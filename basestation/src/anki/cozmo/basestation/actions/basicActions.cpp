@@ -220,7 +220,89 @@ namespace Anki {
       
       return result;
     }
-    
+
+#pragma mark ---- SearchSideToSideAction ----
+
+    SearchSideToSideAction::SearchSideToSideAction(Robot& robot)
+      : IAction(robot)
+      , _compoundAction(robot)
+    {
+    }
+  
+    void SearchSideToSideAction::SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads)
+    {
+      _minSearchAngle_rads = minSearchAngle_rads;
+      _maxSearchAngle_rads = maxSearchAngle_rads;
+    }
+  
+    void SearchSideToSideAction::SetSearchWaitTime(f32 minWaitTime_s, f32 maxWaitTime_s)
+    {
+      _minWaitTime_s = minWaitTime_s;
+      _maxWaitTime_s = maxWaitTime_s;
+    }
+
+    ActionResult SearchSideToSideAction::Init()
+    {
+      // Incase we are re-running this action
+      _compoundAction.ClearActions();
+      _compoundAction.EnableMessageDisplay(IsMessageDisplayEnabled());
+
+      float initialWait_s = GetRNG().RandDblInRange(_minWaitTime_s, _maxWaitTime_s);
+
+      float firstTurnDir = GetRNG().RandDbl() > 0.5f ? 1.0f : -1.0f;      
+      float firstAngle_rads = firstTurnDir * GetRNG().RandDblInRange(_minSearchAngle_rads, _maxSearchAngle_rads);
+      float afterFirstTurnWait_s = GetRNG().RandDblInRange(_minWaitTime_s, _maxWaitTime_s);
+
+      float secondAngle_rads = -firstAngle_rads
+        - firstTurnDir * GetRNG().RandDblInRange(_minSearchAngle_rads, _maxSearchAngle_rads);
+      float afterSecondTurnWait_s = GetRNG().RandDblInRange(_minWaitTime_s, _maxWaitTime_s);
+
+      PRINT_NAMED_DEBUG("SearchSideToSideAction.Init",
+                        "Action will wait %f, turn %fdeg, wait %f, turn %fdeg, wait %f",
+                        initialWait_s,
+                        RAD_TO_DEG(firstAngle_rads),
+                        afterFirstTurnWait_s,
+                        RAD_TO_DEG(secondAngle_rads),
+                        afterSecondTurnWait_s);
+
+      _compoundAction.AddAction(new WaitAction(_robot, initialWait_s));
+
+      TurnInPlaceAction* turn0 = new TurnInPlaceAction(_robot, firstAngle_rads, false);
+      turn0->SetTolerance(DEG_TO_RAD(4.0f));
+      _compoundAction.AddAction(turn0);
+      
+      _compoundAction.AddAction(new WaitAction(_robot, afterFirstTurnWait_s));
+
+      TurnInPlaceAction* turn1 = new TurnInPlaceAction(_robot, secondAngle_rads, false);
+      turn1->SetTolerance(DEG_TO_RAD(4.0f));
+      _compoundAction.AddAction(turn1);
+
+      _compoundAction.AddAction(new WaitAction(_robot, afterSecondTurnWait_s));
+
+      // Prevent the compound action from signaling completion
+      _compoundAction.ShouldEmitCompletionSignal(false);
+      
+      // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
+      _compoundAction.ShouldSuppressTrackLocking(true);
+
+      // Go ahead and do the first Update for the compound action so we don't
+      // "waste" the first CheckIfDone call doing so. Proceed so long as this
+      // first update doesn't _fail_
+      ActionResult compoundResult = _compoundAction.Update();
+      if(ActionResult::SUCCESS == compoundResult ||
+         ActionResult::RUNNING == compoundResult)
+      {
+        return ActionResult::SUCCESS;
+      } else {
+        return compoundResult;
+      }
+    }
+
+    ActionResult SearchSideToSideAction::CheckIfDone()
+    {
+      return _compoundAction.Update();
+    }
+  
 #pragma mark ---- DriveStraightAction ----
     
     DriveStraightAction::DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps)

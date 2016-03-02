@@ -211,6 +211,18 @@ namespace Cozmo {
       }
       #endif // SEND_MOOD_TO_VIZ_DEBUG
       
+      if( _currentBehavior != _nextBehavior ) {
+        Anki::Util::sEvent("robot.behavior_transition",
+                           {{DDATA,
+                                 nullptr != _currentBehavior
+                                 ? _currentBehavior->GetName().c_str()
+                                 : "NULL"}},
+                           nullptr != _nextBehavior
+                           ? _nextBehavior->GetName().c_str()
+                           : "NULL");
+        _lastSwitchTime_sec = currentTime_sec;
+      }
+      
       SetCurrentBehavior(_nextBehavior, currentTime_sec);
       _nextBehavior = nullptr;
     }
@@ -260,8 +272,6 @@ namespace Cozmo {
         BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Update.SelectedNext",
                                "Selected next behavior '%s' at t=%.1f, last was t=%.1f",
                                nextName.c_str(), currentTime_sec, _lastSwitchTime_sec);
-        
-        _lastSwitchTime_sec = currentTime_sec;
       }
     }
     
@@ -332,7 +342,7 @@ namespace Cozmo {
   {
     Result initResult = RESULT_OK;
     
-    // Initialize the selected behavior, if it's not the one we're already running
+    // Interrupt the current behavior, if it's different from the one we want to switch to
     if(_nextBehavior != _currentBehavior || _forceReInit)
     {
       _forceReInit = false;
@@ -345,9 +355,11 @@ namespace Cozmo {
         if (nullptr != _nextBehavior && initResult == RESULT_OK)
         {
           BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManger.InitNextBehaviorHelper.Selected",
-                                 "Selected %s to run next.", _nextBehavior->GetName().c_str());
-          
-          Anki::Util::sEvent("robot.behavior_transition", {{DDATA,_currentBehavior->GetName().c_str()}}, _nextBehavior->GetName().c_str());
+                                 "Selected %s to run next. %s successfully interrupted",
+                                 _nextBehavior->GetName().c_str(),
+                                 nullptr != _currentBehavior
+                                 ? _currentBehavior->GetName().c_str()
+                                 : "NULL");
         }
       }
     }

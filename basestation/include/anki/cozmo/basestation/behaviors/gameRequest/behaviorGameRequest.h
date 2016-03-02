@@ -20,6 +20,8 @@
 namespace Anki {
 namespace Cozmo {
 
+class ObservableObject;
+
 namespace ExternalInterface {
 struct RobotDeletedFace;
 struct RobotObservedFace;
@@ -33,6 +35,7 @@ public:
 
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const final override;
   virtual Result InitInternal(Robot& robot, double currentTime_sec) final override;
+  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) final override;
 
 protected:
 
@@ -42,6 +45,7 @@ protected:
   // Functions to be overridden by sub classes
   
   virtual Result RequestGame_InitInternal(Robot& robot, double currentTime_sec) = 0;
+  virtual Status RequestGame_UpdateInternal(Robot& robot, double currentTime_sec) = 0;
   virtual void HandleGameDeniedRequest(Robot& robot) = 0;
 
   // --------------------------------------------------------------------------------
@@ -60,6 +64,10 @@ protected:
   u32 GetNumBlocks(const Robot& robot) const;
   ObjectID GetRobotsBlockID(const Robot& robot) const;
 
+  // Gets the last known pose of the block (useful in case it gets bumped). returns true if it has a block
+  // pose, false otherwise
+  bool GetLastBlockPose(Pose3d& pose) const;
+
   bool HasFace(const Robot& robot) const;
   bool GetFacePose(const Robot& robot, Pose3d& facePose) const;
 
@@ -76,6 +84,10 @@ private:
   f32        _requestTime_s = -1.0f;
   f32        _lastFaceSeenTime_s = -1.0f;
   Face::ID_t _faceID = Face::UnknownFace;
+  bool       _hasBlockPose = false;
+  Pose3d     _lastBlockPose;
+
+  ObservableObject* GetClosestBlock(const Robot& robot) const;
   
   void HandleObservedFace(const Robot& robot,
                           const ExternalInterface::RobotObservedFace& msg);
