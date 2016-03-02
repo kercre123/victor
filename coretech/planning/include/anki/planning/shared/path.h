@@ -8,7 +8,7 @@
 // time on the robot. The basestation will dole out the path bit by
 // bit
 //NOTE: these need to be even!!
-#define MAX_NUM_PATH_SEGMENTS_ROBOT 10
+#define MAX_NUM_PATH_SEGMENTS_ROBOT 6
 #define MAX_NUM_PATH_SEGMENTS_BASESTATION 128
 
 
