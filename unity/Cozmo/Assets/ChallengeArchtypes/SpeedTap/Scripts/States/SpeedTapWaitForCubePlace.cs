@@ -5,8 +5,8 @@ namespace SpeedTap {
 
   public class SpeedTapWaitForCubePlace : State {
 
-    private const float _kArriveAtCubeThreshold = 90.0f;
-    private const float _kTargetDistanceToCube = 70.0f;
+    private const float _kArriveAtCubeThreshold = 100.0f;
+    private const float _kTargetDistanceToCube = 50.0f;
 
     private SpeedTapGame _SpeedTapGame = null;
 

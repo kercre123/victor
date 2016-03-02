@@ -21,6 +21,7 @@ public class DailyGoalManager : MonoBehaviour {
   private ChallengeDataList _ChallengeList;
 
   private AlertView _RequestDialog = null;
+  private bool _RequestPending = false;
 
   // The Last Challenge ID Cozmo has requested to play
   private ChallengeData _LastChallengeData;
@@ -245,19 +246,18 @@ public class DailyGoalManager : MonoBehaviour {
     alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
     alertView.SetTitleArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
+    _RequestPending = false;
     _RequestDialog = alertView;
   }
 
   private void LearnToCopeWithMiniGameRejection() {
     DAS.Info(this, "LearnToCopeWithMiniGameRejection");
-    if (_RequestDialog != null) {
-      _RequestDialog.CloseView();
-    }
     RobotEngineManager.Instance.SendDenyGameStart();
   }
 
   private void HandleMiniGameConfirm() {
     DAS.Info(this, "HandleMiniGameConfirm");
+    _RequestPending = true;
     if (_RequestDialog != null) {
       _RequestDialog.DisableAllButtons();
     }
@@ -271,16 +271,16 @@ public class DailyGoalManager : MonoBehaviour {
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
     DAS.Info(this, "HandleExternalRejection");
-    if (_RequestDialog != null) {
+    if (_RequestDialog != null && _RequestPending == false) {
       _RequestDialog.CloseView();
     }
   }
 
   private void HandleRequestDialogClose() {
     DAS.Info(this, "HandleUnexpectedClose");
-    SetMinigameNeed();
     if (_RequestDialog != null) {
       _RequestDialog.ViewClosed -= HandleRequestDialogClose;
+      SetMinigameNeed();
     }
   }
 
