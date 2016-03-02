@@ -117,6 +117,7 @@ void PathDolerOuter::Dole(size_t numToDole)
       m.speed.target = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetTargetSpeed();
       m.speed.accel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetAccel();
       m.speed.decel = path_.GetSegmentConstRef(Util::numeric_cast<uint8_t>(i)).GetDecel();
+      m.useShortestDir = t->useShortestDir;
 
       if (msgHandler_->SendMessage(robotID_, RobotInterface::EngineToRobot(std::move(m))) == RESULT_FAIL) {
         printf("ERROR: failed to send message!");
