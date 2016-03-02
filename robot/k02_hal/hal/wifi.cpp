@@ -110,6 +110,7 @@ namespace HAL {
       }
       else
       {
+        AnkiError( 132, "WiFi.ReceiveMessage", 379, "No buffer available to receive clad message %x[%d]", 2, data[0], length);
         return false;
       }
     }
