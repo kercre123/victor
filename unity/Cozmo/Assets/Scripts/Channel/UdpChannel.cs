@@ -134,9 +134,11 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
   }
 
   private void ConnectInternal(int deviceID, int localPort, string advertisingIP, int advertisingPort, bool advertise) {
-    IPAddress advertisingAddress;
-    if (!IPAddress.TryParse(advertisingIP, out advertisingAddress)) {
-      throw new ArgumentException("Could not parse ip address.", "advertisingIP");
+    IPAddress advertisingAddress = null;
+    if (advertise) {
+      if (!IPAddress.TryParse(advertisingIP, out advertisingAddress)) {
+        throw new ArgumentException("Could not parse ip address.", "advertisingIP");
+      }
     }
 
 
