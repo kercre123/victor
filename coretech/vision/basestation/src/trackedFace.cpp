@@ -59,10 +59,11 @@ namespace Vision {
     eyeMidPoint *= 0.5f;
     
     Point3f ray(eyeMidPoint.x(), eyeMidPoint.y(), 1.f);
-    ray = camera.GetCalibration().GetInvCalibrationMatrix() * ray;
+    ASSERT_NAMED(camera.IsCalibrated(), "Camera should be calibrated");
+    ray = camera.GetCalibration()->GetInvCalibrationMatrix() * ray;
     ray.MakeUnitLength();
     
-    ray *= camera.GetCalibration().GetFocalLength_x() * DistanceBetweenEyes_mm / GetIntraEyeDistance();
+    ray *= camera.GetCalibration()->GetFocalLength_x() * DistanceBetweenEyes_mm / GetIntraEyeDistance();
     
     _headPose.SetTranslation(ray);
     _headPose.SetParent(&camera.GetPose());

@@ -56,7 +56,7 @@
 #define USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID 0
 #define USE_THREE_FRAME_MOTION_DETECTION 0
 
-#define DRAW_TOOL_CODE_DEBUG 0
+#define DRAW_TOOL_CODE_DEBUG 1
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
@@ -777,7 +777,9 @@ namespace Cozmo {
     
     AnkiConditionalErrorAndReturnValue(_camera.IsCalibrated(), RESULT_FAIL, "VisionSystem.Update.", "Camera not calibrated");
     
-    auto const& calib = _camera.GetCalibration();
+    auto calib = _camera.GetCalibration();
+    
+    AnkiConditionalErrorAndReturnValue(calib != nullptr, RESULT_FAIL, "VisionSystem.Update", "Camera calib is nullptr");
     
     _tracker = TemplateTracker::LucasKanadeTracker_SampledPlanar6dof(grayscaleImage,
                                                                     trackingQuad,
@@ -788,10 +790,10 @@ namespace Cozmo {
                                                                     FIDUCIAL_SQUARE_THICKNESS_FRACTION,
                                                                     _trackerParameters.numInteriorSamples,
                                                                     _trackerParameters.numSamplingRegions,
-                                                                    calib.GetFocalLength_x(),
-                                                                    calib.GetFocalLength_y(),
-                                                                    calib.GetCenter_x(),
-                                                                    calib.GetCenter_y(),
+                                                                    calib->GetFocalLength_x(),
+                                                                    calib->GetFocalLength_y(),
+                                                                    calib->GetCenter_x(),
+                                                                    calib->GetCenter_y(),
                                                                     Embedded::Point2f(_markerToTrack.size_mm.x(),
                                                                                       _markerToTrack.size_mm.y()),
                                                                      ccmScratch,
@@ -1534,7 +1536,8 @@ namespace Cozmo {
                        "Motion centroid should be within image bounds.");
           
           // make relative to image center *at processing resolution*
-          centroid -= _camera.GetCalibration().GetCenter() * (1.f/scaleMultiplier);
+          ASSERT_NAMED(_camera.IsCalibrated(), "Camera must be calibrated");
+          centroid -= _camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier);
           
           // Filter so as not to move too much from last motion detection,
           // IFF we observed motion in the previous check
@@ -1709,7 +1712,7 @@ namespace Cozmo {
     
   } // GetModeName()
   
-  Result VisionSystem::Init(const Vision::CameraCalibration& camCalib)
+  Result VisionSystem::Init(Vision::CameraCalibration& camCalib)
   {
     Result result = RESULT_OK;
     
@@ -1769,11 +1772,15 @@ namespace Cozmo {
     _faceTracker = new Vision::FaceTracker(_dataPath, config);
     PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
     
-    _camera.SetCalibration(camCalib);
+    // NOTE: we do NOT want to give our bogus camera its own calibration, b/c the camera
+    // gets copied out in Vision::ObservedMarkers we leave in the mailbox for
+    // the main engine thread. We don't want it referring to any memory allocated
+    // here.
+    _camera.SetSharedCalibration(&camCalib);
     
     // Compute FOV from focal length (currently used for tracker prediciton)
-    _headCamFOV_ver = _camera.GetCalibration().ComputeVerticalFOV().ToFloat();
-    _headCamFOV_hor = _camera.GetCalibration().ComputeHorizontalFOV().ToFloat();
+    _headCamFOV_ver = _camera.GetCalibration()->ComputeVerticalFOV().ToFloat();
+    _headCamFOV_hor = _camera.GetCalibration()->ComputeHorizontalFOV().ToFloat();
     
     _exposureTime = 0.2f; // TODO: pick a reasonable start value
     _frameNumber = 0;
@@ -1811,12 +1818,6 @@ namespace Cozmo {
     _markerToTrack.Clear();
     _newMarkerToTrack.Clear();
     _newMarkerToTrackWasProvided = false;
-    
-    // NOTE: we do NOT want to give our bogus camera its own calibration, b/c the camera
-    // gets copied out in Vision::ObservedMarkers we leave in the mailbox for
-    // the main engine thread. We don't want it referring to any memory allocated
-    // here.
-    _camera.SetSharedCalibration(&camCalib);
     
     VisionMarker::SetDataPath(_dataPath);
     
@@ -1879,13 +1880,15 @@ namespace Cozmo {
       sortedQuad = marker.corners;
     }
     
-    auto const& calib = _camera.GetCalibration();
+    ASSERT_NAMED(_camera.IsCalibrated(), "Camera should be calibrated");
+    auto calib = _camera.GetCalibration();
+    ASSERT_NAMED(calib != nullptr, "Calibration should not be null");
     
     return P3P::computePose(sortedQuad,
                             _canonicalMarker3d[0], _canonicalMarker3d[1],
                             _canonicalMarker3d[2], _canonicalMarker3d[3],
-                            calib.GetFocalLength_x(), calib.GetFocalLength_y(),
-                            calib.GetCenter_x(), calib.GetCenter_y(),
+                            calib->GetFocalLength_x(), calib->GetFocalLength_y(),
+                            calib->GetCenter_x(), calib->GetCenter_y(),
                             rotation, translation);
   } // GetVisionMarkerPose()
   
@@ -2090,15 +2093,16 @@ namespace Cozmo {
   
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
-    // If we expect the tool code to be visible _and_ we haven't checked it
-    // too recently, then try to read the tool code (and update calibration data)
-    if(image.GetTimestamp() - _lastToolCodeReadTime_ms > kToolCodeReadPeriod_ms)
+    // If we expect the tool code to be visible, the lift is stopped, _and_ we haven't
+    // checked it too recently, then try to read the tool code (and update calibration data)
+    if(image.GetTimestamp() - _lastToolCodeReadTime_ms > kToolCodeReadPeriod_ms &&
+       NEAR_ZERO(_poseData.poseStamp.GetLiftAngle()-_prevPoseData.poseStamp.GetLiftAngle()))
     {
       // Center points of the calibration dots, in lift coordinate frame
       // TODO: Move these to be defined elsewhere
       const std::vector<Point3f> toolCodeDotsWrtLift = {
-        {3.5f, -10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
-        {3.5f,  10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
+        {1.f, -10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
+        {1.f,  10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
       };
       
       const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_poseData.poseStamp.GetPose(), "RobotLiftBase");
@@ -2106,7 +2110,6 @@ namespace Cozmo {
       Pose3d liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &liftBasePose, "RobotLift");
 
       Robot::ComputeLiftPose(_poseData.poseStamp.GetLiftAngle(), liftPose);
-      
       
       Pose3d liftPoseWrtCam;
       if(false == liftPose.GetWithRespectTo(_poseData.cameraPose, liftPoseWrtCam)) {
@@ -2154,6 +2157,11 @@ namespace Cozmo {
           Quad3f dotQuadRoi3dWrtCam;
           liftPoseWrtCam.ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtCam);
           
+          // DEBUG:
+          Quad3f dotQuadRoi3dWrtWorld;
+          liftPose.GetWithRespectToOrigin().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
+          _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324, dotQuadRoi3dWrtWorld, NamedColors::RED);
+          
           Quad2f dotQuadRoi2d;
           _camera.Project3dPoints(dotQuadRoi3dWrtCam, dotQuadRoi2d);
           
@@ -2169,7 +2177,7 @@ namespace Cozmo {
           if(DRAW_TOOL_CODE_DEBUG) {
             Vision::ImageRGB roiImgDisp(invertedDotRoi);
             roiImgDisp.DrawPoint(Anki::Point2f(m.m10/m.m00, m.m01/m.m00), NamedColors::RED, 1);
-            roiImgDisp.Display(("DotROI_" + std::to_string(i)).c_str());
+            _debugImageRGBMailbox.putMessage({("DotROI_" + std::to_string(i)).c_str(), roiImgDisp});
           }
           const Anki::Point2f  observedPoint(m.m10/m.m00 + dotRectRoi.GetX(),
                                              m.m01/m.m00 + dotRectRoi.GetY());
@@ -2185,29 +2193,32 @@ namespace Cozmo {
         }
         
         // Compute the average:
+        ASSERT_NAMED(_camera.IsCalibrated(), "Camera should be calibrated");
         camCen *= 1.f / (f32)projectedToolCodeDots.size();
-        camCen += _camera.GetCalibration().GetCenter();
+        camCen += _camera.GetCalibration()->GetCenter();
         
 #       if DRAW_TOOL_CODE_DEBUG
         char dispStr[256];
         snprintf(dispStr, 255, "(%.1f,%.1f)", camCen.x(), camCen.y());
-        dispImg.DrawText(Anki::Point2f(0, image.GetNumRows()), dispStr, NamedColors::GREEN);
-        dispImg.Display("ToolCode");
+        dispImg.DrawText(Anki::Point2f(0, image.GetNumRows()), dispStr, NamedColors::BLUE, 0.75);
+        _debugImageRGBMailbox.putMessage({"ToolCode", dispImg});
 #       endif
         
         // Update the camera calibration
         PRINT_NAMED_INFO("VisionSystem.ReadToolCode.CameraCenterUpdated",
                          "Old=(%f,%f), New=(%f,%f), t=%dms",
-                         _camera.GetCalibration().GetCenter_x(),
-                         _camera.GetCalibration().GetCenter_y(),
+                         _camera.GetCalibration()->GetCenter_x(),
+                         _camera.GetCalibration()->GetCenter_y(),
                          camCen.x(), camCen.y(),
                          image.GetTimestamp());
         
-        Vision::CameraCalibration calib(_camera.GetCalibration());
-        calib.SetCenter(camCen);
-        _camera.SetCalibration(calib);
-        
-        _lastToolCodeReadTime_ms = image.GetTimestamp();
+        if(std::isnan(camCen.x()) || std::isnan(camCen.y())) {
+          PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.CamCenNaN", "");
+          return RESULT_FAIL;
+        } else {
+          _camera.GetCalibration()->SetCenter(camCen);
+          _lastToolCodeReadTime_ms = image.GetTimestamp();
+        }
       }
     }
     

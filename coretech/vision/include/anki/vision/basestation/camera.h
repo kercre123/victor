@@ -17,6 +17,8 @@
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/occluderList.h"
 
+#include "util/helpers/templateHelpers.h"
+
 #include <array>
 #include <vector>
 
@@ -46,7 +48,8 @@ namespace Anki {
       // Accessors:
       const CameraID_t          GetID()          const;
       const Pose3d&             GetPose()        const;
-      const CameraCalibration&  GetCalibration() const;
+      const CameraCalibration*  GetCalibration() const; // nullptr if not calibrated
+      CameraCalibration*        GetCalibration();       //   "
 
       void SetID(const CameraID_t ID);
       void SetPose(const Pose3d& newPose);
@@ -58,9 +61,10 @@ namespace Anki {
       // Set the camera to use shared calibration data. In this case, it simply
       // references the calibration data but the caller must ensure that the
       // calibration data persists and is valid for the life of the camera.
-      void SetSharedCalibration(const CameraCalibration* sharedCalib);
+      void SetSharedCalibration(CameraCalibration* sharedCalib);
       
       bool IsCalibrated() const;
+      bool IsCalibrationShared() const;
       
       //
       // Methods:
@@ -150,7 +154,7 @@ namespace Anki {
 
     protected:
       CameraID_t               _camID;
-      const CameraCalibration* _calibration;
+      CameraCalibration*       _calibration = nullptr;
       bool                     _isCalibrationShared;
       Pose3d                   _pose;
       
@@ -180,17 +184,26 @@ namespace Anki {
     inline const Pose3d& Camera::GetPose(void) const
     { return _pose; }
     
-    inline const CameraCalibration& Camera::GetCalibration(void) const
-    { return *_calibration; }
+    inline CameraCalibration* Camera::GetCalibration(void)
+    { return _calibration; }
+    
+    inline const CameraCalibration* Camera::GetCalibration(void) const
+    { return _calibration; }
     
     inline void Camera::SetCalibration(const CameraCalibration &calib)
     {
+      if(!_isCalibrationShared && nullptr != _calibration) {
+        Util::SafeDelete(_calibration);
+      }
       _isCalibrationShared = false;
       _calibration = new CameraCalibration(calib);
     }
     
-    inline void Camera::SetSharedCalibration(const CameraCalibration* sharedCalib)
+    inline void Camera::SetSharedCalibration(CameraCalibration* sharedCalib)
     {
+      if(!_isCalibrationShared && nullptr != _calibration) {
+        Util::SafeDelete(_calibration);
+      }
       _isCalibrationShared = true;
       _calibration = sharedCalib;
     }
@@ -203,6 +216,10 @@ namespace Anki {
     
     inline bool Camera::IsCalibrated() const {
       return (_calibration != nullptr);
+    }
+    
+    inline bool Camera::IsCalibrationShared() const {
+      return _isCalibrationShared;
     }
     
     inline bool Camera::IsOccluded(const Point2f& projectedPoint, const f32 atDistance) const {

@@ -79,7 +79,7 @@ namespace Cozmo {
     // Methods:
     //
     
-    Result Init(const Vision::CameraCalibration& camCalib);
+    Result Init(Vision::CameraCalibration& camCalib);
     void UnInit() { _isInitialized = false; };
     
     bool IsInitialized() const;

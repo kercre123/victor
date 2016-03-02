@@ -416,7 +416,7 @@ namespace Cozmo {
     
     ASSERT_NAMED(_camera.IsCalibrated(), "Camera must be calibrated to populate homography LUT.");
     
-    const Matrix_3x3f K = _camera.GetCalibration().GetCalibrationMatrix();
+    const Matrix_3x3f K = _camera.GetCalibration()->GetCalibrationMatrix();
     
     GroundPlaneROI groundPlaneROI;
     

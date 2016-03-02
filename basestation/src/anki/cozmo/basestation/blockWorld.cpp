@@ -1290,14 +1290,15 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
       // TODO: Don't bother with this if the robot is docking? (picking/placing)??
       // Now that the occlusion maps are complete, check each unobserved object's
       // visibility in each camera
+      const Vision::Camera& camera = _robot->GetVisionComponent().GetCamera();
+      ASSERT_NAMED(camera.IsCalibrated(), "Camera should be calibrated");
       for(auto unobserved : unobservedObjects) {
         
         // Remove objects that should have been visible based on their last known
         // location, but which must not be there because we saw something behind
         // that location:
-        const Vision::Camera& camera = _robot->GetVisionComponent().GetCamera();
-        const u16 xBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration().GetNcols()));
-        const u16 yBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration().GetNrows()));
+        const u16 xBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNcols()));
+        const u16 yBorderPad = static_cast<u16>(0.05*static_cast<f32>(camera.GetCalibration()->GetNrows()));
         if(unobserved.object->IsVisibleFrom(camera, DEG_TO_RAD(45), 20.f, true,
                                             xBorderPad, yBorderPad) &&
            (_robot->GetDockObject() != unobserved.object->GetID()))  // We expect a docking block to disappear from view!
@@ -1357,14 +1358,14 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
           // by the lift. (I.e., assume QVGA is a cropped, narrower FOV)
           // TODO: Actually project a lift into the image and figure out what it will occlude
           u16 xBorderPad = 0;
-          switch(camera.GetCalibration().GetNcols())
+          switch(camera.GetCalibration()->GetNcols())
           {
             case 640:
-              xBorderPad = static_cast<u16>(0.225f * static_cast<f32>(camera.GetCalibration().GetNcols()));
+              xBorderPad = static_cast<u16>(0.225f * static_cast<f32>(camera.GetCalibration()->GetNcols()));
               break;
             case 400:
               // TODO: How much should be occluded?
-              xBorderPad = static_cast<u16>(0.20f * static_cast<f32>(camera.GetCalibration().GetNcols()));
+              xBorderPad = static_cast<u16>(0.20f * static_cast<f32>(camera.GetCalibration()->GetNcols()));
               break;
             case 320:
               // Nothing to do, leave at zero
@@ -1373,7 +1374,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
               // Not expecting other resolutions
               PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects",
                                   "Unexpeted camera calibration ncols=%d.",
-                                  camera.GetCalibration().GetNcols());
+                                  camera.GetCalibration()->GetNcols());
           }
           
           Vision::KnownMarker::NotVisibleReason reason;
