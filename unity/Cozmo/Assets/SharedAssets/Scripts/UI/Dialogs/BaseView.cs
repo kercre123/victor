@@ -24,6 +24,14 @@ namespace Cozmo {
       public event SimpleBaseViewHandler ViewClosed;
       public event SimpleBaseViewHandler ViewCloseAnimationFinished;
 
+      [SerializeField]
+      private string _DASEventViewName = "";
+
+      protected string DASEventViewName {
+        get { return _DASEventViewName; } 
+        set { _DASEventViewName = value; }
+      }
+
       /// <summary>
       /// If true, creates a full screen button behind all the elements of this
       /// dialog. The button will close this dialog on click.
@@ -60,6 +68,11 @@ namespace Cozmo {
       #endregion
 
       public void OpenView(bool? overrideCloseOnTapOutside = null) {
+        if (string.IsNullOrEmpty(_DASEventViewName)) {
+          DAS.Error(this, string.Format("View is missing a _DASEventViewName! Please check the prefab. name={0}", gameObject.name));
+          _DASEventViewName = gameObject.name;
+        }
+
         RaiseViewOpened(this);
 
         bool shouldCloseOnTapOutside = overrideCloseOnTapOutside.HasValue ? 
@@ -70,11 +83,15 @@ namespace Cozmo {
 
           // Place the button underneath all the UI in this dialog
           fullScreenButton.transform.SetAsFirstSibling();
-          UnityEngine.UI.Button fullScreenCollider = fullScreenButton.GetComponent<UnityEngine.UI.Button>();
-          fullScreenCollider.onClick.AddListener(HandleCloseColliderClicked);
+          Cozmo.UI.TouchCatcher fullScreenCollider = fullScreenButton.GetComponent<Cozmo.UI.TouchCatcher>();
+          fullScreenCollider.OnTouch += (HandleCloseColliderClicked);
+          fullScreenCollider.DASEventButtonName = "fullscreen_close_button";
+          fullScreenCollider.DASEventViewController = DASEventViewName;
         }
           
         if (_OptionalCloseDialogButton != null) {
+          _OptionalCloseDialogButton.DASEventButtonName = "close_button";
+          _OptionalCloseDialogButton.DASEventViewController = DASEventViewName;
           _OptionalCloseDialogButton.onClick.AddListener(HandleCloseColliderClicked);
         }
 

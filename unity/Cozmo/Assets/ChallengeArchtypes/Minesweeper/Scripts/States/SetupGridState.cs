@@ -24,7 +24,7 @@ namespace Minesweeper {
 
       var game = (MinesweeperGame)_StateMachine.GetGame();
 
-      game.SharedMinigameView.ShowWideGameStateSlide(game.SetupHelpPrefab, "SetupHelp");
+      game.SharedMinigameView.ShowWideGameStateSlide(game.SetupHelpPrefab, "minesweeper_setup_help");
 
       // add the extra one so our cube goes on the corner
       var topRightCorner = new Vector3((game.Columns + 1) / 2f, (game.Rows + 1) / 2f, 0) * MinesweeperGame.kCellWidth;

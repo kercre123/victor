@@ -26,10 +26,10 @@ public class TimelineEntry : MonoBehaviour {
   private GameObject _TimelineNodeInactive;
 
   [SerializeField]
-  private Button _FillbarButton;
+  private AnkiButton _FillbarButton;
 
   [SerializeField]
-  private Button _TimelineNodeButton;
+  private AnkiButton _TimelineNodeButton;
 
   [SerializeField]
   private GameObject _FriendshipMilestone;
@@ -55,13 +55,13 @@ public class TimelineEntry : MonoBehaviour {
   }
 
   private void HandleClick() {
-    Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.ClickGeneral);
     if (OnSelect != null) {
       OnSelect(_Date);
     }
   }
 
-  public void Inititialize(Date date, TimelineEntryData timelineEntry, float progress, bool first, bool showWeek, int week) {
+  public void Inititialize(Date date, TimelineEntryData timelineEntry, float progress, bool first, bool showWeek, int week,
+                           string dasViewName) {
     _Date = date;
     _Fillbar.fillAmount = progress;
 
@@ -87,6 +87,18 @@ public class TimelineEntry : MonoBehaviour {
     if (showWeek) {
       _WeekLabelGlow.FormattingArgs = _WeekLabel.FormattingArgs = new object[]{ week };
     }
+
+    SetupDasEventNames(date, dasViewName);
+  }
+
+  private void SetupDasEventNames(Date date, string dasViewName) {
+    _FillbarButton.DASEventViewController = dasViewName;
+    _TimelineNodeButton.DASEventViewController = dasViewName;
+
+    string buttonNameFormat = "timeline_entry_{0}_{1}";
+    string dateString = DASUtil.FormatDate(date);
+    _FillbarButton.DASEventButtonName = string.Format(buttonNameFormat, dateString, "fillbar_button");
+    _TimelineNodeButton.DASEventButtonName = string.Format(buttonNameFormat, dateString, "timeline_node_button");
   }
 
   // Show "completed" gems only in Timeline Entry

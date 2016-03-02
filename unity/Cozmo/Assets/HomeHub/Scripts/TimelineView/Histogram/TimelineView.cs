@@ -70,9 +70,9 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private AnkiButton _EndSessionButton;
 
-    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
+    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
 
-    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -110,7 +110,7 @@ namespace Cozmo.HomeHub {
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, Transform[] rewardIcons = null) {
       DAS.Info(this, "Initializing Timeline...");
       _ChallengeListViewInstance = UIManager.CreateUIElement(_ChallengeListViewPrefab.gameObject, _ChallengeContainer).GetComponent<HomeHubChallengeListView>();
-      _ChallengeListViewInstance.Initialize(challengeStatesById);
+      _ChallengeListViewInstance.Initialize(challengeStatesById, DASEventViewName);
       _ChallengeListViewInstance.OnLockedChallengeClicked += OnLockedChallengeClicked;
       _ChallengeListViewInstance.OnUnlockedChallengeClicked += OnUnlockedChallengeClicked;
 
@@ -124,6 +124,8 @@ namespace Cozmo.HomeHub {
       _ContentPane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
       _TimelinePane.GetComponent<RectChangedCallback>().OnRectChanged += SetScrollRectStartPosition;
 
+      _EndSessionButton.DASEventButtonName = "end_session_button";
+      _EndSessionButton.DASEventViewController = this.DASEventViewName;
       _EndSessionButton.onClick.AddListener(HandleEndSessionButtonTap);
       IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
       _CozmoWidgetInstance.UpdateFriendshipText(currentRobot.GetFriendshipLevelName(currentRobot.FriendshipLevel));
@@ -182,7 +184,7 @@ namespace Cozmo.HomeHub {
 
         int daysAgo = (today - date).Days;
 
-        entry.Inititialize(date, timelineEntry, progress, i == 0 && showFirst, daysAgo % 7 == 0, daysAgo / 7);
+        entry.Inititialize(date, timelineEntry, progress, i == 0 && showFirst, daysAgo % 7 == 0, daysAgo / 7, DASEventViewName);
         showFirst = false;
 
         entry.OnSelect += HandleTimelineEntrySelected;
