@@ -871,6 +871,7 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
                            rotSpeed,
                            TERMINAL_POINT_TURN_ACCEL,
                            TERMINAL_POINT_TURN_DECEL,
+                           POINT_TURN_ANGLE_TOL,
                            true);
     }
   }

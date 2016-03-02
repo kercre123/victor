@@ -20,7 +20,8 @@ namespace Cozmo {
 namespace RTIP {
 
 #define TICK_TIME (5000)
-#define BYTES_PER_TICK (256)
+/// Occasionally overflows if this is 256
+#define BYTES_PER_TICK (192)
 
 u32 Version;
 u32 Date;

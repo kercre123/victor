@@ -120,6 +120,7 @@ namespace Anki {
         setBodyAngle.angle_rad             = _targetAngle.ToFloat();
         setBodyAngle.max_speed_rad_per_sec = _maxSpeed_radPerSec;
         setBodyAngle.accel_rad_per_sec2    = _accel_radPerSec2;
+        setBodyAngle.angle_tolerance       = _angleTolerance.ToFloat();
         if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
           return ActionResult::FAILURE_RETRY;
         }
