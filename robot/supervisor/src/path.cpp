@@ -13,11 +13,6 @@
 #define ATAN2_FAST(y,x) atan2_fast(y,x)
 #define ATAN2_ACC(y,x) atan2_acc(y,x)
 
-#if defined(CORETECH_ROBOT)
-#pragma import(__use_no_heap)
-#pragma import(__use_no_heap_region)
-#endif
-
 #if defined(CORETECH_ROBOT) && defined(CORETECH_BASESTATION)
   #error "only one of CORETECH_BASESTATION or CORETECH_ROBOT can be defined"
 #elif !defined(CORETECH_ROBOT) && !defined(CORETECH_BASESTATION)
