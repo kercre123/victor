@@ -32,6 +32,7 @@ namespace Playhouse {
       _AnimationSequence = _PlayhousePanel.GetAnimationList();
       CurrentRobot.SendAnimation(AnimationName.kCodeBreakerNewIdea, OnSequenceAnimationDone);
       _SequenceIndex = -1;
+      SharedMinigameView.HideGameStateSlide();
     }
 
     private void OnSequenceAnimationDone(bool success) {
@@ -47,7 +48,6 @@ namespace Playhouse {
     private void ResetGame() {
       _StateMachine.SetNextState(new RequestPlay());
       _AnimationSequence.Clear();
-      SharedMinigameView.HideGameStateSlide();
     }
   }
 }
