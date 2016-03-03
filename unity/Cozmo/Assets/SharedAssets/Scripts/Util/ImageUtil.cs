@@ -2,6 +2,7 @@
 using System.IO;
 using UnityEngine;
 using System.Collections;
+using Cozmo.Util;
 
 public static class ImageUtil {
 
@@ -168,7 +169,7 @@ public static class ImageUtil {
 
   // Uses only the R value of the color and sets x in R of result and y in G of result
   // and atan2(x,y) in B if the option bool gradient is set
-  public static void ConvolveXandY(Color[] pixels, Color[] newPixels, int width, int height, float[,] kernel, out int newWidth, out int newHeight, bool gradient = false) {
+  public static void ConvolveXandY(Color[] pixels, Color[] newPixels, int width, int height, float[,] kernel, out int newWidth, out int newHeight, bool calculateMagnitude) {
 
     int kw = kernel.GetLength(0);
     int kh = kernel.GetLength(1);
@@ -195,7 +196,7 @@ public static class ImageUtil {
           }
         }
 
-        if (gradient) {
+        if (calculateMagnitude) {
           c.b = Mathf.Sqrt(c.r * c.r + c.g * c.g);
         }
 
@@ -254,10 +255,160 @@ public static class ImageUtil {
     }
   }
 
-  private const float _kMagnitudeThreshold = 0.15f;
-  private const float _kMagnitudeScale = 20f;
+
+
+  public static void PaintDots(Color[] pixelsA, Color[] pixelsB, int width, int height, int radius, bool first = false) {
+    PaintLinesWithGradient(pixelsA, pixelsB, null, width, height, 0, 0, radius, first);
+  }
+
+  public static void SetAlpha(Color[] pixels, float alpha) {
+    for (int i = 0; i < pixels.Length; i++) {
+      pixels[i].a = alpha;
+    }
+  }
+
+  // scale image using bilinear interpolation
+  public static Color[] ScaleImage(Color[] pixels, int width, int height, out int newWidth, out int newHeight, float scale) {
+    newHeight = (int)(height * scale);
+    newWidth = (int)(width * scale);
+
+    Color[] result = new Color[newWidth * newHeight];
+
+    for (int i = 0; i < newWidth; i++) {
+      for (int j = 0; j < newHeight; j++) {
+
+        float x = i / scale;
+        float y = j / scale;
+        int xMin = Mathf.FloorToInt(x);
+        int xMax = Mathf.CeilToInt(x);
+        int yMin = Mathf.FloorToInt(y);
+        int yMax = Mathf.CeilToInt(y);
+
+        if (xMax == width) {
+          xMax = xMin;
+        }
+        if (yMax == height) {
+          yMax = yMin;
+        }
+
+        Color bl = pixels[xMin + width * yMin];
+        Color br = pixels[xMax + width * yMin];
+        Color tl = pixels[xMin + width * yMax];
+        Color tr = pixels[xMax + width * yMax];
+
+        result[i + j * newWidth] = Color.Lerp(Color.Lerp(bl, br, x - xMin), Color.Lerp(tl, tr, x - xMin), y - yMin);
+      }
+    }
+    return result;
+  }
+
+  public static void PaintLinesWithGradient(Color[] pixelsA, Color[] pixelsB, Color[] gradient, int width, int height, int gradientWidth, int gradientHeight, int radius, bool first = false) {
+
+    int lineLength = radius * 4;
+    int length = (width * height);
+    int gradientLength = (gradientWidth * gradientHeight);
+
+    int r2 = (radius * radius);
+
+    int borderX = (width - gradientWidth) / 2;
+    int borderY = (height - gradientHeight) / 2;
+
+    const float _kGridMultiple = 0.5f;
+
+    int gridSize = Mathf.Max(1, (int)(radius * _kGridMultiple));
+    int gridHalf = gridSize / 2;
+
+    // if grid size is 1, grid half will be 0, which means no pixels will be checked.
+    int gridHalfRight = Mathf.Max(1, gridHalf);
+
+    float magThreshold = gridSize * gridSize * 0.1f;
+
+    System.Random rand = new System.Random();
+
+    for(int i = gridHalf; i < width; i+= gridSize) {
+      for(int j = gridHalf; j < height; j+= gridSize) {
+
+        float sumMags = 0f;
+        float maxMag = 0f;
+        int xIndex = 0, yIndex = 0;
+        for (int x = -gridHalf; x < gridHalfRight; x++) {
+          for (int y = -gridHalf; y < gridHalfRight; y++) {
+            int ix = i + x + (j + y) * width;
+
+            if (ix >= 0 && ix < length) {
+              var ca = pixelsA[ix];
+              var cb = pixelsB[ix];
+
+              var mag = Mathf.Sqrt((ca.r - cb.r) * (ca.r - cb.r) + (ca.g - cb.g) * (ca.g - cb.g) + (ca.b - cb.b) * (ca.b - cb.b));
+
+              if (mag > maxMag) {
+                maxMag = mag;
+                xIndex = i + x;
+                yIndex = j + y;
+              }
+              sumMags += mag;
+            }
+          }
+        }
+
+        if (!first && sumMags < magThreshold) {
+          continue;
+        }
+
+        int index = xIndex + yIndex * width;
+        int gradientIndex = xIndex - borderX + (yIndex - borderY) * gradientWidth;
+
+        var c = pixelsA[index];
+        bool point = true;
+        Vector2 n = Vector2.zero;
+        if (gradientIndex >= 0 && gradientIndex < gradientLength) {
+          var g = gradient[gradientIndex];
+          var gv = new Vector2(g.r, g.g);
+          if (!gv.Approximately(Vector2.zero)) {
+            n = gv.normalized;
+            point = false;
+          }
+        }
+
+        float alpha = (float)rand.NextDouble();
+
+
+        for (int k = 0; k < (point ? 1 : lineLength); k++) {
+
+          var offset = n * k;
+
+          for (int x = -radius; x <= radius; x++) {
+            for (int y = -radius; y <= radius; y++) {
+
+              float cX = (xIndex + offset.x);
+              float cY = (yIndex + offset.y);
+
+              int pX = (int)cX + x;
+              int pY = (int)cY + y;
+
+              int endIndex = pX + (pY * width);
+
+              if (endIndex >= 0 && endIndex < length) {
+
+                if (alpha >= pixelsB[endIndex].a) {                  
+                  if (r2 >= ((pX - cX) * (pX - cX) + (pY - cY) * (pY - cY))) {
+
+                    pixelsB[endIndex] = c;
+                    pixelsB[endIndex].a = alpha;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
 
   public static void NonMaximalSuppression(Color[] pixels, Color[] newPixels, int width, int height, out int newWidth, out int newHeight) {
+    
+    const float _kMagnitudeThreshold = 0.15f;
+    const float _kMagnitudeScale = 20f;
 
     newWidth = width - 2;
     newHeight = height - 2;
@@ -382,6 +533,10 @@ public static class ImageUtil {
     NonMaximalSuppression(bufferA, bufferB, newWidth, newHeight, out newWidth, out newHeight);
   }
     
+  #endregion // Filter
+
+  #region Sketch
+
   public static Texture2D Sketch(Texture2D texture, int sketchColors = 8, Gradient colorGradient = null) {
 
     Color[] buffer = texture.GetPixels();
@@ -457,6 +612,101 @@ public static class ImageUtil {
     param.Done = true;
   }
 
-  #endregion //Filter
+  #endregion //Sketch
 
+  #region Paint
+
+  public static Texture2D Paint(Texture2D texture, bool dots = true, Gradient colorGradient = null) {
+
+    Color[] buffer = texture.GetPixels();
+
+    int width = texture.width, height = texture.height;
+
+    PaintInternal(ref buffer, ref width, ref height, dots, colorGradient);
+
+    Texture2D result = new Texture2D(width, height, texture.format, false);
+    result.SetPixels(0, 0, width, height, buffer);
+    result.Apply();
+    return result;
+  }
+
+  private static void PaintInternal(ref Color[] bufferA, ref int width, ref int height, bool dots, Gradient colorGradient) {
+
+    bufferA = ScaleImage(bufferA, width, height, out width, out height, 2);
+
+    Color[] bufferB = new Color[bufferA.Length];
+    Color[] bufferC = new Color[bufferA.Length];
+
+    Convolve(bufferA, bufferB, width, height, _sGaussKernel, out width, out height);
+
+    bufferA.Fill(default(Color));
+    if (dots) {
+
+      PaintDots(bufferB, bufferA, width, height, 8, true);
+      SetAlpha(bufferA, 0f);
+      PaintDots(bufferB, bufferA, width, height, 4);
+      SetAlpha(bufferA, 0f);
+      PaintDots(bufferB, bufferA, width, height, 2);
+      SetAlpha(bufferA, 1f);
+
+    }
+    else {
+      int gradientWidth, gradientHeight; 
+
+      ConvolveXandY(bufferB, bufferC, width, height, _sSobelKernel, out gradientWidth, out gradientHeight, false);
+
+      PaintLinesWithGradient(bufferB, bufferA, bufferC, width, height, gradientWidth, gradientHeight, 8, true);
+      SetAlpha(bufferA, 0f);
+      PaintLinesWithGradient(bufferB, bufferA, bufferC, width, height, gradientWidth, gradientHeight, 4);
+      SetAlpha(bufferA, 0f);
+      PaintLinesWithGradient(bufferB, bufferA, bufferC, width, height, gradientWidth, gradientHeight, 2);
+      SetAlpha(bufferA, 1f);
+    }
+
+    //if (colorGradient != null) {
+    //  GrayScaleToColorUsingGradient(bufferA, bufferA, width, height, colorGradient);
+    //}
+  }
+
+  private class PaintAsyncParam {
+    public Color[] Buffer;
+    public int Width;
+    public int Height;
+    public volatile bool Done;
+    public Gradient ColorGradient;
+    public bool Dots;
+  }
+
+  public static IEnumerator PaintAsync(Texture2D texture, Action<Texture2D> callback, bool dots = true, Gradient colorGradient = null) {
+    if (callback == null) {
+      yield break;
+    }
+
+    PaintAsyncParam param = new PaintAsyncParam() {
+      Buffer = texture.GetPixels(),
+      Width = texture.width,
+      Height = texture.height,
+      ColorGradient = colorGradient,
+      Dots = dots
+    };
+
+    System.Threading.ThreadPool.QueueUserWorkItem(PaintAsyncInternal, param);
+
+    while (!param.Done) {
+      yield return null;
+    }
+
+    Texture2D result = new Texture2D(param.Width, param.Height, texture.format, false);
+    result.SetPixels(0, 0, param.Width, param.Height, param.Buffer);
+    result.Apply();
+    callback(result);
+  }
+
+  private static void PaintAsyncInternal(object obj) {
+    PaintAsyncParam param = (PaintAsyncParam)obj;
+    PaintInternal(ref param.Buffer, ref param.Width, ref param.Height, param.Dots, param.ColorGradient);
+    param.Done = true;
+  }
+
+  #endregion // Paint
 }

@@ -5,10 +5,17 @@ using ArtistCozmo;
 using System;
 
 public class ArtistCozmoGame : GameBase {
-  #region implemented abstract members of GameBase
+
+  public enum ArtStyle {
+    Painting,
+    Sketch,
+
+    Count
+  }
 
   public Gradient ColorGradient { get; private set; }
   public int ColorCount { get; private set; }
+  public ArtStyle Style { get; private set; }
 
   [SerializeField]
   private GameObject _ImagePrefab;
@@ -55,9 +62,8 @@ public class ArtistCozmoGame : GameBase {
     else {
       ColorCount = 8;
     }
+    Style = (ArtStyle)UnityEngine.Random.Range(0, (int)ArtStyle.Count);
   }
-
-  #endregion
 
 
 }
