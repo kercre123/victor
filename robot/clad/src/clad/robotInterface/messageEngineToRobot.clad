@@ -218,7 +218,7 @@ message RadioState
 // Set ReliableTransport timeout time
 message DebugSetRTTO
 {
-  uint_16 timeoutMiliseconds
+  uint_16 timeoutMilliseconds
 }
 
 enum uint_32 ToRobotAddressSpace

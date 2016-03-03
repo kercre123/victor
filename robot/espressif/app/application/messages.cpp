@@ -123,8 +123,8 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_setRTTO:
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize);
-              AnkiDebug( 144, "ReliableTransport.SetConnectionTimeout", 399, "Timeout is now %dms", 1, msg.setRTTO.timeoutMiliseconds);
-              ReliableTransport_SetConnectionTimeout(msg.setRTTO.timeoutMiliseconds * 1000);
+              AnkiDebug( 144, "ReliableTransport.SetConnectionTimeout", 399, "Timeout is now %dms", 1, msg.setRTTO.timeoutMilliseconds);
+              ReliableTransport_SetConnectionTimeout(msg.setRTTO.timeoutMilliseconds * 1000);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_abortAnimation:
