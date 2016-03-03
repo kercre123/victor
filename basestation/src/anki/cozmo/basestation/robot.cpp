@@ -1444,23 +1444,21 @@ namespace Anki {
       ReadAnimationDirImpl("config/basestation/animations/");
     }
     
-    void Robot::ReadAnimationDirImpl(const std::string& animationDir)
+    void Robot::ReadAnimationDirImplHelper(const std::string& animationFolder)
     {
-      if (_context->GetDataPlatform() == nullptr) { return; }
       static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
-      SoundManager::getInstance()->LoadSounds(_context->GetDataPlatform());
-      FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
-      
-      const std::string animationFolder =
-        _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, animationDir);
       std::string animationId;
       s32 loadedFileCount = 0;
       DIR* dir = opendir(animationFolder.c_str());
       if ( dir != nullptr) {
         dirent* ent = nullptr;
         while ( (ent = readdir(dir)) != nullptr) {
-          
-          if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
+          // Recurse further if needed
+          if(ent->d_type == DT_DIR && strcmp(ent->d_name, ".") != 0  && strcmp(ent->d_name, "..") != 0)
+          {
+            ReadAnimationDirImplHelper(animationFolder + ent->d_name+"/");
+          }
+          else if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
             std::string fullFileName = animationFolder + ent->d_name;
             struct stat attrib{0};
             int result = stat(fullFileName.c_str(), &attrib);
@@ -1491,6 +1489,20 @@ namespace Anki {
       } else {
         PRINT_NAMED_INFO("Robot.ReadAnimationFile", "folder not found %s", animationFolder.c_str());
       }
+    }
+    
+    void Robot::ReadAnimationDirImpl(const std::string& animationDir)
+    {
+      if (_context->GetDataPlatform() == nullptr) { return; }
+#     if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
+      SoundManager::getInstance()->LoadSounds(_context->GetDataPlatform());
+#     endif
+      FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
+      
+      const std::string animationFolder =
+        _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, animationDir);
+      
+      ReadAnimationDirImplHelper(animationFolder);
 
       // Tell UI about available animations
       if (HasExternalInterface()) {
