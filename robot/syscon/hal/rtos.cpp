@@ -155,7 +155,7 @@ RTOS_Task* RTOS::schedule(RTOS_TaskProc task, int period, void* userdata, bool r
   RTOS_Task* newTask = create(task, repeating);
   
   if (free_task == NULL) {
-    return false;
+    return NULL;
   }
 
   start(newTask, period, userdata);

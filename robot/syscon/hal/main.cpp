@@ -88,16 +88,16 @@ int main(void)
   Radio::init();
   Timer::init();
 
-  Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
+  //Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
 
   Battery::powerOn();
 
   // We use the RNG in places during init
-  //Radio::shutdown();
-  //Bluetooth::advertise(); 
+  Radio::shutdown();
+  Bluetooth::advertise(); 
 
-  Bluetooth::shutdown();
-  Radio::advertise();
+  //Bluetooth::shutdown();
+  //Radio::advertise();
   
   // Let the test fixtures run, if nessessary
   #ifdef RUN_TESTS
