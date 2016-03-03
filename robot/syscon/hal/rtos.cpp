@@ -168,8 +168,6 @@ extern "C" void SWI0_IRQHandler(void) {
   int ticks = new_count - last_counter;
   last_counter = new_count;
 
-	NVIC_ClearPendingIRQ(SWI5_IRQn);
-	
   while (current_task) {
     current_task->target -= ticks;
 
