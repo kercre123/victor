@@ -43,6 +43,13 @@ class Upgrader:
         while self.acked == False:
             time.sleep(0.0005)
 
+    def disableMotors(self):
+        for i in range(5):
+            self.send(RI.EngineToRobot(setControllerGains=RI.ControllerGains(0,0,0,0,i)))
+        self.send(RI.EngineToRobot(enableLiftPower=RI.EnableLiftPower(False)))
+        self.send(RI.EngineToRobot(stop=RI.StopAllMotors()))
+        time.sleep(2)
+
     def ota(self, filePathName, command, version, flashAddress):
         """Load a file and send it to the robot for flash
         Note that flashAddress must be a multiple of 0x1000
@@ -90,6 +97,9 @@ class Upgrader:
         self.acked = None
         robotInterface.Init(False)
         robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.flashWriteAck, self.recieveAck)
+        robotInterface.Connect()
+        while not robotInterface.GetConnected():
+            time.sleep(0.1)
 
 def UpgradeWiFi(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_WiFi_flash_address):
     "Sends a WiFi firmware upgrade"
@@ -100,6 +110,7 @@ def UpgradeRTIP(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_R
     up.ota(fwPathName, RI.OTACommand.OTA_RTIP, version, flashAddress)
 
 def UpgradeBody(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_body_flash_address):
+    up.disableMotors()
     up.send(RI.EngineToRobot(bootloadBody=RI.BootloadBody()))
     up.ota(fwPathName, RI.OTACommand.OTA_body, version, flashAddress)
 
@@ -118,6 +129,7 @@ def UpgradeAll(up, version=0, wifiImage=DEFAULT_WIFI_IMAGE, rtipImage=DEFAULT_RT
     assert os.path.isfile(wifiImage)
     assert os.path.isfile(rtipImage)
     assert os.path.isfile(bodyImage)
+    up.disableMotors()
     up.ota(wifiImage, RI.OTACommand.OTA_none,  version, RI.OTAFlashRegions.OTA_WiFi_flash_address)
     up.ota(rtipImage, RI.OTACommand.OTA_none,  version, RI.OTAFlashRegions.OTA_RTIP_flash_address)
     up.ota(bodyImage, RI.OTACommand.OTA_stage, version, RI.OTAFlashRegions.OTA_body_flash_address)
@@ -125,7 +137,6 @@ def UpgradeAll(up, version=0, wifiImage=DEFAULT_WIFI_IMAGE, rtipImage=DEFAULT_RT
 # Script entry point
 if __name__ == '__main__':
     up = Upgrader()
-    robotInterface.Connect()
     if len(sys.argv) < 2:
         UpgradeAll(up)
     elif sys.argv[1] == 'all':

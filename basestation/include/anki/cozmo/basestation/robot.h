@@ -495,6 +495,7 @@ public:
     // Read the animations in a dir
     void ReadAnimationDir();
     void ReadAnimationDirImpl(const std::string& animationDir);
+    void ReadAnimationDirImplHelper(const std::string& animationFolder);
 
     // Read the animation groups in a dir
     void ReadAnimationGroupDir();
@@ -653,6 +654,9 @@ public:
     void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   
+    void SetLastSentImageID(u32 lastSentImageID) { _lastSentImageID = lastSentImageID; }
+    const u32 GetLastSentImageID() const { return _lastSentImageID; }
+  
     MovementComponent& GetMoveComponent() { return _movementComponent; }
     const MovementComponent& GetMoveComponent() const { return _movementComponent; }
 
@@ -790,7 +794,8 @@ public:
     bool             _isOnCharger        = false;
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;
-    u8               _enabledAnimTracks      = (u8)AnimTrackFlag::ALL_TRACKS;
+    u32              _lastSentImageID    = 0;
+    u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ALL_TRACKS;
 
     std::vector<std::string> _idleAnimationNameStack;
   

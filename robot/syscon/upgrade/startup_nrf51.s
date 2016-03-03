@@ -41,27 +41,43 @@ Stack_Size      EQU     2048
 Stack_Mem       SPACE   Stack_Size
 __initial_sp
 
-                IF :DEF: __HEAP_SIZE
-Heap_Size       EQU     __HEAP_SIZE
-                ELSE
-Heap_Size       EQU     2048
-                ENDIF
-
-                AREA    HEAP, NOINIT, READWRITE, ALIGN=3
-__heap_base
-Heap_Mem        SPACE   Heap_Size
-__heap_limit
 
                 PRESERVE8
                 THUMB
 
-; Vector Table Mapped to Address 0 at Reset
 
                 AREA    RESET, DATA, READONLY
+__Signature     DCB     'C','Z','M','0'
+                DCD     Reset_Handler
+                DCD     __Vectors
+                DCD     0xDEADFACE
+                DCD     0xDEADFACE
+                DCD     0xDEADFACE
+                DCD     0xDEADFACE
+                DCD     0xDEADFACE
+                DCD     0xDEADFACE
+                DCD     0xDEADFACE
+
+                AREA    SOFT_DEVICE_LOW, DATA, READONLY, PREINIT_ARRAY
+                EXPORT  LowerSector
+LowerSector
+                INCBIN  build/s110_low.bin
+
+                AREA    SOFT_DEVICE_HIGH, DATA, READONLY, PREINIT_ARRAY
+                INCBIN  build/s110_high.bin
+
+                AREA    APPLICATION, DATA, READONLY, PREINIT_ARRAY
+                INCBIN  build/app/syscon.bin
+
+                AREA    BOOTLOADER, DATA, READONLY, PREINIT_ARRAY
+                INCBIN  build/bootloader.bin
+
+                AREA    |.text|, CODE, READONLY
                 EXPORT  __Vectors
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
 
+                ; Vector Table Mapped to Address 0x18000 at Reset
 __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     Reset_Handler
                 DCD     NMI_Handler
@@ -80,32 +96,32 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     SysTick_Handler
 
                 ; External Interrupts
-                DCD     POWER_CLOCK_IRQHandler
-                DCD     RADIO_IRQHandler
-                DCD     UART0_IRQHandler
-                DCD     SPI0_TWI0_IRQHandler
-                DCD     SPI1_TWI1_IRQHandler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
                 DCD     0                         ; Reserved
-                DCD     GPIOTE_IRQHandler
-                DCD     ADC_IRQHandler
-                DCD     TIMER0_IRQHandler
-                DCD     TIMER1_IRQHandler
-                DCD     TIMER2_IRQHandler
-                DCD     RTC0_IRQHandler
-                DCD     TEMP_IRQHandler
-                DCD     RNG_IRQHandler
-                DCD     ECB_IRQHandler
-                DCD     CCM_AAR_IRQHandler
-                DCD     WDT_IRQHandler
-                DCD     RTC1_IRQHandler
-                DCD     QDEC_IRQHandler
-                DCD     LPCOMP_IRQHandler
-                DCD     SWI0_IRQHandler
-                DCD     SWI1_IRQHandler
-                DCD     SWI2_IRQHandler
-                DCD     SWI3_IRQHandler
-                DCD     SWI4_IRQHandler
-                DCD     SWI5_IRQHandler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
+                DCD     Ignore_Handler
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
@@ -125,18 +141,19 @@ NRF_POWER_RAMON_ADDRESS              EQU   0x40000524  ; NRF_POWER->RAMON addres
 NRF_POWER_RAMONB_ADDRESS             EQU   0x40000554  ; NRF_POWER->RAMONB address
 NRF_POWER_RAMONx_RAMxON_ONMODE_Msk   EQU   0x3         ; All RAM blocks on in onmode bit mask
 
-Reset_Handler   PROC
-                EXPORT  Reset_Handler             [WEAK]
+                EXPORT  Reset_Handler
                 IMPORT  SystemInit
                 IMPORT  __main
-                
+
+Reset_Handler   PROC
+                CPSID   I
                 MOVS    R1, #NRF_POWER_RAMONx_RAMxON_ONMODE_Msk
-                
+
                 LDR     R0, =NRF_POWER_RAMON_ADDRESS
                 LDR     R2, [R0]
                 ORRS    R2, R2, R1
                 STR     R2, [R0]
-                
+
                 LDR     R0, =NRF_POWER_RAMONB_ADDRESS
                 LDR     R2, [R0]
                 ORRS    R2, R2, R1
@@ -150,6 +167,7 @@ Reset_Handler   PROC
 
 ; Dummy Exception Handlers (infinite loops which can be modified)
 
+
 NMI_Handler     PROC
                 EXPORT  NMI_Handler               [WEAK]
                 B       .
@@ -159,73 +177,23 @@ HardFault_Handler\
                 EXPORT  HardFault_Handler         [WEAK]
                 B       .
                 ENDP
-SVC_Handler     PROC
-                EXPORT  SVC_Handler               [WEAK]
-                B       .
-                ENDP
 PendSV_Handler  PROC
                 EXPORT  PendSV_Handler            [WEAK]
                 B       .
                 ENDP
+
+SVC_Handler     PROC
+                EXPORT  SVC_Handler               [WEAK]
+                B       .
+                ENDP
+
 SysTick_Handler PROC
                 EXPORT  SysTick_Handler           [WEAK]
                 B       .
                 ENDP
 
-Default_Handler PROC
+Ignore_Handler  BX      LR
 
-                EXPORT   POWER_CLOCK_IRQHandler [WEAK]
-                EXPORT   RADIO_IRQHandler [WEAK]
-                EXPORT   UART0_IRQHandler [WEAK]
-                EXPORT   SPI0_TWI0_IRQHandler [WEAK]
-                EXPORT   SPI1_TWI1_IRQHandler [WEAK]
-                EXPORT   GPIOTE_IRQHandler [WEAK]
-                EXPORT   ADC_IRQHandler [WEAK]
-                EXPORT   TIMER0_IRQHandler [WEAK]
-                EXPORT   TIMER1_IRQHandler [WEAK]
-                EXPORT   TIMER2_IRQHandler [WEAK]
-                EXPORT   RTC0_IRQHandler [WEAK]
-                EXPORT   TEMP_IRQHandler [WEAK]
-                EXPORT   RNG_IRQHandler [WEAK]
-                EXPORT   ECB_IRQHandler [WEAK]
-                EXPORT   CCM_AAR_IRQHandler [WEAK]
-                EXPORT   WDT_IRQHandler [WEAK]
-                EXPORT   RTC1_IRQHandler [WEAK]
-                EXPORT   QDEC_IRQHandler [WEAK]
-                EXPORT   LPCOMP_IRQHandler [WEAK]
-                EXPORT   SWI0_IRQHandler [WEAK]
-                EXPORT   SWI1_IRQHandler [WEAK]
-                EXPORT   SWI2_IRQHandler [WEAK]
-                EXPORT   SWI3_IRQHandler [WEAK]
-                EXPORT   SWI4_IRQHandler [WEAK]
-                EXPORT   SWI5_IRQHandler [WEAK]
-POWER_CLOCK_IRQHandler
-RADIO_IRQHandler
-UART0_IRQHandler
-SPI0_TWI0_IRQHandler
-SPI1_TWI1_IRQHandler
-GPIOTE_IRQHandler
-ADC_IRQHandler
-TIMER0_IRQHandler
-TIMER1_IRQHandler
-TIMER2_IRQHandler
-RTC0_IRQHandler
-TEMP_IRQHandler
-RNG_IRQHandler
-ECB_IRQHandler
-CCM_AAR_IRQHandler
-WDT_IRQHandler
-RTC1_IRQHandler
-QDEC_IRQHandler
-LPCOMP_IRQHandler
-SWI0_IRQHandler
-SWI1_IRQHandler
-SWI2_IRQHandler
-SWI3_IRQHandler
-SWI4_IRQHandler
-SWI5_IRQHandler
-                B .
-                ENDP
                 ALIGN
 
 ; User Initial Stack & Heap
@@ -233,8 +201,6 @@ SWI5_IRQHandler
                 IF      :DEF:__MICROLIB
                 
                 EXPORT  __initial_sp
-                EXPORT  __heap_base
-                EXPORT  __heap_limit
 
                 ELSE
 

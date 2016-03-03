@@ -1,6 +1,8 @@
 extern "C" {
 #include "client.h"
 #include "foregroundTask.h"
+// Forward declaration
+void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 }
 #include "messages.h"
 #include "anki/cozmo/robot/esp.h"
@@ -118,6 +120,13 @@ namespace Anki {
               }
               break;
             }
+            case RobotInterface::EngineToRobot::Tag_setRTTO:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize);
+              AnkiDebug( 144, "ReliableTransport.SetConnectionTimeout", 399, "Timeout is now %dms", 1, msg.setRTTO.timeoutMilliseconds);
+              ReliableTransport_SetConnectionTimeout(msg.setRTTO.timeoutMilliseconds * 1000);
+              break;
+            }
             case RobotInterface::EngineToRobot::Tag_abortAnimation:
             {
               AnimationController::Clear();
@@ -155,7 +164,7 @@ namespace Anki {
             }
             default:
             {
-              AnkiWarn( 137, "WiFi.Messages", 259, "Received message not expected here tag=%02x\n", 1, buffer[0]);
+              AnkiWarn( 137, "WiFi.Messages", 259, "Received message not expected here tag=%02x", 1, buffer[0]);
             }
           }
         }
