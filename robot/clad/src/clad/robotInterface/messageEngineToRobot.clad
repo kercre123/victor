@@ -215,6 +215,12 @@ message RadioState
   bool wifiConnected
 }
 
+// Set ReliableTransport timeout time
+message DebugSetRTTO
+{
+  uint_16 timeoutMiliseconds
+}
+
 enum uint_32 ToRobotAddressSpace
 {
   GLOBAL_INVALID_TAG = 0,
@@ -298,6 +304,7 @@ union EngineToRobot
   // Reserved for FlashWriteAcknowledge message in OTA      = 0x85,
   BodyFirmwareState             bodyState                   = 0x86,
   RTIPVersionInfo               rtipVersion                 = 0x87,
+  DebugSetRTTO                  setRTTO                     = 0x89,
   AbortAnimation                abortAnimation              = 0x90,
   AnimKeyFrame::AudioSample     animAudioSample             = 0x91,
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,

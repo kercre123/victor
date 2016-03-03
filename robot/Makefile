@@ -13,7 +13,7 @@ BINARY_RELEASE_DIR=releases
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h
 
-.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog
+.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim
 
 all: k02 esp sim
 
