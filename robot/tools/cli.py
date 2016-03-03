@@ -134,6 +134,14 @@ class CozmoCLI(IDataReceiver):
             fh = open("robot WiFi crash report {}.p".format(time.ctime()), "wb")
             pickle.dump(msg.crashReport.dump, fh, 2)
             fh.close()
+        elif msg.tag == msg.Tag.activeObjectConnectionState:
+            sys.stdout.write(repr(msg.activeObjectConnectionState))
+            sys.stdout.write(os.linesep)
+            sys.stdout.flush()
+        elif msg.tag == msg.Tag.activeObjectTapped:
+            sys.stdout.write(repr(msg.activeObjectTapped))
+            sys.stdout.write(os.linesep)
+            sys.stdout.flush()
         elif msg.tag == msg.Tag.state and now - self.lastStatePrintTime > self.statePrintInterval:
             sys.stdout.write(repr(msg.state))
             sys.stdout.write(os.linesep)

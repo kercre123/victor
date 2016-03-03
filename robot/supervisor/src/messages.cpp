@@ -665,6 +665,7 @@ namespace Anki {
       }
       void Process_getPropState(const PropState& msg)
       {
+        HAL::GetPropState(msg.slot, msg.x, msg.y, msg.z, msg.shockCount);
       }
       void Process_radioConnected(const RobotInterface::RadioState& state)
       {

@@ -277,6 +277,15 @@ static void send_capture_packet(void* userdata) {
   uesb_write_tx_payload(&PairingAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
 }
 
+void SendObjectConnectionState(int slot)
+{
+  ObjectConnectionState msg;
+  msg.objectID = slot;
+  msg.factoryID = accessories[slot].id;
+  msg.connected = accessories[slot].active;
+  RobotInterface::SendMessage(msg);
+}
+
 extern "C" void uesb_event_handler(void)
 {
   // Only respond to receive interrupts
@@ -318,6 +327,7 @@ extern "C" void uesb_event_handler(void)
     accessories[slot].active = true;
     accessories[slot].id = packet.id;
     accessories[slot].last_received = 0;
+    SendObjectConnectionState(slot);
 
     // Schedule a one time capture for this slot
     RTOS::schedule(send_capture_packet, CAPTURE_OFFSET, (void*) slot, false);
@@ -419,7 +429,11 @@ void Radio::manage(void* userdata) {
     acc->tx_state.ledDark = 0xFF - isqrt(sum);
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
-    acc->active = false;
+    if (acc->active)
+    {
+      acc->active = false;
+      SendObjectConnectionState(currentAccessory);
+    }
     send_dummy_byte();
   }
 }
@@ -427,11 +441,7 @@ void Radio::manage(void* userdata) {
 static void sendNthPropState(void* userdata)
 {
   const int n = (int)userdata;
-  ObjectConnectionState msg;
-  msg.objectID = n;
-  msg.factoryID = accessories[n].id;
-  msg.connected = accessories[n].active;
-  RobotInterface::SendMessage(msg);
+  SendObjectConnectionState(n);
   if (n + 1 < MAX_ACCESSORIES) RTOS::schedule(sendNthPropState, CYCLES_MS(20.0f), (void*)(n+1), false);
 }
 
