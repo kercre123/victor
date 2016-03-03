@@ -14,7 +14,8 @@ struct charliePlex_s
 
 namespace Lights {
   void init();
-  void manage(void*);
+  void update(void);
+	void manage(void*);
   void setLights(const LightState* lights);
 }
 

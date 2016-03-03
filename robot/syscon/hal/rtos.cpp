@@ -1,4 +1,4 @@
-#include <string.h>
+	#include <string.h>
 
 #include "nrf.h"
 #include "nrf_gpio.h"
@@ -28,6 +28,10 @@ void RTOS::init(void) {
   NRF_WDT->CRV = 0x8000; // .5s
   NRF_WDT->RREN = wdog_channel_mask;
   NRF_WDT->TASKS_START = 1;
+
+	// Manage trigger set
+	NVIC_EnableIRQ(SWI0_IRQn);
+	NVIC_SetPriority(SWI0_IRQn, 3);
 }
 
 void RTOS::kick(uint8_t channel) {
@@ -48,14 +52,7 @@ RTOS_Task* RTOS::allocate(void) {
 
 void RTOS::release(RTOS_Task* task) {
   task->next = free_task;
-  free_task = task;  
-}
-
-void RTOS::run(void) {
-  for (;;) {
-    __asm { WFI };
-		RTOS::manage();
-  }
+  free_task = task; 
 }
 
 static void insert(RTOS_Task* newTask) {
@@ -93,39 +90,7 @@ static void insert(RTOS_Task* newTask) {
 }
 
 void RTOS::manage(void) {
-  int new_count = GetCounter();
-  int ticks = new_count - last_counter;
-  last_counter = new_count;
-
-  while (current_task) {
-    current_task->target -= ticks;
-
-    // Current task has not yet fired
-    if (current_task->target > 0) {
-      break ;
-    }
-
-    // Ticks are the underflow
-    ticks = -current_task->target;
-
-    // Return from task queue and fire callback
-    RTOS_Task *fired = current_task;
-    current_task = current_task->next;
-
-		int start = GetCounter();
-    fired->task(fired->userdata);
-		fired->time = GetCounter() - start;
-		
-    // Either release the task slice, or reinsert it with the period
-    if (fired->repeating) {
-      fired->target = fired->period;
-      insert(fired);
-    } else {
-      RTOS::release(fired);
-    }
-  }
-
-  kick(WDOG_RTOS);
+	NVIC_SetPendingIRQ(SWI0_IRQn);
 }
 
 static inline int queue_length() {
@@ -196,4 +161,42 @@ RTOS_Task* RTOS::schedule(RTOS_TaskProc task, int period, void* userdata, bool r
   start(newTask, period, userdata);
   
   return newTask;
+}
+
+extern "C" void SWI0_IRQHandler(void) {
+  int new_count = GetCounter();
+  int ticks = new_count - last_counter;
+  last_counter = new_count;
+
+	NVIC_ClearPendingIRQ(SWI5_IRQn);
+	
+  while (current_task) {
+    current_task->target -= ticks;
+
+    // Current task has not yet fired
+    if (current_task->target > 0) {
+      break ;
+    }
+
+    // Ticks are the underflow
+    ticks = -current_task->target;
+
+    // Return from task queue and fire callback
+    RTOS_Task *fired = current_task;
+    current_task = current_task->next;
+
+		int start = GetCounter();
+    fired->task(fired->userdata);
+		fired->time = GetCounter() - start;
+		
+    // Either release the task slice, or reinsert it with the period
+    if (fired->repeating) {
+      fired->target = fired->period;
+      insert(fired);
+    } else {
+      RTOS::release(fired);
+    }
+  }
+
+  RTOS::kick(WDOG_RTOS);
 }
