@@ -663,9 +663,9 @@ public static class ImageUtil {
       SetAlpha(bufferA, 1f);
     }
 
-    //if (colorGradient != null) {
-    //  GrayScaleToColorUsingGradient(bufferA, bufferA, width, height, colorGradient);
-    //}
+    if (colorGradient != null) {
+      GrayScaleToColorUsingGradient(bufferA, bufferA, width, height, colorGradient);
+    }
   }
 
   private class PaintAsyncParam {

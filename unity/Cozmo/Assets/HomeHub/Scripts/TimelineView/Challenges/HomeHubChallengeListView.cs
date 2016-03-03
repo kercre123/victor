@@ -25,18 +25,23 @@ namespace Cozmo.HomeHub {
 
     private readonly Dictionary<string, GameObject> _ChallengeButtons = new Dictionary<string, GameObject>();
 
-    public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
+    public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, string dasParentViewName) {
       foreach (KeyValuePair<string, ChallengeStatePacket> kvp in challengeStatesById) {
         if (kvp.Value.currentState == ChallengeState.Locked) {
-          _ChallengeButtons.Add(kvp.Value.data.ChallengeID, CreateChallengeButton(kvp.Value.data, _LockedButtonPrefab.gameObject, HandleLockedChallengeClicked));
+          _ChallengeButtons.Add(kvp.Value.data.ChallengeID, 
+            CreateChallengeButton(kvp.Value.data, _LockedButtonPrefab.gameObject, 
+              HandleLockedChallengeClicked, dasParentViewName));
         }
         else {
-          _ChallengeButtons.Add(kvp.Value.data.ChallengeID, CreateChallengeButton(kvp.Value.data, _UnlockedChallengeButtonPrefab.gameObject, HandleUnlockedChallengeClicked));
+          _ChallengeButtons.Add(kvp.Value.data.ChallengeID, 
+            CreateChallengeButton(kvp.Value.data, _UnlockedChallengeButtonPrefab.gameObject, 
+              HandleUnlockedChallengeClicked, dasParentViewName));
         }
       }
     }
 
-    private GameObject CreateChallengeButton(ChallengeData challengeData, GameObject prefab, HubWorldButton.ButtonClickedHandler handler) {
+    private GameObject CreateChallengeButton(ChallengeData challengeData, GameObject prefab, 
+                                             HubWorldButton.ButtonClickedHandler handler, string dasParentViewName) {
       RectTransform container;
       if (_TopChallengeContainer.childCount < _BottomChallengeContainer.childCount) {
         container = _TopChallengeContainer;
@@ -46,7 +51,7 @@ namespace Cozmo.HomeHub {
       }
       GameObject newButton = UIManager.CreateUIElement(prefab, container);
       HubWorldButton buttonScript = newButton.GetComponent<HubWorldButton>();
-      buttonScript.Initialize(challengeData);
+      buttonScript.Initialize(challengeData, dasParentViewName);
       buttonScript.OnButtonClicked += handler;
       return newButton;
     }

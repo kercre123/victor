@@ -21,7 +21,9 @@ public class ArtistCozmoImageMenu : MonoBehaviour {
 
   private void Awake() {
     _SaveButton.onClick.AddListener(HandleSaveClick);
+    _SaveButton.DASEventButtonName = "save_button";
     _RetryButton.onClick.AddListener(HandleRetryClick);
+    _RetryButton.DASEventButtonName = "retry_button";
   }
 
   private void HandleSaveClick() {

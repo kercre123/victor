@@ -47,6 +47,7 @@ namespace Cozmo {
           if (_TitleKey != value && _AlertTitleText != null) {
             _TitleKey = value;
             _AlertTitleText.text = Localization.Get(value);
+            UpdateButtonViewControllerNames();
           }
         }
       }
@@ -57,14 +58,19 @@ namespace Cozmo {
           if (_DescriptionKey != value && _AlertMessageText != null) {
             _DescriptionKey = value;
             _AlertMessageText.text = Localization.Get(value);
+            UpdateButtonViewControllerNames();
           } 
         }
       }
 
       private void Awake() {
-
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
+
+        string viewName = GenerateDasName();
+
         if (_CloseButton != null) {
+          _CloseButton.DASEventViewController = viewName;
+          _CloseButton.DASEventButtonName = "close_button";
           _CloseButton.onClick.AddListener(CloseView);
           _CloseButton.gameObject.SetActive(false);
         }
@@ -75,10 +81,14 @@ namespace Cozmo {
 
         // Hide all buttons
         if (_PrimaryButton != null) {
+          _PrimaryButton.DASEventViewController = viewName;
+          _PrimaryButton.DASEventButtonName = "primary_button";
           _PrimaryButton.gameObject.SetActive(false);
         }
 
         if (_SecondaryButton != null) {
+          _SecondaryButton.DASEventViewController = viewName;
+          _SecondaryButton.DASEventButtonName = "secondary_button";
           _SecondaryButton.gameObject.SetActive(false);
         }
       }
@@ -87,6 +97,37 @@ namespace Cozmo {
         ResetButton(_PrimaryButton);
         ResetButton(_CloseButton);
         ResetButton(_SecondaryButton);
+      }
+
+      private void UpdateButtonViewControllerNames() {
+        string viewName = GenerateDasName();
+        if (_CloseButton != null) {
+          _CloseButton.DASEventViewController = viewName;
+        }
+
+        // Hide all buttons
+        if (_PrimaryButton != null) {
+          _PrimaryButton.DASEventViewController = viewName;
+        }
+
+        if (_SecondaryButton != null) {
+          _SecondaryButton.DASEventViewController = viewName;
+        }
+      }
+
+      private string GenerateDasName() {
+        string viewFormatting = "{0}_{1}";
+        string viewName = null;
+        if (_TitleKey != null) {
+          viewName = string.Format(viewFormatting, DASEventViewName, _TitleKey);
+        }
+        else if (_DescriptionKey != null) {
+          viewName = string.Format(viewFormatting, DASEventViewName, _DescriptionKey);
+        }
+        else {
+          viewName = DASEventViewName;
+        }
+        return viewName;
       }
 
       private void ResetButton(AnkiButton button) {
@@ -105,12 +146,12 @@ namespace Cozmo {
       }
 
       public void SetPrimaryButton(string titleKey, Action action = null, 
-        Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
+                                   Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         SetupButton(_PrimaryButton, Localization.Get(titleKey), action, audioParam);
       }
 
       public void SetSecondaryButton(string titleKey, Action action = null, 
-        Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
+                                     Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         SetupButton(_SecondaryButton, Localization.Get(titleKey), action, audioParam);
       }
 
@@ -123,7 +164,7 @@ namespace Cozmo {
       }
 
       private void SetupButton(AnkiButton button, String title, Action action, 
-        Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
+                               Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         if (button != null) {
           button.gameObject.SetActive(true);
           button.Text = title;

@@ -2,7 +2,7 @@
 
 public static class DASUtil {
   public static string FormatDate(DataPersistence.Date date) {
-    return string.Format("{0:D2}/{1:D2}/{2:D4}", date.Month, date.Day, date.Year);
+    return date.ToString();
   }
 
   public static string FormatStatAmount(Anki.Cozmo.ProgressionStatType type, int amount) {

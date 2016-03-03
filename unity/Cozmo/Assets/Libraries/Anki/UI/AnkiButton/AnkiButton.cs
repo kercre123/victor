@@ -10,9 +10,11 @@ using Cozmo.UI;
 
 namespace Anki {
   namespace UI {
-    [AddComponentMenu("Anki/Button", 02)]
+    [AddComponentMenu("Anki/Anki Button", 02)]
     [ExecuteInEditMode]
     public class AnkiButton : UIBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler {
+
+      private const int kViewControllerParentSearchLimit = 3;
 
       [SerializeField]
       private bool _Interactable = true;
@@ -46,8 +48,9 @@ namespace Anki {
 
       private ButtonUpEvent _OnRelease = new ButtonUpEvent();
 
-      [SerializeField]
-      private string _DASEventName;
+      private string _DASEventButtonName = "";
+
+      private string _DASEventViewController = "";
 
       [SerializeField]
       private AnkiTextLabel _TextLabel;
@@ -100,9 +103,45 @@ namespace Anki {
         set { _OnRelease = value; }
       }
 
-      public string DASEventName {
-        get { return _DASEventName; }
-        set { _DASEventName = value; }
+      public string DASEventButtonName {
+        get { 
+          if (string.IsNullOrEmpty(_DASEventButtonName)) {
+            _DASEventButtonName = this.gameObject.name;
+          }
+          return _DASEventButtonName; 
+        }
+        set { _DASEventButtonName = value; }
+      }
+
+      public string DASEventViewController {
+        get { 
+          // If no view controller is provided, use the names of this object's parents
+          if (string.IsNullOrEmpty(_DASEventViewController)) {
+            string[] parentNames = new string[kViewControllerParentSearchLimit];
+            Transform current = this.transform;
+            for (int i = 0; i < kViewControllerParentSearchLimit; i++) {
+              if (current.parent != null) {
+                current = current.parent;
+                parentNames[i] = current.gameObject.name;
+              }
+            }
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            for (int i = kViewControllerParentSearchLimit - 1; i >= 0; i--) {
+              if (!string.IsNullOrEmpty(parentNames[i])) {
+                if (i != kViewControllerParentSearchLimit - 1) {
+                  sb.Append(".");
+                }
+                sb.Append(parentNames[i]);
+              }
+            }
+            _DASEventViewController = sb.ToString();
+            if (string.IsNullOrEmpty(_DASEventViewController)) {
+              _DASEventViewController = "(parent is null)";
+            }
+          }
+          return _DASEventViewController; 
+        } 
+        set { _DASEventViewController = value; }
       }
 
       public float Alpha {
@@ -133,11 +172,21 @@ namespace Anki {
 
       protected override void Start() {
         base.Start();
+
+        if (string.IsNullOrEmpty(_DASEventButtonName)) {
+          DAS.Error(this, string.Format("gameObject={0} is missing a DASButtonName! Falling back to gameObject name.", 
+            this.gameObject.name));
+        }
+        if (string.IsNullOrEmpty(_DASEventViewController)) {
+          DAS.Error(this, string.Format("gameObject={0} is missing a DASViewController! Falling back to parent's names.", 
+            this.gameObject.name));
+        }
+
         UpdateVisuals();
       }
 
       private void InitializeDefaultGraphics() {
-        if (!_IsInitialized) {
+        if (!_IsInitialized && ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (graphic.targetImage != null) {
               graphic.enabledSprite = graphic.targetImage.sprite;
@@ -220,24 +269,19 @@ namespace Anki {
           return;
         }
 
-        if (_TextLabel != null && _TextLabel.text.StartsWith("#")) {
-          DAS.Event("ui.button", _TextLabel.text, new Dictionary<string,string>{ { "$data", _DASEventName } });
-        }
-        else {
-          DAS.Event("ui.button", this.name, new Dictionary<string,string>{ { "$data", _DASEventName } });
-        }
+        DAS.Event("ui.button", DASEventButtonName, new Dictionary<string,string>{ { "$data", DASEventViewController } });
 
         Tap();
       }
 
       public void OnPointerDown(PointerEventData eventData) {
-        DAS.Debug("AnkiButton.OnPointerDown", string.Format("{0} Pressed", _DASEventName));
+        DAS.Debug("AnkiButton.OnPointerDown", string.Format("{0} Pressed - View: {1}", DASEventButtonName, DASEventViewController));
 
         Press();
       }
 
       public void OnPointerUp(PointerEventData eventData) {
-        DAS.Debug("AnkiButton.OnPointerUp", string.Format("{0} Released", _DASEventName));
+        DAS.Debug("AnkiButton.OnPointerUp", string.Format("{0} Released - View: {1}", DASEventButtonName, DASEventViewController));
 
         Release();
       }
@@ -277,31 +321,35 @@ namespace Anki {
       }
 
       private void ShowPressedState() {
-        foreach (AnkiButtonImage graphic in ButtonGraphics) {
-          if (graphic.targetImage != null && graphic.enabledSprite != null) {
-            SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
+        if (ButtonGraphics != null) {
+          foreach (AnkiButtonImage graphic in ButtonGraphics) {
+            if (graphic.targetImage != null && graphic.enabledSprite != null) {
+              SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
+            }
+            else {
+              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+            }
           }
-          else {
-            DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
-          }
-        }
 
-        PressTextPosition();
-        ShowGlint(true);
+          PressTextPosition();
+          ShowGlint(true);
+        }
       }
 
       private void ShowDisabledState() {
-        foreach (AnkiButtonImage graphic in ButtonGraphics) {
-          if (graphic.targetImage != null && graphic.enabledSprite != null) {
-            SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor, graphic.ignoreSprite);
+        if (ButtonGraphics != null) {
+          foreach (AnkiButtonImage graphic in ButtonGraphics) {
+            if (graphic.targetImage != null && graphic.enabledSprite != null) {
+              SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor, graphic.ignoreSprite);
+            }
+            else {
+              DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
+            }
           }
-          else {
-            DAS.Error(this, "Found null graphic in button! gameObject.name=" + gameObject.name);
-          }
-        }
 
-        ResetTextPosition(TextDisabledColor);
-        ShowGlint(false);
+          ResetTextPosition(TextDisabledColor);
+          ShowGlint(false);
+        }
       }
 
       private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor, bool ignoreSprite) {

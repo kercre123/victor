@@ -15,9 +15,15 @@ namespace Cozmo {
       [SerializeField]
       private AnkiButton _QuitButtonInstance;
 
+      public string DASEventViewController {
+        get { return _QuitButtonInstance.DASEventViewController; } 
+        set { _QuitButtonInstance.DASEventViewController = value; }
+      }
+
       private bool _ConfimedQuit = false;
 
-      private void Start() {
+      private void Awake() {
+        _QuitButtonInstance.DASEventButtonName = "quit_button";
         _QuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
       }
 
@@ -46,7 +52,7 @@ namespace Cozmo {
 
       private void HandleQuitButtonTap() {
         // Open confirmation dialog instead
-        AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
+        AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab);
         // Hook up callbacks
         alertView.SetCloseButtonEnabled(true);
         alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleQuitConfirmed, 

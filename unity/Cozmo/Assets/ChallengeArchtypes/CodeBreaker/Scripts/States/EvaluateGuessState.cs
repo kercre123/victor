@@ -96,7 +96,7 @@ namespace CodeBreaker {
             _CurrentRobot.SendAnimation(AnimationName.kOpenEyesTwo, HandleTryAgainAnimationFinished);
           }
           else {
-            _CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleTryAgainAnimationFinished);
+            _CurrentRobot.SendAnimation(AnimationName.kHappyA, HandleTryAgainAnimationFinished);
           }
         }
         else {

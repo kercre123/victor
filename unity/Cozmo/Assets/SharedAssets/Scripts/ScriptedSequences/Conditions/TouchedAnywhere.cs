@@ -8,6 +8,9 @@ namespace ScriptedSequences.Conditions {
       var touchCatcher = UIManager.Instance.TouchCatcher;
 
       if (touchCatcher != null) {
+        touchCatcher.DASEventButtonName = "touch_catcher";
+        touchCatcher.DASEventViewController = "touched_anywhere";
+
         if (enabled) {
           touchCatcher.OnTouch += HandleTouched;
         }
@@ -15,13 +18,12 @@ namespace ScriptedSequences.Conditions {
           touchCatcher.OnTouch -= HandleTouched;
         }
       }
-      else if(enabled) {
+      else if (enabled) {
         DAS.Warn(this, "Touch Catcher not active when TouchedAnywhere Condition Enabled");
       }
     }
 
-    protected void HandleTouched()
-    {
+    protected void HandleTouched() {
       if (UIManager.Instance.TouchCatcher != null) {
         UIManager.Instance.TouchCatcher.OnTouch -= HandleTouched;
       }
