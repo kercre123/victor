@@ -28,8 +28,7 @@ void UART::DebugChar() {
 }
 
 int UART::get() {
-  return -1;
-
+  /*
   // Configure for read
   NRF_UART0->PSELRXD = PIN_TX_VEXT;
   NRF_UART0->PSELTXD = 0xFFFFFFFF;
@@ -40,6 +39,9 @@ int UART::get() {
 
   // Return data if the head didn't interrupt us
   return NRF_UART0->RXD;
+  */
+  
+  return -1;
 }
 
 static inline void put(unsigned char c) {

@@ -3,7 +3,7 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
-#include "../../hal/hardware.h"
+#include "hal/hardware.h"
 #include "battery.h"
 
 static inline void startADCsample(AnalogInput channel)

@@ -18,6 +18,7 @@
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
+#if defined(DO_MOTOR_TESTING)
 static void TestMotors(void* discard) {
   static int direction = 1;
   
@@ -27,7 +28,9 @@ static void TestMotors(void* discard) {
     Motors::setPower(i, 0x2800 * direction);
   direction *= -1;
 }
+#endif
 
+#if defined(DO_LIGHTS_TESTING)
 static void TestLights(void* data) {
   uint8_t* colors = (uint8_t*) data;
   static int j = 1;
@@ -47,10 +50,13 @@ static void TestLights(void* data) {
       j = (j + 1) % (sizeof(valid) / sizeof(bool));
   }
 }
+#endif
 
+#if defined(DO_ENCODER_TESTING)
 static void TestEncoders(void* data) {
   Motors::getRawValues((uint32_t*) data);
 }
+#endif
 
 void TestFixtures::run() {
 #if defined(DO_ENCODER_TESTING)
@@ -59,10 +65,5 @@ void TestFixtures::run() {
   RTOS::schedule(TestMotors, CYCLES_MS(1000.0f));
 #elif defined(DO_LIGHTS_TESTING)
   RTOS::schedule(TestLights, CYCLES_MS(5.0f), &g_dataToBody.backpackColors);
-#else
-  return ;
 #endif
-
-  // This only happens if a test is running
-  RTOS::run();
 }

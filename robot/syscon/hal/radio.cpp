@@ -16,7 +16,7 @@
 #include "radio.h"
 #include "timer.h"
 #include "head.h"
-#include "rng.h"
+#include "crypto.h"
 #include "spine.h"
 #include "led.h"
 
@@ -26,8 +26,6 @@
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 using namespace Anki::Cozmo;
-
-#define ABS(x)   ((x < 0) ? -x : x)
 
 static const int NUM_PROP_LIGHTS = 4;
 
@@ -121,6 +119,7 @@ extern GlobalDataToBody g_dataToBody;
 
 // Current status values of cubes/chargers
 static RadioState        radioState;
+static RTOS_Task*        radioTask;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -156,32 +155,28 @@ uint8_t isqrt(uint32_t op)
   // "one" starts at the highest power of four <= than the argument.
   while (one > op)
   {
-      one >>= 2;
+    one >>= 2;
   }
 
-  while (one != 0)
-  {
-      if (op >= res + one)
-      {
-          op = op - (res + one);
-          res = res +  2 * one;
-      }
-      res >>= 1;
-      one >>= 2;
+  while (one != 0) {
+    if (op >= res + one) {
+      op -= res + one;
+      res += 2 * one;
+    }
+
+    res >>= 1;
+    one >>= 2;
   }
   return res;
 }
 
-static void createAddress(uesb_address_desc_t& address) {
-  uint8_t data[4];
-  
+static void createAddress(uesb_address_desc_t& address) { 
   // Generate random values
-  Random::get(&data, sizeof(data));
-  Random::get(&address.prefix[0], address.prefix[0]);
+  Crypto::random(&address.prefix[0], address.prefix[0]);
   address.base0 = 0xE7E7E7E7;
-  
+
   // Create a random RF channel
-  Random::get(&address.rf_channel, sizeof(address.rf_channel));
+  Crypto::random(&address.rf_channel, sizeof(address.rf_channel));
   address.rf_channel %= MAX_TX_CHANNELS;
 }
 
@@ -193,15 +188,6 @@ static inline uint8_t next_channel(uint8_t channel) {
 #endif
 
 void Radio::init() {
-  const uesb_config_t uesb_config = {
-    UESB_BITRATE_1MBPS,
-    UESB_CRC_8BIT,
-    UESB_TX_POWER_0DBM,
-    PACKET_SIZE,
-    5,    // Address length
-    2     // Service speed doesn't need to be that fast (prevent blocking encoders)
-  };
-
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
@@ -213,11 +199,31 @@ void Radio::init() {
   }
 
   // Start the radio stack
+
+  radioTask = RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
+  RTOS::stop(radioTask);
+}
+
+void Radio::advertise(void) {
+  const uesb_config_t uesb_config = {
+    UESB_BITRATE_1MBPS,
+    UESB_CRC_8BIT,
+    UESB_TX_POWER_0DBM,
+    PACKET_SIZE,
+    5,    // Address length
+    2     // Service speed doesn't need to be that fast (prevent blocking encoders)
+  };
+
   uesb_init(&uesb_config);
   EnterState(RADIO_PAIRING);
   uesb_start();
 
-  RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
+  RTOS::start(radioTask);
+}
+
+void Radio::shutdown(void) {
+  uesb_stop();
+  RTOS::stop(radioTask);
 }
 
 static int LocateAccessory(uint32_t id) {
@@ -277,6 +283,15 @@ static void send_capture_packet(void* userdata) {
   uesb_write_tx_payload(&PairingAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
 }
 
+void SendObjectConnectionState(int slot)
+{
+  ObjectConnectionState msg;
+  msg.objectID = slot;
+  msg.factoryID = accessories[slot].id;
+  msg.connected = accessories[slot].active;
+  RobotInterface::SendMessage(msg);
+}
+
 extern "C" void uesb_event_handler(void)
 {
   // Only respond to receive interrupts
@@ -318,6 +333,7 @@ extern "C" void uesb_event_handler(void)
     accessories[slot].active = true;
     accessories[slot].id = packet.id;
     accessories[slot].last_received = 0;
+    SendObjectConnectionState(slot);
 
     // Schedule a one time capture for this slot
     RTOS::schedule(send_capture_packet, CAPTURE_OFFSET, (void*) slot, false);
@@ -360,6 +376,7 @@ void Radio::setPropLights(unsigned int slot, const LightState *state) {
 
   AccessorySlot* acc = &accessories[slot];
   memcpy(acc->lights, state, sizeof(acc->lights));
+  memset(acc->lightPhase, 0, sizeof(acc->lightPhase));
 }
 
 void Radio::assignProp(unsigned int slot, uint32_t accessory) {
@@ -419,7 +436,11 @@ void Radio::manage(void* userdata) {
     acc->tx_state.ledDark = 0xFF - isqrt(sum);
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
-    acc->active = false;
+    if (acc->active)
+    {
+      acc->active = false;
+      SendObjectConnectionState(currentAccessory);
+    }
     send_dummy_byte();
   }
 }
@@ -427,11 +448,7 @@ void Radio::manage(void* userdata) {
 static void sendNthPropState(void* userdata)
 {
   const int n = (int)userdata;
-  ObjectConnectionState msg;
-  msg.objectID = n;
-  msg.factoryID = accessories[n].id;
-  msg.connected = accessories[n].active;
-  RobotInterface::SendMessage(msg);
+  SendObjectConnectionState(n);
   if (n + 1 < MAX_ACCESSORIES) RTOS::schedule(sendNthPropState, CYCLES_MS(20.0f), (void*)(n+1), false);
 }
 

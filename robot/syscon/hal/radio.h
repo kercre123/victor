@@ -9,6 +9,9 @@ using namespace Anki::Cozmo;
 
 namespace Radio {
   void init();
+  void advertise();
+  void shutdown();
+
   void manage(void* userdata = NULL);
   void discover();
   void setPropLights(unsigned int slot, const LightState *state);
