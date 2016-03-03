@@ -50,7 +50,7 @@ namespace Vortex {
 
     protected void InitializeMinigameObjects(int numCubes) {
       DAS.Info(this, "VortexGame::Start");
-      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<VortexPanel>();
+      _GamePanel = UIManager.OpenView(_GamePanelPrefab);
 
       _GamePanel.HandleSpinEnded = HandleSpinEnded;
       _GamePanel.HandleSpinStarted = HandleSpinStarted;

@@ -62,18 +62,16 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeData = challengeData;
     _WonChallenge = false;
 
-    _SharedMinigameViewInstance = UIManager.OpenView(
-      UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
-      false) as SharedMinigameView;
-    _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
-      _ChallengeData.HowToPlayDialogContentLocKey);
-    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
-
     Initialize(challengeData.MinigameConfig);
 
-    // Populate the view before opening it so that animations play correctly
-    InitializeView(challengeData);
-    _SharedMinigameViewInstance.OpenView();
+    _SharedMinigameViewInstance = UIManager.OpenView(
+      UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
+      newView => {
+        newView.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
+          _ChallengeData.HowToPlayDialogContentLocKey);
+        InitializeView(newView, _ChallengeData);
+      });
+    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
 
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
@@ -81,12 +79,12 @@ public abstract class GameBase : MonoBehaviour {
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
 
-  protected virtual void InitializeView(ChallengeData data) {
+  protected virtual void InitializeView(SharedMinigameView newView, ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    ChallengeTitleWidget titleWidget = SharedMinigameView.TitleWidget;
+    ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
     titleWidget.Icon = data.ChallengeIcon;
-    SharedMinigameView.ShowBackButton();
+    newView.ShowBackButton();
   }
 
   #endregion

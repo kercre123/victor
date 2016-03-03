@@ -64,10 +64,9 @@ namespace Cozmo {
 
       public void OpenHowToPlayView(bool? overrideBackgroundDim, bool? overrideCloseOnTouchOutside) {
         _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab, 
-          animateImmediately: true,
           overrideBackgroundDim: overrideBackgroundDim,
           overrideCloseOnTouchOutside: overrideCloseOnTouchOutside
-        ) as HowToPlayView;
+        );
         if (_HowToPlayViewContentPrefab != null) {
           _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
         }
