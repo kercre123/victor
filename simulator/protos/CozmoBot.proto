@@ -15,7 +15,7 @@ PROTO CozmoBot [
   # QVGA Crop:
   field SFInt32  cameraWidth  320
   field SFInt32  cameraHeight 240
-  field SFFloat  fieldOfView  0.9
+  field SFFloat  fieldOfView  1.0472
   
   # VGA Wide:
 #    field SFInt32  cameraWidth  640
@@ -216,7 +216,7 @@ Supervisor {
 		} # BODY Solid
 		
 		DEF HEAD Transform {
-		  translation -0.013 0 0.0335
+		  translation -0.013 0 0.0345
 		  children [
 			HingeJoint {
 			  jointParameters HingeJointParameters {
@@ -265,8 +265,8 @@ Supervisor {
 				  Camera {
 						name "HeadCamera"
 						# Note: 8.8mm to lens face, 5.8mm to PCB mount, optical center = ?
-						#translation 0.0177 0 -0.008
-						translation 0.010 0 -0.008
+						translation 0.01752 0 -0.008
+						#translation 0.010 0 -0.008
 						rotation 0.57735 -0.57735 -0.57735 2.0944
 						width IS cameraWidth
 						height IS cameraHeight
