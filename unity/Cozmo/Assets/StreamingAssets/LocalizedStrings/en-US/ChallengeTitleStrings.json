@@ -99,6 +99,12 @@
   "cubeSlap.description": {
     "translation": "Cube Pounce Description"
   },
+  "playhouseGame01.title": {
+    "translation": "Playhouse"
+  },
+  "playhouseGame01.description": {
+    "translation": "Make a play with Cozmo by stringing together a series of actions."
+  },
   "speedTap.title": {
     "translation": "Speed Tap"
   },

@@ -21,7 +21,7 @@ MonoBehaviour:
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
-  _HowToPlayDialogContentLocKey: simonGame.text.howToPlay
+  _HowToPlayDialogContentLocKey: playhouseGame01.text.howToPlay
   _HowToPlayDialogContentPrefab: {fileID: 0}
   _Music:
     _Music: 1971384320
