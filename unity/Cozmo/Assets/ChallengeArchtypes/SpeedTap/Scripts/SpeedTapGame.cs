@@ -11,7 +11,7 @@ namespace SpeedTap {
 
     private const float _kRetreatSpeed = -80.0f;
     private const float _kRetreatTime = 0.75f;
-    private const float _kTapAdjustRange = 10.0f;
+    private const float _kTapAdjustRange = 5.0f;
 
     private Vector3 _CozmoPos;
 
@@ -104,10 +104,6 @@ namespace SpeedTap {
             DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty;
             DataPersistence.DataPersistenceManager.Instance.Save();
           }          
-
-          if (_DifficultyOptions.LastOrDefault().DifficultyId > CurrentDifficulty) {
-            CurrentDifficulty++;
-          }
 
           _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseRound, HandleRoundEndAnimDone));
         }
