@@ -6,8 +6,6 @@ public static class AnimationName {
   public const string kMajorFail = "MajorFail";
   public const string kShocked = "shocked";
 
-  public const string kEnjoyLight = "enjoyLight";
-
   public const string kDefaultFace = "neutral_face";
 
   public const string kSleeping = "ID_sleeping_02";
