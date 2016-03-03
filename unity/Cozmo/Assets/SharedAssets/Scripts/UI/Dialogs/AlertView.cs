@@ -125,10 +125,12 @@ namespace Cozmo {
       public void DisableAllButtons() {
         ResetButton(_PrimaryButton);
         _PrimaryButton.Interactable = false;
-        ResetButton(_CloseButton);
-        _CloseButton.Interactable = false;
         ResetButton(_SecondaryButton);
         _SecondaryButton.Interactable = false;
+        if (_CloseButton != null) {
+          ResetButton(_CloseButton);
+          _CloseButton.Interactable = false;
+        }
       }
 
       private void SetupButton(AnkiButton button, String title, Action action, 
