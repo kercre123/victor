@@ -24,6 +24,7 @@ public class ArtistCozmoImageMenu : MonoBehaviour {
     _SaveButton.DASEventButtonName = "save_button";
     _RetryButton.onClick.AddListener(HandleRetryClick);
     _RetryButton.DASEventButtonName = "retry_button";
+    _SaveButton.DASEventViewController = _RetryButton.DASEventViewController = "artist_cozmo_image_menu";
   }
 
   private void HandleSaveClick() {
