@@ -62,8 +62,9 @@ namespace Anki.Cozmo.Viz {
     // Used to be 5106
     private const int _UILocalPort = 5352;
 
-    private Texture2D _ReceivedImage;
-    public Texture2D RobotCameraImage { get { return _ReceivedImage; } }
+    public Texture2D RobotCameraImage { get { return _ImageReceiver.Image; } }
+
+    private ImageReceiver _ImageReceiver = new ImageReceiver("RobotCameraImage");
 
     private bool _OverlayDirty;
     private Texture2D _OverlayImage;
@@ -115,11 +116,7 @@ namespace Anki.Cozmo.Viz {
 
     private Vector3 _InitialCameraPosition;
     private Quaternion _InitialCameraRotation;
-
-    private MemoryStream _MemStream = new MemoryStream();
-    // required for Minimized Jpeg
-    private MemoryStream _MemStream2 = new MemoryStream();
-      
+          
     public static VizManager Instance { get; private set; }
       
     private void OnEnable() {
@@ -142,11 +139,12 @@ namespace Anki.Cozmo.Viz {
       _InitialCameraPosition = _Camera.transform.localPosition;
       _InitialCameraRotation = _Camera.transform.localRotation;
 
+      _ImageReceiver.OnImageReceived += HandleReceivedImage;
+
       Listen();
     }
 
     private void Update() {
-      ClearOverlay();
       _Channel.Update();
       if (_OverlayImage != null && _OverlayDirty) {
         _OverlayImage.Apply();
@@ -208,7 +206,7 @@ namespace Anki.Cozmo.Viz {
       switch (message.GetTag()) {
       // Camera Image
       case MessageViz.Tag.ImageChunk:
-        ProcessImageChunk(message.ImageChunk);
+        _ImageReceiver.ProcessImageChunk(message.ImageChunk);
         break;
       //Camera Overlay
       case MessageViz.Tag.CameraLine:
@@ -982,69 +980,16 @@ namespace Anki.Cozmo.Viz {
     #endregion // OverlayRender
     #region ImageChunk
 
-
-
-    private void ProcessImageChunk(ImageChunk imageChunk) {
-
-
-      if (imageChunk.chunkId == 0) {
-        _MemStream.Seek(0, SeekOrigin.Begin);
-        _MemStream.SetLength(0);
+    private void HandleReceivedImage(Texture2D image) {
+      _OverlayDirty = true;
+      if (_OverlayImage == null) {
+        _OverlayImage = new Texture2D(image.width, image.height);
+        _OverlayImage.name = "RobotOverlayImage";
       }
-
-      _MemStream.Write(imageChunk.data, 0, imageChunk.data.Length);
-
-      if(imageChunk.chunkId == imageChunk.imageChunkCount - 1) {
-        _OverlayDirty = true;
-
-        var dims = ImageResolutionTable.GetDimensions(imageChunk.resolution);
-
-        //UnityEngine.Debug.Log("Image ID: " + imageChunk.imageId + 
-        //                      " Chunk: "+ imageChunk.chunkId + "/" + imageChunk.imageChunkCount + 
-        //                      " Format: " +imageChunk.imageEncoding + 
-        //                      " Resolution: " +imageChunk.resolution+"("+dims.Width+"x"+dims.Height+")");
-
-        if (_ReceivedImage == null) {
-          _ReceivedImage = new Texture2D(dims.Width, dims.Height);
-          _ReceivedImage.name = "RobotCameraImage";
-          _OverlayImage = new Texture2D(dims.Width, dims.Height);
-          _OverlayImage.name = "RobotOverlayImage";
-          ClearOverlay();
-        }
-          
-        switch (imageChunk.imageEncoding) {
-        case ImageEncoding.JPEGColor:
-        case ImageEncoding.JPEGColorHalfWidth:
-        case ImageEncoding.JPEGGray:
-          _ReceivedImage.LoadImage(_MemStream.GetBuffer());
-          break;
-        case ImageEncoding.JPEGMinimizedGray:
-          ImageUtil.MinimizedGreyToJpeg(_MemStream, _MemStream2, dims.Height, dims.Width);
-          _ReceivedImage.LoadImage(_MemStream2.GetBuffer());
-          break;
-        case ImageEncoding.RawGray:
-          for (int i = 0; i < _MemStream.Length; i++) {
-            _MemStream.Seek(0, SeekOrigin.Begin);
-            _MemStream.Read(ImageUtil.OneByteBuffer, 0, 1);
-            float c =  ImageUtil.OneByteBuffer[0] / 255f;
-            _ReceivedImage.SetPixel(i % _ReceivedImage.width, i / _ReceivedImage.width, new Color(c, c, c, 1f));            
-          }
-          _ReceivedImage.Apply();
-          break;
-        case ImageEncoding.RawRGB:
-          for (int i = 0; i < _MemStream.Length; i+=3) {
-            _MemStream.Seek(0, SeekOrigin.Begin);
-            _MemStream.Read(ImageUtil.ThreeByteBuffer, 0, 3);
-            float r =  ImageUtil.ThreeByteBuffer[0] / 255f;
-            float g =  ImageUtil.ThreeByteBuffer[0] / 255f;
-            float b =  ImageUtil.ThreeByteBuffer[0] / 255f;
-            _ReceivedImage.SetPixel(i % _ReceivedImage.width, i / _ReceivedImage.width, new Color(r, g, b, 1f));            
-          }
-          _ReceivedImage.Apply();
-          break;
-        }
-      }
+      ClearOverlay();
     }
+
+
     #endregion // ImageChunk
   }
 }

@@ -1,12 +1,17 @@
 ﻿using System;
 using System.IO;
 using UnityEngine;
+using System.Collections;
 
 public static class ImageUtil {
 
 
   public static readonly byte[] OneByteBuffer = new byte[1];
   public static readonly byte[] ThreeByteBuffer = new byte[3];
+
+
+
+  #region JPEG
 
   // Pre-baked JPEG header for grayscale, Q50
   static readonly byte[] _Header50 = {
@@ -127,8 +132,11 @@ public static class ImageUtil {
   } // miniGrayToJpeg()
 
 
-  public static Texture2D Convolve(Texture2D texture, float[,] kernel) {
-    int width = texture.width, height = texture.height;
+  #endregion //JPEG
+
+
+  #region Filter
+  public static void Convolve(Color[] pixels, Color[] newPixels, int width, int height, float[,] kernel, out int newWidth, out int newHeight) {
 
     int kw = kernel.GetLength(0);
     int kh = kernel.GetLength(1);
@@ -136,22 +144,18 @@ public static class ImageUtil {
     int borderX = (kw / 2);
     int borderY = (kh / 2);
 
-    int newWidth = width - borderX * 2;
-    int newHeight = height - borderY * 2;
-
-    var pixels = texture.GetPixels();
-
-    Color[] newPixels = new Color[newWidth * newHeight];
+    newWidth = width - borderX * 2;
+    newHeight = height - borderY * 2;
 
     for (int i = 0; i < newWidth; i++) {
       for (int j = 0; j < newHeight; j++) {
-        int newIndex = i * newWidth + j;
+        int newIndex = i + newWidth * j;
 
         Color c = Color.clear;
 
         for (int m = 0; m < kw; m++) {
           for (int n = 0; n < kh; n++) {
-            int oldIndex = (i - borderX + m) * width + j - borderY + n;
+            int oldIndex = (i + m) + width * (j + n);
 
             c += kernel[m, n] * pixels[oldIndex];
           }
@@ -160,13 +164,299 @@ public static class ImageUtil {
         newPixels[newIndex] = c;
       }
     }
-
-    Texture2D newTexture = new Texture2D(newWidth, newHeight, texture.format, false);
-    newTexture.SetPixels(newPixels);
-    newTexture.Apply();
-
-    return newTexture;
   }
 
+  // Uses only the R value of the color and sets x in R of result and y in G of result
+  // and atan2(x,y) in B if the option bool gradient is set
+  public static void ConvolveXandY(Color[] pixels, Color[] newPixels, int width, int height, float[,] kernel, out int newWidth, out int newHeight, bool gradient = false) {
+
+    int kw = kernel.GetLength(0);
+    int kh = kernel.GetLength(1);
+
+    int border = Mathf.Max((kw / 2), (kh / 2));
+
+
+    newWidth = width - border * 2;
+    newHeight = height - border * 2;
+
+    for (int i = 0; i < newWidth; i++) {
+      for (int j = 0; j < newHeight; j++) {
+        int newIndex = i + newWidth * j;
+
+        Color c = Color.black;
+
+        for (int m = 0; m < kw; m++) {
+          for (int n = 0; n < kh; n++) {
+            int oldIndexX = (i + m) + width * (j + n);
+            int oldIndexY = (i + n) + width * (j + m);
+
+            c.r += kernel[m, n] * pixels[oldIndexX].ToGrayscale();
+            c.g += kernel[m, n] * pixels[oldIndexY].ToGrayscale();
+          }
+        }
+
+        if (gradient) {
+          c.b = Mathf.Sqrt(c.r * c.r + c.g * c.g);
+        }
+
+        newPixels[newIndex] = c;
+      }
+    }
+  }
+
+  public static void Flatten(Color[] pixels, Color[] newPixels, int width, int height, int levels) {
+    for (int i = 0; i < width; i++) {
+      for (int j = 0; j < height; j++) {
+
+        int index = i + width * j;
+        var c = pixels[index];
+
+        c.r = Mathf.Round(c.r * levels) / levels;
+        c.g = Mathf.Round(c.g * levels) / levels;
+        c.b = Mathf.Round(c.b * levels) / levels;
+
+        newPixels[index] = c;
+      }
+    }
+  }
+
+  public static void GrayScaleToColorUsingGradient(Color[] pixels, Color[] newPixels, int width, int height, Gradient gradient) {
+    for (int i = 0; i < width; i++) {
+      for (int j = 0; j < height; j++) {
+
+        int index = i + width * j;
+        var c = pixels[index];
+
+        newPixels[index] = gradient.Evaluate(c.ToGrayscale());
+      }
+    }
+  }
+
+  public static void SubtractOneMinus(Color[] pixelsA, Color[] pixelsB, Color[] newPixels, int widthA, int heightA, int widthB, int heightB, out int newWidth, out int newHeight) {
+
+    newWidth = Mathf.Min(widthA, widthB);
+    newHeight = Mathf.Min(heightA, heightB);
+
+    int offsetXA = (widthA - newWidth) / 2;
+    int offsetYA = (heightA - newHeight) / 2;
+    int offsetXB = (widthB - newWidth) / 2;
+    int offsetYB = (heightB - newHeight) / 2;
+
+    for (int i = 0; i < newWidth; i++) {
+      for (int j = 0; j < newHeight; j++) {
+
+        int index = i + newWidth * j;
+        int indexA = i + offsetXA + widthA * (j + offsetYA);
+        int indexB = i + offsetXB + widthB * (j + offsetYB);
+
+        newPixels[index] = pixelsA[indexA] - (Color.white - pixelsB[indexB]);
+      }
+    }
+  }
+
+  private const float _kMagnitudeThreshold = 0.15f;
+  private const float _kMagnitudeScale = 20f;
+
+  public static void NonMaximalSuppression(Color[] pixels, Color[] newPixels, int width, int height, out int newWidth, out int newHeight) {
+
+    newWidth = width - 2;
+    newHeight = height - 2;
+
+    for (int x = 0; x < newWidth; x++) {
+      for (int y = 0; y < newHeight; y++) {
+        int newIndex = x + y * newWidth;
+
+        int index = (x + 1) + (y + 1) * width;
+        int indexN = index - width;
+        int indexS = index + width;
+        int indexW = index - 1;
+        int indexE = index + 1;
+        int indexNW = indexN - 1;
+        int indexNE = indexN + 1;
+        int indexSW = indexS - 1;
+        int indexSE = indexS + 1;
+
+        float xGrad = pixels[index].r;
+        float yGrad = pixels[index].g;
+        float gradMag = pixels[index].b;
+
+        //perform non-maximal supression
+        float nMag = pixels[indexN].b;
+        float sMag = pixels[indexS].b;
+        float wMag = pixels[indexW].b;
+        float eMag = pixels[indexE].b;
+        float neMag = pixels[indexNE].b;
+        float seMag = pixels[indexSE].b;
+        float swMag = pixels[indexSW].b;
+        float nwMag = pixels[indexNW].b;
+        float tmp;
+
+        // http://www.tomgibara.com/computer-vision/CannyEdgeDetector.java
+        /*
+         * An explanation of what's happening here, for those who want
+         * to understand the source: This performs the "non-maximal
+         * supression" phase of the Canny edge detection in which we
+         * need to compare the gradient magnitude to that in the
+         * direction of the gradient; only if the value is a local
+         * maximum do we consider the point as an edge candidate.
+         * 
+         * We need to break the comparison into a number of different
+         * cases depending on the gradient direction so that the
+         * appropriate values can be used. To avoid computing the
+         * gradient direction, we use two simple comparisons: first we
+         * check that the partial derivatives have the same sign (1)
+         * and then we check which is larger (2). As a consequence, we
+         * have reduced the problem to one of four identical cases that
+         * each test the central gradient magnitude against the values at
+         * two points with 'identical support'; what this means is that
+         * the geometry required to accurately interpolate the magnitude
+         * of gradient function at those points has an identical
+         * geometry (upto right-angled-rotation/reflection).
+         * 
+         * When comparing the central gradient to the two interpolated
+         * values, we avoid performing any divisions by multiplying both
+         * sides of each inequality by the greater of the two partial
+         * derivatives. The common comparand is stored in a temporary
+         * variable (3) and reused in the mirror case (4).
+         * 
+         */
+
+        float mag = 1;
+        if (xGrad * yGrad <= 0f /*(1)*/
+          ? Mathf.Abs(xGrad) >= Mathf.Abs(yGrad) /*(2)*/
+          ? (tmp = Mathf.Abs(xGrad * gradMag)) >= Mathf.Abs(yGrad * neMag - (xGrad + yGrad) * eMag) /*(3)*/
+          && tmp > Mathf.Abs(yGrad * swMag - (xGrad + yGrad) * wMag) /*(4)*/
+          : (tmp = Mathf.Abs(yGrad * gradMag)) >= Mathf.Abs(xGrad * neMag - (yGrad + xGrad) * nMag) /*(3)*/
+          && tmp > Mathf.Abs(xGrad * swMag - (yGrad + xGrad) * sMag) /*(4)*/
+          : Mathf.Abs(xGrad) >= Mathf.Abs(yGrad) /*(2)*/
+          ? (tmp = Mathf.Abs(xGrad * gradMag)) >= Mathf.Abs(yGrad * seMag + (xGrad - yGrad) * eMag) /*(3)*/
+          && tmp > Mathf.Abs(yGrad * nwMag + (xGrad - yGrad) * wMag) /*(4)*/
+          : (tmp = Mathf.Abs(yGrad * gradMag)) >= Mathf.Abs(xGrad * seMag + (yGrad - xGrad) * sMag) /*(3)*/
+          && tmp > Mathf.Abs(xGrad * nwMag + (yGrad - xGrad) * nMag) /*(4)*/
+        ) {
+          mag = 1 - Mathf.Max(0, _kMagnitudeScale * (gradMag - _kMagnitudeThreshold));
+          //NOTE: The orientation of the edge is not employed by this
+          //implementation. It is a simple matter to compute it at
+          //this point as: Math.atan2(yGrad, xGrad);
+        }
+        newPixels[newIndex] = new Color(mag, mag, mag);
+      }
+    }
+  }
+
+  private static float[,] _sGaussKernel = {
+    { 2f/159f,  4f/159f,  5f/159f,  4f/159f,  2f/159f },
+    { 4f/159f,  9f/159f, 12f/159f,  9f/159f,  4f/159f },
+    { 5f/159f, 12f/159f, 15f/159f, 12f/159f,  5f/159f },
+    { 4f/159f,  9f/159f, 12f/159f,  9f/159f,  4f/159f },
+    { 2f/159f,  4f/159f,  5f/159f,  4f/159f,  2f/159f }
+  };
+
+  private static float[,] _sSobelKernel = {
+    { -1, 0, 1 },
+    { -2, 0, 2 },
+    { -1, 0, 1 } 
+  };
+
+  public static Texture2D CannyEdgeDetection(Texture2D texture) {
+
+    Color[] bufferA = texture.GetPixels();
+    Color[] bufferB = new Color[bufferA.Length];
+
+    int width, height;
+
+    CannyEdgeDetection(bufferA, bufferB, texture.width, texture.height, out width, out height);
+
+    Texture2D result = new Texture2D(width, height, texture.format, false);
+
+    result.SetPixels(0, 0, width, height, bufferB);
+    result.Apply();
+    return result;
+  }
+
+  public static void CannyEdgeDetection(Color[] bufferA, Color[] bufferB, int width, int height, out int newWidth, out int newHeight) {
+    Convolve(bufferA, bufferB, width, height, _sGaussKernel, out newWidth, out newHeight);
+
+    ConvolveXandY(bufferB, bufferA, newWidth, newHeight, _sSobelKernel, out newWidth, out newHeight, true);
+
+    NonMaximalSuppression(bufferA, bufferB, newWidth, newHeight, out newWidth, out newHeight);
+  }
+    
+  public static Texture2D Sketch(Texture2D texture, int sketchColors = 8, Gradient colorGradient = null) {
+
+    Color[] buffer = texture.GetPixels();
+
+    int width = texture.width, height = texture.height;
+
+    SketchInternal(buffer, ref width, ref height, sketchColors, colorGradient);
+
+    Texture2D result = new Texture2D(width, height, texture.format, false);
+    result.SetPixels(0, 0, width, height, buffer);
+    result.Apply();
+    return result;
+  }
+
+  private static void SketchInternal(Color[] bufferA, ref int width, ref int height, int sketchColors, Gradient colorGradient) {
+    Color[] bufferB = new Color[bufferA.Length];
+    Color[] bufferC = new Color[bufferA.Length];
+
+
+    Convolve(bufferA, bufferB, width, height, _sGaussKernel, out width, out height);
+
+    Flatten(bufferB, bufferC, width, height, sketchColors);
+
+    if (colorGradient != null) {
+      GrayScaleToColorUsingGradient(bufferC, bufferC, width, height, colorGradient);
+    }
+
+    int fillWidth = width, fillHeight = height;
+
+    ConvolveXandY(bufferB, bufferA, width, height, _sSobelKernel, out width, out height, true);
+    NonMaximalSuppression(bufferA, bufferB, width, height, out width, out height);
+
+    SubtractOneMinus(bufferC, bufferB, bufferA, fillWidth, fillHeight, width, height, out width, out height);
+  }
+
+  private class SketchAsyncParam {
+    public Color[] Buffer;
+    public int Width;
+    public int Height;
+    public volatile bool Done;
+    public Gradient ColorGradient;
+    public int Colors;
+  }
+
+  public static IEnumerator SketchAsync(Texture2D texture, Action<Texture2D> callback, int sketchColors = 8, Gradient colorGradient = null) {
+    if (callback == null) {
+      yield break;
+    }
+
+    SketchAsyncParam param = new SketchAsyncParam() {
+      Buffer = texture.GetPixels(),
+      Width = texture.width,
+      Height = texture.height,
+      ColorGradient = colorGradient,
+      Colors = sketchColors,
+    };
+
+    System.Threading.ThreadPool.QueueUserWorkItem(SketchAsyncInternal, param);
+
+    while (!param.Done) {
+      yield return null;
+    }
+
+    Texture2D result = new Texture2D(param.Width, param.Height, texture.format, false);
+    result.SetPixels(0, 0, param.Width, param.Height, param.Buffer);
+    result.Apply();
+    callback(result);
+  }
+
+  private static void SketchAsyncInternal(object obj) {
+    SketchAsyncParam param = (SketchAsyncParam)obj;
+    SketchInternal(param.Buffer, ref param.Width, ref param.Height, param.Colors, param.ColorGradient);
+    param.Done = true;
+  }
+
+  #endregion //Filter
 
 }

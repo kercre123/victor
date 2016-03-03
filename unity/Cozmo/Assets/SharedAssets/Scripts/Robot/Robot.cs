@@ -1233,7 +1233,7 @@ public class Robot : IRobot {
     SetLiftHeight(0f);
     SetHeadAngle();
   }
-
+    
   public void ClearAllBlocks() {
     DAS.Debug(this, "Clear All Blocks");
     RobotEngineManager.Instance.Message.ClearAllBlocks = Singleton<ClearAllBlocks>.Instance.Initialize(ID);
