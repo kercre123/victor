@@ -466,6 +466,31 @@
               <FileName>rtos.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\rtos.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>spine.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\spine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>tests.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\tests.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>timer.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\timer.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>bluetooth.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\bluetooth.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>crypto.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\crypto.cpp</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>2</UseCPPCompiler>
@@ -513,31 +538,6 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
-            </File>
-            <File>
-              <FileName>spine.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\spine.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>tests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\tests.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>timer.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\timer.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bluetooth.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\bluetooth.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>crypto.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\crypto.cpp</FilePath>
             </File>
             <File>
               <FileName>gatts.cpp</FileName>

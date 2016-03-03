@@ -31,6 +31,8 @@ namespace RTOS {
   void run(void);
   void manage(void);
   void kick(uint8_t channel);
+	void EnterCritical(void);
+	void LeaveCritical(void);
   
   RTOS_Task* allocate(void);
   void release(RTOS_Task* task);
