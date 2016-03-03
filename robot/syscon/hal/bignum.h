@@ -6,7 +6,7 @@
 typedef uint16_t big_num_cell_t;
 
 // 1024 static allocated
-static const int CELL_SIZE = 64;
+static const int CELL_SIZE = 256;
 static const int CELL_BITS = (sizeof(big_num_cell_t) * 8);
 
 struct big_num_t {
@@ -67,10 +67,11 @@ bool big_divide(big_num_t& result, big_num_t& modulo, const big_num_t& a, const 
 // These may not be safe
 bool big_shl(big_num_t& out, const big_num_t& a, int bits);
 
-// Montgomery domain numbers
+// Montgomery domain numbers (not in-place)
 bool mont_init(big_mont_t& mont, const big_num_t& modulo);
 bool mont_to(big_mont_t& mont, big_num_t& out, const big_num_t& in);
 bool mont_from(big_mont_t& mont, big_num_t& out, const big_num_t& in);
 bool mont_multiply(big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b);
+bool mont_power(big_mont_t& mont, big_num_t& out, const big_num_t& base_in, const big_num_t& exp);
 
 #endif

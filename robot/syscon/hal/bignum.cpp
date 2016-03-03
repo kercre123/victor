@@ -316,15 +316,10 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
 
   int amax = a.used - 1;
   int bmax = b.used - 1;
-  int zeroed = a.used + b.used + 1; // First entry zeroed
+  int zeroed = CELL_SIZE;
 
-  out.used = amax + bmax;
   out.negative = a.negative != b.negative;
-
-  // Zero term
-  if (out.used == 0) {
-    return false;
-  }
+  out.used = 0;
 
   for (int ai = amax; ai >= 0; ai--) {
     int a_value = a.digits[ai];
@@ -335,7 +330,17 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
       // Multiply base terms and hope it's only 16-bit
       int carry_in = (write_index >= zeroed) ? out.digits[write_index] : 0;
       carry.word = a_value * b.digits[bi] + carry_in;
-      
+
+      // Zero result early abort
+      if (carry.word == 0) {
+        continue ;
+      }
+
+      // Cannot write outside of boundary
+      if (write_index >= CELL_SIZE) {
+        return true;
+      }
+
       out.digits[write_index++] = carry.lower;
 
       // Start carry through chain
@@ -362,8 +367,6 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
     }
   }
 
-  bit_reduce(out);
-
   return false;
 }
 
@@ -373,11 +376,12 @@ bool big_power(big_num_t& result, const big_num_t& base_in, const big_num_t& exp
   big_num_t *temp = &working[1];
 
   int msb = big_msb(exp);
-  
-  *base = base_in;
+
   result = BIG_ONE;
 
-  for (int bit = 0; bit <= msb; bit++) {
+  *base = base_in;
+
+  for (int bit = 0; bit <= msb; bit++) {    
     if (big_bit_get(exp, bit)) {
       if (big_multiply(result, result, *base)) {
         return true;
@@ -388,9 +392,11 @@ bool big_power(big_num_t& result, const big_num_t& base_in, const big_num_t& exp
       return true;
     }
 
-    big_num_t *x = base;
-    base = temp;
-    temp = x;
+    {
+      big_num_t* swap = base;
+      base = temp;
+      temp = swap;
+    }
   }
 
   result.negative = big_odd(base_in) ? base_in.negative : false;
@@ -590,17 +596,17 @@ bool mont_from(big_mont_t& mont, big_num_t& out, const big_num_t& in) {
 
 // TODO: overflow protection
 bool mont_multiply(big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b) {
-  big_num_t c;
+  big_num_t temp;
 
   big_multiply(out, a, b);
 
-  c = out;
-  big_mask(c, mont.shift);
-  big_multiply(c, c, mont.minv);
-  big_mask(c, mont.shift);
-  big_multiply(c, c, mont.modulo);
+  temp = out;
+  big_mask(temp, mont.shift);
+  big_multiply(temp, temp, mont.minv);
+  big_mask(temp, mont.shift);
+  big_multiply(temp, temp, mont.modulo);
 
-  big_subtract(out, out, c);
+  big_subtract(out, out, temp);
   big_shr(out, out, mont.shift);
 
   if (big_compare(out, mont.modulo) >= 0) {
@@ -612,4 +618,33 @@ bool mont_multiply(big_mont_t& mont, big_num_t& out, const big_num_t& a, const b
   return false;
 }
 
-// TODO: MONTGOMERY POWER
+bool mont_power(big_mont_t& mont, big_num_t& result, const big_num_t& base_in, const big_num_t& exp) {
+  big_num_t working[2];
+  big_num_t *base = &working[0];
+  big_num_t *temp = &working[1];
+
+  int msb = big_msb(exp);
+  
+  *base = base_in;
+  result = BIG_ONE;
+
+  for (int bit = 0; bit <= msb; bit++) {
+    if (big_bit_get(exp, bit)) {
+      if (mont_multiply(mont, result, result, *base)) {
+        return true;
+      }
+    }
+
+    if (mont_multiply(mont, *temp, *base, *base)) {
+      return true;
+    }
+
+    big_num_t *x = base;
+    base = temp;
+    temp = x;
+  }
+
+  result.negative = big_odd(base_in) ? base_in.negative : false;
+
+  return false;
+}
