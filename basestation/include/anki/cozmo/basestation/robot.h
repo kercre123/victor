@@ -42,7 +42,6 @@
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -104,6 +103,7 @@ class RobotPoseStamp;
 class IExternalInterface;
 struct RobotState;
 class ActiveCube;
+class CannedAnimationContainer;
 
 typedef enum {
   SAVE_OFF = 0,
@@ -708,6 +708,19 @@ public:
     BehaviorManager  _behaviorMgr;
     bool             _isBehaviorMgrEnabled = false;
     
+  
+  
+    ///////// Animation /////////
+    CannedAnimationContainer&   _cannedAnimations;
+    AnimationGroupContainer     _animationGroups;
+    AnimationStreamer           _animationStreamer;
+    s32 _numFreeAnimationBytes;
+    s32 _numAnimationBytesPlayed         = 0;
+    s32 _numAnimationBytesStreamed       = 0;
+    s32 _numAnimationAudioFramesPlayed   = 0;
+    s32 _numAnimationAudioFramesStreamed = 0;
+    u8  _animationTag                    = 0;
+  
     //ActionQueue      _actionQueue;
     ActionList        _actionList;
     MovementComponent _movementComponent;
@@ -859,18 +872,6 @@ public:
   
     ///////// Audio /////////
     Audio::RobotAudioClient _audioClient;
-  
-    ///////// Animation /////////
-    
-    CannedAnimationContainer _cannedAnimations;
-    AnimationGroupContainer  _animationGroups;
-    AnimationStreamer        _animationStreamer;
-    s32 _numFreeAnimationBytes;
-    s32 _numAnimationBytesPlayed         = 0;
-    s32 _numAnimationBytesStreamed       = 0;
-    s32 _numAnimationAudioFramesPlayed   = 0;
-    s32 _numAnimationAudioFramesStreamed = 0;
-    u8  _animationTag                    = 0;
     
     ///////// Mood/Emotions ////////
     MoodManager*         _moodManager;

@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point.h"
@@ -38,6 +39,7 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
@@ -80,6 +82,8 @@ namespace Anki {
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
+    , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimationContainer())
+    , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _movementComponent(*this)
     , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, _context)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
@@ -87,7 +91,6 @@ namespace Anki {
     , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
-    , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
     , _imageDeChunker(new ImageDeChunker())

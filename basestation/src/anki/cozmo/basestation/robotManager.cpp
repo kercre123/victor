@@ -9,6 +9,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -19,9 +20,12 @@ namespace Anki {
     RobotManager::RobotManager(const CozmoContext* context)
     : _context(context)
     , _robotEventHandler(context)
+    , _cannedAnimationContainer(new CannedAnimationContainer())
     {
       
     }
+    
+    RobotManager::~RobotManager() = default;
     
     void RobotManager::AddRobot(const RobotID_t withID)
     {

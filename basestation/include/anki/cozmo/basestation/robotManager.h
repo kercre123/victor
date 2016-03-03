@@ -15,6 +15,7 @@
 #include "util/signals/simpleSignal.hpp"
 #include <map>
 #include <vector>
+#include <memory>
 
 namespace Anki {
   
@@ -33,12 +34,15 @@ namespace Anki {
   class Robot;
   class IExternalInterface;
   class CozmoContext;
+  class CannedAnimationContainer;
 
     class RobotManager
     {
     public:
     
       RobotManager(const CozmoContext* context);
+      
+      ~RobotManager();
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -67,6 +71,7 @@ namespace Anki {
       using RobotDisconnectedSignal = Signal::Signal<void (RobotID_t)>;
       RobotDisconnectedSignal& OnRobotDisconnected() { return _robotDisconnectedSignal; }
 
+      CannedAnimationContainer& GetCannedAnimationContainer() { return *_cannedAnimationContainer; }
 
     protected:
       RobotDisconnectedSignal _robotDisconnectedSignal;
@@ -74,6 +79,7 @@ namespace Anki {
       std::vector<RobotID_t>     _IDs;
       const CozmoContext* _context;
       RobotEventHandler _robotEventHandler;
+      std::unique_ptr<CannedAnimationContainer> _cannedAnimationContainer;
       
     }; // class RobotManager
     
