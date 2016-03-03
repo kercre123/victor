@@ -113,7 +113,7 @@ class Remote:
                         elif head:
                             robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(0.0)))
                             head = False
-
+                        
                 if self.upgrader is None:
                     now = time.time()
                     if now > nextJogTime:

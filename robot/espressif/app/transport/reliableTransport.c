@@ -31,6 +31,8 @@ void FacePrintf(const char *format, ...);
 #define printClear() (void)0
 #endif
 
+static uint32_t reliableTransport_timeoutMicroseconds;
+
 /// Utility function to print the state of a connection object
 void ICACHE_FLASH_ATTR ReliableConnection_printState(ReliableConnection* connection)
 {
@@ -61,7 +63,7 @@ bool ICACHE_FLASH_ATTR haveDataToSend(ReliableConnection* self)
 
 void ICACHE_FLASH_ATTR ReliableTransport_Init()
 {
-  //printf("ReliableTransport Initalizing\r\n");
+  reliableTransport_timeoutMicroseconds = ReliableConnection_CONNECTION_DEFAULT_TIMEOUT;
 }
 
 void ICACHE_FLASH_ATTR ReliableConnection_Init(ReliableConnection* self, void* dest)
@@ -555,17 +557,22 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
   }
 }
 
+void ICACHE_FLASH_ATTR ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds)
+{
+  reliableTransport_timeoutMicroseconds = timeoutMicroSeconds;
+}
+
 bool ICACHE_FLASH_ATTR ReliableTransport_Update(ReliableConnection* connection)
 {
   uint32_t currentTime = GetMicroCounter();
-  if (currentTime > connection->latestRecvTime + ReliableConnection_CONNECTION_TIMEOUT)
+  if ((currentTime - connection->latestRecvTime) > reliableTransport_timeoutMicroseconds)
   {
     return false;
   }
   else
   {
     printClear();
-    if (currentTime > connection->latestUnackedMessageSentTime + ReliableConnection_UNACKED_MESSAGE_SEPARATION_TIME)
+    if ((currentTime - connection->latestUnackedMessageSentTime) > ReliableConnection_UNACKED_MESSAGE_SEPARATION_TIME)
     {
       SendPendingMessages(connection, false);
     }
