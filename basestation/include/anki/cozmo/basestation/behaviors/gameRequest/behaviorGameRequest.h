@@ -20,6 +20,8 @@
 namespace Anki {
 namespace Cozmo {
 
+class ObservableObject;
+
 namespace ExternalInterface {
 struct RobotDeletedFace;
 struct RobotObservedFace;
@@ -33,6 +35,7 @@ public:
 
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const final override;
   virtual Result InitInternal(Robot& robot, double currentTime_sec) final override;
+  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) final override;
 
 protected:
 
@@ -42,6 +45,7 @@ protected:
   // Functions to be overridden by sub classes
   
   virtual Result RequestGame_InitInternal(Robot& robot, double currentTime_sec) = 0;
+  virtual Status RequestGame_UpdateInternal(Robot& robot, double currentTime_sec) = 0;
   virtual void HandleGameDeniedRequest(Robot& robot) = 0;
 
   // --------------------------------------------------------------------------------
@@ -52,13 +56,17 @@ protected:
   void SendDeny(Robot& robot);
 
   // the time at which it will be OK to end the behavior (allowing us a delay after the request), or -1
-  f32 GetRequestMinDelayComplete_s() const;
+  virtual f32 GetRequestMinDelayComplete_s() const = 0;
 
   Face::ID_t GetFaceID() const { return _faceID; }
   f32 GetLastSeenFaceTime() const {return _lastFaceSeenTime_s;}
     
   u32 GetNumBlocks(const Robot& robot) const;
   ObjectID GetRobotsBlockID(const Robot& robot) const;
+
+  // Gets the last known pose of the block (useful in case it gets bumped). returns true if it has a block
+  // pose, false otherwise
+  bool GetLastBlockPose(Pose3d& pose) const;
 
   bool HasFace(const Robot& robot) const;
   bool GetFacePose(const Robot& robot, Pose3d& facePose) const;
@@ -69,13 +77,16 @@ protected:
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) final override;
   virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) final override;
 
+  f32        _requestTime_s = -1.0f;
 private:
 
   u32        _maxFaceAge_ms = 30000;
-  f32        _minRequestDelay_s = 3.0f;
-  f32        _requestTime_s = -1.0f;
   f32        _lastFaceSeenTime_s = -1.0f;
   Face::ID_t _faceID = Face::UnknownFace;
+  bool       _hasBlockPose = false;
+  Pose3d     _lastBlockPose;
+
+  ObservableObject* GetClosestBlock(const Robot& robot) const;
   
   void HandleObservedFace(const Robot& robot,
                           const ExternalInterface::RobotObservedFace& msg);

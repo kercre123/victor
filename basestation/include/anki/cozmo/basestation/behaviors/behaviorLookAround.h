@@ -96,8 +96,8 @@ private:
   constexpr static f32 kMaxObservationDistanceSq_mm = SQUARE(200.0f);
   // If the possible block is too far, this is the distance to view it from
   constexpr static f32 kPossibleObjectViewingDist_mm = 100.0f;
-  // How long to wait to try to see a possible object
-  constexpr static f32 kPossibleObjectWaitTime_s = 0.75f;
+  // How long to wait to try to see a possible object (might do this 3 times)
+  constexpr static f32 kPossibleObjectWaitTime_s = 0.5f;
   
   State _currentState = State::Inactive;
   Destination _currentDestination = Destination::North;

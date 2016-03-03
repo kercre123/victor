@@ -247,6 +247,7 @@ namespace Anki {
         printf("           Enable behavior group:  Shift+h\n");
         printf("          Disable behavior group:  Alt+h\n");
         printf("            Set emotion to value:  m\n");
+        printf("      Search side to side action:  Shift+l\n");
         printf("           Set DemoState Default:  j\n");
         printf("         Set DemoState FacesOnly:  Shift+j\n");
         printf("        Set DemoState BlocksOnly:  Alt+j\n");
@@ -479,7 +480,8 @@ namespace Anki {
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendTurnInPlaceAtSpeed(DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
-                } else {
+                }
+                else {
                   SendTurnInPlace(DEG_TO_RAD(pointTurnAngle), DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
                 }
                 break;
@@ -512,7 +514,8 @@ namespace Anki {
                 if(modifier_key == webots::Supervisor::KEYBOARD_ALT) {
                   // Re-read animations and send them to physical robot
                   SendReplayLastAnimation();
-                } else {
+                }
+                else {
                   commandedHeadSpeed += headSpeed;
                   movingHead = true;
                 }
@@ -777,34 +780,48 @@ namespace Anki {
                 
               case (s32)'L':
               {
-                static bool backpackLightsOn = false;
-                
-                ExternalInterface::SetBackpackLEDs msg;
-                msg.robotID = 1;
-                for(s32 i=0; i<(s32)LEDId::NUM_BACKPACK_LEDS; ++i)
-                {
-                  msg.onColor[i] = 0;
-                  msg.offColor[i] = 0;
-                  msg.onPeriod_ms[i] = 1000;
-                  msg.offPeriod_ms[i] = 2000;
-                  msg.transitionOnPeriod_ms[i] = 500;
-                  msg.transitionOffPeriod_ms[i] = 500;
-                }
-                
-                if(!backpackLightsOn) {
-                  // Use red channel to control left and right lights
-                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_RIGHT]  = ::Anki::NamedColors::RED >> 1; // Make right light dimmer
-                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_LEFT]   = ::Anki::NamedColors::RED;
-                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_BACK]   = ::Anki::NamedColors::RED;
-                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_MIDDLE] = ::Anki::NamedColors::CYAN;
-                  msg.onColor[(uint32_t)LEDId::LED_BACKPACK_FRONT]  = ::Anki::NamedColors::YELLOW;
-                }
-                
-                ExternalInterface::MessageGameToEngine msgWrapper;
-                msgWrapper.Set_SetBackpackLEDs(msg);
-                SendMessage(msgWrapper);
 
-                backpackLightsOn = !backpackLightsOn;
+                if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT ) {
+                  ExternalInterface::QueueSingleAction msg;
+                  msg.robotID = 1;
+                  msg.position = QueueActionPosition::NOW;
+                  msg.action.Set_searchSideToSide(ExternalInterface::SearchSideToSide(msg.robotID));
+
+                  ExternalInterface::MessageGameToEngine message;
+                  message.Set_QueueSingleAction(msg);
+                  SendMessage(message);
+                }
+                else {
+
+                  static bool backpackLightsOn = false;
+                
+                  ExternalInterface::SetBackpackLEDs msg;
+                  msg.robotID = 1;
+                  for(s32 i=0; i<(s32)LEDId::NUM_BACKPACK_LEDS; ++i)
+                  {
+                    msg.onColor[i] = 0;
+                    msg.offColor[i] = 0;
+                    msg.onPeriod_ms[i] = 1000;
+                    msg.offPeriod_ms[i] = 2000;
+                    msg.transitionOnPeriod_ms[i] = 500;
+                    msg.transitionOffPeriod_ms[i] = 500;
+                  }
+                
+                  if(!backpackLightsOn) {
+                    // Use red channel to control left and right lights
+                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_RIGHT]  = ::Anki::NamedColors::RED >> 1; // Make right light dimmer
+                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_LEFT]   = ::Anki::NamedColors::RED;
+                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_BACK]   = ::Anki::NamedColors::RED;
+                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_MIDDLE] = ::Anki::NamedColors::CYAN;
+                    msg.onColor[(uint32_t)LEDId::LED_BACKPACK_FRONT]  = ::Anki::NamedColors::YELLOW;
+                  }
+                
+                  ExternalInterface::MessageGameToEngine msgWrapper;
+                  msgWrapper.Set_SetBackpackLEDs(msg);
+                  SendMessage(msgWrapper);
+
+                  backpackLightsOn = !backpackLightsOn;
+                }
                 
                 break;
               }

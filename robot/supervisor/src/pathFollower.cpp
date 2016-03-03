@@ -119,11 +119,13 @@ namespace Anki
 
       bool AppendPathSegment_PointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
                                        f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                                       f32 angleTolerance,
                                        bool useShortestDir)
       {
         TrimPath();
         return path_.AppendPointTurn(matID, x, y, targetAngle,
                                      targetRotSpeed, rotAccel, rotDecel,
+                                     angleTolerance,
                                      useShortestDir);
       }
 
@@ -384,6 +386,7 @@ namespace Anki
                                                path_[currPathSegment_].GetTargetSpeed(),
                                                path_[currPathSegment_].GetAccel(),
                                                path_[currPathSegment_].GetDecel(),
+                                               currSeg->angleTolerance,
                                                currSeg->useShortestDir);
           pointTurnStarted_ = true;
 
@@ -669,7 +672,7 @@ namespace Anki
         return true;
       }
 
-      bool DrivePointTurn(f32 sweep_rad, f32 acc_start_frac, f32 acc_end_frac, f32 duration_sec)
+      bool DrivePointTurn(f32 sweep_rad, f32 acc_start_frac, f32 acc_end_frac, f32 angleTolerance, f32 duration_sec)
       {
         VelocityProfileGenerator vpg;
 
@@ -712,9 +715,9 @@ namespace Anki
 
         // Create 3-segment path
         ClearPath();
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang1, targetRotVel, startAngAccel, startAngAccel, false);
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang2, targetRotVel, startAngAccel, startAngAccel, false);
-        AppendPathSegment_PointTurn(0, curr_x, curr_y, dest_ang, sweep_rad > 0 ? COAST_VELOCITY_RADPS : -COAST_VELOCITY_RADPS, endAngAccel, endAngAccel, false);
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang1, targetRotVel, startAngAccel, startAngAccel, angleTolerance, false);
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, int_ang2, targetRotVel, startAngAccel, startAngAccel, angleTolerance, false);
+        AppendPathSegment_PointTurn(0, curr_x, curr_y, dest_ang, sweep_rad > 0 ? COAST_VELOCITY_RADPS : -COAST_VELOCITY_RADPS, endAngAccel, endAngAccel, angleTolerance, false);
 
         StartPathTraversal();
 

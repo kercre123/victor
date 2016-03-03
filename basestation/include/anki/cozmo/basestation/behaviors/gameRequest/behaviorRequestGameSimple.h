@@ -34,12 +34,13 @@ public:
 
 protected:
   virtual Result RequestGame_InitInternal(Robot& robot, double currentTime_sec) override;
-  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
+  virtual Status RequestGame_UpdateInternal(Robot& robot, double currentTime_sec) override;
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
   virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
   virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override;
 
   virtual void HandleGameDeniedRequest(Robot& robot) override;
+  virtual f32 GetRequestMinDelayComplete_s() const override;
   
 private:
 
@@ -57,6 +58,7 @@ private:
     PlayingRequstAnim,
     TrackingFace,
     PlayingDenyAnim,
+    SearchingForBlock
   };
 
   State _state = State::PlayingInitialAnimation;
@@ -104,7 +106,8 @@ private:
   void TransitionToPlayingRequstAnim(Robot& robot);
   void TransitionToTrackingFace(Robot& robot);
   void TransitionToPlayingDenyAnim(Robot& robot);
-
+  void TransitionToSearchingForBlock(Robot& robot);
+  
   bool GetFaceInteractionPose(Robot& robot, Pose3d& pose);
   void ComputeFaceInteractionPose(Robot& robot);
 

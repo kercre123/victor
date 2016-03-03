@@ -150,7 +150,7 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>(unsigned int*)0xE000ED28</ItemText>
+          <ItemText>address.base0</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>

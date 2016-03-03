@@ -76,6 +76,39 @@ namespace Anki {
       
     }; // class TurnInPlaceAction
 
+    // A simple compound action which stops for a while, looks one way, waits a while, then looks the other
+    // way, and waits a while longer. Useful for "searching" for a cube when it may be just out of the field
+    // of view. Note that this action does not move the head
+    class SearchSideToSideAction : public IAction
+    {
+    public:
+      SearchSideToSideAction(Robot& robot);
+
+      virtual const std::string& GetName() const override { return _name; }
+      
+      virtual RobotActionType GetType() const override { return RobotActionType::SEARCH_SIDE_TO_SIDE; }
+
+      virtual u8 GetTracksToLock() const override {
+        return (u8)AnimTrackFlag::BODY_TRACK;
+      }
+
+      void SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads);
+      void SetSearchWaitTime(f32 minWaitTime_s, f32 maxWaitTime_s);
+
+    protected:
+      virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
+
+    private:
+      CompoundActionSequential _compoundAction;
+
+      f32 _minWaitTime_s = 0.8f;
+      f32 _maxWaitTime_s = 1.2f;
+      f32 _minSearchAngle_rads = DEG_TO_RAD(15.0f);
+      f32 _maxSearchAngle_rads = DEG_TO_RAD(20.0f);
+
+      std::string _name = "SearchSideToSideAction";
+    };
 
     // A simple action for drving a straight line forward or backward, without
     // using the planner

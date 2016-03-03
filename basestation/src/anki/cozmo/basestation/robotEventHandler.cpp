@@ -541,6 +541,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::turnTowardsLastFacePose:
       return new TurnTowardsLastFacePoseAction(robot, actionUnion.Get_turnTowardsLastFacePose().maxTurnAngle);
 
+    case RobotActionUnionTag::searchSideToSide:
+      return new SearchSideToSideAction(robot);
+
       // TODO: Add cases for other actions
       
     default:

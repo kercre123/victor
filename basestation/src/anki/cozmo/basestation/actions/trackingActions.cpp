@@ -205,7 +205,8 @@ ActionResult ITrackAction::CheckIfDone()
       RobotInterface::SetBodyAngle setBodyAngle;
       setBodyAngle.angle_rad             = rotatedPose.GetRotation().GetAngleAroundZaxis().ToFloat();
       setBodyAngle.max_speed_rad_per_sec = speed;
-      setBodyAngle.accel_rad_per_sec2    = accel; 
+      setBodyAngle.accel_rad_per_sec2    = accel;
+      setBodyAngle.angle_tolerance       = _panTolerance.ToFloat();
       if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
         return ActionResult::FAILURE_ABORT;
       }
