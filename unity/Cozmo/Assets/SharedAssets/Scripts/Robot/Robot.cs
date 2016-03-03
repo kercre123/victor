@@ -989,7 +989,7 @@ public class Robot : IRobot {
       callback, 
       queueActionPosition);
   }
-    
+
   public void SetRobotVolume(float volume) {
     DAS.Debug(this, "Set Robot Volume " + volume);
 
@@ -1041,13 +1041,13 @@ public class Robot : IRobot {
     TrackToObject(null);
   }
 
-  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
-                         RobotCallback callback = null,
-                         QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
+                                RobotCallback callback = null,
+                                QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Face Object " + observedObject);
 
-    SendQueueSingleAction(Singleton<FaceObject>.Instance.Initialize(
+    SendQueueSingleAction(Singleton<TurnTowardsObject>.Instance.Initialize(
       objectID: observedObject,
       robotID: ID,
       maxTurnAngle: float.MaxValue,
@@ -1065,27 +1065,46 @@ public class Robot : IRobot {
 
   }
 
-  public void FacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, 
-                       RobotCallback callback = null,
-                       QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {    
+  public void TurnTowardsPose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, 
+                              RobotCallback callback = null,
+                              QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {    
 
-    SendQueueSingleAction(Singleton<FacePose>.Instance.Initialize(
-      world_x: face.WorldPosition.x,
-      world_y: face.WorldPosition.y,
-      world_z: face.WorldPosition.z,
-      maxTurnAngle: float.MaxValue,
-      maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
-      panAccel_radPerSec2: panAccel_radPerSec2,
-      panTolerance_rad: 5 * Mathf.Deg2Rad, // 1.7 degrees is the minimum in the engine
-      maxTiltSpeed_radPerSec: 0f,
-      tiltAccel_radPerSec2: 0f,
-      tiltTolerance_rad: 0f,
-      robotID: ID
-    ),
+    SendQueueSingleAction(
+      Singleton<TurnTowardsPose>.Instance.Initialize(
+        world_x: face.WorldPosition.x,
+        world_y: face.WorldPosition.y,
+        world_z: face.WorldPosition.z,
+        maxTurnAngle: float.MaxValue,
+        maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
+        panAccel_radPerSec2: panAccel_radPerSec2,
+        panTolerance_rad: 5 * Mathf.Deg2Rad, // 1.7 degrees is the minimum in the engine
+        maxTiltSpeed_radPerSec: 0f,
+        tiltAccel_radPerSec2: 0f,
+        tiltTolerance_rad: 0f,
+        robotID: ID
+      ),
       callback,
       queueActionPosition);
       
     RobotEngineManager.Instance.SendMessage();
+  }
+
+  // Turns towards the last seen face, but not any more than the specified maxTurnAngle
+  public void TurnTowardsLastFacePose(float maxTurnAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    DAS.Debug(this, "TurnTowardsLastFacePose with maxTurnAngle : " + maxTurnAngle);
+
+    SendQueueSingleAction(Singleton<TurnTowardsLastFacePose>.Instance.Initialize(
+      maxTurnAngle: maxTurnAngle,
+      maxPanSpeed_radPerSec: 4.3f,
+      panAccel_radPerSec2: 10f,
+      panTolerance_rad: 5 * Mathf.Deg2Rad,
+      maxTiltSpeed_radPerSec: 0f,
+      tiltAccel_radPerSec2: 0f,
+      tiltTolerance_rad: 0f,
+      robotID: ID
+    ), 
+      callback, 
+      queueActionPosition);
   }
 
   public void PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {

@@ -99,7 +99,7 @@ namespace Simon {
       _TargetCubeColor = cube.Lights[0].OnColor;
       cube.TurnLEDsOff();
 
-      _CurrentRobot.FaceObject(cube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
+      _CurrentRobot.TurnTowardsObject(cube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
     }
   }
 
