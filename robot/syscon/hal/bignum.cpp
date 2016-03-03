@@ -318,6 +318,13 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
   int bmax = b.used - 1;
   int zeroed = CELL_SIZE;
 
+  // Clear our the section of the output that might be uninitalized
+  {
+    int original_cells = a.used;
+    int maximum = CELL_SIZE - original_cells;
+    memset(&out.digits[original_cells], 0, maximum * sizeof(big_num_cell_t));
+  }
+
   out.negative = a.negative != b.negative;
   out.used = 0;
 
@@ -574,7 +581,7 @@ bool mont_init(big_mont_t& mont, const big_num_t& modulo) {
 }
 
 // Convert to and from montgomery domain
-bool mont_to(big_mont_t& mont, big_num_t& out, const big_num_t& in) {
+bool mont_to(const big_mont_t& mont, big_num_t& out, const big_num_t& in) {
   if (big_shl(out, in, mont.shift)) {
     return true;
   }
@@ -584,7 +591,7 @@ bool mont_to(big_mont_t& mont, big_num_t& out, const big_num_t& in) {
   return false;
 }
 
-bool mont_from(big_mont_t& mont, big_num_t& out, const big_num_t& in) {
+bool mont_from(const big_mont_t& mont, big_num_t& out, const big_num_t& in) {
   if (big_multiply(out, in, mont.rinv)) {
     return true;
   }
@@ -595,11 +602,10 @@ bool mont_from(big_mont_t& mont, big_num_t& out, const big_num_t& in) {
 }
 
 // TODO: overflow protection
-bool mont_multiply(big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b) {
+bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b) {
   big_num_t temp;
 
   big_multiply(out, a, b);
-
   temp = out;
   big_mask(temp, mont.shift);
   big_multiply(temp, temp, mont.minv);
@@ -618,22 +624,30 @@ bool mont_multiply(big_mont_t& mont, big_num_t& out, const big_num_t& a, const b
   return false;
 }
 
-bool mont_power(big_mont_t& mont, big_num_t& result, const big_num_t& base_in, const big_num_t& exp) {
-  big_num_t working[2];
+bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in, const big_num_t& exp) {
+  big_num_t working[3];
   big_num_t *base = &working[0];
   big_num_t *temp = &working[1];
+  big_num_t *result = &working[2];
 
   int msb = big_msb(exp);
   
   *base = base_in;
-  mont_to(mont, result, BIG_ONE);
+  mont_to(mont, *result, BIG_ONE);
 
   for (int bit = 0; bit <= msb; bit++) {
     if (big_bit_get(exp, bit)) {
-      if (mont_multiply(mont, result, result, *base)) {
+      if (mont_multiply(mont, *temp, *result, *base)) {
         return true;
       }
+
+      {
+        big_num_t *x = result;
+        result = temp;
+        temp = x;
+      }
     }
+
 
     if (mont_multiply(mont, *temp, *base, *base)) {
       return true;
@@ -646,7 +660,8 @@ bool mont_power(big_mont_t& mont, big_num_t& result, const big_num_t& base_in, c
     }
   }
 
-  result.negative = big_odd(base_in) ? base_in.negative : false;
+  out = *result;
+  out.negative = big_odd(base_in) ? base_in.negative : false;
 
   return false;
 }

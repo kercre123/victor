@@ -69,9 +69,9 @@ bool big_shl(big_num_t& out, const big_num_t& a, int bits);
 
 // Montgomery domain numbers (not in-place)
 bool mont_init(big_mont_t& mont, const big_num_t& modulo);
-bool mont_to(big_mont_t& mont, big_num_t& out, const big_num_t& in);
-bool mont_from(big_mont_t& mont, big_num_t& out, const big_num_t& in);
-bool mont_multiply(big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b);
-bool mont_power(big_mont_t& mont, big_num_t& out, const big_num_t& base_in, const big_num_t& exp);
+bool mont_to(const big_mont_t& mont, big_num_t& out, const big_num_t& in);
+bool mont_from(const big_mont_t& mont, big_num_t& out, const big_num_t& in);
+bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b);
+bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in, const big_num_t& exp);
 
 #endif
