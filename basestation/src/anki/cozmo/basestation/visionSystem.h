@@ -350,7 +350,7 @@ namespace Cozmo {
 
     // Tool code stuff
     TimeStamp_t                   _lastToolCodeReadTime_ms = 0;
-    const TimeStamp_t             kToolCodeReadPeriod_ms = 5000; // TODO: Increase
+    const TimeStamp_t             kToolCodeReadPeriod_ms = 500; // TODO: Increase
     
     struct VisionMemory {
       /* 10X the memory for debugging on a PC

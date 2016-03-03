@@ -2096,7 +2096,8 @@ namespace Cozmo {
     // If we expect the tool code to be visible, the lift is stopped, _and_ we haven't
     // checked it too recently, then try to read the tool code (and update calibration data)
     if(image.GetTimestamp() - _lastToolCodeReadTime_ms > kToolCodeReadPeriod_ms &&
-       NEAR_ZERO(_poseData.poseStamp.GetLiftAngle()-_prevPoseData.poseStamp.GetLiftAngle()))
+       NEAR_ZERO(_poseData.poseStamp.GetLiftAngle()-_prevPoseData.poseStamp.GetLiftAngle()) &&
+       NEAR_ZERO(_poseData.poseStamp.GetHeadAngle()-_prevPoseData.poseStamp.GetHeadAngle()))
     {
       // Center points of the calibration dots, in lift coordinate frame
       // TODO: Move these to be defined elsewhere
@@ -2146,7 +2147,7 @@ namespace Cozmo {
         {
           // Get an ROI around where we expect to see the dot in the image
           const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[i];
-          const f32 quadPad_mm = 2.f;
+          const f32 quadPad_mm = 2.5f;
           Quad3f dotQuadRoi3d = {
             {dotWrtLift3d.x() - quadPad_mm, dotWrtLift3d.y() - quadPad_mm, dotWrtLift3d.z()},
             {dotWrtLift3d.x() - quadPad_mm, dotWrtLift3d.y() + quadPad_mm, dotWrtLift3d.z()},
@@ -2179,8 +2180,24 @@ namespace Cozmo {
             roiImgDisp.DrawPoint(Anki::Point2f(m.m10/m.m00, m.m01/m.m00), NamedColors::RED, 1);
             _debugImageRGBMailbox.putMessage({("DotROI_" + std::to_string(i)).c_str(), roiImgDisp});
           }
-          const Anki::Point2f  observedPoint(m.m10/m.m00 + dotRectRoi.GetX(),
-                                             m.m01/m.m00 + dotRectRoi.GetY());
+
+          // Refine centroid using only the connected component within which the first
+          // centroid fell
+          cv::Mat labels, stats, centroids;
+          const s32 numComponents = cv::connectedComponentsWithStats(invertedDotRoi.get_CvMat_(), labels, stats, centroids);
+          
+          if(numComponents <= 1) {
+            return RESULT_FAIL;
+          }
+          
+          const s32 dotLabel = labels.at<s32>(std::round(m.m01/m.m00),
+                                              std::round(m.m10/m.m00));
+          
+          ASSERT_NAMED(centroids.type() == CV_64F, "Expecting centroids to be double");
+          const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
+          const Anki::Point2f  observedPoint(dotCentroid[0] + dotRectRoi.GetX(),
+                                             dotCentroid[1] + dotRectRoi.GetY());
+
           const Anki::Point2f& expectedPoint = projectedToolCodeDots[i];
           
           camCen += observedPoint - expectedPoint;
@@ -2200,7 +2217,7 @@ namespace Cozmo {
 #       if DRAW_TOOL_CODE_DEBUG
         char dispStr[256];
         snprintf(dispStr, 255, "(%.1f,%.1f)", camCen.x(), camCen.y());
-        dispImg.DrawText(Anki::Point2f(0, image.GetNumRows()), dispStr, NamedColors::BLUE, 0.75);
+        dispImg.DrawText(Anki::Point2f(0, 15), dispStr, NamedColors::RED, 0.75);
         _debugImageRGBMailbox.putMessage({"ToolCode", dispImg});
 #       endif
         
