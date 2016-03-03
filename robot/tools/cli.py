@@ -142,6 +142,14 @@ class CozmoCLI(IDataReceiver):
             sys.stdout.write(repr(msg.activeObjectTapped))
             sys.stdout.write(os.linesep)
             sys.stdout.flush()
+        elif msg.tag == msg.Tag.activeObjectMoved:
+            sys.stdout.write(repr(msg.activeObjectMoved))
+            sys.stdout.write(os.linesep)
+            sys.stdout.flush()
+        elif msg.tag == msg.Tag.activeObjectStopped:
+            sys.stdout.write(repr(msg.activeObjectStopped))
+            sys.stdout.write(os.linesep)
+            sys.stdout.flush()
         elif msg.tag == msg.Tag.state and now - self.lastStatePrintTime > self.statePrintInterval:
             sys.stdout.write(repr(msg.state))
             sys.stdout.write(os.linesep)
