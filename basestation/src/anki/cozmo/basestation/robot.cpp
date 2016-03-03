@@ -69,9 +69,21 @@
 namespace Anki {
   namespace Cozmo {
     
+    /*
     // static initializers
-    const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0});
+    const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+       0, 0, 1,
+      -1, 0, 0,
+       0,-1, 0
+    });
+    */
     
+    // 4-degree look down:
+    const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+      0,             -0.0698,    0.9976,
+      -1.0000,         0,         0,
+      0,             -0.9976,   -0.0698,
+    });
     
     Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     : _context(context)
