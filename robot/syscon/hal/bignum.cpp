@@ -626,7 +626,7 @@ bool mont_power(big_mont_t& mont, big_num_t& result, const big_num_t& base_in, c
   int msb = big_msb(exp);
   
   *base = base_in;
-  result = BIG_ONE;
+  mont_to(mont, result, BIG_ONE);
 
   for (int bit = 0; bit <= msb; bit++) {
     if (big_bit_get(exp, bit)) {
@@ -639,9 +639,11 @@ bool mont_power(big_mont_t& mont, big_num_t& result, const big_num_t& base_in, c
       return true;
     }
 
-    big_num_t *x = base;
-    base = temp;
-    temp = x;
+    {
+      big_num_t *x = base;
+      base = temp;
+      temp = x;
+    }
   }
 
   result.negative = big_odd(base_in) ? base_in.negative : false;
