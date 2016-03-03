@@ -105,12 +105,12 @@ namespace Cozmo {
       }
 
       public void SetPrimaryButton(string titleKey, Action action = null, 
-        Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
+                                   Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         SetupButton(_PrimaryButton, Localization.Get(titleKey), action, audioParam);
       }
 
       public void SetSecondaryButton(string titleKey, Action action = null, 
-        Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
+                                     Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         SetupButton(_SecondaryButton, Localization.Get(titleKey), action, audioParam);
       }
 
@@ -122,8 +122,19 @@ namespace Cozmo {
         _AlertMessageText.FormattingArgs = args;
       }
 
+      public void DisableAllButtons() {
+        ResetButton(_PrimaryButton);
+        _PrimaryButton.Interactable = false;
+        ResetButton(_SecondaryButton);
+        _SecondaryButton.Interactable = false;
+        if (_CloseButton != null) {
+          ResetButton(_CloseButton);
+          _CloseButton.Interactable = false;
+        }
+      }
+
       private void SetupButton(AnkiButton button, String title, Action action, 
-        Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
+                               Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         if (button != null) {
           button.gameObject.SetActive(true);
           button.Text = title;
