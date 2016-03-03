@@ -208,9 +208,9 @@ public interface IRobot : IDisposable {
                          RobotCallback callback = null,
                          QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void TurnTowardsPose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, 
-                       RobotCallback callback = null,
-                       QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void TurnTowardsFacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, 
+                           RobotCallback callback = null,
+                           QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void TurnTowardsLastFacePose(float maxTurnAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 

@@ -115,6 +115,14 @@ public class Robot : IRobot {
     }
   }
 
+  #region consts
+
+  public const float kDefaultRadPerSec = 4.3f;
+  public const float kPanAccel_radPerSec2 = 10f;
+  public const float kPanTolerance_rad = 5 * Mathf.Deg2Rad;
+
+  #endregion
+
   public byte ID { get; private set; }
 
   // in radians
@@ -1041,7 +1049,7 @@ public class Robot : IRobot {
     TrackToObject(null);
   }
 
-  public void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
+  public void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2,
                                 RobotCallback callback = null,
                                 QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
@@ -1051,7 +1059,7 @@ public class Robot : IRobot {
       objectID: observedObject,
       robotID: ID,
       maxTurnAngle: float.MaxValue,
-      panTolerance_rad: 5 * Mathf.Deg2Rad, // 1.7 degrees is the minimum in the engine
+      panTolerance_rad: kPanTolerance_rad, // 1.7 degrees is the minimum in the engine
       headTrackWhenDone: headTrackWhenDone,
       maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
       panAccel_radPerSec2: panAccel_radPerSec2,
@@ -1065,9 +1073,9 @@ public class Robot : IRobot {
 
   }
 
-  public void TurnTowardsPose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, 
-                              RobotCallback callback = null,
-                              QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {    
+  public void TurnTowardsFacePose(Face face, float maxPanSpeed_radPerSec = kDefaultRadPerSec, float panAccel_radPerSec2 = kPanAccel_radPerSec2, 
+                                  RobotCallback callback = null,
+                                  QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {    
 
     SendQueueSingleAction(
       Singleton<TurnTowardsPose>.Instance.Initialize(
@@ -1077,7 +1085,7 @@ public class Robot : IRobot {
         maxTurnAngle: float.MaxValue,
         maxPanSpeed_radPerSec: maxPanSpeed_radPerSec,
         panAccel_radPerSec2: panAccel_radPerSec2,
-        panTolerance_rad: 5 * Mathf.Deg2Rad, // 1.7 degrees is the minimum in the engine
+        panTolerance_rad: kPanTolerance_rad, // 1.7 degrees is the minimum in the engine
         maxTiltSpeed_radPerSec: 0f,
         tiltAccel_radPerSec2: 0f,
         tiltTolerance_rad: 0f,
@@ -1095,9 +1103,9 @@ public class Robot : IRobot {
 
     SendQueueSingleAction(Singleton<TurnTowardsLastFacePose>.Instance.Initialize(
       maxTurnAngle: maxTurnAngle,
-      maxPanSpeed_radPerSec: 4.3f,
-      panAccel_radPerSec2: 10f,
-      panTolerance_rad: 5 * Mathf.Deg2Rad,
+      maxPanSpeed_radPerSec: kDefaultRadPerSec,
+      panAccel_radPerSec2: kPanAccel_radPerSec2,
+      panTolerance_rad: kPanTolerance_rad,
       maxTiltSpeed_radPerSec: 0f,
       tiltAccel_radPerSec2: 0f,
       tiltTolerance_rad: 0f,
