@@ -62,16 +62,16 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeData = challengeData;
     _WonChallenge = false;
 
+    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
+  }
+
+  private void FinishTurnToFace(bool success) {
     _SharedMinigameViewInstance = UIManager.OpenView(
       UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       false) as SharedMinigameView;
     _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
       _ChallengeData.HowToPlayDialogContentLocKey);
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
-    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
-  }
-
-  private void FinishTurnToFace(bool success) {
     Initialize(_ChallengeData.MinigameConfig);
 
     // Populate the view before opening it so that animations play correctly
