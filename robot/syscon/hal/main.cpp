@@ -81,23 +81,25 @@ int main(void)
   RTOS::init();
   Crypto::init();
 
-  // Setup all the things in order of priority
-  Radio::init();
-  Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
+	Battery::powerOn();
+	
+  // Setup all tasks
   Battery::init();
   Bluetooth::init();
   Timer::init();
   Lights::init();
+  Radio::init();
 
-  Battery::powerOn();
+	#ifndef BLUETOOTH_MODE
+	Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
 
-  // We use the RNG in places during init
-  //Radio::shutdown();
-  //Bluetooth::advertise(); 
-
-  Bluetooth::shutdown();
+	Bluetooth::shutdown();
   Radio::advertise();
-  
+	#else
+	Radio::shutdown();
+  Bluetooth::advertise(); 
+	#endif
+	
   // Let the test fixtures run, if nessessary
   #ifdef RUN_TESTS
 	TestFixtures::run();

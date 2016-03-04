@@ -13,8 +13,16 @@ static const int MAX_TASKS = 32;
 
 typedef void (*RTOS_TaskProc)(void* userdata);
 
+enum RTOS_Priority {
+	RTOS_RADIO_PRIORITY,
+	RTOS_HIGH_PRIORITY,
+	RTOS_DEFAULT_PRIORITY,
+	RTOS_LOW_PRIORITY
+};
+
 struct RTOS_Task {
-  RTOS_TaskProc task;
+  RTOS_Priority priority;
+	RTOS_TaskProc task;
   void* userdata;
   
   int target;
@@ -22,6 +30,7 @@ struct RTOS_Task {
   bool repeating;
 	bool active;
 
+  RTOS_Task *prev;
   RTOS_Task *next;
 };
 
@@ -34,11 +43,13 @@ namespace RTOS {
 	void LeaveCritical(void);
   
   RTOS_Task* allocate(void);
-  void release(RTOS_Task** task);
+  void remove(RTOS_Task* task);
+  void release(RTOS_Task* task);
 
   RTOS_Task* create(RTOS_TaskProc task, bool repeating = true);
   void start(RTOS_Task* task, int period = CYCLES_MS(5.0f), void* userdata = NULL);
   void stop(RTOS_Task* task);
+	void setPriority(RTOS_Task* task, RTOS_Priority priority);
   
   RTOS_Task* schedule(RTOS_TaskProc task, int period = CYCLES_MS(5.0f), void* userdata = NULL, bool repeating = true);
 };

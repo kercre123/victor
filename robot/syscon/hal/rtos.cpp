@@ -1,4 +1,4 @@
-	#include <string.h>
+#include <string.h>
 
 #include "nrf.h"
 #include "nrf_gpio.h"
@@ -45,47 +45,79 @@ RTOS_Task* RTOS::allocate(void) {
   
   RTOS_Task *task = free_task;
   free_task = free_task->next;
-  task->next = NULL;
 
   return task;
 }
 
-void RTOS::release(RTOS_Task** task) {
-  RTOS_Task* released = *task;
-	
-	*task = (*task)->next;
-	released->next = free_task;
-  free_task = released; 
-}
-
-static void insert(RTOS_Task* newTask) {
-  RTOS_Task **cursor = &task_list;
-  
-	while (*cursor != NULL) {
-		cursor = &(*cursor)->next;
+void RTOS::remove(RTOS_Task* task) {
+  // Remove task from listing
+	if (task->prev) {
+		task->prev->next = task->next;
+ 	} else {
+		task_list = task->next;
 	}
 	
-	*cursor = newTask;	
+	if (task->next) {
+		task->next->prev = task->prev;
+	}
+}
+	
+void RTOS::release(RTOS_Task* task) {
+	RTOS::remove(task);
+
+	// Add to unallocated list
+	task->next = free_task;
+	free_task = task;
+}
+
+static void insert(RTOS_Task* task) {
+	// Set task to the first index
+	task->prev = NULL;
+	task->next = task_list;
+	
+	// Shift our task down the chain
+	while (task->next && task->next->priority <= task->priority) {
+		task->prev = task->next;
+		task->next = task->next->next;
+	}
+
+	// Insert the task into the chain
+	if (task->prev) {
+		task->prev->next = task;
+	} else {
+		task_list = task;
+	}
+
+	if (task->next) {
+		task->next->prev = task;
+	}
+}
+
+void RTOS::setPriority(RTOS_Task* task, RTOS_Priority priority) {
+	remove(task);
+	task->priority = priority;
+	insert(task);
 }
 
 void RTOS::manage(void) {
 	NVIC_SetPendingIRQ(SWI0_IRQn);
 }
 
-RTOS_Task* RTOS::create(RTOS_TaskProc task, bool repeating) {
-  RTOS_Task* newTask = allocate();
+RTOS_Task* RTOS::create(RTOS_TaskProc func, bool repeating) {
+  RTOS_Task* task = allocate();
 
-  if (newTask == NULL) {
+  if (task == NULL) {
     return NULL;
   }
 
-  newTask->task = task;
-  newTask->repeating = repeating;
-	newTask->active = false;
+  task->priority = RTOS_DEFAULT_PRIORITY;
+	task->task = func;
+  task->repeating = repeating;
+	task->active = false;
 
-  insert(newTask);
+  insert(task);
  
-	return newTask;
+	return task;
 }
 
 void RTOS::start(RTOS_Task* task, int period, void* userdata) {
@@ -107,16 +139,16 @@ void RTOS::LeaveCritical(void) {
 	NVIC_EnableIRQ(SWI0_IRQn);
 }
 
-RTOS_Task* RTOS::schedule(RTOS_TaskProc task, int period, void* userdata, bool repeating) {
-  RTOS_Task* newTask = create(task, repeating);
+RTOS_Task* RTOS::schedule(RTOS_TaskProc func, int period, void* userdata, bool repeating) {
+  RTOS_Task* task = create(func, repeating);
   
-  if (free_task == NULL) {
+  if (task == NULL) {
     return NULL;
   }
 
-  start(newTask, period, userdata);
+  start(task, period, userdata);
   
-  return newTask;
+  return task;
 }
 
 extern "C" void SWI0_IRQHandler(void) {
@@ -149,7 +181,7 @@ extern "C" void SWI0_IRQHandler(void) {
     if (task->repeating) {
       task->target += task->period;
     } else {
-      RTOS::release(cursor);
+      RTOS::release(task);
     }
   }
 
