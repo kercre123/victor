@@ -230,5 +230,8 @@
   },
   "speedTap.difficulty.expertDescription": {
     "translation": "Patterns may have any number of colors and lights."
+  },
+  "button.retry": {
+    "translation": "Try Again"
   }
 }

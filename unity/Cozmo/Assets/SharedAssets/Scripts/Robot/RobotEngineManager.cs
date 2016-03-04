@@ -66,6 +66,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.InitBlockPoolMessage> OnInitBlockPoolMsg;
+  public event Action<ImageChunk> OnImageChunkReceived;
 
   #region Audio Callback events
 
@@ -347,6 +348,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.InitBlockPoolMessage:
       ReceivedSpecificMessage(message.InitBlockPoolMessage);
+      break;
+    case G2U.MessageEngineToGame.Tag.ImageChunk:
+      ReceivedSpecificMessage(message.ImageChunk);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -636,6 +640,12 @@ public class RobotEngineManager : MonoBehaviour {
       if (CurrentRobot.CurrentBehaviorString != message.text) {
         CurrentRobot.CurrentBehaviorString = message.text;
       }
+    }
+  }
+
+  private void ReceivedSpecificMessage(ImageChunk message) {
+    if (OnImageChunkReceived != null) {
+      OnImageChunkReceived(message);
     }
   }
 

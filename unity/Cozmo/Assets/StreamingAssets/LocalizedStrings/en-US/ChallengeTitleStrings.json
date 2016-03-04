@@ -143,5 +143,11 @@
   },
   "challengeEnded.label.reward": {
     "translation": "Rewards:"
+  },
+  "artistCozmo.title": {
+    "translation": "Artist Cozmo"
+  },
+  "artistCozmo.description": {
+    "translation": "Artist Cozmo Description"
   }
 }
