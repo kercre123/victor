@@ -330,10 +330,13 @@ extern "C" void uesb_event_handler(void)
     }
 
     // We are loading the slot
-    accessories[slot].active = true;
     accessories[slot].id = packet.id;
     accessories[slot].last_received = 0;
-    SendObjectConnectionState(slot);
+    if (accessories[slot].active == false)
+    {
+      accessories[slot].active = true;
+      SendObjectConnectionState(slot);
+    }
 
     // Schedule a one time capture for this slot
     RTOS::schedule(send_capture_packet, CAPTURE_OFFSET, (void*) slot, false);
