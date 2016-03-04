@@ -117,9 +117,9 @@ static inline void aes_decrypt(uint8_t* in, uint8_t* out, int size) {
 }
 
 // Step to convert a pin + random to a hash
-static void dh_encode_random(void *result, int pin, const uint8_t* random) {
+static void dh_encode_random(big_num_t& result, int pin, const uint8_t* random) {
 	ecb_data_t ecb;
-	
+
 	{
 		// Hash our pin (keeping only lower portion
 		SHA1_CTX ctx;
@@ -132,35 +132,31 @@ static void dh_encode_random(void *result, int pin, const uint8_t* random) {
 		aes_setup(ecb, sig);
 	}
 	
-	aes_ecb(ecb, random, result);	
+	result.negative = false;
+	result.used = AES_BLOCK_LENGTH / sizeof(big_num_cell_t);
+	aes_ecb(ecb, random, result.digits);
 }
 
 static void dh_start(DiffieHellman* dh) {
 	// Generate our secret
-	Crypto::random(dh->secret, SECRET_LENGTH);
+	//Crypto::random(dh->secret, SECRET_LENGTH);
 	
 	// Encode our secret as an exponent
 	big_num_t secret;	
 
-	secret.negative = false;
-	secret.used = AES_BLOCK_LENGTH / sizeof(big_num_cell_t);
-	dh_encode_random(secret.digits, dh->pin, dh->secret);
-	mont_power(DEFAULT_DIFFIE_GROUP, dh->state, DEFAULT_DIFFIE_GENERATOR, secret);
+	dh_encode_random(secret, dh->pin, dh->secret);
+	mont_power(*dh->mont, dh->state, *dh->gen, secret);
 }
 
-static void dh_finish(DiffieHellman* dh, uint8_t* key) {
+static void dh_finish(DiffieHellman* dh, uint8_t* key, int length) {
 	// Encode their secret for exponent
-	big_num_t secret;	
-
-	// The cell phone sends the AES encoded chunk (less delay)
-	secret.negative = false;
-	secret.used = SECRET_LENGTH / sizeof(big_num_cell_t);
-	memcpy(secret.digits, dh->secret, SECRET_LENGTH);
-
-	big_num_t result;
-	mont_power(DEFAULT_DIFFIE_GROUP, result, dh->state, secret);
+	big_num_t temp;	
 	
-	memcpy(key, result.digits, AES_BLOCK_LENGTH);
+	dh_encode_random(temp, dh->pin, dh->secret);
+	mont_power(*dh->mont, dh->state, dh->state, temp);
+	mont_from(*dh->mont, temp, dh->state);
+	
+	memcpy(key, temp.digits, length);
 }
 
 void Crypto::init() {
@@ -216,7 +212,7 @@ void Crypto::random(void* ptr, int length) {
   }
 }
 
-void Crypto::execute(CryptoTask* task) {
+void Crypto::execute(const CryptoTask* task) {
 	RTOS::EnterCritical();
 	int count = fifoCount;
 	RTOS::LeaveCritical();
@@ -257,7 +253,7 @@ void Crypto::manage(void) {
 			dh_start((DiffieHellman*) task->input);
 			break ;
 		case CRYPTO_FINISH_DIFFIE_HELLMAN:
-			dh_finish((DiffieHellman*) task->input, (uint8_t*)task->output);
+			dh_finish((DiffieHellman*) task->input, (uint8_t*)task->output, task->length);
 			break ;
 	}
 
