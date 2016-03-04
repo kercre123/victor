@@ -2152,7 +2152,7 @@ namespace Cozmo {
         {
           // Get an ROI around where we expect to see the dot in the image
           const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[i];
-          const f32 kQuadPad_mm = 5.f;
+          const f32 kQuadPad_mm = 3.5f;
           Quad3f dotQuadRoi3d = {
             {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
             {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
@@ -2168,15 +2168,17 @@ namespace Cozmo {
           const f32 kDotAreaFrac = (kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) / (4.f*kQuadPad_mm * kQuadPad_mm);
           const f32 kMinDotAreaFrac = 0.5f * kDotAreaFrac;
           const f32 kMaxDotAreaFrac = 1.5f * kDotAreaFrac;
-          
+          const f32 kHoleAreaFrac = kDotHole_mm * kDotHole_mm / (kDotWidth_mm*kDotWidth_mm);
+          const f32 kMaxHoleAreaFrac = 1.5f * kHoleAreaFrac;
+          const f32 kMinContrastRatio = 1.1f;
           Quad3f dotQuadRoi3dWrtCam;
           liftPoseWrtCam.ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtCam);
           
           // DEBUG:
-          Quad3f dotQuadRoi3dWrtWorld;
-          liftPose.GetWithRespectToOrigin().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
-          dotQuadRoi3dWrtWorld += Point3f(0,0,0.5f);
-          _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324+(u32)i, dotQuadRoi3dWrtWorld, NamedColors::RED);
+          //          Quad3f dotQuadRoi3dWrtWorld;
+          //          liftPose.GetWithRespectToOrigin().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
+          //          dotQuadRoi3dWrtWorld += Point3f(0,0,0.5f);
+          //          _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324+(u32)i, dotQuadRoi3dWrtWorld, NamedColors::RED);
           
           Quad2f dotQuadRoi2d;
           _camera.Project3dPoints(dotQuadRoi3dWrtCam, dotQuadRoi2d);
@@ -2192,21 +2194,15 @@ namespace Cozmo {
 
           // Perform local binarization:
           Vision::Image dotRoi_blurred;
-          cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(), cv::Size(11,11), 5);
+          cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(), cv::Size(15,15), 11);
           Vision::Image binarizedDotRoi(dotRoi.GetNumRows(), dotRoi.GetNumCols());
           binarizedDotRoi.get_CvMat_() = dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_();
           
-          if(DRAW_TOOL_CODE_DEBUG) {
+          if(false && DRAW_TOOL_CODE_DEBUG) {
             _debugImageMailbox.putMessage({(i==0 ? "dotRoi0" : "dotRoi1"), dotRoi});
             _debugImageMailbox.putMessage({(i==0 ? "dotRoi0_blurred" : "dotRoi1_blurred"), dotRoi_blurred});
             _debugImageMailbox.putMessage({(i==0 ? "InvertedDotROI0" : "InvertedDotRoi1"), binarizedDotRoi});
           }
-          
-//          Array<u8> tempEmbeddedArray;
-//          GetImageHelper(invertedDotRoi, tempEmbeddedArray);
-//          
-//          ConnectedComponents extractedComponents;
-//          Embedded::FindCandidateConnectedComponents(tempEmbeddedArray, _detectionParameters, extractedComponents, _memory._ccmScratch, _memory._onchipScratch, _memory._offchipScratch);
           
           // Refine centroid using only the connected component within which the first
           // centroid fell
@@ -2216,7 +2212,8 @@ namespace Cozmo {
           
           s32 dotLabel = -1;
           
-          // Use centroid of component nearest center with the "right area"
+          // Filter out components based on a variety of checks:
+          //  area, solidity, existence and size of a hole that is fully surrounded
           Anki::Point2f roiCen(binarizedDotRoi.GetNumCols(), binarizedDotRoi.GetNumRows());
           roiCen *= 0.5f;
           f32 distToCenterSq = FLT_MAX;
@@ -2224,52 +2221,87 @@ namespace Cozmo {
           {
             const s32* compStats = stats.ptr<s32>(iComp);
             const s32 compArea = compStats[cv::CC_STAT_AREA];
+            const s32 bboxArea = compStats[cv::CC_STAT_HEIGHT]*compStats[cv::CC_STAT_WIDTH];
+            const f32 solidity = (f32)compArea/(f32)bboxArea;
             if(compArea > kMinDotAreaFrac*binarizedDotRoi.GetNumElements() &&
-               compArea < kMaxDotAreaFrac*binarizedDotRoi.GetNumElements())
+               compArea < kMaxDotAreaFrac*binarizedDotRoi.GetNumElements() &&
+               solidity > 0.5f*(1.f-kHoleAreaFrac))
             {
               const f64* dotCentroid = centroids.ptr<f64>(iComp);
-              f32 dist = (Anki::Point2f(dotCentroid[0], dotCentroid[1]) - roiCen).LengthSq();
-              if(dist < distToCenterSq) {
+              const f32 distSq = (Anki::Point2f(dotCentroid[0], dotCentroid[1]) - roiCen).LengthSq();
+              if(distSq < distToCenterSq)
+              {
+                distToCenterSq = distSq;
                 
-                //const f32 compFrac = (f32)stats.at<s32>(iComp, cv::CC_STAT_AREA) / invertedDotRoi.GetNumElements();
-                //if(NEAR(compFrac, kDotAreaFraction, 0.25f))
-                // Check to see if center is "empty" (has background label)
+                // Check to see if center point is "empty" (has background label)
                 // Note the x/y vs. row/col switch here
                 const s32 centerLabel = labels(std::round(dotCentroid[1]),
                                                std::round(dotCentroid[0]));
                 if(centerLabel == 0)
                 {
-                  // Verify if we flood fill from here that we get a hole of
+                  // Verify if we flood fill from center that we get a hole of
                   // reasonable size
-                  cv::floodFill(binarizedDotRoi.get_CvMat_(), cv::Point(dotCentroid[0], dotCentroid[1]), 128);
+                  cv::floodFill(labels.get_CvMat_(), cv::Point(dotCentroid[0], dotCentroid[1]),
+                                numComponents+1);
                   
-                  Anki::Rectangle<s32> compRect(compStats[cv::CC_STAT_LEFT], compStats[cv::CC_STAT_TOP],
+                  Anki::Rectangle<s32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
                                                 compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
                   
-                  Vision::Image compROI = binarizedDotRoi.GetROI(compRect);
-                  s32 holeArea = 0;
-                  auto GetHoleArea = [&holeArea](u8 p)
-                  {
-                    if(p == 128) {
-                      ++holeArea;
-                      return (u8)0; // removes hole when done (necessary?)
-                    }
-                    return p;
-                  };
-                  binarizedDotRoi.ApplyScalarFunction(GetHoleArea);
+                  Vision::Image compBrightnessROI = dotRoi.GetROI(compRect);
+                  Array2d<s32> labelROI = labels.GetROI(compRect);
                   
-                  // Hole should not be too big
-                  if(holeArea < compROI.GetNumElements()/2)
+                  // Loop over an even smaller ROI right around the component to
+                  // compute the hole size, the brightness of that hole vs.
+                  // the component itself, and whether the hole is completely
+                  // surrounded by the component or touches the edge of ROI.
+                  s32 avgDotBrightness = 0;
+                  s32 avgHoleBrightness = 0;
+                  s32 holeArea = 0;
+                  bool touchesEdge = false;
+                  for(s32 i=0; i<labelROI.GetNumRows() && !touchesEdge; ++i)
                   {
-                    // Yay, passed all checks! Thus "must" be a toold code.
-                    dotLabel = iComp;
+                    const u8* brightness_i = compBrightnessROI.GetRow(i);
+                    s32* label_i = labelROI.GetRow(i);
+                    
+                    for(s32 j=0; j<labelROI.GetNumCols() && !touchesEdge; ++j)
+                    {
+                      if(label_i[j] == numComponents+1)
+                      {
+                        ++holeArea;
+                        avgHoleBrightness += brightness_i[j];
+                        
+                        if(i==0 || i==labelROI.GetNumRows()-1 ||
+                           j==0 || j==labelROI.GetNumCols()-1)
+                        {
+                          touchesEdge = true;
+                        }
+                        label_i[j] = 0; // un-fill
+                      }
+                      else if(label_i[j] == iComp)  {
+                        avgDotBrightness += brightness_i[j];
+                      }
+                    }
+                  }
+                  
+                  if(!touchesEdge)
+                  {
+                    avgHoleBrightness /= holeArea;
+                    avgDotBrightness  /= compArea;
+                    
+                    // Hole should neither leak to the outside, nor should it be too big,
+                    // and it's brightness should be sufficiently brigther than the dot
+                    const bool holeSmallEnough = holeArea < compArea * kMaxHoleAreaFrac;
+                    const bool enoughContrast = (f32)avgHoleBrightness > kMinContrastRatio * (f32)avgDotBrightness;
+                    if(holeSmallEnough && enoughContrast)
+                    {
+                      // Yay, passed all checks! Thus "must" be a tool code.
+                      dotLabel = iComp;
+                    }
                   }
                 }
               } // dist to center check
             } // area check
           }
-          //const s32 dotLabel = labels.at<s32>(std::round(m.m01/m.m00),
-          //                                    std::round(m.m10/m.m00));
          
           if(dotLabel == -1) {
             // TODO: Return failure instead?
@@ -2289,8 +2321,6 @@ namespace Cozmo {
 
           if(DRAW_TOOL_CODE_DEBUG) {
             Vision::ImageRGB roiImgDisp(binarizedDotRoi);
-            roiImgDisp.DrawPoint(Anki::Point2f(dotCentroid[0], dotCentroid[1]),
-                                 NamedColors::RED, 1);
             // Function to color component with dotLabel green, and white for all others
             std::function<Vision::PixelRGB(const s32&)> fcn = [dotLabel](const s32& label)
             {
@@ -2303,6 +2333,12 @@ namespace Cozmo {
               }
             };
             labels.ApplyScalarFunction(fcn, roiImgDisp);
+            roiImgDisp.DrawPoint(Anki::Point2f(dotCentroid[0], dotCentroid[1]), NamedColors::RED, 1);
+            
+            const s32* compStats = stats.ptr<s32>(dotLabel);
+            Anki::Rectangle<f32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
+                                          compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
+            roiImgDisp.DrawRect(compRect, NamedColors::RED, 1);
             _debugImageRGBMailbox.putMessage({(i==0 ? "DotROI0withCentroid" : "DotROI1withCentroid"), roiImgDisp});
           }
           
