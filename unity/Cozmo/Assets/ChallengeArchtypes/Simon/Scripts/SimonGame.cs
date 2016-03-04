@@ -52,7 +52,7 @@ namespace Simon {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
 
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetMusicState());
     }
 
     public int GetNewSequenceLength(PlayerType playerPickingSequence) {
