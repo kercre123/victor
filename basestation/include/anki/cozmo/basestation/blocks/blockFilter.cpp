@@ -57,10 +57,12 @@ void BlockFilter::Init(const std::string &path, IExternalInterface* externalInte
     _externalInterface = externalInterface;
     _enabled = Load(path);
     
-    auto callback = std::bind(&BlockFilter::HandleGameEvents, this, std::placeholders::_1);
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage, callback));
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage, callback));
-    _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockSelectedMessage, callback));
+    if (_externalInterface != nullptr) {
+      auto callback = std::bind(&BlockFilter::HandleGameEvents, this, std::placeholders::_1);
+      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage, callback));
+      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage, callback));
+      _signalHandles.push_back(_externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockSelectedMessage, callback));
+    }
   }
 }
 

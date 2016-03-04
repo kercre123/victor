@@ -197,7 +197,9 @@ namespace Anki {
       
       
       // Lock active objects to connect to
-      _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"), _context->GetExternalInterface());
+      if (_context->GetDataPlatform() != nullptr) {
+        _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"), _context->GetExternalInterface());
+      }
       
     } // Constructor: Robot
     
