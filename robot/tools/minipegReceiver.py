@@ -83,12 +83,8 @@ class MinipegWriter(MinipegReceiver):
         fh.write(img)
         fh.close()
 
-    def onConnect(self, source):
-        robotInterface.Send(RI.EngineToRobot(syncTime=RI.SyncTime()))
-
     def __init__(self):
         MinipegReceiver.__init__(self, self.writeImage)
-        robotInterface.SubscribeToConnect(self.onConnect)
 
 if __name__ == '__main__':
     robotInterface.Init()
