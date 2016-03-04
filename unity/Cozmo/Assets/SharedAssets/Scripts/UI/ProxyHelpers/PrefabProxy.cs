@@ -297,12 +297,22 @@ public class PrefabProxy : MonoBehaviour {
 
   public GameObject Prefab;
 
+  /// <summary>
+  /// Instance values like colors, strings, ints, bools
+  /// </summary>
   [HideInInspector]
   public List<ModifiedValueField> ModifiedValues = new List<ModifiedValueField>();
 
+  /// <summary>
+  /// References to other gameObjects in the heirarchy or vice versa, like gameObjects, scripts, button references
+  /// </summary>
   [HideInInspector]
   public List<ModifiedLocalReferenceField> ModifiedLocalReferences = new List<ModifiedLocalReferenceField>();
 
+  // References to
+  /// <summary>
+  /// References to files in project, like materials, textures, fonts, asset files
+  /// </summary>
   [HideInInspector]
   public List<ModifiedGlobalReferenceField> ModifiedGlobalReferences = new List<ModifiedGlobalReferenceField>();
 
@@ -376,6 +386,11 @@ public class PrefabProxy : MonoBehaviour {
       _Instance = (GameObject)GameObject.Instantiate(Prefab);
 
       _Instance.name = name + "(Proxy)";
+
+      // Fix duplicate bug
+      for (int i = transform.childCount - 1; i >= 0; i--) {
+        DestroyImmediate(transform.GetChild(i).gameObject);
+      }
 
       _Instance.transform.SetParent(transform);
 
