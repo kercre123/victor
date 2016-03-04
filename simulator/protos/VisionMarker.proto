@@ -44,7 +44,7 @@ PROTO VisionMarker [
               size %{= fields.markerWidth.value }% 0.0001 %{= fields.markerHeight.value }%
             }
           }
-          %{ if fields.useWhiteBackground then }%
+          %{ if fields.useWhiteBackground.value then }%
           DEF FACE_SHAPE Shape {
             appearance Appearance {
               material Material {

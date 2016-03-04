@@ -1174,14 +1174,24 @@ Supervisor {
                         }                        
                       ]
                     }
-                    Transform {
+                    
+                    #Transform {
+                    #  rotation 1 0 0 1.5708
+                    #  translation 0.001 -0.01 -0.0199
+                    #  children [
+                    #    USE TOOL_CODE_DOT
+                    #  ]
+                    #}
+                
+                    VisionMarker {
                       rotation 1 0 0 1.5708
                       translation 0.001 -0.01 -0.0199
-                      children [
-                        USE TOOL_CODE_DOT
-                      ]
+                      markerWidth 0.003
+                      padding 0.0003
+                      useWhiteBackground FALSE
+                      image "symbols/bullseye2.png"
                     }
-                
+                    
 									] # LIFTER_SHAPE Group Children
 								} # LIFTER_SHAPE Group
 							 

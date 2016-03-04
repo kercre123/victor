@@ -2031,7 +2031,7 @@ namespace Cozmo {
     }
     
     if((lastResult = ReadToolCode(inputImageGray)) != RESULT_OK) {
-      PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
+      PRINT_NAMED_ERROR("VisionSystem.Update.ReadToolCodeFailed", "");
       return lastResult;
     }
     
@@ -2093,11 +2093,16 @@ namespace Cozmo {
   
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
-    // If we expect the tool code to be visible, the lift is stopped, _and_ we haven't
-    // checked it too recently, then try to read the tool code (and update calibration data)
-    if(image.GetTimestamp() - _lastToolCodeReadTime_ms > kToolCodeReadPeriod_ms &&
-       NEAR_ZERO(_poseData.poseStamp.GetLiftAngle()-_prevPoseData.poseStamp.GetLiftAngle()) &&
-       NEAR_ZERO(_poseData.poseStamp.GetHeadAngle()-_prevPoseData.poseStamp.GetHeadAngle()))
+    // All the conditions that must be met to bother trying to read the tool code:
+    const bool liftNotMoving = NEAR_ZERO(_poseData.poseStamp.GetLiftAngle()-_prevPoseData.poseStamp.GetLiftAngle());
+    
+    const bool headNotMoving = NEAR_ZERO(_poseData.poseStamp.GetHeadAngle()-_prevPoseData.poseStamp.GetHeadAngle());
+    
+    const bool longEnoughSinceLastRead = image.GetTimestamp() - _lastToolCodeReadTime_ms > kToolCodeReadPeriod_ms;
+    
+    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK;
+    
+    if(liftNotMoving && headNotMoving && longEnoughSinceLastRead && liftDown)
     {
       // Center points of the calibration dots, in lift coordinate frame
       // TODO: Move these to be defined elsewhere
@@ -2147,13 +2152,22 @@ namespace Cozmo {
         {
           // Get an ROI around where we expect to see the dot in the image
           const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[i];
-          const f32 quadPad_mm = 2.5f;
+          const f32 kQuadPad_mm = 5.f;
           Quad3f dotQuadRoi3d = {
-            {dotWrtLift3d.x() - quadPad_mm, dotWrtLift3d.y() - quadPad_mm, dotWrtLift3d.z()},
-            {dotWrtLift3d.x() - quadPad_mm, dotWrtLift3d.y() + quadPad_mm, dotWrtLift3d.z()},
-            {dotWrtLift3d.x() + quadPad_mm, dotWrtLift3d.y() - quadPad_mm, dotWrtLift3d.z()},
-            {dotWrtLift3d.x() + quadPad_mm, dotWrtLift3d.y() + quadPad_mm, dotWrtLift3d.z()},
+            {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
+            {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
+            {dotWrtLift3d.x() + kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
+            {dotWrtLift3d.x() + kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
           };
+          
+          //const f32 kDotRadius_mm = 1.5f;
+          //const f32 kDotAreaFraction = (kDotRadius_mm*kDotRadius_mm * M_PI /
+          //                              (quadPad_mm * quadPad_mm));
+          const f32 kDotWidth_mm = 2.5f;
+          const f32 kDotHole_mm = 2.5f/3.f;
+          const f32 kDotAreaFrac = (kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) / (4.f*kQuadPad_mm * kQuadPad_mm);
+          const f32 kMinDotAreaFrac = 0.5f * kDotAreaFrac;
+          const f32 kMaxDotAreaFrac = 1.5f * kDotAreaFrac;
           
           Quad3f dotQuadRoi3dWrtCam;
           liftPoseWrtCam.ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtCam);
@@ -2161,38 +2175,109 @@ namespace Cozmo {
           // DEBUG:
           Quad3f dotQuadRoi3dWrtWorld;
           liftPose.GetWithRespectToOrigin().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
-          _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324, dotQuadRoi3dWrtWorld, NamedColors::RED);
+          dotQuadRoi3dWrtWorld += Point3f(0,0,0.5f);
+          _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324+(u32)i, dotQuadRoi3dWrtWorld, NamedColors::RED);
           
           Quad2f dotQuadRoi2d;
           _camera.Project3dPoints(dotQuadRoi3dWrtCam, dotQuadRoi2d);
           
           Anki::Rectangle<s32> dotRectRoi(dotQuadRoi2d);
           const Vision::Image dotRoi = image.GetROI(dotRectRoi);
-          Vision::Image invertedDotRoi = dotRoi.GetNegative();
 
-          double maxVal = 0, minVal = 0;
-          cv::minMaxIdx(invertedDotRoi.get_CvMat_(), &minVal, &maxVal);
-          invertedDotRoi.Threshold((maxVal + minVal)*0.5);
-          cv::Moments m = cv::moments(invertedDotRoi.get_CvMat_(), true);
+          // Simple global threshold for binarization
+          //Vision::Image invertedDotRoi = dotRoi.GetNegative();
+          //double maxVal = 0, minVal = 0;
+          //cv::minMaxIdx(invertedDotRoi.get_CvMat_(), &minVal, &maxVal);
+          //invertedDotRoi.Threshold((maxVal + minVal)*0.5);
+
+          // Perform local binarization:
+          Vision::Image dotRoi_blurred;
+          cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(), cv::Size(11,11), 5);
+          Vision::Image binarizedDotRoi(dotRoi.GetNumRows(), dotRoi.GetNumCols());
+          binarizedDotRoi.get_CvMat_() = dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_();
           
           if(DRAW_TOOL_CODE_DEBUG) {
-            Vision::ImageRGB roiImgDisp(invertedDotRoi);
-            roiImgDisp.DrawPoint(Anki::Point2f(m.m10/m.m00, m.m01/m.m00), NamedColors::RED, 1);
-            _debugImageRGBMailbox.putMessage({("DotROI_" + std::to_string(i)).c_str(), roiImgDisp});
+            _debugImageMailbox.putMessage({(i==0 ? "dotRoi0" : "dotRoi1"), dotRoi});
+            _debugImageMailbox.putMessage({(i==0 ? "dotRoi0_blurred" : "dotRoi1_blurred"), dotRoi_blurred});
+            _debugImageMailbox.putMessage({(i==0 ? "InvertedDotROI0" : "InvertedDotRoi1"), binarizedDotRoi});
           }
-
+          
+//          Array<u8> tempEmbeddedArray;
+//          GetImageHelper(invertedDotRoi, tempEmbeddedArray);
+//          
+//          ConnectedComponents extractedComponents;
+//          Embedded::FindCandidateConnectedComponents(tempEmbeddedArray, _detectionParameters, extractedComponents, _memory._ccmScratch, _memory._onchipScratch, _memory._offchipScratch);
+          
           // Refine centroid using only the connected component within which the first
           // centroid fell
-          cv::Mat labels, stats, centroids;
-          const s32 numComponents = cv::connectedComponentsWithStats(invertedDotRoi.get_CvMat_(), labels, stats, centroids);
+          Array2d<s32> labels;
+          cv::Mat stats, centroids;
+          const s32 numComponents = cv::connectedComponentsWithStats(binarizedDotRoi.get_CvMat_(), labels.get_CvMat_(), stats, centroids);
           
-          if(numComponents <= 1) {
-            return RESULT_FAIL;
+          s32 dotLabel = -1;
+          
+          // Use centroid of component nearest center with the "right area"
+          Anki::Point2f roiCen(binarizedDotRoi.GetNumCols(), binarizedDotRoi.GetNumRows());
+          roiCen *= 0.5f;
+          f32 distToCenterSq = FLT_MAX;
+          for(s32 iComp=1; iComp < numComponents; ++iComp)
+          {
+            const s32* compStats = stats.ptr<s32>(iComp);
+            const s32 compArea = compStats[cv::CC_STAT_AREA];
+            if(compArea > kMinDotAreaFrac*binarizedDotRoi.GetNumElements() &&
+               compArea < kMaxDotAreaFrac*binarizedDotRoi.GetNumElements())
+            {
+              const f64* dotCentroid = centroids.ptr<f64>(iComp);
+              f32 dist = (Anki::Point2f(dotCentroid[0], dotCentroid[1]) - roiCen).LengthSq();
+              if(dist < distToCenterSq) {
+                
+                //const f32 compFrac = (f32)stats.at<s32>(iComp, cv::CC_STAT_AREA) / invertedDotRoi.GetNumElements();
+                //if(NEAR(compFrac, kDotAreaFraction, 0.25f))
+                // Check to see if center is "empty" (has background label)
+                // Note the x/y vs. row/col switch here
+                const s32 centerLabel = labels(std::round(dotCentroid[1]),
+                                               std::round(dotCentroid[0]));
+                if(centerLabel == 0)
+                {
+                  // Verify if we flood fill from here that we get a hole of
+                  // reasonable size
+                  cv::floodFill(binarizedDotRoi.get_CvMat_(), cv::Point(dotCentroid[0], dotCentroid[1]), 128);
+                  
+                  Anki::Rectangle<s32> compRect(compStats[cv::CC_STAT_LEFT], compStats[cv::CC_STAT_TOP],
+                                                compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
+                  
+                  Vision::Image compROI = binarizedDotRoi.GetROI(compRect);
+                  s32 holeArea = 0;
+                  auto GetHoleArea = [&holeArea](u8 p)
+                  {
+                    if(p == 128) {
+                      ++holeArea;
+                      return (u8)0; // removes hole when done (necessary?)
+                    }
+                    return p;
+                  };
+                  binarizedDotRoi.ApplyScalarFunction(GetHoleArea);
+                  
+                  // Hole should not be too big
+                  if(holeArea < compROI.GetNumElements()/2)
+                  {
+                    // Yay, passed all checks! Thus "must" be a toold code.
+                    dotLabel = iComp;
+                  }
+                }
+              } // dist to center check
+            } // area check
           }
-          
-          const s32 dotLabel = labels.at<s32>(std::round(m.m01/m.m00),
-                                              std::round(m.m10/m.m00));
-          
+          //const s32 dotLabel = labels.at<s32>(std::round(m.m01/m.m00),
+          //                                    std::round(m.m10/m.m00));
+         
+          if(dotLabel == -1) {
+            // TODO: Return failure instead?
+            PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.DotsNotFound",
+                                "Failed to find valid dot");
+            return RESULT_OK;
+          }
+
           ASSERT_NAMED(centroids.type() == CV_64F, "Expecting centroids to be double");
           const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
           const Anki::Point2f  observedPoint(dotCentroid[0] + dotRectRoi.GetX(),
@@ -2201,6 +2286,25 @@ namespace Cozmo {
           const Anki::Point2f& expectedPoint = projectedToolCodeDots[i];
           
           camCen += observedPoint - expectedPoint;
+
+          if(DRAW_TOOL_CODE_DEBUG) {
+            Vision::ImageRGB roiImgDisp(binarizedDotRoi);
+            roiImgDisp.DrawPoint(Anki::Point2f(dotCentroid[0], dotCentroid[1]),
+                                 NamedColors::RED, 1);
+            // Function to color component with dotLabel green, and white for all others
+            std::function<Vision::PixelRGB(const s32&)> fcn = [dotLabel](const s32& label)
+            {
+              if(label == dotLabel) {
+                return Vision::PixelRGB(0,255,0);
+              } else if(label == 0) {
+                return Vision::PixelRGB(0,0,0);
+              } else {
+                return Vision::PixelRGB(255,255,255);
+              }
+            };
+            labels.ApplyScalarFunction(fcn, roiImgDisp);
+            _debugImageRGBMailbox.putMessage({(i==0 ? "DotROI0withCentroid" : "DotROI1withCentroid"), roiImgDisp});
+          }
           
 #         if DRAW_TOOL_CODE_DEBUG
           dispImg.DrawPoint(observedPoint, NamedColors::ORANGE, 1);

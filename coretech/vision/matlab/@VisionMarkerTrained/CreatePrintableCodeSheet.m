@@ -74,7 +74,7 @@ whiteOnBlack = false;
 
 parseVarargin(varargin{:});
 
-assert(isempty(outsideBorderSize) || all(outsideBorderSize > markerSize), ...
+assert(isempty(outsideBorderSize) || all(outsideBorderSize==0) || all(outsideBorderSize > markerSize), ...
     'If specified, outsideBorderWidth should be larger than the markerSize.');
 
 if isempty(outsideBorderSize)
