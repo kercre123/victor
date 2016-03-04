@@ -316,13 +316,11 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
 
   int amax = a.used - 1;
   int bmax = b.used - 1;
-  int zeroed = CELL_SIZE;
+  bool clipped = false;
 
   // Clear our the section of the output that might be uninitalized
-  {
-    int original_cells = a.used;
-    int maximum = CELL_SIZE - original_cells;
-    memset(&out.digits[original_cells], 0, maximum * sizeof(big_num_cell_t));
+  for (int i = a.used; i < CELL_SIZE; i++) {
+    out.digits[i]  = 0;
   }
 
   out.negative = a.negative != b.negative;
@@ -330,13 +328,13 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
 
   for (int ai = amax; ai >= 0; ai--) {
     int a_value = a.digits[ai];
+    out.digits[ai] = 0; // This is done here so we can use inplace multiplication
 
     for (int bi = bmax; bi >= 0; bi--) {
       int write_index = ai + bi;
 
       // Multiply base terms and hope it's only 16-bit
-      int carry_in = (write_index >= zeroed) ? out.digits[write_index] : 0;
-      carry.word = a_value * b.digits[bi] + carry_in;
+      carry.word = a_value * b.digits[bi] + out.digits[write_index];
 
       // Zero result early abort
       if (carry.word == 0) {
@@ -345,7 +343,7 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
 
       // Cannot write outside of boundary
       if (write_index >= CELL_SIZE) {
-        return true;
+        clipped = true;
       }
 
       out.digits[write_index++] = carry.lower;
@@ -354,11 +352,10 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
       while (carry.upper) {
         // Overflow check
         if (write_index >= CELL_SIZE) {
-          return true;
+          clipped = true;
         }
 
-        carry_in = (write_index >= zeroed) ? out.digits[write_index] : 0;        
-        carry.word = carry.upper + carry_in;
+        carry.word = carry.upper + out.digits[write_index];
         out.digits[write_index++] = carry.lower;
       }
 
@@ -366,15 +363,10 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
       if (write_index > out.used) {
         out.used = write_index;
       }
-
-      // Set the initalized count-down
-      if (ai + bi < zeroed) {
-        zeroed = ai + bi;
-      }
     }
   }
 
-  return false;
+  return clipped;
 }
 
 bool big_power(big_num_t& result, const big_num_t& base_in, const big_num_t& exp) {
