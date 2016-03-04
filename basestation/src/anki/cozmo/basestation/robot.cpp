@@ -3066,8 +3066,8 @@ namespace Anki {
         }
         
         // Check if there is still space in the message
-        if (numObjects >= static_cast<u8>(ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS)) {
-          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %d", ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS);
+        if (numObjects >= msg.factory_id.size()) {
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", msg.factory_id.size());
           return RESULT_FAIL;
         }
         
