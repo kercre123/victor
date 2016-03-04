@@ -18,7 +18,6 @@ static inline void bit_reduce(big_num_t& num) {
 // POS : A < B
 // NEG : A > B
 //  0  : A = B
-
 int big_unsigned_compare(const big_num_t& a, const big_num_t& b) {
   // Zero values
   if (a.used == 0 && b.used == 0) {
@@ -552,22 +551,24 @@ bool mont_init(big_mont_t& mont, const big_num_t& modulo) {
   }
 
   // R
-  mont.r = BIG_ZERO;
-  big_bit_set(mont.r, mont.shift);
+  big_num_t r;
+
+  r = BIG_ZERO;
+  big_bit_set(r, mont.shift);
 
   // R2
-  big_multiply(mont.r2, mont.r, mont.r);
+  big_multiply(mont.r2, r, r);
   big_modulo(mont.r2, mont.r2, modulo);
 
   // RINV
-  big_invm(mont.rinv, mont.r, modulo);
+  big_invm(mont.rinv, r, modulo);
 
   // MINV
-  big_multiply(temp, mont.rinv, mont.r);
+  big_multiply(temp, mont.rinv, r);
   big_subtract(temp, temp, BIG_ONE);
   big_divide(mont.minv, temp, temp, modulo);
-  big_modulo(mont.minv, mont.minv, mont.r);
-  big_subtract(mont.minv, mont.r, mont.minv);
+  big_modulo(mont.minv, mont.minv, r);
+  big_subtract(mont.minv, r, mont.minv);
 
   // Constant one
   mont_to(mont, mont.one, BIG_ONE);
