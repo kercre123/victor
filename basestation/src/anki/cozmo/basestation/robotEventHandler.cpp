@@ -95,6 +95,12 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     auto delocalizeCallabck = std::bind(&RobotEventHandler::HandleForceDelocalizeRobot, this, std::placeholders::_1);
     _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceDelocalizeRobot, delocalizeCallabck));
     
+    // Custom handler for RequestDiscoveredObjects event
+    auto requestDiscoveredObjectsCallback = std::bind(&RobotEventHandler::HandleRequestDiscoveredObjects, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::RequestDiscoveredObjects, requestDiscoveredObjectsCallback));
+
+    
+    
     // Custom handlers for Mood events
     {
       auto moodEventCallback = std::bind(&RobotEventHandler::HandleMoodEvent, this, std::placeholders::_1);
@@ -113,11 +119,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
     }
     
-    // Custom handlers for BehaviorManager events
-    {
-      auto connectToBlocksCallback = std::bind(&RobotEventHandler::HandleConnectToBlocks, this, std::placeholders::_1);
-      _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToBlocks, connectToBlocksCallback));
-    }
   }
 }
   
@@ -904,10 +905,11 @@ void RobotEventHandler::HandleBehaviorManagerEvent(const AnkiEvent<ExternalInter
   }
 }
 
-void RobotEventHandler::HandleConnectToBlocks(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleRequestDiscoveredObjects(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
+
   const auto& eventData = event.GetData();
-  const auto& message = eventData.Get_ConnectToBlocks();
+  const auto& message = eventData.Get_RequestDiscoveredObjects();
   const RobotID_t robotID = message.robotID;
   
   Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
@@ -915,12 +917,13 @@ void RobotEventHandler::HandleConnectToBlocks(const AnkiEvent<ExternalInterface:
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleConnectToBlocks.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleRequestDiscoveredObjects.InvalidRobotID", "Failed to find robot %u.", robotID);
   }
   else
   {
-    robot->ConnectToBlocks(message.factory_ids);
+    robot->BroadcastDiscoveredObjects();
   }
+
 }
 
 

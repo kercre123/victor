@@ -1396,25 +1396,24 @@ namespace Anki {
               case (s32) '!':
               {
                 webots::Field* factoryIDs = root_->getField("activeObjectFactoryIDs");
-                if (factoryIDs) {
-                  ExternalInterface::ConnectToBlocks msg;
-                  for (int i=0; i<msg.factory_ids.size(); ++i) {
-                    msg.factory_ids[i] = factoryIDs->getMFInt32(i);
+                webots::Field* connect = root_->getField("activeObjectConnect");
+                
+                if (factoryIDs && connect) {
+                  ExternalInterface::BlockSelectedMessage msg;
+                  for (int i=0; i<factoryIDs->getCount(); ++i) {
+                    msg.factoryId = factoryIDs->getMFInt32(i);
+                    msg.selected = connect->getSFBool();
+                    
+                    if (msg.factoryId == 0) {
+                      continue;
+                    }
+                    
+                    PRINT_NAMED_INFO("BlockSelected", "factoryID 0x%x, connect %d", msg.factoryId, msg.selected);
+                    ExternalInterface::MessageGameToEngine msgWrapper;
+                    msgWrapper.Set_BlockSelectedMessage(msg);
+                    SendMessage(msgWrapper);
                   }
-                  
-                  PRINT_NAMED_INFO("Connecting to blocks",
-                                   "0x%x 0x%x 0x%x 0x%x 0x%x",
-                                   msg.factory_ids[0],
-                                   msg.factory_ids[1],
-                                   msg.factory_ids[2],
-                                   msg.factory_ids[3],
-                                   msg.factory_ids[4]);
-                                   
-                  ExternalInterface::MessageGameToEngine msgWrapper;
-                  msgWrapper.Set_ConnectToBlocks(msg);
-                  SendMessage(msgWrapper);
                 }
-
                 break;
               }
 

@@ -59,9 +59,15 @@
 #include "clad/types/imageTypes.h"
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <time.h>
 #include <utility>
 #include <fstream>
+
+
+// Prints the IDs of the active blocks that are on but not currently
+// talking to a robot. Prints roughly once/sec.
+#define PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS 0
 
 namespace Anki {
   
@@ -99,6 +105,7 @@ class MatPiece;
 class MoodManager;
 class PathDolerOuter;
 class ProgressionManager;
+class BlockFilter;
 class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
@@ -582,7 +589,12 @@ public:
     
     // =========  Block messages  ============
   
-    Result ConnectToBlocks(const std::array<u32,(size_t)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS> & factory_ids);
+    // Assign which blocks the robot should connect to.
+    // Max size of set is ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS.
+    Result ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids);
+  
+    // Broadcast to game which blocks have been discovered
+    void BroadcastDiscoveredObjects();
   
     // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
     Result SetObjectLights(const ObjectID& objectID,
@@ -879,7 +891,13 @@ public:
 
     ///////// Progression/Skills ////////
     ProgressionManager*  _progressionManager;
-    
+  
+    //////// Block pool ////////
+    BlockFilter*         _blockFilter;
+  
+    // Map of discovered objects and the last time that they were heard from
+    std::unordered_map<FactoryID, TimeStamp_t> _discoveredObjects;
+  
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending
     // (via MessageHandler) to the physical robot

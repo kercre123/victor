@@ -10,8 +10,8 @@
  * Copyright: Anki, Inc. 2016
  **/
 
-
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -25,21 +25,23 @@
 namespace Anki {
 namespace Cozmo {
     
-BlockFilter::BlockFilter()
-  : BlockFilter(FactoryIDSet())
+BlockFilter::BlockFilter(Robot* inRobot)
+  : BlockFilter(FactoryIDSet(), inRobot)
 {
 }
 
-BlockFilter::BlockFilter(const FactoryIDSet &factoryIds)
-  : _blocks(factoryIds)
+BlockFilter::BlockFilter(const FactoryIDSet &factoryIds, Robot* inRobot)
+  : _robot(inRobot)
+  , _blocks(factoryIds)
   , _path()
   , _enabled(false)
   , _externalInterface(nullptr)
 {
 }
 
-BlockFilter::BlockFilter(const std::string &path)
-  : _blocks()
+BlockFilter::BlockFilter(const std::string &path, Robot* inRobot)
+  : _robot(inRobot)
+  , _blocks()
   , _path(path)
   , _enabled(false)
   , _externalInterface(nullptr)
@@ -75,16 +77,19 @@ bool BlockFilter::ContainsFactoryId(FactoryID factoryId) const
 void BlockFilter::AddFactoryId(const FactoryID factoryId)
 {
   _blocks.insert(factoryId);
+  ConnectToBlocks();
 }
 
 void BlockFilter::AddFactoryIds(const FactoryIDSet &factoryIds)
 {
   _blocks.insert(factoryIds.begin(), factoryIds.end());
+  ConnectToBlocks();
 }
 
 void BlockFilter::RemoveFactoryId(const FactoryID factoryId)
 {
   _blocks.erase(factoryId);
+  ConnectToBlocks();
 }
 
 void BlockFilter::RemoveFactoryIds(const FactoryIDSet &factoryIds)
@@ -93,6 +98,7 @@ void BlockFilter::RemoveFactoryIds(const FactoryIDSet &factoryIds)
   {
     _blocks.erase(factoryID);
   }
+  ConnectToBlocks();
 }
 
 void BlockFilter::RemoveAllFactoryIds()
@@ -182,7 +188,19 @@ bool BlockFilter::Load(const std::string &path)
   _blocks = blocks;
   inputFileSteam.close();
 
+  ConnectToBlocks();
+  
   return true;
+}
+ 
+bool BlockFilter::ConnectToBlocks() const
+{
+  if (_robot) {
+    return _robot->ConnectToBlocks(_blocks) == RESULT_OK;
+  } else {
+    PRINT_NAMED_WARNING("BlockFilter.ConnectToBlocks.NoRobot", "");
+    return false;
+  }
 }
   
 void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -220,11 +238,11 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       const Anki::Cozmo::ExternalInterface::BlockSelectedMessage& msg = event.GetData().Get_BlockSelectedMessage();
       if( msg.selected != 0 )
       {
-        AddFactoryId( msg.blockId );
+        AddFactoryId( msg.factoryId );
       }
       else
       {
-        RemoveFactoryId(msg.blockId);
+        RemoveFactoryId(msg.factoryId);
       }
       break;
     }

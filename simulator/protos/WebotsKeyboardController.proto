@@ -27,6 +27,7 @@ PROTO WebotsKeyboardController [
   
   # Factory IDs of objects to connect to
   field MFInt32 activeObjectFactoryIDs [0 0 0 0 0]
+  field SFBool  activeObjectConnect TRUE
 
   field SFString controllerArgs ""
   field SFVec3f translation 0 0 0.08

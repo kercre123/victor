@@ -830,16 +830,15 @@ message BlockPoolEnabledMessage {
 }
 
 message BlockSelectedMessage {
-  uint_32 blockId,
+  uint_32 factoryId,
   bool   selected
 }
 // Query for E2Gmessage: InitBlockPoolMessage
 message GetBlockPoolMessage {
 }
 
-message ConnectToBlocks {
-  uint_32 factory_ids[5],
-  uint_8  robotID,
+message RequestDiscoveredObjects {
+  uint_8 robotID
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

@@ -33,10 +33,6 @@
 // Whether or not to handle prox obstacle events
 #define HANDLE_PROX_OBSTACLES 0
 
-// Prints the IDs of the active blocks that are on but not currently
-// talking to a robot. Prints roughly once/sec.
-#define PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS 0
-
 
 namespace Anki {
 namespace Cozmo {
@@ -242,22 +238,30 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
 void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
-  Broadcast(ExternalInterface::MessageEngineToGame(ObjectDiscovered(payload)));
-  
-#if(PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS)
-  if (payload.factory_id < s32_MAX) {  // Ignore chargers which have MSB set
-    PRINT_NAMED_INFO("ActiveObjectDiscovered", "%8x", payload.factory_id);
+
+  // TODO: Include charger support but for now ignore them.
+  //       Chargers have MSB set.
+  if (payload.factory_id >= s32_MAX) {
+    return;
   }
-#endif
+  
+  if (_discoveredObjects.find(payload.factory_id) == _discoveredObjects.end()) {
+    Broadcast(ExternalInterface::MessageEngineToGame(ObjectDiscovered(payload)));
+#   if(PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS)
+    PRINT_NAMED_INFO("ObjectDiscovered", "FactoryID 0x%x (currTime %d)", payload.factory_id, GetLastMsgTimestamp());
+#   endif
+  }
+  _discoveredObjects[payload.factory_id] = GetLastMsgTimestamp();  // Not super accurate, but this doesn't need to be
+  
 }
 
  
 void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-#if(OBJECTS_HEARABLE)
   ObjectConnectionState payload = message.GetData().Get_activeObjectConnectionState();
-  
   ObjectID objID;
+  
+#if(OBJECTS_HEARABLE)
   if (payload.connected) {
     // Add cube to blockworld if not already there
     objID = GetBlockWorld().AddLightCube(payload.objectID, payload.factoryID);
@@ -281,8 +285,13 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
                        objID.GetValue(), payload.objectID, payload.factoryID);
     }
   }
+#else
+  // HACK: Just to get a non-conflicting ObjectID in the message for now.
+  objID.Set();
+#endif
   
-
+  PRINT_NAMED_INFO("Robot.HandleActiveObjecConnectionState.Recvd", "FactoryID 0x%x, connected %d", payload.factoryID, payload.connected);
+  
   if (objID.IsSet()) {
     // Update the objectID to be blockworld ID
     payload.objectID = objID.GetValue();
@@ -290,7 +299,6 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     // Forward on to game
     Broadcast(ExternalInterface::MessageEngineToGame(ObjectConnectionState(payload)));
   }
-#endif
 }
   
 
