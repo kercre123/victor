@@ -81,14 +81,14 @@ int main(void)
   RTOS::init();
 
   // Initialize all the early stuff
-  Battery::init();
-  Timer::init();
-  Crypto::init();
   Lights::init();
+  Battery::init();
+  Crypto::init();
   Bluetooth::init();
   Radio::init();
+  Timer::init();
 
-  Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
+  //Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
 
   Battery::powerOn();
 
@@ -106,6 +106,11 @@ int main(void)
   Head::init();
 	#endif
 
+	Timer::start();
+
   // Run forever, because we are awesome.
-	RTOS::run();
+  for (;;) {
+    __asm { WFI };
+		Crypto::manage();
+  }
 }
