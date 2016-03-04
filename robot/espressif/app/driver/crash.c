@@ -113,8 +113,28 @@ extern void crash_dump(int* sp) {
   system_rtc_mem_write(rtcWadder++, &CRASH_DUMP_STORAGE_HEADER, 4);
   system_rtc_mem_write(rtcWadder++, &COZMO_VERSION_COMMIT, 4);
   system_rtc_mem_write(rtcWadder++, &COZMO_BUILD_DATE, 4);
-  system_rtc_mem_write(rtcWadder,   regs, sizeof(ex_regs));
-  rtcWadder += sizeof(ex_regs)/4;
+  
+  system_rtc_mem_write(rtcWadder++, &regs->epc1, 4);
+  system_rtc_mem_write(rtcWadder++, &regs->ps,   4);
+  system_rtc_mem_write(rtcWadder++, &regs->sar,  4);
+  system_rtc_mem_write(rtcWadder++, &regs->xx1,  4);
+  system_rtc_mem_write(rtcWadder++, &regs->a0,   4);
+  system_rtc_mem_write(rtcWadder++, &ex_sp,      4); // a1
+  system_rtc_mem_write(rtcWadder++, &regs->a2,   4);
+  system_rtc_mem_write(rtcWadder++, &regs->a3,   4);
+  system_rtc_mem_write(rtcWadder++, &regs->a4,   4);
+  system_rtc_mem_write(rtcWadder++, &regs->a5,   4);
+  system_rtc_mem_write(rtcWadder++, &regs->a6,   4);
+  system_rtc_mem_write(rtcWadder++, &regs->a7,   4);
+  system_rtc_mem_write(rtcWadder++, &regs->a8,   4);
+  system_rtc_mem_write(rtcWadder++, &regs->a9,   4);
+  system_rtc_mem_write(rtcWadder++, &regs->a10,  4);
+  system_rtc_mem_write(rtcWadder++, &regs->a11,  4);
+  system_rtc_mem_write(rtcWadder++, &regs->a12,  4);
+  system_rtc_mem_write(rtcWadder++, &regs->a13,  4);
+  system_rtc_mem_write(rtcWadder++, &regs->a14,  4);
+  system_rtc_mem_write(rtcWadder++, &regs->a15,  4);
+  system_rtc_mem_write(rtcWadder++, &regs->exccause, 4);
   unsigned int canaries = g_conn.canary1 | (g_conn.canary2 << 8) | (g_conn.canary3 << 16);
   system_rtc_mem_write(rtcWadder++, &canaries, 4);
   if (usestack)

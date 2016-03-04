@@ -665,6 +665,9 @@ namespace Anki {
       }
       void Process_getPropState(const PropState& msg)
       {
+#ifdef TARGET_K02
+        HAL::GetPropState(msg.slot, msg.x, msg.y, msg.z, msg.shockCount);
+#endif
       }
       void Process_radioConnected(const RobotInterface::RadioState& state)
       {
@@ -712,6 +715,10 @@ namespace Anki {
       void Process_bootloadBody(Anki::Cozmo::RobotInterface::BootloadBody const&)
       {
         // Nothing to do here
+      }
+      void Process_setRTTO(Anki::Cozmo::RobotInterface::DebugSetRTTO const&)
+      {
+        // TODO honor this in simulator
       }
       void Process_assignCubeSlots(const CubeSlots& msg)
       {
