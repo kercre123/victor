@@ -94,10 +94,11 @@ class _Dispatcher(IDataReceiver):
         self.transport.start()
         self.nameTable, self.formatTable = importTables(ANKI_LOG_STRING_TABLE_LOCAL if os.path.isfile(ANKI_LOG_STRING_TABLE_LOCAL) else ANKI_LOG_STRING_TABLE_GLOBAL)
 
-    def Connect(self, dest=("172.31.1.1", 5551)):
+    def Connect(self, dest=("172.31.1.1", 5551), syncTime=0):
         "Initiate reliable Connection"
         self.dest = dest
         self.state = ConnectionState.waitingToConnect
+        self.syncTime = 0
         return self.transport.Connect(self.dest)
 
     def Disconnect(self, dest=None):
@@ -124,6 +125,8 @@ class _Dispatcher(IDataReceiver):
     def OnConnected(self, sourceAddress):
         sys.stdout.write("Completed connection to {}{linesep}".format(repr(sourceAddress), linesep=os.linesep))
         self.state = ConnectionState.connected
+        if self.syncTime is not None:
+            self.send(RI.EngineToRobot(syncTime=RI.SyncTime(1, self.syncTime)))
         for sub in self.OnConnectedSubscribers:
             sub(sourceAddress)
 
