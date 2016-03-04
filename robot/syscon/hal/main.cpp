@@ -108,32 +108,7 @@ int main(void)
 
 	Timer::start();
 
-	CryptoTask a, b, c;
-	static uint8_t in[128];
-	static uint8_t cipher[144];
-	static uint8_t out[128];
-	
-	a.op = CRYPTO_GENERATE_RANDOM;
-	a.output = in;
-	a.length = sizeof(in);
-	
-	Crypto::execute(&a);
-	
-	b.op = CRYPTO_AES_ENCRYPT;
-	b.input = in;
-	b.output = cipher;
-	b.length = sizeof(in);
-	
-	Crypto::execute(&b);
-
-	c.op = CRYPTO_AES_DECRYPT;
-	c.input = cipher;
-	c.output = out;
-	c.length = sizeof(in);
-	
-	Crypto::execute(&c);
-
-// Run forever, because we are awesome.
+  // Run forever, because we are awesome.
   for (;;) {
     __asm { WFI };
 		Crypto::manage();
