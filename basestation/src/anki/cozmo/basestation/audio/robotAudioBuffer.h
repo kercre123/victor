@@ -42,6 +42,10 @@ class RobotAudioBuffer
   
 public:
   
+  /*****************************************
+   * Plug-in callback methods
+   */
+  
   // This called when the plug-in is created
   void PrepareAudioBuffer();
   
@@ -51,8 +55,14 @@ public:
   // This is called when the plug-in is terminated. It will flush the remaining audio samples out of the cache
   void ClearCache();
   
-  // Audio Client Methods
-  bool HasAudioBufferStream() { return _streamQueue.size() > 0; }
+
+  /*****************************************
+   * Audio Client methods
+   */
+
+  bool IsActive() const { return _isActive; }
+  
+  bool HasAudioBufferStream() const { return _streamQueue.size() > 0; }
   
   // Get the front / top Audio Buffer stream in the queue
   RobotAudioMessageStream* GetFrontAudioBufferStream();
@@ -77,6 +87,8 @@ private:
   
   // Track what stream is in uses
   RobotAudioMessageStream* _currentStream = nullptr;
+  
+  bool _isActive = false;
   
   // Flag to identify we are waiting for current update buffer session to complete
   bool _isWaitingForReset = false;
