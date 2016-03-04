@@ -107,6 +107,10 @@
 		6BC5B0B6862557075B4051FB /* Vector3.h in Sources */ = {isa = PBXBuildFile; fileRef = 0A8DB35C88E2678ABFFE72EE /* Vector3.h */; };
 		6D01B697D7A17768DA88C372 /* Bulk_Generics_5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3256245981C473DCC2F1453B /* Bulk_Generics_5.cpp */; };
 		6E5962D7AAE351C7B344D0FE /* CVTextureCache.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A3FBE47363BF83270FD67BF /* CVTextureCache.mm */; };
+		6F5432281C891C70006D3724 /* HockeySDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F5432271C891C70006D3724 /* HockeySDK.framework */; };
+		6F5432371C89288F006D3724 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F5432361C89288F006D3724 /* AssetsLibrary.framework */; };
+		6F5432391C8928AF006D3724 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F5432381C8928AF006D3724 /* MobileCoreServices.framework */; };
+		6F54323B1C8928C4006D3724 /* QuickLook.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F54323A1C8928C4006D3724 /* QuickLook.framework */; };
 		70C59CE08D285EDEF400756E /* LifeCycleListener.mm in Sources */ = {isa = PBXBuildFile; fileRef = B676DEF4753207601737D2C0 /* LifeCycleListener.mm */; };
 		73038204E7F1F586EA2107F2 /* Il2CppAttributes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 46014FD4AB8D41FD78CB6309 /* Il2CppAttributes.cpp */; };
 		73F6F9B404514A3F3F49FD47 /* Bulk_DOTween43_0.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 308B9A709015B7FD8A0C3F46 /* Bulk_DOTween43_0.cpp */; };
@@ -337,6 +341,10 @@
 		6B7BDDAF2EDF505368474983 /* UnityRendering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnityRendering.h; path = UnityBuild/Classes/Unity/UnityRendering.h; sourceTree = "<group>"; };
 		6B824E24831C69D2FF4421F3 /* Bulk_Assembly-CSharp_1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_1.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_1.cpp"; sourceTree = "<group>"; };
 		6C8630EC2926CC8F1F1AA46E /* Il2CppGenericMethodPointerTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppGenericMethodPointerTable.cpp; path = UnityBuild/Classes/Native/Il2CppGenericMethodPointerTable.cpp; sourceTree = "<group>"; };
+		6F5432271C891C70006D3724 /* HockeySDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HockeySDK.framework; path = "../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework"; sourceTree = "<group>"; };
+		6F5432361C89288F006D3724 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		6F5432381C8928AF006D3724 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
+		6F54323A1C8928C4006D3724 /* QuickLook.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuickLook.framework; path = System/Library/Frameworks/QuickLook.framework; sourceTree = SDKROOT; };
 		70F9A413DE33B396BAF2C57A /* DisplayManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DisplayManager.h; path = UnityBuild/Classes/Unity/DisplayManager.h; sourceTree = "<group>"; };
 		7507418DA8FF149B8B20CA5C /* Bulk_Generics_0.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_0.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_0.cpp; sourceTree = "<group>"; };
 		789BA5853B7AE960A1A5FF08 /* UnityICallRegistration.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UnityICallRegistration.cpp; path = UnityBuild/Classes/Native/UnityICallRegistration.cpp; sourceTree = "<group>"; };
@@ -445,6 +453,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6F54323B1C8928C4006D3724 /* QuickLook.framework in Frameworks */,
+				6F5432391C8928AF006D3724 /* MobileCoreServices.framework in Frameworks */,
+				6F5432371C89288F006D3724 /* AssetsLibrary.framework in Frameworks */,
 				85DEB8FF1C652A3C00202214 /* libDAS.a in Frameworks */,
 				85065E851BF1904400DBAF35 /* libDriveAudioEngine.a in Frameworks */,
 				83B2574C0E63022200468741 /* OpenAL.framework in Frameworks */,
@@ -482,6 +493,7 @@
 				7F36C11313C5C673007FBDD9 /* AVFoundation.framework in Frameworks */,
 				56B7959B1442E0F20026B3DD /* CoreGraphics.framework in Frameworks */,
 				56B7960F1442E1770026B3DD /* CoreMotion.framework in Frameworks */,
+				6F5432281C891C70006D3724 /* HockeySDK.framework in Frameworks */,
 				405EF7C18A955864E7629C7F /* libiPhone-lib.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -594,6 +606,10 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				6F54323A1C8928C4006D3724 /* QuickLook.framework */,
+				6F5432381C8928AF006D3724 /* MobileCoreServices.framework */,
+				6F5432361C89288F006D3724 /* AssetsLibrary.framework */,
+				6F5432271C891C70006D3724 /* HockeySDK.framework */,
 				495653CB1C7FEE3F0054EB7F /* opencv2.framework */,
 				495653B71C7BCFD10054EB7F /* opencv2.framework */,
 				85DEB8FE1C652A3C00202214 /* libDAS.a */,
@@ -1107,6 +1123,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/opencv",
+					"$(SRCROOT)/HockeyApp",
 				);
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_CPP_EXCEPTIONS = YES;
@@ -1167,6 +1184,7 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(SRCROOT)/opencv",
+					"$(SRCROOT)/HockeyApp",
 				);
 				GCC_ENABLE_CPP_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;

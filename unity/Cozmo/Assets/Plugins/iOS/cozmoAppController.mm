@@ -16,6 +16,7 @@
 #import "UnityAppController.h"
 #import "DAS/DAS.h"
 
+#import <HockeySDK/HockeySDK.h>
 
 // This App Controller is a subclass of the Unity generated AppController, registered with the #define at the bottom of this file
 @interface CozmoAppController : UnityAppController
@@ -35,6 +36,12 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
   [super application:application didFinishLaunchingWithOptions:launchOptions];
   
   [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
+  
+  // TODO: HockeyAppID 
+  [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:@"APP_IDENTIFIER"];
+  
+  [[BITHockeyManager sharedHockeyManager] startManager];
+  [[BITHockeyManager sharedHockeyManager].authenticator authenticateInstallation];
   
   return YES;
 }
