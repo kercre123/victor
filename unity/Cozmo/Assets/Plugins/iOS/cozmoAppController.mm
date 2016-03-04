@@ -37,8 +37,12 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
   
   [application setMinimumBackgroundFetchInterval:UIApplicationBackgroundFetchIntervalMinimum];
   
-  // TODO: HockeyAppID 
-  [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:@"APP_IDENTIFIER"];
+  NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
+  if(!hockeyAppId || hockeyAppId.length == 0) {
+    DASEvent("HockeyApp.ios.disabled", "");
+    return NO;
+  }
+  [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:hockeyAppId];
   
   [[BITHockeyManager sharedHockeyManager] startManager];
   [[BITHockeyManager sharedHockeyManager].authenticator authenticateInstallation];
