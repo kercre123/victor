@@ -29,9 +29,9 @@ void RTOS::init(void) {
   NRF_WDT->RREN = wdog_channel_mask;
   NRF_WDT->TASKS_START = 1;
 
-	// Manage trigger set
-	NVIC_EnableIRQ(SWI0_IRQn);
-	NVIC_SetPriority(SWI0_IRQn, 3);
+  // Manage trigger set
+  NVIC_EnableIRQ(SWI0_IRQn);
+  NVIC_SetPriority(SWI0_IRQn, 3);
 }
 
 void RTOS::kick(uint8_t channel) {
@@ -51,56 +51,56 @@ RTOS_Task* RTOS::allocate(void) {
 
 void RTOS::remove(RTOS_Task* task) {
   // Remove task from listing
-	if (task->prev) {
-		task->prev->next = task->next;
- 	} else {
-		task_list = task->next;
-	}
-	
-	if (task->next) {
-		task->next->prev = task->prev;
-	}
+  if (task->prev) {
+    task->prev->next = task->next;
+  } else {
+    task_list = task->next;
+  }
+  
+  if (task->next) {
+    task->next->prev = task->prev;
+  }
 }
-	
+  
 void RTOS::release(RTOS_Task* task) {
-	RTOS::remove(task);
+  RTOS::remove(task);
 
-	// Add to unallocated list
-	task->next = free_task;
-	free_task = task;
+  // Add to unallocated list
+  task->next = free_task;
+  free_task = task;
 }
 
 static void insert(RTOS_Task* task) {
-	// Set task to the first index
-	task->prev = NULL;
-	task->next = task_list;
-	
-	// Shift our task down the chain
-	while (task->next && task->next->priority <= task->priority) {
-		task->prev = task->next;
-		task->next = task->next->next;
-	}
+  // Set task to the first index
+  task->prev = NULL;
+  task->next = task_list;
+  
+  // Shift our task down the chain
+  while (task->next && task->next->priority <= task->priority) {
+    task->prev = task->next;
+    task->next = task->next->next;
+  }
 
-	// Insert the task into the chain
-	if (task->prev) {
-		task->prev->next = task;
-	} else {
-		task_list = task;
-	}
+  // Insert the task into the chain
+  if (task->prev) {
+    task->prev->next = task;
+  } else {
+    task_list = task;
+  }
 
-	if (task->next) {
-		task->next->prev = task;
-	}
+  if (task->next) {
+    task->next->prev = task;
+  }
 }
 
 void RTOS::setPriority(RTOS_Task* task, RTOS_Priority priority) {
-	remove(task);
-	task->priority = priority;
-	insert(task);
+  remove(task);
+  task->priority = priority;
+  insert(task);
 }
 
 void RTOS::manage(void) {
-	NVIC_SetPendingIRQ(SWI0_IRQn);
+  NVIC_SetPendingIRQ(SWI0_IRQn);
 }
 
 RTOS_Task* RTOS::create(RTOS_TaskProc func, bool repeating) {
@@ -111,32 +111,32 @@ RTOS_Task* RTOS::create(RTOS_TaskProc func, bool repeating) {
   }
 
   task->priority = RTOS_DEFAULT_PRIORITY;
-	task->task = func;
+  task->task = func;
   task->repeating = repeating;
-	task->active = false;
+  task->active = false;
 
   insert(task);
  
-	return task;
+  return task;
 }
 
 void RTOS::start(RTOS_Task* task, int period, void* userdata) {
   task->period = period;
   task->target = period;
   task->userdata = userdata;
-	task->active = true;
+  task->active = true;
 }
 
 void RTOS::stop(RTOS_Task* task) {
-	task->active = false;
+  task->active = false;
 }
 
 void RTOS::EnterCritical(void) {
-	NVIC_DisableIRQ(SWI0_IRQn);
+  NVIC_DisableIRQ(SWI0_IRQn);
 }
 
 void RTOS::LeaveCritical(void) {
-	NVIC_EnableIRQ(SWI0_IRQn);
+  NVIC_EnableIRQ(SWI0_IRQn);
 }
 
 RTOS_Task* RTOS::schedule(RTOS_TaskProc func, int period, void* userdata, bool repeating) {
@@ -156,26 +156,26 @@ extern "C" void SWI0_IRQHandler(void) {
   int ticks = new_count - last_counter;
 
   last_counter = new_count;
-	
+  
   for (RTOS_Task** cursor = &task_list; *cursor; cursor = &(*cursor)->next) {
-		RTOS_Task* task = *cursor;
+    RTOS_Task* task = *cursor;
 
-		// Resume execution
-		if (!task->active) {
-			continue ; 
-		}		
+    // Resume execution
+    if (!task->active) {
+      continue ; 
+    }   
     task->target -= ticks;
 
     // Current task has not yet fired
     if (task->target > 0) {
       continue ;
     }
-		
+    
     // Ticks are the underflow
     ticks = -task->target;
-		task->target = 0;
+    task->target = 0;
 
-		task->task(task->userdata);
+    task->task(task->userdata);
 
     // Either release the task slice, or reinsert it with the period
     if (task->repeating) {

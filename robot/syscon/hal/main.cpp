@@ -49,8 +49,8 @@ extern "C" void HardFault_Handler(void) {
 }
 
 void MotorsUpdate(void* userdata) {
-	//Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
-	//RTOS::kick(WDOG_UART);
+  //Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
+  //RTOS::kick(WDOG_UART);
 }
 
 static void EMERGENCY_FIX(void) {
@@ -81,8 +81,8 @@ int main(void)
   RTOS::init();
   Crypto::init();
 
-	Battery::powerOn();
-	
+  Battery::powerOn();
+  
   // Setup all tasks
   Battery::init();
   Bluetooth::init();
@@ -90,28 +90,28 @@ int main(void)
   Lights::init();
   Radio::init();
 
-	#ifndef BLUETOOTH_MODE
-	Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
+  #ifndef BLUETOOTH_MODE
+  Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
 
-	Bluetooth::shutdown();
+  Bluetooth::shutdown();
   Radio::advertise();
-	#else
-	Radio::shutdown();
+  #else
+  Radio::shutdown();
   Bluetooth::advertise(); 
-	#endif
-	
+  #endif
+  
   // Let the test fixtures run, if nessessary
   #ifdef RUN_TESTS
-	TestFixtures::run();
-	#else
+  TestFixtures::run();
+  #else
   Head::init();
-	#endif
+  #endif
 
-	Timer::start();
+  Timer::start();
 
   // Run forever, because we are awesome.
   for (;;) {
     __asm { WFI };
-		Crypto::manage();
+    Crypto::manage();
   }
 }

@@ -11,7 +11,7 @@
 // Initialize the RTC peripheral
 namespace Timer {
   void init();
-	void start();
+  void start();
 }
 
 // Get the counter - with each tick being ~120 ns (see COUNT_PER_MS)

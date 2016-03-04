@@ -201,8 +201,8 @@ void Radio::init() {
   // Start the radio stack
 
   radioTask = RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
-	RTOS::setPriority(radioTask, RTOS_RADIO_PRIORITY);
-	RTOS::stop(radioTask);
+  RTOS::setPriority(radioTask, RTOS_RADIO_PRIORITY);
+  RTOS::stop(radioTask);
 }
 
 void Radio::advertise(void) {
