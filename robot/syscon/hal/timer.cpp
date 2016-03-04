@@ -64,7 +64,7 @@ extern "C" void RTC1_IRQHandler() {
     return ;
 
   NRF_RTC1->EVENTS_TICK = 0;
-	
-	RTOS::manage();
-	Lights::update();
+  
+  RTOS::manage();
+  Lights::update();
 }
