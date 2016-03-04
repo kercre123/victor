@@ -79,16 +79,15 @@ int main(void)
 
   // Initialize our scheduler
   RTOS::init();
-
-  // Initialize all the early stuff
-  Lights::init();
-  Battery::init();
   Crypto::init();
-  Bluetooth::init();
-  Radio::init();
-  Timer::init();
 
+  // Setup all the things in order of priority
+  Radio::init();
   Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
+  Battery::init();
+  Bluetooth::init();
+  Timer::init();
+  Lights::init();
 
   Battery::powerOn();
 

@@ -20,9 +20,8 @@ struct RTOS_Task {
   int target;
   int period;
   bool repeating;
+	bool active;
 
-	int time;
-	
   RTOS_Task *next;
 };
 
@@ -35,7 +34,7 @@ namespace RTOS {
 	void LeaveCritical(void);
   
   RTOS_Task* allocate(void);
-  void release(RTOS_Task* task);
+  void release(RTOS_Task** task);
 
   RTOS_Task* create(RTOS_TaskProc task, bool repeating = true);
   void start(RTOS_Task* task, int period = CYCLES_MS(5.0f), void* userdata = NULL);

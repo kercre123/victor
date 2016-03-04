@@ -19,7 +19,8 @@ extern "C" {
 #include <stdbool.h>
 #include <string.h>
 
-static uint32_t* AES_KEY = (uint32_t*) 0x1F0C0; // Reserved section in the bootloader for AES key
+// Top 16 bytes of application space
+static uint32_t* AES_KEY = (uint32_t*) 0x1EFF0;
 
 static volatile int fifoHead;
 static volatile int fifoTail;
