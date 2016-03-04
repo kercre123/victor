@@ -152,11 +152,11 @@ static void dh_finish(DiffieHellman* dh, uint8_t* key) {
 	// Encode their secret for exponent
 	big_num_t secret;	
 
+	// The cell phone sends the AES encoded chunk (less delay)
 	secret.negative = false;
 	secret.used = AES_BLOCK_LENGTH / sizeof(big_num_cell_t);
-	dh_encode_random(secret.digits, dh->pin, dh->secret);
+	memcpy(secret.digits, dh->secret);
 
-	
 	big_num_t result;
 	mont_power(DEFAULT_DIFFIE_GROUP, result, dh->state, secret);
 	
