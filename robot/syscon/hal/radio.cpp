@@ -390,6 +390,7 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   AccessorySlot* acc = &accessories[slot];
   acc->id = accessory;
   acc->allocated = true;
+  acc->active = false;
 }
 
 void Radio::manage(void* userdata) {
