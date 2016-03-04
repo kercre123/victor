@@ -62,17 +62,20 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeData = challengeData;
     _WonChallenge = false;
 
+    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
+  }
+
+  private void FinishTurnToFace(bool success) {
     _SharedMinigameViewInstance = UIManager.OpenView(
       UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       false) as SharedMinigameView;
     _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
       _ChallengeData.HowToPlayDialogContentLocKey);
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
-
-    Initialize(challengeData.MinigameConfig);
+    Initialize(_ChallengeData.MinigameConfig);
 
     // Populate the view before opening it so that animations play correctly
-    InitializeView(challengeData);
+    InitializeView(_ChallengeData);
     _SharedMinigameViewInstance.OpenView();
 
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
@@ -239,8 +242,8 @@ public abstract class GameBase : MonoBehaviour {
   private void OpenChallengeEndedDialog(string subtitleText = null) {
     // Open confirmation dialog instead
     GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowNarrowGameStateSlide(
-                                   UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
-                                   "ChallengeEndSlide");
+                                     UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
+                                     "ChallengeEndSlide");
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
 
