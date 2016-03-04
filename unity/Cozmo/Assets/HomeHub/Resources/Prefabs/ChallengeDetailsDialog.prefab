@@ -582,6 +582,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DASEventViewName: challenge_details_dialog
+  _DASEventViewType: 1
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
@@ -1017,6 +1018,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: m_MinWidth
       value: 1200
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _DASEventViewType
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
