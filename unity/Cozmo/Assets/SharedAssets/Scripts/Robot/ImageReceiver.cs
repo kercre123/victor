@@ -83,15 +83,10 @@ public class ImageReceiver : IDisposable {
     }
 
     var dims = ImageResolutionTable.GetDimensions(imageChunk.resolution);
-    UnityEngine.Debug.Log("Image ID: " + imageChunk.imageId + 
-                          " Chunk: "+ imageChunk.chunkId + "/" + imageChunk.imageChunkCount + 
-                          " Format: " +imageChunk.imageEncoding + 
-                          " Resolution: " +imageChunk.resolution+"("+dims.Width+"x"+dims.Height+")");
-   
 
     _MemStream.Write(imageChunk.data, 0, imageChunk.data.Length);
 
-    if(imageChunk.chunkId == imageChunk.imageChunkCount - 1) {
+    if (imageChunk.chunkId == imageChunk.imageChunkCount - 1) {
 
       if (_ReceivedImage == null) {
         _ReceivedImage = new Texture2D(dims.Width, dims.Height);
@@ -112,18 +107,18 @@ public class ImageReceiver : IDisposable {
         for (int i = 0; i < _MemStream.Length; i++) {
           _MemStream.Seek(0, SeekOrigin.Begin);
           _MemStream.Read(ImageUtil.OneByteBuffer, 0, 1);
-          float c =  ImageUtil.OneByteBuffer[0] / 255f;
+          float c = ImageUtil.OneByteBuffer[0] / 255f;
           _ReceivedImage.SetPixel(i % _ReceivedImage.width, i / _ReceivedImage.width, new Color(c, c, c, 1f));            
         }
         _ReceivedImage.Apply();
         break;
       case ImageEncoding.RawRGB:
-        for (int i = 0; i < _MemStream.Length; i+=3) {
+        for (int i = 0; i < _MemStream.Length; i += 3) {
           _MemStream.Seek(0, SeekOrigin.Begin);
           _MemStream.Read(ImageUtil.ThreeByteBuffer, 0, 3);
-          float r =  ImageUtil.ThreeByteBuffer[0] / 255f;
-          float g =  ImageUtil.ThreeByteBuffer[0] / 255f;
-          float b =  ImageUtil.ThreeByteBuffer[0] / 255f;
+          float r = ImageUtil.ThreeByteBuffer[0] / 255f;
+          float g = ImageUtil.ThreeByteBuffer[0] / 255f;
+          float b = ImageUtil.ThreeByteBuffer[0] / 255f;
           _ReceivedImage.SetPixel(i % _ReceivedImage.width, i / _ReceivedImage.width, new Color(r, g, b, 1f));            
         }
         _ReceivedImage.Apply();
