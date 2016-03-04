@@ -8,6 +8,8 @@ extern "C" {
   #include "nrf_soc.h"
 }
 
+#include "sha1.h"
+
 #include "crypto.h"
 #include "timer.h"
 #include "rtos.h"
@@ -18,15 +20,6 @@ extern "C" {
 #include <string.h>
 
 static uint32_t* AES_KEY = (uint32_t*) 0x1F0C0; // Reserved section in the bootloader for AES key
-static const int MAX_CRYPTO_TASKS = 4;
-static const int AES_KEY_LENGTH = 16;
-static const int AES_BLOCK_LENGTH = 16;
-
-struct ecb_data_t {
-  uint8_t key[AES_KEY_LENGTH];
-  uint8_t cleartext[AES_BLOCK_LENGTH];
-  uint8_t ciphertext[AES_BLOCK_LENGTH];
-};
 
 static volatile int fifoHead;
 static volatile int fifoTail;
@@ -58,14 +51,14 @@ static inline void delay() {
 	__asm { WFI };
 }
 
-static inline void aes_setup(ecb_data_t& ecb) {
-	memcpy(&ecb.key, AES_KEY, sizeof(ecb.key));
+static inline void aes_setup(ecb_data_t& ecb, const void* key = AES_KEY) {
+	memcpy(&ecb.key, key, sizeof(ecb.key));
 
 	// Setup NRF_ECB
   NRF_ECB->ECBDATAPTR = (uint32_t)&ecb;
 }
 
-static inline void aes_ecb(ecb_data_t& ecb, void* in, void* out) {
+static inline void aes_ecb(ecb_data_t& ecb, const void* in, void* out) {
 	memcpy(ecb.cleartext, in, AES_BLOCK_LENGTH);
 	NRF_ECB->EVENTS_ENDECB = 0;
 	NRF_ECB->TASKS_STARTECB = 1;
@@ -101,7 +94,7 @@ static inline void aes_decrypt(uint8_t* in, uint8_t* out, int size) {
 	ecb_data_t ecb;
 
 	aes_setup(ecb);
-		
+
 	int block = 0;
 
 	// Create feedback
@@ -121,6 +114,53 @@ static inline void aes_decrypt(uint8_t* in, uint8_t* out, int size) {
 	while(size-- > 0) {
 		*(out++) ^= *(in++);
 	}
+}
+
+// Step to convert a pin + random to a hash
+static void dh_encode_random(void *result, int pin, const uint8_t* random) {
+	ecb_data_t ecb;
+	
+	{
+		// Hash our pin (keeping only lower portion
+		SHA1_CTX ctx;
+		sha1_init(&ctx);
+		sha1_update(&ctx, (BYTE*)&pin, sizeof(pin));
+
+		uint8_t sig[SHA1_BLOCK_SIZE];
+		sha1_final(&ctx, sig);
+
+		aes_setup(ecb, sig);
+	}
+	
+	aes_ecb(ecb, random, result);	
+}
+
+static void dh_start(DiffieHellman* dh) {
+	// Generate our secret
+	Crypto::random(dh->secret, SECRET_LENGTH);
+	
+	// Encode our secret as an exponent
+	big_num_t secret;	
+
+	secret.negative = false;
+	secret.used = AES_BLOCK_LENGTH / sizeof(big_num_cell_t);
+	dh_encode_random(secret.digits, dh->pin, dh->secret);
+	mont_power(DEFAULT_DIFFIE_GROUP, dh->state, DEFAULT_DIFFIE_GENERATOR, secret);
+}
+
+static void dh_finish(DiffieHellman* dh, uint8_t* key) {
+	// Encode their secret for exponent
+	big_num_t secret;	
+
+	secret.negative = false;
+	secret.used = AES_BLOCK_LENGTH / sizeof(big_num_cell_t);
+	dh_encode_random(secret.digits, dh->pin, dh->secret);
+
+	
+	big_num_t result;
+	mont_power(DEFAULT_DIFFIE_GROUP, result, dh->state, secret);
+	
+	memcpy(key, result.digits, AES_BLOCK_LENGTH);
 }
 
 void Crypto::init() {
@@ -213,8 +253,11 @@ void Crypto::manage(void) {
 		case CRYPTO_AES_DECRYPT:
 			aes_decrypt((uint8_t*)task->input, (uint8_t*)task->output, task->length);
 			break ;
-		case CRYPTO_DIFFIE_HELLMAN:
-			// TODO: THIS SHIT
+		case CRYPTO_START_DIFFIE_HELLMAN:
+			dh_start((DiffieHellman*) task->input);
+			break ;
+		case CRYPTO_FINISH_DIFFIE_HELLMAN:
+			dh_finish((DiffieHellman*) task->input, (uint8_t*)task->output);
 			break ;
 	}
 
