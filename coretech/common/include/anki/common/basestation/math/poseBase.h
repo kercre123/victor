@@ -86,4 +86,8 @@ namespace Anki {
   
 } // namespace Anki
 
+
+// TODO: Ideally, we'd only need to include poseBase_impl.h from cpp files...
+#include "anki/common/basestation/math/poseBase_impl.h"
+
 #endif // _ANKICORETECH_MATH_POSEBASE_H_

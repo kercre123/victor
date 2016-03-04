@@ -299,13 +299,13 @@ namespace Anki {
         // Make sure we can see the object, unless we are carrying it (i.e. if we
         // are doing a DriveToPlaceCarriedObject action)
         if(!object->IsBeingCarried()) {
-          FaceObjectAction* faceObjectAction = new FaceObjectAction(_robot, _objectID, Radians(0), true, false);
+          TurnTowardsObjectAction* turnTowardsObjectAction = new TurnTowardsObjectAction(_robot, _objectID, Radians(0), true, false);
           PRINT_NAMED_DEBUG("IActionRunner.CreatedSubAction", "Parent action [%d] %s created a sub action [%d] %s",
                             GetTag(),
                             GetName().c_str(),
-                            faceObjectAction->GetTag(),
-                            faceObjectAction->GetName().c_str());
-          _compoundAction.AddAction(faceObjectAction);
+                            turnTowardsObjectAction->GetTag(),
+                            turnTowardsObjectAction->GetName().c_str());
+          _compoundAction.AddAction(turnTowardsObjectAction);
         }
         
         _compoundAction.ShouldEmitCompletionSignal(false);

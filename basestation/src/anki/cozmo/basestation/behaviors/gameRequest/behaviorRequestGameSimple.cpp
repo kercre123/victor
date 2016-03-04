@@ -202,7 +202,7 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 {
   ObjectID targetBlockID = GetRobotsBlockID(robot);
   if( targetBlockID.IsSet() ) {
-    StartActing(new FaceObjectAction( robot, targetBlockID, PI_F ),
+    StartActing(new TurnTowardsObjectAction( robot, targetBlockID, PI_F ),
                 &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
     SET_STATE(State::FacingBlock);
   }
@@ -251,9 +251,9 @@ void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
 
     CompoundActionSequential* searchAction = new CompoundActionSequential(robot);
 
-    FacePoseAction* faceAction = new FacePoseAction(robot, lastKnownPose, PI_F);
-    faceAction->SetPanTolerance(DEG_TO_RAD(5));
-    searchAction->AddAction(faceAction);
+    TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, lastKnownPose, PI_F);
+    turnTowardsPoseAction->SetPanTolerance(DEG_TO_RAD(5));
+    searchAction->AddAction(turnTowardsPoseAction);
 
     searchAction->AddAction(new SearchSideToSideAction(robot));
     
@@ -352,7 +352,7 @@ void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
 {
   Pose3d lastFacePose;
   if( GetFacePose( robot, lastFacePose ) ) {
-    StartActing(new FacePoseAction(robot, lastFacePose, PI_F),
+    StartActing(new TurnTowardsPoseAction(robot, lastFacePose, PI_F),
                 [this, &robot](ActionResult result) {
                   if( result == ActionResult::SUCCESS ) {
                     TransitionToVerifyingFace(robot);

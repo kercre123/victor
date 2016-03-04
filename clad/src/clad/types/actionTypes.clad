@@ -36,8 +36,8 @@ enum int_32 RobotActionType {
     DRIVE_TO_AND_MOUNT_CHARGER,
     TRAVERSE_OBJECT,
     DRIVE_TO_AND_TRAVERSE_OBJECT,
-    FACE_OBJECT,
-    FACE_POSE,
+    TURN_TOWARDS_OBJECT,
+    TURN_TOWARDS_POSE,
     VISUALLY_VERIFY_OBJECT,
     PLAY_ANIMATION,
     DEVICE_AUDIO,              // This calls audio from WWise
@@ -49,7 +49,8 @@ enum int_32 RobotActionType {
     DRIVE_STRAIGHT,
     TRACK_OBJECT,
     TRACK_FACE,
-    TRACK_MOTION
+    TRACK_MOTION,
+    TURN_TOWARDS_LAST_FACE_POSE
 }
 
 

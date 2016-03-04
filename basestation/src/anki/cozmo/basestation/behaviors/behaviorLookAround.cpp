@@ -201,7 +201,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(Robot& robot)
   SET_STATE(State::LookingAtPossibleObject);
 
   CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new FacePoseAction(robot, _lastPossibleObjectPose, PI_F));
+  action->AddAction(new TurnTowardsPoseAction(robot, _lastPossibleObjectPose, PI_F));
 
   // if the pose is too far away, drive towards it 
   Pose3d relPose;
@@ -260,7 +260,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(Robot& robot)
                     recentObjectID.GetValue());
   
   StartActing(new CompoundActionSequential(robot, {
-                  new FaceObjectAction(robot, recentObjectID, PI_F),
+                  new TurnTowardsObjectAction(robot, recentObjectID, PI_F),
                   // TODO:(bn) vary animation here?
                   new PlayAnimationAction(robot, kBlockReactAnim) }),
                [this, &robot, recentObjectID](ActionResult result) {
