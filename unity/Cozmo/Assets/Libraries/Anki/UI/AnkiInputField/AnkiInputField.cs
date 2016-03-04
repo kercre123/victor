@@ -802,14 +802,12 @@ namespace UnityEngine.UI {
       bool hadFocusBefore = m_AllowInput;
       base.OnPointerDown(eventData);
 
-      #if !UNITY_ANDROID
       if (!InPlaceEditing()) {
         if (m_Keyboard == null || !m_Keyboard.active) {
           OnSelect(eventData);
           return;
         }
       }
-      #endif
 
       // Only set caret position if we didn't just get focus now.
       // Otherwise it will overwrite the select all on focus.
@@ -1326,23 +1324,10 @@ namespace UnityEngine.UI {
         if (m_Placeholder != null)
           m_Placeholder.enabled = isEmpty;
         
-        // If not currently editing the text, set the visible range to the whole text.
-        // The UpdateLabel method will then truncate it to the part that fits inside the Text area.
-        // We can't do this when text is being edited since it would discard the current scroll,
-        // which is defined by means of the m_DrawStart and m_DrawEnd indices.
-
-        // With the Android keyboard hack, the allowInput doesn't seemed to be set consistently across different devices. So we always set the total length of the string to the max length
-        // of the string or else the text in the currently focused InputField won't always display until it looses focus
-        #if UNITY_ANDROID
-          m_DrawStart = 0;
-          m_DrawEnd = m_Text.Length;
-        #else
         if (!m_AllowInput) {
           m_DrawStart = 0;
           m_DrawEnd = m_Text.Length;
         }
-        #endif
-        
         
         if (!isEmpty) {
           // Determine what will actually fit into the given line
@@ -1504,10 +1489,6 @@ namespace UnityEngine.UI {
         return;
       #endif
       // No need to draw a cursor on mobile as its handled by the devices keyboard.
-      #if !UNITY_ANDROID
-      if (!shouldHideMobileInput)
-        return;
-      #endif
       if (m_CachedInputRenderer == null && m_TextComponent != null) {
         GameObject go = new GameObject(transform.name + " Input Caret");
         go.hideFlags = HideFlags.DontSave;
@@ -1847,16 +1828,7 @@ namespace UnityEngine.UI {
       if (EventSystem.current.currentSelectedGameObject != gameObject)
         EventSystem.current.SetSelectedGameObject(gameObject);
 
-      // Register to listen for keyboard events after we activate this InputField
-      #if UNITY_ANDROID
-        Anki.ApplicationServices.JavaService.OnKeyboardTextUpdated -= HandleOnKeyboardTextUpdated;
-        Anki.ApplicationServices.JavaService.OnKeyboardTextUpdated += HandleOnKeyboardTextUpdated;
-        Anki.ApplicationServices.JavaService.OnKeyboardSubmit -= HandleOnKeyboardSubmit;
-        Anki.ApplicationServices.JavaService.OnKeyboardSubmit += HandleOnKeyboardSubmit;
-      #endif
-
       if (TouchScreenKeyboard.isSupported) {  
-        #if !UNITY_ANDROID
         if (Input.touchSupported) {
           TouchScreenKeyboard.hideInput = shouldHideMobileInput;
         }
@@ -1864,11 +1836,7 @@ namespace UnityEngine.UI {
         m_Keyboard = (inputType == InputType.Password) ?
           TouchScreenKeyboard.Open(m_Text, keyboardType, false, multiLine, true) :
             TouchScreenKeyboard.Open(m_Text, keyboardType, inputType == InputType.AutoCorrect, multiLine);
-       
-        #else
-        // Call java keyboard here
-        Anki.ApplicationServices.JavaService.RequestOpenKeyboard(text, characterLimit);
-        #endif
+      
 
         MoveTextEnd(false);
       }
@@ -1902,12 +1870,6 @@ namespace UnityEngine.UI {
       if (!m_AllowInput)
         return;
 
-      // Unsubscribe to events when we get deactivated
-      #if UNITY_ANDROID
-        Anki.ApplicationServices.JavaService.OnKeyboardTextUpdated -= HandleOnKeyboardTextUpdated;
-        Anki.ApplicationServices.JavaService.OnKeyboardSubmit -= HandleOnKeyboardSubmit;
-      #endif
-
       m_HasDoneFocusTransition = false;
       m_AllowInput = false;
       
@@ -1935,7 +1897,7 @@ namespace UnityEngine.UI {
       base.OnDeselect(eventData);
     }
 
-    public virtual void OnSubmit(BaseEventData eventData) {
+    public virtual void OnSubmit(BaseEventData eventData) { 
       if (!IsActive() || !IsInteractable())
         return;
       
