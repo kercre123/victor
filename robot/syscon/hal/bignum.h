@@ -19,6 +19,7 @@ struct big_mont_t {
   int shift;
 
   big_num_t modulo;
+  big_num_t one;
   big_num_t r;
   big_num_t r2;
   big_num_t rinv;

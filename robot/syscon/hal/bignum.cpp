@@ -569,6 +569,9 @@ bool mont_init(big_mont_t& mont, const big_num_t& modulo) {
   big_modulo(mont.minv, mont.minv, mont.r);
   big_subtract(mont.minv, mont.r, mont.minv);
 
+  // Constant one
+  mont_to(mont, mont.one, BIG_ONE);
+
   return false;
 }
 
@@ -625,7 +628,7 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
   int msb = big_msb(exp);
   
   *base = base_in;
-  mont_to(mont, *result, BIG_ONE);
+  *result = mont.one;
 
   for (int bit = 0; bit <= msb; bit++) {
     if (big_bit_get(exp, bit)) {
