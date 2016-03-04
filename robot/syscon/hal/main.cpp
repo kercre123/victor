@@ -88,7 +88,7 @@ int main(void)
   Radio::init();
   Timer::init();
 
-  //Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
+  Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
 
   Battery::powerOn();
 
