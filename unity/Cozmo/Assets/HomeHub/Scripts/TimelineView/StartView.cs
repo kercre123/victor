@@ -29,6 +29,7 @@ public class StartView : BaseView {
     _ConnectButton.onClick.AddListener(HandleConnectClicked);
     _SecretSkipButton.onClick.AddListener(HandleSecretSkipButtonClicked);
     LoopRobotSleep();
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
   }
 
   private bool IsWifiConnected() {
