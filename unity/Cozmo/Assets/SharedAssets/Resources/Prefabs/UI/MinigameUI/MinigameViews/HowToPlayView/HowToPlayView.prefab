@@ -225,6 +225,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DASEventViewName: how_to_play_view
+  _DASEventViewType: 1
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
@@ -651,6 +652,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _DASEventViewName
       value: how_to_play_view
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _DASEventViewType
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

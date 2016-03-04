@@ -122,7 +122,7 @@ public class UIManager : MonoBehaviour {
 
     viewScript.Initialize(overrideCloseOnTouchOutside);
 
-    // TODO: Send DAS event for open based on stack
+    SendDasEventForDialogOpen(viewScript);
 
     Instance._OpenViews.Add(viewScript);
 
@@ -138,17 +138,27 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void CloseAllViews() {
-    while (Instance._OpenViews.Count > 0) {
-      if (Instance._OpenViews[0] != null) {
-        Instance._OpenViews[0].CloseView();
+    Instance.CloseAllViewsInternal();
+  }
+
+  private void CloseAllViewsInternal() {
+    // Close views down the stack
+    for (int i = _OpenViews.Count - 1; i >= 0; i--) {
+      if (_OpenViews[i] != null) {
+        _OpenViews[i].CloseView();
       }
     }
   }
 
   public static void CloseAllViewsImmediately() {
-    while (Instance._OpenViews.Count > 0) {
-      if (Instance._OpenViews[0] != null) {
-        Instance._OpenViews[0].CloseViewImmediately();
+    Instance.CloseAllViewsImmediatelyInternal();
+  }
+
+  private void CloseAllViewsImmediatelyInternal() {
+    // Close views down the stack
+    while (_OpenViews.Count > 0) {
+      if (_OpenViews[Instance._OpenViews.Count - 1] != null) {
+        _OpenViews[Instance._OpenViews.Count - 1].CloseViewImmediately();
       }
     }
   }
@@ -167,6 +177,8 @@ public class UIManager : MonoBehaviour {
 
   private void HandleBaseViewCloseAnimationFinished(BaseView view) {
     TryUnDimBackground(view);
+    SendDasEventForDialogClose(view);
+
     _OpenViews.Remove(view);
   }
 
@@ -209,5 +221,19 @@ public class UIManager : MonoBehaviour {
     if (_TouchCatcherInstance != null) {
       _TouchCatcherInstance.Disable();
     }
+  }
+
+  private static void SendDasEventForDialogOpen(BaseView newView) {
+    string eventOpenId = DASUtil.FormatViewTypeForOpen(newView.DASEventViewType);
+    SendDialogDasEvent(eventOpenId, newView);
+  }
+
+  private static void SendDasEventForDialogClose(BaseView closedView) {
+    string eventClosedId = DASUtil.FormatViewTypeForClose(closedView.DASEventViewType);
+    SendDialogDasEvent(eventClosedId, closedView);
+  }
+
+  private static void SendDialogDasEvent(string eventId, BaseView viewOne) {
+    DAS.Event(eventId, viewOne.DASEventViewName);
   }
 }
