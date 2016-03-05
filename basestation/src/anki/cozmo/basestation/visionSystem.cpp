@@ -2148,11 +2148,12 @@ namespace Cozmo {
 #       endif
         
         Anki::Point2f camCen;
-        for(size_t i=0; i<projectedToolCodeDots.size(); ++i)
+        std::vector<Anki::Point2f> observedPoints;
+        for(size_t iDot=0; iDot<projectedToolCodeDots.size(); ++iDot)
         {
           // Get an ROI around where we expect to see the dot in the image
-          const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[i];
-          const f32 kQuadPad_mm = 3.5f;
+          const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[iDot];
+          const f32 kQuadPad_mm = 4.5f;
           Quad3f dotQuadRoi3d = {
             {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
             {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
@@ -2199,13 +2200,12 @@ namespace Cozmo {
           binarizedDotRoi.get_CvMat_() = dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_();
           
           if(false && DRAW_TOOL_CODE_DEBUG) {
-            _debugImageMailbox.putMessage({(i==0 ? "dotRoi0" : "dotRoi1"), dotRoi});
-            _debugImageMailbox.putMessage({(i==0 ? "dotRoi0_blurred" : "dotRoi1_blurred"), dotRoi_blurred});
-            _debugImageMailbox.putMessage({(i==0 ? "InvertedDotROI0" : "InvertedDotRoi1"), binarizedDotRoi});
+            _debugImageMailbox.putMessage({(iDot==0 ? "dotRoi0" : "dotRoi1"), dotRoi});
+            _debugImageMailbox.putMessage({(iDot==0 ? "dotRoi0_blurred" : "dotRoi1_blurred"), dotRoi_blurred});
+            _debugImageMailbox.putMessage({(iDot==0 ? "InvertedDotROI0" : "InvertedDotRoi1"), binarizedDotRoi});
           }
           
-          // Refine centroid using only the connected component within which the first
-          // centroid fell
+          // Get connected components in the ROI
           Array2d<s32> labels;
           cv::Mat stats, centroids;
           const s32 numComponents = cv::connectedComponentsWithStats(binarizedDotRoi.get_CvMat_(), labels.get_CvMat_(), stats, centroids);
@@ -2240,7 +2240,7 @@ namespace Cozmo {
                 if(centerLabel == 0)
                 {
                   // Verify if we flood fill from center that we get a hole of
-                  // reasonable size
+                  // reasonable size that doesn't "leak" outside of this component
                   cv::floodFill(labels.get_CvMat_(), cv::Point(dotCentroid[0], dotCentroid[1]),
                                 numComponents+1);
                   
@@ -2289,13 +2289,17 @@ namespace Cozmo {
                     avgDotBrightness  /= compArea;
                     
                     // Hole should neither leak to the outside, nor should it be too big,
-                    // and it's brightness should be sufficiently brigther than the dot
+                    // and its brightness should be sufficiently brighter than the dot
                     const bool holeSmallEnough = holeArea < compArea * kMaxHoleAreaFrac;
                     const bool enoughContrast = (f32)avgHoleBrightness > kMinContrastRatio * (f32)avgDotBrightness;
                     if(holeSmallEnough && enoughContrast)
                     {
                       // Yay, passed all checks! Thus "must" be a tool code.
                       dotLabel = iComp;
+                    } else if(! enoughContrast) {
+                      PRINT_NAMED_INFO("VisionSystem.ReadToolCode.BadContrast",
+                                       "Dot %lu: Contrast for comp %d = %f",
+                                       iDot, iComp, (f32)avgHoleBrightness / (f32)avgDotBrightness);
                     }
                   }
                 }
@@ -2312,12 +2316,12 @@ namespace Cozmo {
 
           ASSERT_NAMED(centroids.type() == CV_64F, "Expecting centroids to be double");
           const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
-          const Anki::Point2f  observedPoint(dotCentroid[0] + dotRectRoi.GetX(),
-                                             dotCentroid[1] + dotRectRoi.GetY());
+          observedPoints.push_back(Anki::Point2f(dotCentroid[0] + dotRectRoi.GetX(),
+                                                 dotCentroid[1] + dotRectRoi.GetY()));
 
-          const Anki::Point2f& expectedPoint = projectedToolCodeDots[i];
+          const Anki::Point2f& expectedPoint = projectedToolCodeDots[iDot];
           
-          camCen += observedPoint - expectedPoint;
+          camCen += observedPoints.back() - expectedPoint;
 
           if(DRAW_TOOL_CODE_DEBUG) {
             Vision::ImageRGB roiImgDisp(binarizedDotRoi);
@@ -2339,21 +2343,29 @@ namespace Cozmo {
             Anki::Rectangle<f32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
                                           compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
             roiImgDisp.DrawRect(compRect, NamedColors::RED, 1);
-            _debugImageRGBMailbox.putMessage({(i==0 ? "DotROI0withCentroid" : "DotROI1withCentroid"), roiImgDisp});
+            _debugImageRGBMailbox.putMessage({(iDot==0 ? "DotROI0withCentroid" : "DotROI1withCentroid"), roiImgDisp});
           }
           
 #         if DRAW_TOOL_CODE_DEBUG
-          dispImg.DrawPoint(observedPoint, NamedColors::ORANGE, 1);
+          dispImg.DrawPoint(observedPoints.back(), NamedColors::ORANGE, 1);
           dispImg.DrawPoint(expectedPoint, NamedColors::BLUE,   2);
           dispImg.DrawQuad(dotQuadRoi2d, NamedColors::CYAN, 1);
 #         endif
         }
         
-        // Compute the average:
+        // Compute the average camera center:
         ASSERT_NAMED(_camera.IsCalibrated(), "Camera should be calibrated");
         camCen *= 1.f / (f32)projectedToolCodeDots.size();
         camCen += _camera.GetCalibration()->GetCenter();
         
+        // Compute the focal length by comparing 3D physical distance between
+        // the two dots and observed image distance, relative to the distance of the
+        // the lift's lower bar to the camera
+        ASSERT_NAMED(observedPoints.size() == 2, "Should have observed two points if we get here");
+        const f32 dotSpacing3d = ComputeDistanceBetween(toolCodeDotsWrtCam[0], toolCodeDotsWrtCam[1]);
+        const f32 distCamToLiftBar = ((toolCodeDotsWrtCam[0] + toolCodeDotsWrtCam[1])*0.5f).Length();
+        const f32 f = distCamToLiftBar * ComputeDistanceBetween(observedPoints[0],observedPoints[1]) / dotSpacing3d;
+
 #       if DRAW_TOOL_CODE_DEBUG
         char dispStr[256];
         snprintf(dispStr, 255, "(%.1f,%.1f)", camCen.x(), camCen.y());
@@ -2362,18 +2374,44 @@ namespace Cozmo {
 #       endif
         
         // Update the camera calibration
-        PRINT_NAMED_INFO("VisionSystem.ReadToolCode.CameraCenterUpdated",
-                         "Old=(%f,%f), New=(%f,%f), t=%dms",
+        PRINT_NAMED_INFO("VisionSystem.ReadToolCode.CameraCalibUpdated",
+                         "OldCen=(%f,%f), NewCen=(%f,%f), OldF=(%f,%f), NewF=(%f,%f), t=%dms",
                          _camera.GetCalibration()->GetCenter_x(),
                          _camera.GetCalibration()->GetCenter_y(),
                          camCen.x(), camCen.y(),
+                         _camera.GetCalibration()->GetFocalLength_x(),
+                         _camera.GetCalibration()->GetFocalLength_y(),
+                         f, f,
                          image.GetTimestamp());
         
         if(std::isnan(camCen.x()) || std::isnan(camCen.y())) {
           PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.CamCenNaN", "");
           return RESULT_FAIL;
+        } else if(std::isnan(f) || f <= 0.f) {
+          PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadFocalLength", "");
+          return RESULT_FAIL;
         } else {
+          
+          // Sanity check the new calibration:
+          Vision::Camera tempCamera(_camera);
+          tempCamera.GetCalibration()->SetCenter(camCen);
+          tempCamera.GetCalibration()->SetFocalLength(f, f);
+          std::vector<Anki::Point2f> sanityCheckPoints;
+          tempCamera.Project3dPoints(toolCodeDotsWrtCam, sanityCheckPoints);
+          for(s32 i=0; i<2; ++i)
+          {
+            const f32 reprojErrorSq = (sanityCheckPoints[i] - observedPoints[i]).LengthSq();
+            if(reprojErrorSq > 5*5)
+            {
+              PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadProjection",
+                                "Reprojection error of point %d = %f",
+                                i, std::sqrtf(reprojErrorSq));
+              return RESULT_FAIL;
+            }
+          }
+          
           _camera.GetCalibration()->SetCenter(camCen);
+          _camera.GetCalibration()->SetFocalLength(f, f);
           _lastToolCodeReadTime_ms = image.GetTimestamp();
         }
       }
