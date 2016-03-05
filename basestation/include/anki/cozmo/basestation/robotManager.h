@@ -16,6 +16,8 @@
 #include <map>
 #include <vector>
 #include <memory>
+#include <unordered_map>
+#include <string>
 
 namespace Anki {
   
@@ -35,6 +37,7 @@ namespace Anki {
   class IExternalInterface;
   class CozmoContext;
   class CannedAnimationContainer;
+  class AnimationGroupContainer;
 
     class RobotManager
     {
@@ -71,7 +74,11 @@ namespace Anki {
       using RobotDisconnectedSignal = Signal::Signal<void (RobotID_t)>;
       RobotDisconnectedSignal& OnRobotDisconnected() { return _robotDisconnectedSignal; }
 
-      CannedAnimationContainer& GetCannedAnimationContainer() { return *_cannedAnimationContainer; }
+      CannedAnimationContainer& GetCannedAnimations() { return *_cannedAnimations; }
+      AnimationGroupContainer& GetAnimationGroups() { return *_animationGroups; }
+      
+      // Read the animations in a dir
+      void ReadAnimationDir();
 
     protected:
       RobotDisconnectedSignal _robotDisconnectedSignal;
@@ -79,7 +86,16 @@ namespace Anki {
       std::vector<RobotID_t>     _IDs;
       const CozmoContext* _context;
       RobotEventHandler _robotEventHandler;
-      std::unique_ptr<CannedAnimationContainer> _cannedAnimationContainer;
+      std::unique_ptr<CannedAnimationContainer>   _cannedAnimations;
+      std::unique_ptr<AnimationGroupContainer>    _animationGroups;
+      std::unordered_map<std::string, time_t> _loadedAnimationFiles;
+      std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
+      
+      void ReadAnimationDirImpl(const std::string& animationDir);
+      void ReadAnimationFile(const char* filename);
+
+      void ReadAnimationGroupDir();
+      void ReadAnimationGroupFile(const char* filename);
       
     }; // class RobotManager
     

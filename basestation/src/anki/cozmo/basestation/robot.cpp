@@ -82,7 +82,8 @@ namespace Anki {
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
-    , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimationContainer())
+    , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimations())
+    , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
     , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _movementComponent(*this)
     , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, _context)
@@ -125,8 +126,14 @@ namespace Anki {
       
       _lastDebugStringHash = 0;
 
-      ReadAnimationDir();
-      ReadAnimationGroupDir();
+      if (_context->GetDataPlatform() != nullptr)
+      {
+        if (USE_SOUND_MANAGER_FOR_ROBOT_AUDIO)
+        {
+          SoundManager::getInstance()->LoadSounds(_context->GetDataPlatform());
+        }
+        FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
+      }
       
       // Set up the neutral face to use when resetting procedural animations
       static const char* neutralFaceAnimName = "neutral_face";
@@ -1314,24 +1321,6 @@ namespace Anki {
     {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
     } // StopSound()
-
-    // Read the animations in a dir
-    void Robot::ReadAnimationFile(const char* filename, std::string& animationId)
-    {
-      Json::Value animDefs;
-      const bool success = _context->GetDataPlatform()->readAsJson(filename, animDefs);
-      if (success && !animDefs.empty()) {
-        //PRINT_NAMED_DEBUG("Robot.ReadAnimationFile", "reading %s", filename);
-        _cannedAnimations.DefineFromJson(animDefs, animationId);
-        
-        if(std::string(filename).find(animationId) == std::string::npos) {
-          PRINT_NAMED_WARNING("Robot.ReadAnimationFile.AnimationNameMismatch",
-                              "Animation name '%s' does not match seem to match "
-                              "filename '%s'", animationId.c_str(), filename);
-        }
-      }
-
-    }
     
     const std::string& Robot::GetAnimationNameFromGroup(const std::string& name) {
       const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
@@ -1340,28 +1329,6 @@ namespace Anki {
       }
       static const std::string empty("");
       return empty;
-    }
-    
-    // Read the animation groups in a dir
-    void Robot::ReadAnimationGroupFile(const char* filename)
-    {
-      Json::Value animGroupDef;
-      const bool success = _context->GetDataPlatform()->readAsJson(filename, animGroupDef);
-      if (success && !animGroupDef.empty()) {
-        
-        std::string fullName(filename);
-        
-        // remove path
-        auto slashIndex = fullName.find_last_of("/");
-        std::string jsonName = slashIndex == std::string::npos ? fullName : fullName.substr(slashIndex + 1);
-        // remove extension
-        auto dotIndex = jsonName.find_last_of(".");
-        std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
-
-        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), filename);
-        
-        _animationGroups.DefineFromJson(animGroupDef, animationGroupName);
-      }      
     }
     
     void Robot::LoadEmotionEvents()
@@ -1434,146 +1401,6 @@ namespace Anki {
           }
         }
       }
-    }
-    
-    // Read the animations in a dir
-    void Robot::ReadAnimationDir()
-    {
-      // Disable super-verbose warnings about clipping face parameters in json files
-      // To help find bad/deprecated animations, try removing this.
-      ProceduralFace::EnableClippingWarning(false);
-
-      ReadAnimationDirImpl("assets/animations/");
-      ReadAnimationDirImpl("config/basestation/animations/");
-    }
-    
-    void Robot::ReadAnimationDirImplHelper(const std::string& animationFolder)
-    {
-      static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
-      std::string animationId;
-      s32 loadedFileCount = 0;
-      DIR* dir = opendir(animationFolder.c_str());
-      if ( dir != nullptr) {
-        dirent* ent = nullptr;
-        while ( (ent = readdir(dir)) != nullptr) {
-          // Recurse further if needed
-          if(ent->d_type == DT_DIR && strcmp(ent->d_name, ".") != 0  && strcmp(ent->d_name, "..") != 0)
-          {
-            ReadAnimationDirImplHelper(animationFolder + ent->d_name+"/");
-          }
-          else if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
-            std::string fullFileName = animationFolder + ent->d_name;
-            struct stat attrib{0};
-            int result = stat(fullFileName.c_str(), &attrib);
-            if (result == -1) {
-              PRINT_NAMED_WARNING("Robot.ReadAnimationFile", "could not get mtime for %s", fullFileName.c_str());
-              continue;
-            }
-            bool loadFile = false;
-            auto mapIt = _loadedAnimationFiles.find(fullFileName);
-            if (mapIt == _loadedAnimationFiles.end()) {
-              _loadedAnimationFiles.insert({fullFileName, attrib.st_mtimespec.tv_sec});
-              loadFile = true;
-            } else {
-              if (mapIt->second < attrib.st_mtimespec.tv_sec) {
-                mapIt->second = attrib.st_mtimespec.tv_sec;
-                loadFile = true;
-              } else {
-                //PRINT_NAMED_INFO("Robot.ReadAnimationFile", "old time stamp for %s", fullFileName.c_str());
-              }
-            }
-            if (loadFile) {
-              ReadAnimationFile(fullFileName.c_str(), animationId);
-              ++loadedFileCount;
-            }
-          }
-        }
-        closedir(dir);
-      } else {
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "folder not found %s", animationFolder.c_str());
-      }
-    }
-    
-    void Robot::ReadAnimationDirImpl(const std::string& animationDir)
-    {
-      if (_context->GetDataPlatform() == nullptr) { return; }
-#     if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
-      SoundManager::getInstance()->LoadSounds(_context->GetDataPlatform());
-#     endif
-      FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
-      
-      const std::string animationFolder =
-        _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, animationDir);
-      
-      ReadAnimationDirImplHelper(animationFolder);
-
-      // Tell UI about available animations
-      if (HasExternalInterface()) {
-        std::vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
-        for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-          _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
-        }
-      }
-      
-      ProceduralFace::EnableClippingWarning(true);
-    }
-    
-    // Read the animationGroups in a dir
-    void Robot::ReadAnimationGroupDir()
-    {
-      if (_context->GetDataPlatform() == nullptr) { return; }
-      static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
-      
-      const std::string animationGroupFolder =
-      _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
-      s32 loadedFileCount = 0;
-      DIR* dir = opendir(animationGroupFolder.c_str());
-      if ( dir != nullptr) {
-        dirent* ent = nullptr;
-        while ( (ent = readdir(dir)) != nullptr) {
-          
-          if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
-            std::string fullFileName = animationGroupFolder + ent->d_name;
-            struct stat attrib{0};
-            int result = stat(fullFileName.c_str(), &attrib);
-            if (result == -1) {
-              PRINT_NAMED_WARNING("Robot.ReadAnimationGroupFile", "could not get mtime for %s", fullFileName.c_str());
-              continue;
-            }
-            bool loadFile = false;
-            auto mapIt = _loadedAnimationGroupFiles.find(fullFileName);
-            if (mapIt == _loadedAnimationGroupFiles.end()) {
-              _loadedAnimationGroupFiles.insert({fullFileName, attrib.st_mtimespec.tv_sec});
-              loadFile = true;
-            } else {
-              if (mapIt->second < attrib.st_mtimespec.tv_sec) {
-                mapIt->second = attrib.st_mtimespec.tv_sec;
-                loadFile = true;
-              } else {
-                //PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "old time stamp for %s", fullFileName.c_str());
-              }
-            }
-            if (loadFile) {
-              ReadAnimationGroupFile(fullFileName.c_str());
-              ++loadedFileCount;
-            }
-          }
-        }
-        closedir(dir);
-      } else {
-        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "folder not found %s", animationGroupFolder.c_str());
-      }
-      
-      // TODO: Implement external interface
-      /*
-      // Tell UI about available animationGroups
-      if (HasExternalInterface()) {
-        std::vector<std::string> animNames(_cannedAnimationGroups.GetAnimationGroupNames());
-        for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-          _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationGroupAvailable(*i)));
-        }
-      }
-       */
     }
 
     Result Robot::SyncTime()

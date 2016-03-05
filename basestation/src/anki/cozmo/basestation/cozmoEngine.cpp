@@ -303,11 +303,7 @@ void CozmoEngine::SetEngineState(EngineState newState)
 
 void CozmoEngine::ReadAnimationsFromDisk()
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  if (robot != nullptr) {
-    PRINT_NAMED_INFO("CozmoEngine.ReloadAnimations", "ReadAnimationDir");
-    robot->ReadAnimationDir();
-  }
+  _context->GetRobotManager()->ReadAnimationDir();
 }
   
 Result CozmoEngine::InitInternal()

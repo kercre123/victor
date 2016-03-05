@@ -483,20 +483,6 @@ public:
     // TODO: REMOVE OLD AUDIO SYSTEM
     Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
     void   StopSound();
-
-    // Read the animations in a dir
-    void ReadAnimationFile(const char* filename, std::string& animationID);
-  
-    // Read the animations in a dir
-    void ReadAnimationDir();
-    void ReadAnimationDirImpl(const std::string& animationDir);
-    void ReadAnimationDirImplHelper(const std::string& animationFolder);
-
-    // Read the animation groups in a dir
-    void ReadAnimationGroupDir();
-
-    // Read the animation groups in a dir
-    void ReadAnimationGroupFile(const char* filename);
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
@@ -712,7 +698,7 @@ public:
   
     ///////// Animation /////////
     CannedAnimationContainer&   _cannedAnimations;
-    AnimationGroupContainer     _animationGroups;
+    AnimationGroupContainer&    _animationGroups;
     AnimationStreamer           _animationStreamer;
     s32 _numFreeAnimationBytes;
     s32 _numAnimationBytesPlayed         = 0;
@@ -855,9 +841,6 @@ public:
     u32         _imgProcPeriod         = 0;
     TimeStamp_t _lastImgTimeStamp      = 0;
     std::string _lastPlayedAnimationId;
-
-    std::unordered_map<std::string, time_t> _loadedAnimationFiles;
-    std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
   
     ///////// Modifiers ////////
     
