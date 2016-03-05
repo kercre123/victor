@@ -320,6 +320,7 @@ extern "C" void uesb_event_handler(void)
     if (slot < 0) {
       ObjectDiscovered msg;
       msg.factory_id = packet.id;
+			msg.rssi = rx_payload.rssi;
       RobotInterface::SendMessage(msg);
             
       // Attempt to allocate a slot for it
