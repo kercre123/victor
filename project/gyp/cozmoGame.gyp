@@ -200,6 +200,7 @@
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
                   '<@(opencv_lib_search_path_debug)',
+                  '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
                 ],
               },
             }],
@@ -237,6 +238,7 @@
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
                   '<@(opencv_lib_search_path_debug)',
+                  '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
                 ],
               },
             }],
@@ -274,6 +276,7 @@
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
                   '<@(opencv_lib_search_path_debug)',
+                  '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
                 ],
               },
             }],
@@ -354,6 +357,18 @@
             'sources': [ '<!@(cat <(csharp_source))' ],
             'libraries': [
               '<@(face_library_libs)',
+              '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AssetsLibrary.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreText.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreGraphics.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Foundation.framework',
+              '$(SDKROOT)/System/Library/Frameworks/MobileCoreServices.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QuickLook.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Security.framework',
+              '$(SDKROOT)/System/Library/Frameworks/SystemConfiguration.framework',
+              '$(SDKROOT)/System/Library/Frameworks/UIKit.framework',
+              '/usr/lib/libstdc++.dylib',
             ],
           }, # end CSharpBinding
 

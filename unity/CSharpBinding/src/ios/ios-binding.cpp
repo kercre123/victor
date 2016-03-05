@@ -9,6 +9,7 @@
 #include "ios-binding.h"
 #include "../csharp-binding.h"
 #include "dataPlatformCreator.h"
+#include "hockeyApp.h"
 #include "anki/cozmo/cozmoAPI.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -61,6 +62,7 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data
 
   dataPlatform = CreateDataPlatform();
   ConfigureDASForPlatform(dataPlatform);
+  CreateHockeyApp();
   
     using namespace Cozmo;
   
