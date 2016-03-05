@@ -157,29 +157,24 @@ extern "C" void SWI0_IRQHandler(void) {
 
   last_counter = new_count;
   
-  for (RTOS_Task** cursor = &task_list; *cursor; cursor = &(*cursor)->next) {
-    RTOS_Task* task = *cursor;
-
+  for (RTOS_Task* task = task_list; task; task = task->next) {
     // Resume execution
     if (!task->active) {
       continue ; 
     }   
+
     task->target -= ticks;
 
     // Current task has not yet fired
     if (task->target > 0) {
       continue ;
     }
-    
-    // Ticks are the underflow
-    ticks = -task->target;
-    task->target = 0;
 
     task->task(task->userdata);
 
     // Either release the task slice, or reinsert it with the period
     if (task->repeating) {
-      task->target += task->period;
+			task->target = (task->target % task->period) + task->period;
     } else {
       RTOS::release(task);
     }

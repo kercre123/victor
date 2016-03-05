@@ -83,7 +83,7 @@ static const int CAPTURE_OFFSET = CYCLES_MS(0.5f);
 
 static const int TICK_LOOP = TOTAL_PERIOD / SCHEDULE_PERIOD;
 
-static const int ACCESSORY_TIMEOUT = 400;         // 2s timeout before accessory is considered lost
+static const int ACCESSORY_TIMEOUT = 50;         // 0.5s timeout before accessory is considered lost
 static const int PACKET_SIZE = 17;
 static const int MAX_ACCESSORIES = TICK_LOOP;
 
@@ -176,8 +176,9 @@ static void createAddress(uesb_address_desc_t& address) {
   address.base0 = 0xE7E7E7E7;
 
   // Create a random RF channel
-  Crypto::random(&address.rf_channel, sizeof(address.rf_channel));
-  address.rf_channel %= MAX_TX_CHANNELS;
+  //Crypto::random(&address.rf_channel, sizeof(address.rf_channel));
+  //address.rf_channel %= MAX_TX_CHANNELS;
+	address.rf_channel = 79;
 }
 
 // This will move to the next frequency (channel hopping)
@@ -405,7 +406,7 @@ void Radio::manage(void* userdata) {
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
     // We send the previous LED state (so we don't get jitter on radio)
     uesb_address_desc_t& address = accessories[currentAccessory].address;
-    
+
     // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
     memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
