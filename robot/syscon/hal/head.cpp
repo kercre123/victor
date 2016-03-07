@@ -10,7 +10,7 @@
 #include "radio.h"
 #include "rtos.h"
 #include "hardware.h"
-#include "lights.h"
+#include "backpack.h"
 
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/logging.h"
@@ -156,7 +156,7 @@ static void Process_bootloadBody(const RobotInterface::BootloadBody& msg)
 }
 static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 {
-  Lights::setLights(msg.lights);
+  Backpack::setLights(msg.lights);
 }
 static void Process_setCubeLights(const CubeLights& msg)
 {

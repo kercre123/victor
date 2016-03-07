@@ -16,6 +16,7 @@ extern "C" {
 #include "head.h"
 #include "debug.h"
 #include "timer.h"
+#include "backpack.h"
 #include "lights.h"
 #include "tests.h"
 #include "radio.h"
@@ -77,8 +78,9 @@ int main(void)
   Battery::init();
   Bluetooth::init();
   Timer::init();
-  Lights::init();
+  Backpack::init();
   Radio::init();
+	Lights::init();
 
   #ifndef BLUETOOTH_MODE
   Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
