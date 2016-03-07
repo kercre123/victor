@@ -140,7 +140,7 @@ static void dh_encode_random(big_num_t& result, int pin, const uint8_t* random) 
 
 static void dh_start(DiffieHellman* dh) {
 	// Generate our secret
-	//Crypto::random(dh->secret, SECRET_LENGTH);
+	Crypto::random(dh->secret, SECRET_LENGTH);
 	
 	// Encode our secret as an exponent
 	big_num_t secret;	
@@ -153,7 +153,10 @@ static void dh_finish(DiffieHellman* dh, uint8_t* key, int length) {
 	// Encode their secret for exponent
 	big_num_t temp;	
 	
-	dh_encode_random(temp, dh->pin, dh->secret);
+	temp.negative = false;
+	temp.used = sizeof(dh->secret) / sizeof(big_num_cell_t);
+	memcpy(temp.digits, dh->secret, sizeof(dh->secret));
+
 	mont_power(*dh->mont, dh->state, dh->state, temp);
 	mont_from(*dh->mont, temp, dh->state);
 	
