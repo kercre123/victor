@@ -2170,7 +2170,7 @@ namespace Cozmo {
           const f32 kMinDotAreaFrac = 0.5f * kDotAreaFrac;
           const f32 kMaxDotAreaFrac = 1.5f * kDotAreaFrac;
           const f32 kHoleAreaFrac = kDotHole_mm * kDotHole_mm / (kDotWidth_mm*kDotWidth_mm);
-          const f32 kMaxHoleAreaFrac = 1.5f * kHoleAreaFrac;
+          const f32 kMaxHoleAreaFrac = 1.75f * kHoleAreaFrac;
           const f32 kMinContrastRatio = 1.1f;
           Quad3f dotQuadRoi3dWrtCam;
           liftPoseWrtCam.ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtCam);
@@ -2231,8 +2231,6 @@ namespace Cozmo {
               const f32 distSq = (Anki::Point2f(dotCentroid[0], dotCentroid[1]) - roiCen).LengthSq();
               if(distSq < distToCenterSq)
               {
-                distToCenterSq = distSq;
-                
                 // Check to see if center point is "empty" (has background label)
                 // Note the x/y vs. row/col switch here
                 const s32 centerLabel = labels(std::round(dotCentroid[1]),
@@ -2296,16 +2294,48 @@ namespace Cozmo {
                     {
                       // Yay, passed all checks! Thus "must" be a tool code.
                       dotLabel = iComp;
-                    } else if(! enoughContrast) {
+                      distToCenterSq = distSq;
+                    } else if(DRAW_TOOL_CODE_DEBUG && !enoughContrast) {
                       PRINT_NAMED_INFO("VisionSystem.ReadToolCode.BadContrast",
                                        "Dot %lu: Contrast for comp %d = %f",
                                        iDot, iComp, (f32)avgHoleBrightness / (f32)avgDotBrightness);
+                    } else if(DRAW_TOOL_CODE_DEBUG && !holeSmallEnough) {
+                      PRINT_NAMED_INFO("VisionSystem.ReadToolCode.HoleTooLarge",
+                                       "Dot %lu: hole too large %d > %f*%d (=%f)",
+                                       iDot, holeArea, kMaxHoleAreaFrac, compArea,
+                                       kMaxHoleAreaFrac*compArea);
                     }
                   }
                 }
               } // dist to center check
             } // area check
-          }
+          } // for each component iComp
+          
+          if(DRAW_TOOL_CODE_DEBUG) {
+            Vision::ImageRGB roiImgDisp(binarizedDotRoi);
+            // Function to color component with dotLabel green, and white for all others
+            std::function<Vision::PixelRGB(const s32&)> fcn = [dotLabel](const s32& label)
+            {
+              if(label == dotLabel) {
+                return Vision::PixelRGB(0,255,0);
+              } else if(label == 0) {
+                return Vision::PixelRGB(0,0,0);
+              } else {
+                return Vision::PixelRGB(255,255,255);
+              }
+            };
+            labels.ApplyScalarFunction(fcn, roiImgDisp);
+            if(dotLabel != -1) {
+              const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
+              roiImgDisp.DrawPoint(Anki::Point2f(dotCentroid[0], dotCentroid[1]), NamedColors::RED, 1);
+              
+              const s32* compStats = stats.ptr<s32>(dotLabel);
+              Anki::Rectangle<f32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
+                                            compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
+              roiImgDisp.DrawRect(compRect, NamedColors::RED, 1);
+            }
+            _debugImageRGBMailbox.putMessage({(iDot==0 ? "DotROI0withCentroid" : "DotROI1withCentroid"), roiImgDisp});
+          } // if(DRAW_TOOL_CODE_DEBUG)
          
           if(dotLabel == -1) {
             // TODO: Return failure instead?
@@ -2322,36 +2352,13 @@ namespace Cozmo {
           const Anki::Point2f& expectedPoint = projectedToolCodeDots[iDot];
           
           camCen += observedPoints.back() - expectedPoint;
-
-          if(DRAW_TOOL_CODE_DEBUG) {
-            Vision::ImageRGB roiImgDisp(binarizedDotRoi);
-            // Function to color component with dotLabel green, and white for all others
-            std::function<Vision::PixelRGB(const s32&)> fcn = [dotLabel](const s32& label)
-            {
-              if(label == dotLabel) {
-                return Vision::PixelRGB(0,255,0);
-              } else if(label == 0) {
-                return Vision::PixelRGB(0,0,0);
-              } else {
-                return Vision::PixelRGB(255,255,255);
-              }
-            };
-            labels.ApplyScalarFunction(fcn, roiImgDisp);
-            roiImgDisp.DrawPoint(Anki::Point2f(dotCentroid[0], dotCentroid[1]), NamedColors::RED, 1);
-            
-            const s32* compStats = stats.ptr<s32>(dotLabel);
-            Anki::Rectangle<f32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
-                                          compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
-            roiImgDisp.DrawRect(compRect, NamedColors::RED, 1);
-            _debugImageRGBMailbox.putMessage({(iDot==0 ? "DotROI0withCentroid" : "DotROI1withCentroid"), roiImgDisp});
-          }
           
 #         if DRAW_TOOL_CODE_DEBUG
           dispImg.DrawPoint(observedPoints.back(), NamedColors::ORANGE, 1);
           dispImg.DrawPoint(expectedPoint, NamedColors::BLUE,   2);
           dispImg.DrawQuad(dotQuadRoi2d, NamedColors::CYAN, 1);
 #         endif
-        }
+        } // for each tool code dot iDot
         
         // Compute the average camera center:
         ASSERT_NAMED(_camera.IsCalibrated(), "Camera should be calibrated");
@@ -2391,11 +2398,36 @@ namespace Cozmo {
           PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadFocalLength", "");
           return RESULT_FAIL;
         } else {
+          // Make sure we're not changing too drastically
+          const f32 kMaxChangeFraction = 0.25f;
+          const f32 fChangeFrac = f/_camera.GetCalibration()->GetFocalLength_x();
+          const f32 xChangeFrac = camCen.x() / _camera.GetCalibration()->GetCenter_x();
+          const f32 yChangeFrac = camCen.y() / _camera.GetCalibration()->GetCenter_y();
+          if(!NEAR(fChangeFrac, 1.f, kMaxChangeFraction) ||
+             !NEAR(xChangeFrac, 1.f, kMaxChangeFraction) ||
+             !NEAR(yChangeFrac, 1.f, kMaxChangeFraction))
+          {
+            PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ChangeTooLarge",
+                              "Calibration change too large from current: f=%f vs %f, "
+                              "cen=(%f,%f) vs (%f,%f)",
+                              f, _camera.GetCalibration()->GetFocalLength_x(),
+                              xChangeFrac, yChangeFrac,
+                              _camera.GetCalibration()->GetCenter_x(),
+                              _camera.GetCalibration()->GetCenter_y());
+            return RESULT_FAIL;
+          }
           
           // Sanity check the new calibration:
-          Vision::Camera tempCamera(_camera);
-          tempCamera.GetCalibration()->SetCenter(camCen);
-          tempCamera.GetCalibration()->SetFocalLength(f, f);
+          Vision::Camera tempCamera;
+          Vision::CameraCalibration tempCalib(_camera.GetCalibration()->GetNrows(),
+                                              _camera.GetCalibration()->GetNcols(),
+                                              _camera.GetCalibration()->GetFocalLength_x(),
+                                              _camera.GetCalibration()->GetFocalLength_y(),
+                                              _camera.GetCalibration()->GetCenter_x(),
+                                              _camera.GetCalibration()->GetCenter_y());
+          tempCalib.SetFocalLength(f,f);
+          tempCalib.SetCenter(camCen);
+          tempCamera.SetCalibration(tempCalib);
           std::vector<Anki::Point2f> sanityCheckPoints;
           tempCamera.Project3dPoints(toolCodeDotsWrtCam, sanityCheckPoints);
           for(s32 i=0; i<2; ++i)
@@ -2403,6 +2435,15 @@ namespace Cozmo {
             const f32 reprojErrorSq = (sanityCheckPoints[i] - observedPoints[i]).LengthSq();
             if(reprojErrorSq > 5*5)
             {
+              if(DRAW_TOOL_CODE_DEBUG)
+              {
+                Vision::ImageRGB dispImg(image);
+                dispImg.DrawPoint(sanityCheckPoints[0], NamedColors::RED, 1);
+                dispImg.DrawPoint(sanityCheckPoints[1], NamedColors::RED, 1);
+                dispImg.DrawPoint(observedPoints[0], NamedColors::GREEN, 1);
+                dispImg.DrawPoint(observedPoints[1], NamedColors::GREEN, 1);
+                _debugImageRGBMailbox.putMessage({"SanityCheck", dispImg});
+              }
               PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadProjection",
                                 "Reprojection error of point %d = %f",
                                 i, std::sqrtf(reprojErrorSq));
