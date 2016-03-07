@@ -387,7 +387,7 @@ namespace Anki
       
       // Returns distance in mm
       // If 0, nothing is detected
-      u8 GetForwardProxSensor();
+      u8 GetForwardProxSensorCurrentValue();
       
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
