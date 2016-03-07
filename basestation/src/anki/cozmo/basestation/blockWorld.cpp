@@ -651,7 +651,6 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
         // - - -
         const float sensorValue = ((float)_forwardSensorValue_mm);
         const float maxSensorValue = ((float)FORWARD_COLLISION_SENSOR_LENGTH_MM);
-        const float sensorX = ((float)DRIVE_CENTER_OFFSET); // sensor offset wrt drive center is embedded in the sensor value
       
         // debug?
         const float kDebugRenderZOffset = 25.0f; // Z offset for render only so that it doesn't render underground
@@ -666,8 +665,8 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
         const Vec3f forwardRay = robotPose.GetRotation() * X_AXIS_3D();
         
         // robot detection points
-        Point3f robotForwardLeft  = robotPose * Vec3f{ sensorX,  kFrontCollisionSensorWidth, 0.0f};
-        Point3f robotForwardRight = robotPose * Vec3f{ sensorX, -kFrontCollisionSensorWidth, 0.0f};
+        Point3f robotForwardLeft  = robotPose * Vec3f{ 0.0f,  kFrontCollisionSensorWidth, 0.0f};
+        Point3f robotForwardRight = robotPose * Vec3f{ 0.0f, -kFrontCollisionSensorWidth, 0.0f};
         const Point3f clearUntilLeft  = robotForwardLeft  + (forwardRay*sensorValue);
         const Point3f clearUntilRight = robotForwardRight + (forwardRay*sensorValue);
         

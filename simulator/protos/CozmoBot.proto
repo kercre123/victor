@@ -129,6 +129,18 @@ Supervisor {
 		    }
 		  ]
 		}
+
+    # if you modify the length, you need to update FORWARD_COLLISION_SENSOR_LENGTH_MM
+    DistanceSensor {
+      name "forwardProxSensor"
+      translation 0.04 0 0
+      rotation 0 1 0 0
+      type "generic"
+      lookupTable [ 0.0     40   0,
+                    0.120   160  0] # offset for its own translation
+      numberOfRays 1
+      aperture 0.1
+    }
 	
 		DEF BODY Solid {
 		  translation -0.015 0 0
@@ -193,18 +205,6 @@ Supervisor {
 					  snap			FALSE
 					}
 				  ]
-				}
-
-        # if you modify the length, you need to update FORWARD_COLLISION_SENSOR_LENGTH_MM
-				DistanceSensor {
-					name "forwardProxSensor"
-					translation 0.04 0 0
-					rotation 0 1 0 0
-					type "generic"
-					lookupTable [ 0.0     40   0,
-					              0.120   160  0] # offset for its own translation
-					numberOfRays 1
-					aperture 0.1
 				}
 
 		  ] # BODY Solid children
