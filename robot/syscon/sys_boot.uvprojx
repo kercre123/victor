@@ -332,7 +332,7 @@
               <MiscControls></MiscControls>
               <Define>NRF51,COZMO_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/device;./components/drivers_nrf/hal;../include;.;./components/softdevice/s110/headers</IncludePath>
+              <IncludePath>./components/device;./components/drivers_nrf/hal;../include;.;./components/softdevice/s110/headers;./crypto</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -391,11 +391,6 @@
               <FilePath>.\boot\recovery.cpp</FilePath>
             </File>
             <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\boot\sha1.cpp</FilePath>
-            </File>
-            <File>
               <FileName>timer.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\boot\timer.cpp</FilePath>
@@ -414,6 +409,16 @@
               <FileName>system_nrf51.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\lib\system_nrf51.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>crypto</GroupName>
+          <Files>
+            <File>
+              <FileName>sha1.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\crypto\sha1.cpp</FilePath>
             </File>
           </Files>
         </Group>

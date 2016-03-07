@@ -125,7 +125,7 @@ static void dh_encode_random(void *result, int pin, const uint8_t* random) {
     // Hash our pin (keeping only lower portion
     SHA1_CTX ctx;
     sha1_init(&ctx);
-    sha1_update(&ctx, (BYTE*)&pin, sizeof(pin));
+    sha1_update(&ctx, (uint8_t*)&pin, sizeof(pin));
 
     uint8_t sig[SHA1_BLOCK_SIZE];
     sha1_final(&ctx, sig);
@@ -138,7 +138,7 @@ static void dh_encode_random(void *result, int pin, const uint8_t* random) {
 
 static void dh_start(DiffieHellman* dh) {
   // Generate our secret
-  Crypto::random(dh->secret, SECRET_LENGTH);
+  //Crypto::random(dh->secret, SECRET_LENGTH);
   
   // Encode our secret as an exponent
   big_num_t secret; 
@@ -146,7 +146,8 @@ static void dh_start(DiffieHellman* dh) {
   secret.negative = false;
   secret.used = AES_BLOCK_LENGTH / sizeof(big_num_cell_t);
   dh_encode_random(secret.digits, dh->pin, dh->secret);
-  mont_power(DEFAULT_DIFFIE_GROUP, dh->state, DEFAULT_DIFFIE_GENERATOR, secret);
+	
+	mont_power(*dh->mont, dh->state, *dh->gen, secret);
 }
 
 static void dh_finish(DiffieHellman* dh, uint8_t* key) {
@@ -156,10 +157,10 @@ static void dh_finish(DiffieHellman* dh, uint8_t* key) {
   // The cell phone sends the AES encoded chunk (less delay)
   secret.negative = false;
   secret.used = SECRET_LENGTH / sizeof(big_num_cell_t);
-  memcpy(secret.digits, dh->secret, SECRET_LENGTH);
+  dh_encode_random(secret.digits, dh->pin, dh->secret);
 
   big_num_t result;
-  mont_power(DEFAULT_DIFFIE_GROUP, result, dh->state, secret);
+  mont_power(*dh->mont, result, dh->state, secret);
   
   memcpy(key, result.digits, AES_BLOCK_LENGTH);
 }
@@ -234,7 +235,7 @@ void Crypto::execute(CryptoTask* task) {
 }
 
 void Crypto::manage(void) {
-  RTOS::EnterCritical();
+	RTOS::EnterCritical();
   CryptoTask* task = &fifoQueue[fifoHead];
   int count = fifoCount;
   RTOS::LeaveCritical();

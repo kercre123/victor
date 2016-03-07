@@ -22,7 +22,7 @@ extern "C" {
 #include "crypto.h"
 #include "bluetooth.h"
 
-#include "boot/sha1.h"
+#include "sha1.h"
 
 #include "bootloader.h"
 
@@ -69,6 +69,41 @@ static void EMERGENCY_FIX(void) {
   NVIC_SystemReset();
 }
 
+static const uint8_t secret1[SECRET_LENGTH] = {0,0,0,0,0,0,0,0,0,0};
+static const uint8_t secret2[SECRET_LENGTH] = {0,0,0,0,0,0,0,0,0,0};
+static CryptoTask y;
+static DiffieHellman dh;
+static uint8_t dh_key[AES_KEY_LENGTH];
+
+static void DH_Phase1(CryptoTask* task) {
+	DiffieHellman* dh = (DiffieHellman*) task->input;
+	memcpy(dh->secret, secret2, sizeof(secret2));
+}
+
+static void DH_Phase2(CryptoTask* task) {
+	DiffieHellman* dh = (DiffieHellman*) task->input;
+}
+
+static void TestCrypto(void) {
+	CryptoTask x;
+	x.op = CRYPTO_START_DIFFIE_HELLMAN;
+	x.input = &dh;
+	x.callback = DH_Phase1;
+	Crypto::execute(&x);
+
+	CryptoTask y;
+	y.op = CRYPTO_FINISH_DIFFIE_HELLMAN;
+	y.input = &dh;
+	y.output = &dh_key;
+	y.callback = DH_Phase2;
+	Crypto::execute(&y);
+	
+	dh.mont = &DEFAULT_DIFFIE_GROUP;
+	dh.gen = &DEFAULT_DIFFIE_GENERATOR;
+	dh.pin = 9999;
+	memcpy(dh.secret, secret1, sizeof(secret1));
+}
+
 int main(void)
 {
   // Initialize the SoftDevice handler module.
@@ -107,7 +142,9 @@ int main(void)
   Head::init();
   #endif
 
-  Timer::start();
+  //Timer::start();
+
+	TestCrypto();
 
   // Run forever, because we are awesome.
   for (;;) {
