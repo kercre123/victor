@@ -3111,7 +3111,7 @@ namespace Anki {
     void Robot::BroadcastDiscoveredObjects()
     {
       for (auto obj : _discoveredObjects) {
-        Broadcast(ExternalInterface::MessageEngineToGame(ObjectDiscovered(obj.first)));
+        Broadcast(ExternalInterface::MessageEngineToGame(ObjectDiscovered(obj.first, 0)));
       }
     }
     
