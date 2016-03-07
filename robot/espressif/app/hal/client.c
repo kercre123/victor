@@ -25,7 +25,7 @@ static bool sendHoldoff;
 
 bool clientConnected(void)
 {
-  return clientConnection != NULL;
+  return clientConnectionId != 0;
 }
 
 void clientUpdate(void)

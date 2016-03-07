@@ -716,6 +716,10 @@ namespace Anki {
       {
         // Nothing to do here
       }
+      void Process_setRTTO(Anki::Cozmo::RobotInterface::DebugSetRTTO const&)
+      {
+        // TODO honor this in simulator
+      }
       void Process_assignCubeSlots(const CubeSlots& msg)
       {
         HAL::AssignCubeSlots(7, msg.factory_id);

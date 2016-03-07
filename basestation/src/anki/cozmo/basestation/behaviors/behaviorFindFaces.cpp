@@ -75,17 +75,24 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   
 bool BehaviorFindFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
-  if(_currentState == State::Inactive) {
-    
-    Pose3d facePose;
-    auto lastFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
-    
-    return (lastFaceTime == 0 || lastFaceTime < SEC_TO_MILIS(currentTime_sec - _minimumTimeSinceSeenLastFace_sec));
-  }
-  else {
-    return true;
-  }
+  return true;
 }
+  
+float BehaviorFindFaces::EvaluateScoreInternal(const Anki::Cozmo::Robot &robot, double currentTime_sec) const
+{
+  Pose3d facePose;
+  auto lastFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
+  
+  if (_currentState != State::Inactive ||
+      lastFaceTime == 0 ||
+      lastFaceTime < SEC_TO_MILIS(currentTime_sec - _minimumTimeSinceSeenLastFace_sec))
+  {
+    return IBehavior::EvaluateScoreInternal(robot, currentTime_sec);
+  }
+  
+  return 0.0f;
+}
+  
 
 float BehaviorFindFaces::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
 {

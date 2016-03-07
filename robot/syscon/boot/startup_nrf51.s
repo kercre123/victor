@@ -55,10 +55,9 @@ __heap_limit
                 PRESERVE8
                 THUMB
 
-; Magic signature
+; Vector Table Mapped to Address 0 at Reset
 
-; This is the vector table for the application
-                AREA    RESET, CODE, READONLY
+                AREA    RESET, DATA, READONLY
                 EXPORT  __Vectors
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
@@ -81,32 +80,32 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     SysTick_Handler
 
                 ; External Interrupts
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
+                DCD     POWER_CLOCK_IRQHandler
+                DCD     RADIO_IRQHandler
+                DCD     UART0_IRQHandler
+                DCD     SPI0_TWI0_IRQHandler
+                DCD     SPI1_TWI1_IRQHandler
                 DCD     0                         ; Reserved
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
-                DCD     Trampoline
+                DCD     GPIOTE_IRQHandler
+                DCD     ADC_IRQHandler
+                DCD     TIMER0_IRQHandler
+                DCD     TIMER1_IRQHandler
+                DCD     TIMER2_IRQHandler
+                DCD     RTC0_IRQHandler
+                DCD     TEMP_IRQHandler
+                DCD     RNG_IRQHandler
+                DCD     ECB_IRQHandler
+                DCD     CCM_AAR_IRQHandler
+                DCD     WDT_IRQHandler
+                DCD     RTC1_IRQHandler
+                DCD     QDEC_IRQHandler
+                DCD     LPCOMP_IRQHandler
+                DCD     SWI0_IRQHandler
+                DCD     SWI1_IRQHandler
+                DCD     SWI2_IRQHandler
+                DCD     SWI3_IRQHandler
+                DCD     SWI4_IRQHandler
+                DCD     SWI5_IRQHandler
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
@@ -114,7 +113,10 @@ __Vectors       DCD     __initial_sp              ; Top of Stack
                 DCD     0                         ; Reserved
                 DCD     0                         ; Reserved
 
-__Vectors_End
+__Vectors_End	DCD		0xFFFFFFFF				  ; Reserved space for AES key
+				DCD		0xFFFFFFFF
+				DCD		0xFFFFFFFF
+				DCD		0xFFFFFFFF
 
 __Vectors_Size  EQU     __Vectors_End - __Vectors
 
@@ -143,48 +145,90 @@ Reset_Handler   PROC
                 ORRS    R2, R2, R1
                 STR     R2, [R0]
                 
-                CPSIE   I
                 LDR     R0, =SystemInit
                 BLX     R0
                 LDR     R0, =__main
                 BX      R0
                 ENDP
 
-
-                EXPORT ResetStack
-ResetStack      PROC
-                LDR r0, =__initial_sp
-                MOV sp, r0
-                BX LR
-                ENDP
-
 ; Dummy Exception Handlers (infinite loops which can be modified)
 
+NMI_Handler     PROC
+                EXPORT  NMI_Handler               [WEAK]
+                B       .
+                ENDP
+HardFault_Handler\
+                PROC
+                EXPORT  HardFault_Handler         [WEAK]
+                B       .
+                ENDP
+SVC_Handler     PROC
+                EXPORT  SVC_Handler               [WEAK]
+                B       .
+                ENDP
+PendSV_Handler  PROC
+                EXPORT  PendSV_Handler            [WEAK]
+                B       .
+                ENDP
+SysTick_Handler PROC
+                EXPORT  SysTick_Handler           [WEAK]
+                B       .
+                ENDP
 
 Default_Handler PROC
 
-                EXPORT   NMI_Handler [WEAK]
-                EXPORT   HardFault_Handler [WEAK]
-                EXPORT   SVC_Handler [WEAK]
-                EXPORT   PendSV_Handler [WEAK]
-                EXPORT   SysTick_Handler [WEAK]
-HardFault_Handler
-NMI_Handler
-SVC_Handler
-PendSV_Handler
-SysTick_Handler
+                EXPORT   POWER_CLOCK_IRQHandler [WEAK]
+                EXPORT   RADIO_IRQHandler [WEAK]
+                EXPORT   UART0_IRQHandler [WEAK]
+                EXPORT   SPI0_TWI0_IRQHandler [WEAK]
+                EXPORT   SPI1_TWI1_IRQHandler [WEAK]
+                EXPORT   GPIOTE_IRQHandler [WEAK]
+                EXPORT   ADC_IRQHandler [WEAK]
+                EXPORT   TIMER0_IRQHandler [WEAK]
+                EXPORT   TIMER1_IRQHandler [WEAK]
+                EXPORT   TIMER2_IRQHandler [WEAK]
+                EXPORT   RTC0_IRQHandler [WEAK]
+                EXPORT   TEMP_IRQHandler [WEAK]
+                EXPORT   RNG_IRQHandler [WEAK]
+                EXPORT   ECB_IRQHandler [WEAK]
+                EXPORT   CCM_AAR_IRQHandler [WEAK]
+                EXPORT   WDT_IRQHandler [WEAK]
+                EXPORT   RTC1_IRQHandler [WEAK]
+                EXPORT   QDEC_IRQHandler [WEAK]
+                EXPORT   LPCOMP_IRQHandler [WEAK]
+                EXPORT   SWI0_IRQHandler [WEAK]
+                EXPORT   SWI1_IRQHandler [WEAK]
+                EXPORT   SWI2_IRQHandler [WEAK]
+                EXPORT   SWI3_IRQHandler [WEAK]
+                EXPORT   SWI4_IRQHandler [WEAK]
+                EXPORT   SWI5_IRQHandler [WEAK]
+POWER_CLOCK_IRQHandler
+RADIO_IRQHandler
+UART0_IRQHandler
+SPI0_TWI0_IRQHandler
+SPI1_TWI1_IRQHandler
+GPIOTE_IRQHandler
+ADC_IRQHandler
+TIMER0_IRQHandler
+TIMER1_IRQHandler
+TIMER2_IRQHandler
+RTC0_IRQHandler
+TEMP_IRQHandler
+RNG_IRQHandler
+ECB_IRQHandler
+CCM_AAR_IRQHandler
+WDT_IRQHandler
+RTC1_IRQHandler
+QDEC_IRQHandler
+LPCOMP_IRQHandler
+SWI0_IRQHandler
+SWI1_IRQHandler
+SWI2_IRQHandler
+SWI3_IRQHandler
+SWI4_IRQHandler
+SWI5_IRQHandler
                 B .
                 ENDP
-                
-Trampoline      PROC
-                LDR  R1, =(0x1028)  ; Vector table offset
-                MRS  R0, IPSR       ; Get exception number
-                LSLS R0, #26        ; Clear all bits save bottom 6
-                LSRS R0, #24        ; Multiply by 4
-                LDR  R0, [R1,R0]    ; Load vector address (base+exception*4)
-                BX   R0             ; Jump to it
-                ENDP
-
                 ALIGN
 
 ; User Initial Stack & Heap
@@ -194,7 +238,6 @@ Trampoline      PROC
                 EXPORT  __initial_sp
                 EXPORT  __heap_base
                 EXPORT  __heap_limit
-                EXPORT  ResetStack
 
                 ELSE
 
