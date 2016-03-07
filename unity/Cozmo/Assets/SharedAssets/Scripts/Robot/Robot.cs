@@ -903,6 +903,11 @@ public class Robot : IRobot {
     _RobotCallbacks.Clear();
   }
 
+  public void EnableNewFaceEnrollment(int numToEnroll = 1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    DAS.Debug(this, "Enable new face enrollment: " + numToEnroll);
+    SendQueueSingleAction(Singleton<EnableNewFaceEnrollment>.Instance.Initialize(numToEnroll), callback, queueActionPosition);
+  }
+
   public void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
@@ -989,7 +994,7 @@ public class Robot : IRobot {
       callback, 
       queueActionPosition);
   }
-    
+
   public void SetRobotVolume(float volume) {
     DAS.Debug(this, "Set Robot Volume " + volume);
 
@@ -1233,7 +1238,7 @@ public class Robot : IRobot {
     SetLiftHeight(0f);
     SetHeadAngle();
   }
-    
+
   public void ClearAllBlocks() {
     DAS.Debug(this, "Clear All Blocks");
     RobotEngineManager.Instance.Message.ClearAllBlocks = Singleton<ClearAllBlocks>.Instance.Initialize(ID);

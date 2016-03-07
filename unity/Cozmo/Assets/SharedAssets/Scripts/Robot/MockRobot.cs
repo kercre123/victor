@@ -293,6 +293,10 @@ public class MockRobot : IRobot {
     _Callbacks.Clear();
   }
 
+  public void EnableNewFaceEnrollment(int numToEnroll = 1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    
+  }
+
   public void SendAnimation(string animName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     // we can actually fake the callback by using CozmoFace
     float len = CozmoFace.PlayAnimation(animName);
@@ -506,7 +510,7 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void TurnInPlace(float angle_rad,  float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     Rotation *= Quaternion.Euler(0, 0, angle_rad);
 
     QueueCallback(0.5f, callback);
