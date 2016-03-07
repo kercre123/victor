@@ -21,6 +21,7 @@
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"
+#include "anki/common/basestation/math/linearAlgebra_impl.h"
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -2147,39 +2148,41 @@ namespace Cozmo {
         Vision::ImageRGB dispImg(image);
 #       endif
         
+        // Tool code calibration dot parameters
+        const f32 kDotWidth_mm = 2.5f;
+        const f32 kDotHole_mm  = 2.5f/3.f;
+        const f32 kQuadPad_mm  = 4.5f; // search area
+        const f32 kDotAreaFrac = ((kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) /
+                                  (4.f*kQuadPad_mm * kQuadPad_mm));
+        const f32 kMinDotAreaFrac   = 0.5f * kDotAreaFrac;
+        const f32 kMaxDotAreaFrac   = 1.5f * kDotAreaFrac;
+        const f32 kHoleAreaFrac     = kDotHole_mm * kDotHole_mm / (kDotWidth_mm*kDotWidth_mm);
+        const f32 kMaxHoleAreaFrac  = 1.75f * kHoleAreaFrac;
+        const f32 kMinContrastRatio = 1.1f;
+
         Anki::Point2f camCen;
         std::vector<Anki::Point2f> observedPoints;
         for(size_t iDot=0; iDot<projectedToolCodeDots.size(); ++iDot)
         {
           // Get an ROI around where we expect to see the dot in the image
           const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[iDot];
-          const f32 kQuadPad_mm = 4.5f;
           Quad3f dotQuadRoi3d = {
             {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
             {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
             {dotWrtLift3d.x() + kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
             {dotWrtLift3d.x() + kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
           };
-          
-          //const f32 kDotRadius_mm = 1.5f;
-          //const f32 kDotAreaFraction = (kDotRadius_mm*kDotRadius_mm * M_PI /
-          //                              (quadPad_mm * quadPad_mm));
-          const f32 kDotWidth_mm = 2.5f;
-          const f32 kDotHole_mm = 2.5f/3.f;
-          const f32 kDotAreaFrac = (kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) / (4.f*kQuadPad_mm * kQuadPad_mm);
-          const f32 kMinDotAreaFrac = 0.5f * kDotAreaFrac;
-          const f32 kMaxDotAreaFrac = 1.5f * kDotAreaFrac;
-          const f32 kHoleAreaFrac = kDotHole_mm * kDotHole_mm / (kDotWidth_mm*kDotWidth_mm);
-          const f32 kMaxHoleAreaFrac = 1.75f * kHoleAreaFrac;
-          const f32 kMinContrastRatio = 1.1f;
+
           Quad3f dotQuadRoi3dWrtCam;
           liftPoseWrtCam.ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtCam);
           
-          // DEBUG:
-          //          Quad3f dotQuadRoi3dWrtWorld;
-          //          liftPose.GetWithRespectToOrigin().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
-          //          dotQuadRoi3dWrtWorld += Point3f(0,0,0.5f);
-          //          _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324+(u32)i, dotQuadRoi3dWrtWorld, NamedColors::RED);
+          if(DRAW_TOOL_CODE_DEBUG)
+          {
+            Quad3f dotQuadRoi3dWrtWorld;
+            liftPose.GetWithRespectToOrigin().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
+            dotQuadRoi3dWrtWorld += Point3f(0,0,0.5f);
+            _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324+(u32)iDot, dotQuadRoi3dWrtWorld, NamedColors::RED);
+          }
           
           Quad2f dotQuadRoi2d;
           _camera.Project3dPoints(dotQuadRoi3dWrtCam, dotQuadRoi2d);
@@ -2349,47 +2352,58 @@ namespace Cozmo {
           observedPoints.push_back(Anki::Point2f(dotCentroid[0] + dotRectRoi.GetX(),
                                                  dotCentroid[1] + dotRectRoi.GetY()));
 
-          const Anki::Point2f& expectedPoint = projectedToolCodeDots[iDot];
-          
-          camCen += observedPoints.back() - expectedPoint;
-          
 #         if DRAW_TOOL_CODE_DEBUG
           dispImg.DrawPoint(observedPoints.back(), NamedColors::ORANGE, 1);
-          dispImg.DrawPoint(expectedPoint, NamedColors::BLUE,   2);
+          dispImg.DrawPoint(projectedToolCodeDots[iDot], NamedColors::BLUE,   2);
           dispImg.DrawQuad(dotQuadRoi2d, NamedColors::CYAN, 1);
 #         endif
         } // for each tool code dot iDot
         
-        // Compute the average camera center:
-        ASSERT_NAMED(_camera.IsCalibrated(), "Camera should be calibrated");
-        camCen *= 1.f / (f32)projectedToolCodeDots.size();
-        camCen += _camera.GetCalibration()->GetCenter();
+        // Solve for camera center and focal length as a system of equations
+        //
+        // Let:
+        //   (x_i, y_i, z_i) = 3D location of tool code dot i
+        //   (u_i, v_i)      = observed 2D projection tool code dot i
+        //   (cx,cy)         = calibration center point
+        //   f               = calibration focal length
+        //
+        // Then:
+        //
+        //   [z_i  0   x_i] [cx]   [z_i * u_i]
+        //   [0   z_i  y_i] [cy] = [z_i * v_i]
+        //                  [f ]
+
+        SmallMatrix<4, 3, f32> A;
+        Anki::Point<4, f32> b;
+        Anki::Point<3, f32> calibParams;
         
-        // Compute the focal length by comparing 3D physical distance between
-        // the two dots and observed image distance, relative to the distance of the
-        // the lift's lower bar to the camera
-        ASSERT_NAMED(observedPoints.size() == 2, "Should have observed two points if we get here");
-        const f32 dotSpacing3d = ComputeDistanceBetween(toolCodeDotsWrtCam[0], toolCodeDotsWrtCam[1]);
-        const f32 distCamToLiftBar = ((toolCodeDotsWrtCam[0] + toolCodeDotsWrtCam[1])*0.5f).Length();
-        const f32 f = distCamToLiftBar * ComputeDistanceBetween(observedPoints[0],observedPoints[1]) / dotSpacing3d;
+        for(s32 iDot=0; iDot<2; ++iDot)
+        {
+          A(iDot*2,0)   = toolCodeDotsWrtCam[iDot].z();
+          A(iDot*2,1)   = 0.f;
+          A(iDot*2,2)   = toolCodeDotsWrtCam[iDot].x();
+          b[iDot*2]     = toolCodeDotsWrtCam[iDot].z() * observedPoints[iDot].x();
+          
+          A(iDot*2+1,0) = 0.f;
+          A(iDot*2+1,1) = toolCodeDotsWrtCam[iDot].z();
+          A(iDot*2+1,2) = toolCodeDotsWrtCam[iDot].y();
+          b[iDot*2+1]   = toolCodeDotsWrtCam[iDot].z() * observedPoints[iDot].y();
+        }
+        
+        Result lsqResult = LeastSquares(A,b,calibParams);
+        ASSERT_NAMED(lsqResult == RESULT_OK, "LeastSquares failed");
+        
+        camCen.x()  = calibParams[0];
+        camCen.y()  = calibParams[1];
+        const f32 f = calibParams[2];
 
 #       if DRAW_TOOL_CODE_DEBUG
         char dispStr[256];
-        snprintf(dispStr, 255, "(%.1f,%.1f)", camCen.x(), camCen.y());
-        dispImg.DrawText(Anki::Point2f(0, 15), dispStr, NamedColors::RED, 0.75);
+        snprintf(dispStr, 255, "f=%.1f, cen=(%.1f,%.1f)",
+                 f, camCen.x(), camCen.y());
+        dispImg.DrawText(Anki::Point2f(0, 15), dispStr, NamedColors::RED, 0.6);
         _debugImageRGBMailbox.putMessage({"ToolCode", dispImg});
 #       endif
-        
-        // Update the camera calibration
-        PRINT_NAMED_INFO("VisionSystem.ReadToolCode.CameraCalibUpdated",
-                         "OldCen=(%f,%f), NewCen=(%f,%f), OldF=(%f,%f), NewF=(%f,%f), t=%dms",
-                         _camera.GetCalibration()->GetCenter_x(),
-                         _camera.GetCalibration()->GetCenter_y(),
-                         camCen.x(), camCen.y(),
-                         _camera.GetCalibration()->GetFocalLength_x(),
-                         _camera.GetCalibration()->GetFocalLength_y(),
-                         f, f,
-                         image.GetTimestamp());
         
         if(std::isnan(camCen.x()) || std::isnan(camCen.y())) {
           PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.CamCenNaN", "");
@@ -2417,39 +2431,54 @@ namespace Cozmo {
             return RESULT_FAIL;
           }
           
+          
           // Sanity check the new calibration:
-          Vision::Camera tempCamera;
-          Vision::CameraCalibration tempCalib(_camera.GetCalibration()->GetNrows(),
-                                              _camera.GetCalibration()->GetNcols(),
-                                              _camera.GetCalibration()->GetFocalLength_x(),
-                                              _camera.GetCalibration()->GetFocalLength_y(),
-                                              _camera.GetCalibration()->GetCenter_x(),
-                                              _camera.GetCalibration()->GetCenter_y());
-          tempCalib.SetFocalLength(f,f);
-          tempCalib.SetCenter(camCen);
-          tempCamera.SetCalibration(tempCalib);
-          std::vector<Anki::Point2f> sanityCheckPoints;
-          tempCamera.Project3dPoints(toolCodeDotsWrtCam, sanityCheckPoints);
-          for(s32 i=0; i<2; ++i)
+          if(true) // TODO: Only in debug?
           {
-            const f32 reprojErrorSq = (sanityCheckPoints[i] - observedPoints[i]).LengthSq();
-            if(reprojErrorSq > 5*5)
+            Vision::Camera tempCamera;
+            Vision::CameraCalibration tempCalib(_camera.GetCalibration()->GetNrows(),
+                                                _camera.GetCalibration()->GetNcols(),
+                                                _camera.GetCalibration()->GetFocalLength_x(),
+                                                _camera.GetCalibration()->GetFocalLength_y(),
+                                                _camera.GetCalibration()->GetCenter_x(),
+                                                _camera.GetCalibration()->GetCenter_y());
+            tempCalib.SetFocalLength(f,f);
+            tempCalib.SetCenter(camCen);
+            tempCamera.SetCalibration(tempCalib);
+            std::vector<Anki::Point2f> sanityCheckPoints;
+            tempCamera.Project3dPoints(toolCodeDotsWrtCam, sanityCheckPoints);
+            for(s32 i=0; i<2; ++i)
             {
-              if(DRAW_TOOL_CODE_DEBUG)
+              const f32 reprojErrorSq = (sanityCheckPoints[i] - observedPoints[i]).LengthSq();
+              if(reprojErrorSq > 5*5)
               {
-                Vision::ImageRGB dispImg(image);
-                dispImg.DrawPoint(sanityCheckPoints[0], NamedColors::RED, 1);
-                dispImg.DrawPoint(sanityCheckPoints[1], NamedColors::RED, 1);
-                dispImg.DrawPoint(observedPoints[0], NamedColors::GREEN, 1);
-                dispImg.DrawPoint(observedPoints[1], NamedColors::GREEN, 1);
-                _debugImageRGBMailbox.putMessage({"SanityCheck", dispImg});
+                if(DRAW_TOOL_CODE_DEBUG)
+                {
+                  Vision::ImageRGB dispImg(image);
+                  dispImg.DrawPoint(sanityCheckPoints[0], NamedColors::RED, 1);
+                  dispImg.DrawPoint(sanityCheckPoints[1], NamedColors::RED, 1);
+                  dispImg.DrawPoint(observedPoints[0], NamedColors::GREEN, 1);
+                  dispImg.DrawPoint(observedPoints[1], NamedColors::GREEN, 1);
+                  _debugImageRGBMailbox.putMessage({"SanityCheck", dispImg});
+                }
+                PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadProjection",
+                                  "Reprojection error of point %d = %f",
+                                  i, std::sqrtf(reprojErrorSq));
+                return RESULT_FAIL;
               }
-              PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadProjection",
-                                "Reprojection error of point %d = %f",
-                                i, std::sqrtf(reprojErrorSq));
-              return RESULT_FAIL;
             }
           }
+          
+          // Update the camera calibration
+          PRINT_NAMED_INFO("VisionSystem.ReadToolCode.CameraCalibUpdated",
+                           "OldCen=(%f,%f), NewCen=(%f,%f), OldF=(%f,%f), NewF=(%f,%f), t=%dms",
+                           _camera.GetCalibration()->GetCenter_x(),
+                           _camera.GetCalibration()->GetCenter_y(),
+                           camCen.x(), camCen.y(),
+                           _camera.GetCalibration()->GetFocalLength_x(),
+                           _camera.GetCalibration()->GetFocalLength_y(),
+                           f, f,
+                           image.GetTimestamp());
           
           _camera.GetCalibration()->SetCenter(camCen);
           _camera.GetCalibration()->SetFocalLength(f, f);
