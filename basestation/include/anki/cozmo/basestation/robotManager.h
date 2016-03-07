@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/robotEventHandler.h"
 #include "util/signals/simpleSignal.hpp"
+#include "util/helpers/noncopyable.h"
 #include <map>
 #include <vector>
 #include <memory>
@@ -39,13 +40,15 @@ namespace Anki {
   class CannedAnimationContainer;
   class AnimationGroupContainer;
 
-    class RobotManager
+    class RobotManager : Util::noncopyable
     {
     public:
     
       RobotManager(const CozmoContext* context);
       
       ~RobotManager();
+      
+      void Init();
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;

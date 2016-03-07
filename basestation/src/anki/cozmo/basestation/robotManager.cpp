@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/time/stepTimers.h"
 #include <sys/stat.h>
 
 namespace Anki {
@@ -26,11 +27,28 @@ namespace Anki {
     , _cannedAnimations(new CannedAnimationContainer())
     , _animationGroups(new AnimationGroupContainer())
     {
-      ReadAnimationDir();
-      ReadAnimationGroupDir();
+      
     }
     
     RobotManager::~RobotManager() = default;
+    
+    void RobotManager::Init()
+    {
+      Anki::Util::Time::PushTimedStep("RobotManager::Init");
+      
+      Anki::Util::Time::PushTimedStep("ReadAnimationDir");
+      ReadAnimationDir();
+      Anki::Util::Time::PopTimedStep();
+      
+      Anki::Util::Time::PushTimedStep("ReadAnimationGroupDir");
+      ReadAnimationGroupDir();
+      Anki::Util::Time::PopTimedStep();
+      
+      Anki::Util::Time::PopTimedStep(); // RobotManager::Init
+      
+      Anki::Util::Time::PrintTimedSteps();
+      Anki::Util::Time::ClearSteps();
+    }
     
     void RobotManager::AddRobot(const RobotID_t withID)
     {
@@ -162,8 +180,13 @@ namespace Anki {
       // To help find bad/deprecated animations, try removing this.
       ProceduralFace::EnableClippingWarning(false);
       
+      Anki::Util::Time::PushTimedStep("assets/animations/");
       ReadAnimationDirImpl("assets/animations/");
+      Anki::Util::Time::PopTimedStep();
+      
+      Anki::Util::Time::PushTimedStep("config/basestation/animations/");
       ReadAnimationDirImpl("config/basestation/animations/");
+      Anki::Util::Time::PopTimedStep();
       
       ProceduralFace::EnableClippingWarning(true);
     }

@@ -189,6 +189,8 @@ void CozmoEngine::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGa
   
   _context->GetRobotMsgHandler()->Init(_robotChannel.get(), _context->GetRobotManager());
   
+  _context->GetRobotManager()->Init();
+  
   SetEngineState(EngineState::WaitingForUIDevices);
 }
   
