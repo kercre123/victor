@@ -5,7 +5,7 @@ namespace WhackAMole {
   // TODO : In this state, looks around confused, trying to find cube.
   // If mole state is not NONE, play surprise animation then move to Chase
   // If mole state is NONE for too long, play disappointed animation
-  // then return to Idle state. 
+  // then return to Idle state.
   public class WhackAMoleConfusion : State {
     private WhackAMoleGame _WhackAMoleGame;
     private float _ConfusionTimeout;
@@ -32,7 +32,7 @@ namespace WhackAMole {
     }
 
     void HandleMoleStateChange(WhackAMoleGame.MoleState state) {
-      Debug.Log(string.Format("Confusion - Mole State Changed to {0}", state));
+      DAS.Debug(this, string.Format("Confusion - Mole State Changed to {0}", state));
       if (_WhackAMoleGame.CubeState != WhackAMoleGame.MoleState.NONE) {
         // A cube has been tapped, start chase. If more than one cube is
         // active, Chase will handle moving to Panic.

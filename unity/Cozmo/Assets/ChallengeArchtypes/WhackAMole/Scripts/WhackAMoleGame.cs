@@ -131,7 +131,7 @@ namespace WhackAMole {
         InitializeButtons();
       }
       else {
-        Debug.LogError("Cubes are NOT set up properly. Could not find an A and B cube for whack a mole.");
+        DAS.Error(this, "Cubes are NOT set up properly. Could not find an A and B cube for whack a mole.");
       }
     }
 
@@ -238,7 +238,7 @@ namespace WhackAMole {
     public float GetRelativeRad(KeyValuePair<int,int> KvP) {
       float deg = (90.0f * (KvP.Value + 1));
       float result = Mathf.Deg2Rad * deg;
-      Debug.Log(string.Format("Cube{2}:Face{3} - Relative Rad - {0} Degrees - {1}", result, deg, KvP.Key, KvP.Value));
+      DAS.Debug(this, string.Format("Cube{2}:Face{3} - Relative Rad - {0} Degrees - {1}", result, deg, KvP.Key, KvP.Value));
       return result;
     }
 

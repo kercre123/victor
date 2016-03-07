@@ -25,7 +25,7 @@ namespace WhackAMole {
       PanicTargetSwitch(true);
       _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
     }
-      
+
     public override void Update() {
       base.Update();
       if (_PanicIntervalTimestamp == -1) {
@@ -58,14 +58,14 @@ namespace WhackAMole {
         curr = _WhackAMoleGame.CurrentTargetKvP;
       }
       else {
-        curr = new KeyValuePair<int,int>(-1,-1);
+        curr = new KeyValuePair<int,int>(-1, -1);
       }
       // Grab a different face to chase after. TODO: Make this more random
       foreach (KeyValuePair<int, int> kVp in _WhackAMoleGame.ActivatedFaces) {
         if (!kVp.Equals(curr)) {
           _WhackAMoleGame.CurrentTargetKvP = kVp;
-          Debug.Log(string.Format("Panic - Now Target Cube {0}", kVp.Key));
-          _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[kVp.Key], 150f , null,true, 
+          DAS.Debug(this, string.Format("Panic - Now Target Cube {0}", kVp.Key));
+          _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[kVp.Key], 150f, null, true, 
             _WhackAMoleGame.GetRelativeRad(kVp), Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
           return;
         }
@@ -73,13 +73,13 @@ namespace WhackAMole {
     }
 
     void HandleAnimationDone(bool success) {
-      Debug.Log("Panic Animation Done, Deactivate all Cubes and return to idle.");
+      DAS.Debug(this, "Panic Animation Done, Deactivate all Cubes and return to idle.");
       _WhackAMoleGame.InitializeButtons();
       _StateMachine.SetNextState(new WhackAMoleIdle());
     }
 
     void HandleMoleStateChange(WhackAMoleGame.MoleState state) {
-      Debug.Log(string.Format("Panic - Mole State Changed to {0}", state));
+      DAS.Debug(this, string.Format("Panic - Mole State Changed to {0}", state));
       if (_WhackAMoleGame.CubeState == WhackAMoleGame.MoleState.NONE) {
         // A cube has been tapped, start chase. If more than one cube is
         // active, Chase will handle moving to Panic.
