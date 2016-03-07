@@ -189,7 +189,7 @@ namespace Anki {
       f32 params[4] = {slopeLength/platformLength, 0, 0, 0};
       
       const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_RAMP] + rampID;
-      DrawObject(vizID, VizObjectType::VIZ_OBJECT_RAMP, {{platformLength, width, height}}, pose, color, params);
+      DrawObject(vizID, VizObjectType::VIZ_OBJECT_RAMP, {platformLength, width, height}, pose, color, params);
       
       return vizID;
     }
@@ -211,7 +211,7 @@ namespace Anki {
       
       const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CHARGER] + chargerID;
       DrawObject(vizID, VizObjectType::VIZ_OBJECT_CHARGER,
-                 {{platformLength, width, height}}, pose, color, params);
+                 {platformLength, width, height}, pose, color, params);
       
       return vizID;
     }

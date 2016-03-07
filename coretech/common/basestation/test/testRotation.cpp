@@ -179,8 +179,8 @@ GTEST_TEST(TestRotation, PointRotation3d)
   EXPECT_TRUE( NEAR(q.z(), 0.f, eps) );
   EXPECT_NEAR(q.Length(), p.Length(), epsBig);
   
-  p = {{44.f, 44.f, 44.f}};
-  Rotation3d R(1.076822398155559f, {{0.573788055924467f,   0.808395453061550f,   0.131392763681385f}});
+  p = {44.f, 44.f, 44.f};
+  Rotation3d R(1.076822398155559f, {0.573788055924467f,   0.808395453061550f,   0.131392763681385f});
   q = R * p;
   EXPECT_NEAR( q.x(), 67.183776745385970f, epsBig);
   EXPECT_NEAR( q.y(), 32.034582545499632f, epsBig);

@@ -53,12 +53,12 @@ namespace Anki {
       // TODO: Support multiple Charger types
       
       Pose3d frontPose(-M_PI_2, Z_AXIS_3D(),
-                       {{SlopeLength+PlatformLength, 0, MarkerZPosition}});
+                       Point3f{SlopeLength+PlatformLength, 0, MarkerZPosition});
       _marker = &AddMarker(Vision::MARKER_CHARGER, frontPose, Point2f(MarkerWidth, MarkerHeight));
 
       // PreActionPose, initialized to be with respect to charger
       Pose3d preActionPose(0, Z_AXIS_3D(),
-                           {{-PreAscentDistance, 0.f, 0.f}},
+                           Point3f{-PreAscentDistance, 0.f, 0.f},
                            &GetPose());
       
       if(preActionPose.GetWithRespectTo(_marker->GetPose(), preActionPose) == false) {
@@ -78,7 +78,7 @@ namespace Anki {
     Pose3d Charger::GetDockedPose() const
     {
       Pose3d pose(M_PI, Z_AXIS_3D(),
-                  {{RobotToChargerDistWhenDocked, 0, 0}},
+                  Point3f{RobotToChargerDistWhenDocked, 0, 0},
                   &GetPose());
       
       pose.SetName("Charger" + std::to_string(GetID().GetValue()) + "DockedPose");

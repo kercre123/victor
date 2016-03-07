@@ -74,6 +74,14 @@ namespace Anki {
     }
   }
   
+  template<PointDimType N, typename T>
+  Point<N,T>::Point(const SmallMatrix<N,1,T>& M)
+  {
+    for(PointDimType i=0; i<N; ++i) {
+      this->data[i] = M((s32)i,0);
+    }
+  }
+  
 #if __cplusplus < 201103L
 
   template<PointDimType N, typename T>
@@ -106,6 +114,14 @@ namespace Anki {
   : Point(pt.x, pt.y, pt.z)
   {
     
+  }
+  
+  template<PointDimType N, typename T>
+  Point<N,T>::Point(const cv::Vec<T, N>& vec)
+  {
+    for(PointDimType i=0; i<N; ++i) {
+      this->data[i] = vec[(s32)i];
+    }
   }
   
   template<PointDimType N, typename T>

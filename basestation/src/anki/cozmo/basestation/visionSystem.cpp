@@ -2111,9 +2111,9 @@ namespace Cozmo {
         {1.f,  10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
       };
       
-      const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_poseData.poseStamp.GetPose(), "RobotLiftBase");
+      const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.poseStamp.GetPose(), "RobotLiftBase");
       
-      Pose3d liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &liftBasePose, "RobotLift");
+      Pose3d liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &liftBasePose, "RobotLift");
 
       Robot::ComputeLiftPose(_poseData.poseStamp.GetLiftAngle(), liftPose);
       

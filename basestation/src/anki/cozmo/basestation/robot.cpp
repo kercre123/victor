@@ -94,10 +94,10 @@ namespace Anki {
     , _behaviorMgr(*this)
     , _movementComponent(*this)
     , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, _context)
-    , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
-    , _headCamPose(_kDefaultHeadCamRotation, {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
-    , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
-    , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
+    , _neckPose(0.f,Y_AXIS_3D(), {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
+    , _headCamPose(_kDefaultHeadCamRotation, {HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}, &_neckPose, "RobotHeadCam")
+    , _liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
+    , _liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _moodManager(new MoodManager(this))
@@ -271,11 +271,11 @@ namespace Anki {
       _worldOrigin = &_poseOrigins.back();
       
       _pose.SetRotation(0, Z_AXIS_3D());
-      _pose.SetTranslation({{0.f, 0.f, 0.f}});
+      _pose.SetTranslation({0.f, 0.f, 0.f});
       _pose.SetParent(_worldOrigin);
       
       _driveCenterPose.SetRotation(0, Z_AXIS_3D());
-      _driveCenterPose.SetTranslation({{0.f, 0.f, 0.f}});
+      _driveCenterPose.SetTranslation({0.f, 0.f, 0.f});
       _driveCenterPose.SetParent(_worldOrigin);
       
       _poseHistory->Clear();
@@ -1057,7 +1057,7 @@ namespace Anki {
     {
       // Reset to canonical position
       liftPose.SetRotation(atAngle, Y_AXIS_3D());
-      liftPose.SetTranslation({{LIFT_ARM_LENGTH, 0.f, 0.f}});
+      liftPose.SetTranslation({LIFT_ARM_LENGTH, 0.f, 0.f});
       
       // Rotate to the given angle
       RotationVector3d Rvec(-atAngle, Y_AXIS_3D());
@@ -2112,7 +2112,7 @@ namespace Anki {
         // Record start (x,y) position coming from robot so basestation can
         // compute actual (x,y,z) position from upcoming odometry updates
         // coming from robot (which do not take slope of ramp into account)
-        _rampStartPosition = {{_pose.GetTranslation().x(), _pose.GetTranslation().y()}};
+        _rampStartPosition = {_pose.GetTranslation().x(), _pose.GetTranslation().y()};
         _rampStartHeight   = _pose.GetTranslation().z();
         
         PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOntoRamp",
@@ -2447,8 +2447,8 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      objectPoseWrtLiftPose.SetTranslation({{objectMarker->GetPose().GetTranslation().Length() +
-        LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f}});
+      objectPoseWrtLiftPose.SetTranslation({objectMarker->GetPose().GetTranslation().Length() +
+        LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f});
       
       // make part of the lift's pose chain so the object will now be relative to
       // the lift and move with the robot
@@ -2714,17 +2714,17 @@ namespace Anki {
       const RotationMatrix2d R(atPose.GetRotation().GetAngleAroundZaxis());
 
       static const Quad2f CanonicalBoundingBoxXY(
-        (Point2f){{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
-        {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
-        {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y}},
-        {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y}});
+        {ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y},
+        {ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y},
+        {ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y},
+        {ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y});
 
       Quad2f boundingQuad(CanonicalBoundingBoxXY);
       if(padding_mm != 0.f) {
-        Quad2f paddingQuad((const Point2f){{ padding_mm, -padding_mm}},
-                           {{ padding_mm,  padding_mm}},
-                           {{-padding_mm, -padding_mm}},
-                           {{-padding_mm,  padding_mm}});
+        Quad2f paddingQuad({ padding_mm, -padding_mm},
+                           { padding_mm,  padding_mm},
+                           {-padding_mm, -padding_mm},
+                           {-padding_mm,  padding_mm});
         boundingQuad += paddingQuad;
       }
       
@@ -2835,7 +2835,7 @@ namespace Anki {
       _worldOrigin = newOrigin;
       
       newOrigin->SetRotation(0, Z_AXIS_3D());
-      newOrigin->SetTranslation({{0,0,0}});
+      newOrigin->SetTranslation({0,0,0});
       
       // Now make the robot's origin point to the new origin
       // TODO: avoid the icky const_cast here...
