@@ -253,6 +253,7 @@ extern "C" void backgroundTaskOnConnect(void)
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
+  foregroundTaskPost(Anki::Cozmo::BackgroundTask::readPairedObjectsAndSend, Anki::Cozmo::NVStorage::NVEntry_PairedObjects);
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readCameraCalAndSend, Anki::Cozmo::NVStorage::NVEntry_CameraCalibration);
   AnkiEvent( 124, "UniqueID", 372, "SerialNumber = 0x%x", 1, *serialNumber);
   Anki::Cozmo::RobotInterface::RobotAvailable idMsg;
@@ -265,5 +266,8 @@ extern "C" void backgroundTaskOnDisconnect(void)
   Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
   rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
   rtipMsg.radioConnected.wifiConnected = false;
+  Anki::Cozmo::RTIP::SendMessage(rtipMsg);
+  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_assignCubeSlots;
+  os_memset(&rtipMsg.assignCubeSlots, 0, sizeof(Anki::Cozmo::CubeSlots));
   Anki::Cozmo::RTIP::SendMessage(rtipMsg);
 }

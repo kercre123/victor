@@ -75,8 +75,6 @@ namespace HAL {
 
   void RadioUpdateState(u8 wifi, u8 blue)
   {
-    if (wifi) g_dataToBody.cladBuffer.flags |= SF_WiFi_Connected;
-    else      g_dataToBody.cladBuffer.flags &= ~SF_WiFi_Connected;
     wifiState = wifi;
     blueState = blue;
   }
