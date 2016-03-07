@@ -39,7 +39,7 @@ const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
 const f32 DRIVE_CENTER_OFFSET = -15.f;
 
 // Length of the forward collision sensor (with respect to origin)
-constexpr const u8 FORWARD_COLLISION_SENSOR_LENGTH_MM = 160;
+const u8 FORWARD_COLLISION_SENSOR_LENGTH_MM = 160;
 
 // The height of the lift at various configurations
 // Actual limit in proto is closer to 20.4mm, but there is a weird
