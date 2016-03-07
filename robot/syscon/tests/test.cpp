@@ -103,13 +103,6 @@ int main(int argc, char** argv) {
 	mont_from(DEFAULT_DIFFIE_GROUP, t2, t1);
 	print_hex(t2);
 
-	printf("---\r\n");
-	from_hex(x, "338710C5B511CF63D9BE0701CFEBDEA6");
-	mont_power(DEFAULT_DIFFIE_GROUP, t1, DEFAULT_DIFFIE_GENERATOR, x);
-	mont_power(DEFAULT_DIFFIE_GROUP, t1, t1, x);
-	mont_from(DEFAULT_DIFFIE_GROUP, t2, t1);
-	print_hex(t2);
-
 	return 0;
 }
 
