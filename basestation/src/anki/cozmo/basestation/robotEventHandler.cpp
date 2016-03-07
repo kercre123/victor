@@ -95,6 +95,12 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     auto delocalizeCallabck = std::bind(&RobotEventHandler::HandleForceDelocalizeRobot, this, std::placeholders::_1);
     _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceDelocalizeRobot, delocalizeCallabck));
     
+    // Custom handler for RequestDiscoveredObjects event
+    auto requestDiscoveredObjectsCallback = std::bind(&RobotEventHandler::HandleRequestDiscoveredObjects, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::RequestDiscoveredObjects, requestDiscoveredObjectsCallback));
+
+    
+    
     // Custom handlers for Mood events
     {
       auto moodEventCallback = std::bind(&RobotEventHandler::HandleMoodEvent, this, std::placeholders::_1);
@@ -112,6 +118,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       auto eventCallback = std::bind(&RobotEventHandler::HandleBehaviorManagerEvent, this, std::placeholders::_1);
       _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
     }
+    
   }
 }
   
@@ -831,7 +838,7 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
     
     // We need a robot
     if (nullptr == robot) {
-      PRINT_NAMED_ERROR("RobotEventHandler.HandleForceDelocalizeRobot.InvalidRobotID",
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleForceDelocalizeRobot.InvalidRobotID",
                         "Failed to find robot %d to delocalize.", robotID);
       
       
@@ -853,7 +860,7 @@ void RobotEventHandler::HandleMoodEvent(const AnkiEvent<ExternalInterface::Messa
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_ERROR("RobotEventHandler.HandleMoodEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleMoodEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
   }
   else
   {
@@ -871,7 +878,7 @@ void RobotEventHandler::HandleProgressionEvent(const AnkiEvent<ExternalInterface
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_ERROR("RobotEventHandler.HandleProgressionEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleProgressionEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
   }
   else
   {
@@ -890,14 +897,35 @@ void RobotEventHandler::HandleBehaviorManagerEvent(const AnkiEvent<ExternalInter
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_ERROR("RobotEventHandler.HandleBehaviorManagerEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleBehaviorManagerEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
   }
   else
   {
     robot->GetBehaviorManager().HandleMessage(message.BehaviorManagerMessageUnion);
   }
 }
+
+void RobotEventHandler::HandleRequestDiscoveredObjects(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+
+  const auto& eventData = event.GetData();
+  const auto& message = eventData.Get_RequestDiscoveredObjects();
+  const RobotID_t robotID = message.robotID;
   
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  
+  // We need a robot
+  if (nullptr == robot)
+  {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleRequestDiscoveredObjects.InvalidRobotID", "Failed to find robot %u.", robotID);
+  }
+  else
+  {
+    robot->BroadcastDiscoveredObjects();
+  }
+
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

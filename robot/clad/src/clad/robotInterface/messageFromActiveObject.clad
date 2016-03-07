@@ -1,4 +1,4 @@
-/** Clad for messages from active objects to Engine or Came
+/** Clad for messages from active objects to Engine or Game
  * ROBOT_CLAD_SHARED
  */
 
@@ -13,6 +13,13 @@ message ObjectDiscovered
   uint_32     factory_id,
   int_8       rssi
 }
+
+// Only sent from engine to game
+message ObjectUndiscovered
+{
+  uint_32 factory_id
+}
+
 
 message ObjectConnectionState
 {
