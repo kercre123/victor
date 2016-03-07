@@ -154,24 +154,17 @@ int main(int argc, char** argv) {
 
 	// Attempt to do a montgomery power (p ** x ** y)
 	printf("---\r\n");
-	print_hex(p_mont);
-	print_hex(x);
 	mont_power(mont, t1, p_mont, x);
-	print_hex(t1);
-	mont_power(mont, t2, t1, y);
+	mont_power(mont, t1, t1, y);
+	mont_from(mont, t2, t1);
 	print_hex(t2);
-	mont_from(mont, t1, t2);
-	print_hex(t1);
 
 	// Attempt to do a montgomery power (p ** y ** x)
 	printf("---\r\n");
-	print_hex(p_mont);
 	mont_power(mont, t1, p_mont, y);
-	print_hex(t1);
-	mont_power(mont, t2, t1, x);
+	mont_power(mont, t1, t1, x);
+	mont_from(mont, t2, t1);
 	print_hex(t2);
-	mont_from(mont, t1, t2);
-	print_hex(t1);
 
 	//printf("--- Montgomery settings used ---");
 	//dump(mont);

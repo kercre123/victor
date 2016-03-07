@@ -95,6 +95,7 @@ static void TestCrypto(void) {
 	y.op = CRYPTO_FINISH_DIFFIE_HELLMAN;
 	y.input = &dh;
 	y.output = &dh_key;
+	y.length = sizeof(dh_key);
 	y.callback = DH_Phase2;
 	Crypto::execute(&y);
 	
