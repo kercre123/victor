@@ -493,19 +493,30 @@ void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& m
 {
 #if(HANDLE_PROX_OBSTACLES)
   ProxObstacle proxObs = message.GetData().Get_proxObstacle();
-  PRINT_NAMED_INFO("RobotImplMessaging.HandleProxObstacle.Detected", "at dist %d mm",
-                   proxObs.distance_mm);
+  const bool obstacleDetected = proxObs.distance_mm < FORWARD_COLLISION_SENSOR_LENGTH_MM;
+  if ( obstacleDetected )
+  {
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleProxObstacle.Detected", "at dist %d mm",
+                    proxObs.distance_mm);
   
-  // Compute location of obstacle
-  // NOTE: This should actually depend on a historical pose, but this is all changing eventually anyway...
-  f32 heading = GetPose().GetRotationAngle<'Z'>().ToFloat();
-  Vec3f newPt(GetPose().GetTranslation());
-  newPt.x() += proxObs.distance_mm * cosf(heading);
-  newPt.y() += proxObs.distance_mm * sinf(heading);
-  Pose3d obsPose(heading, Z_AXIS_3D(), newPt, GetWorldOrigin());
+    // Compute location of obstacle
+    // NOTE: This should actually depend on a historical pose, but this is all changing eventually anyway...
+    f32 heading = GetPose().GetRotationAngle<'Z'>().ToFloat();
+    Vec3f newPt(GetPose().GetTranslation());
+    newPt.x() += proxObs.distance_mm * cosf(heading);
+    newPt.y() += proxObs.distance_mm * sinf(heading);
+    Pose3d obsPose(heading, Z_AXIS_3D(), newPt, GetWorldOrigin());
+    
+    // Add prox obstacle
+    _blockWorld.AddProxObstacle(obsPose);
+    
+  } else {
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleProxObstacle.Undetected", "max len %d mm", proxObs.distance_mm);
+  }
   
-  // Add prox obstacle (hijack cliff function for now)
-  _blockWorld.AddCliff(obsPose);
+  // always update the value
+  _blockWorld.SetForwardSensorValue(proxObs.distance_mm);
+  
 #endif
 }
   

@@ -70,7 +70,7 @@
           </BeforeCompile>
           <BeforeMake>
             <RunUserProg1>1</RunUserProg1>
-            <RunUserProg2>1</RunUserProg2>
+            <RunUserProg2>0</RunUserProg2>
             <UserProg1Name>.\export_roms.cmd</UserProg1Name>
             <UserProg2Name>nrfjprog --program ../releases/code.hex --chiperase</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
@@ -80,7 +80,7 @@
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
-            <RunUserProg2>1</RunUserProg2>
+            <RunUserProg2>0</RunUserProg2>
             <UserProg1Name>python ../tools/sign.py ./build/upgrade/sys_upgrade.axf ./build/upgrade/sys_upgrade.safe ./build/upgrade/sys_upgrade.bin</UserProg1Name>
             <UserProg2Name>nrfjprog --reset</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>

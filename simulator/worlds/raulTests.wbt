@@ -2,8 +2,12 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.999988 -0.00110009 -0.00477241 5.82318
-  position -0.00196476 -1.62698 3.1936
+  orientation -0.999408 0.013885 0.0314906 5.45275
+  position -0.0155221 -1.11638 1.12283
+}
+Can {
+  translation 0.01027 0.126367 0.062
+  rotation 1 0 0 1.5708
 }
 Background {
   skyColor [
@@ -27,8 +31,6 @@ DirectionalLight {
 }
 CozmoMat {
   showMarkers FALSE
-  xSize 0.5
-  ySize 0.5
 }
 LightCube {
   translation 0.162799 -0.00141587 0.021993
@@ -41,7 +43,7 @@ DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
 }
 WebotsKeyboardController {
-  behaviorName "ExploreCliff"
+  behaviorName "ExploreUnrecognizedObject"
 }
 CozmoVizDisplay {
 }

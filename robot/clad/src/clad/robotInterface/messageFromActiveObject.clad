@@ -10,7 +10,8 @@ namespace Cozmo {
 
 message ObjectDiscovered
 {
-  uint_32     factory_id
+  uint_32     factory_id,
+  int_8       rssi
 }
 
 message ObjectConnectionState

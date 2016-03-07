@@ -42,6 +42,7 @@
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
 #include "util/console/consoleInterface.h"
 #include "util/global/globalDefinitions.h"
+#include "util/math/math.h"
 
 // The amount of time a proximity obstacle exists beyond the latest detection
 #define PROX_OBSTACLE_LIFETIME_MS  4000
@@ -82,6 +83,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
     , _canAddObjects(true)
     , _currentNavMemoryMapOrigin(nullptr)
     , _isOnCliff(false)
+    , _forwardSensorValue_mm(0)
     , _enableDraw(false)
     {
       CORETECH_ASSERT(_robot != nullptr);
@@ -617,13 +619,11 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
         Point3f cliffSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
         
         // cliff quad
-        Quad3f cliffquad
-        {
-          {+cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // up L
-          {-cliffSize.x(), +cliffSize.y(), cliffSize.z()}, // lo L
-          {+cliffSize.x(), -cliffSize.y(), cliffSize.z()}, // up R
-          {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}  // lo R
-        };
+        Quad3f cliffquad {
+          {+cliffSize.x(), +cliffSize.y(), cliffSize.z()},  // up L
+          {-cliffSize.x(), +cliffSize.y(), cliffSize.z()},  // lo L
+          {+cliffSize.x(), -cliffSize.y(), cliffSize.z()},  // up R
+          {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}}; // lo R
         _robot->GetPose().ApplyTo(cliffquad, cliffquad);
         
         if ( _isOnCliff )
@@ -639,6 +639,98 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
           currentNavMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::ClearOfCliff);
         }
       
+      }
+      
+      // forward sensor
+      #define TRUST_FORWARD_SENSOR 0
+      if( TRUST_FORWARD_SENSOR )
+      {
+        // - - -
+        // ClearOfObstacle from 0                      to _forwardSensorValue_mm
+        // Obstacle        from _forwardSensorValue_mm to MaxSensor
+        // - - -
+        const float sensorValue = ((float)_forwardSensorValue_mm);
+        const float maxSensorValue = ((float)FORWARD_COLLISION_SENSOR_LENGTH_MM);
+      
+        // debug?
+        const float kDebugRenderZOffset = 25.0f; // Z offset for render only so that it doesn't render underground
+        const bool kDebugRenderForwardQuads = false;
+        _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld::UpdateNavMemoryMap");
+        
+        // fetch vars
+        const float kFrontCollisionSensorWidth = 1.0f; // TODO Should this be in CozmoEngineConfig.h ?
+        const Pose3d& robotPose = _robot->GetPose();
+
+        // ray we cast from sensor
+        const Vec3f forwardRay = robotPose.GetRotation() * X_AXIS_3D();
+        
+        // robot detection points
+        Point3f robotForwardLeft  = robotPose * Vec3f{ 0.0f,  kFrontCollisionSensorWidth, 0.0f};
+        Point3f robotForwardRight = robotPose * Vec3f{ 0.0f, -kFrontCollisionSensorWidth, 0.0f};
+        const Point3f clearUntilLeft  = robotForwardLeft  + (forwardRay*sensorValue);
+        const Point3f clearUntilRight = robotForwardRight + (forwardRay*sensorValue);
+        
+        // clear
+        const bool hasClearInFront = Util::IsFltGTZero(sensorValue);
+        if ( hasClearInFront )
+        {
+          // create quad for ClearOfObstacle
+          const Point2f clearQuadBL( robotForwardLeft  );
+          const Point2f clearQuadBR( robotForwardRight );
+          const Point2f clearQuadTL( clearUntilLeft    );
+          const Point2f clearQuadTR( clearUntilRight   );
+          Quad2f clearCollisionQuad { clearQuadTL, clearQuadBL, clearQuadTR, clearQuadBR };
+          currentNavMemoryMap->AddQuad(clearCollisionQuad, INavMemoryMap::EContentType::ClearOfObstacle);
+        
+          // debug render detection lines
+          if ( kDebugRenderForwardQuads )
+          {
+            _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld::UpdateNavMemoryMap",
+              Point3f{clearQuadBL.x(),clearQuadBL.y(), kDebugRenderZOffset},
+              Point3f{clearQuadTL.x(),clearQuadTL.y(), kDebugRenderZOffset},
+              Anki::NamedColors::WHITE,
+              false);
+            _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld::UpdateNavMemoryMap",
+              Point3f{clearQuadBR.x(),clearQuadBR.y(), kDebugRenderZOffset},
+              Point3f{clearQuadTR.x(),clearQuadTR.y(), kDebugRenderZOffset},
+              Anki::NamedColors::OFFWHITE,
+              false);
+          }
+        }
+
+        // obstacle
+        const bool detectedObstacle = Util::IsFltLT(sensorValue, maxSensorValue);
+        if ( detectedObstacle )
+        {
+          // TODO configure this elsewhere. Should not need to create an obstacle just to grab its size
+          Point3f obstacleSize = MarkerlessObject(ObjectType::ProxObstacle).GetSize() * 0.5f;
+          const float distance = obstacleSize.x();
+          const Point3f obstacleUntilLeft  = clearUntilLeft  + (forwardRay*distance);
+          const Point3f obstacleUntilRight = clearUntilRight + (forwardRay*distance);
+          
+          // create quad for ObstacleUnrecognized
+          const Point2f obsQuadBL( clearUntilLeft     );
+          const Point2f obsQuadBR( clearUntilRight    );
+          const Point2f obsQuadTL( obstacleUntilLeft  );
+          const Point2f obsQuadTR( obstacleUntilRight );
+          Quad2f obsCollisionQuad { obsQuadTL, obsQuadBL, obsQuadTR, obsQuadBR };
+          currentNavMemoryMap->AddQuad(obsCollisionQuad, INavMemoryMap::EContentType::ObstacleUnrecognized);
+        
+          // debug render detection lines
+          if ( kDebugRenderForwardQuads )
+          {
+            _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld::UpdateNavMemoryMap",
+              Point3f{obsQuadBL.x(),obsQuadBL.y(), kDebugRenderZOffset},
+              Point3f{obsQuadTL.x(),obsQuadTL.y(), kDebugRenderZOffset},
+              Anki::NamedColors::ORANGE,
+              false);
+            _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld::UpdateNavMemoryMap",
+              Point3f{obsQuadBR.x(),obsQuadBR.y(), kDebugRenderZOffset},
+              Point3f{obsQuadTR.x(),obsQuadTR.y(), kDebugRenderZOffset},
+              Anki::NamedColors::RED,
+              false);
+          }
+        }
       }
       
       currentNavMemoryMap->AddQuad(_robot->GetBoundingQuadXY(), INavMemoryMap::EContentType::ClearOfObstacle );
@@ -1444,6 +1536,62 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
       }
     }
 
+    Result BlockWorld::AddMarkerlessObject(const Pose3d& p)
+    {
+      TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
+  
+      // Create an instance of the detected object
+      MarkerlessObject *m = new MarkerlessObject(ObjectType::ProxObstacle);
+      
+
+      // Raise origin of object above ground.
+      // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
+      Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*m->GetSize().z()));
+      Pose3d obsPose = p * raiseObject;
+      m->SetPose(obsPose);
+      m->SetPoseParent(_robot->GetPose().GetParent());
+      
+      // Check if this prox obstacle already exists
+      std::vector<ObservableObject*> existingObjects;
+      FindOverlappingObjects(m, _existingObjects[ObjectFamily::MarkerlessObject], existingObjects);
+      
+      // Update the last observed time of existing overlapping obstacles
+      for(auto obj : existingObjects) {
+        obj->SetLastObservedTime(lastTimestamp);
+      }
+      
+      // No need to add the obstacle again if it already exists
+      if (!existingObjects.empty()) {
+        delete m;
+        return RESULT_OK;
+      }
+      
+      
+      // Check if the obstacle intersects with any other existing objects in the scene.
+      BlockWorldFilter filter;
+      if(_robot->GetLocalizedTo().IsSet()) {
+        // Ignore the mat object that the robot is localized to (?)
+        filter.AddIgnoreID(_robot->GetLocalizedTo());
+      }
+      FindIntersectingObjects(m, existingObjects, 0, filter);
+      if (!existingObjects.empty()) {
+        delete m;
+        return RESULT_OK;
+      }
+
+      // HACK: to make it think it was observed enough times so as not to get immediately deleted.
+      //       We'll do something better after we figure out how other non-cliff prox obstacles will work.
+      for (u8 i=0; i<MIN_TIMES_TO_OBSERVE_OBJECT; ++i) {
+        m->SetLastObservedTime(lastTimestamp);
+      }
+
+      AddNewObject(ObjectFamily::MarkerlessObject, m);
+      _didObjectsChange = true;
+      _currentObservedObjects.push_back(m);
+      
+      return RESULT_OK;
+    }
+  
     void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
     {
       BlockWorldFilter filter;
@@ -2169,67 +2317,17 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
   
     Result BlockWorld::AddCliff(const Pose3d& p)
     {
-      // temporarily, pretend it's an obstacle. We don't have a use at the moment for it, but it renders a cuboid
-      // so that's nice
-      return AddProxObstacle(p);
+      // at the moment we treat them as markerless objects
+      const Result ret = AddMarkerlessObject(p);
+      return ret;
     }
   
     Result BlockWorld::AddProxObstacle(const Pose3d& p)
     {
-      TimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
-  
-      // Create an instance of the detected object
-      MarkerlessObject *m = new MarkerlessObject(ObjectType::ProxObstacle);
-      
-
-      // Raise origin of object above ground.
-      // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
-      Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*m->GetSize().z()));
-      Pose3d obsPose = p * raiseObject;
-      m->SetPose(obsPose);
-      m->SetPoseParent(_robot->GetPose().GetParent());
-      
-      // Check if this prox obstacle already exists
-      std::vector<ObservableObject*> existingObjects;
-      FindOverlappingObjects(m, _existingObjects[ObjectFamily::MarkerlessObject], existingObjects);
-      
-      // Update the last observed time of existing overlapping obstacles
-      for(auto obj : existingObjects) {
-        obj->SetLastObservedTime(lastTimestamp);
-      }
-      
-      // No need to add the obstacle again if it already exists
-      if (!existingObjects.empty()) {
-        delete m;
-        return RESULT_OK;
-      }
-      
-      
-      // Check if the obstacle intersects with any other existing objects in the scene.
-      BlockWorldFilter filter;
-      if(_robot->GetLocalizedTo().IsSet()) {
-        // Ignore the mat object that the robot is localized to (?)
-        filter.AddIgnoreID(_robot->GetLocalizedTo());
-      }
-      FindIntersectingObjects(m, existingObjects, 0, filter);
-      if (!existingObjects.empty()) {
-        delete m;
-        return RESULT_OK;
-      }
-
-      // HACK: to make it think it was observed enough times so as not to get immediately deleted.
-      //       We'll do something better after we figure out how other non-cliff prox obstacles will work.
-      for (u8 i=0; i<MIN_TIMES_TO_OBSERVE_OBJECT; ++i) {
-        m->SetLastObservedTime(lastTimestamp);
-      }
-
-      AddNewObject(ObjectFamily::MarkerlessObject, m);
-      _didObjectsChange = true;
-      _currentObservedObjects.push_back(m);
-      
-      return RESULT_OK;
+      // add markerless object
+      const Result ret = AddMarkerlessObject(p);
+      return ret;
     }
-
   
     void BlockWorld::RemoveMarkersWithinMarkers(PoseKeyObsMarkerMap_t& currentObsMarkers)
     {

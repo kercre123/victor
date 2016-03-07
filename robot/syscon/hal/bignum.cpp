@@ -18,7 +18,6 @@ static inline void bit_reduce(big_num_t& num) {
 // POS : A < B
 // NEG : A > B
 //  0  : A = B
-
 int big_unsigned_compare(const big_num_t& a, const big_num_t& b) {
   // Zero values
   if (a.used == 0 && b.used == 0) {
@@ -316,37 +315,46 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
 
   int amax = a.used - 1;
   int bmax = b.used - 1;
-  int zeroed = a.used + b.used + 1; // First entry zeroed
+  bool clipped = false;
 
-  out.used = amax + bmax;
-  out.negative = a.negative != b.negative;
-
-  // Zero term
-  if (out.used == 0) {
-    return false;
+  // Clear our the section of the output that might be uninitalized
+  for (int i = a.used; i < CELL_SIZE; i++) {
+    out.digits[i]  = 0;
   }
+
+  out.negative = a.negative != b.negative;
+  out.used = 0;
 
   for (int ai = amax; ai >= 0; ai--) {
     int a_value = a.digits[ai];
+    out.digits[ai] = 0; // This is done here so we can use inplace multiplication
 
     for (int bi = bmax; bi >= 0; bi--) {
       int write_index = ai + bi;
 
       // Multiply base terms and hope it's only 16-bit
-      int carry_in = (write_index >= zeroed) ? out.digits[write_index] : 0;
-      carry.word = a_value * b.digits[bi] + carry_in;
-      
+      carry.word = a_value * b.digits[bi] + out.digits[write_index];
+
+      // Zero result early abort
+      if (carry.word == 0) {
+        continue ;
+      }
+
+      // Cannot write outside of boundary
+      if (write_index >= CELL_SIZE) {
+        clipped = true;
+      }
+
       out.digits[write_index++] = carry.lower;
 
       // Start carry through chain
       while (carry.upper) {
         // Overflow check
         if (write_index >= CELL_SIZE) {
-          return true;
+          clipped = true;
         }
 
-        carry_in = (write_index >= zeroed) ? out.digits[write_index] : 0;        
-        carry.word = carry.upper + carry_in;
+        carry.word = carry.upper + out.digits[write_index];
         out.digits[write_index++] = carry.lower;
       }
 
@@ -354,17 +362,10 @@ bool big_multiply(big_num_t& out, const big_num_t& a, const big_num_t& b) {
       if (write_index > out.used) {
         out.used = write_index;
       }
-
-      // Set the initalized count-down
-      if (ai + bi < zeroed) {
-        zeroed = ai + bi;
-      }
     }
   }
 
-  bit_reduce(out);
-
-  return false;
+  return clipped;
 }
 
 bool big_power(big_num_t& result, const big_num_t& base_in, const big_num_t& exp) {
@@ -373,11 +374,12 @@ bool big_power(big_num_t& result, const big_num_t& base_in, const big_num_t& exp
   big_num_t *temp = &working[1];
 
   int msb = big_msb(exp);
-  
-  *base = base_in;
+
   result = BIG_ONE;
 
-  for (int bit = 0; bit <= msb; bit++) {
+  *base = base_in;
+
+  for (int bit = 0; bit <= msb; bit++) {    
     if (big_bit_get(exp, bit)) {
       if (big_multiply(result, result, *base)) {
         return true;
@@ -388,9 +390,11 @@ bool big_power(big_num_t& result, const big_num_t& base_in, const big_num_t& exp
       return true;
     }
 
-    big_num_t *x = base;
-    base = temp;
-    temp = x;
+    {
+      big_num_t* swap = base;
+      base = temp;
+      temp = swap;
+    }
   }
 
   result.negative = big_odd(base_in) ? base_in.negative : false;
@@ -547,28 +551,33 @@ bool mont_init(big_mont_t& mont, const big_num_t& modulo) {
   }
 
   // R
-  mont.r = BIG_ZERO;
-  big_bit_set(mont.r, mont.shift);
+  big_num_t r;
+
+  r = BIG_ZERO;
+  big_bit_set(r, mont.shift);
 
   // R2
-  big_multiply(mont.r2, mont.r, mont.r);
+  big_multiply(mont.r2, r, r);
   big_modulo(mont.r2, mont.r2, modulo);
 
   // RINV
-  big_invm(mont.rinv, mont.r, modulo);
+  big_invm(mont.rinv, r, modulo);
 
   // MINV
-  big_multiply(temp, mont.rinv, mont.r);
+  big_multiply(temp, mont.rinv, r);
   big_subtract(temp, temp, BIG_ONE);
   big_divide(mont.minv, temp, temp, modulo);
-  big_modulo(mont.minv, mont.minv, mont.r);
-  big_subtract(mont.minv, mont.r, mont.minv);
+  big_modulo(mont.minv, mont.minv, r);
+  big_subtract(mont.minv, r, mont.minv);
+
+  // Constant one
+  mont_to(mont, mont.one, BIG_ONE);
 
   return false;
 }
 
 // Convert to and from montgomery domain
-bool mont_to(big_mont_t& mont, big_num_t& out, const big_num_t& in) {
+bool mont_to(const big_mont_t& mont, big_num_t& out, const big_num_t& in) {
   if (big_shl(out, in, mont.shift)) {
     return true;
   }
@@ -578,7 +587,7 @@ bool mont_to(big_mont_t& mont, big_num_t& out, const big_num_t& in) {
   return false;
 }
 
-bool mont_from(big_mont_t& mont, big_num_t& out, const big_num_t& in) {
+bool mont_from(const big_mont_t& mont, big_num_t& out, const big_num_t& in) {
   if (big_multiply(out, in, mont.rinv)) {
     return true;
   }
@@ -589,18 +598,17 @@ bool mont_from(big_mont_t& mont, big_num_t& out, const big_num_t& in) {
 }
 
 // TODO: overflow protection
-bool mont_multiply(big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b) {
-  big_num_t c;
+bool mont_multiply(const big_mont_t& mont, big_num_t& out, const big_num_t& a, const big_num_t& b) {
+  big_num_t temp;
 
   big_multiply(out, a, b);
+  temp = out;
+  big_mask(temp, mont.shift);
+  big_multiply(temp, temp, mont.minv);
+  big_mask(temp, mont.shift);
+  big_multiply(temp, temp, mont.modulo);
 
-  c = out;
-  big_mask(c, mont.shift);
-  big_multiply(c, c, mont.minv);
-  big_mask(c, mont.shift);
-  big_multiply(c, c, mont.modulo);
-
-  big_subtract(out, out, c);
+  big_subtract(out, out, temp);
   big_shr(out, out, mont.shift);
 
   if (big_compare(out, mont.modulo) >= 0) {
@@ -612,4 +620,44 @@ bool mont_multiply(big_mont_t& mont, big_num_t& out, const big_num_t& a, const b
   return false;
 }
 
-// TODO: MONTGOMERY POWER
+bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in, const big_num_t& exp) {
+  big_num_t working[3];
+  big_num_t *base = &working[0];
+  big_num_t *temp = &working[1];
+  big_num_t *result = &working[2];
+
+  int msb = big_msb(exp);
+  
+  *base = base_in;
+  *result = mont.one;
+
+  for (int bit = 0; bit <= msb; bit++) {
+    if (big_bit_get(exp, bit)) {
+      if (mont_multiply(mont, *temp, *result, *base)) {
+        return true;
+      }
+
+      {
+        big_num_t *x = result;
+        result = temp;
+        temp = x;
+      }
+    }
+
+
+    if (mont_multiply(mont, *temp, *base, *base)) {
+      return true;
+    }
+
+    {
+      big_num_t *x = base;
+      base = temp;
+      temp = x;
+    }
+  }
+
+  out = *result;
+  out.negative = big_odd(base_in) ? base_in.negative : false;
+
+  return false;
+}

@@ -176,7 +176,9 @@
 #endif
 
 // TRUE if greater than the negative of the tolerance
+#ifndef FLT_GTR_ZERO
 #define FLT_GTR_ZERO(x) ((x) >= -FLOATING_POINT_COMPARISON_TOLERANCE)
+#endif
 
 // TRUE if x >= y - tolerance
 #ifndef FLT_GE

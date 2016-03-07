@@ -50,32 +50,38 @@ static void lights_off() {
 // Start all pins as input
 void Lights::init()
 {
-  // Power on the peripheral
-  NRF_RTC1->POWER = 1;
-  
-  // Stop the RTC so it can be reset
-  NRF_RTC1->TASKS_STOP = 1;
-  NRF_RTC1->TASKS_CLEAR = 1;
-  
-  // NOTE: When using the LFCLK with prescaler = 0, we only get 30.517 us
-  // resolution. This should still provide enough for this chip/board.  
-  NRF_RTC1->PRESCALER = 0;
-  
-  // Start the RTC
-  NRF_RTC1->TASKS_START = 1;
-
-  // Configure the interrupts
-  NRF_RTC1->EVTENSET = RTC_EVTENCLR_TICK_Msk;
-  NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
-
-  NVIC_SetPriority(RTC1_IRQn, 2);
-  NVIC_EnableIRQ(RTC1_IRQn);
-
   lights_off();
   
   memset(lights, 0, sizeof(lights));
 
   RTOS::schedule(manage);
+}
+
+void Lights::update(void) {
+  #ifndef RADIO_TIMING_TEST
+  static uint8_t pwm[numLights];
+
+  // Blacken everything out
+  lights_off();
+
+  // Setup anode
+  nrf_gpio_pin_set(RGBLightPins[channel].anode);
+  nrf_gpio_cfg_output(RGBLightPins[channel].anode);
+  
+  // Set lights for current charlie channel
+  for (int i = 0, index = channel * numLightsPerChannel; i < numLightsPerChannel; i++, index++)
+  {
+    int overflow = pwm[index] + (int)pdm_value[index];
+    pwm[index] = overflow;
+    
+    if (overflow > 0xFF) {
+      nrf_gpio_pin_clear(RGBLightPins[channel].cathodes[i]);
+      nrf_gpio_cfg_output(RGBLightPins[channel].cathodes[i]);
+    }
+  }
+  
+  channel = (channel + 1) % numChannels;
+  #endif
 }
 
 void Lights::manage(void*) {
@@ -111,37 +117,4 @@ void Lights::manage(void*) {
 void Lights::setLights(const LightState* update) {
   memcpy(lights, update, sizeof(lights));
   memset(phases, 0, sizeof(phases));
-}
-
-extern "C" void RTC1_IRQHandler() {
-  #ifndef RADIO_TIMING_TEST
-
-  static uint8_t pwm[numLights];
-
-  if (!NRF_RTC1->EVENTS_TICK)
-    return ;
-
-  NRF_RTC1->EVENTS_TICK = 0;
-  
-  // Blacken everything out
-  lights_off();
-
-  // Setup anode
-  nrf_gpio_pin_set(RGBLightPins[channel].anode);
-  nrf_gpio_cfg_output(RGBLightPins[channel].anode);
-  
-  // Set lights for current charlie channel
-  for (int i = 0, index = channel * numLightsPerChannel; i < numLightsPerChannel; i++, index++)
-  {
-    int overflow = pwm[index] + (int)pdm_value[index];
-    pwm[index] = overflow;
-    
-    if (overflow > 0xFF) {
-      nrf_gpio_pin_clear(RGBLightPins[channel].cathodes[i]);
-      nrf_gpio_cfg_output(RGBLightPins[channel].cathodes[i]);
-    }
-  }
-  
-  channel = (channel + 1) % numChannels;
-  #endif
 }
