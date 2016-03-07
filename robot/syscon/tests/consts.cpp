@@ -76,9 +76,10 @@ void dump(const big_num_t& num) {
 
 void dump(const big_mont_t& mont) {
 	printf("{\n\r");
+
 	dump(mont.shift); printf(",\n\r");
-	dump(mont.modulo); printf(",\n\r");
 	dump(mont.one); printf(",\n\r");
+	dump(mont.modulo); printf(",\n\r");
 	dump(mont.r2); printf(",\n\r");
 	dump(mont.rinv); printf(",\n\r");
 	dump(mont.minv); printf("\n\r}\n\r");

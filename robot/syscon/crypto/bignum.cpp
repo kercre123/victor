@@ -645,7 +645,7 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
     }
 
 
-    if (mont_multiply(mont, *temp, *base, *base)) {
+		if (mont_multiply(mont, *temp, *base, *base)) {
       return true;
     }
 
