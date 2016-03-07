@@ -172,7 +172,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
         ServerReceive();
       }
       catch (Exception e) {
-        Debug.LogException(e);
+        DAS.Error(this, e.Message);
         DestroySynchronously(DisconnectionReason.FailedToListen);
         return;
       }
@@ -210,7 +210,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
           SendAdvertisement();
         }
         catch (Exception e) {
-          Debug.LogException(e);
+          DAS.Error(this, e.Message);
           DestroySynchronously(DisconnectionReason.FailedToAdvertise);
           return;
         }
@@ -285,7 +285,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
             SendAdvertisement();
           }
           catch (Exception e) {
-            Debug.LogException(e);
+            DAS.Error(this, e.Message);
             DestroySynchronously(DisconnectionReason.FailedToAdvertise);
             return;
           }
@@ -308,11 +308,14 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
     }
   }
 
-  protected virtual void BeforeConnect(byte deviceID) { }
+  protected virtual void BeforeConnect(byte deviceID) {
+  }
 
-  protected virtual void UpdatePing(float lastUpdateTime) { }
+  protected virtual void UpdatePing(float lastUpdateTime) {
+  }
 
-  protected virtual void UpdateLastPingTime(float lastUpdateTime) { }
+  protected virtual void UpdateLastPingTime(float lastUpdateTime) {
+  }
 
   // synchronous
   private void InternalUpdate() {
@@ -323,7 +326,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
         RaiseConnectedToClient(mainEndPoint.ToString());
       }
       catch (Exception e) {
-        Debug.LogException(e);
+        DAS.Error(this, e.Message);
       }
       
     }
@@ -341,7 +344,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
         RaiseDisconnectedFromClient(currentDisconnectionReason);
       }
       catch (Exception e) {
-        Debug.LogException(e);
+        DAS.Error(this, e.Message);
       }
     }
   }
@@ -355,7 +358,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
         RaiseMessageReceived(message);
       }
       catch (Exception e) {
-        Debug.LogException(e);
+        DAS.Error(this, e.Message);
       }
     }
   }
@@ -418,7 +421,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
         EndSend(result);
       }
       catch (Exception e) {
-        Debug.LogException(e);
+        DAS.Error(this, e.Message);
       }
       finally {
         state.Dispose();
@@ -427,7 +430,9 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
   }
 
   // either
-  protected virtual bool SendDisconnect() { return false; }
+  protected virtual bool SendDisconnect() {
+    return false;
+  }
 
   // synchronous
   protected void SendInternal(MessageOut message) {
@@ -439,7 +444,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
         message.Pack(state.stream);
       }
       catch (Exception e) {
-        Debug.LogException(e);
+        DAS.Error(this, e.Message);
         DestroySynchronously(DisconnectionReason.AttemptedToSendInvalidData);
         return;
       }
@@ -449,7 +454,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
           ServerSend(state);
         }
         catch (Exception e) {
-          Debug.LogException(e);
+          DAS.Error(this, e.Message);
           DestroySynchronously(DisconnectionReason.ConnectionLost);
           return;
         }
@@ -532,11 +537,11 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
       }
       catch (Exception e) {
         if (isMain) {
-          Debug.LogException(e);
+          DAS.Error(this, e.Message);
           Destroy(DisconnectionReason.ConnectionLost);
         }
         else if (!(e is ObjectDisposedException)) {
-          Debug.LogException(e);
+          DAS.Error(this, e.Message);
         }
       }
       finally {
@@ -616,7 +621,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
               }
             }
             catch (Exception e) {
-              Debug.LogException(e);
+              DAS.Error(this, e.Message);
               Destroy(DisconnectionReason.ReceivedInvalidData);
               return;
             }
@@ -635,11 +640,11 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
       }
       catch (Exception e) {
         if (isMain) {
-          Debug.LogException(e);
+          DAS.Error(this, e.Message);
           Destroy(DisconnectionReason.ConnectionLost);
         }
         else if (!(e is ObjectDisposedException)) {
-          Debug.LogException(e);
+          DAS.Error(this, e.Message);
         }
       }
       finally {
@@ -693,11 +698,11 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
       }
       catch (Exception e) {
         if (isAdvert) {
-          Debug.LogException(e);
+          DAS.Error(this, e.Message);
           Destroy(DisconnectionReason.FailedToAdvertise);
         }
         else if (!(e is ObjectDisposedException)) {
-          Debug.LogException(e);
+          DAS.Error(this, e.Message);
         }
       }
       finally {

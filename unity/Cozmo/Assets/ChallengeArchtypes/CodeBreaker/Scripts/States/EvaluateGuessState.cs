@@ -139,7 +139,7 @@ namespace CodeBreaker {
           sortedCubes.Add(leftmostState);
         }
         else {
-          Debug.LogError("null leftmost state!");
+          DAS.Error(this, "null leftmost state!");
           break;
         }
       }
