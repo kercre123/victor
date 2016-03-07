@@ -26,7 +26,7 @@ namespace Xcode {
 
       var delta = end - start;
 
-      Debug.Log("Time To " + title + " (seconds): " + delta.TotalSeconds);
+      sDAS.Debug("Time To " + title + " (seconds): " + delta.TotalSeconds);
       step++;
     }
 
@@ -71,7 +71,8 @@ namespace Xcode {
           var parsed = XcodeProjectParser.Serialize(proj);
           File.WriteAllText("../ios/CozmoUnity_iOS.xcodeproj/project.pbxproj", parsed);
         });
-      } finally {
+      }
+      finally {
         UnityEditor.EditorUtility.ClearProgressBar();
       }
     }
@@ -82,17 +83,17 @@ namespace Xcode {
       string one = "Assets/HubWorld";
       string two = "../ios";
 
-      Debug.Log(MakeRelativePath(one, two));
+      sDAS.Debug(MakeRelativePath(one, two));
 
       one = "Assets/HubWorld/";
       two = "../ios/";
 
-      Debug.Log(MakeRelativePath(one, two));
+      sDAS.Debug(MakeRelativePath(one, two));
 
       one = "../ios/UnityBuild/Classes/CrashReporter.h";
       two = "../ios";
 
-      Debug.Log(MakeRelativePath(one, two));
+      sDAS.Debug(MakeRelativePath(one, two));
 
     }
 
@@ -220,8 +221,7 @@ namespace Xcode {
       // TODO: Add any FileTypes that I've missed
     };
 
-    private static string CalculateMD5Hash(string input)
-    {
+    private static string CalculateMD5Hash(string input) {
       // step 1, calculate MD5 hash from input
       MD5 md5 = System.Security.Cryptography.MD5.Create();
       byte[] inputBytes = System.Text.Encoding.UTF8.GetBytes(input);
@@ -229,8 +229,7 @@ namespace Xcode {
 
       // step 2, convert byte array to hex string
       StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < hash.Length; i++)
-      {
+      for (int i = 0; i < hash.Length; i++) {
         sb.Append(hash[i].ToString("X2"));
       }
       return sb.ToString();
@@ -241,7 +240,7 @@ namespace Xcode {
     }
 
     private static FileId NewFileId(string path, string name, string group = null) {
-      return new FileId() { Value = NewGuid(path + "%" + name +"%"+ group), FileName = name, Group = group };
+      return new FileId() { Value = NewGuid(path + "%" + name + "%" + group), FileName = name, Group = group };
     }
 
     private static void AddXcodeNamedVariable<TKey, TValue>(List<XcodeNamedVariable<TKey, TValue>> list, XcodeNamedVariable<TKey, TValue> entry) where TKey : XcodeString {
@@ -263,7 +262,7 @@ namespace Xcode {
       while (index < groupPath.Length) {
         string folder = groupPath[index];
         index++;
-        if(string.IsNullOrEmpty(folder)) {
+        if (string.IsNullOrEmpty(folder)) {
           continue;
         }
 
@@ -297,7 +296,7 @@ namespace Xcode {
       while (index < groupPath.Length) {
         string folder = groupPath[index];
         index++;
-        if(string.IsNullOrEmpty(folder)) {
+        if (string.IsNullOrEmpty(folder)) {
           continue;
         }
 
@@ -393,7 +392,13 @@ namespace Xcode {
 
       group.children.Add(fileId);
 
-      var fileReference = new PBXFileReference() { fileEncoding = fileType.FileEncoding, lastKnownFileType = fileType.LastKnownFileType, path = relativePath, name = name, sourceTree = "<group>" };
+      var fileReference = new PBXFileReference() {
+        fileEncoding = fileType.FileEncoding,
+        lastKnownFileType = fileType.LastKnownFileType,
+        path = relativePath,
+        name = name,
+        sourceTree = "<group>"
+      };
 
       AddXcodeNamedVariable(project.objects.PBXFileReferenceSection, new XcodeNamedVariable<FileId, PBXFileReference>() {
         Name = fileId,
@@ -432,9 +437,10 @@ namespace Xcode {
       var len = Mathf.Min(fullPath.Length, fullWorkingDirectoryPath.Length);
       int indexOfFirstDifferent = 0;
       for (; 
-           indexOfFirstDifferent < len && 
-             fullPath[indexOfFirstDifferent] == fullWorkingDirectoryPath[indexOfFirstDifferent]; 
-           indexOfFirstDifferent++);
+           indexOfFirstDifferent < len &&
+      fullPath[indexOfFirstDifferent] == fullWorkingDirectoryPath[indexOfFirstDifferent]; 
+           indexOfFirstDifferent++)
+        ;
 
       var copy = new string[fullPath.Length - indexOfFirstDifferent];
       System.Array.Copy(fullPath, indexOfFirstDifferent, copy, 0, copy.Length);
@@ -452,7 +458,7 @@ namespace Xcode {
 
       var relativePath = MakeRelativePath(path, projectRootPath);
 
-      var fileReference = project.objects.PBXFileReferenceSection.Find(x => Path.Equals(x.Value.path.Value,relativePath));
+      var fileReference = project.objects.PBXFileReferenceSection.Find(x => Path.Equals(x.Value.path.Value, relativePath));
 
       if (fileReference == null) {
         sDAS.Error("Could not find file " + path + " in Project");
@@ -545,7 +551,7 @@ namespace Xcode {
     private static T Only<T, _>(this List<XcodeNamedVariable<_, T>> list) where _ : XcodeString {
       return list[0].Value;
     }
-              
+
     private static FileId GetFileId(this List<FileId> list, string fileName) {
       return list.Find(x => x.FileName == fileName);
     }

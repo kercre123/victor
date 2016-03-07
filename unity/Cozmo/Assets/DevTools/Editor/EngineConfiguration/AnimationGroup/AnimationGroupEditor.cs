@@ -23,6 +23,7 @@ public class AnimationGroupEditor : EditorWindow {
   private static readonly HashSet<string> _RecentFiles = new HashSet<string>();
 
   public static string sAnimationDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animations/"; } }
+
   public static string sAnimationGroupDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroups/"; } }
 
   public static string[] AnimationNameOptions { get { return _AnimationNameOptions; } }
@@ -74,7 +75,7 @@ public class AnimationGroupEditor : EditorWindow {
         _RecentFiles.Add(path);
       }
       catch (Exception ex) {
-        Debug.LogException(ex);
+        DAS.Error(this, ex.Message);
       }
     }
   }
@@ -199,7 +200,7 @@ public class AnimationGroupEditor : EditorWindow {
     EditorGUILayout.EndVertical();
     return entry;
   }
-    
+
   [MenuItem("Cozmo/Animation Group Editor %g")]
   public static void OpenAnimationGroupEditor() {
     AnimationGroupEditor window = (AnimationGroupEditor)EditorWindow.GetWindow(typeof(AnimationGroupEditor));
