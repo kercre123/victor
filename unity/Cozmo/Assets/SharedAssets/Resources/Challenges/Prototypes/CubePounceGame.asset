@@ -23,4 +23,6 @@ MonoBehaviour:
     StatGateArray: []
   _HowToPlayDialogContentLocKey: cubeSlap.text.howToPlay
   _HowToPlayDialogContentPrefab: {fileID: 0}
+  _Music:
+    _Music: 59300189
   MinigameConfig: {fileID: 11400000, guid: b28cb45ddbc134621ae9ee104ea2944e, type: 2}
