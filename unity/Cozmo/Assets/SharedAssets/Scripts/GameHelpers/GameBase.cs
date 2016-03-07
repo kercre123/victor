@@ -62,7 +62,6 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeData = challengeData;
     _WonChallenge = false;
 
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetMusicState());
     RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
   }
 
@@ -140,7 +139,6 @@ public abstract class GameBase : MonoBehaviour {
 
   public void CloseMinigameImmediately() {
     DAS.Info(this, "Close Minigame Immediately");
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
     CleanUpOnDestroy();
     Destroy(gameObject);
   }
