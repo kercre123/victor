@@ -31,22 +31,16 @@ enum SPISource
 #define SPINE_MAX_CLAD_MSG_SIZE_DOWN (41)
 #define SPINE_MAX_CLAD_MSG_SIZE_UP (29)
 
-typedef enum {
-  SF_WiFi_Connected = 0x01,
-  SF_BLE_Connected  = 0x02,
-  SF_OBJ_Connected  = 0x04,
-} SpineFlags;
-
 struct CladBufferDown
 {
-  uint16_t flags;
+  uint16_t PADDING;
   uint8_t  length;
   uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE_DOWN];
 };
 
 struct CladBufferUp
 {
-  uint16_t flags;
+  uint16_t PADDING;
   uint8_t  length;
   uint8_t  data[SPINE_MAX_CLAD_MSG_SIZE_UP];
 };
