@@ -97,7 +97,7 @@ namespace SpeedTap {
         }
         else if (_TryPeek && (currTimeMs - _StartTimeMs) >= _PeekDelayTimeMs) {
           _TryPeek = false;
-          _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Peek);
+          _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Peek, RobotCompletedPeekAnimation);
         }
       }
     }
@@ -115,10 +115,14 @@ namespace SpeedTap {
       }
     }
 
-    // TODO: Figure out potential Readjust logic for mid hand
     void RobotCompletedFakeTapAnimation(bool success) {
       _CozmoTapping = false;
       _CurrentRobot.SetLiftHeight(1.0f);
+      _SpeedTapGame.CheckForAdjust();
+    }
+
+    void RobotCompletedPeekAnimation(bool success) {
+      _SpeedTapGame.CheckForAdjust();
     }
 
     void CozmoDidTap() {

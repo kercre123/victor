@@ -133,7 +133,7 @@ namespace SpeedTap {
       else {
         _CozmoRoundsWon++;
       }
-
+      UpdateUI();
       if (IsSessionComplete()) {
         AllRoundsOver = true;
         if (_PlayerRoundsWon > _CozmoRoundsWon) {
