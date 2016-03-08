@@ -160,8 +160,7 @@ namespace SpeedTap {
 
     private void HandleRoundEndAnimDone(bool success) {
       ResetScore();
-      _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime,
-        new SpeedTapWaitForCubePlace(false)));
+      _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
     }
 
     private void HandleSessionAnimDone(bool success) {
