@@ -180,19 +180,16 @@ namespace Anki {
       // To help find bad/deprecated animations, try removing this.
       ProceduralFace::EnableClippingWarning(false);
       
-      Anki::Util::Time::PushTimedStep("assets/animations/");
       ReadAnimationDirImpl("assets/animations/");
-      Anki::Util::Time::PopTimedStep();
-      
-      Anki::Util::Time::PushTimedStep("config/basestation/animations/");
       ReadAnimationDirImpl("config/basestation/animations/");
-      Anki::Util::Time::PopTimedStep();
       
       ProceduralFace::EnableClippingWarning(true);
     }
     
     void RobotManager::ReadAnimationDirImpl(const std::string& animationDir)
     {
+      Anki::Util::Time::ScopedStep scopeTimer(animationDir.c_str());
+      
       const std::string animationFolder =
       _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, animationDir);
       
@@ -224,6 +221,7 @@ namespace Anki {
         }
       }
       
+      Anki::Util::Time::PushTimedStep("BroadcastAvailableAnimations");
       // Tell UI about available animations
       if (nullptr != _context->GetExternalInterface()) {
         std::vector<std::string> animNames(_cannedAnimations->GetAnimationNames());
@@ -231,6 +229,7 @@ namespace Anki {
           _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationAvailable>(*i);
         }
       }
+      Anki::Util::Time::PopTimedStep();
     }
     
     // Read the animation data from a file
