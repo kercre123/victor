@@ -462,15 +462,18 @@ public class RobotEngineManager : MonoBehaviour {
       return;
     CurrentRobot.UpdateObservedFaceInfo(message);
 
-    if (message.faceID > 0 && message.name == "") {
+    if (message.faceID > 0 && message.name == "" && RobotObservedNewFace != null) {
       RobotObservedNewFace(message.faceID, 
         new Vector3(message.world_x, message.world_y, message.world_z), 
         new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w));
     }
 
-    RobotObservedFace(message.faceID, message.name,
-      new Vector3(message.world_x, message.world_y, message.world_z), 
-      new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w));
+    if (RobotObservedFace != null) {
+      RobotObservedFace(message.faceID, message.name,
+        new Vector3(message.world_x, message.world_y, message.world_z), 
+        new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w));
+    }
+
   }
 
   private void ReceivedSpecificMessage(G2U.RobotObservedNothing message) {
