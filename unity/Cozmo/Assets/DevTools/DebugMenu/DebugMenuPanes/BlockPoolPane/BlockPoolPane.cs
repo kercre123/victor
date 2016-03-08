@@ -69,7 +69,7 @@ public class BlockPoolPane : MonoBehaviour {
       _BlockStates[id] = is_enabled;
       
       txt.text = id.ToString("X") + " , " + is_enabled;
-      _BlockSelectedMessage.blockId = id;
+      _BlockSelectedMessage.factoryId = id;
       _BlockSelectedMessage.selected = is_enabled;
       RobotEngineManager.Instance.Message.BlockSelectedMessage = _BlockSelectedMessage;
       RobotEngineManager.Instance.SendMessage();
