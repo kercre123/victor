@@ -714,7 +714,6 @@ public:
     CannedAnimationContainer&   _cannedAnimations;
     AnimationGroupContainer&    _animationGroups;
     AnimationStreamer           _animationStreamer;
-    s32 _numFreeAnimationBytes;
     s32 _numAnimationBytesPlayed         = 0;
     s32 _numAnimationBytesStreamed       = 0;
     s32 _numAnimationAudioFramesPlayed   = 0;
