@@ -27,7 +27,7 @@ void RTOS::init(void) {
   NRF_WDT->CONFIG = (WDT_CONFIG_SLEEP_Run << WDT_CONFIG_SLEEP_Pos);
   NRF_WDT->CRV = 0x8000; // .5s
   NRF_WDT->RREN = wdog_channel_mask;
-  //NRF_WDT->TASKS_START = 1;
+  NRF_WDT->TASKS_START = 1;
 
   // Manage trigger set
   NVIC_EnableIRQ(SWI0_IRQn);

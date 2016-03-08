@@ -162,9 +162,8 @@ static void createAddress(uesb_address_desc_t& address) {
   address.base0 = 0xE7E7E7E7;
 
   // Create a random RF channel
-  //Crypto::random(&address.rf_channel, sizeof(address.rf_channel));
-  //address.rf_channel %= MAX_TX_CHANNELS;
-	address.rf_channel = 79;
+  Crypto::random(&address.rf_channel, sizeof(address.rf_channel));
+  address.rf_channel %= MAX_TX_CHANNELS;
 }
 
 // This will move to the next frequency (channel hopping)
