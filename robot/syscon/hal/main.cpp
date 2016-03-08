@@ -72,38 +72,36 @@ int main(void)
   RTOS::init();
   Crypto::init();
 
-  Battery::powerOn();
-  
+	Radio::init();
+  Motors::init();
+	
   // Setup all tasks
   Battery::init();
   Bluetooth::init();
   Timer::init();
   Backpack::init();
-  Radio::init();
 	Lights::init();
 
-  #ifndef BLUETOOTH_MODE
-  Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
+	Battery::powerOn();
+	
+	//Radio::shutdown();
+  //Bluetooth::advertise(); 
 
-  Bluetooth::shutdown();
-  Radio::advertise();
-  #else
-  Radio::shutdown();
-  Bluetooth::advertise(); 
-  #endif
-  
+	Bluetooth::shutdown();
+	Radio::advertise();
+	
   // Let the test fixtures run, if nessessary
   #ifdef RUN_TESTS
-  TestFixtures::run();
-  #else
+	TestFixtures::run();
+	#else
   Head::init();
-  #endif
+	#endif
 
-  Timer::start();
+	Timer::start();
 
   // Run forever, because we are awesome.
   for (;;) {
     __asm { WFI };
-    Crypto::manage();
+		Crypto::manage();
   }
 }
