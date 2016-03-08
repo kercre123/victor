@@ -19,15 +19,30 @@ public class BlockPoolPane : MonoBehaviour {
   
   private U2G.BlockPoolEnabledMessage _BlockPoolEnabledMessage;
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
-  private Dictionary<uint,bool> _BlockStates;
+
+  private class BlockData {
+    public BlockData(bool is_enabled, sbyte signal_strength, Button btn) {
+      this.IsEnabled = is_enabled;
+      this.SignalStrength = signal_strength;
+      this.Btn = btn;
+    }
+
+    public bool IsEnabled { get; set; }
+
+    public sbyte SignalStrength { get; set; }
+
+    public Button Btn { get; set; }
+  }
+
+  private Dictionary<uint,BlockData> _BlockStates;
 
   void Start() {
 
-    _EnabledCheckbox.onValueChanged.AddListener(HandleValueChanged);
+    _EnabledCheckbox.onValueChanged.AddListener(HandlePoolEnabledValueChanged);
     
     _BlockPoolEnabledMessage = new U2G.BlockPoolEnabledMessage();
     _BlockSelectedMessage = new U2G.BlockSelectedMessage();
-    _BlockStates = new Dictionary<uint, bool>();
+    _BlockStates = new Dictionary<uint, BlockData>();
 
     RobotEngineManager.Instance.OnInitBlockPoolMsg += HandleInitBlockPool;
     
@@ -36,14 +51,13 @@ public class BlockPoolPane : MonoBehaviour {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  void OnDestroy() {
-    RobotEngineManager.Instance.OnInitBlockPoolMsg -= HandleInitBlockPool;
-    RobotEngineManager.Instance.OnObjectDiscoveredMsg -= HandleObjectDiscoveredMsg;
-    ;
-  }
-
-
   void HandleInitBlockPool(G2U.InitBlockPoolMessage initMsg) {
+
+    // clear the lights we've turned blue to show connections.
+    // Might stomp game setup but hopefully people are using this debug menu before playing.
+    foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
+      kvp.Value.SetLEDs(0, 0, 0, 0);
+    }
     // Gets the previous ones enabled...
     _EnabledCheckbox.isOn = initMsg.blockPoolEnabled > 0;
     
@@ -53,38 +67,47 @@ public class BlockPoolPane : MonoBehaviour {
     }
  
     for (int i = 0; i < initMsg.blockData.Length; ++i) {
-      AddButton(initMsg.blockData[i].id, initMsg.blockData[i].enabled);
+      // Never get an rssi value for things that were previously connected and won't be discovered 
+      // if they connected to something else properly, so just indicate with a 0.
+      AddButton(initMsg.blockData[i].id, initMsg.blockData[i].enabled, 0);
     }
     // The first one gets previous ones serialized that may or may exist, this message gets the one we see.
     RobotEngineManager.Instance.OnObjectDiscoveredMsg += HandleObjectDiscoveredMsg;
-    // Will get a series of "Object Discovered" messages that represent blocks cozmo has "Heard" to connect to
-    RobotEngineManager.Instance.Message.RequestDiscoveredObjects = new G2U.RequestDiscoveredObjects();
-    RobotEngineManager.Instance.SendMessage();
+    RobotEngineManager.Instance.OnObjectUndiscoveredMsg -= HandleObjectUndiscoveredMsg;
+    SendDiscoveredObjects(true);
+  }
+
+  void OnDestroy() {
+    RobotEngineManager.Instance.OnInitBlockPoolMsg -= HandleInitBlockPool;
+    RobotEngineManager.Instance.OnObjectDiscoveredMsg -= HandleObjectDiscoveredMsg;
+    RobotEngineManager.Instance.OnObjectUndiscoveredMsg -= HandleObjectUndiscoveredMsg;
+    SendDiscoveredObjects(false);
+    // clear the lights we've turned blue to show connections
+    foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
+      kvp.Value.SetLEDs(0, 0, 0, 0);
+    }
   }
 
   private void HandleObjectDiscoveredMsg(Anki.Cozmo.ObjectDiscovered objDiscoveredMsg) {
-    AddButton(objDiscoveredMsg.factory_id, false);
+    AddButton(objDiscoveredMsg.factory_id, false, objDiscoveredMsg.rssi);
   }
 
-  private void AddButton(uint id, bool is_enabled) {
-
-    GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, _UIContainer);
-    Button btn = gameObject.GetComponent<Button>();
-    Text txt = btn.GetComponentInChildren<Text>();
-      
-    _BlockStates.Add(id, is_enabled);
-    txt.text = id.ToString("X") + " , " + is_enabled;
-    btn.onClick.AddListener(() => HandleButtonClick(id, txt));
-
+  // haven't heard from this block in 10 seconds, remove it.
+  private void HandleObjectUndiscoveredMsg(Anki.Cozmo.ObjectUndiscovered objUnDiscoveredMsg) {
+    BlockPoolPane.BlockData data;
+    if (_BlockStates.TryGetValue(objUnDiscoveredMsg.factory_id, out data)) {
+      Destroy(data.Btn.gameObject);
+      _BlockStates.Remove(objUnDiscoveredMsg.factory_id);
+    }
   }
 
-  private void HandleButtonClick(uint id, Text txt) {
-    bool was_enabled = false;
-    if (_BlockStates.TryGetValue(id, out was_enabled)) {
-      bool is_enabled = !was_enabled;
-      _BlockStates[id] = is_enabled;
+  private void HandleButtonClick(uint id) {
+    BlockPoolPane.BlockData data;
+    if (_BlockStates.TryGetValue(id, out data)) {
+      bool is_enabled = !data.IsEnabled;
+      data.IsEnabled = is_enabled;
       
-      txt.text = id.ToString("X") + " , " + is_enabled;
+      UpdateButton(id);
       _BlockSelectedMessage.factoryId = id;
       _BlockSelectedMessage.selected = is_enabled;
       RobotEngineManager.Instance.Message.BlockSelectedMessage = _BlockSelectedMessage;
@@ -92,9 +115,51 @@ public class BlockPoolPane : MonoBehaviour {
     }
   }
 
-  private void HandleValueChanged(bool val) {
+  private void SendDiscoveredObjects(bool enable) {
+    // Will get a series of "Object Discovered" messages that represent blocks cozmo has "Heard" to connect to
+    G2U.SendDiscoveredObjects msg = new G2U.SendDiscoveredObjects();
+    msg.enable = enable;
+    msg.robotID = (byte)RobotEngineManager.Instance.CurrentRobotID;
+    RobotEngineManager.Instance.Message.SendDiscoveredObjects = msg;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  private void HandlePoolEnabledValueChanged(bool val) {
     _BlockPoolEnabledMessage.enabled = val;
     RobotEngineManager.Instance.Message.BlockPoolEnabledMessage = _BlockPoolEnabledMessage;
     RobotEngineManager.Instance.SendMessage();
+  }
+
+  private void AddButton(uint id, bool is_enabled, sbyte signal_strength) {
+    BlockPoolPane.BlockData data;
+    if (!_BlockStates.TryGetValue(id, out data)) {
+      GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, _UIContainer);
+      Button btn = gameObject.GetComponent<Button>();
+      data = new BlockPoolPane.BlockData(is_enabled, signal_strength, btn);
+      _BlockStates.Add(id, data);
+      UpdateButton(id);
+      btn.onClick.AddListener(() => HandleButtonClick(id));
+    }
+    else if (data.SignalStrength != signal_strength) {
+      // enabled is only changed form unity.
+      data.SignalStrength = signal_strength;
+      UpdateButton(id);
+    }
+  }
+
+  private void UpdateButton(uint id) {
+    BlockPoolPane.BlockData data;
+    if (_BlockStates.TryGetValue(id, out data)) {
+      Text txt = data.Btn.GetComponentInChildren<Text>();
+      if (txt) {
+        txt.text = "ID: " + id.ToString("X") + " \n " +
+        "enabled: " + (data.IsEnabled ? "Y" : "N") + "\n" +
+        "rssi: " + data.SignalStrength;
+      }
+      // Show all our enabled lights to blue so we can see what is currently connected
+      foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
+        kvp.Value.SetLEDs(Color.blue.ToUInt(), Color.cyan.ToUInt());
+      }
+    }
   }
 }
