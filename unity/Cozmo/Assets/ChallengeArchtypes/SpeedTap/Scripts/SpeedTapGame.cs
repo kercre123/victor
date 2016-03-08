@@ -9,9 +9,9 @@ namespace SpeedTap {
 
   public class SpeedTapGame : GameBase {
 
-    private const float _kRetreatSpeed = -120.0f;
-    private const float _kRetreatTime = 0.35f;
-    private const float _kTapAdjustRange = 5.0f;
+    private const float _kRetreatSpeed = -130.0f;
+    private const float _kRetreatTime = 0.30f;
+    private const float _kTapAdjustRange = 1.0f;
 
     private Vector3 _CozmoPos;
     private Quaternion _CozmoRot;
