@@ -32,6 +32,8 @@ struct EnrolledFaceEntry
   TrackedFace::ID_t         faceID;
   TrackedFace::ID_t         prevID = TrackedFace::UnknownFace;
   
+  std::string               name;
+  
   time_t                    enrollmentTime;         // when first added to album
   time_t                    lastDataUpdateTime;     // last time data was updated
   

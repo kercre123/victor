@@ -165,6 +165,7 @@ message RobotObservedFace {
     float_32 quaternion_x,   //     "
     float_32 quaternion_y,   //     "
     float_32 quaternion_z,   //     "
+    string   name            // Empty if none assigned yet
 // TODO: Add expression / landmark locations
 }
 

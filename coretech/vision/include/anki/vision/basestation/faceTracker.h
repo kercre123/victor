@@ -55,6 +55,8 @@ namespace Vision {
     // Will return false if the private implementation does not support face recognition
     static bool IsRecognitionSupported();
     
+    void AssignNameToID(TrackedFace::ID_t faceID, const std::string& name);
+    
     Result SaveAlbum(const std::string& albumName);
     Result LoadAlbum(const std::string& albumName);
     

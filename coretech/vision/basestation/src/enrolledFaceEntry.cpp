@@ -54,6 +54,12 @@ EnrolledFaceEntry::EnrolledFaceEntry(TrackedFace::ID_t withID, Json::Value& json
   } else {
     lastDataUpdateTime = (time_t)json["lastDataUpdateTime"].asLargestInt();
   }
+  
+  if(!json.isMember("name")) {
+    MissingFieldWarning("name");
+  } else {
+    name = json["name"].asString();
+  }
 }
 
 
@@ -71,12 +77,18 @@ void EnrolledFaceEntry::MergeWith(EnrolledFaceEntry& otherEntry)
     lastDataUpdateTime = otherEntry.lastDataUpdateTime;
   }
   
+  // Keep my name unless I don't have one
+  if(name.empty()) {
+    name = otherEntry.name;
+  }
+  
   enrollmentTime = std::min(enrollmentTime, otherEntry.enrollmentTime);
   score = std::max(score, otherEntry.score);
 }
   
 void EnrolledFaceEntry::FillJson(Json::Value& entry) const
 {
+  entry["name"]               = name;
   entry["oldestData"]         = oldestData;
   entry["enrollmentTime"]     = (Json::LargestInt)enrollmentTime;
   entry["lastDataUpdateTime"] = (Json::LargestInt)lastDataUpdateTime;

@@ -770,6 +770,34 @@ namespace Vision {
     return RESULT_OK;
   } // SetSerializedAlbum()
   
+  
+  void FaceRecognizer::AssignNameToID(TrackedFace::ID_t faceID, const std::string& name)
+  {
+    _mutex.lock();
+    auto iter = _enrollmentData.find(faceID);
+    if(iter != _enrollmentData.end()) {
+      iter->second.name = name;
+      
+      // Check for duplicate name
+      for(auto dupIter = _enrollmentData.begin(); dupIter != _enrollmentData.end(); ++dupIter)
+      {
+        if(dupIter->second.name == name && dupIter->first != faceID) {
+          PRINT_NAMED_WARNING("FaceRecognizer.AssignNameToID.DuplicateName",
+                              "Name %s already assigned to ID %d. Merging!",
+                              name.c_str(), faceID);
+          MergeFaces(faceID, dupIter->first);
+          break;
+        }
+      }
+
+    } else {
+      PRINT_NAMED_ERROR("FaceRecognizer.AssignNameToID.InvalidID",
+                        "Unknown ID %d, ignoring name %s", faceID, name.c_str());
+    }
+    _mutex.unlock();
+  }
+  
+  
   Result FaceRecognizer::SaveAlbum(const std::string &albumName)
   {
     Result result = RESULT_OK;

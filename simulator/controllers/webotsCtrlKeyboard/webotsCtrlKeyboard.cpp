@@ -1608,7 +1608,11 @@ namespace Anki {
                     std::string userName = userNameField->getSFString();
                     if(!userName.empty())
                     {
-                      AssignVizFaceName(userName, GetLastObservedFaceID());
+                      printf("Assigning name '%s' to ID %d\n", userName.c_str(), GetLastObservedFaceID());
+                      ExternalInterface::AssignNameToFace assignNameToFace;
+                      assignNameToFace.faceID = GetLastObservedFaceID();
+                      assignNameToFace.name   = userName;
+                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(assignNameToFace)));
                     } else {
                       // No user name, enable enrollment
                       ExternalInterface::EnableNewFaceEnrollment enableEnrollment;

@@ -349,7 +349,8 @@ namespace Cozmo {
                                                              q.w(),
                                                              q.x(),
                                                              q.y(),
-                                                             q.z())));
+                                                             q.z(),
+                                                             knownFace->face.GetName())));
       
       /*
       const Vision::Image& faceThumbnail = knownFace->face.GetThumbnail();

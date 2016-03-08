@@ -416,7 +416,7 @@ message SetOwnerFace {
 }
 
 // Assign a name to a specific face ID
-message AssignVizFaceName {
+message AssignNameToFace {
   int_32 faceID,
   string name
 }
