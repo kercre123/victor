@@ -34,6 +34,8 @@ namespace Anki {
     
     void RobotManager::Init()
     {
+      auto startTime = std::chrono::system_clock::now();
+    
       Anki::Util::Time::PushTimedStep("RobotManager::Init");
       
       Anki::Util::Time::PushTimedStep("ReadAnimationDir");
@@ -48,6 +50,23 @@ namespace Anki {
       
       Anki::Util::Time::PrintTimedSteps();
       Anki::Util::Time::ClearSteps();
+      
+      auto endTime = std::chrono::system_clock::now();
+      auto timeSpent_millis = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+      
+      if (ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS)
+      {
+        constexpr auto maxInitTime_millis = 3000;
+        if (timeSpent_millis > maxInitTime_millis)
+        {
+          PRINT_NAMED_WARNING("RobotManager.Init.TimeSpent",
+                              "%lld milliseconds spent initializing, expected %d",
+                              timeSpent_millis,
+                              maxInitTime_millis);
+        }
+      }
+      
+      PRINT_NAMED_EVENT("RobotManager.Init.TimeSpent", "%lld milliseconds", timeSpent_millis);
     }
     
     void RobotManager::AddRobot(const RobotID_t withID)
