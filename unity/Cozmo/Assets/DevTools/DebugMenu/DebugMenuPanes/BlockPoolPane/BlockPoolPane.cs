@@ -38,10 +38,13 @@ public class BlockPoolPane : MonoBehaviour {
 
   void OnDestroy() {
     RobotEngineManager.Instance.OnInitBlockPoolMsg -= HandleInitBlockPool;
+    RobotEngineManager.Instance.OnObjectDiscoveredMsg -= HandleObjectDiscoveredMsg;
+    ;
   }
 
-  void HandleInitBlockPool(G2U.InitBlockPoolMessage initMsg) {
 
+  void HandleInitBlockPool(G2U.InitBlockPoolMessage initMsg) {
+    // Gets the previous ones enabled...
     _EnabledCheckbox.isOn = initMsg.blockPoolEnabled > 0;
     
     // Clear any old ones 
@@ -50,15 +53,28 @@ public class BlockPoolPane : MonoBehaviour {
     }
  
     for (int i = 0; i < initMsg.blockData.Length; ++i) {
-      GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, _UIContainer);
-      Button btn = gameObject.GetComponent<Button>();
-      Text txt = btn.GetComponentInChildren<Text>();
-      uint id = initMsg.blockData[i].id;
-      bool is_enabled = initMsg.blockData[i].enabled;
-      _BlockStates.Add(id, is_enabled);
-      txt.text = id.ToString("X") + " , " + is_enabled;
-      btn.onClick.AddListener(() => HandleButtonClick(id, txt));
+      AddButton(initMsg.blockData[i].id, initMsg.blockData[i].enabled);
     }
+    // The first one gets previous ones serialized that may or may exist, this message gets the one we see.
+    RobotEngineManager.Instance.OnObjectDiscoveredMsg += HandleObjectDiscoveredMsg;
+    // Will get a series of "Object Discovered" messages that represent blocks cozmo has "Heard" to connect to
+    RobotEngineManager.Instance.Message.RequestDiscoveredObjects = new G2U.RequestDiscoveredObjects();
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  private void HandleObjectDiscoveredMsg(Anki.Cozmo.ObjectDiscovered objDiscoveredMsg) {
+    AddButton(objDiscoveredMsg.factory_id, false);
+  }
+
+  private void AddButton(uint id, bool is_enabled) {
+
+    GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, _UIContainer);
+    Button btn = gameObject.GetComponent<Button>();
+    Text txt = btn.GetComponentInChildren<Text>();
+      
+    _BlockStates.Add(id, is_enabled);
+    txt.text = id.ToString("X") + " , " + is_enabled;
+    btn.onClick.AddListener(() => HandleButtonClick(id, txt));
 
   }
 
@@ -69,7 +85,7 @@ public class BlockPoolPane : MonoBehaviour {
       _BlockStates[id] = is_enabled;
       
       txt.text = id.ToString("X") + " , " + is_enabled;
-      _BlockSelectedMessage.blockId = id;
+      _BlockSelectedMessage.factoryId = id;
       _BlockSelectedMessage.selected = is_enabled;
       RobotEngineManager.Instance.Message.BlockSelectedMessage = _BlockSelectedMessage;
       RobotEngineManager.Instance.SendMessage();

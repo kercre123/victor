@@ -66,6 +66,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.InitBlockPoolMessage> OnInitBlockPoolMsg;
+  public event Action<Anki.Cozmo.ObjectDiscovered> OnObjectDiscoveredMsg;
   public event Action<ImageChunk> OnImageChunkReceived;
 
   #region Audio Callback events
@@ -349,6 +350,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.InitBlockPoolMessage:
       ReceivedSpecificMessage(message.InitBlockPoolMessage);
       break;
+    case G2U.MessageEngineToGame.Tag.ObjectDiscovered:
+      ReceivedSpecificMessage(message.ObjectDiscovered);
+      break;
     case G2U.MessageEngineToGame.Tag.ImageChunk:
       ReceivedSpecificMessage(message.ImageChunk);
       break;
@@ -622,6 +626,13 @@ public class RobotEngineManager : MonoBehaviour {
       OnInitBlockPoolMsg(message);
     }
   }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ObjectDiscovered message) {
+    if (OnObjectDiscoveredMsg != null) {
+      OnObjectDiscoveredMsg(message);
+    }
+  }
+
 
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
     if (OnRequestGameStart != null) {
