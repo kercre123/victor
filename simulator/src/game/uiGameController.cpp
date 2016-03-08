@@ -25,42 +25,6 @@ namespace Anki {
       // Private members:
       namespace {
 
-        const f32 TIME_UNTIL_READY_SEC = 1.5;
-        
-        s32 _stepTimeMS;
-        webots::Supervisor _supervisor;
-        
-        webots::Node* _robotNode = nullptr;
-        std::vector<std::pair<webots::Node*, Pose3d> > _lightCubes;
-        auto _lightCubeOriginIter = _lightCubes.end();
-        
-        Pose3d _robotPose;
-        Pose3d _robotPoseActual;
-        
-        ExternalInterface::RobotState _robotStateMsg;
-        
-        UiGameController::ObservedObject _lastObservedObject;
-        std::map<s32, std::pair<ObjectFamily, ObjectType> > _objectIDToFamilyTypeMap;
-        std::map<ObjectFamily, std::map<ObjectType, std::vector<s32> > > _objectFamilyToTypeToIDMap;
-        std::map<s32, Pose3d> _objectIDToPoseMap;
-        
-        Vision::TrackedFace::ID_t _lastObservedFaceID;
-        
-        std::unordered_set<std::string> _availableAnimations;
-        
-        webots::Node* _root = nullptr;
-        
-        typedef enum {
-          UI_WAITING_FOR_GAME = 0,
-          UI_RUNNING
-        } UI_State_t;
-        
-        UI_State_t _uiState;
-        
-        GameMessageHandler _msgHandler;
-        GameComms *_gameComms = nullptr;
-
-        Util::Data::DataPlatform* _dataPlatform = nullptr;
       } // private namespace
 
     
@@ -407,7 +371,7 @@ namespace Anki {
     }
     
   
-    bool ForceAddRobotIfSpecified()
+    bool UiGameController::ForceAddRobotIfSpecified()
     {
       bool doForceAddRobot = false;
       bool forcedRobotIsSim = false;
@@ -1374,7 +1338,7 @@ namespace Anki {
       return _stepTimeMS;
     }
     
-    webots::Supervisor* UiGameController::GetSupervisor() const
+    webots::Supervisor* UiGameController::GetSupervisor()
     {
       return &_supervisor;
     }
