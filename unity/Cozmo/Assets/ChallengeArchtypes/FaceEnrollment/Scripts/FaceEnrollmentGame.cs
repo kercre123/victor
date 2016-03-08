@@ -6,7 +6,6 @@ using UnityEngine.UI;
 namespace FaceEnrollment {
   public class FaceEnrollmentGame : GameBase {
 
-    public int _ReactToFaceID = 0;
     public Dictionary<int, string> _FaceNameDictionary = new Dictionary<int, string>();
     public Dictionary<int, string> _FaceIDToReaction = new Dictionary<int, string>();
 
@@ -35,11 +34,15 @@ namespace FaceEnrollment {
       CurrentRobot.SetLiftHeight(0.0f);
       CurrentRobot.SetHeadAngle(0.5f);
       RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
+    }
+
+    protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
+      base.InitializeView(newView, data);
 
       _FaceEnrollmentDataView = 
-        SharedMinigameView.ShowWideGameStateSlide(_FaceEnrollmentDataViewPrefab.gameObject, 
+        newView.ShowWideGameStateSlide(_FaceEnrollmentDataViewPrefab.gameObject, 
         "face_enrollment_data_view_panel").GetComponent<FaceEnrollmentDataView>();
-      
+
       _FaceEnrollmentDataView.OnEnrollNewFace += AnimateFaceEnroll;
     }
 
@@ -73,6 +76,10 @@ namespace FaceEnrollment {
 
     private void HandleSubmitButton(string name) {
       EnrollFace(name);
+      CurrentRobot.SendAnimation(_FaceIDToReaction[_NewSeenFaceID], HandleReactionDone);
+    }
+
+    private void HandleReactionDone(bool success) {
       _NewSeenFaceID = 0;
       UIManager.CloseView(_FaceEnrollmentView);
       _FaceEnrollmentView = null;

@@ -9,12 +9,14 @@ namespace FaceEnrollment {
     public System.Action<string> OnSubmitButton;
 
     [SerializeField]
-    public Button _SubmitNameButton;
+    public Anki.UI.AnkiButton _SubmitNameButton;
 
     [SerializeField]
     private InputField _NameField;
 
     void Start() {
+      _SubmitNameButton.DASEventButtonName = "face_enrollment_name_view_submit_button";
+      _SubmitNameButton.DASEventViewController = "face_enrollment_name_view";
       _SubmitNameButton.onClick.AddListener(HandleButtonPress);
     }
 

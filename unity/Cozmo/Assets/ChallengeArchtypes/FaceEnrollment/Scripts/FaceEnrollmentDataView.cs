@@ -7,7 +7,7 @@ public class FaceEnrollmentDataView : MonoBehaviour {
   public System.Action OnEnrollNewFace;
 
   [SerializeField]
-  private Button _EnrollNewFaceButton;
+  private Anki.UI.AnkiButton _EnrollNewFaceButton;
 
   void Start() {
     _EnrollNewFaceButton.onClick.AddListener(HandleEnrollNewFaceButton);

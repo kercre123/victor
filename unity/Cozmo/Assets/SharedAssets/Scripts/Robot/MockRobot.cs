@@ -293,11 +293,11 @@ public class MockRobot : IRobot {
     _Callbacks.Clear();
   }
 
-  public void EnableNewFaceEnrollment(int numToEnroll = 1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void EnableNewFaceEnrollment(int numToEnroll = 1) {
     
   }
 
-  public void AssignNameToFace(int faceID, string name, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void AssignNameToFace(int faceID, string name) {
     
   }
 
