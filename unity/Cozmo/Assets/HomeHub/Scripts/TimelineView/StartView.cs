@@ -27,6 +27,7 @@ public class StartView : BaseView {
     _ConnectButton.onClick.AddListener(HandleConnectClicked);
     _SecretSkipButton.onClick.AddListener(HandleSecretSkipButtonClicked);
     LoopRobotSleep();
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
   }
 
   private bool IsWifiConnected() {
@@ -49,8 +50,7 @@ public class StartView : BaseView {
     if (robot != null) {
       DAS.Info(this, "Cancelling HandleSleepAnimationComplete");
       robot.CancelCallback(HandleSleepAnimationComplete);
-      // kOpenEyes is much longer than kOpenEyesTwo, so play it 1/5 of the time.
-      robot.SendAnimation(UnityEngine.Random.value > 0.8f ? AnimationName.kOpenEyes : AnimationName.kOpenEyesTwo, HandleWakeAnimationComplete);
+      robot.SendAnimation(AnimationName.kOpenEyesTwo, HandleWakeAnimationComplete);
       _ConnectButton.Interactable = false;
     }
   }
@@ -64,12 +64,12 @@ public class StartView : BaseView {
   }
 
   private void HandleSleepAnimationComplete(bool success) {
-    DAS.Info(this, "HandleSleepAnimationComplete: success: "+success);
+    DAS.Info(this, "HandleSleepAnimationComplete: success: " + success);
     LoopRobotSleep();
   }
 
   private void HandleWakeAnimationComplete(bool success) {
-    DAS.Info(this, "HandleWakeAnimationComplete: success: "+success);
+    DAS.Info(this, "HandleWakeAnimationComplete: success: " + success);
 
     var robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
@@ -93,7 +93,7 @@ public class StartView : BaseView {
       OnConnectClicked();
     }
   }
-    
+
   #region implemented abstract members of BaseView
 
   protected override void CleanUp() {

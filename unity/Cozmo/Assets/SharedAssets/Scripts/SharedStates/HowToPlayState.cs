@@ -26,6 +26,7 @@ public class HowToPlayState : State {
     _Game.SharedMinigameView.ShowQuitButton();
     _Game.SharedMinigameView.CloseHowToPlayView();
     _Game.SharedMinigameView.HideContinueButtonShelf();
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_Game.GetMusicState());
 
     if (_NextState == null) {
       _StateMachine.PopState();

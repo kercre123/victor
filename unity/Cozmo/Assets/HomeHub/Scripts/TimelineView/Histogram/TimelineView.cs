@@ -132,6 +132,8 @@ namespace Cozmo.HomeHub {
       _ScrollRect.onValueChanged.AddListener(HandleTimelineViewScroll);
       _MiddlePane.minWidth = _MaxDailyGoalWidth; 
       DAS.Info(this, "TimelineView Initialized");
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
     }
 
     private void PopulateTimeline(List<TimelineEntryData> timelineEntries) {
