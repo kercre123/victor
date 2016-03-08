@@ -14,25 +14,25 @@ namespace Cozmo {
     //////////////////////////////////////////////////////////////////////////
     // Regular (Passive) Blocks ("1x1 Cubes")
     //
-    Block_ANGRYFACE,
-    Block_BULLSEYE2,
-    Block_BULLSEYE2_INVERTED,
-    Block_SQTARGET,
-    Block_FIRE,
-    Block_ANKILOGO,
-    Block_STAR5,
-    Block_ARROW,
-    Block_FLAG,
-    Block_FLAG2,
-    Block_FLAG_INVERTED,
-    Block_SPIDER,
-    Block_KITTY,
-    Block_BEE,
-    Block_DICE,
-    
+    //    Block_ANGRYFACE,
+    //    Block_BULLSEYE2,
+    //    Block_BULLSEYE2_INVERTED,
+    //    Block_SQTARGET,
+    //    Block_FIRE,
+    //    Block_ANKILOGO,
+    //    Block_STAR5,
+    //    Block_ARROW,
+    //    Block_FLAG,
+    //    Block_FLAG2,
+    //    Block_FLAG_INVERTED,
+    //    Block_SPIDER,
+    //    Block_KITTY,
+    //    Block_BEE,
+    //    Block_DICE,
+
     // 2x1 Blocks?
-    Block_BANGBANGBANG,
-    
+    //    Block_BANGBANGBANG,
+
     //////////////////////////////////////////////////////////////////////////
     // Light Cubes (a.k.a. Active Blocks)
     //
@@ -40,33 +40,31 @@ namespace Cozmo {
     Block_LIGHTCUBE1,
     Block_LIGHTCUBE2,
     Block_LIGHTCUBE3,
-    Block_LIGHTCUBE4,
-    
+
     
     //////////////////////////////////////////////////////////////////////////
     // Mat Pieces
     //
     
     // Flat mats:
-    //_objectLibrary[ObjectFamily::MATS].AddObject(new FlatMat(FlatMat::Type::LETTERS_4x4));
     FlatMat_GEARS_4x4,
     FlatMat_LETTERS_4x4,
     FlatMat_ANKI_LOGO_8BIT,
     FlatMat_LAVA_PLAYTEST,
-    
+
     // Platform piece:
     Platform_LARGE,
-    
+
     // Bridges
     Bridge_LONG,
     Bridge_SHORT,
-    
+
     //////////////////////////////////////////////////////////////////////////
     // Ramps
     //
     Ramp_Basic,
-    
-    
+
+
     //////////////////////////////////////////////////////////////////////////
     // Charger
     //
