@@ -198,7 +198,12 @@ bool BlockFilter::Load(const std::string &path)
 bool BlockFilter::ConnectToBlocks() const
 {
   if (_robot) {
-    return _robot->ConnectToBlocks(_blocks) == RESULT_OK;
+    if( _robot->ConnectToBlocks(_blocks) == RESULT_OK )
+    {
+      Save();
+      return true;
+    }
+    return false;
   } else {
     PRINT_NAMED_WARNING("BlockFilter.ConnectToBlocks.NoRobot", "");
     return false;
