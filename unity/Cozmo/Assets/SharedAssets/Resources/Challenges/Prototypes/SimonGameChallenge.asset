@@ -24,5 +24,5 @@ MonoBehaviour:
   _HowToPlayDialogContentLocKey: simonGame.text.howToPlay
   _HowToPlayDialogContentPrefab: {fileID: 0}
   _Music:
-    _Music: 1971384320
+    _Music: -1688518689
   MinigameConfig: {fileID: 11400000, guid: c343a5367e2654452b53acb74b64058e, type: 2}

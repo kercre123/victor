@@ -62,6 +62,7 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeData = challengeData;
     _WonChallenge = false;
 
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetMusicState());
     Initialize(challengeData.MinigameConfig);
 
     _SharedMinigameViewInstance = UIManager.OpenView(
