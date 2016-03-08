@@ -160,6 +160,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _blockFilter.Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"), _context->GetExternalInterface());
   
+  _context->GetRobotManager()->Init();
+  
   return RESULT_OK;
 }
   
@@ -188,8 +190,6 @@ void CozmoEngine::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGa
   }
   
   _context->GetRobotMsgHandler()->Init(_robotChannel.get(), _context->GetRobotManager());
-  
-  _context->GetRobotManager()->Init();
   
   SetEngineState(EngineState::WaitingForUIDevices);
 }
