@@ -90,11 +90,14 @@ namespace Anki {
 
     void UiMessageHandler::DeliverToGame(const ExternalInterface::MessageEngineToGame& message)
     {
-      Comms::MsgPacket p;
-      message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
-      p.dataLen = message.Size();
-      p.destId = _hostUiDeviceID;
-      _uiComms->Send(p);
+      if (!_connectedUiDevices.empty())
+      {
+        Comms::MsgPacket p;
+        message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
+        p.dataLen = message.Size();
+        p.destId = _hostUiDeviceID;
+        _uiComms->Send(p);
+      }
     }
   
     Result UiMessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
