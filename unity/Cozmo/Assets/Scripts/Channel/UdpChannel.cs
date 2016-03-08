@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -88,8 +88,8 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
 
   // timers
   private const float AdvertiseTick = .25f;
-  private const float AdvertiseTimeout = 30.0f;
-  private const float ReceiveTimeout = 30.0f;
+  private const float AdvertiseTimeout = 60.0f;
+  private const float ReceiveTimeout = 60.0f;
   //dmd2do this is padded crazy long to bandaid engine hanging issues
   private float lastUpdateTime = 0;
   private float lastAdvertiseTime = 0;

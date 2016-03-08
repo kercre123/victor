@@ -10,6 +10,13 @@ using System.Reflection;
 using System.Collections;
 
 // Source from reflection of Unity's GameObjectInspector
+/// <summary>
+/// Modified for the PrefabProxy system. Allows us to listen to "Apply"
+/// events so that we can save modifications to any PrefabProxy scripts
+/// that the gameObject has. Also hooks up to Select.
+///
+/// Search for "BEGIN ANKI EDIT"
+/// </summary>
 namespace UnityEditor {
   [CanEditMultipleObjects, CustomEditor(typeof(GameObject))]
   internal class GameObjectInspector : Editor {
