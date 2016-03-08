@@ -39,8 +39,7 @@ static const std::vector<const char*> imageFileExtensions = {"jpg", "jpeg", "png
 // Helper lambda to pass an image file into the vision component and
 // then update FaceWorld with any resulting detections
 static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& faceTracker,
-                      const std::string& filename, const char *dispName, bool shouldBeOwner,
-                      std::map<Vision::TrackedFace::ID_t, std::string>& idToName)
+                      const std::string& filename, const char *dispName, bool shouldBeOwner)
 {
   Result lastResult = RESULT_OK;
   static TimeStamp_t timestamp = 0;
@@ -70,13 +69,6 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
   {
     Result changeResult = robot.GetFaceWorld().ChangeFaceID(updateID.oldID, updateID.newID);
     ASSERT_EQ(changeResult, RESULT_OK);
-    
-    // Update our name LUT
-    auto oldNameIter = idToName.find(updateID.oldID);
-    if(oldNameIter != idToName.end()) {
-      idToName[updateID.newID] = oldNameIter->second;
-      idToName.erase(oldNameIter);
-    }
   }
   
   for(auto & face : faces) {
@@ -102,12 +94,9 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
       dispImg.DrawPoint(rightEye, drawColor, 2);
     }
     
-    std::string label;
-    auto nameIter = idToName.find(face.GetID());
-    if(nameIter == idToName.end()) {
+    std::string label = face.GetName();
+    if(label.empty()) {
       label = std::to_string(face.GetID());
-    } else {
-      label = nameIter->second;
     }
     if(face.IsBeingTracked()) {
       label += "*";
@@ -178,8 +167,6 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     allNames.insert(test.names.begin(), test.names.end());
   }
   
-  std::map<Vision::TrackedFace::ID_t, std::string> idToName;
-  
   Json::Value config;
   config["faceDetection"]["detectionMode"] = "video";
   config["faceRecognition"]["recognitionThreshold"] = 600;
@@ -232,7 +219,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
       {
         const std::string& testFile = testFiles[iFile];
         
-        Recognize(robot, img, *faceTracker, testFile, "TestImage", true, idToName);
+        Recognize(robot, img, *faceTracker, testFile, "TestImage", true);
         stats.totalFrames++;
         
         // Get the faces observed in the current image
@@ -256,12 +243,10 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
           if(isNameSet)
           {
             auto observedFace = robot.GetFaceWorld().GetFace(observedID);
-            std::string observedName;
-            auto nameIter = idToName.find(observedID);
-            if(nameIter != idToName.end()) {
-              observedName = nameIter->second;
-            }
             ASSERT_NE(observedFace, nullptr);
+            
+            const std::string& observedName = observedFace->GetName();
+            
             if(test.names.count(observedName) > 0) {
               //PRINT_NAMED_INFO("FaceRecognition.VideoRecognitionAndTracking.RecognizedFace",
               //                 "Correctly found %s", observedName.c_str());
@@ -272,7 +257,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
           } else if(observedID >= 0) {
             // Recognized, not just tracked
             stats.facesRecognized++;
-            idToName[observedID] = testDir;
+            faceTracker->AssignNameToID(observedID, testDir);
             PRINT_NAMED_INFO("FaceRecogntion.VideoRecognitionAndTracking.AddingName",
                              "Registering '%s' to ID %d", testDir, observedID);
             isNameSet = true;
@@ -304,7 +289,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
       
       // Show the system blank frames before next video so it stops tracking
       for(s32 iBlank=0; iBlank<NumBlankFramesBetweenPeople; ++iBlank) {
-        Recognize(robot, img, *faceTracker, "", "TestImage", true, idToName);
+        Recognize(robot, img, *faceTracker, "", "TestImage", true);
         
         // Since we won't detect anything in these blank frames, we could
         // move through them too quickly and cause the tracker to persist

@@ -37,7 +37,7 @@ namespace Anki {
   protected:
     MsgType message_;
     bool    beenRead_;
-    std::mutex lock_;
+    std::mutex mutex_;
   };
   
   // Multiple-message Mailbox Class
@@ -48,13 +48,14 @@ namespace Anki {
     
     MultiMailbox();
     
-    bool putMessage(const MSG_TYPE newMsg);
+    bool putMessage(const MSG_TYPE& newMsg);
+    bool putMessage(MSG_TYPE&& newMsg);
     bool getMessage(MSG_TYPE& msg);
     
   protected:
     Mailbox<MSG_TYPE> mailboxes_[NUM_BOXES];
     u8 readIndex_, writeIndex_;
-    std::mutex lock_;
+    std::mutex mutex_;
     
     void advanceIndex(u8 &index);
   };

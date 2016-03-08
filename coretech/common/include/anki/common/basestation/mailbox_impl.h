@@ -27,36 +27,31 @@ namespace Anki {
   template<typename MSG_TYPE>
   bool Mailbox<MSG_TYPE>::putMessage(const MSG_TYPE& newMsg)
   {
-    lock_.lock();
+    std::lock_guard<std::mutex> lock(mutex_);
     message_  = newMsg;
     beenRead_ = false;
-    lock_.unlock();
     return true;
   }
   
   template<typename MSG_TYPE>
   bool Mailbox<MSG_TYPE>::putMessage(MSG_TYPE&& newMsg)
   {
-    lock_.lock();
+    std::lock_guard<std::mutex> lock(mutex_);
     message_  = newMsg;
     beenRead_ = false;
-    lock_.unlock();
     return true;
   }
 
   template<typename MSG_TYPE>
   bool Mailbox<MSG_TYPE>::getMessage(MSG_TYPE& msgOut)
   {
-    lock_.lock();
-    bool ret = false;
+    std::lock_guard<std::mutex> lock(mutex_);
     if(!beenRead_) {
       msgOut = message_;
       beenRead_ = true;
-      ret = true;
+      return true;
     }
-    lock_.unlock();
-    
-    return ret;
+    return false;
   }
 
 
@@ -73,31 +68,42 @@ namespace Anki {
   }
   
   template<typename MSG_TYPE, u8 NUM_BOXES>
-  bool MultiMailbox<MSG_TYPE,NUM_BOXES>::putMessage(const MSG_TYPE newMsg)
+  bool MultiMailbox<MSG_TYPE,NUM_BOXES>::putMessage(const MSG_TYPE& newMsg)
   {
-    lock_.lock();
-    bool ret = false;
+    std::lock_guard<std::mutex> lock(mutex_);
+
     if(mailboxes_[writeIndex_].putMessage(newMsg) == true) {
       advanceIndex(writeIndex_);
-      ret = true;
+      return true;
     }
-    lock_.unlock();
-    return ret;
+    return false;
+  }
+  
+  
+  template<typename MSG_TYPE, u8 NUM_BOXES>
+  bool MultiMailbox<MSG_TYPE,NUM_BOXES>::putMessage(MSG_TYPE&& newMsg)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if(mailboxes_[writeIndex_].putMessage(newMsg) == true) {
+      advanceIndex(writeIndex_);
+      return true;
+    }
+    return false;
   }
 
   template<typename MSG_TYPE, u8 NUM_BOXES>
   bool MultiMailbox<MSG_TYPE,NUM_BOXES>::getMessage(MSG_TYPE& msg)
   {
-    lock_.lock();
-    bool ret = false;
+    std::lock_guard<std::mutex> lock(mutex_);
+
     if(mailboxes_[readIndex_].getMessage(msg) == true) {
       // we got a message out of the mailbox (it wasn't locked and there
       // was something in it), so move to the next mailbox
       advanceIndex(readIndex_);
-      ret = true;
+      return true;
     }
-    lock_.unlock();
-    return ret;
+    return false;
   }
 
   template<typename MSG_TYPE, u8 NUM_BOXES>

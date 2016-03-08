@@ -554,12 +554,18 @@ namespace Vision {
         face.SetID(-detectionInfo.nID);
       } else {
         face.SetID(recognitionData.faceID);
+        face.SetName(recognitionData.name); // Could be empty!
       }
       
     } // FOR each face
     
     return RESULT_OK;
   } // Update()
+  
+  void FaceTracker::Impl::AssignNameToID(TrackedFace::ID_t faceID, const std::string& name)
+  {
+    _recognizer.AssignNameToID(faceID, name);
+  }
   
   Result FaceTracker::Impl::SaveAlbum(const std::string& albumName)
   {

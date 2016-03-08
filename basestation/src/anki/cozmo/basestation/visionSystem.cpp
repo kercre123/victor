@@ -1196,6 +1196,20 @@ namespace Cozmo {
     return result;
   } // TrackerPredictionUpdate()
   
+  void VisionSystem::AssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name)
+  {
+    if(!_isInitialized) {
+      PRINT_NAMED_WARNING("VisionSystem.AssignNameToFace.NotInitialized",
+                          "Cannot assign name '%s' to face ID %d before being initialized",
+                          name.c_str(), faceID);
+      return;
+    }
+    
+    ASSERT_NAMED(_faceTracker != nullptr, "VisionSystem.AssignNameToFace.NullFaceTracker");
+    
+    _faceTracker->AssignNameToID(faceID, name);
+  }
+  
   void VisionSystem::EnableNewFaceEnrollment(s32 numToEnroll)
   {
     _faceTracker->EnableNewFaceEnrollment(numToEnroll);
@@ -1204,7 +1218,7 @@ namespace Cozmo {
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
                                    const std::vector<Quad2f>& markerQuads)
   {
-    ASSERT_NAMED(_faceTracker != nullptr, "FaceTracker should not be null.");
+    ASSERT_NAMED(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
    
     /*
     // Periodic printouts of face tracker timings
@@ -1231,7 +1245,7 @@ namespace Cozmo {
       // Black out detected markers so we don't find faces in them
       Vision::Image maskedImage = grayImage;
       ASSERT_NAMED(maskedImage.GetTimestamp() == grayImage.GetTimestamp(),
-                   "Image timestamps should match after assignment.");
+                   "VisionSystem.DetectFaces.BadImageTimestamp");
       
       const cv::Rect_<f32> imgRect(0,0,grayImage.GetNumCols(),grayImage.GetNumRows());
       
@@ -1256,7 +1270,7 @@ namespace Cozmo {
     for(auto & currentFace : faces)
     {
       ASSERT_NAMED(currentFace.GetTimeStamp() == grayImage.GetTimestamp(),
-                   "Timestamp error.");
+                   "VisionSystem.DetectFaces.BadFaceTimestamp");
       
       // Use a camera from the robot's pose history to estimate the head's
       // 3D translation, w.r.t. that camera. Also puts the face's pose in
@@ -1502,13 +1516,13 @@ namespace Cozmo {
           Matrix_3x3f invH;
           _poseData.groundPlaneHomography.GetInverse(invH);
           Point3f temp = invH * Point3f{groundPlaneCentroid.x(), groundPlaneCentroid.y(), 1.f};
-          ASSERT_NAMED(temp.z() > 0, "Projected 'z' should be > 0.");
+          ASSERT_NAMED(temp.z() > 0, "VisionSystem.DetectMotion.BadProjectedZ");
           const f32 divisor = 1.f/temp.z();
           groundPlaneCentroid.x() = temp.x() * divisor;
           groundPlaneCentroid.y() = temp.y() * divisor;
           
           ASSERT_NAMED(Quad2f(_poseData.groundPlaneROI.GetGroundQuad()).Contains(groundPlaneCentroid),
-                       "GroundQuad should contain the ground plane centroid.");
+                       "VisionSystem.DetectMotion.BadGroundPlaneCentroid");
         }
       } // if(groundPlaneVisible)
       
@@ -1529,7 +1543,7 @@ namespace Cozmo {
         {
           ASSERT_NAMED(centroid.x() > 0.f && centroid.x() < image.GetNumCols() &&
                        centroid.y() > 0.f && centroid.y() < image.GetNumRows(),
-                       "Motion centroid should be within image bounds.");
+                       "VisionSystem.DetectMotion.CentroidOOB");
           
           // make relative to image center *at processing resolution*
           centroid -= _camera.GetCalibration().GetCenter() * (1.f/scaleMultiplier);

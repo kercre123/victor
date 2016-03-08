@@ -45,6 +45,8 @@ namespace Vision {
     ~FaceRecognizer();
     
     Result Init(HCOMMON okaoCommonHandle);
+
+    void AssignNameToID(TrackedFace::ID_t faceID, const std::string& name);
     
     // Request that the recognizer work on assigning a new or existing FaceID
     // from its album of known faces to the specified trackerID, using the

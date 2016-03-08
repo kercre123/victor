@@ -49,7 +49,7 @@ namespace Vision {
         } else if(runModeStr == "synchronous") {
           _isRunningAsync = false;
         } else {
-          ASSERT_NAMED(false, "Unrecognized FaceRecognizer run mode. Should be 'synchronous' or 'asynchronous'");
+          ASSERT_NAMED(false, "FaceRecognizer.Constructor.BadRunMode");
         }
       }
     } else {
@@ -168,7 +168,7 @@ namespace Vision {
           } else {
             auto recIDenrollData  = _enrollmentData.find(recognizedID);
             ASSERT_NAMED(recIDenrollData  != _enrollmentData.end(),
-                         "RecognizedID should have enrollment data by now");
+                         "FaceRecognizer.GetRecognitionData.MissingEnrollmentData");
             
             TrackedFace::ID_t mergeTo, mergeFrom;
             
@@ -196,7 +196,8 @@ namespace Vision {
           
         } else {
           // We recognized this person as the same ID already assigned to its tracking ID
-          ASSERT_NAMED(faceID == recognizedID, "Expecting faceID to match recognizedID");
+          ASSERT_NAMED(faceID == recognizedID,
+                       "FaceRecognizer.GetRecognitionData.UnexpectedRecognizedID");
         }
         
         // Update the stored faceID assigned to this trackerID
@@ -223,7 +224,7 @@ namespace Vision {
     if(iter != _trackingToFaceID.end()) {
       const TrackedFace::ID_t faceID = iter->second;
       ASSERT_NAMED(faceID != TrackedFace::UnknownFace,
-                   "Enrollment entry should not have unknown face ID");
+                   "FaceRecognizer.GetRecognitionData.EnrolledEntryWithUnknownID");
       auto & enrolledEntry = _enrollmentData.at(faceID);
       entry = enrolledEntry;
       enrolledEntry.prevID = enrolledEntry.faceID; // no longer "new" or "updated"
@@ -262,7 +263,7 @@ namespace Vision {
   void FaceRecognizer::ExtractFeatures()
   {
     ASSERT_NAMED(ProcessingState::HasNewImage == _state,
-                 "Should be in 'HasNewImage' state to start extracting features.");
+                 "FaceRecognizer.ExtractFeatures.ShouldBeInHasNewImageState");
     
     // If we're not allowed to enroll new faces and there's nobody already
     // enrolled, we have nothing to do
@@ -301,7 +302,7 @@ namespace Vision {
   Result FaceRecognizer::RegisterNewUser(HFEATURE& hFeature)
   {
     ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
-                 "Should only be registering new user if features are ready");
+                 "FaceRecognizer.RegisterNewUser.FeaturesShouldBeReady");
     
     INT32 numUsersInAlbum = 0;
     INT32 okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
@@ -339,7 +340,7 @@ namespace Vision {
       }
       
       ASSERT_NAMED(_lastRegisteredUserID != Vision::TrackedFace::UnknownFace,
-                   "LastRegisteredID should not be the UnknownFace ID");
+                   "FaceRecognizer.RegisterNewUser.LastRegisteredIdIsUnknown");
       
     } while(isRegistered && tries++ < MaxAlbumFaces);
     
@@ -445,14 +446,15 @@ namespace Vision {
   Result FaceRecognizer::UpdateExistingUser(INT32 userID, HFEATURE& hFeature)
   {
     ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
-                 "Should be in 'FeaturesReady' state if updating user record");
+                 "FaceRecognizer.UpdateExistingUser.FeaturesShouldBeReady");
     
     Result result = RESULT_OK;
     
     const time_t updateTime = time(0);
     
     auto enrollDataIter = _enrollmentData.find(userID);
-    ASSERT_NAMED(enrollDataIter != _enrollmentData.end(), "Missing enrollment status");
+    ASSERT_NAMED(enrollDataIter != _enrollmentData.end(),
+                 "FaceRecognizer.UpdateExistingUser.MissingEnrollmentStatus");
     auto & enrollData = enrollDataIter->second;
     
     INT32 numDataStored = 0;
@@ -464,7 +466,8 @@ namespace Vision {
       result = RESULT_FAIL;
     }
     
-    ASSERT_NAMED(numDataStored > 0, "Num data for user should be > 0 if we are updating!");
+    // Num data for user should be > 0 if we are updating!
+    ASSERT_NAMED(numDataStored > 0, "FaceRecognizer.UpdateExistingUser.BadNumData");
     
     // Only update if it has been long enough (where "long enough" can depend on
     // whether we've already filled up all data slots yet)
@@ -520,7 +523,7 @@ namespace Vision {
   Result FaceRecognizer::RecognizeFace(TrackedFace::ID_t& faceID, INT32& recognitionScore)
   {
     ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
-                 "Must be in 'FeaturesReady' state to call RecognizeFace");
+                 "FaceRecognizer.RecognizerFace.FeaturesShouldBeReady");
     
     INT32 numUsersInAlbum = 0;
     INT32 okaoResult = OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsersInAlbum);
@@ -570,7 +573,7 @@ namespace Vision {
           auto oldestEnrollIter = enrollStatusIter;
           
           ASSERT_NAMED(enrollStatusIter != _enrollmentData.end(),
-                       "ID should have enrollment status entry");
+                       "FaceRecognizer.RecognizeFace.MissingEnrollmentDataForOldestID");
           
           auto earliestEnrollmentTime = enrollStatusIter->second.enrollmentTime;
           
@@ -581,7 +584,7 @@ namespace Vision {
             enrollStatusIter = _enrollmentData.find(userIDs[lastResult]);
             
             ASSERT_NAMED(enrollStatusIter != _enrollmentData.end(),
-                         "ID should have enrollment status entry");
+                         "FaceRecognizer.RecognizeFace.MissingEnrollmentData");
             if(enrollStatusIter->second.enrollmentTime < earliestEnrollmentTime)
             {
               oldestID = userIDs[lastResult];
@@ -639,7 +642,7 @@ namespace Vision {
                                     TrackedFace::ID_t mergeID)
   {
     ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
-                 "Should be in 'FeaturesReady' state if merging faces");
+                 "FaceRecognizer.MergeFaces.FeaturesShouldBeReady");
     
     INT32 okaoResult = OKAO_NORMAL;
     
@@ -670,7 +673,7 @@ namespace Vision {
       --numMergeData;
     }
     ASSERT_NAMED((numMergeData+numKeepData) < MaxAlbumDataPerFace,
-                 "Total merge and keep data should be less than max data per face");
+                 "FaceRecognizer.MergeFaces.TotalMergeDataTooLarge");
     
     
     for(s32 iMerge=0; iMerge < numMergeData; ++iMerge) {
@@ -697,9 +700,9 @@ namespace Vision {
     auto keepEnrollIter = _enrollmentData.find(keepID);
     auto mergeEnrollIter = _enrollmentData.find(mergeID);
     ASSERT_NAMED(keepEnrollIter != _enrollmentData.end(),
-                 "ID to keep should have enrollment data entry");
+                 "FaceRecognizer.MergeFaces.MissingEnrollmentDataForKeepID");
     ASSERT_NAMED(mergeEnrollIter != _enrollmentData.end(),
-                 "ID to merge should have enrollment data entry");
+                 "FaceRecognizer.MergeFaces.MissingEnrollmentDataForMergeID");
     
     keepEnrollIter->second.MergeWith(mergeEnrollIter->second);
     
@@ -769,6 +772,35 @@ namespace Vision {
     
     return RESULT_OK;
   } // SetSerializedAlbum()
+  
+  
+  void FaceRecognizer::AssignNameToID(TrackedFace::ID_t faceID, const std::string& name)
+  {
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    auto iter = _enrollmentData.find(faceID);
+    if(iter != _enrollmentData.end()) {
+      iter->second.name = name;
+      
+      // Check for duplicate name
+      for(auto dupIter = _enrollmentData.begin(); dupIter != _enrollmentData.end(); ++dupIter)
+      {
+        if(dupIter->second.name == name && dupIter->first != faceID) {
+          PRINT_NAMED_WARNING("FaceRecognizer.AssignNameToID.DuplicateName",
+                              "Name %s already assigned to ID %d. Merging!",
+                              name.c_str(), faceID);
+          MergeFaces(faceID, dupIter->first);
+          break;
+        }
+      }
+
+    } else {
+      PRINT_NAMED_ERROR("FaceRecognizer.AssignNameToID.InvalidID",
+                        "Unknown ID %d, ignoring name %s", faceID, name.c_str());
+    }
+
+  }
+  
   
   Result FaceRecognizer::SaveAlbum(const std::string &albumName)
   {
