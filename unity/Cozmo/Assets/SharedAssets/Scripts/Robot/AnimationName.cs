@@ -60,5 +60,10 @@ public static class AnimationName {
   public const string kSpeedTap_playerYes_01 = "anim_speedTap_playerYes_01";
   public const string kSpeedTap_FakeOut = "anim_speedTap_fakeOut_01";
   public const string kSpeedTap_LookAtPlayer = "anim_speedTap_lookAtPlayer";
+
+  public const string kFaceEnrollmentReaction_00 = "faceEnrollReact00";
+  public const string kFaceEnrollmentReaction_01 = "faceEnrollReact01";
+  public const string kFaceEnrollmentReaction_02 = "faceEnrollReact02";
+  public const string kFaceEnrollmentReaction_03 = "faceEnrollReact03";
 }
 

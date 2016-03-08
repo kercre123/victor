@@ -10,10 +10,10 @@ namespace FaceEnrollment {
     public Dictionary<int, string> _FaceIDToReaction = new Dictionary<int, string>();
 
     private string[] _ReactionBank = {
-      AnimationName.kSpeedTap_loseSession_02,
-      AnimationName.kSpeedTap_winRound_01,
-      AnimationName.kSpeedTap_winSession_01,
-      AnimationName.kSpeedTap_playerNo_01
+      AnimationName.kFaceEnrollmentReaction_00,
+      AnimationName.kFaceEnrollmentReaction_01,
+      AnimationName.kFaceEnrollmentReaction_02,
+      AnimationName.kFaceEnrollmentReaction_03
     };
 
     private int _ReactionIndex = 0;
