@@ -245,7 +245,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
             auto observedFace = robot.GetFaceWorld().GetFace(observedID);
             ASSERT_NE(observedFace, nullptr);
             
-            std::string observedName = observedFace->GetName();
+            const std::string& observedName = observedFace->GetName();
             
             if(test.names.count(observedName) > 0) {
               //PRINT_NAMED_INFO("FaceRecognition.VideoRecognitionAndTracking.RecognizedFace",
