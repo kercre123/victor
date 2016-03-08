@@ -40,12 +40,12 @@ namespace SpeedTap {
       _MidHand = false;
       _PlayReady = false;
 
-      _CurrentRobot.SetLiftHeight(1.0f);
       _SpeedTapGame.CheckForAdjust(AdjustDone);
     }
 
     void AdjustDone(bool success) {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      _CurrentRobot.SetLiftHeight(1.0f);
       _StartTimeMs = Time.time * 1000.0f;
       _PlayReady = true;
       if (_MidHand == false) {
