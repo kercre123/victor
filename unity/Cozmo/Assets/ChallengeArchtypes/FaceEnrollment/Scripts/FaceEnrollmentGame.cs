@@ -10,10 +10,10 @@ namespace FaceEnrollment {
     public Dictionary<int, string> _FaceIDToReaction = new Dictionary<int, string>();
 
     private string[] _ReactionBank = {
-      AnimationName.kSpeedTap_loseHand_01,
-      AnimationName.kSpeedTap_winHand_01,
+      AnimationName.kSpeedTap_loseSession_02,
+      AnimationName.kSpeedTap_winRound_01,
       AnimationName.kSpeedTap_winSession_01,
-      AnimationName.kSpeedTap_loseSession_03
+      AnimationName.kSpeedTap_playerNo_01
     };
 
     private int _ReactionIndex = 0;
@@ -31,9 +31,9 @@ namespace FaceEnrollment {
     private int _NewSeenFaceID = 0;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      CurrentRobot.SetLiftHeight(0.0f);
-      CurrentRobot.SetHeadAngle(0.5f);
+      ResetPose();
       RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
+      RobotEngineManager.Instance.RobotObservedFace += HandleOnAnyFaceSeen;
     }
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -47,12 +47,11 @@ namespace FaceEnrollment {
     }
 
     private void AnimateFaceEnroll() {
-      CurrentRobot.SendAnimation(AnimationName.kSpeedTap_winHand_01, LookForNewFaceToEnroll);
+      CurrentRobot.SendAnimation(AnimationName.kSpeedTap_Ask2Play, LookForNewFaceToEnroll);
     }
 
     private void LookForNewFaceToEnroll(bool success) {
-      CurrentRobot.SetLiftHeight(0.0f);
-      CurrentRobot.SetHeadAngle(0.5f);
+      ResetPose();
       CurrentRobot.EnableNewFaceEnrollment();
     }
 
@@ -83,20 +82,31 @@ namespace FaceEnrollment {
       _NewSeenFaceID = 0;
       UIManager.CloseView(_FaceEnrollmentView);
       _FaceEnrollmentView = null;
+      ResetPose();
+    }
+
+    private void ResetPose() {
+      CurrentRobot.SetLiftHeight(0.0f);
+      CurrentRobot.SetHeadAngle(0.5f);
     }
 
     private void HandleOnAnyFaceSeen(int faceID, string name, Vector3 pos, Quaternion rot) {
+      Debug.Log("seen face " + faceID + " " + name);
       // check if we have an active face enroll view open
       if (_FaceEnrollmentView == null) {
         if (faceID > 0 && string.IsNullOrEmpty(name) == false && _FaceIDToReaction.ContainsKey(faceID)) {
           // this is a face we know...
           if (Time.time - _LastPlayedReaction > 8.0f) {
             // been at least 8 seconds since we reacted.
-            CurrentRobot.SendAnimation(_FaceIDToReaction[faceID]);
+            CurrentRobot.SendAnimation(_FaceIDToReaction[faceID], ReactToFaceAnimationDone);
             _LastPlayedReaction = Time.time;
           }
         }
       }
+    }
+
+    private void ReactToFaceAnimationDone(bool success) {
+      ResetPose();
     }
 
     protected override void CleanUpOnDestroy() {
