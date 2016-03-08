@@ -10,7 +10,7 @@
 #include "radio.h"
 #include "rtos.h"
 #include "hardware.h"
-#include "lights.h"
+#include "backpack.h"
 
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/logging.h"
@@ -150,23 +150,13 @@ void Head::manage(void* userdata) {
 
 extern void EnterRecovery(void);
 
-static void On_WiFiConnected(void)
-{
-  Radio::sendPropConnectionState();
-}
-
-static void On_WiFiDisconnected(void)
-{
-  
-}
-
 static void Process_bootloadBody(const RobotInterface::BootloadBody& msg)
 {
   EnterRecovery();
 }
 static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 {
-  Lights::setLights(msg.lights);
+  Backpack::setLights(msg.lights);
 }
 static void Process_setCubeLights(const CubeLights& msg)
 {
@@ -184,18 +174,6 @@ static void Process_assignCubeSlots(const CubeSlots& msg)
 static void ProcessMessage()
 {
   using namespace Anki::Cozmo;
-  
-  static bool wifiConnected;
-  if ((g_dataToBody.cladBuffer.flags & SF_WiFi_Connected) && wifiConnected == false)
-  {
-    On_WiFiConnected();
-    wifiConnected = true;
-  }
-  else if ((!(g_dataToBody.cladBuffer.flags & SF_WiFi_Connected)) && (wifiConnected == true))
-  {
-    On_WiFiDisconnected();
-    wifiConnected = false;
-  }
   
   const u8 tag = g_dataToBody.cladBuffer.data[0];
   if (g_dataToBody.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)

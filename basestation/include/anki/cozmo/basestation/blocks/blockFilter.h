@@ -27,6 +27,7 @@ namespace Cozmo {
 class IExternalInterface;
 template <typename Type>
 class AnkiEvent;
+class Robot;
 
 namespace ExternalInterface {
   class MessageGameToEngine;
@@ -37,9 +38,9 @@ class BlockFilter
 public: 
   using FactoryIDSet = std::unordered_set<FactoryID>;
 
-  BlockFilter();
-  explicit BlockFilter(const FactoryIDSet &factoryIds);
-  explicit BlockFilter(const std::string &path);
+  BlockFilter(Robot* inRobot = nullptr);
+  explicit BlockFilter(const FactoryIDSet &factoryIds, Robot* inRobot = nullptr);
+  explicit BlockFilter(const std::string &path, Robot* inRobot = nullptr);
 
   void AddFactoryId(const FactoryID factoryId);
   void AddFactoryIds(const FactoryIDSet &factoryIds);
@@ -64,8 +65,11 @@ public:
 
 private:
   
+  bool ConnectToBlocks() const;
+  
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
+  Robot*       _robot;
   FactoryIDSet _blocks;
   std::string _path;
   bool        _enabled;

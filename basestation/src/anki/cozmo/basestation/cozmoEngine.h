@@ -35,7 +35,6 @@
 #include "clad/types/imageTypes.h"
 #include "clad/types/engineState.h"
 #include "anki/cozmo/basestation/debug/debugConsoleManager.h"
-#include "anki/cozmo/basestation/blocks/blockFilter.h"
 
 
 #include <memory>
@@ -137,7 +136,6 @@ protected:
   std::unique_ptr<CozmoContext>                             _context;
   std::map<AdvertisingRobot, bool>                          _forceAddedRobots;
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
-  BlockFilter _blockFilter;
 
   virtual Result InitInternal();
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);

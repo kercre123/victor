@@ -9,11 +9,11 @@ static const int AES_BLOCK_LENGTH = 16;
 static const int SECRET_LENGTH = 16;
 
 enum CryptoOperation {
-	CRYPTO_GENERATE_RANDOM,
-	CRYPTO_AES_ENCRYPT,
-	CRYPTO_AES_DECRYPT,
-	CRYPTO_START_DIFFIE_HELLMAN,
-	CRYPTO_FINISH_DIFFIE_HELLMAN
+  CRYPTO_GENERATE_RANDOM,
+  CRYPTO_AES_ENCRYPT,
+  CRYPTO_AES_DECRYPT,
+  CRYPTO_START_DIFFIE_HELLMAN,
+  CRYPTO_FINISH_DIFFIE_HELLMAN
 };
 
 struct ecb_data_t {
@@ -23,31 +23,31 @@ struct ecb_data_t {
 };
 
 struct DiffieHellman {
-	// These are the numbers for our diffie group
-	const big_mont_t* mont;
-	const big_num_t*  gen;
-	
-	int 							pin;
-	uint8_t						secret[SECRET_LENGTH];
+  // These are the numbers for our diffie group
+  const big_mont_t* mont;
+  const big_num_t*  gen;
+  
+  int               pin;
+  uint8_t           secret[SECRET_LENGTH];
 
-	big_num_t					state;
+  big_num_t         state;
 };
 
 typedef void (*crypto_callback)(struct CryptoTask*);
 
 struct CryptoTask {
-	crypto_callback callback;
 	CryptoOperation op;
-	void *input;
+	crypto_callback callback;
+	const void *input;
 	void *output;
 	int	 length;
 };
 
 namespace Crypto {
   void init();
-	void manage();
+  void manage();
   void random(void* data, int length);
-	void execute(CryptoTask* task);
+	void execute(const CryptoTask* task);
 }
 
 #endif

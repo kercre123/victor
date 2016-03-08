@@ -1392,6 +1392,30 @@ namespace Anki {
                 UpdateVizOrigin();
                 break;
               }
+                
+              case (s32) '!':
+              {
+                webots::Field* factoryIDs = root_->getField("activeObjectFactoryIDs");
+                webots::Field* connect = root_->getField("activeObjectConnect");
+                
+                if (factoryIDs && connect) {
+                  ExternalInterface::BlockSelectedMessage msg;
+                  for (int i=0; i<factoryIDs->getCount(); ++i) {
+                    msg.factoryId = factoryIDs->getMFInt32(i);
+                    msg.selected = connect->getSFBool();
+                    
+                    if (msg.factoryId == 0) {
+                      continue;
+                    }
+                    
+                    PRINT_NAMED_INFO("BlockSelected", "factoryID 0x%x, connect %d", msg.factoryId, msg.selected);
+                    ExternalInterface::MessageGameToEngine msgWrapper;
+                    msgWrapper.Set_BlockSelectedMessage(msg);
+                    SendMessage(msgWrapper);
+                  }
+                }
+                break;
+              }
 
               case (s32)'@':
               {
@@ -1584,7 +1608,11 @@ namespace Anki {
                     std::string userName = userNameField->getSFString();
                     if(!userName.empty())
                     {
-                      AssignVizFaceName(userName, GetLastObservedFaceID());
+                      printf("Assigning name '%s' to ID %d\n", userName.c_str(), GetLastObservedFaceID());
+                      ExternalInterface::AssignNameToFace assignNameToFace;
+                      assignNameToFace.faceID = GetLastObservedFaceID();
+                      assignNameToFace.name   = userName;
+                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(assignNameToFace)));
                     } else {
                       // No user name, enable enrollment
                       ExternalInterface::EnableNewFaceEnrollment enableEnrollment;

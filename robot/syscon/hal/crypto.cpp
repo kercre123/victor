@@ -19,7 +19,8 @@ extern "C" {
 #include <stdbool.h>
 #include <string.h>
 
-static uint32_t* AES_KEY = (uint32_t*) 0x1F0C0; // Reserved section in the bootloader for AES key
+// Top 16 bytes of application space
+static uint32_t* AES_KEY = (uint32_t*) 0x1EFF0;
 
 static volatile int fifoHead;
 static volatile int fifoTail;
@@ -48,91 +49,93 @@ static void aes_key_init() {
 }
 
 static inline void delay() {
-	__asm { WFI };
+  __asm { WFI };
 }
 
 static inline void aes_setup(ecb_data_t& ecb, const void* key = AES_KEY) {
-	memcpy(&ecb.key, key, sizeof(ecb.key));
+  memcpy(&ecb.key, key, sizeof(ecb.key));
 
-	// Setup NRF_ECB
+  // Setup NRF_ECB
   NRF_ECB->ECBDATAPTR = (uint32_t)&ecb;
 }
 
 static inline void aes_ecb(ecb_data_t& ecb, const void* in, void* out) {
-	memcpy(ecb.cleartext, in, AES_BLOCK_LENGTH);
-	NRF_ECB->EVENTS_ENDECB = 0;
-	NRF_ECB->TASKS_STARTECB = 1;
+  memcpy(ecb.cleartext, in, AES_BLOCK_LENGTH);
+  NRF_ECB->EVENTS_ENDECB = 0;
+  NRF_ECB->TASKS_STARTECB = 1;
 
-	while(NRF_ECB->EVENTS_ENDECB == 0) delay();
-	memcpy(out, ecb.ciphertext, AES_BLOCK_LENGTH);
+  while(NRF_ECB->EVENTS_ENDECB == 0) delay();
+  memcpy(out, ecb.ciphertext, AES_BLOCK_LENGTH);
 }
 
 // Output must be the length of data + 1 block rounded up (16 bytes)
 static inline void aes_encrypt(uint8_t* in, uint8_t* result, int size) {
-	ecb_data_t ecb;
+  ecb_data_t ecb;
 
-	aes_setup(ecb);
-		
-	Crypto::random(result, AES_BLOCK_LENGTH);	// Get IV
+  aes_setup(ecb);
+    
+  Crypto::random(result, AES_BLOCK_LENGTH); // Get IV
 
-	// Generate AES OFB mode stream
-	uint8_t* output = result + AES_BLOCK_LENGTH;
-	int block = 0;
+  // Generate AES OFB mode stream
+  uint8_t* output = result + AES_BLOCK_LENGTH;
+  int block = 0;
 
-	while (block < size) {
-		aes_ecb(ecb, result + block, output + block);
-		block += AES_BLOCK_LENGTH;
-	}
-	
-	// Feed in bits
-	while(size-- > 0) {
-		*(output++) ^= *(in++);
-	}
+  while (block < size) {
+    aes_ecb(ecb, result + block, output + block);
+    block += AES_BLOCK_LENGTH;
+  }
+  
+  // Feed in bits
+  while(size-- > 0) {
+    *(output++) ^= *(in++);
+  }
 }
 
 static inline void aes_decrypt(uint8_t* in, uint8_t* out, int size) {
-	ecb_data_t ecb;
+  ecb_data_t ecb;
 
-	aes_setup(ecb);
+  aes_setup(ecb);
 
-	int block = 0;
+  int block = 0;
 
-	// Create feedback
-	uint8_t feedback[AES_BLOCK_LENGTH];	
-	memcpy(feedback, in, AES_BLOCK_LENGTH);
-	in += AES_BLOCK_LENGTH;
+  // Create feedback
+  uint8_t feedback[AES_BLOCK_LENGTH]; 
+  memcpy(feedback, in, AES_BLOCK_LENGTH);
+  in += AES_BLOCK_LENGTH;
 
-	while (block < size) {
-		uint8_t *stream = out + block;
-		
-		aes_ecb(ecb, feedback, stream);
-		memcpy(&feedback, stream, AES_BLOCK_LENGTH);
-		block += AES_BLOCK_LENGTH;
-	}
+  while (block < size) {
+    uint8_t *stream = out + block;
+    
+    aes_ecb(ecb, feedback, stream);
+    memcpy(&feedback, stream, AES_BLOCK_LENGTH);
+    block += AES_BLOCK_LENGTH;
+  }
 
-	// Feed in bits
-	while(size-- > 0) {
-		*(out++) ^= *(in++);
-	}
+  // Feed in bits
+  while(size-- > 0) {
+    *(out++) ^= *(in++);
+  }
 }
 
 // Step to convert a pin + random to a hash
-static void dh_encode_random(void *result, int pin, const uint8_t* random) {
+static void dh_encode_random(big_num_t& result, int pin, const uint8_t* random) {
 	ecb_data_t ecb;
-	
+
 	{
 		// Hash our pin (keeping only lower portion
 		SHA1_CTX ctx;
 		sha1_init(&ctx);
-		sha1_update(&ctx, (BYTE*)&pin, sizeof(pin));
+		sha1_update(&ctx, (uint8_t*)&pin, sizeof(pin));
 
-		uint8_t sig[SHA1_BLOCK_SIZE];
-		sha1_final(&ctx, sig);
+    uint8_t sig[SHA1_BLOCK_SIZE];
+    sha1_final(&ctx, sig);
 
 		aes_setup(ecb, sig);
 	}
 	
-	aes_ecb(ecb, random, result);	
+	result.negative = false;
+	result.used = AES_BLOCK_LENGTH / sizeof(big_num_cell_t);
+	aes_ecb(ecb, random, result.digits);
 }
 
 static void dh_start(DiffieHellman* dh) {
@@ -142,35 +145,32 @@ static void dh_start(DiffieHellman* dh) {
 	// Encode our secret as an exponent
 	big_num_t secret;	
 
-	secret.negative = false;
-	secret.used = AES_BLOCK_LENGTH / sizeof(big_num_cell_t);
-	dh_encode_random(secret.digits, dh->pin, dh->secret);
-	mont_power(DEFAULT_DIFFIE_GROUP, dh->state, DEFAULT_DIFFIE_GENERATOR, secret);
+	dh_encode_random(secret, dh->pin, dh->secret);
+	mont_power(*dh->mont, dh->state, *dh->gen, secret);
 }
 
-static void dh_finish(DiffieHellman* dh, uint8_t* key) {
+static void dh_finish(DiffieHellman* dh, uint8_t* key, int length) {
 	// Encode their secret for exponent
-	big_num_t secret;	
-
-	// The cell phone sends the AES encoded chunk (less delay)
-	secret.negative = false;
-	secret.used = SECRET_LENGTH / sizeof(big_num_cell_t);
-	memcpy(secret.digits, dh->secret, SECRET_LENGTH);
-
-	big_num_t result;
-	mont_power(DEFAULT_DIFFIE_GROUP, result, dh->state, secret);
+	big_num_t temp;	
 	
-	memcpy(key, result.digits, AES_BLOCK_LENGTH);
+	temp.negative = false;
+	temp.used = sizeof(dh->secret) / sizeof(big_num_cell_t);
+	memcpy(temp.digits, dh->secret, sizeof(dh->secret));
+
+	mont_power(*dh->mont, dh->state, dh->state, temp);
+	mont_from(*dh->mont, temp, dh->state);
+	
+	memcpy(key, temp.digits, length);
 }
 
 void Crypto::init() {
-	fifoHead = 0;
-	fifoTail = 0;
-	fifoCount = 0;
+  fifoHead = 0;
+  fifoTail = 0;
+  fifoCount = 0;
 
   // Setup key
   aes_key_init();
-	
+  
   // Startup AES engine
   NRF_ECB->POWER = 1;
 }
@@ -216,24 +216,25 @@ void Crypto::random(void* ptr, int length) {
   }
 }
 
-void Crypto::execute(CryptoTask* task) {
+void Crypto::execute(const CryptoTask* task) {
 	RTOS::EnterCritical();
 	int count = fifoCount;
 	RTOS::LeaveCritical();
 
-	if (fifoCount >= MAX_CRYPTO_TASKS) {
-		return ;
-	}
+  if (fifoCount >= MAX_CRYPTO_TASKS) {
+    return ;
+  }
 
-	RTOS::EnterCritical();
-	memcpy(&fifoQueue[fifoTail], task, sizeof(CryptoTask));
-	fifoTail = (fifoTail+1) % MAX_CRYPTO_TASKS;
-	fifoCount++;
-	RTOS::LeaveCritical();
+  RTOS::EnterCritical();
+  memcpy(&fifoQueue[fifoTail], task, sizeof(CryptoTask));
+  fifoTail = (fifoTail+1) % MAX_CRYPTO_TASKS;
+  fifoCount++;
+  RTOS::LeaveCritical();
 }
 
 void Crypto::manage(void) {
 	RTOS::EnterCritical();
+
 	CryptoTask* task = &fifoQueue[fifoHead];
 	int count = fifoCount;
 	RTOS::LeaveCritical();
@@ -257,7 +258,7 @@ void Crypto::manage(void) {
 			dh_start((DiffieHellman*) task->input);
 			break ;
 		case CRYPTO_FINISH_DIFFIE_HELLMAN:
-			dh_finish((DiffieHellman*) task->input, (uint8_t*)task->output);
+			dh_finish((DiffieHellman*) task->input, (uint8_t*)task->output, task->length);
 			break ;
 	}
 
@@ -271,3 +272,4 @@ void Crypto::manage(void) {
 	fifoCount--;
 	RTOS::LeaveCritical();
 }
+

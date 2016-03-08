@@ -1,7 +1,7 @@
 #include "timer.h"
 #include "nrf.h"
 
-#include "lights.h"
+#include "backpack.h"
 #include "rtos.h"
 
 void Timer::init()
@@ -64,7 +64,7 @@ extern "C" void RTC1_IRQHandler() {
     return ;
 
   NRF_RTC1->EVENTS_TICK = 0;
-	
-	RTOS::manage();
-	Lights::update();
+  
+  RTOS::manage();
+  Backpack::update();
 }

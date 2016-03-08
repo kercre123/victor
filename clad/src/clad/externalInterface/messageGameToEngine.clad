@@ -416,7 +416,7 @@ message SetOwnerFace {
 }
 
 // Assign a name to a specific face ID
-message AssignVizFaceName {
+message AssignNameToFace {
   int_32 faceID,
   string name
 }
@@ -830,11 +830,15 @@ message BlockPoolEnabledMessage {
 }
 
 message BlockSelectedMessage {
-  uint_32 blockId,
+  uint_32 factoryId,
   bool   selected
 }
 // Query for E2Gmessage: InitBlockPoolMessage
 message GetBlockPoolMessage {
+}
+
+message RequestDiscoveredObjects {
+  uint_8 robotID
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

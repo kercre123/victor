@@ -43,6 +43,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
+#include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
@@ -50,6 +51,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "clad/types/activeObjectTypes.h"
 #include "clad/types/gameStatusFlag.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
@@ -94,6 +96,7 @@ namespace Anki {
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
+    , _blockFilter(new BlockFilter(this))
     , _imageDeChunker(new ImageDeChunker())
     , _traceHandler(_context->GetDataPlatform())
     {
@@ -202,6 +205,12 @@ namespace Anki {
       _shortMinAnglePathPlanner = new MinimalAnglePlanner;
       _selectedPathPlanner = _longPathPlanner;
       
+      
+      // Lock active objects to connect to
+      if (_context->GetDataPlatform() != nullptr) {
+        _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"), _context->GetExternalInterface());
+      }
+      
     } // Constructor: Robot
     
     Robot::~Robot()
@@ -214,6 +223,7 @@ namespace Anki {
       Util::SafeDelete(_shortMinAnglePathPlanner);
       Util::SafeDelete(_moodManager);
       Util::SafeDelete(_progressionManager);
+      Util::SafeDelete(_blockFilter);
 
       _selectedPathPlanner = nullptr;
       
@@ -894,6 +904,18 @@ namespace Anki {
           }
         }
       }
+      
+      /////////// Update discovered active objects //////
+      for (auto obj : _discoveredObjects) {
+        if ( GetLastMsgTimestamp() - obj.second > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
+#         if(PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS)
+          PRINT_NAMED_INFO("ObjectUndiscovered", "FactoryID 0x%x (lastObservedTime %d, currTime %d)", obj.first, obj.second, GetLastMsgTimestamp());
+#         endif
+          Broadcast(ExternalInterface::MessageEngineToGame(ObjectUndiscovered(obj.first)));
+          _discoveredObjects.erase(obj.first);
+        }
+      }
+      
       
       /////////// Update visualization ////////////
       
@@ -2859,6 +2881,70 @@ namespace Anki {
       }
 
     }
+    
+    Result Robot::ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids)
+    {
+      CubeSlots msg;
+      u8 numObjects = 0;
+      u8 objectsSelectedMask = 0;
+      for (auto fid : factory_ids) {
+        
+        // Zero is not a valid factoryID
+        if (fid == 0) {
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ZeroID", "Skipping");
+          continue;
+        }
+        
+        // Check if there is still space in the message
+        if (numObjects >= msg.factory_id.size()) {
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", msg.factory_id.size());
+          return RESULT_FAIL;
+        }
+        
+        
+        // Check if charger already added
+        bool isCharger = fid & 0x80000000;
+        bool chargerAlreadyInList = (objectsSelectedMask & (fid & 0x80000000));
+        
+        // Check if block of this type already added
+        bool blockTypeAlreadyInList = (objectsSelectedMask & (1 << (fid & 0x3)));
+        
+        if (chargerAlreadyInList || blockTypeAlreadyInList) {
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.DuplicateTypeInList",
+                              "Object with factory ID 0x%x matches type of another active object in the list. Only one of each type may be connected.",
+                              fid);
+          return RESULT_FAIL;
+        }
+
+        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x", fid);
+        msg.factory_id[numObjects] = fid;
+        ++numObjects;
+        
+        if (isCharger) {
+          objectsSelectedMask |= 0x80000000;
+        } else {
+          objectsSelectedMask |= (1 << (fid & 0x3));
+        }
+  
+      }
+      
+      // Clear all active blocks in BlockWorld
+      _blockWorld.ClearObjectsByFamily(ObjectFamily::LightCube);
+      _blockWorld.ClearObjectsByFamily(ObjectFamily::Charger);
+      
+      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %d", numObjects);
+      return SendMessage(RobotInterface::EngineToRobot(CubeSlots(msg)));
+      
+    }
+    
+    
+    void Robot::BroadcastDiscoveredObjects()
+    {
+      for (auto obj : _discoveredObjects) {
+        Broadcast(ExternalInterface::MessageEngineToGame(ObjectDiscovered(obj.first, 0)));
+      }
+    }
+    
       
     Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
     {
