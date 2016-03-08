@@ -137,12 +137,10 @@ namespace SpeedTap {
       if (IsSessionComplete()) {
         AllRoundsOver = true;
         if (_PlayerRoundsWon > _CozmoRoundsWon) {
-          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime,
-            new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseSession, HandleSessionAnimDone)));
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseSession, HandleSessionAnimDone));
         }
         else {
-          _StateMachine.SetNextState(new SteerState(_kRetreatSpeed, _kRetreatSpeed, _kRetreatTime,
-            new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleSessionAnimDone)));
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleSessionAnimDone));
         }
       }
       else {
