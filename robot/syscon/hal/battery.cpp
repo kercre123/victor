@@ -193,13 +193,9 @@ void Battery::manage(void* userdata)
         static int ground_short = 0;
         uint32_t raw = NRF_ADC->RESULT;
 
-        if (raw < 0x30) {
-          if (ground_short++ >= 40) {
-            powerOff();
-            for (;;) ;
-          }
-        } else {
-          ground_short = 0;
+        if (raw >= 0x30){
+					RTOS::kick(WDOG_NERVE_PINCH);
+					ground_short = 0;
         }
       
         vExt = calcResult(VEXT_SCALE);
