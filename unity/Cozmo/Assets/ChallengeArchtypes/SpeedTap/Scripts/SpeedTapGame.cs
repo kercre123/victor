@@ -14,6 +14,7 @@ namespace SpeedTap {
     private const float _kTapAdjustRange = 5.0f;
 
     private Vector3 _CozmoPos;
+    private Quaternion _CozmoRot;
 
     public LightCube CozmoBlock;
     public LightCube PlayerBlock;
@@ -332,13 +333,14 @@ namespace SpeedTap {
 
     public void SetCozmoOrigPos() {
       _CozmoPos = CurrentRobot.WorldPosition;
+      _CozmoRot = CurrentRobot.Rotation;
     }
 
     public void CheckForAdjust(RobotCallback adjustCallback = null) {
       float dist = 0.0f;
       dist = (CurrentRobot.WorldPosition - _CozmoPos).magnitude;
       if (dist > _kTapAdjustRange) {
-        CurrentRobot.GotoPose(_CozmoPos, CurrentRobot.Rotation, false, false, adjustCallback);
+        CurrentRobot.GotoPose(_CozmoPos, _CozmoRot, false, false, adjustCallback);
       }
       else {
         if (adjustCallback != null) {
