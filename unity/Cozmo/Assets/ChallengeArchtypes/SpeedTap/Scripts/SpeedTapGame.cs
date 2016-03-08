@@ -329,8 +329,6 @@ namespace SpeedTap {
       SharedMinigameView.ShowNarrowGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
     }
 
-    // Temp Functions for random animation until anim groups are ready
-
     public void SetCozmoOrigPos() {
       _CozmoPos = CurrentRobot.WorldPosition;
       _CozmoRot = CurrentRobot.Rotation;

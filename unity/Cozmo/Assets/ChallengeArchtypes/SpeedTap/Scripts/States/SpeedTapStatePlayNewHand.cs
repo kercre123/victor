@@ -78,6 +78,7 @@ namespace SpeedTap {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
               _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Fake, RobotCompletedFakeTapAnimation);
               _TriedFake = true;
+              _TryPeek = false;
             }
           }
         }
