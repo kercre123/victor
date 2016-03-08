@@ -91,7 +91,6 @@ namespace FaceEnrollment {
     }
 
     private void HandleOnAnyFaceSeen(int faceID, string name, Vector3 pos, Quaternion rot) {
-      Debug.Log("seen face " + faceID + " " + name);
       // check if we have an active face enroll view open
       if (_FaceEnrollmentView == null) {
         if (faceID > 0 && string.IsNullOrEmpty(name) == false && _FaceIDToReaction.ContainsKey(faceID)) {
