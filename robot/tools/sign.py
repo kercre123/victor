@@ -35,8 +35,8 @@ def rom_info(file):
 			if section.name == b"ER_IROM1":
 				temp = fo.tell()
 				fo.seek(section.header.sh_offset)
-				if fo.read(4) != "CZM0":
-					raise Exception("Could not locate cosmo header")
+				if fo.read(4) != b"CZM0":
+					raise Exception("Could not locate cozmo header")
 				fo.seek(temp)
 
 				magic_location = section.header.sh_offset + 12
