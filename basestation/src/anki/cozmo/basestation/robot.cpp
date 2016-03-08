@@ -896,13 +896,13 @@ namespace Anki {
       }
       
       /////////// Update discovered active objects //////
-      for (auto obj : _discoveredObjects) {
-        if ( GetLastMsgTimestamp() - obj.second > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
-#         if(PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS)
-          PRINT_NAMED_INFO("ObjectUndiscovered", "FactoryID 0x%x (lastObservedTime %d, currTime %d)", obj.first, obj.second, GetLastMsgTimestamp());
-#         endif
-          Broadcast(ExternalInterface::MessageEngineToGame(ObjectUndiscovered(obj.first)));
-          _discoveredObjects.erase(obj.first);
+      if (_enableDiscoveredObjectsBroadcasting) {
+        for (auto obj : _discoveredObjects) {
+          if (GetLastMsgTimestamp() - obj.second > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
+            PRINT_NAMED_INFO("ObjectUndiscovered", "FactoryID 0x%x (lastObservedTime %d, currTime %d)", obj.first, obj.second, GetLastMsgTimestamp());
+            Broadcast(ExternalInterface::MessageEngineToGame(ObjectUndiscovered(obj.first)));
+            _discoveredObjects.erase(obj.first);
+          }
         }
       }
       
@@ -3108,11 +3108,9 @@ namespace Anki {
     }
     
     
-    void Robot::BroadcastDiscoveredObjects()
+    void Robot::BroadcastDiscoveredObjects(bool enable)
     {
-      for (auto obj : _discoveredObjects) {
-        Broadcast(ExternalInterface::MessageEngineToGame(ObjectDiscovered(obj.first, 0)));
-      }
+      _enableDiscoveredObjectsBroadcasting = enable;
     }
     
       

@@ -1419,10 +1419,17 @@ namespace Anki {
 
               case (s32)'@':
               {
-                //SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
-                SendAnimation("ANIM_TEST", 1);
-                SendSetIdleAnimation("ANIM_IDLE");
+                static bool enable = true;
+                ExternalInterface::SendDiscoveredObjects msg;
+                msg.robotID = 1;
+                msg.enable = enable;
                 
+                PRINT_NAMED_INFO("SendDiscoveredObjects", "enable: %d", enable);
+                ExternalInterface::MessageGameToEngine msgWrapper;
+                msgWrapper.Set_SendDiscoveredObjects(msg);
+                SendMessage(msgWrapper);
+                
+                enable = !enable;
                 break;
               }
               case (s32)'#':

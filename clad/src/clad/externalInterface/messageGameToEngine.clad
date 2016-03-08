@@ -837,8 +837,9 @@ message BlockSelectedMessage {
 message GetBlockPoolMessage {
 }
 
-message RequestDiscoveredObjects {
-  uint_8 robotID
+message SendDiscoveredObjects {
+  uint_8 robotID,
+  bool enable
 }
 
 // keep empty to generate an auto-union that includes all messages in this file
