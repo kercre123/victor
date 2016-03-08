@@ -122,17 +122,17 @@ namespace SpeedTap {
 
     void CozmoDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.cozmo_tap", "");
-      _StateMachine.SetNextState(new SpeedTapCozmoWins());
+      _SpeedTapGame.CozmoWinsHand();
     }
 
     void PlayerDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.player_tap", "");
       if (_GotMatch) {
         _SpeedTapGame.PlayerTap = true;
-        _StateMachine.SetNextState(new SpeedTapPlayerWins());
+        _SpeedTapGame.PlayerWinsHand();
       }
       else if (_LightsOn) {
-        _StateMachine.SetNextState(new SpeedTapCozmoWins());
+        _SpeedTapGame.CozmoWinsHand();
       }
     }
 
