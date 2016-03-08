@@ -67,9 +67,6 @@ const uint8_t AdjustTableGreen[] = {
   0x8e, 0x8e, 0x8e, 0x8e, 0x8e, 0x8e, 0x8e, 0x8e, 0x8e, 0x8e, 0x8e, 0x8e, 0x8e, 0x8e, 0x8f, 0x8f
 };
 
-static const int TOTAL_LIGHTS = NUM_BACKPACK_LEDS + MAX_ACCESSORIES * NUM_PROP_LIGHTS;
-static const int LIGHTS_PER_WORD = 4;
-
 static LightState lightStates[TOTAL_LIGHTS];
 static uint32_t lightPhases[TOTAL_LIGHTS];
 static uint8_t lightValues[TOTAL_LIGHTS][LIGHTS_PER_WORD];
