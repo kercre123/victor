@@ -29,6 +29,7 @@ namespace FaceEnrollment {
     private FaceEnrollmentNameView _FaceEnrollmentView;
 
     private int _NewSeenFaceID = 0;
+    private int _LastSeenFaceID = 0;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       ResetPose();
@@ -92,20 +93,25 @@ namespace FaceEnrollment {
 
     private void HandleOnAnyFaceSeen(int faceID, string name, Vector3 pos, Quaternion rot) {
       // check if we have an active face enroll view open
+      _LastSeenFaceID = faceID;
       if (_FaceEnrollmentView == null) {
         if (faceID > 0 && string.IsNullOrEmpty(name) == false && _FaceIDToReaction.ContainsKey(faceID)) {
           // this is a face we know...
           if (Time.time - _LastPlayedReaction > 8.0f) {
             // been at least 8 seconds since we reacted.
-            CurrentRobot.SendAnimation(_FaceIDToReaction[faceID], ReactToFaceAnimationDone);
-            _LastPlayedReaction = Time.time;
+            CurrentRobot.FacePose(CurrentRobot.Faces.Find(x => x.ID == faceID), callback: FacePoseDone);
           }
         }
       }
     }
 
+    private void FacePoseDone(bool success) {
+      CurrentRobot.SendAnimation(_FaceIDToReaction[_LastSeenFaceID], ReactToFaceAnimationDone);
+    }
+
     private void ReactToFaceAnimationDone(bool success) {
       ResetPose();
+      _LastPlayedReaction = Time.time;
     }
 
     protected override void CleanUpOnDestroy() {
