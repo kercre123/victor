@@ -181,6 +181,8 @@ public interface IRobot : IDisposable {
 
   void EnableNewFaceEnrollment(int numToEnroll = 1, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
+  void AssignNameToFace(int faceID, string name, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+
   void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendAnimationGroup(string animGroupName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);

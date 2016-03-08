@@ -8,6 +8,18 @@ namespace FaceEnrollment {
 
     public int _ReactToFaceID = 0;
     public Dictionary<int, string> _FaceNameDictionary = new Dictionary<int, string>();
+    public Dictionary<int, string> _FaceIDToReaction = new Dictionary<int, string>();
+
+    private string[] _ReactionBank = {
+      AnimationName.kSpeedTap_loseHand_01,
+      AnimationName.kSpeedTap_winHand_01,
+      AnimationName.kSpeedTap_winSession_01,
+      AnimationName.kSpeedTap_loseSession_03
+    };
+
+    private int _ReactionIndex = 0;
+
+    private float _LastPlayedReaction = 0.0f;
 
     [SerializeField]
     private FaceEnrollmentDataView _FaceEnrollmentDataViewPrefab;
@@ -43,9 +55,13 @@ namespace FaceEnrollment {
 
     public void EnrollFace(string nameForFace) {
       _FaceNameDictionary.Add(_NewSeenFaceID, nameForFace);
+      CurrentRobot.AssignNameToFace(_NewSeenFaceID, nameForFace);
+
+      _FaceIDToReaction.Add(_NewSeenFaceID, _ReactionBank[_ReactionIndex]);
+      _ReactionIndex = (_ReactionIndex + 1) % _ReactionBank.Length;
     }
 
-    private void HandleObservedNewFace(uint robotID, int faceID, Vector3 facePos, Quaternion faceRot) {
+    private void HandleObservedNewFace(int faceID, Vector3 facePos, Quaternion faceRot) {
       if (_FaceEnrollmentView != null) {
         return; // we already have a view open to ask for a name.
       }
@@ -62,9 +78,24 @@ namespace FaceEnrollment {
       _FaceEnrollmentView = null;
     }
 
+    private void HandleOnAnyFaceSeen(int faceID, string name, Vector3 pos, Quaternion rot) {
+      // check if we have an active face enroll view open
+      if (_FaceEnrollmentView == null) {
+        if (faceID > 0 && string.IsNullOrEmpty(name) == false && _FaceIDToReaction.ContainsKey(faceID)) {
+          // this is a face we know...
+          if (Time.time - _LastPlayedReaction > 8.0f) {
+            // been at least 8 seconds since we reacted.
+            CurrentRobot.SendAnimation(_FaceIDToReaction[faceID]);
+            _LastPlayedReaction = Time.time;
+          }
+        }
+      }
+    }
+
     protected override void CleanUpOnDestroy() {
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
     }
+
 
   }
 

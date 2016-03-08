@@ -59,7 +59,8 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
-  public event Action<uint, int, Vector3, Quaternion> RobotObservedNewFace;
+  public event Action<int, string, Vector3, Quaternion> RobotObservedFace;
+  public event Action<int, Vector3, Quaternion> RobotObservedNewFace;
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
   public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
@@ -461,11 +462,15 @@ public class RobotEngineManager : MonoBehaviour {
       return;
     CurrentRobot.UpdateObservedFaceInfo(message);
 
-    if (message.faceID > 0) {
-      RobotObservedNewFace(message.robotID, message.faceID, 
+    if (message.faceID > 0 && message.name == "") {
+      RobotObservedNewFace(message.faceID, 
         new Vector3(message.world_x, message.world_y, message.world_z), 
         new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w));
     }
+
+    RobotObservedFace(message.faceID, message.name,
+      new Vector3(message.world_x, message.world_y, message.world_z), 
+      new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w));
   }
 
   private void ReceivedSpecificMessage(G2U.RobotObservedNothing message) {

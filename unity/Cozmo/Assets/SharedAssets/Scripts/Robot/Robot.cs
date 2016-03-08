@@ -908,6 +908,11 @@ public class Robot : IRobot {
     SendQueueSingleAction(Singleton<EnableNewFaceEnrollment>.Instance.Initialize(numToEnroll), callback, queueActionPosition);
   }
 
+  public void AssignNameToFace(int faceID, string name, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    DAS.Debug(this, "Assigning face " + faceID + " to " + name);
+    SendQueueSingleAction(Singleton<AssignNameToFace>.Instance.Initialize(faceID, name), callback, queueActionPosition);
+  }
+
   public void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
