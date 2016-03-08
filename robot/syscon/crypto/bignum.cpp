@@ -628,8 +628,8 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
 
   int msb = big_msb(exp);
   
-  *base = base_in;
-  *result = mont.one;
+  memcpy(base, &base_in, sizeof(big_num_t));
+  memcpy(result, &mont.one, sizeof(big_num_t));
 
   for (int bit = 0; bit <= msb; bit++) {
     if (big_bit_get(exp, bit)) {
@@ -645,7 +645,7 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
     }
 
 
-    if (mont_multiply(mont, *temp, *base, *base)) {
+		if (mont_multiply(mont, *temp, *base, *base)) {
       return true;
     }
 
@@ -656,7 +656,7 @@ bool mont_power(const big_mont_t& mont, big_num_t& out, const big_num_t& base_in
     }
   }
 
-  out = *result;
+  memcpy(&out, result, sizeof(big_num_t));
   out.negative = big_odd(base_in) ? base_in.negative : false;
 
   return false;

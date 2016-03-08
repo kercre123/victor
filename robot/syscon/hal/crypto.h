@@ -36,18 +36,18 @@ struct DiffieHellman {
 typedef void (*crypto_callback)(struct CryptoTask*);
 
 struct CryptoTask {
-  crypto_callback callback;
-  CryptoOperation op;
-  void *input;
-  void *output;
-  int  length;
+	CryptoOperation op;
+	crypto_callback callback;
+	const void *input;
+	void *output;
+	int	 length;
 };
 
 namespace Crypto {
   void init();
   void manage();
   void random(void* data, int length);
-  void execute(CryptoTask* task);
+	void execute(const CryptoTask* task);
 }
 
 #endif

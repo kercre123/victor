@@ -1,2 +1,2 @@
-g++ -o test test.cpp ../hal/bignum.cpp
-./test
+g++ -o test test.cpp ../crypto/bignum.cpp
+g++ -o consts consts.cpp ../crypto/bignum.cpp

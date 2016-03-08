@@ -16,13 +16,14 @@ extern "C" {
 #include "head.h"
 #include "debug.h"
 #include "timer.h"
+#include "backpack.h"
 #include "lights.h"
 #include "tests.h"
 #include "radio.h"
 #include "crypto.h"
 #include "bluetooth.h"
 
-#include "boot/sha1.h"
+#include "sha1.h"
 
 #include "bootloader.h"
 
@@ -41,16 +42,6 @@ extern void EnterRecovery(void) {
 
   MAGIC_LOCATION = SPI_ENTER_RECOVERY;
   NVIC_SystemReset();
-}
-
-extern "C" void HardFault_Handler(void) {
-  // This stops the system from locking up for now completely temporary.
-  NVIC_SystemReset();
-}
-
-void MotorsUpdate(void* userdata) {
-  //Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
-  //RTOS::kick(WDOG_UART);
 }
 
 static void EMERGENCY_FIX(void) {
@@ -87,8 +78,9 @@ int main(void)
   Battery::init();
   Bluetooth::init();
   Timer::init();
-  Lights::init();
+  Backpack::init();
   Radio::init();
+	Lights::init();
 
   #ifndef BLUETOOTH_MODE
   Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
