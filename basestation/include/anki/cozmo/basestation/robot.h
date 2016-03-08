@@ -42,7 +42,6 @@
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -106,6 +105,7 @@ class RobotPoseStamp;
 class IExternalInterface;
 struct RobotState;
 class ActiveCube;
+class CannedAnimationContainer;
 
 typedef enum {
   SAVE_OFF = 0,
@@ -485,20 +485,6 @@ public:
     // TODO: REMOVE OLD AUDIO SYSTEM
     Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
     void   StopSound();
-
-    // Read the animations in a dir
-    void ReadAnimationFile(const char* filename, std::string& animationID);
-  
-    // Read the animations in a dir
-    void ReadAnimationDir();
-    void ReadAnimationDirImpl(const std::string& animationDir);
-    void ReadAnimationDirImplHelper(const std::string& animationFolder);
-
-    // Read the animation groups in a dir
-    void ReadAnimationGroupDir();
-
-    // Read the animation groups in a dir
-    void ReadAnimationGroupFile(const char* filename);
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
@@ -717,6 +703,18 @@ public:
     BehaviorManager  _behaviorMgr;
     bool             _isBehaviorMgrEnabled = false;
     
+  
+  
+    ///////// Animation /////////
+    CannedAnimationContainer&   _cannedAnimations;
+    AnimationGroupContainer&    _animationGroups;
+    AnimationStreamer           _animationStreamer;
+    s32 _numAnimationBytesPlayed         = 0;
+    s32 _numAnimationBytesStreamed       = 0;
+    s32 _numAnimationAudioFramesPlayed   = 0;
+    s32 _numAnimationAudioFramesStreamed = 0;
+    u8  _animationTag                    = 0;
+  
     //ActionQueue      _actionQueue;
     ActionList        _actionList;
     MovementComponent _movementComponent;
@@ -851,9 +849,6 @@ public:
     u32         _imgProcPeriod         = 0;
     TimeStamp_t _lastImgTimeStamp      = 0;
     std::string _lastPlayedAnimationId;
-
-    std::unordered_map<std::string, time_t> _loadedAnimationFiles;
-    std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
   
     ///////// Modifiers ////////
     
@@ -868,18 +863,6 @@ public:
   
     ///////// Audio /////////
     Audio::RobotAudioClient _audioClient;
-  
-    ///////// Animation /////////
-    
-    CannedAnimationContainer _cannedAnimations;
-    AnimationGroupContainer  _animationGroups;
-    AnimationStreamer        _animationStreamer;
-    s32 _numFreeAnimationBytes;
-    s32 _numAnimationBytesPlayed         = 0;
-    s32 _numAnimationBytesStreamed       = 0;
-    s32 _numAnimationAudioFramesPlayed   = 0;
-    s32 _numAnimationAudioFramesStreamed = 0;
-    u8  _animationTag                    = 0;
     
     ///////// Mood/Emotions ////////
     MoodManager*         _moodManager;

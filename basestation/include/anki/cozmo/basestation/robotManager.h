@@ -13,8 +13,12 @@
 
 #include "anki/cozmo/basestation/robotEventHandler.h"
 #include "util/signals/simpleSignal.hpp"
+#include "util/helpers/noncopyable.h"
 #include <map>
 #include <vector>
+#include <memory>
+#include <unordered_map>
+#include <string>
 
 namespace Anki {
   
@@ -33,12 +37,18 @@ namespace Anki {
   class Robot;
   class IExternalInterface;
   class CozmoContext;
+  class CannedAnimationContainer;
+  class AnimationGroupContainer;
 
-    class RobotManager
+    class RobotManager : Util::noncopyable
     {
     public:
     
       RobotManager(const CozmoContext* context);
+      
+      ~RobotManager();
+      
+      void Init();
       
       // Get the list of known robot ID's
       std::vector<RobotID_t> const& GetRobotIDList() const;
@@ -67,6 +77,11 @@ namespace Anki {
       using RobotDisconnectedSignal = Signal::Signal<void (RobotID_t)>;
       RobotDisconnectedSignal& OnRobotDisconnected() { return _robotDisconnectedSignal; }
 
+      CannedAnimationContainer& GetCannedAnimations() { return *_cannedAnimations; }
+      AnimationGroupContainer& GetAnimationGroups() { return *_animationGroups; }
+      
+      // Read the animations in a dir
+      void ReadAnimationDir();
 
     protected:
       RobotDisconnectedSignal _robotDisconnectedSignal;
@@ -74,6 +89,16 @@ namespace Anki {
       std::vector<RobotID_t>     _IDs;
       const CozmoContext* _context;
       RobotEventHandler _robotEventHandler;
+      std::unique_ptr<CannedAnimationContainer>   _cannedAnimations;
+      std::unique_ptr<AnimationGroupContainer>    _animationGroups;
+      std::unordered_map<std::string, time_t> _loadedAnimationFiles;
+      std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
+      
+      void ReadAnimationDirImpl(const std::string& animationDir);
+      void ReadAnimationFile(const char* filename);
+
+      void ReadAnimationGroupDir();
+      void ReadAnimationGroupFile(const char* filename);
       
     }; // class RobotManager
     
