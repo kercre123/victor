@@ -188,10 +188,6 @@ void Radio::init() {
     createAddress(accessories[i].address);
   }
 
-	assignProp(0, 0x99);
-	assignProp(1, 0xBB);
-	assignProp(2, 0x126);
-	
   // Start the radio stack
   radioTask = RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
   RTOS::setPriority(radioTask, RTOS_RADIO_PRIORITY);
@@ -402,8 +398,6 @@ void Radio::manage(void* userdata) {
     // We send the previous LED state (so we don't get jitter on radio)
     uesb_address_desc_t& address = accessories[currentAccessory].address;
 
-		memset(acc->tx_state.ledStatus, 0xFF, sizeof(acc->tx_state.ledStatus));
-		
     // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
     memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
