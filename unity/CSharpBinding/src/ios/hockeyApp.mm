@@ -185,18 +185,23 @@ BOOL gWaitingForCrashUpload = NO;
 void CreateHockeyApp()
 {
   // Example simple
-  /*
+  //NSLog(@"Waiting for HockeyApp Crash Upload... (%d/%d)", numWaits, 20);
+  NSLog(@"HockedAppDebuggingTemp - CreateHockeyApp");
   NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
   if(!hockeyAppId || hockeyAppId.length == 0) {
+    NSLog(@"HockedAppDebuggingTemp - BAD ID");
     DASEvent("HockeyApp.ios.disabled", "");
     return;
   }
+  NSLog(@"HockedAppDebuggingTemp - configure with ID %@",hockeyAppId);
   [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:hockeyAppId];
   [[BITHockeyManager sharedHockeyManager] startManager];
   [[BITHockeyManager sharedHockeyManager].authenticator authenticateInstallation];
-  */
+  //return ([[BITHockeyManager sharedHockeyManager].crashManager didCrashInLastSession] &&[[BITHockeyManager sharedHockeyManager].crashManager timeintervalCrashInLastSessionOccured] < 5);
+  NSLog(@"HockedAppDebuggingTemp - Did Crash Last Session %d",[[BITHockeyManager sharedHockeyManager].crashManager didCrashInLastSession]);
+  NSLog(@"HockedAppDebuggingTemp - Time check %f",[[BITHockeyManager sharedHockeyManager].crashManager timeintervalCrashInLastSessionOccured]);
   
-  HockeyApp *hockeyApp = [[HockeyApp alloc] init];
-  [hockeyApp activateHockeyApp];
+  /*HockeyApp *hockeyApp = [[HockeyApp alloc] init];
+  [hockeyApp activateHockeyApp];*/
 }
 
