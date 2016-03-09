@@ -240,7 +240,6 @@ namespace Anki {
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
     {
       PRINT_NAMED_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
-      _availableAnimations.insert(msg.animName);
       
       HandleAnimationAvailable(msg);
     }
@@ -1486,21 +1485,6 @@ namespace Anki {
     const Vision::TrackedFace::ID_t UiGameController::GetLastObservedFaceID() const
     {
       return _lastObservedFaceID;
-    }
-    
-    const std::unordered_set<std::string>& UiGameController::GetAvailableAnimations() const
-    {
-      return _availableAnimations;
-    }
-    
-    u32 UiGameController::GetNumAvailableAnimations() const
-    {
-      return (u32)_availableAnimations.size();
-    }
-    
-    bool UiGameController::IsAvailableAnimation(std::string anim) const
-    {
-      return _availableAnimations.find(anim) != _availableAnimations.end();
     }
     
     void UiGameController::SetActualRobotPose(const Pose3d& newPose)
