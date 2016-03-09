@@ -20,6 +20,7 @@ namespace FaceEnrollment {
 
     private float _LastPlayedReaction = 0.0f;
     private int _LastReactedID = 0;
+    private bool _Reacting = false;
 
     [SerializeField]
     private FaceEnrollmentDataView _FaceEnrollmentDataViewPrefab;
@@ -94,21 +95,28 @@ namespace FaceEnrollment {
       if (_FaceEnrollmentView == null) {
         if (faceID > 0 && string.IsNullOrEmpty(name) == false && _FaceIDToReaction.ContainsKey(faceID)) {
           // this is a face we know...
-          if (Time.time - _LastPlayedReaction > 10.0f || _LastReactedID != faceID) {
+          if (Time.time - _LastPlayedReaction > 10.0f || _LastReactedID != faceID && !_Reacting) {
             // been at least 10 seconds since we reacted or it's a new face.
             CurrentRobot.FacePose(CurrentRobot.Faces.Find(x => x.ID == faceID), callback: FacePoseDone);
+            _Reacting = true;
           }
         }
       }
     }
 
     private void FacePoseDone(bool success) {
-      CurrentRobot.SendAnimation(_FaceIDToReaction[_LastSeenFaceID], ReactToFaceAnimationDone);
-      _LastReactedID = _LastSeenFaceID;
+      if (success) {
+        CurrentRobot.SendAnimation(_FaceIDToReaction[_LastSeenFaceID], ReactToFaceAnimationDone);
+        _LastReactedID = _LastSeenFaceID;
+      }
+      else {
+        _Reacting = false;
+      }
     }
 
     private void ReactToFaceAnimationDone(bool success) {
       ResetPose();
+      _Reacting = false;
       _LastPlayedReaction = Time.time;
     }
 
