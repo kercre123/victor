@@ -6,6 +6,8 @@ namespace SpeedTap {
 
   public class SpeedTapStatePlayNewHand : State {
 
+    private const int _kMaxMisses = 2;
+
     private SpeedTapGame _SpeedTapGame = null;
     private float _StartTimeMs = -1.0f;
     private float _OnDelayTimeMs = 2000.0f;
@@ -27,6 +29,7 @@ namespace SpeedTap {
     private bool _TryPeek = false;
     private bool _MidHand = false;
     private bool _PlayReady = false;
+    private bool _CozmoTapRegistered = false;
     private float _CozmoTapDelayTimeMs = 0f;
 
     public override void Enter() {
@@ -39,6 +42,7 @@ namespace SpeedTap {
       _SpeedTapGame.PlayerTap = false;
       _MidHand = false;
       _PlayReady = false;
+      _CozmoTapRegistered = false;
 
       _SpeedTapGame.CheckForAdjust(AdjustDone);
     }
@@ -51,6 +55,7 @@ namespace SpeedTap {
       if (_MidHand == false) {
         _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
         _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
+        _SpeedTapGame.CozmoTappedBlockEvent += CozmoDidTap;
         _MidHand = true;
       }
     }
@@ -68,6 +73,7 @@ namespace SpeedTap {
           if (!_CozmoTapping) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
               _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Tap, RobotCompletedTapAnimation);
+              _CozmoTapRegistered = false;
               _CozmoTapping = true;
               _MidHand = false;
             }
@@ -105,13 +111,24 @@ namespace SpeedTap {
     public override void Exit() {
       base.Exit();
       _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
+      _SpeedTapGame.CozmoTappedBlockEvent -= CozmoDidTap;
     }
 
     void RobotCompletedTapAnimation(bool success) {
       DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
+      if (_CozmoTapRegistered) {
+        _SpeedTapGame.ConsecutiveMisses++;
+        if (_SpeedTapGame.ConsecutiveMisses > _kMaxMisses) {
+          //TODO: Enter Pause-reset-FindCube state.
+          DAS.Warn("SpeedTapGame", "Too many consecutive misses!");
+        }
+      }
+      else {
+        _SpeedTapGame.ConsecutiveMisses = 0;
+      }
       // check for player tapped first here.
       if (_SpeedTapGame.PlayerTap == false) {
-        CozmoDidTap();
+        _SpeedTapGame.CozmoWinsHand();
       }
     }
 
@@ -127,7 +144,9 @@ namespace SpeedTap {
 
     void CozmoDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.cozmo_tap", "");
-      _SpeedTapGame.CozmoWinsHand();
+      if (_CozmoTapping) {
+        _CozmoTapRegistered = true;
+      }
     }
 
     void PlayerDidTap() {
