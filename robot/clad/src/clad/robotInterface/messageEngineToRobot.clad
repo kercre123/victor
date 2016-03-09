@@ -79,7 +79,8 @@ message SetBodyAngle
 {
   float_32 angle_rad,
   float_32 max_speed_rad_per_sec,
-  float_32 accel_rad_per_sec2
+  float_32 accel_rad_per_sec2,
+  float_32 angle_tolerance
 }
 
 message TurnInPlaceAtSpeed
@@ -128,6 +129,7 @@ message AppendPathSegmentPointTurn
   float_32 x_center_mm,
   float_32 y_center_mm,
   float_32 targetRad,
+  float_32 angleTolerance,
   PathSegmentSpeed speed, // targetSpeed indicates rotational speed in rad/s
   bool     useShortestDir
 }

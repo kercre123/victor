@@ -501,7 +501,7 @@ namespace Anki {
             case PFCF_DRIVE_POINT_TURN:
               PRINT("TM: DrivePointTurn\n");
               AnkiInfo( 73, "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", 312, "Started", 0);
-              if (!PathFollower::DrivePointTurn(-PIDIV2_F, 0.25, 0.25, 1)) {
+              if (!PathFollower::DrivePointTurn(-PIDIV2_F, 0.25, 0.25, DEG_TO_RAD(1), 1)) {
               AnkiInfo( 73, "TestModeController.PathFollowConvenienceFuncTestUpdate.DrivePointTurn", 313, "FAILED", 0);
                 return RESULT_FAIL;
               }

@@ -299,7 +299,8 @@ namespace Anki {
 
       void Process_appendPathSegPointTurn(const RobotInterface::AppendPathSegmentPointTurn& msg) {
         PathFollower::AppendPathSegment_PointTurn(0, msg.x_center_mm, msg.y_center_mm, msg.targetRad,
-                                                  msg.speed.target, msg.speed.accel, msg.speed.decel, msg.useShortestDir);
+                                                  msg.speed.target, msg.speed.accel, msg.speed.decel,
+                                                  msg.angleTolerance, msg.useShortestDir);
       }
 
       void Process_trimPath(const RobotInterface::TrimPath& msg) {
@@ -393,7 +394,9 @@ namespace Anki {
       {
         SteeringController::ExecutePointTurn(msg.angle_rad, msg.max_speed_rad_per_sec,
                                              msg.accel_rad_per_sec2,
-                                             msg.accel_rad_per_sec2, true);
+                                             msg.accel_rad_per_sec2,
+                                             msg.angle_tolerance,
+                                             true);
       }
 
       void Process_setCarryState(const CarryStateUpdate& update)

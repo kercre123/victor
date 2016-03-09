@@ -27,6 +27,8 @@ namespace Cozmo {
 
 #define SET_STATE(s) SetState_internal(s, #s)
 
+#define DO_FACE_VERIFICATION_STEP 0
+
 static const char* kInitialAnimationKey = "initial_animName";
 static const char* kPreDriveAnimationKey = "preDrive_animName";
 static const char* kRequestAnimNameKey = "request_animName";
@@ -200,7 +202,7 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 {
   ObjectID targetBlockID = GetRobotsBlockID(robot);
   if( targetBlockID.IsSet() ) {
-    StartActing(new FaceObjectAction( robot, targetBlockID, PI_F ),
+    StartActing(new TurnTowardsObjectAction( robot, targetBlockID, PI_F ),
                 &BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation);
     SET_STATE(State::FacingBlock);
   }
@@ -249,9 +251,9 @@ void BehaviorRequestGameSimple::TransitionToSearchingForBlock(Robot& robot)
 
     CompoundActionSequential* searchAction = new CompoundActionSequential(robot);
 
-    FacePoseAction* faceAction = new FacePoseAction(robot, lastKnownPose, PI_F);
-    faceAction->SetPanTolerance(DEG_TO_RAD(5));
-    searchAction->AddAction(faceAction);
+    TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, lastKnownPose, PI_F);
+    turnTowardsPoseAction->SetPanTolerance(DEG_TO_RAD(5));
+    searchAction->AddAction(turnTowardsPoseAction);
 
     searchAction->AddAction(new SearchSideToSideAction(robot));
     
@@ -350,7 +352,7 @@ void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
 {
   Pose3d lastFacePose;
   if( GetFacePose( robot, lastFacePose ) ) {
-    StartActing(new FacePoseAction(robot, lastFacePose, PI_F),
+    StartActing(new TurnTowardsPoseAction(robot, lastFacePose, PI_F),
                 [this, &robot](ActionResult result) {
                   if( result == ActionResult::SUCCESS ) {
                     TransitionToVerifyingFace(robot);
@@ -369,21 +371,27 @@ void BehaviorRequestGameSimple::TransitionToLookingAtFace(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 {
-  _verifyStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  StartActing(new WaitAction( robot, kFaceVerificationTime_s ),
-              [this, &robot](ActionResult result) {
-                if( result == ActionResult::SUCCESS && GetLastSeenFaceTime() >= _verifyStartTime_s ) {
-                  TransitionToPlayingRequstAnim(robot);
-                }
-                else {
-                  // the face must not have been where we expected, so drop out of the behavior for now
-                  // TODO:(bn) try to bring the block to a different face if we have more than one?
-                  PRINT_NAMED_INFO("BehaviorRequestGameSimple.VerifyingFace.Failed",
-                                   "failed to verify the face, so considering this a rejection");
-                  TransitionToPlayingDenyAnim(robot);
-                }
-              } );
-  SET_STATE(State::VerifyingFace);
+  if( DO_FACE_VERIFICATION_STEP ) {
+    _verifyStartTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    StartActing(new WaitAction( robot, kFaceVerificationTime_s ),
+                [this, &robot](ActionResult result) {
+                  if( result == ActionResult::SUCCESS && GetLastSeenFaceTime() >= _verifyStartTime_s ) {
+                    TransitionToPlayingRequstAnim(robot);
+                  }
+                  else {
+                    // the face must not have been where we expected, so drop out of the behavior for now
+                    // TODO:(bn) try to bring the block to a different face if we have more than one?
+                    PRINT_NAMED_INFO("BehaviorRequestGameSimple.VerifyingFace.Failed",
+                                     "failed to verify the face, so considering this a rejection");
+                    TransitionToPlayingDenyAnim(robot);
+                  }
+                } );
+    SET_STATE(State::VerifyingFace);
+  }
+  else {
+    // just skip verification and go straight to playing the request
+    TransitionToPlayingRequstAnim(robot);
+  }
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot)
@@ -459,6 +467,21 @@ void BehaviorRequestGameSimple::HandleGameDeniedRequest(Robot& robot)
   StopActing();
 
   TransitionToPlayingDenyAnim(robot);
+}
+  
+f32 BehaviorRequestGameSimple::GetRequestMinDelayComplete_s() const
+{
+  if( _requestTime_s < 0.0f ) {
+    return -1.0f;
+  }
+  
+  float minRequestDelay = kMinRequestDelayDefault;
+  if (nullptr != _activeConfig)
+  {
+    minRequestDelay = _activeConfig->minRequestDelay;
+  }
+  
+  return _requestTime_s + minRequestDelay;
 }
 
 }

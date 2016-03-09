@@ -56,7 +56,7 @@ protected:
   void SendDeny(Robot& robot);
 
   // the time at which it will be OK to end the behavior (allowing us a delay after the request), or -1
-  f32 GetRequestMinDelayComplete_s() const;
+  virtual f32 GetRequestMinDelayComplete_s() const = 0;
 
   Face::ID_t GetFaceID() const { return _faceID; }
   f32 GetLastSeenFaceTime() const {return _lastFaceSeenTime_s;}
@@ -77,11 +77,10 @@ protected:
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) final override;
   virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) final override;
 
+  f32        _requestTime_s = -1.0f;
 private:
 
   u32        _maxFaceAge_ms = 30000;
-  f32        _minRequestDelay_s = 3.0f;
-  f32        _requestTime_s = -1.0f;
   f32        _lastFaceSeenTime_s = -1.0f;
   Face::ID_t _faceID = Face::UnknownFace;
   bool       _hasBlockPose = false;
