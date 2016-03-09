@@ -27,9 +27,16 @@ namespace Cozmo {
       [SerializeField]
       private string _DASEventViewName = "";
 
-      protected string DASEventViewName {
+      public string DASEventViewName {
         get { return _DASEventViewName; } 
-        set { _DASEventViewName = value; }
+        protected set { _DASEventViewName = value; }
+      }
+
+      [SerializeField]
+      private DASUtil.ViewType _DASEventViewType = DASUtil.ViewType.View;
+
+      public DASUtil.ViewType DASEventViewType {
+        get { return _DASEventViewType; } 
       }
 
       /// <summary>
@@ -54,6 +61,22 @@ namespace Cozmo {
 
       #region Overriden Methods
 
+      public void Initialize(bool? overrideCloseOnTapOutside = null) {
+        bool shouldCloseOnTapOutside = overrideCloseOnTapOutside.HasValue ? 
+          overrideCloseOnTapOutside.Value : _CloseDialogOnTapOutside;
+        if (shouldCloseOnTapOutside) {
+          CreateFullScreenCloseCollider();
+        }
+
+        SetupCloseButton();
+
+        CheckDASEventName();
+
+        RaiseViewOpened(this);
+
+        PlayOpenAnimations();
+      }
+
       protected abstract void CleanUp();
 
       protected virtual void ConstructOpenAnimation(Sequence openAnimation) {
@@ -67,35 +90,31 @@ namespace Cozmo {
 
       #endregion
 
-      public void OpenView(bool? overrideCloseOnTapOutside = null) {
-        if (string.IsNullOrEmpty(_DASEventViewName)) {
-          DAS.Error(this, string.Format("View is missing a _DASEventViewName! Please check the prefab. name={0}", gameObject.name));
-          _DASEventViewName = gameObject.name;
-        }
+      private void CreateFullScreenCloseCollider() {
+        GameObject fullScreenButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.FullScreenButtonPrefab,
+                                        this.transform);
 
-        RaiseViewOpened(this);
+        // Place the button underneath all the UI in this dialog
+        fullScreenButton.transform.SetAsFirstSibling();
+        Cozmo.UI.TouchCatcher fullScreenCollider = fullScreenButton.GetComponent<Cozmo.UI.TouchCatcher>();
+        fullScreenCollider.OnTouch += (HandleCloseColliderClicked);
+        fullScreenCollider.DASEventButtonName = "fullscreen_close_button";
+        fullScreenCollider.DASEventViewController = DASEventViewName;
+      }
 
-        bool shouldCloseOnTapOutside = overrideCloseOnTapOutside.HasValue ? 
-          overrideCloseOnTapOutside.Value : _CloseDialogOnTapOutside;
-        if (shouldCloseOnTapOutside) {
-          GameObject fullScreenButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.FullScreenButtonPrefab,
-                                          this.transform);
-
-          // Place the button underneath all the UI in this dialog
-          fullScreenButton.transform.SetAsFirstSibling();
-          Cozmo.UI.TouchCatcher fullScreenCollider = fullScreenButton.GetComponent<Cozmo.UI.TouchCatcher>();
-          fullScreenCollider.OnTouch += (HandleCloseColliderClicked);
-          fullScreenCollider.DASEventButtonName = "fullscreen_close_button";
-          fullScreenCollider.DASEventViewController = DASEventViewName;
-        }
-          
+      private void SetupCloseButton() {
         if (_OptionalCloseDialogButton != null) {
           _OptionalCloseDialogButton.DASEventButtonName = "close_button";
           _OptionalCloseDialogButton.DASEventViewController = DASEventViewName;
           _OptionalCloseDialogButton.onClick.AddListener(HandleCloseColliderClicked);
         }
+      }
 
-        PlayOpenAnimations();
+      private void CheckDASEventName() {
+        if (string.IsNullOrEmpty(_DASEventViewName)) {
+          DAS.Error(this, string.Format("View is missing a _DASEventViewName! Please check the prefab. name={0}", gameObject.name));
+          _DASEventViewName = gameObject.name;
+        }
       }
 
       private void HandleCloseColliderClicked() {

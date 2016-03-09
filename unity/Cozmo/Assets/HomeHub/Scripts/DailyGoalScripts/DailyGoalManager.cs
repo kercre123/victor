@@ -79,7 +79,7 @@ public class DailyGoalManager : MonoBehaviour {
         return _LastChallengeData;
       }
     }
-    Debug.LogError(string.Format("Challenge ID not found in ChallengeList {0}", config.ChallengeID));
+    DAS.Error(this, string.Format("Challenge ID not found in ChallengeList {0}", config.ChallengeID));
     return null;
   }
 
@@ -89,7 +89,7 @@ public class DailyGoalManager : MonoBehaviour {
         return _RequestMinigameConfig.RequestList[i].RequestBehaviorGroup;
       }
     }
-    Debug.LogError(string.Format("Challenge ID not found in RequestMinigameList {0}", challengeID));
+    DAS.Error(this, string.Format("Challenge ID not found in RequestMinigameList {0}", challengeID));
     return BehaviorGroup.MiniGame;
   }
 
@@ -235,7 +235,7 @@ public class DailyGoalManager : MonoBehaviour {
       return;
     }
     // Create alert view with Icon
-    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab_Icon, true, true, false) as AlertView;
+    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(false);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);

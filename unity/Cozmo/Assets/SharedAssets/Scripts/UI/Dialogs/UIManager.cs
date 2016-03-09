@@ -96,38 +96,37 @@ public class UIManager : MonoBehaviour {
   /// Creates a dialog using a script/prefab that extends from BaseView.
   /// Plays open animations on that dialog by default. 
   /// </summary>
-  public static BaseView OpenView(
-    BaseView viewPrefab, 
-    bool animateImmediately = true, 
+  public static T OpenView<T>(
+    T viewPrefab, 
+    System.Action<T> preInitFunc = null,
     bool? overrideBackgroundDim = null, 
     bool? overrideCloseOnTouchOutside = null, 
-    bool verticalCanvas = false) {
+    bool verticalCanvas = false) where T : BaseView {
 
     GameObject newView = GameObject.Instantiate(viewPrefab.gameObject);
+    T viewScript = newView.GetComponent<T>();
 
-    BaseView baseViewScript = newView.GetComponent<BaseView>();
-    Instance._OpenViews.Add(baseViewScript);
-
-    bool shouldDimBackground = overrideBackgroundDim.HasValue ? overrideBackgroundDim.Value : baseViewScript.DimBackground;
+    Transform targetCanvas = verticalCanvas ? Instance._VerticalCanvas.transform : Instance._HorizontalCanvas.transform;
+    bool shouldDimBackground = overrideBackgroundDim.HasValue ? overrideBackgroundDim.Value : viewScript.DimBackground;
     if (shouldDimBackground) {
-      Instance._NumDialogsDimmingBackground++;
-      if (Instance._NumDialogsDimmingBackground == 1) {
-        // First dialog to dim the background, we need to create a dimmer
-        // on top of existing ui
-        Instance._DimBackgroundInstance = GameObject.Instantiate(Instance._DimBackgroundPrefab);
-        Instance._DimBackgroundInstance.transform.SetParent(verticalCanvas ? Instance._VerticalCanvas.transform : Instance._HorizontalCanvas.transform, false);
-      }
+      Instance.DimBackground(viewScript, targetCanvas);
     }
 
     // Set the parent of the dialog after dimmer is created so that it displays
     // on top of the dimmer
-    newView.transform.SetParent(verticalCanvas ? Instance._VerticalCanvas.transform : Instance._HorizontalCanvas.transform, false);
+    newView.transform.SetParent(targetCanvas, false);
 
-    if (animateImmediately) {
-      baseViewScript.OpenView(overrideCloseOnTouchOutside);
+    if (preInitFunc != null) {
+      preInitFunc(viewScript);
     }
 
-    return baseViewScript;
+    viewScript.Initialize(overrideCloseOnTouchOutside);
+
+    SendDasEventForDialogOpen(viewScript);
+
+    Instance._OpenViews.Add(viewScript);
+
+    return viewScript;
   }
 
   public static void CloseView(BaseView viewObject) {
@@ -139,23 +138,29 @@ public class UIManager : MonoBehaviour {
   }
 
   public static void CloseAllViews() {
-    while (Instance._OpenViews.Count > 0) {
-      if (Instance._OpenViews[0] != null) {
-        Instance._OpenViews[0].CloseView();
+    Instance.CloseAllViewsInternal();
+  }
+
+  private void CloseAllViewsInternal() {
+    // Close views down the stack
+    for (int i = _OpenViews.Count - 1; i >= 0; i--) {
+      if (_OpenViews[i] != null) {
+        _OpenViews[i].CloseView();
       }
     }
   }
 
   public static void CloseAllViewsImmediately() {
-    while (Instance._OpenViews.Count > 0) {
-      if (Instance._OpenViews[0] != null) {
-        Instance._OpenViews[0].CloseViewImmediately();
-      }
-    }
+    Instance.CloseAllViewsImmediatelyInternal();
   }
 
-  public static Camera GetUICamera() {
-    return _Instance._HorizontalCanvas.worldCamera;
+  private void CloseAllViewsImmediatelyInternal() {
+    // Close views down the stack
+    while (_OpenViews.Count > 0) {
+      if (_OpenViews[Instance._OpenViews.Count - 1] != null) {
+        _OpenViews[Instance._OpenViews.Count - 1].CloseViewImmediately();
+      }
+    }
   }
 
   public static Canvas GetUICanvas() {
@@ -171,18 +176,34 @@ public class UIManager : MonoBehaviour {
   }
 
   private void HandleBaseViewCloseAnimationFinished(BaseView view) {
+    TryUnDimBackground(view);
+    SendDasEventForDialogClose(view);
+
+    _OpenViews.Remove(view);
+  }
+
+  private void DimBackground(BaseView view, Transform targetCanvas) {
+    view.DimBackground = true;
+    _NumDialogsDimmingBackground++;
+    if (_NumDialogsDimmingBackground == 1) {
+      // First dialog to dim the background, we need to create a dimmer
+      // on top of existing ui
+      _DimBackgroundInstance = GameObject.Instantiate(Instance._DimBackgroundPrefab);
+      _DimBackgroundInstance.transform.SetParent(targetCanvas, false);
+    }
+  }
+
+  private void TryUnDimBackground(BaseView view) {
     if (view.DimBackground) {
-      Instance._NumDialogsDimmingBackground--;
-      if (Instance._NumDialogsDimmingBackground <= 0) {
+      _NumDialogsDimmingBackground--;
+      if (_NumDialogsDimmingBackground <= 0) {
         // Destroy the dimmer when no dialogs want it anymore
-        Instance._NumDialogsDimmingBackground = 0;
-        if (Instance._DimBackgroundInstance != null) {
-          Destroy(Instance._DimBackgroundInstance);
+        _NumDialogsDimmingBackground = 0;
+        if (_DimBackgroundInstance != null) {
+          Destroy(_DimBackgroundInstance);
         }
       }
     }
-
-    Instance._OpenViews.Remove(view);
   }
 
   public void ShowTouchCatcher(System.Action onTouch = null) {
@@ -200,5 +221,19 @@ public class UIManager : MonoBehaviour {
     if (_TouchCatcherInstance != null) {
       _TouchCatcherInstance.Disable();
     }
+  }
+
+  private static void SendDasEventForDialogOpen(BaseView newView) {
+    string eventOpenId = DASUtil.FormatViewTypeForOpen(newView.DASEventViewType);
+    SendDialogDasEvent(eventOpenId, newView);
+  }
+
+  private static void SendDasEventForDialogClose(BaseView closedView) {
+    string eventClosedId = DASUtil.FormatViewTypeForClose(closedView.DASEventViewType);
+    SendDialogDasEvent(eventClosedId, closedView);
+  }
+
+  private static void SendDialogDasEvent(string eventId, BaseView viewOne) {
+    DAS.Event(eventId, viewOne.DASEventViewName);
   }
 }

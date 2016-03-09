@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
+  m_Name: PlayhouseGameChallenge
+  m_EditorClassIdentifier: 
+  _MinigamePrefab: {fileID: 128684, guid: 559882aaad7ed411a9ac990a7c90a8b9, type: 2}
+  _ChallengeID: PlayhouseGame
+  _EnableHubWorldChallenge: 1
+  _EnableDevWorldChallenge: 1
+  _ChallengeTitleLocKey: playhouseGame01.title
+  _ChallengeDescriptionLocKey: playhouseGame01.description
+  _ChallengeIcon: {fileID: 21300000, guid: a6f61eafc41094afbac50cae1fbc00da, type: 3}
+  _ChallengeReqs:
+    ChallengeGateKeys: []
+    StatGateArray: []
+  _HowToPlayDialogContentLocKey: playhouseGame01.text.howToPlay
+  _HowToPlayDialogContentPrefab: {fileID: 0}
+  _Music:
+    _Music: 1971384320
+  MinigameConfig: {fileID: 11400000, guid: ea5ab4db723ca4fc2a43430f6a79b910, type: 2}

@@ -20,7 +20,7 @@ namespace Cozmo {
         set { _QuickQuitButtonInstance.DASEventViewController = value; }
       }
 
-      private void Start() {
+      private void Awake() {
         _QuickQuitButtonInstance.DASEventButtonName = "back_button";
         _QuickQuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
       }

@@ -134,6 +134,8 @@ namespace Cozmo.HomeHub {
       _ScrollRect.onValueChanged.AddListener(HandleTimelineViewScroll);
       _MiddlePane.minWidth = _MaxDailyGoalWidth; 
       DAS.Info(this, "TimelineView Initialized");
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
     }
 
     private void PopulateTimeline(List<TimelineEntryData> timelineEntries) {
@@ -319,13 +321,14 @@ namespace Cozmo.HomeHub {
         return;
       }
       DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
-      var summaryPanel = UIManager.OpenView(_DailySummaryPrefab, transform).GetComponent<DailySummaryPanel>();
-      _DailySummaryInstance = summaryPanel;
-      summaryPanel.Initialize(session);
+      _DailySummaryInstance = UIManager.OpenView(_DailySummaryPrefab, 
+        newView => {
+          newView.Initialize(session);
+        });
       if (onComplete != null) {
-        summaryPanel.FriendshipBarAnimateComplete += onComplete;
+        _DailySummaryInstance.FriendshipBarAnimateComplete += onComplete;
       }
-      summaryPanel.ViewClosed += HandleDailySummaryClosed;
+      _DailySummaryInstance.ViewClosed += HandleDailySummaryClosed;
     }
 
     private void HandleOnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel) {
@@ -421,7 +424,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleEndSessionButtonTap() {
       // Open confirmation dialog instead
-      AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab) as AlertView;
+      AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab);
       // Hook up callbacks
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleEndSessionConfirm, AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoDisconnect));

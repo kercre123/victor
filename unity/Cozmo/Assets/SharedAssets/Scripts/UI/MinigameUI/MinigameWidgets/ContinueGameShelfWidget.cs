@@ -22,7 +22,7 @@ namespace Cozmo {
         set { _ContinueButton.DASEventViewController = value; }
       }
 
-      private void Start() {
+      private void Awake() {
         _ContinueButton.DASEventButtonName = "continue_button";
         _ContinueButton.onClick.AddListener(HandleContinueButtonClicked);
       }

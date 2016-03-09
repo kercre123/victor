@@ -60,6 +60,9 @@
   "askCozmo.button": {
     "translation": "GIVE ME ANSWER"
   },
+  "playhouseGame01.text.howToPlay": {
+    "translation": "Select animations together to create a play for Cozmo"
+  },
   "simonGame.label.watchCozmoPattern": {
     "translation": "Watch Cozmo make a pattern."
   },
@@ -227,5 +230,8 @@
   },
   "speedTap.difficulty.expertDescription": {
     "translation": "Patterns may have any number of colors and lights."
+  },
+  "button.retry": {
+    "translation": "Try Again"
   }
 }

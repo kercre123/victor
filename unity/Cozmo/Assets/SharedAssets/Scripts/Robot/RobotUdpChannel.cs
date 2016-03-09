@@ -6,6 +6,7 @@ public class RobotMessageOut : IMessageWrapper {
   public readonly MessageGameToEngine Message = new MessageGameToEngine();
 
   #region IMessageWrapper implementation
+
   public void Unpack(System.IO.Stream stream) {
     Message.Unpack(stream);
   }
@@ -37,6 +38,7 @@ public class RobotMessageOut : IMessageWrapper {
       return Message.GetTag() != MessageGameToEngine.Tag.INVALID;
     }
   }
+
   #endregion
 }
 
@@ -44,6 +46,7 @@ public class RobotMessageIn : IMessageWrapper {
   public readonly MessageEngineToGame Message = new MessageEngineToGame();
 
   #region IMessageWrapper implementation
+
   public void Unpack(System.IO.Stream stream) {
     Message.Unpack(stream);
   }
@@ -75,6 +78,7 @@ public class RobotMessageIn : IMessageWrapper {
       return Message.GetTag() != MessageEngineToGame.Tag.INVALID;
     }
   }
+
   #endregion
 }
 
@@ -123,7 +127,7 @@ public class RobotUdpChannel : UdpChannel<RobotMessageIn, RobotMessageOut> {
         disconnectionMessage.Pack(state.stream);
       }
       catch (Exception e) {
-        Debug.LogException(e);
+        DAS.Error(this, e.Message);
         return false;
       }
 
@@ -138,7 +142,7 @@ public class RobotUdpChannel : UdpChannel<RobotMessageIn, RobotMessageOut> {
       return true;
     }
     catch (Exception e) {
-      Debug.LogException(e);
+      DAS.Error(this, e.Message);
       return false;
     }
     finally {

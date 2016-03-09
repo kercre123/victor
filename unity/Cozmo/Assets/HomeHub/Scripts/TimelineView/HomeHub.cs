@@ -58,7 +58,7 @@ namespace Cozmo.HomeHub {
 
     private void ShowStartView() {
       RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(false);
-      _StartViewInstance = UIManager.OpenView(_StartViewPrefab) as StartView;
+      _StartViewInstance = UIManager.OpenView(_StartViewPrefab);
       _StartViewInstance.OnConnectClicked += HandleConnectClicked;
     }
 
@@ -69,7 +69,7 @@ namespace Cozmo.HomeHub {
 
     private void ShowTimelineDialog(Transform[] rewardIcons = null) {
       // Create dialog with the game prefabs
-      _TimelineViewInstance = UIManager.OpenView(_TimelineViewPrefab, verticalCanvas: true) as TimelineView;
+      _TimelineViewInstance = UIManager.OpenView(_TimelineViewPrefab, verticalCanvas: true);
       _TimelineViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
       _TimelineViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
       _TimelineViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
@@ -150,10 +150,11 @@ namespace Cozmo.HomeHub {
 
     private void OpenChallengeDetailsDialog(string challenge, Transform buttonTransform) {
       // We need to initialize the dialog first before opening the view, so don't animate right away
-      _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab, false, verticalCanvas: true) as ChallengeDetailsDialog;
-      _ChallengeDetailsDialogInstance.Initialize(_ChallengeStatesById[challenge].data, buttonTransform);
-      _ChallengeDetailsDialogInstance.OpenView();
-
+      _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab, 
+        newView => {
+          newView.Initialize(_ChallengeStatesById[challenge].data, buttonTransform);
+        }, 
+        verticalCanvas: true);
 
       var timelineViewInstance = _TimelineViewInstance;
       timelineViewInstance.LockScroll(true);

@@ -447,10 +447,13 @@ namespace Cozmo {
 
       public void HideGameStateSlide() {
         if (_CurrentSlide != null) {
-
+          // Clean up the current out slide
           if (_TransitionOutSlide != null) {
             Destroy(_TransitionOutSlide.gameObject);
           }
+
+          // Send a das event
+          DAS.Event("ui.slide.exit", _CurrentSlideName);
 
           // Set the instance to transition out slot
           _TransitionOutSlide = _CurrentSlide;
@@ -485,6 +488,9 @@ namespace Cozmo {
         HideGameStateSlide();
 
         _CurrentSlideName = slideName;
+
+        // Update das
+        DAS.Event("ui.slide.enter", _CurrentSlideName);
         UpdateButtonDasViewControllerNames(_CurrentSlideName);
 
         // Create the new slide underneath the container

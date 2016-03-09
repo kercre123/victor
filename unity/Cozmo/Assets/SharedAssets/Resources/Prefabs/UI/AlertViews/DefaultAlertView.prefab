@@ -358,6 +358,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DASEventViewName: alert_view
+  _DASEventViewType: 2
   _CloseDialogOnTapOutside: 1
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 1
@@ -752,6 +753,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _DASEventViewName
       value: alert_view
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _DASEventViewType
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
