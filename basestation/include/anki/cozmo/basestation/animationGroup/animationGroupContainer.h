@@ -43,7 +43,11 @@ namespace Anki {
       
       void Clear();
       
-      bool IsAnimationOnCooldown(const std::string& name, double currentTime_s);
+      bool IsAnimationOnCooldown(const std::string& name, double currentTime_s) const;
+
+      // returns how many seconds are left until the cooldown is over for name. Returns 0 if name isn't found,
+      // negative if it isn't on cooldown
+      float TimeUntilCooldownOver(const std::string& name, double currentTime_s) const;
       
       void SetAnimationCooldown(const std::string& name, double cooldownExpiration_s);
       

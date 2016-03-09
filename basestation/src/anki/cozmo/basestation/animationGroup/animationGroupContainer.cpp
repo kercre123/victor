@@ -13,110 +13,125 @@
 
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "util/logging/logging.h"
+#include "util/math/numericCast.h"
+
 
 namespace Anki {
-  namespace Cozmo {
+namespace Cozmo {
     
-    AnimationGroupContainer::AnimationGroupContainer()
-    {
-    }
+AnimationGroupContainer::AnimationGroupContainer()
+{
+}
     
-    Result AnimationGroupContainer::AddAnimationGroup(const std::string& name)
-    {
-      Result lastResult = RESULT_OK;
+Result AnimationGroupContainer::AddAnimationGroup(const std::string& name)
+{
+  Result lastResult = RESULT_OK;
       
-      auto retVal = _animationGroups.find(name);
-      if(retVal == _animationGroups.end()) {
-        _animationGroups.emplace(name,AnimationGroup(name));
-      }
+  auto retVal = _animationGroups.find(name);
+  if(retVal == _animationGroups.end()) {
+    _animationGroups.emplace(name,AnimationGroup(name));
+  }
       
-      return lastResult;
-    }
+  return lastResult;
+}
     
-    AnimationGroup* AnimationGroupContainer::GetAnimationGroup(const std::string& name)
-    {
-      const AnimationGroup* animGroupPtr = const_cast<const AnimationGroupContainer *>(this)->GetAnimationGroup(name);
-      return const_cast<AnimationGroup*>(animGroupPtr);
-    }
+AnimationGroup* AnimationGroupContainer::GetAnimationGroup(const std::string& name)
+{
+  const AnimationGroup* animGroupPtr = const_cast<const AnimationGroupContainer *>(this)->GetAnimationGroup(name);
+  return const_cast<AnimationGroup*>(animGroupPtr);
+}
     
-    const AnimationGroup* AnimationGroupContainer::GetAnimationGroup(const std::string& name) const
-    {
-      const AnimationGroup* animPtr = nullptr;
+const AnimationGroup* AnimationGroupContainer::GetAnimationGroup(const std::string& name) const
+{
+  const AnimationGroup* animPtr = nullptr;
       
-      auto retVal = _animationGroups.find(name);
-      if(retVal == _animationGroups.end()) {
-        PRINT_NAMED_ERROR("AnimationGroupContainer.GetAnimationGroup_Const.InvalidName",
-                          "AnimationGroup requested for unknown animation group '%s'.\n",
-                          name.c_str());
-      } else {
-        animPtr = &retVal->second;
-      }
+  auto retVal = _animationGroups.find(name);
+  if(retVal == _animationGroups.end()) {
+    PRINT_NAMED_ERROR("AnimationGroupContainer.GetAnimationGroup_Const.InvalidName",
+                      "AnimationGroup requested for unknown animation group '%s'.\n",
+                      name.c_str());
+  } else {
+    animPtr = &retVal->second;
+  }
       
-      return animPtr;
-    }
+  return animPtr;
+}
     
-    std::vector<std::string> AnimationGroupContainer::GetAnimationGroupNames()
-    {
-      std::vector<std::string> v;
-      v.reserve(_animationGroups.size());
-      for (std::unordered_map<std::string, AnimationGroup>::iterator i=_animationGroups.begin(); i != _animationGroups.end(); ++i) {
-        v.push_back(i->first);
-      }
-      return v;
-    }
+std::vector<std::string> AnimationGroupContainer::GetAnimationGroupNames()
+{
+  std::vector<std::string> v;
+  v.reserve(_animationGroups.size());
+  for (std::unordered_map<std::string, AnimationGroup>::iterator i=_animationGroups.begin();
+       i != _animationGroups.end();
+       ++i) {
+    v.push_back(i->first);
+  }
+  return v;
+}
     
     
-    Result AnimationGroupContainer::DefineFromJson(const Json::Value& jsonRoot, const std::string& animationGroupName)
-    {
+Result AnimationGroupContainer::DefineFromJson(const Json::Value& jsonRoot, const std::string& animationGroupName)
+{
       
-      if(RESULT_OK != AddAnimationGroup(animationGroupName)) {
-        PRINT_NAMED_INFO("AnimationGroupContainer.DefineAnimationGroupFromJson.ReplaceName",
-                         "Replacing existing animation group named '%s'.\n",
-                         animationGroupName.c_str());
-      }
+  if(RESULT_OK != AddAnimationGroup(animationGroupName)) {
+    PRINT_NAMED_INFO("AnimationGroupContainer.DefineAnimationGroupFromJson.ReplaceName",
+                     "Replacing existing animation group named '%s'.\n",
+                     animationGroupName.c_str());
+  }
       
-      AnimationGroup* animationGroup = GetAnimationGroup(animationGroupName);
-      if(animationGroup == nullptr) {
-        PRINT_NAMED_ERROR("AnimationGroupContainer.DefineAnimationGroupFromJson",
-                          "Could not GetAnimationGroup named '%s'.",
-                          animationGroupName.c_str());
-        return RESULT_FAIL;
-      }
+  AnimationGroup* animationGroup = GetAnimationGroup(animationGroupName);
+  if(animationGroup == nullptr) {
+    PRINT_NAMED_ERROR("AnimationGroupContainer.DefineAnimationGroupFromJson",
+                      "Could not GetAnimationGroup named '%s'.",
+                      animationGroupName.c_str());
+    return RESULT_FAIL;
+  }
       
-      Result result = animationGroup->DefineFromJson(animationGroupName,
-                                                     jsonRoot);
+  Result result = animationGroup->DefineFromJson(animationGroupName,
+                                                 jsonRoot);
       
       
-      if(result != RESULT_OK) {
-        PRINT_NAMED_ERROR("AnimationGroupContainer.DefineAnimationGroupFromJson",
-                          "Failed to define animation group '%s' from Json.\n",
-                          animationGroupName.c_str());
-      }
+  if(result != RESULT_OK) {
+    PRINT_NAMED_ERROR("AnimationGroupContainer.DefineAnimationGroupFromJson",
+                      "Failed to define animation group '%s' from Json.\n",
+                      animationGroupName.c_str());
+  }
       
-      return result;
-    } // AnimationGroupContainer::DefineAnimationGroupFromJson()
+  return result;
+} // AnimationGroupContainer::DefineAnimationGroupFromJson()
     
     
-    void AnimationGroupContainer::Clear()
-    {
-      _animationGroups.clear();
-    } // Clear()
+void AnimationGroupContainer::Clear()
+{
+  _animationGroups.clear();
+} // Clear()
     
     
     
-    bool AnimationGroupContainer::IsAnimationOnCooldown(const std::string& name, double currentTime_s) {
-      auto retVal = _animationCooldowns.find(name);
-      if(retVal == _animationCooldowns.end()) {
-        return false;
-      } else {
-        return  currentTime_s < retVal->second;
-      }
-    }
+bool AnimationGroupContainer::IsAnimationOnCooldown(const std::string& name, double currentTime_s) const
+{
+  auto retVal = _animationCooldowns.find(name);
+  if(retVal == _animationCooldowns.end()) {
+    return false;
+  } else {
+    return  currentTime_s < retVal->second;
+  }
+}
+
+float AnimationGroupContainer::TimeUntilCooldownOver(const std::string& name, double currentTime_s) const
+{
+  auto retVal = _animationCooldowns.find(name);
+  if(retVal == _animationCooldowns.end()) {
+    return 0.0f;
+  } else {
+    return Util::numeric_cast<float>(retVal->second - currentTime_s);
+  }      
+}
+  
+void AnimationGroupContainer::SetAnimationCooldown(const std::string& name, double cooldownExpiration_s)
+{
+  _animationCooldowns[name] = cooldownExpiration_s;
+}
     
-    void AnimationGroupContainer::SetAnimationCooldown(const std::string& name, double cooldownExpiration_s)
-    {
-      _animationCooldowns[name] = cooldownExpiration_s;
-    }
-    
-  } // namespace Cozmo
+} // namespace Cozmo
 } // namespace Anki
