@@ -1059,7 +1059,7 @@ public class Robot : IRobot {
 
     DAS.Debug(this, "Face Object " + observedObject);
 
-    SendQueueSingleAction(Singleton<FaceObject>.Instance.Initialize(
+    SendQueueSingleAction(Singleton<TurnTowardsObject>.Instance.Initialize(
       objectID: observedObject,
       robotID: ID,
       maxTurnAngle: float.MaxValue,
@@ -1081,7 +1081,7 @@ public class Robot : IRobot {
                        RobotCallback callback = null,
                        QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {    
 
-    SendQueueSingleAction(Singleton<FacePose>.Instance.Initialize(
+    SendQueueSingleAction(Singleton<TurnTowardsPose>.Instance.Initialize(
       world_x: face.WorldPosition.x,
       world_y: face.WorldPosition.y,
       world_z: face.WorldPosition.z,
