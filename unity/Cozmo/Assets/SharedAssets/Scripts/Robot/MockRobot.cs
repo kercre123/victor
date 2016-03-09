@@ -388,7 +388,7 @@ public class MockRobot : IRobot {
     Rotation = rotation;
   }
 
-  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     LookAtPosition(observedObject.WorldPosition);
 
@@ -398,8 +398,17 @@ public class MockRobot : IRobot {
     QueueCallback(1f, callback);
   }
 
-  public void FacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void TurnTowardsFacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     LookAtPosition(face.WorldPosition);
+
+    QueueCallback(1f, callback);
+  }
+
+  // Turns towards the last seen face, but not any more than the specified maxTurnAngle
+  public void TurnTowardsLastFacePose(float maxTurnAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    DAS.Debug(this, "TurnTowardsLastFacePose with maxTurnAngle : " + maxTurnAngle);
+
+    TurnInPlace(maxTurnAngle, 4.3f, 10f);
 
     QueueCallback(1f, callback);
   }
@@ -506,7 +515,7 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void TurnInPlace(float angle_rad,  float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     Rotation *= Quaternion.Euler(0, 0, angle_rad);
 
     QueueCallback(0.5f, callback);

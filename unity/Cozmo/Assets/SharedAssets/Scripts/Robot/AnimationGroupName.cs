@@ -4,6 +4,13 @@ using System.Collections;
 public static class AnimationGroupName {
   public const string kWin = "Win";
 
+  #region Request Game
+
+  public const string kRequestGame_Confirm = "requestGame_Confirm";
+  public const string kRequestGame_Reject = "requestGame_Reject";
+
+  #endregion
+
   #region Speed Tap
 
   public const string kSpeedTap_Fake = "speedTap_Fake";
