@@ -71,13 +71,12 @@ namespace Cozmo {
 
       case TestState::ReadyForNextCommand:
       {
-        CST_ASSERT(_currAnimIter != GetAvailableAnimations().end(), "animation " << kTestAnimationName << " not found");
-        
         if (_numAnimsPlayed == NUM_ANIMS_TO_PLAY) {
           _testState = TestState::TestDone;
           PRINT_NAMED_INFO("TestController.Update", "all tests completed (Result = %d)", _result);
           break;
         }
+        CST_ASSERT(_currAnimIter != GetAvailableAnimations().end(), "animation " << kTestAnimationName << " not found");
         PRINT_NAMED_INFO("CST_Animations.PlayingAnim", "%d: %s", _numAnimsPlayed, _currAnimIter->c_str());
         SendAnimation(_currAnimIter->c_str(), 1);
         _lastAnimPlayed = *_currAnimIter;

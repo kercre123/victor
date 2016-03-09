@@ -58,6 +58,23 @@ static const char* kOneAnimationDefaultMoodCooldownJson =
 "  ]"
 "}";
 
+static const char* kTwoAnimationsDefaultMoodWithCooldownJson =
+"{"
+"  \"Animations\": ["
+"    {"
+"      \"Name\": \"majorWin\","
+"      \"Mood\": \"Default\","
+"      \"Weight\": 1.0,"
+"      \"CooldownTime_Sec\": 10.0"
+"    },"
+"    {"
+"      \"Name\": \"majorWinBeatBox\","
+"      \"Mood\": \"Default\","
+"      \"Weight\": 0.01"
+"    }"
+"  ]"
+"}";
+
 static const char* kOneAnimationDefaultMoodUnweightedJson =
 "{"
 "  \"Animations\": ["
@@ -250,7 +267,7 @@ TEST(AnimationGroup, GetDefaultAnimationName)
   EXPECT_EQ(kMajorWin, name);
 }
 
-TEST(AnimationGroup, GetAnimationNameBeforeCooldown)
+TEST(AnimationGroup, GetAnimationNameBeforeCooldownSingle)
 {
   AnimationGroupContainer groupContainer;
   MoodManager moodManager;
@@ -268,8 +285,42 @@ TEST(AnimationGroup, GetAnimationNameBeforeCooldown)
   moodManager.Update(5);
   
   const std::string& name2 = group.GetAnimationName(moodManager, groupContainer);
+
+  // all are on cooldown, so should still pick major win
+  EXPECT_EQ(kMajorWin, name2);
+}
+
+TEST(AnimationGroup, GetAnimationNameBeforeCooldownMultiple)
+{
+  AnimationGroupContainer groupContainer;
+  MoodManager moodManager;
   
-  EXPECT_EQ(kEmpty, name2);
+  moodManager.SetEmotion(EmotionType::Happy, 0.5);
+  
+  moodManager.Update(0);
+  
+  AnimationGroup group = DeserializeAnimationGroupFromJson(kTwoAnimationsDefaultMoodWithCooldownJson);
+  
+  std::string name;
+
+  // either animation could be selected, so keep going until we get major win (because that one has a cool
+  // down)
+  int tries = 0;
+  while( name != kMajorWin ) {
+    name = group.GetAnimationName(moodManager, groupContainer);
+    EXPECT_TRUE( name == kMajorWin || name == kMajorWinBeatBox ) << name;
+    tries++;
+    if( tries > 10000 ) {
+      ADD_FAILURE() << "very likely failure. Couldn't get majorWin animation";
+    }
+  }
+  
+  moodManager.Update(5);
+  
+  const std::string& name2 = group.GetAnimationName(moodManager, groupContainer);
+
+  // major win should be on cooldown, so should still pick major win
+  EXPECT_EQ(kMajorWinBeatBox, name2);
 }
 
 TEST(AnimationGroup, GetAnimationNameOnCooldown)
