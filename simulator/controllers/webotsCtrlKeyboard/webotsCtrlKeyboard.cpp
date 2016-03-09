@@ -1366,7 +1366,7 @@ namespace Anki {
                                       approachAngle_rad);
                   
                 } else if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
-                  ExternalInterface::FaceObject msg;
+                  ExternalInterface::TurnTowardsObject msg;
                   msg.robotID = 1;
                   msg.objectID = u32_MAX; // HACK to tell game to use blockworld's "selected" object
                   msg.panTolerance_rad = DEG_TO_RAD(5);
@@ -1374,7 +1374,7 @@ namespace Anki {
                   msg.headTrackWhenDone = 0;
                   
                   ExternalInterface::MessageGameToEngine msgWrapper;
-                  msgWrapper.Set_FaceObject(msg);
+                  msgWrapper.Set_TurnTowardsObject(msg);
                   SendMessage(msgWrapper);
                 } else if (modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendGotoObject(-1, // tell game to use blockworld's "selected" object
@@ -1635,14 +1635,14 @@ namespace Anki {
                 } else if(altPressed && !shiftPressed) {
                   // ALT+F: Turn to face the pose of the last observed face:
                   printf("Turning to face ID = %d\n", _lastFace.faceID);
-                  ExternalInterface::FacePose facePose; // construct w/ defaults for speed
-                  facePose.world_x = _lastFace.world_x;
-                  facePose.world_y = _lastFace.world_y;
-                  facePose.world_z = _lastFace.world_z;
-                  facePose.panTolerance_rad = DEG_TO_RAD(10);
-                  facePose.maxTurnAngle = M_PI;
-                  facePose.robotID = 1;
-                  SendMessage(ExternalInterface::MessageGameToEngine(std::move(facePose)));
+                  ExternalInterface::TurnTowardsPose turnTowardsPose; // construct w/ defaults for speed
+                  turnTowardsPose.world_x = _lastFace.world_x;
+                  turnTowardsPose.world_y = _lastFace.world_y;
+                  turnTowardsPose.world_z = _lastFace.world_z;
+                  turnTowardsPose.panTolerance_rad = DEG_TO_RAD(10);
+                  turnTowardsPose.maxTurnAngle = M_PI;
+                  turnTowardsPose.robotID = 1;
+                  SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsPose)));
                 } else if(altPressed && shiftPressed) {
                   // ALT+SHIFT+F: Set owner to next observed face
                   ExternalInterface::SetOwnerFace setOwnerFace;
