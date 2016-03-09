@@ -295,11 +295,7 @@ namespace Anki {
 
         // Process any messages from the basestation
         MARK_NEXT_TIME_PROFILE(CozmoBot, MSG);
-        const u32 btleTick = HAL::GetMicroCounter();
         Messages::ProcessBTLEMessages();
-        const u32 btleTock = HAL::GetMicroCounter() - btleTick;
-        if (btleTock > 4) AnkiDebug( 38, "CozmoBot", 401, "ProcessBTLEMessages time = %d", 1, btleTock);
-
 
         //////////////////////////////////////////////////////////////
         // Sensor updates

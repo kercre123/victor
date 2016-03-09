@@ -684,7 +684,8 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
 
 int16_t ICACHE_FLASH_ATTR i2spiGetRtipBootloaderState(void)
 {
-  return rtipBootloaderState;
+  if (outgoingPhase > PHASE_FLAGS) return STATE_RUNNING; 
+  else return rtipBootloaderState;
 }
 
 uint32_t ICACHE_FLASH_ATTR i2spiGetBodyBootloaderCode(void)
