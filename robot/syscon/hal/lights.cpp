@@ -83,9 +83,12 @@ void Lights::init() {
 
 void Lights::manage(void* userdata) {
   static int light = 0;
+	int time = GetFrame();
 	
-	CalculateLEDColor(lightValues[light], lightStates[light], GetFrame(), lightPhases[light]);
-  light = (light + 1) % TOTAL_LIGHTS;
+	for (int i = 0; i < 4; i++) {
+		CalculateLEDColor(lightValues[light], lightStates[light], time, lightPhases[light]);
+		light = (light + 1) % TOTAL_LIGHTS;
+	}
 }
 
 void Lights::update(int index, const LightState* ledParams) {

@@ -72,7 +72,7 @@ int main(void)
   RTOS::init();
   Crypto::init();
 
-	//Radio::init();
+	Radio::init();
   Motors::init();
 	
   // Setup all tasks

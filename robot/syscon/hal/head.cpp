@@ -76,6 +76,7 @@ void Head::init()
 
   RTOS_Task *task = RTOS::schedule(Head::manage);
 	RTOS::setPriority(task, RTOS_HIGH_PRIORITY);
+	RTOS::delay(task, CYCLES_MS(5.0) / 2);	// Out of phase from everything else
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
@@ -124,8 +125,10 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
   txRxIndex = 0;
 }
 
-inline void transmitByte() { 
+static inline void transmitByte() { 
+  NVIC_DisableIRQ(UART0_IRQn);
   NRF_UART0->TXD = txRxBuffer[txRxIndex++];
+  NVIC_EnableIRQ(UART0_IRQn);
 }
 
 void Head::manage(void* userdata) {

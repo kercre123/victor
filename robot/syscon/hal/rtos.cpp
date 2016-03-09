@@ -38,6 +38,11 @@ void RTOS::kick(uint8_t channel) {
   NRF_WDT->RR[channel] = WDT_RR_RR_Reload;
 }
 
+void RTOS::delay(RTOS_Task* task, int delay) {
+	task->target += delay;
+}
+
+
 RTOS_Task* RTOS::allocate(void) {
   if (free_task == NULL) {
     return NULL;
