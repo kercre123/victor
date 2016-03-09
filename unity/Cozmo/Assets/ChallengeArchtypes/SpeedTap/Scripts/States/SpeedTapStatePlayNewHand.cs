@@ -82,7 +82,7 @@ namespace SpeedTap {
         else if (_TryFake) {
           if (!_TriedFake) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Fake, RobotCompletedFakeTapAnimation);
+              _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Fake, AdjustCheck);
               _TriedFake = true;
               _TryPeek = false;
             }
@@ -103,7 +103,7 @@ namespace SpeedTap {
         }
         else if (_TryPeek && (currTimeMs - _StartTimeMs) >= _PeekDelayTimeMs) {
           _TryPeek = false;
-          _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Peek, RobotCompletedPeekAnimation);
+          _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Peek, AdjustCheck);
         }
       }
     }
@@ -117,14 +117,14 @@ namespace SpeedTap {
     void RobotCompletedTapAnimation(bool success) {
       DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
       if (_CozmoTapRegistered) {
+        _SpeedTapGame.ConsecutiveMisses = 0;
+      }
+      else {
         _SpeedTapGame.ConsecutiveMisses++;
         if (_SpeedTapGame.ConsecutiveMisses > _kMaxMisses) {
           //TODO: Enter Pause-reset-FindCube state.
           DAS.Warn("SpeedTapGame", "Too many consecutive misses!");
         }
-      }
-      else {
-        _SpeedTapGame.ConsecutiveMisses = 0;
       }
       // check for player tapped first here.
       if (_SpeedTapGame.PlayerTap == false) {
@@ -132,13 +132,7 @@ namespace SpeedTap {
       }
     }
 
-    void RobotCompletedFakeTapAnimation(bool success) {
-      _CozmoTapping = false;
-      _CurrentRobot.SetLiftHeight(1.0f);
-      _SpeedTapGame.CheckForAdjust();
-    }
-
-    void RobotCompletedPeekAnimation(bool success) {
+    void AdjustCheck(bool success) {
       _SpeedTapGame.CheckForAdjust();
     }
 
