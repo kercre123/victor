@@ -25,7 +25,8 @@ struct RTOS_Task {
   RTOS_TaskProc task;
   void* userdata;
   
-  int target;
+  int time;
+	int target;
   int period;
   bool repeating;
   bool active;

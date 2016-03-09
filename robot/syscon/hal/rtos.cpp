@@ -31,7 +31,7 @@ void RTOS::init(void) {
 
   // Manage trigger set
   NVIC_EnableIRQ(SWI0_IRQn);
-  NVIC_SetPriority(SWI0_IRQn, 3);
+  NVIC_SetPriority(SWI0_IRQn, RTOS_PRIORITY);
 }
 
 void RTOS::kick(uint8_t channel) {
@@ -166,7 +166,7 @@ extern "C" void SWI0_IRQHandler(void) {
     // Resume execution
     if (!task->active) {
       continue ; 
-    }   
+    }
 
     task->target -= ticks;
 
@@ -175,7 +175,10 @@ extern "C" void SWI0_IRQHandler(void) {
       continue ;
     }
 
-    task->task(task->userdata);
+    int start = GetCounter();
+		task->task(task->userdata);
+		int time = GetCounter() - start;
+		task->time = MAX(time, task->time);
 
     // Either release the task slice, or reinsert it with the period
     if (task->repeating) {

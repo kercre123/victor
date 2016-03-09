@@ -35,8 +35,6 @@ struct MotorInfo
   s16 oldPWM;
 };
 
-const u32 IRQ_PRIORITY = 0;
-
 // 16 MHz timer with PWM running at 20kHz
 const s16 TIMER_TICKS_END = (16000000 / 20000) - 1;
 
@@ -305,7 +303,7 @@ void Motors::init()
   
   // Clear pending interrupts and enable the GPIOTE interrupt
   NVIC_ClearPendingIRQ(GPIOTE_IRQn);
-  NVIC_SetPriority(GPIOTE_IRQn, IRQ_PRIORITY);
+  NVIC_SetPriority(GPIOTE_IRQn, ENCODER_PRIORITY);
   NVIC_EnableIRQ(GPIOTE_IRQn);
   
   // Clear pending events

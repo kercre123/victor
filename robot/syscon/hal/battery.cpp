@@ -190,12 +190,10 @@ void Battery::manage(void* userdata)
 
     case ANALOG_V_EXT_SENSE:
       {
-        static int ground_short = 0;
         uint32_t raw = NRF_ADC->RESULT;
 
         if (raw >= 0x30){
 					RTOS::kick(WDOG_NERVE_PINCH);
-					ground_short = 0;
         }
       
         vExt = calcResult(VEXT_SCALE);
