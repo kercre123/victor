@@ -18,6 +18,8 @@ extern "C" {
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_hash.h"
+#include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "anki/cozmo/robot/logging.h"
 #include "face.h"
 #include "upgradeController.h"
@@ -244,29 +246,52 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
 extern "C" void backgroundTaskOnConnect(void)
 {
   const uint32_t* const serialNumber = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
+  
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
-  Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
-  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
-  rtipMsg.radioConnected.wifiConnected = true;
-  Anki::Cozmo::RTIP::SendMessage(rtipMsg);
-  Anki::Cozmo::Face::FaceUnPrintf();
+  else Anki::Cozmo::Face::FaceUnPrintf();
+  
+  // Tell RTIP radio is connected
+  {
+    Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
+    rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
+    rtipMsg.radioConnected.wifiConnected = true;
+    Anki::Cozmo::RTIP::SendMessage(rtipMsg);
+  }
+    
+  // Send our version information to the engine
+  {
+    Anki::Cozmo::RobotInterface::FWVersionInfo vi;
+    vi.wifiVersion = COZMO_VERSION_COMMIT;
+    vi.rtipVersion = Anki::Cozmo::RTIP::Version;
+    vi.bodyVersion = 0; // Don't have access to this yet
+    os_memcpy(vi.toRobotCLADHash,  messageEngineToRobotHash, sizeof(vi.toRobotCLADHash));
+    os_memcpy(vi.toEngineCLADHash, messageRobotToEngineHash, sizeof(vi.toEngineCLADHash));
+    Anki::Cozmo::RobotInterface::SendMessage(vi);
+  }
+  
+  // Send our serial number to the engine
+  {
+    Anki::Cozmo::RobotInterface::RobotAvailable idMsg;
+    idMsg.robotID = *serialNumber;
+    Anki::Cozmo::RobotInterface::SendMessage(idMsg);
+  }
+    
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
+
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readPairedObjectsAndSend, Anki::Cozmo::NVStorage::NVEntry_PairedObjects);
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readCameraCalAndSend, Anki::Cozmo::NVStorage::NVEntry_CameraCalibration);
-  AnkiEvent( 124, "UniqueID", 372, "SerialNumber = 0x%x", 1, *serialNumber);
-  Anki::Cozmo::RobotInterface::RobotAvailable idMsg;
-  idMsg.robotID = *serialNumber;
-  Anki::Cozmo::RobotInterface::SendMessage(idMsg);
 }
 
 extern "C" void backgroundTaskOnDisconnect(void)
 {
   Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
+  
   rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
   rtipMsg.radioConnected.wifiConnected = false;
   Anki::Cozmo::RTIP::SendMessage(rtipMsg);
+  
   rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_assignCubeSlots;
   os_memset(&rtipMsg.assignCubeSlots, 0, sizeof(Anki::Cozmo::CubeSlots));
   Anki::Cozmo::RTIP::SendMessage(rtipMsg);

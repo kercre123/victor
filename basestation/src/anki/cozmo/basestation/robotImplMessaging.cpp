@@ -57,6 +57,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::printText,                   &Robot::HandlePrint);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,                       &Robot::HandleTrace);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,                 &Robot::HandleCrashReport);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::fwVersionInfo,               &Robot::HandleFWVersionInfo);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::blockPickedUp,               &Robot::HandleBlockPickedUp);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::blockPlaced,                 &Robot::HandleBlockPlaced);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectDiscovered,      &Robot::HandleActiveObjectDiscovered);
@@ -197,6 +198,11 @@ void Robot::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 void Robot::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   _traceHandler.HandleCrashReport(message);
+}
+
+void Robot::HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  _traceHandler.HandleFWVersionInfo(message);
 }
 
 void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message)
