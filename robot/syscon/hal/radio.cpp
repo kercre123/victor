@@ -192,22 +192,6 @@ void Radio::init() {
   radioTask = RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
   RTOS::setPriority(radioTask, RTOS_RADIO_PRIORITY);
   RTOS::stop(radioTask);
-
-
-	assignProp(0, 0x99);
-	assignProp(1, 0xBB);
-	assignProp(2, 0x126);
-
-	LightState state;
-	state.onColor = 0xFFFF;
-	state.offColor = 0xFFFF;
-	state.transitionOnFrames = 0x80;
-	state.transitionOffFrames = 0x80;
-	state.onFrames = 0x80;
-	state.offFrames = 0x80;
-	
-	for (int i = 0; i < TOTAL_LIGHTS; i++)
-	Lights::update(i, &state);
 }
 
 void Radio::advertise(void) {
