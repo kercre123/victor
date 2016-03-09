@@ -52,12 +52,12 @@ namespace HAL {
     else
     {
       AnkiConditionalErrorAndReturnValue(sizeWHeader <= RTIP_MAX_CLAD_MSG_SIZE, false, 41, "WiFi", 260, "Can't send message %x[%d] to WiFi, max size %d\r\n", 3, msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
-      const uint8_t rind = txRind;
       uint8_t wind = txWind;
-      const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
+      int available = TX_BUF_SIZE - ((wind - txRind) & TX_BUF_SIZE_MASK);
       while (available < (sizeWHeader + 2)) // Wait for room for message plus tag plus header plus one more so we can tell empty from full
       {
       	if (!reliable) return false;
+        else available = TX_BUF_SIZE - ((wind - txRind) & TX_BUF_SIZE_MASK);
       }
       const u8* msgPtr = (u8*)buffer;
       txBuf[wind++] = sizeWHeader;

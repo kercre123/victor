@@ -296,7 +296,7 @@ namespace Anki {
         // Process any messages from the basestation
         MARK_NEXT_TIME_PROFILE(CozmoBot, MSG);
         Messages::ProcessBTLEMessages();
-				
+
         //////////////////////////////////////////////////////////////
         // Sensor updates
         //////////////////////////////////////////////////////////////
