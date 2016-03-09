@@ -17,6 +17,7 @@ import tarfile
 import logging
 import ConfigParser
 import Queue
+from datetime import datetime
 
 #set up default logger
 UtilLog = logging.getLogger('webots.test')
@@ -25,6 +26,8 @@ formatter = logging.Formatter('%(name)s - %(message)s')
 stdout_handler.setFormatter(formatter)
 UtilLog.addHandler(stdout_handler)
 
+runningMultipleTests = False
+curTime = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
 
 worldFileTestNamePlaceHolder = '%COZMO_SIM_TEST%'
 generatedWorldFileName = '__generated__.wbt'
@@ -69,7 +72,7 @@ def build(options):
 
 
 # runs webots test
-def runWebots(options, resultQueue):
+def runWebots(options, resultQueue, test):
   # prepare run command
   runCommand = [
     '/Applications/Webots/webots', 
@@ -91,7 +94,12 @@ def runWebots(options, resultQueue):
 
   buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
   mkdir_p(buildFolder)
-  logFileName = os.path.join(buildFolder, 'webots_out.txt')
+
+  if runningMultipleTests:
+    logFileName = os.path.join(buildFolder, 'webots_out_' + test + '_' + curTime + '.txt')
+  else:
+    logFileName = os.path.join(buildFolder, 'webots_out_' + test + '.txt')
+
   logFile = open(logFileName, 'w')
   startedTimeS = time.time()
   returnCode = subprocess.call(runCommand, stdout = logFile, stderr = logFile, cwd=buildFolder)
@@ -124,13 +132,15 @@ def stopWebots(options):
   # kill webots
   # prepare run command
   runCommand = [
-    'pkill', 
+    'pkill',
+    '-f',
+    '-i',
     'webots', 
     ]
   # execute
   subprocess.call(runCommand)
 
-  if (WaitUntil(IsWebotsNotRunning, 3, 0.5)):
+  if (WaitUntil(IsWebotsNotRunning, 5, 0.5)):
     cleanWebots(options)
     return True
     
@@ -169,7 +179,6 @@ def SetTestStatus(testName, status, totalResultFlag, testStatuses):
 # runs all threads groups
 # returns true if all tests suceeded correctly
 def runAll(options):
-  
   # Get list of tests and world files from config
   config = ConfigParser.ConfigParser()
   webotsTestCfgPath = 'project/build-scripts/webots/webotsTests.cfg'
@@ -204,9 +213,9 @@ def runAll(options):
 
     # Run test in thread
     testResultQueue = Queue.Queue(1)
-    runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue])
+    runWebotsThread = threading.Thread(target=runWebots, args=[options, testResultQueue, test])
     runWebotsThread.start()
-    runWebotsThread.join(60) # with timeout
+    runWebotsThread.join(120) # with timeout
     
     # Check if timeout exceeded
     if runWebotsThread.isAlive():
@@ -219,7 +228,12 @@ def runAll(options):
     # Check log for crashes, errors, and warnings
     # TODO: Crashes affect test result, but errors and warnings do not. Should they?
     buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
-    logFileName = os.path.join(buildFolder, 'webots_out.txt')
+    
+    if runningMultipleTests:
+      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '_' + curTime + '.txt')
+    else:
+      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '.txt')
+
     (crashCount, errorCount, warningCount) = parseOutput(options, logFileName)
     # UtilLog.info("webot error count %d warning count %d" % (errorCount, warningCount))
     print '##teamcity[buildStatisticValue key=\'WebotsErrorCount\' value=\'%d\']' % (errorCount)
@@ -239,7 +253,7 @@ def runAll(options):
     
     allTestsPassed = SetTestStatus(test, testResultQueue.get(), allTestsPassed, testStatuses)
       
-  return (allTestsPassed, testStatuses, logFileName)
+  return (allTestsPassed, testStatuses)
 
 
 
@@ -267,9 +281,19 @@ def parseOutput(options, logFile):
 # tarball valgrind output files together
 def tarball(options):
   buildFolder = os.path.join(options.projectRoot, 'build/mac/', options.buildType)
-  logFileName = os.path.join(buildFolder, 'webots_out.txt')
   tar = tarfile.open(os.path.join(buildFolder, "webots_out.tar.gz"), "w:gz")
-  tar.add(logFileName, arcname=os.path.basename(logFileName))
+  
+  config = ConfigParser.ConfigParser()
+  webotsTestCfgPath = 'project/build-scripts/webots/webotsTests.cfg'
+  config.read(webotsTestCfgPath)
+  testNames = config.sections()
+  for test in testNames:
+    if runningMultipleTests:
+      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '_' + curTime + '.txt')
+    else:
+      logFileName = os.path.join(buildFolder, 'webots_out_' + test + '.txt')
+    tar.add(logFileName, arcname=os.path.basename(logFileName))
+  
   tar.close()
       
 
@@ -292,6 +316,8 @@ def main(scriptArgs):
                       help='location of the project root')
   parser.add_argument('--showGraphics', dest='showGraphics', action='store_true',
                       help='display Webots window')
+  parser.add_argument('--numRuns', dest='numRuns', action='store', default=1,
+                      help='run the tests this many times also saves logs with timestamps so they arent overwritten')
   (options, args) = parser.parse_known_args(scriptArgs)
 
   if options.debug:
@@ -320,34 +346,43 @@ def main(scriptArgs):
     UtilLog.error("ERROR build failed")
     return 1
 
-  # Kill webots in case it's running
-  stopWebots(options)
+  # if we are running multiple tests set the flag
+  if(int(options.numRuns) > 1):
+    global runningMultipleTests
+    runningMultipleTests= True
 
-  # run the tests
-  (testsSucceeded, testResults, logFileName) = runAll(options)
-  tarball(options)
+  for _ in range(0, int(options.numRuns)):
+    # save current time for logs
+    global curTime
+    curTime = datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')
+  
+    # Kill webots in case it's running
+    stopWebots(options)
+    
+    # run the tests
+    (testsSucceeded, testResults) = runAll(options)
+    tarball(options)
 
-  print 'Test results: '
-  for key,val in testResults.items():
-    print key + ' : ' + str(val)
+    print 'Test results: '
+    for key,val in testResults.items():
+      print key + ' : ' + str(val)
 
-  returnValue = 0;
-  stopResult = stopWebots(options)
-  if not stopResult:
-    # how do we notify the build system that there is something wrong, but it is not this build specific?
-    returnValue = returnValue + 1
+    returnValue = 0;
+    stopResult = stopWebots(options)
+    if not stopResult:
+      # how do we notify the build system that there is something wrong, but it is not this build specific?
+      returnValue = returnValue + 1
 
 
-  if not testsSucceeded:
-    UtilLog.error("*************************")
-    UtilLog.error("SOME TESTS FAILED")
-    UtilLog.error("log file here " + logFileName)
-    UtilLog.error("*************************")
-    returnValue = returnValue + 1
-  else:
-    UtilLog.info("*************************")
-    UtilLog.info("ALL " + str(len(testResults)) + " TESTS PASSED")
-    UtilLog.info("*************************")
+    if not testsSucceeded:
+      UtilLog.error("*************************")
+      UtilLog.error("SOME TESTS FAILED")
+      UtilLog.error("*************************")
+      returnValue = returnValue + 1
+    else:
+      UtilLog.info("*************************")
+      UtilLog.info("ALL " + str(len(testResults)) + " TESTS PASSED")
+      UtilLog.info("*************************")
 
   return returnValue
 
