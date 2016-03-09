@@ -1053,9 +1053,9 @@ public class Robot : IRobot {
     TrackToObject(null);
   }
 
-  public void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
-                         RobotCallback callback = null,
-                         QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
+                                RobotCallback callback = null,
+                                QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Face Object " + observedObject);
 
@@ -1077,9 +1077,9 @@ public class Robot : IRobot {
 
   }
 
-  public void FacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, 
-                       RobotCallback callback = null,
-                       QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {    
+  public void TurnTowardsFace(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, 
+                              RobotCallback callback = null,
+                              QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {    
 
     SendQueueSingleAction(Singleton<TurnTowardsPose>.Instance.Initialize(
       world_x: face.WorldPosition.x,
