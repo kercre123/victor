@@ -78,10 +78,6 @@ public abstract class GameBase : MonoBehaviour {
       });
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
 
-    // Populate the view before opening it so that animations play correctly
-    InitializeView(_ChallengeData);
-    _SharedMinigameViewInstance.OpenView();
-
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
   }

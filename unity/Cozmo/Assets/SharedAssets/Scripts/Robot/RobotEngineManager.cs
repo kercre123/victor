@@ -360,6 +360,7 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.ImageChunk:
       ReceivedSpecificMessage(message.ImageChunk);
+      break;
     case G2U.MessageEngineToGame.Tag.RobotObservedPossibleObject:
       ReceivedSpecificMessage(message.RobotObservedPossibleObject);
       break;
