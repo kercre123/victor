@@ -112,7 +112,7 @@ namespace HAL {
         return false;
       }
     }
-
+		
     Result Update()
     {
       const uint8_t wind = rxWind;
@@ -152,7 +152,7 @@ namespace HAL {
       }
     }
 
-  } // namespace wifi
+	} // namespace WiFi
 } // namespace HAL
 } // namespace Cozmo
 } // namespace Anki

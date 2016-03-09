@@ -293,11 +293,10 @@ namespace Anki {
           wasConnected_ = false;
         }
 
-#ifndef TARGET_K02
         // Process any messages from the basestation
         MARK_NEXT_TIME_PROFILE(CozmoBot, MSG);
         Messages::ProcessBTLEMessages();
-#endif
+				
         //////////////////////////////////////////////////////////////
         // Sensor updates
         //////////////////////////////////////////////////////////////
