@@ -77,7 +77,7 @@ void Lights::init() {
 	memset(lightStates, 0, sizeof(lightStates));
 	
   // Spread light processing across the radio period
-	RTOS_Task* task = RTOS::schedule(Lights::manage, RADIO_TOTAL_PERIOD / TOTAL_LIGHTS);
+	RTOS_Task* task = RTOS::schedule(Lights::manage);
 	RTOS::setPriority(task, RTOS_LOW_PRIORITY);
 }
 
