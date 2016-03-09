@@ -32,7 +32,12 @@ namespace Anki {
       void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message) const;
       
       /// Handler for robot firmware crash dumps
+      // @TODO this should be moved to a different module
       void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message) const;
+      
+      /// Handle Firmware version info received from robot
+      // @TODO This should be moved to a different module
+      void HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message) const;
       
       /// Retrieve the name string from a name ID
       const std::string& GetName(const int nameId) const;

@@ -9,11 +9,12 @@ CLAD_CSHARP=$(CLAD_EMITTER_DIR)/CSharp_emitter.py
 CLAD_PYTHON=$(CLAD_EMITTER_DIR)/Python_emitter.py
 CLAD_CPP_DECL=../robot/clad/cozmo_CPP_declarations_emitter.py
 CLAD_CPP_SWITCH=./cozmo_CPP_switch_emitter.py
+CLAD_HASH=$(CLAD_EMITTER_DIR)/ASTHash_emitter.py
 
 OUTPUT_DIR:=../generated/clad/
 OUTPUT_DIR_CSHARP=../generated/cladCsharp/
 OUTPUT_DIR_PYTHON=../generated/cladPython/
-OUTPUT_DIR_ENGINE:=$(OUTPUT_DIR)/engine/
+OUTPUT_DIR_ENGINE:=$(OUTPUT_DIR)engine/
 
 INPUT_ENGINE_DIR=./src/
 INPUT_ENGINE_FILES=$(shell cd $(INPUT_ENGINE_DIR); find . -type f -iname '*.clad')
@@ -40,7 +41,8 @@ OUTPUT_ROBOT_H=$(patsubst %.clad, %.h, $(INPUT_ROBOT_CPP_FILES))
 OUTPUT_ROBOT_H_AND_CPP=$(OUTPUT_ROBOT_H) $(OUTPUT_ROBOT_CPP)
 OUTPUT_ROBOT_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_ROBOT_SHARED_FILES))
 OUTPUT_ROBOT_PYTHON=$(patsubst %.clad, %.py, $(INPUT_ROBOT_SHARED_FILES))
-
+ROBOT_ENGINE_TO_ROBOT_UNION=clad/robotInterface/messageEngineToRobot
+ROBOT_ROBOT_TO_ENGINE_UNION=clad/robotInterface/messageRobotToEngine
 
 vpath %.clad $(INPUT_ENGINE_DIR):$(INPUT_VIZ_DIR):$(INPUT_ROBOT_DIR)
 vpath %.h $(OUTPUT_DIR_ENGINE)/
@@ -73,8 +75,13 @@ $(OUTPUT_VIZ_H_AND_CPP): $(INPUT_VIZ_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(C
 	chmod -f 555 $(OUTPUT_DIR_ENGINE)/$*.h
 	chmod -f 555 $(OUTPUT_DIR_ENGINE)/$*.cpp
 
+%_hash.h : %.clad $(CLAD_DEPENDENCIES) $(CLAD_HASH)
+	if ! test -d $(dir $(OUTPUT_DIR_ENGINE)$@); then mkdir -p $(dir $(OUTPUT_DIR_ENGINE)$@); fi
+	if test -f $(OUTPUT_DIR_ENGINE)$@; then chmod -f 777 $(OUTPUT_DIR_ENGINE)$@; fi
+	python $(CLAD_HASH) -I $(INPUT_ROBOT_DIR) -o $(OUTPUT_DIR_ENGINE)$@ $<
+	chmod -f 555 $(OUTPUT_DIR_ENGINE)$@
 
-$(OUTPUT_ROBOT_H_AND_CPP): $(INPUT_ROBOT_CPP_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
+$(OUTPUT_ROBOT_H_AND_CPP): $(INPUT_ROBOT_CPP_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH) $(ROBOT_ENGINE_TO_ROBOT_UNION)_hash.h $(ROBOT_ROBOT_TO_ENGINE_UNION)_hash.h
 	if test -f $(OUTPUT_DIR_ENGINE)/$*.h; then chmod -f 777 $(OUTPUT_DIR_ENGINE)/$*.h; fi
 	if test -f $(OUTPUT_DIR_ENGINE)/$*.cpp; then chmod -f 777 $(OUTPUT_DIR_ENGINE)/$*.cpp; fi
 	$(CLAD_CPP) --output-union-helper-constructors -C $(INPUT_ROBOT_DIR) -o $(OUTPUT_DIR_ENGINE)/ $*.clad
