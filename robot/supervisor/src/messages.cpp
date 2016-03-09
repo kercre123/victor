@@ -245,16 +245,11 @@ namespace Anki {
         DockingController::SetDockingErrorSignalMessage(msg);
       }
 
-      extern "C" void ProcessMessage(u8* buffer, u16 bufferSize)
-      {
-         //XXX  "Implement ProcessMessage"
-      }
-
       void ProcessBTLEMessages()
       {
 #ifdef TARGET_K02
-				HAL::WiFi::Update();
-				HAL::Spine::Manage();
+        HAL::Spine::Manage();
+        HAL::WiFi::Update();
 #else
         u32 dataLen;
 
