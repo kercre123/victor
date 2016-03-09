@@ -21,11 +21,11 @@
 #include <unordered_map>
 #include <vector>
 
-#define CozmoPlugInDebugLogs 0
+#define HijackAudioPlugInDebugLogs 0
 
 namespace AudioEngine {
   class AudioEngineController;
-  class CozmoPlugIn;
+  class HijackAudioPlugIn;
 }
 
 namespace Anki {
@@ -94,12 +94,12 @@ public:
 
 private:
   
-  AudioEngine::AudioEngineController* _audioEngine      = nullptr;  // Audio Engine Lib
-  AudioEngine::CozmoPlugIn*           _cozmoPlugIn      = nullptr;  // Plugin Instance
-  RobotAudioBuffer*                   _robotAudioBuffer = nullptr;  // Audio Buffer for Robot Audio Clinet
+  AudioEngine::AudioEngineController* _audioEngine        = nullptr;  // Audio Engine Lib
+  AudioEngine::HijackAudioPlugIn*     _hijackAudioPlugIn  = nullptr;  // Plugin Instance
+  RobotAudioBuffer*                   _robotAudioBuffer   = nullptr;  // Audio Buffer for Robot Audio Clinet
   
-  Util::Dispatch::Queue*              _dispatchQueue    = nullptr;  // The dispatch queue we're ticking on
-  Anki::Util::TaskHandle              _taskHandle       = nullptr;  // Handle to our tick callback task
+  Util::Dispatch::Queue*              _dispatchQueue      = nullptr;  // The dispatch queue we're ticking on
+  Anki::Util::TaskHandle              _taskHandle         = nullptr;  // Handle to our tick callback task
   
   bool _isInitialized = false;
   
@@ -116,7 +116,7 @@ private:
   void ClearGarbageCollector();
   
   // Debug Cozmo PlugIn Logs
-#if CozmoPlugInDebugLogs
+#if HijackAudioPlugInDebugLogs
   enum class LogEnumType {
     Post,
     CreatePlugIn,

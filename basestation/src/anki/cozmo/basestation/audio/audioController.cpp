@@ -21,7 +21,7 @@
 #include <util/logging/logging.h>
 #include <unordered_map>
 
-#if CozmoPlugInDebugLogs
+#if HijackAudioPlugInDebugLogs
 #include <util/time/universalTime.h>
 #endif
 // Allow the build to include/exclude the audio libs
@@ -31,7 +31,7 @@
 
 #define USE_AUDIO_ENGINE 1
 #include <DriveAudioEngine/audioEngineController.h>
-#include <DriveAudioEngine/PlugIns/cozmoPlugIn.h>
+#include <DriveAudioEngine/PlugIns/hijackAudioPlugIn.h>
 #else
 
 // If we're excluding the audio libs, don't link any of the audio engine
@@ -74,42 +74,42 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
 #if USE_AUDIO_ENGINE
     
     // Setup CozmoPlugIn & RobotAudioBuffer
-    _cozmoPlugIn = new CozmoPlugIn( static_cast<uint32_t>( AnimConstants::AUDIO_SAMPLE_RATE ), static_cast<uint16_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
+    _hijackAudioPlugIn = new HijackAudioPlugIn( static_cast<uint32_t>( AnimConstants::AUDIO_SAMPLE_RATE ), static_cast<uint16_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
     _robotAudioBuffer = new RobotAudioBuffer();
     
     // Setup Callbacks
-    _cozmoPlugIn->SetCreatePlugInCallback( [this] () {
+    _hijackAudioPlugIn->SetCreatePlugInCallback( [this] () {
       PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback!" );
       assert( nullptr != _robotAudioBuffer );
       _robotAudioBuffer->PrepareAudioBuffer();
       
-#if CozmoPlugInDebugLogs
+#if HijackAudioPlugInDebugLogs
       _plugInLog.emplace_back( TimeLog( LogEnumType::CreatePlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
 #endif
     } );
 
-    _cozmoPlugIn->SetDestroyPluginCallback( [this] () {
+    _hijackAudioPlugIn->SetDestroyPluginCallback( [this] () {
       PRINT_NAMED_INFO( "AudioController.Initialize", "Create Destroy Callback!" );
       assert( nullptr != _robotAudioBuffer );
       // Done with voice clear audio buffer
       _robotAudioBuffer->ClearCache();
       
-#if CozmoPlugInDebugLogs
+#if HijackAudioPlugInDebugLogs
       _plugInLog.emplace_back( TimeLog( LogEnumType::DestoryPlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
       PrintPlugInLog();
 #endif
     } );
     
-    _cozmoPlugIn->SetProcessCallback( [this] ( const AudioEngine::CozmoPlugIn::CozmoPlugInAudioBuffer& buffer )
+    _hijackAudioPlugIn->SetProcessCallback( [this] ( const AudioEngine::HijackAudioPlugIn::AudioBuffer& buffer )
     {
       _robotAudioBuffer->UpdateBuffer( buffer.frames, buffer.frameCount );
 
-#if CozmoPlugInDebugLogs
+#if HijackAudioPlugInDebugLogs
       _plugInLog.emplace_back( TimeLog( LogEnumType::Update, "FrameCount: " + std::to_string(buffer.frameCount) , Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
 #endif
     });
     
-    const bool success = _cozmoPlugIn->RegisterPlugin();
+    const bool success = _hijackAudioPlugIn->RegisterPlugin();
     if ( ! success ) {
       PRINT_NAMED_ERROR( "AudioController.Initialize", "Fail to Regist Cozmo PlugIn");
     }
@@ -222,7 +222,7 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioE
       Util::SafeDelete( callbackContext );
     }
     
-#if CozmoPlugInDebugLogs
+#if HijackAudioPlugInDebugLogs
     _plugInLog.emplace_back( TimeLog( LogEnumType::Post, "EventId: " + std::to_string(eventId) , Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
 #endif
   }
@@ -353,7 +353,7 @@ void AudioController::ClearGarbageCollector()
 
 // Debug Cozmo PlugIn Logs
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#if CozmoPlugInDebugLogs
+#if HijackAudioPlugInDebugLogs
 
 double ConvertToMiliSec(unsigned long long int miliSeconds) {
   return (double)miliSeconds / 1000000.0;
