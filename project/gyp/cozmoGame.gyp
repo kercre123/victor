@@ -368,7 +368,6 @@
               '$(SDKROOT)/System/Library/Frameworks/Security.framework',
               '$(SDKROOT)/System/Library/Frameworks/SystemConfiguration.framework',
               '$(SDKROOT)/System/Library/Frameworks/UIKit.framework',
-              '/usr/lib/libstdc++.dylib',
             ],
           }, # end CSharpBinding
 
