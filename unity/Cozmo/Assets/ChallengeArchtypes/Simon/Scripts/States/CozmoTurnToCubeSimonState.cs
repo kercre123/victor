@@ -12,7 +12,7 @@ namespace Simon {
 
     public override void Enter() {
       base.Enter();
-      _CurrentRobot.FaceObject(_TargetCube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
+      _CurrentRobot.TurnTowardsObject(_TargetCube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2, HandleTurnFinished);
     }
 
     private void HandleTurnFinished(bool success) {
