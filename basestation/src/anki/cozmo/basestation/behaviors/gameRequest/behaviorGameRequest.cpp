@@ -75,15 +75,6 @@ Result IBehaviorRequestGame::InitInternal(Robot& robot, double currentTime_sec)
   return RequestGame_InitInternal(robot, currentTime_sec);
 }
 
-f32 IBehaviorRequestGame::GetRequestMinDelayComplete_s() const
-{
-  if( _requestTime_s < 0.0f ) {
-    return -1.0f;
-  }
-
-  return _requestTime_s + _minRequestDelay_s;
-}
-
 void IBehaviorRequestGame::SendRequest(Robot& robot)
 {
   using namespace ExternalInterface;

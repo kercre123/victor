@@ -611,9 +611,9 @@ namespace Cozmo {
             if( obj != nullptr &&
                 obj->IsExistenceConfirmed() ) {
 
-              FacePoseAction* faceAction = new FacePoseAction(robot, obj->GetPose(), 0.5 * PI_F);
-              faceAction->SetPanTolerance(DEG_TO_RAD(5));
-              searchAction->AddAction( faceAction );
+              TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, obj->GetPose(), 0.5 * PI_F);
+              turnTowardsPoseAction->SetPanTolerance(DEG_TO_RAD(5));
+              searchAction->AddAction( turnTowardsPoseAction );
             }
           }
 
@@ -675,7 +675,7 @@ namespace Cozmo {
     if( ! robot.IsCarryingObject() ) {
       Pose3d lastFacePose;
       if( robot.GetFaceWorld().GetLastObservedFace(lastFacePose) > 0 ) {
-        FacePoseAction* lookAtFaceAction = new FacePoseAction(robot, lastFacePose, PI_F);
+        TurnTowardsPoseAction* lookAtFaceAction = new TurnTowardsPoseAction(robot, lastFacePose, PI_F);
         lookAtFaceAction->SetPanTolerance( DEG_TO_RAD(5) );
         StartActing(robot, lookAtFaceAction);
         BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TurnTowardsAFace.FindingOldFace",
@@ -1587,10 +1587,10 @@ namespace Cozmo {
      
       if( robot.IsCarryingObject() ) {
         // look at the block, then react to it
-        FacePoseAction* faceObjectAction = new FacePoseAction(robot, oObject->GetPose(), PI_F);
-        faceObjectAction->SetPanTolerance(DEG_TO_RAD(5));
+        TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, oObject->GetPose(), PI_F);
+        turnTowardsPoseAction->SetPanTolerance(DEG_TO_RAD(5));
         StartActing(robot,
-                    faceObjectAction,
+                    turnTowardsPoseAction,
                     [this,&robot](ActionResult ret){
                       PlayAnimation(robot, "ID_reactTo2ndBlock_01");
                       return false;

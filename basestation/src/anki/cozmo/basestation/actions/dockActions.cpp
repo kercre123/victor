@@ -277,7 +277,7 @@ namespace Anki {
       // Set up a visual verification action to make sure we can still see the correct
       // marker of the selected object before proceeding
       // NOTE: This also disables tracking head to object if there was any
-      _faceAndVerifyAction = new FaceObjectAction(_robot,
+      _faceAndVerifyAction = new TurnTowardsObjectAction(_robot,
                                                   _dockObjectID,
                                                   _dockMarker->GetCode(),
                                                   0, true, false);
@@ -839,7 +839,7 @@ namespace Anki {
           result = ActionResult::FAILURE_ABORT;
         }
         
-        _faceAndVerifyAction = new FaceObjectAction(_robot, _carryingObjectID,
+        _faceAndVerifyAction = new TurnTowardsObjectAction(_robot, _carryingObjectID,
                                                     _carryObjectMarker->GetCode(), 0, true, false);
         
         _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
@@ -1045,7 +1045,7 @@ namespace Anki {
             // If the physical robot thinks it succeeded, move the lift out of the
             // way, and attempt to visually verify
             if(_placementVerifyAction == nullptr) {
-              _placementVerifyAction = new FaceObjectAction(_robot, _carryObjectID, Radians(0), true, false);
+              _placementVerifyAction = new TurnTowardsObjectAction(_robot, _carryObjectID, Radians(0), true, false);
               _placementVerifyAction->ShouldSuppressTrackLocking(true);
               _verifyComplete = false;
               

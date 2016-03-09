@@ -561,7 +561,6 @@ namespace Cozmo {
                      "Terminated Robot VisionComponent::Processor thread");
   } // Processor()
   
-  
   static f32 ComputePoseAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
   {
     const Radians poseAngle1( p1.GetPose().GetRotationAngle<'Z'>() );
@@ -602,57 +601,11 @@ namespace Cozmo {
     // and this should be true
     assert(markerOrig.GetTimeStamp() == t);
     
-    // Check to see if the robot's body or head are
-    // moving too fast to queue this marker
-    if(!_visionWhileMovingEnabled && !robot.IsPickingOrPlacing())
+    // If we were moving too fast at timestamp t then don't queue this marker
+    if(WasMovingTooFast(robot, lastResult, t, p))
     {
-      TimeStamp_t t_prev, t_next;
-      RobotPoseStamp p_prev, p_next;
-      
-      lastResult = robot.GetPoseHistory()->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
-                            "Could not get next/previous poses for t = %d, so "
-                            "cannot compute angular velocity. Ignoring marker.\n", t);
-        
-        // Don't return failure, but don't queue the marker either (since we
-        // couldn't check the angular velocity while seeing it
-        return RESULT_OK;
-      }
-      
-      const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 5.f;
-      const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 10.f;
-      
-      assert(t_prev < t);
-      assert(t_next > t);
-      const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
-      const f32 dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
-      const f32 headSpeedPrev = ComputeHeadAngularSpeed(*p, p_prev, dtPrev_sec);
-      const f32 headSpeedNext = ComputeHeadAngularSpeed(*p, p_next, dtNext_sec);
-      const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
-      const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
-      
-      if(turnSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
-         turnSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
-      {
-        //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
-        //                              "Ignoring vision marker seen while turning with angular "
-        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
-        //                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
-        //                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
-        return RESULT_OK;
-      } else if(headSpeedNext > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
-                headSpeedPrev > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
-      {
-        //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
-        //                              "Ignoring vision marker seen while head moving with angular "
-        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
-        //                              RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
-        //                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
-        return RESULT_OK;
-      }
-      
-    } // if(!_visionWhileMovingEnabled)
+      return RESULT_OK;
+    }
     
     // Update the marker's camera to use a pose from pose history, and
     // create a new marker with the updated camera
@@ -752,7 +705,6 @@ namespace Cozmo {
     
   } // QueueObservedMarker()
   
-  
   Result VisionComponent::UpdateVisionMarkers(Robot& robot)
   {
     Result lastResult = RESULT_OK;
@@ -807,6 +759,18 @@ namespace Cozmo {
                           faceDetection.GetHeadPose().GetTranslation().y(),
                           faceDetection.GetHeadPose().GetTranslation().z());
          */
+        
+        // Get historical robot pose at specified timestamp to get
+        // head angle and to attach as parent of the camera pose.
+        TimeStamp_t t;
+        RobotPoseStamp* p = nullptr;
+        HistPoseKey poseKey;
+        robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
+        // If we were moving too fast at the timestamp the face was detected then don't update it
+        if(WasMovingTooFast(robot, lastResult, faceDetection.GetTimeStamp(), p))
+        {
+          return RESULT_OK;
+        }
         
         // Use the faceDetection to update FaceWorld:
         lastResult = robot.GetFaceWorld().AddOrUpdateFace(faceDetection);
@@ -979,6 +943,62 @@ namespace Cozmo {
     
     return RESULT_OK;
   } // UpdateOverheadMap()
+  
+  bool VisionComponent::WasMovingTooFast(Robot& robot, Result& lastResult, TimeStamp_t t, RobotPoseStamp* p)
+  {
+    // Check to see if the robot's body or head are
+    // moving too fast to queue this marker
+    if(!_visionWhileMovingEnabled && !robot.IsPickingOrPlacing())
+    {
+      TimeStamp_t t_prev, t_next;
+      RobotPoseStamp p_prev, p_next;
+      
+      lastResult = robot.GetPoseHistory()->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
+                            "Could not get next/previous poses for t = %d, so "
+                            "cannot compute angular velocity. Ignoring marker.\n", t);
+        
+        // Don't return failure, but don't queue the marker either (since we
+        // couldn't check the angular velocity while seeing it
+        return true;
+      }
+      
+      const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 5.f;
+      const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 10.f;
+      
+      assert(t_prev < t);
+      assert(t_next > t);
+      const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
+      const f32 dtNext_sec = static_cast<f32>(t_next - t) * 0.001f;
+      const f32 headSpeedPrev = ComputeHeadAngularSpeed(*p, p_prev, dtPrev_sec);
+      const f32 headSpeedNext = ComputeHeadAngularSpeed(*p, p_next, dtNext_sec);
+      const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
+      const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
+      
+      if(turnSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
+         turnSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+      {
+        //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
+        //                              "Ignoring vision marker seen while turning with angular "
+        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+        //                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
+        //                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+        return true;
+      } else if(headSpeedNext > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
+                headSpeedPrev > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+      {
+        //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
+        //                              "Ignoring vision marker seen while head moving with angular "
+        //                              "velocity = %.1f/%.1f deg/sec (thresh = %.1fdeg)\n",
+        //                              RAD_TO_DEG(headSpeedPrev), RAD_TO_DEG(headSpeedNext),
+        //                              HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
+        return true;
+      }
+      
+    } // if(!_visionWhileMovingEnabled)
+    return false;
+  }
 
   template<class PixelType>
   Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, const Robot& robot, s32 quality)

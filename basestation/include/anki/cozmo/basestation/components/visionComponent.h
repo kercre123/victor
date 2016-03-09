@@ -144,6 +144,8 @@ struct DockingErrorSignal;
     void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                f32& headTurnSpeedThresh_degPerSec) const;
     
+    bool WasMovingTooFast(Robot& robot, Result& lastResult, TimeStamp_t t, RobotPoseStamp* p);
+    
   protected:
     
     VisionSystem* _visionSystem = nullptr;
@@ -166,16 +168,16 @@ struct DockingErrorSignal;
     Vision::ImageRGB _nextImg;
     Vision::ImageRGB _lastImg; // the last image we processed
     
+    constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
+    constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);
+    f32 _markerDetectionBodyTurnSpeedThreshold_radPerSec = kDefaultBodySpeedThresh;
+    f32 _markerDetectionHeadTurnSpeedThreshold_radPerSec = kDefaultHeadSpeedThresh;
+    
     TimeStamp_t _processingPeriod = 0;
 
     VisionSystem::PoseData   _currentPoseData;
     VisionSystem::PoseData   _nextPoseData;
     bool                     _visionWhileMovingEnabled = false;
-    
-    constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
-    constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);
-    f32 _markerDetectionBodyTurnSpeedThreshold_radPerSec = kDefaultBodySpeedThresh;
-    f32 _markerDetectionHeadTurnSpeedThreshold_radPerSec = kDefaultHeadSpeedThresh;
     
     std::thread _processingThread;
     

@@ -170,6 +170,7 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
                             : MINIMAL_ANGLE_PLANNER_TARGET_ROT_SPEED,
                             MINIMAL_ANGLE_PLANNER_ROT_ACCEL,
                             MINIMAL_ANGLE_PLANNER_ROT_DECEL,
+                            POINT_TURN_ANGLE_TOL,
                             true);
 
       PRINT_NAMED_INFO("MinimalAnglePlanner.Plan.Turn0", "%f", deltaTheta.ToFloat());
@@ -203,6 +204,7 @@ EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& sta
                           : MINIMAL_ANGLE_PLANNER_TARGET_ROT_SPEED,
                           MINIMAL_ANGLE_PLANNER_ROT_ACCEL,
                           MINIMAL_ANGLE_PLANNER_ROT_DECEL,
+                          POINT_TURN_ANGLE_TOL,
                           true);
 
     PRINT_NAMED_INFO("MinimalAnglePlanner.Plan.Turn1", "%f", deltaTheta.ToFloat());

@@ -40,6 +40,7 @@ protected:
   virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override;
 
   virtual void HandleGameDeniedRequest(Robot& robot) override;
+  virtual f32 GetRequestMinDelayComplete_s() const override;
   
 private:
 

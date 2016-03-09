@@ -14,9 +14,8 @@ const f32 WHEEL_BASE_MM      = 48.f;
 
 // Tolerances on commanded target angles
 // i.e. If motor is within this tolerance of the target angle, it is done moving.
-const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2);
-const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5);
-const f32 POINT_TURN_ANGLE_TOL = DEG_TO_RAD(1.f);
+const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2.f);
+const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
 
 const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-23.f);
 const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);

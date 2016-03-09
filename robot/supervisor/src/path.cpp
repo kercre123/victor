@@ -67,12 +67,14 @@ namespace Anki
 
     void PathSegment::DefinePointTurn(f32 x, f32 y, f32 targetAngle,
                                       f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                                      f32 angleTolerance,
                                       bool useShortestDir)
     {
       type_ = PST_POINT_TURN;
       def_.turn.x = x;
       def_.turn.y = y;
       def_.turn.targetAngle = targetAngle;
+      def_.turn.angleTolerance = angleTolerance;
       def_.turn.useShortestDir = useShortestDir;
 
       SetSpeedProfile(targetRotSpeed, rotAccel, rotDecel);
@@ -1129,6 +1131,7 @@ namespace Anki
 
     bool Path::AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
                                f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                               f32 angleTolerance,
                                bool useShortestDir)
     {
       AnkiAssert(capacity_ == MAX_NUM_PATH_SEGMENTS, 277);
@@ -1140,6 +1143,7 @@ namespace Anki
 
       path_[numPathSegments_].DefinePointTurn(x,y,targetAngle,
                                               targetRotSpeed, rotAccel, rotDecel,
+                                              angleTolerance,
                                               useShortestDir);
 
       numPathSegments_++;
