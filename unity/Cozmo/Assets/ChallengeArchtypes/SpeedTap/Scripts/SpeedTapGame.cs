@@ -11,7 +11,7 @@ namespace SpeedTap {
 
     private const float _kRetreatSpeed = -130.0f;
     private const float _kRetreatTime = 0.30f;
-    private const float _kTapAdjustRange = 1.0f;
+    private const float _kTapAdjustRange = 5.0f;
 
     private Vector3 _CozmoPos;
     private Quaternion _CozmoRot;
@@ -163,8 +163,8 @@ namespace SpeedTap {
 
     private void HandleSessionAnimDone(bool success) {
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
-        if (CurrentDifficulty > DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
-          DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty;
+        if (CurrentDifficulty == DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
+          DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty + 1;
           DataPersistence.DataPersistenceManager.Instance.Save();
         }
         RaiseMiniGameWin();
