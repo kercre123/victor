@@ -214,7 +214,12 @@ namespace Anki {
     ActionResult PlayAnimationGroupAction::Init()
     {
       _animName = _robot.GetAnimationNameFromGroup(_animGroupName);
-      return PlayAnimationAction::Init();
+      if( _animName.empty() ) {
+        return ActionResult::FAILURE_ABORT;
+      }
+      else {
+        return PlayAnimationAction::Init();
+      }
     }
 
     #pragma mark ---- DeviceAudioAction ----
