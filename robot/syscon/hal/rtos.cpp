@@ -179,7 +179,9 @@ extern "C" void SWI0_IRQHandler(void) {
 
     // Either release the task slice, or reinsert it with the period
     if (task->repeating) {
-			task->target = (task->target % task->period) + task->period;
+			do {
+				task->target += task->period;
+			} while (task->target <= 0);
     } else {
       RTOS::release(task);
     }

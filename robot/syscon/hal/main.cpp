@@ -72,16 +72,16 @@ int main(void)
   RTOS::init();
   Crypto::init();
 
-	Radio::init();
-  Motors::init();
-	
   // Setup all tasks
+	Radio::init();
+  Motors::init();	
   Battery::init();
   Bluetooth::init();
   Timer::init();
   Backpack::init();
 	Lights::init();
 
+	// Startup the system
 	Battery::powerOn();
 	
 	//Radio::shutdown();

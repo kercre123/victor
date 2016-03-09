@@ -92,30 +92,29 @@ void Backpack::manage(void*) {
 
 	// Channel 1 is unused by the light mapping
   static const int8_t index[] = { 
-		0, -1, -1, -1,
-    6,  7,  8, -1,
-    3,  4,  5, -1,
-    9, 10, 11, -1,
-    2,  1,  1, -1 
+		0, -1, -1,
+    6,  7,  8,
+    3,  4,  5,
+    9, 10, 11,
+    2,  1,  1,
   };
 
   static const int gamma[] = { 
-    0x100, 0x000, 0x000, 0x000,
-    0x0C0, 0x090, 0x100, 0x000,
-    0x0C0, 0x090, 0x100, 0x000,
-    0x0C0, 0x090, 0x100, 0x000,
-    0x100, 0x000, 0x000, 0x000, 
+    0x100, 0x000, 0x000,
+    0x0C0, 0x090, 0x100,
+    0x0C0, 0x090, 0x100,
+    0x0C0, 0x090, 0x100,
+    0x100, 0x000, 0x000,
   };
-	
-	uint8_t* levels = Lights::state(BACKPACK_LIGHT_INDEX_BASE);
-  
-	for (int i = 0; i < NUM_BACKPACK_LEDS * 4; i++) {
-		int g = gamma[i];
+	  
+	int idx = 0;	
+	for (int g = 0; g < NUM_BACKPACK_LEDS; g++) {
+		uint8_t* levels = Lights::state(BACKPACK_LIGHT_INDEX_BASE+g);
 		
-		if (g == 0) continue ;
-		
-		pdm_value[index[i]] = AdjustTable[(g * levels[i]) >> 10];
-  }
+		for (int i = 0; i < 3; i++, idx++) {		
+			pdm_value[index[idx]] = AdjustTable[(gamma[idx] * levels[i]) >> 10];
+		}
+	}
 }
 
 void Backpack::setLights(const LightState* update) {

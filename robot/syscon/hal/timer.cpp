@@ -12,7 +12,6 @@ void Timer::init()
   
   // This setting will ensure correct behaviour when routing TIMER events through 
   // PPI and low power mode simultaneously.
-
   NRF_POWER->TASKS_CONSTLAT = 1;
 
   // Power on the peripheral
@@ -30,7 +29,7 @@ void Timer::init()
   NRF_RTC1->EVTENSET = RTC_EVTENCLR_TICK_Msk;
   NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
 
-  NVIC_SetPriority(RTC1_IRQn, 2);
+  NVIC_SetPriority(RTC1_IRQn, 1);
   NVIC_EnableIRQ(RTC1_IRQn);
 }
 
