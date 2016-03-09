@@ -163,8 +163,9 @@ namespace SpeedTap {
 
     private void HandleSessionAnimDone(bool success) {
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
-        if (CurrentDifficulty == DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
+        if (CurrentDifficulty >= DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
           DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty + 1;
+          Debug.LogWarning(string.Format("Win on Difficulty {0}! Unlock Difficulty {1}!", CurrentDifficulty, DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted));
           DataPersistence.DataPersistenceManager.Instance.Save();
         }
         RaiseMiniGameWin();
@@ -201,6 +202,7 @@ namespace SpeedTap {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetBehaviorSystem(false);
 
+      Debug.LogWarning(string.Format("Initialized with Difficulty {0}!", CurrentDifficulty));
       GameAudioClient.SetMusicState(GetMusicState());
     }
 

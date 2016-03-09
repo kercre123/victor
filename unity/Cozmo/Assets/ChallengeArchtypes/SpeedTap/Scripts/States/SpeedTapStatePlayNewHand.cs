@@ -118,12 +118,17 @@ namespace SpeedTap {
       DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
       if (_CozmoTapRegistered) {
         _SpeedTapGame.ConsecutiveMisses = 0;
+        // TODO: Potentially use _CozmoTapRegistered instead of EndAnimation to determine if Cozmo hit first,
+        // only do this if we can ensure few to zero false positives. 
+        Debug.LogWarning("Successful Hit!");
       }
       else {
         _SpeedTapGame.ConsecutiveMisses++;
+        Debug.LogWarning(string.Format("Missed : {0}", _SpeedTapGame.ConsecutiveMisses));
         if (_SpeedTapGame.ConsecutiveMisses > _kMaxMisses) {
           //TODO: Enter Pause-reset-FindCube state.
           DAS.Warn("SpeedTapGame", "Too many consecutive misses!");
+          Debug.LogWarning("Too many Consecutive misses!");
         }
       }
       // check for player tapped first here.
