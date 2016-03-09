@@ -56,7 +56,6 @@ namespace CubeSlap {
         }
 
         if (Time.time - _FirstTimestamp > _SlapDelay) {
-          
           _CubeSlapGame.AttemptSlap();
           _SlapTriggered = true;
         }
@@ -64,11 +63,12 @@ namespace CubeSlap {
     }
 
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
-      if (!_SlapTriggered && id == _CubeSlapGame.GetCurrentTarget().ID) {
+      // Cubes are super sensitive right now so this check is handled manually in Update
+      /*if (!_SlapTriggered && id == _CubeSlapGame.GetCurrentTarget().ID) {
         _CubeSlapGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinEarly);
         _CubeSlapGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinEarly);
         _CubeSlapGame.OnFailure();
-      }
+      }*/
     }
 
     private void ResetLastSeenTimeStamp() {

@@ -18,6 +18,8 @@ namespace CubeSlap {
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _CurrentRobot.SetLiftHeight(0.7f);
       _CubeSlapGame.ResetSlapChance();
+      _CubeSlapGame.UpdateRoundsUI();
+      _CubeSlapGame.UpdateScoreboard();
     }
 
     // Target cube is marked as Red if not in the right position, and green if in the right position.

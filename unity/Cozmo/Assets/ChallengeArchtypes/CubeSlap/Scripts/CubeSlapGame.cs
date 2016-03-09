@@ -28,8 +28,6 @@ namespace CubeSlap {
     private float _BaseSlapChance;
     private int _MaxFakeouts;
 
-    private int _SlapCount;
-
     private LightCube _CurrentTarget = null;
 
     [SerializeField]
@@ -146,17 +144,21 @@ namespace CubeSlap {
 
     public void OnSuccess() {
       _CozmoFailCount++;
+      UpdateScoreboard();
       _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleAnimationDone));
     }
 
     public void OnFailure() {
       _CozmoSuccessCount++;
+      UpdateScoreboard();
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleAnimationDone));
     }
 
     public void HandleAnimationDone(bool success) {
       // Determines winner and loser at the end of Cozmo's animation, or returns
       // to seek state for the next round
+      // Display the current round
+      UpdateRoundsUI();
       if (_CozmoFailCount + _CozmoSuccessCount >= _Rounds) {
         if (_CozmoSuccessCount > _CozmoFailCount) {
           _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleLoseGameAnimationDone));
@@ -197,6 +199,15 @@ namespace CubeSlap {
     protected override int CalculateExcitementStatRewards() {
       return _CozmoSuccessCount;
     }
- 
+
+    public void UpdateRoundsUI() {
+      // Display the current round
+      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoSuccessCount + _CozmoFailCount + 1);
+    }
+
+    public void UpdateScoreboard() {
+      SharedMinigameView.CozmoScoreboard.Score = _CozmoSuccessCount;
+      SharedMinigameView.PlayerScoreboard.Score = _CozmoFailCount;
+    }
   }
 }
