@@ -67,7 +67,7 @@ void Head::init()
 
   // Extremely low priorty IRQ
   NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
-  NVIC_SetPriority(UART0_IRQn, 1);
+  NVIC_SetPriority(UART0_IRQn, UART_PRIORITY);
   NVIC_EnableIRQ(UART0_IRQn);
 
   // We begin in receive mode (slave)
@@ -76,6 +76,7 @@ void Head::init()
 
   RTOS_Task *task = RTOS::schedule(Head::manage);
 	RTOS::setPriority(task, RTOS_HIGH_PRIORITY);
+	RTOS::delay(task, CYCLES_MS(4.0));	// Out of phase from everything else
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
@@ -124,8 +125,10 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
   txRxIndex = 0;
 }
 
-inline void transmitByte() { 
+static inline void transmitByte() { 
+  NVIC_DisableIRQ(UART0_IRQn);
   NRF_UART0->TXD = txRxBuffer[txRxIndex++];
+  NVIC_EnableIRQ(UART0_IRQn);
 }
 
 void Head::manage(void* userdata) {

@@ -17,6 +17,14 @@ enum watchdog_channels {
   WDOG_TOTAL_CHANNELS
 };
 
+enum IRQ_Priority {
+	ENCODER_PRIORITY = 0,
+	UART_PRIORITY = 1,
+	RTOS_PRIORITY = 3,
+	RADIO_PRIORITY = 2,
+	TIMER_PRIORITY = 1
+};
+
 static const uint8_t wdog_channel_mask = (1 << WDOG_TOTAL_CHANNELS) - 1;
 
 enum e_nrf_gpio {

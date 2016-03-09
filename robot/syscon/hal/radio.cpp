@@ -95,8 +95,12 @@ static const int ADV_CHANNEL = 81;
 // This is for initial channel selection (do not use advertisement channel)
 static const int MAX_TX_CHANNELS = 64;
 
-static const int RADIO_INTERVAL_DELAY = 0xB6;
-static const int RADIO_TIMEOUT_MSB = 20;
+//static const int RADIO_INTERVAL_DELAY = 0xB6;
+//static const int RADIO_TIMEOUT_MSB = 20;
+
+static const int RADIO_INTERVAL_DELAY = 0xB3;
+static const int RADIO_TIMEOUT_MSB = 40;
+
 static const int RADIO_WAKEUP_OFFSET = 18;
 
 // Global head / body sync values
@@ -185,7 +189,6 @@ void Radio::init() {
   }
 
   // Start the radio stack
-
   radioTask = RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
   RTOS::setPriority(radioTask, RTOS_RADIO_PRIORITY);
   RTOS::stop(radioTask);
@@ -198,7 +201,7 @@ void Radio::advertise(void) {
     UESB_TX_POWER_0DBM,
     PACKET_SIZE,
     5,    // Address length
-    2     // Service speed doesn't need to be that fast (prevent blocking encoders)
+		RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
   uesb_init(&uesb_config);
@@ -383,7 +386,9 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
 
 void Radio::manage(void* userdata) {
   // Transmit to accessories round-robin
-  currentAccessory = (currentAccessory + 1) % TICK_LOOP;
+	if (++currentAccessory >= TICK_LOOP) {
+		currentAccessory = 0;
+	}
   
   if (currentAccessory >= MAX_ACCESSORIES) return ;
 
