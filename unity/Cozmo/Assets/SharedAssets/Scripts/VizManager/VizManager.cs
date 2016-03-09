@@ -100,13 +100,13 @@ namespace Anki.Cozmo.Viz {
     private bool _ShowingObjects = true;
 
     enum TextLabelType : byte {
-      ACTION,
-      LOCALIZED_TO,
-      WORLD_ORIGIN,
-      VISION_MODE,
-      BEHAVIOR_STATE,
-      ANIMATION_NAME,
-      DEBUG_STRING}
+      Action,
+      LocalizedTo,
+      WorldOrigin,
+      VisionMode,
+      BehaviorState,
+      AnimationName,
+      DebugString}
 
     ;
 
@@ -315,16 +315,14 @@ namespace Anki.Cozmo.Viz {
 
       // TODO: None of the following are implemented
       // Not sure which ones we actually use
-      case MessageViz.Tag.DefineColor:
-      case MessageViz.Tag.DockingErrorSignal:
-      case MessageViz.Tag.RobotStateMessage:
-        break;
       case MessageViz.Tag.SetLabel:
-        if (message.SetLabel.labelID == (int)TextLabelType.ANIMATION_NAME) {
+        if (message.SetLabel.labelID == (int)TextLabelType.AnimationName) {
           AnimationName = message.SetLabel.text[0];
         }
         break;
-
+      case MessageViz.Tag.DefineColor:
+      case MessageViz.Tag.DockingErrorSignal:
+      case MessageViz.Tag.RobotStateMessage:
       case MessageViz.Tag.SetRobot:
       case MessageViz.Tag.SetVizOrigin:
       case MessageViz.Tag.StartRobotUpdate:

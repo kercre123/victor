@@ -8,15 +8,15 @@ public class RobotStateTextField : MonoBehaviour {
   [SerializeField]
   private AnkiTextLabel _RobotStateLabel;
 
-  private static bool _useAnimString = false;
+  private static bool _sUseAnimString = false;
 
-  public static void ToggleUseAnimString() {
-    _useAnimString = !_useAnimString;
+  public static void UseAnimString(bool enable) {
+    _sUseAnimString = enable;
   }
 
   private void Update() {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
-      if (_useAnimString) {
+      if (_sUseAnimString) {
         if (VizManager.Instance.AnimationName != _RobotStateLabel.text) {
           _RobotStateLabel.text = VizManager.Instance.AnimationName;
         }

@@ -39,7 +39,7 @@ public class RobotSettingsPane : MonoBehaviour {
   }
 
   private void OnToggleDebugStringType(bool check) {
-    RobotStateTextField.ToggleUseAnimString();
+    RobotStateTextField.UseAnimString(check);
   }
 
   private void OnToggleDebugString() {
