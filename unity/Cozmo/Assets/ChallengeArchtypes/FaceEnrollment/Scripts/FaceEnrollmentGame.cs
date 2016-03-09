@@ -19,6 +19,7 @@ namespace FaceEnrollment {
     private int _ReactionIndex = 0;
 
     private float _LastPlayedReaction = 0.0f;
+    private int _LastReactedID = 0;
 
     [SerializeField]
     private FaceEnrollmentDataView _FaceEnrollmentDataViewPrefab;
@@ -44,14 +45,10 @@ namespace FaceEnrollment {
         newView.ShowWideGameStateSlide(_FaceEnrollmentDataViewPrefab.gameObject, 
         "face_enrollment_data_view_panel").GetComponent<FaceEnrollmentDataView>();
 
-      _FaceEnrollmentDataView.OnEnrollNewFace += AnimateFaceEnroll;
+      _FaceEnrollmentDataView.OnEnrollNewFace += LookForNewFaceToEnroll;
     }
 
-    private void AnimateFaceEnroll() {
-      CurrentRobot.SendAnimation(AnimationName.kSpeedTap_Ask2Play, LookForNewFaceToEnroll);
-    }
-
-    private void LookForNewFaceToEnroll(bool success) {
+    private void LookForNewFaceToEnroll() {
       ResetPose();
       CurrentRobot.EnableNewFaceEnrollment();
     }
@@ -97,8 +94,8 @@ namespace FaceEnrollment {
       if (_FaceEnrollmentView == null) {
         if (faceID > 0 && string.IsNullOrEmpty(name) == false && _FaceIDToReaction.ContainsKey(faceID)) {
           // this is a face we know...
-          if (Time.time - _LastPlayedReaction > 8.0f) {
-            // been at least 8 seconds since we reacted.
+          if (Time.time - _LastPlayedReaction > 10.0f || _LastReactedID != faceID) {
+            // been at least 10 seconds since we reacted or it's a new face.
             CurrentRobot.FacePose(CurrentRobot.Faces.Find(x => x.ID == faceID), callback: FacePoseDone);
           }
         }
@@ -107,6 +104,7 @@ namespace FaceEnrollment {
 
     private void FacePoseDone(bool success) {
       CurrentRobot.SendAnimation(_FaceIDToReaction[_LastSeenFaceID], ReactToFaceAnimationDone);
+      _LastReactedID = _LastSeenFaceID;
     }
 
     private void ReactToFaceAnimationDone(bool success) {
@@ -116,6 +114,7 @@ namespace FaceEnrollment {
 
     protected override void CleanUpOnDestroy() {
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
+      RobotEngineManager.Instance.RobotObservedFace -= HandleOnAnyFaceSeen;
     }
 
 
