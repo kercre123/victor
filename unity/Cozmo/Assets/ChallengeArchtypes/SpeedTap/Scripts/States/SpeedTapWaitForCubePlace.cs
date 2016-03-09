@@ -5,8 +5,8 @@ namespace SpeedTap {
 
   public class SpeedTapWaitForCubePlace : State {
 
-    private const float _kArriveAtCubeThreshold = 100.0f;
-    private const float _kTargetDistanceToCube = 50.0f;
+    private const float _kArriveAtCubeThreshold = 50.0f;
+    private const float _kTargetDistanceToCube = 10.0f;
 
     private SpeedTapGame _SpeedTapGame = null;
 
@@ -24,8 +24,6 @@ namespace SpeedTap {
       if (_ShowHowToPlay) {
         _SpeedTapGame.InitialCubesDone();
       }
-      // TODO: Set up UI
-      _CurrentRobot.SetLiftHeight(1.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
       _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
@@ -34,10 +32,19 @@ namespace SpeedTap {
         return;
       }
       _GotoObjectComplete = false;
-      _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, _kTargetDistanceToCube, HandleGotoObjectComplete);
 
       if (_ShowHowToPlay) {
         _StateMachine.PushSubState(new HowToPlayState(null));
+      }
+      _CurrentRobot.SetLiftHeight(1.0f, HandleLiftRaiseComplete);
+    }
+
+    private void HandleLiftRaiseComplete(bool success) {
+      if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude > _kTargetDistanceToCube) {
+        _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, _kTargetDistanceToCube, HandleGotoObjectComplete);
+      }
+      else {
+        _GotoObjectComplete = true;
       }
     }
 

@@ -40,12 +40,12 @@ namespace SpeedTap {
       _MidHand = false;
       _PlayReady = false;
 
-      _CurrentRobot.SetLiftHeight(1.0f);
       _SpeedTapGame.CheckForAdjust(AdjustDone);
     }
 
     void AdjustDone(bool success) {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
+      _CurrentRobot.SetLiftHeight(1.0f);
       _StartTimeMs = Time.time * 1000.0f;
       _PlayReady = true;
       if (_MidHand == false) {
@@ -78,6 +78,7 @@ namespace SpeedTap {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
               _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Fake, RobotCompletedFakeTapAnimation);
               _TriedFake = true;
+              _TryPeek = false;
             }
           }
         }
@@ -96,7 +97,7 @@ namespace SpeedTap {
         }
         else if (_TryPeek && (currTimeMs - _StartTimeMs) >= _PeekDelayTimeMs) {
           _TryPeek = false;
-          _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Peek);
+          _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Peek, RobotCompletedPeekAnimation);
         }
       }
     }
@@ -114,25 +115,29 @@ namespace SpeedTap {
       }
     }
 
-    // TODO: Figure out potential Readjust logic for mid hand
     void RobotCompletedFakeTapAnimation(bool success) {
       _CozmoTapping = false;
       _CurrentRobot.SetLiftHeight(1.0f);
+      _SpeedTapGame.CheckForAdjust();
+    }
+
+    void RobotCompletedPeekAnimation(bool success) {
+      _SpeedTapGame.CheckForAdjust();
     }
 
     void CozmoDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.cozmo_tap", "");
-      _StateMachine.SetNextState(new SpeedTapCozmoWins());
+      _SpeedTapGame.CozmoWinsHand();
     }
 
     void PlayerDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.player_tap", "");
       if (_GotMatch) {
         _SpeedTapGame.PlayerTap = true;
-        _StateMachine.SetNextState(new SpeedTapPlayerWins());
+        _SpeedTapGame.PlayerWinsHand();
       }
       else if (_LightsOn) {
-        _StateMachine.SetNextState(new SpeedTapCozmoWins());
+        _SpeedTapGame.CozmoWinsHand();
       }
     }
 
