@@ -217,30 +217,19 @@ void Crypto::random(void* ptr, int length) {
 }
 
 void Crypto::execute(const CryptoTask* task) {
-	RTOS::EnterCritical();
-	int count = fifoCount;
-	RTOS::LeaveCritical();
-
-  if (fifoCount >= MAX_CRYPTO_TASKS) {
-    return ;
-  }
-
-  RTOS::EnterCritical();
+	if (fifoTail + 1 == fifoHead) {
+		return ;
+	}
+	
   memcpy(&fifoQueue[fifoTail], task, sizeof(CryptoTask));
   fifoTail = (fifoTail+1) % MAX_CRYPTO_TASKS;
-  fifoCount++;
-  RTOS::LeaveCritical();
 }
 
 void Crypto::manage(void) {
-	RTOS::EnterCritical();
-
 	CryptoTask* task = &fifoQueue[fifoHead];
-	int count = fifoCount;
-	RTOS::LeaveCritical();
 
 	// We have no pending messages
-	if (count <= 0) {
+	if (fifoHead == fifoTail) {
 		return ;
 	}
 
@@ -267,9 +256,6 @@ void Crypto::manage(void) {
 	}
 
 	// Dequeue message
-	RTOS::EnterCritical();
 	fifoHead = (fifoHead+1) % MAX_CRYPTO_TASKS;
-	fifoCount--;
-	RTOS::LeaveCritical();
 }
 

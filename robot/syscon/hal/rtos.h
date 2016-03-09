@@ -25,7 +25,8 @@ struct RTOS_Task {
   RTOS_TaskProc task;
   void* userdata;
   
-  int target;
+  int time;
+	int target;
   int period;
   bool repeating;
   bool active;
@@ -49,6 +50,7 @@ namespace RTOS {
   RTOS_Task* create(RTOS_TaskProc task, bool repeating = true);
   void start(RTOS_Task* task, int period = CYCLES_MS(5.0f), void* userdata = NULL);
   void stop(RTOS_Task* task);
+	void delay(RTOS_Task* task, int delay);
   void setPriority(RTOS_Task* task, RTOS_Priority priority);
   
   RTOS_Task* schedule(RTOS_TaskProc task, int period = CYCLES_MS(5.0f), void* userdata = NULL, bool repeating = true);
