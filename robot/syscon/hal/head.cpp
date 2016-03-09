@@ -153,14 +153,14 @@ static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 }
 static void Process_setCubeLights(const CubeLights& msg)
 {
-  Radio::setPropLights(msg.objectID, msg.lights);
+  //Radio::setPropLights(msg.objectID, msg.lights);
 }
 
 static void Process_assignCubeSlots(const CubeSlots& msg)
 {
   for (int i=0; i<7; ++i) // 7 is the number supported in messageToActiveObject.clad
   {
-    Radio::assignProp(i, msg.factory_id[i]);
+    //Radio::assignProp(i, msg.factory_id[i]);
   }
 }
 
