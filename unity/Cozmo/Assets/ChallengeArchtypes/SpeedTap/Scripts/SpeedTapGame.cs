@@ -124,10 +124,6 @@ namespace SpeedTap {
       }
 
       if (_PlayerScore > _CozmoScore) {
-        if (CurrentDifficulty > DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
-          DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty;
-          DataPersistence.DataPersistenceManager.Instance.Save();
-        }
         _PlayerRoundsWon++;
       }
       else {
@@ -164,6 +160,10 @@ namespace SpeedTap {
 
     private void HandleSessionAnimDone(bool success) {
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
+        if (CurrentDifficulty > DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
+          DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty;
+          DataPersistence.DataPersistenceManager.Instance.Save();
+        }
         RaiseMiniGameWin();
       }
       else {
