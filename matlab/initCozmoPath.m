@@ -19,6 +19,6 @@ end
 
 % For now, coretech-external is special and lives outside this repo, 
 % assumed to be in ../coretech-external
-run(fullfile(cozmoDir, '..', '..', '..', '..', 'coretech-external', 'matlab', 'initExternalPath.m'));
+run(fullfile(cozmoDir, '..', '..', '..', '..', 'coretech-external-local', 'matlab', 'initExternalPath.m'));
 
 end % initCozmoPath()

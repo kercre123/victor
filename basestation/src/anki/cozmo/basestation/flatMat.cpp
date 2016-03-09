@@ -44,15 +44,15 @@ namespace Anki {
     : MatPiece(type, GetSizeByType(type))
     {
       if(ObjectType::FlatMat_LETTERS_4x4 == _type) {
-#         include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"
+        //#         include "anki/cozmo/basestation/Mat_Letters_30mm_4x4.def"
       } else if(Type::FlatMat_LAVA_PLAYTEST == _type) {
-#         include "anki/cozmo/basestation/Mat_LavaPlayTest.def"
+        //#         include "anki/cozmo/basestation/Mat_LavaPlayTest.def"
       } else if(Type::FlatMat_ANKI_LOGO_8BIT == _type) {
         PRINT_NAMED_ERROR("FlatMat.AnkiLogoMatIsDeprecated", "");
-//#         include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
+        //#         include "anki/cozmo/basestation/Mat_AnkiLogoPlus8Bits_8x8.def"
       } else if(Type::FlatMat_GEARS_4x4 == _type) {
         PRINT_NAMED_ERROR("FlatMat.GearsMatIsDeprecated", "");
-//#         include "anki/cozmo/basestation/Mat_Gears_30mm_4x4.def"
+        //#         include "anki/cozmo/basestation/Mat_Gears_30mm_4x4.def"
       } else {
           PRINT_NAMED_ERROR("FlatMat.UnrecognizedType", "Unknown FlatMat type specified at construction.");
           assert(false);

@@ -49,45 +49,53 @@ namespace Anki {
     {
       const f32& length = GetSize().x();
       const f32& width  = GetSize().y();
-      //const f32& height = GetSize().z();
+      const f32& height = GetSize().z();
       
-      //const f32 markerSize_sides = 30.f;
+      const f32 markerSize_sides = 30.f;
       const f32 markerSize_top   = 30.f;
       
-      /* COMMENTING OUT B/C THESE MARKERS DON'T CURRENTLY EXIST IN NN LIBRARY
-       
+      // TODO: Set to actual markers once we support platforms
+      const Vision::MarkerType frontSideMarker = Vision::MARKER_UNKNOWN;
+      const Vision::MarkerType backSideMarker  = Vision::MARKER_UNKNOWN;
+      const Vision::MarkerType rightSideMarker = Vision::MARKER_UNKNOWN;
+      const Vision::MarkerType leftSideMarker  = Vision::MARKER_UNKNOWN;
+      
+      const Vision::MarkerType topMarkerUL = Vision::MARKER_UNKNOWN;
+      const Vision::MarkerType topMarkerUR = Vision::MARKER_UNKNOWN;
+      const Vision::MarkerType topMarkerLL = Vision::MARKER_UNKNOWN;
+      const Vision::MarkerType topMarkerLR = Vision::MARKER_UNKNOWN;
+      
       // Front Face
-      AddMarker(Vision::MARKER_PLATFORMNORTH, // Vision::MARKER_INVERTED_E,
+      AddMarker(frontSideMarker,
                 Pose3d(M_PI_2, Z_AXIS_3D(), {length*.5f, 0.f, -.5f*height}),
                 markerSize_sides);
       
       // Back Face
-      AddMarker(Vision::MARKER_PLATFORMSOUTH, //Vision::MARKER_INVERTED_RAMPBACK,
+      AddMarker(backSideMarker,
                 Pose3d(-M_PI_2, Z_AXIS_3D(), {-length*.5f, 0.f, -.5f*height}),
                 markerSize_sides);
       
       // Right Face
-      AddMarker(Vision::MARKER_PLATFORMEAST, //Vision::MARKER_INVERTED_RAMPRIGHT,
+      AddMarker(rightSideMarker,
                 Pose3d(M_PI, Z_AXIS_3D(), {0, width*.5f, -.5f*height}),
                 markerSize_sides);
       
       // Left Face
-      AddMarker(Vision::MARKER_PLATFORMWEST, //Vision::MARKER_INVERTED_RAMPLEFT,
+      AddMarker(leftSideMarker,
                 Pose3d(0.f, Z_AXIS_3D(), {0, -width*.5f, -.5f*height}),
                 markerSize_sides);
-      */
-      
+
       // Top Faces:
-      AddMarker(Vision::MARKER_INVERTED_A, //TODO: Vision::MARKER_ANKILOGOWITHBITS001,
+      AddMarker(topMarkerUL,
                 Pose3d(-M_PI_2, X_AXIS_3D(), {-length*.25f, -width*.25f, 0.f}),
                 markerSize_top);
-      AddMarker(Vision::MARKER_INVERTED_B, //TODO: Vision::MARKER_ANKILOGOWITHBITS010,
+      AddMarker(topMarkerLL,
                 Pose3d(-M_PI_2, X_AXIS_3D(), {-length*.25f,  width*.25f, 0.f}),
                 markerSize_top);
-      AddMarker(Vision::MARKER_INVERTED_C, //TODO: Vision::MARKER_ANKILOGOWITHBITS020,
+      AddMarker(topMarkerLR,
                 Pose3d(-M_PI_2, X_AXIS_3D(), { length*.25f, -width*.25f, 0.f}),
                 markerSize_top);
-      AddMarker(Vision::MARKER_INVERTED_D, //TODO: Vision::MARKER_ANKILOGOWITHBITS030,
+      AddMarker(topMarkerUR,
                 Pose3d(-M_PI_2, X_AXIS_3D(), { length*.25f,  width*.25f, 0.f}),
                 markerSize_top);
       
