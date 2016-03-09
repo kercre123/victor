@@ -191,6 +191,9 @@ class _Dispatcher(IDataReceiver):
                             'formatted': formatTrace(self.formatTable[msg.trace.stringId][0], msg.trace.value)
                     }
                     sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
+            elif msg.tag == msg.Tag.mainCycleTimeError:
+                sys.stdout.write(repr(msg.mainCycleTimeError))
+                sys.stdout.write(os.linesep)
             for tag, subs in self.ReceiveDataSubscribers.items():
                 if msg.tag == tag:
                     for sub in subs:
