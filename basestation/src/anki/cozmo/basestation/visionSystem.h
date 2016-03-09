@@ -220,7 +220,7 @@ namespace Cozmo {
     bool CheckMailbox(ExternalInterface::RobotObservedMotion& msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
     bool CheckMailbox(Vision::FaceTracker::UpdatedID&  msg);
-    bool CheckMailbox(OverheadEdgeChain& msg);
+    bool CheckMailbox(OverheadEdgePointChain& msg);
     
     bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
     bool CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg);
@@ -438,7 +438,7 @@ namespace Cozmo {
     MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
     MultiMailbox<Vision::FaceTracker::UpdatedID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
     
-    MultiMailbox<OverheadEdgeChain, 64> _overheadEdgeChainMailbox;
+    MultiMailbox<OverheadEdgePointChain, 64> _overheadEdgeChainMailbox;
     
     MultiMailbox<std::pair<const char*, Vision::Image>, 10>     _debugImageMailbox;
     MultiMailbox<std::pair<const char*, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;

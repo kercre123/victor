@@ -52,7 +52,6 @@
 
 #define DEBUG_MOTION_DETECTION 0
 #define DEBUG_FACE_DETECTION   0
-#define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
 
 #define USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID 0
 #define USE_THREE_FRAME_MOTION_DETECTION 0
@@ -415,7 +414,7 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(OverheadEdgeChain& msg)
+  bool VisionSystem::CheckMailbox(OverheadEdgePointChain& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -1685,9 +1684,9 @@ namespace Cozmo {
     cv::filter2D(overheadImg.get_CvMat_(), edgeImgX.get_CvMat_(), CV_32F, kernel.get_CvMatx_());
     
     // Look for the first strong edge along the x axis
-    std::list<OverheadEdgeChain> edges;
+    std::vector<OverheadEdgePointChain> edgeChains;
     //const f32 edgeThresholdSq = kEdgeThreshold * kEdgeThreshold;
-    OverheadEdge* lastEdge = nullptr;
+    OverheadEdgePoint* lastEdgePoint = nullptr;
     const s32 jNear = std::ceil(nearX) - roi.GetDist() + kernel.GetNumCols()/2;
     const s32 jFar  = std::floor(farX) - roi.GetDist();
     for(s32 i=0; i<edgeImgX.GetNumRows(); ++i)
@@ -1697,7 +1696,6 @@ namespace Cozmo {
       //const Vision::PixelRGB_<f32>* edgeImgY_i = edgeImgY.GetRow(i);
       for(s32 j=jNear; j<jFar; ++j)
       {
-        if(mask_i[j] > 0 && j)
         {
           // An edge above threshold in _any_ channel is an edge
           auto & edgePixelX = edgeImgX_i[j];
@@ -1709,36 +1707,29 @@ namespace Cozmo {
              std::abs(edgePixelX.g()) > kEdgeThreshold ||
              std::abs(edgePixelX.b()) > kEdgeThreshold)
           {
-            OverheadEdge edge = {
-              .position  = Anki::Point2f(j + roi.GetDist(), i - roi.GetWidthFar()*0.5f),
-              .gradient  = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()},
-              .timestamp = image.GetTimestamp(),
+            OverheadEdgePoint edgePoint = {
+              .position  = Anki::Point2f(j + roi.GetDist(), roi.GetWidthFar()*0.5f - i),
+              .gradient  = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()}
             };
-            if(nullptr == lastEdge ||
-               ComputeDistanceBetween(edge.position, lastEdge->position) > kMaxDistBetweenEdges_mm)
+            if(nullptr == lastEdgePoint ||
+               ComputeDistanceBetween(edgePoint.position, lastEdgePoint->position) > kMaxDistBetweenEdges_mm)
             {
-              // Start new edge
-              edges.push_back(OverheadEdgeChain());
+              // Start new chain
+              edgeChains.emplace_back();
+              edgeChains.back().timestamp = image.GetTimestamp();
             }
-            edges.back().push_back(std::move(edge));
-            lastEdge = &edges.back().back();
+            if(mask_i[j] > 0 && j)
+            {
+              edgeChains.back().points.push_back(std::move(edgePoint));
+              lastEdgePoint = &edgeChains.back().points.back();
+            }
             break; // only keep first edge found in each row
           }
         }
       }
     }
     
-    // Prune length-one chains as noise
-    for(auto iter = edges.begin(); iter != edges.end(); )
-    {
-      if(iter->size() < kMinChainLength) {
-        iter = edges.erase(iter);
-      } else {
-        
-        ++iter;
-      }
-    }
-    
+    #define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
     if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
     {
       static const std::vector<ColorRGBA> lineColorList = {
@@ -1757,21 +1748,25 @@ namespace Cozmo {
       dispImg.DrawLine(Anki::Point2f(jFar, 0), Anki::Point2f(jFar, dispImg.GetNumRows()),
                        NamedColors::YELLOW, 1);
       
-      for(auto & chain : edges)
+      for(auto & chain : edgeChains)
       {
-        ASSERT_NAMED(chain.size() >= 2, "Expecting all chain length to be >= 2");
-        for(s32 i=1; i<chain.size(); ++i) {
-          ASSERT_NAMED(chain[i-1].position.y() != chain[i].position.y(),
-                       "There should only be one edge per row");
-          Anki::Point2f startPoint(chain[i-1].position);
-          startPoint += dispOffset;
-          Anki::Point2f endPoint(chain[i].position);
-          endPoint += dispOffset;
-          dispImg.DrawLine(startPoint, endPoint, *color, 1);
-        }
-        ++color;
-        if(color == lineColorList.end()) {
-          color = lineColorList.begin();
+        if(chain.points.size() >= kMinChainLength)
+        {
+          for(s32 i=1; i<chain.points.size(); ++i) {
+            ASSERT_NAMED(chain.points[i-1].position.y() != chain.points[i].position.y(),
+                         "There should only be one edge per row");
+            Anki::Point2f startPoint(chain.points[i-1].position);
+            startPoint.y() = -startPoint.y();
+            startPoint += dispOffset;
+            Anki::Point2f endPoint(chain.points[i].position);
+            endPoint.y() = -endPoint.y();
+            endPoint += dispOffset;
+            dispImg.DrawLine(startPoint, endPoint, *color, 1);
+          }
+          ++color;
+          if(color == lineColorList.end()) {
+            color = lineColorList.begin();
+          }
         }
       }
       Vision::ImageRGB dispEdgeImg(overheadImg.GetNumRows(), overheadImg.GetNumCols());
@@ -1787,6 +1782,19 @@ namespace Cozmo {
       _debugImageRGBMailbox.putMessage({"OverheadImage", dispImg});
       _debugImageRGBMailbox.putMessage({"OverheadEdgeImage", dispEdgeImg});
     } // if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
+    
+    // Finally do send the edges to the mailbox. Note I do this after rendering because I am std::moving the edges
+    
+    // Copy only the chains with at least k points (less is considered noise)
+    for(const auto& chain : edgeChains)
+    {
+      if ( chain.points.size() >= kMinChainLength ) {
+        _overheadEdgeChainMailbox.putMessage( std::move(chain) );
+      }
+    }
+    // if we std::move chains, their state is no longer valid after, clear the vector to prevent further usage
+    edgeChains.clear();
+    
     
     return RESULT_OK;
   } // DetectOverheadEdges()

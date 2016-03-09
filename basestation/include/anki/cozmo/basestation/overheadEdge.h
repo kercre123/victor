@@ -20,14 +20,25 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-  struct OverheadEdge {
+
+  // Point in an edge
+  struct OverheadEdgePoint {
     Point<2,s32> position;
     Vec3f        gradient;
-    TimeStamp_t  timestamp;
+  };
+
+  // container of points
+  using OverheadEdgePointVector = std::vector<OverheadEdgePoint>;
+  
+  // Chain of points in what seems to be the same edge
+  struct OverheadEdgePointChain {
+    OverheadEdgePointChain() : timestamp(0){}
+    OverheadEdgePointVector points;
+    TimeStamp_t timestamp;
   };
   
-  using OverheadEdgeChain = std::vector<OverheadEdge>;
+  // Container of chains of points
+  using OverheadEdgeVector = std::vector<OverheadEdgePointChain>;
   
 } // namespace Cozmo
 } // namespace Anki

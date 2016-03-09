@@ -18,6 +18,7 @@
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/block.h"
 #include "anki/cozmo/basestation/mat.h"
@@ -2325,6 +2326,62 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
       // add markerless object
       const Result ret = AddMarkerlessObject(p);
       return ret;
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    Result BlockWorld::AddVisionOverheadEdges(const OverheadEdgeVector& edges)
+    {
+      // we just got a bunch of edges from the camera, what in the world do we do with them?
+      
+      // debug draw
+      {
+        static float lingerUntil = 0.0f;
+        const float kLingerTime = 2.0f;
+        const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        
+        // when we don't have edges, we allow some time to remove the last reported edges (to prevent thread sync from
+        // making debug blink)
+        if ( edges.empty() ) {
+          if ( lingerUntil < currentTime ) {
+            _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld.AddVisionOverheadEdges");
+          }
+        } else {
+          _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld.AddVisionOverheadEdges");
+          lingerUntil = currentTime + kLingerTime;
+          
+          const float zoffset = 60.0f;
+          for( const auto& edge : edges ) {
+            ASSERT_NAMED( edge.points.size() > 1, "BlockWorld.AddVisionOverheadEdges.InsufficientPointsInEdge" );
+
+            TimeStamp_t request = edge.timestamp;
+            
+            OverheadEdgePointVector::const_iterator startIt = edge.points.begin();
+            OverheadEdgePointVector::const_iterator endIt   = startIt + 1;
+            while(endIt!=edge.points.end())
+            {
+              Vec3f start( startIt->position.x(), startIt->position.y(), 0.0f);
+              Vec3f end  ( endIt->position.x(), endIt->position.y(), 0.0f);
+            
+              TimeStamp_t t;
+              RobotPoseStamp* p = nullptr;
+              HistPoseKey poseKey;
+              const Result ret = _robot->GetPoseHistory()->ComputeAndInsertPoseAt(request,t, &p, &poseKey, true);
+              const bool poseIsGood = ( RESULT_OK == ret );
+              
+              const Pose3d& observedPose = p ? p->GetPose() : Pose3d();
+              start = observedPose * start;
+              end   = observedPose * end;
+              
+              const Anki::ColorRGBA& color = poseIsGood ? NamedColors::GREEN : NamedColors::RED;
+              _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld.AddVisionOverheadEdges", start, end, color, false, zoffset+1.0f );
+              startIt = endIt;
+              ++endIt;
+            }
+          }
+        }
+      }
+    
+      return RESULT_FAIL;
     }
   
     void BlockWorld::RemoveMarkersWithinMarkers(PoseKeyObsMarkerMap_t& currentObsMarkers)
