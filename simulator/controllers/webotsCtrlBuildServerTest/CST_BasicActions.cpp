@@ -60,6 +60,8 @@ namespace Anki {
       switch (_testState) {
         case TestState::MoveLiftUp:
         {
+          StartMovie("BasicActions");
+        
           SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, 100, 100);
           _testState = TestState::MoveLiftDown;
           break;
@@ -70,7 +72,7 @@ namespace Anki {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetLiftHeight_mm(),
                                                 LIFT_HEIGHT_HIGHDOCK,
-                                                5), 3)
+                                                5), 20)
           {
             SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, 100, 100);
             _testState = TestState::MoveHeadUp;
@@ -83,7 +85,7 @@ namespace Anki {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetLiftHeight_mm(),
                                                 LIFT_HEIGHT_LOWDOCK,
-                                                5), 3)
+                                                5), 20)
           {
             SendMoveHeadToAngle(MAX_HEAD_ANGLE, 100, 100);
             _testState = TestState::MoveHeadDown;
@@ -94,7 +96,7 @@ namespace Anki {
         {
           // Verify head is up
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL), 3)
+                                           NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL), 20)
           {
             SendMoveHeadToAngle(0, 100, 100);
             _testState = TestState::DriveForwards;
@@ -105,7 +107,7 @@ namespace Anki {
         {
           // Verify head is down
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL), 5)
+                                           NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL), 20)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -124,7 +126,7 @@ namespace Anki {
         {
           // Verify robot is 50 mm forwards
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 50, 10), 5)
+                                           NEAR(GetRobotPose().GetTranslation().x(), 50, 10), 20)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -144,7 +146,7 @@ namespace Anki {
           // Verify robot is at starting point
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotPose().GetTranslation().x(), 0, 10) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10), 5)
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10), 20)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -163,7 +165,7 @@ namespace Anki {
         {
           // Verify robot turned to 90 degrees
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 90, 10), 5)
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 90, 10), 20)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -182,7 +184,7 @@ namespace Anki {
         {
           // Verify robot turned back to 0 degrees
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10), 5)
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10), 20)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -203,7 +205,7 @@ namespace Anki {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            (NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 180, 10) ||
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -180, 10)) &&
-                                           NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL), 5)
+                                           NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL), 20)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -225,7 +227,7 @@ namespace Anki {
           // Verify robot is facing pose
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 20) &&
-                                           NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL), 5)
+                                           NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL), 20)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -245,8 +247,9 @@ namespace Anki {
           // Verify robot is facing the object
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 0, 20), 5)
+                                           NEAR(GetRobotPose().GetTranslation().x(), 0, 30), 20)
           {
+            StopMovie();
             CST_EXIT();
           }
           break;

@@ -79,6 +79,9 @@ protected:
                            std::string func,
                            int line);
   
+  void StartMovie(std::string name);
+  void StopMovie();
+  
 }; // class CozmoSimTestController
 
   

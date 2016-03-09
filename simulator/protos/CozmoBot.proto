@@ -1290,7 +1290,7 @@ Supervisor {
 									translation 0.0035 0 -0.0145
 									rotation 0 1 0 1.57
 									model "magnetic"
-									distanceTolerance 0.0038
+									distanceTolerance 0.005
 									type "active"
 									isLocked FALSE
 									autoLock TRUE

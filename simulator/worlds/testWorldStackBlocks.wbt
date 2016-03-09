@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation 0.104346 0.519837 0.847869 2.80444
-  position 0.566838 0.596043 0.277645
+  orientation -0.999718 0.0138894 0.0192539 5.03291
+  position 0.102498 -0.676785 0.183497
 }
 Background {
   skyColor [
@@ -30,17 +30,10 @@ CozmoMat {
 }
 LightCube {
   translation 0.2 0 0.022
-  rotation 0 0 1 0
 }
 LightCube {
-  translation 0.2 -0.075 0.022
-  rotation 1.59007e-05 -1.83671e-06 1 0.230004
+  translation 0.3 0 0.022
   ID 1
-}
-LightCube {
-  translation 0.09 -0.1 0.022
-  rotation 1.59007e-05 -1.83671e-06 1 0.230004
-  ID 2
 }
 BlockWorldComms {
 }

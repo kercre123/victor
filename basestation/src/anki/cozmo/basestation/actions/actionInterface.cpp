@@ -94,7 +94,7 @@ namespace Anki {
       if(tag == static_cast<u32>(ActionConstants::INVALID_TAG) ||
          !IActionRunner::sInUseTagSet.insert(tag).second)
       {
-        PRINT_NAMED_WARNING("IActionRunner.SetTag.InvalidTag", "Tag [%d] is invalid", tag);
+        PRINT_NAMED_ERROR("IActionRunner.SetTag.InvalidTag", "Tag [%d] is invalid", tag);
         _state = ActionResult::FAILURE_BAD_TAG;
         return false;
       }
