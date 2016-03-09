@@ -268,9 +268,6 @@ protected:
 
   const Vision::TrackedFace::ID_t GetLastObservedFaceID() const;
   
-  const std::unordered_set<std::string>& GetAvailableAnimations() const;
-  u32 GetNumAvailableAnimations() const;
-  bool IsAvailableAnimation(std::string anim) const;
   BehaviorType GetBehaviorType(const std::string& behaviorName) const;
 
   
@@ -322,8 +319,6 @@ private:
   std::map<s32, Pose3d> _objectIDToPoseMap;
   
   Vision::TrackedFace::ID_t _lastObservedFaceID;
-  
-  std::unordered_set<std::string> _availableAnimations;
   
   webots::Node* _root = nullptr;
   
