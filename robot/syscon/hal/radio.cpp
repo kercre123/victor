@@ -192,6 +192,22 @@ void Radio::init() {
   radioTask = RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
   RTOS::setPriority(radioTask, RTOS_RADIO_PRIORITY);
   RTOS::stop(radioTask);
+
+
+	assignProp(0, 0x99);
+	assignProp(1, 0xBB);
+	assignProp(2, 0x126);
+
+	LightState state;
+	state.onColor = 0xFFFF;
+	state.offColor = 0xFFFF;
+	state.transitionOnFrames = 0x80;
+	state.transitionOffFrames = 0x80;
+	state.onFrames = 0x80;
+	state.offFrames = 0x80;
+	
+	for (int i = 0; i < TOTAL_LIGHTS; i++)
+	Lights::update(i, &state);
 }
 
 void Radio::advertise(void) {
@@ -420,14 +436,15 @@ void Radio::manage(void* userdata) {
         {  9, 10, 11, 15}
       };
 
-      uint8_t* rgbi = Lights::state(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * c);
+			int group = CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * currentAccessory + c;
+      uint8_t* rgbi = Lights::state(group);
 
       for (int i = 0; i < 4; i++) {
         acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];
         sum += rgbi[i] * rgbi[i];
       }
     }
-
+		
     acc->tx_state.ledDark = 0xFF - isqrt(sum);
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
