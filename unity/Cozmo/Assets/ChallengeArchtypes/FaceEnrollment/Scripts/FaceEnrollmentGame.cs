@@ -97,7 +97,7 @@ namespace FaceEnrollment {
           // this is a face we know...
           if (Time.time - _LastPlayedReaction > 10.0f || _LastReactedID != faceID && !_Reacting) {
             // been at least 10 seconds since we reacted or it's a new face.
-            CurrentRobot.FacePose(CurrentRobot.Faces.Find(x => x.ID == faceID), callback: FacePoseDone);
+            CurrentRobot.TurnTowardsFace(CurrentRobot.Faces.Find(x => x.ID == faceID), callback: FacePoseDone);
             _Reacting = true;
           }
         }
