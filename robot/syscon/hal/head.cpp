@@ -74,7 +74,8 @@ void Head::init()
   setTransmitMode(TRANSMIT_RECEIVE);
   MicroWait(80);
 
-  RTOS::schedule(Head::manage);
+  RTOS_Task *task = RTOS::schedule(Head::manage);
+	RTOS::setPriority(task, RTOS_HIGH_PRIORITY);
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
@@ -127,18 +128,7 @@ inline void transmitByte() {
   NRF_UART0->TXD = txRxBuffer[txRxIndex++];
 }
 
-#include "gatts.h"
-
 void Head::manage(void* userdata) {
-  {
-    static const uint8_t message[] = "Cozmo says hello... Cozmo says hello... ";
-    static int offset = 0;
-    drive_send msg;
-    memcpy(msg.data, &message[offset], sizeof(msg.data));
-    offset = (offset + 1) % sizeof(msg.data);
-    GATTS::transmit(&msg);
-  }
-
   Spine::Dequeue(&(g_dataToHead.cladBuffer));
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
   g_dataToHead.cladBuffer.length = 0;

@@ -66,6 +66,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 
 #define TEST_FACE_DETECTION 0
 #define TEST_FACE_RECOGNITION 0
+#define DRAW_MARKER_DETECTIONS 0
 
 using namespace Anki;
 using namespace Anki::Embedded;
@@ -891,18 +892,18 @@ GTEST_TEST(CoreTech_Vision, LookupMarkerType)
   const s32 numNames = 18;
 
   const char *inputNames[numNames] = {
-    "MARKER_0",
-    "marker_0",
-    "mARKER_0",
-    "0",
-    "c:\\path\\0.png",
-    "~/path/0.png",
-    "MARKER_Y",
-    "MarKER_Y",
-    "Y",
-    "y",
-    "c:\\y.png.out.mat.toast",
-    "/home/users\\crazy\\/y.hello",
+    "MARKER_LIGHTCUBEI_FRONT",
+    "marker_lightcubei_front",
+    "mARKER_lIghtCubeI_Front",
+    "lightCubeI_front",
+    "c:\\path\\lightCubeI_Front.png",
+    "~/path/lightCubeI_front.png",
+    "MARKER_CHARGER",
+    "MarKER_CHARGER",
+    "CHARGER",
+    "charger",
+    "c:\\charger.png.out.mat.toast",
+    "/home/users\\crazy\\/charger.hello",
     "MARKER_UNKNOWN",
     "UNKNOWN",
     "unknown",
@@ -911,18 +912,18 @@ GTEST_TEST(CoreTech_Vision, LookupMarkerType)
     "//unknown"};
 
   const Anki::Vision::MarkerType inputTypes[numNames] = {
-    Anki::Vision::MARKER_0,
-    Anki::Vision::MARKER_0,
-    Anki::Vision::MARKER_0,
-    Anki::Vision::MARKER_0,
-    Anki::Vision::MARKER_0,
-    Anki::Vision::MARKER_0,
-    Anki::Vision::MARKER_Y,
-    Anki::Vision::MARKER_Y,
-    Anki::Vision::MARKER_Y,
-    Anki::Vision::MARKER_Y,
-    Anki::Vision::MARKER_Y,
-    Anki::Vision::MARKER_Y,
+    Anki::Vision::MARKER_LIGHTCUBEI_FRONT,
+    Anki::Vision::MARKER_LIGHTCUBEI_FRONT,
+    Anki::Vision::MARKER_LIGHTCUBEI_FRONT,
+    Anki::Vision::MARKER_LIGHTCUBEI_FRONT,
+    Anki::Vision::MARKER_LIGHTCUBEI_FRONT,
+    Anki::Vision::MARKER_LIGHTCUBEI_FRONT,
+    Anki::Vision::MARKER_CHARGER,
+    Anki::Vision::MARKER_CHARGER,
+    Anki::Vision::MARKER_CHARGER,
+    Anki::Vision::MARKER_CHARGER,
+    Anki::Vision::MARKER_CHARGER,
+    Anki::Vision::MARKER_CHARGER,
     Anki::Vision::MARKER_UNKNOWN,
     Anki::Vision::MARKER_UNKNOWN,
     Anki::Vision::MARKER_UNKNOWN,
@@ -3549,6 +3550,13 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   Array<u8> image(newFiducials_320x240_HEIGHT, newFiducials_320x240_WIDTH, scratchOffchip);
   image.Set(newFiducials_320x240, newFiducials_320x240_WIDTH*newFiducials_320x240_HEIGHT);
 
+  cv::Mat dispImg;
+  if(DRAW_MARKER_DETECTIONS)
+  {
+    ArrayToCvMat(image, &dispImg);
+    cv::cvtColor(dispImg, dispImg, CV_GRAY2RGB);
+  }
+  
   //Array<u8> image = Array<u8>::LoadImage("c:/Anki/products-cozmo-large-files/systemTestsData//trackingImages/tracking_00000_cozmo1_img_545642.jpg", scratchOffchip);
 
   //image.Show("image", true);
@@ -3614,7 +3622,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       seenThisMarkerType[iMarker] = false;
     }
     for(s32 iMarker=0; iMarker<numMarkers_groundTruth; ++iMarker) {
-      ASSERT_FALSE(seenThisMarkerType[iMarker]); // if true, we've already seen one of these
+      EXPECT_FALSE(seenThisMarkerType[iMarker]); // if true, we've already seen one of these
       seenThisMarkerType[iMarker] = true;
     }
 
@@ -3627,7 +3635,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
       CoreTechPrint("Looks like %s was not seen.\n",
         Vision::MarkerTypeStrings[markerTypes_groundTruth[iMarker]]);
     }
-    ASSERT_TRUE(markers.get_size() == numMarkers_groundTruth);
+    EXPECT_EQ(markers.get_size(), numMarkers_groundTruth);
 
     const f32 cornerDistanceTolerance = 2.f*sqrtf(2.f); // in pixels
 
@@ -3637,7 +3645,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
     // are provided in the auto-generated ground truth file)
     for(s32 iMarkerDet=0; iMarkerDet<markers.get_size(); ++iMarkerDet)
     {
-      ASSERT_TRUE(markers[iMarkerDet].validity == VisionMarker::VALID);
+      EXPECT_EQ(markers[iMarkerDet].validity, VisionMarker::VALID);
 
       s32 iMarkerTrue=0;
       while(markers[iMarkerDet].markerType != markerTypes_groundTruth[iMarkerTrue]) {
@@ -3645,7 +3653,7 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
         // if this fails, we found the right number of markers (checked above),
         // but we did not actually find each one (i.e. maybe we found two of
         // one)
-        ASSERT_TRUE(iMarkerTrue < numMarkers_groundTruth);
+        EXPECT_LT(iMarkerTrue, numMarkers_groundTruth);
       }
 
       // Sort the quads to ignore differing corner orderings for markers that
@@ -3661,15 +3669,47 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
         corners_groundTruth[iMarkerTrue][3][1]));
       trueCorners = trueCorners.ComputeClockwiseCorners<f32>();
 
+      bool cornersMatch = true;
       for(s32 iCorner=0; iCorner<4; iCorner++) {
         const Point<float>& currentCorner = currentCorners[iCorner];
         const Point<float>& trueCorner    = trueCorners[iCorner];
 
-        ASSERT_TRUE( (currentCorner - trueCorner).Length() < cornerDistanceTolerance );
+        const f32 cornerDist = (currentCorner - trueCorner).Length();
+        EXPECT_LE(cornerDist, cornerDistanceTolerance );
+        if(cornerDist > cornerDistanceTolerance ) {
+          cornersMatch = false;
+        }
       } // FOR each corner
+      
+      if(DRAW_MARKER_DETECTIONS)
+      {
+        cv::Point2f cen(0,0);
+        for(s32 i=0; i<4; ++i) {
+          s32 iPrev = (i==0 ? 3 : i-1);
+          cv::line(dispImg,
+                   markers[iMarkerDet].corners[iPrev].get_CvPoint_(),
+                   markers[iMarkerDet].corners[i].get_CvPoint_(),
+                   (cornersMatch ? cv::Scalar(0,255,0) : cv::Scalar(0,0,255)));
+          cen += markers[iMarkerDet].corners[i].get_CvPoint_();
+        }
+        
+        cen *= 0.25f;
+        cv::putText(dispImg,
+                    Vision::MarkerTypeStrings[markers[iMarkerDet].markerType],
+                    cen, CV_FONT_NORMAL, 0.35f, cv::Scalar(255,0,0));
+      }
     } // FOR each detected marker
   } else {
     ASSERT_TRUE(false);
+  }
+  
+  if(DRAW_MARKER_DETECTIONS)
+  {
+    cv::namedWindow("DetectedMarkers", cv::WINDOW_NORMAL);
+    cv::resizeWindow("DetectedMarkers",
+                     4*newFiducials_320x240_WIDTH, 4*newFiducials_320x240_HEIGHT);
+    cv::imshow("DetectedMarkers", dispImg);
+    cv::waitKey(5);
   }
 
   GTEST_RETURN_HERE;

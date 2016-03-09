@@ -3,6 +3,8 @@
 #include "anki/cozmo/basestation/tracePrinter.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "util/logging/logging.h"
+#include "clad/robotInterface/messageEngineToRobot_hash.h"
+#include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include <stdlib.h>
 #include <stdarg.h>
 #include <fstream>
@@ -95,6 +97,17 @@ void TracePrinter::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngi
   else
   {
     printf("\tCouldn't write report to file \"%s\"\n", dumpFileName);
+  }
+}
+
+void TracePrinter::HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message) const {
+  if (memcmp(message.GetData().Get_fwVersionInfo().toRobotCLADHash.data(), messageEngineToRobotHash, 16))
+  {
+    PRINT_NAMED_WARNING("RobotFirmware.VersionMissmatch", "Engine to Robot CLAD version hash mismatch");
+  }
+  if (memcmp(message.GetData().Get_fwVersionInfo().toEngineCLADHash.data(), messageRobotToEngineHash, 16))
+  {
+    PRINT_NAMED_WARNING("RobotFirmware.VersionMissmatch", "Robot to Engine CLAD version hash mismatch");
   }
 }
 

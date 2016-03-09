@@ -108,11 +108,11 @@ namespace HAL {
       }
       else
       {
-        AnkiError( 132, "WiFi.ReceiveMessage", 398, "No buffer available to receive clad message %x[%d]", 2, data[0], length);
+        AnkiError( 132, "WiFi.ReceiveMessage", 398, "No buffer available to receive clad message %x[%d], buffer %x %x %d", 5, data[0], length, rxBuf[rind], rxBuf[rind+1], RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK));
         return false;
       }
     }
-
+		
     Result Update()
     {
       const uint8_t wind = rxWind;
@@ -152,7 +152,7 @@ namespace HAL {
       }
     }
 
-  } // namespace wifi
+	} // namespace WiFi
 } // namespace HAL
 } // namespace Cozmo
 } // namespace Anki

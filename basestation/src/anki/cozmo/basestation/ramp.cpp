@@ -19,7 +19,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
-
 namespace Anki {
   
   namespace Cozmo {
@@ -58,12 +57,19 @@ namespace Anki {
     {
       // TODO: Support multiple ramp types
       
+      // TODO: Change to actual marker types when we add ramp support
+      const Vision::MarkerType frontMarkerType = Vision::MARKER_UNKNOWN;
+      const Vision::MarkerType leftMarkerType  = Vision::MARKER_UNKNOWN;
+      const Vision::MarkerType rightMarkerType = Vision::MARKER_UNKNOWN;
+      const Vision::MarkerType backMarkerType  = Vision::MARKER_UNKNOWN;
+      const Vision::MarkerType topMarkerType   = Vision::MARKER_UNKNOWN;
+      
       // Five markers:
       Pose3d frontPose(M_PI_2 - Ramp::Angle, Y_AXIS_3D(),
                        {{Ramp::FrontMarkerDistance*std::cos(Ramp::Angle),
-                        0, Ramp::FrontMarkerDistance*std::sin(Ramp::Angle)}});
+        0, Ramp::FrontMarkerDistance*std::sin(Ramp::Angle)}});
       frontPose *= Pose3d(-M_PI_2, Z_AXIS_3D(), {{0,0,0}});
-      _frontMarker = &AddMarker(Vision::MARKER_RAMPFRONT, frontPose, Ramp::TopMarkerSize);
+      _frontMarker = &AddMarker(frontMarkerType, frontPose, Ramp::TopMarkerSize);
       
       if(_preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), _preAscentPose) == false) {
         PRINT_NAMED_ERROR("Ramp.PreAscentPoseError", "Could not get preAscentPose w.r.t. front ramp marker.\n");
@@ -74,22 +80,22 @@ namespace Anki {
       const f32 SideMarkerHeight = 16.f;
       
       const Pose3d backPose(M_PI_2, Z_AXIS_3D(), {{SlopeLength+PlatformLength, 0, SideMarkerHeight}});
-      AddMarker(Vision::MARKER_RAMPBACK, backPose, Ramp::SideMarkerSize);
+      AddMarker(backMarkerType, backPose, Ramp::SideMarkerSize);
       
       const Vec3f PreDockPoseOffset(0.f, -DEFAULT_PREDOCK_POSE_DISTANCE_MM, -SideMarkerHeight);
       
       const Pose3d rightPose(0.f, Z_AXIS_3D(), {{120.f, -0.5f*Ramp::Width, SideMarkerHeight}});
-      _rightMarker = &AddMarker(Vision::MARKER_RAMPRIGHT, rightPose, Ramp::SideMarkerSize);
+      _rightMarker = &AddMarker(rightMarkerType, rightPose, Ramp::SideMarkerSize);
       AddPreActionPose(PreActionPose::DOCKING, _rightMarker, PreDockPoseOffset);
       
       const Pose3d leftPose(M_PI, Z_AXIS_3D(), {{120.f,  0.5f*Ramp::Width, SideMarkerHeight}});
-      _leftMarker = &AddMarker(Vision::MARKER_RAMPLEFT, leftPose, Ramp::SideMarkerSize);
+      _leftMarker = &AddMarker(leftMarkerType, leftPose, Ramp::SideMarkerSize);
       AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset);
       
       Pose3d topPose(-M_PI_2, Y_AXIS_3D(),
                      {{Ramp::PlatformLength + Ramp::SlopeLength - 0.025f, 0, Ramp::Height}});
       topPose *= Pose3d(M_PI_2, Z_AXIS_3D(), {{0,0,0}});
-      _topMarker = &AddMarker(Vision::MARKER_INVERTED_RAMPFRONT, topPose, Ramp::TopMarkerSize);
+      _topMarker = &AddMarker(topMarkerType, topPose, Ramp::TopMarkerSize);
       
       
       if(_preDescentPose.GetWithRespectTo(_topMarker->GetPose(), _preDescentPose) == false) {

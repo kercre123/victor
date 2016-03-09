@@ -28,8 +28,10 @@ try:
     from ReliableTransport import *
     from clad.robotInterface.messageEngineToRobot import Anki
     from clad.robotInterface.messageRobotToEngine import Anki as _Anki
+    from clad.robotInterface.messageEngineToRobot_hash import messageEngineToRobotHash
+    from clad.robotInterface.messageRobotToEngine_hash import messageRobotToEngineHash
 except:
-    sys.exit("Can't import ReliableTransport / CLAD libraries!{linesep}\t* Are you running from the base robot directory?{linesep}".format(linesepos.linesep))
+    sys.exit("Can't import ReliableTransport / CLAD libraries!{linesep}  * Are you running from the base robot directory?{linesep}".format(linesep=os.linesep))
 from ankiLogPP import importTables
 
 Anki.update(_Anki.deep_clone())
@@ -191,6 +193,20 @@ class _Dispatcher(IDataReceiver):
                             'formatted': formatTrace(self.formatTable[msg.trace.stringId][0], msg.trace.value)
                     }
                     sys.stdout.write("{base} ({level:d}) {name}: {formatted}{linesep}".format(**kwds))
+            elif msg.tag == msg.Tag.mainCycleTimeError:
+                sys.stdout.write(repr(msg.mainCycleTimeError))
+                sys.stdout.write(os.linesep)
+            elif msg.tag == msg.Tag.fwVersionInfo:
+                toRobot = 0
+                for i, b in enumerate(msg.fwVersionInfo.toRobotCLADHash):
+                    toRobot |= b << (8*i)
+                toEngine = 0
+                for i, b in enumerate(msg.fwVersionInfo.toEngineCLADHash):
+                    toEngine |= b << (8*i)
+                if toRobot  != messageEngineToRobotHash:
+                    sys.stderr.write("WARNING: ToRobot CLAD HASH missmatch!{linesep}\t Robot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toRobot,   messageEngineToRobotHash, linesep=os.linesep))
+                if toEngine != messageRobotToEngineHash:
+                    sys.stderr.write("WARNING: ToEngine CLAD HASH missmatch!{linesep}\t Robot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toEngine, messageRobotToEngineHash, linesep=os.linesep))
             for tag, subs in self.ReceiveDataSubscribers.items():
                 if msg.tag == tag:
                     for sub in subs:

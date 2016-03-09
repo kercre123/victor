@@ -47,12 +47,11 @@ namespace Anki {
       void ProcessBadTag_EngineToRobot(const RobotInterface::EngineToRobot::Tag tag);
 #endif
       Result Init();
-#if defined(TARGET_ESPRESSIF)
       extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
-#elif !defined(TARGET_K02)
+
       void ProcessBTLEMessages();
       void ProcessUARTMessages();
-#endif
+
       void ProcessMessage(RobotInterface::EngineToRobot& msg);
 
       void Process_anim(const RobotInterface::EngineToRobot& msg);

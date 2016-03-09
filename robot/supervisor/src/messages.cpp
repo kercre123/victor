@@ -29,6 +29,9 @@
 #include "testModeController.h"
 #ifndef TARGET_K02
 #include "animationController.h"
+#else
+#include "wifi.h"
+#include "spine.h"
 #endif
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
@@ -242,7 +245,6 @@ namespace Anki {
         DockingController::SetDockingErrorSignalMessage(msg);
       }
 
-#ifndef TARGET_K02
       extern "C" void ProcessMessage(u8* buffer, u16 bufferSize)
       {
          //XXX  "Implement ProcessMessage"
@@ -250,6 +252,10 @@ namespace Anki {
 
       void ProcessBTLEMessages()
       {
+#ifdef TARGET_K02
+				HAL::WiFi::Update();
+				HAL::Spine::Manage();
+#else
         u32 dataLen;
 
         //ReliableConnection_printState(&connection);
@@ -275,8 +281,8 @@ namespace Anki {
 						// Can't print anything because we have no where to send it
 					}
         }
-      }
 #endif
+      }
 
       void Process_clearPath(const RobotInterface::ClearPath& msg) {
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
