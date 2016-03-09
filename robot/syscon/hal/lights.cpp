@@ -76,16 +76,16 @@ static void CalculateLEDColor(uint8_t* rgbi,
 void Lights::init() {
 	memset(lightStates, 0, sizeof(lightStates));
 	
-	RTOS_Task* task = RTOS::schedule(Lights::manage, RADIO_TOTAL_PERIOD);
+  // Spread light processing across the radio period
+	RTOS_Task* task = RTOS::schedule(Lights::manage, RADIO_TOTAL_PERIOD / TOTAL_LIGHTS);
 	RTOS::setPriority(task, RTOS_LOW_PRIORITY);
 }
 
 void Lights::manage(void* userdata) {
-  uint32_t time = GetFrame();
+  static int light = 0;
 	
-	for (int i = 0; i < TOTAL_LIGHTS; i++) {
-		CalculateLEDColor(lightValues[i], lightStates[i], time, lightPhases[i]);
-	}
+	CalculateLEDColor(lightValues[light], lightStates[light], GetFrame(), lightPhases[light]);
+  light = (light + 1) % TOTAL_LIGHTS;
 }
 
 void Lights::update(int index, const LightState* ledParams) {
