@@ -23,7 +23,6 @@ extern GlobalDataToBody g_dataToBody;
 // Define charlie wiring here:
 static const charliePlex_s RGBLightPins[] =
 {
-  // anode, cath_red, cath_gree, cath_blue
   {PIN_LED1, {PIN_LED2, PIN_LED3, PIN_LED4}},
   {PIN_LED2, {PIN_LED1, PIN_LED3, PIN_LED4}},
   {PIN_LED3, {PIN_LED1, PIN_LED2, PIN_LED4}},
@@ -49,13 +48,10 @@ static void lights_off() {
 void Backpack::init()
 {
   lights_off();
-  
-  // All lights are updated at the same 35ms period
-	RTOS::schedule(manage, RADIO_TOTAL_PERIOD);
+	RTOS::schedule(manage);
 }
 
 void Backpack::update(void) {
-  #ifndef RADIO_TIMING_TEST
   static uint8_t pwm[numLights];
 
   // Blacken everything out
@@ -71,42 +67,54 @@ void Backpack::update(void) {
     int overflow = pwm[index] + (int)pdm_value[index];
     pwm[index] = overflow;
     
+		int pin = RGBLightPins[channel].cathodes[i];
     if (overflow > 0xFF) {
-      nrf_gpio_pin_clear(RGBLightPins[channel].cathodes[i]);
-      nrf_gpio_cfg_output(RGBLightPins[channel].cathodes[i]);
+      nrf_gpio_pin_clear(pin);
+      nrf_gpio_cfg_output(pin);
     }
   }
   
   channel = (channel + 1) % numChannels;
-  #endif
 }
 
 void Backpack::manage(void*) {
-  // Channel 1 is unused by the light mapping
-  static const int8_t index[][3] = { 
-    {  0,  1,  1 },
-    {  6,  7,  8 },
-    {  3,  4,  5 },
-    {  9, 10, 11 },
-    {  2,  1,  1 }
+	// 8-bit pseudo log scale.  Gives us full bright (64 level)
+	static const uint8_t AdjustTable[] = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x09, 0x0b, 
+		0x0d, 0x10, 0x13, 0x17, 0x1b, 0x20, 0x26, 0x2c, 
+		0x34, 0x3c, 0x45, 0x4f, 0x59, 0x64, 0x70, 0x7c, 
+		0x88, 0x94, 0x9f, 0xaa, 0xb4, 0xbe, 0xc6, 0xce, 
+		0xd5, 0xdb, 0xe1, 0xe5, 0xe9, 0xed, 0xef, 0xf2, 
+		0xf4, 0xf6, 0xf7, 0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 
+		0xfc, 0xfc, 0xfd, 0xfd, 0xfd, 0xfe, 0xfe, 0xff
+	};
+
+	// Channel 1 is unused by the light mapping
+  static const int8_t index[] = { 
+		0, -1, -1, -1,
+    6,  7,  8, -1,
+    3,  4,  5, -1,
+    9, 10, 11, -1,
+    2,  1,  1, -1 
   };
 
-  static const uint8_t* gamma[][3] = { 
-    { AdjustTableFull,             NULL,            NULL },
-    {  AdjustTableRed, AdjustTableGreen, AdjustTableFull },
-    {  AdjustTableRed, AdjustTableGreen, AdjustTableFull },
-    {  AdjustTableRed, AdjustTableGreen, AdjustTableFull },
-    { AdjustTableFull,             NULL,            NULL },                      
+  static const int gamma[] = { 
+    0x100, 0x000, 0x000, 0x000,
+    0x0C0, 0x090, 0x100, 0x000,
+    0x0C0, 0x090, 0x100, 0x000,
+    0x0C0, 0x090, 0x100, 0x000,
+    0x100, 0x000, 0x000, 0x000, 
   };
-
-  uint32_t time = GetFrame();
+	
+	uint8_t* levels = Lights::state(BACKPACK_LIGHT_INDEX_BASE);
   
-  for (int i = 0; i < NUM_BACKPACK_LEDS; i++) {
-    uint8_t* levels = Lights::state(BACKPACK_LIGHT_INDEX_BASE + i);
-    
-    for (int c = 0; c < 3; c++) {
-      pdm_value[index[i][c]] = gamma[i][c][levels[c]];
-    }
+	for (int i = 0; i < NUM_BACKPACK_LEDS * 4; i++) {
+		int g = gamma[i];
+		
+		if (g == 0) continue ;
+		
+		pdm_value[index[i]] = AdjustTable[(g * levels[i]) >> 10];
   }
 }
 

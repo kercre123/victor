@@ -74,7 +74,8 @@ void Head::init()
   setTransmitMode(TRANSMIT_RECEIVE);
   MicroWait(80);
 
-  RTOS::schedule(Head::manage);
+  RTOS_Task *task = RTOS::schedule(Head::manage);
+	RTOS::setPriority(task, RTOS_HIGH_PRIORITY);
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {

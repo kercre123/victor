@@ -38,10 +38,6 @@ static const int CUBE_LIGHT_STRIDE = NUM_PROP_LIGHTS;
 static const int TOTAL_LIGHTS = NUM_BACKPACK_LEDS + MAX_ACCESSORIES * NUM_PROP_LIGHTS;
 static const int LIGHTS_PER_WORD = 4;
 
-extern const uint8_t AdjustTableFull[];
-extern const uint8_t AdjustTableRed[];
-extern const uint8_t AdjustTableGreen[];
-
 namespace Lights {
 	void init();
 	void manage(void*);
