@@ -5,7 +5,7 @@
         "repo_names": {
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz", 
-                "version": "17"
+                "version": "18"
             }
         }, 
         "root_url": "https://svn.ankicore.com/svn"
