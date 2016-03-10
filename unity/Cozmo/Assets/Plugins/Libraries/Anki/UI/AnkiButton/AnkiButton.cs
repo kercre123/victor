@@ -6,7 +6,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Anki.UI;
-using Cozmo.UI;
 
 namespace Anki {
   namespace UI {
@@ -68,9 +67,6 @@ namespace Anki {
 
       [SerializeField]
       private CanvasGroup _AlphaController;
-
-      [SerializeField]
-      private AnkiAnimateGlint _GlintAnimator;
 
       public AnkiButtonImage[] ButtonGraphics;
 
@@ -152,17 +148,6 @@ namespace Anki {
           }
         }
       }
-
-
-      [SerializeField]
-      private Anki.Cozmo.Audio.AudioEventParameter 
-        _UISoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
-
-      public Anki.Cozmo.Audio.AudioEventParameter SoundEvent {
-        get { return _UISoundEvent; }
-        set { _UISoundEvent = value; }
-      }
-
 
       public bool IsInteractable() {
         return _Interactable;
@@ -290,8 +275,6 @@ namespace Anki {
         if (DisableInteraction()) {
           return;
         }
-
-        Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_UISoundEvent);
       }
 
       private void UpdateVisuals() {
@@ -317,7 +300,6 @@ namespace Anki {
         }
 
         ResetTextPosition(TextEnabledColor);
-        ShowGlint(true);
       }
 
       private void ShowPressedState() {
@@ -332,7 +314,6 @@ namespace Anki {
           }
 
           PressTextPosition();
-          ShowGlint(true);
         }
       }
 
@@ -348,26 +329,14 @@ namespace Anki {
           }
 
           ResetTextPosition(TextDisabledColor);
-          ShowGlint(false);
         }
       }
 
       private void SetGraphic(AnkiButtonImage graphic, Sprite desiredSprite, Color desiredColor, bool ignoreSprite) {
-        //bool targetImageExists = (graphic != null && graphic.targetImage != null);
-        //string graphicName = (targetImageExists) ? graphic.targetImage.name : "(graphic or targetImage was null)";
-        //string spriteName = (desiredSprite != null) ? desiredSprite.name : "(desiredSprite is null)";
-        //DAS.Info(this, string.Format("AnkiButton.SetGraphic START! graphic={0}  desiredSprite={1}   desiredColor={2}   ignoreSprite={3}",
-        //  graphicName, spriteName, desiredColor, ignoreSprite));
-        
         if (!ignoreSprite) {
           graphic.targetImage.overrideSprite = desiredSprite ?? graphic.enabledSprite;
         }
         graphic.targetImage.color = desiredColor;
-
-        //string newSpriteName = (targetImageExists && graphic.targetImage.overrideSprite != null) 
-        //  ? graphic.targetImage.overrideSprite.name : "(sprite is null)";
-        //string newColor = (targetImageExists) ? graphic.targetImage.color.ToString() : "(graphic or targetImage was null)";
-        //DAS.Info(this, string.Format("AnkiButton.SetGraphic END!   newSprite={0}   newColor={1}", newSpriteName, newColor));
       }
 
       private void ResetTextPosition(Color color) {
@@ -383,12 +352,6 @@ namespace Anki {
         if (_TextLabel != null) {
           _TextLabel.color = TextPressedColor;
           _TextLabel.transform.localPosition = _TextPressedPosition;
-        }
-      }
-
-      private void ShowGlint(bool show) {
-        if (_GlintAnimator != null) {
-          _GlintAnimator.EnableGlint(show);
         }
       }
 
