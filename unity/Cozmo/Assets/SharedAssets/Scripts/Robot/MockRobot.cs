@@ -293,6 +293,14 @@ public class MockRobot : IRobot {
     _Callbacks.Clear();
   }
 
+  public void EnableNewFaceEnrollment(int numToEnroll = 1) {
+    
+  }
+
+  public void AssignNameToFace(int faceID, string name) {
+    
+  }
+
   public void SendAnimation(string animName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     // we can actually fake the callback by using CozmoFace
     float len = CozmoFace.PlayAnimation(animName);
