@@ -23,7 +23,6 @@ namespace SpeedTap {
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       if (_ShowHowToPlay) {
         _SpeedTapGame.InitialCubesDone();
-        Debug.LogWarning(string.Format("Initialized with Difficulty {0}!", _SpeedTapGame.CurrentDifficulty));
       }
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
