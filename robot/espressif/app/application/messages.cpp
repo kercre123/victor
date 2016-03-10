@@ -14,6 +14,7 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "activeObjectManager.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
+#include "wifi_configuration.h"
 #include "upgradeController.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
@@ -282,6 +283,31 @@ namespace Anki {
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               Factory::Process_EnterFactoryTestMode(msg.enterTestMode);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_appConCfgString:
+            {
+              WiFiConfiguration::ProcessConfigString(msg.appConCfgString);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_appConCfgFlags:
+            {
+              WiFiConfiguration::ProcessConfigFlags(msg.appConCfgFlags);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_appConCfgIPInfo:
+            {
+              WiFiConfiguration::ProcessConfigIPInfo(msg.appConCfgIPInfo);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_appConGetRobotIP:
+            {
+              WiFiConfiguration::SendRobotIpInfo(msg.appConGetRobotIP.ifId);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_wifiOff:
+            {
+              WiFiConfiguration::Off(msg.wifiOff.sleep);
               break;
             }
             default:

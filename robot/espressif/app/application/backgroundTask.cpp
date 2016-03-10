@@ -19,6 +19,7 @@ extern "C" {
 #include "face.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
+#include "wifi_configuration.h"
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -188,6 +189,11 @@ extern "C" int8_t backgroundTaskInit(void)
   {
     os_printf("\tCouldn't initalize factory test framework\r\n");
     return -7;
+  }
+  else if (Anki::Cozmo::WiFiConfiguration::Init() != Anki::RESULT_OK)
+  {
+    os_printf("\tCouldn't initalize WiFiConfiguration module\r\n");
+    return -8;
   }
   else
   {
