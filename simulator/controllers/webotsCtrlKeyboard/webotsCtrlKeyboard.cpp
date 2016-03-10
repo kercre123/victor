@@ -248,6 +248,7 @@ namespace Anki {
         printf("          Disable behavior group:  Alt+h\n");
         printf("            Set emotion to value:  m\n");
         printf("      Search side to side action:  Shift+l\n");
+        printf("    Toggle cliff sensor handling:  Alt+l\n");
         printf("           Set DemoState Default:  j\n");
         printf("         Set DemoState FacesOnly:  Shift+j\n");
         printf("        Set DemoState BlocksOnly:  Alt+j\n");
@@ -790,6 +791,16 @@ namespace Anki {
                   ExternalInterface::MessageGameToEngine message;
                   message.Set_QueueSingleAction(msg);
                   SendMessage(message);
+                }
+                else if (modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                  static bool enableCliffSensor = false;
+
+                  printf("setting enable cliff sensor to %d\n", enableCliffSensor);
+                  ExternalInterface::MessageGameToEngine msg;
+                  msg.Set_EnableCliffSensor(ExternalInterface::EnableCliffSensor{enableCliffSensor});
+                  SendMessage(msg);
+
+                  enableCliffSensor = !enableCliffSensor;
                 }
                 else {
 
