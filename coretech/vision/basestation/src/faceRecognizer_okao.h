@@ -4,7 +4,10 @@
  * Author: Andrew Stein
  * Date:   2/4/2016
  *
- * Description: Wrapper for OKAO Vision face recognition library, which runs on a thread.
+ * Description: Wrapper for OKAO Vision face recognition library. Maintains the 
+ *              library of enrolled faces. Supports running facial feature 
+ *              extraction on a separate thread by default, since that is the 
+ *              slowest part of the recognition process.
  *
  * NOTE: This file should only be included by faceTrackerImpl_okao.h
  *
@@ -130,10 +133,9 @@ namespace Vision {
       ExtractingFeatures,
       FeaturesReady
     };
-    std::mutex  _mutex;
-    std::thread _recognitionThread;
-    bool        _recognitionRunning = false;
-    bool        _isRunningAsync = true;
+    std::mutex      _mutex;
+    std::thread     _featureExtractionThread;
+    bool            _isRunningAsync = true;
     ProcessingState _state = ProcessingState::Idle;
     void Run();
     

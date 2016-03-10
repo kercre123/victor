@@ -119,7 +119,7 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
 TEST(FaceRecognition, VideoRecognitionAndTracking)
 {
   // TODO: Remove this once we sort build failures (See COZMO-797)
-  return;
+  //return;
   
   Result lastResult = RESULT_OK;
   
