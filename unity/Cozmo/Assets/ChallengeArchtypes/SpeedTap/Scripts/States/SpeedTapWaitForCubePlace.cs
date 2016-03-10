@@ -10,10 +10,10 @@ namespace SpeedTap {
 
     private SpeedTapGame _SpeedTapGame = null;
 
-    private bool _ShowHowToPlay = false;
+    private bool _IsFirstTime = false;
 
-    public SpeedTapWaitForCubePlace(bool showHowToPlay) {
-      _ShowHowToPlay = showHowToPlay;
+    public SpeedTapWaitForCubePlace(bool isFirstTime) {
+      _IsFirstTime = isFirstTime;
     }
 
     private bool _GotoObjectComplete = false;
@@ -21,7 +21,7 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      if (_ShowHowToPlay) {
+      if (_IsFirstTime) {
         _SpeedTapGame.InitialCubesDone();
       }
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
@@ -33,9 +33,6 @@ namespace SpeedTap {
       }
       _GotoObjectComplete = false;
 
-      if (_ShowHowToPlay) {
-        _StateMachine.PushSubState(new HowToPlayState(null));
-      }
       _CurrentRobot.SetLiftHeight(1.0f, HandleLiftRaiseComplete);
     }
 
