@@ -13,7 +13,6 @@
 
 Anki::Util::Data::DataPlatform* CreateDataPlatform()
 {
-  NSLog(@"HockedAppDebuggingTemp - CreateDataPlatform");
   NSString* nsCachePath = [NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES) lastObject];
   NSString* nsDocPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
   NSString* nsResourcePath = [[NSBundle mainBundle] pathForResource:@"cozmo_resources" ofType:@""];
