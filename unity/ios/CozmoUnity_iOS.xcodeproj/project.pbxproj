@@ -89,7 +89,6 @@
 		69F66058287B0C4C5877BFBF /* UnityICallRegistration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 789BA5853B7AE960A1A5FF08 /* UnityICallRegistration.cpp */; };
 		6D01B697D7A17768DA88C372 /* Bulk_Generics_5.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3256245981C473DCC2F1453B /* Bulk_Generics_5.cpp */; };
 		6E5962D7AAE351C7B344D0FE /* CVTextureCache.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3A3FBE47363BF83270FD67BF /* CVTextureCache.mm */; };
-		6F169A901C90DFF50086B62F /* HockeySDKResources.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 6F169A8F1C90DFF50086B62F /* HockeySDKResources.bundle */; };
 		6F5432281C891C70006D3724 /* HockeySDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F5432271C891C70006D3724 /* HockeySDK.framework */; };
 		6F5432371C89288F006D3724 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F5432361C89288F006D3724 /* AssetsLibrary.framework */; };
 		6F5432391C8928AF006D3724 /* MobileCoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F5432381C8928AF006D3724 /* MobileCoreServices.framework */; };
@@ -296,7 +295,6 @@
 		6B7BDDAF2EDF505368474983 /* UnityRendering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UnityRendering.h; path = UnityBuild/Classes/Unity/UnityRendering.h; sourceTree = "<group>"; };
 		6B824E24831C69D2FF4421F3 /* Bulk_Assembly-CSharp_1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = "Bulk_Assembly-CSharp_1.cpp"; path = "UnityBuild/Classes/Native/Bulk_Assembly-CSharp_1.cpp"; sourceTree = "<group>"; };
 		6C8630EC2926CC8F1F1AA46E /* Il2CppGenericMethodPointerTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppGenericMethodPointerTable.cpp; path = UnityBuild/Classes/Native/Il2CppGenericMethodPointerTable.cpp; sourceTree = "<group>"; };
-		6F169A8F1C90DFF50086B62F /* HockeySDKResources.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; name = HockeySDKResources.bundle; path = "../../lib/anki/vendor/HockeySDK-iOS/Resources/HockeySDKResources.bundle"; sourceTree = "<group>"; };
 		6F5432271C891C70006D3724 /* HockeySDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HockeySDK.framework; path = "../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework"; sourceTree = "<group>"; };
 		6F5432361C89288F006D3724 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
 		6F5432381C8928AF006D3724 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = System/Library/Frameworks/MobileCoreServices.framework; sourceTree = SDKROOT; };
@@ -561,7 +559,6 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				6F169A8F1C90DFF50086B62F /* HockeySDKResources.bundle */,
 				6F54323A1C8928C4006D3724 /* QuickLook.framework */,
 				6F5432381C8928AF006D3724 /* MobileCoreServices.framework */,
 				6F5432361C89288F006D3724 /* AssetsLibrary.framework */,
@@ -858,7 +855,6 @@
 			files = (
 				F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */,
 				852C0B6D1C6965730003DCFD /* DASConfig.json in Resources */,
-				6F169A901C90DFF50086B62F /* HockeySDKResources.bundle in Resources */,
 				02B586D964836D51B9590340 /* Images.xcassets in Resources */,
 				17E2C07577A687C86B439BF7 /* LaunchScreen-iPhoneLandscape.png in Resources */,
 				8D061DB0D685A1DA6CA66039 /* LaunchScreen-iPhonePortrait.png in Resources */,
