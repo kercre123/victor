@@ -13,7 +13,8 @@ namespace FaceEnrollment {
       AnimationName.kFaceEnrollmentReaction_00,
       AnimationName.kFaceEnrollmentReaction_01,
       AnimationName.kFaceEnrollmentReaction_02,
-      AnimationName.kFaceEnrollmentReaction_03
+      AnimationName.kFaceEnrollmentReaction_03,
+      AnimationName.kFaceEnrollmentReaction_04
     };
 
     private int _ReactionIndex = 0;
