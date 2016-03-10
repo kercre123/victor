@@ -177,6 +177,7 @@ unity/ios/UnityBuild
 unity/ios/build
 unity/ios/opencv
 unity/ios/sphinx
+unity/ios/HockeyApp
 unity/Cozmo/Assets/WellFired/shared.meta
 unity/Cozmo/Assets/WellFired/shared/compiled.meta
 unity/Cozmo/Assets/WellFired/shared/compiled/runtime.meta
