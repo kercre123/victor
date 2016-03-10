@@ -46,6 +46,7 @@ namespace CubeSlap {
       _MaxFakeouts = config.MaxFakeouts;
       _CozmoSuccessCount = 0;
       _CozmoFailCount = 0;
+      _CurrentTarget = null;
       InitializeMinigameObjects(config.NumCubesRequired());
     }
 
@@ -66,25 +67,11 @@ namespace CubeSlap {
 
     public LightCube GetCurrentTarget() {
       if (_CurrentTarget == null) {
-        _CurrentTarget = GetClosestAvailableBlock();
-      }
-      return _CurrentTarget;
-    }
-
-    private LightCube GetClosestAvailableBlock() {
-      float minDist = float.MaxValue;
-      ObservedObject closest = null;
-
-      for (int i = 0; i < CurrentRobot.SeenObjects.Count; ++i) {
-        if (CurrentRobot.SeenObjects[i] is LightCube) {
-          float d = Vector3.Distance(CurrentRobot.SeenObjects[i].WorldPosition, CurrentRobot.WorldPosition);
-          if (d < minDist) {
-            minDist = d;
-            closest = CurrentRobot.SeenObjects[i];
-          }
+        if (this.CubesForGame.Count > 0) {
+          _CurrentTarget = this.CubesForGame[0];
         }
       }
-      return closest as LightCube;
+      return _CurrentTarget;
     }
 
     // Attempt the pounce
@@ -152,6 +139,7 @@ namespace CubeSlap {
       _CozmoSuccessCount++;
       UpdateScoreboard();
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleAnimationDone));
+      Debug.LogError("On Failure");
     }
 
     public void HandleAnimationDone(bool success) {

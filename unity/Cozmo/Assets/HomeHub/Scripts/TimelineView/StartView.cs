@@ -50,7 +50,7 @@ public class StartView : BaseView {
     if (robot != null) {
       DAS.Info(this, "Cancelling HandleSleepAnimationComplete");
       robot.CancelCallback(HandleSleepAnimationComplete);
-      robot.SendAnimation(AnimationName.kOpenEyesTwo, HandleWakeAnimationComplete);
+      robot.SendAnimation(AnimationName.kConnect_WakeUp, HandleWakeAnimationComplete);
       _ConnectButton.Interactable = false;
     }
   }
