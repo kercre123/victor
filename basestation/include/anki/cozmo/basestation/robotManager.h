@@ -83,6 +83,9 @@ namespace Anki {
       // Read the animations in a dir
       void ReadAnimationDir();
 
+      // Iterate through the loaded animations and broadcast their names
+      void BroadcastAvailableAnimations();
+
     protected:
       RobotDisconnectedSignal _robotDisconnectedSignal;
       std::map<RobotID_t,Robot*> _robots;

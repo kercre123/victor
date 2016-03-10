@@ -248,6 +248,7 @@ Result CozmoEngine::Update(const float currTime_sec)
     case EngineState::WaitingForUIDevices:
     {
       if (_uiMsgHandler->HasDesiredNumUiDevices()) {
+        _context->GetRobotManager()->BroadcastAvailableAnimations();
         SetEngineState(EngineState::Running);
       }
       break;

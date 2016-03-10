@@ -203,6 +203,8 @@ namespace Anki {
       ReadAnimationDirImpl("config/basestation/animations/");
       
       ProceduralFace::EnableClippingWarning(true);
+      
+      BroadcastAvailableAnimations();
     }
     
     void RobotManager::ReadAnimationDirImpl(const std::string& animationDir)
@@ -239,8 +241,11 @@ namespace Anki {
           ReadAnimationFile(path.c_str());
         }
       }
-      
-      Anki::Util::Time::PushTimedStep("BroadcastAvailableAnimations");
+    }
+    
+    void RobotManager::BroadcastAvailableAnimations()
+    {
+      Anki::Util::Time::ScopedStep scopeTimer("BroadcastAvailableAnimations");
       // Tell UI about available animations
       if (nullptr != _context->GetExternalInterface()) {
         std::vector<std::string> animNames(_cannedAnimations->GetAnimationNames());
@@ -248,7 +253,6 @@ namespace Anki {
           _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationAvailable>(*i);
         }
       }
-      Anki::Util::Time::PopTimedStep();
     }
     
     // Read the animation data from a file
