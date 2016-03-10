@@ -143,6 +143,7 @@ public abstract class GameBase : MonoBehaviour {
     CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
+    // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
     CurrentRobot.SetEnableCliffSensor(true);
     // Disable all Request game behavior groups while in this view, Timeline View will handle renabling these
     // if appropriate.
