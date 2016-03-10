@@ -268,9 +268,6 @@ public class DailyGoalManager : MonoBehaviour {
   private void HandleMiniGameYesAnimEnd(bool success) {
     DAS.Info(this, "HandleMiniGameYesAnimEnd");
     MinigameConfirmed.Invoke(_LastChallengeData.ChallengeID);
-    // Set WantToPlay to -1 as cozmo's immediate need has been satisfied, will be reset upon entering Timeline again
-    // based on Daily goal progress.
-    RobotEngineManager.Instance.CurrentRobot.SetEmotion(EmotionType.WantToPlay, -1.0f);
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {

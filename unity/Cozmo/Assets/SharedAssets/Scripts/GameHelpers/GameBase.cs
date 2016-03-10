@@ -144,6 +144,9 @@ public abstract class GameBase : MonoBehaviour {
     CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
     CurrentRobot.SetEnableCliffSensor(true);
+    // Disable all Request game behavior groups while in this view, Timeline View will handle renabling these
+    // if appropriate.
+    DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
   }
 
   #endregion
