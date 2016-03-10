@@ -65,5 +65,6 @@ public static class AnimationName {
   public const string kFaceEnrollmentReaction_01 = "faceEnrollReact01";
   public const string kFaceEnrollmentReaction_02 = "faceEnrollReact02";
   public const string kFaceEnrollmentReaction_03 = "faceEnrollReact03";
+  public const string kFaceEnrollmentReaction_04 = "faceEnrollReact04";
 }
 

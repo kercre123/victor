@@ -13,7 +13,8 @@ namespace FaceEnrollment {
       AnimationName.kFaceEnrollmentReaction_00,
       AnimationName.kFaceEnrollmentReaction_01,
       AnimationName.kFaceEnrollmentReaction_02,
-      AnimationName.kFaceEnrollmentReaction_03
+      AnimationName.kFaceEnrollmentReaction_03,
+      AnimationName.kFaceEnrollmentReaction_04
     };
 
     private int _ReactionIndex = 0;
@@ -31,7 +32,7 @@ namespace FaceEnrollment {
     private FaceEnrollmentNameView _FaceEnrollmentView;
 
     private int _NewSeenFaceID = 0;
-    private int _LastSeenFaceID = 0;
+    private int _LastTurnedToAttemptID = 0;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       ResetPose();
@@ -91,13 +92,13 @@ namespace FaceEnrollment {
 
     private void HandleOnAnyFaceSeen(int faceID, string name, Vector3 pos, Quaternion rot) {
       // check if we have an active face enroll view open
-      _LastSeenFaceID = faceID;
       if (_FaceEnrollmentView == null) {
         if (faceID > 0 && string.IsNullOrEmpty(name) == false && _FaceIDToReaction.ContainsKey(faceID)) {
           // this is a face we know...
-          if (Time.time - _LastPlayedReaction > 10.0f || _LastReactedID != faceID && !_Reacting) {
+          if (Time.time - _LastPlayedReaction > 6.0f || _LastReactedID != faceID && !_Reacting) {
             // been at least 10 seconds since we reacted or it's a new face.
             CurrentRobot.TurnTowardsFacePose(CurrentRobot.Faces.Find(x => x.ID == faceID), callback: FacePoseDone);
+            _LastTurnedToAttemptID = faceID;
             _Reacting = true;
           }
         }
@@ -106,8 +107,8 @@ namespace FaceEnrollment {
 
     private void FacePoseDone(bool success) {
       if (success) {
-        CurrentRobot.SendAnimation(_FaceIDToReaction[_LastSeenFaceID], ReactToFaceAnimationDone);
-        _LastReactedID = _LastSeenFaceID;
+        CurrentRobot.SendAnimation(_FaceIDToReaction[_LastTurnedToAttemptID], ReactToFaceAnimationDone);
+        _LastReactedID = _LastTurnedToAttemptID;
       }
       else {
         _Reacting = false;
