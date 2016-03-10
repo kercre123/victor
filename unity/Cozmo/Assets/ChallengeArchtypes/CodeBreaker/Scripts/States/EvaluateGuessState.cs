@@ -93,7 +93,7 @@ namespace CodeBreaker {
         else if (_NumCorrectPosAndColor >= _WinningCode.NumCubes * 0.5f) {
           // Player halfway there
           if (_NumCorrectColor >= _WinningCode.NumCubes * 0.5f) {
-            _CurrentRobot.SendAnimation(AnimationName.kOpenEyesTwo, HandleTryAgainAnimationFinished);
+            _CurrentRobot.SendAnimation(AnimationName.kConnect_WakeUp, HandleTryAgainAnimationFinished);
           }
           else {
             _CurrentRobot.SendAnimation(AnimationName.kEnjoyLight, HandleTryAgainAnimationFinished);
