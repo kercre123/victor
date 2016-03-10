@@ -165,7 +165,6 @@ namespace SpeedTap {
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
         if (CurrentDifficulty >= DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
           DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty + 1;
-          Debug.LogWarning(string.Format("Win on Difficulty {0}! Unlock Difficulty {1}!", CurrentDifficulty, DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted));
           DataPersistence.DataPersistenceManager.Instance.Save();
         }
         RaiseMiniGameWin();
@@ -202,7 +201,6 @@ namespace SpeedTap {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetBehaviorSystem(false);
 
-      Debug.LogWarning(string.Format("Initialized with Difficulty {0}!", CurrentDifficulty));
       GameAudioClient.SetMusicState(GetMusicState());
     }
 
@@ -239,10 +237,6 @@ namespace SpeedTap {
         // Display the current round
         SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
       }
-    }
-
-    public void RollingBlocks() {
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
     }
 
     private void BlockTapped(int blockID, int tappedTimes) {

@@ -7,13 +7,15 @@ namespace SpeedTap {
   public class SpeedTapStatePlayNewHand : State {
 
     private const int _kMaxMisses = 2;
+    private const float _kBaseMatchProbability = 0.2f;
+    private const float _kMatchProbabilityIncrease = 0.1f;
 
     private SpeedTapGame _SpeedTapGame = null;
     private float _StartTimeMs = -1.0f;
     private float _OnDelayTimeMs = 2000.0f;
     private float _OffDelayTimeMs = 2000.0f;
-    private float _PeekMinTimeMs = 500.0f;
-    private float _PeekMaxTimeMs = 1500.0f;
+    private float _PeekMinTimeMs = 400.0f;
+    private float _PeekMaxTimeMs = 1000.0f;
     private float _PeekDelayTimeMs = 0.0f;
     private float _MinCozmoTapDelayTimeMs = 380.0f;
     private float _MaxCozmoTapDelayTimeMs = 700.0f;
@@ -43,6 +45,7 @@ namespace SpeedTap {
       _MidHand = false;
       _PlayReady = false;
       _CozmoTapRegistered = false;
+      _MatchProbability = _kBaseMatchProbability;
 
       _SpeedTapGame.CheckForAdjust(AdjustDone);
     }
@@ -120,15 +123,12 @@ namespace SpeedTap {
         _SpeedTapGame.ConsecutiveMisses = 0;
         // TODO: Potentially use _CozmoTapRegistered instead of EndAnimation to determine if Cozmo hit first,
         // only do this if we can ensure few to zero false positives. 
-        Debug.LogWarning("Successful Hit!");
       }
       else {
         _SpeedTapGame.ConsecutiveMisses++;
-        Debug.LogWarning(string.Format("Missed : {0}", _SpeedTapGame.ConsecutiveMisses));
         if (_SpeedTapGame.ConsecutiveMisses > _kMaxMisses) {
           //TODO: Enter Pause-reset-FindCube state.
-          DAS.Warn("SpeedTapGame", "Too many consecutive misses!");
-          Debug.LogWarning("Too many Consecutive misses!");
+          DAS.Warn("SpeedTapGame", "Too many consecutive misses! Does Cozmo have a cube in front of them?");
         }
       }
       // check for player tapped first here.
@@ -160,7 +160,7 @@ namespace SpeedTap {
     }
 
     private void RollForLights() {
-      _SpeedTapGame.RollingBlocks();
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
       _TriedFake = false;
       _CozmoTapDelayTimeMs = UnityEngine.Random.Range(_MinCozmoTapDelayTimeMs, _MaxCozmoTapDelayTimeMs);
       _SpeedTapGame.PlayerTap = false;
@@ -172,6 +172,9 @@ namespace SpeedTap {
       }
       float matchExperiment = UnityEngine.Random.value;
       _GotMatch = matchExperiment < _MatchProbability;
+      if (!_GotMatch) {
+        _MatchProbability += _kMatchProbabilityIncrease;
+      }
       _SpeedTapGame.Rules.SetLights(_GotMatch, _SpeedTapGame);
     }
 
