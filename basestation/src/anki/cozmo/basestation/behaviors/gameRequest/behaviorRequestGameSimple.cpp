@@ -431,6 +431,7 @@ void BehaviorRequestGameSimple::SetState_internal(State state, const std::string
 {
   _state = state;
   PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.TransitionTo", "%s", stateName.c_str());
+  SetStateName(stateName);
 }
 
 bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& targetPose)
