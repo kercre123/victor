@@ -149,9 +149,9 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>232</LineNumber>
+          <LineNumber>233</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>128224</Address>
+          <Address>127542</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
@@ -160,23 +160,7 @@
           <BreakIfRCount>1</BreakIfRCount>
           <Filename>.\boot\recovery.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression>\\sys_boot\boot/recovery.cpp\232</Expression>
-        </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>69</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>129484</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\boot\main.cpp</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\sys_boot\boot/main.cpp\69</Expression>
+          <Expression>\\sys_boot\boot/recovery.cpp\233</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
