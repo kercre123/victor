@@ -24,6 +24,7 @@ public class XCodeProjectMod
       // background modes
       PlistElementArray bgModes = rootDict.CreateArray("UIBackgroundModes");
       bgModes.AddString("fetch");
+      bgModes.AddString("remote-notification");
       
       // Write to file
       File.WriteAllText(plistPath, plist.WriteToString());
