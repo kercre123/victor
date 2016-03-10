@@ -527,6 +527,7 @@ void BehaviorLookAround::SetState_internal(State state, const std::string& state
 {
   _currentState = state;
   PRINT_NAMED_DEBUG("BehaviorLookAround.TransitionTo", "%s", stateName.c_str());
+  SetStateName(stateName);
 }
 
 

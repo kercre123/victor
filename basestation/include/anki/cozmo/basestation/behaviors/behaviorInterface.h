@@ -106,6 +106,10 @@ namespace Cozmo {
     const std::string& GetStateName() const { return _stateName; }
 
     double GetTimeStartedRunning_s() const { return _startedRunningTime_s; }
+
+    // returns true if any action from StartAction is currently running, indicating that the behavior is
+    // likely waiting for something to complete
+    inline bool IsActing() const;
     
     // EvaluateEmotionScore is a score directly based on the given emotion rules
     float EvaluateEmotionScore(const MoodManager& moodManager) const;
@@ -206,9 +210,6 @@ namespace Cozmo {
     // called (this is necessary to prevent non-running behaviors from doing things with the robot). If the
     // behavior is stopped, within the Stop function, any actions which are still running will be canceled
     // (and you will not get any callback for it).
-
-    // returns true if any action from StartAction is currently running
-    inline bool IsActing() const;
 
     // Each StartActing function returns true if the action was started, false otherwise. Reasons actions
     // might not be started include:

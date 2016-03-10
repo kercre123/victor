@@ -766,17 +766,23 @@ namespace Anki {
       _progressionManager->Update(currentTime);
       
       const char* behaviorChooserName = "";
-      std::string behaviorName("<disabled>");
+      std::string behaviorDebugStr("<disabled>");
       if(_isBehaviorMgrEnabled) {
         _behaviorMgr.Update(currentTime);
         
         const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
         if(behavior != nullptr) {
-          behaviorName = behavior->GetName();
+          if( behavior->IsActing() ) {
+            behaviorDebugStr = "A ";
+          }
+          else {
+            behaviorDebugStr = "  ";
+          }
+          behaviorDebugStr += behavior->GetName();
           const std::string& stateName = behavior->GetStateName();
           if (!stateName.empty())
           {
-            behaviorName += "-" + stateName;
+            behaviorDebugStr += "-" + stateName;
           }
         }
         
@@ -788,7 +794,7 @@ namespace Anki {
       }
       
       GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
-                                         "Behavior:%s:%s", behaviorChooserName, behaviorName.c_str());
+                                         "Behavior:%s:%s", behaviorChooserName, behaviorDebugStr.c_str());
 
       
       //////// Update Robot's State Machine /////////////
@@ -952,7 +958,7 @@ namespace Anki {
       // So we can have an arbitrary number of data here that is likely to change want just hash it all
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
-               "r:%c%c%c%c lock:%c%c%c %2dHz %s:%s ",
+               "r:%c%c%c%c lock:%c%c%c %2dHz %s ",
                GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
                GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
                GetMoveComponent().IsMoving() ? 'B' : ' ',
@@ -961,8 +967,7 @@ namespace Anki {
                _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
                _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
                (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
-               behaviorChooserName,
-               behaviorName.c_str());
+               behaviorDebugStr.c_str());
       
       std::hash<std::string> hasher;
       size_t curr_hash = hasher(std::string(buffer));
