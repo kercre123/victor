@@ -116,7 +116,6 @@ namespace SpeedTap {
       base.Exit();
       _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
       _SpeedTapGame.CozmoTappedBlockEvent -= CozmoDidTap;
-      _CurrentRobot.SetEnableCliffSensor(true);
     }
 
     void RobotCompletedTapAnimation(bool success) {

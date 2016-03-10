@@ -21,6 +21,7 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      _CurrentRobot.SetEnableCliffSensor(true);
       if (_ShowHowToPlay) {
         _SpeedTapGame.InitialCubesDone();
       }
@@ -55,6 +56,7 @@ namespace SpeedTap {
     public override void Update() {
       if (_GotoObjectComplete) {
         if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < _kArriveAtCubeThreshold) {
+          _CurrentRobot.SetEnableCliffSensor(false);
           _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
         }
         else {

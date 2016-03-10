@@ -122,13 +122,7 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Event(DASConstants.Game.kEnd, GetGameTimeElapsedAsStr());
 
     if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(() => {
-        RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
-        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
-      });
+      CurrentRobot.ResetRobotState(EndGameRobotReset);
     }
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.CloseViewImmediately();
@@ -141,6 +135,15 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Info(this, "Close Minigame Immediately");
     CleanUpOnDestroy();
     Destroy(gameObject);
+  }
+
+  public void EndGameRobotReset() {
+    RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+    CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
+    CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
+    CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
+    CurrentRobot.SetEnableCliffSensor(true);
   }
 
   #endregion
@@ -247,13 +250,7 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
 
     if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(() => {
-        RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
-        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
-      });
+      CurrentRobot.ResetRobotState(EndGameRobotReset);
     }
 
     // Listen for dialog close
