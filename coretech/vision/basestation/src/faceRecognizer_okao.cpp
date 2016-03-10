@@ -63,9 +63,9 @@ namespace Vision {
   {
     // Wait for recognition thread to die before destructing since we gave it a
     // reference to *this
-    _recognitionRunning = false;
-    if(_isRunningAsync && _recognitionThread.joinable()) {
-      _recognitionThread.join();
+    _isRunningAsync = false;
+    if(_featureExtractionThread.joinable()) {
+      _featureExtractionThread.join();
     }
     
     if(NULL != _okaoFaceAlbum) {
@@ -112,9 +112,8 @@ namespace Vision {
     
     _detectionInfo.nID = -1;
     
-    _recognitionRunning = true;
     if(_isRunningAsync) {
-      _recognitionThread = std::thread(&FaceRecognizer::Run, this);
+      _featureExtractionThread = std::thread(&FaceRecognizer::Run, this);
     }
     
     _isInitialized = true;
@@ -241,7 +240,7 @@ namespace Vision {
   
   void FaceRecognizer::Run()
   {
-    while(_recognitionRunning)
+    while(_isRunningAsync)
     {
       _mutex.lock();
       const bool anythingToDo = ProcessingState::HasNewImage == _state;
@@ -422,12 +421,11 @@ namespace Vision {
       img.CopyTo(_img);
       _okaoPartDetectionResultHandle = okaoPartDetectionResultHandle;
       _detectionInfo = detectionInfo;
+      _state = ProcessingState::HasNewImage;
+      _mutex.unlock();
       
       //PRINT_NAMED_DEBUG("FaceRecognizer.SetNextFaceToRecognize.SetNextFace",
       //                  "Setting next face to recognize: tracked ID %d", -_detectionInfo.nID);
-
-      _state = ProcessingState::HasNewImage;
-      _mutex.unlock();
       
       if(!_isRunningAsync) {
         // Immediately extract features when running synchronously
@@ -641,9 +639,6 @@ namespace Vision {
   Result FaceRecognizer::MergeFaces(TrackedFace::ID_t keepID,
                                     TrackedFace::ID_t mergeID)
   {
-    ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
-                 "FaceRecognizer.MergeFaces.FeaturesShouldBeReady");
-    
     INT32 okaoResult = OKAO_NORMAL;
     
     INT32 numKeepData = 0;
