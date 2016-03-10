@@ -79,6 +79,7 @@ namespace SpeedTap {
               _CozmoTapRegistered = false;
               _CozmoTapping = true;
               _MidHand = false;
+              _CurrentRobot.SetEnableCliffSensor(false);
             }
           }
         }
@@ -119,6 +120,7 @@ namespace SpeedTap {
 
     void RobotCompletedTapAnimation(bool success) {
       DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
+      _CurrentRobot.SetEnableCliffSensor(true);
       if (_CozmoTapRegistered) {
         _SpeedTapGame.ConsecutiveMisses = 0;
         // TODO: Potentially use _CozmoTapRegistered instead of EndAnimation to determine if Cozmo hit first,
