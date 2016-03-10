@@ -55,7 +55,6 @@ namespace SpeedTap {
       _CurrentRobot.SetLiftHeight(1.0f);
       _StartTimeMs = Time.time * 1000.0f;
       _PlayReady = true;
-      _CurrentRobot.SetEnableCliffSensor(false);
       if (_MidHand == false) {
         _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
         _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
