@@ -11,7 +11,7 @@ namespace SpeedTap {
 
     private const float _kRetreatSpeed = -130.0f;
     private const float _kRetreatTime = 0.30f;
-    private const float _kTapAdjustRange = 1.0f;
+    private const float _kTapAdjustRange = 5.0f;
 
     private Vector3 _CozmoPos;
     private Quaternion _CozmoRot;
@@ -56,6 +56,7 @@ namespace SpeedTap {
     private int _CozmoRoundsWon;
     private int _Rounds;
     private int _MaxScorePerRound;
+    public int ConsecutiveMisses = 0;
     // how many rounds were close in score? used to calculate
     // excitement score rewards.
     private int _CloseRoundCount = 0;
@@ -63,6 +64,7 @@ namespace SpeedTap {
     private List<DifficultySelectOptionData> _DifficultyOptions;
 
     public event Action PlayerTappedBlockEvent;
+    public event Action CozmoTappedBlockEvent;
 
     [SerializeField]
     private GameObject _PlayerTapSlidePrefab;
@@ -119,6 +121,7 @@ namespace SpeedTap {
     }
 
     private void HandleRoundEnd() {
+      ConsecutiveMisses = 0;
       if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
         _CloseRoundCount++;
       }
@@ -160,8 +163,8 @@ namespace SpeedTap {
 
     private void HandleSessionAnimDone(bool success) {
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
-        if (CurrentDifficulty > DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
-          DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty;
+        if (CurrentDifficulty >= DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
+          DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty + 1;
           DataPersistence.DataPersistenceManager.Instance.Save();
         }
         RaiseMiniGameWin();
@@ -236,20 +239,15 @@ namespace SpeedTap {
       }
     }
 
-    public void RollingBlocks() {
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
-    }
-
-    private void UIButtonTapped() {
-      if (PlayerTappedBlockEvent != null) {
-        PlayerTappedBlockEvent();
-      }
-    }
-
     private void BlockTapped(int blockID, int tappedTimes) {
       if (PlayerBlock != null && PlayerBlock.ID == blockID) {
         if (PlayerTappedBlockEvent != null) {
           PlayerTappedBlockEvent();
+        }
+      }
+      else if (CozmoBlock != null && CozmoBlock.ID == blockID) {
+        if (CozmoTappedBlockEvent != null) {
+          CozmoTappedBlockEvent();
         }
       }
     }
