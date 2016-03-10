@@ -168,6 +168,9 @@ message EnableLiftPower {
     bool enable
 }
 
+message EnableCliffSensor {
+    bool enable
+}
 
 // SetHeadAngle
 message SetHeadAngle {
