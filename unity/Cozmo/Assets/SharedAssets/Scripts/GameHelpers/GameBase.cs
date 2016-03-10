@@ -246,6 +246,16 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
 
+    if (CurrentRobot != null) {
+      CurrentRobot.ResetRobotState(() => {
+        RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
+        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+        CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
+        CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
+        CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
+      });
+    }
+
     // Listen for dialog close
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
       Localization.Get(LocalizationKeys.kButtonContinue));

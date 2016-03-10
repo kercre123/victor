@@ -55,6 +55,7 @@ namespace SpeedTap {
       _CurrentRobot.SetLiftHeight(1.0f);
       _StartTimeMs = Time.time * 1000.0f;
       _PlayReady = true;
+      _CurrentRobot.SetEnableCliffSensor(false);
       if (_MidHand == false) {
         _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
         _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
@@ -79,7 +80,6 @@ namespace SpeedTap {
               _CozmoTapRegistered = false;
               _CozmoTapping = true;
               _MidHand = false;
-              _CurrentRobot.SetEnableCliffSensor(false);
             }
           }
         }
@@ -116,11 +116,11 @@ namespace SpeedTap {
       base.Exit();
       _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
       _SpeedTapGame.CozmoTappedBlockEvent -= CozmoDidTap;
+      _CurrentRobot.SetEnableCliffSensor(true);
     }
 
     void RobotCompletedTapAnimation(bool success) {
       DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
-      _CurrentRobot.SetEnableCliffSensor(true);
       if (_CozmoTapRegistered) {
         _SpeedTapGame.ConsecutiveMisses = 0;
         // TODO: Potentially use _CozmoTapRegistered instead of EndAnimation to determine if Cozmo hit first,
