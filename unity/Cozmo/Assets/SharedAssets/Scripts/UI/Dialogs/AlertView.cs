@@ -180,7 +180,7 @@ namespace Cozmo {
           button.gameObject.SetActive(true);
           button.Text = title;
           if (!audioParam.IsInvalid()) {
-            button.SoundEvent = audioParam;
+            //button.SoundEvent = audioParam;
           }
           button.onClick.RemoveAllListeners();
           button.onClick.AddListener(() => {
