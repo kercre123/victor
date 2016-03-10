@@ -30,8 +30,8 @@
 #ifndef TARGET_K02
 #include "animationController.h"
 #else
-#include "wifi.h"
-#include "spine.h"
+#include "hal/wifi.h"
+#include "hal/spine.h"
 #endif
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
