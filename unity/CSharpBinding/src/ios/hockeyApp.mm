@@ -188,10 +188,13 @@ void CreateHockeyApp()
   //NSLog(@"Waiting for HockeyApp Crash Upload... (%d/%d)", numWaits, 20);
   NSLog(@"HockedAppDebuggingTemp - CreateHockeyApp");
   NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
+  
   if(!hockeyAppId || hockeyAppId.length == 0) {
     NSLog(@"HockedAppDebuggingTemp - BAD ID");
     DASEvent("HockeyApp.ios.disabled", "");
-    return;
+    hockeyAppId = @"9ddf59a1bfc9487e9586842a82e32d9d";
+    NSLog(@"HockedAppDebuggingTemp - Using Default ID so I can test until build server changes plist %@",hockeyAppId);
+    //return;
   }
   NSLog(@"HockedAppDebuggingTemp - configure with ID %@",hockeyAppId);
   [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:hockeyAppId];
