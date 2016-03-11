@@ -5,6 +5,8 @@
 //  Created by Molly Jameson
 //
 
+/// Testing pure unity version so disabling for now
+/*
 #import <Foundation/Foundation.h>
 #import "hockeyApp.h"
 
@@ -201,18 +203,16 @@ BOOL gWaitingForCrashUpload = NO;
 void CreateHockeyApp()
 {
   // Example simple
-  /*
-  NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
-  if(!hockeyAppId || hockeyAppId.length == 0) {
-    DASEvent("HockeyApp.ios.disabled", "");
-    return;
-  }
-  [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:hockeyAppId];
-  [[BITHockeyManager sharedHockeyManager] startManager];
-  [[BITHockeyManager sharedHockeyManager].authenticator authenticateInstallation];
-  */
+//  NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
+//  if(!hockeyAppId || hockeyAppId.length == 0) {
+//    DASEvent("HockeyApp.ios.disabled", "");
+//    return;
+//  }
+//  [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:hockeyAppId];
+//  [[BITHockeyManager sharedHockeyManager] startManager];
+//  [[BITHockeyManager sharedHockeyManager].authenticator authenticateInstallation];
   
   HockeyApp *hockeyApp = [[HockeyApp alloc] init];
   [hockeyApp activateHockeyApp];
 }
-
+*/

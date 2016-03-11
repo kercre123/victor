@@ -62,7 +62,7 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data
 
   dataPlatform = CreateDataPlatform();
   ConfigureDASForPlatform(dataPlatform);
-  CreateHockeyApp();
+  //CreateHockeyApp();
   
     using namespace Cozmo;
   

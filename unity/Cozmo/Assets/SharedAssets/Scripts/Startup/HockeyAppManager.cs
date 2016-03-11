@@ -1,7 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using Anki.Debug;
 
 
@@ -12,7 +14,56 @@ public class HockeyAppManager : MonoBehaviour {
   protected const string LOG_FILE_DIR = "/unity_crash_logs/";
   protected const int MAX_CHARS = 199800;
 
-  private string _AppID = null;
+  public enum AuthenticatorType {
+    Anonymous,
+    Device,
+    HockeyAppUser,
+    HockeyAppEmail,
+    WebAuth
+  }
+
+  public string appID = "9ddf59a1bfc9487e9586842a82e32d9d";
+  public AuthenticatorType authenticatorType;
+  // only useful for authenticator types...
+  public string secret = "";
+  
+  public string serverURL = "";
+
+  public bool autoUpload = true;
+  public bool exceptionLogging = true;
+  public bool updateManager = false;
+
+  #if (UNITY_IPHONE && !UNITY_EDITOR)
+  [DllImport("__Internal")]
+  private static extern void HockeyApp_StartHockeyManager(string appID, string serverURL, string authType, string secret, bool updateManagerEnabled, bool autoSendEnabled);
+  [DllImport("__Internal")]
+  private static extern string HockeyApp_GetVersionCode();
+  [DllImport("__Internal")]
+  private static extern string HockeyApp_GetVersionName();
+  [DllImport("__Internal")]
+  private static extern string HockeyApp_GetBundleIdentifier();
+  [DllImport("__Internal")]
+  private static extern string HockeyApp_GetSdkVersion();
+  [DllImport("__Internal")]
+  private static extern string HockeyApp_GetSdkName();
+  #endif
+  
+  void Awake() {
+    
+    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    DontDestroyOnLoad(gameObject);
+
+    if(exceptionLogging == true && IsConnected() == true)
+    {
+      List<string> logFileDirs = GetLogFiles();
+      if ( logFileDirs.Count > 0)
+      {
+        Debug.Log("Found files: " + logFileDirs.Count);
+        StartCoroutine(SendLogs(logFileDirs));
+      }
+    }
+    #endif
+  }
 
   void HandleDebugConsoleCrashFromUnityButton(System.Object setvar) {
     DAS.Event("HockeAppManager.ForceDebugCrash", "HockeAppManager.ForceDebugCrash");
@@ -25,11 +76,12 @@ public class HockeyAppManager : MonoBehaviour {
   void OnEnable() {
     
     #if (UNITY_IPHONE && !UNITY_EDITOR)
-    System.AppDomain.CurrentDomain.UnhandledException += OnHandleUnresolvedException;
-    Application.logMessageReceived += OnHandleLogCallback;
+    if(exceptionLogging == true){
+      System.AppDomain.CurrentDomain.UnhandledException += OnHandleUnresolvedException;
+      Application.logMessageReceived += OnHandleLogCallback;
+    }
     #endif
-
-    // Crashing is useful in all platforms.
+// Crashing is useful in all platforms.
     DAS.Info("HockeAppManager.OnEnable", "HockeAppManager.OnEnable");
     Anki.Cozmo.ExternalInterface.DebugConsoleVar consoleVar = new Anki.Cozmo.ExternalInterface.DebugConsoleVar();
     consoleVar.category = "Debug";
@@ -38,13 +90,21 @@ public class HockeyAppManager : MonoBehaviour {
     DebugConsoleData.Instance.AddConsoleVar(consoleVar, this.HandleDebugConsoleCrashFromUnityButton);
   }
 
-
-
   void OnDisable() {
-    DAS.Info("HockeAppManager.OnDisable", "HockeAppManager.OnDisable");
     #if (UNITY_IPHONE && !UNITY_EDITOR)
+    if(exceptionLogging == true){
       System.AppDomain.CurrentDomain.UnhandledException -= OnHandleUnresolvedException;
       Application.logMessageReceived -= OnHandleLogCallback;
+    }
+    #endif
+  }
+
+  void GameViewLoaded(string message) { 
+
+    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    string urlString = GetBaseURL();
+    string authTypeString = GetAuthenticatorTypeString();
+    HockeyApp_StartHockeyManager(appID, urlString, authTypeString, secret, updateManager, autoUpload);
     #endif
   }
 
@@ -56,12 +116,21 @@ public class HockeyAppManager : MonoBehaviour {
     List<string> list = new List<string>();
     
     #if (UNITY_IPHONE && !UNITY_EDITOR)
+    string bundleID = HockeyApp_GetBundleIdentifier();
+    list.Add("Package: " + bundleID);
+    
+    string versionCode = HockeyApp_GetVersionCode();
+    list.Add("Version Code: " + versionCode);
+
+    string versionName = HockeyApp_GetVersionName();
+    list.Add("Version Name: " + versionName);
+
     string osVersion = "OS: " + SystemInfo.operatingSystem.Replace("iPhone OS ", "");
     list.Add (osVersion);
     
     list.Add("Model: " + SystemInfo.deviceModel);
 
-    list.Add("Date: " + System.DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss {}zzzz yyyy").Replace("{}", "GMT").ToString());
+    list.Add("Date: " + DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss {}zzzz yyyy").Replace("{}", "GMT"));
     #endif
     
     return list;
@@ -76,49 +145,58 @@ public class HockeyAppManager : MonoBehaviour {
     
     WWWForm form = new WWWForm();
     
-
     #if (UNITY_IPHONE && !UNITY_EDITOR)
     byte[] bytes = null;
-    using (FileStream fs = File.OpenRead(log)) {
-      if (fs.Length > MAX_CHARS) {
+    using(FileStream fs = File.OpenRead(log)){
+
+      if (fs.Length > MAX_CHARS)
+      {
         string resizedLog = null;
 
-        using (StreamReader reader = new StreamReader(fs)) {
+        using(StreamReader reader = new StreamReader(fs)){
 
-          reader.BaseStream.Seek(fs.Length - MAX_CHARS, SeekOrigin.Begin);
+          reader.BaseStream.Seek( fs.Length - MAX_CHARS, SeekOrigin.Begin );
           resizedLog = reader.ReadToEnd();
         }
-DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUnityCrashInfo.CreateForm " + resizedLog);
+
         List<string> logHeaders = GetLogHeaders();
         string logHeader = "";
           
-        foreach (string header in logHeaders) {
+        foreach (string header in logHeaders)
+        {
           logHeader += header + "\n";
         }
           
         resizedLog = logHeader + "\n" + "[...]" + resizedLog;
 
-        try {
+        try
+        {
           bytes = System.Text.Encoding.Default.GetBytes(resizedLog);
         }
-        catch (System.Exception ae) {
-          if (Debug.isDebugBuild)
-            Debug.Log("Failed to read bytes of log file: " + ae);
+        catch(ArgumentException ae)
+        {
+          if (Debug.isDebugBuild) Debug.Log("Failed to read bytes of log file: " + ae);
         }
       }
-      else {
-        try {
+      else
+      {
+        try
+        {
           bytes = File.ReadAllBytes(log);
         }
-        catch (System.Exception se) {
-          if (Debug.isDebugBuild) {
+        catch(SystemException se)
+        {
+          if (Debug.isDebugBuild) 
+          {
             Debug.Log("Failed to read bytes of log file: " + se);
           }
         }
+
       }
     }
 
-    if (bytes != null) {
+    if(bytes != null)
+    {
       form.AddBinaryData("log", bytes, log, "text/plain");
     }
 
@@ -163,7 +241,7 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
         }
       }
     }
-    catch(System.Exception e)
+    catch(Exception e)
     {
       if (Debug.isDebugBuild) Debug.Log("Failed to write exception log to file: " + e);
     }
@@ -178,9 +256,16 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
   protected virtual IEnumerator SendLogs(List<string> logs) {
 
     string crashPath = HOCKEYAPP_CRASHESPATH;
-    string url = HOCKEYAPP_BASEURL + crashPath.Replace("[APPID]", _AppID);
+    string url = GetBaseURL() + crashPath.Replace("[APPID]", appID);
 
-    DAS.Event("HockeAppManager.SendLogs " + url, "HockeAppManager.UploadUnityCrashInfo.SendLogs " + url);
+    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    string sdkVersion = HockeyApp_GetSdkVersion ();
+    string sdkName = HockeyApp_GetSdkName ();
+    if (sdkName != null && sdkVersion != null) {
+      url += "?sdk=" + WWW.EscapeURL(sdkName) + "&sdk_version=" + sdkVersion;
+    }
+    #endif
+
     foreach (string log in logs) {
 
       WWWForm postForm = CreateForm(log);
@@ -189,18 +274,15 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
       Dictionary<string,string> headers = new Dictionary<string,string>();
       headers.Add("Content-Type", lContent);
       WWW www = new WWW(url, postForm.data, headers);
-
-      DAS.Event("HockeAppManager.SendLogs2 " + log, "HockeAppManager.UploadUnityCrashInfo.SendLogs2 " + log);
-
       yield return www;
 
-      if (System.String.IsNullOrEmpty(www.error)) {
+      if (String.IsNullOrEmpty(www.error)) {
         try {
           File.Delete(log);
         }
-        catch (System.Exception e) {
+        catch (Exception e) {
           if (Debug.isDebugBuild)
-            DAS.Error(e, "HockeAppManager.LogDeleteFail");
+            Debug.Log("Failed to delete exception log: " + e);
         }
       }
     }
@@ -214,7 +296,7 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
   protected virtual void WriteLogToDisk(string logString, string stackTrace) {
     
     #if (UNITY_IPHONE && !UNITY_EDITOR)
-    string logSession = System.DateTime.Now.ToString("yyyy-MM-dd-HH_mm_ss_fff");
+    string logSession = DateTime.Now.ToString("yyyy-MM-dd-HH_mm_ss_fff");
     string log = logString.Replace("\n", " ");
     string[]stacktraceLines = stackTrace.Split('\n');
     
@@ -239,20 +321,84 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
     #endif
   }
 
-  public void UploadUnityCrashInfo(string appId) {
-    DAS.Event("HockeAppManager.UploadUnityCrashInfo " + appId, "HockeyAppManager.UploadUnityCrashInfo " + appId);
-    _AppID = appId;
+  /// <summary>
+  /// Get the base url used for custom exception reports.
+  /// </summary>
+  /// <returns>A formatted base url.</returns>
+  protected virtual string GetBaseURL() {
+    
+    string baseURL = "";
+    
+    #if (UNITY_IPHONE && !UNITY_EDITOR)
 
-   
-    if ((Application.internetReachability == NetworkReachability.ReachableViaLocalAreaNetwork ||
-        (Application.internetReachability == NetworkReachability.ReachableViaCarrierDataNetwork))) {
-      DAS.Event("HockeAppManager.UploadUnityCrashInfo.Connected", "HockeAppManager.UploadUnityCrashInfo.Connected");
-      List<string> logFileDirs = GetLogFiles();
-      DAS.Event("HockeAppManager.UploadUnityCrashInfo.LogCount = " + logFileDirs.Count, "HockeAppManager.UploadUnityCrashInfo.Connected " + logFileDirs.Count);
-      if (logFileDirs.Count > 0) {
-        StartCoroutine(SendLogs(logFileDirs));
+    string urlString = serverURL.Trim();
+    
+    if(urlString.Length > 0)
+    {
+      baseURL = urlString;
+      
+      if(baseURL[baseURL.Length -1].Equals("/") != true){
+        baseURL += "/";
       }
     }
+    else
+    {
+      baseURL = HOCKEYAPP_BASEURL;
+    }
+    #endif
+
+    return baseURL;
+  }
+
+  /// <summary>
+  /// Get the base url used for custom exception reports.
+  /// </summary>
+  /// <returns>A formatted base url.</returns>
+  protected virtual string GetAuthenticatorTypeString() {
+
+    string authType = "";
+
+    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    switch (authenticatorType)
+    {
+    case AuthenticatorType.Device:
+      authType = "BITAuthenticatorIdentificationTypeDevice";
+      break;
+    case AuthenticatorType.HockeyAppUser:
+      authType = "BITAuthenticatorIdentificationTypeHockeyAppUser";
+      break;
+    case AuthenticatorType.HockeyAppEmail:
+      authType = "BITAuthenticatorIdentificationTypeHockeyAppEmail";
+      break;
+    case AuthenticatorType.WebAuth:
+      authType = "BITAuthenticatorIdentificationTypeWebAuth";
+      break;
+    default:
+      authType = "BITAuthenticatorIdentificationTypeAnonymous";
+      break;
+    }
+    #endif
+
+    return authType;
+  }
+
+  /// <summary>
+  /// Checks whether internet is reachable
+  /// </summary>
+  protected virtual bool IsConnected() {
+
+    bool connected = false;
+    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    
+    if  (Application.internetReachability == NetworkReachability.ReachableViaLocalAreaNetwork || 
+         (Application.internetReachability == NetworkReachability.ReachableViaCarrierDataNetwork))
+    {
+      connected = true;
+    }
+  
+    #endif
+
+    return connected;
   }
 
   /// <summary>
@@ -261,9 +407,9 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
   /// <param name="logString">A string that contains the reason for the exception.</param>
   /// <param name="stackTrace">The stacktrace for the exception.</param>
   protected virtual void HandleException(string logString, string stackTrace) {
-    DAS.Event("HockeAppManager.HandleException", "HockeAppManager.HandleException");
+
     #if (UNITY_IPHONE && !UNITY_EDITOR)
-      WriteLogToDisk(logString, stackTrace);
+    WriteLogToDisk(logString, stackTrace);
     #endif
   }
 
@@ -274,23 +420,26 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
   /// <param name="stackTrace">The stacktrace for the exception.</param>
   /// <param name="type">The type of the log message.</param>
   public void OnHandleLogCallback(string logString, string stackTrace, LogType type) {
-    DAS.Event("HockeAppManager.OnHandleLogCallback", "HockeAppManager.OnHandleLogCallback");
+    
     #if (UNITY_IPHONE && !UNITY_EDITOR)
-    if (LogType.Assert == type || LogType.Exception == type || LogType.Error == type) { 
+    if(LogType.Assert == type || LogType.Exception == type || LogType.Error == type)  
+    { 
       HandleException(logString, stackTrace);
     }   
     #endif
   }
 
   public void OnHandleUnresolvedException(object sender, System.UnhandledExceptionEventArgs args) {
-    DAS.Event("HockeAppManager.OnHandleUnresolvedException", "HockeAppManager.OnHandleUnresolvedException");
+    
     #if (UNITY_IPHONE && !UNITY_EDITOR)
-    if (args == null || args.ExceptionObject == null) { 
+    if(args == null || args.ExceptionObject == null)
+    { 
       return; 
     }
 
-    if (args.ExceptionObject.GetType() == typeof(System.Exception)) { 
-      System.Exception e = (System.Exception)args.ExceptionObject;
+    if(args.ExceptionObject.GetType() == typeof(System.Exception))
+    { 
+      System.Exception e  = (System.Exception)args.ExceptionObject;
       HandleException(e.Source, e.StackTrace);
     }
     #endif
