@@ -165,7 +165,7 @@ public class PrefabProxy : MonoBehaviour {
     }
   }
 
-  public delegate object FieldSetter(object obj,object value);
+  public delegate object FieldSetter(object obj, object value);
 
   private static FieldSetter BuildSetter(string[] typeSplit, int i, ref Type type) {
     Func<object, object> newGetter;

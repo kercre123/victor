@@ -668,13 +668,13 @@ MonoBehaviour:
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_GameObjectType
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_GameObjectType
     JsonValue: 3
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_DASEventViewController
+    FieldName: Cozmo.UI.CozmoButton:_DASEventViewController
     JsonValue: '"assignedByBaseView"'
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_DASEventButtonName
+    FieldName: Cozmo.UI.CozmoButton:_DASEventButtonName
     JsonValue: '"assignedByBaseView"'
   ModifiedLocalReferences:
   - ObjectPath: ../../

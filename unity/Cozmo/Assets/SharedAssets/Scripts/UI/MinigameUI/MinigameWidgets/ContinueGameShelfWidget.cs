@@ -10,7 +10,7 @@ namespace Cozmo {
       public delegate void ContinueButtonClickHandler();
 
       [SerializeField]
-      private AnkiButton _ContinueButton;
+      private Cozmo.UI.CozmoButton _ContinueButton;
 
       [SerializeField]
       private AnkiTextLabel _ShelfTextLabel;

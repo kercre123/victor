@@ -4,12 +4,12 @@ using UnityEngine.UI;
 
 namespace Cozmo.HubWorld {
   public class HubWorldButton : MonoBehaviour {
-    public delegate void ButtonClickedHandler(string challengeClickedId,Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClickedId, Transform buttonTransform);
 
     public event ButtonClickedHandler OnButtonClicked;
 
     [SerializeField]
-    private Anki.UI.AnkiButton _ButtonScript;
+    private Cozmo.UI.CozmoButton _ButtonScript;
 
     [SerializeField]
     private Image _IconImage;

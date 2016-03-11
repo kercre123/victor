@@ -210,19 +210,19 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#label.connect"'
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_GameObjectType
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_GameObjectType
     JsonValue: 3
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_EventType
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_EventType
     JsonValue: 4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_Event
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
     JsonValue: -303697590
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_DASEventViewController
+    FieldName: Cozmo.UI.CozmoButton:_DASEventViewController
     JsonValue: '"assignedByStartView"'
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_DASEventButtonName
+    FieldName: Cozmo.UI.CozmoButton:_DASEventButtonName
     JsonValue: '"connect_button"'
   ModifiedLocalReferences:
   - ObjectPath: ../

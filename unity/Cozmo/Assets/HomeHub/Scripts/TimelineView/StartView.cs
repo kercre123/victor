@@ -7,7 +7,7 @@ using Cozmo.UI;
 public class StartView : BaseView {
 
   [SerializeField]
-  private AnkiButton _ConnectButton;
+  private Cozmo.UI.CozmoButton _ConnectButton;
 
   [SerializeField]
   private Color _DisconnectedColor;
