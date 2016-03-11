@@ -31,6 +31,7 @@ namespace Cozmo {
 #define CST_EXIT()  QuitWebots(_result);  
 #endif
   
+#define DEFAULT_TIMEOUT 10
   
 #define CST_EXPECT(x, errorStreamOutput) \
 if (!(x)) { \
@@ -78,6 +79,11 @@ protected:
                            std::string file,
                            std::string func,
                            int line);
+  
+  void StartMovie(std::string name);
+  void StopMovie();
+  
+  void MakeSynchronous();
   
 }; // class CozmoSimTestController
 

@@ -21,8 +21,10 @@ namespace Anki {
     
     enum class TestState {
       Init,
+      WaitToSeeObjectOne,
       PickupObject,
       PlaceObject,
+      PickupForStack,
       Stack,
       TestDone
     };
@@ -57,10 +59,6 @@ namespace Anki {
       
       TestState _testState = TestState::Init;
       
-      bool _lastActionSucceeded = false;
-      
-      bool _actionFailed = false;
-      
       // Message handlers
       virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg) override;
     };
@@ -76,6 +74,9 @@ namespace Anki {
       switch (_testState) {
         case TestState::Init:
         {
+          MakeSynchronous();
+          StartMovie("ActionRetry");
+          
           SendMoveHeadToAngle(0, 100, 100);
           
           ExternalInterface::QueueSingleAction m;
@@ -87,30 +88,47 @@ namespace Anki {
           message.Set_QueueSingleAction(m);
           SendMessage(message);
           
-          m.robotID = 1;
-          m.position = QueueActionPosition::AT_END;
-          m.idTag = 5;
-          m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-PI/4, DEG_TO_RAD(100), 0, false, 1));
-          message.Set_QueueSingleAction(m);
-          SendMessage(message);
-          _testState = TestState::PickupObject;
+          PRINT_NAMED_INFO("CST_ActionRetry", "Waiting to see object 1");
+          _testState = TestState::WaitToSeeObjectOne;
+          break;
+        }
+        case TestState::WaitToSeeObjectOne:
+        {
+          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
+                                           GetNumObjects() == 1, DEFAULT_TIMEOUT)
+          {
+            ExternalInterface::QueueSingleAction m;
+            m.robotID = 1;
+            m.position = QueueActionPosition::AT_END;
+            m.idTag = 5;
+            m.action.Set_turnInPlace(ExternalInterface::TurnInPlace(-PI/4, DEG_TO_RAD(100), 0, false, 1));
+            ExternalInterface::MessageGameToEngine message;
+            message.Set_QueueSingleAction(m);
+            SendMessage(message);
+          
+            PRINT_NAMED_INFO("CST_ActionRetry", "Turning back to first block");
+            _testState = TestState::PickupObject;
+          }
           break;
         }
         case TestState::PickupObject:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                           GetNumObjects() == 2, 10)
+                                           GetNumObjects() == 2, DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
             m.idTag = 9;
+            m.numRetries = 2;
             // Pickup object 0
             m.action.Set_pickupObject(ExternalInterface::PickupObject(0, motionProfile2, 0, false, true, false));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
+            
+            PRINT_NAMED_INFO("CST_ActionRetry", "Picking up object 0");
             _testState = TestState::PlaceObject;
           }
           break;
@@ -121,7 +139,7 @@ namespace Anki {
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().x(), 128, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 1, 10) &&
-                                           GetCarryingObjectID() == 0, 10)
+                                           GetCarryingObjectID() == 0, DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -132,12 +150,14 @@ namespace Anki {
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
-            _testState = TestState::Stack;
+            
+            PRINT_NAMED_INFO("CST_ActionRetry", "Placing object 0 on ground");
+            _testState = TestState::PickupForStack;
           }
           break;
         }
         // Trying to stack the blocks will cause a FAILURE_RETRY
-        case TestState::Stack:
+        case TestState::PickupForStack:
         {
           // Verify robot has put block down and is in the right position
           Pose3d pose;
@@ -151,7 +171,7 @@ namespace Anki {
                                            NEAR(pose.GetRotationAxis().x(), 0.0, 0.1) &&
                                            NEAR(pose.GetRotationAxis().y(), 0.0, 0.1) &&
                                            (NEAR(pose.GetRotationAxis().z(), 1, 0.1) ||
-                                            NEAR(pose.GetRotationAxis().z(), -1, 0.1)), 10)
+                                            NEAR(pose.GetRotationAxis().z(), -1, 0.1)), DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueCompoundAction m;
             m.robotID = 1;
@@ -161,6 +181,30 @@ namespace Anki {
             m.numRetries = 5;
             // Pickup object 1
             m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PickupObject(1, motionProfile2, 0, false, true, false));
+            ExternalInterface::MessageGameToEngine message;
+            
+            message.Set_QueueCompoundAction(m);
+            SendMessage(message);
+            
+            PRINT_NAMED_INFO("CST_ActionRetry", "Picking up object 1");
+            _testState = TestState::Stack;
+          }
+          break;
+        }
+        case TestState::Stack:
+        {
+          // Verify robot has picked up block to stack
+          Pose3d pose;
+          GetObjectPose(0, pose);
+          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
+                                            GetCarryingObjectID() == 1, 30)
+          {
+            ExternalInterface::QueueCompoundAction m;
+            m.robotID = 1;
+            m.position = QueueActionPosition::NOW;
+            m.idTag = 13;
+            m.parallel = false;
+            m.numRetries = 5;
             // Place object 1 on object 0
             m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(0, motionProfile2, 0, false, true, false));
             ExternalInterface::MessageGameToEngine message;
@@ -168,6 +212,7 @@ namespace Anki {
             message.Set_QueueCompoundAction(m);
             SendMessage(message);
             
+            PRINT_NAMED_INFO("CST_ActionRetry", "Placing object 1 on object 0");
             _testState = TestState::TestDone;
           }
           break;
@@ -179,16 +224,15 @@ namespace Anki {
           GetObjectPose(0, pose0);
           Pose3d pose1;
           GetObjectPose(1, pose1);
-          // Stacking the blocks can fail (rare) as the visuallyVerifyObjectAction can timeout because
-          // it ends up not being able to see the second block after turning to face it. So if this happens just
-          // say it completed
-          IF_CONDITION_WITH_TIMEOUT_ASSERT(_actionFailed || (!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
+          // Note: I'm using robot's actual pose because depending on what the robot does the error in pose estimation can change dramatically
+          IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
                                            NEAR(pose0.GetTranslation().z(), 22, 10) &&
                                            NEAR(pose1.GetTranslation().z(), 65, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 100, 30) &&
-                                           NEAR(GetRobotPose().GetTranslation().y(), 24, 20)), 30)
+                                           NEAR(GetRobotPoseActual().GetTranslation().x(), 78, 20) &&
+                                           NEAR(GetRobotPoseActual().GetTranslation().y(), 45, 20), 60)
           {
+            StopMovie();
             CST_EXIT();
           }
           break;
@@ -201,12 +245,23 @@ namespace Anki {
     // ================ Message handler callbacks ==================
     void CST_ActionRetry::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg)
     {
-      if (msg.result == ActionResult::SUCCESS) {
-        _lastActionSucceeded = true;
-      // 12 is the id of the action that can fail due to not seeing the second block when stacking
-      } else if(msg.idTag == 12) {
-        PRINT_NAMED_WARNING("", "Failed with timeout saying success");
-        _actionFailed = true;
+      if(msg.idTag == 13 && msg.result != ActionResult::SUCCESS) {
+        PRINT_NAMED_INFO("CST_ActionRetry", "Stacking blocks failed queue now and clear remaining a new PlaceOnObject action");
+        
+        ExternalInterface::QueueCompoundAction m;
+        m.robotID = 1;
+        m.position = QueueActionPosition::NOW_AND_CLEAR_REMAINING;
+        m.idTag = 13;
+        m.parallel = false;
+        m.numRetries = 5;
+        // Place object 1 on object 0
+        m.actions.push_back((ExternalInterface::RobotActionUnion)ExternalInterface::PlaceOnObject(0, motionProfile2, 0, false, true, false));
+        ExternalInterface::MessageGameToEngine message;
+        
+        message.Set_QueueCompoundAction(m);
+        SendMessage(message);
+        
+        _testState = TestState::TestDone;
       }
     }
     

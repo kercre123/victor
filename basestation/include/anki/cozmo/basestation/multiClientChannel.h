@@ -106,6 +106,8 @@ namespace Cozmo {
     
     
     virtual uint32_t GetMaxTotalBytesPerMessage() const override;
+    
+    void SetReliableTransportRunMode(bool isSync) { _reliableChannel.GetReliableTransport()->ChangeSyncMode(isSync); }
   
   private:
     

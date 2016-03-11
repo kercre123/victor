@@ -70,6 +70,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReliableTransportRunMode, callback));
   
   // Use a separate callback for StartEngine
   auto startEngineCallback = std::bind(&CozmoEngine::HandleStartEngine, this, std::placeholders::_1);
@@ -503,6 +504,12 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       if(robot != nullptr) {
         robot->GetRobotAudioClient()->SetRobotVolume(msg.volume);
       }
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::ReliableTransportRunMode:
+    {
+      const ExternalInterface::ReliableTransportRunMode& msg = event.GetData().Get_ReliableTransportRunMode();
+      _robotChannel->SetReliableTransportRunMode(msg.isSync);
       break;
     }
     default:

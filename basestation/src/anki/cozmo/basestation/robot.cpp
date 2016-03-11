@@ -703,7 +703,6 @@ namespace Anki {
       ActiveBlockLightTest(1);
       return RESULT_OK;
 #endif
-      
       GetContext()->GetVizManager()->SendStartRobotUpdate();
       
       /* DEBUG
