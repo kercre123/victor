@@ -369,7 +369,7 @@ void Radio::setPropLights(unsigned int slot, const LightState *state) {
   }
 
  for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
-		Lights::update(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * c, &state[c]);
+		Lights::update(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * slot + c, &state[c]);
 	}
 }
 
