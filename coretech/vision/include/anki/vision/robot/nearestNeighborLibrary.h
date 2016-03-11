@@ -64,7 +64,7 @@ namespace Embedded {
   protected:
     
     void Init();
-    Result NormalizeIllumination(u8* data, s32 gridSize);
+    Result NormalizeIllumination(u8* data, s32 gridSize, s32 filterSize);
     
     Result GetProbeHoG();
     

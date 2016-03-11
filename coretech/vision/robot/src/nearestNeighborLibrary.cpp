@@ -170,10 +170,10 @@ namespace Embedded {
   
   Result NearestNeighborLibrary::GetNearestNeighbor(const Array<u8> &image, const Array<f32> &homography, const s32 distThreshold, s32 &label, s32 &closestDistance)
   {
-    const s32 kMedianBlurSize = 0;
-    const f32 kGaussianBlurSigma = 0;
-    cv::Mat_<u8> morphKernel; // = cv::Mat_<u8>::ones(3, 3);
-    
+    AnkiConditionalErrorAndReturnValue(_isInitialized, RESULT_FAIL,
+                                       "NearestNeighborLibrary.GetNearestNeighbor.NotInitialized",
+                                       "");
+  
     label = -1;
     s32 closestIndex = -1;
     s32 secondClosestIndex = -1;
@@ -182,41 +182,21 @@ namespace Embedded {
                                                      false, //USE_ILLUMINATION_NORMALIZATION,
                                                      _probeValues);
     
+    AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
+                                       "NearestNeighborLibrary.GetNearestNeighbor.GetProbesFailed",
+                                       "");
+    
     closestDistance = s32_MAX;
     s32 secondClosestDistance = s32_MAX;
     
-    cv::Mat_<u8> probeImage(VisionMarker::GRIDSIZE, VisionMarker::GRIDSIZE,
-                            _probeValues.data);
-    cv::normalize(probeImage, probeImage, 255, 0, CV_MINMAX);
+    cv::normalize(_probeValues, _probeValues, 255, 0, CV_MINMAX);
     
     cv::Mat_<u8> diffImage, bestDiffImage, secondBestDiffImage;
     for(s32 iExample=0; iExample<_numDataPoints; ++iExample)
     {
-      cv::Mat_<u8> currentExample = _data.row(iExample).reshape(0, VisionMarker::GRIDSIZE);
-     
-      cv::absdiff(probeImage, currentExample, diffImage);
+      cv::absdiff(_probeValues, _data.row(iExample), diffImage);
       
-      if(kMedianBlurSize > 0) {
-        cv::medianBlur(diffImage > distThreshold, diffImage, kMedianBlurSize);
-      }
-      if(kGaussianBlurSigma > 0) {
-        const s32 kernelSize = 2*std::ceil(kGaussianBlurSigma)+1;
-        cv::GaussianBlur(diffImage, diffImage,
-                         cv::Size(kernelSize, kernelSize),
-                         kGaussianBlurSigma);
-      }
-      if(!morphKernel.empty()) {
-        cv::morphologyEx(diffImage>32, diffImage, cv::MORPH_OPEN, morphKernel);
-        cv::morphologyEx(diffImage, diffImage, cv::MORPH_CLOSE, morphKernel);
-      }
-      
-#     if USE_WEIGHTS
-      cv::Mat_<u8> currentWeights = _weights.row(iExample).reshape(0, VisionMarker::GRIDSIZE);
-      diffImage.mul(_weights, 1./255.);
-      const s32 currentDistance = (f32)(255 * cv::sum(diffImage)[0]) / (f32)_totalWeight(iExample,0);// * _totalWeight(iExample,0));
-#     else
       const s32 currentDistance = cv::sum(diffImage)[0] / _dataDimension;
-#     endif
       
       if(currentDistance < closestDistance)
       {
@@ -227,7 +207,7 @@ namespace Embedded {
         if(DRAW_DEBUG_IMAGES)
         {
           std::swap(bestDiffImage, secondBestDiffImage);
-          diffImage.copyTo(bestDiffImage);
+          diffImage.reshape(0, VisionMarker::GRIDSIZE).copyTo(bestDiffImage);
         }
       }
       else if(currentDistance < secondClosestDistance)
@@ -236,7 +216,7 @@ namespace Embedded {
         secondClosestDistance = currentDistance;
         if(DRAW_DEBUG_IMAGES)
         {
-          diffImage.copyTo(secondBestDiffImage);
+          diffImage.reshape(0, VisionMarker::GRIDSIZE).copyTo(secondBestDiffImage);
         }
       }
     }
@@ -272,7 +252,7 @@ namespace Embedded {
         const f32 distThreshLeniency = 1.25f;
         
         maskedDist /= count;
-        if(maskedDist < distThreshLeniency*distThreshold) {
+        if(maskedDist < distThreshLeniency*closestDistance) {
           label = closestLabel;
         }
       }
@@ -282,7 +262,8 @@ namespace Embedded {
         const s32 dispSize = 256;
  
         cv::Mat probeDisp;
-        cv::resize(probeImage, probeDisp, cv::Size(dispSize,dispSize));
+        cv::resize(_probeValues.reshape(0, VisionMarker::GRIDSIZE), probeDisp,
+                   cv::Size(dispSize,dispSize));
         cv::imshow("Probes", probeDisp);
         
         cv::Mat closestExampleDisp;
