@@ -7,6 +7,9 @@
 *.swp
 *.TMP
 .vagrant
+.idea
+*.swo
+
 matlab.mat
 TAGS
 
