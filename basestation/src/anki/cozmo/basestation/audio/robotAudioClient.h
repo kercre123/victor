@@ -23,6 +23,8 @@ class Animation;
   
 namespace Audio {
   
+class AudioController;
+  
 class RobotAudioBuffer;
   
 class RobotAudioClient : public AudioEngineClient
@@ -36,10 +38,11 @@ public:
     PlayOnRobot     // Play on Robot by using Hijack Audio plug-in to get audio stream from Wwise
   };
   
-  // Buffer stream from Wwise Hijack Audio plug-in
-  void SetAudioBuffer( RobotAudioBuffer* audioBuffer ) { _audioBuffer = audioBuffer; }
-
-  RobotAudioBuffer* GetAudioBuffer() { return _audioBuffer; }
+  // Set Audio Controller to provide access to robot audio buffers
+  void SetAudioController( AudioController* audioController ) { _audioController = audioController; }
+  
+  // Get an available Audio Buffer from pool
+  RobotAudioBuffer* GetAvailableAudioBuffer();
   
   // Post Cozmo specific Audio events
   CallbackIdType PostCozmoEvent( GameEvent::GenericEvent event, AudioEngineClient::CallbackFunc callback = nullptr );
@@ -66,8 +69,9 @@ public:
   
 private:
   
-  // Provides cozmo audio data
-  RobotAudioBuffer* _audioBuffer = nullptr;
+  // Provides robot audio buffer
+  AudioController* _audioController = nullptr;
+  
   // Audio Animation Object to provide audio frames to Animation
   RobotAudioAnimation* _currentAnimation = nullptr;
   

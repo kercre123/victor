@@ -375,8 +375,7 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     // Set Robot Audio Client Message Handler to link to Connection and Robot Audio Buffer ( Audio played on Robot )
     RobotAudioClient* audioClient = robot->GetRobotAudioClient();
     audioClient->SetMessageHandler( engineConnection->GetMessageHandler() );
-    // NOTE: Assume there is only 1 Robot
-    audioClient->SetAudioBuffer( _context->GetAudioServer()->GetAudioController()->GetRobotAudioBuffer() );
+    audioClient->SetAudioController( _context->GetAudioServer()->GetAudioController() );
   }
   
   return lastResult;

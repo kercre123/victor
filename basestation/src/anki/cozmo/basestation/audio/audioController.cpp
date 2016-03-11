@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/audio/audioGameObjectTypes.h"
 #include "clad/audio/audioParameterTypes.h"
 #include <util/dispatchQueue/dispatchQueue.h>
 #include <util/helpers/templateHelpers.h>
@@ -74,45 +75,7 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
 #if USE_AUDIO_ENGINE
     
     // Setup CozmoPlugIn & RobotAudioBuffer
-    _hijackAudioPlugIn = new HijackAudioPlugIn( static_cast<uint32_t>( AnimConstants::AUDIO_SAMPLE_RATE ), static_cast<uint16_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
-    _robotAudioBuffer = new RobotAudioBuffer();
-    
-    // Setup Callbacks
-    _hijackAudioPlugIn->SetCreatePlugInCallback( [this] () {
-      PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback!" );
-      assert( nullptr != _robotAudioBuffer );
-      _robotAudioBuffer->PrepareAudioBuffer();
-      
-#if HijackAudioPlugInDebugLogs
-      _plugInLog.emplace_back( TimeLog( LogEnumType::CreatePlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
-#endif
-    } );
-
-    _hijackAudioPlugIn->SetDestroyPluginCallback( [this] () {
-      PRINT_NAMED_INFO( "AudioController.Initialize", "Create Destroy Callback!" );
-      assert( nullptr != _robotAudioBuffer );
-      // Done with voice clear audio buffer
-      _robotAudioBuffer->ClearCache();
-      
-#if HijackAudioPlugInDebugLogs
-      _plugInLog.emplace_back( TimeLog( LogEnumType::DestoryPlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
-      PrintPlugInLog();
-#endif
-    } );
-    
-    _hijackAudioPlugIn->SetProcessCallback( [this] ( const AudioEngine::HijackAudioPlugIn::AudioBuffer& buffer )
-    {
-      _robotAudioBuffer->UpdateBuffer( buffer.frames, buffer.frameCount );
-
-#if HijackAudioPlugInDebugLogs
-      _plugInLog.emplace_back( TimeLog( LogEnumType::Update, "FrameCount: " + std::to_string(buffer.frameCount) , Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
-#endif
-    });
-    
-    const bool success = _hijackAudioPlugIn->RegisterPlugin();
-    if ( ! success ) {
-      PRINT_NAMED_ERROR( "AudioController.Initialize", "Fail to Regist Cozmo PlugIn");
-    }
+    SetupPlugInAndRobotAudioBuffers();
     
     // FIXME: Temp fix to load audio banks
     AudioBankList bankList = {
@@ -284,6 +247,16 @@ bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AudioEngine::AudioGameObject AudioController::GetAvailableRobotAudioBuffer( RobotAudioBuffer*& out_buffer )
+{
+  // TODO: Need to finish this!!!
+  // Need a method to find an audio buffer it's coresponding game object that are ready to use
+  out_buffer = GetAudioBuffer( 1 ); // This is just until we update the wwise project with multiple buffers
+
+  return static_cast<AudioEngine::AudioGameObject>( GameObjectType::CozmoAnimation );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AudioController::RegisterGameObject( AudioEngine::AudioGameObject gameObjectId, std::string gameObjectName )
 {
   bool success = false;
@@ -306,6 +279,78 @@ void AudioController::StartUpSetDefaults()
 
 
 // Private
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController::SetupPlugInAndRobotAudioBuffers()
+{
+  // Setup CozmoPlugIn & RobotAudioBuffer
+  _hijackAudioPlugIn = new HijackAudioPlugIn( static_cast<uint32_t>( AnimConstants::AUDIO_SAMPLE_RATE ), static_cast<uint16_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
+  
+  // Posible plug-ids
+  // TODO: Need to pair with game object
+//  std::vector<int32_t> ids = { 1, 2, 3, 4 };
+  std::vector<int32_t> ids = { 1 }; // Use this until we setup wwise to work with multiple plug-ins
+
+  
+  for ( auto anId : ids ) {
+    _robotAudioBufferPool.emplace( anId, new RobotAudioBuffer() );
+  }
+
+
+  // Setup Callbacks
+  _hijackAudioPlugIn->SetCreatePlugInCallback( [this] ( const uint32_t plugInId )
+  {
+    PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback!" );
+    RobotAudioBuffer* buffer = GetAudioBuffer( plugInId );
+    assert( nullptr != buffer ); // Catch mistakes with wwise project
+    buffer->PrepareAudioBuffer();
+    
+#if HijackAudioPlugInDebugLogs
+    _plugInLog.emplace_back( TimeLog( LogEnumType::CreatePlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+#endif
+  } );
+  
+  _hijackAudioPlugIn->SetDestroyPluginCallback( [this] ( const uint32_t plugInId )
+  {
+    PRINT_NAMED_INFO( "AudioController.Initialize", "Create Destroy Callback!" );
+    RobotAudioBuffer* buffer = GetAudioBuffer( plugInId );
+    assert( nullptr != buffer ); // Catch mistakes with wwise project
+    // Done with voice clear audio buffer
+    buffer->ClearCache();
+    
+#if HijackAudioPlugInDebugLogs
+    _plugInLog.emplace_back( TimeLog( LogEnumType::DestoryPlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+    PrintPlugInLog();
+#endif
+  } );
+  
+  _hijackAudioPlugIn->SetProcessCallback( [this] ( const uint32_t plugInId, const uint8_t* frames, const uint32_t frameCount )
+  {
+    RobotAudioBuffer* buffer = GetAudioBuffer( plugInId );
+    assert( nullptr != buffer ); // Catch mistakes with wwise project
+    buffer->UpdateBuffer( frames, frameCount );
+     
+#if HijackAudioPlugInDebugLogs
+     _plugInLog.emplace_back( TimeLog( LogEnumType::Update, "FrameCount: " + std::to_string(buffer.frameCount) , Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+#endif
+  } );
+  
+  const bool success = _hijackAudioPlugIn->RegisterPlugin();
+  if ( ! success ) {
+    PRINT_NAMED_ERROR( "AudioController.Initialize", "Failed to Register Cozmo PlugIn");
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotAudioBuffer* AudioController::GetAudioBuffer( int32_t plugInId ) const
+{
+  const auto it = _robotAudioBufferPool.find( plugInId );
+  if ( it != _robotAudioBufferPool.end() ) {
+    return it->second;
+  }
+  
+  return nullptr;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioController::Update()
 {

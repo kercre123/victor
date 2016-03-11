@@ -10,6 +10,7 @@
  */
 
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/robotAudioAnimationOnDevice.h"
 #include "anki/cozmo/basestation/audio/robotAudioAnimationOnRobot.h"
 #include "clad/audio/messageAudioClient.h"
@@ -20,7 +21,17 @@
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotAudioBuffer* RobotAudioClient::GetAvailableAudioBuffer()
+{
+  // TODO: This will get an audio buffer from a poll of buffers to allow us to buffer data from multiple sources
+  RobotAudioBuffer* buffer = nullptr;
+  _audioController->GetAvailableRobotAudioBuffer( buffer );
+  return buffer;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( GameEvent::GenericEvent event, AudioEngineClient::CallbackFunc callback )
 {

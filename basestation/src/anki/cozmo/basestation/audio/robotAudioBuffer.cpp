@@ -32,7 +32,7 @@ void RobotAudioBuffer::PrepareAudioBuffer()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioBuffer::UpdateBuffer( const uint8_t* samples, size_t sampleCount )
+void RobotAudioBuffer::UpdateBuffer( const uint8_t* samples, const size_t sampleCount )
 {
   // Ignore updates if we are waiting for the plug-in to reset
   if ( _isWaitingForReset ) {
@@ -61,7 +61,7 @@ void RobotAudioBuffer::UpdateBuffer( const uint8_t* samples, size_t sampleCount 
     std::fill( audioFrame.sample.begin() + sampleCount, audioFrame.sample.end(), 0 );
   }
   
-  ASSERT_NAMED( nullptr!= _currentStream, "Must pass a Robot Audio Buffer Stream object" );
+  ASSERT_NAMED( nullptr != _currentStream, "Must pass a Robot Audio Buffer Stream object" );
   RobotInterface::EngineToRobot* audioMsg = new RobotInterface::EngineToRobot( std::move( audioFrame ) );
   
   _currentStream->PushRobotAudioMessage( audioMsg );
