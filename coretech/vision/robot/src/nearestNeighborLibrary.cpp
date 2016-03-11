@@ -163,7 +163,7 @@ namespace Embedded {
         const f32 distThreshLeniency = 1.25f;
         
         maskedDist /= count;
-        if(maskedDist < distThreshLeniency*closestDistance) {
+        if(maskedDist < distThreshLeniency*distThreshold) {
           label = closestLabel;
         }
       }
