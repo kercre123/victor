@@ -22,7 +22,8 @@ namespace HAL {
     }
     else
     {
-      memcpy(dest, &spinebuffer[spine_enter], sizeof(CladBufferDown));
+      // Skip flags field
+      memcpy(dest, &(spinebuffer[spine_enter]), sizeof(CladBufferDown));
       spine_enter = (spine_enter+1) % QUEUE_DEPTH;
     }
   }

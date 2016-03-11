@@ -134,6 +134,7 @@ EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& 
                           deltaTheta < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
                           FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
                           FACE_AND_APPROACH_PLANNER_ROT_DECEL,
+                          POINT_TURN_ANGLE_TOL,
                           true);
   }
 
@@ -152,6 +153,7 @@ EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& 
                           deltaTheta1 < 0 ? -FACE_AND_APPROACH_TARGET_ROT_SPEED : FACE_AND_APPROACH_TARGET_ROT_SPEED,
                           FACE_AND_APPROACH_PLANNER_ROT_ACCEL,
                           FACE_AND_APPROACH_PLANNER_ROT_DECEL,
+                          POINT_TURN_ANGLE_TOL,
                           true);
   }
 

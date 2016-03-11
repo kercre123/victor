@@ -417,6 +417,15 @@ namespace Cozmo {
     return retVal;
   }
   
+  bool VisionSystem::CheckMailbox(OverheadEdgePointChain& msg)
+  {
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _overheadEdgeChainMailbox.getMessage(msg);
+    }
+    return retVal;
+  }
+  
   bool VisionSystem::CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg)
   {
     bool retVal = false;
@@ -1201,6 +1210,20 @@ namespace Cozmo {
     return result;
   } // TrackerPredictionUpdate()
   
+  void VisionSystem::AssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name)
+  {
+    if(!_isInitialized) {
+      PRINT_NAMED_WARNING("VisionSystem.AssignNameToFace.NotInitialized",
+                          "Cannot assign name '%s' to face ID %d before being initialized",
+                          name.c_str(), faceID);
+      return;
+    }
+    
+    ASSERT_NAMED(_faceTracker != nullptr, "VisionSystem.AssignNameToFace.NullFaceTracker");
+    
+    _faceTracker->AssignNameToID(faceID, name);
+  }
+  
   void VisionSystem::EnableNewFaceEnrollment(s32 numToEnroll)
   {
     _faceTracker->EnableNewFaceEnrollment(numToEnroll);
@@ -1209,7 +1232,7 @@ namespace Cozmo {
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,
                                    const std::vector<Quad2f>& markerQuads)
   {
-    ASSERT_NAMED(_faceTracker != nullptr, "FaceTracker should not be null.");
+    ASSERT_NAMED(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
    
     /*
     // Periodic printouts of face tracker timings
@@ -1236,7 +1259,7 @@ namespace Cozmo {
       // Black out detected markers so we don't find faces in them
       Vision::Image maskedImage = grayImage;
       ASSERT_NAMED(maskedImage.GetTimestamp() == grayImage.GetTimestamp(),
-                   "Image timestamps should match after assignment.");
+                   "VisionSystem.DetectFaces.BadImageTimestamp");
       
       const cv::Rect_<f32> imgRect(0,0,grayImage.GetNumCols(),grayImage.GetNumRows());
       
@@ -1261,7 +1284,7 @@ namespace Cozmo {
     for(auto & currentFace : faces)
     {
       ASSERT_NAMED(currentFace.GetTimeStamp() == grayImage.GetTimestamp(),
-                   "Timestamp error.");
+                   "VisionSystem.DetectFaces.BadFaceTimestamp");
       
       // Use a camera from the robot's pose history to estimate the head's
       // 3D translation, w.r.t. that camera. Also puts the face's pose in
@@ -1507,13 +1530,13 @@ namespace Cozmo {
           Matrix_3x3f invH;
           _poseData.groundPlaneHomography.GetInverse(invH);
           Point3f temp = invH * Point3f{groundPlaneCentroid.x(), groundPlaneCentroid.y(), 1.f};
-          ASSERT_NAMED(temp.z() > 0, "Projected 'z' should be > 0.");
+          ASSERT_NAMED(temp.z() > 0, "VisionSystem.DetectMotion.BadProjectedZ");
           const f32 divisor = 1.f/temp.z();
           groundPlaneCentroid.x() = temp.x() * divisor;
           groundPlaneCentroid.y() = temp.y() * divisor;
           
           ASSERT_NAMED(Quad2f(_poseData.groundPlaneROI.GetGroundQuad()).Contains(groundPlaneCentroid),
-                       "GroundQuad should contain the ground plane centroid.");
+                       "VisionSystem.DetectMotion.BadGroundPlaneCentroid");
         }
       } // if(groundPlaneVisible)
       
@@ -1534,7 +1557,7 @@ namespace Cozmo {
         {
           ASSERT_NAMED(centroid.x() > 0.f && centroid.x() < image.GetNumCols() &&
                        centroid.y() > 0.f && centroid.y() < image.GetNumRows(),
-                       "Motion centroid should be within image bounds.");
+                       "VisionSystem.DetectMotion.CentroidOOB");
           
           // make relative to image center *at processing resolution*
           ASSERT_NAMED(_camera.IsCalibrated(), "Camera must be calibrated");
@@ -1628,6 +1651,159 @@ namespace Cozmo {
     
     return RESULT_OK;
   } // DetectMotion()
+  
+  Result VisionSystem::DetectOverheadEdges(const Vision::ImageRGB& image)
+  {
+    // TODO: Expose parameters
+    // Parameters:
+    //const s32 kKernelSize = -1; // +ve for Sobel edge detection, -1 for Scharr
+    const f32 kEdgeThreshold = 50.f;
+    const f32 kMaxDistBetweenEdges_mm = 5.f; // start new chain after this distance seen
+    const u32 kMinChainLength = 3; // in number of edge pixels
+    
+    const Matrix_3x3f& H = _poseData.groundPlaneHomography;
+    const GroundPlaneROI& roi = _poseData.groundPlaneROI;
+    Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H, false);
+    
+    f32 nearX, farX;
+    roi.GetVisibleX(H, image.GetNumCols(), image.GetNumRows(), nearX, farX);
+    
+    // Get derivatives along the X direction
+    Array2d<Vision::PixelRGB_<f32>> edgeImgX(overheadImg.GetNumRows(), overheadImg.GetNumCols());
+    //Array2d<Vision::PixelRGB_<f32>> edgeImgY(overheadImg.GetNumRows(), overheadImg.GetNumCols());
+    //cv::Sobel(overheadImg.get_CvMat_(), edgeImgX.get_CvMat_(), CV_32F, 1, 0, kKernelSize);
+    //cv::Sobel(overheadImg.get_CvMat_(), edgeImgY.get_CvMat_(), CV_32F, 0, 1, kKernelSize);
+    
+    // Custom Gaussian derivative in x direction, sigma=1, with a little extra space
+    // in the middle to help detect soft edges
+    // (scaled such that each half has absolute sum of 1.0, so it's normalized)
+    SmallMatrix<5,7, f32> kernel{
+      0.0168,    0.0377,         0,0,0,   -0.0377,   -0.0168,
+      0.0754,    0.1689,         0,0,0,   -0.1689,   -0.0754,
+      0.1242,    0.2784,         0,0,0,   -0.2784,   -0.1242,
+      0.0754,    0.1689,         0,0,0,   -0.1689,   -0.0754,
+      0.0168,    0.0377,         0,0,0,   -0.0377,   -0.0168
+    };
+    //cv::Mat kx, ky;
+    //cv::getDerivKernels(kx, ky, 1, 0, 5, true);
+    
+    cv::filter2D(overheadImg.get_CvMat_(), edgeImgX.get_CvMat_(), CV_32F, kernel.get_CvMatx_());
+    
+    // Look for the first strong edge along the x axis
+    std::vector<OverheadEdgePointChain> edgeChains;
+    //const f32 edgeThresholdSq = kEdgeThreshold * kEdgeThreshold;
+    OverheadEdgePoint* lastEdgePoint = nullptr;
+    const s32 jNear = std::ceil(nearX) - roi.GetDist() + kernel.GetNumCols()/2;
+    const s32 jFar  = std::floor(farX) - roi.GetDist();
+    for(s32 i=0; i<edgeImgX.GetNumRows(); ++i)
+    {
+      const u8* mask_i = roi.GetOverheadMask().GetRow(i);
+      const Vision::PixelRGB_<f32>* edgeImgX_i = edgeImgX.GetRow(i);
+      //const Vision::PixelRGB_<f32>* edgeImgY_i = edgeImgY.GetRow(i);
+      for(s32 j=jNear; j<jFar; ++j)
+      {
+        {
+          // An edge above threshold in _any_ channel is an edge
+          auto & edgePixelX = edgeImgX_i[j];
+          //auto & edgePixelY = edgeImgY_i[j];
+          //if(edgePixelX.r()*edgePixelX.r() + edgePixelY.r()*edgePixelY.r() > edgeThresholdSq ||
+          //   edgePixelX.g()*edgePixelX.g() + edgePixelY.g()*edgePixelY.g() > edgeThresholdSq ||
+          //   edgePixelX.b()*edgePixelX.b() + edgePixelY.b()*edgePixelY.b() > edgeThresholdSq)
+          if(std::abs(edgePixelX.r()) > kEdgeThreshold ||
+             std::abs(edgePixelX.g()) > kEdgeThreshold ||
+             std::abs(edgePixelX.b()) > kEdgeThreshold)
+          {
+            OverheadEdgePoint edgePoint = {
+              .position  = Anki::Point2f(j + roi.GetDist(), roi.GetWidthFar()*0.5f - i),
+              .gradient  = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()}
+            };
+            if(nullptr == lastEdgePoint ||
+               ComputeDistanceBetween(edgePoint.position, lastEdgePoint->position) > kMaxDistBetweenEdges_mm)
+            {
+              // Start new chain
+              edgeChains.emplace_back();
+              edgeChains.back().timestamp = image.GetTimestamp();
+            }
+            if(mask_i[j] > 0 && j)
+            {
+              edgeChains.back().points.push_back(std::move(edgePoint));
+              lastEdgePoint = &edgeChains.back().points.back();
+            }
+            break; // only keep first edge found in each row
+          }
+        }
+      }
+    }
+    
+    #define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
+    if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
+    {
+      static const std::vector<ColorRGBA> lineColorList = {
+        NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
+        NamedColors::ORANGE, NamedColors::CYAN, NamedColors::YELLOW,
+      };
+      auto color = lineColorList.begin();
+      Vision::ImageRGB dispImg(overheadImg.GetNumRows(), overheadImg.GetNumCols());
+      overheadImg.CopyTo(dispImg);
+      static const Anki::Point2f dispOffset(-roi.GetDist(), roi.GetWidthFar()*0.5f);
+      Quad2f tempQuad(roi.GetGroundQuad());
+      tempQuad += dispOffset;
+      dispImg.DrawQuad(tempQuad, NamedColors::RED, 1);
+      dispImg.DrawLine(Anki::Point2f(jNear, 0), Anki::Point2f(jNear, dispImg.GetNumRows()),
+                       NamedColors::MAGENTA, 1);
+      dispImg.DrawLine(Anki::Point2f(jFar, 0), Anki::Point2f(jFar, dispImg.GetNumRows()),
+                       NamedColors::YELLOW, 1);
+      
+      for(auto & chain : edgeChains)
+      {
+        if(chain.points.size() >= kMinChainLength)
+        {
+          for(s32 i=1; i<chain.points.size(); ++i) {
+            ASSERT_NAMED(chain.points[i-1].position.y() != chain.points[i].position.y(),
+                         "There should only be one edge per row");
+            Anki::Point2f startPoint(chain.points[i-1].position);
+            startPoint.y() = -startPoint.y();
+            startPoint += dispOffset;
+            Anki::Point2f endPoint(chain.points[i].position);
+            endPoint.y() = -endPoint.y();
+            endPoint += dispOffset;
+            dispImg.DrawLine(startPoint, endPoint, *color, 1);
+          }
+          ++color;
+          if(color == lineColorList.end()) {
+            color = lineColorList.begin();
+          }
+        }
+      }
+      Vision::ImageRGB dispEdgeImg(overheadImg.GetNumRows(), overheadImg.GetNumCols());
+      std::function<Vision::PixelRGB(const Vision::PixelRGB_<f32>&)> fcn = [](const Vision::PixelRGB_<f32>& pixelF32)
+      {
+        return Vision::PixelRGB((u8)std::abs(pixelF32.r()),
+                                (u8)std::abs(pixelF32.g()),
+                                (u8)std::abs(pixelF32.b()));
+      };
+      edgeImgX.ApplyScalarFunction(fcn, dispEdgeImg);
+      //dispImg.Display("OverheadImage", 1);
+      //dispEdgeImg.Display("OverheadEdgeImage");
+      _debugImageRGBMailbox.putMessage({"OverheadImage", dispImg});
+      _debugImageRGBMailbox.putMessage({"OverheadEdgeImage", dispEdgeImg});
+    } // if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
+    
+    // Finally do send the edges to the mailbox. Note I do this after rendering because I am std::moving the edges
+    
+    // Copy only the chains with at least k points (less is considered noise)
+    for(const auto& chain : edgeChains)
+    {
+      if ( chain.points.size() >= kMinChainLength ) {
+        _overheadEdgeChainMailbox.putMessage( std::move(chain) );
+      }
+    }
+    // if we std::move chains, their state is no longer valid after, clear the vector to prevent further usage
+    edgeChains.clear();
+    
+    
+    return RESULT_OK;
+  } // DetectOverheadEdges()
   
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
@@ -1744,9 +1920,11 @@ namespace Cozmo {
     // Initialize the VisionSystem's state (i.e. its "private member variables")
     //
     
+    // Default processing modes to enable
     EnableMode(VisionMode::DetectingMarkers, true);
     //EnableMode(VisionMode::DetectingMotion,  true);
     EnableMode(VisionMode::DetectingFaces,   true);
+    //EnableMode(VisionMode::DetectingOverheadEdges, true);
     
     _markerToTrack.Clear();
     _numTrackFailures          = 0;
@@ -2027,6 +2205,14 @@ namespace Cozmo {
     {
       if((lastResult = DetectMotion(inputImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
+        return lastResult;
+      }
+    }
+    
+    if(IsModeEnabled(VisionMode::DetectingOverheadEdges))
+    {
+      if((lastResult = DetectOverheadEdges(inputImage)) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
         return lastResult;
       }
     }

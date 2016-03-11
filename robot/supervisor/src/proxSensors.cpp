@@ -32,6 +32,7 @@ namespace Anki {
 
         bool _enableCliffDetect = true;
         bool _wasCliffDetected = false;
+        u8 _lastForwardObstacleDetectedDist = FORWARD_COLLISION_SENSOR_LENGTH_MM + 1;
         
         const u32 PROX_EVENT_CYCLE_PERIOD = 6;
 
@@ -146,15 +147,30 @@ namespace Anki {
         // FAKING obstacle detection via prox sensor.
         // TODO: This will eventually be done entirely on the engine using images.
 #ifndef TARGET_K02
-        static u32 proxCycleCnt = 0;
-        if (++proxCycleCnt == PROX_EVENT_CYCLE_PERIOD) {
-          u8 proxVal = HAL::GetForwardProxSensor();
-          if (proxVal > 0) {
-            ProxObstacle msg;
-            msg.distance_mm = proxVal;
-            RobotInterface::SendMessage(msg);
+        {
+          
+          if ( HAL::RadioIsConnected() )
+          {
+            static u32 proxCycleCnt = 0;
+            if (++proxCycleCnt == PROX_EVENT_CYCLE_PERIOD) {
+              u8 proxVal = HAL::GetForwardProxSensorCurrentValue();
+              const bool eventChanged = (proxVal != _lastForwardObstacleDetectedDist);
+              if ( eventChanged )
+              {
+                // send changes in events
+                ProxObstacle msg;
+                msg.distance_mm = proxVal;
+                RobotInterface::SendMessage(msg);
+                _lastForwardObstacleDetectedDist = proxVal;
+              }
+              proxCycleCnt = 0;
+            } // period
           }
-          proxCycleCnt = 0;
+          else {
+            // reset last since we are not connected anymore
+            _lastForwardObstacleDetectedDist = FORWARD_COLLISION_SENSOR_LENGTH_MM + 1;
+          }
+          
         }
 #endif        
 

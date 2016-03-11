@@ -19,6 +19,15 @@ namespace Anki {
 namespace Cozmo {
 namespace RobotInterface {
 
+message FWVersionInfo
+{
+  uint_32 wifiVersion, // TODO actually handle or replace them
+  uint_32 rtipVersion,
+  uint_32 bodyVersion,
+  uint_8  toRobotCLADHash[16],
+  uint_8  toEngineCLADHash[16]
+}
+
 message SyncTimeAck
 {
 }
@@ -121,6 +130,7 @@ union RobotToEngine {
   CrashReport                crashReport            = 0xCF,
   ObjectConnectionState activeObjectConnectionState = 0xD0,
   MotorCalibration           motorCalibration       = 0xD1,
+  FWVersionInfo              fwVersionInfo          = 0xD2,
   
   //0xF0 to 0x FE: Unreliable message to the Engine
   RobotState                 state                  = 0xF0,

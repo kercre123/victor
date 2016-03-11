@@ -135,8 +135,6 @@ int main (void)
   do {
     // Wait for head body sync to occur
     UART::WaitForSync();
-    Anki::Cozmo::HAL::Spine::Manage();
     Anki::Cozmo::HAL::IMU::Update();
-    Anki::Cozmo::HAL::WiFi::Update();
   } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
 }

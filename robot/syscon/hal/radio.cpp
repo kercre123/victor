@@ -18,7 +18,7 @@
 #include "head.h"
 #include "crypto.h"
 #include "spine.h"
-#include "led.h"
+#include "lights.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -26,8 +26,6 @@
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 using namespace Anki::Cozmo;
-
-static const int NUM_PROP_LIGHTS = 4;
 
 enum AccessoryType {
   ACCESSORY_CUBE    = 0x00,
@@ -56,8 +54,6 @@ struct AccessorySlot {
   int         last_received;
   uint32_t    id;
   LEDPacket   tx_state;
-  LightState  lights[NUM_PROP_LIGHTS];
-  uint32_t    lightPhase[NUM_PROP_LIGHTS];
   
   uesb_address_desc_t       address;
 };
@@ -76,16 +72,6 @@ struct CapturePacket {
 };
 
 static void EnterState(RadioState state);
-
-static const int TOTAL_PERIOD = CYCLES_MS(35.0f);
-static const int SCHEDULE_PERIOD = CYCLES_MS(5.0f);
-static const int CAPTURE_OFFSET = CYCLES_MS(0.5f);
-
-static const int TICK_LOOP = TOTAL_PERIOD / SCHEDULE_PERIOD;
-
-static const int ACCESSORY_TIMEOUT = 400;         // 2s timeout before accessory is considered lost
-static const int PACKET_SIZE = 17;
-static const int MAX_ACCESSORIES = TICK_LOOP;
 
 // Advertising settings
 static const uint8_t ROBOT_TO_CUBE_PREFIX = 0x42;
@@ -109,8 +95,12 @@ static const int ADV_CHANNEL = 81;
 // This is for initial channel selection (do not use advertisement channel)
 static const int MAX_TX_CHANNELS = 64;
 
-static const int RADIO_INTERVAL_DELAY = 0xB6;
-static const int RADIO_TIMEOUT_MSB = 20;
+//static const int RADIO_INTERVAL_DELAY = 0xB6;
+//static const int RADIO_TIMEOUT_MSB = 20;
+
+static const int RADIO_INTERVAL_DELAY = 0xB3;
+static const int RADIO_TIMEOUT_MSB = 40;
+
 static const int RADIO_WAKEUP_OFFSET = 18;
 
 // Global head / body sync values
@@ -199,8 +189,8 @@ void Radio::init() {
   }
 
   // Start the radio stack
-
   radioTask = RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
+  RTOS::setPriority(radioTask, RTOS_RADIO_PRIORITY);
   RTOS::stop(radioTask);
 }
 
@@ -211,7 +201,7 @@ void Radio::advertise(void) {
     UESB_TX_POWER_0DBM,
     PACKET_SIZE,
     5,    // Address length
-    2     // Service speed doesn't need to be that fast (prevent blocking encoders)
+		RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
   uesb_init(&uesb_config);
@@ -283,6 +273,15 @@ static void send_capture_packet(void* userdata) {
   uesb_write_tx_payload(&PairingAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
 }
 
+void SendObjectConnectionState(int slot)
+{
+  ObjectConnectionState msg;
+  msg.objectID = slot;
+  msg.factoryID = accessories[slot].id;
+  msg.connected = accessories[slot].active;
+  RobotInterface::SendMessage(msg);
+}
+
 extern "C" void uesb_event_handler(void)
 {
   // Only respond to receive interrupts
@@ -309,6 +308,7 @@ extern "C" void uesb_event_handler(void)
     if (slot < 0) {
       ObjectDiscovered msg;
       msg.factory_id = packet.id;
+			msg.rssi = rx_payload.rssi;
       RobotInterface::SendMessage(msg);
             
       // Attempt to allocate a slot for it
@@ -321,9 +321,13 @@ extern "C" void uesb_event_handler(void)
     }
 
     // We are loading the slot
-    accessories[slot].active = true;
     accessories[slot].id = packet.id;
     accessories[slot].last_received = 0;
+    if (accessories[slot].active == false)
+    {
+      accessories[slot].active = true;
+      SendObjectConnectionState(slot);
+    }
 
     // Schedule a one time capture for this slot
     RTOS::schedule(send_capture_packet, CAPTURE_OFFSET, (void*) slot, false);
@@ -364,9 +368,9 @@ void Radio::setPropLights(unsigned int slot, const LightState *state) {
     return ;
   }
 
-  AccessorySlot* acc = &accessories[slot];
-  memcpy(acc->lights, state, sizeof(acc->lights));
-  memset(acc->lightPhase, 0, sizeof(acc->lightPhase));
+ for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
+		Lights::update(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * slot + c, &state[c]);
+	}
 }
 
 void Radio::assignProp(unsigned int slot, uint32_t accessory) {
@@ -377,11 +381,14 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   AccessorySlot* acc = &accessories[slot];
   acc->id = accessory;
   acc->allocated = true;
+  acc->active = false;
 }
 
 void Radio::manage(void* userdata) {
   // Transmit to accessories round-robin
-  currentAccessory = (currentAccessory + 1) % TICK_LOOP;
+	if (++currentAccessory >= TICK_LOOP) {
+		currentAccessory = 0;
+	}
   
   if (currentAccessory >= MAX_ACCESSORIES) return ;
 
@@ -390,7 +397,7 @@ void Radio::manage(void* userdata) {
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
     // We send the previous LED state (so we don't get jitter on radio)
     uesb_address_desc_t& address = accessories[currentAccessory].address;
-    
+
     // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
     memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
@@ -413,36 +420,23 @@ void Radio::manage(void* userdata) {
         {  9, 10, 11, 15}
       };
 
-      uint8_t rgbi[4];
-      CalculateLEDColor(rgbi, acc->lights[c], currentFrame, acc->lightPhase[c]);
+			int group = CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * currentAccessory + c;
+      uint8_t* rgbi = Lights::state(group);
 
       for (int i = 0; i < 4; i++) {
         acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];
         sum += rgbi[i] * rgbi[i];
       }
     }
-
-    // THIS IS PROBABLY WRONG
+		
     acc->tx_state.ledDark = 0xFF - isqrt(sum);
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
-    acc->active = false;
+    if (acc->active)
+    {
+      acc->active = false;
+      SendObjectConnectionState(currentAccessory);
+    }
     send_dummy_byte();
   }
-}
-
-static void sendNthPropState(void* userdata)
-{
-  const int n = (int)userdata;
-  ObjectConnectionState msg;
-  msg.objectID = n;
-  msg.factoryID = accessories[n].id;
-  msg.connected = accessories[n].active;
-  RobotInterface::SendMessage(msg);
-  if (n + 1 < MAX_ACCESSORIES) RTOS::schedule(sendNthPropState, CYCLES_MS(20.0f), (void*)(n+1), false);
-}
-
-void Radio::sendPropConnectionState(void)
-{
-  RTOS::schedule(sendNthPropState, CYCLES_MS(1000.0f), 0, false);
 }

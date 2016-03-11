@@ -29,6 +29,9 @@
 #include "testModeController.h"
 #ifndef TARGET_K02
 #include "animationController.h"
+#else
+#include "hal/wifi.h"
+#include "hal/spine.h"
 #endif
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
@@ -242,14 +245,12 @@ namespace Anki {
         DockingController::SetDockingErrorSignalMessage(msg);
       }
 
-#ifndef TARGET_K02
-      extern "C" void ProcessMessage(u8* buffer, u16 bufferSize)
-      {
-         //XXX  "Implement ProcessMessage"
-      }
-
       void ProcessBTLEMessages()
       {
+#ifdef TARGET_K02
+        HAL::Spine::Manage();
+        HAL::WiFi::Update();
+#else
         u32 dataLen;
 
         //ReliableConnection_printState(&connection);
@@ -275,8 +276,8 @@ namespace Anki {
 						// Can't print anything because we have no where to send it
 					}
         }
-      }
 #endif
+      }
 
       void Process_clearPath(const RobotInterface::ClearPath& msg) {
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
@@ -298,7 +299,8 @@ namespace Anki {
 
       void Process_appendPathSegPointTurn(const RobotInterface::AppendPathSegmentPointTurn& msg) {
         PathFollower::AppendPathSegment_PointTurn(0, msg.x_center_mm, msg.y_center_mm, msg.targetRad,
-                                                  msg.speed.target, msg.speed.accel, msg.speed.decel, msg.useShortestDir);
+                                                  msg.speed.target, msg.speed.accel, msg.speed.decel,
+                                                  msg.angleTolerance, msg.useShortestDir);
       }
 
       void Process_trimPath(const RobotInterface::TrimPath& msg) {
@@ -392,7 +394,9 @@ namespace Anki {
       {
         SteeringController::ExecutePointTurn(msg.angle_rad, msg.max_speed_rad_per_sec,
                                              msg.accel_rad_per_sec2,
-                                             msg.accel_rad_per_sec2, true);
+                                             msg.accel_rad_per_sec2,
+                                             msg.angle_tolerance,
+                                             true);
       }
 
       void Process_setCarryState(const CarryStateUpdate& update)
@@ -665,6 +669,9 @@ namespace Anki {
       }
       void Process_getPropState(const PropState& msg)
       {
+#ifdef TARGET_K02
+        HAL::GetPropState(msg.slot, msg.x, msg.y, msg.z, msg.shockCount);
+#endif
       }
       void Process_radioConnected(const RobotInterface::RadioState& state)
       {

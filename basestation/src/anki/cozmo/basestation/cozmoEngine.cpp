@@ -158,7 +158,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _isInitialized = true;
   
-  _blockFilter.Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"), _context->GetExternalInterface());
+  _context->GetRobotManager()->Init();
   
   return RESULT_OK;
 }
@@ -248,6 +248,7 @@ Result CozmoEngine::Update(const float currTime_sec)
     case EngineState::WaitingForUIDevices:
     {
       if (_uiMsgHandler->HasDesiredNumUiDevices()) {
+        _context->GetRobotManager()->BroadcastAvailableAnimations();
         SetEngineState(EngineState::Running);
       }
       break;
@@ -303,11 +304,7 @@ void CozmoEngine::SetEngineState(EngineState newState)
 
 void CozmoEngine::ReadAnimationsFromDisk()
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  if (robot != nullptr) {
-    PRINT_NAMED_INFO("CozmoEngine.ReloadAnimations", "ReadAnimationDir");
-    robot->ReadAnimationDir();
-  }
+  _context->GetRobotManager()->ReadAnimationDir();
 }
   
 Result CozmoEngine::InitInternal()

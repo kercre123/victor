@@ -31,39 +31,46 @@ static void TestMotors(void* discard) {
 #endif
 
 #if defined(DO_LIGHTS_TESTING)
-static void TestLights(void* data) {
-  uint8_t* colors = (uint8_t*) data;
-  static int j = 1;
-  
-  bool valid[] = {
-    false, true, true, false, 
-    true, true, true, false, 
-    true, true, true, false,
-    true, true, true, false
-  };
-
-  colors[j] += 4;
-  
-  if (!colors[j]) {
-    j++;
-    while (!valid[j]) 
-      j = (j + 1) % (sizeof(valid) / sizeof(bool));
-  }
+static void TestLights(void* data) {	
+	static const LightState colors[] = {
+		{ 0x0000, 0xFFFF, 0x40, 0x40, 0x40, 0x40 },
+		{ 0x0000, 0x001F, 0x40, 0x40, 0x40, 0x40 },
+		{ 0x0000, 0x03E0, 0x40, 0x40, 0x40, 0x40 },
+		{ 0x0000, 0x7C00, 0x40, 0x40, 0x40, 0x40 }
+	};
+	
+	static int index = 0;
+	
+	for (int i = 0; i < TOTAL_LIGHTS; i++) {
+		Lights::update(i, &colors[index]);
+	}
+	
+	index = (index + 1) % 4;
 }
 #endif
 
 #if defined(DO_ENCODER_TESTING)
-static void TestEncoders(void* data) {
-  Motors::getRawValues((uint32_t*) data);
+static void TestEncoders(void* userdata) {
+  uint32_t data[4];
+	
+	Motors::getRawValues(data);
+	for (int i = 0; i < 4; i++) {
+		LightState colors = { data[i], data[i] };
+		Lights::update(i, &colors);
+	}
 }
 #endif
 
 void TestFixtures::run() {
 #if defined(DO_ENCODER_TESTING)
-  RTOS::schedule(TestEncoders, CYCLES_MS(5.0f), &g_dataToBody.backpackColors);
-#elif defined(DO_MOTOR_TESTING)
+  RTOS::schedule(TestEncoders, CYCLES_MS(5.0f));
+#endif
+
+#if defined(DO_MOTOR_TESTING)
   RTOS::schedule(TestMotors, CYCLES_MS(1000.0f));
-#elif defined(DO_LIGHTS_TESTING)
-  RTOS::schedule(TestLights, CYCLES_MS(5.0f), &g_dataToBody.backpackColors);
+#endif
+
+#if defined(DO_LIGHTS_TESTING)
+  RTOS::schedule(TestLights, CYCLES_MS(5000.0f));
 #endif
 }

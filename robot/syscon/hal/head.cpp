@@ -10,7 +10,7 @@
 #include "radio.h"
 #include "rtos.h"
 #include "hardware.h"
-#include "lights.h"
+#include "backpack.h"
 
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/logging.h"
@@ -67,14 +67,16 @@ void Head::init()
 
   // Extremely low priorty IRQ
   NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
-  NVIC_SetPriority(UART0_IRQn, 1);
+  NVIC_SetPriority(UART0_IRQn, UART_PRIORITY);
   NVIC_EnableIRQ(UART0_IRQn);
 
   // We begin in receive mode (slave)
   setTransmitMode(TRANSMIT_RECEIVE);
   MicroWait(80);
 
-  RTOS::schedule(Head::manage);
+  RTOS_Task *task = RTOS::schedule(Head::manage);
+	RTOS::setPriority(task, RTOS_HIGH_PRIORITY);
+	RTOS::delay(task, CYCLES_MS(4.0));	// Out of phase from everything else
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
@@ -123,22 +125,13 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
   txRxIndex = 0;
 }
 
-inline void transmitByte() { 
+static inline void transmitByte() { 
+  NVIC_DisableIRQ(UART0_IRQn);
   NRF_UART0->TXD = txRxBuffer[txRxIndex++];
+  NVIC_EnableIRQ(UART0_IRQn);
 }
 
-#include "gatts.h"
-
 void Head::manage(void* userdata) {
-  {
-    static const uint8_t message[] = "Cozmo says hello... Cozmo says hello... ";
-    static int offset = 0;
-    drive_send msg;
-    memcpy(msg.data, &message[offset], sizeof(msg.data));
-    offset = (offset + 1) % sizeof(msg.data);
-    GATTS::transmit(&msg);
-  }
-
   Spine::Dequeue(&(g_dataToHead.cladBuffer));
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
   g_dataToHead.cladBuffer.length = 0;
@@ -150,23 +143,13 @@ void Head::manage(void* userdata) {
 
 extern void EnterRecovery(void);
 
-static void On_WiFiConnected(void)
-{
-  Radio::sendPropConnectionState();
-}
-
-static void On_WiFiDisconnected(void)
-{
-  
-}
-
 static void Process_bootloadBody(const RobotInterface::BootloadBody& msg)
 {
   EnterRecovery();
 }
 static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 {
-  Lights::setLights(msg.lights);
+  Backpack::setLights(msg.lights);
 }
 static void Process_setCubeLights(const CubeLights& msg)
 {
@@ -184,18 +167,6 @@ static void Process_assignCubeSlots(const CubeSlots& msg)
 static void ProcessMessage()
 {
   using namespace Anki::Cozmo;
-  
-  static bool wifiConnected;
-  if ((g_dataToBody.cladBuffer.flags & SF_WiFi_Connected) && wifiConnected == false)
-  {
-    On_WiFiConnected();
-    wifiConnected = true;
-  }
-  else if ((!(g_dataToBody.cladBuffer.flags & SF_WiFi_Connected)) && (wifiConnected == true))
-  {
-    On_WiFiDisconnected();
-    wifiConnected = false;
-  }
   
   const u8 tag = g_dataToBody.cladBuffer.data[0];
   if (g_dataToBody.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)

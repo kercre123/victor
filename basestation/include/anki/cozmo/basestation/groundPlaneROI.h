@@ -47,21 +47,27 @@ public:
   Quad2f GetImageQuad(const Matrix_3x3f& H) const;
   
   Vision::ImageRGB GetOverheadImage(const Vision::ImageRGB& image,
-                                    const Matrix_3x3f& H) const;
+                                    const Matrix_3x3f& H,
+                                    bool useMask = true) const;
   
   Vision::Image GetOverheadImage(const Vision::Image& image,
-                                 const Matrix_3x3f& H) const;
+                                 const Matrix_3x3f& H,
+                                 bool useMask = true) const;
   
   // Creates the mask on first request and then just returns that one from then on
   const Vision::Image& GetOverheadMask() const;
   
   Point2f GetOverheadImageOrigin() const { return Point2f{_dist, -_widthFar*0.5f}; }
   
+  // Get the near and far points on the ground plane that are visible in image
+  void GetVisibleX(const Matrix_3x3f& H, s32 imageWidth, s32 imageHeight,
+                   f32& near, f32& far) const;
+  
 private:
   // In mm
   f32 _dist = 50.f;
-  f32 _length = 100.f;
-  f32 _widthFar = 80.f;
+  f32 _length = 150.f;
+  f32 _widthFar = 100.f;
   f32 _widthClose = 30.f;
   
   mutable Vision::Image _overheadMask;
@@ -69,7 +75,8 @@ private:
   template<class PixelType>
   void GetOverheadImageHelper(const Vision::ImageBase<PixelType>& image,
                               const Matrix_3x3f& H,
-                              Vision::ImageBase<PixelType>& overheadImg) const;
+                              Vision::ImageBase<PixelType>& overheadImg,
+                              bool useMask) const;
 }; // class GroundPlaneROI
 
 } // namespace Cozmo

@@ -274,13 +274,16 @@ namespace Anki {
       
       // Draw name & most likely expression
       std::string name;
-      auto faceIter = _faceNameLUT.find(face.GetID());
-      if(faceIter != _faceNameLUT.end()) {
-        name = faceIter->second;
+      if(face.GetName().empty()) {
+        if(face.GetID() > 0) {
+          name = "KnownFace[";
+        } else {
+          name = "UnknownFace[";
+        }
+        name += std::to_string(face.GetID()) + "]-";
       } else {
-        name = "Face[" + std::to_string(face.GetID()) + "]";
+        name = face.GetName() + "-";
       }
-      name += "-";
       name += Vision::TrackedFace::GetExpressionName(face.GetMaxExpression());
       DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
       
@@ -883,7 +886,6 @@ namespace Anki {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisualizeQuad>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetVizOrigin>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseQuad>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::AssignVizFaceName>();
     }
     
     template<>
@@ -921,14 +923,6 @@ namespace Anki {
       EraseQuad((uint32_t)VizQuadType::VIZ_QUAD_GENERIC_3D, msg.quadID);
     }
     
-    template<>
-    void VizManager::HandleMessage(const ExternalInterface::AssignVizFaceName& msg)
-    {
-      PRINT_NAMED_INFO("VizManager.HandleMessage.AssignVizFaceName",
-                       "Assigning name '%s' to ID %d",
-                       msg.name.c_str(), msg.faceID);
-      _faceNameLUT[msg.faceID] = msg.name;
-    }
     
   } // namespace Cozmo
 } // namespace Anki

@@ -42,7 +42,6 @@
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -59,6 +58,7 @@
 #include "clad/types/imageTypes.h"
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <time.h>
 #include <utility>
 #include <fstream>
@@ -99,11 +99,13 @@ class MatPiece;
 class MoodManager;
 class PathDolerOuter;
 class ProgressionManager;
+class BlockFilter;
 class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
 struct RobotState;
 class ActiveCube;
+class CannedAnimationContainer;
 
 typedef enum {
   SAVE_OFF = 0,
@@ -488,20 +490,6 @@ public:
     // TODO: REMOVE OLD AUDIO SYSTEM
     Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
     void   StopSound();
-
-    // Read the animations in a dir
-    void ReadAnimationFile(const char* filename, std::string& animationID);
-  
-    // Read the animations in a dir
-    void ReadAnimationDir();
-    void ReadAnimationDirImpl(const std::string& animationDir);
-    void ReadAnimationDirImplHelper(const std::string& animationFolder);
-
-    // Read the animation groups in a dir
-    void ReadAnimationGroupDir();
-
-    // Read the animation groups in a dir
-    void ReadAnimationGroupFile(const char* filename);
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
@@ -586,6 +574,13 @@ public:
    
     
     // =========  Block messages  ============
+  
+    // Assign which blocks the robot should connect to.
+    // Max size of set is ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS.
+    Result ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids);
+  
+    // Set whether or not to broadcast to game which blocks have been discovered
+    void BroadcastDiscoveredObjects(bool enable);
   
     // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
     Result SetObjectLights(const ObjectID& objectID,
@@ -713,6 +708,18 @@ public:
     BehaviorManager  _behaviorMgr;
     bool             _isBehaviorMgrEnabled = false;
     
+  
+  
+    ///////// Animation /////////
+    CannedAnimationContainer&   _cannedAnimations;
+    AnimationGroupContainer&    _animationGroups;
+    AnimationStreamer           _animationStreamer;
+    s32 _numAnimationBytesPlayed         = 0;
+    s32 _numAnimationBytesStreamed       = 0;
+    s32 _numAnimationAudioFramesPlayed   = 0;
+    s32 _numAnimationAudioFramesStreamed = 0;
+    u8  _animationTag                    = 0;
+  
     //ActionQueue      _actionQueue;
     ActionList        _actionList;
     MovementComponent _movementComponent;
@@ -843,9 +850,6 @@ public:
     u32         _imgProcPeriod         = 0;
     TimeStamp_t _lastImgTimeStamp      = 0;
     std::string _lastPlayedAnimationId;
-
-    std::unordered_map<std::string, time_t> _loadedAnimationFiles;
-    std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
   
     ///////// Modifiers ////////
     
@@ -860,25 +864,20 @@ public:
   
     ///////// Audio /////////
     Audio::RobotAudioClient _audioClient;
-  
-    ///////// Animation /////////
-    
-    CannedAnimationContainer _cannedAnimations;
-    AnimationGroupContainer  _animationGroups;
-    AnimationStreamer        _animationStreamer;
-    s32 _numFreeAnimationBytes;
-    s32 _numAnimationBytesPlayed         = 0;
-    s32 _numAnimationBytesStreamed       = 0;
-    s32 _numAnimationAudioFramesPlayed   = 0;
-    s32 _numAnimationAudioFramesStreamed = 0;
-    u8  _animationTag                    = 0;
     
     ///////// Mood/Emotions ////////
     MoodManager*         _moodManager;
 
     ///////// Progression/Skills ////////
     ProgressionManager*  _progressionManager;
-    
+  
+    //////// Block pool ////////
+    BlockFilter*         _blockFilter;
+  
+    // Map of discovered objects and the last time that they were heard from
+    std::unordered_map<FactoryID, TimeStamp_t> _discoveredObjects;
+    bool _enableDiscoveredObjectsBroadcasting = false;
+  
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending
     // (via MessageHandler) to the physical robot
@@ -894,6 +893,7 @@ public:
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message);

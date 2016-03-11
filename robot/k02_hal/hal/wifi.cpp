@@ -52,12 +52,12 @@ namespace HAL {
     else
     {
       AnkiConditionalErrorAndReturnValue(sizeWHeader <= RTIP_MAX_CLAD_MSG_SIZE, false, 41, "WiFi", 260, "Can't send message %x[%d] to WiFi, max size %d\r\n", 3, msgID, size, RTIP_MAX_CLAD_MSG_SIZE);
-      const uint8_t rind = txRind;
       uint8_t wind = txWind;
-      const int available = TX_BUF_SIZE - ((wind - rind) & TX_BUF_SIZE_MASK);
+      int available = TX_BUF_SIZE - ((wind - txRind) & TX_BUF_SIZE_MASK);
       while (available < (sizeWHeader + 2)) // Wait for room for message plus tag plus header plus one more so we can tell empty from full
       {
       	if (!reliable) return false;
+        else available = TX_BUF_SIZE - ((wind - txRind) & TX_BUF_SIZE_MASK);
       }
       const u8* msgPtr = (u8*)buffer;
       txBuf[wind++] = sizeWHeader;
@@ -75,8 +75,6 @@ namespace HAL {
 
   void RadioUpdateState(u8 wifi, u8 blue)
   {
-    if (wifi) g_dataToBody.cladBuffer.flags |= SF_WiFi_Connected;
-    else      g_dataToBody.cladBuffer.flags &= ~SF_WiFi_Connected;
     wifiState = wifi;
     blueState = blue;
   }
@@ -110,11 +108,11 @@ namespace HAL {
       }
       else
       {
-        AnkiError( 132, "WiFi.ReceiveMessage", 398, "No buffer available to receive clad message %x[%d]", 2, data[0], length);
+        AnkiError( 132, "WiFi.ReceiveMessage", 398, "No buffer available to receive clad message %x[%d], buffer %x %x %d", 5, data[0], length, rxBuf[rind], rxBuf[rind+1], RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK));
         return false;
       }
     }
-
+		
     Result Update()
     {
       const uint8_t wind = rxWind;
@@ -154,7 +152,7 @@ namespace HAL {
       }
     }
 
-  } // namespace wifi
+	} // namespace WiFi
 } // namespace HAL
 } // namespace Cozmo
 } // namespace Anki

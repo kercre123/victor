@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/overheadEdge.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -70,6 +71,9 @@ namespace Anki
       
       // Adds a cliff (detected with cliff detector)
       Result AddCliff(const Pose3d& p);
+      
+      // Adds the given edges detected by the vision system to the world
+      Result AddVisionOverheadEdges(const OverheadEdgeVector& edges);
       
       // Adds a light cube object with the specified activeID and factoryID at
       // an unknown pose. To be used when the cube first comes into radio contact.
@@ -223,6 +227,7 @@ namespace Anki
       
       // sets whether we are currently on a cliff or over ground
       void SetIsOnCliff(bool value) { _isOnCliff = value; }
+      void SetForwardSensorValue(uint16_t value_mm) { _forwardSensorValue_mm = value_mm; }
 
       // return pointer to current INavMemoryMap (it may be null if not enabled)
       const INavMemoryMap* GetNavMemoryMap() const;
@@ -316,6 +321,9 @@ namespace Anki
       
       // Remove all posekey-marker pairs from the map if marker is marked used
       void RemoveUsedMarkers(PoseKeyObsMarkerMap_t& poseKeyObsMarkerMap);
+
+      // adds a markerless object at the given pose
+      Result AddMarkerlessObject(const Pose3d& pose);
       
       // Generates a list of ObservedMarker pointers that reference the actual ObservedMarkers
       // stored in poseKeyObsMarkerMap
@@ -393,6 +401,9 @@ namespace Anki
       
       // set to true/false upon cliff sensor notifications
       bool _isOnCliff;
+      
+      // set to the value of the forward sensor
+      uint16_t _forwardSensorValue_mm;
                   
       // For allowing the calling of VizManager draw functions
       bool _enableDraw;

@@ -22,6 +22,9 @@
 #include "clad/types/visionModes.h"
 #include <webots/Supervisor.hpp>
 #include <unordered_set>
+#include "anki/cozmo/game/comms/gameMessageHandler.h"
+#include "anki/cozmo/game/comms/gameComms.h"
+
 
 namespace Anki {
   
@@ -68,9 +71,6 @@ public:
   void QuitController(s32 status);
   
   void UpdateVizOrigin();
-  
-  // Just updates face ID to name mapping for Visualization -- does not affect engine!
-  void AssignVizFaceName(const std::string& name, Vision::TrackedFace::ID_t faceID);
   
 protected:
   
@@ -238,7 +238,7 @@ protected:
 
   // ====== Accessors =====
   s32 GetStepTimeMS() const;
-  webots::Supervisor* GetSupervisor() const;
+  webots::Supervisor* GetSupervisor();
 
   // Robot state message convenience functions
   const Pose3d& GetRobotPose() const;
@@ -268,9 +268,6 @@ protected:
 
   const Vision::TrackedFace::ID_t GetLastObservedFaceID() const;
   
-  const std::unordered_set<std::string>& GetAvailableAnimations() const;
-  u32 GetNumAvailableAnimations() const;
-  bool IsAvailableAnimation(std::string anim) const;
   BehaviorType GetBehaviorType(const std::string& behaviorName) const;
 
   
@@ -297,6 +294,46 @@ private:
   void HandleDebugStringBase(ExternalInterface::DebugString const& msg);
   
   void UpdateActualObjectPoses();
+  bool ForceAddRobotIfSpecified();
+  
+  
+  
+  
+  const f32 TIME_UNTIL_READY_SEC = 1.5;
+  
+  s32 _stepTimeMS;
+  webots::Supervisor _supervisor;
+  
+  webots::Node* _robotNode = nullptr;
+  std::vector<std::pair<webots::Node*, Pose3d> > _lightCubes;
+  std::vector<std::pair<webots::Node*, Pose3d> >::iterator _lightCubeOriginIter = _lightCubes.end();
+  
+  Pose3d _robotPose;
+  Pose3d _robotPoseActual;
+  
+  ExternalInterface::RobotState _robotStateMsg;
+  
+  UiGameController::ObservedObject _lastObservedObject;
+  std::map<s32, std::pair<ObjectFamily, ObjectType> > _objectIDToFamilyTypeMap;
+  std::map<ObjectFamily, std::map<ObjectType, std::vector<s32> > > _objectFamilyToTypeToIDMap;
+  std::map<s32, Pose3d> _objectIDToPoseMap;
+  
+  Vision::TrackedFace::ID_t _lastObservedFaceID;
+  
+  webots::Node* _root = nullptr;
+  
+  typedef enum {
+    UI_WAITING_FOR_GAME = 0,
+    UI_RUNNING
+  } UI_State_t;
+  
+  UI_State_t _uiState;
+  
+  GameMessageHandler _msgHandler;
+  GameComms *_gameComms = nullptr;
+  
+  Util::Data::DataPlatform* _dataPlatform = nullptr;
+
   
 }; // class UiGameController
   

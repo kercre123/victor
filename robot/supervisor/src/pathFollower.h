@@ -35,6 +35,7 @@ namespace Anki
                                        f32 x_mm, f32 y_mm,
                                        f32 targetAngle,
                                        f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                                       f32 angleTolerance,
                                        bool useShortestDir);
       
       u8 GenerateDubinsPath(f32 start_x, f32 start_y, f32 start_theta,

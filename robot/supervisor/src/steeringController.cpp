@@ -77,6 +77,8 @@ namespace Anki {
       const f32 POINT_TURN_SLIP_COMP_FACTOR = 1.5f;
 #endif
       
+      f32 pointTurnAngTol_;
+      
       f32 pointTurnSpeedKp_ = 20;
       f32 pointTurnSpeedKd_ = 0;
       f32 pointTurnSpeedKi_ = 0.5;
@@ -518,7 +520,7 @@ namespace Anki {
       SetSteerMode(SM_PATH_FOLLOW);
     }
 
-    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, bool useShortestDir)
+    void ExecutePointTurn(f32 targetAngle, f32 maxAngularVel, f32 angularAccel, f32 angularDecel, f32 angleTolerance, bool useShortestDir)
     {
       if (fabsf(maxAngularVel) > MAX_BODY_ROTATION_SPEED_RAD_PER_SEC + 1e-6) {
         AnkiWarn( 53, "SteeringController.ExecutePointTurn", 298, "Speed of %f deg/s exceeds limit of %f deg/s. Clamping.", 2,
@@ -530,7 +532,7 @@ namespace Anki {
       ExecutePointTurn_Internal(maxAngularVel, angularAccel);
 
       targetRad_ = targetAngle;
-
+      pointTurnAngTol_ = ABS(angleTolerance);
       prevAngle_ = Localization::GetCurrentMatOrientation();
       f32 currAngle = prevAngle_.ToFloat();
       f32 destAngle = targetRad_.ToFloat();
@@ -538,7 +540,7 @@ namespace Anki {
 
       angularDistTraversed_ = 0;
 
-      if (ABS(angularDistExpected_) < POINT_TURN_ANGLE_TOL) {
+      if (ABS(angularDistExpected_) < pointTurnAngTol_) {
         ExitPointTurn();
 #if(DEBUG_STEERING_CONTROLLER)
         AnkiDebug( 12, "POINT TURN", 109, "Already at destination", 0);
@@ -600,13 +602,13 @@ namespace Anki {
 
         
         // Compute distance to target
-        float angularDistToTarget = ABS(angularDistTraversed_) > POINT_TURN_ANGLE_TOL ?
+        float angularDistToTarget = ABS(angularDistTraversed_) > pointTurnAngTol_ ?
                                     (targetRad_ - currAngle).ToFloat() :
                                     currAngle.angularDistance(targetRad_, maxAngularVel_ < 0);
         
         // Check for stop condition
         f32 absAngularDistToTarget = ABS(angularDistToTarget);
-        if (absAngularDistToTarget < POINT_TURN_ANGLE_TOL) {
+        if (absAngularDistToTarget < pointTurnAngTol_) {
           if (inPositionStartTime_ == 0) {
             AnkiDebug( 126, "ManagePointTurn.InRange", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
             inPositionStartTime_ = HAL::GetTimeStamp();

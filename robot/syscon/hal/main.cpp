@@ -16,13 +16,14 @@ extern "C" {
 #include "head.h"
 #include "debug.h"
 #include "timer.h"
+#include "backpack.h"
 #include "lights.h"
 #include "tests.h"
 #include "radio.h"
 #include "crypto.h"
 #include "bluetooth.h"
 
-#include "boot/sha1.h"
+#include "sha1.h"
 
 #include "bootloader.h"
 
@@ -41,16 +42,6 @@ extern void EnterRecovery(void) {
 
   MAGIC_LOCATION = SPI_ENTER_RECOVERY;
   NVIC_SystemReset();
-}
-
-extern "C" void HardFault_Handler(void) {
-  // This stops the system from locking up for now completely temporary.
-  NVIC_SystemReset();
-}
-
-void MotorsUpdate(void* userdata) {
-	//Battery::setHeadlight(g_dataToBody.flags & BODY_FLASHLIGHT);
-	//RTOS::kick(WDOG_UART);
 }
 
 static void EMERGENCY_FIX(void) {
@@ -79,26 +70,26 @@ int main(void)
 
   // Initialize our scheduler
   RTOS::init();
-
-  // Initialize all the early stuff
-  Battery::init();
-  Timer::init();
   Crypto::init();
-  Lights::init();
+
+  // Setup all tasks
+	Radio::init();
+  Motors::init();	
+  Battery::init();
   Bluetooth::init();
-  Radio::init();
+  Timer::init();
+  Backpack::init();
+	Lights::init();
 
-  Motors::init(); // NOTE: THIS CAUSES COZMO TO NOT ADVERTISE. SEEMS TO BE PPI/TIMER RELATED
-
-  Battery::powerOn();
-
-  // We use the RNG in places during init
-  //Radio::shutdown();
+	// Startup the system
+	Battery::powerOn();
+	
+	//Radio::shutdown();
   //Bluetooth::advertise(); 
 
-  Bluetooth::shutdown();
-  Radio::advertise();
-  
+	Bluetooth::shutdown();
+	Radio::advertise();
+	
   // Let the test fixtures run, if nessessary
   #ifdef RUN_TESTS
 	TestFixtures::run();
@@ -106,6 +97,11 @@ int main(void)
   Head::init();
 	#endif
 
+	Timer::start();
+
   // Run forever, because we are awesome.
-	RTOS::run();
+  for (;;) {
+    __asm { WFI };
+		Crypto::manage();
+  }
 }

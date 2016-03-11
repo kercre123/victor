@@ -1582,11 +1582,11 @@ namespace Cozmo {
   
   void BehaviorOCD::FaceDisturbedBlock(Robot& robot, const ObjectID& objID)
   {
-    FaceObjectAction* faceObjectAction = new FaceObjectAction(robot, objID, Radians(PI_F), true, false);
-    faceObjectAction->SetPanTolerance(DEG_TO_RAD_F32(10));
-    robot.GetActionList().QueueActionAtEnd(faceObjectAction);
+    TurnTowardsObjectAction* turnTowardsObjectAction = new TurnTowardsObjectAction(robot, objID, Radians(PI_F), true, false);
+    turnTowardsObjectAction->SetPanTolerance(DEG_TO_RAD_F32(10));
+    robot.GetActionList().QueueActionAtEnd(turnTowardsObjectAction);
     _currentState = State::FaceDisturbedBlock;
-    _lastActionTag = faceObjectAction->GetTag();
+    _lastActionTag = turnTowardsObjectAction->GetTag();
   }
 
   void BehaviorOCD::MakeNeat(const ObjectID& objID)

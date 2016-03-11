@@ -25,42 +25,6 @@ namespace Anki {
       // Private members:
       namespace {
 
-        const f32 TIME_UNTIL_READY_SEC = 1.5;
-        
-        s32 _stepTimeMS;
-        webots::Supervisor _supervisor;
-        
-        webots::Node* _robotNode = nullptr;
-        std::vector<std::pair<webots::Node*, Pose3d> > _lightCubes;
-        auto _lightCubeOriginIter = _lightCubes.end();
-        
-        Pose3d _robotPose;
-        Pose3d _robotPoseActual;
-        
-        ExternalInterface::RobotState _robotStateMsg;
-        
-        UiGameController::ObservedObject _lastObservedObject;
-        std::map<s32, std::pair<ObjectFamily, ObjectType> > _objectIDToFamilyTypeMap;
-        std::map<ObjectFamily, std::map<ObjectType, std::vector<s32> > > _objectFamilyToTypeToIDMap;
-        std::map<s32, Pose3d> _objectIDToPoseMap;
-        
-        Vision::TrackedFace::ID_t _lastObservedFaceID;
-        
-        std::unordered_set<std::string> _availableAnimations;
-        
-        webots::Node* _root = nullptr;
-        
-        typedef enum {
-          UI_WAITING_FOR_GAME = 0,
-          UI_RUNNING
-        } UI_State_t;
-        
-        UI_State_t _uiState;
-        
-        GameMessageHandler _msgHandler;
-        GameComms *_gameComms = nullptr;
-
-        Util::Data::DataPlatform* _dataPlatform = nullptr;
       } // private namespace
 
     
@@ -276,7 +240,6 @@ namespace Anki {
     void UiGameController::HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg)
     {
       PRINT_NAMED_INFO("HandleAnimationAvailable", "Animation available: %s", msg.animName.c_str());
-      _availableAnimations.insert(msg.animName);
       
       HandleAnimationAvailable(msg);
     }
@@ -407,7 +370,7 @@ namespace Anki {
     }
     
   
-    bool ForceAddRobotIfSpecified()
+    bool UiGameController::ForceAddRobotIfSpecified()
     {
       bool doForceAddRobot = false;
       bool forcedRobotIsSim = false;
@@ -646,14 +609,6 @@ namespace Anki {
       msg.trans_y = correctionPose.GetTranslation().y();
       msg.trans_z = correctionPose.GetTranslation().z();
       
-      SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
-    }
-    
-    void UiGameController::AssignVizFaceName(const std::string& name, Vision::TrackedFace::ID_t faceID)
-    {
-      ExternalInterface::AssignVizFaceName msg;
-      msg.name = name;
-      msg.faceID = faceID;
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
     }
 
@@ -1374,7 +1329,7 @@ namespace Anki {
       return _stepTimeMS;
     }
     
-    webots::Supervisor* UiGameController::GetSupervisor() const
+    webots::Supervisor* UiGameController::GetSupervisor()
     {
       return &_supervisor;
     }
@@ -1530,21 +1485,6 @@ namespace Anki {
     const Vision::TrackedFace::ID_t UiGameController::GetLastObservedFaceID() const
     {
       return _lastObservedFaceID;
-    }
-    
-    const std::unordered_set<std::string>& UiGameController::GetAvailableAnimations() const
-    {
-      return _availableAnimations;
-    }
-    
-    u32 UiGameController::GetNumAvailableAnimations() const
-    {
-      return (u32)_availableAnimations.size();
-    }
-    
-    bool UiGameController::IsAvailableAnimation(std::string anim) const
-    {
-      return _availableAnimations.find(anim) != _availableAnimations.end();
     }
     
     void UiGameController::SetActualRobotPose(const Pose3d& newPose)

@@ -8,7 +8,7 @@
 // time on the robot. The basestation will dole out the path bit by
 // bit
 //NOTE: these need to be even!!
-#define MAX_NUM_PATH_SEGMENTS_ROBOT 10
+#define MAX_NUM_PATH_SEGMENTS_ROBOT 6
 #define MAX_NUM_PATH_SEGMENTS_BASESTATION 128
 
 
@@ -72,6 +72,7 @@ namespace Anki
         f32 x;
         f32 y;
         f32 targetAngle;
+        f32 angleTolerance;
         u8  useShortestDir;
       } turn;
     } PathSegmentDef;
@@ -101,6 +102,7 @@ namespace Anki
       // Defines the path segment as a point turn
       void DefinePointTurn(f32 x, f32 y, f32 targetAngle,
                            f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                           f32 angleTolerance,
                            bool useShortestDir);
       
       // Sets the speed parameters of the current segment
@@ -181,6 +183,7 @@ namespace Anki
       
       bool AppendPointTurn(u32 matID, f32 x, f32 y, f32 targetAngle,
                            f32 targetRotSpeed, f32 rotAccel, f32 rotDecel,
+                           f32 angleTolerance,
                            bool useShortestDir);
 
       bool AppendSegment(const PathSegment& segment);

@@ -14,9 +14,8 @@ const f32 WHEEL_BASE_MM      = 48.f;
 
 // Tolerances on commanded target angles
 // i.e. If motor is within this tolerance of the target angle, it is done moving.
-const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2);
-const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5);
-const f32 POINT_TURN_ANGLE_TOL = DEG_TO_RAD(1.f);
+const f32 HEAD_ANGLE_TOL       = DEG_TO_RAD(2.f);
+const f32 LIFT_ANGLE_TOL       = DEG_TO_RAD(1.5f);
 
 const f32 MIN_HEAD_ANGLE = DEG_TO_RAD(-23.f);
 const f32 MAX_HEAD_ANGLE = DEG_TO_RAD( 45.f);
@@ -37,6 +36,9 @@ const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
 // (If you were to model the treaded robot as a two-wheel robot,
 // the drive center is the location between the two wheels)
 const f32 DRIVE_CENTER_OFFSET = -15.f;
+
+// Length of the forward collision sensor (with respect to origin)
+const u8 FORWARD_COLLISION_SENSOR_LENGTH_MM = 160;
 
 // The height of the lift at various configurations
 // Actual limit in proto is closer to 20.4mm, but there is a weird

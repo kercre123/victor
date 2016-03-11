@@ -184,9 +184,9 @@ namespace Cozmo {
     }
     
     // Always turn to look at the face before any reaction
-    FacePoseAction* facePoseAction = new FacePoseAction(robot, face->GetHeadPose(), DEG_TO_RAD(179));
-    facePoseAction->SetPanTolerance( DEG_TO_RAD(0.5) );
-    robot.GetActionList().QueueAction(QueueActionPosition::NOW, facePoseAction);
+    TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, face->GetHeadPose(), DEG_TO_RAD(179));
+    turnTowardsPoseAction->SetPanTolerance( DEG_TO_RAD(0.5) );
+    robot.GetActionList().QueueAction(QueueActionPosition::NOW, turnTowardsPoseAction);
                                       
     
     // If we haven't played our init anim yet for this face and it's been awhile

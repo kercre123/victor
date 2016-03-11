@@ -39,4 +39,7 @@ void clientUpdate(void);
 /// Check if client is connected.
 bool clientConnected(void);
 
+/// Retrieve the approximate number of bytes available in the transmit queue
+sint16 clientQueueAvailable(void);
+
 #endif

@@ -94,27 +94,27 @@ namespace Cozmo {
       _knownFaces.insert({newID, knownFaceIter->second.face});
       RemoveFace(knownFaceIter, false); // NOTE: don't broadcast the deletion
       
-      ExternalInterface::RobotChangedObservedFaceID msg;
-      msg.oldID = oldID;
-      msg.newID = newID;
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-      
       PRINT_NAMED_INFO("FaceWorld.ChangeFaceID.Success",
                        "Updating old face %d to new ID %d",
-                       msg.oldID, msg.newID);
+                       oldID, newID);
       
-      return RESULT_OK;
     } else if(oldID > 0){
-      PRINT_NAMED_WARNING("FaceWorld.ChangeFaceID.BadOldID",
+      PRINT_NAMED_INFO("FaceWorld.ChangeFaceID.UnknownOldID",
                           "ID %d does not exist, cannot update to %d",
                           oldID, newID);
-      return RESULT_FAIL;
     } else {
       // Probably no match for old ID because it was a tracked ID and wasn't
       // even added to face world before being recognized and being assigned this
       // new recognized ID
-      return RESULT_OK;
     }
+    
+    // Always notify game: let it decide whether or not it cares or knows about oldID
+    ExternalInterface::RobotChangedObservedFaceID msg;
+    msg.oldID = oldID;
+    msg.newID = newID;
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+
+    return RESULT_OK;
   }
   
   Result FaceWorld::AddOrUpdateFace(Vision::TrackedFace& face)
@@ -349,7 +349,8 @@ namespace Cozmo {
                                                              q.w(),
                                                              q.x(),
                                                              q.y(),
-                                                             q.z())));
+                                                             q.z(),
+                                                             knownFace->face.GetName())));
       
       /*
       const Vision::Image& faceThumbnail = knownFace->face.GetThumbnail();

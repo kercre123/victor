@@ -35,7 +35,6 @@ def loadImage(filePathName, invert=False):
 
 def SendFaceImage(*args):
     img = loadImage(sys.argv[1], (len(sys.argv) > 2 and sys.argv[2] == '-i'))
-    robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(syncTime=Anki.Cozmo.RobotInterface.SyncTime()))
     robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSilence=Anki.Cozmo.AnimKeyFrame.AudioSilence()))
     robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animStartOfAnimation=Anki.Cozmo.AnimKeyFrame.StartOfAnimation()))
     robotInterface.Send(Anki.Cozmo.RobotInterface.EngineToRobot(animAudioSilence=Anki.Cozmo.AnimKeyFrame.AudioSilence()))

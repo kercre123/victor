@@ -58,6 +58,7 @@ protected:
   void HandleMoodEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleProgressionEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleBehaviorManagerEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleSendDiscoveredObjects(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 };
 
   

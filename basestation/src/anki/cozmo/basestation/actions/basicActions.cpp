@@ -120,6 +120,7 @@ namespace Anki {
         setBodyAngle.angle_rad             = _targetAngle.ToFloat();
         setBodyAngle.max_speed_rad_per_sec = _maxSpeed_radPerSec;
         setBodyAngle.accel_rad_per_sec2    = _accel_radPerSec2;
+        setBodyAngle.angle_tolerance       = _angleTolerance.ToFloat();
         if(RESULT_OK != _robot.SendRobotMessage<RobotInterface::SetBodyAngle>(std::move(setBodyAngle))) {
           return ActionResult::FAILURE_RETRY;
         }
@@ -840,26 +841,26 @@ namespace Anki {
       return _compoundAction.Update();
     }
     
-#pragma mark ---- FaceObjectAction ----
+#pragma mark ---- TurnTowardsObjectAction ----
     
-    FaceObjectAction::FaceObjectAction(Robot& robot,
+    TurnTowardsObjectAction::TurnTowardsObjectAction(Robot& robot,
                                        ObjectID objectID,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
-    : FaceObjectAction(robot, objectID, Vision::Marker::ANY_CODE,
+    : TurnTowardsObjectAction(robot, objectID, Vision::Marker::ANY_CODE,
                        maxTurnAngle, visuallyVerifyWhenDone, headTrackWhenDone)
     {
       
     }
     
-    FaceObjectAction::FaceObjectAction(Robot& robot,
+    TurnTowardsObjectAction::TurnTowardsObjectAction(Robot& robot,
                                        ObjectID objectID,
                                        Vision::Marker::Code whichCode,
                                        Radians maxTurnAngle,
                                        bool visuallyVerifyWhenDone,
                                        bool headTrackWhenDone)
-    : FacePoseAction(robot, maxTurnAngle)
+    : TurnTowardsPoseAction(robot, maxTurnAngle)
     , _facePoseCompoundActionDone(false)
     , _visuallyVerifyAction(robot, objectID, whichCode)
     , _objectID(objectID)
@@ -870,7 +871,7 @@ namespace Anki {
       
     }
     
-    Radians FaceObjectAction::GetHeadAngle(f32 heightDiff)
+    Radians TurnTowardsObjectAction::GetHeadAngle(f32 heightDiff)
     {
       // TODO: Just commanding fixed head angle depending on height of object.
       //       Verify this is ok with the wide angle lens. If not, dynamically compute
@@ -883,11 +884,11 @@ namespace Anki {
       return headAngle;
     }
     
-    ActionResult FaceObjectAction::Init()
+    ActionResult TurnTowardsObjectAction::Init()
     {
       ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
       if(object == nullptr) {
-        PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectNotFound",
+        PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.ObjectNotFound",
                           "Object with ID=%d no longer exists in the world.",
                           _objectID.GetValue());
         return ActionResult::FAILURE_ABORT;
@@ -896,7 +897,7 @@ namespace Anki {
       Pose3d objectPoseWrtRobot;
       if(_whichCode == Vision::Marker::ANY_CODE) {
         if(false == object->GetPose().GetWithRespectTo(_robot.GetPose(), objectPoseWrtRobot)) {
-          PRINT_NAMED_ERROR("FaceObjectAction.Init.ObjectPoseOriginProblem",
+          PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.ObjectPoseOriginProblem",
                             "Could not get pose of object %d w.r.t. robot pose.",
                             _objectID.GetValue());
           return ActionResult::FAILURE_ABORT;
@@ -906,7 +907,7 @@ namespace Anki {
         std::vector<Vision::KnownMarker*> const& markers = object->GetMarkersWithCode(_whichCode);
         
         if(markers.empty()) {
-          PRINT_NAMED_ERROR("FaceObjectAction.Init.NoMarkersWithCode",
+          PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoMarkersWithCode",
                             "Object %d does not have any markers with code %d.",
                             _objectID.GetValue(), _whichCode);
           return ActionResult::FAILURE_ABORT;
@@ -916,7 +917,7 @@ namespace Anki {
         if(markers.size() == 1) {
           closestMarker = markers.front();
           if(false == closestMarker->GetPose().GetWithRespectTo(_robot.GetPose(), objectPoseWrtRobot)) {
-            PRINT_NAMED_ERROR("FaceObjectAction.Init.MarkerOriginProblem",
+            PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.MarkerOriginProblem",
                               "Could not get pose of marker with code %d of object %d "
                               "w.r.t. robot pose.", _whichCode, _objectID.GetValue() );
             return ActionResult::FAILURE_ABORT;
@@ -926,7 +927,7 @@ namespace Anki {
           Pose3d markerPoseWrtRobot;
           for(auto marker : markers) {
             if(false == marker->GetPose().GetWithRespectTo(_robot.GetPose(), markerPoseWrtRobot)) {
-              PRINT_NAMED_ERROR("FaceObjectAction.Init.MarkerOriginProblem",
+              PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.MarkerOriginProblem",
                                 "Could not get pose of marker with code %d of object %d "
                                 "w.r.t. robot pose.", _whichCode, _objectID.GetValue() );
               return ActionResult::FAILURE_ABORT;
@@ -942,7 +943,7 @@ namespace Anki {
         }
         
         if(closestMarker == nullptr) {
-          PRINT_NAMED_ERROR("FaceObjectAction.Init.NoClosestMarker",
+          PRINT_NAMED_ERROR("TurnTowardsObjectAction.Init.NoClosestMarker",
                             "No closest marker found for object %d.", _objectID.GetValue());
           return ActionResult::FAILURE_ABORT;
         }
@@ -951,7 +952,7 @@ namespace Anki {
       // Have to set the parent class's pose before calling its Init()
       SetPose(objectPoseWrtRobot);
       
-      ActionResult facePoseInitResult = FacePoseAction::Init();
+      ActionResult facePoseInitResult = TurnTowardsPoseAction::Init();
       if(ActionResult::SUCCESS != facePoseInitResult) {
         return facePoseInitResult;
       }
@@ -963,14 +964,14 @@ namespace Anki {
       _visuallyVerifyAction.ShouldSuppressTrackLocking(true);
       
       return ActionResult::SUCCESS;
-    } // FaceObjectAction::Init()
+    } // TurnTowardsObjectAction::Init()
     
     
-    ActionResult FaceObjectAction::CheckIfDone()
+    ActionResult TurnTowardsObjectAction::CheckIfDone()
     {
       // Tick the compound action until it completes
       if(!_facePoseCompoundActionDone) {
-        ActionResult compoundResult = FacePoseAction::CheckIfDone();
+        ActionResult compoundResult = TurnTowardsPoseAction::CheckIfDone();
         
         if(compoundResult != ActionResult::SUCCESS) {
           return compoundResult;
@@ -1002,16 +1003,16 @@ namespace Anki {
       }
 
       return ActionResult::SUCCESS;
-    } // FaceObjectAction::CheckIfDone()
+    } // TurnTowardsObjectAction::CheckIfDone()
     
     
-    const std::string& FaceObjectAction::GetName() const
+    const std::string& TurnTowardsObjectAction::GetName() const
     {
-      static const std::string name("FaceObjectAction");
+      static const std::string name("TurnTowardsObjectAction");
       return name;
     }
     
-    void FaceObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+    void TurnTowardsObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted info;
       info.numObjects = 1;
@@ -1082,9 +1083,9 @@ namespace Anki {
       
     } // Update()
     
-#pragma mark ---- FacePoseAction ----
+#pragma mark ---- TurnTowardsPoseAction ----
     
-    FacePoseAction::FacePoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle)
+    TurnTowardsPoseAction::TurnTowardsPoseAction(Robot& robot, const Pose3d& pose, Radians maxTurnAngle)
     : PanAndTiltAction(robot, 0, 0, false, true)
     , _poseWrtRobot(pose)
     , _isPoseSet(true)
@@ -1092,40 +1093,40 @@ namespace Anki {
     {
     }
     
-    FacePoseAction::FacePoseAction(Robot& robot, Radians maxTurnAngle)
+    TurnTowardsPoseAction::TurnTowardsPoseAction(Robot& robot, Radians maxTurnAngle)
     : PanAndTiltAction(robot, 0, 0, false, true)
     , _isPoseSet(false)
     , _maxTurnAngle(maxTurnAngle.getAbsoluteVal())
     {
     }
     
-    Radians FacePoseAction::GetHeadAngle(f32 heightDiff)
+    Radians TurnTowardsPoseAction::GetHeadAngle(f32 heightDiff)
     {
       const f32 distanceXY = Point2f(_poseWrtRobot.GetTranslation()).Length();
       const Radians headAngle = std::atan2(heightDiff, distanceXY);
       return headAngle;
     }
     
-    void FacePoseAction::SetPose(const Pose3d& pose)
+    void TurnTowardsPoseAction::SetPose(const Pose3d& pose)
     {
       _poseWrtRobot = pose;
       _isPoseSet = true;
     }
     
-    ActionResult FacePoseAction::Init()
+    ActionResult TurnTowardsPoseAction::Init()
     {
       if(!_isPoseSet) {
-        PRINT_NAMED_ERROR("FacePoseAction.Init.PoseNotSet", "");
+        PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.PoseNotSet", "");
         return ActionResult::FAILURE_ABORT;
       }
       
       if(_poseWrtRobot.GetParent() == nullptr) {
-        PRINT_NAMED_INFO("FacePoseAction.SetPose.AssumingRobotOriginAsParent", "");
+        PRINT_NAMED_INFO("TurnTowardsPoseAction.SetPose.AssumingRobotOriginAsParent", "");
         _poseWrtRobot.SetParent(_robot.GetWorldOrigin());
       }
       else if(false == _poseWrtRobot.GetWithRespectTo(_robot.GetPose(), _poseWrtRobot))
       {
-        PRINT_NAMED_ERROR("FacePoseAction.Init.PoseOriginFailure",
+        PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.PoseOriginFailure",
                           "Could not get pose w.r.t. robot pose.");
         _poseWrtRobot.Print();
         _poseWrtRobot.PrintNamedPathToOrigin(false);
@@ -1138,13 +1139,13 @@ namespace Anki {
         const Radians turnAngle = std::atan2(_poseWrtRobot.GetTranslation().y(),
                                              _poseWrtRobot.GetTranslation().x());
         
-        PRINT_NAMED_INFO("FacePoseAction.Init.TurnAngle",
+        PRINT_NAMED_INFO("TurnTowardsPoseAction.Init.TurnAngle",
                          "Computed turn angle = %.1fdeg", turnAngle.getDegrees());
         
         if(turnAngle.getAbsoluteVal() <= _maxTurnAngle) {
           SetBodyPanAngle(turnAngle);
         } else {
-          PRINT_NAMED_ERROR("FacePoseAction.Init.RequiredTurnTooLarge",
+          PRINT_NAMED_ERROR("TurnTowardsPoseAction.Init.RequiredTurnTooLarge",
                             "Required turn angle of %.1fdeg is larger than max angle of %.1fdeg.",
                             turnAngle.getDegrees(), _maxTurnAngle.getDegrees());
           return ActionResult::FAILURE_ABORT;
@@ -1164,11 +1165,11 @@ namespace Anki {
       // Proceed with base class's Init()
       return PanAndTiltAction::Init();
       
-    } // FacePoseAction::Init()
+    } // TurnTowardsPoseAction::Init()
     
-    const std::string& FacePoseAction::GetName() const
+    const std::string& TurnTowardsPoseAction::GetName() const
     {
-      static const std::string name("FacePoseAction");
+      static const std::string name("TurnTowardsPoseAction");
       return name;
     }
     
@@ -1328,6 +1329,25 @@ namespace Anki {
       return actionRes;
       
     } // VisuallyVerifyObjectAction::CheckIfDone()
+    
+#pragma mark ---- TurnTowardsLastFacePoseAction ----
+
+    TurnTowardsLastFacePoseAction::TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle)
+    : TurnTowardsPoseAction(robot, maxTurnAngle)
+    {
+      Pose3d pose;
+      // If we have a last observed face set the pose of it otherwise pose wil not be set and TurnTowardsPoseAction will return failure
+      if(robot.GetFaceWorld().GetLastObservedFace(pose) != 0)
+      {
+        SetPose(pose);
+      }
+    }
+    
+    const std::string& TurnTowardsLastFacePoseAction::GetName() const
+    {
+      static const std::string name("TurnTowardsLastFacePoseAction");
+      return name;
+    }
     
 #pragma mark ---- WaitAction ----
     

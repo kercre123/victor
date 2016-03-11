@@ -174,6 +174,9 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
  */
 void ReliableConnection_printState(ReliableConnection* connection);
 
+/** Retrieve the number of bytes of reliable data queue available
+ */
+int16_t ReliableConnection_GetReliableQueueAvailable(ReliableConnection* connection);
 
 // end extern "C"
 #ifdef __cplusplus

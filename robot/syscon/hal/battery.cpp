@@ -190,17 +190,18 @@ void Battery::manage(void* userdata)
 
     case ANALOG_V_EXT_SENSE:
       {
-        static int ground_short = 0;
         uint32_t raw = NRF_ADC->RESULT;
+				static int pinch_count = 0;
 
-        if (raw < 0x30) {
-          if (ground_short++ >= 40) {
-            powerOff();
-            for (;;) ;
-          }
+        if (raw >= 0x30){
+					pinch_count = 0;
+					RTOS::kick(WDOG_NERVE_PINCH);
         } else {
-          ground_short = 0;
-        }
+					if (++pinch_count > 50) {
+						Battery::powerOff();
+						return ;
+					}
+				}
       
         vExt = calcResult(VEXT_SCALE);
         onContacts = vExt > VEXT_DETECT_THRESHOLD;

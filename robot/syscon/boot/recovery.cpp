@@ -254,7 +254,7 @@ void EnterRecovery(void) {
 
   RECOVERY_STATE state = STATE_IDLE;
 
-  for(int i = 0; i < 16; i++) {
+  for(int i = 0; i < 4; i++) {
     setLight(0);
     MicroWait(25000);
   }

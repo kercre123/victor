@@ -360,7 +360,7 @@ namespace Anki {
                   relAngleToMarker -= robotPose_angle.ToFloat();
 
                   f32 targetAngle = (Localization::GetCurrentMatOrientation() + PI_F + relAngleToMarker).ToFloat();
-                  SteeringController::ExecutePointTurn(targetAngle, 2, 10, 10, true);
+                  SteeringController::ExecutePointTurn(targetAngle, 2, 10, 10, DEG_TO_RAD(1), true);
                   mode_ = ROTATE_FOR_CHARGER_APPROACH;
                 } else {
                   #if(DEBUG_PAP_CONTROLLER)

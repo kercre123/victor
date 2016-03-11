@@ -1,4 +1,5 @@
 // System Includes
+#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <vector>
@@ -1128,11 +1129,11 @@ namespace Anki {
     {
       return 0;
     }
-    
-    u8 HAL::GetForwardProxSensor()
+
+    u8 HAL::GetForwardProxSensorCurrentValue()
     {
-      double val = proxCenter_->getValue();
-      return val >= 150 ? 0 : val;      // 150mm is from proto file
+      const u8 val = static_cast<u8>( proxCenter_->getValue() );
+      return val;
     }
     
     bool HAL::IsCliffDetected()

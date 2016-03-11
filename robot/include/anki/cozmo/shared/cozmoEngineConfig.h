@@ -52,6 +52,18 @@ namespace Anki {
     // see if they should be deleted..
     // (A negative value means it _really_ has to intersect in order for the object to be deleted.)
     const f32 ROBOT_BBOX_PADDING_FOR_OBJECT_DELETION = -5.f;
+
+    
+    /***************************************************************************
+     *
+     *                          Tolerances
+     *
+     **************************************************************************/
+
+    // Angular tolerance on point turns.
+    // Mostly used by TurnInPlaceAction, but also used by planner in some places. Maybe planner should keep its own constants?
+    const f32 POINT_TURN_ANGLE_TOL = DEG_TO_RAD(2.f);
+    
     
     /***************************************************************************
      *

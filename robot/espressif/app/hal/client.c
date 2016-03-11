@@ -28,6 +28,12 @@ bool clientConnected(void)
   return clientConnectionId != 0;
 }
 
+sint16 clientQueueAvailable(void)
+{
+  if (clientConnection) return ReliableConnection_GetReliableQueueAvailable(clientConnection);
+  else return 0;
+}
+
 void clientUpdate(void)
 {
   if (clientConnection != NULL)

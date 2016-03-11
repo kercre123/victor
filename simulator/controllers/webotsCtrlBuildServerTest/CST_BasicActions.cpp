@@ -210,7 +210,7 @@ namespace Anki {
             m.position = QueueActionPosition::NOW;
             m.idTag = 7;
             // Face the position (0,-100,0) wrt robot
-            m.action.Set_facePose(ExternalInterface::FacePose(GetRobotPose().GetTranslation().x(),
+            m.action.Set_turnTowardsPose(ExternalInterface::TurnTowardsPose(GetRobotPose().GetTranslation().x(),
                                                               GetRobotPose().GetTranslation().y() + -100,
                                                               NECK_JOINT_POSITION[2], PI, 0, 0, 0, 0, 0, 0, 1));
             ExternalInterface::MessageGameToEngine message;
@@ -232,7 +232,7 @@ namespace Anki {
             m.position = QueueActionPosition::NOW;
             m.idTag = 8;
             // Face block 0
-            m.action.Set_faceObject(ExternalInterface::FaceObject(0, PI, 0, 0, 0, 0, 0, 0, 1, true, false));
+            m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(0, PI, 0, 0, 0, 0, 0, 0, 1, true, false));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

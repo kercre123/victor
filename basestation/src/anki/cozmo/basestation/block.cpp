@@ -53,10 +53,16 @@ namespace Cozmo {
   const Block::BlockInfoTableEntry_t& Block::LookupBlockInfo(const ObjectType type)
   {
     static const std::map<ObjectType, Block::BlockInfoTableEntry_t> BlockInfoLUT = {
-#       define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
-#       include "anki/cozmo/basestation/BlockDefinitions.h"
-  };
-    return BlockInfoLUT.at(type);
+#     define BLOCK_DEFINITION_MODE BLOCK_LUT_MODE
+#     include "anki/cozmo/basestation/BlockDefinitions.h"
+    };
+    
+    // If this assertion fails, somebody is trying to construct an invalid
+    // block type
+    auto entry = BlockInfoLUT.find(type);
+    ASSERT_NAMED(entry != BlockInfoLUT.end(),
+                 "Block.LookupBlockInfo.InvalidBlockType");
+    return entry->second;
   }
 
   

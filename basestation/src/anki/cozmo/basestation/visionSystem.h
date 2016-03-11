@@ -37,6 +37,7 @@
 
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/groundPlaneROI.h"
+#include "anki/cozmo/basestation/overheadEdge.h"
 
 #include "anki/common/basestation/matlabInterface.h"
 
@@ -189,6 +190,8 @@ namespace Cozmo {
     std::string GetModeName(VisionMode mode) const;
     std::string GetCurrentModeName() const;
     
+    void AssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name);
+    
     void EnableNewFaceEnrollment(s32 numToEnroll);
     
     void SetParams(const bool autoExposureOn,
@@ -217,6 +220,7 @@ namespace Cozmo {
     bool CheckMailbox(ExternalInterface::RobotObservedMotion& msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
     bool CheckMailbox(Vision::FaceTracker::UpdatedID&  msg);
+    bool CheckMailbox(OverheadEdgePointChain& msg);
     
     bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
     bool CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg);
@@ -421,6 +425,8 @@ namespace Cozmo {
     
     Result DetectMotion(const Vision::ImageRGB& image);
     
+    Result DetectOverheadEdges(const Vision::ImageRGB& image);
+    
     Result ReadToolCode(const Vision::Image& image);
     
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
@@ -437,6 +443,8 @@ namespace Cozmo {
     
     MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
     MultiMailbox<Vision::FaceTracker::UpdatedID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
+    
+    MultiMailbox<OverheadEdgePointChain, 64> _overheadEdgeChainMailbox;
     
     MultiMailbox<std::pair<const char*, Vision::Image>, 10>     _debugImageMailbox;
     MultiMailbox<std::pair<const char*, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;

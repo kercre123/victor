@@ -36,6 +36,8 @@ namespace Planning {
 
 #define LATTICE_PLANNER_ROT_ACCEL 100
 #define LATTICE_PLANNER_ROT_DECEL 100
+  
+#define LATTICE_PLANNER_POINT_TURN_TOL DEG_TO_RAD(2)
 
 #define REPLAN_PENALTY_BUFFER 0.5
 
@@ -1277,6 +1279,7 @@ bool MotionPrimitive::Create(const Json::Value& config, StateTheta startingAngle
                                   rotSpeed,
                                   LATTICE_PLANNER_ROT_ACCEL,
                                   LATTICE_PLANNER_ROT_DECEL,
+                                  LATTICE_PLANNER_POINT_TURN_TOL,
                                   true);
   }
 
