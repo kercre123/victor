@@ -170,7 +170,7 @@ bool IBehaviorRequestGame::GetFacePose(const Robot& robot, Pose3d& facePose) con
   float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const u32 currTime_ms = Util::numeric_cast<u32>( std::floor( currentTime_sec * 0.001 ) );
 
-  TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
+  TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(facePose);
   
   const bool hasFace = lastObservedFaceTime > 0 && lastObservedFaceTime + _maxFaceAge_ms > currTime_ms;
 
