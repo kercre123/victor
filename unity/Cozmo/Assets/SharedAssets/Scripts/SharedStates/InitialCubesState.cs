@@ -22,8 +22,6 @@ public class InitialCubesState : State {
     _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
 
     _Game = _StateMachine.GetGame();
-    Debug.Log(_Game);
-    Debug.Log(_Game.SharedMinigameView);
     _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
     _Game.SharedMinigameView.ShowContinueButtonOnShelf(HandleContinueButtonClicked,
       Localization.Get(LocalizationKeys.kButtonContinue), 
