@@ -599,7 +599,7 @@ message EnableVisionMode {
 }
 
 message VisionRunMode {
-  uint_8 mode
+  bool isSync
 }
 
 message ReliableTransportRunMode {

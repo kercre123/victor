@@ -95,7 +95,7 @@ namespace Anki {
         case TestState::WaitToSeeObjectOne:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetNumObjects() == 1, 10)
+                                           GetNumObjects() == 1, DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -115,7 +115,7 @@ namespace Anki {
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                           GetNumObjects() == 2, 10)
+                                           GetNumObjects() == 2, DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -139,7 +139,7 @@ namespace Anki {
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().x(), 128, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 1, 10) &&
-                                           GetCarryingObjectID() == 0, 10)
+                                           GetCarryingObjectID() == 0, DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -171,7 +171,7 @@ namespace Anki {
                                            NEAR(pose.GetRotationAxis().x(), 0.0, 0.1) &&
                                            NEAR(pose.GetRotationAxis().y(), 0.0, 0.1) &&
                                            (NEAR(pose.GetRotationAxis().z(), 1, 0.1) ||
-                                            NEAR(pose.GetRotationAxis().z(), -1, 0.1)), 10)
+                                            NEAR(pose.GetRotationAxis().z(), -1, 0.1)), DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueCompoundAction m;
             m.robotID = 1;

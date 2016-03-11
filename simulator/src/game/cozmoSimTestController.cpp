@@ -79,7 +79,7 @@ namespace Anki {
     {
       // Set vision to synchronous
       ExternalInterface::VisionRunMode m;
-      m.mode = (u8)VisionComponent::RunMode::Synchronous;
+      m.isSync = true;
       ExternalInterface::MessageGameToEngine message;
       message.Set_VisionRunMode(m);
       SendMessage(message);

@@ -918,7 +918,7 @@ void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
    [this] (const GameToEngineEvent& event)
    {
      const ExternalInterface::VisionRunMode& msg = event.GetData().Get_VisionRunMode();
-     _visionComponent.SetRunMode(VisionComponent::RunMode(msg.mode));
+     _visionComponent.SetRunMode((msg.isSync ? VisionComponent::RunMode::Synchronous : VisionComponent::RunMode::Asynchronous));
    }));
 }
 

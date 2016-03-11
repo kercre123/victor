@@ -84,7 +84,7 @@ namespace Anki {
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
-                                           GetNumObjects() == 1, 15)
+                                           GetNumObjects() == 1, DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -105,7 +105,7 @@ namespace Anki {
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 5) &&
                                            NEAR(GetRobotPose().GetTranslation().x(), 60, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 0, 10) &&
-                                           GetCarryingObjectID() == 0, 10)
+                                           GetCarryingObjectID() == 0, DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueCompoundAction m;
             m.robotID = 1;
