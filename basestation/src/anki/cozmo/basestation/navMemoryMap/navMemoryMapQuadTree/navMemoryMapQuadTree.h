@@ -1,5 +1,5 @@
 /**
- * File: navMemoryMap.h
+ * File: navMemoryMapQuadTree.h
  *
  * Author: Raul
  * Date:   12/09/2015
@@ -13,7 +13,7 @@
 #define ANKI_COZMO_NAV_MEMORY_MAP_H
 
 #include "anki/cozmo/basestation/navMemoryMap/iNavMemoryMap.h"
-#include "navMeshQuadTree/navMeshQuadTree.h"
+#include "navMeshQuadTree.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -21,7 +21,7 @@ namespace Cozmo {
 class VizManager;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class NavMemoryMap : public INavMemoryMap
+class NavMemoryMapQuadTree : public INavMemoryMap
 {
 public:
 
@@ -30,8 +30,8 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Construction/Destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  NavMemoryMap(VizManager* vizManager);
-  virtual ~NavMemoryMap() {}  
+  NavMemoryMapQuadTree(VizManager* vizManager);
+  virtual ~NavMemoryMapQuadTree() {}
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // From INavMemoryMap

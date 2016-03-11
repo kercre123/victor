@@ -254,6 +254,7 @@ namespace Anki {
     
   
     UiGameController::UiGameController(s32 step_time_ms)
+    : _firstRobotPoseUpdate( true )
     {
       _stepTimeMS = step_time_ms;
       _robotNode = nullptr;
@@ -565,13 +566,23 @@ namespace Anki {
           static_cast<f32>(orientationActual[7]),
           static_cast<f32>(orientationActual[8])} );
       }
+
+      // if it's the first time that we set the proper pose for the robot, update the visualization origin to
+      // the robot, since debug render expects to be centered around the robot
+      if ( _firstRobotPoseUpdate )
+      {
+          PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
+            "Auto aligning viz to match robot's pose.");
+            
+          Pose3d initialWorldPose = _robotPoseActual * _robotPose.GetInverse();
+          UpdateVizOrigin(initialWorldPose);
+          _firstRobotPoseUpdate = false;
+      }
       
     }
     
     void UiGameController::UpdateVizOrigin()
     {
-      SetVizOrigin msg;
-      
       Pose3d correctionPose;
       if(_robotStateMsg.localizedToObjectID >= 0)
       {
@@ -597,21 +608,25 @@ namespace Anki {
         correctionPose = _robotPoseActual * _robotPose.GetInverse();
       }
       
-      
-      const RotationVector3d Rvec(correctionPose.GetRotationVector());
+      UpdateVizOrigin(correctionPose);
+    }
+    
+    void UiGameController::UpdateVizOrigin(const Pose3d& originPose)
+    {
+      SetVizOrigin msg;
+      const RotationVector3d Rvec(originPose.GetRotationVector());
       
       msg.rot_rad = Rvec.GetAngle().ToFloat();
       msg.rot_axis_x = Rvec.GetAxis().x();
       msg.rot_axis_y = Rvec.GetAxis().y();
       msg.rot_axis_z = Rvec.GetAxis().z();
       
-      msg.trans_x = correctionPose.GetTranslation().x();
-      msg.trans_y = correctionPose.GetTranslation().y();
-      msg.trans_z = correctionPose.GetTranslation().z();
+      msg.trans_x = originPose.GetTranslation().x();
+      msg.trans_y = originPose.GetTranslation().y();
+      msg.trans_z = originPose.GetTranslation().z();
       
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
     }
-
     
     void UiGameController::SetDataPlatform(Util::Data::DataPlatform* dataPlatform) {
       _dataPlatform = dataPlatform;

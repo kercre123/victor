@@ -16,8 +16,24 @@ namespace NavMemoryMapTypes {
 
 bool ExpectsAdditionalData(EContentType type)
 {
-  const bool ret = (type == EContentType::Cliff);
-  return ret;
+  // using switch to force at compilation type to decide on new types
+  switch(type)
+  {
+    case EContentType::Unknown:
+    case EContentType::ClearOfObstacle:
+    case EContentType::ClearOfCliff:
+    case EContentType::ObstacleCube:
+    case EContentType::ObstacleUnrecognized:
+    case EContentType::InterestingEdge:
+    {
+      return false;
+    }
+  
+    case EContentType::Cliff:
+    {
+      return true;
+    }
+  }
 }
 
 } // namespace

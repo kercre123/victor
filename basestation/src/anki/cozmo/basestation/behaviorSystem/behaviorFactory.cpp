@@ -31,8 +31,9 @@
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
-#include "../behaviors/exploration/behaviorExploreMarkedCube.h" // any reason why we need to expose behavior headers?
+#include "../behaviors/exploration/behaviorExploreMarkedCube.h"
 #include "../behaviors/exploration/behaviorExploreCliff.h"
+#include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -154,7 +155,12 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     {
       newBehavior = new BehaviorRequestGameSimple(robot, config);
       break;
-    } 
+    }
+    case BehaviorType::ExploreLookAroundInPlace:
+    {
+      newBehavior = new BehaviorExploreLookAroundInPlace(robot, config);
+      break;
+    }
    case BehaviorType::Count:
     {
       PRINT_NAMED_ERROR("BehaviorFactory.CreateBehavior.BadType", "Unexpected type '%s'", EnumToString(behaviorType));

@@ -230,13 +230,14 @@ void NavMeshQuadTreeNode::AddQuadsToDraw(VizManager::SimpleQuadVector& quadVecto
     switch(_content.type)
     {
       case ENodeContentType::Invalid             : { color = Anki::NamedColors::WHITE;    color.SetAlpha(1.0f); break; }
-      case ENodeContentType::Subdivided          : { color = Anki::NamedColors::BLUE;     color.SetAlpha(1.0f); break; }
+      case ENodeContentType::Subdivided          : { color = Anki::NamedColors::CYAN;     color.SetAlpha(1.0f); break; }
       case ENodeContentType::Unknown             : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
       case ENodeContentType::ClearOfObstacle     : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
       case ENodeContentType::ClearOfCliff        : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
       case ENodeContentType::ObstacleCube        : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
       case ENodeContentType::ObstacleUnrecognized: { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
       case ENodeContentType::Cliff               : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
+      case ENodeContentType::InterestingEdge          : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }
     }
     //quadVector.emplace_back(VizManager::MakeSimpleQuad(color, Point3f{_center.x(), _center.y(), _center.z()+_level*100}, _sideLen));
     quadVector.emplace_back(VizManager::MakeSimpleQuad(color, _center, _sideLen));
@@ -314,9 +315,20 @@ bool NavMeshQuadTreeNode::CanOverrideSelfWithContent(ENodeContentType newContent
     return isTotalClear;
   }
 
-  // ClearOfCliff can only be overriden by Cliff
+  // ClearOfCliff can not be overriden by ClearOfObstacle
   if ( _content.type == ENodeContentType::ClearOfCliff && newContentType == ENodeContentType::ClearOfObstacle ) {
     return false;
+  }
+  
+  // InterestingEdge can only override basic node types, because it would cause data loss otherwise. For example,
+  // we don't want to override a recognized marked cube or a cliff with their own border
+  if ( newContentType == ENodeContentType::InterestingEdge ) {
+    if ( ( _content.type == ENodeContentType::ObstacleCube         ) ||
+         ( _content.type == ENodeContentType::ObstacleUnrecognized ) ||
+         ( _content.type == ENodeContentType::Cliff                ) )
+    {
+      return false;
+    }
   }
   
   return true;
