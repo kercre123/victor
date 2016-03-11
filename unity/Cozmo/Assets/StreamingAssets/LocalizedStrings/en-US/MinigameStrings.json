@@ -127,7 +127,7 @@
     "translation": "Tap the cube faster than Cozmo when the light numbers are the same to earn a point!"
   },
   "speedTap.tapBlock": {
-    "translation": "Tap the flashing cube to begin the round!"
+    "translation": "Tap the flashing cube to begin the round!\n(Make sure the cubes are far apart.)"
   },
   "treasureHunt.title": {
     "translation": "Treasure Hunt"

@@ -36,6 +36,7 @@ namespace SpeedTap {
     }
 
     private void HandleTap(int id, int tappedTimes) {
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
       if (id == _SpeedTapGame.PlayerBlock.ID) {
         _StateMachine.SetNextState(new SpeedTapStatePlayNewHand());
       }

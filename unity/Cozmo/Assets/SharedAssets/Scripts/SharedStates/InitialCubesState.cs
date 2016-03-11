@@ -40,14 +40,14 @@ public class InitialCubesState : State {
       bool isValidCube = lightCube.Value.MarkersVisible;
 
       if (isValidCube && numValidCubes < _CubesRequired) { 
-        lightCube.Value.SetLEDs(Color.white);
+        lightCube.Value.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
         numValidCubes++;
         if (!_Game.CubesForGame.Contains(lightCube.Value)) {
           _Game.CubesForGame.Add(lightCube.Value);
         }
       }
       else {
-        lightCube.Value.TurnLEDsOff();
+        lightCube.Value.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
         if (_Game.CubesForGame.Contains(lightCube.Value)) {
           _Game.CubesForGame.Remove(lightCube.Value);
         }
@@ -75,6 +75,12 @@ public class InitialCubesState : State {
 
   public override void Exit() {
     base.Exit();
+
+    foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
+      if (!_Game.CubesForGame.Contains(lightCube.Value)) {
+        lightCube.Value.TurnLEDsOff();
+      }
+    }
 
     _Game.SharedMinigameView.HideGameStateSlide();
   }
