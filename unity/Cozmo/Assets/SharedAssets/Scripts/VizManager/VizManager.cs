@@ -140,6 +140,8 @@ namespace Anki.Cozmo.Viz {
 
     public static VizManager Instance { get; private set; }
 
+    public static bool EnableTexture = false;
+
     private void OnEnable() {
       
       DAS.Info(this, "Enabling VizManager");
@@ -166,6 +168,10 @@ namespace Anki.Cozmo.Viz {
     }
 
     private void Update() {
+      if (EnableTexture == false) {
+        return;
+      }
+
       _Channel.Update();
       if (_OverlayImage != null && _OverlayDirty) {
         _OverlayImage.Apply();

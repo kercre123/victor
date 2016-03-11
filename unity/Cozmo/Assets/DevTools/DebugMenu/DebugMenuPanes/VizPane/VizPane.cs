@@ -9,15 +9,20 @@ namespace Anki.Cozmo.Viz {
     [SerializeField]
     private Text _InfoLabel;
 
+    void Start() {
+      VizManager.EnableTexture = true;
+    }
+
+    void OnDestroy() {
+      VizManager.EnableTexture = false;
+    }
     
     // Update is called once per frame
-    private void Update () {
-
+    private void Update() {
       _InfoLabel.text = string.Format("Current Behavior: {0}\n" +
-        "Recent Mood Events: {1}\n",
+      "Recent Mood Events: {1}\n",
         VizManager.Instance.Behavior,
         VizManager.Instance.RecentMoodEvents != null ? string.Join(", ", VizManager.Instance.RecentMoodEvents) : "");
-
     }
   }
 }
