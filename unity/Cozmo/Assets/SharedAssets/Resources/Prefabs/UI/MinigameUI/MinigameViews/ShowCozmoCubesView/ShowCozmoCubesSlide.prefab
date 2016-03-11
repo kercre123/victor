@@ -152,7 +152,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _CubeContainer: {fileID: 11416400}
   _CubePrefab: {fileID: 11403952, guid: 9bc3dc942ef314969978ec0457452ccd, type: 2}
-  _CubeOff: {fileID: 21300000, guid: 049a6b8b83062465ca4813545702d5c5, type: 3}
+  _CubeOff: {fileID: 21300000, guid: 7f27c6ce3444a4d8087036c225ac7d37, type: 3}
   _CubeOn: {fileID: 21300000, guid: 5cd7f4864070540f8b6f069d19efaebe, type: 3}
   _ShowCozmoCubesLabel: {fileID: 0}
 --- !u!114 &11451162
@@ -391,7 +391,12 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _CubeOff
+      value: 
+      objectReference: {fileID: 21300000, guid: 7f27c6ce3444a4d8087036c225ac7d37,
+        type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 146872}

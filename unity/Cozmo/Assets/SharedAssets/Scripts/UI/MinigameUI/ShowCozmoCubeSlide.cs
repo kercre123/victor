@@ -12,17 +12,17 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   private Image _CubePrefab;
 
   [SerializeField]
-  private Sprite _CubeOff;
-
-  [SerializeField]
-  private Sprite _CubeOn;
-
-  [SerializeField]
   private AnkiTextLabel _ShowCozmoCubesLabel;
 
   private Image[] _CubeImages;
 
-  public void Initialize(int numCubesToShow) {
+  private Sprite _OutOfViewColor;
+  private Sprite _InViewColor;
+
+  public void Initialize(int numCubesToShow, Cozmo.CubeColor outOfViewColor, Cozmo.CubeColor inViewColor) {
+    _InViewColor = inViewColor.uiSprite;
+    _OutOfViewColor = outOfViewColor.uiSprite;
+
     CreateCubes(numCubesToShow);
     LightUpCubes(0);
     _ShowCozmoCubesLabel.text = Localization.GetWithArgs(LocalizationKeys.kMinigameLabelShowCubes,
@@ -31,7 +31,7 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
 
   public void LightUpCubes(int numberCubes) {
     for (int i = 0; i < _CubeImages.Length; i++) {
-      _CubeImages[i].sprite = (i < numberCubes) ? _CubeOn : _CubeOff;
+      _CubeImages[i].sprite = (i < numberCubes) ? _InViewColor : _OutOfViewColor;
     }
   }
 
