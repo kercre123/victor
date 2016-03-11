@@ -42,6 +42,15 @@ namespace Cozmo {
         return Instance._OutOfViewColor;
       }
     }
+
+    [SerializeField]
+    private CubeColor _ReadyColor;
+
+    public static CubeColor ReadyColor {
+      get {
+        return Instance._ReadyColor;
+      }
+    }
   }
 
   [System.Serializable]
