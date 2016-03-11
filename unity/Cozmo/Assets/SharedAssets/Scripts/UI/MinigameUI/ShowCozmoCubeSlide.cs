@@ -19,7 +19,7 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   private Sprite _OutOfViewColor;
   private Sprite _InViewColor;
 
-  public void Initialize(int numCubesToShow, Cozmo.CubeColor outOfViewColor, Cozmo.CubeColor inViewColor) {
+  public void Initialize(int numCubesToShow, Cozmo.CubePalette.CubeColor outOfViewColor, Cozmo.CubePalette.CubeColor inViewColor) {
     _InViewColor = inViewColor.uiSprite;
     _OutOfViewColor = outOfViewColor.uiSprite;
 

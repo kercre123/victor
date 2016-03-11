@@ -53,6 +53,13 @@ public abstract class GameBase : MonoBehaviour {
 
   public List<LightCube> CubesForGame;
 
+  private Dictionary<LightCube, CycleData> _CubeCycleTimers;
+
+  private class CycleData {
+    public float timeElaspedSeconds;
+    public float cycleIntervalSeconds;
+  }
+
   #region Initialization
 
   public void InitializeMinigame(ChallengeData challengeData) {
@@ -63,6 +70,8 @@ public abstract class GameBase : MonoBehaviour {
     _WonChallenge = false;
 
     RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
+
+    _CubeCycleTimers = new Dictionary<LightCube, CycleData>();
   }
 
   private void FinishTurnToFace(bool success) {
@@ -99,6 +108,7 @@ public abstract class GameBase : MonoBehaviour {
   #region Update
 
   protected virtual void Update() {
+    UpdateCubeCycleLights();
     UpdateStateMachine();
   }
 
@@ -329,7 +339,55 @@ public abstract class GameBase : MonoBehaviour {
 
   #endregion
 
-  // end DAS
+  // end Difficulty Select
+
+  #region LightCubes
+
+  public void StartCycleCube(LightCube cube, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
+    // Set colors
+    int colorIndex = 0;
+    for (int i = 0; i < cube.Lights.Length; i++) {
+      colorIndex = i % lightColorsCounterclockwise.Length;
+      cube.Lights[i].OnColor = lightColorsCounterclockwise[colorIndex].ToUInt();
+    }
+
+    // Set up timing data
+    CycleData data = new CycleData();
+    data.cycleIntervalSeconds = cycleIntervalSeconds;
+    data.timeElaspedSeconds = 0;
+    _CubeCycleTimers.Add(cube, data);
+  }
+
+  public void StopCycleCube(LightCube cube) {
+    _CubeCycleTimers.Remove(cube);
+  }
+
+  private void UpdateCubeCycleLights() {
+    foreach (KeyValuePair<LightCube,CycleData> kvp in _CubeCycleTimers) {
+      kvp.Value.timeElaspedSeconds += Time.deltaTime;
+
+      if (kvp.Value.timeElaspedSeconds > kvp.Value.cycleIntervalSeconds) {
+        SpinLightsCounterclockwise(kvp.Key);
+        kvp.Value.timeElaspedSeconds %= kvp.Value.cycleIntervalSeconds;
+      }
+    }
+  }
+
+  public void SpinLightsCounterclockwise(LightCube cube) {
+    uint color_0 = cube.Lights[3].OnColor;
+    uint color_1 = cube.Lights[0].OnColor;
+    uint color_2 = cube.Lights[1].OnColor;
+    uint color_3 = cube.Lights[2].OnColor;
+
+    cube.Lights[0].OnColor = color_0;
+    cube.Lights[1].OnColor = color_1;
+    cube.Lights[2].OnColor = color_2;
+    cube.Lights[3].OnColor = color_3;
+  }
+
+  #endregion
+
+  // end LightCubes
 
   #region DAS Events
 
@@ -367,5 +425,5 @@ public abstract class GameBase : MonoBehaviour {
 
   #endregion
 
-  // end Difficulty Select
+  // end DAS
 }

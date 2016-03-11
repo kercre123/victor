@@ -303,20 +303,6 @@ namespace SpeedTap {
       }
     }
 
-    public void SpinLights(LightCube cube) {
-
-      uint color_0 = cube.Lights[3].OnColor;
-      uint color_1 = cube.Lights[0].OnColor;
-      uint color_2 = cube.Lights[1].OnColor;
-      uint color_3 = cube.Lights[2].OnColor;
-
-      cube.Lights[0].OnColor = color_0;
-      cube.Lights[1].OnColor = color_1;
-      cube.Lights[2].OnColor = color_2;
-      cube.Lights[3].OnColor = color_3;
-      
-    }
-
     protected override int CalculateExcitementStatRewards() {
       return 1 + _CloseRoundCount * 2;
     }
