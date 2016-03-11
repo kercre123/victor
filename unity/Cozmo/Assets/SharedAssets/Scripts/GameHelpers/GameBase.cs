@@ -132,6 +132,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void OnDestroy() {
     DAS.Event(DASConstants.Game.kEnd, GetGameTimeElapsedAsStr());
+    Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameEnd);
 
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(EndGameRobotReset);
@@ -272,8 +273,7 @@ public abstract class GameBase : MonoBehaviour {
     // Listen for dialog close
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
       Localization.Get(LocalizationKeys.kButtonContinue));
-
-    Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameEnd);
+    
 
     _RewardedXp = new StatContainer();
 
