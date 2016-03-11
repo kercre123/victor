@@ -56,6 +56,7 @@ namespace Anki {
       switch (_testState) {
         case TestState::TurnToFace:
         {
+          MakeSynchronous();
           SendMoveHeadToAngle(MAX_HEAD_ANGLE, 100, 100);
           
           ExternalInterface::QueueSingleAction m;

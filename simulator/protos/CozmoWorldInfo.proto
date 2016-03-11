@@ -11,8 +11,7 @@ PROTO CozmoWorldInfo [
 WorldInfo {
   title IS title
   info IS info
-  # Makes the world more "spongy", allows objects to slightly intersect before
-  # exploding them apart
+  # Makes the world more "spongy", allows objects to slightly intersect before exploding them apart
   CFM 0.007 # Don't increase over 0.01 
   gravity 0 0 -9.81
   physics "cozmo_physics"
@@ -105,6 +104,15 @@ WorldInfo {
         5000
       ]
       bounce 0
+    }
+    DEF LIFT_BLOCK ContactProperties {
+      material1 "cmat_lift"
+      material2 "cmat_block"
+      coulombFriction [
+        1
+      ]
+      bounce 0
+      softCFM 0.05
     }
   ]
 } 

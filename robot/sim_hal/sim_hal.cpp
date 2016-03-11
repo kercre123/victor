@@ -390,8 +390,8 @@ namespace Anki {
         motorSpeedCoeffs_[i] = 0.5;
       }
       
-      motorSpeedCoeffs_[MOTOR_LEFT_WHEEL] = 0.9;
-      motorSpeedCoeffs_[MOTOR_RIGHT_WHEEL] = 0.9;
+      motorSpeedCoeffs_[MOTOR_LEFT_WHEEL] = 0.925;
+      motorSpeedCoeffs_[MOTOR_RIGHT_WHEEL] = 0.925;
 
       // Enable position measurements on head, lift, and wheel motors
       leftWheelPosSensor_->enable(TIME_STEP);
@@ -538,7 +538,6 @@ namespace Anki {
 
     void HAL::GetGroundTruthPose(f32 &x, f32 &y, f32& rad)
     {
-
       const double* position = gps_->getValues();
       const double* northVector = compass_->getValues();
 

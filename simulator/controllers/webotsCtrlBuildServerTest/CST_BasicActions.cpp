@@ -60,6 +60,7 @@ namespace Anki {
       switch (_testState) {
         case TestState::MoveLiftUp:
         {
+          MakeSynchronous();
           StartMovie("BasicActions");
         
           SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, 100, 100);

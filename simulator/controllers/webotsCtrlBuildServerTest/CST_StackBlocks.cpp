@@ -73,11 +73,8 @@ namespace Anki {
       switch (_testState) {
         case TestState::Init:
         {
-          time_t t;
-          time(&t);
-          std::stringstream ss;
-          ss << "/Users/alchaussee/Desktop/webotsMovies/" << "StackBlocks " << std::asctime(std::localtime(&t)) << ".mp4";
-          GetSupervisor()->startMovie(ss.str(), 854, 480, 0, 90, 1, false);
+          MakeSynchronous();
+          StartMovie("StackBlocks");
           
           SendMoveHeadToAngle(0, 100, 100);
           _testState = TestState::PickupObject;
@@ -106,7 +103,7 @@ namespace Anki {
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 5) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 130, 10) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 60, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 0, 10) &&
                                            GetCarryingObjectID() == 0, 10)
           {
@@ -136,18 +133,14 @@ namespace Anki {
           GetObjectPose(0, pose0);
           Pose3d pose1;
           GetObjectPose(1, pose1);
-          std::cout << GetCarryingObjectID() << " " << pose0.GetTranslation().z() << " " <<
-          pose1.GetTranslation().z() << " " << GetRobotPose().GetTranslation().x() << " " <<
-          GetRobotPose().GetTranslation().y() << std::endl;
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
                                            NEAR(pose0.GetTranslation().z(), 65, 10) &&
                                            NEAR(pose1.GetTranslation().z(), 22, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 228, 10) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 130, 10) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 0, 10), 20)
           {
-            GetSupervisor()->stopMovie();
-            sleep(5);
+            StopMovie();
             CST_EXIT();
           }
           break;
@@ -163,13 +156,7 @@ namespace Anki {
       if (msg.result == ActionResult::SUCCESS) {
         _lastActionSucceeded = true;
       } else {
-        time_t t;
-        time(&t);
-        std::stringstream ss;
-        ss << "/Users/alchaussee/Desktop/webots/" << "StackBlocks " << std::asctime(std::localtime(&t)) << ".jpg";
-        GetSupervisor()->exportImage(ss.str(), 100);
-        GetSupervisor()->stopMovie();
-        sleep(5);
+        StopMovie();
       }
     }
     

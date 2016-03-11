@@ -598,6 +598,14 @@ message EnableVisionMode {
    bool       enable
 }
 
+message VisionRunMode {
+  uint_8 mode
+}
+
+message ReliableTransportRunMode {
+  bool isSync
+}
+
 // SetActiveObjectLEDs
 message SetActiveObjectLEDs {
     uint_32  objectID,

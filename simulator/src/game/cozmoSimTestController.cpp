@@ -45,11 +45,7 @@ namespace Anki {
           PRINT_STREAM_WARNING("CONDITION_WITH_TIMEOUT_ASSERT", "(" << condAsString << ") still false after " << timeout << " seconds. (" << file << "." << func << "." << line << ")");
           _result = 255;
           
-          if(RECORD_TEST)
-          {
-            GetSupervisor()->stopMovie();
-            sleep(10);
-          }
+          StopMovie();
           
           CST_EXIT();
         }
@@ -72,11 +68,27 @@ namespace Anki {
     
     void CozmoSimTestController::StopMovie()
     {
-      if(RECORD_TEST)
+      if(RECORD_TEST && GetSupervisor()->getMovieStatus() == GetSupervisor()->MOVIE_RECORDING)
       {
         GetSupervisor()->stopMovie();
-        sleep(10);
+        sleep(10); // Wait a few seconds for the movie to be encoded and saved
       }
+    }
+    
+    void CozmoSimTestController::MakeSynchronous()
+    {
+      // Set vision to synchronous
+      ExternalInterface::VisionRunMode m;
+      m.mode = (u8)VisionComponent::RunMode::Synchronous;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_VisionRunMode(m);
+      SendMessage(message);
+      
+      // Set reliable transport to synchronous
+      ExternalInterface::ReliableTransportRunMode m1;
+      m1.isSync = true;
+      message.Set_ReliableTransportRunMode(m1);
+      SendMessage(message);
     }
     
     // =========== CozmoSimTestFactory ============

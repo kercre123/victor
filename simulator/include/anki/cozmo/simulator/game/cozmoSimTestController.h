@@ -82,6 +82,8 @@ protected:
   void StartMovie(std::string name);
   void StopMovie();
   
+  void MakeSynchronous();
+  
 }; // class CozmoSimTestController
 
   

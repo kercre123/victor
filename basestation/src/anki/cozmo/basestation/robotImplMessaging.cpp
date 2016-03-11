@@ -912,6 +912,14 @@ void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
       const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
       EnableVisionWhileMoving(msg.enable);
     }));
+  
+  // VisionRunMode
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::VisionRunMode,
+   [this] (const GameToEngineEvent& event)
+   {
+     const ExternalInterface::VisionRunMode& msg = event.GetData().Get_VisionRunMode();
+     _visionComponent.SetRunMode(VisionComponent::RunMode(msg.mode));
+   }));
 }
 
 void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)

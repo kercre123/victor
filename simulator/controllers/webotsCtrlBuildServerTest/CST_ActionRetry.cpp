@@ -74,6 +74,7 @@ namespace Anki {
       switch (_testState) {
         case TestState::Init:
         {
+          MakeSynchronous();
           StartMovie("ActionRetry");
           
           SendMoveHeadToAngle(0, 100, 100);

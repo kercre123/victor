@@ -29,10 +29,10 @@ CozmoMat {
   showMarkers FALSE
 }
 LightCube {
-  translation 0.2 0 0.022
+  translation 0.13 0 0.022
 }
 LightCube {
-  translation 0.3 0 0.022
+  translation 0.2 0 0.022
   ID 1
 }
 BlockWorldComms {
