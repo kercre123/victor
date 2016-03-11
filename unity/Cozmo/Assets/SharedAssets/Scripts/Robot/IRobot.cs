@@ -179,6 +179,10 @@ public interface IRobot : IDisposable {
 
   void CancelAllCallbacks();
 
+  void EnableNewFaceEnrollment(int numToEnroll = 1);
+
+  void AssignNameToFace(int faceID, string name);
+
   void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendAnimationGroup(string animGroupName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
@@ -204,13 +208,15 @@ public interface IRobot : IDisposable {
 
   void StopTrackToObject();
 
-  void FaceObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
-                  RobotCallback callback = null,
-                  QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void TurnTowardsObject(ObservedObject observedObject, bool headTrackWhenDone = true, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f,
+                         RobotCallback callback = null,
+                         QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void FacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, 
-                RobotCallback callback = null,
-                QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void TurnTowardsFacePose(Face face, float maxPanSpeed_radPerSec = 4.3f, float panAccel_radPerSec2 = 10f, 
+                           RobotCallback callback = null,
+                           QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+
+  void TurnTowardsLastFacePose(float maxTurnAngle, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void PickupObject(ObservedObject selectedObject, bool usePreDockPose = true, bool useManualSpeed = false, bool useApproachAngle = false, float approachAngleRad = 0.0f, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 

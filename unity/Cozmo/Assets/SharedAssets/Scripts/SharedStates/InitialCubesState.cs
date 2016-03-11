@@ -19,6 +19,7 @@ public class InitialCubesState : State {
     base.Enter();
     _CurrentRobot.SetLiftHeight(0f);
     _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
+    _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
 
     _Game = _StateMachine.GetGame();
     _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);

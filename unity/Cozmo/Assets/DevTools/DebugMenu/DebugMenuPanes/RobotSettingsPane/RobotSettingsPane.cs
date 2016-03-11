@@ -11,6 +11,9 @@ public class RobotSettingsPane : MonoBehaviour {
   private Button _ToggleDebugStringButton;
 
   [SerializeField]
+  private Toggle _ToggleDebugStringType;
+
+  [SerializeField]
   private GameObject _RobotStateTextFieldPrefab;
 
   private void Start() {
@@ -25,6 +28,7 @@ public class RobotSettingsPane : MonoBehaviour {
 
     _ToggleDebugStringButton.onClick.AddListener(OnToggleDebugString);
     
+    _ToggleDebugStringType.onValueChanged.AddListener(OnToggleDebugStringType);
   }
 
   private void OnVolumeSliderChanged(float newValue) {
@@ -32,6 +36,10 @@ public class RobotSettingsPane : MonoBehaviour {
     if (robot != null) {
       robot.SetRobotVolume(_VolumeSlider.value);
     }
+  }
+
+  private void OnToggleDebugStringType(bool check) {
+    RobotStateTextField.UseAnimString(check);
   }
 
   private void OnToggleDebugString() {

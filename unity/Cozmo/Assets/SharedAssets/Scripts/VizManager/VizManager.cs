@@ -48,7 +48,9 @@ namespace Anki.Cozmo.Viz {
       #endregion
     }
 
-    private class VizUdpChannel : UdpChannel<MessageVizWrapper, MessageVizWrapper> { }
+    private class VizUdpChannel : UdpChannel<MessageVizWrapper, MessageVizWrapper> {
+
+    }
 
     private VizUdpChannel _Channel = null;
 
@@ -68,7 +70,9 @@ namespace Anki.Cozmo.Viz {
 
     private bool _OverlayDirty;
     private Texture2D _OverlayImage;
+
     public Texture2D RobotCameraOverlay { get { return _OverlayImage; } }
+
     private Color32[] _OverlayClearBuffer = null;
 
 
@@ -95,6 +99,17 @@ namespace Anki.Cozmo.Viz {
 
     private bool _ShowingObjects = true;
 
+    enum TextLabelType : byte {
+      Action,
+      LocalizedTo,
+      WorldOrigin,
+      VisionMode,
+      BehaviorState,
+      AnimationName,
+      DebugString}
+
+    ;
+
     private readonly Dictionary<uint, Dictionary<uint, VizQuad>> _Quads = new Dictionary<uint, Dictionary<uint, VizQuad>>();
     private readonly Dictionary<uint, VizQuad> _Objects = new Dictionary<uint, VizQuad>();
     private readonly Dictionary<uint, VizLabel> _ObjectLabels = new Dictionary<uint, VizLabel>();
@@ -107,18 +122,24 @@ namespace Anki.Cozmo.Viz {
     private readonly List<uint> _TmpList = new List<uint>();
 
     public float[] Emotions { get; private set; }
+
     public string[] RecentMoodEvents { get; private set; }
+
     public string Behavior { get; private set; }
+
+    public string AnimationName { get; private set; }
+
     public BehaviorScoreData[] BehaviorScoreData { get; private set; }
+
     public RobotInterface.AnimationState AnimationState { get; private set; }
 
     public Camera Camera { get { return _Camera; } }
 
     private Vector3 _InitialCameraPosition;
     private Quaternion _InitialCameraRotation;
-          
+
     public static VizManager Instance { get; private set; }
-      
+
     private void OnEnable() {
       
       DAS.Info(this, "Enabling VizManager");
@@ -151,7 +172,7 @@ namespace Anki.Cozmo.Viz {
         _OverlayDirty = false;
       }
     }
-  
+
     public void Listen() {
       _Channel.Connect(_UIDeviceID, _UILocalPort);
     }
@@ -292,12 +313,16 @@ namespace Anki.Cozmo.Viz {
         AnimationState = message.AnimationState;
         break;
 
-        // TODO: None of the following are implemented
-        // Not sure which ones we actually use
+      // TODO: None of the following are implemented
+      // Not sure which ones we actually use
+      case MessageViz.Tag.SetLabel:
+        if (message.SetLabel.labelID == (int)TextLabelType.AnimationName) {
+          AnimationName = message.SetLabel.text[0];
+        }
+        break;
       case MessageViz.Tag.DefineColor:
       case MessageViz.Tag.DockingErrorSignal:
       case MessageViz.Tag.RobotStateMessage:
-      case MessageViz.Tag.SetLabel:
       case MessageViz.Tag.SetRobot:
       case MessageViz.Tag.SetVizOrigin:
       case MessageViz.Tag.StartRobotUpdate:
@@ -378,7 +403,7 @@ namespace Anki.Cozmo.Viz {
 
       if (!quadDict.TryGetValue(quad.quadID, out vizQuad)) {
         vizQuad = UIManager.CreateUIElement(_VizQuadPrefab, _VizScene).GetComponent<VizQuad>();
-        vizQuad.Initialize("Quad_"+quad.quadID.ToString());
+        vizQuad.Initialize("Quad_" + quad.quadID.ToString());
         quadDict.Add(quad.quadID, vizQuad);
       }
 
@@ -627,7 +652,7 @@ namespace Anki.Cozmo.Viz {
       EraseItem(_ObjectLabels, eraseObj.objectID, eraseObj.lower_bound_id, eraseObj.upper_bound_id);
     }
 
-    public void ShowObjects(ShowObjects showObjects){
+    public void ShowObjects(ShowObjects showObjects) {
       
       _ShowingObjects = (showObjects.show == 0 ? false : true);
       foreach (var obj in _Objects.Values) {
@@ -766,6 +791,7 @@ namespace Anki.Cozmo.Viz {
 
       _OverlayImage.SetPixels32(_OverlayClearBuffer);
     }
+
     private void DrawCameraLine(CameraLine camLine) {
 
       DrawOverlayLine(camLine.xStart, camLine.yStart, camLine.xEnd, camLine.yEnd, camLine.color.ToColor());
@@ -882,7 +908,7 @@ namespace Anki.Cozmo.Viz {
       float yratio = ry / y;
 
       var d = 0.25f - y;
-      var end = Mathf.Ceil(y/Mathf.Sqrt(2));
+      var end = Mathf.Ceil(y / Mathf.Sqrt(2));
 
       for (var x = 0; x <= end; x++) {
         int xdx = (int)(x * xratio);
@@ -954,7 +980,7 @@ namespace Anki.Cozmo.Viz {
         int xRange = Mathf.Abs(minX - maxX);
         int yRange = Mathf.Abs(minY - maxY);
 
-        for(int j = 0; j < xRange; j++) {
+        for (int j = 0; j < xRange; j++) {
           for (int k = 0; k < yRange; k++) {
 
             int jf = minX + stepX * j;
@@ -978,6 +1004,7 @@ namespace Anki.Cozmo.Viz {
     }
 
     #endregion // OverlayRender
+
     #region ImageChunk
 
     private void HandleReceivedImage(Texture2D image) {

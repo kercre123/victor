@@ -65,6 +65,10 @@ public abstract class GameBase : MonoBehaviour {
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetMusicState());
     Initialize(challengeData.MinigameConfig);
 
+    RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
+  }
+
+  private void FinishTurnToFace(bool success) {
     _SharedMinigameViewInstance = UIManager.OpenView(
       UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       newView => {
@@ -135,7 +139,6 @@ public abstract class GameBase : MonoBehaviour {
 
   public void CloseMinigameImmediately() {
     DAS.Info(this, "Close Minigame Immediately");
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
     CleanUpOnDestroy();
     Destroy(gameObject);
   }

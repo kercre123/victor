@@ -52,8 +52,7 @@ public class StartView : BaseView {
     if (robot != null) {
       DAS.Info(this, "Cancelling HandleSleepAnimationComplete");
       robot.CancelCallback(HandleSleepAnimationComplete);
-      // kOpenEyes is much longer than kOpenEyesTwo, so play it 1/5 of the time.
-      robot.SendAnimation(UnityEngine.Random.value > 0.8f ? AnimationName.kOpenEyes : AnimationName.kOpenEyesTwo, HandleWakeAnimationComplete);
+      robot.SendAnimation(AnimationName.kOpenEyesTwo, HandleWakeAnimationComplete);
       _ConnectButton.Interactable = false;
     }
   }
