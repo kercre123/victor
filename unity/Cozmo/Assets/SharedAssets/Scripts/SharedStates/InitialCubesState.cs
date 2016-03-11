@@ -44,6 +44,7 @@ public class InitialCubesState : State {
         numValidCubes++;
         if (!_Game.CubesForGame.Contains(lightCube.Value)) {
           _Game.CubesForGame.Add(lightCube.Value);
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameStart);
         }
       }
       else {
