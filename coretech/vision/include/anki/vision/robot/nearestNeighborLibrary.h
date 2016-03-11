@@ -55,15 +55,8 @@ namespace Embedded {
     
   protected:
     
-    void Init();
-    Result NormalizeIllumination(u8* data, s32 gridSize, s32 filterSize);
-    
-    bool _isInitialized;
     cv::Mat_<u8> _probeValues;
-    
     cv::Mat_<u8> _data;    // numDataPoints rows x dataDimension cols
-    cv::Mat_<u8> _weights; // numDataPoints rows x dataDimension cols
-    cv::Mat_<s32> _totalWeight; // 1 row x dataDimension cols
     
     s32 _numDataPoints;
     s32 _dataDimension;
@@ -78,8 +71,6 @@ namespace Embedded {
     s32 _numProbeOffsets;
     
     s32 _numFractionalBits;
-    
-    cv::Mat_<s32>_probeFiltering;
     
   }; // class NearestNeighborLibrary
   
