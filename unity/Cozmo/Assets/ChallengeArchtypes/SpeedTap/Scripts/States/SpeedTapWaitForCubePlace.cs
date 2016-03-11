@@ -21,6 +21,8 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
+      _CurrentRobot.SetEnableCliffSensor(true);
       if (_ShowHowToPlay) {
         _SpeedTapGame.InitialCubesDone();
       }
@@ -55,6 +57,8 @@ namespace SpeedTap {
     public override void Update() {
       if (_GotoObjectComplete) {
         if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < _kArriveAtCubeThreshold) {
+          // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
+          _CurrentRobot.SetEnableCliffSensor(false);
           _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
         }
         else {

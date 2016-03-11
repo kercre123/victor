@@ -122,13 +122,7 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Event(DASConstants.Game.kEnd, GetGameTimeElapsedAsStr());
 
     if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(() => {
-        RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
-        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
-      });
+      CurrentRobot.ResetRobotState(EndGameRobotReset);
     }
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.CloseViewImmediately();
@@ -141,6 +135,19 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Info(this, "Close Minigame Immediately");
     CleanUpOnDestroy();
     Destroy(gameObject);
+  }
+
+  public void EndGameRobotReset() {
+    RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+    CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
+    CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
+    CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
+    // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
+    CurrentRobot.SetEnableCliffSensor(true);
+    // Disable all Request game behavior groups while in this view, Timeline View will handle renabling these
+    // if appropriate.
+    DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
   }
 
   #endregion
@@ -245,6 +252,10 @@ public abstract class GameBase : MonoBehaviour {
                                      "ChallengeEndSlide");
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
+
+    if (CurrentRobot != null) {
+      CurrentRobot.ResetRobotState(EndGameRobotReset);
+    }
 
     // Listen for dialog close
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
