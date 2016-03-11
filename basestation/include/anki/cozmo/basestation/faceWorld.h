@@ -39,9 +39,14 @@ namespace Cozmo {
     // Returns number of known faces observed since seenSinceTime_ms
     std::map<TimeStamp_t, Vision::TrackedFace::ID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const;
 
-    // Returns time of the last observed face.
-    // 0 if no face was ever observed.
+    // If the robot has observed a face, sets p to the pose of the last observed face and returns the
+    // timestamp when that face was last seen. Otherwise, returns 0    
     TimeStamp_t GetLastObservedFace(Pose3d& p) const;
+
+    // like GetLastObservedFace, but returns a pose with respect to the current robot pose. If they have
+    // different origins (e.g. the robot was picked up and hasn't seen a face since), this code will assume
+    // that the origins are the same (even though they aren't).
+    TimeStamp_t GetLastObservedFaceWithRespectToRobot(Pose3d& p) const;
     
     // Removes all known faces and resets the last observed face timer to 0, so
     // GetLastObservedFace() will return 0.
