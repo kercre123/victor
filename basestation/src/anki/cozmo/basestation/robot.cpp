@@ -670,6 +670,65 @@ namespace Anki {
       return camera;
     }
     
+    
+    void Robot::StartCameraCalibration() {
+      PRINT_NAMED_INFO("Robot.StartCameraCalibration", "");
+      
+      // TODO: Cancel actions that might be using lift or head.
+      //       Prevent actions that use lift or head from starting while IsCalibratingCamera().
+      
+      // Disable head and lift tracks so that animations don't interfere with
+      _movementComponent.LockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK) | static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+      
+      // Start calibration mode on robot
+      SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(-0.5f, -0.3f, true)));
+      
+      _cameraCalibrationStartTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      _camCalibLastMovedTime = _cameraCalibrationStartTime_ms;
+      _useNextImageForCameraCalibration = false;
+    }
+    
+    void Robot::StopCameraCalibration() {
+      PRINT_NAMED_INFO("Robot.StopCameraCalibration", "");
+      
+      // Stop calibration mode on robot
+      SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(0, 0, false)));
+      
+      // Re-enable tracks
+      _movementComponent.UnlockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK) | static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+      
+      _cameraCalibrationStartTime_ms = 0;
+      _camCalibLastMovedTime = 0;
+      _useNextImageForCameraCalibration = false;
+    }
+    
+    void Robot::CameraCalibrationUpdate() {
+      if (IsCalibratingCamera()) {
+        TimeStamp_t currTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        if (_useNextImageForCameraCalibration) {
+          
+          // TODO: Process next image for camera calibration
+          //       Something should check UseNextImageForCameraCalibration(). If true, it should use the next image
+          //       to do camera calibration and then call StopCameraCalibration(). Calling it here for now.
+          PRINT_NAMED_WARNING("Robot.CameraCalibrationUpdate.UseNextImage", "TODO: Implement camera calibration!");
+          StopCameraCalibration();
+          
+        } else if (currTimestamp - _camCalibLastMovedTime > 500) {
+          _useNextImageForCameraCalibration = true;
+        } else if (currTimestamp - _cameraCalibrationStartTime_ms > 3000) {
+          PRINT_NAMED_WARNING("Robot.CameraCalibrationUpdate.Tieout",
+                              "Taking too long for robot to be ready for camera calibration");
+          StopCameraCalibration();
+        } else if (GetHeadAngle() != _camCalibLastHeadAngle || GetLiftAngle() != _camCalibLastLiftAngle) {
+          _camCalibLastHeadAngle = GetHeadAngle();
+          _camCalibLastLiftAngle = GetLiftAngle();
+          _camCalibLastMovedTime = currTimestamp;
+        }
+        
+      }
+    }
+
+    
     // Flashes a pattern on an active block
     void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
       /*
@@ -915,6 +974,9 @@ namespace Anki {
           }
         }
       }
+      
+      ////////// Update camera calibration /////////
+      CameraCalibrationUpdate();
       
       
       /////////// Update visualization ////////////
