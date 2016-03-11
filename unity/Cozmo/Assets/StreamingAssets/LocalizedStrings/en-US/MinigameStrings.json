@@ -18,6 +18,9 @@
       "/{*}"
     ]
   },
+  "connect.label.showCubes": {
+    "translation": "Put {0} cubes in front of Cozmo."
+  },
   "minigame.text.playerWins": {
     "translation": "WINNER: PLAYER"
   },
@@ -37,7 +40,7 @@
     "translation": "Score"
   },
   "minigame.label.showCubes": {
-    "translation": "Put {0} cubes where Cozmo can see them. They'll turn white when they're in the right place."
+    "translation": "Put {0} cubes in front of Cozmo. They'll turn white when he can see them."
   },
   "minigame.label.cubesFound": {
     "translation": "{0} cubes found"
