@@ -206,8 +206,6 @@ namespace Anki {
         // Set to pressed visual state
         ShowPressedState();
         StartCoroutine(DelayedResetButton());
-    
-        PlayAudioEvent();
         _OnClick.Invoke();
       }
 
@@ -244,7 +242,6 @@ namespace Anki {
 
         // Reset to normal visual state
         ShowEnabledState();
-    
         _OnRelease.Invoke();
       }
   
@@ -269,12 +266,6 @@ namespace Anki {
         DAS.Debug("AnkiButton.OnPointerUp", string.Format("{0} Released - View: {1}", DASEventButtonName, DASEventViewController));
 
         Release();
-      }
-
-      public void PlayAudioEvent() {
-        if (DisableInteraction()) {
-          return;
-        }
       }
 
       private void UpdateVisuals() {
