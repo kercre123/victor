@@ -26,6 +26,21 @@ namespace Cozmo.UI {
       base.onClick.RemoveListener(HandleOnPress);
     }
 
+    protected override void ShowEnabledState() {
+      base.ShowEnabledState();
+      ShowGlint(true);
+    }
+
+    protected override void ShowPressedState() {
+      base.ShowPressedState();
+      ShowGlint(true);
+    }
+
+    protected override void ShowDisabledState() {
+      base.ShowDisabledState();
+      ShowGlint(false);
+    }
+
     private void HandleOnPress() {
       Anki.Cozmo.Audio.GameAudioClient.PostAudioEvent(_UISoundEvent);
     }
