@@ -807,7 +807,7 @@ namespace Anki
       if(doIlluminationNormalization)
       {
         // TODO: Make this a member of the class and pre-allocate it?
-        cv::Mat_<s32> _probeFiltering;
+        cv::Mat_<s16> _probeFiltering;
         
         cv::Mat_<u8> temp(VisionMarker::GRIDSIZE, VisionMarker::GRIDSIZE, probeValues.data);
         //cv::imshow("Original ProbeValues", temp);
@@ -816,7 +816,7 @@ namespace Anki
         static cv::Mat_<s16> kernel;
         if(kernel.empty()) {
           assert(VisionMarker::GRIDSIZE % 2 == 0);
-          const s32 halfSize = VisionMarker::GRIDSIZE/2;
+          const s32 halfSize = 2*std::ceil((f32)VisionMarker::GRIDSIZE/15.f)+1;  //VisionMarker::GRIDSIZE/2;
           kernel = cv::Mat_<s16>(halfSize-1,halfSize-1);
           kernel = -1;
           kernel((halfSize-1)/2,(halfSize-1)/2) = kernel.rows*kernel.cols - 1;
