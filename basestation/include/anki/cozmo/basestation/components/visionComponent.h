@@ -115,6 +115,8 @@ struct DockingErrorSignal;
     Result UpdateOverheadMap(const Vision::ImageRGB& image,
                              const VisionSystem::PoseData& poseData);
     
+    Result UpdateOverheadEdges(Robot& robot);
+    
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     
