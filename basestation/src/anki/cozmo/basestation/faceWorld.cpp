@@ -351,7 +351,30 @@ namespace Cozmo {
     
     return _lastObservedFaceTimeStamp;
   }
-  
+
+  TimeStamp_t FaceWorld::GetLastObservedFaceWithRespectToRobot(Pose3d& p) const
+  {
+    if (_lastObservedFaceTimeStamp > 0) {
+      p = _lastObservedFacePose;
+
+      if( ! p.GetWithRespectTo(_robot.GetPose(), p ) ) {
+        // don't have a real transform, so just pretend the origins are the same
+        Pose3d lastFaceWRTOrigin = _lastObservedFacePose.GetWithRespectToOrigin();
+        p = Pose3d{ lastFaceWRTOrigin.GetRotation(),
+                    lastFaceWRTOrigin.GetTranslation(),
+                    _robot.GetWorldOrigin() };
+
+        if( ! p.GetWithRespectTo(_robot.GetPose(), p) ) {
+          PRINT_NAMED_ERROR("FaceWorld.LastObservedFace.PoseError",
+                            "BUG: couldn't get new pose with respect to robot. This should never happen");
+          return 0;
+        }
+      }
+    }
+    
+    return _lastObservedFaceTimeStamp;    
+  }
+
 } // namespace Cozmo
 } // namespace Anki
 

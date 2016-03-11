@@ -74,7 +74,6 @@ namespace Anki {
         
         // Save robot image to file
         bool saveRobotImageToFile_ = false;
-        ExternalInterface::RobotObservedFace _lastFace;
         
       } // private namespace
     
@@ -173,7 +172,7 @@ namespace Anki {
     void WebotsKeyboardController::HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg)
     {
       //printf("RECEIVED FACE OBSERVED: faceID %llu\n", msg.faceID);
-      _lastFace = msg;
+      // _lastFace = msg;
     }
 
     void WebotsKeyboardController::HandleDebugString(ExternalInterface::DebugString const& msg)
@@ -1592,11 +1591,8 @@ namespace Anki {
                   SendEnableVisionMode(VisionMode::DetectingFaces, false);
                 } else if(altPressed && !shiftPressed) {
                   // ALT+F: Turn to face the pose of the last observed face:
-                  printf("Turning to face ID = %llu\n", _lastFace.faceID);
-                  ExternalInterface::TurnTowardsPose turnTowardsPose; // construct w/ defaults for speed
-                  turnTowardsPose.world_x = _lastFace.world_x;
-                  turnTowardsPose.world_y = _lastFace.world_y;
-                  turnTowardsPose.world_z = _lastFace.world_z;
+                  printf("Turning to last face\n");
+                  ExternalInterface::TurnTowardsLastFacePose turnTowardsPose; // construct w/ defaults for speed
                   turnTowardsPose.panTolerance_rad = DEG_TO_RAD(10);
                   turnTowardsPose.maxTurnAngle = M_PI;
                   turnTowardsPose.robotID = 1;

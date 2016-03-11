@@ -1130,6 +1130,7 @@ namespace Anki {
                           "Could not get pose w.r.t. robot pose.");
         _poseWrtRobot.Print();
         _poseWrtRobot.PrintNamedPathToOrigin(false);
+        _robot.GetPose().PrintNamedPathToOrigin(false);
         return ActionResult::FAILURE_ABORT;
       }
       
@@ -1337,7 +1338,7 @@ namespace Anki {
     {
       Pose3d pose;
       // If we have a last observed face set the pose of it otherwise pose wil not be set and TurnTowardsPoseAction will return failure
-      if(robot.GetFaceWorld().GetLastObservedFace(pose) != 0)
+      if(robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(pose) != 0)
       {
         SetPose(pose);
       }
