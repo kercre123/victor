@@ -13,7 +13,7 @@ namespace Cozmo {
       public event QuickQuitButtonHandler QuitGameConfirmed;
 
       [SerializeField]
-      private AnkiButton _QuickQuitButtonInstance;
+      private Cozmo.UI.CozmoButton _QuickQuitButtonInstance;
 
       public string DASEventViewController {
         get { return _QuickQuitButtonInstance.DASEventViewController; } 

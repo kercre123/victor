@@ -16,13 +16,13 @@ namespace Cozmo {
       private AnkiTextLabel _AlertMessageText;
 
       [SerializeField]
-      private AnkiButton _PrimaryButton;
+      private Cozmo.UI.CozmoButton _PrimaryButton;
 
       [SerializeField]
-      private AnkiButton _SecondaryButton;
+      private Cozmo.UI.CozmoButton _SecondaryButton;
 
       [SerializeField]
-      private AnkiButton _CloseButton;
+      private Cozmo.UI.CozmoButton _CloseButton;
 
       [SerializeField]
       private CanvasGroup _AlphaController;
@@ -130,7 +130,7 @@ namespace Cozmo {
         return viewName;
       }
 
-      private void ResetButton(AnkiButton button) {
+      private void ResetButton(Cozmo.UI.CozmoButton button) {
         if (button != null && button.isActiveAndEnabled) {
           button.onClick.RemoveAllListeners();
         }
@@ -174,13 +174,13 @@ namespace Cozmo {
         }
       }
 
-      private void SetupButton(AnkiButton button, String title, Action action, 
+      private void SetupButton(Cozmo.UI.CozmoButton button, String title, Action action, 
                                Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         if (button != null) {
           button.gameObject.SetActive(true);
           button.Text = title;
           if (!audioParam.IsInvalid()) {
-            //button.SoundEvent = audioParam;
+            button.SoundEvent = audioParam;
           }
           button.onClick.RemoveAllListeners();
           button.onClick.AddListener(() => {

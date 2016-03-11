@@ -47,7 +47,7 @@ namespace Cozmo {
       private bool _CloseDialogOnTapOutside;
 
       [SerializeField]
-      private AnkiButton _OptionalCloseDialogButton;
+      private Cozmo.UI.CozmoButton _OptionalCloseDialogButton;
 
       public bool DimBackground = false;
 

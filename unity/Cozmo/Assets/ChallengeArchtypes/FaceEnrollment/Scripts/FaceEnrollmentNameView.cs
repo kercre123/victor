@@ -9,7 +9,7 @@ namespace FaceEnrollment {
     public System.Action<string> OnSubmitButton;
 
     [SerializeField]
-    public Anki.UI.AnkiButton _SubmitNameButton;
+    public Cozmo.UI.CozmoButton _SubmitNameButton;
 
     [SerializeField]
     private InputField _NameField;

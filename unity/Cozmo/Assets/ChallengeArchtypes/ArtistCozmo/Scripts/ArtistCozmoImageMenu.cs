@@ -10,10 +10,10 @@ public class ArtistCozmoImageMenu : MonoBehaviour {
   private RawImage _RawImage;
 
   [SerializeField]
-  private AnkiButton _RetryButton;
+  private Cozmo.UI.CozmoButton _RetryButton;
 
   [SerializeField]
-  private AnkiButton _SaveButton;
+  private Cozmo.UI.CozmoButton _SaveButton;
 
   public event Action OnSaveClick;
 

@@ -7,7 +7,7 @@ namespace Playhouse {
   public class PlayhousePanel : MonoBehaviour {
 
     [SerializeField]
-    private Anki.UI.AnkiButton _StartPlayButton;
+    private Cozmo.UI.CozmoButton _StartPlayButton;
 
     [SerializeField]
     private UnityEngine.UI.Dropdown _Dropdown1;

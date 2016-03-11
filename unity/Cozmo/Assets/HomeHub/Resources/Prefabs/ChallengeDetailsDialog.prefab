@@ -608,13 +608,13 @@ MonoBehaviour:
   Prefab: {fileID: 103458, guid: 85d9e07d30b304f2782d1dc4fa7f476c, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_GameObjectType
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_GameObjectType
     JsonValue: 3
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_DASEventViewController
+    FieldName: Cozmo.UI.CozmoButton:_DASEventViewController
     JsonValue: '"assignedByBaseView"'
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_DASEventButtonName
+    FieldName: Cozmo.UI.CozmoButton:_DASEventButtonName
     JsonValue: '"assignedByBaseView"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
@@ -656,19 +656,19 @@ MonoBehaviour:
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#button.startChallenge"'
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_GameObjectType
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_GameObjectType
     JsonValue: 0
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_EventType
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_EventType
     JsonValue: 4
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_UISoundEvent:_Event
+    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
     JsonValue: -1676603318
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_DASEventViewController
+    FieldName: Cozmo.UI.CozmoButton:_DASEventViewController
     JsonValue: '"assignedByChallengeDetailsDialog"'
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiButton:_DASEventButtonName
+    FieldName: Cozmo.UI.CozmoButton:_DASEventButtonName
     JsonValue: '"assignedByChallengeDetailsDialog"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../

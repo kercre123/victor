@@ -278,7 +278,7 @@ namespace Anki {
         }
       }
 
-      protected override void ShowEnabledState() {
+      protected virtual void ShowEnabledState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (graphic.targetImage != null && graphic.enabledSprite != null) {
@@ -293,7 +293,7 @@ namespace Anki {
         ResetTextPosition(TextEnabledColor);
       }
 
-      protected override  void ShowPressedState() {
+      protected virtual void ShowPressedState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (graphic.targetImage != null && graphic.enabledSprite != null) {
@@ -308,7 +308,7 @@ namespace Anki {
         }
       }
 
-      protected override  void ShowDisabledState() {
+      protected virtual void ShowDisabledState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (graphic.targetImage != null && graphic.enabledSprite != null) {

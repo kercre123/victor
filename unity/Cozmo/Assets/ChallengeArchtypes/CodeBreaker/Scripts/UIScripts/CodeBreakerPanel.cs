@@ -8,7 +8,7 @@ namespace CodeBreaker {
   public class CodeBreakerPanel : MonoBehaviour {
 
     [SerializeField]
-    private AnkiButton _SubmitGuessButton;
+    private CozmoButton _SubmitGuessButton;
 
     [SerializeField]
     private AnkiTextLabel _GuessesLeftLabel;

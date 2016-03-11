@@ -172,10 +172,6 @@ MonoBehaviour:
   _AlphaController: {fileID: 0}
   _GlintAnimator: {fileID: 0}
   ButtonGraphics: []
-  _UISoundEvent:
-    _Event: -1705717452
-    _EventType: 5
-    _GameObjectType: 2
 --- !u!114 &11463238
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -360,19 +356,7 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 0}
-      propertyPath: _UISoundEvent._EventType
-      value: 5
-      objectReference: {fileID: 0}
-    - target: {fileID: 0}
-      propertyPath: _UISoundEvent._Event
-      value: -1705717452
-      objectReference: {fileID: 0}
-    - target: {fileID: 0}
-      propertyPath: _UISoundEvent._GameObjectType
-      value: 2
-      objectReference: {fileID: 0}
+    m_Modifications: []
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 174196}

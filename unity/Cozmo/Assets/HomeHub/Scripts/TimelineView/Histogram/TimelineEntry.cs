@@ -26,10 +26,10 @@ public class TimelineEntry : MonoBehaviour {
   private GameObject _TimelineNodeInactive;
 
   [SerializeField]
-  private AnkiButton _FillbarButton;
+  private Cozmo.UI.CozmoButton _FillbarButton;
 
   [SerializeField]
-  private AnkiButton _TimelineNodeButton;
+  private Cozmo.UI.CozmoButton _TimelineNodeButton;
 
   [SerializeField]
   private GameObject _FriendshipMilestone;

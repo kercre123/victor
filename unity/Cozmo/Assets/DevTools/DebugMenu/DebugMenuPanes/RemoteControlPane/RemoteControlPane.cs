@@ -7,16 +7,16 @@ using Anki.UI;
 public class RemoteControlPane : MonoBehaviour {
 
   [SerializeField]
-  private AnkiButton _Forward;
+  private Cozmo.UI.CozmoButton _Forward;
 
   [SerializeField]
-  private AnkiButton _Backwards;
+  private Cozmo.UI.CozmoButton _Backwards;
 
   [SerializeField]
-  private AnkiButton _Left;
+  private Cozmo.UI.CozmoButton _Left;
 
   [SerializeField]
-  private AnkiButton _Right;
+  private Cozmo.UI.CozmoButton _Right;
 
   [SerializeField]
   private Slider _HeadAngle;

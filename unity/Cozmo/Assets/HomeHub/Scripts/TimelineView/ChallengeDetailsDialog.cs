@@ -26,7 +26,7 @@ public class ChallengeDetailsDialog : BaseView {
   private IconProxy _ChallengeIcon;
 
   [SerializeField]
-  private AnkiButton _StartChallengeButton;
+  private Cozmo.UI.CozmoButton _StartChallengeButton;
 
   [SerializeField]
   private Vector3 _CenteredIconViewportPos;
