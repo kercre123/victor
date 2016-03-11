@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -63,7 +63,6 @@ public abstract class GameBase : MonoBehaviour {
     _WonChallenge = false;
 
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetMusicState());
-    Initialize(challengeData.MinigameConfig);
 
     RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
   }
@@ -76,6 +75,8 @@ public abstract class GameBase : MonoBehaviour {
           _ChallengeData.HowToPlayDialogContentLocKey);
         InitializeView(newView, _ChallengeData);
       });
+
+    Initialize(_ChallengeData.MinigameConfig);
     _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
 
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());

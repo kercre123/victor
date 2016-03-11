@@ -4,7 +4,7 @@ using Anki.UI;
 using System;
 
 [System.Serializable]
-public class DifficultySelectOptionData {  
+public class DifficultySelectOptionData {
   public int DifficultyId;
   public LocalizedString DifficultyName;
   public LocalizedString DifficultyDescription;
@@ -13,7 +13,7 @@ public class DifficultySelectOptionData {
 public class DifficultySelectOption : MonoBehaviour {
 
   [SerializeField]
-  private AnkiButton _Button;
+  private Cozmo.UI.CozmoButton _Button;
 
   [SerializeField]
   private AnkiTextLabel _Label;

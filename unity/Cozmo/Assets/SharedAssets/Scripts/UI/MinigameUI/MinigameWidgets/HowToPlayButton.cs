@@ -9,7 +9,7 @@ namespace Cozmo {
     public class HowToPlayButton : MinigameWidget {
 
       [SerializeField]
-      private AnkiButton _HowToPlayButtonInstance;
+      private Cozmo.UI.CozmoButton _HowToPlayButtonInstance;
 
       [SerializeField]
       private HowToPlayView _HowToPlayViewPrefab;

@@ -7,10 +7,12 @@ public class FaceEnrollmentDataView : MonoBehaviour {
   public System.Action OnEnrollNewFace;
 
   [SerializeField]
-  private Anki.UI.AnkiButton _EnrollNewFaceButton;
+  private Cozmo.UI.CozmoButton _EnrollNewFaceButton;
 
   void Start() {
     _EnrollNewFaceButton.onClick.AddListener(HandleEnrollNewFaceButton);
+    _EnrollNewFaceButton.DASEventButtonName = "enroll_new_face_button";
+    _EnrollNewFaceButton.DASEventViewController = "enroll_data_view";
   }
 
   private void HandleEnrollNewFaceButton() {
