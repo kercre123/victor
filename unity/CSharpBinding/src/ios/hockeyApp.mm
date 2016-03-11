@@ -12,6 +12,15 @@
 #import <DASClientInfo.h>
 #import <HockeySDK/HockeySDK.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+  
+  void UnitySendMessage(const char* obj, const char* method, const char* msg);
+  
+#ifdef __cplusplus
+}
+#endif
 
 
 @interface HockeyApp : NSObject 
@@ -79,7 +88,12 @@ BOOL gWaitingForCrashUpload = NO;
   NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
   if(!hockeyAppId || hockeyAppId.length == 0) {
     DASEvent("HockeyApp.ios.disabled", "");
-    return;
+    
+    // TEMP DEBUGGING
+    hockeyAppId = @"9ddf59a1bfc9487e9586842a82e32d9d";
+    NSLog(@"HockedAppDebuggingTemp - Using Default ID so I can test until build server changes plist %@",hockeyAppId);
+    //return;
+    // END TEMP DEBUGGING
   }
 
   DASEvent("HockeyApp.ios.checkin", "%s", hockeyAppId.UTF8String);
@@ -103,6 +117,8 @@ BOOL gWaitingForCrashUpload = NO;
     // do normal initialization
     [self setupApplication];
   }
+  // Because Unity will log exceptions that are non-fatal but still bad, call every startup
+  UnitySendMessage("StartupManager", "UploadUnityCrashInfo", hockeyAppId.UTF8String);
 }
 
 -(void)setupApplication {
