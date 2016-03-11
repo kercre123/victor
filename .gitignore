@@ -192,3 +192,5 @@ UnityDASDll/UnityDASDll/bin/*
 
 # Anki specific
 EXTERNALS
+
+!libHockeyAppUnity.a
