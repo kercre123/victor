@@ -260,6 +260,7 @@ public class DailyGoalManager : MonoBehaviour {
     _RequestPending = true;
     if (_RequestDialog != null) {
       _RequestDialog.DisableAllButtons();
+      _RequestDialog.ViewClosed -= HandleRequestDialogClose;
     }
     RobotEngineManager.Instance.CurrentRobot.SendAnimationGroup(AnimationGroupName.kRequestGame_Confirm, HandleMiniGameYesAnimEnd);
   }
