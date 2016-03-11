@@ -75,7 +75,8 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: if set to true Cozmo creates/uses memory maps
+CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld.MapMemory", false); // kEnableMapMemory: if set to true Cozmo creates/uses memory maps
+CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // kDebugRenderOverheadEdges: enables/disables debug render
 
     BlockWorld::BlockWorld(Robot* robot)
     : _robot(robot)
@@ -2332,9 +2333,106 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
     Result BlockWorld::AddVisionOverheadEdges(const OverheadEdgeVector& edges)
     {
       // we just got a bunch of edges from the camera, what in the world do we do with them?
+      size_t pointCount = 0;
+      
+      // test: add as interesting stuff (no extra data added now)
+      struct EdgeSegment {
+        EdgeSegment() {}
+        EdgeSegment(const Vec3f& s, const Vec3f& e) : start(s), end(e) {}
+        Vec3f start;
+        Vec3f end;
+      };
+      std::vector<EdgeSegment> segments;
+      {
+        // epsilon to merge points into the same edge segment. If adding a point to a segment creates
+        // a deviation with respect to the first direction of the segment bigger than this epsilon,
+        // then the point will not be added to that segment
+        // cos(10deg) = 0.984807...
+        // cos(40def) = 0.766044...
+        const float kDotBorderEpsilon = 0.7660f; // 0.9848f;
+      
+        // for every chain, define segments
+        for( const auto& edge : edges )
+        {
+          // need at least two points in an edge
+          if ( edge.points.size() <= 1 ) {
+            ASSERT_NAMED( edge.points.size() > 1, "BlockWorld.AddVisionOverheadEdges.InsufficientPointsInEdge" );
+            continue;
+          }
+          pointCount += edge.points.size();
+          
+          // grab the robot pose at the timestamp of this edge
+          TimeStamp_t t;
+          RobotPoseStamp* p = nullptr;
+          HistPoseKey poseKey;
+          const Result poseRet = _robot->GetPoseHistory()->ComputeAndInsertPoseAt(edge.timestamp, t, &p, &poseKey, true);
+          const bool poseIsGood = ( RESULT_OK == poseRet );
+          const Pose3d& edgeObservationPose = (poseIsGood && (nullptr!=p)) ? p->GetPose() : Pose3d();
+          
+          // init line
+          Vec3f segmentStart( edge.points[0].position.x(), edge.points[0].position.y(), 0.0f );
+          Vec3f segmentEnd  ( edge.points[1].position.x(), edge.points[1].position.y(), 0.0f );
+          Vec3f segmentDir = segmentEnd - segmentStart;
+          const float initialLength = segmentDir.MakeUnitLength();
+          ASSERT_NAMED( !Util::IsNearZero(initialLength), "BlockWorld.AddVisionOverheadEdges.PointsAreTooCloseInitial" );
+          
+          // iterate all waypoints from 2 on
+          size_t idx = 2;
+          const size_t lastIdx = (edge.points.size()-1);
+          do
+          {
+            // grab candidate point for this point in the chain
+            Vec3f candidateSegmentEnd( edge.points[idx].position.x(), edge.points[idx].position.y(), 0.0f );
+            Vec3f candidateDir = (candidateSegmentEnd - segmentEnd);
+            const float candidateLen = candidateDir.MakeUnitLength();
+            ASSERT_NAMED( !Util::IsNearZero(candidateLen), "BlockWorld.AddVisionOverheadEdges.PointsAreTooCloseIdx" );
+
+            // Can we merge this point in the same segment?
+            // = if we add this point to the current segmentEnd, does it exceed the threshold?
+            const float dotProduct = DotProduct(segmentDir, candidateDir);
+            bool canMergePoint = (dotProduct >= kDotBorderEpsilon); // if dotProduct is bigger, angle between is smaller
+            
+            // a) if we can merge the point, do so by setting it as End
+            if ( canMergePoint )
+            {
+              segmentEnd = candidateSegmentEnd;
+              // we do not update the direction so that we check deviation with respect to first two points, not
+              // deviation with respect to current segment. This prevents smoothing out a curve whose points are
+              // all close to the previous (angle-wise)
+            }
+            else
+            {
+              // can't merge this point:
+              // 1) add segment
+              const Vec3f& worldStart = edgeObservationPose * segmentStart;
+              const Vec3f& worldEnd   = edgeObservationPose * segmentEnd;
+              segments.emplace_back( worldStart, worldEnd );
+              
+              // 2) restart another segment
+              segmentStart = segmentEnd;
+              segmentEnd = candidateSegmentEnd;
+              segmentDir = segmentEnd - segmentStart;
+              const float newInitialLength = segmentDir.MakeUnitLength();
+              ASSERT_NAMED( !Util::IsNearZero(newInitialLength), "BlockWorld.AddVisionOverheadEdges.PointsAreTooCloseInitial" );
+            }
+            
+            ++idx;
+          } while ( idx <= lastIdx );
+          
+          // add last segment
+          const Vec3f& worldStart = edgeObservationPose * segmentStart;
+          const Vec3f& worldEnd   = edgeObservationPose * segmentEnd;
+          segments.emplace_back( worldStart, worldEnd );
+        }
+      }
       
       // debug draw
+      if ( kDebugRenderOverheadEdges )
       {
+        static size_t prevPointCount = 0;
+        static size_t prevSegmentCount = 0;
+        const size_t segmentCount = segments.size();
+      
         static float lingerUntil = 0.0f;
         const float kLingerTime = 2.0f;
         const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -2343,9 +2441,21 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
         // making debug blink)
         if ( edges.empty() ) {
           if ( lingerUntil < currentTime ) {
+            if ( prevPointCount != pointCount || prevSegmentCount != segmentCount )
+            {
+              PRINT_NAMED_INFO("BlockWorld.AddVisionOverheadEdges", "%zu points merged into %zu segments", pointCount, segmentCount);
+              prevPointCount=pointCount;
+              prevSegmentCount=segmentCount;
+            }
             _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld.AddVisionOverheadEdges");
           }
         } else {
+            if ( prevPointCount != pointCount || prevSegmentCount != segmentCount )
+            {
+              PRINT_NAMED_INFO("BlockWorld.AddVisionOverheadEdges", "%zu points merged into %zu segments", pointCount, segmentCount);
+              prevPointCount=pointCount;
+              prevSegmentCount=segmentCount;
+            }
           _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld.AddVisionOverheadEdges");
           lingerUntil = currentTime + kLingerTime;
           
@@ -2354,6 +2464,8 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
             ASSERT_NAMED( edge.points.size() > 1, "BlockWorld.AddVisionOverheadEdges.InsufficientPointsInEdge" );
 
             TimeStamp_t request = edge.timestamp;
+            
+            bool colorSwitchValue = false;
             
             OverheadEdgePointVector::const_iterator startIt = edge.points.begin();
             OverheadEdgePointVector::const_iterator endIt   = startIt + 1;
@@ -2372,11 +2484,22 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
               start = observedPose * start;
               end   = observedPose * end;
               
-              const Anki::ColorRGBA& color = poseIsGood ? NamedColors::GREEN : NamedColors::RED;
-              _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld.AddVisionOverheadEdges", start, end, color, false, zoffset+1.0f );
+              const Anki::ColorRGBA& color = poseIsGood ? ( colorSwitchValue ? NamedColors::GREEN : NamedColors::YELLOW) : NamedColors::RED;
+              colorSwitchValue = !colorSwitchValue;
+              
+              _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld.AddVisionOverheadEdges", start, end, color, false, zoffset );
               startIt = endIt;
               ++endIt;
             }
+          }
+          
+          // segments
+          bool colorSwitchValue = false;
+          const float zoffsetSegments = zoffset + 10.0f;
+          for( const auto& s : segments ) {
+            const Anki::ColorRGBA& color = colorSwitchValue ? NamedColors::ORANGE : NamedColors::BLUE;
+            _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld.AddVisionOverheadEdges", s.start, s.end, color, false, zoffsetSegments );
+            colorSwitchValue = !colorSwitchValue;
           }
         }
       }
