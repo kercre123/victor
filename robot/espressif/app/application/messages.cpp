@@ -1,6 +1,7 @@
 extern "C" {
 #include "client.h"
 #include "foregroundTask.h"
+#include "rboot.h"
 // Forward declaration
 void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 }
@@ -16,6 +17,8 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "upgradeController.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
+static Anki::Cozmo::NVStorage::NVReportDest nvOpReportTo;
+
 namespace Anki {
   namespace Cozmo {
     namespace Messages {
@@ -25,24 +28,105 @@ namespace Anki {
         return RESULT_OK;
       }
       
-      bool taskReadNVAndSend(u32 tag)
+      static void SendNVOpResult(const NVStorage::NVOpResult* report, const NVStorage::NVReportDest dest)
       {
-        RobotInterface::NVReadResult rslt;
-        rslt.blob.tag = tag;
-        const NVStorage::NVResult result = NVStorage::Read(rslt.blob);
-        if (result == NVStorage::NV_OKAY)
+        switch (dest)
         {
-          RobotInterface::SendMessage(rslt);
+          case NVStorage::ENGINE:
+          {
+            RobotInterface::NVOpResultToEngine msg;
+            msg.robotAddress = *SERIAL_NUMBER;
+            os_memcpy(&msg.report, report, sizeof(NVStorage::NVOpResult));
+            RobotInterface::SendMessage(msg);
+            break;
+          }
+          case NVStorage::BODY:
+          {
+            RobotInterface::EngineToRobot msg;
+            msg.tag = RobotInterface::EngineToRobot::Tag_nvOpResultToBody;
+            os_memcpy(&msg.nvOpResultToBody.report, report, sizeof(NVStorage::NVOpResult));
+            RTIP::SendMessage(msg);
+            break;
+          }
+          default:
+          {
+            AnkiError( 151, "Messages.SendNVOpResult", 408, "Unhandled report destination %d", 1, dest);
+          }
         }
-        else
+      }
+      
+      static void NVWriteDoneCallback(const NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
+      {
+        NVStorage::NVOpResult msg;
+        msg.tag    = entry->tag;
+        msg.result = result;
+        msg.write  = true;
+        SendNVOpResult(&msg, nvOpReportTo);
+      }
+      
+      static void NVEraseDoneCallback(const NVStorage::NVEntryTag tag, const NVStorage::NVResult result)
+      {
+        NVStorage::NVOpResult msg;
+        msg.tag = tag;
+        msg.result = result;
+        msg.write = true;
+        SendNVOpResult(&msg, nvOpReportTo);
+      }
+
+      static void NVReadDoneCB(NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
+      {
+        if (result != NVStorage::NV_OKAY) // Failed read
         {
           NVStorage::NVOpResult msg;
-          msg.tag = tag;
+          msg.tag = ((entry == NULL) ? NVStorage::NVEntry_Invalid : entry->tag);
           msg.result = result;
           msg.write = false;
-          RobotInterface::SendMessage(msg);
+          SendNVOpResult(&msg, nvOpReportTo);
         }
-        return false;
+        else // Successful read, send data
+        {
+          switch(nvOpReportTo)
+          {
+            case NVStorage::ENGINE:
+            {
+              RobotInterface::NVReadResultToEngine msg;
+              msg.robotAddress = *SERIAL_NUMBER;
+              os_memcpy(&msg.blob, entry, sizeof(NVStorage::NVStorageBlob));
+              RobotInterface::SendMessage(msg);
+              break;
+            }
+            case NVStorage::BODY:
+            {
+              RobotInterface::EngineToRobot msg;
+              msg.tag = RobotInterface::EngineToRobot::Tag_nvReadToBody;
+              os_memcpy(&msg.nvReadToBody.entry, entry, sizeof(NVStorage::NVStorageBlob));
+              RTIP::SendMessage(msg);
+              break;
+            }
+            default:
+            {
+              AnkiError( 152, "Messages.NVReadDoneCB", 408, "Unhandled report destination %d", 1, nvOpReportTo);
+            }
+          }
+        }
+      }
+
+      static void NVMultiEraseDoneCB(const NVStorage::NVResult result)
+      {
+        NVStorage::NVOpResult msg;
+        msg.tag    = NVStorage::NVEntry_Invalid;
+        msg.result = result;
+        msg.write  = true;
+        SendNVOpResult(&msg, nvOpReportTo);
+      }
+      
+      static void NVMultiReadDoneCB(const NVStorage::NVResult result)
+      {
+        NVStorage::NVOpResult msg;
+        msg.tag    = NVStorage::NVEntry_Invalid;
+        msg.result = result;
+        msg.write  = false;
+        SendNVOpResult(&msg, nvOpReportTo);
       }
       
       void ProcessMessage(u8* buffer, u16 bufferSize)
@@ -80,27 +164,45 @@ namespace Anki {
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               NVStorage::NVOpResult result;
-              result.tag    = msg.writeNV.tag;
+              result.tag    = msg.writeNV.entry.tag;
               result.write  = true;
-              result.result = NVStorage::Write(msg.writeNV);
-              RobotInterface::SendMessage(result);
+              if (msg.writeNV.writeNotErase)
+              {
+                result.result = NVStorage::Write(&msg.writeNV.entry,
+                                  (msg.writeNV.reportEach || msg.writeNV.reportDone) ? NVWriteDoneCallback : 0);
+              }
+              else if (msg.writeNV.rangeEnd == NVStorage::NVEntry_Invalid)
+              {
+                result.result = NVStorage::Erase(msg.writeNV.entry.tag,
+                                  (msg.writeNV.reportEach || msg.writeNV.reportDone) ? NVEraseDoneCallback : 0);
+              }
+              else
+              {
+                result.result = NVStorage::EraseRange(msg.writeNV.entry.tag, msg.writeNV.rangeEnd,
+                                                      msg.writeNV.reportEach ? NVEraseDoneCallback : 0,
+                                                      msg.writeNV.reportDone ? NVMultiEraseDoneCB  : 0);
+              }
+              if (result.result >= 0) nvOpReportTo = msg.writeNV.reportTo;
+              else SendNVOpResult(&result, msg.writeNV.reportTo);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_readNV:
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              switch (msg.readNV.to)
+              NVStorage::NVOpResult result;
+              result.tag    = msg.writeNV.entry.tag;
+              result.write  = false;
+              if (msg.readNV.tagRangeEnd == NVStorage::NVEntry_Invalid)
               {
-                case NVStorage::ENGINE:
-                {
-                  foregroundTaskPost(taskReadNVAndSend, msg.readNV.tag);
-                  break;
-                }
-                default:
-                {
-                  AnkiError( 142, "Messages.readNV", 379, "Reading to target %d not yet supported.", 1, msg.readNV.to);
-                }
+                result.result = NVStorage::Read(msg.readNV.tag, NVReadDoneCB);
               }
+              else
+              {
+                result.result = NVStorage::ReadRange(msg.readNV.tag, msg.readNV.tagRangeEnd,
+                                                     NVReadDoneCB, NVMultiReadDoneCB);
+              }
+              if (result.result >= 0) nvOpReportTo = msg.readNV.to;
+              else SendNVOpResult(&result, msg.readNV.to);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_rtipVersion:

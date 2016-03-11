@@ -824,7 +824,7 @@ void Robot::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message
 
 void Robot::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  NVStorage::NVOpResult payload = message.GetData().Get_nvResult();
+  NVStorage::NVOpResult payload = message.GetData().Get_nvResult().report;
   PRINT_NAMED_INFO("Robot.HandleNVOpResult","Tag: %d, Result: %d, write: %d", payload.tag, (int)payload.result, payload.write);
 }
 

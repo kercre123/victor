@@ -17,67 +17,56 @@ namespace NVStorage {
     NVEntry_PairedObjects,
   }
 
+  // Nominally 0 is success > 0 is conditional success and < 0 is error
   enum int_8 NVResult {
     NV_OKAY = 0,
+    NV_SCHEDULED =  1, // Scheduled for opertation
+    NV_NO_DO     =  2, // Nothing to do
     NV_NOT_FOUND = -1,
     NV_NO_ROOM   = -2,
     NV_ERROR     = -3,
     NV_TIMEOUT   = -4,
+    NV_BUSY      = -5, // Operations pending. try again later
+    NV_BAD_ARGS  = -6, // Invalid arguments to call
+    NV_NO_MEM    = -7,
   }
 
   /// Used to store a retrive serialized NV storage structures without caring whats in them
-  message NVStorageBlob
+  structure NVStorageBlob
   {
     uint_32 tag,
     uint_8  blob[uint_32:1024],
   }
-
-  enum int_8 NVReadDest
+  
+  enum int_8 NVReportDest
   {
     ENGINE,
+    WIFI,
     RTIP,
     BODY,
-    FIXTURE
   }
 
   message NVStorageRead
   {
     NVEntryTag tag,
-    NVReadDest to
+    NVEntryTag tagRangeEnd,
+    NVReportDest to,
   }
   
-  message NVOpResult {
+  message NVStorageWrite
+  {
+    NVReportDest reportTo, // Where we send reports
+    bool writeNotErase,    // If true this is a write, if false erase
+    bool reportEach,       // Report each operation completed
+    bool reportDone,       // Report when final operation is done
+    NVEntryTag rangeEnd,   // If erasing a range, the end of the range, start is the entry tag
+    NVStorageBlob entry
+  }
+  
+  structure NVOpResult {
     NVEntryTag tag,
     NVResult   result,
     bool       write,
-  }
-
-  structure WiFiAPConfig
-  {
-    uint_32 ip_domain,
-    uint_8  ssid[32],
-    uint_8  psk[64],
-    uint_8  channel,
-    uint_8  beacon_interval,
-  }
-  
-  enum uint_8 WiFiStaModeFlags
-  {
-    WiFiOff        = 0x00,
-    WiFiStationOn  = 0x01,
-    WiFiAPOn       = 0x02,
-    WiFiStaticIP   = 0x04,
-  }
-
-  structure WiFiStaConfig
-  {
-    uint_32 staticIP,
-    uint_32 staticNetmask,
-    uint_32 staticGateway,
-    uint_8  ssid[32],
-    uint_8  psk[64],
-    uint_8  bssid[6],
-    uint_8  mode, ///< Packed with WiFiStaConfig above
   }
 
 }

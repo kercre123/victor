@@ -583,7 +583,7 @@ namespace Anki {
 
       void Process_enableCamCalibMode(const RobotInterface::EnableCamCalibMode& msg)
       {
-        AnkiDebug( 145, "CameraCalibMode", 401, "enabled: %d", 1, msg.enable);
+        AnkiDebug( 154, "CameraCalibMode", 413, "enabled: %d", 1, msg.enable);
         if (msg.enable) {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
@@ -733,7 +733,7 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageBlob const&)
+      void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageWrite const&)
       {
         // Nothing to do here
       }
@@ -770,6 +770,14 @@ namespace Anki {
         // Nothing to do here
       }
       void Process_bleSendHelloMessage(Anki::Cozmo::BLE_SendHello const&)
+      {
+        // Nothing to do here
+      }
+      void Process_nvReadToBody(Anki::Cozmo::RobotInterface::NVReadResultToBody const&)
+      {
+        // Nothing to do here
+      }
+      void Process_nvOpResultToBody(Anki::Cozmo::RobotInterface::NVOpResultToBody const&)
       {
         // Nothing to do here
       }
