@@ -200,6 +200,14 @@ public:
   
 
     //
+    // Camera calibration (using lift tool code)
+    //
+    void StartCameraCalibration();
+    void StopCameraCalibration();
+    bool IsCalibratingCamera() { return _cameraCalibrationStartTime_ms != 0; }
+    bool UseNextImageForCameraCalibration() { return _useNextImageForCameraCalibration; }
+  
+    //
     // Camera / Vision
     //
     VisionComponent&         GetVisionComponent() { return _visionComponent; }
@@ -755,6 +763,14 @@ public:
     std::array<u8,   NUM_PROX>  _proxVals;
     std::array<bool, NUM_PROX>  _proxBlocked;
     */
+  
+    // Camera calibration
+    void CameraCalibrationUpdate();
+    TimeStamp_t       _cameraCalibrationStartTime_ms = 0;
+    TimeStamp_t       _camCalibLastMovedTime = 0;  
+    f32               _camCalibLastHeadAngle = 0;
+    f32               _camCalibLastLiftAngle = 0;
+    bool              _useNextImageForCameraCalibration = false;
 
     // Geometry / Pose
     std::list<Pose3d> _poseOrigins; // placeholder origin poses while robot isn't localized

@@ -576,7 +576,29 @@ namespace Anki {
         }
       }
 
-
+      void Process_enableCamCalibMode(const RobotInterface::EnableCamCalibMode& msg)
+      {
+        AnkiDebug( 145, "CameraCalibMode", 401, "enabled: %d", 1, msg.enable);
+        if (msg.enable) {
+          HeadController::Disable();
+          f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
+          HAL::MotorSetPower(MOTOR_HEAD, p);
+          
+          LiftController::Disable();
+          p = CLIP(msg.liftPower, -0.5f, 0.5f);
+          HAL::MotorSetPower(MOTOR_LIFT, p);
+          
+        } else {
+          
+          HAL::MotorSetPower(MOTOR_HEAD, 0);
+          HeadController::Enable();
+          
+          HAL::MotorSetPower(MOTOR_LIFT, 0);
+          LiftController::Enable();
+        }
+      }
+      
+      
       // --------- Block control messages ----------
 
       void Process_flashObjectIDs(const  FlashObjectIDs& msg)
