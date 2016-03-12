@@ -312,7 +312,7 @@ namespace Cozmo {
     _isRunning = false;
     StopInternal(_robot, currentTime_sec);
     _lastRunTime_s = currentTime_sec;
-    StopActing();
+    StopActing(false);
   }
   
   inline Result IBehavior::Interrupt(double currentTime_sec)
