@@ -13,12 +13,13 @@ public class HockeyAppManager : MonoBehaviour {
   protected const int MAX_CHARS = 199800;
 
   private string _AppID = null;
-  private string _BundleIdentifier = null;
-  private string _VersionCode = null;
-  private string _VersionName = null;
-  private string _SDKVersion = null;
-  private string _SDKName = null;
-
+  #if (UNITY_IPHONE && !UNITY_EDITOR)
+  private string _BundleIdentifier;
+  private string _VersionCode;
+  private string _VersionName;
+  private string _SDKVersion;
+  private string _SDKName;
+#endif
   void HandleDebugConsoleCrashFromUnityButton(System.Object setvar) {
     DAS.Event("HockeAppManager.ForceDebugCrash", "HockeAppManager.ForceDebugCrash");
     if (setvar.ToString() != "exception") {
@@ -254,6 +255,7 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
 
   public void UploadUnityCrashInfo(string hockey_params) {
     // params are appId, versionCode, versionName, budleIdentifier, sdkversion, sdkname
+#if (UNITY_IPHONE && !UNITY_EDITOR)
     char[] delimiterChars = { ',' };
     string[] split_params = hockey_params.Split(delimiterChars);
     DAS.Event("HockeAppManager.UploadUnityCrashInfo " + hockey_params, "HockeyAppManager.UploadUnityCrashInfo " + hockey_params);
@@ -273,6 +275,9 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
         StartCoroutine(SendLogs(logFileDirs));
       }
     }
+#else
+    DAS.Event("HockeAppManager.UploadUnityCrashInfoNotIOS " + hockey_params, "HockeyAppManager.UploadUnityCrashInfoNotIOS");
+#endif
   }
 
   /// <summary>
