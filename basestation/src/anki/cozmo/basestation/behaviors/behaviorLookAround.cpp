@@ -84,6 +84,17 @@ bool BehaviorLookAround::IsRunnable(const Robot& robot, double currentTime_sec) 
   return false;
 }
 
+float BehaviorLookAround::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+{
+  float minScore = 0.0f;
+  // if we are going to examine (or searching for) a possible block, increase the minimum score
+  if( _currentState == State::LookingAtPossibleObject || _currentState == State::ExaminingFoundObject ) {
+    minScore = 0.8f;
+  }
+
+  return std::max( minScore, IBehavior::EvaluateRunningScoreInternal(robot, currentTime_sec) );
+}
+
 void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   switch(event.GetData().GetTag())

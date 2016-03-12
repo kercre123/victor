@@ -97,7 +97,10 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
   // disable idle animation, but save the old one on the stack
-  robot.PushIdleAnimation("NONE");
+  if( ! _shouldPopIdle ) {
+    _shouldPopIdle = true;
+    robot.PushIdleAnimation("NONE");
+  }
 
   if( GetNumBlocks(robot) == 0 ) {
     _activeConfig = &_zeroBlockConfig;
@@ -128,6 +131,15 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
     }
   }
 
+  if( _state == State::TrackingFace &&
+      GetRequestMinDelayComplete_s() >= 0.0f &&
+      currentTime_sec >= GetRequestMinDelayComplete_s() ) {
+    // timeout acts as a deny
+    StopActing();
+    SendDeny(robot);
+    TransitionToPlayingDenyAnim(robot);
+  }
+    
   if( IsActing() ) {
     return Status::Running;
   }
@@ -139,23 +151,8 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
 
 Result BehaviorRequestGameSimple::InterruptInternal(Robot& robot, double currentTime_sec)
 {
-  // if we are playing an animation, we don't want to be interrupted
-  if( IsActing() ) {
-    if( _state == State::TrackingFace ) {
-      if( GetRequestMinDelayComplete_s() >= 0.0f && currentTime_sec < GetRequestMinDelayComplete_s() ) {
-        // we are doing a face track action, and it hasn't been long enough since the request, so hold in this
-        // behavior for a while
-        return Result::RESULT_FAIL;
-      }
-    }
-    else {
-      // we are doing something, wait until we are done
-      return Result::RESULT_FAIL;
-    }
-  }
-
   StopInternal(robot, currentTime_sec);
-
+  
   return Result::RESULT_OK;
 }
 
@@ -175,7 +172,10 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot, double currentTime_se
   // don't use transition to because we don't want to do anything
   _state = State::PlayingInitialAnimation;
 
-  robot.PopIdleAnimation();
+  if( _shouldPopIdle ) {
+    _shouldPopIdle = false;
+    robot.PopIdleAnimation();
+  }
 }
 
 float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
@@ -189,6 +189,18 @@ float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot, doubl
     score *= _oneBlockConfig.scoreFactor;
   }
   return score;
+}
+
+float BehaviorRequestGameSimple::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+{
+  // if we have requested, and are past the timeout, then we don't want to keep running
+  if( IsActing() ) {
+    // while we are doing things, we really don't want to be interrupted
+    return 1.0f;
+  }
+
+  // otherwise, fall back to running score
+  return EvaluateScoreInternal(robot, currentTime_sec);
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot)
@@ -396,8 +408,11 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot)
 {
-  StartActing(new PlayAnimationAction(robot, _activeConfig->requestAnimationName),
-              &BehaviorRequestGameSimple::TransitionToTrackingFace);
+  // always turn back to the face after the animation in case the animation moves the head
+  StartActing(new CompoundActionSequential(robot, {
+        new PlayAnimationAction(robot, _activeConfig->requestAnimationName),
+        new TurnTowardsLastFacePoseAction(robot, PI_F)}),
+    &BehaviorRequestGameSimple::TransitionToTrackingFace);
   SET_STATE(State::PlayingRequstAnim);
 }
 
@@ -408,7 +423,7 @@ void BehaviorRequestGameSimple::TransitionToTrackingFace(Robot& robot)
   if( GetFaceID() == Face::UnknownFace ) {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoValidFace",
                         "Can't do face tracking because there is no valid face!");
-    // use an action that just hangs to simulate the track face logic      
+    // use an action that just hangs to simulate the track face logic
     StartActing( new HangAction(robot) );
   }
   else {

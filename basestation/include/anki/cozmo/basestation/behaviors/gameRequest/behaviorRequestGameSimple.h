@@ -38,6 +38,7 @@ protected:
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
   virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
   virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override;
+  virtual float EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const override;
 
   virtual void HandleGameDeniedRequest(Robot& robot) override;
   virtual f32 GetRequestMinDelayComplete_s() const override;
@@ -92,6 +93,8 @@ private:
 
   Pose3d _faceInteractionPose;
   bool   _hasFaceInteractionPose = false;
+
+  bool   _shouldPopIdle = false;
 
   void SetState_internal(State state, const std::string& stateName);
 
