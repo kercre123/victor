@@ -90,6 +90,22 @@ namespace Cozmo {
           const ExternalInterface::EnableNewFaceEnrollment& msg = event.GetData().Get_EnableNewFaceEnrollment();
           _visionSystem->EnableNewFaceEnrollment(msg.numToEnroll);
         }));
+      
+      // StartFaceTracking
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EnableVisionMode,
+         [this] (const AnkiEvent<MessageGameToEngine>& event)
+         {
+           auto const& payload = event.GetData().Get_EnableVisionMode();
+           EnableMode(payload.mode, payload.enable);
+         }));
+      
+      // VisionWhileMoving
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::VisionWhileMoving,
+         [this] (const AnkiEvent<MessageGameToEngine>& event)
+         {
+           const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
+           EnableVisionWhileMoving(msg.enable);
+         }));
     }
     
   } // VisionSystem()

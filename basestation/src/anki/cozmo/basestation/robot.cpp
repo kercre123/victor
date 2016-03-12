@@ -131,7 +131,6 @@ namespace Anki {
       if (HasExternalInterface())
       {
         SetupGainsHandlers(*_context->GetExternalInterface());
-        SetupVisionHandlers(*_context->GetExternalInterface());
         SetupMiscHandlers(*_context->GetExternalInterface());
       }
       

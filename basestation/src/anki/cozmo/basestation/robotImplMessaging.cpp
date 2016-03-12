@@ -964,27 +964,6 @@ void Robot::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
                   msg.makeRelative, Point2f(msg.relativeToX, msg.relativeToY));
 }
   
-void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
-{
-  // TODO: Just move these handlers to VisionComponent and have it handle them directly
-  
-  // StartFaceTracking
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::EnableVisionMode,
-    [this] (const GameToEngineEvent& event)
-    {
-      auto const& payload = event.GetData().Get_EnableVisionMode();
-      _visionComponent.EnableMode(payload.mode, payload.enable);
-    }));
-  
-  // VisionWhileMoving
-  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::VisionWhileMoving,
-    [this] (const GameToEngineEvent& event)
-    {
-      const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
-      _visionComponent.EnableVisionWhileMoving(msg.enable);
-    }));
-}
-
 void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
 {
   // SetControllerGains
