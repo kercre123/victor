@@ -25,7 +25,7 @@
 
 
 // Enable blockworld objects to be created upon radio connection of light cubes
-#define OBJECTS_HEARABLE 0
+#define OBJECTS_HEARABLE 1
 
 
 namespace Anki {

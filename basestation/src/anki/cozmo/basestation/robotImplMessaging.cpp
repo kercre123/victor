@@ -290,8 +290,8 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     // Remove cube from blockworld if it exists
     ObservableObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
     if (obj) {
-      GetBlockWorld().ClearObject(obj);
       objID = obj->GetID();
+      GetBlockWorld().DeleteObject(objID);
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
                        "Object %d (activeID %d, factoryID 0x%x)",
                        objID.GetValue(), payload.objectID, payload.factoryID);
