@@ -179,7 +179,7 @@ namespace SpeedTap {
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
       _DifficultyOptions = speedTapConfig.DifficultyOptions;
-      InitializeMinigameObjects(speedTapConfig.NumCubesRequired());
+      InitializeMinigameObjects(1);
     }
 
     // Use this for initialization
@@ -213,8 +213,8 @@ namespace SpeedTap {
     }
 
     public void InitialCubesDone() {
-      CozmoBlock = GetClosestAvailableBlock();
-      PlayerBlock = GetFarthestAvailableBlock();
+      CozmoBlock = GetCozmoCube();
+      PlayerBlock = GetPlayerCube();
     }
 
     public void UpdateUI() {
@@ -252,35 +252,24 @@ namespace SpeedTap {
       }
     }
 
-    private LightCube GetClosestAvailableBlock() {
-      float minDist = float.MaxValue;
-      ObservedObject closest = null;
-
-      for (int i = 0; i < CubesForGame.Count; ++i) {
-        if (CubesForGame[i] != PlayerBlock) {
-          float d = Vector3.Distance(CubesForGame[i].WorldPosition, CurrentRobot.WorldPosition);
-          if (d < minDist) {
-            minDist = d;
-            closest = CubesForGame[i];
-          }
-        }
-      }
-      return closest as LightCube;
+    private LightCube GetCozmoCube() {
+      return CubesForGame[0];
     }
 
-    private LightCube GetFarthestAvailableBlock() {
+    private LightCube GetPlayerCube() {
       float maxDist = 0;
       ObservedObject farthest = null;
 
-      for (int i = 0; i < CubesForGame.Count; ++i) {
-        if (CubesForGame[i] != CozmoBlock) {
-          float d = Vector3.Distance(CubesForGame[i].WorldPosition, CurrentRobot.WorldPosition);
+      foreach (var kvp in CurrentRobot.LightCubes) {
+        if (kvp.Value.ID != CozmoBlock.ID) {
+          float d = Vector3.Distance(kvp.Value.WorldPosition, CurrentRobot.WorldPosition);
           if (d >= maxDist) {
             maxDist = d;
-            farthest = CubesForGame[i];
+            farthest = kvp.Value;
           }
         }
       }
+      CubesForGame.Add(farthest as LightCube);
       return farthest as LightCube;
     }
 

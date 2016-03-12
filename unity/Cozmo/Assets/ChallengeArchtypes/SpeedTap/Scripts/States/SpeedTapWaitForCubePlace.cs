@@ -63,7 +63,6 @@ namespace SpeedTap {
         }
         else {
           // restart this state
-          _SpeedTapGame.InitialCubesDone();
           _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
         }
       }

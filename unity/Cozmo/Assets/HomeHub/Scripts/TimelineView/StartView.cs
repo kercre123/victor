@@ -46,7 +46,7 @@ public class StartView : BaseView {
     _BluetoothIndicator.color = IsBluetoothConnected() ? Color.white : _DisconnectedColor;
 
     int currentNumCubes = RobotEngineManager.Instance.CurrentRobot.LightCubes.Count;
-    if (_CubesSeen.Count != currentNumCubes) {
+    if (_CubesSeen.Count < currentNumCubes) {
       foreach (var cube in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
         if (cube.Value.MarkersVisible && !_CubesSeen.Contains(cube.Value)) {
           _CubesSeen.Add(cube.Value);

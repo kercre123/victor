@@ -355,7 +355,12 @@ public abstract class GameBase : MonoBehaviour {
     CycleData data = new CycleData();
     data.cycleIntervalSeconds = cycleIntervalSeconds;
     data.timeElaspedSeconds = 0;
-    _CubeCycleTimers.Add(cube, data);
+    if (_CubeCycleTimers.ContainsKey(cube)) {
+      _CubeCycleTimers[cube] = data;
+    }
+    else {
+      _CubeCycleTimers.Add(cube, data);
+    }
   }
 
   public void StopCycleCube(LightCube cube) {
