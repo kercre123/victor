@@ -7,10 +7,10 @@ using Anki.Debug;
 
 public class HockeyAppManager : MonoBehaviour {
 
-  protected const string HOCKEYAPP_BASEURL = "https://rink.hockeyapp.net/";
-  protected const string HOCKEYAPP_CRASHESPATH = "api/2/apps/[APPID]/crashes/upload";
-  protected const string LOG_FILE_DIR = "/unity_crash_logs/";
-  protected const int MAX_CHARS = 199800;
+  protected const string kHockeyAppBaseUrl = "https://rink.hockeyapp.net/";
+  protected const string kHockeyAppCrashesPath = "api/2/apps/[APPID]/crashes/upload";
+  protected const string kLogFileDir = "/unity_crash_logs/";
+  protected const int kMaxChars = 199800;
 
   private string _AppID = null;
   #if (UNITY_IPHONE && !UNITY_EDITOR)
@@ -22,10 +22,11 @@ public class HockeyAppManager : MonoBehaviour {
 #endif
   void HandleDebugConsoleCrashFromUnityButton(System.Object setvar) {
     DAS.Event("HockeAppManager.ForceDebugCrash", "HockeAppManager.ForceDebugCrash");
+    // Apparently dividing by 0 only forces an exception on mac not iOS. So just throw.
     if (setvar.ToString() != "exception") {
       throw new UnityException("ForcedExceptionTest");
     }
-    DAS.Info("test.crash.impossible", "test.crash.impossible");
+    DAS.Info("test.crash", "test.crash");
   }
 
   void OnEnable() {
@@ -36,7 +37,6 @@ public class HockeyAppManager : MonoBehaviour {
     #endif
 
     // Crashing is useful in all platforms.
-    DAS.Info("HockeAppManager.OnEnable", "HockeAppManager.OnEnable");
     Anki.Cozmo.ExternalInterface.DebugConsoleVar consoleVar = new Anki.Cozmo.ExternalInterface.DebugConsoleVar();
     consoleVar.category = "Debug";
     consoleVar.varName = "Crash From Unity";
@@ -44,10 +44,7 @@ public class HockeyAppManager : MonoBehaviour {
     DebugConsoleData.Instance.AddConsoleVar(consoleVar, this.HandleDebugConsoleCrashFromUnityButton);
   }
 
-
-
   void OnDisable() {
-    DAS.Info("HockeAppManager.OnDisable", "HockeAppManager.OnDisable");
     #if (UNITY_IPHONE && !UNITY_EDITOR)
       System.AppDomain.CurrentDomain.UnhandledException -= OnHandleUnresolvedException;
       Application.logMessageReceived -= OnHandleLogCallback;
@@ -84,20 +81,17 @@ public class HockeyAppManager : MonoBehaviour {
   protected virtual WWWForm CreateForm(string log) {
     
     WWWForm form = new WWWForm();
-    
-
     #if (UNITY_IPHONE && !UNITY_EDITOR)
     byte[] bytes = null;
     using (FileStream fs = File.OpenRead(log)) {
-      if (fs.Length > MAX_CHARS) {
+      if (fs.Length > kMaxChars) {
         string resizedLog = null;
 
         using (StreamReader reader = new StreamReader(fs)) {
 
-          reader.BaseStream.Seek(fs.Length - MAX_CHARS, SeekOrigin.Begin);
+          reader.BaseStream.Seek(fs.Length - kMaxChars, SeekOrigin.Begin);
           resizedLog = reader.ReadToEnd();
         }
-DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUnityCrashInfo.CreateForm " + resizedLog);
         List<string> logHeaders = GetLogHeaders();
         string logHeader = "";
           
@@ -145,7 +139,7 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
     List<string> logs = new List<string>();
 
     #if (UNITY_IPHONE && !UNITY_EDITOR)
-    string logsDirectoryPath = Application.persistentDataPath + LOG_FILE_DIR;
+    string logsDirectoryPath = Application.persistentDataPath + kLogFileDir;
 
     try
     {
@@ -186,15 +180,13 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
   /// </summary>
   protected virtual IEnumerator SendLogs(List<string> logs) {
 
-    string crashPath = HOCKEYAPP_CRASHESPATH;
-    string url = HOCKEYAPP_BASEURL + crashPath.Replace("[APPID]", _AppID);
+    string crashPath = kHockeyAppCrashesPath;
+    string url = kHockeyAppBaseUrl + crashPath.Replace("[APPID]", _AppID);
     #if (UNITY_IPHONE && !UNITY_EDITOR)
     if (_SDKName != null && _SDKVersion != null) {
       url += "?sdk=" + WWW.EscapeURL(_SDKName) + "&sdk_version=" + _SDKVersion;
     }
     #endif
-
-    DAS.Event("HockeAppManager.SendLogs " + url, "HockeAppManager.UploadUnityCrashInfo.SendLogs " + url);
     foreach (string log in logs) {
 
       WWWForm postForm = CreateForm(log);
@@ -203,9 +195,6 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
       Dictionary<string,string> headers = new Dictionary<string,string>();
       headers.Add("Content-Type", lContent);
       WWW www = new WWW(url, postForm.data, headers);
-
-      DAS.Event("HockeAppManager.SendLogs2 " + log, "HockeAppManager.UploadUnityCrashInfo.SendLogs2 " + log);
-
       yield return www;
 
       if (System.String.IsNullOrEmpty(www.error)) {
@@ -242,7 +231,7 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
     }
     
     List<string> logHeaders = GetLogHeaders();
-    using (StreamWriter file = new StreamWriter(Application.persistentDataPath + LOG_FILE_DIR + "LogFile_" + logSession + ".log", true))
+    using (StreamWriter file = new StreamWriter(Application.persistentDataPath + kLogFileDir + "LogFile_" + logSession + ".log", true))
     {
       foreach (string header in logHeaders)
       {
@@ -258,7 +247,6 @@ DAS.Event("HockeAppManager.CreateForm " + resizedLog, "HockeAppManager.UploadUni
 #if (UNITY_IPHONE && !UNITY_EDITOR)
     char[] delimiterChars = { ',' };
     string[] split_params = hockey_params.Split(delimiterChars);
-    DAS.Event("HockeAppManager.UploadUnityCrashInfo " + hockey_params, "HockeyAppManager.UploadUnityCrashInfo " + hockey_params);
     _AppID = split_params[0];
     _VersionCode = split_params[1];
     _VersionName = split_params[2];

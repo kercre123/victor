@@ -90,12 +90,7 @@ BOOL gWaitingForCrashUpload = NO;
   NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
   if(!hockeyAppId || hockeyAppId.length == 0) {
     DASEvent("HockeyApp.ios.disabled", "");
-    
-    // TEMP DEBUGGING
-    hockeyAppId = @"9ddf59a1bfc9487e9586842a82e32d9d";
-    NSLog(@"HockedAppDebuggingTemp - Using Default ID so I can test until build server changes plist %@",hockeyAppId);
-    //return;
-    // END TEMP DEBUGGING
+    return;
   }
 
   DASEvent("HockeyApp.ios.checkin", "%s", hockeyAppId.UTF8String);
@@ -225,16 +220,14 @@ BOOL gWaitingForCrashUpload = NO;
 void CreateHockeyApp()
 {
   // Example simple
-  /*
-  NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
-  if(!hockeyAppId || hockeyAppId.length == 0) {
-    DASEvent("HockeyApp.ios.disabled", "");
-    return;
-  }
-  [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:hockeyAppId];
-  [[BITHockeyManager sharedHockeyManager] startManager];
-  [[BITHockeyManager sharedHockeyManager].authenticator authenticateInstallation];
-  */
+//  NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
+//  if(!hockeyAppId || hockeyAppId.length == 0) {
+//    DASEvent("HockeyApp.ios.disabled", "");
+//    return;
+//  }
+//  [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:hockeyAppId];
+//  [[BITHockeyManager sharedHockeyManager] startManager];
+//  [[BITHockeyManager sharedHockeyManager].authenticator authenticateInstallation];
   
   HockeyApp *hockeyApp = [[HockeyApp alloc] init];
   [hockeyApp activateHockeyApp];
