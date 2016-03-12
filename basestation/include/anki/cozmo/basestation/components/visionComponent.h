@@ -116,6 +116,9 @@ struct DockingErrorSignal;
     
     Result UpdateOverheadEdges();
     
+    // See what tool we have on our lifter and calibrate the camera
+    Result UpdateToolCode();
+    
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     
@@ -148,10 +151,10 @@ struct DockingErrorSignal;
     bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p);
     
     // Online camera calibration using tool codes:
-    void StartCameraCalibration();
-    void StopCameraCalibration();
-    bool IsCalibratingCamera() { return _cameraCalibrationStartTime_ms != 0; }
-    bool UseNextImageForCameraCalibration() { return _useNextImageForCameraCalibration; }
+    void StartToolCodeCheck();
+    void StopToolCodeCheck();
+    bool IsReadingToolCode() { return _toolCodeStartTime_ms != 0; }
+    bool UseNextImageForToolCodeCheck() { return _useNextImageForToolCode; }
     
   protected:
     
@@ -168,12 +171,12 @@ struct DockingErrorSignal;
     bool                      _isCamCalibSet = false;
     
     // Online camera calibration
-    void CameraCalibrationUpdate();
-    TimeStamp_t       _cameraCalibrationStartTime_ms = 0;
-    TimeStamp_t       _camCalibLastMovedTime = 0;
-    f32               _camCalibLastHeadAngle = 0;
-    f32               _camCalibLastLiftAngle = 0;
-    bool              _useNextImageForCameraCalibration = false;
+    void ReadToolCode();
+    TimeStamp_t       _toolCodeStartTime_ms    = 0;
+    TimeStamp_t       _toolCodeLastMovedTime   = 0;
+    f32               _toolCodeLastHeadAngle   = 0;
+    f32               _toolCodeLastLiftAngle   = 0;
+    bool              _useNextImageForToolCode = false;
  
     RunMode _runMode = RunMode::Asynchronous;
     

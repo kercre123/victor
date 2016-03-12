@@ -1140,63 +1140,64 @@ namespace Cozmo {
                                                                           s32 quality);
   
   
-  void VisionComponent::StartCameraCalibration()
+  void VisionComponent::StartToolCodeCheck()
   {
-    PRINT_NAMED_INFO("Robot.StartCameraCalibration", "");
-    
     // TODO: Cancel actions that might be using lift or head.
     //       Prevent actions that use lift or head from starting while IsCalibratingCamera().
     
     // Disable head and lift tracks so that animations don't interfere with
-    _robot.GetMoveComponent().LockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK) | static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+    _robot.GetMoveComponent().LockTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK) |
+                                         static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
     
     // Start calibration mode on robot
     _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(-0.5f, -0.3f, true)));
     
-    _cameraCalibrationStartTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    _camCalibLastMovedTime = _cameraCalibrationStartTime_ms;
-    _useNextImageForCameraCalibration = false;
+    _toolCodeStartTime_ms    = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    _toolCodeLastMovedTime   = _toolCodeStartTime_ms;
+    _useNextImageForToolCode = false;
+    
+    PRINT_NAMED_INFO("VisionComponent.StartToolCodeCheck", "t=%d", _toolCodeStartTime_ms);
   }
   
-  void VisionComponent::StopCameraCalibration()
+  void VisionComponent::StopToolCodeCheck()
   {
-    PRINT_NAMED_INFO("Robot.StopCameraCalibration", "");
+    PRINT_NAMED_INFO("VisionComponent.StopToolCodeCheck", "");
     
     // Stop calibration mode on robot
     _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(0, 0, false)));
     
     // Re-enable tracks
-    _robot.GetMoveComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK) | static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
+    _robot.GetMoveComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK) |
+                                           static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
     
-    _cameraCalibrationStartTime_ms = 0;
-    _camCalibLastMovedTime = 0;
-    _useNextImageForCameraCalibration = false;
+    _toolCodeStartTime_ms    = 0;
+    _toolCodeLastMovedTime   = 0;
+    _useNextImageForToolCode = false;
+    EnableMode(VisionMode::CheckingToolCode, false);
   }
   
-  void VisionComponent::CameraCalibrationUpdate()
+  void VisionComponent::ReadToolCode()
   {
-    if (IsCalibratingCamera()) {
+    if (IsReadingToolCode()) {
       TimeStamp_t currTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      if (_useNextImageForCameraCalibration) {
-        
-        // TODO: Process next image for camera calibration
-        //       Something should check UseNextImageForCameraCalibration(). If true, it should use the next image
-        //       to do camera calibration and then call StopCameraCalibration(). Calling it here for now.
-        PRINT_NAMED_WARNING("Robot.CameraCalibrationUpdate.UseNextImage", "TODO: Implement camera calibration!");
-        StopCameraCalibration();
-        
-      } else if (currTimestamp - _camCalibLastMovedTime > 500) {
-        _useNextImageForCameraCalibration = true;
-      } else if (currTimestamp - _cameraCalibrationStartTime_ms > 3000) {
-        PRINT_NAMED_WARNING("Robot.CameraCalibrationUpdate.Tieout",
-                            "Taking too long for robot to be ready for camera calibration");
-        StopCameraCalibration();
-      } else if (_robot.GetHeadAngle() != _camCalibLastHeadAngle ||
-                 _robot.GetLiftAngle() != _camCalibLastLiftAngle)
+      if (_useNextImageForToolCode)
       {
-        _camCalibLastHeadAngle = _robot.GetHeadAngle();
-        _camCalibLastLiftAngle = _robot.GetLiftAngle();
-        _camCalibLastMovedTime = currTimestamp;
+        // Tell the VisionSystem thread to check the tool code in the next image it gets.
+        // It will disable this mode when it completes.
+        EnableMode(VisionMode::CheckingToolCode, true);
+        
+      } else if (currTimestamp - _toolCodeLastMovedTime > 500) {
+        _useNextImageForToolCode = true;
+      } else if (currTimestamp - _toolCodeStartTime_ms > 3000) {
+        PRINT_NAMED_WARNING("VisionComponent.ReadToolCode.Timeout",
+                            "Taking too long for robot to be ready for reading tool code");
+        StopToolCodeCheck();
+      } else if (_robot.GetHeadAngle() != _toolCodeLastHeadAngle ||
+                 _robot.GetLiftAngle() != _toolCodeLastLiftAngle)
+      {
+        _toolCodeLastHeadAngle = _robot.GetHeadAngle();
+        _toolCodeLastLiftAngle = _robot.GetLiftAngle();
+        _toolCodeLastMovedTime = currTimestamp;
       }
       
     }
