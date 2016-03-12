@@ -1266,6 +1266,8 @@ namespace Anki {
     bool Robot::PopIdleAnimation()
     {
       if( _idleAnimationNameStack.empty() ) {
+        PRINT_NAMED_WARNING("Robot.PopIdleAnimation.NoStack",
+                            "Trying to pop an idle animation, but the stack is empty");
         return false;
       }
       

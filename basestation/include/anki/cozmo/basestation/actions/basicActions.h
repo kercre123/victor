@@ -78,11 +78,13 @@ namespace Anki {
 
     // A simple compound action which stops for a while, looks one way, waits a while, then looks the other
     // way, and waits a while longer. Useful for "searching" for a cube when it may be just out of the field
-    // of view. Note that this action does not move the head
+    // of view. Note that this action does not move the head. This action disabled live idle while it's
+    // running
     class SearchSideToSideAction : public IAction
     {
     public:
       SearchSideToSideAction(Robot& robot);
+      virtual ~SearchSideToSideAction();
 
       virtual const std::string& GetName() const override { return _name; }
       
@@ -106,6 +108,7 @@ namespace Anki {
       f32 _maxWaitTime_s = 1.2f;
       f32 _minSearchAngle_rads = DEG_TO_RAD(15.0f);
       f32 _maxSearchAngle_rads = DEG_TO_RAD(20.0f);
+      bool _shouldPopIdle = false;
 
       std::string _name = "SearchSideToSideAction";
     };
