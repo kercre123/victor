@@ -213,8 +213,12 @@ namespace SpeedTap {
     }
 
     public void InitialCubesDone() {
-      CozmoBlock = GetCozmoCube();
-      PlayerBlock = GetPlayerCube();
+      CozmoBlock = CubesForGame[0];
+    }
+
+    public void SetPlayerCube(LightCube cube) {
+      PlayerBlock = cube;
+      CubesForGame.Add(cube);
     }
 
     public void UpdateUI() {
@@ -250,27 +254,6 @@ namespace SpeedTap {
           CozmoTappedBlockEvent();
         }
       }
-    }
-
-    private LightCube GetCozmoCube() {
-      return CubesForGame[0];
-    }
-
-    private LightCube GetPlayerCube() {
-      float maxDist = 0;
-      ObservedObject farthest = null;
-
-      foreach (var kvp in CurrentRobot.LightCubes) {
-        if (kvp.Value.ID != CozmoBlock.ID) {
-          float d = Vector3.Distance(kvp.Value.WorldPosition, CurrentRobot.WorldPosition);
-          if (d >= maxDist) {
-            maxDist = d;
-            farthest = kvp.Value;
-          }
-        }
-      }
-      CubesForGame.Add(farthest as LightCube);
-      return farthest as LightCube;
     }
 
     private static ISpeedTapRules GetRules(SpeedTapRuleSet ruleSet) {

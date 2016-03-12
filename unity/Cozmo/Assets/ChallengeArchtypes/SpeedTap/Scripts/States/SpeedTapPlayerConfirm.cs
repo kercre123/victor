@@ -11,18 +11,28 @@ namespace SpeedTap {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
 
-      _SpeedTapGame.StartCycleCube(_SpeedTapGame.PlayerBlock, 
-        Cozmo.CubePalette.TapMeColor.lightColors, 
-        Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
+      foreach (var kvp in _CurrentRobot.LightCubes) {
+        if (kvp.Value.ID != _SpeedTapGame.CozmoBlock.ID) {
+          _SpeedTapGame.StartCycleCube(kvp.Value, 
+            Cozmo.CubePalette.TapMeColor.lightColors, 
+            Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
+        }
+      }
 
       LightCube.TappedAction += HandleTap;
       _SpeedTapGame.ShowPlayerTapSlide();
     }
 
     private void HandleTap(int id, int tappedTimes) {
-      _SpeedTapGame.StopCycleCube(_SpeedTapGame.PlayerBlock);
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
-      if (id == _SpeedTapGame.PlayerBlock.ID) {
+      if (id != _SpeedTapGame.CozmoBlock.ID) {
+        foreach (var kvp in _CurrentRobot.LightCubes) {
+          if (kvp.Value.ID != _SpeedTapGame.CozmoBlock.ID) {
+            _SpeedTapGame.StopCycleCube(kvp.Value);
+            kvp.Value.TurnLEDsOff();
+          }
+        }
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
+        _SpeedTapGame.SetPlayerCube(_CurrentRobot.LightCubes[id]);
         _StateMachine.SetNextState(new SpeedTapStatePlayNewHand());
       }
     }
