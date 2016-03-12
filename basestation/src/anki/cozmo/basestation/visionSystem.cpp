@@ -1876,6 +1876,8 @@ namespace Cozmo {
       ,{VisionMode::Tracking,             "TRACKING"}
       ,{VisionMode::DetectingFaces,       "FACES"}
       ,{VisionMode::DetectingMotion,      "MOTION"}
+      ,{VisionMode::CheckingToolCode,     "TOOLCODE"}
+      ,{VisionMode::DetectingOverheadEdges, "OVERHEADEDGES"}
     };
 
     std::string retStr("");
@@ -2304,9 +2306,12 @@ namespace Cozmo {
   
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
-    // Guarantee CheckingToolCode mode gets disabled no matter how we return from
-    // this function
-    Cleanup disableCheckToolCode([this]() {
+    ToolCode codeRead = ToolCode::UnknownTool;
+    
+    // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
+    // no matter how we return from this function
+    Cleanup disableCheckToolCode([this,&codeRead]() {
+      this->_toolCodeMailbox.putMessage(codeRead);
       this->EnableMode(VisionMode::CheckingToolCode, false);
       PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledCheckingToolCode", "");
     });
@@ -2706,6 +2711,10 @@ namespace Cozmo {
       _camera.GetCalibration()->SetCenter(camCen);
       _camera.GetCalibration()->SetFocalLength(f, f);
       _lastToolCodeReadTime_ms = image.GetTimestamp();
+      
+      // TODO: Actually read the code and put corresponding result in the mailbox (once we have more than one)
+      // NOTE: This gets put in the mailbox by the Cleanup object defined at the top of the function
+      codeRead = ToolCode::CubeLiftingTool;
       
     } // if(new calib values pass sanity / nan checks)
   

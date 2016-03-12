@@ -1396,6 +1396,8 @@ namespace Anki {
       
       _toolReadSignalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotReadToolCode,
          [this] (const AnkiEvent<ExternalInterface::MessageEngineToGame> &msg) {
+           PRINT_NAMED_INFO("ReadToolCodeAction.SignalHandler",
+                            "Read tool code: %s", EnumToString(msg.GetData().Get_RobotReadToolCode().code));
            this->_state = State::ReadCompleted;
       });
       

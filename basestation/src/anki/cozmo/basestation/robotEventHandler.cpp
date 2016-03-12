@@ -64,6 +64,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       ExternalInterface::MessageGameToEngineTag::SetHeadAngle,
       ExternalInterface::MessageGameToEngineTag::PanAndTilt,
       ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose,
+      ExternalInterface::MessageGameToEngineTag::ReadToolCode
     };
     
     // Subscribe to desired events

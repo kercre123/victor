@@ -752,6 +752,7 @@ namespace Anki {
         TRY_AND_RETURN_ON_FAILURE(UpdateDockingErrorSignal);
         TRY_AND_RETURN_ON_FAILURE(UpdateMotionCentroid);
         TRY_AND_RETURN_ON_FAILURE(UpdateOverheadEdges);
+        TRY_AND_RETURN_ON_FAILURE(UpdateToolCode);
         
 #       undef TRY_AND_RETURN_ON_FAILURE
         
