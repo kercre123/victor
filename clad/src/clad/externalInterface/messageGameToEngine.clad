@@ -574,6 +574,11 @@ message EnableRobotPickupParalysis
     bool enable
 }
 
+// ReadToolCode
+message ReadToolCode {
+
+}
+
 // PlayAnimation
 message PlayAnimation {
     uint_8  robotID,
@@ -727,7 +732,8 @@ union RobotActionUnion {
   PanAndTilt                panAndTilt,
   Wait                      wait,
   MountCharger              mountCharger,
-  TurnTowardsLastFacePose   turnTowardsLastFacePose
+  TurnTowardsLastFacePose   turnTowardsLastFacePose,
+  ReadToolCode              readToolCode
 }
 
 // QueueSingleAction

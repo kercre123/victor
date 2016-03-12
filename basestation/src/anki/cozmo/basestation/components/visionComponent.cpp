@@ -976,6 +976,22 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateOverheadMap()
   
+  Result VisionComponent::UpdateToolCode()
+  {
+    if(_visionSystem != nullptr)
+    {
+      ToolCode code;
+      if(true == _visionSystem->CheckMailbox(code))
+      {
+        ExternalInterface::RobotReadToolCode msg;
+        msg.code = code;
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      }
+    }
+
+    return RESULT_OK;
+  }
+  
   bool VisionComponent::WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p)
   {
     // Check to see if the robot's body or head are
@@ -1139,70 +1155,6 @@ namespace Cozmo {
   template Result VisionComponent::CompressAndSendImage<Vision::PixelRGB>(const Vision::ImageBase<Vision::PixelRGB>& img,
                                                                           s32 quality);
   
-  
-  void VisionComponent::StartToolCodeCheck()
-  {
-    // TODO: Cancel actions that might be using lift or head.
-    //       Prevent actions that use lift or head from starting while IsCalibratingCamera().
-    
-    // Disable head and lift tracks so that animations don't interfere with
-    _robot.GetMoveComponent().LockTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK) |
-                                         static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
-    
-    // Start calibration mode on robot
-    _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(-0.5f, -0.3f, true)));
-    
-    _toolCodeStartTime_ms    = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    _toolCodeLastMovedTime   = _toolCodeStartTime_ms;
-    _useNextImageForToolCode = false;
-    
-    PRINT_NAMED_INFO("VisionComponent.StartToolCodeCheck", "t=%d", _toolCodeStartTime_ms);
-  }
-  
-  void VisionComponent::StopToolCodeCheck()
-  {
-    PRINT_NAMED_INFO("VisionComponent.StopToolCodeCheck", "");
-    
-    // Stop calibration mode on robot
-    _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(0, 0, false)));
-    
-    // Re-enable tracks
-    _robot.GetMoveComponent().UnlockTracks(static_cast<u8>(AnimTrackFlag::HEAD_TRACK) |
-                                           static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
-    
-    _toolCodeStartTime_ms    = 0;
-    _toolCodeLastMovedTime   = 0;
-    _useNextImageForToolCode = false;
-    EnableMode(VisionMode::CheckingToolCode, false);
-  }
-  
-  void VisionComponent::ReadToolCode()
-  {
-    if (IsReadingToolCode()) {
-      TimeStamp_t currTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      if (_useNextImageForToolCode)
-      {
-        // Tell the VisionSystem thread to check the tool code in the next image it gets.
-        // It will disable this mode when it completes.
-        EnableMode(VisionMode::CheckingToolCode, true);
-        
-      } else if (currTimestamp - _toolCodeLastMovedTime > 500) {
-        _useNextImageForToolCode = true;
-      } else if (currTimestamp - _toolCodeStartTime_ms > 3000) {
-        PRINT_NAMED_WARNING("VisionComponent.ReadToolCode.Timeout",
-                            "Taking too long for robot to be ready for reading tool code");
-        StopToolCodeCheck();
-      } else if (_robot.GetHeadAngle() != _toolCodeLastHeadAngle ||
-                 _robot.GetLiftAngle() != _toolCodeLastLiftAngle)
-      {
-        _toolCodeLastHeadAngle = _robot.GetHeadAngle();
-        _toolCodeLastLiftAngle = _robot.GetLiftAngle();
-        _toolCodeLastMovedTime = currTimestamp;
-      }
-      
-    }
-  }
-
   
 } // namespace Cozmo
 } // namespace Anki

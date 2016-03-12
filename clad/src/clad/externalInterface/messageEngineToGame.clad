@@ -12,6 +12,7 @@
 #include "clad/types/powerMessages.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/engineState.clad"
+#include "clad/types/toolCodes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -209,6 +210,11 @@ message RobotDeletedObject {
 message RobotMarkedObjectPoseUnknown {
     uint_32 robotID,
     uint_32 objectID
+}
+
+// RobotReadToolCode
+message RobotReadToolCode {
+    ToolCode code
 }
 
 

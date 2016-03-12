@@ -56,6 +56,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/visionModes.h"
+#include "clad/types/toolCodes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 
@@ -221,6 +222,7 @@ namespace Cozmo {
     bool CheckMailbox(Vision::TrackedFace&        msg);
     bool CheckMailbox(Vision::FaceTracker::UpdatedID&  msg);
     bool CheckMailbox(OverheadEdgePointChain& msg);
+    bool CheckMailbox(ToolCode& msg);
     
     bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
     bool CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg);
@@ -445,6 +447,8 @@ namespace Cozmo {
     MultiMailbox<Vision::FaceTracker::UpdatedID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
     
     MultiMailbox<OverheadEdgePointChain, 64> _overheadEdgeChainMailbox;
+    
+    Mailbox<ToolCode> _toolCodeMailbox;
     
     MultiMailbox<std::pair<const char*, Vision::Image>, 10>     _debugImageMailbox;
     MultiMailbox<std::pair<const char*, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;

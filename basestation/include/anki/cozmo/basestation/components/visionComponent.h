@@ -150,12 +150,6 @@ struct DockingErrorSignal;
     
     bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p);
     
-    // Online camera calibration using tool codes:
-    void StartToolCodeCheck();
-    void StopToolCodeCheck();
-    bool IsReadingToolCode() { return _toolCodeStartTime_ms != 0; }
-    bool UseNextImageForToolCodeCheck() { return _useNextImageForToolCode; }
-    
   protected:
     
     Robot& _robot;
@@ -170,14 +164,6 @@ struct DockingErrorSignal;
     Vision::CameraCalibration _camCalib;
     bool                      _isCamCalibSet = false;
     
-    // Online camera calibration
-    void ReadToolCode();
-    TimeStamp_t       _toolCodeStartTime_ms    = 0;
-    TimeStamp_t       _toolCodeLastMovedTime   = 0;
-    f32               _toolCodeLastHeadAngle   = 0;
-    f32               _toolCodeLastLiftAngle   = 0;
-    bool              _useNextImageForToolCode = false;
- 
     RunMode _runMode = RunMode::Asynchronous;
     
     bool   _running = false;

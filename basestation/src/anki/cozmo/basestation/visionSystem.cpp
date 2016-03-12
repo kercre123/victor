@@ -426,6 +426,15 @@ namespace Cozmo {
     return retVal;
   }
   
+  bool VisionSystem::CheckMailbox(ToolCode& msg)
+  {
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _toolCodeMailbox.getMessage(msg);
+    }
+    return retVal;
+  }
+  
   bool VisionSystem::CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg)
   {
     bool retVal = false;
