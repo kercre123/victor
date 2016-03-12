@@ -50,11 +50,12 @@ delete(findobj(gcf, 'Type', 'uicontrol'));
 
 markerPositions = cell(1, numImages);
 
-markerSize = min(imageSize)/(numRows+2); % the +3 introduces padding by making markerSize smaller
-xcenters = linspace(0,1,numCols+2);
-xcenters = imageSize(1)*xcenters(2:end-1);
-ycenters = linspace(0,1,numRows+2);
-ycenters = imageSize(2)*ycenters(2:end-1);
+markerSize = min(imageSize)/(numRows+1); % the +3 introduces padding by making markerSize smaller
+padding = 0.02;
+xcenters = linspace(padding,1-padding,numCols);
+xcenters = (imageSize(1)-markerSize)*xcenters + markerSize/2;
+ycenters = linspace(padding,1-padding,numRows);
+ycenters = (imageSize(2)-markerSize)*ycenters + markerSize/2;
 
 [xgrid,ygrid] = meshgrid(xcenters,ycenters);
 
