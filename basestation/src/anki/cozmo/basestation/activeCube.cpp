@@ -318,30 +318,12 @@ namespace Anki {
         switch(_markers.front().GetCode())
         {
           case Vision::MARKER_LIGHTCUBEI_FRONT:
-            _identityState = ActiveIdentityState::Identified;
-#if(OBJECTS_HEARABLE==0)
-            _activeID = 0;
-#endif
-            break;
-            
           case Vision::MARKER_LIGHTCUBEJ_FRONT:
-            _identityState = ActiveIdentityState::Identified;
-#if(OBJECTS_HEARABLE==0)
-            _activeID = 1;
-#endif
-            break;
-            
           case Vision::MARKER_LIGHTCUBEK_FRONT:
             _identityState = ActiveIdentityState::Identified;
-#if(OBJECTS_HEARABLE==0)
-            _activeID = 2;
-#endif
             break;
             
           default:
-#if(OBJECTS_HEARABLE==0)
-            _activeID = -1;
-#endif
             _identityState = ActiveIdentityState::Unidentified;
             PRINT_NAMED_ERROR("ActiveCube.Identify.UnknownID",
                               "ActiveID not defined for block with front marker = %d\n",

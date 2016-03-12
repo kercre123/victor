@@ -273,7 +273,6 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
   ObjectConnectionState payload = message.GetData().Get_activeObjectConnectionState();
   ObjectID objID;
   
-#if(OBJECTS_HEARABLE)
   if (payload.connected) {
     // Add cube to blockworld if not already there
     objID = GetBlockWorld().AddLightCube(payload.objectID, payload.factoryID);
@@ -297,10 +296,6 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
                        objID.GetValue(), payload.objectID, payload.factoryID);
     }
   }
-#else
-  // HACK: Just to get a non-conflicting ObjectID in the message for now.
-  objID.Set();
-#endif
   
   PRINT_NAMED_INFO("Robot.HandleActiveObjecConnectionState.Recvd", "FactoryID 0x%x, connected %d", payload.factoryID, payload.connected);
   
