@@ -99,6 +99,7 @@ public:
                                             bool& actionCompleteRef);
 
   bool CallStopActing() { return StopActing(); }
+  bool CallStopActing(bool val) { return StopActing(val); }
 };
 
 
@@ -511,10 +512,66 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
   robot.GetActionList().Update();
   robot.GetActionList().Update();
 
-  EXPECT_TRUE(robot.GetActionList().IsEmpty()) << "action should have been can celled by stop";
+  EXPECT_TRUE(robot.GetActionList().IsEmpty()) << "action should have been canceled by stop";
 
   EXPECT_FALSE(callbackCalled1);
   EXPECT_FALSE(callbackCalled2) << "callback shouldn't happen if behavior isn't running";
+}
+
+TEST(BehaviorInterface, StopActingWithoutCallback)
+{
+  UiMessageHandler handler(0);
+  CozmoContext context(nullptr, &handler);
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+  
+  b.Init(0.0f);
+
+  DoTicks(robot, b, 3);
+
+  bool done1 = false;
+  bool callbackCalled1 = false;
+  bool ret = b.CallStartActingExternalCallback2(robot, done1,
+                                                [&callbackCalled1](ActionResult res) {
+                                                  callbackCalled1 = true;
+                                                });
+  EXPECT_TRUE(ret);
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_FALSE(robot.GetActionList().IsEmpty());
+
+  // stop acting but don't allow the callback
+  b.CallStopActing(false);
+
+  DoTicks(robot, b, 3);
+  EXPECT_TRUE(robot.GetActionList().IsEmpty()) << "action should be canceled";
+  EXPECT_FALSE(callbackCalled1) << "StartActing callback should not have run";
+
+  ///////////////////////////////////////////////////////////////////////////////
+  // now do it with true
+
+  callbackCalled1 = false;
+  
+  ret = b.CallStartActingExternalCallback2(robot, done1,
+                                                [&callbackCalled1](ActionResult res) {
+                                                  callbackCalled1 = true;
+                                                });
+  EXPECT_TRUE(ret);
+
+  DoTicks(robot, b, 3);
+
+  EXPECT_FALSE(robot.GetActionList().IsEmpty());
+
+  // stop acting but don't allow the callback
+  b.CallStopActing(true);
+
+  DoTicks(robot, b, 3);
+  EXPECT_TRUE(robot.GetActionList().IsEmpty()) << "action should be canceled";
+  EXPECT_TRUE(callbackCalled1) << "Should have gotten callback this time";
+
 }
 
 class TestInitBehavior : public IBehavior
