@@ -517,7 +517,7 @@ namespace Anki {
           if (++discoveredSendCtr == DISCOVERED_MESSAGE_PERIOD) {
             BlockMessages::LightCubeMessage msg;
             msg.tag = BlockMessages::LightCubeMessage::Tag_discovered;
-            msg.discovered.factory_id = blockID_;
+            msg.discovered.factory_id = factoryID_;
             emitter_->send(msg.GetBuffer(), msg.Size());
             discoveredSendCtr = 0;
           }

@@ -757,6 +757,39 @@ namespace Anki {
           webotRobot_.setLabel(robotID_, poseString, 0.5, robotID_*.05, .05, 0xff0000, 0.);
         }
          */
+        
+        
+        // Send block connection state when engine connects
+        static bool wasConnected = false;
+        if (!wasConnected && HAL::RadioIsConnected()) {
+          for (auto & block : blockFactoryIDByActiveID_ ) {
+            ObjectConnectionState msg;
+            msg.objectID = block.first;
+            msg.factoryID = block.second;
+            msg.connected = true;
+            RobotInterface::SendMessage(msg);
+          }
+          wasConnected = true;
+        } else if (!HAL::RadioIsConnected()) {
+          wasConnected = false;
+        }
+        
+        // Check for disconnecting blocks
+        auto blockIt = blockLastHeardTimeByActiveID_.begin();
+        while (blockIt != blockLastHeardTimeByActiveID_.end()) {
+          if (HAL::GetTimeStamp() - blockIt->second > 3000) {  // Threshold needs to be greater than ActiveBlock::DISCOVERED_MESSAGE_PERIOD * ActiveBlock::TIMESTEP
+            ObjectConnectionState msg;
+            msg.objectID = blockIt->first;
+            msg.factoryID = blockFactoryIDByActiveID_.at(msg.objectID);
+            msg.connected = false;
+            RobotInterface::SendMessage(msg);
+            
+            blockFactoryIDByActiveID_.erase(msg.objectID);
+            blockIt = blockLastHeardTimeByActiveID_.erase(blockIt);
+          } else {
+            ++blockIt;
+          }
+        }
 
         // Manage block flashing
         if (flashBlockIdx_ >= 0) {
@@ -811,13 +844,37 @@ namespace Anki {
               }
               case BlockMessages::LightCubeMessage::Tag_discovered:
               {
-                ObjectDiscovered m;
-                memcpy(m.GetBuffer(), lcm.discovered.GetBuffer(), lcm.discovered.Size());
-                RobotInterface::SendMessage(m);
-                
+                // For convenience, blocks that are in the world file are automatically connected to,
+                // but no more than one of each block type can be connected to because of the way sim lightCubes
+                // are currently communicating with the sim robot. If there is more than one of a given block
+                // type, the ones that are not already "connected" with the robot will have their
+                // discovered message transmitted.
+
                 u32 activeID = i;
-                blockFactoryIDByActiveID_[activeID] = m.factory_id;
-                blockLastHeardTimeByActiveID_[activeID] = HAL::GetTimeStamp();
+                ObjectDiscovered odMsg;
+                memcpy(odMsg.GetBuffer(), lcm.discovered.GetBuffer(), lcm.discovered.Size());
+
+                if (blockFactoryIDByActiveID_.count(activeID) > 0) {
+                  if (blockFactoryIDByActiveID_.at(activeID) != odMsg.factory_id) {
+                    // There's already a connected block with this activeID, but the factoryIDs don't match
+                    // so transmit discovery message instead.
+                    RobotInterface::SendMessage(odMsg);
+                  } else {
+                    // Found matching already-connected block. Update last heard time.
+                    blockFactoryIDByActiveID_[activeID] = odMsg.factory_id;
+                    blockLastHeardTimeByActiveID_[activeID] = HAL::GetTimeStamp();
+                  }
+                } else {
+                  blockFactoryIDByActiveID_[activeID] = odMsg.factory_id;
+                  blockLastHeardTimeByActiveID_[activeID] = HAL::GetTimeStamp();
+                
+                  // The block is "connecting" for the first time so send an ObjectConnectionState message
+                  ObjectConnectionState ocsMsg;
+                  ocsMsg.objectID = activeID;
+                  ocsMsg.factoryID = odMsg.factory_id;
+                  ocsMsg.connected = true;
+                  RobotInterface::SendMessage(ocsMsg);
+                }
                 break;
               }
               default:
@@ -1192,17 +1249,7 @@ namespace Anki {
 
       return SendBlockMessage(blockID, m);
     }
-    
-    u32 HAL::GetLastCubeContactTime(u32 cubeID) {
-      assert(cubeID < MAX_NUM_ACTIVE_OBJECTS);
-      return blockLastHeardTimeByActiveID_[cubeID];
-    }
-    
-    u32 HAL::GetCubeFactoryID(u32 cubeID) {
-      assert(cubeID < MAX_NUM_ACTIVE_OBJECTS);
-      return blockFactoryIDByActiveID_[cubeID];
-    }
-    
+
     Result HAL::AssignCubeSlots(int total_ids, const uint32_t *ids)
     {
       return RESULT_OK;
