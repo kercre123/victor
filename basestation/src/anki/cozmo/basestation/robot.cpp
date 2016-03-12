@@ -100,7 +100,7 @@ namespace Anki {
     , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
     , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _movementComponent(*this)
-    , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, _context)
+    , _visionComponent(*this, VisionComponent::RunMode::Asynchronous, _context)
     , _neckPose(0.f,Y_AXIS_3D(), {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
     , _headCamPose(_kDefaultHeadCamRotation, {HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
@@ -681,65 +681,7 @@ namespace Anki {
       
       return camera;
     }
-    
-    
-    void Robot::StartCameraCalibration() {
-      PRINT_NAMED_INFO("Robot.StartCameraCalibration", "");
-      
-      // TODO: Cancel actions that might be using lift or head.
-      //       Prevent actions that use lift or head from starting while IsCalibratingCamera().
-      
-      // Disable head and lift tracks so that animations don't interfere with
-      _movementComponent.LockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK) | static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
-      
-      // Start calibration mode on robot
-      SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(-0.5f, -0.3f, true)));
-      
-      _cameraCalibrationStartTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      _camCalibLastMovedTime = _cameraCalibrationStartTime_ms;
-      _useNextImageForCameraCalibration = false;
-    }
-    
-    void Robot::StopCameraCalibration() {
-      PRINT_NAMED_INFO("Robot.StopCameraCalibration", "");
-      
-      // Stop calibration mode on robot
-      SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(0, 0, false)));
-      
-      // Re-enable tracks
-      _movementComponent.UnlockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK) | static_cast<u8>(AnimTrackFlag::LIFT_TRACK));
-      
-      _cameraCalibrationStartTime_ms = 0;
-      _camCalibLastMovedTime = 0;
-      _useNextImageForCameraCalibration = false;
-    }
-    
-    void Robot::CameraCalibrationUpdate() {
-      if (IsCalibratingCamera()) {
-        TimeStamp_t currTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-        if (_useNextImageForCameraCalibration) {
-          
-          // TODO: Process next image for camera calibration
-          //       Something should check UseNextImageForCameraCalibration(). If true, it should use the next image
-          //       to do camera calibration and then call StopCameraCalibration(). Calling it here for now.
-          PRINT_NAMED_WARNING("Robot.CameraCalibrationUpdate.UseNextImage", "TODO: Implement camera calibration!");
-          StopCameraCalibration();
-          
-        } else if (currTimestamp - _camCalibLastMovedTime > 500) {
-          _useNextImageForCameraCalibration = true;
-        } else if (currTimestamp - _cameraCalibrationStartTime_ms > 3000) {
-          PRINT_NAMED_WARNING("Robot.CameraCalibrationUpdate.Tieout",
-                              "Taking too long for robot to be ready for camera calibration");
-          StopCameraCalibration();
-        } else if (GetHeadAngle() != _camCalibLastHeadAngle || GetLiftAngle() != _camCalibLastLiftAngle) {
-          _camCalibLastHeadAngle = GetHeadAngle();
-          _camCalibLastLiftAngle = GetLiftAngle();
-          _camCalibLastMovedTime = currTimestamp;
-        }
-        
-      }
-    }
-
+   
     
     // Flashes a pattern on an active block
     void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
@@ -801,7 +743,7 @@ namespace Anki {
         // Helper macro for running a vision component, capturing result, and
         // printing error message / returning if that result was not RESULT_OK.
 #       define TRY_AND_RETURN_ON_FAILURE(__NAME__) \
-        do { if((visionResult = _visionComponent.__NAME__(*this)) != RESULT_OK) { \
+        do { if((visionResult = _visionComponent.__NAME__()) != RESULT_OK) { \
           PRINT_NAMED_ERROR("Robot.Update." QUOTE(__NAME__) "Failed", ""); \
           return visionResult; } } while(0)
         
@@ -987,10 +929,6 @@ namespace Anki {
           }
         }
       }
-      
-      ////////// Update camera calibration /////////
-      CameraCalibrationUpdate();
-      
       
       /////////// Update visualization ////////////
       
@@ -2607,7 +2545,7 @@ namespace Anki {
       _imgProcPeriod = (_imgProcPeriod * (1.f-imgProcrateAvgCoeff) +
                         _visionComponent.GetProcessingPeriod() * imgProcrateAvgCoeff);
       
-      _visionComponent.SetNextImage(image, *this);
+      _visionComponent.SetNextImage(image);
       
       return lastResult;
     }
