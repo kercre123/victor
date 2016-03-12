@@ -152,6 +152,7 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
 Result BehaviorRequestGameSimple::InterruptInternal(Robot& robot, double currentTime_sec)
 {
   StopInternal(robot, currentTime_sec);
+  StopActing(false);
   
   return Result::RESULT_OK;
 }
