@@ -47,10 +47,15 @@ static const char* kDriveToPlacePoseThreshold_radsKey = "place_position_threshol
 static const float kMinRequestDelayDefault = 5.0f;
 static const float kAfterPlaceBackupDistance_mmDefault = 80.0f;
 static const float kAfterPlaceBackupSpeed_mmpsDefault = 80.0f;
-static const float kDistToMoveTowardsFace_mm = 120.0f;
 static const float kFaceVerificationTime_s = 0.75f;
 static const float kDriveToPlacePoseThreshold_mmDefault = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
 static const float kDriveToPlacePoseThreshold_radsDefault = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
+
+#define kDistToMoveTowardsFace_mm {120.0f, 100.0f, 140.0f, 50.0f, 180.0f, 20.0f}
+
+// need to be as far away as the size of the robot + 2 blocks + padding
+static const float kSafeDistSqFromObstacle_mm = SQUARE(100);
+
 
 void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Value& config)
 {
@@ -246,9 +251,15 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                   TransitionToPickingUpBlock(robot);
                 }
                 else {
-                  // if its an abort failure, do nothing, which will cause the behavior to stop
-                  PRINT_NAMED_INFO("BehaviorRequestGameSimple.PickingUpBlock.Failed",
-                                   "failed to pick up block with no retry, so ending the behavior");
+                  // couldn't pick up this block. If we have another, try that. Otherwise, fail
+                  if( SwitchRobotsBlock(robot) ) {
+                    TransitionToPickingUpBlock(robot);
+                  }
+                  else {
+                    // if its an abort failure, do nothing, which will cause the behavior to stop
+                    PRINT_NAMED_INFO("BehaviorRequestGameSimple.PickingUpBlock.Failed",
+                                     "failed to pick up block with no retry, so ending the behavior");
+                  }
                 }
               } );
   SET_STATE(State::PickingUpBlock);
@@ -450,7 +461,7 @@ void BehaviorRequestGameSimple::SetState_internal(State state, const std::string
   SetStateName(stateName);
 }
 
-bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& targetPose)
+bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& targetPoseRet)
 {
   Pose3d facePose;
   if ( ! GetFacePose(robot, facePose ) ) {
@@ -460,21 +471,63 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
   }
   
   if( ! facePose.GetWithRespectTo(robot.GetPose(), facePose) ) {
-    PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoFacePose",
-                        "could not get face pose with respect to robot");
+    PRINT_NAMED_ERROR("BehaviorRequestGameSimple.NoFacePose",
+                      "could not get face pose with respect to robot. This should never happen");
     return false;
   }
 
   float xyDistToFace = std::sqrt( std::pow( facePose.GetTranslation().x(), 2) +
                                   std::pow( facePose.GetTranslation().y(), 2) );
-  float distanceRatio = kDistToMoveTowardsFace_mm / xyDistToFace;
-  
-  float relX = distanceRatio * facePose.GetTranslation().x();
-  float relY = distanceRatio * facePose.GetTranslation().y();
-  Radians targetAngle = std::atan2(relY, relX);
 
-  targetPose = Pose3d{ targetAngle, Z_AXIS_3D(), {relX, relY, 0.0f}, &robot.GetPose() };
-  targetPose = targetPose.GetWithRespectToOrigin();
+  // try a few different positions until we get one that isn't near another cube
+  Radians targetAngle = std::atan2(facePose.GetTranslation().y(), facePose.GetTranslation().x());
+  float oneOverDist = 1.0 / xyDistToFace;
+
+  Pose3d targetPose;
+  
+  for(float newDist : kDistToMoveTowardsFace_mm) {
+    float distanceRatio =  newDist * oneOverDist;
+        
+    float relX = distanceRatio * facePose.GetTranslation().x();
+    float relY = distanceRatio * facePose.GetTranslation().y();
+
+    targetPose = Pose3d{ targetAngle, Z_AXIS_3D(), {relX, relY, 0.0f}, &robot.GetPose() };
+    targetPose = targetPose.GetWithRespectToOrigin();
+
+    BlockWorldFilter filter;
+    filter.OnlyConsiderLatestUpdate(false);
+    filter.SetFilterFcn( [&](ObservableObject* obj) {
+        if( obj->GetPoseState() != ObservableObject::PoseState::Known ) {
+          // ignore unknown obstacles
+          return false;
+        }
+
+        float distSq = (obj->GetPose().GetWithRespectToOrigin().GetTranslation() -
+                        targetPose.GetTranslation()).LengthSq();
+        if( distSq < kSafeDistSqFromObstacle_mm ) {
+          PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.GetFaceInteractionPose.Obstacle",
+                            "Obstacle %d within sqrt(%f) of point at d=%f",
+                            obj->GetID().GetValue(),
+                            distSq,
+                            newDist);
+          return true;
+        }
+        return false;
+      });
+
+    std::vector<ObservableObject*> blocks;
+    robot.GetBlockWorld().FindMatchingObjects(filter, blocks);
+
+    if(blocks.empty()) {
+      targetPoseRet = targetPose;
+      return true;
+    }
+  }
+
+  PRINT_NAMED_INFO("BehaviorRequestGameSimple.NoSafeBlockPose",
+                   "Could not find a safe place to put down the cube, using current position");  
+  targetPoseRet = Pose3d{ targetAngle, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f}, &robot.GetPose() };
+  targetPoseRet = targetPoseRet.GetWithRespectToOrigin();
 
   return true;
 }
