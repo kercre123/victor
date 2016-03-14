@@ -321,6 +321,7 @@ namespace Anki {
           case Vision::MARKER_LIGHTCUBEJ_FRONT:
           case Vision::MARKER_LIGHTCUBEK_FRONT:
             _identityState = ActiveIdentityState::Identified;
+            PRINT_NAMED_INFO("ActiveCube.Identify.IDAcquired", "factoryID 0x%x", GetFactoryID());
             break;
             
           default:

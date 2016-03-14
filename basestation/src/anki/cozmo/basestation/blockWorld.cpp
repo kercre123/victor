@@ -785,7 +785,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
+  void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object, bool doIdentify)
   {
     if(!object->GetID().IsSet()) {
       object->SetID();
@@ -795,7 +795,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
     if(object->IsActive()) {
       _unidentifiedActiveObjects.insert(object->GetID());
       // Don't trigger identification while picking / placing
-      if(!_robot->IsPickingOrPlacing()) {
+      if(doIdentify && !_robot->IsPickingOrPlacing()) {
         object->Identify();
       }
     }
@@ -1216,7 +1216,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
                                matchingObject->GetID().GetValue());
             }
             
-          } else {
+          } else if (!_robot->GetMoveComponent().IsMoving()) {
             matchingObject->SetPose( objSeen->GetPose(), distToObj );
           }
           
@@ -1362,7 +1362,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
                   
                   objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
                 } else {
-                  // Don't delete objects that are still in radio communication. Retrigger Identify.
+                  // Don't delete objects that are still in radio communication. Retrigger Identify?
                   PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.RetryIdentify", "Re-attempt identify on object %d (%s)", object->GetID().GetValue(), EnumToString(object->GetType()));
                   object->Identify();
                   ++objectIter;
@@ -2342,7 +2342,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
       ActiveCube* cube = new ActiveCube(activeID, factoryID);
       cube->SetPoseParent(_robot->GetWorldOrigin());
       cube->SetPoseState(ObservableObject::PoseState::Unknown);
-      AddNewObject(ObjectFamily::LightCube, cube);
+      AddNewObject(ObjectFamily::LightCube, cube, false);
       PRINT_NAMED_INFO("BlockWorld.AddLightCube.Added",
                        "objectID %d (activeID %d)",
                        cube->GetID().GetValue(), cube->GetActiveID());
