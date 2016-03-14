@@ -27,7 +27,11 @@ namespace SpeedTap {
         _SpeedTapGame.InitialCubesDone();
       }
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
-      _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
+
+      _SpeedTapGame.StartCycleCube(_SpeedTapGame.CozmoBlock, 
+        Cozmo.CubePalette.TapMeColor.lightColors, 
+        Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
+      
       // Just hold on this state if all rounds are over.
       if (_SpeedTapGame.AllRoundsOver) {
         return;
@@ -59,7 +63,6 @@ namespace SpeedTap {
         }
         else {
           // restart this state
-          _SpeedTapGame.InitialCubesDone();
           _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
         }
       }

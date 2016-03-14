@@ -51,11 +51,31 @@ namespace Cozmo {
         return Instance._ReadyColor;
       }
     }
-  }
 
-  [System.Serializable]
-  public class CubeColor {
-    public Sprite uiSprite;
-    public Color lightColor;
+    [SerializeField]
+    private CubeCycleColors _TapMeColor;
+
+    public static CubeCycleColors TapMeColor {
+      get {
+        return Instance._TapMeColor;
+      }
+    }
+
+    [System.Serializable]
+    public class CubeColor {
+      // TODO: Use generic sprites from mock tray or write a shader instead of
+      // having a sprite for every color in existence
+      public Sprite uiSprite;
+      public Color lightColor;
+    }
+
+    [System.Serializable]
+    public class CubeCycleColors {
+      // TODO: Use generic sprites from mock tray or write a shader instead of
+      // having a sprite for every color in existence
+      public Sprite uiSprite;
+      public Color[] lightColors;
+      public float cycleIntervalSeconds;
+    }
   }
 }

@@ -70,6 +70,7 @@ public static class LocalizationKeys {
 
   #region MinigameStrings
 
+  public const string kConnectLabelShowCubes = "connect.label.showCubes";
   public const string kMinigameTextPlayerWins = "minigame.text.playerWins";
   public const string kMinigameTextCozmoWins = "minigame.text.cozmoWins";
   public const string kMinigameQuitViewTitle = "minigame.quitView.title";
@@ -166,6 +167,16 @@ public static class LocalizationKeys {
   public const string kDailyGoalFriendBonus = "dailyGoal.FriendBonus";
   public const string kDailyGoalComplete = "dailyGoal.Complete";
   public const string kTimelineWeekLabel = "timeline.weekLabel";
+  public const string kLabelConnect = "label.connect";
+
+  #endregion
+
+  #region StatStrings
+
+  public const string kProgStatBond = "progStat.Bond";
+  public const string kProgStatExcitement = "progStat.Excitement";
+  public const string kProgStatNovelty = "progStat.Novelty";
+  public const string kProgStatDefault = "progStat.Default";
 
   #endregion
 }

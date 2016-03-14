@@ -179,7 +179,7 @@ namespace SpeedTap {
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
       _DifficultyOptions = speedTapConfig.DifficultyOptions;
-      InitializeMinigameObjects(speedTapConfig.NumCubesRequired());
+      InitializeMinigameObjects(1);
     }
 
     // Use this for initialization
@@ -213,8 +213,12 @@ namespace SpeedTap {
     }
 
     public void InitialCubesDone() {
-      CozmoBlock = GetClosestAvailableBlock();
-      PlayerBlock = GetFarthestAvailableBlock();
+      CozmoBlock = CubesForGame[0];
+    }
+
+    public void SetPlayerCube(LightCube cube) {
+      PlayerBlock = cube;
+      CubesForGame.Add(cube);
     }
 
     public void UpdateUI() {
@@ -252,38 +256,6 @@ namespace SpeedTap {
       }
     }
 
-    private LightCube GetClosestAvailableBlock() {
-      float minDist = float.MaxValue;
-      ObservedObject closest = null;
-
-      for (int i = 0; i < CubesForGame.Count; ++i) {
-        if (CubesForGame[i] != PlayerBlock) {
-          float d = Vector3.Distance(CubesForGame[i].WorldPosition, CurrentRobot.WorldPosition);
-          if (d < minDist) {
-            minDist = d;
-            closest = CubesForGame[i];
-          }
-        }
-      }
-      return closest as LightCube;
-    }
-
-    private LightCube GetFarthestAvailableBlock() {
-      float maxDist = 0;
-      ObservedObject farthest = null;
-
-      for (int i = 0; i < CubesForGame.Count; ++i) {
-        if (CubesForGame[i] != CozmoBlock) {
-          float d = Vector3.Distance(CubesForGame[i].WorldPosition, CurrentRobot.WorldPosition);
-          if (d >= maxDist) {
-            maxDist = d;
-            farthest = CubesForGame[i];
-          }
-        }
-      }
-      return farthest as LightCube;
-    }
-
     private static ISpeedTapRules GetRules(SpeedTapRuleSet ruleSet) {
       switch (ruleSet) {
       case SpeedTapRuleSet.NoRed:
@@ -301,20 +273,6 @@ namespace SpeedTap {
       default:
         return new DefaultSpeedTapRules();
       }
-    }
-
-    public void SpinLights(LightCube cube) {
-
-      uint color_0 = cube.Lights[3].OnColor;
-      uint color_1 = cube.Lights[0].OnColor;
-      uint color_2 = cube.Lights[1].OnColor;
-      uint color_3 = cube.Lights[2].OnColor;
-
-      cube.Lights[0].OnColor = color_0;
-      cube.Lights[1].OnColor = color_1;
-      cube.Lights[2].OnColor = color_2;
-      cube.Lights[3].OnColor = color_3;
-      
     }
 
     protected override int CalculateExcitementStatRewards() {

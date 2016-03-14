@@ -1,13 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using Anki.UI;
 using UnityEngine.UI;
 using Cozmo.UI;
 
 public class StartView : BaseView {
-
-  [SerializeField]
-  private AnkiButton _ConnectButton;
 
   [SerializeField]
   private Color _DisconnectedColor;
@@ -21,13 +19,46 @@ public class StartView : BaseView {
   [SerializeField]
   private Button _SecretSkipButton;
 
+  [SerializeField]
+  private ShowCozmoCubeSlide _ShowCozmoCubesContainer;
+
   public event System.Action OnConnectClicked;
 
+  private int _NumRequiredCubes = 3;
+  private List<int> _CubeIdsSeen;
+
   private void Awake() {
-    _ConnectButton.onClick.AddListener(HandleConnectClicked);
+    _CubeIdsSeen = new List<int>();
+
+    #if UNITY_EDITOR
     _SecretSkipButton.onClick.AddListener(HandleSecretSkipButtonClicked);
+    #endif
+
     LoopRobotSleep();
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
+
+    _ShowCozmoCubesContainer.Initialize(_NumRequiredCubes, Cozmo.CubePalette.OutOfViewColor, Cozmo.CubePalette.InViewColor, 
+      LocalizationKeys.kConnectLabelShowCubes);
+  }
+
+  private void Update() {
+    _WifiIndicator.color = IsWifiConnected() ? Color.white : _DisconnectedColor;
+    _BluetoothIndicator.color = IsBluetoothConnected() ? Color.white : _DisconnectedColor;
+
+    int currentNumCubes = RobotEngineManager.Instance.CurrentRobot.LightCubes.Count;
+    if (_CubeIdsSeen.Count < currentNumCubes) {
+      foreach (var cube in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
+        if (cube.Value.MarkersVisible && !_CubeIdsSeen.Contains(cube.Key)) {
+          _CubeIdsSeen.Add(cube.Value.ID);
+          cube.Value.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameStart);
+        }
+      }
+      _ShowCozmoCubesContainer.LightUpCubes(_CubeIdsSeen.Count);
+      if (_CubeIdsSeen.Count >= _NumRequiredCubes) {
+        HandleConnectClicked();
+      }
+    }
   }
 
   private bool IsWifiConnected() {
@@ -39,19 +70,12 @@ public class StartView : BaseView {
     return true;
   }
 
-  // we want to update our status in real time.
-  private void Update() {
-    _WifiIndicator.color = IsWifiConnected() ? Color.white : _DisconnectedColor;
-    _BluetoothIndicator.color = IsBluetoothConnected() ? Color.white : _DisconnectedColor;
-  }
-
   private void HandleConnectClicked() {
     var robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
       DAS.Info(this, "Cancelling HandleSleepAnimationComplete");
       robot.CancelCallback(HandleSleepAnimationComplete);
       robot.SendAnimation(AnimationName.kConnect_WakeUp, HandleWakeAnimationComplete);
-      _ConnectButton.Interactable = false;
     }
   }
 

@@ -6,7 +6,7 @@ using System.Collections;
 public class ShowCozmoCubeSlide : MonoBehaviour {
 
   [SerializeField]
-  private VerticalLayoutGroup _CubeContainer;
+  private HorizontalOrVerticalLayoutGroup _CubeContainer;
 
   [SerializeField]
   private Image _CubePrefab;
@@ -19,13 +19,14 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   private Sprite _OutOfViewColor;
   private Sprite _InViewColor;
 
-  public void Initialize(int numCubesToShow, Cozmo.CubeColor outOfViewColor, Cozmo.CubeColor inViewColor) {
+  public void Initialize(int numCubesToShow, Cozmo.CubePalette.CubeColor outOfViewColor, Cozmo.CubePalette.CubeColor inViewColor,
+                         string locKeyToUse) {
     _InViewColor = inViewColor.uiSprite;
     _OutOfViewColor = outOfViewColor.uiSprite;
 
     CreateCubes(numCubesToShow);
     LightUpCubes(0);
-    _ShowCozmoCubesLabel.text = Localization.GetWithArgs(LocalizationKeys.kMinigameLabelShowCubes,
+    _ShowCozmoCubesLabel.text = Localization.GetWithArgs(locKeyToUse,
       numCubesToShow);
   }
 
