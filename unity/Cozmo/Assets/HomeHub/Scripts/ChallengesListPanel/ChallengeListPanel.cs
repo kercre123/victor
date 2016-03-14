@@ -6,7 +6,7 @@ using Cozmo.UI;
 using Cozmo.HubWorld;
 
 namespace Cozmo.HomeHub {
-  public class HomeHubChallengeListView : MonoBehaviour {
+  public class ChallengeListPanel : MonoBehaviour {
 
     [SerializeField]
     private HubWorldButton _UnlockedChallengeButtonPrefab;
@@ -25,7 +25,7 @@ namespace Cozmo.HomeHub {
 
     private readonly Dictionary<string, GameObject> _ChallengeButtons = new Dictionary<string, GameObject>();
 
-    public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, string dasParentViewName) {
+    private void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, string dasParentViewName) {
       foreach (KeyValuePair<string, ChallengeStatePacket> kvp in challengeStatesById) {
         if (kvp.Value.currentState == ChallengeState.Locked) {
           _ChallengeButtons.Add(kvp.Value.data.ChallengeID, 

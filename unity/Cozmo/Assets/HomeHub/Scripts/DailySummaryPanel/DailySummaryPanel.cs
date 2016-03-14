@@ -8,7 +8,7 @@ using Anki.Cozmo;
 
 public class DailySummaryPanel : BaseView {
   
-  public Cozmo.HomeHub.TimelineView.OnFriendshipBarAnimateComplete FriendshipBarAnimateComplete;
+  public Cozmo.HomeHub.HomeView.OnFriendshipBarAnimateComplete FriendshipBarAnimateComplete;
 
   // yay magic numbers
   const float kInitialFillPoint = 0.275f;

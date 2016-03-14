@@ -82,8 +82,8 @@ namespace Cozmo.HomeHub {
     public event Action OnEndSessionClicked;
 
     [SerializeField]
-    HomeHubChallengeListView _ChallengeListViewPrefab;
-    HomeHubChallengeListView _ChallengeListViewInstance;
+    ChallengeListPanel _ChallengeListViewPrefab;
+    ChallengeListPanel _ChallengeListViewInstance;
 
     [SerializeField]
     DailyGoalPanel _DailyGoalPrefab;
@@ -109,8 +109,8 @@ namespace Cozmo.HomeHub {
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, Transform[] rewardIcons = null) {
       DAS.Info(this, "Initializing Timeline...");
-      _ChallengeListViewInstance = UIManager.CreateUIElement(_ChallengeListViewPrefab.gameObject, _ChallengeContainer).GetComponent<HomeHubChallengeListView>();
-      _ChallengeListViewInstance.Initialize(challengeStatesById, DASEventViewName);
+      _ChallengeListViewInstance = UIManager.CreateUIElement(_ChallengeListViewPrefab.gameObject, _ChallengeContainer).GetComponent<ChallengeListPanel>();
+      // _ChallengeListViewInstance.Initialize(challengeStatesById, DASEventViewName);
       _ChallengeListViewInstance.OnLockedChallengeClicked += OnLockedChallengeClicked;
       _ChallengeListViewInstance.OnUnlockedChallengeClicked += OnUnlockedChallengeClicked;
 
@@ -326,7 +326,7 @@ namespace Cozmo.HomeHub {
           newView.Initialize(session);
         });
       if (onComplete != null) {
-        _DailySummaryInstance.FriendshipBarAnimateComplete += onComplete;
+        //_DailySummaryInstance.FriendshipBarAnimateComplete += onComplete;
       }
       _DailySummaryInstance.ViewClosed += HandleDailySummaryClosed;
     }
