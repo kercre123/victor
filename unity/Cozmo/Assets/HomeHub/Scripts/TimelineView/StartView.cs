@@ -75,7 +75,7 @@ public class StartView : BaseView {
     if (robot != null) {
       DAS.Info(this, "Cancelling HandleSleepAnimationComplete");
       robot.CancelCallback(HandleSleepAnimationComplete);
-      Anki.Cozmo.Audio.AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoConnect);
       robot.SendAnimation(AnimationName.kConnect_WakeUp, HandleWakeAnimationComplete);
     }
   }
