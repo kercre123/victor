@@ -75,8 +75,7 @@ void Head::init()
   MicroWait(80);
 
   RTOS_Task *task = RTOS::schedule(Head::manage);
-	RTOS::setPriority(task, RTOS_HIGH_PRIORITY);
-	RTOS::delay(task, CYCLES_MS(4.0));	// Out of phase from everything else
+  RTOS::setPriority(task, RTOS_UART_PRIORITY);
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
