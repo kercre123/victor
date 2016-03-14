@@ -15,15 +15,12 @@ namespace Cozmo.HomeHub {
     public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
 
     [SerializeField]
-    private HomeViewTab _CozmoTabPrefab;
     private HomeViewTab _CozmoTab;
 
     [SerializeField]
-    private HomeViewTab _PlayTabPrefab;
     private HomeViewTab _PlayTab;
 
     [SerializeField]
-    private HomeViewTab _ProfileTabPrefab;
     private HomeViewTab _ProfileTab;
 
     [SerializeField]
@@ -39,15 +36,18 @@ namespace Cozmo.HomeHub {
     DailySummaryPanel _DailySummaryPrefab;
     DailySummaryPanel _DailySummaryInstance;
 
+    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
+
+    public event ButtonClickedHandler OnLockedChallengeClicked;
+    public event ButtonClickedHandler OnUnlockedChallengeClicked;
+    public event ButtonClickedHandler OnCompletedChallengeClicked;
+    public event Action OnEndSessionClicked;
+
     private Dictionary<string, ChallengeStatePacket> _ChallengeStates;
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, Transform[] rewardIcons = null) {
 
       _ChallengeStates = challengeStatesById;
-
-      _CozmoTab = UIManager.CreateUIElement(_CozmoTabPrefab.gameObject, this.transform).GetComponent<HomeViewTab>();
-      _PlayTab = UIManager.CreateUIElement(_PlayTabPrefab.gameObject, this.transform).GetComponent<HomeViewTab>();
-      _ProfileTab = UIManager.CreateUIElement(_ProfileTabPrefab.gameObject, this.transform).GetComponent<HomeViewTab>();
 
       _CozmoTab.Initialize(this);
       _PlayTab.Initialize(this);

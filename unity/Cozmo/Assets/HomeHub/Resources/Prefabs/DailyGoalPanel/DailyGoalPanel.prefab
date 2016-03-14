@@ -127,8 +127,9 @@ GameObject:
   - 224: {fileID: 22496728}
   - 222: {fileID: 22217438}
   - 114: {fileID: 11413872}
+  - 114: {fileID: 11429418}
   m_Layer: 0
-  m_Name: DailyGoalPanelPrefab
+  m_Name: DailyGoalPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -395,6 +396,17 @@ MonoBehaviour:
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
+--- !u!114 &11429418
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 130834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d19915635dcd34752a39d00ae11e54c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &11435984
 MonoBehaviour:
   m_ObjectHideFlags: 1

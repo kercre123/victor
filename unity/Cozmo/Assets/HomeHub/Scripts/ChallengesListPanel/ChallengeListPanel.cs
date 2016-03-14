@@ -6,7 +6,7 @@ using Cozmo.UI;
 using Cozmo.HubWorld;
 
 namespace Cozmo.HomeHub {
-  public class ChallengeListPanel : MonoBehaviour {
+  public class ChallengeListPanel : TabPanel {
 
     [SerializeField]
     private HubWorldButton _UnlockedChallengeButtonPrefab;
@@ -25,17 +25,18 @@ namespace Cozmo.HomeHub {
 
     private readonly Dictionary<string, GameObject> _ChallengeButtons = new Dictionary<string, GameObject>();
 
-    private void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, string dasParentViewName) {
-      foreach (KeyValuePair<string, ChallengeStatePacket> kvp in challengeStatesById) {
+    public override void Initialize(HomeView homeViewInstance) {
+      base.Initialize(homeViewInstance);
+      foreach (KeyValuePair<string, ChallengeStatePacket> kvp in homeViewInstance.GetChallengeStates()) {
         if (kvp.Value.currentState == ChallengeState.Locked) {
           _ChallengeButtons.Add(kvp.Value.data.ChallengeID, 
             CreateChallengeButton(kvp.Value.data, _LockedButtonPrefab.gameObject, 
-              HandleLockedChallengeClicked, dasParentViewName));
+              HandleLockedChallengeClicked, "challenge_list_panel"));
         }
         else {
           _ChallengeButtons.Add(kvp.Value.data.ChallengeID, 
             CreateChallengeButton(kvp.Value.data, _UnlockedChallengeButtonPrefab.gameObject, 
-              HandleUnlockedChallengeClicked, dasParentViewName));
+              HandleUnlockedChallengeClicked, "challenge_list_panel"));
         }
       }
     }

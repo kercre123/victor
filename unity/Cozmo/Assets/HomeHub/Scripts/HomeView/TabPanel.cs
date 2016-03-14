@@ -6,7 +6,7 @@ namespace Cozmo.HomeHub {
 
     private HomeView _HomeViewInstance;
 
-    public void Initialize(HomeView homeViewInstance) {
+    public virtual void Initialize(HomeView homeViewInstance) {
       _HomeViewInstance = homeViewInstance;
     }
 
