@@ -3820,10 +3820,10 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 
   const f32 minDifference = 1.0f;
   Point<f32> groundTruth[4];
-  groundTruth[0] = Point<f32>(22.2537f,22.2517f);
-  groundTruth[1] = Point<f32>(22.2359f,56.4778f);
-  groundTruth[2] = Point<f32>(56.4742f,22.2397f);
-  groundTruth[3] = Point<f32>(56.4890f,56.4873f);
+  groundTruth[3] = Point<f32>(22.2537f,22.2517f);
+  groundTruth[2] = Point<f32>(22.2359f,56.4778f);
+  groundTruth[1] = Point<f32>(56.4742f,22.2397f);
+  groundTruth[0] = Point<f32>(56.4890f,56.4873f);
 
   for(s32 i=0; i<4; i++) {
     ASSERT_TRUE(ABS(markers[0].corners[i].x - groundTruth[i].x) < minDifference);

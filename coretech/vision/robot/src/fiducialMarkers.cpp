@@ -807,7 +807,7 @@ namespace Anki
       if(doIlluminationNormalization)
       {
         // TODO: Make this a member of the class and pre-allocate it?
-        cv::Mat_<s32> _probeFiltering;
+        cv::Mat_<s16> _probeFiltering;
         
         cv::Mat_<u8> temp(VisionMarker::GRIDSIZE, VisionMarker::GRIDSIZE, probeValues.data);
         //cv::imshow("Original ProbeValues", temp);
