@@ -318,7 +318,7 @@ extern "C" void uesb_event_handler(void)
     if (slot < 0) {
       ObjectDiscovered msg;
       msg.factory_id = packet.id;
-			msg.rssi = rx_payload.rssi;
+      msg.rssi = rx_payload.rssi;
       RobotInterface::SendMessage(msg);
             
       // Attempt to allocate a slot for it
@@ -434,7 +434,7 @@ void Radio::manage(void* userdata) {
         {  9, 10, 11, 15}
       };
 
-			int group = CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * currentAccessory + c;
+      int group = CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * currentAccessory + c;
       uint8_t* rgbi = Lights::state(group);
 
       for (int i = 0; i < 4; i++) {
@@ -442,7 +442,7 @@ void Radio::manage(void* userdata) {
         sum += rgbi[i] * rgbi[i];
       }
     }
-		
+
     acc->tx_state.ledDark = 0xFF - isqrt(sum);
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
@@ -451,6 +451,7 @@ void Radio::manage(void* userdata) {
       acc->active = false;
       SendObjectConnectionState(currentAccessory);
     }
+    
     send_dummy_byte();
   }
 }

@@ -83,13 +83,13 @@ int main(void)
 
   // Startup the system
   Battery::powerOn();
-  
+
   //Radio::shutdown();
   //Bluetooth::advertise(); 
 
   Bluetooth::shutdown();
   Radio::advertise();
-  
+
   // Let the test fixtures run, if nessessary
   #ifdef RUN_TESTS
   TestFixtures::run();
