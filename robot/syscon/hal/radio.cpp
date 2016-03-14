@@ -73,6 +73,9 @@ struct CapturePacket {
 
 static void EnterState(RadioState state);
 
+// 1/10th the time should be silence
+static const int SILENCE_PERIOD = CYCLES_MS(1.0f);
+
 // Advertising settings
 static const uint8_t ROBOT_TO_CUBE_PREFIX = 0x42;
 static const uint8_t CUBE_TO_ROBOT_PREFIX = 0x52;
@@ -110,6 +113,7 @@ extern GlobalDataToBody g_dataToBody;
 // Current status values of cubes/chargers
 static RadioState        radioState;
 static RTOS_Task*        radioTask;
+static RTOS_Task*        radioSilenceTask;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -189,9 +193,11 @@ void Radio::init() {
   }
 
   // Start the radio stack
-  radioTask = RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
+  radioTask = RTOS::schedule(manage, SCHEDULE_PERIOD);
+  radioSilenceTask = RTOS::schedule(silence, SCHEDULE_PERIOD);
   RTOS::setPriority(radioTask, RTOS_RADIO_PRIORITY);
   RTOS::stop(radioTask);
+  RTOS::stop(radioSilenceTask);
 }
 
 void Radio::advertise(void) {
@@ -201,7 +207,7 @@ void Radio::advertise(void) {
     UESB_TX_POWER_0DBM,
     PACKET_SIZE,
     5,    // Address length
-		RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
+    RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
   uesb_init(&uesb_config);
@@ -209,6 +215,10 @@ void Radio::advertise(void) {
   uesb_start();
 
   RTOS::start(radioTask);
+
+  // This creates a quiet period for the radio to reduce jitter
+  RTOS::start(radioSilenceTask);
+  RTOS::delay(radioSilenceTask, SCHEDULE_PERIOD - SILENCE_PERIOD);
 }
 
 void Radio::shutdown(void) {
@@ -369,8 +379,8 @@ void Radio::setPropLights(unsigned int slot, const LightState *state) {
   }
 
  for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
-		Lights::update(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * slot + c, &state[c]);
-	}
+   Lights::update(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * slot + c, &state[c]);
+ }
 }
 
 void Radio::assignProp(unsigned int slot, uint32_t accessory) {
@@ -384,12 +394,16 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   acc->active = false;
 }
 
+void Radio::silence(void* userdata) {
+  uesb_stop();
+}
+
 void Radio::manage(void* userdata) {
   // Transmit to accessories round-robin
-	if (++currentAccessory >= TICK_LOOP) {
-		currentAccessory = 0;
-	}
-  
+  if (++currentAccessory >= TICK_LOOP) {
+    currentAccessory = 0;
+  }
+
   if (currentAccessory >= MAX_ACCESSORIES) return ;
 
   AccessorySlot* acc = &accessories[currentAccessory];

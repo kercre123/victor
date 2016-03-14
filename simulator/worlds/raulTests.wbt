@@ -35,7 +35,7 @@ CozmoMat {
 LightCube {
   translation 0.162799 -0.00141587 0.021993
   rotation 1.59038e-05 -1.83704e-06 1 0.23
-  ID 3
+  ID 1
 }
 BlockWorldComms {
 }

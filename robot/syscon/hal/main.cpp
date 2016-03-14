@@ -73,35 +73,35 @@ int main(void)
   Crypto::init();
 
   // Setup all tasks
-	Radio::init();
+  Radio::init();
   Motors::init();	
   Battery::init();
   Bluetooth::init();
   Timer::init();
   Backpack::init();
-	Lights::init();
+  Lights::init();
 
-	// Startup the system
-	Battery::powerOn();
-	
-	//Radio::shutdown();
+  // Startup the system
+  Battery::powerOn();
+  
+  //Radio::shutdown();
   //Bluetooth::advertise(); 
 
-	Bluetooth::shutdown();
-	Radio::advertise();
-	
+  Bluetooth::shutdown();
+  Radio::advertise();
+  
   // Let the test fixtures run, if nessessary
   #ifdef RUN_TESTS
-	TestFixtures::run();
-	#else
+  TestFixtures::run();
+  #else
   Head::init();
-	#endif
+  #endif
 
-	Timer::start();
+  Timer::start();
 
   // Run forever, because we are awesome.
   for (;;) {
     __asm { WFI };
-		Crypto::manage();
+    Crypto::manage();
   }
 }

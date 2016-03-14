@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/namedColors/namedColors.h"
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/overheadEdge.h"
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -70,6 +71,9 @@ namespace Anki
       
       // Adds a cliff (detected with cliff detector)
       Result AddCliff(const Pose3d& p);
+      
+      // Adds the given edges detected by the vision system to the world
+      Result AddVisionOverheadEdges(const OverheadEdgeVector& edges);
       
       // Adds a light cube object with the specified activeID and factoryID at
       // an unknown pose. To be used when the cube first comes into radio contact.

@@ -858,6 +858,20 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateMotionCentroid()
   
+  Result VisionComponent::UpdateOverheadEdges(Robot& robot)
+  {
+    if(_visionSystem != nullptr)
+    {
+      OverheadEdgeVector edgeChainVector;
+      OverheadEdgePointChain edgeChain;
+      while(true == _visionSystem->CheckMailbox(edgeChain))
+      {
+        edgeChainVector.emplace_back( std::move(edgeChain) ); // warning moving local variable
+      }
+      robot.GetBlockWorld().AddVisionOverheadEdges(edgeChainVector);
+    }
+    return RESULT_OK;
+  }
   
   Result VisionComponent::UpdateOverheadMap(const Vision::ImageRGB& image,
                                             const VisionSystem::PoseData& poseData)

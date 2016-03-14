@@ -25,6 +25,7 @@ namespace Radio {
   void advertise();
   void shutdown();
 
+  void silence(void* userdata);	// This prevents interrupts from causing jitter
   void manage(void* userdata = NULL);
   void discover();
   void setPropLights(unsigned int slot, const LightState *state);

@@ -7,11 +7,12 @@ namespace Cozmo {
 
   enum uint_8 VisionMode
   {
-    Idle                = 0x00,
-    DetectingMarkers    = 0x01,
-    Tracking            = 0x02,
-    DetectingFaces      = 0x04,
-    DetectingMotion     = 0x08
+    Idle                   = 0x00,
+    DetectingMarkers       = 0x01,
+    Tracking               = 0x02,
+    DetectingFaces         = 0x04,
+    DetectingMotion        = 0x08,
+    DetectingOverheadEdges = 0x10,
   }
       
 } // namespace Cozmo
