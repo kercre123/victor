@@ -395,10 +395,13 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
 }
 
 void Radio::silence(void* userdata) {
-  uesb_stop();
+  uesb_pause();
 }
 
 void Radio::manage(void* userdata) {
+  // Reenable the radio
+  uesb_resume();
+
   // Transmit to accessories round-robin
   if (++currentAccessory >= TICK_LOOP) {
     currentAccessory = 0;
