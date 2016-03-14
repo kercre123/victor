@@ -723,7 +723,7 @@ namespace Cozmo {
         const Quad2f& corners = visionMarker.GetImageCorners();
         const ColorRGBA& drawColor = (visionMarker.GetCode() == Vision::MARKER_UNKNOWN ?
                                       NamedColors::BLUE : NamedColors::RED);
-        _vizManager->DrawCameraQuad(corners, drawColor);
+        _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
         
         const bool drawMarkerNames = false;
         if(drawMarkerNames)

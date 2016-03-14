@@ -214,9 +214,14 @@ namespace Anki {
                            const ColorRGBA& color);
       
       // Draw a generic 2D quad in the camera display
+      // TopColor is the color of the line connecting the upper left and upper right corners.
       template<typename T>
       void DrawCameraQuad(const Quadrilateral<2,T>& quad,
                           const ColorRGBA& color);
+      template<typename T>
+      void DrawCameraQuad(const Quadrilateral<2,T>& quad,
+                          const ColorRGBA& color,
+                          const ColorRGBA& topColor);
       
       // Draw a line segment in the camera display
       void DrawCameraLine(const Point2f& start,
@@ -509,8 +514,16 @@ namespace Anki {
     }
     
     template<typename T>
+    inline void VizManager::DrawCameraQuad(const Quadrilateral<2,T>& quad,
+                                           const ColorRGBA& color)
+    {
+      DrawCameraQuad(quad, color, color);
+    }
+    
+    template<typename T>
     void VizManager::DrawCameraQuad(const Quadrilateral<2,T>& quad,
-                                    const ColorRGBA& color)
+                                    const ColorRGBA& color,
+                                    const ColorRGBA& topColor)
     {
       using namespace Quad;
       VizInterface::CameraQuad v;
@@ -527,9 +540,9 @@ namespace Anki {
       v.xLowerRight = static_cast<float>(quad[BottomRight].x());
       v.yLowerRight = static_cast<float>(quad[BottomRight].y());
       v.color = (uint32_t)color;
+      v.topColor = (uint32_t)topColor;
       SendMessage(VizInterface::MessageViz(std::move(v)));
     }
-
     
     template<typename T>
     void VizManager::DrawMatMarker(const u32 quadID,

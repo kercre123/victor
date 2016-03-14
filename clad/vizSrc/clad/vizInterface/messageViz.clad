@@ -104,6 +104,7 @@ message SimpleQuadVectorMessageEnd
 message CameraQuad
 {
   uint_32 color,
+  uint_32 topColor, // Color to draw line between UpperLeft and UpperRight corners
   float_32 xUpperLeft,
   float_32 yUpperLeft,
   float_32 xLowerLeft,
