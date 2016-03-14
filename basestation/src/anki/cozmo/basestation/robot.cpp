@@ -2885,9 +2885,13 @@ namespace Anki {
     Result Robot::ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids)
     {
       CubeSlots msg;
+      for (auto & fid : msg.factory_id) {
+        fid = 0;
+      }
+      
       u8 numObjects = 0;
       u8 objectsSelectedMask = 0;
-      for (auto fid : factory_ids) {
+      for (auto & fid : factory_ids) {
         
         // Zero is not a valid factoryID
         if (fid == 0) {

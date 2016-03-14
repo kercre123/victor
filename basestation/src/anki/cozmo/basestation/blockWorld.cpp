@@ -1334,30 +1334,39 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
             {
               if(object->GetNumTimesObserved() < MIN_TIMES_TO_OBSERVE_OBJECT) {
                 // If this object has only been seen once and that was too long ago,
-                // just delete it
-                
+                // just delete it, but only if this is a non-active object or radio
+                // connection has not been established yet
                 if (!object->IsActive() || object->GetActiveID() < 0) {
-                  // Only delete if this is a non-active object or radio connection has not been established yet
-                  
                   PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects",
                                    "Deleting %s object %d that was only observed %d time(s).\n",
                                    ObjectTypeToString(object->GetType()),
                                    object->GetID().GetValue(),
                                    object->GetNumTimesObserved());
                   objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
+                } else {
+                  ++objectIter;
                 }
               } else if(object->IsActive() &&
                         ActiveIdentityState::WaitingForIdentity == object->GetIdentityState() &&
-                        object->GetLastObservedTime() < atTimestamp - BLOCK_IDENTIFICATION_TIMEOUT_MS)
-              {
-                
-                PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects",
-                                 "Deleting unobserved %s active object %d that has "
-                                 "not completed identification in %dms",
-                                 EnumToString(object->GetType()),
-                                 object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
-                
-                objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
+                        object->GetLastObservedTime() < atTimestamp - BLOCK_IDENTIFICATION_TIMEOUT_MS) {
+
+                // If this is an active object and identification has timed out
+                // delete it if radio connection has not been established yet.
+                // Otherwise, retry identification.
+                if (object->GetActiveID() < 0) {
+                  PRINT_NAMED_INFO("BlockWorld.CheckForUnobservedObjects.IdentifyTimedOut",
+                                   "Deleting unobserved %s active object %d that has "
+                                   "not completed identification in %dms",
+                                   EnumToString(object->GetType()),
+                                   object->GetID().GetValue(), BLOCK_IDENTIFICATION_TIMEOUT_MS);
+                  
+                  objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
+                } else {
+                  // Don't delete objects that are still in radio communication. Retrigger Identify.
+                  PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.RetryIdentify", "Re-attempt identify on object %d (%s)", object->GetID().GetValue(), EnumToString(object->GetType()));
+                  object->Identify();
+                  ++objectIter;
+                }
 
               } else {
                 // Otherwise, add it to the list for further checks below to see if
@@ -2284,21 +2293,32 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
       ObservableObject* matchingObsObject = GetActiveObjectByActiveID(activeID);
       ActiveCube* matchingObject = dynamic_cast<ActiveCube*>(matchingObsObject);
       if (matchingObject == nullptr) {
-        // If no match found, find one with an invalid activeID and assume it's that
+        // If no match found, find one of the same type with an invalid activeID and assume it's that
         const ObjectsMapByID_t& objectsOfSameType = GetExistingObjectsByType(cubeType);
         for (auto& cubeIt : objectsOfSameType) {
-          if (cubeIt.second->GetActiveID() < 0) {
-            ActiveCube* activeObj = dynamic_cast<ActiveCube*>(cubeIt.second);
-            activeObj->SetActiveID(activeID);
+          ActiveCube* sameTypeCube = dynamic_cast<ActiveCube*>(cubeIt.second);
+          if (sameTypeCube->GetActiveID() < 0) {
+            sameTypeCube->SetActiveID(activeID);
             PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatchingObjectWithNoActiveID",
                              "objectID %d, activeID %d, type %d",
-                             cubeIt.second->GetID().GetValue(), cubeIt.second->GetActiveID(), cubeType);
-            return cubeIt.second->GetID();
+                             sameTypeCube->GetID().GetValue(), sameTypeCube->GetActiveID(), cubeType);
+            return sameTypeCube->GetID();
           } else {
-            PRINT_NAMED_WARNING("BlockWorld.AddLightCube.FoundOtherCubeOfSameType",
-                                "ActiveID %d is same type as another existing object (objectID %d, activeID %d, type %d). Multiple objects of same type not supported!",
-                                activeID, cubeIt.second->GetID().GetValue(), cubeIt.second->GetActiveID(), cubeType);
-            return ObjectID();
+            // If found an existing object of the same type but not same factoryID then ignore it
+            // until we figure out how to deal with multiple objects of same type.
+            if ( sameTypeCube->GetFactoryID() != factoryID ) {
+              PRINT_NAMED_WARNING("BlockWorld.AddLightCube.FoundOtherCubeOfSameType",
+                                  "ActiveID %d (factoryID 0x%x) is same type as another existing object (objectID %d, activeID %d, factoryID 0x%x, type %d). Multiple objects of same type not supported!",
+                                  activeID, factoryID,
+                                  sameTypeCube->GetID().GetValue(), sameTypeCube->GetActiveID(), sameTypeCube->GetFactoryID(), cubeType);
+              return ObjectID();
+            } else {
+              PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundIdenticalObjectOnDifferentSlot",
+                               "Updating activeID of block with factoryID 0x%x from %d to %d",
+                               sameTypeCube->GetFactoryID(), sameTypeCube->GetActiveID(), activeID);
+              sameTypeCube->SetActiveID(activeID);
+              return sameTypeCube->GetID();
+            }
           }
         }
       } else {
@@ -2311,7 +2331,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
         } else {
           // FactoryID mismatch. Delete the current object and fall through to add a new one
           PRINT_NAMED_WARNING("BlockWorld.AddLightCube.MismatchedFactoryID",
-                              "objectID %d, activeID %d, type %d, factoryID 0x%x (expected 0x%x",
+                              "objectID %d, activeID %d, type %d, factoryID 0x%x (expected 0x%x)",
                               matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), cubeType, factoryID, matchingObject->GetFactoryID());
           DeleteObject(matchingObject->GetID());
         }
@@ -2323,7 +2343,9 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
       cube->SetPoseParent(_robot->GetWorldOrigin());
       cube->SetPoseState(ObservableObject::PoseState::Unknown);
       AddNewObject(ObjectFamily::LightCube, cube);
-      PRINT_NAMED_INFO("BlockWorld.AddLightCube.Added", "objectID %d (activeID %d)", cube->GetID().GetValue(), cube->GetActiveID());
+      PRINT_NAMED_INFO("BlockWorld.AddLightCube.Added",
+                       "objectID %d (activeID %d)",
+                       cube->GetID().GetValue(), cube->GetActiveID());
       return cube->GetID();
     }
   
