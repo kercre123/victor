@@ -234,8 +234,11 @@ namespace Anki {
           }
         }
         
+        // Use current time to make globally unique identifier robust to the scene tree changing due to dynamically added objects
+        u32 currTime_ms = static_cast<u32>(1000 * block_controller.getTime());
+        
         // Generate a factory ID
-        factoryID_ = nodeIndex * 1000 + activeIDToFactoryIDMap_[blockID_];
+        factoryID_ = currTime_ms * 100000 + nodeIndex * 1000 + activeIDToFactoryIDMap_[blockID_];
         printf("Starting ActiveBlock %d (factoryID %d)\n", blockID_, factoryID_);
         
         
@@ -251,12 +254,12 @@ namespace Anki {
         receiver_ = block_controller.getReceiver("receiver");
         assert(receiver_ != nullptr);
         receiver_->enable(TIMESTEP);
-        receiver_->setChannel(blockID_);
+        receiver_->setChannel(factoryID_ + 1);
         
         // Get radio emitter
         emitter_ = block_controller.getEmitter("emitter");
         assert(emitter_ != nullptr);
-        emitter_->setChannel(blockID_);
+        emitter_->setChannel(factoryID_);
         
         // Get accelerometer
         accel_ = block_controller.getAccelerometer("accel");
@@ -518,7 +521,9 @@ namespace Anki {
             BlockMessages::LightCubeMessage msg;
             msg.tag = BlockMessages::LightCubeMessage::Tag_discovered;
             msg.discovered.factory_id = factoryID_;
+            emitter_->setChannel(OBJECT_DISCOVERY_CHANNEL);
             emitter_->send(msg.GetBuffer(), msg.Size());
+            emitter_->setChannel(factoryID_);
             discoveredSendCtr = 0;
           }
           

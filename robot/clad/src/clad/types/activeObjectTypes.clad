@@ -33,6 +33,7 @@ enum uint_32 ActiveObjectConstants
   NUM_CUBE_LEDS = 4,
   FLASH_BLOCK_TIME_INTERVAL_MS = 200,
   ACTIVE_OBJECT_DISCOVERY_PERIOD_MS = 1000,
+  OBJECT_DISCOVERY_CHANNEL = 5,    // sim only
 }
 
 enum uint_8 WhichCubeLEDs
