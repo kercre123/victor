@@ -19,7 +19,7 @@ public class HockeyAppManager : MonoBehaviour {
   private string _VersionName;
   private string _SDKVersion;
   private string _SDKName;
-#endif
+  #endif
   private void HandleDebugConsoleCrashFromUnityButton(System.Object setvar) {
     DAS.Event("HockeAppManager.ForceDebugCrash", "HockeAppManager.ForceDebugCrash");
     // Apparently dividing by 0 only forces an exception on mac not iOS. So just throw.
@@ -46,8 +46,8 @@ public class HockeyAppManager : MonoBehaviour {
 
   void OnDisable() {
     #if (UNITY_IPHONE && !UNITY_EDITOR)
-      System.AppDomain.CurrentDomain.UnhandledException -= OnHandleUnresolvedException;
-      Application.logMessageReceived -= OnHandleLogCallback;
+    System.AppDomain.CurrentDomain.UnhandledException -= OnHandleUnresolvedException;
+    Application.logMessageReceived -= OnHandleLogCallback;
     #endif
   }
 
@@ -55,7 +55,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// Collect all header fields for the custom exception report.
   /// </summary>
   /// <returns>A list which contains the header fields for a log file.</returns>
-  private virtual List<string> GetLogHeaders() {
+  private List<string> GetLogHeaders() {
     List<string> list = new List<string>();
     #if (UNITY_IPHONE && !UNITY_EDITOR)
     list.Add("Package: " + _BundleIdentifier);
@@ -63,10 +63,8 @@ public class HockeyAppManager : MonoBehaviour {
     list.Add("Version Name: " + _VersionName);
 
     string osVersion = "OS: " + SystemInfo.operatingSystem.Replace("iPhone OS ", "");
-    list.Add (osVersion);
-    
+    list.Add(osVersion);
     list.Add("Model: " + SystemInfo.deviceModel);
-
     list.Add("Date: " + System.DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss {}zzzz yyyy").Replace("{}", "GMT").ToString());
     #endif
     
@@ -78,7 +76,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// </summary>
   /// <param name="log">A string that contains information about the exception.</param>
   /// <returns>The form data for the current exception report.</returns>
-  private virtual WWWForm CreateForm(string log) {
+  private WWWForm CreateForm(string log) {
     
     WWWForm form = new WWWForm();
     #if (UNITY_IPHONE && !UNITY_EDITOR)
@@ -124,9 +122,7 @@ public class HockeyAppManager : MonoBehaviour {
     if (bytes != null) {
       form.AddBinaryData("log", bytes, log, "text/plain");
     }
-
     #endif
-    
     return form;
   }
 
@@ -134,41 +130,35 @@ public class HockeyAppManager : MonoBehaviour {
   /// Get a list of all existing exception reports.
   /// </summary>
   /// <returns>A list which contains the filenames of the log files.</returns>
-  private virtual List<string> GetLogFiles() {
+  private List<string> GetLogFiles() {
 
     List<string> logs = new List<string>();
 
     #if (UNITY_IPHONE && !UNITY_EDITOR)
     string logsDirectoryPath = Application.persistentDataPath + kLogFileDir;
 
-    try
-    {
-      if (Directory.Exists(logsDirectoryPath) == false)
-      {
+    try {
+      if (Directory.Exists(logsDirectoryPath) == false) {
         Directory.CreateDirectory(logsDirectoryPath);
       }
     
       DirectoryInfo info = new DirectoryInfo(logsDirectoryPath);
       FileInfo[] files = info.GetFiles();
 
-      if (files.Length > 0)
-      {
-        foreach (FileInfo file in files)
-        {
-          if (file.Extension == ".log")
-          {
+      if (files.Length > 0) {
+        foreach (FileInfo file in files) {
+          if (file.Extension == ".log") {
             logs.Add(file.FullName);
           }
-          else
-          {
+          else {
             File.Delete(file.FullName);
           }
         }
       }
     }
-    catch(System.Exception e)
-    {
-      if (Debug.isDebugBuild) Debug.Log("Failed to write exception log to file: " + e);
+    catch (System.Exception e) {
+      if (Debug.isDebugBuild)
+        Debug.Log("Failed to write exception log to file: " + e);
     }
     #endif
 
@@ -178,7 +168,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// <summary>
   /// Upload existing reports to HockeyApp and delete them locally.
   /// </summary>
-  private virtual IEnumerator SendLogs(List<string> logs) {
+  private IEnumerator SendLogs(List<string> logs) {
 
     string crashPath = kHockeyAppCrashesPath;
     string url = kHockeyAppBaseUrl + crashPath.Replace("[APPID]", _AppID);
@@ -216,7 +206,6 @@ public class HockeyAppManager : MonoBehaviour {
   /// <param name="logString">A string that contains the reason for the exception.</param>
   /// <param name="stackTrace">The stacktrace for the exception.</param>
   private void WriteLogToDisk(string logString, string stackTrace) {
-    
     #if (UNITY_IPHONE && !UNITY_EDITOR)
     string logSession = System.DateTime.Now.ToString("yyyy-MM-dd-HH_mm_ss_fff");
     string log = logString.Replace("\n", " ");
@@ -238,15 +227,14 @@ public class HockeyAppManager : MonoBehaviour {
       }
     }
     catch (System.Exception e) {
-      DAS.Error("game.log.file_write_error", "");
+      DAS.Error("game.log.file_write_error", e);
     }
-
     #endif
   }
 
   public void UploadUnityCrashInfo(string hockey_params) {
     // params are appId, versionCode, versionName, budleIdentifier, sdkversion, sdkname
-#if (UNITY_IPHONE && !UNITY_EDITOR)
+    #if (UNITY_IPHONE && !UNITY_EDITOR)
     char[] delimiterChars = { ',' };
     string[] split_params = hockey_params.Split(delimiterChars);
     _AppID = split_params[0];
@@ -265,9 +253,9 @@ public class HockeyAppManager : MonoBehaviour {
         StartCoroutine(SendLogs(logFileDirs));
       }
     }
-#else
+    #else
     DAS.Event("HockeAppManager.UploadUnityCrashInfoNotIOS " + hockey_params, "HockeyAppManager.UploadUnityCrashInfoNotIOS");
-#endif
+    #endif
   }
 
   /// <summary>
@@ -278,7 +266,7 @@ public class HockeyAppManager : MonoBehaviour {
   private void HandleException(string logString, string stackTrace) {
     DAS.Event("HockeAppManager.HandleException", "HockeAppManager.HandleException");
     #if (UNITY_IPHONE && !UNITY_EDITOR)
-      WriteLogToDisk(logString, stackTrace);
+    WriteLogToDisk(logString, stackTrace);
     #endif
   }
 
