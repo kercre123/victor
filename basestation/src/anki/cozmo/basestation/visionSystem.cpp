@@ -1477,7 +1477,7 @@ namespace Cozmo {
         
         imgQuad *= 1.f / scaleMultiplier;
         
-        const Anki::Rectangle<s32> boundingRect(imgQuad); // Not Embedded::
+        Anki::Rectangle<s32> boundingRect(imgQuad); // Not Embedded::
         Vision::Image groundPlaneForegroundMotion;
         foregroundMotion.GetROI(boundingRect).CopyTo(groundPlaneForegroundMotion);
         
@@ -2575,7 +2575,7 @@ namespace Cozmo {
         return RESULT_OK;
       }
       
-      ASSERT_NAMED(centroids.type() == CV_64F, "Expecting centroids to be double");
+      ASSERT_NAMED(centroids.type() == CV_64F, "VisionSystem.ReadToolCode.CentroidTypeNotDouble");
       const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
       observedPoints.push_back(Anki::Point2f(dotCentroid[0] + dotRectRoi.GetX(),
                                              dotCentroid[1] + dotRectRoi.GetY()));
@@ -2586,6 +2586,9 @@ namespace Cozmo {
       dispImg.DrawQuad(dotQuadRoi2d, NamedColors::CYAN, 1);
 #     endif
     } // for each tool code dot iDot
+    
+    ASSERT_NAMED(observedPoints.size() == 2,
+                 "VisionSystem.ReadToolCode.WrongNumDotsObserved");
     
     // Solve for camera center and focal length as a system of equations
     //
