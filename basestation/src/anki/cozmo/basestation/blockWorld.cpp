@@ -2750,7 +2750,7 @@ CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld", false); // kEnableMapMemory: i
     {
       FindFcn findLambda = [](ObservableObject* current, ObservableObject* best)
       {
-        if(best == nullptr || current->GetLastObservedTime() < best->GetLastObservedTime()) {
+        if(best == nullptr || current->GetLastObservedTime() > best->GetLastObservedTime()) {
           return true;
         } else {
           return false;
