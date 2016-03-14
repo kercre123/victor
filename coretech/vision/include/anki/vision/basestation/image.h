@@ -89,10 +89,10 @@ namespace Vision {
     
   protected:
     template<typename DerivedType>
-    DerivedType GetROI(const Rectangle<s32>& roiRect);
+    DerivedType GetROI(Rectangle<s32>& roiRect);
     
     template<typename DerivedType>
-    const DerivedType GetROI(const Rectangle<s32>& roiRect) const;
+    const DerivedType GetROI(Rectangle<s32>& roiRect) const;
 
   private:
     TimeStamp_t     _timeStamp;
@@ -116,8 +116,8 @@ namespace Vision {
     
     Image(const Array2d<u8>& array2d) : ImageBase<u8>(array2d) { }
     
-    Image GetROI(const Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
-    const Image GetROI(const Rectangle<s32>& roiRect) const { return ImageBase<u8>::GetROI<Image>(roiRect); }
+    Image GetROI(Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
+    const Image GetROI(Rectangle<s32>& roiRect) const { return ImageBase<u8>::GetROI<Image>(roiRect); }
     
 #   if ANKICORETECH_USE_OPENCV
     // Construct from a cv::Mat_<u8>
@@ -167,8 +167,8 @@ namespace Vision {
     
     ImageRGB(const Array2d<PixelRGB>& array2d) : ImageBase<PixelRGB>(array2d) { }
     
-    ImageRGB GetROI(const Rectangle<s32>& roiRect) { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
-    const ImageRGB GetROI(const Rectangle<s32>& roiRect) const { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
+    ImageRGB GetROI(Rectangle<s32>& roiRect) { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
+    const ImageRGB GetROI(Rectangle<s32>& roiRect) const { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
     
     Image ToGray() const;
     
@@ -199,7 +199,7 @@ namespace Vision {
     
     Image ToGray() const;
     
-    ImageRGBA GetROI(const Rectangle<s32>& roiRect) {
+    ImageRGBA GetROI(Rectangle<s32>& roiRect) {
       return ImageBase<PixelRGBA>::GetROI<ImageRGBA>(roiRect);
     }
     
@@ -223,7 +223,7 @@ namespace Vision {
   
   template<typename T>
   template<typename DerivedType>
-  DerivedType ImageBase<T>::GetROI(const Rectangle<s32>& roiRect)
+  DerivedType ImageBase<T>::GetROI(Rectangle<s32>& roiRect)
   {
     DerivedType roi(Array2d<T>::GetROI(roiRect));
     roi.SetTimestamp(GetTimestamp());
@@ -232,7 +232,7 @@ namespace Vision {
   
   template<typename T>
   template<typename DerivedType>
-  const DerivedType ImageBase<T>::GetROI(const Rectangle<s32>& roiRect) const
+  const DerivedType ImageBase<T>::GetROI(Rectangle<s32>& roiRect) const
   {
     DerivedType roi(Array2d<T>::GetROI(roiRect));
     roi.SetTimestamp(GetTimestamp());

@@ -82,16 +82,18 @@ namespace Anki
   
   template<typename T>
   template<typename Trect>
-  const Array2d<T> Array2d<T>::GetROI(const Rectangle<Trect>& roiRect) const
+  const Array2d<T> Array2d<T>::GetROI(Rectangle<Trect>& roiRect) const
   {
-    return Array2d<T>(this->get_CvMat_()(roiRect.get_CvRect_() & cv::Rect_<Trect>(0,0,GetNumCols(),GetNumRows())));
+    roiRect = roiRect.Intersect(Rectangle<Trect>(0,0,GetNumCols(),GetNumRows()));
+    return Array2d<T>(this->get_CvMat_()(roiRect.get_CvRect_()));
   }
 
   template<typename T>
   template<typename Trect>
-  Array2d<T> Array2d<T>::GetROI(const Rectangle<Trect>& roiRect)
+  Array2d<T> Array2d<T>::GetROI(Rectangle<Trect>& roiRect)
   {
-    return Array2d<T>(this->get_CvMat_()(roiRect.get_CvRect_() & cv::Rect_<Trect>(0,0,GetNumCols(),GetNumRows())));
+    roiRect = roiRect.Intersect(Rectangle<Trect>(0,0,GetNumCols(),GetNumRows()));
+    return Array2d<T>(this->get_CvMat_()(roiRect.get_CvRect_()));
   }
 
   
