@@ -7,10 +7,10 @@ using Anki.Debug;
 
 public class HockeyAppManager : MonoBehaviour {
 
-  protected const string kHockeyAppBaseUrl = "https://rink.hockeyapp.net/";
-  protected const string kHockeyAppCrashesPath = "api/2/apps/[APPID]/crashes/upload";
-  protected const string kLogFileDir = "/unity_crash_logs/";
-  protected const int kMaxChars = 199800;
+  private const string kHockeyAppBaseUrl = "https://rink.hockeyapp.net/";
+  private const string kHockeyAppCrashesPath = "api/2/apps/[APPID]/crashes/upload";
+  private const string kLogFileDir = "/unity_crash_logs/";
+  private const int kMaxChars = 199800;
 
   private string _AppID = null;
   #if (UNITY_IPHONE && !UNITY_EDITOR)
@@ -20,7 +20,7 @@ public class HockeyAppManager : MonoBehaviour {
   private string _SDKVersion;
   private string _SDKName;
 #endif
-  void HandleDebugConsoleCrashFromUnityButton(System.Object setvar) {
+  private void HandleDebugConsoleCrashFromUnityButton(System.Object setvar) {
     DAS.Event("HockeAppManager.ForceDebugCrash", "HockeAppManager.ForceDebugCrash");
     // Apparently dividing by 0 only forces an exception on mac not iOS. So just throw.
     if (setvar.ToString() != "exception") {
@@ -55,7 +55,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// Collect all header fields for the custom exception report.
   /// </summary>
   /// <returns>A list which contains the header fields for a log file.</returns>
-  protected virtual List<string> GetLogHeaders() {
+  private virtual List<string> GetLogHeaders() {
     List<string> list = new List<string>();
     #if (UNITY_IPHONE && !UNITY_EDITOR)
     list.Add("Package: " + _BundleIdentifier);
@@ -78,7 +78,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// </summary>
   /// <param name="log">A string that contains information about the exception.</param>
   /// <returns>The form data for the current exception report.</returns>
-  protected virtual WWWForm CreateForm(string log) {
+  private virtual WWWForm CreateForm(string log) {
     
     WWWForm form = new WWWForm();
     #if (UNITY_IPHONE && !UNITY_EDITOR)
@@ -134,7 +134,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// Get a list of all existing exception reports.
   /// </summary>
   /// <returns>A list which contains the filenames of the log files.</returns>
-  protected virtual List<string> GetLogFiles() {
+  private virtual List<string> GetLogFiles() {
 
     List<string> logs = new List<string>();
 
@@ -178,7 +178,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// <summary>
   /// Upload existing reports to HockeyApp and delete them locally.
   /// </summary>
-  protected virtual IEnumerator SendLogs(List<string> logs) {
+  private virtual IEnumerator SendLogs(List<string> logs) {
 
     string crashPath = kHockeyAppCrashesPath;
     string url = kHockeyAppBaseUrl + crashPath.Replace("[APPID]", _AppID);
@@ -194,16 +194,17 @@ public class HockeyAppManager : MonoBehaviour {
       lContent = lContent.Replace("\"", "");
       Dictionary<string,string> headers = new Dictionary<string,string>();
       headers.Add("Content-Type", lContent);
-      WWW www = new WWW(url, postForm.data, headers);
-      yield return www;
+      using (WWW www = new WWW(url, postForm.data, headers)) {
+        yield return www;
 
-      if (System.String.IsNullOrEmpty(www.error)) {
-        try {
-          File.Delete(log);
-        }
-        catch (System.Exception e) {
-          if (Debug.isDebugBuild)
-            DAS.Error(e, "HockeAppManager.LogDeleteFail");
+        if (System.String.IsNullOrEmpty(www.error)) {
+          try {
+            File.Delete(log);
+          }
+          catch (System.Exception e) {
+            if (Debug.isDebugBuild)
+              DAS.Error(e, "HockeAppManager.LogDeleteFail");
+          }
         }
       }
     }
@@ -214,31 +215,32 @@ public class HockeyAppManager : MonoBehaviour {
   /// </summary>
   /// <param name="logString">A string that contains the reason for the exception.</param>
   /// <param name="stackTrace">The stacktrace for the exception.</param>
-  protected virtual void WriteLogToDisk(string logString, string stackTrace) {
+  private void WriteLogToDisk(string logString, string stackTrace) {
     
     #if (UNITY_IPHONE && !UNITY_EDITOR)
     string logSession = System.DateTime.Now.ToString("yyyy-MM-dd-HH_mm_ss_fff");
     string log = logString.Replace("\n", " ");
-    string[]stacktraceLines = stackTrace.Split('\n');
+    string[] stacktraceLines = stackTrace.Split('\n');
     
     log = "\n" + log + "\n";
-    foreach (string line in stacktraceLines)
-    {
-      if(line.Length > 0)
-      {
-        log +="  at " + line + "\n";
+    foreach (string line in stacktraceLines) {
+      if (line.Length > 0) {
+        log += "  at " + line + "\n";
       }
     }
-    
-    List<string> logHeaders = GetLogHeaders();
-    using (StreamWriter file = new StreamWriter(Application.persistentDataPath + kLogFileDir + "LogFile_" + logSession + ".log", true))
-    {
-      foreach (string header in logHeaders)
-      {
-        file.WriteLine(header);
+    try {
+      List<string> logHeaders = GetLogHeaders();
+      using (StreamWriter file = new StreamWriter(Application.persistentDataPath + kLogFileDir + "LogFile_" + logSession + ".log", true)) {
+        foreach (string header in logHeaders) {
+          file.WriteLine(header);
+        }
+        file.WriteLine(log);
       }
-      file.WriteLine(log);
     }
+    catch (System.Exception e) {
+      DAS.Error("game.log.file_write_error", "");
+    }
+
     #endif
   }
 
@@ -273,7 +275,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// </summary>
   /// <param name="logString">A string that contains the reason for the exception.</param>
   /// <param name="stackTrace">The stacktrace for the exception.</param>
-  protected virtual void HandleException(string logString, string stackTrace) {
+  private void HandleException(string logString, string stackTrace) {
     DAS.Event("HockeAppManager.HandleException", "HockeAppManager.HandleException");
     #if (UNITY_IPHONE && !UNITY_EDITOR)
       WriteLogToDisk(logString, stackTrace);
@@ -286,7 +288,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// <param name="logString">A string that contains the reason for the exception.</param>
   /// <param name="stackTrace">The stacktrace for the exception.</param>
   /// <param name="type">The type of the log message.</param>
-  public void OnHandleLogCallback(string logString, string stackTrace, LogType type) {
+  private void OnHandleLogCallback(string logString, string stackTrace, LogType type) {
     DAS.Event("HockeAppManager.OnHandleLogCallback", "HockeAppManager.OnHandleLogCallback");
     #if (UNITY_IPHONE && !UNITY_EDITOR)
     if (LogType.Assert == type || LogType.Exception == type || LogType.Error == type) { 
@@ -295,7 +297,7 @@ public class HockeyAppManager : MonoBehaviour {
     #endif
   }
 
-  public void OnHandleUnresolvedException(object sender, System.UnhandledExceptionEventArgs args) {
+  private void OnHandleUnresolvedException(object sender, System.UnhandledExceptionEventArgs args) {
     DAS.Event("HockeAppManager.OnHandleUnresolvedException", "HockeAppManager.OnHandleUnresolvedException");
     #if (UNITY_IPHONE && !UNITY_EDITOR)
     if (args == null || args.ExceptionObject == null) { 
