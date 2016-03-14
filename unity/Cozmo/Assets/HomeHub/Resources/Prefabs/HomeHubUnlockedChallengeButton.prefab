@@ -246,15 +246,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _Interactable: 1
-  _DASEventButtonName: assignedByHubWorldButton
-  _DASEventViewController: assignedByTimelineView
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
   TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   _AlphaController: {fileID: 0}
-  _GlintAnimator: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11401516}
     ignoreSprite: 0
@@ -280,10 +277,11 @@ MonoBehaviour:
     pressedColor: {r: 0.63235295, g: 0.63235295, b: 0.63235295, a: 1}
     disabledSprite: {fileID: 0}
     disabledColor: {r: 1, g: 1, b: 1, a: 0.20392157}
+  _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: -1705717452
     _EventType: 5
-    _GameObjectType: 2
+    _GameObjectType: 3
 --- !u!114 &11456194
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -663,6 +661,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _DASEventButtonName
       value: assignedByHubWorldButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _UISoundEvent._GameObjectType
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

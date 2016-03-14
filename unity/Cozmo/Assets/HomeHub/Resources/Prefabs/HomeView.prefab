@@ -200,6 +200,7 @@ GameObject:
   - 224: {fileID: 22479086}
   - 222: {fileID: 22252340}
   - 114: {fileID: 11447800}
+  - 114: {fileID: 11430304}
   m_Layer: 5
   m_Name: PlayTab
   m_TagString: Untagged
@@ -255,6 +256,26 @@ MonoBehaviour:
     _Event: -1705717452
     _EventType: 6
     _GameObjectType: 2
+--- !u!114 &11430304
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 187216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -405508275, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
 --- !u!114 &11430910
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -466,7 +487,8 @@ MonoBehaviour:
   _CozmoTabButton: {fileID: 11400074}
   _PlayTabButton: {fileID: 11411434}
   _ProfileTabButton: {fileID: 11438976}
-  _DailySummaryPrefab: {fileID: 0}
+  _DailySummaryPrefab: {fileID: 11431484, guid: 208cdc22bb9974adebd14cd4d3247e61,
+    type: 2}
 --- !u!114 &11474822
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -847,7 +869,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: -1720.0001, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22493498
 RectTransform:
