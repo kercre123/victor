@@ -353,12 +353,6 @@ namespace Anki {
 
       void SendImageChunk(const RobotID_t robotID, const ImageChunk& robotImageChunk);
       
-      void SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
-                            const u16 topRight_x, const u16 topRight_y,
-                            const u16 bottomRight_x, const u16 bottomRight_y,
-                            const u16 bottomLeft_x, const u16 bottomLeft_y,
-                            bool verified);
-      
       void SendTrackerQuad(const u16 topLeft_x, const u16 topLeft_y,
                            const u16 topRight_x, const u16 topRight_y,
                            const u16 bottomRight_x, const u16 bottomRight_y,
