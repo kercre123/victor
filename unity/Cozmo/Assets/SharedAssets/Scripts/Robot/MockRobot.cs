@@ -204,6 +204,10 @@ public class MockRobot : IRobot {
     // Won't be called
   }
 
+  public void SendDiscoveredObjects(bool enable) {
+    
+  }
+
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
     // we can update our display face
     CozmoFace.DisplayProceduralFace(faceAngle, faceCenter, faceScale, leftEyeParams, rightEyeParams);

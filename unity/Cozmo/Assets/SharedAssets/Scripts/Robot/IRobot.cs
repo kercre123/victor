@@ -163,6 +163,8 @@ public interface IRobot : IDisposable {
 
   void UpdateObservedFaceInfo(G2U.RobotObservedFace message);
 
+  void SendDiscoveredObjects(bool enable);
+
   void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams);
 
   void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps);

@@ -764,6 +764,10 @@ public class Robot : IRobot {
 
   #endregion
 
+  public void DiscoveredLightCube(Anki.Cozmo.ObjectDiscovered message) {
+    
+  }
+
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
       DAS.Warn(this, "UpdateObservedObjectInfo received message about the Mat!");
@@ -815,6 +819,15 @@ public class Robot : IRobot {
     //DAS.Debug ("Robot", "saw a face at " + message.faceID);
     Face face = Faces.Find(x => x.ID == message.faceID);
     AddObservedFace(face != null ? face : null, message);
+  }
+
+  public void SendDiscoveredObjects(bool enable) {
+    // Will get a series of "Object Discovered" messages that represent blocks cozmo has "Heard" to connect to
+    G2U.SendDiscoveredObjects msg = new G2U.SendDiscoveredObjects();
+    msg.enable = enable;
+    msg.robotID = (byte)RobotEngineManager.Instance.CurrentRobotID;
+    RobotEngineManager.Instance.Message.SendDiscoveredObjects = msg;
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
