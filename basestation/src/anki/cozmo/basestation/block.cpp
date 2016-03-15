@@ -83,9 +83,9 @@ namespace Cozmo {
     
     Pose3d facePose;
     
-    const float halfWidth  = 0.5f * GetSize().y();   // y
-    const float halfHeight = 0.5f * GetSize().z();  // z
-    const float halfDepth  = 0.5f * GetSize().x();   // x
+    const float halfWidth  = 0.5f * GetSize().y();  
+    const float halfHeight = 0.5f * GetSize().z();  
+    const float halfDepth  = 0.5f * GetSize().x();
     
     // SetSize() should have been called already
     CORETECH_ASSERT(halfDepth > 0.f && halfHeight > 0.f && halfWidth > 0.f);
@@ -96,32 +96,28 @@ namespace Cozmo {
     {
       case FRONT_FACE:
         facePose = Pose3d(-M_PI_2, Z_AXIS_3D(), {{-halfDepth, 0.f, 0.f}},  &GetPose());
-        //facePose = Pose3d(0,       Z_AXIS_3D(), {{-halfDepth, 0.f, 0.f}},  &pose_);
         break;
         
       case LEFT_FACE:
-        facePose = Pose3d(M_PI, Z_AXIS_3D(), {{0.f, halfWidth, 0.f}},  &GetPose());
-        //facePose = Pose3d(-M_PI_2, Z_AXIS_3D(), {{0.f, -halfWidth, 0.f}},  &pose_);
+        facePose = Pose3d(M_PI,    Z_AXIS_3D(), {{0.f, halfWidth, 0.f}},   &GetPose());
         break;
         
       case BACK_FACE:
-        facePose = Pose3d(M_PI_2,    Z_AXIS_3D(), {{halfDepth, 0.f, 0.f}},   &GetPose());
-        //facePose = Pose3d(0,    Z_AXIS_3D(), {{halfDepth, 0.f, 0.f}},   &pose_);
+        facePose = Pose3d(M_PI_2,  Z_AXIS_3D(), {{halfDepth, 0.f, 0.f}},   &GetPose());
         break;
         
       case RIGHT_FACE:
-        facePose = Pose3d(0,  Z_AXIS_3D(), {{0.f, -halfWidth, 0.f}},   &GetPose());
-        //facePose = Pose3d(M_PI_2,  Z_AXIS_3D(), {{0.f, halfWidth, 0.f}},   &pose_);
+        facePose = Pose3d(0,       Z_AXIS_3D(), {{0.f, -halfWidth, 0.f}},  &GetPose());
         break;
         
       case TOP_FACE:
-        facePose = Pose3d(-M_PI_2,  X_AXIS_3D(), {{0.f, 0.f, halfHeight}},  &GetPose());
-        //facePose = Pose3d(M_PI_2,  Y_AXIS_3D(), {{0.f, 0.f, halfHeight}},  &pose_);
+        // Rotate -90deg around X, then -90 around Z
+        facePose = Pose3d(2.09439510, {-0.57735027, 0.57735027, -0.57735027}, {0.f, 0.f, halfHeight},  &GetPose());
         break;
         
       case BOTTOM_FACE:
-        facePose = Pose3d(M_PI_2, X_AXIS_3D(), {{0.f, 0.f, -halfHeight}}, &GetPose());
-        //facePose = Pose3d(-M_PI_2, Y_AXIS_3D(), {{0.f, 0.f, -halfHeight}}, &pose_);
+        // Rotate +90deg around X, then -90 around Z
+        facePose = Pose3d(2.09439510, {0.57735027, -0.57735027, -0.57735027}, {0.f, 0.f, -halfHeight}, &GetPose());
         break;
         
       default:

@@ -60,6 +60,12 @@ static void EMERGENCY_FIX(void) {
   NVIC_SystemReset();
 }
 
+void wiggle(void*) {
+  static int power = 0x7000;
+  Motors::setPower(MOTOR_HEAD, power);
+  power = -power;
+}
+
 int main(void)
 {
   // Initialize the SoftDevice handler module.
@@ -83,13 +89,13 @@ int main(void)
 
   // Startup the system
   Battery::powerOn();
-  
+
   //Radio::shutdown();
   //Bluetooth::advertise(); 
 
   Bluetooth::shutdown();
   Radio::advertise();
-  
+
   // Let the test fixtures run, if nessessary
   #ifdef RUN_TESTS
   TestFixtures::run();

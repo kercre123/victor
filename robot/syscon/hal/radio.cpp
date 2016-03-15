@@ -198,6 +198,12 @@ void Radio::init() {
   RTOS::setPriority(radioTask, RTOS_RADIO_PRIORITY);
   RTOS::stop(radioTask);
   RTOS::stop(radioSilenceTask);
+
+  #if 0
+  assignProp(0, 0x26);
+  assignProp(1, 0xd9);
+  assignProp(2, 0x110);
+  #endif
 }
 
 void Radio::advertise(void) {
@@ -318,7 +324,7 @@ extern "C" void uesb_event_handler(void)
     if (slot < 0) {
       ObjectDiscovered msg;
       msg.factory_id = packet.id;
-			msg.rssi = rx_payload.rssi;
+      msg.rssi = rx_payload.rssi;
       RobotInterface::SendMessage(msg);
             
       // Attempt to allocate a slot for it
@@ -395,10 +401,13 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
 }
 
 void Radio::silence(void* userdata) {
-  uesb_stop();
+  uesb_pause();
 }
 
 void Radio::manage(void* userdata) {
+  // Reenable the radio
+  uesb_resume();
+
   // Transmit to accessories round-robin
   if (++currentAccessory >= TICK_LOOP) {
     currentAccessory = 0;
@@ -434,7 +443,7 @@ void Radio::manage(void* userdata) {
         {  9, 10, 11, 15}
       };
 
-			int group = CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * currentAccessory + c;
+      int group = CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * currentAccessory + c;
       uint8_t* rgbi = Lights::state(group);
 
       for (int i = 0; i < 4; i++) {
@@ -442,7 +451,7 @@ void Radio::manage(void* userdata) {
         sum += rgbi[i] * rgbi[i];
       }
     }
-		
+
     acc->tx_state.ledDark = 0xFF - isqrt(sum);
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
@@ -451,6 +460,7 @@ void Radio::manage(void* userdata) {
       acc->active = false;
       SendObjectConnectionState(currentAccessory);
     }
+    
     send_dummy_byte();
   }
 }

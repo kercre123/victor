@@ -721,11 +721,19 @@ namespace Cozmo {
         }
         
         const Quad2f& corners = visionMarker.GetImageCorners();
-        _vizManager->SendVisionMarker(corners[Quad::TopLeft].x(),  corners[Quad::TopLeft].y(),
-                                                    corners[Quad::TopRight].x(),  corners[Quad::TopRight].y(),
-                                                    corners[Quad::BottomRight].x(),  corners[Quad::BottomRight].y(),
-                                                    corners[Quad::BottomLeft].x(),  corners[Quad::BottomLeft].y(),
-                                                    visionMarker.GetCode() != Vision::MARKER_UNKNOWN);
+        const ColorRGBA& drawColor = (visionMarker.GetCode() == Vision::MARKER_UNKNOWN ?
+                                      NamedColors::BLUE : NamedColors::RED);
+        _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
+        
+        const bool drawMarkerNames = false;
+        if(drawMarkerNames)
+        {
+          Rectangle<f32> boundingRect(corners);
+          std::string markerName(visionMarker.GetCodeName());
+          _vizManager->DrawCameraText(boundingRect.GetTopLeft(),
+                                      markerName.substr(strlen("MARKER_"),std::string::npos),
+                                      drawColor);
+        }
       }
     }
     return lastResult;

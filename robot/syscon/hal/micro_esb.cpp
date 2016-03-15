@@ -32,6 +32,7 @@ static volatile uint8_t         m_last_rx_packet_pid    = UESB_PID_RESET_VALUE;
 static volatile uint32_t        m_last_rx_packet_crc    = 0xFFFFFFFF;
 
 static uesb_mainstate_t         m_uesb_mainstate        = UESB_STATE_UNINITIALIZED;
+static bool                     m_paused;
 
 // Macros
 #define                         DISABLE_RF_IRQ      NVIC_DisableIRQ(RADIO_IRQn)
@@ -127,6 +128,7 @@ uint32_t uesb_init(const uesb_config_t *parameters)
   NVIC_SetPriority(RADIO_IRQn, m_config_local.radio_irq_priority & 0x03);
 
   m_uesb_mainstate = UESB_STATE_IDLE;
+  m_paused = false;
 
   return UESB_SUCCESS;
 }
@@ -250,7 +252,7 @@ uint32_t uesb_start() {
     
     NRF_RADIO->TASKS_TXEN  = 1;
 
-  } else if (m_rx_fifo.count < UESB_CORE_RX_FIFO_SIZE) {
+  } else if (!m_paused && m_rx_fifo.count < UESB_CORE_RX_FIFO_SIZE) {
     m_uesb_mainstate       = UESB_STATE_PRX;
     
     update_rf_payload_format(m_config_local.payload_length);
@@ -267,6 +269,16 @@ uint32_t uesb_start() {
   ENABLE_RF_IRQ;
 
   return UESB_SUCCESS;
+}
+
+void uesb_pause(void)
+{
+  m_paused = true;
+}
+
+void uesb_resume(void)
+{
+  m_paused = false;
 }
 
 uint32_t uesb_stop(void)

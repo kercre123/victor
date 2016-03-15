@@ -136,6 +136,8 @@ uint32_t uesb_disable(void);
 bool     uesb_is_idle(void);
 uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *payload, uint8_t length);
 uint32_t uesb_read_rx_payload(uesb_payload_t *payload);
+void uesb_pause(void);
+void uesb_resume(void);
 uint32_t uesb_start(void);
 uint32_t uesb_stop(void);
 uint32_t uesb_flush_tx(void);
