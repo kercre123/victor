@@ -40,7 +40,7 @@ namespace Anki {
         const f32 ENCODER_ANGLE_RES = DEG_TO_RAD(0.35f);
         
         // Motor burnout protection
-        const f32 BURNOUT_POWER_THRESH = 0.6;
+        const f32 BURNOUT_POWER_THRESH = 0.8;  // TODO: This is high. It should really be closer to 0.5.
         const u32 BURNOUT_TIME_THRESH_MS = 2000.f;
 
         // Initialized in Init()
@@ -469,7 +469,7 @@ namespace Anki {
             Disable(true);
             return true;
           } else {
-            AnkiWarn( 16, "LiftController", 150, "burnout protection triggered. Recalibrating.", 0);
+            AnkiWarn( 16, "LiftController", 150, "burnout protection triggered (power = %f). Recalibrating.", 1, power_);
             StartCalibrationRoutine();
             return true;
           }
