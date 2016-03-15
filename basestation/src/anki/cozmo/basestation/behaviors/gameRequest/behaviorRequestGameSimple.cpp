@@ -53,7 +53,9 @@ static const float kFaceVerificationTime_s = 0.75f;
 static const float kDriveToPlacePoseThreshold_mmDefault = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
 static const float kDriveToPlacePoseThreshold_radsDefault = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
 
-#define kDistToMoveTowardsFace_mm {120.0f, 100.0f, 140.0f, 50.0f, 180.0f, 20.0f}
+// #define kDistToMoveTowardsFace_mm {120.0f, 100.0f, 140.0f, 50.0f, 180.0f, 20.0f}
+// to avoid cliff issues, we're only going to move slightly forwards
+#define kDistToMoveTowardsFace_mm {20.0f}
 
 // need to be as far away as the size of the robot + 2 blocks + padding
 static const float kSafeDistSqFromObstacle_mm = SQUARE(100);
