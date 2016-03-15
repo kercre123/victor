@@ -53,11 +53,14 @@ public abstract class GameBase : MonoBehaviour {
 
   public List<LightCube> CubesForGame;
 
-  private Dictionary<LightCube, CycleData> _CubeCycleTimers;
+  private Dictionary<int, CycleData> _CubeCycleTimers;
 
   private class CycleData {
+    public int cubeID;
     public float timeElaspedSeconds;
     public float cycleIntervalSeconds;
+    public Color[] cycleColors;
+    public int colorIndex;
   }
 
   #region Initialization
@@ -71,7 +74,7 @@ public abstract class GameBase : MonoBehaviour {
 
     RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
 
-    _CubeCycleTimers = new Dictionary<LightCube, CycleData>();
+    _CubeCycleTimers = new Dictionary<int, CycleData>();
   }
 
   private void FinishTurnToFace(bool success) {
@@ -346,8 +349,9 @@ public abstract class GameBase : MonoBehaviour {
 
   #region LightCubes
 
-  public void StartCycleCube(LightCube cube, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
+  public void StartCycleCube(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
     // Set colors
+    LightCube cube = CurrentRobot.LightCubes[cubeID];
     int colorIndex = 0;
     for (int i = 0; i < cube.Lights.Length; i++) {
       colorIndex = i % lightColorsCounterclockwise.Length;
@@ -356,41 +360,47 @@ public abstract class GameBase : MonoBehaviour {
 
     // Set up timing data
     CycleData data = new CycleData();
+    data.cubeID = cubeID;
     data.cycleIntervalSeconds = cycleIntervalSeconds;
-    data.timeElaspedSeconds = 0;
-    if (_CubeCycleTimers.ContainsKey(cube)) {
-      _CubeCycleTimers[cube] = data;
+    data.timeElaspedSeconds = 0f;
+    data.colorIndex = 0;
+    data.cycleColors = lightColorsCounterclockwise;
+    if (_CubeCycleTimers.ContainsKey(cube.ID)) {
+      _CubeCycleTimers[cube.ID] = data;
     }
     else {
-      _CubeCycleTimers.Add(cube, data);
+      _CubeCycleTimers.Add(cube.ID, data);
     }
   }
 
-  public void StopCycleCube(LightCube cube) {
-    _CubeCycleTimers.Remove(cube);
+  public void StopCycleCube(int cubeID) {
+    LightCube cube = CurrentRobot.LightCubes[cubeID];
+    if (_CubeCycleTimers.ContainsKey(cube.ID)) {
+      _CubeCycleTimers.Remove(cube.ID);
+    }
   }
 
   private void UpdateCubeCycleLights() {
-    foreach (KeyValuePair<LightCube,CycleData> kvp in _CubeCycleTimers) {
+    foreach (KeyValuePair<int,CycleData> kvp in _CubeCycleTimers) {
       kvp.Value.timeElaspedSeconds += Time.deltaTime;
 
       if (kvp.Value.timeElaspedSeconds > kvp.Value.cycleIntervalSeconds) {
-        SpinLightsCounterclockwise(kvp.Key);
+        CycleLightsClockwise(kvp.Value);
         kvp.Value.timeElaspedSeconds %= kvp.Value.cycleIntervalSeconds;
       }
     }
   }
 
-  public void SpinLightsCounterclockwise(LightCube cube) {
-    uint color_0 = cube.Lights[3].OnColor;
-    uint color_1 = cube.Lights[0].OnColor;
-    uint color_2 = cube.Lights[1].OnColor;
-    uint color_3 = cube.Lights[2].OnColor;
-
-    cube.Lights[0].OnColor = color_0;
-    cube.Lights[1].OnColor = color_1;
-    cube.Lights[2].OnColor = color_2;
-    cube.Lights[3].OnColor = color_3;
+  private void CycleLightsClockwise(CycleData data) {
+    LightCube cube = CurrentRobot.LightCubes[data.cubeID];
+    data.colorIndex++;
+    data.colorIndex %= data.cycleColors.Length;
+    int colorIndex = 0;
+    for (int i = 0; i < cube.Lights.Length; i++) {
+      colorIndex = (data.colorIndex + i) % data.cycleColors.Length;
+      cube.Lights[i].OnColor = data.cycleColors[colorIndex].ToUInt();
+      cube.Lights[i].OnPeriodMs = LightCube.Light.FOREVER;
+    }
   }
 
   #endregion

@@ -257,6 +257,11 @@ namespace Cozmo {
         }
       }
 
+      public void HideCozmoScoreboard() {
+        HideWidget(_CozmoScoreWidgetInstance);
+        _CozmoScoreWidgetInstance = null;
+      }
+
       public ScoreWidget PlayerScoreboard {
         get {
           if (_PlayerScoreWidgetInstance == null) {
@@ -265,6 +270,11 @@ namespace Cozmo {
           }
           return _PlayerScoreWidgetInstance;
         }
+      }
+
+      public void HidePlayerScoreboard() {
+        HideWidget(_PlayerScoreWidgetInstance);
+        _PlayerScoreWidgetInstance = null;
       }
 
       private ScoreWidget CreateScoreWidget(RectTransform widgetParent, float animationOffset,
@@ -400,6 +410,8 @@ namespace Cozmo {
       public GameObject ShowWideGameStateSlide(GameObject prefab, string slideKey) {
         InfoTitleText = null;
         HideGameStateSlide();
+        HidePlayerScoreboard();
+        HideCozmoScoreboard();
         return ShowGameStateSlide(slideKey, prefab, _WideGameSlideContainer);
       }
 
