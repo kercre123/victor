@@ -833,25 +833,6 @@ namespace Anki {
     } // SendImage()
 */
 
-    void VizManager::SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
-                                      const u16 topRight_x, const u16 topRight_y,
-                                      const u16 bottomRight_x, const u16 bottomRight_y,
-                                      const u16 bottomLeft_x, const u16 bottomLeft_y,
-                                      bool verified)
-    {
-      VizInterface::VisionMarker v;
-      v.topLeft_x = topLeft_x;
-      v.topLeft_y = topLeft_y;
-      v.topRight_x = topRight_x;
-      v.topRight_y = topRight_y;
-      v.bottomRight_x = bottomRight_x;
-      v.bottomRight_y = bottomRight_y;
-      v.bottomLeft_x = bottomLeft_x;
-      v.bottomLeft_y = bottomLeft_y;
-      v.verified = static_cast<u8>(verified);
-      SendMessage(VizInterface::MessageViz(std::move(v)));
-    }
-
     void VizManager::SendTrackerQuad(const u16 topLeft_x, const u16 topLeft_y,
                                      const u16 topRight_x, const u16 topRight_y,
                                      const u16 bottomRight_x, const u16 bottomRight_y,
