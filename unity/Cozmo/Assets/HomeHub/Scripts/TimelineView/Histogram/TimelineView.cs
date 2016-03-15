@@ -248,7 +248,7 @@ namespace Cozmo.HomeHub {
         if (currentSession.GoalsFinished == false &&
             DailyGoalManager.Instance.AreAllDailyGoalsComplete(currentSession.Progress, currentSession.Goals)) {
           currentSession.GoalsFinished = true;
-          Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
         }
       }
       else {
