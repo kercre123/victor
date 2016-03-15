@@ -78,11 +78,14 @@ protected:
   bool HasFace(const Robot& robot) const;
   bool GetFacePose(const Robot& robot, Pose3d& facePose) const;
 
+  virtual void HandleCliffEvent(Robot& robot, const EngineToGameEvent& event) {};
+
   // --------------------------------------------------------------------------------
   // Functions from IBehavior which aren't exposed to children
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) final override;
   virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) final override;
+  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) final override;
 
   f32        _requestTime_s = -1.0f;
 private:

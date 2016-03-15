@@ -137,9 +137,9 @@ namespace Cozmo {
     // hack: keep track of this so we don't delete the demo chooser if it was already running
     _demoBehaviorChooserRunning = true;
     
-    BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+    // BehaviorFactory& behaviorFactory = GetBehaviorFactory();
     // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
-    AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
+    // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
     // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
 
     chooser->InitEnabledBehaviors(config);

@@ -44,6 +44,8 @@ static const char* kPlaceMotionProfileKey = "place_motion_profile";
 static const char* kDriveToPlacePoseThreshold_mmKey = "place_position_threshold_mm";
 static const char* kDriveToPlacePoseThreshold_radsKey = "place_position_threshold_rads";
 
+static const char* kCliffReactAnimName = "anim_VS_loco_cliffReact";
+
 static const float kMinRequestDelayDefault = 5.0f;
 static const float kAfterPlaceBackupDistance_mmDefault = 80.0f;
 static const float kAfterPlaceBackupSpeed_mmpsDefault = 80.0f;
@@ -51,7 +53,9 @@ static const float kFaceVerificationTime_s = 0.75f;
 static const float kDriveToPlacePoseThreshold_mmDefault = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
 static const float kDriveToPlacePoseThreshold_radsDefault = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
 
-#define kDistToMoveTowardsFace_mm {120.0f, 100.0f, 140.0f, 50.0f, 180.0f, 20.0f}
+// #define kDistToMoveTowardsFace_mm {120.0f, 100.0f, 140.0f, 50.0f, 180.0f, 20.0f}
+// to avoid cliff issues, we're only going to move slightly forwards
+#define kDistToMoveTowardsFace_mm {20.0f}
 
 // need to be as far away as the size of the robot + 2 blocks + padding
 static const float kSafeDistSqFromObstacle_mm = SQUARE(100);
@@ -94,6 +98,8 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
     _afterPlaceBackupSpeed_mmps = config.get(kAfterPlaceBackupSpeed_mmpsKey,
                                              kAfterPlaceBackupSpeed_mmpsDefault).asFloat();
   }
+
+  SubscribeToTags({EngineToGameTag::CliffEvent});
 }
 
 Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
@@ -120,7 +126,7 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
       TransitionToPlayingInitialAnimation(robot);
     }
   }
-
+  
   return RESULT_OK;
 }
 
@@ -135,7 +141,7 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
       TransitionToFacingBlock(robot);
     }
   }
-
+  
   if( _state == State::TrackingFace &&
       GetRequestMinDelayComplete_s() >= 0.0f &&
       currentTime_sec >= GetRequestMinDelayComplete_s() ) {
@@ -144,11 +150,11 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
     SendDeny(robot);
     TransitionToPlayingDenyAnim(robot);
   }
-    
+
   if( IsActing() ) {
     return Status::Running;
   }
-
+  
   PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.Complete", "no current actions, so finishing");
 
   return Status::Complete;
@@ -156,6 +162,10 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
 
 Result BehaviorRequestGameSimple::InterruptInternal(Robot& robot, double currentTime_sec)
 {
+  if( _state == State::HandlingCliff ) {
+    return Result::RESULT_FAIL;
+  }
+  
   StopInternal(robot, currentTime_sec);
   StopActing(false);
   
@@ -175,7 +185,7 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot, double currentTime_se
     // action is can canceled automatically by IBehavior
   }
 
-  // don't use transition to because we don't want to do anything
+  // don't use transition to because we don't want to do anything.
   _state = State::PlayingInitialAnimation;
 
   if( _shouldPopIdle ) {
@@ -186,6 +196,10 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot, double currentTime_se
 
 float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
 {
+  if( _state == State::HandlingCliff ) {
+    return 1.0f;
+  }
+  
   // NOTE: can't use _activeConfig because we haven't been Init'd yet  
   float score = IBehavior::EvaluateScoreInternal(robot, currentTime_sec);
   if( GetNumBlocks(robot) == 0 ) {
@@ -454,6 +468,22 @@ void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
   SET_STATE(State::PlayingDenyAnim);
 }
 
+void BehaviorRequestGameSimple::TransitionToHandlingCliff(Robot& robot)
+{
+  // cancel any other action when we enter this state
+  StopActing(false);
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  action->AddAction(new PlayAnimationAction(robot, kCliffReactAnimName));
+  if( robot.IsCarryingObject() ) {
+    action->AddAction(new PlaceObjectOnGroundAction(robot));
+  }
+
+  // after action is complete, let the behavior end, resetting the state
+  StartActing( action , [this]() { SET_STATE(State::PlayingInitialAnimation); });
+
+  SET_STATE(State::HandlingCliff);
+}
+
 void BehaviorRequestGameSimple::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;
@@ -552,6 +582,15 @@ f32 BehaviorRequestGameSimple::GetRequestMinDelayComplete_s() const
   }
   
   return _requestTime_s + minRequestDelay;
+}
+
+void BehaviorRequestGameSimple::HandleCliffEvent(Robot& robot, const EngineToGameEvent& event)
+{
+  if( event.GetData().Get_CliffEvent().detected ) {
+    PRINT_NAMED_INFO("BehaviorRequestGameSimple.Cliff",
+                     "handling cliff event");
+    TransitionToHandlingCliff(robot);
+  }
 }
 
 }
