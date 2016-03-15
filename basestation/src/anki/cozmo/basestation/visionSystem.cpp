@@ -2338,8 +2338,8 @@ namespace Cozmo {
     // Center points of the calibration dots, in lift coordinate frame
     // TODO: Move these to be defined elsewhere
     const std::vector<Point3f> toolCodeDotsWrtLift = {
-      {1.f, -10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
-      {1.f,  10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
+      {1.5f, -10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
+      {1.5f,  10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
     };
     
     const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.poseStamp.GetPose(), "RobotLiftBase");
@@ -2410,6 +2410,17 @@ namespace Cozmo {
         liftPose.GetWithRespectToOrigin().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
         dotQuadRoi3dWrtWorld += Point3f(0,0,0.5f);
         _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324+(u32)iDot, dotQuadRoi3dWrtWorld, NamedColors::RED);
+        
+        Quad3f dotQuad3d = {
+          {dotWrtLift3d.x() - kDotWidth_mm*0.5f, dotWrtLift3d.y() - kDotWidth_mm*0.5f, dotWrtLift3d.z()},
+          {dotWrtLift3d.x() - kDotWidth_mm*0.5f, dotWrtLift3d.y() + kDotWidth_mm*0.5f, dotWrtLift3d.z()},
+          {dotWrtLift3d.x() + kDotWidth_mm*0.5f, dotWrtLift3d.y() - kDotWidth_mm*0.5f, dotWrtLift3d.z()},
+          {dotWrtLift3d.x() + kDotWidth_mm*0.5f, dotWrtLift3d.y() + kDotWidth_mm*0.5f, dotWrtLift3d.z()},
+        };
+        Quad3f dotQuadWrtWorld;
+        liftPose.GetWithRespectToOrigin().ApplyTo(dotQuad3d, dotQuadWrtWorld);
+        dotQuadWrtWorld += Point3f(0,0,0.5f);
+        _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9337+(u32)iDot, dotQuadWrtWorld, NamedColors::GREEN);
       }
       
       Quad2f dotQuadRoi2d;
