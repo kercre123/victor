@@ -30,7 +30,8 @@ namespace Radio {
   void assignProp(unsigned int slot, uint32_t accessory);
 
   void prepare(void* userdata);
-  void resume(void* userdata = NULL);
+  void resume(void* userdata);
+  void manage();
 }
 
 #endif

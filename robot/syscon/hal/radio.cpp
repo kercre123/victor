@@ -109,8 +109,6 @@ extern GlobalDataToBody g_dataToBody;
 
 // Current status values of cubes/chargers
 static RadioState        radioState;
-static RTOS_Task*        radioPrepareTask;
-static RTOS_Task*        radioResumeTask;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -188,16 +186,6 @@ void Radio::init() {
     accessories[i].address = TalkingAddress;
     createAddress(accessories[i].address);
   }
-
-  // Start the radio stack
-  radioPrepareTask = RTOS::schedule(prepare, SCHEDULE_PERIOD);
-  radioResumeTask = RTOS::schedule(resume, SCHEDULE_PERIOD);
-
-  RTOS::stop(radioPrepareTask);
-  RTOS::stop(radioResumeTask);
-  
-  RTOS::setPriority(radioPrepareTask, RTOS_RADIO_PRIORITY);
-  RTOS::setPriority(radioResumeTask, RTOS_RADIO_PRIORITY);
 }
 
 void Radio::advertise(void) {
@@ -211,20 +199,10 @@ void Radio::advertise(void) {
   };
 
   uesb_init(&uesb_config);
-
-  // Resume our tasks
-  RTOS::start(radioResumeTask);
-  RTOS::start(radioPrepareTask);
-
-  // This creates a quiet period for the radio to reduce jitter
-  RTOS::delay(radioResumeTask, SILENCE_PERIOD);
 }
 
 void Radio::shutdown(void) {
   uesb_stop();
-
-  RTOS::stop(radioPrepareTask);
-  RTOS::stop(radioResumeTask);
 }
 
 static int LocateAccessory(uint32_t id) {
@@ -389,6 +367,8 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   acc->active = false;
 }
 
+static int next_timer = 0;
+
 void Radio::prepare(void* userdata) {
   uesb_stop();
 
@@ -454,4 +434,21 @@ void Radio::prepare(void* userdata) {
 void Radio::resume(void* userdata) {
   // Reenable the radio
   uesb_start();
+}
+
+// THIS IS A TEMPORARY HACK AND I HATE IT
+void Radio::manage(void) {
+  static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
+  static int next_resume  = next_prepare + SILENCE_PERIOD;
+  int count = GetCounter();
+
+  if (next_prepare <= count) {
+    prepare(NULL);
+    next_prepare += SCHEDULE_PERIOD;
+  }
+  
+  if (next_resume <= count) {
+    resume(NULL);
+    next_resume += SCHEDULE_PERIOD;
+  }
 }
