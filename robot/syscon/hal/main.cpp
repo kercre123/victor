@@ -103,6 +103,9 @@ int main(void)
   Head::init();
   #endif
 
+  // THIS IS ONLY HERE FOR DEVELOPMENT PURPOSES
+  Bootloader::init();
+  
   Timer::start();
 
   // Run forever, because we are awesome.

@@ -16,18 +16,6 @@ static inline void startADCsample(AnalogInput channel)
 
 void Battery::init()
 {
-  // Enable charger
-  nrf_gpio_pin_set(PIN_CHARGE_EN);
-  nrf_gpio_cfg_output(PIN_CHARGE_EN);
- 
-  // Syscon power - this should always be on until battery fail
-  nrf_gpio_pin_set(PIN_PWR_EN);
-  nrf_gpio_cfg_output(PIN_PWR_EN);
-
-  // Encoder and headboard power
-  nrf_gpio_pin_set(PIN_VDDs_EN);
-  nrf_gpio_cfg_output(PIN_VDDs_EN);
-
   // Configure the analog sense pins
   nrf_gpio_cfg_input(PIN_V_EXT_SENSE, NRF_GPIO_PIN_PULLUP);
 
@@ -43,23 +31,49 @@ void Battery::init()
   NRF_ADC->ENABLE = ADC_ENABLE_ENABLE_Enabled;
 
   startADCsample(ANALOG_V_EXT_SENSE);
+
+  // Wait for cozmo to sit on a charger
+  while (Battery::read() < VEXT_CONTACT_LEVEL) ;
+}
+
+void Battery::powerOn() {
+  // Enable charger
+  nrf_gpio_pin_set(PIN_CHARGE_EN);
+  nrf_gpio_cfg_output(PIN_CHARGE_EN);
+ 
+  // Syscon power - this should always be on until battery fail
+  nrf_gpio_pin_set(PIN_PWR_EN);
+  nrf_gpio_cfg_output(PIN_PWR_EN);
+
+  // Encoder and headboard power
+  nrf_gpio_pin_set(PIN_VDDs_EN);
+  nrf_gpio_cfg_output(PIN_VDDs_EN);
+}
+
+int32_t Battery::read(void) {
+  while (!NRF_ADC->EVENTS_END) ;
+  NRF_ADC->EVENTS_END = 0;
+  NRF_ADC->TASKS_STOP = 1;
+  
+  uint32_t value = NRF_ADC->RESULT;
+
+  startADCsample(ANALOG_V_EXT_SENSE);
+  int32_t temp = VEXT_CONTACT_LEVEL;
+
+  return value;
 }
 
 void Battery::manage(void) {
-  if (!NRF_ADC->EVENTS_END) return ;
-
   static int ground_short = 0;
-  uint32_t raw = NRF_ADC->RESULT;
-
-  if (raw < 0x30) {
+  
+  int32_t value = read();
+    
+  if (value < 0x30) {
     // Wait a full 5 seconds in recovery mode before rebooting
     if (ground_short++ >= 5) {
-      NVIC_SystemReset();
+      //NVIC_SystemReset();
     }
   } else {
     ground_short = 0;
   }
-
-  startADCsample(ANALOG_V_EXT_SENSE);
 }
-
