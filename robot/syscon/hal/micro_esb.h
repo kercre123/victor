@@ -133,18 +133,14 @@ struct uesb_payload_fifo_t
 
 uint32_t uesb_init(const uesb_config_t *parameters);
 uint32_t uesb_disable(void);
-bool     uesb_is_idle(void);
 uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *payload, uint8_t length);
 uint32_t uesb_read_rx_payload(uesb_payload_t *payload);
 void uesb_pause(void);
 void uesb_resume(void);
 uint32_t uesb_start(void);
 uint32_t uesb_stop(void);
-uint32_t uesb_flush_tx(void);
-uint32_t uesb_flush_rx(void);
 uint32_t uesb_get_clear_interrupts(void);
 uint32_t uesb_set_rx_address(const uesb_address_desc_t *addr);
-uint32_t uesb_set_tx_power(uesb_tx_power_t tx_output_power);
 extern "C" void uesb_event_handler(void);
 
 #endif

@@ -294,28 +294,6 @@ uint32_t uesb_stop(void)
   return UESB_SUCCESS;
 }
 
-uint32_t uesb_flush_tx(void)
-{
-  if(m_uesb_mainstate != UESB_STATE_IDLE) return UESB_ERROR_NOT_IDLE;
-  DISABLE_RF_IRQ;
-  m_tx_fifo.count = 0;
-  m_tx_fifo.entry_point = m_tx_fifo.exit_point = 0;
-  ENABLE_RF_IRQ;
-
-  return UESB_SUCCESS;
-}
-
-uint32_t uesb_flush_rx(void)
-{
-  DISABLE_RF_IRQ;
-  m_rx_fifo.count = 0;
-  m_last_rx_packet_pid = UESB_PID_RESET_VALUE;
-  m_rx_fifo.entry_point = m_rx_fifo.exit_point = 0;
-  ENABLE_RF_IRQ;
-
-  return UESB_SUCCESS;
-}
-
 uint32_t uesb_get_clear_interrupts(void)
 {
   DISABLE_RF_IRQ;
@@ -329,18 +307,6 @@ uint32_t uesb_get_clear_interrupts(void)
 uint32_t uesb_set_rx_address(const uesb_address_desc_t *addr)
 {
   memcpy(&m_config_local.rx_address, addr, sizeof(uesb_address_desc_t));
-  
-  return UESB_SUCCESS;
-}
-
-uint32_t uesb_set_tx_power(uesb_tx_power_t tx_output_power)
-{
-  if(m_uesb_mainstate != UESB_STATE_IDLE) return UESB_ERROR_NOT_IDLE;
-  
-  if ( m_config_local.tx_output_power == tx_output_power ) return UESB_SUCCESS;
-  m_config_local.tx_output_power = tx_output_power;
-  
-  update_radio_parameters();
   
   return UESB_SUCCESS;
 }
