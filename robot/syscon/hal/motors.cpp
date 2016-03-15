@@ -502,50 +502,6 @@ s32 Motors::debugWheelsGetTicks(u8 motorID)
                                 | (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos) \
                                 | (GPIO_PIN_CNF_DIR_Input << GPIO_PIN_CNF_DIR_Pos)
 
-// TODO: This should be optimized
-#if 0
-static void HandlePinTransition(MotorInfo* motorInfo, u32 pinState, u32 count)
-{
-  u32 pin = motorInfo->encoderPins[0];
-  u32 mask = 1 << pin;
-  
-  u32 transition = (pinState ^ m_lastState) & mask;
-  
-  // Toggle the sense level (for whack-a-mole)
-  if (transition)
-  {
-    // Check for high to low transition and invert the sensing
-    if (!(pinState & mask))
-    {
-      // NOTE: Using this edge because of the orientation of the encoder.
-      // If the encoder was rotated 180 degrees, then the other edge should be used.
-      fast_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_SENSE_HIGH);
-      
-      if (1) // && (count - motorInfo->count) > DEBOUNCE_COUNT)
-      {
-        motorInfo->count = count;
-        u32 pin2 = motorInfo->encoderPins[1];
-        
-        if (pin2 != ENCODER_NONE)
-        {
-          // Check quadrature encoder state for forward vs backward
-          if (pinState & (1 << pin2))
-            motorInfo->position += ABS(motorInfo->unitsPerTick);
-          else
-            motorInfo->position -= ABS(motorInfo->unitsPerTick);
-        } else {
-          motorInfo->position += motorInfo->unitsPerTick;
-        }
-      }
-      
-    } else {
-      // Handle low to high transition
-      fast_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_SENSE_LOW);
-    }
-  }
-}
-#endif
-
 void Motors::printEncoder(u8 motorID) // XXX: wheels are in encoder ticks, not meters
 {
   int i = m_motors[motorID].position;

@@ -60,6 +60,12 @@ static void EMERGENCY_FIX(void) {
   NVIC_SystemReset();
 }
 
+void wiggle(void*) {
+  static int power = 0x7000;
+  Motors::setPower(MOTOR_HEAD, power);
+  power = -power;
+}
+
 int main(void)
 {
   // Initialize the SoftDevice handler module.

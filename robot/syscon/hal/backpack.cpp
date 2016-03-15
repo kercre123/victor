@@ -52,10 +52,6 @@ void Backpack::init()
 }
 
 void Backpack::update(void) {
-  // Only do backpack lights 50% of the time.
-  static bool duty;
-  if (duty = !duty) return ;
-  
   static uint8_t pwm[numLights];
 
   // Blacken everything out
