@@ -31,6 +31,7 @@ class TopicPrinter:
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="topic",
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('-l', '--list', action='store_true', help="List available topics and exit")
     parser.add_argument('-a', '--all', action='store_true', help="Print all messages")
     parser.add_argument('--no-sync',   action='store_true', help="Do not send sync time message to robot on startup.")
     parser.add_argument('--sync-time', default=0, type=int, help="Manually specify sync time offset")
@@ -38,6 +39,16 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--port', default=5551, type=int, help="Manually specify robot's port")
     parser.add_argument('tags', nargs='*', help="The tags to subscribe to")
     args = parser.parse_args()
+
+    if args.list:
+        sys.stdout.write("Available topics:")
+        sys.stdout.write(os.linesep)
+        topics = list(robotInterface.RI.RobotToEngine._tags_by_name.keys())
+        topics.sort()
+        for n in topics:
+            sys.stdout.write(n)
+            sys.stdout.write(os.linesep)
+        sys.exit()
 
     robotInterface.Init()
     robotInterface.Connect(dest=(args.ip_address, args.port), syncTime = None if args.no_sync else args.sync_time)
