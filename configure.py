@@ -263,7 +263,7 @@ def parse_engine_arguments():
         ArgumentParser.Command('wipeall!', 'delete, then wipe all ignored files in the entire repo (including generated projects)')]
     parser.add_command_arguments(commands)
       
-    platforms = ['mac', 'ios', 'linux']
+    platforms = ['mac', 'ios', 'linux', 'android']
     default_platforms = ['mac']
     parser.add_platform_arguments(platforms, default_platforms)
     
@@ -352,7 +352,12 @@ class EnginePlatformConfiguration(object):
         self.platform_build_dir = os.path.join(options.build_dir, self.platform)
         self.platform_output_dir = os.path.join(options.output_dir, self.platform)
         
-        self.project_name = 'cozmoEngine.xcodeproj'
+        if self.options.verbose:
+            print("initializing {0}".format(self.platform))
+        if self.platform != 'android':
+            self.project_name = 'cozmoEngine.xcodeproj'
+        else:
+            self.project_name = 'Android.mk'
         self.project_path = os.path.join(self.platform_output_dir, self.project_name)
         self.derived_data_dir = os.path.join(self.platform_build_dir, 'derived-data')
     
@@ -386,7 +391,7 @@ class EnginePlatformConfiguration(object):
                 buildaction = 'clean'
             else:
                 buildaction = 'build'
-            
+
             ankibuild.xcode.build(
                 buildaction=buildaction,
                 project=self.project_path,
@@ -394,7 +399,7 @@ class EnginePlatformConfiguration(object):
                 platform=self.platform,
                 configuration=self.options.configuration,
                 simulator=self.options.simulator)
-    
+
     def delete(self):
         if self.options.verbose:
             print_status('Deleting generated files for platform {0}...'.format(self.platform))
