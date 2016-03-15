@@ -70,9 +70,9 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private AnkiButton _EndSessionButton;
 
-    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
+    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
 
-    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -289,8 +289,6 @@ namespace Cozmo.HomeHub {
             });
         }
       }
-
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
 
       ShowDailySessionPanel(timelineEntry, HandleOnFriendshipBarAnimateComplete);
     }
