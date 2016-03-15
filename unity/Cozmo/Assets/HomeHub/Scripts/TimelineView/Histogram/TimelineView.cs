@@ -70,9 +70,9 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private AnkiButton _EndSessionButton;
 
-    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
+    public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
 
-    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -244,6 +244,12 @@ namespace Cozmo.HomeHub {
       // check if the current session is still valid
       if (currentSession != null) {  
         _DailyGoalInstance.SetDailyGoals(currentSession.Progress, currentSession.Goals, rewardIcons);
+
+        if (currentSession.GoalsFinished == false &&
+            DailyGoalManager.Instance.AreAllDailyGoalsComplete(currentSession.Progress, currentSession.Goals)) {
+          currentSession.GoalsFinished = true;
+          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
+        }
       }
       else {
         var lastSession = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
@@ -289,8 +295,6 @@ namespace Cozmo.HomeHub {
             });
         }
       }
-
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
 
       ShowDailySessionPanel(timelineEntry, HandleOnFriendshipBarAnimateComplete);
     }

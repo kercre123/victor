@@ -89,7 +89,6 @@ public abstract class GameBase : MonoBehaviour {
 
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameStart);
 
   }
 
@@ -132,11 +131,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void OnDestroy() {
     DAS.Event(DASConstants.Game.kEnd, GetGameTimeElapsedAsStr());
-    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameEnd);
 
-    if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(EndGameRobotReset);
-    }
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
@@ -146,6 +141,9 @@ public abstract class GameBase : MonoBehaviour {
 
   public void CloseMinigameImmediately() {
     DAS.Info(this, "Close Minigame Immediately");
+    if (CurrentRobot != null) {
+      CurrentRobot.ResetRobotState(EndGameRobotReset);
+    }
     CleanUpOnDestroy();
     Destroy(gameObject);
   }
@@ -158,9 +156,6 @@ public abstract class GameBase : MonoBehaviour {
     CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
     // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
     CurrentRobot.SetEnableCliffSensor(true);
-    // Disable all Request game behavior groups while in this view, Timeline View will handle renabling these
-    // if appropriate.
-    DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
   }
 
   #endregion
@@ -268,6 +263,9 @@ public abstract class GameBase : MonoBehaviour {
 
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(EndGameRobotReset);
+      // Disable all Request game behavior groups while in this view, Timeline View will handle renabling these
+      // if appropriate.
+      DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
     }
 
     // Listen for dialog close
@@ -312,6 +310,7 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     SendEventForRewards(_RewardedXp);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameEnd);
 
     // Close minigame UI
     CloseMinigameImmediately();
