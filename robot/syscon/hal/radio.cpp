@@ -112,8 +112,8 @@ extern GlobalDataToBody g_dataToBody;
 
 // Current status values of cubes/chargers
 static RadioState        radioState;
-static RTOS_Task*        radioTask;
-static RTOS_Task*        radioSilenceTask;
+static RTOS_Task*        radioPrepareTask;
+static RTOS_Task*        radioResumeTask;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -193,11 +193,14 @@ void Radio::init() {
   }
 
   // Start the radio stack
-  radioTask = RTOS::schedule(manage, SCHEDULE_PERIOD);
-  radioSilenceTask = RTOS::schedule(silence, SCHEDULE_PERIOD);
-  RTOS::setPriority(radioTask, RTOS_RADIO_PRIORITY);
-  RTOS::stop(radioTask);
-  RTOS::stop(radioSilenceTask);
+  radioPrepareTask = RTOS::schedule(prepare, SCHEDULE_PERIOD);
+  radioResumeTask = RTOS::schedule(resume, SCHEDULE_PERIOD);
+
+  RTOS::stop(radioPrepareTask);
+  RTOS::stop(radioResumeTask);
+  
+  RTOS::setPriority(radioPrepareTask, RTOS_RADIO_PRIORITY);
+  RTOS::setPriority(radioResumeTask, RTOS_RADIO_PRIORITY);
 
   #if 0
   assignProp(0, 0x26);
@@ -220,16 +223,19 @@ void Radio::advertise(void) {
   EnterState(RADIO_PAIRING);
   uesb_start();
 
-  RTOS::start(radioTask);
+  // Resume our tasks
+  RTOS::start(radioResumeTask);
+  RTOS::start(radioPrepareTask);
 
   // This creates a quiet period for the radio to reduce jitter
-  RTOS::start(radioSilenceTask);
-  RTOS::delay(radioSilenceTask, SCHEDULE_PERIOD - SILENCE_PERIOD);
+  RTOS::delay(radioPrepareTask, SCHEDULE_PERIOD - SILENCE_PERIOD);
 }
 
 void Radio::shutdown(void) {
   uesb_stop();
-  RTOS::stop(radioTask);
+
+  RTOS::stop(radioPrepareTask);
+  RTOS::stop(radioResumeTask);
 }
 
 static int LocateAccessory(uint32_t id) {
@@ -262,12 +268,6 @@ static void EnterState(RadioState state) {
       uesb_set_rx_address(&accessories[currentAccessory].address);
       break ;
   }
-}
-
-static void send_dummy_byte(void) {
-  // This just send garbage and return to pairing mode when finished
-  EnterState(RADIO_PAIRING);
-  uesb_write_tx_payload(&accessories[currentAccessory].address, 1, NULL, 0);
 }
 
 static void send_capture_packet(void* userdata) {
@@ -374,7 +374,7 @@ void uesb_event_handler(uint32_t flags)
     msg.shockCount = ap->shockCount;
     RobotInterface::SendMessage(msg);
 
-    send_dummy_byte();
+    EnterState(RADIO_PAIRING);
     break ;
   }
 }
@@ -400,13 +400,8 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   acc->active = false;
 }
 
-void Radio::silence(void* userdata) {
-  uesb_pause();
-}
-
-void Radio::manage(void* userdata) {
-  // Reenable the radio
-  uesb_resume();
+void Radio::prepare(void* userdata) {
+  uesb_stop();
 
   // Transmit to accessories round-robin
   if (++currentAccessory >= TICK_LOOP) {
@@ -424,7 +419,7 @@ void Radio::manage(void* userdata) {
     // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
     memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
-    uesb_write_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
+    uesb_prepare_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
 
     #ifdef CHANNEL_HOP
     // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
@@ -461,6 +456,24 @@ void Radio::manage(void* userdata) {
       SendObjectConnectionState(currentAccessory);
     }
     
-    send_dummy_byte();
+    // This just send garbage and return to pairing mode when finished
+    EnterState(RADIO_PAIRING);
+    uesb_prepare_tx_payload(&accessories[currentAccessory].address, 1, NULL, 0);
   }
+}
+
+void Radio::resume(void* userdata) {
+  static bool toggle = false;
+  toggle = !toggle;
+
+  nrf_gpio_cfg_output(PIN_LED4);
+  
+  if (toggle) {
+    nrf_gpio_pin_set(PIN_LED4);
+  } else {
+    nrf_gpio_pin_clear(PIN_LED4);
+  }
+
+  // Reenable the radio
+  uesb_start();
 }
