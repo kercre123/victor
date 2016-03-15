@@ -141,7 +141,7 @@ void Lights::init() {
   
   // Set our default light state
   memset(&state, 0, sizeof(state));
-
+  
   for (int i = 0; i < TOTAL_LIGHTS; i++) {
     update(i, &state);
   }

@@ -37,6 +37,25 @@ __attribute((at(0x20003FFC))) static uint32_t MAGIC_LOCATION = 0;
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
+extern "C" void HardFault_Handler(void) {
+  __disable_irq();
+  
+  
+  nrf_gpio_pin_set(PIN_LED1);
+  nrf_gpio_cfg_output(PIN_LED1);
+  nrf_gpio_pin_set(PIN_LED2);
+  nrf_gpio_cfg_output(PIN_LED2);
+  nrf_gpio_pin_set(PIN_LED3);
+  nrf_gpio_cfg_output(PIN_LED3);
+  nrf_gpio_pin_set(PIN_LED4);
+  nrf_gpio_cfg_output(PIN_LED4);
+
+  
+  MicroWait(1000000);
+  
+  NVIC_SystemReset();
+}
+
 extern void EnterRecovery(void) {
   Motors::teardown();
 

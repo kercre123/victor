@@ -198,12 +198,6 @@ void Radio::init() {
   
   RTOS::setPriority(radioPrepareTask, RTOS_RADIO_PRIORITY);
   RTOS::setPriority(radioResumeTask, RTOS_RADIO_PRIORITY);
-
-  #if 1
-  assignProp(0, 0x99);
-  assignProp(1, 0xBB);
-  assignProp(2, 0x126);
-  #endif
 }
 
 void Radio::advertise(void) {

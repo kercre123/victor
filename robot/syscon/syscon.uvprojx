@@ -528,6 +528,21 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>New Group</GroupName>
+          <Files>
+            <File>
+              <FileName>bootloader.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\bootloader.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>bootloader.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\hal\bootloader.s</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>
