@@ -51,7 +51,6 @@ public class StartView : BaseView {
         if (cube.Value.MarkersVisible && !_CubeIdsSeen.Contains(cube.Key)) {
           _CubeIdsSeen.Add(cube.Value.ID);
           cube.Value.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
-          Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameStart);
         }
       }
       _ShowCozmoCubesContainer.LightUpCubes(_CubeIdsSeen.Count);
