@@ -208,9 +208,9 @@ void Radio::init() {
 
 void Radio::advertise(void) {
   const uesb_config_t uesb_config = {
-    UESB_BITRATE_1MBPS,
+    RADIO_MODE_MODE_Nrf_1Mbit,
     UESB_CRC_8BIT,
-    UESB_TX_POWER_0DBM,
+    RADIO_TXPOWER_TXPOWER_0dBm,
     PACKET_SIZE,
     5,    // Address length
     RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
@@ -298,10 +298,10 @@ void SendObjectConnectionState(int slot)
   RobotInterface::SendMessage(msg);
 }
 
-extern "C" void uesb_event_handler(void)
+void uesb_event_handler(uint32_t flags)
 {
   // Only respond to receive interrupts
-  if(~uesb_get_clear_interrupts() & UESB_INT_RX_DR_MSK) {
+  if(~flags & UESB_INT_RX_DR_MSK) {
     return ;
   }
 
