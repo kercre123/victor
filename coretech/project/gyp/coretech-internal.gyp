@@ -103,6 +103,7 @@
         'compiler_flags': [
           '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
           '-DANDROID=1',
+          '-D__ARM_NEON=1',
           '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
           '-fpic',
           '-ffunction-sections',
