@@ -532,6 +532,11 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
           return false;
         }
 
+        if( robot.IsCarryingObject() && robot.GetCarryingObject() == obj->GetID() ) {
+          // ignore the block we are carrying
+          return false;
+        }
+
         float distSq = (obj->GetPose().GetWithRespectToOrigin().GetTranslation() -
                         targetPose.GetTranslation()).LengthSq();
         if( distSq < kSafeDistSqFromObstacle_mm ) {
