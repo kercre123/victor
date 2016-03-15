@@ -89,6 +89,8 @@ public abstract class GameBase : MonoBehaviour {
 
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameStart);
+
   }
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
@@ -130,6 +132,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void OnDestroy() {
     DAS.Event(DASConstants.Game.kEnd, GetGameTimeElapsedAsStr());
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameEnd);
 
     if (CurrentRobot != null) {
       CurrentRobot.ResetRobotState(EndGameRobotReset);
@@ -270,6 +273,7 @@ public abstract class GameBase : MonoBehaviour {
     // Listen for dialog close
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
       Localization.Get(LocalizationKeys.kButtonContinue));
+    
 
     _RewardedXp = new StatContainer();
 
