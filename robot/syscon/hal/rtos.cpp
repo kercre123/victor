@@ -39,7 +39,7 @@ void RTOS::kick(uint8_t channel) {
 }
 
 void RTOS::delay(RTOS_Task* task, int delay) {
-	task->target += delay;
+  task->target += delay;
 }
 
 

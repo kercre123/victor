@@ -98,11 +98,8 @@ static const int ADV_CHANNEL = 81;
 // This is for initial channel selection (do not use advertisement channel)
 static const int MAX_TX_CHANNELS = 64;
 
-//static const int RADIO_INTERVAL_DELAY = 0xB6;
-//static const int RADIO_TIMEOUT_MSB = 20;
-
-static const int RADIO_INTERVAL_DELAY = 0xB3;
-static const int RADIO_TIMEOUT_MSB = 40;
+static const int RADIO_INTERVAL_DELAY = 0xB6;
+static const int RADIO_TIMEOUT_MSB = 20;
 
 static const int RADIO_WAKEUP_OFFSET = 18;
 
@@ -202,10 +199,10 @@ void Radio::init() {
   RTOS::setPriority(radioPrepareTask, RTOS_RADIO_PRIORITY);
   RTOS::setPriority(radioResumeTask, RTOS_RADIO_PRIORITY);
 
-  #if 0
-  assignProp(0, 0x26);
-  assignProp(1, 0xd9);
-  assignProp(2, 0x110);
+  #if 1
+  assignProp(0, 0x99);
+  assignProp(1, 0xBB);
+  assignProp(2, 0x126);
   #endif
 }
 
@@ -220,15 +217,13 @@ void Radio::advertise(void) {
   };
 
   uesb_init(&uesb_config);
-  EnterState(RADIO_PAIRING);
-  uesb_start();
 
   // Resume our tasks
   RTOS::start(radioResumeTask);
   RTOS::start(radioPrepareTask);
 
   // This creates a quiet period for the radio to reduce jitter
-  RTOS::delay(radioPrepareTask, SCHEDULE_PERIOD - SILENCE_PERIOD);
+  RTOS::delay(radioResumeTask, SILENCE_PERIOD);
 }
 
 void Radio::shutdown(void) {
@@ -413,20 +408,7 @@ void Radio::prepare(void* userdata) {
   AccessorySlot* acc = &accessories[currentAccessory];
 
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
-    // We send the previous LED state (so we don't get jitter on radio)
-    uesb_address_desc_t& address = accessories[currentAccessory].address;
-
-    // Broadcast to the appropriate device
-    EnterState(RADIO_TALKING);
-    memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
-    uesb_prepare_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
-
-    #ifdef CHANNEL_HOP
-    // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
-    address.rf_channel = next_channel(address.rf_channel);
-    #endif
-
-    // Update the color status of the 
+    // Update the color status of the lights
     uint32_t currentFrame = GetFrame();
 
     int sum = 0;
@@ -448,6 +430,19 @@ void Radio::prepare(void* userdata) {
     }
 
     acc->tx_state.ledDark = 0xFF - isqrt(sum);
+
+    // We send the previous LED state (so we don't get jitter on radio)
+    uesb_address_desc_t& address = accessories[currentAccessory].address;
+
+    // Broadcast to the appropriate device
+    EnterState(RADIO_TALKING);
+    memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
+    uesb_prepare_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
+
+    #ifdef CHANNEL_HOP
+    // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
+    address.rf_channel = next_channel(address.rf_channel);
+    #endif
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
     if (acc->active)
@@ -463,17 +458,6 @@ void Radio::prepare(void* userdata) {
 }
 
 void Radio::resume(void* userdata) {
-  static bool toggle = false;
-  toggle = !toggle;
-
-  nrf_gpio_cfg_output(PIN_LED4);
-  
-  if (toggle) {
-    nrf_gpio_pin_set(PIN_LED4);
-  } else {
-    nrf_gpio_pin_clear(PIN_LED4);
-  }
-
   // Reenable the radio
   uesb_start();
 }
