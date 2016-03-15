@@ -42,6 +42,8 @@ protected:
 
   virtual void HandleGameDeniedRequest(Robot& robot) override;
   virtual f32 GetRequestMinDelayComplete_s() const override;
+
+  virtual void HandleCliffEvent(Robot& robot, const EngineToGameEvent& event) override;
   
 private:
 
@@ -59,7 +61,8 @@ private:
     PlayingRequstAnim,
     TrackingFace,
     PlayingDenyAnim,
-    SearchingForBlock
+    SearchingForBlock,
+    HandlingCliff
   };
 
   State _state = State::PlayingInitialAnimation;
@@ -110,10 +113,10 @@ private:
   void TransitionToTrackingFace(Robot& robot);
   void TransitionToPlayingDenyAnim(Robot& robot);
   void TransitionToSearchingForBlock(Robot& robot);
+  void TransitionToHandlingCliff(Robot& robot);
   
   bool GetFaceInteractionPose(Robot& robot, Pose3d& pose);
   void ComputeFaceInteractionPose(Robot& robot);
-
 };
 
 }

@@ -235,12 +235,24 @@ void IBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, const Ro
       HandleDeletedFace(event.GetData().Get_RobotDeletedFace());
       break;
 
+    case EngineToGameTag::CliffEvent:
+      // handled in WhileRunning
+      break;
+
     default:
       PRINT_NAMED_WARNING("IBehaviorRequestGame.InvalidTag",
                           "Received unexpected event with tag %hhu.", event.GetData().GetTag());
       break;
   }
 }
+
+void IBehaviorRequestGame::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
+{
+  if( event.GetData().GetTag() == EngineToGameTag::CliffEvent ) {
+    HandleCliffEvent(robot, event);
+  }
+}
+
 
 void IBehaviorRequestGame::HandleWhileRunning(const GameToEngineEvent& event, Robot& robot)
 {
