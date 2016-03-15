@@ -78,9 +78,7 @@ public class InitialCubesState : State {
           if (_ValidCubeIds.Count < _CubesRequired) {
             _ValidCubeIds.Add(cube.ID);
             cube.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
-
-            // TODO Put in correct sound
-            Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameStart);
+            Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
           }
           else {
             cube.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
