@@ -69,6 +69,9 @@ namespace SpeedTap {
     [SerializeField]
     private GameObject _PlayerTapSlidePrefab;
 
+    [SerializeField]
+    private GameObject _WaitForCozmoSlidePrefab;
+
     public void ResetScore() {
       _CozmoScore = 0;
       _PlayerScore = 0;
@@ -280,7 +283,11 @@ namespace SpeedTap {
     }
 
     public void ShowPlayerTapSlide() {
-      SharedMinigameView.ShowNarrowGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
+      SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
+    }
+
+    public void ShowWaitForCozmoSlide() {
+      SharedMinigameView.ShowWideGameStateSlide(_WaitForCozmoSlidePrefab, "WaitForCozmoSlide");
     }
 
     public void SetCozmoOrigPos() {

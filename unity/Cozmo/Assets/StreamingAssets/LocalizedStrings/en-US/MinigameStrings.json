@@ -130,7 +130,7 @@
     "translation": "Tap the cube faster than Cozmo when the light numbers are the same to earn a point!"
   },
   "speedTap.tapBlock": {
-    "translation": "Tap a flashing cube to claim it and begin the round!\n\n(Make sure your and Cozmo's cubes are far apart.)"
+    "translation": "Tap a flashing cube to claim it and begin the game!\n\n(Make sure your and Cozmo's cubes are far apart.)"
   },
   "treasureHunt.title": {
     "translation": "Treasure Hunt"
@@ -206,5 +206,8 @@
   },
   "minigame.text.howToPlay": {
     "translation": "How To Play"
+  },
+  "speedTap.text.waitForCozmo": {
+    "translation": "Wait for Cozmo to claim his cube."
   }
 }

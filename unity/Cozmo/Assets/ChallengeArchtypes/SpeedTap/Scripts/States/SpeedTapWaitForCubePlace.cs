@@ -36,6 +36,8 @@ namespace SpeedTap {
       if (_SpeedTapGame.AllRoundsOver) {
         return;
       }
+
+      _SpeedTapGame.ShowWaitForCozmoSlide();
       _GotoObjectComplete = false;
 
       _CurrentRobot.SetLiftHeight(1.0f, HandleLiftRaiseComplete);
