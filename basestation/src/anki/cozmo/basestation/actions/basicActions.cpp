@@ -1396,8 +1396,9 @@ namespace Anki {
       
       _toolReadSignalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotReadToolCode,
          [this] (const AnkiEvent<ExternalInterface::MessageEngineToGame> &msg) {
+           _toolCodeRead = msg.GetData().Get_RobotReadToolCode().code;
            PRINT_NAMED_INFO("ReadToolCodeAction.SignalHandler",
-                            "Read tool code: %s", EnumToString(msg.GetData().Get_RobotReadToolCode().code));
+                            "Read tool code: %s", EnumToString(_toolCodeRead));
            this->_state = State::ReadCompleted;
       });
       
@@ -1444,11 +1445,22 @@ namespace Anki {
           break;
           
         case State::ReadCompleted:
-          result = ActionResult::SUCCESS;
+          if(_toolCodeRead == ToolCode::UnknownTool) {
+            result = ActionResult::FAILURE_ABORT;
+          } else {
+            result = ActionResult::SUCCESS;
+          }
           break;
       }
       
       return result;
+    } // CheckIfDone()
+    
+    void ReadToolCodeAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+    {
+      ReadToolCodeCompleted info;
+      info.code = _toolCodeRead;
+      completionUnion.Set_readToolCodeCompleted(std::move( info ));
     }
 
   }

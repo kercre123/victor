@@ -21,6 +21,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/types/toolCodes.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
@@ -561,6 +562,8 @@ namespace Anki {
       
       virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
       
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
+      
     protected:
       
       virtual ActionResult Init() override;
@@ -572,6 +575,8 @@ namespace Anki {
       TimeStamp_t       _toolCodeLastMovedTime   = 0;
       f32               _toolCodeLastHeadAngle   = 0;
       f32               _toolCodeLastLiftAngle   = 0;
+      ToolCode          _toolCodeRead            = ToolCode::UnknownTool;
+      
       const TimeStamp_t kRequiredStillTime_ms    = 500;
   
       enum class State : u8 {
