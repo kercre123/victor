@@ -69,9 +69,8 @@ void Battery::manage(void) {
   int32_t value = read();
     
   if (value < 0x30) {
-    // Wait a full 5 seconds in recovery mode before rebooting
-    if (ground_short++ >= 5) {
-      //NVIC_SystemReset();
+    if (ground_short++ >= 0x4000) {
+      NVIC_SystemReset();
     }
   } else {
     ground_short = 0;

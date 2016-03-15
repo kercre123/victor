@@ -56,7 +56,8 @@ int main (void) {
 
   Battery::init();
   
-  if (*MAGIC_LOCATION == SPI_ENTER_RECOVERY || !CheckSig()) {
+  if (*MAGIC_LOCATION == SPI_ENTER_RECOVERY || !CheckSig())
+  {
     *MAGIC_LOCATION = 0;
     
     Battery::powerOn();
