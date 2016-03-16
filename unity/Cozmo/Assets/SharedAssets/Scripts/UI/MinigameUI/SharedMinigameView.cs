@@ -281,6 +281,11 @@ namespace Cozmo {
         }
       }
 
+      public void HideCozmoScoreboard() {
+        HideWidget(_CozmoScoreWidgetInstance);
+        _CozmoScoreWidgetInstance = null;
+      }
+
       public ScoreWidget PlayerScoreboard {
         get {
           if (_PlayerScoreWidgetInstance == null) {
@@ -289,6 +294,11 @@ namespace Cozmo {
           }
           return _PlayerScoreWidgetInstance;
         }
+      }
+
+      public void HidePlayerScoreboard() {
+        HideWidget(_PlayerScoreWidgetInstance);
+        _PlayerScoreWidgetInstance = null;
       }
 
       private ScoreWidget CreateScoreWidget(RectTransform widgetParent, float animationOffset,
@@ -422,13 +432,15 @@ namespace Cozmo {
       public ShowCozmoCubeSlide ShowCozmoCubesSlide(int numCubesRequired) {
         GameObject slideObject = ShowWideGameStateSlide(UIPrefabHolder.Instance.InitialCubesSlide, "setup_cubes_slide");
         ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
-        cubeSlide.Initialize(numCubesRequired);
+        cubeSlide.Initialize(numCubesRequired, Cozmo.CubePalette.OutOfViewColor, Cozmo.CubePalette.InViewColor, LocalizationKeys.kMinigameLabelShowCubes);
         return cubeSlide;
       }
 
       public GameObject ShowWideGameStateSlide(GameObject prefab, string slideDasName) {
         InfoTitleText = null;
         HideGameStateSlide();
+        HidePlayerScoreboard();
+        HideCozmoScoreboard();
         return ShowGameStateSlide(slideDasName, prefab, _WideGameSlideContainer);
       }
 

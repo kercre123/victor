@@ -71,7 +71,10 @@ namespace Cozmo {
         if (_CloseButton != null) {
           _CloseButton.DASEventViewController = viewName;
           _CloseButton.DASEventButtonName = "close_button";
-          _CloseButton.onClick.AddListener(CloseView);
+          _CloseButton.onClick.AddListener(() => {
+            Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.ClickBack);
+            CloseView();
+          });
           _CloseButton.gameObject.SetActive(false);
         }
 
@@ -94,6 +97,7 @@ namespace Cozmo {
       }
 
       protected override void CleanUp() {
+        Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowClose);
         ResetButton(_PrimaryButton);
         ResetButton(_CloseButton);
         ResetButton(_SecondaryButton);

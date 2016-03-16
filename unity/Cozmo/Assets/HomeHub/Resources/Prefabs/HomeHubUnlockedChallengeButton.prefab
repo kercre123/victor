@@ -191,7 +191,7 @@ MonoBehaviour:
   m_IgnoreLayout: 0
   m_MinWidth: 640
   m_MinHeight: -1
-  m_PreferredWidth: 800
+  m_PreferredWidth: 1000
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
@@ -282,7 +282,7 @@ MonoBehaviour:
     disabledColor: {r: 1, g: 1, b: 1, a: 0.20392157}
   _UISoundEvent:
     _Event: -1705717452
-    _EventType: 5
+    _EventType: 6
     _GameObjectType: 2
 --- !u!114 &11456194
 MonoBehaviour:

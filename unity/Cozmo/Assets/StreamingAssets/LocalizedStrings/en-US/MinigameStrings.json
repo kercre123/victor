@@ -18,6 +18,9 @@
       "/{*}"
     ]
   },
+  "connect.label.showCubes": {
+    "translation": "Put {0} cubes in front of Cozmo."
+  },
   "minigame.text.playerWins": {
     "translation": "WINNER: PLAYER"
   },
@@ -37,7 +40,7 @@
     "translation": "Score"
   },
   "minigame.label.showCubes": {
-    "translation": "Put {0} cubes where Cozmo can see them. They'll turn white when they're in the right place."
+    "translation": "Put {0} cubes in front of Cozmo. They'll turn white when he can see them."
   },
   "minigame.label.cubesFound": {
     "translation": "{0} cubes found"
@@ -130,7 +133,7 @@
     "translation": "Tap the cube faster than Cozmo when the light numbers are the same to earn a point!"
   },
   "speedTap.tapBlock": {
-    "translation": "Tap the flashing cube to begin the round!"
+    "translation": "Tap a flashing cube to claim it and begin the game!\n\n(Make sure your and Cozmo's cubes are far apart.)"
   },
   "treasureHunt.title": {
     "translation": "Treasure Hunt"
@@ -233,5 +236,8 @@
   },
   "button.retry": {
     "translation": "Try Again"
+  },
+  "speedTap.text.waitForCozmo": {
+    "translation": "Wait for Cozmo to claim his cube."
   }
 }

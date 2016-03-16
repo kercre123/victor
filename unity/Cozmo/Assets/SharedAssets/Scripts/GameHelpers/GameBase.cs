@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -53,6 +53,16 @@ public abstract class GameBase : MonoBehaviour {
 
   public List<LightCube> CubesForGame;
 
+  private Dictionary<int, CycleData> _CubeCycleTimers;
+
+  private class CycleData {
+    public int cubeID;
+    public float timeElaspedSeconds;
+    public float cycleIntervalSeconds;
+    public Color[] cycleColors;
+    public int colorIndex;
+  }
+
   #region Initialization
 
   public void InitializeMinigame(ChallengeData challengeData) {
@@ -65,6 +75,8 @@ public abstract class GameBase : MonoBehaviour {
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetMusicState());
 
     RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
+
+    _CubeCycleTimers = new Dictionary<int, CycleData>();
   }
 
   private void FinishTurnToFace(bool success) {
@@ -81,6 +93,7 @@ public abstract class GameBase : MonoBehaviour {
 
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
+
   }
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
@@ -100,6 +113,7 @@ public abstract class GameBase : MonoBehaviour {
   #region Update
 
   protected virtual void Update() {
+    UpdateCubeCycleLights();
     UpdateStateMachine();
   }
 
@@ -121,16 +135,6 @@ public abstract class GameBase : MonoBehaviour {
 
   public void OnDestroy() {
     DAS.Event(DASConstants.Game.kEnd, GetGameTimeElapsedAsStr());
-
-    if (CurrentRobot != null) {
-      CurrentRobot.ResetRobotState(() => {
-        RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
-        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
-        CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
-      });
-    }
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
@@ -140,8 +144,21 @@ public abstract class GameBase : MonoBehaviour {
 
   public void CloseMinigameImmediately() {
     DAS.Info(this, "Close Minigame Immediately");
+    if (CurrentRobot != null) {
+      CurrentRobot.ResetRobotState(EndGameRobotReset);
+    }
     CleanUpOnDestroy();
     Destroy(gameObject);
+  }
+
+  public void EndGameRobotReset() {
+    RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+    CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
+    CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
+    CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
+    // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
+    CurrentRobot.SetEnableCliffSensor(true);
   }
 
   #endregion
@@ -247,9 +264,17 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
 
+    if (CurrentRobot != null) {
+      CurrentRobot.ResetRobotState(EndGameRobotReset);
+      // Disable all Request game behavior groups while in this view, Timeline View will handle renabling these
+      // if appropriate.
+      DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
+    }
+
     // Listen for dialog close
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
       Localization.Get(LocalizationKeys.kButtonContinue));
+    
 
     _RewardedXp = new StatContainer();
 
@@ -288,6 +313,7 @@ public abstract class GameBase : MonoBehaviour {
     }
 
     SendEventForRewards(_RewardedXp);
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameEnd);
 
     // Close minigame UI
     CloseMinigameImmediately();
@@ -319,7 +345,67 @@ public abstract class GameBase : MonoBehaviour {
 
   #endregion
 
-  // end DAS
+  // end Difficulty Select
+
+  #region LightCubes
+
+  public void StartCycleCube(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
+    // Set colors
+    LightCube cube = CurrentRobot.LightCubes[cubeID];
+    int colorIndex = 0;
+    for (int i = 0; i < cube.Lights.Length; i++) {
+      colorIndex = i % lightColorsCounterclockwise.Length;
+      cube.Lights[i].OnColor = lightColorsCounterclockwise[colorIndex].ToUInt();
+    }
+
+    // Set up timing data
+    CycleData data = new CycleData();
+    data.cubeID = cubeID;
+    data.cycleIntervalSeconds = cycleIntervalSeconds;
+    data.timeElaspedSeconds = 0f;
+    data.colorIndex = 0;
+    data.cycleColors = lightColorsCounterclockwise;
+    if (_CubeCycleTimers.ContainsKey(cube.ID)) {
+      _CubeCycleTimers[cube.ID] = data;
+    }
+    else {
+      _CubeCycleTimers.Add(cube.ID, data);
+    }
+  }
+
+  public void StopCycleCube(int cubeID) {
+    LightCube cube = CurrentRobot.LightCubes[cubeID];
+    if (_CubeCycleTimers.ContainsKey(cube.ID)) {
+      _CubeCycleTimers.Remove(cube.ID);
+    }
+  }
+
+  private void UpdateCubeCycleLights() {
+    foreach (KeyValuePair<int,CycleData> kvp in _CubeCycleTimers) {
+      kvp.Value.timeElaspedSeconds += Time.deltaTime;
+
+      if (kvp.Value.timeElaspedSeconds > kvp.Value.cycleIntervalSeconds) {
+        CycleLightsClockwise(kvp.Value);
+        kvp.Value.timeElaspedSeconds %= kvp.Value.cycleIntervalSeconds;
+      }
+    }
+  }
+
+  private void CycleLightsClockwise(CycleData data) {
+    LightCube cube = CurrentRobot.LightCubes[data.cubeID];
+    data.colorIndex++;
+    data.colorIndex %= data.cycleColors.Length;
+    int colorIndex = 0;
+    for (int i = 0; i < cube.Lights.Length; i++) {
+      colorIndex = (data.colorIndex + i) % data.cycleColors.Length;
+      cube.Lights[i].OnColor = data.cycleColors[colorIndex].ToUInt();
+      cube.Lights[i].OnPeriodMs = LightCube.Light.FOREVER;
+    }
+  }
+
+  #endregion
+
+  // end LightCubes
 
   #region DAS Events
 
@@ -357,5 +443,5 @@ public abstract class GameBase : MonoBehaviour {
 
   #endregion
 
-  // end Difficulty Select
+  // end DAS
 }

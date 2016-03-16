@@ -188,6 +188,10 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
+  public void SetEnableCliffSensor(bool enabled) {
+    // Do nothing
+  }
+
   public void ClearAllBehaviorScoreOverrides() {
     // Do nothing
   }

@@ -11,7 +11,7 @@ namespace SpeedTap {
 
     private const float _kRetreatSpeed = -130.0f;
     private const float _kRetreatTime = 0.30f;
-    private const float _kTapAdjustRange = 1.0f;
+    private const float _kTapAdjustRange = 5.0f;
 
     private Vector3 _CozmoPos;
     private Quaternion _CozmoRot;
@@ -56,6 +56,7 @@ namespace SpeedTap {
     private int _CozmoRoundsWon;
     private int _Rounds;
     private int _MaxScorePerRound;
+    public int ConsecutiveMisses = 0;
     // how many rounds were close in score? used to calculate
     // excitement score rewards.
     private int _CloseRoundCount = 0;
@@ -63,9 +64,13 @@ namespace SpeedTap {
     private List<DifficultySelectOptionData> _DifficultyOptions;
 
     public event Action PlayerTappedBlockEvent;
+    public event Action CozmoTappedBlockEvent;
 
     [SerializeField]
     private GameObject _PlayerTapSlidePrefab;
+
+    [SerializeField]
+    private GameObject _WaitForCozmoSlidePrefab;
 
     public void ResetScore() {
       _CozmoScore = 0;
@@ -119,6 +124,7 @@ namespace SpeedTap {
     }
 
     private void HandleRoundEnd() {
+      ConsecutiveMisses = 0;
       if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
         _CloseRoundCount++;
       }
@@ -160,8 +166,8 @@ namespace SpeedTap {
 
     private void HandleSessionAnimDone(bool success) {
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
-        if (CurrentDifficulty > DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
-          DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty;
+        if (CurrentDifficulty >= DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
+          DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty + 1;
           DataPersistence.DataPersistenceManager.Instance.Save();
         }
         RaiseMiniGameWin();
@@ -176,7 +182,7 @@ namespace SpeedTap {
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
       _DifficultyOptions = speedTapConfig.DifficultyOptions;
-      InitializeMinigameObjects(speedTapConfig.NumCubesRequired());
+      InitializeMinigameObjects(1);
     }
 
     // Use this for initialization
@@ -184,7 +190,7 @@ namespace SpeedTap {
 
       InitialCubesState initCubeState = new InitialCubesState(
                                           new SelectDifficultyState(
-                                            new SpeedTapWaitForCubePlace(true),
+                                            new HowToPlayState(new SpeedTapWaitForCubePlace(true)),
                                             DifficultyOptions,
                                             Mathf.Max(DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted, 1)
                                           ), 
@@ -210,8 +216,12 @@ namespace SpeedTap {
     }
 
     public void InitialCubesDone() {
-      CozmoBlock = GetClosestAvailableBlock();
-      PlayerBlock = GetFarthestAvailableBlock();
+      CozmoBlock = CubesForGame[0];
+    }
+
+    public void SetPlayerCube(LightCube cube) {
+      PlayerBlock = cube;
+      CubesForGame.Add(cube);
     }
 
     public void UpdateUI() {
@@ -236,54 +246,17 @@ namespace SpeedTap {
       }
     }
 
-    public void RollingBlocks() {
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
-    }
-
-    private void UIButtonTapped() {
-      if (PlayerTappedBlockEvent != null) {
-        PlayerTappedBlockEvent();
-      }
-    }
-
     private void BlockTapped(int blockID, int tappedTimes) {
       if (PlayerBlock != null && PlayerBlock.ID == blockID) {
         if (PlayerTappedBlockEvent != null) {
           PlayerTappedBlockEvent();
         }
       }
-    }
-
-    private LightCube GetClosestAvailableBlock() {
-      float minDist = float.MaxValue;
-      ObservedObject closest = null;
-
-      for (int i = 0; i < CubesForGame.Count; ++i) {
-        if (CubesForGame[i] != PlayerBlock) {
-          float d = Vector3.Distance(CubesForGame[i].WorldPosition, CurrentRobot.WorldPosition);
-          if (d < minDist) {
-            minDist = d;
-            closest = CubesForGame[i];
-          }
+      else if (CozmoBlock != null && CozmoBlock.ID == blockID) {
+        if (CozmoTappedBlockEvent != null) {
+          CozmoTappedBlockEvent();
         }
       }
-      return closest as LightCube;
-    }
-
-    private LightCube GetFarthestAvailableBlock() {
-      float maxDist = 0;
-      ObservedObject farthest = null;
-
-      for (int i = 0; i < CubesForGame.Count; ++i) {
-        if (CubesForGame[i] != CozmoBlock) {
-          float d = Vector3.Distance(CubesForGame[i].WorldPosition, CurrentRobot.WorldPosition);
-          if (d >= maxDist) {
-            maxDist = d;
-            farthest = CubesForGame[i];
-          }
-        }
-      }
-      return farthest as LightCube;
     }
 
     private static ISpeedTapRules GetRules(SpeedTapRuleSet ruleSet) {
@@ -305,26 +278,16 @@ namespace SpeedTap {
       }
     }
 
-    public void SpinLights(LightCube cube) {
-
-      uint color_0 = cube.Lights[3].OnColor;
-      uint color_1 = cube.Lights[0].OnColor;
-      uint color_2 = cube.Lights[1].OnColor;
-      uint color_3 = cube.Lights[2].OnColor;
-
-      cube.Lights[0].OnColor = color_0;
-      cube.Lights[1].OnColor = color_1;
-      cube.Lights[2].OnColor = color_2;
-      cube.Lights[3].OnColor = color_3;
-
-    }
-
     protected override int CalculateExcitementStatRewards() {
       return 1 + _CloseRoundCount * 2;
     }
 
     public void ShowPlayerTapSlide() {
-      SharedMinigameView.ShowNarrowGameStateSlide(_PlayerTapSlidePrefab, "speed_tap_player_tap_slide");
+      SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapSlide");
+    }
+
+    public void ShowWaitForCozmoSlide() {
+      SharedMinigameView.ShowWideGameStateSlide(_WaitForCozmoSlidePrefab, "WaitForCozmoSlide");
     }
 
     public void SetCozmoOrigPos() {
