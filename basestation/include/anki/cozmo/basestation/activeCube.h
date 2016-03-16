@@ -75,12 +75,7 @@ namespace Cozmo {
     // the block's current state.
     WhichCubeLEDs MakeWhichLEDsRelativeToXY(const WhichCubeLEDs whichLEDs,
                                              const Point2f& xyPosition,
-                                             MakeRelativeMode mode) const;
-    
-    // Trigger a brief change in flash/color to allow identification of this block
-    // (Possibly actually flash out the block's ID? TBD...)
-    virtual void Identify() override;
-    
+                                             MakeRelativeMode mode) const;   
     
     // If object is moving, returns true and the time that it started moving in t.
     // If not moving, returns false and the time that it stopped moving in t.

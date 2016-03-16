@@ -807,7 +807,7 @@ namespace Anki {
               if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(odMsg.factory_id)) {
                 for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
                   if (activeObjectSlots_[i].assignedFactoryID == 0) {
-                    printf("sim_hal.Update.AutoAssignedObject: FactoryID 0x%x in slot %d", odMsg.factory_id, i);
+                    printf("sim_hal.Update.AutoAssignedObject: FactoryID 0x%x in slot %d\n", odMsg.factory_id, i);
                     activeObjectSlots_[i].assignedFactoryID = odMsg.factory_id;
                     activeObjectSlots_[i].receiver->setChannel(odMsg.factory_id);
                     activeObjectSlots_[i].receiver->enable(TIME_STEP);

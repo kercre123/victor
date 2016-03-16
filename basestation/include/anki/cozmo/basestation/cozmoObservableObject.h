@@ -68,12 +68,10 @@ namespace Cozmo {
     
     void SetVizManager(VizManager* vizManager) { _vizManager = vizManager; }
     
-    void      SetActiveID(ActiveID activeID)         { _activeID = activeID; }
-    ActiveID  GetActiveID()                  const   { return _activeID; }
-    virtual bool      IsActive()                     const   { return false; }
-    FactoryID GetFactoryID()                 const   { return _factoryID; }
-    
-    virtual void Identify() { /* no-op */ }
+    void         SetActiveID(ActiveID activeID)         { assert(IsActive()); _activeID = activeID; }
+    ActiveID     GetActiveID()                  const   { return _activeID; }
+    virtual bool IsActive()                     const   { return false; }
+    FactoryID    GetFactoryID()                 const   { return _factoryID; }
     
     
     struct LEDstate {

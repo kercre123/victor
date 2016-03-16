@@ -311,8 +311,8 @@ namespace Anki
       
       // Helpers for actually inserting a new object into a new family using
       // its type and ID. Object's ID will be set if it isn't already.
-      void AddNewObject(const ObjectFamily toFamily, ObservableObject* object, bool doIdentify = true);
-      void AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object, bool doIdentify = true);
+      void AddNewObject(const ObjectFamily toFamily, ObservableObject* object);
+      void AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object);
       
       //template<class ObjectType>
       Result AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
@@ -491,9 +491,9 @@ namespace Anki
       return GetActiveObjectByActiveIDHelper(activeID, inFamily); // returns const*
     }
     
-    inline void BlockWorld::AddNewObject(const ObjectFamily toFamily, ObservableObject* object, bool doIdentify)
+    inline void BlockWorld::AddNewObject(const ObjectFamily toFamily, ObservableObject* object)
     {
-      AddNewObject(_existingObjects[toFamily], object, doIdentify);
+      AddNewObject(_existingObjects[toFamily], object);
     }
 
     /*

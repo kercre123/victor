@@ -787,19 +787,10 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object, bool doIdentify)
+  void BlockWorld::AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object)
   {
     if(!object->GetID().IsSet()) {
       object->SetID();
-    }
-    
-    // If this is a new active object, trigger an identification procedure
-    if(object->IsActive()) {
-      _unidentifiedActiveObjects.insert(object->GetID());
-      // Don't trigger identification while picking / placing
-      if(doIdentify && !_robot->IsPickingOrPlacing()) {
-        object->Identify();
-      }
     }
     
     // Set the viz manager on this new object
@@ -815,10 +806,25 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
     {
       ObjectsMapByType_t& objectsExisting = _existingObjects[inFamily];
       
-      // We only want to localize the robot to an object from this group once:
-      // just using the one that's closest (and offers localization info). Note
-      // that the objectsSeen container is already sorted by observation distance.
-      bool haveLocalizedRobotToObject = false;
+      // Struct for storing pairs of currently observed objects and their
+      // matching object that is currently known.
+      // To be used for localization after all observed objects have been processed.
+      struct ObservedAndMatchedPair {
+        ObservableObject* observedObject;
+        ObservableObject* matchedObject;
+        f32 distance;
+
+        // Sets the pose of matchedObject to that of observedObject
+        // and deletes observedObject.
+        void MergeAndDelete() {
+          matchedObject->SetPose( observedObject->GetPose(), distance );
+          delete observedObject;
+        }
+        
+      };
+      std::map<const Pose3d*, ObservedAndMatchedPair > potentialObjectsForLocalizingTo;
+      
+
       
       for(auto objSeenPair : objectsSeen) {
 
@@ -828,6 +834,14 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
         
         ObservableObject* matchingObject = nullptr;
         
+        
+        // Ignoring any block observed outside of the localization range
+        const f32 distToObj = ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose());
+        if (distToObj > MAX_LOCALIZATION_AND_ID_DISTANCE_MM) {
+          PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.IgnoringCuzObjectTooFar", "dist %fmm", distToObj);
+          continue;
+        }
+
         if (objSeen->IsActive()) {
           // Find all objects of the same type
           BlockWorldFilter filter;
@@ -1044,6 +1058,10 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
           
         } else { // This is an existing object
           
+          // NOTE: Since we're assuming there can only be one instance of each active object type
+          //       the matching is done immediately at the top and there is no identification step required.
+          //       If that ever comes back we may have to revive this in some form.
+          /*
           if(matchingObject->IsActive())
           {
             if(ActiveIdentityState::Identified == matchingObject->GetIdentityState())
@@ -1095,7 +1113,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
               matchingObject->Identify();
             }
           } // if(matchingObject->IsActive())
-          
+          */
           
           // Check if there are objects on top of this object that need to be moved since the
           // object it's resting on has moved.
@@ -1126,15 +1144,12 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
           matchingObject->SetLastObservedTime(objSeen->GetLastObservedTime());
           matchingObject->UpdateMarkerObservationTimes(*objSeen);
 
-          const f32 distToObj = ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose());
 
           bool useThisObjectToLocalize = false;
 #         if ENABLE_BLOCK_BASED_LOCALIZATION
           // Decide whether we will be updating the robot's pose relative to this
           // object or updating the object's pose w.r.t. the robot. We only localize
           // to the object if:
-          //  - we haven't already done so this tick (to another object),
-          //  - the robot is not moving,
           //  - the object is close enough,
           //  - the object didn't _just_ get identified (since we still need to check if
           //     its active ID matches a pre-existing one (on the next Update)
@@ -1144,10 +1159,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
           //  - the object is neither the object the robot is docking to or tracking to,
           //  - if the robot isn't already localized to an object or it has moved
           //     since the last time it got localized to an object.
-          useThisObjectToLocalize = (!haveLocalizedRobotToObject &&
-                                     !_robot->GetMoveComponent().IsMoving() &&
-                                     distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
-                                     _unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
+          useThisObjectToLocalize = (distToObj <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
+                                     //_unidentifiedActiveObjects.count(matchingObject->GetID()) == 0 &&
                                      matchingObject->CanBeUsedForLocalization() &&
                                      matchingObject->GetID() != _robot->GetDockObject() &&
                                      matchingObject->GetID() != _robot->GetMoveComponent().GetTrackToObject() &&
@@ -1199,27 +1212,45 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
           // update the object's pose.
           if(useThisObjectToLocalize)
           {
-            if (objSeen->IsRestingFlat()) {
-              assert(ActiveIdentityState::Identified == matchingObject->GetIdentityState());
-              Result localizeResult = _robot->LocalizeToObject(objSeen, matchingObject);
-              if(localizeResult != RESULT_OK) {
-                 PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
-                                   "Failed to localize to %s object %d.",
-                                   ObjectTypeToString(matchingObject->GetType()),
-                                   matchingObject->GetID().GetValue());
-                 return localizeResult;
+            if (!_robot->GetMoveComponent().IsMoving()) {
+              
+              if (objSeen->IsRestingFlat()) {
+                assert(ActiveIdentityState::Identified == matchingObject->GetIdentityState());
+                
+                // If the objSeen is no closer to the robot than the object already stored for this frame
+                // then just update its pose. Otherwise, set the pose of the stored object and replace
+                // it with this one.
+                const Pose3d* matchingObjectFrame = &matchingObject->GetPose().FindOrigin();
+                
+                if (potentialObjectsForLocalizingTo.count(matchingObjectFrame) > 0) {
+                  // There's already an ObservedMatchPair for the current frame.
+                  // Check if it's farther away from robot than this one.
+                  ObservedAndMatchedPair* obsAndMatchPair = &potentialObjectsForLocalizingTo.at(matchingObjectFrame);
+                  if (distToObj < obsAndMatchPair->distance ) {
+                    // This new one is closer so merge the stored pair and replace it with this one
+                    obsAndMatchPair->MergeAndDelete();
+                    *obsAndMatchPair = { .observedObject = objSeen, .matchedObject = matchingObject, .distance = distToObj };
+                  } else {
+                    matchingObject->SetPose( objSeen->GetPose(), distToObj );
+                    delete objSeen;
+                  }
+                  
+                } else {
+                  potentialObjectsForLocalizingTo[matchingObjectFrame] = { .observedObject = objSeen, .matchedObject = matchingObject, .distance = distToObj };
+                }
+                
+                
+                
+              } else {
+                PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
+                                 "Not localizing to object %d because it is not observed to be flat",
+                                 matchingObject->GetID().GetValue());
               }
               
-              // So we don't do this again with a more distant object
-             haveLocalizedRobotToObject = true;
-            } else {
-              PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
-                               "Not localizing to object %d because it is not observed to be flat",
-                               matchingObject->GetID().GetValue());
             }
-            
-          } else if (!_robot->GetMoveComponent().IsMoving()) {
+          } else {
             matchingObject->SetPose( objSeen->GetPose(), distToObj );
+            delete objSeen;
           }
           
           observedObject = matchingObject;
@@ -1248,10 +1279,6 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
               _robot->GetVisionComponent().GetCamera().AddOccluder(*marker);
             }
           }
-          
-          // Now that we've merged in objSeen, we can delete it because we
-          // will no longer be using it.  Otherwise, we'd leak.
-          delete objSeen;
           
         } // if/else overlapping existing objects found
      
@@ -1293,6 +1320,43 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
         _currentObservedObjects.push_back(observedObject);
         
       } // for each object seen
+      
+      
+      // Now process the block(s) that need to be localized to.
+      // If there are blocks in other frames then set the pose of the block in the
+      // current frame and localize to each of the blocks in the other frames.
+      // If there are no blocks in other frames, then localize to the block in the current frame.
+      const Pose3d* currFrame = &_robot->GetPose().FindOrigin();
+      if (potentialObjectsForLocalizingTo.count(currFrame) > 0 && potentialObjectsForLocalizingTo.size() > 1) {
+        potentialObjectsForLocalizingTo[currFrame].MergeAndDelete();
+        potentialObjectsForLocalizingTo.erase(currFrame);
+      }
+      
+      // Order ObservedAndMatchPairs by distance so that we localize to
+      // the closest object last.
+      std::map<f32, ObservedAndMatchedPair, std::greater<f32>> objectsToLocalizeToByDist;
+      for (auto & obj : potentialObjectsForLocalizingTo) {
+        objectsToLocalizeToByDist[obj.second.distance] = obj.second;
+      }
+      
+      for (auto & objPair : objectsToLocalizeToByDist) {
+      
+        ObservableObject* observedObj = objPair.second.observedObject;
+        ObservableObject* matchedObj = objPair.second.matchedObject;
+
+        Result localizeResult = _robot->LocalizeToObject(observedObj, matchedObj);
+        if(localizeResult != RESULT_OK) {
+          PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
+                            "Failed to localize to %s object %d.",
+                            ObjectTypeToString(matchedObj->GetType()),
+                            matchedObj->GetID().GetValue());
+          return localizeResult;
+        }
+
+        
+        delete observedObj;
+      }
+      
       
       return RESULT_OK;
       
@@ -1365,8 +1429,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
                   objectIter = DeleteObject(objectIter, objectsByType.first, objectFamily.first);
                 } else {
                   // Don't delete objects that are still in radio communication. Retrigger Identify?
-                  PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.RetryIdentify", "Re-attempt identify on object %d (%s)", object->GetID().GetValue(), EnumToString(object->GetType()));
-                  object->Identify();
+                  //PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.RetryIdentify", "Re-attempt identify on object %d (%s)", object->GetID().GetValue(), EnumToString(object->GetType()));
+                  //object->Identify();
                   ++objectIter;
                 }
 
@@ -2343,7 +2407,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
       ActiveCube* cube = new ActiveCube(activeID, factoryID);
       cube->SetPoseParent(_robot->GetWorldOrigin());
       cube->SetPoseState(ObservableObject::PoseState::Unknown);
-      AddNewObject(ObjectFamily::LightCube, cube, false);
+      AddNewObject(ObjectFamily::LightCube, cube);
       PRINT_NAMED_INFO("BlockWorld.AddLightCube.Added",
                        "objectID %d (activeID %d)",
                        cube->GetID().GetValue(), cube->GetActiveID());
