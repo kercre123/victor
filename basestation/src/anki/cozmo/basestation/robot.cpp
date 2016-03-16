@@ -268,7 +268,7 @@ namespace Anki {
         }
         
         // Check the lift to see if tool changed while we were picked up
-        _actionList.QueueActionNext(new ReadToolCodeAction(*this));
+        //_actionList.QueueActionNext(new ReadToolCodeAction(*this));
         
         Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
       }
