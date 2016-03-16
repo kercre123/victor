@@ -82,7 +82,7 @@ namespace Anki {
     });
     
     /* For tool code reading
-    // 4-degree look down:
+    // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
     const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
       0,             -0.0698,    0.9976,
       -1.0000,         0,         0,

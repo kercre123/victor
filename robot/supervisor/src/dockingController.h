@@ -23,24 +23,27 @@
 // Distance between the robot origin and the distance along the robot's x-axis
 // to the lift when it is in the low docking position.
 #ifdef SIMULATOR
-/*
-const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
-const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 14.f;
+///*
+//const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
+//const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 14.f;
+//const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 12.f;
+//const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 14.f;
+//*/
+//const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 25.6f;
+//const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 17.6f;
 const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 12.f;
-const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 14.f;
-*/
-const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 28.f;
-const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 20.f;
-const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 19.f;
-const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 16.f;
-
+//const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 13.6f;
+//
 #else
 // Cozmo v4.1
+const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 20.f;
+#endif
+
+
 const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 22.f;
 const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 17.f;
-const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 20.f;
 const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 13.f;
-#endif
+
 
 
 
