@@ -2385,7 +2385,7 @@ namespace Cozmo {
     const f32 kMinDotAreaFrac   = 0.5f * kDotAreaFrac;
     const f32 kMaxDotAreaFrac   = 1.5f * kDotAreaFrac;
     const f32 kHoleAreaFrac     = kDotHole_mm * kDotHole_mm / (kDotWidth_mm*kDotWidth_mm);
-    const f32 kMaxHoleAreaFrac  = 1.75f * kHoleAreaFrac;
+    const f32 kMaxHoleAreaFrac  = 2.f * kHoleAreaFrac;
     const f32 kMinContrastRatio = 1.1f;
     
     Anki::Point2f camCen;
@@ -2537,11 +2537,11 @@ namespace Cozmo {
                   // Yay, passed all checks! Thus "must" be a tool code.
                   dotLabel = iComp;
                   distToCenterSq = distSq;
-                } else if(DRAW_TOOL_CODE_DEBUG && !enoughContrast) {
+                } else if(!enoughContrast) {
                   PRINT_NAMED_INFO("VisionSystem.ReadToolCode.BadContrast",
                                    "Dot %lu: Contrast for comp %d = %f",
                                    iDot, iComp, (f32)avgHoleBrightness / (f32)avgDotBrightness);
-                } else if(DRAW_TOOL_CODE_DEBUG && !holeSmallEnough) {
+                } else if(!holeSmallEnough) {
                   PRINT_NAMED_INFO("VisionSystem.ReadToolCode.HoleTooLarge",
                                    "Dot %lu: hole too large %d > %f*%d (=%f)",
                                    iDot, holeArea, kMaxHoleAreaFrac, compArea,

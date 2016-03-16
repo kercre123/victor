@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/visionSystem.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"
@@ -122,6 +123,9 @@ namespace Cozmo {
       
       // Got a new calibration: rebuild the LUT for ground plane homographies
       PopulateGroundPlaneHomographyLUT();
+      
+      // Fine-tune calibration using tool code dots
+      //_robot.GetActionList().QueueActionNext(new ReadToolCodeAction(_robot));
     }
   }
   

@@ -34,7 +34,7 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/soundManager.h"    // TODO: REMOVE ME
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -58,6 +58,7 @@
 #include "util/transport/reliableConnection.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
 
 #include <fstream>
 #include <regex>
@@ -265,6 +266,9 @@ namespace Anki {
                            "there are no more objects to localize to in the world.", GetID());
           SetLocalizedTo(nullptr); // marks us as localized to odometry only
         }
+        
+        // Check the lift to see if tool changed while we were picked up
+        _actionList.QueueActionNext(new ReadToolCodeAction(*this));
         
         Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
       }
