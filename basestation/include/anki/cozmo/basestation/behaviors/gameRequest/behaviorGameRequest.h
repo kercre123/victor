@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include <set>
 #include <string>
 
 namespace Anki {
@@ -62,7 +63,13 @@ protected:
   f32 GetLastSeenFaceTime() const {return _lastFaceSeenTime_s;}
     
   u32 GetNumBlocks(const Robot& robot) const;
-  ObjectID GetRobotsBlockID(const Robot& robot) const;
+
+  // The first call to this will set the block ID, then it will be consistent until the behavior is reset
+  ObjectID GetRobotsBlockID(const Robot& robot);
+
+  // If possible, this call will switch the robot to a different block ID. It will add the current ID to a
+  // blacklist (which gets reset next time this behavior runs). Returns true if successful
+  bool SwitchRobotsBlock(const Robot& robot);
 
   // Gets the last known pose of the block (useful in case it gets bumped). returns true if it has a block
   // pose, false otherwise
@@ -71,11 +78,14 @@ protected:
   bool HasFace(const Robot& robot) const;
   bool GetFacePose(const Robot& robot, Pose3d& facePose) const;
 
+  virtual void HandleCliffEvent(Robot& robot, const EngineToGameEvent& event) {};
+
   // --------------------------------------------------------------------------------
   // Functions from IBehavior which aren't exposed to children
 
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) final override;
   virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) final override;
+  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) final override;
 
   f32        _requestTime_s = -1.0f;
 private:
@@ -85,6 +95,9 @@ private:
   Face::ID_t _faceID = Face::UnknownFace;
   bool       _hasBlockPose = false;
   Pose3d     _lastBlockPose;
+  ObjectID   _robotsBlockID;
+
+  std::set<ObjectID> _badBlocks;
 
   ObservableObject* GetClosestBlock(const Robot& robot) const;
   

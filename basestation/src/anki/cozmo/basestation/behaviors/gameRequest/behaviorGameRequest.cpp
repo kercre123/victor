@@ -71,6 +71,8 @@ bool IBehaviorRequestGame::IsRunnable(const Robot& robot, double currentTime_sec
 Result IBehaviorRequestGame::InitInternal(Robot& robot, double currentTime_sec)
 {
   _requestTime_s = -1.0f;
+  _robotsBlockID.UnSet();
+  _badBlocks.clear();
   
   return RequestGame_InitInternal(robot, currentTime_sec);
 }
@@ -96,9 +98,16 @@ u32 IBehaviorRequestGame::GetNumBlocks(const Robot& robot) const
   filter.OnlyConsiderLatestUpdate(false);
   filter.SetFilterFcn( [](ObservableObject* obj) {
     // Observable Objects includes "markerlessObject" cliffs.
-    return obj->IsExistenceConfirmed() && obj->GetPoseState() == ObservableObject::PoseState::Known && obj->GetFamily() == ObjectFamily::LightCube;
+    return obj->IsExistenceConfirmed() &&
+      obj->GetPoseState() == ObservableObject::PoseState::Known &&
+      obj->GetFamily() == ObjectFamily::LightCube;
     } );
 
+  // TODO:(bn) make a helper function to avoid code duplication
+
+  // TODO:(bn) lee suggested we use != UNKNOWN instead of == known, so that we will still attempt to interact
+  // with dirty blocks. I think the best would be to prefer Known, but fall back to Dirty as well
+  
   std::vector<ObservableObject*> blocks;
   robot.GetBlockWorld().FindMatchingObjects(filter, blocks);
   
@@ -111,25 +120,62 @@ ObservableObject* IBehaviorRequestGame::GetClosestBlock(const Robot& robot) cons
   BlockWorldFilter filter;
   filter.OnlyConsiderLatestUpdate(false);
   filter.SetFilterFcn( [](ObservableObject* obj) {
-      return obj->IsExistenceConfirmed() && obj->GetPoseState() == ObservableObject::PoseState::Known && obj->GetFamily() == ObjectFamily::LightCube;;
+      return obj->IsExistenceConfirmed() &&
+        obj->GetPoseState() == ObservableObject::PoseState::Known &&
+        obj->GetFamily() == ObjectFamily::LightCube;
     } );
 
   return robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );
 }
 
 
-ObjectID IBehaviorRequestGame::GetRobotsBlockID(const Robot& robot) const
+ObjectID IBehaviorRequestGame::GetRobotsBlockID(const Robot& robot)
 {
+  if( ! _robotsBlockID.IsSet() ) {
+    // set the block ID, but then leave it the same for the duration of the behavior
+    ObservableObject* closestObj = GetClosestBlock(robot);
   
-  ObservableObject* closestObj = GetClosestBlock(robot);
-  
-  if( closestObj != nullptr ) {
-    return closestObj->GetID();
+    if( closestObj != nullptr ) {
+      PRINT_NAMED_DEBUG("BehaviorRequestGame.SetRobotBlockID", "%d",
+                        closestObj->GetID().GetValue());
+      _robotsBlockID = closestObj->GetID();
+    }
   }
-  else {
-    // return a default object ID
-    return {};
+
+  // either return the valid id, or an invalid ID if we don't have a block
+  return _robotsBlockID;
+}
+
+bool IBehaviorRequestGame::SwitchRobotsBlock(const Robot& robot)
+{
+  if( ! _robotsBlockID.IsSet() ) {
+    // robot doesn't have a block, so just try to get it now
+    return GetRobotsBlockID(robot).IsSet();
   }
+
+  // otherwise, try to find a new block that doesn't match this ID
+  _badBlocks.insert(_robotsBlockID);
+
+  BlockWorldFilter filter;
+  filter.OnlyConsiderLatestUpdate(false);
+  filter.SetFilterFcn( [this](ObservableObject* obj) {
+      return obj->IsExistenceConfirmed() &&
+        obj->GetPoseState() == ObservableObject::PoseState::Known &&
+        obj->GetFamily() == ObjectFamily::LightCube &&
+        _badBlocks.find( obj->GetID() ) == _badBlocks.end();
+    } );
+
+  ObservableObject* newBlock = robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );
+  if( newBlock != nullptr ) {
+    PRINT_NAMED_DEBUG("BehaviorRequestGame.SwitchRobotsBlock", "switch from %d to %d",
+                      _robotsBlockID.GetValue(),
+                      newBlock->GetID().GetValue());
+
+    _robotsBlockID = newBlock->GetID();
+    return true;
+  }
+
+  return false;
 }
 
 bool IBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
@@ -170,7 +216,7 @@ bool IBehaviorRequestGame::GetFacePose(const Robot& robot, Pose3d& facePose) con
   float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const u32 currTime_ms = Util::numeric_cast<u32>( std::floor( currentTime_sec * 0.001 ) );
 
-  TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
+  TimeStamp_t lastObservedFaceTime = robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(facePose);
   
   const bool hasFace = lastObservedFaceTime > 0 && lastObservedFaceTime + _maxFaceAge_ms > currTime_ms;
 
@@ -189,12 +235,24 @@ void IBehaviorRequestGame::AlwaysHandle(const EngineToGameEvent& event, const Ro
       HandleDeletedFace(event.GetData().Get_RobotDeletedFace());
       break;
 
+    case EngineToGameTag::CliffEvent:
+      // handled in WhileRunning
+      break;
+
     default:
       PRINT_NAMED_WARNING("IBehaviorRequestGame.InvalidTag",
                           "Received unexpected event with tag %hhu.", event.GetData().GetTag());
       break;
   }
 }
+
+void IBehaviorRequestGame::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
+{
+  if( event.GetData().GetTag() == EngineToGameTag::CliffEvent ) {
+    HandleCliffEvent(robot, event);
+  }
+}
+
 
 void IBehaviorRequestGame::HandleWhileRunning(const GameToEngineEvent& event, Robot& robot)
 {

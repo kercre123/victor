@@ -54,27 +54,10 @@
 #define     UESB_ERROR_RX_FIFO_EMPTY        0x0303
 
 // Configuration parameter definitions
-enum uesb_bitrate_t {
-  UESB_BITRATE_2MBPS = RADIO_MODE_MODE_Nrf_2Mbit,
-  UESB_BITRATE_1MBPS = RADIO_MODE_MODE_Nrf_1Mbit,
-  UESB_BITRATE_250KBPS = RADIO_MODE_MODE_Nrf_250Kbit
-};
-
 enum uesb_crc_t {
   UESB_CRC_16BIT = RADIO_CRCCNF_LEN_Two,
   UESB_CRC_8BIT  = RADIO_CRCCNF_LEN_One,
   UESB_CRC_OFF   = RADIO_CRCCNF_LEN_Disabled
-};
-
-enum uesb_tx_power_t {
-  UESB_TX_POWER_4DBM     = RADIO_TXPOWER_TXPOWER_Pos4dBm,
-  UESB_TX_POWER_0DBM     = RADIO_TXPOWER_TXPOWER_0dBm,
-  UESB_TX_POWER_NEG4DBM  = RADIO_TXPOWER_TXPOWER_Neg4dBm,
-  UESB_TX_POWER_NEG8DBM  = RADIO_TXPOWER_TXPOWER_Neg8dBm,
-  UESB_TX_POWER_NEG12DBM = RADIO_TXPOWER_TXPOWER_Neg12dBm,
-  UESB_TX_POWER_NEG16DBM = RADIO_TXPOWER_TXPOWER_Neg16dBm,
-  UESB_TX_POWER_NEG20DBM = RADIO_TXPOWER_TXPOWER_Neg20dBm,
-  UESB_TX_POWER_NEG30DBM = RADIO_TXPOWER_TXPOWER_Neg30dBm
 };
 
 // Internal state definition
@@ -98,15 +81,15 @@ struct uesb_address_desc_t
 struct uesb_config_t
 {
   // General RF parameters
-  uesb_bitrate_t          bitrate;
-  uesb_crc_t              crc;
-  uesb_tx_power_t         tx_output_power;
-  uint8_t                 payload_length;
-  uint8_t                 rf_addr_length;
+  uint32_t             bitrate;
+  uesb_crc_t           crc;
+  uint32_t             tx_output_power;
+  uint8_t              payload_length;
+  uint8_t              rf_addr_length;
 
-  uint8_t                 radio_irq_priority;
+  uint8_t              radio_irq_priority;
 
-  uesb_address_desc_t     rx_address;
+  uesb_address_desc_t  rx_address;
 };
 
 struct uesb_payload_t
@@ -133,18 +116,12 @@ struct uesb_payload_fifo_t
 
 uint32_t uesb_init(const uesb_config_t *parameters);
 uint32_t uesb_disable(void);
-bool     uesb_is_idle(void);
-uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *payload, uint8_t length);
+uint32_t uesb_prepare_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *data, uint8_t length);
+uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *data, uint8_t length);
 uint32_t uesb_read_rx_payload(uesb_payload_t *payload);
-void uesb_pause(void);
-void uesb_resume(void);
 uint32_t uesb_start(void);
 uint32_t uesb_stop(void);
-uint32_t uesb_flush_tx(void);
-uint32_t uesb_flush_rx(void);
-uint32_t uesb_get_clear_interrupts(void);
 uint32_t uesb_set_rx_address(const uesb_address_desc_t *addr);
-uint32_t uesb_set_tx_power(uesb_tx_power_t tx_output_power);
-extern "C" void uesb_event_handler(void);
+void uesb_event_handler(uint32_t flags);
 
 #endif

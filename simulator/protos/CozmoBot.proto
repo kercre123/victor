@@ -1178,14 +1178,16 @@ Supervisor {
                     }
                     
 									] # LIFTER_SHAPE Group Children
+
 								} # LIFTER_SHAPE Group
 							       
 								Connector {
 									name "gripperConnector"
+									#translation 0.0035 0 -0.0145
 									translation 0.0035 0 -0.0145
 									rotation 0 1 0 1.57
 									model "magnetic"
-									distanceTolerance 0.0038
+									distanceTolerance 0.005
 									type "active"
 									isLocked FALSE
 									autoLock TRUE
@@ -1196,7 +1198,18 @@ Supervisor {
 								] # SmallFingerGripper Children
 
 								%{ if not fields.vizMode.value then }%
-								boundingObject USE LIFTER_SHAPE
+								boundingObject Transform {
+									translation 0.0 0.0 -0.011
+									children [
+										Shape {
+											geometry Box {
+												#size 0.007 0.036 0.05
+												size 0.007 0.036 0.028
+											}
+										}
+									]
+								}	
+								contactMaterial "cmat_lift"
 								physics Physics {
 									density 1000
 								}

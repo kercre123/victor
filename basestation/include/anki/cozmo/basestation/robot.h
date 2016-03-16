@@ -410,6 +410,8 @@ public:
     static const Pose3d ProxDetectTransform[NUM_PROX];
     */
 
+    void SetEnableCliffSensor(bool val) { _enableCliffSensor = val; }
+  
     // Set how to save incoming robot state messages
     void SetSaveStateMode(const SaveMode_t mode);
     
@@ -418,7 +420,7 @@ public:
     
     // Return the timestamp of the last _processed_ image
     TimeStamp_t GetLastImageTimeStamp() { return _visionComponent.GetLastProcessedImageTimeStamp(); }
-    
+  
     // =========== Actions Commands =============
     
     // Return a reference to the robot's action list for directly adding things
@@ -800,6 +802,7 @@ public:
     bool             _isOnCharger        = false;
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;
+    bool             _enableCliffSensor  = true;
     u32              _lastSentImageID    = 0;
     u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ALL_TRACKS;
 

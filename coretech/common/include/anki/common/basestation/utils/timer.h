@@ -96,7 +96,7 @@ private:
   double elapsedTimeInSeconds_;
   BaseStationTime_t elapsedTimeInNanoSeconds_;
   
-  size_t tickCount_;
+  size_t tickCount_ = 0;
 };
 
   /* Not used by Cozmo

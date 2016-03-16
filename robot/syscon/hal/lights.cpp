@@ -136,14 +136,12 @@ static void CalculateLEDColor(LightValues& light, const uint32_t time)
   }
 }
 
-void Lights::init() {
+void Lights::init() {  
   LightState state;
   
   // Set our default light state
   memset(&state, 0, sizeof(state));
-  state.offColor = 0x0000;
-  state.onColor = 0x0000;
-
+  
   for (int i = 0; i < TOTAL_LIGHTS; i++) {
     update(i, &state);
   }

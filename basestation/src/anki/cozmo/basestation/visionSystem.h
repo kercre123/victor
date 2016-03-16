@@ -209,6 +209,8 @@ namespace Cozmo {
                              const s32 minObjectWidth,
                              const s32 maxObjectHeight,
                              const s32 maxObjectWidth);
+    
+   const std::string GetDataPath() const { return _dataPath; }
   
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.

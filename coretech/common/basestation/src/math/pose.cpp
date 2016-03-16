@@ -512,7 +512,7 @@ namespace Anki {
   
   void Pose3d::Print() const
   {
-    CoreTechPrint("Pose%s%s: Translation=(%f, %f %f), RotVec=(%f, %f, %f), RotAng=%frad (%.1fdeg), parent 0x%x;%s\n",
+    PRINT_NAMED_INFO("Pose3d.Print", "Pose%s%s: Translation=(%f, %f %f), RotVec=(%f, %f, %f), RotAng=%frad (%.1fdeg), parent 0x%p;%s\n",
                   GetName().empty() ? "" : " ", GetName().c_str(),
                   _translation.x(), _translation.y(), _translation.z(),
                   GetRotationAxis().x(), GetRotationAxis().y(), GetRotationAxis().z(),

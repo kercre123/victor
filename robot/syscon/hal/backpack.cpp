@@ -53,14 +53,14 @@ void Backpack::init()
 
 void Backpack::update(void) {
   static uint8_t pwm[numLights];
-
+  
   // Blacken everything out
   lights_off();
 
   // Setup anode
   nrf_gpio_pin_set(RGBLightPins[channel].anode);
   nrf_gpio_cfg_output(RGBLightPins[channel].anode);
-  
+
   // Set lights for current charlie channel
   for (int i = 0, index = channel * numLightsPerChannel; i < numLightsPerChannel; i++, index++)
   {
@@ -73,7 +73,7 @@ void Backpack::update(void) {
       nrf_gpio_cfg_output(pin);
     }
   }
-  
+
   channel = (channel + 1) % numChannels;
 }
 
@@ -119,6 +119,6 @@ void Backpack::manage(void*) {
 
 void Backpack::setLights(const LightState* update) {
   for (int i = 0; i < NUM_BACKPACK_LEDS; i++) {
-		Lights::update(i, &update[i]);
-	}
+    Lights::update(i, &update[i]);
+  }
 }

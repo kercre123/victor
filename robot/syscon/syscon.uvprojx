@@ -171,7 +171,7 @@
             <AdsLsun>1</AdsLsun>
             <AdsLven>1</AdsLven>
             <AdsLsxf>1</AdsLsxf>
-            <RvctClst>0</RvctClst>
+            <RvctClst>1</RvctClst>
             <GenPPlst>0</GenPPlst>
             <AdsCpuType>"Cortex-M0"</AdsCpuType>
             <RvctDeviceName></RvctDeviceName>
@@ -273,7 +273,7 @@
               <OCR_RVCT4>
                 <Type>1</Type>
                 <StartAddress>0x18000</StartAddress>
-                <Size>0x5000</Size>
+                <Size>0x7000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -524,6 +524,21 @@
               <FileName>sha1.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\crypto\sha1.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>bootloader</GroupName>
+          <Files>
+            <File>
+              <FileName>bootloader.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\bootloader.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>bootloader.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\hal\bootloader.s</FilePath>
             </File>
           </Files>
         </Group>

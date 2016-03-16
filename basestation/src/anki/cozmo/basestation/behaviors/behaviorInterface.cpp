@@ -281,14 +281,14 @@ namespace Cozmo {
   bool IBehavior::StopActing(bool allowCallback)
   {
     if( IsActing() ) {
-      // TODO:(bn) should we check IsRunning here? Currently, no, because we want to support this happening
-      // from Stop()
+      u32 tagToCancel = _lastActionTag;
+      
       if( ! allowCallback ) {
         // if we want to block the callback, clear the tag here, before the cancel
         _lastActionTag = ActionConstants::INVALID_TAG;
       }
       
-      bool ret = _robot.GetActionList().Cancel( _lastActionTag );
+      bool ret = _robot.GetActionList().Cancel( tagToCancel );
 
       // note that the callback, if there was one (and it was allowed to run), should have already been called
       // at this point, so it's safe to clear the tag. Also, if the cancel itself failed, that is probably a

@@ -70,6 +70,7 @@ namespace Cozmo {
     switch (_testState) {
       case TestState::MoveHead:
       {
+        MakeSynchronous();
         SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
         _testState = TestState::InitialLocalization;
         break;

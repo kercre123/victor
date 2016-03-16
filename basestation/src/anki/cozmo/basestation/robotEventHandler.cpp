@@ -88,7 +88,11 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // Custom handler for EnableLiftPower
     auto enableLiftPowerCallback = std::bind(&RobotEventHandler::HandleEnableLiftPower, this, std::placeholders::_1);
     _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::EnableLiftPower, enableLiftPowerCallback));
-    
+
+    // Custom handler for EnableCliffSensor
+    auto enableCliffSensorCallback = std::bind(&RobotEventHandler::HandleEnableCliffSensor, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::EnableCliffSensor, enableCliffSensorCallback));
+
     // Custom handler for DisplayProceduralFace
     auto dispProcFaceCallback = std::bind(&RobotEventHandler::HandleDisplayProceduralFace, this, std::placeholders::_1);
     _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::DisplayProceduralFace, dispProcFaceCallback));
@@ -846,6 +850,19 @@ void RobotEventHandler::HandleEnableLiftPower(const AnkiEvent<ExternalInterface:
   }
 }
 
+
+void RobotEventHandler::HandleEnableCliffSensor(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  // TODO: get RobotID in a non-hack way
+  RobotID_t robotID = 1;
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  
+  if (nullptr != robot)
+  {
+    const ExternalInterface::EnableCliffSensor& msg = event.GetData().Get_EnableCliffSensor();
+    robot->SetEnableCliffSensor(msg.enable);
+  }
+}
   
 void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {

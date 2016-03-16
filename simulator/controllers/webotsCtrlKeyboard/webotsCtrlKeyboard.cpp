@@ -73,7 +73,6 @@ namespace Anki {
         
         // Save robot image to file
         bool saveRobotImageToFile_ = false;
-        ExternalInterface::RobotObservedFace _lastFace;
         
       } // private namespace
     
@@ -172,7 +171,7 @@ namespace Anki {
     void WebotsKeyboardController::HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg)
     {
       //printf("RECEIVED FACE OBSERVED: faceID %llu\n", msg.faceID);
-      _lastFace = msg;
+      // _lastFace = msg;
     }
 
     void WebotsKeyboardController::HandleDebugString(ExternalInterface::DebugString const& msg)
@@ -248,6 +247,7 @@ namespace Anki {
         printf("          Disable behavior group:  Alt+h\n");
         printf("            Set emotion to value:  m\n");
         printf("      Search side to side action:  Shift+l\n");
+        printf("    Toggle cliff sensor handling:  Alt+l\n");
         printf("           Set DemoState Default:  j\n");
         printf("         Set DemoState FacesOnly:  Shift+j\n");
         printf("        Set DemoState BlocksOnly:  Alt+j\n");
@@ -790,6 +790,16 @@ namespace Anki {
                   ExternalInterface::MessageGameToEngine message;
                   message.Set_QueueSingleAction(msg);
                   SendMessage(message);
+                }
+                else if (modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                  static bool enableCliffSensor = false;
+
+                  printf("setting enable cliff sensor to %d\n", enableCliffSensor);
+                  ExternalInterface::MessageGameToEngine msg;
+                  msg.Set_EnableCliffSensor(ExternalInterface::EnableCliffSensor{enableCliffSensor});
+                  SendMessage(msg);
+
+                  enableCliffSensor = !enableCliffSensor;
                 }
                 else {
 
@@ -1640,11 +1650,8 @@ namespace Anki {
                   
                 } else if(altPressed && !shiftPressed) {
                   // ALT+F: Turn to face the pose of the last observed face:
-                  printf("Turning to face ID = %d\n", _lastFace.faceID);
-                  ExternalInterface::TurnTowardsPose turnTowardsPose; // construct w/ defaults for speed
-                  turnTowardsPose.world_x = _lastFace.world_x;
-                  turnTowardsPose.world_y = _lastFace.world_y;
-                  turnTowardsPose.world_z = _lastFace.world_z;
+                  printf("Turning to last face\n");
+                  ExternalInterface::TurnTowardsLastFacePose turnTowardsPose; // construct w/ defaults for speed
                   turnTowardsPose.panTolerance_rad = DEG_TO_RAD(10);
                   turnTowardsPose.maxTurnAngle = M_PI;
                   turnTowardsPose.robotID = 1;

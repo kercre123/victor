@@ -107,6 +107,14 @@ namespace Cozmo {
            const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
            EnableVisionWhileMoving(msg.enable);
          }));
+      
+      // VisionRunMode
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::VisionRunMode,
+         [this] (const AnkiEvent<MessageGameToEngine>& event)
+         {
+           const ExternalInterface::VisionRunMode& msg = event.GetData().Get_VisionRunMode();
+           SetRunMode((msg.isSync ? RunMode::Synchronous : RunMode::Asynchronous));
+         }));
     }
     
   } // VisionSystem()
@@ -132,14 +140,17 @@ namespace Cozmo {
   
   void VisionComponent::SetRunMode(RunMode mode) {
     if(mode == RunMode::Synchronous && _runMode == RunMode::Asynchronous) {
-      PRINT_NAMED_INFO("VisionComponent.SetRunMode.SwitchToAsync", "");
+      PRINT_NAMED_INFO("VisionComponent.SetRunMode.SwitchToSync", "");
       if(_running) {
+        //Save old dataPath before destroying current vision system
+        std::string dataPath = _visionSystem->GetDataPath();
         Stop();
+        _visionSystem = new VisionSystem(dataPath, _vizManager);
       }
       _runMode = mode;
     }
     else if(mode == RunMode::Asynchronous && _runMode == RunMode::Synchronous) {
-      PRINT_NAMED_INFO("VisionComponent.SetRunMode.SwitchToSync", "");
+      PRINT_NAMED_INFO("VisionComponent.SetRunMode.SwitchToAsync", "");
       _runMode = mode;
     }
   }
@@ -867,7 +878,7 @@ namespace Cozmo {
         _vizManager->SetDockingError(dockErrMsg.x_distErr,
                                                    dockErrMsg.y_horErr,
                                                    dockErrMsg.angleErr);
-        
+
         // Try to use this for closed-loop control by sending it on to the robot
         _robot.SendRobotMessage<DockingErrorSignal>(std::move(dockErrMsg));
       }

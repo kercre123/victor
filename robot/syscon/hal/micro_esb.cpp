@@ -18,21 +18,14 @@
 // RF parameters
 static uesb_config_t            m_config_local;
 
-// TX FIFO
+// TX/RX FIFO
 static uesb_payload_fifo_t      m_tx_fifo;
-
-// RX FIFO
 static uesb_payload_fifo_t      m_rx_fifo;
-static uint8_t                  m_rx_buffer[UESB_CORE_MAX_PAYLOAD_LENGTH+2];
 
 // Run time variables
-static volatile uint32_t        m_interrupt_flags       = 0;
 static uint32_t                 m_pid[UESB_MAX_PIPES];
-static volatile uint8_t         m_last_rx_packet_pid    = UESB_PID_RESET_VALUE;
-static volatile uint32_t        m_last_rx_packet_crc    = 0xFFFFFFFF;
 
 static uesb_mainstate_t         m_uesb_mainstate        = UESB_STATE_UNINITIALIZED;
-static bool                     m_paused;
 
 // Macros
 #define                         DISABLE_RF_IRQ      NVIC_DisableIRQ(RADIO_IRQn)
@@ -69,6 +62,7 @@ static void update_radio_parameters()
 
   // CRC configuration
   NRF_RADIO->CRCCNF    = m_config_local.crc               << RADIO_CRCCNF_LEN_Pos;
+  
   switch(m_config_local.crc)
   {
   case RADIO_CRCCNF_LEN_Two:
@@ -84,35 +78,11 @@ static void update_radio_parameters()
   }
 }
 
-static void initialize_fifos()
-{
-  memset(&m_tx_fifo, 0, sizeof(m_tx_fifo));
-  memset(&m_rx_fifo, 0, sizeof(m_rx_fifo));
-}
-
-static void tx_fifo_remove_last()
-{
-  if(m_tx_fifo.count > 0)
-  {
-    DISABLE_RF_IRQ;
-    m_tx_fifo.count--;
-    m_tx_fifo.exit_point++;
-    if(m_tx_fifo.exit_point >= UESB_CORE_TX_FIFO_SIZE) m_tx_fifo.exit_point = 0;
-    ENABLE_RF_IRQ;
-  }
-}
-
 uint32_t uesb_init(const uesb_config_t *parameters)
 {
   if(m_uesb_mainstate != UESB_STATE_UNINITIALIZED) return UESB_ERROR_ALREADY_INITIALIZED;
+  
   memcpy(&m_config_local, parameters, sizeof(uesb_config_t));
-
-  m_interrupt_flags    = 0;
-  memset(m_pid, 0, sizeof(m_pid));
-  m_last_rx_packet_pid = 0xFF;
-  m_last_rx_packet_crc = 0xFFFFFFFF;
-
-  update_radio_parameters();
 
   NRF_RADIO->POWER = 1;
 
@@ -123,12 +93,13 @@ uint32_t uesb_init(const uesb_config_t *parameters)
                            RADIO_SHORTS_DISABLED_RSSISTOP_Msk;
   NRF_RADIO->INTENSET    = RADIO_INTENSET_DISABLED_Msk;
 
-  initialize_fifos();
-
-  NVIC_SetPriority(RADIO_IRQn, m_config_local.radio_irq_priority & 0x03);
+  NVIC_SetPriority(RADIO_IRQn, m_config_local.radio_irq_priority);
 
   m_uesb_mainstate = UESB_STATE_IDLE;
-  m_paused = false;
+
+  memset(&m_tx_fifo, 0, sizeof(m_tx_fifo));
+  memset(&m_rx_fifo, 0, sizeof(m_rx_fifo));
+  memset(m_pid, 0, sizeof(m_pid));
 
   return UESB_SUCCESS;
 }
@@ -147,7 +118,7 @@ uint32_t uesb_disable(void)
   return UESB_SUCCESS;
 }
 
-uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *data, uint8_t length)
+uint32_t uesb_prepare_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *data, uint8_t length)
 {
   if(m_uesb_mainstate == UESB_STATE_UNINITIALIZED) return UESB_ERROR_NOT_INITIALIZED;
   if(m_tx_fifo.count >= UESB_CORE_TX_FIFO_SIZE) return UESB_ERROR_TX_FIFO_FULL;
@@ -167,10 +138,19 @@ uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, uint8_t pipe,
     uesb_stop();
   }
   ENABLE_RF_IRQ;
-
-  uesb_start();
-
+  
   return UESB_SUCCESS;
+}
+
+uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *data, uint8_t length)
+{
+  uint32_t error = uesb_prepare_tx_payload(address, pipe, data, length);
+  
+  if (error != UESB_SUCCESS) {
+    return error;
+  }
+  
+  return uesb_start();
 }
 
 uint32_t uesb_read_rx_payload(uesb_payload_t *payload)
@@ -211,16 +191,12 @@ static void configure_addresses(const uesb_address_desc_t *address) {
 
   // Set radio transmission buffer
   NRF_RADIO->FREQUENCY = address->rf_channel;
-
-  NRF_RADIO->RXADDRESSES = address->rx_pipes_enabled;
 }
 
 uint32_t uesb_start() {
   if(m_uesb_mainstate != UESB_STATE_IDLE) return UESB_ERROR_NOT_IDLE;
     
   update_radio_parameters();
-
-  uesb_payload_t *current_payload = &m_tx_fifo.payload[m_tx_fifo.exit_point];
 
   NRF_RADIO->EVENTS_DISABLED = 0;
   NRF_RADIO->EVENTS_READY = 0;
@@ -230,6 +206,8 @@ uint32_t uesb_start() {
   //NRF_RADIO->EVENTS_RSSIEND = 0;
 
   if (m_tx_fifo.count > 0) {
+    uesb_payload_t *current_payload = &m_tx_fifo.payload[m_tx_fifo.exit_point];
+
     // Dequeue fifo
     uint8_t pipe = current_payload->pipe;
     
@@ -252,14 +230,18 @@ uint32_t uesb_start() {
     
     NRF_RADIO->TASKS_TXEN  = 1;
 
-  } else if (!m_paused && m_rx_fifo.count < UESB_CORE_RX_FIFO_SIZE) {
+  } else if (m_rx_fifo.count < UESB_CORE_RX_FIFO_SIZE) {
+    // Read to the next spot in the payload
+    uesb_payload_t *m_rx_payload = &m_rx_fifo.payload[m_rx_fifo.entry_point];
+
     m_uesb_mainstate       = UESB_STATE_PRX;
     
     update_rf_payload_format(m_config_local.payload_length);
     configure_addresses(&m_config_local.rx_address);
     
-    NRF_RADIO->PACKETPTR = (uint32_t)&m_rx_buffer;
-  
+    NRF_RADIO->RXADDRESSES = m_config_local.rx_address.rx_pipes_enabled;
+    NRF_RADIO->PACKETPTR = (uint32_t)&m_rx_payload->pid;
+
     NRF_RADIO->TASKS_RXEN  = 1;
   } else {
     m_uesb_mainstate = UESB_STATE_IDLE;
@@ -269,16 +251,6 @@ uint32_t uesb_start() {
   ENABLE_RF_IRQ;
 
   return UESB_SUCCESS;
-}
-
-void uesb_pause(void)
-{
-  m_paused = true;
-}
-
-void uesb_resume(void)
-{
-  m_paused = false;
 }
 
 uint32_t uesb_stop(void)
@@ -294,38 +266,6 @@ uint32_t uesb_stop(void)
   return UESB_SUCCESS;
 }
 
-uint32_t uesb_flush_tx(void)
-{
-  if(m_uesb_mainstate != UESB_STATE_IDLE) return UESB_ERROR_NOT_IDLE;
-  DISABLE_RF_IRQ;
-  m_tx_fifo.count = 0;
-  m_tx_fifo.entry_point = m_tx_fifo.exit_point = 0;
-  ENABLE_RF_IRQ;
-
-  return UESB_SUCCESS;
-}
-
-uint32_t uesb_flush_rx(void)
-{
-  DISABLE_RF_IRQ;
-  m_rx_fifo.count = 0;
-  m_last_rx_packet_pid = UESB_PID_RESET_VALUE;
-  m_rx_fifo.entry_point = m_rx_fifo.exit_point = 0;
-  ENABLE_RF_IRQ;
-
-  return UESB_SUCCESS;
-}
-
-uint32_t uesb_get_clear_interrupts(void)
-{
-  DISABLE_RF_IRQ;
-  uint32_t interrupts = m_interrupt_flags;
-  m_interrupt_flags = 0;
-  ENABLE_RF_IRQ;
-
-  return interrupts;
-}
-
 uint32_t uesb_set_rx_address(const uesb_address_desc_t *addr)
 {
   memcpy(&m_config_local.rx_address, addr, sizeof(uesb_address_desc_t));
@@ -333,61 +273,45 @@ uint32_t uesb_set_rx_address(const uesb_address_desc_t *addr)
   return UESB_SUCCESS;
 }
 
-uint32_t uesb_set_tx_power(uesb_tx_power_t tx_output_power)
-{
-  if(m_uesb_mainstate != UESB_STATE_IDLE) return UESB_ERROR_NOT_IDLE;
-  
-  if ( m_config_local.tx_output_power == tx_output_power ) return UESB_SUCCESS;
-  m_config_local.tx_output_power = tx_output_power;
-  
-  update_radio_parameters();
-  
-  return UESB_SUCCESS;
-}
-
 extern "C" void RADIO_IRQHandler()
 {   
-  if(!NRF_RADIO->EVENTS_DISABLED || (~NRF_RADIO->INTENSET & RADIO_INTENSET_DISABLED_Msk)) {
-    return ;
-  }
-
+  // Clear event
   NRF_RADIO->EVENTS_DISABLED = 0;
 
   switch(m_uesb_mainstate)
   {
   case UESB_STATE_PRX:
-    // CRC Passed, not a re-transmit
-    if(NRF_RADIO->CRCSTATUS != 0 && (NRF_RADIO->RXCRC != m_last_rx_packet_crc || m_rx_buffer[1] >> 1 != m_last_rx_packet_pid))
+    // CRC Passed
+    if (NRF_RADIO->CRCSTATUS != 0)
     {
       uesb_payload_t *m_rx_payload = &m_rx_fifo.payload[m_rx_fifo.entry_point];
       
-      m_interrupt_flags |= UESB_INT_RX_DR_MSK;
-
       if(++m_rx_fifo.entry_point >= UESB_CORE_RX_FIFO_SIZE) m_rx_fifo.entry_point = 0;
       m_rx_fifo.count++;
-
-      memcpy(&m_rx_payload->pid, m_rx_buffer, sizeof(m_rx_buffer));
     
       m_rx_payload->length = m_config_local.payload_length;
       m_rx_payload->pipe = NRF_RADIO->RXMATCH;
       m_rx_payload->rssi = NRF_RADIO->RSSISAMPLE;
     
-      m_last_rx_packet_pid = m_rx_payload->null >> 1;
-      m_last_rx_packet_crc = NRF_RADIO->RXCRC;
+      uesb_event_handler(UESB_INT_RX_DR_MSK);
     }
     
     break ;
   case UESB_STATE_PTX:
     // Naively assume we don't need an ACK
-    m_interrupt_flags |= UESB_INT_TX_SUCCESS_MSK;
-    tx_fifo_remove_last();
+    if (m_tx_fifo.count > 0)
+    {
+      m_tx_fifo.count--;
+      m_tx_fifo.exit_point++;
+      if(m_tx_fifo.exit_point >= UESB_CORE_TX_FIFO_SIZE) m_tx_fifo.exit_point = 0;
+    }
 
+    uesb_event_handler(UESB_INT_TX_SUCCESS_MSK);
     break ;
   default:
     break ;
   }
   
   m_uesb_mainstate = UESB_STATE_IDLE;
-  uesb_event_handler();
   uesb_start();
 }
