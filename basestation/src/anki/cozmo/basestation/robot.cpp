@@ -2832,7 +2832,7 @@ namespace Anki {
         if( DEBUG_BLOCK_LIGHTS ) {
           PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set1",
                             "Setting lights for object %d (activeID %d)",
-                            objectID.GetValue(), activeCube->Vision::ObservableObject::GetActiveID());
+                            objectID.GetValue(), activeCube->GetActiveID());
         }
 
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
@@ -2875,7 +2875,7 @@ namespace Anki {
         if( DEBUG_BLOCK_LIGHTS ) {
           PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set2",
                             "Setting lights for object %d (activeID %d)",
-                            objectID.GetValue(), activeCube->Vision::ObservableObject::GetActiveID());
+                            objectID.GetValue(), activeCube->GetActiveID());
         }
         
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));

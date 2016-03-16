@@ -51,9 +51,10 @@ namespace Anki {
     
     ActiveCube::ActiveCube(ObjectType type)
     : Block(ObjectFamily::LightCube, type)
-    , _activeID(-1)
-    , _factoryID(0)
     {
+      _activeID = -1;
+      _factoryID = 0;
+      
       // For now, assume 6 different markers, so we can avoid rotation ambiguities
       // Verify that here by making sure a set of markers has as many elements
       // as the original list:
@@ -335,27 +336,7 @@ namespace Anki {
       }
     } // Identify()
     
-    std::map<s32,bool>& ActiveCube::GetAvailableIDs()
-    {
-      static std::map<s32,bool> availableIDs;
-      return availableIDs;
-    }
-    
-    void ActiveCube::RegisterAvailableID(s32 activeID)
-    {
-      if(ActiveCube::GetAvailableIDs().count(activeID) > 0) {
-        PRINT_NAMED_WARNING("ActiveCube.RegisterAvailableID",
-                            "Ignoring duplicate registration of available ID %d.\n", activeID);
-      } else {
-        ActiveCube::GetAvailableIDs()[activeID] = false;
-      }
-      
-    }
-    
-    void ActiveCube::ClearAvailableIDs()
-    {
-      ActiveCube::GetAvailableIDs().clear();
-    }
+
     
     WhichCubeLEDs ActiveCube::GetCornerClosestToXY(const Point2f& xyPosition) const
     {

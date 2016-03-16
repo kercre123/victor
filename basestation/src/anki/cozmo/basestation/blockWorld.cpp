@@ -2283,7 +2283,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
     */
 
   
-    ObjectID BlockWorld::AddLightCube(ActionableObject::ActiveID activeID, FactoryID factoryID)
+    ObjectID BlockWorld::AddLightCube(ActiveID activeID, FactoryID factoryID)
     {
       if (activeID >= 4 || activeID < 0) {
         PRINT_NAMED_WARNING("BlockWorld.AddLightCube.InvalidActiveID", "activeID %d", activeID);
@@ -2292,13 +2292,12 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
       
       // Is there an active object with the same activeID that already exists?
       ObjectType cubeType = ActiveCube::GetTypeFromFactoryID(factoryID);
-      ObservableObject* matchingObsObject = GetActiveObjectByActiveID(activeID);
-      ActiveCube* matchingObject = dynamic_cast<ActiveCube*>(matchingObsObject);
+      ObservableObject* matchingObject = GetActiveObjectByActiveID(activeID);
       if (matchingObject == nullptr) {
         // If no match found, find one of the same type with an invalid activeID and assume it's that
         const ObjectsMapByID_t& objectsOfSameType = GetExistingObjectsByType(cubeType);
         for (auto& cubeIt : objectsOfSameType) {
-          ActiveCube* sameTypeCube = dynamic_cast<ActiveCube*>(cubeIt.second);
+          ObservableObject* sameTypeCube = cubeIt.second;
           if (sameTypeCube->GetActiveID() < 0) {
             sameTypeCube->SetActiveID(activeID);
             PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatchingObjectWithNoActiveID",
