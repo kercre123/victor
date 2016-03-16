@@ -54,14 +54,17 @@ protected:
   virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
 
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
-  
+
+  virtual float EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const override;
+
 private:
   enum class State {
     WaitForOtherActions,
     Inactive,
     Roaming,
     LookingAtPossibleObject,
-    ExaminingFoundObject
+    ExaminingFoundObject,
+    BackingUpFromCliff
   };
 
   void TransitionToWaitForOtherActions(Robot& robot);
@@ -69,6 +72,7 @@ private:
   void TransitionToRoaming(Robot& robot);
   void TransitionToLookingAtPossibleObject(Robot& robot);
   void TransitionToExaminingFoundObject(Robot& robot);
+  void TransitionToBackingUpFromCliff(Robot& robot);
 
   void SetState_internal(State state, const std::string& stateName);
 
@@ -120,6 +124,7 @@ private:
 
   void HandleObjectObserved(const ExternalInterface::RobotObservedObject& msg, bool confirmed, Robot& robot);
   void HandleRobotPutDown(const EngineToGameEvent& event, Robot& robot);
+  void HandleCliffEvent(const EngineToGameEvent& event, Robot& robot);
 };
   
 

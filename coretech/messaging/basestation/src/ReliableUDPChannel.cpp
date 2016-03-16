@@ -79,6 +79,11 @@ void ReliableUDPChannel::Stop()
 void ReliableUDPChannel::Update()
 {
   // Nothing to do; everything is done in threads.
+  // Unless we are running synchronous
+  if(reliableTransport.IsSynchronous())
+  {
+    reliableTransport.Update();
+  }
 }
 
 bool ReliableUDPChannel::Send(const Anki::Comms::OutgoingPacket& packet)
@@ -348,7 +353,6 @@ void ReliableUDPChannel::ConfigureReliableTransport()
 bool ReliableUDPChannel::SendDirect(const OutgoingPacket& packet)
 {
   // TODO: Do not hold lock.
-
   TransportAddress destAddress;
   if (!UnreliableUDPChannel::GetAddress(destAddress, packet.destId)) {
     PRINT_STREAM_WARNING("ReliableUDPChannel.SendDirect",

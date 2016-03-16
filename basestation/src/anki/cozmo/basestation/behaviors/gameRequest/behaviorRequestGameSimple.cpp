@@ -44,13 +44,22 @@ static const char* kPlaceMotionProfileKey = "place_motion_profile";
 static const char* kDriveToPlacePoseThreshold_mmKey = "place_position_threshold_mm";
 static const char* kDriveToPlacePoseThreshold_radsKey = "place_position_threshold_rads";
 
+static const char* kCliffReactAnimName = "anim_VS_loco_cliffReact";
+
 static const float kMinRequestDelayDefault = 5.0f;
 static const float kAfterPlaceBackupDistance_mmDefault = 80.0f;
 static const float kAfterPlaceBackupSpeed_mmpsDefault = 80.0f;
-static const float kDistToMoveTowardsFace_mm = 120.0f;
 static const float kFaceVerificationTime_s = 0.75f;
 static const float kDriveToPlacePoseThreshold_mmDefault = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
 static const float kDriveToPlacePoseThreshold_radsDefault = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
+
+// #define kDistToMoveTowardsFace_mm {120.0f, 100.0f, 140.0f, 50.0f, 180.0f, 20.0f}
+// to avoid cliff issues, we're only going to move slightly forwards
+#define kDistToMoveTowardsFace_mm {20.0f}
+
+// need to be as far away as the size of the robot + 2 blocks + padding
+static const float kSafeDistSqFromObstacle_mm = SQUARE(100);
+
 
 void BehaviorRequestGameSimple::ConfigPerNumBlocks::LoadFromJson(const Json::Value& config)
 {
@@ -89,6 +98,8 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
     _afterPlaceBackupSpeed_mmps = config.get(kAfterPlaceBackupSpeed_mmpsKey,
                                              kAfterPlaceBackupSpeed_mmpsDefault).asFloat();
   }
+
+  SubscribeToTags({EngineToGameTag::CliffEvent});
 }
 
 Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
@@ -97,7 +108,10 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
   // disable idle animation, but save the old one on the stack
-  robot.PushIdleAnimation("NONE");
+  if( ! _shouldPopIdle ) {
+    _shouldPopIdle = true;
+    robot.PushIdleAnimation("NONE");
+  }
 
   if( GetNumBlocks(robot) == 0 ) {
     _activeConfig = &_zeroBlockConfig;
@@ -112,7 +126,7 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
       TransitionToPlayingInitialAnimation(robot);
     }
   }
-
+  
   return RESULT_OK;
 }
 
@@ -127,11 +141,20 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
       TransitionToFacingBlock(robot);
     }
   }
+  
+  if( _state == State::TrackingFace &&
+      GetRequestMinDelayComplete_s() >= 0.0f &&
+      currentTime_sec >= GetRequestMinDelayComplete_s() ) {
+    // timeout acts as a deny
+    StopActing();
+    SendDeny(robot);
+    TransitionToPlayingDenyAnim(robot);
+  }
 
   if( IsActing() ) {
     return Status::Running;
   }
-
+  
   PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.Complete", "no current actions, so finishing");
 
   return Status::Complete;
@@ -139,23 +162,13 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
 
 Result BehaviorRequestGameSimple::InterruptInternal(Robot& robot, double currentTime_sec)
 {
-  // if we are playing an animation, we don't want to be interrupted
-  if( IsActing() ) {
-    if( _state == State::TrackingFace ) {
-      if( GetRequestMinDelayComplete_s() >= 0.0f && currentTime_sec < GetRequestMinDelayComplete_s() ) {
-        // we are doing a face track action, and it hasn't been long enough since the request, so hold in this
-        // behavior for a while
-        return Result::RESULT_FAIL;
-      }
-    }
-    else {
-      // we are doing something, wait until we are done
-      return Result::RESULT_FAIL;
-    }
+  if( _state == State::HandlingCliff ) {
+    return Result::RESULT_FAIL;
   }
-
+  
   StopInternal(robot, currentTime_sec);
-
+  StopActing(false);
+  
   return Result::RESULT_OK;
 }
 
@@ -172,14 +185,21 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot, double currentTime_se
     // action is can canceled automatically by IBehavior
   }
 
-  // don't use transition to because we don't want to do anything
+  // don't use transition to because we don't want to do anything.
   _state = State::PlayingInitialAnimation;
 
-  robot.PopIdleAnimation();
+  if( _shouldPopIdle ) {
+    _shouldPopIdle = false;
+    robot.PopIdleAnimation();
+  }
 }
 
 float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
 {
+  if( _state == State::HandlingCliff ) {
+    return 1.0f;
+  }
+  
   // NOTE: can't use _activeConfig because we haven't been Init'd yet  
   float score = IBehavior::EvaluateScoreInternal(robot, currentTime_sec);
   if( GetNumBlocks(robot) == 0 ) {
@@ -189,6 +209,18 @@ float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot, doubl
     score *= _oneBlockConfig.scoreFactor;
   }
   return score;
+}
+
+float BehaviorRequestGameSimple::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+{
+  // if we have requested, and are past the timeout, then we don't want to keep running
+  if( IsActing() ) {
+    // while we are doing things, we really don't want to be interrupted
+    return 1.0f;
+  }
+
+  // otherwise, fall back to running score
+  return EvaluateScoreInternal(robot, currentTime_sec);
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot)
@@ -233,9 +265,15 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                   TransitionToPickingUpBlock(robot);
                 }
                 else {
-                  // if its an abort failure, do nothing, which will cause the behavior to stop
-                  PRINT_NAMED_INFO("BehaviorRequestGameSimple.PickingUpBlock.Failed",
-                                   "failed to pick up block with no retry, so ending the behavior");
+                  // couldn't pick up this block. If we have another, try that. Otherwise, fail
+                  if( SwitchRobotsBlock(robot) ) {
+                    TransitionToPickingUpBlock(robot);
+                  }
+                  else {
+                    // if its an abort failure, do nothing, which will cause the behavior to stop
+                    PRINT_NAMED_INFO("BehaviorRequestGameSimple.PickingUpBlock.Failed",
+                                     "failed to pick up block with no retry, so ending the behavior");
+                  }
                 }
               } );
   SET_STATE(State::PickingUpBlock);
@@ -396,8 +434,11 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot)
 {
-  StartActing(new PlayAnimationAction(robot, _activeConfig->requestAnimationName),
-              &BehaviorRequestGameSimple::TransitionToTrackingFace);
+  // always turn back to the face after the animation in case the animation moves the head
+  StartActing(new CompoundActionSequential(robot, {
+        new PlayAnimationAction(robot, _activeConfig->requestAnimationName),
+        new TurnTowardsLastFacePoseAction(robot, PI_F)}),
+    &BehaviorRequestGameSimple::TransitionToTrackingFace);
   SET_STATE(State::PlayingRequstAnim);
 }
 
@@ -408,7 +449,7 @@ void BehaviorRequestGameSimple::TransitionToTrackingFace(Robot& robot)
   if( GetFaceID() == Face::UnknownFace ) {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoValidFace",
                         "Can't do face tracking because there is no valid face!");
-    // use an action that just hangs to simulate the track face logic      
+    // use an action that just hangs to simulate the track face logic
     StartActing( new HangAction(robot) );
   }
   else {
@@ -427,13 +468,30 @@ void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
   SET_STATE(State::PlayingDenyAnim);
 }
 
+void BehaviorRequestGameSimple::TransitionToHandlingCliff(Robot& robot)
+{
+  // cancel any other action when we enter this state
+  StopActing(false);
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  action->AddAction(new PlayAnimationAction(robot, kCliffReactAnimName));
+  if( robot.IsCarryingObject() ) {
+    action->AddAction(new PlaceObjectOnGroundAction(robot));
+  }
+
+  // after action is complete, let the behavior end, resetting the state
+  StartActing( action , [this]() { SET_STATE(State::PlayingInitialAnimation); });
+
+  SET_STATE(State::HandlingCliff);
+}
+
 void BehaviorRequestGameSimple::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;
   PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.TransitionTo", "%s", stateName.c_str());
+  SetStateName(stateName);
 }
 
-bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& targetPose)
+bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& targetPoseRet)
 {
   Pose3d facePose;
   if ( ! GetFacePose(robot, facePose ) ) {
@@ -443,21 +501,68 @@ bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& tar
   }
   
   if( ! facePose.GetWithRespectTo(robot.GetPose(), facePose) ) {
-    PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoFacePose",
-                        "could not get face pose with respect to robot");
+    PRINT_NAMED_ERROR("BehaviorRequestGameSimple.NoFacePose",
+                      "could not get face pose with respect to robot. This should never happen");
     return false;
   }
 
   float xyDistToFace = std::sqrt( std::pow( facePose.GetTranslation().x(), 2) +
                                   std::pow( facePose.GetTranslation().y(), 2) );
-  float distanceRatio = kDistToMoveTowardsFace_mm / xyDistToFace;
-  
-  float relX = distanceRatio * facePose.GetTranslation().x();
-  float relY = distanceRatio * facePose.GetTranslation().y();
-  Radians targetAngle = std::atan2(relY, relX);
 
-  targetPose = Pose3d{ targetAngle, Z_AXIS_3D(), {relX, relY, 0.0f}, &robot.GetPose() };
-  targetPose = targetPose.GetWithRespectToOrigin();
+  // try a few different positions until we get one that isn't near another cube
+  Radians targetAngle = std::atan2(facePose.GetTranslation().y(), facePose.GetTranslation().x());
+  float oneOverDist = 1.0 / xyDistToFace;
+
+  Pose3d targetPose;
+  
+  for(float newDist : kDistToMoveTowardsFace_mm) {
+    float distanceRatio =  newDist * oneOverDist;
+        
+    float relX = distanceRatio * facePose.GetTranslation().x();
+    float relY = distanceRatio * facePose.GetTranslation().y();
+
+    targetPose = Pose3d{ targetAngle, Z_AXIS_3D(), {relX, relY, 0.0f}, &robot.GetPose() };
+    targetPose = targetPose.GetWithRespectToOrigin();
+
+    BlockWorldFilter filter;
+    filter.OnlyConsiderLatestUpdate(false);
+    filter.SetFilterFcn( [&](ObservableObject* obj) {
+        if( obj->GetPoseState() != ObservableObject::PoseState::Known ) {
+          // ignore unknown obstacles
+          return false;
+        }
+
+        if( robot.IsCarryingObject() && robot.GetCarryingObject() == obj->GetID() ) {
+          // ignore the block we are carrying
+          return false;
+        }
+
+        float distSq = (obj->GetPose().GetWithRespectToOrigin().GetTranslation() -
+                        targetPose.GetTranslation()).LengthSq();
+        if( distSq < kSafeDistSqFromObstacle_mm ) {
+          PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.GetFaceInteractionPose.Obstacle",
+                            "Obstacle %d within sqrt(%f) of point at d=%f",
+                            obj->GetID().GetValue(),
+                            distSq,
+                            newDist);
+          return true;
+        }
+        return false;
+      });
+
+    std::vector<ObservableObject*> blocks;
+    robot.GetBlockWorld().FindMatchingObjects(filter, blocks);
+
+    if(blocks.empty()) {
+      targetPoseRet = targetPose;
+      return true;
+    }
+  }
+
+  PRINT_NAMED_INFO("BehaviorRequestGameSimple.NoSafeBlockPose",
+                   "Could not find a safe place to put down the cube, using current position");  
+  targetPoseRet = Pose3d{ targetAngle, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f}, &robot.GetPose() };
+  targetPoseRet = targetPoseRet.GetWithRespectToOrigin();
 
   return true;
 }
@@ -482,6 +587,15 @@ f32 BehaviorRequestGameSimple::GetRequestMinDelayComplete_s() const
   }
   
   return _requestTime_s + minRequestDelay;
+}
+
+void BehaviorRequestGameSimple::HandleCliffEvent(Robot& robot, const EngineToGameEvent& event)
+{
+  if( event.GetData().Get_CliffEvent().detected ) {
+    PRINT_NAMED_INFO("BehaviorRequestGameSimple.Cliff",
+                     "handling cliff event");
+    TransitionToHandlingCliff(robot);
+  }
 }
 
 }

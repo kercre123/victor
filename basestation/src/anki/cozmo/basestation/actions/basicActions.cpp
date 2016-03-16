@@ -228,6 +228,14 @@ namespace Anki {
       , _compoundAction(robot)
     {
     }
+
+    SearchSideToSideAction::~SearchSideToSideAction()
+    {
+      if( _shouldPopIdle ) {
+        _robot.PopIdleAnimation();
+        _shouldPopIdle = false;
+      }
+    }
   
     void SearchSideToSideAction::SetSearchAngle(f32 minSearchAngle_rads, f32 maxSearchAngle_rads)
     {
@@ -284,6 +292,12 @@ namespace Anki {
       
       // Prevent the compound action from locking tracks (the PanAndTiltAction handles it itself)
       _compoundAction.ShouldSuppressTrackLocking(true);
+
+      // disable the live idle animation, so we aren't moving during the "wait" sections
+      if( ! _shouldPopIdle ) {
+        _shouldPopIdle = true;
+        _robot.PushIdleAnimation("NONE");
+      }
 
       // Go ahead and do the first Update for the compound action so we don't
       // "waste" the first CheckIfDone call doing so. Proceed so long as this
@@ -1130,6 +1144,7 @@ namespace Anki {
                           "Could not get pose w.r.t. robot pose.");
         _poseWrtRobot.Print();
         _poseWrtRobot.PrintNamedPathToOrigin(false);
+        _robot.GetPose().PrintNamedPathToOrigin(false);
         return ActionResult::FAILURE_ABORT;
       }
       
@@ -1337,7 +1352,7 @@ namespace Anki {
     {
       Pose3d pose;
       // If we have a last observed face set the pose of it otherwise pose wil not be set and TurnTowardsPoseAction will return failure
-      if(robot.GetFaceWorld().GetLastObservedFace(pose) != 0)
+      if(robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(pose) != 0)
       {
         SetPose(pose);
       }

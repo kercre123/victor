@@ -56,6 +56,7 @@ namespace Anki {
       switch (_testState) {
         case TestState::TurnToFace:
         {
+          MakeSynchronous();
           SendMoveHeadToAngle(MAX_HEAD_ANGLE, 100, 100);
           
           ExternalInterface::QueueSingleAction m;
@@ -75,7 +76,7 @@ namespace Anki {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotHeadAngle_rad(), MAX_HEAD_ANGLE, HEAD_ANGLE_TOL) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 10) &&
-                                           _faceSeenTime != 0, 10)
+                                           _faceSeenTime != 0, DEFAULT_TIMEOUT)
           {
             SendMoveHeadToAngle(0, 20, 20);
             
@@ -97,7 +98,7 @@ namespace Anki {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
                                            (NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -180, 10) ||
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 180, 10)), 10)
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 180, 10)), DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -119,7 +120,7 @@ namespace Anki {
                                            NEAR(GetRobotHeadAngle_rad(), DEG_TO_RAD(37), DEG_TO_RAD(2)) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), -90, 10) &&
                                            _prevFaceSeenTime < _faceSeenTime &&
-                                           _prevFaceSeenTime != 0, 10)
+                                           _prevFaceSeenTime != 0, DEFAULT_TIMEOUT)
           {
             CST_EXIT();
           }

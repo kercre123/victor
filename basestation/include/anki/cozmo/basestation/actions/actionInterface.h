@@ -136,6 +136,8 @@ namespace Anki {
       void SetStatus(const std::string& msg);
       
       void ResetState() { _state = ActionResult::FAILURE_NOT_STARTED; }
+
+      ActionResult GetState() const { return _state; } 
       
     private:
 

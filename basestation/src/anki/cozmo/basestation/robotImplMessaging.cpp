@@ -488,6 +488,12 @@ void Robot::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& messa
 void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   CliffEvent cliffEvent = message.GetData().Get_cliffEvent();
+  // always listen to events which say we aren't on a cliff, but ignore ones which say we are (so we don't
+  // get "stuck" om a cliff
+  if( ! _enableCliffSensor && cliffEvent.detected ) {
+    return;
+  }
+
   if (cliffEvent.detected) {
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f while driving %s",
                      cliffEvent.x_mm, cliffEvent.y_mm, cliffEvent.drivingForward ? "forwards" : "backwards");
@@ -508,7 +514,6 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   // Forward on with EngineToGame event
   CliffEvent payload = message.GetData().Get_cliffEvent();
   Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(payload)));
-  
 }
   
 void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -988,6 +993,14 @@ void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
       const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
       _visionComponent.EnableVisionWhileMoving(msg.enable);
     }));
+  
+  // VisionRunMode
+  _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::VisionRunMode,
+   [this] (const GameToEngineEvent& event)
+   {
+     const ExternalInterface::VisionRunMode& msg = event.GetData().Get_VisionRunMode();
+     _visionComponent.SetRunMode((msg.isSync ? VisionComponent::RunMode::Synchronous : VisionComponent::RunMode::Asynchronous));
+   }));
 }
 
 void Robot::SetupGainsHandlers(IExternalInterface& externalInterface)
