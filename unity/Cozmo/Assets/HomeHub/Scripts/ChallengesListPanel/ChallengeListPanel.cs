@@ -20,9 +20,6 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private RectTransform _BottomChallengeContainer;
 
-    public event TimelineView.ButtonClickedHandler OnLockedChallengeClicked;
-    public event TimelineView.ButtonClickedHandler OnUnlockedChallengeClicked;
-
     private readonly Dictionary<string, GameObject> _ChallengeButtons = new Dictionary<string, GameObject>();
 
     public override void Initialize(HomeView homeViewInstance) {
@@ -58,15 +55,11 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
-      if (OnLockedChallengeClicked != null) {
-        OnLockedChallengeClicked(challengeClicked, buttonTransform);
-      }
+      base.GetHomeViewInstance().HandleLockedChallengeClicked(challengeClicked, buttonTransform);
     }
 
     private void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
-      if (OnUnlockedChallengeClicked != null) {
-        OnUnlockedChallengeClicked(challengeClicked, buttonTransform);
-      }
+      base.GetHomeViewInstance().HandleUnlockedChallengeClicked(challengeClicked, buttonTransform);
     }
 
   }

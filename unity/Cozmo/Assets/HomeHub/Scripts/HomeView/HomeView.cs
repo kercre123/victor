@@ -181,6 +181,18 @@ namespace Cozmo.HomeHub {
       return _ChallengeStates;
     }
 
+    public void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
+      if (OnLockedChallengeClicked != null) {
+        OnLockedChallengeClicked(challengeClicked, buttonTransform);
+      } 
+    }
+
+    public void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
+      if (OnUnlockedChallengeClicked != null) {
+        OnUnlockedChallengeClicked(challengeClicked, buttonTransform);
+      } 
+    }
+
     protected override void CleanUp() {
       
     }
