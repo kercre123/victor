@@ -349,8 +349,8 @@ namespace Anki {
 
         onRamp_ = false;
 
-        prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
-        prevRightWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
+        prevLeftWheelPos_ = HAL::MotorGetPosition(MOTOR_LEFT_WHEEL);
+        prevRightWheelPos_ = HAL::MotorGetPosition(MOTOR_RIGHT_WHEEL);
 
         gyroRotOffset_ =  -IMUFilter::GetRotation();
 
@@ -468,8 +468,8 @@ namespace Anki {
 
         // Update current pose estimate based on wheel motion
 
-        f32 currLeftWheelPos = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
-        f32 currRightWheelPos = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
+        f32 currLeftWheelPos = HAL::MotorGetPosition(MOTOR_LEFT_WHEEL);
+        f32 currRightWheelPos = HAL::MotorGetPosition(MOTOR_RIGHT_WHEEL);
 
         // Compute distance traveled by each wheel
         f32 lDist = currLeftWheelPos - prevLeftWheelPos_;
@@ -668,8 +668,8 @@ namespace Anki {
         // Set orientation according to gyro
         orientation_ = IMUFilter::GetRotation() + gyroRotOffset_;
 
-        prevLeftWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_LEFT_WHEEL);
-        prevRightWheelPos_ = HAL::MotorGetPosition(HAL::MOTOR_RIGHT_WHEEL);
+        prevLeftWheelPos_ = HAL::MotorGetPosition(MOTOR_LEFT_WHEEL);
+        prevRightWheelPos_ = HAL::MotorGetPosition(MOTOR_RIGHT_WHEEL);
         
 
 #if(USE_OVERLAY_DISPLAY)

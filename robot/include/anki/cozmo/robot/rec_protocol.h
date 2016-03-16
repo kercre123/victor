@@ -7,10 +7,12 @@ typedef uint16_t commandWord;
 
 #define SHA1_DIGEST_LENGTH 20
 #define TRANSMIT_BLOCK_SIZE 0x1000
-#define SECURE_SPACE 0x1000
+#define SECURE_SPACE 0x18000
+#define BOOTLOADER 0x1F000
 
 // These are used for the Head communication protocol
 static const commandWord COMMAND_HEADER = 0x5478;
+static const uint32_t SPI_ENTER_RECOVERY = 0x444d7852;
 
 #ifndef SHA1_BLOCK_SIZE
 #define SHA1_BLOCK_SIZE 20
@@ -35,34 +37,5 @@ enum RECOVERY_STATE {
   STATE_UNKNOWN,
   STATE_IDLE = 0x5479
 };
-
-enum DROP_COMMANDS {
-  DROP_EnterBootloader = 0xfe,
-  DROP_BodyUpgradeData = 0xfd,
-  DROP_BodyState       = 0xfc,
-};
-
-enum EnterBootloaderWhich {
-  BOOTLOAD_RTIP,
-  BOOTLOAD_BODY,
-  BOOTLOAD_WIFI,
-};
-
-// WIFI -> RTIP
-typedef struct {
-  uint8_t which;
-} EnterBootloader;
-
-// RTIP -> WIFI
-typedef struct {
-  uint16_t state;
-  uint16_t  count;
-} BodyState;
-
-// WIFI -> RTIP
-typedef struct
-{
-  uint32_t data;
-} BodyUpgradeData;
 
 #endif

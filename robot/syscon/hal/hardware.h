@@ -10,6 +10,23 @@
 // Updated for EP1
 #define ROBOT_EP1_BODY
 
+enum watchdog_channels {
+  WDOG_RTOS,
+	WDOG_NERVE_PINCH,
+  //WDOG_UART,
+  WDOG_TOTAL_CHANNELS
+};
+
+enum IRQ_Priority {
+	ENCODER_PRIORITY = 0,
+	UART_PRIORITY = 1,
+	RTOS_PRIORITY = 3,
+	RADIO_PRIORITY = 2,
+	TIMER_PRIORITY = 1
+};
+
+static const uint8_t wdog_channel_mask = (1 << WDOG_TOTAL_CHANNELS) - 1;
+
 enum e_nrf_gpio {
   // Encoders
   PIN_ENCODER_LEFT    = 13, // ENC1

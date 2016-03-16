@@ -1,4 +1,5 @@
 // System Includes
+#include <cassert>
 #include <cmath>
 #include <cstdlib>
 #include <vector>
@@ -78,14 +79,14 @@ namespace Anki {
       webots::Motor* headMotor_;
       webots::Motor* liftMotor_;
 
-      webots::Motor* motors_[HAL::MOTOR_COUNT];
+      webots::Motor* motors_[MOTOR_COUNT];
 
       // Motor position sensors
       webots::PositionSensor* leftWheelPosSensor_;
       webots::PositionSensor* rightWheelPosSensor_;
       webots::PositionSensor* headPosSensor_;
       webots::PositionSensor* liftPosSensor_;
-      webots::PositionSensor* motorPosSensors_[HAL::MOTOR_COUNT];
+      webots::PositionSensor* motorPosSensors_[MOTOR_COUNT];
 
       // Gripper
       webots::Connector* con_;
@@ -134,10 +135,10 @@ namespace Anki {
       std::map<u32, TimeStamp_t> blockLastHeardTimeByActiveID_;
 
       // For tracking wheel distance travelled
-      f32 motorPositions_[HAL::MOTOR_COUNT];
-      f32 motorPrevPositions_[HAL::MOTOR_COUNT];
-      f32 motorSpeeds_[HAL::MOTOR_COUNT];
-      f32 motorSpeedCoeffs_[HAL::MOTOR_COUNT];
+      f32 motorPositions_[MOTOR_COUNT];
+      f32 motorPrevPositions_[MOTOR_COUNT];
+      f32 motorSpeeds_[MOTOR_COUNT];
+      f32 motorSpeedCoeffs_[MOTOR_COUNT];
 
       HAL::IDCard idCard_;
 
@@ -206,12 +207,12 @@ namespace Anki {
       {
         // Update position and speed info
         f32 posDelta = 0;
-        for(int i = 0; i < HAL::MOTOR_COUNT; i++)
+        for(int i = 0; i < MOTOR_COUNT; i++)
         {
           if (motors_[i]) {
             f32 pos = motorPosSensors_[i]->getValue();
             if (usingTreads_) {
-              if (i == HAL::MOTOR_LEFT_WHEEL || i == HAL::MOTOR_RIGHT_WHEEL) {
+              if (i == MOTOR_LEFT_WHEEL || i == MOTOR_RIGHT_WHEEL) {
                 pos = motorPosSensors_[i]->getValue() * -1000.f;
               }
             }
@@ -1130,11 +1131,11 @@ namespace Anki {
     {
       return 0;
     }
-    
-    u8 HAL::GetForwardProxSensor()
+
+    u8 HAL::GetForwardProxSensorCurrentValue()
     {
-      double val = proxCenter_->getValue();
-      return val >= 150 ? 0 : val;      // 150mm is from proto file
+      const u8 val = static_cast<u8>( proxCenter_->getValue() );
+      return val;
     }
     
     bool HAL::IsCliffDetected()

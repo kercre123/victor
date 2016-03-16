@@ -8,7 +8,7 @@
 
 extern "C" const uint32_t BOOTLOADER_LENGTH;
 extern "C" const uint8_t BOOTLOADER_UPDATE[];
-static uint8_t* BOOTLOADER = (uint8_t*)0;
+static uint8_t* BOOTLOADER = (uint8_t*)0x1F000;
 
 void schedule(void);
 void recover(void* userdata);
@@ -18,14 +18,10 @@ static const int CAPTURE_OFFSET = CYCLES_MS(5000.0f);
 void Bootloader::init(void) {
   for (int i = 0; i < BOOTLOADER_LENGTH; i++) {
     if (BOOTLOADER_UPDATE[i] != BOOTLOADER[i]) {    
-      schedule();
+      RTOS::schedule(recover, CAPTURE_OFFSET);
       return ;
     }
   }
-}
-
-void schedule(void) {
-  RTOS::schedule(recover, CAPTURE_OFFSET, NULL, false);
 }
 
 void flash_data(uint8_t* target, const uint8_t* source, int size)
@@ -59,7 +55,6 @@ void flash_data(uint8_t* target, const uint8_t* source, int size)
 void recover(void* userdata) {
   // Refuse to upgrade bootloader until we are on charge contacts
   if (!Battery::onContacts) {
-    schedule();
     return ;
   }
 

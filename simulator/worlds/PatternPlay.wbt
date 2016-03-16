@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation 0.277384 -0.176739 -0.944363 1.1871
-  position -0.58873 -0.192701 1.75825
+  orientation 0.699455 0.348898 0.623725 1.34915
+  position 1.10296 -0.776421 0.915775
 }
 Background {
   skyColor [

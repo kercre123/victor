@@ -31,7 +31,7 @@ namespace Vision {
   class FaceTracker::Impl
   {
   public:
-    Impl(const std::string& modelPath);
+    Impl(const std::string& modelPath, DetectionMode mode);
     ~Impl();
     
     Result Update(const Vision::Image& frameOrig);
@@ -40,9 +40,16 @@ namespace Vision {
     
     void EnableDisplay(bool enabled);
     
+    static bool IsRecognitionSupported() { return true; }
+    
+    // TODO: Support new face enrollment settings
+    void EnableNewFaceEnrollment(bool enable);
+    bool IsNewFaceEnrollmentEnabled() const;
+    
   private:
     
     bool _isInitialized;
+    bool _enrollNewFaces = true;
     
     HTracker _tracker;
     
@@ -51,10 +58,10 @@ namespace Vision {
   }; // class FaceTracker::Impl
   
   
-  FaceTracker::Impl::Impl(const std::string& modelPath)
+  FaceTracker::Impl::Impl(const std::string& modelPath, DetectionMode mode)
   : _isInitialized(false)
   {
-    int result = FSDK_ActivateLibrary("ELkdyOk2HkQzszNuy/UiJi3MeO2CaR14pgUHiledsvUNYPvUlOGXS3bz4f9FxZfmXwFfGO5faL2EHo03ORXu7aPxRFafrUBTWiI2x3sckO4oJBrgqb2kJGpdImPObq5vYeI55m3DWlTp7w6NWyzUxgsqTfwrjoMLFfnhHoHVoNs=");
+    int result = FSDK_ActivateLibrary("gDULw5eSsCx78rRhbS4hRLR/m0wk+AzQgwrt0mM2PbFg6NJg5ETN+xDKuN0cA/DQApWO1ySzm+WNTgwoGFoIkbPMRqqEAPF7TkhskEqs4q9uogNDziY1MW7Asj+fS6IAo9tE7ItR2goUifoNVuAlG8R3brcbum4yA/vfsvrgQ2s=");
     
     if(result != FSDKE_OK) {
       PRINT_NAMED_ERROR("FaceTracker.Impl.ActivationFailure",
@@ -85,6 +92,8 @@ namespace Vision {
     
     int errorPosition;
     result = FSDK_SetTrackerMultipleParameters(_tracker,
+                                               "DetermineFaceRotationAngle=false;"
+                                               "HandleArbitraryRotations=true;"
                                                "DetectFacialFeatures=true;"
                                                "DetectEyes=true;",
                                                &errorPosition);
@@ -101,6 +110,25 @@ namespace Vision {
   FaceTracker::Impl::~Impl()
   {
     FSDK_FreeTracker(_tracker);
+  }
+  
+  void FaceTracker::Impl::EnableNewFaceEnrollment(bool enable)
+  {
+    if(enable != _enrollNewFaces)
+    {
+      int result = FSDK_SetTrackerParameter(_tracker, "Learning", (enable ? "true" : "false"));
+      if(result != FSDKE_OK) {
+        PRINT_NAMED_ERROR("FaceTracker.Impl.EnableNewFaceEnrollmentFail",
+                          "Failed setting 'Learning' parameter");
+      } else {
+        _enrollNewFaces = enable;
+      }
+    }
+  }
+  
+  bool FaceTracker::Impl::IsNewFaceEnrollmentEnabled() const
+  {
+    return _enrollNewFaces;
   }
   
   static inline TrackedFace::Feature GetFeatureHelper(const FSDK_Features& fsdk_features,

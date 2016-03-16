@@ -126,6 +126,9 @@ namespace Cozmo {
     // Actually stream the animation (called each tick)
     Result UpdateStream(Robot& robot, Animation* anim, bool storeFace);
     
+    // This is performs the test cases for the animation while loop
+    bool ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
+    
     Result SendStartOfAnimation();
     Result SendEndOfAnimation(Robot& robot);
     

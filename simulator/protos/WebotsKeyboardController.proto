@@ -17,10 +17,17 @@ PROTO WebotsKeyboardController [
   field SFString behaviorGroup "RequestSpeedTap"
 
   # BehaviorChooser to send
-  field SFString behaviorChooserName "InvestorDemoFacesAndBlocks"
+  field SFString behaviorChooserName "default"
 
   field SFString emotionName "WantToPlay"
   field SFFloat emotionVal 1.0
+
+  # Name to assign to current faceID
+  field SFString userName ""
+  
+  # Factory IDs of objects to connect to
+  field MFInt32 activeObjectFactoryIDs [0 0 0 0 0]
+  field SFBool  activeObjectConnect TRUE
 
   field SFString controllerArgs ""
   field SFVec3f translation 0 0 0.08
@@ -93,9 +100,9 @@ PROTO WebotsKeyboardController [
   field SFFloat liftKd 1250
   field SFFloat liftMaxErrorSum 4
 
-  field SFFloat pointTurnKp 250
-  field SFFloat pointTurnKi 0.2
-  field SFFloat pointTurnKd 3000
+  field SFFloat pointTurnKp 150
+  field SFFloat pointTurnKi 0.3
+  field SFFloat pointTurnKd 4000
   field SFFloat pointTurnMaxErrorSum 100
 
   field SFFloat headSpeedDegPerSec 360
@@ -141,8 +148,10 @@ PROTO WebotsKeyboardController [
   field SFInt32 driveTest_wheel_power 20
   field SFInt32 liftTest_flags 0  
   field SFInt32 liftTest_nodCycleTimeMS 2000  
+  field SFInt32 liftTest_powerPercent 0             # 0-100: If 0 then cycles through increasing power levels
   field SFInt32 headTest_flags 0
   field SFInt32 headTest_nodCycleTimeMS 2000  
+  field SFInt32 headTest_powerPercent 0             # 0-100: If 0 then cycles through increasing power levels
 
   # Force-add robot options
   field SFBool   forceAddRobot FALSE

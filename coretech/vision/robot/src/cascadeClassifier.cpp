@@ -7,6 +7,9 @@ Copyright Anki, Inc. 2014
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
+// Deprecate?
+#if 0
+
 /*M///////////////////////////////////////////////////////////////////////////////////////
 //
 //  IMPORTANT: READ BEFORE DOWNLOADING, COPYING, INSTALLING OR USING.
@@ -899,3 +902,5 @@ namespace Anki
     } // namespace Classifier
   } // namespace Embedded
 } // namespace Anki
+
+#endif // #if 0

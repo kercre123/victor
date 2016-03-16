@@ -289,11 +289,11 @@ for i_region = 1:numRegions
                   yInt = temp;
                 end
                 
-              elseif lineFits(iLine).switched == true && lineFits(jLine).switched == false
+              elseif lineFits(iLine).switched == false && lineFits(jLine).switched == true
                 yInt = (lineFits(iLine).slope*lineFits(jLine).intercept + lineFits(iLine).intercept) / ...
                   (1 - lineFits(iLine).slope*lineFits(jLine).slope);
                 xInt = lineFits(jLine).slope*yInt + lineFits(jLine).intercept;
-              elseif lineFits(iLine).switched == false && lineFits(jLine).switched == true
+              elseif lineFits(iLine).switched == true && lineFits(jLine).switched == false
                 yInt = (lineFits(jLine).slope*lineFits(iLine).intercept + lineFits(jLine).intercept) / ...
                   (1 - lineFits(iLine).slope*lineFits(jLine).slope);
                 xInt = lineFits(iLine).slope*yInt + lineFits(iLine).intercept;

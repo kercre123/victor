@@ -19,8 +19,8 @@
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc.hpp>
 #include <vector>
 #include <functional>
 
@@ -319,6 +319,15 @@ void VizControllerImpl::ProcessVizCameraQuadMessage(const AnkiEvent<VizInterface
   camDisp->drawLine((int)payload.xUpperLeft, (int)payload.yUpperLeft, (int)payload.xLowerLeft, (int)payload.yLowerLeft);
   camDisp->drawLine((int)payload.xLowerLeft, (int)payload.yLowerLeft, (int)payload.xLowerRight, (int)payload.yLowerRight);
   camDisp->drawLine((int)payload.xLowerRight, (int)payload.yLowerRight, (int)payload.xUpperRight, (int)payload.yUpperRight);
+  
+  if(payload.topColor != payload.color)
+  {
+    camDisp->setColor(payload.topColor >> 8);
+    uint8_t alpha = (uint8_t)(payload.topColor & 0xff);
+    if(alpha < 0xff) {
+      camDisp->setAlpha(oneOver255 * static_cast<f32>(alpha));
+    }
+  }
   camDisp->drawLine((int)payload.xUpperRight, (int)payload.yUpperRight, (int)payload.xUpperLeft, (int)payload.yUpperLeft);
 }
 

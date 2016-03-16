@@ -18,6 +18,8 @@ extern "C" {
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_hash.h"
+#include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "anki/cozmo/robot/logging.h"
 #include "face.h"
 #include "upgradeController.h"
@@ -150,7 +152,17 @@ bool readPairedObjectsAndSend(uint32_t tag)
   entry.tag = tag;
   const NVStorage::NVResult result = NVStorage::Read(entry);
   AnkiConditionalWarnAndReturnValue(result == NVStorage::NV_OKAY, false, 48, "ReadAndSendPairedObjects", 272, "Failed to paired objects: %d", 1, result);
-  const CubeSlots* const slots = (CubeSlots*)entry.blob;
+  CubeSlots* slots;
+  // XXX TODO Remove this hack once the old robots are gone
+  if (entry.blob_length == CubeSlots::MAX_SIZE) // New style CubeSlots message
+  {
+    slots = (CubeSlots*)entry.blob;
+  }
+  else // Old style slots message
+  {
+    AnkiWarn( 48, "ReadAndSendPairedObjects", 397, "Old style NV data found, please update", 0)
+    slots = (CubeSlots*)(entry.blob + 4); // Skip past padding and length field
+  }
   RobotInterface::EngineToRobot m;
   m.tag = RobotInterface::EngineToRobot::Tag_assignCubeSlots;
   memcpy(&m.assignCubeSlots, slots->GetBuffer(), slots->Size());
@@ -224,28 +236,63 @@ extern "C" int8_t backgroundTaskInit(void)
   }
 }
 
-extern "C" void backgroundTaskOnRTIPSync(void)
+extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
+  if (Anki::Cozmo::UpgradeController::CheckForAndDoStaged()) return false;
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readPairedObjectsAndSend, Anki::Cozmo::NVStorage::NVEntry_PairedObjects);
+  return false;
 }
 
 extern "C" void backgroundTaskOnConnect(void)
 {
   const uint32_t* const serialNumber = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
+  
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
-  i2spiQueueMessage((u8*)"\xfc\x01", 2); // FC is the tag for a radio connection state message to the robot
-  Anki::Cozmo::Face::FaceUnPrintf();
+  else Anki::Cozmo::Face::FaceUnPrintf();
+  
+  // Tell RTIP radio is connected
+  {
+    Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
+    rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
+    rtipMsg.radioConnected.wifiConnected = true;
+    Anki::Cozmo::RTIP::SendMessage(rtipMsg);
+  }
+    
+  // Send our version information to the engine
+  {
+    Anki::Cozmo::RobotInterface::FWVersionInfo vi;
+    vi.wifiVersion = COZMO_VERSION_COMMIT;
+    vi.rtipVersion = Anki::Cozmo::RTIP::Version;
+    vi.bodyVersion = 0; // Don't have access to this yet
+    os_memcpy(vi.toRobotCLADHash,  messageEngineToRobotHash, sizeof(vi.toRobotCLADHash));
+    os_memcpy(vi.toEngineCLADHash, messageRobotToEngineHash, sizeof(vi.toEngineCLADHash));
+    Anki::Cozmo::RobotInterface::SendMessage(vi);
+  }
+  
+  // Send our serial number to the engine
+  {
+    Anki::Cozmo::RobotInterface::RobotAvailable idMsg;
+    idMsg.robotID = *serialNumber;
+    Anki::Cozmo::RobotInterface::SendMessage(idMsg);
+  }
+    
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
+
+  foregroundTaskPost(Anki::Cozmo::BackgroundTask::readPairedObjectsAndSend, Anki::Cozmo::NVStorage::NVEntry_PairedObjects);
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readCameraCalAndSend, Anki::Cozmo::NVStorage::NVEntry_CameraCalibration);
-  AnkiEvent( 124, "UniqueID", 372, "SerialNumber = 0x%x", 1, *serialNumber);
-  Anki::Cozmo::RobotInterface::RobotAvailable idMsg;
-  idMsg.robotID = *serialNumber;
-  Anki::Cozmo::RobotInterface::SendMessage(idMsg);
 }
 
 extern "C" void backgroundTaskOnDisconnect(void)
 {
-  i2spiQueueMessage((u8*)"\xfc\x00", 2); // FC is the tag for a radio connection state message to the robot
+  Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
+  
+  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
+  rtipMsg.radioConnected.wifiConnected = false;
+  Anki::Cozmo::RTIP::SendMessage(rtipMsg);
+  
+  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_assignCubeSlots;
+  os_memset(&rtipMsg.assignCubeSlots, 0, sizeof(Anki::Cozmo::CubeSlots));
+  Anki::Cozmo::RTIP::SendMessage(rtipMsg);
 }

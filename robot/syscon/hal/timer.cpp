@@ -1,17 +1,13 @@
 #include "timer.h"
 #include "nrf.h"
 
-void Timer::Init()
+#include "hardware.h"
+#include "backpack.h"
+#include "rtos.h"
+#include "radio.h"
+
+void Timer::init()
 {
-  // The synthesized LFCLK requires the 16MHz HFCLK to be running, since there's no
-  // external crystal/oscillator.
-  NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
-  NRF_CLOCK->TASKS_HFCLKSTART = 1;
-  
-  // Wait for the external oscillator to start
-  while (!NRF_CLOCK->EVENTS_HFCLKSTARTED)
-    ;
-  
   // Enabling constant latency as indicated by PAN 11 "HFCLK: Base current with HFCLK 
   // running is too high" found at Product Anomaly document found at
   // https://www.nordicsemi.com/eng/Products/Bluetooth-R-low-energy/nRF51822/#Downloads
@@ -19,13 +15,7 @@ void Timer::Init()
   // This setting will ensure correct behaviour when routing TIMER events through 
   // PPI and low power mode simultaneously.
   NRF_POWER->TASKS_CONSTLAT = 1;
-  
-  // Change the source for LFCLK
-  NRF_CLOCK->LFCLKSRC = CLOCK_LFCLKSRCCOPY_SRC_Synth;
-  
-  // Start the LFCLK
-  NRF_CLOCK->TASKS_LFCLKSTART = 1;
-  
+
   // Power on the peripheral
   NRF_RTC1->POWER = 1;
   
@@ -37,6 +27,15 @@ void Timer::Init()
   // resolution. This should still provide enough for this chip/board.  
   NRF_RTC1->PRESCALER = 0;
   
+  // Configure the interrupts
+  NRF_RTC1->EVTENSET = RTC_EVTENCLR_TICK_Msk;
+  NRF_RTC1->INTENSET = RTC_INTENSET_TICK_Msk;
+
+  NVIC_SetPriority(RTC1_IRQn, TIMER_PRIORITY);
+  NVIC_EnableIRQ(RTC1_IRQn);
+}
+
+void Timer::start(void) {
   // Start the RTC
   NRF_RTC1->TASKS_START = 1;
 }
@@ -59,4 +58,15 @@ loop
     NOP
     BNE loop
     BX lr
+}
+
+extern "C" void RTC1_IRQHandler() {
+  if (!NRF_RTC1->EVENTS_TICK)
+    return ;
+
+  NRF_RTC1->EVENTS_TICK = 0;
+  
+  Radio::manage();
+  Backpack::update();
+  RTOS::manage();
 }

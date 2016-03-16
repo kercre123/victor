@@ -5,14 +5,20 @@
 #include "timer.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
+#include "lights.h"
 
 #include "radio.h"
 #include "rtos.h"
 #include "hardware.h"
+#include "backpack.h"
 
 #include "anki/cozmo/robot/spineData.h"
+#include "anki/cozmo/robot/logging.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "spine.h"
+
+using namespace Anki::Cozmo;
 
 #define MAX(a, b) ((a > b) ? a : b)
 
@@ -30,12 +36,11 @@ static int txRxIndex;
 static int debugSafeWords;
 static TRANSMIT_MODE uart_mode;
 
-bool Head::spokenTo;
+bool Head::spokenTo = false;
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-extern void EnterRecovery(void);
 static void setTransmitMode(TRANSMIT_MODE mode);
 
 void Head::init() 
@@ -62,14 +67,15 @@ void Head::init()
 
   // Extremely low priorty IRQ
   NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
-  NVIC_SetPriority(UART0_IRQn, 1);
+  NVIC_SetPriority(UART0_IRQn, UART_PRIORITY);
   NVIC_EnableIRQ(UART0_IRQn);
 
   // We begin in receive mode (slave)
   setTransmitMode(TRANSMIT_RECEIVE);
   MicroWait(80);
 
-  RTOS::schedule(Head::manage);
+  RTOS_Task *task = RTOS::schedule(Head::manage);
+  RTOS::setPriority(task, RTOS_UART_PRIORITY);
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
@@ -118,44 +124,95 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
   txRxIndex = 0;
 }
 
-inline void transmitByte() { 
+static inline void transmitByte() { 
+  NVIC_DisableIRQ(UART0_IRQn);
   NRF_UART0->TXD = txRxBuffer[txRxIndex++];
+  NVIC_EnableIRQ(UART0_IRQn);
 }
 
 void Head::manage(void* userdata) {
-  Spine::dequeue(g_dataToHead.spineMessage);
+  Spine::Dequeue(&(g_dataToHead.cladBuffer));
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
-  g_dataToHead.spineMessage.opcode = NO_OPERATION;
+  g_dataToHead.cladBuffer.length = 0;
   txRxIndex = 0;
 
   setTransmitMode(TRANSMIT_SEND);
   transmitByte();
 }
 
+extern void EnterRecovery(void);
+
+static void Process_bootloadBody(const RobotInterface::BootloadBody& msg)
+{
+  EnterRecovery();
+}
+static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
+{
+  Backpack::setLights(msg.lights);
+}
+static void Process_setCubeLights(const CubeLights& msg)
+{
+  Radio::setPropLights(msg.objectID, msg.lights);
+}
+
+static void Process_assignCubeSlots(const CubeSlots& msg)
+{
+  for (int i=0; i<7; ++i) // 7 is the number supported in messageToActiveObject.clad
+  {
+    Radio::assignProp(i, msg.factory_id[i]);
+  }
+}
+
+static void ProcessMessage()
+{
+  using namespace Anki::Cozmo;
+  
+  const u8 tag = g_dataToBody.cladBuffer.data[0];
+  if (g_dataToBody.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
+  {
+    // pass
+  }
+  else if (tag > RobotInterface::TO_BODY_END)
+  {
+    AnkiError( 139, "Spine.ProcessMessage", 384, "Body received message %x that seems bound above", 1, tag);
+  }
+  else
+  {
+    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToBody.cladBuffer);
+    switch(tag)
+    {
+      #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x2F.def"
+      default:
+        AnkiError( 140, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, tag);
+    }
+  }
+}
+
 extern "C"
 void UART0_IRQHandler()
 {
+  static int header_shift = 0;
+
   // We received a byte
   if (NRF_UART0->EVENTS_RXDRDY) {
     NRF_UART0->EVENTS_RXDRDY = 0;
 
-    txRxBuffer[txRxIndex] = NRF_UART0->RXD;
-
     // Re-sync to header
     if (txRxIndex < 4) {
-      const uint32_t head_target = SPI_SOURCE_HEAD;
-      const uint8_t header = head_target >> (txRxIndex * 8);
-
-      if(txRxBuffer[txRxIndex] != header) {
-        txRxIndex = 0;
+      header_shift = (header_shift >> 8) | (NRF_UART0->RXD << 24);
+      
+      if (header_shift == SPI_SOURCE_HEAD) {
+        txRxIndex = 4;
         return ;
       }
+    } else {
+      txRxBuffer[txRxIndex] = NRF_UART0->RXD;
     }
 
     // We received a full packet
     if (++txRxIndex >= sizeof(GlobalDataToBody)) {
       memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
-      Spine::processMessage(g_dataToBody.spineMessage);
+      ProcessMessage();
       Head::spokenTo = true;
       
       setTransmitMode(TRANSMIT_DEBUG);
@@ -175,6 +232,7 @@ void UART0_IRQHandler()
           setTransmitMode(TRANSMIT_DEBUG);
           #else
           setTransmitMode(TRANSMIT_RECEIVE);
+          header_shift = 0;
           #endif
         } else {
           transmitByte();

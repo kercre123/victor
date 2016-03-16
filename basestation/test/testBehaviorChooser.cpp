@@ -136,8 +136,9 @@ TEST(BehaviorChooser, EnabledBehaviors)
 {
   CozmoContext context{};
   Robot testRobot(0, &context);
+  Json::Value chooserConfig;
   
-  SimpleBehaviorChooser behaviorChooser;
+  SimpleBehaviorChooser behaviorChooser(testRobot, chooserConfig);
   
   const bool loadedOK = LoadTestBehaviors(testRobot, behaviorChooser);
   EXPECT_TRUE(loadedOK);

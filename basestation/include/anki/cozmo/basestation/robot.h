@@ -42,7 +42,6 @@
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
@@ -59,6 +58,7 @@
 #include "clad/types/imageTypes.h"
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <time.h>
 #include <utility>
 #include <fstream>
@@ -99,11 +99,13 @@ class MatPiece;
 class MoodManager;
 class PathDolerOuter;
 class ProgressionManager;
+class BlockFilter;
 class RobotPoseHistory;
 class RobotPoseStamp;
 class IExternalInterface;
 struct RobotState;
 class ActiveCube;
+class CannedAnimationContainer;
 
 typedef enum {
   SAVE_OFF = 0,
@@ -202,7 +204,6 @@ public:
     //
     VisionComponent&         GetVisionComponent() { return _visionComponent; }
     const VisionComponent&   GetVisionComponent() const { return _visionComponent; }
-    void                     EnableVisionWhileMoving(bool enable);
     Vision::Camera           GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
     Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request) const;
     Pose3d                   GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
@@ -486,19 +487,6 @@ public:
     // TODO: REMOVE OLD AUDIO SYSTEM
     Result PlaySound(const std::string& soundName, u8 numLoops, u8 volume);
     void   StopSound();
-
-    // Read the animations in a dir
-    void ReadAnimationFile(const char* filename, std::string& animationID);
-  
-    // Read the animations in a dir
-    void ReadAnimationDir();
-    void ReadAnimationDirImpl(const std::string& animationDir);
-
-    // Read the animation groups in a dir
-    void ReadAnimationGroupDir();
-
-    // Read the animation groups in a dir
-    void ReadAnimationGroupFile(const char* filename);
   
     // Load in all data-driven behaviors
     void LoadBehaviors();
@@ -584,6 +572,13 @@ public:
     
     // =========  Block messages  ============
   
+    // Assign which blocks the robot should connect to.
+    // Max size of set is ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS.
+    Result ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids);
+  
+    // Set whether or not to broadcast to game which blocks have been discovered
+    void BroadcastDiscoveredObjects(bool enable);
+  
     // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
     Result SetObjectLights(const ObjectID& objectID,
                            const std::array<u32,(size_t)ActiveObjectConstants::NUM_CUBE_LEDS>& onColor,
@@ -651,6 +646,9 @@ public:
     void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   
+    void SetLastSentImageID(u32 lastSentImageID) { _lastSentImageID = lastSentImageID; }
+    const u32 GetLastSentImageID() const { return _lastSentImageID; }
+  
     MovementComponent& GetMoveComponent() { return _movementComponent; }
     const MovementComponent& GetMoveComponent() const { return _movementComponent; }
 
@@ -707,6 +705,18 @@ public:
     BehaviorManager  _behaviorMgr;
     bool             _isBehaviorMgrEnabled = false;
     
+  
+  
+    ///////// Animation /////////
+    CannedAnimationContainer&   _cannedAnimations;
+    AnimationGroupContainer&    _animationGroups;
+    AnimationStreamer           _animationStreamer;
+    s32 _numAnimationBytesPlayed         = 0;
+    s32 _numAnimationBytesStreamed       = 0;
+    s32 _numAnimationAudioFramesPlayed   = 0;
+    s32 _numAnimationAudioFramesStreamed = 0;
+    u8  _animationTag                    = 0;
+  
     //ActionQueue      _actionQueue;
     ActionList        _actionList;
     MovementComponent _movementComponent;
@@ -736,9 +746,6 @@ public:
     // This functions sets _selectedPathPlanner to the appropriate planner
     void SelectPlanner(const Pose3d& targetPose);
     void SelectPlanner(const std::vector<Pose3d>& targetPoses);
-
-    // Sends a path to the robot to be immediately executed
-    bool                      _visionWhileMovingEnabled = false;
 
     /*
     // Proximity sensors
@@ -791,8 +798,9 @@ public:
     bool             _isOnCharger        = false;
     f32              _battVoltage        = 5;
     ImageSendMode    _imageSendMode      = ImageSendMode::Off;
-    u8               _enabledAnimTracks      = (u8)AnimTrackFlag::ALL_TRACKS;
     bool             _enableCliffSensor  = true;
+    u32              _lastSentImageID    = 0;
+    u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ALL_TRACKS;
 
     std::vector<std::string> _idleAnimationNameStack;
   
@@ -844,9 +852,6 @@ public:
     u32         _imgProcPeriod         = 0;
     TimeStamp_t _lastImgTimeStamp      = 0;
     std::string _lastPlayedAnimationId;
-
-    std::unordered_map<std::string, time_t> _loadedAnimationFiles;
-    std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
   
     ///////// Modifiers ////////
     
@@ -861,25 +866,20 @@ public:
   
     ///////// Audio /////////
     Audio::RobotAudioClient _audioClient;
-  
-    ///////// Animation /////////
-    
-    CannedAnimationContainer _cannedAnimations;
-    AnimationGroupContainer  _animationGroups;
-    AnimationStreamer        _animationStreamer;
-    s32 _numFreeAnimationBytes;
-    s32 _numAnimationBytesPlayed         = 0;
-    s32 _numAnimationBytesStreamed       = 0;
-    s32 _numAnimationAudioFramesPlayed   = 0;
-    s32 _numAnimationAudioFramesStreamed = 0;
-    u8  _animationTag                    = 0;
     
     ///////// Mood/Emotions ////////
     MoodManager*         _moodManager;
 
     ///////// Progression/Skills ////////
     ProgressionManager*  _progressionManager;
-    
+  
+    //////// Block pool ////////
+    BlockFilter*         _blockFilter;
+  
+    // Map of discovered objects and the last time that they were heard from
+    std::unordered_map<FactoryID, TimeStamp_t> _discoveredObjects;
+    bool _enableDiscoveredObjectsBroadcasting = false;
+  
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending
     // (via MessageHandler) to the physical robot
@@ -895,6 +895,7 @@ public:
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -917,6 +918,7 @@ public:
     void HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
     void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -982,9 +984,6 @@ inline const Pose3d& Robot::GetPose(void) const
 
 inline const Pose3d& Robot::GetDriveCenterPose(void) const
 {return _driveCenterPose; }
-
-inline void Robot::EnableVisionWhileMoving(bool enable)
-{ _visionWhileMovingEnabled = enable; }
 
 inline const f32 Robot::GetHeadAngle() const
 { return _currentHeadAngle; }

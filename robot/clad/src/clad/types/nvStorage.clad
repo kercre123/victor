@@ -31,6 +31,20 @@ namespace NVStorage {
     uint_32 tag,
     uint_8  blob[uint_32:1024],
   }
+
+  enum int_8 NVReadDest
+  {
+    ENGINE,
+    RTIP,
+    BODY,
+    FIXTURE
+  }
+
+  message NVStorageRead
+  {
+    NVEntryTag tag,
+    NVReadDest to
+  }
   
   message NVOpResult {
     NVEntryTag tag,

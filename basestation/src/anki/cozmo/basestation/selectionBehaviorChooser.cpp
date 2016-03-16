@@ -29,7 +29,7 @@ namespace Anki {
 namespace Cozmo {
   
 SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Value& config)
-  : SimpleBehaviorChooser()
+  : SimpleBehaviorChooser(robot, config)
   , _robot(robot)
   , _config(config)
 {

@@ -53,6 +53,7 @@ enum uint_32 ImageConstants
 message ImageChunk {
   uint_32 frameTimeStamp,
   uint_32 imageId,
+  int_32 chunkDebug,
   ImageEncoding imageEncoding,
   ImageResolution resolution,
   uint_8 imageChunkCount,

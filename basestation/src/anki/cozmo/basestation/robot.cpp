@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/activeCube.h"
 #include "anki/cozmo/basestation/ledEncoding.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/common/basestation/math/point.h"
@@ -38,9 +39,11 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
+#include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
@@ -48,6 +51,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "clad/types/activeObjectTypes.h"
 #include "clad/types/gameStatusFlag.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
@@ -80,6 +84,9 @@ namespace Anki {
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
+    , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimations())
+    , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
+    , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _movementComponent(*this)
     , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, _context)
     , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
@@ -87,9 +94,9 @@ namespace Anki {
     , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
     , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
-    , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
+    , _blockFilter(new BlockFilter(this))
     , _imageDeChunker(new ImageDeChunker())
     , _traceHandler(_context->GetDataPlatform())
     {
@@ -122,8 +129,14 @@ namespace Anki {
       
       _lastDebugStringHash = 0;
 
-      ReadAnimationDir();
-      ReadAnimationGroupDir();
+      if (_context->GetDataPlatform() != nullptr)
+      {
+        if (USE_SOUND_MANAGER_FOR_ROBOT_AUDIO)
+        {
+          SoundManager::getInstance()->LoadSounds(_context->GetDataPlatform());
+        }
+        FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
+      }
       
       // Set up the neutral face to use when resetting procedural animations
       static const char* neutralFaceAnimName = "neutral_face";
@@ -192,6 +205,12 @@ namespace Anki {
       _shortMinAnglePathPlanner = new MinimalAnglePlanner;
       _selectedPathPlanner = _longPathPlanner;
       
+      
+      // Lock active objects to connect to
+      if (_context->GetDataPlatform() != nullptr) {
+        _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"), _context->GetExternalInterface());
+      }
+      
     } // Constructor: Robot
     
     Robot::~Robot()
@@ -204,6 +223,7 @@ namespace Anki {
       Util::SafeDelete(_shortMinAnglePathPlanner);
       Util::SafeDelete(_moodManager);
       Util::SafeDelete(_progressionManager);
+      Util::SafeDelete(_blockFilter);
 
       _selectedPathPlanner = nullptr;
       
@@ -610,21 +630,6 @@ namespace Anki {
       }
       #endif // !(ANKI_IOS_BUILD || ANDROID)
     }
-    
-    f32 ComputePoseAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
-    {
-      const Radians poseAngle1( p1.GetPose().GetRotationAngle<'Z'>() );
-      const Radians poseAngle2( p2.GetPose().GetRotationAngle<'Z'>() );
-      const f32 poseAngSpeed = std::abs((poseAngle1-poseAngle2).ToFloat()) / dt;
-      
-      return poseAngSpeed;
-    }
-
-    f32 ComputeHeadAngularSpeed(const RobotPoseStamp& p1, const RobotPoseStamp& p2, const f32 dt)
-    {
-      const f32 headAngSpeed = std::abs((Radians(p1.GetHeadAngle()) - Radians(p2.GetHeadAngle())).ToFloat()) / dt;
-      return headAngSpeed;
-    }
 
     Vision::Camera Robot::GetHistoricalCamera(TimeStamp_t t_request) const
     {
@@ -733,6 +738,7 @@ namespace Anki {
         TRY_AND_RETURN_ON_FAILURE(UpdateTrackingQuad);
         TRY_AND_RETURN_ON_FAILURE(UpdateDockingErrorSignal);
         TRY_AND_RETURN_ON_FAILURE(UpdateMotionCentroid);
+        TRY_AND_RETURN_ON_FAILURE(UpdateOverheadEdges);
         
 #       undef TRY_AND_RETURN_ON_FAILURE
         
@@ -904,6 +910,18 @@ namespace Anki {
           }
         }
       }
+      
+      /////////// Update discovered active objects //////
+      if (_enableDiscoveredObjectsBroadcasting) {
+        for (auto obj : _discoveredObjects) {
+          if (GetLastMsgTimestamp() - obj.second > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
+            PRINT_NAMED_INFO("ObjectUndiscovered", "FactoryID 0x%x (lastObservedTime %d, currTime %d)", obj.first, obj.second, GetLastMsgTimestamp());
+            Broadcast(ExternalInterface::MessageEngineToGame(ObjectUndiscovered(obj.first)));
+            _discoveredObjects.erase(obj.first);
+          }
+        }
+      }
+      
       
       /////////// Update visualization ////////////
       
@@ -1332,24 +1350,6 @@ namespace Anki {
     {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
     } // StopSound()
-
-    // Read the animations in a dir
-    void Robot::ReadAnimationFile(const char* filename, std::string& animationId)
-    {
-      Json::Value animDefs;
-      const bool success = _context->GetDataPlatform()->readAsJson(filename, animDefs);
-      if (success && !animDefs.empty()) {
-        //PRINT_NAMED_DEBUG("Robot.ReadAnimationFile", "reading %s", filename);
-        _cannedAnimations.DefineFromJson(animDefs, animationId);
-        
-        if(std::string(filename).find(animationId) == std::string::npos) {
-          PRINT_NAMED_WARNING("Robot.ReadAnimationFile.AnimationNameMismatch",
-                              "Animation name '%s' does not match seem to match "
-                              "filename '%s'", animationId.c_str(), filename);
-        }
-      }
-
-    }
     
     const std::string& Robot::GetAnimationNameFromGroup(const std::string& name) {
       const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
@@ -1358,28 +1358,6 @@ namespace Anki {
       }
       static const std::string empty("");
       return empty;
-    }
-    
-    // Read the animation groups in a dir
-    void Robot::ReadAnimationGroupFile(const char* filename)
-    {
-      Json::Value animGroupDef;
-      const bool success = _context->GetDataPlatform()->readAsJson(filename, animGroupDef);
-      if (success && !animGroupDef.empty()) {
-        
-        std::string fullName(filename);
-        
-        // remove path
-        auto slashIndex = fullName.find_last_of("/");
-        std::string jsonName = slashIndex == std::string::npos ? fullName : fullName.substr(slashIndex + 1);
-        // remove extension
-        auto dotIndex = jsonName.find_last_of(".");
-        std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
-
-        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), filename);
-        
-        _animationGroups.DefineFromJson(animGroupDef, animationGroupName);
-      }      
     }
     
     void Robot::LoadEmotionEvents()
@@ -1452,134 +1430,6 @@ namespace Anki {
           }
         }
       }
-    }
-    
-    // Read the animations in a dir
-    void Robot::ReadAnimationDir()
-    {
-      // Disable super-verbose warnings about clipping face parameters in json files
-      // To help find bad/deprecated animations, try removing this.
-      ProceduralFace::EnableClippingWarning(false);
-
-      ReadAnimationDirImpl("assets/animations/");
-      ReadAnimationDirImpl("config/basestation/animations/");
-    }
-    
-    void Robot::ReadAnimationDirImpl(const std::string& animationDir)
-    {
-      if (_context->GetDataPlatform() == nullptr) { return; }
-      static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
-      SoundManager::getInstance()->LoadSounds(_context->GetDataPlatform());
-      FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
-      
-      const std::string animationFolder =
-        _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, animationDir);
-      std::string animationId;
-      s32 loadedFileCount = 0;
-      DIR* dir = opendir(animationFolder.c_str());
-      if ( dir != nullptr) {
-        dirent* ent = nullptr;
-        while ( (ent = readdir(dir)) != nullptr) {
-          
-          if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
-            std::string fullFileName = animationFolder + ent->d_name;
-            struct stat attrib{0};
-            int result = stat(fullFileName.c_str(), &attrib);
-            if (result == -1) {
-              PRINT_NAMED_WARNING("Robot.ReadAnimationFile", "could not get mtime for %s", fullFileName.c_str());
-              continue;
-            }
-            bool loadFile = false;
-            auto mapIt = _loadedAnimationFiles.find(fullFileName);
-            if (mapIt == _loadedAnimationFiles.end()) {
-              _loadedAnimationFiles.insert({fullFileName, attrib.st_mtimespec.tv_sec});
-              loadFile = true;
-            } else {
-              if (mapIt->second < attrib.st_mtimespec.tv_sec) {
-                mapIt->second = attrib.st_mtimespec.tv_sec;
-                loadFile = true;
-              } else {
-                //PRINT_NAMED_INFO("Robot.ReadAnimationFile", "old time stamp for %s", fullFileName.c_str());
-              }
-            }
-            if (loadFile) {
-              ReadAnimationFile(fullFileName.c_str(), animationId);
-              ++loadedFileCount;
-            }
-          }
-        }
-        closedir(dir);
-      } else {
-        PRINT_NAMED_INFO("Robot.ReadAnimationFile", "folder not found %s", animationFolder.c_str());
-      }
-
-      // Tell UI about available animations
-      if (HasExternalInterface()) {
-        std::vector<std::string> animNames(_cannedAnimations.GetAnimationNames());
-        for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-          _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationAvailable(*i)));
-        }
-      }
-      
-      ProceduralFace::EnableClippingWarning(true);
-    }
-    
-    // Read the animationGroups in a dir
-    void Robot::ReadAnimationGroupDir()
-    {
-      if (_context->GetDataPlatform() == nullptr) { return; }
-      static const std::regex jsonFilenameMatcher("[^.].*\\.json\0");
-      
-      const std::string animationGroupFolder =
-      _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
-      s32 loadedFileCount = 0;
-      DIR* dir = opendir(animationGroupFolder.c_str());
-      if ( dir != nullptr) {
-        dirent* ent = nullptr;
-        while ( (ent = readdir(dir)) != nullptr) {
-          
-          if (ent->d_type == DT_REG && std::regex_match(ent->d_name, jsonFilenameMatcher)) {
-            std::string fullFileName = animationGroupFolder + ent->d_name;
-            struct stat attrib{0};
-            int result = stat(fullFileName.c_str(), &attrib);
-            if (result == -1) {
-              PRINT_NAMED_WARNING("Robot.ReadAnimationGroupFile", "could not get mtime for %s", fullFileName.c_str());
-              continue;
-            }
-            bool loadFile = false;
-            auto mapIt = _loadedAnimationGroupFiles.find(fullFileName);
-            if (mapIt == _loadedAnimationGroupFiles.end()) {
-              _loadedAnimationGroupFiles.insert({fullFileName, attrib.st_mtimespec.tv_sec});
-              loadFile = true;
-            } else {
-              if (mapIt->second < attrib.st_mtimespec.tv_sec) {
-                mapIt->second = attrib.st_mtimespec.tv_sec;
-                loadFile = true;
-              } else {
-                //PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "old time stamp for %s", fullFileName.c_str());
-              }
-            }
-            if (loadFile) {
-              ReadAnimationGroupFile(fullFileName.c_str());
-              ++loadedFileCount;
-            }
-          }
-        }
-        closedir(dir);
-      } else {
-        PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "folder not found %s", animationGroupFolder.c_str());
-      }
-      
-      // TODO: Implement external interface
-      /*
-      // Tell UI about available animationGroups
-      if (HasExternalInterface()) {
-        std::vector<std::string> animNames(_cannedAnimationGroups.GetAnimationGroupNames());
-        for (std::vector<std::string>::iterator i=animNames.begin(); i != animNames.end(); ++i) {
-          _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::AnimationGroupAvailable(*i)));
-        }
-      }
-       */
     }
 
     Result Robot::SyncTime()
@@ -1759,6 +1609,23 @@ namespace Anki {
         // Now we need to go through all objects whose poses have been adjusted
         // by this origin switch and notify the outside world of the change.
         _blockWorld.UpdateObjectOrigins(oldOrigin, _worldOrigin);
+        
+        // after updating all block world objects, no one should be pointing to the oldOrigin
+        bool removed = false;
+        auto listIter = _poseOrigins.begin();
+        auto listEnd  = _poseOrigins.end();
+        for(; listIter != listEnd; ++listIter )
+        {
+          if ( &(*listIter) == oldOrigin )
+          {
+            listIter = _poseOrigins.erase(listIter);
+            removed = true;
+            break;
+          }
+        }
+        if ( !removed ) {
+          PRINT_NAMED_ERROR("Robot.LocalizeToObject", "Could not remove old origin from _poseOrigins");
+        }
         
       } // if(_worldOrigin != &existingObject->GetPose().FindOrigin())
       
@@ -3021,6 +2888,68 @@ namespace Anki {
       }
 
     }
+    
+    Result Robot::ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids)
+    {
+      CubeSlots msg;
+      u8 numObjects = 0;
+      u8 objectsSelectedMask = 0;
+      for (auto fid : factory_ids) {
+        
+        // Zero is not a valid factoryID
+        if (fid == 0) {
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ZeroID", "Skipping");
+          continue;
+        }
+        
+        // Check if there is still space in the message
+        if (numObjects >= msg.factory_id.size()) {
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", msg.factory_id.size());
+          return RESULT_FAIL;
+        }
+        
+        
+        // Check if charger already added
+        bool isCharger = fid & 0x80000000;
+        bool chargerAlreadyInList = (objectsSelectedMask & (fid & 0x80000000));
+        
+        // Check if block of this type already added
+        bool blockTypeAlreadyInList = (objectsSelectedMask & (1 << (fid & 0x3)));
+        
+        if (chargerAlreadyInList || blockTypeAlreadyInList) {
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.DuplicateTypeInList",
+                              "Object with factory ID 0x%x matches type of another active object in the list. Only one of each type may be connected.",
+                              fid);
+          return RESULT_FAIL;
+        }
+
+        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x", fid);
+        msg.factory_id[numObjects] = fid;
+        ++numObjects;
+        
+        if (isCharger) {
+          objectsSelectedMask |= 0x80000000;
+        } else {
+          objectsSelectedMask |= (1 << (fid & 0x3));
+        }
+  
+      }
+      
+      // Clear all active blocks in BlockWorld
+      _blockWorld.ClearObjectsByFamily(ObjectFamily::LightCube);
+      _blockWorld.ClearObjectsByFamily(ObjectFamily::Charger);
+      
+      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %d", numObjects);
+      return SendMessage(RobotInterface::EngineToRobot(CubeSlots(msg)));
+      
+    }
+    
+    
+    void Robot::BroadcastDiscoveredObjects(bool enable)
+    {
+      _enableDiscoveredObjectsBroadcasting = enable;
+    }
+    
       
     Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
     {
@@ -3101,7 +3030,7 @@ namespace Anki {
  
     Result Robot::SendSetCarryState(CarryState state)
     {
-      return SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::CarryState(state)));
+      return SendMessage(RobotInterface::EngineToRobot(Anki::Cozmo::CarryStateUpdate(state)));
     }
       
     Result Robot::SendFlashObjectIDs()

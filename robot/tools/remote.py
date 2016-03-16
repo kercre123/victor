@@ -3,7 +3,7 @@
 Python command line interface for Robot over the network
 """
 
-import sys, os, time, pygame
+import sys, os, time, pygame, threading
 if sys.version_info.major < 3:
     #sys.stderr.write("Python 2 is depricated." + os.linesep)
     from StringIO import StringIO as BytesIO
@@ -60,7 +60,7 @@ class Remote:
                             self.animStreamer = None
                     elif key[pygame.K_u]:
                         self.upgrader = fota.Upgrader()
-                        fota.UpgradeAll(self.upgrader, wifiImage="releases/esp.user.bin", rtipImage="releases/robot.safe", bodyImage="releases/syscon.safe")
+                        threading.Thread(target=fota.UpgradeAll, args=(self.upgrader,), name="UpgradeAll").run()
                     elif key[pygame.K_j]: # J
                         if nextJogTime == float("Inf"):
                             nextJogTime = time.time()
@@ -123,6 +123,7 @@ class Remote:
                     screen.fill((0, 255, 0) if robotInterface.GetState() == robotInterface.ConnectionState.connected else (255, 0, 0))
                 else:
                     screen.blit(self.image, (0,0))
+                time.sleep(0.05)
                 pygame.display.flip()
             except Exception as e:
                 running = False

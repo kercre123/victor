@@ -18,7 +18,6 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
-#include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
 #include "anki/cozmo/basestation/block.h"
@@ -235,7 +234,8 @@ namespace Anki {
         printf("                Abort everything:  Shift+q\n");
         printf("         Update controller gains:  k\n");
         printf("                 Request IMU log:  o\n");
-        printf("           Toggle face detection:  f (Shift+f)\n");
+        printf("           Toggle face detection:  f\n");
+        printf(" Assign userName to current face:  Shift+f\n");
         printf("          Turn towards last face:  Alt+f\n");
         printf("              Reset 'owner' face:  Alt+Shift+f\n");
         printf("                      Test modes:  Alt + Testmode#\n");
@@ -412,12 +412,12 @@ namespace Anki {
                 case TestMode::TM_LIFT:
                   p1 = root_->getField("liftTest_flags")->getSFInt32();
                   p2 = root_->getField("liftTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if LiftTF_NODDING flag is set)
-                  p3 = 250;
+                  p3 = root_->getField("liftTest_powerPercent")->getSFInt32();    // Power to run motor at. If 0, cycle through increasing power. Only used during LiftTF_TEST_POWER.
                   break;
                 case TestMode::TM_HEAD:
                   p1 = root_->getField("headTest_flags")->getSFInt32();
                   p2 = root_->getField("headTest_nodCycleTimeMS")->getSFInt32();  // Nodding cycle time in ms (if HTF_NODDING flag is set)
-                  p3 = 250;
+                  p3 = root_->getField("headTest_powerPercent")->getSFInt32();    // Power to run motor at. If 0, cycle through increasing power. Only used during HTF_TEST_POWER.
                   break;
                 case TestMode::TM_PLACE_BLOCK_ON_GROUND:
                   p1 = 100;  // x_offset_mm
@@ -1402,13 +1402,44 @@ namespace Anki {
                 UpdateVizOrigin();
                 break;
               }
+                
+              case (s32) '!':
+              {
+                webots::Field* factoryIDs = root_->getField("activeObjectFactoryIDs");
+                webots::Field* connect = root_->getField("activeObjectConnect");
+                
+                if (factoryIDs && connect) {
+                  ExternalInterface::BlockSelectedMessage msg;
+                  for (int i=0; i<factoryIDs->getCount(); ++i) {
+                    msg.factoryId = factoryIDs->getMFInt32(i);
+                    msg.selected = connect->getSFBool();
+                    
+                    if (msg.factoryId == 0) {
+                      continue;
+                    }
+                    
+                    PRINT_NAMED_INFO("BlockSelected", "factoryID 0x%x, connect %d", msg.factoryId, msg.selected);
+                    ExternalInterface::MessageGameToEngine msgWrapper;
+                    msgWrapper.Set_BlockSelectedMessage(msg);
+                    SendMessage(msgWrapper);
+                  }
+                }
+                break;
+              }
 
               case (s32)'@':
               {
-                //SendAnimation("ANIM_BACK_AND_FORTH_EXCITED", 3);
-                SendAnimation("ANIM_TEST", 1);
-                SendSetIdleAnimation("ANIM_IDLE");
+                static bool enable = true;
+                ExternalInterface::SendDiscoveredObjects msg;
+                msg.robotID = 1;
+                msg.enable = enable;
                 
+                PRINT_NAMED_INFO("SendDiscoveredObjects", "enable: %d", enable);
+                ExternalInterface::MessageGameToEngine msgWrapper;
+                msgWrapper.Set_SendDiscoveredObjects(msg);
+                SendMessage(msgWrapper);
+                
+                enable = !enable;
                 break;
               }
               case (s32)'#':
@@ -1587,8 +1618,30 @@ namespace Anki {
                 const bool shiftPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
                 const bool altPressed   = modifier_key & webots::Supervisor::KEYBOARD_ALT;
                 if (shiftPressed && !altPressed) {
-                  // SHIFT+F: Disable face detection
-                  SendEnableVisionMode(VisionMode::DetectingFaces, false);
+                  // SHIFT+F: Associate name with current face
+                  webots::Field* userNameField = root_->getField("userName");
+                  if(nullptr != userNameField)
+                  {
+                    std::string userName = userNameField->getSFString();
+                    if(!userName.empty())
+                    {
+                      printf("Assigning name '%s' to ID %d\n", userName.c_str(), GetLastObservedFaceID());
+                      ExternalInterface::AssignNameToFace assignNameToFace;
+                      assignNameToFace.faceID = GetLastObservedFaceID();
+                      assignNameToFace.name   = userName;
+                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(assignNameToFace)));
+                    } else {
+                      // No user name, enable enrollment
+                      ExternalInterface::EnableNewFaceEnrollment enableEnrollment;
+                      enableEnrollment.numToEnroll = 1;
+                      printf("Enabling enrollment of next face\n");
+                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(enableEnrollment)));
+                    }
+                    
+                  } else {
+                    printf("No 'userName' field\n");
+                  }
+                  
                 } else if(altPressed && !shiftPressed) {
                   // ALT+F: Turn to face the pose of the last observed face:
                   printf("Turning to last face\n");
@@ -1603,8 +1656,10 @@ namespace Anki {
                   setOwnerFace.ownerID = -1;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(setOwnerFace)));
                 } else {
-                  // Just F: Enable face detection
-                  SendEnableVisionMode(VisionMode::DetectingFaces, true);
+                  // Just F: Toggle face detection
+                  static bool isFaceDetectionEnabled = true;
+                  isFaceDetectionEnabled = !isFaceDetectionEnabled;
+                  SendEnableVisionMode(VisionMode::DetectingFaces, isFaceDetectionEnabled);
                 }
                 break;
               }

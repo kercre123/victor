@@ -127,6 +127,10 @@ namespace Anki {
     
     SmallMatrix<NROWS,NCOLS,T>  operator* (T value) const;
     SmallMatrix<NROWS,NCOLS,T>& operator*=(T value);
+    SmallMatrix<NROWS,NCOLS,T>  operator+ (T value) const;
+    SmallMatrix<NROWS,NCOLS,T>& operator+=(T value);
+    SmallMatrix<NROWS,NCOLS,T>& operator*=(const SmallMatrix<NROWS,NCOLS,T>& other);
+    SmallMatrix<NROWS,NCOLS,T>& operator+=(const SmallMatrix<NROWS,NCOLS,T>& other);
     
     // Matrix transpose:
     void GetTranspose(SmallMatrix<NCOLS,NROWS,T>& outTransposed) const;
@@ -140,6 +144,7 @@ namespace Anki {
     MatDimType GetNumRows() const;
     MatDimType GetNumCols() const;
     
+    void FillWith(T value);
 
 # if ANKICORETECH_USE_OPENCV
   public:
@@ -151,9 +156,6 @@ namespace Anki {
 # endif
     
   protected:
-    
-    T* getDataPtr(void);
-    const T* getDataPtr(void) const;
     
     // Do we want to provide non-square matrix inversion?
     // I'm putting this here so the SmallSquareMatrix subclass can get

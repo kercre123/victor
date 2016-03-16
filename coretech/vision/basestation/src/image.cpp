@@ -14,9 +14,9 @@
 #include "anki/vision/basestation/image_impl.h"
 
 #if ANKICORETECH_USE_OPENCV
-#include "opencv2/core/core.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
 #endif
 
 namespace Anki {
@@ -227,6 +227,19 @@ namespace Vision {
     cv::bitwise_not(get_CvMat_(), output.get_CvMat_());
     return output;
   }
+  
+  Image& Image::Threshold(u8 value)
+  {
+    get_CvMat_() = get_CvMat_() > value;
+    return *this;
+  }
+  
+  Image  Image::Threshold(u8 value) const
+  {
+    Image thresholdedImage(*this);
+    return thresholdedImage.Threshold(value);
+  }
+
   
   s32 Image::GetConnectedComponents(Array2d<s32>& labelImage,
                                     std::vector<std::vector< Point2<s32> > >& regionPoints) const

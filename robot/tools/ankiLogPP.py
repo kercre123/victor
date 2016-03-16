@@ -21,7 +21,7 @@ __version__ = "0.1"
 import sys, os, re, argparse, json, mmap
 
 if sys.version_info.major < 3:
-    sys.stderr.write("Python below than 3.5 is depricated" + os.linesep)
+    sys.stderr.write("Python 2x is depricated" + os.linesep)
 
 verbosity = 0
 DEFAULT_SOURCE_FILE_TYPES = ['.h', '.c', '.hpp', '.cpp']
@@ -339,12 +339,15 @@ class ParseData:
                     if ext in sourceTypes:
                         fpn = os.path.join(dirpath, file)
                         fh = open(fpn, "r")
-                        for line in fh:
-                            if self.INCLUDE_FILE_RE.search(line):
-                                self.pt[fpn] = self.parseFile(fpn)
-                                break
-                        else:
-                            vPrint(2, "Skipping file \"{}\" because it doesn't have the logging include.".format(fpn))
+                        try:
+                            for line in fh:
+                                if self.INCLUDE_FILE_RE.search(line):
+                                    self.pt[fpn] = self.parseFile(fpn)
+                                    break
+                            else:
+                                vPrint(2, "Skipping file \"{}\" because it doesn't have the logging include.".format(fpn))
+                        except Exception as e:
+                            sys.exit("Error parsing file \"{}\":{linesep}\t{}{linesep}".format(file, str(e), linesep=os.linesep))
                         fh.close()
             self.nameTable  = {ASSERT_NAME_ID: "ASSERT", 1: "Messages"}
             self.fmtTable   = {0: ("Invalid format ID", 0), 1: ("RTIP missed %d traces", 1), 2: ("WiFi missed %d traces", 1)}

@@ -62,7 +62,7 @@ namespace Anki {
         }
 
         static u32 imgID = 0;
-        const cv::vector<int> compressionParams = {
+        const std::vector<int> compressionParams = {
           CV_IMWRITE_JPEG_QUALITY, IMAGE_SEND_JPEG_COMPRESSION_QUALITY
         };
 
@@ -70,7 +70,7 @@ namespace Anki {
         cvImg = cv::Mat(captureHeight, captureWidth/3, CV_8UC3, (void*)img);
         cvtColor(cvImg, cvImg, CV_BGR2RGB);
 
-        cv::vector<u8> compressedBuffer;
+        std::vector<u8> compressedBuffer;
         cv::imencode(".jpg",  cvImg, compressedBuffer, compressionParams);
 
         const u32 numTotalBytes = static_cast<u32>(compressedBuffer.size());
@@ -96,14 +96,14 @@ namespace Anki {
 
           if (chunkByteCnt == IMAGE_CHUNK_SIZE) {
             //PRINT("Sending image chunk %d\n", m.chunkId);
-            RobotInterface::SendMessage(m, false, true);
+            RobotInterface::SendMessage(m);
             ++m.chunkId;
             chunkByteCnt = 0;
           } else if (totalByteCnt == numTotalBytes) {
             // This should be the last message!
             //PRINT("Sending LAST image chunk %d\n", m.chunkId);
             m.data_length = chunkByteCnt;
-            RobotInterface::SendMessage(m, false, true);
+            RobotInterface::SendMessage(m);
           }
         } // for each byte in the compressed buffer
 

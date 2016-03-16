@@ -5,7 +5,6 @@
 #include "uart.h"
 #include "hal/portable.h"
 #include "messages.h"
-#include "cube.h"
 #include "spine.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/robotInterface/messageToActiveObject.h"
@@ -13,11 +12,9 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "uart.h"
 
+#define MAX_CUBES 7
 
-AcceleratorPacket g_AccelStatus[Anki::Cozmo::MAX_NUM_ACTIVE_OBJECTS];
-uint16_t g_LedStatus[Anki::Cozmo::MAX_NUM_ACTIVE_OBJECTS][Anki::Cozmo::NUM_CUBE_LEDS];
-uint32_t g_SlotId[Anki::Cozmo::MAX_NUM_ACTIVE_OBJECTS];
-uint32_t g_LastContactTimestamp[Anki::Cozmo::MAX_NUM_ACTIVE_OBJECTS] = {0};
+static uint8_t g_shockCount[MAX_CUBES];
 
 namespace Anki
 {
@@ -25,73 +22,14 @@ namespace Anki
   {
     namespace HAL
     {
-      extern void GetBackpack(uint16_t* colors);
-
-      Result AssignCubeSlots(int total_ids, const uint32_t* ids) {
-        int slots = MIN(total_ids, MAX_NUM_ACTIVE_OBJECTS);
-
-        for (int i = 0; i < slots; i++) {
-          g_SlotId[i] = ids[i];
-        }
-
-        Cube::SendPropIds();
-
-        return RESULT_OK;
-      }
-      
-      // ONE DAY THIS WILL DO BETTER STUFF
-      void Cube::SpineIdle(SpineProtocol& msg) {
-        static int index = 0;
-        static int prop = 0;
-
-        if (prop < MAX_NUM_ACTIVE_OBJECTS && g_SlotId[prop]) {
-          msg.opcode = SET_PROP_STATE;
-          msg.SetPropState.slot = prop;
-          memcpy((void*)&msg.SetPropState.colors, &g_LedStatus[prop], sizeof(msg.SetPropState.colors));
-        } else {
-          msg.opcode = SET_BACKPACK_STATE;
-          GetBackpack(msg.SetBackpackState.colors);
-        }
-
-        if (prop++ > MAX_NUM_ACTIVE_OBJECTS) {
-          prop = 0;
-        }
-      }
-      
-      void Cube::SendPropIds(void) {
-        for (int i = 0; i < MAX_NUM_ACTIVE_OBJECTS; i++) {
-          if (g_SlotId[i]) {
-            SpineProtocol msg;
-
-            msg.opcode = ASSIGN_PROP;
-            msg.AssignProp.slot = i;
-            msg.AssignProp.prop_id = g_SlotId[i];
-            
-            Spine::Enqueue(msg);
-          }
-        }
-      }
-      
-      void DiscoverProp(uint32_t id) {
-        ObjectDiscovered m;
-        m.factory_id = id;
-        RobotInterface::SendMessage(m, false, false);
-      }
-      
-      void GetPropState(int id, int x, int y, int z, int shocks) {
+      void GetPropState(int id, int ax, int ay, int az, int shocks) {
         // Tap detection
-        if (id >= MAX_NUM_ACTIVE_OBJECTS) {
+        if (id >= MAX_CUBES) {
           return ;
         }
 
-        g_LastContactTimestamp[id] = HAL::GetTimeStamp();
-        
-        uint8_t count = shocks - g_AccelStatus[id].shockCount;
-
-        g_AccelStatus[id].x = x;
-        g_AccelStatus[id].y = y;
-        g_AccelStatus[id].z = z;
-        g_AccelStatus[id].shockCount = shocks;
+        uint8_t count = shocks - g_shockCount[id];
+        g_shockCount[id] = shocks;
 
         //DisplayStatus(id);
 
@@ -106,14 +44,9 @@ namespace Anki
         // Detect if block moved from accel data
         const u8 START_MOVING_COUNT_THRESH = 5;  // Determines number of motion tics that much be observed before Moving msg is sent
         const u8 STOP_MOVING_COUNT_THRESH = 20;  // Determines number of no-motion tics that much be observed before StoppedMoving msg is sent
-        static u8 movingTimeoutCtr[MAX_NUM_ACTIVE_OBJECTS] = {0};
-        static bool isMoving[MAX_NUM_ACTIVE_OBJECTS] = {false};
-        static UpAxis prevUpAxis[MAX_NUM_ACTIVE_OBJECTS] = {Unknown};
-
-        s8 ax = g_AccelStatus[id].x;
-        s8 ay = g_AccelStatus[id].y;
-        s8 az = g_AccelStatus[id].z;
-
+        static u8 movingTimeoutCtr[MAX_CUBES] = {0};
+        static bool isMoving[MAX_CUBES] = {false};
+        static UpAxis prevUpAxis[MAX_CUBES] = {Unknown};
 
         // Compute upAxis
         // Send ObjectMoved message if upAxis changes
@@ -169,33 +102,6 @@ namespace Anki
           isMoving[id] = false;
         }
       }
-
-      Result SetBlockLight(const u32 blockID, const u16* colors)
-      {
-        if (blockID >= MAX_NUM_ACTIVE_OBJECTS) {
-          return RESULT_FAIL;
-        }
-        
-        memcpy(g_LedStatus[blockID], colors, sizeof(g_LedStatus[blockID]));
-        
-        return RESULT_OK;
-      }
-      
-      u32 GetLastCubeContactTime(const u32 cubeID) {
-        if (cubeID >= MAX_NUM_ACTIVE_OBJECTS) {
-          return 0;
-        }
-        return g_LastContactTimestamp[cubeID];
-      }
-      
-      u32 GetCubeFactoryID(u32 cubeID)
-      {
-        if (cubeID >= MAX_NUM_ACTIVE_OBJECTS) {
-          return 0;
-        }
-        return g_SlotId[cubeID];
-      }
-      
     }
   }
 }

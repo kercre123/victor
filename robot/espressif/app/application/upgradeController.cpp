@@ -16,6 +16,7 @@ extern "C" {
 #include "upgradeController.h"
 #include "anki/cozmo/robot/esp.h"
 #include "anki/cozmo/robot/logging.h"
+#include "rtip.h"
 #include "clad/robotInterface/otaMessages.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -60,7 +61,7 @@ LOCAL bool TaskI2SPISwitchMode(uint32 mode)
   }
   else
   {
-#ifdef DEBUG_OTA
+#ifdef DEBUG_OTA__
     os_printf("w");
 #endif
     return true;
@@ -90,6 +91,9 @@ LOCAL bool TaskDoEraseFlash(uint32 param)
       }
       else // We're done erasing
       {
+#ifdef DEBUG_OTA
+        os_printf("Finished erase\r\n");
+#endif
         resp.address = msg->start;
         resp.length  = msg->size;
         resp.writeNotErase = false;
@@ -167,7 +171,7 @@ LOCAL bool TaskWriteFlash(uint32 param)
       resp.address = msg->address;
       resp.length  = msg->data_length;
       resp.writeNotErase = true;
-      RobotInterface::SendMessage(resp, true, true);
+      RobotInterface::SendMessage(resp);
       break;
     }
     case SPI_FLASH_RESULT_ERR:
@@ -176,14 +180,13 @@ LOCAL bool TaskWriteFlash(uint32 param)
       resp.address = msg->address;
       resp.length  = 0; // Indicates failure
       resp.writeNotErase = true;
-      RobotInterface::SendMessage(resp, true, true);
+      RobotInterface::SendMessage(resp);
       break;
     }
     case SPI_FLASH_RESULT_TIMEOUT:
     {
       if (retries-- > 0)
       {
-        foregroundTaskPost(TaskWriteFlash, param);
         return true;
       }
       else
@@ -192,7 +195,7 @@ LOCAL bool TaskWriteFlash(uint32 param)
         resp.address = msg->address;
         resp.length  = 0; // Indicates failure
         resp.writeNotErase = true;
-        RobotInterface::SendMessage(resp, true, true);
+        RobotInterface::SendMessage(resp);
         break;
       }
     }
@@ -374,7 +377,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
         else // Done writing firmware
         {
           AnkiInfo( 29, "UpgradeController", 180, "RTIP OTA transfer complete", 0);
-          if (flashStagedFlags[0] != 0xFFFFffff)
+          if (flashStagedFlags[0] != 0xFFFFffff && flashStagedFlags[1] != 0)
           {
             uint32 flag = 0;
             if (spi_flash_write(FLASH_STAGED_FLAG_ADDRESS+4, &flag, 4) != SPI_FLASH_RESULT_OK)
@@ -382,8 +385,11 @@ LOCAL bool TaskOtaRTIP(uint32 param)
               os_printf("Couldn't set stage 2 staged upgrade flag\r\n");
             }
           }
-          i2spiSwitchMode(I2SPI_NORMAL);
-          state->phase = 3;
+          if (i2spiBootloaderCommandDone())
+          {
+            i2spiSwitchMode(I2SPI_NORMAL);
+            state->phase = 3;
+          }
           return true;
         }
       }
@@ -706,24 +712,6 @@ LOCAL bool TaskCheckSig(uint32 param)
   }
 }
   
-extern "C" bool i2spiSynchronizedCallback(uint32 param)
-{
-  if (flashStagedFlags[0] != 0xFFFFFFFF)
-  {
-    if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
-    {
-      // Enter bootloader message from otaMessages.clad
-      if (i2spiQueueMessage((u8*)"\xfe\x01", 2) == false) return true;
-      os_printf("Flash staged, starting upgrade sequence\r\n");
-    }
-    else
-    {
-      StartWiFiUpgrade(true);
-    }
-  }
-  return false;
-}
-  
 void EraseFlash(RobotInterface::EraseFlash& msg)
 {
   if (msg.start < FLASH_WRITE_START_ADDRESS) // Refuse to erase addresses that are too low
@@ -732,8 +720,8 @@ void EraseFlash(RobotInterface::EraseFlash& msg)
   }
   else
   {
-    // TODO tell the RTIP we're going away, in the mean time, at least tell it the connection is going away
-    i2spiQueueMessage((u8*)"\xfc\x00", 2); // FC is the tag for a radio connection state message to the robot
+    u8 radioConnectedMsg[] = {Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected, false};
+    Anki::Cozmo::RTIP::SendMessage(radioConnectedMsg, 2);
     
     RobotInterface::EraseFlash* taskMsg = static_cast<RobotInterface::EraseFlash*>(os_zalloc(msg.Size()));
     if (taskMsg == NULL)
@@ -766,7 +754,16 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
     {
       os_memcpy(taskMsg, &msg, msg.Size());
       retries = MAX_RETRIES;
-      foregroundTaskPost(TaskWriteFlash, reinterpret_cast<uint32>(taskMsg));
+#ifdef DEBUG_OTA__
+      os_printf("Posting TaskWriteFlash\r\n");
+#endif
+      if (foregroundTaskPost(TaskWriteFlash, reinterpret_cast<uint32>(taskMsg)) == false)
+      {
+        AnkiError( 29, "UpgradeController", 389, "Failed to post TaskWriteFlash", 0);
+      }
+#ifdef DEBUG_OTA__
+      os_printf("\tdone\r\n");
+#endif
     }
   }
 }
@@ -835,6 +832,25 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
         }
       }
     }
+  }
+  
+  bool CheckForAndDoStaged(void)
+  {
+    if (flashStagedFlags[0] != 0xFFFFFFFF)
+    {
+      if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
+      {
+        u8 msg = RobotInterface::EngineToRobot::Tag_bootloadBody;
+        os_printf("Flash staged, starting upgrade sequence\r\n");
+        return RTIP::SendMessage(&msg, 1);
+      }
+      else
+      {
+        StartWiFiUpgrade(true);
+      }
+      return true;
+    }
+    return false;
   }
   
   void StartRTIPUpgrade(void)

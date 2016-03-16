@@ -15,6 +15,7 @@ sint8 clientInit();
 /** Method for sending messages NOT PACKETS
  * @param msgID The ID (tag) of the message to be sent
  * @param buffer A pointer to the message to be sent
+ * @param msgID The tag of the message being transmitted
  * @param reliable Specifify if the message should be transferred reliably. Default true.
  * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
  * @return True if sucessfully queued, false otherwise
@@ -37,5 +38,8 @@ void clientUpdate(void);
 
 /// Check if client is connected.
 bool clientConnected(void);
+
+/// Retrieve the approximate number of bytes available in the transmit queue
+sint16 clientQueueAvailable(void);
 
 #endif

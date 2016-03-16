@@ -74,7 +74,8 @@ Supervisor {
 		
 		# Bottom Face
     VisionMarker {
-      rotation 1 0 0 -1.5708
+      # Rotate around X to get on top, followed by around Z to orient correctly
+			rotation 0.57735027 -0.57735027 -0.57735027 2.09439510
       translation 0 0 %{=-hWidth}%
       %{ if fields.markerImg_bottom.value ~= "" then }%
         image IS markerImg_bottom
@@ -88,7 +89,8 @@ Supervisor {
 		
 		# Top Face
 		VisionMarker {
-			rotation 1 0 0 1.5708
+			# Rotate around X to get on top, followed by around Z to orient correctly
+			rotation -0.57735027 0.57735027 -0.57735027 2.09439510
 			translation 0 0 %{=hWidth}%
 			%{ if fields.markerImg_top.value ~= "" then }%
 			  image IS markerImg_top

@@ -34,19 +34,6 @@ namespace Anki
         uint8_t GetTxData(uint8_t* dest, uint8_t maxLength);
       } // namespace WiFi
     } // Namespace HAL
-    
-    namespace RobotInterface
-    {
-      /** Method for sending messages *not packets*
-       * Called by CLAD generated code
-       * @param msgID The ID (tag) of the message to be sent
-       * @param buffer A pointer to the message to be sent
-       * @param reliable Specifify if the message should be transferred reliably. Default true.
-       * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
-       * @return True if sucessfully queued, false otherwise
-       */
-      bool clientSendMessage(const u8* buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot);
-    }
   } // Namespace Cozmo
 } // Namespace Anki
 

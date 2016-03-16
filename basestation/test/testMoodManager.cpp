@@ -455,7 +455,9 @@ TEST(MoodManager, BehaviorScoring)
   ASSERT_NE(testBehaviorReqHappy, nullptr);
   ASSERT_NE(testBehaviorReqCalm,  nullptr);
   
-  SimpleBehaviorChooser behaviorChooser;
+  Json::Value chooserConfig;
+  SimpleBehaviorChooser behaviorChooser(testRobot, chooserConfig);
+  
   behaviorChooser.AddBehavior(testBehaviorReqHappy);
   behaviorChooser.AddBehavior(testBehaviorReqCalm);
   

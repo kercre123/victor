@@ -13,11 +13,7 @@
 #define __Basestation_Audio_RobotAudioClient_H__
 
 #include "anki/cozmo/basestation/audio/audioEngineClient.h"
-#include "anki/cozmo/basestation/animations/track.h"
-#include <util/dispatchQueue/dispatchQueue.h>
-#include <list>
-#include <unordered_map>
-#include <mutex>
+#include "anki/cozmo/basestation/audio/robotAudioAnimation.h"
 
 
 namespace Anki {
@@ -28,119 +24,52 @@ class Animation;
 namespace Audio {
   
 class RobotAudioBuffer;
-class RobotAudioMessageStream;
   
 class RobotAudioClient : public AudioEngineClient
 {
 public:
-
-  RobotAudioClient();
-  ~RobotAudioClient();
   
+  // Animation audio modes
+  enum class AnimationMode : uint8_t {
+    None,           // No audio
+    PlayOnDevice,   // Play on Device - This is not perfectly synced to animations
+    PlayOnRobot     // Play on Robot by using Hijack Audio plug-in to get audio stream from Wwise
+  };
+  
+  // Buffer stream from Wwise Hijack Audio plug-in
   void SetAudioBuffer( RobotAudioBuffer* audioBuffer ) { _audioBuffer = audioBuffer; }
+
+  RobotAudioBuffer* GetAudioBuffer() { return _audioBuffer; }
   
   // Post Cozmo specific Audio events
   CallbackIdType PostCozmoEvent( GameEvent::GenericEvent event, AudioEngineClient::CallbackFunc callback = nullptr );
   
-  // Load animation and begin to buffer audio
-  bool LoadAnimationAudio( Animation* anAnimation, bool streamAudioToRobot );
-  
-  // This returns true after LoadAnimationAudio() is performed and remains true until the last audio message
-  // is completed
-  bool IsPlayingAnimation() const { return _isPlayingAnimation; }
-  
-  // Current Animation id
-  // Return empty string if no animation is playing
-  const std::string& GetCurrentAnimationName() const { return _animationName; }
-  
-  // Abort current playing animation
-  void AbortAnimation();
-  
-  // Return false if we expect to have buffer however it is not ready yet
-  bool PrepareRobotAudioMessage( TimeStamp_t startTime_ms,
-                                 TimeStamp_t streamingTime_ms );
-
-  // Pop the front EngineToRobot audio message
-  // Will set out_RobotAudioMessagePtr to Null if there are no messages for provided current time. Use this to identify
-  // when to send a AudioSilence message.
-  // Note: EngineToRobot pointer memory needs to be manage or it will leak memory.
-  void PopRobotAudioMessage( RobotInterface::EngineToRobot*& out_RobotAudioMessagePtr,
-                             TimeStamp_t startTime_ms,
-                             TimeStamp_t streamingTime_ms );
-  
-  // Set the minimum amount of Audio messages that should be buffered before return true "ready" from
-  // PrepareRobotAudioMessage() or PopRobotAudioMessage()
-  void SetPreBufferRobotAudioMessageCount( uint8_t count ) { _PreBufferRobotAudioMessageCount = count; }
-  
-  // Check if there is enough initial audio buffer to begin streaming animation
-  // This returns true if there is no RobotAudioBuffer
-  bool UpdateFirstBuffer();
-
   // Value between ( 0.0 - 1.0 )
   void SetRobotVolume(float volume);
+
+  // Create an Audio Animation for a specific animation. Only one animation can be played at a time
+  void CreateAudioAnimation( Animation* anAnimation, AnimationMode mode );
+
+  RobotAudioAnimation* GetCurrentAnimation() { return _currentAnimation; }
+  
+  // Delete audio animation
+  // Note: This Does not Abort the animation
+  void ClearCurrentAnimation();
+
+  bool HasAnimation() const { return _currentAnimation != nullptr; }
+
+  // Return true if there is no animation or animation is ready
+  bool UpdateAnimationIsReady();
+  
+  // Check Animation States to see if it's completed
+  bool AnimationIsComplete();
   
 private:
   
   // Provides cozmo audio data
   RobotAudioBuffer* _audioBuffer = nullptr;
-  
-  // Dispatch event
-  Util::Dispatch::Queue* _postEventTimerQueue;
-  
-  // Track specific animation instance
-  using AnimationPlayId = uint16_t;
-  AnimationPlayId _currentAnimationPlayId = 0;
-  
-  
-  // Amount of audio messages that need to be buffered before starting animation
-  uint8_t _PreBufferRobotAudioMessageCount = 0;
-  
-  // Struct to sync audio buffer streams with animation
-  struct AnimationEvent {
-    using AnimationEventId = uint16_t;
-    static constexpr AnimationEventId kInvalidAnimationEventId = 0;
-    
-    AnimationEventId EventId = kInvalidAnimationEventId;
-    GameEvent::GenericEvent AudioEvent = GameEvent::GenericEvent::Invalid;
-    uint32_t TimeInMS = 0;
-    AnimationEvent( AnimationEventId eventId, GameEvent::GenericEvent audioEvent, uint32_t timeInMS ) :
-      EventId( eventId ),
-      AudioEvent( audioEvent ),
-      TimeInMS( timeInMS ) {}
-  };
-  // Ordered list of animation audio event
-  std::list<AnimationEvent> _animationEventList;
-  // List of failed animation events
-  std::list<AnimationEvent::AnimationEventId> _invalidAnimationIds;
-  // Guard against event errors on different threads
-  std::mutex _invalidAnimationIdLock;
-
-  // Animation properties
-  // State Flags
-  bool _isPlayingAnimation = false;
-  bool _isFirstBufferLoaded = false;
-  bool _didBeginPostingEvents = false;
-  bool _streamAudioToRobot = false;
-  
-  // Animation id
-  std::string _animationName = "";
-  // Track Queue's front stream
-  RobotAudioMessageStream* _currentBufferStream = nullptr;
-  
-  // Begin to post audio events to audio controller
-  void BeginBufferingAudioEvents();
-  
-  // TODO: This currently just clears all metadata and audio buffered data. It is not pleasant to the ears.
-  // This is called after the last audio messages has been proccessed
-  void ClearAnimation();
-  
-  // Handle Cozmo event callbacks, specifically errors
-  void HandleCozmoEventCallback( AnimationEvent::AnimationEventId eventId,
-                                 GameEvent::GenericEvent audioEvent,
-                                 AudioCallback& callback );
-  
-  // Remove Events which have been marked as invalid
-  void RemoveInvalidEvents();
+  // Audio Animation Object to provide audio frames to Animation
+  RobotAudioAnimation* _currentAnimation = nullptr;
   
 };
   

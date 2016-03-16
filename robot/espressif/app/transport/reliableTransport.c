@@ -31,6 +31,8 @@ void FacePrintf(const char *format, ...);
 #define printClear() (void)0
 #endif
 
+static uint32_t reliableTransport_timeoutMicroseconds;
+
 /// Utility function to print the state of a connection object
 void ICACHE_FLASH_ATTR ReliableConnection_printState(ReliableConnection* connection)
 {
@@ -61,7 +63,7 @@ bool ICACHE_FLASH_ATTR haveDataToSend(ReliableConnection* self)
 
 void ICACHE_FLASH_ATTR ReliableTransport_Init()
 {
-  //printf("ReliableTransport Initalizing\r\n");
+  reliableTransport_timeoutMicroseconds = ReliableConnection_CONNECTION_DEFAULT_TIMEOUT;
 }
 
 void ICACHE_FLASH_ATTR ReliableConnection_Init(ReliableConnection* self, void* dest)
@@ -99,12 +101,12 @@ static ICACHE_FLASH_ATTR bool QueueMessage(const uint8_t* buffer, const uint16_t
   }
   if (unlikely(bufferSize+1 > ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE)) // + 1 for tag byte. Easier to assume it's there than check
   {
-    printf("ERROR: Reliable transport can't ever send message of %d bytes > MTU %d\r\n", bufferSize, (int)(ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE));
+    //printf("ERROR: Reliable transport can't ever send message of %d bytes > MTU %d\r\n", bufferSize, (int)(ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE));
     return false;
   }
   else if (unlikely(connection->numPendingReliableMessages >= ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH))
   {
-    printf("WARN: No slots left for pending reliable messages\r\n");
+    // For some reason, this debug print crashes the espressif printf("WARN: No slots left for pending reliable messages %x[%x...%d]\r\n", tag, buffer[0], bufferSize);
     return false;
   }
   else if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > /* +1 for tag, easier to assume it's there than check. */
@@ -555,20 +557,30 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
   }
 }
 
+void ICACHE_FLASH_ATTR ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds)
+{
+  reliableTransport_timeoutMicroseconds = timeoutMicroSeconds;
+}
+
 bool ICACHE_FLASH_ATTR ReliableTransport_Update(ReliableConnection* connection)
 {
   uint32_t currentTime = GetMicroCounter();
-  if (currentTime > connection->latestRecvTime + ReliableConnection_CONNECTION_TIMEOUT)
+  if ((currentTime - connection->latestRecvTime) > reliableTransport_timeoutMicroseconds)
   {
     return false;
   }
   else
   {
     printClear();
-    if (currentTime > connection->latestUnackedMessageSentTime + ReliableConnection_UNACKED_MESSAGE_SEPARATION_TIME)
+    if ((currentTime - connection->latestUnackedMessageSentTime) > ReliableConnection_UNACKED_MESSAGE_SEPARATION_TIME)
     {
       SendPendingMessages(connection, false);
     }
     return true;
   }
+}
+
+int16_t ICACHE_FLASH_ATTR ReliableConnection_GetReliableQueueAvailable(ReliableConnection* connection)
+{
+  return ((int16_t)connection->pendingReliableBytes) - ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE;
 }

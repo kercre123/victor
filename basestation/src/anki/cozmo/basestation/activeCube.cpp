@@ -75,11 +75,10 @@ namespace Anki {
     // Changes to this mapping should also be reflected in ActiveBlock::activeIDToFactoryIDMap_
     ActiveCube::Type ActiveCube::GetTypeFromFactoryID(FactoryID id)
     {
-      static constexpr ObjectType factoryIDToObjectType[4] = {
+      static constexpr ObjectType factoryIDToObjectType[3] = {
         ObjectType::Block_LIGHTCUBE3,
         ObjectType::Block_LIGHTCUBE2,
-        ObjectType::Block_LIGHTCUBE1,
-        ObjectType::Block_LIGHTCUBE4
+        ObjectType::Block_LIGHTCUBE1
       };
       
       u8 typeID = id & 0x3;
@@ -318,33 +317,24 @@ namespace Anki {
         // TODO: Actually get activeID from flashing LEDs instead of using a single hard-coded value
         switch(_markers.front().GetCode())
         {
-          case Vision::MARKER_1:
-          case Vision::MARKER_LIGHTNINGBOLT_01:
+          case Vision::MARKER_LIGHTCUBEI_FRONT:
             _identityState = ActiveIdentityState::Identified;
 #if(OBJECTS_HEARABLE==0)
             _activeID = 0;
 #endif
             break;
             
-          case Vision::MARKER_INVERTED_1:
-          case Vision::MARKER_LIGHTNINGBOLTHOLLOW_01:
+          case Vision::MARKER_LIGHTCUBEJ_FRONT:
             _identityState = ActiveIdentityState::Identified;
 #if(OBJECTS_HEARABLE==0)
             _activeID = 1;
 #endif
             break;
             
-          case Vision::MARKER_INVERTED_LIGHTNINGBOLT_01:
+          case Vision::MARKER_LIGHTCUBEK_FRONT:
             _identityState = ActiveIdentityState::Identified;
 #if(OBJECTS_HEARABLE==0)
             _activeID = 2;
-#endif
-            break;
-            
-          case Vision::MARKER_INVERTED_LIGHTNINGBOLTHOLLOW_01:
-            _identityState = ActiveIdentityState::Identified;
-#if(OBJECTS_HEARABLE==0)
-            _activeID = 3;
 #endif
             break;
             

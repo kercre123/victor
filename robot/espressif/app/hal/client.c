@@ -25,7 +25,13 @@ static bool sendHoldoff;
 
 bool clientConnected(void)
 {
-  return clientConnection != NULL;
+  return clientConnectionId != 0;
+}
+
+sint16 clientQueueAvailable(void)
+{
+  if (clientConnection) return ReliableConnection_GetReliableQueueAvailable(clientConnection);
+  else return 0;
 }
 
 void clientUpdate(void)

@@ -10,6 +10,7 @@ enum uint_32 VizConstants
 {
   VIZ_SERVER_PORT = 5252,
   PHYSICS_PLUGIN_SERVER_PORT = 5253,
+  UNITY_VIZ_SERVER_PORT = 5352,
   ALL_PATH_IDs    = 0xffffffff,
   ALL_QUAD_IDs    = 0xffffffff,
   ALL_QUAD_TYPEs  = 0xffffffff,

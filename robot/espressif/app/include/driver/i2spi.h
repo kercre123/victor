@@ -67,6 +67,10 @@ uint32_t i2spiGetBodyBootloaderCode(void);
  */
 bool i2spiBootloaderPushChunk(FirmwareBlock* chunk);
 
+/** Push a bootload command done message to the RTIP
+ */
+bool i2spiBootloaderCommandDone(void);
+
 /// Count how many tx underruns we've had
 extern uint32_t i2spiTxUnderflowCount;
 /// Count how many tx overruns we've had

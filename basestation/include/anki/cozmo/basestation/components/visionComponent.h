@@ -42,14 +42,6 @@ namespace Vision {
   
 namespace Cozmo {
 
-namespace RobotInterface {
-  struct PanAndTilt;
-  class EngineToRobot;
-  class RobotToEngine;
-  enum class EngineToRobotTag : uint8_t;
-  enum class RobotToEngineTag : uint8_t;
-} // end namespace RobotInterface
-
 // Forward declaration
 class Robot;
 class CozmoContext;
@@ -99,7 +91,7 @@ struct DockingErrorSignal;
     
     // Vision system will switch to tracking when this marker is seen
     void SetMarkerToTrack(const Vision::Marker::Code&  markerToTrack,
-                          const f32                    markerWidth_mm,
+                          const Point2f&               markerSize_mm,
                           const Point2f&               imageCenter,
                           const f32                    radius,
                           const bool                   checkAngleX,
@@ -107,7 +99,7 @@ struct DockingErrorSignal;
                           const f32                    postOffsetY_mm = 0,
                           const f32                    postOffsetAngle_rad = 0);
     
-    // Queue an observed vision marker for processing with the robot's BlockWorld.
+    // Queue an observed vision marker for processing with the robot's BlockWorld,
     // if the robot wasn't moving too much while it was observed
     Result QueueObservedMarker(Robot& robot, const Vision::ObservedMarker& marker);
     
@@ -122,6 +114,8 @@ struct DockingErrorSignal;
     Result UpdateMotionCentroid(Robot& robot);
     Result UpdateOverheadMap(const Vision::ImageRGB& image,
                              const VisionSystem::PoseData& poseData);
+    
+    Result UpdateOverheadEdges(Robot& robot);
     
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
@@ -189,6 +183,8 @@ struct DockingErrorSignal;
     
     std::thread _processingThread;
     
+    std::vector<Signal::SmartHandle> _signalHandles;
+    
     std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
     void PopulateGroundPlaneHomographyLUT(const Robot& robot, f32 angleResolution_rad = DEG_TO_RAD(0.25f));
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
@@ -243,7 +239,7 @@ struct DockingErrorSignal;
       _markerDetectionHeadTurnSpeedThreshold_radPerSec = DEG_TO_RAD(headTurnSpeedThresh_degPerSec);
     }
   }
-  
+
   inline void VisionComponent::GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                                      f32& headTurnSpeedThresh_degPerSec) const
   {

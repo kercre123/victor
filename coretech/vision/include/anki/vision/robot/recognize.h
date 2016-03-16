@@ -9,6 +9,9 @@ Copyright Anki, Inc. 2014
 For internal use only. No part of this code may be used without a signed non-disclosure agreement with Anki, inc.
 **/
 
+// Deprecate?
+#if 0
+
 #ifndef _ANKICORETECHEMBEDDED_VISION_RECOGNIZE_H_
 #define _ANKICORETECHEMBEDDED_VISION_RECOGNIZE_H_
 
@@ -53,3 +56,5 @@ namespace Anki
 } //namespace Anki
 
 #endif // _ANKICORETECHEMBEDDED_VISION_RECOGNIZE_H_
+
+#endif // #if 0

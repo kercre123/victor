@@ -36,6 +36,7 @@
 #include "clad/types/engineState.h"
 #include "anki/cozmo/basestation/debug/debugConsoleManager.h"
 
+
 #include <memory>
 
 
@@ -135,7 +136,7 @@ protected:
   std::unique_ptr<CozmoContext>                             _context;
   std::map<AdvertisingRobot, bool>                          _forceAddedRobots;
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
-  
+
   virtual Result InitInternal();
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);

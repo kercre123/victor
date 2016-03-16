@@ -63,9 +63,7 @@ typedef struct _AnkiReliablePacketHeader
 /// Unacked message retransmit interval in microseconds returns
 #define ReliableConnection_UNACKED_MESSAGE_SEPARATION_TIME 33000
 /// Maximum time without receiving a message before we consider it dead
-#define ReliableConnection_CONNECTION_TIMEOUT 5000000
-/// A warning time before actual timeout
-#define ReliableConnection_CONNECTION_PRETIMEOUT 1000000
+#define ReliableConnection_CONNECTION_DEFAULT_TIMEOUT 5000000
 
 /** Structure for pending reliable messages in the queue
  * This is inserted as a header in between messages in the reliable message queue buffers
@@ -166,11 +164,19 @@ int16_t ReliableTransport_ReceiveData(ReliableConnection* connection, uint8_t* b
  */
 bool ReliableTransport_Update(ReliableConnection* connection);
 
+/** Sets the reliable transport connection timeout period.
+ * @param timeoutMicroSeconds Timeout in microseconds.
+ */
+void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
+
 /** Debugging function to print the state of the reliable connection
  * @param connection The connection instance to print
  */
 void ReliableConnection_printState(ReliableConnection* connection);
 
+/** Retrieve the number of bytes of reliable data queue available
+ */
+int16_t ReliableConnection_GetReliableQueueAvailable(ReliableConnection* connection);
 
 // end extern "C"
 #ifdef __cplusplus

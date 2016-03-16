@@ -50,6 +50,11 @@ enum uint_8 CarryState
   NUM_CARRY_STATES
 }
 
+message CarryStateUpdate
+{
+  CarryState state
+}
+
 // Structure definition for convenience
 structure RobotPose
 {
@@ -77,6 +82,12 @@ structure RobotState
   int_8   currPathSegment, // -1 if not traversing a path
   uint_8  numFreeSegmentSlots,
   uint_8  battVolt10x,
+}
+
+structure PowerState {
+  int_32 VBatFixed,
+  int_32 VExtFixed,
+  uint_8 chargeStat,
 }
 
 namespace RobotInterface {

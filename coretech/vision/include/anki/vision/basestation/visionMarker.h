@@ -88,7 +88,7 @@ namespace Anki {
     {
     public:
       
-      KnownMarker(const Code& type, const Pose3d& atPose, const f32 size_mm);
+      KnownMarker(const Code& type, const Pose3d& atPose, const Point2f& size_mm);
 
       Result EstimateObservedPose(const ObservedMarker& obsMarker,
                                   Pose3d& pose) const;
@@ -138,9 +138,9 @@ namespace Anki {
                          NotVisibleReason& reason) const;
       
       // Accessors
-      Quad3f const& Get3dCorners() const; // at current pose
-      Pose3d const& GetPose()      const;
-      f32    const& GetSize()      const;
+      Quad3f  const& Get3dCorners() const; // at current pose
+      Pose3d  const& GetPose()      const;
+      Point2f const& GetSize()      const;
       
       Quad3f Get3dCorners(const Pose3d& atPose) const;
       
@@ -155,7 +155,7 @@ namespace Anki {
       static const Quad3f _canonicalCorners3d;
       
       Pose3d       _pose;
-      f32          _size; // in mm
+      Point2f      _size; // in mm
       Quad3f       _corners3d;
       TimeStamp_t  _lastObservedTime;
 
@@ -186,7 +186,7 @@ namespace Anki {
       return _code;
     }
     
-    inline f32 const& KnownMarker::GetSize() const {
+    inline Point2f const& KnownMarker::GetSize() const {
       return _size;
     }
     

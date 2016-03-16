@@ -16,8 +16,7 @@ namespace Cozmo {
 
   message CubeSlots
   {
-    uint_8      padding[3],
-    uint_32     factory_id[uint_8]
+    uint_32 factory_id[7]
   }
 
   message FlashObjectIDs
@@ -29,6 +28,13 @@ namespace Cozmo {
   {
     uint_32 objectID,
     bool    isBeingCarried,
+  }
+  
+  /// XXX Temporary messages until more of cube control is moved into body
+  structure SetPropState
+  {
+    uint_16 colors[4],
+    uint_8  slot,
   }
   
 } // Cozmo

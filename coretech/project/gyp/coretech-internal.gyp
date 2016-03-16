@@ -196,7 +196,7 @@
             'OTHER_CFLAGS': ['-O0'],
             'OTHER_CPLUSPLUSFLAGS': ['-O0'],
             'LIBRARY_SEARCH_PATHS': [
-                '<@(opencv_lib_search_path_mac_release)',
+                '<@(opencv_lib_search_path_debug)',
             ],
            },
           'defines': [
@@ -211,7 +211,7 @@
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
-              '<@(opencv_lib_search_path_mac_release)',
+              '<@(opencv_lib_search_path_release)',
             ],
            },
           'defines': [
@@ -226,7 +226,7 @@
             'OTHER_CFLAGS': ['-Os'],
             'OTHER_CPLUSPLUSFLAGS': ['-Os'],
             'LIBRARY_SEARCH_PATHS': [
-              '<@(opencv_lib_search_path_mac_release)',
+              '<@(opencv_lib_search_path_release)',
             ],
            },
           'defines': [
@@ -791,12 +791,8 @@
         '<(coretech_external_path)/matconvnet/matlab/src/bits',
         '<@(face_library_includes)',
       ],
-      'conditions': [
-        ['OS=="ios" and face_library=="facesdk"', {
-          'libraries': [
-            '<@(face_library_libs)',
-          ],
-        }],
+      'libraries': [
+        '<@(face_library_libs)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [

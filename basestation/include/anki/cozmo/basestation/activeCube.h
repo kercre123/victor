@@ -18,12 +18,12 @@ class Camera;
 
 namespace Cozmo {
 
+  using FactoryID = u32;
+  
   class ActiveCube : public Block
   {
   public:
     static const s32 NUM_LEDS = 4;
-  
-    using FactoryID = u32;
     
     ActiveCube(Type type);
     ActiveCube(ActiveID activeID, FactoryID factoryID);

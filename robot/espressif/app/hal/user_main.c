@@ -106,7 +106,7 @@ void user_rf_pre_init(void)
 {
   crashHandlerInit(); // Set up our own crash handler, so we can record crashes in more detail
   system_phy_set_rfoption(1); // Do all the calibration, don't care how much power we burn
-  //system_phy_set_max_tpw(82); // Set the maximum  TX power allowed
+  system_phy_set_max_tpw(48); // Set the maximum  TX power allowed
 }
 
 /// Forward declarations
@@ -199,7 +199,7 @@ void user_init(void)
   ap_config.authmode = AUTH_WPA2_PSK;
   ap_config.max_connection = AP_MAX_CONNECTIONS;
   ap_config.ssid_hidden = 0; // No hidden SSIDs, they create security problems
-  ap_config.beacon_interval = 35 + ap_config.channel; // Must be 50 or lower for iOS devices to connect
+  ap_config.beacon_interval = 10 + ap_config.channel; // Must be 50 or lower for iOS devices to connect
 
   // Setup ESP module to AP mode and apply settings
   wifi_set_opmode(SOFTAP_MODE);

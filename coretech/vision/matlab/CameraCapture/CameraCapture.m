@@ -208,6 +208,8 @@ closeCameraFcn = @()[];
         
     % Capture remaining frames
     i_frame = 1;
+    totalProcessTime = 0;
+    numProcessCalls = 0;
     while i_frame <= numFrames && ~escapePressed
         t = tic;
         frame = getFrameFcn(i_frame);
@@ -223,7 +225,10 @@ closeCameraFcn = @()[];
                     disp('Processing frame')
                 end
                 %try
-                    processFcn(frame, processAxes, h_imgProc); %#ok<NOEFF>
+                tic
+                processFcn(frame, processAxes, h_imgProc); %#ok<NOEFF>
+                totalProcessTime = totalProcessTime + toc;
+                numProcessCalls = numProcessCalls + 1;
                 %catch E
                  %   warning(E.message)
                 %end
@@ -256,6 +261,9 @@ closeCameraFcn = @()[];
 % end
 
 closeCameraFcn();
+
+fprintf('Average processing function time = %.3fsec (%d calls)\n', ...
+  totalProcessTime / numProcessCalls, numProcessCalls);
 
 if nargout==0
     clear grabs;

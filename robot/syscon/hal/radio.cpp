@@ -16,15 +16,16 @@
 #include "radio.h"
 #include "timer.h"
 #include "head.h"
-#include "rng.h"
+#include "crypto.h"
 #include "spine.h"
+#include "lights.h"
 
-#ifdef DUMP_DISCOVER
-#include "head.h"
-#endif
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-
-#define ABS(x)   ((x < 0) ? -x : x)
+using namespace Anki::Cozmo;
 
 enum AccessoryType {
   ACCESSORY_CUBE    = 0x00,
@@ -41,14 +42,20 @@ struct LEDPacket {
   uint8_t ledDark;       // Dark byte
 };
 
+struct AcceleratorPacket {
+  int8_t    x, y, z;
+  uint8_t   shockCount;
+  uint16_t  timestamp;
+};
+
 struct AccessorySlot {
-  bool                active;
-  bool                allocated;
-  int                 last_received;
-  uint32_t            id;
-  LEDPacket           tx_state;
+  bool        active;
+  bool        allocated;
+  int         last_received;
+  uint32_t    id;
+  LEDPacket   tx_state;
   
-  uesb_address_desc_t address;
+  uesb_address_desc_t       address;
 };
 
 struct AdvertisePacket {
@@ -66,15 +73,8 @@ struct CapturePacket {
 
 static void EnterState(RadioState state);
 
-static const int TOTAL_PERIOD = CYCLES_MS(35.0f);
-static const int SCHEDULE_PERIOD = CYCLES_MS(5.0f);
-static const int CAPTURE_OFFSET = CYCLES_MS(0.5f);
-
-static const int TICK_LOOP = TOTAL_PERIOD / SCHEDULE_PERIOD;
-
-static const int ACCESSORY_TIMEOUT = 400;         // 2s timeout before accessory is considered lost
-static const int PACKET_SIZE = 17;
-static const int MAX_ACCESSORIES = TICK_LOOP;
+// 1/10th the time should be silence
+static const int SILENCE_PERIOD = CYCLES_MS(1.0f);
 
 // Advertising settings
 static const uint8_t ROBOT_TO_CUBE_PREFIX = 0x42;
@@ -100,6 +100,7 @@ static const int MAX_TX_CHANNELS = 64;
 
 static const int RADIO_INTERVAL_DELAY = 0xB6;
 static const int RADIO_TIMEOUT_MSB = 20;
+
 static const int RADIO_WAKEUP_OFFSET = 18;
 
 // Global head / body sync values
@@ -131,42 +132,40 @@ static AccessorySlot accessories[MAX_ACCESSORIES];
 static uint8_t currentAccessory;
 
 // Integer square root calculator
-uint32_t isqrt(uint32_t a_nInput)
+uint8_t isqrt(uint32_t op)
 {
-    uint32_t op  = a_nInput;
-    uint32_t res = 0;
-    uint32_t one = 1uL << 30; // The second-to-top bit is set: use 1u << 14 for uint16_t type; use 1uL<<30 for uint32_t type
+  if (op >= 0xFC04) {
+    return 0xFE;
+  }
+  
+  uint32_t res = 0;
+  uint32_t one = 1uL << 18; // Second to top bit (255^2 * 16)
 
+  // "one" starts at the highest power of four <= than the argument.
+  while (one > op)
+  {
+    one >>= 2;
+  }
 
-    // "one" starts at the highest power of four <= than the argument.
-    while (one > op)
-    {
-        one >>= 2;
+  while (one != 0) {
+    if (op >= res + one) {
+      op -= res + one;
+      res += 2 * one;
     }
 
-    while (one != 0)
-    {
-        if (op >= res + one)
-        {
-            op = op - (res + one);
-            res = res +  2 * one;
-        }
-        res >>= 1;
-        one >>= 2;
-    }
-    return res;
+    res >>= 1;
+    one >>= 2;
+  }
+  return res;
 }
 
-static void createAddress(uesb_address_desc_t& address) {
-  uint8_t data[4];
-  
+static void createAddress(uesb_address_desc_t& address) { 
   // Generate random values
-  Random::get(&data, sizeof(data));
-  Random::get(&address.prefix[0], address.prefix[0]);
+  Crypto::random(&address.prefix[0], address.prefix[0]);
   address.base0 = 0xE7E7E7E7;
-  
+
   // Create a random RF channel
-  Random::get(&address.rf_channel, sizeof(address.rf_channel));
+  Crypto::random(&address.rf_channel, sizeof(address.rf_channel));
   address.rf_channel %= MAX_TX_CHANNELS;
 }
 
@@ -178,15 +177,6 @@ static inline uint8_t next_channel(uint8_t channel) {
 #endif
 
 void Radio::init() {
-  const uesb_config_t uesb_config = {
-    UESB_BITRATE_1MBPS,
-    UESB_CRC_8BIT,
-    UESB_TX_POWER_0DBM,
-    PACKET_SIZE,
-    5,    // Address length
-    2     // Service speed doesn't need to be that fast (prevent blocking encoders)
-  };
-
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
@@ -195,29 +185,24 @@ void Radio::init() {
   for (int i = 0; i < MAX_ACCESSORIES; i++) {
     accessories[i].address = TalkingAddress;
     createAddress(accessories[i].address);
-
-    // Clear the lights to a known state
-    static const uint16_t reset_state[] = {
-      0x001F,
-      0x03E0,
-      0x7C00,
-      0x7FFF
-    };
-    
-    setPropState(i, reset_state);
   }
+}
 
+void Radio::advertise(void) {
+  const uesb_config_t uesb_config = {
+    RADIO_MODE_MODE_Nrf_1Mbit,
+    UESB_CRC_8BIT,
+    RADIO_TXPOWER_TXPOWER_0dBm,
+    PACKET_SIZE,
+    5,    // Address length
+    RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
+  };
 
-  // Start the radio stack
   uesb_init(&uesb_config);
-  EnterState(RADIO_PAIRING);
-  uesb_start();
+}
 
-  RTOS::schedule(Radio::manage, SCHEDULE_PERIOD);
-
-  SpineProtocol msg;
-  msg.opcode = REQUEST_PROPS;
-  Spine::enqueue(msg);
+void Radio::shutdown(void) {
+  uesb_stop();
 }
 
 static int LocateAccessory(uint32_t id) {
@@ -252,12 +237,6 @@ static void EnterState(RadioState state) {
   }
 }
 
-static void send_dummy_byte(void) {
-  // This just send garbage and return to pairing mode when finished
-  EnterState(RADIO_PAIRING);
-  uesb_write_tx_payload(&accessories[currentAccessory].address, 1, NULL, 0);
-}
-
 static void send_capture_packet(void* userdata) {
   int slot = (int) userdata;
 
@@ -277,10 +256,19 @@ static void send_capture_packet(void* userdata) {
   uesb_write_tx_payload(&PairingAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
 }
 
-extern "C" void uesb_event_handler(void)
+void SendObjectConnectionState(int slot)
+{
+  ObjectConnectionState msg;
+  msg.objectID = slot;
+  msg.factoryID = accessories[slot].id;
+  msg.connected = accessories[slot].active;
+  RobotInterface::SendMessage(msg);
+}
+
+void uesb_event_handler(uint32_t flags)
 {
   // Only respond to receive interrupts
-  if(~uesb_get_clear_interrupts() & UESB_INT_RX_DR_MSK) {
+  if(~flags & UESB_INT_RX_DR_MSK) {
     return ;
   }
 
@@ -301,16 +289,11 @@ extern "C" void uesb_event_handler(void)
     // Attempt to locate existing accessory and repair
     slot = LocateAccessory(packet.id);
     if (slot < 0) {
-      SpineProtocol msg;
-      msg.opcode = PROP_DISCOVERED;
-      msg.PropDiscovered.prop_id = packet.id;
-              
-      Spine::enqueue(msg);
-      
-      #ifdef DUMP_DISCOVER
-      if (packet.id < 0x8000) UART::print("%x\r\n", (uint16_t) packet.id);
-      #endif
-      
+      ObjectDiscovered msg;
+      msg.factory_id = packet.id;
+      msg.rssi = rx_payload.rssi;
+      RobotInterface::SendMessage(msg);
+            
       // Attempt to allocate a slot for it
       slot = FreeAccessory();
 
@@ -321,9 +304,13 @@ extern "C" void uesb_event_handler(void)
     }
 
     // We are loading the slot
-    accessories[slot].active = true;
     accessories[slot].id = packet.id;
     accessories[slot].last_received = 0;
+    if (accessories[slot].active == false)
+    {
+      accessories[slot].active = true;
+      SendObjectConnectionState(slot);
+    }
 
     // Schedule a one time capture for this slot
     RTOS::schedule(send_capture_packet, CAPTURE_OFFSET, (void*) slot, false);
@@ -346,69 +333,27 @@ extern "C" void uesb_event_handler(void)
 
     acc->last_received = 0;
 
-    SpineProtocol msg;
-    msg.opcode = GET_PROP_STATE;
-    msg.GetPropState.slot = currentAccessory;
-    msg.GetPropState.x = ap->x;
-    msg.GetPropState.y = ap->y;
-    msg.GetPropState.z = ap->z;
-    msg.GetPropState.shockCount = ap->shockCount;
-    
-    Spine::enqueue(msg);
+    PropState msg;
+    msg.slot = currentAccessory;
+    msg.x = ap->x;
+    msg.y = ap->y;
+    msg.z = ap->z;
+    msg.shockCount = ap->shockCount;
+    RobotInterface::SendMessage(msg);
 
-    send_dummy_byte();
+    EnterState(RADIO_PAIRING);
     break ;
   }
 }
 
-// Calculate the weight of a 16-bit color word
-static inline int colorWeight(uint16_t w) {
-  static const int squared[] = {
-    0, 64, 256, 576, 
-    1089, 1681, 2401, 3249, 
-    4356, 5476, 6724, 8100, 
-    9801, 11449, 13225, 15129, 
-    17424, 19600, 21904, 24336, 
-    27225, 29929, 32761, 35721, 
-    39204, 42436, 45796, 49284, 
-    53361, 57121, 61009, 65025
-  };
-
-  return 
-    squared[(w >> 10) & 0x1F] +
-    squared[(w >>  5) & 0x1F] +
-    squared[(w >>  0) & 0x1F] +
-    squared[(w & 0x8000) ? 0x1F : 0];
-}
-
-void Radio::setPropState(unsigned int slot, const uint16_t *state) {
+void Radio::setPropLights(unsigned int slot, const LightState *state) {
   if (slot > MAX_ACCESSORIES) {
     return ;
   }
 
-  int sum = 0;
-  for (int i = 0; i < 4; i++) {
-    sum += colorWeight(state[i]);
-  }
-
-  int sq_sum = isqrt(sum);
-
-  LEDPacket packet = {
-    {
-      UNPACK_COLORS(state[0]),
-      UNPACK_COLORS(state[1]),
-      UNPACK_COLORS(state[2]),
-      UNPACK_COLORS(state[3]),
-      UNPACK_IR(state[0]),
-      UNPACK_IR(state[1]),
-      UNPACK_IR(state[2]),
-      UNPACK_IR(state[3])
-    },
-    (sq_sum >= 0xFF) ? 1 : (0x255 - sq_sum)
-  };
-  
-  AccessorySlot* acc = &accessories[slot];
-  memcpy(&acc->tx_state, &packet, sizeof(LEDPacket));
+ for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
+   Lights::update(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * slot + c, &state[c]);
+ }
 }
 
 void Radio::assignProp(unsigned int slot, uint32_t accessory) {
@@ -419,23 +364,54 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   AccessorySlot* acc = &accessories[slot];
   acc->id = accessory;
   acc->allocated = true;
+  acc->active = false;
 }
 
-void Radio::manage(void* userdata) {
+static int next_timer = 0;
+
+void Radio::prepare(void* userdata) {
+  uesb_stop();
+
   // Transmit to accessories round-robin
-  currentAccessory = (currentAccessory + 1) % TICK_LOOP;
-  
+  if (++currentAccessory >= TICK_LOOP) {
+    currentAccessory = 0;
+  }
+
   if (currentAccessory >= MAX_ACCESSORIES) return ;
 
   AccessorySlot* acc = &accessories[currentAccessory];
 
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
+    // Update the color status of the lights
+    uint32_t currentFrame = GetFrame();
+
+    int sum = 0;
+    for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
+      static const uint8_t light_index[NUM_PROP_LIGHTS][4] = {
+        {  0,  1,  2, 12},
+        {  3,  4,  5, 13},
+        {  6,  7,  8, 14},
+        {  9, 10, 11, 15}
+      };
+
+      int group = CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * currentAccessory + c;
+      uint8_t* rgbi = Lights::state(group);
+
+      for (int i = 0; i < 4; i++) {
+        acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];
+        sum += rgbi[i] * rgbi[i];
+      }
+    }
+
+    acc->tx_state.ledDark = 0xFF - isqrt(sum);
+
+    // We send the previous LED state (so we don't get jitter on radio)
     uesb_address_desc_t& address = accessories[currentAccessory].address;
-    
+
     // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
     memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
-    uesb_write_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
+    uesb_prepare_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
 
     #ifdef CHANNEL_HOP
     // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
@@ -443,7 +419,36 @@ void Radio::manage(void* userdata) {
     #endif
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
-    acc->active = false;
-    send_dummy_byte();
+    if (acc->active)
+    {
+      acc->active = false;
+      SendObjectConnectionState(currentAccessory);
+    }
+    
+    // This just send garbage and return to pairing mode when finished
+    EnterState(RADIO_PAIRING);
+    uesb_prepare_tx_payload(&accessories[currentAccessory].address, 1, NULL, 0);
+  }
+}
+
+void Radio::resume(void* userdata) {
+  // Reenable the radio
+  uesb_start();
+}
+
+// THIS IS A TEMPORARY HACK AND I HATE IT
+void Radio::manage(void) {
+  static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
+  static int next_resume  = next_prepare + SILENCE_PERIOD;
+  int count = GetCounter();
+
+  if (next_prepare <= count) {
+    prepare(NULL);
+    next_prepare += SCHEDULE_PERIOD;
+  }
+  
+  if (next_resume <= count) {
+    resume(NULL);
+    next_resume += SCHEDULE_PERIOD;
   }
 }

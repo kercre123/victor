@@ -11,7 +11,8 @@
 *
 */
 
-#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/imgproc.hpp>
+
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -26,6 +27,7 @@
 #include "clad/types/robotStatusAndActions.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeFstream.h"
+#include "anki/common/basestation/utils/timer.h"
 #include <functional>
 
 // Whether or not to handle prox obstacle events
@@ -43,53 +45,39 @@ using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
 
 void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId)
 {
+  using localHandlerType = void(Robot::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);
+  // Create a helper lambda for subscribing to a tag with a local handler
+  auto doRobotSubscribe = [this, robotId, messageHandler] (RobotInterface::RobotToEngineTag tagType, localHandlerType handler)
+  {
+    _signalHandles.push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1)));
+  };
+  
   // bind to specific handlers in the robot class
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::cameraCalibration,
-    std::bind(&Robot::HandleCameraCalibration, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::printText,
-    std::bind(&Robot::HandlePrint, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::trace,
-    std::bind(&Robot::HandleTrace, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::crashReport,
-    std::bind(&Robot::HandleCrashReport, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::blockPickedUp,
-    std::bind(&Robot::HandleBlockPickedUp, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::blockPlaced,
-    std::bind(&Robot::HandleBlockPlaced, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectDiscovered,
-    std::bind(&Robot::HandleActiveObjectDiscovered, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectConnectionState,
-    std::bind(&Robot::HandleActiveObjectConnectionState, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectMoved,
-    std::bind(&Robot::HandleActiveObjectMoved, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectStopped,
-    std::bind(&Robot::HandleActiveObjectStopped, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::activeObjectTapped,
-    std::bind(&Robot::HandleActiveObjectTapped, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::goalPose,
-    std::bind(&Robot::HandleGoalPose, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::cliffEvent,
-    std::bind(&Robot::HandleCliffEvent, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::proxObstacle,
-    std::bind(&Robot::HandleProxObstacle, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::chargerEvent,
-   std::bind(&Robot::HandleChargerEvent, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::image,
-    std::bind(&Robot::HandleImageChunk, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuDataChunk,
-    std::bind(&Robot::HandleImuData, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::imuRawDataChunk,
-    std::bind(&Robot::HandleImuRawData, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::syncTimeAck,
-    std::bind(&Robot::HandleSyncTimeAck, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::robotPoked,
-    std::bind(&Robot::HandleRobotPoked, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::nvData,
-    std::bind(&Robot::HandleNVData, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::nvResult,
-    std::bind(&Robot::HandleNVOpResult, this, std::placeholders::_1)));
-  _signalHandles.push_back(messageHandler->Subscribe(robotId, RobotInterface::RobotToEngineTag::robotAvailable,
-                                                     std::bind(&Robot::HandleRobotSetID, this, std::placeholders::_1)));
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::cameraCalibration,           &Robot::HandleCameraCalibration);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::printText,                   &Robot::HandlePrint);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,                       &Robot::HandleTrace);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,                 &Robot::HandleCrashReport);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::fwVersionInfo,               &Robot::HandleFWVersionInfo);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::blockPickedUp,               &Robot::HandleBlockPickedUp);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::blockPlaced,                 &Robot::HandleBlockPlaced);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectDiscovered,      &Robot::HandleActiveObjectDiscovered);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectConnectionState, &Robot::HandleActiveObjectConnectionState);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectMoved,           &Robot::HandleActiveObjectMoved);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectStopped,         &Robot::HandleActiveObjectStopped);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectTapped,          &Robot::HandleActiveObjectTapped);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::goalPose,                    &Robot::HandleGoalPose);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::cliffEvent,                  &Robot::HandleCliffEvent);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::proxObstacle,                &Robot::HandleProxObstacle);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::chargerEvent,                &Robot::HandleChargerEvent);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::image,                       &Robot::HandleImageChunk);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::imuDataChunk,                &Robot::HandleImuData);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::imuRawDataChunk,             &Robot::HandleImuRawData);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::syncTimeAck,                 &Robot::HandleSyncTimeAck);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::robotPoked,                  &Robot::HandleRobotPoked);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::nvData,                      &Robot::HandleNVData);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::nvResult,                    &Robot::HandleNVOpResult);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::robotAvailable,              &Robot::HandleRobotSetID);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::motorCalibration,            &Robot::HandleMotorCalibration);
   
 
   // lambda wrapper to call internal handler
@@ -181,6 +169,12 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
   SetPhysicalRobot(payload.isPhysicalRobots);  
 }
   
+void Robot::HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const RobotInterface::MotorCalibration& payload = message.GetData().Get_motorCalibration();
+  PRINT_NAMED_INFO("MotorCalibration", "Motor %d, started %d", (int)payload.motorID, payload.calibStarted);
+}
+  
 void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const RobotInterface::RobotAvailable& payload = message.GetData().Get_robotAvailable();
@@ -204,6 +198,11 @@ void Robot::HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 void Robot::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   _traceHandler.HandleCrashReport(message);
+}
+
+void Robot::HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  _traceHandler.HandleFWVersionInfo(message);
 }
 
 void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -248,21 +247,33 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
   
 void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-#if(PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS)
-  const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
-  if (payload.factory_id < s32_MAX) {  // Ignore chargers which have MSB set
-    PRINT_NAMED_INFO("ActiveObjectDiscovered", "%8x", payload.factory_id);
+  if (_enableDiscoveredObjectsBroadcasting) {
+    const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
+
+    // TODO: Include charger support but for now ignore them.
+    //       Chargers have MSB set.
+    if (payload.factory_id >= s32_MAX) {
+      return;
+    }
+    
+    if (_discoveredObjects.find(payload.factory_id) == _discoveredObjects.end()) {
+      PRINT_NAMED_INFO("ObjectDiscovered", "FactoryID 0x%x (currTime %d)", payload.factory_id, GetLastMsgTimestamp());
+    }
+    _discoveredObjects[payload.factory_id] = GetLastMsgTimestamp();  // Not super accurate, but this doesn't need to be
+#   if (PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS)
+    PRINT_NAMED_INFO("ObjectDiscovered", "FactoryID 0x%x, rssi %d, (currTime %d)", payload.factory_id, payload.rssi, GetLastMsgTimestamp());
+#   endif
+    Broadcast(ExternalInterface::MessageEngineToGame(ObjectDiscovered(payload)));
   }
-#endif
 }
 
  
 void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-#if(OBJECTS_HEARABLE)
   ObjectConnectionState payload = message.GetData().Get_activeObjectConnectionState();
-  
   ObjectID objID;
+  
+#if(OBJECTS_HEARABLE)
   if (payload.connected) {
     // Add cube to blockworld if not already there
     objID = GetBlockWorld().AddLightCube(payload.objectID, payload.factoryID);
@@ -286,8 +297,13 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
                        objID.GetValue(), payload.objectID, payload.factoryID);
     }
   }
+#else
+  // HACK: Just to get a non-conflicting ObjectID in the message for now.
+  objID.Set();
+#endif
   
-
+  PRINT_NAMED_INFO("Robot.HandleActiveObjecConnectionState.Recvd", "FactoryID 0x%x, connected %d", payload.factoryID, payload.connected);
+  
   if (objID.IsSet()) {
     // Update the objectID to be blockworld ID
     payload.objectID = objID.GetValue();
@@ -295,7 +311,6 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     // Forward on to game
     Broadcast(ExternalInterface::MessageEngineToGame(ObjectConnectionState(payload)));
   }
-#endif
 }
   
 
@@ -505,19 +520,30 @@ void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& m
 {
 #if(HANDLE_PROX_OBSTACLES)
   ProxObstacle proxObs = message.GetData().Get_proxObstacle();
-  PRINT_NAMED_INFO("RobotImplMessaging.HandleProxObstacle.Detected", "at dist %d mm",
-                   proxObs.distance_mm);
+  const bool obstacleDetected = proxObs.distance_mm < FORWARD_COLLISION_SENSOR_LENGTH_MM;
+  if ( obstacleDetected )
+  {
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleProxObstacle.Detected", "at dist %d mm",
+                    proxObs.distance_mm);
   
-  // Compute location of obstacle
-  // NOTE: This should actually depend on a historical pose, but this is all changing eventually anyway...
-  f32 heading = GetPose().GetRotationAngle<'Z'>().ToFloat();
-  Vec3f newPt(GetPose().GetTranslation());
-  newPt.x() += proxObs.distance_mm * cosf(heading);
-  newPt.y() += proxObs.distance_mm * sinf(heading);
-  Pose3d obsPose(heading, Z_AXIS_3D(), newPt, GetWorldOrigin());
+    // Compute location of obstacle
+    // NOTE: This should actually depend on a historical pose, but this is all changing eventually anyway...
+    f32 heading = GetPose().GetRotationAngle<'Z'>().ToFloat();
+    Vec3f newPt(GetPose().GetTranslation());
+    newPt.x() += proxObs.distance_mm * cosf(heading);
+    newPt.y() += proxObs.distance_mm * sinf(heading);
+    Pose3d obsPose(heading, Z_AXIS_3D(), newPt, GetWorldOrigin());
+    
+    // Add prox obstacle
+    _blockWorld.AddProxObstacle(obsPose);
+    
+  } else {
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleProxObstacle.Undetected", "max len %d mm", proxObs.distance_mm);
+  }
   
-  // Add prox obstacle (hijack cliff function for now)
-  _blockWorld.AddCliff(obsPose);
+  // always update the value
+  _blockWorld.SetForwardSensorValue(proxObs.distance_mm);
+  
 #endif
 }
   
@@ -561,16 +587,23 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     payload.chunkId, payload.data.data(), (uint32_t)payload.data.size() );
 
   if (_context->GetExternalInterface() != nullptr && GetImageSendMode() != ImageSendMode::Off) {
-    ExternalInterface::MessageEngineToGame msgWrapper;
-    msgWrapper.Set_ImageChunk(payload);
-    _context->GetExternalInterface()->Broadcast(msgWrapper);
+    
+    // we don't want to start sending right in the middle of an image, wait until we hit payload 0
+    // before starting to send.
+    if(payload.chunkId == 0 || GetLastSentImageID() == payload.imageId) {
+      SetLastSentImageID(payload.imageId);
+      
+      ExternalInterface::MessageEngineToGame msgWrapper;
+      msgWrapper.Set_ImageChunk(payload);
+      _context->GetExternalInterface()->Broadcast(msgWrapper);
 
-    const bool wasLastChunk = payload.chunkId == payload.imageChunkCount-1;
+      const bool wasLastChunk = payload.chunkId == payload.imageChunkCount-1;
 
-    if(wasLastChunk && GetImageSendMode() == ImageSendMode::SingleShot) {
-      // We were just in single-image send mode, and the image got sent, so
-      // go back to "off". (If in stream mode, stay in stream mode.)
-      SetImageSendMode(ImageSendMode::Off);
+      if(wasLastChunk && GetImageSendMode() == ImageSendMode::SingleShot) {
+        // We were just in single-image send mode, and the image got sent, so
+        // go back to "off". (If in stream mode, stay in stream mode.)
+        SetImageSendMode(ImageSendMode::Off);
+      }
     }
   }
   GetContext()->GetVizManager()->SendImageChunk(GetID(), payload);
@@ -584,7 +617,14 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 
     Vision::ImageRGB image(height,width,cvImg.data);
     image.SetTimestamp(payload.frameTimeStamp);
-
+    
+    /* For help debugging COZMO-694:
+    PRINT_NAMED_INFO("Robot.HandleImageChunk.ImageReady",
+                     "About to process image: robot timestamp %d, message time %f, basestation timestamp %d",
+                     image.GetTimestamp(), message.GetCurrentTime(),
+                     BaseStationTimer::getInstance()->GetCurrentTimeStamp());
+     */
+    
 #   if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
     // Create a 50mb ramdisk on OSX at "/Volumes/RamDisk/" by typing: diskutil erasevolume HFS+ 'RamDisk' `hdiutil attach -nomount ram://100000`
     static const char * const g_queueImages_filenamePattern = "/Volumes/RamDisk/robotImage%04d.bmp";
@@ -602,6 +642,40 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
       g_queueImages_queueIndex = 0;
 #   endif // #if defined(STREAM_IMAGES_VIA_FILESYSTEM) && STREAM_IMAGES_VIA_FILESYSTEM == 1
 
+    #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS
+    #define TRACK_MULTIPLE_IMAGES_PER_TICK 1
+    #else
+    #define TRACK_MULTIPLE_IMAGES_PER_TICK 0
+    #endif
+    if (TRACK_MULTIPLE_IMAGES_PER_TICK)
+    {
+      static uint32_t repeatTimeCount = 0;
+      static double lastImageTime = -1.0;
+      
+      double currentMessageTime = SEC_TO_MILIS(message.GetCurrentTime());
+      if (currentMessageTime != lastImageTime)
+      {
+        lastImageTime = currentMessageTime;
+        repeatTimeCount = 0;
+      }
+      else
+      {
+        ++repeatTimeCount;
+        if (repeatTimeCount >= 3)
+        {
+          PRINT_NAMED_WARNING("Robot.HandleImageChunk",
+                              "%d robot images (latest=%dms) received in basestation tick at %fms.",
+                              repeatTimeCount,
+                              payload.frameTimeStamp,
+                              currentMessageTime);
+          
+          // Drop the rest of the images on the floor
+          return;
+          
+        }
+      }
+    }
+    
     ProcessImage(image);
 
   } // if(isImageReady)
@@ -708,7 +782,7 @@ void Robot::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   
   void Robot::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message)
   {
-    NVStorage::NVStorageBlob nvBlob = message.GetData().Get_nvData();
+    NVStorage::NVStorageBlob nvBlob = message.GetData().Get_nvData().blob;
 
     switch((NVStorage::NVEntryTag)nvBlob.tag)
     {
@@ -902,6 +976,8 @@ void Robot::HandleMessage(const ExternalInterface::SetAllActiveObjectLEDs& msg)
   
 void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
 {
+  // TODO: Just move these handlers to VisionComponent and have it handle them directly
+  
   // StartFaceTracking
   _signalHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::EnableVisionMode,
     [this] (const GameToEngineEvent& event)
@@ -915,7 +991,7 @@ void Robot::SetupVisionHandlers(IExternalInterface& externalInterface)
     [this] (const GameToEngineEvent& event)
     {
       const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
-      EnableVisionWhileMoving(msg.enable);
+      _visionComponent.EnableVisionWhileMoving(msg.enable);
     }));
   
   // VisionRunMode

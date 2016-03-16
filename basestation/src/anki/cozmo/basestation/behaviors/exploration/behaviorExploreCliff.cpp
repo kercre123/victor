@@ -16,6 +16,8 @@
 #include "anki/cozmo/basestation/navMemoryMap/quadData/navMemoryMapQuadData_Cliff.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"

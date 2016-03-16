@@ -32,6 +32,13 @@ static inline u32 system_get_time() { return Anki::Cozmo::HAL::GetTimeStamp(); }
 
 #define DEBUG_ANIMATION_CONTROLLER 0
 
+/// Converts 32 bit RGBA color to 16 bit
+#define ENCODED_COLOR(color) (((color << 24) & (u32)LED_IR) ? (u16)LED_ENC_IR : 0) | \
+                             ((((color >> 8) & (u32)LED_RED)   >> (16 + 3)) << (u32)LED_ENC_RED_SHIFT) | \
+                             ((((color >> 8) & (u32)LED_GREEN) >> ( 8 + 3)) << (u32)LED_ENC_GRN_SHIFT) | \
+                             ((((color >> 8) & (u32)LED_BLUE)  >> ( 0 + 3)) << (u32)LED_ENC_BLU_SHIFT)
+
+
 namespace Anki {
 namespace Cozmo {
 namespace AnimationController {
@@ -49,6 +56,7 @@ namespace AnimationController {
 
     s32 _numAudioFramesBuffered; // NOTE: Also counts EndOfAnimationFrames...
     s32 _numBytesPlayed = 0;
+    s32 _numBytesInBuffer = 0;
     s32 _numAudioFramesPlayed = 0;
 
     u8  _currentTag = 0;
@@ -96,11 +104,7 @@ namespace AnimationController {
 
   static s32 GetNumBytesInBuffer()
   {
-    if(_lastBufferPos >= _currentBufferPos) {
-      return (_lastBufferPos - _currentBufferPos);
-    } else {
-      return KEYFRAME_BUFFER_SIZE - (_currentBufferPos - _lastBufferPos);
-    }
+    return _numBytesInBuffer;
   }
 
   s32 GetTotalNumBytesPlayed() {
@@ -117,6 +121,12 @@ namespace AnimationController {
 
   void ClearNumAudioFramesPlayed() {
     _numAudioFramesPlayed = 0;
+  }
+
+  void CountConsumedBytes(const s32 num)
+  {
+    _numBytesPlayed   += num;
+    _numBytesInBuffer -= num;
   }
 
   void StopTracksInUse()
@@ -169,6 +179,7 @@ namespace AnimationController {
 
     _numBytesPlayed += GetNumBytesInBuffer();
     _numAudioFramesPlayed += _numAudioFramesBuffered;
+    _numBytesInBuffer = 0;
 
     _currentBufferPos = 0;
     _lastBufferPos = 0;
@@ -201,7 +212,7 @@ namespace AnimationController {
     if (_isPlaying) msg.status     |= IS_ANIMATING;
     msg.enabledAnimTracks = GetEnabledTracks();
     msg.tag = GetCurrentTag();
-    if (Anki::Cozmo::HAL::RadioSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState, false, false))
+    if (Anki::Cozmo::HAL::RadioSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_animState))
     {
       return RESULT_OK;
     }
@@ -213,7 +224,9 @@ namespace AnimationController {
 
   static inline RobotInterface::EngineToRobot::Tag PeekBufferTag()
   {
-    return _keyFrameBuffer[_currentBufferPos];
+    int nextTagIndex = _currentBufferPos + 2;
+    if (nextTagIndex >= KEYFRAME_BUFFER_SIZE) nextTagIndex -= KEYFRAME_BUFFER_SIZE;
+    return _keyFrameBuffer[nextTagIndex];
   }
 
   static u32 GetFromBuffer(u8* data, u32 numBytes)
@@ -235,27 +248,35 @@ namespace AnimationController {
       memcpy(data+firstChunk, _keyFrameBuffer, numBytes - firstChunk);
       _currentBufferPos = numBytes-firstChunk;
     }
-
-    // Increment total number of bytes played since startup
-    _numBytesPlayed += numBytes;
-
     return numBytes;
   }
 
   static s32 GetFromBuffer(RobotInterface::EngineToRobot* msg)
   {
-    s32 readSoFar;
-    memset(msg, 0, sizeof(RobotInterface::EngineToRobot)); // Memset 0 - sets size to 1
-    readSoFar  = GetFromBuffer(msg->GetBuffer(), RobotInterface::EngineToRobot::MIN_SIZE); // Read in enough to know what it is
-    readSoFar += GetFromBuffer(msg->GetBuffer() + readSoFar, msg->Size() - readSoFar); // Read in the minimum size for the type to get length fields
-    readSoFar += GetFromBuffer(msg->GetBuffer() + readSoFar, msg->Size() - readSoFar); // Read in anything left now that we know how big minimum fields are
-    return readSoFar;
+    u16 size;
+    GetFromBuffer(reinterpret_cast<u8*>(&size), 2);
+    if (GetNumBytesAvailable() < size)
+    {
+      AnkiError( 136, "AnimationController.BufferCorrupt", 392, "Message size header (%d) greater than available bytes (%d), assuming corrupt and clearing", 2, GetNumBytesAvailable(), size);
+      Clear();
+      return 0;
+    }
+    GetFromBuffer(msg->GetBuffer(), size);
+    if (msg->Size() != size)
+    {
+      AnkiError( 136, "AnimationController.BufferCorrupt", 393, "Clad message size (%d) doesn't match stored header (%d), assuming corrupt and clearing", 2, msg->Size(), size);
+      Clear();
+      return 0;
+    }
+    // Increment total number of bytes played since startup
+    CountConsumedBytes(size);
+    return size+2;
   }
 
-  Result BufferKeyFrame(const RobotInterface::EngineToRobot& msg)
+  Result BufferKeyFrame(const u8* buffer, const u16 bufferSize)
   {
     const s32 numBytesAvailable = GetNumBytesAvailable();
-    const s32 numBytesNeeded = msg.Size();
+    const s32 numBytesNeeded = bufferSize + 2;
     if(numBytesAvailable < numBytesNeeded) {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
@@ -272,22 +293,26 @@ namespace AnimationController {
 
     AnkiAssert(numBytesNeeded < KEYFRAME_BUFFER_SIZE, 8);
 
-    if(_lastBufferPos + numBytesNeeded < KEYFRAME_BUFFER_SIZE) {
+    _keyFrameBuffer[_lastBufferPos++] = bufferSize & 0xff;
+    if (_lastBufferPos >= KEYFRAME_BUFFER_SIZE) _lastBufferPos -= KEYFRAME_BUFFER_SIZE;
+    _keyFrameBuffer[_lastBufferPos++] = bufferSize >> 8;
+
+    if(_lastBufferPos + bufferSize < KEYFRAME_BUFFER_SIZE) {
       // There's enough room from current end position to end of buffer to just
       // copy directly
-      memcpy(_keyFrameBuffer + _lastBufferPos, msg.GetBuffer(), numBytesNeeded);
-      _lastBufferPos += numBytesNeeded;
+      memcpy(_keyFrameBuffer + _lastBufferPos, buffer, bufferSize);
+      _lastBufferPos += bufferSize;
     } else {
       // Copy the first chunk into whatever fits from current position to end of
       // the buffer
       const s32 firstChunk = KEYFRAME_BUFFER_SIZE - _lastBufferPos;
-      memcpy(_keyFrameBuffer + _lastBufferPos, msg.GetBuffer(), firstChunk);
+      memcpy(_keyFrameBuffer + _lastBufferPos, buffer, firstChunk);
 
       // Copy the remaining data starting at the beginning of the buffer
-      memcpy(_keyFrameBuffer, msg.GetBuffer()+firstChunk, numBytesNeeded - firstChunk);
-      _lastBufferPos = numBytesNeeded-firstChunk;
+      memcpy(_keyFrameBuffer, buffer+firstChunk, bufferSize - firstChunk);
+      _lastBufferPos = bufferSize-firstChunk;
      }
-    switch(msg.tag) {
+    switch(buffer[0]) {
       case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
         ++_haveReceivedTerminationFrame;
       case RobotInterface::EngineToRobot::Tag_animAudioSample:
@@ -299,6 +324,8 @@ namespace AnimationController {
     }
 
     AnkiAssert(_lastBufferPos >= 0 && _lastBufferPos < KEYFRAME_BUFFER_SIZE, 9);
+
+    _numBytesInBuffer += bufferSize;
 
     return RESULT_OK;
   }
@@ -401,9 +428,10 @@ namespace AnimationController {
             if(_tracksToPlay & AUDIO_TRACK) {
               _playSilence = false;
               #ifdef TARGET_ESPRESSIF
-                u8 tag;
-                GetFromBuffer(&tag, 1); // Get the audio sample header out
+                u8 header[3];
+                GetFromBuffer(header, 3); // Get the size + audio sample header
                 GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the first MAX_AUDIO_BYTES_PER_DROP from the buffer
+                CountConsumedBytes(1 + MAX_AUDIO_BYTES_PER_DROP); // Advance by header plus the bytes we just consumed
                 _audioReadInd = MAX_AUDIO_BYTES_PER_DROP;
                 return true; // Play audio
               #else
@@ -437,6 +465,7 @@ namespace AnimationController {
         if (!_playSilence)
         {
           GetFromBuffer(dest, MAX_AUDIO_BYTES_PER_DROP); // Get the next MAX_AUDIO_BYTES_PER_DROP from the buffer
+          CountConsumedBytes(MAX_AUDIO_BYTES_PER_DROP);
         }
         _audioReadInd += MAX_AUDIO_BYTES_PER_DROP;
         if (_audioReadInd >= AUDIO_SAMPLE_SIZE)
@@ -605,6 +634,12 @@ namespace AnimationController {
 #               endif
 
               #ifdef TARGET_ESPRESSIF
+                RobotInterface::BackpackLights bplm;
+                for (int l=0; l<NUM_BACKPACK_LEDS; ++l)
+                {
+                  bplm.lights[l].offColor = bplm.lights[l].onColor = ENCODED_COLOR(msg.animBackpackLights.colors[l]);
+                  bplm.lights[l].onFrames = 0xff;
+                }
                 RTIP::SendMessage(msg);
               #else
                 for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {

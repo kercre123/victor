@@ -37,6 +37,7 @@
 
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/groundPlaneROI.h"
+#include "anki/cozmo/basestation/overheadEdge.h"
 
 #include "anki/common/basestation/matlabInterface.h"
 
@@ -48,6 +49,7 @@
 #include "anki/vision/basestation/cameraCalibration.h"
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/faceTracker.h"
+#include "anki/vision/basestation/visionMarker.h"
 
 #include "visionParameters.h"
 #include "clad/vizInterface/messageViz.h"
@@ -89,7 +91,7 @@ namespace Cozmo {
     void   SetModes(u32 modes) { _mode = modes; }
     
     // Accessors
-    f32 GetTrackingMarkerWidth();
+    const Point2f& GetTrackingMarkerSize();
     
     struct PoseData {
       TimeStamp_t      timeStamp;
@@ -116,14 +118,14 @@ namespace Cozmo {
     // If checkAngleX is true, then tracking will be considered as a failure if
     // the X angle is greater than TrackerParameters::MAX_BLOCK_DOCKING_ANGLE.
     Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
-                            const f32                  markerWidth_mm,
+                            const Point2f&             markerSize_mm,
                             const bool                 checkAngleX);
     
     // Same as above, except the robot will only start tracking the marker
     // if its observed centroid is within the specified radius (in pixels)
     // from the given image point.
     Result SetMarkerToTrack(const Vision::MarkerType&  markerToTrack,
-                            const f32                  markerWidth_mm,
+                            const Point2f&             markerSize_mm,
                             const Embedded::Point2f&   imageCenter,
                             const f32                  radius,
                             const bool                 checkAngleX,
@@ -188,6 +190,10 @@ namespace Cozmo {
     std::string GetModeName(VisionMode mode) const;
     std::string GetCurrentModeName() const;
     
+    void AssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name);
+    
+    void EnableNewFaceEnrollment(s32 numToEnroll);
+    
     void SetParams(const bool autoExposureOn,
                    const f32 exposureTime,
                    const s32 integerCountsIncrement,
@@ -215,6 +221,8 @@ namespace Cozmo {
     //bool CheckMailbox(RobotInterface::PanAndTilt& msg);
     bool CheckMailbox(ExternalInterface::RobotObservedMotion& msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
+    bool CheckMailbox(Vision::FaceTracker::UpdatedID&  msg);
+    bool CheckMailbox(OverheadEdgePointChain& msg);
     
     bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
     bool CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg);
@@ -297,7 +305,7 @@ namespace Cozmo {
     // Tracking marker related members
     struct MarkerToTrack {
       Anki::Vision::MarkerType  type;
-      f32                       width_mm;
+      Point2f                   size_mm;
       Embedded::Point2f         imageCenter;
       f32                       imageSearchRadius;
       bool                      checkAngleX;
@@ -415,6 +423,8 @@ namespace Cozmo {
     
     Result DetectMotion(const Vision::ImageRGB& image);
     
+    Result DetectOverheadEdges(const Vision::ImageRGB& image);
+    
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                         DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
@@ -428,6 +438,9 @@ namespace Cozmo {
     //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
     
     MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
+    MultiMailbox<Vision::FaceTracker::UpdatedID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
+    
+    MultiMailbox<OverheadEdgePointChain, 64> _overheadEdgeChainMailbox;
     
     MultiMailbox<std::pair<const char*, Vision::Image>, 10>     _debugImageMailbox;
     MultiMailbox<std::pair<const char*, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;

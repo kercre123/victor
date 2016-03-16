@@ -128,7 +128,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
     PRINT_NAMED_WARNING("CozmoEngineInit.NoVizHostIP",
                         "No VizHostIP member in JSON config file. Not initializing VizManager.");
   } else if(!_config[AnkiUtil::kP_VIZ_HOST_IP].asString().empty()){
-    _context->GetVizManager()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), (uint16_t)VizConstants::VIZ_SERVER_PORT);
+    _context->GetVizManager()->Connect(_config[AnkiUtil::kP_VIZ_HOST_IP].asCString(), (uint16_t)VizConstants::VIZ_SERVER_PORT,
+                                       _config[AnkiUtil::kP_ADVERTISING_HOST_IP].isString() ? _config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString() : "127.0.0.1", (uint16_t)VizConstants::UNITY_VIZ_SERVER_PORT);
     
     // Erase anything that's still being visualized in case there were leftovers from
     // a previous run?? (We should really be cleaning up after ourselves when
@@ -157,6 +158,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
   }
   
   _isInitialized = true;
+  
+  _context->GetRobotManager()->Init();
   
   return RESULT_OK;
 }
@@ -246,6 +249,7 @@ Result CozmoEngine::Update(const float currTime_sec)
     case EngineState::WaitingForUIDevices:
     {
       if (_uiMsgHandler->HasDesiredNumUiDevices()) {
+        _context->GetRobotManager()->BroadcastAvailableAnimations();
         SetEngineState(EngineState::Running);
       }
       break;
@@ -301,11 +305,7 @@ void CozmoEngine::SetEngineState(EngineState newState)
 
 void CozmoEngine::ReadAnimationsFromDisk()
 {
-  Robot* robot = _context->GetRobotManager()->GetFirstRobot();
-  if (robot != nullptr) {
-    PRINT_NAMED_INFO("CozmoEngine.ReloadAnimations", "ReadAnimationDir");
-    robot->ReadAnimationDir();
-  }
+  _context->GetRobotManager()->ReadAnimationDir();
 }
   
 Result CozmoEngine::InitInternal()

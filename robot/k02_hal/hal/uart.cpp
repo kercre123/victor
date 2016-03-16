@@ -52,40 +52,37 @@ void Anki::Cozmo::HAL::UART::Init() {
 inline void transmit_mode(TRANSFER_MODE mode) { 
   switch (mode) {
     case TRANSMIT_SEND:
-      // Special case mode where we force the head to enter recovery mode
-      Anki::Cozmo::HAL::Spine::Dequeue(g_dataToBody.spineMessage);
+		{
+      Anki::Cozmo::HAL::Spine::Dequeue(&(g_dataToBody.cladBuffer));
       memcpy(txRxBuffer, &g_dataToBody, sizeof(GlobalDataToBody));
 
-
       PORTD_PCR6 = PORT_PCR_MUX(0);
       PORTD_PCR7 = PORT_PCR_MUX(3);
       UART0_C2 = UART_C2_TE_MASK;
       break ;
-
+		}
     case TRANSMIT_RECOVERY:
+		{
       PORTD_PCR6 = PORT_PCR_MUX(0);
       PORTD_PCR7 = PORT_PCR_MUX(3);
       UART0_C2 = UART_C2_TE_MASK;
       break ;
-
+		}
     case TRANSMIT_RECEIVE:
+		{
       PORTD_PCR6 = PORT_PCR_MUX(3);
       PORTD_PCR7 = PORT_PCR_MUX(0);
       UART0_C2 = UART_C2_RE_MASK;
       break ;
+		}
     default:
+		{
       break ;
+		}
   }
 
   uart_mode = mode;
   txRxIndex = 0;
-}
-
-void Anki::Cozmo::HAL::UART::EnterBodyRecovery(void) {
-  SpineProtocol msg;
-  
-  msg.opcode = ENTER_RECOVERY;
-  Spine::Enqueue(msg);
 }
 
 void Anki::Cozmo::HAL::UART::SendRecoveryData(const uint8_t* data, int bytes) {
@@ -190,7 +187,7 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
 
         if (txRxIndex == 4) {
           if ((rx_source & 0xFFFF) == RECOVERY_HEADER) {
-            ChangeRecoveryState((RECOVERY_STATE)(__rev(rx_source) & 0xFFFF));
+						ChangeRecoveryState((RECOVERY_STATE)(__rev(rx_source) & 0xFFFF));
             txRxIndex = 0;
           }
         }

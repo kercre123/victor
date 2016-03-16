@@ -50,11 +50,10 @@ namespace Anki {
       /** Wrapper method for sending messages NOT PACKETS
        * @param msgID The ID (tag) of the message to be sent
        * @param buffer A pointer to the message to be sent
-       * @param reliable Specifify if the message should be transferred reliably. Default true.
-       * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
+       * @param msgID the tag to attach to the given message
        * @return True if sucessfully queued, false otherwise
        */
-      bool RadioSendMessage(const void *buffer, const u16 size, const int msgID, const bool reliable=true, const bool hot=false);
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID);
       
       void FaceAnimate(u8* frame, const u16 length);
     }

@@ -37,6 +37,7 @@
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/ledTypes.h"
+#include "clad/types/motorTypes.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 
 // Set to 0 if you want to read printf output in a terminal and you're not
@@ -287,16 +288,6 @@ namespace Anki
       // MOTORS
       //
 
-      enum MotorID
-      {
-        MOTOR_LEFT_WHEEL = 0,
-        MOTOR_RIGHT_WHEEL,
-        MOTOR_LIFT,
-        MOTOR_HEAD,
-        //MOTOR_GRIP,
-        MOTOR_COUNT
-      };
-
       // Positive numbers move the motor forward or up, negative is back or down
       // Set the motor power in the unitless range [-1.0, 1.0]
       void MotorSetPower(MotorID motor, f32 power);
@@ -344,6 +335,15 @@ namespace Anki
       // Starts camera frame synchronization (blocking call)
       void CameraGetFrame(u8* frame, ImageResolution res, bool enableLight);
 
+      // Return the current scan line time
+      u16 CameraGetScanLine();
+      
+      // Get the camera frame number -- counts from camera start
+      u32 CameraGetFrameNumber();
+      
+      // Get the number of scan lines of delay due to current exposure settings
+      u16 CameraGetExposureDelay();
+
 #     ifdef SIMULATOR
       u32 GetCameraStartTime();
       bool IsVideoEnabled();
@@ -387,7 +387,7 @@ namespace Anki
       
       // Returns distance in mm
       // If 0, nothing is detected
-      u8 GetForwardProxSensor();
+      u8 GetForwardProxSensorCurrentValue();
       
 // #pragma mark --- Battery ---
       /////////////////////////////////////////////////////////////////////
@@ -473,11 +473,9 @@ namespace Anki
       /** Wrapper method for sending messages NOT PACKETS
        * @param msgID The ID (tag) of the message to be sent
        * @param buffer A pointer to the message to be sent
-       * @param reliable Specifify if the message should be transferred reliably. Default true.
-       * @param hot Specify if the message is hot and needs to be sent imeediately. Default false.
        * @return True if sucessfully queued, false otherwise
        */
-      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID, const bool reliable=true, const bool hot=false);
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID);
 
       /////////////////////////////////////////////////////////////////////
       // BLOCK COMMS

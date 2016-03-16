@@ -270,7 +270,7 @@ namespace Cozmo {
               // NOTE: don't use StartActing for this, because it is a continuous action
               robot.GetActionList().QueueActionNow(action);
               BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TrackFace.Enabled",
-                                     "EnableTrackToFace %lld (was tracking %lld)",
+                                     "EnableTrackToFace %d (was tracking %d)",
                                      _faceID,
                                      robot.GetMoveComponent().GetTrackToFace());
             }
@@ -724,7 +724,7 @@ namespace Cozmo {
             haveTargetAngle = true;
                 
             BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.TurnTowardsAFace.Block.HaveFaceId",
-                                   "turning towards face id %lld at angle %fdeg",
+                                   "turning towards face id %d at angle %fdeg",
                                    _faceID,
                                    DEG_TO_RAD( targetBodyAngle.ToFloat() ));
           }
@@ -1769,7 +1769,7 @@ namespace Cozmo {
     // If faceID not already set or we're not currently tracking the update the faceID
     if (_faceID == Face::UnknownFace) {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleObservedFace.UpdatingFaceToTrack",
-                             "id = %lld",
+                             "id = %d",
                              msg.faceID);
       _faceID = static_cast<Face::ID_t>(msg.faceID);
     }
@@ -1782,7 +1782,7 @@ namespace Cozmo {
   Result BehaviorBlockPlay::HandleDeletedFace(const ExternalInterface::RobotDeletedFace& msg)
   {
     if (_faceID == msg.faceID) {
-      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleDeletedFace", "id = %lld", msg.faceID);
+      BEHAVIOR_VERBOSE_PRINT(DEBUG_BLOCK_PLAY_BEHAVIOR, "BehaviorBlockPlay.HandleDeletedFace", "id = %d", msg.faceID);
       _faceID = Face::UnknownFace;
     }
     

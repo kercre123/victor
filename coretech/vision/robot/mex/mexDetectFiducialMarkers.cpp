@@ -51,8 +51,28 @@ using namespace Anki::Embedded;
 // returnInvalidMarkers = 0;
 // cornerMethod = 0;
 // [quads, markerTypes, markerNames, markerValidity] = mexDetectFiducialMarkers(image, useIntegralImageFiltering, scaleImage_numPyramidLevels, scaleImage_thresholdMultiplier, component1d_minComponentWidth, component1d_maxSkipDistance, component_minimumNumPixels, component_maximumNumPixels, component_sparseMultiplyThreshold, component_solidMultiplyThreshold, component_minHollowRatio, minLaplacianPeakRatio, quads_minQuadArea, quads_quadSymmetryThreshold, quads_minDistanceFromImageEdge, decode_minContrastRatio, quadRefinementIterations, numRefinementSamples, quadRefinementMaxCornerChange, quadRefinementMinCornerChange, returnInvalidMarkers, cornerMethod);
+
+# if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+static bool isLibraryLoaded = false;
+void AtExit()
+{
+  mexPrintf("Marking NN library as not loaded\n");
+  isLibraryLoaded = false;
+}
+#endif
+
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
+# if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
+  mexAtExit(AtExit);
+  
+  if(!isLibraryLoaded) {
+    mexPrintf("Loading NN library with markers generated on %s\n", Anki::Vision::MarkerDefinitionVersionString);
+    VisionMarker::GetNearestNeighborLibrary();
+    isLibraryLoaded = true;
+  }
+# endif
+  
   Anki::SetCoreTechPrintFunctionPtr(mexPrintf);
 
   Anki::Embedded::FiducialDetectionParameters params;
@@ -93,8 +113,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   params.returnInvalidMarkers             = static_cast<bool>(Round<s32>(mxGetScalar(prhs[20])));
   params.doCodeExtraction                 = true;
   
-  params.cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
-  if(nrhs >= 22) {
+  params.cornerMethod = CORNER_METHOD_LINE_FITS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
+  if(nrhs >= 21) {
     params.cornerMethod = static_cast<CornerMethod>(Round<s32>(mxGetScalar(prhs[21])));
   }
   
@@ -113,21 +133,17 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   AnkiConditionalErrorAndReturn(scratch3.IsValid(), "mexDetectFiducialMarkers", "Scratch3 could not be allocated");
 
   FixedLengthList<VisionMarker> markers(maxMarkers, scratch0);
-  FixedLengthList<Array<f32> > homographies(maxMarkers, scratch0);
-
+  
   markers.set_size(maxMarkers);
-  homographies.set_size(maxMarkers);
-
   for(s32 i=0; i<maxMarkers; i++) {
     Array<f32> newArray(3, 3, scratch0);
-    homographies[i] = newArray;
+    markers[i].homography = newArray;
   }
 
   {
     const Anki::Result result = DetectFiducialMarkers(
       image,
       markers,
-      homographies,
       params,
       scratch1,
       scratch2,

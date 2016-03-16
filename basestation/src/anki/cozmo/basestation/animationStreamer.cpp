@@ -175,7 +175,10 @@ namespace Cozmo {
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
 #if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
-      _audioClient.AbortAnimation();
+      if ( _audioClient.HasAnimation() ) {
+        _audioClient.GetCurrentAnimation()->AbortAnimation();
+      }
+      _audioClient.ClearCurrentAnimation();
 #endif
     }
   } // Abort()
@@ -257,9 +260,12 @@ namespace Cozmo {
       
 #     if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       // Prep sound
-      _audioClient.LoadAnimationAudio(anim, robot.IsPhysical());
-      // Set Pre Buffer Key Frame Size
-      _audioClient.SetPreBufferRobotAudioMessageCount(0);
+      {
+        using namespace Audio;
+        const RobotAudioClient::AnimationMode mode = robot.IsPhysical() ?
+          RobotAudioClient::AnimationMode::PlayOnRobot : RobotAudioClient::AnimationMode::PlayOnDevice;
+        _audioClient.CreateAudioAnimation( anim , mode);
+      }
 #     endif
       
 #     if PLAY_ROBOT_AUDIO_ON_DEVICE
@@ -472,10 +478,14 @@ namespace Cozmo {
 
   Result AnimationStreamer::BufferAudioToSend(bool sendSilence, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms)
   {
-    if ( _audioClient.IsPlayingAnimation() ) {
-      // Get Audio Key Frame
+    using namespace Audio;
+    
+    
+    if ( _audioClient.HasAnimation() ) {
+      
+      RobotAudioAnimation* audioAnimation = _audioClient.GetCurrentAnimation();
       RobotInterface::EngineToRobot* audioMsg = nullptr;
-      _audioClient.PopRobotAudioMessage(audioMsg, startTime_ms, streamingTime_ms);
+      audioAnimation->PopRobotAudioMessage( audioMsg, startTime_ms, streamingTime_ms );
       if ( nullptr != audioMsg ) {
         // Add key frame
         BufferMessageToSend( audioMsg );
@@ -484,12 +494,12 @@ namespace Cozmo {
         // Insert Silence
         BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
       }
-    }  // if ( _audioClient.IsPlayingAnimation() )
-    else if(sendSilence) {
+    }
+    else if ( sendSilence ) {
       // No audio sample available, so send silence
       BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
     }
-       
+  
     return RESULT_OK;
   } // BufferAudioToSend()
   
@@ -934,7 +944,8 @@ namespace Cozmo {
     
     return lastResult;
   }// StreamFaceLayers()
-    
+  
+  
   Result AnimationStreamer::UpdateStream(Robot& robot, Animation* anim, bool storeFace)
   {
     Result lastResult = RESULT_OK;
@@ -980,10 +991,10 @@ namespace Cozmo {
     // Add more stuff to the send buffer. Note that we are not counting individual
     // keyframes here, but instead _audio_ keyframes (with which we will buffer
     // any co-timed keyframes from other tracks).
-    while( _sendBuffer.empty() &&
-          ( (anim->HasFramesLeft() && !_audioClient.IsPlayingAnimation() ) ||
-            (_audioClient.UpdateFirstBuffer() && _audioClient.PrepareRobotAudioMessage(_startTime_ms, _streamingTime_ms)) ) )
+    
+    while ( ShouldProcessAnimationFrame(anim, _startTime_ms, _streamingTime_ms) )
     {
+      
 #     if DEBUG_ANIMATIONS
       //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.",
       //                 numBytesToSend);
@@ -1133,17 +1144,40 @@ namespace Cozmo {
     
     // Send an end-of-animation keyframe when done
     if( !anim->HasFramesLeft() &&
-        !_audioClient.IsPlayingAnimation() &&
+        _audioClient.AnimationIsComplete() &&
         _sendBuffer.empty() &&
         _startOfAnimationSent &&
         !_endOfAnimationSent)
-    {
+    {      
+       _audioClient.ClearCurrentAnimation();
       lastResult = SendEndOfAnimation(robot);
     }
     
     return lastResult;
   } // UpdateStream()
   
+  
+  bool AnimationStreamer::ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms )
+  {
+    bool result = false;
+    if ( _sendBuffer.empty() ) {
+      
+      // There are animation frames, but no audio to play
+      if ( anim->HasFramesLeft() && !_audioClient.HasAnimation() ) {
+        result = true;
+      }
+      // There is audio to play
+      else if ( _audioClient.HasAnimation() ) {
+        // Update the RobotAudioAnimation object
+        _audioClient.GetCurrentAnimation()->Update(startTime_ms, streamingTime_ms);
+        // Check if audio is ready to proceed.
+        result = _audioClient.UpdateAnimationIsReady();
+      }
+    }
+    
+    return result;
+  }
+
   
   Result AnimationStreamer::Update(Robot& robot)
   {

@@ -479,7 +479,42 @@ namespace Anki {
     }
     return *this;
   }
+  
+  
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T>  SmallMatrix<NROWS,NCOLS,T>::operator+ (T value) const
+  {
+    SmallMatrix<NROWS,NCOLS,T> result(*this);
+    result += value;
+    return result;
+  }
+  
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator+=(T value)
+  {
+    for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+      this->val[i] += value;
+    }
+    return *this;
+  }
 
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator*=(const SmallMatrix<NROWS,NCOLS,T>& other)
+  {
+    for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+      this->val[i] *= other.val[i];
+    }
+    return *this;
+  }
+  
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator+=(const SmallMatrix<NROWS,NCOLS,T>& other)
+  {
+    for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+      this->val[i] += other.val[i];
+    }
+    return *this;
+  }
   
   
   // Matrix transpose:
@@ -608,6 +643,15 @@ namespace Anki {
     CORETECH_ASSERT(false);
     // TODO: Define our own opencv-free inverse?
 #endif
+  }
+  
+  
+  template<MatDimType NROWS, MatDimType NCOLS, typename T>
+  void SmallMatrix<NROWS,NCOLS,T>::FillWith(T value)
+  {
+    for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+      this->val[i] = value;
+    }
   }
   
   

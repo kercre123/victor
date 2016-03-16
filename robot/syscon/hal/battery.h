@@ -2,6 +2,7 @@
 #define BATTERY_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 namespace Battery {
   // Initialize the charge pins and sensing
@@ -10,6 +11,7 @@ namespace Battery {
   // Update the state of the battery
   void manage(void* userdata = NULL);
   void setHeadlight(bool status);
+  uint8_t getLevel(void);
   
   // Turn on power to the head
   void powerOn();

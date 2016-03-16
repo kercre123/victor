@@ -13,6 +13,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -40,16 +41,65 @@ namespace Anki {
 namespace Cozmo {
 
 #pragma mark --- SimpleBehaviorChooser IBehaviorChooser Members ---
-SimpleBehaviorChooser::SimpleBehaviorChooser()
+SimpleBehaviorChooser::SimpleBehaviorChooser(Robot& robot, const Json::Value& config)
 {
-  // MarkW:TODO move this to Json once the chooser creation flow is simplified
-  _minMarginToSwapRunningBehavior.Reserve(5);
-  _minMarginToSwapRunningBehavior.AddNode(  2.0f, 2.0f); // up until this point, running behavior will almost definitely be kept running
-  _minMarginToSwapRunningBehavior.AddNode( 10.0f, 0.1f); // after this point, a fairly small difference will allow it to swap behaviors
-  _minMarginToSwapRunningBehavior.AddNode( 60.0f, 0.0f); // after this time a running behavior will only stay running if scored high
-  _minMarginToSwapRunningBehavior.AddNode(120.0f, 0.0f); // start of score being reduced to encourage variety
-  _minMarginToSwapRunningBehavior.AddNode(240.0f,-0.5f); //
+  ReadFromJson(robot, config);
 }
+
+
+static const char* kScoreBonusForCurrentBehaviorKey = "scoreBonusForCurrentBehavior";
+  
+
+bool SimpleBehaviorChooser::ReadFromJson(Robot& robot, const Json::Value& config)
+{
+  _scoreBonusForCurrentBehavior.Clear();
+
+  const Json::Value& scoreBonusJson = config[kScoreBonusForCurrentBehaviorKey];
+  if (scoreBonusJson.isNull() || !_scoreBonusForCurrentBehavior.ReadFromJson(scoreBonusJson))
+  {
+    PRINT_NAMED_WARNING("SimpleBehaviorChooser.ReadFromJson.BadScoreBonus", "'%s' failed to read (%s)", kScoreBonusForCurrentBehaviorKey, scoreBonusJson.isNull() ? "Missing" : "Bad");
+  }
+  
+  if (_scoreBonusForCurrentBehavior.GetNumNodes() == 0)
+  {
+    PRINT_NAMED_WARNING("SimpleBehaviorChooser.ReadFromJson.EmptyScoreBonus", "Forcing to default (no bonuses)");
+    _scoreBonusForCurrentBehavior.AddNode(0.0f, 0.0f); // no bonus for any X
+  }
+
+  // Ensure that there is a none behavior in the factory (will only create if there isn't), and hang onto a pointer to it
+  _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorType::NoneBehavior, robot, config);
+  AddFactoryBehaviors(robot, config);
+  
+  InitEnabledBehaviors(config);
+  
+  return true;
+}
+
+
+bool SimpleBehaviorChooser::AddFactoryBehaviors(const Robot& robot, const Json::Value& config)
+{
+  bool allAddedOK = true;
+  const BehaviorFactory& behaviorFactory = robot.GetBehaviorFactory();
+  
+  for (const auto& it : behaviorFactory.GetBehaviorMap())
+  {
+    IBehavior* behaviorToAdd = it.second;
+    const Result addResult = AddBehavior(behaviorToAdd);
+    if (Result::RESULT_OK != addResult)
+    {
+      PRINT_NAMED_ERROR("SimpleBehaviorChooser::AddFactoryBehaviors.FailedToAdd",
+                        "BehaviorFactory behavior '%s' failed to add to chooser!", behaviorToAdd->GetName().c_str());
+      allAddedOK = false;
+    }
+    else {
+      PRINT_NAMED_DEBUG("SimpleBehaviorChooser::AddFactoryBehaviors.AddedFromFactory",
+                        "Added behavior '%s' from factory", behaviorToAdd->GetName().c_str());
+    }
+  }
+          
+  return allAddedOK;
+}
+
 
 Result SimpleBehaviorChooser::AddBehavior(IBehavior* newBehavior)
 {
@@ -189,9 +239,9 @@ void SimpleBehaviorChooser::InitEnabledBehaviors(const Json::Value& inJson)
 }
   
 
-float SimpleBehaviorChooser::MinMarginToSwapRunningBehavior(float runningDuration) const
+float SimpleBehaviorChooser::ScoreBonusForCurrentBehavior(float runningDuration) const
 {
-  const float minMargin = _minMarginToSwapRunningBehavior.EvaluateY(runningDuration);
+  const float minMargin = _scoreBonusForCurrentBehavior.EvaluateY(runningDuration);
   return minMargin;
 }
   
@@ -226,9 +276,9 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
       if (behavior->IsRunning())
       {
         const float runningDuration = Util::numeric_cast<float>(behavior->GetRunningDuration(currentTime_sec));
-        const float minMarginToSwitch = MinMarginToSwapRunningBehavior(runningDuration);
+        const float runningBonus = ScoreBonusForCurrentBehavior(runningDuration);
         
-        scoreData.totalScore += minMarginToSwitch;
+        scoreData.totalScore += runningBonus;
 
         // running behavior gets max possible random score
         scoreData.totalScore += kRandomFactor;
@@ -254,6 +304,11 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
   
   VIZ_BEHAVIOR_SELECTION_ONLY( robot.GetContext()->GetVizManager()->SendRobotBehaviorSelectData(std::move(robotBehaviorSelectData)) );
   
+  if (bestBehavior == nullptr)
+  {
+    bestBehavior = _behaviorNone;
+  }
+
   return bestBehavior;
 }
   

@@ -44,16 +44,17 @@ namespace RobotInterface {
     uint_8    sig[20], ///< Cryptographic signature / checksum for the firmware upgrade
     OTACommand command, ///< What upgrade to do
   }
-
-  enum uint_8 EnterBootloaderWhich
-  {
-    BOOTLOAD_RTIP,
-    BOOTLOAD_BODY,
-  }
   
-  structure EnterBootloader
+  message BootloadRTIP
+  {}
+  
+  message BootloadBody
+  {}
+  
+  message BodyFirmwareState
   {
-    EnterBootloaderWhich which
+    uint_16 state,
+    uint_16 count,
   }
   
 } // RobotInterface

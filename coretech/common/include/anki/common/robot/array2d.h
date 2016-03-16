@@ -30,10 +30,10 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/common/robot/serialize_declarations.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
-#include "opencv2/core/core.hpp"
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/objdetect/objdetect.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
+#include "opencv2/objdetect.hpp"
 #endif
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV
@@ -936,11 +936,11 @@ namespace Anki
       AnkiConditionalErrorAndReturnValue(in.IsValid() && out,
         RESULT_FAIL, "ArrayToCvMat", "This Array is invalid");
 
-      out->refcount = NULL;
-
-      // These two should be set, because if the Mat_ constructor was not called, these will not be initialized
-      out->step.p = out->step.buf;
-      out->size = &out->rows;
+//      out->refcount = NULL;
+//
+//      // These two should be set, because if the Mat_ constructor was not called, these will not be initialized
+//      out->step.p = out->step.buf;
+//      out->size = &out->rows;
 
       *out = cv::Mat_<Type>(in.get_size(0), in.get_size(1), const_cast<Type*>(in.Pointer(0,0)), static_cast<size_t>(in.get_stride()));
 

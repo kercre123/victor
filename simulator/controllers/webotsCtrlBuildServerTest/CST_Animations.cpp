@@ -30,7 +30,6 @@ namespace Cozmo {
   class CST_Animations : public CozmoSimTestController {
     
   private:
-    const u32 MIN_NUM_ANIMS_REQUIRED = 1;
     const u32 NUM_ANIMS_TO_PLAY = 1;
     
     virtual s32 UpdateInternal() override;
@@ -39,7 +38,6 @@ namespace Cozmo {
     
     TestState _testState = TestState::InitCheck;
 
-    std::unordered_set<std::string>::iterator _currAnimIter;
     std::string _lastAnimPlayed = "";
     double _lastAnimPlayedTime = 0;
     u32 _numAnimsPlayed = 0;
@@ -59,12 +57,9 @@ namespace Cozmo {
 
       case TestState::InitCheck:
        
-        // Check that there were atleast a few animations defined
-        // TODO: Should animFailedToLoad be an EngineToGame message? Or do we test this is EngineTestController (which doesn't exist yet) that can listen to events.
-        CST_ASSERT (GetNumAvailableAnimations() >= MIN_NUM_ANIMS_REQUIRED,
-                    GetNumAvailableAnimations() << " anims loaded but " << MIN_NUM_ANIMS_REQUIRED << " expected");
-
-        _currAnimIter = GetAvailableAnimations().find(kTestAnimationName);
+        // TODO: This used to be where we asserted there were available animations to be played, but by moving our animation
+        // loading to be earlier we no longer get information on available animations. If we want that, or if there is some
+        // other initialization that needs to happen, it should go here.
         
         _testState = TestState::ReadyForNextCommand;
         break;
@@ -76,11 +71,10 @@ namespace Cozmo {
           PRINT_NAMED_INFO("TestController.Update", "all tests completed (Result = %d)", _result);
           break;
         }
-        CST_ASSERT(_currAnimIter != GetAvailableAnimations().end(), "animation " << kTestAnimationName << " not found");
-        PRINT_NAMED_INFO("CST_Animations.PlayingAnim", "%d: %s", _numAnimsPlayed, _currAnimIter->c_str());
-        SendAnimation(_currAnimIter->c_str(), 1);
-        _lastAnimPlayed = *_currAnimIter;
-        ++_currAnimIter;
+        auto animToPlay = kTestAnimationName;
+        PRINT_NAMED_INFO("CST_Animations.PlayingAnim", "%d: %s", _numAnimsPlayed, animToPlay);
+        SendAnimation(animToPlay, 1);
+        _lastAnimPlayed = animToPlay;
         ++_numAnimsPlayed;
         _lastAnimPlayedTime = GetSupervisor()->getTime();
         _testState = TestState::ExecutingTestAnimation;

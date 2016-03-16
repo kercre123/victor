@@ -19,8 +19,6 @@
 
 #include "anki/common/basestation/math/pose.h"
 
-#include "clad/externalInterface/messageEngineToGame.h"
-
 namespace Anki {
 namespace Cozmo {
   

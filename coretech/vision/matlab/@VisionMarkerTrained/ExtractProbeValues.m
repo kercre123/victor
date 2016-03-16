@@ -23,6 +23,8 @@ computeGradMag = false;
 computeGradMagWeights = false;
 saveTree = true;
 boxFilterWidth = 0; % for illumination normalization for NearestNeighbor
+numNoiseVersions = 1;
+noiseVariance = 0;
 
 % Now using unpadded images to train
 %imageCoords = [-VisionMarkerTrained.FiducialPaddingFraction ...
@@ -105,18 +107,18 @@ numBlurs     = length(blurSigmas);
 numSizes     = length(imageSizes);
 numExposures = length(exposures);
 
+numVariations = numNoiseVersions*numBlurs*numSizes*numExposures*numPerturbations*(double(addInversions)+1);
 fprintf('Will create %d samples for each of %d images = %d total samples.\n', ...
-  numBlurs*numSizes*numExposures*numPerturbations*(double(addInversions)+1), numImages, ...
-  numBlurs*numSizes*numExposures*numPerturbations*numImages*(double(addInversions)+1));
+  numVariations, numImages, numVariations*numImages);
 
 labelNames = cell(1, numImages);
 %img = cell(1, numImages);
 
 corners = [0 0; 0 1; 1 0; 1 1];
 
-labels        = cell(numImages, numBlurs, numSizes, numExposures);
+labels        = cell(numImages, numBlurs, numSizes, numNoiseVersions, numExposures);
 
-probeValues = cell(numImages, numBlurs, numSizes, numExposures, numPerturbations, double(addInversions)+1);
+probeValues = cell(numImages, numBlurs, numSizes, numNoiseVersions, numExposures, numPerturbations, double(addInversions)+1);
 if computeGradMag
   gradMagValues = cell(numImages, numBlurs, numSizes, numExposures, numPerturbations, double(addInversions)+1);
 end
@@ -158,7 +160,7 @@ for iImg = 1:numImages
     
     [~,labelNames{iImg}] = fileparts(fnames{iImg});
     
-    [nrowsOrig,ncolsOrig,~] = size(imgOrig);
+    %[nrowsOrig,ncolsOrig,~] = size(imgOrig);
     
     % numBlurs, numSizes, numExposures, numPerturbations
     for iInvert = 1:(double(addInversions)+1)
@@ -166,68 +168,79 @@ for iImg = 1:numImages
         imgOrig = 1 - imgOrig;
       end
       
-      for iBlur = 1:numBlurs
-        imgBlur = single(imgOrig);
-        
-        blurSigma = blurSigmas(iBlur);
-        if blurSigma > 0
-          imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma*sqrt(nrowsOrig^2 + ncolsOrig^2)));
-        end
-        
         for iSize = 1:numSizes
           
-          imgResized = imresize(imgBlur, imageSizes(iSize)*[1 1], 'bilinear');
+          imgResized = imresize(imgOrig, imageSizes(iSize)*[1 1], 'bilinear');
           
-          for iExp = 1:numExposures
-            img = min(1, ((whitePoint-blackPoint)/255*imgResized+blackPoint/255)*exposures(iExp));
-            
-            % Same for all perturbations in following loop
-            img = single(img);
-            [nrows,ncols,~] = size(img);
-            imageCoordsX = linspace(0, 1, ncols);
-            imageCoordsY = linspace(0, 1, nrows);
-            
-            for iPerturb = 1:numPerturbations
-              
-              if strcmp(perturbationType, 'shift')
-                xPerturb = X + xShift(iPerturb);
-                yPerturb = Y + yShift(iPerturb);
-              else
-                % Sample a perturbation of the corners
-                switch(perturbationType)
-                  case 'normal'
-                    perturbation = max(-3*perturbSigma, min(3*perturbSigma, perturbSigma*randn(4,2)));
-                  case 'uniform'
-                    perturbation = 2*perturbSigma*rand(4,2) - perturbSigma;
-                  otherwise
-                    error('Unrecognized perturbationType "%s".', perturbationType);
-                end
-                
-                corners_i = corners + perturbation;
-                T = cp2tform(corners_i, corners, 'projective');
-                [xPerturb, yPerturb] = tforminv(T, X, Y);
-              end
-              
-              probeValues{iImg, iBlur, iSize, iExp, iPerturb, iInvert} = im2uint8(mean(interp2(imageCoordsX, imageCoordsY, img, ...
-                xPerturb, yPerturb, 'linear', 1), 2));
-              
-              if computeGradMag
-                imgGradMag = single(smoothgradient(img));
-                gradMagValues{iImg, iBlur, iSize, iExp, iPerturb, iInvert} = im2uint8(mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
-                  xPerturb, yPerturb, 'linear', 0), 2));
-              end
-              
-              labels{iImg, iBlur, iSize, iExp, iPerturb, iInvert} = uint32(iImg + (iInvert-1)*numImages);
-              
-            end % FOR each perturbation
-            
-            %labels{iImg, iBlur, iSize, iExp} = iImg*ones(1,numPerturbations, 'uint32');
-            
-          end % FOR each exposure
-          
+           for iBlur = 1:numBlurs
+             imgBlur = single(imgResized);
+             
+             blurSigma = blurSigmas(iBlur);
+             if blurSigma > 0
+               imgBlur = separable_filter(imgBlur, gaussian_kernel(blurSigma*sqrt(2)*imageSizes(iSize)));
+             end
+             
+             for iNoise = 1:numNoiseVersions
+               
+               if noiseVariance > 0
+                 imgNoisy = imnoise(imgBlur, 'speckle', noiseVariance);
+               else
+                 imgNoisy = imgBlur;
+               end
+               
+               for iExp = 1:numExposures
+                 img = min(1, ((whitePoint-blackPoint)/255*imgNoisy+blackPoint/255)*exposures(iExp));
+                 
+                 % Same for all perturbations in following loop
+                 img = single(img);
+                 [nrows,ncols,~] = size(img);
+                 imageCoordsX = linspace(0, 1, ncols);
+                 imageCoordsY = linspace(0, 1, nrows);
+                 
+                 for iPerturb = 1:numPerturbations
+                   
+                   if strcmp(perturbationType, 'shift')
+                     xPerturb = X + xShift(iPerturb);
+                     yPerturb = Y + yShift(iPerturb);
+                   else
+                     % Sample a perturbation of the corners
+                     switch(perturbationType)
+                       case 'normal'
+                         perturbation = max(-3*perturbSigma, min(3*perturbSigma, perturbSigma*randn(4,2)));
+                       case 'uniform'
+                         perturbation = 2*perturbSigma*rand(4,2) - perturbSigma;
+                       otherwise
+                         error('Unrecognized perturbationType "%s".', perturbationType);
+                     end
+                     
+                     corners_i = corners + perturbation;
+                     T = cp2tform(corners_i, corners, 'projective');
+                     [xPerturb, yPerturb] = tforminv(T, X, Y);
+                   end
+                   
+                   probeValues{iImg, iBlur, iSize, iNoise, iExp, iPerturb, iInvert} = im2uint8(mean(interp2(imageCoordsX, imageCoordsY, img, ...
+                     xPerturb, yPerturb, 'linear', 1), 2));
+                   
+                   if computeGradMag
+                     imgGradMag = single(smoothgradient(img));
+                     gradMagValues{iImg, iBlur, iSize, iNoise, iExp, iPerturb, iInvert} = im2uint8(mean(interp2(imageCoordsX, imageCoordsY, imgGradMag, ...
+                       xPerturb, yPerturb, 'linear', 0), 2));
+                   end
+                   
+                   labels{iImg, iBlur, iSize, iNoise, iExp, iPerturb, iInvert} = uint32(iImg + (iInvert-1)*numImages);
+                   
+                 end % FOR each perturbation
+                 
+                 %labels{iImg, iBlur, iSize, iExp} = iImg*ones(1,numPerturbations, 'uint32');
+                 
+               end % FOR each exposure
+             
+             end % FOR each noise version
+
+           end % FOR each blur
+           
         end % FOR each size
         
-      end % FOR each blur
       
     end % FOR inversion
         
@@ -448,6 +461,8 @@ trainingState.labelNames    = labelNames;
 trainingState.numImages     = numImages;
 trainingState.xgrid         = xgrid;
 trainingState.ygrid         = ygrid;
+
+trainingState.parameters    = varargin;
 
 fprintf('Probe extraction took %.2f seconds (%.1f minutes)\n', toc(t_start), toc(t_start)/60);
 

@@ -81,10 +81,11 @@ namespace Anki
       // 10% of the width, we use 0.2/sqrt(2)=0.14 as the multiplier.
       // This kernel size assumes we RE-filter the extracted probe values inside the nearest
       // neighbor code.
-      const f32 kernelSize = std::round(1.4142f*FIDUCIAL_SQUARE_WIDTH_FRACTION *
+      const f32 avgThicknessFraction = 0.5f*(FIDUCIAL_SQUARE_THICKNESS_FRACTION.x + FIDUCIAL_SQUARE_THICKNESS_FRACTION.y);
+      const f32 kernelSize = std::round(1.4142f*avgThicknessFraction *
                                         ((corners[Quadrilateral<f32>::TopLeft] - corners[Quadrilateral<f32>::BottomRight]).Length() +
                                          (corners[Quadrilateral<f32>::TopRight] - corners[Quadrilateral<f32>::BottomLeft]).Length()));
-
+      
       cv::Mat_<s16> kernel(kernelSize, kernelSize);
       kernel = -1;
       kernel(kernelSize/2, kernelSize/2) = kernelSize*kernelSize - 1;
@@ -103,7 +104,6 @@ namespace Anki
     
     Result DetectFiducialMarkers(const Array<u8> &image,
                                  FixedLengthList<VisionMarker> &markers,
-                                 FixedLengthList<Array<f32> > &homographies,
                                  const FiducialDetectionParameters &params,
                                  MemoryStack scratchCcm,
                                  MemoryStack scratchOnchip,
@@ -118,7 +118,7 @@ namespace Anki
       const s32 imageHeight = image.get_size(0);
       const s32 imageWidth = image.get_size(1);
 
-      AnkiConditionalErrorAndReturnValue(image.IsValid() && markers.IsValid() && homographies.IsValid() && scratchOffChip.IsValid() && scratchOnchip.IsValid() && scratchCcm.IsValid(),
+      AnkiConditionalErrorAndReturnValue(image.IsValid() && markers.IsValid() && scratchOffChip.IsValid() && scratchOnchip.IsValid() && scratchCcm.IsValid(),
         RESULT_FAIL_INVALID_OBJECT, "DetectFiducialMarkers", "Some input is invalid");
 
       // On the robot, we don't have enough memory for resolutions over QVGA
@@ -315,7 +315,7 @@ namespace Anki
         // 4b. Compute a homography for each extracted quadrilateral
         BeginBenchmark("ComputeHomographyFromQuad");
         for(s32 iQuad=0; iQuad<extractedQuads.get_size(); iQuad++) {
-          Array<f32> &currentHomography = homographies[iQuad];
+          Array<f32> &currentHomography = markers[iQuad].homography;
           VisionMarker &currentMarker = markers[iQuad];
 
           bool numericalFailure;
@@ -323,7 +323,8 @@ namespace Anki
             return lastResult;
           }
 
-          markers[iQuad] = VisionMarker(extractedQuads[iQuad], VisionMarker::UNKNOWN);
+          currentMarker.validity = VisionMarker::UNKNOWN;
+          currentMarker.corners.SetCast(extractedQuads[iQuad]);
 
           if(numericalFailure) {
             currentMarker.validity = VisionMarker::NUMERICAL_FAILURE;
@@ -353,8 +354,8 @@ namespace Anki
       cv::Mat_<u8> cvImage;
       ArrayToCvMat(image, &cvImage);
       
-      for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++) {
-        const Array<f32> &currentHomography = homographies[iMarker];
+      for(s32 iMarker=0; iMarker<markers.get_size(); iMarker++)
+      {
         VisionMarker &currentMarker = markers[iMarker];
         
         cv::Mat_<u8> cvImageROI, cvImageROI_orig;
@@ -367,7 +368,6 @@ namespace Anki
         if(currentMarker.validity == VisionMarker::UNKNOWN) {
           // If refine_quadRefinementIterations > 0, then make this marker's corners more accurate
           lastResult = currentMarker.RefineCorners(image,
-                                                   currentHomography,
                                                    params.decode_minContrastRatio,
                                                    params.refine_quadRefinementIterations,
                                                    params.refine_numRefinementSamples,
@@ -376,7 +376,6 @@ namespace Anki
                                                    params.quads_minQuadArea,
                                                    params.quads_quadSymmetryThreshold,
                                                    params.quads_minDistanceFromImageEdge,
-                                                   refinedHomography,
                                                    meanGrayvalueThreshold,
                                                    scratchOnchip);
 
@@ -392,7 +391,6 @@ namespace Anki
               // ... and there was enough contrast, so proceed with with decoding
               // the marker
               lastResult = currentMarker.Extract(image,
-                                                 refinedHomography,
 #if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
                                                  NEAREST_NEIGHBOR_DISTANCE_THRESHOLD,
 #                                                else
@@ -430,11 +428,9 @@ namespace Anki
           {
             for(s32 jQuad=iMarker; jQuad<markers.get_size(); jQuad++) {
               markers[jQuad] = markers[jQuad+1];
-              homographies[jQuad].Set(homographies[jQuad+1]);
             }
             //extractedQuads.set_size(extractedQuads.get_size()-1);
             markers.set_size(markers.get_size()-1);
-            homographies.set_size(homographies.get_size()-1);
             iMarker--;
           }
         }

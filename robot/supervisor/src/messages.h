@@ -27,6 +27,7 @@
 #define COZMO_MESSAGE_ROBOT_H
 
 #include "anki/types.h"
+#include "clad/types/motorTypes.h"
 #include <stdarg.h>
 #include <stddef.h>
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -46,12 +47,11 @@ namespace Anki {
       void ProcessBadTag_EngineToRobot(const RobotInterface::EngineToRobot::Tag tag);
 #endif
       Result Init();
-#if defined(TARGET_ESPRESSIF)
       extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
-#elif !defined(TARGET_K02)
+
       void ProcessBTLEMessages();
       void ProcessUARTMessages();
-#endif
+
       void ProcessMessage(RobotInterface::EngineToRobot& msg);
 
       void Process_anim(const RobotInterface::EngineToRobot& msg);
@@ -69,6 +69,8 @@ namespace Anki {
       // stored internally that is updated by UpdateRobotStateMsg().
       Result SendRobotStateMsg(const RobotState* msg = NULL);
 
+      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted);
+      
 #ifndef TARGET_K02
       // For sending text message to basestation
       int SendText(const char *format, ...);

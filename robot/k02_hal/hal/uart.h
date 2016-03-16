@@ -27,7 +27,6 @@ namespace Anki
         void Init(void);
         void Transmit(void);
 
-        void EnterBodyRecovery(void);
         void SendRecoveryData(const uint8_t* data, int bytes);
 
         void DebugInit(void);

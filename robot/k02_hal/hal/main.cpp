@@ -60,6 +60,22 @@ namespace Anki
   }
 }
 
+// This silences exception allocations
+extern "C" 
+void * __aeabi_vec_ctor_nocookie_nodtor(   void* user_array,
+                                           void* (*constructor)(void*),
+                                           size_t element_size,
+                                           size_t element_count) 
+
+{
+    size_t ii = 0;
+    char *ptr = (char*) (user_array);
+    if ( constructor != NULL )
+        for( ; ii != element_count ; ii++, ptr += element_size )
+            constructor( ptr );
+    return user_array;
+}
+
 int main (void)
 {
   using namespace Anki::Cozmo::HAL;
@@ -78,9 +94,6 @@ int main (void)
   PowerInit();
 
   DAC::Init();
-  DAC::Tone();
-  MicroWait(10);
-  DAC::Mute();
 
   // Wait for Espressif to toggle out 4 words of I2SPI
   for (int i = 0; i < 32; i++)
@@ -97,7 +110,11 @@ int main (void)
   while((MCG->S & MCG_S_CLKST_MASK))    ;
 
   MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
-  
+
+  DAC::Tone();
+  MicroWait(10);
+  DAC::Mute();
+
   I2C::Init();
   UART::Init();
   IMU::Init();
@@ -118,8 +135,6 @@ int main (void)
   do {
     // Wait for head body sync to occur
     UART::WaitForSync();
-    Anki::Cozmo::HAL::Spine::Manage(g_dataToHead.spineMessage);
     Anki::Cozmo::HAL::IMU::Update();
-    Anki::Cozmo::HAL::WiFi::Update();
   } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
 }

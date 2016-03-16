@@ -3,134 +3,192 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
+#include "hardware.h"
 #include "rtos.h"
 #include "timer.h"
 
-static RTOS_Task *current_task;
+static RTOS_Task *task_list;
 static RTOS_Task *free_task;
 static RTOS_Task task_pool[MAX_TASKS];
+
 static int last_counter;
 
 void RTOS::init(void) {
   // Clear out our task management pool
-  current_task = NULL;
+  task_list = NULL;
   free_task = &task_pool[0];
 
   memset(&task_pool, 0, sizeof(task_pool));
   for (int i = 1; i < MAX_TASKS; i++) {
     task_pool[i-1].next = &task_pool[i];
   }
+
+  // Setup the watchdog
+  NRF_WDT->CONFIG = (WDT_CONFIG_SLEEP_Run << WDT_CONFIG_SLEEP_Pos);
+  NRF_WDT->CRV = 0x8000; // .5s
+  NRF_WDT->RREN = wdog_channel_mask;
+  //NRF_WDT->TASKS_START = 1;
+
+  // Manage trigger set
+  NVIC_EnableIRQ(SWI0_IRQn);
+  NVIC_SetPriority(SWI0_IRQn, RTOS_PRIORITY);
 }
 
-void RTOS::run(void) {
-  last_counter = GetCounter();
+void RTOS::kick(uint8_t channel) {
+  NRF_WDT->RR[channel] = WDT_RR_RR_Reload;
+}
 
-  for (;;) {
-    __asm { WFI };
-    manage();
+void RTOS::delay(RTOS_Task* task, int delay) {
+  task->target += delay;
+}
+
+
+RTOS_Task* RTOS::allocate(void) {
+  if (free_task == NULL) {
+    return NULL;
   }
-}
-
-static void insert(RTOS_Task* newTask) {
-  RTOS_Task *cursor = current_task;
-  RTOS_Task *last   = NULL;
   
-  // Locate an element we should fire before
-  while (cursor && cursor->target <= newTask->target) {
-    newTask->target -= cursor->target;
+  RTOS_Task *task = free_task;
+  free_task = free_task->next;
 
-    last = cursor;
-    cursor = cursor->next;
-  }
+  return task;
+}
 
-  // Insert our task into the chain
-  newTask->next = cursor;
-  if (last != NULL) {
-    last->next = newTask;
+void RTOS::remove(RTOS_Task* task) {
+  // Remove task from listing
+  if (task->prev) {
+    task->prev->next = task->next;
   } else {
-    current_task = newTask;
+    task_list = task->next;
   }
- 
-  // Decrement the tasks after this target
-  int ticks = newTask->target;
-  while (cursor) {
-    cursor->target -= ticks;
-    
-    if (cursor->target >= 0) {
-      break ;
-    }
-    
-    ticks = -cursor->target;
-    cursor->target = 0;
+  
+  if (task->next) {
+    task->next->prev = task->prev;
   }
+}
+  
+void RTOS::release(RTOS_Task* task) {
+  RTOS::remove(task);
+
+  // Add to unallocated list
+  task->next = free_task;
+  free_task = task;
+}
+
+static void insert(RTOS_Task* task) {
+  // Set task to the first index
+  task->prev = NULL;
+  task->next = task_list;
+  
+  // Shift our task down the chain
+  while (task->next && task->next->priority <= task->priority) {
+    task->prev = task->next;
+    task->next = task->next->next;
+  }
+
+  // Insert the task into the chain
+  if (task->prev) {
+    task->prev->next = task;
+  } else {
+    task_list = task;
+  }
+
+  if (task->next) {
+    task->next->prev = task;
+  }
+}
+
+void RTOS::setPriority(RTOS_Task* task, RTOS_Priority priority) {
+  remove(task);
+  task->priority = priority;
+  insert(task);
 }
 
 void RTOS::manage(void) {
+  NVIC_SetPendingIRQ(SWI0_IRQn);
+}
+
+RTOS_Task* RTOS::create(RTOS_TaskProc func, bool repeating) {
+  RTOS_Task* task = allocate();
+
+  if (task == NULL) {
+    return NULL;
+  }
+
+  task->priority = RTOS_DEFAULT_PRIORITY;
+  task->task = func;
+  task->repeating = repeating;
+  task->active = false;
+
+  insert(task);
+ 
+  return task;
+}
+
+void RTOS::start(RTOS_Task* task, int period, void* userdata) {
+  task->period = period;
+  task->target = period;
+  task->userdata = userdata;
+  task->active = true;
+}
+
+void RTOS::stop(RTOS_Task* task) {
+  task->active = false;
+}
+
+void RTOS::EnterCritical(void) {
+  NVIC_DisableIRQ(SWI0_IRQn);
+}
+
+void RTOS::LeaveCritical(void) {
+  NVIC_EnableIRQ(SWI0_IRQn);
+}
+
+RTOS_Task* RTOS::schedule(RTOS_TaskProc func, int period, void* userdata, bool repeating) {
+  RTOS_Task* task = create(func, repeating);
+  
+  if (task == NULL) {
+    return NULL;
+  }
+
+  start(task, period, userdata);
+  
+  return task;
+}
+
+extern "C" void SWI0_IRQHandler(void) {
   int new_count = GetCounter();
   int ticks = new_count - last_counter;
-  last_counter = new_count;
 
-  while (current_task) {
-    current_task->target -= ticks;
+  last_counter = new_count;
+  
+  for (RTOS_Task* task = task_list; task; task = task->next) {
+    // Resume execution
+    if (!task->active) {
+      continue ; 
+    }
+
+    task->target -= ticks;
 
     // Current task has not yet fired
-    if (current_task->target > 0) {
-      break ;
+    if (task->target > 0) {
+      continue ;
     }
 
-    // Ticks are the underflow
-    ticks = -current_task->target;
-
-    // Return from task queue and fire callback
-    RTOS_Task *fired = current_task;
-    current_task = current_task->next;
-
-    fired->task(fired->userdata);
+    int start = GetCounter();
+		task->task(task->userdata);
+		int time = GetCounter() - start;
+		task->time = MAX(time, task->time);
 
     // Either release the task slice, or reinsert it with the period
-    if (fired->repeating) {
-      fired->target = fired->period;
-      insert(fired);
+    if (task->repeating) {
+			do {
+				task->target += task->period;
+			} while (task->target <= 0);
     } else {
-      fired->next = free_task;
-      free_task = fired;
+      RTOS::release(task);
     }
   }
-}
 
-static inline int queue_length() {
-  RTOS_Task *cursor = current_task;
-  int length = 0;
-  
-  while (cursor) {
-    cursor = cursor->next;
-    length ++;
-  }
-
-  return length;
-}
-
-bool RTOS::schedule(RTOS_TaskProc task, int period, void* userdata, bool repeating) {
-  if (free_task == NULL) {
-    return false;
-  }
-
-  // Allocate a task
-  RTOS_Task *newTask = free_task;
-  free_task = free_task->next;
-
-  newTask->task = task;
-  newTask->period = period;
-  newTask->userdata = userdata;
-  newTask->repeating = repeating;
-  newTask->target = period + repeating;
-
-  // This attempts to auto-spread OS tasks
-  if (repeating) {
-    newTask->target += CYCLES_MS(0.5f) * queue_length();
-  }
-  
-  insert(newTask);
-  
-  return true;
+  RTOS::kick(WDOG_RTOS);
 }

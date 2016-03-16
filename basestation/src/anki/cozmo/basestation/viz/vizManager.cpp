@@ -27,7 +27,7 @@
 #include <fstream>
 
 #if ANKICORETECH_USE_OPENCV
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/highgui.hpp>
 #endif
 
 
@@ -36,7 +36,7 @@ namespace Anki {
     
     const VizManager::Handle_t VizManager::INVALID_HANDLE = u32_MAX;
     
-    Result VizManager::Connect(const char *udp_host_address, const unsigned short port)
+    Result VizManager::Connect(const char *udp_host_address, const unsigned short port, const char* unity_host_address, const unsigned short unity_port)
     {
       if(_isInitialized) {
         Disconnect();
@@ -45,6 +45,10 @@ namespace Anki {
       if (!_vizClient.Connect(udp_host_address, port)) {
         PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager client (%s:%d)", udp_host_address, port);
         //_isInitialized = false;
+      }
+      
+      if(!_unityVizClient.Connect(unity_host_address, unity_port)) {
+        PRINT_NAMED_INFO("VizManager.Connect", "Failed to init VizManager unity client (%s:%d)", unity_host_address, unity_port);
       }
      
       PRINT_STREAM_INFO("VizManager.Connect", "VizManager connected.");
@@ -56,7 +60,10 @@ namespace Anki {
     Result VizManager::Disconnect()
     {
       if(_isInitialized) {
-        if (_vizClient.Disconnect()) {
+        bool vizDisconnected = _vizClient.Disconnect();
+        bool unityDisconnected = _unityVizClient.Disconnect();
+        
+        if (vizDisconnected || unityDisconnected) {
           _isInitialized = false;
           PRINT_NAMED_INFO("VizManager.Connect", "VizManager disconnected.");
           return RESULT_OK;
@@ -88,6 +95,10 @@ namespace Anki {
       const size_t numWritten = (uint32_t)message.Pack(buffer, MAX_MESSAGE_SIZE);
       if (_vizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
         PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+      }
+      
+      if (_unityVizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
+        PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd to Unity failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
       }
     }
 
@@ -205,16 +216,19 @@ namespace Anki {
       return vizID;
     }
 
-    VizManager::Handle_t VizManager::DrawHumanHead(const u32 headID, const Point3f& size, const Pose3d& pose, const ColorRGBA& color)
+    VizManager::Handle_t VizManager::DrawHumanHead(const s32 headID, const Point3f& size, const Pose3d& pose, const ColorRGBA& color)
     {
-      if (headID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]) {
+      if (std::abs(headID) >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]) {
         PRINT_NAMED_ERROR("VizManager.DrawHumanHead.IDtooLarge", "Specified head ID=%d larger than maxID=%d",
           headID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD]);
         return INVALID_HANDLE;
 
       }
       
-      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD] + headID;
+      const u32 vizID = (headID >= 0 ?
+                         VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD] + headID :
+                         _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_HUMAN_HEAD] + headID);
+                         
       DrawObject(vizID, VizObjectType::VIZ_OBJECT_HUMAN_HEAD, size, pose, color);
       return vizID;
     }
@@ -241,8 +255,11 @@ namespace Anki {
     
     void VizManager::DrawCameraFace(const Vision::TrackedFace& face, const ColorRGBA& color) {
       // Draw eyes
-      DrawCameraOval(face.GetLeftEyeCenter(), 1, 1, color);
-      DrawCameraOval(face.GetRightEyeCenter(), 1, 1, color);
+      Point2f leftEye, rightEye;
+      if(face.GetEyeCenters(leftEye, rightEye)) {
+        DrawCameraOval(leftEye,  1, 1, color);
+        DrawCameraOval(rightEye, 1, 1, color);
+      }
       
       // Draw features
       for(s32 iFeature=0; iFeature<(s32)Vision::TrackedFace::NumFeatures; ++iFeature)
@@ -257,14 +274,16 @@ namespace Anki {
       
       // Draw name & most likely expression
       std::string name;
-      if(face.GetID() < 0) {
-        name = "Unknown";
-      } else if(face.GetName().empty()) {
-        name = "Face" + std::to_string(face.GetID());
+      if(face.GetName().empty()) {
+        if(face.GetID() > 0) {
+          name = "KnownFace[";
+        } else {
+          name = "UnknownFace[";
+        }
+        name += std::to_string(face.GetID()) + "]-";
       } else {
-        name = face.GetName() + "[" + std::to_string(face.GetID()) + "]";
+        name = face.GetName() + "-";
       }
-      name += "-";
       name += Vision::TrackedFace::GetExpressionName(face.GetMaxExpression());
       DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
       
@@ -813,25 +832,6 @@ namespace Anki {
 
     } // SendImage()
 */
-
-    void VizManager::SendVisionMarker(const u16 topLeft_x, const u16 topLeft_y,
-                                      const u16 topRight_x, const u16 topRight_y,
-                                      const u16 bottomRight_x, const u16 bottomRight_y,
-                                      const u16 bottomLeft_x, const u16 bottomLeft_y,
-                                      bool verified)
-    {
-      VizInterface::VisionMarker v;
-      v.topLeft_x = topLeft_x;
-      v.topLeft_y = topLeft_y;
-      v.topRight_x = topRight_x;
-      v.topRight_y = topRight_y;
-      v.bottomRight_x = bottomRight_x;
-      v.bottomRight_y = bottomRight_y;
-      v.bottomLeft_x = bottomLeft_x;
-      v.bottomLeft_y = bottomLeft_y;
-      v.verified = static_cast<u8>(verified);
-      SendMessage(VizInterface::MessageViz(std::move(v)));
-    }
 
     void VizManager::SendTrackerQuad(const u16 topLeft_x, const u16 topLeft_y,
                                      const u16 topRight_x, const u16 topRight_y,

@@ -42,10 +42,6 @@ Face {
   image "face03.png"
 }
 LightCube {
-  translation -0.1 0.12 0.022
-  rotation 0 0 1 0.23
-}
-LightCube {
   translation -0.12 0.07 0.022
   rotation 0 0 1 0.23
   ID 1
@@ -58,7 +54,7 @@ LightCube {
 LightCube {
   translation 0.154 0.014 0.022
   rotation 0 0 1 0.23
-  ID 3
+  ID 0
 }
 BlockWorldComms {
 }

@@ -1,6 +1,6 @@
 #include "messages.h"
-#include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/robot/hal.h"
 #include <math.h>
 
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -29,6 +29,9 @@
 #include "testModeController.h"
 #ifndef TARGET_K02
 #include "animationController.h"
+#else
+#include "hal/wifi.h"
+#include "hal/spine.h"
 #endif
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
@@ -58,6 +61,10 @@ namespace Anki {
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
+        // Cache for power state information
+        float vBat;
+        float vExt;
+        u8 chargeStat;
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---
@@ -71,18 +78,28 @@ namespace Anki {
         return RESULT_OK;
       }
 
-      void ProcessBadTag_EngineToRobot(RobotInterface::EngineToRobot::Tag badTag)
-      {
-        AnkiWarn( 106, "Messages.ProcessBadTag_EngineToRobot.Recvd", 355, "Received message with bad tag %02x", 1, badTag);
-      }
-
       void ProcessMessage(RobotInterface::EngineToRobot& msg)
       {
-        #ifdef TARGET_K02
-        #include "clad/robotInterface/messageEngineToRobot_switch.def"
-        #else
-        #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
-        #endif
+        switch(msg.tag)
+        {
+#ifdef TARGET_K02
+          #include "clad/robotInterface/messageEngineToRobot_switch_from_0x30_to_0x7f.def"
+          // Need to add additional messages for special cases handled both on the Espressif and K02
+          case RobotInterface::EngineToRobot::Tag_animHeadAngle:
+            Process_animHeadAngle(msg.animHeadAngle);
+            break;
+          case RobotInterface::EngineToRobot::Tag_animBodyMotion:
+            Process_animBodyMotion(msg.animBodyMotion);
+            break;
+          case RobotInterface::EngineToRobot::Tag_animLiftHeight:
+            Process_animLiftHeight(msg.animLiftHeight);
+            break;
+#else
+            #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
+#endif
+          default:
+            AnkiWarn( 106, "Messages.ProcessBadTag_EngineToRobot.Recvd", 355, "Received message with bad tag %x", 1, msg.tag);
+        }
         if (lookForID_ != RobotInterface::EngineToRobot::INVALID)
         {
           if (msg.tag == lookForID_)
@@ -228,14 +245,12 @@ namespace Anki {
         DockingController::SetDockingErrorSignalMessage(msg);
       }
 
-#ifndef TARGET_K02
-      extern "C" void ProcessMessage(u8* buffer, u16 bufferSize)
-      {
-         //XXX  "Implement ProcessMessage"
-      }
-
       void ProcessBTLEMessages()
       {
+#ifdef TARGET_K02
+        HAL::Spine::Manage();
+        HAL::WiFi::Update();
+#else
         u32 dataLen;
 
         //ReliableConnection_printState(&connection);
@@ -261,8 +276,8 @@ namespace Anki {
 						// Can't print anything because we have no where to send it
 					}
         }
-      }
 #endif
+      }
 
       void Process_clearPath(const RobotInterface::ClearPath& msg) {
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
@@ -384,9 +399,9 @@ namespace Anki {
                                              true);
       }
 
-      void Process_setCarryState(const CarryState& state)
+      void Process_setCarryState(const CarryStateUpdate& update)
       {
-        PickAndPlaceController::SetCarryState(state);
+        PickAndPlaceController::SetCarryState(update.state);
       }
 
       void Process_imuRequest(const Anki::Cozmo::RobotInterface::ImuRequest& msg)
@@ -540,21 +555,12 @@ namespace Anki {
       // Group processor for all animation key frame messages
       void Process_anim(const RobotInterface::EngineToRobot& msg)
       {
-        if(AnimationController::BufferKeyFrame(msg) != RESULT_OK) {
+        if(AnimationController::BufferKeyFrame(msg.GetBuffer(), msg.Size()) != RESULT_OK) {
           //PRINT("Failed to buffer a keyframe! Clearing Animation buffer!\n");
           AnimationController::Clear();
         }
       }
 #endif
-
-      void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
-      {
-        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
-          BackpackLightController::SetParams((LEDId)i, msg.lights[i].onColor, msg.lights[i].offColor,
-                                             msg.lights[i].onFrames, msg.lights[i].offFrames,
-                                             msg.lights[i].transitionOnFrames, msg.lights[i].transitionOffFrames);
-        }
-      }
 
       void Process_enablePickupParalysis(const RobotInterface::EnablePickupParalysis& msg)
       {
@@ -577,16 +583,6 @@ namespace Anki {
       {
         // Start flash pattern on blocks
         HAL::FlashBlockIDs();
-      }
-
-      void Process_assignCubeSlots(const CubeSlots& msg)
-      {
-        HAL::AssignCubeSlots(msg.factory_id_length, msg.factory_id);
-      }
-      
-      void Process_setCubeLights(const CubeLights& msg)
-      {
-        BlockLightController::SetLights(msg.objectID, msg.lights);
       }
 
       void Process_setObjectBeingCarried(const ObjectBeingCarried& msg)
@@ -657,35 +653,46 @@ namespace Anki {
       {
         // Handled on the Espressif
       }
+#ifndef TARGET_K02
       void Process_animBackpackLights(const Anki::Cozmo::AnimKeyFrame::BackpackLights& msg)
       {
         for(s32 iLED=0; iLED<NUM_BACKPACK_LEDS; ++iLED) {
           HAL::SetLED(static_cast<LEDId>(iLED), msg.colors[iLED]);
         }
       }
-      void Process_animEndOfAnimation(const Anki::Cozmo::AnimKeyFrame::EndOfAnimation&)
+#endif
+      void Process_powerState(const PowerState& msg)
       {
-        // Handled on the Espressif
+        vBat = static_cast<float>(msg.VBatFixed)/65536.0f;
+        vExt = static_cast<float>(msg.VExtFixed)/65536.0f;
+        chargeStat = msg.chargeStat;
       }
-      void Process_animStartOfAnimation(const Anki::Cozmo::AnimKeyFrame::StartOfAnimation&)
+      void Process_getPropState(const PropState& msg)
       {
-        // Handled on the Espressif
+#ifdef TARGET_K02
+        HAL::GetPropState(msg.slot, msg.x, msg.y, msg.z, msg.shockCount);
+#endif
+      }
+      void Process_radioConnected(const RobotInterface::RadioState& state)
+      {
+        HAL::RadioUpdateState(state.wifiConnected, false);
+      }
+      void Process_bootloadRTIP(const RobotInterface::BootloadRTIP&)
+      {
+        // Handled in HAL SPI not here
+      }
+      void Process_bodyUpgradeData(const RobotInterface::BodyUpgradeData&)
+      {
+        // Handled in HAL SPI not here
       }
 
-      // ---------- Firmware over the air stubs for espressif -----------
+#ifdef SIMULATOR
+      /// Stub message handlers to satisfy simulator build
       void Process_eraseFlash(Anki::Cozmo::RobotInterface::EraseFlash const&)
       {
         // Nothing to do here
       }
       void Process_writeFlash(RobotInterface::WriteFlash const&)
-      {
-        // Nothing to do here
-      }
-      void Process_bodyUpgradeData(unsigned int const&)
-      {
-        // Nothing to do here
-      }
-      void Process_enterBootloader(Anki::Cozmo::RobotInterface::EnterBootloader const&)
       {
         // Nothing to do here
       }
@@ -697,18 +704,43 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_readNV(Anki::Cozmo::NVStorage::NVEntryTag const&)
+      void Process_readNV(Anki::Cozmo::NVStorage::NVStorageRead const&)
       {
         // Nothing to do here
       }
-      void Process_setRawPWM(Anki::Cozmo::RawPWM const&)
+      void Process_bodyState(Anki::Cozmo::RobotInterface::BodyFirmwareState const&)
       {
-        // Not used here
+        // Nothing to do here
       }
-      void Process_radioConnected(const bool& wifi)
+      void Process_rtipVersion(Anki::Cozmo::RobotInterface::RTIPVersionInfo const&)
       {
-        HAL::RadioUpdateState(wifi, false);
+        // Nothing to do here
       }
+      void Process_bootloadBody(Anki::Cozmo::RobotInterface::BootloadBody const&)
+      {
+        // Nothing to do here
+      }
+      void Process_setRTTO(Anki::Cozmo::RobotInterface::DebugSetRTTO const&)
+      {
+        // TODO honor this in simulator
+      }
+      void Process_assignCubeSlots(const CubeSlots& msg)
+      {
+        HAL::AssignCubeSlots(7, msg.factory_id);
+      }
+      void Process_setCubeLights(const CubeLights& msg)
+      {
+        BlockLightController::SetLights(msg.objectID, msg.lights);
+      }
+      void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
+      {
+        for(s32 i=0; i<NUM_BACKPACK_LEDS; ++i) {
+          BackpackLightController::SetParams((LEDId)i, msg.lights[i].onColor, msg.lights[i].offColor,
+                                             msg.lights[i].onFrames, msg.lights[i].offFrames,
+                                             msg.lights[i].transitionOnFrames, msg.lights[i].transitionOffFrames);
+        }
+      }
+#endif
 
 // ----------- Send messages -----------------
 
@@ -734,7 +766,7 @@ namespace Anki {
           }
         }
 
-        if(RobotInterface::SendMessage(*m, false, false) == true) {
+        if(RobotInterface::SendMessage(*m) == true) {
           // Update send history
           robotStateSendHist_[robotStateSendHistIdx_] = m->timestamp;
           if (++robotStateSendHistIdx_ > 1) robotStateSendHistIdx_ = 0;
@@ -747,6 +779,16 @@ namespace Anki {
         }
       }
 
+      
+      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted)
+      {
+        RobotInterface::MotorCalibration m;
+        m.motorID = motor;
+        m.calibStarted = calibStarted;
+        return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
+      }
+      
+      
 #ifndef TARGET_K02
       int SendText(const char *format, ...)
       {
@@ -847,9 +889,24 @@ namespace Anki {
     } // namespace RobotInterface
 
     namespace HAL {
-#ifndef TARGET_K02
-      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID, const bool reliable, const bool hot)
+#ifdef TARGET_K02
+      u8 BatteryGetVoltage10x()
       {
+        return static_cast<u8>(Messages::vBat * 10.0f);
+      }
+      bool BatteryIsCharging()
+      {
+        return false;
+      }
+      bool BatteryIsOnCharger()
+      {
+        return Messages::vExt > 4.0f;
+      }  
+#else
+      bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
+      {
+        const bool reliable = msgID < RobotInterface::TO_ENG_UNREL;
+        const bool hot = false;
         if (RadioIsConnected())
         {
           if (reliable)

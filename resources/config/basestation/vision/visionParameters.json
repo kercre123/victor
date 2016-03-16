@@ -1,0 +1,11 @@
+{
+  "faceDetection" : {
+    "detectionMode": "video"
+  },
+  "faceRecognition" : {
+    "recognitionThreshold": 750,
+    "mergeThreshold": 500,
+    "timeBetweenEnrollmentUpdates_sec": 60,
+    "timeBetweenInitialEnrollmentUpdates_sec": 1
+  }
+}

@@ -17,22 +17,6 @@ namespace Anki
       // Light up one of the backpack LEDs to the specified 24-bit RGB color
       void SetLED(LEDId led_id, u16 color)
       {
-        static const uint16_t LEFT_MASK  = PACK_COLORS(0xFF, 0, 0xFF, 0xFF);
-        static const uint16_t RIGHT_MASK = PACK_COLORS(0xFF, 0xFF, 0, 0xFF);
-
-        switch (led_id) {
-          case LED_BACKPACK_FRONT:
-          case LED_BACKPACK_MIDDLE:
-          case LED_BACKPACK_BACK:
-            colorState[led_id] = color;
-            break ;
-          case LED_BACKPACK_LEFT:
-            colorState[0] = (colorState[0] & LEFT_MASK) | PACK_COLORS(0, UNPACK_RED(color), 0, 0);
-            break ;
-          case LED_BACKPACK_RIGHT:
-            colorState[0] = (colorState[0] & RIGHT_MASK) | PACK_COLORS(0, 0, UNPACK_RED(color), 0);
-            break ;
-        }
       }
       
       void GetBackpack(uint16_t* colors) {
