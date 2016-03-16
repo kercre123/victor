@@ -336,11 +336,13 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SuccessOrFailure += RobotEngineMessages;
     RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
     RobotEngineManager.Instance.OnProgressionStatRecieved += UpdateProgressionStatFromEngineRobotManager;
+    RobotEngineManager.Instance.OnObjectConnectionState += ObjectConnectionState;
   }
 
   public void Dispose() {
     RobotEngineManager.Instance.DisconnectedFromClient -= Reset;
     RobotEngineManager.Instance.SuccessOrFailure -= RobotEngineMessages;
+    RobotEngineManager.Instance.OnObjectConnectionState -= ObjectConnectionState;
   }
 
   public void CooldownTimers(float delta) {
@@ -764,8 +766,13 @@ public class Robot : IRobot {
 
   #endregion
 
-  public void DiscoveredLightCube(Anki.Cozmo.ObjectDiscovered message) {
-    
+  public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
+    DAS.Debug(this, "ObjectConnectionState: " + message.objectID);
+    int id = (int)message.objectID;
+    if (!LightCubes.ContainsKey(id)) {
+      LightCube lightCube = new LightCube(id, ObjectFamily.LightCube, ObjectType.Block_LIGHTCUBE1);
+      LightCubes.Add(id, lightCube);
+    }
   }
 
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
@@ -788,7 +795,7 @@ public class Robot : IRobot {
     if (lightCube == null) {
       lightCube = new LightCube(message.objectID, message.objectFamily, message.objectType);
 
-      LightCubes.Add(lightCube, lightCube);
+      LightCubes.Add(message.objectID, lightCube);
       SeenObjects.Add(lightCube);
     }
 
@@ -819,15 +826,6 @@ public class Robot : IRobot {
     //DAS.Debug ("Robot", "saw a face at " + message.faceID);
     Face face = Faces.Find(x => x.ID == message.faceID);
     AddObservedFace(face != null ? face : null, message);
-  }
-
-  public void SendDiscoveredObjects(bool enable) {
-    // Will get a series of "Object Discovered" messages that represent blocks cozmo has "Heard" to connect to
-    G2U.SendDiscoveredObjects msg = new G2U.SendDiscoveredObjects();
-    msg.enable = enable;
-    msg.robotID = (byte)RobotEngineManager.Instance.CurrentRobotID;
-    RobotEngineManager.Instance.Message.SendDiscoveredObjects = msg;
-    RobotEngineManager.Instance.SendMessage();
   }
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {

@@ -74,14 +74,14 @@ public class BlockPoolPane : MonoBehaviour {
     // The first one gets previous ones serialized that may or may exist, this message gets the one we see.
     RobotEngineManager.Instance.OnObjectDiscoveredMsg += HandleObjectDiscoveredMsg;
     RobotEngineManager.Instance.OnObjectUndiscoveredMsg -= HandleObjectUndiscoveredMsg;
-    RobotEngineManager.Instance.CurrentRobot.SendDiscoveredObjects(true);
+    SendDiscoveredObjects(true);
   }
 
   void OnDestroy() {
     RobotEngineManager.Instance.OnInitBlockPoolMsg -= HandleInitBlockPool;
     RobotEngineManager.Instance.OnObjectDiscoveredMsg -= HandleObjectDiscoveredMsg;
     RobotEngineManager.Instance.OnObjectUndiscoveredMsg -= HandleObjectUndiscoveredMsg;
-    RobotEngineManager.Instance.CurrentRobot.SendDiscoveredObjects(false);
+    SendDiscoveredObjects(false);
     // clear the lights we've turned blue to show connections
     foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
       kvp.Value.SetLEDs(0, 0, 0, 0);
@@ -113,6 +113,15 @@ public class BlockPoolPane : MonoBehaviour {
       RobotEngineManager.Instance.Message.BlockSelectedMessage = _BlockSelectedMessage;
       RobotEngineManager.Instance.SendMessage();
     }
+  }
+
+  private void SendDiscoveredObjects(bool enable) {
+    // Will get a series of "Object Discovered" messages that represent blocks cozmo has "Heard" to connect to
+    G2U.SendDiscoveredObjects msg = new G2U.SendDiscoveredObjects();
+    msg.enable = enable;
+    msg.robotID = (byte)RobotEngineManager.Instance.CurrentRobotID;
+    RobotEngineManager.Instance.Message.SendDiscoveredObjects = msg;
+    RobotEngineManager.Instance.SendMessage();
   }
 
   private void HandlePoolEnabledValueChanged(bool val) {

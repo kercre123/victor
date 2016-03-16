@@ -196,16 +196,16 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
+  public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
+
+  }
+
   public void UpdateObservedObjectInfo(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
     // Won't be called
   }
 
   public void UpdateObservedFaceInfo(Anki.Cozmo.ExternalInterface.RobotObservedFace message) {
     // Won't be called
-  }
-
-  public void SendDiscoveredObjects(bool enable) {
-    
   }
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
