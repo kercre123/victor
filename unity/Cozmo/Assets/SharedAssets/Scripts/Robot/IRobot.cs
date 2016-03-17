@@ -149,6 +149,8 @@ public interface IRobot : IDisposable {
 
   void SetProgressionStats(StatContainer stats);
 
+  void SetEnableCliffSensor(bool enabled);
+
   void SetEnableAllBehaviors(bool enabled);
 
   void SetEnableBehaviorGroup(BehaviorGroup behaviorGroup, bool enabled);

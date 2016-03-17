@@ -234,7 +234,7 @@ namespace CodeBreaker {
       // Convert that vector to radians
       Quaternion facingCubesQuaternion = Quaternion.LookRotation(facingCubes, Vector3.up);
 
-      Vector3 targetPosition = midpointPosition - (facingCubes.normalized * kCubeDistance);
+      Vector3 targetPosition = midpointPosition - (facingCubes.normalized * kCubeDistance * (_Game.NumCubesInCode * 0.5f));
 
       if (Vector3.Distance(targetPosition, _CurrentRobot.WorldPosition) > kDriveToCubeBuffer) {
         _CurrentRobot.GotoPose(targetPosition, facingCubesQuaternion, callback: HandleMoveToCubeCallback);

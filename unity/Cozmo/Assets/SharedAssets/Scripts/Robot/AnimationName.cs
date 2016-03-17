@@ -9,7 +9,6 @@ public static class AnimationName {
   public const string kDefaultFace = "neutral_face";
 
   public const string kSleeping = "ID_sleeping_02";
-  public const string kOpenEyes = "ID_WakeUp";
   public const string kSurprise = "ID_reactTppl_Surprise";
   public const string kHappyA = "ID_catCatch_happyB";
   public const string kccMisch = "ID_catCatch_mischievous";
@@ -22,7 +21,7 @@ public static class AnimationName {
   public const string kCelebration2 = "Celebration2";
 
   public const string kShiver = "ID_test_shiver";
-  public const string kOpenEyesTwo = "ID_wake_openEyes";
+  public const string kConnect_WakeUp = "anim_VS_launch_wakeUp";
 
   public const string kCodeBreakerThinking = "MM_thinking";
   public const string kCodeBreakerNewIdea = "MM_newIdea";

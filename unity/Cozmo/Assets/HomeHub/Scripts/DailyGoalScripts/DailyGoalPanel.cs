@@ -70,10 +70,6 @@ public class DailyGoalPanel : MonoBehaviour {
     _TotalProgressBar.SetProgress(dailyProg);
     _BonusBarPanel.SetFriendshipBonus(bonusMult);
 
-    if (dailyProg > 0) {
-      // This might not be the best place to do this, but it should be ok for now.
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.RelationshipGain);
-    }
     DailyGoalManager.Instance.SetMinigameNeed();
 
     if (rewardIcons != null) {
@@ -176,6 +172,9 @@ public class DailyGoalPanel : MonoBehaviour {
             (ProgressionStatType)stat));
         }
       }
+    }
+    if (rewardIconsByStat.Length > 0) {
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.RelationshipGain);
     }
   }
 
