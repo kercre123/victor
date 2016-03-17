@@ -139,7 +139,6 @@ namespace CubeSlap {
       _CozmoSuccessCount++;
       UpdateScoreboard();
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleAnimationDone));
-      Debug.LogError("On Failure");
     }
 
     public void HandleAnimationDone(bool success) {

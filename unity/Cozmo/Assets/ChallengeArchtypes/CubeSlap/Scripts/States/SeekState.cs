@@ -29,9 +29,6 @@ namespace CubeSlap {
       bool isBad = true;
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       LightCube target = _CubeSlapGame.GetCurrentTarget();
-      if (target == null) {
-        Debug.LogError("Target is null!");
-      }
       if (target != null) {
         // If Cube is in the right position, enter game state.
         if (target.MarkersVisible) {
