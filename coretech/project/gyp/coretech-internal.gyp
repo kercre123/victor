@@ -100,6 +100,7 @@
       }],
       ['OS=="android"', {
         'target_archs%': ['armveabi-v7a'],
+	'target_cpu': ['arm'],
         'compiler_flags': [
           '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
           '-DANDROID=1',

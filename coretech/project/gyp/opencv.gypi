@@ -52,6 +52,7 @@
 	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/imgcodecs',
 	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/videoio',
 	  ],
+
 	  'opencv_libs': [
             'libzlib.a',
             'liblibjpeg.a',
@@ -72,11 +73,11 @@
           ],
 
           'opencv_lib_search_path_debug': [
-            '<(coretech_external_path)/build/opencv-android/sdk/native/libs',
+            '<(coretech_external_path)/build/opencv-android/sdk/native/libs/armeabi-v7a',
           ],
 
           'opencv_lib_search_path_release': [
-            '<(coretech_external_path)/build/opencv-android/sdk/native/libs',
+            '<(coretech_external_path)/build/opencv-android/sdk/native/libs/armeabi-v7a',
           ],
         },
 

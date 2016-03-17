@@ -146,6 +146,7 @@
       }],
       ['OS=="android"', {
         'target_archs%': ['armveabi-v7a'],
+        'target_cpu': ['arm'],
         'compiler_flags': [
           '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
           '-DANDROID=1',
@@ -1279,6 +1280,8 @@
       'include_dirs': [
         '../../basestation/src',
         '../../basestation/include',
+        '../../basestation/include/anki/cozmo/basestation',
+        '../../basestation/include/anki/cozmo/basestation/actions',
         '../../include',
         '../../robot/include',
         '../../generated/clad/engine',
