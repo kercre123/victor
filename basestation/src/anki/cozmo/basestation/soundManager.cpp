@@ -285,12 +285,17 @@ namespace Anki {
             }
             bool loadSoundFile = false;
             auto mapIt = _availableSounds.find(shortFilename);
+#ifdef __APPLE__
+            time_t tmpSeconds = attrib.st_mtimespec.tv_sec;
+#else
+            time_t tmpSeconds = attrib.st_mtime;
+#endif
             if (mapIt == _availableSounds.end()) {
-              _availableSounds[shortFilename].lastLoadedTime = attrib.st_mtimespec.tv_sec;
+              _availableSounds[shortFilename].lastLoadedTime = tmpSeconds;
               loadSoundFile = true;
             } else {
-              if (mapIt->second.lastLoadedTime < attrib.st_mtimespec.tv_sec) {
-                mapIt->second.lastLoadedTime = attrib.st_mtimespec.tv_sec;
+              if (mapIt->second.lastLoadedTime < tmpSeconds) {
+                mapIt->second.lastLoadedTime = tmpSeconds;
                 loadSoundFile = true;
               } else {
                 //PRINT_NAMED_INFO("Robot.ReadAnimationFile", "old time stamp for %s", fullFileName.c_str());
@@ -357,7 +362,7 @@ namespace Anki {
       if(subDir.empty()) { // Only display this message at the root
         PRINT_NAMED_INFO("SoundManager.ReadSoundDir",
                          "SoundManager now contains %lu available sounds.",
-                         _availableSounds.size());
+                         (unsigned long)_availableSounds.size());
       }
       
       return;

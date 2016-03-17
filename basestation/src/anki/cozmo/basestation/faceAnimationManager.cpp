@@ -78,12 +78,17 @@ namespace Cozmo {
           }
           bool loadAnimDir = false;
           auto mapIt = _availableAnimations.find(animName);
+#ifdef __APPLE__ // XXX: Possibly replace time structs with std::chrono
+            time_t tmpSeconds = attrib.st_mtimespec.tv_sec; //This maps to __darwin_time_t
+#else
+            time_t tmpSeconds = attrib.st_mtime;
+#endif
           if (mapIt == _availableAnimations.end()) {
-            _availableAnimations[animName].lastLoadedTime = attrib.st_mtimespec.tv_sec;
+            _availableAnimations[animName].lastLoadedTime = tmpSeconds;
             loadAnimDir = true;
           } else {
-            if (mapIt->second.lastLoadedTime < attrib.st_mtimespec.tv_sec) {
-              mapIt->second.lastLoadedTime = attrib.st_mtimespec.tv_sec;
+            if (mapIt->second.lastLoadedTime < tmpSeconds) {
+              mapIt->second.lastLoadedTime = tmpSeconds;
               loadAnimDir = true;
             } else {
               //PRINT_NAMED_INFO("Robot.ReadAnimationFile", "old time stamp for %s", fullFileName.c_str());
@@ -187,7 +192,7 @@ namespace Cozmo {
             
             //PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
             //                 "Added %lu files/frames to animation %s",
-            //                 _availableAnimations[animName].GetNumFrames(),
+            //                 (unsigned long)_availableAnimations[animName].GetNumFrames(),
             //                 animName.c_str());
           }
         }
@@ -266,7 +271,7 @@ namespace Cozmo {
         PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
                           "Requested frame number %d is invalid. "
                           "Only %lu frames available in animatino %s.",
-                          frameNum, animIter->second.GetNumFrames(),
+                          frameNum, (unsigned long)animIter->second.GetNumFrames(),
                           animName.c_str());
         return nullptr;
       }
