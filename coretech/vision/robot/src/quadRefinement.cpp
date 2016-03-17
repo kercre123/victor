@@ -4,6 +4,7 @@
 #include "anki/common/robot/hostIntrinsics_m4.h"
 
 #include "anki/vision/robot/fiducialDetection.h"
+#include "anki/vision/robot/imageProcessing.h"
 
 #define DEBUG_QUAD_REFINEMENT 0
 
@@ -14,23 +15,7 @@
 static Anki::Embedded::Matlab matlab(false);
 #endif
 
-#define ACCELERATION_NONE 0
-#define ACCELERATION_ARM_M4 1
-#define ACCELERATION_ARM_A7 2
 
-#if defined(__ARM_ARCH_7A__)
-#define ACCELERATION_TYPE ACCELERATION_ARM_A7
-#else
-#define ACCELERATION_TYPE ACCELERATION_ARM_M4
-#endif
-
-#if ACCELERATION_TYPE == ACCELERATION_NONE
-#warning not using ARM acceleration
-#endif
-
-#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
-#include <arm_neon.h>
-#endif
 
 namespace Anki {
   namespace Embedded {
