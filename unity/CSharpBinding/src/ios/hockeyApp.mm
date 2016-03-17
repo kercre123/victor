@@ -12,6 +12,17 @@
 #import <DASClientInfo.h>
 #import <HockeySDK/HockeySDK.h>
 
+#include <string>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+  
+  void UnitySendMessage(const char* obj, const char* method, const char* msg);
+  
+#ifdef __cplusplus
+}
+#endif
 
 
 @interface HockeyApp : NSObject 
@@ -103,6 +114,30 @@ BOOL gWaitingForCrashUpload = NO;
     // do normal initialization
     [self setupApplication];
   }
+  std::string comma_string(hockeyAppId.UTF8String);
+  
+  NSString *versionCode = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"];
+  comma_string += ",";
+  if( versionCode )
+  {
+    comma_string += [versionCode UTF8String];
+  }
+  NSString *versionName = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleShortVersionString"];
+  comma_string += ",";
+  if( versionName )
+  {
+    comma_string += [versionName UTF8String];
+  }
+  NSString *bundleIdentifier = [[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleIdentifier"];
+  comma_string += ",";
+  if( bundleIdentifier )
+  {
+    comma_string += [bundleIdentifier UTF8String];
+  }
+  // SDK Name... that is apparently not defined in the SDK according to the example source
+  comma_string += ",3.8.5,HockeySDK";
+  // Because Unity will log exceptions that are non-fatal but still bad, call every startup
+  UnitySendMessage("StartupManager", "UploadUnityCrashInfo", comma_string.c_str());
 }
 
 -(void)setupApplication {
@@ -185,16 +220,14 @@ BOOL gWaitingForCrashUpload = NO;
 void CreateHockeyApp()
 {
   // Example simple
-  /*
-  NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
-  if(!hockeyAppId || hockeyAppId.length == 0) {
-    DASEvent("HockeyApp.ios.disabled", "");
-    return;
-  }
-  [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:hockeyAppId];
-  [[BITHockeyManager sharedHockeyManager] startManager];
-  [[BITHockeyManager sharedHockeyManager].authenticator authenticateInstallation];
-  */
+//  NSString *hockeyAppId = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.hockeyapp.appid"];
+//  if(!hockeyAppId || hockeyAppId.length == 0) {
+//    DASEvent("HockeyApp.ios.disabled", "");
+//    return;
+//  }
+//  [[BITHockeyManager sharedHockeyManager] configureWithIdentifier:hockeyAppId];
+//  [[BITHockeyManager sharedHockeyManager] startManager];
+//  [[BITHockeyManager sharedHockeyManager].authenticator authenticateInstallation];
   
   HockeyApp *hockeyApp = [[HockeyApp alloc] init];
   [hockeyApp activateHockeyApp];

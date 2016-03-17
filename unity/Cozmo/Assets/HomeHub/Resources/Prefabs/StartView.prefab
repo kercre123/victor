@@ -34,6 +34,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &147020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22487342}
+  - 114: {fileID: 11477080}
+  m_Layer: 5
+  m_Name: CubeContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1 &155692
 GameObject:
   m_ObjectHideFlags: 0
@@ -77,6 +93,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22434626}
   - 114: {fileID: 11473448}
+  - 114: {fileID: 11452136}
   m_Layer: 5
   m_Name: StartView
   m_TagString: Untagged
@@ -96,6 +113,22 @@ GameObject:
   - 199: {fileID: 19988744}
   m_Layer: 5
   m_Name: Particle System2
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &177044
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22450696}
+  - 114: {fileID: 11412394}
+  m_Layer: 5
+  m_Name: PromptProxy
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -136,22 +169,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!1 &185102
-GameObject:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  serializedVersion: 4
-  m_Component:
-  - 224: {fileID: 22459704}
-  - 114: {fileID: 11404312}
-  m_Layer: 5
-  m_Name: ConnectButton
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!1 &197298
 GameObject:
   m_ObjectHideFlags: 0
@@ -180,7 +197,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22434626}
-  m_RootOrder: 6
+  m_RootOrder: 5
 --- !u!4 &498456
 Transform:
   m_ObjectHideFlags: 1
@@ -192,41 +209,23 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22434626}
-  m_RootOrder: 5
---- !u!114 &11404312
+  m_RootOrder: 4
+--- !u!114 &11412394
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 185102}
+  m_GameObject: {fileID: 177044}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
-  ModifiedValues:
-  - ObjectPath: ButtonDropShadow/ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#label.connect"'
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_GameObjectType
-    JsonValue: 3
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_EventType
-    JsonValue: 4
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
-    JsonValue: -303697590
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_DASEventViewController
-    JsonValue: '"assignedByStartView"'
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_DASEventButtonName
-    JsonValue: '"connect_button"'
+  Prefab: {fileID: 197596, guid: ae49e6684bcd54750a412c285af56dd3, type: 2}
+  ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: StartView:_ConnectButton
+    FieldName: ShowCozmoCubeSlide:_ShowCozmoCubesLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11439074
@@ -351,6 +350,20 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11452136
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 168466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95442a215d5084493bd1debeb942b416, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _CubeContainer: {fileID: 11477080}
+  _CubePrefab: {fileID: 11403952, guid: 9bc3dc942ef314969978ec0457452ccd, type: 2}
+  _ShowCozmoCubesLabel: {fileID: 0}
 --- !u!114 &11457522
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -416,15 +429,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: daa075ad0ae694f99810197cf8beeddc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: start_view
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
-  _ConnectButton: {fileID: 0}
   _DisconnectedColor: {r: 0.019607844, g: 0.08627451, b: 0.101960786, a: 0.32156864}
   _WifiIndicator: {fileID: 11442104}
   _BluetoothIndicator: {fileID: 11449968}
   _SecretSkipButton: {fileID: 11439074}
+  _ShowCozmoCubesContainer: {fileID: 11452136}
+--- !u!114 &11477080
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 147020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -405508275, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 4
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 1
 --- !u!114 &11492438
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -3579,7 +3611,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22434626}
-  m_RootOrder: 7
+  m_RootOrder: 6
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 20, y: 20}
@@ -3596,7 +3628,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 22488952}
-  - {fileID: 22459704}
   - {fileID: 22439646}
   - {fileID: 22494656}
   - {fileID: 22492796}
@@ -3604,6 +3635,8 @@ RectTransform:
   - {fileID: 431988}
   - {fileID: 22411568}
   - {fileID: 22448516}
+  - {fileID: 22487342}
+  - {fileID: 22450696}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
@@ -3622,11 +3655,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22434626}
-  m_RootOrder: 2
+  m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 300, y: 50}
-  m_SizeDelta: {x: 800, y: 300}
+  m_AnchoredPosition: {x: 308, y: 178}
+  m_SizeDelta: {x: 857, y: 361}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22448516
 RectTransform:
@@ -3639,28 +3672,45 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22434626}
-  m_RootOrder: 8
+  m_RootOrder: 7
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: -80, y: 20}
   m_SizeDelta: {x: 200, y: 200}
   m_Pivot: {x: 1, y: 1}
---- !u!224 &22459704
+--- !u!224 &22450696
 RectTransform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 185102}
+  m_GameObject: {fileID: 177044}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22434626}
-  m_RootOrder: 1
+  m_RootOrder: 9
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -200}
-  m_SizeDelta: {x: 600, y: 200}
+  m_AnchoredPosition: {x: 0, y: -383.5}
+  m_SizeDelta: {x: 1500, y: 150}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!224 &22487342
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 147020}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 22434626}
+  m_RootOrder: 8
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: -204}
+  m_SizeDelta: {x: 800, y: 209}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22488952
 RectTransform:
@@ -3690,11 +3740,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22434626}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -460, y: 75}
-  m_SizeDelta: {x: 450, y: 250}
+  m_AnchoredPosition: {x: -505, y: 208}
+  m_SizeDelta: {x: 482, y: 301}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22494656
 RectTransform:
@@ -3707,11 +3757,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 22434626}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -200, y: 50}
-  m_SizeDelta: {x: 300, y: 300}
+  m_AnchoredPosition: {x: -227, y: 178}
+  m_SizeDelta: {x: 321, y: 361}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:

@@ -1143,6 +1143,7 @@
 					"$(SRCROOT)/sphinx",
 					"$(SRCROOT)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
+					"$(SRCROOT)/HockeyApp",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-DINIT_SCRIPTING_BACKEND=1";
@@ -1201,6 +1202,7 @@
 					"$(SRCROOT)/opencv",
 					"$(ANKI_BUILD_UNITY_XCODE_BUILD_DIR)/Libraries",
 					"$(SRCROOT)/sphinx",
+					"$(SRCROOT)/HockeyApp",
 				);
 				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "-DINIT_SCRIPTING_BACKEND=1";

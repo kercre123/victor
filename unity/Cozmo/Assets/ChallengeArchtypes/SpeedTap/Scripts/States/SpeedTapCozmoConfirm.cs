@@ -14,9 +14,11 @@ namespace SpeedTap {
     }
 
     private void HandleTapDone(bool success) {
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CubeCozmoTap);
+      _SpeedTapGame.StopCycleCube(_SpeedTapGame.CozmoBlock);
+      _SpeedTapGame.CozmoBlock.SetLEDs(Cozmo.CubePalette.ReadyColor.lightColor);
       _SpeedTapGame.SetCozmoOrigPos();
       _StateMachine.SetNextState(new SpeedTapPlayerConfirm());
-      _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
     }
   }
 

@@ -150,7 +150,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95442a215d5084493bd1debeb942b416, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _NumCubesBar: {fileID: 11457834}
+  _CubeContainer: {fileID: 11416400}
+  _CubePrefab: {fileID: 11403952, guid: 9bc3dc942ef314969978ec0457452ccd, type: 2}
+  _CubeOff: {fileID: 21300000, guid: 7f27c6ce3444a4d8087036c225ac7d37, type: 3}
+  _CubeOn: {fileID: 21300000, guid: 5cd7f4864070540f8b6f069d19efaebe, type: 3}
   _ShowCozmoCubesLabel: {fileID: 0}
 --- !u!114 &11451162
 MonoBehaviour:
@@ -164,7 +167,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: .316000015}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.316}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -217,7 +220,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d37561d0eb89449ab33f38ecb7bd8ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _SegmentPrefab: {fileID: 11437646, guid: 9bc3dc942ef314969978ec0457452ccd, type: 2}
+  _SegmentPrefab: {fileID: 0}
   _SegmentContainer: {fileID: 11416400}
 --- !u!114 &11462478
 MonoBehaviour:
@@ -276,11 +279,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22455672}
   m_RootOrder: 0
-  m_AnchorMin: {x: .5, y: .5}
-  m_AnchorMax: {x: .5, y: .5}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -183, y: 0}
   m_SizeDelta: {x: 843, y: 578}
-  m_Pivot: {x: .5, y: .5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22455672
 RectTransform:
   m_ObjectHideFlags: 1
@@ -301,7 +304,7 @@ RectTransform:
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: .5, y: .5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22457204
 RectTransform:
   m_ObjectHideFlags: 1
@@ -314,11 +317,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22455672}
   m_RootOrder: 2
-  m_AnchorMin: {x: .5, y: .5}
-  m_AnchorMax: {x: .5, y: .5}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -751, y: 0}
   m_SizeDelta: {x: 338, y: 213}
-  m_Pivot: {x: .5, y: .5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22469606
 RectTransform:
   m_ObjectHideFlags: 1
@@ -336,7 +339,7 @@ RectTransform:
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: .5, y: .5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22473990
 RectTransform:
   m_ObjectHideFlags: 1
@@ -349,11 +352,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22455672}
   m_RootOrder: 1
-  m_AnchorMin: {x: .5, y: .5}
-  m_AnchorMax: {x: .5, y: .5}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 243, y: 3}
   m_SizeDelta: {x: 184, y: 578}
-  m_Pivot: {x: .5, y: .5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22479862
 RectTransform:
   m_ObjectHideFlags: 1
@@ -366,11 +369,11 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 22455672}
   m_RootOrder: 3
-  m_AnchorMin: {x: .5, y: .5}
-  m_AnchorMax: {x: .5, y: .5}
-  m_AnchoredPosition: {x: 625, y: 1.50001526}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 625, y: 1.5000153}
   m_SizeDelta: {x: 529, y: 575}
-  m_Pivot: {x: .5, y: .5}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!225 &22534124
 CanvasGroup:
   m_ObjectHideFlags: 1
@@ -388,7 +391,12 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _CubeOff
+      value: 
+      objectReference: {fileID: 21300000, guid: 7f27c6ce3444a4d8087036c225ac7d37,
+        type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 146872}
