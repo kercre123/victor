@@ -3090,7 +3090,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
     {
       FindFcn findLambda = [](ObservableObject* current, ObservableObject* best)
       {
-        if(best == nullptr || current->GetLastObservedTime() < best->GetLastObservedTime()) {
+        if(best == nullptr || current->GetLastObservedTime() > best->GetLastObservedTime()) {
           return true;
         } else {
           return false;

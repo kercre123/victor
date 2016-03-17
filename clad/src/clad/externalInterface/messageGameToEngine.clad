@@ -168,6 +168,9 @@ message EnableLiftPower {
     bool enable
 }
 
+message EnableCliffSensor {
+    bool enable
+}
 
 // SetHeadAngle
 message SetHeadAngle {
@@ -610,6 +613,14 @@ message ReadAnimationFile {
 message EnableVisionMode {
    VisionMode mode,
    bool       enable
+}
+
+message VisionRunMode {
+  bool isSync
+}
+
+message ReliableTransportRunMode {
+  bool isSync
 }
 
 // SetActiveObjectLEDs

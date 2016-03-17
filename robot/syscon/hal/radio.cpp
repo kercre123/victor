@@ -98,11 +98,8 @@ static const int ADV_CHANNEL = 81;
 // This is for initial channel selection (do not use advertisement channel)
 static const int MAX_TX_CHANNELS = 64;
 
-//static const int RADIO_INTERVAL_DELAY = 0xB6;
-//static const int RADIO_TIMEOUT_MSB = 20;
-
-static const int RADIO_INTERVAL_DELAY = 0xB3;
-static const int RADIO_TIMEOUT_MSB = 40;
+static const int RADIO_INTERVAL_DELAY = 0xB6;
+static const int RADIO_TIMEOUT_MSB = 20;
 
 static const int RADIO_WAKEUP_OFFSET = 18;
 
@@ -112,8 +109,6 @@ extern GlobalDataToBody g_dataToBody;
 
 // Current status values of cubes/chargers
 static RadioState        radioState;
-static RTOS_Task*        radioTask;
-static RTOS_Task*        radioSilenceTask;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -191,45 +186,23 @@ void Radio::init() {
     accessories[i].address = TalkingAddress;
     createAddress(accessories[i].address);
   }
-
-  // Start the radio stack
-  radioTask = RTOS::schedule(manage, SCHEDULE_PERIOD);
-  radioSilenceTask = RTOS::schedule(silence, SCHEDULE_PERIOD);
-  RTOS::setPriority(radioTask, RTOS_RADIO_PRIORITY);
-  RTOS::stop(radioTask);
-  RTOS::stop(radioSilenceTask);
-
-  #if 0
-  assignProp(0, 0x26);
-  assignProp(1, 0xd9);
-  assignProp(2, 0x110);
-  #endif
 }
 
 void Radio::advertise(void) {
   const uesb_config_t uesb_config = {
-    UESB_BITRATE_1MBPS,
+    RADIO_MODE_MODE_Nrf_1Mbit,
     UESB_CRC_8BIT,
-    UESB_TX_POWER_0DBM,
+    RADIO_TXPOWER_TXPOWER_0dBm,
     PACKET_SIZE,
     5,    // Address length
     RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
   uesb_init(&uesb_config);
-  EnterState(RADIO_PAIRING);
-  uesb_start();
-
-  RTOS::start(radioTask);
-
-  // This creates a quiet period for the radio to reduce jitter
-  RTOS::start(radioSilenceTask);
-  RTOS::delay(radioSilenceTask, SCHEDULE_PERIOD - SILENCE_PERIOD);
 }
 
 void Radio::shutdown(void) {
   uesb_stop();
-  RTOS::stop(radioTask);
 }
 
 static int LocateAccessory(uint32_t id) {
@@ -264,12 +237,6 @@ static void EnterState(RadioState state) {
   }
 }
 
-static void send_dummy_byte(void) {
-  // This just send garbage and return to pairing mode when finished
-  EnterState(RADIO_PAIRING);
-  uesb_write_tx_payload(&accessories[currentAccessory].address, 1, NULL, 0);
-}
-
 static void send_capture_packet(void* userdata) {
   int slot = (int) userdata;
 
@@ -298,10 +265,10 @@ void SendObjectConnectionState(int slot)
   RobotInterface::SendMessage(msg);
 }
 
-extern "C" void uesb_event_handler(void)
+void uesb_event_handler(uint32_t flags)
 {
   // Only respond to receive interrupts
-  if(~uesb_get_clear_interrupts() & UESB_INT_RX_DR_MSK) {
+  if(~flags & UESB_INT_RX_DR_MSK) {
     return ;
   }
 
@@ -374,7 +341,7 @@ extern "C" void uesb_event_handler(void)
     msg.shockCount = ap->shockCount;
     RobotInterface::SendMessage(msg);
 
-    send_dummy_byte();
+    EnterState(RADIO_PAIRING);
     break ;
   }
 }
@@ -400,13 +367,10 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   acc->active = false;
 }
 
-void Radio::silence(void* userdata) {
-  uesb_pause();
-}
+static int next_timer = 0;
 
-void Radio::manage(void* userdata) {
-  // Reenable the radio
-  uesb_resume();
+void Radio::prepare(void* userdata) {
+  uesb_stop();
 
   // Transmit to accessories round-robin
   if (++currentAccessory >= TICK_LOOP) {
@@ -418,20 +382,7 @@ void Radio::manage(void* userdata) {
   AccessorySlot* acc = &accessories[currentAccessory];
 
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
-    // We send the previous LED state (so we don't get jitter on radio)
-    uesb_address_desc_t& address = accessories[currentAccessory].address;
-
-    // Broadcast to the appropriate device
-    EnterState(RADIO_TALKING);
-    memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
-    uesb_write_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
-
-    #ifdef CHANNEL_HOP
-    // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
-    address.rf_channel = next_channel(address.rf_channel);
-    #endif
-
-    // Update the color status of the 
+    // Update the color status of the lights
     uint32_t currentFrame = GetFrame();
 
     int sum = 0;
@@ -453,6 +404,19 @@ void Radio::manage(void* userdata) {
     }
 
     acc->tx_state.ledDark = 0xFF - isqrt(sum);
+
+    // We send the previous LED state (so we don't get jitter on radio)
+    uesb_address_desc_t& address = accessories[currentAccessory].address;
+
+    // Broadcast to the appropriate device
+    EnterState(RADIO_TALKING);
+    memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
+    uesb_prepare_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
+
+    #ifdef CHANNEL_HOP
+    // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
+    address.rf_channel = next_channel(address.rf_channel);
+    #endif
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
     if (acc->active)
@@ -461,6 +425,30 @@ void Radio::manage(void* userdata) {
       SendObjectConnectionState(currentAccessory);
     }
     
-    send_dummy_byte();
+    // This just send garbage and return to pairing mode when finished
+    EnterState(RADIO_PAIRING);
+    uesb_prepare_tx_payload(&accessories[currentAccessory].address, 1, NULL, 0);
+  }
+}
+
+void Radio::resume(void* userdata) {
+  // Reenable the radio
+  uesb_start();
+}
+
+// THIS IS A TEMPORARY HACK AND I HATE IT
+void Radio::manage(void) {
+  static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
+  static int next_resume  = next_prepare + SILENCE_PERIOD;
+  int count = GetCounter();
+
+  if (next_prepare <= count) {
+    prepare(NULL);
+    next_prepare += SCHEDULE_PERIOD;
+  }
+  
+  if (next_resume <= count) {
+    resume(NULL);
+    next_resume += SCHEDULE_PERIOD;
   }
 }

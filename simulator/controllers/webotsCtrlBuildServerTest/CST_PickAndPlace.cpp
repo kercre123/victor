@@ -87,6 +87,7 @@ namespace Cozmo {
 
       case TestState::MoveHead:
       {
+        MakeSynchronous();
         SendMoveHeadToAngle(0, 100, 100);
         _testState = TestState::VerifyBlocks;
         break;

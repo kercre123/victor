@@ -54,10 +54,13 @@ bool CheckSig(void) {
 int main (void) {
   TimerInit();
 
-  if (*MAGIC_LOCATION == SPI_ENTER_RECOVERY || !CheckSig()) {
+  Battery::init();
+  
+  if (*MAGIC_LOCATION == SPI_ENTER_RECOVERY || !CheckSig())
+  {
     *MAGIC_LOCATION = 0;
     
-    Battery::init();
+    Battery::powerOn();
     EnterRecovery();
     NVIC_SystemReset();
   }

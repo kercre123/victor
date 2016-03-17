@@ -65,6 +65,8 @@ namespace Anki {
       virtual bool GetAddress(TransportAddress& address, ConnectionId connectionId) const override;
 
       virtual uint32_t GetMaxTotalBytesPerMessage() const override;
+      
+      Anki::Util::ReliableTransport* GetReliableTransport() { return &reliableTransport; }
 
     protected:
 

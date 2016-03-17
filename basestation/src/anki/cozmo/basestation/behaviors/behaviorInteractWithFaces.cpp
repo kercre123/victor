@@ -40,7 +40,7 @@ namespace Cozmo {
   using namespace ExternalInterface;
 
   //static const char * const kStrongFriendlyReactAnimName = "ID_react2face_friendly_01";
-  static const char * const kMinorFriendlyReactAnimName = "ID_react2face_2nd";
+  static const char * const kMinorFriendlyReactAnimName = "anim_speedTap_findsPlayer_01";
   static const char * const kStrongScaredReactAnimName = "ID_react2face_disgust";
   
   static const std::vector<const char *> kReactionAnimNames = {

@@ -37,6 +37,7 @@ namespace Cozmo {
 
 // TODO:(bn) ask Mooly, maybe we can use some of the alts here as well?
 static const char* kBlockReactAnim = "ID_react2block_02";
+static const char* kCliffReactAnimName = "anim_VS_loco_cliffReact";
 
 using namespace ExternalInterface;
 
@@ -49,7 +50,8 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   SubscribeToTags({{
     EngineToGameTag::RobotObservedObject,
     EngineToGameTag::RobotObservedPossibleObject,
-    EngineToGameTag::RobotPutDown
+    EngineToGameTag::RobotPutDown,
+    EngineToGameTag::CliffEvent
   }});
 
   if (GetEmotionScorerCount() == 0)
@@ -84,6 +86,17 @@ bool BehaviorLookAround::IsRunnable(const Robot& robot, double currentTime_sec) 
   return false;
 }
 
+float BehaviorLookAround::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+{
+  float minScore = 0.0f;
+  // if we are going to examine (or searching for) a possible block, increase the minimum score
+  if( _currentState == State::LookingAtPossibleObject || _currentState == State::ExaminingFoundObject ) {
+    minScore = 0.8f;
+  }
+
+  return std::max( minScore, IBehavior::EvaluateRunningScoreInternal(robot, currentTime_sec) );
+}
+
 void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
 {
   switch(event.GetData().GetTag())
@@ -103,7 +116,11 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
     case EngineToGameTag::RobotPutDown:
       HandleRobotPutDown(event, robot);
       break;
-      
+
+    case EngineToGameTag::CliffEvent:
+      HandleCliffEvent(event, robot);
+      break;
+
     default:
       PRINT_NAMED_ERROR("BehaviorLookAround.HandleWhileRunning.InvalidTag",
                         "Received event with unhandled tag %hhu.",
@@ -278,6 +295,13 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(Robot& robot)
              });
 }
 
+void BehaviorLookAround::TransitionToBackingUpFromCliff(Robot& robot)
+{
+  SET_STATE(State::BackingUpFromCliff);
+  StopActing(false);
+  StartActing(new PlayAnimationAction(robot, kCliffReactAnimName),
+              &BehaviorLookAround::TransitionToInactive);
+}
 
 IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double currentTime_sec)
 {
@@ -434,6 +458,15 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
   }
 }
 
+void BehaviorLookAround::HandleCliffEvent(const EngineToGameEvent& event, Robot& robot)
+{
+  if( event.GetData().Get_CliffEvent().detected ) {
+    // consider this location an obstacle
+    UpdateSafeRegion(robot.GetPose().GetTranslation());
+    TransitionToBackingUpFromCliff(robot);
+  }
+}
+
 void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
 {
   Vec3f translationDiff = objectPosition - _moveAreaCenter.GetTranslation();
@@ -527,6 +560,7 @@ void BehaviorLookAround::SetState_internal(State state, const std::string& state
 {
   _currentState = state;
   PRINT_NAMED_DEBUG("BehaviorLookAround.TransitionTo", "%s", stateName.c_str());
+  SetStateName(stateName);
 }
 
 

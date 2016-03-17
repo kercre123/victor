@@ -4,6 +4,7 @@
 #include "hardware.h"
 #include "backpack.h"
 #include "rtos.h"
+#include "radio.h"
 
 void Timer::init()
 {
@@ -65,6 +66,7 @@ extern "C" void RTC1_IRQHandler() {
 
   NRF_RTC1->EVENTS_TICK = 0;
   
-  RTOS::manage();
+  Radio::manage();
   Backpack::update();
+  RTOS::manage();
 }
