@@ -10,10 +10,10 @@ namespace SpeedTap {
 
     private SpeedTapGame _SpeedTapGame = null;
 
-    private bool _ShowHowToPlay = false;
+    private bool _IsFirstTime = false;
 
-    public SpeedTapWaitForCubePlace(bool showHowToPlay) {
-      _ShowHowToPlay = showHowToPlay;
+    public SpeedTapWaitForCubePlace(bool isFirstTime) {
+      _IsFirstTime = isFirstTime;
     }
 
     private bool _GotoObjectComplete = false;
@@ -21,21 +21,25 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      if (_ShowHowToPlay) {
+      // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
+      _CurrentRobot.SetEnableCliffSensor(true);
+      if (_IsFirstTime) {
         _SpeedTapGame.InitialCubesDone();
       }
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
-      _SpeedTapGame.CozmoBlock.SetLEDs(Color.white);
-      _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
+
+      _SpeedTapGame.StartCycleCube(_SpeedTapGame.CozmoBlock, 
+        Cozmo.CubePalette.TapMeColor.lightColors, 
+        Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
+      
       // Just hold on this state if all rounds are over.
       if (_SpeedTapGame.AllRoundsOver) {
         return;
       }
+
+      _SpeedTapGame.ShowWaitForCozmoSlide();
       _GotoObjectComplete = false;
 
-      if (_ShowHowToPlay) {
-        _StateMachine.PushSubState(new HowToPlayState(null));
-      }
       _CurrentRobot.SetLiftHeight(1.0f, HandleLiftRaiseComplete);
     }
 
@@ -55,11 +59,12 @@ namespace SpeedTap {
     public override void Update() {
       if (_GotoObjectComplete) {
         if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < _kArriveAtCubeThreshold) {
+          // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
+          _CurrentRobot.SetEnableCliffSensor(false);
           _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
         }
         else {
           // restart this state
-          _SpeedTapGame.InitialCubesDone();
           _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
         }
       }

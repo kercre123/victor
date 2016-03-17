@@ -308,15 +308,15 @@ public class Robot : IRobot {
 
     // These defaults should eventually be in clad
     PathMotionProfileDefault = new PathMotionProfile(
-      speed_mmps: 60.0f,
+      speed_mmps: 100.0f, // 160 booking, 80-120 reasonable, 60 stately pace
       accel_mmps2: 200.0f,
       decel_mmps2: 500.0f,
-      pointTurnSpeed_rad_per_sec: 2.0f,
+      pointTurnSpeed_rad_per_sec: 2.0f, // 2.5 max
       pointTurnAccel_rad_per_sec2: 100.0f,
       pointTurnDecel_rad_per_sec2: 500.0f,
-      dockSpeed_mmps: 100.0f,
+      dockSpeed_mmps: 100.0f, // should be less than speed_mmps
       dockAccel_mmps2: 200.0f,
-      reverseSpeed_mmps: 60.0f
+      reverseSpeed_mmps: 80.0f
     );
             
     BackpackLights = new ILight[Singleton<SetBackpackLEDs>.Instance.onColor.Length];
@@ -1291,6 +1291,11 @@ public class Robot : IRobot {
 
   public void VisionWhileMoving(bool enable) {
     RobotEngineManager.Instance.Message.VisionWhileMoving = Singleton<VisionWhileMoving>.Instance.Initialize(System.Convert.ToByte(enable));
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void SetEnableCliffSensor(bool enabled) {
+    RobotEngineManager.Instance.Message.EnableCliffSensor = Singleton<EnableCliffSensor>.Instance.Initialize(enabled);
     RobotEngineManager.Instance.SendMessage();
   }
 

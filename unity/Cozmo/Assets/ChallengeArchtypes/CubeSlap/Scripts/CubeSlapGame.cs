@@ -28,8 +28,6 @@ namespace CubeSlap {
     private float _BaseSlapChance;
     private int _MaxFakeouts;
 
-    private int _SlapCount;
-
     private LightCube _CurrentTarget = null;
 
     [SerializeField]
@@ -48,6 +46,7 @@ namespace CubeSlap {
       _MaxFakeouts = config.MaxFakeouts;
       _CozmoSuccessCount = 0;
       _CozmoFailCount = 0;
+      _CurrentTarget = null;
       InitializeMinigameObjects(config.NumCubesRequired());
     }
 
@@ -68,25 +67,11 @@ namespace CubeSlap {
 
     public LightCube GetCurrentTarget() {
       if (_CurrentTarget == null) {
-        _CurrentTarget = GetClosestAvailableBlock();
-      }
-      return _CurrentTarget;
-    }
-
-    private LightCube GetClosestAvailableBlock() {
-      float minDist = float.MaxValue;
-      ObservedObject closest = null;
-
-      for (int i = 0; i < CurrentRobot.SeenObjects.Count; ++i) {
-        if (CurrentRobot.SeenObjects[i] is LightCube) {
-          float d = Vector3.Distance(CurrentRobot.SeenObjects[i].WorldPosition, CurrentRobot.WorldPosition);
-          if (d < minDist) {
-            minDist = d;
-            closest = CurrentRobot.SeenObjects[i];
-          }
+        if (this.CubesForGame.Count > 0) {
+          _CurrentTarget = this.CubesForGame[0];
         }
       }
-      return closest as LightCube;
+      return _CurrentTarget;
     }
 
     // Attempt the pounce
@@ -146,17 +131,21 @@ namespace CubeSlap {
 
     public void OnSuccess() {
       _CozmoFailCount++;
+      UpdateScoreboard();
       _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleAnimationDone));
     }
 
     public void OnFailure() {
       _CozmoSuccessCount++;
+      UpdateScoreboard();
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleAnimationDone));
     }
 
     public void HandleAnimationDone(bool success) {
       // Determines winner and loser at the end of Cozmo's animation, or returns
       // to seek state for the next round
+      // Display the current round
+      UpdateRoundsUI();
       if (_CozmoFailCount + _CozmoSuccessCount >= _Rounds) {
         if (_CozmoSuccessCount > _CozmoFailCount) {
           _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleLoseGameAnimationDone));
@@ -197,6 +186,15 @@ namespace CubeSlap {
     protected override int CalculateExcitementStatRewards() {
       return _CozmoSuccessCount;
     }
- 
+
+    public void UpdateRoundsUI() {
+      // Display the current round
+      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoSuccessCount + _CozmoFailCount + 1);
+    }
+
+    public void UpdateScoreboard() {
+      SharedMinigameView.CozmoScoreboard.Score = _CozmoSuccessCount;
+      SharedMinigameView.PlayerScoreboard.Score = _CozmoFailCount;
+    }
   }
 }
