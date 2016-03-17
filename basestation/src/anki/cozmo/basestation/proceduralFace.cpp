@@ -66,7 +66,7 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
   if(eyeArray.size() != N) {
     PRINT_NAMED_WARNING("ProceduralFace.SetEyeArrayHelper.WrongNumParams",
                         "Unexpected number of parameters for %s array (%lu vs. %lu)",
-                        eyeStr, eyeArray.size(), N);
+                        eyeStr, (unsigned long)eyeArray.size(), (unsigned long)N);
     return;
   }
   

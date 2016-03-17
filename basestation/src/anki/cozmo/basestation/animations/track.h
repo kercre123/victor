@@ -167,7 +167,7 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrameToBack(const FRAME_TYPE& keyFra
   if(_frames.size() > MAX_FRAMES_PER_TRACK) {
     PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameToBack.TooManyFrames",
       "There are already %lu frames in %s track. Refusing to add more.",
-      _frames.size(), keyFrame.GetClassName().c_str());
+      (unsigned long)_frames.size(), keyFrame.GetClassName().c_str());
     return RESULT_FAIL;
   }
 
@@ -189,7 +189,7 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrameByTime(const FRAME_TYPE& keyFra
   if(_frames.size() > MAX_FRAMES_PER_TRACK) {
     PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameToBack.TooManyFrames",
       "There are already %lu frames in %s track. Refusing to add more.",
-      _frames.size(), keyFrame.GetClassName().c_str());
+      (unsigned long)_frames.size(), keyFrame.GetClassName().c_str());
     return RESULT_FAIL;
   }
 

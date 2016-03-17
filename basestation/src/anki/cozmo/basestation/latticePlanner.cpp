@@ -358,7 +358,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
   else {
     PRINT_NAMED_INFO("LatticePlanner.ComputePath.NoValidTarget",
                      "could not find valid target out of %lu possible targets\n",
-                     numTargetPoses);
+                     (unsigned long)numTargetPoses);
     return EComputePathStatus::Error;
   }
 }

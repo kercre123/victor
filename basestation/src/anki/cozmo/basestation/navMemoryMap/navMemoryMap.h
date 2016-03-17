@@ -13,7 +13,7 @@
 #define ANKI_COZMO_NAV_MEMORY_MAP_H
 
 #include "anki/cozmo/basestation/navMemoryMap/iNavMemoryMap.h"
-#include "navMeshQuadTree.h"
+#include "navMeshQuadTree/navMeshQuadTree.h"
 
 namespace Anki {
 namespace Cozmo {

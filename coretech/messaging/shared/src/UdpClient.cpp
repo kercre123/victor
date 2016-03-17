@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <linux/in.h>
 
 UdpClient::UdpClient()
 {

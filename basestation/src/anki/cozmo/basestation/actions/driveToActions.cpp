@@ -576,7 +576,7 @@ namespace Anki {
       
       PRINT_NAMED_INFO("DriveToPoseAction.SetGoal",
                        "Setting %lu possible goal options.",
-                       _goalPoses.size());
+                       (unsigned long)_goalPoses.size());
       
       _isGoalSet = true;
       

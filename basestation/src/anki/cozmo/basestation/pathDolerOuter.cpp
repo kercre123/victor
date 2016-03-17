@@ -57,8 +57,8 @@ void PathDolerOuter::Dole(size_t numToDole)
 
   printf("PathDolerOuter: should dole from %d to %lu (totalSegments = %lu)\n",
          lastDoledSegmentIdx_ + 1,
-         endIdx,
-         pathSizeOnBasestation_);
+         (unsigned long)endIdx,
+         (unsigned long)pathSizeOnBasestation_);
 
   for(size_t i = (size_t)lastDoledSegmentIdx_ + 1; i <= endIdx; ++i) {
 
