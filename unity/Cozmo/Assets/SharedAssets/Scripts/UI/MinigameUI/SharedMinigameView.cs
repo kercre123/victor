@@ -437,6 +437,9 @@ namespace Cozmo {
       }
 
       public GameObject ShowWideGameStateSlide(GameObject prefab, string slideDasName) {
+        if (slideDasName == _CurrentSlideName) {
+          return _CurrentSlide.gameObject;
+        }
         InfoTitleText = null;
         HideGameStateSlide();
         HidePlayerScoreboard();
@@ -445,6 +448,9 @@ namespace Cozmo {
       }
 
       public GameObject ShowNarrowGameStateSlide(GameObject prefab, string slideDasName) {
+        if (slideDasName == _CurrentSlideName) {
+          return _CurrentSlide.gameObject;
+        }
         InfoTitleText = null;
         HideGameStateSlide();
         return ShowGameStateSlide(slideDasName, prefab, _NarrowGameSlideContainer);
