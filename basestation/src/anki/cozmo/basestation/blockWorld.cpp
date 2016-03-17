@@ -805,6 +805,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
                                            const TimeStamp_t atTimestamp)
     {
       ObjectsMapByType_t& objectsExisting = _existingObjects[inFamily];
+      const Pose3d* currFrame = &_robot->GetPose().FindOrigin();
       
       // Struct for storing pairs of currently observed objects and their
       // matching object that is currently known.
@@ -838,7 +839,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
         // Ignoring any block observed outside of the localization range
         const f32 distToObj = ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose());
         if (distToObj > MAX_LOCALIZATION_AND_ID_DISTANCE_MM) {
-          PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.IgnoringCuzObjectTooFar", "dist %fmm", distToObj);
+          //PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.IgnoringCuzObjectTooFar", "dist %fmm", distToObj);
           continue;
         }
 
@@ -1168,44 +1169,6 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
                                       _robot->HasMovedSinceBeingLocalized()) );
 #         endif
           
-          // If we're about to use this object for localization and it's a different
-          // object than the robot is already localize to, then we need to decide
-          // whether it's "better" than the one we're already using
-          if(useThisObjectToLocalize && _robot->GetLocalizedTo() != matchingObject->GetID()) {
-            Vision::ObservableObject* currentLocalizationObject = GetObjectByID(_robot->GetLocalizedTo());
-            
-            if(currentLocalizationObject != nullptr) {
-              if(matchingObject->GetLastObservedTime() < currentLocalizationObject->GetLastObservedTime()) {
-                // Don't use this object to localize if it seen before the object
-                // the robot is currently localized to.
-                useThisObjectToLocalize = false;
-              } else if(matchingObject->GetLastObservedTime() == currentLocalizationObject->GetLastObservedTime()) {
-                // If this object was seen at the same time as the one the robot
-                // is currently localized to, only use it if its closest observed marker
-                // is closer than the one we're localized to
-                useThisObjectToLocalize = false;
-                for(auto marker : matchingObject->GetMarkers()) {
-                  if(marker.GetLastObservedTime() >= matchingObject->GetLastObservedTime()) {
-                    Pose3d markerPoseWrtCamera;
-                    if(false == marker.GetPose().GetWithRespectTo(_robot->GetVisionComponent().GetCamera().GetPose(), markerPoseWrtCamera)) {
-                      PRINT_NAMED_ERROR("Robot.AddAndUpdateObjects.MarkerOriginProblem",
-                                        "Could not get pose of marker w.r.t. robot camera.");
-                      return RESULT_FAIL;
-                    }
-                    const f32 distToMarkerSq = markerPoseWrtCamera.GetTranslation().LengthSq();
-                    if(distToMarkerSq < _robot->GetLocalizedToDistanceSq()) {
-                      useThisObjectToLocalize = true;
-                      // Stop looking as soon as we find any marker that's closer
-                      break;
-                    }
-                  }
-                } // for each marker on the matching object
-              } else {
-                // This object was seen more recently than the one currently localized
-                // to, so nothing to do (leave useThisObjectToLocalize set to true)
-              }
-            }
-          }
           
           // Now that we've decided whether or not to use this object for localization,
           // either use it to upate the robot's pose or use the robot's pose to
@@ -1239,8 +1202,6 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
                   potentialObjectsForLocalizingTo[matchingObjectFrame] = { .observedObject = objSeen, .matchedObject = matchingObject, .distance = distToObj };
                 }
                 
-                
-                
               } else {
                 PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
                                  "Not localizing to object %d because it is not observed to be flat",
@@ -1272,7 +1233,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
           // identified (it's possible we're seeing an existing object behind its
           // last-known location, in which case we don't want to delete the existing
           // one before realizing the new observation is the same object):
-          if(ActiveIdentityState::Identified == observedObject->GetIdentityState()) {
+          if(ActiveIdentityState::Identified == observedObject->GetIdentityState()
+             && &observedObject->GetPose().FindOrigin() == currFrame) {
             std::vector<const Vision::KnownMarker *> observedMarkers;
             observedObject->GetObservedMarkers(observedMarkers);
             for(auto marker : observedMarkers) {
@@ -1308,7 +1270,11 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
           return RESULT_FAIL;
         }
 
-        BroadcastObjectObservation(observedObject, true);
+
+        // Broadcast object's existence as long as it was observed in the current frame.
+        if (&observedObject->GetPose().FindOrigin() == currFrame) {
+          BroadcastObjectObservation(observedObject, true);
+        }
         
         // Update navMemory map
         INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
@@ -1326,7 +1292,6 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
       // If there are blocks in other frames then set the pose of the block in the
       // current frame and localize to each of the blocks in the other frames.
       // If there are no blocks in other frames, then localize to the block in the current frame.
-      const Pose3d* currFrame = &_robot->GetPose().FindOrigin();
       if (potentialObjectsForLocalizingTo.count(currFrame) > 0 && potentialObjectsForLocalizingTo.size() > 1) {
         potentialObjectsForLocalizingTo[currFrame].MergeAndDelete();
         potentialObjectsForLocalizingTo.erase(currFrame);
