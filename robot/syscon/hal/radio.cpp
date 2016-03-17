@@ -364,7 +364,6 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   AccessorySlot* acc = &accessories[slot];
   acc->id = accessory;
   acc->allocated = true;
-  acc->active = false;
 }
 
 static int next_timer = 0;
@@ -421,6 +420,12 @@ void Radio::prepare(void* userdata) {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
     if (acc->active)
     {
+      // Spread the remaining accessories forward as a patch fix
+      // Simply reset the timeout of all accessories
+      for (int i = 0; i < MAX_ACCESSORIES; i++) {
+        acc->last_received = 0;
+      }
+
       acc->active = false;
       SendObjectConnectionState(currentAccessory);
     }
