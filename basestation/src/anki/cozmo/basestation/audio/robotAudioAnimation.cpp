@@ -74,7 +74,7 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
 {
   _audioClient = audioClient;
   if ( _audioClient != nullptr ) {
-    _audioBuffer = _audioClient->GetAudioBuffer();
+    _audioBuffer = _audioClient->GetAvailableAudioBuffer();
   }
   
   // Return error

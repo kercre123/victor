@@ -50,7 +50,7 @@ public:
   void PrepareAudioBuffer();
   
   // Write samples to buffer
-  void UpdateBuffer( const uint8_t* samples, size_t sampleCount );
+  void UpdateBuffer( const uint8_t* samples, const size_t sampleCount );
   
   // This is called when the plug-in is terminated. It will flush the remaining audio samples out of the cache
   void ClearCache();

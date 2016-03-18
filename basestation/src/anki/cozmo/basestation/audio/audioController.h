@@ -21,11 +21,11 @@
 #include <unordered_map>
 #include <vector>
 
-#define CozmoPlugInDebugLogs 0
+#define HijackAudioPlugInDebugLogs 0
 
 namespace AudioEngine {
   class AudioEngineController;
-  class CozmoPlugIn;
+  class HijackAudioPlugIn;
 }
 
 namespace Anki {
@@ -79,8 +79,9 @@ public:
                      AudioEngine::AudioTimeMs valueChangeDuration = 0,
                      AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear ) const;
   
-  // Get Audio Buffer Obj for robot
-  RobotAudioBuffer* GetRobotAudioBuffer() { return _robotAudioBuffer; }
+  // Set out_buffer
+  // Return coresponding game object for out_buffer
+  AudioEngine::AudioGameObject GetAvailableRobotAudioBuffer( RobotAudioBuffer*& out_buffer );
   
   // Register Game Objects
   // Note Game Object Ids must be unique
@@ -94,12 +95,12 @@ public:
 
 private:
   
-  AudioEngine::AudioEngineController* _audioEngine      = nullptr;  // Audio Engine Lib
-  AudioEngine::CozmoPlugIn*           _cozmoPlugIn      = nullptr;  // Plugin Instance
-  RobotAudioBuffer*                   _robotAudioBuffer = nullptr;  // Audio Buffer for Robot Audio Clinet
+  AudioEngine::AudioEngineController* _audioEngine        = nullptr;  // Audio Engine Lib
+  AudioEngine::HijackAudioPlugIn*     _hijackAudioPlugIn  = nullptr;  // Plugin Instance
+  std::unordered_map< int32_t, RobotAudioBuffer* > _robotAudioBufferPool; // Store all Audio Buffers
   
-  Util::Dispatch::Queue*              _dispatchQueue    = nullptr;  // The dispatch queue we're ticking on
-  Anki::Util::TaskHandle              _taskHandle       = nullptr;  // Handle to our tick callback task
+  Util::Dispatch::Queue*              _dispatchQueue      = nullptr;  // The dispatch queue we're ticking on
+  Anki::Util::TaskHandle              _taskHandle         = nullptr;  // Handle to our tick callback task
   
   bool _isInitialized = false;
   
@@ -108,15 +109,20 @@ private:
   
   std::vector< AudioEngine::AudioCallbackContext* > _callbackGarbageCollector;
 
+  // Setup HijackAudio plug-in & robot buffers
+  void SetupPlugInAndRobotAudioBuffers();
+  
+  RobotAudioBuffer* GetAudioBuffer( int32_t plugInId ) const;
   
   // Tick Audio Engine
   void Update();
   
+  // Clean up call back messages
   void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );
   void ClearGarbageCollector();
   
   // Debug Cozmo PlugIn Logs
-#if CozmoPlugInDebugLogs
+#if HijackAudioPlugInDebugLogs
   enum class LogEnumType {
     Post,
     CreatePlugIn,
