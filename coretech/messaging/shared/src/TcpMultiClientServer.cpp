@@ -9,7 +9,10 @@
 #include <sys/ioctl.h>
 #include <assert.h>
 #include <errno.h>
+
+#ifdef __ANDROID__
 #include <linux/in.h>
+#endif
 
 // TODO: Should be possible to do this with HANDLE_RECV_ON_SELECT == 0.
 //       This way we can skip a memcpy().
