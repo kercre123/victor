@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -153,7 +153,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void EndGameRobotReset() {
     RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
-    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
     CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
