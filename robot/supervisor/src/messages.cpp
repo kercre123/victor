@@ -11,8 +11,8 @@
 #include "../sim_hal/transport/IReceiver.h"
 #include "../sim_hal/transport/reliableTransport.h"
 #include "anki/vision/CameraSettings.h"
-#include <string.h>
 #endif
+#include <string.h>
 
 #include "liftController.h"
 #include "headController.h"
@@ -27,7 +27,10 @@
 #include "dockingController.h"
 #include "pickAndPlaceController.h"
 #include "testModeController.h"
-#ifndef TARGET_K02
+#ifdef TARGET_K02
+#include "hal/uart.h"
+#include "hal/imu.h"
+#else
 #include "animationController.h"
 #endif
 
@@ -55,6 +58,8 @@ namespace Anki {
         // Used to avoid repeating a send.
         TimeStamp_t robotStateSendHist_[2];
         u8 robotStateSendHistIdx_ = 0;
+
+        bool sendTestStateMessages = false;
 
         // Flag for receipt of Init message
         bool initReceived_ = false;
@@ -669,6 +674,12 @@ namespace Anki {
         HAL::GetPropState(msg.slot, msg.x, msg.y, msg.z, msg.shockCount);
 #endif
       }
+      
+      void Process_enableTestStateMessage(const RobotInterface::EnableTestStateMessage& msg)
+      {
+        sendTestStateMessages = msg.enable;
+      }
+      
       void Process_radioConnected(const RobotInterface::RadioState& state)
       {
         HAL::RadioUpdateState(state.wifiConnected, false);
@@ -743,12 +754,25 @@ namespace Anki {
 
       Result SendRobotStateMsg(const RobotState* msg)
       {
-
+#ifdef TARGET_K02
+        if (sendTestStateMessages)
+        {
+          RobotInterface::TestState tsm;
+          memcpy((void*)tsm.speedsFixed,    (void*)g_dataToHead.speeds,    sizeof(tsm.speedsFixed));
+          memcpy((void*)tsm.positionsFixed, (void*)g_dataToHead.positions, sizeof(tsm.positionsFixed));
+          memcpy((void*)tsm.gyro, (void*)HAL::IMU::IMUState.gyro, sizeof(tsm.gyro));
+          memcpy((void*)tsm.acc,  (void*)HAL::IMU::IMUState.acc,  sizeof(tsm.acc));
+          tsm.cliffLevel = g_dataToHead.cliffLevel,
+          tsm.battVolt10x = static_cast<uint8_t>(vBat * 10.0f);
+          tsm.extVolt10x  = static_cast<uint8_t>(vExt * 10.0f);
+          tsm.chargeStat  = chargeStat;
+        }
+#endif
+        
         // Don't send robot state updates unless the init message was received
         if (!initReceived_) {
           return RESULT_FAIL;
         }
-
 
         const RobotState* m = &robotState_;
         if (msg) {
