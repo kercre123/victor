@@ -10,7 +10,7 @@ namespace SpeedTap {
     private const float _kBaseMatchProbability = 0.2f;
     private const float _kMatchProbabilityIncrease = 0.1f;
     // TODO: Remove this once we have a way to get timestamp information directly from animations
-    private const float _kTapAnimHitDelay = 0.66f;
+    private const float _kTapAnimHitDelay = 300.0f;
 
     private SpeedTapGame _SpeedTapGame = null;
     private float _StartTimeMs = -1.0f;
@@ -20,7 +20,7 @@ namespace SpeedTap {
     private float _PeekMinTimeMs = 400.0f;
     private float _PeekMaxTimeMs = 1000.0f;
     private float _PeekDelayTimeMs = 0.0f;
-    private float _MinCozmoTapDelayTimeMs = 380.0f;
+    private float _MinCozmoTapDelayTimeMs = 280.0f;
     private float _MaxCozmoTapDelayTimeMs = 700.0f;
     private float _MatchProbability = 0.35f;
     private float _FakeProbability = 0.25f;
@@ -69,11 +69,17 @@ namespace SpeedTap {
 
     public override void Update() {
       base.Update();
+      float currTimeMs = Time.time * 1000.0f;
       // Do not run game while not ready for play
       if (_PlayReady == false || _MidHand == false) {
+        // If Tapping, check timing
+        if (_CozmoTapping && (currTimeMs - _TapStartTimeMs) >= _kTapAnimHitDelay) {
+          if (_SpeedTapGame.PlayerHitFirst == false) {
+            _CozmoHitCube = true;
+          }
+        }
         return;
       }
-      float currTimeMs = Time.time * 1000.0f;
 
       if (_LightsOn) {
         if (_GotMatch) {
@@ -85,13 +91,6 @@ namespace SpeedTap {
               _CozmoTapping = true;
               _MidHand = false;
               _TapStartTimeMs = currTimeMs;
-            }
-          }
-          else {
-            if ((currTimeMs - _TapStartTimeMs) >= _kTapAnimHitDelay) {
-              if (_SpeedTapGame.PlayerHitFirst == false) {
-                _CozmoHitCube = true;
-              }
             }
           }
         }
@@ -168,7 +167,9 @@ namespace SpeedTap {
     void PlayerDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.player_tap", "");
       if (_GotMatch) {
-        _SpeedTapGame.PlayerHitFirst = !_CozmoHitCube;
+        if (_CozmoHitCube == false) {
+          _SpeedTapGame.PlayerHitFirst = true;
+        }
       }
       else if (_LightsOn) {
         _SpeedTapGame.PlayerHitWrong();
