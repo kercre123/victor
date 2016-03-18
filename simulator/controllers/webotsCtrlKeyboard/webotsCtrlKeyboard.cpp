@@ -1411,7 +1411,7 @@ namespace Anki {
                 if (factoryIDs && connect) {
                   ExternalInterface::BlockSelectedMessage msg;
                   for (int i=0; i<factoryIDs->getCount(); ++i) {
-                    msg.factoryId = factoryIDs->getMFInt32(i);
+                    msg.factoryId = static_cast<u32>(strtol(factoryIDs->getMFString(i).c_str(), nullptr, 16));
                     msg.selected = connect->getSFBool();
                     
                     if (msg.factoryId == 0) {

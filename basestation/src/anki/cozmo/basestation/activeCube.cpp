@@ -51,9 +51,10 @@ namespace Anki {
     
     ActiveCube::ActiveCube(ObjectType type)
     : Block(ObjectFamily::LightCube, type)
-    , _activeID(-1)
-    , _factoryID(0)
     {
+      _activeID = -1;
+      _factoryID = 0;
+      
       // For now, assume 6 different markers, so we can avoid rotation ambiguities
       // Verify that here by making sure a set of markers has as many elements
       // as the original list:
@@ -70,6 +71,9 @@ namespace Anki {
     {
       _activeID = activeID;
       _factoryID = factoryID;
+      
+      if (_activeID >= 0)
+        _identityState = ActiveIdentityState::Identified;
     }
     
     // Changes to this mapping should also be reflected in ActiveBlock::activeIDToFactoryIDMap_
@@ -300,79 +304,6 @@ namespace Anki {
               IsRestingFlat());
     }
     
-    void ActiveCube::Identify()
-    {
-      if(_identificationTimer > 0) {
-        _identificationTimer -= BS_TIME_STEP;
-        _identityState = ActiveIdentityState::WaitingForIdentity;
-        PRINT_NAMED_INFO("ActiveCube.Identify.Waiting",
-                         "Faking identification time for object %d",
-                         GetID().GetValue());
-      } else if(GetLastPoseUpdateDistance() > MAX_LOCALIZATION_AND_ID_DISTANCE_MM) {
-        PRINT_NAMED_INFO("ActiveCube.Identify.TooFar",
-                         "Too far to identify object %d (%.1fmm > %.1fmm)",
-                         GetID().GetValue(), GetLastPoseUpdateDistance(),
-                         MAX_LOCALIZATION_AND_ID_DISTANCE_MM);
-      } else {
-        // TODO: Actually get activeID from flashing LEDs instead of using a single hard-coded value
-        switch(_markers.front().GetCode())
-        {
-          case Vision::MARKER_LIGHTCUBEI_FRONT:
-            _identityState = ActiveIdentityState::Identified;
-#if(OBJECTS_HEARABLE==0)
-            _activeID = 0;
-#endif
-            break;
-            
-          case Vision::MARKER_LIGHTCUBEJ_FRONT:
-            _identityState = ActiveIdentityState::Identified;
-#if(OBJECTS_HEARABLE==0)
-            _activeID = 1;
-#endif
-            break;
-            
-          case Vision::MARKER_LIGHTCUBEK_FRONT:
-            _identityState = ActiveIdentityState::Identified;
-#if(OBJECTS_HEARABLE==0)
-            _activeID = 2;
-#endif
-            break;
-            
-          default:
-#if(OBJECTS_HEARABLE==0)
-            _activeID = -1;
-#endif
-            _identityState = ActiveIdentityState::Unidentified;
-            PRINT_NAMED_ERROR("ActiveCube.Identify.UnknownID",
-                              "ActiveID not defined for block with front marker = %d\n",
-                              _markers.front().GetCode());
-        }
-        
-        _identificationTimer = ID_TIME_MS;
-      }
-    } // Identify()
-    
-    std::map<s32,bool>& ActiveCube::GetAvailableIDs()
-    {
-      static std::map<s32,bool> availableIDs;
-      return availableIDs;
-    }
-    
-    void ActiveCube::RegisterAvailableID(s32 activeID)
-    {
-      if(ActiveCube::GetAvailableIDs().count(activeID) > 0) {
-        PRINT_NAMED_WARNING("ActiveCube.RegisterAvailableID",
-                            "Ignoring duplicate registration of available ID %d.\n", activeID);
-      } else {
-        ActiveCube::GetAvailableIDs()[activeID] = false;
-      }
-      
-    }
-    
-    void ActiveCube::ClearAvailableIDs()
-    {
-      ActiveCube::GetAvailableIDs().clear();
-    }
     
     WhichCubeLEDs ActiveCube::GetCornerClosestToXY(const Point2f& xyPosition) const
     {

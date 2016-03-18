@@ -83,11 +83,6 @@ namespace Anki {
       // is returned.
       Result UpdateMarkerObservationTimes(const ObservableObject& otherObject);
       
-      
-      // For defining Active Objects (which are powered and have, e.g., LEDs they can flash)
-      virtual bool IsActive() const { return false; }
-      virtual void Identify() { /* no-op */ }
-      
       // If object is moving, returns true and the time that it started moving in t.
       // If not moving, returns false and the time that it stopped moving in t.
       virtual bool IsMoving(TimeStamp_t* t = nullptr) const { return false; }
@@ -136,9 +131,6 @@ namespace Anki {
       const Pose3d&      GetPose()   const;
       const ColorRGBA&   GetColor()  const;
       //virtual float GetMinDim() const = 0;
-      
-      using ActiveID = s32;
-      virtual ActiveID GetActiveID() const { return -1; }
       
       void SetID();
       void SetColor(const ColorRGBA& color);

@@ -273,7 +273,6 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
   ObjectConnectionState payload = message.GetData().Get_activeObjectConnectionState();
   ObjectID objID;
   
-#if(OBJECTS_HEARABLE)
   if (payload.connected) {
     // Add cube to blockworld if not already there
     objID = GetBlockWorld().AddLightCube(payload.objectID, payload.factoryID);
@@ -290,17 +289,13 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     // Remove cube from blockworld if it exists
     ObservableObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
     if (obj) {
-      GetBlockWorld().ClearObject(obj);
       objID = obj->GetID();
+      GetBlockWorld().DeleteObject(objID);
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
                        "Object %d (activeID %d, factoryID 0x%x)",
                        objID.GetValue(), payload.objectID, payload.factoryID);
     }
   }
-#else
-  // HACK: Just to get a non-conflicting ObjectID in the message for now.
-  objID.Set();
-#endif
   
   PRINT_NAMED_INFO("Robot.HandleActiveObjecConnectionState.Recvd", "FactoryID 0x%x, connected %d", payload.factoryID, payload.connected);
   

@@ -20,7 +20,8 @@ namespace Cozmo {
   enum class TestState {
     MoveHead,            // Move head so it can see block
     InitialLocalization, // Localize to Object A
-    Kidnap,              // Delocalize robot and move to new position
+    NotifyKidnap,        // Move robot to new position and delocalize
+    Kidnap,              // Wait for confirmation of delocalization
     LocalizeToObjectB,   // See and localize to new Object B
     ReSeeObjectA,        // Drive to re-see Object A, to force re-jiggering of origins
     TestDone
@@ -87,11 +88,19 @@ namespace Cozmo {
           // as if it has been picked up -- but it doesn't know where it actually
           // is anymore)
           SetActualRobotPose(_kidnappedPose);
-          
-          SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ForceDelocalizeRobot(_robotState.robotID)));
-          
-          _testState = TestState::Kidnap;
+        
+          _testState = TestState::NotifyKidnap;
         }
+        break;
+      }
+
+      case TestState::NotifyKidnap:
+      {
+        // Sending the delocalize message one tic after actually moving the robot to be sure that no images
+        // from the previous pose are processed after the delocalization.
+        SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ForceDelocalizeRobot(_robotState.robotID)));
+        
+        _testState = TestState::Kidnap;
         break;
       }
         

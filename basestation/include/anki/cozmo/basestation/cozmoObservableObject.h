@@ -25,6 +25,10 @@ namespace Anki {
 namespace Cozmo {
   
   class VizManager;
+
+  
+  using ActiveID = s32;  // TODO: Change this to u32 and use 0 as invalid
+  using FactoryID = u32;
   
   class ObservableObject : public Vision::ObservableObject
   {
@@ -64,7 +68,32 @@ namespace Cozmo {
     
     void SetVizManager(VizManager* vizManager) { _vizManager = vizManager; }
     
+    void         SetActiveID(ActiveID activeID)         { assert(IsActive()); _activeID = activeID; }
+    ActiveID     GetActiveID()                  const   { return _activeID; }
+    virtual bool IsActive()                     const   { return false; }
+    FactoryID    GetFactoryID()                 const   { return _factoryID; }
+    
+    
+    struct LEDstate {
+      ColorRGBA onColor;
+      ColorRGBA offColor;
+      u32       onPeriod_ms;
+      u32       offPeriod_ms;
+      u32       transitionOnPeriod_ms;
+      u32       transitionOffPeriod_ms;
+      
+      LEDstate()
+      : onColor(0), offColor(0), onPeriod_ms(0), offPeriod_ms(0)
+      , transitionOnPeriod_ms(0), transitionOffPeriod_ms(0)
+      {
+        
+      }
+    };
+    
   protected:
+    
+    ActiveID _activeID = -1;
+    FactoryID _factoryID = 0;
     
     ObjectFamily  _family = ObjectFamily::Unknown;
     ObjectType    _type   = ObjectType::Unknown;

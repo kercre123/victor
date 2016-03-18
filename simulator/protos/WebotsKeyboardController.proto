@@ -25,8 +25,8 @@ PROTO WebotsKeyboardController [
   # Name to assign to current faceID
   field SFString userName ""
   
-  # Factory IDs of objects to connect to
-  field MFInt32 activeObjectFactoryIDs [0 0 0 0 0]
+  # Factory IDs of objects to connect to (hex)
+  field MFString activeObjectFactoryIDs ["0" "0" "0" "0" "0"]
   field SFBool  activeObjectConnect TRUE
 
   field SFString controllerArgs ""

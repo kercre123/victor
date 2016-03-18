@@ -57,6 +57,8 @@ PROTO CozmoBot [
   # The number of intermediate wheels to simulate in each tread between the two end wheels.
   field SFInt32 numInterTreadWheels 2
   
+  # Autoconnect to all blocks in world (as if they were paired in flash)
+  field SFBool autoConnectToBlocks TRUE
 ]
 {
 
@@ -90,7 +92,10 @@ Supervisor {
 		  name "blockCommsEmitter"
 		}
 		
-		# There should be a total of MAX_NUM_ACTIVE_OBJECTS (defined in activeObjectTypes.clad) receivers
+		# There should be a total of MAX_NUM_ACTIVE_OBJECTS (defined in activeObjectTypes.clad) receivers plus a receiver for discovery
+		Receiver {
+		  name "discoveryReceiver"
+		}
 		Receiver {
 		  name "blockCommsReceiver0"
 		}

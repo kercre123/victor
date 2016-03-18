@@ -609,6 +609,7 @@
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
             </File>
+			<File>
               <FileName>dockingController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\dockingController.cpp</FilePath>

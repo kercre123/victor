@@ -17,8 +17,6 @@ namespace Anki {
 class Camera;
 
 namespace Cozmo {
-
-  using FactoryID = u32;
   
   class ActiveCube : public Block
   {
@@ -35,6 +33,8 @@ namespace Cozmo {
     virtual ActiveCube* CloneType() const override {
       return new ActiveCube(this->_type);
     }
+    
+    virtual bool IsActive() const override  { return true; }
     
     // This overrides ObservableObject::SetPose to mark this object as localized
     // anytime its pose is set
@@ -75,13 +75,7 @@ namespace Cozmo {
     // the block's current state.
     WhichCubeLEDs MakeWhichLEDsRelativeToXY(const WhichCubeLEDs whichLEDs,
                                              const Point2f& xyPosition,
-                                             MakeRelativeMode mode) const;
-    
-    // Trigger a brief change in flash/color to allow identification of this block
-    // (Possibly actually flash out the block's ID? TBD...)
-    virtual void Identify() override;
-    
-    virtual bool IsActive() const override { return true; }
+                                             MakeRelativeMode mode) const;   
     
     // If object is moving, returns true and the time that it started moving in t.
     // If not moving, returns false and the time that it stopped moving in t.
@@ -91,14 +85,9 @@ namespace Cozmo {
     virtual void SetIsMoving(bool isMoving, TimeStamp_t t) override { _isMoving = isMoving; _movingTime = t;}
     
     virtual bool CanBeUsedForLocalization() const override;
+
     
-    void SetActiveID(ActiveID activeID) { _activeID = activeID; }
-    virtual ActiveID GetActiveID() const override { return _activeID; }
     
-    FactoryID GetFactoryID() const { return _factoryID; }
-    
-    static void RegisterAvailableID(s32 activeID);
-    static void ClearAvailableIDs();
     
     // Take the given top LED pattern and create a pattern that indicates
     // the corresponding bottom LEDs as well
@@ -124,38 +113,16 @@ namespace Cozmo {
     // out to actually set the physical block to match
     //void FillMessage(SetBlockLights& msg) const;
 
-    struct LEDstate {
-      ColorRGBA onColor;
-      ColorRGBA offColor;
-      u32       onPeriod_ms;
-      u32       offPeriod_ms;
-      u32       transitionOnPeriod_ms;
-      u32       transitionOffPeriod_ms;
-      
-      LEDstate()
-      : onColor(0), offColor(0), onPeriod_ms(0), offPeriod_ms(0)
-      , transitionOnPeriod_ms(0), transitionOffPeriod_ms(0)
-      {
-        
-      }
-    };
 
     const LEDstate& GetLEDState(s32 whichLED) const;
     
   protected:
-    
-    ActiveID _activeID;
-    FactoryID _factoryID;
     
     bool        _isMoving = false;
     TimeStamp_t _movingTime = 0;
     
     // Keep track of flash rate and color of each LED
     std::array<LEDstate,NUM_LEDS> _ledState;
-    
-    // Map of available active IDs that the robot knows are around, and an
-    // indicator of whether or not we've seen each yet.
-    static std::map<s32,bool>& GetAvailableIDs();
     
     // Temporary timer for faking duration of identification process
     // TODO: Remove once real identification is implemented

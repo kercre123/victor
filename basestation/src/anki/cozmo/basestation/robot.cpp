@@ -2837,8 +2837,8 @@ namespace Anki {
 
         if( DEBUG_BLOCK_LIGHTS ) {
           PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set1",
-                            "Setting lights for object %d",
-                            objectID.GetValue());
+                            "Setting lights for object %d (activeID %d)",
+                            objectID.GetValue(), activeCube->GetActiveID());
         }
 
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
@@ -2880,8 +2880,8 @@ namespace Anki {
 
         if( DEBUG_BLOCK_LIGHTS ) {
           PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set2",
-                            "Setting lights for object %d",
-                            objectID.GetValue());
+                            "Setting lights for object %d (activeID %d)",
+                            objectID.GetValue(), activeCube->GetActiveID());
         }
         
         return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
@@ -2892,9 +2892,13 @@ namespace Anki {
     Result Robot::ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids)
     {
       CubeSlots msg;
+      for (auto & fid : msg.factory_id) {
+        fid = 0;
+      }
+      
       u8 numObjects = 0;
       u8 objectsSelectedMask = 0;
-      for (auto fid : factory_ids) {
+      for (auto & fid : factory_ids) {
         
         // Zero is not a valid factoryID
         if (fid == 0) {
@@ -2923,7 +2927,7 @@ namespace Anki {
           return RESULT_FAIL;
         }
 
-        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x", fid);
+        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x (slot %d)", fid, numObjects);
         msg.factory_id[numObjects] = fid;
         ++numObjects;
         
