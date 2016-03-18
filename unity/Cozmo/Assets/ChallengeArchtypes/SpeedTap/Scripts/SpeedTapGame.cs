@@ -18,7 +18,7 @@ namespace SpeedTap {
 
     public LightCube CozmoBlock;
     public LightCube PlayerBlock;
-    public bool PlayerTap = false;
+    public bool PlayerHitFirst = false;
     public bool AllRoundsOver = false;
 
     public readonly Color[] PlayerWinColors = new Color[4];
@@ -76,6 +76,12 @@ namespace SpeedTap {
       _CozmoScore = 0;
       _PlayerScore = 0;
       UpdateUI();
+    }
+
+    // In Future, potentially play a different animation here
+    public void PlayerHitWrong() {
+      DAS.Info("SpeedTapGame.PlayerHitWrong", "");
+      CozmoWinsHand();
     }
 
     public void CozmoWinsHand() {
