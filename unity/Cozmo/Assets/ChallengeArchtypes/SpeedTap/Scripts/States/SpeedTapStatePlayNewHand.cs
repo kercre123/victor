@@ -8,7 +8,7 @@ namespace SpeedTap {
 
     private const int _kMaxMisses = 3;
     private const float _kBaseMatchProbability = 0.2f;
-    private const float _kMatchProbabilityIncrease = 0.1f;
+    private const float _kMatchProbabilityIncrease = 0.15f;
     // TODO: Remove this once we have a way to get timestamp information directly from animations
     private const float _kTapAnimHitDelay = 500.0f;
 
@@ -24,7 +24,7 @@ namespace SpeedTap {
     private float _MaxCozmoTapDelayTimeMs = 700.0f;
     private float _MatchProbability = 0.35f;
     private float _FakeProbability = 0.25f;
-    private float _PeekProbability = 0.40f;
+    private float _PeekProbability = 0.80f;
 
     private bool _LightsOn = false;
     private bool _GotMatch = false;
@@ -184,13 +184,13 @@ namespace SpeedTap {
 
       _TryFake = UnityEngine.Random.Range(0.0f, 1.0f) < _FakeProbability;
       _TryPeek = UnityEngine.Random.Range(0.0f, 1.0f) < _PeekProbability;
-      if (_TryPeek) {
-        _PeekDelayTimeMs = UnityEngine.Random.Range(_PeekMinTimeMs, _PeekMaxTimeMs);
-      }
       float matchExperiment = UnityEngine.Random.value;
       _GotMatch = matchExperiment < _MatchProbability;
       if (!_GotMatch) {
         _MatchProbability += _kMatchProbabilityIncrease;
+        if (_TryPeek) {
+          _PeekDelayTimeMs = UnityEngine.Random.Range(_PeekMinTimeMs, _PeekMaxTimeMs);
+        }
       }
       _SpeedTapGame.Rules.SetLights(_GotMatch, _SpeedTapGame);
     }
