@@ -70,6 +70,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.InitBlockPoolMessage> OnInitBlockPoolMsg;
   public event Action<Anki.Cozmo.ObjectDiscovered> OnObjectDiscoveredMsg;
   public event Action<Anki.Cozmo.ObjectUndiscovered> OnObjectUndiscoveredMsg;
+  public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
 
@@ -360,6 +361,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.ObjectUndiscovered:
       ReceivedSpecificMessage(message.ObjectUndiscovered);
       break;
+    case G2U.MessageEngineToGame.Tag.ObjectConnectionState:
+      ReceivedSpecificMessage(message.ObjectConnectionState);
+      break;
     case G2U.MessageEngineToGame.Tag.ImageChunk:
       ReceivedSpecificMessage(message.ImageChunk);
       break;
@@ -387,7 +391,15 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.RobotConnected message) {
+    if (!_IsRobotConnected) {
+      _IsRobotConnected = true;
 
+      AddRobot((byte)message.robotID);
+
+      if (RobotConnected != null) {
+        RobotConnected((byte)message.robotID);
+      }
+    }
   }
 
   private void ReceivedSpecificMessage(G2U.UiDeviceConnected message) {
@@ -612,23 +624,6 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.RobotState message) {
-    if (!_IsRobotConnected) {
-      DAS.Debug(this, "Robot " + message.robotID.ToString() + " sent first state message.");
-      _IsRobotConnected = true;
-
-      AddRobot(message.robotID);
-
-      if (RobotConnected != null) {
-        RobotConnected(message.robotID);
-      }
-    }
-
-    if (!Robots.ContainsKey(message.robotID)) {
-      DAS.Debug(this, "adding robot with ID: " + message.robotID);
-      
-      AddRobot(message.robotID);
-    }
-    
     Robots[message.robotID].UpdateInfo(message);
   }
 
@@ -647,6 +642,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.InitBlockPoolMessage message) {
     if (OnInitBlockPoolMsg != null) {
       OnInitBlockPoolMsg(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ObjectConnectionState message) {
+    if (OnObjectConnectionState != null) {
+      OnObjectConnectionState(message);
     }
   }
 

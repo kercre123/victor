@@ -336,11 +336,13 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SuccessOrFailure += RobotEngineMessages;
     RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
     RobotEngineManager.Instance.OnProgressionStatRecieved += UpdateProgressionStatFromEngineRobotManager;
+    RobotEngineManager.Instance.OnObjectConnectionState += ObjectConnectionState;
   }
 
   public void Dispose() {
     RobotEngineManager.Instance.DisconnectedFromClient -= Reset;
     RobotEngineManager.Instance.SuccessOrFailure -= RobotEngineMessages;
+    RobotEngineManager.Instance.OnObjectConnectionState -= ObjectConnectionState;
   }
 
   public void CooldownTimers(float delta) {
@@ -764,6 +766,15 @@ public class Robot : IRobot {
 
   #endregion
 
+  public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
+    DAS.Debug(this, "ObjectConnectionState: " + message.objectID);
+    int id = (int)message.objectID;
+    if (!LightCubes.ContainsKey(id)) {
+      LightCube lightCube = new LightCube(id, ObjectFamily.LightCube, ObjectType.Block_LIGHTCUBE1);
+      LightCubes.Add(id, lightCube);
+    }
+  }
+
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
       DAS.Warn(this, "UpdateObservedObjectInfo received message about the Mat!");
@@ -784,7 +795,7 @@ public class Robot : IRobot {
     if (lightCube == null) {
       lightCube = new LightCube(message.objectID, message.objectFamily, message.objectType);
 
-      LightCubes.Add(lightCube, lightCube);
+      LightCubes.Add(message.objectID, lightCube);
       SeenObjects.Add(lightCube);
     }
 

@@ -200,6 +200,10 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
+  public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
+
+  }
+
   public void UpdateObservedObjectInfo(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
     // Won't be called
   }

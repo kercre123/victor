@@ -161,6 +161,8 @@ public interface IRobot : IDisposable {
 
   void OverrideBehaviorScore(string behaviorName, float newScore);
 
+  void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message);
+
   void UpdateObservedObjectInfo(G2U.RobotObservedObject message);
 
   void UpdateObservedFaceInfo(G2U.RobotObservedFace message);
