@@ -10,7 +10,7 @@ namespace SpeedTap {
     private const float _kBaseMatchProbability = 0.2f;
     private const float _kMatchProbabilityIncrease = 0.1f;
     // TODO: Remove this once we have a way to get timestamp information directly from animations
-    private const float _kTapAnimHitDelay = 300.0f;
+    private const float _kTapAnimHitDelay = 500.0f;
 
     private SpeedTapGame _SpeedTapGame = null;
     private float _StartTimeMs = -1.0f;
