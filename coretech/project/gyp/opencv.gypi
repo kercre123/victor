@@ -2,7 +2,6 @@
   'variables' : {
     'opencv_version': '3.1.0',
     'opencv_android_path': 'build/opencv-android/sdk/native/jni/include',
-
    'conditions': [
       [
         'OS=="ios"',
@@ -39,18 +38,18 @@
          'OS=="android"',
         {
           'opencv_includes': [
-	      '<(coretech_external_path)/<(opencv_android_path)',
-	      '<(coretech_external_path)/<(opencv_android_path)/opencv2',
-	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/core',
-	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/highgui',
-	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/imgproc',
-	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/calib3d',
-	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/objdetect',
-	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/video',
-	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/features2d',
-	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/flann',
-	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/imgcodecs',
-	      '<(coretech_external_path)/<(opencv_android_path)/opencv2/videoio',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include/opencv2',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include/opencv2/core',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include/opencv2/highgui',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include/opencv2/imgproc',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include/opencv2/calib3d',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include/opencv2/objdetect',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include/opencv2/video',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include/opencv2/features2d',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include/opencv2/flann',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include/opencv2/imgcodecs',
+	      '<(coretech_external_path)/build/opencv-android/sdk/native/jni/include/opencv2/videoio',
 	  ],
 
 	  'opencv_libs': [
