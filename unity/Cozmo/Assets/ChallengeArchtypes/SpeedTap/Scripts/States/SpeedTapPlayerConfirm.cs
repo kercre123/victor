@@ -19,14 +19,13 @@ namespace SpeedTap {
               Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
           }
         }
-        _SpeedTapGame.ShowPlayerTapSlide();
+        _SpeedTapGame.ShowPlayerTapConfirmSlide();
       }
       else {
         _SpeedTapGame.StartCycleCube(_SpeedTapGame.PlayerBlock.ID, 
           Cozmo.CubePalette.TapMeColor.lightColors, 
           Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
-        // TODO: Show ready for round slide
-        _SpeedTapGame.ShowPlayerTapSlide();
+        _SpeedTapGame.ShowPlayerTapNewRoundSlide();
       }
 
       LightCube.TappedAction += HandleTap;
