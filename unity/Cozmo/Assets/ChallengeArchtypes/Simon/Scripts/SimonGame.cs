@@ -51,6 +51,8 @@ namespace Simon {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetMusicState());
     }
 
     public int GetNewSequenceLength(PlayerType playerPickingSequence) {

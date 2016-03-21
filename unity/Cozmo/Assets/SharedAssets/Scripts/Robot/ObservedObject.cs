@@ -95,12 +95,6 @@ public class ObservedObject {
     if (objectFamily == ObjectFamily.LightCube) {
       CubeType = CubeType.LightCube;
     }
-    else if (objectType == ObjectType.Block_BULLSEYE2 || objectType == ObjectType.Block_BULLSEYE2_INVERTED) {
-      CubeType = CubeType.BullsEye;
-    }
-    else if (objectType == ObjectType.Block_FLAG || objectType == ObjectType.Block_FLAG2 || objectType == ObjectType.Block_FLAG_INVERTED) {
-      CubeType = CubeType.Flag;
-    }
     else {
       CubeType = CubeType.Unknown;
       DAS.Warn(this, "Object " + ID + " with type " + objectType + " is unsupported"); 

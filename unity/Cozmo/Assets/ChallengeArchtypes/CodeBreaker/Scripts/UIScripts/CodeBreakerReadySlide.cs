@@ -11,7 +11,7 @@ namespace CodeBreaker {
     private AnkiTextLabel _SlideText;
 
     [SerializeField]
-    private AnkiButton _ReadyButton;
+    private Cozmo.UI.CozmoButton _ReadyButton;
 
     public event ReadyButtonClickedHandler OnReadyButtonClicked;
 

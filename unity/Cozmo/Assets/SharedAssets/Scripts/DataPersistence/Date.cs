@@ -207,7 +207,7 @@ namespace DataPersistence {
     }
 
     public override string ToString() {
-      return Month + "/" + Day + "/" + Year;
+      return string.Format("{0:D2}/{1:D2}/{2:D4}", Month, Day, Year);
     }
   }
 }

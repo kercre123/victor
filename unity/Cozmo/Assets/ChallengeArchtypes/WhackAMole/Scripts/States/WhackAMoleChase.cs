@@ -43,7 +43,7 @@ namespace WhackAMole {
     public void RobotArrives(bool success) {
       if (_WhackAMoleGame.ActivatedFaces.Contains(_TargetKvP)) {
         float dist = Vector3.Distance(_CurrentRobot.LightCubes[_TargetKvP.Key].WorldPosition, _CurrentRobot.WorldPosition);
-        Debug.Log(string.Format("DistCheck -- {0}", dist));
+        DAS.Debug(this, string.Format("DistCheck -- {0}", dist));
         if (dist < kPounceDist) {
           _StateMachine.SetNextState(new AnimationState(AnimationName.kSpeedTap_Tap_01, HandleAnimationDone));
         }
@@ -73,7 +73,7 @@ namespace WhackAMole {
     }
 
     void HandleMoleStateChange(WhackAMoleGame.MoleState state) {
-      Debug.Log(string.Format("Chase - Mole State Changed to {0}", state));
+      DAS.Debug(this, string.Format("Chase - Mole State Changed to {0}", state));
       if (state == WhackAMoleGame.MoleState.NONE) {
         // A cube has been tapped, start chase. If more than one cube is
         // active, Chase will handle moving to Panic.

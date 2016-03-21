@@ -23,7 +23,7 @@ namespace AskCozmo {
     private float _Progress = 0f;
 
     protected void InitializeMinigameObjects() {
-      _GamePanel = UIManager.OpenView(_GamePanelPrefab).GetComponent<AskCozmoPanel>();
+      _GamePanel = UIManager.OpenView(_GamePanelPrefab);
       _GamePanel.OnAskButtonPressed += OnAnswerRequested;
       // ScriptedSequences.ScriptedSequenceManager.Instance.ActivateSequence("AzkCozmoSequence");
     }

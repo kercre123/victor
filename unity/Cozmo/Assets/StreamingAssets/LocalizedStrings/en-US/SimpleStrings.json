@@ -80,5 +80,8 @@
   },
   "label.connect": {
     "translation": "Connect"
+  },
+  "button.save": {
+    "translation": "Save"
   }
 }

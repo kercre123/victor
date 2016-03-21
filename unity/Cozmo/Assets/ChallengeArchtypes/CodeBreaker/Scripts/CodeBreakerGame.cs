@@ -5,8 +5,8 @@ namespace CodeBreaker {
 
   public class CodeBreakerGame : GameBase {
 
-    private const string kHowToPlaySlideName = "HowToPlay";
-    private const string kGamePanelSlideName = "ScoreCard";
+    private const string kHowToPlaySlideName = "codebreaker_how_to_play_slide";
+    private const string kGamePanelSlideName = "codebreaker_score_slide";
 
     [SerializeField]
     private CodeBreakerReadySlide _ReadySlidePrefab;

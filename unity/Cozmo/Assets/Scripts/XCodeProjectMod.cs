@@ -1,4 +1,4 @@
-﻿#if UNITY_EDITOR
+﻿#if UNITY_EDITOR && UNITY_IOS
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.Callbacks;
@@ -24,6 +24,7 @@ public class XCodeProjectMod
       // background modes
       PlistElementArray bgModes = rootDict.CreateArray("UIBackgroundModes");
       bgModes.AddString("fetch");
+      bgModes.AddString("remote-notification");
       
       // Write to file
       File.WriteAllText(plistPath, plist.WriteToString());

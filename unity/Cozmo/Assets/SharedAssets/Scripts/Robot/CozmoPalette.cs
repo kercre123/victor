@@ -50,4 +50,7 @@ public static class CozmoPalette {
       (byte)(color.a * 255));
   }
 
+  public static float ToGrayscale(this Color c) {
+    return 0.3f * c.r + 0.59f * c.g + 0.11f * c.b;
+  }
 }

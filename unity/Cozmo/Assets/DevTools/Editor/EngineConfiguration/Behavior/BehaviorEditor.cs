@@ -27,6 +27,7 @@ public class BehaviorEditor : EditorWindow {
   public static string sBehaviorDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/behaviors/"; } }
 
   public static string sBehaviorCppDirectory { get { return Application.dataPath + "/../../../lib/anki/cozmo-engine/basestation/src/anki/cozmo/basestation/behaviors/"; } }
+
   public static string sBehaviorHDirectory { get { return Application.dataPath + "/../../../lib/anki/cozmo-engine/basestation/include/anki/cozmo/basestation/behaviors/"; } }
 
 
@@ -35,7 +36,7 @@ public class BehaviorEditor : EditorWindow {
   static BehaviorEditor() {
     LoadBehaviors();
   }
-    
+
   private static string FindFile(string fileName, string rootPath) {
     var path = Path.Combine(rootPath, fileName);
     if (File.Exists(path)) {
@@ -69,20 +70,20 @@ public class BehaviorEditor : EditorWindow {
       return string.Empty;
     }
     if (name.EndsWith("_s") || name.EndsWith("_mm") || name.EndsWith("_m") ||
-      name.EndsWith("_mmps") || name.EndsWith("_sec") || name.EndsWith("_rad")
-      || name.EndsWith("_deg")) {
+        name.EndsWith("_mmps") || name.EndsWith("_sec") || name.EndsWith("_rad")
+        || name.EndsWith("_deg")) {
       return 0f;
     }
 
     if (name.EndsWith("_ms") || name.IndexOf("index", StringComparison.InvariantCultureIgnoreCase) != -1
-      || name.IndexOf("length", StringComparison.InvariantCultureIgnoreCase) != -1
-      || name.IndexOf("num", StringComparison.InvariantCultureIgnoreCase) != -1) {
+        || name.IndexOf("length", StringComparison.InvariantCultureIgnoreCase) != -1
+        || name.IndexOf("num", StringComparison.InvariantCultureIgnoreCase) != -1) {
       return 0;
     }
 
     if (name.StartsWith("is", StringComparison.InvariantCultureIgnoreCase) ||
-       name.StartsWith("can", StringComparison.InvariantCultureIgnoreCase) ||
-      name.EndsWith("allowed", StringComparison.InvariantCultureIgnoreCase)) {
+        name.StartsWith("can", StringComparison.InvariantCultureIgnoreCase) ||
+        name.EndsWith("allowed", StringComparison.InvariantCultureIgnoreCase)) {
       return false;
     }
 
@@ -112,7 +113,7 @@ public class BehaviorEditor : EditorWindow {
     string[] lines;
     Match match;   
 
-    while(header != null) {
+    while (header != null) {
       lines = File.ReadAllLines(header);
       header = null;
 
@@ -123,7 +124,7 @@ public class BehaviorEditor : EditorWindow {
         
           string path = match.Groups[1].Value;
 
-          Debug.Log("Found include path: " + path);
+          DAS.Debug(typeof(BehaviorEditor), "Found include path: " + path);
 
           string fileName = Path.GetFileName(path);
 
@@ -145,7 +146,7 @@ public class BehaviorEditor : EditorWindow {
       }
     }
       
-    foreach(var file in cppFiles) {
+    foreach (var file in cppFiles) {
       lines = File.ReadAllLines(file);
 
       foreach (var line in lines) {
@@ -202,7 +203,7 @@ public class BehaviorEditor : EditorWindow {
         var regex = new Regex("//.*");
 
         // remove // comments
-        json = regex.Replace(json,string.Empty);
+        json = regex.Replace(json, string.Empty);
 
         _CurrentBehavior = JsonConvert.DeserializeObject<Behavior>(json, GlobalSerializerSettings.JsonSettings);
         _CurrentBehaviorFile = path;
@@ -210,7 +211,7 @@ public class BehaviorEditor : EditorWindow {
         _RecentFiles.Add(path);
       }
       catch (Exception ex) {
-        Debug.LogException(ex);
+        DAS.Error(this, ex.Message);
       }
     }
   }

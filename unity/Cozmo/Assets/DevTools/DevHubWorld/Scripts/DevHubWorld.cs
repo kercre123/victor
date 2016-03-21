@@ -34,7 +34,7 @@ public class DevHubWorld : HubWorldBase {
 
   private void ShowHubWorldDialog() {
     // Create dialog with the game prefabs
-    _DevHubWorldDialogInstance = UIManager.OpenView(_DevHubWorldDialogPrefab) as DevHubWorldDialog;
+    _DevHubWorldDialogInstance = UIManager.OpenView(_DevHubWorldDialogPrefab);
     _DevHubWorldDialogInstance.Initialize(_ChallengeDataList);
     
     // Listen for dialog button tap events

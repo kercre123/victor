@@ -161,6 +161,8 @@ public interface IRobot : IDisposable {
 
   void OverrideBehaviorScore(string behaviorName, float newScore);
 
+  void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message);
+
   void UpdateObservedObjectInfo(G2U.RobotObservedObject message);
 
   void UpdateObservedFaceInfo(G2U.RobotObservedFace message);
@@ -180,6 +182,10 @@ public interface IRobot : IDisposable {
   void CancelCallback(RobotCallback callback);
 
   void CancelAllCallbacks();
+
+  void EnableNewFaceEnrollment(int numToEnroll = 1);
+
+  void AssignNameToFace(int faceID, string name);
 
   void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 

@@ -29,13 +29,13 @@ namespace Conversations {
     }
 
     [SerializeField]
-    private BaseView _LeftBubble;
+    private SpeechBubble _LeftBubble;
 
     [SerializeField]
-    private BaseView _RightBubble;
+    private SpeechBubble _RightBubble;
 
     [SerializeField]
-    private BaseView _ConvoOverlayPrefab;
+    private ConvoBackground _ConvoOverlayPrefab;
     private ConvoBackground _CurrBackground;
 
     private Conversation _CurrentConversation = new Conversation();
@@ -70,7 +70,7 @@ namespace Conversations {
     public void AddConversationLine(ConversationLine line) {
       _CurrentConversation.AddToConversation(line);
       if (_CurrBackground == null) {
-        _CurrBackground = UIManager.OpenView(_ConvoOverlayPrefab) as ConvoBackground;
+        _CurrBackground = UIManager.OpenView(_ConvoOverlayPrefab);
         _CurrBackground.InitButtonText(LocalizationKeys.kButtonContinue);
       }
       CreateSpeechBubble(line);
@@ -88,13 +88,13 @@ namespace Conversations {
         if (_CurrentRightSpeechBubble != null) {
           UIManager.CloseView(_CurrentRightSpeechBubble);
         }
-        newBubble = _CurrentRightSpeechBubble = UIManager.OpenView(_RightBubble) as SpeechBubble;
+        newBubble = _CurrentRightSpeechBubble = UIManager.OpenView(_RightBubble);
       }
       else {
         if (_CurrentLeftSpeechBubble != null) {
           UIManager.CloseView(_CurrentLeftSpeechBubble);
         }
-        newBubble = _CurrentLeftSpeechBubble = UIManager.OpenView(_LeftBubble) as SpeechBubble;
+        newBubble = _CurrentLeftSpeechBubble = UIManager.OpenView(_LeftBubble);
       }
       newBubble.Initialize(line);
       return newBubble;

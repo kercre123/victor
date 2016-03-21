@@ -24,6 +24,8 @@ namespace Simon {
       _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = false;
       _SequenceList = _GameInstance.GetCurrentSequence();
       _CurrentRobot.SetHeadAngle(1.0f);
+      // add delay before allowing player taps because cozmo can accidentally tap when setting pattern.
+      _LastTappedTime = Time.time;
     }
 
     public override void Update() {

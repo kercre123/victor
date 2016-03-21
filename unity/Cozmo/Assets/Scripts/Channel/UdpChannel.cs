@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -12,10 +12,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Net.NetworkInformation;
 
-public class UdpChannel : ChannelBase {
+public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageOut> where MessageIn : IMessageWrapper, new() where MessageOut : IMessageWrapper, new() {
 
-  private class SocketBufferState : IDisposable {
-    public readonly UdpChannel channel;
+  protected class SocketBufferState : IDisposable {
+    public readonly UdpChannel<MessageIn, MessageOut> channel;
     public Socket socket;
     public EndPoint endPoint;
     public readonly MemoryStream stream;
@@ -24,7 +24,7 @@ public class UdpChannel : ChannelBase {
     public bool isSocketActive;
     public bool needsCloseWhenDone;
 
-    public SocketBufferState(UdpChannel channel, Socket socket, EndPoint endPoint) {
+    public SocketBufferState(UdpChannel<MessageIn, MessageOut> channel, Socket socket, EndPoint endPoint) {
       this.channel = channel;
       this.stream = new MemoryStream(MaxBufferSize);
       Reset(socket, endPoint);
@@ -68,20 +68,18 @@ public class UdpChannel : ChannelBase {
 
   // fixed messages
   private readonly AdvertisementRegistrationMsg advertisementRegistrationMessage = new AdvertisementRegistrationMsg();
-  private readonly U2G.MessageGameToEngine pingMessage = new U2G.MessageGameToEngine { Ping = new U2G.Ping() };
-  private readonly U2G.MessageGameToEngine disconnectionMessage = new U2G.MessageGameToEngine { DisconnectFromUiDevice = new U2G.DisconnectFromUiDevice() };
 
   // sockets
   private IPEndPoint localEndPoint = null;
   private Socket advertisementClient;
   private IPEndPoint advertisementEndPoint = null;
-  private Socket mainServer;
-  private IPEndPoint mainEndPoint = null;
+  protected Socket mainServer;
+  protected IPEndPoint mainEndPoint = null;
 
   // active operations
   private SocketBufferState advertisementSend = null;
-  private SocketBufferState mainSend = null;
-  private SocketBufferState mainReceive = null;
+  protected SocketBufferState mainSend = null;
+  protected SocketBufferState mainReceive = null;
 
   // state information
   private ConnectionState connectionState = ConnectionState.Disconnected;
@@ -91,18 +89,16 @@ public class UdpChannel : ChannelBase {
   // timers
   private const float AdvertiseTick = .25f;
   private const float AdvertiseTimeout = 60.0f;
-  private const float PingTick = 0.1f;
   private const float ReceiveTimeout = 60.0f;
   //dmd2do this is padded crazy long to bandaid engine hanging issues
   private float lastUpdateTime = 0;
   private float lastAdvertiseTime = 0;
   private float startAdvertiseTime = 0;
   private float lastReceiveTime = 0;
-  private float lastPingTime = 0;
 
   // various queues
   private readonly Queue<SocketBufferState> sentBuffers = new Queue<SocketBufferState>(MaxQueuedSends);
-  private readonly Queue<G2U.MessageEngineToGame> receivedMessages = new Queue<G2U.MessageEngineToGame>(MaxQueuedReceives);
+  private readonly Queue<MessageIn> receivedMessages = new Queue<MessageIn>(MaxQueuedReceives);
 
   // lists of pooled objects
   private readonly List<SocketBufferState> bufferStatePool = new List<SocketBufferState>(BufferStatePoolLength);
@@ -128,12 +124,23 @@ public class UdpChannel : ChannelBase {
     callback_SimpleSend_Complete = SimpleSend_Complete;
   }
 
+  public override void Connect(int deviceID, int localPort) {
+    ConnectInternal(deviceID, localPort, null, 0, false);
+  }
+
   // synchronous
   public override void Connect(int deviceID, int localPort, string advertisingIP, int advertisingPort) {
-    IPAddress advertisingAddress;
-    if (!IPAddress.TryParse(advertisingIP, out advertisingAddress)) {
-      throw new ArgumentException("Could not parse ip address.", "advertisingIP");
+    ConnectInternal(deviceID, localPort, advertisingIP, advertisingPort, true);
+  }
+
+  private void ConnectInternal(int deviceID, int localPort, string advertisingIP, int advertisingPort, bool advertise) {
+    IPAddress advertisingAddress = null;
+    if (advertise) {
+      if (!IPAddress.TryParse(advertisingIP, out advertisingAddress)) {
+        throw new ArgumentException("Could not parse ip address.", "advertisingIP");
+      }
     }
+
 
     // dunno if 0 is good or not, so allowing it
     if (deviceID < 0 || deviceID > byte.MaxValue) {
@@ -150,12 +157,12 @@ public class UdpChannel : ChannelBase {
         throw new InvalidOperationException("You should only call Connect on the main Unity thread.");
       }
 
-      lastUpdateTime = Time.realtimeSinceStartup;
+      // reset lastReceiveTime so we have time to reconnect
+      lastReceiveTime = lastUpdateTime = Time.realtimeSinceStartup;
       IPAddress localAddress = GetLocalIPv4();
 
       try {
-        pingMessage.Ping.counter = 0;
-        disconnectionMessage.DisconnectFromUiDevice.deviceID = (byte)deviceID;
+        BeforeConnect((byte)deviceID);
 
         // set up main socket
         localEndPoint = new IPEndPoint(IPAddress.Any, localPort);
@@ -170,41 +177,46 @@ public class UdpChannel : ChannelBase {
         return;
       }
 
-      try {
-        string localIP = (localAddress ?? IPAddress.Loopback).ToString();
-        int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
+      if (advertise) {
+        try {
+          string localIP = (localAddress ?? IPAddress.Loopback).ToString();
+          int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
 
-        // set up advertisement message
-        DAS.Debug(this, "Advertising IP: " + localIP);
-        int length = Encoding.UTF8.GetByteCount(localIP);
-        if (length + 1 > advertisementRegistrationMessage.Ip.Length) {
-          DAS.Error(this, "Advertising host is too long: " +
-          advertisementRegistrationMessage.Ip.Length.ToString() + " bytes allowed, " +
-          length.ToString() + " bytes used.");
+          // set up advertisement message
+          DAS.Debug(this, "Advertising IP: " + localIP);
+          int length = Encoding.UTF8.GetByteCount(localIP);
+          if (length + 1 > advertisementRegistrationMessage.Ip.Length) {
+            DAS.Error(this, "Advertising host is too long: " +
+            advertisementRegistrationMessage.Ip.Length.ToString() + " bytes allowed, " +
+            length.ToString() + " bytes used.");
+            DestroySynchronously(DisconnectionReason.FailedToAdvertise);
+            return;
+          }
+          Encoding.UTF8.GetBytes(localIP, 0, localIP.Length, advertisementRegistrationMessage.Ip, 0);
+          advertisementRegistrationMessage.Ip[length] = 0;
+          
+          advertisementRegistrationMessage.Port = (ushort)realPort;
+          advertisementRegistrationMessage.Id = (byte)deviceID;
+          advertisementRegistrationMessage.Protocol = (byte)ChannelProtocol.Udp;
+          advertisementRegistrationMessage.EnableAdvertisement = 1;
+          advertisementRegistrationMessage.OneShot = 1;
+
+          // set up advertisement socket
+          advertisementEndPoint = new IPEndPoint(advertisingAddress, advertisingPort);
+          advertisementClient = new Socket(advertisementEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
+
+          // advertise
+          startAdvertiseTime = lastUpdateTime;
+          SendAdvertisement();
+        }
+        catch (Exception e) {
+          Debug.LogException(e);
           DestroySynchronously(DisconnectionReason.FailedToAdvertise);
           return;
         }
-        Encoding.UTF8.GetBytes(localIP, 0, localIP.Length, advertisementRegistrationMessage.Ip, 0);
-        advertisementRegistrationMessage.Ip[length] = 0;
-        
-        advertisementRegistrationMessage.Port = (ushort)realPort;
-        advertisementRegistrationMessage.Id = (byte)deviceID;
-        advertisementRegistrationMessage.Protocol = (byte)ChannelProtocol.Udp;
-        advertisementRegistrationMessage.EnableAdvertisement = 1;
-        advertisementRegistrationMessage.OneShot = 1;
-
-        // set up advertisement socket
-        advertisementEndPoint = new IPEndPoint(advertisingAddress, advertisingPort);
-        advertisementClient = new Socket(advertisementEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-
-        // advertise
-        startAdvertiseTime = lastUpdateTime;
-        SendAdvertisement();
       }
-      catch (Exception e) {
-        Debug.LogException(e);
-        DestroySynchronously(DisconnectionReason.FailedToAdvertise);
-        return;
+      else {
+        startAdvertiseTime = lastUpdateTime;
       }
 
       // set state
@@ -233,8 +245,8 @@ public class UdpChannel : ChannelBase {
   }
 
   // synchronous
-  public override void Send(U2G.MessageGameToEngine message) {
-    if (message.GetTag() == U2G.MessageGameToEngine.Tag.INVALID) {
+  public override void Send(MessageOut message) {
+    if (!message.IsValid) {
       throw new ArgumentException("Message id is not valid.", "message");
     }
 
@@ -290,14 +302,19 @@ public class UdpChannel : ChannelBase {
         InternalUpdate();
 
         if (connectionState == ConnectionState.Connected) {
-          if (lastPingTime + PingTick < lastUpdateTime) {
-            lastPingTime = lastUpdateTime;
-            SendInternal(pingMessage);
-            pingMessage.Ping.counter += 1;
-          }
+          UpdatePing(lastUpdateTime);
         }
       }
     }
+  }
+
+  protected virtual void BeforeConnect(byte deviceID) {
+  }
+
+  protected virtual void UpdatePing(float lastUpdateTime) {
+  }
+
+  protected virtual void UpdateLastPingTime(float lastUpdateTime) {
   }
 
   // synchronous
@@ -335,7 +352,7 @@ public class UdpChannel : ChannelBase {
   // synchronous
   private void ProcessMessages() {
     while (receivedMessages.Count > 0) {
-      G2U.MessageEngineToGame message = receivedMessages.Dequeue();
+      MessageIn message = receivedMessages.Dequeue();
       try {
         // can trigger Disconnect, InternalUpdate
         RaiseMessageReceived(message);
@@ -392,7 +409,7 @@ public class UdpChannel : ChannelBase {
   }
   
   // either
-  private void SimpleSend(SocketBufferState chainedState) {
+  protected void SimpleSend(SocketBufferState chainedState) {
     BeginSend(chainedState, callback_SimpleSend_Complete);
   }
 
@@ -413,44 +430,12 @@ public class UdpChannel : ChannelBase {
   }
 
   // either
-  private bool SendDisconnect() {
-    SocketBufferState state = AllocateBufferState(mainServer, mainEndPoint);
-    bool success = false;
-    try {
-      state.needsCloseWhenDone = true;
-
-      try {
-        state.length = disconnectionMessage.Size;
-        disconnectionMessage.Pack(state.stream);
-      }
-      catch (Exception e) {
-        Debug.LogException(e);
-        return false;
-      }
-
-      if (mainSend == null) {
-        SimpleSend(state);
-      }
-      else {
-        mainSend.chainedSend = state;
-      }
-      
-      success = true;
-      return true;
-    }
-    catch (Exception e) {
-      Debug.LogException(e);
-      return false;
-    }
-    finally {
-      if (!success) {
-        state.Dispose();
-      }
-    }
+  protected virtual bool SendDisconnect() {
+    return false;
   }
 
   // synchronous
-  private void SendInternal(U2G.MessageGameToEngine message) {
+  protected void SendInternal(MessageOut message) {
     bool success = false;
     SocketBufferState state = AllocateBufferState(mainServer, mainEndPoint);
     try {
@@ -606,7 +591,7 @@ public class UdpChannel : ChannelBase {
             connectionState = ConnectionState.Connected;
             mainEndPoint = ipEndPoint;
             lastReceiveTime = lastUpdateTime;
-            lastPingTime = lastUpdateTime - PingTick * 2;
+            UpdateLastPingTime(lastUpdateTime);
 
             // ignore first message
           }
@@ -614,9 +599,9 @@ public class UdpChannel : ChannelBase {
 
             lastReceiveTime = lastUpdateTime;
 
-            G2U.MessageEngineToGame message;
+            MessageIn message;
             try {
-              message = new G2U.MessageEngineToGame();
+              message = new MessageIn();
               try {
                 message.Unpack(state.stream);
               }
@@ -670,6 +655,10 @@ public class UdpChannel : ChannelBase {
 
   // either
   private void SendAdvertisement() {
+    if (advertisementClient == null) {
+      return;
+    }
+
     if (advertisementSend != null || lastAdvertiseTime + AdvertiseTick > lastUpdateTime) {
       return;
     }
@@ -723,7 +712,7 @@ public class UdpChannel : ChannelBase {
   }
 
   // either
-  private SocketBufferState AllocateBufferState(Socket socket, EndPoint endPoint) {
+  protected SocketBufferState AllocateBufferState(Socket socket, EndPoint endPoint) {
     SocketBufferState state;
     int count = bufferStatePool.Count;
     if (count > 0) {
@@ -737,7 +726,7 @@ public class UdpChannel : ChannelBase {
     return state;
   }
 
-  private void FreeBufferState(SocketBufferState state) {
+  protected void FreeBufferState(SocketBufferState state) {
     if (state.socket == null) {
       return;
     }

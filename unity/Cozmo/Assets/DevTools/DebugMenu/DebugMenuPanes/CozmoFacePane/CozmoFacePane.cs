@@ -238,7 +238,7 @@ public class CozmoFacePane : MonoBehaviour {
     _RightLowerLidAngleLabel.text = _RightLowerLidAngle.value.ToString();
     _RightLowerLidBendLabel.text = _RightLowerLidBend.value.ToString();
   }
-    
+
   private void UpdateCozmoFaceMaterial() {
     CozmoFace.DisplayProceduralFace(
       _FaceAngle.value,
@@ -431,6 +431,6 @@ public class CozmoFacePane : MonoBehaviour {
     fullSB.AppendLine(leftSB.ToString());
     fullSB.AppendLine(rightSB.ToString());
 
-    Debug.Log(fullSB.ToString());
+    DAS.Debug(this, fullSB.ToString());
   }
 }

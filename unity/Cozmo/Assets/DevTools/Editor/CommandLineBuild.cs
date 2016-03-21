@@ -24,7 +24,7 @@ public class CommandLineBuild {
       }
     }
     catch (UnityException ex) {
-      Debug.LogException(ex);
+      sDAS.Error(ex.Message);
     }
 
     ProjectBuilder builder = new ProjectBuilder();

@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -72,6 +72,8 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeData = challengeData;
     _WonChallenge = false;
 
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetMusicState());
+
     RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
 
     _CubeCycleTimers = new Dictionary<int, CycleData>();
@@ -80,15 +82,14 @@ public abstract class GameBase : MonoBehaviour {
   private void FinishTurnToFace(bool success) {
     _SharedMinigameViewInstance = UIManager.OpenView(
       UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
-      false) as SharedMinigameView;
-    _SharedMinigameViewInstance.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
-      _ChallengeData.HowToPlayDialogContentLocKey);
-    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
-    Initialize(_ChallengeData.MinigameConfig);
+      newView => {
+        newView.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
+          _ChallengeData.HowToPlayDialogContentLocKey);
+        InitializeView(newView, _ChallengeData);
+      });
 
-    // Populate the view before opening it so that animations play correctly
-    InitializeView(_ChallengeData);
-    _SharedMinigameViewInstance.OpenView();
+    Initialize(_ChallengeData.MinigameConfig);
+    _SharedMinigameViewInstance.QuitMiniGameConfirmed += HandleQuitConfirmed;
 
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
@@ -97,12 +98,12 @@ public abstract class GameBase : MonoBehaviour {
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
 
-  protected virtual void InitializeView(ChallengeData data) {
+  protected virtual void InitializeView(SharedMinigameView newView, ChallengeData data) {
     // For all challenges, set the title text and add a quit button by default
-    ChallengeTitleWidget titleWidget = SharedMinigameView.TitleWidget;
+    ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
     titleWidget.Icon = data.ChallengeIcon;
-    SharedMinigameView.ShowBackButton();
+    newView.ShowBackButton();
   }
 
   #endregion
@@ -134,7 +135,6 @@ public abstract class GameBase : MonoBehaviour {
 
   public void OnDestroy() {
     DAS.Event(DASConstants.Game.kEnd, GetGameTimeElapsedAsStr());
-
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
@@ -153,7 +153,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void EndGameRobotReset() {
     RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
-    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
     CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
@@ -260,7 +260,7 @@ public abstract class GameBase : MonoBehaviour {
     // Open confirmation dialog instead
     GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowNarrowGameStateSlide(
                                      UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
-                                     "ChallengeEndSlide");
+                                     "challenge_end_slide");
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
     _ChallengeEndViewInstance.SetupDialog(subtitleText);
 

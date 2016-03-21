@@ -10,14 +10,20 @@ namespace Cozmo {
       public delegate void ContinueButtonClickHandler();
 
       [SerializeField]
-      private AnkiButton _ContinueButton;
+      private Cozmo.UI.CozmoButton _ContinueButton;
 
       [SerializeField]
       private AnkiTextLabel _ShelfTextLabel;
 
       private ContinueButtonClickHandler _OnClickCallback;
 
-      private void Start() {
+      public string DASEventViewController {
+        get { return _ContinueButton.DASEventViewController; } 
+        set { _ContinueButton.DASEventViewController = value; }
+      }
+
+      private void Awake() {
+        _ContinueButton.DASEventButtonName = "continue_button";
         _ContinueButton.onClick.AddListener(HandleContinueButtonClicked);
       }
 

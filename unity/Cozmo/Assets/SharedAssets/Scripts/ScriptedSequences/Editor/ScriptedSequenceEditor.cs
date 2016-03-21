@@ -618,7 +618,7 @@ public class ScriptedSequenceEditor : EditorWindow {
         _RecentFiles.Add(path);
       }
       catch (Exception ex) {
-        Debug.LogException(ex);
+        DAS.Error(this, ex.Message);
       }
     }
   }

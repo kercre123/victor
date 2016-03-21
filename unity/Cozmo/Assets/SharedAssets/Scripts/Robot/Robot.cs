@@ -336,11 +336,13 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SuccessOrFailure += RobotEngineMessages;
     RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
     RobotEngineManager.Instance.OnProgressionStatRecieved += UpdateProgressionStatFromEngineRobotManager;
+    RobotEngineManager.Instance.OnObjectConnectionState += ObjectConnectionState;
   }
 
   public void Dispose() {
     RobotEngineManager.Instance.DisconnectedFromClient -= Reset;
     RobotEngineManager.Instance.SuccessOrFailure -= RobotEngineMessages;
+    RobotEngineManager.Instance.OnObjectConnectionState -= ObjectConnectionState;
   }
 
   public void CooldownTimers(float delta) {
@@ -764,6 +766,15 @@ public class Robot : IRobot {
 
   #endregion
 
+  public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
+    DAS.Debug(this, "ObjectConnectionState: " + message.objectID);
+    int id = (int)message.objectID;
+    if (!LightCubes.ContainsKey(id)) {
+      LightCube lightCube = new LightCube(id, ObjectFamily.LightCube, ObjectType.Block_LIGHTCUBE1);
+      LightCubes.Add(id, lightCube);
+    }
+  }
+
   public void UpdateObservedObjectInfo(G2U.RobotObservedObject message) {
     if (message.objectFamily == Anki.Cozmo.ObjectFamily.Mat) {
       DAS.Warn(this, "UpdateObservedObjectInfo received message about the Mat!");
@@ -784,7 +795,7 @@ public class Robot : IRobot {
     if (lightCube == null) {
       lightCube = new LightCube(message.objectID, message.objectFamily, message.objectType);
 
-      LightCubes.Add(lightCube, lightCube);
+      LightCubes.Add(message.objectID, lightCube);
       SeenObjects.Add(lightCube);
     }
 
@@ -909,6 +920,18 @@ public class Robot : IRobot {
 
   public void CancelAllCallbacks() {
     _RobotCallbacks.Clear();
+  }
+
+  public void EnableNewFaceEnrollment(int numToEnroll = 1) {
+    DAS.Debug(this, "Enable new face enrollment: " + numToEnroll);
+    RobotEngineManager.Instance.Message.EnableNewFaceEnrollment = Singleton<EnableNewFaceEnrollment>.Instance.Initialize(numToEnroll);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void AssignNameToFace(int faceID, string name) {
+    DAS.Debug(this, "Assigning face " + faceID + " to " + name);
+    RobotEngineManager.Instance.Message.AssignNameToFace = Singleton<AssignNameToFace>.Instance.Initialize(faceID, name);
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {

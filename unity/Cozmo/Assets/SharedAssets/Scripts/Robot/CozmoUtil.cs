@@ -13,7 +13,7 @@ public static class CozmoUtil {
   public const float kMinWheelSpeedMM = 10f;
   public const float kBlockLengthMM = 44f;
   public const float kLocalBusyTime = 1f;
-  public const float kMaxLiftHeightMM = 90f;
+  public const float kMaxLiftHeightMM = 92f;
   public const float kMinLiftHeightMM = 32f;
   public const float kLiftRequestTime = 3f;
   public const float kMinHeadAngle = -25f;

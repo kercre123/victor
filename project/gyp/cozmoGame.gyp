@@ -195,8 +195,12 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_debug)',
-                  '<@(opencv_lib_search_path_ios_debug)',
                   '<(webots_path)/lib/',
+                  '<@(face_library_lib_path)',
+                ],
+                'FRAMEWORK_SEARCH_PATHS': [
+                  '<@(opencv_lib_search_path_debug)',
+                  '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
                 ],
               },
             }],
@@ -204,8 +208,9 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_debug)',
-                  '<@(opencv_lib_search_path_mac_debug)',
+                  '<@(opencv_lib_search_path_debug)',
                   '<(webots_path)/lib/',
+                  '<@(face_library_lib_path)',
                 ],
               },
             }],
@@ -228,8 +233,12 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_release)',
-                  '<@(opencv_lib_search_path_ios_release)',
                   '<(webots_path)/lib/',
+                  '<@(face_library_lib_path)',
+                ],
+                'FRAMEWORK_SEARCH_PATHS': [
+                  '<@(opencv_lib_search_path_debug)',
+                  '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
                 ],
               },
             }],
@@ -237,8 +246,9 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_release)',
-                  '<@(opencv_lib_search_path_mac_release)',
+                  '<@(opencv_lib_search_path_release)',
                   '<(webots_path)/lib/',
+                  '<@(face_library_lib_path)',
                 ],
               },
             }],
@@ -261,8 +271,12 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_ios_release)',
-                  '<@(opencv_lib_search_path_ios_release)',
                   '<(webots_path)/lib/',
+                  '<@(face_library_lib_path)',
+                ],
+                'FRAMEWORK_SEARCH_PATHS': [
+                  '<@(opencv_lib_search_path_debug)',
+                  '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
                 ],
               },
             }],
@@ -270,8 +284,9 @@
               'xcode_settings': {
                 'LIBRARY_SEARCH_PATHS': [
                   '<@(cte_lib_search_path_mac_release)',
-                  '<@(opencv_lib_search_path_mac_release)',
+                  '<@(opencv_lib_search_path_release)',
                   '<(webots_path)/lib/',
+                  '<@(face_library_lib_path)',
                 ],
               },
             }],
@@ -341,6 +356,18 @@
             ],
             'sources': [ '<!@(cat <(csharp_source))' ],
             'libraries': [
+              '<@(face_library_libs)',
+              '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AssetsLibrary.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreText.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreGraphics.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Foundation.framework',
+              '$(SDKROOT)/System/Library/Frameworks/MobileCoreServices.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QuickLook.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Security.framework',
+              '$(SDKROOT)/System/Library/Frameworks/SystemConfiguration.framework',
+              '$(SDKROOT)/System/Library/Frameworks/UIKit.framework',
             ],
           }, # end CSharpBinding
 

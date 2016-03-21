@@ -16,13 +16,13 @@ namespace Cozmo {
       private AnkiTextLabel _AlertMessageText;
 
       [SerializeField]
-      private AnkiButton _PrimaryButton;
+      private Cozmo.UI.CozmoButton _PrimaryButton;
 
       [SerializeField]
-      private AnkiButton _SecondaryButton;
+      private Cozmo.UI.CozmoButton _SecondaryButton;
 
       [SerializeField]
-      private AnkiButton _CloseButton;
+      private Cozmo.UI.CozmoButton _CloseButton;
 
       [SerializeField]
       private CanvasGroup _AlphaController;
@@ -47,6 +47,7 @@ namespace Cozmo {
           if (_TitleKey != value && _AlertTitleText != null) {
             _TitleKey = value;
             _AlertTitleText.text = Localization.Get(value);
+            UpdateButtonViewControllerNames();
           }
         }
       }
@@ -57,14 +58,19 @@ namespace Cozmo {
           if (_DescriptionKey != value && _AlertMessageText != null) {
             _DescriptionKey = value;
             _AlertMessageText.text = Localization.Get(value);
+            UpdateButtonViewControllerNames();
           } 
         }
       }
 
       private void Awake() {
-
         Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.WindowOpen);
+
+        string viewName = GenerateDasName();
+
         if (_CloseButton != null) {
+          _CloseButton.DASEventViewController = viewName;
+          _CloseButton.DASEventButtonName = "close_button";
           _CloseButton.onClick.AddListener(() => {
             Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.ClickBack);
             CloseView();
@@ -78,10 +84,14 @@ namespace Cozmo {
 
         // Hide all buttons
         if (_PrimaryButton != null) {
+          _PrimaryButton.DASEventViewController = viewName;
+          _PrimaryButton.DASEventButtonName = "primary_button";
           _PrimaryButton.gameObject.SetActive(false);
         }
 
         if (_SecondaryButton != null) {
+          _SecondaryButton.DASEventViewController = viewName;
+          _SecondaryButton.DASEventButtonName = "secondary_button";
           _SecondaryButton.gameObject.SetActive(false);
         }
       }
@@ -93,7 +103,38 @@ namespace Cozmo {
         ResetButton(_SecondaryButton);
       }
 
-      private void ResetButton(AnkiButton button) {
+      private void UpdateButtonViewControllerNames() {
+        string viewName = GenerateDasName();
+        if (_CloseButton != null) {
+          _CloseButton.DASEventViewController = viewName;
+        }
+
+        // Hide all buttons
+        if (_PrimaryButton != null) {
+          _PrimaryButton.DASEventViewController = viewName;
+        }
+
+        if (_SecondaryButton != null) {
+          _SecondaryButton.DASEventViewController = viewName;
+        }
+      }
+
+      private string GenerateDasName() {
+        string viewFormatting = "{0}_{1}";
+        string viewName = null;
+        if (_TitleKey != null) {
+          viewName = string.Format(viewFormatting, DASEventViewName, _TitleKey);
+        }
+        else if (_DescriptionKey != null) {
+          viewName = string.Format(viewFormatting, DASEventViewName, _DescriptionKey);
+        }
+        else {
+          viewName = DASEventViewName;
+        }
+        return viewName;
+      }
+
+      private void ResetButton(Cozmo.UI.CozmoButton button) {
         if (button != null && button.isActiveAndEnabled) {
           button.onClick.RemoveAllListeners();
         }
@@ -137,7 +178,7 @@ namespace Cozmo {
         }
       }
 
-      private void SetupButton(AnkiButton button, String title, Action action, 
+      private void SetupButton(Cozmo.UI.CozmoButton button, String title, Action action, 
                                Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         if (button != null) {
           button.gameObject.SetActive(true);

@@ -200,6 +200,10 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
+  public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
+
+  }
+
   public void UpdateObservedObjectInfo(Anki.Cozmo.ExternalInterface.RobotObservedObject message) {
     // Won't be called
   }
@@ -295,6 +299,14 @@ public class MockRobot : IRobot {
 
   public void CancelAllCallbacks() {
     _Callbacks.Clear();
+  }
+
+  public void EnableNewFaceEnrollment(int numToEnroll = 1) {
+    
+  }
+
+  public void AssignNameToFace(int faceID, string name) {
+    
   }
 
   public void SendAnimation(string animName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {

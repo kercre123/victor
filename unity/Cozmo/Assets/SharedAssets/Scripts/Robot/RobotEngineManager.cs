@@ -59,12 +59,19 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<bool,string> RobotCompletedAnimation;
   public event Action<bool,uint> RobotCompletedCompoundAction;
   public event Action<bool,uint> RobotCompletedTaggedAction;
+  public event Action<int, string, Vector3, Quaternion> RobotObservedFace;
+  public event Action<int, Vector3, Quaternion> RobotObservedNewFace;
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
   public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
   public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
+  public event Action<Anki.Cozmo.ExternalInterface.InitBlockPoolMessage> OnInitBlockPoolMsg;
+  public event Action<Anki.Cozmo.ObjectDiscovered> OnObjectDiscoveredMsg;
+  public event Action<Anki.Cozmo.ObjectUndiscovered> OnObjectUndiscoveredMsg;
+  public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
+  public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
 
   #region Audio Callback events
@@ -74,7 +81,7 @@ public class RobotEngineManager : MonoBehaviour {
   #endregion
 
   private bool _CozmoBindingStarted = false;
-  private ChannelBase _Channel = null;
+  private RobotUdpChannel _Channel = null;
   private bool _IsRobotConnected = false;
 
   private const int _UIDeviceID = 1;
@@ -85,9 +92,9 @@ public class RobotEngineManager : MonoBehaviour {
 
   public bool AllowImageSaving { get; private set; }
 
-  private U2G.MessageGameToEngine _Message = new G2U.MessageGameToEngine();
+  private RobotMessageOut _MessageOut = new RobotMessageOut();
 
-  public U2G.MessageGameToEngine Message { get { return _Message; } }
+  public U2G.MessageGameToEngine Message { get { return _MessageOut.Message; } }
 
   private U2G.StartEngine StartEngineMessage = new U2G.StartEngine();
   private U2G.ForceAddRobot ForceAddRobotMessage = new U2G.ForceAddRobot();
@@ -137,7 +144,7 @@ public class RobotEngineManager : MonoBehaviour {
 
     Application.runInBackground = true;
 
-    _Channel = new UdpChannel();
+    _Channel = new RobotUdpChannel();
     _Channel.ConnectedToClient += Connected;
     _Channel.DisconnectedFromClient += Disconnected;
     _Channel.MessageReceived += ReceivedMessage;
@@ -247,10 +254,11 @@ public class RobotEngineManager : MonoBehaviour {
       return;
     }
 
-    _Channel.Send(Message);
+    _Channel.Send(_MessageOut);
   }
 
-  private void ReceivedMessage(G2U.MessageEngineToGame message) {
+  private void ReceivedMessage(RobotMessageIn messageIn) {
+    var message = messageIn.Message;
     switch (message.GetTag()) {
     case G2U.MessageEngineToGame.Tag.Ping:
       break;
@@ -344,6 +352,21 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.DenyGameStart:
       ReceivedSpecificMessage(message.DenyGameStart);
       break;
+    case G2U.MessageEngineToGame.Tag.InitBlockPoolMessage:
+      ReceivedSpecificMessage(message.InitBlockPoolMessage);
+      break;
+    case G2U.MessageEngineToGame.Tag.ObjectDiscovered:
+      ReceivedSpecificMessage(message.ObjectDiscovered);
+      break;
+    case G2U.MessageEngineToGame.Tag.ObjectUndiscovered:
+      ReceivedSpecificMessage(message.ObjectUndiscovered);
+      break;
+    case G2U.MessageEngineToGame.Tag.ObjectConnectionState:
+      ReceivedSpecificMessage(message.ObjectConnectionState);
+      break;
+    case G2U.MessageEngineToGame.Tag.ImageChunk:
+      ReceivedSpecificMessage(message.ImageChunk);
+      break;
     case G2U.MessageEngineToGame.Tag.RobotObservedPossibleObject:
       ReceivedSpecificMessage(message.RobotObservedPossibleObject);
       break;
@@ -368,7 +391,15 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.RobotConnected message) {
+    if (!_IsRobotConnected) {
+      _IsRobotConnected = true;
 
+      AddRobot((byte)message.robotID);
+
+      if (RobotConnected != null) {
+        RobotConnected((byte)message.robotID);
+      }
+    }
   }
 
   private void ReceivedSpecificMessage(G2U.UiDeviceConnected message) {
@@ -454,6 +485,19 @@ public class RobotEngineManager : MonoBehaviour {
     if (CurrentRobot == null)
       return;
     CurrentRobot.UpdateObservedFaceInfo(message);
+
+    if (message.faceID > 0 && message.name == "" && RobotObservedNewFace != null) {
+      RobotObservedNewFace(message.faceID, 
+        new Vector3(message.world_x, message.world_y, message.world_z), 
+        new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w));
+    }
+
+    if (RobotObservedFace != null) {
+      RobotObservedFace(message.faceID, message.name,
+        new Vector3(message.world_x, message.world_y, message.world_z), 
+        new Quaternion(message.quaternion_x, message.quaternion_y, message.quaternion_z, message.quaternion_w));
+    }
+
   }
 
   private void ReceivedSpecificMessage(G2U.RobotObservedNothing message) {
@@ -580,23 +624,6 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.RobotState message) {
-    if (!_IsRobotConnected) {
-      DAS.Debug(this, "Robot " + message.robotID.ToString() + " sent first state message.");
-      _IsRobotConnected = true;
-
-      AddRobot(message.robotID);
-
-      if (RobotConnected != null) {
-        RobotConnected(message.robotID);
-      }
-    }
-
-    if (!Robots.ContainsKey(message.robotID)) {
-      DAS.Debug(this, "adding robot with ID: " + message.robotID);
-      
-      AddRobot(message.robotID);
-    }
-    
     Robots[message.robotID].UpdateInfo(message);
   }
 
@@ -611,6 +638,31 @@ public class RobotEngineManager : MonoBehaviour {
       OnCliffEvent(message);
     }
   }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.InitBlockPoolMessage message) {
+    if (OnInitBlockPoolMsg != null) {
+      OnInitBlockPoolMsg(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ObjectConnectionState message) {
+    if (OnObjectConnectionState != null) {
+      OnObjectConnectionState(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ObjectDiscovered message) {
+    if (OnObjectDiscoveredMsg != null) {
+      OnObjectDiscoveredMsg(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ObjectUndiscovered message) {
+    if (OnObjectUndiscoveredMsg != null) {
+      OnObjectUndiscoveredMsg(message);
+    }
+  }
+
 
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
     if (OnRequestGameStart != null) {
@@ -635,6 +687,12 @@ public class RobotEngineManager : MonoBehaviour {
       if (CurrentRobot.CurrentBehaviorString != message.text) {
         CurrentRobot.CurrentBehaviorString = message.text;
       }
+    }
+  }
+
+  private void ReceivedSpecificMessage(ImageChunk message) {
+    if (OnImageChunkReceived != null) {
+      OnImageChunkReceived(message);
     }
   }
 

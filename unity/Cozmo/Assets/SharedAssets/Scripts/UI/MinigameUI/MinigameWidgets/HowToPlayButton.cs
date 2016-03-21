@@ -9,7 +9,7 @@ namespace Cozmo {
     public class HowToPlayButton : MinigameWidget {
 
       [SerializeField]
-      private AnkiButton _HowToPlayButtonInstance;
+      private Cozmo.UI.CozmoButton _HowToPlayButtonInstance;
 
       [SerializeField]
       private HowToPlayView _HowToPlayViewPrefab;
@@ -18,12 +18,18 @@ namespace Cozmo {
       private string _HowToPlayLocKey = null;
       private GameObject _HowToPlayViewContentPrefab = null;
 
+      public string DASEventViewController {
+        get { return _HowToPlayButtonInstance.DASEventViewController; } 
+        set { _HowToPlayButtonInstance.DASEventViewController = value; }
+      }
+
       public void Initialize(string howToPlayTextLocKey, GameObject howToPlayViewContents) {
         _HowToPlayLocKey = howToPlayTextLocKey;
         _HowToPlayViewContentPrefab = howToPlayViewContents;
       }
 
       private void Start() {
+        _HowToPlayButtonInstance.DASEventButtonName = "how_to_play_button";
         _HowToPlayButtonInstance.onClick.AddListener(HandleHowToPlayButtonTap);
       }
 
@@ -58,10 +64,9 @@ namespace Cozmo {
 
       public void OpenHowToPlayView(bool? overrideBackgroundDim, bool? overrideCloseOnTouchOutside) {
         _HowToPlayViewInstance = UIManager.OpenView(_HowToPlayViewPrefab, 
-          animateImmediately: true,
           overrideBackgroundDim: overrideBackgroundDim,
           overrideCloseOnTouchOutside: overrideCloseOnTouchOutside
-        ) as HowToPlayView;
+        );
         if (_HowToPlayViewContentPrefab != null) {
           _HowToPlayViewInstance.Initialize(_HowToPlayViewContentPrefab);
         }
