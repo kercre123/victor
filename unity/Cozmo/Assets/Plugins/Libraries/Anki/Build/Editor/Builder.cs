@@ -14,7 +14,7 @@ namespace Anki {
 
       private const string _kProjectName = "Cozmo";
       private const string _kBuildOuputFolder = "Build";
-      private const string _kSimulationMode = _kProjectName + "/Build/AssetBundles/Simulation Mode";
+      private const string _kSimulationMode = _kProjectName + "/Build/Asset Bundle Simulation Mode";
 
       [MenuItem(_kSimulationMode)]
       public static void ToggleSimulationMode() {
@@ -27,7 +27,7 @@ namespace Anki {
         return true;
       }
 
-      [MenuItem(Build.Builder._kProjectName + "/Build/AssetBundles/Build Bundles")]
+      [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles")]
       public static void BuildAssetBundles() {
         string outputPath = Path.Combine(Assets.AssetBundleManager.kAssetBundlesFolder, Assets.AssetBundleManager.GetPlatformName());
                 
@@ -36,11 +36,16 @@ namespace Anki {
         }
   	
         BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.None, EditorUserBuildSettings.activeBuildTarget);
+
+        // Copy the asset bundles to the target folder
+        if (CopyAssetBundlesTo(Path.Combine(Application.streamingAssetsPath, Assets.AssetBundleManager.kAssetBundlesFolder))) {
+          AssetDatabase.Refresh();
+        }
       }
 
-      [MenuItem(Build.Builder._kProjectName + "/Build/Build Bundles And Player")]
+      [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles And Player")]
       public static void BuildPlayer() {
-        var outputFolder = GetOutputFolder();
+        string outputFolder = GetOutputFolder();
         if (outputFolder == null)
           return;
   			
@@ -50,11 +55,7 @@ namespace Anki {
 
         // Build and copy asset bundles
         BuildAssetBundles();
-        if (!CopyAssetBundlesTo(Path.Combine(Application.streamingAssetsPath, Assets.AssetBundleManager.kAssetBundlesFolder))) {
-          return;
-        }
-        AssetDatabase.Refresh();
-  			
+
         // TODO: Determine which scene should be here
         string[] sceneList = new string[0];
         string outputPath = outputFolder + "/" + GetOutputName();
