@@ -290,7 +290,7 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     ObservableObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
     if (obj) {
       objID = obj->GetID();
-      GetBlockWorld().DeleteObject(objID);
+      GetBlockWorld().ClearObject(objID);
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Disconnected",
                        "Object %d (activeID %d, factoryID 0x%x)",
                        objID.GetValue(), payload.objectID, payload.factoryID);
