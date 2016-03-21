@@ -263,7 +263,8 @@ union EngineToRobot
   BackpackLights                setBackpackLights           = 0x03,
   CubeLights                    setCubeLights               = 0x04,
   CubeSlots                     assignCubeSlots             = 0x05,
-  
+  KillBodyCode                  killBodyCode                = 0x06,
+
   // 0x30 to 0x7f: To RTIP
   BootloadRTIP                  bootloadRTIP                = 0x30,
   RadioState                    radioConnected              = 0x31,

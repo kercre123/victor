@@ -195,7 +195,6 @@ void Battery::manage(void* userdata)
 
         if (raw >= 0x30){
           pinch_count = 0;
-          RTOS::kick(WDOG_NERVE_PINCH);
         } else if (++pinch_count > 50) {
           NVIC_SystemReset();
         }

@@ -163,6 +163,17 @@ static void Process_assignCubeSlots(const CubeSlots& msg)
   }
 }
 
+static void Process_killBodyCode(const KillBodyCode& msg)
+{
+  // This will destroy the first sector in the application layer
+  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  NRF_NVMC->ERASEPAGE = 0x18000;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+}
+
 static void ProcessMessage()
 {
   using namespace Anki::Cozmo;
@@ -211,6 +222,8 @@ void UART0_IRQHandler()
 
     // We received a full packet
     if (++txRxIndex >= sizeof(GlobalDataToBody)) {
+      RTOS::kick(WDOG_UART);
+
       memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
       ProcessMessage();
       Head::spokenTo = true;
