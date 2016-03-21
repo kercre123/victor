@@ -949,8 +949,8 @@ namespace Anki {
 
       info.focalLength_x = f;
       info.focalLength_y = f;
-      info.center_x      = 0.5f*width;
-      info.center_y      = 0.5f*height;
+      info.center_x      = 0.5f*(width-1);
+      info.center_y      = 0.5f*(height-1);
       info.skew          = 0.f;
       info.nrows         = nrows;
       info.ncols         = ncols;

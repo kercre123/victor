@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/visionSystem.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/vision/basestation/trackedFace.h"
@@ -30,9 +31,11 @@
 #include "util/helpers/templateHelpers.h"
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/imageTypes.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -42,9 +45,10 @@
 namespace Anki {
 namespace Cozmo {
   
-  VisionComponent::VisionComponent(RobotID_t robotID, RunMode mode, const CozmoContext* context)
-  : _vizManager(context->GetVizManager())
-  , _camera(robotID)
+  VisionComponent::VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context)
+  : _robot(robot)
+  , _vizManager(context->GetVizManager())
+  , _camera(robot.GetID())
   , _runMode(mode)
   {
     std::string dataPath("");
@@ -87,11 +91,35 @@ namespace Cozmo {
           const ExternalInterface::EnableNewFaceEnrollment& msg = event.GetData().Get_EnableNewFaceEnrollment();
           _visionSystem->EnableNewFaceEnrollment(msg.numToEnroll);
         }));
+      
+      // StartFaceTracking
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EnableVisionMode,
+         [this] (const AnkiEvent<MessageGameToEngine>& event)
+         {
+           auto const& payload = event.GetData().Get_EnableVisionMode();
+           EnableMode(payload.mode, payload.enable);
+         }));
+      
+      // VisionWhileMoving
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::VisionWhileMoving,
+         [this] (const AnkiEvent<MessageGameToEngine>& event)
+         {
+           const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
+           EnableVisionWhileMoving(msg.enable);
+         }));
+      
+      // VisionRunMode
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::VisionRunMode,
+         [this] (const AnkiEvent<MessageGameToEngine>& event)
+         {
+           const ExternalInterface::VisionRunMode& msg = event.GetData().Get_VisionRunMode();
+           SetRunMode((msg.isSync ? RunMode::Synchronous : RunMode::Asynchronous));
+         }));
     }
     
   } // VisionSystem()
 
-  void VisionComponent::SetCameraCalibration(const Robot& robot, const Vision::CameraCalibration& camCalib)
+  void VisionComponent::SetCameraCalibration(const Vision::CameraCalibration& camCalib)
   {
     if(_camCalib != camCalib || !_isCamCalibSet)
     {
@@ -102,7 +130,10 @@ namespace Cozmo {
       _visionSystem->UnInit();
       
       // Got a new calibration: rebuild the LUT for ground plane homographies
-      PopulateGroundPlaneHomographyLUT(robot);
+      PopulateGroundPlaneHomographyLUT();
+      
+      // Fine-tune calibration using tool code dots
+      //_robot.GetActionList().QueueActionNext(new ReadToolCodeAction(_robot));
     }
   }
   
@@ -299,8 +330,7 @@ namespace Cozmo {
     }
   }
   
-  Result VisionComponent::SetNextImage(const Vision::ImageRGB& image,
-                                       const Robot& robot)
+  Result VisionComponent::SetNextImage(const Vision::ImageRGB& image)
   {
     if(_isCamCalibSet) {
       ASSERT_NAMED(nullptr != _visionSystem, "VisionSystem should not be NULL.");
@@ -320,24 +350,24 @@ namespace Cozmo {
       // Fill in the pose data for the given image, by querying robot history
       RobotPoseStamp imagePoseStamp;
       TimeStamp_t imagePoseStampTimeStamp;
-      Result lastResult = robot.GetPoseHistory()->ComputePoseAt(image.GetTimestamp(), imagePoseStampTimeStamp, imagePoseStamp, true);
+      Result lastResult = _robot.GetPoseHistory()->ComputePoseAt(image.GetTimestamp(), imagePoseStampTimeStamp, imagePoseStamp, true);
 
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionComponent.SetNextImage.PoseHistoryFail",
                           "Unable to get computed pose at image timestamp of %d. (rawPoses: have %zu from %d:%d) (visionPoses: have %zu from %d:%d)\n",
                           image.GetTimestamp(),
-                          robot.GetPoseHistory()->GetNumRawPoses(),
-                          robot.GetPoseHistory()->GetOldestTimeStamp(),
-                          robot.GetPoseHistory()->GetNewestTimeStamp(),
-                          robot.GetPoseHistory()->GetNumVisionPoses(),
-                          robot.GetPoseHistory()->GetOldestVisionOnlyTimeStamp(),
-                          robot.GetPoseHistory()->GetNewestVisionOnlyTimeStamp());
+                          _robot.GetPoseHistory()->GetNumRawPoses(),
+                          _robot.GetPoseHistory()->GetOldestTimeStamp(),
+                          _robot.GetPoseHistory()->GetNewestTimeStamp(),
+                          _robot.GetPoseHistory()->GetNumVisionPoses(),
+                          _robot.GetPoseHistory()->GetOldestVisionOnlyTimeStamp(),
+                          _robot.GetPoseHistory()->GetNewestVisionOnlyTimeStamp());
         return lastResult;
       }
       
       // Get most recent pose data in history
       Anki::Cozmo::RobotPoseStamp lastPoseStamp;
-      robot.GetPoseHistory()->GetLastPoseWithFrameID(robot.GetPoseFrameID(), lastPoseStamp);
+      _robot.GetPoseHistory()->GetLastPoseWithFrameID(_robot.GetPoseFrameID(), lastPoseStamp);
       
       // Compare most recent pose and pose at time of image to see if robot has moved in the short time
       // time since the image was taken. If it has, this suppresses motion detection inside VisionSystem.
@@ -360,7 +390,7 @@ namespace Cozmo {
       _nextPoseData.poseStamp = imagePoseStamp;
       _nextPoseData.timeStamp = imagePoseStampTimeStamp;
       _nextPoseData.isMoving = !headSame || !poseSame;
-      _nextPoseData.cameraPose = robot.GetHistoricalCameraPose(_nextPoseData.poseStamp, _nextPoseData.timeStamp);
+      _nextPoseData.cameraPose = _robot.GetHistoricalCameraPose(_nextPoseData.poseStamp, _nextPoseData.timeStamp);
       _nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(_nextPoseData.poseStamp.GetHeadAngle(),
                                                                      _nextPoseData.groundPlaneHomography);
       Unlock();
@@ -423,13 +453,13 @@ namespace Cozmo {
     
   } // SetNextImage()
   
-  void VisionComponent::PopulateGroundPlaneHomographyLUT(const Robot& robot, f32 angleResolution_rad)
+  void VisionComponent::PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad)
   {
-    const Pose3d& robotPose = robot.GetPose();
+    const Pose3d& robotPose = _robot.GetPose();
     
     ASSERT_NAMED(_camera.IsCalibrated(), "Camera must be calibrated to populate homography LUT.");
     
-    const Matrix_3x3f K = _camera.GetCalibration().GetCalibrationMatrix();
+    const Matrix_3x3f K = _camera.GetCalibration()->GetCalibrationMatrix();
     
     GroundPlaneROI groundPlaneROI;
     
@@ -442,7 +472,7 @@ namespace Cozmo {
       // the current head angle
       Pose3d robotPoseWrtCamera;
 #if ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
-      bool result = robotPose.GetWithRespectTo(robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
+      bool result = robotPose.GetWithRespectTo(_robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
       assert(result == true); // this really shouldn't fail! camera has to be in the robot's pose tree
 #else
       robotPose.GetWithRespectTo(robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
@@ -580,7 +610,7 @@ namespace Cozmo {
   }
   
   
-  Result VisionComponent::QueueObservedMarker(Robot& robot, const Vision::ObservedMarker& markerOrig)
+  Result VisionComponent::QueueObservedMarker(const Vision::ObservedMarker& markerOrig)
   {
     Result lastResult = RESULT_OK;
     
@@ -589,14 +619,14 @@ namespace Cozmo {
     TimeStamp_t t;
     RobotPoseStamp* p = nullptr;
     HistPoseKey poseKey;
-    lastResult = robot.GetPoseHistory()->ComputeAndInsertPoseAt(markerOrig.GetTimeStamp(), t, &p, &poseKey, true);
+    lastResult = _robot.GetPoseHistory()->ComputeAndInsertPoseAt(markerOrig.GetTimeStamp(), t, &p, &poseKey, true);
 
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
                           "Time: %d, hist: %d to %d\n",
                           markerOrig.GetTimeStamp(),
-                          robot.GetPoseHistory()->GetOldestTimeStamp(),
-                          robot.GetPoseHistory()->GetNewestTimeStamp());
+                          _robot.GetPoseHistory()->GetOldestTimeStamp(),
+                          _robot.GetPoseHistory()->GetNewestTimeStamp());
       return lastResult;
     }
     
@@ -605,7 +635,7 @@ namespace Cozmo {
     assert(markerOrig.GetTimeStamp() == t);
     
     // If we were moving too fast at timestamp t then don't queue this marker
-    if(WasMovingTooFast(robot, lastResult, t, p))
+    if(WasMovingTooFast(t, p))
     {
       return RESULT_OK;
     }
@@ -615,11 +645,11 @@ namespace Cozmo {
     assert(nullptr != p);
     Vision::ObservedMarker marker(markerOrig.GetTimeStamp(), markerOrig.GetCode(),
                                   markerOrig.GetImageCorners(),
-                                  robot.GetHistoricalCamera(*p, markerOrig.GetTimeStamp()),
+                                  _robot.GetHistoricalCamera(*p, markerOrig.GetTimeStamp()),
                                   markerOrig.GetUserHandle());
     
     // Queue the marker for processing by the blockWorld
-    robot.GetBlockWorld().QueueObservedMarker(poseKey, marker);
+    _robot.GetBlockWorld().QueueObservedMarker(poseKey, marker);
     
     /*
     // React to the marker if there is a callback for it
@@ -653,7 +683,7 @@ namespace Cozmo {
       
       
       // Block Markers
-      std::set<const ObservableObject*> const& blocks = robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Block).GetObjectsWithMarker(marker);
+      std::set<const ObservableObject*> const& blocks = _robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Block).GetObjectsWithMarker(marker);
       for(auto block : blocks) {
         std::vector<Vision::KnownMarker*> const& blockMarkers = block->GetMarkersWithCode(marker.GetCode());
         
@@ -668,7 +698,7 @@ namespace Cozmo {
                                 "Could not estimate pose of block marker. Not visualizing.\n");
           } else {
             if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              robot.GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
+              _robot.GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
             } else {
               PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                   "Cannot visualize a Block marker whose pose origin is not the camera's origin that saw it.\n");
@@ -679,7 +709,7 @@ namespace Cozmo {
       
       
       // Mat Markers
-      std::set<const ObservableObject*> const& mats = robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithMarker(marker);
+      std::set<const ObservableObject*> const& mats = _robot.GetBlockWorld().GetObjectLibrary(ObjectFamily::Mat).GetObjectsWithMarker(marker);
       for(auto mat : mats) {
         std::vector<Vision::KnownMarker*> const& matMarkers = mat->GetMarkersWithCode(marker.GetCode());
         
@@ -693,7 +723,7 @@ namespace Cozmo {
                                 "Could not estimate pose of mat marker. Not visualizing.\n");
           } else {
             if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindOrigin(), markerPose) == true) {
-              robot.GetContext()->GetVizManager()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
+              _robot.GetContext()->GetVizManager()->DrawMatMarker(quadID++, matMarker->Get3dCorners(markerPose), NamedColors::RED);
             } else {
               PRINT_NAMED_WARNING("BlockWorld.QueueObservedMarker.MarkerOriginNotCameraOrigin",
                                   "Cannot visualize a Mat marker whose pose origin is not the camera's origin that saw it.\n");
@@ -708,7 +738,7 @@ namespace Cozmo {
     
   } // QueueObservedMarker()
   
-  Result VisionComponent::UpdateVisionMarkers(Robot& robot)
+  Result VisionComponent::UpdateVisionMarkers()
   {
     Result lastResult = RESULT_OK;
     if(_visionSystem != nullptr)
@@ -716,7 +746,7 @@ namespace Cozmo {
       Vision::ObservedMarker visionMarker;
       while(true == _visionSystem->CheckMailbox(visionMarker)) {
         
-        lastResult = QueueObservedMarker(robot, visionMarker);
+        lastResult = QueueObservedMarker(visionMarker);
         if(lastResult != RESULT_OK) {
           PRINT_NAMED_ERROR("VisionComponent.Update.FailedToQueueVisionMarker",
                             "Got VisionMarker message from vision processing thread but failed to queue it.");
@@ -742,7 +772,7 @@ namespace Cozmo {
     return lastResult;
   } // UpdateVisionMarkers()
   
-  Result VisionComponent::UpdateFaces(Robot& robot)
+  Result VisionComponent::UpdateFaces()
   {
     Result lastResult = RESULT_OK;
     if(_visionSystem != nullptr)
@@ -750,7 +780,7 @@ namespace Cozmo {
       Vision::FaceTracker::UpdatedID updatedID;
       while(true == _visionSystem->CheckMailbox(updatedID))
       {
-        robot.GetFaceWorld().ChangeFaceID(updatedID.oldID, updatedID.newID);
+        _robot.GetFaceWorld().ChangeFaceID(updatedID.oldID, updatedID.newID);
       }
 
       Vision::TrackedFace faceDetection;
@@ -776,15 +806,15 @@ namespace Cozmo {
         TimeStamp_t t;
         RobotPoseStamp* p = nullptr;
         HistPoseKey poseKey;
-        robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
+        _robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
         // If we were moving too fast at the timestamp the face was detected then don't update it
-        if(WasMovingTooFast(robot, lastResult, faceDetection.GetTimeStamp(), p))
+        if(WasMovingTooFast(faceDetection.GetTimeStamp(), p))
         {
           return RESULT_OK;
         }
         
         // Use the faceDetection to update FaceWorld:
-        lastResult = robot.GetFaceWorld().AddOrUpdateFace(faceDetection);
+        lastResult = _robot.GetFaceWorld().AddOrUpdateFace(faceDetection);
         if(lastResult != RESULT_OK) {
           PRINT_NAMED_ERROR("VisionComponent.Update.FailedToUpdateFace",
                             "Got FaceDetection from vision processing but failed to update it.");
@@ -796,7 +826,7 @@ namespace Cozmo {
     return lastResult;
   } // UpdateFaces()
   
-  Result VisionComponent::UpdateTrackingQuad(Robot& robot)
+  Result VisionComponent::UpdateTrackingQuad()
   {
     if(_visionSystem != nullptr)
     {
@@ -812,7 +842,7 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateTrackingQuad()
   
-  Result VisionComponent::UpdateDockingErrorSignal(Robot& robot)
+  Result VisionComponent::UpdateDockingErrorSignal()
   {
     if(_visionSystem != nullptr)
     {
@@ -821,7 +851,7 @@ namespace Cozmo {
         
         // Hook the pose coming out of the vision system up to the historical
         // camera at that timestamp
-        Vision::Camera histCamera(robot.GetHistoricalCamera(markerPoseWrtCamera.second));
+        Vision::Camera histCamera(_robot.GetHistoricalCamera(markerPoseWrtCamera.second));
         markerPoseWrtCamera.first.SetParent(&histCamera.GetPose());
         /*
          // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
@@ -850,26 +880,26 @@ namespace Cozmo {
                                                    dockErrMsg.angleErr);
 
         // Try to use this for closed-loop control by sending it on to the robot
-        robot.SendRobotMessage<DockingErrorSignal>(std::move(dockErrMsg));
+        _robot.SendRobotMessage<DockingErrorSignal>(std::move(dockErrMsg));
       }
     } // if(_visionSystem != nullptr)
     return RESULT_OK;
   } // UpdateDockingErrorSignal()
   
-  Result VisionComponent::UpdateMotionCentroid(Robot& robot)
+  Result VisionComponent::UpdateMotionCentroid()
   {
     if(_visionSystem != nullptr)
     {
       ExternalInterface::RobotObservedMotion motionCentroid;
       if (true == _visionSystem->CheckMailbox(motionCentroid))
       {
-        robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(motionCentroid)));
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(motionCentroid)));
       }
     } // if(_visionSystem != nullptr)
     return RESULT_OK;
   } // UpdateMotionCentroid()
   
-  Result VisionComponent::UpdateOverheadEdges(Robot& robot)
+  Result VisionComponent::UpdateOverheadEdges()
   {
     if(_visionSystem != nullptr)
     {
@@ -879,7 +909,7 @@ namespace Cozmo {
       {
         edgeChainVector.emplace_back( std::move(edgeChain) ); // warning moving local variable
       }
-      robot.GetBlockWorld().AddVisionOverheadEdges(edgeChainVector);
+      _robot.GetBlockWorld().AddVisionOverheadEdges(edgeChainVector);
     }
     return RESULT_OK;
   }
@@ -969,16 +999,32 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateOverheadMap()
   
-  bool VisionComponent::WasMovingTooFast(Robot& robot, Result& lastResult, TimeStamp_t t, RobotPoseStamp* p)
+  Result VisionComponent::UpdateToolCode()
+  {
+    if(_visionSystem != nullptr)
+    {
+      ToolCode code;
+      if(true == _visionSystem->CheckMailbox(code))
+      {
+        ExternalInterface::RobotReadToolCode msg;
+        msg.code = code;
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      }
+    }
+
+    return RESULT_OK;
+  }
+  
+  bool VisionComponent::WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p)
   {
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
-    if(!_visionWhileMovingEnabled && !robot.IsPickingOrPlacing())
+    if(!_visionWhileMovingEnabled && !_robot.IsPickingOrPlacing())
     {
       TimeStamp_t t_prev, t_next;
       RobotPoseStamp p_prev, p_next;
       
-      lastResult = robot.GetPoseHistory()->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
+      Result lastResult = _robot.GetPoseHistory()->GetRawPoseBeforeAndAfter(t, t_prev, p_prev, t_next, p_next);
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker.HistoricalPoseNotFound",
                             "Could not get next/previous poses for t = %d, so "
@@ -1026,9 +1072,9 @@ namespace Cozmo {
   }
 
   template<class PixelType>
-  Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, const Robot& robot, s32 quality)
+  Result VisionComponent::CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality)
   {
-    if(!robot.HasExternalInterface()) {
+    if(!_robot.HasExternalInterface()) {
       PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
       return RESULT_FAIL;
     }
@@ -1112,13 +1158,13 @@ namespace Cozmo {
       
       if (chunkByteCnt == (s32)ImageConstants::IMAGE_CHUNK_SIZE) {
         //PRINT("Sending image chunk %d\n", m.chunkId);
-        robot.GetContext()->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
+        _robot.GetContext()->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
         ++m.chunkId;
         chunkByteCnt = 0;
       } else if (totalByteCnt == numTotalBytes) {
         // This should be the last message!
         //PRINT("Sending LAST image chunk %d\n", m.chunkId);
-        robot.GetContext()->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
+        _robot.GetContext()->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
       }
     } // for each byte in the compressed buffer
     
@@ -1127,10 +1173,10 @@ namespace Cozmo {
   
   // Explicit instantiation for grayscale and RGB
   template Result VisionComponent::CompressAndSendImage<u8>(const Vision::ImageBase<u8>& img,
-                                                            const Robot& robot, s32 quality);
+                                                            s32 quality);
   
   template Result VisionComponent::CompressAndSendImage<Vision::PixelRGB>(const Vision::ImageBase<Vision::PixelRGB>& img,
-                                                                          const Robot& robot, s32 quality);
+                                                                          s32 quality);
   
   
 } // namespace Cozmo

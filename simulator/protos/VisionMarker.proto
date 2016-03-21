@@ -6,6 +6,7 @@ PROTO VisionMarker [
   
   field SFFloat    markerWidth  0.025
   field SFFloat    markerHeight -1     # -1 means same as markerWidth
+  field SFFloat    markerThickness 0.0001
   field SFFloat    padding      0.002
   
   #field SFBool     isDockable   FALSE
@@ -41,10 +42,10 @@ PROTO VisionMarker [
               }
             }
             geometry DEF MARKER_BOX Box {
-              size %{= fields.markerWidth.value }% 0.0001 %{= fields.markerHeight.value }%
+              size %{= fields.markerWidth.value }% %{=fields.markerThickness.value}% %{= fields.markerHeight.value }%
             }
           }
-          %{ if fields.useWhiteBackground then }%
+          %{ if fields.useWhiteBackground.value then }%
           DEF FACE_SHAPE Shape {
             appearance Appearance {
               material Material {
@@ -52,7 +53,7 @@ PROTO VisionMarker [
               }
             }
             geometry Box {
-              size %{=whiteFaceWidth}% 0.00005 %{=whiteFaceHeight}%
+              size %{=whiteFaceWidth}% %{=fields.markerThickness.value/2}% %{=whiteFaceHeight}%
             }
           }
           %{ end }%        

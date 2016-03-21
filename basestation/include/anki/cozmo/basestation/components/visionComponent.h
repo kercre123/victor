@@ -58,21 +58,20 @@ struct DockingErrorSignal;
       Asynchronous
     };
     
-    VisionComponent(RobotID_t robotID, RunMode mode, const CozmoContext* context);
+    VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context);
     virtual ~VisionComponent();
     
     void SetRunMode(RunMode mode);
 
     // Calibration must be provided before Update() can be called
-    void SetCameraCalibration(const Robot& robot, const Vision::CameraCalibration& camCalib);
+    void SetCameraCalibration(const Vision::CameraCalibration& camCalib);
     
     // Provide next image for processing, with corresponding robot state.
     // In synchronous mode, the image is processed immediately. In asynchronous
     // mode, it will be processed as soon as the current image is completed.
     // Also, any debug images left by vision processing for display will be
     // displayed.
-    Result SetNextImage(const Vision::ImageRGB& image,
-                        const Robot& robot);
+    Result SetNextImage(const Vision::ImageRGB& image);
 
     void Pause(); // toggle paused state
     void Pause(bool isPaused); // set pause state
@@ -101,21 +100,24 @@ struct DockingErrorSignal;
     
     // Queue an observed vision marker for processing with the robot's BlockWorld,
     // if the robot wasn't moving too much while it was observed
-    Result QueueObservedMarker(Robot& robot, const Vision::ObservedMarker& marker);
+    Result QueueObservedMarker(const Vision::ObservedMarker& marker);
     
     // Set whether or not markers queued while robot is "moving" (meaning it is
     // turning too fast or head is moving too fast) will be considered
     void   EnableVisionWhileMoving(bool enable);
     
-    Result UpdateFaces(Robot& robot);
-    Result UpdateVisionMarkers(Robot& robot);
-    Result UpdateTrackingQuad(Robot& robot);
-    Result UpdateDockingErrorSignal(Robot& robot);
-    Result UpdateMotionCentroid(Robot& robot);
+    Result UpdateFaces();
+    Result UpdateVisionMarkers();
+    Result UpdateTrackingQuad();
+    Result UpdateDockingErrorSignal();
+    Result UpdateMotionCentroid();
     Result UpdateOverheadMap(const Vision::ImageRGB& image,
                              const VisionSystem::PoseData& poseData);
     
-    Result UpdateOverheadEdges(Robot& robot);
+    Result UpdateOverheadEdges();
+    
+    // See what tool we have on our lifter and calibrate the camera
+    Result UpdateToolCode();
     
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
@@ -133,7 +135,7 @@ struct DockingErrorSignal;
     TimeStamp_t GetProcessingPeriod();
     
     template<class PixelType>
-    Result CompressAndSendImage(const Vision::ImageBase<PixelType>& img, const Robot& robot, s32 quality);
+    Result CompressAndSendImage(const Vision::ImageBase<PixelType>& img, s32 quality);
     
     // Detected markers will only be queued for BlockWorld processing if the robot
     // was turning by less than these amounts when they were observed.
@@ -146,9 +148,11 @@ struct DockingErrorSignal;
     void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                f32& headTurnSpeedThresh_degPerSec) const;
     
-    bool WasMovingTooFast(Robot& robot, Result& lastResult, TimeStamp_t t, RobotPoseStamp* p);
+    bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p);
     
   protected:
+    
+    Robot& _robot;
     
     VisionSystem* _visionSystem = nullptr;
     VizManager*   _vizManager = nullptr;
@@ -158,7 +162,7 @@ struct DockingErrorSignal;
     // cameras (e.g. those stored inside the pose history)
     Vision::Camera            _camera;
     Vision::CameraCalibration _camCalib;
-    bool    _isCamCalibSet = false;
+    bool                      _isCamCalibSet = false;
     
     RunMode _runMode = RunMode::Asynchronous;
     
@@ -186,7 +190,7 @@ struct DockingErrorSignal;
     std::vector<Signal::SmartHandle> _signalHandles;
     
     std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
-    void PopulateGroundPlaneHomographyLUT(const Robot& robot, f32 angleResolution_rad = DEG_TO_RAD(0.25f));
+    void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
     
     void Processor();

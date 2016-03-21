@@ -13,6 +13,7 @@ namespace Cozmo {
     DetectingFaces         = 0x04,
     DetectingMotion        = 0x08,
     DetectingOverheadEdges = 0x10,
+    CheckingToolCode       = 0x20
   }
       
 } // namespace Cozmo

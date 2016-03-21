@@ -200,6 +200,13 @@ message EnableLiftPower
   bool enable
 }
 
+message EnableCamCalibMode
+{
+  float_32 headPower,
+  float_32 liftPower,
+  bool enable
+}
+
 message RTIPVersionInfo
 {
   uint_32 version,
@@ -295,6 +302,7 @@ union EngineToRobot
   BodyUpgradeData               bodyUpgradeData             = 0x52,
   PowerState                    powerState                  = 0x53,
   PropState                     getPropState                = 0x54,
+  EnableCamCalibMode            enableCamCalibMode          = 0x55,
   
   // 0x80 to 0xAF: To WiFi
   // Flash and OTA message must not be changed or OTA will break

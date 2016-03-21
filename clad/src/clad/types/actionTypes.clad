@@ -4,6 +4,7 @@
 // Copyright: Anki Inc (c) 2015
 
 #include "clad/audio/audioEventTypes.clad"
+#include "clad/types/toolCodes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -50,7 +51,8 @@ enum int_32 RobotActionType {
     TRACK_OBJECT,
     TRACK_FACE,
     TRACK_MOTION,
-    TURN_TOWARDS_LAST_FACE_POSE
+    TURN_TOWARDS_LAST_FACE_POSE,
+    READ_TOOL_CODE
 }
 
 
@@ -105,12 +107,18 @@ structure TrackFaceCompleted {
   int_32 faceID
 }
 
+// Used by ReadToolCodeAction
+structure ReadToolCodeCompleted {
+  ToolCode code // will be unknown if failure
+}
+
 // Use tag to determine what struct to use
 union ActionCompletedUnion {
   ObjectInteractionCompleted  objectInteractionCompleted,
   AnimationCompleted          animationCompleted,
   DeviceAudioCompleted        deviceAudioCompleted,
   TrackFaceCompleted          trackFaceCompleted,
+  ReadToolCodeCompleted       readToolCodeCompleted,
 }
 
 

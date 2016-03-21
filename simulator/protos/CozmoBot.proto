@@ -222,7 +222,7 @@ Supervisor {
 		} # BODY Solid
 		
 		DEF HEAD Transform {
-		  translation -0.013 0 0.0335
+		  translation -0.013 0 0.0345
 		  children [
 			HingeJoint {
 			  jointParameters HingeJointParameters {
@@ -271,13 +271,13 @@ Supervisor {
 				  Camera {
 						name "HeadCamera"
 						# Note: 8.8mm to lens face, 5.8mm to PCB mount, optical center = ?
-						#translation 0.0177 0 -0.008
-						translation 0.010 0 -0.008
-						rotation 0.57735 -0.57735 -0.57735 2.0944
+						translation 0.01752 0 -0.008 # Matches engine definitions
+						rotation 0.57735 -0.57735 -0.57735 2.0944 # looking straight ahead
+						#rotation    0.563430001007340  -0.563430001007340  -0.604229482837223 2.054545429548061 # 4-degree look-down
 						width IS cameraWidth
 						height IS cameraHeight
 						fieldOfView IS fieldOfView
-						near 0.012
+						near 0.010
 						antiAliasing TRUE
 						
 						%{ if fields.vizMode.value or fields.hideCameraDisplay.value then }%
@@ -312,7 +312,7 @@ Supervisor {
 						# resolution 0.00958
 				  }
 				  DEF FACE Transform {
-						translation 0.016 0 0
+						translation 0.012 0 0
 						children [
 							Shape {
 								appearance Appearance {
@@ -355,7 +355,7 @@ Supervisor {
 				  DEF HEAD_SHAPE Group {
 				    children [
 					  Transform {
-						translation 0.016 0 0.012 
+						translation 0.012 0 0.012 
 						children [
 							DEF HEAD_CAPSULE_WIDTH Shape {
 							  geometry Capsule {
@@ -368,21 +368,21 @@ Supervisor {
 				      }
 				      
 				      Transform {
-				        translation 0.016 0 -0.012 
+				        translation 0.012 0 -0.012
 				        children [
 				          USE HEAD_CAPSULE_WIDTH
 				        ]
 				      }
 				      
 				      Transform {
-				        translation -0.01 0 0.007
+				        translation -0.012 0 0.007
 				        children [
 				          USE HEAD_CAPSULE_WIDTH
 				        ]
 				      }
 				      
 				      Transform {
-				        translation -0.01 0 -0.007
+				        translation -0.012 0 -0.007
 				        children [
 				          USE HEAD_CAPSULE_WIDTH
 				        ]
@@ -390,7 +390,7 @@ Supervisor {
 				      
 				      # Front height capsules
 					  Transform {
-						translation 0.016 0.015 0
+						translation 0.012 0.015 0
 						rotation 1 0 0 1.5708
 						children [
 							DEF HEAD_CAPSULE_HEIGHT_FRONT Shape {
@@ -404,7 +404,7 @@ Supervisor {
 				      }			
 
 				      Transform {
-				        translation 0.016 -0.015 0
+				        translation 0.012 -0.015 0
 						rotation 1 0 0 1.5708				        
 				        children [
 				          USE HEAD_CAPSULE_HEIGHT_FRONT
@@ -413,7 +413,7 @@ Supervisor {
 				      
 				      # Rear height capsules
 				      Transform {
-						translation -0.01 0.015 0
+						translation -0.012 0.015 0
 						rotation 1 0 0 1.5708
 						children [
 							DEF HEAD_CAPSULE_HEIGHT_REAR Shape {
@@ -427,8 +427,8 @@ Supervisor {
 				      }			
 
 				      Transform {
-				        translation -0.01 -0.015 0
-						rotation 1 0 0 1.5708				        
+				        translation -0.012 -0.015 0
+						    rotation 1 0 0 1.5708				        
 				        children [
 				          USE HEAD_CAPSULE_HEIGHT_REAR
 				        ]
@@ -436,12 +436,12 @@ Supervisor {
 				      
 				      # Length-wise capsules
 				      Transform {
-						translation 0.003 0.015 0.0095
-						rotation -0.0944316 -0.0944316 0.991043 1.57979
+						rotation -0.0944316 -0.0944316 0.991043 1.59
+						translation 0.0005 0.015 0.009
 						children [
 							DEF HEAD_CAPSULE_LENGTH Shape {
 							  geometry Capsule {
-							    height 0.02648
+							    height 0.0235
 							    radius 0.005
 							  }
 							  appearance USE MAIN_BODY_APPEARANCE 
@@ -450,24 +450,24 @@ Supervisor {
 				      }
 				      
 				      Transform {
-						translation 0.003 0.015 -0.0095
-						rotation 0.0944316 0.0944316 0.991043 1.57979
+                rotation 0.0944316 0.0944316 0.991043 1.59
+                translation 0.0005 0.015 -0.009
 				        children [
 				          USE HEAD_CAPSULE_LENGTH
 				        ]
 				      }
 
 				      Transform {
-						translation 0.003 -0.015 0.0095
-						rotation -0.0944316 -0.0944316 0.991043 1.57979
+                rotation -0.0944316 -0.0944316 0.991043 1.59 #1.57979
+                translation 0.0005 -0.015 0.009
 				        children [
 				          USE HEAD_CAPSULE_LENGTH
 				        ]
 				      }
 
 				      Transform {
-						translation 0.003 -0.015 -0.0095
-						rotation 0.0944316 0.0944316 0.991043 1.57979
+                rotation 0.0944316 0.0944316 0.991043 1.59
+                translation 0.0005 -0.015 -0.009
 				        children [
 				          USE HEAD_CAPSULE_LENGTH
 				        ]
@@ -475,12 +475,12 @@ Supervisor {
 
 					  # Head cap (top)
 					  Transform {
-					    translation 0.003 0 0.014
-						rotation 0 -1 0 0.189997				    
+					    translation 0.0003 0 0.01375
+  						rotation 0 -1 0 0.22			    
 					    children [
 					      Shape {
 					        geometry Box {
-					          size 0.027 0.03 0.001
+					          size 0.024 0.03 0.001
 					        }
  							appearance USE MAIN_BODY_APPEARANCE 
 					      }
@@ -489,7 +489,7 @@ Supervisor {
 					  
 					  # Head cap (back)
 					  Transform {
-					    translation -0.0145 0 0
+					    translation -0.0165 0 0
 					    children [
 					      Shape {
 					        geometry Box {
@@ -1037,9 +1037,9 @@ Supervisor {
 		  children [
 				Shape {
 					geometry Cylinder {
-					height 0.048
-					radius 0.0035
-					subdivision 10
+            height 0.048
+            radius 0.0035
+            subdivision 10
 					}
 					appearance USE MAIN_BODY_APPEARANCE
 				}
@@ -1068,9 +1068,9 @@ Supervisor {
 					endPoint Solid {
 					children [
 
-					    #GRIPPER PLATE
-					    Transform {
-						translation 0.0626 0 -0.012
+					  #GRIPPER PLATE
+					  Transform {
+						  translation 0.065 0 -0.012
 						children [
 							HingeJoint {
 							jointParameters HingeJointParameters {
@@ -1126,95 +1126,66 @@ Supervisor {
 								Transform {
 									translation 0.0035 0.017 -0.012
 									children [
-									USE GRIPPER_FINGER
+									  USE GRIPPER_FINGER
 									]
 								}
 
 								DEF LIFTER_SHAPE Group {
 									children [
-									Transform {
-										translation 0 -0.0165 -0.01155
-										children [
-										DEF GRIPPER_SIDE Shape {
-											geometry Box {
-											size 0.007 0.004 0.0289
-											}
-											appearance USE MAIN_BODY_APPEARANCE
-										}
-										]
-									}
-									Transform {
-										translation 0 0.0165 -0.01155
-										children [
-											USE GRIPPER_SIDE
-										]
-									}
-									Transform {
-										translation 0.001 0 -0.0235
-										children [
-										DEF GRIPPER_BOTTOM Shape {
-											geometry Box {
-											size 0.005 0.029 0.005
-											}
-											appearance USE MAIN_BODY_APPEARANCE
-										}
-										]
-									}
+                    Transform {
+                      translation 0.0005 -0.0165 -0.01155
+                      children [
+                        DEF GRIPPER_SIDE Shape {
+                          geometry Box {
+                            size 0.007 0.004 0.0289
+                          }
+                          appearance USE MAIN_BODY_APPEARANCE
+                        }
+                      ]
+                    }
+                    Transform {
+                      translation 0.0005 0.0165 -0.01155
+                      children [
+                        USE GRIPPER_SIDE
+                      ]
+                    }
+                    Transform {
+                      translation 0.0015 0 -0.024
+                      children [
+                        DEF GRIPPER_BOTTOM Shape {
+                          geometry Box {
+                            size 0.005 0.029 0.008
+                          }
+                          appearance USE MAIN_BODY_APPEARANCE
+                        }
+                      ]
+                    }
+                  
+                  
+                    # Tool code dots (varying y in Transform translation moves the dots L/R)
+                    VisionMarker {
+                      rotation 1 0 0 1.5708
+                      translation 0.0015 0.01 -0.01995
+                      markerWidth 0.0025
+                      markerThickness 0.0001
+                      padding 0
+                      useWhiteBackground FALSE
+                      image "toolCodeDot.png"
+                    }         
+                    VisionMarker {
+                      rotation 1 0 0 1.5708
+                      translation 0.0015 -0.01 -0.01995
+                      markerWidth 0.0025
+                      markerThickness 0.0001
+                      padding 0
+                      useWhiteBackground FALSE
+                      image "toolCodeDot.png"
+                    }
+                    
 									] # LIFTER_SHAPE Group Children
 
 								} # LIFTER_SHAPE Group
-							 
-	#							DEF CALIBRATION_RIG Group {
-	# 							  children [
-	# 							    Transform {
-	# 							      translation 0 -.0125 -0.0135
-	# 							      children [
-	# 							        DEF CALIBRATION_TAB Group {
-	# 							          children [
-	# 							            Shape {
-	# 							              geometry Box {
-	# 							                size .003 .003 .003
-	# 							              }
-	# 							            }
-	# 							            Transform {
-	# 							              translation -.0015 0 0
-	# 							              children [
-	# 							                Shape {
-	# 							                  geometry Box {
-	# 							                    size .0002 .0029 .0029
-	# 							                  }
-	# 							                  appearance Appearance {
-	#                						            texture ImageTexture {
-	# 					                              url "textures/calibrationDot.png"
-	#                 						        }
-	#                 						      }
-	#                 						    }
-	#                 						  ] # Transform children
-	#                 						} # Transform
-	#                 					  ] # CALIBRATION_TAB Group Children
-	#               						} # CALIBRATION_TAB Group   
-	# 							      ] # Transform Children
-	# 							    } # Transform
-	# 							    Transform {
-	# 							      translation 0 .0125 -0.0135
-	# 							      children [
-	# 							        USE CALIBRATION_TAB
-	# 							      ]
-	# 							    }
-	# 							    Transform {
-	# 							      translation 0 .0125 0.0035
-	# 							      children [
-	# 							        USE CALIBRATION_TAB
-	# 							      ]
-	# 							    }
-	# 							    Transform {
-	# 							      translation 0 -.0125 0.0035
-	# 							      children [
-	# 							        USE CALIBRATION_TAB
-	# 							      ]
-	# 							    }
-	# 							  ] # CALIBRATION_RIG children
-	# 							} # CALIBRATION_RIG Group        
+							       
 								Connector {
 									name "gripperConnector"
 									#translation 0.0035 0 -0.0145
@@ -1263,14 +1234,14 @@ Supervisor {
 									0 0.00175 -0.0025
 									0 0.00175 0.0025
 									0.048 0.00175 0.0025
-									0.0626 0.00175 -0.0108
-									0.0626 0.00175 -0.0158
+									0.065 0.00175 -0.0108
+									0.065 0.00175 -0.0158
 									0.048 0.00175 -0.0025
 									0 -0.00175 -0.0025
 									0 -0.00175 0.0025
 									0.048 -0.00175 0.0025
-									0.0626 -0.00175 -0.0102
-									0.0626 -0.00175 -0.0152
+									0.065 -0.00175 -0.0102
+									0.065 -0.00175 -0.0152
 									0.048 -0.00175 -0.0025
 								]
 								}
@@ -1290,7 +1261,7 @@ Supervisor {
 							} # DEF LIFT_ARM_SHIFT
 						
 							Transform {
-								translation 0.0626 -0.0005 -0.012
+								translation 0.065 -0.0005 -0.012
 								children [
 									Shape {
 									geometry Cylinder {
@@ -1309,7 +1280,7 @@ Supervisor {
 							children [
 								USE LIFT_ARM_SHAPE
 								Transform {
-									translation 0.0626 0.0005 -0.012
+									translation 0.065 0.0005 -0.012
 									children [
 										Shape {
 										geometry Cylinder {
@@ -1379,7 +1350,7 @@ Supervisor {
 
 									# Hinge to close mechanical loop back to gripper plate
 									Transform {
-									  translation 0.0626 0 -0.012
+									  translation 0.065 0 -0.012
 									  children [
 									    HingeJoint {
 									      jointParameters HingeJointParameters {
@@ -1400,7 +1371,7 @@ Supervisor {
 										children [
 											USE LIFT_ARM_SHAPE
 											Transform {
-												translation 0.0626 0.0005 -0.012
+												translation 0.065 0.0005 -0.012
 												children [
 													Shape {
 														geometry Cylinder {
@@ -1419,7 +1390,7 @@ Supervisor {
 										children [
 											USE LIFT_ARM_SHAPE
 											Transform {
-												translation 0.0626 -0.0005 -0.012
+												translation 0.065 -0.0005 -0.012
 												children [
 													Shape {
 														geometry Cylinder {

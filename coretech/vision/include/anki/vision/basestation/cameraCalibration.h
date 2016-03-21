@@ -60,6 +60,9 @@ namespace Anki {
       f32     GetSkew()          const;
       const Point2f& GetCenter() const;
       
+      void    SetFocalLength(f32 fx, f32 fy);
+      void    SetCenter(const Point2f& center);
+      
       // Compute vertical/horizontal FOV angles.
       // (These are full field of view, not half field of view.)
       Radians ComputeVerticalFOV() const;
@@ -130,6 +133,16 @@ namespace Anki {
       return Radians(2.f*std::atan2f(0.5f*static_cast<f32>(GetNcols()),
                                      GetFocalLength_x()));
     }
+    
+    inline void CameraCalibration::SetFocalLength(f32 fx, f32 fy) {
+      _focalLength_x = fx;
+      _focalLength_y = fy;
+    }
+
+    inline void CameraCalibration::SetCenter(const Point2f& center) {
+      _center = center;
+    }
+    
     
   } // namesapce Vision
 } // namespace Anki

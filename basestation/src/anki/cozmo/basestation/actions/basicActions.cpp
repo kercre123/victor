@@ -1392,5 +1392,91 @@ namespace Anki {
         return ActionResult::RUNNING;
       }
     }
+    
+#pragma mark ---- ReadToolCodeAction ----
+    
+    ReadToolCodeAction::ReadToolCodeAction(Robot& robot)
+    : IAction(robot)
+    {
+      
+    }
+    
+    ActionResult ReadToolCodeAction::Init()
+    {
+      // Start calibration mode on robot
+      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(-0.5f, -0.3f, true)));
+      
+      _toolCodeLastMovedTime   = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      _state = State::WaitingToGetInPosition;
+      
+      _toolReadSignalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotReadToolCode,
+         [this] (const AnkiEvent<ExternalInterface::MessageEngineToGame> &msg) {
+           _toolCodeRead = msg.GetData().Get_RobotReadToolCode().code;
+           PRINT_NAMED_INFO("ReadToolCodeAction.SignalHandler",
+                            "Read tool code: %s", EnumToString(_toolCodeRead));
+           this->_state = State::ReadCompleted;
+      });
+      
+      return ActionResult::SUCCESS;
+    }
+    
+    ReadToolCodeAction::~ReadToolCodeAction()
+    {
+      // Stop calibration mode on robot
+      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(0, 0, false)));
+      
+      _robot.GetVisionComponent().EnableMode(VisionMode::CheckingToolCode, false);
+    }
+    
+    ActionResult ReadToolCodeAction::CheckIfDone()
+    {
+      ActionResult result = ActionResult::RUNNING;
+      
+      TimeStamp_t currTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      
+      switch(_state)
+      {
+        case State::WaitingToGetInPosition:
+        {
+          if (currTimestamp - _toolCodeLastMovedTime > kRequiredStillTime_ms)
+          {
+            // Tell the VisionSystem thread to check the tool code in the next image it gets.
+            // It will disable this mode when it completes.
+            _robot.GetVisionComponent().EnableMode(VisionMode::CheckingToolCode, true);
+            _state = State::WaitingForRead;
+          }
+          else if (_robot.GetHeadAngle() != _toolCodeLastHeadAngle ||
+                   _robot.GetLiftAngle() != _toolCodeLastLiftAngle)
+          {
+            _toolCodeLastHeadAngle = _robot.GetHeadAngle();
+            _toolCodeLastLiftAngle = _robot.GetLiftAngle();
+            _toolCodeLastMovedTime = currTimestamp;
+          }
+          break;
+        }
+          
+        case State::WaitingForRead:
+          // Nothing to do
+          break;
+          
+        case State::ReadCompleted:
+          if(_toolCodeRead == ToolCode::UnknownTool) {
+            result = ActionResult::FAILURE_ABORT;
+          } else {
+            result = ActionResult::SUCCESS;
+          }
+          break;
+      }
+      
+      return result;
+    } // CheckIfDone()
+    
+    void ReadToolCodeAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
+    {
+      ReadToolCodeCompleted info;
+      info.code = _toolCodeRead;
+      completionUnion.Set_readToolCodeCompleted(std::move( info ));
+    }
+
   }
 }

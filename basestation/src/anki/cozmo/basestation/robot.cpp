@@ -34,7 +34,7 @@
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/soundManager.h"    // TODO: REMOVE ME
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -58,6 +58,7 @@
 #include "util/transport/reliableConnection.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
+#include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
 
 #include <fstream>
 #include <regex>
@@ -74,8 +75,20 @@ namespace Anki {
   namespace Cozmo {
     
     // static initializers
-    const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({0,0,1,  -1,0,0,  0,-1,0});
+    const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+       0, 0, 1,
+      -1, 0, 0,
+       0,-1, 0
+    });
     
+    /* For tool code reading
+    // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
+    const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
+      0,             -0.0698,    0.9976,
+      -1.0000,         0,         0,
+      0,             -0.9976,   -0.0698,
+    });
+     */
     
     Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     : _context(context)
@@ -88,11 +101,11 @@ namespace Anki {
     , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
     , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _movementComponent(*this)
-    , _visionComponent(robotID, VisionComponent::RunMode::Asynchronous, _context)
-    , _neckPose(0.f,Y_AXIS_3D(), {{NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}}, &_pose, "RobotNeck")
-    , _headCamPose(_kDefaultHeadCamRotation, {{HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}}, &_neckPose, "RobotHeadCam")
-    , _liftBasePose(0.f, Y_AXIS_3D(), {{LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}}, &_pose, "RobotLiftBase")
-    , _liftPose(0.f, Y_AXIS_3D(), {{LIFT_ARM_LENGTH, 0.f, 0.f}}, &_liftBasePose, "RobotLift")
+    , _visionComponent(*this, VisionComponent::RunMode::Asynchronous, _context)
+    , _neckPose(0.f,Y_AXIS_3D(), {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
+    , _headCamPose(_kDefaultHeadCamRotation, {HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}, &_neckPose, "RobotHeadCam")
+    , _liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
+    , _liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
@@ -119,7 +132,6 @@ namespace Anki {
       if (HasExternalInterface())
       {
         SetupGainsHandlers(*_context->GetExternalInterface());
-        SetupVisionHandlers(*_context->GetExternalInterface());
         SetupMiscHandlers(*_context->GetExternalInterface());
       }
       
@@ -255,6 +267,9 @@ namespace Anki {
           SetLocalizedTo(nullptr); // marks us as localized to odometry only
         }
         
+        // Check the lift to see if tool changed while we were picked up
+        //_actionList.QueueActionNext(new ReadToolCodeAction(*this));
+        
         Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPutDown(GetID())));
       }
       _isPickedUp = t;
@@ -279,11 +294,11 @@ namespace Anki {
       _worldOrigin = &_poseOrigins.back();
       
       _pose.SetRotation(0, Z_AXIS_3D());
-      _pose.SetTranslation({{0.f, 0.f, 0.f}});
+      _pose.SetTranslation({0.f, 0.f, 0.f});
       _pose.SetParent(_worldOrigin);
       
       _driveCenterPose.SetRotation(0, Z_AXIS_3D());
-      _driveCenterPose.SetTranslation({{0.f, 0.f, 0.f}});
+      _driveCenterPose.SetTranslation({0.f, 0.f, 0.f});
       _driveCenterPose.SetParent(_worldOrigin);
       
       _poseHistory->Clear();
@@ -669,6 +684,7 @@ namespace Anki {
       
       return camera;
     }
+   
     
     // Flashes a pattern on an active block
     void Robot::ActiveObjectLightTest(const ObjectID& objectID) {
@@ -729,7 +745,7 @@ namespace Anki {
         // Helper macro for running a vision component, capturing result, and
         // printing error message / returning if that result was not RESULT_OK.
 #       define TRY_AND_RETURN_ON_FAILURE(__NAME__) \
-        do { if((visionResult = _visionComponent.__NAME__(*this)) != RESULT_OK) { \
+        do { if((visionResult = _visionComponent.__NAME__()) != RESULT_OK) { \
           PRINT_NAMED_ERROR("Robot.Update." QUOTE(__NAME__) "Failed", ""); \
           return visionResult; } } while(0)
         
@@ -739,6 +755,7 @@ namespace Anki {
         TRY_AND_RETURN_ON_FAILURE(UpdateDockingErrorSignal);
         TRY_AND_RETURN_ON_FAILURE(UpdateMotionCentroid);
         TRY_AND_RETURN_ON_FAILURE(UpdateOverheadEdges);
+        TRY_AND_RETURN_ON_FAILURE(UpdateToolCode);
         
 #       undef TRY_AND_RETURN_ON_FAILURE
         
@@ -922,7 +939,6 @@ namespace Anki {
         }
       }
       
-      
       /////////// Update visualization ////////////
       
       // Draw observed markers, but only if images are being streamed
@@ -1082,7 +1098,7 @@ namespace Anki {
     {
       // Reset to canonical position
       liftPose.SetRotation(atAngle, Y_AXIS_3D());
-      liftPose.SetTranslation({{LIFT_ARM_LENGTH, 0.f, 0.f}});
+      liftPose.SetTranslation({LIFT_ARM_LENGTH, 0.f, 0.f});
       
       // Rotate to the given angle
       RotationVector3d Rvec(-atAngle, Y_AXIS_3D());
@@ -1959,7 +1975,7 @@ namespace Anki {
         // Record start (x,y) position coming from robot so basestation can
         // compute actual (x,y,z) position from upcoming odometry updates
         // coming from robot (which do not take slope of ramp into account)
-        _rampStartPosition = {{_pose.GetTranslation().x(), _pose.GetTranslation().y()}};
+        _rampStartPosition = {_pose.GetTranslation().x(), _pose.GetTranslation().y()};
         _rampStartHeight   = _pose.GetTranslation().z();
         
         PRINT_NAMED_INFO("Robot.SetOnRamp.TransitionOntoRamp",
@@ -2294,8 +2310,8 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      objectPoseWrtLiftPose.SetTranslation({{objectMarker->GetPose().GetTranslation().Length() +
-        LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f}});
+      objectPoseWrtLiftPose.SetTranslation({objectMarker->GetPose().GetTranslation().Length() +
+        LIFT_FRONT_WRT_WRIST_JOINT, 0.f, -12.5f});
       
       // make part of the lift's pose chain so the object will now be relative to
       // the lift and move with the robot
@@ -2539,7 +2555,7 @@ namespace Anki {
       _imgProcPeriod = (_imgProcPeriod * (1.f-imgProcrateAvgCoeff) +
                         _visionComponent.GetProcessingPeriod() * imgProcrateAvgCoeff);
       
-      _visionComponent.SetNextImage(image, *this);
+      _visionComponent.SetNextImage(image);
       
       return lastResult;
     }
@@ -2561,17 +2577,17 @@ namespace Anki {
       const RotationMatrix2d R(atPose.GetRotation().GetAngleAroundZaxis());
 
       static const Quad2f CanonicalBoundingBoxXY(
-        (Point2f){{ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y}},
-        {{ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y}},
-        {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y}},
-        {{ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y}});
+        {ROBOT_BOUNDING_X_FRONT, -0.5f*ROBOT_BOUNDING_Y},
+        {ROBOT_BOUNDING_X_FRONT,  0.5f*ROBOT_BOUNDING_Y},
+        {ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X, -0.5f*ROBOT_BOUNDING_Y},
+        {ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X,  0.5f*ROBOT_BOUNDING_Y});
 
       Quad2f boundingQuad(CanonicalBoundingBoxXY);
       if(padding_mm != 0.f) {
-        Quad2f paddingQuad((const Point2f){{ padding_mm, -padding_mm}},
-                           {{ padding_mm,  padding_mm}},
-                           {{-padding_mm, -padding_mm}},
-                           {{-padding_mm,  padding_mm}});
+        Quad2f paddingQuad({ padding_mm, -padding_mm},
+                           { padding_mm,  padding_mm},
+                           {-padding_mm, -padding_mm},
+                           {-padding_mm,  padding_mm});
         boundingQuad += paddingQuad;
       }
       
@@ -2599,7 +2615,21 @@ namespace Anki {
     
     f32 Robot::GetLiftHeight() const
     {
-      return (std::sin(GetLiftAngle()) * LIFT_ARM_LENGTH) + LIFT_BASE_POSITION[2] + LIFT_FORK_HEIGHT_REL_TO_ARM_END;
+      return ConvertLiftAngleToLiftHeightMM(GetLiftAngle());
+    }
+    
+    Pose3d Robot::GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const
+    {
+      Pose3d liftPose(_liftPose);
+      ComputeLiftPose(atLiftAngle, liftPose);
+      
+      Pose3d camPose = GetCameraPose(atHeadAngle);
+      
+      Pose3d liftPoseWrtCam;
+      bool result = liftPose.GetWithRespectTo(camPose, liftPoseWrtCam);
+      ASSERT_NAMED(result == true, "Lift and camera poses should be in same pose tree");
+      
+      return liftPoseWrtCam;
     }
     
     f32 Robot::ConvertLiftHeightToLiftAngleRad(f32 height_mm)
@@ -2668,7 +2698,7 @@ namespace Anki {
       _worldOrigin = newOrigin;
       
       newOrigin->SetRotation(0, Z_AXIS_3D());
-      newOrigin->SetTranslation({{0,0,0}});
+      newOrigin->SetTranslation({0,0,0});
       
       // Now make the robot's origin point to the new origin
       // TODO: avoid the icky const_cast here...

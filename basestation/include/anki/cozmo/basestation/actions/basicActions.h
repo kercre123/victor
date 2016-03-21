@@ -21,6 +21,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/types/toolCodes.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
@@ -548,7 +549,50 @@ namespace Anki {
 
     };
 
+    
+    class ReadToolCodeAction : public IAction
+    {
+    public:
       
+      ReadToolCodeAction(Robot& robot);
+      virtual ~ReadToolCodeAction();
+      
+      virtual const std::string& GetName() const override { return _name; }
+      virtual RobotActionType GetType() const override { return RobotActionType::READ_TOOL_CODE; }
+      virtual u8 GetTracksToLock() const override {
+        return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
+      }
+      
+      virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
+      
+      virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
+      
+    protected:
+      
+      virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
+      
+    private:
+      
+      std::string       _name = "ReadToolCode";
+      TimeStamp_t       _toolCodeLastMovedTime   = 0;
+      f32               _toolCodeLastHeadAngle   = 0;
+      f32               _toolCodeLastLiftAngle   = 0;
+      ToolCode          _toolCodeRead            = ToolCode::UnknownTool;
+      
+      const TimeStamp_t kRequiredStillTime_ms    = 500;
+  
+      enum class State : u8 {
+        WaitingToGetInPosition,
+        WaitingForRead,
+        ReadCompleted
+      } _state;
+  
+      // Handler for the tool code being read
+      Signal::SmartHandle        _toolReadSignalHandle;
+      
+    }; // class ReadToolCodeAction
+    
   }
 }
 

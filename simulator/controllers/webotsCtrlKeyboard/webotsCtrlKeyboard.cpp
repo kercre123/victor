@@ -838,7 +838,13 @@ namespace Anki {
                 
               case (s32)'T':
               {
-                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
+                const bool shiftPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
+                const bool altPressed   = modifier_key & webots::Supervisor::KEYBOARD_ALT;
+                
+                if(altPressed && shiftPressed)
+                {
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::ReadToolCode()));
+                } else if(shiftPressed) {
                   static bool trackingObject = false;
                   
                   trackingObject = !trackingObject;
@@ -856,7 +862,7 @@ namespace Anki {
                     SendTrackToObject(u32_MAX);
                   }
                   
-                } else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                } else if(altPressed) {
                   static bool trackingFace = false;
                   
                   trackingFace = !trackingFace;
@@ -1689,7 +1695,7 @@ namespace Anki {
                 SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DenyGameStart()));
                 break;
               }
-              
+                
               default:
               {
                 // Unsupported key: ignore.

@@ -101,7 +101,7 @@ TEST(BlockWorld, AddAndRemoveObject)
                                            HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
                                            HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
-  robot.GetVisionComponent().SetCameraCalibration(robot, camCalib);
+  robot.GetVisionComponent().SetCameraCalibration(camCalib);
   const f32 halfHeight = 0.25f*static_cast<f32>(camCalib.GetNrows());
   const f32 halfWidth = 0.25f*static_cast<f32>(camCalib.GetNcols());
   const f32 xcen = camCalib.GetCenter_x();
@@ -118,7 +118,7 @@ TEST(BlockWorld, AddAndRemoveObject)
   // angular velocities, since we don't have real state history to do so.
   robot.GetVisionComponent().EnableVisionWhileMoving(true);
   
-  lastResult = robot.GetVisionComponent().QueueObservedMarker(robot, marker);
+  lastResult = robot.GetVisionComponent().QueueObservedMarker(marker);
   ASSERT_EQ(lastResult, RESULT_OK);
   
   // Tick the robot, which will tick the BlockWorld, which will use the queued marker
@@ -203,7 +203,7 @@ TEST_P(BlockWorldTest, BlockAndRobotLocalization)
 
   ASSERT_TRUE(jsonRoot.isMember("CameraCalibration"));
   Vision::CameraCalibration calib(jsonRoot["CameraCalibration"]);
-  robot.GetVisionComponent().SetCameraCalibration(robot, calib);
+  robot.GetVisionComponent().SetCameraCalibration(calib);
     
   bool checkRobotPose;
   ASSERT_TRUE(JsonTools::GetValueOptional(jsonRoot, "CheckRobotPose", checkRobotPose));

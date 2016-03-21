@@ -39,6 +39,27 @@ namespace Anki {
   // TODO: make normal a UnitVector type
   template<size_t N, typename T>
   SmallSquareMatrix<N,T> GetProjectionOperator(const Point<N,T>& normal);
+ 
+  enum class LeastSquaresMethod : u8 {
+    LU,
+    Cholesky,
+    Eigenvalue,
+    SVD,
+    QR
+  };
+  
+  template<s32 M, s32 N, typename T>
+  Result LeastSquares(const SmallMatrix<M, N, T>&   A,
+                      const SmallMatrix<M, 1, T>&   b,
+                      SmallMatrix<N,1,T>&           x,
+                      LeastSquaresMethod            method = LeastSquaresMethod::LU);
+  
+  template<s32 M, s32 N, typename T>
+  Result LeastSquares(const SmallMatrix<M, N, T>&   A,
+                      const Point<M,T>&             b,
+                      Point<N,T>&                   x,
+                      LeastSquaresMethod            method = LeastSquaresMethod::LU);
+  
   
 } // namespace Anki
 

@@ -33,6 +33,7 @@ namespace Anki {
   
   // Forward declaration
   class Radians;
+  template<s32,s32,typename> class SmallMatrix;
   
   using PointDimType = size_t;
   
@@ -58,6 +59,8 @@ namespace Anki {
     // the last dimensions. For example, construct a 2D point from a 3D point
     // by just using the (x,y) dimensions and ignoring z.
     Point(const Point<N+1,T>& pt);
+    
+    explicit Point(const SmallMatrix<N,1,T>& M);
 
 #if __cplusplus == 201103L
     // Point(T x1, T x2, ..., T xN);
@@ -96,8 +99,10 @@ namespace Anki {
     const T& z() const;
     
 #if ANKICORETECH_USE_OPENCV
-    Point(const cv::Point_<T>& pt);
-    Point(const cv::Point3_<T>& pt);
+    explicit Point(const cv::Point_<T>& pt);
+    explicit Point(const cv::Point3_<T>& pt);
+    explicit Point(const cv::Vec<T,N>& vec);
+    
     cv::Point_<T> get_CvPoint_() const;
     cv::Point3_<T> get_CvPoint3_() const;
 #endif

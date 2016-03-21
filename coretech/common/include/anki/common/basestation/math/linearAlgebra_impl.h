@@ -47,6 +47,49 @@ namespace Anki {
     
     return P;
   }
+
+  // LUT for converting our least squares methods to OpenCV ones
+  static inline int GetOpenCvSolveMethod(LeastSquaresMethod method)
+  {
+    switch(method)
+    {
+      case LeastSquaresMethod::LU:         return cv::DECOMP_LU;
+      case LeastSquaresMethod::Cholesky:   return cv::DECOMP_CHOLESKY;
+      case LeastSquaresMethod::Eigenvalue: return cv::DECOMP_EIG;
+      case LeastSquaresMethod::SVD:        return cv::DECOMP_SVD;
+      case LeastSquaresMethod::QR:         return cv::DECOMP_QR;
+    }
+  }
+  
+  template<s32 M, s32 N, typename T>
+  Result LeastSquares(const SmallMatrix<M, N, T>&   A,
+                      const SmallMatrix<M, 1, T>&   b,
+                      SmallMatrix<N,1,T>&           x,
+                      LeastSquaresMethod            method)
+  {
+    const bool success = cv::solve(A.get_CvMatx_(), b.get_CvMatx_(), x.get_CvMatx_(),
+                                   GetOpenCvSolveMethod(method) | cv::DECOMP_NORMAL);
+    if(success) {
+      return RESULT_OK;
+    } else {
+      return RESULT_FAIL;
+    }
+  }
+  
+  template<s32 M, s32 N, typename T>
+  Result LeastSquares(const SmallMatrix<M, N, T>&   A,
+                      const Point<M,T>&             bIn,
+                      Point<N,T>&                   xOut,
+                      LeastSquaresMethod            method)
+  {
+    SmallMatrix<M, 1, T> b{bIn};
+    SmallMatrix<N, 1, T> x;
+    
+    Result result = LeastSquares(A, b, x, method);
+    xOut = Point<N,T>(x);
+    
+    return result;
+  }
   
 } // namespace Anki
 

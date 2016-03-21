@@ -64,6 +64,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       ExternalInterface::MessageGameToEngineTag::SetHeadAngle,
       ExternalInterface::MessageGameToEngineTag::PanAndTilt,
       ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose,
+      ExternalInterface::MessageGameToEngineTag::ReadToolCode
     };
     
     // Subscribe to desired events
@@ -555,6 +556,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::searchSideToSide:
       return new SearchSideToSideAction(robot);
 
+    case RobotActionUnionTag::readToolCode:
+      return new ReadToolCodeAction(robot);
+      
       // TODO: Add cases for other actions
       
     default:
@@ -698,6 +702,11 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
     case ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose:
     {
       newAction = GetTurnTowardsLastFacePoseActionHelper(robot, event.GetData().Get_TurnTowardsLastFacePose());
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::ReadToolCode:
+    {
+      newAction = new ReadToolCodeAction(robot);
       break;
     }
     default:

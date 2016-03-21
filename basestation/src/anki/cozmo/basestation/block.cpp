@@ -95,19 +95,19 @@ namespace Cozmo {
     switch(whichFace)
     {
       case FRONT_FACE:
-        facePose = Pose3d(-M_PI_2, Z_AXIS_3D(), {{-halfDepth, 0.f, 0.f}},  &GetPose());
+        facePose = Pose3d(-M_PI_2, Z_AXIS_3D(), {-halfDepth, 0.f, 0.f},  &GetPose());
         break;
         
       case LEFT_FACE:
-        facePose = Pose3d(M_PI,    Z_AXIS_3D(), {{0.f, halfWidth, 0.f}},   &GetPose());
+        facePose = Pose3d(M_PI,    Z_AXIS_3D(), {0.f, halfWidth, 0.f},   &GetPose());
         break;
         
       case BACK_FACE:
-        facePose = Pose3d(M_PI_2,  Z_AXIS_3D(), {{halfDepth, 0.f, 0.f}},   &GetPose());
+        facePose = Pose3d(M_PI_2,  Z_AXIS_3D(), {halfDepth, 0.f, 0.f},   &GetPose());
         break;
         
       case RIGHT_FACE:
-        facePose = Pose3d(0,       Z_AXIS_3D(), {{0.f, -halfWidth, 0.f}},  &GetPose());
+        facePose = Pose3d(0,       Z_AXIS_3D(), {0.f, -halfWidth, 0.f},  &GetPose());
         break;
         
       case TOP_FACE:
@@ -142,7 +142,7 @@ namespace Cozmo {
       // Add docking preaction poses
       if (dockOrientations & (1 << rot)) {
         for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
-          Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -halfHeight}}, &marker->GetPose());
+          Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {v.GetX() , -v.GetY(), -halfHeight}, &marker->GetPose());
           preDockPose.RotateBy(Rvec);
           AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose);
         }
@@ -151,7 +151,7 @@ namespace Cozmo {
       // Add rolling preaction poses
       if (rollOrientations & (1 << rot)) {
         for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
-          Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {{v.GetX() , -v.GetY(), -halfHeight}}, &marker->GetPose());
+          Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {v.GetX() , -v.GetY(), -halfHeight}, &marker->GetPose());
           preDockPose.RotateBy(Rvec);
           AddPreActionPose(PreActionPose::ROLLING, marker, preDockPose);
         }
@@ -164,13 +164,13 @@ namespace Cozmo {
       // Add a pre-placeOnGround pose to each face, where the robot will be sitting
       // relative to the face when we put down the block -- one for each
       // orientation of the block.
-      Pose3d prePlaceOnGroundPose(M_PI_2, Z_AXIS_3D(),  {{0.f, -DefaultPrePlaceOnGroundDistance, -halfHeight}}, &marker->GetPose());
+      Pose3d prePlaceOnGroundPose(M_PI_2, Z_AXIS_3D(),  Point3f{0.f, -DefaultPrePlaceOnGroundDistance, -halfHeight}, &marker->GetPose());
       prePlaceOnGroundPose.RotateBy(Rvec);
       AddPreActionPose(PreActionPose::PLACE_ON_GROUND, marker, prePlaceOnGroundPose);
       
       // Add a pre-placeRelative pose to each face, where the robot should be before
       // it approaches the block in order to place a carried object on top of or in front of it.
-      Pose3d prePlaceRelativePose(M_PI_2, Z_AXIS_3D(),  {{0.f, -DEFAULT_PREDOCK_POSE_DISTANCE_MM, -halfHeight}}, &marker->GetPose());
+      Pose3d prePlaceRelativePose(M_PI_2, Z_AXIS_3D(),  Point3f{0.f, -DEFAULT_PREDOCK_POSE_DISTANCE_MM, -halfHeight}, &marker->GetPose());
       prePlaceRelativePose.RotateBy(Rvec);
       AddPreActionPose(PreActionPose::PLACE_RELATIVE, marker, prePlaceRelativePose);
     }

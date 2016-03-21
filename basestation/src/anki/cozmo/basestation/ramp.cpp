@@ -47,10 +47,10 @@ namespace Anki {
     : ActionableObject(ObjectFamily::Ramp, ObjectType::Ramp_Basic)
     , _size(SlopeLength+PlatformLength, Width, Height)
     , _preAscentPose(0, Z_AXIS_3D(),
-                     {{-PreAscentDistance, 0.f, 0.f}},
+                     {-PreAscentDistance, 0.f, 0.f},
                      &GetPose())
     , _preDescentPose(M_PI, Z_AXIS_3D(),
-                      {{SlopeLength + PlatformLength + PreDescentDistance, 0, Height}},
+                      {SlopeLength + PlatformLength + PreDescentDistance, 0, Height},
                       &GetPose())
     , _vizHandle(VizManager::INVALID_HANDLE)
     
@@ -66,9 +66,9 @@ namespace Anki {
       
       // Five markers:
       Pose3d frontPose(M_PI_2 - Ramp::Angle, Y_AXIS_3D(),
-                       {{Ramp::FrontMarkerDistance*std::cos(Ramp::Angle),
-        0, Ramp::FrontMarkerDistance*std::sin(Ramp::Angle)}});
-      frontPose *= Pose3d(-M_PI_2, Z_AXIS_3D(), {{0,0,0}});
+                       {Ramp::FrontMarkerDistance*std::cos(Ramp::Angle),
+                       0, Ramp::FrontMarkerDistance*std::sin(Ramp::Angle)});
+      frontPose *= Pose3d(-M_PI_2, Z_AXIS_3D(), {0,0,0});
       _frontMarker = &AddMarker(frontMarkerType, frontPose, Ramp::TopMarkerSize);
       
       if(_preAscentPose.GetWithRespectTo(_frontMarker->GetPose(), _preAscentPose) == false) {
@@ -79,24 +79,23 @@ namespace Anki {
       
       const f32 SideMarkerHeight = 16.f;
       
-      const Pose3d backPose(M_PI_2, Z_AXIS_3D(), {{SlopeLength+PlatformLength, 0, SideMarkerHeight}});
+      const Pose3d backPose(M_PI_2, Z_AXIS_3D(), {SlopeLength+PlatformLength, 0, SideMarkerHeight});
       AddMarker(backMarkerType, backPose, Ramp::SideMarkerSize);
       
       const Vec3f PreDockPoseOffset(0.f, -DEFAULT_PREDOCK_POSE_DISTANCE_MM, -SideMarkerHeight);
       
-      const Pose3d rightPose(0.f, Z_AXIS_3D(), {{120.f, -0.5f*Ramp::Width, SideMarkerHeight}});
+      const Pose3d rightPose(0.f, Z_AXIS_3D(), {120.f, -0.5f*Ramp::Width, SideMarkerHeight});
       _rightMarker = &AddMarker(rightMarkerType, rightPose, Ramp::SideMarkerSize);
       AddPreActionPose(PreActionPose::DOCKING, _rightMarker, PreDockPoseOffset);
       
-      const Pose3d leftPose(M_PI, Z_AXIS_3D(), {{120.f,  0.5f*Ramp::Width, SideMarkerHeight}});
+      const Pose3d leftPose(M_PI, Z_AXIS_3D(), {120.f,  0.5f*Ramp::Width, SideMarkerHeight});
       _leftMarker = &AddMarker(leftMarkerType, leftPose, Ramp::SideMarkerSize);
       AddPreActionPose(PreActionPose::DOCKING, _leftMarker, PreDockPoseOffset);
       
       Pose3d topPose(-M_PI_2, Y_AXIS_3D(),
-                     {{Ramp::PlatformLength + Ramp::SlopeLength - 0.025f, 0, Ramp::Height}});
-      topPose *= Pose3d(M_PI_2, Z_AXIS_3D(), {{0,0,0}});
+                     {Ramp::PlatformLength + Ramp::SlopeLength - 0.025f, 0, Ramp::Height});
+      topPose *= Pose3d(M_PI_2, Z_AXIS_3D(), {0,0,0});
       _topMarker = &AddMarker(topMarkerType, topPose, Ramp::TopMarkerSize);
-      
       
       if(_preDescentPose.GetWithRespectTo(_topMarker->GetPose(), _preDescentPose) == false) {
         PRINT_NAMED_ERROR("Ramp.PreDescentPoseError", "Could not get preDescentPose w.r.t. top ramp marker.\n");
@@ -132,7 +131,7 @@ namespace Anki {
     Pose3d Ramp::GetPostAscentPose(const float wheelBase) const
     {
       Pose3d pose(0, Z_AXIS_3D(),
-                  {{Ramp::SlopeLength + wheelBase, 0, Ramp::Height}},
+                  {Ramp::SlopeLength + wheelBase, 0, Ramp::Height},
                   &GetPose());
       
       //pose.PreComposeWith(GetPose());
@@ -144,7 +143,7 @@ namespace Anki {
     Pose3d Ramp::GetPostDescentPose(const float wheelBase) const
     {
       Pose3d pose(M_PI, Z_AXIS_3D(),
-                  {{-wheelBase, 0, 0.f}},
+                  {-wheelBase, 0, 0.f},
                   &GetPose());
       
       //pose.PreComposeWith(GetPose());

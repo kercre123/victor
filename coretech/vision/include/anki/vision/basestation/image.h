@@ -40,7 +40,7 @@ namespace Vision {
     ImageBase() : Array2d<T>() { }
     ImageBase(s32 nrows, s32 ncols) : Array2d<T>(nrows, ncols) { }
     ImageBase(s32 nrows, s32 ncols, T* data) : Array2d<T>(nrows, ncols, data) { }
-    ImageBase(Array2d<T>&& array) : Array2d<T>(array) { }
+    ImageBase(const Array2d<T>& array) : Array2d<T>(array) { }
     
     // Read from file
     Result Load(const std::string& filename);
@@ -89,7 +89,10 @@ namespace Vision {
     
   protected:
     template<typename DerivedType>
-    DerivedType GetROI(const Rectangle<s32>& roiRect);
+    DerivedType GetROI(Rectangle<s32>& roiRect);
+    
+    template<typename DerivedType>
+    const DerivedType GetROI(Rectangle<s32>& roiRect) const;
 
   private:
     TimeStamp_t     _timeStamp;
@@ -111,9 +114,10 @@ namespace Vision {
     // Wrap image "header" around given data pointer: no allocation.
     Image(s32 nrows, s32 ncols, u8* data);
     
-    Image(const ImageBase<u8>&& imageBase) : ImageBase<u8>(imageBase) { }
+    Image(const Array2d<u8>& array2d) : ImageBase<u8>(array2d) { }
     
-    Image GetROI(const Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
+    Image GetROI(Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
+    const Image GetROI(Rectangle<s32>& roiRect) const { return ImageBase<u8>::GetROI<Image>(roiRect); }
     
 #   if ANKICORETECH_USE_OPENCV
     // Construct from a cv::Mat_<u8>
@@ -161,7 +165,10 @@ namespace Vision {
     // Replicates grayscale image across all three channels
     ImageRGB(const Image& imageGray);
     
-    ImageRGB GetROI(const Rectangle<s32>& roiRect) { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
+    ImageRGB(const Array2d<PixelRGB>& array2d) : ImageBase<PixelRGB>(array2d) { }
+    
+    ImageRGB GetROI(Rectangle<s32>& roiRect) { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
+    const ImageRGB GetROI(Rectangle<s32>& roiRect) const { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
     
     Image ToGray() const;
     
@@ -192,7 +199,7 @@ namespace Vision {
     
     Image ToGray() const;
     
-    ImageRGBA GetROI(const Rectangle<s32>& roiRect) {
+    ImageRGBA GetROI(Rectangle<s32>& roiRect) {
       return ImageBase<PixelRGBA>::GetROI<ImageRGBA>(roiRect);
     }
     
@@ -216,7 +223,16 @@ namespace Vision {
   
   template<typename T>
   template<typename DerivedType>
-  DerivedType ImageBase<T>::GetROI(const Rectangle<s32>& roiRect)
+  DerivedType ImageBase<T>::GetROI(Rectangle<s32>& roiRect)
+  {
+    DerivedType roi(Array2d<T>::GetROI(roiRect));
+    roi.SetTimestamp(GetTimestamp());
+    return roi;
+  }
+  
+  template<typename T>
+  template<typename DerivedType>
+  const DerivedType ImageBase<T>::GetROI(Rectangle<s32>& roiRect) const
   {
     DerivedType roi(Array2d<T>::GetROI(roiRect));
     roi.SetTimestamp(GetTimestamp());

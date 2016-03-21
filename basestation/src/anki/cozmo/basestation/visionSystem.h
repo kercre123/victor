@@ -56,6 +56,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/visionModes.h"
+#include "clad/types/toolCodes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 
@@ -80,7 +81,7 @@ namespace Cozmo {
     // Methods:
     //
     
-    Result Init(const Vision::CameraCalibration& camCalib);
+    Result Init(Vision::CameraCalibration& camCalib);
     void UnInit() { _isInitialized = false; };
     
     bool IsInitialized() const;
@@ -223,6 +224,7 @@ namespace Cozmo {
     bool CheckMailbox(Vision::TrackedFace&        msg);
     bool CheckMailbox(Vision::FaceTracker::UpdatedID&  msg);
     bool CheckMailbox(OverheadEdgePointChain& msg);
+    bool CheckMailbox(ToolCode& msg);
     
     bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
     bool CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg);
@@ -354,6 +356,10 @@ namespace Cozmo {
     // We hold a reference to the VizManager since we often want to draw to it
     VizManager*                   _vizManager = nullptr;
 
+    // Tool code stuff
+    TimeStamp_t                   _lastToolCodeReadTime_ms = 0;
+    const TimeStamp_t             kToolCodeReadPeriod_ms = 500; // TODO: Increase
+    
     struct VisionMemory {
       /* 10X the memory for debugging on a PC
        static const s32 OFFCHIP_BUFFER_SIZE = 20000000;
@@ -425,6 +431,8 @@ namespace Cozmo {
     
     Result DetectOverheadEdges(const Vision::ImageRGB& image);
     
+    Result ReadToolCode(const Vision::Image& image);
+    
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                         DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
@@ -441,6 +449,8 @@ namespace Cozmo {
     MultiMailbox<Vision::FaceTracker::UpdatedID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
     
     MultiMailbox<OverheadEdgePointChain, 64> _overheadEdgeChainMailbox;
+    
+    Mailbox<ToolCode> _toolCodeMailbox;
     
     MultiMailbox<std::pair<const char*, Vision::Image>, 10>     _debugImageMailbox;
     MultiMailbox<std::pair<const char*, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;
