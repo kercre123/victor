@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "util/transport/udpTransport.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -109,7 +111,13 @@ namespace Cozmo {
       // Register with advertisement service
       if (regClient_.Connect(advertisementRegIP_, advertisementRegPort_)) {
         regMsg_.id = deviceID_;
-        strcpy((char*)regMsg_.ip, GetLocalIP());
+        
+        {
+          const uint32_t localIpAddress = Util::UDPTransport::GetLocalIpAddress();
+          const uint8_t* ipBytes = (const uint8_t*)&localIpAddress;
+          snprintf((char*)regMsg_.ip, sizeof(regMsg_.ip), "%d.%d.%d.%d", (int)ipBytes[0], (int)ipBytes[1], (int)ipBytes[2], (int)ipBytes[3]);
+        }
+
         regMsg_.port = serverListenPort_;
         regMsg_.protocol = USE_UDP_UI_COMMS ? Anki::Comms::UDP : Anki::Comms::TCP;
         
@@ -305,58 +313,6 @@ namespace Cozmo {
     regClient_.Send((char*)&regMsg_, sizeof(regMsg_));
   }
   
-  
-  // Hacky function to grab localhost IP address starting with 192.
-  const char* const GameComms::GetLocalIP()
-  {
-    // Get robot's IPv4 address.
-    // Looking for (and assuming there is only one) address that starts with 192.
-    struct ifaddrs *ifaddr, *ifa;
-    if (getifaddrs(&ifaddr) != 0) {
-      printf("getifaddrs failed\n");
-      assert(false);
-    }
-    
-    int family, s, n;
-    static char host[NI_MAXHOST];
-    for (ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
-      if (ifa->ifa_addr == NULL)
-        continue;
-      
-      family = ifa->ifa_addr->sa_family;
-      
-      // Display IPv4 addresses only
-      if (family == AF_INET) {
-        s = getnameinfo(ifa->ifa_addr,
-                        (family == AF_INET) ? sizeof(struct sockaddr_in) :
-                        sizeof(struct sockaddr_in6),
-                        host, NI_MAXHOST,
-                        NULL, 0, NI_NUMERICHOST);
-        if (s != 0) {
-          printf("getnameinfo() failed\n");
-          assert(false);
-        }
-        
-        // Does address start with 192?
-        if (strncmp(host, "192.", 4) == 0)
-        {
-          printf("GameComms: Local host IP = %s\n", host);
-          break;
-        }
-        // Does address start with 172? (Cozmo3)
-        if (strncmp(host, "172.", 4) == 0)
-        {
-          printf("GameComms: Local host IP = %s\n", host);
-          break;
-        }
-
-      }
-    }
-    freeifaddrs(ifaddr);
-    
-    return host;
-  }
-
   
 }  // namespace Cozmo
 }  // namespace Anki
