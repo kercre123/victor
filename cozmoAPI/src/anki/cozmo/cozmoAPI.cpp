@@ -91,7 +91,7 @@ void CozmoAPI::Clear()
   // If there is a thread running, kill it first
   if (_cozmoRunnerThread.joinable())
   {
-    if (!_cozmoRunner)
+    if (_cozmoRunner)
     {
       _cozmoRunner->Stop();
     }
