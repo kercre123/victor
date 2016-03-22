@@ -10,6 +10,7 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "anki/common/constantsAndMacros.h"
 #include "animationController.h"
 #include "rtip.h"
+#include "factoryTests.h"
 #include "nvStorage.h"
 #include "upgradeController.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -160,6 +161,18 @@ namespace Anki {
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               AnimationController::EnableTracks(msg.enableAnimTracks.whichTracks);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_testState:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              Factory::Process_TestState(msg.testState);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_enterTestMode:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              Factory::Process_EnterFactoryTestMode(msg.enterTestMode);
               break;
             }
             default:

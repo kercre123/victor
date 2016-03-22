@@ -15,6 +15,7 @@ extern "C" {
 #include "rboot.h"
 }
 #include "rtip.h"
+#include "factoryTests.h"
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -127,6 +128,11 @@ void Exec(os_event_t *event)
       //BootloaderDebugFace();
       break;
     }
+    case 4:
+    {
+      Factory::Update();
+      break;
+    }
     // Add new "long execution" tasks as switch cases here.
     default:
     {
@@ -227,6 +233,11 @@ extern "C" int8_t backgroundTaskInit(void)
   {
     os_printf("\tCouldn't initalize face controller\r\n");
     return -5;
+  }
+  else if (Anki::Cozmo::Factory::Init() == false)
+  {
+    os_printf("\tCouldn't initalize factory test framework");
+    return -6;
   }
   else
   {

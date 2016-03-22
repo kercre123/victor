@@ -323,7 +323,8 @@ union EngineToRobot
   AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
   // Anim future expansion                                  = 0x9F,
-  TestState                     testState                   = 0xA0,
+  TestState                     testState                   = 0xA1,
+  EnterFactoryTestMode          enterTestMode               = 0xA2,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
