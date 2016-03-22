@@ -738,7 +738,7 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_killBodyCode(Anki::Cozmo::RobotInterface::KillBodyCode const&) {
+      void Process_killBodyCode(Anki::Cozmo::KillBodyCode const&) {
         // Nothing to do here
       }
       void Process_bootloadBody(Anki::Cozmo::RobotInterface::BootloadBody const&)
