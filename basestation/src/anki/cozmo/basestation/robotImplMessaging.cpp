@@ -504,7 +504,7 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
 
-  _blockWorld.SetIsOnCliff(cliffEvent.detected);
+  SetIsOnCliff(cliffEvent.detected);
   
   // Forward on with EngineToGame event
   CliffEvent payload = message.GetData().Get_cliffEvent();
@@ -537,7 +537,7 @@ void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& m
   }
   
   // always update the value
-  _blockWorld.SetForwardSensorValue(proxObs.distance_mm);
+  SetForwardSensorValue(proxObs.distance_mm);
   
 #endif
 }

@@ -84,8 +84,6 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
     , _canDeleteObjects(true)
     , _canAddObjects(true)
     , _currentNavMemoryMapOrigin(nullptr)
-    , _isOnCliff(false)
-    , _forwardSensorValue_mm(0)
     , _enableDraw(false)
     {
       CORETECH_ASSERT(_robot != nullptr);
@@ -626,7 +624,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
           {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}}; // lo R
         _robot->GetPose().ApplyTo(cliffquad, cliffquad);
         
-        if ( _isOnCliff )
+        if ( _robot->IsOnCliff() )
         {
           // build data we want to embed for this quad
           NavMemoryMapQuadData_Cliff cliffData;
@@ -649,7 +647,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
         // ClearOfObstacle from 0                      to _forwardSensorValue_mm
         // Obstacle        from _forwardSensorValue_mm to MaxSensor
         // - - -
-        const float sensorValue = ((float)_forwardSensorValue_mm);
+        const float sensorValue = ((float)_robot->GetForwardSensorValue());
         const float maxSensorValue = ((float)FORWARD_COLLISION_SENSOR_LENGTH_MM);
       
         // debug?

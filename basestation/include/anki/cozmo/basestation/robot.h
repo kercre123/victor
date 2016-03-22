@@ -412,6 +412,15 @@ public:
 
     void SetEnableCliffSensor(bool val) { _enableCliffSensor = val; }
   
+    // sets whether we are currently on a cliff or over ground
+    void SetIsOnCliff(bool value) { _isOnCliff = value; }
+    bool IsOnCliff() const { return _isOnCliff; }
+  
+    // sets distance detected by forward proximity sensor
+    void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
+    u16 GetForwardSensorValue() const { return _forwardSensorValue_mm; }
+
+  
     // Set how to save incoming robot state messages
     void SetSaveStateMode(const SaveMode_t mode);
     
@@ -805,6 +814,9 @@ public:
     bool             _enableCliffSensor  = true;
     u32              _lastSentImageID    = 0;
     u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ALL_TRACKS;
+    bool             _isOnCliff          = false;
+    u16              _forwardSensorValue_mm = 0;
+
 
     std::vector<std::string> _idleAnimationNameStack;
   
