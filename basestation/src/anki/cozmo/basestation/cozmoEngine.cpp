@@ -33,6 +33,7 @@
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "util/logging/sosLoggerProvider.h"
 #include "util/logging/printfLoggerProvider.h"
+#include "util/logging/multiLoggerProvider.h"
 
 
 namespace Anki {
@@ -70,6 +71,8 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReliableTransportRunMode, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging, callback));
+
   
   // Use a separate callback for StartEngine
   auto startEngineCallback = std::bind(&CozmoEngine::HandleStartEngine, this, std::placeholders::_1);
@@ -508,6 +511,25 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     {
       const ExternalInterface::ReliableTransportRunMode& msg = event.GetData().Get_ReliableTransportRunMode();
       _robotChannel->SetReliableTransportRunMode(msg.isSync);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging:
+    {
+      if(Anki::Util::gLoggerProvider != nullptr) {
+        Anki::Util::MultiLoggerProvider* multiLoggerProvider = dynamic_cast<Anki::Util::MultiLoggerProvider*>(Anki::Util::gLoggerProvider);
+        Anki::Util::MultiFormattedLoggerProvider* multiFormattedLoggerProvider = dynamic_cast<Anki::Util::MultiFormattedLoggerProvider*>(Anki::Util::gLoggerProvider);
+        if (multiLoggerProvider != nullptr) {
+          Anki::Util::SosLoggerProvider* sosLoggerProvider = dynamic_cast<Anki::Util::SosLoggerProvider*>(multiLoggerProvider->GetProvider(0));
+          if (sosLoggerProvider != nullptr) {
+            sosLoggerProvider->OpenSocket("localhost", 4444);
+          }
+        } else if (multiFormattedLoggerProvider != nullptr) {
+          Anki::Util::SosLoggerProvider* sosLoggerProvider = dynamic_cast<Anki::Util::SosLoggerProvider*>(multiFormattedLoggerProvider->GetProvider(0));
+          if (sosLoggerProvider != nullptr) {
+            sosLoggerProvider->OpenSocket("localhost", 4444);
+          }
+        }
+      }
       break;
     }
     default:
