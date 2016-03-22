@@ -545,6 +545,10 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
+  public void SetEnableSOSLogging(bool enable) {
+    
+  }
+
   public void ExecuteBehavior(Anki.Cozmo.BehaviorType type) {
     // Do nothing
   }
