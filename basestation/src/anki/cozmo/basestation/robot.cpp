@@ -1056,6 +1056,16 @@ namespace Anki {
     } // IsValidHeadAngle()
 
     
+    void Robot::SetNewPose(const Pose3d& newPose)
+    {
+      SetPose(newPose.GetWithRespectToOrigin());
+      ++_frameId;
+      
+      const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
+      
+      SendAbsLocalizationUpdate(_pose, timeStamp, _frameId);
+    }
+    
     void Robot::SetPose(const Pose3d &newPose)
     {
       // Update our current pose and keep the name consistent

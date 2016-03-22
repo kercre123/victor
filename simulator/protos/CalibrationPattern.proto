@@ -1,0 +1,40 @@
+#VRML_SIM V7.3.0 utf8
+
+PROTO CalibrationPattern [
+  field SFString name "CalibrationPattern"
+  
+  field SFVec3f       translation  0 0 0
+  field SFRotation    rotation     0 0 1 0
+  
+  field SFString image "acircles_pattern.png"
+
+]
+{
+Solid {
+
+  %{ imageURL = "textures/calibration/" .. fields.image.value }% 
+
+  name IS name
+
+  translation IS translation
+  rotation IS rotation
+  
+  children [
+    
+    Shape {
+      appearance Appearance {
+        texture ImageTexture {
+          url [ "%{= imageURL }%" ]
+        }
+      }
+      geometry Box {
+        size 0.14 0.01 0.10
+      }
+    }
+   
+  ] # Solid Children
+  
+} # Parent Solid
+
+  
+} # PROTO

@@ -25,6 +25,7 @@ enum uint_8 BehaviorType {
   ExploreMarkedCube,
   ExploreCliff,
   RequestGameSimple,
+  FactoryTest,
 
   Count
 }

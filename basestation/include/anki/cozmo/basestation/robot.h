@@ -198,6 +198,11 @@ public:
     // Sets the charger that it's docking to
     void   SetCharger(const ObjectID& chargerID) { _chargerID = chargerID; }
   
+    // Updates the pose of the robot.
+    // Sends new pose down to robot.
+    // Increments frameID
+    void SetNewPose(const Pose3d& newPose);
+  
     //
     // Camera / Vision
     //
@@ -241,9 +246,8 @@ public:
     Pose3d                 GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
   
     // These change the robot's internal (basestation) representation of its
-    // pose, head angle, and lift angle, but do NOT actually command the
+    // head angle, and lift angle, but do NOT actually command the
     // physical robot to do anything!
-    void SetPose(const Pose3d &newPose);
     void SetHeadAngle(const f32& angle);
     void SetLiftAngle(const f32& angle);
 
@@ -820,6 +824,11 @@ public:
 
     std::vector<std::string> _idleAnimationNameStack;
   
+    // Sets robot pose but does not update the pose on the robot.
+    // Unless you know what you're doing you probably want to use
+    // the public function SetNewPose()
+    void SetPose(const Pose3d &newPose);
+  
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
                                            TimeStamp_t& t, RobotPoseStamp** p,
@@ -866,7 +875,7 @@ public:
     std::string _lastPlayedAnimationId;
   
     ///////// Modifiers ////////
-    
+  
     void SetCurrPathSegment(const s8 s)     {_currPathSegment = s;}
     void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
     void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}
