@@ -61,9 +61,9 @@ void InitCube(void) {
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   
   // XXX: NEVER enable PA8 (high-voltage PROG) - it DOES NOT WORK IN EP1 (since we're using nRF24LE1s)
-  //GPIO_ResetBits(GPIOA, GPIO_Pin_8);
-  //GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
-  //GPIO_Init(GPIOA, &GPIO_InitStructure);
+  GPIO_ResetBits(GPIOA, GPIO_Pin_8);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
 
   // Pull PB7 (CS#) high.
   GPIO_SetBits(GPIOB, GPIO_Pin_7);
@@ -136,12 +136,14 @@ static inline void CubeBlockBusy(void) {
 }
 
 static void CubeErasePage(uint8_t page) {
+/* Only on nRF24
   CubeAssert(true);
   CubeWrite(CUBE_ERASE_PAGE);
   CubeWrite(page);
   CubeAssert(false);
 
   CubeBlockBusy(); // Wait for page to be erased
+*/
 }
 
 static inline void CubeProgram(int address, const uint8_t *data, int length) {

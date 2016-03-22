@@ -386,6 +386,8 @@ static void Charge(void)
 }
 #endif
 
+void CubeBurn(void);
+
 static CommandFunction m_functions[] =
 {
   {"GetSerial", GetSerial, FALSE},
@@ -398,6 +400,7 @@ static CommandFunction m_functions[] =
   {"Current", TestCurrent, FALSE},
   {"DumpFixtureSerials", DumpFixtureSerials, FALSE},
   {"Voltage", TestVoltage, FALSE},
+  {"Burn", CubeBurn, FALSE},
 };
 
 static void ParseCommand(void)
