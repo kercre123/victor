@@ -227,6 +227,8 @@ namespace Anki {
     
     Robot::~Robot()
     {
+      AbortAll();
+      
       Util::SafeDelete(_imageDeChunker);
       Util::SafeDelete(_poseHistory);
       Util::SafeDelete(_pdo);
