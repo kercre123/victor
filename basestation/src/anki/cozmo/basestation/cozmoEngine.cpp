@@ -519,17 +519,16 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     {
       if(Anki::Util::gLoggerProvider != nullptr) {
         Anki::Util::MultiLoggerProvider* multiLoggerProvider = dynamic_cast<Anki::Util::MultiLoggerProvider*>(Anki::Util::gLoggerProvider);
-        Anki::Util::MultiFormattedLoggerProvider* multiFormattedLoggerProvider = dynamic_cast<Anki::Util::MultiFormattedLoggerProvider*>(Anki::Util::gLoggerProvider);
         if (multiLoggerProvider != nullptr) {
-          Anki::Util::SosLoggerProvider* sosLoggerProvider = dynamic_cast<Anki::Util::SosLoggerProvider*>(multiLoggerProvider->GetProvider(0));
-          if (sosLoggerProvider != nullptr) {
-            sosLoggerProvider->OpenSocket("localhost", 4444);
+          const std::vector<Anki::Util::ILoggerProvider*> loggers = multiLoggerProvider->GetProviders();
+          for(int i = 0; i < loggers.size(); ++i) {
+            Anki::Util::SosLoggerProvider* sosLoggerProvider = dynamic_cast<Anki::Util::SosLoggerProvider*>(loggers[i]);
+            if (sosLoggerProvider != nullptr) {
+              sosLoggerProvider->OpenSocket("localhost", 4444);
+              break;
+            }
           }
-        } else if (multiFormattedLoggerProvider != nullptr) {
-          Anki::Util::SosLoggerProvider* sosLoggerProvider = dynamic_cast<Anki::Util::SosLoggerProvider*>(multiFormattedLoggerProvider->GetProvider(0));
-          if (sosLoggerProvider != nullptr) {
-            sosLoggerProvider->OpenSocket("localhost", 4444);
-          }
+
         }
       }
       break;
