@@ -57,6 +57,7 @@ class IExternalInterface;
 class CozmoContext;
 class MultiClientChannel;
 class UiMessageHandler;
+class TextToSpeech;
   
 template <typename Type>
 class AnkiEvent;
@@ -133,6 +134,7 @@ protected:
   std::unique_ptr<MultiClientChannel>                       _robotChannel;
   std::unique_ptr<UiMessageHandler>                         _uiMsgHandler;
   std::unique_ptr<SpeechRecognition::KeyWordRecognizer>     _keywordRecognizer;
+  std::unique_ptr<TextToSpeech>                             _textToSpeech;
   std::unique_ptr<CozmoContext>                             _context;
   std::map<AdvertisingRobot, bool>                          _forceAddedRobots;
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
