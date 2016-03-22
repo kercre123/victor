@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
 #include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
 #include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
+#include "anki/cozmo/basestation/textToSpeech/textToSpeech.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -43,6 +44,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   : _robotChannel(new MultiClientChannel{})
   , _uiMsgHandler(new UiMessageHandler(1))
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
+  , _textToSpeech(new TextToSpeech(_uiMsgHandler.get(),dataPlatform))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
 {
   ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
