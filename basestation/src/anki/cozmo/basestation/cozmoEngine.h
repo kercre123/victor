@@ -122,8 +122,6 @@ public:
   void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution);
 
 protected:
-
-  Anki::Util::MultiFormattedLoggerProvider _loggerProvider;
   
   std::vector<::Signal::SmartHandle> _signalHandles;
   

@@ -39,8 +39,7 @@ namespace Anki {
 namespace Cozmo {
 
 CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
-  : _loggerProvider({ new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider() })
-  , _robotChannel(new MultiClientChannel{})
+  : _robotChannel(new MultiClientChannel{})
   , _uiMsgHandler(new UiMessageHandler(1))
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
