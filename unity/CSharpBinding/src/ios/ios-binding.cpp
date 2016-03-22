@@ -17,6 +17,8 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
+#include "util/logging/sosLoggerProvider.h"
+#include "util/logging/multiLoggerProvider.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "dasLoggerProvider.h"
 #include "dasConfiguration.h"
@@ -55,9 +57,8 @@ void configure_game(Json::Value config)
 
 int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data)
 {
-  Anki::Util::DasLoggerProvider* loggerProvider = new Anki::Util::DasLoggerProvider();
-  Anki::Util::gLoggerProvider = loggerProvider;
-  Anki::Util::gEventProvider = loggerProvider;
+  Anki::Util::MultiLoggerProvider loggerProvider({new Util::SosLoggerProvider(), new Util::DasLoggerProvider()});
+  Anki::Util::gLoggerProvider = &loggerProvider;
   PRINT_NAMED_INFO("CSharpBinding.cozmo_game_create", "engine creating engine");
 
   dataPlatform = CreateDataPlatform();
