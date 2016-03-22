@@ -6,6 +6,11 @@
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
                 "version": "21"
+            },
+            "cozmo-assets": {
+                "subdirs": ["animations"],
+                "allow_extra_files": "True",
+                "extract_types_from_tar": [".json"]
             }
         }, 
         "root_url": "https://svn.ankicore.com/svn"
