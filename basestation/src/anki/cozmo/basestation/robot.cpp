@@ -217,12 +217,6 @@ namespace Anki {
       _shortMinAnglePathPlanner = new MinimalAnglePlanner;
       _selectedPathPlanner = _longPathPlanner;
       
-      
-      // Lock active objects to connect to
-      if (_context->GetDataPlatform() != nullptr) {
-        _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"), _context->GetExternalInterface());
-      }
-      
     } // Constructor: Robot
     
     Robot::~Robot()
@@ -628,6 +622,20 @@ namespace Anki {
     
     void Robot::SetPhysicalRobot(bool isPhysical)
     {
+      // TODO: Move somewhere else? This might not the best place for this, but it's where we
+      // know whether or not we're talking to a physical robot or not so do things that depend on that here.
+      // Assumes this function is only called once following connection.
+      
+      // Connect to active objects in saved blockpool, but only for physical robots.
+      // Sim robots automatically connect to all robots in their world as long as CozmoBot's
+      // autoConnectToBlocks field is TRUE.
+      if (isPhysical) {
+        if (_context->GetDataPlatform() != nullptr) {
+          _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"), _context->GetExternalInterface());
+        }
+      }
+      
+      
       _isPhysical = isPhysical;
       
       // Modify net timeout depending on robot type - simulated robots shouldn't timeout so we can pause and debug them
