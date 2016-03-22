@@ -148,7 +148,7 @@ namespace Cozmo {
   }
   
   inline bool ObservableObject::IsExistenceConfirmed() const {
-    return ((!IsActive() || ActiveIdentityState::Identified == GetIdentityState()) &&
+    return ( //(!IsActive() || ActiveIdentityState::Identified == GetIdentityState()) &&
             GetNumTimesObserved() >= MIN_TIMES_TO_OBSERVE_OBJECT &&
             !IsPoseStateUnknown());
   }
