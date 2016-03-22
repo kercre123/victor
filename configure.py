@@ -8,6 +8,7 @@ import os
 import os.path
 import platform
 import sys
+import subprocess
 import time
 
 ENGINE_ROOT = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))))
@@ -356,11 +357,12 @@ class EnginePlatformConfiguration(object):
             print("initializing {0}".format(self.platform))
         if self.platform != 'android':
             self.project_name = 'cozmoEngine.xcodeproj'
-        else:
-            self.project_name = 'Android.mk'
-        self.project_path = os.path.join(self.platform_output_dir, self.project_name)
-        self.derived_data_dir = os.path.join(self.platform_build_dir, 'derived-data')
-    
+            self.project_path = os.path.join(self.platform_output_dir, self.project_name)
+            self.derived_data_dir = os.path.join(self.platform_build_dir, 'derived-data')
+        #else:  ### DNW: location to add android project.
+        #    self.project_name = 'Android.mk'
+        self.project_path = self.platform_output_dir
+
     def process(self):
         if self.options.command in ('generate', 'build'):
             self.generate()
@@ -377,7 +379,8 @@ class EnginePlatformConfiguration(object):
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
         
         generate_gyp(self.gyp_dir, self.platform, self.options)
-        ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
+        if self.platform == 'mac' or self.platform == 'ios':
+            ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
 
     def build(self):
         if self.options.verbose:
@@ -391,7 +394,7 @@ class EnginePlatformConfiguration(object):
                 buildaction = 'clean'
             else:
                 buildaction = 'build'
-
+        if self.platform == 'mac' or self.platform == 'ios':
             ankibuild.xcode.build(
                 buildaction=buildaction,
                 project=self.project_path,
@@ -399,6 +402,21 @@ class EnginePlatformConfiguration(object):
                 platform=self.platform,
                 configuration=self.options.configuration,
                 simulator=self.options.simulator)
+        elif self.platform == 'android':
+            command = ['ninja']
+            # DNW: will add an option to switch debug, profile, release
+            cwd_loc = os.path.join(ENGINE_ROOT, 'generated', 'android', 'out', 'Release')
+            if self.options.verbose:
+                command += ['-v']
+            if self.options.command == 'clean':
+                command += ['-t', 'clean']
+            # DNW: This needs to be a function / more full featured.
+            # Will add a ankibuild.ninja.build later.  just a process call for now.
+            pipe = subprocess.Popen(command, cwd=cwd_loc, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = pipe.communicate()
+            if '' != err:
+                print err
+            print out
 
     def delete(self):
         if self.options.verbose:
