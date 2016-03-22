@@ -2934,7 +2934,6 @@ namespace Anki {
         fid = 0;
       }
       
-      u8 numObjects = 0;
       u8 objectsSelectedMask = 0;
       for (auto & fid : factory_ids) {
         
@@ -2945,8 +2944,8 @@ namespace Anki {
         }
         
         // Check if there is still space in the message
-        if (numObjects >= msg.factory_id.size()) {
-          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", msg.factory_id.size());
+        if (msg.factory_id.size() >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", factory_ids.size());
           return RESULT_FAIL;
         }
         
@@ -2965,9 +2964,8 @@ namespace Anki {
           return RESULT_FAIL;
         }
 
-        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x (slot %d)", fid, numObjects);
-        msg.factory_id[numObjects] = fid;
-        ++numObjects;
+        msg.factory_id.push_back(fid);
+        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x (slot %lu)", fid, msg.factory_id.size());
         
         if (isCharger) {
           objectsSelectedMask |= 0x80000000;
@@ -2981,7 +2979,7 @@ namespace Anki {
       _blockWorld.ClearObjectsByFamily(ObjectFamily::LightCube);
       _blockWorld.ClearObjectsByFamily(ObjectFamily::Charger);
       
-      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %d", numObjects);
+      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %lu", msg.factory_id.size());
       return SendMessage(RobotInterface::EngineToRobot(CubeSlots(msg)));
       
     }
