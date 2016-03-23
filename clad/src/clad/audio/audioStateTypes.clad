@@ -12,6 +12,7 @@ enum uint_32 GenericState
 
 enum uint_32 Music
 {
+  Gp_Between_Rounds = 658369771,
   Gp_Cube_Pounce = 59300189,
   Gp_Simon = 2606448607,
   Gp_Speed_Tap = 1944187438,
