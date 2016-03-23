@@ -272,7 +272,7 @@
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_ios_release)',
                     '<@(opencv_lib_search_path_release)',
-                    '<(webots_path)/lib/'
+                    '<(webots_path)/lib/',
                     '<@(flite_lib_search_path_ios)',
                 ],
               },
@@ -282,7 +282,7 @@
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_mac_release)',
                     '<@(opencv_lib_search_path_release)',
-                    '<(webots_path)/lib/'
+                    '<(webots_path)/lib/',
                     '<@(flite_lib_search_path_mac)',
                 ],
               },
@@ -307,7 +307,7 @@
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_ios_release)',
                     '<@(opencv_lib_search_path_release)',
-                    '<(webots_path)/lib/'
+                    '<(webots_path)/lib/',
                     '<@(flite_lib_search_path_ios)',
                 ],
               },
@@ -317,7 +317,7 @@
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_mac_release)',
                     '<@(opencv_lib_search_path_release)',
-                    '<(webots_path)/lib/'
+                    '<(webots_path)/lib/',
                     '<@(flite_lib_search_path_mac)',
                 ],
               },
@@ -1328,6 +1328,7 @@
               '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
               '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+              '<@(flite_libs)',
             ],
           },
         ],

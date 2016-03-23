@@ -20,6 +20,18 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  message CubeSlots
+  {
+    uint_32 factory_id[uint_32:7] // Don't send more than MAX_NUM_ACTIVE_OBJECTS above
+  }
+  
+  structure SetPropSlot
+  {
+    uint_32 factory_id,
+    uint_8  slot
+  }
+  
 namespace RobotInterface {
 
 /** Pipe from engine to robot.
@@ -262,7 +274,7 @@ union EngineToRobot
   // Reserved for bootloader data message to get moved here = 0x02,
   BackpackLights                setBackpackLights           = 0x03,
   CubeLights                    setCubeLights               = 0x04,
-  CubeSlots                     assignCubeSlots             = 0x05,
+  SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
 
   // 0x30 to 0x7f: To RTIP
@@ -332,7 +344,8 @@ union EngineToRobot
   AnimKeyFrame::DisableAnimTracks disableAnimTracks         = 0x9D,
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
   // Anim future expansion                                  = 0x9F,
-
+  CubeSlots                     assignCubeSlots             = 0xA0,
+  
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
 

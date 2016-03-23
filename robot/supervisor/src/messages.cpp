@@ -749,6 +749,10 @@ namespace Anki {
       {
         // TODO honor this in simulator
       }
+      void Process_setPropSlot(const SetPropSlot& msg)
+      {
+        // Nothing to do here
+      }
       void Process_assignCubeSlots(const CubeSlots& msg)
       {
         HAL::AssignCubeSlots(7, msg.factory_id);

@@ -15,6 +15,7 @@ extern "C" {
 #include "rboot.h"
 }
 #include "rtip.h"
+#include "activeObjectManager.h"
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -129,6 +130,11 @@ void Exec(os_event_t *event)
       //BootloaderDebugFace();
       break;
     }
+    case 4:
+    {
+      ActiveObjectManager::Update();
+      break;
+    }
     // Add new "long execution" tasks as switch cases here.
     default:
     {
@@ -144,31 +150,6 @@ void Exec(os_event_t *event)
   lastBTT = btStart;
   // Always repost so we'll execute again.
   system_os_post(backgroundTask_PRIO, event->sig + 1, event->par);
-}
-
-bool readPairedObjectsAndSend(uint32_t tag)
-{
-  NVStorage::NVStorageBlob entry;
-  entry.tag = tag;
-  const NVStorage::NVResult result = NVStorage::Read(entry);
-  AnkiConditionalWarnAndReturnValue(result == NVStorage::NV_OKAY, false, 48, "ReadAndSendPairedObjects", 272, "Failed to paired objects: %d", 1, result);
-  CubeSlots* slots;
-  // XXX TODO Remove this hack once the old robots are gone
-  if (entry.blob_length == CubeSlots::MAX_SIZE) // New style CubeSlots message
-  {
-    slots = (CubeSlots*)entry.blob;
-  }
-  else // Old style slots message
-  {
-    AnkiWarn( 48, "ReadAndSendPairedObjects", 397, "Old style NV data found, please update", 0)
-    slots = (CubeSlots*)(entry.blob + 4); // Skip past padding and length field
-  }
-  RobotInterface::EngineToRobot m;
-  m.tag = RobotInterface::EngineToRobot::Tag_assignCubeSlots;
-  memcpy(&m.assignCubeSlots, slots->GetBuffer(), slots->Size());
-  
-  RTIP::SendMessage(m);
-  return false;
 }
 
 bool readCameraCalAndSend(uint32_t tag)
@@ -230,6 +211,11 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't initalize face controller\r\n");
     return -5;
   }
+  else if (Anki::Cozmo::ActiveObjectManager::Init() == false)
+  {
+    os_printf("\tCouldn't initalize prop manager\r\n");
+    return -6;
+  }
   else
   {
     return 0;
@@ -239,7 +225,6 @@ extern "C" int8_t backgroundTaskInit(void)
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
   if (Anki::Cozmo::UpgradeController::CheckForAndDoStaged()) return false;
-  foregroundTaskPost(Anki::Cozmo::BackgroundTask::readPairedObjectsAndSend, Anki::Cozmo::NVStorage::NVEntry_PairedObjects);
   return false;
 }
 
@@ -280,7 +265,6 @@ extern "C" void backgroundTaskOnConnect(void)
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
 
-  foregroundTaskPost(Anki::Cozmo::BackgroundTask::readPairedObjectsAndSend, Anki::Cozmo::NVStorage::NVEntry_PairedObjects);
   foregroundTaskPost(Anki::Cozmo::BackgroundTask::readCameraCalAndSend, Anki::Cozmo::NVStorage::NVEntry_CameraCalibration);
 }
 
@@ -292,7 +276,5 @@ extern "C" void backgroundTaskOnDisconnect(void)
   rtipMsg.radioConnected.wifiConnected = false;
   Anki::Cozmo::RTIP::SendMessage(rtipMsg);
   
-  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_assignCubeSlots;
-  os_memset(&rtipMsg.assignCubeSlots, 0, sizeof(Anki::Cozmo::CubeSlots));
-  Anki::Cozmo::RTIP::SendMessage(rtipMsg);
+  Anki::Cozmo::ActiveObjectManager::DisconnectAll();
 }

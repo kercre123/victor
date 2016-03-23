@@ -25,6 +25,8 @@ struct LightValues {
   uint8_t values[LIGHTS_PER_WORD];
 };
 
+static const int LIGHTS_PER_FRAME = 4;
+
 static LightValues lights[TOTAL_LIGHTS];
 
 static const uint16_t DivTable[] = {
@@ -147,15 +149,14 @@ void Lights::init() {
   }
 
   // Spread light processing across the radio period
-  RTOS_Task* task = RTOS::schedule(Lights::manage);
-  RTOS::setPriority(task, RTOS_LOW_PRIORITY);
+  RTOS::schedule(Lights::manage);
 }
 
 void Lights::manage(void* userdata) {
   static int light = 0;
   int time = GetFrame();
   
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < LIGHTS_PER_FRAME; i++) {
     CalculateLEDColor(lights[light++], time);
     if (light > TOTAL_LIGHTS) light = 0;
   }

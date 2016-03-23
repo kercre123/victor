@@ -7,21 +7,13 @@
 #include "rtos.h"
 #include "timer.h"
 
-static RTOS_Task *task_list;
-static RTOS_Task *free_task;
 static RTOS_Task task_pool[MAX_TASKS];
 
 static int last_counter;
 
 void RTOS::init(void) {
   // Clear out our task management pool
-  task_list = NULL;
-  free_task = &task_pool[0];
-
   memset(&task_pool, 0, sizeof(task_pool));
-  for (int i = 1; i < MAX_TASKS; i++) {
-    task_pool[i-1].next = &task_pool[i];
-  }
 
   // Setup the watchdog
   NRF_WDT->CONFIG = (WDT_CONFIG_SLEEP_Run << WDT_CONFIG_SLEEP_Pos);
@@ -42,65 +34,17 @@ void RTOS::delay(RTOS_Task* task, int delay) {
   task->target += delay;
 }
 
-RTOS_Task* RTOS::allocate(void) {
-  if (free_task == NULL) {
-    return NULL;
+static RTOS_Task* allocate(void) {
+  for (int i = 0; i < MAX_TASKS; i++) {
+    if (task_pool[i].allocated) {
+      continue ;
+    }
+    
+    task_pool[i].allocated = true;
+    return &task_pool[i];
   }
   
-  RTOS_Task *task = free_task;
-  free_task = free_task->next;
-
-  return task;
-}
-
-void RTOS::remove(RTOS_Task* task) {
-  // Remove task from listing
-  if (task->prev) {
-    task->prev->next = task->next;
-  } else {
-    task_list = task->next;
-  }
-  
-  if (task->next) {
-    task->next->prev = task->prev;
-  }
-}
-  
-void RTOS::release(RTOS_Task* task) {
-  RTOS::remove(task);
-
-  // Add to unallocated list
-  task->next = free_task;
-  free_task = task;
-}
-
-static void insert(RTOS_Task* task) {
-  // Set task to the first index
-  task->prev = NULL;
-  task->next = task_list;
-  
-  // Shift our task down the chain
-  while (task->next && task->next->priority <= task->priority) {
-    task->prev = task->next;
-    task->next = task->next->next;
-  }
-
-  // Insert the task into the chain
-  if (task->prev) {
-    task->prev->next = task;
-  } else {
-    task_list = task;
-  }
-
-  if (task->next) {
-    task->next->prev = task;
-  }
-}
-
-void RTOS::setPriority(RTOS_Task* task, RTOS_Priority priority) {
-  remove(task);
-  task->priority = priority;
-  insert(task);
+  return NULL;
 }
 
 void RTOS::manage(void) {
@@ -114,12 +58,9 @@ RTOS_Task* RTOS::create(RTOS_TaskProc func, bool repeating) {
     return NULL;
   }
 
-  task->priority = RTOS_DEFAULT_PRIORITY;
   task->task = func;
   task->repeating = repeating;
   task->active = false;
-
-  insert(task);
  
   return task;
 }
@@ -161,9 +102,11 @@ extern "C" void SWI0_IRQHandler(void) {
 
   last_counter = new_count;
   
-  for (RTOS_Task* task = task_list; task; task = task->next) {
+  for (int i = 0 ; i < MAX_TASKS; i++) {
+    RTOS_Task* const task = &task_pool[i];
+
     // Resume execution
-    if (!task->active) {
+    if (!task->active || !task->allocated) {
       continue ; 
     }
 
@@ -174,18 +117,15 @@ extern "C" void SWI0_IRQHandler(void) {
       continue ;
     }
 
-    int start = GetCounter();
-		task->task(task->userdata);
-		int time = GetCounter() - start;
-		task->time = MAX(time, task->time);
+    task->task(task->userdata);
 
     // Either release the task slice, or reinsert it with the period
     if (task->repeating) {
-			do {
-				task->target += task->period;
-			} while (task->target <= 0);
+      do {
+        task->target += task->period;
+      } while (task->target <= 0);
     } else {
-      RTOS::release(task);
+      task->allocated = false;
     }
   }
 
