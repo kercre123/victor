@@ -153,10 +153,11 @@ def svn_package(svn_dict):
     repos = svn_dict.get("repo_names", "")
     user = svn_dict.get("default_usr", "undefined")
     cred = SVN_CRED % (user, password)
+    stale_warning = "WARNING: If this build succeeds, it may contain stale animation and/or audio data."
 
     if not is_up(root_url):
         print "{0} is not available.  Please check your internet connection.".format(root_url)
-        print "WARNING: If this build succeeds, it may contain stale animation and/or audio data."
+        print(stale_warning)
         return
 
     for repo in repos:
@@ -203,7 +204,7 @@ def svn_package(svn_dict):
             successful, err = pipe.communicate()
             status = pipe.poll()
             if err == '' and status == 0:
-                print successful
+                print successful.strip()
                 # Equivalent to a git clean
                 pipe = subprocess.Popen(cleanup, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 extract_message, error = pipe.communicate()
@@ -222,8 +223,8 @@ def svn_package(svn_dict):
                     if VERBOSE:
                         print err
             else:
-                print "Error in checking out {0}".format(repo)
-                print(err)
+                print "Error in checking out {0}: {1}".format(repo, err.strip())
+                print(stale_warning)
 
             if extract_types:
                 for subdir in subdirs:
