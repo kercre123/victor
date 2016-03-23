@@ -69,7 +69,7 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void ShowDevConnectDialog() {
-    if (_DevConnectDialogInstance == null) {
+    if (_DevConnectDialogInstance == null && _DevConnectDialog != null) {
       _DevConnectDialogInstance = UIManager.CreateUIElement(_DevConnectDialog.gameObject);
     }
   }

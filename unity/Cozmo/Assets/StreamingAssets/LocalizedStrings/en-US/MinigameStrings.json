@@ -135,6 +135,9 @@
   "speedTap.tapBlock": {
     "translation": "Tap a flashing cube to claim it and begin the game!\n\n(Make sure your and Cozmo's cubes are far apart.)"
   },
+  "speedTap.tapBlockForRound": {
+    "translation": "Ready? \nTap your cube to start the next round.\n\n(Make sure your and Cozmo's cubes are far apart.)"
+  },
   "treasureHunt.title": {
     "translation": "Treasure Hunt"
   },
