@@ -300,12 +300,17 @@ namespace Anki {
         }
         bool loadFile = false;
         auto mapIt = _loadedAnimationGroupFiles.find(path);
+#ifdef __APPLE__
+        time_t tmpSeconds = attrib.st_mtimespec.tv_sec;
+#else
+        time_t tmpSeconds = attrib.st_mtime;
+#endif
         if (mapIt == _loadedAnimationGroupFiles.end()) {
-          _loadedAnimationGroupFiles.insert({path, attrib.st_mtimespec.tv_sec});
+          _loadedAnimationGroupFiles.insert({path, tmpSeconds});
           loadFile = true;
         } else {
-          if (mapIt->second < attrib.st_mtimespec.tv_sec) {
-            mapIt->second = attrib.st_mtimespec.tv_sec;
+          if (mapIt->second < tmpSeconds) {
+            mapIt->second = tmpSeconds;
             loadFile = true;
           } else {
             //PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "old time stamp for %s", fullFileName.c_str());
