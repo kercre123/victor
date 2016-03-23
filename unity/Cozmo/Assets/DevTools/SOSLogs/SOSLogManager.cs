@@ -28,4 +28,16 @@ public class SOSLogManager : MonoBehaviour {
       _SosTcpClient.CleanUp();
     }
   }
+
+  void Update() {
+    if (_SosTcpClient != null) {
+      _SosTcpClient.ProcessMessages();
+    }
+  }
+
+  public void RegisterListener(System.Action<string> listener) {
+    if (_SosTcpClient != null) {
+      _SosTcpClient.OnNewSOSLogEntry += listener;
+    }
+  }
 }

@@ -42,6 +42,34 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     DAS.AddTarget(this);
 
     ConsoleLogPane.ConsoleLogPaneOpened += OnConsoleLogPaneOpened;
+
+  }
+
+  private void EnableSOSLogs() {
+    SOSLogManager.Instance.CreateListener();
+    RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
+    SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
+  }
+
+  private void HandleNewSOSLog(string log) {
+    if (log.Contains("[Warn]")) {
+      SaveLogPacket(LogPacket.ELogKind.Warning, "", log, null);
+    }
+    else if (log.Contains("[Error]")) {
+      SaveLogPacket(LogPacket.ELogKind.Error, "", log, null);
+    }
+    else if (log.Contains("[Debug]")) {
+      SaveLogPacket(LogPacket.ELogKind.Debug, "", log, null);
+    }
+    else if (log.Contains("[Info]")) {
+      SaveLogPacket(LogPacket.ELogKind.Info, "", log, null);
+    }
+    else if (log.Contains("[Event]")) {
+      SaveLogPacket(LogPacket.ELogKind.Event, "", log, null);
+    }
+    else {
+      SaveLogPacket(LogPacket.ELogKind.Debug, "", log, null);
+    }
   }
 
   private void OnDestroy() {
@@ -92,6 +120,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   private void OnConsoleLogPaneOpened(ConsoleLogPane logPane) {
     _ConsoleLogPaneView = logPane;
+    _ConsoleLogPaneView.ConsoleSOSLogButtonEnable += EnableSOSLogs;
 
     List<string> consoleText = CompileRecentLogs();
     _ConsoleLogPaneView.Initialize(consoleText, _TextLabelPool);

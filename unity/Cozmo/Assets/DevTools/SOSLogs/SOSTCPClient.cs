@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 using System;
 using System.Net;
@@ -15,6 +16,9 @@ public class SOSTCPClient {
   private bool _IsActive = false;
 
   public Action<string> OnNewSOSLogEntry;
+  private List<string> _Messages = new List<string>();
+
+  private readonly object sync = new object();
 
   public void StartListening() {
     try {
@@ -32,6 +36,17 @@ public class SOSTCPClient {
     _IsActive = false;
   }
 
+  public void ProcessMessages() {
+    lock (sync) {
+      if (OnNewSOSLogEntry != null) {
+        for (int i = 0; i < _Messages.Count; ++i) {
+          OnNewSOSLogEntry(_Messages[i]);
+        }
+      }
+      _Messages.Clear();
+    }
+  }
+
   private void HandleConnected(System.IAsyncResult result) {
     try {
 
@@ -42,10 +57,9 @@ public class SOSTCPClient {
 
       int i;
       while ((i = _Stream.Read(bytes, 0, bytes.Length)) != 0 && _IsActive) {
-        if (OnNewSOSLogEntry != null) {
-          OnNewSOSLogEntry(System.Text.Encoding.ASCII.GetString(bytes, 0, i));
+        lock (sync) {
+          _Messages.Add(System.Text.Encoding.ASCII.GetString(bytes, 0, i));
         }
-        Debug.Log(System.Text.Encoding.ASCII.GetString(bytes, 0, i));
       }
     }
     catch (Exception ex) {
