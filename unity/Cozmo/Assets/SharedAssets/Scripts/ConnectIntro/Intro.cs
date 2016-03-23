@@ -7,6 +7,7 @@ public class Intro : MonoBehaviour {
   [SerializeField] protected InputField _RobotIPInputField;
   [SerializeField] protected InputField _SimIPInputField;
   [SerializeField] protected Text _Error;
+  [SerializeField] protected InputField _RobotNameInputField;
 
   private bool _Simulated = false;
   private string _CurrentRobotIP;
@@ -40,15 +41,23 @@ public class Intro : MonoBehaviour {
     set { PlayerPrefs.SetString("LastID", value); }
   }
 
+  private string LastRobotName {
+    get { return PlayerPrefs.GetString("LastRobotName", "OK0000"); }
+    
+    set { PlayerPrefs.SetString("LastRobotName", value); }
+  }
+
   protected void OnEnable() {
 
     _EngineIPInputField.text = LastEngineIP;
     _RobotIPInputField.text = LastIP;
     _SimIPInputField.text = LastSimIP;
+    _RobotNameInputField.text = LastRobotName;
 
     _EngineIPInputField.Rebuild(CanvasUpdate.PreRender);
     _RobotIPInputField.Rebuild(CanvasUpdate.PreRender);
     _SimIPInputField.Rebuild(CanvasUpdate.PreRender);
+    _RobotNameInputField.Rebuild(CanvasUpdate.PreRender);
 
   }
 
@@ -117,10 +126,15 @@ public class Intro : MonoBehaviour {
     RobotEngineManager.Instance.MockConnect();
   }
 
+  public void ConfigureWifi() {
+    CozmoBinding.WifiSetup(_RobotNameInputField.text, "2manysecrets");
+  }
+
   protected void SaveData() {
     LastIP = _RobotIPInputField.text;
     LastSimIP = _SimIPInputField.text;
     LastEngineIP = _EngineIPInputField.text;
+    LastRobotName = _RobotNameInputField.text;
   }
 
   private void Connected(string connectionIdentifier) {
