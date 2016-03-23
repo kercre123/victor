@@ -16,7 +16,7 @@ namespace Cozmo {
 
   message CubeSlots
   {
-    uint_32 factory_id[7]
+    uint_32 factory_id[uint_32:7] // Don't send more than MAX_NUM_ACTIVE_OBJECTS above
   }
 
   message FlashObjectIDs
@@ -28,6 +28,12 @@ namespace Cozmo {
   {
     uint_32 objectID,
     bool    isBeingCarried,
+  }
+  
+  structure SetPropSlot
+  {
+    uint_32 factory_id,
+    uint_8  slot
   }
   
   /// XXX Temporary messages until more of cube control is moved into body

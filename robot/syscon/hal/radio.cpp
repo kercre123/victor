@@ -347,7 +347,7 @@ void uesb_event_handler(uint32_t flags)
 }
 
 void Radio::setPropLights(unsigned int slot, const LightState *state) {
-  if (slot > MAX_ACCESSORIES) {
+  if (slot >= MAX_ACCESSORIES) {
     return ;
   }
 
@@ -357,13 +357,26 @@ void Radio::setPropLights(unsigned int slot, const LightState *state) {
 }
 
 void Radio::assignProp(unsigned int slot, uint32_t accessory) {
-  if (slot > MAX_ACCESSORIES) {
+  if (slot >= MAX_ACCESSORIES) {
     return ;
   }
   
   AccessorySlot* acc = &accessories[slot];
-  acc->id = accessory;
-  acc->allocated = true;
+  if (accessory != 0)
+  {
+    acc->allocated = true;
+    acc->id = accessory;
+  }
+  else
+  {
+    acc->allocated = false;
+    acc->active    = false;
+    if (acc->id != 0)
+    {
+      SendObjectConnectionState(slot);
+      acc->id = 0;
+    }
+  }
 }
 
 void Radio::prepare(void* userdata) {
