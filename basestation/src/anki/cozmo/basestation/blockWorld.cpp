@@ -853,7 +853,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
           if (blocks.size() > 1) {
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleMatchesForActiveObject",
                                 "Observed active object of type %d matches %lu existing objects. Multiple blocks of same type not currently supported.",
-                                objSeen->GetType(), blocks.size());
+                                objSeen->GetType(), (unsigned long)blocks.size());
             
           } else if (blocks.size() == 0) {
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.NoMatchForActiveObject",
@@ -1839,7 +1839,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
               // mats it is seeing, but don't localize to any of them.
               PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.NotOnMatNoLocalize",
                                       "Robot %d is localized to a mat it doesn't see, and will not localize to any of the %lu mats it sees but is not on.",
-                                      _robot->GetID(), matsSeen.size());
+                                      _robot->GetID(), (unsigned long)matsSeen.size());
             }
             else {
               if(overlappingMatsSeen.size() > 1) {

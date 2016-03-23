@@ -309,7 +309,7 @@ namespace Anki {
                                          "LocalizedTo: <nothing>");
       GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
-                                         _poseOrigins.size(),
+                                         (unsigned long)_poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
       
       // create a new memory map for this origin
@@ -362,7 +362,7 @@ namespace Anki {
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
       GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
-                                         _poseOrigins.size(),
+                                         (unsigned long)_poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
       
       return RESULT_OK;
@@ -2938,7 +2938,7 @@ namespace Anki {
         
         // Check if there is still space in the message
         if (numObjects >= msg.factory_id.size()) {
-          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", msg.factory_id.size());
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", (unsigned long)msg.factory_id.size());
           return RESULT_FAIL;
         }
         
@@ -2987,7 +2987,7 @@ namespace Anki {
       
     Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
     {
-      //CoreTechPrint("_reactionCallbacks size = %lu\n", _reactionCallbacks.size());
+      //CoreTechPrint("_reactionCallbacks size = %lu\n", (unsigned long)_reactionCallbacks.size());
       
       _reactionCallbacks[code].emplace_front(callback);
       

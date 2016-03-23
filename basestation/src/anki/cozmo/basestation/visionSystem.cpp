@@ -1326,7 +1326,7 @@ namespace Cozmo {
     
     for(auto & region : regionPoints) {
       //PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
-      //                 "Area=%lu", region.size());
+      //                 "Area=%lu", (unsigned long)region.size());
       if(region.size() > minArea && region.size() > largestRegion) {
         centroid = 0.f;
         for(auto & point : region) {
@@ -2540,11 +2540,11 @@ namespace Cozmo {
                 } else if(!enoughContrast) {
                   PRINT_NAMED_INFO("VisionSystem.ReadToolCode.BadContrast",
                                    "Dot %lu: Contrast for comp %d = %f",
-                                   iDot, iComp, (f32)avgHoleBrightness / (f32)avgDotBrightness);
+                                   (unsigned long)iDot, iComp, (f32)avgHoleBrightness / (f32)avgDotBrightness);
                 } else if(!holeSmallEnough) {
                   PRINT_NAMED_INFO("VisionSystem.ReadToolCode.HoleTooLarge",
                                    "Dot %lu: hole too large %d > %f*%d (=%f)",
-                                   iDot, holeArea, kMaxHoleAreaFrac, compArea,
+                                   (unsigned long)iDot, holeArea, kMaxHoleAreaFrac, compArea,
                                    kMaxHoleAreaFrac*compArea);
                 }
               }
