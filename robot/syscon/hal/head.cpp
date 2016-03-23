@@ -74,8 +74,7 @@ void Head::init()
   setTransmitMode(TRANSMIT_RECEIVE);
   MicroWait(80);
 
-  RTOS_Task *task = RTOS::schedule(Head::manage);
-  RTOS::setPriority(task, RTOS_UART_PRIORITY);
+  RTOS::schedule(Head::manage);
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
@@ -155,12 +154,9 @@ static void Process_setCubeLights(const CubeLights& msg)
   Radio::setPropLights(msg.objectID, msg.lights);
 }
 
-static void Process_assignCubeSlots(const CubeSlots& msg)
+static void Process_setPropSlot(const SetPropSlot& msg)
 {
-  for (int i=0; i<7; ++i) // 7 is the number supported in messageToActiveObject.clad
-  {
-    Radio::assignProp(i, msg.factory_id[i]);
-  }
+  Radio::assignProp(msg.slot, msg.factory_id);
 }
 
 static void Process_killBodyCode(const KillBodyCode& msg)
