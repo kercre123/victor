@@ -11,7 +11,7 @@ using System.Threading;
 public class SOSTCPClient {
 
   private TcpListener _TcpListener;
-  private Byte[] bytes = new Byte[256];
+  private Byte[] bytes = new Byte[1024];
   private NetworkStream _Stream;
   private bool _IsActive = false;
 
@@ -21,6 +21,10 @@ public class SOSTCPClient {
   private readonly object sync = new object();
 
   public void StartListening() {
+    if (_IsActive) {
+      Debug.Log("already listening");
+      return;
+    }
     try {
       _IsActive = true;
       _TcpListener = new TcpListener(IPAddress.Parse("127.0.0.1"), 4444);
