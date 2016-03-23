@@ -161,7 +161,7 @@ uint8_t isqrt(uint32_t op)
 
 static void createAddress(uesb_address_desc_t& address) { 
   // Generate random values
-  Crypto::random(&address.prefix[0], address.prefix[0]);
+  Crypto::random(&address.prefix[0], 1);
   address.base0 = 0xE7E7E7E7;
 
   // Create a random RF channel
@@ -379,8 +379,6 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   }
 }
 
-static int next_timer = 0;
-
 void Radio::prepare(void* userdata) {
   uesb_stop();
 
@@ -459,13 +457,13 @@ void Radio::manage(void) {
   static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
   static int next_resume  = next_prepare + SILENCE_PERIOD;
   int count = GetCounter();
-
-  if (next_prepare <= count) {
+    
+  if (next_prepare - count < 0) {
     prepare(NULL);
     next_prepare += SCHEDULE_PERIOD;
   }
   
-  if (next_resume <= count) {
+  if (next_resume - count < 0) {
     resume(NULL);
     next_resume += SCHEDULE_PERIOD;
   }

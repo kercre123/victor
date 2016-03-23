@@ -74,8 +74,7 @@ void Head::init()
   setTransmitMode(TRANSMIT_RECEIVE);
   MicroWait(80);
 
-  RTOS_Task *task = RTOS::schedule(Head::manage);
-  RTOS::setPriority(task, RTOS_UART_PRIORITY);
+  RTOS::schedule(Head::manage);
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
