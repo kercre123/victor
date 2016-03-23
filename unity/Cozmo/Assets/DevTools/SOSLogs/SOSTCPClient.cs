@@ -23,7 +23,7 @@ public class SOSTCPClient {
   public void StartListening() {
     try {
       _IsActive = true;
-      _TcpListener = new TcpListener(Dns.GetHostEntry("localhost").AddressList[0], 4444);
+      _TcpListener = new TcpListener(IPAddress.Parse("127.0.0.1"), 4444);
       _TcpListener.Start();
       var result = _TcpListener.BeginAcceptTcpClient(new AsyncCallback(HandleConnected), _TcpListener);
       result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(1));
