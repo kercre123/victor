@@ -9,6 +9,14 @@ namespace Cozmo {
   namespace MinigameWidgets {
     public class ScoreWidget : MinigameWidget {
 
+      private const float kAnimYOffset = 0.0f;
+      private const float kAnimDur = 0.25f;
+
+      public float AnimationXOffset {
+        set;
+        private get;
+      }
+
       [SerializeField]
       private Image _PortraitImage;
 
@@ -29,11 +37,6 @@ namespace Cozmo {
 
       [SerializeField]
       private Canvas _WinnerCanvas;
-
-      public float AnimationXOffset {
-        set;
-        private get;
-      }
 
       public int MaxRounds {
         set {
@@ -94,22 +97,12 @@ namespace Cozmo {
         Destroy(gameObject);
       }
 
-      // TODO: Don't hardcode this
-      public override Sequence OpenAnimationSequence() {
-        Sequence open = DOTween.Sequence();
-        open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + AnimationXOffset, 
-          this.transform.localPosition.y, this.transform.localPosition.z),
-          0.25f).From().SetEase(Ease.OutQuad));
-        return open;
+      public override Sequence CreateOpenAnimSequence() {
+        return CreateOpenAnimSequence(AnimationXOffset, kAnimYOffset, kAnimDur);
       }
 
-      // TODO: Don't hardcode this
-      public override Sequence CloseAnimationSequence() {
-        Sequence close = DOTween.Sequence();
-        close.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + AnimationXOffset, 
-          this.transform.localPosition.y, this.transform.localPosition.z),
-          0.25f).SetEase(Ease.OutQuad));
-        return close;
+      public override Sequence CreateCloseAnimSequence() {
+        return CreateCloseAnimSequence(AnimationXOffset, kAnimYOffset, kAnimDur);
       }
 
       #endregion
