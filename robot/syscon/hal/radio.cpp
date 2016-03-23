@@ -192,7 +192,7 @@ void Radio::advertise(void) {
   const uesb_config_t uesb_config = {
     RADIO_MODE_MODE_Nrf_1Mbit,
     UESB_CRC_8BIT,
-    RADIO_TXPOWER_TXPOWER_0dBm,
+    RADIO_TXPOWER_TXPOWER_Pos4dBm,
     PACKET_SIZE,
     5,    // Address length
     RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
