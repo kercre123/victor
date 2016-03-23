@@ -25,7 +25,9 @@ public class SOSTCPClient {
       _IsActive = true;
       _TcpListener = new TcpListener(Dns.GetHostEntry("localhost").AddressList[0], 4444);
       _TcpListener.Start();
-      _TcpListener.BeginAcceptTcpClient(new AsyncCallback(HandleConnected), _TcpListener);
+      var result = _TcpListener.BeginAcceptTcpClient(new AsyncCallback(HandleConnected), _TcpListener);
+      result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(1));
+      Debug.Log("SOS Server Started Listening");
     }
     catch (Exception ex) {
       Debug.LogException(ex);
@@ -52,7 +54,7 @@ public class SOSTCPClient {
 
       TcpListener listener = (TcpListener)result.AsyncState;
       var client = listener.EndAcceptTcpClient(result);
-      Debug.Log("Connected to SOS server!");
+      Debug.Log("SOS Server Connected!");
       _Stream = client.GetStream();
 
       int i;
