@@ -524,7 +524,7 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
           for(int i = 0; i < loggers.size(); ++i) {
             Anki::Util::SosLoggerProvider* sosLoggerProvider = dynamic_cast<Anki::Util::SosLoggerProvider*>(loggers[i]);
             if (sosLoggerProvider != nullptr) {
-              sosLoggerProvider->OpenSocket("localhost", 4444);
+              sosLoggerProvider->OpenSocket();
               // disables tags for the SOS program
               sosLoggerProvider->SetSoSTagEncoding(false);
               break;
