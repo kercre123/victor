@@ -859,6 +859,10 @@ message GetDebugConsoleVarMessage {
 message GetAllDebugConsoleVarMessage {
 }
 
+message SetEnableSOSLogging {
+  bool enabled
+}
+
 message BlockPoolEnabledMessage {
   bool enabled
 }
