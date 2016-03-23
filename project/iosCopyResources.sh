@@ -64,7 +64,7 @@ rsync -r -t --exclude=".*" --delete $SPHINXDIR/ $DSTDIR_SPHINX/
 # copy assets
 if [ -d "$ASSETSRDIR" ] ; then
   mkdir -p "$DSTDIR_ASSET"
-  rsync -r -t --exclude=".*" --delete $ASSETSRDIR/ $DSTDIR_ASSET/
+  rsync -r -t -k --exclude=".*" --delete $ASSETSRDIR/ $DSTDIR_ASSET/
 fi
 
 if [ -d "$ASSETS_SOUND_DIR" ]; then
