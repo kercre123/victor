@@ -134,7 +134,11 @@ def stopWebots(options):
   grep = subprocess.Popen(('grep', '[w]ebots'), stdin=ps.stdout, stdout=subprocess.PIPE)
   grepMinusThisProcess = subprocess.Popen(('grep', '-v', 'webotsTest.py'), stdin=grep.stdout, stdout=subprocess.PIPE)
   awk  = subprocess.Popen(('awk', '{print $2}'), stdin=grepMinusThisProcess.stdout, stdout=subprocess.PIPE)
-  kill = subprocess.Popen(('xargs', 'kill'), stdin=awk.stdout)
+  kill = subprocess.Popen(('xargs', 'kill', '-9'), stdin=awk.stdout, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  out,err = kill.communicate()
+  if '' != err:
+    print err
+  print out
 
   if (WaitUntil(IsWebotsNotRunning, 5, 0.5)):
     cleanWebots(options)
