@@ -1,5 +1,6 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
+#import <DAS/DAS.h>
 #import "wifiConfigure.h"
 #import "RoutingHTTPServer.h"
 
@@ -44,7 +45,7 @@ static void handleMobileconfigLoadRequest(RouteRequest * request, RouteResponse 
     NSString* myHTTPResponse =
     @"<HTML><HEAD><title>Profile Install</title>\
     </HEAD><script> \
-    </script><BODY><h1><a href='cozmo://'>Return To Cozmo</a></h1></BODY></HTML>";
+    </script><BODY><h1><a href='cozmoApp://'>Return To Cozmo</a></h1></BODY></HTML>";
     [response respondWithString: myHTTPResponse];
   }
 }
@@ -89,12 +90,59 @@ int COZHttpServerShutdown() {
   return 0;
 }
 
-int COZWifiConfigure(const char* wifiSSID, const char* wifiPasskey) {
-  // TODO: Instead of just loading a static file, load it then modify with correct data given ssid passed in.
-  NSMutableString* path = [NSMutableString stringWithString:[[NSBundle mainBundle] bundlePath]];
-  [path appendString:@"/Cozmos.mobileconfig"];
-  _mobileconfigData = [NSData dataWithContentsOfFile:path];
+bool COZWifiConfigure(const char* wifiSSID, const char* wifiPasskey) {
+  NSString* configPath = [[NSBundle mainBundle] pathForResource:@"CozmoWifiConfigTemplate" ofType:@"mobileconfig"];
+  if (![[NSFileManager defaultManager] fileExistsAtPath:configPath]) {
+    DASError("cozmo.ios.wifiConfigure","Could not find wifi config template at path %s", [configPath UTF8String]);
+    return FALSE;
+  }
+  
+  _mobileconfigData = [NSData dataWithContentsOfFile:configPath];
+  
+  NSError* error = nil;
+  NSMutableDictionary* configDict = (NSMutableDictionary*) [NSPropertyListSerialization propertyListWithData:_mobileconfigData
+                                                                                                     options:NSPropertyListMutableContainersAndLeaves
+                                                                                                      format:nil
+                                                                                                       error:&error];
+  if (nil == configDict) {
+    NSString* errorString = [NSString stringWithFormat:@"%@", error];
+    DASError("cozmo.ios.wifiConfigure", "Problem deserializing mobileconfig template: %s", [errorString UTF8String]);
+    return FALSE;
+  }
+
+  NSString* ssidKey = @"SSID_STR";
+  NSString* passwordKey = @"Password";
+  NSString* payloadKey = @"PayloadContent";
+  NSString* uuidKey = @"PayloadUUID";
+  int payloadIndex = 0;
+  
+  // First update the UUID of the mobileconfig to match the unique app install uuid
+  NSString* deviceIDString = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
+  [configDict setValue:deviceIDString forKey:uuidKey];
+  
+  // Grab the dict with the connection-specific data
+  NSMutableDictionary* cozmoConfig = (NSMutableDictionary*)[(NSMutableArray*)[configDict objectForKey:payloadKey] objectAtIndex: payloadIndex];
+  
+  // Update the values we care about for the connection
+  [cozmoConfig setValue:deviceIDString forKey:uuidKey];
+  [cozmoConfig setValue:[NSString stringWithUTF8String:wifiSSID] forKey:ssidKey];
+  [cozmoConfig setValue:[NSString stringWithUTF8String:wifiPasskey] forKey:passwordKey];
+  
+  // Turn our newly updated plist back into some raw data we'll serve
+  NSData* preparedConfig = [NSPropertyListSerialization dataWithPropertyList:configDict
+                                                                      format:NSPropertyListXMLFormat_v1_0
+                                                                     options:(NSPropertyListWriteOptions)0
+                                                                       error:&error];
+  if (nil == preparedConfig) {
+    NSString* errorString = [NSString stringWithFormat:@"%@", error];
+    DASError("cozmo.ios.wifiConfigure", "Problem creating mobileconfig from modified plist: %s", [errorString UTF8String]);
+    return FALSE;
+  }
+  
+  // Finally set us to use the data we've prepared
+  _mobileconfigData = preparedConfig;
   
   [[UIApplication sharedApplication] openURL:[NSURL URLWithString: [_localAddress stringByAppendingString:@"/start/"]]];
-  return 0;
+  return TRUE;
 }
+

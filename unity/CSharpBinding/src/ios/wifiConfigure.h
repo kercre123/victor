@@ -6,7 +6,7 @@ int COZHttpServerInit(int portNum);
   
 int COZHttpServerShutdown();
   
-int COZWifiConfigure(const char* wifiSSID, const char* wifiPasskey);
+bool COZWifiConfigure(const char* wifiSSID, const char* wifiPasskey);
 
 
 #endif // __iOS_WifiConfigure_H__

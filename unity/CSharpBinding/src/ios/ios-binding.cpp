@@ -112,5 +112,5 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_destroy()
 
 int Anki::Cozmo::CSharpBinding::cozmo_engine_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
 {
-  return COZWifiConfigure(wifiSSID, wifiPasskey);
+  return COZWifiConfigure(wifiSSID, wifiPasskey) ? RESULT_OK : RESULT_FAIL;
 }
