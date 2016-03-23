@@ -63,43 +63,21 @@ extern void EnterRecovery(void) {
   NVIC_SystemReset();
 }
 
-static void EMERGENCY_FIX(void) {
-  uint32_t* BOOLOADER_ADDR = (uint32_t*)(NRF_UICR_BASE + 0x14);
-  const uint32_t ACTUAL_ADDR = 0x1F000;
-
-  if (*BOOLOADER_ADDR != 0xFFFFFFFF) return ;
-  
-  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
-  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-  *BOOLOADER_ADDR = ACTUAL_ADDR;
-  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
-  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-  
-  NVIC_SystemReset();
-}
-
-void wiggle(void*) {
-  static int power = 0x7000;
-  Motors::setPower(MOTOR_HEAD, power);
-  power = -power;
-}
-
 int main(void)
 {
   // Initialize the SoftDevice handler module.
   SOFTDEVICE_HANDLER_INIT(NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM, NULL);
 
-  // This makes sure the bootloader address is set, will not be in the final version
-  EMERGENCY_FIX();
-
   // Initialize our scheduler
   RTOS::init();
   Crypto::init();
 
-  // Setup all tasks
+  // Setup all tasks (reverse priority)
   Radio::init();
-  Motors::init();	
+  #ifndef RUN_TESTS
+  Head::init();
+  #endif
+  Motors::init();
   Battery::init();
   Bluetooth::init();
   Timer::init();
@@ -118,8 +96,6 @@ int main(void)
   // Let the test fixtures run, if nessessary
   #ifdef RUN_TESTS
   TestFixtures::run();
-  #else
-  Head::init();
   #endif
 
   // THIS IS ONLY HERE FOR DEVELOPMENT PURPOSES
