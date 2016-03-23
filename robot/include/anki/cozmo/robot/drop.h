@@ -110,6 +110,8 @@ typedef enum
 #define GET_JPEG_LENGTH(i) ((i&jpegLenMask) << 2)
 
 #define RTIP_MAX_CLAD_MSG_SIZE (253)
+#define RTIP_RX_MAX_BUFFER (192)
+#define RTIP_RX_FLUSH_PER_DROP (3)
 
 /// RTIP to WiFi state update message
 typedef struct
