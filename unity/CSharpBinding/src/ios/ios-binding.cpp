@@ -96,7 +96,7 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_da
   
   engineAPI = created_engine;
   
-  COZHttpServerInit(8000);
+  COZHttpServerInit(8500);
 
   return RESULT_OK;
 }
