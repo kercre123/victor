@@ -1720,8 +1720,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1208.5, y: 322}
-  m_SizeDelta: {x: 362, y: 150}
+  m_AnchoredPosition: {x: 820, y: -316}
+  m_SizeDelta: {x: 250, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22406122
 RectTransform:
@@ -2220,6 +2220,18 @@ Prefab:
       value: 
       objectReference: {fileID: 11427454, guid: 1fbeecc0ee49a443298dea77336f8a48,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: m_AnchoredPosition.x
+      value: 820
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_AnchoredPosition.y
+      value: -316
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_SizeDelta.x
+      value: 250
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 100452}
