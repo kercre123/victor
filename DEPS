@@ -3,15 +3,19 @@
         "default_usr": "ankibuildserver", 
         "pwd": "FoDmKuxMUjsmNhA49BnWysEfVLWaLdGY", 
         "repo_names": {
-            "cozmosoundbanks": {
-                "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "21"
-            },
             "cozmo-assets": {
-                "subdirs": ["animations"],
-                "allow_extra_files": "True",
-                "extract_types_from_tar": [".json"],
+                "allow_extra_files": "True", 
+                "extract_types_from_tar": [
+                    ".json"
+                ], 
+                "subdirs": [
+                    "animations"
+                ], 
                 "version": "11"
+            }, 
+            "cozmosoundbanks": {
+                "package_name": "GeneratedSoundBanks.tar.gz", 
+                "version": "23"
             }
         }, 
         "root_url": "https://svn.ankicore.com/svn"
