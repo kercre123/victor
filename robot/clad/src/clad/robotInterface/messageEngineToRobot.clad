@@ -20,6 +20,18 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  message CubeSlots
+  {
+    uint_32 factory_id[uint_32:7] // Don't send more than MAX_NUM_ACTIVE_OBJECTS above
+  }
+  
+  structure SetPropSlot
+  {
+    uint_32 factory_id,
+    uint_8  slot
+  }
+  
 namespace RobotInterface {
 
 /** Pipe from engine to robot.
