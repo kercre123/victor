@@ -255,6 +255,7 @@ namespace Anki {
         printf("  Set idle to'idleAnimationName':  Shift+Alt+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
         printf("    Respond 'no' to game request:  n\n");
+        printf("        Quit keyboard controller:  Shift+Alt+x\n");
         printf("                      Print help:  ?\n");
         printf("\n");
       }
@@ -297,8 +298,7 @@ namespace Anki {
         if (lastKeysPressed_ == keysPressed) {
           return;
         }
-        lastKeysPressed_ = keysPressed;
-        
+        lastKeysPressed_ = keysPressed;        
         
         for(auto key : keysPressed)
         {
@@ -449,6 +449,7 @@ namespace Anki {
           }
           
           if(!testMode) {
+
             // Check for (mostly) single key commands
             switch (key)
             {
@@ -524,8 +525,14 @@ namespace Anki {
                 
               case (s32)'X':
               {
-                commandedHeadSpeed -= headSpeed;
-                movingHead = true;
+                if( modifier_key & webots::Supervisor::KEYBOARD_ALT &&
+                    modifier_key & webots::Supervisor::KEYBOARD_SHIFT ) {
+                  _shouldQuit = true;
+                }
+                else {
+                  commandedHeadSpeed -= headSpeed;
+                  movingHead = true;
+                }
                 break;
               }
                 
@@ -1825,8 +1832,13 @@ namespace Anki {
 
         
         ProcessKeystroke();
-        
-        return 0;
+
+        if( _shouldQuit ) {
+          return 1;
+        }
+        else {        
+          return 0;
+        }
       }
     
       
