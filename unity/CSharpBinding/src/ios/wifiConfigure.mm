@@ -12,8 +12,6 @@ static int _portNum = 0;
 
 
 static void handleMobileconfigRootRequest(RouteRequest *request, RouteResponse * response) {
-  NSLog(@"handleMobileconfigRootRequest");
-  
   _shouldInstallProfile = TRUE;
   
   NSString* myResponse =
@@ -35,13 +33,11 @@ static void handleMobileconfigRootRequest(RouteRequest *request, RouteResponse *
 
 static void handleMobileconfigLoadRequest(RouteRequest * request, RouteResponse * response) {
   if(_shouldInstallProfile) {
-    NSLog(@"handleMobileconfigLoadRequest, first time");
     _shouldInstallProfile = FALSE;
     
     [response setHeader:@"Content-Type" value:@"application/x-apple-aspen-config"];
     [response respondWithData:_mobileconfigData];
   } else {
-    NSLog(@"handleMobileconfigLoadRequest, NOT first time");
     NSString* myHTTPResponse =
     @"<HTML><HEAD><title>Profile Install</title>\
     </HEAD><script> \
@@ -68,7 +64,8 @@ int COZHttpServerInit(int portNum)
   
   NSError *err = nil;
   if (![_httpServer start:&err]) {
-    NSLog(@"Error starting http server: %@", err);
+    NSString* errorString = [NSString stringWithFormat:@"%@", err];
+    DASError("cozmo.ios.httpServerInit", "Error starting http server: %s", [errorString UTF8String]);
     
     [_httpServer stop];
     _httpServer = nil;
