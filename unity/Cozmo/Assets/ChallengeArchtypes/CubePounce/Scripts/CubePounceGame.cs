@@ -94,7 +94,7 @@ namespace CubePounce {
         // Enter Animation State to attempt a pounce.
         // Set Callback for HandleEndSlapAttempt
         _CliffFlagTrown = false;
-        CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Tap, HandleSlapAttemptEnd);
+        CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Tap, HandlePounceEnd);
       }
       else {
         // If you do a fakeout instead, increase the likelyhood of a slap
@@ -104,7 +104,7 @@ namespace CubePounce {
       }
     }
 
-    private void HandleSlapAttemptEnd(bool success) {
+    private void HandlePounceEnd(bool success) {
       // If the animation completes and the cube is beneath Cozmo,
       // Cozmo has won.
       if (_CliffFlagTrown) {
