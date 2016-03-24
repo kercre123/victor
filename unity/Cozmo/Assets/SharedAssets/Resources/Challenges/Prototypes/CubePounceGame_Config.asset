@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MinSlapDelay: 0.5
   MaxSlapDelay: 1.5
-  Rounds: 3
-  MaxScorePerRound: 0
+  Rounds: 1
+  MaxScorePerRound: 3
   StartingSlapChance: 0.3
   MaxFakeouts: 5
