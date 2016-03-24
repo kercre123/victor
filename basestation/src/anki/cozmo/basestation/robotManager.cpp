@@ -226,7 +226,7 @@ namespace Anki {
         }
         bool loadFile = false;
         auto mapIt = _loadedAnimationFiles.find(path);
-#ifdef __APPLE__
+#ifdef __APPLE__  // TODO: COZMO-1057
         time_t tmpSeconds = attrib.st_mtimespec.tv_sec;
 #else
         time_t tmpSeconds = attrib.st_mtime;
@@ -300,7 +300,7 @@ namespace Anki {
         }
         bool loadFile = false;
         auto mapIt = _loadedAnimationGroupFiles.find(path);
-#ifdef __APPLE__
+#ifdef __APPLE__  // TODO: COZMO-1057
         time_t tmpSeconds = attrib.st_mtimespec.tv_sec;
 #else
         time_t tmpSeconds = attrib.st_mtime;

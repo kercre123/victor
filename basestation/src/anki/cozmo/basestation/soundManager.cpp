@@ -285,7 +285,7 @@ namespace Anki {
             }
             bool loadSoundFile = false;
             auto mapIt = _availableSounds.find(shortFilename);
-#ifdef __APPLE__
+#ifdef __APPLE__ // TODO: COZMO-1057
             time_t tmpSeconds = attrib.st_mtimespec.tv_sec;
 #else
             time_t tmpSeconds = attrib.st_mtime;

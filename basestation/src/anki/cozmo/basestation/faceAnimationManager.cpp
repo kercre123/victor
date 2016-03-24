@@ -78,7 +78,7 @@ namespace Cozmo {
           }
           bool loadAnimDir = false;
           auto mapIt = _availableAnimations.find(animName);
-#ifdef __APPLE__ // XXX: Possibly replace time structs with std::chrono
+#ifdef __APPLE__ // TODO: COZMO-1057 
             time_t tmpSeconds = attrib.st_mtimespec.tv_sec; //This maps to __darwin_time_t
 #else
             time_t tmpSeconds = attrib.st_mtime;
