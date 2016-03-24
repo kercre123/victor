@@ -49,7 +49,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   private void EnableSOSLogs() {
     if (_SOSLoggingEnabled) {
-      DAS.Warn("SOS log already enabled");
+      DAS.Warn(this, "SOS log already enabled");
       return;
     }
     _SOSLoggingEnabled = true;
