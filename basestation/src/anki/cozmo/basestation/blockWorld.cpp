@@ -2353,9 +2353,15 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
       } else {
         // A match was found but does it have the same factory ID?
         if(matchingObject->GetFactoryID() == factoryID) {
-          PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundActiveObject",
-                           "objectID %d, activeID %d, type %d",
-                           matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), cubeType);
+          PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatchingActiveObject",
+                           "objectID %d, activeID %d, type %d, factoryID 0x%x",
+                           matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), cubeType, matchingObject->GetFactoryID());
+          return matchingObject->GetID();
+        } else if (matchingObject->GetFactoryID() == 0) {
+          // Existing object was only previously observed, never connected, so its factoryID is 0
+          PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatchingActiveObjectThatWasNeverConnected",
+                           "objectID %d, activeID %d, type %d, factoryID 0x%x",
+                           matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), cubeType, matchingObject->GetFactoryID());
           return matchingObject->GetID();
         } else {
           // FactoryID mismatch. Delete the current object and fall through to add a new one

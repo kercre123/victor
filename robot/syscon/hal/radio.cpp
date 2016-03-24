@@ -161,7 +161,7 @@ uint8_t isqrt(uint32_t op)
 
 static void createAddress(uesb_address_desc_t& address) { 
   // Generate random values
-  Crypto::random(&address.prefix[0], address.prefix[0]);
+  Crypto::random(&address.prefix[0], 1);
   address.base0 = 0xE7E7E7E7;
 
   // Create a random RF channel
@@ -192,7 +192,7 @@ void Radio::advertise(void) {
   const uesb_config_t uesb_config = {
     RADIO_MODE_MODE_Nrf_1Mbit,
     UESB_CRC_8BIT,
-    RADIO_TXPOWER_TXPOWER_0dBm,
+    RADIO_TXPOWER_TXPOWER_Pos4dBm,
     PACKET_SIZE,
     5,    // Address length
     RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
@@ -347,7 +347,7 @@ void uesb_event_handler(uint32_t flags)
 }
 
 void Radio::setPropLights(unsigned int slot, const LightState *state) {
-  if (slot > MAX_ACCESSORIES) {
+  if (slot >= MAX_ACCESSORIES) {
     return ;
   }
 
@@ -357,16 +357,27 @@ void Radio::setPropLights(unsigned int slot, const LightState *state) {
 }
 
 void Radio::assignProp(unsigned int slot, uint32_t accessory) {
-  if (slot > MAX_ACCESSORIES) {
+  if (slot >= MAX_ACCESSORIES) {
     return ;
   }
   
   AccessorySlot* acc = &accessories[slot];
-  acc->id = accessory;
-  acc->allocated = true;
+  if (accessory != 0)
+  {
+    acc->allocated = true;
+    acc->id = accessory;
+  }
+  else
+  {
+    acc->allocated = false;
+    acc->active    = false;
+    if (acc->id != 0)
+    {
+      SendObjectConnectionState(slot);
+      acc->id = 0;
+    }
+  }
 }
-
-static int next_timer = 0;
 
 void Radio::prepare(void* userdata) {
   uesb_stop();
@@ -446,13 +457,13 @@ void Radio::manage(void) {
   static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
   static int next_resume  = next_prepare + SILENCE_PERIOD;
   int count = GetCounter();
-
-  if (next_prepare <= count) {
+    
+  if (next_prepare - count < 0) {
     prepare(NULL);
     next_prepare += SCHEDULE_PERIOD;
   }
   
-  if (next_resume <= count) {
+  if (next_resume - count < 0) {
     resume(NULL);
     next_resume += SCHEDULE_PERIOD;
   }

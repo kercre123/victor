@@ -58,6 +58,27 @@
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
     ],
 
+    'flite_includes':[
+      '<(coretech_external_path)/flite-2.0.0/include',
+    ],
+
+    'flite_libs': [
+      'libflite_cmu_grapheme_lang.a',
+      'libflite_cmu_grapheme_lex.a',
+      'libflite_cmu_us_kal.a',
+      'libflite_cmulex.a',
+      'libflite_usenglish.a',
+      'libflite.a',
+    ],
+
+    'flite_lib_search_path_mac': [
+      '<(coretech_external_path)/flite-2.0.0/generated/mac/DerivedData/Release',
+    ],
+    'flite_lib_search_path_ios': [
+      '<(coretech_external_path)/flite-2.0.0/generated/ios/DerivedData/Release-iphoneos',
+    ],
+
+
     # Make sure these are always _after_ our opencv_includes!
     'webots_includes': [
       '<(webots_path)/include/controller/cpp',
@@ -215,6 +236,7 @@
                     '<@(cte_lib_search_path_ios_debug)',
                     '<@(opencv_lib_search_path_debug)',
                     '<(webots_path)/lib/',
+                    '<@(flite_lib_search_path_ios)',
                 ],
               },
             }],
@@ -224,6 +246,7 @@
                     '<@(cte_lib_search_path_mac_debug)',
                     '<@(opencv_lib_search_path_debug)',
                     '<(webots_path)/lib/',
+                    '<@(flite_lib_search_path_mac)',
                 ],
               },
             }],
@@ -247,7 +270,8 @@
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_ios_release)',
                     '<@(opencv_lib_search_path_release)',
-                    '<(webots_path)/lib/'
+                    '<(webots_path)/lib/',
+                    '<@(flite_lib_search_path_ios)',
                 ],
               },
             }],
@@ -256,7 +280,8 @@
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_mac_release)',
                     '<@(opencv_lib_search_path_release)',
-                    '<(webots_path)/lib/'
+                    '<(webots_path)/lib/',
+                    '<@(flite_lib_search_path_mac)',
                 ],
               },
             }],
@@ -280,7 +305,8 @@
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_ios_release)',
                     '<@(opencv_lib_search_path_release)',
-                    '<(webots_path)/lib/'
+                    '<(webots_path)/lib/',
+                    '<@(flite_lib_search_path_ios)',
                 ],
               },
             }],
@@ -289,7 +315,8 @@
                 'LIBRARY_SEARCH_PATHS': [
                     '<@(cte_lib_search_path_mac_release)',
                     '<@(opencv_lib_search_path_release)',
-                    '<(webots_path)/lib/'
+                    '<(webots_path)/lib/',
+                    '<@(flite_lib_search_path_mac)',
                 ],
               },
             }],
@@ -524,6 +551,7 @@
             'include_dirs': [
               '<@(opencv_includes)',
               '<@(webots_includes)', # After opencv!
+              '<@(flite_includes)'
             ],
             'dependencies': [
               'cozmoEngine',
@@ -543,6 +571,7 @@
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '$(SDKROOT)/System/Library/Frameworks/OpenAL.framework',
               '<@(sphinx_libs)',
+              '<@(flite_libs)',
               '<@(opencv_libs)',
               '<@(face_library_libs)',
             ],
@@ -1253,6 +1282,7 @@
         '../../generated/clad/engine',
         '<@(opencv_includes)',
         '<@(pocketsphinx_includes)',
+        '<@(flite_includes)',
         '../../cozmoAPI/src',
         '../../cozmoAPI/include',
         '../../generated/clad/game',
@@ -1293,6 +1323,7 @@
               '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
               '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+              '<@(flite_libs)',
             ],
           },
         ],

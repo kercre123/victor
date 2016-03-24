@@ -475,7 +475,7 @@ namespace Cozmo {
       bool result = robotPose.GetWithRespectTo(_robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
       assert(result == true); // this really shouldn't fail! camera has to be in the robot's pose tree
 #else
-      robotPose.GetWithRespectTo(robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
+      robotPose.GetWithRespectTo(_robot.GetCameraPose(headAngle_rad), robotPoseWrtCamera);
 #endif
       const RotationMatrix3d& R = robotPoseWrtCamera.GetRotationMatrix();
       const Vec3f&            T = robotPoseWrtCamera.GetTranslation();

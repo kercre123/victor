@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
 #include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
 #include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
+#include "anki/cozmo/basestation/textToSpeech/textToSpeech.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -33,16 +34,17 @@
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "util/logging/sosLoggerProvider.h"
 #include "util/logging/printfLoggerProvider.h"
+#include "util/logging/multiLoggerProvider.h"
 
 
 namespace Anki {
 namespace Cozmo {
 
 CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
-  : _loggerProvider({ new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider() })
-  , _robotChannel(new MultiClientChannel{})
+  : _robotChannel(new MultiClientChannel{})
   , _uiMsgHandler(new UiMessageHandler(1))
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
+  , _textToSpeech(new TextToSpeech(_uiMsgHandler.get(),dataPlatform))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
 {
   ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
@@ -71,6 +73,8 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReliableTransportRunMode, callback));
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging, callback));
+
   
   // Use a separate callback for StartEngine
   auto startEngineCallback = std::bind(&CozmoEngine::HandleStartEngine, this, std::placeholders::_1);
@@ -509,6 +513,26 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
     {
       const ExternalInterface::ReliableTransportRunMode& msg = event.GetData().Get_ReliableTransportRunMode();
       _robotChannel->SetReliableTransportRunMode(msg.isSync);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging:
+    {
+      if(Anki::Util::gLoggerProvider != nullptr) {
+        Anki::Util::MultiLoggerProvider* multiLoggerProvider = dynamic_cast<Anki::Util::MultiLoggerProvider*>(Anki::Util::gLoggerProvider);
+        if (multiLoggerProvider != nullptr) {
+          const std::vector<Anki::Util::ILoggerProvider*> loggers = multiLoggerProvider->GetProviders();
+          for(int i = 0; i < loggers.size(); ++i) {
+            Anki::Util::SosLoggerProvider* sosLoggerProvider = dynamic_cast<Anki::Util::SosLoggerProvider*>(loggers[i]);
+            if (sosLoggerProvider != nullptr) {
+              sosLoggerProvider->OpenSocket();
+              // disables tags for the SOS program
+              sosLoggerProvider->SetSoSTagEncoding(false);
+              break;
+            }
+          }
+
+        }
+      }
       break;
     }
     default:

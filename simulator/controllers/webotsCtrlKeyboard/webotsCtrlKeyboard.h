@@ -31,6 +31,10 @@ protected:
   virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg) override;
   virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg) override;
   virtual void HandleDebugString(ExternalInterface::DebugString const& msg) override;
+
+private:
+
+  bool _shouldQuit = false;
   
 }; // class WebotsKeyboardController
 } // namespace Cozmo

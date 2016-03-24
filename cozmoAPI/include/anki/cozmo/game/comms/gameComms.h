@@ -73,8 +73,6 @@ namespace Cozmo {
     
     void PrintRecvBuf();
     
-    const char* const GetLocalIP();
-    
     // 'Queue' of received messages from all connected user devices with their received times.
     std::deque<Comms::MsgPacket> recvdMsgPackets_;
 

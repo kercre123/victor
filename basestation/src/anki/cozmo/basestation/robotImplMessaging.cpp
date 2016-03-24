@@ -449,8 +449,8 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
   
   if(nullptr == object)
   {
-    PRINT_NAMED_INFO("Robot.HandleActiveObjectTapped.UnknownActiveID",
-                     "Could not find match for active object ID %d", payload.objectID);
+    PRINT_NAMED_WARNING("Robot.HandleActiveObjectTapped.UnknownActiveID",
+                        "Could not find match for active object ID %d", payload.objectID);
   } else {
     assert(object->IsActive());
     

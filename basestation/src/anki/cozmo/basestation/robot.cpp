@@ -217,16 +217,12 @@ namespace Anki {
       _shortMinAnglePathPlanner = new MinimalAnglePlanner;
       _selectedPathPlanner = _longPathPlanner;
       
-      
-      // Lock active objects to connect to
-      if (_context->GetDataPlatform() != nullptr) {
-        _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"), _context->GetExternalInterface());
-      }
-      
     } // Constructor: Robot
     
     Robot::~Robot()
     {
+      AbortAll();
+      
       Util::SafeDelete(_imageDeChunker);
       Util::SafeDelete(_poseHistory);
       Util::SafeDelete(_pdo);
@@ -628,6 +624,20 @@ namespace Anki {
     
     void Robot::SetPhysicalRobot(bool isPhysical)
     {
+      // TODO: Move somewhere else? This might not the best place for this, but it's where we
+      // know whether or not we're talking to a physical robot or not so do things that depend on that here.
+      // Assumes this function is only called once following connection.
+      
+      // Connect to active objects in saved blockpool, but only for physical robots.
+      // Sim robots automatically connect to all robots in their world as long as CozmoBot's
+      // autoConnectToBlocks field is TRUE.
+      if (isPhysical) {
+        if (_context->GetDataPlatform() != nullptr) {
+          _blockFilter->Init(_context->GetDataPlatform()->pathToResource(Util::Data::Scope::External, "blockPool.txt"), _context->GetExternalInterface());
+        }
+      }
+      
+      
       _isPhysical = isPhysical;
       
       // Modify net timeout depending on robot type - simulated robots shouldn't timeout so we can pause and debug them
@@ -2936,7 +2946,6 @@ namespace Anki {
         fid = 0;
       }
       
-      u8 numObjects = 0;
       u8 objectsSelectedMask = 0;
       for (auto & fid : factory_ids) {
         
@@ -2947,8 +2956,8 @@ namespace Anki {
         }
         
         // Check if there is still space in the message
-        if (numObjects >= msg.factory_id.size()) {
-          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", msg.factory_id.size());
+        if (msg.factory_id.size() >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", factory_ids.size());
           return RESULT_FAIL;
         }
         
@@ -2967,9 +2976,8 @@ namespace Anki {
           return RESULT_FAIL;
         }
 
-        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x (slot %d)", fid, numObjects);
-        msg.factory_id[numObjects] = fid;
-        ++numObjects;
+        msg.factory_id.push_back(fid);
+        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x (slot %lu)", fid, msg.factory_id.size());
         
         if (isCharger) {
           objectsSelectedMask |= 0x80000000;
@@ -2983,7 +2991,7 @@ namespace Anki {
       _blockWorld.ClearObjectsByFamily(ObjectFamily::LightCube);
       _blockWorld.ClearObjectsByFamily(ObjectFamily::Charger);
       
-      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %d", numObjects);
+      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %lu", msg.factory_id.size());
       return SendMessage(RobotInterface::EngineToRobot(CubeSlots(msg)));
       
     }
