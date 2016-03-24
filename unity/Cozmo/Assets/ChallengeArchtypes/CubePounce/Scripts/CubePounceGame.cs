@@ -2,9 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace CubeSlap {
+namespace CubePounce {
   
-  public class CubeSlapGame : GameBase {
+  public class CubePounceGame : GameBase {
 
     public const string kSetUp = "SetUp";
     public const string kWaitForPounce = "WaitForPounce";
@@ -41,7 +41,7 @@ namespace CubeSlap {
     private string _RetractAnimation = "pounceRetract";
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      CubeSlapConfig config = minigameConfig as CubeSlapConfig;
+      CubePounceConfig config = minigameConfig as CubePounceConfig;
       _Rounds = config.Rounds;
       _MinSlapDelay = config.MinSlapDelay;
       _MaxSlapDelay = config.MaxSlapDelay;

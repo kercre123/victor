@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace CubeSlap {
-  public class SlapGameState : State {
+namespace CubePounce {
+  public class PounceState : State {
 
-    private CubeSlapGame _CubeSlapGame;
+    private CubePounceGame _CubeSlapGame;
     private float _SlapDelay;
     private float _FirstTimestamp = -1;
     private float _LastSeenTimeStamp = -1;
@@ -12,7 +12,7 @@ namespace CubeSlap {
 
     public override void Enter() {
       base.Enter();
-      _CubeSlapGame = (_StateMachine.GetGame() as CubeSlapGame);
+      _CubeSlapGame = (_StateMachine.GetGame() as CubePounceGame);
       _SlapDelay = _CubeSlapGame.GetSlapDelay();
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _CurrentRobot.SetLiftHeight(1.0f);
@@ -38,7 +38,7 @@ namespace CubeSlap {
           // Unless the cube is in the right position, trigger a failure since you moved it
           if (target.MarkersVisible) {
             float distance = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
-            if (distance < CubeSlapGame.kCubePlaceDist) {
+            if (distance < CubePounceGame.kCubePlaceDist) {
               didFail = false;
               ResetLastSeenTimeStamp();
             }
@@ -47,7 +47,7 @@ namespace CubeSlap {
             if (_LastSeenTimeStamp == -1) {
               _LastSeenTimeStamp = Time.time;
             }
-            if (Time.time - _LastSeenTimeStamp > CubeSlapGame.kCubeLostDelay) {
+            if (Time.time - _LastSeenTimeStamp > CubePounceGame.kCubeLostDelay) {
               _CubeSlapGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinEarly);
               _CubeSlapGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinEarly);
               _CubeSlapGame.OnFailure();

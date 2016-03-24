@@ -1,17 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace CubeSlap {
+namespace CubePounce {
   // Wait for the cube to be in position, then wait for a tap before transferring into Lineup State
   public class SeekState : State {
 
-    private CubeSlapGame _CubeSlapGame;
+    private CubePounceGame _CubeSlapGame;
     private float _ConfirmDelay = 0.5f;
     public float _FirstSeenTimestamp = -1;
 
     public override void Enter() {
       base.Enter();
-      _CubeSlapGame = (_StateMachine.GetGame() as CubeSlapGame);
+      _CubeSlapGame = (_StateMachine.GetGame() as CubePounceGame);
       _CubeSlapGame.GetCurrentTarget();
       _CubeSlapGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderSetupText);
       _CubeSlapGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoSetupText);
@@ -33,7 +33,7 @@ namespace CubeSlap {
         // If Cube is in the right position, enter game state.
         if (target.MarkersVisible) {
           float distance = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
-          if (distance < CubeSlapGame.kCubePlaceDist) {
+          if (distance < CubePounceGame.kCubePlaceDist) {
             isBad = false;
             target.SetLEDs(Color.green);
             if (_FirstSeenTimestamp == -1) {
@@ -41,13 +41,14 @@ namespace CubeSlap {
             }
 
             if (Time.time - _FirstSeenTimestamp > _ConfirmDelay) {
-              _StateMachine.SetNextState(new SlapGameState());
+              _StateMachine.SetNextState(new PounceState());
             }
           }
+          /*
           else if (Vector3.Dot(_CurrentRobot.Forward, (target.WorldPosition - _CurrentRobot.WorldPosition).normalized) > 0.92f) {
             // the robot is lined up but not close enough to drive toward it to start the game.
             _CurrentRobot.DriveWheels(15.0f, 15.0f);
-          }
+          }*/
         }
       }
       if (isBad) {

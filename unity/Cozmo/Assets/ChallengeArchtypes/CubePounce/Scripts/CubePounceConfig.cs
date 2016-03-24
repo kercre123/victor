@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace CubeSlap {
+namespace CubePounce {
 
-  public class CubeSlapConfig : MinigameConfigBase {
+  public class CubePounceConfig : MinigameConfigBase {
     public override int NumCubesRequired() {
       return 1;
     }
