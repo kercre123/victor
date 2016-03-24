@@ -73,6 +73,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
+  public event Action<Anki.Cozmo.ExternalInterface.FactoryTestResult> OnFactoryResult;
 
   #region Audio Callback events
 
@@ -369,6 +370,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RobotObservedPossibleObject:
       ReceivedSpecificMessage(message.RobotObservedPossibleObject);
+      break;
+    case G2U.MessageEngineToGame.Tag.FactoryTestResult:
+      ReceivedSpecificMessage(message.FactoryTestResult);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -679,6 +683,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject message) {
     if (OnObservedPossibleObject != null) {
       OnObservedPossibleObject(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.FactoryTestResult message) {
+    if (OnFactoryResult != null) {
+      OnFactoryResult(message);
     }
   }
 
