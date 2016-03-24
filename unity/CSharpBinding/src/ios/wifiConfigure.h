@@ -13,12 +13,27 @@
 #ifndef __iOS_WifiConfigure_H__
 #define __iOS_WifiConfigure_H__
 
+#include "util/helpers/noncopyable.h"
 
-int COZHttpServerInit(int portNum);
+namespace Anki {
+namespace Cozmo {
+
+class WifiConfigure : Util::noncopyable
+{
+public:
+  WifiConfigure();
+  virtual ~WifiConfigure();
   
-int COZHttpServerShutdown();
+  bool UpdateMobileconfig(const char* wifiSSID, const char* wifiPasskey);
+  void InstallMobileconfig();
   
-bool COZWifiConfigure(const char* wifiSSID, const char* wifiPasskey);
+private:
+  struct WifiConfigureImpl;
+  std::unique_ptr<WifiConfigureImpl> _impl;
+  
+}; // class WifiConfigure
+} // namespace Cozmo
+} // namespace Anki
 
 
 #endif // __iOS_WifiConfigure_H__

@@ -35,8 +35,7 @@ Anki::Util::Data::DataPlatform* dataPlatform = nullptr;
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 const char* VIZ_HOST_IP = "127.0.0.1";
 
-// Port used to host the mobileconfig file for wifi configuration
-const int httpServerPortNum = 8500;
+WifiConfigure* wifiConfigure = nullptr;
 
 void configure_engine(Json::Value config)
 {
@@ -99,14 +98,17 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_da
   
   engineAPI = created_engine;
   
-  COZHttpServerInit(httpServerPortNum);
+  wifiConfigure = new WifiConfigure();
 
   return RESULT_OK;
 }
 
 int Anki::Cozmo::CSharpBinding::cozmo_engine_destroy()
 {
-  COZHttpServerShutdown();
+  // TODO:(lc) We probably don't want or need the wifiConfigure running the entire lifetime of the app, so figure out
+  // the lifetime it really needs
+  Anki::Util::SafeDelete(wifiConfigure);
+  
   Anki::Util::SafeDelete(engineAPI);
   Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
   Anki::Util::SafeDelete(dataPlatform);
@@ -115,5 +117,19 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_destroy()
 
 int Anki::Cozmo::CSharpBinding::cozmo_engine_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
 {
-  return COZWifiConfigure(wifiSSID, wifiPasskey) ? RESULT_OK : RESULT_FAIL;
+  if (nullptr == wifiConfigure)
+  {
+    PRINT_NAMED_ERROR("CSharpBinding.cozmo_engine_wifi_setup", "Tried to setup wifi with no wifiConfigure object created");
+    return RESULT_FAIL;
+  }
+  
+  if (!wifiConfigure->UpdateMobileconfig(wifiSSID, wifiPasskey))
+  {
+    PRINT_NAMED_ERROR("CSharpBinding.cozmo_engine_wifi_setup", "Problem updating mobileconfig to be used for wifi configuration");
+    return RESULT_FAIL;
+  }
+  
+  wifiConfigure->InstallMobileconfig();
+  
+  return RESULT_OK;
 }
