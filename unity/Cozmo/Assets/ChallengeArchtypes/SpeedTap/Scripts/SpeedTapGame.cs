@@ -270,17 +270,17 @@ namespace SpeedTap {
 
     private static ISpeedTapRules GetRules(SpeedTapRuleSet ruleSet) {
       switch (ruleSet) {
-      case SpeedTapRuleSet.NoRed:
+      case SpeedTapRuleSet.NoRed: // 1
         return new NoRedSpeedTapRules();
-      case SpeedTapRuleSet.TwoColor:
+      case SpeedTapRuleSet.TwoColor: // 2
         return new TwoColorSpeedTapRules();
       case SpeedTapRuleSet.LightCountNoColor:
-        return new LightCountNoColorSpeedTapRules();
+        return new LightCountNoColorSpeedTapRules(); // 4
       case SpeedTapRuleSet.LightCountMultiColor:
         return new LightCountMultiColorSpeedTapRules();
       case SpeedTapRuleSet.LightCountSameColorNoTap:
         return new LightCountSameColorNoTap();
-      case SpeedTapRuleSet.LightCountTwoColor:
+      case SpeedTapRuleSet.LightCountTwoColor: // 3
         return new LightCountTwoColorSpeedTapRules();
       default:
         return new DefaultSpeedTapRules();
