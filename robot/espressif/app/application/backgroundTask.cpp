@@ -16,26 +16,25 @@ extern "C" {
 }
 #include "rtip.h"
 #include "activeObjectManager.h"
+#include "face.h"
+#include "factoryTests.h"
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "anki/cozmo/robot/logging.h"
-#include "face.h"
 #include "upgradeController.h"
 #include "animationController.h"
 #include "nvStorage.h"
+
+extern const unsigned int COZMO_VERSION_COMMIT;
 
 #define backgroundTaskQueueLen 2 ///< Maximum number of task 0 subtasks which can be in the queue
 os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task 0 queue
 
 #define EXPECTED_BT_INTERVAL_US 5000
 #define BT_MAX_RUN_TIME_US      2000
-
-extern const unsigned int COZMO_VERSION_COMMIT;
-extern const char* DAS_USER;
-extern const char* BUILD_DATE;
 
 namespace Anki {
 namespace Cozmo {
@@ -54,36 +53,6 @@ void CheckForUpgrades(void)
   {
     UpgradeController::StartRTIPUpgrade();
   }
-}
-
-void WiFiFace(void)
-{
-  static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nWiFi-V: %x\nWiFi-D: %s\nRTIP-V: %x\nRTIP-D: %s\n          %c";
-  static const u32 wifiFaceSpinner[] ICACHE_RODATA_ATTR STORE_ATTR = {'|', '/', '-', '\\', '|', '/', '-', '\\'};
-  const uint32 wifiFaceFmtSz = ((sizeof(wifiFaceFormat)+3)/4)*4;
-  if (!clientConnected())
-  {
-    if (!crashHandlerHasReport())
-    {
-      struct softap_config ap_config;
-      if (wifi_softap_get_config(&ap_config) == false)
-      {
-        os_printf("WiFiFace couldn't read back config\r\n");
-      }
-      char fmtBuf[wifiFaceFmtSz];
-      memcpy(fmtBuf, wifiFaceFormat, wifiFaceFmtSz);
-      Face::FaceInvertPrintf((system_get_time() >> 24) & 0x1); // Invert the face every few seconds
-      Face::FacePrintf(fmtBuf,
-                       ap_config.ssid, ap_config.password, ap_config.channel, wifi_softap_get_station_num(),
-                       COZMO_VERSION_COMMIT, BUILD_DATE + 5,
-                       RTIP::Version, RTIP::VersionDescription, wifiFaceSpinner[system_get_time() >> 16 & 0x7]);
-    }
-  }
-}
-
-void BootloaderDebugFace(void)
-{
-  Face::FacePrintf("RTIP: %04x\nBody: %08x", i2spiGetRtipBootloaderState(), i2spiGetBodyBootloaderCode());
 }
 
 /** The OS task which dispatches subtasks.
@@ -126,8 +95,7 @@ void Exec(os_event_t *event)
     }
     case 3:
     {
-      WiFiFace();
-      //BootloaderDebugFace();
+      Factory::Update();
       break;
     }
     case 4:
@@ -216,6 +184,11 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't initalize prop manager\r\n");
     return -6;
   }
+  else if (Anki::Cozmo::Factory::Init() == false)
+  {
+    os_printf("\tCouldn't initalize factory test framework\r\n");
+    return -7;
+  }
   else
   {
     return 0;
@@ -225,7 +198,16 @@ extern "C" int8_t backgroundTaskInit(void)
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
   if (Anki::Cozmo::UpgradeController::CheckForAndDoStaged()) return false;
+  Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
   return false;
+}
+
+static bool sendWifiConnectionState(const bool state)
+{
+  Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
+  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
+  rtipMsg.radioConnected.wifiConnected = state;
+  return Anki::Cozmo::RTIP::SendMessage(rtipMsg);
 }
 
 extern "C" void backgroundTaskOnConnect(void)
@@ -235,14 +217,10 @@ extern "C" void backgroundTaskOnConnect(void)
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
   else Anki::Cozmo::Face::FaceUnPrintf();
   
-  // Tell RTIP radio is connected
-  {
-    Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
-    rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
-    rtipMsg.radioConnected.wifiConnected = true;
-    Anki::Cozmo::RTIP::SendMessage(rtipMsg);
-  }
-    
+  Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_None);
+  
+  sendWifiConnectionState(true);
+  
   // Send our version information to the engine
   {
     Anki::Cozmo::RobotInterface::FWVersionInfo vi;
@@ -260,7 +238,7 @@ extern "C" void backgroundTaskOnConnect(void)
     idMsg.robotID = *serialNumber;
     Anki::Cozmo::RobotInterface::SendMessage(idMsg);
   }
-    
+  
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
@@ -270,11 +248,7 @@ extern "C" void backgroundTaskOnConnect(void)
 
 extern "C" void backgroundTaskOnDisconnect(void)
 {
-  Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
-  
-  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
-  rtipMsg.radioConnected.wifiConnected = false;
-  Anki::Cozmo::RTIP::SendMessage(rtipMsg);
-  
   Anki::Cozmo::ActiveObjectManager::DisconnectAll();
+  sendWifiConnectionState(false);
+  Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
 }

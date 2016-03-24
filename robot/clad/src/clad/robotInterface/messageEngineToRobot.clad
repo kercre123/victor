@@ -16,6 +16,7 @@
 #include "clad/robotInterface/messageToActiveObject.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
+#include "clad/types/fwTestMessages.clad"
 #include "clad/types/nvStorage.clad"
 
 namespace Anki {
@@ -316,6 +317,7 @@ union EngineToRobot
   PowerState                    powerState                  = 0x53,
   PropState                     getPropState                = 0x54,
   EnableCamCalibMode            enableCamCalibMode          = 0x55,
+  EnableTestStateMessage        enableTestStateMessage      = 0x56,
   
   // 0x80 to 0xAF: To WiFi
   // Flash and OTA message must not be changed or OTA will break
@@ -345,7 +347,9 @@ union EngineToRobot
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
   // Anim future expansion                                  = 0x9F,
   CubeSlots                     assignCubeSlots             = 0xA0,
-  
+  TestState                     testState                   = 0xA1,
+  EnterFactoryTestMode          enterTestMode               = 0xA2,
+
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
 
