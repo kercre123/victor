@@ -26,6 +26,8 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   private Dictionary<LogPacket.ELogKind, bool> _LastToggleValues;
 
+  private bool _SOSLoggingEnabled = false;
+
   // Use this for initialization
   private void Awake() {
     _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
@@ -46,6 +48,11 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void EnableSOSLogs() {
+    if (_SOSLoggingEnabled) {
+      DAS.Warn(this, "SOS log already enabled");
+      return;
+    }
+    _SOSLoggingEnabled = true;
     SOSLogManager.Instance.CreateListener();
     RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
     SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);

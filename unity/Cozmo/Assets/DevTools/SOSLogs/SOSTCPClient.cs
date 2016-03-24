@@ -58,7 +58,9 @@ public class SOSTCPClient {
 
       TcpListener listener = (TcpListener)result.AsyncState;
       var client = listener.EndAcceptTcpClient(result);
-      DAS.Debug(this, "SOS Server Connected!");
+
+      // using Debug.Log because DAS log will cause threading issues with updating UI.
+      Debug.Log("SOS Server Connected!");
       _Stream = client.GetStream();
 
       while ((_Stream.Read(_Bytes, 0, _Bytes.Length)) != 0 && _IsActive) {
