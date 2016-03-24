@@ -35,6 +35,9 @@ Anki::Util::Data::DataPlatform* dataPlatform = nullptr;
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 const char* VIZ_HOST_IP = "127.0.0.1";
 
+// Port used to host the mobileconfig file for wifi configuration
+const int httpServerPortNum = 8500;
+
 void configure_engine(Json::Value config)
 {
   if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
@@ -96,7 +99,7 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_da
   
   engineAPI = created_engine;
   
-  COZHttpServerInit(8500);
+  COZHttpServerInit(httpServerPortNum);
 
   return RESULT_OK;
 }
