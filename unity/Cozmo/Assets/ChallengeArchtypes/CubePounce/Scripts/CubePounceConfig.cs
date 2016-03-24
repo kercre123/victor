@@ -15,6 +15,7 @@ namespace CubePounce {
     public float MinSlapDelay;
     public float MaxSlapDelay;
     public int Rounds;
+    public int MaxScorePerRound;
     [Range(0f, 1f)]
     public float StartingSlapChance;
     public int MaxFakeouts;

@@ -24,20 +24,18 @@ namespace CubePounce {
     private int _Rounds;
 
     private bool _CliffFlagTrown = false;
-    // Flag to keep track if we've actually done the Pounce animation this round
-    private bool _SlapFlagThrown = false;
     private float _CurrentSlapChance;
     private float _BaseSlapChance;
     private int _MaxFakeouts;
+    private int _MaxScorePerRound;
 
     private LightCube _CurrentTarget = null;
 
-    [SerializeField]
-    private List<string> _FakeoutAnimations;
-    [SerializeField]
-    private string _PounceAnimation = "pounceForward";
-    [SerializeField]
-    private string _RetractAnimation = "pounceRetract";
+    public bool AllRoundsOver {
+      get {
+        return _CozmoScore + _PlayerScore >= _Rounds;
+      }
+    }
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       CubePounceConfig config = minigameConfig as CubePounceConfig;
@@ -46,8 +44,11 @@ namespace CubePounce {
       _MaxSlapDelay = config.MaxSlapDelay;
       _BaseSlapChance = config.StartingSlapChance;
       _MaxFakeouts = config.MaxFakeouts;
+      _MaxScorePerRound = config.MaxScorePerRound;
       _CozmoScore = 0;
       _PlayerScore = 0;
+      _PlayerRoundsWon = 0;
+      _CozmoRoundsWon = 0;
       _CurrentTarget = null;
       InitializeMinigameObjects(config.NumCubesRequired());
     }
@@ -89,15 +90,13 @@ namespace CubePounce {
         // Enter Animation State to attempt a pounce.
         // Set Callback for HandleEndSlapAttempt
         _CliffFlagTrown = false;
-        _SlapFlagThrown = true;
-        CurrentRobot.SendAnimation(_PounceAnimation, HandleEndSlapAttempt);
+        CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Tap, HandleEndSlapAttempt);
       }
       else {
         // If you do a fakeout instead, increase the likelyhood of a slap
         // attempt based on the max number of fakeouts.
-        int rand = Random.Range(0, _FakeoutAnimations.Count);
         _CurrentSlapChance += ((1.0f - _BaseSlapChance) / _MaxFakeouts);
-        _StateMachine.SetNextState(new AnimationState(_FakeoutAnimations[rand], HandleFakeoutEnd));
+        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_Fake, HandleFakeoutEnd));
       }
     }
 
@@ -134,21 +133,21 @@ namespace CubePounce {
     public void OnPlayerWin() {
       _PlayerScore++;
       UpdateScoreboard();
-      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleRoundEndAnimationDone));
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandEndAnimationDone));
     }
 
     public void OnCozmoWin() {
       _CozmoScore++;
       UpdateScoreboard();
-      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleRoundEndAnimationDone));
+      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandEndAnimationDone));
     }
 
-    public void HandleRoundEndAnimationDone(bool success) {
+    public void HandEndAnimationDone(bool success) {
       // Determines winner and loser at the end of Cozmo's animation, or returns
       // to seek state for the next round
       // Display the current round
       UpdateRoundsUI();
-      if (_CozmoScore + _PlayerScore >= _Rounds) {
+      if (AllRoundsOver) {
         if (_CozmoScore > _PlayerScore) {
           _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleLoseGameAnimationDone));
         }
@@ -156,9 +155,11 @@ namespace CubePounce {
           _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseSession, HandleWinGameAnimationDone));
         }
       }
-      else if (_SlapFlagThrown) {
-        _SlapFlagThrown = false;
-        _StateMachine.SetNextState(new AnimationState(_RetractAnimation, HandleRetractDone));
+      else if (_CozmoScore >= _MaxScorePerRound) {
+        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinRound, RoundEndAnimationDone));
+      }
+      else if (_PlayerScore >= _MaxScorePerRound) {
+        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseRound, RoundEndAnimationDone));
       }
       else {
         _StateMachine.SetNextState(new SeekState());
@@ -173,7 +174,13 @@ namespace CubePounce {
       RaiseMiniGameLose();
     }
 
-    public void HandleRetractDone(bool success) {
+    public void RoundEndAnimationDone(bool success) {
+      if (_CozmoScore > _PlayerScore) {
+        _CozmoRoundsWon++;
+      }
+      else {
+        _PlayerRoundsWon++;
+      }
       _StateMachine.SetNextState(new SeekState());
     }
 
@@ -195,8 +202,25 @@ namespace CubePounce {
     }
 
     public void UpdateScoreboard() {
-      SharedMinigameView.CozmoScoreboard.Score = _CozmoScore;
-      SharedMinigameView.PlayerScoreboard.Score = _PlayerScore;
+      int halfTotalRounds = (_Rounds + 1) / 2;
+      Cozmo.MinigameWidgets.ScoreWidget cozmoScoreWidget = SharedMinigameView.CozmoScoreboard;
+      cozmoScoreWidget.Score = _CozmoScore;
+      cozmoScoreWidget.MaxRounds = halfTotalRounds;
+      cozmoScoreWidget.RoundsWon = _CozmoRoundsWon;
+
+      Cozmo.MinigameWidgets.ScoreWidget playerScoreWidget = SharedMinigameView.PlayerScoreboard;
+      playerScoreWidget.Score = _PlayerScore;
+      playerScoreWidget.MaxRounds = halfTotalRounds;
+      playerScoreWidget.RoundsWon = _PlayerRoundsWon;
+
+      if (AllRoundsOver) {
+        // Hide Current Round at end
+        SharedMinigameView.InfoTitleText = string.Empty;
+      }
+      else {
+        // Display the current round
+        SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
+      }
     }
   }
 }

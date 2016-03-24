@@ -7,7 +7,7 @@ namespace CubePounce {
     private CubePounceGame _CubeSlapGame;
     private float _SlapDelay;
     private float _FirstTimestamp = -1;
-    private float _LastSeenTimeStamp = -1;
+    //private float _LastSeenTimeStamp = -1;
     public bool _SlapTriggered = false;
 
     public override void Enter() {
@@ -72,7 +72,7 @@ namespace CubePounce {
     }
 
     private void ResetLastSeenTimeStamp() {
-      _LastSeenTimeStamp = -1;
+      //_LastSeenTimeStamp = -1;
     }
 
     public override void Exit() {
