@@ -26,6 +26,7 @@ public class SOSLogManager : MonoBehaviour {
   void OnDestroy() {
     if (_SosTcpClient != null) {
       _SosTcpClient.CleanUp();
+      _SosTcpClient = null;
     }
   }
 

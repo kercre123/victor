@@ -11,18 +11,18 @@ using System.Threading;
 public class SOSTCPClient {
 
   private TcpListener _TcpListener;
-  private Byte[] bytes = new Byte[1024];
+  private Byte[] _Bytes = new Byte[1024];
   private NetworkStream _Stream;
   private bool _IsActive = false;
 
   public Action<string> OnNewSOSLogEntry;
   private List<string> _Messages = new List<string>();
 
-  private readonly object sync = new object();
+  private readonly object _Sync = new object();
 
   public void StartListening() {
     if (_IsActive) {
-      Debug.Log("already listening");
+      DAS.Warn(this, "already listening");
       return;
     }
     try {
@@ -31,7 +31,7 @@ public class SOSTCPClient {
       _TcpListener.Start();
       var result = _TcpListener.BeginAcceptTcpClient(new AsyncCallback(HandleConnected), _TcpListener);
       result.AsyncWaitHandle.WaitOne(TimeSpan.FromSeconds(1));
-      Debug.Log("SOS Server Started Listening");
+      DAS.Debug(this, "SOS Server Started Listening");
     }
     catch (Exception ex) {
       Debug.LogException(ex);
@@ -43,7 +43,7 @@ public class SOSTCPClient {
   }
 
   public void ProcessMessages() {
-    lock (sync) {
+    lock (_Sync) {
       if (OnNewSOSLogEntry != null) {
         for (int i = 0; i < _Messages.Count; ++i) {
           OnNewSOSLogEntry(_Messages[i]);
@@ -58,12 +58,14 @@ public class SOSTCPClient {
 
       TcpListener listener = (TcpListener)result.AsyncState;
       var client = listener.EndAcceptTcpClient(result);
-      Debug.Log("SOS Server Connected!");
+      DAS.Debug(this, "SOS Server Connected!");
       _Stream = client.GetStream();
 
-      while ((_Stream.Read(bytes, 0, bytes.Length)) != 0 && _IsActive) {
-        lock (sync) {
-          string logOutput = System.Text.Encoding.ASCII.GetString(bytes).Replace('\0', ' ');
+      while ((_Stream.Read(_Bytes, 0, _Bytes.Length)) != 0 && _IsActive) {
+        lock (_Sync) {
+          // the replacement is so c# strings don't get messed up by nulls in the middle of strings.
+          // C# strings do not expect to be null terminated and causes weirdness down the line if they are.
+          string logOutput = System.Text.Encoding.ASCII.GetString(_Bytes).Replace('\0', ' ');
           logOutput = logOutput.Replace('\n', ' ');
           _Messages.Add(logOutput);
         }
