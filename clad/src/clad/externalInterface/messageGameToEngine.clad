@@ -863,6 +863,10 @@ message SetEnableSOSLogging {
   bool enabled
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// BlockPool
+///////////////////////////////////////////////////////////////////////////////
+
 message BlockPoolEnabledMessage {
   bool enabled
 }
@@ -878,6 +882,22 @@ message GetBlockPoolMessage {
 message SendDiscoveredObjects {
   uint_8 robotID,
   bool enable
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// FactoryTest
+///////////////////////////////////////////////////////////////////////////////
+
+// Begins the factory test behavior.
+// Engine sends a FactoryTestResult message when test completes.
+message StartFactoryTest {
+  uint_8 testSection
+}
+
+// Cancels the currently running factory test behavior.
+// Engine sends a FactoryTestResult message if test was running.
+message StopFactoryTest {
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

@@ -60,6 +60,8 @@ protected:
   void HandleProgressionEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleBehaviorManagerEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleSendDiscoveredObjects(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleStartFactoryTest(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleStopFactoryTest(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 };
 
   
