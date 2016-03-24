@@ -113,6 +113,11 @@ namespace Anki {
           {0, 1, 2, 3}
         };
         
+        // Mapping from type ID to FactoryID
+        // This is just what it happens to be in EP2. Changes to this mapping should
+        // also be reflected in ActiveCube::GetTypeFromFactoryID().
+        // Alternatively, modify the LightCube ObjectTypes to match the factoryID.
+        const u32 activeIDToFactoryIDMap_[MAX_NUM_CUBES] = {2, 1, 0, 3};
         u32 factoryID_ = 0;
         
         // Flash ID params
@@ -234,7 +239,7 @@ namespace Anki {
         u32 currTime_ms = static_cast<u32>(1000 * block_controller.getTime());
         
         // Generate a factory ID
-        factoryID_ = currTime_ms * 100000 + nodeIndex * 1000 + blockID_;
+        factoryID_ = currTime_ms * 100000 + nodeIndex * 1000 + activeIDToFactoryIDMap_[blockID_];
         printf("Starting ActiveBlock %d (factoryID %d)\n", blockID_, factoryID_);
         
         
