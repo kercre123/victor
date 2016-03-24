@@ -151,19 +151,27 @@ namespace CubePounce {
       // to seek state for the next round
       // Display the current round
       UpdateRoundsUI();
-      if (AllRoundsCompleted) {
+      if (Mathf.Max(_CozmoScore, _PlayerScore) > _MaxScorePerRound) {
         if (_CozmoScore > _PlayerScore) {
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleLoseGameAnimationDone));
+          _CozmoRoundsWon++;
         }
         else {
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseSession, HandleWinGameAnimationDone));
+          _PlayerRoundsWon++;
         }
-      }
-      else if (_CozmoScore >= _MaxScorePerRound) {
-        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinRound, RoundEndAnimationDone));
-      }
-      else if (_PlayerScore >= _MaxScorePerRound) {
-        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseRound, RoundEndAnimationDone));
+        if (AllRoundsCompleted) {
+          if (_CozmoScore > _PlayerScore) {
+            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleLoseGameAnimationDone));
+          }
+          else {
+            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseSession, HandleWinGameAnimationDone));
+          }
+        }
+        else if (_CozmoScore >= _MaxScorePerRound) {
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinRound, RoundEndAnimationDone));
+        }
+        else if (_PlayerScore >= _MaxScorePerRound) {
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseRound, RoundEndAnimationDone));
+        }
       }
       else {
         _StateMachine.SetNextState(new SeekState());
@@ -181,12 +189,6 @@ namespace CubePounce {
     public void RoundEndAnimationDone(bool success) {
       if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
         _CloseRoundCount++;
-      }
-      if (_CozmoScore > _PlayerScore) {
-        _CozmoRoundsWon++;
-      }
-      else {
-        _PlayerRoundsWon++;
       }
       _StateMachine.SetNextState(new SeekState());
     }
