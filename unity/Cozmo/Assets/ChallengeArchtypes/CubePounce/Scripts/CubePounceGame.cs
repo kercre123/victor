@@ -14,7 +14,6 @@ namespace CubePounce {
     // Consts for determining the exact placement and forgiveness for cube location
     // Must be consistent for animations to work
     public const float kCubePlaceDist = 80.0f;
-    public const float kCubeLostDelay = 0.25f;
     private int _CozmoScore;
     private int _PlayerScore;
     private int _PlayerRoundsWon;
@@ -108,7 +107,7 @@ namespace CubePounce {
       if (_CliffFlagTrown) {
         SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinPoint);
         SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinPoint);
-        OnFailure();
+        OnCozmoWin();
         return;
       }
       else {
@@ -116,7 +115,7 @@ namespace CubePounce {
         // The player has won this round 
         SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderPlayerWinPoint);
         SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoPlayerWinPoint);
-        OnSuccess();
+        OnPlayerWin();
       }
     }
 
@@ -132,19 +131,19 @@ namespace CubePounce {
       _CliffFlagTrown = true;
     }
 
-    public void OnSuccess() {
+    public void OnPlayerWin() {
       _PlayerScore++;
       UpdateScoreboard();
-      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleAnimationDone));
+      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleRoundEndAnimationDone));
     }
 
-    public void OnFailure() {
+    public void OnCozmoWin() {
       _CozmoScore++;
       UpdateScoreboard();
-      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleAnimationDone));
+      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandleRoundEndAnimationDone));
     }
 
-    public void HandleAnimationDone(bool success) {
+    public void HandleRoundEndAnimationDone(bool success) {
       // Determines winner and loser at the end of Cozmo's animation, or returns
       // to seek state for the next round
       // Display the current round

@@ -30,6 +30,7 @@ namespace CubePounce {
       // and that players haven't already pulled the cube too early. If they have, return to the Seek state and automatically
       // trigger a failure on the player's part.
       if (!_SlapTriggered) {
+        /*
         // If the slap hasn't been triggered, check to make sure the Cube hasn't been tampered with.
         // If the cube is not visible or it has moved outside of the ideal range, trigger a failure.
         LightCube target = _CubeSlapGame.GetCurrentTarget();
@@ -50,10 +51,10 @@ namespace CubePounce {
             if (Time.time - _LastSeenTimeStamp > CubePounceGame.kCubeLostDelay) {
               _CubeSlapGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinEarly);
               _CubeSlapGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinEarly);
-              _CubeSlapGame.OnFailure();
+              _CubeSlapGame.OnCozmoWin();
             }
           }
-        }
+        }*/
 
         if (Time.time - _FirstTimestamp > _SlapDelay) {
           _CubeSlapGame.AttemptSlap();
@@ -63,12 +64,11 @@ namespace CubePounce {
     }
 
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
-      // Cubes are super sensitive right now so this check is handled manually in Update
-      /*if (!_SlapTriggered && id == _CubeSlapGame.GetCurrentTarget().ID) {
+      if (!_SlapTriggered && id == _CubeSlapGame.GetCurrentTarget().ID) {
         _CubeSlapGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinEarly);
         _CubeSlapGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinEarly);
-        _CubeSlapGame.OnFailure();
-      }*/
+        _CubeSlapGame.OnCozmoWin();
+      }
     }
 
     private void ResetLastSeenTimeStamp() {
