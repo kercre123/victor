@@ -36,8 +36,7 @@ class Remote:
         drive = False
         lift  = False
         head  = False
-        nextJogTime = float("Inf")
-        jogDir = 1
+        jogging = False
         running = True
         while running:
             try:
@@ -62,11 +61,8 @@ class Remote:
                         self.upgrader = fota.Upgrader()
                         threading.Thread(target=fota.UpgradeAll, args=(self.upgrader,), name="UpgradeAll").run()
                     elif key[pygame.K_j]: # J
-                        if nextJogTime == float("Inf"):
-                            nextJogTime = time.time()
-                        else:
-                            nextJogTime = float("Inf")
-                            robotInterface.Send(robotInterface.RI.EngineToRobot(stop=robotInterface.RI.StopAllMotors()))
+                        robotInterface.Send(robotInterface.RI.EngineToRobot(enterTestMode=robotInterface.RI.EnterFactoryTestMode(robotInterface.RI.FactoryTestMode.FTM_None if jogging else robotInterface.RI.FactoryTestMode.FTM_motorLifeTest)))
+                        jogging = not jogging
                     else:
                         left = 0.0
                         right = 0.0
@@ -109,15 +105,6 @@ class Remote:
                         elif head:
                             robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(0.0)))
                             head = False
-
-                if self.upgrader is None:
-                    now = time.time()
-                    if now > nextJogTime:
-                        robotInterface.Send(robotInterface.RI.EngineToRobot(drive=robotInterface.RI.DriveWheels(100.0*jogDir, 100.0*jogDir)))
-                        robotInterface.Send(robotInterface.RI.EngineToRobot(moveLift=robotInterface.RI.MoveLift(1.5*jogDir)))
-                        robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(2.5*jogDir)))
-                        nextJogTime = now + 1.0
-                        jogDir *= -1
 
                 if self.image is None:
                     screen.fill((0, 255, 0) if robotInterface.GetState() == robotInterface.ConnectionState.connected else (255, 0, 0))

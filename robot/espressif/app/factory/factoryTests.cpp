@@ -20,8 +20,6 @@ extern const unsigned int COZMO_VERSION_COMMIT;
 extern const char* DAS_USER;
 extern const char* BUILD_DATE;
 
-#define ARRAYSIZE(a) (sizeof(a) / sizeof(*(a)))
-
 typedef void (*FTMUpdateFunc)(void);
 
 struct FTMenuItem
@@ -37,12 +35,18 @@ namespace Factory {
 
 static const u32 faceSpinner[] ICACHE_RODATA_ATTR STORE_ATTR = {'|', '/', '-', '\\', '|', '/', '-', '\\'};
 static RobotInterface::FactoryTestMode mode;
+static u32 lastExecTime;
 static u32 modeTimeout;
 static s8  menuIndex;
 
+#define MENU_TIMEOUT 10000000
+
 static const FTMenuItem menuItems[] = {
-  {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo, 30000000 },
-  {"Motor test", RobotInterface::FTM_motorLifeTest, 30000000 }
+  {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      10000000 },
+  {"State info",      RobotInterface::FTM_StateInfo,     30000000 },
+  {"IMU info",        RobotInterface::FTM_ImuInfo,       30000000 },
+  {"Encoder info",    RobotInterface::FTM_EncoderInfo,   30000000 },
+  {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 }
 };
 #define NUM_MENU_ITEMS (sizeof(menuItems)/sizeof(*menuItems))
 
@@ -58,7 +62,6 @@ void Update()
 {
   if (mode != RobotInterface::FTM_None) 
   {
-    static u32 lastExecTime;
     const u32 now = system_get_time();
     if (now > modeTimeout) 
     {
@@ -146,31 +149,66 @@ void Update()
 
 void Process_TestState(const RobotInterface::TestState& state)
 {
+  const u32 now = system_get_time();
   switch (mode)
   {
     case RobotInterface::FTM_entry:
     {
-      if (state.speedsFixed[2] < -1000) 
+      if (((now - lastExecTime) > 2000000) && (ABS(state.speedsFixed[0]) > 1000))
       {
+        lastExecTime = now;
         SetMode(RobotInterface::FTM_menus);
+        modeTimeout = now + MENU_TIMEOUT;
       }
       break;
     }
     case RobotInterface::FTM_menus:
     {
-      if (ABS(state.speedsFixed[0] > 1000))
+      if (now - lastExecTime > 1000000)
       {
-        menuIndex = (menuIndex + 1) % NUM_MENU_ITEMS;
+        if (ABS(state.speedsFixed[0] > 1000))
+        {
+          lastExecTime = now;
+          modeTimeout  = now + MENU_TIMEOUT;
+          menuIndex = (menuIndex + 1) % NUM_MENU_ITEMS;
+        }
+        else if (ABS(state.speedsFixed[1] > 1000))
+        {
+          lastExecTime = now;
+          modeTimeout  = now + MENU_TIMEOUT;
+          menuIndex = (menuIndex - 1) % NUM_MENU_ITEMS;
+        }
+        else if (state.speedsFixed[2] < -10000)
+        {
+          lastExecTime = now;
+          modeTimeout  = now + MENU_TIMEOUT;
+          SetMode(menuItems[menuIndex].mode);
+          modeTimeout = system_get_time() + menuItems[menuIndex].timeout;
+        }
       }
-      else if (ABS(state.speedsFixed[1] > 1000))
-      {
-        menuIndex = (menuIndex - 1) % NUM_MENU_ITEMS;
-      }
-      else if (state.speedsFixed[2] < -10000)
-      {
-        SetMode(menuItems[menuIndex].mode);
-        modeTimeout = system_get_time() + menuItems[menuIndex].timeout;
-      }
+      break;
+    }
+    case RobotInterface::FTM_StateInfo:
+    {
+      Face::FacePrintf("Cliff: %d\nBatV10x: %d\nExtV10x: %d\nChargeState: 0x%x",
+                       state.cliffLevel, state.battVolt10x, state.extVolt10x, state.chargeStat);
+      break;
+    }
+    case RobotInterface::FTM_ImuInfo:
+    {
+      Face::FacePrintf("Gyro:\n%d\n%d\n%d\nAcc:\n%d\n%d\n%d\n",
+                       state.gyro[0], state.gyro[1], state.gyro[2],
+                       state.acc[0],  state.acc[1],  state.acc[2]);
+      break;
+    }
+    case RobotInterface::FTM_EncoderInfo:
+    {
+      Face::FacePrintf("Speeds:\n%d %d\n%d %d\nPositions:\n%d %d\n%d %d\n",
+                       (state.speedsFixed[0]),    (state.speedsFixed[1]),
+                       (state.speedsFixed[2]),    (state.speedsFixed[3]),
+                       (state.positionsFixed[0]), (state.positionsFixed[1]),
+                       (state.positionsFixed[2]), (state.positionsFixed[3]));
+      break;
     }
     default:
     {
@@ -183,6 +221,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
 {
   RobotInterface::EngineToRobot msg;
   Anki::Cozmo::Face::FaceUnPrintf();
+  
   if (mode == RobotInterface::FTM_None && newMode != RobotInterface::FTM_None)
   {
     msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableTestStateMessage;
@@ -223,11 +262,16 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
   switch (newMode)
   {
     case RobotInterface::FTM_entry:
+    {
+      lastExecTime = system_get_time();
+      break;
+    }
     case RobotInterface::FTM_menus:
     {
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
       msg.enableLiftPower.enable = false;
       Anki::Cozmo::RTIP::SendMessage(msg);
+      break;
     }
     default:
     {
