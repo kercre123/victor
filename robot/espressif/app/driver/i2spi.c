@@ -89,6 +89,8 @@ static uint16_t messageBufferRind;
 static int16_t rtipBootloaderState;
 /// The last state we've received from the RTIP updating the Body bootloader state
 static uint32_t bodyBootloaderCode;
+/// The number of bytes we estimate are in the RTIP's CLAD rx queue
+static int16_t rtipRXQueueEstimate;
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
@@ -169,15 +171,17 @@ void makeDrop(void)
   
   drop.droplet |= PumpScreenData(drop.screenData);
   
-  if (messageBufferRind != messageBufferWind)
+  if (messageBufferRind != messageBufferWind) // Have CLAD payload to send
   {
     const uint16_t messageAvailable = I2SPI_MESSAGE_BUF_SIZE - ((messageBufferRind - messageBufferWind) & I2SPI_MESSAGE_BUF_SIZE_MASK);
     const uint8_t messageSize = messageBuffer[messageBufferRind];
+    rtipRXQueueEstimate -= RTIP_RX_FLUSH_PER_DROP;
+    if (rtipRXQueueEstimate < 0) rtipRXQueueEstimate = 0;
     if (unlikely(messageSize > messageAvailable))
     {
       os_printf("ERROR I2SPI messageBuffer is corrupt! %d > %d, %02x\r\n", messageSize, messageAvailable, messageBuffer[(messageBufferRind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK]);
     }
-    else
+    else if ((RTIP_RX_MAX_BUFFER - rtipRXQueueEstimate) > messageSize)
     {
       messageBufferRind = (messageBufferRind + 1) & I2SPI_MESSAGE_BUF_SIZE_MASK; // Advance past size
       for (drop.payloadLen=0; drop.payloadLen<messageSize; ++drop.payloadLen)
@@ -468,6 +472,7 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   messageBufferRind     = 0;
   rtipBootloaderState   = STATE_UNKNOWN;
   bodyBootloaderCode    = STATE_UNKNOWN;
+  rtipRXQueueEstimate   = 0;
 
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
 

@@ -19,10 +19,6 @@ namespace Anki {
 namespace Cozmo {
 namespace RTIP {
 
-#define TICK_TIME (5000)
-/// Occasionally overflows if this is 256
-#define BYTES_PER_TICK (192)
-
 u32 Version;
 u32 Date;
 char VersionDescription[VERSION_DESCRIPTION_SIZE]; 
@@ -34,13 +30,6 @@ bool Init()
 
 bool SendMessage(u8* buffer, u16 bufferSize)
 {
-  static uint32_t lastCallTime = 0;
-  static uint16_t sentThisTick = 0;
-  const uint32_t now = system_get_time();
-  const uint32_t timeSinceLastCall = now - lastCallTime;
-  const uint32_t flushed = BYTES_PER_TICK * timeSinceLastCall / TICK_TIME;
-  sentThisTick = flushed > sentThisTick ? 0 : sentThisTick - flushed;
-  AnkiConditionalErrorAndReturnValue((bufferSize + sentThisTick) <= BYTES_PER_TICK,  false, 30, "RTIP", 197, "SendMessage: Not enough buffer on RTIP", 0);
   AnkiConditionalErrorAndReturnValue(bufferSize <= DROP_TO_RTIP_MAX_VAR_PAYLOAD,     false, 30, "RTIP", 198, "SendMessage: Message too large for RTIP, %d > %d", 2, bufferSize, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
   AnkiConditionalErrorAndReturnValue(i2spiQueueMessage(buffer, bufferSize), false, 30, "RTIP", 199, "SendMessage: Couldn't forward message %x[%d] to RTIP", 2, buffer[0], bufferSize);
   return true;
