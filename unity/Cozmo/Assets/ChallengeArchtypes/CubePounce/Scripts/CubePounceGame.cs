@@ -31,9 +31,12 @@ namespace CubePounce {
 
     private LightCube _CurrentTarget = null;
 
-    public bool AllRoundsOver {
+    public bool AllRoundsCompleted {
       get {
-        return _CozmoScore + _PlayerScore >= _Rounds;
+        int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
+        int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
+        int roundsLeft = _Rounds - losingScore - winningScore;
+        return (winningScore > losingScore + roundsLeft);
       }
     }
 
@@ -147,7 +150,7 @@ namespace CubePounce {
       // to seek state for the next round
       // Display the current round
       UpdateRoundsUI();
-      if (AllRoundsOver) {
+      if (AllRoundsCompleted) {
         if (_CozmoScore > _PlayerScore) {
           _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleLoseGameAnimationDone));
         }
@@ -213,7 +216,7 @@ namespace CubePounce {
       playerScoreWidget.MaxRounds = halfTotalRounds;
       playerScoreWidget.RoundsWon = _PlayerRoundsWon;
 
-      if (AllRoundsOver) {
+      if (AllRoundsCompleted) {
         // Hide Current Round at end
         SharedMinigameView.InfoTitleText = string.Empty;
       }
