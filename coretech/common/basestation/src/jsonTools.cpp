@@ -50,10 +50,12 @@ namespace JsonTools
     return node.asUInt();
   }
 
+#ifndef __ANDROID__
   template<>
   uint32_t GetValue<uint32_t>(const Json::Value& node) {
     return node.asUInt();
   }
+#endif //size_t is the same as uint32_t for arm
 
   // Signed int
   template<>
@@ -70,7 +72,7 @@ namespace JsonTools
   int32_t GetValue<int32_t>(const Json::Value& node) {
     return node.asInt();
   }
-  
+ 
   template<>
   size_t GetValue<size_t>(const Json::Value& node) {
     return node.asUInt();

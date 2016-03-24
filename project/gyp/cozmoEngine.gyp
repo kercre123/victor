@@ -146,9 +146,11 @@
       }],
       ['OS=="android"', {
         'target_archs%': ['armveabi-v7a'],
+        'target_cpu': ['arm'],
         'compiler_flags': [
           '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
           '-DANDROID=1',
+          '-D__ARM_NEON=1',
           '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
           '-fpic',
           '-ffunction-sections',
@@ -352,6 +354,7 @@
       {
         'defines': [
           'ANDROID=1',
+          '__ARM_NEON=1',
         ],
       },
     ],
@@ -1277,6 +1280,8 @@
       'include_dirs': [
         '../../basestation/src',
         '../../basestation/include',
+        '../../basestation/include/anki/cozmo/basestation',
+        '../../basestation/include/anki/cozmo/basestation/actions',
         '../../include',
         '../../robot/include',
         '../../generated/clad/engine',

@@ -16,24 +16,6 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "anki/vision/robot/integralImage.h"
 #include "anki/vision/robot/imageProcessing.h"
 
-#define ACCELERATION_NONE 0
-#define ACCELERATION_ARM_M4 1
-#define ACCELERATION_ARM_A7 2
-
-#if defined(__ARM_ARCH_7A__)
-#define ACCELERATION_TYPE ACCELERATION_ARM_A7
-#else
-#define ACCELERATION_TYPE ACCELERATION_ARM_M4
-#endif
-
-#if ACCELERATION_TYPE == ACCELERATION_NONE
-#warning not using ARM acceleration
-#endif
-
-#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
-#include <arm_neon.h>
-#endif
-
 namespace Anki
 {
   namespace Embedded

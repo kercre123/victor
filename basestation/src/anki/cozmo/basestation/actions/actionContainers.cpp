@@ -73,7 +73,7 @@ namespace Anki {
         }
         case QueueActionPosition::IN_PARALLEL:
         {
-          if(AddConcurrentAction(action, numRetries) == -1);
+          if(AddConcurrentAction(action, numRetries) == -1)
           {
             result = RESULT_FAIL;
           }

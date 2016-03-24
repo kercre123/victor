@@ -9,6 +9,10 @@
 #include <errno.h>
 #include <unistd.h>
 
+#ifdef __ANDROID__
+#include <linux/in.h>
+#endif
+
 UdpClient::UdpClient()
 {
   socketfd = -1;

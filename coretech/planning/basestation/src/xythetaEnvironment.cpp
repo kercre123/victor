@@ -320,7 +320,7 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
 
     if(actionPenalty > plan.penalties_[i] + REPLAN_PENALTY_BUFFER) {
       printf("Collision along plan action %lu (starting from %d) Penalty increased from %f to %f\n",
-             i,
+             (unsigned long)i,
              currentPathIndex,
              plan.penalties_[i],
              actionPenalty);
@@ -796,7 +796,7 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
     if(angles_.size() != numAngles_) {
       printf("ERROR: numAngles is %u, but we read %lu angle definitions\n",
              numAngles_,
-             angles_.size());
+             (unsigned long)angles_.size());
       return false;
     }
 
@@ -1612,7 +1612,7 @@ void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
 
   for(size_t i=0; i<plan.actions_.size(); ++i) {
     printf("%2lu: (%f, %f, %f [%d]) --> %s (penalty = %f)\n",
-           i,
+           (unsigned long)i,
            curr_c.x_mm, curr_c.y_mm, curr_c.theta, currID.s.theta, 
            actionTypes_[plan.actions_[i]].GetName().c_str(),
            plan.penalties_[i]);

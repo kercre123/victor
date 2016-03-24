@@ -20,11 +20,16 @@
 #include <string.h>
 
 // For getting local host's IP address
+#ifdef __APPLE__
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE     /* To get defns of NI_MAXSERV and NI_MAXHOST */
+#endif
+#include <ifaddrs.h>
+#endif
+
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netdb.h>
-#include <ifaddrs.h>
 #include <stdlib.h>
 #include <unistd.h>
 

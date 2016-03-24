@@ -226,12 +226,17 @@ namespace Anki {
         }
         bool loadFile = false;
         auto mapIt = _loadedAnimationFiles.find(path);
+#ifdef __APPLE__  // TODO: COZMO-1057
+        time_t tmpSeconds = attrib.st_mtimespec.tv_sec;
+#else
+        time_t tmpSeconds = attrib.st_mtime;
+#endif
         if (mapIt == _loadedAnimationFiles.end()) {
-          _loadedAnimationFiles.insert({path, attrib.st_mtimespec.tv_sec});
+          _loadedAnimationFiles.insert({path, tmpSeconds});
           loadFile = true;
         } else {
-          if (mapIt->second < attrib.st_mtimespec.tv_sec) {
-            mapIt->second = attrib.st_mtimespec.tv_sec;
+          if (mapIt->second < tmpSeconds) {
+            mapIt->second = tmpSeconds;
             loadFile = true;
           } else {
             //PRINT_NAMED_INFO("Robot.ReadAnimationFile", "old time stamp for %s", fullFileName.c_str());
@@ -295,12 +300,17 @@ namespace Anki {
         }
         bool loadFile = false;
         auto mapIt = _loadedAnimationGroupFiles.find(path);
+#ifdef __APPLE__  // TODO: COZMO-1057
+        time_t tmpSeconds = attrib.st_mtimespec.tv_sec;
+#else
+        time_t tmpSeconds = attrib.st_mtime;
+#endif
         if (mapIt == _loadedAnimationGroupFiles.end()) {
-          _loadedAnimationGroupFiles.insert({path, attrib.st_mtimespec.tv_sec});
+          _loadedAnimationGroupFiles.insert({path, tmpSeconds});
           loadFile = true;
         } else {
-          if (mapIt->second < attrib.st_mtimespec.tv_sec) {
-            mapIt->second = attrib.st_mtimespec.tv_sec;
+          if (mapIt->second < tmpSeconds) {
+            mapIt->second = tmpSeconds;
             loadFile = true;
           } else {
             //PRINT_NAMED_INFO("Robot.ReadAnimationGroupFile", "old time stamp for %s", fullFileName.c_str());

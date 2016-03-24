@@ -80,7 +80,7 @@ void RobotAudioAnimationOnDevice::PopRobotAudioMessage( RobotInterface::EngineTo
                                                         TimeStamp_t streamingTime_ms )
 {
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimationOnDevice::PopRobotAudioMessagePlayOnDeviceMode", "StartTime: %d - StreamingTime: %d - RelevantTime: %d - eventIdx: %d / %lu", startTime_ms, streamingTime_ms, (streamingTime_ms - startTime_ms), GetEventIndex(), _animationEvents.size() );
+    PRINT_NAMED_INFO("RobotAudioAnimationOnDevice::PopRobotAudioMessagePlayOnDeviceMode", "StartTime: %d - StreamingTime: %d - RelevantTime: %d - eventIdx: %d / %lu", startTime_ms, streamingTime_ms, (streamingTime_ms - startTime_ms), GetEventIndex(), (unsigned long)_animationEvents.size() );
   }
   
   // When playing on device we always send Silence messages
@@ -148,7 +148,7 @@ void RobotAudioAnimationOnDevice::PrepareAnimation()
 bool RobotAudioAnimationOnDevice::IsAnimationDone() const
 {
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimation::AllAnimationsPlayed", "eventCount: %lu  eventIdx: %d  completedCount: %d  hasAudioBufferStream: %d", _animationEvents.size(), GetEventIndex(), GetCompletedEventCount(), _audioBuffer->HasAudioBufferStream());
+    PRINT_NAMED_INFO("RobotAudioAnimation::AllAnimationsPlayed", "eventCount: %lu  eventIdx: %d  completedCount: %d  hasAudioBufferStream: %d", (unsigned long)_animationEvents.size(), GetEventIndex(), GetCompletedEventCount(), _audioBuffer->HasAudioBufferStream());
   }
   
   // Compare completed event count with number of events

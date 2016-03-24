@@ -418,7 +418,7 @@ def main(scriptArgs):
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
                                   ndk_root,
-                                  audioProjectGypPath
+                                  audioProjectGypPath,
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
