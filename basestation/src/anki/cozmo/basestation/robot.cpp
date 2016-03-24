@@ -2967,7 +2967,7 @@ namespace Anki {
         }
 
         msg.factory_id.push_back(fid);
-        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x (slot %lu)", fid, msg.factory_id.size());
+        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x (slot %lu)", fid, (unsigned long)msg.factory_id.size());
         
         if (isCharger) {
           objectsSelectedMask |= 0x80000000;
@@ -2981,7 +2981,7 @@ namespace Anki {
       _blockWorld.ClearObjectsByFamily(ObjectFamily::LightCube);
       _blockWorld.ClearObjectsByFamily(ObjectFamily::Charger);
       
-      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %lu", msg.factory_id.size());
+      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %lu", (unsigned long)msg.factory_id.size());
       return SendMessage(RobotInterface::EngineToRobot(CubeSlots(msg)));
       
     }
