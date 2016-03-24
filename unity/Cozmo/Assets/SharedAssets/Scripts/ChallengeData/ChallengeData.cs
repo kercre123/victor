@@ -88,7 +88,7 @@ public class ChallengeData : ScriptableObject {
   [SerializeField]
   protected MusicStateWrapper _Music;
 
-  public Anki.Cozmo.Audio.GameState.Music Music {
+  public Anki.Cozmo.Audio.GameState.Music DefaultMusic {
     get { return _Music.Music; }
   }
 

@@ -18,4 +18,6 @@ public class SimonGameConfig : MinigameConfigBase {
   public int NumCubesInPattern = 2;
 
   public AnimationCurve CozmoGuessCubeCorrectPercentage = new AnimationCurve(new Keyframe(0, 1, 0, -0.06f), new Keyframe(5, 0.7f, -0.06f, 0));
+
+  public MusicStateWrapper BetweenRoundsMusic;
 }

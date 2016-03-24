@@ -48,6 +48,8 @@ namespace SpeedTap {
       }
     }
 
+    private MusicStateWrapper _BetweenRoundsMusic;
+
     public ISpeedTapRules Rules;
 
     private int _CozmoScore;
@@ -133,6 +135,7 @@ namespace SpeedTap {
     }
 
     private void HandleRoundEnd() {
+      GameAudioClient.SetMusicState(_BetweenRoundsMusic);
       ConsecutiveMisses = 0;
       if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
         _CloseRoundCount++;
@@ -191,6 +194,7 @@ namespace SpeedTap {
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
       _DifficultyOptions = speedTapConfig.DifficultyOptions;
+      _BetweenRoundsMusic = speedTapConfig.BetweenRoundMusic;
       InitializeMinigameObjects(1);
     }
 
@@ -212,8 +216,6 @@ namespace SpeedTap {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
       CurrentRobot.SetBehaviorSystem(false);
-
-      GameAudioClient.SetMusicState(GetMusicState());
     }
 
     protected override void OnDifficultySet(int difficulty) {

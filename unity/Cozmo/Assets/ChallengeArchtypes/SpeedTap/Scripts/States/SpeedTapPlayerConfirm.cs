@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using Anki.Cozmo.Audio;
 
 namespace SpeedTap {
 
@@ -67,6 +68,8 @@ namespace SpeedTap {
       if (_SpeedTapGame.PlayerBlock != null) {
         _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
       }
+
+      GameAudioClient.SetMusicState(_SpeedTapGame.GetDefaultMusicState());
 
       _SpeedTapGame.ResetScore();
     }
