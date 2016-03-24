@@ -520,7 +520,7 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       if(Anki::Util::gLoggerProvider != nullptr) {
         Anki::Util::MultiLoggerProvider* multiLoggerProvider = dynamic_cast<Anki::Util::MultiLoggerProvider*>(Anki::Util::gLoggerProvider);
         if (multiLoggerProvider != nullptr) {
-          const std::vector<Anki::Util::ILoggerProvider*> loggers = multiLoggerProvider->GetProviders();
+          const std::vector<Anki::Util::ILoggerProvider*>& loggers = multiLoggerProvider->GetProviders();
           for(int i = 0; i < loggers.size(); ++i) {
             Anki::Util::SosLoggerProvider* sosLoggerProvider = dynamic_cast<Anki::Util::SosLoggerProvider*>(loggers[i]);
             if (sosLoggerProvider != nullptr) {
