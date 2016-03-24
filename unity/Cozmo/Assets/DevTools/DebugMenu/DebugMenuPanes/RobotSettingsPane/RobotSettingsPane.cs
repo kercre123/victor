@@ -34,7 +34,7 @@ public class RobotSettingsPane : MonoBehaviour {
   private void OnVolumeSliderChanged(float newValue) {
     IRobot robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
-      robot.SetRobotVolume(_VolumeSlider.value);
+      robot.SetRobotVolume(newValue);
     }
   }
 
