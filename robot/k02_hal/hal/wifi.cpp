@@ -10,6 +10,7 @@
 #include "anki/cozmo/robot/drop.h"
 #include "anki/cozmo/robot/logging.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "MK02F12810.h"
 
 /// Code below assumes buffer elements = uint8_t also assumes power of two size
 #define TX_BUF_SIZE (256)
@@ -108,7 +109,7 @@ namespace HAL {
       }
       else
       {
-        AnkiError( 132, "WiFi.ReceiveMessage", 398, "No buffer available to receive clad message %x[%d], time %d, buffer %x %x %d", 6, data[0], length, HAL::GetTimeStamp(), rxBuf[rind], rxBuf[rind+1], RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK));
+        AnkiError( 132, "WiFi.ReceiveMessage", 398, "No buffer available to receive clad message %x[%d], tick %d, time %d, buffer %x %x %d", 7, data[0], length, HAL::GetTimeStamp(), SysTick->VAL, rxBuf[rind], rxBuf[rind+1], RX_BUF_SIZE - ((rind - wind) & RX_BUF_SIZE_MASK));
         return false;
       }
     }
