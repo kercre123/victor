@@ -38,8 +38,8 @@ python /Users/peter.unrein/Desktop/calib_images/  9 7 27
 '''
 
 def main(filepath,length = 9 , width = 7,square_size = 30):
-    length = int(length-1) #opencv actually uses the inner points of a checkerboard
-    width = int(width-1)
+    length = int(length)-1 #opencv actually uses the inner points of a checkerboard
+    width = int(width)-1
     image_list = []
     obj_pts = []
     img_pts = []
@@ -55,7 +55,7 @@ def main(filepath,length = 9 , width = 7,square_size = 30):
         return
     print ('images found: ' +str(image_list))
 
-    pattern_size = (6,8)
+    pattern_size = (width,length)
     in_pts = []
     for i in range(length): #generates a list of object points base on 30 mm squares
         for j in range(width):
@@ -63,8 +63,8 @@ def main(filepath,length = 9 , width = 7,square_size = 30):
             y = width -1
             x = x-i
             y = y-j
-            in_pts.extend([[x*square_size,y*square_size,0]])
-
+            in_pts.extend([[x*float(square_size),y*float(square_size),0]])
+ 
     for im in image_list: #will look for a checkerboard in each image listed
        
         imagename = filepath + im
