@@ -448,6 +448,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _DevConnectDialog: {fileID: 11479636, guid: a9aac651b15944e00bd82acaac7f014c, type: 2}
+  _Background: {fileID: 420244544}
 --- !u!1 &1475281480
 GameObject:
   m_ObjectHideFlags: 0
