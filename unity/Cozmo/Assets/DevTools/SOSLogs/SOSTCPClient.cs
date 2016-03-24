@@ -61,10 +61,11 @@ public class SOSTCPClient {
       Debug.Log("SOS Server Connected!");
       _Stream = client.GetStream();
 
-      int i;
-      while ((i = _Stream.Read(bytes, 0, bytes.Length)) != 0 && _IsActive) {
+      while ((_Stream.Read(bytes, 0, bytes.Length)) != 0 && _IsActive) {
         lock (sync) {
-          _Messages.Add(System.Text.Encoding.ASCII.GetString(bytes, 0, i));
+          string logOutput = System.Text.Encoding.ASCII.GetString(bytes).Replace('\0', ' ');
+          logOutput = logOutput.Replace('\n', ' ');
+          _Messages.Add(logOutput);
         }
       }
     }

@@ -256,7 +256,7 @@ public class LogPacket {
       break;
     }
     
-    string contextStr = "null";
+    string contextStr = "";
     if (Context != null) {
       Dictionary<string, string> contextDict = Context as Dictionary<string, string>;
       if (contextDict != null) {
