@@ -2,6 +2,17 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>cozmoApp</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>com.anki.cozmo</string>
+		</dict>
+	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
@@ -139,9 +150,9 @@
 	</array>
 	<key>Unity_LoadingActivityIndicatorStyle</key>
 	<integer>-1</integer>
-        <key>com.anki.das.version</key>
-        <string></string>
-        <key>com.anki.hockeyapp.appid</key>
-        <string></string>
+	<key>com.anki.das.version</key>
+	<string></string>
+	<key>com.anki.hockeyapp.appid</key>
+	<string></string>
 </dict>
 </plist>

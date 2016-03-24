@@ -22,6 +22,7 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "dasLoggerProvider.h"
 #include "dasConfiguration.h"
+#include "wifiConfigure.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -30,13 +31,15 @@ using namespace Anki;
 using namespace Anki::Cozmo;
 using namespace Anki::Cozmo::CSharpBinding;
 
-CozmoAPI* gameAPI = nullptr;
+CozmoAPI* engineAPI = nullptr;
 Anki::Util::Data::DataPlatform* dataPlatform = nullptr;
 
 const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 const char* VIZ_HOST_IP = "127.0.0.1";
 
-void configure_game(Json::Value config)
+WifiConfigure* wifiConfigure = nullptr;
+
+void configure_engine(Json::Value config)
 {
   if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
     config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
@@ -55,7 +58,7 @@ void configure_game(Json::Value config)
   config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
 }
 
-int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data)
+int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_data)
 {
   Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({new Util::SosLoggerProvider(), new Util::DasLoggerProvider()});
   Anki::Util::gLoggerProvider = loggerProvider;
@@ -65,44 +68,69 @@ int Anki::Cozmo::CSharpBinding::cozmo_game_create(const char* configuration_data
   ConfigureDASForPlatform(dataPlatform);
   CreateHockeyApp();
   
-    using namespace Cozmo;
+  using namespace Cozmo;
+
+  if (engineAPI != nullptr) {
+      PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "Game already initialized.");
+      return (int)RESULT_FAIL;
+  }
   
-    if (gameAPI != nullptr) {
-        PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "Game already initialized.");
-        return (int)RESULT_FAIL;
-    }
-    
-    if (configuration_data == nullptr) {
-        PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "Null pointer for configuration_data.");
-        return (int)RESULT_FAIL_INVALID_PARAMETER;
-    }
-    
-    Json::Reader reader;
-    Json::Value config;
-    if (!reader.parse(configuration_data, configuration_data + std::strlen(configuration_data), config)) {
-        PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "json configuration parsing error: " << reader.getFormattedErrorMessages());
-        return (int)RESULT_FAIL;
-    }
+  if (configuration_data == nullptr) {
+      PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "Null pointer for configuration_data.");
+      return (int)RESULT_FAIL_INVALID_PARAMETER;
+  }
   
-    configure_game(config);
+  Json::Reader reader;
+  Json::Value config;
+  if (!reader.parse(configuration_data, configuration_data + std::strlen(configuration_data), config)) {
+      PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "json configuration parsing error: " << reader.getFormattedErrorMessages());
+      return (int)RESULT_FAIL;
+  }
+
+  configure_engine(config);
+
+  CozmoAPI* created_engine = new CozmoAPI();
+
+  bool result = created_engine->StartRun(dataPlatform, config);
+  if (! result) {
+    delete created_engine;
+    return (int)result;
+  }
   
-    CozmoAPI* created_game = new CozmoAPI();
+  engineAPI = created_engine;
   
-    bool result = created_game->StartRun(dataPlatform, config);
-    if (! result) {
-      delete created_game;
-      return (int)result;
-    }
-    
-    gameAPI = created_game;
-  
-    return RESULT_OK;
+  wifiConfigure = new WifiConfigure();
+
+  return RESULT_OK;
 }
 
-int Anki::Cozmo::CSharpBinding::cozmo_game_destroy()
+int Anki::Cozmo::CSharpBinding::cozmo_engine_destroy()
 {
-  Anki::Util::SafeDelete(gameAPI);
+  // TODO:(lc) We probably don't want or need the wifiConfigure running the entire lifetime of the app, so figure out
+  // the lifetime it really needs
+  Anki::Util::SafeDelete(wifiConfigure);
+  
+  Anki::Util::SafeDelete(engineAPI);
   Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
   Anki::Util::SafeDelete(dataPlatform);
-    return (int)RESULT_OK;
+  return (int)RESULT_OK;
+}
+
+int Anki::Cozmo::CSharpBinding::cozmo_engine_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
+{
+  if (nullptr == wifiConfigure)
+  {
+    PRINT_NAMED_ERROR("CSharpBinding.cozmo_engine_wifi_setup", "Tried to setup wifi with no wifiConfigure object created");
+    return RESULT_FAIL;
+  }
+  
+  if (!wifiConfigure->UpdateMobileconfig(wifiSSID, wifiPasskey))
+  {
+    PRINT_NAMED_ERROR("CSharpBinding.cozmo_engine_wifi_setup", "Problem updating mobileconfig to be used for wifi configuration");
+    return RESULT_FAIL;
+  }
+  
+  wifiConfigure->InstallMobileconfig();
+  
+  return RESULT_OK;
 }
