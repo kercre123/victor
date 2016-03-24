@@ -27,11 +27,11 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ACCELERATION_ARM_M4 1
 #define ACCELERATION_ARM_A7 2
 #define ACCELERATION_TYPE ACCELERATION_NONE
-/*
-* XXX: Disabled until we can figure out why NEON will not work with arm-v7a.
+
+// TODO: COZMO-1058 Disabled until we can figure out why NEON will not work with arm-v7a.
 
 #if defined(__ARM_ARCH_7A__)
-#define ACCELERATION_TYPE ACCELERATION_ARM_A7
+#define ACCELERATION_TYPE ACCELERATION_NONE //ACCELERATION_ARM_A7
 #else
 #define ACCELERATION_TYPE ACCELERATION_ARM_M4
 #endif
@@ -43,7 +43,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #if ACCELERATION_TYPE == ACCELERATION_ARM_A7
 #include <arm_neon.h>
 #endif
-*/
+
 
 template<u8 upsamplePowerU8> void UpsampleByPowerOfTwoBilinear_innerLoop(
   const u8 * restrict pInY0,
