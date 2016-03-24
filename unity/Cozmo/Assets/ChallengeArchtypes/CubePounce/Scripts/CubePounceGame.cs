@@ -18,6 +18,7 @@ namespace CubePounce {
     private int _PlayerScore;
     private int _PlayerRoundsWon;
     private int _CozmoRoundsWon;
+    private int _CloseRoundCount;
 
     private float _MinSlapDelay;
     private float _MaxSlapDelay;
@@ -178,6 +179,9 @@ namespace CubePounce {
     }
 
     public void RoundEndAnimationDone(bool success) {
+      if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
+        _CloseRoundCount++;
+      }
       if (_CozmoScore > _PlayerScore) {
         _CozmoRoundsWon++;
       }
@@ -196,7 +200,7 @@ namespace CubePounce {
     }
 
     protected override int CalculateExcitementStatRewards() {
-      return _CozmoScore;
+      return 1 + _CloseRoundCount * 2;
     }
 
     public void UpdateRoundsUI() {
