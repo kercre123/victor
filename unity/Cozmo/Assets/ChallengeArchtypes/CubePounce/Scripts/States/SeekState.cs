@@ -18,7 +18,6 @@ namespace CubePounce {
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _CurrentRobot.SetLiftHeight(0.7f);
       _CubeSlapGame.ResetSlapChance();
-      _CubeSlapGame.UpdateRoundsUI();
       _CubeSlapGame.UpdateScoreboard();
     }
 

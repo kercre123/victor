@@ -13,20 +13,20 @@ namespace CubePounce {
     public const string kPlayerWin = "PlayerWin";
     // Consts for determining the exact placement and forgiveness for cube location
     // Must be consistent for animations to work
-    public const float kCubePlaceDist = 80.0f;
+    public const float kCubePlaceDist = 40.0f;
     private int _CozmoScore;
     private int _PlayerScore;
     private int _PlayerRoundsWon;
     private int _CozmoRoundsWon;
     private int _CloseRoundCount;
 
-    private float _MinSlapDelay;
-    private float _MaxSlapDelay;
+    private float _MinAttemptDelay;
+    private float _MaxAttemptDelay;
     private int _Rounds;
 
     private bool _CliffFlagTrown = false;
-    private float _CurrentSlapChance;
-    private float _BaseSlapChance;
+    private float _CurrentPounceChance;
+    private float _BasePounceChance;
     private int _MaxFakeouts;
     private int _MaxScorePerRound;
 
@@ -44,9 +44,9 @@ namespace CubePounce {
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       CubePounceConfig config = minigameConfig as CubePounceConfig;
       _Rounds = config.Rounds;
-      _MinSlapDelay = config.MinSlapDelay;
-      _MaxSlapDelay = config.MaxSlapDelay;
-      _BaseSlapChance = config.StartingSlapChance;
+      _MinAttemptDelay = config.MinSlapDelay;
+      _MaxAttemptDelay = config.MaxSlapDelay;
+      _BasePounceChance = config.StartingSlapChance;
       _MaxFakeouts = config.MaxFakeouts;
       _MaxScorePerRound = config.MaxScorePerRound;
       _CozmoScore = 0;
@@ -82,15 +82,15 @@ namespace CubePounce {
     }
 
     // Attempt the pounce
-    public void AttemptSlap() {
-      float SlapRoll;
+    public void AttemptPounce() {
+      float PounceRoll;
       if (_MaxFakeouts <= 0) {
-        SlapRoll = 0.0f;
+        PounceRoll = 0.0f;
       }
       else {
-        SlapRoll = Random.Range(0.0f, 1.0f);
+        PounceRoll = Random.Range(0.0f, 1.0f);
       }
-      if (SlapRoll <= _CurrentSlapChance) {
+      if (PounceRoll <= _CurrentPounceChance) {
         // Enter Animation State to attempt a pounce.
         // Set Callback for HandleEndSlapAttempt
         _CliffFlagTrown = false;
@@ -99,7 +99,7 @@ namespace CubePounce {
       else {
         // If you do a fakeout instead, increase the likelyhood of a slap
         // attempt based on the max number of fakeouts.
-        _CurrentSlapChance += ((1.0f - _BaseSlapChance) / _MaxFakeouts);
+        _CurrentPounceChance += ((1.0f - _BasePounceChance) / _MaxFakeouts);
         _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_Fake, HandleFakeoutEnd));
       }
     }
@@ -137,20 +137,19 @@ namespace CubePounce {
     public void OnPlayerWin() {
       _PlayerScore++;
       UpdateScoreboard();
-      _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandEndAnimationDone));
+      _StateMachine.SetNextState(new AnimationState(AnimationGroupName.kSpeedTap_LoseHand, HandEndAnimationDone));
     }
 
     public void OnCozmoWin() {
       _CozmoScore++;
       UpdateScoreboard();
-      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kWin, HandEndAnimationDone));
+      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinHand, HandEndAnimationDone));
     }
 
     public void HandEndAnimationDone(bool success) {
       // Determines winner and loser at the end of Cozmo's animation, or returns
       // to seek state for the next round
       // Display the current round
-      UpdateRoundsUI();
       if (Mathf.Max(_CozmoScore, _PlayerScore) > _MaxScorePerRound) {
         if (_CozmoScore > _PlayerScore) {
           _CozmoRoundsWon++;
@@ -158,6 +157,7 @@ namespace CubePounce {
         else {
           _PlayerRoundsWon++;
         }
+        UpdateScoreboard();
         if (AllRoundsCompleted) {
           if (_CozmoScore > _PlayerScore) {
             _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleLoseGameAnimationDone));
@@ -194,20 +194,15 @@ namespace CubePounce {
     }
 
     public float GetSlapDelay() {
-      return Random.Range(_MinSlapDelay, _MaxSlapDelay);
+      return Random.Range(_MinAttemptDelay, _MaxAttemptDelay);
     }
 
     public void ResetSlapChance() {
-      _CurrentSlapChance = _BaseSlapChance;
+      _CurrentPounceChance = _BasePounceChance;
     }
 
     protected override int CalculateExcitementStatRewards() {
       return 1 + _CloseRoundCount * 2;
-    }
-
-    public void UpdateRoundsUI() {
-      // Display the current round
-      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoScore + _PlayerScore + 1);
     }
 
     public void UpdateScoreboard() {
