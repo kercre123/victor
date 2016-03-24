@@ -121,7 +121,7 @@ namespace CubePounce {
     }
 
     public void HandleFakeoutEnd(bool success) {
-      _StateMachine.SetNextState(new SlapGameState());
+      _StateMachine.SetNextState(new PounceState());
     }
 
     private void HandleCliffEvent(Anki.Cozmo.CliffEvent cliff) {
