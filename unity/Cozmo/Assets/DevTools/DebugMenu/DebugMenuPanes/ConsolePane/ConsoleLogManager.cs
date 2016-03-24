@@ -69,6 +69,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     }
     else {
       SaveLogPacket(LogPacket.ELogKind.Debug, "", log, null);
+      Debug.LogWarning("Malformed Log Detected");
     }
   }
 
