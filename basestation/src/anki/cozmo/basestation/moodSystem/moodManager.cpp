@@ -11,14 +11,15 @@
  **/
 
 
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/moodSystem/emotionEvent.h"
-#include "anki/cozmo/basestation/moodSystem/staticMoodData.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/moodSystem/emotionEvent.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/moodSystem/staticMoodData.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "anki/common/basestation/utils/timer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/vizInterface/messageViz.h"
@@ -60,6 +61,13 @@ MoodManager::MoodManager(Robot* inRobot)
 void MoodManager::Init(const Json::Value& inJson)
 {
   GetStaticMoodData().Init(inJson);
+
+  if (nullptr != _robot && _robot->HasExternalInterface() )
+  {
+    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _signalHandles);
+    using namespace ExternalInterface;
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::MoodMessage>();
+  }      
 }
   
 bool MoodManager::LoadEmotionEvents(const Json::Value& inJson)
@@ -116,48 +124,36 @@ void MoodManager::Update(double currentTime)
   #endif //SEND_MOOD_TO_VIZ_DEBUG
 }
   
-  
-void MoodManager::HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-{
-  const auto& eventData = event.GetData();
-  
-  switch (eventData.GetTag())
-  {
-    case ExternalInterface::MessageGameToEngineTag::MoodMessage:
-      {
-        const Anki::Cozmo::ExternalInterface::MoodMessageUnion& moodMessage = eventData.Get_MoodMessage().MoodMessageUnion;
 
-        switch (moodMessage.GetTag())
-        {
-          case ExternalInterface::MoodMessageUnionTag::GetEmotions:
-            SendEmotionsToGame();
-            break;
-          case ExternalInterface::MoodMessageUnionTag::SetEmotion:
-          {
-            const Anki::Cozmo::ExternalInterface::SetEmotion& msg = moodMessage.Get_SetEmotion();
-            SetEmotion(msg.emotionType, msg.newVal);
-            break;
-          }
-          case ExternalInterface::MoodMessageUnionTag::AddToEmotion:
-          {
-            const Anki::Cozmo::ExternalInterface::AddToEmotion& msg = moodMessage.Get_AddToEmotion();
-            AddToEmotion(msg.emotionType, msg.deltaVal, msg.uniqueIdString.c_str(), GetCurrentTimeInSeconds());
-            break;
-          }
-          case ExternalInterface::MoodMessageUnionTag::TriggerEmotionEvent:
-          {
-            const Anki::Cozmo::ExternalInterface::TriggerEmotionEvent& msg = moodMessage.Get_TriggerEmotionEvent();
-            TriggerEmotionEvent(msg.emotionEventName, GetCurrentTimeInSeconds());
-            break;
-          }
-          default:
-            PRINT_NAMED_ERROR("MoodManager.HandleEvent.UnhandledMessageUnionTag", "Unexpected tag %u", (uint32_t)moodMessage.GetTag());
-            assert(0);
-        }
-      }
+template<>
+void MoodManager::HandleMessage(const ExternalInterface::MoodMessage& msg)
+{
+  const Anki::Cozmo::ExternalInterface::MoodMessageUnion& moodMessage = msg.MoodMessageUnion;
+  switch (moodMessage.GetTag())
+  {
+    case ExternalInterface::MoodMessageUnionTag::GetEmotions:
+      SendEmotionsToGame();
       break;
+    case ExternalInterface::MoodMessageUnionTag::SetEmotion:
+    {
+      const Anki::Cozmo::ExternalInterface::SetEmotion& msg = moodMessage.Get_SetEmotion();
+      SetEmotion(msg.emotionType, msg.newVal);
+      break;
+    }
+    case ExternalInterface::MoodMessageUnionTag::AddToEmotion:
+    {
+      const Anki::Cozmo::ExternalInterface::AddToEmotion& msg = moodMessage.Get_AddToEmotion();
+      AddToEmotion(msg.emotionType, msg.deltaVal, msg.uniqueIdString.c_str(), GetCurrentTimeInSeconds());
+      break;
+    }
+    case ExternalInterface::MoodMessageUnionTag::TriggerEmotionEvent:
+    {
+      const Anki::Cozmo::ExternalInterface::TriggerEmotionEvent& msg = moodMessage.Get_TriggerEmotionEvent();
+      TriggerEmotionEvent(msg.emotionEventName, GetCurrentTimeInSeconds());
+      break;
+    }
     default:
-      PRINT_NAMED_ERROR("MoodManager.HandleEvent.UnhandledMessageGameToEngineTag", "Unexpected tag %u", (uint32_t)eventData.GetTag());
+      PRINT_NAMED_ERROR("MoodManager.HandleMoodEvent.UnhandledMessageUnionTag", "Unexpected tag %u", (uint32_t)moodMessage.GetTag());
       assert(0);
   }
 }

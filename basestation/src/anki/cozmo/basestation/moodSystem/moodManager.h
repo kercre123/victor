@@ -17,9 +17,10 @@
 
 #include "anki/cozmo/basestation/moodSystem/emotion.h"
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
-#include "clad/types/simpleMoodTypes.h"
 #include "clad/types/emotionTypes.h"
+#include "clad/types/simpleMoodTypes.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
+#include "util/signals/simpleSignal.hpp"
 #include <assert.h>
 #include <map>
 #include <string>
@@ -102,8 +103,9 @@ public:
   double GetLastUpdateTime() const { return _lastUpdateTime; }
   
   // ==================== Event/Message Handling ====================
-  
-  void HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  // Handle various message types
+  template<typename T>
+  void HandleMessage(const T& msg);
   
   void SendEmotionsToGame();
 
@@ -148,6 +150,8 @@ private:
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( std::vector<std::string> _eventNames; )
   Robot*          _robot;
   double          _lastUpdateTime;
+
+  std::vector<Signal::SmartHandle> _signalHandles;
 };
   
 
