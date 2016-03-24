@@ -137,7 +137,7 @@ public class InitialCubesState : State {
 
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
       if (!_Game.CubesForGame.Contains(lightCube.Value)) {
-        lightCube.Value.TurnLEDsOff();
+        lightCube.Value.SetLEDsOff();
       }
     }
 

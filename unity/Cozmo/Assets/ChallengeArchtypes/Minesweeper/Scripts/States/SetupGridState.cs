@@ -19,7 +19,7 @@ namespace Minesweeper {
       _CurrentIndex = -1;
 
       foreach (var cube in _CurrentRobot.LightCubes.Values) {
-        cube.TurnLEDsOff();
+        cube.SetLEDsOff();
       }
 
       var game = (MinesweeperGame)_StateMachine.GetGame();

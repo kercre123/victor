@@ -192,7 +192,7 @@ public class LightCube : ObservedObject {
     }
   }
 
-  public void TurnLEDsOff() {
+  public void SetLEDsOff() {
     SetLEDs((uint)LEDColor.LED_OFF);
   }
 
