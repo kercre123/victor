@@ -895,7 +895,7 @@ message StartFactoryTest {
   uint_8 testSection
 }
 
-// Cancels the currently running factory test behavior.
+// Cancels the currently running factory test behavior.
 // Engine sends a FactoryTestResult message if test was running.
 message StopFactoryTest {
 }
