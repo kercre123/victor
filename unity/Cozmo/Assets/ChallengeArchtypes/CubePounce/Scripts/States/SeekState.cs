@@ -17,7 +17,7 @@ namespace CubePounce {
       _CubeSlapGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoSetupText);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _CurrentRobot.SetLiftHeight(0.7f);
-      _CubeSlapGame.ResetSlapChance();
+      _CubeSlapGame.ResetPounceChance();
       _CubeSlapGame.UpdateScoreboard();
     }
 
@@ -32,6 +32,7 @@ namespace CubePounce {
         // If Cube is in the right position, enter game state.
         if (target.MarkersVisible) {
           float distance = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
+          Debug.Log(string.Format("Distance : {0}", distance));
           if (distance < CubePounceGame.kCubePlaceDist) {
             isBad = false;
             target.SetLEDs(Color.green);
@@ -43,11 +44,6 @@ namespace CubePounce {
               _StateMachine.SetNextState(new PounceState());
             }
           }
-          /*
-          else if (Vector3.Dot(_CurrentRobot.Forward, (target.WorldPosition - _CurrentRobot.WorldPosition).normalized) > 0.92f) {
-            // the robot is lined up but not close enough to drive toward it to start the game.
-            _CurrentRobot.DriveWheels(15.0f, 15.0f);
-          }*/
         }
       }
       if (isBad) {

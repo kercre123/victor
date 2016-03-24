@@ -5,19 +5,19 @@ namespace CubePounce {
   public class PounceState : State {
 
     private CubePounceGame _CubePounceGame;
-    private float _PounceDelay;
+    private float _AttemptDelay;
     private float _FirstTimestamp = -1;
     //private float _LastSeenTimeStamp = -1;
-    public bool _PounceTriggered = false;
+    public bool _AttemptTriggered = false;
 
     public override void Enter() {
       base.Enter();
       _CubePounceGame = (_StateMachine.GetGame() as CubePounceGame);
-      _PounceDelay = _CubePounceGame.GetSlapDelay();
+      _AttemptDelay = _CubePounceGame.GetAttemptDelay();
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _CurrentRobot.SetLiftHeight(1.0f);
       _FirstTimestamp = Time.time;
-      _PounceTriggered = false;
+      _AttemptTriggered = false;
       _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderWaitForPounce);
       _CubePounceGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoWaitForPounce);
       LightCube.OnMovedAction += HandleCubeMoved;
@@ -25,16 +25,16 @@ namespace CubePounce {
 
     public override void Update() {
       base.Update();
-      if (!_PounceTriggered) {
-        if (Time.time - _FirstTimestamp > _PounceDelay) {
+      if (!_AttemptTriggered) {
+        if (Time.time - _FirstTimestamp > _AttemptDelay) {
           _CubePounceGame.AttemptPounce();
-          _PounceTriggered = true;
+          _AttemptTriggered = true;
         }
       }
     }
 
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
-      if (!_PounceTriggered && id == _CubePounceGame.GetCurrentTarget().ID) {
+      if (!_AttemptTriggered && id == _CubePounceGame.GetCurrentTarget().ID) {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinEarly);
         _CubePounceGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinEarly);
         _CubePounceGame.OnCozmoWin();

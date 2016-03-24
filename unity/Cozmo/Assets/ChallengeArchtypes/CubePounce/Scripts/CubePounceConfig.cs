@@ -12,12 +12,12 @@ namespace CubePounce {
       return 1;
     }
 
-    public float MinSlapDelay;
-    public float MaxSlapDelay;
+    public float MinAttemptDelay;
+    public float MaxAttemptDelay;
     public int Rounds;
     public int MaxScorePerRound;
     [Range(0f, 1f)]
-    public float StartingSlapChance;
+    public float StartingPounceChance;
     public int MaxFakeouts;
   }
 }

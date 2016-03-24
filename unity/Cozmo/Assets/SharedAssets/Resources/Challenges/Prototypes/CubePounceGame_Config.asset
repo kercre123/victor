@@ -11,9 +11,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d4aed587cb1d4f179e52757a3a66d2f, type: 3}
   m_Name: CubePounceGame_Config
   m_EditorClassIdentifier: 
-  MinSlapDelay: 0.5
-  MaxSlapDelay: 1.5
+  MinAttemptDelay: 0.25
+  MaxAttemptDelay: 1.25
   Rounds: 1
   MaxScorePerRound: 3
-  StartingSlapChance: 0.3
+  StartingPounceChance: 0
   MaxFakeouts: 5

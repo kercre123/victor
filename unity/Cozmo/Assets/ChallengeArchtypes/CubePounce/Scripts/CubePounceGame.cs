@@ -13,7 +13,7 @@ namespace CubePounce {
     public const string kPlayerWin = "PlayerWin";
     // Consts for determining the exact placement and forgiveness for cube location
     // Must be consistent for animations to work
-    public const float kCubePlaceDist = 40.0f;
+    public const float kCubePlaceDist = 60.0f;
     private int _CozmoScore;
     private int _PlayerScore;
     private int _PlayerRoundsWon;
@@ -44,9 +44,9 @@ namespace CubePounce {
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       CubePounceConfig config = minigameConfig as CubePounceConfig;
       _Rounds = config.Rounds;
-      _MinAttemptDelay = config.MinSlapDelay;
-      _MaxAttemptDelay = config.MaxSlapDelay;
-      _BasePounceChance = config.StartingSlapChance;
+      _MinAttemptDelay = config.MinAttemptDelay;
+      _MaxAttemptDelay = config.MaxAttemptDelay;
+      _BasePounceChance = config.StartingPounceChance;
       _MaxFakeouts = config.MaxFakeouts;
       _MaxScorePerRound = config.MaxScorePerRound;
       _CozmoScore = 0;
@@ -92,7 +92,6 @@ namespace CubePounce {
       }
       if (PounceRoll <= _CurrentPounceChance) {
         // Enter Animation State to attempt a pounce.
-        // Set Callback for HandleEndSlapAttempt
         _CliffFlagTrown = false;
         CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Tap, HandlePounceEnd);
       }
@@ -193,11 +192,11 @@ namespace CubePounce {
       _StateMachine.SetNextState(new SeekState());
     }
 
-    public float GetSlapDelay() {
+    public float GetAttemptDelay() {
       return Random.Range(_MinAttemptDelay, _MaxAttemptDelay);
     }
 
-    public void ResetSlapChance() {
+    public void ResetPounceChance() {
       _CurrentPounceChance = _BasePounceChance;
     }
 
