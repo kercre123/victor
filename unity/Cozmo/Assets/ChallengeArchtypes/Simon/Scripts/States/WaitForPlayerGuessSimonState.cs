@@ -13,6 +13,7 @@ namespace Simon {
     private int _TargetCube = -1;
     private uint _TargetCubeColor;
     private float _StartLightBlinkTime = -1;
+    private const float _kTapBufferSeconds = 0.2f;
 
     public override void Enter() {
       base.Enter();
@@ -47,7 +48,6 @@ namespace Simon {
       }
       else if (Time.time - _StartLightBlinkTime > SimonGame.kLightBlinkLengthSeconds) {
         _StartLightBlinkTime = -1;
-        _CurrentRobot.LightCubes[_TargetCube].SetLEDs(_TargetCubeColor);
       }
     }
 
@@ -86,7 +86,7 @@ namespace Simon {
 
     private void OnBlockTapped(int id, int times) {
       _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
-      if (Time.time - _LastTappedTime < 0.4f || _StartLightBlinkTime != -1) {
+      if (Time.time - _LastTappedTime < _kTapBufferSeconds || _StartLightBlinkTime != -1) {
         return;
       }
 
@@ -95,11 +95,10 @@ namespace Simon {
 
       SimonGame game = _StateMachine.GetGame() as SimonGame;
       GameAudioClient.PostAudioEvent(game.GetAudioForBlock(id));
+      game.BlinkLight(id, SimonGame.kLightBlinkLengthSeconds, Color.black, game.GetColorForBlock(id));
 
       _TargetCube = id;
       LightCube cube = _CurrentRobot.LightCubes[_TargetCube];
-      _TargetCubeColor = cube.Lights[0].OnColor;
-
       _CurrentRobot.TurnTowardsObject(cube, false, SimonGame.kTurnSpeed_rps, SimonGame.kTurnAccel_rps2);
     }
   }

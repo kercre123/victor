@@ -269,4 +269,12 @@ public class LightCube : ObservedObject {
     this.relativeToX = relativeToX;
     this.relativeToY = relativeToY;
   }
+
+  public Color[] GetLEDs() {
+    Color[] lightColors = new Color[Lights.Length];
+    for (int i = 0; i < Lights.Length; ++i) {
+      lightColors[i] = Lights[i].OnColor.ToColor();
+    }
+    return lightColors;
+  }
 }
