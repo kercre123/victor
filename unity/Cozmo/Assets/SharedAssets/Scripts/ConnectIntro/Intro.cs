@@ -141,6 +141,8 @@ public class Intro : MonoBehaviour {
 
     #if UNITY_EDITOR
     _Robot.SetRobotVolume(0.06f);
+    #else
+    _Robot.SetRobotVolume(1.0f);
     #endif
 
     Screen.sleepTimeout = SleepTimeout.NeverSleep;
