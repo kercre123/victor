@@ -35,7 +35,7 @@ const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
 // located for the treaded robot when not carrying a block.
 // (If you were to model the treaded robot as a two-wheel robot,
 // the drive center is the location between the two wheels)
-const f32 DRIVE_CENTER_OFFSET = -15.f;
+const f32 DRIVE_CENTER_OFFSET = -20.f;
 
 // Length of the forward collision sensor (with respect to origin)
 const u8 FORWARD_COLLISION_SENSOR_LENGTH_MM = 160;

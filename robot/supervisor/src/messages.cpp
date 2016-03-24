@@ -198,6 +198,9 @@ namespace Anki {
         // Poor-man's time sync to basestation, for now.
         HAL::SetTimeStamp(msg.syncTime);
 
+        // Set drive center offset
+        Localization::SetDriveCenterOffset(msg.driveCenterOffset);
+        
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 #ifndef TARGET_K02

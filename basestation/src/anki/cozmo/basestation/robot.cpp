@@ -2459,7 +2459,7 @@ namespace Anki {
     {
 
       Result result = SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::SyncTime(_ID, BaseStationTimer::getInstance()->GetCurrentTimeStamp())));
+        RobotInterface::SyncTime(_ID, BaseStationTimer::getInstance()->GetCurrentTimeStamp(), DRIVE_CENTER_OFFSET)));
       
       if(result == RESULT_OK) {
         result = SendMessage(RobotInterface::EngineToRobot(

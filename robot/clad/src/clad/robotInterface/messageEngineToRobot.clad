@@ -171,6 +171,10 @@ message SyncTime
 {
   uint_32 robotID,
   uint_32 syncTime,
+
+  // Other random things to send to robot on init
+  // which can eventually be made constant
+  float_32 driveCenterOffset
 }
 
 message ImageRequest
