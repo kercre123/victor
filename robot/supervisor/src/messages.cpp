@@ -5,6 +5,7 @@
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #ifndef TARGET_K02
 #include "../sim_hal/transport/IUnreliableTransport.h"
@@ -766,6 +767,7 @@ namespace Anki {
           tsm.battVolt10x = static_cast<uint8_t>(vBat * 10.0f);
           tsm.extVolt10x  = static_cast<uint8_t>(vExt * 10.0f);
           tsm.chargeStat  = chargeStat;
+          RobotInterface::SendMessage(tsm);
         }
 #endif
         

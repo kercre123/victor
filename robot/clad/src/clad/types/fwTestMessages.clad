@@ -8,8 +8,12 @@ namespace RobotInterface {
   
   enum int_32 FactoryTestMode
   {
-    FTM_menus = -1, ///< Display menus on face
-    FTM_None = 0, ///< Exit factory test mode
+    FTM_menus = -2, ///< Display menus on face
+    FTM_entry = -1, ///< Default disconnected state
+    FTM_None  = 0,   ///< Exit factory test mode
+    FTM_WiFiInfo,
+    FTM_VersionInfo,
+    FTM_StateInfo,
     FTM_motorLifeTest,
   }
   

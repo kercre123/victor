@@ -110,7 +110,7 @@ char *ets_strcpy(char *dest, const char *src);
 char *ets_strncpy(char *dest, const char *src, size_t n);
 char *ets_strstr(const char *haystack, const char *needle);
 int ets_sprintf(char *str, const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
-int os_snprintf(char *str, size_t size, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
+int ets_snprintf(char *str, size_t size, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
 int ets_printf(const char *format, ...)  __attribute__ ((format (printf, 1, 2)));
 void ets_install_putc1(void* routine);
 void uart_div_modify(int no, int freq);

@@ -24,7 +24,7 @@ namespace Anki
         /** Dispatch messages in main loop and do any other periodic update functions.
          * @return RESULT_OK normally or an error condition
          */
-        Result Update(); 
+        Result Update();
         
         /** Get pending data to be sent to the WiFi processor
          * @param dest A pointer to write data to
