@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 using Anki.Cozmo.ExternalInterface;
 
@@ -28,6 +29,8 @@ public class FactoryIntroManager : MonoBehaviour {
   [SerializeField]
   private Canvas _Canvas;
 
+  private List<string> _LogList = new List<string>();
+
   void Start() {
     ShowDevConnectDialog();
     RobotEngineManager.Instance.RobotConnected += HandleConnected;
@@ -53,10 +56,17 @@ public class FactoryIntroManager : MonoBehaviour {
     }
     _FactoryLogPanelInstance = GameObject.Instantiate(_FactoryLogPanelPrefab).GetComponent<FactoryLogPanel>();
     _FactoryLogPanelInstance.transform.SetParent(_Canvas.transform, false);
+    _FactoryLogPanelInstance.UpdateLogText(_LogList);
   }
 
   private void HandleNewSOSLog(string log_entry) {
-    
+    while (_LogList.Count > 100) {
+      _LogList.RemoveAt(0);
+    }
+    _LogList.Add(log_entry);
+    if (_FactoryLogPanelInstance != null) {
+      _FactoryLogPanelInstance.UpdateLogText(_LogList);
+    }
   }
 
   private void HandleDisconnectedFromClient(DisconnectionReason obj) {

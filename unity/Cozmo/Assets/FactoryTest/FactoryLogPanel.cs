@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class FactoryLogPanel : MonoBehaviour {
   [SerializeField]
@@ -11,14 +12,19 @@ public class FactoryLogPanel : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Button _CloseButton;
 
+  private string _LogText;
+
   void Start() {
-    string test = "sdfsdf";
-    for (int i = 0; i < 100; ++i) {
-      test += i + "wee\n";
-    }
-    _LogTextField.text = test;
-    _TextScrollRect.verticalNormalizedPosition = 0;
     _CloseButton.onClick.AddListener(ClosePanel);
+  }
+
+  public void UpdateLogText(List<string> logQueue) {
+    _LogText = "";
+    for (int i = logQueue.Count - 5; i < logQueue.Count; ++i) {
+      _LogText += logQueue[i];
+    }
+    _LogTextField.text = _LogText;
+    _TextScrollRect.verticalNormalizedPosition = 0;
   }
 
   private void ClosePanel() {

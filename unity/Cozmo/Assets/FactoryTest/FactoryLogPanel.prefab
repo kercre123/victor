@@ -8,9 +8,9 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22416932}
-  - 114: {fileID: 11459718}
   - 222: {fileID: 22266778}
   - 114: {fileID: 11469954}
+  - 114: {fileID: 11482902}
   m_Layer: 5
   m_Name: Viewport
   m_TagString: Untagged
@@ -307,7 +307,7 @@ MonoBehaviour:
     m_MaxSize: 40
     m_Alignment: 0
     m_AlignByGeometry: 0
-    m_RichText: 1
+    m_RichText: 0
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
@@ -326,18 +326,6 @@ MonoBehaviour:
   _LogTextField: {fileID: 11446024}
   _TextScrollRect: {fileID: 11425636}
   _CloseButton: {fileID: 11442220}
---- !u!114 &11459718
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 140170}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: -1200242548, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_ShowMaskGraphic: 0
 --- !u!114 &11468562
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -392,6 +380,17 @@ MonoBehaviour:
   m_FillAmount: 1
   m_FillClockwise: 1
   m_FillOrigin: 0
+--- !u!114 &11482902
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 140170}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -146154839, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!222 &22218536
 CanvasRenderer:
   m_ObjectHideFlags: 1
