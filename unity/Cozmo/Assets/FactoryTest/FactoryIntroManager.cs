@@ -60,6 +60,7 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void HandleNewSOSLog(string log_entry) {
+    Debug.Log(log_entry);
     while (_LogList.Count > 100) {
       _LogList.RemoveAt(0);
     }

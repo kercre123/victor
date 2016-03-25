@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class FactoryLogPanel : MonoBehaviour {
   [SerializeField]
-  UnityEngine.UI.Text _LogTextField;
+  RectTransform _LogTextList;
 
   [SerializeField]
   private UnityEngine.UI.ScrollRect _TextScrollRect;
@@ -12,18 +12,25 @@ public class FactoryLogPanel : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Button _CloseButton;
 
-  private string _LogText;
+  [SerializeField]
+  private UnityEngine.UI.Text _TextPrefab;
 
   void Start() {
     _CloseButton.onClick.AddListener(ClosePanel);
   }
 
   public void UpdateLogText(List<string> logQueue) {
-    _LogText = "";
-    for (int i = logQueue.Count - 5; i < logQueue.Count; ++i) {
-      _LogText += logQueue[i];
+
+    for (int i = 0; i < _LogTextList.childCount; ++i) {
+      GameObject.Destroy(_LogTextList.GetChild(i).gameObject);
     }
-    _LogTextField.text = _LogText;
+
+    for (int i = 0; i < logQueue.Count; ++i) {
+      GameObject textInstance = GameObject.Instantiate(_TextPrefab.gameObject);
+      textInstance.transform.SetParent(_LogTextList);
+      textInstance.GetComponent<UnityEngine.UI.Text>().text = logQueue[i];
+    }
+
     _TextScrollRect.verticalNormalizedPosition = 0;
   }
 
