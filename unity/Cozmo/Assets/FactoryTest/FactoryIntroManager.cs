@@ -144,6 +144,7 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void RestartTestApp() {
+    _RestartButton.gameObject.SetActive(false);
     SOSLogManager.Instance.CleanUp();
     CozmoBinding.Shutdown();
     UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
