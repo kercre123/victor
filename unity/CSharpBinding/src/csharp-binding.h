@@ -25,6 +25,7 @@ extern "C" {
   // Hook for triggering setup of the desired wifi details
   int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey);
   
+  void cozmo_send_to_clipboard(const char* log);
   
   void Unity_DAS_Event(const char* eventName, const char* eventValue);
   

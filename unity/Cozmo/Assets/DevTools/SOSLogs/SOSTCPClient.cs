@@ -63,11 +63,12 @@ public class SOSTCPClient {
       Debug.Log("SOS Server Connected!");
       _Stream = client.GetStream();
 
-      while ((_Stream.Read(_Bytes, 0, _Bytes.Length)) != 0 && _IsActive) {
+      int i;
+      while ((i = _Stream.Read(_Bytes, 0, _Bytes.Length)) != 0 && _IsActive) {
         lock (_Sync) {
           // the replacement is so c# strings don't get messed up by nulls in the middle of strings.
           // C# strings do not expect to be null terminated and causes weirdness down the line if they are.
-          string logOutput = System.Text.Encoding.ASCII.GetString(_Bytes).Replace('\0', ' ');
+          string logOutput = System.Text.Encoding.ASCII.GetString(_Bytes, 0, i).Replace('\0', ' ');
           logOutput = logOutput.Replace('\n', ' ');
           _Messages.Add(logOutput);
         }
