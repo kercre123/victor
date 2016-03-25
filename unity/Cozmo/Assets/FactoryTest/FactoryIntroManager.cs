@@ -67,6 +67,7 @@ public class FactoryIntroManager : MonoBehaviour {
 
   private void HandleTestNumberUpdate(int update) {
     _TestNumber = update;
+    Debug.Log("TODO: Test Start Number: " + _TestNumber);
   }
 
   private void HandleStartButtonClick() {
@@ -77,8 +78,12 @@ public class FactoryIntroManager : MonoBehaviour {
   private void HandleConnected(int robotID) {
     HideDevConnectDialog();
     SetStatusText("Factory App Connected To Robot");
-    RobotEngineManager.Instance.Message.StartFactoryTest = Singleton<StartFactoryTest>.Instance.Initialize((byte)_TestNumber);
-    RobotEngineManager.Instance.SendMessage();
+
+    // runs the factory test.
+    RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+    RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.FactoryTest);
+
     SOSLogManager.Instance.CreateListener();
     RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
     SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
@@ -152,11 +157,11 @@ public class FactoryIntroManager : MonoBehaviour {
 
   private void FactoryResult(FactoryTestResult result) {
     SetStatusText("Result Code: " + result.resultCode);
-    if (result.resultCode != 0) {
-      TestFailed();
+    if (result.resultCode == Anki.Cozmo.FactoryTestResultCode.SUCCESS) {
+      TestPassed();
     }
     else {
-      TestPassed();
+      TestFailed();
     }
   }
 
