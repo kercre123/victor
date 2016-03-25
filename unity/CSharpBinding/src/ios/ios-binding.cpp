@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include "clipboardPaster.h"
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -133,4 +134,8 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_wifi_setup(const char* wifiSSID, co
   wifiConfigure->InstallMobileconfig();
   
   return RESULT_OK;
+}
+
+void Anki::Cozmo::CSharpBinding::cozmo_engine_send_to_clipboard(const char* log) {
+  WriteToClipboard(log);
 }
