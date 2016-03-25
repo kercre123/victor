@@ -72,8 +72,6 @@ public class FactoryIntroManager : MonoBehaviour {
   private void HandleStartButtonClick() {
     ShowDevConnectDialog();
     _StartButton.gameObject.SetActive(false);
-    _RestartButton.gameObject.SetActive(true);
-    _RestartButton.onClick.AddListener(() => RestartTestApp());
   }
 
   private void HandleConnected(int robotID) {
@@ -84,6 +82,8 @@ public class FactoryIntroManager : MonoBehaviour {
     SOSLogManager.Instance.CreateListener();
     RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
     SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
+    _RestartButton.gameObject.SetActive(true);
+    _RestartButton.onClick.AddListener(() => RestartTestApp());
   }
 
   private void HandleLogButtonClick() {
@@ -144,6 +144,7 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void RestartTestApp() {
+    SOSLogManager.Instance.CleanUp();
     CozmoBinding.Shutdown();
     UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
   }

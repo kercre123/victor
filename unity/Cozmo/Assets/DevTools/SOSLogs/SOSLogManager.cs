@@ -27,11 +27,14 @@ public class SOSLogManager : MonoBehaviour {
     _SosTcpClient.StartListening();
   }
 
-  void OnDestroy() {
+  public void CleanUp() {
     if (_SosTcpClient != null) {
       _SosTcpClient.CleanUp();
-      _SosTcpClient = null;
     }
+  }
+
+  void OnDestroy() {
+    CleanUp();
   }
 
   void Update() {
