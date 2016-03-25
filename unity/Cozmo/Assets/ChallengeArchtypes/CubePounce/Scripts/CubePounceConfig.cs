@@ -19,5 +19,14 @@ namespace CubePounce {
     [Range(0f, 1f)]
     public float StartingPounceChance;
     public int MaxFakeouts;
+
+
+    [SerializeField]
+    protected MusicStateWrapper _BetweenRoundMusic;
+
+    public Anki.Cozmo.Audio.GameState.Music BetweenRoundMusic {
+      get { return _BetweenRoundMusic.Music; }
+    }
+
   }
 }

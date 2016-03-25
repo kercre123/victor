@@ -136,7 +136,7 @@ namespace CubePounce {
     public void OnPlayerWin() {
       _PlayerScore++;
       UpdateScoreboard();
-      _StateMachine.SetNextState(new AnimationState(AnimationGroupName.kCubePounce_LoseHand, HandEndAnimationDone));
+      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_LoseHand, HandEndAnimationDone));
     }
 
     public void OnCozmoWin() {

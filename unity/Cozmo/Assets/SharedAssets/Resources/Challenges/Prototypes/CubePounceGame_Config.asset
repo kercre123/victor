@@ -17,3 +17,5 @@ MonoBehaviour:
   MaxScorePerRound: 3
   StartingPounceChance: 0
   MaxFakeouts: 5
+  _BetweenRoundMusic:
+    _Music: 658369771
