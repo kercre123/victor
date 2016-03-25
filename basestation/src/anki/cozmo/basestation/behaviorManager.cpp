@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
 
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -42,6 +43,7 @@ namespace Cozmo {
   , _forceReInit(false)
   , _robot(robot)
   , _behaviorFactory(new BehaviorFactory())
+  , _whiteboard( new BehaviorWhiteboard() )
   , _minBehaviorTime_sec(1)
   {
 
@@ -64,6 +66,10 @@ namespace Cozmo {
       AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
       AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
     }
+    
+    // initialize whiteboard
+    assert( _whiteboard );
+    _whiteboard->Init(_robot);
     
     if (_robot.HasExternalInterface())
     {
