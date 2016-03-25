@@ -37,7 +37,13 @@ public class FactoryIntroManager : MonoBehaviour {
   private UnityEngine.UI.Text _StatusText;
 
   [SerializeField]
+  private UnityEngine.UI.Text _StationNumberText;
+
+  [SerializeField]
   private Canvas _Canvas;
+
+  private int _StationNumber = 0;
+  private int _TestNumber = 0;
 
   private List<string> _LogList = new List<string>();
 
@@ -53,6 +59,16 @@ public class FactoryIntroManager : MonoBehaviour {
     _StartButton.onClick.AddListener(HandleStartButtonClick);
   }
 
+  private void HandleStationNumberUpdate(int update) {
+    _StationNumber = update;
+    _StationNumberText.text = "Station Number: " + _StationNumber;
+    Debug.Log("TODO: Handle Station Number: " + _StationNumber);
+  }
+
+  private void HandleTestNumberUpdate(int update) {
+    _TestNumber = update;
+  }
+
   private void HandleStartButtonClick() {
     ShowDevConnectDialog();
     _StartButton.gameObject.SetActive(false);
@@ -61,7 +77,7 @@ public class FactoryIntroManager : MonoBehaviour {
   private void HandleConnected(int robotID) {
     HideDevConnectDialog();
     SetStatusText("Factory App Connected To Robot");
-    RobotEngineManager.Instance.Message.StartFactoryTest = Singleton<StartFactoryTest>.Instance.Initialize(0);
+    RobotEngineManager.Instance.Message.StartFactoryTest = Singleton<StartFactoryTest>.Instance.Initialize((byte)_TestNumber);
     RobotEngineManager.Instance.SendMessage();
     SOSLogManager.Instance.CreateListener();
     RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
@@ -89,6 +105,8 @@ public class FactoryIntroManager : MonoBehaviour {
     }
     _FactoryOptionsPanelInstance = GameObject.Instantiate(_FactoryOptionsPanelPrefab).GetComponent<FactoryOptionsPanel>();
     _FactoryOptionsPanelInstance.transform.SetParent(_Canvas.transform, false);
+    _FactoryOptionsPanelInstance.OnSetStationNumber += HandleStationNumberUpdate;
+    _FactoryOptionsPanelInstance.OnSetTestNumber += HandleTestNumberUpdate;
   }
 
   private void SetStatusText(string txt) {

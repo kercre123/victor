@@ -522,6 +522,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CloseButton: {fileID: 11495068}
+  _StationNumberInput: {fileID: 11482552}
+  _TestNumberInput: {fileID: 11410694}
 --- !u!114 &11482552
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -904,7 +906,15 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _StationNumberInput
+      value: 
+      objectReference: {fileID: 11482552}
+    - target: {fileID: 0}
+      propertyPath: _TestNumberInput
+      value: 
+      objectReference: {fileID: 11410694}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 154846}
