@@ -7,9 +7,14 @@
  * Description: Functional test fixture behavior
  *
  *              Init conditions:
- *                - Cozmo is on starting charger of the test fixture
+ *                - Cozmo is on starting charger 1 of the test fixture
  *
  *              Behavior:
+ *                - Drive straight off charger until cliff detected
+ *                - Backup to pose for camera calibration
+ *                - Turn to take pictures of all calibration targets and calibrate
+ *                - Go to pickup block
+ *                - Place block back down
  *
  *
  *
@@ -94,6 +99,7 @@ namespace Cozmo {
     
     _testResult = FactoryTestResultCode::UNKNOWN;
     _actionCallbackMap.clear();
+    _holdUntilTime = -1;
     
     robot.GetActionList().Cancel();
     
@@ -114,14 +120,20 @@ namespace Cozmo {
   void BehaviorFactoryTest::EndTest(Robot& robot, FactoryTestResultCode resCode)
   {
     // Send test result out and make this behavior stop running
-    _testResult = resCode;
-    if (_testResult == FactoryTestResultCode::SUCCESS) {
-      PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.TestComplete", "PASS");
+    if (_testResult == FactoryTestResultCode::UNKNOWN) {
+      _testResult = resCode;
+      if (_testResult == FactoryTestResultCode::SUCCESS) {
+        PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.TestComplete", "PASS");
+      } else {
+        PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestComplete", "FAIL: %s (code %d)", EnumToString(_testResult), (int)_testResult);
+      }
+      
+      robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
     } else {
-      PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestComplete", "FAIL: %s (code %d)", EnumToString(_testResult), (int)_testResult);
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestAlreadyComplete",
+                          "Existing result %s (new result %s)",
+                          EnumToString(_testResult), EnumToString(resCode) );
     }
-    
-    robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
   }
   
   
@@ -148,13 +160,11 @@ namespace Cozmo {
       return Status::Running;
     }
     
-    f32 currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    
     auto gotoPoseCallback = [this,&robot](ActionResult ret){
       if (ret != ActionResult::SUCCESS) {
         EndTest(robot, FactoryTestResultCode::GOTO_POSE_ACTION_FAILED);
       } else {
-        _lastPoseArrivedTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
       }
       return true;
     };
@@ -169,13 +179,28 @@ namespace Cozmo {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOnCharger", "");
           END_TEST(FactoryTestResultCode::CHARGER_UNDETECTED);
         }
-        
-        DriveStraightAction *driveAction = new DriveStraightAction(robot, 250, 100);
-        StartActing(robot, driveAction );
-        _currentState = State::DriveToSlot;
+       
+        // Check for IMU drift
+        if (_holdUntilTime < 0) {
+          // Capture initial robot orientation and check if it changes over some period of time
+          _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
+          _holdUntilTime = currentTime_sec + _kIMUDriftDetectPeriod_sec;
+        } else if (currentTime_sec > _holdUntilTime) {
+          f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
+          if(angleChange > _kIMUDriftAngleThreshDeg) {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.IMUDrift",
+                                "Angle change of %f deg detected in %f seconds",
+                                angleChange, _kIMUDriftDetectPeriod_sec);
+            END_TEST(FactoryTestResultCode::IMU_DRIFTING);
+          }
+          
+          // Drive off charger
+          DriveStraightAction *driveAction = new DriveStraightAction(robot, 250, 100);
+          StartActing(robot, driveAction );
+          SetCurrState(State::DriveToSlot);
+        }
         break;
       }
-        
       case State::DriveToSlot:
       {
         if (!robot.IsOnCliff()) {
@@ -195,7 +220,7 @@ namespace Cozmo {
         
         // Go to camera calibration pose
         StartActing(robot, new DriveToPoseAction(robot, _camCalibPose, _motionProfile) );
-        _currentState = State::GotoCalibrationPose;
+        SetCurrState(State::GotoCalibrationPose);
         break;
       }
         
@@ -215,14 +240,14 @@ namespace Cozmo {
         }
         
         _camCalibPoseIndex = 0;
-        _currentState = State::TakeCalibrationImages;
+        SetCurrState(State::TakeCalibrationImages);
         break;
       }
         
       case State::TakeCalibrationImages:
       {
         if (_camCalibPoseIndex >= _camCalibPanAndTiltAngles.size()) {
-          _currentState = State::ComputeCameraCalibration;
+          SetCurrState(State::ComputeCameraCalibration);
           break;
         }
 
@@ -252,7 +277,7 @@ namespace Cozmo {
         
         // Goto pose where block is visible
         StartActing(robot, new DriveToPoseAction(robot, _prePickupPose, _motionProfile, false, false), gotoPoseCallback);
-        _currentState = State::GotoPickupPose;
+        SetCurrState(State::GotoPickupPose);
         break;
       }
         
@@ -273,8 +298,8 @@ namespace Cozmo {
         
         // Verify that block exists
         if (!_blockObjectID.IsSet()) {
-          if (_lastPoseArrivedTime < 0 || currTime > _lastPoseArrivedTime + 1.f) {
-            PRINT_NAMED_ERROR("BehaviorFactoryTest.Update.ExpectingCubeToExist", "currTime %f, lastPoseArrivedTime %f", currTime, _lastPoseArrivedTime);
+          if (currentTime_sec > _holdUntilTime) {
+            PRINT_NAMED_ERROR("BehaviorFactoryTest.Update.ExpectingCubeToExist", "currTime %f", currentTime_sec);
             END_TEST(FactoryTestResultCode::CUBE_NOT_FOUND);
           }
           
@@ -302,8 +327,9 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
         }
         
+        _actualLightCubePose = oObject->GetPose();
         _attemptCounter = 0;
-        _currentState = State::StartPickup;
+        SetCurrState(State::StartPickup);
         break;
       }
       case State::StartPickup:
@@ -313,7 +339,7 @@ namespace Cozmo {
             PRINT_NAMED_INFO("BehaviorFactoryTest.pickupCallback.Success", "");
           } else if (_attemptCounter <= _kNumPickupRetries) {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.pickupCallback.FailedRetrying", "");
-            _currentState = State::StartPickup;
+            SetCurrState(State::StartPickup);
           } else {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.pickupCallback.Failed", "");
             EndTest(robot, FactoryTestResultCode::PICKUP_FAILED);
@@ -327,7 +353,7 @@ namespace Cozmo {
         StartActing(robot,
                     new DriveToPickupObjectAction(robot, _blockObjectID, _motionProfile),
                     pickupCallback);
-        _currentState = State::PickingUpBlock;
+        SetCurrState(State::PickingUpBlock);
         break;
       }
       case State::PickingUpBlock:
@@ -344,9 +370,9 @@ namespace Cozmo {
         
         // Put block down
         StartActing(robot,
-                    new PlaceObjectOnGroundAtPoseAction(robot, _expectedLightCubePose, _motionProfile),
+                    new PlaceObjectOnGroundAtPoseAction(robot, _actualLightCubePose, _motionProfile),
                     placementCallback);
-        _currentState = State::PlacingBlock;
+        SetCurrState(State::PlacingBlock);
         break;
       }
       case State::PlacingBlock:
@@ -355,7 +381,7 @@ namespace Cozmo {
         ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
         Vec3f Tdiff;
         Radians angleDiff;
-        if (!oObject->GetPose().IsSameAs_WithAmbiguity(_expectedLightCubePose,
+        if (!oObject->GetPose().IsSameAs_WithAmbiguity(_actualLightCubePose,
                                                        oObject->GetRotationAmbiguities(),
                                                        oObject->GetSameDistanceTolerance(),
                                                        oObject->GetSameAngleTolerance()*0.5f, true,
@@ -365,21 +391,21 @@ namespace Cozmo {
                               oObject->GetPose().GetTranslation().x(),
                               oObject->GetPose().GetTranslation().y(),
                               oObject->GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
-                              _expectedLightCubePose.GetTranslation().x(),
-                              _expectedLightCubePose.GetTranslation().y(),
-                              _expectedLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
+                              _actualLightCubePose.GetTranslation().x(),
+                              _actualLightCubePose.GetTranslation().y(),
+                              _actualLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
           END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
         }
         
         // Look at charger
         StartActing(robot, new TurnTowardsPoseAction(robot, _expectedChargerPose, DEG_TO_RAD(180)), gotoPoseCallback );
-        _currentState = State::DockToCharger;
+        SetCurrState(State::DockToCharger);
         break;
       }
       case State::DockToCharger:
       {
         if (!_chargerObjectID.IsSet()) {
-          if (_lastPoseArrivedTime > 0 && currTime > _lastPoseArrivedTime + 1.0) {
+          if (currentTime_sec > _holdUntilTime) {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectedChargerToExist", "");
             END_TEST(FactoryTestResultCode::CHARGER_NOT_FOUND);
           }

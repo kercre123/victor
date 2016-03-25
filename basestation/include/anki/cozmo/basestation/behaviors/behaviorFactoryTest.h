@@ -10,7 +10,12 @@
  *                - Cozmo is on starting charger of the test fixture
  *
  *              Behavior:
- *
+ *                - Drive straight off charger until cliff detected
+ *                - Backup to pose for camera calibration
+ *                - Turn to take pictures of all calibration targets and calibrate
+ *                - Go to pickup block
+ *                - Place block back down
+ *                - Dock to charger 2
  *
  *
  * Copyright: Anki, Inc. 2016
@@ -71,6 +76,7 @@ namespace Cozmo {
     const Pose3d _camCalibPose;
     const Pose3d _prePickupPose;
     const Pose3d _expectedLightCubePose;
+          Pose3d _actualLightCubePose;
     const Pose3d _expectedChargerPose;
     std::vector<std::pair<f32,f32> > _camCalibPanAndTiltAngles;
     u32          _camCalibPoseIndex = 0;
@@ -78,6 +84,8 @@ namespace Cozmo {
     static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
     static constexpr f32 _kRbotPoseSamenessAngleThresh_rad = DEG_TO_RAD(5);
     static constexpr u32 _kNumPickupRetries = 1;
+    static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
+    static constexpr f32 _kIMUDriftAngleThreshDeg = 1.f;
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
@@ -122,12 +130,10 @@ namespace Cozmo {
     std::map<u32, ActionResultCallback> _actionCallbackMap;
     bool IsActing() const {return !_actionCallbackMap.empty(); }
     
-    State _currentState;
-    
-    f32 _lastPoseArrivedTime = -1.0f;
-    
-    Result _lastHandlerResult;
-
+    State   _currentState;
+    f32     _holdUntilTime = -1.0f;
+    Radians _startingRobotOrientation;
+    Result  _lastHandlerResult;
     PathMotionProfile _motionProfile;
  
     // Map of action tags that have been commanded to callback functions
