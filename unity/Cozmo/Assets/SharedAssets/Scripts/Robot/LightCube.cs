@@ -200,6 +200,14 @@ public class LightCube : ObservedObject {
     SetLEDs(onColor.ToUInt());
   }
 
+  public void SetLEDs(Color[] onColor) {
+    uint[] colors = new uint[onColor.Length];
+    for (int i = 0; i < onColor.Length; i++) {
+      colors[i] = onColor[i].ToUInt();
+    }
+    SetLEDs(colors);
+  }
+
   public void SetFlashingLEDs(Color onColor, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionMs = 0) {
     SetLEDs(onColor.ToUInt(), 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
   }
@@ -211,13 +219,36 @@ public class LightCube : ObservedObject {
   public void SetLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
                       uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
 
+    Light light; 
     for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i].OnColor = onColor;
-      Lights[i].OffColor = offColor;
-      Lights[i].OnPeriodMs = onPeriod_ms;
-      Lights[i].OffPeriodMs = offPeriod_ms;
-      Lights[i].TransitionOnPeriodMs = transitionOnPeriod_ms;
-      Lights[i].TransitionOffPeriodMs = transitionOffPeriod_ms;
+      light = Lights[i];
+      light.OnColor = onColor;
+      light.OffColor = offColor;
+      light.OnPeriodMs = onPeriod_ms;
+      light.OffPeriodMs = offPeriod_ms;
+      light.TransitionOnPeriodMs = transitionOnPeriod_ms;
+      light.TransitionOffPeriodMs = transitionOffPeriod_ms;
+    }
+
+    relativeMode = 0;
+    relativeToX = 0;
+    relativeToY = 0;
+  }
+
+  public void SetLEDs(uint[] lightColors, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+                      uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+
+    uint onColor;
+    Light light; 
+    for (int i = 0; i < Lights.Length; ++i) {
+      onColor = lightColors[i % lightColors.Length];
+      light = Lights[i];
+      light.OnColor = onColor;
+      light.OffColor = offColor;
+      light.OnPeriodMs = onPeriod_ms;
+      light.OffPeriodMs = offPeriod_ms;
+      light.TransitionOnPeriodMs = transitionOnPeriod_ms;
+      light.TransitionOffPeriodMs = transitionOffPeriod_ms;
     }
 
     relativeMode = 0;

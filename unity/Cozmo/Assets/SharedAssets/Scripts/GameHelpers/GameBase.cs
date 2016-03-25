@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -35,8 +35,8 @@ public abstract class GameBase : MonoBehaviour {
     get { return _SharedMinigameViewInstance; }
   }
 
-  public Anki.Cozmo.Audio.GameState.Music GetMusicState() {
-    return _ChallengeData.Music;
+  public Anki.Cozmo.Audio.GameState.Music GetDefaultMusicState() {
+    return _ChallengeData.DefaultMusic;
   }
 
   protected Transform SharedMinigameViewInstanceParent { get { return _SharedMinigameViewInstance.transform; } }
@@ -72,7 +72,7 @@ public abstract class GameBase : MonoBehaviour {
     _ChallengeData = challengeData;
     _WonChallenge = false;
 
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetMusicState());
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
 
     RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
 

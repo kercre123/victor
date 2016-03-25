@@ -35,6 +35,10 @@ public static class CozmoBinding {
   [DllImport("__Internal")]
   private static extern int cozmo_shutdown();
 
+  [DllImport("__Internal")]
+  private static extern int cozmo_wifi_setup(string wifiSSID, string wifiPasskey);
+
+
   public static void Startup(string configurationData) {
     if (initialized) {
       sDAS.Warn("Reinitializing because Startup was called twice...");
@@ -69,6 +73,21 @@ public static class CozmoBinding {
 
       if (result != AnkiResult.RESULT_OK) {
         sDAS.Error("CozmoBinding.Shutdown [cozmo_shutdown]: error code " + result.ToString());
+      }
+    }
+  }
+
+  public static void WifiSetup(string wifiSSID, string wifiPasskey) {
+    if (initialized) {
+      AnkiResult result = AnkiResult.RESULT_OK;
+      #if !UNITY_EDITOR && !UNITY_STANDALONE
+      Profiler.BeginSample("CozmoBinding.cozmo_wifi_setup");
+      result = (AnkiResult)CozmoBinding.cozmo_wifi_setup(wifiSSID, wifiPasskey);
+      Profiler.EndSample();
+      #endif
+
+      if (result != AnkiResult.RESULT_OK) {
+        sDAS.Error("CozmoBinding.WifiSetup [cozmo_wifi_setup]: error code " + result.ToString());
       }
     }
   }

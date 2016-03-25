@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEngine;
+using Anki.Cozmo.Audio;
 
 namespace SpeedTap {
 

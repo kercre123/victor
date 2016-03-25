@@ -19,6 +19,9 @@
 
 // This App Controller is a subclass of the Unity generated AppController, registered with the #define at the bottom of this file
 @interface CozmoAppController : UnityAppController
+{
+  UIBackgroundTaskIdentifier bgTask;
+}
 
 - (BOOL)application:(UIApplication*)application didFinishLaunchingWithOptions:(NSDictionary*)launchOptions;
 
@@ -45,6 +48,22 @@ performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionH
   
   // We always report that there's new data so that the OS will allow us to run as often as possible
   completionHandler(UIBackgroundFetchResultNewData);
+}
+
+
+- (void)applicationDidEnterBackground:(UIApplication*)application
+{
+  [super applicationDidEnterBackground:application];
+  
+  // Set up a task to throw onto the end of the main queue as a means of allowing whatevers in there a chance to complete
+  if (self->bgTask == UIBackgroundTaskInvalid) {
+    bgTask = [application beginBackgroundTaskWithExpirationHandler: ^{
+      dispatch_async(dispatch_get_main_queue(), ^{
+        [application endBackgroundTask:self->bgTask];
+        self->bgTask = UIBackgroundTaskInvalid;
+      });
+    }];
+  }
 }
 
 @end

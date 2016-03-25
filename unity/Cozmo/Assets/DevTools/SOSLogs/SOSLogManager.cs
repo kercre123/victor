@@ -19,6 +19,10 @@ public class SOSLogManager : MonoBehaviour {
   }
 
   public void CreateListener() {
+    if (_SosTcpClient != null) {
+      Debug.LogWarning("SOS Listener already exists");
+      return;
+    }
     _SosTcpClient = new SOSTCPClient();
     _SosTcpClient.StartListening();
   }
