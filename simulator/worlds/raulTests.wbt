@@ -2,11 +2,11 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.999408 0.013885 0.0314906 5.45275
-  position -0.0155221 -1.11638 1.12283
+  orientation -0.930334 -0.151195 -0.334093 5.37766
+  position 0.658151 -2.06941 2.16641
 }
 Can {
-  translation 0.01027 0.126367 0.062
+  translation 0.01027 0.126367 0.312
   rotation 1 0 0 1.5708
 }
 Background {
@@ -31,15 +31,26 @@ DirectionalLight {
 }
 CozmoMat {
   showMarkers FALSE
+  xSize 0.05
+  ySize 0.05
+}
+RectangleArena {
+  rotation 1 0 0 1.5708
+  floorSize 5 5
 }
 LightCube {
-  translation 0.162799 -0.00141587 0.021993
+  translation 0.162799 -0.00141587 0.271993
   rotation 1.59038e-05 -1.83704e-06 1 0.23
   ID 1
+}
+Table {
+  rotation 1 0 0 1.5708
+  size 0.5 0.25 0.5
 }
 BlockWorldComms {
 }
 DEF Cozmo_1 CozmoBot {
+  translation 0 0 0.25
   name "CozmoBot_1"
 }
 WebotsKeyboardController {
