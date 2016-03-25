@@ -62,7 +62,7 @@ namespace CodeBreaker {
 
       _ValidCodeColors = _Game.ValidColors;
       foreach (var cubeState in _TargetCubeStates) {
-        cubeState.cube.TurnLEDsOff();
+        cubeState.cube.SetLEDsOff();
         cubeState.cube.SetLEDs(_ValidCodeColors[cubeState.currentColorIndex]);
       }
       _SecondsSinceLastCubeAdjust = 0f;

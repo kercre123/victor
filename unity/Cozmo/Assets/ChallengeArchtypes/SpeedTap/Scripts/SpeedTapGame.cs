@@ -229,12 +229,12 @@ namespace SpeedTap {
     }
 
     public void InitialCubesDone() {
-      CozmoBlock = CubesForGame[0];
+      CozmoBlock = CurrentRobot.LightCubes[CubeIdsForGame[0]];
     }
 
     public void SetPlayerCube(LightCube cube) {
       PlayerBlock = cube;
-      CubesForGame.Add(cube);
+      CubeIdsForGame.Add(cube);
     }
 
     public void UpdateUI() {
