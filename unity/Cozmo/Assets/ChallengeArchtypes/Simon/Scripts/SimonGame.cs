@@ -76,13 +76,13 @@ namespace Simon {
         List<int> usedIndices = new List<int>();
         int randomIndex = 0;
         SimonCube randomSimonSound;
-        foreach (LightCube cube in CubesForGame) {
+        foreach (int cube in CubeIdsForGame) {
           do {
             randomIndex = Random.Range(0, _CubeColorsAndSounds.Length);
           } while (usedIndices.Contains(randomIndex));
           usedIndices.Add(randomIndex);
           randomSimonSound = _CubeColorsAndSounds[randomIndex];
-          _BlockIdToSound.Add(cube.ID, randomSimonSound);
+          _BlockIdToSound.Add(cube, randomSimonSound);
         }
       }
 
@@ -90,20 +90,24 @@ namespace Simon {
     }
 
     public void SetCubeLightsDefaultOn() {
-      foreach (LightCube cube in CubesForGame) {
-        cube.SetLEDs(_BlockIdToSound[cube.ID].cubeColor);
+      foreach (int cubeId in CubeIdsForGame) {
+        CurrentRobot.LightCubes[cubeId].SetLEDs(_BlockIdToSound[cubeId].cubeColor);
       }
     }
 
     public void SetCubeLightsGuessWrong() {
-      foreach (LightCube cube in CubesForGame) {
-        cube.SetFlashingLEDs(Color.red, 100, 100, 0);
+      Debug.LogError("Wrong:" + CubeIdsForGame.Count);
+      foreach (int cubeId in CubeIdsForGame) {
+        Debug.LogError(cubeId);
+        CurrentRobot.LightCubes[cubeId].SetFlashingLEDs(Color.red, 100, 100, 0);
       }
     }
 
     public void SetCubeLightsGuessRight() {
-      foreach (LightCube cube in CubesForGame) {
-        cube.SetFlashingLEDs(_BlockIdToSound[cube.ID].cubeColor, 100, 100, 0);
+      Debug.LogError("Right:" + CubeIdsForGame.Count);
+      foreach (int cubeId in CubeIdsForGame) {
+        Debug.LogError(cubeId);
+        CurrentRobot.LightCubes[cubeId].SetFlashingLEDs(_BlockIdToSound[cubeId].cubeColor, 100, 100, 0);
       }
     }
 
@@ -111,8 +115,8 @@ namespace Simon {
       _CurrentIDSequence.Clear();
       for (int i = 0; i < sequenceLength; ++i) {
         int pickedID = -1;
-        int pickIndex = Random.Range(0, CubesForGame.Count);
-        pickedID = CubesForGame[pickIndex].ID;
+        int pickIndex = Random.Range(0, CubeIdsForGame.Count);
+        pickedID = CubeIdsForGame[pickIndex];
         _CurrentIDSequence.Add(pickedID);
       }
     }

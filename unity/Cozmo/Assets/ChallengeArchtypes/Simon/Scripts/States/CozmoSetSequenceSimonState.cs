@@ -66,7 +66,6 @@ namespace Simon {
     public override void Exit() {
       base.Exit();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      _GameInstance.SetCubeLightsDefaultOn();
     }
   }
 

@@ -13,7 +13,7 @@ namespace Simon {
     private int _TargetCube = -1;
     private uint _TargetCubeColor;
     private float _StartLightBlinkTime = -1;
-    private const float _kTapBufferSeconds = 0.2f;
+    private const float _kTapBufferSeconds = 0f;
 
     public override void Enter() {
       base.Enter();
@@ -55,7 +55,6 @@ namespace Simon {
       base.Exit();
       LightCube.TappedAction -= OnBlockTapped;
       _CurrentRobot.DriveWheels(0f, 0f);
-      _GameInstance.SetCubeLightsDefaultOn();
     }
 
     private void HandleOnPlayerWinAnimationDone(bool success) {

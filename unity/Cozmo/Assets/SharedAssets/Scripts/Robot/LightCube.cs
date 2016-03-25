@@ -208,11 +208,11 @@ public class LightCube : ObservedObject {
     SetLEDs(colors);
   }
 
-  public void SetFlashingLEDs(Color onColor, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionMs = 0) {
+  public void SetFlashingLEDs(Color onColor, uint onDurationMs = 100, uint offDurationMs = 100, uint transitionMs = 0) {
     SetLEDs(onColor.ToUInt(), 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
   }
 
-  public void SetFlashingLEDs(uint onColor, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionMs = 0) {
+  public void SetFlashingLEDs(uint onColor, uint onDurationMs = 100, uint offDurationMs = 100, uint transitionMs = 0) {
     SetLEDs(onColor, 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
   }
 

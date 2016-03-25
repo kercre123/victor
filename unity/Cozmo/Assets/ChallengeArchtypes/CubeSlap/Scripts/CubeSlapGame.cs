@@ -67,8 +67,8 @@ namespace CubeSlap {
 
     public LightCube GetCurrentTarget() {
       if (_CurrentTarget == null) {
-        if (this.CubesForGame.Count > 0) {
-          _CurrentTarget = this.CubesForGame[0];
+        if (this.CubeIdsForGame.Count > 0) {
+          _CurrentTarget = CurrentRobot.LightCubes[this.CubeIdsForGame[0]];
         }
       }
       return _CurrentTarget;

@@ -32,7 +32,7 @@ public class InitialCubesState : State {
       Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound, 0),
       Cozmo.UI.UIColorPalette.NeutralTextColor());
     _Game.SharedMinigameView.EnableContinueButton(false);
-    _Game.CubesForGame = new List<LightCube>();
+    _Game.CubeIdsForGame = new List<int>();
     _CubeIdToTimeout = new Dictionary<int, float>();
     _ValidCubeIds = new List<int>();
 
@@ -132,11 +132,11 @@ public class InitialCubesState : State {
     base.Exit();
 
     foreach (int id in _ValidCubeIds) {
-      _Game.CubesForGame.Add(_CurrentRobot.LightCubes[id]);
+      _Game.CubeIdsForGame.Add(id);
     }
 
     foreach (KeyValuePair<int, LightCube> lightCube in _CurrentRobot.LightCubes) {
-      if (!_Game.CubesForGame.Contains(lightCube.Value)) {
+      if (!_Game.CubeIdsForGame.Contains(lightCube.Key)) {
         lightCube.Value.SetLEDsOff();
       }
     }

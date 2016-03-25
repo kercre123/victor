@@ -51,7 +51,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private float _GameStartTime;
 
-  public List<LightCube> CubesForGame;
+  public List<int> CubeIdsForGame;
 
   private Dictionary<int, CycleData> _CubeCycleTimers;
 
