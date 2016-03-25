@@ -27,12 +27,16 @@ public class FactoryIntroManager : MonoBehaviour {
   private FactoryLogPanel _FactoryLogPanelInstance;
 
   [SerializeField]
+  private UnityEngine.UI.Text _StatusText;
+
+  [SerializeField]
   private Canvas _Canvas;
 
   private List<string> _LogList = new List<string>();
 
   void Start() {
     ShowDevConnectDialog();
+    SetStatusText("Not Connected");
     RobotEngineManager.Instance.RobotConnected += HandleConnected;
     RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
     RobotEngineManager.Instance.OnFactoryResult += FactoryResult;
@@ -42,7 +46,7 @@ public class FactoryIntroManager : MonoBehaviour {
 
   private void HandleConnected(int robotID) {
     HideDevConnectDialog();
-    Debug.Log("Factory App Connected To Robot");
+    SetStatusText("Factory App Connected To Robot");
     RobotEngineManager.Instance.Message.StartFactoryTest = Singleton<StartFactoryTest>.Instance.Initialize(0);
     RobotEngineManager.Instance.SendMessage();
     SOSLogManager.Instance.CreateListener();
@@ -59,6 +63,12 @@ public class FactoryIntroManager : MonoBehaviour {
     _FactoryLogPanelInstance.UpdateLogText(_LogList);
   }
 
+  private void SetStatusText(string txt) {
+    if (_StatusText != null) {
+      _StatusText.text = txt;
+    }
+  }
+
   private void HandleNewSOSLog(string log_entry) {
     Debug.Log(log_entry);
     while (_LogList.Count > 100) {
@@ -71,6 +81,7 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void HandleDisconnectedFromClient(DisconnectionReason obj) {
+    SetStatusText("Disconnected: " + obj.ToString());
     TestFailed();
   }
 
@@ -88,6 +99,7 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void FactoryResult(FactoryTestResult result) {
+    SetStatusText("Result Code: " + result.resultCode);
     if (result.resultCode != 0) {
       TestFailed();
     }
