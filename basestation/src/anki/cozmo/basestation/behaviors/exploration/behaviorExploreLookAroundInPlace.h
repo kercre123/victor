@@ -66,8 +66,8 @@ protected:
   
   virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
   virtual IBehavior::Status UpdateInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) { return Result::RESULT_OK; } // TODO?
-  virtual void StopInternal(Robot& robot, double currentTime_sec) {} // TODO?
+  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override { return Result::RESULT_OK; } // TODO?
+  virtual void StopInternal(Robot& robot, double currentTime_sec) override {} // TODO?
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions
