@@ -96,17 +96,13 @@ namespace Simon {
     }
 
     public void SetCubeLightsGuessWrong() {
-      Debug.LogError("Wrong:" + CubeIdsForGame.Count);
       foreach (int cubeId in CubeIdsForGame) {
-        Debug.LogError(cubeId);
         CurrentRobot.LightCubes[cubeId].SetFlashingLEDs(Color.red, 100, 100, 0);
       }
     }
 
     public void SetCubeLightsGuessRight() {
-      Debug.LogError("Right:" + CubeIdsForGame.Count);
       foreach (int cubeId in CubeIdsForGame) {
-        Debug.LogError(cubeId);
         CurrentRobot.LightCubes[cubeId].SetFlashingLEDs(_BlockIdToSound[cubeId].cubeColor, 100, 100, 0);
       }
     }
