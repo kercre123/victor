@@ -780,6 +780,14 @@ namespace Anki {
                                              msg.lights[i].transitionOnFrames, msg.lights[i].transitionOffFrames);
         }
       }
+      void Process_enterTestMode(const RobotInterface::EnterFactoryTestMode&)
+      {
+        // nothing to do here
+      }
+      void Process_testState(const RobotInterface::TestState&)
+      {
+        // Nothing to do here
+      }
 #endif
 
 // ----------- Send messages -----------------
