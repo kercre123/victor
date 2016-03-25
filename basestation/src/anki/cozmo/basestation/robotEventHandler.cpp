@@ -104,14 +104,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // Custom handler for SendDiscoveredObjects event
     auto sendDiscoveredObjectsCallback = std::bind(&RobotEventHandler::HandleSendDiscoveredObjects, this, std::placeholders::_1);
     _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SendDiscoveredObjects, sendDiscoveredObjectsCallback));
-
-    // Custom handler for StartFactoryTest event
-    auto startFactoryTestCallback = std::bind(&RobotEventHandler::HandleStartFactoryTest, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartFactoryTest, startFactoryTestCallback));
-    
-    // Custom handler for StopFactoryTest event
-    auto stopFactoryTestCallback = std::bind(&RobotEventHandler::HandleStopFactoryTest, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StopFactoryTest, stopFactoryTestCallback));
     
     // Custom handlers for Mood events
     {
@@ -980,24 +972,6 @@ void RobotEventHandler::HandleSendDiscoveredObjects(const AnkiEvent<ExternalInte
   }
 
 }
-  
- 
-void RobotEventHandler::HandleStartFactoryTest(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-{
-  //const auto& eventData = event.GetData();
-  //const auto& message = eventData.Get_StartFactoryTest();
-  
-  PRINT_NAMED_WARNING("RobotEventHandler.HandleStartFactoryTest", "TODO...");
-}
-
-void RobotEventHandler::HandleStopFactoryTest(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-{
-  //const auto& eventData = event.GetData();
-  //const auto& message = eventData.Get_StartFactoryTest();
-  
-  PRINT_NAMED_WARNING("RobotEventHandler.HandleStopFactoryTest", "TODO...");
-}
-  
 
 } // namespace Cozmo
 } // namespace Anki
