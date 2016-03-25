@@ -17,14 +17,21 @@ public class FactoryIntroManager : MonoBehaviour {
   private UnityEngine.UI.Button _LogsButton;
 
   [SerializeField]
-  private UnityEngine.UI.Button _SettingsButton;
+  private UnityEngine.UI.Button _OptionsButton;
 
   [SerializeField]
   private UnityEngine.UI.Button _RestartButton;
 
   [SerializeField]
+  private UnityEngine.UI.Button _StartButton;
+
+  [SerializeField]
   private FactoryLogPanel _FactoryLogPanelPrefab;
   private FactoryLogPanel _FactoryLogPanelInstance;
+
+  [SerializeField]
+  private FactoryOptionsPanel _FactoryOptionsPanelPrefab;
+  private FactoryOptionsPanel _FactoryOptionsPanelInstance;
 
   [SerializeField]
   private UnityEngine.UI.Text _StatusText;
@@ -35,13 +42,20 @@ public class FactoryIntroManager : MonoBehaviour {
   private List<string> _LogList = new List<string>();
 
   void Start() {
-    ShowDevConnectDialog();
+    
     SetStatusText("Not Connected");
     RobotEngineManager.Instance.RobotConnected += HandleConnected;
     RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
     RobotEngineManager.Instance.OnFactoryResult += FactoryResult;
     _RestartButton.gameObject.SetActive(false);
     _LogsButton.onClick.AddListener(HandleLogButtonClick);
+    _OptionsButton.onClick.AddListener(HandleOptionsButtonClick);
+    _StartButton.onClick.AddListener(HandleStartButtonClick);
+  }
+
+  private void HandleStartButtonClick() {
+    ShowDevConnectDialog();
+    _StartButton.gameObject.SetActive(false);
   }
 
   private void HandleConnected(int robotID) {
@@ -58,9 +72,23 @@ public class FactoryIntroManager : MonoBehaviour {
     if (_FactoryLogPanelInstance != null) {
       GameObject.Destroy(_FactoryLogPanelInstance.gameObject);
     }
+    if (_FactoryOptionsPanelInstance != null) {
+      GameObject.Destroy(_FactoryOptionsPanelInstance);
+    }
     _FactoryLogPanelInstance = GameObject.Instantiate(_FactoryLogPanelPrefab).GetComponent<FactoryLogPanel>();
     _FactoryLogPanelInstance.transform.SetParent(_Canvas.transform, false);
     _FactoryLogPanelInstance.UpdateLogText(_LogList);
+  }
+
+  private void HandleOptionsButtonClick() {
+    if (_FactoryLogPanelInstance != null) {
+      GameObject.Destroy(_FactoryLogPanelInstance.gameObject);
+    }
+    if (_FactoryOptionsPanelInstance != null) {
+      GameObject.Destroy(_FactoryOptionsPanelInstance);
+    }
+    _FactoryOptionsPanelInstance = GameObject.Instantiate(_FactoryOptionsPanelPrefab).GetComponent<FactoryOptionsPanel>();
+    _FactoryOptionsPanelInstance.transform.SetParent(_Canvas.transform, false);
   }
 
   private void SetStatusText(string txt) {
@@ -70,7 +98,6 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void HandleNewSOSLog(string log_entry) {
-    Debug.Log(log_entry);
     while (_LogList.Count > 100) {
       _LogList.RemoveAt(0);
     }
@@ -91,11 +118,18 @@ public class FactoryIntroManager : MonoBehaviour {
     }
     _Background.color = Color.red;
     _RestartButton.gameObject.SetActive(true);
+    _RestartButton.onClick.AddListener(() => RestartTestApp());
   }
 
   private void TestPassed() {
     _Background.color = Color.green;
     _RestartButton.gameObject.SetActive(true);
+    _RestartButton.onClick.AddListener(() => RestartTestApp());
+  }
+
+  private void RestartTestApp() {
+    CozmoBinding.Shutdown();
+    UnityEngine.SceneManagement.SceneManager.LoadScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name);
   }
 
   private void FactoryResult(FactoryTestResult result) {
