@@ -28,9 +28,11 @@ namespace Simon {
 
     [SerializeField]
     private SimonSound[] _CubeColorsAndSounds;
+    public MusicStateWrapper BetweenRoundsMusic;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       _Config = (SimonGameConfig)minigameConfig;
+      BetweenRoundsMusic = _Config.BetweenRoundsMusic;
       InitializeMinigameObjects();
     }
 
@@ -52,7 +54,7 @@ namespace Simon {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
 
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetMusicState());
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
     }
 
     public int GetNewSequenceLength(PlayerType playerPickingSequence) {
