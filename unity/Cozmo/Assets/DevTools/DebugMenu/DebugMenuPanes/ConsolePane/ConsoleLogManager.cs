@@ -129,6 +129,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   private void OnConsoleLogPaneOpened(ConsoleLogPane logPane) {
     _ConsoleLogPaneView = logPane;
     _ConsoleLogPaneView.ConsoleSOSLogButtonEnable += EnableSOSLogs;
+    _ConsoleLogPaneView.ConsoleLogCopyToClipboard += CopyLogsToClipboard;
 
     List<string> consoleText = CompileRecentLogs();
     _ConsoleLogPaneView.Initialize(consoleText, _TextLabelPool);
@@ -146,6 +147,16 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     // Change the text for the pane
     List<string> consoleText = CompileRecentLogs();
     _ConsoleLogPaneView.SetText(consoleText);
+  }
+
+  private void CopyLogsToClipboard() {
+    List<string> logDb = CompileRecentLogs();
+    string logFull = "";
+    for (int i = 0; i < logDb.Count; ++i) {
+      logFull += logDb[i];
+    }
+    CozmoBinding.SendToClipboard(logFull);
+    GUIUtility.systemCopyBuffer = logFull;
   }
 
   private void OnConsoleLogPaneClosed() {
