@@ -14,7 +14,7 @@ namespace CubePounce {
     public const string kPlayerWin = "PlayerWin";
     // Consts for determining the exact placement and forgiveness for cube location
     // Must be consistent for animations to work
-    public const float kCubePlaceDist = 60.0f;
+    public const float kCubePlaceDist = 65.0f;
     private int _CozmoScore;
     private int _PlayerScore;
     private int _PlayerRoundsWon;
