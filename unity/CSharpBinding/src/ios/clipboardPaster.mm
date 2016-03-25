@@ -12,4 +12,5 @@
 
 void WriteToClipboard(const char* log) {
   [UIPasteboard generalPasteboard].string = [NSString stringWithUTF8String:log];
+  [UIPasteboard generalPasteboard].persistent = YES;
 }
