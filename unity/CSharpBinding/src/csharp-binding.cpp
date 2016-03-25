@@ -90,3 +90,6 @@ int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
   return result;
 }
 
+void cozmo_send_to_clipboard(const char* log) {
+  cozmo_engine_send_to_clipboard(log);
+}

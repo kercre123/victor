@@ -38,6 +38,8 @@ public static class CozmoBinding {
   [DllImport("__Internal")]
   private static extern int cozmo_wifi_setup(string wifiSSID, string wifiPasskey);
 
+  [DllImport("__Internal")]
+  private static extern void cozmo_send_to_clipboard(string logData);
 
   public static void Startup(string configurationData) {
     if (initialized) {
@@ -90,6 +92,15 @@ public static class CozmoBinding {
         sDAS.Error("CozmoBinding.WifiSetup [cozmo_wifi_setup]: error code " + result.ToString());
       }
     }
+  }
+
+  public static void SendToClipboard(string log) {
+    if (initialized) {
+      #if !UNITY_EDITOR && !UNITY_STANDALONE
+      cozmo_send_to_clipboard(log);
+      #endif
+    }
+
   }
 }
 
