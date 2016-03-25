@@ -30,7 +30,7 @@
 
 #define DEBUG_FACTORY_TEST_BEHAVIOR 1
 
-#define END_TEST_IN_HANDLER(ERRCODE) EndTest(ERRCODE); return RESULT_OK;
+#define END_TEST_IN_HANDLER(ERRCODE) EndTest(robot, ERRCODE); return RESULT_OK;
 
 namespace Anki {
 namespace Cozmo {
@@ -40,10 +40,11 @@ namespace Cozmo {
   , _cliffDetectPose(0, Z_AXIS_3D(), {50, 0, 0}, &robot.GetPose().FindOrigin())
   , _camCalibPose(0, Z_AXIS_3D(), {0, 0, 0}, &robot.GetPose().FindOrigin())
   , _prePickupPose( DEG_TO_RAD(90), Z_AXIS_3D(), {0, 100, 0}, &robot.GetPose().FindOrigin())
-  , _expectedLightCubePose(0, Z_AXIS_3D(), {0, 300, 0}, &robot.GetPose().FindOrigin())
+  , _expectedLightCubePose(0, Z_AXIS_3D(), {0, 250, 0}, &robot.GetPose().FindOrigin())
+  , _expectedChargerPose(0, Z_AXIS_3D(), {-250, 150, 0}, &robot.GetPose().FindOrigin())
   , _currentState(State::StartOnCharger)
   , _lastHandlerResult(RESULT_OK)
-  , _testResult(FactoryTestErrorCode::UNKNOWN)
+  , _testResult(FactoryTestResultCode::UNKNOWN)
   {
     SetDefaultName("FactoryTest");
 
@@ -67,7 +68,6 @@ namespace Cozmo {
     };
     
     
-    
     SubscribeToTags({{
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
@@ -85,14 +85,15 @@ namespace Cozmo {
   
   bool BehaviorFactoryTest::IsRunnable(const Robot& robot, double currentTime_sec) const
   {
-    return _testResult == FactoryTestErrorCode::UNKNOWN;
+    return _testResult == FactoryTestResultCode::UNKNOWN;
   }
   
   Result BehaviorFactoryTest::InitInternal(Robot& robot, double currentTime_sec)
   {
     Result lastResult = RESULT_OK;
     
-    _interrupted = false;
+    _testResult = FactoryTestResultCode::UNKNOWN;
+    _actionCallbackMap.clear();
     
     robot.GetActionList().Cancel();
     
@@ -110,21 +111,29 @@ namespace Cozmo {
     // ...
   }
 
-  void BehaviorFactoryTest::EndTest(FactoryTestErrorCode errCode)
+  void BehaviorFactoryTest::EndTest(Robot& robot, FactoryTestResultCode resCode)
   {
     // Send test result out and make this behavior stop running
-    _testResult = errCode;
-    if (_testResult == FactoryTestErrorCode::SUCCESS) {
+    _testResult = resCode;
+    if (_testResult == FactoryTestResultCode::SUCCESS) {
       PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.TestComplete", "PASS");
     } else {
-      PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestComplete", "FAIL (code %d)", _testResult);
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestComplete", "FAIL: %s (code %d)", EnumToString(_testResult), (int)_testResult);
     }
+    
+    robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
   }
   
   
   IBehavior::Status BehaviorFactoryTest::UpdateInternal(Robot& robot, double currentTime_sec)
   {
-    #define END_TEST(ERRCODE) EndTest(ERRCODE); return Status::Failure;
+    #define END_TEST(ERRCODE) EndTest(robot, ERRCODE); return Status::Failure;
+    
+    // If test is complete
+    if (_testResult != FactoryTestResultCode::UNKNOWN) {
+      PRINT_NAMED_WARNING("BehaviorFactory.Update.TestAlreadyComplete", "Result %s (code %d)", EnumToString(_testResult), (int)_testResult);
+      return Status::Complete;
+    }
     
     // Check to see if we had any problems with any handlers
     if(_lastHandlerResult != RESULT_OK) {
@@ -133,15 +142,23 @@ namespace Cozmo {
       return Status::Failure;
     }
     
-    if(_interrupted) {
-      return Status::Complete;
-    }
-
     UpdateStateName();
    
-    if (_isActing) {
+    if (IsActing()) {
       return Status::Running;
     }
+    
+    f32 currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    
+    auto gotoPoseCallback = [this,&robot](ActionResult ret){
+      if (ret != ActionResult::SUCCESS) {
+        EndTest(robot, FactoryTestResultCode::GOTO_POSE_ACTION_FAILED);
+      } else {
+        _lastPoseArrivedTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      }
+      return true;
+    };
+    
     
     switch(_currentState)
     {
@@ -150,10 +167,10 @@ namespace Cozmo {
         // Check that robot is on charger
         if (!robot.IsOnCharger()) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOnCharger", "");
-          END_TEST(FactoryTestErrorCode::CHARGER_UNDETECTED);
+          END_TEST(FactoryTestResultCode::CHARGER_UNDETECTED);
         }
         
-        DriveStraightAction *driveAction = new DriveStraightAction(robot, 200, 100);
+        DriveStraightAction *driveAction = new DriveStraightAction(robot, 250, 100);
         StartActing(robot, driveAction );
         _currentState = State::DriveToSlot;
         break;
@@ -163,12 +180,12 @@ namespace Cozmo {
       {
         if (!robot.IsOnCliff()) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingCliff", "");
-          END_TEST(FactoryTestErrorCode::CLIFF_UNDETECTED);
+          END_TEST(FactoryTestResultCode::CLIFF_UNDETECTED);
         }
         
         if (robot.IsOnCharger()) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOffCharger", "");
-          END_TEST(FactoryTestErrorCode::STILL_ON_CHARGER);
+          END_TEST(FactoryTestResultCode::STILL_ON_CHARGER);
         }
         
         // Set pose to expected
@@ -194,7 +211,7 @@ namespace Cozmo {
                               _camCalibPose.GetTranslation().x(),
                               _camCalibPose.GetTranslation().y(),
                               _camCalibPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
-          END_TEST(FactoryTestErrorCode::NOT_IN_CALIBRATION_POSE);
+          END_TEST(FactoryTestResultCode::NOT_IN_CALIBRATION_POSE);
         }
         
         _camCalibPoseIndex = 0;
@@ -233,8 +250,8 @@ namespace Cozmo {
         PRINT_NAMED_INFO("BehaviorFactoryTest.Update.Calibrating", "TODO...");
         // TODO: Do calibration...
         
-        
-        StartActing(robot, new DriveToPoseAction(robot, _prePickupPose, _motionProfile, false, false));
+        // Goto pose where block is visible
+        StartActing(robot, new DriveToPoseAction(robot, _prePickupPose, _motionProfile, false, false), gotoPoseCallback);
         _currentState = State::GotoPickupPose;
         break;
       }
@@ -251,22 +268,28 @@ namespace Cozmo {
                               _prePickupPose.GetTranslation().x(),
                               _prePickupPose.GetTranslation().y(),
                               _prePickupPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
-          END_TEST(FactoryTestErrorCode::NOT_IN_PRE_PICKUP_POSE);
+          END_TEST(FactoryTestResultCode::NOT_IN_PRE_PICKUP_POSE);
         }
         
-        // Verify that block is approximately where expected
+        // Verify that block exists
         if (!_blockObjectID.IsSet()) {
-          PRINT_NAMED_ERROR("BehaviorFactoryTest.Update.ExpectingCubeToExist", "");
-          END_TEST(FactoryTestErrorCode::CUBE_NOT_FOUND);
+          if (_lastPoseArrivedTime < 0 || currTime > _lastPoseArrivedTime + 1.f) {
+            PRINT_NAMED_ERROR("BehaviorFactoryTest.Update.ExpectingCubeToExist", "currTime %f, lastPoseArrivedTime %f", currTime, _lastPoseArrivedTime);
+            END_TEST(FactoryTestResultCode::CUBE_NOT_FOUND);
+          }
+          
+          // Waiting for block to exist. Should be seeing it very soon!
+          break;
         }
 
+        // Verify that block is approximately where expected
         ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
         Vec3f Tdiff;
         Radians angleDiff;
         if (!oObject->GetPose().IsSameAs_WithAmbiguity(_expectedLightCubePose,
                                                        oObject->GetRotationAmbiguities(),
-                                                       oObject->GetSameDistanceTolerance()*0.5f,
-                                                       oObject->GetSameAngleTolerance(), true,
+                                                       oObject->GetSameDistanceTolerance(),
+                                                       oObject->GetSameAngleTolerance()*0.5f, true,
                                                        Tdiff, angleDiff)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpected",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
@@ -276,30 +299,53 @@ namespace Cozmo {
                               _expectedLightCubePose.GetTranslation().x(),
                               _expectedLightCubePose.GetTranslation().y(),
                               _expectedLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
-          END_TEST(FactoryTestErrorCode::CUBE_NOT_WHERE_EXPECTED);
+          END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
         }
         
-        // Dock to block
-        StartActing(robot, new DriveToPickupObjectAction(robot,
-                                                         _blockObjectID,
-                                                         _motionProfile));
+        _attemptCounter = 0;
+        _currentState = State::StartPickup;
+        break;
+      }
+      case State::StartPickup:
+      {
+        auto pickupCallback = [this,&robot](ActionResult ret){
+          if (ret == ActionResult::SUCCESS && robot.GetCarryingObject() == _blockObjectID) {
+            PRINT_NAMED_INFO("BehaviorFactoryTest.pickupCallback.Success", "");
+          } else if (_attemptCounter <= _kNumPickupRetries) {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.pickupCallback.FailedRetrying", "");
+            _currentState = State::StartPickup;
+          } else {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.pickupCallback.Failed", "");
+            EndTest(robot, FactoryTestResultCode::PICKUP_FAILED);
+          }
+          return true;
+        };
+       
+        // Pickup block
+        PRINT_NAMED_INFO("BehaviorFactory.Update.PickingUp", "Attempt %d", _attemptCounter);
+        ++_attemptCounter;
+        StartActing(robot,
+                    new DriveToPickupObjectAction(robot, _blockObjectID, _motionProfile),
+                    pickupCallback);
         _currentState = State::PickingUpBlock;
         break;
       }
       case State::PickingUpBlock:
       {
-        // Verify that block is being carried
-        if (robot.GetCarryingObject() != _blockObjectID) {
-          PRINT_NAMED_WARNING("BehaviorFactory.Update.ExpectedToBeCarryingBlock", "");
-          END_TEST(FactoryTestErrorCode::PICKUP_FAILED);
-        }
+        auto placementCallback = [this,&robot](ActionResult ret){
+          if (ret == ActionResult::SUCCESS && !robot.IsCarryingObject()) {
+            PRINT_NAMED_INFO("BehaviorFactoryTest.placementCallback.Success", "");
+          } else {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.placementCallback.Failed", "");
+            EndTest(robot, FactoryTestResultCode::PLACEMENT_FAILED);
+          }
+          return true;
+        };
         
         // Put block down
-        StartActing(robot, new DriveToPlaceCarriedObjectAction(robot,
-                                                               _expectedLightCubePose,
-                                                               true,
-                                                               _motionProfile,
-                                                               false));
+        StartActing(robot,
+                    new PlaceObjectOnGroundAtPoseAction(robot, _expectedLightCubePose, _motionProfile),
+                    placementCallback);
         _currentState = State::PlacingBlock;
         break;
       }
@@ -311,8 +357,8 @@ namespace Cozmo {
         Radians angleDiff;
         if (!oObject->GetPose().IsSameAs_WithAmbiguity(_expectedLightCubePose,
                                                        oObject->GetRotationAmbiguities(),
-                                                       oObject->GetSameDistanceTolerance()*0.5f,
-                                                       oObject->GetSameAngleTolerance(), true,
+                                                       oObject->GetSameDistanceTolerance(),
+                                                       oObject->GetSameAngleTolerance()*0.5f, true,
                                                        Tdiff, angleDiff)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpectedAfterPlacement",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
@@ -322,14 +368,38 @@ namespace Cozmo {
                               _expectedLightCubePose.GetTranslation().x(),
                               _expectedLightCubePose.GetTranslation().y(),
                               _expectedLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
-          END_TEST(FactoryTestErrorCode::CUBE_NOT_WHERE_EXPECTED);
+          END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
         }
         
         // Look at charger
-        
+        StartActing(robot, new TurnTowardsPoseAction(robot, _expectedChargerPose, DEG_TO_RAD(180)), gotoPoseCallback );
+        _currentState = State::DockToCharger;
         break;
       }
+      case State::DockToCharger:
+      {
+        if (!_chargerObjectID.IsSet()) {
+          if (_lastPoseArrivedTime > 0 && currTime > _lastPoseArrivedTime + 1.0) {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectedChargerToExist", "");
+            END_TEST(FactoryTestResultCode::CHARGER_NOT_FOUND);
+          }
+          break;
+        }
         
+        auto chargerCallback = [this,&robot](ActionResult ret){
+          if (ret == ActionResult::SUCCESS && robot.IsOnCharger()) {
+            EndTest(robot, FactoryTestResultCode::SUCCESS);
+          } else {
+            EndTest(robot, FactoryTestResultCode::CHARGER_DOCK_FAILED);
+          }
+          return true;
+        };
+        
+        StartActing(robot,
+                    new DriveToAndMountChargerAction(robot, _chargerObjectID, _motionProfile),
+                    chargerCallback);
+        break;
+      }
       default:
         PRINT_NAMED_ERROR("BehaviorFactoryTest.Update.UnknownState",
                           "Reached unknown state %d.", _currentState);
@@ -341,20 +411,22 @@ namespace Cozmo {
 
   Result BehaviorFactoryTest::InterruptInternal(Robot& robot, double currentTime_sec)
   {
-    _interrupted = true;
-    
+    StopInternal(robot, currentTime_sec);
     return RESULT_OK;
   }
   
   void BehaviorFactoryTest::StopInternal(Robot& robot, double currentTime_sec)
   {
-    if(_lastActionTag != static_cast<u32>(ActionConstants::INVALID_TAG)) {
-      // Make sure we don't stay in tracking when we leave this action
-      // TODO: this will cancel any action we were doing. Cancel all tracking actions?
-      robot.GetActionList().Cancel(_lastActionTag);
+    // Cancel all actions
+    for (auto tag : _actionCallbackMap) {
+      robot.GetActionList().Cancel(tag.first);
+    }
+    _actionCallbackMap.clear();
+    
+    if (_testResult == FactoryTestResultCode::UNKNOWN) {
+      EndTest(robot, FactoryTestResultCode::TEST_CANCELLED);
     }
   }
-  
 
   
   void BehaviorFactoryTest::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
@@ -428,18 +500,24 @@ namespace Cozmo {
       case State::GotoPickupPose:
         name = "GOTO_PICKUP_POSE";
         break;
+      case State::StartPickup:
+        name = "START_PICKUP";
+        break;
       case State::PickingUpBlock:
         name = "PICKING";
         break;
       case State::PlacingBlock:
         name = "PLACING";
         break;
+      case State::DockToCharger:
+        name = "DOCK_TO_CHARGER";
+        break;
       default:
         PRINT_NAMED_WARNING("BehaviorFactoryTest.SetCurrState.InvalidState", "");
         break;
     }
 
-    if( _isActing ) {
+    if( IsActing() ) {
       name += '*';
     }
     else {
@@ -463,214 +541,20 @@ namespace Cozmo {
       return lastResult;
     }
     
-    
-    if (msg.idTag != _lastActionTag) {
+    if (_actionCallbackMap.count(msg.idTag) == 0) {
       BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR, "BehaviorFactoryTest.HandleActionCompleted.OtherAction",
-                             "finished action id=%d, but only care about id %d",
-                             msg.idTag,
-                             _lastActionTag);
+                             "finished action id=%d type=%s but don't care",
+                             msg.idTag, EnumToString(msg.actionType));
       return lastResult;
     }
-
-    if( _actionResultCallback ) {
-      if( _actionResultCallback(msg.result) ) {
-        return lastResult;
+    
+    if (_actionCallbackMap.count(msg.idTag) != 0) {
+      if (_actionCallbackMap[msg.idTag]) {
+        _actionCallbackMap[msg.idTag](msg.result);
       }
+      _actionCallbackMap.erase(msg.idTag);
     }
     
-    switch(_currentState)
-    {
-
-      case State::DriveToSlot:
-      case State::GotoCalibrationPose:
-      case State::TakeCalibrationImages:
-      case State::ComputeCameraCalibration:
-      case State::GotoPickupPose:
-        _isActing = false;
-        break;
-
-      case State::PickingUpBlock:
-      {
-        ++_attemptCounter;
-        if(msg.result == ActionResult::SUCCESS) {
-          switch(msg.actionType) {
-              
-            case RobotActionType::PICKUP_OBJECT_LOW:
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR,
-                                     "BehaviorFactoryTest.HandleActionCompleted.PickupSuccessful",
-                                     "");
-
-
-              
-              // We're done picking up the block.
-              //SetCurrState(State::TrackingFace);
-              _isActing = false;
-              break;
-              
-            case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
-              
-              PRINT_NAMED_ERROR("BehaviorFactoryTest.PickingUp.PICK_AND_PLACE_INCOMPLETE", "THIS ACTUALLY HAPPENS?");
-              
-              // We failed to pick up or place the last block, try again, and check if we need to roll or not
-              //SetCurrState(State::InspectingBlock);
-              //_holdUntilTime = currentTime_sec + _timetoInspectBlock;
-              _isActing = false;
-              break;
-
-            default:
-              // Simply ignore other action completions?
-              break;
-              
-          } // switch(actionType)
-        } else if( msg.result == ActionResult::FAILURE_RETRY ) {
-
-          // // This isn't foolproof, but use lift height to check if this failure occurred during pickup
-          // // verification.
-          // if (robot.GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK) {
-          //   PlayAnimation(robot, "Demo_OCD_PickUp_Fail");
-          // } // else {
-          //   // don't make sad emote if we just drove to the wrong position
-          //   _isActing = false;
-          //   // }
-
-          BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR,
-                                 "BehaviorFactoryTest.HandleActionCompleted.PickupFailure",
-                                 "failed pickup with %s, trying again",
-                                 EnumToString(msg.completionInfo.Get_objectInteractionCompleted().result));
-
-          switch(msg.completionInfo.Get_objectInteractionCompleted().result)
-          {
-            case ObjectInteractionResult::INCOMPLETE:
-            case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE: {
-              _isActing = false;
-              break;
-            }
-
-            default: {
-              // Simultaneously lower lift and play failure animation
-              MoveLiftToHeightAction* lowerLift = new MoveLiftToHeightAction(robot, 
-              MoveLiftToHeightAction::Preset::LOW_DOCK);
-              lowerLift->SetDuration(0.25); // Lower it fast: frustrated
-              StartActing(robot, new CompoundActionParallel(robot, {
-//                new PlayAnimationAction(robot, "ID_rollBlock_fail_01"),
-                lowerLift
-              }));
-            }
-          }
-
-//          SetCurrState(State::InspectingBlock);
-//          _holdUntilTime = currentTime_sec + _timetoInspectBlock;
-
-
-        } else {
-            BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR,
-                                   "BehaviorFactoryTest.HandleActionCompleted.PickupFailure",
-                                   "failed pickup with %s, searching",
-                                   EnumToString(msg.completionInfo.Get_objectInteractionCompleted().result));
-//            _missingBlockFoundState = State::InspectingBlock;
-//            SetCurrState(State::SearchingForMissingBlock);
-            _isActing = false;
-        }
-        
-        break;
-      } // case PickingUpBlock
-        
-      case State::PlacingBlock:
-      {
-        ++_attemptCounter;
-        if(msg.result == ActionResult::SUCCESS) {
-          switch(msg.actionType) {
-              
-            case RobotActionType::PLACE_OBJECT_HIGH:
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR,
-                                     "BehaviorFactoryTest.HandleActionCompleted.PlacementSuccessful",
-                                     "Placed object %d",
-                                     _blockObjectID.GetValue());
-              
-//              SetCurrState();
-              _attemptCounter = 0;
-              break;
-              
-            case RobotActionType::PICK_AND_PLACE_INCOMPLETE:
-              PRINT_NAMED_ERROR("BehaviorFactoryTest.Placing.PICK_AND_PLACE_INCOMPLETE", "THIS ACTUALLY HAPPENS?");
-              
-              // We failed to place the last block, try again?
-              SetCurrState(State::PlacingBlock);
-              _isActing = false;
-              break;
-              
-            default:
-              // Simply ignore other action completions?
-              break;
-          }
-        } else {
-
-          switch(msg.completionInfo.Get_objectInteractionCompleted().result)
-          {
-            case ObjectInteractionResult::INCOMPLETE:
-            case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
-            {
-              // TODO:(bn) "soft fail" sound here?
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR,
-                                     "BehaviorFactoryTest.HandleActionCompleted.PlacementFailure",
-                                     "pre-dock fail, trying again");
-              SetCurrState(State::PlacingBlock);
-              _isActing = false;
-              break;
-            }
-
-            case ObjectInteractionResult::VISUAL_VERIFICATION_FAILED:
-            {
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR,
-                                     "BehaviorFactoryTest.HandleActionCompleted.PlacementFailure",
-                                     "failed to visually verify before placement docking, searching for cube");
-
-              // search for the block, but hold a bit first in case we see it
-//              _missingBlockFoundState = State::PlacingBlock;
-              _holdUntilTime = currentTime_sec + 0.75f;
-//              SetCurrState(State::SearchingForMissingBlock);
-              _isActing = false;
-              break;
-            }
-              
-            default:
-            {
-              BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR,
-                                     "BehaviorFactoryTest.HandleActionCompleted.PlacementFailure",
-                                     "dock fail with %s, backing up to try again",
-                                     EnumToString(msg.completionInfo.Get_objectInteractionCompleted().result));
-              
-              _blockObjectID.UnSet();
-
-/*
-              const float failureBackupDist = 70.0f;
-              const float failureBackupSpeed = 80.0f;
-              
-              // back up and drop the block, then re-init to start over
-              StartActing(robot,
-                          new CompoundActionSequential(robot, {
-                              new DriveStraightAction(robot, -failureBackupDist, -failureBackupSpeed),
-                              new PlaceObjectOnGroundAction(robot)}),
-                              [this,&robot](ActionResult ret){
-                                _isActing = false;
-                                InitState(robot);
-                                return true;
-                              }
-                          );
- */
-              break;
-            }
-          } // switch(objectInteractionResult)
-          
-        }
-        break;
-      } // case PlacingBlock
-
-      default:
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleActionCompleted.UnexpectedAction", "Action type %d completed during %s", msg.actionType, GetStateName().c_str());
-        break;
-    } // switch(_currentState)
-
     return lastResult;
   } // HandleActionCompleted()
 
@@ -696,7 +580,7 @@ namespace Cozmo {
           return RESULT_OK;
         } else {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedProxObstacle", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
-          END_TEST_IN_HANDLER(FactoryTestErrorCode::UNEXPECTED_OBSERVED_OBJECT);
+          END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
         }
         break;
         
@@ -706,7 +590,7 @@ namespace Cozmo {
           return RESULT_OK;
         } else {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedBlock", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
-          END_TEST_IN_HANDLER(FactoryTestErrorCode::UNEXPECTED_OBSERVED_OBJECT);
+          END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
         }
         break;
         
@@ -716,13 +600,13 @@ namespace Cozmo {
           return RESULT_OK;
         } else {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedCharger", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
-          END_TEST_IN_HANDLER(FactoryTestErrorCode::UNEXPECTED_OBSERVED_OBJECT);
+          END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
         }
         break;
         
       default:
         PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleObservedObject.UnexpectedObjectType", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
-        END_TEST_IN_HANDLER(FactoryTestErrorCode::UNEXPECTED_OBSERVED_OBJECT);
+        END_TEST_IN_HANDLER(FactoryTestResultCode::UNEXPECTED_OBSERVED_OBJECT);
     }
     
     return RESULT_OK;
@@ -754,10 +638,14 @@ namespace Cozmo {
 
   void BehaviorFactoryTest::StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback)
   {
-    _lastActionTag = action->GetTag();
-    _actionResultCallback = callback;
-    robot.GetActionList().QueueActionNow(action);
-    _isActing = true;
+    assert(_actionCallbackMap.count(action->GetTag()) == 0);
+
+    if (robot.GetActionList().QueueActionNow(action) == RESULT_OK) {
+      _actionCallbackMap[action->GetTag()] = callback;
+    } else {
+      PRINT_NAMED_WARNING("BehaviorFactory.StartActing.QueueActionFailed", "Action type %s", EnumToString(action->GetType()));
+      EndTest(robot, FactoryTestResultCode::QUEUE_ACTION_FAILED);
+    }
   }
 
 

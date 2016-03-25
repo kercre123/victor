@@ -22,9 +22,9 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/vision/basestation/trackedFace.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/pathMotionProfile.h"
+#include "clad/types/factoryTestTypes.h"
 
 
 namespace Anki {
@@ -46,8 +46,7 @@ namespace Cozmo {
     
   private:
     
-    // Internally, this behavior is just a little state machine going back and
-    // forth between picking up and placing blocks
+    // TODO: Move to factoryTestTypes.clad?
     enum class State {
       StartOnCharger,           // Verify that robot is on charger and IMU is not drifting
       DriveToSlot,              // Drive forward until cliff event. Set robot's pose.
@@ -58,26 +57,11 @@ namespace Cozmo {
       TakeCalibrationImages,    // Take and save images of calibration patterns
       ComputeCameraCalibration, // Compute calibration and check that values are reasonable
       GotoPickupPose,
-      
+      StartPickup,
       PickingUpBlock,
+      StartPlacement,
       PlacingBlock,
-    };
-    
-    enum class FactoryTestErrorCode {
-      UNKNOWN = 0,
-      
-      SUCCESS,
-      
-      CHARGER_UNDETECTED,
-      STILL_ON_CHARGER,
-      CLIFF_UNDETECTED,
-      NOT_IN_CALIBRATION_POSE,
-      CALIBRATION_VALUES_OOR,
-      NOT_IN_PRE_PICKUP_POSE,
-      CUBE_NOT_FOUND,
-      CUBE_NOT_WHERE_EXPECTED,
-      PICKUP_FAILED,
-      UNEXPECTED_OBSERVED_OBJECT,
+      DockToCharger
     };
     
     
@@ -85,19 +69,19 @@ namespace Cozmo {
 //    constexpr static kIMUDriftTimeout_ms = 2000
     const Pose3d _cliffDetectPose;
     const Pose3d _camCalibPose;
-    std::vector<std::pair<f32,f32> > _camCalibPanAndTiltAngles;
-
     const Pose3d _prePickupPose;
     const Pose3d _expectedLightCubePose;
+    const Pose3d _expectedChargerPose;
+    std::vector<std::pair<f32,f32> > _camCalibPanAndTiltAngles;
+    u32          _camCalibPoseIndex = 0;
     
     static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
     static constexpr f32 _kRbotPoseSamenessAngleThresh_rad = DEG_TO_RAD(5);
-
-    
+    static constexpr u32 _kNumPickupRetries = 1;
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
-    void EndTest(FactoryTestErrorCode errCode);
+    void EndTest(Robot& robot, FactoryTestResultCode resCode);
    
     // Finish placing current object if there is one, otherwise good to go
     virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
@@ -108,9 +92,7 @@ namespace Cozmo {
     // something went wrong so start it up again.
     constexpr static f32 kInactionFailsafeTimeoutSec = 1;
     
-    // Height to set lift to once it has picked up the first block
-    constexpr static f32 kLowCarryHeightMM = 45;
-    
+   
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
 
     
@@ -137,21 +119,20 @@ namespace Cozmo {
     
     void StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
 
+    std::map<u32, ActionResultCallback> _actionCallbackMap;
+    bool IsActing() const {return !_actionCallbackMap.empty(); }
     
     State _currentState;
-    bool  _interrupted;
-    bool _isActing = false;
     
-    f32 _holdUntilTime = -1.0f;
+    f32 _lastPoseArrivedTime = -1.0f;
     
     Result _lastHandlerResult;
 
     PathMotionProfile _motionProfile;
  
-    // ID tag of last queued action
-    u32 _lastActionTag;
+    // Map of action tags that have been commanded to callback functions
     std::map<u32, std::string> _animActionTags;
-    ActionResultCallback _actionResultCallback;
+    ActionResultCallback       _actionResultCallback;
 
     // ID of block to pickup
     ObjectID _blockObjectID;
@@ -160,9 +141,7 @@ namespace Cozmo {
     
     s32 _attemptCounter = 0;
     
-    u32 _camCalibPoseIndex = 0;
-    
-    FactoryTestErrorCode _testResult;
+    FactoryTestResultCode _testResult;
     
   }; // class BehaviorFactoryTest
 

@@ -13,6 +13,7 @@
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/engineState.clad"
 #include "clad/types/toolCodes.clad"
+#include "clad/types/factoryTestTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -338,7 +339,7 @@ message InitBlockPoolMessage {
 ///////////////////////////////////////////////////////////////////////////////
 
 message FactoryTestResult {
-  uint_8 resultCode
+  FactoryTestResultCode resultCode
 }
 
 ///////////////////////////////////////////////////////////////////////////////

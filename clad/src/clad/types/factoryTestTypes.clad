@@ -1,0 +1,31 @@
+// FactoryTest enumeration file
+//  for the C-Like Abstract Data language
+// Author: Kevin Yoon
+// Copyright: Anki Inc (c) 2016
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 FactoryTestResultCode {
+  UNKNOWN = 0,
+  SUCCESS,
+  CHARGER_UNDETECTED,
+  STILL_ON_CHARGER,
+  GOTO_POSE_ACTION_FAILED,
+  CLIFF_UNDETECTED,
+  NOT_IN_CALIBRATION_POSE,
+  CALIBRATION_VALUES_OOR,
+  NOT_IN_PRE_PICKUP_POSE,
+  CUBE_NOT_FOUND,
+  CUBE_NOT_WHERE_EXPECTED,
+  PICKUP_FAILED,
+  PLACEMENT_FAILED,
+  UNEXPECTED_OBSERVED_OBJECT,
+  CHARGER_NOT_FOUND,
+  CHARGER_DOCK_FAILED,
+  QUEUE_ACTION_FAILED,
+  TEST_CANCELLED
+}
+
+} // namespace Cozmo
+} // namespace Anki

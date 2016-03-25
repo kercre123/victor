@@ -44,10 +44,10 @@ Solid {
     }
 
     # Rotated 45 high
-    CalibrationPattern {
-      translation 0 0.13 0.15
-      rotation 0 -1 0 0.785398
-    }
+#    CalibrationPattern {
+#      translation 0 0.13 0.15
+#      rotation 0 -1 0 0.785398
+#    }
 
 
   ] # Solid Children
