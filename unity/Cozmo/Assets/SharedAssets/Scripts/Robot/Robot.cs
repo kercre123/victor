@@ -1024,13 +1024,14 @@ public class Robot : IRobot {
   public void SetRobotVolume(float volume) {
     DAS.Debug(this, "Set Robot Volume " + volume);
 
-    RobotEngineManager.Instance.Message.SetRobotVolume = 
-      Singleton<SetRobotVolume>.Instance.Initialize(ID, volume);
-    RobotEngineManager.Instance.SendMessage();
+    Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot, volume);
   }
 
   public float GetRobotVolume() {
-    return Singleton<SetRobotVolume>.Instance.volume;
+    float volume = 1f;
+    Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> currentVolumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.VolumePreferences;
+    currentVolumePrefs.TryGetValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot, out volume);
+    return volume;
   }
 
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
