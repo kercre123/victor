@@ -136,6 +136,7 @@ namespace SpeedTap {
 
     private void HandleRoundEnd() {
       GameAudioClient.SetMusicState(_BetweenRoundsMusic);
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
       ConsecutiveMisses = 0;
       if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
         _CloseRoundCount++;
@@ -177,6 +178,7 @@ namespace SpeedTap {
     }
 
     private void HandleSessionAnimDone(bool success) {
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
         if (CurrentDifficulty >= DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
           DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty + 1;
