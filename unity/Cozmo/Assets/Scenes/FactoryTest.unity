@@ -927,7 +927,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 65dc7be214371450897ab2ba1522fd59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DevConnectDialog: {fileID: 11479636, guid: a9aac651b15944e00bd82acaac7f014c, type: 2}
+  _DevConnectDialog: {fileID: 11464748, guid: 8815496b5af52428aa9fe74118d9bae3, type: 2}
   _Background: {fileID: 420244544}
   _LogsButton: {fileID: 764554401}
   _SettingsButton: {fileID: 680834003}
