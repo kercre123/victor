@@ -93,13 +93,13 @@ namespace CubePounce {
       if (PounceRoll <= _CurrentPounceChance) {
         // Enter Animation State to attempt a pounce.
         _CliffFlagTrown = false;
-        CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Tap, HandlePounceEnd);
+        CurrentRobot.SendAnimationGroup(AnimationGroupName.kCubePounce_Pounce, HandlePounceEnd);
       }
       else {
         // If you do a fakeout instead, increase the likelyhood of a slap
         // attempt based on the max number of fakeouts.
         _CurrentPounceChance += ((1.0f - _BasePounceChance) / _MaxFakeouts);
-        CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Fake, HandleFakeoutEnd);
+        CurrentRobot.SendAnimationGroup(AnimationGroupName.kCubePounce_Fake, HandleFakeoutEnd);
       }
     }
 
@@ -136,13 +136,13 @@ namespace CubePounce {
     public void OnPlayerWin() {
       _PlayerScore++;
       UpdateScoreboard();
-      _StateMachine.SetNextState(new AnimationState(AnimationGroupName.kSpeedTap_LoseHand, HandEndAnimationDone));
+      _StateMachine.SetNextState(new AnimationState(AnimationGroupName.kCubePounce_LoseHand, HandEndAnimationDone));
     }
 
     public void OnCozmoWin() {
       _CozmoScore++;
       UpdateScoreboard();
-      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinHand, HandEndAnimationDone));
+      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinHand, HandEndAnimationDone));
     }
 
     public void HandEndAnimationDone(bool success) {
@@ -159,17 +159,17 @@ namespace CubePounce {
         UpdateScoreboard();
         if (AllRoundsCompleted) {
           if (_CozmoScore > _PlayerScore) {
-            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleLoseGameAnimationDone));
+            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinSession, HandleLoseGameAnimationDone));
           }
           else {
-            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseSession, HandleWinGameAnimationDone));
+            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_LoseSession, HandleWinGameAnimationDone));
           }
         }
         else if (_CozmoScore >= _MaxScorePerRound) {
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinRound, RoundEndAnimationDone));
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinRound, RoundEndAnimationDone));
         }
         else if (_PlayerScore >= _MaxScorePerRound) {
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseRound, RoundEndAnimationDone));
+          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_LoseRound, RoundEndAnimationDone));
         }
       }
       else {
