@@ -10,12 +10,13 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "anki/cozmo/basestation/actions/actionInterface.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/components/animTrackHelpers.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/common/basestation/math/poseBase_impl.h"
 #include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/components/animTrackHelpers.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/helpers/templateHelpers.h"
@@ -206,7 +207,12 @@ namespace Anki {
       }
       return _state;
     }
-    
+
+    void IActionRunner::SetEnableMoodEventOnCompletion(bool enable)
+    {
+      _robot.GetMoodManager().SetEnableMoodEventOnCompletion(GetTag(), enable);
+    }
+  
     void IActionRunner::PrepForCompletion()
     {
       GetCompletionUnion(_completionUnion);

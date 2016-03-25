@@ -102,6 +102,10 @@ namespace Anki {
       void ShouldSuppressTrackLocking(bool tf) { _suppressTrackLocking = tf; }
       bool IsSuppressingTrackLocking() const { return _suppressTrackLocking; }
 
+      // By default, the completion of any action could cause a mood event (the robot's mood manager defines
+      // this). If this is set to false, this action won't trigger any mood events
+      void SetEnableMoodEventOnCompletion(bool enable);
+
       // Override this to fill in the ActionCompletedStruct emitted as part of the
       // completion signal with an action finishes. Note that this public because
       // subclasses that are composed of other actions may want to make use of

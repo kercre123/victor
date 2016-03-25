@@ -1,0 +1,105 @@
+{
+  "emotionEvents": [
+    {
+      "name": "DrivingActionFailedWithRetry",
+      "emotionAffectors": [										  
+         {
+            "emotionType": "Happy",
+            "value": -0.04
+         },
+         {
+            "emotionType": "Confident",
+            "value": -0.04
+         }
+      ]
+    },
+    {
+      "name": "DrivingActionFailedWithAbort",
+      "emotionAffectors": [										  
+         {
+            "emotionType": "Happy",
+            "value": -0.1
+         },
+         {
+            "emotionType": "Confident",
+            "value": -0.08
+         }
+      ]
+    },
+    {
+      "name": "PickingOrPlacingActionFailedWithRetry",
+      "emotionAffectors": [										  
+         {
+            "emotionType": "Happy",
+            "value": -0.08
+         },
+         {
+            "emotionType": "Confident",
+            "value": -0.08
+         }
+      ]
+    },
+    {
+      "name": "PickingOrPlacingActionFailedWithAbort",
+      "emotionAffectors": [										  
+         {
+            "emotionType": "Happy",
+            "value": -0.12
+         },
+         {
+            "emotionType": "Confident",
+            "value": -0.12
+         }
+      ]
+    },
+    {
+      "name": "DrivingActionSucceeded",
+      "emotionAffectors": [										  
+        {
+          "emotionType": "Confident",
+          "value": 0.02
+        }
+      ]
+    },
+    {
+      "name": "PickupSucceeded",
+      "emotionAffectors": [										  
+        {
+          "emotionType": "Happy",
+          "value": 0.08
+        },
+        {
+          "emotionType": "Confident",
+          "value": 0.08
+        }
+      ]
+    },
+    {
+      "name": "StackSucceeded",
+      "emotionAffectors": [										  
+        {
+          "emotionType": "Happy",
+          "value": 0.12
+        },
+        {
+          "emotionType": "Confident",
+          "value": 0.2
+        }
+      ]
+    },
+    {
+      "name": "RollSucceeded",
+      "emotionAffectors": [										  
+        {
+          "emotionType": "Happy",
+          "value": 0.12
+        },
+        {
+          "emotionType": "Confident",
+          "value": 0.12
+        }
+      ]
+    }
+  ]
+}
+
