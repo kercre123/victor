@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Anki.Cozmo.Audio;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -30,6 +31,8 @@ namespace CubePounce {
     private int _MaxFakeouts;
     private int _MaxScorePerRound;
 
+    private MusicStateWrapper _BetweenRoundsMusic;
+
     private LightCube _CurrentTarget = null;
 
     public bool AllRoundsCompleted {
@@ -54,6 +57,7 @@ namespace CubePounce {
       _PlayerRoundsWon = 0;
       _CozmoRoundsWon = 0;
       _CurrentTarget = null;
+      _BetweenRoundsMusic = config.BetweenRoundMusic;
       InitializeMinigameObjects(config.NumCubesRequired());
     }
 
@@ -136,12 +140,14 @@ namespace CubePounce {
     public void OnPlayerWin() {
       _PlayerScore++;
       UpdateScoreboard();
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_LoseHand, HandEndAnimationDone));
     }
 
     public void OnCozmoWin() {
       _CozmoScore++;
       UpdateScoreboard();
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinHand, HandEndAnimationDone));
     }
 
@@ -158,18 +164,23 @@ namespace CubePounce {
         }
         UpdateScoreboard();
         if (AllRoundsCompleted) {
-          if (_CozmoScore > _PlayerScore) {
+          GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
+          if (_CozmoRoundsWon > _PlayerRoundsWon) {
             _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinSession, HandleLoseGameAnimationDone));
           }
           else {
             _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_LoseSession, HandleWinGameAnimationDone));
           }
         }
-        else if (_CozmoScore >= _MaxScorePerRound) {
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinRound, RoundEndAnimationDone));
-        }
-        else if (_PlayerScore >= _MaxScorePerRound) {
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_LoseRound, RoundEndAnimationDone));
+        else {
+          GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
+          GameAudioClient.SetMusicState(_BetweenRoundsMusic);
+          if (_CozmoScore > _PlayerScore) {
+            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinRound, RoundEndAnimationDone));
+          }
+          else {
+            _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_LoseRound, RoundEndAnimationDone));
+          }
         }
       }
       else {

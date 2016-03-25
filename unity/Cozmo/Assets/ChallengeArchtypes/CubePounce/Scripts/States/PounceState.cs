@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Anki.Cozmo.Audio;
 using System.Collections;
 
 namespace CubePounce {
@@ -13,6 +14,7 @@ namespace CubePounce {
     public override void Enter() {
       base.Enter();
       _CubePounceGame = (_StateMachine.GetGame() as CubePounceGame);
+      GameAudioClient.SetMusicState(_CubePounceGame.GetDefaultMusicState());
       _AttemptDelay = _CubePounceGame.GetAttemptDelay();
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
       _CurrentRobot.SetLiftHeight(1.0f);
