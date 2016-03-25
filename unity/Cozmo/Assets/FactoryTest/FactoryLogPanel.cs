@@ -47,6 +47,7 @@ public class FactoryLogPanel : MonoBehaviour {
         logFull += _LogQueueCache[i];
       }
       GUIUtility.systemCopyBuffer = logFull;
+      CozmoBinding.SendToClipboard(logFull);
     }
   }
 
