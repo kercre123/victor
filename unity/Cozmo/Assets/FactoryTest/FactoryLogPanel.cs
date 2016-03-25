@@ -15,12 +15,18 @@ public class FactoryLogPanel : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Text _TextPrefab;
 
+  [SerializeField]
+  private UnityEngine.UI.Button _CopyLogsButton;
+
+  private List<string> _LogQueueCache = null;
+
   void Start() {
     _CloseButton.onClick.AddListener(ClosePanel);
+    _CopyLogsButton.onClick.AddListener(CopyLogs);
   }
 
   public void UpdateLogText(List<string> logQueue) {
-
+    _LogQueueCache = logQueue;
     for (int i = 0; i < _LogTextList.childCount; ++i) {
       GameObject.Destroy(_LogTextList.GetChild(i).gameObject);
     }
@@ -32,6 +38,16 @@ public class FactoryLogPanel : MonoBehaviour {
     }
 
     _TextScrollRect.verticalNormalizedPosition = 0;
+  }
+
+  private void CopyLogs() {
+    if (_LogQueueCache != null) {
+      string logFull = "";
+      for (int i = 0; i < _LogQueueCache.Count; ++i) {
+        logFull += _LogQueueCache[i];
+      }
+      GUIUtility.systemCopyBuffer = logFull;
+    }
   }
 
   private void ClosePanel() {

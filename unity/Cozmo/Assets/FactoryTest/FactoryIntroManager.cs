@@ -72,6 +72,8 @@ public class FactoryIntroManager : MonoBehaviour {
   private void HandleStartButtonClick() {
     ShowDevConnectDialog();
     _StartButton.gameObject.SetActive(false);
+    _RestartButton.gameObject.SetActive(true);
+    _RestartButton.onClick.AddListener(() => RestartTestApp());
   }
 
   private void HandleConnected(int robotID) {
@@ -135,14 +137,10 @@ public class FactoryIntroManager : MonoBehaviour {
       return; // quit case
     }
     _Background.color = Color.red;
-    _RestartButton.gameObject.SetActive(true);
-    _RestartButton.onClick.AddListener(() => RestartTestApp());
   }
 
   private void TestPassed() {
     _Background.color = Color.green;
-    _RestartButton.gameObject.SetActive(true);
-    _RestartButton.onClick.AddListener(() => RestartTestApp());
   }
 
   private void RestartTestApp() {
