@@ -40,27 +40,32 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   SequenceTextAssets:
-  - {fileID: 4900000, guid: 1d176bcc95ecb4192b4d0b72d7035f42, type: 3}
-  - {fileID: 4900000, guid: cd450454da0e24291afa000352473669, type: 3}
+  - {fileID: 4900000, guid: 1f1f54452c0984b7bb32c6e522b24df8, type: 3}
   - {fileID: 4900000, guid: 6fc0487a9817d40a4844528eda09d145, type: 3}
-  - {fileID: 4900000, guid: c5fba53a389a74e4e8a5c55b0a2e121b, type: 3}
-  - {fileID: 4900000, guid: cda94c2912e514c34a129fa0da6a6c4c, type: 3}
-  - {fileID: 4900000, guid: 7bc60d7ef339e4c3587b1a79da646004, type: 3}
-  - {fileID: 4900000, guid: c7e8ea45a2b1d49628c1bd90d2ba93be, type: 3}
-  - {fileID: 4900000, guid: d23103e29b8c244948c9fd1ec319a29f, type: 3}
-  - {fileID: 4900000, guid: 92e0825a897f8427f9a10b6cb3562b42, type: 3}
-  - {fileID: 4900000, guid: 56dae1972236d49348719152052cf46e, type: 3}
-  - {fileID: 4900000, guid: 948a35f9208f248ac98735c2fa65b9b0, type: 3}
-  - {fileID: 4900000, guid: cbfa046ff65d04028afcd9d826636aef, type: 3}
-  - {fileID: 4900000, guid: f5d3e0fb69d574e339b4f552f348bd8e, type: 3}
-  - {fileID: 4900000, guid: 009f7485b2a2f4286af23b447535689e, type: 3}
+  - {fileID: 4900000, guid: 8303dd89915d2441f8d12f81b74664f7, type: 3}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: SequenceTextAssets.Array.size
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: SequenceTextAssets.Array.data[2]
+      value: 
+      objectReference: {fileID: 4900000, guid: 6fc0487a9817d40a4844528eda09d145, type: 3}
+    - target: {fileID: 0}
+      propertyPath: SequenceTextAssets.Array.data[0]
+      value: 
+      objectReference: {fileID: 4900000, guid: 1f1f54452c0984b7bb32c6e522b24df8, type: 3}
+    - target: {fileID: 0}
+      propertyPath: SequenceTextAssets.Array.data[1]
+      value: 
+      objectReference: {fileID: 4900000, guid: 6fc0487a9817d40a4844528eda09d145, type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 132256}
