@@ -112,6 +112,14 @@ namespace ScriptedSequences {
     public void BootstrapCoroutine(IEnumerator coroutine) {
       StartCoroutine(coroutine);
     }
+
+    public List<string> GetSequenceNames() {
+      List<string> sequenceNames = new List<string>();
+      foreach (var sequence in Sequences) {
+        sequenceNames.Add(sequence.Name);
+      }
+      return sequenceNames;
+    }
   }
 }
 

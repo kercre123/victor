@@ -20,6 +20,8 @@ namespace DataPersistence {
 
     public MinigameSaveData MinigameSaveData;
 
+    public Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> VolumePreferences;
+
     public SaveData() {
       CompletedScriptedSequences = new Dictionary<string, bool>();
       ConversationHistory = new Conversations.ConversationHistory();
@@ -27,6 +29,7 @@ namespace DataPersistence {
       Sessions = new List<TimelineEntryData>();
       CurrentStats = new StatContainer();
       MinigameSaveData = new MinigameSaveData();
+      VolumePreferences = new Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float>();
     }
   }
 }

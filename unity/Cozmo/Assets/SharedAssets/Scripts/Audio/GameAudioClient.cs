@@ -19,9 +19,9 @@ namespace Anki {
       public struct AudioEventParameter {
 
         public static AudioEventParameter DefaultClick = new AudioEventParameter(
-          GameEvent.GenericEvent.Sfx_Ui_Click_General_Play,
-          GameEvent.EventGroupType.UI,
-          GameObjectType.UI);
+                                                           GameEvent.GenericEvent.Sfx_Ui_Click_General_Play,
+                                                           GameEvent.EventGroupType.UI,
+                                                           GameObjectType.UI);
 
         public static AudioEventParameter UIEvent(GameEvent.UI ui) {
           return new AudioEventParameter(
@@ -99,8 +99,8 @@ namespace Anki {
         //    client.OnAudioCallback += YourHandler
 
         static public ushort PostAudioEvent(AudioEventParameter parameter,
-          Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
-          CallbackHandler handler = null) {
+                                            Anki.Cozmo.Audio.AudioCallbackFlag callbackFlag = AudioCallbackFlag.EventNone,
+                                            CallbackHandler handler = null) {
           AudioClient client = AudioClient.Instance;
           return client.PostEvent(parameter.Event, parameter.GameObjectType, callbackFlag, handler);
         }
@@ -142,21 +142,31 @@ namespace Anki {
           client.UnregisterCallbackHandler(playId);
         }
 
-        static public void SetVolumeValue(VolumeParameters.VolumeType parameter, float volume, int timeInMS = 0, CurveType curve = CurveType.Linear ) {
+        static public void SetVolumeValue(VolumeParameters.VolumeType parameter, float volume, int timeInMS = 0, CurveType curve = CurveType.Linear) {
           // TODO Fix GameObject Id -- JMR Do I still need this?
           AudioClient client = AudioClient.Instance;
           // TODO Need to cast for Invalid GameObj to set global RTPCs -- JMR Do I still need this?
           client.PostParameter((GameParameter.ParameterType)parameter, volume, GameObjectType.Invalid, timeInMS, curve);
+
+          System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.VolumePreferences;
+          if (volumePrefs.ContainsKey(parameter)) {
+            volumePrefs[parameter] = volume;
+          }
+          else {
+            volumePrefs.Add(parameter, volume);
+          }
+          DataPersistence.DataPersistenceManager.Instance.Save();
         }
 
-        static public void SetMusicVolume(float volume, int timeInMS = 0, CurveType curve = CurveType.Linear ) {
+        static public void SetMusicVolume(float volume, int timeInMS = 0, CurveType curve = CurveType.Linear) {
           AudioClient client = AudioClient.Instance;
           client.PostParameter(GameParameter.ParameterType.Music_Volume, volume, GameObjectType.Invalid, timeInMS, curve);
         }
 
         // Set Music States
         // We can move this, I just need a place to keep static state to start the music
-        private static bool _didPlayMusic = false; 
+        private static bool _didPlayMusic = false;
+
         static public void SetMusicState(Anki.Cozmo.Audio.GameState.Music state) {
           AudioClient client = AudioClient.Instance;
           if (!_didPlayMusic) {
