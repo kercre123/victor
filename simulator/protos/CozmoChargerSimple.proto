@@ -38,13 +38,11 @@ Robot {
       rotation 0 0 1 1.5708 # 90 deg about z-axis
       translation %{=fields.wallWidth.value}% 0 %{=fields.platformHeight.value + fields.wallHeight.value/2}%
       children [
-        VisionMarker {
-          #rotation 0 0 1 1.5708
-          #image "symbols/rampFront.png"
-          image "charger.png"
-          markerWidth IS dockMarkerWidth
-          markerHeight IS dockMarkerHeight
-        }
+#        VisionMarker {
+#          image "charger.png"
+#          markerWidth IS dockMarkerWidth
+#          markerHeight IS dockMarkerHeight
+#        }
       ]
     }
 

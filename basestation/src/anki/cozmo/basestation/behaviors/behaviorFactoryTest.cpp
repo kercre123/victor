@@ -77,7 +77,8 @@ namespace Cozmo {
       EngineToGameTag::RobotCompletedAction,
       EngineToGameTag::RobotObservedObject,
       EngineToGameTag::RobotDeletedObject,
-      EngineToGameTag::ObjectMoved
+      EngineToGameTag::ObjectMoved,
+      EngineToGameTag::CameraCalibration
     }});
 
     SubscribeToTags({
@@ -240,6 +241,7 @@ namespace Cozmo {
         }
         
         _camCalibPoseIndex = 0;
+        robot.GetVisionComponent().ClearCalibrationImages();
         SetCurrState(State::TakeCalibrationImages);
         break;
       }
@@ -247,6 +249,12 @@ namespace Cozmo {
       case State::TakeCalibrationImages:
       {
         if (_camCalibPoseIndex >= _camCalibPanAndTiltAngles.size()) {
+          // Start calibration computation
+          PRINT_NAMED_INFO("BehaviorFactoryTest.Update.StartingCalibration",
+                           "% images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
+          robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
+          _calibrationReceived = false;
+          _holdUntilTime = currentTime_sec + 30.f;
           SetCurrState(State::ComputeCameraCalibration);
           break;
         }
@@ -255,6 +263,8 @@ namespace Cozmo {
           
           // TODO: Take and save picture. In another state?
           // ...
+          robot.GetVisionComponent().StoreNextImageForCameraCalibration();
+          
           
           // PanAndTilt to next pose for viewing calibration pattern
           PanAndTiltAction *ptAction = new PanAndTiltAction(robot,
@@ -272,15 +282,16 @@ namespace Cozmo {
         
       case State::ComputeCameraCalibration:
       {
-        PRINT_NAMED_INFO("BehaviorFactoryTest.Update.Calibrating", "TODO...");
-        // TODO: Do calibration...
-        
-        // Goto pose where block is visible
-        StartActing(robot, new DriveToPoseAction(robot, _prePickupPose, _motionProfile, false, false), gotoPoseCallback);
-        SetCurrState(State::GotoPickupPose);
+        if (_calibrationReceived) {
+          // Goto pose where block is visible
+          StartActing(robot, new DriveToPoseAction(robot, _prePickupPose, _motionProfile, false, false), gotoPoseCallback);
+          SetCurrState(State::GotoPickupPose);
+        } else if (currentTime_sec > _holdUntilTime) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CalibrationTimedout", "");
+          END_TEST(FactoryTestResultCode::CALIBRATION_TIMED_OUT);
+        }
         break;
       }
-        
       case State::GotoPickupPose:
       {
         // Verify that robot is where expected
@@ -479,6 +490,9 @@ namespace Cozmo {
         _lastHandlerResult = HandleObjectMoved(robot, event.GetData().Get_ObjectMoved());
         break;
         
+      case EngineToGameTag::CameraCalibration:
+        _lastHandlerResult = HandleCameraCalibration(robot, event.GetData().Get_CameraCalibration());
+        break;
         
       default:
         PRINT_NAMED_ERROR("BehaviorFactoryTest.HandleWhileRunning.InvalidTag",
@@ -660,7 +674,30 @@ namespace Cozmo {
     // ...
     
     return RESULT_OK;
-  }  
+  }
+  
+  Result BehaviorFactoryTest::HandleCameraCalibration(Anki::Cozmo::Robot &robot, const Anki::Cozmo::CameraCalibration &msg)
+  {
+    #define CHECK_OOR(value, min, max) (value < min || value > max)
+
+    // Check if calibration values are sane
+    if (CHECK_OOR(msg.focalLength_x, 250, 310) ||
+        CHECK_OOR(msg.focalLength_y, 250, 310) ||
+        CHECK_OOR(msg.center_x, 130, 190) ||
+        CHECK_OOR(msg.center_y, 90, 150) ||
+        msg.nrows != 240 ||
+        msg.ncols != 320)
+    {
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.HandleCameraCalibration.OOR",
+                          "focalLength (%f, %f), center (%f, %f)",
+                          msg.focalLength_x, msg.focalLength_y, msg.center_x, msg.center_y);
+      END_TEST_IN_HANDLER(FactoryTestResultCode::CALIBRATION_VALUES_OOR);
+    }
+
+    robot.GetVisionComponent().ClearCalibrationImages();
+    _calibrationReceived = true;
+    return RESULT_OK;
+  }
 
   void BehaviorFactoryTest::StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback)
   {

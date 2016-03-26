@@ -434,6 +434,15 @@ namespace Cozmo {
     }
     return retVal;
   }
+
+  bool VisionSystem::CheckMailbox(Vision::CameraCalibration& msg)
+  {
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _calibrationMailbox.getMessage(msg);
+    }
+    return retVal;
+  }
   
   bool VisionSystem::CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg)
   {
@@ -1877,6 +1886,7 @@ namespace Cozmo {
       ,{VisionMode::DetectingFaces,       "FACES"}
       ,{VisionMode::DetectingMotion,      "MOTION"}
       ,{VisionMode::CheckingToolCode,     "TOOLCODE"}
+      ,{VisionMode::ComputingCalibration, "CALIBRATION"}
       ,{VisionMode::DetectingOverheadEdges, "OVERHEADEDGES"}
     };
 
@@ -2150,7 +2160,8 @@ namespace Cozmo {
   
   // This is the regular Update() call
   Result VisionSystem::Update(const PoseData&            poseData,
-                              const Vision::ImageRGB&    inputImage)
+                              const Vision::ImageRGB&    inputImage,
+                              const std::list<Vision::Image>& calibImages)
   {
     Result lastResult = RESULT_OK;
     
@@ -2235,6 +2246,15 @@ namespace Cozmo {
         return lastResult;
       }
     }
+    
+    if(IsModeEnabled(VisionMode::ComputingCalibration))
+    {
+      if((lastResult = ComputeCalibration(calibImages)) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
+        return lastResult;
+      }
+    }
+
     
     /*
     // Store a copy of the current image for next time
@@ -2734,6 +2754,32 @@ namespace Cozmo {
   
     return RESULT_OK;
   } // ReadToolCode()
+  
+  
+  Result VisionSystem::ComputeCalibration(const std::list<Vision::Image>& calibImages)
+  {
+    Vision::CameraCalibration calibration;
+    
+    // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
+    // no matter how we return from this function
+    Cleanup disableComputingCalibration([this,&calibration]() {
+      this->_calibrationMailbox.putMessage(calibration);
+      this->EnableMode(VisionMode::ComputingCalibration, false);
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.DisabledComputingCalibration", "");
+    });
+    
+    
+    PRINT_NAMED_WARNING("VisionSystem.ComputeCalibration.TODO", "...");
+    // Default for now
+    calibration = Vision::CameraCalibration(240, 320,
+                                            290, 290,
+                                            160, 120);
+
+    
+    
+    return RESULT_OK;
+  }
+  
   
 } // namespace Cozmo
 } // namespace Anki

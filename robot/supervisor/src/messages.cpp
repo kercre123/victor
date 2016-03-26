@@ -466,7 +466,7 @@ namespace Anki {
             headCamInfo = &headCamInfoScaled;
           }
 
-          RobotInterface::CameraCalibration headCalibMsg = {
+          CameraCalibration headCalibMsg = {
             headCamInfo->focalLength_x,
             headCamInfo->focalLength_y,
             headCamInfo->center_x,

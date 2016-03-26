@@ -26,6 +26,7 @@
 
 #include <thread>
 #include <mutex>
+#include <list>
 
 namespace Anki {
 
@@ -119,6 +120,8 @@ struct DockingErrorSignal;
     // See what tool we have on our lifter and calibrate the camera
     Result UpdateToolCode();
     
+    Result UpdateComputedCalibration();
+    
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     
@@ -150,6 +153,12 @@ struct DockingErrorSignal;
     
     bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p);
     
+    // Camera calibration
+    void StoreNextImageForCameraCalibration()           { _storeNextImageForCalibration = true;  }
+    bool WillStoreNextImageForCameraCalibration() const { return _storeNextImageForCalibration;  }
+    u32  GetNumStoredCameraCalibrationImages()    const { return (u32)_calibrationImages.size(); }
+    void ClearCalibrationImages()                       { _clearCalibrationImages = true; _storeNextImageForCalibration = false; }
+    
   protected:
     
     Robot& _robot;
@@ -173,6 +182,10 @@ struct DockingErrorSignal;
     Vision::ImageRGB _currentImg;
     Vision::ImageRGB _nextImg;
     Vision::ImageRGB _lastImg; // the last image we processed
+    
+    bool _storeNextImageForCalibration = false;
+    bool _clearCalibrationImages = false;
+    std::list<Vision::Image> _calibrationImages;
     
     constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
     constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);

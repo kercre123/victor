@@ -158,7 +158,7 @@ bool readCameraCalAndSend(uint32_t tag)
   entry.tag = tag;
   const NVStorage::NVResult result = NVStorage::Read(entry);
   AnkiConditionalWarnAndReturnValue(result == NVStorage::NV_OKAY, false, 96, "ReadAndSendCameraCal", 350, "Failed to read camera calibration: %d", 1, result);
-  const RobotInterface::CameraCalibration* const calib = (RobotInterface::CameraCalibration*)entry.blob;
+  const CameraCalibration* const calib = (CameraCalibration*)entry.blob;
   RobotInterface::SendMessage(*calib);
   return false;
 }

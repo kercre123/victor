@@ -147,7 +147,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
 
 void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const RobotInterface::CameraCalibration& payload = message.GetData().Get_cameraCalibration();
+  const CameraCalibration& payload = message.GetData().Get_cameraCalibration();
   PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
     "Received new %dx%d camera calibration from robot.", payload.ncols, payload.nrows);
 
@@ -785,7 +785,7 @@ void Robot::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message
     {
       PRINT_NAMED_INFO("Robot.HandleNVData.CameraCalibration","");
       
-      RobotInterface::CameraCalibration payload;
+      CameraCalibration payload;
       payload.Unpack(nvBlob.blob.data(), nvBlob.blob.size());
       PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
                        "Received new %dx%d camera calibration from robot.", payload.ncols, payload.nrows);

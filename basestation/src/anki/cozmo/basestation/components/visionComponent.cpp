@@ -403,7 +403,7 @@ namespace Cozmo {
         case RunMode::Synchronous:
         {
           if(!_paused) {
-            _visionSystem->Update(_nextPoseData, image);
+            _visionSystem->Update(_nextPoseData, image, _calibrationImages);
             _lastImg = image;
             
             _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
@@ -432,6 +432,22 @@ namespace Cozmo {
         default:
           PRINT_NAMED_ERROR("VisionComponent.SetNextImage.InvalidRunMode", "");
       } // switch(_runMode)
+
+
+      // Store image for calibration
+      if (_storeNextImageForCalibration) {
+        _storeNextImageForCalibration = false;
+        _calibrationImages.emplace_back(image.ToGray());
+        PRINT_NAMED_INFO("VisionComponent.SetNextImage.StoringCalibrationImage",
+                         "Num images including this: %lu", _calibrationImages.size());
+      }
+      
+      // Clear calibration images as long as we're not in the mode for processing them.
+      // I _think_ this is sufficient for thread-safety.
+      if (_clearCalibrationImages && !IsModeEnabled(VisionMode::ComputingCalibration)) {
+        _calibrationImages.clear();
+        _clearCalibrationImages = false;
+      }
       
       // Display any debug images left by the vision system
       std::pair<const char*, Vision::Image>    debugGray;
@@ -553,7 +569,7 @@ namespace Cozmo {
         // There is an image to be processed:
         
         //assert(_currentImg != nullptr);
-        _visionSystem->Update(_currentPoseData, _currentImg);
+        _visionSystem->Update(_currentPoseData, _currentImg, _calibrationImages);
         
         _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
                                            "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
@@ -1014,6 +1030,30 @@ namespace Cozmo {
 
     return RESULT_OK;
   }
+  
+  Result VisionComponent::UpdateComputedCalibration()
+  {
+    if(_visionSystem != nullptr)
+    {
+      Vision::CameraCalibration calib;
+      if(true == _visionSystem->CheckMailbox(calib))
+      {
+        CameraCalibration msg;
+        msg.center_x = calib.GetCenter_x();
+        msg.center_y = calib.GetCenter_y();
+        msg.focalLength_x = calib.GetFocalLength_x();
+        msg.focalLength_y = calib.GetFocalLength_y();
+        msg.nrows = calib.GetNrows();
+        msg.ncols = calib.GetNcols();
+        msg.skew = calib.GetSkew();
+        msg.isPhysicalRobots = _robot.IsPhysical();
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      }
+    }
+    
+    return RESULT_OK;
+  }
+
   
   bool VisionComponent::WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p)
   {

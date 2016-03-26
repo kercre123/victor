@@ -107,7 +107,8 @@ namespace Cozmo {
     // This is main Update() call to be called in a loop from above.
 
     Result Update(const PoseData&            robotState,
-                  const Vision::ImageRGB&    inputImg);
+                  const Vision::ImageRGB&    inputImg,
+                  const std::list<Vision::Image>& calibImages);
     
     void StopTracking();
 
@@ -225,6 +226,7 @@ namespace Cozmo {
     bool CheckMailbox(Vision::FaceTracker::UpdatedID&  msg);
     bool CheckMailbox(OverheadEdgePointChain& msg);
     bool CheckMailbox(ToolCode& msg);
+    bool CheckMailbox(Vision::CameraCalibration& msg);
     
     bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
     bool CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg);
@@ -433,6 +435,8 @@ namespace Cozmo {
     
     Result ReadToolCode(const Vision::Image& image);
     
+    Result ComputeCalibration(const std::list<Vision::Image>& calibImages);
+    
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                         DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
@@ -451,6 +455,7 @@ namespace Cozmo {
     MultiMailbox<OverheadEdgePointChain, 64> _overheadEdgeChainMailbox;
     
     Mailbox<ToolCode> _toolCodeMailbox;
+    Mailbox<Vision::CameraCalibration> _calibrationMailbox;
     
     MultiMailbox<std::pair<const char*, Vision::Image>, 10>     _debugImageMailbox;
     MultiMailbox<std::pair<const char*, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;

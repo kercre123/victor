@@ -109,12 +109,18 @@ namespace Cozmo {
                                 const ExternalInterface::RobotObservedObject& msg,
                                 double currentTime_sec);
     
-    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg, double currentTime_sec);
+    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg,
+                               double currentTime_sec);
 
+    Result HandleObjectMoved(const Robot& robot,
+                             const ObjectMoved &msg);
+    
+    Result HandleCameraCalibration(Robot& robot,
+                                   const CameraCalibration &msg);
+    
     Result HandleActionCompleted(Robot& robot,
                                  const ExternalInterface::RobotCompletedAction& msg,
                                  double currentTime_sec);
-    Result HandleObjectMoved(const Robot& robot, const ObjectMoved &msg);
 
     
     void InitState(const Robot& robot);
@@ -146,7 +152,7 @@ namespace Cozmo {
     ObjectID _chargerObjectID;
     
     s32 _attemptCounter = 0;
-    
+    bool _calibrationReceived = false;
     FactoryTestResultCode _testResult;
     
   }; // class BehaviorFactoryTest
