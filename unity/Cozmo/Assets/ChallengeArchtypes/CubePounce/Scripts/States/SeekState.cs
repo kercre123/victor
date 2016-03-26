@@ -32,7 +32,6 @@ namespace CubePounce {
         // If Cube is in the right position, enter game state.
         if (target.MarkersVisible) {
           float distance = Vector3.Distance(_CurrentRobot.WorldPosition, target.WorldPosition);
-          Debug.Log(string.Format("Distance : {0}", distance));
           if (distance < CubePounceGame.kCubePlaceDist) {
             isBad = false;
             target.SetLEDs(Color.green);

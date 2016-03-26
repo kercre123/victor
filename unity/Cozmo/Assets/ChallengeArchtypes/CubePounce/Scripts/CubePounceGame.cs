@@ -129,11 +129,11 @@ namespace CubePounce {
       _StateMachine.SetNextState(new PounceState());
     }
 
+    // TODO: Replace HandleCliffEvent with a better way to identify if Cozmo has successfully pulled off a pounce.
+    // Currently, Cozmo will trigger the end of their pounce animation before the cliff event is registered, possibly
+    // can have a quick fix here by adding more to the end of the pounce animation, although much more likely we will
+    // have to replace this entirely.
     private void HandleCliffEvent(Anki.Cozmo.CliffEvent cliff) {
-      // Ignore if it throws this without a cliff actually detected
-      if (!cliff.detected) {
-        return;
-      }
       _CliffFlagTrown = true;
     }
 
