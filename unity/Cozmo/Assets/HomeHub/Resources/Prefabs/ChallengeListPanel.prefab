@@ -206,7 +206,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 126506, guid: 4ef88dfcd9f4745199dff6dbb0759051, type: 2}
-  ModifiedValues: []
+  ModifiedValues:
+  - ObjectPath: BackgroundStroke
+    FieldName: UnityEngine.UI.Image:m_Color:b
+    JsonValue: 1.0
+  - ObjectPath: BackgroundStroke
+    FieldName: UnityEngine.UI.Image:m_Color:g
+    JsonValue: 1.0
+  - ObjectPath: Background
+    FieldName: UnityEngine.UI.Image:m_Color:b
+    JsonValue: 1.0
+  - ObjectPath: Background
+    FieldName: UnityEngine.UI.Image:m_Color:g
+    JsonValue: 1.0
   ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!114 &11471502

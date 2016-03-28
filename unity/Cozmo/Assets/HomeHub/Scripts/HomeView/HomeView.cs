@@ -53,6 +53,14 @@ namespace Cozmo.HomeHub {
       _PlayTab.Initialize(this);
       _ProfileTab.Initialize(this);
 
+      _CozmoTabButton.DASEventButtonName = "cozmo_tab_botton";
+      _PlayTabButton.DASEventButtonName = "play_tab_button";
+      _ProfileTabButton.DASEventButtonName = "profile_tab_button";
+
+      _CozmoTabButton.DASEventViewController = "home_view";
+      _PlayTabButton.DASEventViewController = "home_view";
+      _ProfileTabButton.DASEventViewController = "home_view";
+
       _CozmoTabButton.onClick.AddListener(HandleCozmoTabButton);
       _PlayTabButton.onClick.AddListener(HandlePlayTabButton);
       _ProfileTabButton.onClick.AddListener(HandleProfileTabButton);

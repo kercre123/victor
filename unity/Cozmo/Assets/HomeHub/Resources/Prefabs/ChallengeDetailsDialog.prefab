@@ -520,14 +520,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.6431373, b: 0.13725491, a: 1}
+  m_Color: {r: 0.6985294, g: 0.41809043, b: 0.020545002, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: ca044b66fe6b64c598c4ff70ac9ccd4a, type: 3}
+  m_Sprite: {fileID: 0}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -610,12 +610,6 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_GameObjectType
     JsonValue: 3
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_DASEventViewController
-    JsonValue: '"assignedByBaseView"'
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_DASEventButtonName
-    JsonValue: '"assignedByBaseView"'
   ModifiedLocalReferences:
   - ObjectPath: ../../
     FieldName: ChallengeDetailsDialog:_OptionalCloseDialogButton
@@ -664,12 +658,6 @@ MonoBehaviour:
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
     JsonValue: -1676603318
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_DASEventViewController
-    JsonValue: '"assignedByChallengeDetailsDialog"'
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_DASEventButtonName
-    JsonValue: '"assignedByChallengeDetailsDialog"'
   ModifiedLocalReferences:
   - ObjectPath: ../../../
     FieldName: ChallengeDetailsDialog:_StartChallengeButton
