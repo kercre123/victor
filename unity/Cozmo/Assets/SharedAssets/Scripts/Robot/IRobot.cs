@@ -252,6 +252,8 @@ public interface IRobot : IDisposable {
 
   void SetVisionMode(VisionMode mode, bool enable);
 
+  void SetEnableSOSLogging(bool enable);
+
   void ExecuteBehavior(BehaviorType type);
 
   void SetBehaviorSystem(bool enable);

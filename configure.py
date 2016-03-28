@@ -173,7 +173,8 @@ def parse_game_arguments():
     parser.add_argument(
         '--do-not-check-dependencies',
         required=False,
-        help='Use this flag to not pull down the latest dependencies(i.e. audio)')
+        action='store_true',
+        help='Use this flag to NOT pull down the latest dependencies (i.e. audio and animation)')
 
     return parser.parse_args()
 

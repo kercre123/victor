@@ -152,7 +152,7 @@ namespace Cozmo {
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
         Sequence open;
         foreach (MinigameWidget widget in _ActiveWidgets) {
-          open = widget.OpenAnimationSequence();
+          open = widget.CreateOpenAnimSequence();
           if (open != null) {
             openAnimation.Join(open);
           }
@@ -163,7 +163,7 @@ namespace Cozmo {
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
         Sequence close;
         foreach (MinigameWidget widget in _ActiveWidgets) {
-          close = widget.CloseAnimationSequence();
+          close = widget.CreateCloseAnimSequence();
           if (close != null) {
             closeAnimation.Join(close);
           }
@@ -191,7 +191,7 @@ namespace Cozmo {
       private void AddWidget(MinigameWidget widgetToAdd) {
         _ActiveWidgets.Add(widgetToAdd);
         if (_OpenAnimationStarted) {
-          Sequence openAnimation = widgetToAdd.OpenAnimationSequence();
+          Sequence openAnimation = widgetToAdd.CreateOpenAnimSequence();
           openAnimation.Play();
         }
       }
@@ -203,7 +203,7 @@ namespace Cozmo {
 
         _ActiveWidgets.Remove(widgetToHide);
 
-        Sequence close = widgetToHide.CloseAnimationSequence();
+        Sequence close = widgetToHide.CreateCloseAnimSequence();
         close.AppendCallback(() => {
           if (widgetToHide != null) {
             widgetToHide.DestroyWidgetImmediately();

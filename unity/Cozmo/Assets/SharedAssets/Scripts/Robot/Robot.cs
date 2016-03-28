@@ -1024,13 +1024,14 @@ public class Robot : IRobot {
   public void SetRobotVolume(float volume) {
     DAS.Debug(this, "Set Robot Volume " + volume);
 
-    RobotEngineManager.Instance.Message.SetRobotVolume = 
-      Singleton<SetRobotVolume>.Instance.Initialize(ID, volume);
-    RobotEngineManager.Instance.SendMessage();
+    Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot, volume);
   }
 
   public float GetRobotVolume() {
-    return Singleton<SetRobotVolume>.Instance.volume;
+    float volume = 1f;
+    Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> currentVolumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.VolumePreferences;
+    currentVolumePrefs.TryGetValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot, out volume);
+    return volume;
   }
 
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
@@ -1336,6 +1337,12 @@ public class Robot : IRobot {
   public void SetVisionMode(VisionMode mode, bool enable) {
 
     RobotEngineManager.Instance.Message.EnableVisionMode = Singleton<EnableVisionMode>.Instance.Initialize(mode, enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void SetEnableSOSLogging(bool enable) {
+    DAS.Debug(this, "Set enable SOS Logging: " + enable);
+    RobotEngineManager.Instance.Message.SetEnableSOSLogging = Singleton<SetEnableSOSLogging>.Instance.Initialize(enable);
     RobotEngineManager.Instance.SendMessage();
   }
 

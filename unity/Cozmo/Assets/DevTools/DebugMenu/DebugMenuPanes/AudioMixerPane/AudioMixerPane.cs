@@ -11,31 +11,33 @@ namespace Anki.Cozmo.Audio {
     [SerializeField]
     private MixerStrip _MixerStripPrefab;
 
-    /// <summary>
-    /// TODO: Track this in our audio system somewhere
-    /// </summary>
-    private static readonly Dictionary<VolumeParameters.VolumeType, float> _CurrentVolumes = new Dictionary<VolumeParameters.VolumeType, float>();
+    private const float _kDefaultVolume = 0.7f;
 
     private void Awake() {
       var types = System.Enum.GetValues(typeof(VolumeParameters.VolumeType));
-      foreach(var type in types) {
+      Dictionary<VolumeParameters.VolumeType, float> currentVolumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.VolumePreferences;
+      bool prefsChanged = false;
+      foreach (var type in types) {
         var volumeType = (VolumeParameters.VolumeType)type;
 
         var mixerStrip = UIManager.CreateUIElement(_MixerStripPrefab, _MixerTray).GetComponent<MixerStrip>();
 
         mixerStrip.VolumeType = volumeType;
         float volume;
-        if (!_CurrentVolumes.TryGetValue(volumeType, out volume)) {
-          volume = 1f;
-          _CurrentVolumes[volumeType] = volume;
+        if (!currentVolumePrefs.TryGetValue(volumeType, out volume)) {
+          volume = _kDefaultVolume;
+          currentVolumePrefs[volumeType] = volume;
+          prefsChanged = true;
         }
         mixerStrip.Value = volume;
         mixerStrip.OnValueChange += HandleValueChanged;
       }
+      if (prefsChanged) {
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      }
     }
 
     private void HandleValueChanged(VolumeParameters.VolumeType volumeType, float volume) {
-      _CurrentVolumes[volumeType] = volume;
       GameAudioClient.SetVolumeValue(volumeType, volume);
     }
 

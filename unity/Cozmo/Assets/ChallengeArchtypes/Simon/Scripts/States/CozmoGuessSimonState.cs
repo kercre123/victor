@@ -47,9 +47,9 @@ namespace Simon {
             _ShouldWinGame = false;
             int correctId = _CurrentSequence[_CurrentSequenceIndex];
             List<int> blockIds = new List<int>();
-            foreach (LightCube cube in _GameInstance.CubesForGame) {
-              if (cube.ID != correctId) {
-                blockIds.Add(cube.ID);
+            foreach (int cubeId in _GameInstance.CubeIdsForGame) {
+              if (cubeId != correctId) {
+                blockIds.Add(cubeId);
               }
             }
             int targetId = blockIds[Random.Range(0, blockIds.Count)];
@@ -63,10 +63,7 @@ namespace Simon {
     }
 
     private void StartTurnToTarget(LightCube target) {
-      var cubeLightColor = target.Lights[0].OnColor;
-
-      _CurrentRobot.SetAllBackpackBarLED(cubeLightColor);
-
+      _CurrentRobot.SetAllBackpackBarLED(_GameInstance.GetColorForBlock(target.ID));
       _StateMachine.PushSubState(new CozmoTurnToCubeSimonState(target));
     }
 
@@ -77,7 +74,6 @@ namespace Simon {
     public override void Exit() {
       base.Exit();
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
-      _GameInstance.SetCubeLightsDefaultOn();
     }
 
     private void CozmoLoseGame() {

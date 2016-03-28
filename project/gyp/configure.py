@@ -9,6 +9,13 @@ import argparse
 import StringIO
 import shutil
 import logging
+import json
+import errno
+
+ASSET_REPO = 'cozmo-assets'
+ASSET_DIR = 'lib/anki/products-cozmo-assets'
+CONFIG_FILE = 'DEPS'
+BACKUP_DIR = '/tmp/anim_assets_backup'
 
 #set up default logger
 UtilLog = logging.getLogger('cozmo.game.configure')
@@ -23,6 +30,101 @@ def gypHelp():
   print "git clone git@github.com:anki/anki-gyp.git"
   print "echo PATH=$HOME/your_workspace/gyp:$PATH >> ~/.bash_profile"
   print ". ~/.bash_profile"
+
+def _readConfigFile(configFile):
+  configData = None
+  if os.path.isfile(configFile):
+    with open(configFile, mode="r") as fileObj:
+      configData = json.load(fileObj)
+  return configData
+
+def _checkSubdirs(assetDir, repoConfig):
+  try:
+    subdirs = repoConfig['subdirs']
+  except KeyError:
+    return
+  for subdir in subdirs:
+    subdir = os.path.join(assetDir, subdir)
+    if not os.path.exists(subdir):
+      raise RuntimeError('Asset directory not found [%s]' % subdir)
+
+def _backupDir(dirPath, backupDir=BACKUP_DIR):
+  try:
+    os.makedirs(backupDir)
+  except OSError, e:
+    if e.errno != errno.EEXIST:
+      UtilLog.info("Deleting %s" % dirPath)
+      shutil.rmtree(dirPath)
+      return None
+  dirName = os.path.basename(dirPath)
+  backupDir = os.path.join(backupDir, dirName)
+  if os.path.exists(dirPath):
+    if os.path.exists(backupDir):
+      UtilLog.info("Removing existing %s backup directory" % backupDir)
+      shutil.rmtree(backupDir)
+    UtilLog.info("Moving %s to %s" % (dirPath, backupDir))
+    os.rename(dirPath, backupDir)
+  return backupDir
+
+def _setupSymlinks(sourceDir, destDir, repoConfig):
+  try:
+    subdirs = repoConfig['subdirs']
+  except KeyError:
+    return
+
+  for subdir in subdirs:
+    src = os.path.join(sourceDir, subdir)
+    dst = os.path.join(destDir, subdir)
+
+    if not os.path.exists(src):
+      UtilLog.error("Cannot symlink %s -> %s because %s doesn't exist" % (dst, src, src))
+      continue
+
+    if os.path.exists(dst):
+      if os.path.islink(dst):
+        # we have an existing symlink that MAY need to be replaced
+        existingLink = os.readlink(dst)
+        UtilLog.info("We currently have %s -> %s" % (dst, existingLink))
+        if existingLink == src:
+          UtilLog.info("Symlink is already setup correctly")
+          continue
+        UtilLog.info("Removing %s to change that symlink (so it points at %s)" % (dst, src))
+        os.remove(dst)
+      else:
+        # we have an existing directory that needs to be moved to make room for the symlink
+        backupDir = _backupDir(dst)
+        if backupDir:
+          print("Existing %s directory was moved to %s (to be replaced by a symlink)"
+                % (dst, backupDir))
+        else:
+          print("Deleted the existing %s directory (to be replaced by a symlink)" % dst)
+
+    # make parent directory(ies) for the symlink
+    try:
+      os.makedirs(destDir)
+    except OSError, e:
+      if e.errno != errno.EEXIST:
+        raise
+
+    print("Symlinking %s -> %s" % (dst, src))
+    os.symlink(src, dst)
+
+def checkCozmoAssetDir(options, configFile=CONFIG_FILE, assetRepo=ASSET_REPO, assetDir=ASSET_DIR):
+  if not options.cozmoAssetPath:
+    options.cozmoAssetPath = os.path.join(options.projectRoot, assetDir)
+  if not os.path.exists(options.cozmoAssetPath):
+    raise RuntimeError('Asset directory not found [%s]' % options.cozmoAssetPath)
+  configFile = os.path.join(options.projectRoot, configFile)
+  configData = _readConfigFile(configFile)
+  try:
+    repoConfig = configData['svn']['repo_names'][assetRepo]
+  except (KeyError, TypeError):
+    UtilLog.error("No data found for '%s' in %s" % (assetRepo, configFile))
+  else:
+    symlinkSrc = os.path.join(options.externalsPath, assetRepo)
+    if os.path.exists(symlinkSrc):
+      _setupSymlinks(symlinkSrc, options.cozmoAssetPath, repoConfig)
+    _checkSubdirs(options.cozmoAssetPath, repoConfig)
 
 def main(scriptArgs):
   version = '1.0'
@@ -92,10 +194,10 @@ def main(scriptArgs):
   else:
     projectRoot = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip("\r\n")
 
-  if not options.cozmoAssetPath:
-    options.cozmoAssetPath = os.path.join(options.projectRoot, 'lib/anki/products-cozmo-assets')
-  if not os.path.exists(options.cozmoAssetPath):
-    UtilLog.error('cozmo-asset not found [%s]' % (options.cozmoAssetPath) )
+  try:
+    checkCozmoAssetDir(options)
+  except (RuntimeError, OSError), e:
+    UtilLog.error(str(e))
     return False
 
   if not options.cozmoEnginePath:
@@ -160,7 +262,6 @@ def main(scriptArgs):
       UtilLog.error('coretech-external not found [%s]' % (options.coretechExternalPath) )
       return False
     coretechExternalPath = options.coretechExternalPath
-
 
     if not options.externalsPath or not os.path.exists(options.externalsPath):
         UtilLog.error('EXTERNALS directory not found [%s]' % (options.externalsPath) )
@@ -394,8 +495,6 @@ def main(scriptArgs):
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
 
-
-
   if 'android' in options.platforms:
     ### Install android build deps if necessary
     # TODO: We should only check for deps in configure.py, not actuall install anything
@@ -517,3 +616,4 @@ if __name__ == '__main__':
     sys.exit(0)
   else:
     sys.exit(1)
+
