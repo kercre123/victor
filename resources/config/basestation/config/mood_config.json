@@ -75,6 +75,32 @@
         "y" : 1.0
       }
     ]
+  },
+  "actionResultEmotionEvents": {
+    "DRIVE_TO_POSE": {      
+      "FAILURE_RETRY": "DrivingActionFailedWithRetry",
+      "FAILURE_ABORT": "DrivingActionFailedWithAbort"
+    },
+    "PICKUP_OBJECT_LOW": {
+      "SUCCESS": "PickupSucceeded",
+      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+    },
+    "PICKUP_OBJECT_HIGH": {
+      "SUCCESS": "PickupSucceeded",
+      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+    },
+    "PLACE_OBJECT_HIGH": {
+      "SUCCESS": "StackSucceeded",
+      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+    },
+    "ROLL_OBJECT_LOW": {
+      "SUCCESS": "RollSucceeded",
+      "FAILURE_RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "FAILURE_ABORT": "PickingOrPlacingActionFailedWithAbort"
+    }
   }
 }
 
