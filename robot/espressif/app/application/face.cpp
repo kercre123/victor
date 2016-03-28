@@ -66,8 +66,14 @@ namespace Face {
   int m_remainingRects;
   bool m_rectLock;
 
-  bool _textMode;
-  bool _textModeInverted;
+  typedef enum {
+    graphics = 0x00,
+    text     = 0x01,
+    debug    = 0x02,
+    inverted = 0x04
+  } FaceMode;
+
+  s8 _mode;
   
   static void ResetScan() {
     if (m_remainingRects > 0) {
@@ -96,8 +102,7 @@ namespace Face {
     // Setup a single frame transfer
     ResetScreen();
 
-    _textMode = false;
-    _textModeInverted = false;
+    _mode = graphics;
     return RESULT_OK;
   }
 
@@ -263,19 +268,8 @@ namespace Face {
     return screenDataValid;
   }
 
-  // Display text on the screen until turned off
-  extern "C" void FacePrintf(const char *format, ...)
+  void PrintFormatted(char *buffer)
   {
-    // Build the printf into a local buffer and zero-terminate it
-    char buffer[256];
-    va_list argptr;
-    va_start(argptr, format);
-    vsnprintf(buffer, sizeof(buffer)-1, format, argptr);
-    va_end(argptr);
-    buffer[sizeof(buffer)-1] = '\0';
-
-    _textMode = true;
-
     // Build the result into the framebuffer
     u64 frame[COLS];
     int x = 0, y = 0;
@@ -310,35 +304,63 @@ namespace Face {
       x++;
     }
     
-    if (_textModeInverted)
+    if (_mode & inverted)
     {
       for (y=0; y<COLS; ++y) frame[y] = ~frame[y];
     }
 
     Face::CreateRects((u64*) frame);
   }
+
+
+  // Display text on the screen until turned off
+  extern "C" void FacePrintf(const char *format, ...)
+  {
+    if ((_mode & debug) == 0)
+      {// Build the printf into a local buffer and zero-terminate it
+      char buffer[256];
+      va_list argptr;
+      va_start(argptr, format);
+      vsnprintf(buffer, sizeof(buffer)-1, format, argptr);
+      va_end(argptr);
+      buffer[sizeof(buffer)-1] = '\0';
+      
+      _mode = text;
+
+      PrintFormatted(buffer);
+    }
+  }
+  
+  extern "C" void FaceDebugPrintf(const char *format, ...)
+  {
+    // Build the printf into a local buffer and zero-terminate it
+    char buffer[256];
+    va_list argptr;
+    va_start(argptr, format);
+    vsnprintf(buffer, sizeof(buffer)-1, format, argptr);
+    va_end(argptr);
+    buffer[sizeof(buffer)-1] = '\0';
+    
+    _mode |= debug | inverted;
+
+    PrintFormatted(buffer);
+  }
   
   // Return display to normal function
   extern "C" void FaceUnPrintf(void)
   {
-    _textMode = false;
+    _mode = graphics;
     m_rectLock = true;
     ResetScreen();
     m_rectLock = false;
   }
-  
-  // Sets future calls to FacePrintf to invert the display
-  extern "C" void FaceInvertPrintf(bool invert)
-  {
-    _textModeInverted = invert;
-  }
-  
+
 } // Face
 
 namespace HAL {
   void FaceAnimate(u8* image, const u16 length)
   {
-    if (Face::_textMode || Face::m_remainingRects > 0) return; // Ignore when in text mode
+    if (Face::_mode != Face::graphics || Face::m_remainingRects > 0) return; // Ignore when in text mode
 
     else if (length == MAX_FACE_FRAME_SIZE) // If it's this size, it's raw
     {
