@@ -21,7 +21,6 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
-template<typename TYPE> class AnkiEvent;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // BehaviorWhiteboard
@@ -40,14 +39,15 @@ public:
   // initializes the whiteboard, registers to events
   void Init(Robot& robot);
 
-private:
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // handle for possible object events
-  void OnPossibleObjectSpotted(const AnkiEvent<ExternalInterface::MessageEngineToGame>& event);
+  // template for all events we subscribe to
+  template<typename T>
+  void HandleMessage(const T& msg);
+
+private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
