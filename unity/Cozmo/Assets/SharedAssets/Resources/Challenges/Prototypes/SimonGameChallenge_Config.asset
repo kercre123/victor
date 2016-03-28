@@ -18,15 +18,18 @@ MonoBehaviour:
   CozmoGuessCubeCorrectPercentage:
     serializedVersion: 2
     m_Curve:
-    - time: -.0479925163
-      value: .990719199
-      inSlope: -.106584691
-      outSlope: -.106584691
+    - time: -0.047992516
+      value: 0.9907192
+      inSlope: -0.10658469
+      outSlope: -0.10658469
       tangentMode: 0
-    - time: 5.01523256
-      value: .581688702
-      inSlope: -.297731221
-      outSlope: -.297731221
+    - time: 5.0152326
+      value: 0.5816887
+      inSlope: -0.29773122
+      outSlope: -0.29773122
       tangentMode: 0
     m_PreInfinity: 2
     m_PostInfinity: 2
+    m_RotationOrder: 4
+  BetweenRoundsMusic:
+    _Music: 658369771

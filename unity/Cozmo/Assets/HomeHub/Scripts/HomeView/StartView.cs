@@ -83,7 +83,10 @@ public class StartView : BaseView {
     var robot = RobotEngineManager.Instance.CurrentRobot;
     if (robot != null) {
       DAS.Info(this, "Sending Sleeping Animation");
-      robot.SendAnimation(AnimationName.kSleeping, HandleSleepAnimationComplete);
+      // INGO: This is a bit of a hack so that Mooly can test animations while the StartView is open
+      if (!DebugMenuManager.Instance.IsDialogOpen()) {
+        robot.SendAnimation(AnimationName.kSleeping, HandleSleepAnimationComplete);
+      }
     }
   }
 

@@ -15,6 +15,7 @@ namespace Simon {
       base.Enter();
       _GameInstance = _StateMachine.GetGame() as SimonGame;
       _GameInstance.InitColorsAndSounds();
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.BetweenRoundsMusic);
 
       _GameInstance.SharedMinigameView.ShowContinueButtonCentered(HandleContinuePressed,
         Localization.Get(LocalizationKeys.kButtonContinue));
@@ -26,11 +27,13 @@ namespace Simon {
 
       _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = (_NextPlayer != PlayerType.Cozmo);
       _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = (_NextPlayer != PlayerType.Human);
+
+      _GameInstance.SetCubeLightsDefaultOn();
     }
 
     private void HandleContinuePressed() {
       _GameInstance.SharedMinigameView.HideContinueButtonShelf();
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.GetMusicState());
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.GetDefaultMusicState());
       if (_NextPlayer == PlayerType.Cozmo) {
         _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));
       }

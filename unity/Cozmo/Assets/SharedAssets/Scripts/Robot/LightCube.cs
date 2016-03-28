@@ -192,7 +192,7 @@ public class LightCube : ObservedObject {
     }
   }
 
-  public void TurnLEDsOff() {
+  public void SetLEDsOff() {
     SetLEDs((uint)LEDColor.LED_OFF);
   }
 
@@ -200,24 +200,55 @@ public class LightCube : ObservedObject {
     SetLEDs(onColor.ToUInt());
   }
 
-  public void SetFlashingLEDs(Color onColor, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionMs = 0) {
+  public void SetLEDs(Color[] onColor) {
+    uint[] colors = new uint[onColor.Length];
+    for (int i = 0; i < onColor.Length; i++) {
+      colors[i] = onColor[i].ToUInt();
+    }
+    SetLEDs(colors);
+  }
+
+  public void SetFlashingLEDs(Color onColor, uint onDurationMs = 100, uint offDurationMs = 100, uint transitionMs = 0) {
     SetLEDs(onColor.ToUInt(), 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
   }
 
-  public void SetFlashingLEDs(uint onColor, uint onDurationMs = 200, uint offDurationMs = 200, uint transitionMs = 0) {
+  public void SetFlashingLEDs(uint onColor, uint onDurationMs = 100, uint offDurationMs = 100, uint transitionMs = 0) {
     SetLEDs(onColor, 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
   }
 
   public void SetLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
                       uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
 
+    Light light; 
     for (int i = 0; i < Lights.Length; ++i) {
-      Lights[i].OnColor = onColor;
-      Lights[i].OffColor = offColor;
-      Lights[i].OnPeriodMs = onPeriod_ms;
-      Lights[i].OffPeriodMs = offPeriod_ms;
-      Lights[i].TransitionOnPeriodMs = transitionOnPeriod_ms;
-      Lights[i].TransitionOffPeriodMs = transitionOffPeriod_ms;
+      light = Lights[i];
+      light.OnColor = onColor;
+      light.OffColor = offColor;
+      light.OnPeriodMs = onPeriod_ms;
+      light.OffPeriodMs = offPeriod_ms;
+      light.TransitionOnPeriodMs = transitionOnPeriod_ms;
+      light.TransitionOffPeriodMs = transitionOffPeriod_ms;
+    }
+
+    relativeMode = 0;
+    relativeToX = 0;
+    relativeToY = 0;
+  }
+
+  public void SetLEDs(uint[] lightColors, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
+                      uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
+
+    uint onColor;
+    Light light; 
+    for (int i = 0; i < Lights.Length; ++i) {
+      onColor = lightColors[i % lightColors.Length];
+      light = Lights[i];
+      light.OnColor = onColor;
+      light.OffColor = offColor;
+      light.OnPeriodMs = onPeriod_ms;
+      light.OffPeriodMs = offPeriod_ms;
+      light.TransitionOnPeriodMs = transitionOnPeriod_ms;
+      light.TransitionOffPeriodMs = transitionOffPeriod_ms;
     }
 
     relativeMode = 0;
@@ -237,5 +268,13 @@ public class LightCube : ObservedObject {
     this.relativeMode = relativeMode;
     this.relativeToX = relativeToX;
     this.relativeToY = relativeToY;
+  }
+
+  public Color[] GetLEDs() {
+    Color[] lightColors = new Color[Lights.Length];
+    for (int i = 0; i < Lights.Length; ++i) {
+      lightColors[i] = Lights[i].OnColor.ToColor();
+    }
+    return lightColors;
   }
 }

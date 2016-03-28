@@ -135,6 +135,7 @@
 		85065E851BF1904400DBAF35 /* libDriveAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */; };
 		852C0B6D1C6965730003DCFD /* DASConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 852C0B6C1C6965730003DCFD /* DASConfig.json */; };
 		85DEB8FF1C652A3C00202214 /* libDAS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DEB8FE1C652A3C00202214 /* libDAS.a */; };
+		85DF60091CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig in Resources */ = {isa = PBXBuildFile; fileRef = 85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */; settings = {ASSET_TAGS = (); }; };
 		85F44C1D5C0709D7AACE6C09 /* Il2CppGenericMethodTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 36BDDFF568A6239A8136E27B /* Il2CppGenericMethodTable.cpp */; };
 		867D643A0A33E9D2D9898C47 /* Bulk_Mono.Security_1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 64FF4558A72C09D3EB4EA737 /* Bulk_Mono.Security_1.cpp */; };
 		88289F763E18C6692F0BD7DC /* iAD.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6191E0E7276E6E65DE82A228 /* iAD.mm */; };
@@ -367,6 +368,7 @@
 		85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDriveAudioEngine.a; path = "../../lib/anki/cozmo-engine/lib/audio/gyp/build/Debug-iphoneos/libDriveAudioEngine.a"; sourceTree = "<group>"; };
 		852C0B6C1C6965730003DCFD /* DASConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = DASConfig.json; sourceTree = "<group>"; };
 		85DEB8FE1C652A3C00202214 /* libDAS.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDAS.a; path = "../../lib/anki/cozmo-engine/tools/das-client/gyp/build/Debug-iphoneos/libDAS.a"; sourceTree = "<group>"; };
+		85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = CozmoWifiConfigTemplate.mobileconfig; sourceTree = "<group>"; };
 		872D8FE853E21136529C3BDB /* WWWConnection.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = WWWConnection.mm; path = UnityBuild/Classes/Unity/WWWConnection.mm; sourceTree = "<group>"; };
 		87EEE4C8E35C05A18245D3CC /* Il2CppMethodPointerTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppMethodPointerTable.cpp; path = UnityBuild/Classes/Native/Il2CppMethodPointerTable.cpp; sourceTree = "<group>"; };
 		891ECBCE255BBCDA7DA8088B /* Bulk_Generics_16.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_16.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_16.cpp; sourceTree = "<group>"; };
@@ -659,6 +661,7 @@
 				852C0B6C1C6965730003DCFD /* DASConfig.json */,
 				F8BD0CDF1B5EAF0400F71EA3 /* ios.xcconfig */,
 				8D1107310486CEB800E47090 /* Info.plist */,
+				85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */,
 			);
 			name = Config;
 			sourceTree = "<group>";
@@ -900,6 +903,7 @@
 			files = (
 				F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */,
 				852C0B6D1C6965730003DCFD /* DASConfig.json in Resources */,
+				85DF60091CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig in Resources */,
 				02B586D964836D51B9590340 /* Images.xcassets in Resources */,
 				17E2C07577A687C86B439BF7 /* LaunchScreen-iPhoneLandscape.png in Resources */,
 				8D061DB0D685A1DA6CA66039 /* LaunchScreen-iPhonePortrait.png in Resources */,
