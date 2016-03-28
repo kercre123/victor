@@ -150,13 +150,13 @@ namespace Anki {
     Signal::SmartHandle UiMessageHandler::Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType,
                                                     std::function<void(const AnkiEvent<ExternalInterface::MessageEngineToGame>&)> messageHandler)
     {
-      return _eventMgrToGame.Subcribe(static_cast<u32>(tagType), messageHandler);
+      return _eventMgrToGame.Subscribe(static_cast<u32>(tagType), messageHandler);
     } // Subscribe(MessageEngineToGame)
     
     Signal::SmartHandle UiMessageHandler::Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType,
                                                     std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler)
     {
-      return _eventMgrToEngine.Subcribe(static_cast<u32>(tagType), messageHandler);
+      return _eventMgrToEngine.Subscribe(static_cast<u32>(tagType), messageHandler);
     } // Subscribe(MessageGameToEngine)
 
     

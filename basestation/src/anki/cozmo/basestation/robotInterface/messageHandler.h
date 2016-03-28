@@ -44,7 +44,7 @@ public:
   virtual Result SendMessage(const RobotID_t robotId, const RobotInterface::EngineToRobot& msg, bool reliable = true, bool hot = false);
 
   Signal::SmartHandle Subscribe(const uint32_t robotId, const RobotInterface::RobotToEngineTag& tagType, std::function<void(const AnkiEvent<RobotInterface::RobotToEngine>&)> messageHandler) {
-    return _eventMgr.Subcribe(robotId, static_cast<uint32_t>(tagType), messageHandler);
+    return _eventMgr.Subscribe(robotId, static_cast<uint32_t>(tagType), messageHandler);
   }
 
 protected:
