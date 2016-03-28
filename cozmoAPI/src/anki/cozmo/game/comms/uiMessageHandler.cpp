@@ -16,7 +16,6 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
-#include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/multiClientComms.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"

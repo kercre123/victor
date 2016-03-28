@@ -22,14 +22,8 @@
 #include "clad/types/animationKeyFrames.h"
 #include "clad/types/ledTypes.h"
 #include "clad/audio/audioEventTypes.h"
-#include "anki/cozmo/basestation/soundManager.h"
 #include "util/random/randomGenerator.h"
 #include "json/json-forwards.h"
-
-// This is a temporary switch to use the old SoundManager for streaming robot
-// audio for animations, until we manage to fully hook up Jordan's stuff for
-// using (and syncing) wwise AudioManager.
-#define USE_SOUND_MANAGER_FOR_ROBOT_AUDIO 0
 
 namespace Anki {
 namespace Cozmo {
@@ -187,47 +181,6 @@ namespace Cozmo {
   // of "samples" to be individually streamed to the robot.
   class RobotAudioKeyFrame : public IKeyFrame
   {
-# if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
-  public:
-    RobotAudioKeyFrame() : _selectedAudioIndex(0), _sampleIndex(0) { }
-
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
-    
-    static const std::string& GetClassName() {
-      static const std::string ClassName("RobotAudioKeyFrame");
-      return ClassName;
-    }
-
-    const std::string& GetSoundName() const;
-    
-    // This is only here so we can compile when USE_SOUND_MANAGER_FOR_ROBOT_AUDIO flag is on - JMR
-    struct AudioRef {
-      std::string name;
-      s32 numSamples;
-      f32 volume;
-      // This is only here so we can compile when USE_SOUND_MANAGER_FOR_ROBOT_AUDIO flag is on - JMR
-      Audio::GameEvent::GenericEvent audioEvent = Audio::GameEvent::GenericEvent::Invalid;
-    };
-    
-    const AudioRef& GetAudioRef() const;
-
-  protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
-
-  private:
-    
-    Result AddAudioRef(const std::string& name, const f32 volume = 1.f);
-    
-    std::vector<AudioRef> _audioReferences;
-
-    s32 _selectedAudioIndex;
-    
-    s32 _sampleIndex;
-    
-    AnimKeyFrame::AudioSample  _audioSampleMsg;
-    
-# else // if(USE_SOUND_MANAGER_FOR_ROBOT_AUDIO==0)
-    
   public:
     RobotAudioKeyFrame() { }
     
@@ -254,8 +207,6 @@ namespace Cozmo {
     Result AddAudioRef(const Audio::GameEvent::GenericEvent event);
 
     std::vector<AudioRef> _audioReferences;
-    
-# endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
     
   }; // class RobotAudioKeyFrame
     

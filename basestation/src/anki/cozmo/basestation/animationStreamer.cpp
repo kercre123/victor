@@ -1121,27 +1121,6 @@ namespace Cozmo {
       
     } // while(buffering frames)
     
-#   if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
-#   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-    if (PLAY_PHYSICAL_ROBOT_AUDIO_ON_DEVICE_TOO || !robot.IsPhysical()) {
-      for (auto audioKF : _onDeviceRobotAudioKeyFrameQueue)
-      {
-        if(!anim->HasFramesLeft() ||   // If all tracks buffered already, then play this now.
-           ((_playedRobotAudio_ms < _startTime_ms + audioKF->GetTriggerTime()) &&
-            audioKF->IsTimeToPlay(_startTime_ms,  currTime_ms)))
-        {
-          // TODO: Insert some kind of small delay to simulate latency?
-          SoundManager::getInstance()->Play(audioKF->GetSoundName());
-          _playedRobotAudio_ms = currTime_ms;
-          
-          _lastPlayedOnDeviceRobotAudioKeyFrame = audioKF;
-          _onDeviceRobotAudioKeyFrameQueue.pop_front();
-        }
-      }
-    }
-#   endif // PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-#   endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
-    
     // Send an end-of-animation keyframe when done
     if( !anim->HasFramesLeft() &&
         _audioClient.AnimationIsComplete() &&
