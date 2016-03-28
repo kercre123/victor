@@ -39,16 +39,22 @@ static u32 lastExecTime;
 static u32 modeTimeout;
 static s8  menuIndex;
 
-#define MENU_TIMEOUT 10000000
+#define MENU_TIMEOUT 100000000
 
-static const FTMenuItem menuItems[] = {
+static const FTMenuItem rootMenuItems[] = {
   {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      10000000 },
-  {"State info",      RobotInterface::FTM_StateInfo,     30000000 },
+  {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
+  {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 },
+};
+#define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
+
+static const FTMenuItem stateMenuItems[] = {
+  {"ADC info",        RobotInterface::FTM_ADCInfo,       30000000 },
   {"IMU info",        RobotInterface::FTM_ImuInfo,       30000000 },
   {"Encoder info",    RobotInterface::FTM_EncoderInfo,   30000000 },
-  {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 }
+  {"<--",             RobotInterface::FTM_menus, MENU_TIMEOUT}
 };
-#define NUM_MENU_ITEMS (sizeof(menuItems)/sizeof(*menuItems))
+#define NUM_STATE_MENU_ITEMS (sizeof(stateMenuItems)/sizeof(FTMenuItem))
 
 bool Init()
 {
@@ -56,6 +62,28 @@ bool Init()
   modeTimeout = 0xFFFFffff;
   menuIndex = 0;
   return true;
+}
+
+static u8 getCurrentMenuItems(const FTMenuItem** items)
+{
+  switch(mode)
+  {
+    case RobotInterface::FTM_menus:
+    {
+      *items = rootMenuItems;
+      return NUM_ROOT_MENU_ITEMS;
+    }
+    case RobotInterface::FTM_StateMenu:
+    {
+      *items = stateMenuItems;
+      return NUM_STATE_MENU_ITEMS;
+    }
+    default:
+    {
+      *items = NULL;
+      return 0;
+    }
+  }
 }
 
 void Update()
@@ -78,21 +106,31 @@ void Update()
         break;
       }
       case RobotInterface::FTM_menus:
+      case RobotInterface::FTM_StateMenu:
       {
         char menuBuf[256];
         unsigned int bufIndex = 0;
-        u8 i;
-        for (i=0; i<NUM_MENU_ITEMS; ++i)
+        const FTMenuItem* items;
+        u8 i, numItems;
+        numItems = getCurrentMenuItems(&items);
+        if (numItems == 0)
         {
-          bufIndex += ets_snprintf(menuBuf + bufIndex, sizeof(menuBuf) - bufIndex, "%s %s\n", i==menuIndex ? ">" : " ", menuItems[i].name);
-          if (bufIndex >= sizeof(menuBuf))
-          {
-            bufIndex = sizeof(menuBuf-1);
-            break;
-          }
+          Face::FacePrintf("Invalid menu %d", mode);
         }
-        menuBuf[bufIndex] = 0;
-        Face::FacePrintf(menuBuf);
+        else
+        {
+          for (i=0; i<numItems; ++i)
+          {
+            bufIndex += ets_snprintf(menuBuf + bufIndex, sizeof(menuBuf) - bufIndex, "%s %s\n", i==menuIndex ? ">" : " ", items[i].name);
+            if (bufIndex >= sizeof(menuBuf))
+            {
+              bufIndex = sizeof(menuBuf-1);
+              break;
+            }
+          }
+          menuBuf[bufIndex] = 0;
+          Face::FacePrintf(menuBuf);
+        }
         break;
       }
       case RobotInterface::FTM_WiFiInfo:
@@ -163,32 +201,35 @@ void Process_TestState(const RobotInterface::TestState& state)
       break;
     }
     case RobotInterface::FTM_menus:
+    case RobotInterface::FTM_StateMenu:
     {
-      if (now - lastExecTime > 1000000)
+      const FTMenuItem* items;
+      const u8 numItems = getCurrentMenuItems(&items);
+      if ((now - lastExecTime > 1000000) && numItems)
       {
         if (ABS(state.speedsFixed[0] > 1000))
         {
           lastExecTime = now;
           modeTimeout  = now + MENU_TIMEOUT;
-          menuIndex = (menuIndex + 1) % NUM_MENU_ITEMS;
+          menuIndex = (menuIndex + 1) % numItems;
         }
         else if (ABS(state.speedsFixed[1] > 1000))
         {
           lastExecTime = now;
           modeTimeout  = now + MENU_TIMEOUT;
-          menuIndex = (menuIndex - 1) % NUM_MENU_ITEMS;
+          menuIndex = (menuIndex - 1) % numItems;
         }
         else if (state.speedsFixed[2] < -10000)
         {
           lastExecTime = now;
           modeTimeout  = now + MENU_TIMEOUT;
-          SetMode(menuItems[menuIndex].mode);
-          modeTimeout = system_get_time() + menuItems[menuIndex].timeout;
+          SetMode(items[menuIndex].mode);
+          modeTimeout = system_get_time() + items[menuIndex].timeout;
         }
       }
       break;
     }
-    case RobotInterface::FTM_StateInfo:
+    case RobotInterface::FTM_ADCInfo:
     {
       Face::FacePrintf("Cliff: %d\nBatV10x: %d\nExtV10x: %d\nChargeState: 0x%x",
                        state.cliffLevel, state.battVolt10x, state.extVolt10x, state.chargeStat);
@@ -221,6 +262,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
 {
   RobotInterface::EngineToRobot msg;
   Anki::Cozmo::Face::FaceUnPrintf();
+  menuIndex = 0;
   
   if (mode == RobotInterface::FTM_None && newMode != RobotInterface::FTM_None)
   {
@@ -240,6 +282,8 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
   {
     case RobotInterface::FTM_entry:
     case RobotInterface::FTM_menus:
+    case RobotInterface::FTM_WiFiInfo:
+    case RobotInterface::FTM_StateMenu:
     {
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
       msg.enableLiftPower.enable = true;
@@ -267,6 +311,8 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
       break;
     }
     case RobotInterface::FTM_menus:
+    case RobotInterface::FTM_WiFiInfo:
+    case RobotInterface::FTM_StateMenu:
     {
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
       msg.enableLiftPower.enable = false;

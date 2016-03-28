@@ -12,7 +12,8 @@ namespace RobotInterface {
     FTM_entry = -1, ///< Default disconnected state
     FTM_None  = 0,   ///< Exit factory test mode
     FTM_WiFiInfo,
-    FTM_StateInfo,
+    FTM_StateMenu,
+    FTM_ADCInfo,
     FTM_ImuInfo,
     FTM_EncoderInfo,
     FTM_motorLifeTest,
