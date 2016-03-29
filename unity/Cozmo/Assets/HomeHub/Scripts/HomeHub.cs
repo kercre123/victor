@@ -7,6 +7,8 @@ using Cozmo.Util;
 namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
 
+    public Transform[] RewardIcons = null;
+
     [SerializeField]
     private StartView _StartViewPrefab;
     private StartView _StartViewInstance;
@@ -67,7 +69,7 @@ namespace Cozmo.HomeHub {
       ShowTimelineDialog();
     }
 
-    private void ShowTimelineDialog(Transform[] rewardIcons = null) {
+    private void ShowTimelineDialog() {
       // Create dialog with the game prefabs
       _HomeViewInstance = UIManager.OpenView(_HomeViewPrefab, verticalCanvas: true);
       _HomeViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
@@ -76,7 +78,7 @@ namespace Cozmo.HomeHub {
       _HomeViewInstance.OnEndSessionClicked += HandleSessionEndClicked;
 
       // Show the current state of challenges being locked/unlocked
-      _HomeViewInstance.Initialize(_ChallengeStatesById, rewardIcons);
+      _HomeViewInstance.Initialize(_ChallengeStatesById, this);
 
       // The Default chooser is used for freeplay. 
       RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
@@ -174,7 +176,8 @@ namespace Cozmo.HomeHub {
         CompleteChallenge(_CurrentChallengePlaying, didWin, rewards);
         _CurrentChallengePlaying = null;
       }
-      ShowTimelineDialog(rewardIcons);
+      ShowTimelineDialog();
+      RewardIcons = rewardIcons;
     }
 
     private void HandleMiniGameQuit() {

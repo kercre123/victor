@@ -5,10 +5,10 @@ using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.UI;
-
-// ProgressionStatType
+using System.Linq;
+using System;
 using Anki.Cozmo;
-
+using DataPersistence;
 
 // Panel for generating and displaying the ProgressionStat goals for the Day.
 public class DailyGoalPanel : MonoBehaviour {
@@ -16,6 +16,7 @@ public class DailyGoalPanel : MonoBehaviour {
   private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
   private const float _kFadeTweenDuration = 0.25f;
 
+  public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
 
   // Prefab for GoalCells
   [SerializeField]
@@ -52,20 +53,146 @@ public class DailyGoalPanel : MonoBehaviour {
   private GoalCell[] _GoalCellsByStat;
   private readonly List<Sequence> _RewardTweens = new List<Sequence>();
 
+  [SerializeField]
+  private DailySummaryPanel _DailySummaryPrefab;
+  private DailySummaryPanel _DailySummaryInstance;
+
   void Awake() {
     _RectTransform = GetComponent<RectTransform>();
     _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
     _GoalCellsByStat = new GoalCell[(int)ProgressionStatType.Count];
+  }
 
-    var currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
+  void Start() {
+    UpdateDailySession(GetComponent<Cozmo.HomeHub.TabPanel>().GetHomeViewInstance().HomeHubInstance.RewardIcons);
+  }
 
-    SetDailyGoals(currentSession.Progress, currentSession.Goals);
-
-    if (currentSession.GoalsFinished == false &&
-        DailyGoalManager.Instance.AreAllDailyGoalsComplete(currentSession.Progress, currentSession.Goals)) {
-      currentSession.GoalsFinished = true;
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
+  private void OnDestroy() {
+    for (int i = 0; i < _GoalCells.Count; i++) {
+      _GoalCells[i].OnProgChanged -= RefreshProgress;
     }
+    _GoalCells.Clear();
+
+    if (_RewardTweens != null) {
+      StopCoroutine(DelayedAnimateRewards(null));
+      foreach (var tween in _RewardTweens) {
+        tween.Kill();
+      }
+      _RewardTweens.Clear();
+    }
+  }
+
+  public void UpdateDailySession(Transform[] rewardIcons = null) {
+    var currentSession = DataPersistenceManager.Instance.CurrentSession;
+    IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
+
+    if (currentSession != null) {
+
+      SetDailyGoals(currentSession.Progress, currentSession.Goals, rewardIcons);
+
+      if (currentSession.GoalsFinished == false &&
+          DailyGoalManager.Instance.AreAllDailyGoalsComplete(currentSession.Progress, currentSession.Goals)) {
+        currentSession.GoalsFinished = true;
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
+      }
+    }
+    else {
+      var lastSession = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+
+      if (lastSession != null && !lastSession.Complete) {
+        CompleteSession(lastSession);
+      }
+
+      // start a new session
+      TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today) {
+        StartingFriendshipLevel = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel,
+        StartingFriendshipPoints = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints
+      };
+
+      StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
+      newSession.Goals.Set(goals);
+
+      currentRobot.SetProgressionStats(newSession.Progress);
+
+      SetDailyGoals(newSession.Progress, newSession.Goals, rewardIcons);
+
+      DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
+
+      DataPersistenceManager.Instance.Save();
+    }
+
+    rewardIcons = null;
+  }
+
+
+  private void CompleteSession(TimelineEntryData timelineEntry) {
+
+    int friendshipPoints = DailyGoalManager.Instance.CalculateFriendshipPoints(timelineEntry.Progress, timelineEntry.Goals);
+
+    RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
+    UpdateFriendshipPoints(timelineEntry, friendshipPoints);
+
+    int stat_count = (int)Anki.Cozmo.ProgressionStatType.Count; 
+    for (int i = 0; i < stat_count; ++i) {
+      var targetStat = (Anki.Cozmo.ProgressionStatType)i;
+      if (timelineEntry.Goals[targetStat] > 0) {
+        DAS.Event(DASConstants.Goal.kProgressSummary, DASUtil.FormatDate(timelineEntry.Date), 
+          new Dictionary<string,string> { {
+              "$data",
+              DASUtil.FormatGoal(targetStat, timelineEntry.Progress[targetStat], timelineEntry.Goals[targetStat])
+            }
+          });
+      }
+    }
+
+    Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
+
+    ShowDailySessionPanel(timelineEntry, HandleOnFriendshipBarAnimateComplete);
+  }
+
+  private void ShowDailySessionPanel(TimelineEntryData session, OnFriendshipBarAnimateComplete onComplete = null) {
+    if (_DailySummaryInstance != null) {
+      return;
+    }
+    DailyGoalManager.Instance.DisableRequestGameBehaviorGroups();
+    _DailySummaryInstance = UIManager.OpenView(_DailySummaryPrefab, 
+      newView => {
+        newView.Initialize(session);
+      });
+    if (onComplete != null) {
+      _DailySummaryInstance.FriendshipBarAnimateComplete += onComplete;
+    }
+    _DailySummaryInstance.ViewClosed += HandleDailySummaryClosed;
+  }
+
+
+  private void HandleOnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel) {
+
+    TimeSpan deltaTime = DataPersistenceManager.Instance.Data.Sessions.Count <= 1 ? new TimeSpan(1, 0, 0, 0) : 
+      (DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 2].Date - DataPersistenceManager.Today);
+    int friendshipPoints = ((int)deltaTime.TotalDays + 1) * 10;
+    summaryPanel.FriendshipBarAnimateComplete -= HandleOnFriendshipBarAnimateComplete;
+
+    if (friendshipPoints < 0) {
+      RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
+      UpdateFriendshipPoints(data, friendshipPoints);
+      summaryPanel.AnimateFriendshipBar(data);
+    }
+  }
+
+  private void UpdateFriendshipPoints(TimelineEntryData timelineEntry, int friendshipPoints) {
+    timelineEntry.AwardedFriendshipPoints = friendshipPoints;
+    DataPersistenceManager.Instance.Data.FriendshipLevel
+    = timelineEntry.EndingFriendshipLevel
+      = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel;
+    DataPersistenceManager.Instance.Data.FriendshipPoints
+    = timelineEntry.EndingFriendshipPoints
+      = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints;
+    timelineEntry.Complete = true;
+  }
+
+  private void HandleDailySummaryClosed() {
+    DailyGoalManager.Instance.SetMinigameNeed();
   }
 
   public void SetDailyGoals(StatContainer progress, StatContainer goals, Transform[] rewardIcons = null) {
@@ -148,21 +275,6 @@ public class DailyGoalPanel : MonoBehaviour {
     var rect = _RectTransform.rect;
 
     _TitleGlow.localScale = _Title.localScale = Vector3.one * _TitleScaleCurve.Evaluate(rect.width);
-  }
-
-  private void OnDestroy() {
-    for (int i = 0; i < _GoalCells.Count; i++) {
-      _GoalCells[i].OnProgChanged -= RefreshProgress;
-    }
-    _GoalCells.Clear();
-
-    if (_RewardTweens != null) {
-      StopCoroutine(DelayedAnimateRewards(null));
-      foreach (var tween in _RewardTweens) {
-        tween.Kill();
-      }
-      _RewardTweens.Clear();
-    }
   }
 
   private IEnumerator DelayedAnimateRewards(Transform[] rewardIconsByStat) {
