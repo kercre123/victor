@@ -151,7 +151,6 @@ namespace Anki.Cozmo.Viz {
       }
       else {
         Instance = this;
-        DontDestroyOnLoad(gameObject);
       }
         
       _Channel = new VizUdpChannel();

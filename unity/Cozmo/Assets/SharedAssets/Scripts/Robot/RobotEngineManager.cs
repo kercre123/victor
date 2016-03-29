@@ -125,7 +125,6 @@ public class RobotEngineManager : MonoBehaviour {
     }
     else {
       Instance = this;
-      DontDestroyOnLoad(gameObject);
     }
 
     TextAsset config = _Configuration;
