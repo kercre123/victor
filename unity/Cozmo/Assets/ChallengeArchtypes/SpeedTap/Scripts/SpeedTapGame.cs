@@ -86,13 +86,13 @@ namespace SpeedTap {
     // In Future, potentially play a different animation here
     public void PlayerHitWrong() {
       DAS.Info("SpeedTapGame.PlayerHitWrong", "");
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapRed);
       CozmoWinsHand();
     }
 
     public void CozmoWinsHand() {
       _CozmoScore++;
       UpdateUI();
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
       PlayerBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
       for (int i = 0; i < 4; i++) {
         CozmoBlock.Lights[i].SetFlashingLED(CozmoWinColors[i], 100, 100, 0);
