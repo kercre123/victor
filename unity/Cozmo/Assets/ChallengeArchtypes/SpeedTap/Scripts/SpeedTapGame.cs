@@ -325,6 +325,9 @@ namespace SpeedTap {
       }
     }
 
+    protected override string GetQuitGameState() {
+      return string.Format(DASConstants.Game.kQuitGameStateSpeedTap, _PlayerRoundsWon, _CozmoRoundsWon, _PlayerScore, _CozmoScore);
+    }
 
   }
 }

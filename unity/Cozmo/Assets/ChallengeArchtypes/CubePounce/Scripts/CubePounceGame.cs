@@ -236,5 +236,9 @@ namespace CubePounce {
         SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
       }
     }
+
+    protected override string GetQuitGameState() {
+      return string.Format(DASConstants.Game.kQuitGameStateCubePounce, _PlayerRoundsWon, _CozmoRoundsWon, _PlayerScore, _CozmoScore);
+    }
   }
 }
