@@ -20,15 +20,11 @@ public class StartView : BaseView {
   private Button _SecretSkipButton;
 
   [SerializeField]
-  private ShowCozmoCubeSlide _ShowCozmoCubesContainer;
+  private CozmoButton _ConnectButton;
 
   public event System.Action OnConnectClicked;
 
-  private int _NumRequiredCubes = 3;
-  private List<int> _CubeIdsSeen;
-
   private void Awake() {
-    _CubeIdsSeen = new List<int>();
 
     #if UNITY_EDITOR
     _SecretSkipButton.onClick.AddListener(HandleSecretSkipButtonClicked);
@@ -36,28 +32,18 @@ public class StartView : BaseView {
 
     LoopRobotSleep();
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
+    _ConnectButton.DASEventButtonName = "connect_button";
+    _ConnectButton.DASEventViewController = "start_view";
+  }
 
-    _ShowCozmoCubesContainer.Initialize(_NumRequiredCubes, Cozmo.CubePalette.OutOfViewColor, Cozmo.CubePalette.InViewColor, 
-      LocalizationKeys.kConnectLabelShowCubes);
+  private void Start() {
+
+    _ConnectButton.onClick.AddListener(() => HandleConnectClicked());
   }
 
   private void Update() {
     _WifiIndicator.color = IsWifiConnected() ? Color.white : _DisconnectedColor;
     _BluetoothIndicator.color = IsBluetoothConnected() ? Color.white : _DisconnectedColor;
-
-    int currentNumCubes = RobotEngineManager.Instance.CurrentRobot.LightCubes.Count;
-    if (_CubeIdsSeen.Count < currentNumCubes) {
-      foreach (var cube in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
-        if (cube.Value.MarkersVisible && !_CubeIdsSeen.Contains(cube.Key)) {
-          _CubeIdsSeen.Add(cube.Value.ID);
-          cube.Value.SetLEDs(Cozmo.CubePalette.InViewColor.lightColor);
-        }
-      }
-      _ShowCozmoCubesContainer.LightUpCubes(_CubeIdsSeen.Count);
-      if (_CubeIdsSeen.Count >= _NumRequiredCubes) {
-        HandleConnectClicked();
-      }
-    }
   }
 
   private bool IsWifiConnected() {
