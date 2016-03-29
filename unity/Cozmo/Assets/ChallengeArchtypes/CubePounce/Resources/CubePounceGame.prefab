@@ -10,7 +10,7 @@ GameObject:
   - 4: {fileID: 439342}
   - 114: {fileID: 11489490}
   m_Layer: 0
-  m_Name: CubeSlapGame
+  m_Name: CubePounceGame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -36,16 +36,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 141604}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c8b193790a284a36a9a0a09bbb3a8ea, type: 3}
+  m_Script: {fileID: 11500000, guid: a9cf68e381422438d9b3603688adeaea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GameStateSlides: []
-  _FakeoutAnimations:
-  - pounceFakeout1
-  - pounceFakeout2
-  - pounceFakeout3
-  _PounceAnimation: pounceForward
-  _RetractAnimation: pounceRetract
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
