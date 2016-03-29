@@ -22,6 +22,8 @@ namespace ScriptedSequences.Actions {
       _Token = new SimpleAsyncToken();
 
       // FIXME: This will change when we start using wwise to generate sound for Cozmo
+      // TODO: Account for player's current preferences
+      // TODO: Don't use SetVolumeValue because it saves to preferences
       if (VolumeChannel == Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot) {
         IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
         DOTween.To(() => currentRobot.GetRobotVolume(), x => currentRobot.SetRobotVolume(x), TargetVolume, Duration).OnComplete(() => DoneTween());

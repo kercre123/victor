@@ -13,6 +13,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Rounds: 3
   MaxScorePerRound: 5
+  _BetweenRoundMusic:
+    _Music: 658369771
   DifficultyOptions:
   - DifficultyId: 1
     DifficultyName:

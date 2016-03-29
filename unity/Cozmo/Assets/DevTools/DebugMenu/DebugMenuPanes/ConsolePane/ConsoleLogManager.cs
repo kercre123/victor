@@ -26,6 +26,8 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   private Dictionary<LogPacket.ELogKind, bool> _LastToggleValues;
 
+  private bool _SOSLoggingEnabled = false;
+
   // Use this for initialization
   private void Awake() {
     _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
@@ -42,6 +44,40 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     DAS.AddTarget(this);
 
     ConsoleLogPane.ConsoleLogPaneOpened += OnConsoleLogPaneOpened;
+
+  }
+
+  private void EnableSOSLogs() {
+    if (_SOSLoggingEnabled) {
+      DAS.Warn(this, "SOS log already enabled");
+      return;
+    }
+    _SOSLoggingEnabled = true;
+    SOSLogManager.Instance.CreateListener();
+    RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
+    SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
+  }
+
+  private void HandleNewSOSLog(string log) {
+    if (log.Contains("[Warn]")) {
+      SaveLogPacket(LogPacket.ELogKind.Warning, "", log, null);
+    }
+    else if (log.Contains("[Error]")) {
+      SaveLogPacket(LogPacket.ELogKind.Error, "", log, null);
+    }
+    else if (log.Contains("[Debug]")) {
+      SaveLogPacket(LogPacket.ELogKind.Debug, "", log, null);
+    }
+    else if (log.Contains("[Info]")) {
+      SaveLogPacket(LogPacket.ELogKind.Info, "", log, null);
+    }
+    else if (log.Contains("[Event]")) {
+      SaveLogPacket(LogPacket.ELogKind.Event, "", log, null);
+    }
+    else {
+      SaveLogPacket(LogPacket.ELogKind.Debug, "", log, null);
+      Debug.LogWarning("Malformed Log Detected");
+    }
   }
 
   private void OnDestroy() {
@@ -92,6 +128,8 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   private void OnConsoleLogPaneOpened(ConsoleLogPane logPane) {
     _ConsoleLogPaneView = logPane;
+    _ConsoleLogPaneView.ConsoleSOSLogButtonEnable += EnableSOSLogs;
+    _ConsoleLogPaneView.ConsoleLogCopyToClipboard += CopyLogsToClipboard;
 
     List<string> consoleText = CompileRecentLogs();
     _ConsoleLogPaneView.Initialize(consoleText, _TextLabelPool);
@@ -109,6 +147,16 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     // Change the text for the pane
     List<string> consoleText = CompileRecentLogs();
     _ConsoleLogPaneView.SetText(consoleText);
+  }
+
+  private void CopyLogsToClipboard() {
+    List<string> logDb = CompileRecentLogs();
+    string logFull = "";
+    for (int i = 0; i < logDb.Count; ++i) {
+      logFull += logDb[i];
+    }
+    CozmoBinding.SendToClipboard(logFull);
+    GUIUtility.systemCopyBuffer = logFull;
   }
 
   private void OnConsoleLogPaneClosed() {
@@ -227,7 +275,7 @@ public class LogPacket {
       break;
     }
     
-    string contextStr = "null";
+    string contextStr = "";
     if (Context != null) {
       Dictionary<string, string> contextDict = Context as Dictionary<string, string>;
       if (contextDict != null) {

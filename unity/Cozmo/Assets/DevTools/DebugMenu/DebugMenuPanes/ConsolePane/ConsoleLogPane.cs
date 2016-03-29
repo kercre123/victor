@@ -11,6 +11,10 @@ public class ConsoleLogPane : MonoBehaviour {
 
   public static event ConsoleLogPaneOpenHandler ConsoleLogPaneOpened;
 
+  public delegate void ConsoleSOSLogButtonEnableHandler();
+
+  public event ConsoleSOSLogButtonEnableHandler ConsoleSOSLogButtonEnable;
+
   private static void RaiseConsoleLogPaneOpened(ConsoleLogPane consoleLogPane) {
     if (ConsoleLogPaneOpened != null) {
       ConsoleLogPaneOpened(consoleLogPane);
@@ -20,6 +24,10 @@ public class ConsoleLogPane : MonoBehaviour {
   public delegate void ConsoleLogPaneClosedHandler();
 
   public event ConsoleLogPaneClosedHandler ConsoleLogPaneClosed;
+
+  public delegate void ConsoleLogCopyToClipboardHander();
+
+  public event ConsoleLogCopyToClipboardHander ConsoleLogCopyToClipboard;
 
   private void RaiseConsoleLogPaneClosed() {
     if (ConsoleLogPaneClosed != null) {
@@ -46,6 +54,12 @@ public class ConsoleLogPane : MonoBehaviour {
   [SerializeField]
   private ConsoleLogToggle[] _LogToggles;
 
+  [SerializeField]
+  private Button _EnableSOSButton;
+
+  [SerializeField]
+  private Button _CopyLogButton;
+
   private SimpleObjectPool<AnkiTextLabel> _TextLabelPool;
   private List<AnkiTextLabel> _TextLabelsUsed;
   private AnkiTextLabel _NewestTextLabel;
@@ -55,6 +69,15 @@ public class ConsoleLogPane : MonoBehaviour {
     _TextLabelsUsed = new List<AnkiTextLabel>();
 
     RaiseConsoleLogPaneOpened(this);
+
+    _EnableSOSButton.onClick.AddListener(HandleOnEnableSOSLogButton);
+    _CopyLogButton.onClick.AddListener(HandleOnCopyLogButton);
+  }
+
+  private void HandleOnCopyLogButton() {
+    if (ConsoleLogCopyToClipboard != null) {
+      ConsoleLogCopyToClipboard();
+    }
   }
 
   private void OnDestroy() {
@@ -62,6 +85,12 @@ public class ConsoleLogPane : MonoBehaviour {
     ReturnLabelsToPool();
 
     RaiseConsoleLogPaneClosed();
+  }
+
+  private void HandleOnEnableSOSLogButton() {
+    if (ConsoleSOSLogButtonEnable != null) {
+      ConsoleSOSLogButtonEnable();
+    }
   }
 
   public void Initialize(List<string> consoleText, SimpleObjectPool<AnkiTextLabel> textLabelPool) {

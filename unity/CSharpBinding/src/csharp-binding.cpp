@@ -62,7 +62,7 @@ int cozmo_startup(const char *configuration_data)
     int result = (int)RESULT_OK;
     
 #ifdef USE_IOS
-    result = cozmo_game_create(configuration_data);
+    result = cozmo_engine_create(configuration_data);
 #endif
     
     return result;
@@ -73,9 +73,23 @@ int cozmo_shutdown()
     int result = (int)RESULT_OK;
     
 #ifdef USE_IOS
-    result = cozmo_game_destroy();
+    result = cozmo_engine_destroy();
 #endif
     
     return result;
 }
 
+int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
+{
+  int result = (int)RESULT_OK;
+  
+#ifdef USE_IOS
+  result = cozmo_engine_wifi_setup(wifiSSID, wifiPasskey);
+#endif
+  
+  return result;
+}
+
+void cozmo_send_to_clipboard(const char* log) {
+  cozmo_engine_send_to_clipboard(log);
+}

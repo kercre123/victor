@@ -28,20 +28,37 @@
       'libsphinxBase.a',
     ],
 
+    'routing_http_server_libs': [
+      'librouting_http_server.a',
+    ],
+
+    'routing_http_server_include': [
+      '<(coretech_external_path)/routing_http_server/generated/include',
+    ],
+
+    'das_include': [
+      '../../lib/anki/das-client/include',
+      '../../lib/anki/das-client/ios',
+    ],
+
     'cte_lib_search_path_mac_debug': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Debug',
+      '<(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release', # NOTE WE USE RELEASE HERE INTENTIONALLY
     ],
 
     'cte_lib_search_path_mac_release': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Release',
+      '<(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release',
     ],
 
     'cte_lib_search_path_ios_debug': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
+      '<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos', # NOTE WE USE RELEASE HERE INTENTIONALLY
     ],
 
     'cte_lib_search_path_ios_release': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
+      '<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos',
     ],
 
     'webots_includes': [
@@ -342,8 +359,8 @@
             'include_dirs': [
               '../../unity/CSharpBinding/src',
               '<@(opencv_includes)',
-              '../../lib/anki/das-client/include',
-              '../../lib/anki/das-client/ios'
+              '<@(das_include)',
+              '<@(routing_http_server_include)',
             ],
             'dependencies': [
               '<(cg-ce_gyp_path):cozmoEngine',
@@ -358,6 +375,7 @@
             'libraries': [
               '<@(face_library_libs)',
               '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
+              '<@(routing_http_server_libs)',
               '$(SDKROOT)/System/Library/Frameworks/AssetsLibrary.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreText.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreGraphics.framework',
