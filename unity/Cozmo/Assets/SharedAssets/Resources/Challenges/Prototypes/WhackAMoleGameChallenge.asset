@@ -17,8 +17,12 @@ MonoBehaviour:
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: whackAMole.title
   _ChallengeDescriptionLocKey: whackAMole.description
-  _ChallengeIcon: {fileID: 21300000, guid: f62381e18f14f42eca4b75da898accf3, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: b9aff666f4e44424795e2b6746840501, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
+  _HowToPlayDialogContentLocKey: 
+  _HowToPlayDialogContentPrefab: {fileID: 0}
+  _Music:
+    _Music: 0
   MinigameConfig: {fileID: 11400000, guid: 566bcc302b99544f39c6182baf144e67, type: 2}

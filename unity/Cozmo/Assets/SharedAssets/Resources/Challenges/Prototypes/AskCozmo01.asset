@@ -16,11 +16,13 @@ MonoBehaviour:
   _EnableHubWorldChallenge: 0
   _EnableDevWorldChallenge: 1
   _ChallengeTitleLocKey: askCozmo01.title
-  _ChallengeSubtitleLocKey: askCozmo01.subtitle
   _ChallengeDescriptionLocKey: askCozmo01.description
-  _ChallengeIcon: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
-  _ChallengeKeyArt: {fileID: 21300000, guid: 3e61a0dd57c8c4783ba373ea0bf0ce76, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: b9aff666f4e44424795e2b6746840501, type: 3}
   _ChallengeReqs:
     ChallengeGateKeys: []
     StatGateArray: []
+  _HowToPlayDialogContentLocKey: 
+  _HowToPlayDialogContentPrefab: {fileID: 0}
+  _Music:
+    _Music: 0
   MinigameConfig: {fileID: 11400000, guid: ab054c57772e9435e9f091ac02533134, type: 2}
