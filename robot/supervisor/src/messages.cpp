@@ -356,7 +356,8 @@ namespace Anki {
         //AnkiInfo( 116, "Messages.Process_drive.Executing", 364, "left=%f mm/s, right=%f mm/s", 2, msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
 
         //PathFollower::ClearPath();
-        SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+        SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
+                                               msg.lwheel_accel_mmps2, msg.rwheel_accel_mmps2);
       }
 
       void Process_driveCurvature(const RobotInterface::DriveWheelsCurvature& msg) {

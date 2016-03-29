@@ -59,7 +59,9 @@ message StartEngine {
 // DriveWheels
 message DriveWheels {
     float_32 lwheel_speed_mmps,
-    float_32 rwheel_speed_mmps
+    float_32 rwheel_speed_mmps,
+    float_32 lwheel_accel_mmps2 = 0.0,
+    float_32 rwheel_accel_mmps2 = 0.0
 }
 
 // TurnInPlace

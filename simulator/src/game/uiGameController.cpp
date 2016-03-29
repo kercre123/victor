@@ -640,11 +640,13 @@ namespace Anki {
       ++m.counter;
     }
     
-    void UiGameController::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps)
+    void UiGameController::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps, const f32 lwheel_accel_mmps2, const f32 rwheel_accel_mmps2)
     {
       ExternalInterface::DriveWheels m;
       m.lwheel_speed_mmps = lwheel_speed_mmps;
       m.rwheel_speed_mmps = rwheel_speed_mmps;
+      m.lwheel_accel_mmps2 = lwheel_accel_mmps2;
+      m.rwheel_accel_mmps2 = rwheel_accel_mmps2;
       ExternalInterface::MessageGameToEngine message;
       message.Set_DriveWheels(m);
       SendMessage(message);
