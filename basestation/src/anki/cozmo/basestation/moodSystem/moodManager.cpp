@@ -173,7 +173,10 @@ void MoodManager::HandleMessage(const ExternalInterface::RobotCompletedAction& m
     _actionsTagsToIgnore.erase(ignoreIt);
     return;
   }
-
+  // Prevent Cozmo from crashing when receiving a message with an invalid action Type
+  if (RobotActionTypeToString(msg.actionType) == nullptr) {
+    return;
+  }
   const auto& actionIt = _actionCompletedEventMap.find( RobotActionTypeToString(msg.actionType) );
   if( actionIt != _actionCompletedEventMap.end() ) {
     const auto& resultIt = actionIt->second.find( ActionResultToString(msg.result) );
