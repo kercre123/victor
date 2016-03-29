@@ -38,8 +38,8 @@ MonoBehaviour:
   TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   _AlphaController: {fileID: 0}
-  _GlintAnimator: {fileID: 0}
   ButtonGraphics: []
+  _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: -1705717452
     _EventType: 6

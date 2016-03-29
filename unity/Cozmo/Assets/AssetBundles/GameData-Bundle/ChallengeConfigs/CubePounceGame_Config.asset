@@ -14,5 +14,5 @@ MonoBehaviour:
   MinSlapDelay: 1.5
   MaxSlapDelay: 3
   Rounds: 5
-  StartingSlapChance: .200000003
+  StartingSlapChance: 0.2
   MaxFakeouts: 4
