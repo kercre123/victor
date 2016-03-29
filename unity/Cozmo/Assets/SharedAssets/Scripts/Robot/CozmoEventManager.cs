@@ -36,8 +36,14 @@ public class CozmoEventManager {
   // other managers listen to this and use that to map enum based events to things
   public event Action<CozmoEvent> CozmoEventReceived;
 
+  // List of All Event Enums, used by tools for visualization
+  public readonly List<CozmoEvent> CozmoEventList;
+
   public CozmoEventManager() {
-    // TODO : Constructor?
+    CozmoEventList = new List<CozmoEvent>();
+    for (int i = 0; i < (int)CozmoEvent.COUNT; i++) {
+      CozmoEventList.Add((CozmoEvent)i);
+    }
     // Listen to whatever message is giving us the CozmoEvent message.
     // RobotEngineManager.Instance.WhateverTheEventMessageThingyIs += RaiseCozmoEvent;
   }
