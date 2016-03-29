@@ -258,6 +258,11 @@ void Process_TestState(const RobotInterface::TestState& state)
   }
 }
 
+RobotInterface::FactoryTestMode GetMode()
+{
+  return mode;
+}
+
 void SetMode(const RobotInterface::FactoryTestMode newMode)
 {
   RobotInterface::EngineToRobot msg;
