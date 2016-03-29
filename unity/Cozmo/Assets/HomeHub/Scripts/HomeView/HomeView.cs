@@ -106,11 +106,8 @@ namespace Cozmo.HomeHub {
     private void UpdateDailySession(Transform[] rewardIcons = null) {
       var currentSession = DataPersistenceManager.Instance.CurrentSession;
       IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
-      // check if the current session is still valid
-      if (currentSession != null && DailyGoalsSet != null) {  
-        DailyGoalsSet(currentSession.Progress, currentSession.Goals, rewardIcons);
-      }
-      else {
+      // if current session is invalid then start a new session
+      if (currentSession == null) {  
         var lastSession = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
 
         if (lastSession != null && !lastSession.Complete) {

@@ -27,7 +27,7 @@ namespace Cozmo.HomeHub {
     private GameBase _MiniGameInstance;
 
     public GameBase MiniGameInstance { 
-      get {        
+      get {
         return _MiniGameInstance;
       }
     }

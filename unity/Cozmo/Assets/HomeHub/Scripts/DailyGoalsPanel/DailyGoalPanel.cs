@@ -56,6 +56,16 @@ public class DailyGoalPanel : MonoBehaviour {
     _RectTransform = GetComponent<RectTransform>();
     _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
     _GoalCellsByStat = new GoalCell[(int)ProgressionStatType.Count];
+
+    var currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
+
+    SetDailyGoals(currentSession.Progress, currentSession.Goals);
+
+    if (currentSession.GoalsFinished == false &&
+        DailyGoalManager.Instance.AreAllDailyGoalsComplete(currentSession.Progress, currentSession.Goals)) {
+      currentSession.GoalsFinished = true;
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
+    }
   }
 
   public void SetDailyGoals(StatContainer progress, StatContainer goals, Transform[] rewardIcons = null) {
