@@ -159,8 +159,9 @@ namespace Simon {
       SharedMinigameView.ShowInfoTextSlideWithKey(infoText);
     }
 
-    protected override string GetQuitGameState() {
-      return string.Format(DASConstants.Game.kQuitGameStateSimon, _CurrentSequenceLength);
+    protected override void RaiseMiniGameQuit() {
+      base.RaiseMiniGameQuit();
+      DAS.Event(DASConstants.Game.kQuitGameScore, _CurrentSequenceLength.ToString());
     }
   }
 
