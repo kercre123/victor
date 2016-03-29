@@ -134,10 +134,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 0
+    m_Left: 100
     m_Right: 0
     m_Top: 0
-    m_Bottom: 0
+    m_Bottom: 100
   m_ChildAlignment: 4
   m_Spacing: 0
   m_ChildForceExpandWidth: 1
@@ -255,7 +255,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
   m_MinWidth: -1
-  m_MinHeight: 160
+  m_MinHeight: 150
   m_PreferredWidth: -1
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
@@ -272,8 +272,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _UnlockedChallengeButtonPrefab: {fileID: 11402620, guid: 7dcd9a3635461408cb723d74ad988f45,
-    type: 2}
-  _LockedButtonPrefab: {fileID: 11402620, guid: 356b37c545ee84297ac38fc2bbb1ce6a,
     type: 2}
   _TopChallengeContainer: {fileID: 22401556}
   _BottomChallengeContainer: {fileID: 22413684}
@@ -561,6 +559,18 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: m_AnchorMax.y
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_MinHeight
+      value: 150
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_Padding.m_Bottom
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_Padding.m_Left
+      value: 100
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

@@ -12,9 +12,6 @@ namespace Cozmo.HomeHub {
     private HubWorldButton _UnlockedChallengeButtonPrefab;
 
     [SerializeField]
-    private HubWorldButton _LockedButtonPrefab;
-
-    [SerializeField]
     private RectTransform _TopChallengeContainer;
 
     [SerializeField]
@@ -25,12 +22,7 @@ namespace Cozmo.HomeHub {
     public override void Initialize(HomeView homeViewInstance) {
       base.Initialize(homeViewInstance);
       foreach (KeyValuePair<string, ChallengeStatePacket> kvp in homeViewInstance.GetChallengeStates()) {
-        if (kvp.Value.currentState == ChallengeState.Locked) {
-          _ChallengeButtons.Add(kvp.Value.data.ChallengeID, 
-            CreateChallengeButton(kvp.Value.data, _LockedButtonPrefab.gameObject, 
-              HandleLockedChallengeClicked, "challenge_list_panel"));
-        }
-        else {
+        if (kvp.Value.currentState != ChallengeState.Locked) {
           _ChallengeButtons.Add(kvp.Value.data.ChallengeID, 
             CreateChallengeButton(kvp.Value.data, _UnlockedChallengeButtonPrefab.gameObject, 
               HandleUnlockedChallengeClicked, "challenge_list_panel"));
@@ -52,10 +44,6 @@ namespace Cozmo.HomeHub {
       buttonScript.Initialize(challengeData, dasParentViewName);
       buttonScript.OnButtonClicked += handler;
       return newButton;
-    }
-
-    private void HandleLockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
-      base.GetHomeViewInstance().HandleLockedChallengeClicked(challengeClicked, buttonTransform);
     }
 
     private void HandleUnlockedChallengeClicked(string challengeClicked, Transform buttonTransform) {
