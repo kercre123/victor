@@ -51,7 +51,7 @@ DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
 }
 WebotsKeyboardController {
-  animationToSendName "test_face"
+  behaviorName "FactoryTest"
 }
 CozmoVizDisplay {
 }
