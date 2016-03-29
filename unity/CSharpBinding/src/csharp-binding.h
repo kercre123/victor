@@ -27,15 +27,15 @@ extern "C" {
   
   void cozmo_send_to_clipboard(const char* log);
   
-  void Unity_DAS_Event(const char* eventName, const char* eventValue);
+  void Unity_DAS_Event(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
   
-  void Unity_DAS_LogE(const char* eventName, const char* eventValue);
+  void Unity_DAS_LogE(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
   
-  void Unity_DAS_LogW(const char* eventName, const char* eventValue);
+  void Unity_DAS_LogW(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
   
-  void Unity_DAS_LogI(const char* eventName, const char* eventValue);
+  void Unity_DAS_LogI(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
   
-  void Unity_DAS_LogD(const char* eventName, const char* eventValue);
+  void Unity_DAS_LogD(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
 
 #ifndef _cplusplus
 }

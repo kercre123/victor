@@ -2,15 +2,16 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class IphoneDasTarget : IDASTarget {
 
   public void Event(string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
     #if !UNITY_EDITOR && UNITY_IPHONE
     if (keyValues != null) {
-      Unity_DAS_Event(eventName, eventValue, keyValues.Keys, keyValues.Values, keyValues.Count);
+      Unity_DAS_Event(eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
-      Unity_DAS_Event(eventName, eventValue, {}, {}, 0);
+      Unity_DAS_Event(eventName, eventValue, null, null, 0);
     }
     #endif
   }
@@ -19,9 +20,9 @@ public class IphoneDasTarget : IDASTarget {
 
 #if !UNITY_EDITOR && UNITY_IPHONE
     if (keyValues != null) {
-      Unity_DAS_LogE(eventName, eventValue, keyValues.Keys, keyValues.Values, keyValues.Count);
+      Unity_DAS_LogE(eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
-      Unity_DAS_LogE(eventName, eventValue, {}, {}, 0);
+      Unity_DAS_LogE(eventName, eventValue, null, null, 0);
     }
 #endif
   }
@@ -30,9 +31,9 @@ public class IphoneDasTarget : IDASTarget {
 
 #if !UNITY_EDITOR && UNITY_IPHONE
     if (keyValues != null) {
-      Unity_DAS_LogW(eventName, eventValue, keyValues.Keys, keyValues.Values, keyValues.Count);
+      Unity_DAS_LogW(eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
-      Unity_DAS_LogW(eventName, eventValue, {}, {}, 0);
+      Unity_DAS_LogW(eventName, eventValue, null, null, 0);
     }
 #endif
   }
@@ -41,20 +42,20 @@ public class IphoneDasTarget : IDASTarget {
 
 #if !UNITY_EDITOR && UNITY_IPHONE
     if (keyValues != null) {
-      Unity_DAS_LogI(eventName, eventValue, keyValues.Keys, keyValues.Values, keyValues.Count);
+      Unity_DAS_LogI(eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
-      Unity_DAS_LogI(eventName, eventValue, {}, {}, 0);
+      Unity_DAS_LogI(eventName, eventValue, null, null, 0);
     }
 #endif
   }
 
   public void Debug(string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
-
+    
 #if !UNITY_EDITOR && UNITY_IPHONE
     if (keyValues != null) {
-      Unity_DAS_LogD(eventName, eventValue, keyValues.Keys, keyValues.Values, keyValues.Count);
+      Unity_DAS_LogD(eventName, eventValue, keyValues.Keys.ToArray(), keyValues.Values.ToArray(), (uint)keyValues.Count);
     } else {
-      Unity_DAS_LogD(eventName, eventValue, {}, {}, 0);
+      Unity_DAS_LogD(eventName, eventValue, null, null, 0);
     }
 #endif
   }
