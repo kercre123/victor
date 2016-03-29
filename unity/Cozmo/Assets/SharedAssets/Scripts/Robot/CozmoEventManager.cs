@@ -18,7 +18,7 @@ public class CozmoEventManager {
     } 
   }
 
-  // TODO: Replace this with CLAD generated enums to match engine events.
+  // TODO: Replace this with CLAD generated enums to match engine message
   public enum CozmoEvent : byte {
     SPEEDTAP_TAP,
     SPEEDTAP_WIN_HAND,
@@ -37,20 +37,19 @@ public class CozmoEventManager {
   // For example, The AnimationTool would add SendAnimationGroup calls to CozmoEvents
   public Dictionary<CozmoEvent,Action> CozmoEventDict = new Dictionary<CozmoEvent, Action>();
 
-  // Initialize the CozmoEventManager
   public CozmoEventManager() {
-    if (_Instance != null) {
-      DAS.Error(this, "CozmoEventManager already initialized");
-    }
-
+    // TODO : Constructor?
+    // RobotEngineManager.Instance.WhateverTheEventMessageThingyIs += CozmoEventReceived;
   }
 
-  // Fire a specified CozmoEvent's Action,
-  public bool FireEvent(CozmoEvent toFire) {
-    Action eventAction;
-    if (CozmoEventDict.TryGetValue(toFire, out eventAction)) {
-      if (eventAction != null) {
-        eventAction.Invoke();
+  // TODO : Ok so the CozmoEvent Action has been fired, how does that action send the proper animation?
+  // AnimationTool has a CozmoEvent to String mapping for GroupNames?
+  // Fire the Action for the specific CozmoEvent enum
+  public bool CozmoEventRecieved(CozmoEvent cozEvent) {
+    Action cozAction;
+    if (CozmoEventDict.TryGetValue(cozEvent, out cozAction)) {
+      if (cozAction != null) {
+        cozAction.Invoke();
         return true;
       }
     }
