@@ -21,21 +21,21 @@ public class AnimationManager {
   private IRobot _CurrRobot = null;
 
   // Map Animation Group Names to Event Enums
-  public Dictionary<CozmoEvent, string> AnimationGroupDict = new Dictionary<CozmoEvent, string>();
+  public Dictionary<CladGameEvent, string> AnimationGroupDict = new Dictionary<CladGameEvent, string>();
 
 
   public AnimationManager() {
-    CozmoEventManager.Instance.CozmoEventReceived += CozmoEventRecieved;
+    CladEventManager.Instance.CozmoEventReceived += CozmoEventRecieved;
     _CurrRobot = RobotEngineManager.Instance.CurrentRobot;
   }
 
-  public void CozmoEventRecieved(CozmoEvent cozEvent) {
+  public void CozmoEventRecieved(CladGameEvent cozEvent) {
     if (AnimationGroupDict.ContainsKey(cozEvent)) {
       _CurrRobot.SendAnimationGroup(AnimationGroupDict[cozEvent]);
     }
   }
 
-  public bool SetAnimationForEvent(CozmoEvent cozEvent, string animGroupName) {
+  public bool SetAnimationForEvent(CladGameEvent cozEvent, string animGroupName) {
     if (AnimationGroupDict.ContainsKey(cozEvent)) {
       DAS.Error(this, "CozmoEvent already has an Animation Assigned, only one Animation Group per Event");
       return false;
@@ -44,7 +44,7 @@ public class AnimationManager {
     return true;
   }
 
-  public bool RemoveAnimationForEvent(CozmoEvent cozEvent, string animGroupName) {
+  public bool RemoveAnimationForEvent(CladGameEvent cozEvent, string animGroupName) {
     if (AnimationGroupDict.ContainsKey(cozEvent)) {
       AnimationGroupDict.Remove(cozEvent);
       return true;
