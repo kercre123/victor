@@ -225,7 +225,7 @@ namespace Anki {
         try {
           var sourceFolder = Path.Combine(Path.Combine(System.Environment.CurrentDirectory, Assets.AssetBundleManager.kAssetBundlesFolder), Assets.AssetBundleManager.GetPlatformName());
           if (!System.IO.Directory.Exists(sourceFolder)) {
-            DAS.Error(this, "No asset bundles folder for the current platform. Build bundles first");
+            DAS.Error(null, "No asset bundles folder for the current platform. Build bundles first");
           }
 
           // CopyFileOrDirectory requires the target to not exist so delete it first
@@ -233,7 +233,7 @@ namespace Anki {
           FileUtil.CopyFileOrDirectory(sourceFolder, outputFolder);
         }
         catch(IOException e) {
-          DAS.Error(this, e.Message);
+          DAS.Error(null, e.Message);
           return false;
         }
 

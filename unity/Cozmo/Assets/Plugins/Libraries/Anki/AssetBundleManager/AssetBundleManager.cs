@@ -494,15 +494,15 @@ namespace Anki {
 
           switch (logType) {
           case LogType.Log:
-            DAS.Debug(this, message);
+            DAS.Debug(null, message);
             break;
 
           case LogType.Warning:
-            DAS.Warn(this, message);
+            DAS.Warn(null, message);
             break;
 
           case LogType.Error:
-            DAS.Error(this, message);
+            DAS.Error(null, message);
             break;
           }
         }
