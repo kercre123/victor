@@ -147,6 +147,7 @@ namespace SpeedTap {
         _SpeedTapGame.PlayerWinsHand();
       }
       else {
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
         _SpeedTapGame.CozmoWinsHand();
       }
     }
