@@ -42,7 +42,8 @@ MonoBehaviour:
   _DevConnectDialog: {fileID: 11479636, guid: 3b9cf9ff8ffdd479091ec33a2b620033, type: 2}
   _HubWorldPrefab: {fileID: 11476446, guid: 44f04469ca0784cb2976d4476c98a378, type: 2}
   _IntroScriptedSequenceName: 
-  _RobotStateTextFieldPrefab: {fileID: 0}
+  _RobotStateTextFieldPrefab: {fileID: 11455370, guid: 689e303582fa0435b8ce1a821c97d2cb,
+    type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
