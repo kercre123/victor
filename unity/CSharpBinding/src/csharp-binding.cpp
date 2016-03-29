@@ -37,24 +37,44 @@ using namespace Anki::Cozmo::CSharpBinding;
 
 bool initialized = false;
 
-void Unity_DAS_Event(const char* eventName, const char* eventValue) {
-  PRINT_NAMED_EVENT(eventName, "%s", eventValue);
+void Unity_DAS_Event(const char* eventName, const char* eventValue, const std::string keys [], const std::string values [], uint keyValueCount) {
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i].c_str(), values[i].c_str()));
+  }
+  Anki::Util::sEventF(eventName, keyValues, "%s", eventValue);
 }
 
-void Unity_DAS_LogE(const char* eventName, const char* eventValue) {
-  PRINT_NAMED_ERROR(eventName, "%s", eventValue);
+void Unity_DAS_LogE(const char* eventName, const char* eventValue, const std::string keys [], const std::string values [], uint keyValueCount) {
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i].c_str(), values[i].c_str()));
+  }
+  Anki::Util::sErrorF(eventName, keyValues, "%s", eventValue);
 }
 
-void Unity_DAS_LogW(const char* eventName, const char* eventValue) {
-  PRINT_NAMED_WARNING(eventName, "%s", eventValue);
+void Unity_DAS_LogW(const char* eventName, const char* eventValue, const std::string keys [], const std::string values [], uint keyValueCount) {
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i].c_str(), values[i].c_str()));
+  }
+  Anki::Util::sWarningF(eventName, keyValues, "%s", eventValue);
 }
 
-void Unity_DAS_LogI(const char* eventName, const char* eventValue) {
-  PRINT_NAMED_INFO(eventName, "%s", eventValue);
+void Unity_DAS_LogI(const char* eventName, const char* eventValue, const std::string keys [], const std::string values [], uint keyValueCount) {
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i].c_str(), values[i].c_str()));
+  }
+  Anki::Util::sInfoF(eventName, keyValues, "%s", eventValue);
 }
 
-void Unity_DAS_LogD(const char* eventName, const char* eventValue) {
-  PRINT_NAMED_DEBUG(eventName, "%s", eventValue);
+void Unity_DAS_LogD(const char* eventName, const char* eventValue, const std::string keys [], const std::string values [], uint keyValueCount) {
+  std::vector<std::pair<const char*, const char *>> keyValues;
+  for(int i = 0; i < keyValueCount; ++i) {
+    keyValues.push_back(std::pair<const char *, const char *>(keys[i].c_str(), values[i].c_str()));
+  }
+  Anki::Util::sDebugF(eventName, keyValues, "%s", eventValue);
 }
 
 int cozmo_startup(const char *configuration_data)
