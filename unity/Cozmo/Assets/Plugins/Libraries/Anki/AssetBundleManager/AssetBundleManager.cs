@@ -244,13 +244,13 @@ namespace Anki {
 
         switch (EditorUserBuildSettings.activeBuildTarget) {
         case BuildTarget.Android:
-          return "Android";
+          return "android";
         case BuildTarget.iOS:
-          return "iOS";
+          return "ios";
         case BuildTarget.StandaloneOSXIntel:
         case BuildTarget.StandaloneOSXIntel64:
         case BuildTarget.StandaloneOSXUniversal:
-          return "OSX";
+          return "mac";
         default:
           Log(LogType.Error, "Unsupported platform " + Application.platform);
           return null;
