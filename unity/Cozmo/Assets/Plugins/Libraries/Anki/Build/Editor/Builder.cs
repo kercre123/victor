@@ -225,7 +225,7 @@ namespace Anki {
         try {
           var sourceFolder = Path.Combine(Path.Combine(System.Environment.CurrentDirectory, Assets.AssetBundleManager.kAssetBundlesFolder), Assets.AssetBundleManager.GetPlatformName());
           if (!System.IO.Directory.Exists(sourceFolder)) {
-            Debug.LogError("No asset bundles folder for the current platform. Build bundles first");
+            DAS.Error(this, "No asset bundles folder for the current platform. Build bundles first");
           }
 
           // CopyFileOrDirectory requires the target to not exist so delete it first
@@ -233,7 +233,7 @@ namespace Anki {
           FileUtil.CopyFileOrDirectory(sourceFolder, outputFolder);
         }
         catch(IOException e) {
-          Debug.LogError(e.Message);
+          DAS.Error(this, e.Message);
           return false;
         }
 
@@ -263,7 +263,7 @@ namespace Anki {
             return path;
           }
         default:
-          Debug.LogError("Target " + EditorUserBuildSettings.activeBuildTarget + " not implemented.");
+          DAS.Error(null, "Target " + EditorUserBuildSettings.activeBuildTarget + " not implemented.");
           return null;
         }
       }
@@ -276,7 +276,7 @@ namespace Anki {
         case BuildTarget.iOS:
           return ""; // The folder name is enough in iOS
         default:
-          Debug.LogError("Target " + EditorUserBuildSettings.activeBuildTarget + " not implemented.");
+          DAS.Error(null, "Target " + EditorUserBuildSettings.activeBuildTarget + " not implemented.");
           return null;
         }
       }

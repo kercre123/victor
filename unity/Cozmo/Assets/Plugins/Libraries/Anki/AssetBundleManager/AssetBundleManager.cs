@@ -277,7 +277,7 @@ namespace Anki {
 
       private void Start() {
         if (_sInstance != null) {
-          Debug.LogError("There are two AssetBundleManager instances in the project!!!");
+          DAS.Error(this, "There are two AssetBundleManager instances in the project!!!");
           return;
         }
 
@@ -494,15 +494,15 @@ namespace Anki {
 
           switch (logType) {
           case LogType.Log:
-            Debug.Log(message);
+            DAS.Debug(this, message);
             break;
 
           case LogType.Warning:
-            Debug.LogWarning(message);
+            DAS.Warn(this, message);
             break;
 
           case LogType.Error:
-            Debug.LogError(message);
+            DAS.Error(this, message);
             break;
           }
         }

@@ -58,9 +58,7 @@ namespace Anki {
             returnCode = 1;
             response = "[ERROR] build failed\n" + buildResult;
           }
-
-          Debug.Log("The response is " + returnCode + " " + buildResult);
-
+            
           // Encode the response to send back.
           // Format [ responseCode, ...message... ]
           int resultBufferLen = Encoding.UTF8.GetByteCount(response);
