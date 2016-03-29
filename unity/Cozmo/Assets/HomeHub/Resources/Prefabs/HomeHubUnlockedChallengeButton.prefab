@@ -246,15 +246,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _Interactable: 1
-  _DASEventButtonName: assignedByHubWorldButton
-  _DASEventViewController: assignedByTimelineView
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
   TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   _AlphaController: {fileID: 0}
-  _GlintAnimator: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11401516}
     ignoreSprite: 0
@@ -280,6 +277,7 @@ MonoBehaviour:
     pressedColor: {r: 0.63235295, g: 0.63235295, b: 0.63235295, a: 1}
     disabledSprite: {fileID: 0}
     disabledColor: {r: 1, g: 1, b: 1, a: 0.20392157}
+  _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: -1705717452
     _EventType: 6
@@ -352,11 +350,20 @@ MonoBehaviour:
   Prefab: {fileID: 112842, guid: e48611878db304fb1a8a34ac88e4682e, type: 2}
   ModifiedValues:
   - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:b
+    JsonValue: 0.0
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:g
+    JsonValue: 0.0
+  - ObjectPath: 
+    FieldName: Anki.UI.AnkiTextLabel:m_Color:r
+    JsonValue: 0.0
+  - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
     JsonValue: 3
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: Anki.UI.AnkiButton:_TextLabel
+    FieldName: Cozmo.UI.CozmoButton:_TextLabel
     ReferencePath: 
   - ObjectPath: ../
     FieldName: Cozmo.HubWorld.HubWorldButton:_ChallengeTitle

@@ -15,13 +15,15 @@ namespace Cozmo.HomeHub {
     public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
 
     [SerializeField]
-    private HomeViewTab _CozmoTab;
+    private HomeViewTab _CozmoTabPrefab;
 
     [SerializeField]
-    private HomeViewTab _PlayTab;
+    private HomeViewTab _PlayTabPrefab;
 
     [SerializeField]
-    private HomeViewTab _ProfileTab;
+    private HomeViewTab _ProfileTabPrefab;
+
+    private HomeViewTab _CurrentTab;
 
     [SerializeField]
     private CozmoButton _CozmoTabButton;
@@ -31,6 +33,9 @@ namespace Cozmo.HomeHub {
 
     [SerializeField]
     private CozmoButton _ProfileTabButton;
+
+    [SerializeField]
+    private RectTransform _ScrollRectContent;
 
     [SerializeField]
     DailySummaryPanel _DailySummaryPrefab;
@@ -47,11 +52,13 @@ namespace Cozmo.HomeHub {
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, Transform[] rewardIcons = null) {
 
+      DASEventViewName = "home_view";
+
       _ChallengeStates = challengeStatesById;
 
-      _CozmoTab.Initialize(this);
-      _PlayTab.Initialize(this);
-      _ProfileTab.Initialize(this);
+      _CurrentTab = GameObject.Instantiate(_PlayTabPrefab.gameObject).GetComponent<HomeViewTab>();
+      _CurrentTab.transform.SetParent(_ScrollRectContent, false);
+      _CurrentTab.Initialize(this);
 
       _CozmoTabButton.DASEventButtonName = "cozmo_tab_botton";
       _PlayTabButton.DASEventButtonName = "play_tab_button";
@@ -70,15 +77,30 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleCozmoTabButton() {
-      
+      if (_CurrentTab != null) {
+        GameObject.Destroy(_CurrentTab.gameObject);
+      }
+      _CurrentTab = GameObject.Instantiate(_CozmoTabPrefab.gameObject).GetComponent<HomeViewTab>();
+      _CurrentTab.transform.SetParent(_ScrollRectContent, false);
+      _CurrentTab.Initialize(this);
     }
 
     private void HandlePlayTabButton() {
-      
+      if (_CurrentTab != null) {
+        GameObject.Destroy(_CurrentTab.gameObject);
+      }
+      _CurrentTab = GameObject.Instantiate(_PlayTabPrefab.gameObject).GetComponent<HomeViewTab>();
+      _CurrentTab.transform.SetParent(_ScrollRectContent, false);
+      _CurrentTab.Initialize(this);
     }
 
     private void HandleProfileTabButton() {
-      
+      if (_CurrentTab != null) {
+        GameObject.Destroy(_CurrentTab.gameObject);
+      }
+      _CurrentTab = GameObject.Instantiate(_ProfileTabPrefab.gameObject).GetComponent<HomeViewTab>();
+      _CurrentTab.transform.SetParent(_ScrollRectContent, false);
+      _CurrentTab.Initialize(this);
     }
 
     private void UpdateDailySession(Transform[] rewardIcons = null) {
