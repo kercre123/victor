@@ -244,13 +244,13 @@ namespace Anki {
 
         switch (EditorUserBuildSettings.activeBuildTarget) {
         case BuildTarget.Android:
-          return "Android";
+          return "android";
         case BuildTarget.iOS:
-          return "iOS";
+          return "ios";
         case BuildTarget.StandaloneOSXIntel:
         case BuildTarget.StandaloneOSXIntel64:
         case BuildTarget.StandaloneOSXUniversal:
-          return "OSX";
+          return "mac";
         default:
           Log(LogType.Error, "Unsupported platform " + Application.platform);
           return null;
@@ -277,7 +277,7 @@ namespace Anki {
 
       private void Start() {
         if (_sInstance != null) {
-          Debug.LogError("There are two AssetBundleManager instances in the project!!!");
+          DAS.Error(this, "There are two AssetBundleManager instances in the project!!!");
           return;
         }
 
@@ -494,15 +494,15 @@ namespace Anki {
 
           switch (logType) {
           case LogType.Log:
-            Debug.Log(message);
+            DAS.Debug(null, message);
             break;
 
           case LogType.Warning:
-            Debug.LogWarning(message);
+            DAS.Warn(null, message);
             break;
 
           case LogType.Error:
-            Debug.LogError(message);
+            DAS.Error(null, message);
             break;
           }
         }
