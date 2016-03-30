@@ -6,6 +6,8 @@
 
 namespace Spine {
   void Dequeue(CladBufferUp* dest);
+  void ProcessHeadData();
+  void ProcessMessage(void*msg);
 }
 
 namespace Anki {

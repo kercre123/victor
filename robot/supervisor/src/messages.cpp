@@ -749,7 +749,41 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_killBodyCode(Anki::Cozmo::KillBodyCode const&) {
+      void Process_oledRelease(Anki::Cozmo::RobotInterface::DisplayRelease const&)
+      {
+        // Nothing to do here
+      }
+      void Process_bleEncodedKey(Anki::Cozmo::BLE_EncodedKey const&)
+      {
+        // Nothing to do here
+      }
+      void Process_blePhoneDiffie(Anki::Cozmo::BLE_PhoneDiffie const&)
+      {
+        // Nothing to do here
+      }
+      void Process_bleRobotDiffie(Anki::Cozmo::BLE_RobotDiffie const&)
+      {
+        // Nothing to do here
+      }
+      void Process_bleEnterPairing(Anki::Cozmo::BLE_EnterPairing const&)
+      {
+        // Nothing to do here
+      }
+      void Process_oledDisplayNumber(Anki::Cozmo::RobotInterface::DisplayNumber const&)
+      {
+        // Nothing to do here
+      }
+      void Process_bleRecvHelloMessage(Anki::Cozmo::BLE_RecvHello const&)
+      {
+        // Nothing to do here
+      }
+      void Process_bleSendHelloMessage(Anki::Cozmo::BLE_SendHello const&)
+      {
+        // Nothing to do here
+      }
+      
+      void Process_killBodyCode(Anki::Cozmo::KillBodyCode const&)
+      {
         // Nothing to do here
       }
       void Process_bootloadBody(Anki::Cozmo::RobotInterface::BootloadBody const&)

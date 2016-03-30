@@ -5,11 +5,14 @@
 #include <stdint.h>
 
 #define CYCLES_MS(ms) (int)(32768 * 256.0f * ms / 1000.0f)
+
 #ifndef MAX
 #define MAX(a,b) ((a > b) ? a : b)
 #endif
 
-static const int MAX_TASKS = 32;
+static const int MAX_TASKS = 10;
+
+#ifdef __cplusplus
 
 typedef void (*RTOS_TaskProc)(void* userdata);
 
@@ -21,7 +24,6 @@ struct RTOS_Task {
   int period;
   bool repeating;
   bool active;
-  bool allocated;
 
   RTOS_Task *prev;
   RTOS_Task *next;
@@ -39,9 +41,9 @@ namespace RTOS {
   RTOS_Task* create(RTOS_TaskProc task, bool repeating = true);
   void start(RTOS_Task* task, int period = CYCLES_MS(5.0f), void* userdata = NULL);
   void stop(RTOS_Task* task);
-  void delay(RTOS_Task* task, int delay);
   
   RTOS_Task* schedule(RTOS_TaskProc task, int period = CYCLES_MS(5.0f), void* userdata = NULL, bool repeating = true);
 };
+#endif
 
 #endif

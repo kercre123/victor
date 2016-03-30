@@ -1,29 +1,40 @@
-#include "motors.h"
-#include "anki/cozmo/robot/spineData.h"
-#include "timer.h"
-#include "nrf.h"
-#include "nrf_gpio.h"
-#include "nrf_gpiote.h"
-#include "hardware.h"
 #include <limits.h>
 
+
+extern "C" {
+  #include "nrf.h"
+  #include "nrf_gpio.h"
+  #include "nrf_gpiote.h"
+  #include "nrf_sdm.h"
+}
+
+#include "hardware.h"
+
+#include "motors.h"
+#include "timer.h"
 #include "debug.h"
 #include "rtos.h"
 #include "head.h"
 
+#include "anki/cozmo/robot/spineData.h"
+
+
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-struct MotorInfo
+struct MotorConfig
 {
   // These few are constant; will refactor into separate structs again soon.
   u8 n1Pin;
   u8 n2Pin;
   u8 pPin;
   u8 isBackward;   // True if wired backward
-  u8 lastP;        // Last value of pPin
   u8 encoderPins[2];
-  nrf_gpio_pin_pull_t encoderPull;
+};
+
+struct MotorInfo
+{
+  u8 lastP;        // Last value of pPin
   
   Fixed unitsPerTick;
   Fixed64 position;
@@ -58,63 +69,65 @@ const Fixed RADIANS_PER_HEAD_TICK = TO_FIXED((0.125 * 3.14159265359) / 348.77);
 const u32 ENCODER_TIMEOUT_COUNT = 200 * COUNT_PER_MS;
 const u32 ENCODER_NONE = 0xFF;
 
-// Set the debounce to reject all noise above it
-// const u8 DEBOUNCE_COUNT = 511;   // About 60uS?
-
 // NOTE: Do NOT re-order the MotorID enum, because this depends on it
-MotorInfo m_motors[MOTOR_COUNT] =
-{
+static const MotorConfig m_config[MOTOR_COUNT] = {
   {
     PIN_LEFT_N1,
     PIN_LEFT_N2,
     PIN_LEFT_P,
     false,
-    0,
     PIN_ENCODER_LEFT,
     ENCODER_NONE,
-    NRF_GPIO_PIN_NOPULL,
-    1, // units per tick = 1 tick
-    0, 0, 0, 0, 0, 0
   },
   {
     PIN_RIGHT_N1,
     PIN_RIGHT_N2,
     PIN_RIGHT_P,
     false,
-    0,
     PIN_ENCODER_RIGHT,
     ENCODER_NONE,
-    NRF_GPIO_PIN_NOPULL,
-    1, // units per tick = 1 tick
-    0, 0, 0, 0, 0, 0
   },
   {
     PIN_LIFT_N1,
     PIN_LIFT_N2,
     PIN_LIFT_P,
     true,
-    0,
     PIN_ENCODER_LIFTA,
     PIN_ENCODER_LIFTB,
-    NRF_GPIO_PIN_NOPULL,
-    RADIANS_PER_LIFT_TICK,
-    0, 0, 0, 0, 0, 0
   },
   {
     PIN_HEAD_N1,
     PIN_HEAD_N2,
     PIN_HEAD_P,
     true,
-    0,
     PIN_ENCODER_HEADA,
     PIN_ENCODER_HEADB,
-    NRF_GPIO_PIN_NOPULL,
+  }
+};
+
+static MotorInfo m_motors[MOTOR_COUNT] =
+{
+  {
+    0,
+    1, // units per tick = 1 tick
+    0, 0, 0, 0, 0, 0
+  },
+  {
+    0,
+    1, // units per tick = 1 tick
+    0, 0, 0, 0, 0, 0
+  },
+  {
+    0,
+    RADIANS_PER_LIFT_TICK,
+    0, 0, 0, 0, 0, 0
+  },
+  {
+    0,
     RADIANS_PER_HEAD_TICK,
     0, 0, 0, 0, 0, 0
   },
 };
-
-//const u32 MOTOR_COUNT = sizeof(m_motors) / sizeof(MotorInfo);
 
 u32 m_lastState = 0;
 
@@ -153,21 +166,16 @@ static void ConfigureTimer(NRF_TIMER_Type* timer, const u8 taskChannel, const u8
   // Configure PPI channels to toggle the output PWM pins on matching timer compare
   // and toggle the GPIO for the selected duty cycle.
   
-  // Match compare[0] (PWM n + 0)
-  NRF_PPI->CH[ppiChannel + 0].EEP = (u32)&timer->EVENTS_COMPARE[0];
-  NRF_PPI->CH[ppiChannel + 0].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 0];
-  
-  // Match compare[2] (timer wrap-around)
-  NRF_PPI->CH[ppiChannel + 1].EEP = (u32)&timer->EVENTS_COMPARE[2];
-  NRF_PPI->CH[ppiChannel + 1].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 0];
-  
-  // Match compare[1] (PWM n + 1)
-  NRF_PPI->CH[ppiChannel + 2].EEP = (u32)&timer->EVENTS_COMPARE[1];
-  NRF_PPI->CH[ppiChannel + 2].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 1];
-  
-  // Match compare[3] (timer wrap-around)
-  NRF_PPI->CH[ppiChannel + 3].EEP = (u32)&timer->EVENTS_COMPARE[3];
-  NRF_PPI->CH[ppiChannel + 3].TEP = (u32)&NRF_GPIOTE->TASKS_OUT[taskChannel + 1];
+  // Match compares
+  // 0: PWM n + 0
+  // 1: PWM n + 1
+  // 2: timer wrap-around
+  // 3: timer wrap-around
+
+  sd_ppi_channel_assign(ppiChannel + 0, &timer->EVENTS_COMPARE[0], &NRF_GPIOTE->TASKS_OUT[taskChannel + 0]);
+  sd_ppi_channel_assign(ppiChannel + 1, &timer->EVENTS_COMPARE[2], &NRF_GPIOTE->TASKS_OUT[taskChannel + 0]);
+  sd_ppi_channel_assign(ppiChannel + 2, &timer->EVENTS_COMPARE[1], &NRF_GPIOTE->TASKS_OUT[taskChannel + 1]);
+  sd_ppi_channel_assign(ppiChannel + 3, &timer->EVENTS_COMPARE[3], &NRF_GPIOTE->TASKS_OUT[taskChannel + 1]);
 }
 
 void Motors::teardown(void) {
@@ -177,16 +185,16 @@ void Motors::teardown(void) {
 
   // Tear down GPIOTE tasks
   for (int i = 0; i < MOTOR_COUNT; i++) {
-    MotorInfo* motorInfo = &m_motors[i];
+    const MotorConfig* motorConfig = &m_config[i];
 
     nrf_gpiote_task_disable(i);
-    nrf_gpio_pin_clear(motorInfo->n1Pin);
-    nrf_gpio_pin_clear(motorInfo->n2Pin);
-    nrf_gpio_pin_clear(motorInfo->pPin);
+    nrf_gpio_pin_clear(motorConfig->n1Pin);
+    nrf_gpio_pin_clear(motorConfig->n2Pin);
+    nrf_gpio_pin_clear(motorConfig->pPin);
   }
   
   // Disable PPI channels
-  NRF_PPI->CHEN = 0x00;
+  sd_ppi_channel_enable_set(0x00);
 
   // Clear timers
   NRF_TIMER1->TASKS_CLEAR = 1;
@@ -202,40 +210,27 @@ void Motors::teardown(void) {
   MicroWait(250000);
 }
 
-static void ConfigurePinSense(u8 pin, u32 pinState, nrf_gpio_pin_pull_t pullDirection)
-{
-  u32 mask = 1 << pin;
-    
-  // Configure initial pin sensing (used for inversion with whack-a-mole)
-  if (pinState & mask)
-  {
-    nrf_gpio_cfg_sense_input(pin, pullDirection, NRF_GPIO_PIN_SENSE_LOW);
-    m_lastState |= mask;
-  } else {
-    nrf_gpio_cfg_sense_input(pin, pullDirection, NRF_GPIO_PIN_SENSE_HIGH);
-  }
-}
-
 // Reset Nordic tasks to allow less glitchy changes.
 // Without a reset, the polarity will become permanently inverted.
 static void ConfigureTask(u8 motorID, volatile u32 *timer)
 {
+  const MotorConfig* motorConfig = &m_config[motorID];
   MotorInfo* motorInfo = &m_motors[motorID];
 
   // Zero
   if (motorInfo->nextPWM == 0) {
     nrf_gpiote_task_disable(motorID);
-    nrf_gpio_pin_clear(motorInfo->n1Pin);
-    nrf_gpio_pin_clear(motorInfo->n2Pin);
+    nrf_gpio_pin_clear(motorConfig->n1Pin);
+    nrf_gpio_pin_clear(motorConfig->n2Pin);
   
   // Forward
-  } else if ((motorInfo->nextPWM > 0) != motorInfo->isBackward)
+  } else if ((motorInfo->nextPWM > 0) != motorConfig->isBackward)
   {
     // Drive P2+N1
     nrf_gpiote_task_disable(motorID);
-    nrf_gpio_pin_clear(motorInfo->n1Pin);
-    nrf_gpio_pin_clear(motorInfo->n2Pin);
-    nrf_gpio_pin_clear(motorInfo->pPin);    // P=0 is P2+N1
+    nrf_gpio_pin_clear(motorConfig->n1Pin);
+    nrf_gpio_pin_clear(motorConfig->n2Pin);
+    nrf_gpio_pin_clear(motorConfig->pPin);    // P=0 is P2+N1
     
     // XXX: If P drive doesn't match, wait until next update to start motor - to workaround 2.1 hardware glitch
     if (0 != motorInfo->lastP)
@@ -243,8 +238,8 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
       motorInfo->lastP = 0;
       return;   // Don't update oldPWM, so we come in here again
     } else {
-      nrf_gpiote_task_configure(motorID, motorInfo->n1Pin,
-        NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);      
+      nrf_gpiote_task_configure(motorID, motorConfig->n1Pin,
+        NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);
       nrf_gpiote_task_enable(motorID);
     }
     
@@ -255,9 +250,9 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
         
     // Drive P1+N2
     nrf_gpiote_task_disable(motorID);
-    nrf_gpio_pin_clear(motorInfo->n1Pin);
-    nrf_gpio_pin_clear(motorInfo->n2Pin);
-    nrf_gpio_pin_set(motorInfo->pPin);      // P=1 is P1+N2
+    nrf_gpio_pin_clear(motorConfig->n1Pin);
+    nrf_gpio_pin_clear(motorConfig->n2Pin);
+    nrf_gpio_pin_set(motorConfig->pPin);      // P=1 is P1+N2
     
     // XXX: If P drive doesn't match, wait until next update to start motor - to workaround 2.1 hardware glitch
     if (1 != motorInfo->lastP)
@@ -265,8 +260,8 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
       motorInfo->lastP = 1;
       return;   // Don't update oldPWM, so we come in here again
     } else {
-      nrf_gpiote_task_configure(motorID, motorInfo->n2Pin,
-        NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);    
+      nrf_gpiote_task_configure(motorID, motorConfig->n2Pin,
+        NRF_GPIOTE_POLARITY_TOGGLE, NRF_GPIOTE_INITIAL_VALUE_HIGH);
       nrf_gpiote_task_enable(motorID);
     }
   }
@@ -285,14 +280,12 @@ static void ConfigureTask(u8 motorID, volatile u32 *timer)
 
 void Motors::init()
 {
-  int i;
-  
   // Configure TIMER1 and TIMER2 with the appropriate task and PPI channels
   ConfigureTimer(NRF_TIMER1, 0, 0);
   ConfigureTimer(NRF_TIMER2, 2, 4);
   
   // Enable PPI channels for timer PWM and reset
-  NRF_PPI->CHEN = 0xFF;
+  sd_ppi_channel_enable_set(0xFF);
   
   // Start the timers
   NRF_TIMER1->TASKS_START = 1;
@@ -316,22 +309,34 @@ void Motors::init()
   NRF_GPIOTE->INTENSET = GPIOTE_INTENSET_PORT_Msk;
   
   // Configure each motor pin as an output
-  for (i = 0; i < MOTOR_COUNT; i++)
+  for (int i = 0; i < MOTOR_COUNT; i++)
   {
     // Configure the pins for the motor bridge to be outputs and default low (stopped)
-    MotorInfo* motorInfo = &m_motors[i];
-    nrf_gpio_pin_clear(motorInfo->n1Pin);
-    nrf_gpio_pin_clear(motorInfo->n2Pin);
-    nrf_gpio_pin_clear(motorInfo->pPin);
-    nrf_gpio_cfg_output(motorInfo->n1Pin);
-    nrf_gpio_cfg_output(motorInfo->n2Pin);
-    nrf_gpio_cfg_output(motorInfo->pPin);
+    const MotorConfig* motorConfig = &m_config[i];
+
+    nrf_gpio_pin_clear(motorConfig->n1Pin);
+    nrf_gpio_pin_clear(motorConfig->n2Pin);
+    nrf_gpio_pin_clear(motorConfig->pPin);
+    nrf_gpio_cfg_output(motorConfig->n1Pin);
+    nrf_gpio_cfg_output(motorConfig->n2Pin);
+    nrf_gpio_cfg_output(motorConfig->pPin);
     
     // Enable sensing for each encoder pin (only one per quadrature encoder)
-    ConfigurePinSense(motorInfo->encoderPins[0], state, motorInfo->encoderPull);
-    if (motorInfo->encoderPins[1] != ENCODER_NONE)
+    const u8 pin = motorConfig->encoderPins[0];
+    const u32 mask = 1 << pin;
+      
+    // Configure initial pin sensing (used for inversion with whack-a-mole)
+    if (state & mask)
     {
-      nrf_gpio_cfg_input(motorInfo->encoderPins[1], motorInfo->encoderPull);
+      nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_LOW);
+      m_lastState |= mask;
+    } else {
+      nrf_gpio_cfg_sense_input(pin, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_SENSE_HIGH);
+    }
+
+    if (motorConfig->encoderPins[1] != ENCODER_NONE)
+    {
+      nrf_gpio_cfg_input(motorConfig->encoderPins[1], NRF_GPIO_PIN_NOPULL);
     }
   }
 
@@ -424,7 +429,7 @@ void Motors::manage(void* userdata)
     // Restart the timer
     NRF_TIMER2->TASKS_START = 1;
   }
-  
+
   // Update the SPI data structure to send data back to the head
   // Wheel position and speed are recorded in encoder ticks, so we
   // are applying conversions here for now, until code is refactored

@@ -1,5 +1,5 @@
 #include <stdarg.h>
-#include "spine.h"
+#include "messages.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "anki/cozmo/robot/logging.h"

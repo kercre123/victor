@@ -25,7 +25,7 @@ static uesb_payload_fifo_t      m_rx_fifo;
 // Run time variables
 static uint32_t                 m_pid[UESB_MAX_PIPES];
 
-static uesb_mainstate_t         m_uesb_mainstate        = UESB_STATE_UNINITIALIZED;
+uesb_mainstate_t                m_uesb_mainstate        = UESB_STATE_UNINITIALIZED;
 
 // Macros
 #define                         DISABLE_RF_IRQ      NVIC_DisableIRQ(RADIO_IRQn)
@@ -195,7 +195,7 @@ static void configure_addresses(const uesb_address_desc_t *address) {
 
 uint32_t uesb_start() {
   if(m_uesb_mainstate != UESB_STATE_IDLE) return UESB_ERROR_NOT_IDLE;
-    
+
   update_radio_parameters();
 
   NRF_RADIO->EVENTS_DISABLED = 0;
