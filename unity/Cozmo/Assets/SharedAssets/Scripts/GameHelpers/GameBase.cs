@@ -51,6 +51,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private float _GameStartTime;
 
+  [HideInInspector]
   public List<int> CubeIdsForGame;
 
   private Dictionary<int, CycleData> _CubeCycleTimers;

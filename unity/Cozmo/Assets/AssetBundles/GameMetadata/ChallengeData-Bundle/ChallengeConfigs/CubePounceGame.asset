@@ -11,7 +11,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
   m_Name: CubePounceGame
   m_EditorClassIdentifier: 
-  _MinigamePrefab: {fileID: 141604, guid: a537b64f98d4747c0b9cf3a4147e0ea1, type: 2}
+  _MinigamePrefab: {fileID: 141604, guid: 4a17ea3fde94148d4a48ef61c4b8c725, type: 2}
   _ChallengeID: CubePounceGame
   _ChallengeTitleLocKey: cubeSlap.title
   _ChallengeDescriptionLocKey: cubeSlap.description
