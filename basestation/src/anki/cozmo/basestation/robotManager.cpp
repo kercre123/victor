@@ -246,6 +246,13 @@ namespace Anki {
           ReadAnimationFile(path.c_str());
         }
       }
+      
+      // Only when not shipping use our temp dir
+      std::string test_anim = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "TestAnim.json");
+      if( Util::FileUtils::FileExists(test_anim) )
+      {
+        ReadAnimationFile(test_anim.c_str());
+      }
     }
     
     void RobotManager::BroadcastAvailableAnimations()

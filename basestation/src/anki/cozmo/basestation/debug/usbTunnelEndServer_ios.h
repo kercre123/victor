@@ -23,9 +23,15 @@ namespace Anki {
     class IExternalInterface;
   }
 }
+#if __APPLE__
+#include "TargetConditionals.h"
+#endif
+
 #if TARGET_OS_IPHONE
 void CreateUSBTunnelServer(Anki::Cozmo::IExternalInterface* externalInterface, Anki::Util::Data::DataPlatform* dataPlatform);
 #else
 void CreateUSBTunnelServer(Anki::Cozmo::IExternalInterface* externalInterface, Anki::Util::Data::DataPlatform* dataPlatform) {}
 #endif
+
+
 #endif // __iOS_usbTnnelEndServer_H__

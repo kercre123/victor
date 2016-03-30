@@ -1,3 +1,6 @@
+
+#include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
+
 #if TARGET_OS_IPHONE
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
@@ -55,48 +58,53 @@ Anki::Cozmo::IExternalInterface* s_externalInterface;
 
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path
 {
-  printf("httpResponseForMethod\n");
   if ([method isEqualToString:@"POST"] )
   {
-
-    NSString *postStr = nil;
-    
-    NSData *postData = [request body];
-    if (postData)
+   //Check for command that says update and play an animation
+    //localhost:2223/cmd_anim_update/anim_name
+    if( [path containsString:@"cmd_anim_update/"] )
     {
-      postStr = [[NSString alloc] initWithData:postData encoding:NSUTF8StringEncoding];
-      // const std::string animationFolder = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources, animationDir);
-      //std::string full_path = s_dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "assets/animations/");
-      // TODO: get the name from json... if parsed to json can just use data platform write to json
-      //full_path += "some_anim_name.json";
-      std::string full_path = s_dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "some_anim_name.json");
-      printf("Write To: %s\n",full_path.c_str());
-      std::string content = [postStr UTF8String];
-      Anki::Util::FileUtils::WriteFile(full_path, content);
-      
-      
-      Anki::Cozmo::ExternalInterface::ReadAnimationFile m;
-      Anki::Cozmo::ExternalInterface::MessageGameToEngine message;
-      message.Set_ReadAnimationFile(m);
-      // TODO: not thread safe maybe?
-      s_externalInterface->Broadcast(message);
-      
-      // TODO: get from file and safe...
-      Anki::Cozmo::ExternalInterface::PlayAnimation anim_m;
-      anim_m.animationName = "MajorFail";
-      Anki::Cozmo::ExternalInterface::MessageGameToEngine message2;
-      message2.Set_PlayAnimation(anim_m);
-      s_externalInterface->Broadcast(message2);
+      NSData *postData = [request body];
+      if (postData)
+      {
+        NSString* postStr = [[NSString alloc] initWithData:postData encoding:NSUTF8StringEncoding];
+        NSArray* path_list = [path componentsSeparatedByString:@"/"];
+        if( path_list && [path_list count] > 2)
+        {
+          // strip name from path
+          //std::string anim_name = "MajorFail";
+          std::string anim_name = [[path_list objectAtIndex:2] UTF8String];
+          // TODO: delete temp version on shutdown...
+          
+          // The "resource" file is not directly writable on device, so write to documents and then let reload overwrite.
+          std::string full_path = s_dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "TestAnim.json");
+          std::string content = [postStr UTF8String];
+          Anki::Util::FileUtils::WriteFile(full_path, content);
+          
+          
+          Anki::Cozmo::ExternalInterface::ReadAnimationFile m;
+          Anki::Cozmo::ExternalInterface::MessageGameToEngine message;
+          message.Set_ReadAnimationFile(m);
+          // TODO: not thread safe maybe?
+          s_externalInterface->Broadcast(message);
+          
+          // TODO: get from file and safe...
+          Anki::Cozmo::ExternalInterface::PlayAnimation anim_m;
+          anim_m.animationName = anim_name;
+          anim_m.numLoops = 1;
+          Anki::Cozmo::ExternalInterface::MessageGameToEngine message2;
+          message2.Set_PlayAnimation(anim_m);
+          s_externalInterface->Broadcast(message2);
+        }
+      }
     }
     
-    
-    NSData *response = [@"<html><body>Correct<body></html>" dataUsingEncoding:NSUTF8StringEncoding];
-    
+    NSData *response = [@"Cozmo USB tunnel: Post Recieved\n" dataUsingEncoding:NSUTF8StringEncoding];
     return [[HTTPDataResponse alloc] initWithData:response];
   }
   else if([method isEqualToString:@"GET"] )
   {
-    NSData *get_response = [@"<html><body>GET RESPONSE<body></html>" dataUsingEncoding:NSUTF8StringEncoding];
+    NSData *get_response = [@"<html><body>Cozmo USB tunnel: Get Recieved<body></html>\n" dataUsingEncoding:NSUTF8StringEncoding];
     return [[HTTPDataResponse alloc] initWithData:get_response];
   }
   
@@ -105,8 +113,6 @@ Anki::Cozmo::IExternalInterface* s_externalInterface;
 
 - (void)processBodyData:(NSData *)postDataChunk
 {
-  printf("processBodyData\n");
-  
   // Remember: In order to support LARGE POST uploads, the data is read in chunks.
   // This prevents a 50 MB upload from being stored in RAM.
   // The size of the chunks are limited by the POST_CHUNKSIZE definition.
@@ -131,50 +137,17 @@ void CreateUSBTunnelServerImpl()
   //@autoreleasepool {
     s_HttpServer = [[HTTPServer alloc] init];
     [s_HttpServer setType:@"_http._tcp."];
-    /*[s_HttpServer handleMethod:@"GET" withPath:@"/start" block:^(RouteRequest *request, RouteResponse *response) {
-      handleUSBTunnelGetTest(response, "localhost:2223");
-    }];*/
-    
-    /*[_impl->_httpServer handleMethod:@"GET" withPath:@"/load" block:^(RouteRequest *request, RouteResponse *response) {
-      if(_impl->_shouldInstallProfile) {
-        _impl->_shouldInstallProfile = FALSE;
-        handleMobileconfigLoadRequestWithData(response, _impl->_mobileconfigData);
-      } else {
-        handleMobileconfigLoadRequestWithLink(response);
-      }
-    }];*/
-  
-  // Force Import this method to try to avoid crashing...
-  // HttpConnection.m copied.
-  /*UInt64 r1;
-  NSString* contentLength = @"6";
-  BOOL hasR1 = [NSNumber parseString:(NSString *)contentLength intoUInt64:&r1];
-  if( hasR1)
-  {
-    printf("yay\n");
-  }
-  else
-  {
-    printf("nay\n");
-  }*/
-  
+
   
     NSError *err = nil;
     [s_HttpServer setPort:2223];
     
     [s_HttpServer setConnectionClass:[MyHTTPConnection class]];
-    
+   
     if (![s_HttpServer start:&err]) {
-      //NSString* errorString = [NSString stringWithFormat:@"%@", err];
-      //DASError("WifiConfigure.constructor", "Error starting http server: %s", [errorString UTF8String]);
       printf("Error starting \n");
       [s_HttpServer stop];
       s_HttpServer = nil;
-    } else {
-      printf("Yay Created\n");
-      // We allow the server to grab whatever available port, then we store it here
-      //_impl->_portNum = [_impl->_httpServer listeningPort];
-      //_impl->_localAddress = [@"http://localhost:" stringByAppendingString:[NSString stringWithFormat:@"%d", _impl->_portNum]];
     }
   //} // autoreleasepool
 }
@@ -182,7 +155,6 @@ void CreateUSBTunnelServer(Anki::Cozmo::IExternalInterface* externalInterface, A
 {
   s_dataPlatform = dataPlatform;
   s_externalInterface = externalInterface;
-  //std::string full_path = _dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, name + "_PlayerName.wav");
   CreateUSBTunnelServerImpl();
 }
 
