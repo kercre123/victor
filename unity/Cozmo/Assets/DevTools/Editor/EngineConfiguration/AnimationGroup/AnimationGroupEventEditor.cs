@@ -38,6 +38,7 @@ public class AnimationGroupEventEditor : EditorWindow {
   }
 
   private static void LoadAnimationGroups() {
+    // Load All Animation Groups for reference
     if (Directory.Exists(sAnimationGroupDirectory)) {
       _AnimationGroupFiles = Directory.GetFiles(sAnimationGroupDirectory);
       _AnimationGroupNameOptions = _AnimationGroupFiles.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
@@ -46,8 +47,9 @@ public class AnimationGroupEventEditor : EditorWindow {
       _AnimationGroupFiles = new string[0];
       _AnimationGroupNameOptions = _AnimationGroupFiles;
     }
+    // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
     if (Directory.Exists(sEventMapDirectory)) {
-      _EventMapFiles = Directory.GetFiles(sAnimationGroupDirectory);
+      _EventMapFiles = Directory.GetFiles(sEventMapDirectory);
       _EventMapNameOptions = _EventMapFiles.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
     }
     else {
@@ -57,6 +59,7 @@ public class AnimationGroupEventEditor : EditorWindow {
 
   }
 
+  // TODO : UPDATE
   private bool CheckDiscardUnsaved() {
     bool canOpen = true;
     if (_CurrentEventMap != null && (string.IsNullOrEmpty(_CurrentEventMapFile) || JsonConvert.SerializeObject(_CurrentEventMap, Formatting.Indented, GlobalSerializerSettings.JsonSettings) != File.ReadAllText(_CurrentEventMapFile))) {
@@ -65,6 +68,7 @@ public class AnimationGroupEventEditor : EditorWindow {
     return canOpen;
   }
 
+  // TODO : UPDATE
   private void LoadFile(string path) {
     if (CheckDiscardUnsaved()) {
       try {
@@ -82,24 +86,28 @@ public class AnimationGroupEventEditor : EditorWindow {
     }
   }
 
+  // TODO : UPDATE
   public void OnGUI() {
     DrawToolbar();
 
     DrawCladEventList();
   }
 
+  // TODO : UPDATE
   private void DrawToolbar() {
     
 
     GUILayout.FlexibleSpace();
   }
 
+  // TODO : UPDATE
   private void DrawCladEventList() {
     EditorGUILayout.BeginVertical();
     //EditorDrawingUtility.DrawList("CLAD Events", _CurrentEventMap.AnimationGroups, DrawCladEventEntry, () => new CladEventMap.CladEventAnimationEntry());
     EditorGUILayout.EndVertical();
   }
 
+  // TODO : UPDATE
   public CladEventToAnimGroupMap DrawCladEventEntry(CladEventToAnimGroupMap entry) {
     EditorGUILayout.BeginVertical();
     //EditorGUILayout.LabelField(entry.cladEvent.ToString());
