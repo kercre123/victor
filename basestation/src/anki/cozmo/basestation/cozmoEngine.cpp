@@ -36,6 +36,8 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
 
+#include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -81,6 +83,9 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartEngine, startEngineCallback));
   
   _debugConsoleManager.Init(_context->GetExternalInterface());
+  
+  CreateUSBTunnelServer(_uiMsgHandler.get(),dataPlatform);
+
 }
   
 
