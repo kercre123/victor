@@ -23,8 +23,8 @@ enum BLEError {
 static const int COZMO_FRAME_DATA_LENGTH = AES_BLOCK_LENGTH;
 
 enum CozmoFrameFlags {
-  END_OF_MESSAGE = 0x01,
-  START_OF_MESSAGE = 0x02,
+  START_OF_MESSAGE = 0x01,
+  END_OF_MESSAGE = 0x02,
   MESSAGE_ENCRYPTED = 0x04
 };
 

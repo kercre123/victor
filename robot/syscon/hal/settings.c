@@ -25,7 +25,7 @@ const uint16_t COZMO_UUID_TRANSMIT_CHAR     = 0xbee0;
 
 const uint16_t MFG_DATA_ID                  = 0xefbe;
 
-const uint8_t DEVICE_NAME[]                 = "Cozmet 55";
+const uint8_t DEVICE_NAME[]                 = "Cozmet";
 const int DEVICE_NAME_LENGTH                = sizeof(DEVICE_NAME) - 1;
 
 // Gap connection parameters

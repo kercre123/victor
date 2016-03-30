@@ -16,7 +16,7 @@
   
 // Softdevice settings
 static const nrf_clock_lfclksrc_t m_clock_source = NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM;
-static bool                 m_sd_enabled;
+static bool  m_sd_enabled;
 static const int TRANSMISSION_RATE = CYCLES_MS(5.0);
 
 // Service settings
@@ -77,6 +77,8 @@ static void permissions_error(BLEError error) {
 }
 
 static bool message_encrypted(uint8_t op) {
+  return false;
+
   using namespace Anki::Cozmo::RobotInterface;
   
   // These are the only messages that may be sent unencrypted over the wire
@@ -92,6 +94,8 @@ static bool message_encrypted(uint8_t op) {
 }
 
 static bool message_authenticated(uint8_t op) {
+  return false;
+  
   using namespace Anki::Cozmo::RobotInterface;
 
   // These are the only messages that may be used unauthenticated
@@ -114,7 +118,7 @@ static void frame_data_received(const void* _ = NULL) {
     permissions_error(BLE_ERROR_BUFFER_UNDERFLOW);
     return ;
   }
-  
+
   // Attempted to send a bad message over the wire, disconnect user and 
   if (message_authenticated(rx_buffer.msgID) && !m_authenticated) {
     permissions_error(BLE_ERROR_NOT_AUTHENTICATED);
@@ -140,7 +144,7 @@ static void frame_receive(CozmoFrame& receive)
   }
 
   // Buffer overflow
-  if (rx_buffer.pointer + COZMO_FRAME_DATA_LENGTH >= sizeof(sizeof(rx_buffer))) {
+  if (rx_buffer.pointer + COZMO_FRAME_DATA_LENGTH >= sizeof(rx_buffer.raw)) {
     permissions_error(BLE_ERROR_BUFFER_OVERFLOW);
     return ;
   }
@@ -153,6 +157,12 @@ static void frame_receive(CozmoFrame& receive)
     return ;
   }
   
+  // Attemped to send a protected message unencrypted
+  if (message_encrypted(rx_buffer.msgID) != encrypted) {
+    permissions_error(BLE_ERROR_MESSAGE_ENCRYPTION_WRONG);
+    return ;
+  }
+
   // rx_buffer.pointer
   if (encrypted) {
     CryptoTask t;
@@ -164,18 +174,11 @@ static void frame_receive(CozmoFrame& receive)
 
     Crypto::execute(&t);
   } else {
-    // Attemped to send a protected message unencrypted
-    if (message_encrypted(rx_buffer.msgID) != encrypted) {
-      permissions_error(BLE_ERROR_MESSAGE_ENCRYPTION_WRONG);
-      return ;
-    }
-
     // Feed unencrypted data through to the engine
     frame_data_received();
   }
 }
 
-/*
 static void send_welcome_message(const void*) {  
   using namespace Anki::Cozmo;
   
@@ -185,7 +188,6 @@ static void send_welcome_message(const void*) {
 
   RobotInterface::SendMessage(msg);
 }
-*/
 
 static void manage_ble(void*) {
   // Manage outbound transmissions
@@ -509,7 +511,20 @@ void Bluetooth::advertise(void) {
   ble_gap_conn_sec_mode_t sec_mode;
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
 
-  err_code = sd_ble_gap_device_name_set(&sec_mode, DEVICE_NAME, DEVICE_NAME_LENGTH);
+
+  // THIS IS TEMPORARY
+  uint32_t* AES_KEY = (uint32_t*) 0x1EFF0;
+  uint8_t hex[] = "0123456789ABCDEF";
+  uint8_t devname[32] = {
+    hex[(*AES_KEY >>  0) & 0xF],
+    hex[(*AES_KEY >>  4) & 0xF],
+    hex[(*AES_KEY >>  8) & 0xF],
+    hex[(*AES_KEY >> 12) & 0xF],
+    ' ', 0
+  };  
+  strcat((char*)devname, (char*)DEVICE_NAME);
+  
+  err_code = sd_ble_gap_device_name_set(&sec_mode, devname, strlen((char*)devname));
   APP_ERROR_CHECK(err_code);
 
   err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
