@@ -11,6 +11,9 @@
 
 #include "hardware.h"
 
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+
 #define ONLY_DIGITS
 #include "font.h"
 
@@ -61,6 +64,25 @@ struct ScreenRect {
 };
 
 static const uint8_t StartWrite = I2C_DATA | I2C_CONTINUATION;
+
+static const uint8_t PinFont[][16] = {
+  {0,248,252,204,12,252,248,0,0,31,63,48,51,63,31,0},
+  {0,0,24,252,252,0,0,0,0,0,0,63,63,0,0,0},
+  {0,56,60,140,140,252,248,0,0,62,63,51,49,49,48,0},
+  {0,56,60,140,140,252,120,0,0,28,60,49,49,63,31,0},
+  {0,240,240,128,128,252,252,0,0,1,1,1,1,63,63,0},
+  {0,124,252,204,204,204,140,0,0,28,60,48,48,63,31,0},
+  {0,248,252,204,204,220,152,0,0,31,63,48,48,63,31,0},
+  {0,28,28,12,12,252,252,0,0,0,0,0,0,63,63,0},
+  {0,120,252,204,204,252,120,0,0,31,63,48,48,63,31,0},
+  {0,120,252,204,204,252,248,0,0,24,56,48,48,63,31,0},
+  {0,248,252,204,204,252,248,0,0,63,63,0,0,63,63,0},
+  {0,252,252,204,204,252,184,0,0,63,63,48,48,63,31,0},
+  {0,248,252,12,12,60,56,0,0,31,63,48,48,60,28,0},
+  {0,252,252,12,12,252,248,0,0,63,63,48,48,63,31,0},
+  {0,252,252,204,204,12,12,0,0,63,63,48,48,48,48,0},
+  {0,252,252,204,204,12,12,0,0,63,63,0,0,0,0,0}
+};
 
 static bool FaceLock = false;
 static int FaceRemaining = 0;
@@ -119,25 +141,50 @@ void Anki::Cozmo::HAL::OLED::FeedFace(bool rect, uint8_t *face_bytes) {
   was_rect = rect;
 }
 
-// Display a number
-void Anki::Cozmo::HAL::OLED::ErrorCode(uint16_t code) {
-  using namespace Anki::Cozmo::HAL;
-  
-  uint8_t FrameBuffer[(CHAR_WIDTH + 1) * 5];
-  uint8_t *write_ptr = &FrameBuffer[sizeof(FrameBuffer)];
-  
+void Anki::Cozmo::HAL::OLED::ReleaseFace() {
+  FaceLock = false;
+}
+
+void Anki::Cozmo::HAL::OLED::DisplayNumber(int code, int x, int y) {
+  static const int TOTAL_DIGITS = 5;	
+  static const int SYMBOL_BITS = 4;
+
+  static const int FONT_WIDTH = 8;
+  static const int FONT_HEIGHT = 2;
+
+  // Bind to proper rectangle
+  const uint8_t Rectangle[] = {
+    I2C_COMMAND | I2C_CONTINUATION,
+    COLUMNADDR, x, x + (TOTAL_DIGITS * FONT_WIDTH) - 1,
+    PAGEADDR, y, y + FONT_HEIGHT - 1
+  };
+
   FaceLock = true;
-  int bytes = 0;
-  do {
-    write_ptr -= CHAR_WIDTH;
-    memcpy(write_ptr, FONT[code % 10], CHAR_WIDTH);
-    *(--write_ptr) = 0;
-    bytes += CHAR_WIDTH + 1;
-    code /= 10;
-  } while (code > 0);
 
-
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)ResetCursor, sizeof(ResetCursor), I2C_FORCE_START);
+  // Start writting the font
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)Rectangle, sizeof(Rectangle), I2C_FORCE_START);
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), I2C_FORCE_START);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), write_ptr, bytes);
+    
+  for (int o = 0; o < FONT_HEIGHT * FONT_WIDTH; o += FONT_WIDTH) {
+    for (int i = (TOTAL_DIGITS - 1) * SYMBOL_BITS; i >= 0; i -= SYMBOL_BITS) {
+      int character = (code >> i) & 0xF;
+      I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &PinFont[character][o], FONT_WIDTH);
+    }
+  }
+}
+
+using namespace Anki::Cozmo::RobotInterface;
+
+namespace Anki {
+  namespace Cozmo {
+    namespace Messages {
+      void Process_oledRelease(const DisplayRelease& msg) {
+        Anki::Cozmo::HAL::OLED::ReleaseFace();
+      }
+
+      void Process_oledDisplayNumber(const DisplayNumber& msg) {
+        Anki::Cozmo::HAL::OLED::DisplayNumber(msg.value, msg.x, msg.y);
+      }
+    }
+  }
 }

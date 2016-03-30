@@ -12,12 +12,13 @@
 namespace Timer {
   void init();
   void start();
+  void lowPowerMode(bool power);
 }
 
 // Get the counter - with each tick being ~120 ns (see COUNT_PER_MS)
 // XXX: Mike observed the counter jumping back, sometimes.  Is it still happening?
 #define GetCounter() ((u32)(NRF_RTC1->COUNTER << 8))
-#define GetFrame() (NRF_RTC1->COUNTER / (32768 / 30.00f)) // 33ms
+#define GetFrame() (NRF_RTC1->COUNTER * (NRF_RTC1->PRESCALER + 1) / (int)(32768 / 30.00f)) // 33ms
 
 // Wait in a loop for the specified amount of microseconds
 void MicroWait(u32 microseconds);

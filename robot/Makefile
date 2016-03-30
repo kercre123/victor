@@ -13,9 +13,13 @@ BINARY_RELEASE_DIR=releases
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h
 
-.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim
+.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh
 
 all: k02 esp sim
+
+# Convenience rule
+fresh: clean $(ANKI_LOG_TABLE_JSON) all python
+	rm -Rf build ./syscon/build
 
 $(ANKI_LOG_TABLE_JSON): $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
 	python3 $(ANKI_LOG_PP) --preprocessor --string-table --output $@ $(ANKI_LOG_SRC_DIRS)
@@ -28,6 +32,9 @@ verboseAnkiLog: $(ANKI_LOG_PP)
 
 $(VERSION_HEADER):
 	$(VERSION_GENERATOR) $@
+
+python:
+	make -C clad python
 
 sim: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make fourzero -C clad -j4
@@ -61,4 +68,4 @@ onBuildServer: k02 $(BINARY_RELEASE_DIR)/esp.user.bin
 clean:
 	make -C clad clean
 	make -C espressif/app clean
-	rm $(VERSION_HEADER)
+	rm -f $(VERSION_HEADER)

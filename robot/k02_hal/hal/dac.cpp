@@ -90,6 +90,7 @@ void Anki::Cozmo::HAL::DAC::Feed(uint8_t* samples) {
 
 void Anki::Cozmo::HAL::DAC::Tone(void) {
   EnableAudio(true);
+
   for (int i = 0; i < DAC_WORDS; i++) {
     DAC_WRITE[i] = 0x100 + 0xFF * sinf(i * M_PI_2 / 16);
   }

@@ -6,10 +6,15 @@
 
 using namespace Anki::Cozmo;
 
+enum LightDriverMode {
+  RTC_LEDS,
+  TIMER_LEDS
+};
+
 struct charliePlex_s
 {
   uint8_t anode;
-  uint8_t cathodes[3];
+  uint8_t cathode;
 };
 
 namespace Backpack {
@@ -17,6 +22,8 @@ namespace Backpack {
   void update(void);
   void manage(void*);
   void setLights(const LightState* lights);
+  void lightsOff();
+  void lightMode(LightDriverMode mode);
 }
 
 #endif /* LIGHTS_H */
