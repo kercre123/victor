@@ -30,12 +30,20 @@ public class AnimationManager {
   }
 
   public void CozmoEventRecieved(CladGameEvent cozEvent) {
-    if (AnimationGroupDict.ContainsKey(cozEvent)) {
-      _CurrRobot.SendAnimationGroup(AnimationGroupDict[cozEvent]);
+    string animGroup = "";
+    if (AnimationGroupDict.TryGetValue(cozEvent, out animGroup)) {
+      _CurrRobot.SendAnimationGroup(animGroup);
     }
   }
 
-  public bool SetAnimationForEvent(CladGameEvent cozEvent, string animGroupName) {
+  public void ReplaceAnimationForEvent(CladGameEvent cozEvent, string animGroupName) {
+    if (AnimationGroupDict.ContainsKey(cozEvent)) {
+      AnimationGroupDict.Remove(cozEvent);
+    }
+    AnimationGroupDict.Add(cozEvent, animGroupName);
+  }
+
+  public bool AddAnimationToEvent(CladGameEvent cozEvent, string animGroupName) {
     if (AnimationGroupDict.ContainsKey(cozEvent)) {
       DAS.Error(this, "CozmoEvent already has an Animation Assigned, only one Animation Group per Event");
       return false;
@@ -44,7 +52,7 @@ public class AnimationManager {
     return true;
   }
 
-  public bool RemoveAnimationForEvent(CladGameEvent cozEvent, string animGroupName) {
+  public bool RemoveAnimationFromEvent(CladGameEvent cozEvent, string animGroupName) {
     if (AnimationGroupDict.ContainsKey(cozEvent)) {
       AnimationGroupDict.Remove(cozEvent);
       return true;
