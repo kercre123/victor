@@ -85,7 +85,6 @@ namespace Cozmo.HomeHub {
         GameObject.Destroy(_CurrentTab.gameObject);
       }
       _ScrollRect.horizontalNormalizedPosition = 0.0f;
-
       _CurrentTab = GameObject.Instantiate(_CozmoTabPrefab.gameObject).GetComponent<HomeViewTab>();
       _CurrentTab.transform.SetParent(_ScrollRectContent, false);
       _CurrentTab.Initialize(this);
