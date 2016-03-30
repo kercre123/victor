@@ -74,16 +74,11 @@ namespace Cozmo.HomeHub {
 
     public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
 
-    public event ButtonClickedHandler OnLockedChallengeClicked;
-    public event ButtonClickedHandler OnUnlockedChallengeClicked;
-    public event ButtonClickedHandler OnCompletedChallengeClicked;
-
-
     public event Action OnEndSessionClicked;
 
-    [SerializeField]
-    HomeHubChallengeListView _ChallengeListViewPrefab;
-    HomeHubChallengeListView _ChallengeListViewInstance;
+    //[SerializeField]
+    //ChallengeListPanel _ChallengeListViewPrefab;
+    //ChallengeListPanel _ChallengeListViewInstance;
 
     [SerializeField]
     DailyGoalPanel _DailyGoalPrefab;
@@ -109,10 +104,10 @@ namespace Cozmo.HomeHub {
 
     public void Initialize(Dictionary<string, ChallengeStatePacket> challengeStatesById, Transform[] rewardIcons = null) {
       DAS.Info(this, "Initializing Timeline...");
-      _ChallengeListViewInstance = UIManager.CreateUIElement(_ChallengeListViewPrefab.gameObject, _ChallengeContainer).GetComponent<HomeHubChallengeListView>();
-      _ChallengeListViewInstance.Initialize(challengeStatesById, DASEventViewName);
-      _ChallengeListViewInstance.OnLockedChallengeClicked += OnLockedChallengeClicked;
-      _ChallengeListViewInstance.OnUnlockedChallengeClicked += OnUnlockedChallengeClicked;
+      //_ChallengeListViewInstance = UIManager.CreateUIElement(_ChallengeListViewPrefab.gameObject, _ChallengeContainer).GetComponent<ChallengeListPanel>();
+      // _ChallengeListViewInstance.Initialize(challengeStatesById, DASEventViewName);
+      // _ChallengeListViewInstance.OnLockedChallengeClicked += OnLockedChallengeClicked;
+      // _ChallengeListViewInstance.OnUnlockedChallengeClicked += OnUnlockedChallengeClicked;
 
       _DailyGoalInstance = UIManager.CreateUIElement(_DailyGoalPrefab.gameObject, _DailyGoalsContainer).GetComponent<DailyGoalPanel>();
 
@@ -330,7 +325,7 @@ namespace Cozmo.HomeHub {
           newView.Initialize(session);
         });
       if (onComplete != null) {
-        _DailySummaryInstance.FriendshipBarAnimateComplete += onComplete;
+        //_DailySummaryInstance.FriendshipBarAnimateComplete += onComplete;
       }
       _DailySummaryInstance.ViewClosed += HandleDailySummaryClosed;
     }

@@ -7,13 +7,15 @@ using Cozmo.Util;
 namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
 
+    public Transform[] RewardIcons = null;
+
     [SerializeField]
     private StartView _StartViewPrefab;
     private StartView _StartViewInstance;
 
     [SerializeField]
-    private TimelineView _TimelineViewPrefab;
-    private TimelineView _TimelineViewInstance;
+    private HomeView _HomeViewPrefab;
+    private HomeView _HomeViewInstance;
 
     [SerializeField]
     private ChallengeDetailsDialog _ChallengeDetailsPrefab;
@@ -27,7 +29,7 @@ namespace Cozmo.HomeHub {
     private GameBase _MiniGameInstance;
 
     public GameBase MiniGameInstance { 
-      get {        
+      get {
         return _MiniGameInstance;
       }
     }
@@ -45,9 +47,9 @@ namespace Cozmo.HomeHub {
 
       // Deregister events
       // Destroy dialog if it exists
-      if (_TimelineViewInstance != null) {
+      if (_HomeViewInstance != null) {
         DeregisterDialogEvents();
-        _TimelineViewInstance.CloseViewImmediately();
+        _HomeViewInstance.CloseViewImmediately();
       }
 
       if (_StartViewInstance != null) {
@@ -67,16 +69,16 @@ namespace Cozmo.HomeHub {
       ShowTimelineDialog();
     }
 
-    private void ShowTimelineDialog(Transform[] rewardIcons = null) {
+    private void ShowTimelineDialog() {
       // Create dialog with the game prefabs
-      _TimelineViewInstance = UIManager.OpenView(_TimelineViewPrefab, verticalCanvas: true);
-      _TimelineViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
-      _TimelineViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
-      _TimelineViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
-      _TimelineViewInstance.OnEndSessionClicked += HandleSessionEndClicked;
+      _HomeViewInstance = UIManager.OpenView(_HomeViewPrefab, verticalCanvas: true);
+      _HomeViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
+      _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
+      _HomeViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
+      _HomeViewInstance.OnEndSessionClicked += HandleSessionEndClicked;
 
       // Show the current state of challenges being locked/unlocked
-      _TimelineViewInstance.Initialize(_ChallengeStatesById, rewardIcons);
+      _HomeViewInstance.Initialize(_ChallengeStatesById, this);
 
       // The Default chooser is used for freeplay. 
       RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
@@ -156,14 +158,6 @@ namespace Cozmo.HomeHub {
         }, 
         verticalCanvas: true);
 
-      var timelineViewInstance = _TimelineViewInstance;
-      timelineViewInstance.LockScroll(true);
-      _ChallengeDetailsDialogInstance.ViewClosed += () => {
-        if (timelineViewInstance != null) {
-          timelineViewInstance.LockScroll(false);
-        }
-      };
-
       // React to when we should start the challenge.
       _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
     }
@@ -182,7 +176,8 @@ namespace Cozmo.HomeHub {
         CompleteChallenge(_CurrentChallengePlaying, didWin, rewards);
         _CurrentChallengePlaying = null;
       }
-      ShowTimelineDialog(rewardIcons);
+      ShowTimelineDialog();
+      RewardIcons = rewardIcons;
     }
 
     private void HandleMiniGameQuit() {
@@ -223,18 +218,18 @@ namespace Cozmo.HomeHub {
     }
 
     private void CloseTimelineDialog() {
-      if (_TimelineViewInstance != null) {
+      if (_HomeViewInstance != null) {
         DeregisterDialogEvents();
-        _TimelineViewInstance.CloseView();
+        _HomeViewInstance.CloseView();
       }
     }
 
     private void DeregisterDialogEvents() {
-      if (_TimelineViewInstance != null) {
-        _TimelineViewInstance.OnLockedChallengeClicked -= HandleLockedChallengeClicked;
-        _TimelineViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
-        _TimelineViewInstance.OnCompletedChallengeClicked -= HandleCompletedChallengeClicked;
-        _TimelineViewInstance.OnEndSessionClicked -= HandleSessionEndClicked;
+      if (_HomeViewInstance != null) {
+        _HomeViewInstance.OnLockedChallengeClicked -= HandleLockedChallengeClicked;
+        _HomeViewInstance.OnUnlockedChallengeClicked -= HandleUnlockedChallengeClicked;
+        _HomeViewInstance.OnCompletedChallengeClicked -= HandleCompletedChallengeClicked;
+        _HomeViewInstance.OnEndSessionClicked -= HandleSessionEndClicked;
       }
       DailyGoalManager.Instance.MinigameConfirmed -= HandleStartChallengeRequest;
     }
@@ -326,7 +321,7 @@ namespace Cozmo.HomeHub {
     }
 
     public void TestCompleteChallenge(string completedChallengeId) {
-      if (_TimelineViewInstance != null) {
+      if (_HomeViewInstance != null) {
 
         CompleteChallenge(new CompletedChallengeData() {
           ChallengeId = completedChallengeId 
@@ -334,7 +329,7 @@ namespace Cozmo.HomeHub {
 
         // Force refresh of the dialog
         DeregisterDialogEvents();
-        _TimelineViewInstance.CloseViewImmediately();
+        _HomeViewInstance.CloseViewImmediately();
         ShowTimelineDialog();
       }
     }
