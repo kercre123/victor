@@ -23,7 +23,6 @@
 #include "dasLoggerProvider.h"
 #include "dasConfiguration.h"
 #include "wifiConfigure.h"
-#include "usbTunnelEndServer.h"
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -102,7 +101,6 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_da
   engineAPI = created_engine;
   
   wifiConfigure = new WifiConfigure();
-  CreateUSBTunnelServer();
 
   return RESULT_OK;
 }
