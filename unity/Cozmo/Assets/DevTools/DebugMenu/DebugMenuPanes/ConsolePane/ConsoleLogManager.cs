@@ -204,7 +204,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   private void ResetTextLabel(AnkiTextLabel toReset, bool spawned) {
     if (!spawned) {
       // Add the text label as a child under the parent container for the pool
-      toReset.transform.SetParent(this.transform, true);
+      toReset.transform.SetParent(this.transform, false);
       toReset.text = null;
       toReset.gameObject.SetActive(false);
     }
