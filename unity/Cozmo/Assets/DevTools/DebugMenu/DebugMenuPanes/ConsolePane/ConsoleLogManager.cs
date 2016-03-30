@@ -294,7 +294,7 @@ public class LogPacket {
 
     string keyValuesStr = "";
     if (KeyValues != null) {
-      contextStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
+      keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
     }
 
     // TODO: Colorize the text
