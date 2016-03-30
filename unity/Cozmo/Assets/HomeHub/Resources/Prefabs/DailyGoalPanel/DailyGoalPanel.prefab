@@ -380,6 +380,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+  _DailySummaryPrefab: {fileID: 11431484, guid: 208cdc22bb9974adebd14cd4d3247e61,
+    type: 2}
 --- !u!114 &11415510
 MonoBehaviour:
   m_ObjectHideFlags: 1
