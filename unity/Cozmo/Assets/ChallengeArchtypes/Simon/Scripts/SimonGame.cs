@@ -158,6 +158,11 @@ namespace Simon {
       infoText += Localization.GetWithArgs(LocalizationKeys.kSimonGameLabelStepsLeft, currentIndex, sequenceCount);
       SharedMinigameView.ShowInfoTextSlideWithKey(infoText);
     }
+
+    protected override void RaiseMiniGameQuit() {
+      base.RaiseMiniGameQuit();
+      DAS.Event(DASConstants.Game.kQuitGameScore, _CurrentSequenceLength.ToString());
+    }
   }
 
   [System.Serializable]

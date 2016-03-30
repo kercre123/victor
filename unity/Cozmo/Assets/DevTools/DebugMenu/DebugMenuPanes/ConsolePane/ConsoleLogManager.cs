@@ -60,22 +60,22 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   private void HandleNewSOSLog(string log) {
     if (log.Contains("[Warn]")) {
-      SaveLogPacket(LogPacket.ELogKind.Warning, "", log, null);
+      SaveLogPacket(LogPacket.ELogKind.Warning, "", log, null, null);
     }
     else if (log.Contains("[Error]")) {
-      SaveLogPacket(LogPacket.ELogKind.Error, "", log, null);
+      SaveLogPacket(LogPacket.ELogKind.Error, "", log, null, null);
     }
     else if (log.Contains("[Debug]")) {
-      SaveLogPacket(LogPacket.ELogKind.Debug, "", log, null);
+      SaveLogPacket(LogPacket.ELogKind.Debug, "", log, null, null);
     }
     else if (log.Contains("[Info]")) {
-      SaveLogPacket(LogPacket.ELogKind.Info, "", log, null);
+      SaveLogPacket(LogPacket.ELogKind.Info, "", log, null, null);
     }
     else if (log.Contains("[Event]")) {
-      SaveLogPacket(LogPacket.ELogKind.Event, "", log, null);
+      SaveLogPacket(LogPacket.ELogKind.Event, "", log, null, null);
     }
     else {
-      SaveLogPacket(LogPacket.ELogKind.Debug, "", log, null);
+      SaveLogPacket(LogPacket.ELogKind.Debug, "", log, null, null);
       Debug.LogWarning("Malformed Log Detected");
     }
   }
@@ -89,29 +89,29 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     }
   }
 
-  void IDASTarget.Info(string eventName, string eventValue, object context) {
-    SaveLogPacket(LogPacket.ELogKind.Info, eventName, eventValue, context);
+  void IDASTarget.Info(string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
+    SaveLogPacket(LogPacket.ELogKind.Info, eventName, eventValue, context, keyValues);
   }
 
-  void IDASTarget.Error(string eventName, string eventValue, object context) {
-    SaveLogPacket(LogPacket.ELogKind.Error, eventName, eventValue, context);
+  void IDASTarget.Error(string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
+    SaveLogPacket(LogPacket.ELogKind.Error, eventName, eventValue, context, keyValues);
   }
 
-  void IDASTarget.Warn(string eventName, string eventValue, object context) {
-    SaveLogPacket(LogPacket.ELogKind.Warning, eventName, eventValue, context);
+  void IDASTarget.Warn(string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
+    SaveLogPacket(LogPacket.ELogKind.Warning, eventName, eventValue, context, keyValues);
   }
 
-  void IDASTarget.Event(string eventName, string eventValue, object context) {
-    SaveLogPacket(LogPacket.ELogKind.Event, eventName, eventValue, context);
+  void IDASTarget.Event(string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
+    SaveLogPacket(LogPacket.ELogKind.Event, eventName, eventValue, context, keyValues);
   }
 
-  void IDASTarget.Debug(string eventName, string eventValue, object context) {
-    SaveLogPacket(LogPacket.ELogKind.Debug, eventName, eventValue, context);
+  void IDASTarget.Debug(string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
+    SaveLogPacket(LogPacket.ELogKind.Debug, eventName, eventValue, context, keyValues);
   }
 
-  private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, object context) {
+  private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
     // Add the new log to the queue
-    LogPacket newPacket = new LogPacket(logKind, eventName, eventValue, context);
+    LogPacket newPacket = new LogPacket(logKind, eventName, eventValue, context, keyValues);
     _MostRecentLogs.Enqueue(newPacket);
     while (_MostRecentLogs.Count > numberCachedLogMaximum) {
       _MostRecentLogs.Dequeue();
@@ -242,11 +242,17 @@ public class LogPacket {
     private set;
   }
 
-  public LogPacket(ELogKind logKind, string eventName, string eventValue, object context) {
+  public Dictionary<string, string> KeyValues {
+    get;
+    private set;
+  }
+
+  public LogPacket(ELogKind logKind, string eventName, string eventValue, object context, Dictionary<string, string> keyValue) {
     LogKind = logKind;
     EventName = eventName;
     EventValue = eventValue;
     Context = context;
+    KeyValues = keyValue;
   }
 
   public override string ToString() {
@@ -285,7 +291,13 @@ public class LogPacket {
         contextStr = Context.ToString();
       }
     }
+
+    string keyValuesStr = "";
+    if (KeyValues != null) {
+      keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
+    }
+
     // TODO: Colorize the text
-    return string.Format("<color=#{0}>[{1}] {2}: {3} ({4})</color>", colorStr, logKindStr, EventName, EventValue, contextStr);
+    return string.Format("<color=#{0}>[{1}] {2}: {3} ({4}) ({5})</color>", colorStr, logKindStr, EventName, EventValue, contextStr, keyValuesStr);
   }
 }
