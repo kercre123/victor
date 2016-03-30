@@ -7,6 +7,7 @@ using System.Linq;
 using AnimationGroups;
 using System.IO;
 using Newtonsoft.Json;
+using Anki.Cozmo;
 
 public class AnimationGroupEventEditor : EditorWindow {
 
@@ -14,15 +15,21 @@ public class AnimationGroupEventEditor : EditorWindow {
 
   private static string[] _AnimationGroupNameOptions;
 
-  private static AnimationGroup _CurrentAnimationGroup;
-  private static string _CurrentAnimationGroupFile;
-  private static string _CurrentAnimationGroupName;
+  private static string[] _EventMapFiles;
+
+  private static string[] _EventMapNameOptions;
+
+  public static string[] _EventMap = new string[(int)CladGameEvent.COUNT];
+
+  private static CladEventToAnimGroupMap _CurrentEventMap;
+  private static string _CurrentEventMapFile;
 
 
   private static readonly HashSet<string> _RecentFiles = new HashSet<string>();
 
   public static string sAnimationGroupDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroups/"; } }
 
+  public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroups/mapping"; } }
 
   public static string[] AnimationGroupNameOptions { get { return _AnimationGroupNameOptions; } }
 
@@ -39,27 +46,34 @@ public class AnimationGroupEventEditor : EditorWindow {
       _AnimationGroupFiles = new string[0];
       _AnimationGroupNameOptions = _AnimationGroupFiles;
     }
+    if (Directory.Exists(sEventMapDirectory)) {
+      _EventMapFiles = Directory.GetFiles(sAnimationGroupDirectory);
+      _EventMapNameOptions = _EventMapFiles.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
+    }
+    else {
+      _EventMapFiles = new string[0];
+      _EventMapNameOptions = _EventMapFiles;
+    }
+
   }
 
-  private bool CheckDiscardUnsavedAnimationGroup() {
+  private bool CheckDiscardUnsaved() {
     bool canOpen = true;
-    if (_CurrentAnimationGroup != null && (string.IsNullOrEmpty(_CurrentAnimationGroupFile) || JsonConvert.SerializeObject(_CurrentAnimationGroup, Formatting.Indented, GlobalSerializerSettings.JsonSettings) != File.ReadAllText(_CurrentAnimationGroupFile))) {
+    if (_CurrentEventMap != null && (string.IsNullOrEmpty(_CurrentEventMapFile) || JsonConvert.SerializeObject(_CurrentEventMap, Formatting.Indented, GlobalSerializerSettings.JsonSettings) != File.ReadAllText(_CurrentEventMapFile))) {
       canOpen = EditorUtility.DisplayDialog("Warning", "Opening an AnimationGroup will Discard Unsaved Changes. Are you Sure?", "Yes");
     }
     return canOpen;
   }
 
   private void LoadFile(string path) {
-    if (CheckDiscardUnsavedAnimationGroup()) {
+    if (CheckDiscardUnsaved()) {
       try {
-        _CurrentAnimationGroup = null;
-        _CurrentAnimationGroupFile = null;
-        _CurrentAnimationGroupName = null;
+        _CurrentEventMap = null;
+        _CurrentEventMapFile = null;
 
         string json = File.ReadAllText(path);
-        _CurrentAnimationGroup = JsonConvert.DeserializeObject<AnimationGroup>(json, GlobalSerializerSettings.JsonSettings);
-        _CurrentAnimationGroupFile = path;
-        _CurrentAnimationGroupName = Path.GetFileNameWithoutExtension(path);
+        _CurrentEventMap = JsonConvert.DeserializeObject<CladEventToAnimGroupMap>(json, GlobalSerializerSettings.JsonSettings);
+        _CurrentEventMapFile = path;
         _RecentFiles.Add(path);
       }
       catch (Exception ex) {
@@ -71,114 +85,25 @@ public class AnimationGroupEventEditor : EditorWindow {
   public void OnGUI() {
     DrawToolbar();
 
-    if (_CurrentAnimationGroup != null) {
-
-      _CurrentAnimationGroupName = EditorGUILayout.TextField("Name", _CurrentAnimationGroupName ?? string.Empty);
-
-      DrawAnimationGroup(_CurrentAnimationGroup);
-    }
+    DrawCladEventList();
   }
 
   private void DrawToolbar() {
-
-    EditorGUILayout.BeginHorizontal(EditorDrawingUtility.ToolbarStyle);
-
-    if (GUILayout.Button("Load", EditorDrawingUtility.ToolbarButtonStyle)) {
-      GenericMenu menu = new GenericMenu();
-
-      foreach (var file in _AnimationGroupFiles.Where(x => x.EndsWith(".json"))) {
-        Action<string> closureAction = (string f) => {
-
-          menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
-            LoadFile(f);
-          });
-        };
-        closureAction(file);
-      }
-      menu.ShowAsContext();
-    }
-
-
-
-    if (_RecentFiles.Count > 0 && GUILayout.Button("Load Recent", EditorDrawingUtility.ToolbarButtonStyle)) {
-
-      GenericMenu menu = new GenericMenu();
-
-      foreach (var file in _RecentFiles) {
-        Action<string> closureAction = (string f) => {
-
-          menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
-            LoadFile(f);
-          });
-        };
-        closureAction(file);
-      }
-      menu.ShowAsContext();
-    }
-
-    if (GUILayout.Button("New AnimationGroup", EditorDrawingUtility.ToolbarButtonStyle)) {
-      if (CheckDiscardUnsavedAnimationGroup()) {
-        _CurrentAnimationGroup = new AnimationGroup();
-        GUI.FocusControl("EditNameField");
-        _CurrentAnimationGroupFile = null;
-      }
-    }
-
-
-    if (_CurrentAnimationGroup != null) {
-      if (GUILayout.Button("Save", EditorDrawingUtility.ToolbarButtonStyle)) {         
-        if (string.IsNullOrEmpty(_CurrentAnimationGroupFile)) {
-          _CurrentAnimationGroupFile = EditorUtility.SaveFilePanel("Save AnimationGroup", sAnimationGroupDirectory, _CurrentAnimationGroupName, "json");
-        }
-
-        if (!string.IsNullOrEmpty(_CurrentAnimationGroupFile)) {
-          if (_CurrentAnimationGroup.Animations.Count == 0) {
-            EditorUtility.DisplayDialog("Error!", "Cannot save a group with no Animations!", "OK");
-          }
-          else {
-            string newFileName = Path.Combine(sAnimationGroupDirectory, _CurrentAnimationGroupName + ".json");
-
-            bool good = true;
-            if (Path.GetFileName(_CurrentAnimationGroupFile) != Path.GetFileName(newFileName)) {
-              if (EditorUtility.DisplayDialog("Alert!", "AnimationGroup has been renamed. Save Anyway?", "Yes", "No")) {
-                if (File.Exists(_CurrentAnimationGroupFile) && EditorUtility.DisplayDialog("Alert!", "Should we delete the old file?\n" + _CurrentAnimationGroupFile, "Yes", "No")) {
-                  File.Delete(_CurrentAnimationGroupFile);
-                }
-                _CurrentAnimationGroupFile = newFileName;
-              }
-              else {
-                good = false;
-              }
-            }
-
-            if (good) {
-              _RecentFiles.Add(_CurrentAnimationGroupFile);
-
-              File.WriteAllText(_CurrentAnimationGroupFile, JsonConvert.SerializeObject(_CurrentAnimationGroup, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
-
-              // Reload groups
-              LoadAnimationGroups();
-              EditorUtility.DisplayDialog("Save Successful!", "AnimationGroup '" + _CurrentAnimationGroupName + "' has been saved to " + _CurrentAnimationGroupFile, "OK");
-            }
-          }
-        }
-      }
-    }
+    
 
     GUILayout.FlexibleSpace();
-
-    EditorGUILayout.EndHorizontal();
   }
 
-  private AnimationGroup DrawAnimationGroup(AnimationGroup animGroup) {
-    EditorDrawingUtility.DrawGroupedList("Animations", animGroup.Animations, DrawAnimationGroupEntry, () => new AnimationGroup.AnimationGroupEntry(), x => x.Mood, m => m.ToString());
-    return animGroup;
-  }
-
-  public AnimationGroup.AnimationGroupEntry DrawAnimationGroupEntry(AnimationGroup.AnimationGroupEntry entry) {
+  private void DrawCladEventList() {
     EditorGUILayout.BeginVertical();
-    //entry.Name = _AnimationNameOptions[EditorGUILayout.Popup("Animation Name", Mathf.Max(0, Array.IndexOf(_AnimationNameOptions, entry.Name)), _AnimationNameOptions)];
+    //EditorDrawingUtility.DrawList("CLAD Events", _CurrentEventMap.AnimationGroups, DrawCladEventEntry, () => new CladEventMap.CladEventAnimationEntry());
+    EditorGUILayout.EndVertical();
+  }
 
+  public CladEventToAnimGroupMap DrawCladEventEntry(CladEventToAnimGroupMap entry) {
+    EditorGUILayout.BeginVertical();
+    //EditorGUILayout.LabelField(entry.cladEvent.ToString());
+    //entry.animationGroupName = _AnimationGroupNameOptions[EditorGUILayout.Popup("Animation Group", Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, entry.animationGroupName)), _AnimationGroupNameOptions)];
     EditorGUILayout.EndVertical();
     return entry;
   }
@@ -188,6 +113,8 @@ public class AnimationGroupEventEditor : EditorWindow {
     AnimationGroupEventEditor window = (AnimationGroupEventEditor)EditorWindow.GetWindow(typeof(AnimationGroupEventEditor));
     window.titleContent = new GUIContent("Animation Event Map");
     window.Show();
+    window.Focus();
+    window.position = new Rect(0, 0, 500, 500);
   }
 
 
