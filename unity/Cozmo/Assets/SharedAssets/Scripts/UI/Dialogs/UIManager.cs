@@ -40,6 +40,10 @@ public class UIManager : MonoBehaviour {
   [SerializeField]
   private GameObject _TouchCatcherPrefab;
 
+  public GameObject TouchCatcherPrefab {
+    get { return _TouchCatcherPrefab; }
+  }
+
   [SerializeField]
   private GameObject _DimBackgroundPrefab;
 

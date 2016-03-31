@@ -32,13 +32,6 @@ namespace Cozmo {
       }
 
       [SerializeField]
-      private GameObject _FullScreenButtonPrefab;
-
-      public GameObject FullScreenButtonPrefab {
-        get { return _FullScreenButtonPrefab; }
-      }
-
-      [SerializeField]
       private AlertView _AlertViewPrefab;
 
       public AlertView AlertViewPrefab {
