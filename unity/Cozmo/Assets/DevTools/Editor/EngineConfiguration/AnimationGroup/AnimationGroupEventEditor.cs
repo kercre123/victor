@@ -23,21 +23,22 @@ public class AnimationGroupEventEditor : EditorWindow {
 
   private static CladEventToAnimGroupMap _CurrentEventMap;
   private static string _CurrentEventMapFile;
+  private static string _CurrentEventMapName;
 
 
   private static readonly HashSet<string> _RecentFiles = new HashSet<string>();
 
   public static string sAnimationGroupDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroups/"; } }
 
-  public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroups/mapping"; } }
+  public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroupMaps"; } }
 
   public static string[] AnimationGroupNameOptions { get { return _AnimationGroupNameOptions; } }
 
   static AnimationGroupEventEditor() {
-    LoadAnimationGroups();
+    LoadData();
   }
 
-  private static void LoadAnimationGroups() {
+  private static void LoadData() {
     // Load All Animation Groups for reference
     if (Directory.Exists(sAnimationGroupDirectory)) {
       _AnimationGroupFiles = Directory.GetFiles(sAnimationGroupDirectory);
@@ -68,7 +69,6 @@ public class AnimationGroupEventEditor : EditorWindow {
     return canOpen;
   }
 
-  // TODO : UPDATE
   private void LoadFile(string path) {
     if (CheckDiscardUnsaved()) {
       try {
@@ -90,30 +90,118 @@ public class AnimationGroupEventEditor : EditorWindow {
   public void OnGUI() {
     DrawToolbar();
 
-    DrawCladEventList();
+    if (_CurrentEventMap != null) {
+
+      _CurrentEventMapName = EditorGUILayout.TextField("Name", _CurrentEventMapName ?? string.Empty);
+
+      DrawEventMap(_CurrentEventMap);
+    }
   }
 
   // TODO : UPDATE
   private void DrawToolbar() {
-    
+
+    EditorGUILayout.BeginHorizontal(EditorDrawingUtility.ToolbarStyle);
+
+    if (GUILayout.Button("Load", EditorDrawingUtility.ToolbarButtonStyle)) {
+      GenericMenu menu = new GenericMenu();
+
+      foreach (var file in _EventMapFiles.Where(x => x.EndsWith(".json"))) {
+        Action<string> closureAction = (string f) => {
+
+          menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
+            LoadFile(f);
+          });
+        };
+        closureAction(file);
+      }
+      menu.ShowAsContext();
+    }
+
+    if (_RecentFiles.Count > 0 && GUILayout.Button("Load Recent", EditorDrawingUtility.ToolbarButtonStyle)) {
+
+      GenericMenu menu = new GenericMenu();
+
+      foreach (var file in _RecentFiles) {
+        Action<string> closureAction = (string f) => {
+
+          menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
+            LoadFile(f);
+          });
+        };
+        closureAction(file);
+      }
+      menu.ShowAsContext();
+    }
+    // New Event Map Button
+    if (GUILayout.Button("New EventToAnimationMap", EditorDrawingUtility.ToolbarButtonStyle)) {
+      if (CheckDiscardUnsaved()) {
+        _CurrentEventMap = new CladEventToAnimGroupMap();
+        GUI.FocusControl("EditNameField");
+        _CurrentEventMap = null;
+      }
+    }
+    // Save Current Event Map Button
+    if (_CurrentEventMap != null) {
+      if (GUILayout.Button("Save", EditorDrawingUtility.ToolbarButtonStyle)) {         
+        if (string.IsNullOrEmpty(_CurrentEventMapFile)) {
+          _CurrentEventMapFile = EditorUtility.SaveFilePanel("Save EventMap", sEventMapDirectory, _CurrentEventMapName, "json");
+        }
+
+        if (!string.IsNullOrEmpty(_CurrentEventMapFile)) {
+          if (_CurrentEventMap.Pairs.Count == 0) {
+            EditorUtility.DisplayDialog("Error!", "Cannot save a map with no Pairs!", "I guess...");
+          }
+          else {
+            string newFileName = Path.Combine(sEventMapDirectory, _CurrentEventMapName + ".json");
+
+            bool good = true;
+            if (Path.GetFileName(_CurrentEventMapFile) != Path.GetFileName(newFileName)) {
+              if (EditorUtility.DisplayDialog("Alert!", "EventMap has been renamed. Save Anyway?", "Fuck it! GO!", "Oh shit, stop that!")) {
+                if (File.Exists(_CurrentEventMapFile) && EditorUtility.DisplayDialog("Sire!", "Should we delete this old file?\n" + _CurrentEventMapFile, "Yes", "No")) {
+                  File.Delete(_CurrentEventMapFile);
+                }
+                _CurrentEventMapFile = newFileName;
+              }
+              else {
+                good = false;
+              }
+            }
+
+            if (good) {
+              _RecentFiles.Add(_CurrentEventMapFile);
+
+              File.WriteAllText(_CurrentEventMapFile, JsonConvert.SerializeObject(_CurrentEventMap, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
+
+              // Reload groups
+              LoadData();
+              EditorUtility.DisplayDialog("Save Successful!", "EventMap '" + _CurrentEventMapName + "' has been saved to " + _CurrentEventMapFile, "OK");
+            }
+          }
+        }
+      }
+    }
 
     GUILayout.FlexibleSpace();
+
+    EditorGUILayout.EndHorizontal();
   }
 
   // TODO : UPDATE
-  private void DrawCladEventList() {
+  private void DrawEventMap(CladEventToAnimGroupMap eMap) {
     EditorGUILayout.BeginVertical();
-    //EditorDrawingUtility.DrawList("CLAD Events", _CurrentEventMap.AnimationGroups, DrawCladEventEntry, () => new CladEventMap.CladEventAnimationEntry());
+    // TOOD: Get DrawList to work properly
+    //EditorDrawingUtility.DrawList("CLAD Events", _CurrentEventMap.Pairs, DrawCladEventEntry, () => new CladEventToAnimGroupMap.CladAnimPair());
     EditorGUILayout.EndVertical();
   }
 
   // TODO : UPDATE
-  public CladEventToAnimGroupMap DrawCladEventEntry(CladEventToAnimGroupMap entry) {
+  public CladEventToAnimGroupMap.CladAnimPair DrawCladEventEntry(CladEventToAnimGroupMap.CladAnimPair pair) {
     EditorGUILayout.BeginVertical();
-    //EditorGUILayout.LabelField(entry.cladEvent.ToString());
-    //entry.animationGroupName = _AnimationGroupNameOptions[EditorGUILayout.Popup("Animation Group", Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, entry.animationGroupName)), _AnimationGroupNameOptions)];
+    EditorGUILayout.LabelField(pair.CladEvent.ToString());
+    pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup("Animation Group", Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];
     EditorGUILayout.EndVertical();
-    return entry;
+    return pair;
   }
 
   [MenuItem("Cozmo/Animation Event Map #%g")]
