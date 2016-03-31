@@ -1,0 +1,124 @@
+ManifestFileVersion: 0
+CRC: 954676401
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 35455f3eed15629ebafc3956306f29e2
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: f083a72f0df925f431de96ca53324470
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 49
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 20a68120a842b4bdb93e71742aff8c42, type: 3}
+- Class: 114
+  Script: {fileID: 1392445389, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d2daa4d2da2bc4fa793d4714e67f1c2b, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: cd28c0c3cc5e04a3095ebccb388d0bd4, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 576709940282843eb99954078542b2db, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e8dd2a16310d94ed7b92b8dea856246d, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: ced794a627a794336a291a8757602a82, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d153b857e153047098676bba98748c43, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8fda23677481447a3ad3ea9f9d4b6e58, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 6fffe3d7025fc4012866f41e75c46c9f, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 10edcd28534124da582f47cccdb34b21, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2d4aed587cb1d4f179e52757a3a66d2f, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 0f4e8e58e7fe44714ac3795faf293f12, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 128bb70a7ceb84c24a0de684f732f728, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 243fd38adbe874a7fa1addae5e487405, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: df40c0dab77ed40e2b27649a8d5cb222, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f9730d4b4c4424a5faaa7debb612cc52, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8066850c0fd5246ccacb34fc100eb09c, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5a449b0de3bc04d88802548a816083a6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 478ca7ddd3c554402a7dedaa225039ed, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 9010204fd05644f94b02f03ce9d0a5bb, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5e48d68ffa4704c94b45eda54e189e5f, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1e7104df6348e4797bbd06273dae3feb, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
+Assets:
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/TreasureHuntChallenge_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/WhackAMoleGameChallenge_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/PlayhouseGameChallenge.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/FaceEnrollementGameChallenge.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeList.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/CodeBreakerGameChallenge01_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/CubePounceGame.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/MinesweeperChallenge.asset
+- Assets/AssetBundles/GameMetadata-Bundle/CubePalette/ShowCozmoCubeSprite.prefab
+- Assets/AssetBundles/GameMetadata-Bundle/ScriptedSequences/AnimationTestSequence.json
+- Assets/AssetBundles/GameMetadata-Bundle/RequestGame/RequestGameConfigs/RequestSimon.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/SimonGameChallenge_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ProgressionStatConfig.asset
+- Assets/AssetBundles/GameMetadata-Bundle/RequestGame/RequestGameConfigs/RequestCubePounce.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/AskCozmo01.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/AskCozmo01_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/CubePalette/CubePalette.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/VortexGameChallenge.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/SelfieGameChallenge.asset
+- Assets/AssetBundles/GameMetadata-Bundle/FriendshipProgressionConfig.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/MinesweeperChallenge_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/ArtistCozmoGameChallenge_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ScriptedSequences/AzkCozmoSequence.json
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/VortexGameChallenge_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/ArtistCozmoGameChallenge.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/SelfieGameChallenge_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/SpeedTapGameChallenge_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/PlayhouseGameChallenge_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/TreasureHuntChallenge.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/CodeBreakerGameChallenge01.asset
+- Assets/AssetBundles/GameMetadata-Bundle/RequestGame/RequestGameList.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/CubePounceGame_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/RequestGame/RequestGameConfigs/RequestSpeedTap.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/SpeedTapGameChallenge.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/FaceEnrollementGameChallenge_Config.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/WhackAMoleGameChallenge.asset
+- Assets/AssetBundles/GameMetadata-Bundle/ChallengeData/ChallengeConfigs/SimonGameChallenge.asset
+Dependencies:
+- AssetBundles/ios/sprites/basic-ui.hd
+- AssetBundles/ios/minigame-ui-prefabs
+- AssetBundles/ios/debug-assets
+- AssetBundles/ios/minigame-data

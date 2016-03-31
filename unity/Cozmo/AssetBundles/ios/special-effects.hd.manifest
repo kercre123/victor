@@ -1,0 +1,31 @@
+ManifestFileVersion: 0
+CRC: 576764035
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 742a92d73aad711d56c2fc201ec0db09
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 99422eb4cddec43cc74f87e56e0be1d4
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 84
+  Script: {instanceID: 0}
+Assets:
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/CozmoFacePost.mat
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/GrayscaleShader.shader
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/GradientComplexAlphaClippingShader.shader
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/BlurFilter.shader
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/GradientSimpleAlphaClippingShader.shader
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/GradientSimpleAlphaClippingScreenspaceShader.shader
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/CozmoFace.renderTexture
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/CozmoFacePost.shader
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/GradientComplexAlphaClippingScreenspaceShader.shader
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/TextGlow.shader
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/AnimatedGlintShader.shader
+- Assets/AssetBundles/SpecialEffects/SpecialEffects-HD/TextGlow.mat
+Dependencies: []

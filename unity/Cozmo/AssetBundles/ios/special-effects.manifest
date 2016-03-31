@@ -1,0 +1,31 @@
+ManifestFileVersion: 0
+CRC: 1001074864
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 742a92d73aad711d56c2fc201ec0db09
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 99422eb4cddec43cc74f87e56e0be1d4
+HashAppended: 0
+ClassTypes:
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 84
+  Script: {instanceID: 0}
+Assets:
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/CozmoFacePost.mat
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GrayscaleShader.shader
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GradientComplexAlphaClippingShader.shader
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/BlurFilter.shader
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GradientSimpleAlphaClippingShader.shader
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GradientSimpleAlphaClippingScreenspaceShader.shader
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/CozmoFace.renderTexture
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/CozmoFacePost.shader
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GradientComplexAlphaClippingScreenspaceShader.shader
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/TextGlow.shader
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/AnimatedGlintShader.shader
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/TextGlow.mat
+Dependencies: []

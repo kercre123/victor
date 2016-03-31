@@ -1,0 +1,194 @@
+ManifestFileVersion: 0
+CRC: 590473042
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 8cd2c5c8f66303dfefb7939e7ac218e6
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: df17edab651a1513cd390c475ae9f52f
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 20
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 49
+  Script: {instanceID: 0}
+- Class: 81
+  Script: {instanceID: 0}
+- Class: 82
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2fad616075162431c9537d5d28f70a6a, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 65690f114622146f18ec0e520f581d33, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 925afa713f29940c7ad2d5d1d2d07018, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: fa4c1322d7d774498836557ffaab5e88, type: 3}
+- Class: 114
+  Script: {fileID: 1392445389, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 1980459831, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 1741964061, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: -619905303, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 1301386320, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: -2095666955, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: -405508275, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: -765806418, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 575553740, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 1679637790, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: -1200242548, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: -900027084, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: -146154839, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 1367256648, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 1573420865, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 1077351063, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 708705254, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 1997211142, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 1297475563, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: bdfe7272dd253496482b2e6840bf1543, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d19915635dcd34752a39d00ae11e54c5, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 85cd9fd3aa63043d096ef878f6a2c553, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 61dd6714bbc6c41c6acf385e054d5de1, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: f5de753499fb146d79dc90a42622eaef, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 22bc7b443fad445419c51a921230e275, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e22a1964e562e41dfaef9962c096c7d6, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4bf07eb4b31a9423eb8aee4f93f18acc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 561cd865c1f4546288137d72e64dc001, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 2cf909c64d0b9446ea88f48bcd80805f, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8adf7157c35a548feb4223e80ee7bb05, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 49898da79bc624eeea2044eb78c17d47, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 21cb49b7aeadb43bbae124902dfe6437, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 21b8c8186a3de4a2e8c3ba2de77de642, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 10edcd28534124da582f47cccdb34b21, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 0f4e8e58e7fe44714ac3795faf293f12, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3a9dfb884b8334521bae0ac461587531, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: a41bbe99256a64d469e220319b895431, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 909c585ba1f764677a93af23393d9cd1, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 9348598b8656c480cb56f4a5683e3a50, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8066850c0fd5246ccacb34fc100eb09c, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 1f761a5cee78f459b9cbcbd8e8e9f342, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3b62f3ecc7743434ca9e31bd187a36a7, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: d50df73de9d7c4cd8be879cc630d807f, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: ba238b3d97f5a48d9a968bbb380894a2, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: daa075ad0ae694f99810197cf8beeddc, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: a9d9ecfdcd06045bba258e3fa0c9cc83, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 8fbb100ef2e504caca60c424650496b8, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 31abf14e3b565439ab400ebd41c47495, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 6d5cac5e2982e4ca594c4343eaba9198, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 4e2291fe839e3426f8f980a1c62f5707, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e912c14f12674433fab7e39520a5a74e, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 128
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+- Class: 222
+  Script: {instanceID: 0}
+- Class: 223
+  Script: {instanceID: 0}
+- Class: 224
+  Script: {instanceID: 0}
+- Class: 225
+  Script: {instanceID: 0}
+Assets:
+- Assets/AssetBundles/MainAssets-Bundle/Managers/LocalNotificationManager.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/ConversationManager/SpeechBubbleRight.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/HomeView.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/Tabs/PlayTab/DailyGoalPanel/DailySummaryPanel.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/ChallengeDetailsDialog.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/ObjectTagRegistryManager.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/DailyGoalManager.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/HomeHubIntroManager.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/PauseManager.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/AudioManager.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/Tabs/CozmoTab/CozmoTab.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/ScriptedSequenceManager.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/Tabs/PlayTab/ChallengeListPanel/HomeHubUnlockedChallengeButton.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/Tabs/PlayTab/DailyGoalPanel/DailyGoalPanel.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/UIManager.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/StartView.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/StartupManager.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/ConversationManager/ConversationManager.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/Tabs/PlayTab/DailyGoalPanel/BonusBarPanel.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/RobotEngineManager/cozmo-configuration.json
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/HomeHub.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/Tabs/ProfileTab/ProfileTab.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/Tabs/PlayTab/DailyGoalPanel/ChallengeBadge.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/Tabs/PlayTab/PlayTab.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/RobotEngineManager/cozmo-configuration-2devices.json
+- Assets/AssetBundles/MainAssets-Bundle/Managers/ConversationManager/ConversationBackground.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/Tabs/PlayTab/ChallengeListPanel/ChallengeListPanel.prefab
+- Assets/AssetBundles/MainAssets-Bundle/HomeHub/Tabs/PlayTab/DailyGoalPanel/GoalCellPrefab.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/ConversationManager/SpeechBubbleLeft.prefab
+- Assets/AssetBundles/MainAssets-Bundle/Managers/RobotEngineManager/RobotEngineManager.prefab
+- Assets/AssetBundles/MainAssets-Bundle/DevConnectDialog/DevConnectDialog.prefab
+Dependencies:
+- AssetBundles/ios/sprites/basic-ui.hd
+- AssetBundles/ios/basic-ui-prefabs
+- AssetBundles/ios/debug-assets
+- AssetBundles/ios/game-metadata
