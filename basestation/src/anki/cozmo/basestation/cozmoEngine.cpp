@@ -36,8 +36,10 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
 
+#include "util/global/globalDefinitions.h"
+#if ANKI_DEV_CHEATS
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
-
+#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -48,6 +50,9 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
   , _textToSpeech(new TextToSpeech(_uiMsgHandler.get(),dataPlatform))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
+#if ANKI_DEV_CHEATS
+  , _usbTunnelServerDebug(new USBTunnelServer(_uiMsgHandler.get(),dataPlatform))
+#endif
 {
   ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
   if (Anki::Util::gTickTimeProvider == nullptr) {
@@ -83,9 +88,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartEngine, startEngineCallback));
   
   _debugConsoleManager.Init(_context->GetExternalInterface());
-  
-  CreateUSBTunnelServer(_uiMsgHandler.get(),dataPlatform);
-
 }
   
 
