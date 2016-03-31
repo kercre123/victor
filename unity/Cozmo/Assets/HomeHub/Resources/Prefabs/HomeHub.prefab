@@ -40,8 +40,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _StartViewPrefab: {fileID: 11473448, guid: aa1c93b68e19246e29f87de1a90da9d1, type: 2}
-  _TimelineViewPrefab: {fileID: 11480722, guid: d3419a371468943d0b4c9ec43d79d786,
-    type: 2}
+  _HomeViewPrefab: {fileID: 11474562, guid: ef57092272bb644c79f4fe5743a4b495, type: 2}
   _ChallengeDetailsPrefab: {fileID: 11471404, guid: dd6c56330042c4b55904fa785cddaedc,
     type: 2}
   _ChallengeDataList: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f, type: 2}

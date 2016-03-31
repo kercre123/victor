@@ -24,4 +24,17 @@ public static class AnimationGroupName {
   public const string kSpeedTap_LoseSession = "speedTap_LoseSession";
 
   #endregion
+
+  #region Cube Pounce
+
+  public const string kCubePounce_Fake = "cubePounce_Fake";
+  public const string kCubePounce_Pounce = "cubePounce_Pounce";
+  public const string kCubePounce_WinHand = "cubePounce_WinHand";
+  public const string kCubePounce_WinRound = "cubePounce_WinRound";
+  public const string kCubePounce_WinSession = "cubePounce_WinSession";
+  public const string kCubePounce_LoseHand = "cubePounce_LoseHand";
+  public const string kCubePounce_LoseRound = "cubePounce_LoseRound";
+  public const string kCubePounce_LoseSession = "cubePounce_LoseSession";
+
+  #endregion
 }

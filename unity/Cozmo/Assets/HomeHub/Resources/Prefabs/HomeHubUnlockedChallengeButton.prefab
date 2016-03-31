@@ -189,9 +189,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_IgnoreLayout: 0
-  m_MinWidth: 640
+  m_MinWidth: 400
   m_MinHeight: -1
-  m_PreferredWidth: 1000
+  m_PreferredWidth: 600
   m_PreferredHeight: -1
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
@@ -246,15 +246,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _Interactable: 1
-  _DASEventButtonName: assignedByHubWorldButton
-  _DASEventViewController: assignedByTimelineView
   _TextLabel: {fileID: 0}
   _TextLabelOffset: 0
-  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
+  TextEnabledColor: {r: 0, g: 0, b: 0, a: 1}
   TextPressedColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   TextDisabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   _AlphaController: {fileID: 0}
-  _GlintAnimator: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11401516}
     ignoreSprite: 0
@@ -280,6 +277,7 @@ MonoBehaviour:
     pressedColor: {r: 0.63235295, g: 0.63235295, b: 0.63235295, a: 1}
     disabledSprite: {fileID: 0}
     disabledColor: {r: 1, g: 1, b: 1, a: 0.20392157}
+  _GlintAnimator: {fileID: 0}
   _UISoundEvent:
     _Event: -1705717452
     _EventType: 6
@@ -352,11 +350,11 @@ MonoBehaviour:
   Prefab: {fileID: 112842, guid: e48611878db304fb1a8a34ac88e4682e, type: 2}
   ModifiedValues:
   - ObjectPath: 
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
-    JsonValue: 3
+    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_RichText
+    JsonValue: false
   ModifiedLocalReferences:
   - ObjectPath: ../
-    FieldName: Anki.UI.AnkiButton:_TextLabel
+    FieldName: Cozmo.UI.CozmoButton:_TextLabel
     ReferencePath: 
   - ObjectPath: ../
     FieldName: Cozmo.HubWorld.HubWorldButton:_ChallengeTitle
@@ -479,7 +477,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 200, y: 0}
-  m_SizeDelta: {x: 400, y: 400}
+  m_SizeDelta: {x: 350, y: 350}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22443288
 RectTransform:
@@ -531,8 +529,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: 574, y: 0}
-  m_SizeDelta: {x: 404, y: 200}
+  m_AnchoredPosition: {x: 200, y: -250}
+  m_SizeDelta: {x: 400, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22490842
 RectTransform:
@@ -617,11 +615,11 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_SizeDelta.x
-      value: 500
+      value: 350
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_SizeDelta.y
-      value: 200
+      value: 350
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: m_AnchoredPosition.x
@@ -663,6 +661,18 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _DASEventButtonName
       value: assignedByHubWorldButton
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_PreferredWidth
+      value: 600
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_MinWidth
+      value: 400
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_AnchoredPosition.y
+      value: -250
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
