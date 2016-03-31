@@ -404,18 +404,15 @@ class EnginePlatformConfiguration(object):
                 simulator=self.options.simulator)
         elif self.platform == 'android':
             command = ['ninja']
-            # DNW: will add an option to switch debug, profile, release
             cwd_loc = os.path.join(ENGINE_ROOT, 'generated', 'android', 'out', self.options.configuration)
             if self.options.verbose:
                 command += ['-v']
             if self.options.command == 'clean':
                 command += ['-t', 'clean']
-            # DNW: This needs to be a function / more full featured.
-            # Will add a ankibuild.ninja.build later.  just a process call for now.
-            pipe = subprocess.Popen(command, cwd=cwd_loc, stderr=subprocess.PIPE)
-            out, err = pipe.communicate()
-            if '' != err:
-                print err
+            # if this needs more features should add as ankibuild.ninja.build
+            results = subprocess.call(command, cwd=cwd_loc, shell=True)
+            if results:
+                sys.exit('[ERROR] running %s' % command)
 
     def delete(self):
         if self.options.verbose:
