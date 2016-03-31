@@ -1,0 +1,22 @@
+/** Clad message definitions for unlocks
+*/
+
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 UnlockIds
+{
+  BurpAction,
+  DriveInCircleAction,
+  CubeRollAction,
+  SimonGame,
+  SpeedTapGame,
+  CubePounceGame,
+  SpeedTapEasyImplicit,
+  SpeedTapMediumImplicit,
+  SpeedTapHardImplicit
+}
+
+} // namespace Cozmo
+} // namespace Anki
