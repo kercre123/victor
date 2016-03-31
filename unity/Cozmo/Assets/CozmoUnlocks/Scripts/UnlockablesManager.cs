@@ -8,7 +8,7 @@ public class UnlockableInfoList : ScriptableObject {
 }
 
 public class UnlockablesManager : MonoBehaviour {
-  private Dictionary<uint, bool> _UnlockablesState = new Dictionary<uint, bool>();
+  private Dictionary<Anki.Cozmo.UnlockIds, bool> _UnlockablesState = new Dictionary<Anki.Cozmo.UnlockIds, bool>();
 
   [SerializeField]
   private UnlockableInfoList _UnlockableInfoList;
@@ -59,7 +59,7 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   // also valid for implicit unlocks
-  public bool IsUnlockableAvailable(uint id) {
+  public bool IsUnlockableAvailable(Anki.Cozmo.UnlockIds id) {
     if (_UnlockablesState[id]) {
       return true;
     }

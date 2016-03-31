@@ -7,11 +7,11 @@ public enum UnlockableType {
 }
 
 public class UnlockableInfo : ScriptableObject {
-  public readonly uint Id;
+  public readonly Anki.Cozmo.UnlockIds Id;
 
   public readonly UnlockableType UnlockableType;
 
-  public readonly uint[] Prerequisites;
+  public readonly Anki.Cozmo.UnlockIds[] Prerequisites;
 
   // true = any prereq filled will make this unlock available
   // false = all prereqs must be filled to make this unlock available.
