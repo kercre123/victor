@@ -130,17 +130,15 @@ namespace Anki {
     } // Broadcast(MessageGameToEngine &&)
     
     // Called from any not main thread and dealt with during the update.
-    void UiMessageHandler::BroadcastThreadSafe(const ExternalInterface::MessageGameToEngine& message)
+    void UiMessageHandler::BroadcastDeferred(const ExternalInterface::MessageGameToEngine& message)
     {
-      _mutex.lock();
+      std::lock_guard<std::mutex> lock(_mutex);
       _threadedMsgs.emplace_back(message);
-      _mutex.unlock();
     }
-    void UiMessageHandler::BroadcastThreadSafe(ExternalInterface::MessageGameToEngine&& message)
+    void UiMessageHandler::BroadcastDeferred(ExternalInterface::MessageGameToEngine&& message)
     {
-      _mutex.lock();
+      std::lock_guard<std::mutex> lock(_mutex);
       _threadedMsgs.emplace_back(std::move(message));
-      _mutex.unlock();
     }
     
     // Broadcasting MessageEngineToGame messages also delivers them out of the engine
@@ -237,15 +235,16 @@ namespace Anki {
         }
       }
       
-      _mutex.lock();
-      if( _threadedMsgs.size() > 0 )
       {
-        for(auto threaded_msg : _threadedMsgs) {
-          Broadcast(std::move(threaded_msg));
+        std::lock_guard<std::mutex> lock(_mutex);
+        if( _threadedMsgs.size() > 0 )
+        {
+          for(auto threaded_msg : _threadedMsgs) {
+            Broadcast(std::move(threaded_msg));
+          }
+          _threadedMsgs.clear();
         }
-        _threadedMsgs.clear();
       }
-      _mutex.unlock();
       
       return lastResult;
     } // Update()

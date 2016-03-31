@@ -40,6 +40,7 @@
 @end
 
 @implementation CozmoUSBTunnelHTTPServer
+
 - (Anki::Util::Data::DataPlatform*)GetDataPlatform
 {
   return _dataPlatform;
@@ -91,60 +92,63 @@
 
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path
 {
-  if ([method isEqualToString:@"POST"] )
+  @autoreleasepool
   {
-   //Check for command that says update and play an animation
-    // In the future we could have a command for updating other things via server command line as well.
-    //localhost:2223/cmd_anim_update/anim_name
-    if( [path containsString:@"cmd_anim_update/"] )
+    if ([method isEqualToString:@"POST"] )
     {
-      NSData *postData = [request body];
-      if (postData)
+     //Check for command that says update and play an animation
+      // In the future we could have a command for updating other things via server command line as well.
+      //localhost:2223/cmd_anim_update/anim_name
+      if( [path containsString:@"cmd_anim_update/"] )
       {
-        NSString* postStr = [[NSString alloc] initWithData:postData encoding:NSUTF8StringEncoding];
-        NSArray* path_list = [path componentsSeparatedByString:@"/"];
-        if( path_list && [path_list count] > 2)
+        NSData *postData = [request body];
+        if (postData)
         {
-          // strip name from path
-          std::string anim_name = [[path_list objectAtIndex:2] UTF8String];
-          
-          CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
-          Anki::Util::Data::DataPlatform* data_platform = [cozmo_server GetDataPlatform];
-          Anki::Cozmo::IExternalInterface* external_interface = [cozmo_server GetExternalInterface];
-          if( data_platform && external_interface)
+          NSString* postStr = [[NSString alloc] initWithData:postData encoding:NSUTF8StringEncoding];
+          NSArray* path_list = [path componentsSeparatedByString:@"/"];
+          if( path_list && [path_list count] > 2)
           {
-            // The "resource" file is not directly writable on device, so write to documents and then let reload overwrite.
-            std::string full_path = data_platform->pathToResource(Anki::Util::Data::Scope::Cache, Anki::Cozmo::USBTunnelServer::TempAnimFileName);
-            std::string content = [postStr UTF8String];
-            Anki::Util::FileUtils::WriteFile(full_path, content);
+            // strip name from path
+            std::string anim_name = [[path_list objectAtIndex:2] UTF8String];
             
-            // Since we're on our own thread make sure to call ThreadSafe Version.
-            Anki::Cozmo::ExternalInterface::MessageGameToEngine read_msg;
-            Anki::Cozmo::ExternalInterface::ReadAnimationFile m;
-            read_msg.Set_ReadAnimationFile(m);
-            external_interface->BroadcastThreadSafe(std::move(read_msg));
-            
-            Anki::Cozmo::ExternalInterface::MessageGameToEngine play_msg;
-            Anki::Cozmo::ExternalInterface::PlayAnimation play_msg_content;
-            play_msg_content.animationName = anim_name;
-            play_msg_content.numLoops = 1;
-            play_msg.Set_PlayAnimation(play_msg_content);
-            external_interface->BroadcastThreadSafe(std::move(play_msg));
+            CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
+            Anki::Util::Data::DataPlatform* data_platform = [cozmo_server GetDataPlatform];
+            Anki::Cozmo::IExternalInterface* external_interface = [cozmo_server GetExternalInterface];
+            if( data_platform && external_interface)
+            {
+              // The "resource" file is not directly writable on device, so write to documents and then let reload overwrite.
+              std::string full_path = data_platform->pathToResource(Anki::Util::Data::Scope::Cache, Anki::Cozmo::USBTunnelServer::TempAnimFileName);
+              std::string content = [postStr UTF8String];
+              Anki::Util::FileUtils::WriteFile(full_path, content);
+              
+              // Since we're on our own thread make sure to call ThreadSafe Version.
+              Anki::Cozmo::ExternalInterface::MessageGameToEngine read_msg;
+              Anki::Cozmo::ExternalInterface::ReadAnimationFile m;
+              read_msg.Set_ReadAnimationFile(m);
+              external_interface->BroadcastDeferred(std::move(read_msg));
+              
+              Anki::Cozmo::ExternalInterface::MessageGameToEngine play_msg;
+              Anki::Cozmo::ExternalInterface::PlayAnimation play_msg_content;
+              play_msg_content.animationName = anim_name;
+              play_msg_content.numLoops = 1;
+              play_msg.Set_PlayAnimation(play_msg_content);
+              external_interface->BroadcastDeferred(std::move(play_msg));
+            }
           }
         }
       }
+      
+      NSData *response = [@"Cozmo USB tunnel: Post Recieved\n" dataUsingEncoding:NSUTF8StringEncoding];
+      return [[HTTPDataResponse alloc] initWithData:response];
+    }
+    else if([method isEqualToString:@"GET"] )
+    {
+      NSData *get_response = [@"<html><body>Cozmo USB tunnel: Get Recieved<body></html>\n" dataUsingEncoding:NSUTF8StringEncoding];
+      return [[HTTPDataResponse alloc] initWithData:get_response];
     }
     
-    NSData *response = [@"Cozmo USB tunnel: Post Recieved\n" dataUsingEncoding:NSUTF8StringEncoding];
-    return [[HTTPDataResponse alloc] initWithData:response];
-  }
-  else if([method isEqualToString:@"GET"] )
-  {
-    NSData *get_response = [@"<html><body>Cozmo USB tunnel: Get Recieved<body></html>\n" dataUsingEncoding:NSUTF8StringEncoding];
-    return [[HTTPDataResponse alloc] initWithData:get_response];
-  }
-  
-  return [super httpResponseForMethod:method URI:path];
+    return [super httpResponseForMethod:method URI:path];
+  } // @autoreleasepool
 }
 
 - (void)processBodyData:(NSData *)postDataChunk
@@ -186,6 +190,8 @@ namespace Anki {
         if (![_impl->_httpServer start:&err]) {
           [_impl->_httpServer stop];
           _impl->_httpServer = nil;
+          NSString* errorString = [NSString stringWithFormat:@"%@", err];
+          PRINT_NAMED_ERROR("USBTunnelServer.constructor","%s",[errorString UTF8String]);
         }
       }
     }

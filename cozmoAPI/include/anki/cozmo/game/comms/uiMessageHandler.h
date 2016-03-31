@@ -52,8 +52,8 @@ namespace Anki {
       
       virtual void Broadcast(const ExternalInterface::MessageGameToEngine& message) override;
       virtual void Broadcast(ExternalInterface::MessageGameToEngine&& message) override;
-      virtual void BroadcastThreadSafe(const ExternalInterface::MessageGameToEngine& message) override;
-      virtual void BroadcastThreadSafe(ExternalInterface::MessageGameToEngine&& message) override;
+      virtual void BroadcastDeferred(const ExternalInterface::MessageGameToEngine& message) override;
+      virtual void BroadcastDeferred(ExternalInterface::MessageGameToEngine&& message) override;
       
       virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) override;
       virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) override;
