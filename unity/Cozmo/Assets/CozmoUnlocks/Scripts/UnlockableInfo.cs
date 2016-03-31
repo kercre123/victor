@@ -6,18 +6,18 @@ public enum UnlockableType {
   Action
 }
 
-public class UnlockableInfo {
-  public readonly uint _Id;
+public class UnlockableInfo : ScriptableObject {
+  public readonly uint Id;
 
-  public readonly UnlockableType _UnlockableType;
+  public readonly UnlockableType UnlockableType;
 
-  public readonly uint[] _Prerequisites;
+  public readonly uint[] Prerequisites;
 
   // true = any prereq filled will make this unlock available
   // false = all prereqs must be filled to make this unlock available.
-  public readonly bool _AnyPrereqUnlock;
+  public readonly bool AnyPrereqUnlock;
 
-  public readonly int _CubesRequired;
+  public readonly int CubesRequired;
 
-  public readonly int _TreatCost;
+  public readonly int TreatCost;
 }
