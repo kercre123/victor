@@ -18,6 +18,11 @@
 #include "util/time/stepTimers.h"
 #include <sys/stat.h>
 
+#include "util/global/globalDefinitions.h"
+#if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
+#endif
+
 namespace Anki {
   namespace Cozmo {
     
@@ -246,6 +251,14 @@ namespace Anki {
           ReadAnimationFile(path.c_str());
         }
       }
+#if ANKI_DEV_CHEATS
+      // Only when not shipping use our temp dir
+      std::string test_anim = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, USBTunnelServer::TempAnimFileName);
+      if( Util::FileUtils::FileExists(test_anim) )
+      {
+        ReadAnimationFile(test_anim.c_str());
+      }
+#endif
     }
     
     void RobotManager::BroadcastAvailableAnimations()

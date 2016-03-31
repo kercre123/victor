@@ -35,7 +35,7 @@
 #include "clad/types/imageTypes.h"
 #include "clad/types/engineState.h"
 #include "anki/cozmo/basestation/debug/debugConsoleManager.h"
-
+#include "util/global/globalDefinitions.h"
 
 #include <memory>
 
@@ -58,6 +58,7 @@ class CozmoContext;
 class MultiClientChannel;
 class UiMessageHandler;
 class TextToSpeech;
+class USBTunnelServer;
   
 template <typename Type>
 class AnkiEvent;
@@ -145,6 +146,10 @@ protected:
   Result AddRobot(RobotID_t robotID);
   
   EngineState _engineState = EngineState::Stopped;
+
+#if ANKI_DEV_CHEATS
+  std::unique_ptr<USBTunnelServer>                          _usbTunnelServerDebug;
+#endif
   
 }; // class CozmoEngine
   
