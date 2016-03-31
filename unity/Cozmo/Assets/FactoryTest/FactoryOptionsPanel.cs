@@ -5,6 +5,7 @@ public class FactoryOptionsPanel : MonoBehaviour {
 
   public System.Action<int> OnSetTestNumber;
   public System.Action<int> OnSetStationNumber;
+  public System.Action<bool> OnSetSim;
 
   [SerializeField]
   private UnityEngine.UI.Button _CloseButton;
@@ -15,11 +16,15 @@ public class FactoryOptionsPanel : MonoBehaviour {
   [SerializeField]
   public UnityEngine.UI.InputField _TestNumberInput;
 
+  [SerializeField]
+  private UnityEngine.UI.Toggle _SimToggle;
+
   // Use this for initialization
   void Start() {
     _CloseButton.onClick.AddListener(() => GameObject.Destroy(gameObject));
     _StationNumberInput.onEndEdit.AddListener(HandleOnSetStationNumber);
     _TestNumberInput.onEndEdit.AddListener(HandleOnSetTestNumber);
+    _SimToggle.onValueChanged.AddListener(HandleOnSetSimType);
   }
 
   void HandleOnSetTestNumber(string input) {
@@ -31,6 +36,12 @@ public class FactoryOptionsPanel : MonoBehaviour {
   void HandleOnSetStationNumber(string input) {
     if (OnSetStationNumber != null) {
       OnSetStationNumber(int.Parse(input));
+    }
+  }
+
+  void HandleOnSetSimType(bool isSim) {
+    if (OnSetSim != null) {
+      OnSetSim(isSim);
     }
   }
 }

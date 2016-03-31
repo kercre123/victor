@@ -44,6 +44,7 @@ public class FactoryIntroManager : MonoBehaviour {
 
   private int _StationNumber = 0;
   private int _TestNumber = 0;
+  private bool _IsSim = false;
 
   private List<string> _LogList = new List<string>();
 
@@ -68,6 +69,10 @@ public class FactoryIntroManager : MonoBehaviour {
   private void HandleTestNumberUpdate(int update) {
     _TestNumber = update;
     Debug.Log("TODO: Test Start Number: " + _TestNumber);
+  }
+
+  private void HandleSetSimType(bool isSim) {
+    _IsSim = isSim;
   }
 
   private void HandleStartButtonClick() {
@@ -114,6 +119,7 @@ public class FactoryIntroManager : MonoBehaviour {
     _FactoryOptionsPanelInstance.transform.SetParent(_Canvas.transform, false);
     _FactoryOptionsPanelInstance.OnSetStationNumber += HandleStationNumberUpdate;
     _FactoryOptionsPanelInstance.OnSetTestNumber += HandleTestNumberUpdate;
+    _FactoryOptionsPanelInstance.OnSetSim += HandleSetSimType;
   }
 
   private void SetStatusText(string txt) {
@@ -169,7 +175,7 @@ public class FactoryIntroManager : MonoBehaviour {
     if (_DevConnectDialogInstance == null && _DevConnectDialog != null) {
       _DevConnectDialogInstance = GameObject.Instantiate(_DevConnectDialog.gameObject);
     }
-    _DevConnectDialogInstance.GetComponent<Intro>().Play(false);
+    _DevConnectDialogInstance.GetComponent<Intro>().Play(_IsSim);
   }
 
   private void HideDevConnectDialog() {
