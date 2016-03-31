@@ -24,7 +24,7 @@ public class UnlockablesManager : MonoBehaviour {
     return unlocked;
   }
 
-  public List<UnlockableInfo> GetUnlockedExplicit() {
+  public List<UnlockableInfo> GetUnlocked() {
     List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id]) {
@@ -34,7 +34,7 @@ public class UnlockablesManager : MonoBehaviour {
     return unlocked;
   }
 
-  public List<UnlockableInfo> GetAvailableAndLockedExplicit() {
+  public List<UnlockableInfo> GetAvailableAndLocked() {
     List<UnlockableInfo> available = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id];
@@ -46,7 +46,7 @@ public class UnlockablesManager : MonoBehaviour {
     return available;
   }
 
-  public List<UnlockableInfo> GetUnavailableExplicit() {
+  public List<UnlockableInfo> GetUnavailable() {
     List<UnlockableInfo> unavailable = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id];
@@ -58,7 +58,12 @@ public class UnlockablesManager : MonoBehaviour {
     return unavailable;
   }
 
-  // also valid for implicit unlocks
+  // is something unlocked. works for implicit unlocks.
+  public bool IsUnlocked(Anki.Cozmo.UnlockIds id) {
+    return _UnlockablesState[id];
+  }
+
+  // is something available to be unlocked. only works for explicit unlocks.
   public bool IsUnlockableAvailable(Anki.Cozmo.UnlockIds id) {
     if (_UnlockablesState[id]) {
       return true;
