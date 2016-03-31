@@ -26,6 +26,7 @@
 
 #include "json/json.h"
 
+#include <memory>
 #include <unordered_map>
 #include <string>
 #include <random>
@@ -41,6 +42,7 @@ namespace Cozmo {
   class BehaviorFactory;
   class Reward;
   class Robot;
+  class BehaviorWhiteboard;
   
   namespace ExternalInterface {
     class BehaviorManagerMessageUnion;
@@ -120,6 +122,9 @@ namespace Cozmo {
     IBehavior* _nextBehavior = nullptr;
     IBehavior* _forceSwitchBehavior = nullptr;
     
+    // whiteboard for behaviors to share information, or to store information only useful to behaviors
+    std::unique_ptr<BehaviorWhiteboard> _whiteboard;
+    
     // Minimum amount of time to stay in each behavior
     float _minBehaviorTime_sec;
     float _lastSwitchTime_sec;
@@ -131,16 +136,7 @@ namespace Cozmo {
     std::vector<Signal::SmartHandle> _eventHandlers;
     
   }; // class BehaviorManager
-  
-  
-  class Reward
-  {
-  public:
-    
-    float value;
-    
-  }; // class Reward
-  
+
 } // namespace Cozmo
 } // namespace Anki
 

@@ -39,10 +39,10 @@ static const int TOTAL_LIGHTS = NUM_BACKPACK_LEDS + MAX_ACCESSORIES * NUM_PROP_L
 static const int LIGHTS_PER_WORD = 4;
 
 namespace Lights {
-	void init();
-	void manage(void*);
-	void update(int index, const LightState* ledParams);
-	uint8_t* state(int index);
+  void init();
+  void manage();
+  void update(int index, const LightState* ledParams);
+  uint8_t* state(int index);
 };
-											 
+
 #endif

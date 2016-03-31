@@ -17,7 +17,6 @@
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/basestation/soundManager.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
@@ -361,126 +360,6 @@ return RESULT_FAIL; \
     // RobotAudioKeyFrame
     //
     
-#   if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
-    const std::string& RobotAudioKeyFrame::GetSoundName() const
-    {
-      static const std::string unknownName("UNKNOWN");
-      if(_selectedAudioIndex<0 || _audioReferences.empty()) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetSoundName.InvalidState",
-                          "KeyFrame not initialized with selected sound name yet.\n");
-        return unknownName;
-      }
-      
-      return _audioReferences[_selectedAudioIndex].name;
-    }
-    
-    RobotInterface::EngineToRobot* RobotAudioKeyFrame::GetStreamMessage()
-    {
-      if(_audioReferences.empty()) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
-                          "Check to make sure animation loaded successfully - sound file(s) probably not found.");
-        return nullptr;
-      }
-      
-      if(_sampleIndex == 0) {
-        // Select one of the audio names to play
-        if(_audioReferences.size()==1) {
-          // Special case: there's only one audio option
-          _selectedAudioIndex = 0;
-        } else {
-          _selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
-        }
-      }
-      
-      // Populate the message with the next chunk of audio data and send it out
-      if(_sampleIndex < _audioReferences[_selectedAudioIndex].numSamples)
-      {
-        if (!SoundManager::getInstance()->GetSoundSample(_audioReferences[_selectedAudioIndex].name,
-                                                         (uint32_t)_sampleIndex, _audioReferences[_selectedAudioIndex].volume, _audioSampleMsg)) {
-          PRINT_NAMED_WARNING("RobotAudioKeyFrame.GetStreamMessage.MissingSample", "Index %d", _sampleIndex);
-        }
-        
-        ++_sampleIndex;
-        
-        return new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSample(_audioSampleMsg));
-      } else {
-        _sampleIndex = 0;
-        return nullptr;
-      }
-    } // GetStreamMessage()
-    
-    Result RobotAudioKeyFrame::AddAudioRef(const std::string& name, const f32 volume)
-    {
-      AudioRef audioRef;
-      const u32 duration_ms = SoundManager::getInstance()->GetSoundDurationInMilliseconds(name);
-      if(duration_ms == 0) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.AddAudioRef.InvalidName",
-                          "SoundManager could not find the sound associated with name '%s'.\n",
-                          name.c_str());
-        return RESULT_FAIL;
-      }
-      
-      audioRef.name = name;
-      audioRef.numSamples = duration_ms / SAMPLE_LENGTH_MS;
-      audioRef.volume = volume;
-      _audioReferences.push_back(audioRef);
-
-      return RESULT_OK;
-    }
-    
-    Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
-    {
-      // Get volume
-      f32 volume = 1.0;
-      JsonTools::GetValueOptional(jsonRoot, "volume", volume);
-      
-      
-      if(!jsonRoot.isMember("audioName")) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.MissingAudioName",
-                          "%s: No 'audioName' field in Json frame.\n",
-                          animNameDebug.c_str());
-        return RESULT_FAIL;
-      }
-      
-      const Json::Value& jsonAudioNames = jsonRoot["audioName"];
-      if(jsonAudioNames.isArray()) {
-        for(s32 i=0; i<jsonAudioNames.size(); ++i) {
-          Result addResult = AddAudioRef(jsonAudioNames[i].asString(), volume);
-          if(addResult != RESULT_OK) {
-            return addResult;
-          }
-        }
-      } else {
-        Result addResult = AddAudioRef(jsonAudioNames.asString(), volume);
-        if(addResult != RESULT_OK) {
-          return addResult;
-        }
-      }
-      
-      return RESULT_OK;
-    }
-    
-    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef() const
-    {
-      if(_audioReferences.empty()) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetStreamMessage.EmptyAudioReferences",
-                          "Check to make sure animation loaded successfully - sound file(s) probably not found.");
-        static const AudioRef InvalidRef{};
-        return InvalidRef;
-      }
-      
-      // Select one of the audio names to play
-      size_t selectedAudioIndex = 0;
-      if(_audioReferences.size()>1) {
-        // If there are more than one audio references
-        selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
-      }
-      
-      return _audioReferences[selectedAudioIndex];
-    }
-    
-#   else // (if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO==0)
-    
     Result RobotAudioKeyFrame::AddAudioRef(const Audio::GameEvent::GenericEvent event)
     {
       // TODO: Need a way to verify the event is valid while loading animation metadata - JMR
@@ -543,8 +422,6 @@ return RESULT_FAIL; \
       return RESULT_OK;
     }
     
-#   endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
-    
 #pragma mark -
 #pragma mark DeviceAudioKeyFrame
     //
@@ -568,7 +445,6 @@ return RESULT_FAIL; \
     void DeviceAudioKeyFrame::PlayOnDevice()
     {
       // TODO: Replace with real call to wwise or something
-      SoundManager::getInstance()->Play(_audioName);
     }
     
 #pragma mark -

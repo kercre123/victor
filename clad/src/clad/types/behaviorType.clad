@@ -24,6 +24,7 @@ enum uint_8 BehaviorType {
   GatherBlocks,
   ExploreMarkedCube,
   ExploreCliff,
+  ExploreLookAroundInPlace,
   RequestGameSimple,
 
   Count

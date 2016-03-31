@@ -371,6 +371,7 @@ ColorRGBA NavMeshQuadTreeProcessor::GetDebugColor(ENodeContentType contentType)
     case ENodeContentType::ObstacleCube:         { ret = ColorRGBA(1.0f, 0.0f, 0.0f, 0.3f); break; };
     case ENodeContentType::ObstacleUnrecognized: { ret = ColorRGBA(0.5f, 0.0f, 0.0f, 0.3f); break; };
     case ENodeContentType::Cliff:                { ret = ColorRGBA(0.0f, 0.0f, 0.0f, 0.3f); break; };
+    case ENodeContentType::InterestingEdge:           { ret = ColorRGBA(0.0f, 0.0f, 0.5f, 0.3f); break; };
   }
   return ret;
 }

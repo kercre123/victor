@@ -30,19 +30,19 @@ namespace HAL {
   
   bool Spine::Enqueue(const u8* data, const u8 length, const u8 tag) {
     const int exit = (spine_exit+1) % QUEUE_DEPTH;
-		u8 realTag;
-		u8 realLength;
-		if (tag == RobotInterface::GLOBAL_INVALID_TAG)
-		{
-			realTag = data[0];
-			realLength = length;
-		}
-		else
-		{
-			realTag = tag;
-			realLength = length + 1;
-		}
-		
+    u8 realTag;
+    u8 realLength;
+    if (tag == RobotInterface::GLOBAL_INVALID_TAG)
+    {
+      realTag = data[0];
+      realLength = length;
+    }
+    else
+    {
+      realTag = tag;
+      realLength = length + 1;
+    }
+
     if (spine_enter == exit) {
       return false;
     }
@@ -53,7 +53,7 @@ namespace HAL {
     }
     else
     {
-			u8* dest = spinebuffer[spine_exit].data;
+      u8* dest = spinebuffer[spine_exit].data;
       if (tag != RobotInterface::GLOBAL_INVALID_TAG)
       {
         *dest = tag;
@@ -81,10 +81,10 @@ namespace HAL {
     {
       RadioSendMessage(g_dataToHead.cladBuffer.data + 1, g_dataToHead.cladBuffer.length-1, g_dataToHead.cladBuffer.data[0]);
     }
-		else if (msg->Size() != g_dataToHead.cladBuffer.length)
-		{
-			AnkiError( 138, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, tag, g_dataToHead.cladBuffer.length, msg->Size());
-		}
+    else if (msg->Size() != g_dataToHead.cladBuffer.length)
+    {
+      AnkiError( 138, "Spine.Manage", 390, "Received message %x has %d bytes but should have %d", 3, tag, g_dataToHead.cladBuffer.length, msg->Size());
+    }
     else
     {
       Messages::ProcessMessage(*msg);

@@ -35,7 +35,6 @@
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/soundManager.h"    // TODO: REMOVE ME
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
@@ -143,10 +142,6 @@ namespace Anki {
 
       if (_context->GetDataPlatform() != nullptr)
       {
-        if (USE_SOUND_MANAGER_FOR_ROBOT_AUDIO)
-        {
-          SoundManager::getInstance()->LoadSounds(_context->GetDataPlatform());
-        }
         FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
       }
       

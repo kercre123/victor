@@ -71,7 +71,7 @@ public:
   }
 
   // Allows subscribing to events by type with the passed in function
-  Signal::SmartHandle Subcribe(const uint32_t type, SubscriberFunction<DataType> function)
+  Signal::SmartHandle Subscribe(const uint32_t type, SubscriberFunction<DataType> function)
   {
     return this->_eventHandlerMap[type].ScopedSubscribe(function);
   }
@@ -132,7 +132,7 @@ public:
   }
 
   // Allows subscribing to events by type with the passed in function
-  Signal::SmartHandle Subcribe(const uint32_t mailbox, const uint32_t type, SubscriberFunction<DataType> function)
+  Signal::SmartHandle Subscribe(const uint32_t mailbox, const uint32_t type, SubscriberFunction<DataType> function)
   {
     return this->_eventHandlerMap[type][mailbox].ScopedSubscribe(function);
   }

@@ -37,9 +37,6 @@ class NavMeshQuadTreeNode : private Util::noncopyable
 {
 public:
 
-void TESTDONOTCOMIT();
-void TESTDONOTCOMITRec();
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

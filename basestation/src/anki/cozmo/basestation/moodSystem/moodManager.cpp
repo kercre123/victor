@@ -11,14 +11,15 @@
  **/
 
 
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/moodSystem/emotionEvent.h"
-#include "anki/cozmo/basestation/moodSystem/staticMoodData.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/moodSystem/emotionEvent.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/moodSystem/staticMoodData.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "anki/common/basestation/utils/timer.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/vizInterface/messageViz.h"
@@ -35,6 +36,8 @@ namespace Cozmo {
 // For now StaticMoodData is basically a singleton, but hidden behind an interface in mood manager incase we ever
 // need it to be different per robot / moodManager
 static StaticMoodData sStaticMoodData;
+
+static const char* kActionResultEmotionEventKey = "actionResultEmotionEvents";
 
 
 StaticMoodData& MoodManager::GetStaticMoodData()
@@ -60,13 +63,59 @@ MoodManager::MoodManager(Robot* inRobot)
 void MoodManager::Init(const Json::Value& inJson)
 {
   GetStaticMoodData().Init(inJson);
+
+  LoadActionCompletedEventMap(inJson[kActionResultEmotionEventKey]);
+
+  if (nullptr != _robot && _robot->HasExternalInterface() )
+  {
+    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _signalHandles);
+    using namespace ExternalInterface;
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::MoodMessage>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotCompletedAction>();
+  }      
 }
   
 bool MoodManager::LoadEmotionEvents(const Json::Value& inJson)
 {
   return GetStaticMoodData().LoadEmotionEvents(inJson);
 }
-  
+
+void MoodManager::LoadActionCompletedEventMap(const Json::Value& inJson)
+{
+  if( ! inJson.isNull() ) {
+    for(auto actionIt = inJson.begin(); actionIt != inJson.end(); ++actionIt) {
+      if( ! actionIt->isNull() ) {
+        std::map< std::string, std::string > actionMap;
+        for(auto resultIt = actionIt->begin(); resultIt != actionIt->end(); ++resultIt) {
+          if( ! resultIt->isNull() ) {
+            actionMap.insert( std::make_pair( resultIt.key().asString(), resultIt->asString() ) );
+          }
+        }
+        if( ! actionMap.empty() ) {
+          _actionCompletedEventMap.insert( std::make_pair( actionIt.key().asString(), std::move( actionMap ) ) );
+        }
+      }
+    }
+  }
+
+  // PrintActionCompletedEventMap();
+}
+
+void MoodManager::PrintActionCompletedEventMap() const
+{
+  PRINT_NAMED_INFO("MoodManager.PrintActionCompletedEventMap", "action result event map follows:");
+
+  for( const auto& actionIt : _actionCompletedEventMap ) {
+    for( const auto& resultIt : actionIt.second ) {
+      PRINT_NAMED_INFO("MoodManager.PrintActionCompletedEventMap",
+                       "%20s %15s %s",
+                       actionIt.first.c_str(),
+                       resultIt.first.c_str(),
+                       resultIt.second.c_str());
+    }
+  }
+}
+
 void MoodManager::Reset()
 {
   for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
@@ -115,49 +164,63 @@ void MoodManager::Update(double currentTime)
   }
   #endif //SEND_MOOD_TO_VIZ_DEBUG
 }
-  
-  
-void MoodManager::HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-{
-  const auto& eventData = event.GetData();
-  
-  switch (eventData.GetTag())
-  {
-    case ExternalInterface::MessageGameToEngineTag::MoodMessage:
-      {
-        const Anki::Cozmo::ExternalInterface::MoodMessageUnion& moodMessage = eventData.Get_MoodMessage().MoodMessageUnion;
 
-        switch (moodMessage.GetTag())
-        {
-          case ExternalInterface::MoodMessageUnionTag::GetEmotions:
-            SendEmotionsToGame();
-            break;
-          case ExternalInterface::MoodMessageUnionTag::SetEmotion:
-          {
-            const Anki::Cozmo::ExternalInterface::SetEmotion& msg = moodMessage.Get_SetEmotion();
-            SetEmotion(msg.emotionType, msg.newVal);
-            break;
-          }
-          case ExternalInterface::MoodMessageUnionTag::AddToEmotion:
-          {
-            const Anki::Cozmo::ExternalInterface::AddToEmotion& msg = moodMessage.Get_AddToEmotion();
-            AddToEmotion(msg.emotionType, msg.deltaVal, msg.uniqueIdString.c_str(), GetCurrentTimeInSeconds());
-            break;
-          }
-          case ExternalInterface::MoodMessageUnionTag::TriggerEmotionEvent:
-          {
-            const Anki::Cozmo::ExternalInterface::TriggerEmotionEvent& msg = moodMessage.Get_TriggerEmotionEvent();
-            TriggerEmotionEvent(msg.emotionEventName, GetCurrentTimeInSeconds());
-            break;
-          }
-          default:
-            PRINT_NAMED_ERROR("MoodManager.HandleEvent.UnhandledMessageUnionTag", "Unexpected tag %u", (uint32_t)moodMessage.GetTag());
-            assert(0);
-        }
-      }
+template<>
+void MoodManager::HandleMessage(const ExternalInterface::RobotCompletedAction& msg)
+{
+  auto ignoreIt = _actionsTagsToIgnore.find(msg.idTag);
+  if( ignoreIt != _actionsTagsToIgnore.end() ) {
+    _actionsTagsToIgnore.erase(ignoreIt);
+    return;
+  }
+  // Prevent Cozmo from crashing when receiving a message with an invalid action Type
+  const char* actionTypeString = RobotActionTypeToString(msg.actionType);
+  if (actionTypeString == nullptr) {
+    return;
+  }
+  const auto& actionIt = _actionCompletedEventMap.find( actionTypeString );
+  if( actionIt != _actionCompletedEventMap.end() ) {
+    const auto& resultIt = actionIt->second.find( ActionResultToString(msg.result) );
+    if( resultIt != actionIt->second.end() ) {
+      PRINT_NAMED_DEBUG("MoodManager.ActionCompleted.Reaction",
+                        "Reacting to action '%s' completion with '%s' by triggering event '%s'",
+                        RobotActionTypeToString(msg.actionType),
+                        ActionResultToString(msg.result),
+                        resultIt->second.c_str());
+      TriggerEmotionEvent(resultIt->second, GetCurrentTimeInSeconds());
+    }
+  }
+}
+
+template<>
+void MoodManager::HandleMessage(const ExternalInterface::MoodMessage& msg)
+{
+  const Anki::Cozmo::ExternalInterface::MoodMessageUnion& moodMessage = msg.MoodMessageUnion;
+  switch (moodMessage.GetTag())
+  {
+    case ExternalInterface::MoodMessageUnionTag::GetEmotions:
+      SendEmotionsToGame();
       break;
+    case ExternalInterface::MoodMessageUnionTag::SetEmotion:
+    {
+      const Anki::Cozmo::ExternalInterface::SetEmotion& msg = moodMessage.Get_SetEmotion();
+      SetEmotion(msg.emotionType, msg.newVal);
+      break;
+    }
+    case ExternalInterface::MoodMessageUnionTag::AddToEmotion:
+    {
+      const Anki::Cozmo::ExternalInterface::AddToEmotion& msg = moodMessage.Get_AddToEmotion();
+      AddToEmotion(msg.emotionType, msg.deltaVal, msg.uniqueIdString.c_str(), GetCurrentTimeInSeconds());
+      break;
+    }
+    case ExternalInterface::MoodMessageUnionTag::TriggerEmotionEvent:
+    {
+      const Anki::Cozmo::ExternalInterface::TriggerEmotionEvent& msg = moodMessage.Get_TriggerEmotionEvent();
+      TriggerEmotionEvent(msg.emotionEventName, GetCurrentTimeInSeconds());
+      break;
+    }
     default:
-      PRINT_NAMED_ERROR("MoodManager.HandleEvent.UnhandledMessageGameToEngineTag", "Unexpected tag %u", (uint32_t)eventData.GetTag());
+      PRINT_NAMED_ERROR("MoodManager.HandleMoodEvent.UnhandledMessageUnionTag", "Unexpected tag %u", (uint32_t)moodMessage.GetTag());
       assert(0);
   }
 }
@@ -303,7 +366,17 @@ void MoodManager::SetEmotion(EmotionType emotionType, float value)
   GetEmotion(emotionType).SetValue(value);
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent("SetEmotion") );
 }
-  
+
+void MoodManager::SetEnableMoodEventOnCompletion(u32 actionTag, bool enable)
+{
+  if( enable ) {
+    _actionsTagsToIgnore.erase(actionTag);
+  }
+  else {
+    _actionsTagsToIgnore.insert(actionTag);
+  }
+}
+
 SimpleMoodType MoodManager::GetSimpleMood() const
 {
   float happiness = GetEmotion(EmotionType::Happy).GetValue();

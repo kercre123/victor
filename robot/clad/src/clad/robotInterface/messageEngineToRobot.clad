@@ -16,7 +16,9 @@
 #include "clad/robotInterface/messageToActiveObject.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
+#include "clad/types/fwTestMessages.clad"
 #include "clad/types/nvStorage.clad"
+#include "clad/types/bleMessages.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -242,6 +244,19 @@ message DebugSetRTTO
   uint_16 timeoutMilliseconds
 }
 
+// Display a 
+message DisplayNumber
+{
+  uint_32 value,
+  uint_8  x,
+  uint_8  y
+}
+
+// This is an empty message, just display
+message DisplayRelease
+{  
+}
+
 enum uint_32 ToRobotAddressSpace
 {
   GLOBAL_INVALID_TAG = 0,
@@ -269,13 +284,22 @@ union EngineToRobot
 {
   // 0x00 Is invalid message
   
-  // 0x01 to 0x2f: Messages to the body / test fixture
+  // 0x01 to 0x27: Messages to the body / test fixture
+  // 0x28 to 0x2f: Allocated to BLE response messages
   BootloadBody                  bootloadBody                = 0x01,
   // Reserved for bootloader data message to get moved here = 0x02,
   BackpackLights                setBackpackLights           = 0x03,
   CubeLights                    setCubeLights               = 0x04,
   SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
+
+  BLE_RecvHello                 bleRecvHelloMessage         = 0x25,
+  BLE_EnterPairing              bleEnterPairing             = 0x26,
+  BLE_PhoneDiffie               blePhoneDiffie              = 0x27,
+
+  BLE_SendHello                 bleSendHelloMessage         = 0x28,
+  BLE_EncodedKey                bleEncodedKey               = 0x29,
+  BLE_RobotDiffie               bleRobotDiffie              = 0x2A,
 
   // 0x30 to 0x7f: To RTIP
   BootloadRTIP                  bootloadRTIP                = 0x30,
@@ -316,6 +340,9 @@ union EngineToRobot
   PowerState                    powerState                  = 0x53,
   PropState                     getPropState                = 0x54,
   EnableCamCalibMode            enableCamCalibMode          = 0x55,
+  EnableTestStateMessage        enableTestStateMessage      = 0x56,
+  DisplayNumber                 oledDisplayNumber           = 0x57,
+  DisplayRelease                oledRelease                 = 0x58,
   
   // 0x80 to 0xAF: To WiFi
   // Flash and OTA message must not be changed or OTA will break
@@ -345,7 +372,9 @@ union EngineToRobot
   AnimKeyFrame::EnableAnimTracks enableAnimTracks           = 0x9E,
   // Anim future expansion                                  = 0x9F,
   CubeSlots                     assignCubeSlots             = 0xA0,
-  
+  TestState                     testState                   = 0xA1,
+  EnterFactoryTestMode          enterTestMode               = 0xA2,
+
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }
 

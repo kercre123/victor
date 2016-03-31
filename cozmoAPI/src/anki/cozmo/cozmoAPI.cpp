@@ -39,6 +39,12 @@ bool CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Valu
   bool gameInitResult = false;
   _cozmoRunner.reset(new CozmoInstanceRunner(dataPlatform, config, gameInitResult));
   
+  if (!gameInitResult)
+  {
+    PRINT_NAMED_ERROR("CozmoAPI.StartRun", "Error initializing new api instance!");
+    return Result::RESULT_FAIL;
+  }
+  
   // Start the thread
   _cozmoRunnerThread = std::thread(&CozmoInstanceRunner::Run, _cozmoRunner.get());
   
@@ -115,7 +121,6 @@ CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dat
 {
   Result initResultReturn = _cozmoInstance->Init(config);
   if (initResultReturn != RESULT_OK) {
-    //TODO: if init is not ok, change state to not running
     PRINT_NAMED_ERROR("CozmoAPI.CozmoInstanceRunner", "cozmo init failed with error %d", initResultReturn);
   }
   initResult = initResultReturn == RESULT_OK;
@@ -137,8 +142,11 @@ void CozmoAPI::CozmoInstanceRunner::Run()
 
     std::chrono::duration<double> timeSeconds = tickStart - runStart;
 
-    //TODO: capture update failure and change state to not running
-    Update(timeSeconds.count());
+    // If we fail to update properly stop running
+    if (!Update(timeSeconds.count()))
+    {
+      Stop();
+    }
     
     auto tickNow = std::chrono::system_clock::now();
     auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - tickStart);
@@ -161,7 +169,7 @@ bool CozmoAPI::CozmoInstanceRunner::Update(const double currentTime_sec)
 {
   Result updateResult = _cozmoInstance->Update(static_cast<float>(currentTime_sec));
   if (updateResult != RESULT_OK) {
-    PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner", "cozmo update failed with error %d", updateResult);
+    PRINT_NAMED_ERROR("CozmoAPI.CozmoInstanceRunner.Update", "Cozmo update failed with error %d", updateResult);
   }
   return updateResult == RESULT_OK;
 }

@@ -59,6 +59,7 @@ const char* ENodeContentTypeToString(ENodeContentType nodeContentType)
     case ENodeContentType::ObstacleCube: return "ObstacleCube";
     case ENodeContentType::ObstacleUnrecognized: return "ObstacleUnrecognized";
     case ENodeContentType::Cliff: return "Cliff";
+    case ENodeContentType::InterestingEdge: return "InterestingEdge";
   }
   return "ERROR";
 }

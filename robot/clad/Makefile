@@ -26,7 +26,7 @@ ENGINE_TO_ROBOT_UNION:=./clad/robotInterface/messageEngineToRobot
 ROBOT_TO_ENGINE_UNION:=./clad/robotInterface/messageRobotToEngine
 LIGHT_CUBE_UNION:=./clad/robotInterface/lightCubeMessage
 BODY_START_TAG:=0x01
-BODY_END_TAG:=0x2F
+BODY_END_TAG:=0x27
 RTIP_START_TAG:=0x30
 RTIP_END_TAG:=0x7F
 WIFI_START_TAG:=0x80
@@ -89,12 +89,12 @@ python: $(OUTPUT_PYTHON) $(ENGINE_TO_ROBOT_UNION)_hash.py $(ROBOT_TO_ENGINE_UNIO
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.h
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.cpp
 
-%_hash.h : %.clad $(CLAD_DEPENDENCIES) $(CLAD_HASH)
+%_hash.h : %.clad $(CLAD_DEPENDENCIES) $(CLAD_HASH) $(shell /usr/bin/find $(INPUT_DIR) -type f)
 	if test -f $(OUTPUT_DIR)robot/$@; then chmod -f 777 $(OUTPUT_DIR)robot/$@; fi
 	python $(CLAD_HASH) -I $(INPUT_DIR) -o $(OUTPUT_DIR)robot/$@ $<
 	chmod -f 555 $(OUTPUT_DIR)robot/$@
 
-%_hash.py: %.clad $(CLAD_DEPENDENCIES) $(CLAD_HASH)
+%_hash.py: %.clad $(CLAD_DEPENDENCIES) $(CLAD_HASH) $(shell /usr/bin/find $(INPUT_DIR) -type f)
 	if test -f $(OUTPUT_DIR_PYTHON)robot/$@; then chmod -f 777 $(OUTPUT_DIR_PYTHON)robot/$@; fi
 	python $(CLAD_HASH) -I $(INPUT_DIR) -o $(OUTPUT_DIR_PYTHON)robot/$@ $<
 	chmod -f 555 $(OUTPUT_DIR_PYTHON)robot/$@

@@ -1,0 +1,14 @@
+{
+  "name": "ble-tool",
+  "version": "1.0.0",
+  "description": "BLE Tool",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bryon Vandiver",
+  "license": "ISC",
+  "dependencies": {
+    "noble": "^1.3.0"
+  }
+}

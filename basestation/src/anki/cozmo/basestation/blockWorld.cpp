@@ -24,7 +24,7 @@
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/navMemoryMap/navMemoryMap.h"
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapFactory.h"
 #include "bridge.h"
 #include "flatMat.h"
 #include "platform.h"
@@ -559,19 +559,17 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
       ASSERT_NAMED( _navMemoryMaps.find(oldOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginOld");
       ASSERT_NAMED( _navMemoryMaps.find(newOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginNew");
       ASSERT_NAMED( oldOrigin == _currentNavMemoryMapOrigin, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");
-      ASSERT_NAMED(nullptr != dynamic_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() ), "BlockWorld.UpdateObjectOrigins.badMemoryMapCastOld");
-      ASSERT_NAMED(nullptr != dynamic_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() ), "BlockWorld.UpdateObjectOrigins.badMemoryMapCastNew");
 
       // grab the underlying memory map and merge them
-      NavMemoryMap* oldMap = static_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() );
-      NavMemoryMap* newMap = static_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() );
+      INavMemoryMap* oldMap = _navMemoryMaps[oldOrigin].get();
+      INavMemoryMap* newMap = _navMemoryMaps[newOrigin].get();
       newMap->Merge(oldMap, *oldOrigin);
       
       // switch back to what is becoming the new map
       _currentNavMemoryMapOrigin = newOrigin;
       
       // now we can delete what is become the old map, since we have merged its data into the new one
-      _navMemoryMaps.erase( oldOrigin );
+      _navMemoryMaps.erase( oldOrigin ); // smart pointer will delete memory
     }
     
     return result;
@@ -762,7 +760,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
     {
       // create a new memory map in the given origin
       VizManager* vizMgr = _robot->GetContext()->GetVizManager();
-      _navMemoryMaps.emplace( std::make_pair(worldOriginPtr, std::unique_ptr<INavMemoryMap>(new NavMemoryMap( vizMgr ))) );
+      INavMemoryMap* navMemoryMap = NavMemoryMapFactory::CreateDefaultNavMemoryMap(vizMgr);
+      _navMemoryMaps.emplace( std::make_pair(worldOriginPtr, std::unique_ptr<INavMemoryMap>(navMemoryMap)) );
       _currentNavMemoryMapOrigin = worldOriginPtr;
     }
   }
@@ -2497,6 +2496,50 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
         }
       }
       
+      // add to memory map
+      // currently add quad per segment. In the future this may actually be a point cloud or store segments
+      // as extra data
+      INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+      if( nullptr != currentNavMemoryMap )
+      {
+        // calculate robot fwd position (kind of there the camera is for this edge detection)
+        Vec3f robotFwd{ ROBOT_BOUNDING_X_FRONT, 0, 0};
+        robotFwd = _robot->GetPose() * robotFwd;
+        const Point3f& cornerBR = robotFwd;
+        const Point3f& cornerBL = robotFwd;
+        
+        // by doing 2 passes, 1 for clear, 1 for interesting, we allow border quads to always override clear quads
+        // regardless of the order in which the segment is processed
+      
+        // clear from robot to segment
+        // TODO rsam: since the image is processed as vertical columns, cornerBR and cornerBL should also move laterally
+        // however I'm not sure that's how we want to process borders (need to sync with Andrew on this)
+        for ( const auto& segment : segments )
+        {
+          // clear from the robot to the edge
+          Quad2f robotToSegmentQuad(
+            segment.start ,// TopLeft,
+            cornerBL      ,// BottomLeft,
+            segment.end   ,// TopRight,
+            cornerBR       // BottomRight
+          );
+          currentNavMemoryMap->AddQuad(robotToSegmentQuad, INavMemoryMap::EContentType::ClearOfObstacle);
+        }
+          
+        // add every segment as an interesting edge
+        for ( const auto& segment : segments )
+        {
+          // interesting edge where we said
+          Quad2f segmentToQuad(
+            segment.start ,// TopLeft,
+            segment.start ,// BottomLeft,
+            segment.end   ,// TopRight,
+            segment.end    // BottomRight
+          );
+          currentNavMemoryMap->AddQuad(segmentToQuad, INavMemoryMap::EContentType::InterestingEdge);
+        }
+      }
+      
       // debug draw
       if ( kDebugRenderOverheadEdges )
       {
@@ -2530,7 +2573,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
           _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld.AddVisionOverheadEdges");
           lingerUntil = currentTime + kLingerTime;
           
-          const float zoffset = 60.0f;
+          const float zoffset = 100.0f;
           for( const auto& edge : edges ) {
             ASSERT_NAMED( edge.points.size() > 1, "BlockWorld.AddVisionOverheadEdges.InsufficientPointsInEdge" );
 

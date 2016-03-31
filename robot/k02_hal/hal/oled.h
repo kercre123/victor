@@ -61,7 +61,8 @@ namespace Anki
       {
         void Init(void);
         void FeedFace(bool rect, uint8_t *face_bytes);
-        void ErrorCode(uint16_t code);
+        void ReleaseFace();
+        void DisplayNumber(int code, int x, int y);				
       }
     }
   }

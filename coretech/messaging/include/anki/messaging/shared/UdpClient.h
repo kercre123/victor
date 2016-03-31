@@ -12,6 +12,7 @@ public:
 
   bool Connect(const char *host_address, const unsigned short port);
   bool Disconnect();
+  bool IsConnected() const { return socketfd >= 0; }
   int Send(const char* data, int size);
   int Recv(char* data, int maxSize);
 

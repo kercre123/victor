@@ -33,6 +33,7 @@ enum class EContentType : uint8_t {
   ObstacleCube,         // an area with obstacles we recognize as cubes
   ObstacleUnrecognized, // an area with obstacles we do not recognize
   Cliff,                // an area with cliffs or holes
+  InterestingEdge,           // a border/edge detected by the camera
 };
 
 // this function returns true if the given content type expects additional data (iNavMemoryMapQuadData), false otherwise

@@ -1,7 +1,7 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
-#define NRF_BAUD(x) (int)(x * 268.435456) // 2^28/1MHz
+#define NRF_BAUD(x) (int)(x * 4194304.0f / 15625.0f) // 2^28/1MHz
 
 //#define DEBUG_MESSAGES
 //#define RADIO_TIMING_TEST
@@ -12,17 +12,26 @@
 
 enum watchdog_channels {
   WDOG_RTOS,
-  WDOG_UART,
+  WDOG_NERVE_PINCH,
   WDOG_TOTAL_CHANNELS
 };
 
 enum IRQ_Priority {
-  ENCODER_PRIORITY = 0,
-  UART_PRIORITY = 1,
-  TIMER_PRIORITY = 1,
+  ENCODER_PRIORITY = 1,
+  TIMER_PRIORITY = 2,
+  UART_PRIORITY = 2,
   RADIO_PRIORITY = 2,
+  LED_PRIORITY = 2,
   RTOS_PRIORITY = 3
 };
+
+enum BodyOperatingMode {
+  LOW_POWER_OPERATING_MODE,
+  BLUETOOTH_OPERATING_MODE,
+  WIFI_OPERATING_MODE
+};
+
+extern void enterOperatingMode(BodyOperatingMode mode);
 
 static const uint8_t wdog_channel_mask = (1 << WDOG_TOTAL_CHANNELS) - 1;
 
@@ -93,6 +102,5 @@ enum e_ppi_channel {
   PPI_MOTOR_CHANNEL_6,
   PPI_MOTOR_CHANNEL_7
 };
-
 
 #endif

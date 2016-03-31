@@ -71,6 +71,7 @@ public:
   void QuitController(s32 status);
   
   void UpdateVizOrigin();
+  void UpdateVizOrigin(const Pose3d& originPose);
   
 protected:
   
@@ -310,6 +311,7 @@ private:
   
   Pose3d _robotPose;
   Pose3d _robotPoseActual;
+  bool _firstRobotPoseUpdate;
   
   ExternalInterface::RobotState _robotStateMsg;
   

@@ -27,6 +27,7 @@ SUBDIRS=    \
   transport \
   clad \
   application \
+	factory \
   supervisor
 endif # } PDIR
 
@@ -53,6 +54,7 @@ COMPONENTS_eagle.app.v6 = \
   transport/libtransport.a \
   clad/libclad.a \
   application/libapplication.a \
+	factory/libfactory.a \
   supervisor/libsupervisor.a
 
 LINKFLAGS_eagle.app.v6 = \
