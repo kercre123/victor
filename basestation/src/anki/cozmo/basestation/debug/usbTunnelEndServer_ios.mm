@@ -15,7 +15,7 @@
 #ifdef ANKI_DEV_CHEATS
 
 #if __APPLE__
-#include "TargetConditionals.h"
+#include "TargetConditionals.h" // must be included for TARGET_OS_IPHONE
 #endif
 
 #if TARGET_OS_IPHONE
@@ -61,9 +61,8 @@
 
 
 @interface CozmoUSBTunnelHTTPConnection : HTTPConnection
-// Just a bunch of funcitonal overrides
+// Just a bunch of functional overrides
 @end
-
 
 @implementation CozmoUSBTunnelHTTPConnection
 
@@ -119,19 +118,18 @@
             std::string content = [postStr UTF8String];
             Anki::Util::FileUtils::WriteFile(full_path, content);
             
+            // Since we're on our own thread make sure to call ThreadSafe Version.
+            Anki::Cozmo::ExternalInterface::MessageGameToEngine read_msg;
             Anki::Cozmo::ExternalInterface::ReadAnimationFile m;
-            Anki::Cozmo::ExternalInterface::MessageGameToEngine message;
-            message.Set_ReadAnimationFile(m);
-            // TODO: not thread safe maybe?
-            external_interface->Broadcast(message);
+            read_msg.Set_ReadAnimationFile(m);
+            external_interface->BroadcastThreadSafe(std::move(read_msg));
             
-            // TODO: get from file and safe...
-            Anki::Cozmo::ExternalInterface::PlayAnimation anim_m;
-            anim_m.animationName = anim_name;
-            anim_m.numLoops = 1;
-            Anki::Cozmo::ExternalInterface::MessageGameToEngine message2;
-            message2.Set_PlayAnimation(anim_m);
-            external_interface->Broadcast(message2);
+            Anki::Cozmo::ExternalInterface::MessageGameToEngine play_msg;
+            Anki::Cozmo::ExternalInterface::PlayAnimation play_msg_content;
+            play_msg_content.animationName = anim_name;
+            play_msg_content.numLoops = 1;
+            play_msg.Set_PlayAnimation(play_msg_content);
+            external_interface->BroadcastThreadSafe(std::move(play_msg));
           }
         }
       }
@@ -179,7 +177,7 @@ namespace Anki {
         
         [_impl->_httpServer SetDataPlatform:dataPlatform];
         [_impl->_httpServer SetExternalInterface:externalInterface];
-        // The maya script talks to this.
+        // The maya script talks to this port, must be known
         [_impl->_httpServer setPort:2223];
         // Custom class that has a bunch of our overrides
         [_impl->_httpServer setConnectionClass:[CozmoUSBTunnelHTTPConnection class]];
@@ -210,8 +208,15 @@ namespace Anki {
   }
 }
 #else // not on iphone, just mac build
-USBTunnelServer::USBTunnelServer(Anki::Cozmo::IExternalInterface* , Anki::Util::Data::DataPlatform* ) {}
-USBTunnelServer::~USBTunnelServer() {}
+#include <string>
+namespace Anki {
+  namespace Cozmo {
+      const std::string USBTunnelServer::TempAnimFileName("TestAnim.json");
+      struct USBTunnelServer::USBTunnelServerImpl {};
+      USBTunnelServer::USBTunnelServer(Anki::Cozmo::IExternalInterface* , Anki::Util::Data::DataPlatform* ) {}
+      USBTunnelServer::~USBTunnelServer() {}
+  }
+}
 #endif // target iOS
 
 #endif // shipping
