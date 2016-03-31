@@ -13,6 +13,7 @@ enum uint_8 GameEvents
   OnDriveStart,
   OnDriveEnd,
   OnSpeedtapStarted,
+  Count, // Keep count at end.
 }
 
 
