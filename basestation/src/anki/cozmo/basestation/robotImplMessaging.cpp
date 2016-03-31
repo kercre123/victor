@@ -74,8 +74,8 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::imuRawDataChunk,             &Robot::HandleImuRawData);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::syncTimeAck,                 &Robot::HandleSyncTimeAck);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotPoked,                  &Robot::HandleRobotPoked);
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::nvData,                      &Robot::HandleNVData);
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::nvResult,                    &Robot::HandleNVOpResult);
+//  doRobotSubscribe(RobotInterface::RobotToEngineTag::nvData,                      &Robot::HandleNVData);
+//  doRobotSubscribe(RobotInterface::RobotToEngineTag::nvResult,                    &Robot::HandleNVOpResult);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotAvailable,              &Robot::HandleRobotSetID);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::motorCalibration,            &Robot::HandleMotorCalibration);
   
@@ -774,7 +774,7 @@ void Robot::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked(payload.robotID)));
 }
 
-  
+/*
 void Robot::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   NVStorage::NVStorageBlob nvBlob = message.GetData().Get_nvData().blob;
@@ -821,7 +821,8 @@ void Robot::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   NVStorage::NVOpResult payload = message.GetData().Get_nvResult();
   PRINT_NAMED_INFO("Robot.HandleNVOpResult","Tag: %d, Result: %d, write: %d", payload.tag, (int)payload.result, payload.write);
 }
-
+*/
+  
 void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
 {
   auto helper = MakeAnkiEventUtil(externalInterface, *this, _signalHandles);

@@ -49,6 +49,7 @@
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -667,6 +668,8 @@ public:
     inline const ProgressionManager& GetProgressionManager() const { assert(_progressionManager); return *_progressionManager; }
     inline ProgressionManager& GetProgressionManager() { assert(_progressionManager); return *_progressionManager; }
   
+    NVStorageComponent& GetNVStorageComponent() { return _nvStorageComponent; }
+  
     // Handle various message types
     template<typename T>
     void HandleMessage(const T& msg);
@@ -720,10 +723,11 @@ public:
     s32 _numAnimationAudioFramesStreamed = 0;
     u8  _animationTag                    = 0;
   
-    //ActionQueue      _actionQueue;
-    ActionList        _actionList;
-    MovementComponent _movementComponent;
-    VisionComponent   _visionComponent;
+    //ActionQueue       _actionQueue;
+    ActionList         _actionList;
+    MovementComponent  _movementComponent;
+    VisionComponent    _visionComponent;
+    NVStorageComponent _nvStorageComponent;
   
     // Hash to not spam debug messages
     size_t            _lastDebugStringHash;
@@ -919,9 +923,9 @@ public:
     void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
-    void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-    void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  
+//    void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+//    void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+
     void SetupMiscHandlers(IExternalInterface& externalInterface);
     void SetupGainsHandlers(IExternalInterface& externalInterface);
   

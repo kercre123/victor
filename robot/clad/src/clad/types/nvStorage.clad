@@ -9,12 +9,31 @@ namespace NVStorage {
 
   enum uint_32 NVEntryTag
   {
+    // ===== Non-factory entries ======
+
+    // Single blob entries start here
+    // Upper 16 bits must be zero
     NVEntry_Invalid = 0xFFFFffff,
     NVEntry_APConfig = 0,
     NVEntry_StaConfig,
     NVEntry_CameraCalibration,
     NVEntry_SDKModeUnlocked,
     NVEntry_PairedObjects,
+
+    // Multi-blob entries start here
+    // Upper 16 bits must be non-zero and the bottom 16 bits must all be zero
+
+
+    // ====== Factory entries ========
+    // Same rules as regarding single and multi-blob entries
+    // except that the MSB is 1 for potential special treatment during
+    // garbage collection in the future.
+    NVEntry_CalibImage1 = 0x80010000,
+    NVEntry_CalibImage2 = 0x80020000,
+    NVEntry_CalibImage3 = 0x80030000,
+    NVEntry_CalibImage4 = 0x80040000,
+    NVEntry_CalibImage5 = 0x80050000,
+
   }
 
   enum int_8 NVResult {
