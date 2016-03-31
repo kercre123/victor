@@ -13,7 +13,18 @@ public class UnlockablesManager : MonoBehaviour {
   [SerializeField]
   private UnlockableInfoList _UnlockableInfoList;
 
-  public List<UnlockableInfo> GetUnlocked() {
+  public List<UnlockableInfo> GetUnlockedGames() {
+    List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
+    for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
+      if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id] &&
+          _UnlockableInfoList.UnlockableInfoData[i].UnlockableType == UnlockableType.Game) {
+        unlocked.Add(_UnlockableInfoList.UnlockableInfoData[i]);
+      }
+    }
+    return unlocked;
+  }
+
+  public List<UnlockableInfo> GetUnlockedExplicit() {
     List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id]) {
@@ -23,7 +34,7 @@ public class UnlockablesManager : MonoBehaviour {
     return unlocked;
   }
 
-  public List<UnlockableInfo> GetAvailableAndLocked() {
+  public List<UnlockableInfo> GetAvailableAndLockedExplicit() {
     List<UnlockableInfo> available = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id];
@@ -35,7 +46,7 @@ public class UnlockablesManager : MonoBehaviour {
     return available;
   }
 
-  public List<UnlockableInfo> GetUnavailable() {
+  public List<UnlockableInfo> GetUnavailableExplicit() {
     List<UnlockableInfo> unavailable = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id];
@@ -47,6 +58,7 @@ public class UnlockablesManager : MonoBehaviour {
     return unavailable;
   }
 
+  // also valid for implicit unlocks
   public bool IsUnlockableAvailable(uint id) {
     if (_UnlockablesState[id]) {
       return true;
