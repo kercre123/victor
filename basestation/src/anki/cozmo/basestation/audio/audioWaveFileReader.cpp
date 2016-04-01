@@ -8,89 +8,176 @@
 
 #include "anki/cozmo/basestation/audio/audioWaveFileReader.h"
 
+#include "util/dataPacking/dataPacking.h"
+#include <algorithm>
+#include <iostream>
+
 
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioWaveFileReader::~AudioWaveFileReader()
 {
-  Util::SafeDelete(_currentWaveData);
+  ClearCallChachedWaveData();
 }
   
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AudioWaveFileReader::LoadWaveFile(const std::string& filePath)
 {
+  // Check if file is already in cache
+  if ( _cachedWaveData.find( filePath ) != _cachedWaveData.end() ) {
+    PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Wave file \"%s\" is already cached", filePath.c_str());
+    return false;
+  }
+  
   // Open file
   std::FILE* wavFile = fopen( filePath.c_str(), "r" );
-  
   if ( wavFile == nullptr ) {
     PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Unable to open wave file: %s", filePath.c_str());
     return false;
   }
   
-  // Crate Data Container
-  WaveDataContainer* waveDataContainer = new WaveDataContainer();
-  
   // Load header
-  int headerSize = sizeof(waveDataContainer->Header);
-  size_t bytesRead = fread(&waveDataContainer->Header, 1, headerSize, wavFile);
+  WaveHeader header;
+  int headerSize = sizeof(header);
+  size_t bytesRead = fread(&header, 1, headerSize, wavFile);
   bool success = (bytesRead == headerSize);
   if ( !success ) {
     PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Failed to read Wave file header metadata");
-    Util::SafeDelete(waveDataContainer);
     fclose(wavFile);
     return false;
   }
   
   // Only read expected .wav file types
-  success = memcmp(waveDataContainer->Header.Riff, "RIFF", 4) == 0;
-  success = success && (memcmp(waveDataContainer->Header.Riff, "RIFF", 4) == 0);
+  success = memcmp(header.Riff, "RIFF", 4) == 0;
+  success = success && (memcmp(header.Wave, "WAVE", 4) == 0);
   if ( !success ) {
     PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "File is not RIFF WAVE format");
-    Util::SafeDelete(waveDataContainer);
-    fclose(wavFile);
-    return false;
-  }
-  // Check .wav file audio format
-  success = waveDataContainer->Header.AudioFormat == AudioFormatType::PCM;
-  success = success && (waveDataContainer->Header.BitsPerSample == 16);
-  if ( !success ) {
-    PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Wave file is NOT PCM 16-bit format");
-    Util::SafeDelete(waveDataContainer);
     fclose(wavFile);
     return false;
   }
   
+  // Only read .wav files where the data is directly behind the format sub-chunk
+  success = (memcmp(header.DataChunkId, "data", 4) == 0);
+  if ( !success ) {
+    PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Data chunk is not where it's expected");
+    fclose(wavFile);
+    return false;
+  }
+  
+  // Check .wav file audio format
+  success = header.AudioFormat == AudioFormatType::PCM;
+  if ( !success ) {
+    PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Wave file is NOT PCM format");
+    fclose(wavFile);
+    return false;
+  }
+  
+
   // Read file contents to buffer
-  success = waveDataContainer->CreateDataBuffer();
+  size_t sourceBufferSize = 4 * 1024; // 4 KB
+  unsigned char* sourceBuffer = new (std::nothrow) unsigned char[ sourceBufferSize] ;
+  success = ( sourceBuffer != nullptr );
   if ( !success ) {
     PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Failed to alloc Data Buffer!");
-    Util::SafeDelete(waveDataContainer);
     fclose(wavFile);
     return false;
   }
   
-  // Check that all the audio data has been writen into a buffer
-  bytesRead = fread(waveDataContainer->DataBuffer, 1, waveDataContainer->Header.DataChunkSize, wavFile);
-  success = (bytesRead == waveDataContainer->Header.DataChunkSize);
-  success = success && (fgetc(wavFile) == EOF);
+  // Create Standard Buffer to write formated data into
+  StandardWaveDataContainer* standardData = new StandardWaveDataContainer( header.SamplesPerSec,
+                                                                           header.NumberOfChannels,
+                                                                           header.CalculateDuration_ms(),
+                                                                           header.CalculateNumberOfStandardSamples() );
+  success = standardData->HasBuffer();
   if ( !success ) {
-    PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Failed to write file into Audio Buffer!");
-    Util::SafeDelete(waveDataContainer);
+    PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Failed to alloc Standard Audio Data Buffer!");
+    delete standardData;
     fclose(wavFile);
     return false;
   }
   
+  // Read audio data from disk
+  size_t sourceDataIdx = 0;
+  size_t standardDataIdx = 0;
+  size_t samplesPerChannel = standardData->BufferSize / standardData->NumberOfChannels;
+  // Read the file in chunks
+  while ( sourceDataIdx < header.DataChunkSize ) {
+    // Read bytes form file
+    size_t readsize = std::min( sourceBufferSize, (static_cast<size_t>(header.DataChunkSize) - sourceDataIdx) );
+    bytesRead = fread(sourceBuffer, 1, readsize, wavFile);
+    sourceDataIdx += bytesRead;
+    
+    // Write audio sample into Standard format
+    float* standardDataPointer = (standardData->AudioBuffer + standardDataIdx);
+    standardDataIdx += ConvertPCMDataStream( header, sourceBuffer, bytesRead, samplesPerChannel, standardDataPointer );
+  }
   
-  fclose(wavFile);
+  ASSERT_NAMED(standardDataIdx == standardData->BufferSize, ("Didn't store samples correctly - SampleCount " +
+                                                             std::to_string(standardDataIdx) +
+                                                             " | TotalSamples "
+                                                             + std::to_string(standardDataIdx)).c_str());
   
-  ASSERT_NAMED(_currentWaveData == nullptr, "Must delete _currentWaveData before loading a new file");
-  _currentWaveData = waveDataContainer;
+  _cachedWaveData[ filePath ] = standardData;
   
-  return true;
+   return true;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const AudioWaveFileReader::StandardWaveDataContainer* AudioWaveFileReader::GetCachedWaveDataWithKey( const std::string& key )
+{
+  const auto it = _cachedWaveData.find( key );
+  if ( it != _cachedWaveData.end() ) {
+    return it->second;
+  }
+  
+  return nullptr;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioWaveFileReader::ClearChachedWaveDataWithKey( const std::string& key )
+{
+  const auto it = _cachedWaveData.find( key );
+  if ( it != _cachedWaveData.end() ) {
+    delete it->second;
+    _cachedWaveData.erase( it );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioWaveFileReader::ClearCallChachedWaveData()
+{
+  for ( auto& anItem : _cachedWaveData ) {
+    delete anItem.second;
+  }
+  _cachedWaveData.clear();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+size_t AudioWaveFileReader::ConvertPCMDataStream( WaveHeader& waveHeader,
+                                                  unsigned char* sourceBuffer,
+                                                  size_t sourceBuffSize,
+                                                  size_t samplesPerChannel,
+                                                  float* out_standardBuffer )
+{
+  // Convert wave data into standard format, float 32-bit  normalize into range [-1.0, 1.0]
+  ASSERT_NAMED(waveHeader.BitsPerSample == 16, "Only read signed 16-bit .wav files");
+  ASSERT_NAMED(waveHeader.NumberOfChannels == 1, "Only read single channel .wav files");
+  
+  uint bytesPerSample  = waveHeader.BitsPerSample / 8;
+  const size_t sampleCount = sourceBuffSize / bytesPerSample;
+  
+  // Convert 2 bytes into uint16
+  int16_t* unpackedValues = reinterpret_cast<int16_t*>(sourceBuffer);
+  // Write into out buffer
+  for (size_t sampleIdx = 0; sampleIdx < sampleCount; ++sampleIdx) {
+    out_standardBuffer[sampleIdx] = unpackedValues[sampleIdx]/(float)(INT16_MAX);
+  }
+  
+  return sampleCount;
+}
 
 } // Audio
 } // Cozmo
