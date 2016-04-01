@@ -25,9 +25,6 @@ public class AnimationGroupEventEditor : EditorWindow {
 
   private static Vector2 _scrollPos = new Vector2();
 
-
-  private static readonly HashSet<string> _RecentFiles = new HashSet<string>();
-
   public static string sAnimationGroupDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroups/"; } }
 
   public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroupMaps"; } }
@@ -54,6 +51,7 @@ public class AnimationGroupEventEditor : EditorWindow {
       _EventMapNameOptions = _EventMapFiles.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
     }
     else {
+      Directory.CreateDirectory(sEventMapDirectory);
       _EventMapFiles = new string[0];
       _EventMapNameOptions = _EventMapFiles;
     }
@@ -83,7 +81,6 @@ public class AnimationGroupEventEditor : EditorWindow {
         if (_CurrentEventMap.MapUpdate(out newStuff)) {
           EditorUtility.DisplayDialog("Heads up", string.Format("Just so you know, there are new game events added since you last opened this file, including {0}", newStuff), "Thanks!");
         }
-        _RecentFiles.Add(path);
       }
       catch (Exception ex) {
         DAS.Error(this, ex.Message);
@@ -121,21 +118,6 @@ public class AnimationGroupEventEditor : EditorWindow {
       menu.ShowAsContext();
     }
 
-    if (_RecentFiles.Count > 0 && GUILayout.Button("Load Recent", EditorDrawingUtility.ToolbarButtonStyle)) {
-
-      GenericMenu menu = new GenericMenu();
-
-      foreach (var file in _RecentFiles) {
-        Action<string> closureAction = (string f) => {
-
-          menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
-            LoadFile(f);
-          });
-        };
-        closureAction(file);
-      }
-      menu.ShowAsContext();
-    }
     // New Event Map Button
     if (GUILayout.Button("New EventToAnimationMap", EditorDrawingUtility.ToolbarButtonStyle)) {
       if (CheckDiscardUnsaved()) {
@@ -176,7 +158,6 @@ public class AnimationGroupEventEditor : EditorWindow {
             }
 
             if (good) {
-              _RecentFiles.Add(_CurrentEventMapFile);
 
               File.WriteAllText(_CurrentEventMapFile, JsonConvert.SerializeObject(_CurrentEventMap, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
 
@@ -222,6 +203,7 @@ public class AnimationGroupEventEditor : EditorWindow {
   [MenuItem("Cozmo/Animation Event Map #%g")]
   public static void OpenAnimationGroupEventEditor() {
     AnimationGroupEventEditor window = (AnimationGroupEventEditor)EditorWindow.GetWindow(typeof(AnimationGroupEventEditor));
+    AnimationGroupEventEditor.LoadData();
     window.titleContent = new GUIContent("Animation Event Map");
     window.Show();
     window.Focus();
