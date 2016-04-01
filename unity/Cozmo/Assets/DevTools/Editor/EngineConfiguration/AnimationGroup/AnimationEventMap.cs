@@ -15,24 +15,19 @@ namespace Anki.Cozmo {
 
     public void NewMap() {
       Pairs.Clear();
-      for (int i = 0; i < (int)CladGameEvent.COUNT; i++) {
-        Pairs.Add(new CladAnimPair((CladGameEvent)i));
+      for (int i = 0; i < (int)GameEvents.Count; i++) {
+        Pairs.Add(new CladAnimPair((GameEvents)i));
       }
     }
 
     [System.Serializable]
     public class CladAnimPair {
-      public CladAnimPair() {
-        CladEvent = CladGameEvent.COUNT;
-        AnimName = string.Empty;
-      }
-
-      public CladAnimPair(CladGameEvent cEvent, string animName = "") {
+      public CladAnimPair(GameEvents cEvent, string animName = "") {
         CladEvent = cEvent;
         AnimName = animName;
       }
 
-      public CladGameEvent CladEvent;
+      public GameEvents CladEvent;
       public string AnimName;
     }
   }

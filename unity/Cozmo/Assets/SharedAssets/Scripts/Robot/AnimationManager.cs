@@ -5,6 +5,9 @@ using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
+/// <summary>
+/// Manager for calling AnimationGroups that are mapped to game events
+/// </summary>
 public class AnimationManager {
   
   private static AnimationManager _Instance = null;
@@ -21,7 +24,7 @@ public class AnimationManager {
   private IRobot _CurrRobot = null;
 
   // Map Animation Group Names to Event Enums
-  public Dictionary<CladGameEvent, string> AnimationGroupDict = new Dictionary<CladGameEvent, string>();
+  public Dictionary<GameEvents, string> AnimationGroupDict = new Dictionary<GameEvents, string>();
 
 
   public AnimationManager() {
@@ -29,38 +32,13 @@ public class AnimationManager {
     _CurrRobot = RobotEngineManager.Instance.CurrentRobot;
   }
 
-  public void CozmoEventRecieved(CladGameEvent cozEvent) {
+  public void CozmoEventRecieved(GameEvents cozEvent) {
     string animGroup = "";
     if (AnimationGroupDict.TryGetValue(cozEvent, out animGroup)) {
       if (!string.IsNullOrEmpty(animGroup)) {
         _CurrRobot.SendAnimationGroup(animGroup);
       }
     }
-  }
-
-  public void ReplaceAnimationForEvent(CladGameEvent cozEvent, string animGroupName) {
-    if (AnimationGroupDict.ContainsKey(cozEvent)) {
-      AnimationGroupDict.Remove(cozEvent);
-    }
-    AnimationGroupDict.Add(cozEvent, animGroupName);
-  }
-
-  public bool AddAnimationToEvent(CladGameEvent cozEvent, string animGroupName) {
-    if (AnimationGroupDict.ContainsKey(cozEvent)) {
-      DAS.Error(this, "CozmoEvent already has an Animation Assigned, only one Animation Group per Event");
-      return false;
-    }
-    AnimationGroupDict.Add(cozEvent, animGroupName);
-    return true;
-  }
-
-  public bool RemoveAnimationFromEvent(CladGameEvent cozEvent, string animGroupName) {
-    if (AnimationGroupDict.ContainsKey(cozEvent)) {
-      AnimationGroupDict.Remove(cozEvent);
-      return true;
-    }
-    DAS.Error(this, "CozmoEvent doesn't have an Animation Assigned, can't remove what doesn't exist");
-    return false;
   }
 
 }

@@ -19,9 +19,7 @@ public class AnimationGroupEventEditor : EditorWindow {
 
   private static string[] _EventMapNameOptions;
 
-  public static string[] _EventMap = new string[(int)CladGameEvent.COUNT];
-
-  public static CladGameEvent[] _AllEvents;
+  public static string[] _EventMap = new string[(int)GameEvents.Count];
 
   private static AnimationEventMap _CurrentEventMap;
   private static string _CurrentEventMapFile;
@@ -163,7 +161,7 @@ public class AnimationGroupEventEditor : EditorWindow {
             bool good = true;
             if (Path.GetFileName(_CurrentEventMapFile) != Path.GetFileName(newFileName)) {
               if (EditorUtility.DisplayDialog("Alert!", "EventMap has been renamed. Save Anyway?", "Yes", "No")) {
-                if (File.Exists(_CurrentEventMapFile) && EditorUtility.DisplayDialog("Sire!", "Should we delete this old file?\n" + _CurrentEventMapFile, "Yes", "No")) {
+                if (File.Exists(_CurrentEventMapFile) && EditorUtility.DisplayDialog("Hold up!", "Should we delete this old file?\n" + _CurrentEventMapFile, "Yes", "No")) {
                   File.Delete(_CurrentEventMapFile);
                 }
                 _CurrentEventMapFile = newFileName;
@@ -196,8 +194,17 @@ public class AnimationGroupEventEditor : EditorWindow {
   private void DrawEventMap(AnimationEventMap eMap) {
     EditorGUILayout.BeginVertical();
     _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
-    // TOOD: Get DrawList to work properly
-    EditorDrawingUtility.DrawList("CLAD Events", _CurrentEventMap.Pairs, DrawCladEventEntry, () => new AnimationEventMap.CladAnimPair());
+
+    EditorGUILayout.BeginHorizontal();
+    GUILayout.Label("CLAD Events");
+    EditorGUILayout.EndHorizontal();
+
+    for (int i = 0; i < _CurrentEventMap.Pairs.Count; i++) {
+      EditorGUILayout.BeginHorizontal();
+      _CurrentEventMap.Pairs[i] = DrawCladEventEntry(_CurrentEventMap.Pairs[i]);
+      EditorGUILayout.EndHorizontal();
+    }
+
     EditorGUILayout.EndScrollView();
     EditorGUILayout.EndVertical();
   }
