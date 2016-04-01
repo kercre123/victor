@@ -19,8 +19,6 @@ public class AnimationGroupEventEditor : EditorWindow {
 
   private static string[] _EventMapNameOptions;
 
-  public static string[] _EventMap = new string[(int)GameEvents.Count];
-
   private static AnimationEventMap _CurrentEventMap;
   private static string _CurrentEventMapFile;
   private static string _CurrentEventMapName;
@@ -62,7 +60,6 @@ public class AnimationGroupEventEditor : EditorWindow {
 
   }
 
-  // TODO : UPDATE
   private bool CheckDiscardUnsaved() {
     bool canOpen = true;
     if (_CurrentEventMap != null && (string.IsNullOrEmpty(_CurrentEventMapFile) || JsonConvert.SerializeObject(_CurrentEventMap, Formatting.Indented, GlobalSerializerSettings.JsonSettings) != File.ReadAllText(_CurrentEventMapFile))) {
@@ -81,6 +78,11 @@ public class AnimationGroupEventEditor : EditorWindow {
         _CurrentEventMap = JsonConvert.DeserializeObject<AnimationEventMap>(json, GlobalSerializerSettings.JsonSettings);
         _CurrentEventMapName = Path.GetFileNameWithoutExtension(path);
         _CurrentEventMapFile = path;
+        // Update the map in case there are new events since we last opened it
+        string newStuff = "";
+        if (_CurrentEventMap.MapUpdate(out newStuff)) {
+          EditorUtility.DisplayDialog("Heads up", string.Format("Just so you know, there are new game events added since you last opened this file, including {0}", newStuff), "Thanks!");
+        }
         _RecentFiles.Add(path);
       }
       catch (Exception ex) {
@@ -89,7 +91,6 @@ public class AnimationGroupEventEditor : EditorWindow {
     }
   }
 
-  // TODO : UPDATE
   public void OnGUI() {
     DrawToolbar();
 
@@ -101,7 +102,6 @@ public class AnimationGroupEventEditor : EditorWindow {
     }
   }
 
-  // TODO : UPDATE
   private void DrawToolbar() {
 
     EditorGUILayout.BeginHorizontal(EditorDrawingUtility.ToolbarStyle);
@@ -141,6 +141,7 @@ public class AnimationGroupEventEditor : EditorWindow {
       if (CheckDiscardUnsaved()) {
         _CurrentEventMap = new AnimationEventMap();
         _CurrentEventMap.NewMap();
+        _CurrentEventMapName = string.Empty;
         GUI.FocusControl("EditNameField");
       }
     }
@@ -152,7 +153,10 @@ public class AnimationGroupEventEditor : EditorWindow {
         }
 
         if (!string.IsNullOrEmpty(_CurrentEventMapFile)) {
-          if (_CurrentEventMap.Pairs.Count == 0) {
+          if (string.IsNullOrEmpty(_CurrentEventMapName)) {
+            EditorUtility.DisplayDialog("Error!", "Name your file before you save it!", "Ok");
+          }
+          else if (_CurrentEventMap.Pairs.Count == 0) {
             EditorUtility.DisplayDialog("Error!", "Cannot save a map with no Pairs!", "Ok");
           }
           else {
@@ -190,7 +194,6 @@ public class AnimationGroupEventEditor : EditorWindow {
     EditorGUILayout.EndHorizontal();
   }
 
-  // TODO : UPDATE
   private void DrawEventMap(AnimationEventMap eMap) {
     EditorGUILayout.BeginVertical();
     _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
@@ -209,7 +212,6 @@ public class AnimationGroupEventEditor : EditorWindow {
     EditorGUILayout.EndVertical();
   }
 
-  // TODO : UPDATE
   public AnimationEventMap.CladAnimPair DrawCladEventEntry(AnimationEventMap.CladAnimPair pair) {
     EditorGUILayout.BeginVertical();
     pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup(pair.CladEvent.ToString(), Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];

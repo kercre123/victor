@@ -9,7 +9,32 @@ using Newtonsoft.Json;
 /// </summary>
 namespace Anki.Cozmo {
   public class AnimationEventMap {
-    // TODO: Make it default initialize pairs for all CladEvents
+
+    // Comparer to properly sort AnimationPairings
+    public class AnimPairComparer : IComparer<CladAnimPair> {
+      public int Compare(CladAnimPair x, CladAnimPair y) {
+        if (x == null) {
+          if (y == null) {
+            // If both null, equals
+            return 0;
+          }
+          else {
+            // If x null and y isn't, y is greater
+            return -1;
+          }
+        }
+        else {
+          // If y null, x is greater
+          if (y == null) {
+            return 1;
+          }
+          else {
+            // If both aren't null, actually compare CladEvent values
+            return ((int)x.CladEvent).CompareTo((int)y.CladEvent);
+          }
+        }
+      }
+    }
 
     public List<CladAnimPair> Pairs = new List<CladAnimPair>();
 
@@ -18,6 +43,32 @@ namespace Anki.Cozmo {
       for (int i = 0; i < (int)GameEvents.Count; i++) {
         Pairs.Add(new CladAnimPair((GameEvents)i));
       }
+    }
+
+    // Updates the Map to include any new GameEvents that may have been added
+    // returns true if anything new was added. TODO: Is there a faster way to do this? Do I care?
+    public bool MapUpdate(out string newStuff) {
+      bool didUpdate = false;
+      newStuff = "";
+      List<GameEvents> eList = new List<GameEvents>();
+      // Add in all clad generated game events
+      for (int i = 0; i < (int)GameEvents.Count; i++) {
+        eList.Add((GameEvents)i);
+      }
+      // Remove the ones we already have from the "to add" list
+      for (int i = 0; i < Pairs.Count; i++) {
+        eList.Remove(Pairs[i].CladEvent);
+      }
+      // Add in the remaining ones
+      for (int i = 0; i < eList.Count; i++) {
+        newStuff += string.Format("- {0} -", eList[i]);
+        Pairs.Add(new CladAnimPair(eList[i]));
+        didUpdate = true;
+      }
+      if (didUpdate) {
+        Pairs.Sort(new AnimPairComparer());
+      }
+      return didUpdate;
     }
 
     [System.Serializable]
