@@ -12,6 +12,9 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+#define DISABLE_CRYPTO_CHECK
+#define DISABLE_AUTHENTIFICATION
+
 #define member_size(type, member) sizeof(((type *)0)->member)
   
 // Softdevice settings
@@ -47,6 +50,7 @@ struct BLE_CladBuffer {
   };
    
   unsigned int  pointer;
+  unsigned int  message_size;
   bool encrypted;
 };
 
@@ -77,8 +81,6 @@ static void permissions_error(BLEError error) {
 }
 
 static bool message_encrypted(uint8_t op) {
-  return false;
-
   using namespace Anki::Cozmo::RobotInterface;
   
   // These are the only messages that may be sent unencrypted over the wire
@@ -94,8 +96,6 @@ static bool message_encrypted(uint8_t op) {
 }
 
 static bool message_authenticated(uint8_t op) {
-  return false;
-  
   using namespace Anki::Cozmo::RobotInterface;
 
   // These are the only messages that may be used unauthenticated
@@ -119,11 +119,13 @@ static void frame_data_received(const void* _ = NULL) {
     return ;
   }
 
+  #ifndef DISABLE_AUTHENTIFICATION
   // Attempted to send a bad message over the wire, disconnect user and 
   if (message_authenticated(rx_buffer.msgID) && !m_authenticated) {
     permissions_error(BLE_ERROR_NOT_AUTHENTICATED);
     return ;
   }
+  #endif
 
   // Forward message up clad
   if (rx_buffer.msgID >= 0x30) {
@@ -157,11 +159,13 @@ static void frame_receive(CozmoFrame& receive)
     return ;
   }
   
+  #ifndef DISABLE_CRYPTO_CHECK
   // Attemped to send a protected message unencrypted
   if (message_encrypted(rx_buffer.msgID) != encrypted) {
     permissions_error(BLE_ERROR_MESSAGE_ENCRYPTION_WRONG);
     return ;
   }
+  #endif
 
   // rx_buffer.pointer
   if (encrypted) {
@@ -169,7 +173,7 @@ static void frame_receive(CozmoFrame& receive)
     
     t.op = CRYPTO_AES_DECODE;
     t.callback = frame_data_received;
-    t.state = receive.message;
+    t.state = rx_buffer.raw;
     t.length = rx_buffer.pointer;
 
     Crypto::execute(&t);
@@ -193,7 +197,6 @@ static void manage_ble(void*) {
   // Manage outbound transmissions
   if (tx_pending) {
     // Calculate the length of the message we are trying to send
-    const int message_length = tx_buffer.length + 2 + (tx_buffer.encrypted ? AES_BLOCK_LENGTH : 0);  
     CozmoFrame f;
 
     f.flags = 
@@ -202,11 +205,9 @@ static void manage_ble(void*) {
 
     memcpy(f.message, &tx_buffer.raw[tx_buffer.pointer], sizeof(f.message));
 
-    if (tx_buffer.pointer + sizeof(f.message) >= message_length) {
+    if (tx_buffer.pointer + sizeof(f.message) >= tx_buffer.message_size) {
       f.flags |= END_OF_MESSAGE;
-      tx_pending = false;
-      tx_buffered = false;
-    }  
+    }
 
     // Transmit our frame
     ble_gatts_hvx_params_t params;
@@ -222,6 +223,11 @@ static void manage_ble(void*) {
     
     if (err_code == NRF_SUCCESS) {
       tx_buffer.pointer += sizeof(f.message);
+
+      if (tx_buffer.pointer >= tx_buffer.message_size) {
+        tx_pending = false;
+        tx_buffered = false;
+      }
     }
     
     return ;
@@ -244,6 +250,7 @@ bool Bluetooth::transmit(const uint8_t* data, int length, uint8_t op) {
   tx_buffer.msgID = op;
   tx_buffer.encrypted = encrypted;
   tx_buffer.pointer = 0;
+  tx_buffer.message_size = length + 2;
   tx_buffered = true;
   
   memcpy(tx_buffer.data, data, length);
@@ -259,6 +266,8 @@ bool Bluetooth::transmit(const uint8_t* data, int length, uint8_t op) {
     t.callback = start_message_transmission;
     t.state = tx_buffer.raw;
     t.length = tx_buffer.length + 2;
+    
+    tx_buffer.message_size += AES_BLOCK_LENGTH;
     
     Crypto::execute(&t);
   } else {
@@ -287,6 +296,7 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       t.op = CRYPTO_GENERATE_RANDOM;
       t.state = &m_nonce;
       t.length = sizeof(m_nonce);
+      t.callback = send_welcome_message;
 
       Crypto::execute(&t);
 

@@ -42,6 +42,7 @@ noble.on('discover', function (device) {
               receive = char;
               break;
             case '763dbee15df1405e8aac51572be5bab3': // TO COZMO
+              char.notify(true);
               send = char;
               break ;
           }
