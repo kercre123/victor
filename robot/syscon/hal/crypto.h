@@ -42,7 +42,7 @@ struct CryptoTask {
   CryptoOperation op;
   crypto_callback callback;
   const void *state;
-  int length;
+  int* length;
 };
 
 namespace Crypto {

@@ -49,8 +49,8 @@ struct BLE_CladBuffer {
     };
   };
    
-  unsigned int  pointer;
-  unsigned int  message_size;
+  int  pointer;
+  int  message_size;
   bool encrypted;
 };
 
@@ -114,7 +114,7 @@ static bool message_authenticated(uint8_t op) {
 
 static void frame_data_received(const void* _ = NULL) {
   // Attempted to underflow the receive buffer
-  if (rx_buffer.length > rx_buffer.pointer) {
+  if (rx_buffer.length > rx_buffer.message_size) {
     permissions_error(BLE_ERROR_BUFFER_UNDERFLOW);
     return ;
   }
@@ -159,6 +159,8 @@ static void frame_receive(CozmoFrame& receive)
     return ;
   }
   
+  rx_buffer.message_size = rx_buffer.pointer;
+
   #ifndef DISABLE_CRYPTO_CHECK
   // Attemped to send a protected message unencrypted
   if (message_encrypted(rx_buffer.msgID) != encrypted) {
@@ -174,7 +176,7 @@ static void frame_receive(CozmoFrame& receive)
     t.op = CRYPTO_AES_DECODE;
     t.callback = frame_data_received;
     t.state = rx_buffer.raw;
-    t.length = rx_buffer.pointer;
+    t.length = &rx_buffer.message_size;
 
     Crypto::execute(&t);
   } else {
@@ -263,12 +265,11 @@ bool Bluetooth::transmit(const uint8_t* data, int length, uint8_t op) {
     CryptoTask t;
 
     t.op = CRYPTO_AES_ENCODE;
+    tx_buffer.message_size = tx_buffer.length + 2;
     t.callback = start_message_transmission;
     t.state = tx_buffer.raw;
-    t.length = tx_buffer.length + 2;
-    
-    tx_buffer.message_size += AES_BLOCK_LENGTH;
-    
+    t.length = &tx_buffer.message_size;
+        
     Crypto::execute(&t);
   } else {
     tx_pending = true;
@@ -293,9 +294,10 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       tx_pending = false;
       tx_buffered = false;
 
+      static const int nonce_length = sizeof(m_nonce);
       t.op = CRYPTO_GENERATE_RANDOM;
       t.state = &m_nonce;
-      t.length = sizeof(m_nonce);
+      t.length = (int*)&nonce_length;
       t.callback = send_welcome_message;
 
       Crypto::execute(&t);

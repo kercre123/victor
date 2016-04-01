@@ -146,16 +146,16 @@ void Crypto::manage(void) {
 
   switch (task->op) {
     case CRYPTO_GENERATE_RANDOM:
-      random((uint8_t*)task->state, task->length);
+      random((uint8_t*)task->state, *task->length);
       break ;
     case CRYPTO_ECB:
       aes_ecb((nrf_ecb_hal_data_t*) task->state);
       break ;
     case CRYPTO_AES_DECODE:
-      aes_decode((uint8_t*) task->state, task->length);
+      *task->length = aes_decode((uint8_t*) task->state, *task->length);
       break ;
     case CRYPTO_AES_ENCODE:
-      aes_encode((uint8_t*) task->state, task->length);
+      *task->length = aes_encode((uint8_t*) task->state, *task->length);
       break ;
     case CRYPTO_START_DIFFIE_HELLMAN:
       dh_start((DiffieHellman*) task->state);

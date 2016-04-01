@@ -49,8 +49,17 @@ void aes_ecb(nrf_ecb_hal_data_t* ecb) {
   }
 }
 
-void aes_encode(uint8_t* data, int length) {
+int aes_encode(uint8_t* data, int length) {
   nrf_ecb_hal_data_t ecb;
+
+  // This forces the block length to be a multiple of 16
+  // while also injecting random numbers into the buffer
+  // so we don't get cross talk
+  if (length % AES_BLOCK_LENGTH) {
+    int pad = AES_BLOCK_LENGTH - (length % AES_BLOCK_LENGTH);
+    Crypto::random(data + length, pad);
+    length += AES_BLOCK_LENGTH;
+  }
 
   memcpy(ecb.key, AES_KEY, AES_KEY_LENGTH);
   
@@ -67,9 +76,11 @@ void aes_encode(uint8_t* data, int length) {
   }
 
   memcpy(data, ecb.cleartext, AES_BLOCK_LENGTH);
+
+  return length + AES_BLOCK_LENGTH;
 }
 
-void aes_decode(uint8_t* data, int length) {
+int aes_decode(uint8_t* data, int length) {
   nrf_ecb_hal_data_t ecb;
   
   memcpy(ecb.key, AES_KEY, AES_KEY_LENGTH);
@@ -84,4 +95,6 @@ void aes_decode(uint8_t* data, int length) {
       *(data++) = *(block++) ^ ecb.ciphertext[bi];
     }
   }
+  
+  return length - AES_BLOCK_LENGTH;
 }

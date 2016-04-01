@@ -12,7 +12,7 @@ static const int AES_BLOCK_LENGTH = 16;
 
 void aes_key_init();
 void aes_ecb(nrf_ecb_hal_data_t* ecb);
-void aes_decode(uint8_t* data, int length);
-void aes_encode(uint8_t* data, int length);
+int aes_decode(uint8_t* data, int length);
+int aes_encode(uint8_t* data, int length);
 
 #endif
