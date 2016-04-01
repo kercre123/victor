@@ -28,7 +28,7 @@ public class AnimationManager {
 
 
   public AnimationManager() {
-    CladEventManager.Instance.CozmoEventReceived += CozmoEventRecieved;
+    GameEventManager.Instance.OnReceiveGameEvent += CozmoEventRecieved;
     _CurrRobot = RobotEngineManager.Instance.CurrentRobot;
   }
 
