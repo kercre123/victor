@@ -95,7 +95,11 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->PSELTXD = PIN_TX_HEAD;
 
       // Configure pin so it is open-drain
-      nrf_gpio_cfg_output(PIN_TX_HEAD);
+      NRF_GPIO->PIN_CNF[PIN_TX_HEAD] = (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos)
+                                    | (GPIO_PIN_CNF_DRIVE_H0H1 << GPIO_PIN_CNF_DRIVE_Pos)
+                                    | (GPIO_PIN_CNF_PULL_Disabled << GPIO_PIN_CNF_PULL_Pos)
+                                    | (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos)
+                                    | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
       break ;
     case TRANSMIT_RECEIVE:
       #ifndef DUMP_DISCOVER
@@ -113,7 +117,7 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->PSELTXD = PIN_TX_VEXT;
 
       // Configure pin so it is open-drain
-      nrf_gpio_cfg_output(PIN_TX_HEAD);
+      nrf_gpio_cfg_output(PIN_TX_VEXT);
       
       // We are in debug transmit mode, these are the safe bytes
       debugSafeWords = DEBUG_BYTES;
