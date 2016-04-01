@@ -212,7 +212,7 @@ static bool sendWifiConnectionState(const bool state)
 
 extern "C" void backgroundTaskOnConnect(void)
 {
-  const uint32_t* const serialNumber = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
+  const uint32_t* const factoryData = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
   
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
   else Anki::Cozmo::Face::FaceUnPrintf();
@@ -235,7 +235,8 @@ extern "C" void backgroundTaskOnConnect(void)
   // Send our serial number to the engine
   {
     Anki::Cozmo::RobotInterface::RobotAvailable idMsg;
-    idMsg.robotID = *serialNumber;
+    idMsg.robotID = factoryData[0];
+    idMsg.modelID = factoryData[1];
     Anki::Cozmo::RobotInterface::SendMessage(idMsg);
   }
   
