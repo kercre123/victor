@@ -9,7 +9,7 @@ using System.IO;
 using Newtonsoft.Json;
 using Anki.Cozmo;
 
-public class AnimationGroupEventEditor : EditorWindow {
+public class AnimationEventEditor : EditorWindow {
 
   private static string[] _AnimationGroupFiles;
 
@@ -31,7 +31,7 @@ public class AnimationGroupEventEditor : EditorWindow {
 
   public static string[] AnimationGroupNameOptions { get { return _AnimationGroupNameOptions; } }
 
-  static AnimationGroupEventEditor() {
+  static AnimationEventEditor() {
     LoadData();
   }
 
@@ -124,6 +124,7 @@ public class AnimationGroupEventEditor : EditorWindow {
         _CurrentEventMap = new AnimationEventMap();
         _CurrentEventMap.NewMap();
         _CurrentEventMapName = string.Empty;
+        _CurrentEventMapFile = null;
         GUI.FocusControl("EditNameField");
       }
     }
@@ -184,9 +185,7 @@ public class AnimationGroupEventEditor : EditorWindow {
     EditorGUILayout.EndHorizontal();
 
     for (int i = 0; i < _CurrentEventMap.Pairs.Count; i++) {
-      EditorGUILayout.BeginHorizontal();
       _CurrentEventMap.Pairs[i] = DrawCladEventEntry(_CurrentEventMap.Pairs[i]);
-      EditorGUILayout.EndHorizontal();
     }
 
     EditorGUILayout.EndScrollView();
@@ -194,16 +193,19 @@ public class AnimationGroupEventEditor : EditorWindow {
   }
 
   public AnimationEventMap.CladAnimPair DrawCladEventEntry(AnimationEventMap.CladAnimPair pair) {
-    EditorGUILayout.BeginVertical();
+    EditorGUILayout.BeginHorizontal();
     pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup(pair.CladEvent.ToString(), Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];
-    EditorGUILayout.EndVertical();
+    if (GUILayout.Button("X", GUILayout.Width(30))) {
+      pair.AnimName = "";
+    }
+    EditorGUILayout.EndHorizontal();
     return pair;
   }
 
   [MenuItem("Cozmo/Animation Event Map #%g")]
   public static void OpenAnimationGroupEventEditor() {
-    AnimationGroupEventEditor window = (AnimationGroupEventEditor)EditorWindow.GetWindow(typeof(AnimationGroupEventEditor));
-    AnimationGroupEventEditor.LoadData();
+    AnimationEventEditor window = (AnimationEventEditor)EditorWindow.GetWindow(typeof(AnimationEventEditor));
+    AnimationEventEditor.LoadData();
     window.titleContent = new GUIContent("Animation Event Map");
     window.Show();
     window.Focus();
