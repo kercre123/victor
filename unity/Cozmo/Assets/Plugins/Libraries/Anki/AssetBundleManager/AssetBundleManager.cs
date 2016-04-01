@@ -15,7 +15,7 @@ namespace Anki {
     
     public class AssetBundleManager : MonoBehaviour {
 
-      public const string kAssetBundlesFolder = "AssetBundles"; 
+      public const string kAssetBundlesFolder = "AssetBundles";
 
       private static AssetBundleManager _sInstance;
       private static bool _sIsLogEnabled;
@@ -75,7 +75,7 @@ namespace Anki {
         PrintActiveVariants();
       }
 
-      // Initializes the asset manager. Once the process is finished, the function calls the callback indicating if the 
+      // Initializes the asset manager. Once the process is finished, the function calls the callback indicating if the
       // intialization process was successful or not.
       public void Initialize(Action<bool> callback) {
         Log(LogType.Log, "Initializing Asset Manager");
@@ -136,7 +136,7 @@ namespace Anki {
       }
 
       // Loads an asset bundle asynchronously. This function loads the bundle and all its dependencies. Variants are resolved so
-      // the right bundle is loaded according to the current active variants. 
+      // the right bundle is loaded according to the current active variants.
       // Once the operation is completed, the callback will be called with a boolean indicating if the load was successful or not.
       // Asset bundles are reference counted so they are only loaded once.
       public void LoadAssetBundleAsync(string assetBundleName, Action<bool> callback) {
@@ -151,13 +151,15 @@ namespace Anki {
 
         string variantAssetBundleName = RemapVariantName(assetBundleName);
 
+        Log(LogType.Log, variantAssetBundleName);
+
         StartCoroutine(LoadAssetBundleAsyncInternal(variantAssetBundleName, callback));
       }
 
-      // Decreases the reference count for the bundle and unloads it if necessary. If the bundle will be unloaded, its dependencies 
+      // Decreases the reference count for the bundle and unloads it if necessary. If the bundle will be unloaded, its dependencies
       // will be checked to see if they have to be unloaded as well. When destroyObjectsCreatedFromBundle is true, all the assets
       // loaded from the bundle will be destroyed automatically. When it is false, the assets won't be destroyed but the connection
-      // with the bundle is lost. If the same bundle and asset are loaded again, a new copy of the asset will be created. 
+      // with the bundle is lost. If the same bundle and asset are loaded again, a new copy of the asset will be created.
       public void UnloadAssetBundle(string assetBundleName, bool destroyObjectsCreatedFromBundle = true) {
         Log(LogType.Log, "Unloading asset bundle " + assetBundleName);
 
@@ -177,11 +179,9 @@ namespace Anki {
         Log(LogType.Log, "Loading asset " + assetName + " from asset bundle " + assetBundleName);
 
         #if UNITY_EDITOR
-        if (SimulateAssetBundleInEditor)
-        {
+        if (SimulateAssetBundleInEditor) {
           string[] assetPaths = AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(assetBundleName, assetName);
-          if (assetPaths.Length == 0)
-          {
+          if (assetPaths.Length == 0) {
             Log(LogType.Error, "Couldn't find asset " + assetName + " in asset bundle " + assetBundleName);
             CallCallback(callback, null);
             return;
@@ -199,12 +199,12 @@ namespace Anki {
         else
         #endif
         {
-            StartCoroutine(LoadAssetAsyncInternal<AssetType>(assetBundleName, assetName, callback));
+          StartCoroutine(LoadAssetAsyncInternal<AssetType>(assetBundleName, assetName, callback));
         }
       }
 
       // Loads a new scene asynchronously from the given asset bundle. The asset bundle must have been loaded previously.
-      // The loadAdditively parameter indicates whether the scene should be loaded additively or not. 
+      // The loadAdditively parameter indicates whether the scene should be loaded additively or not.
       // Once the operation is completed, the callback will be called with a boolean indicating if the load was successful
       // or not.
       public void LoadSceneAsync(string assetBundleName, string sceneName, bool loadAdditively, Action<bool> callback) {
@@ -221,9 +221,9 @@ namespace Anki {
         }
       }
 
-      // Unloads an scene. Note that only scene that were loaded additively can be unloaded. 
+      // Unloads an scene. Note that only scene that were loaded additively can be unloaded.
       // If unloadUnusedAssets is true then the function tries to unload all the assets that may be unused
-      // after the scene is unloaded. It is a good idea to do this when transitioning between scenes to make sure that unused 
+      // after the scene is unloaded. It is a good idea to do this when transitioning between scenes to make sure that unused
       // assets are not left in memory.
       // After the operation is completed, the callback is called with a boolean to indicate if it was successful
       public void UnloadSceneAsync(string sceneName, Action<bool> callback, bool unloadUnusedAssets = true) {
@@ -289,14 +289,14 @@ namespace Anki {
       private string RemapVariantName(string assetBundleName) {
 
         // Check if the bundle is supposed to have variants
-        string[] split = assetBundleName.Split('.');
+        /*string[] split = assetBundleName.Split('.');
         if (split.Length <= 1) {
           return assetBundleName;
-        }
+        }*/
 
         // Find the variant information for the bundle
         List<string> variants = null;
-        if (!_Variants.TryGetValue(split[0], out variants)) {
+        if (!_Variants.TryGetValue(assetBundleName, out variants)) {
           return assetBundleName;
         }
 
@@ -311,7 +311,7 @@ namespace Anki {
         }
 
         if (variantIndex != -1) {
-          string variantAssetBundleName = split[0] + "." + variants[variantIndex];
+          string variantAssetBundleName = assetBundleName + "." + variants[variantIndex];
           Log(LogType.Log, "Remapping asset bundle " + assetBundleName + " to " + variantAssetBundleName);
 
           return variantAssetBundleName;
@@ -447,15 +447,14 @@ namespace Anki {
       #if UNITY_EDITOR
       private IEnumerator LoadSceneAsyncInternalInEditor(string assetBundleName, string sceneName, bool loadAdditively, Action<bool> callback) {
         string[] scenePaths = UnityEditor.AssetDatabase.GetAssetPathsFromAssetBundleAndAssetName(assetBundleName, sceneName);
-        if (scenePaths.Length == 0)
-        {
+        if (scenePaths.Length == 0) {
           Log(LogType.Error, "Couldn't load scene " + sceneName + " from asset bundle " + assetBundleName);
           CallCallback(callback, false);
           yield break;
         }
 
         AsyncOperation operation;
-        if (loadAdditively) 
+        if (loadAdditively)
           operation = UnityEditor.EditorApplication.LoadLevelAdditiveAsyncInPlayMode(scenePaths[0]);
         else
           operation = UnityEditor.EditorApplication.LoadLevelAsyncInPlayMode(scenePaths[0]);
@@ -494,20 +493,20 @@ namespace Anki {
 
           switch (logType) {
           case LogType.Log:
-            DAS.Debug(null, message);
+            DAS.Debug("[AssetManager]", message);
             break;
 
           case LogType.Warning:
-            DAS.Warn(null, message);
+            DAS.Warn("[AssetManager]", message);
             break;
 
           case LogType.Error:
-            DAS.Error(null, message);
+            DAS.Error("[AssetManager]", message);
             break;
           }
         }
       }
- 
+
       private void PrintLoadedBundleInfo() {
         System.Text.StringBuilder sb = new System.Text.StringBuilder("Loaded bundles:\n");
         foreach (var pair in _LoadedAssetBundles) {
@@ -529,6 +528,7 @@ namespace Anki {
           callback(value);
         }
       }
+
       #endregion
     }
   }

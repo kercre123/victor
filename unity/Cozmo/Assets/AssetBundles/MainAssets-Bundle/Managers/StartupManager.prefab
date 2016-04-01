@@ -51,6 +51,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba238b3d97f5a48d9a968bbb380894a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _assetBundlesToLoad:
+  - basic-ui-prefabs
+  - main-scene
+  - main-assets
+  - debug-assets
+  - game-metadata
+  - minigame-data
+  - sprites/basic-ui
+  - minigame-ui-prefabs
+  - sprites/minigame-ui
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

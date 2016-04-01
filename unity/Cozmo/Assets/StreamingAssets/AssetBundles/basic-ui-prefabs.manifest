@@ -1,9 +1,9 @@
 ManifestFileVersion: 0
-CRC: 4083734036
+CRC: 1160056315
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 373440506e225438efef6103bc6e5097
+    Hash: e4e3866664c85363d1ff69e295ed567c
   TypeTreeHash:
     serializedVersion: 2
     Hash: d2cb81d40819d21ad71785192c836bb9
@@ -46,7 +46,7 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: db66ec8e0a2b0469a8dabccd011d0743, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: e04c1d03faf4b43ba9ac14603feefe4b, type: 3}
+  Script: {fileID: 11500000, guid: 5b3fc0c5e9f534d109d440955e9c3d30, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -61,13 +61,13 @@ ClassTypes:
   Script: {instanceID: 0}
 Assets:
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/Subtitle_Light_Primary_proxy.prefab
-- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/AlertViewHolder.asset
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/CozmoFacePost.mat
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/Title_Dark_Secondary_proxy.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GrayscaleShader.shader
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/ParagraphText_Large_proxy.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GradientComplexAlphaClippingShader.shader
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Buttons/Button_Icon_proxy.prefab
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/AlertViewLoader.asset
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Background/Background_Secondary_proxy.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/BlurFilter.shader
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/Subtitle_Dark_Primary_proxy.prefab

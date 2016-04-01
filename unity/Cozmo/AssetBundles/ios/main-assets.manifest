@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 590473042
+CRC: 1871163606
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: 8cd2c5c8f66303dfefb7939e7ac218e6
+    Hash: 8b94490247a885376c57eca895071dad
   TypeTreeHash:
     serializedVersion: 2
-    Hash: df17edab651a1513cd390c475ae9f52f
+    Hash: 1b87ab3a17be12fa2f8cac3619d201a1
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -94,8 +94,6 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 2cf909c64d0b9446ea88f48bcd80805f, type: 3}
 - Class: 114
-  Script: {fileID: 11500000, guid: 8adf7157c35a548feb4223e80ee7bb05, type: 3}
-- Class: 114
   Script: {fileID: 11500000, guid: 49898da79bc624eeea2044eb78c17d47, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 21cb49b7aeadb43bbae124902dfe6437, type: 3}
@@ -161,7 +159,6 @@ Assets:
 - Assets/AssetBundles/MainAssets-Bundle/HomeHub/HomeView.prefab
 - Assets/AssetBundles/MainAssets-Bundle/HomeHub/Tabs/PlayTab/DailyGoalPanel/DailySummaryPanel.prefab
 - Assets/AssetBundles/MainAssets-Bundle/HomeHub/ChallengeDetailsDialog.prefab
-- Assets/AssetBundles/MainAssets-Bundle/Managers/ObjectTagRegistryManager.prefab
 - Assets/AssetBundles/MainAssets-Bundle/Managers/DailyGoalManager.prefab
 - Assets/AssetBundles/MainAssets-Bundle/Managers/HomeHubIntroManager.prefab
 - Assets/AssetBundles/MainAssets-Bundle/Managers/PauseManager.prefab
