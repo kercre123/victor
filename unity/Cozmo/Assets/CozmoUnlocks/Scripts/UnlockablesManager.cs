@@ -13,6 +13,20 @@ public class UnlockablesManager : MonoBehaviour {
   [SerializeField]
   private UnlockableInfoList _UnlockableInfoList;
 
+  void Start() {
+    // temp data for testing:
+    Dictionary<Anki.Cozmo.UnlockIds, bool> testData = new Dictionary<Anki.Cozmo.UnlockIds, bool>();
+    for (int i = 0; i < Enum.GetValues(typeof(Anki.Cozmo.UnlockIds)).Length; ++i) {
+      testData.Add((Anki.Cozmo.UnlockIds)i, false);
+    }
+    testData[Anki.Cozmo.UnlockIds.SpeedTapGame] = true;
+    testData[Anki.Cozmo.UnlockIds.SpeedTapEasyImplicit] = true;
+  }
+
+  public void OnConnectLoad(Dictionary<Anki.Cozmo.UnlockIds, bool> loadedUnlockables) {
+    _UnlockablesState = loadedUnlockables;
+  }
+
   public List<UnlockableInfo> GetUnlockedGames() {
     List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
@@ -60,6 +74,11 @@ public class UnlockablesManager : MonoBehaviour {
       }
     }
     return unavailable;
+  }
+
+  public void SetUnlocked(Anki.Cozmo.UnlockIds id, bool unlocked) {
+    _UnlockablesState[id] = unlocked;
+    // TODO: Also pass to engine/robot and listen for a response.
   }
 
   public bool IsUnlocked(Anki.Cozmo.UnlockIds id) {
