@@ -179,8 +179,8 @@ void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 {
   const RobotInterface::RobotAvailable& payload = message.GetData().Get_robotAvailable();
   // Set DAS Global on all messages
-  char string_id[8];
-  snprintf(string_id, sizeof(string_id), "%08x", payload.robotID);
+  char string_id[32] = {0};
+  snprintf(string_id, sizeof(string_id), "0xbeef%04x%08x", payload.modelID,payload.robotID);
   Anki::Util::sSetGlobal(DPHYS, string_id);
 }
 
