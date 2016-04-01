@@ -24,46 +24,48 @@ public class UnlockablesManager : MonoBehaviour {
     return unlocked;
   }
 
-  public List<UnlockableInfo> GetUnlocked() {
+  public List<UnlockableInfo> GetUnlocked(bool getExplicitOnly) {
     List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id]) {
-        unlocked.Add(_UnlockableInfoList.UnlockableInfoData[i]);
+        if ((!getExplicitOnly) || (getExplicitOnly && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock)) {
+          unlocked.Add(_UnlockableInfoList.UnlockableInfoData[i]);
+        }
       }
     }
     return unlocked;
   }
 
-  public List<UnlockableInfo> GetAvailableAndLocked() {
+  // explicit unlocks only.
+  public List<UnlockableInfo> GetAvailableAndLockedExplicit() {
     List<UnlockableInfo> available = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id];
       bool isAvailable = IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id);
-      if (locked && isAvailable) {
+      if (locked && isAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock) {
         available.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
     }
     return available;
   }
 
-  public List<UnlockableInfo> GetUnavailable() {
+  // explicit unlocks only.
+  public List<UnlockableInfo> GetUnavailableExplicit() {
     List<UnlockableInfo> unavailable = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id];
       bool isAvailable = IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id);
-      if (locked && !isAvailable) {
+      if (locked && !isAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock) {
         unavailable.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
     }
     return unavailable;
   }
 
-  // is something unlocked. works for implicit unlocks.
   public bool IsUnlocked(Anki.Cozmo.UnlockIds id) {
     return _UnlockablesState[id];
   }
 
-  // is something available to be unlocked. only works for explicit unlocks.
   public bool IsUnlockableAvailable(Anki.Cozmo.UnlockIds id) {
     if (_UnlockablesState[id]) {
       return true;

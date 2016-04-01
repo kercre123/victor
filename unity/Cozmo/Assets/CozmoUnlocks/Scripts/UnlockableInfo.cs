@@ -1,23 +1,31 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
 public enum UnlockableType {
   Game,
   Action
 }
 
+[Serializable]
 public class UnlockableInfo : ScriptableObject {
-  public readonly Anki.Cozmo.UnlockIds Id;
+  public Anki.Cozmo.UnlockIds Id;
 
-  public readonly UnlockableType UnlockableType;
+  public UnlockableType UnlockableType;
 
-  public readonly Anki.Cozmo.UnlockIds[] Prerequisites;
+  public Anki.Cozmo.UnlockIds[] Prerequisites;
 
   // true = any prereq filled will make this unlock available
   // false = all prereqs must be filled to make this unlock available.
-  public readonly bool AnyPrereqUnlock;
+  public bool AnyPrereqUnlock;
 
-  public readonly int CubesRequired;
+  public int CubesRequired;
 
-  public readonly int TreatCost;
+  // explicitly viewable and unlockable from the unlocks menu in Cozmo Tab.
+  public bool ExplicitUnlock;
+
+  // unlocked by default if the robot profile is new.
+  public bool DefaultUnlock;
+
+  public int TreatCost;
 }
