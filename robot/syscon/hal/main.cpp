@@ -127,11 +127,6 @@ int main(void)
   TestFixtures::run();
   #endif
 
-  static uint8_t temp[32] = "HELLO COZMO 123";
-
-  aes_encode(temp, sizeof(temp) - 16);
-  aes_decode(temp, sizeof(temp));
-
   enterOperatingMode(BLUETOOTH_OPERATING_MODE);
 
   Timer::start();

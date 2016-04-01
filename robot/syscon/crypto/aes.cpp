@@ -78,7 +78,7 @@ void aes_decode(uint8_t* data, int length) {
   uint8_t *block = data + AES_BLOCK_LENGTH;
   for(int i = AES_BLOCK_LENGTH; i < length; i += AES_BLOCK_LENGTH) {
     aes_ecb(&ecb);
-    memcpy(ecb.cleartext, data, AES_BLOCK_LENGTH);
+    memcpy(ecb.cleartext, block, AES_BLOCK_LENGTH);
 
     for (int bi = 0; bi < AES_BLOCK_LENGTH; bi++) {
       *(data++) = *(block++) ^ ecb.ciphertext[bi];
