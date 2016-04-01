@@ -212,8 +212,7 @@ public class AnimationGroupEventEditor : EditorWindow {
   // TODO : UPDATE
   public AnimationEventMap.CladAnimPair DrawCladEventEntry(AnimationEventMap.CladAnimPair pair) {
     EditorGUILayout.BeginVertical();
-    EditorGUILayout.LabelField(pair.CladEvent.ToString());
-    pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup("Animation Group", Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];
+    pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup(pair.CladEvent.ToString(), Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];
     EditorGUILayout.EndVertical();
     return pair;
   }
