@@ -25,6 +25,8 @@ namespace Anki {
       private Dictionary<string, LoadedAssetBundle> _LoadedAssetBundles = new Dictionary<string, LoadedAssetBundle>();
       private Dictionary<string, List<string>> _Variants = new Dictionary<string, List<string>>();
 
+      private List<string> _InProgressAssetBundles = new List<string>();
+
       private string _AssetBundleFolder;
 
       #if UNITY_EDITOR
@@ -79,6 +81,7 @@ namespace Anki {
       // intialization process was successful or not.
       public void Initialize(Action<bool> callback) {
         Log(LogType.Log, "Initializing Asset Manager");
+        _sInstance = this;
 
         #if UNITY_EDITOR  
         // In simulator mode we don't load any bundles
@@ -187,7 +190,7 @@ namespace Anki {
             return;
           }
 
-          if (assetPaths.Length > 0) {
+          if (assetPaths.Length > 1) {
             Log(LogType.Warning, "This case in LoadAssets needs to be implemented");
             CallCallback(callback, null);
             return;
@@ -276,7 +279,7 @@ namespace Anki {
       #region Private Methods
 
       private void Start() {
-        if (_sInstance != null) {
+        if (_sInstance != null && _sInstance != this) {
           DAS.Error(this, "There are two AssetBundleManager instances in the project!!!");
           return;
         }
@@ -332,6 +335,25 @@ namespace Anki {
           yield break;
         }
 
+        // Don't try to load the asset bundle if some other thread already started to load it
+        if (_InProgressAssetBundles.Contains(assetBundleName)) {
+          // Wait for someone else to finish loading it
+          while (true) {
+            _LoadedAssetBundles.TryGetValue(assetBundleName, out loadedAssetBundle);
+            if (loadedAssetBundle != null) {
+              loadedAssetBundle.OnLoaded();
+              PrintLoadedBundleInfo();
+              CallCallback(callback, true);
+              yield break;
+            }
+            else {
+              yield return 0;
+            }
+          }
+        }
+
+        _InProgressAssetBundles.Add(assetBundleName);
+
         // The bundle hasn't been loaded yet so load it from disk
         string assetBundlePath = _AssetBundleFolder + assetBundleName;
         AssetBundle assetBundle;
@@ -348,6 +370,8 @@ namespace Anki {
           assetBundle = www.assetBundle;
           www.Dispose();
         }
+
+        _InProgressAssetBundles.Remove(assetBundleName);
 
         if (assetBundle != null) {
           // The bundle was loaded. Track it.
@@ -434,7 +458,7 @@ namespace Anki {
           yield break;
         }
 
-        AssetBundleRequest request = loadedAssetBundle.AssetBundle.LoadAssetAsync<AssetType>(assetName);
+        AssetBundleRequest request = loadedAssetBundle.AssetBundle.LoadAssetWithSubAssetsAsync<AssetType>(assetName);
         yield return request;
 
         if (request.asset == null) {

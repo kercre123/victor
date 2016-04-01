@@ -5,15 +5,15 @@ namespace Cozmo {
   [CreateAssetMenu]
   public class ShaderHolder : ScriptableObject {
 
-    private static ShaderHolder _Instance;
+    private static ShaderHolder _sInstance;
+
+    public static void SetInstance(ShaderHolder instance) {
+      _sInstance = instance;
+    }
 
     public static ShaderHolder Instance {
-      get {
-        if (_Instance == null) {
-          _Instance = Resources.Load<ShaderHolder>("Prefabs/UI/UIPrefabHolder");
-        }
-        return _Instance;
-      }
+      get { return _sInstance; }
+    }
     }
 
     [SerializeField]

@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using Anki.Assets;
+using Cozmo;
 
 /// <summary>
 /// Add managers to this object by calling
@@ -17,20 +18,17 @@ public class StartupManager : MonoBehaviour {
   // In the future we can add a loading screen between hub/minigame
   // to load different UI
   [SerializeField]
-  private string[] _assetBundlesToLoad;
+  private string[] _AssetBundlesToLoad;
 
   // Use this for initialization
   private IEnumerator Start() {
     if (Application.isPlaying) {
       // Set up localization files.
       Localization.LoadStrings();
-
-      // Add managers to this object here
-      // gameObject.AddComponent<ManagerTypeName>();
-      gameObject.AddComponent<HockeyAppManager>();
-      gameObject.AddComponent<ObjectTagRegistryManager>();
+      AddComponents();
     }
 
+    // Load asset bundler
     AssetBundleManager.IsLogEnabled = true;
       
     bool initializedAssetManager = false;
@@ -43,21 +41,39 @@ public class StartupManager : MonoBehaviour {
 
     // TODO: Pick sd or hd based on device
     assetBundleManager.AddActiveVariant("hd");
-      
-    foreach (string assetBundleName in _assetBundlesToLoad) {
-      bool loadedAssetBundle = false;
+
+    int loadedAssetBundles = 0;
+    foreach (string assetBundleName in _AssetBundlesToLoad) {
       assetBundleManager.LoadAssetBundleAsync(assetBundleName, 
         (success) => {
           if (!success) {
             DAS.Error("StartupManager.Awake.AssetBundleLoading", 
               string.Format("Failed to load Asset Bundle with name={0}", assetBundleName));
           }
-          loadedAssetBundle = true;
+          loadedAssetBundles++;
         });
-
-      while (!loadedAssetBundle) {
-        yield return 0;
-      }
     }
+
+    while (loadedAssetBundles < _AssetBundlesToLoad.Length) {
+      yield return 0;
+    }
+
+    LoadAssets();
+  }
+
+  private void AddComponents() {
+    // Add managers to this object here
+    // gameObject.AddComponent<ManagerTypeName>();
+    gameObject.AddComponent<HockeyAppManager>();
+    gameObject.AddComponent<ObjectTagRegistryManager>();
+  }
+
+  private void LoadAssets() {
+    // TODO: Don't hardcode this?
+    AssetBundleManager.Instance.LoadAssetAsync<ShaderHolder>(CozmoAssetBundleNames.BasicUIPrefabsBundleName, 
+      "ShaderHolder", (ShaderHolder sh) => {
+      ShaderHolder.SetInstance(sh);
+    });
+    
   }
 }

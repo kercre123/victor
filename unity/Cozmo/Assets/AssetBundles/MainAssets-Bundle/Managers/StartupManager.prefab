@@ -9,7 +9,6 @@ GameObject:
   m_Component:
   - 4: {fileID: 472660}
   - 114: {fileID: 11479852}
-  - 114: {fileID: 11426774}
   m_Layer: 0
   m_Name: StartupManager
   m_TagString: Untagged
@@ -29,17 +28,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!114 &11426774
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 117198}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bdfe7272dd253496482b2e6840bf1543, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &11479852
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -51,16 +39,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba238b3d97f5a48d9a968bbb380894a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _assetBundlesToLoad:
-  - basic-ui-prefabs
+  _AssetBundlesToLoad:
   - main-scene
-  - main-assets
-  - debug-assets
-  - game-metadata
-  - minigame-data
-  - sprites/basic-ui
-  - minigame-ui-prefabs
-  - sprites/minigame-ui
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

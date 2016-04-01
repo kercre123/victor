@@ -8,33 +8,21 @@ namespace Cozmo {
 
       private const string _kAlertViewLoaderAssetName = "AlertViewLoader";
 
-      public delegate void AlertViewGetter(bool success,AlertViewLoader instance);
+      public delegate void AlertViewLoaderGetter(bool success,AlertViewLoader instance);
 
       private static AlertViewLoader _sInstance;
 
-      private static event AlertViewGetter _sGetterCallbacks;
+      private static event AlertViewLoaderGetter _sGetterCallbacks;
 
-      public static void LoadInstance(AlertViewGetter callback) {
+      public static void LoadInstance(AlertViewLoaderGetter callback) {
         if (_sInstance == null) {
           _sGetterCallbacks += callback;
-          Anki.Assets.AssetBundleManager.Instance.LoadAssetBundleAsync(CozmoAssetBundleNames.BasicUIPrefabsBundleName, 
-            HandleAssetBundleFinishedLoading);
-        }
-        else {
-          if (callback != null) {
-            callback(true, _sInstance);
-          }
-        }
-      }
-
-      private static void HandleAssetBundleFinishedLoading(bool success) {
-        if (success) {
           Anki.Assets.AssetBundleManager.Instance.LoadAssetAsync<AlertViewLoader>(CozmoAssetBundleNames.BasicUIPrefabsBundleName, 
             _kAlertViewLoaderAssetName, HandleAssetFinishedLoading);
         }
         else {
-          if (_sGetterCallbacks != null) {
-            _sGetterCallbacks(false, null);
+          if (callback != null) {
+            callback(true, _sInstance);
           }
         }
       }
