@@ -32,7 +32,9 @@ public class AnimationManager {
   public void CozmoEventRecieved(CladGameEvent cozEvent) {
     string animGroup = "";
     if (AnimationGroupDict.TryGetValue(cozEvent, out animGroup)) {
-      _CurrRobot.SendAnimationGroup(animGroup);
+      if (!string.IsNullOrEmpty(animGroup)) {
+        _CurrRobot.SendAnimationGroup(animGroup);
+      }
     }
   }
 
