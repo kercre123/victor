@@ -1,15 +1,19 @@
 ﻿using System;
 using UnityEngine;
+using UnityEditor;
 using Anki.Cozmo;
 using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using System.IO;
 
 /// <summary>
 /// Manager for calling AnimationGroups that are mapped to game events
 /// </summary>
 public class AnimationManager {
-  
+
+  AnimationEventMap _CurrentEventMap;
+
   private static AnimationManager _Instance = null;
 
   public static AnimationManager Instance { 
@@ -30,6 +34,20 @@ public class AnimationManager {
   public AnimationManager() {
     GameEventManager.Instance.OnReceiveGameEvent += CozmoEventRecieved;
     _CurrRobot = RobotEngineManager.Instance.CurrentRobot;
+  }
+
+  public void LoadAnimationMap(string path) {
+    AnimationGroupDict.Clear();
+    string json = File.ReadAllText(path);
+    _CurrentEventMap = JsonConvert.DeserializeObject<AnimationEventMap>(json, GlobalSerializerSettings.JsonSettings);
+    for (int i = 0; i < _CurrentEventMap.Pairs.Count; i++) {
+      AnimationEventMap.CladAnimPair currPair = _CurrentEventMap.Pairs[i];
+      if (!string.IsNullOrEmpty(currPair.AnimName)) {
+        if (!AnimationGroupDict.ContainsKey(currPair.CladEvent)) {
+          AnimationGroupDict.Add(currPair.CladEvent, currPair.AnimName);
+        }
+      }
+    }
   }
 
   public void CozmoEventRecieved(GameEvents cozEvent) {
