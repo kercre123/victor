@@ -2,7 +2,6 @@
 using System.Collections;
 
 namespace Cozmo {
-  [CreateAssetMenu]
   public class CubePalette : ScriptableObject {
 
     private static CubePalette _Instance;

@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 2167257659
+CRC: 4083734036
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: b7fe35ff1de7260cc0fb41ea8053fe35
+    Hash: 373440506e225438efef6103bc6e5097
   TypeTreeHash:
     serializedVersion: 2
-    Hash: 27b54c5c79dceaef18c6ea607752a8f3
+    Hash: d2cb81d40819d21ad71785192c836bb9
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -43,6 +43,10 @@ ClassTypes:
   Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 272432aff5c394666a2851200425cc59, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: db66ec8e0a2b0469a8dabccd011d0743, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: e04c1d03faf4b43ba9ac14603feefe4b, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -57,6 +61,7 @@ ClassTypes:
   Script: {instanceID: 0}
 Assets:
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/Subtitle_Light_Primary_proxy.prefab
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/AlertViewHolder.asset
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/CozmoFacePost.mat
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/Title_Dark_Secondary_proxy.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GrayscaleShader.shader
@@ -69,6 +74,7 @@ Assets:
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/Subtitle_Dark_Secondary_proxy.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/AlertViews/NoTextAlertView.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Background/Background_Tertiary_proxy.prefab
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/ShaderHolder.asset
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GradientSimpleAlphaClippingShader.shader
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/DimBackground.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/LabelHeader_Primary_proxy.prefab

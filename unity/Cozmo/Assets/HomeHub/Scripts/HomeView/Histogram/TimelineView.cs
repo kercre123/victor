@@ -423,7 +423,7 @@ namespace Cozmo.HomeHub {
 
     private void HandleEndSessionButtonTap() {
       // Open confirmation dialog instead
-      AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab);
+      AlertView alertView = UIManager.OpenView(AlertViewHolder.Instance.AlertViewPrefab);
       // Hook up callbacks
       alertView.SetCloseButtonEnabled(false);
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleEndSessionConfirm, AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoDisconnect));

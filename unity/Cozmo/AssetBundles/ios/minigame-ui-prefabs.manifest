@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 4023567029
+CRC: 1985780976
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: aae693eae3d45b126229db0ea412994d
+    Hash: cd8d4d382bcb7a79acd8d1c89cb0acf7
   TypeTreeHash:
     serializedVersion: 2
-    Hash: bd506ad8ba32dd08ba3165c4b1e97b35
+    Hash: 03037a46e32d43ca4dfa197040a1b0aa
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -21,8 +21,6 @@ ClassTypes:
   Script: {instanceID: 0}
 - Class: 84
   Script: {instanceID: 0}
-- Class: 114
-  Script: {fileID: 11500000, guid: 5be1f790cb104445592ef389f9bc14a0, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 95442a215d5084493bd1debeb942b416, type: 3}
 - Class: 114
@@ -112,7 +110,7 @@ Assets:
 - Assets/AssetBundles/UI/MinigameUIPrefabs-Bundle/HowToPlayView/HowToPlayButton.prefab
 - Assets/AssetBundles/UI/MinigameUIPrefabs-Bundle/HowToPlayView/HowToPlayView.prefab
 - Assets/AssetBundles/UI/MinigameUIPrefabs-Bundle/ChallengeEnded/ChallengeEndedDialog.prefab
-- Assets/AssetBundles/UI/MinigameUIPrefabs-Bundle/UIPrefabHolder.asset
+- Assets/AssetBundles/UI/MinigameUIPrefabs-Bundle/MinigameUIPrefabHolder.asset
 - Assets/AssetBundles/UI/MinigameUIPrefabs-Bundle/SharedMinigameView.prefab
 - Assets/AssetBundles/UI/MinigameUIPrefabs-Bundle/InMinigameUI/CozmoStatusBarSegment.prefab
 - Assets/AssetBundles/UI/MinigameUIPrefabs-Bundle/InMinigameUI/ChallengeTitleWidget.prefab

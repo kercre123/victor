@@ -236,7 +236,7 @@ public class DailyGoalManager : MonoBehaviour {
       return;
     }
     // Create alert view with Icon
-    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
+    AlertView alertView = UIManager.OpenView(AlertViewHolder.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(false);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
