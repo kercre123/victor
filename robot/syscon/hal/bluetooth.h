@@ -11,11 +11,14 @@ extern "C"
 
 #include "crypto.h"
 
+#include "clad/robotInterface/messageEngineToRobot.h"
+
 enum BLEError {
   BLE_ERROR_NONE,
   BLE_ERROR_BUFFER_UNDERFLOW,
   BLE_ERROR_MESSAGE_ENCRYPTION_WRONG,
   BLE_ERROR_BAD_FRAMING,
+  BLE_ERROR_AUTHENTICATED_FAILED,
   BLE_ERROR_NOT_AUTHENTICATED,
   BLE_ERROR_BUFFER_OVERFLOW
 };
@@ -45,6 +48,10 @@ namespace Bluetooth {
   void advertise(void);
 
   bool transmit(const uint8_t* data, int length, uint8_t id);
+
+  // These are message handlers
+  void authChallenge(const Anki::Cozmo::BLE_RecvHello& msg);
+  void enterPairing(const Anki::Cozmo::BLE_EnterPairing& msg);
 };
 
 #endif

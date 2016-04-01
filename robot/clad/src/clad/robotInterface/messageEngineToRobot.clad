@@ -293,13 +293,11 @@ union EngineToRobot
   SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
 
-  BLE_RecvHello                 bleRecvHelloMessage         = 0x25,
-  BLE_EnterPairing              bleEnterPairing             = 0x26,
-  BLE_PhoneDiffie               blePhoneDiffie              = 0x27,
+  BLE_RecvHello                 bleRecvHelloMessage         = 0x26,
+  BLE_EnterPairing              bleEnterPairing             = 0x27,
 
   BLE_SendHello                 bleSendHelloMessage         = 0x28,
   BLE_EncodedKey                bleEncodedKey               = 0x29,
-  BLE_RobotDiffie               bleRobotDiffie              = 0x2A,
 
   // 0x30 to 0x7f: To RTIP
   BootloadRTIP                  bootloadRTIP                = 0x30,

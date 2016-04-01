@@ -11,8 +11,6 @@ extern "C" {
 #include "../hal/crypto.h"
 
 // Top 16 bytes of application space
-static uint32_t* AES_KEY = (uint32_t*) 0x1EFF0;
-
 void aes_key_init() {
   for (int i = 0; i < 4; i++) {
     if (AES_KEY[i] != 0xFFFFFFFF) {

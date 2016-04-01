@@ -7,18 +7,11 @@ namespace Anki {
 namespace Cozmo {
 	// These are the diffie-hellman key exchange values
 	message BLE_EnterPairing {
-
-	}
-
-	message BLE_PhoneDiffie {
-		uint_8	random[16]
-	}
-
-	message BLE_RobotDiffie {
-		uint_8	random[16]
+		uint_8	secret[16]
 	}
 
 	message BLE_EncodedKey {
+		uint_8 secret[16],
 		uint_8 encoded_key[16]
 	}
 

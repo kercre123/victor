@@ -60,6 +60,11 @@ static BLE_CladBuffer tx_buffer;
 static bool tx_pending;
 static bool tx_buffered;
 
+static DiffieHellman dh_state = {
+  &DEFAULT_DIFFIE_GROUP,
+  &DEFAULT_DIFFIE_GENERATOR,
+};
+
 extern "C" void conn_params_error_handler(uint32_t nrf_error)
 {
   APP_ERROR_HANDLER(nrf_error);
@@ -80,15 +85,55 @@ static void permissions_error(BLEError error) {
   sd_ble_gap_disconnect(Bluetooth::conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
 }
 
+void Bluetooth::authChallenge(const Anki::Cozmo::BLE_RecvHello& msg) {
+  for (int i = 0; i < sizeof(m_nonce); i++) {
+    if (msg.nonce[i] != m_nonce[i]) {
+      permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
+      return ;
+    }
+  }
+
+  m_authenticated = true;
+}
+
+static void dh_complete(const void*) {
+  using namespace Anki::Cozmo;
+  
+  // Transmit our encryped key
+  BLE_EncodedKey msg;
+  memcpy(msg.secret, dh_state.local_secret, SECRET_LENGTH);
+  memcpy(msg.encoded_key, dh_state.encoded_key, AES_BLOCK_LENGTH);  
+  RobotInterface::SendMessage(msg);
+}
+
+void Bluetooth::enterPairing(const Anki::Cozmo::BLE_EnterPairing& msg) {  
+  using namespace Anki::Cozmo;
+  
+  // Copy in our secret code, and run
+  memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
+  
+  // Run the completed DH stack
+  CryptoTask t;
+  t.op = CRYPTO_FINISH_DIFFIE_HELLMAN;
+  t.state = &dh_state;
+  t.callback = dh_complete;
+  Crypto::execute(&t);
+
+  // Display the pin number
+  RobotInterface::DisplayNumber dn;
+  dn.value = dh_state.pin; 
+  dn.x = 32;
+  dn.y = 24;
+  RobotInterface::SendMessage(dn);
+}
+
 static bool message_encrypted(uint8_t op) {
   using namespace Anki::Cozmo::RobotInterface;
   
   // These are the only messages that may be sent unencrypted over the wire
   switch (op) {
     case EngineToRobot::Tag_bleEnterPairing:
-    case EngineToRobot::Tag_blePhoneDiffie:
     case EngineToRobot::Tag_bleEncodedKey:
-    case EngineToRobot::Tag_bleRobotDiffie:
       return false;
   }
 
@@ -101,9 +146,7 @@ static bool message_authenticated(uint8_t op) {
   // These are the only messages that may be used unauthenticated
   switch (op) {
     case EngineToRobot::Tag_bleEnterPairing:
-    case EngineToRobot::Tag_blePhoneDiffie:
     case EngineToRobot::Tag_bleEncodedKey:
-    case EngineToRobot::Tag_bleRobotDiffie:
     case EngineToRobot::Tag_bleRecvHelloMessage:
     case EngineToRobot::Tag_bleSendHelloMessage:
       return false;
@@ -294,12 +337,18 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       tx_pending = false;
       tx_buffered = false;
 
+      // Initalize our DH state
+      t.op = CRYPTO_START_DIFFIE_HELLMAN;
+      t.state = &dh_state;
+      t.callback = NULL;
+      Crypto::execute(&t);
+    
+      // Generate our welcome nonce
       static const int nonce_length = sizeof(m_nonce);
       t.op = CRYPTO_GENERATE_RANDOM;
       t.state = &m_nonce;
       t.length = (int*)&nonce_length;
       t.callback = send_welcome_message;
-
       Crypto::execute(&t);
 
       RTOS::start(task, TRANSMISSION_RATE);
