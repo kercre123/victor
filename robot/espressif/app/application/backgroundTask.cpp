@@ -236,7 +236,7 @@ extern "C" void backgroundTaskOnConnect(void)
   {
     Anki::Cozmo::RobotInterface::RobotAvailable idMsg;
     idMsg.robotID = factoryData[0];
-    idMsg.modelID = factoryData[1];
+    idMsg.modelID = factoryData[1] & 0xFFFF;
     Anki::Cozmo::RobotInterface::SendMessage(idMsg);
   }
   
