@@ -12,8 +12,8 @@ const key = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 factory.on('discovered', function(info) {
 	console.log("Located cozmo:", info.name, "(" + info.revision + ")")
 
-	//info.interface.send(message, key);
-	info.interface.send(message);
+	info.interface.send(message, key);
+	//info.interface.send(message);
 
 	info.interface.on('data', (data, encrypted) => {
 		if (encrypted) {
