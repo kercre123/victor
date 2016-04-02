@@ -97,8 +97,8 @@ public class AnimationEventEditor : EditorWindow {
     if (_CurrentEventMap != null) {
 
       _CurrentEventMapName = EditorGUILayout.TextField("File Name", _CurrentEventMapName ?? string.Empty);
-      _EventSearchField = EditorGUILayout.TextField("Search Events", _EventSearchField ?? string.Empty);
-      _AnimSearchField = EditorGUILayout.TextField("Search AnimGroups", _AnimSearchField ?? string.Empty);
+      _EventSearchField = EditorGUILayout.TextField("Filter CLAD Events", _EventSearchField ?? string.Empty);
+      _AnimSearchField = EditorGUILayout.TextField("Filter Animation Groups", _AnimSearchField ?? string.Empty);
       FilterAnimFields();
       DrawEventMap(_CurrentEventMap);
     }
