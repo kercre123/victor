@@ -51,12 +51,13 @@ static void dh_encode_random(big_num_t& result, int pin, const uint8_t* random) 
 
 static void dh_start(DiffieHellman* dh) {
   // Generate our secret
-  Crypto::random(dh->secret, SECRET_LENGTH);
+  Crypto::random(&dh->pin, sizeof(dh->pin));
+  Crypto::random(dh->local_secret, SECRET_LENGTH);
 
   // Encode our secret as an exponent
   big_num_t secret;
 
-  dh_encode_random(secret, dh->pin, dh->secret);
+  dh_encode_random(secret, dh->pin, dh->local_secret);
   mont_power(*dh->mont, dh->state, *dh->gen, secret);
 }
 
@@ -65,14 +66,21 @@ static void dh_finish(DiffieHellman* dh) {
   big_num_t temp;
 
   temp.negative = false;
-  temp.used = sizeof(dh->secret) / sizeof(big_num_cell_t);
-  memcpy(temp.digits, dh->secret, sizeof(dh->secret));
+  temp.used = sizeof(dh->remote_secret) / sizeof(big_num_cell_t);
+  memcpy(temp.digits, dh->remote_secret, sizeof(dh->remote_secret));
 
   mont_power(*dh->mont, dh->state, dh->state, temp);
   mont_from(*dh->mont, temp, dh->state);
 
   // Override the secret with 
-  memcpy(dh->secret, temp.digits, sizeof(dh->secret));
+  nrf_ecb_hal_data_t ecb;
+  
+  memcpy(ecb.key, temp.digits, AES_KEY_LENGTH);
+  memcpy(ecb.cleartext, AES_KEY, AES_BLOCK_LENGTH);
+  
+  aes_ecb(&ecb);
+
+  memcpy(dh->encoded_key, ecb.ciphertext, AES_BLOCK_LENGTH);
 }
 
 void Crypto::init() {
@@ -146,16 +154,16 @@ void Crypto::manage(void) {
 
   switch (task->op) {
     case CRYPTO_GENERATE_RANDOM:
-      random((uint8_t*)task->state, task->length);
+      random((uint8_t*)task->state, *task->length);
       break ;
     case CRYPTO_ECB:
       aes_ecb((nrf_ecb_hal_data_t*) task->state);
       break ;
     case CRYPTO_AES_DECODE:
-      aes_decode((uint8_t*) task->state, task->length);
+      *task->length = aes_decode((uint8_t*) task->state, *task->length);
       break ;
     case CRYPTO_AES_ENCODE:
-      aes_encode((uint8_t*) task->state, task->length);
+      *task->length = aes_encode((uint8_t*) task->state, *task->length);
       break ;
     case CRYPTO_START_DIFFIE_HELLMAN:
       dh_start((DiffieHellman*) task->state);

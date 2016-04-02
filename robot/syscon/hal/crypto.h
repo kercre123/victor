@@ -31,8 +31,10 @@ struct DiffieHellman {
   const big_num_t*  gen;
   
   int               pin;
-  uint8_t           secret[MAX(SECRET_LENGTH, AES_KEY_LENGTH)];
-
+  uint8_t           local_secret[MAX(SECRET_LENGTH, AES_KEY_LENGTH)];
+  uint8_t           remote_secret[MAX(SECRET_LENGTH, AES_KEY_LENGTH)];
+  uint8_t           encoded_key[AES_KEY_LENGTH];
+  
   big_num_t         state;
 };
 
@@ -42,7 +44,7 @@ struct CryptoTask {
   CryptoOperation op;
   crypto_callback callback;
   const void *state;
-  int length;
+  int* length;
 };
 
 namespace Crypto {
