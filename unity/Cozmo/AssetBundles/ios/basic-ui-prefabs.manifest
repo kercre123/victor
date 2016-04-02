@@ -1,12 +1,12 @@
 ManifestFileVersion: 0
-CRC: 1160056315
+CRC: 913822848
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: e4e3866664c85363d1ff69e295ed567c
+    Hash: d0664f0e2e07964e41d3ff11787af509
   TypeTreeHash:
     serializedVersion: 2
-    Hash: d2cb81d40819d21ad71785192c836bb9
+    Hash: 0a3ddda4b351f8cdd69aef4abc685dda
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -34,19 +34,19 @@ ClassTypes:
 - Class: 114
   Script: {fileID: 11500000, guid: 85cd9fd3aa63043d096ef878f6a2c553, type: 3}
 - Class: 114
+  Script: {fileID: 11500000, guid: 5b3fc0c5e9f534d109d440955e9c3d30, type: 3}
+- Class: 114
   Script: {fileID: 11500000, guid: e0d25789f3e324c0a846a644a77184ac, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: a41bbe99256a64d469e220319b895431, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: db66ec8e0a2b0469a8dabccd011d0743, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 9844201f93af34ea3b97dcf3bd6287d8, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
 - Class: 114
   Script: {fileID: 11500000, guid: 272432aff5c394666a2851200425cc59, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: db66ec8e0a2b0469a8dabccd011d0743, type: 3}
-- Class: 114
-  Script: {fileID: 11500000, guid: 5b3fc0c5e9f534d109d440955e9c3d30, type: 3}
 - Class: 115
   Script: {instanceID: 0}
 - Class: 128
@@ -60,8 +60,10 @@ ClassTypes:
 - Class: 225
   Script: {instanceID: 0}
 Assets:
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/DefaultMaterial.mat
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/Subtitle_Light_Primary_proxy.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/CozmoFacePost.mat
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/AnimatedGlintMaterial.mat
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/Title_Dark_Secondary_proxy.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GrayscaleShader.shader
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/ParagraphText_Large_proxy.prefab
@@ -76,6 +78,7 @@ Assets:
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Background/Background_Tertiary_proxy.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/ShaderHolder.asset
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GradientSimpleAlphaClippingShader.shader
+- Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/DefaultMaterial.png
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/DimBackground.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/UIProxys/Text/LabelHeader_Primary_proxy.prefab
 - Assets/AssetBundles/UI/BasicUIPrefabs-Bundle/SpecialEffects/GradientSimpleAlphaClippingScreenspaceShader.shader

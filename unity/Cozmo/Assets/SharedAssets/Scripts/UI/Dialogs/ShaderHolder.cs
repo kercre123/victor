@@ -14,6 +14,12 @@ namespace Cozmo {
     public static ShaderHolder Instance {
       get { return _sInstance; }
     }
+
+    [SerializeField]
+    private Material _DefaultMaterial;
+
+    public Material DefaultMaterial {
+      get { return _DefaultMaterial; }
     }
 
     [SerializeField]
