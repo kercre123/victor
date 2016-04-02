@@ -28,6 +28,8 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+
 #include <anki/messaging/basestation/IComms.h>
 #include <anki/messaging/basestation/advertisementService.h>
 
@@ -93,6 +95,12 @@ namespace Anki {
       {
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
+        
+        if (nullptr != _devLoggingSystem)
+        {
+          _devLoggingSystem->LogMessage(message);
+        }
+        
         p.dataLen = message.Size();
         p.destId = _hostUiDeviceID;
         _uiComms->Send(p);
@@ -107,6 +115,11 @@ namespace Anki {
                           "Buffer's size does not match expected size for this message ID. (Msg " << ExternalInterface::MessageGameToEngineTagToString(message.GetTag()) << ", expected " << message.Size() << ", recvd " << packet.dataLen << ")");
         
         return RESULT_FAIL;
+      }
+      
+      if (nullptr != _devLoggingSystem)
+      {
+        _devLoggingSystem->LogMessage(message);
       }
       
       // Send out this message to anyone that's subscribed

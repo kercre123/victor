@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/messaging/basestation/IChannel.h"
 #include "anki/messaging/basestation/IComms.h"
@@ -51,6 +52,11 @@ Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface
 {
   if (_isInitialized)
   {
+    if (nullptr != _devLoggingSystem)
+    {
+      _devLoggingSystem->LogMessage(msg);
+    }
+    
     Comms::OutgoingPacket p;
     p.bufferSize = (uint32_t)msg.Pack(p.buffer, p.MAX_SIZE);
     p.destId = robotId;
@@ -126,6 +132,11 @@ void MessageHandler::ProcessPacket(const Comms::IncomingPacket& packet)
     PRINT_NAMED_ERROR("RobotMessageHandler.MessageUnpack", "Message unpack error, tag %02x expecting %d but have %d",
                       msgID, static_cast<int>(unpackSize), packet.bufferSize);
     return;
+  }
+  
+  if (nullptr != _devLoggingSystem)
+  {
+    _devLoggingSystem->LogMessage(message);
   }
 
   Broadcast(robotID, std::move(message));

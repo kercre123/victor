@@ -30,11 +30,15 @@ namespace Cozmo {
 
 class DevLoggingSystem : Util::noncopyable {
 public:
-  DevLoggingSystem(const std::string& baseDirectory);
+  DevLoggingSystem();
   virtual ~DevLoggingSystem();
   
   template<typename MsgType>
   void LogMessage(const MsgType& message);
+  
+  static const std::chrono::system_clock::time_point& GetAppRunStartTime() { return kAppRunStartTime; }
+  static void SetDevLoggingBaseDirectory(const std::string& directory) { kDevLoggingBaseDirectory = directory; }
+  static const std::string& GetDevLoggingBaseDirectory() { return kDevLoggingBaseDirectory; }
   
 private:
   std::unique_ptr<Util::RollingFileLogger>    _gameToEngineLog;
@@ -47,6 +51,9 @@ private:
   template<typename MsgType>
   std::string PrepareMessage(const MsgType& message);
   
+  static const std::chrono::system_clock::time_point kAppRunStartTime;
+  
+  static std::string kDevLoggingBaseDirectory;
 };
 
 } // end namespace Cozmo

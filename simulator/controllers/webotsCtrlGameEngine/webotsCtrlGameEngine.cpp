@@ -14,9 +14,13 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/sosLoggerProvider.h"
+#include "util/logging/saveToFileLoggerProvider.h"
 #include "util/logging/multiFormattedLoggerProvider.h"
+#include "util/logging/rollingFileLogger.h"
+#include "util/global/globalDefinitions.h"
 
 #include "util/time/stopWatch.h"
 
@@ -79,10 +83,7 @@ using namespace Anki::Cozmo;
 
 
 int main(int argc, char **argv)
-{  
-  Anki::Util::MultiFormattedLoggerProvider loggerProvider({new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN)});
-  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
-  Anki::Util::gLoggerProvider = &loggerProvider;
+{
   // Get the last position of '/'
   std::string aux(argv[0]);
 #if defined(_WIN32) || defined(WIN32)
@@ -98,6 +99,21 @@ int main(int argc, char **argv)
   std::string cachePath = path + "temp";
   std::string externalPath = path + "temp";
   Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  
+#if ANKI_DEV_CHEATS
+  std::string appRunTimeString = Util::RollingFileLogger::GetDateTimeString(DevLoggingSystem::GetAppRunStartTime());
+  DevLoggingSystem::SetDevLoggingBaseDirectory(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, appRunTimeString));
+#endif
+  
+  Anki::Util::MultiFormattedLoggerProvider loggerProvider({
+    new Util::SosLoggerProvider()
+    , new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN)
+#if ANKI_DEV_CHEATS
+    , new Util::SaveToFileLoggerProvider(DevLoggingSystem::GetDevLoggingBaseDirectory() + "/print")
+#endif
+  });
+  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+  Anki::Util::gLoggerProvider = &loggerProvider;
 
   // Start with a step so that we can attach to the process here for debugging
   basestationController.step(BS_TIME_STEP);

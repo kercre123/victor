@@ -38,6 +38,7 @@ namespace Anki {
     class Robot;
     class RobotManager;
     class MultiClientComms;
+    class DevLoggingSystem;
     
     class UiMessageHandler : public IExternalInterface
     {
@@ -66,6 +67,8 @@ namespace Anki {
       AnkiEventMgr<ExternalInterface::MessageGameToEngine>& GetEventMgrToEngine() { return _eventMgrToEngine; }
       
       bool HasDesiredNumUiDevices() const { return _hasDesiredUiDevices; }
+      
+      void SetDevLoggingSystem(DevLoggingSystem* devLogging) { _devLoggingSystem = devLogging; }
       
     protected:
       
@@ -96,6 +99,8 @@ namespace Anki {
       
       AnkiEventMgr<ExternalInterface::MessageEngineToGame> _eventMgrToGame;
       AnkiEventMgr<ExternalInterface::MessageGameToEngine> _eventMgrToEngine;
+      
+      DevLoggingSystem* _devLoggingSystem = nullptr;
       
     }; // class MessageHandler
     

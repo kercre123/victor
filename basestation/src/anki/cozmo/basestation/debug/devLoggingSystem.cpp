@@ -9,10 +9,15 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+std::string DevLoggingSystem::kDevLoggingBaseDirectory = "";
+  
+const std::chrono::system_clock::time_point DevLoggingSystem::kAppRunStartTime = std::chrono::system_clock::now();
 
-DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory)
+DevLoggingSystem::DevLoggingSystem()
   : _startTime(std::chrono::system_clock::now())
 {
+  std::string baseDirectory = GetDevLoggingBaseDirectory();
   auto getPathString = [baseDirectory] (const std::string& path) -> std::string
   {
     std::ostringstream pathStream;
