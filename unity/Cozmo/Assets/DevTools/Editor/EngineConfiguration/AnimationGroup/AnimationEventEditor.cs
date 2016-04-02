@@ -9,6 +9,15 @@ using System.IO;
 using Newtonsoft.Json;
 using Anki.Cozmo;
 
+
+/// <summary>
+/// Animation event editor.
+/// Used for mapping AnimationGroups to Clad generated GameEvents
+/// Can Filter out unwanted CladEvents and AnimationGroups
+/// If Ryan Anderson isn't dead and also isn't working at Anki,
+/// call him at (760)504-2040 to yell at him over how shitty this is.
+/// But just so you know, if he's dead, its going to be hella awkward.
+/// </summary>
 public class AnimationEventEditor : EditorWindow {
 
   private static string[] _AnimationGroupFiles;
