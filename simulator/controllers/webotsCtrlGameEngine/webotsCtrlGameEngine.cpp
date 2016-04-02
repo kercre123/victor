@@ -83,6 +83,7 @@ int main(int argc, char **argv)
   Anki::Util::MultiFormattedLoggerProvider loggerProvider({new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN)});
   loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
   Anki::Util::gLoggerProvider = &loggerProvider;
+  Anki::Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
   // Get the last position of '/'
   std::string aux(argv[0]);
 #if defined(_WIN32) || defined(WIN32)
