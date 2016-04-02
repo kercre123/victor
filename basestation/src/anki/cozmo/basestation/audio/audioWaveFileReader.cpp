@@ -20,7 +20,7 @@ namespace Audio {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioWaveFileReader::~AudioWaveFileReader()
 {
-  ClearCallChachedWaveData();
+  ClearAllCachedWaveData();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -51,8 +51,8 @@ bool AudioWaveFileReader::LoadWaveFile(const std::string& filePath)
   }
   
   // Only read expected .wav file types
-  success = memcmp(header.Riff, "RIFF", 4) == 0;
-  success = success && (memcmp(header.Wave, "WAVE", 4) == 0);
+  success = memcmp(header.riff, "RIFF", 4) == 0;
+  success = success && (memcmp(header.wave, "WAVE", 4) == 0);
   if ( !success ) {
     PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "File is not RIFF WAVE format");
     fclose(wavFile);
@@ -60,7 +60,7 @@ bool AudioWaveFileReader::LoadWaveFile(const std::string& filePath)
   }
   
   // Only read .wav files where the data is directly behind the format sub-chunk
-  success = (memcmp(header.DataChunkId, "data", 4) == 0);
+  success = (memcmp(header.dataChunkId, "data", 4) == 0);
   if ( !success ) {
     PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Data chunk is not where it's expected");
     fclose(wavFile);
@@ -68,7 +68,7 @@ bool AudioWaveFileReader::LoadWaveFile(const std::string& filePath)
   }
   
   // Check .wav file audio format
-  success = header.AudioFormat == AudioFormatType::PCM;
+  success = header.audioFormat == AudioFormatType::PCM;
   if ( !success ) {
     PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Wave file is NOT PCM format");
     fclose(wavFile);
@@ -87,14 +87,15 @@ bool AudioWaveFileReader::LoadWaveFile(const std::string& filePath)
   }
   
   // Create Standard Buffer to write formated data into
-  StandardWaveDataContainer* standardData = new StandardWaveDataContainer( header.SamplesPerSec,
-                                                                           header.NumberOfChannels,
+  StandardWaveDataContainer* standardData = new StandardWaveDataContainer( header.samplesPerSec,
+                                                                           header.numberOfChannels,
                                                                            header.CalculateDuration_ms(),
                                                                            header.CalculateNumberOfStandardSamples() );
   success = standardData->HasBuffer();
   if ( !success ) {
     PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Failed to alloc Standard Audio Data Buffer!");
-    delete standardData;
+    Util::SafeDeleteArray( sourceBuffer );
+    Util::SafeDelete( standardData );
     fclose(wavFile);
     return false;
   }
@@ -102,25 +103,28 @@ bool AudioWaveFileReader::LoadWaveFile(const std::string& filePath)
   // Read audio data from disk
   size_t sourceDataIdx = 0;
   size_t standardDataIdx = 0;
-  size_t samplesPerChannel = standardData->BufferSize / standardData->NumberOfChannels;
+  size_t samplesPerChannel = standardData->bufferSize / standardData->numberOfChannels;
   // Read the file in chunks
-  while ( sourceDataIdx < header.DataChunkSize ) {
+  while ( sourceDataIdx < header.dataChunkSize ) {
     // Read bytes form file
-    size_t readsize = std::min( sourceBufferSize, (static_cast<size_t>(header.DataChunkSize) - sourceDataIdx) );
+    size_t readsize = std::min( sourceBufferSize, (static_cast<size_t>(header.dataChunkSize) - sourceDataIdx) );
     bytesRead = fread(sourceBuffer, 1, readsize, wavFile);
     sourceDataIdx += bytesRead;
     
     // Write audio sample into Standard format
-    float* standardDataPointer = (standardData->AudioBuffer + standardDataIdx);
+    float* standardDataPointer = (standardData->audioBuffer + standardDataIdx);
     standardDataIdx += ConvertPCMDataStream( header, sourceBuffer, bytesRead, samplesPerChannel, standardDataPointer );
   }
   
-  ASSERT_NAMED(standardDataIdx == standardData->BufferSize, ("Didn't store samples correctly - SampleCount " +
+  ASSERT_NAMED(standardDataIdx == standardData->bufferSize, ("Didn't store samples correctly - SampleCount " +
                                                              std::to_string(standardDataIdx) +
                                                              " | TotalSamples "
                                                              + std::to_string(standardDataIdx)).c_str());
   
   _cachedWaveData[ filePath ] = standardData;
+  
+  // Clean up
+  Util::SafeDeleteArray( sourceBuffer );
   
    return true;
 }
@@ -137,7 +141,7 @@ const AudioWaveFileReader::StandardWaveDataContainer* AudioWaveFileReader::GetCa
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioWaveFileReader::ClearChachedWaveDataWithKey( const std::string& key )
+void AudioWaveFileReader::ClearCachedWaveDataWithKey( const std::string& key )
 {
   const auto it = _cachedWaveData.find( key );
   if ( it != _cachedWaveData.end() ) {
@@ -147,7 +151,7 @@ void AudioWaveFileReader::ClearChachedWaveDataWithKey( const std::string& key )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioWaveFileReader::ClearCallChachedWaveData()
+void AudioWaveFileReader::ClearAllCachedWaveData()
 {
   for ( auto& anItem : _cachedWaveData ) {
     delete anItem.second;
@@ -163,10 +167,10 @@ size_t AudioWaveFileReader::ConvertPCMDataStream( WaveHeader& waveHeader,
                                                   float* out_standardBuffer )
 {
   // Convert wave data into standard format, float 32-bit  normalize into range [-1.0, 1.0]
-  ASSERT_NAMED(waveHeader.BitsPerSample == 16, "Only read signed 16-bit .wav files");
-  ASSERT_NAMED(waveHeader.NumberOfChannels == 1, "Only read single channel .wav files");
+  ASSERT_NAMED(waveHeader.bitsPerSample == 16, "Only read signed 16-bit .wav files");
+  ASSERT_NAMED(waveHeader.numberOfChannels == 1, "Only read single channel .wav files");
   
-  uint bytesPerSample  = waveHeader.BitsPerSample / 8;
+  uint bytesPerSample  = waveHeader.bitsPerSample / 8;
   const size_t sampleCount = sourceBuffSize / bytesPerSample;
   
   // Convert 2 bytes into uint16

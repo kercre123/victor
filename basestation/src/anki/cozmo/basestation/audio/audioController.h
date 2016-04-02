@@ -21,8 +21,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include "anki/cozmo/basestation/soundManager.h"
-
 #define HijackAudioPlugInDebugLogs 0
 
 namespace AudioEngine {
@@ -134,9 +132,6 @@ private:
   // Clean up call back messages
   void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );
   void ClearGarbageCollector();
-  
-  
-//  SoundManager* _soundMng;
   
   
   // Debug Cozmo PlugIn Logs

@@ -24,8 +24,6 @@
 
 #include "anki/cozmo/basestation/audio/audioWaveFileReader.h"
 
-
-
 #if HijackAudioPlugInDebugLogs
 #include "util/time/universalTime.h"
 #endif
@@ -37,10 +35,7 @@
 #define USE_AUDIO_ENGINE 1
 #include "DriveAudioEngine/audioEngineController.h"
 #include "DriveAudioEngine/PlugIns/hijackAudioPlugIn.h"
-
 #include "DriveAudioEngine/PlugIns/wavePortalPlugIn.h"
-#include "wavePortalFxTypes.h"
-
 #else
 
 // If we're excluding the audio libs, don't link any of the audio engine
@@ -116,27 +111,42 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
   // TEST Playing Audio File
   /*
   _reader = new AudioWaveFileReader;
-  const std::string testWavFilePath = dataPlatfrom->pathToResource( Util::Data::Scope::Resources, "assets/testAudio/NewSineEdit.wav" ); // out2 //NewSine.wav
+  const std::string testWavFilePath = dataPlatfrom->pathToResource( Util::Data::Scope::Resources, "assets/testAudio/out2.wav" ); // out2 //NewSine.wav
   _reader->LoadWaveFile(testWavFilePath);
   const AudioWaveFileReader::StandardWaveDataContainer* data = nullptr;
   data = _reader->GetCachedWaveDataWithKey(testWavFilePath);
   
   if ( data != nullptr ) {
     // This temp
-    AudioDataProxy* dataProxy = new AudioDataProxy( data->SampleRate,
-                                                    data->NumberOfChannels,
-                                                    data->Duration_ms,
-                                                    data->AudioBuffer,
-                                                    static_cast<uint32_t>( data->BufferSize ) );
-    _wavePortalPlugIn->SetAudioDataProxy( dataProxy );
+    _wavePortalPlugIn->SetAudioDataInfo( data->sampleRate,
+                                         data->numberOfChannels,
+                                         data->duration_ms,
+                                         data->audioBuffer,
+                                         static_cast<uint32_t>( data->bufferSize ) );
     
     // FIXME: TEST Playing Wave
-    Util::Dispatch::After(_dispatchQueue, std::chrono::milliseconds( 4000 ), [this]() {
-      _audioEngine->PostEvent("PLAY_TEST_WAVE_SOURCE", 1);
+    Util::Dispatch::After(_dispatchQueue, std::chrono::milliseconds( 8000 ), [this, testWavFilePath]() {
+      
+      AudioCallbackContext* callbackContext = new AudioCallbackContext();
+      // Set callback flags
+      callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
+      // Register callbacks for event
+      PRINT_NAMED_INFO("AudioController.TEST_WavePortal", "Post Event");
+      callbackContext->SetEventCallbackFunc( [this, testWavFilePath]
+                                            ( const AudioCallbackContext* thisContext,
+                                              const AudioEngine::AudioCallbackInfo& callbackInfo )
+      {
+        PRINT_NAMED_INFO("AudioController.TEST_WavePortal",
+                         "Event Complete Clear Cache:\n%s", callbackInfo.GetDescription().c_str());
+        _reader->ClearCachedWaveDataWithKey(testWavFilePath);
+      });
+      
+      _audioEngine->PostEvent("DEV_EXTERNAL_DEVICE_PLAY", 1, callbackContext);
+      
     });
-
   }
-   */
+  */
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
