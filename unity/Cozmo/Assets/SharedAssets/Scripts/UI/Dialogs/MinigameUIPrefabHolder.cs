@@ -5,15 +5,14 @@ namespace Cozmo {
   namespace UI {
     public class MinigameUIPrefabHolder : ScriptableObject {
 
-      private static MinigameUIPrefabHolder _Instance;
+      private static MinigameUIPrefabHolder _sInstance;
+
+      public static void SetInstance(MinigameUIPrefabHolder instance) {
+        _sInstance = instance;
+      }
 
       public static MinigameUIPrefabHolder Instance {
-        get {
-          if (_Instance == null) {
-            _Instance = Resources.Load<MinigameUIPrefabHolder>("Prefabs/UI/UIPrefabHolder");
-          }
-          return _Instance;
-        }
+        get { return _sInstance; }
       }
 
       [SerializeField]

@@ -45,23 +45,17 @@ namespace Cozmo {
       }
 
       private void HandleQuitButtonTap() {
-        AlertViewLoader.LoadInstance(CreateAlertView);
-      }
-
-      private void CreateAlertView(bool success, AlertViewLoader alertViewLoader) {
-        if (success) {
-          // Open confirmation dialog instead
-          AlertView alertView = UIManager.OpenView(alertViewLoader.AlertViewPrefab);
-          // Hook up callbacks
-          alertView.SetCloseButtonEnabled(true);
-          alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleQuitConfirmed);
-          alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleQuitCancelled);
-          alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
-          alertView.DescriptionLocKey = LocalizationKeys.kMinigameQuitViewDescription;
-          // Listen for dialog close
-          alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
-          _ConfimedQuit = false;
-        }
+        // Open confirmation dialog instead
+        AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+        // Hook up callbacks
+        alertView.SetCloseButtonEnabled(true);
+        alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleQuitConfirmed);
+        alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleQuitCancelled);
+        alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
+        alertView.DescriptionLocKey = LocalizationKeys.kMinigameQuitViewDescription;
+        // Listen for dialog close
+        alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
+        _ConfimedQuit = false;
       }
 
       private void HandleQuitViewClosed() {

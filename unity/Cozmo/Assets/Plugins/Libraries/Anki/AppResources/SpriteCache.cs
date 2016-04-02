@@ -1,10 +1,10 @@
 using UnityEngine;
 using System;
 
-namespace Anki.AppResources
-{
+namespace Anki.AppResources {
   public static partial class SpriteCache {
 
+    // TODO: Not used?
     public static Sprite LoadSprite(string path) {
       Sprite sprite = Resources.Load<Sprite>(path);
       return sprite;
@@ -16,4 +16,4 @@ namespace Anki.AppResources
 
   }
 }
- // namespace Anki.AppResources
+// namespace Anki.AppResources

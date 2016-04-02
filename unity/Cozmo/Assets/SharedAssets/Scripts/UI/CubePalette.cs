@@ -4,15 +4,14 @@ using System.Collections;
 namespace Cozmo {
   public class CubePalette : ScriptableObject {
 
-    private static CubePalette _Instance;
+    private static CubePalette _sInstance;
+
+    public static void SetInstance(CubePalette instance) {
+      _sInstance = instance;
+    }
 
     public static CubePalette Instance {
-      get {
-        if (_Instance == null) {
-          _Instance = Resources.Load<CubePalette>("Prefabs/UI/CubePalette");
-        }
-        return _Instance;
-      }
+      get { return _sInstance; }
     }
 
     [SerializeField]

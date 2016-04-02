@@ -6,35 +6,14 @@ namespace Cozmo {
     [CreateAssetMenu]
     public class AlertViewLoader : ScriptableObject {
 
-      private const string _kAlertViewLoaderAssetName = "AlertViewLoader";
-
-      public delegate void AlertViewLoaderGetter(bool success,AlertViewLoader instance);
-
       private static AlertViewLoader _sInstance;
 
-      private static event AlertViewLoaderGetter _sGetterCallbacks;
-
-      public static void LoadInstance(AlertViewLoaderGetter callback) {
-        if (_sInstance == null) {
-          _sGetterCallbacks += callback;
-          Anki.Assets.AssetBundleManager.Instance.LoadAssetAsync<AlertViewLoader>(CozmoAssetBundleNames.BasicUIPrefabsBundleName, 
-            _kAlertViewLoaderAssetName, HandleAssetFinishedLoading);
-        }
-        else {
-          if (callback != null) {
-            callback(true, _sInstance);
-          }
-        }
+      public static void SetInstance(AlertViewLoader instance) {
+        _sInstance = instance;
       }
 
-      private static void HandleAssetFinishedLoading(AlertViewLoader loader) {
-        // TODO: Handle loader == null?
-        if (loader != null) {
-          _sInstance = loader;
-          if (_sGetterCallbacks != null) {
-            _sGetterCallbacks(true, _sInstance);
-          }
-        }
+      public static AlertViewLoader Instance {
+        get { return _sInstance; }
       }
 
       [SerializeField]

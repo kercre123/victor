@@ -422,20 +422,14 @@ namespace Cozmo.HomeHub {
     #region End Session
 
     private void HandleEndSessionButtonTap() {
-      AlertViewLoader.LoadInstance(CreateAlertView);
-    }
-
-    private void CreateAlertView(bool success, AlertViewLoader alertViewLoader) {
-      if (success) {
-        // Open confirmation dialog instead
-        AlertView alertView = UIManager.OpenView(alertViewLoader.AlertViewPrefab);
-        // Hook up callbacks
-        alertView.SetCloseButtonEnabled(false);
-        alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleEndSessionConfirm, AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoDisconnect));
-        alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleEndSessionCancel);
-        alertView.TitleLocKey = LocalizationKeys.kEndSessionTitle;
-        alertView.DescriptionLocKey = LocalizationKeys.kEndSessionDescription;
-      }
+      // Open confirmation dialog instead
+      AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+      // Hook up callbacks
+      alertView.SetCloseButtonEnabled(false);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleEndSessionConfirm, AudioEventParameter.SFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CozmoDisconnect));
+      alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleEndSessionCancel);
+      alertView.TitleLocKey = LocalizationKeys.kEndSessionTitle;
+      alertView.DescriptionLocKey = LocalizationKeys.kEndSessionDescription;
     }
 
     private void HandleEndSessionCancel() {
