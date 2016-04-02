@@ -757,14 +757,6 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_blePhoneDiffie(Anki::Cozmo::BLE_PhoneDiffie const&)
-      {
-        // Nothing to do here
-      }
-      void Process_bleRobotDiffie(Anki::Cozmo::BLE_RobotDiffie const&)
-      {
-        // Nothing to do here
-      }
       void Process_bleEnterPairing(Anki::Cozmo::BLE_EnterPairing const&)
       {
         // Nothing to do here
