@@ -22,6 +22,7 @@ public class AnimationEventEditor : EditorWindow {
   private static AnimationEventMap _CurrentEventMap;
   private static string _CurrentEventMapFile;
   private static string _CurrentEventMapName;
+  private static string _EventSearchField = "";
 
   private static Vector2 _scrollPos = new Vector2();
 
@@ -94,6 +95,7 @@ public class AnimationEventEditor : EditorWindow {
     if (_CurrentEventMap != null) {
 
       _CurrentEventMapName = EditorGUILayout.TextField("Name", _CurrentEventMapName ?? string.Empty);
+      _EventSearchField = EditorGUILayout.TextField("Search Events", _EventSearchField ?? string.Empty);
 
       DrawEventMap(_CurrentEventMap);
     }
@@ -194,9 +196,12 @@ public class AnimationEventEditor : EditorWindow {
 
   public AnimationEventMap.CladAnimPair DrawCladEventEntry(AnimationEventMap.CladAnimPair pair) {
     EditorGUILayout.BeginHorizontal();
-    pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup(pair.CladEvent.ToString(), Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];
-    if (GUILayout.Button("X", GUILayout.Width(30))) {
-      pair.AnimName = "";
+    string eventName = pair.CladEvent.ToString();
+    if (string.IsNullOrEmpty(_EventSearchField) || eventName.Contains(_EventSearchField)) {
+      pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup(eventName, Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];
+      if (GUILayout.Button("X", GUILayout.Width(30))) {
+        pair.AnimName = "";
+      }
     }
     EditorGUILayout.EndHorizontal();
     return pair;
