@@ -139,7 +139,6 @@ namespace Cozmo {
     using ActionResultCallback = std::function<bool(ActionResult result)>;
     
     void StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
-    void SetDriveToObjectSounds(IDriveToInteractWithObject* action);
     
     State _currentState;
     bool  _interrupted;

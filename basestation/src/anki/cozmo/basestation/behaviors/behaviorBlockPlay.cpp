@@ -448,7 +448,6 @@ namespace Cozmo {
                                                    true,
                                                    approachAngle_rad);
         }
-        SetDriveToObjectSounds(rollAction);
         StartActing(robot, rollAction);
         break;
       }
@@ -499,7 +498,6 @@ namespace Cozmo {
             DriveToPickupObjectAction* pickupAction = new DriveToPickupObjectAction(robot,
                                                                                     _objectToPickUp,
                                                                                     _motionProfile);
-            SetDriveToObjectSounds(pickupAction);
             StartActing(robot, pickupAction);
 
             PRINT_NAMED_INFO("BehaviorBlockPlay.UpdateInternal.Pickup.Drive",
@@ -528,7 +526,6 @@ namespace Cozmo {
         DriveToPlaceOnObjectAction* placeAction = new DriveToPlaceOnObjectAction(robot,
                                                                                  _objectToPlaceOn,
                                                                                  _motionProfile);
-        SetDriveToObjectSounds(placeAction);
         StartActing(robot, placeAction);
         break;
       }
@@ -1845,21 +1842,6 @@ namespace Cozmo {
     else {
       robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
     }
-  }
-  
-  void BehaviorBlockPlay::SetDriveToObjectSounds(IDriveToInteractWithObject* action)
-  {
-    // Set sounds based on whether this is the first try or not
-    if(_attemptCounter == 0) {
-      action->SetSounds("ID_AlignToObject_Content_Start",
-                        "ID_AlignToObject_Content_Drive",
-                        "ID_AlignToObject_Content_Stop");
-    } else {
-      action->SetSounds("ID_AlignToObject_Frustrated_Start",
-                        "ID_AlignToObject_Frustrated_Drive",
-                        "ID_AlignToObject_Frustrated_Stop");
-    }
-    // TODO: More granularity in frustration level? (Hopefully don't need it; few failures!)
   }
 
   

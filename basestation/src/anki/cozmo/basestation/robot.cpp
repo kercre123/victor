@@ -827,9 +827,8 @@ namespace Anki {
       //////// Update Robot's State Machine /////////////
       Result actionResult = _actionList.Update();
       if(actionResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.", GetID());
-      }
-        
+        PRINT_NAMED_INFO("Robot.Update", "Robot %d had an action fail.", GetID());
+      }        
       //////// Stream Animations /////////
       if(_timeSynced) { // Don't stream anything before we've connected
         Result animStreamResult = _animationStreamer.Update(*this);
@@ -996,14 +995,15 @@ namespace Anki {
       // So we can have an arbitrary number of data here that is likely to change want just hash it all
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
-               "r:%c%c%c%c lock:%c%c%c %2dHz %s ",
+               "r:%c%c%c%c <%8s> %2dHz %s ",
                GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
                GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
                GetMoveComponent().IsMoving() ? 'B' : ' ',
                IsCarryingObject() ? 'C' : ' ',
-               _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
-               _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
-               _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
+               SimpleMoodTypeToString(GetMoodManager().GetSimpleMood()),
+               // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+               // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+               // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
                (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
                behaviorDebugStr.c_str());
       
