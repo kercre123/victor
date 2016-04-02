@@ -14,6 +14,7 @@ public class AnimationEventEditor : EditorWindow {
   private static string[] _AnimationGroupFiles;
 
   private static string[] _AnimationGroupNameOptions;
+  private static string[] _FilteredAnimationOptions;
 
   private static string[] _EventMapFiles;
 
@@ -23,6 +24,7 @@ public class AnimationEventEditor : EditorWindow {
   private static string _CurrentEventMapFile;
   private static string _CurrentEventMapName;
   private static string _EventSearchField = "";
+  private static string _AnimSearchField = "";
 
   private static Vector2 _scrollPos = new Vector2();
 
@@ -94,11 +96,24 @@ public class AnimationEventEditor : EditorWindow {
 
     if (_CurrentEventMap != null) {
 
-      _CurrentEventMapName = EditorGUILayout.TextField("Name", _CurrentEventMapName ?? string.Empty);
+      _CurrentEventMapName = EditorGUILayout.TextField("File Name", _CurrentEventMapName ?? string.Empty);
       _EventSearchField = EditorGUILayout.TextField("Search Events", _EventSearchField ?? string.Empty);
-
+      _AnimSearchField = EditorGUILayout.TextField("Search AnimGroups", _AnimSearchField ?? string.Empty);
+      FilterAnimFields();
       DrawEventMap(_CurrentEventMap);
     }
+  }
+
+  private void FilterAnimFields() {
+    List<string> filterList = new List<string>();
+    for (int i = 0; i < _AnimationGroupNameOptions.Length; i++) {
+      string aName = _AnimationGroupNameOptions[i];
+      if (aName.Contains(_AnimSearchField)) {
+        filterList.Add(aName);
+      }
+    }
+    filterList.Insert(0, "");
+    _FilteredAnimationOptions = filterList.ToArray();
   }
 
   private void DrawToolbar() {
@@ -198,7 +213,12 @@ public class AnimationEventEditor : EditorWindow {
     EditorGUILayout.BeginHorizontal();
     string eventName = pair.CladEvent.ToString();
     if (string.IsNullOrEmpty(_EventSearchField) || eventName.Contains(_EventSearchField)) {
-      pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup(eventName, Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];
+      if (string.IsNullOrEmpty(_AnimSearchField) || pair.AnimName == "" || pair.AnimName.Contains(_AnimSearchField)) {
+        pair.AnimName = _FilteredAnimationOptions[EditorGUILayout.Popup(eventName, Mathf.Max(0, Array.IndexOf(_FilteredAnimationOptions, pair.AnimName)), _FilteredAnimationOptions)];
+      }
+      else if (!string.IsNullOrEmpty(_AnimSearchField) && !pair.AnimName.Contains(_AnimSearchField)) {
+        pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup(eventName, Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];
+      }
       if (GUILayout.Button("X", GUILayout.Width(30))) {
         pair.AnimName = "";
       }
