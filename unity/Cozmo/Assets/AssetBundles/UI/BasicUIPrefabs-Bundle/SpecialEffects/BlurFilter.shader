@@ -216,4 +216,5 @@
         ENDCG
         }
     }
+    Fallback "Mobile/Diffuse"
 }
