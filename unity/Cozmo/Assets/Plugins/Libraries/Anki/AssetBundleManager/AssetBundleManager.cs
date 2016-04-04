@@ -263,11 +263,11 @@ namespace Anki {
 
         switch (Application.platform) {
         case RuntimePlatform.Android:
-          return "Android";
+          return "android";
         case RuntimePlatform.IPhonePlayer:
-          return "iOS";
+          return "ios";
         case RuntimePlatform.OSXPlayer:
-          return "OSX";
+          return "mac";
         default:
           Log(LogType.Error, "Unsupported platform " + Application.platform);
           return null;

@@ -15,6 +15,8 @@ namespace Anki {
 
       private const string _kProjectName = "Cozmo";
       private const string _kBuildOuputFolder = "../../build/";
+
+      #if UNITY_EDITOR
       private const string _kSimulationMode = _kProjectName + "/Build/Asset Bundle Simulation Mode";
 
       [MenuItem(_kSimulationMode)]
@@ -27,6 +29,7 @@ namespace Anki {
         Menu.SetChecked(_kSimulationMode, Assets.AssetBundleManager.SimulateAssetBundleInEditor);
         return true;
       }
+      #endif
 
       [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles")]
       public static void BuildAssetBundles() {
@@ -232,7 +235,7 @@ namespace Anki {
           FileUtil.DeleteFileOrDirectory(outputFolder);
           FileUtil.CopyFileOrDirectory(sourceFolder, outputFolder);
         }
-        catch(IOException e) {
+        catch (IOException e) {
           DAS.Error(null, e.Message);
           return false;
         }
@@ -259,7 +262,7 @@ namespace Anki {
           {
             string configuration = Debug.isDebugBuild ? "Debug" : "Release";
             string platformName = Assets.AssetBundleManager.GetPlatformName();
-            string path = _kBuildOuputFolder + platformName + "/" + "unity-" + platformName + "/" +  configuration + "-iphoneos/";
+            string path = _kBuildOuputFolder + platformName + "/" + "unity-" + platformName + "/" + configuration + "-iphoneos/";
             return path;
           }
         default:
