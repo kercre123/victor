@@ -27,7 +27,7 @@ public class AnimationManager {
   private IRobot _CurrRobot = null;
 
   // Map Animation Group Names to Event Enums
-  public Dictionary<GameEvents, string> AnimationGroupDict = new Dictionary<GameEvents, string>();
+  public Dictionary<GameEvent, string> AnimationGroupDict = new Dictionary<GameEvent, string>();
 
 
   public AnimationManager() {
@@ -49,7 +49,7 @@ public class AnimationManager {
     }
   }
 
-  public void CozmoEventRecieved(GameEvents cozEvent) {
+  public void CozmoEventRecieved(GameEvent cozEvent) {
     string animGroup = "";
     if (AnimationGroupDict.TryGetValue(cozEvent, out animGroup)) {
       if (!string.IsNullOrEmpty(animGroup)) {

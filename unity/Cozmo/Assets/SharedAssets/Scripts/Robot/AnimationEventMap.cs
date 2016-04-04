@@ -40,8 +40,8 @@ namespace Anki.Cozmo {
 
     public void NewMap() {
       Pairs.Clear();
-      for (int i = 0; i < (int)GameEvents.Count; i++) {
-        Pairs.Add(new CladAnimPair((GameEvents)i));
+      for (int i = 0; i < (int)GameEvent.Count; i++) {
+        Pairs.Add(new CladAnimPair((GameEvent)i));
       }
     }
 
@@ -50,10 +50,10 @@ namespace Anki.Cozmo {
     public bool MapUpdate(out string newStuff) {
       bool didUpdate = false;
       newStuff = "";
-      List<GameEvents> eList = new List<GameEvents>();
+      List<GameEvent> eList = new List<GameEvent>();
       // Add in all clad generated game events
-      for (int i = 0; i < (int)GameEvents.Count; i++) {
-        eList.Add((GameEvents)i);
+      for (int i = 0; i < (int)GameEvent.Count; i++) {
+        eList.Add((GameEvent)i);
       }
       // Remove the ones we already have from the "to add" list
       for (int i = 0; i < Pairs.Count; i++) {
@@ -73,12 +73,12 @@ namespace Anki.Cozmo {
 
     [System.Serializable]
     public class CladAnimPair {
-      public CladAnimPair(GameEvents cEvent, string animName = "") {
+      public CladAnimPair(GameEvent cEvent, string animName = "") {
         CladEvent = cEvent;
         AnimName = animName;
       }
 
-      public GameEvents CladEvent;
+      public GameEvent CladEvent;
       public string AnimName;
     }
   }
