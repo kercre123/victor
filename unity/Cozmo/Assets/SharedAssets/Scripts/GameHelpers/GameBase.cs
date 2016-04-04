@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -228,10 +228,10 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Minigame Exit
 
-  protected void RaiseMiniGameQuit() {
+  protected virtual void RaiseMiniGameQuit() {
     _StateMachine.Stop();
 
-    DAS.Event(DASConstants.Game.kQuit, GetQuitGameState());
+    DAS.Event(DASConstants.Game.kQuit, null);
     if (OnMiniGameQuit != null) {
       OnMiniGameQuit();
     }
@@ -485,11 +485,6 @@ public abstract class GameBase : MonoBehaviour {
 
   private string GetGameTimeElapsedAsStr() {
     return string.Format("{0}s", Time.time - _GameStartTime);
-  }
-
-  private string GetQuitGameState() {
-    // TODO
-    return null;
   }
 
   private void SendEventForRewards(StatContainer rewards) {

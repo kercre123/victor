@@ -136,7 +136,7 @@
 		85065E851BF1904400DBAF35 /* libDriveAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */; };
 		852C0B6D1C6965730003DCFD /* DASConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 852C0B6C1C6965730003DCFD /* DASConfig.json */; };
 		85DEB8FF1C652A3C00202214 /* libDAS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DEB8FE1C652A3C00202214 /* libDAS.a */; };
-		85DF60091CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig in Resources */ = {isa = PBXBuildFile; fileRef = 85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */; settings = {ASSET_TAGS = (); }; };
+		85DF60091CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig in Resources */ = {isa = PBXBuildFile; fileRef = 85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */; };
 		85F44C1D5C0709D7AACE6C09 /* Il2CppGenericMethodTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 36BDDFF568A6239A8136E27B /* Il2CppGenericMethodTable.cpp */; };
 		867D643A0A33E9D2D9898C47 /* Bulk_Mono.Security_1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 64FF4558A72C09D3EB4EA737 /* Bulk_Mono.Security_1.cpp */; };
 		88289F763E18C6692F0BD7DC /* iAD.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6191E0E7276E6E65DE82A228 /* iAD.mm */; };
@@ -1159,6 +1159,8 @@
 					"-weak_framework",
 					CoreMotion,
 					"-weak-lSystem",
+					"-force_load",
+					"$(CORETECH_EXTERNAL_DIR)/routing_http_server/generated/ios/DerivedData/Release-iphoneos/librouting_http_server.a",
 				);
 				PRODUCT_NAME = cozmo;
 				PROVISIONING_PROFILE = "";
@@ -1218,6 +1220,8 @@
 					"-weak_framework",
 					CoreMotion,
 					"-weak-lSystem",
+					"-force_load",
+					"$(CORETECH_EXTERNAL_DIR)/routing_http_server/generated/ios/DerivedData/Release-iphoneos/librouting_http_server.a",
 				);
 				PRODUCT_NAME = cozmo;
 				PROVISIONING_PROFILE = "";

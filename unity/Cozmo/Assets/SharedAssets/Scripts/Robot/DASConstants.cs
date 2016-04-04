@@ -7,6 +7,8 @@ namespace DASConstants {
     public const string kType = "game.type";
     public const string kEnd = "game.end";
     public const string kQuit = "game.quit";
+    public const string kQuitGameScore = "game.quit.score";
+    public const string kQuitGameRoundsWon = "game.quit.rounds_won";
     public const string kEndWithRank = "game.end.player_rank";
     public const string kRankPlayerLose = "1";
     public const string kRankPlayerWon = "0";
