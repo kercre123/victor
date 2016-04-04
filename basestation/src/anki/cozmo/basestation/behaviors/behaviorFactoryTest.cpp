@@ -251,7 +251,7 @@ namespace Cozmo {
         if (_camCalibPoseIndex >= _camCalibPanAndTiltAngles.size()) {
           // Start calibration computation
           PRINT_NAMED_INFO("BehaviorFactoryTest.Update.StartingCalibration",
-                           "% images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
+                           "%d images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
           robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
           _calibrationReceived = false;
           _holdUntilTime = currentTime_sec + 30.f;

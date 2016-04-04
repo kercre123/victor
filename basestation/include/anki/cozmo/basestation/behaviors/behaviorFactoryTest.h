@@ -85,7 +85,7 @@ namespace Cozmo {
     static constexpr f32 _kRbotPoseSamenessAngleThresh_rad = DEG_TO_RAD(5);
     static constexpr u32 _kNumPickupRetries = 1;
     static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
-    static constexpr f32 _kIMUDriftAngleThreshDeg = 1.f;
+    static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
