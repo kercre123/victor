@@ -42,6 +42,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/vision/basestation/visionMarker.h"
@@ -109,6 +110,7 @@ namespace Anki {
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
+    , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
     , _blockFilter(new BlockFilter(this))
     , _imageDeChunker(new ImageDeChunker())
     , _traceHandler(_context->GetDataPlatform())
@@ -178,6 +180,26 @@ namespace Anki {
         
         LoadEmotionEvents();
       }
+
+      // Read in progression unlock config
+      if (nullptr != _context->GetDataPlatform())
+      {
+        Json::Value progressionUnlockConfig;
+        std::string jsonFilename = "config/basestation/config/unlock_config.json";
+        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                               jsonFilename,
+                                                               progressionUnlockConfig);
+        if (!success)
+        {
+          PRINT_NAMED_ERROR("Robot.UnlockConfigJsonNotFound",
+                            "Progression unlock Json config file %s not found.",
+                            jsonFilename.c_str());
+        }
+        
+        _progressionUnlockComponent->Init(progressionUnlockConfig);
+        _progressionUnlockComponent->SendUnlockStatus();
+      }
+      
       
       LoadBehaviors();
       
@@ -227,6 +249,7 @@ namespace Anki {
       Util::SafeDelete(_shortMinAnglePathPlanner);
       Util::SafeDelete(_moodManager);
       Util::SafeDelete(_progressionManager);
+      Util::SafeDelete(_progressionUnlockComponent);
       Util::SafeDelete(_blockFilter);
 
       _selectedPathPlanner = nullptr;
@@ -792,6 +815,7 @@ namespace Anki {
       _moodManager->Update(currentTime);
       
       _progressionManager->Update(currentTime);
+      _progressionUnlockComponent->Update();
       
       const char* behaviorChooserName = "";
       std::string behaviorDebugStr("<disabled>");

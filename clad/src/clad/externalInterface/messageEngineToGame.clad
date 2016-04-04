@@ -13,6 +13,7 @@
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/engineState.clad"
 #include "clad/types/toolCodes.clad"
+#include "clad/types/unlockTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -289,6 +290,25 @@ message ProgressionStats {
   uint_8  robotID,
   int_32 statValues[uint_8]
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Progression Unlocks
+///////////////////////////////////////////////////////////////////////////////
+
+message RequestSetUnlockResult {
+  UnlockId unlockID,
+  bool unlocked
+}
+
+structure UnlockEntry {
+  UnlockId unlockID,
+  bool unlocked
+}
+
+message UnlockStatus {
+  UnlockEntry unlocks[uint_8]
+}  
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Debug / Console

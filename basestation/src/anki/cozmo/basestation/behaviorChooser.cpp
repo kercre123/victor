@@ -147,6 +147,11 @@ void SimpleBehaviorChooser::EnableBehaviorGroup(BehaviorGroup behaviorGroup, boo
   BehaviorGroupFlags behaviorGroupFlags;
   behaviorGroupFlags.SetBitFlag(behaviorGroup, true);
   
+  // PRINT_NAMED_DEBUG("SimpleBehaviorChooser.EnableBehaviorGroup",
+  //                   "%s: %d",
+  //                   BehaviorGroupToString(behaviorGroup),
+  //                   newVal);
+
   for (const auto& kv : _nameToBehaviorMap)
   {
     IBehavior* behavior = kv.second;

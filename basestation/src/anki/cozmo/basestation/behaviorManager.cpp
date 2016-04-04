@@ -10,27 +10,22 @@
  **/
 
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/cozmo/basestation/behaviorChooser.h"
-#include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 
+#include "anki/common/basestation/utils/timer.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
-
-#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
-
-#include "anki/common/basestation/utils/timer.h"
-
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 #include "clad/types/behaviorChooserType.h"
-
-#include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
-
-#include "anki/common/basestation/utils/timer.h"
+#include "util/logging/logging.h"
 
 #define DEBUG_BEHAVIOR_MGR 0
 
@@ -394,6 +389,13 @@ namespace Cozmo {
     
     _behaviorChooser = newChooser;
 
+    if( _behaviorChooser == _defaultChooser ) {
+      _robot.GetProgressionUnlockComponent().IterateUnlockedFreeplayBehaviors(
+        [this](BehaviorGroup group, bool enabled){
+          _behaviorChooser->EnableBehaviorGroup(group, enabled);
+        });
+    }
+
     // force the new behavior chooser to select something now, instead of waiting for it to be ready
     SelectNextBehavior(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
   }
@@ -490,6 +492,7 @@ namespace Cozmo {
           PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableBehaviorGroup", "%s: %s",
                             BehaviorGroupToString(msg.behaviorGroup),
                             msg.enable ? "true" : "false");
+
           _behaviorChooser->EnableBehaviorGroup(msg.behaviorGroup, msg.enable);
         }
         else
