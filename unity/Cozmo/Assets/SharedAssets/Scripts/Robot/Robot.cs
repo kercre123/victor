@@ -304,7 +304,7 @@ public class Robot : IRobot {
     VisibleObjects = new List<ObservedObject>(initialSize);
     DirtyObjects = new List<ObservedObject>(initialSize);
     LightCubes = new Dictionary<int, LightCube>();
-    Faces = new List< global::Face>();
+    Faces = new List<global::Face>();
 
     // These defaults should eventually be in clad
     PathMotionProfileDefault = new PathMotionProfile(

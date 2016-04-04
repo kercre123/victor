@@ -66,6 +66,12 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   private void HandleTappedUnlocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped Unlocked: " + unlockInfo.Id);
+    if (unlockInfo.UnlockableType == UnlockableType.Action) {
+      // TODO: Send message to engine to trigger unlockable action.
+    }
+    else if (unlockInfo.UnlockableType == UnlockableType.Game) {
+      // TODO: run the game that was unlocked.
+    }
   }
 
   private void HandleTappedAvailable(UnlockableInfo unlockInfo) {
