@@ -228,8 +228,8 @@ namespace Cozmo {
     bool CheckMailbox(ToolCode& msg);
     bool CheckMailbox(Vision::CameraCalibration& msg);
     
-    bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
-    bool CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg);
+    bool CheckDebugMailbox(std::pair<std::string, Vision::Image>& msg);
+    bool CheckDebugMailbox(std::pair<std::string, Vision::ImageRGB>& msg);
     
   protected:
     
@@ -457,8 +457,8 @@ namespace Cozmo {
     Mailbox<ToolCode> _toolCodeMailbox;
     Mailbox<Vision::CameraCalibration> _calibrationMailbox;
     
-    MultiMailbox<std::pair<const char*, Vision::Image>, 10>     _debugImageMailbox;
-    MultiMailbox<std::pair<const char*, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;
+    MultiMailbox<std::pair<std::string, Vision::Image>, 10>     _debugImageMailbox;
+    MultiMailbox<std::pair<std::string, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;
     
     void RestoreNonTrackingMode();
     

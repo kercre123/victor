@@ -450,13 +450,13 @@ namespace Cozmo {
       }
       
       // Display any debug images left by the vision system
-      std::pair<const char*, Vision::Image>    debugGray;
-      std::pair<const char*, Vision::ImageRGB> debugRGB;
+      std::pair<std::string, Vision::Image>    debugGray;
+      std::pair<std::string, Vision::ImageRGB> debugRGB;
       while(_visionSystem->CheckDebugMailbox(debugGray)) {
-        debugGray.second.Display(debugGray.first);
+        debugGray.second.Display(debugGray.first.c_str());
       }
       while(_visionSystem->CheckDebugMailbox(debugRGB)) {
-        debugRGB.second.Display(debugRGB.first);
+        debugRGB.second.Display(debugRGB.first.c_str());
       }
       
     } else {

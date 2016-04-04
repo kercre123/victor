@@ -248,7 +248,9 @@ namespace Cozmo {
         
       case State::TakeCalibrationImages:
       {
-        if (_camCalibPoseIndex >= _camCalibPanAndTiltAngles.size()) {
+        // All calibration images acquired.
+        // Start computing calibration.
+        if (robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() >= _camCalibPanAndTiltAngles.size()) {
           // Start calibration computation
           PRINT_NAMED_INFO("BehaviorFactoryTest.Update.StartingCalibration",
                            "%d images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
@@ -259,23 +261,21 @@ namespace Cozmo {
           break;
         }
 
+        // Move to fixed calibration pose and take image
         if (!robot.GetMoveComponent().IsMoving()) {
-          
-          // TODO: Take and save picture. In another state?
-          // ...
-          robot.GetVisionComponent().StoreNextImageForCameraCalibration();
-          
-          
-          // PanAndTilt to next pose for viewing calibration pattern
-          PanAndTiltAction *ptAction = new PanAndTiltAction(robot,
-                                                            _camCalibPanAndTiltAngles[_camCalibPoseIndex].first,
-                                                            _camCalibPanAndTiltAngles[_camCalibPoseIndex].second,
-                                                            true,
-                                                            true);
-          ptAction->SetMaxPanSpeed(_motionProfile.pointTurnSpeed_rad_per_sec);
-          ptAction->SetPanAccel(_motionProfile.pointTurnAccel_rad_per_sec2);
-          StartActing(robot, ptAction);
-          ++_camCalibPoseIndex;
+          if (robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == _camCalibPoseIndex) {
+            PanAndTiltAction *ptAction = new PanAndTiltAction(robot,
+                                                              _camCalibPanAndTiltAngles[_camCalibPoseIndex].first,
+                                                              _camCalibPanAndTiltAngles[_camCalibPoseIndex].second,
+                                                              true,
+                                                              true);
+            ptAction->SetMaxPanSpeed(_motionProfile.pointTurnSpeed_rad_per_sec);
+            ptAction->SetPanAccel(_motionProfile.pointTurnAccel_rad_per_sec2);
+            StartActing(robot, ptAction);
+            ++_camCalibPoseIndex;
+          } else {
+            robot.GetVisionComponent().StoreNextImageForCameraCalibration();
+          }
         }
         break;
       }

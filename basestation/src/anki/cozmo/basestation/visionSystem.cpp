@@ -41,6 +41,7 @@
 #include "anki/vision/robot/classifier.h"
 #include "anki/vision/robot/lbpcascade_frontalface.h"
 #include "anki/vision/robot/cameraImagingPipeline.h"
+#include "opencv2/calib3d/calib3d.hpp"
 
 // CoreTech Common Includes
 #include "anki/common/shared/radians.h"
@@ -58,6 +59,7 @@
 #define USE_THREE_FRAME_MOTION_DETECTION 0
 
 #define DRAW_TOOL_CODE_DEBUG 0
+#define DRAW_CALIB_IMAGES 0
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
@@ -444,7 +446,7 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg)
+  bool VisionSystem::CheckDebugMailbox(std::pair<std::string, Vision::Image>& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -453,7 +455,7 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg)
+  bool VisionSystem::CheckDebugMailbox(std::pair<std::string, Vision::ImageRGB>& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -2756,6 +2758,29 @@ namespace Cozmo {
   } // ReadToolCode()
   
   
+  // Helper function for computing "corner" positions of the calibration board
+  void CalcBoardCornerPositions(cv::Size boardSize, float squareSize, std::vector<cv::Point3f>& corners)
+  {
+    corners.clear();
+    
+    //    switch(patternType)
+    //    {
+    //      case Settings::CHESSBOARD:
+    //      case Settings::CIRCLES_GRID:
+    //        for( int i = 0; i < boardSize.height; ++i )
+    //          for( int j = 0; j < boardSize.width; ++j )
+    //            corners.push_back(Point3f(float( j*squareSize ), float( i*squareSize ), 0));
+    //        break;
+    //
+    //      case Settings::ASYMMETRIC_CIRCLES_GRID:
+    for( int i = 0; i < boardSize.height; i++ )
+      for( int j = 0; j < boardSize.width; j++ )
+        corners.push_back(cv::Point3f(float((2*j + i % 2)*squareSize), float(i*squareSize), 0));
+    //        break;
+    //    }
+  }
+
+  
   Result VisionSystem::ComputeCalibration(const std::list<Vision::Image>& calibImages)
   {
     Vision::CameraCalibration calibration;
@@ -2765,17 +2790,95 @@ namespace Cozmo {
     Cleanup disableComputingCalibration([this,&calibration]() {
       this->_calibrationMailbox.putMessage(calibration);
       this->EnableMode(VisionMode::ComputingCalibration, false);
-      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.DisabledComputingCalibration", "");
     });
     
     
-    PRINT_NAMED_WARNING("VisionSystem.ComputeCalibration.TODO", "...");
-    // Default for now
-    calibration = Vision::CameraCalibration(240, 320,
-                                            290, 290,
-                                            160, 120);
-
+    // Check that there are enough images
+    static const u32 _kMinNumImagesRequired = 4;
+    if (calibImages.size() < _kMinNumImagesRequired) {
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NotEnoughImages", "Got %lu. Need %d.", calibImages.size(), _kMinNumImagesRequired);
+      return RESULT_FAIL;
+    }
+    PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NumImages", "%d.", (u32)calibImages.size());
     
+    
+    // Description of asymmetric circles calibration target
+    cv::Size boardSize(4,11);
+    static constexpr f32 squareSize = 0.01; // TODO: Doesn't really matter for camera matrix intrinsics computation, but should probably measure this.
+    cv::Size imageSize(calibImages.front().GetNumCols(), calibImages.front().GetNumRows());
+    
+    
+    std::vector<std::vector<cv::Point2f> > imagePoints;
+    std::vector<std::vector<cv::Point3f> > objectPoints(1);
+    
+    // Parameters for circle grid search
+    cv::SimpleBlobDetector::Params params;
+    params.maxArea = 800;
+    params.minArea = 20;
+    params.minDistBetweenBlobs = 5;
+    cv::Ptr<cv::SimpleBlobDetector> blobDetector = cv::SimpleBlobDetector::create(params);
+    int findCirclesFlags = cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING;
+    
+    int imgCnt = 0;
+    for (auto img : calibImages) {
+      
+      // Get image points
+      std::vector<cv::Point2f> pointBuf;
+      bool found = cv::findCirclesGrid(img.get_CvMat_(), boardSize, pointBuf, findCirclesFlags, blobDetector);
+
+      if (found) {
+        PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.FoundPoints", "");
+        imagePoints.push_back(pointBuf);
+        cv::drawChessboardCorners(img.get_CvMat_(), boardSize, cv::Mat(pointBuf), found);
+      } else {
+        PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NoPointsFound", "");
+      }
+      
+      
+      // Draw image
+      if (DRAW_CALIB_IMAGES) {
+        _debugImageMailbox.putMessage({std::string("CalibImage") + std::to_string(imgCnt), img});
+      }
+      ++imgCnt;
+    }
+    
+    // Were points found in enough of the images?
+    if (imagePoints.size() < _kMinNumImagesRequired) {
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.InsufficientImagesWithPoints",
+                       "Points detected in only %lu images. Need %d.",
+                       imagePoints.size(), _kMinNumImagesRequired);
+      return RESULT_FAIL;
+    }
+    
+    
+    // Get object points
+    CalcBoardCornerPositions(boardSize, squareSize, objectPoints[0]);
+    objectPoints.resize(imagePoints.size(), objectPoints[0]);
+    
+
+    // Compute calibration
+    std::vector<cv::Mat> rvecs, tvecs;
+    cv::Mat cameraMatrix = cv::Mat::eye(3, 3, CV_64F);
+    cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
+    
+    double rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
+    
+    
+    calibration = Vision::CameraCalibration(imageSize.height, imageSize.width,
+                                            cameraMatrix.at<double>(0,0), cameraMatrix.at<double>(1,1),
+                                            cameraMatrix.at<double>(0,2), cameraMatrix.at<double>(1,2));
+
+    PRINT_NAMED_DEBUG("VisionSystem.ComputeCalibration.CalibValues",
+                      "fx: %f, fy: %f, cx: %f, cy: %f",
+                      calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
+                      calibration.GetCenter_x(), calibration.GetCenter_y());
+    
+                          
+    // Check if average reprojection error is too high
+    if (rms > 1.f) {
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh", "%f", rms);
+      return RESULT_FAIL;
+    }
     
     return RESULT_OK;
   }
