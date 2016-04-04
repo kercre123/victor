@@ -9,13 +9,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ec2f3eb4b68fe4cc5a82db071a780b62, type: 3}
-  m_Name: SimonGameUnlockable
+  m_Name: SpeedTapEasyImplicitUnlockable
   m_EditorClassIdentifier: 
-  Id: 3
+  Id: 6
   UnlockableType: 0
   Prerequisites: 
   AnyPrereqUnlock: 0
   CubesRequired: 0
-  ExplicitUnlock: 1
+  ExplicitUnlock: 0
   DefaultUnlock: 0
   TreatCost: 0

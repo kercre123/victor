@@ -3,11 +3,20 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
-public class UnlockableInfoList : ScriptableObject {
-  public UnlockableInfo[] UnlockableInfoData;
-}
-
 public class UnlockablesManager : MonoBehaviour {
+  
+  public static UnlockablesManager Instance { get; private set; }
+
+  private void OnEnable() {
+    if (Instance != null && Instance != this) {
+      Destroy(gameObject);
+      return;
+    }
+    else {
+      Instance = this;
+    }
+  }
+
   private Dictionary<Anki.Cozmo.UnlockIds, bool> _UnlockablesState = new Dictionary<Anki.Cozmo.UnlockIds, bool>();
 
   [SerializeField]
@@ -21,8 +30,11 @@ public class UnlockablesManager : MonoBehaviour {
     }
     testData[Anki.Cozmo.UnlockIds.SpeedTapGame] = true;
     testData[Anki.Cozmo.UnlockIds.SpeedTapEasyImplicit] = true;
+    testData[Anki.Cozmo.UnlockIds.BurpAction] = true;
+    _UnlockablesState = testData;
   }
 
+  // should be called when connected to the robot and loaded unlock info from the physical robot.
   public void OnConnectLoad(Dictionary<Anki.Cozmo.UnlockIds, bool> loadedUnlockables) {
     _UnlockablesState = loadedUnlockables;
   }
@@ -76,7 +88,7 @@ public class UnlockablesManager : MonoBehaviour {
     return unavailable;
   }
 
-  public void SetUnlocked(Anki.Cozmo.UnlockIds id, bool unlocked) {
+  public void TrySetUnlocked(Anki.Cozmo.UnlockIds id, bool unlocked) {
     _UnlockablesState[id] = unlocked;
     // TODO: Also pass to engine/robot and listen for a response.
   }
