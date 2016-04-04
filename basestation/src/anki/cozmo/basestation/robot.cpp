@@ -96,6 +96,7 @@ namespace Anki {
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
+    , _isBehaviorMgrEnabled(false)
     , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimations())
     , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
     , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)

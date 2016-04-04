@@ -706,7 +706,7 @@ public:
     FaceWorld         _faceWorld;
   
     BehaviorManager  _behaviorMgr;
-    bool             _isBehaviorMgrEnabled = false;
+    bool             _isBehaviorMgrEnabled;
     
   
   

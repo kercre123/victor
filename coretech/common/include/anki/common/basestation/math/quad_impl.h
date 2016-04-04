@@ -449,6 +449,37 @@ namespace Anki {
   } // Contains()
   
   template<QuadDimType N, typename T>
+  bool Quadrilateral<N,T>::Intersects(const Point2<T>& rayFrom, const Point2<T>& rayTo, Point2<T>* outIntersectionPoint) const
+  {
+    using namespace Quad;
+
+    const Quadrilateral<N,T>& one = *this;
+    kmRay2 thisSegments[4];
+    kmVec2 oneTL {one[TopLeft    ].x(), one[TopLeft    ].y()};
+    kmVec2 oneTR {one[TopRight   ].x(), one[TopRight   ].y()};
+    kmVec2 oneBL {one[BottomLeft ].x(), one[BottomLeft ].y()};
+    kmVec2 oneBR {one[BottomRight].x(), one[BottomRight].y()};
+    kmRay2FillWithEndpoints(&thisSegments[0], &oneTL, &oneTR);
+    kmRay2FillWithEndpoints(&thisSegments[1], &oneTR, &oneBR);
+    kmRay2FillWithEndpoints(&thisSegments[2], &oneBR, &oneBL);
+    kmRay2FillWithEndpoints(&thisSegments[3], &oneBL, &oneTL);
+
+    kmRay2 testRay;
+    kmVec2 from {rayFrom.x(), rayFrom.y()};
+    kmVec2 to   {rayTo.x(),   rayTo.y()  };
+    kmRay2FillWithEndpoints(&testRay, &from, &to);
+
+    for( int i=0; i<4; ++i) {
+      kmVec2 interPoint;
+      const kmBool segmentIntersects = kmSegment2WithSegmentIntersection(&thisSegments[i], &testRay, &interPoint);
+      if ( segmentIntersects ) {
+        if ( outIntersectionPoint ) { (*outIntersectionPoint) = Point2<T>(interPoint.x, interPoint.y); }
+        return true;
+      }
+    }
+  }
+  
+  template<QuadDimType N, typename T>
   bool Quadrilateral<N,T>::Intersects(const Quadrilateral<2,T>& other) const
   {
     static_assert(N==2, "Quad intersection check only valid for 2D quads.");
