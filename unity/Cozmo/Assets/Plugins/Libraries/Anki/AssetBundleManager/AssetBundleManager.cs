@@ -458,7 +458,10 @@ namespace Anki {
           yield break;
         }
 
+        Log(LogType.Log, "Trying LoadAssetAsync " + assetName + " from asset bundle " + assetBundleName + ".");
         AssetBundleRequest request = loadedAssetBundle.AssetBundle.LoadAssetAsync<AssetType>(assetName);
+        Log(LogType.Log, "Trying LoadAssetAsync " + assetName + " from asset bundle " + assetBundleName + ". Request value is "
+        + ((request == null) ? "(NULL)" : request.asset.ToString()));
         yield return request;
 
         if (request.asset == null) {
