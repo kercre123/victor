@@ -300,7 +300,7 @@ namespace Anki {
           if (Audio::GameState::StateGroupType:: Music == _stateGroup) {
             static bool didStartMusic = false;
             if (!didStartMusic) {
-              _robot.GetRobotAudioClient()->PostEvent( static_cast<Audio::GameEvent::GenericEvent>(GameEvent::Music::Play), GameObjectType::Default );
+              _robot.GetRobotAudioClient()->PostEvent( static_cast<Audio::GameEvent::GenericEvent>(Audio::GameEvent::Music::Play), GameObjectType::Default );
               didStartMusic = true;
             }
           }

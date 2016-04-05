@@ -8,8 +8,9 @@ namespace Anki {
 namespace Cozmo {
 
 
-enum uint_8 GameEvents
+enum uint_8 GameEvent
 {
+  NotFound,
   OnDriveStart,
   OnDriveEnd,
   OnSpeedtapStarted,
