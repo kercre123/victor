@@ -29,6 +29,26 @@ public class UnlockablesManager : MonoBehaviour {
   // should be called when connected to the robot and loaded unlock info from the physical robot.
   public void OnConnectLoad(Dictionary<Anki.Cozmo.UnlockIds, bool> loadedUnlockables) {
     _UnlockablesState = loadedUnlockables;
+    if (NothingUnlocked()) {
+      SetDefaults();
+    }
+  }
+
+  private bool NothingUnlocked() {
+    foreach (KeyValuePair<Anki.Cozmo.UnlockIds, bool> kvp in _UnlockablesState) {
+      if (kvp.Value) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private void SetDefaults() {
+    for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
+      if (_UnlockableInfoList.UnlockableInfoData[i].DefaultUnlock) {
+        _UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id] = true;
+      }
+    }
   }
 
   public List<UnlockableInfo> GetUnlockedGames() {
