@@ -30,7 +30,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     for (int i = 0; i < _Unlocked.Count; ++i) {
       GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
       tileInstance.transform.SetParent(_UnlocksContainer, false);
-      tileInstance.name = _Unlocked[i].Id.ToString();
+      tileInstance.name = _Unlocked[i].Id.Value.ToString();
       tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventButtonName = tileInstance.name;
       tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventViewController = "cozmo_unlock_panel";
       tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileInstance.name + "\n(unlocked)";
@@ -41,7 +41,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     for (int i = 0; i < _Available.Count; ++i) {
       GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
       tileInstance.transform.SetParent(_UnlocksContainer, false);
-      tileInstance.name = _Available[i].Id.ToString();
+      tileInstance.name = _Available[i].Id.Value.ToString();
       tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventButtonName = tileInstance.name;
       tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventViewController = "cozmo_unlock_panel";
       tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileInstance.name + "\n(available)";
@@ -52,7 +52,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     for (int i = 0; i < _Unavailable.Count; ++i) {
       GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
       tileInstance.transform.SetParent(_UnlocksContainer, false);
-      tileInstance.name = _Unavailable[i].Id.ToString();
+      tileInstance.name = _Unavailable[i].Id.Value.ToString();
       tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventButtonName = tileInstance.name;
       tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventViewController = "cozmo_unlock_panel";
       tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileInstance.name + "\n(locked)";
@@ -77,7 +77,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   private void HandleTappedAvailable(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
-    UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id, true);
+    UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
   }
 
   private void HandleRequestSetUnlockResult(Anki.Cozmo.UnlockIds unlockId, bool unlocked) {

@@ -36,13 +36,22 @@ namespace Cozmo.HomeHub {
 
     private CompletedChallengeData _CurrentChallengePlaying;
 
+    private void RefreshChallengeUnlockInfo(Anki.Cozmo.UnlockIds id, bool unlocked) {
+      LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
+      if (_HomeViewInstance != null) {
+        _HomeViewInstance.SetChallengeStates(_ChallengeStatesById);
+      }
+    }
+
     public override bool LoadHubWorld() {
+      RobotEngineManager.Instance.OnRequestSetUnlockResult += RefreshChallengeUnlockInfo;
       LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
       ShowStartView();
       return true;
     }
 
     public override bool DestroyHubWorld() {
+      RobotEngineManager.Instance.OnRequestSetUnlockResult -= RefreshChallengeUnlockInfo;
       CloseMiniGameImmediately();
 
       // Deregister events
@@ -128,7 +137,7 @@ namespace Cozmo.HomeHub {
       _ChallengeDetailsDialogInstance.CloseViewImmediately();
 
       // Play minigame immediately
-      PlayMinigame(_ChallengeStatesById[challengeClicked].data);
+      PlayMinigame(_ChallengeStatesById[challengeClicked].Data);
     }
 
     private void HandleStartChallengeRequest(string challengeRequested) {
@@ -143,7 +152,7 @@ namespace Cozmo.HomeHub {
       CloseTimelineDialog();
 
       // Play minigame immediately
-      PlayMinigame(_ChallengeStatesById[challengeRequested].data);
+      PlayMinigame(_ChallengeStatesById[challengeRequested].Data);
     }
 
     private void HandleCompletedChallengeClicked(string challengeClicked, Transform buttonTransform) {
@@ -154,7 +163,7 @@ namespace Cozmo.HomeHub {
       // We need to initialize the dialog first before opening the view, so don't animate right away
       _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab, 
         newView => {
-          newView.Initialize(_ChallengeStatesById[challenge].data, buttonTransform);
+          newView.Initialize(_ChallengeStatesById[challenge].Data, buttonTransform);
         }, 
         verticalCanvas: true);
 
@@ -244,64 +253,20 @@ namespace Cozmo.HomeHub {
       foreach (ChallengeData data in sourceChallenges.ChallengeData) {
         // Create a new data packet
         statePacket = new ChallengeStatePacket();
-        statePacket.data = data;
+        statePacket.Data = data;
 
         // Determine the current state of the challenge
-        statePacket.currentState = DetermineCurrentChallengeState(data, DataPersistenceManager.Instance.Data.CompletedChallengeIds);
-        // TODO: Set the unlock progress from persistant data (for now, use 0)
-        statePacket.unlockProgress = 0;
+        statePacket.ChallengeUnlocked = UnlockablesManager.Instance.IsUnlocked(data.UnlockId.Value);
         // Add the challenge to the dictionary
         challengeStateByKey.Add(data.ChallengeID, statePacket);
       }
     }
 
-    private ChallengeState DetermineCurrentChallengeState(ChallengeData dataToTest, List<string> completedChallenges) {
-      // If the challenge is in the completed challenges list, it has been completed
-      ChallengeState challengeState = ChallengeState.Locked;
-      if (completedChallenges.Contains(dataToTest.ChallengeID)) {
-        challengeState = ChallengeState.Completed;
-      }
-      else {
-        IRobot currentRobot = RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null;
-        if (dataToTest.ChallengeReqs.MeetsRequirements(currentRobot, completedChallenges)) {
-          // Otherwise, it is locked or unlocked based on its requirements
-          // TODO: Add case for when the challenge is unlocked, but not actionable
-          challengeState = ChallengeState.Unlocked;
-        }
-      }
-      return challengeState;
-    }
-
     private void CompleteChallenge(CompletedChallengeData completedChallenge, bool won, StatContainer rewards) { 
-      // If the completed challenge is not already complete
-      if (won && !DataPersistenceManager.Instance.Data.CompletedChallengeIds.Contains(completedChallenge.ChallengeId)) {
-        // Add the current challenge to the completed list
-        DataPersistenceManager.Instance.Data.CompletedChallengeIds.Add(completedChallenge.ChallengeId);
-        _ChallengeStatesById[completedChallenge.ChallengeId].currentState = ChallengeState.FreshlyCompleted;
-
-        // Check all the locked challenges to see if any new ones unlocked.
-        foreach (ChallengeStatePacket challengeState in _ChallengeStatesById.Values) {
-          if (challengeState.currentState == ChallengeState.Locked) {
-            var lastState = challengeState.currentState;
-            challengeState.currentState = DetermineCurrentChallengeState(challengeState.data, 
-              DataPersistenceManager.Instance.Data.CompletedChallengeIds);
-
-            if (lastState == ChallengeState.Locked && challengeState.currentState == ChallengeState.Unlocked) {
-              challengeState.currentState = ChallengeState.FreshlyUnlocked;
-            }
-          }
-        }
-      }
-
-      completedChallenge.Won = won;
-      completedChallenge.RecievedStats.Set(rewards);
-      completedChallenge.EndTime = System.DateTime.UtcNow;
-
       // the last session is not necessarily valid as the 'CurrentSession', as its possible
       // the day rolled over while we were playing the challenge.
       var session = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
       if (session != null) {
-        session.CompletedChallenges.Add(completedChallenge);
         session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
       }
       else {
@@ -338,19 +303,7 @@ namespace Cozmo.HomeHub {
   }
 
   public class ChallengeStatePacket {
-    public ChallengeData data;
-    public ChallengeState currentState;
-    public float unlockProgress;
-  }
-
-  public enum ChallengeState {
-    Locked,
-    Unlocked,
-    Completed,
-
-    // these are used by the UI to know when to play animations.
-    // TimelineView will then bump them into unlocked or completed
-    FreshlyCompleted,
-    FreshlyUnlocked
+    public ChallengeData Data;
+    public bool ChallengeUnlocked;
   }
 }

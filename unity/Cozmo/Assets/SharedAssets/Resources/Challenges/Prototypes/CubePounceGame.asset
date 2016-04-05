@@ -18,9 +18,7 @@ MonoBehaviour:
   _ChallengeTitleLocKey: cubeSlap.title
   _ChallengeDescriptionLocKey: cubeSlap.description
   _ChallengeIcon: {fileID: 21300000, guid: 737c11135ebe84f5b8e6ff9e07906057, type: 3}
-  _ChallengeReqs:
-    ChallengeGateKeys: []
-    StatGateArray: []
+  _UnlockId: 5
   _HowToPlayDialogContentLocKey: cubeSlap.text.howToPlay
   _HowToPlayDialogContentPrefab: {fileID: 0}
   _Music:

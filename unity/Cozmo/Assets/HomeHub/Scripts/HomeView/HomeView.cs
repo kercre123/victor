@@ -80,6 +80,10 @@ namespace Cozmo.HomeHub {
 
     }
 
+    public void SetChallengeStates(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
+      _ChallengeStates = challengeStatesById;
+    }
+
     private void HandleCozmoTabButton() {
       if (_CurrentTab != null) {
         GameObject.Destroy(_CurrentTab.gameObject);

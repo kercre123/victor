@@ -9,17 +9,16 @@ public enum UnlockableType {
 
 [Serializable]
 public class UnlockableInfo : ScriptableObject {
-  public Anki.Cozmo.UnlockIds Id;
+  public SerializableUnlockIds Id;
 
   public UnlockableType UnlockableType;
 
-  public Anki.Cozmo.UnlockIds[] Prerequisites;
+  // used for serializing enums as strings instead of integers.
+  public SerializableUnlockIds[] Prerequisites;
 
   // true = any prereq filled will make this unlock available
   // false = all prereqs must be filled to make this unlock available.
   public bool AnyPrereqUnlock;
-
-  public int CubesRequired;
 
   // explicitly viewable and unlockable from the unlocks menu in Cozmo Tab.
   public bool ExplicitUnlock;
@@ -28,4 +27,10 @@ public class UnlockableInfo : ScriptableObject {
   public bool DefaultUnlock;
 
   public int TreatCost;
+
+  [Serializable]
+  public class SerializableUnlockIds : SerializableEnum<Anki.Cozmo.UnlockIds> {
+
+  }
+
 }

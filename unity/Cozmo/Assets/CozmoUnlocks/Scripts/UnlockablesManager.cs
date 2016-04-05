@@ -46,7 +46,7 @@ public class UnlockablesManager : MonoBehaviour {
   private void SetDefaults() {
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
       if (_UnlockableInfoList.UnlockableInfoData[i].DefaultUnlock) {
-        _UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id] = true;
+        _UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value] = true;
       }
     }
   }
@@ -54,7 +54,7 @@ public class UnlockablesManager : MonoBehaviour {
   public List<UnlockableInfo> GetUnlockedGames() {
     List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id] &&
+      if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value] &&
           _UnlockableInfoList.UnlockableInfoData[i].UnlockableType == UnlockableType.Game) {
         unlocked.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
@@ -65,7 +65,7 @@ public class UnlockablesManager : MonoBehaviour {
   public List<UnlockableInfo> GetUnlocked(bool getExplicitOnly) {
     List<UnlockableInfo> unlocked = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id]) {
+      if (_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value]) {
         if ((!getExplicitOnly) || (getExplicitOnly && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock)) {
           unlocked.Add(_UnlockableInfoList.UnlockableInfoData[i]);
         }
@@ -78,8 +78,8 @@ public class UnlockablesManager : MonoBehaviour {
   public List<UnlockableInfo> GetAvailableAndLockedExplicit() {
     List<UnlockableInfo> available = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id];
-      bool isAvailable = IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id);
+      bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value];
+      bool isAvailable = IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
       if (locked && isAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock) {
         available.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
@@ -91,8 +91,8 @@ public class UnlockablesManager : MonoBehaviour {
   public List<UnlockableInfo> GetUnavailableExplicit() {
     List<UnlockableInfo> unavailable = new List<UnlockableInfo>();
     for (int i = 0; i < _UnlockableInfoList.UnlockableInfoData.Length; ++i) {
-      bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id];
-      bool isAvailable = IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id);
+      bool locked = !_UnlockablesState[_UnlockableInfoList.UnlockableInfoData[i].Id.Value];
+      bool isAvailable = IsUnlockableAvailable(_UnlockableInfoList.UnlockableInfoData[i].Id.Value);
       if (locked && !isAvailable && _UnlockableInfoList.UnlockableInfoData[i].ExplicitUnlock) {
         unavailable.Add(_UnlockableInfoList.UnlockableInfoData[i]);
       }
@@ -113,7 +113,7 @@ public class UnlockablesManager : MonoBehaviour {
       return true;
     }
 
-    UnlockableInfo unlockableInfo = Array.Find(_UnlockableInfoList.UnlockableInfoData, x => x.Id == id);
+    UnlockableInfo unlockableInfo = Array.Find(_UnlockableInfoList.UnlockableInfoData, x => x.Id.Value == id);
 
     if (unlockableInfo == null) {
       DAS.Error(this, "Invalid unlockable id " + id);
@@ -121,7 +121,7 @@ public class UnlockablesManager : MonoBehaviour {
     }
 
     for (int i = 0; i < unlockableInfo.Prerequisites.Length; ++i) {
-      if (!_UnlockablesState[unlockableInfo.Prerequisites[i]]) {
+      if (!_UnlockablesState[unlockableInfo.Prerequisites[i].Value]) {
         if (unlockableInfo.AnyPrereqUnlock == false) {
           return false;
         }

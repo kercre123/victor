@@ -11,9 +11,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec2f3eb4b68fe4cc5a82db071a780b62, type: 3}
   m_Name: SpeedTapMediumImplicitUnlockable
   m_EditorClassIdentifier: 
-  Id: 7
+  Id:
+    _EnumValueAsString: SpeedTapMediumImplicit
+    _EnumValue: 7
   UnlockableType: 0
-  Prerequisites: 
+  Prerequisites: []
   AnyPrereqUnlock: 0
   CubesRequired: 0
   ExplicitUnlock: 0

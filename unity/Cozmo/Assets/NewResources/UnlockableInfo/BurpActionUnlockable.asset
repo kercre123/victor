@@ -11,9 +11,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec2f3eb4b68fe4cc5a82db071a780b62, type: 3}
   m_Name: BurpActionUnlockable
   m_EditorClassIdentifier: 
-  Id: 0
+  Id:
+    _EnumValueAsString: BurpAction
+    _EnumValue: 0
   UnlockableType: 1
-  Prerequisites: 
+  Prerequisites: []
   AnyPrereqUnlock: 0
   CubesRequired: 0
   ExplicitUnlock: 1

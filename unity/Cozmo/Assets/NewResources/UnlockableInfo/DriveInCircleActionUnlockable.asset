@@ -11,9 +11,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec2f3eb4b68fe4cc5a82db071a780b62, type: 3}
   m_Name: DriveInCircleActionUnlockable
   m_EditorClassIdentifier: 
-  Id: 1
+  Id:
+    _EnumValueAsString: DriveInCircleAction
+    _EnumValue: 1
   UnlockableType: 1
-  Prerequisites: 
+  Prerequisites: []
   AnyPrereqUnlock: 0
   CubesRequired: 0
   ExplicitUnlock: 1
