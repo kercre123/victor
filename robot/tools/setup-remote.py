@@ -6,6 +6,9 @@ BUILD_DIR = "dist"
 STRING_TABLE_FILE = os.path.join("..", "resources", "config", "basestation", "AnkiLogStringTables.json")
 CLAD_DIR = os.path.join("generated", "cladPython")
 
+shutil.rmtree(BUILD_DIR, True)
+os.remove("remote-dist.zip")
+
 setup(name="Remote",
       version="1.0",
       description="Factory test remote control app",
