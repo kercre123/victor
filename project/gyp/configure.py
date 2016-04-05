@@ -355,8 +355,8 @@ def main(scriptArgs):
                                     ctiGtestPath, 
                                     ctiAnkiUtilProjectPath,
                                     projectRoot,
-                                    gtestPath, 
-                                    ankiUtilProjectPath, 
+                                    gtestPath,
+                                    ankiUtilProjectPath,
                                     coretechInternalProjectPath,
                                     audioProjectGypPath,
                                     bleCozmoProjectPath,
@@ -365,6 +365,7 @@ def main(scriptArgs):
       gyp.main(gypArgs)
       
       
+
 
   if 'android' in options.platforms:
     ### Install android build deps if necessary
@@ -435,6 +436,7 @@ def main(scriptArgs):
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
                                   ndk_root,
+                                  audioProjectPath,
                                   audioProjectGypPath,
                                   bleCozmoProjectPath,
                                 )

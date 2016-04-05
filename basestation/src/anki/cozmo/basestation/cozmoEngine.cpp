@@ -22,7 +22,6 @@
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
 #include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
-#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeech.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -35,8 +34,14 @@
 #include "util/logging/sosLoggerProvider.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
-
 #include "util/global/globalDefinitions.h"
+
+#if ANDROID
+#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer_android.h"
+#else
+#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer_ios_mac.h"
+#endif
+
 #if ANKI_DEV_CHEATS
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 #endif
@@ -50,7 +55,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
   , _textToSpeech(new TextToSpeech(_uiMsgHandler.get(),dataPlatform))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
-#if ANKI_DEV_CHEATS
+#if ANKI_DEV_CHEATS && !ANDROID
   , _usbTunnelServerDebug(new USBTunnelServer(_uiMsgHandler.get(),dataPlatform))
 #endif
 {

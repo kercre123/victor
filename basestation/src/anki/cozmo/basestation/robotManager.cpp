@@ -268,7 +268,7 @@ namespace Anki {
           ReadAnimationFile(path.c_str());
         }
       }
-#if ANKI_DEV_CHEATS
+#if ANKI_DEV_CHEATS && !ANDROID
       // Only when not shipping use our temp dir
       std::string test_anim = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, USBTunnelServer::TempAnimFileName);
       if( Util::FileUtils::FileExists(test_anim) )
