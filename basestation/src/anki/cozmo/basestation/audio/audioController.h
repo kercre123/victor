@@ -25,7 +25,11 @@
 
 namespace AudioEngine {
   class AudioEngineController;
+
+namespace PlugIns {
   class HijackAudioPlugIn;
+  class WavePortalPlugIn;
+}
 }
 
 namespace Anki {
@@ -42,6 +46,7 @@ namespace Cozmo {
 namespace Audio {
   
 class RobotAudioBuffer;
+class AudioWaveFileReader;
   
 class AudioController : public Util::noncopyable
 {
@@ -95,12 +100,16 @@ public:
 
 private:
   
-  AudioEngine::AudioEngineController* _audioEngine        = nullptr;  // Audio Engine Lib
-  AudioEngine::HijackAudioPlugIn*     _hijackAudioPlugIn  = nullptr;  // Plugin Instance
-  std::unordered_map< int32_t, RobotAudioBuffer* > _robotAudioBufferPool; // Store all Audio Buffers
+  AudioEngine::AudioEngineController*               _audioEngine            = nullptr;  // Audio Engine Lib
+  AudioEngine::PlugIns::HijackAudioPlugIn*          _hijackAudioPlugIn      = nullptr;  // Plugin Instance
+  std::unordered_map< int32_t, RobotAudioBuffer* >  _robotAudioBufferPool; // Store all Audio Buffers
   
-  Util::Dispatch::Queue*              _dispatchQueue      = nullptr;  // The dispatch queue we're ticking on
-  Anki::Util::TaskHandle              _taskHandle         = nullptr;  // Handle to our tick callback task
+  AudioWaveFileReader*           _reader                      = nullptr;
+  AudioEngine::PlugIns::WavePortalPlugIn* _wavePortalPlugIn   = nullptr;
+  
+  
+  Util::Dispatch::Queue*    _dispatchQueue  = nullptr;  // The dispatch queue we're ticking on
+  Anki::Util::TaskHandle    _taskHandle     = nullptr;  // Handle to our tick callback task
   
   bool _isInitialized = false;
   
@@ -110,7 +119,10 @@ private:
   std::vector< AudioEngine::AudioCallbackContext* > _callbackGarbageCollector;
 
   // Setup HijackAudio plug-in & robot buffers
-  void SetupPlugInAndRobotAudioBuffers();
+  void SetupHijackAudioPlugInAndRobotAudioBuffers();
+  
+  // Setup WavePortal plug-in
+  void SetupWavePortalPlugIn();
   
   RobotAudioBuffer* GetAudioBuffer( int32_t plugInId ) const;
   
@@ -120,6 +132,7 @@ private:
   // Clean up call back messages
   void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );
   void ClearGarbageCollector();
+  
   
   // Debug Cozmo PlugIn Logs
 #if HijackAudioPlugInDebugLogs
