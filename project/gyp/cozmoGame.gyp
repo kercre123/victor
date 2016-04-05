@@ -10,6 +10,7 @@
     'ctrlKeyboard_source': 'ctrlKeyboard.lst',
     'ctrlBuildServerTest_source': 'ctrlBuildServerTest.lst',    
     'csharp_source': 'csharp.lst',
+    'assets_source': 'assets.lst',
     'buildMex': '<(build-mex)',
     
     # TODO: should this be passed in, or shared?
@@ -395,6 +396,7 @@
             'type': 'none',
             'dependencies': [
               'CSharpBinding',
+              'AssetFiles',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',
               '<(cg-cti_gyp_path):ctiCommonRobot',
@@ -572,6 +574,7 @@
             'target_name': 'all_lib_targets',
             'type': 'none',
             'dependencies': [
+              'AssetFiles',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',
               '<(cg-cti_gyp_path):ctiCommonRobot',
@@ -617,9 +620,11 @@
 
 
   'targets': [
-
-    
-
+    {
+      'target_name': 'AssetFiles',
+      'type': 'none',
+      'sources': [ '<!@(cat <(assets_source))' ],
+    } # end target
   ] # end targets
 
 }
