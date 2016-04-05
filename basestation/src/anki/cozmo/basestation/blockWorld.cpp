@@ -2495,8 +2495,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
       RobotPoseStamp* p = nullptr;
       HistPoseKey poseKey;
       const Result poseRet = _robot->GetPoseHistory()->ComputeAndInsertPoseAt(frameInfo.timestamp, t, &p, &poseKey, true);
-      const bool poseIsGood = ( RESULT_OK == poseRet );
-      if ( !poseIsGood || p == nullptr ) {
+      const bool poseIsGood = ( RESULT_OK == poseRet ) && (p != nullptr);
+      if ( !poseIsGood ) {
         PRINT_NAMED_ERROR("BlockWorld.AddVisionOverheadEdges.PoseNotGood", "Pose not good for timestamp %d", frameInfo.timestamp);
         return RESULT_FAIL;
       }

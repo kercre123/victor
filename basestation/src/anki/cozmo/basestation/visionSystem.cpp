@@ -1663,7 +1663,7 @@ namespace Cozmo {
   
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void VisionSystem::SetGoundROIToImageLimits(const PoseData& poseData, const float imgX, const float imgY, Quad2f& groundPlane)
+  void VisionSystem::SetGroundROIToImageLimits(const PoseData& poseData, const float imgX, const float imgY, Quad2f& groundPlane)
   {
     ASSERT_NAMED(poseData.groundPlaneVisible, "VisionSystem..SetGoundROIToImageLimits.groundPlaneNotVisible");
     const Matrix_3x3f& H = _poseData.groundPlaneHomography;
@@ -1678,8 +1678,8 @@ namespace Cozmo {
     kmRay2FillWithEndpoints(&imageTopLine, &imageTL, &imageTR);
 
     kmRay2 imageBotLine;
-    kmVec2 imageBL{   0, imgY};
-    kmVec2 imageBR{imgX, imgY};
+    kmVec2 imageBL{   0, imgY-1};
+    kmVec2 imageBR{imgX, imgY-1};
     kmRay2FillWithEndpoints(&imageBotLine, &imageBL, &imageBR);
 
     kmRay2 groundLeftLine;
@@ -1757,7 +1757,7 @@ namespace Cozmo {
           ++iCorner)
       {
         Point3f temp = invH * finalQuad2DAs3f[iCorner];
-        ASSERT_NAMED(temp.z() > 0.f, "Projected ground quad points should have z > 0.");
+        ASSERT_NAMED(temp.z() > 0, "VisionSystem.SetGroundROIToImageLimits.BadProjectedZ");
         const f32 divisor = 1.f / temp.z();
         groundPlane[iCorner].x() = temp.x() * divisor;
         groundPlane[iCorner].y() = temp.y() * divisor;
@@ -1851,10 +1851,16 @@ namespace Cozmo {
     
     // calculate the actual ground plane ROI once we apply camera limits
     Quad2f clampedGroundPlaneROI;
-    SetGoundROIToImageLimits(_poseData, image.GetNumCols(), image.GetNumRows(), clampedGroundPlaneROI);
+    SetGroundROIToImageLimits(_poseData, image.GetNumCols(), image.GetNumRows(), clampedGroundPlaneROI);
     
-    f32 nearX, farX;
-    roi.GetVisibleX(H, image.GetNumCols(), image.GetNumRows(), nearX, farX);
+    f32 nearX = clampedGroundPlaneROI[Quad::BottomRight].x();
+    f32 farX  = clampedGroundPlaneROI[Quad::TopRight].x();
+    
+    // since it involves collision math they can be a little different, but they should be fairly close
+    ASSERT_NAMED( NEAR(nearX,clampedGroundPlaneROI[Quad::BottomLeft].x(), 1e-3f),
+      "VisionSystem.DetectOverheadEdges.BadClampedBottomX");
+    ASSERT_NAMED( NEAR(farX,clampedGroundPlaneROI[Quad::TopLeft].x(), 1e-3f),
+      "VisionSystem.DetectOverheadEdges.BadClampedTopX");
     
     // Get derivatives along the X direction
     Array2d<Vision::PixelRGB_<f32>> edgeImgX(overheadImg.GetNumRows(), overheadImg.GetNumCols());
@@ -2126,7 +2132,7 @@ namespace Cozmo {
     EnableMode(VisionMode::DetectingMarkers, true);
     //EnableMode(VisionMode::DetectingMotion,  true);
     EnableMode(VisionMode::DetectingFaces,   true);
-    EnableMode(VisionMode::DetectingOverheadEdges, true);
+    //EnableMode(VisionMode::DetectingOverheadEdges, true);
     
     _markerToTrack.Clear();
     _numTrackFailures          = 0;

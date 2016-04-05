@@ -477,6 +477,8 @@ namespace Anki {
         return true;
       }
     }
+    
+    return false;
   }
   
   template<QuadDimType N, typename T>

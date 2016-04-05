@@ -37,10 +37,10 @@ namespace Cozmo {
   struct OverheadEdgePointChain {
     OverheadEdgePointChain() : isBorder(true) { }
     OverheadEdgePointVector points;
-    bool isBorder;
+    bool isBorder; // isBorder: true = detected border; false = reached end of ground plane without detecting a border
   };
 
-  // container of points
+  // container of chains
   using OverheadEdgeChainVector = std::vector<OverheadEdgePointChain>;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

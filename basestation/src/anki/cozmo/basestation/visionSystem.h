@@ -435,7 +435,7 @@ namespace Cozmo {
     // the new ROI back into the ground plane. In other words, it calculates the part of the ground plane ROI
     // that is visible in the given poseData. Returns the result in groundPlane
     // requires: PoseData.groundPlaneVisible == true, otherwise it doesn't make sense to use the ROI
-    void SetGoundROIToImageLimits(const PoseData& poseData, const float imgX, const float imgY, Quad2f& groundPlane);
+    void SetGroundROIToImageLimits(const PoseData& poseData, const float imgX, const float imgY, Quad2f& groundPlane);
     
     Result ReadToolCode(const Vision::Image& image);
     

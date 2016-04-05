@@ -134,7 +134,7 @@ namespace Anki {
     // Only valid for 2D quads. Assumes quads are convex and checks whether
     // any corners of one quad are inside the other one, as well as whether any segments collide
     bool Intersects(const Quadrilateral<2,T>& other) const;
-    bool Intersects(const Point2<T>& rayFrom, const Point2<T>& rayTo, Point2<T>* outIntersectionPoint) const;
+    bool Intersects(const Point2<T>& rayFrom, const Point2<T>& rayTo, Point2<T>* outIntersectionPoint=nullptr) const;
     
   protected:
     
