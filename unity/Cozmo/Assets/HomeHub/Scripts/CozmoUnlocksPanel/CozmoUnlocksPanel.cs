@@ -16,6 +16,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   void Start() { 
     LoadTiles();
+    RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleRequestSetUnlockResult;
   }
 
   public void LoadTiles() {
@@ -77,6 +78,9 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private void HandleTappedAvailable(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
     UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id, true);
+  }
+
+  private void HandleRequestSetUnlockResult(Anki.Cozmo.UnlockIds unlockId, bool unlocked) {
     LoadTiles();
   }
 }

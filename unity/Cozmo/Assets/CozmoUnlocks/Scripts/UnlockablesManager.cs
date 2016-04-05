@@ -22,16 +22,8 @@ public class UnlockablesManager : MonoBehaviour {
   [SerializeField]
   private UnlockableInfoList _UnlockableInfoList;
 
-  void Start() {
-    // temp data for testing:
-    Dictionary<Anki.Cozmo.UnlockIds, bool> testData = new Dictionary<Anki.Cozmo.UnlockIds, bool>();
-    for (int i = 0; i < Enum.GetValues(typeof(Anki.Cozmo.UnlockIds)).Length; ++i) {
-      testData.Add((Anki.Cozmo.UnlockIds)i, false);
-    }
-    testData[Anki.Cozmo.UnlockIds.SpeedTapGame] = true;
-    testData[Anki.Cozmo.UnlockIds.SpeedTapEasyImplicit] = true;
-    testData[Anki.Cozmo.UnlockIds.BurpAction] = true;
-    _UnlockablesState = testData;
+  private void Start() {
+    RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleOnUnlockRequestSuccess;
   }
 
   // should be called when connected to the robot and loaded unlock info from the physical robot.
@@ -89,8 +81,7 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   public void TrySetUnlocked(Anki.Cozmo.UnlockIds id, bool unlocked) {
-    _UnlockablesState[id] = unlocked;
-    // TODO: Also pass to engine/robot and listen for a response.
+    RobotEngineManager.Instance.CurrentRobot.RequestSetUnlock(id, unlocked);
   }
 
   public bool IsUnlocked(Anki.Cozmo.UnlockIds id) {
@@ -124,6 +115,10 @@ public class UnlockablesManager : MonoBehaviour {
 
     return true;
 
+  }
+
+  private void HandleOnUnlockRequestSuccess(Anki.Cozmo.UnlockIds id, bool unlocked) {
+    _UnlockablesState[id] = unlocked;
   }
 
 }
