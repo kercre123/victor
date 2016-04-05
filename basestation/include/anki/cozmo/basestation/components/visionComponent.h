@@ -126,6 +126,11 @@ struct DockingErrorSignal;
     Vision::Camera& GetCamera(void);
     
     const Vision::CameraCalibration& GetCameraCalibration() const;
+    
+    // If enabled, the camera calibration will be updated based on the
+    // position of the centroids of the dots that are part of the tool codes.
+    // Fails if vision system is already in the middle of reading tool code.
+    Result EnableToolCodeCalibration(bool enable);
       
     // If the current image is newer than the specified timestamp, copy it into
     // the given img and return true.

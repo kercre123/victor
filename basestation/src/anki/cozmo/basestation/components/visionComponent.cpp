@@ -330,6 +330,16 @@ namespace Cozmo {
     }
   }
   
+  Result VisionComponent::EnableToolCodeCalibration(bool enable)
+  {
+    if(nullptr != _visionSystem) {
+      return _visionSystem->EnableToolCodeCalibration(enable);
+    } else {
+      PRINT_NAMED_ERROR("VisionComponent.EnableToolCodeCalibration.NullVisionSystem", "");
+      return RESULT_FAIL;
+    }
+  }
+  
   Result VisionComponent::SetNextImage(const Vision::ImageRGB& image)
   {
     if(_isCamCalibSet) {

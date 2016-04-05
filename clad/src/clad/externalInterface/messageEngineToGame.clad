@@ -214,7 +214,17 @@ message RobotMarkedObjectPoseUnknown {
 }
 
 // RobotReadToolCode
+//  Code will be "UnknownTool" if unsuccessfully read
+//  All coordinates will be -1 if not found / not computed
 message RobotReadToolCode {
+    float_32 expectedCalibDotLeft_x  = -1.0,
+    float_32 expectedCalibDotLeft_y  = -1.0,
+    float_32 expectedCalibDotRight_x = -1.0,
+    float_32 expectedCalibDotRight_y = -1.0,
+    float_32 observedCalibDotLeft_x  = -1.0,
+    float_32 observedCalibDotLeft_y  = -1.0,
+    float_32 observedCalibDotRight_x = -1.0,
+    float_32 observedCalibDotRight_y = -1.0,
     ToolCode code
 }
 

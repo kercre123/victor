@@ -91,6 +91,8 @@ namespace Cozmo {
     u32    GetEnabledModes() const { return _mode; }
     void   SetModes(u32 modes) { _mode = modes; }
     
+    Result EnableToolCodeCalibration(bool enable);
+    
     // Accessors
     const Point2f& GetTrackingMarkerSize();
     
@@ -276,6 +278,8 @@ namespace Cozmo {
     
     u32 _mode = static_cast<u32>(VisionMode::Idle);
     u32 _modeBeforeTracking = static_cast<u32>(VisionMode::Idle);
+    
+    bool _calibrateFromToolCode = false;
     
     // Camera parameters
     // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?

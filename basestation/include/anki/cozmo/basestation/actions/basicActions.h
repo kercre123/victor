@@ -554,7 +554,7 @@ namespace Anki {
     {
     public:
       
-      ReadToolCodeAction(Robot& robot);
+      ReadToolCodeAction(Robot& robot, bool doCalibration = false);
       virtual ~ReadToolCodeAction();
       
       virtual const std::string& GetName() const override { return _name; }
@@ -575,6 +575,7 @@ namespace Anki {
     private:
       
       std::string       _name = "ReadToolCode";
+      bool              _doCalibration           = false;
       TimeStamp_t       _toolCodeLastMovedTime   = 0;
       f32               _toolCodeLastHeadAngle   = 0;
       f32               _toolCodeLastLiftAngle   = 0;
