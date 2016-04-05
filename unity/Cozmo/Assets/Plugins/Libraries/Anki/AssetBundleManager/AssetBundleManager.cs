@@ -458,7 +458,7 @@ namespace Anki {
           yield break;
         }
 
-        AssetBundleRequest request = loadedAssetBundle.AssetBundle.LoadAssetWithSubAssetsAsync<AssetType>(assetName);
+        AssetBundleRequest request = loadedAssetBundle.AssetBundle.LoadAssetAsync<AssetType>(assetName);
         yield return request;
 
         if (request.asset == null) {
