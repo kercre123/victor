@@ -18,7 +18,9 @@ MonoBehaviour:
   _ChallengeTitleLocKey: simonGame01.title
   _ChallengeDescriptionLocKey: simonGame01.description
   _ChallengeIcon: {fileID: 21300000, guid: a6f61eafc41094afbac50cae1fbc00da, type: 3}
-  _UnlockId: 3
+  _UnlockId:
+    _EnumValueAsString: SimonGame
+    _EnumValue: 3
   _HowToPlayDialogContentLocKey: simonGame.text.howToPlay
   _HowToPlayDialogContentPrefab: {fileID: 0}
   _Music:

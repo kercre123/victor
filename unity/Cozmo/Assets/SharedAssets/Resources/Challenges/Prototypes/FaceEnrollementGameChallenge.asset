@@ -18,9 +18,9 @@ MonoBehaviour:
   _ChallengeTitleLocKey: FaceEnrollmentTest
   _ChallengeDescriptionLocKey: FaceEnrollmentTest
   _ChallengeIcon: {fileID: 0}
-  _ChallengeReqs:
-    ChallengeGateKeys: []
-    StatGateArray: []
+  _UnlockId:
+    _EnumValueAsString: BurpAction
+    _EnumValue: 0
   _HowToPlayDialogContentLocKey: 
   _HowToPlayDialogContentPrefab: {fileID: 0}
   _Music:
