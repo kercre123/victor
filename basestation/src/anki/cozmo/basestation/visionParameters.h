@@ -14,6 +14,7 @@
 #define ANKI_COZMO_BASESTATION_VISIONPARAMETERS_H
 
 #include "anki/common/types.h"
+#include "anki/common/basestation/math/point.h"
 
 #include "anki/vision/robot/binaryTracker.h"
 #include "anki/vision/robot/lucasKanade.h"
@@ -90,6 +91,8 @@ struct DetectFiducialMarkersParameters
   s32 numRefinementSamples;
   f32 quadRefinementMaxCornerChange;
   f32 quadRefinementMinCornerChange;
+  Point2f fiducialThicknessFraction;
+  Point2f roundedCornersFraction;
   bool keepUnverifiedMarkers;
   
   // Methods
@@ -136,7 +139,7 @@ struct TrackerParameters
   static const f32 MAX_DOCKING_FOV_ANGLE;
   
   TrackerParameters();
-  void Initialize(ImageResolution resolution);
+  void Initialize(ImageResolution resolution, const Point2f& fiducialThicknessFraction);
   
 }; // struct TrackerParameters
 

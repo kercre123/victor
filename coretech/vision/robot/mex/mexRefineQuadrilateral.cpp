@@ -42,12 +42,14 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   
   const s32 iterations          = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
   AnkiConditionalErrorAndReturn(mxGetNumberOfElements(prhs[argIndex])==1, "mexRefineQuadrilateral", "Separate squareThicknesses in x/y not supported yet. prhs[%d] must be a scalar.", argIndex);
-  const f32 squareWidthFraction = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
-  const f32 darkGray            = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
-  const f32 brightGray          = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
-  const s32 numSamples          = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
-  const f32 maxCornerChange     = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
-  const f32 minCornerChange     = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
+  const f32 squareWidthFraction    = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
+  const f32 darkGray               = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
+  const f32 brightGray             = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
+  const s32 numSamples             = static_cast<s32>(mxGetScalar(prhs[argIndex++]));
+  const f32 maxCornerChange        = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
+  const f32 minCornerChange        = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
+  AnkiConditionalErrorAndReturn(mxGetNumberOfElements(prhs[argIndex])==1, "mexRefineQuadrilateral", "Separate roundedCornerFraction in x/y not supported yet. prhs[%d] must be a scalar.", argIndex);
+  const f32 roundedCornersFraction = static_cast<f32>(mxGetScalar(prhs[argIndex++]));
   
   Quadrilateral<f32> initialQuadF32;
   Quadrilateral<f32> refinedQuad;
@@ -55,7 +57,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   initialQuadF32.SetCast<s16>(initialQuad);
 
-  Anki::Result lastResult = RefineQuadrilateral(initialQuadF32, initialHomography, image, Point<f32>(squareWidthFraction, squareWidthFraction), iterations, darkGray, brightGray, numSamples, maxCornerChange, minCornerChange, refinedQuad, refinedHomography, scratch);
+  Anki::Result lastResult = RefineQuadrilateral(initialQuadF32, initialHomography, image, Point<f32>(squareWidthFraction, squareWidthFraction), Point<f32>(roundedCornersFraction,roundedCornersFraction), iterations, darkGray, brightGray, numSamples, maxCornerChange, minCornerChange, refinedQuad, refinedHomography, scratch);
   
   // Create outputs before the next error check, in case it fails (for example, if homography refinement failed)
   plhs[0] = mxCreateDoubleMatrix(4,2, mxREAL);

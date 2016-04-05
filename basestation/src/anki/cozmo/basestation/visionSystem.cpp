@@ -536,6 +536,10 @@ namespace Cozmo {
 #     else
       const CornerMethod cornerMethod = CORNER_METHOD_LINE_FITS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
       
+      ASSERT_NAMED(_detectionParameters.fiducialThicknessFraction.x() > 0 &&
+                   _detectionParameters.fiducialThicknessFraction.y(),
+                   "VisionSystem.DetectMarkers.FiducialThicknessFractionParameterNotInitialized");
+      
       // Convert "basestation" detection parameters to "embedded" parameters
       // TODO: Merge the fiducial detection parameters structs
       Embedded::FiducialDetectionParameters embeddedParams;
@@ -561,6 +565,10 @@ namespace Cozmo {
       embeddedParams.refine_numRefinementSamples = _detectionParameters.numRefinementSamples;
       embeddedParams.refine_quadRefinementMaxCornerChange = _detectionParameters.quadRefinementMaxCornerChange;
       embeddedParams.refine_quadRefinementMinCornerChange = _detectionParameters.quadRefinementMinCornerChange;
+      embeddedParams.fiducialThicknessFraction.x = _detectionParameters.fiducialThicknessFraction.x();
+      embeddedParams.fiducialThicknessFraction.y = _detectionParameters.fiducialThicknessFraction.y();
+      embeddedParams.roundedCornersFraction.x = _detectionParameters.roundedCornersFraction.x();
+      embeddedParams.roundedCornersFraction.y = _detectionParameters.roundedCornersFraction.y();
       embeddedParams.returnInvalidMarkers = _detectionParameters.keepUnverifiedMarkers;
       embeddedParams.doCodeExtraction = true;
       
@@ -806,7 +814,8 @@ namespace Cozmo {
                                                                     _trackerParameters.numPyramidLevels,
                                                                     Transformations::TRANSFORM_PROJECTIVE,
                                                                     _trackerParameters.numFiducialEdgeSamples,
-                                                                    FIDUCIAL_SQUARE_THICKNESS_FRACTION,
+                                                                     Embedded::Point<f32>(_detectionParameters.fiducialThicknessFraction.x(),
+                                                                               _detectionParameters.fiducialThicknessFraction.y()),
                                                                     _trackerParameters.numInteriorSamples,
                                                                     _trackerParameters.numSamplingRegions,
                                                                     calib->GetFocalLength_x(),
@@ -1977,7 +1986,7 @@ namespace Cozmo {
     
     // Just make all the vision parameters' resolutions match capture resolution:
     _detectionParameters.Initialize(_captureResolution);
-    _trackerParameters.Initialize(_captureResolution);
+    _trackerParameters.Initialize(_captureResolution, _detectionParameters.fiducialThicknessFraction);
     _faceDetectionParameters.Initialize(_captureResolution);
     
     Simulator::Initialize();
