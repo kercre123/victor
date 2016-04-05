@@ -13,10 +13,10 @@ enum uint_8 UnlockId
   SimonGame,
   SpeedTapGame,
   CubePounceGame,
+  FaceEnrollmentGame,
   SpeedTapEasyImplicit,
   SpeedTapMediumImplicit,
   SpeedTapHardImplicit,
-
   Count
 }
 
