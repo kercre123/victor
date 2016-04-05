@@ -16,6 +16,7 @@
 #include "clad/types/progressionStatTypes.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
+#include "clad/types/unlockTypes.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/messageToBehaviorManager.clad"
@@ -842,6 +843,11 @@ message ProgressionMessage {
   ProgressionMessageUnion  ProgressionMessageUnion
 }
 
+// Progression unlocks
+message RequestSetUnlock {
+  UnlockId unlockID,
+  bool unlocked
+}
 
 // Debug console set
 message SetDebugConsoleVarMessage {

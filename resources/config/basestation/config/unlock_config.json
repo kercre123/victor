@@ -1,0 +1,11 @@
+{
+  "unlockedFreeplayBehaviors": {
+    "CubeRollAction": {
+      "freeplayBehaviorGroup": "Unlock_CubeRoll",
+      "unlocked": false
+    },
+    "DriveInCircleAction": {
+      "unlocked": true
+    }
+  }
+}
