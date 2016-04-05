@@ -19,8 +19,8 @@ MonoBehaviour:
   _ChallengeDescriptionLocKey: FaceEnrollmentTest
   _ChallengeIcon: {fileID: 0}
   _UnlockId:
-    _EnumValueAsString: BurpAction
-    _EnumValue: 0
+    _EnumValueAsString: FaceEnrollmentGame
+    _EnumValue: 6
   _HowToPlayDialogContentLocKey: 
   _HowToPlayDialogContentPrefab: {fileID: 0}
   _Music:
