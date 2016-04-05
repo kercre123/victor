@@ -204,9 +204,7 @@ void CozmoEngine::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGa
   
 bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
 {
-  // Check if already connected
-  Robot* robot = CozmoEngine::GetRobotByID(whichRobot);
-  if (robot != nullptr) {
+  if( CozmoEngine::HasRobotWithID(whichRobot)) {
     PRINT_NAMED_INFO("CozmoEngine.ConnectToRobot.AlreadyConnected", "Robot %d already connected", whichRobot);
     return true;
   }
@@ -403,6 +401,11 @@ int CozmoEngine::GetNumRobots() const {
   
 Robot* CozmoEngine::GetRobotByID(const RobotID_t robotID) {
   return _context->GetRobotManager()->GetRobotByID(robotID);
+}
+
+bool  CozmoEngine::HasRobotWithID(const RobotID_t robotID) const
+{
+  return _context->GetRobotManager()->DoesRobotExist(robotID);
 }
 
 void CozmoEngine::ListenForRobotConnections(bool listen)
