@@ -8,7 +8,7 @@ PROTO CalibrationPattern [
 
   # Width of pattern measured between outside edge of dots
   # on opposite sides of the long dimensions
-  field SFFloat       patternWidth 0.1
+  field SFFloat       patternWidth 0.05
 
 
   # Asymmetric circles pattern

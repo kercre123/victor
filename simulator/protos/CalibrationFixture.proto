@@ -18,29 +18,29 @@ Solid {
   children [
     # Tilted down
     CalibrationPattern {
-      translation 0.17 0 0.04
+      translation 0.11 0 0.04
       rotation -0.357407 0.357407 0.862856 4.56541
     }
 
     # Tilted up (high)
     CalibrationPattern {
-      translation 0.15 0 0.12
+      translation 0.09 0 0.09
       rotation 0.129428 0.129428 0.983106 1.58783
     }
 
     # Tilted right
     CalibrationPattern {
-      translation 0.13 0.13 0.04
+      translation 0.07 0.09 0.04
     }
 
     # Tilted left
     CalibrationPattern {
-      translation 0.13 -0.13 0.04
+      translation 0.07 -0.09 0.04
     }
 
     # Straight on
     CalibrationPattern {
-      translation -0.02 -0.18 0.04
+      translation -0.02 -0.13 0.04
     }
 
     # Rotated 45 high
