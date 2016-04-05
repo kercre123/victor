@@ -176,7 +176,11 @@ def svn_package(svn_dict):
         unpack = [ptool] + ptool_options + [package, '-C', loc]
         l_rev = 'unknown'
 
-        if os.path.isdir(loc):
+        for subdir in subdirs:
+            if not os.path.isdir(subdir):
+                l_rev = 0
+                break
+        if l_rev != 0 and os.path.isdir(loc):
             l_rev = get_svn_file_rev(loc, cred)
             #print("The version of [%s] is [%s]" % (loc, l_rev))
             if l_rev is None:

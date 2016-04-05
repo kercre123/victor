@@ -1,0 +1,66 @@
+{
+  "behaviorType" : "RequestGameSimple",
+  "name" : "RequestCubePounce",
+
+  "zero_block_config": {
+    "request_animName" : "ID_MotionFollow_ReactToMotion",
+    "deny_animName" : "ID_catch_fail",
+    "minRequestDelay_s" : 20.0
+  },
+
+  "one_block_config": {
+    "initial_animName" : "ID_catch_start",
+    "preDrive_animName" : "ID_reactTo2ndBlock_01",
+    "request_animName" : "ID_MotionFollow_ReactToMotion",
+    "deny_animName" : "ID_catch_fail",
+    "minRequestDelay_s" : 20.0
+  },
+  
+  "emotionScorers" :
+  [
+    {
+      "emotionType" : "WantToPlay",
+      "scoreGraph" :
+      {
+        "nodes" :
+        [
+          {
+            "x" : 0.0,
+            "y" : 0.0
+          },
+          {
+            "x" : 1.0,
+            "y" : 0.8
+          }
+        ]
+      },
+      "trackDelta" : false
+    }
+  ],
+  "repetitionPenalty" :
+  {
+    "nodes" :
+    [
+      {
+        "x" : 5.0,
+        "y" : 0.0
+      },
+      {
+        "x" : 10.0,
+        "y" : 0.1
+      },
+      {
+        "x" : 20.0,
+        "y" : 1.0
+      }
+    ]
+  },
+  "behaviorGroups" :
+  [
+    "ChangesPosition",
+    "ChangesOrientation",
+    "MovesLift",
+    "MiniGame",
+    "RequestCubePounce"
+  ]
+}
