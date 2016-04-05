@@ -1340,7 +1340,7 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void RequestSetUnlock(Anki.Cozmo.UnlockIds unlockID, bool unlocked) {
+  public void RequestSetUnlock(Anki.Cozmo.UnlockId unlockID, bool unlocked) {
     RobotEngineManager.Instance.Message.RequestSetUnlock = Singleton<RequestSetUnlock>.Instance.Initialize(unlockID, unlocked);
     RobotEngineManager.Instance.SendMessage();
   }

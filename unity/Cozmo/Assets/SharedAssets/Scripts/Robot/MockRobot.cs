@@ -545,7 +545,7 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void RequestSetUnlock(Anki.Cozmo.UnlockIds unlockID, bool unlocked) {
+  public void RequestSetUnlock(Anki.Cozmo.UnlockId unlockID, bool unlocked) {
     
   }
 

@@ -20,16 +20,16 @@ public class UnlockDebugPane : MonoBehaviour {
 
   private void PopulateOptions() {
     List<UnityEngine.UI.Dropdown.OptionData> options = new List<UnityEngine.UI.Dropdown.OptionData>();
-    for (int i = 0; i < System.Enum.GetValues(typeof(Anki.Cozmo.UnlockIds)).Length; ++i) {
+    for (int i = 0; i < System.Enum.GetValues(typeof(Anki.Cozmo.UnlockId)).Length; ++i) {
       UnityEngine.UI.Dropdown.OptionData option = new UnityEngine.UI.Dropdown.OptionData();
-      option.text = System.Enum.GetValues(typeof(Anki.Cozmo.UnlockIds)).GetValue(i).ToString();
+      option.text = System.Enum.GetValues(typeof(Anki.Cozmo.UnlockId)).GetValue(i).ToString();
       options.Add(option);
     }
     _UnlockSelection.AddOptions(options);
   }
 
-  private Anki.Cozmo.UnlockIds GetSelectedUnlockId() {
-    return (Anki.Cozmo.UnlockIds)System.Enum.Parse(typeof(Anki.Cozmo.UnlockIds), _UnlockSelection.options[_UnlockSelection.value].text);
+  private Anki.Cozmo.UnlockId GetSelectedUnlockId() {
+    return (Anki.Cozmo.UnlockId)System.Enum.Parse(typeof(Anki.Cozmo.UnlockId), _UnlockSelection.options[_UnlockSelection.value].text);
   }
 
   private void OnHandleLockButtonClicked() {

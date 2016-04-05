@@ -73,7 +73,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
-  public event Action<Anki.Cozmo.UnlockIds, bool> OnRequestSetUnlockResult;
+  public event Action<Anki.Cozmo.UnlockId, bool> OnRequestSetUnlockResult;
 
   #region Audio Callback events
 
@@ -698,7 +698,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.UnlockStatus message) {
     if (UnlockablesManager.Instance != null) {
-      Dictionary<Anki.Cozmo.UnlockIds, bool> loadedUnlockables = new Dictionary<UnlockIds, bool>();
+      Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables = new Dictionary<UnlockId, bool>();
       for (int i = 0; i < message.unlocks.Length; ++i) {
         loadedUnlockables.Add(message.unlocks[i].unlockID, message.unlocks[i].unlocked);
       }

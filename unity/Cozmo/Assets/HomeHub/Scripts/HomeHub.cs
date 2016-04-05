@@ -36,7 +36,7 @@ namespace Cozmo.HomeHub {
 
     private CompletedChallengeData _CurrentChallengePlaying;
 
-    private void RefreshChallengeUnlockInfo(Anki.Cozmo.UnlockIds id, bool unlocked) {
+    private void RefreshChallengeUnlockInfo(Anki.Cozmo.UnlockId id, bool unlocked) {
       LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
       if (_HomeViewInstance != null) {
         _HomeViewInstance.SetChallengeStates(_ChallengeStatesById);

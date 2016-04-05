@@ -80,7 +80,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
   }
 
-  private void HandleRequestSetUnlockResult(Anki.Cozmo.UnlockIds unlockId, bool unlocked) {
+  private void HandleRequestSetUnlockResult(Anki.Cozmo.UnlockId unlockId, bool unlocked) {
     LoadTiles();
   }
 }

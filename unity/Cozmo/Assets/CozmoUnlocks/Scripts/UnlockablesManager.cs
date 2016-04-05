@@ -17,7 +17,7 @@ public class UnlockablesManager : MonoBehaviour {
     }
   }
 
-  private Dictionary<Anki.Cozmo.UnlockIds, bool> _UnlockablesState = new Dictionary<Anki.Cozmo.UnlockIds, bool>();
+  private Dictionary<Anki.Cozmo.UnlockId, bool> _UnlockablesState = new Dictionary<Anki.Cozmo.UnlockId, bool>();
 
   [SerializeField]
   private UnlockableInfoList _UnlockableInfoList;
@@ -27,7 +27,7 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   // should be called when connected to the robot and loaded unlock info from the physical robot.
-  public void OnConnectLoad(Dictionary<Anki.Cozmo.UnlockIds, bool> loadedUnlockables) {
+  public void OnConnectLoad(Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables) {
     _UnlockablesState = loadedUnlockables;
     if (NothingUnlocked()) {
       SetDefaults();
@@ -35,7 +35,7 @@ public class UnlockablesManager : MonoBehaviour {
   }
 
   private bool NothingUnlocked() {
-    foreach (KeyValuePair<Anki.Cozmo.UnlockIds, bool> kvp in _UnlockablesState) {
+    foreach (KeyValuePair<Anki.Cozmo.UnlockId, bool> kvp in _UnlockablesState) {
       if (kvp.Value) {
         return false;
       }
@@ -100,15 +100,15 @@ public class UnlockablesManager : MonoBehaviour {
     return unavailable;
   }
 
-  public void TrySetUnlocked(Anki.Cozmo.UnlockIds id, bool unlocked) {
+  public void TrySetUnlocked(Anki.Cozmo.UnlockId id, bool unlocked) {
     RobotEngineManager.Instance.CurrentRobot.RequestSetUnlock(id, unlocked);
   }
 
-  public bool IsUnlocked(Anki.Cozmo.UnlockIds id) {
+  public bool IsUnlocked(Anki.Cozmo.UnlockId id) {
     return _UnlockablesState[id];
   }
 
-  public bool IsUnlockableAvailable(Anki.Cozmo.UnlockIds id) {
+  public bool IsUnlockableAvailable(Anki.Cozmo.UnlockId id) {
     if (_UnlockablesState[id]) {
       return true;
     }
@@ -137,7 +137,7 @@ public class UnlockablesManager : MonoBehaviour {
 
   }
 
-  private void HandleOnUnlockRequestSuccess(Anki.Cozmo.UnlockIds id, bool unlocked) {
+  private void HandleOnUnlockRequestSuccess(Anki.Cozmo.UnlockId id, bool unlocked) {
     _UnlockablesState[id] = unlocked;
   }
 
