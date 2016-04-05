@@ -1466,13 +1466,14 @@ namespace Anki {
             const bool success = _context->GetDataPlatform()->readAsJson(fullFileName, behaviorJson);
             if (success && !behaviorJson.empty())
             {
-              //PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
+              // PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
               _behaviorMgr.LoadBehaviorFromJson(behaviorJson);
             }
-            else
+            else if( ! success )
             {
               PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read '%s'", fullFileName.c_str());
             }
+            // don't print anything if we read an empty json
           }
         }
       }
