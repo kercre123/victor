@@ -1,4 +1,4 @@
-// {
+{
 //   "behaviorType": "GatherBlocks",
 //   "name": "gatherBlocks",
 //   "emotionScorers": [
@@ -65,4 +65,4 @@
 //     "ChangesOrientation",
 //     "MovesLift"
 //   ]
-// }
+}
