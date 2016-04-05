@@ -1,5 +1,4 @@
 // C# build script for unity project
-using UnityEditor;
 using UnityEngine;
 using System.Collections.Generic;
 using System.Collections;
