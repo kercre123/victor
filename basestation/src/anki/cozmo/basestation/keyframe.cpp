@@ -618,22 +618,24 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
           
           // Check that speed is valid
           if (std::abs(_streamMsg.speed) > MAX_BODY_ROTATION_SPEED_DEG_PER_SEC) {
-            PRINT_NAMED_WARNING("BodyMotionKeyFrame.SetMembersFromJson.PointTurnSpeedExceedsLimit",
-                                "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
-                                animNameDebug.c_str(),
-                                std::abs(_streamMsg.speed),
-                                MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
-            _streamMsg.speed = CLIP(_streamMsg.speed, -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC, MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+            PRINT_NAMED_INFO("BodyMotionKeyFrame.SetMembersFromJson.PointTurnSpeedExceedsLimit",
+                             "%s: PointTurn speed %d deg/s exceeds limit of %f deg/s. Clamping",
+                             animNameDebug.c_str(),
+                             std::abs(_streamMsg.speed),
+                             MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
+            _streamMsg.speed = CLIP(_streamMsg.speed,
+                                    -MAX_BODY_ROTATION_SPEED_DEG_PER_SEC,
+                                    MAX_BODY_ROTATION_SPEED_DEG_PER_SEC);
           }
         } else if(radiusStr == "STRAIGHT") {
           _streamMsg.curvatureRadius_mm = s16_MAX;
           
           // Check that speed is valid
           if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
-            PRINT_NAMED_WARNING("BodyMotionKeyFrame.SetMembersFromJson.StraightSpeedExceedsLimit",
-                                "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
-                                animNameDebug.c_str(),
-                                std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+            PRINT_NAMED_INFO("BodyMotionKeyFrame.SetMembersFromJson.StraightSpeedExceedsLimit",
+                             "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                             animNameDebug.c_str(),
+                             std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
             _streamMsg.speed = CLIP(_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
           }
         } else {
@@ -652,10 +654,10 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
         //       speed limit should look like between straight and point turns so
         //       just using straight limit for now as a sanity check.
         if (std::abs(_streamMsg.speed) > MAX_WHEEL_SPEED_MMPS) {
-          PRINT_NAMED_WARNING("BodyMotionKeyFrame.SetMembersFromJson.ArcSpeedExceedsLimit",
-                              "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
-                              animNameDebug.c_str(),
-                              std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
+          PRINT_NAMED_INFO("BodyMotionKeyFrame.SetMembersFromJson.ArcSpeedExceedsLimit",
+                           "%s: Speed %d mm/s exceeds limit of %f mm/s. Clamping",
+                           animNameDebug.c_str(),
+                           std::abs(_streamMsg.speed), MAX_WHEEL_SPEED_MMPS);
           _streamMsg.speed = CLIP(_streamMsg.speed, -MAX_WHEEL_SPEED_MMPS, MAX_WHEEL_SPEED_MMPS);
         }
       }
