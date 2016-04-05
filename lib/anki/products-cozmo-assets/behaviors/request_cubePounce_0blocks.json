@@ -1,0 +1,59 @@
+{
+  "behaviorType" : "RequestGameSimple",
+  "name" : "RequestCubePounce_0Blocks",
+
+  "numBlocks": 0,
+  "moreBlocksAllowed": false,
+
+  "request_animName" : "anim_speedTap_look4Block_01",  // TEMP: stand-in for now
+  "deny_animName" : "anim_speedTap_playerNo_01",  // TEMP: stand-in for now
+  "minRequestDelay_s" : 20.0,
+  
+  "emotionScorers" :
+  [
+    {
+      "emotionType" : "WantToPlay",
+      "scoreGraph" :
+      {
+        "nodes" :
+        [
+          {
+            "x" : 0.0,
+            "y" : 0.0
+          },
+          {
+            "x" : 1.0,
+            "y" : 0.8
+          }
+        ]
+      },
+      "trackDelta" : false
+    }
+  ],
+  "repetitionPenalty" :
+  {
+    "nodes" :
+    [
+      {
+        "x" : 5.0,
+        "y" : 0.0
+      },
+      {
+        "x" : 10.0,
+        "y" : 0.1
+      },
+      {
+        "x" : 20.0,
+        "y" : 1.0
+      }
+    ]
+  },
+  "behaviorGroups" :
+  [
+    "ChangesPosition",
+    "ChangesOrientation",
+    "MovesLift",
+    "MiniGame",
+    "RequestCubePounce"
+  ]
+}
