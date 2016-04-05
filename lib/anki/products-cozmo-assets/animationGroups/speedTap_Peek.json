@@ -1,0 +1,22 @@
+{
+  "Animations": [
+    {
+      "Name": "anim_speedTap_lookAtPlayer",
+      "Weight": 0.2,
+      "CooldownTime_Sec": 0.0,
+      "Mood": "Default"
+    },
+    {
+      "Name": "anim_speedTap_idle_01",
+      "Weight": 0.3,
+      "CooldownTime_Sec": 0.0,
+      "Mood": "Default"
+    },
+    {
+      "Name": "anim_speedTap_idle_02",
+      "Weight": 0.5,
+      "CooldownTime_Sec": 0.0,
+      "Mood": "Default"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "behaviorType": "LookAround",
+  "name": "lookAround",
+  "emotionScorers": [
+    {
+      "emotionType": "Excited",
+      "scoreGraph": {
+        "nodes": [
+          {
+            "x": -1.0,
+            "y": 0.8
+          },
+          {
+            "x": -0.004,
+            "y": 0.3
+          },
+          {
+            "x": 1.0,
+            "y": 0.01
+          }
+        ]
+      },
+      "trackDelta": false
+    }
+  ],
+  "repetitionPenalty": {
+    "nodes": [
+      {
+        "x": 5.0,
+        "y": 0.0
+      },
+      {
+        "x": 10.0,
+        "y": 0.1
+      },
+      {
+        "x": 20.0,
+        "y": 1.0
+      }
+    ]
+  },
+  "behaviorGroups": [
+    "ChangesPosition",
+    "ChangesOrientation",
+    "MovesLift"
+  ]
+}
