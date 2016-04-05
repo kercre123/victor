@@ -96,9 +96,9 @@ namespace Anki {
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
         
-        if (nullptr != _devLoggingSystem)
+        if (nullptr != DevLoggingSystem::GetInstance())
         {
-          _devLoggingSystem->LogMessage(message);
+          DevLoggingSystem::GetInstance()->LogMessage(message);
         }
         
         p.dataLen = message.Size();
@@ -117,9 +117,9 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
-      if (nullptr != _devLoggingSystem)
+      if (nullptr != DevLoggingSystem::GetInstance())
       {
-        _devLoggingSystem->LogMessage(message);
+        DevLoggingSystem::GetInstance()->LogMessage(message);
       }
       
       // Send out this message to anyone that's subscribed

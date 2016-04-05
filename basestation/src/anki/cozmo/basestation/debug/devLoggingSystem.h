@@ -30,30 +30,36 @@ namespace Cozmo {
 
 class DevLoggingSystem : Util::noncopyable {
 public:
-  DevLoggingSystem();
+  static void CreateInstance(const std::string& loggingBaseDirectory);
+  static void DestroyInstance();
+  static DevLoggingSystem* GetInstance() { return sInstance; }
+  static const std::chrono::system_clock::time_point& GetAppRunStartTime() { return kAppRunStartTime; }
+  
   virtual ~DevLoggingSystem();
   
   template<typename MsgType>
   void LogMessage(const MsgType& message);
   
-  static const std::chrono::system_clock::time_point& GetAppRunStartTime() { return kAppRunStartTime; }
-  static void SetDevLoggingBaseDirectory(const std::string& directory) { kDevLoggingBaseDirectory = directory; }
-  static const std::string& GetDevLoggingBaseDirectory() { return kDevLoggingBaseDirectory; }
+  const std::string& GetDevLoggingBaseDirectory() { return _devLoggingBaseDirectory; }
   
 private:
+  static DevLoggingSystem* sInstance;
+  static const std::chrono::system_clock::time_point kAppRunStartTime;
+  
   std::unique_ptr<Util::RollingFileLogger>    _gameToEngineLog;
   std::unique_ptr<Util::RollingFileLogger>    _engineToGameLog;
   std::unique_ptr<Util::RollingFileLogger>    _robotToEngineLog;
   std::unique_ptr<Util::RollingFileLogger>    _engineToRobotLog;
+  std::string _devLoggingBaseDirectory;
   
-  std::chrono::system_clock::time_point       _startTime;
+  DevLoggingSystem(const std::string& baseDirectory);
+  
+  void DeleteFiles(const std::string& baseDirectory, const std::string& extension);
+  void ArchiveDirectories(const std::string& baseDirectory, const std::string& excludeDirectory);
+  std::string GetPathString(const std::string& base, const std::string& path);
   
   template<typename MsgType>
   std::string PrepareMessage(const MsgType& message);
-  
-  static const std::chrono::system_clock::time_point kAppRunStartTime;
-  
-  static std::string kDevLoggingBaseDirectory;
 };
 
 } // end namespace Cozmo

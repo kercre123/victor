@@ -31,7 +31,6 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/multiClientChannel.h"
 #include "anki/cozmo/basestation/robotManager.h"
-#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "util/logging/sosLoggerProvider.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -51,13 +50,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
-  }
-  
-  if (ANKI_DEV_CHEATS)
-  {
-    _devLoggingSystem.reset(new DevLoggingSystem());
-    _uiMsgHandler->SetDevLoggingSystem(_devLoggingSystem.get());
-    _context->GetRobotMsgHandler()->SetDevLoggingSystem(_devLoggingSystem.get());
   }
   
   PRINT_NAMED_INFO("CozmoEngine.Constructor",

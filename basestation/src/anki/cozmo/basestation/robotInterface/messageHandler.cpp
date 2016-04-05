@@ -52,9 +52,9 @@ Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface
 {
   if (_isInitialized)
   {
-    if (nullptr != _devLoggingSystem)
+    if (nullptr != DevLoggingSystem::GetInstance())
     {
-      _devLoggingSystem->LogMessage(msg);
+      DevLoggingSystem::GetInstance()->LogMessage(msg);
     }
     
     Comms::OutgoingPacket p;
@@ -134,9 +134,9 @@ void MessageHandler::ProcessPacket(const Comms::IncomingPacket& packet)
     return;
   }
   
-  if (nullptr != _devLoggingSystem)
+  if (nullptr != DevLoggingSystem::GetInstance())
   {
-    _devLoggingSystem->LogMessage(message);
+    DevLoggingSystem::GetInstance()->LogMessage(message);
   }
 
   Broadcast(robotID, std::move(message));

@@ -47,8 +47,6 @@ public:
   Signal::SmartHandle Subscribe(const uint32_t robotId, const RobotInterface::RobotToEngineTag& tagType, std::function<void(const AnkiEvent<RobotInterface::RobotToEngine>&)> messageHandler) {
     return _eventMgr.Subscribe(robotId, static_cast<uint32_t>(tagType), messageHandler);
   }
-  
-  void SetDevLoggingSystem(DevLoggingSystem* devLogging) { _devLoggingSystem = devLogging; }
 
 protected:
   void Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message);
@@ -60,7 +58,6 @@ private:
   Comms::IChannel* _channel;
   RobotManager* _robotManager;
   bool _isInitialized;
-  DevLoggingSystem* _devLoggingSystem = nullptr;
 
 };
 

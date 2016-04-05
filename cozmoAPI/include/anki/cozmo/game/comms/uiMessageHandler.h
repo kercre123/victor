@@ -68,8 +68,6 @@ namespace Anki {
       
       bool HasDesiredNumUiDevices() const { return _hasDesiredUiDevices; }
       
-      void SetDevLoggingSystem(DevLoggingSystem* devLogging) { _devLoggingSystem = devLogging; }
-      
     protected:
       
       std::unique_ptr<MultiClientComms>             _uiComms;
@@ -99,8 +97,6 @@ namespace Anki {
       
       AnkiEventMgr<ExternalInterface::MessageEngineToGame> _eventMgrToGame;
       AnkiEventMgr<ExternalInterface::MessageGameToEngine> _eventMgrToEngine;
-      
-      DevLoggingSystem* _devLoggingSystem = nullptr;
       
     }; // class MessageHandler
     

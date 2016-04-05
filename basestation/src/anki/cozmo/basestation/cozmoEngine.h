@@ -58,7 +58,6 @@ class CozmoContext;
 class MultiClientChannel;
 class UiMessageHandler;
 class TextToSpeech;
-class DevLoggingSystem;
   
 template <typename Type>
 class AnkiEvent;
@@ -135,7 +134,6 @@ protected:
   std::unique_ptr<SpeechRecognition::KeyWordRecognizer>     _keywordRecognizer;
   std::unique_ptr<TextToSpeech>                             _textToSpeech;
   std::unique_ptr<CozmoContext>                             _context;
-  std::unique_ptr<DevLoggingSystem>                         _devLoggingSystem;
   std::map<AdvertisingRobot, bool>                          _forceAddedRobots;
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
 

@@ -1,5 +1,8 @@
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+//#include "anki/cozmo/basestation/util/file/archiveUtil.h"
 #include "util/logging/rollingFileLogger.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/fileUtils/fileUtils.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -10,30 +13,77 @@
 namespace Anki {
 namespace Cozmo {
   
-std::string DevLoggingSystem::kDevLoggingBaseDirectory = "";
-  
-const std::chrono::system_clock::time_point DevLoggingSystem::kAppRunStartTime = std::chrono::system_clock::now();
+DevLoggingSystem* DevLoggingSystem::sInstance                                   = nullptr;
+const std::chrono::system_clock::time_point DevLoggingSystem::kAppRunStartTime  = std::chrono::system_clock::now();
 
-DevLoggingSystem::DevLoggingSystem()
-  : _startTime(std::chrono::system_clock::now())
+
+void DevLoggingSystem::CreateInstance(const std::string& loggingBaseDirectory)
 {
-  std::string baseDirectory = GetDevLoggingBaseDirectory();
-  auto getPathString = [baseDirectory] (const std::string& path) -> std::string
-  {
-    std::ostringstream pathStream;
-    if (!baseDirectory.empty())
-    {
-      pathStream << baseDirectory << '/';
-    }
-    
-    pathStream << path;
-    return pathStream.str();
-  };
+  Util::SafeDelete(sInstance);
+
+  sInstance = new DevLoggingSystem(loggingBaseDirectory);
+}
+
+void DevLoggingSystem::DestroyInstance()
+{
+  Util::SafeDelete(sInstance);
+}
+
+DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory)
+{
+  DeleteFiles(baseDirectory, ".tar.gz");
+  std::string appRunTimeString = Util::RollingFileLogger::GetDateTimeString(DevLoggingSystem::GetAppRunStartTime());
+  ArchiveDirectories(baseDirectory, appRunTimeString);
   
-  _gameToEngineLog.reset(new Util::RollingFileLogger(getPathString("gameToEngine")));
-  _engineToGameLog.reset(new Util::RollingFileLogger(getPathString("engineToGame")));
-  _robotToEngineLog.reset(new Util::RollingFileLogger(getPathString("robotToEngine")));
-  _engineToRobotLog.reset(new Util::RollingFileLogger(getPathString("engineToRobot")));
+  _devLoggingBaseDirectory = GetPathString(baseDirectory, appRunTimeString);
+  _gameToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "gameToEngine")));
+  _engineToGameLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "engineToGame")));
+  _robotToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "robotToEngine")));
+  _engineToRobotLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "engineToRobot")));
+}
+  
+void DevLoggingSystem::DeleteFiles(const std::string& baseDirectory, const std::string& extension)
+{
+  auto filesToDelete = Util::FileUtils::FilesInDirectory(baseDirectory, true, extension.c_str());
+  for (auto& file : filesToDelete)
+  {
+    Util::FileUtils::DeleteFile(file);
+  }
+}
+  
+void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, const std::string& excludeDirectory)
+{
+  std::vector<std::string> directoryList;
+  Util::FileUtils::ListAllDirectories(baseDirectory, directoryList);
+  
+  for (auto iter = directoryList.begin(); iter != directoryList.end(); iter++)
+  {
+    if (*iter == excludeDirectory)
+    {
+      directoryList.erase(iter);
+      break;
+    }
+  }
+  
+  for (auto& directory : directoryList)
+  {
+    auto directoryPath = GetPathString(baseDirectory, directory);
+    //auto filePaths = Util::FileUtils::FilesInDirectory(directoryPath, true, ".log", true);
+    //ArchiveUtil::CreateArchiveFromFiles(directoryPath + ".tar.gz", directoryPath, filePaths);
+    Util::FileUtils::RemoveDirectory(directoryPath);
+  }
+}
+
+std::string DevLoggingSystem::GetPathString(const std::string& base, const std::string& path)
+{
+  std::ostringstream pathStream;
+  if (!base.empty())
+  {
+    pathStream << base << '/';
+  }
+  
+  pathStream << path;
+  return pathStream.str();
 }
 
 DevLoggingSystem::~DevLoggingSystem() = default;
@@ -41,6 +91,8 @@ DevLoggingSystem::~DevLoggingSystem() = default;
 template<typename MsgType>
 std::string DevLoggingSystem::PrepareMessage(const MsgType& message)
 {
+  // We want to repackage the clad messages with some extra information at the start
+  // We'll add 4 bytes to hold the size and another 4 for the timestamp
   static const std::size_t extraSize = sizeof(uint32_t) * 2;
   const std::size_t messageSize = message.Size();
   const std::size_t totalSize = messageSize + extraSize;
@@ -48,11 +100,13 @@ std::string DevLoggingSystem::PrepareMessage(const MsgType& message)
   
   uint8_t* data = messageVector.data();
   
+  // First write in the size
   *((uint32_t*)data) = static_cast<uint32_t>(totalSize);
   data += sizeof(uint32_t);
   
+  // Then write in the timestamp as a millisecond count since the app started running
   auto timeNow = std::chrono::system_clock::now();
-  auto msElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - _startTime);
+  auto msElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - kAppRunStartTime);
   *((uint32_t*)data) = static_cast<uint32_t>(msElapsed.count());
   data += sizeof(uint32_t);
   
@@ -82,24 +136,16 @@ void DevLoggingSystem::LogMessage(const RobotInterface::EngineToRobot& message)
 template<>
 void DevLoggingSystem::LogMessage(const RobotInterface::RobotToEngine& message)
 {
-  static const int logEveryNth = 10;
-  static int imageCount = logEveryNth;
-  
+  // CLAD messages from the robot with image payloads are large, and in chunks, so throw them out for now
   if (RobotInterface::RobotToEngineTag::image == message.GetTag())
   {
-    --imageCount;
-    if (imageCount > 0)
-    {
-      // Bail early if we haven't gotten to the image message we want
-      return;
-    }
-    
-    // This is an image we're going to log so reset the counter
-    imageCount = logEveryNth;
+    return;
   }
   
   _robotToEngineLog->Write(PrepareMessage(message));
 }
+  
+
 
 } // end namespace Cozmo
 } // end namespace Anki
