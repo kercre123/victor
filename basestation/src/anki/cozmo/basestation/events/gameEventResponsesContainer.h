@@ -17,20 +17,6 @@
 #include "clad/types/gameEvents.h"
 #include <unordered_map>
 
- namespace std {
-  
-  template <>
-  struct hash<Anki::Cozmo::GameEvent>
-  {
-    std::size_t operator()(const Anki::Cozmo::GameEvent& k) const
-    {
-      using std::hash;
-      return std::hash<uint8_t>()((uint8_t)k);
-    }
-  };
-  
-}
-
 namespace Anki {
   namespace Util
   {
@@ -52,8 +38,7 @@ namespace Cozmo {
     bool        HasResponse(Anki::Cozmo::GameEvent ev);
     
   private:
-    GameEvent   StringToEnum(std::string str);
-    std::unordered_map<Anki::Cozmo::GameEvent, std::string> _eventMap;
+    std::unordered_map<std::string, std::string> _eventMap;
     
   }; // class GameEventResponsesContainer
   
