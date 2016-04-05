@@ -39,6 +39,19 @@
 
 namespace Anki {
 namespace Cozmo {
+
+  ////////////////////////////
+  // Static consts
+  ////////////////////////////
+  
+  // Rotation ambiguities for observed blocks.
+  // We only care that the block is upright.
+  const std::vector<RotationMatrix3d> BehaviorFactoryTest::_kBlockRotationAmbiguities({
+    RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
+    RotationMatrix3d({0,1,0,  1,0,0,  0,0,1})
+  });
+
+
   
   BehaviorFactoryTest::BehaviorFactoryTest(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -323,18 +336,20 @@ namespace Cozmo {
         Vec3f Tdiff;
         Radians angleDiff;
         if (!oObject->GetPose().IsSameAs_WithAmbiguity(_expectedLightCubePose,
-                                                       oObject->GetRotationAmbiguities(),
+                                                       _kBlockRotationAmbiguities,
                                                        oObject->GetSameDistanceTolerance(),
                                                        oObject->GetSameAngleTolerance()*0.5f, true,
                                                        Tdiff, angleDiff)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpected",
-                              "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
+                              "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f; tdiff: %f %f %f; angleDiff (deg): %f",
                               oObject->GetPose().GetTranslation().x(),
                               oObject->GetPose().GetTranslation().y(),
                               oObject->GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
                               _expectedLightCubePose.GetTranslation().x(),
                               _expectedLightCubePose.GetTranslation().y(),
-                              _expectedLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
+                              _expectedLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
+                              Tdiff.x(), Tdiff.y(), Tdiff.z(),
+                              angleDiff.getDegrees());
           END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
         }
         
@@ -393,7 +408,7 @@ namespace Cozmo {
         Vec3f Tdiff;
         Radians angleDiff;
         if (!oObject->GetPose().IsSameAs_WithAmbiguity(_actualLightCubePose,
-                                                       oObject->GetRotationAmbiguities(),
+                                                       _kBlockRotationAmbiguities,
                                                        oObject->GetSameDistanceTolerance(),
                                                        oObject->GetSameAngleTolerance()*0.5f, true,
                                                        Tdiff, angleDiff)) {

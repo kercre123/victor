@@ -86,6 +86,11 @@ namespace Cozmo {
     static constexpr u32 _kNumPickupRetries = 1;
     static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
     static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
+
+    
+    // Compute rotation ambiguities.
+    // As long as the cube is upright, it's fine.
+    static const std::vector<RotationMatrix3d> _kBlockRotationAmbiguities;
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
     virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
