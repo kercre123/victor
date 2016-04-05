@@ -886,6 +886,23 @@ message SendDiscoveredObjects {
   bool enable
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+// Camera calibration
+///////////////////////////////////////////////////////////////////////////////
+
+message SaveCalibrationImage {
+  uint_8 robotID,
+}
+
+message ClearCalibrationImages {
+  uint_8 robotID,
+}
+
+message ComputeCameraCalibration {
+  uint_8 robotID,
+}
+
 // keep empty to generate an auto-union that includes all messages in this file
 // if you do not want to include messages in this union, use the keyword "structure" instead of "message"
 union MessageGameToEngine { }

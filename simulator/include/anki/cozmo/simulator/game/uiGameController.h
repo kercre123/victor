@@ -234,6 +234,9 @@ protected:
   void SendSetIdleAnimation(const std::string &animName);
   void SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos);
   void SendCancelAction();
+  void SendSaveCalibrationImage();
+  void SendClearCalibrationImages();
+  void SendComputeCameraCalibration();
   
 
   // ====== Accessors =====

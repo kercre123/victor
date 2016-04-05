@@ -447,14 +447,19 @@ namespace Cozmo {
       // Store image for calibration
       if (_storeNextImageForCalibration) {
         _storeNextImageForCalibration = false;
-        _calibrationImages.emplace_back(image.ToGray());
-        PRINT_NAMED_INFO("VisionComponent.SetNextImage.StoringCalibrationImage",
-                         "Num images including this: %lu", _calibrationImages.size());
+        if (IsModeEnabled(VisionMode::ComputingCalibration)) {
+          PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
+        } else {
+          _calibrationImages.emplace_back(image.ToGray());
+          PRINT_NAMED_INFO("VisionComponent.SetNextImage.StoringCalibrationImage",
+                           "Num images including this: %lu", _calibrationImages.size());
+        }
       }
       
       // Clear calibration images as long as we're not in the mode for processing them.
       // I _think_ this is sufficient for thread-safety.
       if (_clearCalibrationImages && !IsModeEnabled(VisionMode::ComputingCalibration)) {
+        PRINT_NAMED_INFO("VisionComponent.SetNextImage.ClearingCalibrationImages", "");
         _calibrationImages.clear();
         _clearCalibrationImages = false;
       }

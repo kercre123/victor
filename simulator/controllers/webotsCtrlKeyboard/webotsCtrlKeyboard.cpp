@@ -1466,12 +1466,16 @@ namespace Anki {
               }
               case (s32)'$':
               {
-                SendAnimation("ANIM_LIFT_NOD", 1);
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendClearCalibrationImages();
+                } else {
+                  SendSaveCalibrationImage();
+                }
                 break;
               }
               case (s32)'%':
               {
-                SendAnimation("ANIM_ALERT", 1);
+                SendComputeCameraCalibration();
                 break;
               }
               case (s32)'*':

@@ -104,6 +104,18 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // Custom handler for SendDiscoveredObjects event
     auto sendDiscoveredObjectsCallback = std::bind(&RobotEventHandler::HandleSendDiscoveredObjects, this, std::placeholders::_1);
     _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SendDiscoveredObjects, sendDiscoveredObjectsCallback));
+
+    // Custom handler for SaveCalibrationImage event
+    auto saveCalibrationImageCallback = std::bind(&RobotEventHandler::HandleSaveCalibrationImage, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SaveCalibrationImage, saveCalibrationImageCallback));
+    
+    // Custom handler for ClearCalibrationImages event
+    auto clearCalibrationImagesCallback = std::bind(&RobotEventHandler::HandleClearCalibrationImages, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ClearCalibrationImages, clearCalibrationImagesCallback));
+    
+    // Custom handler for ComputeCameraCalibration event
+    auto computeCameraCalibrationCallback = std::bind(&RobotEventHandler::HandleComputeCameraCalibration, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ComputeCameraCalibration, computeCameraCalibrationCallback));
     
     // Custom handlers for Mood events
     {
@@ -972,6 +984,70 @@ void RobotEventHandler::HandleSendDiscoveredObjects(const AnkiEvent<ExternalInte
   }
 
 }
+  
+  void RobotEventHandler::HandleSaveCalibrationImage(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  {
+    
+    const auto& eventData = event.GetData();
+    const auto& message = eventData.Get_SaveCalibrationImage();
+    const RobotID_t robotID = message.robotID;
+    
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    // We need a robot
+    if (nullptr == robot)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleSaveCalibrationImage.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      robot->GetVisionComponent().StoreNextImageForCameraCalibration();
+    }
+    
+  }
+  
+  void RobotEventHandler::HandleClearCalibrationImages(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  {
+    
+    const auto& eventData = event.GetData();
+    const auto& message = eventData.Get_ClearCalibrationImages();
+    const RobotID_t robotID = message.robotID;
+    
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    // We need a robot
+    if (nullptr == robot)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleClearCalibrationImages.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      robot->GetVisionComponent().ClearCalibrationImages();
+    }
+    
+  }
+  
+  void RobotEventHandler::HandleComputeCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  {
+    
+    const auto& eventData = event.GetData();
+    const auto& message = eventData.Get_ComputeCameraCalibration();
+    const RobotID_t robotID = message.robotID;
+    
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    // We need a robot
+    if (nullptr == robot)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleComputeCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      robot->GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
+    }
+    
+  }
+  
 
 } // namespace Cozmo
 } // namespace Anki
