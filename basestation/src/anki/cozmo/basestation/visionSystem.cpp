@@ -194,7 +194,7 @@ namespace Cozmo {
       if(enabled) {
         const bool modeAlreadyEnabled = _mode & static_cast<u32>(whichMode);
         if(!modeAlreadyEnabled) {
-          PRINT_NAMED_INFO("VisionSystem.EnableModeHelper",
+          PRINT_NAMED_INFO("VisionSystem.EnablingMode",
                            "Adding mode %s to current mode %s.",
                            VisionSystem::GetModeName(whichMode).c_str(),
                            VisionSystem::GetModeName(static_cast<VisionMode>(_mode)).c_str());
@@ -204,10 +204,10 @@ namespace Cozmo {
       } else {
         const bool modeAlreadyDisabled = !(_mode & static_cast<u32>(whichMode));
         if(!modeAlreadyDisabled) {
-          PRINT_NAMED_WARNING("VisionSystem.EnableMode.DisablingMode",
-                              "Removing mode %s from current mode %s.",
-                              VisionSystem::GetModeName(whichMode).c_str(),
-                              VisionSystem::GetModeName(static_cast<VisionMode>(_mode)).c_str());
+          PRINT_NAMED_INFO("VisionSystem.DisablingMode",
+                           "Removing mode %s from current mode %s.",
+                           VisionSystem::GetModeName(whichMode).c_str(),
+                           VisionSystem::GetModeName(static_cast<VisionMode>(_mode)).c_str());
           _mode &= ~static_cast<u32>(whichMode);
         }
       }
