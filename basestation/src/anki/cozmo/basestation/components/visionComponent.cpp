@@ -903,13 +903,11 @@ namespace Cozmo {
   {
     if(_visionSystem != nullptr)
     {
-      OverheadEdgeVector edgeChainVector;
-      OverheadEdgePointChain edgeChain;
-      while(true == _visionSystem->CheckMailbox(edgeChain))
+      OverheadEdgeFrame edgeFrame;
+      while(true == _visionSystem->CheckMailbox(edgeFrame))
       {
-        edgeChainVector.emplace_back( std::move(edgeChain) ); // warning moving local variable
-      }
-      _robot.GetBlockWorld().AddVisionOverheadEdges(edgeChainVector);
+        _robot.GetBlockWorld().ProcessVisionOverheadEdges(edgeFrame);
+      }      
     }
     return RESULT_OK;
   }
