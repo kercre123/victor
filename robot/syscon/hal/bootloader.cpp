@@ -2,8 +2,6 @@
 
 #include "nrf.h"
 
-#include "rtos.h"
-#include "battery.h"
 #include "bootloader.h"
 
 extern "C" const uint32_t BOOTLOADER_LENGTH;
@@ -12,17 +10,6 @@ static uint8_t* BOOTLOADER = (uint8_t*)0x1F000;
 
 void schedule(void);
 void recover(void* userdata);
-
-static const int CAPTURE_OFFSET = CYCLES_MS(5000.0f);
-
-void Bootloader::init(void) {
-  for (int i = 0; i < BOOTLOADER_LENGTH; i++) {
-    if (BOOTLOADER_UPDATE[i] != BOOTLOADER[i]) {    
-      RTOS::schedule(recover, CAPTURE_OFFSET);
-      return ;
-    }
-  }
-}
 
 void flash_data(uint8_t* target, const uint8_t* source, int size)
 {
@@ -52,13 +39,13 @@ void flash_data(uint8_t* target, const uint8_t* source, int size)
   }
 }
 
-void recover(void* userdata) {
-  // Refuse to upgrade bootloader until we are on charge contacts
-  if (!Battery::onContacts) {
-    return ;
+void Bootloader::init(void) {
+  for (int i = 0; i < BOOTLOADER_LENGTH; i++) {
+    if (BOOTLOADER_UPDATE[i] != BOOTLOADER[i])
+    {
+      __disable_irq();
+      flash_data(BOOTLOADER, BOOTLOADER_UPDATE, BOOTLOADER_LENGTH);
+      NVIC_SystemReset();
+    }
   }
-
-  __disable_irq();
-  flash_data(BOOTLOADER, BOOTLOADER_UPDATE, BOOTLOADER_LENGTH);
-  NVIC_SystemReset();
 }
