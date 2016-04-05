@@ -446,13 +446,25 @@ namespace Cozmo {
 
       // Store image for calibration
       if (_storeNextImageForCalibration) {
-        _storeNextImageForCalibration = false;
+
         if (IsModeEnabled(VisionMode::ComputingCalibration)) {
           PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
+          _storeNextImageForCalibration = false;
         } else {
-          _calibrationImages.emplace_back(image.ToGray());
-          PRINT_NAMED_INFO("VisionComponent.SetNextImage.StoringCalibrationImage",
-                           "Num images including this: %lu", _calibrationImages.size());
+          
+          // If we were moving too fast at the timestamp the image was taken then don't save it for calibration purposes
+          TimeStamp_t t;
+          RobotPoseStamp p;
+          _robot.GetPoseHistory()->ComputePoseAt(image.GetTimestamp(), t, p, true);
+          if(!WasMovingTooFast(image.GetTimestamp(), &p, DEG_TO_RAD(0.1), DEG_TO_RAD(0.1)))
+          {
+            _storeNextImageForCalibration = false;
+            _calibrationImages.emplace_back(image.ToGray());
+            PRINT_NAMED_INFO("VisionComponent.SetNextImage.StoringCalibrationImage",
+                             "Num images including this: %lu", _calibrationImages.size());
+          } else {
+            PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
+          }
         }
       }
       
@@ -615,12 +627,7 @@ namespace Cozmo {
       }
       
     } // while(_running)
-    
-    if(_visionSystem != nullptr) {
-      delete _visionSystem;
-      _visionSystem = nullptr;
-    }
-    
+
     PRINT_NAMED_INFO("VisionComponent.Processor",
                      "Terminated Robot VisionComponent::Processor thread");
   } // Processor()
@@ -1070,7 +1077,9 @@ namespace Cozmo {
   }
 
   
-  bool VisionComponent::WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p)
+  bool VisionComponent::WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
+                                         const f32 bodyTurnSpeedLimit_radPerSec,
+                                         const f32 headTurnSpeedLimit_radPerSec)
   {
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
@@ -1090,9 +1099,6 @@ namespace Cozmo {
         return true;
       }
       
-      const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 5.f;
-      const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 10.f;
-      
       assert(t_prev < t);
       assert(t_next > t);
       const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
@@ -1102,8 +1108,8 @@ namespace Cozmo {
       const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
       const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
       
-      if(turnSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
-         turnSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+      if(turnSpeedNext > bodyTurnSpeedLimit_radPerSec ||
+         turnSpeedPrev > bodyTurnSpeedLimit_radPerSec)
       {
         //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
         //                              "Ignoring vision marker seen while turning with angular "
@@ -1111,8 +1117,8 @@ namespace Cozmo {
         //                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
         //                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
         return true;
-      } else if(headSpeedNext > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
-                headSpeedPrev > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+      } else if(headSpeedNext > headTurnSpeedLimit_radPerSec ||
+                headSpeedPrev > headTurnSpeedLimit_radPerSec)
       {
         //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
         //                              "Ignoring vision marker seen while head moving with angular "

@@ -709,6 +709,19 @@ namespace Cozmo {
       END_TEST_IN_HANDLER(FactoryTestResultCode::CALIBRATION_VALUES_OOR);
     }
 
+    Vision::CameraCalibration camCalib(msg.nrows, msg.ncols,
+                                       msg.focalLength_x, msg.focalLength_y,
+                                       msg.center_x, msg.center_y,
+                                       msg.skew);
+    
+    // Set camera calibration
+    PRINT_NAMED_INFO("BehaviorFactoryTest.HandleCameraCalibration.SettingNewCalibration", "");
+    robot.GetVisionComponent().SetCameraCalibration(camCalib);
+    
+    // TODO: Save calibration to robot
+    // ...
+
+    
     robot.GetVisionComponent().ClearCalibrationImages();
     _calibrationReceived = true;
     return RESULT_OK;

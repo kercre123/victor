@@ -156,7 +156,9 @@ struct DockingErrorSignal;
     void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                f32& headTurnSpeedThresh_degPerSec) const;
     
-    bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p);
+    bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
+                          const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(5),
+                          const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10));
     
     // Camera calibration
     void StoreNextImageForCameraCalibration()           { _storeNextImageForCalibration = true;  }
