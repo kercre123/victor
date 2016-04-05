@@ -19,6 +19,10 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleRequestSetUnlockResult;
   }
 
+  void OnDestroy() {
+    RobotEngineManager.Instance.OnRequestSetUnlockResult -= HandleRequestSetUnlockResult;
+  }
+
   public void LoadTiles() {
 
     ClearTiles();
