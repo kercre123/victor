@@ -43,7 +43,12 @@ public class AnimationManager {
     if (Directory.Exists(sEventMapDirectory)) {
       string[] _EventMapFiles = Directory.GetFiles(sEventMapDirectory);
       // TODO : Specify the event map file to use in a config
-      LoadAnimationMap(_EventMapFiles[0]);
+      if (_EventMapFiles.Length > 0) {
+        LoadAnimationMap(_EventMapFiles[0]);
+      }
+      else {
+        DAS.Warn(this, "No Animation Event Map to load in products-cozmo-assets/animationGroupMaps/");
+      }
     }
     else {
       DAS.Warn(this, "No Animation Event Map to load in products-cozmo-assets/animationGroupMaps/");
