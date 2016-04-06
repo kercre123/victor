@@ -251,6 +251,7 @@ namespace SpeedTap {
 
     protected override void CleanUpOnDestroy() {
       LightCube.TappedAction -= BlockTapped;
+      CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_GetOut);
     }
 
     public void InitialCubesDone() {

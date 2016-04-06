@@ -22,6 +22,7 @@ public static class AnimationGroupName {
   public const string kSpeedTap_LoseHand = "speedTap_LoseHand";
   public const string kSpeedTap_LoseRound = "speedTap_LoseRound";
   public const string kSpeedTap_LoseSession = "speedTap_LoseSession";
+  public const string kSpeedTap_GetOut = "speedTap_GetOut";
 
   #endregion
 
