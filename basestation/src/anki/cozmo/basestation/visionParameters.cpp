@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-
+#include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/robot/utilities.h"
 
 #include "anki/vision/robot/fiducialDetection.h" // just for FIDUCIAL_SQUARE_WIDTH_FRACTION
@@ -96,6 +96,12 @@ namespace Anki {
         // Return unknown/unverified markers (e.g. for display)
         keepUnverifiedMarkers = false;
         
+        // Thickness of the fiducial rectangle, relative to its width/height
+        fiducialThicknessFraction.x() = fiducialThicknessFraction.y() = 0.1f;
+        
+        // Radius of rounds as a fraction of the height/width of the fiducial rectangle
+        roundedCornersFraction.x() = roundedCornersFraction.y() = 0.15f;
+        
         isInitialized = true;
       } // DetectFiducialMarkersParameters::Initialize()
 
@@ -117,7 +123,8 @@ namespace Anki {
         
       }
       
-      void TrackerParameters::Initialize(ImageResolution resolution)
+      void TrackerParameters::Initialize(ImageResolution resolution,
+                                         const Point2f& fiducialThicknessFraction)
       {
         // This is size of the box filter used to locally normalize the image
         // as a fraction of the size of the current tracking quad.
@@ -147,7 +154,8 @@ namespace Anki {
         numFiducialEdgeSamples        = 500;
         
         if(numFiducialEdgeSamples > 0) {
-          scaleTemplateRegionPercent    = 1.f - 0.5f*(FIDUCIAL_SQUARE_THICKNESS_FRACTION.x + FIDUCIAL_SQUARE_THICKNESS_FRACTION.y);
+          scaleTemplateRegionPercent    = 1.f - 0.5f*(fiducialThicknessFraction.x() +
+                                                      fiducialThicknessFraction.y());
         } else {
           scaleTemplateRegionPercent = 1.1f;
         }

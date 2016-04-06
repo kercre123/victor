@@ -1,0 +1,7 @@
+{
+  "unlockedFreeplayBehaviors": {
+    "CubeRollAction": {
+      "freeplayBehaviorGroup": "Unlock_CubeRoll",
+    }
+  }
+}

@@ -199,7 +199,9 @@ namespace Cozmo {
       }
       closedir(dir);
     } else {
-      PRINT_NAMED_WARNING("FaceAnimationManager.ReadFaceAnimationDir", "folder not found %s", animationFolder.c_str());
+      PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir",
+                       "folder not found, no face animations read %s",
+                       animationFolder.c_str());
     }
     
   } // ReadFaceAnimationDir()

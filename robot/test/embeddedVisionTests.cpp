@@ -3492,45 +3492,43 @@ GTEST_TEST(CoreTech_Vision, ScrollingIntegralImageGeneration)
 
 #endif // #if !defined(JUST_FIDUCIAL_DETECTION)
 
-GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
+
+static void GetDefaultFiducialDetectionParams(Anki::Embedded::FiducialDetectionParameters& params)
 {
-  Anki::Embedded::FiducialDetectionParameters params;
-
   params.scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
-  //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
+                                                 //const s32 scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
   params.scaleImage_numPyramidLevels = 3;
-
+  
   params.component1d_minComponentWidth = 0;
   params.component1d_maxSkipDistance = 0;
-
+  
   const f32 minSideLength = 0.01f*MAX(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
   const f32 maxSideLength = 0.97f*MIN(newFiducials_320x240_HEIGHT,newFiducials_320x240_WIDTH);
-
+  
   params.useIntegralImageFiltering = true;
-
+  
   params.component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
   params.component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
   params.component_sparseMultiplyThreshold = 1000 << 5;
   params.component_solidMultiplyThreshold = 2 << 5;
-
+  
   //params.component_percentHorizontal = 1 << 7; // 0.5, in SQ 23.8
   //params.component_percentVertical = 1 << 7; // 0.5, in SQ 23.8
   params.component_minHollowRatio = 1.0f;
-
+  
   params.minLaplacianPeakRatio = 5;
-
+  
   params.maxExtractedQuads = 1000/2;
   params.quads_minQuadArea = 100/4;
   params.quads_quadSymmetryThreshold = 384;
   params.quads_minDistanceFromImageEdge = 2;
-
+  
   params.decode_minContrastRatio = 1.25;
-
-  const s32 maxMarkers = 100;
+  
   //params.maxConnectedComponentSegments = 5000; // 25000/4 = 6250
   params.maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
-  //params.maxConnectedComponentSegments = 70000;
-
+                                                //params.maxConnectedComponentSegments = 70000;
+  
   params.refine_quadRefinementIterations = 5;
   params.refine_numRefinementSamples = 100;
   params.refine_quadRefinementMaxCornerChange = 5.f;
@@ -3540,7 +3538,25 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
   
   params.doCodeExtraction = true;
   params.returnInvalidMarkers = false;
+  
+  params.fiducialThicknessFraction.x = params.fiducialThicknessFraction.y = .1f;
+  
+  // NOTE: the test image doesn't actually have rounded corners, but we use
+  // them in practice, so let's test with this parameter setting (refinement assuming
+  // rounded corners on square corners should still work fine)
+  // TODO: Update test image to use rounded corners
+  params.roundedCornersFraction.x = params.roundedCornersFraction.y = 0.15f;
+  
+} // GetDefaultFiducialDetectionParams()
 
+
+GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers)
+{
+  Anki::Embedded::FiducialDetectionParameters params;
+  GetDefaultFiducialDetectionParams(params);
+  
+  const s32 maxMarkers = 100;
+  
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);
   MemoryStack scratchOffchip(&offchipBuffer[0], OFFCHIP_BUFFER_SIZE);
@@ -3719,47 +3735,9 @@ GTEST_TEST(CoreTech_Vision, DetectFiducialMarkers_benchmark)
 {
   // Don't check if the markers were correctly detected, just check the timing
   Anki::Embedded::FiducialDetectionParameters params;
-
-  params.scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
-  //params.scaleImage_thresholdMultiplier = 49152; // .75*(2^16)=49152
-  params.scaleImage_numPyramidLevels = 3;
-
-  params.component1d_minComponentWidth = 0;
-  params.component1d_maxSkipDistance = 0;
-
-  const f32 minSideLength = 0.01f*MAX(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
-  const f32 maxSideLength = 0.97f*MIN(simpleFiducials_320x240_HEIGHT,simpleFiducials_320x240_WIDTH);
-
-  params.component_minimumNumPixels = Round<s32>(minSideLength*minSideLength - (0.8f*minSideLength)*(0.8f*minSideLength));
-  params.component_maximumNumPixels = Round<s32>(maxSideLength*maxSideLength - (0.8f*maxSideLength)*(0.8f*maxSideLength));
-  params.component_sparseMultiplyThreshold = 1000 << 5;
-  params.component_solidMultiplyThreshold = 2 << 5;
-
-  params.component_minHollowRatio = 1.0f;
-
-  params.maxExtractedQuads = 1000/2;
-  params.quads_minQuadArea = 100/4;
-  params.quads_quadSymmetryThreshold = 384;
-  params.quads_minDistanceFromImageEdge = 2;
-
-  params.decode_minContrastRatio = 1.25;
-
-  const s32 maxMarkers = 100;
-  //params.maxConnectedComponentSegments = 5000; // 25000/4 = 6250
-  params.maxConnectedComponentSegments = 39000; // 322*240/2 = 38640
-  //params.maxConnectedComponentSegments = 70000;
-
-  params.cornerMethod = CORNER_METHOD_LAPLACIAN_PEAKS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
-
-  params.minLaplacianPeakRatio = 5;
+  GetDefaultFiducialDetectionParams(params);
   
-  params.returnInvalidMarkers = false;
-  params.doCodeExtraction = true;
-
-  params.refine_quadRefinementIterations = 5;
-  params.refine_numRefinementSamples = 100;
-  params.refine_quadRefinementMaxCornerChange = 5.f;
-  params.refine_quadRefinementMinCornerChange = .005f;
+  const s32 maxMarkers = 100;
 
   MemoryStack scratchCcm(&ccmBuffer[0], CCM_BUFFER_SIZE);
   MemoryStack scratchOnchip(&onchipBuffer[0], ONCHIP_BUFFER_SIZE);

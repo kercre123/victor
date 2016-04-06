@@ -5,17 +5,19 @@
 namespace Anki {
 namespace Cozmo {
 
-enum uint_8 UnlockIds
+enum uint_8 UnlockId
 {
-  BurpAction,
+  BurpAction = 0,
   DriveInCircleAction,
   CubeRollAction,
   SimonGame,
   SpeedTapGame,
   CubePounceGame,
+  FaceEnrollmentGame,
   SpeedTapEasyImplicit,
   SpeedTapMediumImplicit,
-  SpeedTapHardImplicit
+  SpeedTapHardImplicit,
+  Count
 }
 
 } // namespace Cozmo

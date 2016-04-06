@@ -46,6 +46,10 @@ static const char* kDriveToPlacePoseThreshold_radsKey = "place_position_threshol
 
 static const char* kCliffReactAnimName = "anim_VS_loco_cliffReact";
 
+// TODO:(bn) replace these with animation groups
+static const char* kDrivingFailAnimName = "ID_react2block_align_fail";
+static const char* kPickupFailAnimName = "ID_rollBlock_fail_01";
+
 static const float kMinRequestDelayDefault = 5.0f;
 static const float kAfterPlaceBackupDistance_mmDefault = 80.0f;
 static const float kAfterPlaceBackupSpeed_mmpsDefault = 80.0f;
@@ -256,13 +260,32 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
 {
   ObjectID targetBlockID = GetRobotsBlockID(robot);
   StartActing(new DriveToPickupObjectAction(robot, targetBlockID, _driveToPickupProfile),
-              [this, &robot](ActionResult result) {
-                if ( result == ActionResult::SUCCESS ) {
+              [this, &robot](const ExternalInterface::RobotCompletedAction& resultMsg) {                
+                if ( resultMsg.result == ActionResult::SUCCESS ) {
                   ComputeFaceInteractionPose(robot);
                   TransitionToDrivingToFace(robot);
                 }
-                else if ( result == ActionResult::FAILURE_RETRY ) {
-                  TransitionToPickingUpBlock(robot);
+                else if ( resultMsg.result == ActionResult::FAILURE_RETRY ) {
+
+                  // TODO:(bn) animation groups here?
+                  IActionRunner* animAction = nullptr;
+                  switch(resultMsg.completionInfo.Get_objectInteractionCompleted().result)
+                  {
+                    case ObjectInteractionResult::INCOMPLETE:
+                    case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+                    {
+                      animAction = new PlayAnimationAction(robot, kDrivingFailAnimName);
+                      break;
+                    }
+            
+                    default: {
+                      animAction = new PlayAnimationAction(robot, kPickupFailAnimName);
+                      break;
+                    }
+                  }
+                  assert(nullptr != animAction);
+
+                  StartActing(animAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
                 }
                 else {
                   // couldn't pick up this block. If we have another, try that. Otherwise, fail

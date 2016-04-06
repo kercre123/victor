@@ -417,11 +417,11 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(OverheadEdgePointChain& msg)
+  bool VisionSystem::CheckMailbox(OverheadEdgeFrame& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
-      retVal = _overheadEdgeChainMailbox.getMessage(msg);
+      retVal = _overheadEdgeFrameMailbox.getMessage(msg);
     }
     return retVal;
   }
@@ -536,6 +536,10 @@ namespace Cozmo {
 #     else
       const CornerMethod cornerMethod = CORNER_METHOD_LINE_FITS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
       
+      ASSERT_NAMED(_detectionParameters.fiducialThicknessFraction.x() > 0 &&
+                   _detectionParameters.fiducialThicknessFraction.y(),
+                   "VisionSystem.DetectMarkers.FiducialThicknessFractionParameterNotInitialized");
+      
       // Convert "basestation" detection parameters to "embedded" parameters
       // TODO: Merge the fiducial detection parameters structs
       Embedded::FiducialDetectionParameters embeddedParams;
@@ -561,6 +565,10 @@ namespace Cozmo {
       embeddedParams.refine_numRefinementSamples = _detectionParameters.numRefinementSamples;
       embeddedParams.refine_quadRefinementMaxCornerChange = _detectionParameters.quadRefinementMaxCornerChange;
       embeddedParams.refine_quadRefinementMinCornerChange = _detectionParameters.quadRefinementMinCornerChange;
+      embeddedParams.fiducialThicknessFraction.x = _detectionParameters.fiducialThicknessFraction.x();
+      embeddedParams.fiducialThicknessFraction.y = _detectionParameters.fiducialThicknessFraction.y();
+      embeddedParams.roundedCornersFraction.x = _detectionParameters.roundedCornersFraction.x();
+      embeddedParams.roundedCornersFraction.y = _detectionParameters.roundedCornersFraction.y();
       embeddedParams.returnInvalidMarkers = _detectionParameters.keepUnverifiedMarkers;
       embeddedParams.doCodeExtraction = true;
       
@@ -806,7 +814,8 @@ namespace Cozmo {
                                                                     _trackerParameters.numPyramidLevels,
                                                                     Transformations::TRANSFORM_PROJECTIVE,
                                                                     _trackerParameters.numFiducialEdgeSamples,
-                                                                    FIDUCIAL_SQUARE_THICKNESS_FRACTION,
+                                                                     Embedded::Point<f32>(_detectionParameters.fiducialThicknessFraction.x(),
+                                                                               _detectionParameters.fiducialThicknessFraction.y()),
                                                                     _trackerParameters.numInteriorSamples,
                                                                     _trackerParameters.numSamplingRegions,
                                                                     calib->GetFocalLength_x(),
@@ -1661,21 +1670,206 @@ namespace Cozmo {
     return RESULT_OK;
   } // DetectMotion()
   
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void VisionSystem::SetGroundROIToImageLimits(const PoseData& poseData, const float imgX, const float imgY, Quad2f& groundPlane)
+  {
+    ASSERT_NAMED(poseData.groundPlaneVisible, "VisionSystem..SetGoundROIToImageLimits.groundPlaneNotVisible");
+    const Matrix_3x3f& H = _poseData.groundPlaneHomography;
+    const GroundPlaneROI& roi = _poseData.groundPlaneROI;
+    
+    // project roi into 2d image
+    const Quad2f& groundInImage = roi.GetImageQuad(H);
+  
+    kmRay2 imageTopLine;
+    kmVec2 imageTL{   0, 0};
+    kmVec2 imageTR{imgX, 0};
+    kmRay2FillWithEndpoints(&imageTopLine, &imageTL, &imageTR);
+
+    kmRay2 imageBotLine;
+    kmVec2 imageBL{   0, imgY-1};
+    kmVec2 imageBR{imgX, imgY-1};
+    kmRay2FillWithEndpoints(&imageBotLine, &imageBL, &imageBR);
+
+    kmRay2 groundLeftLine;
+    kmVec2 groundBL{groundInImage[Quad::BottomLeft].x(), groundInImage[Quad::BottomLeft].y()};
+    kmVec2 groundTL{groundInImage[Quad::TopLeft   ].x(), groundInImage[Quad::TopLeft   ].y()};
+    kmRay2FillWithEndpoints(&groundLeftLine, &groundBL, &groundTL);
+    
+    kmRay2 groundRightLine;
+    kmVec2 groundBR{groundInImage[Quad::BottomRight].x(), groundInImage[Quad::BottomRight].y()};
+    kmVec2 groundTR{groundInImage[Quad::TopRight   ].x(), groundInImage[Quad::TopRight   ].y()};
+    kmRay2FillWithEndpoints(&groundRightLine, &groundBR, &groundTR);
+
+    // find intersections of ground lines in image bounds
+    kmVec2 interLT, interRT, interLB, interRB;
+    const kmBool leftTopInter  = kmSegment2WithSegmentIntersection(&imageTopLine, &groundLeftLine , &interLT);
+    const kmBool rightTopInter = kmSegment2WithSegmentIntersection(&imageTopLine, &groundRightLine, &interRT);
+    const kmBool leftBotInter  = kmSegment2WithSegmentIntersection(&imageBotLine, &groundLeftLine , &interLB);
+    const kmBool rightBotInter = kmSegment2WithSegmentIntersection(&imageBotLine, &groundRightLine, &interRB);
+
+    const bool hasTopCollision = (leftTopInter || rightTopInter);
+    const bool hasBotCollision = (leftBotInter || rightBotInter);
+
+    // assert quadY < imageY, otherwise more than one collision can happen
+    ASSERT_NAMED( groundLeftLine.dir.y  < imgY, "DetectOverheadEdges.BadGroundPlaneYL" );
+    ASSERT_NAMED( groundRightLine.dir.y < imgY, "DetectOverheadEdges.BadGroundPlaneYR" );
+    // assert top and bot don't have collisions at the same time
+    ASSERT_NAMED(!(hasTopCollision && hasBotCollision), "DetectOverheadEdges.MultipleLineCollision");
+    ASSERT_NAMED(leftTopInter==rightTopInter, "DetectOverheadEdges.AssumedCenteredQuad");
+    ASSERT_NAMED(leftBotInter==rightBotInter, "DetectOverheadEdges.AssumedCenteredQuad");
+    
+    Quad2f finalQuad2D;
+    if ( hasTopCollision )
+    {
+      Anki::Point2f topLeft (interLT.x, interLT.y);
+      Anki::Point2f topRight(interRT.x, interRT.y);
+      finalQuad2D = Quad2f(
+        topLeft,  // TL
+        groundInImage[Quad::BottomLeft], // BL
+        topRight, // TR
+        groundInImage[Quad::BottomRight] // BR
+      );
+    }
+    else if ( hasBotCollision )
+    {
+      Anki::Point2f botLeft (interLB.x, interLB.y);
+      Anki::Point2f botRight(interRB.x, interRB.y);
+      finalQuad2D = Quad2f(
+        groundInImage[Quad::TopLeft],  // TL
+        botLeft, // BL
+        groundInImage[Quad::TopRight], // TR
+        botRight // BR
+      );
+    }
+    else
+    {
+      // we can assume groundInImage is fully contained in the image, otherwise ROI groundPlaneVisible would be false
+      finalQuad2D = groundInImage;
+      groundPlane = roi.GetGroundQuad();
+    }
+
+    // if there were collisions and we limited the ROI, project new ROI back into ground plane
+    if ( hasTopCollision || hasBotCollision )
+    {
+      Quad3f finalQuad2DAs3f(
+        Anki::Point3f(finalQuad2D[Quad::TopLeft    ].x(),finalQuad2D[Quad::TopLeft    ].y(), 1.0f),
+        Anki::Point3f(finalQuad2D[Quad::BottomLeft ].x(),finalQuad2D[Quad::BottomLeft ].y(), 1.0f),
+        Anki::Point3f(finalQuad2D[Quad::TopRight   ].x(),finalQuad2D[Quad::TopRight   ].y(), 1.0f),
+        Anki::Point3f(finalQuad2D[Quad::BottomRight].x(),finalQuad2D[Quad::BottomRight].y(), 1.0f) );
+      
+      // project back into ground
+      Matrix_3x3f invH;
+      H.GetInverse(invH);
+      for(Quad::CornerName iCorner = Quad::CornerName::FirstCorner;
+          iCorner != Quad::CornerName::NumCorners;
+          ++iCorner)
+      {
+        Point3f temp = invH * finalQuad2DAs3f[iCorner];
+        ASSERT_NAMED(temp.z() > 0, "VisionSystem.SetGroundROIToImageLimits.BadProjectedZ");
+        const f32 divisor = 1.f / temp.z();
+        groundPlane[iCorner].x() = temp.x() * divisor;
+        groundPlane[iCorner].y() = temp.y() * divisor;
+      }
+    }
+    
+  //  _vizManager->DrawCameraQuad(finalQuad2D, ::Anki::NamedColors::RED);
+  //  _vizManager->DrawCameraQuad(groundInImage, ::Anki::NamedColors::BLUE);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder, bool isInMask, std::vector<OverheadEdgePointChain>& imageChains )
+  {
+    const f32 kMaxDistBetweenEdges_mm = 5.f; // start new chain after this distance seen
+    
+    // can we add to the current image chain?
+    bool addToCurrentChain = false;
+    if ( !imageChains.empty() )
+    {
+      OverheadEdgePointChain& currentChain = imageChains.back();
+      if ( currentChain.points.empty() )
+      {
+        // current chain does not have points yet, we can add this one as the first one
+        addToCurrentChain = true;
+      }
+      else
+      {
+        // there are points, does the chain and this point match border vs no_border flag?
+        if ( isBorder == currentChain.isBorder )
+        {
+          // they do, is the new point close enough to the last point in the current chain?
+          const f32 distToPrevPoint = ComputeDistanceBetween(pointInfo.position, imageChains.back().points.back().position);
+          if ( distToPrevPoint <= kMaxDistBetweenEdges_mm )
+          {
+            // it is close, this point should be added to the current chain
+            addToCurrentChain = true;
+          }
+        }
+      }
+    }
+    
+    // if we don't want to add the point to the current chain, then we need to start a new chain
+    if ( !addToCurrentChain )
+    {
+      imageChains.emplace_back();
+      imageChains.back().isBorder = isBorder;
+    }
+    
+    // if this point is inside the mask, then we add to be reported, otherwise we compute everything as if we
+    // were going to add it, but then don't add this point, thus potentially creating a new chain with no points (this
+    // allows breaking a border chain with a border detected in the image, but outside of the mask)
+    if ( isInMask )
+    {
+      // add to current chain (can be the newly created for this border)
+      OverheadEdgePointChain& newCurrentChain = imageChains.back();
+      
+      // if we have an empty chain, set isBorder now
+      if ( newCurrentChain.points.empty() ) {
+        newCurrentChain.isBorder = isBorder;
+      } else {
+        ASSERT_NAMED(newCurrentChain.isBorder == isBorder, "VisionSystem.AddEdgePoint.BadBorderFlag");
+      }
+      
+      // now add this point
+      newCurrentChain.points.emplace_back( pointInfo );
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result VisionSystem::DetectOverheadEdges(const Vision::ImageRGB& image)
   {
     // TODO: Expose parameters
     // Parameters:
     //const s32 kKernelSize = -1; // +ve for Sobel edge detection, -1 for Scharr
     const f32 kEdgeThreshold = 50.f;
-    const f32 kMaxDistBetweenEdges_mm = 5.f; // start new chain after this distance seen
     const u32 kMinChainLength = 3; // in number of edge pixels
+    
+    // if the ground plane is not currently visible, do not detect edges
+    if ( !_poseData.groundPlaneVisible )
+    {
+      OverheadEdgeFrame edgeFrame;
+      edgeFrame.timestamp = image.GetTimestamp();
+      edgeFrame.groundPlaneValid = false;
+      _overheadEdgeFrameMailbox.putMessage( std::move(edgeFrame) );
+      return RESULT_OK;
+    }
     
     const Matrix_3x3f& H = _poseData.groundPlaneHomography;
     const GroundPlaneROI& roi = _poseData.groundPlaneROI;
-    Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H, false);
+    const Vision::ImageRGB& overheadImg = roi.GetOverheadImage(image, H, false);
     
-    f32 nearX, farX;
-    roi.GetVisibleX(H, image.GetNumCols(), image.GetNumRows(), nearX, farX);
+    // calculate the actual ground plane ROI once we apply camera limits
+    Quad2f clampedGroundPlaneROI;
+    SetGroundROIToImageLimits(_poseData, image.GetNumCols(), image.GetNumRows(), clampedGroundPlaneROI);
+    
+    f32 nearX = clampedGroundPlaneROI[Quad::BottomRight].x();
+    f32 farX  = clampedGroundPlaneROI[Quad::TopRight].x();
+    
+    // since it involves collision math they can be a little different, but they should be fairly close
+    ASSERT_NAMED( NEAR(nearX,clampedGroundPlaneROI[Quad::BottomLeft].x(), 1e-3f),
+      "VisionSystem.DetectOverheadEdges.BadClampedBottomX");
+    ASSERT_NAMED( NEAR(farX,clampedGroundPlaneROI[Quad::TopLeft].x(), 1e-3f),
+      "VisionSystem.DetectOverheadEdges.BadClampedTopX");
     
     // Get derivatives along the X direction
     Array2d<Vision::PixelRGB_<f32>> edgeImgX(overheadImg.GetNumRows(), overheadImg.GetNumCols());
@@ -1698,10 +1892,10 @@ namespace Cozmo {
     
     cv::filter2D(overheadImg.get_CvMat_(), edgeImgX.get_CvMat_(), CV_32F, kernel.get_CvMatx_());
     
+    std::vector<OverheadEdgePointChain> candidateChains;
+    
     // Look for the first strong edge along the x axis
-    std::vector<OverheadEdgePointChain> edgeChains;
     //const f32 edgeThresholdSq = kEdgeThreshold * kEdgeThreshold;
-    OverheadEdgePoint* lastEdgePoint = nullptr;
     const s32 jNear = std::ceil(nearX) - roi.GetDist() + kernel.GetNumCols()/2;
     const s32 jFar  = std::floor(farX) - roi.GetDist();
     for(s32 i=0; i<edgeImgX.GetNumRows(); ++i)
@@ -1709,38 +1903,44 @@ namespace Cozmo {
       const u8* mask_i = roi.GetOverheadMask().GetRow(i);
       const Vision::PixelRGB_<f32>* edgeImgX_i = edgeImgX.GetRow(i);
       //const Vision::PixelRGB_<f32>* edgeImgY_i = edgeImgY.GetRow(i);
+      bool foundBorder = false;
       for(s32 j=jNear; j<jFar; ++j)
       {
+        // An edge above threshold in _any_ channel is an edge
+        auto & edgePixelX = edgeImgX_i[j];
+        //auto & edgePixelY = edgeImgY_i[j];
+        //if(edgePixelX.r()*edgePixelX.r() + edgePixelY.r()*edgePixelY.r() > edgeThresholdSq ||
+        //   edgePixelX.g()*edgePixelX.g() + edgePixelY.g()*edgePixelY.g() > edgeThresholdSq ||
+        //   edgePixelX.b()*edgePixelX.b() + edgePixelY.b()*edgePixelY.b() > edgeThresholdSq)
+        if(std::abs(edgePixelX.r()) > kEdgeThreshold ||
+           std::abs(edgePixelX.g()) > kEdgeThreshold ||
+           std::abs(edgePixelX.b()) > kEdgeThreshold)
         {
-          // An edge above threshold in _any_ channel is an edge
-          auto & edgePixelX = edgeImgX_i[j];
-          //auto & edgePixelY = edgeImgY_i[j];
-          //if(edgePixelX.r()*edgePixelX.r() + edgePixelY.r()*edgePixelY.r() > edgeThresholdSq ||
-          //   edgePixelX.g()*edgePixelX.g() + edgePixelY.g()*edgePixelY.g() > edgeThresholdSq ||
-          //   edgePixelX.b()*edgePixelX.b() + edgePixelY.b()*edgePixelY.b() > edgeThresholdSq)
-          if(std::abs(edgePixelX.r()) > kEdgeThreshold ||
-             std::abs(edgePixelX.g()) > kEdgeThreshold ||
-             std::abs(edgePixelX.b()) > kEdgeThreshold)
-          {
-            OverheadEdgePoint edgePoint = {
-              .position  = Anki::Point2f(j + roi.GetDist(), roi.GetWidthFar()*0.5f - i),
-              .gradient  = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()}
-            };
-            if(nullptr == lastEdgePoint ||
-               ComputeDistanceBetween(edgePoint.position, lastEdgePoint->position) > kMaxDistBetweenEdges_mm)
-            {
-              // Start new chain
-              edgeChains.emplace_back();
-              edgeChains.back().timestamp = image.GetTimestamp();
-            }
-            if(mask_i[j] > 0 && j)
-            {
-              edgeChains.back().points.push_back(std::move(edgePoint));
-              lastEdgePoint = &edgeChains.back().points.back();
-            }
-            break; // only keep first edge found in each row
-          }
+          OverheadEdgePoint edgePoint = {
+            .position  = Anki::Point2f(j + roi.GetDist(), roi.GetWidthFar()*0.5f - i),
+            .gradient  = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()}
+          };
+          
+          // add the point as a border
+          const bool isBorder = true;
+          const bool isInMask = (mask_i[j] > 0 && j);
+          AddEdgePoint(edgePoint, isBorder, isInMask, candidateChains);
+          foundBorder = true;
+          break; // only keep first edge found in each row
         }
+      }
+      
+      // if we did not find border, report lack of border for this row
+      if ( !foundBorder )
+      {
+        // add the point as a no_border
+        OverheadEdgePoint noBorderLimitPoint = {
+          .position  = Anki::Point2f(jFar + roi.GetDist(), roi.GetWidthFar()*0.5f - i),
+          .gradient  = {0,0,0}
+        };
+        const bool isBorder = false;
+        const bool isInMask = true; // in mask so that we add the point
+        AddEdgePoint(noBorderLimitPoint, isBorder, isInMask, candidateChains);
       }
     }
     
@@ -1763,7 +1963,7 @@ namespace Cozmo {
       dispImg.DrawLine(Anki::Point2f(jFar, 0), Anki::Point2f(jFar, dispImg.GetNumRows()),
                        NamedColors::YELLOW, 1);
       
-      for(auto & chain : edgeChains)
+      for(auto & chain : candidateChains)
       {
         if(chain.points.size() >= kMinChainLength)
         {
@@ -1798,18 +1998,24 @@ namespace Cozmo {
       _debugImageRGBMailbox.putMessage({"OverheadEdgeImage", dispEdgeImg});
     } // if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
     
-    // Finally do send the edges to the mailbox. Note I do this after rendering because I am std::moving the edges
-    
+    // create edge frame info to send
+    OverheadEdgeFrame edgeFrame;
+    edgeFrame.timestamp = image.GetTimestamp();
+    edgeFrame.groundPlaneValid = true;
+    edgeFrame.groundplane = clampedGroundPlaneROI;
+
     // Copy only the chains with at least k points (less is considered noise)
-    for(const auto& chain : edgeChains)
+    for(auto& chain : candidateChains)
     {
+      // filter chains that don't have a minimum number of points
       if ( chain.points.size() >= kMinChainLength ) {
-        _overheadEdgeChainMailbox.putMessage( std::move(chain) );
+        edgeFrame.chains.emplace_back( std::move(chain) );
       }
     }
-    // if we std::move chains, their state is no longer valid after, clear the vector to prevent further usage
-    edgeChains.clear();
+    candidateChains.clear(); // some chains are in undefined state after std::move, clear them now
     
+    // put in mailbox
+    _overheadEdgeFrameMailbox.putMessage( std::move(edgeFrame) );
     
     return RESULT_OK;
   } // DetectOverheadEdges()
@@ -1977,7 +2183,7 @@ namespace Cozmo {
     
     // Just make all the vision parameters' resolutions match capture resolution:
     _detectionParameters.Initialize(_captureResolution);
-    _trackerParameters.Initialize(_captureResolution);
+    _trackerParameters.Initialize(_captureResolution, _detectionParameters.fiducialThicknessFraction);
     _faceDetectionParameters.Initialize(_captureResolution);
     
     Simulator::Initialize();

@@ -305,14 +305,21 @@ namespace Anki {
       // one of them, but a group. Used for debugging purposes where the underlaying geometry is not directly
       // related to a given object
       
+      template <typename T>
       void DrawSegment(const std::string& identifier,
-        const Point3f& from, const Point3f& to, const ColorRGBA& color, bool clearPrevious, float zOffset=0.0f);
+        const Point<3,T>& from, const Point<3,T>& to, const ColorRGBA& color, bool clearPrevious, float zOffset=0.0f);
       void EraseSegments(const std::string& identifier);
       
       // vector of simple quads (note a simple quad is an axis aligned quad with a color)
       using SimpleQuadVector = std::vector<VizInterface::SimpleQuad>;
       void DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads);
       void EraseQuadVector(const std::string& identifier);
+      
+      // non-axis aligned quads as 4 segments
+      template <typename T>
+      void DrawQuadAsSegments(const std::string& identifier, const Quadrilateral<2, T>& quad, T z, const ColorRGBA& color, bool clearPrevious);
+      template <typename T>
+      void DrawQuadAsSegments(const std::string& identifier, const Quadrilateral<3, T>& quad, const ColorRGBA& color, bool clearPrevious);
       
       // helper to create SimpleQuads from Color and coordinates/size in millimeters. Note SimpleQuad uses floats
       template <typename T>
@@ -580,6 +587,56 @@ namespace Anki {
       DrawQuad(VizQuadType::VIZ_QUAD_POSE_MARKER, quadID, quad, 0.5f, color);
     }
     
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+    template <typename T>
+    void VizManager::DrawSegment(const std::string& identifier,
+      const Point<3,T>& from, const Point<3,T>& to, const ColorRGBA& color, bool clearPrevious, float zOffset)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::SegmentPrimitive
+        {identifier,
+         color.AsRGBA(),
+         { {Anki::Util::numeric_cast<float>(MM_TO_M(from.x())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(from.y())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(from.z()+zOffset))}
+         },
+         { {Anki::Util::numeric_cast<float>(MM_TO_M(to.x())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(to.y())),
+            Anki::Util::numeric_cast<float>(MM_TO_M(to.z()+zOffset))}
+         },
+         clearPrevious
+        })
+      );
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    template <typename T>
+    void VizManager::DrawQuadAsSegments(const std::string& identifier, const Quadrilateral<2, T>& quad, T z, const ColorRGBA& color, bool clearPrevious)
+    {
+      const Point<3,T> topLeft = {quad[Quad::CornerName::TopLeft].x(), quad[Quad::CornerName::TopLeft].y(), z};
+      const Point<3,T> topRight = {quad[Quad::CornerName::TopRight].x(), quad[Quad::CornerName::TopRight].y(), z};
+      const Point<3,T> bottomLeft = {quad[Quad::CornerName::BottomLeft].x(), quad[Quad::CornerName::BottomLeft].y(), z};
+      const Point<3,T> bottomRight = {quad[Quad::CornerName::BottomRight].x(), quad[Quad::CornerName::BottomRight].y(), z};
+      DrawSegment(identifier, topLeft, topRight, color, clearPrevious);
+      DrawSegment(identifier, topRight, bottomRight, color, false);
+      DrawSegment(identifier, bottomRight, bottomLeft, color, false);
+      DrawSegment(identifier, bottomLeft, topLeft, color, false);
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    template <typename T>
+    void VizManager::DrawQuadAsSegments(const std::string& identifier, const Quadrilateral<3, T>& quad, const ColorRGBA& color, bool clearPrevious)
+    {
+      const Point<3,T>& topLeft = quad[Quad::CornerName::TopLeft];
+      const Point<3,T>& topRight = quad[Quad::CornerName::TopRight];
+      const Point<3,T>& bottomLeft = quad[Quad::CornerName::BottomLeft];
+      const Point<3,T>& bottomRight = quad[Quad::CornerName::BottomRight];
+      DrawSegment(identifier, topLeft, topRight, color, clearPrevious);
+      DrawSegment(identifier, topRight, bottomRight, color, false);
+      DrawSegment(identifier, bottomRight, bottomLeft, color, false);
+      DrawSegment(identifier, bottomLeft, topLeft, color, false);
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     template <typename T>
     VizInterface::SimpleQuad VizManager::MakeSimpleQuad(const ColorRGBA& color, const Point<3, T>& centerMM, T sideSizeMM)
     {

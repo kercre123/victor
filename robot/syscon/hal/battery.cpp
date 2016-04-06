@@ -191,9 +191,14 @@ void Battery::manage(void* userdata)
     case ANALOG_V_EXT_SENSE:
       {
         uint32_t raw = NRF_ADC->RESULT;
+        static int ground_short = 0;
 
         if (raw >= 0x30){
           RTOS::kick(WDOG_NERVE_PINCH);
+          ground_short = 0;
+        } else if (ground_short++ >= 30) {
+          Battery::powerOff();
+          while(true) ;
         }
 
         vExt = calcResult(VEXT_SCALE);

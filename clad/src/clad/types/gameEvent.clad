@@ -1,0 +1,22 @@
+// File: GameEvents
+// Author: Molly Jameson
+// Created: 3/31/16
+// Copyright: Anki, inc. 2016
+
+
+namespace Anki {
+namespace Cozmo {
+
+
+enum uint_8 GameEvent
+{
+  OnDriveStart,
+  OnDriveEnd,
+  OnSpeedtapStarted,
+  Count, // Keep count at end.
+}
+
+
+} // end namespace Cozmo
+} // end namespace Anki
+

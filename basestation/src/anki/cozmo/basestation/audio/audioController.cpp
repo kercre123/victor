@@ -22,8 +22,10 @@
 #include <util/logging/logging.h>
 #include <unordered_map>
 
+#include "anki/cozmo/basestation/audio/audioWaveFileReader.h"
+
 #if HijackAudioPlugInDebugLogs
-#include <util/time/universalTime.h>
+#include "util/time/universalTime.h"
 #endif
 // Allow the build to include/exclude the audio libs
 //#define EXCLUDE_ANKI_AUDIO_LIBS 0
@@ -31,8 +33,9 @@
 #ifndef EXCLUDE_ANKI_AUDIO_LIBS
 
 #define USE_AUDIO_ENGINE 1
-#include <DriveAudioEngine/audioEngineController.h>
-#include <DriveAudioEngine/PlugIns/hijackAudioPlugIn.h>
+#include "DriveAudioEngine/audioEngineController.h"
+#include "DriveAudioEngine/PlugIns/hijackAudioPlugIn.h"
+#include "DriveAudioEngine/PlugIns/wavePortalPlugIn.h"
 #else
 
 // If we're excluding the audio libs, don't link any of the audio engine
@@ -46,7 +49,7 @@ namespace Cozmo {
 namespace Audio {
   
 using namespace AudioEngine;
-  
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
@@ -74,8 +77,10 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     ASSERT_NAMED( !_taskHandle, "AudioController.Initialize Invalid Task Handle" );
 #if USE_AUDIO_ENGINE
     
-    // Setup CozmoPlugIn & RobotAudioBuffer
-    SetupPlugInAndRobotAudioBuffers();
+    // Register and Prepare Plug-Ins
+    SetupHijackAudioPlugInAndRobotAudioBuffers();
+    SetupWavePortalPlugIn();
+    
     
     // FIXME: Temp fix to load audio banks
     AudioBankList bankList = {
@@ -102,6 +107,46 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(10);
     _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
   }
+  
+  // TEST Playing Audio File
+  /*
+  _reader = new AudioWaveFileReader;
+  const std::string testWavFilePath = dataPlatfrom->pathToResource( Util::Data::Scope::Resources, "assets/testAudio/out2.wav" ); // out2 //NewSine.wav
+  _reader->LoadWaveFile(testWavFilePath);
+  const AudioWaveFileReader::StandardWaveDataContainer* data = nullptr;
+  data = _reader->GetCachedWaveDataWithKey(testWavFilePath);
+  
+  if ( data != nullptr ) {
+    // This temp
+    _wavePortalPlugIn->SetAudioDataInfo( data->sampleRate,
+                                         data->numberOfChannels,
+                                         data->duration_ms,
+                                         data->audioBuffer,
+                                         static_cast<uint32_t>( data->bufferSize ) );
+    
+    // FIXME: TEST Playing Wave
+    Util::Dispatch::After(_dispatchQueue, std::chrono::milliseconds( 8000 ), [this, testWavFilePath]() {
+      
+      AudioCallbackContext* callbackContext = new AudioCallbackContext();
+      // Set callback flags
+      callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
+      // Register callbacks for event
+      PRINT_NAMED_INFO("AudioController.TEST_WavePortal", "Post Event");
+      callbackContext->SetEventCallbackFunc( [this, testWavFilePath]
+                                            ( const AudioCallbackContext* thisContext,
+                                              const AudioEngine::AudioCallbackInfo& callbackInfo )
+      {
+        PRINT_NAMED_INFO("AudioController.TEST_WavePortal",
+                         "Event Complete Clear Cache:\n%s", callbackInfo.GetDescription().c_str());
+        _reader->ClearCachedWaveDataWithKey(testWavFilePath);
+      });
+      
+      _audioEngine->PostEvent("DEV_EXTERNAL_DEVICE_PLAY", 1, callbackContext);
+      
+    });
+  }
+  */
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -118,6 +163,11 @@ AudioController::~AudioController()
 #if USE_AUDIO_ENGINE
   {
     Util::SafeDelete( _audioEngine );
+    
+    Util::SafeDelete( _hijackAudioPlugIn );
+    
+    Util::SafeDelete( _reader );
+    Util::SafeDelete( _wavePortalPlugIn );
   }
 #endif
 }
@@ -280,8 +330,9 @@ void AudioController::StartUpSetDefaults()
 
 // Private
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioController::SetupPlugInAndRobotAudioBuffers()
+void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
 {
+  using namespace PlugIns;
   // Setup CozmoPlugIn & RobotAudioBuffer
   _hijackAudioPlugIn = new HijackAudioPlugIn( static_cast<uint32_t>( AnimConstants::AUDIO_SAMPLE_RATE ), static_cast<uint16_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
   
@@ -338,6 +389,15 @@ void AudioController::SetupPlugInAndRobotAudioBuffers()
   if ( ! success ) {
     PRINT_NAMED_ERROR( "AudioController.Initialize", "Failed to Register Cozmo PlugIn");
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioController:: SetupWavePortalPlugIn()
+{
+  using namespace PlugIns;
+  // Register Wave file
+  _wavePortalPlugIn = new WavePortalPlugIn();
+  _wavePortalPlugIn->RegisterPlugIn();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
