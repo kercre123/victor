@@ -71,8 +71,6 @@ namespace Cozmo.HomeHub {
       RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(false);
       _StartViewInstance = UIManager.OpenView(_StartViewPrefab);
       _StartViewInstance.OnConnectClicked += HandleConnectClicked;
-      // Initialize AnimationManager
-      AnimationManager.Instance = new AnimationManager();
     }
 
     private void HandleConnectClicked() {
