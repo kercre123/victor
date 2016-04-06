@@ -12,6 +12,7 @@ public class RobotSettingsPane : MonoBehaviour {
 
   [SerializeField]
   private GameObject _RobotStateTextFieldPrefab;
+  private GameObject _RobotStateTextFieldInstance;
 
   private void Start() {
 
@@ -25,14 +26,13 @@ public class RobotSettingsPane : MonoBehaviour {
   }
 
   private void OnToggleDebugString() {
-    Canvas debug_canvas = DebugMenuManager.Instance.DebugOverlayCanvas;
-    if (debug_canvas != null) {
-      RobotStateTextField old_instance = debug_canvas.GetComponentInChildren<RobotStateTextField>();
-      if (old_instance == null) {
-        UIManager.CreateUIElement(_RobotStateTextFieldPrefab, debug_canvas.transform);
+    Canvas debugCanvas = DebugMenuManager.Instance.DebugOverlayCanvas;
+    if (debugCanvas != null) {
+      if (_RobotStateTextFieldInstance == null) {
+        _RobotStateTextFieldInstance = UIManager.CreateUIElement(_RobotStateTextFieldPrefab, debugCanvas.transform);
       }
       else {
-        Destroy(old_instance.gameObject);
+        Destroy(_RobotStateTextFieldInstance.gameObject);
       }
     }
     

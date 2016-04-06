@@ -19,14 +19,14 @@ public class StartupManager : MonoBehaviour {
   [SerializeField]
   private string[] _AssetBundlesToLoad;
 
+  [SerializeField]
+  private string _DebugAssetBundleName;
+
+  [SerializeField]
+  private string[] _StartupDebugPrefabNames;
+
   // Use this for initialization
   private IEnumerator Start() {
-    if (Application.isPlaying) {
-      // Set up localization files.
-      Localization.LoadStrings();
-      AddComponents();
-    }
-
     // Load asset bundler
     AssetBundleManager.IsLogEnabled = true;
       
@@ -38,9 +38,49 @@ public class StartupManager : MonoBehaviour {
       yield return 0;
     }
 
+    // Load debug asset bundle if in debug build
+    if (Debug.isDebugBuild) {
+      bool loadedDebugAssetBundle = false;
+      assetBundleManager.LoadAssetBundleAsync(_DebugAssetBundleName, 
+        (success) => {
+          if (!success) {
+            DAS.Error("StartupManager.Awake.AssetBundleLoading", 
+              string.Format("Failed to load Asset Bundle with name={0}", _DebugAssetBundleName));
+          }
+          loadedDebugAssetBundle = true;
+        });
+      while (!loadedDebugAssetBundle) {
+        yield return 0;
+      }
+
+      if (Debug.isDebugBuild) {
+        int loadedDebugAssets = 0;
+        foreach (string prefabName in _StartupDebugPrefabNames) {
+          AssetBundleManager.Instance.LoadAssetAsync<GameObject>(_DebugAssetBundleName, 
+            prefabName, (GameObject prefab) => {
+            if (prefab != null) {
+              GameObject go = GameObject.Instantiate(prefab);
+              go.transform.SetParent(transform);
+            }
+            loadedDebugAssets++;
+          });
+        }
+        while (loadedDebugAssets < _StartupDebugPrefabNames.Length) {
+          yield return 0;
+        }
+      }
+    }
+
+    // Set up localization files and add managers
+    if (Application.isPlaying) {
+      Localization.LoadStrings();
+      AddComponents();
+    }
+
     // TODO: Pick sd or hd based on device
     assetBundleManager.AddActiveVariant("hd");
 
+    // Load initial asset bundles
     int loadedAssetBundles = 0;
     foreach (string assetBundleName in _AssetBundlesToLoad) {
       assetBundleManager.LoadAssetBundleAsync(assetBundleName, 
@@ -57,6 +97,7 @@ public class StartupManager : MonoBehaviour {
       yield return 0;
     }
 
+    // Instantiate startup assets
     LoadAssets();
   }
 
@@ -65,6 +106,10 @@ public class StartupManager : MonoBehaviour {
     // gameObject.AddComponent<ManagerTypeName>();
     gameObject.AddComponent<HockeyAppManager>();
     gameObject.AddComponent<ObjectTagRegistryManager>();
+
+    if (Debug.isDebugBuild) {
+      gameObject.AddComponent<SOSLogManager>();
+    }
   }
 
   private void LoadAssets() {

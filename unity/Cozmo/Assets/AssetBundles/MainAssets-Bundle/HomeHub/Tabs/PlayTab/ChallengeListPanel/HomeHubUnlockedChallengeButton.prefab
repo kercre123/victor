@@ -281,7 +281,7 @@ MonoBehaviour:
   _UISoundEvent:
     _Event: -1705717452
     _EventType: 6
-    _GameObjectType: 2
+    _GameObjectType: 3
 --- !u!114 &11456194
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -673,6 +673,10 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: m_AnchoredPosition.y
       value: -250
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _UISoundEvent._GameObjectType
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
