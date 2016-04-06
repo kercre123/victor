@@ -19,6 +19,8 @@ public class StartupManager : MonoBehaviour {
 
       // Add managers to this object here
       // gameObject.AddComponent<ManagerTypeName>();
+      // Initialize the Animation Manager and load the Animation Event Map
+      AnimationManager.Instance = new AnimationManager();
     }
   }
 }

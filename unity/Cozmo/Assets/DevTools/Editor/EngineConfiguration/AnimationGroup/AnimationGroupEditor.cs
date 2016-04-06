@@ -206,6 +206,8 @@ public class AnimationGroupEditor : EditorWindow {
     AnimationGroupEditor window = (AnimationGroupEditor)EditorWindow.GetWindow(typeof(AnimationGroupEditor));
     window.titleContent = new GUIContent("Animation Group Editor");
     window.Show();
+    window.Focus();
+    window.position = new Rect(0, 0, 500, 500);
   }
 
 
