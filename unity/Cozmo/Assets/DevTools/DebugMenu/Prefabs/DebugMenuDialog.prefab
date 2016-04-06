@@ -402,6 +402,8 @@ MonoBehaviour:
     panePrefab: {fileID: 113112, guid: 8c3f37331342f4f9ea1f27702db99db0, type: 2}
   - name: Unlock
     panePrefab: {fileID: 184652, guid: 63894049fc5b64b30806c09cf75f98a2, type: 2}
+  - name: Firmware
+    panePrefab: {fileID: 134512, guid: ab7943ed1c0f240ffac4aef39fc47a57, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
   _TabContainer: {fileID: 188218}
   _ContentPaneContainer: {fileID: 121806}
