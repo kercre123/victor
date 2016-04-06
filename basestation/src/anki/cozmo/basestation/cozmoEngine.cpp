@@ -87,6 +87,9 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   auto startEngineCallback = std::bind(&CozmoEngine::HandleStartEngine, this, std::placeholders::_1);
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartEngine, startEngineCallback));
   
+  auto updateFirmwareCallback = std::bind(&CozmoEngine::HandleUpdateFirmware, this, std::placeholders::_1);
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::UpdateFirmware, updateFirmwareCallback));
+  
   _debugConsoleManager.Init(_context->GetExternalInterface());
 }
   
@@ -202,6 +205,22 @@ void CozmoEngine::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGa
   SetEngineState(EngineState::WaitingForUIDevices);
 }
   
+void CozmoEngine::HandleUpdateFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const ExternalInterface::UpdateFirmware& msg = event.GetData().Get_UpdateFirmware();
+  
+  if (EngineState::UpdatingFirmware == _engineState)
+  {
+    PRINT_NAMED_WARNING("CozmoEngine.HandleUpdateFirmware.AlreadyStarted", "");
+    return;
+  }
+
+  if (_context->GetRobotManager()->InitUpdateFirmware(msg.version))
+  {
+    SetEngineState(EngineState::UpdatingFirmware);
+  }
+}
+  
 bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
 {
   if( CozmoEngine::HasRobotWithID(whichRobot)) {
@@ -286,6 +305,23 @@ Result CozmoEngine::Update(const float currTime_sec)
       _context->GetRobotManager()->UpdateAllRobots();
       
       _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
+      break;
+    }
+    case EngineState::UpdatingFirmware:
+    {
+      // Update comms and messages from robot
+      
+      _robotChannel->Update();
+      
+      _context->GetRobotMsgHandler()->ProcessMessages();
+      
+      // Update the firmware updating, returns true when complete (error or success)
+      
+      if (_context->GetRobotManager()->UpdateFirmware())
+      {
+        SetEngineState(EngineState::Running);
+      }
+      
       break;
     }
     default:

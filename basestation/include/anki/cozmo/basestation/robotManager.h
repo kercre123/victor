@@ -42,6 +42,7 @@ namespace Anki {
   class CozmoContext;
   class CannedAnimationContainer;
   class AnimationGroupContainer;
+  class FirmwareUpdater;
   class GameEventResponsesContainer;
 
     class RobotManager : Util::noncopyable
@@ -73,6 +74,12 @@ namespace Anki {
       // Call each Robot's Update() function
       void UpdateAllRobots();
       
+      // Attempt to begin updating firmware to specified version (return false if it cannot begin)
+      bool InitUpdateFirmware(int version);
+      
+      // Update firmware (if appropriate) on every connected robot
+      bool UpdateFirmware();
+      
       // Return a
       // Return the number of availale robots
       size_t GetNumRobots() const;
@@ -103,6 +110,7 @@ namespace Anki {
       RobotEventHandler _robotEventHandler;
       std::unique_ptr<CannedAnimationContainer>   _cannedAnimations;
       std::unique_ptr<AnimationGroupContainer>    _animationGroups;
+      std::unique_ptr<FirmwareUpdater>            _firmwareUpdater;
       std::unordered_map<std::string, time_t> _loadedAnimationFiles;
       std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
       std::unique_ptr<GameEventResponsesContainer> _gameEventResponses;
