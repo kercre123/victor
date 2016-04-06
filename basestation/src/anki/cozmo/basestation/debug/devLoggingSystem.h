@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <chrono>
+#include <vector>
 
 // Forward declarations
 namespace Anki {
@@ -42,20 +43,26 @@ public:
   
   const std::string& GetDevLoggingBaseDirectory() { return _devLoggingBaseDirectory; }
   
+  void PrepareForUpload();
+  
 private:
   static DevLoggingSystem* sInstance;
   static const std::chrono::system_clock::time_point kAppRunStartTime;
+  static const std::string kWaitingForUploadDirName;
+  static const std::string kArchiveExtensionString;
   
   std::unique_ptr<Util::RollingFileLogger>    _gameToEngineLog;
   std::unique_ptr<Util::RollingFileLogger>    _engineToGameLog;
   std::unique_ptr<Util::RollingFileLogger>    _robotToEngineLog;
   std::unique_ptr<Util::RollingFileLogger>    _engineToRobotLog;
+  
+  std::string _allLogsBaseDirectory;
   std::string _devLoggingBaseDirectory;
   
   DevLoggingSystem(const std::string& baseDirectory);
   
   void DeleteFiles(const std::string& baseDirectory, const std::string& extension);
-  void ArchiveDirectories(const std::string& baseDirectory, const std::string& excludeDirectory);
+  void ArchiveDirectories(const std::string& baseDirectory, const std::vector<std::string>& excludeDirectories);
   std::string GetPathString(const std::string& base, const std::string& path);
   
   template<typename MsgType>

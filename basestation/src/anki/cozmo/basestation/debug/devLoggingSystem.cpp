@@ -1,5 +1,5 @@
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
-//#include "anki/cozmo/basestation/util/file/archiveUtil.h"
+#include "anki/cozmo/basestation/util/file/archiveUtil.h"
 #include "util/logging/rollingFileLogger.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
@@ -9,13 +9,15 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 
 #include <sstream>
+#include <cstdio>
 
 namespace Anki {
 namespace Cozmo {
   
 DevLoggingSystem* DevLoggingSystem::sInstance                                   = nullptr;
 const std::chrono::system_clock::time_point DevLoggingSystem::kAppRunStartTime  = std::chrono::system_clock::now();
-
+const std::string DevLoggingSystem::kWaitingForUploadDirName                    = "waiting_for_upload";
+const std::string DevLoggingSystem::kArchiveExtensionString                     = ".tar.gz";
 
 void DevLoggingSystem::CreateInstance(const std::string& loggingBaseDirectory)
 {
@@ -31,11 +33,13 @@ void DevLoggingSystem::DestroyInstance()
 
 DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory)
 {
-  DeleteFiles(baseDirectory, ".tar.gz");
+  DeleteFiles(baseDirectory, kArchiveExtensionString);
   std::string appRunTimeString = Util::RollingFileLogger::GetDateTimeString(DevLoggingSystem::GetAppRunStartTime());
-  ArchiveDirectories(baseDirectory, appRunTimeString);
+  ArchiveDirectories(baseDirectory, {appRunTimeString, kWaitingForUploadDirName} );
   
+  _allLogsBaseDirectory = baseDirectory;
   _devLoggingBaseDirectory = GetPathString(baseDirectory, appRunTimeString);
+  
   _gameToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "gameToEngine")));
   _engineToGameLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "engineToGame")));
   _robotToEngineLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "robotToEngine")));
@@ -51,27 +55,57 @@ void DevLoggingSystem::DeleteFiles(const std::string& baseDirectory, const std::
   }
 }
   
-void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, const std::string& excludeDirectory)
+void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, const std::vector<std::string>& excludeDirectories)
 {
   std::vector<std::string> directoryList;
   Util::FileUtils::ListAllDirectories(baseDirectory, directoryList);
   
-  for (auto iter = directoryList.begin(); iter != directoryList.end(); iter++)
+  for (auto& excludeDirectory : excludeDirectories)
   {
-    if (*iter == excludeDirectory)
+    for (auto iter = directoryList.begin(); iter != directoryList.end(); iter++)
     {
-      directoryList.erase(iter);
-      break;
+      if (*iter == excludeDirectory)
+      {
+        directoryList.erase(iter);
+        break;
+      }
     }
   }
   
   for (auto& directory : directoryList)
   {
     auto directoryPath = GetPathString(baseDirectory, directory);
-    //auto filePaths = Util::FileUtils::FilesInDirectory(directoryPath, true, ".log", true);
-    //ArchiveUtil::CreateArchiveFromFiles(directoryPath + ".tar.gz", directoryPath, filePaths);
+    auto filePaths = Util::FileUtils::FilesInDirectory(directoryPath, true, Util::RollingFileLogger::kDefaultFileExtension, true);
+    ArchiveUtil::CreateArchiveFromFiles(directoryPath + kArchiveExtensionString, directoryPath, filePaths);
     Util::FileUtils::RemoveDirectory(directoryPath);
   }
+}
+  
+void DevLoggingSystem::PrepareForUpload()
+{
+  // First create an archive for the current logs
+  auto filePaths = Util::FileUtils::FilesInDirectory(_devLoggingBaseDirectory, true, Util::RollingFileLogger::kDefaultFileExtension, true);
+  ArchiveUtil::CreateArchiveFromFiles(_devLoggingBaseDirectory + kArchiveExtensionString, _devLoggingBaseDirectory, filePaths);
+  
+  // Now move all existing archives to the upload directory
+  auto filesToMove = Util::FileUtils::FilesInDirectory(_allLogsBaseDirectory, false, kArchiveExtensionString.c_str());
+  
+  // If we had nothing to move, we have nothing left to do
+  if (filesToMove.empty())
+  {
+    return;
+  }
+  
+  std::string waitingDir = GetPathString(_allLogsBaseDirectory, kWaitingForUploadDirName);
+  Util::FileUtils::CreateDirectory(waitingDir);
+  for (auto& filename : filesToMove)
+  {
+    std::string newFilename = GetPathString(waitingDir, filename);
+    Util::FileUtils::DeleteFile(newFilename);
+    std::rename(GetPathString(_allLogsBaseDirectory, filename).c_str(), newFilename.c_str());
+  }
+  
+  // Post all to amazon
 }
 
 std::string DevLoggingSystem::GetPathString(const std::string& base, const std::string& path)
