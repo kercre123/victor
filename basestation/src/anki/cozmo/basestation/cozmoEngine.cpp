@@ -36,6 +36,10 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
 
+#if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+#endif
+
 
 namespace Anki {
 namespace Cozmo {
@@ -79,6 +83,19 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   // Use a separate callback for StartEngine
   auto startEngineCallback = std::bind(&CozmoEngine::HandleStartEngine, this, std::placeholders::_1);
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartEngine, startEngineCallback));
+  
+  
+#if ANKI_DEV_CHEATS
+  auto devLoggingCallback = [] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) {
+    auto devLoggingSystem = DevLoggingSystem::GetInstance();
+    auto msg = event.GetData().Get_UploadDevLogs();
+    if (nullptr != devLoggingSystem)
+    {
+      devLoggingSystem->PrepareForUpload(msg.namePrefix);
+    }
+  };
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::UploadDevLogs, devLoggingCallback));
+#endif
   
   _debugConsoleManager.Init(_context->GetExternalInterface());
 }

@@ -204,6 +204,10 @@ int main(int argc, char **argv)
 #endif
     
   } // while still stepping
+  
+#if ANKI_DEV_CHEATS
+  DevLoggingSystem::DestroyInstance();
+#endif
 
   Anki::Util::gLoggerProvider = nullptr;
   return 0;

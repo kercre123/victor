@@ -81,8 +81,10 @@ void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, cons
   }
 }
   
-void DevLoggingSystem::PrepareForUpload()
+void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix)
 {
+  // TODO:(lc) Use the name prefix arg to either directly change the file names being saved or simply upload them with the name
+  
   // First create an archive for the current logs
   auto filePaths = Util::FileUtils::FilesInDirectory(_devLoggingBaseDirectory, true, Util::RollingFileLogger::kDefaultFileExtension, true);
   ArchiveUtil::CreateArchiveFromFiles(_devLoggingBaseDirectory + kArchiveExtensionString, _devLoggingBaseDirectory, filePaths);

@@ -43,7 +43,7 @@ public:
   
   const std::string& GetDevLoggingBaseDirectory() { return _devLoggingBaseDirectory; }
   
-  void PrepareForUpload();
+  void PrepareForUpload(const std::string& namePrefix);
   
 private:
   static DevLoggingSystem* sInstance;
