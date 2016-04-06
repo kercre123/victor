@@ -20,9 +20,6 @@ namespace Anki
 {
 namespace Cozmo
 {
-  GameEventResponsesContainer::GameEventResponsesContainer()
-  {
-  }
   
   bool GameEventResponsesContainer::Load(Anki::Util::Data::DataPlatform* data, std::string path)
   {
@@ -45,7 +42,7 @@ namespace Cozmo
         for(int iFrame = 0; iFrame < numFrames; ++iFrame)
         {
           const Json::Value& singleEvent = allPairsArray[iFrame];
-          // just store the string since we don't have a string -> Enum function and will end up with a lot of these
+          // store the string since we don't have a string -> Enum function and will end up with a lot of these
           _eventMap.emplace(singleEvent["CladEvent"].asString(), singleEvent["AnimName"].asString());
         }
       }
@@ -60,14 +57,14 @@ namespace Cozmo
     if(retVal == _eventMap.end())
     {
       PRINT_NAMED_ERROR("GameEventResponsesContainer::GetResponse",
-                        "Animation requested for unknown animation '%s'.\n",
+                        "Animation requested for unknown response '%s'.\n",
                         GameEventToString(ev));
       return "";
     }
     return retVal->second;
   }
   
-  bool        GameEventResponsesContainer::HasResponse(Anki::Cozmo::GameEvent ev)
+  bool GameEventResponsesContainer::HasResponse(Anki::Cozmo::GameEvent ev)
   {
     auto retVal = _eventMap.find(EnumToString(ev));
     return retVal != _eventMap.end();

@@ -49,6 +49,7 @@ namespace Anki {
     , _interruptRunning(interruptRunning)
     {
       RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+      // The config is not up to date, use the backup name
       if( !robot_mgr->HasAnimationResponseForEvent(animEvent) )
       {
         _animName = backupAnimName;
@@ -272,18 +273,18 @@ namespace Anki {
       }
     }
     
-    // Factory that allows us to treat groups and animations the same.
+    // Factories that allows us to treat groups and animations the same.
     PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, u32 numLoops,bool interruptRunning)
     {
       RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
       if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
       {
         std::string response_name = robot_mgr->GetAnimationResponseForEvent(animEvent);
-        if( robot.GetCannedAnimation(response_name) )
+        if( robot_mgr->HasCannedAnimation(response_name) )
         {
           return new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
         }
-        else // it's an animation group
+        else if( robot_mgr->HasAnimationGroup(response_name)) // it's an animation group
         {
           return new PlayAnimationGroupAction(robot, animEvent, numLoops,interruptRunning);
         }
@@ -300,12 +301,12 @@ namespace Anki {
         response_name = robot_mgr->GetAnimationResponseForEvent(animEvent);
       }
       
-      if( robot.GetCannedAnimation(response_name) )
+      if( robot_mgr->HasCannedAnimation(response_name) )
       {
         // return new anim
         ret_action = new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
       }
-      else
+      else if( robot_mgr->HasAnimationGroup(response_name))
       {
         ret_action = new PlayAnimationGroupAction(robot, response_name, numLoops,interruptRunning);
       }

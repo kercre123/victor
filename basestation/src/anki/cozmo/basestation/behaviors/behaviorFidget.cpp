@@ -36,8 +36,11 @@ namespace Cozmo {
     
     _minWait_sec = 2.f;
     _maxWait_sec = 5.f;
+    
+    _lastFidgetTime_sec = 0;
+    _nextFidgetWait_sec = 5;
 
-    AddFidget("Brickout", [this, &robot](){return CreatePlayAnimationAction(robot, GameEvent::OnFidget, "ID_idle_brickout_02");}, 1, 60, true);
+    AddFidget("Brickout", [this, &robot](){return CreatePlayAnimationAction(robot, GameEvent::OnFidget);}, 1, 60, true);
 
     SubscribeToTags({EngineToGameTag::RobotCompletedAction});
     

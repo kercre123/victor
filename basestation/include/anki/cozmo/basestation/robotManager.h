@@ -84,6 +84,8 @@ namespace Anki {
       CannedAnimationContainer& GetCannedAnimations() { return *_cannedAnimations; }
       AnimationGroupContainer& GetAnimationGroups() { return *_animationGroups; }
       
+      bool HasCannedAnimation(const std::string& animName);
+      bool HasAnimationGroup(const std::string& groupName);
       bool HasAnimationResponseForEvent( GameEvent ev );
       std::string GetAnimationResponseForEvent( GameEvent ev );
       

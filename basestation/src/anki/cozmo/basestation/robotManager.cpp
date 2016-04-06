@@ -375,6 +375,14 @@ namespace Anki {
       }
     }
     
+    bool RobotManager::HasCannedAnimation(const std::string& animName)
+    {
+      return _cannedAnimations->HasAnimation(animName);
+    }
+    bool RobotManager::HasAnimationGroup(const std::string& groupName)
+    {
+      return _animationGroups->HasGroup(groupName);
+    }
     bool RobotManager::HasAnimationResponseForEvent( GameEvent ev )
     {
       return _gameEventResponses->HasResponse(ev);

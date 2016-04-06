@@ -30,10 +30,12 @@ namespace Anki {
     class PlayAnimationAction : public IAction
     {
     public:
+      // Deprecated constructor hardcoded use of string names
       PlayAnimationAction(Robot& robot,
                           const std::string& animName,
                           u32 numLoops = 1,
                           bool interruptRunning = true);
+      // Preferred constructor, used by the factory CreatePlayAnimationAction
       PlayAnimationAction(Robot& robot,
                           GameEvent animName,
                           u32 numLoops = 1,
@@ -86,10 +88,12 @@ namespace Anki {
     class PlayAnimationGroupAction : public PlayAnimationAction
     {
     public:
+      // Deprecated
       explicit PlayAnimationGroupAction(Robot& robot,
                                         const std::string& animGroupName,
                                         u32 numLoops = 1,
                                         bool interruptRunning = true);
+      // Preferred constructor, used by the factory CreatePlayAnimationAction
       explicit PlayAnimationGroupAction(Robot& robot,
                                         GameEvent animEvent,
                                         u32 numLoops = 1,
@@ -105,6 +109,7 @@ namespace Anki {
     // Checks if something is an animation or a group and returns the right action
     PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent,
                                                     u32 numLoops = 1,bool interruptRunning = true);
+    // This will fallback on a hardcoded name if used.
     PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName,
                         u32 numLoops = 1,bool interruptRunning = true);
 
