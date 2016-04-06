@@ -144,6 +144,9 @@ namespace Anki
       // of the given pose. Returns nullptr if no objects match. Returns closest
       // if multiple matches are found.
       ObservableObject* FindObjectClosestTo(const Pose3d& pose,
+                                            const BlockWorldFilter& filter = BlockWorldFilter()) const;
+
+      ObservableObject* FindObjectClosestTo(const Pose3d& pose,
                                             const Vec3f&  distThreshold,
                                             const BlockWorldFilter& filter = BlockWorldFilter()) const;
       

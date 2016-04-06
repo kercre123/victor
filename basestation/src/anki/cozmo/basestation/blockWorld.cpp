@@ -3133,7 +3133,14 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       
       return FindObjectHelper(findLambda, filter, true);
     }
-    
+
+    ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
+                                                      const BlockWorldFilter& filter) const
+    {
+      return FindObjectClosestTo(pose, Vec3f{FLT_MAX}, filter);
+    }
+
+
     ObservableObject* BlockWorld::FindObjectClosestTo(const Pose3d& pose,
                                                       const Vec3f&  distThreshold,
                                                       const BlockWorldFilter& filter) const
