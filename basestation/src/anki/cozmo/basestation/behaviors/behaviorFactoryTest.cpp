@@ -114,6 +114,7 @@ namespace Cozmo {
     _testResult = FactoryTestResultCode::UNKNOWN;
     _actionCallbackMap.clear();
     _holdUntilTime = -1;
+    _watchdogTriggerTime = currentTime_sec + _kWatchdogTimeout;
     
     robot.GetActionList().Cancel();
     
@@ -139,7 +140,9 @@ namespace Cozmo {
       if (_testResult == FactoryTestResultCode::SUCCESS) {
         PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.TestComplete", "PASS");
       } else {
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestComplete", "FAIL: %s (code %d)", EnumToString(_testResult), (int)_testResult);
+        PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestComplete",
+                            "FAIL: %s (code %d, state %s)",
+                            EnumToString(_testResult), (int)_testResult, GetStateName().c_str());
       }
       
       robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
@@ -170,6 +173,11 @@ namespace Cozmo {
     
     UpdateStateName();
    
+    // Check watchdog timer
+    if (currentTime_sec > _watchdogTriggerTime) {
+      END_TEST(FactoryTestResultCode::TEST_TIMED_OUT);
+    }
+    
     if (IsActing()) {
       return Status::Running;
     }
@@ -524,6 +532,11 @@ namespace Cozmo {
   
   void BehaviorFactoryTest::SetCurrState(State s)
   {
+    // Update watchdog
+    if (s != _currentState) {
+      _watchdogTriggerTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _kWatchdogTimeout;
+    }
+    
     _currentState = s;
 
     UpdateStateName();

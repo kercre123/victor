@@ -79,7 +79,6 @@ namespace Cozmo {
           Pose3d _actualLightCubePose;
     const Pose3d _expectedChargerPose;
     std::vector<std::pair<f32,f32> > _camCalibPanAndTiltAngles;
-    u32          _camCalibPoseIndex = 0;
     
     static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
     static constexpr f32 _kRbotPoseSamenessAngleThresh_rad = DEG_TO_RAD(5);
@@ -87,6 +86,9 @@ namespace Cozmo {
     static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
     static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
 
+    // If no change in behavior state for this long then trigger failure
+    static constexpr f32 _kWatchdogTimeout = 10;
+    
     
     // Compute rotation ambiguities.
     // As long as the cube is upright, it's fine.
@@ -101,11 +103,6 @@ namespace Cozmo {
     
     virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
     
-    // If the robot is not executing any action for this amount of time,
-    // something went wrong so start it up again.
-    constexpr static f32 kInactionFailsafeTimeoutSec = 1;
-    
-   
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
 
     
@@ -155,6 +152,10 @@ namespace Cozmo {
     ObjectID _blockObjectID;
     ObjectID _cliffObjectID;
     ObjectID _chargerObjectID;
+    
+    
+    u32      _camCalibPoseIndex = 0;
+    f32      _watchdogTriggerTime = -1.0;
     
     s32 _attemptCounter = 0;
     bool _calibrationReceived = false;
