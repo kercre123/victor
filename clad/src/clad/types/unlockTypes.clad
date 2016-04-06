@@ -17,6 +17,7 @@ enum uint_8 UnlockId
   SpeedTapEasyImplicit,
   SpeedTapMediumImplicit,
   SpeedTapHardImplicit,
+  SpeedTapExpertImplicit,
   Count
 }
 
