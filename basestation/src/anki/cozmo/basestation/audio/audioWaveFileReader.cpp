@@ -1,13 +1,18 @@
-//
-//  audioWaveFileReader.cpp
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 3/23/16.
-//
-//
+/*
+ * File: audioWaveFileReader.cpp
+ *
+ * Author: Jordan Rivas
+ * Created: 3/23/2016
+ *
+ * Description: This class purpose is to read .wav files from disk and store them in memory. When the file is loaded the
+ *              data is reformatted to be in a standard audio format, 32-bit floating point.
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ */
+
 
 #include "anki/cozmo/basestation/audio/audioWaveFileReader.h"
-
 #include "util/dataPacking/dataPacking.h"
 #include <algorithm>
 #include <iostream>
@@ -17,6 +22,7 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioWaveFileReader::~AudioWaveFileReader()
 {
@@ -24,12 +30,12 @@ AudioWaveFileReader::~AudioWaveFileReader()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AudioWaveFileReader::LoadWaveFile(const std::string& filePath)
+bool AudioWaveFileReader::LoadWaveFile( const std::string& filePath, const std::string& key )
 {
   // Check if file is already in cache
   if ( _cachedWaveData.find( filePath ) != _cachedWaveData.end() ) {
-    PRINT_NAMED_ERROR("AudioWaveFileReader.LoadWaveFile", "Wave file \"%s\" is already cached", filePath.c_str());
-    return false;
+    PRINT_NAMED_WARNING("AudioWaveFileReader.LoadWaveFile", "Wave file \"%s\" is already cached", filePath.c_str());
+    return true;
   }
   
   // Open file
@@ -121,7 +127,7 @@ bool AudioWaveFileReader::LoadWaveFile(const std::string& filePath)
                                                              " | TotalSamples "
                                                              + std::to_string(standardDataIdx)).c_str());
   
-  _cachedWaveData[ filePath ] = standardData;
+  _cachedWaveData[ key ] = standardData;
   
   // Clean up
   Util::SafeDeleteArray( sourceBuffer );
@@ -182,6 +188,7 @@ size_t AudioWaveFileReader::ConvertPCMDataStream( WaveHeader& waveHeader,
   
   return sampleCount;
 }
+
 
 } // Audio
 } // Cozmo
