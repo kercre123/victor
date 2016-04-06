@@ -2899,10 +2899,10 @@ namespace Cozmo {
                                             cameraMatrix.at<double>(0,0), cameraMatrix.at<double>(1,1),
                                             cameraMatrix.at<double>(0,2), cameraMatrix.at<double>(1,2));
 
-    PRINT_NAMED_DEBUG("VisionSystem.ComputeCalibration.CalibValues",
-                      "fx: %f, fy: %f, cx: %f, cy: %f",
-                      calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
-                      calibration.GetCenter_x(), calibration.GetCenter_y());
+    PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.CalibValues",
+                     "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
+                     calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
+                     calibration.GetCenter_x(), calibration.GetCenter_y(), rms);
     
                           
     // Check if average reprojection error is too high
