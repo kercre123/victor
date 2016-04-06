@@ -38,7 +38,7 @@ namespace Anki {
     
     PlayAnimationAction::PlayAnimationAction(Robot& robot, GameEvent animEvent,
                                              u32 numLoops, bool interruptRunning)
-    : PlayAnimationAction(robot,animEvent,EnumToString(animEvent),numLoops,interruptRunning)
+    : PlayAnimationAction(robot,animEvent,"GameEventNotFound",numLoops,interruptRunning)
     {
     }
     
@@ -356,17 +356,16 @@ namespace Anki {
 
     ActionResult DeviceAudioAction::Init()
     {
-      using namespace Audio;
       switch ( _actionType ) {
         case AudioActionType::Event:
         {
           if (_waitUntilDone) {
             
-            const AudioEngineClient::CallbackFunc callback = [this] ( AudioCallback callback )
+            const  Audio::AudioEngineClient::CallbackFunc callback = [this] (  Audio::AudioCallback callback )
             {
-              const AudioCallbackInfoTag tag = callback.callbackInfo.GetTag();
-              if (AudioCallbackInfoTag::callbackComplete == tag ||
-                  AudioCallbackInfoTag::callbackError == tag) /* -- Waiting to hear back from WWise about error case -- */ {
+              const  Audio::AudioCallbackInfoTag tag = callback.callbackInfo.GetTag();
+              if ( Audio::AudioCallbackInfoTag::callbackComplete == tag ||
+                   Audio::AudioCallbackInfoTag::callbackError == tag) /* -- Waiting to hear back from WWise about error case -- */ {
                 _isCompleted = true;
               }
             };
@@ -393,7 +392,7 @@ namespace Anki {
           if (Audio::GameState::StateGroupType:: Music == _stateGroup) {
             static bool didStartMusic = false;
             if (!didStartMusic) {
-              _robot.GetRobotAudioClient()->PostEvent( static_cast<Audio::GameEvent::GenericEvent>(Audio::GameEvent::Music::Play), GameObjectType::Default );
+              _robot.GetRobotAudioClient()->PostEvent( static_cast<Audio::GameEvent::GenericEvent>(Audio::GameEvent::Music::Play), Audio::GameObjectType::Default );
               didStartMusic = true;
             }
           }
