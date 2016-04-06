@@ -279,6 +279,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotDisconnected:
       ReceivedSpecificMessage(message.RobotDisconnected);
       break;
+    case G2U.MessageEngineToGame.Tag.EngineRobotCLADVersionMismatch:
+      ReceivedSpecificMessage(message.EngineRobotCLADVersionMismatch);
+      break;
     case G2U.MessageEngineToGame.Tag.RobotObservedObject:
       ReceivedSpecificMessage(message.RobotObservedObject);
       break;
@@ -424,6 +427,20 @@ public class RobotEngineManager : MonoBehaviour {
     DAS.Error("RobotEngineManager", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
     Disconnect();
     Disconnected(DisconnectionReason.RobotDisconnected);
+  }
+
+  private void ReceivedSpecificMessage(G2U.EngineRobotCLADVersionMismatch message) {
+    if (message.engineToRobotMismatch) {
+      string str = "Engine to Robot CLAD version mismatch. Engine's EngineToRobot hash = " + message.engineEnginetoRobotHash + ". Robot's EngineToRobot hash = " + message.robotEnginetoRobotHash;
+      DAS.Error("RobotEngineManager", str);
+    }
+
+    if (message.robotToEngineMistmatch) {
+      string str = "Robot to Engine CLAD version mismatch. Engine's EngineToRobot hash = " + message.engineRobotToEngineHash + ". Robot's RobotToEngine hash = " + message.robotRobotToEngineHash;
+      DAS.Error("RobotEngineManager", str);
+    }
+
+    DebugMenuManager.Instance.OnDebugMenuButtonTap();
   }
 
   private void ReceivedSpecificMessage(G2U.InitDebugConsoleVarMessage message) {
