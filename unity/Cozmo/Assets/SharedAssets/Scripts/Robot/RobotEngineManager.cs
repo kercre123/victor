@@ -377,6 +377,7 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RequestSetUnlockResult:
       ReceivedSpecificMessage(message.RequestSetUnlockResult);
+      break;
     case G2U.MessageEngineToGame.Tag.FirmwareUpdateProgress:
       ReceivedSpecificMessage(message.FirmwareUpdateProgress);
       break;
