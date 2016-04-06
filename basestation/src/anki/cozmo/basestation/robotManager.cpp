@@ -15,7 +15,7 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/types/gameEvents.h"
+#include "clad/types/gameEvent.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/time/stepTimers.h"
 #include <sys/stat.h>

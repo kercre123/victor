@@ -14,7 +14,7 @@
 #include "clad/types/engineState.clad"
 #include "clad/types/toolCodes.clad"
 #include "clad/types/unlockTypes.clad"
-#include "clad/types/gameEvents.clad"
+#include "clad/types/gameEvent.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"

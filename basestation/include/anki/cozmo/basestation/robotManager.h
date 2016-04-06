@@ -14,7 +14,7 @@
 #include "anki/cozmo/basestation/robotEventHandler.h"
 #include "util/signals/simpleSignal.hpp"
 #include "util/helpers/noncopyable.h"
-#include "clad/types/gameEvents.h"
+#include "clad/types/gameEvent.h"
 #include <map>
 #include <vector>
 #include <memory>

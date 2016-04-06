@@ -14,7 +14,7 @@
 #ifndef __Cozmo_Basestation_Events_GameEventResponsesContainer_H__
 #define __Cozmo_Basestation_Events_GameEventResponsesContainer_H__
 
-#include "clad/types/gameEvents.h"
+#include "clad/types/gameEvent.h"
 #include <unordered_map>
 
 namespace Anki {

@@ -17,7 +17,7 @@
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/common/basestation/math/pose.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/gameEvents.h"
+#include "clad/types/gameEvent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
