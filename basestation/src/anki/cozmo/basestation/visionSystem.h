@@ -223,7 +223,7 @@ namespace Cozmo {
     bool CheckMailbox(ExternalInterface::RobotObservedMotion& msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
     bool CheckMailbox(Vision::FaceTracker::UpdatedID&  msg);
-    bool CheckMailbox(OverheadEdgePointChain& msg);
+    bool CheckMailbox(OverheadEdgeFrame& msg);
     bool CheckMailbox(ToolCode& msg);
     
     bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
@@ -430,6 +430,12 @@ namespace Cozmo {
     Result DetectMotion(const Vision::ImageRGB& image);
     
     Result DetectOverheadEdges(const Vision::ImageRGB& image);
+
+    // given poseData and image size, it calculates the limits of the ground plane ROI within the image and projects
+    // the new ROI back into the ground plane. In other words, it calculates the part of the ground plane ROI
+    // that is visible in the given poseData. Returns the result in groundPlane
+    // requires: PoseData.groundPlaneVisible == true, otherwise it doesn't make sense to use the ROI
+    void SetGroundROIToImageLimits(const PoseData& poseData, const float imgX, const float imgY, Quad2f& groundPlane);
     
     Result ReadToolCode(const Vision::Image& image);
     
@@ -448,7 +454,7 @@ namespace Cozmo {
     MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
     MultiMailbox<Vision::FaceTracker::UpdatedID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
     
-    MultiMailbox<OverheadEdgePointChain, 64> _overheadEdgeChainMailbox;
+    MultiMailbox<OverheadEdgeFrame, 8> _overheadEdgeFrameMailbox;
     
     Mailbox<ToolCode> _toolCodeMailbox;
     

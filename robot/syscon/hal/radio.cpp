@@ -17,8 +17,8 @@
 #include "timer.h"
 #include "head.h"
 #include "crypto.h"
-#include "spine.h"
 #include "lights.h"
+#include "messages.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -27,81 +27,8 @@
 
 using namespace Anki::Cozmo;
 
-enum AccessoryType {
-  ACCESSORY_CUBE    = 0x00,
-  ACCESSORY_CHARGER = 0x80
-};
-
-enum RadioState {
-  RADIO_PAIRING,        // We are listening for pairing results
-  RADIO_TALKING         // We are communicating to cubes
-};
-
-struct LEDPacket {
-  uint8_t ledStatus[16]; // 4-LEDs, three colors
-  uint8_t ledDark;       // Dark byte
-};
-
-struct AcceleratorPacket {
-  int8_t    x, y, z;
-  uint8_t   shockCount;
-  uint16_t  timestamp;
-};
-
-struct AccessorySlot {
-  bool        active;
-  bool        allocated;
-  int         last_received;
-  uint32_t    id;
-  LEDPacket   tx_state;
-  
-  uesb_address_desc_t       address;
-};
-
-struct AdvertisePacket {
-  uint32_t id;
-};
-
-struct CapturePacket {
-  uint8_t target_channel;
-  uint8_t interval_delay;
-  uint8_t prefix;
-  uint8_t base[4];
-  uint8_t timeout_msb;
-  uint8_t wakeup_offset;
-};
-
 static void EnterState(RadioState state);
-
-// 1/10th the time should be silence
-static const int SILENCE_PERIOD = CYCLES_MS(1.0f);
-
-// Advertising settings
-static const uint8_t ROBOT_TO_CUBE_PREFIX = 0x42;
-static const uint8_t CUBE_TO_ROBOT_PREFIX = 0x52;
-
-static const uint32_t UNUSED_BASE = 0xE6E6E6E6;
-static const uint32_t ADVERTISE_BASE = 0xC2C2C2C2;
-
-#define ADVERTISE_PREFIX    {0, ROBOT_TO_CUBE_PREFIX, CUBE_TO_ROBOT_PREFIX}
-#define COMMUNICATE_PREFIX  {0, CUBE_TO_ROBOT_PREFIX}
-
-// These are the pipes allocated to communication
-static const int ROBOT_PAIR_PIPE = 1;
-static const int CUBE_PAIR_PIPE = 2;
-
-static const int ROBOT_TALK_PIPE = 0;
-static const int CUBE_TALK_PIPE = 1;
-
-static const int ADV_CHANNEL = 81;
-
-// This is for initial channel selection (do not use advertisement channel)
-static const int MAX_TX_CHANNELS = 64;
-
-static const int RADIO_INTERVAL_DELAY = 0xB6;
-static const int RADIO_TIMEOUT_MSB = 20;
-
-static const int RADIO_WAKEUP_OFFSET = 18;
+static void send_capture_packet(void* userdata);
 
 // Global head / body sync values
 extern GlobalDataToHead g_dataToHead;
@@ -109,6 +36,10 @@ extern GlobalDataToBody g_dataToBody;
 
 // Current status values of cubes/chargers
 static RadioState        radioState;
+
+extern uesb_mainstate_t  m_uesb_mainstate;
+
+static RTOS_Task*        capture_task;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -126,10 +57,12 @@ static const uesb_address_desc_t TalkingAddress = {
   0x03
 };
 
-static AccessorySlot accessories[MAX_ACCESSORIES];
+//static struct {
+  static AccessorySlot accessories[MAX_ACCESSORIES];
 
-// Variables for talking to an accessory
-static uint8_t currentAccessory;
+  // Variables for talking to an accessory
+  static uint8_t currentAccessory;
+//} __attribute((at(0x20000004));
 
 // Integer square root calculator
 uint8_t isqrt(uint32_t op)
@@ -177,15 +110,8 @@ static inline uint8_t next_channel(uint8_t channel) {
 #endif
 
 void Radio::init() {
-  // Clear our our states
-  memset(accessories, 0, sizeof(accessories));
-  currentAccessory = 0;
-
-  // Generate target address for the robot
-  for (int i = 0; i < MAX_ACCESSORIES; i++) {
-    accessories[i].address = TalkingAddress;
-    createAddress(accessories[i].address);
-  }
+  // Create a task for capturing cubes
+  capture_task = RTOS::create(send_capture_packet, false);
 }
 
 void Radio::advertise(void) {
@@ -198,11 +124,22 @@ void Radio::advertise(void) {
     RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
+  // Clear our our states
+  memset(accessories, 0, sizeof(accessories));
+  currentAccessory = 0;
+
+  // Generate target address for the robot
+  for (int i = 0; i < MAX_ACCESSORIES; i++) {
+    accessories[i].address = TalkingAddress;
+    createAddress(accessories[i].address);
+  }
+
   uesb_init(&uesb_config);
 }
 
 void Radio::shutdown(void) {
-  uesb_stop();
+  RTOS::stop(capture_task);
+  uesb_disable();
 }
 
 static int LocateAccessory(uint32_t id) {
@@ -313,7 +250,7 @@ void uesb_event_handler(uint32_t flags)
     }
 
     // Schedule a one time capture for this slot
-    RTOS::schedule(send_capture_packet, CAPTURE_OFFSET, (void*) slot, false);
+    RTOS::start(capture_task, CAPTURE_OFFSET, (void*) slot);
     break ;
     
   case RADIO_TALKING:
@@ -454,6 +391,11 @@ void Radio::resume(void* userdata) {
 
 // THIS IS A TEMPORARY HACK AND I HATE IT
 void Radio::manage(void) {
+  // We are in bluetooth mode, do not do this
+  if (m_uesb_mainstate == UESB_STATE_UNINITIALIZED) {
+    return ;
+  }
+
   static int next_prepare = GetCounter() + SCHEDULE_PERIOD;
   static int next_resume  = next_prepare + SILENCE_PERIOD;
   int count = GetCounter();

@@ -9,7 +9,7 @@
 
 #include "hardware.h"
 
-static const int MAX_DEBUG_PRINT = 512;
+static const int MAX_DEBUG_PRINT = 128;
 static uint8_t debug_print_out[MAX_DEBUG_PRINT];
 static int debug_print_first = 0;
 static int debug_print_last = 0;

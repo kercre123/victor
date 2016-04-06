@@ -115,6 +115,7 @@ int main(int argc, char **argv)
   });
   loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
   Anki::Util::gLoggerProvider = &loggerProvider;
+  Anki::Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
 
   // Start with a step so that we can attach to the process here for debugging
   basestationController.step(BS_TIME_STEP);

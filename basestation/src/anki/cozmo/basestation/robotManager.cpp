@@ -11,12 +11,20 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
+#include "anki/cozmo/basestation/events/gameEventResponsesContainer.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/firmwareUpdater/firmwareUpdater.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/gameEvent.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/time/stepTimers.h"
 #include <sys/stat.h>
+
+#include "util/global/globalDefinitions.h"
+#if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -26,6 +34,8 @@ namespace Anki {
     , _robotEventHandler(context)
     , _cannedAnimations(new CannedAnimationContainer())
     , _animationGroups(new AnimationGroupContainer())
+    , _firmwareUpdater(new FirmwareUpdater(context))
+    , _gameEventResponses(new GameEventResponsesContainer())
     {
       
     }
@@ -44,6 +54,10 @@ namespace Anki {
       
       Anki::Util::Time::PushTimedStep("ReadAnimationGroupDir");
       ReadAnimationGroupDir();
+      Anki::Util::Time::PopTimedStep();
+      
+      Anki::Util::Time::PushTimedStep("ReadAnimationGroupMapsDir");
+      _gameEventResponses->Load(_context->GetDataPlatform(),"assets/AnimationGroupMaps");
       Anki::Util::Time::PopTimedStep();
       
       Anki::Util::Time::PopTimedStep(); // RobotManager::Init
@@ -137,6 +151,18 @@ namespace Anki {
       return _robots.count(withID) > 0;
     }
 
+    
+    bool RobotManager::InitUpdateFirmware(int version)
+    {
+      return _firmwareUpdater->InitUpdate(_robots, version);
+    }
+    
+    
+    bool RobotManager::UpdateFirmware()
+    {
+      return _firmwareUpdater->Update(_robots);
+    }
+    
     
     void RobotManager::UpdateAllRobots()
     {
@@ -246,6 +272,14 @@ namespace Anki {
           ReadAnimationFile(path.c_str());
         }
       }
+#if ANKI_DEV_CHEATS
+      // Only when not shipping use our temp dir
+      std::string test_anim = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, USBTunnelServer::TempAnimFileName);
+      if( Util::FileUtils::FileExists(test_anim) )
+      {
+        ReadAnimationFile(test_anim.c_str());
+      }
+#endif
     }
     
     void RobotManager::BroadcastAvailableAnimations()
@@ -353,6 +387,23 @@ namespace Anki {
         
         _animationGroups->DefineFromJson(animGroupDef, animationGroupName);
       }
+    }
+    
+    bool RobotManager::HasCannedAnimation(const std::string& animName)
+    {
+      return _cannedAnimations->HasAnimation(animName);
+    }
+    bool RobotManager::HasAnimationGroup(const std::string& groupName)
+    {
+      return _animationGroups->HasGroup(groupName);
+    }
+    bool RobotManager::HasAnimationResponseForEvent( GameEvent ev )
+    {
+      return _gameEventResponses->HasResponse(ev);
+    }
+    std::string RobotManager::GetAnimationResponseForEvent( GameEvent ev )
+    {
+      return _gameEventResponses->GetResponse(ev);
     }
     
   } // namespace Cozmo

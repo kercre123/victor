@@ -1,106 +1,377 @@
 #include <string.h>
-
-extern "C"
-{
-  #include "nrf.h"
-  #include "nrf_sdm.h"
-
-  #include "ble_advdata.h"
-  #include "ble_hci.h"
-  #include "ble_conn_params.h"
-
-  #include "softdevice_handler.h"  
-}
-
-#include "gatts.h"
+#include <stdint.h>
+#include <stdlib.h>
 
 #include "rtos.h"
-#include "battery.h"
 #include "bluetooth.h"
-#include "motors.h"
+#include "crypto.h"
+#include "messages.h"
 
-// These are constants for the system
-#define IS_SRVC_CHANGED_CHARACT_PRESENT 0
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-const char DEVICE_NAME[]                    = "Botvac D80";
+#define DISABLE_CRYPTO_CHECK
+#define DISABLE_AUTHENTIFICATION
 
-const uint16_t MIN_CONN_INTERVAL            = MSEC_TO_UNITS(100, UNIT_1_25_MS);
-const uint16_t MAX_CONN_INTERVAL            = MSEC_TO_UNITS(200, UNIT_1_25_MS);
-const uint16_t SLAVE_LATENCY                = 0;
-const uint16_t CONN_SUP_TIMEOUT             = MSEC_TO_UNITS(4000, UNIT_10_MS);
+#define member_size(type, member) sizeof(((type *)0)->member)
+  
+// Softdevice settings
+static const nrf_clock_lfclksrc_t m_clock_source = NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM;
+static bool  m_sd_enabled;
+static const int TRANSMISSION_RATE = CYCLES_MS(5.0);
 
-// Advertising settings
-const uint16_t APP_ADV_INTERVAL             = 40;
-const uint16_t APP_ADV_TIMEOUT_IN_SECONDS   = 180;
+// Service settings
+uint16_t                    Bluetooth::service_handle;
+ble_gatts_char_handles_t    Bluetooth::receive_handles;
+ble_gatts_char_handles_t    Bluetooth::transmit_handles;
+static RTOS_Task            *task;
 
-// Connection constants for RTOS
-const uint32_t FIRST_CONN_PARAMS_UPDATE_DELAY = CYCLES_MS(20000);
-const uint32_t NEXT_CONN_PARAMS_UPDATE_DELAY  = CYCLES_MS(5000);
-const uint8_t MAX_CONN_PARAMS_UPDATE_COUNT    = 3;
+// Current connection state settings
+uint16_t                    Bluetooth::conn_handle;
+static uint8_t              m_nonce[member_size(Anki::Cozmo::BLE_SendHello, nonce)];
+static bool                 m_authenticated;
 
-// Security paramters
-const uint8_t SEC_PARAM_BOND                = 1;
-const uint8_t SEC_PARAM_MITM                = 0;
-const uint8_t SEC_PARAM_IO_CAPABILITIES     = BLE_GAP_IO_CAPS_NONE;
-const uint8_t SEC_PARAM_OOB                 = 0;
-const uint8_t SEC_PARAM_MIN_KEY_SIZE        = 7;
-const uint8_t SEC_PARAM_MAX_KEY_SIZE        = 16;
+static const int MAX_CLAD_MESSAGE_LENGTH = 0x100 - 2;
+static const int MAX_CLAD_OUTBOUND_SIZE = MAX_CLAD_MESSAGE_LENGTH - AES_BLOCK_LENGTH;
+static const uint8_t HELLO_SIGNATURE[] = { 'C', 'Z', 'M', '0' };
 
-// Various variables for tracking junk
-static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;
-static ble_gap_sec_params_t             m_sec_params;
-static ble_advdata_manuf_data_t         m_manuf_data;
+struct BLE_CladBuffer {
+  uint16_t  PADDING;
+  
+  union {
+    uint8_t     raw[MAX_CLAD_MESSAGE_LENGTH + 2];
+    struct {
+      uint8_t   length;
+      uint8_t   msgID;
+      uint8_t   data[MAX_CLAD_MESSAGE_LENGTH];
+    };
+  };
+   
+  int  pointer;
+  int  message_size;
+  bool encrypted;
+};
+
+// Buffers for queueing and dequeueing
+static BLE_CladBuffer rx_buffer;
+static BLE_CladBuffer tx_buffer;
+static bool tx_pending;
+static bool tx_buffered;
+
+static DiffieHellman dh_state = {
+  &DEFAULT_DIFFIE_GROUP,
+  &DEFAULT_DIFFIE_GENERATOR,
+};
+
+extern "C" void conn_params_error_handler(uint32_t nrf_error)
+{
+  APP_ERROR_HANDLER(nrf_error);
+}
 
 void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p_file_name)
 {
   NVIC_SystemReset();
 }
 
-static void advertising_start(void)
+static void softdevice_assertion_handler(uint32_t pc, uint16_t line_num, const uint8_t * file_name)
 {
-  uint32_t             err_code;
-  ble_gap_adv_params_t adv_params;
-
-  // Start advertising
-  memset(&adv_params, 0, sizeof(adv_params));
-
-  adv_params.type        = BLE_GAP_ADV_TYPE_ADV_IND;
-  adv_params.p_peer_addr = NULL;
-  adv_params.fp          = BLE_GAP_ADV_FP_ANY;
-  adv_params.interval    = APP_ADV_INTERVAL;
-  adv_params.timeout     = APP_ADV_TIMEOUT_IN_SECONDS;
-
-  err_code = sd_ble_gap_adv_start(&adv_params);
-  APP_ERROR_CHECK(err_code);
+  NVIC_SystemReset();
 }
 
-static void on_ble_evt(ble_evt_t * p_ble_evt)
+static void permissions_error(BLEError error) {
+  // This should be logged
+  sd_ble_gap_disconnect(Bluetooth::conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+}
+
+void Bluetooth::authChallenge(const Anki::Cozmo::BLE_RecvHello& msg) {
+  for (int i = 0; i < sizeof(m_nonce); i++) {
+    if (msg.nonce[i] != m_nonce[i]) {
+      permissions_error(BLE_ERROR_AUTHENTICATED_FAILED);
+      return ;
+    }
+  }
+
+  m_authenticated = true;
+}
+
+static void dh_complete(const void*) {
+  using namespace Anki::Cozmo;
+  
+  // Transmit our encryped key
+  BLE_EncodedKey msg;
+  memcpy(msg.secret, dh_state.local_secret, SECRET_LENGTH);
+  memcpy(msg.encoded_key, dh_state.encoded_key, AES_BLOCK_LENGTH);  
+  RobotInterface::SendMessage(msg);
+}
+
+void Bluetooth::enterPairing(const Anki::Cozmo::BLE_EnterPairing& msg) {  
+  using namespace Anki::Cozmo;
+  
+  // Copy in our secret code, and run
+  memcpy(dh_state.remote_secret, msg.secret, SECRET_LENGTH);
+  
+  // Run the completed DH stack
+  CryptoTask t;
+  t.op = CRYPTO_FINISH_DIFFIE_HELLMAN;
+  t.state = &dh_state;
+  t.callback = dh_complete;
+  Crypto::execute(&t);
+
+  // Display the pin number
+  RobotInterface::DisplayNumber dn;
+  dn.value = dh_state.pin; 
+  dn.x = 32;
+  dn.y = 24;
+  RobotInterface::SendMessage(dn);
+}
+
+static bool message_encrypted(uint8_t op) {
+  using namespace Anki::Cozmo::RobotInterface;
+  
+  // These are the only messages that may be sent unencrypted over the wire
+  switch (op) {
+    case EngineToRobot::Tag_bleEnterPairing:
+    case EngineToRobot::Tag_bleEncodedKey:
+      return false;
+  }
+
+  return true;
+}
+
+static bool message_authenticated(uint8_t op) {
+  using namespace Anki::Cozmo::RobotInterface;
+
+  // These are the only messages that may be used unauthenticated
+  switch (op) {
+    case EngineToRobot::Tag_bleEnterPairing:
+    case EngineToRobot::Tag_bleEncodedKey:
+    case EngineToRobot::Tag_bleRecvHelloMessage:
+    case EngineToRobot::Tag_bleSendHelloMessage:
+      return false;
+  }
+
+  return true;
+}
+
+static void frame_data_received(const void* _ = NULL) {
+  // Attempted to underflow the receive buffer
+  if (rx_buffer.length > rx_buffer.message_size) {
+    permissions_error(BLE_ERROR_BUFFER_UNDERFLOW);
+    return ;
+  }
+
+  #ifndef DISABLE_AUTHENTIFICATION
+  // Attempted to send a bad message over the wire, disconnect user and 
+  if (message_authenticated(rx_buffer.msgID) && !m_authenticated) {
+    permissions_error(BLE_ERROR_NOT_AUTHENTICATED);
+    return ;
+  }
+  #endif
+
+  // Forward message up clad
+  if (rx_buffer.msgID >= 0x30) {
+    Anki::Cozmo::HAL::RadioSendMessage(rx_buffer.data, rx_buffer.length, rx_buffer.msgID);
+  } else {
+    Spine::ProcessMessage(&rx_buffer);
+  }
+}
+
+static void frame_receive(CozmoFrame& receive)
 {
-  uint32_t                    err_code;
+  bool final      = (receive.flags & END_OF_MESSAGE) != 0;
+  bool start      = (receive.flags & START_OF_MESSAGE) != 0;
+  bool encrypted  = (receive.flags & MESSAGE_ENCRYPTED) != 0;
+
+  if (start) {
+    rx_buffer.pointer = 0;
+  }
+
+  // Buffer overflow
+  if (rx_buffer.pointer + COZMO_FRAME_DATA_LENGTH >= sizeof(rx_buffer.raw)) {
+    permissions_error(BLE_ERROR_BUFFER_OVERFLOW);
+    return ;
+  }
+
+  memcpy(&rx_buffer.raw[rx_buffer.pointer], receive.message, COZMO_FRAME_DATA_LENGTH);
+  rx_buffer.pointer += COZMO_FRAME_DATA_LENGTH;
+
+  // We have not finished receiving our message
+  if (!final) {
+    return ;
+  }
+  
+  rx_buffer.message_size = rx_buffer.pointer;
+
+  #ifndef DISABLE_CRYPTO_CHECK
+  // Attemped to send a protected message unencrypted
+  if (message_encrypted(rx_buffer.msgID) != encrypted) {
+    permissions_error(BLE_ERROR_MESSAGE_ENCRYPTION_WRONG);
+    return ;
+  }
+  #endif
+
+  // rx_buffer.pointer
+  if (encrypted) {
+    CryptoTask t;
+    
+    t.op = CRYPTO_AES_DECODE;
+    t.callback = frame_data_received;
+    t.state = rx_buffer.raw;
+    t.length = &rx_buffer.message_size;
+
+    Crypto::execute(&t);
+  } else {
+    // Feed unencrypted data through to the engine
+    frame_data_received();
+  }
+}
+
+static void send_welcome_message(const void*) {  
+  using namespace Anki::Cozmo;
+  
+  BLE_SendHello msg; 
+  memcpy(msg.signature, HELLO_SIGNATURE, sizeof(m_nonce));
+  memcpy(msg.nonce, m_nonce, sizeof(m_nonce));
+
+  RobotInterface::SendMessage(msg);
+}
+
+static void manage_ble(void*) {
+  // Manage outbound transmissions
+  if (tx_pending) {
+    // Calculate the length of the message we are trying to send
+    CozmoFrame f;
+
+    f.flags = 
+      (tx_buffer.encrypted ? MESSAGE_ENCRYPTED : 0) |
+      ((tx_buffer.pointer == 0) ? START_OF_MESSAGE : 0);
+
+    memcpy(f.message, &tx_buffer.raw[tx_buffer.pointer], sizeof(f.message));
+
+    if (tx_buffer.pointer + sizeof(f.message) >= tx_buffer.message_size) {
+      f.flags |= END_OF_MESSAGE;
+    }
+
+    // Transmit our frame
+    ble_gatts_hvx_params_t params;
+    uint16_t len = sizeof(CozmoFrame);
+    
+    memset(&params, 0, sizeof(params));
+    params.type   = BLE_GATT_HVX_NOTIFICATION;
+    params.handle = Bluetooth::transmit_handles.value_handle;
+    params.p_data = (uint8_t*) &f;
+    params.p_len  = &len;
+    
+    uint32_t err_code = sd_ble_gatts_hvx(Bluetooth::conn_handle, &params);
+    
+    if (err_code == NRF_SUCCESS) {
+      tx_buffer.pointer += sizeof(f.message);
+
+      if (tx_buffer.pointer >= tx_buffer.message_size) {
+        tx_pending = false;
+        tx_buffered = false;
+      }
+    }
+    
+    return ;
+  }
+}
+
+static void start_message_transmission(const void*) {
+  tx_pending = true;
+}
+
+bool Bluetooth::transmit(const uint8_t* data, int length, uint8_t op) {
+  // We are already sending a message, jerk.
+  if (tx_buffered) {
+    return false;
+  }
+  
+  bool encrypted = message_encrypted(op);
+  
+  tx_buffer.length = length;
+  tx_buffer.msgID = op;
+  tx_buffer.encrypted = encrypted;
+  tx_buffer.pointer = 0;
+  tx_buffer.message_size = length + 2;
+  tx_buffered = true;
+  
+  memcpy(tx_buffer.data, data, length);
+
+  if (length > MAX_CLAD_OUTBOUND_SIZE) {
+    return false;
+  }
+
+  if (encrypted) {
+    CryptoTask t;
+
+    t.op = CRYPTO_AES_ENCODE;
+    tx_buffer.message_size = tx_buffer.length + 2;
+    t.callback = start_message_transmission;
+    t.state = tx_buffer.raw;
+    t.length = &tx_buffer.message_size;
+        
+    Crypto::execute(&t);
+  } else {
+    tx_pending = true;
+  }
+  
+  return true;
+}
+
+static void on_ble_event(ble_evt_t * p_ble_evt)
+{
   static ble_gap_master_id_t  p_master_id;
   static ble_gap_sec_keyset_t keys_exchanged;
+  
+  uint32_t                    err_code;
+  CryptoTask t;
 
   switch (p_ble_evt->header.evt_id)
   {
     case BLE_GAP_EVT_CONNECTED:
-      m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+      Bluetooth::conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+      m_authenticated = false;
+      tx_pending = false;
+      tx_buffered = false;
+
+      // Initalize our DH state
+      t.op = CRYPTO_START_DIFFIE_HELLMAN;
+      t.state = &dh_state;
+      t.callback = NULL;
+      Crypto::execute(&t);
+    
+      // Generate our welcome nonce
+      static const int nonce_length = sizeof(m_nonce);
+      t.op = CRYPTO_GENERATE_RANDOM;
+      t.state = &m_nonce;
+      t.length = (int*)&nonce_length;
+      t.callback = send_welcome_message;
+      Crypto::execute(&t);
+
+      RTOS::start(task, TRANSMISSION_RATE);
       break;
 
     case BLE_GAP_EVT_DISCONNECTED:
-      m_conn_handle = BLE_CONN_HANDLE_INVALID;
+      Bluetooth::conn_handle = BLE_CONN_HANDLE_INVALID;
+      RTOS::stop(task);
 
-      advertising_start();
+      // Resume advertising
+      err_code = sd_ble_gap_adv_start(&adv_params);
+      APP_ERROR_CHECK(err_code);
       break;
 
     case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
-      err_code = sd_ble_gap_sec_params_reply(m_conn_handle,
+      err_code = sd_ble_gap_sec_params_reply(Bluetooth::conn_handle,
                                      BLE_GAP_SEC_STATUS_SUCCESS,
                                      &m_sec_params,&keys_exchanged);
       APP_ERROR_CHECK(err_code);
       break;
 
     case BLE_GATTS_EVT_SYS_ATTR_MISSING:
-      err_code = sd_ble_gatts_sys_attr_set(m_conn_handle, NULL, 0,BLE_GATTS_SYS_ATTR_FLAG_USR_SRVCS);
+      err_code = sd_ble_gatts_sys_attr_set(Bluetooth::conn_handle, NULL, 0,BLE_GATTS_SYS_ATTR_FLAG_USR_SRVCS);
       APP_ERROR_CHECK(err_code);
       break;
 
@@ -109,14 +380,14 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
 
       if (p_master_id.ediv == p_ble_evt->evt.gap_evt.params.sec_info_request.master_id.ediv)
       {
-        err_code = sd_ble_gap_sec_info_reply(m_conn_handle, &keys_exchanged.keys_central.p_enc_key->enc_info, &keys_exchanged.keys_central.p_id_key->id_info, NULL);
+        err_code = sd_ble_gap_sec_info_reply(Bluetooth::conn_handle, &keys_exchanged.keys_central.p_enc_key->enc_info, &keys_exchanged.keys_central.p_id_key->id_info, NULL);
         APP_ERROR_CHECK(err_code);
         p_master_id.ediv = p_ble_evt->evt.gap_evt.params.sec_info_request.master_id.ediv;
       }
       else
       {
         // No keys found for this device
-        err_code = sd_ble_gap_sec_info_reply(m_conn_handle, NULL, NULL,NULL);
+        err_code = sd_ble_gap_sec_info_reply(Bluetooth::conn_handle, NULL, NULL,NULL);
         APP_ERROR_CHECK(err_code);
       }
       break;
@@ -124,51 +395,165 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     case BLE_GAP_EVT_TIMEOUT:
       if (p_ble_evt->evt.gap_evt.params.timeout.src == BLE_GAP_TIMEOUT_SRC_ADVERTISING)
       {
-        // XXX: Go to system-off mode (this function will not return; wakeup will cause a reset)                
-        
-        //err_code = sd_power_system_off();
-        //APP_ERROR_CHECK(err_code);
+        // XXX: Go into low power mode        
       }
       break;
 
+    case BLE_GATTS_EVT_WRITE:
+    {
+      ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
+
+      // Ignore probing messages, but don't disconnect
+      if ((p_evt_write->handle == Bluetooth::receive_handles.value_handle) &&
+          (p_evt_write->len == sizeof(CozmoFrame)))
+      {
+        frame_receive(*(CozmoFrame*) p_evt_write->data);
+      }
+      break;
+    }
+    
     default:
       // No implementation needed.
       break;
   }
 }
 
-static void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
+extern "C" void on_conn_params_evt(ble_conn_params_evt_t * p_evt)
 {
   uint32_t err_code;
 
   if(p_evt->evt_type == BLE_CONN_PARAMS_EVT_FAILED)
   {
-    err_code = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_CONN_INTERVAL_UNACCEPTABLE);
+    err_code = sd_ble_gap_disconnect(Bluetooth::conn_handle, BLE_HCI_CONN_INTERVAL_UNACCEPTABLE);
     APP_ERROR_CHECK(err_code);
   }
 }
 
-static void ble_evt_dispatch(ble_evt_t * p_ble_evt)
+// Initalization functions
+static uint32_t receive_char_add(uint8_t uuid_type)
 {
-  on_ble_evt(p_ble_evt);
-  ble_conn_params_on_ble_evt(p_ble_evt);
-  GATTS::on_ble_evt(p_ble_evt);
+  static CozmoFrame value;
+  ble_gatts_char_md_t char_md;
+  ble_gatts_attr_t    attr_char_value;
+  ble_uuid_t          ble_uuid;
+  ble_gatts_attr_md_t attr_md;
+
+  memset(&char_md, 0, sizeof(char_md));
+  
+  char_md.char_props.read   = 1;
+  char_md.char_props.write  = 1;
+  char_md.p_char_user_desc  = NULL;
+  char_md.p_char_pf         = NULL;
+  char_md.p_user_desc_md    = NULL;
+  char_md.p_cccd_md         = NULL;
+  char_md.p_sccd_md         = NULL;
+  
+  ble_uuid.type = uuid_type;
+  ble_uuid.uuid = COZMO_UUID_RECEIVE_CHAR;
+  
+  memset(&attr_md, 0, sizeof(attr_md));
+
+  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
+  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
+  attr_md.vloc       = BLE_GATTS_VLOC_USER;
+  attr_md.rd_auth    = 0;
+  attr_md.wr_auth    = 0;
+  attr_md.vlen       = 0;
+  
+  memset(&attr_char_value, 0, sizeof(attr_char_value));
+
+  attr_char_value.p_uuid       = &ble_uuid;
+  attr_char_value.p_attr_md    = &attr_md;
+  attr_char_value.init_len     = sizeof(CozmoFrame);
+  attr_char_value.init_offs    = 0;
+  attr_char_value.max_len      = sizeof(CozmoFrame);
+  attr_char_value.p_value      = (uint8_t*)&value;
+  
+  return sd_ble_gatts_characteristic_add(Bluetooth::service_handle, &char_md,
+                                            &attr_char_value,
+                                            &Bluetooth::receive_handles);
 }
 
-static void sys_evt_dispatch(uint32_t sys_evt)
+static uint32_t transmit_char_add(uint8_t uuid_type)
 {
-  // TODO: SYSTEM EVENTS
+  static CozmoFrame value;
+  ble_gatts_char_md_t char_md;
+  ble_gatts_attr_md_t cccd_md;
+  ble_gatts_attr_t    attr_char_value;
+  ble_uuid_t          ble_uuid;
+  ble_gatts_attr_md_t attr_md;
+
+  memset(&cccd_md, 0, sizeof(cccd_md));
+
+  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.read_perm);
+  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&cccd_md.write_perm);
+  cccd_md.vloc = BLE_GATTS_VLOC_STACK;
+  
+  memset(&char_md, 0, sizeof(char_md));
+  
+  char_md.char_props.read   = 1;
+  char_md.char_props.notify = 1;
+  char_md.p_char_user_desc  = NULL;
+  char_md.p_char_pf         = NULL;
+  char_md.p_user_desc_md    = NULL;
+  char_md.p_cccd_md         = &cccd_md;
+  char_md.p_sccd_md         = NULL;
+  
+  ble_uuid.type = uuid_type;
+  ble_uuid.uuid = COZMO_UUID_TRANSMIT_CHAR;
+  
+  memset(&attr_md, 0, sizeof(attr_md));
+
+  BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.read_perm);
+  BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.write_perm);
+  attr_md.vloc       = BLE_GATTS_VLOC_USER;
+  attr_md.rd_auth    = 0;
+  attr_md.wr_auth    = 0;
+  attr_md.vlen       = 0;
+  
+  memset(&attr_char_value, 0, sizeof(attr_char_value));
+  
+  attr_char_value.p_uuid       = &ble_uuid;
+  attr_char_value.p_attr_md    = &attr_md;
+  attr_char_value.init_len     = sizeof(CozmoFrame);
+  attr_char_value.init_offs    = 0;
+  attr_char_value.max_len      = sizeof(CozmoFrame);
+  attr_char_value.p_value      = (uint8_t*)&value;
+  
+  return sd_ble_gatts_characteristic_add(Bluetooth::service_handle, &char_md,
+                                          &attr_char_value,
+                                          &Bluetooth::transmit_handles);
 }
 
-static void conn_params_error_handler(uint32_t nrf_error)
-{
-  APP_ERROR_HANDLER(nrf_error);
+uint32_t Bluetooth::init() {
+  uint32_t err_code;
+
+  conn_handle = BLE_CONN_HANDLE_INVALID;
+
+  // Initialize SoftDevice.
+  err_code = sd_softdevice_enable(m_clock_source, softdevice_assertion_handler);
+  APP_ERROR_CHECK(err_code);
+
+  m_sd_enabled      = true;
+
+  task = RTOS::create(manage_ble);
+  
+  // Enable BLE event interrupt (interrupt priority has already been set by the stack).
+  return sd_nvic_EnableIRQ(SWI2_IRQn);
 }
 
-static void ble_stack_init(void)
-{
+void Bluetooth::advertise(void) {
   uint32_t err_code;
   
+  if (!m_sd_enabled) {
+    err_code = sd_softdevice_enable(m_clock_source, softdevice_assertion_handler);
+    APP_ERROR_CHECK(err_code);
+
+    sd_nvic_EnableIRQ(SWI2_IRQn);
+
+    m_sd_enabled      = true;
+  }
+
   // Enable BLE stack 
   ble_enable_params_t ble_enable_params;
   memset(&ble_enable_params, 0, sizeof(ble_enable_params));
@@ -180,124 +565,108 @@ static void ble_stack_init(void)
   
   err_code = sd_ble_gap_address_get(&addr);
   APP_ERROR_CHECK(err_code);
-  sd_ble_gap_address_set(BLE_GAP_ADDR_CYCLE_MODE_NONE, &addr);
+  err_code = sd_ble_gap_address_set(BLE_GAP_ADDR_CYCLE_MODE_NONE, &addr);
   APP_ERROR_CHECK(err_code);
-  // Subscribe for BLE events.
-  err_code = softdevice_ble_evt_handler_set(ble_evt_dispatch);
-  APP_ERROR_CHECK(err_code);
-  
-  // Register with the SoftDevice handler module for BLE events.
-  err_code = softdevice_sys_evt_handler_set(sys_evt_dispatch);
-  APP_ERROR_CHECK(err_code);
-}
 
-static void gap_params_init(void)
-{
-  uint32_t                err_code;
-  ble_gap_conn_params_t   gap_conn_params;
+  // GAP parameters init
   ble_gap_conn_sec_mode_t sec_mode;
-
   BLE_GAP_CONN_SEC_MODE_SET_OPEN(&sec_mode);
 
-  err_code = sd_ble_gap_device_name_set(&sec_mode,
-                                        (const uint8_t *)DEVICE_NAME,
-                                        sizeof(DEVICE_NAME) - 1);
+
+  // THIS IS TEMPORARY
+  uint32_t* AES_KEY = (uint32_t*) 0x1EFF0;
+  uint8_t hex[] = "0123456789ABCDEF";
+  uint8_t devname[32] = {
+    hex[(*AES_KEY >>  0) & 0xF],
+    hex[(*AES_KEY >>  4) & 0xF],
+    hex[(*AES_KEY >>  8) & 0xF],
+    hex[(*AES_KEY >> 12) & 0xF],
+    ' ', 0
+  };  
+  strcat((char*)devname, (char*)DEVICE_NAME);
+  
+  err_code = sd_ble_gap_device_name_set(&sec_mode, devname, strlen((char*)devname));
   APP_ERROR_CHECK(err_code);
-
-  memset(&gap_conn_params, 0, sizeof(gap_conn_params));
-
-  gap_conn_params.min_conn_interval = MIN_CONN_INTERVAL;
-  gap_conn_params.max_conn_interval = MAX_CONN_INTERVAL;
-  gap_conn_params.slave_latency     = SLAVE_LATENCY;
-  gap_conn_params.conn_sup_timeout  = CONN_SUP_TIMEOUT;
 
   err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
   APP_ERROR_CHECK(err_code);
-}
 
-static void services_init(void)
-{
-  uint32_t err_code;
+  // Create vendor ID for services
+  uint8_t uuid_type;
 
-  err_code = GATTS::init();
+  err_code = sd_ble_uuid_vs_add(&COZMO_UUID_BASE, &uuid_type);
   APP_ERROR_CHECK(err_code);
-}
-
-static void advertising_init(void)
-{
-  uint32_t      err_code;
-  ble_advdata_t advdata;
-  ble_advdata_t scanrsp;
   
+  // Setup our service
   ble_uuid_t adv_uuids[] = {
-    {DRIVE_UUID_SERVICE, GATTS::uuid_type}
+    { COZMO_UUID_SERVICE, uuid_type }
   };
 
-  m_manuf_data.company_identifier = MFG_DATA_ID;
-  m_manuf_data.data.size = sizeof(MFG_DATA);
-  m_manuf_data.data.p_data = (uint8_t*)MFG_DATA;
+  err_code = sd_ble_gatts_service_add(BLE_GATTS_SRVC_TYPE_PRIMARY, &adv_uuids[0], &Bluetooth::service_handle);
+  APP_ERROR_CHECK(err_code);
+  
+  err_code = receive_char_add(uuid_type);
+  APP_ERROR_CHECK(err_code);
+  
+  err_code = transmit_char_add(uuid_type);
+  APP_ERROR_CHECK(err_code);
 
-  // Build and set advertising data
-  memset(&advdata, 0, sizeof(advdata));
-
-  advdata.name_type               = BLE_ADVDATA_FULL_NAME;
-  advdata.include_appearance      = true;
-  advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE;
-  advdata.p_manuf_specific_data   = &m_manuf_data;
-
+  // Initailize advertising 
+  ble_advdata_t scanrsp;
   memset(&scanrsp, 0, sizeof(scanrsp));
   scanrsp.uuids_complete.uuid_cnt = sizeof(adv_uuids) / sizeof(ble_uuid_t);
   scanrsp.uuids_complete.p_uuids  = adv_uuids;
   
-  err_code = ble_advdata_set(&advdata, &scanrsp);
+  err_code = ble_advdata_set(&m_advdata, &scanrsp);
   APP_ERROR_CHECK(err_code);
-}
 
-static void conn_params_init(void)
-{
-  uint32_t               err_code;
-  ble_conn_params_init_t cp_init;
-
-  memset(&cp_init, 0, sizeof(cp_init));
-
-  cp_init.p_conn_params                  = NULL;
-  cp_init.first_conn_params_update_delay = FIRST_CONN_PARAMS_UPDATE_DELAY;
-  cp_init.next_conn_params_update_delay  = NEXT_CONN_PARAMS_UPDATE_DELAY;
-  cp_init.max_conn_params_update_count   = MAX_CONN_PARAMS_UPDATE_COUNT;
-  cp_init.start_on_notify_cccd_handle    = BLE_GATT_HANDLE_INVALID;
-  cp_init.disconnect_on_fail             = false;
-  cp_init.evt_handler                    = on_conn_params_evt;
-  cp_init.error_handler                  = conn_params_error_handler;
-
+  // Initialize connection parameters
   err_code = ble_conn_params_init(&cp_init);
   APP_ERROR_CHECK(err_code);
-}
-
-static void sec_params_init(void)
-{
-  m_sec_params.bond         = SEC_PARAM_BOND;
-  m_sec_params.mitm         = SEC_PARAM_MITM;
-  m_sec_params.io_caps      = SEC_PARAM_IO_CAPABILITIES;
-  m_sec_params.oob          = SEC_PARAM_OOB;
-  m_sec_params.min_key_size = SEC_PARAM_MIN_KEY_SIZE;
-  m_sec_params.max_key_size = SEC_PARAM_MAX_KEY_SIZE;
-}
-
-void Bluetooth::init(void) {
-}
-
-void Bluetooth::advertise(void) {
-  ble_stack_init();
-  gap_params_init();
-  services_init();
-  advertising_init();
-  conn_params_init();
-  sec_params_init();
-
-  advertising_start();
+  
+  // Start advertising
+  err_code = sd_ble_gap_adv_start(&adv_params);
+  APP_ERROR_CHECK(err_code);
 }
 
 void Bluetooth::shutdown(void) {
-  // Make sure the soft device is disabled so we can do things
+  RTOS::stop(task);
   sd_softdevice_disable();
+  m_sd_enabled = false;
+}
+
+extern "C" void SWI2_IRQHandler(void)
+{
+  uint32_t evt_id;
+  uint32_t err_code;
+
+  // Pull event from SOC.
+  for (;;) {
+    err_code = sd_evt_get(&evt_id);
+    
+    if (err_code == NRF_ERROR_NOT_FOUND) {
+      break ;
+    } else if (err_code != NRF_SUCCESS) {
+      APP_ERROR_HANDLER(err_code);
+    }
+  }
+  
+  // Pull event from stack
+  for (;;) {
+    uint8_t ble_buffer[BLE_STACK_EVT_MSG_BUF_SIZE] __attribute__ ((aligned (4)));
+    uint16_t evt_len = sizeof(ble_buffer);
+    err_code = sd_ble_evt_get(ble_buffer, &evt_len);
+    
+    switch (err_code) {
+      case NRF_SUCCESS:
+        ble_conn_params_on_ble_evt((ble_evt_t *)ble_buffer);
+        on_ble_event((ble_evt_t *)ble_buffer);
+        break ;
+      case NRF_ERROR_NOT_FOUND:
+       return ;
+      default:
+        APP_ERROR_HANDLER(err_code);
+        break ; 
+    }
+  }
 }

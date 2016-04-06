@@ -42,7 +42,7 @@ static s8  menuIndex;
 #define MENU_TIMEOUT 100000000
 
 static const FTMenuItem rootMenuItems[] = {
-  {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      10000000 },
+  {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      30000000 },
   {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
   {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 },
 };
@@ -256,6 +256,11 @@ void Process_TestState(const RobotInterface::TestState& state)
       break;
     }
   }
+}
+
+RobotInterface::FactoryTestMode GetMode()
+{
+  return mode;
 }
 
 void SetMode(const RobotInterface::FactoryTestMode newMode)

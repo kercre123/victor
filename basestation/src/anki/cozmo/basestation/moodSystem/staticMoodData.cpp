@@ -171,26 +171,25 @@ bool StaticMoodData::ReadFromJson(const Json::Value& inJson)
     const Json::Value& graphEmotionTypeName = decayGraphJson[kEmotionTypeKey];
     
     const char* emotionTypeString = graphEmotionTypeName.isString() ? graphEmotionTypeName.asCString() : "";
-    const EmotionType emotionType = EmotionTypeFromString( emotionTypeString );
-    
-    if (emotionType < EmotionType::Count)
-    {
-      if (SetDecayGraph(emotionType, decayGraph))
-      {
-        decayGraphsSet[(size_t)emotionType] = true;
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("StaticMoodData.ReadFromJson.InvalidDecayGraph", "DecayGraph %u '%s' failed to set", i, emotionTypeString);
-        return false;
-      }
+
+    if (strcmp(emotionTypeString, "default") == 0) {
+      // Default graph
+      defaultDecayGraph = decayGraph;
     }
-    else
-    {
-      if (strcmp(emotionTypeString, "default") == 0)
+    else {
+      const EmotionType emotionType = EmotionTypeFromString( emotionTypeString );
+    
+      if (emotionType < EmotionType::Count)
       {
-        // Default graph
-        defaultDecayGraph = decayGraph;
+        if (SetDecayGraph(emotionType, decayGraph))
+        {
+          decayGraphsSet[(size_t)emotionType] = true;
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("StaticMoodData.ReadFromJson.InvalidDecayGraph", "DecayGraph %u '%s' failed to set", i, emotionTypeString);
+          return false;
+        }
       }
       else
       {

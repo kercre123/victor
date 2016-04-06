@@ -38,6 +38,7 @@ namespace Anki {
       
       AnimationGroup* GetAnimationGroup(const std::string& name);
       const AnimationGroup* GetAnimationGroup(const std::string& name) const;
+      bool HasGroup(const std::string& name) const;
       
       std::vector<std::string> GetAnimationGroupNames();
       

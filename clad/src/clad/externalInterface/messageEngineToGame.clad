@@ -12,7 +12,10 @@
 #include "clad/types/powerMessages.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/engineState.clad"
+#include "clad/types/firmwareTypes.clad"
 #include "clad/types/toolCodes.clad"
+#include "clad/types/unlockTypes.clad"
+#include "clad/types/gameEvent.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -291,6 +294,25 @@ message ProgressionStats {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Progression Unlocks
+///////////////////////////////////////////////////////////////////////////////
+
+message RequestSetUnlockResult {
+  UnlockId unlockID,
+  bool unlocked
+}
+
+structure UnlockEntry {
+  UnlockId unlockID,
+  bool unlocked
+}
+
+message UnlockStatus {
+  UnlockEntry unlocks[uint_8]
+}  
+
+
+///////////////////////////////////////////////////////////////////////////////
 // Debug / Console
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -331,6 +353,29 @@ structure BlockPoolBlockData {
 message InitBlockPoolMessage {
   uint_8              blockPoolEnabled,
   BlockPoolBlockData  blockData[uint_8]
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Firmware
+///////////////////////////////////////////////////////////////////////////////
+
+message FirmwareUpdateProgress {
+  uint_32 robotID,
+  FirmwareUpdateStage stage,
+  FirmwareUpdateSubStage subStage,
+  uint_8  percentComplete
+}
+
+message FirmwareUpdateComplete {
+  uint_32 robotID,
+  FirmwareUpdateResult  result
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CozmoGameEvent, generic events unity might care about.
+///////////////////////////////////////////////////////////////////////////////
+message CozmoGameEvent {
+  GameEvent eventEnum,
 }
 
 ///////////////////////////////////////////////////////////////////////////////

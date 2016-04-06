@@ -36,6 +36,7 @@ namespace Cozmo {
     
     Animation* GetAnimation(const std::string& name);
     const Animation* GetAnimation(const std::string& name) const;
+    bool  HasAnimation(const std::string& name) const;
     
     std::vector<std::string> GetAnimationNames();
     

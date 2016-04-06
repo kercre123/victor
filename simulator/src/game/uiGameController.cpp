@@ -456,9 +456,6 @@ namespace Anki {
               PRINT_NAMED_INFO("KeyboardController.Update", "Sent force-add robot message.");
             }
             
-            // Turn on image streaming to game/UI by default:
-            SendImageRequest(ImageSendMode::Stream, 1);
-            
             _uiState = UI_RUNNING;
           }
           break;

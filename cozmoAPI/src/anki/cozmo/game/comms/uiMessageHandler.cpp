@@ -142,6 +142,17 @@ namespace Anki {
         BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
     } // Broadcast(MessageGameToEngine &&)
     
+    // Called from any not main thread and dealt with during the update.
+    void UiMessageHandler::BroadcastDeferred(const ExternalInterface::MessageGameToEngine& message)
+    {
+      std::lock_guard<std::mutex> lock(_mutex);
+      _threadedMsgs.emplace_back(message);
+    }
+    void UiMessageHandler::BroadcastDeferred(ExternalInterface::MessageGameToEngine&& message)
+    {
+      std::lock_guard<std::mutex> lock(_mutex);
+      _threadedMsgs.emplace_back(std::move(message));
+    }
     
     // Broadcasting MessageEngineToGame messages also delivers them out of the engine
     void UiMessageHandler::Broadcast(const ExternalInterface::MessageEngineToGame& message)
@@ -236,6 +247,18 @@ namespace Anki {
           }
         }
       }
+      
+      {
+        std::lock_guard<std::mutex> lock(_mutex);
+        if( _threadedMsgs.size() > 0 )
+        {
+          for(auto threaded_msg : _threadedMsgs) {
+            Broadcast(std::move(threaded_msg));
+          }
+          _threadedMsgs.clear();
+        }
+      }
+      
       return lastResult;
     } // Update()
     

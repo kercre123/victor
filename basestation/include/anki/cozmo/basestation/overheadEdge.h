@@ -17,10 +17,12 @@
 
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/point.h"
+#include "anki/common/basestation/math/quad_impl.h"
 
 namespace Anki {
 namespace Cozmo {
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Point in an edge
   struct OverheadEdgePoint {
     Point<2,s32> position;
@@ -30,16 +32,27 @@ namespace Cozmo {
   // container of points
   using OverheadEdgePointVector = std::vector<OverheadEdgePoint>;
   
-  // Chain of points in what seems to be the same edge
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Chain of points that define a segment
   struct OverheadEdgePointChain {
-    OverheadEdgePointChain() : timestamp(0){}
+    OverheadEdgePointChain() : isBorder(true) { }
     OverheadEdgePointVector points;
-    TimeStamp_t timestamp;
+    bool isBorder; // isBorder: true = detected border; false = reached end of ground plane without detecting a border
   };
-  
-  // Container of chains of points
-  using OverheadEdgeVector = std::vector<OverheadEdgePointChain>;
-  
+
+  // container of chains
+  using OverheadEdgeChainVector = std::vector<OverheadEdgePointChain>;
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // information processed for a frame at the given timestamp
+  struct OverheadEdgeFrame {
+  OverheadEdgeFrame() : timestamp(0), groundPlaneValid(false) {}
+    TimeStamp_t timestamp;
+    bool groundPlaneValid;
+    Quad2f groundplane;
+    OverheadEdgeChainVector chains;
+  };
+    
 } // namespace Cozmo
 } // namespace Anki
 

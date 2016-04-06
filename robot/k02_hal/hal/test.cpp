@@ -54,7 +54,7 @@ void StartupSelfTest(void) {
   int result = RunTests();
   
   if (result != ERROR_NONE) {
-    OLED::ErrorCode(result);
+    OLED::DisplayNumber(result, 88, 0);
   }
 }
 

@@ -15,6 +15,9 @@ namespace Anki {
       /// Main loop tick, called from background task
       void Update();
       
+      /// Get the current factory test mode
+      RobotInterface::FactoryTestMode GetMode();
+      
       void SetMode(const RobotInterface::FactoryTestMode mode);
       
       /// Process test state update messages
