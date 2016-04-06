@@ -38,10 +38,10 @@ namespace Cozmo
       if( success && jsonRoot.isMember("Pairs"))
       {
         Json::Value allPairsArray = jsonRoot["Pairs"];
-        const int numFrames = allPairsArray.size();
-        for(int iFrame = 0; iFrame < numFrames; ++iFrame)
+        const int numPairs = allPairsArray.size();
+        for(int i = 0; i < numPairs; ++i)
         {
-          const Json::Value& singleEvent = allPairsArray[iFrame];
+          const Json::Value& singleEvent = allPairsArray[i];
           // store the string since we don't have a string -> Enum function and will end up with a lot of these
           _eventMap.emplace(singleEvent["CladEvent"].asString(), singleEvent["AnimName"].asString());
         }
