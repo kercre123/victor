@@ -179,11 +179,9 @@ namespace SpeedTap {
 
     private void HandleSessionAnimDone(bool success) {
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
-      Debug.Log(_PlayerRoundsWon > _CozmoRoundsWon);
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
         switch (CurrentDifficulty) {
         case 1:
-          Debug.Log("TRY UNLOCK MEDIUM");
           UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.SpeedTapMediumImplicit, true);
           break;
         case 2:
