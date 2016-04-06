@@ -62,7 +62,7 @@ namespace Cozmo
       PRINT_NAMED_ERROR("GameEventResponsesContainer::GetResponse",
                         "Animation requested for unknown animation '%s'.\n",
                         GameEventToString(ev));
-      return "ANIM_TEST";
+      return "";
     }
     return retVal->second;
   }

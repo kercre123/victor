@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robotManager.h"
 
 namespace Anki {
   
@@ -33,6 +34,33 @@ namespace Anki {
     , _interruptRunning(interruptRunning)
     {
       
+    }
+    
+    PlayAnimationAction::PlayAnimationAction(Robot& robot, GameEvent animEvent,
+                                             u32 numLoops, bool interruptRunning)
+    : PlayAnimationAction(robot,animEvent,EnumToString(animEvent),numLoops,interruptRunning)
+    {
+    }
+    
+    PlayAnimationAction::PlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName,
+                                             u32 numLoops, bool interruptRunning)
+    : IAction(robot)
+    , _numLoops(numLoops)
+    , _interruptRunning(interruptRunning)
+    {
+      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+      if( !robot_mgr->HasAnimationResponseForEvent(animEvent) )
+      {
+        _animName = backupAnimName;
+      }
+      else
+      {
+        _animName = robot_mgr->GetAnimationResponseForEvent(animEvent);
+        
+        // Let game know this was triggered if something else needed to happen
+        robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::CozmoGameEvent>(animEvent);
+      }
+      _name = "PlayAnimation" + _animName + "Action";
     }
     
     PlayAnimationAction::~PlayAnimationAction()
@@ -55,6 +83,11 @@ namespace Anki {
       {
         const Animation* streamingAnimation = _robot.GetAnimationStreamer().GetStreamingAnimation();
         const Animation* ourAnimation = _robot.GetCannedAnimation(_animName);
+        
+        if( ourAnimation == nullptr)
+        {
+          return ActionResult::FAILURE_ABORT;
+        }
         
         _alteredAnimation = std::unique_ptr<Animation>(new Animation(*ourAnimation));
         assert(_alteredAnimation);
@@ -205,10 +238,27 @@ namespace Anki {
     PlayAnimationGroupAction::PlayAnimationGroupAction(Robot& robot,
                                                        const std::string& animGroupName,
                                                        u32 numLoops, bool interruptRunning)
-    : PlayAnimationAction(robot, "", numLoops, interruptRunning),
+   : PlayAnimationAction(robot, "", numLoops, interruptRunning),
     _animGroupName(animGroupName)
     {
       
+    }
+    
+    PlayAnimationGroupAction::PlayAnimationGroupAction(Robot& robot,
+                             GameEvent animEvent,
+                             u32 numLoops,
+                             bool interruptRunning)
+    : PlayAnimationAction(robot, "", numLoops, interruptRunning),
+    _animGroupName("")
+    {
+      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+      if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
+      {
+        _animGroupName = robot_mgr->GetAnimationResponseForEvent(animEvent);
+        // Let game know this was triggered if something else needed to happen
+        robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::CozmoGameEvent>(animEvent);
+      }
+      // will FAILURE_ABORT on Init if not an event
     }
 
     ActionResult PlayAnimationGroupAction::Init()
@@ -221,6 +271,48 @@ namespace Anki {
         return PlayAnimationAction::Init();
       }
     }
+    
+    // Factory that allows us to treat groups and animations the same.
+    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, u32 numLoops,bool interruptRunning)
+    {
+      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+      if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
+      {
+        std::string response_name = robot_mgr->GetAnimationResponseForEvent(animEvent);
+        if( robot.GetCannedAnimation(response_name) )
+        {
+          return new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
+        }
+        else // it's an animation group
+        {
+          return new PlayAnimationGroupAction(robot, animEvent, numLoops,interruptRunning);
+        }
+      }
+      return nullptr;
+    }
+    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName, u32 numLoops,bool interruptRunning)
+    {
+      PlayAnimationAction* ret_action = nullptr;
+      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+      std::string response_name = backupAnimName;
+      if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
+      {
+        response_name = robot_mgr->GetAnimationResponseForEvent(animEvent);
+      }
+      
+      if( robot.GetCannedAnimation(response_name) )
+      {
+        // return new anim
+        ret_action = new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
+      }
+      else
+      {
+        ret_action = new PlayAnimationGroupAction(robot, response_name, numLoops,interruptRunning);
+      }
+      
+      return ret_action;
+    }
+    
 
     #pragma mark ---- DeviceAudioAction ----
 

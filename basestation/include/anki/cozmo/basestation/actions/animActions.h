@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/common/basestation/math/pose.h"
 #include "clad/types/actionTypes.h"
+#include "clad/types/gameEvents.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
@@ -31,6 +32,16 @@ namespace Anki {
     public:
       PlayAnimationAction(Robot& robot,
                           const std::string& animName,
+                          u32 numLoops = 1,
+                          bool interruptRunning = true);
+      PlayAnimationAction(Robot& robot,
+                          GameEvent animName,
+                          u32 numLoops = 1,
+                          bool interruptRunning = true);
+      // Backup constructor for transition, allows to use designer driven config or hardcoded backup
+      PlayAnimationAction(Robot& robot,
+                          GameEvent animName,
+                          const std::string& backupAnimName,
                           u32 numLoops = 1,
                           bool interruptRunning = true);
       virtual ~PlayAnimationAction();
@@ -79,6 +90,10 @@ namespace Anki {
                                         const std::string& animGroupName,
                                         u32 numLoops = 1,
                                         bool interruptRunning = true);
+      explicit PlayAnimationGroupAction(Robot& robot,
+                                        GameEvent animEvent,
+                                        u32 numLoops = 1,
+                                        bool interruptRunning = true);
       
     protected:
       virtual ActionResult Init() override;
@@ -86,6 +101,12 @@ namespace Anki {
       std::string   _animGroupName;
       
     }; // class PlayAnimationGroupAction
+    
+    // Checks if something is an animation or a group and returns the right action
+    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent,
+                                                    u32 numLoops = 1,bool interruptRunning = true);
+    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName,
+                        u32 numLoops = 1,bool interruptRunning = true);
 
 
     class DeviceAudioAction : public IAction
