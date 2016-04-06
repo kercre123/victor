@@ -22,9 +22,9 @@ namespace Cozmo.HomeHub {
     public override void Initialize(HomeView homeViewInstance) {
       base.Initialize(homeViewInstance);
       foreach (KeyValuePair<string, ChallengeStatePacket> kvp in homeViewInstance.GetChallengeStates()) {
-        if (kvp.Value.currentState != ChallengeState.Locked) {
-          _ChallengeButtons.Add(kvp.Value.data.ChallengeID, 
-            CreateChallengeButton(kvp.Value.data, _UnlockedChallengeButtonPrefab.gameObject, 
+        if (kvp.Value.ChallengeUnlocked) {
+          _ChallengeButtons.Add(kvp.Value.Data.ChallengeID, 
+            CreateChallengeButton(kvp.Value.Data, _UnlockedChallengeButtonPrefab.gameObject, 
               HandleUnlockedChallengeClicked, "challenge_list_panel"));
         }
       }

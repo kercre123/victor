@@ -35,6 +35,9 @@ namespace Cozmo.HomeHub {
     [SerializeField]
     private RectTransform _ScrollRectContent;
 
+    [SerializeField]
+    private UnityEngine.UI.ScrollRect _ScrollRect;
+
     private HomeHub _HomeHubInstance;
 
     public HomeHub HomeHubInstance {
@@ -77,10 +80,15 @@ namespace Cozmo.HomeHub {
 
     }
 
+    public void SetChallengeStates(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
+      _ChallengeStates = challengeStatesById;
+    }
+
     private void HandleCozmoTabButton() {
       if (_CurrentTab != null) {
         GameObject.Destroy(_CurrentTab.gameObject);
       }
+      _ScrollRect.horizontalNormalizedPosition = 0.0f;
       _CurrentTab = GameObject.Instantiate(_CozmoTabPrefab.gameObject).GetComponent<HomeViewTab>();
       _CurrentTab.transform.SetParent(_ScrollRectContent, false);
       _CurrentTab.Initialize(this);
@@ -90,6 +98,7 @@ namespace Cozmo.HomeHub {
       if (_CurrentTab != null) {
         GameObject.Destroy(_CurrentTab.gameObject);
       }
+      _ScrollRect.horizontalNormalizedPosition = 0.0f;
       _CurrentTab = GameObject.Instantiate(_PlayTabPrefab.gameObject).GetComponent<HomeViewTab>();
       _CurrentTab.transform.SetParent(_ScrollRectContent, false);
       _CurrentTab.Initialize(this);
@@ -99,6 +108,7 @@ namespace Cozmo.HomeHub {
       if (_CurrentTab != null) {
         GameObject.Destroy(_CurrentTab.gameObject);
       }
+      _ScrollRect.horizontalNormalizedPosition = 0.0f;
       _CurrentTab = GameObject.Instantiate(_ProfileTabPrefab.gameObject).GetComponent<HomeViewTab>();
       _CurrentTab.transform.SetParent(_ScrollRectContent, false);
       _CurrentTab.Initialize(this);

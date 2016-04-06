@@ -73,6 +73,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
+  public event Action<Anki.Cozmo.UnlockId, bool> OnRequestSetUnlockResult;
 
   #region Audio Callback events
 
@@ -368,6 +369,12 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RobotObservedPossibleObject:
       ReceivedSpecificMessage(message.RobotObservedPossibleObject);
+      break;
+    case G2U.MessageEngineToGame.Tag.UnlockStatus:
+      ReceivedSpecificMessage(message.UnlockStatus);
+      break;
+    case G2U.MessageEngineToGame.Tag.RequestSetUnlockResult:
+      ReceivedSpecificMessage(message.RequestSetUnlockResult);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -686,6 +693,22 @@ public class RobotEngineManager : MonoBehaviour {
       if (CurrentRobot.CurrentBehaviorString != message.text) {
         CurrentRobot.CurrentBehaviorString = message.text;
       }
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.UnlockStatus message) {
+    if (UnlockablesManager.Instance != null) {
+      Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables = new Dictionary<UnlockId, bool>();
+      for (int i = 0; i < message.unlocks.Length; ++i) {
+        loadedUnlockables.Add(message.unlocks[i].unlockID, message.unlocks[i].unlocked);
+      }
+      UnlockablesManager.Instance.OnConnectLoad(loadedUnlockables);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult message) {
+    if (OnRequestSetUnlockResult != null) {
+      OnRequestSetUnlockResult(message.unlockID, message.unlocked);
     }
   }
 

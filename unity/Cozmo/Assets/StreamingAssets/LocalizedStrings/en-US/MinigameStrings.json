@@ -54,6 +54,9 @@
   "minigames.label.gamesAndActivities": {
     "translation": "Games & Activities"
   },
+  "minigames.label.cozmoUnlocksPanel": {
+    "translation": "Cozmo Unlocks"
+  },
   "minigame.label.difficultySelect": {
     "translation": "SELECT DIFFICULTY"
   },
