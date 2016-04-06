@@ -357,7 +357,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21cb49b7aeadb43bbae124902dfe6437, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _GoalCellPrefab: {fileID: 11499814, guid: 8c4c020f2bbd142e0bef9f2370a1ca07, type: 2}
+  _GoalCellPrefab: {fileID: 11499814, guid: aef1bd931641f42c49fc1349a71d6fe9, type: 2}
   _BonusBarContainer: {fileID: 22428654}
   _BonusBarPrefab: {fileID: 11477656, guid: ea0dc2f73b17c4751a4c3c726e2fdb53, type: 2}
   _TotalProgressBar: {fileID: 11435984}
@@ -998,7 +998,7 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _GoalCellPrefab
       value: 
-      objectReference: {fileID: 11499814, guid: 8c4c020f2bbd142e0bef9f2370a1ca07,
+      objectReference: {fileID: 11499814, guid: aef1bd931641f42c49fc1349a71d6fe9,
         type: 2}
     - target: {fileID: 0}
       propertyPath: _DailySummaryPrefab

@@ -207,6 +207,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// <param name="stackTrace">The stacktrace for the exception.</param>
   private void WriteLogToDisk(string logString, string stackTrace) {
     #if (UNITY_IPHONE && !UNITY_EDITOR)
+    DAS.Debug("game.log.write_log_to_disk", "logString: " + logString + " \n stackTrace: " + stackTrace);
     string logSession = System.DateTime.Now.ToString("yyyy-MM-dd-HH_mm_ss_fff");
     string log = logString.Replace("\n", " ");
     string[] stacktraceLines = stackTrace.Split('\n');
@@ -233,7 +234,6 @@ public class HockeyAppManager : MonoBehaviour {
     }
     catch (System.Exception e) {
       DAS.Error("game.log.file_write_error", e);
-      DAS.Error("game.log.file_write_error", "Failed to WriteLogToDisk for error! logString: " + logString + " \n stackTrace: " + stackTrace);
     }
     #endif
   }

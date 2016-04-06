@@ -30,8 +30,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _TabViewPanelPrefabs:
-  - {fileID: 11429418, guid: 1c9c7d463cd6744f7bb5716b5f131435, type: 2}
-  - {fileID: 11483340, guid: 6fcb96ee43be54c4eb207b16a7ee625b, type: 2}
+  - {fileID: 11429418, guid: 5cfca50bd149c4f0fa165abf972d8c13, type: 2}
+  - {fileID: 11483340, guid: 2453f18bd514742a5b96299b79a121ca, type: 2}
 --- !u!114 &11409080
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -93,12 +93,12 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _TabViewPanelPrefabs.Array.data[0]
       value: 
-      objectReference: {fileID: 11429418, guid: 1c9c7d463cd6744f7bb5716b5f131435,
+      objectReference: {fileID: 11429418, guid: 5cfca50bd149c4f0fa165abf972d8c13,
         type: 2}
     - target: {fileID: 0}
       propertyPath: _TabViewPanelPrefabs.Array.data[1]
       value: 
-      objectReference: {fileID: 11483340, guid: 6fcb96ee43be54c4eb207b16a7ee625b,
+      objectReference: {fileID: 11483340, guid: 2453f18bd514742a5b96299b79a121ca,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

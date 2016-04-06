@@ -789,7 +789,7 @@ MonoBehaviour:
   _DailyProgressBar: {fileID: 11404458}
   _ObjectivesContainer: {fileID: 22462446}
   _ChallengesContainer: {fileID: 22498466}
-  _ObjectivePrefab: {fileID: 166116, guid: 8c4c020f2bbd142e0bef9f2370a1ca07, type: 2}
+  _ObjectivePrefab: {fileID: 166116, guid: aef1bd931641f42c49fc1349a71d6fe9, type: 2}
   _ChallengePrefab: {fileID: 176740, guid: 7c5677da1156f4b24b46f53bcdcb7503, type: 2}
   _CurrentFriendshipLevel: {fileID: 11483090}
   _NextFriendshipLevel: {fileID: 11464100}
@@ -1990,7 +1990,7 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _ObjectivePrefab
       value: 
-      objectReference: {fileID: 166116, guid: 8c4c020f2bbd142e0bef9f2370a1ca07, type: 2}
+      objectReference: {fileID: 166116, guid: aef1bd931641f42c49fc1349a71d6fe9, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 136404}
