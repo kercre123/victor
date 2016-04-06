@@ -76,7 +76,7 @@ namespace Anki {
 namespace Cozmo {
 
 CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld.MapMemory", false); // kEnableMapMemory: if set to true Cozmo creates/uses memory maps
-CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // kDebugRenderOverheadEdges: enables/disables debug render
+CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // kDebugRenderOverheadEdges: enables/disables debug render
 
     BlockWorld::BlockWorld(Robot* robot)
     : _robot(robot)
@@ -2485,7 +2485,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
       
       // we are only processing edges for the memory map, so if there's no map, don't do anything
       INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
-      if( nullptr == currentNavMemoryMap )
+      if( nullptr == currentNavMemoryMap && !kDebugRenderOverheadEdges )
       {
         return RESULT_OK;
       }
@@ -2517,9 +2517,6 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
                 frameInfo.groundplane[Quad::BottomRight].y(),
                 0.0f);
 
-      #define RENDER_VISION_POINTS 0
-      #define RENDER_MEMORYMAP_QUADS 0
-      
       const float kBorderDepth = 1.0f;
       
       // TODO reserve some quads in each vector (what makes sense?)
@@ -2527,11 +2524,13 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
       std::vector<Quad2f> visionQuadsWithBorders;
       for( const auto& chain : frameInfo.chains )
       {
-        ASSERT_NAMED(chain.points.size() > 2,"AddVisionOverheadEdges.ChainWithTooLittlePoints");
 
         // debug render
-        if ( RENDER_VISION_POINTS )
+        if ( kDebugRenderOverheadEdges )
         {
+//          VizManager* vizManager = _robot->GetContext()->GetVizManager();
+//          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", frameInfo.groundplane, 3.0f, NamedColors::CYAN, false);
+          
           // renders every segment reported by vision
           for (size_t i=0; i<chain.points.size()-1; ++i)
           {
@@ -2543,6 +2542,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
             vizManager->DrawSegment("BlockWorld.AddVisionOverheadEdges", start, end, color, false);
           }
         }
+
+        ASSERT_NAMED(chain.points.size() > 2,"AddVisionOverheadEdges.ChainWithTooLittlePoints");
         
         // iterate the chain merging points together
         Point3f segmentStart = EdgePointToPoint3f(chain.points[0], observedPose);
@@ -2636,7 +2637,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
       // send quads to memory map
       for ( const auto& clearQuad2D : visionQuadsClear )
       {
-        if ( RENDER_MEMORYMAP_QUADS )
+        if ( kDebugRenderOverheadEdges )
         {
           ColorRGBA color = Anki::NamedColors::GREEN;
           const float z = 2.0f;
@@ -2645,13 +2646,15 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
         }
 
         // add clear info to map
-        currentNavMemoryMap->AddQuad(clearQuad2D, INavMemoryMap::EContentType::ClearOfObstacle);
+        if ( currentNavMemoryMap ) {
+          currentNavMemoryMap->AddQuad(clearQuad2D, INavMemoryMap::EContentType::ClearOfObstacle);
+        }
       }
       
       // send quads to memory map
       for ( const auto& borderQuad2D : visionQuadsWithBorders )
       {
-        if ( RENDER_MEMORYMAP_QUADS )
+        if ( kDebugRenderOverheadEdges )
         {
           ColorRGBA color = Anki::NamedColors::BLUE;
           const float z = 2.0f;
@@ -2660,7 +2663,9 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
         }
       
         // add interesting edge
-        currentNavMemoryMap->AddQuad(borderQuad2D, INavMemoryMap::EContentType::InterestingEdge);
+        if ( currentNavMemoryMap ) {
+          currentNavMemoryMap->AddQuad(borderQuad2D, INavMemoryMap::EContentType::InterestingEdge);
+        }
       }
       
       return RESULT_OK;
