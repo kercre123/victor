@@ -2528,8 +2528,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         // debug render
         if ( kDebugRenderOverheadEdges )
         {
-          VizManager* vizManager = _robot->GetContext()->GetVizManager();
-          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", frameInfo.groundplane, 3.0f, NamedColors::CYAN, false);
+//          VizManager* vizManager = _robot->GetContext()->GetVizManager();
+//          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", frameInfo.groundplane, 3.0f, NamedColors::CYAN, false);
           
           // renders every segment reported by vision
           for (size_t i=0; i<chain.points.size()-1; ++i)
