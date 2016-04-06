@@ -52,6 +52,9 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     _signalHandles.push_back(messageHandler->Subscribe(robotId, tagType, std::bind(handler, this, std::placeholders::_1)));
   };
   
+  Anki::Util::sSetGlobal(DPHYS, "0xbadcode");
+  Anki::Util::sEvent("robot.InitRobotMessageComponent",{},"");
+  
   // bind to specific handlers in the robot class
   doRobotSubscribe(RobotInterface::RobotToEngineTag::cameraCalibration,           &Robot::HandleCameraCalibration);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::printText,                   &Robot::HandlePrint);
@@ -182,6 +185,9 @@ void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   char string_id[32] = {0};
   snprintf(string_id, sizeof(string_id), "0xbeef%04x%08x", payload.modelID,payload.robotID);
   Anki::Util::sSetGlobal(DPHYS, string_id);
+  
+  // This should be definition always have a phys ID
+  Anki::Util::sEvent("robot.handleRobotSetID",{},string_id);
 }
 
 void Robot::HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message)
