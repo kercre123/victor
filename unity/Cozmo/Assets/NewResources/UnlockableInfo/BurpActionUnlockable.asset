@@ -15,9 +15,12 @@ MonoBehaviour:
     _EnumValueAsString: BurpAction
     _EnumValue: 0
   UnlockableType: 1
-  Prerequisites: []
+  Prerequisites:
+  - _EnumValueAsString: SpeedTapGame
+    _EnumValue: 4
+  - _EnumValueAsString: SimonGame
+    _EnumValue: 3
   AnyPrereqUnlock: 0
-  CubesRequired: 0
   ExplicitUnlock: 1
   DefaultUnlock: 0
   TreatCost: 0

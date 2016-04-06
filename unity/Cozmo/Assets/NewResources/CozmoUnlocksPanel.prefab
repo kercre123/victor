@@ -225,7 +225,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#minigames.label.gamesAndActivities'
+  m_Text: '#minigames.label.cozmoUnlocksPanel'
   _AllUppercase: 1
   GlowText: 0
 --- !u!114 &11474322
@@ -289,7 +289,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#minigames.label.gamesAndActivities'
+  m_Text: '#minigames.label.cozmoUnlocksPanel'
   _AllUppercase: 1
   GlowText: 1
 --- !u!114 &11496212
