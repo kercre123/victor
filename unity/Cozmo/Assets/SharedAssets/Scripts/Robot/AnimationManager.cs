@@ -21,7 +21,12 @@ public class AnimationManager {
         _Instance = new AnimationManager();
       }
       return _Instance; 
-    } 
+    }
+    set {
+      if (_Instance != null) {
+        _Instance = value;
+      }
+    }
   }
 
   private IRobot _CurrRobot = null;
@@ -29,15 +34,26 @@ public class AnimationManager {
   // Map Animation Group Names to Event Enums
   public Dictionary<GameEvent, string> AnimationGroupDict = new Dictionary<GameEvent, string>();
 
+  public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroupMaps"; } }
 
   public AnimationManager() {
-    GameEventManager.Instance.OnReceiveGameEvent += CozmoEventRecieved;
+    GameEventManager.Instance.OnGameEvent += GameEventReceived;
     _CurrRobot = RobotEngineManager.Instance.CurrentRobot;
+    // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
+    if (Directory.Exists(sEventMapDirectory)) {
+      string[] _EventMapFiles = Directory.GetFiles(sEventMapDirectory);
+      // TODO : Specify the event map file to use in a config
+      LoadAnimationMap(_EventMapFiles[0]);
+    }
+    else {
+      DAS.Warn(this, "No Animation Event Map to load in products-cozmo-assets/animationGroupMaps/");
+    }
   }
 
   public void LoadAnimationMap(string path) {
     AnimationGroupDict.Clear();
     string json = File.ReadAllText(path);
+    DAS.Event(this, string.Format("LoadAnimationMap {0}", Path.GetFileName(path)));
     _CurrentEventMap = JsonConvert.DeserializeObject<AnimationEventMap>(json, GlobalSerializerSettings.JsonSettings);
     for (int i = 0; i < _CurrentEventMap.Pairs.Count; i++) {
       AnimationEventMap.CladAnimPair currPair = _CurrentEventMap.Pairs[i];
@@ -49,7 +65,7 @@ public class AnimationManager {
     }
   }
 
-  public void CozmoEventRecieved(GameEvent cozEvent) {
+  public void GameEventReceived(GameEvent cozEvent) {
     string animGroup = "";
     if (AnimationGroupDict.TryGetValue(cozEvent, out animGroup)) {
       if (!string.IsNullOrEmpty(animGroup)) {

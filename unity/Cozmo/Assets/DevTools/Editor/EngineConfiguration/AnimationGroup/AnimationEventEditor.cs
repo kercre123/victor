@@ -14,9 +14,6 @@ using Anki.Cozmo;
 /// Animation event editor.
 /// Used for mapping AnimationGroups to Clad generated GameEvents
 /// Can Filter out unwanted CladEvents and AnimationGroups
-/// If Ryan Anderson isn't dead and also isn't working at Anki,
-/// call him at (760)504-2040 to yell at him over how shitty this is.
-/// But just so you know, if he's dead, its going to be hella awkward.
 /// </summary>
 public class AnimationEventEditor : EditorWindow {
 
@@ -26,8 +23,6 @@ public class AnimationEventEditor : EditorWindow {
   private static string[] _FilteredAnimationOptions;
 
   private static string[] _EventMapFiles;
-
-  private static string[] _EventMapNameOptions;
 
   private static AnimationEventMap _CurrentEventMap;
   private static string _CurrentEventMapFile;
@@ -60,12 +55,10 @@ public class AnimationEventEditor : EditorWindow {
     // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
     if (Directory.Exists(sEventMapDirectory)) {
       _EventMapFiles = Directory.GetFiles(sEventMapDirectory);
-      _EventMapNameOptions = _EventMapFiles.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
     }
     else {
       Directory.CreateDirectory(sEventMapDirectory);
       _EventMapFiles = new string[0];
-      _EventMapNameOptions = _EventMapFiles;
     }
 
   }
