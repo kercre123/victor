@@ -51,6 +51,37 @@ Quad3f GroundPlaneROI::GetGroundQuad(f32 zHeight) const
   };
 }
 
+bool GroundPlaneROI::GetVisibleGroundQuad(const Matrix_3x3f& H, s32 imgWidth, s32 imgHeight,
+                                          Quad3f& groundQuad, f32 z) const
+{
+  Quad2f imgQuad;
+  const bool intersectsBorder = GetImageQuad(H, imgWidth, imgHeight, imgQuad);
+  
+  // Start with full ground quad. If the projected image doesn't intersect
+  // the image border, we'll just return that.
+  groundQuad = GetGroundQuad(z);
+  
+  if(intersectsBorder)
+  {
+    // Project back into ground
+    //  Technically, we are only checking for "near" intersection in GetImageQuad above,
+    //  so the far points can't move, so there's no reason to warp them.
+    Matrix_3x3f invH;
+    H.GetInverse(invH);
+    for(Quad::CornerName iCorner : {Quad::BottomLeft, Quad::BottomRight})
+    {
+      Point3f temp = invH * Point3f(imgQuad[iCorner].x(), imgQuad[iCorner].y(), 1.f);
+      ASSERT_NAMED(temp.z() > 0, "GroundPlaneROI.GetVisibleGroundQuad.BadProjectedZ");
+      const f32 divisor = 1.f / temp.z();
+      groundQuad[iCorner].x() = temp.x() * divisor;
+      groundQuad[iCorner].y() = temp.y() * divisor;
+    }
+  }
+
+  return intersectsBorder;
+} // GetVisibleGroundQuad()
+  
+  
 void GroundPlaneROI::GetVisibleX(const Matrix_3x3f& H, s32 imageWidth, s32 imageHeight,
                                  f32& near, f32& far) const
 {
@@ -74,7 +105,7 @@ void GroundPlaneROI::GetVisibleX(const Matrix_3x3f& H, s32 imageWidth, s32 image
   }
 }
   
-Quad2f GroundPlaneROI::GetImageQuad(const Matrix_3x3f& H) const
+bool GroundPlaneROI::GetImageQuad(const Matrix_3x3f& H, s32 imgWidth, s32 imgHeight, Quad2f& imgQuad) const
 {
   // Note that the z coordinate is actually 0, but in the mapping to the
   // image plane below, we are actually doing K[R t]* [Px Py Pz 1]',
@@ -86,18 +117,22 @@ Quad2f GroundPlaneROI::GetImageQuad(const Matrix_3x3f& H) const
   // Project ground quad in camera image
   // (This could be done by Camera::ProjectPoints, but that would duplicate
   //  the computation of H we did above, which here we need to use below)
-  Quad2f imgGroundQuad;
   for(Quad::CornerName iCorner = Quad::CornerName::FirstCorner;
       iCorner != Quad::CornerName::NumCorners; ++iCorner)
   {
     Point3f temp = H * groundQuad[iCorner];
     ASSERT_NAMED(temp.z() > 0.f, "Projected ground quad points should have z > 0.");
     const f32 divisor = 1.f / temp.z();
-    imgGroundQuad[iCorner].x() = temp.x() * divisor;
-    imgGroundQuad[iCorner].y() = temp.y() * divisor;
+    imgQuad[iCorner].x() = temp.x() * divisor;
+    imgQuad[iCorner].y() = temp.y() * divisor;
   }
   
-  return imgGroundQuad;
+  // Clamp to image boundary:
+  const Point2f imgBotLeft(0,imgHeight-1);
+  const Point2f imgBotRight(imgWidth-1,imgHeight-1);
+  const bool intersectsImageBorder = ClampQuad(imgQuad, imgBotLeft, imgBotRight);
+  
+  return intersectsImageBorder;
 } // GetImageQuad()
 
 template<class PixelType>
@@ -151,6 +186,53 @@ Vision::Image GroundPlaneROI::GetOverheadImage(const Vision::Image &image, const
   Vision::Image overheadImg(_overheadMask.GetNumRows(), _overheadMask.GetNumCols());
   GetOverheadImageHelper(image, H, overheadImg, useMask);
   return overheadImg;
+}
+
+
+namespace {
+  inline kmRay2 Point2fToRay(const Point2f& from, const Point2f& to ) {
+    kmRay2 retRay;
+    kmVec2 kmFrom{from.x(), from.y() };
+    kmVec2 kmTo  {to.x()  , to.y()   };
+    kmRay2FillWithEndpoints(&retRay, &kmFrom, &kmTo);
+    return retRay;
+  }
+} // anonymous namespace
+  
+  
+bool GroundPlaneROI::ClampQuad(Quad2f& quad, const Point2f& groundLeft, const Point2f& groundRight)
+{
+  // this is a trick to prevent precision errors around the borders. We are just trying to find intersection
+  // with a line, not a segment, so we artificially extend the segment given to provide a safer line
+  Vec2f clampLineDir = groundLeft - groundRight;
+  const Point2f botClampLeft ( groundLeft  + clampLineDir );
+  const Point2f botClampRight( groundRight - clampLineDir );
+  
+  // Create lines for collision check
+  kmRay2 groundBotLine = Point2fToRay(botClampLeft, botClampRight);
+  kmRay2 segmentLeftLine  = Point2fToRay(quad[Quad::BottomLeft],  quad[Quad::TopLeft] );
+  kmRay2 segmentRightLine = Point2fToRay(quad[Quad::BottomRight], quad[Quad::TopRight]);
+  
+  // find intersections of segment lines (it should always happen unless there's a precision error in the border,
+  // which can happen)
+  kmVec2 interBL, interBR;
+  const kmBool leftBotInter  = kmSegment2WithSegmentIntersection(&groundBotLine, &segmentLeftLine , &interBL);
+  const kmBool rightBotInter = kmSegment2WithSegmentIntersection(&groundBotLine, &segmentRightLine, &interBR);
+  if ( leftBotInter && rightBotInter )
+  {
+    Anki::Point2f clampedBotLeft (interBL.x, interBL.y);
+    Anki::Point2f clampedBotRight(interBR.x, interBR.y);
+    quad[Quad::BottomLeft ] = clampedBotLeft;
+    quad[Quad::BottomRight] = clampedBotRight;
+    return true;
+  }
+  else
+  {
+    //PRINT_NAMED_ERROR("GroundPlaneROI.ClampQuad.NoCollisionFound",
+    //                  "Could not find intersection of fake vision quad with ground plane. Ignoring segment");
+    return false;
+  }
+  
 }
 
   

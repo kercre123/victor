@@ -123,6 +123,7 @@ namespace Anki
     Array2d<T>& Abs();
     
     void FillWith(T value);
+    void SetMaskTo(const Array2d<u8>& mask, T value);
     
 #if ANKICORETECH_USE_OPENCV
     bool IsContinuous() const { return cv::Mat_<T>::isContinuous(); }

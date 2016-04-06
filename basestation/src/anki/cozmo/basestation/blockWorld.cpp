@@ -2427,52 +2427,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         return ret;
       }
       
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      inline kmRay2 Point2fToRay(const Point2f& from, const Point2f& to ) {
-        kmRay2 retRay;
-        kmVec2 kmFrom{from.x(), from.y() };
-        kmVec2 kmTo  {to.x()  , to.y()   };
-        kmRay2FillWithEndpoints(&retRay, &kmFrom, &kmTo);
-        return retRay;
-      }
-      
-      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      // clamps the given quad on the bottom with the given left/right points
-      bool ClampQuad(Quad2f& quad, const Point2f& groundLeft, const Point2f& groundRight)
-      {
-        // this is a trick to prevent precision errors around the borders. We are just trying to find intersection
-        // with a line, not a segment, so we artificially extend the segment given to provide a safer line
-        Vec2f clampLineDir = groundLeft - groundRight;
-        const Point2f botClampLeft ( groundLeft  + clampLineDir );
-        const Point2f botClampRight( groundRight - clampLineDir );
-      
-        // Create lines for collision check
-        kmRay2 groundBotLine = Point2fToRay(botClampLeft, botClampRight);
-        kmRay2 segmentLeftLine  = Point2fToRay(quad[Quad::BottomLeft],  quad[Quad::TopLeft] );
-        kmRay2 segmentRightLine = Point2fToRay(quad[Quad::BottomRight], quad[Quad::TopRight]);
-
-        // find intersections of segment lines (it should always happen unless there's a precision error in the border,
-        // which can happen)
-        kmVec2 interBL, interBR;
-        const kmBool leftBotInter  = kmSegment2WithSegmentIntersection(&groundBotLine, &segmentLeftLine , &interBL);
-        const kmBool rightBotInter = kmSegment2WithSegmentIntersection(&groundBotLine, &segmentRightLine, &interBR);
-        if ( leftBotInter && rightBotInter )
-        {
-          Anki::Point2f clampedBotLeft (interBL.x, interBL.y);
-          Anki::Point2f clampedBotRight(interBR.x, interBR.y);
-          quad[Quad::BottomLeft ] = clampedBotLeft;
-          quad[Quad::BottomRight] = clampedBotRight;
-        }
-        else
-        {
-          PRINT_NAMED_ERROR("BlockWorld.AddVisionOverheadEdges.NoCollisionFound",
-            "Could not find intersection of fake vision quad with ground plane. Ignoring segment");
-          return false;
-        }
-        
-        return true;
-      }
-    }
+    } // anonymous namespace
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     Result BlockWorld::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
@@ -2581,7 +2536,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           {
             // can't merge the point, add current segment and restart
             Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
-            bool success = ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
+            bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
             ASSERT_NAMED(success, "AddVisionOverheadEdges.FailedQuadClamp");
             if ( success ) {
               visionQuadsClear.emplace_back(clearQuad);
@@ -2609,7 +2564,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           if ( doneWithChain )
           {
             Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
-            bool success = ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
+            bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
             ASSERT_NAMED(success, "AddVisionOverheadEdges.FailedQuadClamp");
             if ( success ) {
               visionQuadsClear.emplace_back(clearQuad);

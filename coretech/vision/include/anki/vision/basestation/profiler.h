@@ -15,6 +15,7 @@
 
 #include <chrono>
 #include <unordered_map>
+#include <string>
 
 namespace Anki {
 namespace Vision {
@@ -25,6 +26,11 @@ namespace Vision {
     
     // Calls Print() on destruction
     ~Profiler();
+    
+    // Purely used for creating a more specific event name for printing timing
+    // messages: "Profiler.<name>". If you don't set this, the generic event name
+    // "Profiler" will be used.
+    void SetProfileGroupName(const char* name);
     
     // Start named timer (create if first call, un-pause otherwise)
     void Tic(const char* timerName);
@@ -37,7 +43,7 @@ namespace Vision {
     double AverageToc(const char* timerName);
     
     // Print average time per tic/toc pair for each registered timer
-    void Print() const;
+    void PrintAverageTiming() const;
     
   private:
     
@@ -53,6 +59,8 @@ namespace Vision {
     using TimerContainer = std::unordered_map<const char*, Profiler::Timer>;
     
     TimerContainer _timers;
+    
+    std::string _eventName = "Profiler";
     
   }; // class Profiler
   

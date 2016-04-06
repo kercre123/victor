@@ -50,6 +50,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/basestation/profiler.h"
 
 #include "visionParameters.h"
 #include "clad/vizInterface/messageViz.h"
@@ -70,7 +71,7 @@ namespace Cozmo {
   class Robot;
   class VizManager;
 
-  class VisionSystem
+  class VisionSystem : public Vision::Profiler
   {
   public:
 
@@ -430,12 +431,6 @@ namespace Cozmo {
     Result DetectMotion(const Vision::ImageRGB& image);
     
     Result DetectOverheadEdges(const Vision::ImageRGB& image);
-
-    // given poseData and image size, it calculates the limits of the ground plane ROI within the image and projects
-    // the new ROI back into the ground plane. In other words, it calculates the part of the ground plane ROI
-    // that is visible in the given poseData. Returns the result in groundPlane
-    // requires: PoseData.groundPlaneVisible == true, otherwise it doesn't make sense to use the ROI
-    void SetGroundROIToImageLimits(const PoseData& poseData, const float imgX, const float imgY, Quad2f& groundPlane);
     
     Result ReadToolCode(const Vision::Image& image);
     

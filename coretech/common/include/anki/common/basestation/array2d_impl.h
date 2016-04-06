@@ -469,6 +469,17 @@ namespace Anki
     assert(false);
 #   endif
   }
+
+  template<typename T>
+  void Array2d<T>::SetMaskTo(const Array2d<u8>& mask, T value)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->setTo(value, mask.get_CvMat_());
+#   else
+    assert(false);
+#   endif
+  }
+
   
   /* OLD: Inherit from unmanaged
 

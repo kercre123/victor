@@ -35,6 +35,9 @@ namespace Vision {
       PRINT_NAMED_WARNING("FaceTrackerImpl.Constructor.NoFaceDetectConfig",
                           "Did not find 'faceDetection' field in config");
     }
+    
+    Profiler::SetProfileGroupName("FaceTracker");
+    
   } // Impl Constructor()
   
   template<class T>

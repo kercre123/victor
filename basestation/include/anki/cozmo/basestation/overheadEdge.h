@@ -25,7 +25,7 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Point in an edge
   struct OverheadEdgePoint {
-    Point<2,s32> position;
+    Point2f      position;
     Vec3f        gradient;
   };
 

@@ -484,7 +484,8 @@ namespace Cozmo {
       // image plane
       const Matrix_3x3f H = K*Matrix_3x3f{R.GetColumn(0),R.GetColumn(1),T};
       
-      Quad2f imgQuad = groundPlaneROI.GetImageQuad(H);
+      Quad2f imgQuad;
+      groundPlaneROI.GetImageQuad(H, _camCalib.GetNcols(), _camCalib.GetNrows(), imgQuad);
       
       if(_camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::TopLeft]) ||
          _camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::BottomLeft]))
@@ -921,7 +922,8 @@ namespace Cozmo {
       
       const GroundPlaneROI& roi = poseData.groundPlaneROI;
       
-      Quad2f imgGroundQuad = roi.GetImageQuad(H);
+      Quad2f imgGroundQuad;
+      roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), imgGroundQuad);
       
       static Vision::ImageRGB overheadMap(1000.f, 1000.f);
       
