@@ -1778,7 +1778,7 @@ namespace Cozmo {
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder, bool isInMask, std::vector<OverheadEdgePointChain>& imageChains )
+  void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder, std::vector<OverheadEdgePointChain>& imageChains )
   {
     const f32 kMaxDistBetweenEdges_mm = 5.f; // start new chain after this distance seen
     
@@ -1815,24 +1815,18 @@ namespace Cozmo {
       imageChains.back().isBorder = isBorder;
     }
     
-    // if this point is inside the mask, then we add to be reported, otherwise we compute everything as if we
-    // were going to add it, but then don't add this point, thus potentially creating a new chain with no points (this
-    // allows breaking a border chain with a border detected in the image, but outside of the mask)
-    if ( isInMask )
-    {
-      // add to current chain (can be the newly created for this border)
-      OverheadEdgePointChain& newCurrentChain = imageChains.back();
-      
-      // if we have an empty chain, set isBorder now
-      if ( newCurrentChain.points.empty() ) {
-        newCurrentChain.isBorder = isBorder;
-      } else {
-        ASSERT_NAMED(newCurrentChain.isBorder == isBorder, "VisionSystem.AddEdgePoint.BadBorderFlag");
-      }
-      
-      // now add this point
-      newCurrentChain.points.emplace_back( pointInfo );
+    // add to current chain (can be the newly created for this border)
+    OverheadEdgePointChain& newCurrentChain = imageChains.back();
+    
+    // if we have an empty chain, set isBorder now
+    if ( newCurrentChain.points.empty() ) {
+      newCurrentChain.isBorder = isBorder;
+    } else {
+      ASSERT_NAMED(newCurrentChain.isBorder == isBorder, "VisionSystem.AddEdgePoint.BadBorderFlag");
     }
+    
+    // now add this point
+    newCurrentChain.points.emplace_back( pointInfo );
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1906,6 +1900,12 @@ namespace Cozmo {
       bool foundBorder = false;
       for(s32 j=jNear; j<jFar; ++j)
       {
+        // filter out by mask
+        const bool isInMask = (mask_i[j] > 0 && j);
+        if (!isInMask ) {
+          continue;
+        }
+      
         // An edge above threshold in _any_ channel is an edge
         auto & edgePixelX = edgeImgX_i[j];
         //auto & edgePixelY = edgeImgY_i[j];
@@ -1923,8 +1923,7 @@ namespace Cozmo {
           
           // add the point as a border
           const bool isBorder = true;
-          const bool isInMask = (mask_i[j] > 0 && j);
-          AddEdgePoint(edgePoint, isBorder, isInMask, candidateChains);
+          AddEdgePoint(edgePoint, isBorder, candidateChains);
           foundBorder = true;
           break; // only keep first edge found in each row
         }
@@ -1939,8 +1938,7 @@ namespace Cozmo {
           .gradient  = {0,0,0}
         };
         const bool isBorder = false;
-        const bool isInMask = true; // in mask so that we add the point
-        AddEdgePoint(noBorderLimitPoint, isBorder, isInMask, candidateChains);
+        AddEdgePoint(noBorderLimitPoint, isBorder, candidateChains);
       }
     }
     
