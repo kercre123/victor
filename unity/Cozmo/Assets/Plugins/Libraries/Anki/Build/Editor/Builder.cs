@@ -33,12 +33,15 @@ namespace Anki {
 
       [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles")]
       public static void BuildAssetBundles() {
+        // Rebuild sprite atlases
+        UnityEditor.Sprites.Packer.RebuildAtlasCacheIfNeeded(EditorUserBuildSettings.activeBuildTarget);
+
         string outputPath = Path.Combine(Assets.AssetBundleManager.kAssetBundlesFolder, Assets.AssetBundleManager.GetPlatformName());
                 
         if (!Directory.Exists(outputPath)) {
           Directory.CreateDirectory(outputPath);
         }
-  	
+
         BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.None, EditorUserBuildSettings.activeBuildTarget);
 
         // Copy the asset bundles to the target folder
