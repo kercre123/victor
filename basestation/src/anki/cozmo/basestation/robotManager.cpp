@@ -14,6 +14,7 @@
 #include "anki/cozmo/basestation/events/gameEventResponsesContainer.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/firmwareUpdater/firmwareUpdater.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/gameEvent.h"
 #include "util/fileUtils/fileUtils.h"
@@ -33,6 +34,7 @@ namespace Anki {
     , _robotEventHandler(context)
     , _cannedAnimations(new CannedAnimationContainer())
     , _animationGroups(new AnimationGroupContainer())
+    , _firmwareUpdater(new FirmwareUpdater(context))
     , _gameEventResponses(new GameEventResponsesContainer())
     {
       
@@ -149,6 +151,18 @@ namespace Anki {
       return _robots.count(withID) > 0;
     }
 
+    
+    bool RobotManager::InitUpdateFirmware(int version)
+    {
+      return _firmwareUpdater->InitUpdate(_robots, version);
+    }
+    
+    
+    bool RobotManager::UpdateFirmware()
+    {
+      return _firmwareUpdater->Update(_robots);
+    }
+    
     
     void RobotManager::UpdateAllRobots()
     {

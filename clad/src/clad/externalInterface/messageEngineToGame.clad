@@ -12,6 +12,7 @@
 #include "clad/types/powerMessages.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/engineState.clad"
+#include "clad/types/firmwareTypes.clad"
 #include "clad/types/toolCodes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/gameEvent.clad"
@@ -352,6 +353,22 @@ structure BlockPoolBlockData {
 message InitBlockPoolMessage {
   uint_8              blockPoolEnabled,
   BlockPoolBlockData  blockData[uint_8]
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Firmware
+///////////////////////////////////////////////////////////////////////////////
+
+message FirmwareUpdateProgress {
+  uint_32 robotID,
+  FirmwareUpdateStage stage,
+  FirmwareUpdateSubStage subStage,
+  uint_8  percentComplete
+}
+
+message FirmwareUpdateComplete {
+  uint_32 robotID,
+  FirmwareUpdateResult  result
 }
 
 ///////////////////////////////////////////////////////////////////////////////

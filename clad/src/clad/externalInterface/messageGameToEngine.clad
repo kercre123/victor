@@ -57,6 +57,12 @@ message ForceAddRobot {
 message StartEngine {
 }
 
+// UpdateFirmware
+// Tell the engine to start updating the robot firmware to specific version
+message UpdateFirmware {
+  int_32 version
+}
+
 // DriveWheels
 message DriveWheels {
     float_32 lwheel_speed_mmps,
