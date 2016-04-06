@@ -13,11 +13,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: SpeedTapMediumImplicit
-    _EnumValue: 7
+    _EnumValue: 8
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
-  CubesRequired: 0
   ExplicitUnlock: 0
   DefaultUnlock: 0
   TreatCost: 0
