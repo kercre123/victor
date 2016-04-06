@@ -44,22 +44,22 @@
 
     'cte_lib_search_path_mac_debug': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Debug',
-      '<(coretech_external_path)/libarchive/lib/MacOSX',
+      '<(coretech_external_path)/libarchive/project/mac/DerivedData/Debug',
     ],
 
     'cte_lib_search_path_mac_release': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Release',
-      '<(coretech_external_path)/libarchive/lib/MacOSX',
+      '<(coretech_external_path)/llibarchive/project/mac/DerivedData/Release',
     ],
 
     'cte_lib_search_path_ios_debug': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
-      '<(coretech_external_path)/libarchive/lib/iOS',
+      '<(coretech_external_path)/libarchive/project/mac/DerivedData/Debug-iphoneos',
     ],
 
     'cte_lib_search_path_ios_release': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
-      '<(coretech_external_path)/libarchive/lib/iOS',
+      '<(coretech_external_path)/libarchive/project/mac/DerivedData/Release-iphoneos',
     ],
 
     'flite_includes':[
@@ -87,7 +87,7 @@
     ],
 
     'libarchive_include': [
-      '<(coretech_external_path)/libarchive/include',
+      '<(coretech_external_path)/libarchive/project/include',
     ],
 
     # Make sure these are always _after_ our opencv_includes!
