@@ -17,18 +17,25 @@
 
 #include "util/signals/simpleSignal_fwd.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "anki/cozmo/basestation/audio/audioWaveFileReader.h"
 #include <vector>
 
 struct cst_voice_struct;
 
 namespace Anki {
 
-  namespace Util {
-    namespace Data {
-      class DataPlatform;
-    }
-  }
+namespace Util {
+namespace Data {
+  class DataPlatform;
+}
+}
 namespace Cozmo {
+  
+namespace Audio {
+  class AudioController;
+  class AudioWaveFileReader;
+}
+  
 
 class IExternalInterface;
 
@@ -36,14 +43,22 @@ class IExternalInterface;
 
 class TextToSpeech {
 public:
-  TextToSpeech(IExternalInterface* externalInterface,Util::Data::DataPlatform* dataPlatform);
+  TextToSpeech(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform);
   void CleanUp();
 
+  void SetAudioController(Audio::AudioController* audioController) { _audioController = audioController; }
+  
 private:
   void HandleAssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name);
+  
+  void HandlePlayFaceNameAnimation(Vision::TrackedFace::ID_t faceID, const std::string& name);
+  
   std::vector<Signal::SmartHandle> _signalHandles;
   cst_voice_struct* _voice;
   Util::Data::DataPlatform* _dataPlatform;
+  Audio::AudioController* _audioController;
+  Audio::AudioWaveFileReader _waveFileReader;
+  
 };
 
 } // end namespace Cozmo

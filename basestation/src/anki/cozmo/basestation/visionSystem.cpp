@@ -432,11 +432,11 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(OverheadEdgePointChain& msg)
+  bool VisionSystem::CheckMailbox(OverheadEdgeFrame& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
-      retVal = _overheadEdgeChainMailbox.getMessage(msg);
+      retVal = _overheadEdgeFrameMailbox.getMessage(msg);
     }
     return retVal;
   }
@@ -560,6 +560,10 @@ namespace Cozmo {
 #     else
       const CornerMethod cornerMethod = CORNER_METHOD_LINE_FITS; // {CORNER_METHOD_LAPLACIAN_PEAKS, CORNER_METHOD_LINE_FITS};
       
+      ASSERT_NAMED(_detectionParameters.fiducialThicknessFraction.x() > 0 &&
+                   _detectionParameters.fiducialThicknessFraction.y(),
+                   "VisionSystem.DetectMarkers.FiducialThicknessFractionParameterNotInitialized");
+      
       // Convert "basestation" detection parameters to "embedded" parameters
       // TODO: Merge the fiducial detection parameters structs
       Embedded::FiducialDetectionParameters embeddedParams;
@@ -585,6 +589,10 @@ namespace Cozmo {
       embeddedParams.refine_numRefinementSamples = _detectionParameters.numRefinementSamples;
       embeddedParams.refine_quadRefinementMaxCornerChange = _detectionParameters.quadRefinementMaxCornerChange;
       embeddedParams.refine_quadRefinementMinCornerChange = _detectionParameters.quadRefinementMinCornerChange;
+      embeddedParams.fiducialThicknessFraction.x = _detectionParameters.fiducialThicknessFraction.x();
+      embeddedParams.fiducialThicknessFraction.y = _detectionParameters.fiducialThicknessFraction.y();
+      embeddedParams.roundedCornersFraction.x = _detectionParameters.roundedCornersFraction.x();
+      embeddedParams.roundedCornersFraction.y = _detectionParameters.roundedCornersFraction.y();
       embeddedParams.returnInvalidMarkers = _detectionParameters.keepUnverifiedMarkers;
       embeddedParams.doCodeExtraction = true;
       
@@ -830,7 +838,8 @@ namespace Cozmo {
                                                                     _trackerParameters.numPyramidLevels,
                                                                     Transformations::TRANSFORM_PROJECTIVE,
                                                                     _trackerParameters.numFiducialEdgeSamples,
-                                                                    FIDUCIAL_SQUARE_THICKNESS_FRACTION,
+                                                                     Embedded::Point<f32>(_detectionParameters.fiducialThicknessFraction.x(),
+                                                                               _detectionParameters.fiducialThicknessFraction.y()),
                                                                     _trackerParameters.numInteriorSamples,
                                                                     _trackerParameters.numSamplingRegions,
                                                                     calib->GetFocalLength_x(),
@@ -1350,7 +1359,7 @@ namespace Cozmo {
     
     for(auto & region : regionPoints) {
       //PRINT_NAMED_INFO("VisionSystem.Update.FoundMotionRegion",
-      //                 "Area=%lu", region.size());
+      //                 "Area=%lu", (unsigned long)region.size());
       if(region.size() > minArea && region.size() > largestRegion) {
         centroid = 0.f;
         for(auto & point : region) {
@@ -1497,7 +1506,10 @@ namespace Cozmo {
       // Get centroid of all the motion within the ground plane, if we have one to reason about
       if(_poseData.groundPlaneVisible && _prevPoseData.groundPlaneVisible)
       {
-        Quad2f imgQuad = _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography);
+        Quad2f imgQuad;
+        _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography,
+                                              image.GetNumCols(), image.GetNumRows(),
+                                              imgQuad);
         
         imgQuad *= 1.f / scaleMultiplier;
         
@@ -1685,92 +1697,217 @@ namespace Cozmo {
     return RESULT_OK;
   } // DetectMotion()
   
-  Result VisionSystem::DetectOverheadEdges(const Vision::ImageRGB& image)
+
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder, std::vector<OverheadEdgePointChain>& imageChains )
   {
-    // TODO: Expose parameters
-    // Parameters:
-    //const s32 kKernelSize = -1; // +ve for Sobel edge detection, -1 for Scharr
-    const f32 kEdgeThreshold = 50.f;
     const f32 kMaxDistBetweenEdges_mm = 5.f; // start new chain after this distance seen
-    const u32 kMinChainLength = 3; // in number of edge pixels
     
-    const Matrix_3x3f& H = _poseData.groundPlaneHomography;
-    const GroundPlaneROI& roi = _poseData.groundPlaneROI;
-    Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H, false);
-    
-    f32 nearX, farX;
-    roi.GetVisibleX(H, image.GetNumCols(), image.GetNumRows(), nearX, farX);
-    
-    // Get derivatives along the X direction
-    Array2d<Vision::PixelRGB_<f32>> edgeImgX(overheadImg.GetNumRows(), overheadImg.GetNumCols());
-    //Array2d<Vision::PixelRGB_<f32>> edgeImgY(overheadImg.GetNumRows(), overheadImg.GetNumCols());
-    //cv::Sobel(overheadImg.get_CvMat_(), edgeImgX.get_CvMat_(), CV_32F, 1, 0, kKernelSize);
-    //cv::Sobel(overheadImg.get_CvMat_(), edgeImgY.get_CvMat_(), CV_32F, 0, 1, kKernelSize);
-    
-    // Custom Gaussian derivative in x direction, sigma=1, with a little extra space
-    // in the middle to help detect soft edges
-    // (scaled such that each half has absolute sum of 1.0, so it's normalized)
-    SmallMatrix<5,7, f32> kernel{
-      0.0168,    0.0377,         0,0,0,   -0.0377,   -0.0168,
-      0.0754,    0.1689,         0,0,0,   -0.1689,   -0.0754,
-      0.1242,    0.2784,         0,0,0,   -0.2784,   -0.1242,
-      0.0754,    0.1689,         0,0,0,   -0.1689,   -0.0754,
-      0.0168,    0.0377,         0,0,0,   -0.0377,   -0.0168
-    };
-    //cv::Mat kx, ky;
-    //cv::getDerivKernels(kx, ky, 1, 0, 5, true);
-    
-    cv::filter2D(overheadImg.get_CvMat_(), edgeImgX.get_CvMat_(), CV_32F, kernel.get_CvMatx_());
-    
-    // Look for the first strong edge along the x axis
-    std::vector<OverheadEdgePointChain> edgeChains;
-    //const f32 edgeThresholdSq = kEdgeThreshold * kEdgeThreshold;
-    OverheadEdgePoint* lastEdgePoint = nullptr;
-    const s32 jNear = std::ceil(nearX) - roi.GetDist() + kernel.GetNumCols()/2;
-    const s32 jFar  = std::floor(farX) - roi.GetDist();
-    for(s32 i=0; i<edgeImgX.GetNumRows(); ++i)
+    // can we add to the current image chain?
+    bool addToCurrentChain = false;
+    if ( !imageChains.empty() )
     {
-      const u8* mask_i = roi.GetOverheadMask().GetRow(i);
-      const Vision::PixelRGB_<f32>* edgeImgX_i = edgeImgX.GetRow(i);
-      //const Vision::PixelRGB_<f32>* edgeImgY_i = edgeImgY.GetRow(i);
-      for(s32 j=jNear; j<jFar; ++j)
+      OverheadEdgePointChain& currentChain = imageChains.back();
+      if ( currentChain.points.empty() )
       {
+        // current chain does not have points yet, we can add this one as the first one
+        addToCurrentChain = true;
+      }
+      else
+      {
+        // there are points, does the chain and this point match border vs no_border flag?
+        if ( isBorder == currentChain.isBorder )
         {
-          // An edge above threshold in _any_ channel is an edge
-          auto & edgePixelX = edgeImgX_i[j];
-          //auto & edgePixelY = edgeImgY_i[j];
-          //if(edgePixelX.r()*edgePixelX.r() + edgePixelY.r()*edgePixelY.r() > edgeThresholdSq ||
-          //   edgePixelX.g()*edgePixelX.g() + edgePixelY.g()*edgePixelY.g() > edgeThresholdSq ||
-          //   edgePixelX.b()*edgePixelX.b() + edgePixelY.b()*edgePixelY.b() > edgeThresholdSq)
-          if(std::abs(edgePixelX.r()) > kEdgeThreshold ||
-             std::abs(edgePixelX.g()) > kEdgeThreshold ||
-             std::abs(edgePixelX.b()) > kEdgeThreshold)
+          // they do, is the new point close enough to the last point in the current chain?
+          const f32 distToPrevPoint = ComputeDistanceBetween(pointInfo.position, imageChains.back().points.back().position);
+          if ( distToPrevPoint <= kMaxDistBetweenEdges_mm )
           {
-            OverheadEdgePoint edgePoint = {
-              .position  = Anki::Point2f(j + roi.GetDist(), roi.GetWidthFar()*0.5f - i),
-              .gradient  = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()}
-            };
-            if(nullptr == lastEdgePoint ||
-               ComputeDistanceBetween(edgePoint.position, lastEdgePoint->position) > kMaxDistBetweenEdges_mm)
-            {
-              // Start new chain
-              edgeChains.emplace_back();
-              edgeChains.back().timestamp = image.GetTimestamp();
-            }
-            if(mask_i[j] > 0 && j)
-            {
-              edgeChains.back().points.push_back(std::move(edgePoint));
-              lastEdgePoint = &edgeChains.back().points.back();
-            }
-            break; // only keep first edge found in each row
+            // it is close, this point should be added to the current chain
+            addToCurrentChain = true;
           }
         }
       }
     }
     
-    #define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
+    // if we don't want to add the point to the current chain, then we need to start a new chain
+    if ( !addToCurrentChain )
+    {
+      imageChains.emplace_back();
+      imageChains.back().isBorder = isBorder;
+    }
+    
+    // add to current chain (can be the newly created for this border)
+    OverheadEdgePointChain& newCurrentChain = imageChains.back();
+    
+    // if we have an empty chain, set isBorder now
+    if ( newCurrentChain.points.empty() ) {
+      newCurrentChain.isBorder = isBorder;
+    } else {
+      ASSERT_NAMED(newCurrentChain.isBorder == isBorder, "VisionSystem.AddEdgePoint.BadBorderFlag");
+    }
+    
+    // now add this point
+    newCurrentChain.points.emplace_back( pointInfo );
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ 
+#define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
+  
+  namespace {
+    
+    inline void SetEdgePosition(const Matrix_3x3f& invH,
+                                s32 i, s32 j,
+                                OverheadEdgePoint& edgePoint)
+    {
+      // Project point onto ground plane
+      // Note that b/c we are working transposed, i is x and j is y in the
+      // original image.
+      Point3f temp = invH * Point3f(i, j, 1.f);
+      ASSERT_NAMED(temp.z() > 0, "VisionSystem.SetEdgePositionHelper.BadProjectedZ");
+      const f32 divisor = 1.f / temp.z();
+      
+      edgePoint.position.x() = temp.x() * divisor;
+      edgePoint.position.y() = temp.y() * divisor;
+    }
+    
+  } // anonymous namespace
+  
+  Result VisionSystem::DetectOverheadEdges(const Vision::ImageRGB &image)
+  {
+    // TODO: Expose parameters
+    // Parameters:
+    //const s32 kKernelSize = -1; // +ve for Sobel edge detection, -1 for Scharr
+    const f32 kEdgeThreshold = 50.f;
+    const u32 kMinChainLength = 3; // in number of edge pixels
+    
+    // if the ground plane is not currently visible, do not detect edges
+    if ( !_poseData.groundPlaneVisible )
+    {
+      OverheadEdgeFrame edgeFrame;
+      edgeFrame.timestamp = image.GetTimestamp();
+      edgeFrame.groundPlaneValid = false;
+      _overheadEdgeFrameMailbox.putMessage( std::move(edgeFrame) );
+      return RESULT_OK;
+    }
+    
+    // Get ROI around ground plane quad in image
+    const Matrix_3x3f& H = _poseData.groundPlaneHomography;
+    const GroundPlaneROI& roi = _poseData.groundPlaneROI;
+    Quad2f groundInImage;
+    roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), groundInImage);
+    
+    Anki::Rectangle<s32> bbox(groundInImage);
+    Vision::ImageRGB imageROI = image.GetROI(bbox);
+    
+    // Find edges in that ROI
+    // Custom Gaussian derivative in x direction, sigma=1, with a little extra space
+    // in the middle to help detect soft edges
+    // (scaled such that each half has absolute sum of 1.0, so it's normalized)
+    Tic("EdgeDetection");
+    const SmallMatrix<7,5, f32> kernel{
+      0.0168,    0.0754,    0.1242,   0.0754,  0.0168,
+      0.0377,    0.1689,    0.2784,   0.1689,  0.0377,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      -0.0377,  -0.1689,   -0.2784,  -0.1689, -0.0377,
+      -0.0168,  -0.0754,   -0.1242,  -0.0754, -0.0168,
+    };
+    
+    /*
+    const SmallMatrix<7, 5, s16> kernel{
+      9,    39,    64,    39,     9,
+      19,    86,   143,    86,    19,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      -19,   -86,  -143,   -86,   -19,
+      -9,   -39,   -64,   -39,    -9
+    };
+    */
+    
+    Array2d<Vision::PixelRGB_<s16>> edgeImgX(image.GetNumRows(), image.GetNumCols());
+    cv::filter2D(imageROI.get_CvMat_(), edgeImgX.GetROI(bbox).get_CvMat_(), CV_16S, kernel.get_CvMatx_());
+    Toc("EdgeDetection");
+    
+    Tic("GroundQuadEdgeMasking");
+    // Remove edges that aren't in the ground plane quad (as opposed to its bounding rectangle)
+    Vision::Image mask(edgeImgX.GetNumRows(), edgeImgX.GetNumCols());
+    mask.FillWith(255);
+    cv::fillConvexPoly(mask.get_CvMat_(), std::vector<cv::Point>{
+        groundInImage[Quad::CornerName::TopLeft].get_CvPoint_(),
+        groundInImage[Quad::CornerName::TopRight].get_CvPoint_(),
+        groundInImage[Quad::CornerName::BottomRight].get_CvPoint_(),
+        groundInImage[Quad::CornerName::BottomLeft].get_CvPoint_(),
+      }, 0);
+    
+    edgeImgX.SetMaskTo(mask, 0);
+    Toc("GroundQuadEdgeMasking");
+    
+    std::vector<OverheadEdgePointChain> candidateChains;
+    
+    // Find first strong edge in each column, in the ground plane mask, working
+    // upward from bottom.
+    // Note: looping only over the ROI portion of full image, but working in
+    //       full-image coordinates so that H directly applies
+    // Note: transposing so we can work along rows, which is more efficient.
+    //       (this also means using bbox.X for transposed rows and bbox.Y for transposed cols)
+    Tic("FindingGroundEdgePoints");
+    Matrix_3x3f invH;
+    H.GetInverse(invH);
+    Array2d<Vision::PixelRGB_<f32>> edgeTrans(edgeImgX.get_CvMat_().t());
+    OverheadEdgePoint edgePoint;
+    for(s32 i=bbox.GetX(); i<bbox.GetXmax(); ++i)
+    {
+      bool foundBorder = false;
+      const Vision::PixelRGB_<f32>* edgeTrans_i = edgeTrans.GetRow(i);
+      
+      // Right to left in transposed image ==> bottom to top in original image
+      for(s32 j=bbox.GetYmax()-1; j>=bbox.GetY(); --j)
+      {
+        auto & edgePixelX = edgeTrans_i[j];
+        if(std::abs(edgePixelX.r()) > kEdgeThreshold ||
+           std::abs(edgePixelX.g()) > kEdgeThreshold ||
+           std::abs(edgePixelX.b()) > kEdgeThreshold)
+        {
+          // Project point onto ground plane
+          // Note that b/c we are working transposed, i is x and j is y in the
+          // original image.
+          SetEdgePosition(invH, i, j, edgePoint);
+          edgePoint.gradient = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()};
+          
+          foundBorder = true;
+          AddEdgePoint(edgePoint, foundBorder, candidateChains);
+          break; // only keep first edge found in each row (working right to left)
+        }
+      }
+      
+      // if we did not find border, report lack of border for this row
+      if ( !foundBorder )
+      {
+        const bool isInsideGroundQuad = (i >= groundInImage[Quad::TopLeft].x() &&
+                                         i <= groundInImage[Quad::TopRight].x());
+        
+        if(isInsideGroundQuad)
+        {
+          // Project point onto ground plane
+          // Note that b/c we are working transposed, i is x and j is y in the
+          // original image.
+          SetEdgePosition(invH, i, bbox.GetY(), edgePoint);
+          edgePoint.gradient = 0;
+          AddEdgePoint(edgePoint, foundBorder, candidateChains);
+        }
+      }
+      
+    }
+    Toc("FindingGroundEdgePoints");
+    
     if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
     {
+      Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H);
+      
       static const std::vector<ColorRGBA> lineColorList = {
         NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
         NamedColors::ORANGE, NamedColors::CYAN, NamedColors::YELLOW,
@@ -1782,18 +1919,12 @@ namespace Cozmo {
       Quad2f tempQuad(roi.GetGroundQuad());
       tempQuad += dispOffset;
       dispImg.DrawQuad(tempQuad, NamedColors::RED, 1);
-      dispImg.DrawLine(Anki::Point2f(jNear, 0), Anki::Point2f(jNear, dispImg.GetNumRows()),
-                       NamedColors::MAGENTA, 1);
-      dispImg.DrawLine(Anki::Point2f(jFar, 0), Anki::Point2f(jFar, dispImg.GetNumRows()),
-                       NamedColors::YELLOW, 1);
       
-      for(auto & chain : edgeChains)
+      for(auto & chain : candidateChains)
       {
         if(chain.points.size() >= kMinChainLength)
         {
           for(s32 i=1; i<chain.points.size(); ++i) {
-            ASSERT_NAMED(chain.points[i-1].position.y() != chain.points[i].position.y(),
-                         "There should only be one edge per row");
             Anki::Point2f startPoint(chain.points[i-1].position);
             startPoint.y() = -startPoint.y();
             startPoint += dispOffset;
@@ -1808,35 +1939,55 @@ namespace Cozmo {
           }
         }
       }
-      Vision::ImageRGB dispEdgeImg(overheadImg.GetNumRows(), overheadImg.GetNumCols());
-      std::function<Vision::PixelRGB(const Vision::PixelRGB_<f32>&)> fcn = [](const Vision::PixelRGB_<f32>& pixelF32)
+      Vision::ImageRGB dispEdgeImg(edgeImgX.GetNumRows(), edgeImgX.GetNumCols());
+      std::function<Vision::PixelRGB(const Vision::PixelRGB_<s16>&)> fcn = [](const Vision::PixelRGB_<s16>& pixelS16)
       {
-        return Vision::PixelRGB((u8)std::abs(pixelF32.r()),
-                                (u8)std::abs(pixelF32.g()),
-                                (u8)std::abs(pixelF32.b()));
+        return Vision::PixelRGB((u8)std::abs(pixelS16.r()),
+                                (u8)std::abs(pixelS16.g()),
+                                (u8)std::abs(pixelS16.b()));
       };
       edgeImgX.ApplyScalarFunction(fcn, dispEdgeImg);
+      
+      // Project edges on the ground back into image for display
+      for(auto & chain : candidateChains)
+      {
+        for(s32 i=0; i<chain.points.size(); ++i) {
+          const Anki::Point2f& groundPoint = chain.points[i].position;
+          Point3f temp = H * Anki::Point3f(groundPoint.x(), groundPoint.y(), 1.f);
+          ASSERT_NAMED(temp.z() > 0.f, "VisionSystem.DetectOverheadEdges.BadDisplayZ");
+          const f32 divisor = 1.f / temp.z();
+          dispEdgeImg.DrawPoint({temp.x()*divisor, temp.y()*divisor}, NamedColors::RED, 1);
+        }
+      }
+      dispEdgeImg.DrawQuad(groundInImage, NamedColors::GREEN, 1);
       //dispImg.Display("OverheadImage", 1);
       //dispEdgeImg.Display("OverheadEdgeImage");
       _debugImageRGBMailbox.putMessage({"OverheadImage", dispImg});
-      _debugImageRGBMailbox.putMessage({"OverheadEdgeImage", dispEdgeImg});
+      _debugImageRGBMailbox.putMessage({"EdgeImage", dispEdgeImg});
     } // if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
     
-    // Finally do send the edges to the mailbox. Note I do this after rendering because I am std::moving the edges
+    // create edge frame info to send
+    OverheadEdgeFrame edgeFrame;
+    edgeFrame.timestamp = image.GetTimestamp();
+    edgeFrame.groundPlaneValid = true;
+    
+    roi.GetVisibleGroundQuad(H, image.GetNumCols(), image.GetNumRows(), edgeFrame.groundplane);
     
     // Copy only the chains with at least k points (less is considered noise)
-    for(const auto& chain : edgeChains)
+    for(auto& chain : candidateChains)
     {
+      // filter chains that don't have a minimum number of points
       if ( chain.points.size() >= kMinChainLength ) {
-        _overheadEdgeChainMailbox.putMessage( std::move(chain) );
+        edgeFrame.chains.emplace_back( std::move(chain) );
       }
     }
-    // if we std::move chains, their state is no longer valid after, clear the vector to prevent further usage
-    edgeChains.clear();
+    candidateChains.clear(); // some chains are in undefined state after std::move, clear them now
     
+    // put in mailbox
+    _overheadEdgeFrameMailbox.putMessage( std::move(edgeFrame) );
     
     return RESULT_OK;
-  } // DetectOverheadEdges()
+  }
   
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
@@ -1929,6 +2080,8 @@ namespace Cozmo {
   {
     Result result = RESULT_OK;
     
+    Profiler::SetProfileGroupName("VisionSystem");
+    
     bool calibSizeValid = false;
     switch(camCalib.GetNcols())
     {
@@ -2002,7 +2155,7 @@ namespace Cozmo {
     
     // Just make all the vision parameters' resolutions match capture resolution:
     _detectionParameters.Initialize(_captureResolution);
-    _trackerParameters.Initialize(_captureResolution);
+    _trackerParameters.Initialize(_captureResolution, _detectionParameters.fiducialThicknessFraction);
     _faceDetectionParameters.Initialize(_captureResolution);
     
     Simulator::Initialize();
@@ -2214,10 +2367,12 @@ namespace Cozmo {
     std::vector<Quad2f> markerQuads;
 
     if(IsModeEnabled(VisionMode::DetectingMarkers)) {
+      Tic("TotalDetectingMarkers");
       if((lastResult = DetectMarkers(inputImageGray, markerQuads)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.LookForMarkersFailed", "");
         return lastResult;
       }
+      Toc("TotalDetectingMarkers");
     }
     
     if(IsModeEnabled(VisionMode::Tracking)) {
@@ -2229,10 +2384,12 @@ namespace Cozmo {
     }
     
     if(IsModeEnabled(VisionMode::DetectingFaces)) {
+      Tic("TotalDetectingFaces");
       if((lastResult = DetectFaces(inputImageGray, markerQuads)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
         return lastResult;
       }
+      Toc("TotalDetectingFaces");
     }
     
     // DEBUG!!!!
@@ -2248,10 +2405,12 @@ namespace Cozmo {
     
     if(IsModeEnabled(VisionMode::DetectingOverheadEdges))
     {
+      Tic("TotalDetectingOverheadEdges");
       if((lastResult = DetectOverheadEdges(inputImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
         return lastResult;
       }
+      Toc("TotalDetectingOverheadEdges");
     }
     
     if(IsModeEnabled(VisionMode::ReadingToolCode))
@@ -2270,7 +2429,12 @@ namespace Cozmo {
       }
     }
 
-    
+    static s32 profilePrintCtr = 60;
+    if(--profilePrintCtr == 0) {
+      Profiler::PrintAverageTiming();
+      profilePrintCtr = 60;
+    }
+
     /*
     // Store a copy of the current image for next time
     // NOTE: Now _prevImage should correspond to _prevRobotState
@@ -2583,11 +2747,11 @@ namespace Cozmo {
                 } else if(!enoughContrast) {
                   PRINT_NAMED_INFO("VisionSystem.ReadToolCode.BadContrast",
                                    "Dot %lu: Contrast for comp %d = %f",
-                                   iDot, iComp, (f32)avgHoleBrightness / (f32)avgDotBrightness);
+                                   (unsigned long)iDot, iComp, (f32)avgHoleBrightness / (f32)avgDotBrightness);
                 } else if(!holeSmallEnough) {
                   PRINT_NAMED_INFO("VisionSystem.ReadToolCode.HoleTooLarge",
                                    "Dot %lu: hole too large %d > %f*%d (=%f)",
-                                   iDot, holeArea, kMaxHoleAreaFrac, compArea,
+                                   (unsigned long)iDot, holeArea, kMaxHoleAreaFrac, compArea,
                                    kMaxHoleAreaFrac*compArea);
                 }
               }

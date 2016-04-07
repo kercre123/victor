@@ -8,6 +8,7 @@ import os
 import os.path
 import platform
 import sys
+import subprocess
 import time
 
 ENGINE_ROOT = os.path.normpath(os.path.abspath(os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))))
@@ -263,7 +264,7 @@ def parse_engine_arguments():
         ArgumentParser.Command('wipeall!', 'delete, then wipe all ignored files in the entire repo (including generated projects)')]
     parser.add_command_arguments(commands)
       
-    platforms = ['mac', 'ios', 'linux']
+    platforms = ['mac', 'ios', 'linux', 'android']
     default_platforms = ['mac']
     parser.add_platform_arguments(platforms, default_platforms)
     
@@ -352,10 +353,16 @@ class EnginePlatformConfiguration(object):
         self.platform_build_dir = os.path.join(options.build_dir, self.platform)
         self.platform_output_dir = os.path.join(options.output_dir, self.platform)
         
-        self.project_name = 'cozmoEngine.xcodeproj'
-        self.project_path = os.path.join(self.platform_output_dir, self.project_name)
-        self.derived_data_dir = os.path.join(self.platform_build_dir, 'derived-data')
-    
+        if self.options.verbose:
+            print("initializing {0}".format(self.platform))
+        if self.platform != 'android':
+            self.project_name = 'cozmoEngine.xcodeproj'
+            self.project_path = os.path.join(self.platform_output_dir, self.project_name)
+            self.derived_data_dir = os.path.join(self.platform_build_dir, 'derived-data')
+        else:  ### DNW: location to add android project.
+        #    self.project_name = 'Android.mk'
+            self.project_path = self.platform_output_dir
+
     def process(self):
         if self.options.command in ('generate', 'build'):
             self.generate()
@@ -372,7 +379,8 @@ class EnginePlatformConfiguration(object):
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
         
         generate_gyp(self.gyp_dir, self.platform, self.options)
-        ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
+        if self.platform == 'mac' or self.platform == 'ios':
+            ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
 
     def build(self):
         if self.options.verbose:
@@ -386,7 +394,7 @@ class EnginePlatformConfiguration(object):
                 buildaction = 'clean'
             else:
                 buildaction = 'build'
-            
+        if self.platform == 'mac' or self.platform == 'ios':
             ankibuild.xcode.build(
                 buildaction=buildaction,
                 project=self.project_path,
@@ -394,7 +402,18 @@ class EnginePlatformConfiguration(object):
                 platform=self.platform,
                 configuration=self.options.configuration,
                 simulator=self.options.simulator)
-    
+        elif self.platform == 'android':
+            command = ['ninja']
+            cwd_loc = os.path.join(ENGINE_ROOT, 'generated', 'android', 'out', self.options.configuration)
+            if self.options.verbose:
+                command += ['-v']
+            if self.options.command == 'clean':
+                command += ['-t', 'clean']
+            # if this needs more features should add as ankibuild.ninja.build
+            results = subprocess.call(command, cwd=cwd_loc, shell=True)
+            if results:
+                sys.exit('[ERROR] running %s' % command)
+
     def delete(self):
         if self.options.verbose:
             print_status('Deleting generated files for platform {0}...'.format(self.platform))

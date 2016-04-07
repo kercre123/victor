@@ -35,7 +35,7 @@
 #include "clad/types/imageTypes.h"
 #include "clad/types/engineState.h"
 #include "anki/cozmo/basestation/debug/debugConsoleManager.h"
-
+#include "util/global/globalDefinitions.h"
 
 #include <memory>
 
@@ -58,6 +58,7 @@ class CozmoContext;
 class MultiClientChannel;
 class UiMessageHandler;
 class TextToSpeech;
+class USBTunnelServer;
   
 template <typename Type>
 class AnkiEvent;
@@ -115,6 +116,7 @@ public:
   Robot* GetFirstRobot();
   int    GetNumRobots() const;
   Robot* GetRobotByID(const RobotID_t robotID); // returns nullptr for invalid ID
+  bool   HasRobotWithID(const RobotID_t robotID) const;
   std::vector<RobotID_t> const& GetRobotIDList() const;
   
   virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
@@ -140,11 +142,16 @@ protected:
   virtual Result InitInternal();
   void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleUpdateFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void SetEngineState(EngineState newState);
   
   Result AddRobot(RobotID_t robotID);
   
   EngineState _engineState = EngineState::Stopped;
+
+#if ANKI_DEV_CHEATS
+  std::unique_ptr<USBTunnelServer>                          _usbTunnelServerDebug;
+#endif
   
 }; // class CozmoEngine
   

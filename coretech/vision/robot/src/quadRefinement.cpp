@@ -4,8 +4,9 @@
 #include "anki/common/robot/hostIntrinsics_m4.h"
 
 #include "anki/vision/robot/fiducialDetection.h"
+#include "anki/vision/robot/imageProcessing.h"
 
-#define DEBUG_QUAD_REFINEMENT 0
+#define DEBUG_QUAD_REFINEMENT 0 // Vision system will need to be running synchronously
 
 #define VISUALIZE_WITH_MATLAB 0
 
@@ -14,23 +15,6 @@
 static Anki::Embedded::Matlab matlab(false);
 #endif
 
-#define ACCELERATION_NONE 0
-#define ACCELERATION_ARM_M4 1
-#define ACCELERATION_ARM_A7 2
-
-#if defined(__ARM_ARCH_7A__)
-#define ACCELERATION_TYPE ACCELERATION_ARM_A7
-#else
-#define ACCELERATION_TYPE ACCELERATION_ARM_M4
-#endif
-
-#if ACCELERATION_TYPE == ACCELERATION_NONE
-#warning not using ARM acceleration
-#endif
-
-#if ACCELERATION_TYPE == ACCELERATION_ARM_A7
-#include <arm_neon.h>
-#endif
 
 namespace Anki {
   namespace Embedded {
@@ -89,6 +73,7 @@ namespace Anki {
       const Array<f32>& initialHomography,
       const Array<u8> &image,
       const Point<f32>& squareSizeFraction,
+      const Point<f32>& roundedCornerFraction,
       const s32 maxIterations,
       const f32 darkGray,
       const f32 brightGray,
@@ -110,21 +95,6 @@ namespace Anki {
 
       AnkiConditionalErrorAndReturnValue(NotAliased(initialHomography, refinedHomography),
         RESULT_FAIL_ALIASED_MEMORY, "RefineQuadrilateral", "initialHomography and refinedHomography are aliased");
-
-#     if VISUALIZE_WITH_MATLAB
-      CoreTechPrint("Initial quad: ");
-      initialQuad.Print();
-      CoreTechPrint("\n");
-
-      matlab.PutArray(image, "img");
-      matlab.PutQuad(initialQuad, "initialQuad");
-      matlab.EvalStringEcho("initialQuad = double(initialQuad); "
-        "imagesc(img), axis image, hold on, colormap(gray), "
-        "plot(initialQuad([1 2 4 3 1],1)+1, "
-        "     initialQuad([1 2 4 3 1],2)+1, "
-        "     'r', 'LineWidth', 2, "
-        "     'Tag', 'initialQuad'); drawnow");
-#     endif
 
       // Use the size of the initial quad to establish the resolution and thus
       // the scale of the derivatives of the implicit template model
@@ -168,11 +138,12 @@ namespace Anki {
       const s32 N = CeilS32(static_cast<f32>(numSamples)/8.f);
       const s32 actualNumSamples = 8*N;
 
-      const f32 outerInc = 1.f / static_cast<f32>(N-1);
+      const f32 outerIncX = (1.f - 2.f*roundedCornerFraction.x) / static_cast<f32>(N-1);
+      const f32 outerIncY = (1.f - 2.f*roundedCornerFraction.y) / static_cast<f32>(N-1);
       //LinearSequence<f32> OuterOneToN = LinearSequence<f32>(0.f, outerInc, 1.f);
 
-      const f32 innerIncX = (1.f - 2.f*squareSizeFraction.x) / static_cast<f32>(N-1);
-      const f32 innerIncY = (1.f - 2.f*squareSizeFraction.y) / static_cast<f32>(N-1);
+      const f32 innerIncX = (1.f - 2.f*std::max(squareSizeFraction.x, roundedCornerFraction.x)) / static_cast<f32>(N-1);
+      const f32 innerIncY = (1.f - 2.f*std::max(squareSizeFraction.y, roundedCornerFraction.y)) / static_cast<f32>(N-1);
       //LinearSequence<f32> InnerOneToN = LinearSequence<f32>(squareWidthFraction, innerInc, 1.f-squareWidthFraction);
 
       // Template coordinates
@@ -217,8 +188,8 @@ namespace Anki {
         f32 * restrict pTXbtm = Tx.Pointer(0,N);
         f32 * restrict pTYbtm = Ty.Pointer(0,N);
 
-        f32 x=0.f;
-        for(s32 index = 0; index<N; x += outerInc, ++index)
+        f32 x=roundedCornerFraction.x;
+        for(s32 index = 0; index<N; x += outerIncX, ++index)
         {
           pXtop[index] = x;
           pYtop[index] = 0.f;
@@ -232,12 +203,14 @@ namespace Anki {
           pTXbtm[index] = 0.f;
           pTYbtm[index] = derivMagnitude;
         }
-
-        pTXtop[0]   = -derivMagnitude;
-        pTXtop[N-1] =  derivMagnitude;
-
-        pTXbtm[0]   = -derivMagnitude;
-        pTXbtm[N-1] =  derivMagnitude;
+        
+        if(roundedCornerFraction.x==0.f) {
+          pTXtop[0]   = -derivMagnitude;
+          pTXtop[N-1] =  derivMagnitude;
+          
+          pTXbtm[0]   = -derivMagnitude;
+          pTXbtm[N-1] =  derivMagnitude;
+        }
       } // Outer Top / Bottom
 
       // Inner
@@ -254,7 +227,7 @@ namespace Anki {
         f32 * restrict pTXbtm = Tx.Pointer(0,5*N);
         f32 * restrict pTYbtm = Ty.Pointer(0,5*N);
 
-        f32 x = squareSizeFraction.x;
+        f32 x = std::max(squareSizeFraction.x, roundedCornerFraction.x);
         for(s32 index = 0; index < N; x += innerIncX, ++index)
         {
           pXtop[index] = x;
@@ -270,11 +243,13 @@ namespace Anki {
           pTYbtm[index] = -derivMagnitude;
         }
 
-        pTXtop[0]   =  derivMagnitude;
-        pTXtop[N-1] = -derivMagnitude;
-
-        pTXbtm[0]   =  derivMagnitude;
-        pTXbtm[N-1] = -derivMagnitude;
+        if(roundedCornerFraction.x==0.f) {
+          pTXtop[0]   =  derivMagnitude;
+          pTXtop[N-1] = -derivMagnitude;
+          
+          pTXbtm[0]   =  derivMagnitude;
+          pTXbtm[N-1] = -derivMagnitude;
+        }
       } // Inner Top / Bottom
 
       //
@@ -295,8 +270,8 @@ namespace Anki {
         f32 * restrict pTXright = Tx.Pointer(0,3*N);
         f32 * restrict pTYright = Ty.Pointer(0,3*N);
 
-        f32 y = 0.f;
-        for(s32 index = 0; index < N; y += outerInc, ++index)
+        f32 y = roundedCornerFraction.y;
+        for(s32 index = 0; index < N; y += outerIncY, ++index)
         {
           pXleft[index] = 0.f;
           pYleft[index] = y;
@@ -311,11 +286,13 @@ namespace Anki {
           pTYright[index] = 0.f;
         }
 
-        pTYleft[0]   = -derivMagnitude;
-        pTYleft[N-1] =  derivMagnitude;
-
-        pTYright[0]   = -derivMagnitude;
-        pTYright[N-1] =  derivMagnitude;
+        if(roundedCornerFraction.y==0.f) {
+          pTYleft[0]   = -derivMagnitude;
+          pTYleft[N-1] =  derivMagnitude;
+          
+          pTYright[0]   = -derivMagnitude;
+          pTYright[N-1] =  derivMagnitude;
+        }
       } // Outer Left / Right
 
       // Inner
@@ -332,7 +309,7 @@ namespace Anki {
         f32 * restrict pTXright = Tx.Pointer(0,7*N);
         f32 * restrict pTYright = Ty.Pointer(0,7*N);
 
-        f32 y = squareSizeFraction.y;
+        f32 y = std::max(squareSizeFraction.y, roundedCornerFraction.y);
         for(s32 index = 0; index < N; y += innerIncY, ++index)
         {
           pXleft[index] = squareSizeFraction.x;
@@ -348,11 +325,13 @@ namespace Anki {
           pTYright[index] =  0.f;
         }
 
-        pTYleft[0]   =  derivMagnitude;
-        pTYleft[N-1] = -derivMagnitude;
-
-        pTYright[0]   =  derivMagnitude;
-        pTYright[N-1] = -derivMagnitude;
+        if(roundedCornerFraction.y==0.f) {
+          pTYleft[0]   =  derivMagnitude;
+          pTYleft[N-1] = -derivMagnitude;
+          
+          pTYright[0]   =  derivMagnitude;
+          pTYright[N-1] = -derivMagnitude;
+        }
       } // Inner Left / Right
 
       /* Less efficient?
@@ -453,7 +432,7 @@ namespace Anki {
       xSide.Set(1.f);
       InnerOneToN.Evaluate(ySide);
       */
-
+      
       // A = [ xsquare.*Tx  ysquare.*Tx  Tx  ...
       //       xsquare.*Ty  ysquare.*Ty  Ty ...
       //       (-xsquare.^2.*Tx-xsquare.*ysquare.*Ty) ...
@@ -476,6 +455,54 @@ namespace Anki {
         Arow[i] = A.Pointer(i,0); // TODO: do i need "restrict" here?
       }
 
+#     if DEBUG_QUAD_REFINEMENT
+#     if VISUALIZE_WITH_MATLAB
+      CoreTechPrint("Initial quad: ");
+      initialQuad.Print();
+      CoreTechPrint("\n");
+      
+      matlab.PutArray(image, "img");
+      matlab.PutQuad(initialQuad, "initialQuad");
+      matlab.EvalStringEcho("initialQuad = double(initialQuad); "
+                            "imagesc(img), axis image, hold on, colormap(gray), "
+                            "plot(initialQuad([1 2 4 3 1],1)+1, "
+                            "     initialQuad([1 2 4 3 1],2)+1, "
+                            "     'r', 'LineWidth', 2, "
+                            "     'Tag', 'initialQuad'); drawnow");
+#     else
+      auto DrawQuad = [](cv::Mat& img, const Quadrilateral<f32>& quad, const cv::Scalar& color) {
+        cv::line(img, quad[0].get_CvPoint_(), quad[1].get_CvPoint_(), color);
+        cv::line(img, quad[1].get_CvPoint_(), quad[3].get_CvPoint_(), color);
+        cv::line(img, quad[3].get_CvPoint_(), quad[2].get_CvPoint_(), color);
+        cv::line(img, quad[2].get_CvPoint_(), quad[0].get_CvPoint_(), color);
+      };
+      {
+        cv::Mat dispImg;
+        ArrayToCvMat(image, &dispImg);
+        cv::cvtColor(dispImg, dispImg, cv::COLOR_GRAY2BGR);
+        DrawQuad(dispImg, initialQuad, cv::Scalar(0,0,255));
+        
+        // Draw samples:
+        const f32 h00 = initialHomography[0][0]; const f32 h01 = initialHomography[0][1]; const f32 h02 = initialHomography[0][2];
+        const f32 h10 = initialHomography[1][0]; const f32 h11 = initialHomography[1][1]; const f32 h12 = initialHomography[1][2];
+        const f32 h20 = initialHomography[2][0]; const f32 h21 = initialHomography[2][1]; const f32 h22 = initialHomography[2][2];
+        for(s32 iSample=0; iSample<actualNumSamples; iSample++)
+        {
+          f32 x = h00*pX[iSample] + h01*pY[iSample] + h02;
+          f32 y = h10*pX[iSample] + h11*pY[iSample] + h12;
+          const f32 normalization = 1.f / (h20*pX[iSample] + h21*pY[iSample] + h22);
+          
+          x *= normalization;
+          y *= normalization;
+          
+          cv::circle(dispImg, cv::Point2f(x, y), 2, cv::Scalar(0,255,0));
+        }
+        cv::imshow("InitialQuad", dispImg);
+        //cv::imwrite("/Users/andrew/temp/initialQuad.png", dispImg);
+      }
+#     endif
+#     endif
+      
       // Create A matrix of Jacobians
       for(s32 iSample=0; iSample<actualNumSamples; iSample++) {
         const f32 x = pX[iSample];
@@ -759,6 +786,7 @@ namespace Anki {
           break;
         }
 
+#       if DEBUG_QUAD_REFINEMENT
 #       if VISUALIZE_WITH_MATLAB
         {
           matlab.PutQuad(refinedQuad, "refinedQuad");
@@ -769,6 +797,17 @@ namespace Anki {
             "     'b', 'LineWidth', 1, "
             "     'Tag', 'refinedQuad'); drawnow");
         }
+#       else
+        {
+          cv::Mat dispImg;
+          ArrayToCvMat(image, &dispImg);
+          cv::cvtColor(dispImg, dispImg, cv::COLOR_GRAY2BGR);
+          DrawQuad(dispImg, refinedQuad, cv::Scalar(255,0,0));
+          cv::imshow("RefinedQuad", dispImg);
+          //cv::imwrite("/Users/andrew/temp/refinedQuad_" + std::to_string(iteration) + ".png", dispImg);
+          cv::waitKey(5);
+        }
+#       endif
 #       endif
 
         EndBenchmark("vme_quadrefine_mainLoop_finalize");
@@ -778,6 +817,7 @@ namespace Anki {
 
       BeginBenchmark("vme_quadrefine_finalize");
 
+#     if DEBUG_QUAD_REFINEMENT
 #     if VISUALIZE_WITH_MATLAB
       CoreTechPrint("Final quad: ");
       refinedQuad.Print();
@@ -790,6 +830,17 @@ namespace Anki {
           "     'g', 'LineWidth', 1, "
           "     'Tag', 'refinedQuad'); drawnow");
       }
+#     else
+      {
+        cv::Mat dispImg;
+        ArrayToCvMat(image, &dispImg);
+        cv::cvtColor(dispImg, dispImg, cv::COLOR_GRAY2BGR);
+        DrawQuad(dispImg, refinedQuad, cv::Scalar(0,255,0));
+        cv::imshow("FinalQuad", dispImg);
+        //cv::imwrite("/Users/andrew/temp/finalQuad.png", dispImg);
+        cv::waitKey(1);
+      }
+#     endif
 #     endif
 
       // DEBUG: Visualize initial and final quad:

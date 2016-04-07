@@ -4,7 +4,7 @@
 #include "debug.h"
 #include "timer.h"
 #include "anki/cozmo/robot/spineData.h"
-#include "spine.h"
+#include "messages.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
@@ -191,12 +191,14 @@ void Battery::manage(void* userdata)
     case ANALOG_V_EXT_SENSE:
       {
         uint32_t raw = NRF_ADC->RESULT;
-        static int pinch_count = 0;
+        static int ground_short = 0;
 
         if (raw >= 0x30){
-          pinch_count = 0;
-        } else if (++pinch_count > 50) {
-          NVIC_SystemReset();
+          RTOS::kick(WDOG_NERVE_PINCH);
+          ground_short = 0;
+        } else if (ground_short++ >= 30) {
+          Battery::powerOff();
+          while(true) ;
         }
 
         vExt = calcResult(VEXT_SCALE);

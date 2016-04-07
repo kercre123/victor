@@ -14,7 +14,7 @@
 #define ANKI_COZMO_INAV_MEMORY_MAP_H
 
 #include "navMemoryMapTypes.h"
-#include "iNavMemoryMapQuadData.h"
+#include "quadData/iNavMemoryMapQuadData.h"
 
 #include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/quad.h"

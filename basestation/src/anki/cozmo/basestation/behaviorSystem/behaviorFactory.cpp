@@ -22,7 +22,6 @@
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
-#include "anki/cozmo/basestation/behaviors/behaviorBlockPlay.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
@@ -32,8 +31,9 @@
 #include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
-#include "../behaviors/exploration/behaviorExploreMarkedCube.h" // any reason why we need to expose behavior headers?
+#include "../behaviors/exploration/behaviorExploreMarkedCube.h"
 #include "../behaviors/exploration/behaviorExploreCliff.h"
+#include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -79,11 +79,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::OCD:
     {
       newBehavior = new BehaviorOCD(robot, config);
-      break;
-    }
-    case BehaviorType::BlockPlay:
-    {
-      newBehavior = new BehaviorBlockPlay(robot, config);
       break;
     }
     case BehaviorType::Fidget:
@@ -154,6 +149,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::RequestGameSimple:
     {
       newBehavior = new BehaviorRequestGameSimple(robot, config);
+      break;
+    }
+    case BehaviorType::ExploreLookAroundInPlace:
+    {
+      newBehavior = new BehaviorExploreLookAroundInPlace(robot, config);
       break;
     }
     case BehaviorType::FactoryTest:

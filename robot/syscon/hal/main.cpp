@@ -4,10 +4,8 @@ extern "C" {
   #include "nrf.h"
   #include "nrf_gpio.h"
   #include "nrf_sdm.h"
-
-  #include "softdevice_handler.h"  
 }
-  
+
 #include "hardware.h"
 
 #include "rtos.h"
@@ -39,20 +37,30 @@ GlobalDataToBody g_dataToBody;
 
 extern "C" void HardFault_Handler(void) {
   __disable_irq();
-  
-  
-  nrf_gpio_pin_set(PIN_LED1);
-  nrf_gpio_cfg_output(PIN_LED1);
-  nrf_gpio_pin_set(PIN_LED2);
-  nrf_gpio_cfg_output(PIN_LED2);
-  nrf_gpio_pin_set(PIN_LED3);
-  nrf_gpio_cfg_output(PIN_LED3);
-  nrf_gpio_pin_set(PIN_LED4);
-  nrf_gpio_cfg_output(PIN_LED4);
 
-  
-  MicroWait(1000000);
-  
+  uint8_t pins[] = {
+    PIN_LED1,
+    PIN_LED2,
+    PIN_LED3,
+    PIN_LED4
+  };
+
+  for (int i = 0; i < sizeof(pins) * sizeof(pins) * 2; i++) {
+    for (int k = 0; k < sizeof(pins); k++) {
+      nrf_gpio_cfg_input(pins[k], NRF_GPIO_PIN_NOPULL);
+    }
+
+    uint8_t ann = pins[i % sizeof(pins)];
+    uint8_t cath = pins[i / sizeof(pins) % sizeof(pins)];
+
+    nrf_gpio_pin_set(ann);
+    nrf_gpio_cfg_output(ann);
+    nrf_gpio_pin_clear(cath);
+    nrf_gpio_cfg_output(cath);
+    
+    MicroWait(10000);
+  }
+
   NVIC_SystemReset();
 }
 
@@ -63,23 +71,51 @@ extern void EnterRecovery(void) {
   NVIC_SystemReset();
 }
 
+void enterOperatingMode(BodyOperatingMode mode) {
+  switch (mode) {
+    case LOW_POWER_OPERATING_MODE:
+      Timer::lowPowerMode(true);
+      Backpack::lightMode(RTC_LEDS);
+
+      Radio::shutdown();
+      Bluetooth::advertise();
+      break ;
+    
+    case BLUETOOTH_OPERATING_MODE:
+      Timer::lowPowerMode(true);
+      Backpack::lightMode(RTC_LEDS);
+
+      Radio::shutdown();
+      Bluetooth::advertise();
+      break ;
+    
+    case WIFI_OPERATING_MODE:
+      Bluetooth::shutdown();
+      Radio::advertise();
+
+      Backpack::lightMode(TIMER_LEDS);
+      Timer::lowPowerMode(false);
+
+      break ;
+  }
+}
+
 int main(void)
 {
-  // Initialize the SoftDevice handler module.
-  SOFTDEVICE_HANDLER_INIT(NRF_CLOCK_LFCLKSRC_SYNTH_250_PPM, NULL);
-
+  Bootloader::init();
+  
   // Initialize our scheduler
   RTOS::init();
+
+  // Initialize the SoftDevice handler module.
+  Bluetooth::init();
   Crypto::init();
 
-  // Setup all tasks (reverse priority)
-  Radio::init();
-  #ifndef RUN_TESTS
-  Head::init();
-  #endif
+  // Setup all tasks
   Motors::init();
+  Radio::init();
+  Head::init();
   Battery::init();
-  Bluetooth::init();
   Timer::init();
   Backpack::init();
   Lights::init();
@@ -87,25 +123,20 @@ int main(void)
   // Startup the system
   Battery::powerOn();
 
-  //Radio::shutdown();
-  //Bluetooth::advertise(); 
-
-  Bluetooth::shutdown();
-  Radio::advertise();
-
   // Let the test fixtures run, if nessessary
   #ifdef RUN_TESTS
+  Head::enabled(false);
   TestFixtures::run();
   #endif
 
-  // THIS IS ONLY HERE FOR DEVELOPMENT PURPOSES
-  Bootloader::init();
-  
+  enterOperatingMode(WIFI_OPERATING_MODE);
+
   Timer::start();
 
   // Run forever, because we are awesome.
   for (;;) {
-    __asm { WFI };
+    // This means that if the crypto engine is running, the lights will stop pulsing. 
     Crypto::manage();
+    Lights::manage();
   }
 }

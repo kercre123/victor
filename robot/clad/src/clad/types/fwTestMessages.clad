@@ -1,0 +1,47 @@
+/** @file Messages related to firmware test functions
+ * @author Daniel Casner <daniel@anki.com>
+ */
+
+namespace Anki {
+namespace Cozmo {
+namespace RobotInterface {
+  
+  enum int_32 FactoryTestMode
+  {
+    FTM_menus = -2, ///< Display menus on face
+    FTM_entry = -1, ///< Default disconnected state
+    FTM_None  = 0,   ///< Exit factory test mode
+    FTM_WiFiInfo,
+    FTM_StateMenu,
+    FTM_ADCInfo,
+    FTM_ImuInfo,
+    FTM_EncoderInfo,
+    FTM_motorLifeTest,
+  }
+  
+  /// The active test mode of the robot
+  message EnterFactoryTestMode
+  {
+    FactoryTestMode mode,
+  }
+  
+  /// Control whether the TestStateMessage will be sent or not
+  message EnableTestStateMessage
+  {
+    bool enable
+  }
+  
+  message TestState
+  {
+    int_32  speedsFixed[4],
+    int_32  positionsFixed[4],
+    uint_32 cliffLevel,
+    int_16  gyro[3],
+    int_16  acc[3],
+    uint_8  battVolt10x,
+    uint_8  extVolt10x,
+    uint_8  chargeStat,
+  }
+}
+}
+}

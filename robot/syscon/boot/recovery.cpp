@@ -249,15 +249,17 @@ static inline bool FlashBlock() {
   return true;
 }
 
+void BlinkALot(void) {
+  for (int i = 0; i < 20; i++) {
+    setLight(1+i%3);
+    MicroWait(10000);
+  }
+}
+
 void EnterRecovery(void) {
   UARTInit();
 
   RECOVERY_STATE state = STATE_IDLE;
-
-  for(int i = 0; i < 4; i++) {
-    setLight(0);
-    MicroWait(25000);
-  }
 
   for (;;) {
     do {

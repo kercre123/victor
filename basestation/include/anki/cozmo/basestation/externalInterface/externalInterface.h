@@ -36,6 +36,8 @@ public:
   
   virtual void Broadcast(const ExternalInterface::MessageGameToEngine& message) = 0;
   virtual void Broadcast(ExternalInterface::MessageGameToEngine&& message) = 0;
+  virtual void BroadcastDeferred(const ExternalInterface::MessageGameToEngine& message) = 0;
+  virtual void BroadcastDeferred(ExternalInterface::MessageGameToEngine&& message) = 0;
   
   virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) = 0;
   virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) = 0;

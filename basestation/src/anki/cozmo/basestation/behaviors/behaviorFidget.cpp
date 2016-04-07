@@ -36,16 +36,12 @@ namespace Cozmo {
     
     _minWait_sec = 2.f;
     _maxWait_sec = 5.f;
+    
+    _lastFidgetTime_sec = 0;
+    _nextFidgetWait_sec = 5;
 
-    AddFidget("Brickout", [this, &robot](){return new PlayAnimationAction(robot, "ID_idle_brickout_02");}, 1, 60, true);
-    
-    // TODO: Make probabilities non-zero once we have these animations available
-    /*
-    AddFidget("Yawn", [](){return new PlayAnimationAction("Yawn");}, 0);
-    AddFidget("Stretch", [](){return new PlayAnimationAction("Stretch");}, 0);
-    AddFidget("Sneeze", [](){return new PlayAnimationAction("Sneeze");}, 0);
-     */
-    
+    AddFidget("Brickout", [this, &robot](){return CreatePlayAnimationAction(robot, GameEvent::OnFidget);}, 1, 60, true);
+
     SubscribeToTags({EngineToGameTag::RobotCompletedAction});
     
     if (GetEmotionScorerCount() == 0)

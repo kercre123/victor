@@ -24,6 +24,9 @@ PROTO WebotsKeyboardController [
 
   # Name to assign to current faceID
   field SFString userName ""
+
+  # Unlock ID to unlock / lock
+  field SFString unlockName "CubeRollAction"
   
   # Factory IDs of objects to connect to (hex)
   field MFString activeObjectFactoryIDs ["0" "0" "0" "0" "0"]

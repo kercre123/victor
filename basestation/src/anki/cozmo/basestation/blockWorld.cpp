@@ -24,7 +24,7 @@
 #include "anki/cozmo/basestation/mat.h"
 #include "anki/cozmo/basestation/markerlessObject.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/navMemoryMap/navMemoryMap.h"
+#include "anki/cozmo/basestation/navMemoryMap/navMemoryMapFactory.h"
 #include "bridge.h"
 #include "flatMat.h"
 #include "platform.h"
@@ -76,7 +76,7 @@ namespace Anki {
 namespace Cozmo {
 
 CONSOLE_VAR(bool, kEnableMapMemory, "BlockWorld.MapMemory", false); // kEnableMapMemory: if set to true Cozmo creates/uses memory maps
-CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // kDebugRenderOverheadEdges: enables/disables debug render
+CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // kDebugRenderOverheadEdges: enables/disables debug render
 
     BlockWorld::BlockWorld(Robot* robot)
     : _robot(robot)
@@ -557,19 +557,17 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
       ASSERT_NAMED( _navMemoryMaps.find(oldOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginOld");
       ASSERT_NAMED( _navMemoryMaps.find(newOrigin) != _navMemoryMaps.end(), "BlockWorld.UpdateObjectOrigins.missingMapOriginNew");
       ASSERT_NAMED( oldOrigin == _currentNavMemoryMapOrigin, "BlockWorld.UpdateObjectOrigins.updatingMapNotCurrent");
-      ASSERT_NAMED(nullptr != dynamic_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() ), "BlockWorld.UpdateObjectOrigins.badMemoryMapCastOld");
-      ASSERT_NAMED(nullptr != dynamic_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() ), "BlockWorld.UpdateObjectOrigins.badMemoryMapCastNew");
 
       // grab the underlying memory map and merge them
-      NavMemoryMap* oldMap = static_cast<NavMemoryMap*>( _navMemoryMaps[oldOrigin].get() );
-      NavMemoryMap* newMap = static_cast<NavMemoryMap*>( _navMemoryMaps[newOrigin].get() );
+      INavMemoryMap* oldMap = _navMemoryMaps[oldOrigin].get();
+      INavMemoryMap* newMap = _navMemoryMaps[newOrigin].get();
       newMap->Merge(oldMap, *oldOrigin);
       
       // switch back to what is becoming the new map
       _currentNavMemoryMapOrigin = newOrigin;
       
       // now we can delete what is become the old map, since we have merged its data into the new one
-      _navMemoryMaps.erase( oldOrigin );
+      _navMemoryMaps.erase( oldOrigin ); // smart pointer will delete memory
     }
     
     return result;
@@ -760,7 +758,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
     {
       // create a new memory map in the given origin
       VizManager* vizMgr = _robot->GetContext()->GetVizManager();
-      _navMemoryMaps.emplace( std::make_pair(worldOriginPtr, std::unique_ptr<INavMemoryMap>(new NavMemoryMap( vizMgr ))) );
+      INavMemoryMap* navMemoryMap = NavMemoryMapFactory::CreateDefaultNavMemoryMap(vizMgr);
+      _navMemoryMaps.emplace( std::make_pair(worldOriginPtr, std::unique_ptr<INavMemoryMap>(navMemoryMap)) );
       _currentNavMemoryMapOrigin = worldOriginPtr;
     }
   }
@@ -851,7 +850,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
           if (blocks.size() > 1) {
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleMatchesForActiveObject",
                                 "Observed active object of type %d matches %lu existing objects. Multiple blocks of same type not currently supported.",
-                                objSeen->GetType(), blocks.size());
+                                objSeen->GetType(), (unsigned long)blocks.size());
             
           } else if (blocks.size() == 0) {
             PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.NoMatchForActiveObject",
@@ -1837,7 +1836,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
               // mats it is seeing, but don't localize to any of them.
               PRINT_LOCALIZATION_INFO("BlockWorld.UpdateRobotPose.NotOnMatNoLocalize",
                                       "Robot %d is localized to a mat it doesn't see, and will not localize to any of the %lu mats it sees but is not on.",
-                                      _robot->GetID(), matsSeen.size());
+                                      _robot->GetID(), (unsigned long)matsSeen.size());
             }
             else {
               if(overlappingMatsSeen.size() > 1) {
@@ -2399,181 +2398,230 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", false); // 
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    Result BlockWorld::AddVisionOverheadEdges(const OverheadEdgeVector& edges)
+    Result BlockWorld::ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
     {
-      // we just got a bunch of edges from the camera, what in the world do we do with them?
-      size_t pointCount = 0;
-      
-      // test: add as interesting stuff (no extra data added now)
-      struct EdgeSegment {
-        EdgeSegment() {}
-        EdgeSegment(const Vec3f& s, const Vec3f& e) : start(s), end(e) {}
-        Vec3f start;
-        Vec3f end;
-      };
-      std::vector<EdgeSegment> segments;
-      {
-        // epsilon to merge points into the same edge segment. If adding a point to a segment creates
-        // a deviation with respect to the first direction of the segment bigger than this epsilon,
-        // then the point will not be added to that segment
-        // cos(10deg) = 0.984807...
-        // cos(40def) = 0.766044...
-        const float kDotBorderEpsilon = 0.7660f; // 0.9848f;
-      
-        // for every chain, define segments
-        for( const auto& edge : edges )
-        {
-          // need at least two points in an edge
-          if ( edge.points.size() <= 1 ) {
-            ASSERT_NAMED( edge.points.size() > 1, "BlockWorld.AddVisionOverheadEdges.InsufficientPointsInEdge" );
-            continue;
-          }
-          pointCount += edge.points.size();
-          
-          // grab the robot pose at the timestamp of this edge
-          TimeStamp_t t;
-          RobotPoseStamp* p = nullptr;
-          HistPoseKey poseKey;
-          const Result poseRet = _robot->GetPoseHistory()->ComputeAndInsertPoseAt(edge.timestamp, t, &p, &poseKey, true);
-          const bool poseIsGood = ( RESULT_OK == poseRet );
-          const Pose3d& edgeObservationPose = (poseIsGood && (nullptr!=p)) ? p->GetPose() : Pose3d();
-          
-          // init line
-          Vec3f segmentStart( edge.points[0].position.x(), edge.points[0].position.y(), 0.0f );
-          Vec3f segmentEnd  ( edge.points[1].position.x(), edge.points[1].position.y(), 0.0f );
-          Vec3f segmentDir = segmentEnd - segmentStart;
-          const float initialLength = segmentDir.MakeUnitLength();
-          ASSERT_NAMED( !Util::IsNearZero(initialLength), "BlockWorld.AddVisionOverheadEdges.PointsAreTooCloseInitial" );
-          
-          // iterate all waypoints from 2 on
-          size_t idx = 2;
-          const size_t lastIdx = (edge.points.size()-1);
-          do
-          {
-            // grab candidate point for this point in the chain
-            Vec3f candidateSegmentEnd( edge.points[idx].position.x(), edge.points[idx].position.y(), 0.0f );
-            Vec3f candidateDir = (candidateSegmentEnd - segmentEnd);
-            const float candidateLen = candidateDir.MakeUnitLength();
-            ASSERT_NAMED( !Util::IsNearZero(candidateLen), "BlockWorld.AddVisionOverheadEdges.PointsAreTooCloseIdx" );
-
-            // Can we merge this point in the same segment?
-            // = if we add this point to the current segmentEnd, does it exceed the threshold?
-            const float dotProduct = DotProduct(segmentDir, candidateDir);
-            bool canMergePoint = (dotProduct >= kDotBorderEpsilon); // if dotProduct is bigger, angle between is smaller
-            
-            // a) if we can merge the point, do so by setting it as End
-            if ( canMergePoint )
-            {
-              segmentEnd = candidateSegmentEnd;
-              // we do not update the direction so that we check deviation with respect to first two points, not
-              // deviation with respect to current segment. This prevents smoothing out a curve whose points are
-              // all close to the previous (angle-wise)
-            }
-            else
-            {
-              // can't merge this point:
-              // 1) add segment
-              const Vec3f& worldStart = edgeObservationPose * segmentStart;
-              const Vec3f& worldEnd   = edgeObservationPose * segmentEnd;
-              segments.emplace_back( worldStart, worldEnd );
-              
-              // 2) restart another segment
-              segmentStart = segmentEnd;
-              segmentEnd = candidateSegmentEnd;
-              segmentDir = segmentEnd - segmentStart;
-              const float newInitialLength = segmentDir.MakeUnitLength();
-              ASSERT_NAMED( !Util::IsNearZero(newInitialLength), "BlockWorld.AddVisionOverheadEdges.PointsAreTooCloseInitial" );
-            }
-            
-            ++idx;
-          } while ( idx <= lastIdx );
-          
-          // add last segment
-          const Vec3f& worldStart = edgeObservationPose * segmentStart;
-          const Vec3f& worldEnd   = edgeObservationPose * segmentEnd;
-          segments.emplace_back( worldStart, worldEnd );
-        }
-      }
-      
-      // debug draw
-      if ( kDebugRenderOverheadEdges )
-      {
-        static size_t prevPointCount = 0;
-        static size_t prevSegmentCount = 0;
-        const size_t segmentCount = segments.size();
-      
-        static float lingerUntil = 0.0f;
-        const float kLingerTime = 2.0f;
-        const f32 currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        
-        // when we don't have edges, we allow some time to remove the last reported edges (to prevent thread sync from
-        // making debug blink)
-        if ( edges.empty() ) {
-          if ( lingerUntil < currentTime ) {
-            if ( prevPointCount != pointCount || prevSegmentCount != segmentCount )
-            {
-              PRINT_NAMED_INFO("BlockWorld.AddVisionOverheadEdges", "%zu points merged into %zu segments", pointCount, segmentCount);
-              prevPointCount=pointCount;
-              prevSegmentCount=segmentCount;
-            }
-            _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld.AddVisionOverheadEdges");
-          }
+      Result ret = RESULT_OK;
+      if ( frameInfo.groundPlaneValid ) {
+        if ( !frameInfo.chains.empty() ) {
+          ret = AddVisionOverheadEdges(frameInfo);
         } else {
-            if ( prevPointCount != pointCount || prevSegmentCount != segmentCount )
-            {
-              PRINT_NAMED_INFO("BlockWorld.AddVisionOverheadEdges", "%zu points merged into %zu segments", pointCount, segmentCount);
-              prevPointCount=pointCount;
-              prevSegmentCount=segmentCount;
-            }
-          _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld.AddVisionOverheadEdges");
-          lingerUntil = currentTime + kLingerTime;
-          
-          const float zoffset = 60.0f;
-          for( const auto& edge : edges ) {
-            ASSERT_NAMED( edge.points.size() > 1, "BlockWorld.AddVisionOverheadEdges.InsufficientPointsInEdge" );
+          // we expect lack of borders to be reported as !isBorder chains
+          ASSERT_NAMED(false, "ProcessVisionOverheadEdges.ValidPlaneWithNoChains");
+        }
+      } else {
+        // ground plane was invalid (atm we don't use this). It's probably only useful if we are debug-rendering
+        // the ground plane
+        _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld.AddVisionOverheadEdges");
+      }
+      return ret;
+    }
+  
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    namespace {
 
-            TimeStamp_t request = edge.timestamp;
-            
-            bool colorSwitchValue = false;
-            
-            OverheadEdgePointVector::const_iterator startIt = edge.points.begin();
-            OverheadEdgePointVector::const_iterator endIt   = startIt + 1;
-            while(endIt!=edge.points.end())
-            {
-              Vec3f start( startIt->position.x(), startIt->position.y(), 0.0f);
-              Vec3f end  ( endIt->position.x(), endIt->position.y(), 0.0f);
-            
-              TimeStamp_t t;
-              RobotPoseStamp* p = nullptr;
-              HistPoseKey poseKey;
-              const Result ret = _robot->GetPoseHistory()->ComputeAndInsertPoseAt(request,t, &p, &poseKey, true);
-              const bool poseIsGood = ( RESULT_OK == ret );
-              
-              const Pose3d& observedPose = p ? p->GetPose() : Pose3d();
-              start = observedPose * start;
-              end   = observedPose * end;
-              
-              const Anki::ColorRGBA& color = poseIsGood ? ( colorSwitchValue ? NamedColors::GREEN : NamedColors::YELLOW) : NamedColors::RED;
-              colorSwitchValue = !colorSwitchValue;
-              
-              _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld.AddVisionOverheadEdges", start, end, color, false, zoffset );
-              startIt = endIt;
-              ++endIt;
-            }
-          }
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      inline Point3f EdgePointToPoint3f(const OverheadEdgePoint& point, const Pose3d& pose, float z=0.0f) {
+        Point3f ret = pose * Point3f(point.position.x(), point.position.y(), z);
+        return ret;
+      }
+      
+    } // anonymous namespace
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    Result BlockWorld::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
+    {
+      _robot->GetContext()->GetVizManager()->EraseSegments("BlockWorld.AddVisionOverheadEdges");
+      
+      // check conditions to add edges
+      ASSERT_NAMED(!frameInfo.chains.empty(), "AddVisionOverheadEdges.NoEdges");
+      ASSERT_NAMED(frameInfo.groundPlaneValid, "AddVisionOverheadEdges.InvalidGroundPlane");
+      
+      // we are only processing edges for the memory map, so if there's no map, don't do anything
+      INavMemoryMap* currentNavMemoryMap = GetNavMemoryMap();
+      if( nullptr == currentNavMemoryMap && !kDebugRenderOverheadEdges )
+      {
+        return RESULT_OK;
+      }
+
+      // grab the robot pose at the timestamp of this frame
+      TimeStamp_t t;
+      RobotPoseStamp* p = nullptr;
+      HistPoseKey poseKey;
+      const Result poseRet = _robot->GetPoseHistory()->ComputeAndInsertPoseAt(frameInfo.timestamp, t, &p, &poseKey, true);
+      const bool poseIsGood = ( RESULT_OK == poseRet ) && (p != nullptr);
+      if ( !poseIsGood ) {
+        PRINT_NAMED_ERROR("BlockWorld.AddVisionOverheadEdges.PoseNotGood", "Pose not good for timestamp %d", frameInfo.timestamp);
+        return RESULT_FAIL;
+      }
+      const Pose3d& observedPose = p->GetPose();
+      const Point3f& cameraOrigin = observedPose.GetTranslation();
+      
+      // Ideally we would do clamping with quad in robot coordinates, but this is an optimization to prevent
+      // having to transform segments twice. We transform the segments to world space so that we can
+      // calculate variations in angles, in order to merge together small variations. Once we have transformed
+      // the segments, we can clamp the merged segments. We could do this in 2D, but we would have to transform
+      // those segments again into world space. As a minor optimization, transform ground-plane's near-plane instead
+      Point2f nearPlaneLeft  = observedPose *
+        Point3f(frameInfo.groundplane[Quad::BottomLeft].x(),
+                frameInfo.groundplane[Quad::BottomLeft].y(),
+                0.0f);
+      Point2f nearPlaneRight = observedPose *
+        Point3f(frameInfo.groundplane[Quad::BottomRight].x(),
+                frameInfo.groundplane[Quad::BottomRight].y(),
+                0.0f);
+
+      const float kBorderDepth = 1.0f;
+      
+      // TODO reserve some quads in each vector (what makes sense?)
+      std::vector<Quad2f> visionQuadsClear;
+      std::vector<Quad2f> visionQuadsWithBorders;
+      for( const auto& chain : frameInfo.chains )
+      {
+
+        // debug render
+        if ( kDebugRenderOverheadEdges )
+        {
+//          VizManager* vizManager = _robot->GetContext()->GetVizManager();
+//          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", frameInfo.groundplane, 3.0f, NamedColors::CYAN, false);
           
-          // segments
-          bool colorSwitchValue = false;
-          const float zoffsetSegments = zoffset + 10.0f;
-          for( const auto& s : segments ) {
-            const Anki::ColorRGBA& color = colorSwitchValue ? NamedColors::ORANGE : NamedColors::BLUE;
-            _robot->GetContext()->GetVizManager()->DrawSegment("BlockWorld.AddVisionOverheadEdges", s.start, s.end, color, false, zoffsetSegments );
-            colorSwitchValue = !colorSwitchValue;
+          // renders every segment reported by vision
+          for (size_t i=0; i<chain.points.size()-1; ++i)
+          {
+            const float z = 4.0f;
+            Point3f start = EdgePointToPoint3f(chain.points[i], observedPose, z);
+            Point3f end   = EdgePointToPoint3f(chain.points[i+1], observedPose, z);
+            ColorRGBA color = ((i%2) == 0) ? NamedColors::YELLOW : NamedColors::ORANGE;
+            VizManager* vizManager = _robot->GetContext()->GetVizManager();
+            vizManager->DrawSegment("BlockWorld.AddVisionOverheadEdges", start, end, color, false);
           }
         }
+
+        ASSERT_NAMED(chain.points.size() > 2,"AddVisionOverheadEdges.ChainWithTooLittlePoints");
+        
+        // iterate the chain merging points together
+        Point3f segmentStart = EdgePointToPoint3f(chain.points[0], observedPose);
+        Point3f segmentEnd   = EdgePointToPoint3f(chain.points[1], observedPose);
+        Vec3f segmentNormal  = (segmentEnd-segmentStart);
+        segmentNormal.MakeUnitLength();
+        size_t curIdx = 2;
+        bool doneWithChain = false;
+        do
+        {
+          // epsilon to merge points into the same edge segment. If adding a point to a segment creates
+          // a deviation with respect to the first direction of the segment bigger than this epsilon,
+          // then the point will not be added to that segment
+          // cos(10deg) = 0.984807...
+          // cos(20deg) = 0.939692...
+          // cos(30deg) = 0.866025...
+          // cos(40deg) = 0.766044...
+          const float kDotBorderEpsilon = 0.7660f;
+        
+          // get candidate point to merge into previous segment
+          Point3f candidateEnd = EdgePointToPoint3f(chain.points[curIdx], observedPose);
+          Vec3f candidateNormal = candidateEnd - segmentEnd;
+          candidateNormal.MakeUnitLength();
+          
+          // check if can be merged
+          const float dotProduct = DotProduct(segmentNormal, candidateNormal);
+          bool canMergePoint = (dotProduct >= kDotBorderEpsilon); // if dotProduct is bigger, angle between is smaller
+          if ( canMergePoint )
+          {
+            // it can, advance to next
+            segmentEnd = candidateEnd;
+            segmentNormal = candidateNormal;
+          }
+          else
+          {
+            // can't merge the point, add current segment and restart
+            Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
+            bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
+            ASSERT_NAMED(success, "AddVisionOverheadEdges.FailedQuadClamp");
+            if ( success ) {
+              visionQuadsClear.emplace_back(clearQuad);
+            }
+            if ( chain.isBorder ) {
+              Vec3f segStartDepthDir = (segmentStart - cameraOrigin);
+              segStartDepthDir.MakeUnitLength();
+              Vec3f segEndDepthDir = (segmentEnd - cameraOrigin);
+              segEndDepthDir.MakeUnitLength();
+              // TL, BL, TR, BR
+              Quad2f borderQuad = { segmentStart + segStartDepthDir*kBorderDepth, segmentStart,
+                                    segmentEnd   + segEndDepthDir*kBorderDepth,   segmentEnd };
+              visionQuadsWithBorders.emplace_back(borderQuad);
+            }
+            
+            // restart
+            segmentStart = segmentEnd; // segmentEnd becomes the new start
+            segmentEnd = candidateEnd; // candidateEnd becomes the new end
+            segmentNormal = segmentEnd-segmentStart;
+            segmentNormal.MakeUnitLength();
+          }
+          
+          // we are done if this point is the last one
+          doneWithChain = (curIdx == chain.points.size()-1);
+          if ( doneWithChain )
+          {
+            Quad2f clearQuad = { segmentStart, cameraOrigin, segmentEnd, cameraOrigin }; // TL, BL, TR, BR
+            bool success = GroundPlaneROI::ClampQuad(clearQuad, nearPlaneLeft, nearPlaneRight);
+            ASSERT_NAMED(success, "AddVisionOverheadEdges.FailedQuadClamp");
+            if ( success ) {
+              visionQuadsClear.emplace_back(clearQuad);
+            }
+            if ( chain.isBorder ) {
+              Vec3f segStartDepthDir = (segmentStart - cameraOrigin);
+              segStartDepthDir.MakeUnitLength();
+              Vec3f segEndDepthDir = (segmentEnd - cameraOrigin);
+              segEndDepthDir.MakeUnitLength();
+              // TL, BL, TR, BR
+              Quad2f borderQuad = { segmentStart + segStartDepthDir*kBorderDepth, segmentStart,
+                                    segmentEnd   + segEndDepthDir*kBorderDepth,   segmentEnd };
+              visionQuadsWithBorders.emplace_back(borderQuad);
+            }
+          }
+          else
+          {
+            // not done, move to next point
+            ++curIdx;
+          }
+          
+        } while (!doneWithChain);
       }
-    
-      return RESULT_FAIL;
+      
+      // send quads to memory map
+      for ( const auto& clearQuad2D : visionQuadsClear )
+      {
+        if ( kDebugRenderOverheadEdges )
+        {
+          ColorRGBA color = Anki::NamedColors::GREEN;
+          const float z = 2.0f;
+          VizManager* vizManager = _robot->GetContext()->GetVizManager();
+          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", clearQuad2D, z, color, false);
+        }
+
+        // add clear info to map
+        if ( currentNavMemoryMap ) {
+          currentNavMemoryMap->AddQuad(clearQuad2D, INavMemoryMap::EContentType::ClearOfObstacle);
+        }
+      }
+      
+      // send quads to memory map
+      for ( const auto& borderQuad2D : visionQuadsWithBorders )
+      {
+        if ( kDebugRenderOverheadEdges )
+        {
+          ColorRGBA color = Anki::NamedColors::BLUE;
+          const float z = 2.0f;
+          VizManager* vizManager = _robot->GetContext()->GetVizManager();
+          vizManager->DrawQuadAsSegments("BlockWorld.AddVisionOverheadEdges", borderQuad2D, z, color, false);
+        }
+      
+        // add interesting edge
+        if ( currentNavMemoryMap ) {
+          currentNavMemoryMap->AddQuad(borderQuad2D, INavMemoryMap::EContentType::InterestingEdge);
+        }
+      }
+      
+      return RESULT_OK;
     }
   
     void BlockWorld::RemoveMarkersWithinMarkers(PoseKeyObsMarkerMap_t& currentObsMarkers)

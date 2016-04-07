@@ -14,17 +14,18 @@
 #ifndef __Cozmo_Basestation_MoodSystem_MoodManager_H__
 #define __Cozmo_Basestation_MoodSystem_MoodManager_H__
 
-
+#include "anki/common/types.h"
 #include "anki/cozmo/basestation/moodSystem/emotion.h"
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
-#include "clad/types/simpleMoodTypes.h"
 #include "clad/types/emotionTypes.h"
+#include "clad/types/simpleMoodTypes.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
+#include "util/signals/simpleSignal.hpp"
 #include <assert.h>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
-
 
 namespace Anki {
 namespace Cozmo {
@@ -82,6 +83,12 @@ public:
                      const char* uniqueIdString, double currentTimeInSeconds);
   
   void SetEmotion(EmotionType emotionType, float value); // directly set the value e.g. for debugging
+
+  // This manager internally listens for ActionCompleted events from the robot, and can use those to trigger
+  // emotion events. By default, it listens for any actions that complete, but this function can be used to
+  // enable or disable listening for specific actions
+  void SetEnableMoodEventOnCompletion(u32 actionTag, bool enable);
+
   
   // ==================== GetEmotion... ====================
 
@@ -102,8 +109,9 @@ public:
   double GetLastUpdateTime() const { return _lastUpdateTime; }
   
   // ==================== Event/Message Handling ====================
-  
-  void HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  // Handle various message types
+  template<typename T>
+  void HandleMessage(const T& msg);
   
   void SendEmotionsToGame();
 
@@ -138,6 +146,9 @@ private:
     assert((index >= 0) && (index < (size_t)EmotionType::Count));
     return _emotions[index];
   }
+
+  void LoadActionCompletedEventMap(const Json::Value& inJson);
+  void PrintActionCompletedEventMap() const;
   
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( void AddEvent(const char* eventName) );
     
@@ -148,6 +159,14 @@ private:
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( std::vector<std::string> _eventNames; )
   Robot*          _robot;
   double          _lastUpdateTime;
+
+  // maps from action type -> action result -> emotion event
+  using ActionCompletedEventMap = std::map< std::string, std::map< std::string, std::string > >;
+  ActionCompletedEventMap _actionCompletedEventMap;
+
+  std::set< u32 > _actionsTagsToIgnore;
+  
+  std::vector<Signal::SmartHandle> _signalHandles;
 };
   
 

@@ -1,25 +1,28 @@
 #ifndef __RNG_H
 #define __RNG_H
 
+#include "aes.h"
 #include "bignum.h"
 
+#ifndef MAX
+#define MAX(x,y) ((x < y) ? (y) : (x))
+#endif
+
 static const int MAX_CRYPTO_TASKS = 4;
-static const int AES_KEY_LENGTH = 16;
-static const int AES_BLOCK_LENGTH = 16;
-static const int SECRET_LENGTH = 16;
+static const int SECRET_LENGTH = AES_BLOCK_LENGTH;
 
 enum CryptoOperation {
+  // Generate random number
   CRYPTO_GENERATE_RANDOM,
-  CRYPTO_AES_ENCRYPT,
-  CRYPTO_AES_DECRYPT,
+  
+  // AES CFB block mode stuff
+  CRYPTO_ECB,
+  CRYPTO_AES_DECODE,
+  CRYPTO_AES_ENCODE,
+  
+  // Pin code stuff
   CRYPTO_START_DIFFIE_HELLMAN,
   CRYPTO_FINISH_DIFFIE_HELLMAN
-};
-
-struct ecb_data_t {
-  uint8_t key[AES_KEY_LENGTH];
-  uint8_t cleartext[AES_BLOCK_LENGTH];
-  uint8_t ciphertext[AES_BLOCK_LENGTH];
 };
 
 struct DiffieHellman {
@@ -28,26 +31,27 @@ struct DiffieHellman {
   const big_num_t*  gen;
   
   int               pin;
-  uint8_t           secret[SECRET_LENGTH];
-
+  uint8_t           local_secret[MAX(SECRET_LENGTH, AES_KEY_LENGTH)];
+  uint8_t           remote_secret[MAX(SECRET_LENGTH, AES_KEY_LENGTH)];
+  uint8_t           encoded_key[AES_KEY_LENGTH];
+  
   big_num_t         state;
 };
 
-typedef void (*crypto_callback)(struct CryptoTask*);
+typedef void (*crypto_callback)(const void *state);
 
 struct CryptoTask {
-	CryptoOperation op;
-	crypto_callback callback;
-	const void *input;
-	void *output;
-	int	 length;
+  CryptoOperation op;
+  crypto_callback callback;
+  const void *state;
+  int* length;
 };
 
 namespace Crypto {
   void init();
   void manage();
   void random(void* data, int length);
-	void execute(const CryptoTask* task);
+  void execute(const CryptoTask* task);
 }
 
 #endif

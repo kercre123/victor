@@ -22,7 +22,6 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -117,12 +116,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     auto computeCameraCalibrationCallback = std::bind(&RobotEventHandler::HandleComputeCameraCalibration, this, std::placeholders::_1);
     _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ComputeCameraCalibration, computeCameraCalibrationCallback));
     
-    // Custom handlers for Mood events
-    {
-      auto moodEventCallback = std::bind(&RobotEventHandler::HandleMoodEvent, this, std::placeholders::_1);
-      _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::MoodMessage, moodEventCallback));
-    }
-
     // Custom handlers for Progression events
     {
       auto progressionEventCallback = std::bind(&RobotEventHandler::HandleProgressionEvent, this, std::placeholders::_1);
@@ -889,41 +882,23 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
   robot->GetAnimationStreamer().GetLastProceduralFace()->SetFromMessage(msg);
 }
   
-  void RobotEventHandler::HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-  {
-    RobotID_t robotID = event.GetData().Get_ForceDelocalizeRobot().robotID;
+void RobotEventHandler::HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  RobotID_t robotID = event.GetData().Get_ForceDelocalizeRobot().robotID;
 
-    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
     
-    // We need a robot
-    if (nullptr == robot) {
-      PRINT_NAMED_WARNING("RobotEventHandler.HandleForceDelocalizeRobot.InvalidRobotID",
+  // We need a robot
+  if (nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleForceDelocalizeRobot.InvalidRobotID",
                         "Failed to find robot %d to delocalize.", robotID);
       
       
-    } else {
-      PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.ForceDelocalize",
-                       "Forcibly delocalizing robot %d", robotID);
+  } else {
+    PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.ForceDelocalize",
+                     "Forcibly delocalizing robot %d", robotID);
       
-      robot->Delocalize();
-    }
-  }
-  
-void RobotEventHandler::HandleMoodEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-{
-  const auto& eventData = event.GetData();
-  const RobotID_t robotID = eventData.Get_MoodMessage().robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleMoodEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
-  }
-  else
-  {
-    robot->GetMoodManager().HandleEvent(event);
+    robot->Delocalize();
   }
 }
   

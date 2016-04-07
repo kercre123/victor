@@ -14,7 +14,6 @@
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/robot.h"
-
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 
@@ -73,7 +72,7 @@ namespace Anki {
         }
         case QueueActionPosition::IN_PARALLEL:
         {
-          if(AddConcurrentAction(action, numRetries) == -1);
+          if(AddConcurrentAction(action, numRetries) == -1)
           {
             result = RESULT_FAIL;
           }
@@ -183,7 +182,11 @@ namespace Anki {
       
       for(auto queueIter = _queues.begin(); queueIter != _queues.end(); )
       {
-        lastResult = queueIter->second.Update();
+        Result thisResult = queueIter->second.Update();
+        if( lastResult == RESULT_OK ) {
+          // lastResult will be either the first failure, or OK
+          lastResult = thisResult;
+        }
         
         // If the queue is complete, remove it
         if(queueIter->second.IsEmpty()) {

@@ -279,7 +279,7 @@ void AudioServer::PerformCallback( ConnectionIdType connectionId,
 void AudioServer::RegisterCladGameObjectsWithAudioController()
 {
   // Enumerate through GameObjectType Enums
-  for ( uint32_t aGameObj = static_cast<uint32_t>(GameObjectType::Default);
+  for ( uint32_t aGameObj = static_cast<AudioGameObject>(GameObjectType::Default);
         aGameObj < static_cast<uint32_t>(GameObjectType::End);
         ++aGameObj) {
     // Register GameObjectType

@@ -274,7 +274,7 @@ Cost xythetaPlannerImpl::ExpandCollisionStatesFromGoal()
                          heurExpansions,
                          numEscapes,
                          minCostOutside,
-                         _heurMap.size());
+                         (unsigned long)_heurMap.size());
         return minCostOutside;
       }
 
@@ -577,7 +577,7 @@ void xythetaPlannerImpl::BuildPlan()
 
   _plan.start_ = _start;
 
-  PRINT_NAMED_INFO("xythetaPlanner.BuildPlan", "Created plan of length %lu", _plan.actions_.size());
+  PRINT_NAMED_INFO("xythetaPlanner.BuildPlan", "Created plan of length %lu", (unsigned long)_plan.actions_.size());
 }
 
 void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)

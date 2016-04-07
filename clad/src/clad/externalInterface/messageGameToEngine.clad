@@ -16,6 +16,7 @@
 #include "clad/types/progressionStatTypes.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
+#include "clad/types/unlockTypes.clad"
 #include "clad/types/controllerChannels.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/messageToBehaviorManager.clad"
@@ -54,6 +55,12 @@ message ForceAddRobot {
 // StartEngine
 // Tell the engine to start running.
 message StartEngine {
+}
+
+// UpdateFirmware
+// Tell the engine to start updating the robot firmware to specific version
+message UpdateFirmware {
+  int_32 version
 }
 
 // DriveWheels
@@ -440,6 +447,12 @@ message SetOwnerFace {
 message AssignNameToFace {
   int_32 faceID,
   string name
+}
+
+message PrepareFaceNameAnimation {
+  int_32 faceID,
+  string name
+  // Add playback properties: length, pitch, etc.
 }
 
 // Start / stop face enrollment
@@ -844,6 +857,11 @@ message ProgressionMessage {
   ProgressionMessageUnion  ProgressionMessageUnion
 }
 
+// Progression unlocks
+message RequestSetUnlock {
+  UnlockId unlockID,
+  bool unlocked
+}
 
 // Debug console set
 message SetDebugConsoleVarMessage {

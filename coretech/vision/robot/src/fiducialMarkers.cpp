@@ -1092,6 +1092,8 @@ namespace Anki
                                        const s32 quads_minQuadArea,
                                        const s32 quads_quadSymmetryThreshold,
                                        const s32 quads_minDistanceFromImageEdge,
+                                       const Point<f32>& fiducialThicknessFraction,
+                                       const Point<f32>& roundedCornersFraction,
                                        u8 &meanGrayvalueThreshold,
                                        MemoryStack scratch)
     {
@@ -1125,7 +1127,8 @@ namespace Anki
             initQuad,
             initHomography,
             image,
-            FIDUCIAL_SQUARE_THICKNESS_FRACTION,
+            fiducialThicknessFraction,
+            roundedCornersFraction,
             refine_quadRefinementIterations,
             darkValue,
             brightValue,

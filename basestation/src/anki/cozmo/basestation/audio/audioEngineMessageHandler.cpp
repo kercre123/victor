@@ -25,7 +25,7 @@ void AudioEngineMessageHandler::Broadcast( const MessageAudioClient& message)
 
 Signal::SmartHandle AudioEngineMessageHandler::Subscribe(const MessageAudioClientTag& tagType, std::function<void(const AnkiEvent<MessageAudioClient>&)> messageHandler)
 {
-  return _eventMgr.Subcribe( static_cast<uint32_t>(tagType), messageHandler );
+  return _eventMgr.Subscribe( static_cast<uint32_t>(tagType), messageHandler );
 }
 
   

@@ -72,8 +72,8 @@ namespace Anki
       // Adds a cliff (detected with cliff detector)
       Result AddCliff(const Pose3d& p);
       
-      // Adds the given edges detected by the vision system to the world
-      Result AddVisionOverheadEdges(const OverheadEdgeVector& edges);
+      // Processes the edges found in the given frame
+      Result ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
       
       // Adds a light cube object with the specified activeID and factoryID at
       // an unknown pose. To be used when the cube first comes into radio contact.
@@ -343,6 +343,13 @@ namespace Anki
                                          bool returnFirstFound = false) const;
       
       void SetupEventHandlers(IExternalInterface& externalInterface);
+      
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      // Vision border detection
+      // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+      
+      // adds edges from the given frame to the world info
+      Result AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
       
       //
       // Member Variables

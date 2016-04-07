@@ -527,7 +527,8 @@ namespace Cozmo {
       // image plane
       const Matrix_3x3f H = K*Matrix_3x3f{R.GetColumn(0),R.GetColumn(1),T};
       
-      Quad2f imgQuad = groundPlaneROI.GetImageQuad(H);
+      Quad2f imgQuad;
+      groundPlaneROI.GetImageQuad(H, _camCalib.GetNcols(), _camCalib.GetNrows(), imgQuad);
       
       if(_camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::TopLeft]) ||
          _camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::BottomLeft]))
@@ -941,13 +942,11 @@ namespace Cozmo {
   {
     if(_visionSystem != nullptr)
     {
-      OverheadEdgeVector edgeChainVector;
-      OverheadEdgePointChain edgeChain;
-      while(true == _visionSystem->CheckMailbox(edgeChain))
+      OverheadEdgeFrame edgeFrame;
+      while(true == _visionSystem->CheckMailbox(edgeFrame))
       {
-        edgeChainVector.emplace_back( std::move(edgeChain) ); // warning moving local variable
-      }
-      _robot.GetBlockWorld().AddVisionOverheadEdges(edgeChainVector);
+        _robot.GetBlockWorld().ProcessVisionOverheadEdges(edgeFrame);
+      }      
     }
     return RESULT_OK;
   }
@@ -961,7 +960,8 @@ namespace Cozmo {
       
       const GroundPlaneROI& roi = poseData.groundPlaneROI;
       
-      Quad2f imgGroundQuad = roi.GetImageQuad(H);
+      Quad2f imgGroundQuad;
+      roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), imgGroundQuad);
       
       static Vision::ImageRGB overheadMap(1000.f, 1000.f);
       

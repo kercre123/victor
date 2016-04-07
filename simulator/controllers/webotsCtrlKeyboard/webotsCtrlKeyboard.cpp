@@ -8,34 +8,35 @@
 
 #include "webotsCtrlKeyboard.h"
 
-#include <opencv2/imgproc/imgproc.hpp>
-#include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "anki/common/basestation/math/pose.h"
-#include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/colorRGBA.h"
-#include "anki/vision/basestation/image.h"
+#include "anki/common/basestation/math/point_impl.h"
+#include "anki/common/basestation/math/pose.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserTypesHelpers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
+#include "anki/cozmo/basestation/block.h"
+#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/moodSystem/emotionTypesHelpers.h"
-#include "anki/cozmo/basestation/block.h"
-#include "util/logging/printfLoggerProvider.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
+#include "anki/vision/basestation/image.h"
 #include "clad/types/actionTypes.h"
-#include "clad/types/proceduralEyeParameters.h"
-#include "clad/types/ledTypes.h"
 #include "clad/types/activeObjectTypes.h"
-#include "clad/types/demoBehaviorState.h"
-#include "clad/types/behaviorType.h"
 #include "clad/types/behaviorChooserType.h"
+#include "clad/types/behaviorType.h"
+#include "clad/types/demoBehaviorState.h"
+#include "clad/types/ledTypes.h"
+#include "clad/types/proceduralEyeParameters.h"
+#include "util/logging/printfLoggerProvider.h"
+#include <fstream>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
 #include <string.h>
-#include <fstream>
-#include <webots/ImageRef.hpp>
+#include <webots/Compass.hpp>
 #include <webots/Display.hpp>
 #include <webots/GPS.hpp>
-#include <webots/Compass.hpp>
+#include <webots/ImageRef.hpp>
 
 
 namespace Anki {
@@ -254,7 +255,9 @@ namespace Anki {
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Shift+Alt+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
-        printf("    Respond 'no' to game request:  n\n");
+        printf("       unlock progression unlock:  n\n");
+        printf("         lock progression unlock:  Shift+n\n");
+        printf("    Respond 'no' to game request:  Alt+n\n");
         printf("        Quit keyboard controller:  Shift+Alt+x\n");
         printf("                      Print help:  ?\n");
         printf("\n");
@@ -1704,7 +1707,28 @@ namespace Anki {
 
               case (s32)'N':
               {
-                SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DenyGameStart()));
+                if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::DenyGameStart()));
+                }
+                else {
+                  webots::Field* unlockNameField = root_->getField("unlockName");
+                  if (unlockNameField == nullptr) {
+                    printf("ERROR: No unlockNameField field found in WebotsKeyboardController.proto\n");
+                    break;
+                  }
+                
+                  std::string unlockName = unlockNameField->getSFString();
+                  if (unlockName.empty()) {
+                    printf("ERROR: unlockName field is empty\n");
+                    break;
+                  }
+
+                  UnlockId unlock = UnlockIdsFromString(unlockName.c_str());
+                  bool val = ! ( modifier_key & webots::Supervisor::KEYBOARD_SHIFT );
+                  SendMessage( ExternalInterface::MessageGameToEngine(
+                                 ExternalInterface::RequestSetUnlock(unlock, val)));
+
+                }
                 break;
               }
                 

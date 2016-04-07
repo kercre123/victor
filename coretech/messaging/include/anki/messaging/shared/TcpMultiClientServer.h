@@ -20,6 +20,7 @@
 #include <thread>
 #include <mutex>
 #include <sys/socket.h> // Needed for the socket functions
+#include <sys/select.h>
 
 class TcpMultiClientServer {
 public:

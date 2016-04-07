@@ -96,7 +96,7 @@ namespace Cozmo {
     if(msg.paramNames.size() != msg.paramValues.size()) {
       PRINT_NAMED_ERROR("AnimationStreamer.HandleSetLiveAnimationParameter.MismatchedLengths",
                         "ParamNames and ParamValues not the same length (%lu & %lu)\n",
-                        msg.paramNames.size(), msg.paramValues.size());
+                        (unsigned long)msg.paramNames.size(), (unsigned long)msg.paramValues.size());
     } else {
       
       if(msg.setUnspecifiedToDefault) {
@@ -155,7 +155,7 @@ namespace Cozmo {
     } else {
       PRINT_NAMED_ERROR("HasSettableParameters.SetParamsFromJson.UnusedParams",
                         "%lu members in Json went unused.",
-                        json.size() - numFound);
+                        (unsigned long)(json.size() - numFound));
       return RESULT_FAIL;
     }
   }

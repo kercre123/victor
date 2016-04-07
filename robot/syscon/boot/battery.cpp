@@ -14,6 +14,12 @@ static inline void startADCsample(AnalogInput channel)
   NRF_ADC->TASKS_START = 1;
 }
 
+static inline void kickDog() {
+  for (int channel = 0; channel < 8; channel++) {
+    NRF_WDT->RR[channel] = WDT_RR_RR_Reload;
+  }
+}
+
 void Battery::init()
 {
   // Configure the analog sense pins
@@ -58,7 +64,6 @@ int32_t Battery::read(void) {
   uint32_t value = NRF_ADC->RESULT;
 
   startADCsample(ANALOG_V_EXT_SENSE);
-  int32_t temp = VEXT_CONTACT_LEVEL;
 
   return value;
 }
@@ -66,6 +71,8 @@ int32_t Battery::read(void) {
 void Battery::manage(void) {
   static int ground_short = 0;
   
+  kickDog();
+
   int32_t value = read();
     
   if (value < 0x30) {

@@ -42,20 +42,32 @@
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/include',
     ],
 
+    'routing_http_server_libs': [
+      'librouting_http_server.a',
+    ],
+
+    'routing_http_server_include': [
+      '<(coretech_external_path)/routing_http_server/generated/include',
+    ],
+
     'cte_lib_search_path_mac_debug': [
+    '<(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release', # NOTE WE USE RELEASE HERE INTENTIONALLY
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Debug',
     ],
 
     'cte_lib_search_path_mac_release': [
+    '<(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release', # NOTE WE USE RELEASE HERE INTENTIONALLY
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Release',
     ],
 
     'cte_lib_search_path_ios_debug': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
+      '<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos', # NOTE WE USE RELEASE HERE INTENTIONALLY
     ],
 
     'cte_lib_search_path_ios_release': [
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
+      '<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos', # NOTE WE USE RELEASE HERE INTENTIONALLY
     ],
 
     'flite_includes':[
@@ -146,9 +158,11 @@
       }],
       ['OS=="android"', {
         'target_archs%': ['armveabi-v7a'],
+        'target_cpu': ['arm'],
         'compiler_flags': [
           '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
           '-DANDROID=1',
+          '-D__ARM_NEON=1',
           '-gcc-toolchain', '<(ndk_root)/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64',
           '-fpic',
           '-ffunction-sections',
@@ -352,6 +366,7 @@
       {
         'defines': [
           'ANDROID=1',
+          '__ARM_NEON=1',
         ],
       },
     ],
@@ -551,7 +566,8 @@
             'include_dirs': [
               '<@(opencv_includes)',
               '<@(webots_includes)', # After opencv!
-              '<@(flite_includes)'
+              '<@(flite_includes)',
+              '<@(routing_http_server_include)',
             ],
             'dependencies': [
               'cozmoEngine',
@@ -574,6 +590,7 @@
               '<@(flite_libs)',
               '<@(opencv_libs)',
               '<@(face_library_libs)',
+              '<@(routing_http_server_libs)',
             ],
 
               
@@ -1277,12 +1294,15 @@
       'include_dirs': [
         '../../basestation/src',
         '../../basestation/include',
+        '../../basestation/include/anki/cozmo/basestation',
+        '../../basestation/include/anki/cozmo/basestation/actions',
         '../../include',
         '../../robot/include',
         '../../generated/clad/engine',
         '<@(opencv_includes)',
         '<@(pocketsphinx_includes)',
         '<@(flite_includes)',
+        '<@(routing_http_server_include)',
         '../../cozmoAPI/src',
         '../../cozmoAPI/include',
         '../../generated/clad/game',
@@ -1324,6 +1344,7 @@
               '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
               '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
               '<@(flite_libs)',
+              '<@(routing_http_server_libs)',
             ],
           },
         ],

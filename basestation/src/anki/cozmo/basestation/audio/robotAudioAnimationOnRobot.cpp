@@ -235,7 +235,7 @@ void RobotAudioAnimationOnRobot::PrepareAnimation()
 bool RobotAudioAnimationOnRobot::IsAnimationDone() const
 {
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimation::AllAnimationsPlayed", "eventCount: %lu  eventIdx: %d  completedCount: %d  hasAudioBufferStream: %d", _animationEvents.size(), GetEventIndex(), GetCompletedEventCount(), _audioBuffer->HasAudioBufferStream());
+    PRINT_NAMED_INFO("RobotAudioAnimation::AllAnimationsPlayed", "eventCount: %lu  eventIdx: %d  completedCount: %d  hasAudioBufferStream: %d", (unsigned long)_animationEvents.size(), GetEventIndex(), GetCompletedEventCount(), _audioBuffer->HasAudioBufferStream());
   }
   
   // Compare completed event count with number of events

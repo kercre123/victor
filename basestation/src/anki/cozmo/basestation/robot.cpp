@@ -35,7 +35,6 @@
 #include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/soundManager.h"    // TODO: REMOVE ME
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
@@ -43,6 +42,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/vision/basestation/visionMarker.h"
@@ -97,6 +97,7 @@ namespace Anki {
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
+    , _isBehaviorMgrEnabled(false)
     , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimations())
     , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
     , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
@@ -109,6 +110,7 @@ namespace Anki {
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
+    , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
     , _blockFilter(new BlockFilter(this))
     , _imageDeChunker(new ImageDeChunker())
     , _traceHandler(_context->GetDataPlatform())
@@ -143,10 +145,6 @@ namespace Anki {
 
       if (_context->GetDataPlatform() != nullptr)
       {
-        if (USE_SOUND_MANAGER_FOR_ROBOT_AUDIO)
-        {
-          SoundManager::getInstance()->LoadSounds(_context->GetDataPlatform());
-        }
         FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
       }
       
@@ -182,6 +180,26 @@ namespace Anki {
         
         LoadEmotionEvents();
       }
+
+      // Read in progression unlock config
+      if (nullptr != _context->GetDataPlatform())
+      {
+        Json::Value progressionUnlockConfig;
+        std::string jsonFilename = "config/basestation/config/unlock_config.json";
+        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                               jsonFilename,
+                                                               progressionUnlockConfig);
+        if (!success)
+        {
+          PRINT_NAMED_ERROR("Robot.UnlockConfigJsonNotFound",
+                            "Progression unlock Json config file %s not found.",
+                            jsonFilename.c_str());
+        }
+        
+        _progressionUnlockComponent->Init(progressionUnlockConfig);
+        _progressionUnlockComponent->SendUnlockStatus();
+      }
+      
       
       LoadBehaviors();
       
@@ -231,6 +249,7 @@ namespace Anki {
       Util::SafeDelete(_shortMinAnglePathPlanner);
       Util::SafeDelete(_moodManager);
       Util::SafeDelete(_progressionManager);
+      Util::SafeDelete(_progressionUnlockComponent);
       Util::SafeDelete(_blockFilter);
 
       _selectedPathPlanner = nullptr;
@@ -305,7 +324,7 @@ namespace Anki {
                                          "LocalizedTo: <nothing>");
       GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
-                                         _poseOrigins.size(),
+                                         (unsigned long)_poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
       
       // create a new memory map for this origin
@@ -358,7 +377,7 @@ namespace Anki {
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
       GetContext()->GetVizManager()->SetText(VizManager::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
-                                         _poseOrigins.size(),
+                                         (unsigned long)_poseOrigins.size(),
                                          _worldOrigin->GetName().c_str());
       
       return RESULT_OK;
@@ -797,6 +816,7 @@ namespace Anki {
       _moodManager->Update(currentTime);
       
       _progressionManager->Update(currentTime);
+      _progressionUnlockComponent->Update();
       
       const char* behaviorChooserName = "";
       std::string behaviorDebugStr("<disabled>");
@@ -833,9 +853,8 @@ namespace Anki {
       //////// Update Robot's State Machine /////////////
       Result actionResult = _actionList.Update();
       if(actionResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("Robot.Update", "Robot %d had an action fail.", GetID());
-      }
-        
+        PRINT_NAMED_INFO("Robot.Update", "Robot %d had an action fail.", GetID());
+      }        
       //////// Stream Animations /////////
       if(_timeSynced) { // Don't stream anything before we've connected
         Result animStreamResult = _animationStreamer.Update(*this);
@@ -1002,14 +1021,15 @@ namespace Anki {
       // So we can have an arbitrary number of data here that is likely to change want just hash it all
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
-               "r:%c%c%c%c lock:%c%c%c %2dHz %s ",
+               "r:%c%c%c%c <%8s> %2dHz %s ",
                GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
                GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
                GetMoveComponent().IsMoving() ? 'B' : ' ',
                IsCarryingObject() ? 'C' : ' ',
-               _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
-               _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
-               _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
+               SimpleMoodTypeToString(GetMoodManager().GetSimpleMood()),
+               // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
+               // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
+               // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
                (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
                behaviorDebugStr.c_str());
       
@@ -1457,13 +1477,14 @@ namespace Anki {
             const bool success = _context->GetDataPlatform()->readAsJson(fullFileName, behaviorJson);
             if (success && !behaviorJson.empty())
             {
-              //PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
+              // PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
               _behaviorMgr.LoadBehaviorFromJson(behaviorJson);
             }
-            else
+            else if( ! success )
             {
               PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read '%s'", fullFileName.c_str());
             }
+            // don't print anything if we read an empty json
           }
         }
       }
@@ -2958,7 +2979,7 @@ namespace Anki {
         
         // Check if there is still space in the message
         if (msg.factory_id.size() >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
-          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", factory_ids.size());
+          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", (unsigned long)factory_ids.size());
           return RESULT_FAIL;
         }
         
@@ -2978,7 +2999,7 @@ namespace Anki {
         }
 
         msg.factory_id.push_back(fid);
-        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x (slot %lu)", fid, msg.factory_id.size());
+        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x (slot %lu)", fid, (unsigned long)msg.factory_id.size());
         
         if (isCharger) {
           objectsSelectedMask |= 0x80000000;
@@ -2992,7 +3013,7 @@ namespace Anki {
       _blockWorld.ClearObjectsByFamily(ObjectFamily::LightCube);
       _blockWorld.ClearObjectsByFamily(ObjectFamily::Charger);
       
-      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %lu", msg.factory_id.size());
+      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %lu", (unsigned long)msg.factory_id.size());
       return SendMessage(RobotInterface::EngineToRobot(CubeSlots(msg)));
       
     }
@@ -3006,7 +3027,7 @@ namespace Anki {
       
     Robot::ReactionCallbackIter Robot::AddReactionCallback(const Vision::Marker::Code code, ReactionCallback callback)
     {
-      //CoreTechPrint("_reactionCallbacks size = %lu\n", _reactionCallbacks.size());
+      //CoreTechPrint("_reactionCallbacks size = %lu\n", (unsigned long)_reactionCallbacks.size());
       
       _reactionCallbacks[code].emplace_front(callback);
       

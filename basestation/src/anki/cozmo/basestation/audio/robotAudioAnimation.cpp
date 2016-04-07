@@ -115,7 +115,7 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
              [] (const AnimationEvent& lhs, const AnimationEvent& rhs) { return lhs.TimeInMS < rhs.TimeInMS; } );
   
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimation::LoadAnimation", "Audio Events Size: %lu - Enter", _animationEvents.size());
+    PRINT_NAMED_INFO("RobotAudioAnimation::LoadAnimation", "Audio Events Size: %lu - Enter", (unsigned long)_animationEvents.size());
     for (size_t idx = 0; idx < _animationEvents.size(); ++idx ) {
       PRINT_NAMED_INFO("RobotAudioAnimation::LoadAnimation", "Event Id: %d AudioEvent: %d TimeInMS: %d", _animationEvents[idx].EventId, _animationEvents[idx].AudioEvent, _animationEvents[idx].TimeInMS);
     }

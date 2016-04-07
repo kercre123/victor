@@ -5,8 +5,15 @@ namespace Cozmo {
 namespace Audio {
 namespace GameEvent {
 
+enum uint_32 DevDevice
+{
+  ExternalSource = 1611831138,
+  Invalid = 0,  // Use this to check for Invalid events
+}
+
 enum uint_32 DevRobot
 {
+  ExternalSource = 1386228553,
   FreqSweep = 2813811606,
   Invalid = 0,  // Use this to check for Invalid events
   PinkNoise_1Sec = 594803606,
@@ -19,6 +26,7 @@ enum uint_32 DevRobot
 
 enum uint_32 EventGroupType
 {
+  DevDevice,
   DevRobot,
   GenericEvent,
   Music,
@@ -30,6 +38,8 @@ enum uint_32 EventGroupType
 
 enum uint_32 GenericEvent
 {
+  Dev_External_Device_Play = 1611831138,
+  Dev_External_Play = 1386228553,
   Dev_Robot_Freq_Sweep_Play = 2813811606,
   Dev_Robot_Pink_1Sec_Play = 594803606,
   Dev_Robot_Pink_5Sec_Play = 3129383074,
@@ -54,7 +64,9 @@ enum uint_32 GenericEvent
   Sfx_Gp_St_Cube_Cozmo_Tap_Play = 4150826906,
   Sfx_Gp_St_Lightup_Play = 3029762013,
   Sfx_Gp_St_Lose_Play = 3132723231,
+  Sfx_Gp_St_Tap_Red_Play = 2305458725,
   Sfx_Gp_St_Win_Play = 2930798326,
+  Sfx_Placeholder_Play = 1074988205,
   Sfx_Srcn_Angry_Play = 2970495120,
   Sfx_Srcn_Angry_Short_Play = 675033713,
   Sfx_Srcn_Curious_Play = 2929357367,
@@ -89,6 +101,7 @@ enum uint_32 GenericEvent
   Sfx_Ui_Shared_Win_Play = 790005487,
   Sfx_Ui_Window_Close_Play = 945548936,
   Sfx_Ui_Window_Open_Play = 1425451874,
+  Vo_Coz_External_Play = 3049878514,
   Vo_Coz_Gp_Shared_Fakeout_Play = 2145308968,
   Vo_Coz_Gp_Shared_Lose_Level1_Play = 1274627492,
   Vo_Coz_Gp_Shared_Lose_Level2_Play = 2780324953,
@@ -117,9 +130,18 @@ enum uint_32 GenericEvent
   Vo_Coz_Names_Hanns_Play = 1495436810,
   Vo_Coz_Names_Mark_Play = 3817785349,
   Vo_Coz_Placeholder_Play = 1720370564,
+  Vo_Coz_React_Cliff_Play = 2113972887,
+  Vo_Coz_See_Cube_First_Play = 2830862605,
+  Vo_Coz_Shared_Align_Frustrated_Lp_Play = 1590494918,
+  Vo_Coz_Shared_Align_Happy_Lp_Play = 2922294162,
+  Vo_Coz_Shared_Align_Lp_Stop = 4023782391,
+  Vo_Coz_Shared_Angry_Long_Play = 979595827,
+  Vo_Coz_Shared_Angry_Short_Play = 2394635367,
+  Vo_Coz_Shared_Curious_Play = 2080538209,
   Vo_Coz_Shared_Effort_Lift_Play = 2460792037,
   Vo_Coz_Shared_Excited_Play = 2632256753,
   Vo_Coz_Shared_Fussy_Play = 566465057,
+  Vo_Coz_Shared_Giggle_Mischief_Play = 397975633,
   Vo_Coz_Shared_Happy_Play = 201496157,
   Vo_Coz_Shared_Idea_Play = 1539283944,
   Vo_Coz_Shared_Raspberry_Play = 2795241433,
@@ -128,10 +150,13 @@ enum uint_32 GenericEvent
   Vo_Coz_Shared_React_To_Face3_Play = 715610799,
   Vo_Coz_Shared_React_To_Face4_Play = 4168344386,
   Vo_Coz_Shared_React_To_Face_Play = 120601544,
+  Vo_Coz_Shared_Sad_Long_Play = 671078736,
   Vo_Coz_Shared_Sad_Play = 3608646555,
   Vo_Coz_Shared_Snore_Play = 4264057356,
+  Vo_Coz_Shared_Surprised_Play = 1790597682,
   Vo_Coz_Shared_Wakeup_01_Play = 2791888938,
   Vo_Coz_Shared_Wakeup_02_Play = 3053926619,
+  Vo_Coz_Wakeup_Play = 1419359148,
   Vo_Coz_Word_Cube_Happy_Play = 1191391304,
   Vo_Coz_Word_Cube_Neutral_Play = 2400301061,
   Vo_Coz_Word_Cube_Sad_Play = 35990338,
@@ -158,6 +183,7 @@ enum uint_32 Robot
   EffortLift = 2460792037,
   EffortTap = 1227708849,
   Excited = 2632256753,
+  ExternalSource = 3049878514,
   Fussy = 566465057,
   Happy = 201496157,
   Idea = 1539283944,
@@ -170,11 +196,11 @@ enum uint_32 Robot
   NameCozmo_TEMP = 668936046,
   NameHanns_TEMP = 1495436810,
   NameMark_TEMP = 3817785349,
+  ReactCliff = 2113972887,
   ReactFace1 = 1544570445,
   ReactFace2 = 1241463592,
   ReactFace3 = 715610799,
   ReactFace4 = 4168344386,
-  Sad = 3608646555,
   ScreenAngry = 2970495120,
   ScreenAngryShort = 675033713,
   ScreenCurious = 2929357367,
@@ -185,6 +211,7 @@ enum uint_32 Robot
   ScreenSadShort = 2802070604,
   ScreenSurprised = 2745956824,
   ScreenSurprisedShort = 4045766953,
+  SeeCubeFirst = 2830862605,
   ServoAngry = 1524483935,
   ServoAngryShort = 2458788830,
   ServoCurious = 832775516,
@@ -195,6 +222,13 @@ enum uint_32 Robot
   ServoSadShort = 1279356523,
   ServoSurprised = 963363667,
   ServoSurprisedShort = 2913987754,
+  SharedAlignFrustrated_Loop = 1590494918,
+  SharedAlignHappy_Loop = 2922294162,
+  SharedAlign_LoopStop = 4023782391,
+  SharedAngryLong = 979595827,
+  SharedAngryShort = 2394635367,
+  SharedCurious = 2080538209,
+  SharedGiggleMischief = 397975633,
   SharedLoseGrowl = 2814534941,
   SharedLoseLookup = 1147134583,
   SharedLoseLookupSurprised = 2695653881,
@@ -206,13 +240,17 @@ enum uint_32 Robot
   SharedLoseThrowBlock = 4278599179,
   SharedRaspberry = 2795241433,
   SharedReactToFace = 120601544,
+  SharedSad = 3608646555,
+  SharedSadLong = 671078736,
+  SharedSnore = 4264057356,
+  SharedSurprised = 1790597682,
   SharedWinChaCha = 1405278772,
   SharedWinLaugh = 3313607831,
   SharedWinMedium = 3583968567,
   SharedWinShort = 1731815324,
   SharedWinShortWow = 2491294792,
-  Snore = 4264057356,
   Takeout = 2145308968,
+  WakeUp = 1419359148,
   WakeUp01 = 2791888938,
   WakeUp02 = 3053926619,
   Win1 = 1576554633,
@@ -230,6 +268,7 @@ enum uint_32 SFX
   CozmoDisconnect = 4253874560,
   CubeCozmoTap = 4150826906,
   DailyGoal = 2068868782,
+  Dev_Placeholder = 1074988205,
   GameEnd = 2512825307,
   GameSharedBlockConnect = 596005814,
   GameSharedEnd = 2780471356,
@@ -248,6 +287,7 @@ enum uint_32 SFX
   SimonLightYellow = 3420921906,
   SpeedTapLightup = 3029762013,
   SpeedTapLose = 3132723231,
+  SpeedTapRed = 2305458725,
   SpeedTapWin = 2930798326,
 }
 

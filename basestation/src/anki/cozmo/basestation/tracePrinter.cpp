@@ -177,7 +177,7 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
             case 'f':
             {
               fbuf[subFmtInd] = fmtPtr[subFmtInd];
-              fbuf[subFmtInd+1] = NULL;
+              fbuf[subFmtInd+1] = '\0';
               if (fmtPtr[subFmtInd] == 'f')
               {
                 const float fltArg = *(reinterpret_cast<const float*>(&trace.value[argInd]));
@@ -211,7 +211,7 @@ std::string TracePrinter::GetFormatted(const RobotInterface::PrintTrace& trace) 
           pbuf[index++] = *(fmtPtr++);
         }
       }
-      pbuf[index] = NULL;
+      pbuf[index] = '\0';
       return pbuf;
     }
   }

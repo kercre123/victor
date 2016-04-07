@@ -51,10 +51,14 @@ bool CheckSig(void) {
   return true;
 }
 
+extern void BlinkALot(void);
+
 int main (void) {
   TimerInit();
 
   Battery::init();
+
+  BlinkALot();
   
   if (*MAGIC_LOCATION == SPI_ENTER_RECOVERY || !CheckSig())
   {

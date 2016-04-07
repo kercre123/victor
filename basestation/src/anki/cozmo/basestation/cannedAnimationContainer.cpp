@@ -69,6 +69,11 @@ namespace Cozmo {
     
     return animPtr;
   }
+  bool CannedAnimationContainer::HasAnimation(const std::string& name) const
+  {
+    auto retVal = _animations.find(name);
+    return retVal != _animations.end();
+  }
   
   std::vector<std::string> CannedAnimationContainer::GetAnimationNames()
   {
@@ -105,7 +110,7 @@ namespace Cozmo {
       PRINT_NAMED_WARNING("CannedAnimationContainer.DefineFromJson.TooManyAnims",
                           "Expecting only one animation per json file, found %lu. "
                           "Will use first: %s",
-                          animationNames.size(), animationNames[0].c_str());
+                          (unsigned long)animationNames.size(), animationNames[0].c_str());
     }
     
     animationName = animationNames[0];

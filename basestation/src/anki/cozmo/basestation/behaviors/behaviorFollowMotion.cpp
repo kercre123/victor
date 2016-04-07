@@ -31,10 +31,6 @@ using namespace ExternalInterface;
 static std::vector<std::string> _animReactions = {
   "Demo_Motion_Reaction",
 };
-  
-static std::string kLookDownAnimName = "Loco_Neutral2converge_01";
-static std::string kLookUpAndDownAnimName = "ID_converge2MHold_01";
-static std::string kLookUpAnimName = "Loco_converge2Neutral_01";
 
 BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
@@ -122,7 +118,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
     case State::HoldingHeadDown:
       if(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() >= _holdHeadDownUntil) {
         
-        PlayAnimationAction* action = new PlayAnimationAction(robot, kLookUpAnimName);
+        PlayAnimationAction* action = CreatePlayAnimationAction(robot, GameEvent::OnFollowMotionLookUp, "Loco_converge2Neutral_01");
         _actionRunning = action->GetTag();
         
         // Note that queuing action "now" will cancel the tracking action
@@ -252,8 +248,7 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
           MoveLiftToHeightAction* liftAction = new MoveLiftToHeightAction(robot, 
           MoveLiftToHeightAction::Preset::LOW_DOCK);
 
-          PlayAnimationAction* reactAnimAction = new PlayAnimationAction(robot, "ID_MotionFollow_ReactToMotion");
-
+          PlayAnimationAction* reactAnimAction = CreatePlayAnimationAction(robot, GameEvent::OnFollowMotionReact, "ID_MotionFollow_ReactToMotion");
           CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {panTiltAction, liftAction, reactAnimAction});
       
       	  // Wait for the animation to complete
@@ -286,14 +281,15 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
         if( belowMinGroundPlaneDist )
         {
           _holdHeadDownUntil = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _timeToHoldHeadDown_sec;
-          PlayAnimationAction* lookDownAction = new PlayAnimationAction(robot, kLookDownAnimName);
+          
+          PlayAnimationAction* lookDownAction = CreatePlayAnimationAction(robot, GameEvent::OnFollowMotionLookDown, "Loco_Neutral2converge_01");
           _actionRunning = lookDownAction->GetTag();
           
           // Note that queuing action "now" will cancel the tracking action
           robot.GetActionList().QueueActionNow(lookDownAction);
           
           // After head gets down and before pouncing, play animation to glance up and down, looping
-          PlayAnimationAction* glanceUpAndDownAction = new PlayAnimationAction(robot, kLookUpAndDownAnimName, 0);
+          PlayAnimationAction* glanceUpAndDownAction = CreatePlayAnimationAction(robot, GameEvent::OnFollowMotionLookUpAndDown, "ID_converge2MHold_01",0);
           robot.GetActionList().QueueActionNext(glanceUpAndDownAction);
           
           PRINT_NAMED_INFO("BehaviorFollowMotion.HoldingHeadLow",

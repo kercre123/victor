@@ -250,7 +250,9 @@ namespace Anki {
             PRINT_NAMED_INFO("IDockAction.MovingLiftPostDockHandler",
                              "Playing animation %s ",
                              _liftMovingAnimation.c_str());
-            _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_robot, _liftMovingAnimation, 1, false));
+            IActionRunner* animAction = new PlayAnimationAction(_robot, _liftMovingAnimation, 1, false);
+            animAction->ShouldEmitCompletionSignal(false);
+            _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
           } else {
             PRINT_NAMED_WARNING("IDockAction.MovingLiftPostDockHandler.InvalidAnimation",
                                 "Could not find animation %s",

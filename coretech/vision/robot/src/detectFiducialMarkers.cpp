@@ -30,6 +30,7 @@ namespace Anki
   {
     
     static Result IlluminationNormalization(const Quadrilateral<f32>& corners,
+                                            const Point<f32>& fiducialThicknessFraction,
                                             cv::Mat_<u8>& cvImage, // filters this in place
                                             cv::Mat_<u8>& cvImageROI, // returns the ROI for the corners
                                             cv::Mat_<u8>& cvImageROI_orig)  // stores a copy of the original data inside the ROI
@@ -81,7 +82,7 @@ namespace Anki
       // 10% of the width, we use 0.2/sqrt(2)=0.14 as the multiplier.
       // This kernel size assumes we RE-filter the extracted probe values inside the nearest
       // neighbor code.
-      const f32 avgThicknessFraction = 0.5f*(FIDUCIAL_SQUARE_THICKNESS_FRACTION.x + FIDUCIAL_SQUARE_THICKNESS_FRACTION.y);
+      const f32 avgThicknessFraction = 0.5f*(fiducialThicknessFraction.x + fiducialThicknessFraction.y);
       const f32 kernelSize = std::round(1.4142f*avgThicknessFraction *
                                         ((corners[Quadrilateral<f32>::TopLeft] - corners[Quadrilateral<f32>::BottomRight]).Length() +
                                          (corners[Quadrilateral<f32>::TopRight] - corners[Quadrilateral<f32>::BottomLeft]).Length()));
@@ -109,6 +110,7 @@ namespace Anki
                                  MemoryStack scratchOnchip,
                                  MemoryStack scratchOffChip)
     {
+      AnkiAssert(params.fiducialThicknessFraction.x > 0 && params.fiducialThicknessFraction.y > 0);
       const f32 maxProjectiveTermValue = 8.0f;
 
       Result lastResult;
@@ -359,7 +361,7 @@ namespace Anki
         VisionMarker &currentMarker = markers[iMarker];
         
         cv::Mat_<u8> cvImageROI, cvImageROI_orig;
-        lastResult = IlluminationNormalization(currentMarker.corners, cvImage, cvImageROI, cvImageROI_orig);
+        lastResult = IlluminationNormalization(currentMarker.corners, params.fiducialThicknessFraction, cvImage, cvImageROI, cvImageROI_orig);
         if(lastResult != RESULT_OK) {
           AnkiWarn("DetectFiducialMarkers", "Illumination normalization failed, skipping marker %d.\n", iMarker);
           continue;
@@ -376,6 +378,8 @@ namespace Anki
                                                    params.quads_minQuadArea,
                                                    params.quads_quadSymmetryThreshold,
                                                    params.quads_minDistanceFromImageEdge,
+                                                   params.fiducialThicknessFraction,
+                                                   params.roundedCornersFraction,
                                                    meanGrayvalueThreshold,
                                                    scratchOnchip);
 

@@ -182,6 +182,7 @@ void BehaviorLookAround::TransitionToRoaming(Robot& robot)
       _currentDestination = GetNextDestination(_currentDestination);
       if (_numDestinationsLeft == 0) {
         TransitionToInactive(robot);
+        return;
       }
     }
   }
@@ -265,6 +266,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(Robot& robot)
 {
   if( _recentObjects.empty() ) {
     TransitionToRoaming(robot);
+    return;
   }
 
   SET_STATE(State::ExaminingFoundObject);

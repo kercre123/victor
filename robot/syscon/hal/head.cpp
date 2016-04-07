@@ -11,12 +11,12 @@
 #include "rtos.h"
 #include "hardware.h"
 #include "backpack.h"
+#include "bluetooth.h"
 
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/logging.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
 
-#include "spine.h"
+#include "messages.h"
 
 using namespace Anki::Cozmo;
 
@@ -35,6 +35,7 @@ static const int DEBUG_BYTES = 32;
 static int txRxIndex;
 static int debugSafeWords;
 static TRANSMIT_MODE uart_mode;
+static bool m_enabled;
 
 bool Head::spokenTo = false;
 
@@ -74,7 +75,13 @@ void Head::init()
   setTransmitMode(TRANSMIT_RECEIVE);
   MicroWait(80);
 
+  m_enabled = true;
+
   RTOS::schedule(Head::manage);
+}
+
+void Head::enable(bool enable) {
+  m_enabled = enable;
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
@@ -88,7 +95,11 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->PSELTXD = PIN_TX_HEAD;
 
       // Configure pin so it is open-drain
-      nrf_gpio_cfg_output(PIN_TX_HEAD);
+      NRF_GPIO->PIN_CNF[PIN_TX_HEAD] = (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos)
+                                    | (GPIO_PIN_CNF_DRIVE_H0D1 << GPIO_PIN_CNF_DRIVE_Pos)
+                                    | (GPIO_PIN_CNF_PULL_Disabled << GPIO_PIN_CNF_PULL_Pos)
+                                    | (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos)
+                                    | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
       break ;
     case TRANSMIT_RECEIVE:
       #ifndef DUMP_DISCOVER
@@ -106,7 +117,7 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->PSELTXD = PIN_TX_VEXT;
 
       // Configure pin so it is open-drain
-      nrf_gpio_cfg_output(PIN_TX_HEAD);
+      nrf_gpio_cfg_output(PIN_TX_VEXT);
       
       // We are in debug transmit mode, these are the safe bytes
       debugSafeWords = DEBUG_BYTES;
@@ -130,6 +141,11 @@ static inline void transmitByte() {
 }
 
 void Head::manage(void* userdata) {
+  // Head body sync is disabled, so just kick the watchdog
+  if (!m_enabled) {
+    return ;
+  }
+
   Spine::Dequeue(&(g_dataToHead.cladBuffer));
   memcpy(txRxBuffer, &g_dataToHead, sizeof(GlobalDataToHead));
   g_dataToHead.cladBuffer.length = 0;
@@ -137,62 +153,6 @@ void Head::manage(void* userdata) {
 
   setTransmitMode(TRANSMIT_SEND);
   transmitByte();
-}
-
-extern void EnterRecovery(void);
-
-static void Process_bootloadBody(const RobotInterface::BootloadBody& msg)
-{
-  EnterRecovery();
-}
-static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
-{
-  Backpack::setLights(msg.lights);
-}
-static void Process_setCubeLights(const CubeLights& msg)
-{
-  Radio::setPropLights(msg.objectID, msg.lights);
-}
-
-static void Process_setPropSlot(const SetPropSlot& msg)
-{
-  Radio::assignProp(msg.slot, msg.factory_id);
-}
-
-static void Process_killBodyCode(const KillBodyCode& msg)
-{
-  // This will destroy the first sector in the application layer
-  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos;
-  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-  NRF_NVMC->ERASEPAGE = 0x18000;
-  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
-  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-}
-
-static void ProcessMessage()
-{
-  using namespace Anki::Cozmo;
-  
-  const u8 tag = g_dataToBody.cladBuffer.data[0];
-  if (g_dataToBody.cladBuffer.length == 0 || tag == RobotInterface::GLOBAL_INVALID_TAG)
-  {
-    // pass
-  }
-  else if (tag > RobotInterface::TO_BODY_END)
-  {
-    AnkiError( 139, "Spine.ProcessMessage", 384, "Body received message %x that seems bound above", 1, tag);
-  }
-  else
-  {
-    RobotInterface::EngineToRobot& msg = *reinterpret_cast<RobotInterface::EngineToRobot*>(&g_dataToBody.cladBuffer);
-    switch(tag)
-    {
-      #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x2F.def"
-      default:
-        AnkiError( 140, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, tag);
-    }
-  }
 }
 
 extern "C"
@@ -218,10 +178,8 @@ void UART0_IRQHandler()
 
     // We received a full packet
     if (++txRxIndex >= sizeof(GlobalDataToBody)) {
-      RTOS::kick(WDOG_UART);
-
       memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
-      ProcessMessage();
+      Spine::ProcessHeadData();
       Head::spokenTo = true;
       
       setTransmitMode(TRANSMIT_DEBUG);

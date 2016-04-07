@@ -98,7 +98,9 @@ namespace Anki {
       }
       
       if (_unityVizClient.Send((const char*)buffer, (int)numWritten) <= 0) {
-        PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd to Unity failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+        if ( _unityVizClient.IsConnected() ) { // prevents webots from crying when no Unity app is launched
+          PRINT_NAMED_WARNING("VizManager.SendMessage.Fail", "Send vizMsgID %s of size %zd to Unity failed\n", VizInterface::MessageVizTagToString(message.GetTag()), numWritten);
+        }
       }
     }
 
@@ -545,25 +547,6 @@ namespace Anki {
     
     // ==== Draw functions by identifier =====
     
-    void VizManager::DrawSegment(const std::string& identifier,
-      const Point3f& from, const Point3f& to, const ColorRGBA& color, bool clearPrevious, float zOffset)
-    {
-      SendMessage(VizInterface::MessageViz(VizInterface::SegmentPrimitive
-        {identifier,
-         color.AsRGBA(),
-         { {Anki::Util::numeric_cast<float>(MM_TO_M(from.x())),
-            Anki::Util::numeric_cast<float>(MM_TO_M(from.y())),
-            Anki::Util::numeric_cast<float>(MM_TO_M(from.z()+zOffset))}
-         },
-         { {Anki::Util::numeric_cast<float>(MM_TO_M(to.x())),
-            Anki::Util::numeric_cast<float>(MM_TO_M(to.y())),
-            Anki::Util::numeric_cast<float>(MM_TO_M(to.z()+zOffset))}
-         },
-         clearPrevious
-        })
-      );
-    }
-    
     void VizManager::EraseSegments(const std::string& identifier)
     {
       SendMessage(VizInterface::MessageViz(VizInterface::EraseSegmentPrimitives{identifier}));
@@ -578,8 +561,9 @@ namespace Anki {
       if ( !quads.empty() )
       {
         // calculate some initial sizes
+        const size_t kReservedBytes = 2; // for things like array size
         const size_t maxBufferSize = Anki::Util::numeric_cast<size_t>((std::underlying_type<VizConstants>::type)VizConstants::MaxMessageSize);
-        const size_t maxBufferForQuads = maxBufferSize - (identifier.length()+1);
+        const size_t maxBufferForQuads = maxBufferSize - (identifier.length()+1) - kReservedBytes;
         size_t quadsPerMessage = maxBufferForQuads / sizeof(SimpleQuadVector::value_type);
         size_t remainingQuads = quads.size();
         CORETECH_ASSERT(quadsPerMessage>0);

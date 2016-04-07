@@ -311,7 +311,7 @@ namespace Cozmo {
 #   if DEBUG_ANIMATION_STREAMING
     PRINT_NAMED_INFO("AnimationStreamer.AddFaceLayer",
                      "%s, Tag = %d (Total layers=%lu)",
-                     newLayer.name.c_str(), newLayer.tag, _faceLayers.size()+1);
+                     newLayer.name.c_str(), newLayer.tag, (unsigned long)_faceLayers.size()+1);
 #   endif
     
     _faceLayers[_layerTagCtr] = std::move(newLayer);
@@ -338,7 +338,7 @@ namespace Cozmo {
 #   if DEBUG_ANIMATION_STREAMING
     PRINT_NAMED_INFO("AnimationStreamer.AddPersistentFaceLayer",
                      "%s, Tag = %d (Total layers=%lu)",
-                     newLayer.name.c_str(), newLayer.tag, _faceLayers.size());
+                     newLayer.name.c_str(), newLayer.tag, (unsigned long)_faceLayers.size());
 #   endif
     
     _faceLayers[_layerTagCtr] = std::move(newLayer);
@@ -352,7 +352,7 @@ namespace Cozmo {
     if(layerIter != _faceLayers.end()) {
       PRINT_NAMED_INFO("AnimationStreamer.RemovePersistentFaceLayer",
                        "%s, Tag = %d (Layers remaining=%lu)",
-                       layerIter->second.name.c_str(), layerIter->first, _faceLayers.size()-1);
+                       layerIter->second.name.c_str(), layerIter->first, (unsigned long)_faceLayers.size()-1);
       
 
       // Add a layer that takes us back from where this persistent frame leaves
@@ -411,7 +411,7 @@ namespace Cozmo {
     while(!_sendBuffer.empty()) {
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SendBufferedMessages",
-                       "Send buffer length=%lu.", _sendBuffer.size());
+                       "Send buffer length=%lu.", (unsigned long)_sendBuffer.size());
 #     endif
       
       // Compute number of bytes required and whether the robot is accepting any
@@ -453,7 +453,7 @@ namespace Cozmo {
         PRINT_NAMED_INFO("Animation.SendBufferedMessages.SentMax",
                          "Sent %d messages, but ran out of bytes or audio frames to "
                          "send from buffer. %lu bytes remain, so will continue next Update().",
-                         numSent, _sendBuffer.size());
+                         numSent, (unsigned long)_sendBuffer.size());
 #       endif
         return RESULT_OK;
       }
@@ -469,7 +469,7 @@ namespace Cozmo {
     if(numSent > 0) {
       PRINT_NAMED_INFO("Animation.SendBufferedMessages.Sent",
                        "Sent %d messages, %lu remain in buffer.",
-                       numSent, _sendBuffer.size());
+                       numSent, (unsigned long)_sendBuffer.size());
     }
 #   endif
     
@@ -697,7 +697,7 @@ namespace Cozmo {
 #   if DEBUG_ANIMATION_STREAMING
     if(!_faceLayers.empty()) {
       PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.ApplyingFaceLayers",
-                       "NumLayers=%lu", _faceLayers.size());
+                       "NumLayers=%lu", (unsigned long)_faceLayers.size());
     }
 #   endif
     
@@ -750,7 +750,7 @@ namespace Cozmo {
 #         if DEBUG_ANIMATION_STREAMING
           PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.RemovingFaceLayer",
                            "%s, Tag = %d (Layers remaining=%lu)",
-                           faceLayer.name.c_str(), faceLayer.tag, _faceLayers.size()-1);
+                           faceLayer.name.c_str(), faceLayer.tag, (unsigned long)_faceLayers.size()-1);
 #         endif
           tagsToErase.push_back(faceLayerIter->first);
         }
@@ -890,7 +890,7 @@ namespace Cozmo {
     
 #   if DEBUG_ANIMATION_STREAMING
     PRINT_NAMED_INFO("AnimationStreamer.StreamFaceLayers",
-                     "Have %lu face layers to stream", _faceLayers.size());
+                     "Have %lu face layers to stream", (unsigned long)_faceLayers.size());
 #   endif
     
     // There is no idle/streaming animation playing, but we haven't finished
@@ -1120,27 +1120,6 @@ namespace Cozmo {
       _streamingTime_ms += RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
       
     } // while(buffering frames)
-    
-#   if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
-#   if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-    if (PLAY_PHYSICAL_ROBOT_AUDIO_ON_DEVICE_TOO || !robot.IsPhysical()) {
-      for (auto audioKF : _onDeviceRobotAudioKeyFrameQueue)
-      {
-        if(!anim->HasFramesLeft() ||   // If all tracks buffered already, then play this now.
-           ((_playedRobotAudio_ms < _startTime_ms + audioKF->GetTriggerTime()) &&
-            audioKF->IsTimeToPlay(_startTime_ms,  currTime_ms)))
-        {
-          // TODO: Insert some kind of small delay to simulate latency?
-          SoundManager::getInstance()->Play(audioKF->GetSoundName());
-          _playedRobotAudio_ms = currTime_ms;
-          
-          _lastPlayedOnDeviceRobotAudioKeyFrame = audioKF;
-          _onDeviceRobotAudioKeyFrameQueue.pop_front();
-        }
-      }
-    }
-#   endif // PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-#   endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
     
     // Send an end-of-animation keyframe when done
     if( !anim->HasFramesLeft() &&

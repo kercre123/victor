@@ -37,7 +37,7 @@ namespace Cozmo {
   private:
     
     const Pose3d  _kidnappedPose;
-    const f32     _poseDistThresh_mm = 20.f;
+    const f32     _poseDistThresh_mm = 25.f;
     const Radians _poseAngleThresh;
     
     virtual s32 UpdateInternal() override;
