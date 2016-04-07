@@ -21,6 +21,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   private int numberCachedLogMaximum = 100;
 
   private Queue<LogPacket> _MostRecentLogs;
+  private Queue<LogPacket> _ReceivedPackets;
 
   private ConsoleLogPane _ConsoleLogPaneView;
 
@@ -32,6 +33,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   private void Awake() {
     _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
     _MostRecentLogs = new Queue<LogPacket>();
+    _ReceivedPackets = new Queue<LogPacket>();
     _ConsoleLogPaneView = null;
 
     _LastToggleValues = new Dictionary<LogPacket.ELogKind, bool>();
@@ -46,6 +48,27 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
     ConsoleLogPane.ConsoleLogPaneOpened += OnConsoleLogPaneOpened;
 
+  }
+
+  private void Update() {
+    while (_ReceivedPackets.Count > 0) {
+      LogPacket newPacket;
+
+      // Packets could be trying to be saved from another thread while we are processing them here so we have to lock
+      lock(_ReceivedPackets) {
+        newPacket = _ReceivedPackets.Dequeue();
+      }
+
+      _MostRecentLogs.Enqueue(newPacket);
+      while (_MostRecentLogs.Count > numberCachedLogMaximum) {
+        _MostRecentLogs.Dequeue();
+      }
+
+      // Update the UI, if it is open
+      if ((_ConsoleLogPaneView != null) && (_LastToggleValues[newPacket.LogKind])) {
+          _ConsoleLogPaneView.AppendLog(newPacket.ToString());
+      }
+    }
   }
 
   private void EnableSOSLogs() {
@@ -118,19 +141,11 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
-    // Add the new log to the queue
     LogPacket newPacket = new LogPacket(logKind, eventName, eventValue, context, keyValues);
-    _MostRecentLogs.Enqueue(newPacket);
-    while (_MostRecentLogs.Count > numberCachedLogMaximum) {
-      _MostRecentLogs.Dequeue();
-    }
-    
-    // Update the UI, if it is open
-    if (_ConsoleLogPaneView != null) {
-      // TODO: Only add the new log to the UI if the filter is toggled on
-      if (_LastToggleValues[newPacket.LogKind] == true) {
-        _ConsoleLogPaneView.AppendLog(newPacket.ToString());
-      }
+
+    // This can be called from multiple threads while the main one is processing the received packets so we have to lock
+    lock(_ReceivedPackets) {
+      _ReceivedPackets.Enqueue(newPacket);
     }
   }
 
@@ -310,7 +325,16 @@ public class LogPacket {
       keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
     }
 
-    // TODO: Colorize the text
-    return string.Format("<color=#{0}>[{1}] {2}: {3} ({4}) ({5})</color>", colorStr, logKindStr, EventName, EventValue, contextStr, keyValuesStr);
+    StringBuilder formatStr = new StringBuilder("<color=#{0}>[{1}] {2}: {3}"); 
+    if (!string.IsNullOrEmpty(contextStr)) {
+      formatStr.Append(" ({4})");
+    }
+
+    if (!string.IsNullOrEmpty(keyValuesStr)) {
+      formatStr.Append(" ({5})");
+    }
+    formatStr.Append("</color>");
+
+    return string.Format(formatStr.ToString(), colorStr, logKindStr, EventName, EventValue, contextStr, keyValuesStr);
   }
 }
