@@ -864,6 +864,18 @@ namespace Anki {
       assert(nullptr != _driveToObjectAction);
       _driveToObjectAction->SetDrivingSounds(drivingSoundStartClipName, drivingSoundStopClipName);
     }
+
+    void IDriveToInteractWithObject::SetApproachAngle(const f32 angle_rad)
+    {
+      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetApproachAngle.Invalid",
+                            "Tried to set the approach angle, but action has already started");
+        return;
+      }
+      assert(nullptr != _driveToObjectAction);
+      _driveToObjectAction->SetApproachAngle(angle_rad);
+    }
+
     
 #pragma mark ---- DriveToAlignWithObjectAction ----
     
@@ -980,10 +992,59 @@ namespace Anki {
                                  useApproachAngle,
                                  approachAngle_rad,
                                  useManualSpeed)
+    , _objectID(objectID)
     {
       RollObjectAction* action = new RollObjectAction(robot, objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
       AddAction(action);
+    }
+
+    void DriveToRollObjectAction::RollToUpright()
+    {
+      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUpright.AlreadyRunning",
+                            "Tried to set the approach angle, but action has already started");
+        return;
+      }
+
+      if( ! _objectID.IsSet() ) {
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.NoObject", "invalid object id");
+        return;
+      }
+
+      const BlockWorld& blockWorld = _robot.GetBlockWorld();
+      std::vector<std::pair<Quad2f, ObjectID> > obstacles;
+      blockWorld.GetObstacles(obstacles);
+
+      // Compute approach angle so that rolling rights the block, using docking
+      ObservableObject* observableObject = _robot.GetBlockWorld().GetObjectByID(_objectID);
+      if( nullptr == observableObject ) {
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.NullObject", "invalid object id");
+        return;
+      }
+
+      ActionableObject* obj = static_cast<ActionableObject*>(observableObject);
+      std::vector<PreActionPose> preActionPoses;
+      obj->GetCurrentPreActionPoses(preActionPoses,
+                                    {PreActionPose::DOCKING},
+                                    std::set<Vision::Marker::Code>(),
+                                    obstacles);
+
+      if( preActionPoses.empty() ) {
+        PRINT_NAMED_INFO("DriveToRollObjectAction.RollToUpright",
+                         "No valid pre-dock poses for object %d, giving up on behavior",
+                         _objectID.GetValue());
+        return;
+      }
+        
+      // Execute roll
+      if (preActionPoses.size() == 1) {
+        Vec3f approachVec = ComputeVectorBetween(obj->GetPose(), preActionPoses[0].GetPose());
+        f32 approachAngle_rad = atan2f(approachVec.y(), approachVec.x());
+        SetApproachAngle(approachAngle_rad);
+      }
+      // else, Block must be upside down, so don't limit approach angle, or there are no poses
+
     }
     
 #pragma mark ---- DriveToPopAWheelieAction ----

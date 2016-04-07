@@ -196,7 +196,7 @@ namespace Cozmo {
       PlayAnimation(robot, kMinorFriendlyReactAnimName, QueueActionPosition::AT_END);
       dataIter->second._playedNewFaceAnim = true;
 
-      robot.GetMoodManager().TriggerEmotionEvent("SeeSometingNew", currentTime_sec);
+      // robot.GetMoodManager().TriggerEmotionEvent("SeeSometingNew", currentTime_sec);
       _newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
     }
     

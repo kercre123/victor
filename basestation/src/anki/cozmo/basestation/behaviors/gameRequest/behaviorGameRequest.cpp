@@ -100,7 +100,8 @@ u32 IBehaviorRequestGame::GetNumBlocks(const Robot& robot) const
     // Observable Objects includes "markerlessObject" cliffs.
     return obj->IsExistenceConfirmed() &&
       obj->GetPoseState() == ObservableObject::PoseState::Known &&
-      obj->GetFamily() == ObjectFamily::LightCube;
+      obj->GetFamily() == ObjectFamily::LightCube &&
+      obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
     } );
 
   // TODO:(bn) make a helper function to avoid code duplication
@@ -122,7 +123,8 @@ ObservableObject* IBehaviorRequestGame::GetClosestBlock(const Robot& robot) cons
   filter.SetFilterFcn( [](ObservableObject* obj) {
       return obj->IsExistenceConfirmed() &&
         obj->GetPoseState() == ObservableObject::PoseState::Known &&
-        obj->GetFamily() == ObjectFamily::LightCube;
+        obj->GetFamily() == ObjectFamily::LightCube &&
+        obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
     } );
 
   return robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );
@@ -162,6 +164,7 @@ bool IBehaviorRequestGame::SwitchRobotsBlock(const Robot& robot)
       return obj->IsExistenceConfirmed() &&
         obj->GetPoseState() == ObservableObject::PoseState::Known &&
         obj->GetFamily() == ObjectFamily::LightCube &&
+        obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS &&
         _badBlocks.find( obj->GetID() ) == _badBlocks.end();
     } );
 
