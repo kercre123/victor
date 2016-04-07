@@ -28,7 +28,6 @@ struct IncomingPacket;
 namespace Cozmo {
 
 class RobotManager;
-class DevLoggingSystem;
 
 namespace RobotInterface {
 
@@ -59,6 +58,7 @@ private:
   RobotManager* _robotManager;
   bool _isInitialized;
 
+  
 };
 
 

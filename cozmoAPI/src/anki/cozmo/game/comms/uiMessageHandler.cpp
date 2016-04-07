@@ -11,6 +11,7 @@
  **/
 
 #include "util/logging/logging.h"
+#include "util/global/globalDefinitions.h"
 
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -28,10 +29,13 @@
 #include "anki/common/basestation/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 
 #include <anki/messaging/basestation/IComms.h>
 #include <anki/messaging/basestation/advertisementService.h>
+
+#if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -96,10 +100,12 @@ namespace Anki {
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
         
+#if ANKI_DEV_CHEATS
         if (nullptr != DevLoggingSystem::GetInstance())
         {
           DevLoggingSystem::GetInstance()->LogMessage(message);
         }
+#endif
         
         p.dataLen = message.Size();
         p.destId = _hostUiDeviceID;
@@ -117,10 +123,12 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
+#if ANKI_DEV_CHEATS
       if (nullptr != DevLoggingSystem::GetInstance())
       {
         DevLoggingSystem::GetInstance()->LogMessage(message);
       }
+#endif
       
       // Send out this message to anyone that's subscribed
       Broadcast(std::move(message));

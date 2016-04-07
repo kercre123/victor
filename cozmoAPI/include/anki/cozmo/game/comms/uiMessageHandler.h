@@ -38,7 +38,6 @@ namespace Anki {
     class Robot;
     class RobotManager;
     class MultiClientComms;
-    class DevLoggingSystem;
     
     class UiMessageHandler : public IExternalInterface
     {
