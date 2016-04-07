@@ -586,6 +586,7 @@ MonoBehaviour:
   _PlayTabButton: {fileID: 11411434}
   _ProfileTabButton: {fileID: 11438976}
   _ScrollRectContent: {fileID: 22415210}
+  _ScrollRect: {fileID: 11465266}
 --- !u!114 &11484364
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -16,9 +16,9 @@ MonoBehaviour:
   _ChallengeTitleLocKey: playhouseGame01.title
   _ChallengeDescriptionLocKey: playhouseGame01.description
   _ChallengeIcon: {fileID: 21300000, guid: a6f61eafc41094afbac50cae1fbc00da, type: 3}
-  _ChallengeReqs:
-    ChallengeGateKeys: []
-    StatGateArray: []
+  _UnlockId:
+    _EnumValueAsString: BurpAction
+    _EnumValue: 0
   _HowToPlayDialogContentLocKey: playhouseGame01.text.howToPlay
   _HowToPlayDialogContentPrefab: {fileID: 0}
   _Music:

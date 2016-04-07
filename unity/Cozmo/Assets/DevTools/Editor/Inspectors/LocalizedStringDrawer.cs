@@ -59,6 +59,6 @@ public class LocalizedStringDrawer : PropertyDrawer {
       // preview the current value
       GUI.Label(position, key);
     }
-    EditorGUI.EndProperty ();
+    EditorGUI.EndProperty();
   }
 }

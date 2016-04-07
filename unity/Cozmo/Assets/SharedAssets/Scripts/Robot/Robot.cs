@@ -304,7 +304,7 @@ public class Robot : IRobot {
     VisibleObjects = new List<ObservedObject>(initialSize);
     DirtyObjects = new List<ObservedObject>(initialSize);
     LightCubes = new Dictionary<int, LightCube>();
-    Faces = new List< global::Face>();
+    Faces = new List<global::Face>();
 
     // These defaults should eventually be in clad
     PathMotionProfileDefault = new PathMotionProfile(
@@ -1337,6 +1337,11 @@ public class Robot : IRobot {
   public void SetVisionMode(VisionMode mode, bool enable) {
 
     RobotEngineManager.Instance.Message.EnableVisionMode = Singleton<EnableVisionMode>.Instance.Initialize(mode, enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void RequestSetUnlock(Anki.Cozmo.UnlockId unlockID, bool unlocked) {
+    RobotEngineManager.Instance.Message.RequestSetUnlock = Singleton<RequestSetUnlock>.Instance.Initialize(unlockID, unlocked);
     RobotEngineManager.Instance.SendMessage();
   }
 

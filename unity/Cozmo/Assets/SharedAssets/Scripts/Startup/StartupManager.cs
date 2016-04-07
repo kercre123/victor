@@ -106,6 +106,7 @@ public class StartupManager : MonoBehaviour {
     // gameObject.AddComponent<ManagerTypeName>();
     gameObject.AddComponent<HockeyAppManager>();
     gameObject.AddComponent<ObjectTagRegistryManager>();
+    AnimationManager.Instance = new AnimationManager();
 
     if (Debug.isDebugBuild) {
       gameObject.AddComponent<SOSLogManager>();

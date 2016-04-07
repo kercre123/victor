@@ -57,8 +57,9 @@ if [ ! -d "$ASSETS_SOUND_DIR" ] ; then
 fi
 
 # copy resources
+# Note: (need -L For SRCDIR to copy the firmware over via a symlink)
 mkdir -p "$DSTDIR_META"
-rsync -r -t --exclude=".*" --delete $SRCDIR/ $DSTDIR_META/
+rsync -r -t -L --exclude=".*" --delete $SRCDIR/ $DSTDIR_META/
 rsync -r -t --exclude=".*" --delete $SPHINXDIR/ $DSTDIR_SPHINX/
 
 # copy assets

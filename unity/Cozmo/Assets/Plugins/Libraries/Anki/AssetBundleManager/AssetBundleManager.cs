@@ -406,13 +406,14 @@ namespace Anki {
         int loadedDependencies = 0;
         for (int i = 0; i < loadedAssetBundle.Dependencies.Length; i++) {
           loadedAssetBundle.Dependencies[i] = RemapVariantName(loadedAssetBundle.Dependencies[i]);
-          Log(LogType.Log, "Loading asset bundle " + loadedAssetBundle.Dependencies[i]);
+          string dependencyName = loadedAssetBundle.Dependencies[i];
+          Log(LogType.Log, "Loading asset bundle " + dependencyName);
 
           StartCoroutine(LoadAssetBundleAsyncInternal(loadedAssetBundle.Dependencies[i], (bool successful) => {
             loadedDependencies++;
 
             if (!successful) {
-              Log(LogType.Error, "Couldn't load asset bundle " + loadedAssetBundle.Dependencies[i] + " which is a dependency of " + assetBundleName);
+              Log(LogType.Error, "Couldn't load asset bundle " + dependencyName + " which is a dependency of " + assetBundleName);
             }
           }));
         }

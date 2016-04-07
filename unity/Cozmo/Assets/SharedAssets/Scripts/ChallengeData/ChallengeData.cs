@@ -47,12 +47,11 @@ public class ChallengeData : ScriptableObject {
     get { return _ChallengeIcon; }
   }
 
-  // The set of requirements needed to unlock this challenge
   [SerializeField]
-  private ChallengeRequirements _ChallengeReqs;
+  private UnlockableInfo.SerializableUnlockIds _UnlockId;
 
-  public ChallengeRequirements ChallengeReqs {
-    get { return _ChallengeReqs; }
+  public UnlockableInfo.SerializableUnlockIds UnlockId {
+    get { return _UnlockId; }
   }
 
   [SerializeField]
