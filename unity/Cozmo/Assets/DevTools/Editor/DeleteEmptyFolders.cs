@@ -3,10 +3,12 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-public class DeleteEmptyFolders : AssetPostprocessor {
+public class DeleteEmptyFolders {
+  
   // http://docs.unity3d.com/ScriptReference/AssetPostprocessor.OnPostprocessAllAssets.html
   // https://gist.github.com/liortal53/780075ddb17f9306ae32
-  static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths) {
+  [MenuItem("Cozmo/Remove empty folders")]
+  static void ProcessDeleteEmptyFolders() {
     var index = Application.dataPath.IndexOf("/Assets");
     var projectSubfolders = Directory.GetDirectories(Application.dataPath, "*", SearchOption.AllDirectories);
 
