@@ -1,11 +1,16 @@
-//
-//  audioWaveFileReader.h
-//  cozmoEngine
-//
-//  Created by Jordan Rivas on 3/23/16.
-//
-//  Notes:
-//    - Read file into memory
+/*
+ * File: audioWaveFileReader.h
+ *
+ * Author: Jordan Rivas
+ * Created: 3/23/2016
+ *
+ * Description: This class purpose is to read .wav files from disk and store them in memory. When the file is loaded the
+ *              data is reformatted to be in a standard audio format, 32-bit floating point.
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ */
+
 
 #ifndef __Basestation_Audio_AudioWaveFileReader_H__
 #define __Basestation_Audio_AudioWaveFileReader_H__
@@ -15,6 +20,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+
 
 namespace Anki {
 namespace Cozmo {
@@ -75,12 +81,17 @@ public:
   
   ~AudioWaveFileReader();
   
-  bool LoadWaveFile( const std::string& filePath );
+  // Load .wav file from disk, reformat into standard format and store with key
+  bool LoadWaveFile( const std::string& filePath, const std::string& key );
   
+  // Access audio data
+  // Note: AudioWaveFileReader owns the memory for the audio data
   const StandardWaveDataContainer* GetCachedWaveDataWithKey( const std::string& key );
   
+  // Remove audio data from memroy
   void ClearCachedWaveDataWithKey( const std::string& key );
   
+  // Remove all audio data from memory
   void ClearAllCachedWaveData();
   
   
