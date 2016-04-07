@@ -24,6 +24,10 @@ public class UnityDasTarget : IDASTarget {
     UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 1, eventName, eventValue), context as UnityEngine.Object);
   }
 
+  public void SetGlobal(string key, string value) {
+    UnityEngine.Debug.Log(string.Format("DAS [{0}] {1} - {2}", 6, key, value));
+  }
+
   #endregion
   
 }
