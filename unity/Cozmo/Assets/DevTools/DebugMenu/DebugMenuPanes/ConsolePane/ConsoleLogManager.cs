@@ -40,6 +40,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     _LastToggleValues.Add(LogPacket.ELogKind.Error, true);
     _LastToggleValues.Add(LogPacket.ELogKind.Event, true);
     _LastToggleValues.Add(LogPacket.ELogKind.Debug, true);
+    _LastToggleValues.Add(LogPacket.ELogKind.Global, true);
 
     DAS.AddTarget(this);
 
@@ -74,6 +75,9 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     else if (log.Contains("[Event]")) {
       SaveLogPacket(LogPacket.ELogKind.Event, "", log, null, null);
     }
+    else if (log.Contains("[Global]")) {
+      SaveLogPacket(LogPacket.ELogKind.Global, "", log, null, null);
+    }
     else {
       SaveLogPacket(LogPacket.ELogKind.Debug, "", log, null, null);
       Debug.LogWarning("Malformed Log Detected");
@@ -107,6 +111,10 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   void IDASTarget.Debug(string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
     SaveLogPacket(LogPacket.ELogKind.Debug, eventName, eventValue, context, keyValues);
+  }
+
+  void IDASTarget.SetGlobal(string eventName, string eventValue) {
+    SaveLogPacket(LogPacket.ELogKind.Global, eventName, eventValue, null, null);
   }
 
   private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
@@ -219,7 +227,8 @@ public class LogPacket {
     Warning,
     Error,
     Debug,
-    Event
+    Event,
+    Global
   }
 
   public ELogKind LogKind {
@@ -259,6 +268,10 @@ public class LogPacket {
     string logKindStr = "";
     string colorStr = "";
     switch (LogKind) {
+    case ELogKind.Global:
+      logKindStr = "GLOBAL";
+      colorStr = "ff00cc";
+      break;
     case ELogKind.Info:
       logKindStr = "INFO";
       colorStr = "ffffff";

@@ -35,7 +35,7 @@ public class ConsoleLogPane : MonoBehaviour {
     }
   }
 
-  public delegate void ConsoleLogToggleChangedHandler(LogPacket.ELogKind logKind, bool newIsOnValue);
+  public delegate void ConsoleLogToggleChangedHandler(LogPacket.ELogKind logKind,bool newIsOnValue);
 
   public event ConsoleLogToggleChangedHandler ConsoleLogToggleChanged;
 
@@ -193,6 +193,10 @@ public class ConsoleLogPane : MonoBehaviour {
 
   public void OnDebugToggleChanged(bool newValue) {
     RaiseConsoleLogToggleChanged(LogPacket.ELogKind.Debug, newValue);
+  }
+
+  public void OnGlobalToggleChanged(bool newValue) {
+    RaiseConsoleLogToggleChanged(LogPacket.ELogKind.Global, newValue);
   }
 
   #endregion
