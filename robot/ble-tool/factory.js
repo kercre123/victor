@@ -19,12 +19,6 @@ noble.on('discover', function (device) {
   // Check manufacturer ID and data bundle to verify this is a cozmo
   if (!data || data.readUInt16BE(0) != 0xBEEF) { return ; }
   
-  var deviceType = data.toString('utf-8', 2, 4);  
-  if (deviceType != 'CZ') return ;
-
-  // Display info we found out about cozmo
-  var deviceVersion = data.readUInt32LE(4);
-
   // Scan for characteristics
   device.on('connect', function () { device.discoverServices(); });
 
@@ -53,9 +47,17 @@ noble.on('discover', function (device) {
           return ;
         }
 
+        function pad(v) { while (v.length < 8) v = "0" + v; return v }
+
+        // Display info we found out about cozmo
+        var deviceVersion = data.readUInt32LE(2);
+        var deviceID0 = pad(data.readUInt32LE(6).toString(16));
+        var deviceID1 = pad(data.readUInt32LE(10).toString(16));
+
         emitter.emit('discovered', {
           name: device.advertisement.localName || "<noname>", 
           revision: deviceVersion.toString(16),
+          id: deviceID0 + deviceID1,
           interface: new Cozmo(device, service, send, receive)
         });
       });

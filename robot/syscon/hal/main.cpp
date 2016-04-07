@@ -8,6 +8,7 @@ extern "C" {
 
 #include "hardware.h"
 
+#include "storage.h"
 #include "rtos.h"
 #include "battery.h"
 #include "motors.h"
@@ -103,6 +104,7 @@ void enterOperatingMode(BodyOperatingMode mode) {
 int main(void)
 {
   Bootloader::init();
+  Storage::init();
   
   // Initialize our scheduler
   RTOS::init();
@@ -129,7 +131,7 @@ int main(void)
   TestFixtures::run();
   #endif
 
-  enterOperatingMode(WIFI_OPERATING_MODE);
+  enterOperatingMode(BLUETOOTH_OPERATING_MODE);
 
   Timer::start();
 

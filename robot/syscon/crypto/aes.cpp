@@ -8,28 +8,22 @@ extern "C" {
 }
 
 #include "aes.h"
+#include "../hal/storage.h"
 #include "../hal/crypto.h"
 
 // Top 16 bytes of application space
 void aes_key_init() {
-  for (int i = 0; i < 4; i++) {
-    if (AES_KEY[i] != 0xFFFFFFFF) {
-      return ;
-    }
+  if (aes_key() != NULL) {
+    return ;
   }
-
-  uint32_t key[4];
-  Crypto::random(&key, sizeof(key));  // This is kinda dumb.
   
-  // Write AES key to the designated flash sector
-  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
-  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-  for (int i = 0; i < sizeof(key) / sizeof(uint32_t); i++) {
-    AES_KEY[i] = key[i];
-    while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-  }
-  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
-  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  uint8_t key[AES_KEY_LENGTH];
+  Crypto::random(key, AES_KEY_LENGTH);
+  Storage::set(STORAGE_AES_KEY, key, AES_KEY_LENGTH);
+}
+
+const void* aes_key() {
+  return Storage::get_lazy(STORAGE_AES_KEY);
 }
 
 void aes_ecb(nrf_ecb_hal_data_t* ecb) {
@@ -59,7 +53,7 @@ int aes_encode(uint8_t* data, int length) {
     length += AES_BLOCK_LENGTH;
   }
 
-  memcpy(ecb.key, AES_KEY, AES_KEY_LENGTH);
+  memcpy(ecb.key, aes_key(), AES_KEY_LENGTH);
   
   Crypto::random(ecb.cleartext, AES_BLOCK_LENGTH);
 
@@ -81,7 +75,7 @@ int aes_encode(uint8_t* data, int length) {
 int aes_decode(uint8_t* data, int length) {
   nrf_ecb_hal_data_t ecb;
   
-  memcpy(ecb.key, AES_KEY, AES_KEY_LENGTH);
+  memcpy(ecb.key, aes_key(), AES_KEY_LENGTH);
   memcpy(ecb.cleartext, data, AES_BLOCK_LENGTH);
 
   uint8_t *block = data + AES_BLOCK_LENGTH;
