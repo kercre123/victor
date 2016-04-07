@@ -68,4 +68,5 @@
 			ENDCG
 		}
 	}
+	Fallback "UI/Cozmo/Invisible"
 }
