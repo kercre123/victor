@@ -461,7 +461,7 @@ namespace Cozmo {
             _storeNextImageForCalibration = false;
             _calibrationImages.emplace_back(image.ToGray());
             PRINT_NAMED_INFO("VisionComponent.SetNextImage.StoringCalibrationImage",
-                             "Num images including this: %lu", _calibrationImages.size());
+                             "Num images including this: %u", (u32)_calibrationImages.size());
           } else {
             PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
           }
