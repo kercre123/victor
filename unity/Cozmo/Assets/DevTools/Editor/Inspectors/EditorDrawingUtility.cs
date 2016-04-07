@@ -68,6 +68,9 @@ public static class EditorDrawingUtility {
     if (GUILayout.Button("+", GUILayout.Width(30))) {
       list.Insert(0, createFunc());
     }
+    if (GUILayout.Button("-", GUILayout.Width(30))) {
+      list.RemoveAt(0);
+    }
     EditorGUILayout.EndHorizontal();
 
     var splitList = list.GroupBy(groupBy).Select(g => new KeyValuePair<U, List<T>>(g.Key, g.ToList()));
@@ -136,11 +139,11 @@ public static class EditorDrawingUtility {
 
     position.height = lineHeight;
     int selectedFileIndex = EditorGUI.Popup(position, "Localization File", 
-                            Mathf.Max(0, 
-                              System.Array.IndexOf(
-                                LocalizationEditorUtility.LocalizationFiles, 
-                                localizedStringFile)), 
-                            LocalizationEditorUtility.LocalizationFiles);
+                              Mathf.Max(0, 
+                                System.Array.IndexOf(
+                                  LocalizationEditorUtility.LocalizationFiles, 
+                                  localizedStringFile)), 
+                              LocalizationEditorUtility.LocalizationFiles);
     localizedStringFile = LocalizationEditorUtility.LocalizationFiles[selectedFileIndex];
 
     position.y += lineHeight;
@@ -156,7 +159,7 @@ public static class EditorDrawingUtility {
     }
       
     if (localizationKey != lastLocKey && (string.IsNullOrEmpty(localizedString) ||
-      localizedString == LocalizationEditorUtility.GetTranslation(localizedStringFile, lastLocKey))) {
+        localizedString == LocalizationEditorUtility.GetTranslation(localizedStringFile, lastLocKey))) {
       InitializeLocalizationString(localizationKey, out localizedStringFile, out localizedString);
     }
 

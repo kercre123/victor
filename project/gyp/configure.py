@@ -61,10 +61,54 @@ def _backupDir(dirPath, backupDir=BACKUP_DIR):
   if os.path.exists(dirPath):
     if os.path.exists(backupDir):
       UtilLog.info("Removing existing %s backup directory" % backupDir)
-      shutil.rmtree(backupDir)
+      try:
+        shutil.rmtree(backupDir)
+      except OSError:
+        UtilLog.info("Failed to remove existing %s backup directory" % backupDir)
     UtilLog.info("Moving %s to %s" % (dirPath, backupDir))
-    os.rename(dirPath, backupDir)
+    try:
+      os.rename(dirPath, backupDir)
+    except OSError, e:
+      UtilLog.info("Move/rename failed, so deleting %s" % dirPath)
+      shutil.rmtree(dirPath)
+      return None
   return backupDir
+
+def _makeRoomForSymlink(dst, src):
+  # This function needs to return something (not None) if we cannot or
+  # should not create/update the symlink in the calling function.
+  # It currently returns True if the symlink is already setup correctly
+  # and returns False if the path already exists and failed to get
+  # removed (so the symlink cannot be setup).
+
+  if os.path.islink(dst):
+    # we have an existing symlink that MAY need to be replaced
+    existingLink = os.readlink(dst)
+    UtilLog.info("We currently have %s -> %s" % (dst, existingLink))
+    if existingLink == src:
+      UtilLog.info("Symlink is already setup correctly")
+      return True
+    UtilLog.info("Removing %s to change that symlink (so it points at %s)" % (dst, src))
+    try:
+      os.remove(dst)
+    except OSError:
+      print("Delete %s so that symlink can be updated for animation data" % dst)
+      return False
+  else:
+    # we have an existing directory that needs to be moved to make room for the symlink
+    try:
+      backupDir = _backupDir(dst)
+    except OSError:
+      if os.path.exists(dst):
+        print("Move/delete %s so it can be replaced by a symlink for animation data" % dst)
+        return False
+      else:
+        backupDir = None
+    if backupDir:
+      print("Existing %s directory was moved to %s (to be replaced by a symlink)"
+            % (dst, backupDir))
+    else:
+      print("Deleted the existing %s directory (to be replaced by a symlink)" % dst)
 
 def _setupSymlinks(sourceDir, destDir, repoConfig):
   try:
@@ -80,24 +124,10 @@ def _setupSymlinks(sourceDir, destDir, repoConfig):
       UtilLog.error("Cannot symlink %s -> %s because %s doesn't exist" % (dst, src, src))
       continue
 
-    if os.path.exists(dst):
-      if os.path.islink(dst):
-        # we have an existing symlink that MAY need to be replaced
-        existingLink = os.readlink(dst)
-        UtilLog.info("We currently have %s -> %s" % (dst, existingLink))
-        if existingLink == src:
-          UtilLog.info("Symlink is already setup correctly")
-          continue
-        UtilLog.info("Removing %s to change that symlink (so it points at %s)" % (dst, src))
-        os.remove(dst)
-      else:
-        # we have an existing directory that needs to be moved to make room for the symlink
-        backupDir = _backupDir(dst)
-        if backupDir:
-          print("Existing %s directory was moved to %s (to be replaced by a symlink)"
-                % (dst, backupDir))
-        else:
-          print("Deleted the existing %s directory (to be replaced by a symlink)" % dst)
+    if os.path.exists(dst) or os.path.islink(dst):
+      ret = _makeRoomForSymlink(dst, src)
+      if ret is not None:
+        continue
 
     # make parent directory(ies) for the symlink
     try:
@@ -314,6 +344,7 @@ def main(scriptArgs):
   #   'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations',
   #   'lib/anki/products-cozmo-assets/sounds'], ['project/gyp/cozmoGame.lst'])
   generator.processFolder(['unity/CSharpBinding/src'], ['project/gyp/csharp.lst'])
+  generator.processFolder([options.cozmoAssetPath], ['project/gyp/assets.lst'])
 
   if options.updateListsOnly:
     # TODO: remove dependency on abspath.

@@ -73,7 +73,10 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
-  public event Action<Anki.Cozmo.ExternalInterface.FactoryTestResult> OnFactoryResult;
+ public event Action<Anki.Cozmo.ExternalInterface.FactoryTestResult> OnFactoryResult;
+  public event Action<Anki.Cozmo.UnlockId, bool> OnRequestSetUnlockResult;
+  public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress> OnFirmwareUpdateProgress;
+  public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete> OnFirmwareUpdateComplete;
 
   #region Audio Callback events
 
@@ -126,7 +129,6 @@ public class RobotEngineManager : MonoBehaviour {
     }
     else {
       Instance = this;
-      DontDestroyOnLoad(gameObject);
     }
 
     TextAsset config = _Configuration;
@@ -371,8 +373,20 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotObservedPossibleObject:
       ReceivedSpecificMessage(message.RobotObservedPossibleObject);
       break;
+    case G2U.MessageEngineToGame.Tag.UnlockStatus:
+      ReceivedSpecificMessage(message.UnlockStatus);
+      break;
+    case G2U.MessageEngineToGame.Tag.RequestSetUnlockResult:
+      ReceivedSpecificMessage(message.RequestSetUnlockResult);
+      break;
     case G2U.MessageEngineToGame.Tag.FactoryTestResult:
       ReceivedSpecificMessage(message.FactoryTestResult);
+      break;
+    case G2U.MessageEngineToGame.Tag.FirmwareUpdateProgress:
+      ReceivedSpecificMessage(message.FirmwareUpdateProgress);
+      break;
+    case G2U.MessageEngineToGame.Tag.FirmwareUpdateComplete:
+      ReceivedSpecificMessage(message.FirmwareUpdateComplete);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -700,14 +714,47 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.UnlockStatus message) {
+    if (UnlockablesManager.Instance != null) {
+      Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables = new Dictionary<UnlockId, bool>();
+      for (int i = 0; i < message.unlocks.Length; ++i) {
+        loadedUnlockables.Add(message.unlocks[i].unlockID, message.unlocks[i].unlocked);
+      }
+      UnlockablesManager.Instance.OnConnectLoad(loadedUnlockables);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RequestSetUnlockResult message) {
+    if (OnRequestSetUnlockResult != null) {
+      OnRequestSetUnlockResult(message.unlockID, message.unlocked);
+    }
+  }
+
   private void ReceivedSpecificMessage(ImageChunk message) {
     if (OnImageChunkReceived != null) {
       OnImageChunkReceived(message);
     }
   }
 
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress message) {
+    if (OnFirmwareUpdateProgress != null) {
+      OnFirmwareUpdateProgress(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
+    if (OnFirmwareUpdateComplete != null) {
+      OnFirmwareUpdateComplete(message);
+    }
+  }
+
   public void StartEngine() {
     Message.StartEngine = StartEngineMessage;
+    SendMessage();
+  }
+
+  public void UpdateFirmware(int firmwareVersion) {
+    Message.UpdateFirmware = Singleton<U2G.UpdateFirmware>.Instance.Initialize(firmwareVersion);
     SendMessage();
   }
 

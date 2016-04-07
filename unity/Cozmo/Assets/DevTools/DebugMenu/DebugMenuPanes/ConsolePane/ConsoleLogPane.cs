@@ -25,6 +25,10 @@ public class ConsoleLogPane : MonoBehaviour {
 
   public event ConsoleLogPaneClosedHandler ConsoleLogPaneClosed;
 
+  public delegate void ConsoleLogCopyToClipboardHander();
+
+  public event ConsoleLogCopyToClipboardHander ConsoleLogCopyToClipboard;
+
   private void RaiseConsoleLogPaneClosed() {
     if (ConsoleLogPaneClosed != null) {
       ConsoleLogPaneClosed();
@@ -53,6 +57,9 @@ public class ConsoleLogPane : MonoBehaviour {
   [SerializeField]
   private Button _EnableSOSButton;
 
+  [SerializeField]
+  private Button _CopyLogButton;
+
   private SimpleObjectPool<AnkiTextLabel> _TextLabelPool;
   private List<AnkiTextLabel> _TextLabelsUsed;
   private AnkiTextLabel _NewestTextLabel;
@@ -64,6 +71,13 @@ public class ConsoleLogPane : MonoBehaviour {
     RaiseConsoleLogPaneOpened(this);
 
     _EnableSOSButton.onClick.AddListener(HandleOnEnableSOSLogButton);
+    _CopyLogButton.onClick.AddListener(HandleOnCopyLogButton);
+  }
+
+  private void HandleOnCopyLogButton() {
+    if (ConsoleLogCopyToClipboard != null) {
+      ConsoleLogCopyToClipboard();
+    }
   }
 
   private void OnDestroy() {

@@ -304,7 +304,7 @@ public class Robot : IRobot {
     VisibleObjects = new List<ObservedObject>(initialSize);
     DirtyObjects = new List<ObservedObject>(initialSize);
     LightCubes = new Dictionary<int, LightCube>();
-    Faces = new List< global::Face>();
+    Faces = new List<global::Face>();
 
     // These defaults should eventually be in clad
     PathMotionProfileDefault = new PathMotionProfile(
@@ -934,6 +934,12 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  public void PrepareFaceNameAnimation(int faceId, string name) {
+    DAS.Debug(this, "Perform Face Name Animation - faceId: " + faceId + " name: " + name);
+    RobotEngineManager.Instance.Message.PrepareFaceNameAnimation = Singleton<PrepareFaceNameAnimation>.Instance.Initialize(faceId, name);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
@@ -1024,13 +1030,14 @@ public class Robot : IRobot {
   public void SetRobotVolume(float volume) {
     DAS.Debug(this, "Set Robot Volume " + volume);
 
-    RobotEngineManager.Instance.Message.SetRobotVolume = 
-      Singleton<SetRobotVolume>.Instance.Initialize(ID, volume);
-    RobotEngineManager.Instance.SendMessage();
+    Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot, volume);
   }
 
   public float GetRobotVolume() {
-    return Singleton<SetRobotVolume>.Instance.volume;
+    float volume = 1f;
+    Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> currentVolumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.VolumePreferences;
+    currentVolumePrefs.TryGetValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot, out volume);
+    return volume;
   }
 
   public void TrackToObject(ObservedObject observedObject, bool headOnly = true) {
@@ -1336,6 +1343,11 @@ public class Robot : IRobot {
   public void SetVisionMode(VisionMode mode, bool enable) {
 
     RobotEngineManager.Instance.Message.EnableVisionMode = Singleton<EnableVisionMode>.Instance.Initialize(mode, enable);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void RequestSetUnlock(Anki.Cozmo.UnlockId unlockID, bool unlocked) {
+    RobotEngineManager.Instance.Message.RequestSetUnlock = Singleton<RequestSetUnlock>.Instance.Initialize(unlockID, unlocked);
     RobotEngineManager.Instance.SendMessage();
   }
 

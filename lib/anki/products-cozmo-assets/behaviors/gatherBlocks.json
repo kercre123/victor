@@ -1,0 +1,68 @@
+// {
+//   "behaviorType": "GatherBlocks",
+//   "name": "gatherBlocks",
+//   "emotionScorers": [
+//     {
+//       "emotionType": "Brave",
+//       "scoreGraph": {
+//         "nodes": [
+//           {
+//             "x": -1.0,
+//             "y": 0.01
+//           },
+//           {
+//             "x": 0.0,
+//             "y": 0.08
+//           },
+//           {
+//             "x": 1.0,
+//             "y": 0.74
+//           }
+//         ]
+//       },
+//       "trackDelta": false
+//     },
+//     {
+//       "emotionType": "Excited",
+//       "scoreGraph": {
+//         "nodes": [
+//           {
+//             "x": -1.0,
+//             "y": 0.61
+//           },
+//           {
+//             "x": 0.007,
+//             "y": 0.07
+//           },
+//           {
+//             "x": 1.0,
+//             "y": 0.05
+//           }
+//         ]
+//       },
+//       "trackDelta": false
+//     }
+//   ],
+//   "repetitionPenalty": {
+//     "nodes": [
+//       {
+//         "x": 0.0,
+//         "y": 0.0
+//       },
+//       {
+//         "x": 10.0,
+//         "y": 0.2
+//       },
+//       {
+//         "x": 20.0,
+//         "y": 1.0
+//       }
+//     ]
+//   },
+//   "behaviorGroups": [
+//     "AffectsBlocks",
+//     "ChangesPosition",
+//     "ChangesOrientation",
+//     "MovesLift"
+//   ]
+// }

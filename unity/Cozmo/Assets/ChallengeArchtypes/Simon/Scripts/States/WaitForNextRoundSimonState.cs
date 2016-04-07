@@ -27,6 +27,8 @@ namespace Simon {
 
       _GameInstance.SharedMinigameView.CozmoScoreboard.Dim = (_NextPlayer != PlayerType.Cozmo);
       _GameInstance.SharedMinigameView.PlayerScoreboard.Dim = (_NextPlayer != PlayerType.Human);
+
+      _GameInstance.SetCubeLightsDefaultOn();
     }
 
     private void HandleContinuePressed() {

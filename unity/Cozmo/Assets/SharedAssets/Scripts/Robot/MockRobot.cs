@@ -22,6 +22,11 @@ public class MockRobot : IRobot {
   public MockRobot(byte id) {
     ID = id;
     Rotation = Quaternion.identity;
+    Dictionary<Anki.Cozmo.UnlockId, bool> defaultValues = new Dictionary<UnlockId, bool>();
+    for (int i = 0; i < (int)Anki.Cozmo.UnlockId.Count; ++i) {
+      defaultValues.Add((Anki.Cozmo.UnlockId)i, true);
+    }
+    UnlockablesManager.Instance.OnConnectLoad(defaultValues);
   }
 
   public void SetLocalBusyTimer(float localBusyTimer) {
@@ -309,6 +314,10 @@ public class MockRobot : IRobot {
     
   }
 
+  public void PrepareFaceNameAnimation(int faceId, string name) {
+  
+  }
+
   public void SendAnimation(string animName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     // we can actually fake the callback by using CozmoFace
     float len = CozmoFace.PlayAnimation(animName);
@@ -543,6 +552,10 @@ public class MockRobot : IRobot {
 
   public void SetVisionMode(Anki.Cozmo.VisionMode mode, bool enable) {
     // Do nothing
+  }
+
+  public void RequestSetUnlock(Anki.Cozmo.UnlockId unlockID, bool unlocked) {
+    
   }
 
   public void SetEnableSOSLogging(bool enable) {

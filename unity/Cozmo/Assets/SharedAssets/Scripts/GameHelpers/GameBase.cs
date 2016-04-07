@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -51,7 +51,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private float _GameStartTime;
 
-  public List<LightCube> CubesForGame;
+  public List<int> CubeIdsForGame;
 
   private Dictionary<int, CycleData> _CubeCycleTimers;
 
@@ -61,6 +61,15 @@ public abstract class GameBase : MonoBehaviour {
     public float cycleIntervalSeconds;
     public Color[] cycleColors;
     public int colorIndex;
+  }
+
+  private Dictionary<int, BlinkData> _BlinkCubeTimers;
+
+  private class BlinkData {
+    public int cubeID;
+    public float timeElaspedSeconds;
+    public float blinkDuration;
+    public Color[] originalColor;
   }
 
   #region Initialization
@@ -77,6 +86,7 @@ public abstract class GameBase : MonoBehaviour {
     RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
 
     _CubeCycleTimers = new Dictionary<int, CycleData>();
+    _BlinkCubeTimers = new Dictionary<int, BlinkData>();
   }
 
   private void FinishTurnToFace(bool success) {
@@ -114,6 +124,7 @@ public abstract class GameBase : MonoBehaviour {
 
   protected virtual void Update() {
     UpdateCubeCycleLights();
+    UpdateBlinkLights();
     UpdateStateMachine();
   }
 
@@ -216,10 +227,10 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Minigame Exit
 
-  protected void RaiseMiniGameQuit() {
+  protected virtual void RaiseMiniGameQuit() {
     _StateMachine.Stop();
 
-    DAS.Event(DASConstants.Game.kQuit, GetQuitGameState());
+    DAS.Event(DASConstants.Game.kQuit, null);
     if (OnMiniGameQuit != null) {
       OnMiniGameQuit();
     }
@@ -350,13 +361,12 @@ public abstract class GameBase : MonoBehaviour {
   #region LightCubes
 
   public void StartCycleCube(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
+    // Remove from blink lights if it exists there
+    StopBlinkLight(cubeID);
+
     // Set colors
     LightCube cube = CurrentRobot.LightCubes[cubeID];
-    int colorIndex = 0;
-    for (int i = 0; i < cube.Lights.Length; i++) {
-      colorIndex = i % lightColorsCounterclockwise.Length;
-      cube.Lights[i].OnColor = lightColorsCounterclockwise[colorIndex].ToUInt();
-    }
+    cube.SetLEDs(lightColorsCounterclockwise);
 
     // Set up timing data
     CycleData data = new CycleData();
@@ -365,18 +375,19 @@ public abstract class GameBase : MonoBehaviour {
     data.timeElaspedSeconds = 0f;
     data.colorIndex = 0;
     data.cycleColors = lightColorsCounterclockwise;
-    if (_CubeCycleTimers.ContainsKey(cube.ID)) {
-      _CubeCycleTimers[cube.ID] = data;
+
+    // Update data
+    if (_CubeCycleTimers.ContainsKey(cubeID)) {
+      _CubeCycleTimers[cubeID] = data;
     }
     else {
-      _CubeCycleTimers.Add(cube.ID, data);
+      _CubeCycleTimers.Add(cubeID, data);
     }
   }
 
   public void StopCycleCube(int cubeID) {
-    LightCube cube = CurrentRobot.LightCubes[cubeID];
-    if (_CubeCycleTimers.ContainsKey(cube.ID)) {
-      _CubeCycleTimers.Remove(cube.ID);
+    if (_CubeCycleTimers.ContainsKey(cubeID)) {
+      _CubeCycleTimers.Remove(cubeID);
     }
   }
 
@@ -403,6 +414,56 @@ public abstract class GameBase : MonoBehaviour {
     }
   }
 
+  public void BlinkLight(int cubeId, float duration, Color blinkColor, Color originalColor) {
+    BlinkLight(cubeId, duration, new Color[]{ blinkColor }, new Color[]{ originalColor });
+  }
+
+  public void BlinkLight(int cubeId, float duration, Color[] blinkColorsCounterclockwise, Color[] originalColors) {
+    // Remove from cycle cubes if it's there
+    StopCycleCube(cubeId);
+
+    // Set up timing data
+    BlinkData data = new BlinkData();
+    data.cubeID = cubeId;
+    data.blinkDuration = duration;
+    data.timeElaspedSeconds = 0f;
+    data.originalColor = originalColors;
+
+    // Set colors
+    LightCube cube = CurrentRobot.LightCubes[cubeId];
+    cube.SetLEDs(blinkColorsCounterclockwise);
+
+    // Update data
+    if (_BlinkCubeTimers.ContainsKey(cubeId)) {
+      _BlinkCubeTimers[cubeId] = data;
+    }
+    else {
+      _BlinkCubeTimers.Add(cubeId, data);
+    }
+  }
+
+  private void StopBlinkLight(int cubeId) {
+    if (_BlinkCubeTimers.ContainsKey(cubeId)) {
+      LightCube cube = CurrentRobot.LightCubes[cubeId];
+      cube.SetLEDs(_BlinkCubeTimers[cubeId].originalColor);
+      _BlinkCubeTimers.Remove(cubeId);
+    }
+  }
+
+  private void UpdateBlinkLights() {
+    List<int> cubesToStopBlinking = new List<int>();
+    foreach (KeyValuePair<int,BlinkData> cubeIdToTimer in _BlinkCubeTimers) {
+      cubeIdToTimer.Value.timeElaspedSeconds += Time.deltaTime;
+      if (cubeIdToTimer.Value.timeElaspedSeconds > cubeIdToTimer.Value.blinkDuration) {
+        cubesToStopBlinking.Add(cubeIdToTimer.Key);
+      }
+    }
+
+    foreach (int cubeId in cubesToStopBlinking) {
+      StopBlinkLight(cubeId);
+    }
+  }
+
   #endregion
 
   // end LightCubes
@@ -423,11 +484,6 @@ public abstract class GameBase : MonoBehaviour {
 
   private string GetGameTimeElapsedAsStr() {
     return string.Format("{0}s", Time.time - _GameStartTime);
-  }
-
-  private string GetQuitGameState() {
-    // TODO
-    return null;
   }
 
   private void SendEventForRewards(StatContainer rewards) {

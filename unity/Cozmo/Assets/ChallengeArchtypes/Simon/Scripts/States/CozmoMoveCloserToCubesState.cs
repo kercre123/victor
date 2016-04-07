@@ -20,7 +20,12 @@ namespace Simon {
 
     public override void Enter() {
       base.Enter();
-      List<LightCube> cubesForGame = _StateMachine.GetGame().CubesForGame;
+      List<LightCube> cubesForGame = new List<LightCube>();
+      GameBase game = _StateMachine.GetGame();
+      IRobot robot = game.CurrentRobot;
+      foreach (int id in game.CubeIdsForGame) {
+        cubesForGame.Add(robot.LightCubes[id]);
+      }
       LightCube cubeA, cubeB;
       LightCube.TryFindCubesFurthestApart(cubesForGame, out cubeA, out cubeB);
       _CubeMidpoint = VectorUtil.Midpoint(cubeA.WorldPosition.xy(), cubeB.WorldPosition.xy());

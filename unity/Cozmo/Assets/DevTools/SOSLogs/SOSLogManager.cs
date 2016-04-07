@@ -14,7 +14,6 @@ public class SOSLogManager : MonoBehaviour {
     }
     else {
       Instance = this;
-      DontDestroyOnLoad(gameObject);
     }
   }
 

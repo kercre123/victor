@@ -55,4 +55,8 @@ public class DebugMenuManager : MonoBehaviour {
     _DebugMenuDialogInstance.OnDebugMenuClosed -= OnDebugMenuDialogClose;
     _LastOpenedDebugTab = lastOpenTab;
   }
+
+  public bool IsDialogOpen() {
+    return _DebugMenuDialogInstance != null;
+  }
 }

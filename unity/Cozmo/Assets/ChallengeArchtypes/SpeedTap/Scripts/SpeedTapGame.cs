@@ -86,13 +86,13 @@ namespace SpeedTap {
     // In Future, potentially play a different animation here
     public void PlayerHitWrong() {
       DAS.Info("SpeedTapGame.PlayerHitWrong", "");
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapRed);
       CozmoWinsHand();
     }
 
     public void CozmoWinsHand() {
       _CozmoScore++;
       UpdateUI();
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
       PlayerBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
       for (int i = 0; i < 4; i++) {
         CozmoBlock.Lights[i].SetFlashingLED(CozmoWinColors[i], 100, 100, 0);
@@ -180,9 +180,16 @@ namespace SpeedTap {
     private void HandleSessionAnimDone(bool success) {
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
-        if (CurrentDifficulty >= DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted) {
-          DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted = CurrentDifficulty + 1;
-          DataPersistence.DataPersistenceManager.Instance.Save();
+        switch (CurrentDifficulty) {
+        case 1:
+          UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.SpeedTapMediumImplicit, true);
+          break;
+        case 2:
+          UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.SpeedTapHardImplicit, true);
+          break;
+        case 3:
+          UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.SpeedTapExpertImplicit, true);
+          break;
         }
         RaiseMiniGameWin();
       }
@@ -200,6 +207,24 @@ namespace SpeedTap {
       InitializeMinigameObjects(1);
     }
 
+    private int HighestLevelCompleted() {
+      if (UnlockablesManager.Instance != null) {
+        if (UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.SpeedTapExpertImplicit)) {
+          return 4;
+        }
+        else if (UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.SpeedTapHardImplicit)) {
+          return 3;
+        }
+        else if (UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.SpeedTapMediumImplicit)) {
+          return 2;
+        }
+        else {
+          return 1;
+        }
+      }
+      return 0;
+    }
+
     // Use this for initialization
     protected void InitializeMinigameObjects(int cubesRequired) { 
 
@@ -207,7 +232,7 @@ namespace SpeedTap {
                                           new SelectDifficultyState(
                                             new HowToPlayState(new SpeedTapWaitForCubePlace(true)),
                                             DifficultyOptions,
-                                            Mathf.Max(DataPersistence.DataPersistenceManager.Instance.Data.MinigameSaveData.SpeedTapHighestLevelCompleted, 1)
+                                            Mathf.Max(HighestLevelCompleted(), 1)
                                           ), 
                                           cubesRequired);
       _StateMachine.SetNextState(initCubeState);
@@ -226,15 +251,16 @@ namespace SpeedTap {
 
     protected override void CleanUpOnDestroy() {
       LightCube.TappedAction -= BlockTapped;
+      CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_GetOut);
     }
 
     public void InitialCubesDone() {
-      CozmoBlock = CubesForGame[0];
+      CozmoBlock = CurrentRobot.LightCubes[CubeIdsForGame[0]];
     }
 
     public void SetPlayerCube(LightCube cube) {
       PlayerBlock = cube;
-      CubesForGame.Add(cube);
+      CubeIdsForGame.Add(cube);
     }
 
     public void UpdateUI() {
@@ -325,6 +351,18 @@ namespace SpeedTap {
       }
     }
 
+    protected override void RaiseMiniGameQuit() {
+      base.RaiseMiniGameQuit();
+
+      Dictionary<string, string> quitGameScoreKeyValues = new Dictionary<string, string>();
+      Dictionary<string, string> quitGameRoundsWonKeyValues = new Dictionary<string, string>();
+
+      quitGameScoreKeyValues.Add("CozmoScore", _CozmoScore.ToString());
+      quitGameRoundsWonKeyValues.Add("CozmoRoundsWon", _CozmoRoundsWon.ToString());
+
+      DAS.Event(DASConstants.Game.kQuitGameScore, _PlayerScore.ToString(), null, quitGameScoreKeyValues);
+      DAS.Event(DASConstants.Game.kQuitGameRoundsWon, _PlayerRoundsWon.ToString(), null, quitGameRoundsWonKeyValues);
+    }
 
   }
 }
