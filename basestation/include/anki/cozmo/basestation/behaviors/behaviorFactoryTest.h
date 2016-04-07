@@ -68,7 +68,7 @@ namespace Cozmo {
     static constexpr u32 _kMinNumberOfCalibrationImagesRequired = 5;
 
     // If no change in behavior state for this long then trigger failure
-    static constexpr f32 _kWatchdogTimeout = 10;
+    static constexpr f32 _kWatchdogTimeout = 20;
     
     
     // Compute rotation ambiguities.
