@@ -156,7 +156,9 @@ namespace Cozmo {
     inline void SetStateName(const std::string& inName) { _stateName = inName; }
     
     virtual Result InitInternal(Robot& robot, double currentTime_sec) = 0;
-    virtual Status UpdateInternal(Robot& robot, double currentTime_sec) = 0;
+
+    // default implementation is to return Running while IsActing, and Complete otherwise
+    virtual Status UpdateInternal(Robot& robot, double currentTime_sec);
     virtual Result InterruptInternal(Robot& robot, double currentTime_sec) = 0;
     virtual void   StopInternal(Robot& robot, double currentTime_sec) = 0;
     

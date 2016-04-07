@@ -847,7 +847,7 @@ namespace Anki {
       }
       
       GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
-                                         "Behavior:%s:%s", behaviorChooserName, behaviorDebugStr.c_str());
+                                         "%s", behaviorDebugStr.c_str());
 
       
       //////// Update Robot's State Machine /////////////
