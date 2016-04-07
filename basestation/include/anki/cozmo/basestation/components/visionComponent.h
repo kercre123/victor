@@ -126,6 +126,7 @@ struct DockingErrorSignal;
     Vision::Camera& GetCamera(void);
     
     const Vision::CameraCalibration& GetCameraCalibration() const;
+    bool IsCameraCalibrationSet() const { return _isCamCalibSet; }
     
     // If enabled, the camera calibration will be updated based on the
     // position of the centroids of the dots that are part of the tool codes.

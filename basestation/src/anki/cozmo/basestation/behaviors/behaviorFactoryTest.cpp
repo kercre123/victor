@@ -196,6 +196,16 @@ namespace Cozmo {
     {
       case FactoryTestState::RequestCalibrationImages:
       {
+        // Set calibration if not already set
+        if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
+          PRINT_NAMED_INFO("BehaviorFactoryTest.Update.SettingFakeCalib", "");
+          Vision::CameraCalibration fakeCalib(240, 320,
+                                              290, 290,
+                                              160, 120);
+          robot.GetVisionComponent().SetCameraCalibration(fakeCalib);
+        }
+        
+        
         PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.RequestCalibrationImages", "TODO");
         SetCurrState(FactoryTestState::ChargerAndIMUCheck);
         break;
