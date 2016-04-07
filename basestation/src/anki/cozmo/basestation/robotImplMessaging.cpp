@@ -812,6 +812,9 @@ void Robot::HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 void Robot::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   _timeSynced = true;
+  
+  RobotInterface::SyncTimeAck payload = message.GetData().Get_syncTimeAck();
+  SetPhysicalRobot(payload.isPhysical);
 }
   
 void Robot::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message)
