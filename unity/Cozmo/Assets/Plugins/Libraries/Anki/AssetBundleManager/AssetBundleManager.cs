@@ -93,16 +93,20 @@ namespace Anki {
         #endif
 
         // Determine where the assets are located
+        string manifestAssetBundleName = "";
+
         #if UNITY_EDITOR
-        _AssetBundleFolder = kAssetBundlesFolder + "/" + GetPlatformName() + "/";
+        string platformName = GetPlatformName(EditorUserBuildSettings.activeBuildTarget);
+        manifestAssetBundleName = platformName;
+        _AssetBundleFolder = kAssetBundlesFolder + "/" + platformName + "/";
         #else
+        manifestAssetBundleName = GetRuntimePlatformName();
         _AssetBundleFolder = System.IO.Path.Combine(Application.streamingAssetsPath, kAssetBundlesFolder) + "/";
         #endif
         Log(LogType.Log, "Asset bundle folder is " + _AssetBundleFolder);
 
         // Load the asset bundle manifest from the main bundle which is called like the platform
         Log(LogType.Log, "Loading asset bundle manifest");
-        string manifestAssetBundleName = GetPlatformName();
         LoadAssetBundleAsync(manifestAssetBundleName, (bool successful) => {
           if (!successful) {
             Log(LogType.Error, "Error initializing the asset system. Couldn't load the manifest bundle");
@@ -242,10 +246,10 @@ namespace Anki {
         }
       }
 
-      public static string GetPlatformName() {
-        #if UNITY_EDITOR
+      #if UNITY_EDITOR
+      public static string GetPlatformName(BuildTarget buildTarget) {
 
-        switch (EditorUserBuildSettings.activeBuildTarget) {
+        switch (buildTarget) {
         case BuildTarget.Android:
           return "android";
         case BuildTarget.iOS:
@@ -258,9 +262,10 @@ namespace Anki {
           Log(LogType.Error, "Unsupported platform " + Application.platform);
           return null;
         }
-
-        #else
-
+      }
+      #else
+      
+      public static string GetRuntimePlatformName() {
         switch (Application.platform) {
         case RuntimePlatform.Android:
           return "android";
@@ -272,9 +277,8 @@ namespace Anki {
           Log(LogType.Error, "Unsupported platform " + Application.platform);
           return null;
         }
-        #endif
       }
-
+      #endif
 
       #region Private Methods
 

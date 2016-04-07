@@ -33,35 +33,29 @@ namespace Anki {
 
       [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles")]
       public static void BuildAssetBundles() {
-        // Rebuild sprite atlases
-        UnityEditor.Sprites.Packer.RebuildAtlasCacheIfNeeded(EditorUserBuildSettings.activeBuildTarget);
-
-        string outputPath = Path.Combine(Assets.AssetBundleManager.kAssetBundlesFolder, Assets.AssetBundleManager.GetPlatformName());
-                
-        if (!Directory.Exists(outputPath)) {
-          Directory.CreateDirectory(outputPath);
-        }
-
-        BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.None, EditorUserBuildSettings.activeBuildTarget);
-
-        // Copy the asset bundles to the target folder
-        if (CopyAssetBundlesTo(Path.Combine(Application.streamingAssetsPath, Assets.AssetBundleManager.kAssetBundlesFolder))) {
-          AssetDatabase.Refresh();
-        }
+        BuildAssetBundlesInternal(EditorUserBuildSettings.activeBuildTarget);
       }
 
       [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles And Player")]
       public static void BuildPlayer() {
-        string outputFolder = GetOutputFolder();
-  			
-        BuildOptions options = GetBuildOptions(EditorUserBuildSettings.activeBuildTarget, Debug.isDebugBuild, EditorUserBuildSettings.allowDebugging, EditorUserBuildSettings.connectProfiler);
-        BuildPlayerInternal(outputFolder, EditorUserBuildSettings.activeBuildTarget, options);
+        BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
+        if (buildTarget == BuildTarget.StandaloneOSXIntel) {
+          Debug.LogError("Standalone build not supported, aborting");
+          return;
+        }
+
+        string outputFolder = GetOutputFolder(buildTarget);
+        BuildOptions options = GetBuildOptions(buildTarget, Debug.isDebugBuild, EditorUserBuildSettings.allowDebugging, EditorUserBuildSettings.connectProfiler);
+        string result = BuildPlayerInternal(outputFolder, buildTarget, options);
+        if (string.IsNullOrEmpty(result)) {
+          result = "Successfully built for " + buildTarget + " at " + outputFolder;
+        }
+        Debug.Log(result);
       }
 
       // Build the project from a set of arguments. This method is used for automated builds
       public static string BuildWithArgs(string[] argv) {
 
-        string outputFolder = GetOutputFolder();
         string platform = null;
         string config = null;
         string sdk = null;
@@ -84,7 +78,9 @@ namespace Anki {
             }
           case "--build-path":
             {
-              outputFolder = argv[i++];
+              // Not used?
+              i++;
+              // outputFolder = argv[i++];
               break;
             }
           case "--debug":
@@ -107,7 +103,6 @@ namespace Anki {
           }
         }
 
-        DAS.Debug(null, String.Format("platform: {0} | config: {1} | buildPath: {2} | enabledDebugging: {3}", platform, config, outputFolder, enableDebugging));
         iOSSdkVersion saveIOSSDKVersion = PlayerSettings.iOS.sdkVersion;
         ScriptCallOptimizationLevel saveIOSScriptLevel = PlayerSettings.iOS.scriptCallOptimization;
 
@@ -137,6 +132,9 @@ namespace Anki {
           }
         }
 
+        string outputFolder = GetOutputFolder(buildTarget);
+        DAS.Debug(null, String.Format("platform: {0} | config: {1} | buildPath: {2} | enabledDebugging: {3}", platform, config, outputFolder, enableDebugging));
+
         // Later on use this to switch between building for different targets
         // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
 
@@ -162,6 +160,24 @@ namespace Anki {
         return result;
       }
 
+      public static void BuildAssetBundlesInternal(BuildTarget buildTarget) {
+        // Rebuild sprite atlases
+        UnityEditor.Sprites.Packer.RebuildAtlasCacheIfNeeded(buildTarget, true, UnityEditor.Sprites.Packer.Execution.ForceRegroup);
+
+        string outputPath = Path.Combine(Assets.AssetBundleManager.kAssetBundlesFolder, Assets.AssetBundleManager.GetPlatformName(buildTarget));
+
+        if (!Directory.Exists(outputPath)) {
+          Directory.CreateDirectory(outputPath);
+        }
+
+        BuildPipeline.BuildAssetBundles(outputPath, BuildAssetBundleOptions.None, buildTarget);
+
+        // Copy the asset bundles to the target folder
+        if (CopyAssetBundlesTo(Path.Combine(Application.streamingAssetsPath, Assets.AssetBundleManager.kAssetBundlesFolder), buildTarget)) {
+          AssetDatabase.Refresh();
+        }
+      }
+
       private static string BuildPlayerInternal(string outputFolder, BuildTarget buildTarget, BuildOptions buildOptions) {
         if (outputFolder == null)
           return "No output folder specified for the build";
@@ -171,11 +187,13 @@ namespace Anki {
         }
 
         // Build and copy asset bundles
-        BuildAssetBundles();
+        BuildAssetBundlesInternal(buildTarget);
 
         string[] scenes = GetScenesFromBuildSettings();
-        string outputPath = outputFolder + "/" + GetOutputName();
+        string outputPath = outputFolder + "/" + GetOutputName(buildTarget);
+
         string result = BuildPipeline.BuildPlayer(scenes, outputPath, buildTarget, buildOptions);
+
         return result;
       }
 
@@ -227,9 +245,9 @@ namespace Anki {
       }
 
       // Copies the asset bundles to the target folder
-      private static bool CopyAssetBundlesTo(string outputFolder) {
+      private static bool CopyAssetBundlesTo(string outputFolder, BuildTarget buildTarget) {
         try {
-          var sourceFolder = Path.Combine(Path.Combine(System.Environment.CurrentDirectory, Assets.AssetBundleManager.kAssetBundlesFolder), Assets.AssetBundleManager.GetPlatformName());
+          var sourceFolder = Path.Combine(Path.Combine(System.Environment.CurrentDirectory, Assets.AssetBundleManager.kAssetBundlesFolder), Assets.AssetBundleManager.GetPlatformName(buildTarget));
           if (!System.IO.Directory.Exists(sourceFolder)) {
             DAS.Error(null, "No asset bundles folder for the current platform. Build bundles first");
           }
@@ -258,31 +276,31 @@ namespace Anki {
       }
 
       // Returns the output folder according to the active build target
-      private static string GetOutputFolder() {
-        switch (EditorUserBuildSettings.activeBuildTarget) {
+      private static string GetOutputFolder(BuildTarget buildTarget) {
+        switch (buildTarget) {
         case BuildTarget.Android:
         case BuildTarget.iOS:
           {
             string configuration = Debug.isDebugBuild ? "Debug" : "Release";
-            string platformName = Assets.AssetBundleManager.GetPlatformName();
+            string platformName = Assets.AssetBundleManager.GetPlatformName(buildTarget);
             string path = _kBuildOuputFolder + platformName + "/" + "unity-" + platformName + "/" + configuration + "-iphoneos/";
             return path;
           }
         default:
-          DAS.Error(null, "Target " + EditorUserBuildSettings.activeBuildTarget + " not implemented.");
+          DAS.Error(null, "Target " + buildTarget + " not implemented.");
           return null;
         }
       }
 
       // Returns the name of the build output artifact
-      private static string GetOutputName() {
-        switch (EditorUserBuildSettings.activeBuildTarget) {
+      private static string GetOutputName(BuildTarget buildTarget) {
+        switch (buildTarget) {
         case BuildTarget.Android:
           return _kProjectName + ".apk";
         case BuildTarget.iOS:
           return ""; // The folder name is enough in iOS
         default:
-          DAS.Error(null, "Target " + EditorUserBuildSettings.activeBuildTarget + " not implemented.");
+          DAS.Error(null, "Target " + buildTarget + " not implemented.");
           return null;
         }
       }
