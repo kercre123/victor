@@ -18,9 +18,10 @@
 #ifndef __Anki_Cozmo_BlockWorldFilter_H__
 #define __Anki_Cozmo_BlockWorldFilter_H__
 
+#include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
-#include "anki/common/basestation/objectIDs.h"
 
 #include <set>
 #include <assert.h>
