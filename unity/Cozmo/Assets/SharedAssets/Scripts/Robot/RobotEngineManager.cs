@@ -432,12 +432,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.EngineRobotCLADVersionMismatch message) {
     if (message.engineToRobotMismatch) {
       string str = "Engine to Robot CLAD version mismatch. Engine's EngineToRobot hash = " + message.engineEnginetoRobotHash + ". Robot's EngineToRobot hash = " + message.robotEnginetoRobotHash;
-      DAS.Error("RobotEngineManager", str);
+      DAS.Error("clad_version_mismatch_engine_to_robot", str);
     }
 
     if (message.robotToEngineMistmatch) {
       string str = "Robot to Engine CLAD version mismatch. Engine's EngineToRobot hash = " + message.engineRobotToEngineHash + ". Robot's RobotToEngine hash = " + message.robotRobotToEngineHash;
-      DAS.Error("RobotEngineManager", str);
+      DAS.Error("clad_version_mismatch_robot_to_engine", str);
     }
 
     DebugMenuManager.Instance.OnDebugMenuButtonTap();
