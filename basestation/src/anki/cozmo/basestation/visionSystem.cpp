@@ -3023,7 +3023,6 @@ namespace Cozmo {
       if (found) {
         PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.FoundPoints", "");
         imagePoints.push_back(pointBuf);
-        cv::drawChessboardCorners(img.get_CvMat_(), boardSize, cv::Mat(pointBuf), found);
       } else {
         PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NoPointsFound", "");
       }
@@ -3031,7 +3030,12 @@ namespace Cozmo {
       
       // Draw image
       if (DRAW_CALIB_IMAGES) {
-        _debugImageMailbox.putMessage({std::string("CalibImage") + std::to_string(imgCnt), img});
+        Vision::ImageRGB dispImg;
+        cv::cvtColor(img.get_CvMat_(), dispImg.get_CvMat_(), cv::COLOR_GRAY2BGR);
+        if (found) {
+          cv::drawChessboardCorners(dispImg.get_CvMat_(), boardSize, cv::Mat(pointBuf), found);
+        }
+        _debugImageRGBMailbox.putMessage({std::string("CalibImage") + std::to_string(imgCnt), dispImg});
       }
       ++imgCnt;
     }
