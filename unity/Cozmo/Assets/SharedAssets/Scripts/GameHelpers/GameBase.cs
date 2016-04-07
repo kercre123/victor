@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -105,6 +105,7 @@ public abstract class GameBase : MonoBehaviour {
     DAS.Event(DASConstants.Game.kStart, GetGameUUID());
     DAS.Event(DASConstants.Game.kType, GetDasGameName());
 
+    DAS.SetGlobal(DASConstants.Game.kGlobal, GetDasGameName());
   }
 
   protected abstract void Initialize(MinigameConfigBase minigameConfigData);
@@ -147,6 +148,7 @@ public abstract class GameBase : MonoBehaviour {
 
   public void OnDestroy() {
     DAS.Event(DASConstants.Game.kEnd, GetGameTimeElapsedAsStr());
+    DAS.SetGlobal(DASConstants.Game.kGlobal, null);
     if (_SharedMinigameViewInstance != null) {
       _SharedMinigameViewInstance.CloseViewImmediately();
       _SharedMinigameViewInstance = null;
@@ -480,11 +482,11 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private string GetDasGameName() {
-    return _ChallengeData.ChallengeID;
+    return _ChallengeData.ChallengeID.ToLower().Replace("game", "");
   }
 
   private string GetGameTimeElapsedAsStr() {
-    return string.Format("{0}s", Time.time - _GameStartTime);
+    return string.Format("{0}", Time.time - _GameStartTime);
   }
 
   private void SendEventForRewards(StatContainer rewards) {
