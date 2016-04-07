@@ -14,6 +14,8 @@ public interface IDAS {
   void Info(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
 
   void Debug(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null);
+
+  void SetGlobal(string key, string value);
 }
 
 public static partial class DAS {
@@ -80,6 +82,12 @@ public static partial class DAS {
     }
   }
 
+  public static void SetGlobal(string key, string value) {
+    for (int i = 0, len = _Targets.Count; i < len; i++) {
+      _Targets[i].SetGlobal(key, value);
+    }
+  }
+
   private static string GetEventName(object eventObject) {
     if (eventObject == null) {
       return string.Empty;
@@ -132,6 +140,10 @@ public static partial class DAS {
 
     public void Debug(string eventValue, System.Object context = null, Dictionary<string, string> keyValues = null) {
       DAS.Debug(_EventName, eventValue, context, keyValues);            
+    }
+
+    public void SetGlobal(string key, string value) {
+      DAS.SetGlobal(key, value);            
     }
   }
   

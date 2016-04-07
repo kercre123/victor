@@ -13,6 +13,7 @@ namespace DASConstants {
     public const string kRankPlayerLose = "1";
     public const string kRankPlayerWon = "0";
     public const string kEndPointsEarned = "game.end.goal_points_earned.{0}";
+    public const string kGlobal = "$game";
   }
 
   public static class Friendship {
