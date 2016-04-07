@@ -6,6 +6,22 @@
 namespace Anki {
 namespace Cozmo {
 
+enum uint_8 FactoryTestState {
+  RequestCalibrationImages,
+  ChargerAndIMUCheck,       // Verify that robot is on charger and IMU is not drifting
+  DriveToSlot,              // Drive forward until cliff event. Set robot's pose.
+  GotoCalibrationPose,      // Drive to pose from which calibration images are to be taken
+  TakeCalibrationImages,    // Take and save images of calibration patterns
+  ComputeCameraCalibration, // Compute calibration and check that values are reasonable
+  WaitForCameraCalibration,
+  GotoPickupPose,
+  StartPickup,
+  PickingUpBlock,
+  StartPlacement,
+  PlacingBlock,
+  DockToCharger
+}
+
 enum uint_8 FactoryTestResultCode {
   UNKNOWN = 0,
   SUCCESS,

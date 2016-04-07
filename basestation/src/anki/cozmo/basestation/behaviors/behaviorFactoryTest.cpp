@@ -60,7 +60,7 @@ namespace Cozmo {
   , _prePickupPose( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 150, 0}, &robot.GetPose().FindOrigin())
   , _expectedLightCubePose(0, Z_AXIS_3D(), {-50, 300, 0}, &robot.GetPose().FindOrigin())
   , _expectedChargerPose(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin())
-  , _currentState(State::StartOnCharger)
+  , _currentState(FactoryTestState::RequestCalibrationImages)
   , _lastHandlerResult(RESULT_OK)
   , _testResult(FactoryTestResultCode::UNKNOWN)
   {
@@ -194,7 +194,13 @@ namespace Cozmo {
     
     switch(_currentState)
     {
-      case State::StartOnCharger:
+      case FactoryTestState::RequestCalibrationImages:
+      {
+        PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.RequestCalibrationImages", "TODO");
+        SetCurrState(FactoryTestState::ChargerAndIMUCheck);
+        break;
+      }
+      case FactoryTestState::ChargerAndIMUCheck:
       {
         // Check that robot is on charger
         if (!robot.IsOnCharger()) {
@@ -219,11 +225,11 @@ namespace Cozmo {
           // Drive off charger
           DriveStraightAction *driveAction = new DriveStraightAction(robot, 250, 100);
           StartActing(robot, driveAction );
-          SetCurrState(State::DriveToSlot);
+          SetCurrState(FactoryTestState::DriveToSlot);
         }
         break;
       }
-      case State::DriveToSlot:
+      case FactoryTestState::DriveToSlot:
       {
         if (!robot.IsOnCliff()) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingCliff", "");
@@ -242,11 +248,11 @@ namespace Cozmo {
         
         // Go to camera calibration pose
         StartActing(robot, new DriveToPoseAction(robot, _camCalibPose, _motionProfile) );
-        SetCurrState(State::GotoCalibrationPose);
+        SetCurrState(FactoryTestState::GotoCalibrationPose);
         break;
       }
         
-      case State::GotoCalibrationPose:
+      case FactoryTestState::GotoCalibrationPose:
       {
         // Check that robot is in correct pose
         if (!robot.GetPose().IsSameAs(_camCalibPose, _kRobotPoseSamenessDistThresh_mm, _kRbotPoseSamenessAngleThresh_rad)) {
@@ -261,24 +267,29 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::NOT_IN_CALIBRATION_POSE);
         }
         
-        _camCalibPoseIndex = 0;
-        robot.GetVisionComponent().ClearCalibrationImages();
-        SetCurrState(State::TakeCalibrationImages);
+        
+        // Check if all calibration images received from flash.
+        // If so, go directly to ComputeCameraCalibration.
+        // Otherwise, acquire images
+        if (robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() >= _kMinNumberOfCalibrationImagesRequired) {
+           SetCurrState(FactoryTestState::ComputeCameraCalibration);
+        } else {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.InsufficientCalibrationImagesInFlash",
+                              "Only %d images found in flash. Taking pictures now.",
+                              robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
+          _camCalibPoseIndex = 0;
+          robot.GetVisionComponent().ClearCalibrationImages();
+          SetCurrState(FactoryTestState::TakeCalibrationImages);
+        }
         break;
       }
         
-      case State::TakeCalibrationImages:
+      case FactoryTestState::TakeCalibrationImages:
       {
         // All calibration images acquired.
         // Start computing calibration.
         if (robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() >= _camCalibPanAndTiltAngles.size()) {
-          // Start calibration computation
-          PRINT_NAMED_INFO("BehaviorFactoryTest.Update.StartingCalibration",
-                           "%d images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
-          robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
-          _calibrationReceived = false;
-          _holdUntilTime = currentTime_sec + 30.f;
-          SetCurrState(State::ComputeCameraCalibration);
+          SetCurrState(FactoryTestState::ComputeCameraCalibration);
           break;
         }
 
@@ -301,19 +312,29 @@ namespace Cozmo {
         break;
       }
         
-      case State::ComputeCameraCalibration:
+      case FactoryTestState::ComputeCameraCalibration:
+      {
+        // Start calibration computation
+        PRINT_NAMED_INFO("BehaviorFactoryTest.Update.StartingCalibration",
+                         "%d images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
+        robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
+        _calibrationReceived = false;
+        _holdUntilTime = currentTime_sec + 30.f;
+        SetCurrState(FactoryTestState::WaitForCameraCalibration);
+      }
+      case FactoryTestState::WaitForCameraCalibration:
       {
         if (_calibrationReceived) {
           // Goto pose where block is visible
           StartActing(robot, new DriveToPoseAction(robot, _prePickupPose, _motionProfile, false, false), gotoPoseCallback);
-          SetCurrState(State::GotoPickupPose);
+          SetCurrState(FactoryTestState::GotoPickupPose);
         } else if (currentTime_sec > _holdUntilTime) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CalibrationTimedout", "");
           END_TEST(FactoryTestResultCode::CALIBRATION_TIMED_OUT);
         }
         break;
       }
-      case State::GotoPickupPose:
+      case FactoryTestState::GotoPickupPose:
       {
         // Verify that robot is where expected
         if (!robot.GetPose().IsSameAs(_prePickupPose, _kRobotPoseSamenessDistThresh_mm, _kRbotPoseSamenessAngleThresh_rad)) {
@@ -363,17 +384,17 @@ namespace Cozmo {
         
         _actualLightCubePose = oObject->GetPose();
         _attemptCounter = 0;
-        SetCurrState(State::StartPickup);
+        SetCurrState(FactoryTestState::StartPickup);
         break;
       }
-      case State::StartPickup:
+      case FactoryTestState::StartPickup:
       {
         auto pickupCallback = [this,&robot](ActionResult ret){
           if (ret == ActionResult::SUCCESS && robot.GetCarryingObject() == _blockObjectID) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.pickupCallback.Success", "");
           } else if (_attemptCounter <= _kNumPickupRetries) {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.pickupCallback.FailedRetrying", "");
-            SetCurrState(State::StartPickup);
+            SetCurrState(FactoryTestState::StartPickup);
           } else {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.pickupCallback.Failed", "");
             EndTest(robot, FactoryTestResultCode::PICKUP_FAILED);
@@ -387,10 +408,10 @@ namespace Cozmo {
         StartActing(robot,
                     new DriveToPickupObjectAction(robot, _blockObjectID, _motionProfile),
                     pickupCallback);
-        SetCurrState(State::PickingUpBlock);
+        SetCurrState(FactoryTestState::PickingUpBlock);
         break;
       }
-      case State::PickingUpBlock:
+      case FactoryTestState::PickingUpBlock:
       {
         auto placementCallback = [this,&robot](ActionResult ret){
           if (ret == ActionResult::SUCCESS && !robot.IsCarryingObject()) {
@@ -406,10 +427,10 @@ namespace Cozmo {
         StartActing(robot,
                     new PlaceObjectOnGroundAtPoseAction(robot, _actualLightCubePose, _motionProfile),
                     placementCallback);
-        SetCurrState(State::PlacingBlock);
+        SetCurrState(FactoryTestState::PlacingBlock);
         break;
       }
-      case State::PlacingBlock:
+      case FactoryTestState::PlacingBlock:
       {
         // Verify that block is where expected
         ObservableObject* oObject = robot.GetBlockWorld().GetObjectByID(_blockObjectID);
@@ -433,10 +454,10 @@ namespace Cozmo {
         
         // Look at charger
         StartActing(robot, new TurnTowardsPoseAction(robot, _expectedChargerPose, DEG_TO_RAD(180)), gotoPoseCallback );
-        SetCurrState(State::DockToCharger);
+        SetCurrState(FactoryTestState::DockToCharger);
         break;
       }
-      case State::DockToCharger:
+      case FactoryTestState::DockToCharger:
       {
         if (!_chargerObjectID.IsSet()) {
           if (currentTime_sec > _holdUntilTime) {
@@ -462,7 +483,7 @@ namespace Cozmo {
       }
       default:
         PRINT_NAMED_ERROR("BehaviorFactoryTest.Update.UnknownState",
-                          "Reached unknown state %d.", _currentState);
+                          "Reached unknown state %d.", (u32)_currentState);
         return Status::Failure;
     }
     
@@ -530,7 +551,7 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark BlockPlay-Specific Methods
   
-  void BehaviorFactoryTest::SetCurrState(State s)
+  void BehaviorFactoryTest::SetCurrState(FactoryTestState s)
   {
     // Update watchdog
     if (s != _currentState) {
@@ -547,44 +568,8 @@ namespace Cozmo {
 
   void BehaviorFactoryTest::UpdateStateName()
   {
-    std::string name;
-    switch(_currentState)
-    {
-      case State::StartOnCharger:
-        name = "START_ON_CHARGER";
-        break;
-      case State::DriveToSlot:
-        name = "DRIVE_TO_SLOT";
-        break;
-      case State::GotoCalibrationPose:
-        name = "GOTO_CALIB_POSE";
-        break;
-      case State::TakeCalibrationImages:
-        name = "TAKE_CALIB_IMAGES";
-        break;
-      case State::ComputeCameraCalibration:
-        name = "CALIBRATING";
-        break;
-      case State::GotoPickupPose:
-        name = "GOTO_PICKUP_POSE";
-        break;
-      case State::StartPickup:
-        name = "START_PICKUP";
-        break;
-      case State::PickingUpBlock:
-        name = "PICKING";
-        break;
-      case State::PlacingBlock:
-        name = "PLACING";
-        break;
-      case State::DockToCharger:
-        name = "DOCK_TO_CHARGER";
-        break;
-      default:
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.SetCurrState.InvalidState", "");
-        break;
-    }
-
+    std::string name = EnumToString(_currentState);
+        
     if( IsActing() ) {
       name += '*';
     }

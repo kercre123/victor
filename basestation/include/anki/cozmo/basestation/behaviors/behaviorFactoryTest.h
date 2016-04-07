@@ -51,27 +51,7 @@ namespace Cozmo {
     
   private:
     
-    // TODO: Move to factoryTestTypes.clad?
-    enum class State {
-      StartOnCharger,           // Verify that robot is on charger and IMU is not drifting
-      DriveToSlot,              // Drive forward until cliff event. Set robot's pose.
-
-      // Check head and lift motors?
-      
-      GotoCalibrationPose,      // Drive to pose from which calibration images are to be taken
-      TakeCalibrationImages,    // Take and save images of calibration patterns
-      ComputeCameraCalibration, // Compute calibration and check that values are reasonable
-      GotoPickupPose,
-      StartPickup,
-      PickingUpBlock,
-      StartPlacement,
-      PlacingBlock,
-      DockToCharger
-    };
-    
-    
     // Test constants
-//    constexpr static kIMUDriftTimeout_ms = 2000
     const Pose3d _cliffDetectPose;
     const Pose3d _camCalibPose;
     const Pose3d _prePickupPose;
@@ -85,6 +65,7 @@ namespace Cozmo {
     static constexpr u32 _kNumPickupRetries = 1;
     static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
     static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
+    static constexpr u32 _kMinNumberOfCalibrationImagesRequired = 5;
 
     // If no change in behavior state for this long then trigger failure
     static constexpr f32 _kWatchdogTimeout = 10;
@@ -126,7 +107,7 @@ namespace Cozmo {
 
     
     void InitState(const Robot& robot);
-    void SetCurrState(State s);
+    void SetCurrState(FactoryTestState s);
     void UpdateStateName();
     
 
@@ -138,7 +119,7 @@ namespace Cozmo {
     std::map<u32, ActionResultCallback> _actionCallbackMap;
     bool IsActing() const {return !_actionCallbackMap.empty(); }
     
-    State   _currentState;
+    FactoryTestState   _currentState;
     f32     _holdUntilTime = -1.0f;
     Radians _startingRobotOrientation;
     Result  _lastHandlerResult;
