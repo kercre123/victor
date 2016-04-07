@@ -25,6 +25,8 @@ public class StartupManager : MonoBehaviour {
   [SerializeField]
   private string[] _StartupDebugPrefabNames;
 
+  private bool _IsDebugBuild = false;
+
   // Use this for initialization
   private IEnumerator Start() {
     // Load asset bundler
@@ -38,8 +40,12 @@ public class StartupManager : MonoBehaviour {
       yield return 0;
     }
 
+    // INGO: QA is testing on a release build so manually set to true for now
+    // _IsDebugBuild = Debug.isDebugBuild;
+    _IsDebugBuild = true;
+
     // Load debug asset bundle if in debug build
-    if (Debug.isDebugBuild) {
+    if (_IsDebugBuild) {
       bool loadedDebugAssetBundle = false;
       assetBundleManager.LoadAssetBundleAsync(_DebugAssetBundleName, 
         (success) => {
@@ -53,21 +59,19 @@ public class StartupManager : MonoBehaviour {
         yield return 0;
       }
 
-      if (Debug.isDebugBuild) {
-        int loadedDebugAssets = 0;
-        foreach (string prefabName in _StartupDebugPrefabNames) {
-          AssetBundleManager.Instance.LoadAssetAsync<GameObject>(_DebugAssetBundleName, 
-            prefabName, (GameObject prefab) => {
-            if (prefab != null) {
-              GameObject go = GameObject.Instantiate(prefab);
-              go.transform.SetParent(transform);
-            }
-            loadedDebugAssets++;
-          });
-        }
-        while (loadedDebugAssets < _StartupDebugPrefabNames.Length) {
-          yield return 0;
-        }
+      int loadedDebugAssets = 0;
+      foreach (string prefabName in _StartupDebugPrefabNames) {
+        AssetBundleManager.Instance.LoadAssetAsync<GameObject>(_DebugAssetBundleName, 
+          prefabName, (GameObject prefab) => {
+          if (prefab != null) {
+            GameObject go = GameObject.Instantiate(prefab);
+            go.transform.SetParent(transform);
+          }
+          loadedDebugAssets++;
+        });
+      }
+      while (loadedDebugAssets < _StartupDebugPrefabNames.Length) {
+        yield return 0;
       }
     }
 
@@ -108,7 +112,7 @@ public class StartupManager : MonoBehaviour {
     gameObject.AddComponent<ObjectTagRegistryManager>();
     AnimationManager.Instance = new AnimationManager();
 
-    if (Debug.isDebugBuild) {
+    if (_IsDebugBuild) {
       gameObject.AddComponent<SOSLogManager>();
     }
   }
