@@ -21,13 +21,16 @@
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/helpers/printByteArray.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_hash.h"
+#include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/robotStatusAndActions.h"
+#include "util/debug/messageDebugging.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeFstream.h"
-#include "anki/common/basestation/utils/timer.h"
 #include <functional>
 
 // Whether or not to handle prox obstacle events
@@ -208,8 +211,47 @@ void Robot::HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& me
 
 void Robot::HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  _traceHandler.HandleFWVersionInfo(message);
+  static_assert(decltype(RobotInterface::FWVersionInfo::toRobotCLADHash)().size() == sizeof(messageEngineToRobotHash), "Incorrect sizes in CLAD version mismatch message");
+  static_assert(decltype(RobotInterface::FWVersionInfo::toEngineCLADHash)().size() == sizeof(messageRobotToEngineHash), "Incorrect sizes in CLAD version mismatch message");
+  
+  const RobotInterface::FWVersionInfo& fwVersionInfo = message.GetData().Get_fwVersionInfo();
+
+  bool engineToRobotMismatch = false;
+  std::string robotEngineToRobotStr;
+  std::string engineEngineToRobotStr;
+  if (memcmp(fwVersionInfo.toRobotCLADHash.data(), messageEngineToRobotHash, fwVersionInfo.toRobotCLADHash.size())) {
+
+    robotEngineToRobotStr = Anki::Util::ConvertMessageBufferToString(fwVersionInfo.toRobotCLADHash.data(), static_cast<uint32_t>(fwVersionInfo.toRobotCLADHash.size()), Anki::Util::EBytesToTextType::eBTTT_Hex);
+    engineEngineToRobotStr = Anki::Util::ConvertMessageBufferToString(messageEngineToRobotHash, sizeof(messageEngineToRobotHash), Anki::Util::EBytesToTextType::eBTTT_Hex);
+
+    PRINT_NAMED_WARNING("RobotFirmware.VersionMissmatch", "Engine to Robot CLAD version hash mismatch. Robot's EngineToRobot hash = %s. Engine's EngineToRobot hash = %s.", robotEngineToRobotStr.c_str(), engineEngineToRobotStr.c_str());
+
+    engineToRobotMismatch = true;
+  }
+  
+  bool robotToEngineMismatch = false;
+  std::string robotRobotToEngineStr;
+  std::string engineRobotToEngineStr;
+  if (memcmp(fwVersionInfo.toEngineCLADHash.data(), messageRobotToEngineHash, fwVersionInfo.toEngineCLADHash.size())) {
+
+    robotRobotToEngineStr = Anki::Util::ConvertMessageBufferToString(fwVersionInfo.toEngineCLADHash.data(), static_cast<uint32_t>(fwVersionInfo.toEngineCLADHash.size()), Anki::Util::EBytesToTextType::eBTTT_Hex);
+    engineRobotToEngineStr = Anki::Util::ConvertMessageBufferToString(messageRobotToEngineHash, sizeof(messageRobotToEngineHash), Anki::Util::EBytesToTextType::eBTTT_Hex);
+    
+    PRINT_NAMED_WARNING("RobotFirmware.VersionMissmatch", "Robot to Engine CLAD version hash mismatch. Robot's RobotToEngine hash = %s. Engine's RobotToEngine hash = %s.", robotRobotToEngineStr.c_str(), engineRobotToEngineStr.c_str());
+
+    robotToEngineMismatch = true;
+  }
+  
+  if (engineToRobotMismatch || robotToEngineMismatch) {
+    Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::EngineRobotCLADVersionMismatch(engineToRobotMismatch,
+                                                                                                       robotToEngineMismatch,
+                                                                                                       engineEngineToRobotStr,
+                                                                                                       engineRobotToEngineStr,
+                                                                                                       robotEngineToRobotStr,
+                                                                                                       robotRobotToEngineStr)));
+  }
 }
+
 
 void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
@@ -770,6 +812,9 @@ void Robot::HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 void Robot::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   _timeSynced = true;
+  
+  RobotInterface::SyncTimeAck payload = message.GetData().Get_syncTimeAck();
+  SetPhysicalRobot(payload.isPhysical);
 }
   
 void Robot::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message)

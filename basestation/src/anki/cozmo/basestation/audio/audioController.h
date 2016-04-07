@@ -14,10 +14,10 @@
 #ifndef __Basestation_Audio_AudioController_H__
 #define __Basestation_Audio_AudioController_H__
 
-#include <DriveAudioEngine/audioTypes.h>
-#include <DriveAudioEngine/audioCallback.h>
-#include <util/helpers/noncopyable.h>
-#include <util/dispatchQueue/iTaskHandle.h>
+#include "DriveAudioEngine/audioTypes.h"
+#include "DriveAudioEngine/audioCallback.h"
+#include "util/helpers/noncopyable.h"
+#include "util/dispatchQueue/iTaskHandle.h"
 #include <unordered_map>
 #include <vector>
 
@@ -45,11 +45,14 @@ namespace Data {
 namespace Cozmo {
 namespace Audio {
   
+class AudioControllerPluginInterface;
 class RobotAudioBuffer;
 class AudioWaveFileReader;
+
   
 class AudioController : public Util::noncopyable
 {
+  friend class AudioControllerPluginInterface;
   
 public:
   
@@ -97,16 +100,21 @@ public:
   // TEMP: Set Cozmo Speaker Volumes
   void StartUpSetDefaults();
   
+  // Expose PlugIn functionality
+  AudioControllerPluginInterface* GetPluginInterface() const { return _pluginInterface; }
 
 private:
+
+  // Engine Components
+  AudioEngine::AudioEngineController*       _audioEngine            = nullptr;  // Audio Engine Lib
+  // Custom Plugins
+  AudioEngine::PlugIns::HijackAudioPlugIn*  _hijackAudioPlugIn      = nullptr;  // Plugin Instance
+  AudioEngine::PlugIns::WavePortalPlugIn*   _wavePortalPlugIn       = nullptr;
+
+  // Controller Components
+  AudioControllerPluginInterface*           _pluginInterface = nullptr;
   
-  AudioEngine::AudioEngineController*               _audioEngine            = nullptr;  // Audio Engine Lib
-  AudioEngine::PlugIns::HijackAudioPlugIn*          _hijackAudioPlugIn      = nullptr;  // Plugin Instance
   std::unordered_map< int32_t, RobotAudioBuffer* >  _robotAudioBufferPool; // Store all Audio Buffers
-  
-  AudioWaveFileReader*           _reader                      = nullptr;
-  AudioEngine::PlugIns::WavePortalPlugIn* _wavePortalPlugIn   = nullptr;
-  
   
   Util::Dispatch::Queue*    _dispatchQueue  = nullptr;  // The dispatch queue we're ticking on
   Anki::Util::TaskHandle    _taskHandle     = nullptr;  // Handle to our tick callback task

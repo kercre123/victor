@@ -47,18 +47,18 @@ void RobotAudioClient::SetRobotVolume(float volume)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation, AnimationMode mode )
+void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation, const AnimationMode mode )
 {
   // Create appropriate animation type for mode
   RobotAudioAnimation* audioAnimation = nullptr;
   switch ( mode ) {
   
     case AnimationMode::PlayOnDevice:
-      audioAnimation = static_cast<RobotAudioAnimation*>( new RobotAudioAnimationOnDevice( anAnimation, this ) );
+      audioAnimation = dynamic_cast<RobotAudioAnimation*>( new RobotAudioAnimationOnDevice( anAnimation, this ) );
       break;
       
     case AnimationMode::PlayOnRobot:
-      audioAnimation = static_cast<RobotAudioAnimation*>( new RobotAudioAnimationOnRobot( anAnimation, this ) );
+      audioAnimation = dynamic_cast<RobotAudioAnimation*>( new RobotAudioAnimationOnRobot( anAnimation, this ) );
       break;
       
     default:
