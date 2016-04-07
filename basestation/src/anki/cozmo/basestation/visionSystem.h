@@ -367,6 +367,9 @@ namespace Cozmo {
     TimeStamp_t                   _lastToolCodeReadTime_ms = 0;
     const TimeStamp_t             kToolCodeReadPeriod_ms = 500; // TODO: Increase
     
+    // Calibration stuff
+    static const u32              _kMinNumCalibImagesRequired = 4;
+    
     struct VisionMemory {
       /* 10X the memory for debugging on a PC
        static const s32 OFFCHIP_BUFFER_SIZE = 20000000;

@@ -2989,12 +2989,11 @@ namespace Cozmo {
     
     
     // Check that there are enough images
-    static const u32 _kMinNumImagesRequired = 4;
-    if (calibImages.size() < _kMinNumImagesRequired) {
-      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NotEnoughImages", "Got %lu. Need %d.", calibImages.size(), _kMinNumImagesRequired);
+    if (calibImages.size() < _kMinNumCalibImagesRequired) {
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NotEnoughImages", "Got %u. Need %u.", (u32)calibImages.size(), _kMinNumCalibImagesRequired);
       return RESULT_FAIL;
     }
-    PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NumImages", "%d.", (u32)calibImages.size());
+    PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NumImages", "%u.", (u32)calibImages.size());
     
     
     // Description of asymmetric circles calibration target
@@ -3038,10 +3037,10 @@ namespace Cozmo {
     }
     
     // Were points found in enough of the images?
-    if (imagePoints.size() < _kMinNumImagesRequired) {
+    if (imagePoints.size() < _kMinNumCalibImagesRequired) {
       PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.InsufficientImagesWithPoints",
-                       "Points detected in only %lu images. Need %d.",
-                       imagePoints.size(), _kMinNumImagesRequired);
+                       "Points detected in only %u images. Need %u.",
+                       (u32)imagePoints.size(), _kMinNumCalibImagesRequired);
       return RESULT_FAIL;
     }
     
