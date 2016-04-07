@@ -69,12 +69,20 @@ class Upgrader:
             sys.stdout.write("Loading \"{}\", {:d} bytes.\r\n".format(filePathName, fwSize))
             fw = struct.pack('i', fwSize) + fw
             fwSize = len(fw)
+            
+            # Print out the SHA1 signature
+            sys.stdout.write("sig = ")
+            for b in sig:
+                sys.stdout.write("{:02X}".format(b) ) 
+            sys.stdout.write("\r\n")
+
             # Wait for connection
             while not robotInterface.GetConnected():
                 time.sleep(0.1)
             # Erase flash
             sys.stdout.write("Erasing flash\r\n")
             self.sendAndWait(RI.EngineToRobot(eraseFlash=RI.EraseFlash(flashAddress, fwSize)))
+            sys.stdout.write("\r\n");
             # Write Firmware
             sys.stdout.write("Writing new firmware to robot storage\r\n")
             written = 0
@@ -85,6 +93,7 @@ class Upgrader:
                     chunk = fw[written:written+FW_CHUNK_SIZE]
                 self.sendAndWait(RI.EngineToRobot(writeFlash=RI.WriteFlash(flashAddress+written, chunk)))
                 written += len(chunk)
+            sys.stdout.write("\r\n");
             # Finish OTA
             self.send(RI.EngineToRobot(
                 triggerOTAUpgrade=RI.OTAUpgrade(
