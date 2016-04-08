@@ -2639,7 +2639,7 @@ namespace Anki {
         compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
         compression_params.push_back(90);
         sprintf(imgFilename, "%s/cozmo%d_%dms_%d.jpg", imageCaptureDir.c_str(), GetID(), image.GetTimestamp(), imgCounter++);
-        imwrite(imgFilename, image.get_CvMat_(), compression_params);
+        //cv::imwrite(imgFilename, image.get_CvMat_(), compression_params);
         
         if (_imageSaveMode == SAVE_ONE_SHOT) {
           _imageSaveMode = SAVE_OFF;

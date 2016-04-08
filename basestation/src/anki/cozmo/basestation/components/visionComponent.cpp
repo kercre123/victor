@@ -1295,7 +1295,7 @@ namespace Cozmo {
     cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
     
     std::vector<u8> compressedBuffer;
-    cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
+    //cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
     
     const u32 numTotalBytes = static_cast<u32>(compressedBuffer.size());
     

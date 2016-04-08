@@ -71,14 +71,14 @@ namespace Cozmo {
     // Compute eye and lid polygons:
     //
     std::vector<cv::Point> eyePoly, segment, lowerLidPoly, upperLidPoly;
-    const s32 ellipseDelta = 10;
+    //const s32 ellipseDelta = 10;
     
     // 1. Eye shape poly
     {
       // Upper right corner
       if(upRightRadX > 0 && upRightRadY > 0) {
-        cv::ellipse2Poly(cv::Point(eyeWidth/2  - upRightRadX, -eyeHeight/2 + upRightRadY),
-                         cv::Size(upRightRadX,upRightRadY), 0, 270, 360, ellipseDelta, segment);
+       // cv::ellipse2Poly(cv::Point(eyeWidth/2  - upRightRadX, -eyeHeight/2 + upRightRadY),cv::Size(upRightRadX,upRightRadY), 0, 270, 
+       // 360, (int)ellipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.push_back({eyeWidth/2,-eyeHeight/2});
@@ -86,8 +86,8 @@ namespace Cozmo {
       
       // Lower right corner
       if(lowRightRadX > 0 && lowRightRadY > 0) {
-        cv::ellipse2Poly(cv::Point(eyeWidth/2 - lowRightRadX, eyeHeight/2 - lowRightRadY),
-                         cv::Size(lowRightRadX,lowRightRadY), 0, 0, 90, ellipseDelta, segment);
+        //cv::ellipse2Poly(cv::Point(eyeWidth/2 - lowRightRadX, eyeHeight/2 - lowRightRadY),
+        //                 cv::Size(lowRightRadX,lowRightRadY), 0, 0, 90, ellipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.push_back({eyeWidth/2, eyeHeight/2});
@@ -95,8 +95,8 @@ namespace Cozmo {
       
       // Lower left corner
       if(lowLeftRadX > 0 && lowLeftRadY > 0) {
-        cv::ellipse2Poly(cv::Point(-eyeWidth/2  + lowLeftRadX, eyeHeight/2 - lowLeftRadY),
-                         cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, ellipseDelta, segment);
+       // cv::ellipse2Poly(cv::Point(-eyeWidth/2  + lowLeftRadX, eyeHeight/2 - lowLeftRadY),
+       //                  cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, ellipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.push_back({-eyeWidth/2, eyeHeight/2});
@@ -105,8 +105,8 @@ namespace Cozmo {
     
     // Upper left corner
     if(upLeftRadX > 0 && upLeftRadY > 0) {
-      cv::ellipse2Poly(cv::Point(-eyeWidth/2 + upLeftRadX, -eyeHeight/2 + upLeftRadY),
-                       cv::Size(upLeftRadX,upLeftRadY), 0, 180, 270, ellipseDelta, segment);
+   //   cv::ellipse2Poly(cv::Point(-eyeWidth/2 + upLeftRadX, -eyeHeight/2 + upLeftRadY),
+    //                   cv::Size(upLeftRadX,upLeftRadY), 0, 180, 270, ellipseDelta, segment);
       eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
     } else {
       eyePoly.push_back({-eyeWidth/2,-eyeHeight/2});
@@ -127,9 +127,9 @@ namespace Cozmo {
       // Add bend:
       const f32 yRad = std::round(_faceData.GetParameter(whichEye, Parameter::LowerLidBend) * static_cast<f32>(eyeHeight));
       if(yRad != 0) {
-        const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
-        cv::ellipse2Poly(cv::Point(0, eyeHeight/2 - lowerLidY),
-                         cv::Size(xRad,yRad), angleDeg, 180, 360, ellipseDelta, segment);
+        //const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
+        //cv::ellipse2Poly(cv::Point(0, eyeHeight/2 - lowerLidY),
+        //                 cv::Size(xRad,yRad), angleDeg, 180, 360, ellipseDelta, segment);
         ASSERT_NAMED(std::abs(segment.front().x - lowerLidPoly.back().x)<3 &&
                      std::abs(segment.front().y-lowerLidPoly.back().y)<3,
                      "First curved lower lid segment point not close to last lid poly point.");
@@ -155,9 +155,9 @@ namespace Cozmo {
       // Add bend:
       const f32 yRad = std::round(_faceData.GetParameter(whichEye, Parameter::UpperLidBend) * static_cast<f32>(eyeHeight));
       if(yRad != 0) {
-        const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
-        cv::ellipse2Poly(cv::Point(0, -eyeHeight/2 + upperLidY),
-                         cv::Size(xRad,yRad), angleDeg, 0, 180, ellipseDelta, segment);
+        //const f32 xRad = std::round(static_cast<f32>(eyeWidth)*.5f / std::cos(angleRad));
+        //cv::ellipse2Poly(cv::Point(0, -eyeHeight/2 + upperLidY),
+        //                 cv::Size(xRad,yRad), angleDeg, 0, 180, ellipseDelta, segment);
         ASSERT_NAMED(std::abs(segment.front().x - upperLidPoly.back().x)<3 &&
                      std::abs(segment.front().y - upperLidPoly.back().y)<3,
                      "First curved upper lid segment point not close to last lid poly point.");

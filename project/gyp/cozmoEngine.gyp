@@ -226,6 +226,7 @@
             '-lc++_shared',
             '-lGLESv2',
             '-llog',
+            '-lz',
         ],
       },
       { # not android
