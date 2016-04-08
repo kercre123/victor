@@ -167,6 +167,7 @@ unity/Cozmo/obj/*
 # Unity-AssetBundles
 unity/Cozmo/AssetBundles/*
 unity/Cozmo/Assets/StreamingAssets/AssetBundles/*
+unity/Cozmo/Assets/StreamingAssets/AssetBundles.meta
 
 # Visual studio
 *.userprefs
