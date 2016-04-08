@@ -41,7 +41,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _AssetBundlesToLoad:
   - main-scene
-  _DebugAssetBundleName: debug-assets
+  _DebugAssetBundleName: debug-prefabs
   _StartupDebugPrefabNames:
   - DebugMenuManager
   - VizManager
