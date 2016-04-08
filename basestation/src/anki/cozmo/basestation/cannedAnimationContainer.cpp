@@ -69,6 +69,11 @@ namespace Cozmo {
     
     return animPtr;
   }
+  bool CannedAnimationContainer::HasAnimation(const std::string& name) const
+  {
+    auto retVal = _animations.find(name);
+    return retVal != _animations.end();
+  }
   
   std::vector<std::string> CannedAnimationContainer::GetAnimationNames()
   {

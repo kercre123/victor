@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robotManager.h"
 
 namespace Anki {
   
@@ -35,6 +36,34 @@ namespace Anki {
       
     }
     
+    PlayAnimationAction::PlayAnimationAction(Robot& robot, GameEvent animEvent,
+                                             u32 numLoops, bool interruptRunning)
+    : PlayAnimationAction(robot,animEvent,"GameEventNotFound",numLoops,interruptRunning)
+    {
+    }
+    
+    PlayAnimationAction::PlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName,
+                                             u32 numLoops, bool interruptRunning)
+    : IAction(robot)
+    , _numLoops(numLoops)
+    , _interruptRunning(interruptRunning)
+    {
+      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+      // The config is not up to date, use the backup name
+      if( !robot_mgr->HasAnimationResponseForEvent(animEvent) )
+      {
+        _animName = backupAnimName;
+      }
+      else
+      {
+        _animName = robot_mgr->GetAnimationResponseForEvent(animEvent);
+        
+        // Let game know this was triggered if something else needed to happen
+        robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::CozmoGameEvent>(animEvent);
+      }
+      _name = "PlayAnimation" + _animName + "Action";
+    }
+    
     PlayAnimationAction::~PlayAnimationAction()
     {
       // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
@@ -42,6 +71,10 @@ namespace Anki {
       // to clean up
       if(!_stoppedPlaying && !_wasAborted) {
         _robot.GetAnimationStreamer().SetStreamingAnimation(_robot, nullptr);
+      }
+      else
+      {
+        _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>("");
       }
     }
 
@@ -55,6 +88,11 @@ namespace Anki {
       {
         const Animation* streamingAnimation = _robot.GetAnimationStreamer().GetStreamingAnimation();
         const Animation* ourAnimation = _robot.GetCannedAnimation(_animName);
+        
+        if( ourAnimation == nullptr)
+        {
+          return ActionResult::FAILURE_ABORT;
+        }
         
         _alteredAnimation = std::unique_ptr<Animation>(new Animation(*ourAnimation));
         assert(_alteredAnimation);
@@ -85,6 +123,8 @@ namespace Anki {
       else // do the normal thing
       {
         _animTag = _robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
+        
+        _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(_animName);
       }
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
@@ -205,10 +245,27 @@ namespace Anki {
     PlayAnimationGroupAction::PlayAnimationGroupAction(Robot& robot,
                                                        const std::string& animGroupName,
                                                        u32 numLoops, bool interruptRunning)
-    : PlayAnimationAction(robot, "", numLoops, interruptRunning),
+   : PlayAnimationAction(robot, "", numLoops, interruptRunning),
     _animGroupName(animGroupName)
     {
       
+    }
+    
+    PlayAnimationGroupAction::PlayAnimationGroupAction(Robot& robot,
+                             GameEvent animEvent,
+                             u32 numLoops,
+                             bool interruptRunning)
+    : PlayAnimationAction(robot, "", numLoops, interruptRunning),
+    _animGroupName("")
+    {
+      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+      if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
+      {
+        _animGroupName = robot_mgr->GetAnimationResponseForEvent(animEvent);
+        // Let game know this was triggered if something else needed to happen
+        robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::CozmoGameEvent>(animEvent);
+      }
+      // will FAILURE_ABORT on Init if not an event
     }
 
     ActionResult PlayAnimationGroupAction::Init()
@@ -221,6 +278,48 @@ namespace Anki {
         return PlayAnimationAction::Init();
       }
     }
+    
+    // Factories that allows us to treat groups and animations the same.
+    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, u32 numLoops,bool interruptRunning)
+    {
+      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+      if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
+      {
+        std::string response_name = robot_mgr->GetAnimationResponseForEvent(animEvent);
+        if( robot_mgr->HasCannedAnimation(response_name) )
+        {
+          return new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
+        }
+        else if( robot_mgr->HasAnimationGroup(response_name)) // it's an animation group
+        {
+          return new PlayAnimationGroupAction(robot, animEvent, numLoops,interruptRunning);
+        }
+      }
+      return nullptr;
+    }
+    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName, u32 numLoops,bool interruptRunning)
+    {
+      PlayAnimationAction* ret_action = nullptr;
+      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+      std::string response_name = backupAnimName;
+      if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
+      {
+        response_name = robot_mgr->GetAnimationResponseForEvent(animEvent);
+      }
+      
+      if( robot_mgr->HasCannedAnimation(response_name) )
+      {
+        // return new anim
+        ret_action = new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
+      }
+      else if( robot_mgr->HasAnimationGroup(response_name))
+      {
+        ret_action = new PlayAnimationGroupAction(robot, response_name, numLoops,interruptRunning);
+      }
+      
+      return ret_action;
+    }
+    
 
     #pragma mark ---- DeviceAudioAction ----
 
@@ -263,17 +362,16 @@ namespace Anki {
 
     ActionResult DeviceAudioAction::Init()
     {
-      using namespace Audio;
       switch ( _actionType ) {
         case AudioActionType::Event:
         {
           if (_waitUntilDone) {
             
-            const AudioEngineClient::CallbackFunc callback = [this] ( AudioCallback callback )
+            const  Audio::AudioEngineClient::CallbackFunc callback = [this] (  Audio::AudioCallback callback )
             {
-              const AudioCallbackInfoTag tag = callback.callbackInfo.GetTag();
-              if (AudioCallbackInfoTag::callbackComplete == tag ||
-                  AudioCallbackInfoTag::callbackError == tag) /* -- Waiting to hear back from WWise about error case -- */ {
+              const  Audio::AudioCallbackInfoTag tag = callback.callbackInfo.GetTag();
+              if ( Audio::AudioCallbackInfoTag::callbackComplete == tag ||
+                   Audio::AudioCallbackInfoTag::callbackError == tag) /* -- Waiting to hear back from WWise about error case -- */ {
                 _isCompleted = true;
               }
             };
@@ -300,7 +398,7 @@ namespace Anki {
           if (Audio::GameState::StateGroupType:: Music == _stateGroup) {
             static bool didStartMusic = false;
             if (!didStartMusic) {
-              _robot.GetRobotAudioClient()->PostEvent( static_cast<Audio::GameEvent::GenericEvent>(GameEvent::Music::Play), GameObjectType::Default );
+              _robot.GetRobotAudioClient()->PostEvent( static_cast<Audio::GameEvent::GenericEvent>(Audio::GameEvent::Music::Play), Audio::GameObjectType::Default );
               didStartMusic = true;
             }
           }

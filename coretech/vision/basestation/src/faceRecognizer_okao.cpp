@@ -17,6 +17,7 @@
 
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/console/consoleInterface.h"
 
 #include "json/json.h"
 #include "anki/common/basestation/jsonTools.h"
@@ -28,22 +29,23 @@
 namespace Anki {
 namespace Vision {
   
+  // Time between adding enrollment data for an existing user. "Initial" version
+  // is used until all the slots are filled.
+  CONSOLE_VAR_RANGED(s32, kFaceRecognitionThreshold, "Vision.FaceRecognition", 750, 0, 1000);
+  CONSOLE_VAR_RANGED(s32, kFaceMergeThreshold,       "Vision.FaceRecognition", 900, 0, 1000);
+  CONSOLE_VAR(f32, kTimeBetweenFaceEnrollmentUpdates_sec,        "Vision.FaceRecognition", 60.f);
+  CONSOLE_VAR(f32, kTimeBetweenInitialFaceEnrollmentUpdates_sec, "Vision.FaceRecognition", 0.5f);
+  
   FaceRecognizer::FaceRecognizer(const Json::Value& config)
   {
-    // Macro to prevent typos: name in json must match member variable name (w/ preceding underscore)
-#   define SetParam(__NAME__) JsonTools::GetValueOptional(recognitionConfig, QUOTE(__NAME__), _##__NAME__)
-    if(config.isMember("faceRecognition"))
+    if(config.isMember("FaceRecognition"))
     {
       // TODO: Use string constants
-      const Json::Value& recognitionConfig = config["faceRecognition"];
+      const Json::Value& recognitionConfig = config["FaceRecognition"];
       
-      SetParam(recognitionThreshold);
-      SetParam(mergeThreshold);
-      SetParam(timeBetweenEnrollmentUpdates_sec);
-      SetParam(timeBetweenInitialEnrollmentUpdates_sec);
-      
+      // TODO: Make this a console var too? (Not sure about switching it _while_ running though.
       std::string runModeStr;
-      if(JsonTools::GetValueOptional(recognitionConfig, "runMode", runModeStr)) {
+      if(JsonTools::GetValueOptional(recognitionConfig, "RunMode", runModeStr)) {
         if(runModeStr == "asynchronous") {
           _isRunningAsync = true;
         } else if(runModeStr == "synchronous") {
@@ -182,12 +184,12 @@ namespace Vision {
               faceID = mergeTo;
             }
             
-            PRINT_NAMED_INFO("FaceRecognizer.Run.MergingFaces",
+            PRINT_NAMED_INFO("FaceRecognizer.GetRecognitionData.MergingFaces",
                              "Tracking %d: merging ID=%d into ID=%d",
                              _detectionInfo.nID, mergeFrom, mergeTo);
             Result mergeResult = MergeFaces(mergeTo, mergeFrom);
             if(RESULT_OK != mergeResult) {
-              PRINT_NAMED_WARNING("FaceRecognizer.Run.MergeFail",
+              PRINT_NAMED_WARNING("FaceRecognizer.GetRecognitionData.MergeFail",
                                   "Trying to merge %d with %d", faceID, recognizedID);
             }
           }
@@ -470,8 +472,8 @@ namespace Vision {
     // Only update if it has been long enough (where "long enough" can depend on
     // whether we've already filled up all data slots yet)
     auto const timeSinceLastUpdate = updateTime - enrollData.lastDataUpdateTime;
-    if(timeSinceLastUpdate > _timeBetweenEnrollmentUpdates_sec ||
-       ((numDataStored <= MaxAlbumDataPerFace) &&  timeSinceLastUpdate > _timeBetweenInitialEnrollmentUpdates_sec))
+    if(timeSinceLastUpdate > kTimeBetweenFaceEnrollmentUpdates_sec ||
+       ((numDataStored <= MaxAlbumDataPerFace) &&  timeSinceLastUpdate > kTimeBetweenInitialFaceEnrollmentUpdates_sec))
     {
       okaoResult=  OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID-1, enrollData.oldestData);
       if(OKAO_NORMAL != okaoResult) {
@@ -558,7 +560,7 @@ namespace Vision {
       } else {
         //const f32   RelativeRecogntionThreshold = 1.5; // Score of top result must be this times the score of the second best result
         
-        if(resultNum > 0 && scores[0] > _recognitionThreshold)
+        if(resultNum > 0 && scores[0] > kFaceRecognitionThreshold)
         {
           // Our ID numbering starts at 1, Okao's starts at 0:
           for(s32 iResult=0; iResult<resultNum; ++iResult) {
@@ -577,7 +579,7 @@ namespace Vision {
           
           // Merge all results that are above threshold together, keeping the one enrolled earliest
           INT32 lastResult = 1;
-          while(lastResult < resultNum && scores[lastResult] > _mergeThreshold)
+          while(lastResult < resultNum && scores[lastResult] > kFaceMergeThreshold)
           {
             enrollStatusIter = _enrollmentData.find(userIDs[lastResult]);
             
@@ -606,7 +608,7 @@ namespace Vision {
               } else {
                 PRINT_NAMED_INFO("FaceRecognizer.RecognizeFace.MergingRecords",
                                  "Merging face %d with %d b/c its score %d is > %d",
-                                 userIDs[iResult], oldestID, scores[iResult], _mergeThreshold);
+                                 userIDs[iResult], oldestID, scores[iResult], kFaceMergeThreshold);
               }
             }
           }

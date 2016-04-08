@@ -10,7 +10,6 @@ enum uint_8 BehaviorType {
   NoneBehavior, // Named differently to not conflict with the Python keyword
   LookAround,
   OCD,
-  BlockPlay,
   Fidget,
   InteractWithFaces,
   ReactToCliff,
@@ -26,6 +25,7 @@ enum uint_8 BehaviorType {
   ExploreCliff,
   ExploreLookAroundInPlace,
   RequestGameSimple,
+  RollBlock,
 
   Count
 }

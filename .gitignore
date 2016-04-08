@@ -12,6 +12,9 @@
 
 matlab.mat
 TAGS
+EXTERNALS
+.idea
+
 
 # Webots
 *.wbproj

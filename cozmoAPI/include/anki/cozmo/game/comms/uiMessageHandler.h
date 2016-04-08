@@ -52,6 +52,8 @@ namespace Anki {
       
       virtual void Broadcast(const ExternalInterface::MessageGameToEngine& message) override;
       virtual void Broadcast(ExternalInterface::MessageGameToEngine&& message) override;
+      virtual void BroadcastDeferred(const ExternalInterface::MessageGameToEngine& message) override;
+      virtual void BroadcastDeferred(ExternalInterface::MessageGameToEngine&& message) override;
       
       virtual void Broadcast(const ExternalInterface::MessageEngineToGame& message) override;
       virtual void Broadcast(ExternalInterface::MessageEngineToGame&& message) override;
@@ -96,6 +98,9 @@ namespace Anki {
       
       AnkiEventMgr<ExternalInterface::MessageEngineToGame> _eventMgrToGame;
       AnkiEventMgr<ExternalInterface::MessageGameToEngine> _eventMgrToEngine;
+      
+      std::vector<ExternalInterface::MessageGameToEngine> _threadedMsgs;
+      std::mutex _mutex;
       
     }; // class MessageHandler
     

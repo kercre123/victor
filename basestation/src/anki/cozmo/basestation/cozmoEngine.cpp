@@ -36,6 +36,10 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
 
+#include "util/global/globalDefinitions.h"
+#if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
+#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -46,6 +50,9 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
   , _textToSpeech(new TextToSpeech(_uiMsgHandler.get(),dataPlatform))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
+#if ANKI_DEV_CHEATS
+  , _usbTunnelServerDebug(new USBTunnelServer(_uiMsgHandler.get(),dataPlatform))
+#endif
 {
   ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
   if (Anki::Util::gTickTimeProvider == nullptr) {
@@ -79,6 +86,9 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   // Use a separate callback for StartEngine
   auto startEngineCallback = std::bind(&CozmoEngine::HandleStartEngine, this, std::placeholders::_1);
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartEngine, startEngineCallback));
+  
+  auto updateFirmwareCallback = std::bind(&CozmoEngine::HandleUpdateFirmware, this, std::placeholders::_1);
+  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::UpdateFirmware, updateFirmwareCallback));
   
   _debugConsoleManager.Init(_context->GetExternalInterface());
 }
@@ -195,11 +205,25 @@ void CozmoEngine::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGa
   SetEngineState(EngineState::WaitingForUIDevices);
 }
   
+void CozmoEngine::HandleUpdateFirmware(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  const ExternalInterface::UpdateFirmware& msg = event.GetData().Get_UpdateFirmware();
+  
+  if (EngineState::UpdatingFirmware == _engineState)
+  {
+    PRINT_NAMED_WARNING("CozmoEngine.HandleUpdateFirmware.AlreadyStarted", "");
+    return;
+  }
+
+  if (_context->GetRobotManager()->InitUpdateFirmware(msg.version))
+  {
+    SetEngineState(EngineState::UpdatingFirmware);
+  }
+}
+  
 bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
 {
-  // Check if already connected
-  Robot* robot = CozmoEngine::GetRobotByID(whichRobot);
-  if (robot != nullptr) {
+  if( CozmoEngine::HasRobotWithID(whichRobot)) {
     PRINT_NAMED_INFO("CozmoEngine.ConnectToRobot.AlreadyConnected", "Robot %d already connected", whichRobot);
     return true;
   }
@@ -283,6 +307,23 @@ Result CozmoEngine::Update(const float currTime_sec)
       _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
       break;
     }
+    case EngineState::UpdatingFirmware:
+    {
+      // Update comms and messages from robot
+      
+      _robotChannel->Update();
+      
+      _context->GetRobotMsgHandler()->ProcessMessages();
+      
+      // Update the firmware updating, returns true when complete (error or success)
+      
+      if (_context->GetRobotManager()->UpdateFirmware())
+      {
+        SetEngineState(EngineState::Running);
+      }
+      
+      break;
+    }
     default:
       PRINT_NAMED_ERROR("CozmoEngine.Update.UnexpectedState","Running Update in an unexpected state!");
   }
@@ -323,6 +364,9 @@ Result CozmoEngine::InitInternal()
   // Setup Unity Audio Client Connections
   AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( *_context->GetExternalInterface() );
   _context->GetAudioServer()->RegisterClientConnection( unityConnection );
+  
+  // Setup Text To Speach with Audio Controller
+  _textToSpeech->SetAudioController(_context->GetAudioServer()->GetAudioController());
   
   
   return RESULT_OK;
@@ -396,6 +440,11 @@ int CozmoEngine::GetNumRobots() const {
   
 Robot* CozmoEngine::GetRobotByID(const RobotID_t robotID) {
   return _context->GetRobotManager()->GetRobotByID(robotID);
+}
+
+bool  CozmoEngine::HasRobotWithID(const RobotID_t robotID) const
+{
+  return _context->GetRobotManager()->DoesRobotExist(robotID);
 }
 
 void CozmoEngine::ListenForRobotConnections(bool listen)

@@ -14,11 +14,14 @@
 #include "anki/cozmo/basestation/robotEventHandler.h"
 #include "util/signals/simpleSignal.hpp"
 #include "util/helpers/noncopyable.h"
+#include "clad/types/gameEvent.h"
 #include <map>
 #include <vector>
 #include <memory>
 #include <unordered_map>
 #include <string>
+
+
 
 namespace Anki {
   
@@ -39,6 +42,8 @@ namespace Anki {
   class CozmoContext;
   class CannedAnimationContainer;
   class AnimationGroupContainer;
+  class FirmwareUpdater;
+  class GameEventResponsesContainer;
 
     class RobotManager : Util::noncopyable
     {
@@ -69,6 +74,12 @@ namespace Anki {
       // Call each Robot's Update() function
       void UpdateAllRobots();
       
+      // Attempt to begin updating firmware to specified version (return false if it cannot begin)
+      bool InitUpdateFirmware(int version);
+      
+      // Update firmware (if appropriate) on every connected robot
+      bool UpdateFirmware();
+      
       // Return a
       // Return the number of availale robots
       size_t GetNumRobots() const;
@@ -79,6 +90,11 @@ namespace Anki {
 
       CannedAnimationContainer& GetCannedAnimations() { return *_cannedAnimations; }
       AnimationGroupContainer& GetAnimationGroups() { return *_animationGroups; }
+      
+      bool HasCannedAnimation(const std::string& animName);
+      bool HasAnimationGroup(const std::string& groupName);
+      bool HasAnimationResponseForEvent( GameEvent ev );
+      std::string GetAnimationResponseForEvent( GameEvent ev );
       
       // Read the animations in a dir
       void ReadAnimationDir();
@@ -94,8 +110,10 @@ namespace Anki {
       RobotEventHandler _robotEventHandler;
       std::unique_ptr<CannedAnimationContainer>   _cannedAnimations;
       std::unique_ptr<AnimationGroupContainer>    _animationGroups;
+      std::unique_ptr<FirmwareUpdater>            _firmwareUpdater;
       std::unordered_map<std::string, time_t> _loadedAnimationFiles;
       std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
+      std::unique_ptr<GameEventResponsesContainer> _gameEventResponses;
       
       void ReadAnimationDirImpl(const std::string& animationDir);
       void ReadAnimationFile(const char* filename);
@@ -108,5 +126,6 @@ namespace Anki {
     
   } // namespace Cozmo
 } // namespace Anki
+
 
 #endif // ANKI_COZMO_BASESTATION_ROBOTMANAGER_H

@@ -14,10 +14,10 @@
 #ifndef __Basestation_Audio_AudioController_H__
 #define __Basestation_Audio_AudioController_H__
 
-#include <DriveAudioEngine/audioTypes.h>
-#include <DriveAudioEngine/audioCallback.h>
-#include <util/helpers/noncopyable.h>
-#include <util/dispatchQueue/iTaskHandle.h>
+#include "DriveAudioEngine/audioTypes.h"
+#include "DriveAudioEngine/audioCallback.h"
+#include "util/helpers/noncopyable.h"
+#include "util/dispatchQueue/iTaskHandle.h"
 #include <unordered_map>
 #include <vector>
 
@@ -25,7 +25,11 @@
 
 namespace AudioEngine {
   class AudioEngineController;
+
+namespace PlugIns {
   class HijackAudioPlugIn;
+  class WavePortalPlugIn;
+}
 }
 
 namespace Anki {
@@ -41,10 +45,14 @@ namespace Data {
 namespace Cozmo {
 namespace Audio {
   
+class AudioControllerPluginInterface;
 class RobotAudioBuffer;
+class AudioWaveFileReader;
+
   
 class AudioController : public Util::noncopyable
 {
+  friend class AudioControllerPluginInterface;
   
 public:
   
@@ -92,15 +100,24 @@ public:
   // TEMP: Set Cozmo Speaker Volumes
   void StartUpSetDefaults();
   
+  // Expose PlugIn functionality
+  AudioControllerPluginInterface* GetPluginInterface() const { return _pluginInterface; }
 
 private:
+
+  // Engine Components
+  AudioEngine::AudioEngineController*       _audioEngine            = nullptr;  // Audio Engine Lib
+  // Custom Plugins
+  AudioEngine::PlugIns::HijackAudioPlugIn*  _hijackAudioPlugIn      = nullptr;  // Plugin Instance
+  AudioEngine::PlugIns::WavePortalPlugIn*   _wavePortalPlugIn       = nullptr;
+
+  // Controller Components
+  AudioControllerPluginInterface*           _pluginInterface = nullptr;
   
-  AudioEngine::AudioEngineController* _audioEngine        = nullptr;  // Audio Engine Lib
-  AudioEngine::HijackAudioPlugIn*     _hijackAudioPlugIn  = nullptr;  // Plugin Instance
-  std::unordered_map< int32_t, RobotAudioBuffer* > _robotAudioBufferPool; // Store all Audio Buffers
+  std::unordered_map< int32_t, RobotAudioBuffer* >  _robotAudioBufferPool; // Store all Audio Buffers
   
-  Util::Dispatch::Queue*              _dispatchQueue      = nullptr;  // The dispatch queue we're ticking on
-  Anki::Util::TaskHandle              _taskHandle         = nullptr;  // Handle to our tick callback task
+  Util::Dispatch::Queue*    _dispatchQueue  = nullptr;  // The dispatch queue we're ticking on
+  Anki::Util::TaskHandle    _taskHandle     = nullptr;  // Handle to our tick callback task
   
   bool _isInitialized = false;
   
@@ -110,7 +127,10 @@ private:
   std::vector< AudioEngine::AudioCallbackContext* > _callbackGarbageCollector;
 
   // Setup HijackAudio plug-in & robot buffers
-  void SetupPlugInAndRobotAudioBuffers();
+  void SetupHijackAudioPlugInAndRobotAudioBuffers();
+  
+  // Setup WavePortal plug-in
+  void SetupWavePortalPlugIn();
   
   RobotAudioBuffer* GetAudioBuffer( int32_t plugInId ) const;
   
@@ -120,6 +140,7 @@ private:
   // Clean up call back messages
   void MoveCallbackContextToGarbageCollector( const AudioEngine::AudioCallbackContext* callbackContext );
   void ClearGarbageCollector();
+  
   
   // Debug Cozmo PlugIn Logs
 #if HijackAudioPlugInDebugLogs

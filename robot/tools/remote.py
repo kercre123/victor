@@ -33,6 +33,7 @@ class Remote:
         screen_size = (640, 480)
         background = (207, 176, 123)
         screen = pygame.display.set_mode(screen_size)
+        renderedGreen = False
         drive = False
         lift  = False
         head  = False
@@ -106,9 +107,14 @@ class Remote:
                             robotInterface.Send(robotInterface.RI.EngineToRobot(moveHead=robotInterface.RI.MoveHead(0.0)))
                             head = False
 
-                if self.image is None:
-                    screen.fill((0, 255, 0) if robotInterface.GetState() == robotInterface.ConnectionState.connected else (255, 0, 0))
-                else:
+                if self.image is None or renderedGreen is False:
+                    if robotInterface.GetState() == robotInterface.ConnectionState.connected:
+                        screen.fill((0, 255, 0))
+                        renderedGreen = True
+                    else:
+                        screen.fill((255, 0, 0))
+                        renderedGreen = False
+                elif renderedGreen:
                     screen.blit(self.image, (0,0))
                 time.sleep(0.05)
                 pygame.display.flip()

@@ -45,14 +45,12 @@ static void Process_setPropSlot(const SetPropSlot& msg)
 
 static void Process_bleRecvHelloMessage(const BLE_RecvHello& msg)
 {
+  Bluetooth::authChallenge(msg);
 }
 
 static void Process_bleEnterPairing(const BLE_EnterPairing& msg)
 {
-}
-
-static void Process_blePhoneDiffie(const BLE_PhoneDiffie& msg)
-{
+  Bluetooth::enterPairing(msg);
 }
 
 static void Process_killBodyCode(const KillBodyCode& msg)

@@ -165,13 +165,15 @@ namespace Vision {
 // "Register" our RGB/RGBA pixels as DataTypes with OpenCV
 namespace cv {
 
-  template<> class DataDepth<Anki::Vision::PixelRGB_<u8> >  : public DataDepth<DataType<Vec<u8,3> > >  { };
-  template<> class DataDepth<Anki::Vision::PixelRGB_<f32> > : public DataDepth<DataType<Vec<f32,3> > > { };
-  template<> class DataDepth<Anki::Vision::PixelRGBA>       : public DataDepth<DataType<Vec<u8,4> > >  { };
+  template<> class DataDepth<Anki::Vision::PixelRGB_<u8>  > : public DataDepth<DataType<Vec<u8, 3> > >  { };
+  template<> class DataDepth<Anki::Vision::PixelRGB_<s16> > : public DataDepth<DataType<Vec<s16,3> > >  { };
+  template<> class DataDepth<Anki::Vision::PixelRGB_<f32> > : public DataDepth<DataType<Vec<f32,3> > >  { };
+  template<> class DataDepth<Anki::Vision::PixelRGBA>       : public DataDepth<DataType<Vec<u8, 4> > >  { };
 
-  template<> class DataType<Anki::Vision::PixelRGB_<u8> >  : public DataType<Vec<u8,3> >   { };
-  template<> class DataType<Anki::Vision::PixelRGB_<f32> > : public DataType<Vec<f32, 3> > { };
-  template<> class DataType<Anki::Vision::PixelRGBA>       : public DataType<Vec<u8,4> >   { };
+  template<> class DataType<Anki::Vision::PixelRGB_<u8>  > : public DataType<Vec<u8, 3> > { };
+  template<> class DataType<Anki::Vision::PixelRGB_<s16> > : public DataType<Vec<s16,3> > { };
+  template<> class DataType<Anki::Vision::PixelRGB_<f32> > : public DataType<Vec<f32,3> > { };
+  template<> class DataType<Anki::Vision::PixelRGBA>       : public DataType<Vec<u8, 4> > { };
 
 } // namespace cv
 

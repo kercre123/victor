@@ -157,6 +157,8 @@ namespace Anki
                            const s32 quads_minQuadArea,
                            const s32 quads_quadSymmetryThreshold,
                            const s32 quads_minDistanceFromImageEdge,
+                           const Point<f32>& fiducialThicknessFraction,
+                           const Point<f32>& roundedCornerFraction,
                            u8 &meanGrayvalueThreshold, //< Computed for Extract()
                            MemoryStack scratch);
 

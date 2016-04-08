@@ -56,7 +56,13 @@ const AnimationGroup* AnimationGroupContainer::GetAnimationGroup(const std::stri
       
   return animPtr;
 }
-    
+  
+bool AnimationGroupContainer::HasGroup(const std::string& name) const
+{
+  auto retVal = _animationGroups.find(name);
+  return retVal != _animationGroups.end();
+}
+  
 std::vector<std::string> AnimationGroupContainer::GetAnimationGroupNames()
 {
   std::vector<std::string> v;

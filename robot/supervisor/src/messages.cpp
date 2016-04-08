@@ -192,6 +192,12 @@ namespace Anki {
         AnkiInfo( 100, "Messages.Process_syncTime.Recvd", 305, "", 0);
 
         RobotInterface::SyncTimeAck syncTimeAckMsg;
+#ifdef  SIMULATOR
+        syncTimeAckMsg.isPhysical = false;
+#       else
+        syncTimeAckMsg.isPhysical = true;
+#       endif
+        
         if (!RobotInterface::SendMessage(syncTimeAckMsg)) {
           AnkiWarn( 102, "Messages.Process_syncTime.AckFailed", 352, "Failed to send syncTimeAckMsg", 0);
         }
@@ -475,12 +481,7 @@ namespace Anki {
             headCamInfo->center_y,
             headCamInfo->skew,
             headCamInfo->nrows,
-            headCamInfo->ncols,
-#           ifdef SIMULATOR
-            0 // This is NOT a real robot
-#           else
-            1 // This is a real robot
-#           endif
+            headCamInfo->ncols
           };
 
           if(!RobotInterface::SendMessage(headCalibMsg)) {
@@ -583,7 +584,7 @@ namespace Anki {
 
       void Process_enableCamCalibMode(const RobotInterface::EnableCamCalibMode& msg)
       {
-        AnkiDebug( 145, "CameraCalibMode", 401, "enabled: %d", 1, msg.enable);
+        AnkiDebug( 154, "CameraCalibMode", 413, "enabled: %d", 1, msg.enable);
         if (msg.enable) {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
@@ -733,7 +734,7 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageBlob const&)
+      void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageWrite const&)
       {
         // Nothing to do here
       }
@@ -757,14 +758,6 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_blePhoneDiffie(Anki::Cozmo::BLE_PhoneDiffie const&)
-      {
-        // Nothing to do here
-      }
-      void Process_bleRobotDiffie(Anki::Cozmo::BLE_RobotDiffie const&)
-      {
-        // Nothing to do here
-      }
       void Process_bleEnterPairing(Anki::Cozmo::BLE_EnterPairing const&)
       {
         // Nothing to do here
@@ -778,6 +771,14 @@ namespace Anki {
         // Nothing to do here
       }
       void Process_bleSendHelloMessage(Anki::Cozmo::BLE_SendHello const&)
+      {
+        // Nothing to do here
+      }
+      void Process_nvReadToBody(Anki::Cozmo::RobotInterface::NVReadResultToBody const&)
+      {
+        // Nothing to do here
+      }
+      void Process_nvOpResultToBody(Anki::Cozmo::RobotInterface::NVOpResultToBody const&)
       {
         // Nothing to do here
       }

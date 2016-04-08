@@ -12,7 +12,10 @@
 #include "clad/types/powerMessages.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/engineState.clad"
+#include "clad/types/firmwareTypes.clad"
 #include "clad/types/toolCodes.clad"
+#include "clad/types/unlockTypes.clad"
+#include "clad/types/gameEvent.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -50,6 +53,15 @@ message RobotDisconnected {
 message UiDeviceConnected {
     uint_32 deviceID,
     uint_8 successful
+}
+
+message EngineRobotCLADVersionMismatch {
+  bool engineToRobotMismatch,
+  bool robotToEngineMistmatch,
+  string  engineEnginetoRobotHash,	// Engine's calculated hash for the engine to robot messages
+  string  engineRobotToEngineHash,	// Engine's calculated hash for the robot to engine messages
+  string  robotEnginetoRobotHash,	// Robot's calculated hash for the engine to robot messages
+  string  robotRobotToEngineHash,	// Robot's calculated hash for the robot to engine messages
 }
 
 /*
@@ -103,7 +115,9 @@ message RobotPoked {
 message DebugString {
     string    text
 }
-
+message DebugAnimationString {
+string    text
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////  VISION  ////////////////////////////////////
@@ -291,6 +305,25 @@ message ProgressionStats {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Progression Unlocks
+///////////////////////////////////////////////////////////////////////////////
+
+message RequestSetUnlockResult {
+  UnlockId unlockID,
+  bool unlocked
+}
+
+structure UnlockEntry {
+  UnlockId unlockID,
+  bool unlocked
+}
+
+message UnlockStatus {
+  UnlockEntry unlocks[uint_8]
+}  
+
+
+///////////////////////////////////////////////////////////////////////////////
 // Debug / Console
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -331,6 +364,35 @@ structure BlockPoolBlockData {
 message InitBlockPoolMessage {
   uint_8              blockPoolEnabled,
   BlockPoolBlockData  blockData[uint_8]
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Firmware
+///////////////////////////////////////////////////////////////////////////////
+
+message FirmwareUpdateProgress {
+  uint_32 robotID,
+  FirmwareUpdateStage stage,
+  FirmwareUpdateSubStage subStage,
+  string  fwSigWifi,
+  string  fwSigRTIP,
+  string  fwSigBody,
+  uint_8  percentComplete
+}
+
+message FirmwareUpdateComplete {
+  uint_32 robotID,
+  FirmwareUpdateResult  result,
+  string  fwSigWifi,
+  string  fwSigRTIP,
+  string  fwSigBody
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CozmoGameEvent, generic events unity might care about.
+///////////////////////////////////////////////////////////////////////////////
+message CozmoGameEvent {
+  GameEvent eventEnum,
 }
 
 ///////////////////////////////////////////////////////////////////////////////

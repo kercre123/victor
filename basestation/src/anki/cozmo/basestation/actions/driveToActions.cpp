@@ -10,14 +10,19 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "driveToActions.h"
+#include "anki/common/basestation/utils/timer.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
-#include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/robot.h"
-#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "driveToActions.h"
 
+static const char* kDefaultDrivingSoundsSadClipStart = "ID_AlignToObject_Frustrated_Start";
+static const char* kDefaultDrivingSoundsSadClipStop = "ID_AlignToObject_Frustrated_Stop";
+static const char* kDefaultDrivingSoundsDefaultClipStart = "ID_AlignToObject_Content_Start";
+static const char* kDefaultDrivingSoundsDefaultClipStop = "ID_AlignToObject_Content_Stop";
 
 namespace Anki {
   
@@ -120,6 +125,19 @@ namespace Anki {
       PRINT_NAMED_INFO("DriveToObjectAction.SetApproachingAngle", "%f rad", angle_rad);
       _useApproachAngle = true;
       _approachAngle_rad = angle_rad;
+    }
+
+    void DriveToObjectAction::SetDrivingSounds(const std::string& drivingSoundStartClipName,
+                                               const std::string& drivingSoundStopClipName)
+    {
+      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+        PRINT_NAMED_WARNING("DriveToObjectAction.SetDrivingSounds.Invalid",
+                            "Tried to set driving sounds, but action has already started");
+        return;
+      }
+      _startDrivingAnimClip = drivingSoundStartClipName;
+      _stopDrivingAnimClip = drivingSoundStopClipName;
+      _hasCustomDrivingSounds = true;
     }
     
     ActionResult DriveToObjectAction::GetPossiblePoses(ActionableObject* object,
@@ -290,8 +308,9 @@ namespace Anki {
           
           DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(_robot, _pathMotionProfile, true, _useManualSpeed);
           driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
-          driveToPoseAction->SetSounds(_startSound, _drivingSound, _stopSound);
-          driveToPoseAction->SetDriveSoundSpacing(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
+          if( _hasCustomDrivingSounds ) {
+            driveToPoseAction->SetDrivingSounds(_startDrivingAnimClip, _stopDrivingAnimClip);
+          }
           _compoundAction.AddAction(driveToPoseAction);
         }
         
@@ -497,7 +516,12 @@ namespace Anki {
     , _maxReplanPlanningTime(DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S)
     , _timeToAbortPlanning(-1.0f)
     {
-
+      if( robot.GetMoodManager().GetSimpleMood() == SimpleMoodType::Sad ) {
+        SetDrivingSounds(kDefaultDrivingSoundsSadClipStart, kDefaultDrivingSoundsSadClipStop);
+      }
+      else {
+        SetDrivingSounds(kDefaultDrivingSoundsDefaultClipStart, kDefaultDrivingSoundsDefaultClipStop);
+      }
     }
     
     DriveToPoseAction::DriveToPoseAction(Robot& robot,
@@ -542,6 +566,8 @@ namespace Anki {
       _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
       _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
       _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
+
+      StopDrivingSoundsIfNeeded();
     }
     
     Result DriveToPoseAction::SetGoal(const Pose3d& pose,
@@ -582,6 +608,30 @@ namespace Anki {
       
       return RESULT_OK;
     }
+
+    void DriveToPoseAction::StopDrivingSoundsIfNeeded()
+    {
+      if( _shouldStopDrivingSounds ) {
+        if( !_stopDrivingAnimClip.empty() ) {
+          IActionRunner* animAction = new PlayAnimationAction(_robot, _stopDrivingAnimClip);
+          animAction->ShouldEmitCompletionSignal(false);
+          _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
+        }
+        _shouldStopDrivingSounds = false;
+      }
+    }
+  
+    void DriveToPoseAction::SetDrivingSounds(const std::string& drivingSoundStartClipName,
+                                             const std::string& drivingSoundStopClipName)
+    {
+      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+        PRINT_NAMED_WARNING("DriveToPoseAction.SetDrivingSounds.Invalid",
+                            "Tried to set driving sounds, but action has already started");
+        return;
+      }
+      _startDrivingAnimClip = drivingSoundStartClipName;
+      _stopDrivingAnimClip = drivingSoundStopClipName;
+    }
     
     const std::string& DriveToPoseAction::GetName() const
     {
@@ -594,7 +644,6 @@ namespace Anki {
       ActionResult result = ActionResult::SUCCESS;
       
       _timeToAbortPlanning = -1.0f;
-      _nextDrivingSoundTime = 0.f;
       
       if(!_isGoalSet) {
         PRINT_NAMED_ERROR("DriveToPoseAction.Init.NoGoalSet",
@@ -660,29 +709,12 @@ namespace Anki {
         
       } // if/else isGoalSet
       
-      if(!_drivingSound.empty())
-      {
-        // If we have a driving sound to play, set up callbacks for when that sound
-        // starts/ends so we can choose the time for the next to play between
-        // sounds.
-        auto soundCompleteLambda = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
-        {
-          if(_driveSoundActionTag == event.GetData().Get_RobotCompletedAction().idTag)
-          {
-            // Indicate last drive sound is done
-            _driveSoundActionTag = (u32)ActionConstants::INVALID_TAG;
-            
-            // Choose next play time, relative to current time
-            _nextDrivingSoundTime = event.GetCurrentTime() + GetRNG().RandDblInRange(_drivingSoundSpacingMin_sec, _drivingSoundSpacingMax_sec);
-          }
-        };
-        
-        _soundCompletedHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotCompletedAction, soundCompleteLambda);
-      }
-      
-      if(ActionResult::SUCCESS == result && !_startSound.empty()) {
+      if(ActionResult::SUCCESS == result && !_startDrivingAnimClip.empty()) {
         // Play starting sound if there is one (only if nothing else is playing)
-        _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_robot, _startSound, 1, false));
+        IActionRunner* animAction = new PlayAnimationAction(_robot, _startDrivingAnimClip, 1, false);
+        animAction->ShouldEmitCompletionSignal(false);
+        _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
+        _shouldStopDrivingSounds = true;
       }
       
       return result;
@@ -789,23 +821,11 @@ namespace Anki {
         }
       }
       
-      const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      
-      // Play driving or driving sounds if it's time (queue only if nothing else is playing)
-      if(ActionResult::RUNNING == result &&                              // we're still runing
-         !_drivingSound.empty() &&                                       // we have a drive sound to play
-         (u32)ActionConstants::INVALID_TAG == _driveSoundActionTag &&    // we aren't waiting on last drive sound to stop
-         currentTime > _nextDrivingSoundTime)                            // it's time to play
+      if(ActionResult::RUNNING != result)
       {
-        PlayAnimationAction* driveSoundAction = new PlayAnimationAction(_robot, _drivingSound, 1, false);
-        _driveSoundActionTag = driveSoundAction->GetTag();
-        _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, driveSoundAction);
+        StopDrivingSoundsIfNeeded();
       }
-      else if(ActionResult::SUCCESS == result && !_stopSound.empty())
-      {
-        _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_robot, _stopSound, 1, false));
-      }
-      
+
       return result;
     } // CheckIfDone()
     
@@ -832,6 +852,30 @@ namespace Anki {
 
       AddAction(_driveToObjectAction);
     }
+
+    void IDriveToInteractWithObject::SetDrivingSounds(const std::string& drivingSoundStartClipName,
+                                                      const std::string& drivingSoundStopClipName)
+    {
+      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetDrivingSounds.Invalid",
+                            "Tried to set driving sounds, but action has already started");
+        return;
+      }
+      assert(nullptr != _driveToObjectAction);
+      _driveToObjectAction->SetDrivingSounds(drivingSoundStartClipName, drivingSoundStopClipName);
+    }
+
+    void IDriveToInteractWithObject::SetApproachAngle(const f32 angle_rad)
+    {
+      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetApproachAngle.Invalid",
+                            "Tried to set the approach angle, but action has already started");
+        return;
+      }
+      assert(nullptr != _driveToObjectAction);
+      _driveToObjectAction->SetApproachAngle(angle_rad);
+    }
+
     
 #pragma mark ---- DriveToAlignWithObjectAction ----
     
@@ -948,10 +992,59 @@ namespace Anki {
                                  useApproachAngle,
                                  approachAngle_rad,
                                  useManualSpeed)
+    , _objectID(objectID)
     {
       RollObjectAction* action = new RollObjectAction(robot, objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
       AddAction(action);
+    }
+
+    void DriveToRollObjectAction::RollToUpright()
+    {
+      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.RollToUpright.AlreadyRunning",
+                            "Tried to set the approach angle, but action has already started");
+        return;
+      }
+
+      if( ! _objectID.IsSet() ) {
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.NoObject", "invalid object id");
+        return;
+      }
+
+      const BlockWorld& blockWorld = _robot.GetBlockWorld();
+      std::vector<std::pair<Quad2f, ObjectID> > obstacles;
+      blockWorld.GetObstacles(obstacles);
+
+      // Compute approach angle so that rolling rights the block, using docking
+      ObservableObject* observableObject = _robot.GetBlockWorld().GetObjectByID(_objectID);
+      if( nullptr == observableObject ) {
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.NullObject", "invalid object id");
+        return;
+      }
+
+      ActionableObject* obj = static_cast<ActionableObject*>(observableObject);
+      std::vector<PreActionPose> preActionPoses;
+      obj->GetCurrentPreActionPoses(preActionPoses,
+                                    {PreActionPose::DOCKING},
+                                    std::set<Vision::Marker::Code>(),
+                                    obstacles);
+
+      if( preActionPoses.empty() ) {
+        PRINT_NAMED_INFO("DriveToRollObjectAction.RollToUpright",
+                         "No valid pre-dock poses for object %d, giving up on behavior",
+                         _objectID.GetValue());
+        return;
+      }
+        
+      // Execute roll
+      if (preActionPoses.size() == 1) {
+        Vec3f approachVec = ComputeVectorBetween(obj->GetPose(), preActionPoses[0].GetPose());
+        f32 approachAngle_rad = atan2f(approachVec.y(), approachVec.x());
+        SetApproachAngle(approachAngle_rad);
+      }
+      // else, Block must be upside down, so don't limit approach angle, or there are no poses
+
     }
     
 #pragma mark ---- DriveToPopAWheelieAction ----
@@ -982,15 +1075,14 @@ namespace Anki {
                                                                    const ObjectID& objectID,
                                                                    const PathMotionProfile& motionProfile,
                                                                    const bool useManualSpeed)
-    : CompoundActionSequential(robot, {
-      new DriveToObjectAction(robot,
-                              objectID,
-                              PreActionPose::ENTRY,
-                              motionProfile,
-                              0,
-                              false,
-                              0,
-                              useManualSpeed)})
+    : IDriveToInteractWithObject(robot,
+                                 objectID,
+                                 PreActionPose::ENTRY,
+                                 motionProfile,
+                                 0,
+                                 false,
+                                 0,
+                                 useManualSpeed)
     {
       TraverseObjectAction* action = new TraverseObjectAction(robot, objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
@@ -1003,15 +1095,14 @@ namespace Anki {
                                                                const ObjectID& objectID,
                                                                const PathMotionProfile& motionProfile,
                                                                const bool useManualSpeed)
-    : CompoundActionSequential(robot, {
-      new DriveToObjectAction(robot,
-                              objectID,
-                              PreActionPose::ENTRY,
-                              motionProfile,
-                              0,
-                              false,
-                              0,
-                              useManualSpeed)})
+    : IDriveToInteractWithObject(robot,
+                                 objectID,
+                                 PreActionPose::ENTRY,
+                                 motionProfile,
+                                 0,
+                                 false,
+                                 0,
+                                 useManualSpeed)
     {
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);

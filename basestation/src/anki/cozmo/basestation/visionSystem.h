@@ -50,6 +50,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/faceTracker.h"
 #include "anki/vision/basestation/visionMarker.h"
+#include "anki/vision/basestation/profiler.h"
 
 #include "visionParameters.h"
 #include "clad/vizInterface/messageViz.h"
@@ -70,7 +71,7 @@ namespace Cozmo {
   class Robot;
   class VizManager;
 
-  class VisionSystem
+  class VisionSystem : public Vision::Profiler
   {
   public:
 
@@ -223,7 +224,7 @@ namespace Cozmo {
     bool CheckMailbox(ExternalInterface::RobotObservedMotion& msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
     bool CheckMailbox(Vision::FaceTracker::UpdatedID&  msg);
-    bool CheckMailbox(OverheadEdgePointChain& msg);
+    bool CheckMailbox(OverheadEdgeFrame& msg);
     bool CheckMailbox(ToolCode& msg);
     
     bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
@@ -448,7 +449,7 @@ namespace Cozmo {
     MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
     MultiMailbox<Vision::FaceTracker::UpdatedID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
     
-    MultiMailbox<OverheadEdgePointChain, 64> _overheadEdgeChainMailbox;
+    MultiMailbox<OverheadEdgeFrame, 8> _overheadEdgeFrameMailbox;
     
     Mailbox<ToolCode> _toolCodeMailbox;
     

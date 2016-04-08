@@ -48,8 +48,8 @@ public:
   // Perform audio events in current frame
   // Will set out_RobotAudioMessagePtr to Null to identify steamer to send a AudioSilence message.
   virtual void PopRobotAudioMessage( RobotInterface::EngineToRobot*& out_RobotAudioMessagePtr,
-                                                           TimeStamp_t startTime_ms,
-                                    TimeStamp_t streamingTime_ms ) override;
+                                     TimeStamp_t startTime_ms,
+                                     TimeStamp_t streamingTime_ms ) override;
 
 
 protected:

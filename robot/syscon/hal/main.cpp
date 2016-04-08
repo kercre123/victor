@@ -102,6 +102,8 @@ void enterOperatingMode(BodyOperatingMode mode) {
 
 int main(void)
 {
+  Bootloader::init();
+  
   // Initialize our scheduler
   RTOS::init();
 

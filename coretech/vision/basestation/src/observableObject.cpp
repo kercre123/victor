@@ -1,5 +1,5 @@
 /**
- * File: observableObject_impl.h
+ * File: observableObject.cpp
  *
  * Author: Andrew Stein
  * Date:   (various)

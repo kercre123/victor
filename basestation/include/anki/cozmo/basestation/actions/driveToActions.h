@@ -23,7 +23,7 @@
 namespace Anki {
   
   namespace Cozmo {
-    
+
     class DriveToPoseAction : public IAction
     {
     public:
@@ -64,6 +64,11 @@ namespace Anki {
       Result SetGoals(const std::vector<Pose3d>& poses,
                       const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                       const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+
+      // Sets the driving animations (usually just sounds, expected not to lock anything). Set to empty
+      // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
+      // the start, otherwise you may break things (e.g. sounds might never stop playing).
+      void SetDrivingSounds(const std::string& drivingSoundStartClipName, const std::string& drivingSoundStopClipName);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
@@ -78,24 +83,7 @@ namespace Anki {
         }
         return ignoredTracks;
       }
-      
-      // Specify sounds to be played when movement starts, while driving, and once
-      // the pose is reached. Use "" for any sound you don't want.
-      // NOTE: these really specify the names of sound-only animations
-      void SetSounds(const std::string& startSound,
-                     const std::string& driveSound,
-                     const std::string& stopSound);
-      
-      // Set the min/max time between end of last drive sound and beginning of next.
-      // Actual gap will be randomly selected between these two values.
-      void SetDriveSoundSpacing(f32 min_sec, f32 max_sec);
-      
-      // Defaults for playing sound
-      static constexpr auto DefaultStartSound   = "";
-      static constexpr auto DefaultDrivingSound = "";
-      static constexpr auto DefaultStopSound    = "";
-      static constexpr f32  DefaultDrivingSoundSpacingMin_sec = 0.5f;
-      static constexpr f32  DefaultDrivingSoundSpacingMax_sec = 1.5f;
+            
 
     protected:
       
@@ -103,6 +91,8 @@ namespace Anki {
       virtual ActionResult CheckIfDone() override;
       
       bool IsUsingManualSpeed() {return _useManualSpeed;}
+
+      void StopDrivingSoundsIfNeeded();
       
       bool     _startedTraversingPath = false;
       
@@ -123,41 +113,14 @@ namespace Anki {
       float _maxReplanPlanningTime;
       
       float _timeToAbortPlanning;
-      
-      // For playing sound
-      std::string _startSound   = DriveToPoseAction::DefaultStartSound;
-      std::string _drivingSound = DriveToPoseAction::DefaultDrivingSound;
-      std::string _stopSound    = DriveToPoseAction::DefaultStopSound;
-      f32         _drivingSoundSpacingMin_sec = DriveToPoseAction::DefaultDrivingSoundSpacingMin_sec;
-      f32         _drivingSoundSpacingMax_sec = DriveToPoseAction::DefaultDrivingSoundSpacingMax_sec;
-      f32         _nextDrivingSoundTime = 0.f;
-      u32         _driveSoundActionTag  = (u32)ActionConstants::INVALID_TAG;
-      
+
+      std::string _startDrivingAnimClip;
+      std::string _stopDrivingAnimClip;
+      bool _shouldStopDrivingSounds = false;
+            
       Signal::SmartHandle _originChangedHandle;
-      Signal::SmartHandle _soundCompletedHandle;
       
     }; // class DriveToPoseAction
-    
-    inline void DriveToPoseAction::SetSounds(const std::string& startSound,
-                                             const std::string& driveSound,
-                                             const std::string& stopSound)
-    {
-      _startSound   = startSound;
-      _drivingSound = driveSound;
-      _stopSound    = stopSound;
-    }
-    
-    inline void DriveToPoseAction::SetDriveSoundSpacing(f32 min_sec, f32 max_sec)
-    {
-      if(max_sec <= min_sec) {
-        PRINT_NAMED_WARNING("DriveToPoseAction.SetDriveSoundSpacing.InvalidMinMax",
-                            "Min (%.3f) should be less than max (%.3f)",
-                            min_sec, max_sec);
-        return;
-      }
-      _drivingSoundSpacingMin_sec = min_sec;
-      _drivingSoundSpacingMax_sec = max_sec;
-    }
 
     
     // Uses the robot's planner to select the best pre-action pose for the
@@ -194,13 +157,12 @@ namespace Anki {
       // If set, instead of driving to the nearest preActionPose, only the preActionPose
       // that is most closely aligned with the approach angle is considered.
       void SetApproachAngle(const f32 angle_rad);
-      
-      // These just wrap the corresponding methods for the internally-used DriveToPose
-      void SetSounds(const std::string& startSound,
-                     const std::string& driveSound,
-                     const std::string& stopSound);
-      void SetDriveSoundSpacing(f32 min_sec, f32 max_sec);
-      
+
+      // Sets the driving animations (usually just sounds, expected not to lock anything). Set to empty
+      // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
+      // the start, otherwise you may break things (e.g. sounds might never stop playing).
+      void SetDrivingSounds(const std::string& drivingSoundStartClipName, const std::string& drivingSoundStopClipName);
+            
     protected:
       
       virtual ActionResult Init() override;
@@ -221,35 +183,15 @@ namespace Anki {
       
       bool                       _useApproachAngle;
       Radians                    _approachAngle_rad;
-      
-      PathMotionProfile          _pathMotionProfile;
-    
-    private:
-      // For playing sound
-      std::string _startSound   = DriveToPoseAction::DefaultStartSound;
-      std::string _drivingSound = DriveToPoseAction::DefaultDrivingSound;
-      std::string _stopSound    = DriveToPoseAction::DefaultStopSound;
-      f32         _drivingSoundSpacingMin_sec = DriveToPoseAction::DefaultDrivingSoundSpacingMin_sec;
-      f32         _drivingSoundSpacingMax_sec = DriveToPoseAction::DefaultDrivingSoundSpacingMax_sec;
 
+      std::string _startDrivingAnimClip;
+      std::string _stopDrivingAnimClip;
+      bool _hasCustomDrivingSounds = false;
+      
+      PathMotionProfile          _pathMotionProfile;    
     }; // DriveToObjectAction
-    
-    inline void DriveToObjectAction::SetSounds(const std::string& startSound,
-                                               const std::string& driveSound,
-                                               const std::string& stopSound)
-    {
-      _startSound   = startSound;
-      _drivingSound = driveSound;
-      _stopSound    = stopSound;
-    }
-    
-    inline void DriveToObjectAction::SetDriveSoundSpacing(f32 min_sec, f32 max_sec)
-    {
-      _drivingSoundSpacingMin_sec = min_sec;
-      _drivingSoundSpacingMax_sec = max_sec;
-    }
-    
-    
+
+  
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
     {
     public:
@@ -278,16 +220,6 @@ namespace Anki {
     // do something with it.
     class IDriveToInteractWithObject : public CompoundActionSequential
     {
-    public:
-      
-      // Wrappers for the sounds available in DriveToObjectAction, which is the
-      // first action in the sequence for all derived classes
-      void SetSounds(const std::string& startSound,
-                     const std::string& driveSound,
-                     const std::string& stopSound);
-      
-      void SetDriveSoundSpacing(f32 min_sec, f32 max_sec);
-      
     protected:
       // Not directly instantiable
       IDriveToInteractWithObject(Robot& robot,
@@ -298,26 +230,25 @@ namespace Anki {
                                  const bool useApproachAngle,
                                  const f32 approachAngle_rad,
                                  const bool useManualSpeed);
+
+    public:
+
+      // Sets the driving animations (usually just sounds, expected not to lock anything). Set to empty
+      // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
+      // the start, otherwise you may break things (e.g. sounds might never stop playing).
+      void SetDrivingSounds(const std::string& drivingSoundStartClipName, const std::string& drivingSoundStopClipName);
+
+    protected:
+
+      // If set, instead of driving to the nearest preActionPose, only the preActionPose
+      // that is most closely aligned with the approach angle is considered.
+      void SetApproachAngle(const f32 angle_rad);
       
     private:
-      DriveToObjectAction* _driveToObjectAction;
-      
+
+      DriveToObjectAction* _driveToObjectAction = nullptr;
     }; // class IDriveToInteractWithObject
-    
-    inline void IDriveToInteractWithObject::SetSounds(const std::string& startSound,
-                                                      const std::string& driveSound,
-                                                      const std::string& stopSound)
-    {
-      assert(nullptr != _driveToObjectAction);
-      _driveToObjectAction->SetSounds(startSound, driveSound, stopSound);
-    }
-    
-    inline void IDriveToInteractWithObject::SetDriveSoundSpacing(f32 min_sec, f32 max_sec)
-    {
-      assert(nullptr != _driveToObjectAction);
-      _driveToObjectAction->SetDriveSoundSpacing(min_sec, max_sec);
-    }
-    
+        
     
     // Compound action for driving to an object, visually verifying it can still be seen,
     // and then driving to it until it is at the specified distance (i.e. distanceFromMarker_mm)
@@ -483,6 +414,10 @@ namespace Anki {
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
                               const bool useManualSpeed = false);
+
+      // Sets the approach angle so that, if possible, the roll action will roll the block to land upright. If
+      // the block is upside down or already upright, and roll action will be allowed
+      void RollToUpright();
       
       // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
@@ -502,6 +437,9 @@ namespace Anki {
           completionUnion = _completedActionInfoStack.back().first;
         }
       }
+
+    private:
+      ObjectID _objectID;
 
     };
     
@@ -542,7 +480,7 @@ namespace Anki {
   
 
     // Common compound action
-    class DriveToAndTraverseObjectAction : public CompoundActionSequential
+    class DriveToAndTraverseObjectAction : public IDriveToInteractWithObject
     {
     public:
       DriveToAndTraverseObjectAction(Robot& robot,
@@ -555,7 +493,7 @@ namespace Anki {
     };
     
     
-    class DriveToAndMountChargerAction : public CompoundActionSequential
+    class DriveToAndMountChargerAction : public IDriveToInteractWithObject
     {
     public:
       DriveToAndMountChargerAction(Robot& robot,

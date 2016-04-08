@@ -11,6 +11,7 @@ enum uint_8 EngineState {
   WaitingForUIDevices,
   WaitingForRobots,
   Running,
+  UpdatingFirmware,
 
   Count
 }

@@ -20,7 +20,7 @@ namespace Vision {
   
   Profiler::~Profiler()
   {
-    Print();
+    PrintAverageTiming();
   }
   
 # if !SHOW_TIMING
@@ -77,12 +77,18 @@ namespace Vision {
     }
   }
   
-  void Profiler::Print() const
+  void Profiler::SetProfileGroupName(const char *name)
+  {
+    _eventName = "Profiler.";
+    _eventName += name;
+  }
+  
+  void Profiler::PrintAverageTiming() const
   {
     for(auto & timerPair : _timers)
     {
       const Timer& timer = timerPair.second;
-      PRINT_NAMED_INFO("Profiler", "%s averaged %.2fms over %d calls",
+      PRINT_NAMED_INFO(_eventName.c_str(), "%s averaged %.2fms over %d calls",
                        timerPair.first,
                        (timer.count > 0 ? (double)timer.totalTime.count() / (double)timer.count : 0),
                        timer.count);

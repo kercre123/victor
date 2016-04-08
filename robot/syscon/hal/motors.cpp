@@ -193,9 +193,6 @@ void Motors::teardown(void) {
     nrf_gpio_pin_clear(motorConfig->pPin);
   }
   
-  // Disable PPI channels
-  sd_ppi_channel_enable_set(0x00);
-
   // Clear timers
   NRF_TIMER1->TASKS_CLEAR = 1;
   NRF_TIMER2->TASKS_CLEAR = 1;

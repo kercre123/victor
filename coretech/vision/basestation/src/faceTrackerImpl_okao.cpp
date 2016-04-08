@@ -28,13 +28,16 @@ namespace Vision {
   FaceTracker::Impl::Impl(const std::string& modelPath, const Json::Value& config)
   : _recognizer(config)
   {
-    if(config.isMember("faceDetection")) {
+    if(config.isMember("FaceDetection")) {
       // TODO: Use string constants
-      _config = config["faceDetection"];
+      _config = config["FaceDetection"];
     } else {
       PRINT_NAMED_WARNING("FaceTrackerImpl.Constructor.NoFaceDetectConfig",
-                          "Did not find 'faceDetection' field in config");
+                          "Did not find 'FaceDetection' field in config");
     }
+    
+    Profiler::SetProfileGroupName("FaceTracker");
+    
   } // Impl Constructor()
   
   template<class T>
@@ -82,7 +85,7 @@ namespace Vision {
     }
 
     std::string detectionMode = "video";
-    if(SetParamHelper(_config, "detectionMode", detectionMode))
+    if(SetParamHelper(_config, "DetectionMode", detectionMode))
     {
       if(detectionMode == "video")
       {
@@ -440,8 +443,7 @@ namespace Vision {
       }
     }
     
-    ASSERT_NAMED(frameOrig.IsContinuous(),
-                 "Image must be continuous to pass straight into OKAO Detector");
+    ASSERT_NAMED(frameOrig.IsContinuous(), "FaceTrackerImpl.Update.NonContinuousImage");
     
     INT32 okaoResult = OKAO_NORMAL;
     //TIC;
@@ -550,7 +552,7 @@ namespace Vision {
       face.SetScore(recognitionData.score); // could still be zero!
       if(TrackedFace::UnknownFace == recognitionData.faceID) {
         // No recognition ID: use the tracker ID as the face's handle/ID
-        ASSERT_NAMED(detectionInfo.nID > 0, "Expecting trackerID > 0");
+        ASSERT_NAMED(detectionInfo.nID > 0, "FaceTrackerImpl.Update.InvalidTrackerID");
         face.SetID(-detectionInfo.nID);
       } else {
         face.SetID(recognitionData.faceID);

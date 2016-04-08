@@ -18,6 +18,7 @@ extern "C" {
 #include "activeObjectManager.h"
 #include "face.h"
 #include "factoryTests.h"
+#include "nvStorage.h"
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -68,19 +69,16 @@ void Exec(os_event_t *event)
     AnkiWarn( 51, "BackgroundTask.IntervalTooLong", 295, "Background task interval too long: %dus!", 1, btInterval);
   }
   
+  clientUpdate();
+  
   switch (event->sig)
   {
     case 0:
     {
-      clientUpdate();
-      break;
-    }
-    case 1:
-    {
       CheckForUpgrades();
       break;
     }
-    case 2:
+    case 1:
     {
       static u32 lastAnimStateTime = 0;
       const u32 now = system_get_time();
@@ -93,14 +91,19 @@ void Exec(os_event_t *event)
       }
       break;
     }
-    case 3:
+    case 2:
     {
       Factory::Update();
       break;
     }
-    case 4:
+    case 3:
     {
       ActiveObjectManager::Update();
+      break;
+    }
+    case 4:
+    {
+      NVStorage::Update();
       break;
     }
     // Add new "long execution" tasks as switch cases here.
@@ -120,15 +123,12 @@ void Exec(os_event_t *event)
   system_os_post(backgroundTask_PRIO, event->sig + 1, event->par);
 }
 
-bool readCameraCalAndSend(uint32_t tag)
+void sendCameraCalibration(NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
 {
-  NVStorage::NVStorageBlob entry;
-  entry.tag = tag;
-  const NVStorage::NVResult result = NVStorage::Read(entry);
-  AnkiConditionalWarnAndReturnValue(result == NVStorage::NV_OKAY, false, 96, "ReadAndSendCameraCal", 350, "Failed to read camera calibration: %d", 1, result);
-  const RobotInterface::CameraCalibration* const calib = (RobotInterface::CameraCalibration*)entry.blob;
+  os_printf("sendCameraCalibration: %d\r\n", result);
+  AnkiConditionalWarnAndReturn(result == NVStorage::NV_OKAY, 96, "ReadAndSendCameraCal", 350, "Failed to read camera calibration: %d", 1, result);
+  const RobotInterface::CameraCalibration* const calib = (RobotInterface::CameraCalibration*)entry->blob;
   RobotInterface::SendMessage(*calib);
-  return false;
 }
 
 bool readAndSendCrashReport(uint32_t param)
@@ -153,7 +153,7 @@ bool readAndSendCrashReport(uint32_t param)
 
 extern "C" int8_t backgroundTaskInit(void)
 {
-  os_printf("backgroundTask init\r\n");
+  //os_printf("backgroundTask init\r\n");
   if (system_os_task(Anki::Cozmo::BackgroundTask::Exec, backgroundTask_PRIO, backgroundTaskQueue, backgroundTaskQueueLen) == false)
   {
     os_printf("\tCouldn't register background OS task\r\n");
@@ -212,8 +212,8 @@ static bool sendWifiConnectionState(const bool state)
 
 extern "C" void backgroundTaskOnConnect(void)
 {
-  const uint32_t* const serialNumber = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
-  
+  const uint32_t* const factoryData = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
+
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
   else Anki::Cozmo::Face::FaceUnPrintf();
   
@@ -235,7 +235,8 @@ extern "C" void backgroundTaskOnConnect(void)
   // Send our serial number to the engine
   {
     Anki::Cozmo::RobotInterface::RobotAvailable idMsg;
-    idMsg.robotID = *serialNumber;
+    idMsg.robotID = factoryData[0];
+    idMsg.modelID = factoryData[1] & 0xFFFF;
     Anki::Cozmo::RobotInterface::SendMessage(idMsg);
   }
   
@@ -243,7 +244,7 @@ extern "C" void backgroundTaskOnConnect(void)
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
 
-  foregroundTaskPost(Anki::Cozmo::BackgroundTask::readCameraCalAndSend, Anki::Cozmo::NVStorage::NVEntry_CameraCalibration);
+  Anki::Cozmo::NVStorage::Read(Anki::Cozmo::NVStorage::NVEntry_CameraCalibration, Anki::Cozmo::BackgroundTask::sendCameraCalibration);
 }
 
 extern "C" void backgroundTaskOnDisconnect(void)

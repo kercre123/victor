@@ -110,8 +110,17 @@ void user_rf_pre_init(void)
 }
 
 /// Forward declarations
-int NVCheckIntegrity(const bool recollect, const bool defragment);
+typedef void (*NVInitDoneCB)(const int8_t);
+int8_t NVInit(const bool garbageCollect, NVInitDoneCB finishedCallback);
 void NVWipeAll(void);
+
+static void nv_init_done(const int8_t result)
+{
+  // Enable I2SPI start only after clientInit and checkAndClearBootloaderConfig
+  i2spiInit();
+
+  os_printf("User initalization complete\r\n");
+}
 
 /** Callback after all the chip system initalization is done.
  * We shouldn't do any networking until after this is done.
@@ -122,15 +131,6 @@ static void system_init_done(void)
   // Do this before i2spiInit so we don't desynchronize
   checkAndClearBootloaderConfig();
   
-  // Check the file system integrity
-#if 1
-  const int nvops = NVCheckIntegrity(false, false); /// @TODO do the recollect and defragment operations
-  os_printf("Completed %d non-volatile file system operations\r\n", nvops);
-#else
-  NVWipeAll();
-  os_printf("Wiped all NV storage\r\n");
-#endif
-  
   // Setup Basestation client
   clientInit();
 
@@ -140,12 +140,9 @@ static void system_init_done(void)
   // Set up shared foreground tasks
   foregroundTaskInit();
 
-  // Enable I2SPI start only after clientInit and checkAndClearBootloaderConfig
-  i2spiInit();
-
-  os_printf("CPU Freq: %d MHz\r\n", system_get_cpu_freq());
-
-  os_printf("user initalization complete\r\n");
+  // Check the file system integrity
+  // Must be called after backgroundTaskInit and foregroundTaskInit
+  NVInit(true, nv_init_done);
 }
 
 /** User initialization function
@@ -155,7 +152,6 @@ static void system_init_done(void)
  */
 void user_init(void)
 {
-  const uint32_t* const serialNumber = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
   char ssid[65];
   int8 err;
 
@@ -164,7 +160,7 @@ void user_init(void)
   REG_SET_BIT(0x3ff00014, BIT(0)); //< Set CPU frequency to 160MHz
   err = system_update_cpu_freq(160);
 
-  uart_init(BIT_RATE_115200, BIT_RATE_115200);
+  uart_init(BIT_RATE_230400, BIT_RATE_115200);
 
   gpio_init();
 
@@ -173,14 +169,14 @@ void user_init(void)
   uint8 macaddr[6];
   wifi_get_macaddr(SOFTAP_IF, macaddr);
   
-  if (*serialNumber == 0xFFFFffff)
+  if (*SERIAL_NUMBER == 0xFFFFffff)
   {
     os_printf("No serial number present, will use MAC instead\r\n");
     os_sprintf(ssid, "FAIL%02x%02x", macaddr[4], macaddr[5]);
   }
   else
   {
-    os_sprintf(ssid, "OK%04x", (*serialNumber) & 0xFFFF);
+    os_sprintf(ssid, "OK%04x", (*SERIAL_NUMBER) & 0xFFFF);
   }
 
   struct softap_config ap_config;

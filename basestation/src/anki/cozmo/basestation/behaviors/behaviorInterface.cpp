@@ -152,6 +152,15 @@ namespace Cozmo {
       }
     }
   }
+
+  IBehavior::Status IBehavior::UpdateInternal(Robot& robot, double currentTime_sec)
+  {
+    if( IsActing() ) {
+      return Status::Running;
+    }
+
+    return Status::Complete;
+  }
   
   double IBehavior::GetRunningDuration(double currentTime_sec) const
   {

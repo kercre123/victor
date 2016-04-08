@@ -99,6 +99,7 @@ class MatPiece;
 class MoodManager;
 class PathDolerOuter;
 class ProgressionManager;
+class ProgressionUnlockComponent;
 class BlockFilter;
 class RobotPoseHistory;
 class RobotPoseStamp;
@@ -655,7 +656,7 @@ public:
   
     MovementComponent& GetMoveComponent() { return _movementComponent; }
     const MovementComponent& GetMoveComponent() const { return _movementComponent; }
-
+  
     const MoodManager& GetMoodManager() const { assert(_moodManager); return *_moodManager; }
           MoodManager& GetMoodManager()       { assert(_moodManager); return *_moodManager; }
 
@@ -667,9 +668,13 @@ public:
   
     inline const ProgressionManager& GetProgressionManager() const { assert(_progressionManager); return *_progressionManager; }
     inline ProgressionManager& GetProgressionManager() { assert(_progressionManager); return *_progressionManager; }
-  
+
+    inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const { assert(_progressionUnlockComponent); return *_progressionUnlockComponent; }
+    inline ProgressionUnlockComponent& GetProgressionUnlockComponent() { assert(_progressionUnlockComponent); return *_progressionUnlockComponent; }
+
+    const NVStorageComponent& GetNVStorageComponent() const { return _nvStorageComponent; }
     NVStorageComponent& GetNVStorageComponent() { return _nvStorageComponent; }
-  
+
     // Handle various message types
     template<typename T>
     void HandleMessage(const T& msg);
@@ -709,7 +714,7 @@ public:
     FaceWorld         _faceWorld;
   
     BehaviorManager  _behaviorMgr;
-    bool             _isBehaviorMgrEnabled = false;
+    bool             _isBehaviorMgrEnabled;
     
   
   
@@ -875,6 +880,7 @@ public:
 
     ///////// Progression/Skills ////////
     ProgressionManager*  _progressionManager;
+    ProgressionUnlockComponent* _progressionUnlockComponent;
   
     //////// Block pool ////////
     BlockFilter*         _blockFilter;
