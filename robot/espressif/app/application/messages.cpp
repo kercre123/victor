@@ -286,26 +286,31 @@ namespace Anki {
             }
             case RobotInterface::EngineToRobot::Tag_appConCfgString:
             {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               WiFiConfiguration::ProcessConfigString(msg.appConCfgString);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_appConCfgFlags:
             {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               WiFiConfiguration::ProcessConfigFlags(msg.appConCfgFlags);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_appConCfgIPInfo:
             {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               WiFiConfiguration::ProcessConfigIPInfo(msg.appConCfgIPInfo);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_appConGetRobotIP:
             {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               WiFiConfiguration::SendRobotIpInfo(msg.appConGetRobotIP.ifId);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_wifiOff:
             {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               WiFiConfiguration::Off(msg.wifiOff.sleep);
               break;
             }
