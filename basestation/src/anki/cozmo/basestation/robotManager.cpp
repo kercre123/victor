@@ -182,7 +182,9 @@ namespace Anki {
           case RESULT_FAIL_IO_TIMEOUT:
           {
             PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect\n");
-            RemoveRobot(r->first);
+            const RobotID_t robotIdToRemove = r->first;
+            ++r;
+            RemoveRobot(robotIdToRemove);
             
             break;
           }
