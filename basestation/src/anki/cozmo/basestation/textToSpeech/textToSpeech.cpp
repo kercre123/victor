@@ -9,6 +9,7 @@
  * Copyright: Anki, inc. 2016
  *
  */
+#ifndef ANDROID
 extern "C" {
   
 #include "flite.h"
@@ -106,4 +107,4 @@ void TextToSpeech::HandlePlayFaceNameAnimation(Vision::FaceID_t faceId,
 
 } // end namespace Cozmo
 } // end namespace Anki
-
+#endif // TODO: Android for flite has not been written.

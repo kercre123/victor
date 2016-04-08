@@ -53,7 +53,9 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   : _robotChannel(new MultiClientChannel{})
   , _uiMsgHandler(new UiMessageHandler(1))
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
+#if !ANDROID
   , _textToSpeech(new TextToSpeech(_uiMsgHandler.get(),dataPlatform))
+#endif
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
 #if ANKI_DEV_CHEATS && !ANDROID
   , _usbTunnelServerDebug(new USBTunnelServer(_uiMsgHandler.get(),dataPlatform))

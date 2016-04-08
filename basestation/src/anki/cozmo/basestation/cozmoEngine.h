@@ -134,7 +134,9 @@ protected:
   std::unique_ptr<MultiClientChannel>                       _robotChannel;
   std::unique_ptr<UiMessageHandler>                         _uiMsgHandler;
   std::unique_ptr<SpeechRecognition::KeyWordRecognizer>     _keywordRecognizer;
+#if !ANDROID
   std::unique_ptr<TextToSpeech>                             _textToSpeech;
+#endif
   std::unique_ptr<CozmoContext>                             _context;
   std::map<AdvertisingRobot, bool>                          _forceAddedRobots;
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
