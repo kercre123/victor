@@ -33,6 +33,14 @@ extern Anki::Cozmo::CozmoContext* cozmoContext;
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+namespace Anki {
+namespace Vision {
+  // Console vars we want to modify for the tests below
+  extern s32 kFaceRecognitionThreshold;
+  extern s32 kFaceMergeThreshold;
+  extern f32 kTimeBetweenInitialFaceEnrollmentUpdates_sec;
+}
+}
 
 static const std::vector<const char*> imageFileExtensions = {"jpg", "jpeg", "png"};
 
@@ -168,12 +176,15 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   }
   
   Json::Value config;
-  config["faceDetection"]["detectionMode"] = "video";
-  config["faceRecognition"]["recognitionThreshold"] = 600;
+  config["FaceDetection"]["DetectionMode"] = "video";
+  config["FaceRecognition"]["RunMode"] = "synchronous";
+  
+  Vision::kFaceRecognitionThreshold = 600;
+  Vision::kFaceMergeThreshold = 500;
   
   // Since we're processing faster than real time (using saved images)
-  config["faceRecognition"]["timeBetweenInitialEnrollmentUpdates_sec"] = 0.01;
-  config["faceRecognition"]["runMode"] = "synchronous";
+  Vision::kTimeBetweenInitialFaceEnrollmentUpdates_sec = 0.01;
+
   
   for(s32 iReload=0; iReload<2; ++iReload)
   {

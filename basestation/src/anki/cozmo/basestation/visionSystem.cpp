@@ -26,6 +26,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/console/consoleInterface.h"
 
 //
 // Embedded implementation holdovers:
@@ -65,6 +66,18 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
+  CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
+  
+  CONSOLE_VAR(f32, kCalibDotSearchSize_mm,    "Vision.ToolCode",  4.5f);
+  CONSOLE_VAR(f32, kCalibDotMinContrastRatio, "Vision.ToolCode",  1.1f);
+  
+  CONSOLE_VAR(bool, kUseHalfResMotionDetection,       "Vision.MotionDetection", true);
+  CONSOLE_VAR(u32,  kLastMotionDelay_ms,              "Vision.MotionDetection", 500);
+  CONSOLE_VAR(u8,   kMinBrightnessForMotionDetection, "Vision.MotionDetection", 10);
+  CONSOLE_VAR(f32,  kMotionDetectRatioThreshold,      "Vision.MotionDetection", 1.25f);
+  CONSOLE_VAR(f32,  kMinMotionAreaFraction,           "Vision.MotionDetection", 1.f/225.f); // 1/15 of each image dimension
   
   using namespace Embedded;
   
@@ -1386,19 +1399,18 @@ namespace Cozmo {
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &imageIn)
   {
     const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
-                                _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD(0.1));
+                                _prevPoseData.poseStamp.GetHeadAngle(), (f32)DEG_TO_RAD(0.1));
     
     const bool poseSame = (NEAR(_poseData.poseStamp.GetPose().GetTranslation().x(),
                                 _prevPoseData.poseStamp.GetPose().GetTranslation().x(), .5f) &&
                            NEAR(_poseData.poseStamp.GetPose().GetTranslation().y(),
                                 _prevPoseData.poseStamp.GetPose().GetTranslation().y(), .5f) &&
-                           NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
-                                _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
-                                DEG_TO_RAD(0.1)));
+                           NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+                                _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+                                (f32)DEG_TO_RAD(0.1)));
     Vision::ImageRGB image;
     f32 scaleMultiplier = 1.f;
-    const bool useHalfRes = true;
-    if(useHalfRes) {
+    if(kUseHalfResMotionDetection) {
       image = Vision::ImageRGB(imageIn.GetNumRows()/2,imageIn.GetNumCols()/2);
       imageIn.Resize(image, Vision::ResizeMethod::NearestNeighbor);
       scaleMultiplier = 2.f;
@@ -1411,7 +1423,7 @@ namespace Cozmo {
 #      if USE_THREE_FRAME_MOTION_DETECTION
        !_prevPrevImage.IsEmpty() &&
 #      endif
-       image.GetTimestamp() - _lastMotionTime > 500)
+       image.GetTimestamp() - _lastMotionTime > kLastMotionDelay_ms)
     {
       s32 numAboveThresh = 0;
       
@@ -1427,14 +1439,13 @@ namespace Cozmo {
         };
         
         u8 retVal = 0;
-        const u8 minBrightness = 10;
-        if(p1.IsBrighterThan(minBrightness) && p2.IsBrighterThan(minBrightness)) {
-          
-          const f32 ratioThreshold = 1.25f; // TODO: pass in or capture?
+        if(p1.IsBrighterThan(kMinBrightnessForMotionDetection) &&
+           p2.IsBrighterThan(kMinBrightnessForMotionDetection))
+        {
           const f32 ratioR = ratioTestHelper(p1.r(), p2.r());
           const f32 ratioG = ratioTestHelper(p1.g(), p2.g());
           const f32 ratioB = ratioTestHelper(p1.b(), p2.b());
-          if(ratioR > ratioThreshold || ratioG > ratioThreshold || ratioB > ratioThreshold) {
+          if(ratioR > kMotionDetectRatioThreshold || ratioG > kMotionDetectRatioThreshold || ratioB > kMotionDetectRatioThreshold) {
             ++numAboveThresh;
             retVal = 255; // use 255 because it will actually display
           }
@@ -1467,12 +1478,7 @@ namespace Cozmo {
       Anki::Point2f groundPlaneCentroid(0.f,0.f);
       
       // Get overall image centroid
-      //#       if USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
-      const size_t minAreaDivisor = 225; // 1/15 of each image dimension
-                                         //#       else
-                                         //        const size_t minAreaDivisor = 36; // 1/6 of each image dimension
-                                         //#       endif
-      const size_t minArea = image.GetNumElements() / minAreaDivisor;
+      const size_t minArea = (f32)image.GetNumElements() * kMinMotionAreaFraction;
       f32 imgRegionArea    = 0.f;
       f32 groundRegionArea = 0.f;
       if(numAboveThresh > minArea) {
@@ -1518,7 +1524,7 @@ namespace Cozmo {
         // Find centroid of largest connected component inside the ground plane
         const f32 imgQuadArea = imgQuad.ComputeArea();
         groundRegionArea = GetCentroid(groundPlaneForegroundMotion,
-                                       imgQuadArea/static_cast<f32>(minAreaDivisor),
+                                       imgQuadArea*kMinMotionAreaFraction,
                                        groundPlaneCentroid);
         
         // Move back to image coordinates from ROI coordinates
@@ -1752,12 +1758,6 @@ namespace Cozmo {
   
   Result VisionSystem::DetectOverheadEdges(const Vision::ImageRGB &image)
   {
-    // TODO: Expose parameters
-    // Parameters:
-    //const s32 kKernelSize = -1; // +ve for Sobel edge detection, -1 for Scharr
-    const f32 kEdgeThreshold = 50.f;
-    const u32 kMinChainLength = 3; // in number of edge pixels
-    
     // if the ground plane is not currently visible, do not detect edges
     if ( !_poseData.groundPlaneVisible )
     {
@@ -2223,9 +2223,9 @@ namespace Cozmo {
       sortedQuad = marker.corners;
     }
     
-    ASSERT_NAMED(_camera.IsCalibrated(), "Camera should be calibrated");
+    ASSERT_NAMED(_camera.IsCalibrated(), "VisionSystem.GetVisionMarkerPose.CameraNotCalibrated");
     auto calib = _camera.GetCalibration();
-    ASSERT_NAMED(calib != nullptr, "Calibration should not be null");
+    ASSERT_NAMED(calib != nullptr, "VisionSystem.GetVisionMarkerPose.NullCalibration");
     
     return P3P::computePose(sortedQuad,
                             _canonicalMarker3d[0], _canonicalMarker3d[1],
@@ -2540,17 +2540,14 @@ namespace Cozmo {
 #   endif
     
     // Tool code calibration dot parameters
-    // TODO: Expose the non-computed ones somewhere? Cozmo Config?
     const f32 kDotWidth_mm = 2.5f;
     const f32 kDotHole_mm  = 2.5f/3.f;
-    const f32 kQuadPad_mm  = 4.5f; // search area
     const f32 kDotAreaFrac = ((kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) /
-                              (4.f*kQuadPad_mm * kQuadPad_mm));
+                              (4.f*kCalibDotSearchSize_mm * kCalibDotSearchSize_mm));
     const f32 kMinDotAreaFrac   = 0.5f * kDotAreaFrac;
     const f32 kMaxDotAreaFrac   = 1.5f * kDotAreaFrac;
     const f32 kHoleAreaFrac     = kDotHole_mm * kDotHole_mm / (kDotWidth_mm*kDotWidth_mm);
     const f32 kMaxHoleAreaFrac  = 2.f * kHoleAreaFrac;
-    const f32 kMinContrastRatio = 1.1f;
     
     Anki::Point2f camCen;
     std::vector<Anki::Point2f> observedPoints;
@@ -2559,10 +2556,10 @@ namespace Cozmo {
       // Get an ROI around where we expect to see the dot in the image
       const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[iDot];
       Quad3f dotQuadRoi3d = {
-        {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
       };
       
       Quad3f dotQuadRoi3dWrtCam;
@@ -2695,7 +2692,7 @@ namespace Cozmo {
                 // Hole should neither leak to the outside, nor should it be too big,
                 // and its brightness should be sufficiently brighter than the dot
                 const bool holeSmallEnough = holeArea < compArea * kMaxHoleAreaFrac;
-                const bool enoughContrast = (f32)avgHoleBrightness > kMinContrastRatio * (f32)avgDotBrightness;
+                const bool enoughContrast = (f32)avgHoleBrightness > kCalibDotMinContrastRatio * (f32)avgDotBrightness;
                 if(holeSmallEnough && enoughContrast)
                 {
                   // Yay, passed all checks! Thus "must" be a tool code.
@@ -2797,7 +2794,7 @@ namespace Cozmo {
     }
     
     Result lsqResult = LeastSquares(A,b,calibParams);
-    ASSERT_NAMED(lsqResult == RESULT_OK, "LeastSquares failed");
+    ASSERT_NAMED(lsqResult == RESULT_OK, "VisionSystem.ReadToolCode.LeastSquaresFailed");
     
     camCen.x()  = calibParams[0];
     camCen.y()  = calibParams[1];
