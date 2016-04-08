@@ -48,7 +48,8 @@ def paddedString(s):
             
 def ipStr2u32(s):
     octets = [int(o) for o in s.split('.')]
-    return sum([o << s for o, s in zip(octets, [24, 16, 8, 0])])
+    # Espressif endienness
+    return sum([o << s for o, s in zip(octets, [0, 8, 16, 24])])
 
 class CozmoBLE:
     "Class for communicating with robot over Bluetooth Low-Energy"
@@ -113,24 +114,26 @@ class CozmoBLE:
             paddedString("2manysecrets")
         )))
         if not self.waitForAck(): return
-        if False:
-            self.send(RI.EngineToRobot(appConCfgIPInfo=RI.AppConnectConfigIPInfo(
-                ipStr2u32("172.31.1.1"),
-                ipStr2u32("255.255.255.0"),
-                ipStr2u32("172.31.1.1"),
-                1 # SoftAP interface
-            )))
-            if not self.waitForAck(): return
         self.send(RI.EngineToRobot(appConCfgFlags=RI.AppConnectConfigFlags(
-            RI.APFlags.AP_AP_DHCP | RI.APFlags.AP_PHY_G | RI.APFlags.AP_SOFTAP | RI.APFlags.AP_APPLY_SETTINGS,
-            120, # DHCPS lease time in minutes
-            100, # WiFi beacon interval in ms
-            int(random.uniform(0, 12)), # WiFi channel
-            3, # Max wifi connections
-            3, # Auth mode WPA2_PSK
-            0, # apMinMaxSupRate not if Used
-            0, # WiFi Fixed rate if used
-            0 # sta DHCP max retry if used
+            RI.APFlags.AP_PHY_G | RI.APFlags.AP_SOFTAP | RI.APFlags.AP_APPLY_SETTINGS,
+            beaconInterval = 100, # WiFi beacon interval in ms
+            channel = int(random.uniform(0, 12)), # WiFi channel
+            authMode = 0 # 0 for off 3 for  WPA2_PSK
+        )))
+        if not self.waitForAck(): return
+        self.send(RI.EngineToRobot(appConCfgFlags=RI.AppConnectConfigFlags(
+            RI.APFlags.AP_SOFTAP | RI.APFlags.AP_AP_DHCP_STOP,
+        )))
+        if not self.waitForAck(): return
+        self.send(RI.EngineToRobot(appConCfgIPInfo=RI.AppConnectConfigIPInfo(
+            ipStr2u32("172.31.1.1"),
+            ipStr2u32("255.255.255.0"),
+            ipStr2u32("172.31.1.1"),
+            1 # SoftAP interface
+        )))
+        if not self.waitForAck(): return
+        self.send(RI.EngineToRobot(appConCfgFlags=RI.AppConnectConfigFlags(
+            RI.APFlags.AP_SOFTAP | RI.APFlags.AP_AP_DHCP_START
         )))
         if not self.waitForAck(): return
         

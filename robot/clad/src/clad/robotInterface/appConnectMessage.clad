@@ -14,7 +14,7 @@ namespace RobotInterface {
 enum uint_32 APFlags
 {
   AP_AP_HIDDEN      = 0x00000001,
-  AP_AP_DHCP        = 0x00000002,
+  AP_AP_DHCP_START  = 0x00000002,
   AP_AP_DHCP_GW     = 0x00000004,
   AP_ROUTE          = 0x00000008,
   AP_PHY_B          = 0x00000010,
@@ -38,6 +38,7 @@ enum uint_32 APFlags
   AP_STA_AUTOCON    = 0x00002000,
   AP_STA_RECON      = 0x00004000,
   AP_STA_HIDDEN     = 0x00008000,
+  AP_AP_DHCP_STOP   = 0x00010000,
   AP_APPLY_SETTINGS = 0xC0000000, // Apply wifi config now
 }
 
@@ -87,18 +88,19 @@ message AppConnectConfigString
   uint_8 data[16],
 }
 
+// FF is used as a don't set / leave default value
 message AppConnectConfigFlags
 {
   APFlags apFlags,
-  uint_32 apDHCPLeaseTime,
-  uint_16 beaconInterval,
-  uint_8  rfMax_dBm,
-  uint_8  channel,
-  uint_8  maxConnections,
-  uint_8  authMode,
-  uint_8  apMinMaxSupRate,
-  uint_8  wifiFixedRate,
-  uint_8  staDHCPMaxTry,
+  uint_32 apDHCPLeaseTime = 0xFFFFffff, // Don't set, use Espressif default
+  uint_16 beaconInterval = 0xFFFF, // miliseconds
+  uint_8  rfMax_dBm = 0xFF,
+  uint_8  channel = 1,
+  uint_8  maxConnections = 3,
+  uint_8  authMode = 3, // WPA2_PSK
+  uint_8  apMinMaxSupRate = 0xFF,
+  uint_8  wifiFixedRate = 0xFF,
+  uint_8  staDHCPMaxTry = 0xFF,
 }
 
 message AppConnectConfigIPInfo

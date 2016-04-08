@@ -175,12 +175,17 @@ namespace WiFiConfiguration {
     apConfig.beacon_interval = msg.beaconInterval;
     staConfig.bssid_set      = (msg.apFlags & AP_BSSID)  ? true : false;
     
-    if (msg.rfMax_dBm <= 82) // A valid dBm, use 0xff to disable setting
+    // Don't call this here, it kills timing. Could write to flash and then 
+    /*if (msg.rfMax_dBm <= 82) // A valid dBm, use 0xff to disable setting
     {
       system_phy_set_max_tpw(msg.rfMax_dBm);
-    }
+    }*/
     
-    conditionalFlagsError(wifi_set_opmode_current((msg.apFlags & AP_OPMODE_MSK) >> AP_OPMODE_SHIFT), FLAGS_ERR_OFFSET-1, "Failed to set opmode");
+    const u8 opMode = (msg.apFlags & AP_OPMODE_MSK) >> AP_OPMODE_SHIFT;
+    if (wifi_get_opmode() != opMode)
+    {
+      conditionalFlagsError(wifi_set_opmode_current(opMode), FLAGS_ERR_OFFSET-1, "Failed to set opmode");
+    }
     
     if (msg.apFlags & AP_PHY_MASK) // WiFi phy mode set requested
     {
@@ -201,7 +206,7 @@ namespace WiFiConfiguration {
       if (msg.apFlags & AP_STA_DHCP)
       {
         conditionalFlagsError(wifi_station_dhcpc_start(), FLAGS_ERR_OFFSET-13, "Couldn't start station DHCP client");
-        conditionalFlagsError(wifi_station_dhcpc_set_maxtry(msg.staDHCPMaxTry), FLAGS_ERR_OFFSET-14, "Couldn't set station DHCP max tries");
+        if (msg.staDHCPMaxTry != 0xFF) conditionalFlagsError(wifi_station_dhcpc_set_maxtry(msg.staDHCPMaxTry), FLAGS_ERR_OFFSET-14, "Couldn't set station DHCP max tries");
       }
       else
       {
@@ -216,19 +221,20 @@ namespace WiFiConfiguration {
       {
         conditionalFlagsError(wifi_set_user_sup_rate(msg.apMinMaxSupRate & 0x0f, msg.apMinMaxSupRate >> 4) == 0, FLAGS_ERR_OFFSET-21, "Failed to limit supported wifi rates");
       }
-      if (msg.apFlags & AP_AP_DHCP)
+      if (msg.apFlags & AP_AP_DHCP_START)
       {
         uint8_t mode = msg.apFlags & AP_ROUTE ? 0x01 : 0x00;
         conditionalFlagsError(wifi_softap_set_dhcps_offer_option(OFFER_ROUTER, &mode), FLAGS_ERR_OFFSET-23, "Failed to set softap DHCP offer options");
         conditionalFlagsError(wifi_softap_dhcps_start(), FLAGS_ERR_OFFSET-24, "Failed to start softap DHCP server");
-        conditionalFlagsError(wifi_softap_set_dhcps_lease_time(msg.apDHCPLeaseTime), FLAGS_ERR_OFFSET-25, "Failed to set softap DHCP lease time");
+        if (msg.apDHCPLeaseTime != 0xFFFFffff) conditionalFlagsError(wifi_softap_set_dhcps_lease_time(msg.apDHCPLeaseTime), FLAGS_ERR_OFFSET-25, "Failed to set softap DHCP lease time");
       }
-      else
+      else if (msg.apFlags & AP_AP_DHCP_STOP)
       {
         conditionalFlagsError(wifi_softap_dhcps_stop(), FLAGS_ERR_OFFSET-30, "Failed to stop softap DHCP server");
       }
     }
     
+    sendResult(0, EngineToRobot::Tag_appConCfgFlags);
   }
   
   void ProcessConfigIPInfo(const RobotInterface::AppConnectConfigIPInfo& msg)
