@@ -413,7 +413,7 @@ namespace Cozmo {
         case RunMode::Synchronous:
         {
           if(!_paused) {
-            _visionSystem->Update(_nextPoseData, image, _calibrationImages);
+            _visionSystem->Update(_nextPoseData, image);
             _lastImg = image;
             
             _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
@@ -459,21 +459,14 @@ namespace Cozmo {
           if(!WasMovingTooFast(image.GetTimestamp(), &p, DEG_TO_RAD(0.1), DEG_TO_RAD(0.1)))
           {
             _storeNextImageForCalibration = false;
-            _calibrationImages.emplace_back(image.ToGray());
-            PRINT_NAMED_INFO("VisionComponent.SetNextImage.StoringCalibrationImage",
-                             "Num images including this: %u", (u32)_calibrationImages.size());
+            Result addResult = _visionSystem->AddCalibrationImage(image.ToGray());
+            if(RESULT_OK != addResult) {
+              PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
+            }
           } else {
             PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
           }
         }
-      }
-      
-      // Clear calibration images as long as we're not in the mode for processing them.
-      // I _think_ this is sufficient for thread-safety.
-      if (_clearCalibrationImages && !IsModeEnabled(VisionMode::ComputingCalibration)) {
-        PRINT_NAMED_INFO("VisionComponent.SetNextImage.ClearingCalibrationImages", "");
-        _calibrationImages.clear();
-        _clearCalibrationImages = false;
       }
       
       // Display any debug images left by the vision system
@@ -597,7 +590,7 @@ namespace Cozmo {
         // There is an image to be processed:
         
         //assert(_currentImg != nullptr);
-        _visionSystem->Update(_currentPoseData, _currentImg, _calibrationImages);
+        _visionSystem->Update(_currentPoseData, _currentImg);
         
         _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
                                            "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
@@ -1239,6 +1232,31 @@ namespace Cozmo {
   template Result VisionComponent::CompressAndSendImage<Vision::PixelRGB>(const Vision::ImageBase<Vision::PixelRGB>& img,
                                                                           s32 quality);
   
+  Result VisionComponent::ClearCalibrationImages()
+  {
+    if(nullptr != _visionSystem || !_visionSystem->IsInitialized())
+    {
+      PRINT_NAMED_ERROR("VisionComponent.ClearCalibrationImages.VisionSystemNotReady", "");
+      return RESULT_FAIL;
+    }
+    else
+    {
+      return _visionSystem->ClearCalibrationImages();
+    }
+  }
+  
+  size_t VisionComponent::GetNumStoredCameraCalibrationImages() const
+  {
+    if(nullptr != _visionSystem || !_visionSystem->IsInitialized())
+    {
+      PRINT_NAMED_ERROR("VisionComponent.GetNumStoredCameraCalibrationImages.VisionSystemNotReady", "");
+      return RESULT_FAIL;
+    }
+    else
+    {
+      return _visionSystem->GetNumStoredCalibrationImages();
+    }
+  }
   
 } // namespace Cozmo
 } // namespace Anki
