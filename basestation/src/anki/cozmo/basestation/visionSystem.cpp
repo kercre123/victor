@@ -26,6 +26,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/console/consoleInterface.h"
 
 //
 // Embedded implementation holdovers:
@@ -67,6 +68,10 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+CONSOLE_VAR(float, kMaxCalibBlobPixelArea, "kMaxCalibBlobPixelArea", 800.f); // max number of pixels in calibration pattern blob
+CONSOLE_VAR(float, kMinCalibBlobPixelArea, "kMinCalibBlobPixelArea", 20.f); // min number of pixels in calibration pattern blob
+CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlobs", 5.f); // min pixel distance between calibration pattern blobs
   
   using namespace Embedded;
   
@@ -1410,15 +1415,15 @@ namespace Cozmo {
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &imageIn)
   {
     const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
-                                _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD(0.1));
+                                _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD_F32(0.1));
     
     const bool poseSame = (NEAR(_poseData.poseStamp.GetPose().GetTranslation().x(),
                                 _prevPoseData.poseStamp.GetPose().GetTranslation().x(), .5f) &&
                            NEAR(_poseData.poseStamp.GetPose().GetTranslation().y(),
                                 _prevPoseData.poseStamp.GetPose().GetTranslation().y(), .5f) &&
-                           NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
-                                _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
-                                DEG_TO_RAD(0.1)));
+                           NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+                                _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+                                DEG_TO_RAD_F32(0.1)));
     Vision::ImageRGB image;
     f32 scaleMultiplier = 1.f;
     const bool useHalfRes = true;
@@ -3036,9 +3041,9 @@ namespace Cozmo {
     
     // Parameters for circle grid search
     cv::SimpleBlobDetector::Params params;
-    params.maxArea = 800;
-    params.minArea = 20;
-    params.minDistBetweenBlobs = 5;
+    params.maxArea = kMaxCalibBlobPixelArea;
+    params.minArea = kMinCalibBlobPixelArea;
+    params.minDistBetweenBlobs = kMinCalibPixelDistBetweenBlobs;
     cv::Ptr<cv::SimpleBlobDetector> blobDetector = cv::SimpleBlobDetector::create(params);
     int findCirclesFlags = cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING;
     

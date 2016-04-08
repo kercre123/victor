@@ -1234,7 +1234,7 @@ namespace Cozmo {
   
   Result VisionComponent::ClearCalibrationImages()
   {
-    if(nullptr != _visionSystem || !_visionSystem->IsInitialized())
+    if(nullptr == _visionSystem || !_visionSystem->IsInitialized())
     {
       PRINT_NAMED_ERROR("VisionComponent.ClearCalibrationImages.VisionSystemNotReady", "");
       return RESULT_FAIL;
@@ -1247,15 +1247,7 @@ namespace Cozmo {
   
   size_t VisionComponent::GetNumStoredCameraCalibrationImages() const
   {
-    if(nullptr != _visionSystem || !_visionSystem->IsInitialized())
-    {
-      PRINT_NAMED_ERROR("VisionComponent.GetNumStoredCameraCalibrationImages.VisionSystemNotReady", "");
-      return RESULT_FAIL;
-    }
-    else
-    {
-      return _visionSystem->GetNumStoredCalibrationImages();
-    }
+    return _visionSystem->GetNumStoredCalibrationImages();
   }
   
 } // namespace Cozmo
