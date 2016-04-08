@@ -72,6 +72,10 @@ namespace Anki {
       if(!_stoppedPlaying && !_wasAborted) {
         _robot.GetAnimationStreamer().SetStreamingAnimation(_robot, nullptr);
       }
+      else
+      {
+        _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>("");
+      }
     }
 
     ActionResult PlayAnimationAction::Init()
@@ -119,6 +123,8 @@ namespace Anki {
       else // do the normal thing
       {
         _animTag = _robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
+        
+        _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(_animName);
       }
       
       if(_animTag == AnimationStreamer::NotAnimatingTag) {
