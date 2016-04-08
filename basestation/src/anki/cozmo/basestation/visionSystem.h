@@ -110,8 +110,11 @@ namespace Cozmo {
     // This is main Update() call to be called in a loop from above.
 
     Result Update(const PoseData&            robotState,
-                  const Vision::ImageRGB&    inputImg,
-                  const std::list<Vision::Image>& calibImages);
+                  const Vision::ImageRGB&    inputImg);
+    
+    Result AddCalibrationImage(const Vision::Image& calibImg);
+    Result ClearCalibrationImages();
+    size_t GetNumStoredCalibrationImages() const { return _calibImages.size(); }
     
     void StopTracking();
 
@@ -369,6 +372,8 @@ namespace Cozmo {
     
     // Calibration stuff
     static const u32              _kMinNumCalibImagesRequired = 4;
+    std::list<Vision::Image>      _calibImages;
+    bool                          _isCalibrating = false;
     
     struct VisionMemory {
       /* 10X the memory for debugging on a PC
@@ -443,7 +448,7 @@ namespace Cozmo {
     
     Result ReadToolCode(const Vision::Image& image);
     
-    Result ComputeCalibration(const std::list<Vision::Image>& calibImages);
+    Result ComputeCalibration();
     
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                         DockingErrorSignal& dockErrMsg,

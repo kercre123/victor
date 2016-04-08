@@ -127,6 +127,7 @@ struct DockingErrorSignal;
     
     const Vision::CameraCalibration& GetCameraCalibration() const;
     bool IsCameraCalibrationSet() const { return _isCamCalibSet; }
+    Result ClearCalibrationImages();
     
     // If enabled, the camera calibration will be updated based on the
     // position of the centroids of the dots that are part of the tool codes.
@@ -164,8 +165,7 @@ struct DockingErrorSignal;
     // Camera calibration
     void StoreNextImageForCameraCalibration()           { _storeNextImageForCalibration = true;  }
     bool WillStoreNextImageForCameraCalibration() const { return _storeNextImageForCalibration;  }
-    u32  GetNumStoredCameraCalibrationImages()    const { return (u32)_calibrationImages.size(); }
-    void ClearCalibrationImages()                       { _clearCalibrationImages = true; _storeNextImageForCalibration = false; }
+    size_t  GetNumStoredCameraCalibrationImages() const;
     
   protected:
     
@@ -192,8 +192,6 @@ struct DockingErrorSignal;
     Vision::ImageRGB _lastImg; // the last image we processed
     
     bool _storeNextImageForCalibration = false;
-    bool _clearCalibrationImages = false;
-    std::list<Vision::Image> _calibrationImages;
     
     constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
     constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);

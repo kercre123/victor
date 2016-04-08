@@ -285,7 +285,7 @@ namespace Cozmo {
            SetCurrState(FactoryTestState::ComputeCameraCalibration);
         } else {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.InsufficientCalibrationImagesInFlash",
-                              "Only %d images found in flash. Taking pictures now.",
+                              "Only %lu images found in flash. Taking pictures now.",
                               robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
           _camCalibPoseIndex = 0;
           robot.GetVisionComponent().ClearCalibrationImages();
@@ -326,7 +326,7 @@ namespace Cozmo {
       {
         // Start calibration computation
         PRINT_NAMED_INFO("BehaviorFactoryTest.Update.StartingCalibration",
-                         "%d images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
+                         "%lu images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
         robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
         _calibrationReceived = false;
         _holdUntilTime = currentTime_sec + 30.f;

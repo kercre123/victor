@@ -2189,6 +2189,8 @@ namespace Cozmo {
     
     VisionMarker::SetDataPath(_dataPath);
     
+    _isCalibrating = false;
+    
     _isInitialized = true;
     
     return result;
@@ -2326,10 +2328,35 @@ namespace Cozmo {
     return RESULT_OK;
   } // PreprocessImage()
   
+  Result VisionSystem::AddCalibrationImage(const Vision::Image& calibImg)
+  {
+    if(_isCalibrating) {
+      PRINT_NAMED_INFO("VisionSystem.AddCalibrationImage.AlreadyCalibrating",
+                       "Cannot add calibration image while already in the middle of doing calibration.");
+      return RESULT_FAIL;
+    }
+    
+    _calibImages.push_back(calibImg);
+    PRINT_NAMED_INFO("VisionSystem.AddCalibrationImage",
+                     "Num images including this: %u", (u32)_calibImages.size());
+    return RESULT_OK;
+  } // AddCalibrationImage()
+  
+  Result VisionSystem::ClearCalibrationImages()
+  {
+    if(_isCalibrating) {
+      PRINT_NAMED_INFO("VisionSystem.ClearCalibrationImages.AlreadyCalibrating",
+                       "Cannot clear calibration images while already in the middle of doing calibration.");
+      return RESULT_FAIL;
+    }
+    
+    _calibImages.clear();
+    return RESULT_OK;
+  }
+  
   // This is the regular Update() call
   Result VisionSystem::Update(const PoseData&            poseData,
-                              const Vision::ImageRGB&    inputImage,
-                              const std::list<Vision::Image>& calibImages)
+                              const Vision::ImageRGB&    inputImage)
   {
     Result lastResult = RESULT_OK;
     
@@ -2421,9 +2448,9 @@ namespace Cozmo {
       }
     }
     
-    if(IsModeEnabled(VisionMode::ComputingCalibration))
+    if(IsModeEnabled(VisionMode::ComputingCalibration) && _calibImages.size() >= _kMinNumCalibImagesRequired)
     {
-      if((lastResult = ComputeCalibration(calibImages)) != RESULT_OK) {
+      if((lastResult = ComputeCalibration()) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
         return lastResult;
       }
@@ -2976,30 +3003,32 @@ namespace Cozmo {
   }
 
   
-  Result VisionSystem::ComputeCalibration(const std::list<Vision::Image>& calibImages)
+  Result VisionSystem::ComputeCalibration()
   {
     Vision::CameraCalibration calibration;
+    _isCalibrating = true;
     
     // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
     // no matter how we return from this function
     Cleanup disableComputingCalibration([this,&calibration]() {
       this->_calibrationMailbox.putMessage(calibration);
       this->EnableMode(VisionMode::ComputingCalibration, false);
+      _isCalibrating = false;
+      this->ClearCalibrationImages();
     });
     
-    
     // Check that there are enough images
-    if (calibImages.size() < _kMinNumCalibImagesRequired) {
-      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NotEnoughImages", "Got %u. Need %u.", (u32)calibImages.size(), _kMinNumCalibImagesRequired);
+    if (_calibImages.size() < _kMinNumCalibImagesRequired) {
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NotEnoughImages", "Got %u. Need %u.", (u32)_calibImages.size(), _kMinNumCalibImagesRequired);
       return RESULT_FAIL;
     }
-    PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NumImages", "%u.", (u32)calibImages.size());
+    PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NumImages", "%u.", (u32)_calibImages.size());
     
     
     // Description of asymmetric circles calibration target
     cv::Size boardSize(4,11);
     static constexpr f32 squareSize = 0.01; // TODO: Doesn't really matter for camera matrix intrinsics computation, but should probably measure this.
-    cv::Size imageSize(calibImages.front().GetNumCols(), calibImages.front().GetNumRows());
+    cv::Size imageSize(_calibImages.front().GetNumCols(), _calibImages.front().GetNumRows());
     
     
     std::vector<std::vector<cv::Point2f> > imagePoints;
@@ -3014,7 +3043,7 @@ namespace Cozmo {
     int findCirclesFlags = cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING;
     
     int imgCnt = 0;
-    for (auto img : calibImages) {
+    for (auto img : _calibImages) {
       
       // Get image points
       std::vector<cv::Point2f> pointBuf;
