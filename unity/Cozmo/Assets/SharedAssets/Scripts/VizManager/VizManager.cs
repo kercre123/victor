@@ -99,17 +99,6 @@ namespace Anki.Cozmo.Viz {
 
     private bool _ShowingObjects = true;
 
-    enum TextLabelType : byte {
-      Action,
-      LocalizedTo,
-      WorldOrigin,
-      VisionMode,
-      BehaviorState,
-      AnimationName,
-      DebugString}
-
-    ;
-
     private readonly Dictionary<uint, Dictionary<uint, VizQuad>> _Quads = new Dictionary<uint, Dictionary<uint, VizQuad>>();
     private readonly Dictionary<uint, VizQuad> _Objects = new Dictionary<uint, VizQuad>();
     private readonly Dictionary<uint, VizLabel> _ObjectLabels = new Dictionary<uint, VizLabel>();
@@ -126,8 +115,6 @@ namespace Anki.Cozmo.Viz {
     public string[] RecentMoodEvents { get; private set; }
 
     public string Behavior { get; private set; }
-
-    public string AnimationName { get; private set; }
 
     public BehaviorScoreData[] BehaviorScoreData { get; private set; }
 
@@ -321,10 +308,6 @@ namespace Anki.Cozmo.Viz {
       // TODO: None of the following are implemented
       // Not sure which ones we actually use
       case MessageViz.Tag.SetLabel:
-        if (message.SetLabel.labelID == (int)TextLabelType.AnimationName) {
-          AnimationName = message.SetLabel.text[0];
-        }
-        break;
       case MessageViz.Tag.DefineColor:
       case MessageViz.Tag.DockingErrorSignal:
       case MessageViz.Tag.RobotStateMessage:

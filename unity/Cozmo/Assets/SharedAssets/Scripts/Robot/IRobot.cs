@@ -91,6 +91,8 @@ public interface IRobot : IDisposable {
 
   string CurrentBehaviorString { get; set; }
 
+  string CurrentDebugAnimationString { get; set; }
+
   ObservedObject CarryingObject { get; }
 
   event Action<ObservedObject> OnCarryingObjectSet;

@@ -348,6 +348,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.DebugString:
       ReceivedSpecificMessage(message.DebugString);
       break;
+    case G2U.MessageEngineToGame.Tag.DebugAnimationString:
+      ReceivedSpecificMessage(message.DebugAnimationString);
+      break;
     case G2U.MessageEngineToGame.Tag.RequestGameStart:
       ReceivedSpecificMessage(message.RequestGameStart);
       break;
@@ -700,6 +703,14 @@ public class RobotEngineManager : MonoBehaviour {
     if (CurrentRobot != null) {
       if (CurrentRobot.CurrentBehaviorString != message.text) {
         CurrentRobot.CurrentBehaviorString = message.text;
+      }
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DebugAnimationString message) {
+    if (CurrentRobot != null) {
+      if (CurrentRobot.CurrentDebugAnimationString != message.text) {
+        CurrentRobot.CurrentDebugAnimationString = message.text;
       }
     }
   }
