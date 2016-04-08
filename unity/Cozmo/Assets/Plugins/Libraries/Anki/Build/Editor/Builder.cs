@@ -56,6 +56,7 @@ namespace Anki {
       // Build the project from a set of arguments. This method is used for automated builds
       public static string BuildWithArgs(string[] argv) {
 
+        string outputFolder = null;
         string platform = null;
         string config = null;
         string sdk = null;
@@ -78,9 +79,7 @@ namespace Anki {
             }
           case "--build-path":
             {
-              // Not used?
-              i++;
-              // outputFolder = argv[i++];
+              outputFolder = argv[i++];
               break;
             }
           case "--debug":
@@ -102,6 +101,8 @@ namespace Anki {
             break;
           }
         }
+
+        DAS.Debug(null, String.Format("platform: {0} | config: {1} | buildPath: {2} | enabledDebugging: {3}", platform, config, outputFolder, enableDebugging));
 
         iOSSdkVersion saveIOSSDKVersion = PlayerSettings.iOS.sdkVersion;
         ScriptCallOptimizationLevel saveIOSScriptLevel = PlayerSettings.iOS.scriptCallOptimization;
@@ -131,9 +132,6 @@ namespace Anki {
             break;
           }
         }
-
-        string outputFolder = GetOutputFolder(buildTarget);
-        DAS.Debug(null, String.Format("platform: {0} | config: {1} | buildPath: {2} | enabledDebugging: {3}", platform, config, outputFolder, enableDebugging));
 
         // Later on use this to switch between building for different targets
         // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
