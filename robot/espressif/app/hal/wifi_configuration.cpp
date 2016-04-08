@@ -84,9 +84,9 @@ namespace WiFiConfiguration {
     using namespace RobotInterface;
     #ifdef DEBUG_WIFI_CFG
     char pbuf[17];
-    ets_snprintf(pbuf, 17, "%s", msg.data);
+    const int dstrlen = ets_snprintf(pbuf, 17, "%s", msg.data);
     pbuf[16] = 0;
-    os_printf("WiFiConfig string: %d %s\r\n", msg.id, pbuf);
+    os_printf("WiFiConfig string: %d \"%s\" [%d]\r\n", msg.id, pbuf, dstrlen);
     #endif
     
     switch(msg.id)

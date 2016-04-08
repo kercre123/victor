@@ -90,6 +90,7 @@ class CozmoBLE:
         self.tx = robot.find_characteristic(TO_ROBOT_UUID)
         self.rx.start_notify(self.onReceive)
         
+        print("Sending data")
         self.send(RI.EngineToRobot(appConCfgString=RI.AppConnectConfigString(
             RI.APConfigStringID.AP_AP_SSID_0,
             paddedString("IM0BB8")

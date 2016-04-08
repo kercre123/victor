@@ -17,6 +17,7 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "wifi_configuration.h"
 #include "upgradeController.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 static Anki::Cozmo::NVStorage::NVReportDest nvOpReportTo;
 
@@ -43,10 +44,9 @@ namespace Anki {
           }
           case NVStorage::BODY:
           {
-            RobotInterface::EngineToRobot msg;
-            msg.tag = RobotInterface::EngineToRobot::Tag_nvOpResultToBody;
-            os_memcpy(&msg.nvOpResultToBody.report, report, sizeof(NVStorage::NVOpResult));
-            RTIP::SendMessage(msg);
+            RobotInterface::NVOpResultToBody msg;
+            os_memcpy(&msg.report, report, sizeof(NVStorage::NVOpResult));
+            RobotInterface::SendMessage(msg);
             break;
           }
           default:
@@ -98,10 +98,9 @@ namespace Anki {
             }
             case NVStorage::BODY:
             {
-              RobotInterface::EngineToRobot msg;
-              msg.tag = RobotInterface::EngineToRobot::Tag_nvReadToBody;
-              os_memcpy(&msg.nvReadToBody.entry, entry, sizeof(NVStorage::NVStorageBlob));
-              RTIP::SendMessage(msg);
+              RobotInterface::NVReadResultToBody msg;
+              os_memcpy(&msg.entry, entry, sizeof(NVStorage::NVStorageBlob));
+              RobotInterface::SendMessage(msg);
               break;
             }
             default:

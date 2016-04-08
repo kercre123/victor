@@ -23,6 +23,7 @@ extern "C" {
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "anki/cozmo/robot/logging.h"
@@ -210,10 +211,9 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
 
 static bool sendWifiConnectionState(const bool state)
 {
-  Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
-  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
-  rtipMsg.radioConnected.wifiConnected = state;
-  return Anki::Cozmo::RTIP::SendMessage(rtipMsg);
+  Anki::Cozmo::RobotInterface::RadioState rtipMsg;
+  rtipMsg.wifiConnected = state;
+  return Anki::Cozmo::RobotInterface::SendMessage(rtipMsg);
 }
 
 extern "C" void backgroundTaskOnConnect(void)
