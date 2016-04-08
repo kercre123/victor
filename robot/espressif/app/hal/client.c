@@ -100,7 +100,7 @@ sint8 clientInit()
   static struct espconn s_socket;
   static esp_udp s_udp;
   
-  printf("clientInit\r\n");
+  //printf("clientInit\r\n");
 
   clientConnection = NULL;
   clientConnectionId = 0;
@@ -130,7 +130,7 @@ sint8 clientInit()
     
   ReliableTransport_Init();
 
-  printf("\tno error\r\n");
+  //printf("\tno error\r\n");
   return ESPCONN_OK;
 }
 

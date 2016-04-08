@@ -11,15 +11,20 @@ class CameraCalibStorer:
     def onConnect(self, dest):
         "Callback when connected to the robot"
         print("Sending configuration to robot")
-        nvCmd = Anki.Cozmo.NVStorage.NVStorageBlob(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_CameraCalibration, self.camCalib.pack())
-        robotInterface.Send(RI.EngineToRobot(writeNV=nvCmd))
+        robotInterface.Send(RI.EngineToRobot(writeNV=Anki.Cozmo.NVStorage.NVStorageWrite(
+            Anki.Cozmo.NVStorage.NVReportDest.ENGINE,
+            True,
+            True,
+            False,
+            Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_Invalid,
+            Anki.Cozmo.NVStorage.NVStorageBlob(Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_CameraCalibration, self.camCalib.pack()))))
         
     def onOpResult(self, msg):
         "Callback when receiving an operation result"
-        if msg.tag != Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_CameraCalibration:
+        if msg.report.tag != Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_CameraCalibration:
             print("Result for unexpected tag 0x{:x}, {:d}".format(msg.tag, msg.result))
         else:
-            if msg.result == Anki.Cozmo.NVStorage.NVResult.NV_OKAY:
+            if msg.report.result == Anki.Cozmo.NVStorage.NVResult.NV_OKAY:
                 print("Success :-)")
             else:
                 print("Failure :-(  {:d}".format(msg.result))
@@ -36,7 +41,13 @@ class CameraCalibStorer:
 
 if __name__ == "__main__":
     print("Camera Calibration parameter utility")
-    params = [eval(input("{} >>> ".format(s[1:]))) for s in RI.CameraCalibration.__slots__]
+    if len(sys.argv)-1 == len(RI.CameraCalibration.__slots__):
+        try:
+            params = [eval(a) for a in sys.argv[1:]]
+        except:
+            sys.exit("Couldn't evaluate arguments as parameters for CameraCalibration struct")
+    else:
+        params = [eval(input("{} >>> ".format(s[1:]))) for s in RI.CameraCalibration.__slots__]
     print("Storing calibration parameters to robot, please wait.")
     CameraCalibStorer(params)
     time.sleep(5)

@@ -5,228 +5,882 @@
  * All stored data is stored as entries each of which has an NVEntryHeader followed by the entry data. The header is
  * used for retrieving entries and for storing the status of entries.
  *
- * The first two sectors of the NV storage area is used as a staging sector when doing moves or erases. All the
- * remaining sectors are available for data.
  */
 
 #include "nvStorage.h"
 extern "C" {
 #include "rboot.h"
+#include "osapi.h"
+#include "mem.h"
+#include "foregroundTask.h"
 }
+#include "face.h"
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/esp.h"
 
-#define END_OF_FLASH (0x200000)
-#define DATA_START_ADDRESS (NV_STORAGE_START_ADDRESS + (2*SECTOR_SIZE))
+#define READ_BACKOFF_INTERVAL_us (1000000)
+
+#define DEBUG_NVS 0
+
+#if DEBUG_NVS
+#define db_printf(...) os_printf(__VA_ARGS__)
+#else
+#define db_printf(...)
+#endif
 
 namespace Anki {
 namespace Cozmo {
 namespace NVStorage {
 
 struct NVEntryHeader {
-  u32 size;  ///< Size of the entry data plus this header
-  u32 tag;   ///< Data identification for this structure
-  u32 valid; ///< Left 0xFFFFffff when written, set to 0x00000000 or other code when entry is marked for deletion
+  u32 size;      ///< Size of the entry data plus this header
+  u32 tag;       ///< Data identification for this structure
+  u32 successor; /**< Left 0xFFFFffff when written, set to 0x00000000 for deletion or written address of successor if
+                      replaced. @warning MUST be the last member of the struct. */
 };
 
-NVResult Write(NVStorageBlob& entry)
+struct NVStorageState {
+  NVStorageBlob* pendingWrite;
+  WriteDoneCB    pendingWriteDoneCallback;
+  u32            pendingOverwriteHeaderAddress; // The header address of an entry that needs to be overwritten
+  u32            pendingEraseStart; // Lowest tag we are searching to erase
+  u32            pendingEraseEnd; // Highest tag we are searching to erase
+  EraseDoneCB    pendingEraseCallback;
+  MultiOpDoneCB  pendingMultiEraseDoneCallback;
+  u32            pendingReadStart; // Lowest tag we are searching to read
+  u32            pendingReadEnd; // Highest tag we are searching to read
+  ReadDoneCB     pendingReadCallback;
+  MultiOpDoneCB  pendingMultiReadDoneCallback;
+  u32            lastReadTime; // The last time we returned a read result, use to back off and leave room for transport to clear
+  s32            startOfData; // Address of the 0th byte of NV data
+  s32            endOfData;   // Address 1 past the last byte of data
+  s32            flashPointer;
+  s8             phase;
+  s8             retries;
+  bool           multiEraseDidAny;
+  bool           multiReadFoundAny;
+};
+
+static NVStorageState nv;
+
+static void printNVSS()
 {
-  u32 addr = DATA_START_ADDRESS;
-  NVEntryHeader header;
-  const u32 blobSize  = ((entry.blob_length + 3)/4)*4;
-  const u32 entrySize = blobSize + sizeof(NVEntryHeader);
-  
-  while ((addr + entrySize) < END_OF_FLASH)
+  db_printf("pw  = %x\tpwdc = %x\tpoha = %x\r\n"
+            "pes = %d\tpee  = %d\tpec  = %x\tpmedc = %x\r\n"
+            "prs = %d\tpre  = %d\tprc  = %x\tpmrdc = %x\r\n"
+            "sod = %x\teod  = %x\tfp   = %x\r\n"
+            "p   = %d\tr    = %d\tmeda = %x\tmrfa = %x\r\n\r\n",
+  (u32)nv.pendingWrite, (u32)nv.pendingWriteDoneCallback, nv.pendingOverwriteHeaderAddress,
+  nv.pendingEraseStart, nv.pendingEraseEnd, (u32)nv.pendingEraseCallback, (u32)nv.pendingMultiEraseDoneCallback,
+  nv.pendingReadStart, nv.pendingReadEnd, (u32)nv.pendingReadCallback, (u32)nv.pendingMultiReadDoneCallback,
+  nv.startOfData, nv.endOfData, nv.flashPointer,
+  nv.phase, nv.retries, nv.multiEraseDidAny, nv.multiReadFoundAny);
+}
+
+#define FLASH_OP_RETRIES_BEFORE_FAIL 10
+
+static void resetWrite()
+{
+  if (nv.pendingWrite != NULL) os_free(nv.pendingWrite);
+  nv.pendingWrite = NULL;
+  nv.pendingWriteDoneCallback = NULL;
+  nv.pendingOverwriteHeaderAddress = 0;
+  nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+  nv.phase = 0;
+  nv.flashPointer = nv.startOfData;
+}
+
+static void resetErase()
+{
+  nv.pendingEraseStart = NVEntry_Invalid;
+  nv.pendingEraseEnd   = NVEntry_Invalid;
+  nv.pendingEraseCallback = NULL;
+  nv.pendingMultiEraseDoneCallback = NULL;
+  nv.multiEraseDidAny = false;
+  nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+  nv.phase = 0;
+  nv.flashPointer = nv.startOfData;
+}
+
+static void resetRead()
+{
+  nv.pendingReadStart = NVEntry_Invalid;
+  nv.pendingReadEnd   = NVEntry_Invalid;
+  nv.pendingReadCallback = NULL;
+  nv.pendingMultiReadDoneCallback = NULL;
+  nv.multiReadFoundAny = false;
+  nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+  nv.phase = 0;
+  nv.flashPointer = nv.startOfData;
+}
+
+static inline bool isBusy()
+{
+  return ((nv.pendingWrite      != NULL)            ||
+          (nv.pendingEraseStart != NVEntry_Invalid) ||
+          (nv.pendingReadStart  != NVEntry_Invalid));
+}
+
+typedef enum
+{
+  GC_init,
+  GC_erase,
+  GC_rewrite,
+  GC_finalize,
+} GCPhase;
+
+struct GarbageCollectionState
+{
+  NVInitDoneCB finishedCallback;
+  NVDataAreaHeader dah;
+  u32 areaStart;
+  s32 readPointer;
+  s32 writePointer;
+  int entryCount;
+  int flashOpRetries;
+  u16 sectorCounter;
+  GCPhase phase;
+};
+
+/*static void printGCState(const GarbageCollectionState* const state)
+{
+  os_printf("as = %x\trp = %x\twp = %x\r\nec = %d\tr  = %d\tsc = %d\r\nphase = %d\r\n",
+  state->areaStart, state->readPointer, state->writePointer,
+  state->entryCount, state->flashOpRetries, state->sectorCounter, state->phase);
+}*/
+
+#define FLASH_RESULT_TO_NV_RESULT(fr) (fr == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT)
+
+#define GET_FLASH(address, dest, size) { \
+  SpiFlashOpResult r = spi_flash_read(address, dest, size); \
+  if (r != SPI_FLASH_RESULT_OK) { \
+    if (gc->flashOpRetries-- > 0) { \
+      return true; \
+    } \
+    else { \
+      os_printf("GF at %d failed: %x\r\n", __LINE__, r); \
+      gc->finishedCallback(FLASH_RESULT_TO_NV_RESULT(r)); \
+      os_free(gc); \
+      return false; \
+    } \
+  } \
+  else gc->flashOpRetries = FLASH_OP_RETRIES_BEFORE_FAIL; \
+}
+
+#define PUT_FLASH(address, src, size) { \
+  SpiFlashOpResult r = spi_flash_write(address, src, size); \
+  if (r != SPI_FLASH_RESULT_OK) { \
+    if (gc->flashOpRetries-- > 0) { \
+      return true; \
+    } \
+    else { \
+      os_printf("PF at %d failed: %x\r\n", __LINE__, r); \
+      gc->finishedCallback(FLASH_RESULT_TO_NV_RESULT(r)); \
+      os_free(gc); \
+      return false; \
+    } \
+  } \
+  else gc->flashOpRetries = FLASH_OP_RETRIES_BEFORE_FAIL; \
+}
+
+#if NV_STORAGE_NUM_AREAS==2
+static bool GarbageCollectionTask(uint32_t param)
+{
+  GarbageCollectionState* gc = reinterpret_cast<GarbageCollectionState*>(param);
+
+  switch (gc->phase)
   {
-    SpiFlashOpResult flashResult = spi_flash_read(addr, reinterpret_cast<uint32*>(&header), sizeof(header));
-    AnkiConditionalWarnAndReturnValue(flashResult == SPI_FLASH_RESULT_OK,
-                                      flashResult == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT, 42, "NVStorage.Write", 261, "Failed to read header %d", 1, flashResult);
-    if (header.tag == NVEntry_Invalid) // Have reached the end of storage, put it here.
+    case GC_init:
     {
-      header.size  = entrySize;
-      header.tag   = entry.tag;
-      flashResult = spi_flash_write(addr, reinterpret_cast<uint32*>(&header), sizeof(NVEntryHeader) - 4); // We don't write the valid flag, thus leaving it valid.
-      AnkiConditionalWarnAndReturnValue(flashResult == SPI_FLASH_RESULT_OK,
-                                        flashResult == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT, 42, "NVStorage.Write", 262, "Failed to write new header %d", 1, flashResult);
-      addr += sizeof(NVEntryHeader);
-      flashResult = spi_flash_write(addr, reinterpret_cast<uint32*>(entry.blob), blobSize);
-      if (flashResult != SPI_FLASH_RESULT_OK)
+      GET_FLASH(nv.startOfData - sizeof(NVDataAreaHeader), reinterpret_cast<uint32*>(&gc->dah), sizeof(NVDataAreaHeader));
+      if (gc->dah.nvStorageVersion != NV_STORAGE_FORMAT_VERSION)
       {
-        u32 invalid = 0;
-        AnkiWarn( 42, "NVStorage.Write", 263, "Failed to write blob! %d", 1, flashResult);
-        const SpiFlashOpResult flashResult2 = spi_flash_write(addr-4, &invalid, 4); // Mark this header as invalid
-        AnkiConditionalErrorAndReturnValue(flashResult2 == SPI_FLASH_RESULT_OK,
-                                           flashResult2 == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT, 42, "NVStorage.Write", 264, "Failed to invalidate header %d on failed blob write %d", 2,
-                                           flashResult2, flashResult);
-        return flashResult == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT;
+        os_printf("NVS GC format conversion from %d to %d not supported\r\n", gc->dah.nvStorageVersion, NV_STORAGE_FORMAT_VERSION);
+        gc->finishedCallback(NV_ERROR);
+        break;
+      }
+      else if (nv.startOfData == (NV_STORAGE_START_ADDRESS + sizeof(NVDataAreaHeader)))
+      {
+        gc->areaStart = NV_STORAGE_START_ADDRESS + NV_STORAGE_AREA_SIZE;
+      }
+      else if (nv.startOfData == (NV_STORAGE_START_ADDRESS + NV_STORAGE_AREA_SIZE + sizeof(NVDataAreaHeader)))
+      {
+        gc->areaStart = NV_STORAGE_START_ADDRESS;
       }
       else
       {
-        return NV_OKAY;
+        os_printf("NVS GC unexpected start of data %x fail!\r\n", nv.startOfData);
+        gc->finishedCallback(NV_ERROR);
+        break;
+      }
+      gc->readPointer   = nv.startOfData;
+      gc->writePointer  = gc->areaStart + sizeof(NVDataAreaHeader);
+      gc->entryCount    = 0;
+      gc->sectorCounter = 0;
+      gc->phase = GC_erase;
+      return true;
+    }
+    case GC_erase:
+    {
+      const u16 sector = static_cast<u16>(gc->areaStart / SECTOR_SIZE) + gc->sectorCounter;
+      const SpiFlashOpResult flashResult = spi_flash_erase_sector(sector);
+      if (flashResult != SPI_FLASH_RESULT_OK)
+      {
+        if (gc->flashOpRetries-- > 0) return true;
+        else
+        {
+          os_printf("GarbageCollectionTask ERROR: Couldn't erase sector %x\r\n", sector);
+          gc->finishedCallback(FLASH_RESULT_TO_NV_RESULT(flashResult));
+          break;
+        }
+      }
+      else
+      {
+        gc->flashOpRetries = FLASH_OP_RETRIES_BEFORE_FAIL;
+        gc->sectorCounter++;
+        if ((gc->sectorCounter * SECTOR_SIZE) >= NV_STORAGE_AREA_SIZE)
+        {
+          gc->phase = GC_rewrite;
+        }
+        return true;
       }
     }
-    else if (header.tag == entry.tag && header.valid) // Found a matching valid tag
+    case GC_rewrite:
     {
-        u32 invalid = 0;
-        flashResult = spi_flash_write(addr + sizeof(NVEntryHeader) - 4, &invalid, 4); // Invaildate this entry
-        AnkiConditionalWarnAndReturnValue(flashResult == SPI_FLASH_RESULT_OK,
-                                          flashResult == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT, 42, "NVStorage.Write", 265, "Failed to invalidate old entry %d", 1, flashResult);
-        addr += header.size; // Advance to the next
+      //printGCState(gc);
+      if ((gc->readPointer - nv.startOfData) >= static_cast<s32>(NV_STORAGE_CAPACITY))
+      {
+        os_printf("NV GarbageCollect WARNING: read pointer hit end of capacity %x %x\r\n", gc->readPointer, nv.startOfData);
+        db_printf("NVS %d entries, 0x%x bytes used after GC\r\n", gc->entryCount, gc->writePointer-gc->areaStart);
+        gc->phase = GC_finalize;
+        return true;
+      }
+      else if ((gc->writePointer - gc->areaStart) >= static_cast<s32>(NV_STORAGE_CAPACITY))
+      {
+        os_printf("NV GarbageCollect WARNING: write pointer hit end of capacity %x %x\r\n", gc->writePointer, gc->areaStart);
+        db_printf("NVS %d entries, 0x%x bytes used after GC\r\n", gc->entryCount, gc->writePointer-gc->areaStart);
+        gc->phase = GC_finalize;
+        return true;
+      }
+      else
+      {
+        u32 buffer[1152]; // Large enough for header + maximum blob + control word
+        NVEntryHeader& header = *reinterpret_cast<NVEntryHeader*>(buffer);
+        
+        GET_FLASH(gc->readPointer, buffer, sizeof(NVEntryHeader));
+        if (header.tag == NVEntry_Invalid)
+        { // End of stored data
+          db_printf("NVS %d entries, 0x%x bytes used after GC\r\n", gc->entryCount, gc->writePointer-gc->areaStart);
+          gc->phase = GC_finalize;
+          return true;
+        }
+        else
+        {
+          if (header.successor != 0xFFFFffff)
+          { // Superceeded entry, skip over
+            gc->readPointer += header.size;
+            return true;
+          }
+          else
+          {
+            GET_FLASH(gc->readPointer + sizeof(NVEntryHeader), buffer + (sizeof(NVEntryHeader)/4), header.size - sizeof(NVEntryHeader));
+            if (buffer[(header.size/4)-1] != 0)
+            { // Control word is non-zero, this is an invalid entry so skip past
+              gc->readPointer += header.size;
+              return true;
+            }
+            else
+            { // Copy this to new area
+              PUT_FLASH(gc->writePointer, buffer, header.size);
+              gc->readPointer  += header.size;
+              gc->writePointer += header.size;
+              gc->entryCount++;
+              return true;
+            }
+          }
+        }
+      }
     }
-    else
+    case GC_finalize:
     {
-      addr += header.size; // Advance to next entry
-    }
-  }
-  
-  return NV_NO_ROOM;
-}
-
-NVResult Erase(const u32 tag)
-{
-  u32 addr = DATA_START_ADDRESS;
-  NVEntryHeader header;
-  
-  while (addr < END_OF_FLASH)
-  {
-    SpiFlashOpResult flashResult = spi_flash_read(addr, reinterpret_cast<uint32*>(&header), sizeof(header));
-    AnkiConditionalWarnAndReturnValue(flashResult == SPI_FLASH_RESULT_OK,
-                                      flashResult == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT, 43, "NVStorage.Read", 261, "Failed to read header %d", 1, flashResult);
-    if (header.tag == NVEntry_Invalid) // Have reached the end of storage without finding anything
-    {
+      gc->dah.dataAreaMagic = NV_STORAGE_AREA_HEADER_MAGIC;
+      gc->dah.nvStorageVersion = NV_STORAGE_FORMAT_VERSION;
+      gc->dah.journalNumber += 1;
+      PUT_FLASH(gc->areaStart, reinterpret_cast<uint32_t*>(&gc->dah), sizeof(NVDataAreaHeader));
+      nv.startOfData = gc->areaStart + sizeof(NVDataAreaHeader);
+      nv.endOfData = nv.startOfData + NV_STORAGE_CAPACITY;
+      nv.flashPointer = nv.startOfData;
+      printNVSS();
+      gc->finishedCallback(NV_OKAY);
       break;
     }
-    else if (header.tag == tag && header.valid)
+    default:
     {
-      u32 invalid = 0;
-      flashResult = spi_flash_write(addr + sizeof(NVEntryHeader) - 4, &invalid, 4); // Invaildate this entry
-      AnkiConditionalWarnAndReturnValue(flashResult == SPI_FLASH_RESULT_OK,
-                                        flashResult == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT, 49, "NVStorage.Erase", 274, "Failed to erase tag 0x%x: %d", 2, tag, flashResult);
-      return NV_OKAY;
+       os_printf("GarbageCollectionTask ERROR: Unhandled phase %d\r\n", gc->phase);
+    }
+  }
+  
+  os_printf("GarbageCollectionTask exiting\r\n");
+  os_free(gc);
+  return false;
+}
+#else
+#error "GarbageCollection implementation relies on exactly two storage areas"
+#endif
+
+extern "C" int8_t GarbageCollect(NVInitDoneCB finishedCallback)
+{
+  if (isBusy()) return NV_BUSY;
+  else
+  {
+    GarbageCollectionState* state = reinterpret_cast<GarbageCollectionState*>(os_malloc(sizeof(GarbageCollectionState)));
+    if (state == NULL) return NV_NO_MEM;
+    state->finishedCallback = finishedCallback;
+    state->flashOpRetries   = FLASH_OP_RETRIES_BEFORE_FAIL;
+    state->phase = GC_init;
+    if (foregroundTaskPost(GarbageCollectionTask, reinterpret_cast<u32>(state)) == false)
+    {
+      os_printf("NVStorage GarbageCollect failed to post task\r\n");
+      os_free(state);
+      return NV_ERROR;
+    }
+    else return NV_SCHEDULED;
+  }
+}
+
+
+extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
+{
+  NVDataAreaHeader dah;
+  s32 newestJournalNumber = -1;
+  u32 newestJournalAddress = 0;
+  s32 newestJournalVersion = NV_STORAGE_FORMAT_VERSION;
+  int area;
+  nv.pendingWrite = NULL;
+  resetWrite();
+  resetErase();
+  resetRead();
+  nv.lastReadTime = system_get_time();
+  
+  //NVWipeAll();
+  
+  for (area=0; area<NV_STORAGE_NUM_AREAS; ++area)
+  {
+    const u32 addr = NV_STORAGE_START_ADDRESS + (NV_STORAGE_AREA_SIZE * area);
+    const SpiFlashOpResult flashResult = spi_flash_read(addr, reinterpret_cast<u32*>(&dah), sizeof(NVDataAreaHeader));
+    if (flashResult != SPI_FLASH_RESULT_OK)
+    {
+      os_printf("NVInit Failed (%d) to read flash area header at %x\r\n", flashResult, area);
+      finishedCallback(FLASH_RESULT_TO_NV_RESULT(flashResult));
+      return -1;
     }
     else
     {
-      addr += header.size;
+      db_printf("NV Area %d at %x: magic = %x\tversion = %d\tnumber=%d\r\n",
+                area, addr, dah.dataAreaMagic, dah.nvStorageVersion, dah.journalNumber);
+      if ((dah.dataAreaMagic == NV_STORAGE_AREA_HEADER_MAGIC) && (dah.journalNumber > newestJournalNumber))
+      {
+        newestJournalVersion = dah.nvStorageVersion;
+        newestJournalNumber  = dah.journalNumber;
+        newestJournalAddress = addr;
+      }
     }
   }
-
-  return NV_NOT_FOUND;
   
-}
-
-NVResult Read(NVStorageBlob& entry)
-{
-  u32 addr = DATA_START_ADDRESS;
-  NVEntryHeader header;
-  
-  while (addr < END_OF_FLASH)
+  if (newestJournalAddress == 0) // Uninitalized storage
   {
-    SpiFlashOpResult flashResult = spi_flash_read(addr, reinterpret_cast<uint32*>(&header), sizeof(header));
-    AnkiConditionalWarnAndReturnValue(flashResult == SPI_FLASH_RESULT_OK,
-                                      flashResult == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT, 43, "NVStorage.Read", 261, "Failed to read header %d", 1, flashResult);
-    if (header.tag == NVEntry_Invalid) // Have reached the end of storage without finding anything
+    const u32 addr = NV_STORAGE_START_ADDRESS;
+    dah.dataAreaMagic = NV_STORAGE_AREA_HEADER_MAGIC;
+    dah.nvStorageVersion = NV_STORAGE_FORMAT_VERSION;
+    dah.journalNumber = 1;
+    os_printf("NVInit initalizing flash to (%d, %d) at %x\r\n", dah.nvStorageVersion, dah.journalNumber, addr);
+    NVWipeAll();
+    const SpiFlashOpResult flashResult = spi_flash_write(addr, reinterpret_cast<u32*>(&dah), sizeof(NVDataAreaHeader));
+    if (flashResult != SPI_FLASH_RESULT_OK)
     {
-      break;
-    }
-    else if (header.tag == entry.tag && header.valid)
-    {
-      addr += sizeof(NVEntryHeader);
-      entry.blob_length = header.size - sizeof(NVEntryHeader);
-      flashResult = spi_flash_read(addr, reinterpret_cast<uint32*>(entry.blob), entry.blob_length);
-      AnkiConditionalWarnAndReturnValue(flashResult == SPI_FLASH_RESULT_OK,
-                                        flashResult == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT, 43, "NVStorage.Read", 266, "Failed to read blob %d", 1, flashResult);
-      return NV_OKAY;
+      os_printf("NVInit failed (%d) to initalize flash area header at %x\r\n", flashResult, area);
+      finishedCallback(FLASH_RESULT_TO_NV_RESULT(flashResult));
+      return -2;
     }
     else
     {
-      addr += header.size;
+      nv.startOfData  = addr + sizeof(NVDataAreaHeader);
+      nv.endOfData    = nv.startOfData + NV_STORAGE_CAPACITY;
+      nv.flashPointer = nv.startOfData;
+      printNVSS();
+      finishedCallback(NV_OKAY);
+      return 0;
     }
   }
-
-  return NV_NOT_FOUND;
+  else
+  {
+    os_printf("NVInit selecting segment at %x\r\n", newestJournalAddress);
+    nv.startOfData  = newestJournalAddress + sizeof(NVDataAreaHeader);
+    nv.endOfData    = nv.startOfData + NV_STORAGE_CAPACITY;
+    nv.flashPointer = nv.startOfData;
+    if ((newestJournalVersion != NV_STORAGE_FORMAT_VERSION) && (gc == false))
+    {
+      os_printf("NVInit WARNING: flash storage version %d current softare version %d but GC not scheduled!\r\n", newestJournalVersion, NV_STORAGE_FORMAT_VERSION);
+      finishedCallback(NV_BAD_ARGS);
+      return 1;
+    }
+  }
+  
+  if (gc)
+  {
+    const NVResult ret = GarbageCollect(finishedCallback);
+    if (ret != NV_SCHEDULED)
+    {
+      os_printf("NVInit: Couldn't start garbage collection: %d\r\n", ret);
+      finishedCallback(ret);
+      return ret;
+    }
+    else
+    {
+      // Don't call finishedCallback here, GarbageCollect will call it when it's done
+      return ret;
+    }
+  }
+  else
+  {
+    //printNVSS();
+    finishedCallback(NV_OKAY);
+    return 0;
+  }
 }
 
-extern "C" int NVCheckIntegrity(const bool recollect, const bool defragment)
+
+static void processFailure(const NVResult fail)
 {
-  if (recollect)
+  AnkiWarn( 145, "NVStorage.Operation.Failure", 401, "Fail = %d, addr = 0x%x", 2, fail, nv.flashPointer);
+  
+  if ((nv.pendingWrite != NULL) && (nv.pendingWriteDoneCallback != NULL))
   {
-    AnkiWarn( 44, "NVStorage.CheckIntegrity", 267, "recollect not yet implemented.", 0);
+    nv.pendingWriteDoneCallback(nv.pendingWrite, fail);
   }
-  if (defragment)
+  resetWrite();
+  
+  if (nv.pendingEraseCallback != NULL) nv.pendingEraseCallback(nv.pendingEraseStart, fail);
+  if (nv.pendingMultiEraseDoneCallback != NULL) nv.pendingMultiEraseDoneCallback(fail);
+  resetErase();
+
+  if (nv.pendingReadCallback != NULL) nv.pendingReadCallback(nv.pendingWrite, fail);
+  if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(fail);
+  resetRead();
+
+  nv.flashPointer = nv.startOfData;
+}
+
+static void endWrite(const NVResult writeResult)
+{
+  AnkiConditionalWarn(writeResult == NV_OKAY, 146, "NVStorage.WriteFailure", 410, "Failed to write to NV storage %d at 0x%x, phase %d", 3, writeResult, nv.flashPointer, nv.phase);
+  if (nv.pendingWriteDoneCallback != NULL)
   {
-    AnkiWarn( 44, "NVStorage.CheckIntegrity", 268, "defragment not yet implemented.", 0);
+    nv.pendingWriteDoneCallback(nv.pendingWrite, writeResult);
   }
-  return 0;
+  resetWrite();
+}
+
+Result Update()
+{
+  const u32 now = system_get_time();
+  if (isBusy() && (now - nv.lastReadTime > READ_BACKOFF_INTERVAL_us))
+  { // If we have anything to do
+    static NVEntryHeader header;
+    SpiFlashOpResult flashResult;
+    if (nv.flashPointer >= nv.endOfData) // Handle wrap around edge case here
+    {
+      header.tag = NVEntry_Invalid;
+      flashResult = SPI_FLASH_RESULT_OK;
+      nv.phase = 1;
+    }
+    else if (nv.phase == 0)
+    {
+      flashResult = spi_flash_read(nv.flashPointer, reinterpret_cast<uint32*>(&header), sizeof(header));
+      if (flashResult != SPI_FLASH_RESULT_OK)
+      {
+        if (nv.retries-- <= 0) processFailure(flashResult == SPI_FLASH_RESULT_ERR ? NV_ERROR : NV_TIMEOUT);
+      }
+      else
+      {
+        nv.phase = 1;
+      }
+      db_printf("0 %x %d %x %x\r\n", nv.flashPointer, header.tag, header.size, header.successor);
+    }
+    else
+    {
+      if (header.tag == NVEntry_Invalid) // We've reached the end of flash
+      {
+        if (nv.pendingWrite != NULL) // We have something to write, put it here
+        {
+          const u32 blobSize  = ((nv.pendingWrite->blob_length + 3)/4)*4;
+          const u32 entrySize = blobSize + sizeof(NVEntryHeader) + 4;
+          if (nv.flashPointer + (s32)entrySize >= nv.endOfData) // No room!
+          {
+            endWrite(NV_NO_ROOM);
+          }
+          else // We do have room
+          {
+            NVEntryHeader wrHeader;
+            u32 entryInvalid = 0;
+            wrHeader.size = entrySize;
+            wrHeader.tag  = nv.pendingWrite->tag;
+            switch (nv.phase)
+            {
+              case 1:
+              {
+                flashResult = spi_flash_write(nv.flashPointer, reinterpret_cast<uint32*>(&wrHeader), sizeof(NVEntryHeader) - 4); // Write header minus sucessor word
+                if (flashResult != SPI_FLASH_RESULT_OK)
+                {
+                  if (nv.retries-- <= 0) endWrite(FLASH_RESULT_TO_NV_RESULT(flashResult));
+                }
+                else
+                {
+                  nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+                  nv.phase = 2;
+                }
+                break;
+              }
+              case 2:
+              {
+                flashResult = spi_flash_write(nv.flashPointer + sizeof(NVEntryHeader), 
+                                              reinterpret_cast<uint32*>(&(nv.pendingWrite->blob)), blobSize);
+                if (flashResult != SPI_FLASH_RESULT_OK)
+                {
+                  if (nv.retries-- <= 0) endWrite(FLASH_RESULT_TO_NV_RESULT(flashResult));
+                }
+                else
+                {
+                  nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+                  nv.phase = 3;
+                }
+                break;
+              }
+              case 3:
+              {
+                if (nv.pendingOverwriteHeaderAddress != 0) // Update overwritten entry if any
+                {
+                  flashResult = spi_flash_write(nv.pendingOverwriteHeaderAddress + sizeof(NVEntryHeader) - 4, (u32*)&nv.flashPointer, 4);
+                  if (flashResult != SPI_FLASH_RESULT_OK)
+                  {
+                    if (nv.retries-- <= 0)
+                    { // Failed to invalidate old entry
+                      nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+                      nv.phase = 4;
+                    }
+                  }
+                  else
+                  {
+                    nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+                    nv.phase = 5;
+                  }
+                }
+                else // Nothing to overwrite so skip to next step
+                {
+                  nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+                  nv.phase = 5;
+                }
+                break;
+              }
+              case 4:
+              {
+                entryInvalid =  nv.pendingOverwriteHeaderAddress;
+                // Explicit fallthrough to next case
+              }
+              case 5:
+              {
+                flashResult = spi_flash_write(nv.flashPointer + entrySize - 4, &entryInvalid, 4);
+                if (flashResult != SPI_FLASH_RESULT_OK)
+                {
+                  if (nv.retries-- <= 0)
+                  {
+                    AnkiError( 153, "NVStorage.WriteFailure.Corruption", 411, "Couldn't overwrite old entry or invalidate new entry", 0);
+                    endWrite(FLASH_RESULT_TO_NV_RESULT(flashResult));
+                  }
+                }
+                else if (entryInvalid == 0)
+                {
+                  endWrite(NV_OKAY);
+                }
+                else
+                {
+                  AnkiWarn( 146, "NVStorage.WriteFailure", 412, "Couldn't overwrite old entry.", 0)
+                  endWrite(NV_ERROR);
+                }
+                break;
+              }
+              default:
+              {
+                AnkiError( 146, "NVStorage.WriteFailure", 409, "Unexpected nv.phase = %d! aborting all", 1, nv.phase);
+                processFailure(NV_ERROR);
+              }
+            }
+          }
+        } // Done with write operations at end of flash
+        
+        else if (nv.pendingEraseStart != NVEntry_Invalid)
+        { // We were erasing anything
+          if (nv.pendingMultiEraseDoneCallback != NULL)
+          {
+            nv.pendingMultiEraseDoneCallback(nv.multiEraseDidAny ? NV_OKAY : NV_NO_DO);
+          }
+          resetErase();
+        } // Done with erase operations at end of flash
+        
+        else if (nv.pendingReadStart != NVEntry_Invalid)
+        { // We were reading anything 
+          if (nv.pendingReadStart == nv.pendingReadEnd)
+          {
+            NVStorageBlob entry;
+            entry.tag = nv.pendingReadStart;
+            entry.blob_length = 0;
+            nv.pendingReadCallback(&entry, NV_NOT_FOUND);
+          }
+          else if (nv.pendingMultiReadDoneCallback != NULL)
+          {
+            nv.pendingMultiReadDoneCallback(nv.multiReadFoundAny ? NV_OKAY : NV_NOT_FOUND);
+          }
+          resetRead();
+        } // Done with read operations at end of flash
+        
+        else
+        {
+          nv.flashPointer = nv.startOfData;
+          nv.phase = 0;
+        }
+      } // Done with handling end of flash
+      
+      else if (header.successor == 0) // Erased entry with no successor
+      {
+        nv.flashPointer += header.size;
+        nv.phase = 0;
+      }
+      else if (header.successor != 0xFFFFffff) // Replaced entry
+      {
+        if (((nv.pendingWrite != NULL) && (nv.pendingWrite->tag == header.tag)) ||
+            ((nv.pendingEraseStart != NVEntry_Invalid) && (nv.pendingEraseStart == nv.pendingEraseEnd)) ||
+            ((nv.pendingReadStart  != NVEntry_Invalid) && (nv.pendingReadStart  == nv.pendingReadEnd)))
+        { // This points toward the entry we are seeking
+          if (((s32)header.successor < nv.startOfData) || ((s32)header.successor >= nv.endOfData))
+          {
+            AnkiWarn( 147, "NVStorage.Seek.BadSuccessor", 403, "Bad successor 0x%x on tag 0x%x at 0x%x, skipping to 0x%x", 4, header.successor, header.tag, nv.flashPointer, nv.flashPointer + header.size);
+            nv.flashPointer += header.size;
+          }
+          else
+          {
+            nv.flashPointer = header.successor;
+          }
+        }
+        else
+        {
+          nv.flashPointer += header.size;
+        }
+        nv.phase = 0;
+      } // Done handling invalidated entry
+      
+      else
+      { // A valid entry  
+        if ((nv.pendingWrite != NULL) && (header.tag == nv.pendingWrite->tag))
+        { // This is something we need to invalidate to "overwrite"
+          if (nv.pendingOverwriteHeaderAddress != 0)
+          {
+            AnkiWarn( 148, "NVStorage.Seek.MultiplePredicessors", 404, "Multiple predicessors for tag 0x%x, at 0x%x and 0x%x", 3, nv.pendingWrite->tag, nv.pendingOverwriteHeaderAddress, nv.flashPointer);
+          }
+          else 
+          {
+            nv.pendingOverwriteHeaderAddress = nv.flashPointer;
+            db_printf("Queing overwrite of entry at %d at %x\r\n", header.tag, nv.flashPointer);
+          }
+          nv.flashPointer += header.size;
+          nv.phase = 0;
+        } //  Done queing overwrite
+        
+        else if (nv.pendingEraseStart <= header.tag && header.tag <= nv.pendingEraseEnd)
+        { // This is something we need to erase
+          uint32 successor = 0;
+          flashResult = spi_flash_write(nv.flashPointer + sizeof(NVEntryHeader) - 4, &successor, 4);
+          if (flashResult != SPI_FLASH_RESULT_OK)
+          {
+            if (nv.retries-- <= 0)
+            {
+              const NVResult fail = FLASH_RESULT_TO_NV_RESULT(flashResult);
+              AnkiWarn( 149, "NVStorage.EraseFailure", 405, "Failed to erase entry 0x%x[%d] at 0x%x, %d", 4, header.tag, header.size, nv.flashPointer, fail);
+              if (nv.pendingEraseCallback != NULL) nv.pendingEraseCallback(header.tag, fail);
+              if (nv.pendingMultiEraseDoneCallback != NULL) nv.pendingMultiEraseDoneCallback(fail);
+              resetErase();
+            }
+          }
+          else // Erase successful
+          {
+            nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+            if (nv.pendingEraseCallback != NULL) nv.pendingEraseCallback(header.tag, NV_OKAY);
+            if (nv.pendingEraseStart == nv.pendingEraseEnd) resetErase(); // Was single erase and we did it
+            else {
+              nv.multiEraseDidAny = true;
+              nv.flashPointer += header.size;
+              nv.phase = 0;
+            }
+          }
+        } // Done handling erase
+        
+        else if (nv.pendingReadStart <= header.tag && header.tag <= nv.pendingReadEnd)
+        { // This is something we wanted to read
+          NVStorageBlob entry;
+          entry.tag = header.tag;
+          entry.blob_length = 0;
+          switch(nv.phase)
+          {
+            case 1: // read the valid tag first
+            {
+              u32 entryInvalid = 0xFFFFffff;
+              flashResult = spi_flash_read(nv.flashPointer + header.size - 4, &entryInvalid, 4); 
+              if (flashResult != SPI_FLASH_RESULT_OK)
+              {
+                if (nv.retries -- <= 0)
+                {
+                  const NVResult readResult = FLASH_RESULT_TO_NV_RESULT(flashResult);
+                  AnkiWarn( 150, "NVStorage.ReadFailure", 406, "Failed to read entry invalid tag at 0x%x, %d", 2, nv.flashPointer, readResult);
+                  AnkiAssert(nv.pendingReadCallback != NULL, 407);
+                  nv.pendingReadCallback(&entry, readResult);
+                  if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(readResult);
+                  resetRead();
+                }
+              }
+              else
+              {
+                nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+                if (entryInvalid == 0)
+                { // Valid entry, read it
+                  nv.phase = 2;
+                }
+                else // Invalid entry, skip it
+                {
+                  nv.flashPointer += header.size;
+                  nv.phase = 0;
+                }
+              }
+              break;
+            }
+            case 2: // Now read the entry itself
+            {
+              const u32 blobSize = header.size - sizeof(NVEntryHeader) - 4;
+              flashResult = spi_flash_read(nv.flashPointer + sizeof(NVEntryHeader), reinterpret_cast<uint32*>(entry.blob), blobSize); // Read in the entry
+              if (flashResult != SPI_FLASH_RESULT_OK)
+              {
+                if (nv.retries-- <= 0)
+                {
+                  const NVResult readResult = FLASH_RESULT_TO_NV_RESULT(flashResult);
+                  AnkiWarn( 150, "NVStorage.ReadFailure", 414, "Failed to read entry at 0x%x, %d", 2, nv.flashPointer, readResult);
+                  AnkiAssert(nv.pendingReadCallback != NULL, 407);
+                  nv.pendingReadCallback(&entry, readResult);
+                  if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(readResult);
+                  resetRead();
+                }
+              }
+              else
+              {
+                nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
+                entry.blob_length = blobSize;
+                AnkiAssert(nv.pendingReadCallback != NULL, 407);
+                db_printf("Found something to read, sending it over\r\n");
+                nv.pendingReadCallback(&entry, NV_OKAY);
+                nv.lastReadTime = now;
+                if (nv.pendingReadStart == nv.pendingReadEnd) resetRead(); // This was a single read and we did it
+                else
+                {
+                  db_printf("Looking for next entry to read\r\n");
+                  nv.multiReadFoundAny = true;
+                  nv.flashPointer += header.size;
+                  nv.phase = 0;
+                }
+              }
+              break;
+            }
+            default:
+            {
+              AnkiError( 150, "NVStorage.ReadFailure", 409, "Unexpected nv.phase = %d! aborting all", 1, nv.phase);
+              processFailure(NV_ERROR);
+            }
+          }
+        } // Done handling read
+        
+        else
+        { // This is an entry we don't care about right now, advance past
+          nv.flashPointer += header.size;
+          nv.phase = 0;
+        }
+      } // Done with handling valid entry
+      
+    } // done with successfully read header
+  } // Done with having anything pending
+  return RESULT_OK;
+}
+
+
+NVResult Write(NVStorageBlob* entry, WriteDoneCB callback)
+{
+  if (entry == NULL) return NV_BAD_ARGS;
+  if (entry->tag == NVEntry_Invalid) return NV_BAD_ARGS;
+  if (isBusy()) return NV_BUSY; // Already have something queued
+  nv.pendingWrite = reinterpret_cast<NVStorageBlob*>(os_zalloc(sizeof(NVStorageBlob)));
+  if (nv.pendingWrite == NULL) return NV_NO_MEM;
+  os_memcpy(nv.pendingWrite, entry, sizeof(NVStorageBlob));
+  nv.pendingWriteDoneCallback = callback;
+  db_printf("NVS Write %d scheduled\r\n", entry->tag);
+  return NV_SCHEDULED;
+}
+
+NVResult Erase(const u32 tag, EraseDoneCB callback)
+{
+  // Erase single tag is just a special case of erase range
+  return EraseRange(tag, tag, callback, NULL);
+}
+
+NVResult EraseRange(const u32 start, const u32 end, EraseDoneCB eachCallback, MultiOpDoneCB finishedCallback)
+{
+  if (isBusy()) return NV_BUSY; // Already have something queued
+  nv.pendingEraseStart = start;
+  nv.pendingEraseEnd   = end;
+  nv.pendingEraseCallback = eachCallback;
+  nv.pendingMultiReadDoneCallback = finishedCallback;
+  db_printf("NVS EraseRange %d-%d scheduled\r\n", start, end);
+  return NV_SCHEDULED;
+}
+
+NVResult Read(const u32 tag, ReadDoneCB callback)
+{
+  // Read single is just a special case of read range
+  return ReadRange(tag, tag, callback, NULL);
+}
+
+NVResult ReadRange(const u32 start, const u32 end, ReadDoneCB readCallback, MultiOpDoneCB finishedCallback)
+{
+  if (readCallback == NULL) return NV_BAD_ARGS;
+  if (isBusy()) return NV_BUSY; // Already have something queued
+  nv.pendingReadStart = start;
+  nv.pendingReadEnd   = end;
+  nv.pendingReadCallback = readCallback;
+  nv.pendingMultiReadDoneCallback = finishedCallback;
+  db_printf("NVS ReadRange %d-%d scheduled\r\n", start, end);
+  return NV_SCHEDULED;
 }
 
 extern "C" void NVWipeAll(void)
 {
+  int retries = FLASH_OP_RETRIES_BEFORE_FAIL;
   // TODO: should use larger erase segment than sector
-  for (u16 sector = NV_STORAGE_START_ADDRESS / SECTOR_SIZE; sector < END_OF_FLASH / SECTOR_SIZE; ++sector)
+  u16 sector = NV_STORAGE_START_ADDRESS / SECTOR_SIZE;
+  while ((sector < (NV_STORAGE_END_ADDRESS / SECTOR_SIZE)) && (retries > 0))
   {
-    SpiFlashOpResult flashResult = spi_flash_erase_sector(sector);
-    AnkiConditionalErrorAndReturn(flashResult == SPI_FLASH_RESULT_OK, 45, "NVStorage.WipeAll", 269, "Failed to erase sector 0x%x, %d", 2, sector, flashResult);
-  }
-}
-
-extern "C" bool NVGetWiFiAPConfig(struct softap_config* config, struct ip_info* info)
-{
-  NVStorageBlob apEntry;
-  apEntry.tag = NVEntry_APConfig;
-  if (Read(apEntry) == NV_OKAY) // Found wifi configuration
-  {
-    const WiFiAPConfig* nvApConfig = reinterpret_cast<WiFiAPConfig*>(apEntry.blob);
-    memcpy(config->ssid,     nvApConfig->ssid, 32);
-    memcpy(config->password, nvApConfig->psk,  64);
-    config->channel = nvApConfig->channel;
-    config->beacon_interval = nvApConfig->beacon_interval;
-    info->ip.addr = nvApConfig->ip_domain;
-    info->gw.addr = nvApConfig->ip_domain;
-    return true;
-  }
-  else
-  {
-    return false;
-  }
-}
-
-extern "C" u8 NVGetWiFiStaConfig(struct station_config* config, struct ip_info* info)
-{
-  NVStorageBlob staEntry;
-  staEntry.tag = NVEntry_StaConfig;
-  switch (Read(staEntry))
-  {
-    case NV_OKAY:
+    const SpiFlashOpResult flashResult = spi_flash_erase_sector(sector);
+    if (flashResult == SPI_FLASH_RESULT_OK)
     {
-      const WiFiStaConfig* nvStaConfig = reinterpret_cast<WiFiStaConfig*>(staEntry.blob);
-      
-      memcpy(config->ssid,     nvStaConfig->ssid, 32);
-      memcpy(config->password, nvStaConfig->psk,  64);
-      config->bssid_set = 0;
-      for (u8 bsc=0; bsc<6; ++bsc)
-      {
-        config->bssid[bsc] = nvStaConfig->bssid[bsc];
-        if (nvStaConfig->bssid[bsc] != 0xff)
-        {
-          config->bssid_set = 1;
-        }
-      }
-      
-      info->ip.addr = nvStaConfig->staticIP;
-      info->gw.addr = nvStaConfig->staticGateway;
-      info->netmask.addr = nvStaConfig->staticNetmask;
-      
-      return nvStaConfig->mode;
+      sector++;
+      retries = FLASH_OP_RETRIES_BEFORE_FAIL;
     }
-    case NV_NOT_FOUND:
-    {
-      return SOFTAP_MODE;
-    }
-    default:
-    {
-      return NULL_MODE;
-    }
+    else retries--;
   }
+  if (retries == 0) os_printf("NVWipeAll failed on sector %x\r\n", sector);
 }
 
 } // NVStorage

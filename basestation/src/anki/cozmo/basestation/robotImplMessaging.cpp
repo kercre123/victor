@@ -171,8 +171,6 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
   SetCameraRotation(0, 0, 0);                           // Set extrinsic calibration (rotation only, assuming known position)
                                                         // TODO: Set these from rotation calibration info to be sent in CameraCalibration message
                                                         //       and/or when we do on-engine calibration with images of tool code.
-  
-  SetPhysicalRobot(payload.isPhysicalRobots);  
 }
   
 void Robot::HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -812,6 +810,9 @@ void Robot::HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& mes
 void Robot::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   _timeSynced = true;
+  
+  RobotInterface::SyncTimeAck payload = message.GetData().Get_syncTimeAck();
+  SetPhysicalRobot(payload.isPhysical);
 }
   
 void Robot::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -848,12 +849,8 @@ void Robot::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message
                                       payload.skew);
       
       _visionComponent.SetCameraCalibration(calib);
-      SetPhysicalRobot(payload.isPhysicalRobots);
       break;
     }
-    case NVStorage::NVEntryTag::NVEntry_APConfig:
-    case NVStorage::NVEntryTag::NVEntry_StaConfig:
-    case NVStorage::NVEntryTag::NVEntry_SDKModeUnlocked:
     case NVStorage::NVEntryTag::NVEntry_Invalid:
       PRINT_NAMED_WARNING("Robot.HandleNVData.UnhandledTag", "TODO: Implement handler for tag %d", nvBlob.tag);
       break;
@@ -866,7 +863,7 @@ void Robot::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message
 
 void Robot::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  NVStorage::NVOpResult payload = message.GetData().Get_nvResult();
+  NVStorage::NVOpResult payload = message.GetData().Get_nvResult().report;
   PRINT_NAMED_INFO("Robot.HandleNVOpResult","Tag: %d, Result: %d, write: %d", payload.tag, (int)payload.result, payload.write);
 }
 
