@@ -100,6 +100,11 @@ namespace Anki {
       auto iter = _robots.find(withID);
       if(iter != _robots.end()) {
         PRINT_NAMED_INFO("RobotManager.RemoveRobot", "Removing robot with ID=%d\n", withID);
+        
+        _robotDisconnectedSignal.emit(withID);
+        _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(withID, 0.0f)));
+        
+        
         delete(iter->second);
         iter = _robots.erase(iter);
         
@@ -176,21 +181,10 @@ namespace Anki {
         {
           case RESULT_FAIL_IO_TIMEOUT:
           {
-            // Find the ID. This is inefficient, but this isn't a long list
-            for(auto idIter = _IDs.begin(); idIter != _IDs.end(); ++idIter) {
-              if(*idIter == r->first) {
-                _IDs.erase(idIter);
-                break;
-              }
-            }
-
             PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots.FailIOTimeout", "Signaling robot disconnect\n");
-            //CozmoEngineSignals::RobotDisconnectedSignal().emit(r->first);
-            _robotDisconnectedSignal.emit(r->first);
-            _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(r->first, 0.0f)));
-            
-            delete r->second;
-            r = _robots.erase(r);
+            const RobotID_t robotIdToRemove = r->first;
+            ++r;
+            RemoveRobot(robotIdToRemove);
             
             break;
           }
