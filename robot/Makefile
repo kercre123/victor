@@ -45,6 +45,14 @@ nrf: $(ANKI_LOG_TABLE_JSON)
 k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
+release:
+	cp ./build/41/robot.safe releases
+	cp ./syscon/build/app/syscon.safe releases
+	cp ./espressif/bin/upgrade/user1.2048.new.3.bin releases/esp.user.bin
+
+vesp:
+	vagrant ssh -c "make -C /vagrant/robot esp"
+
 esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3
