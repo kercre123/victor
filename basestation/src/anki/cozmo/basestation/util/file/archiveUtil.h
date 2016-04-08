@@ -4,7 +4,7 @@
  * Author: Lee Crippen
  * Created: 4/4/2016
  *
- * Description:
+ * Description: Utility wrapper around needed archive file creation functionality.
  *
  * Copyright: Anki, inc. 2016
  *
@@ -26,6 +26,9 @@ public:
   static void CreateArchiveFromFiles(const std::string& outputPath,
                                      const std::string& filenameBase,
                                      const std::vector<std::string>& filenames);
+  
+  // Removes an initial part of a filename (does nothing if the filename has no path separators)
+  static std::string RemoveFilenameBase(const std::string& filenameBase, const std::string& filename);
 private:
 
 };

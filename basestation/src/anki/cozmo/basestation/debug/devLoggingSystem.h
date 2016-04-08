@@ -4,7 +4,7 @@
 * Author: Lee Crippen
 * Created: 3/30/2016
 *
-* Description: 
+* Description: System for collecting, archiving, and uploading logs useful for debugging during development.
 *
 * Copyright: Anki, inc. 2016
 *
@@ -41,9 +41,9 @@ public:
   template<typename MsgType>
   void LogMessage(const MsgType& message);
   
-  const std::string& GetDevLoggingBaseDirectory() { return _devLoggingBaseDirectory; }
+  const std::string& GetDevLoggingBaseDirectory() const { return _devLoggingBaseDirectory; }
   
-  void PrepareForUpload(const std::string& namePrefix);
+  void PrepareForUpload(const std::string& namePrefix) const;
   
 private:
   static DevLoggingSystem* sInstance;
@@ -61,12 +61,12 @@ private:
   
   DevLoggingSystem(const std::string& baseDirectory);
   
-  void DeleteFiles(const std::string& baseDirectory, const std::string& extension);
-  void ArchiveDirectories(const std::string& baseDirectory, const std::vector<std::string>& excludeDirectories);
-  std::string GetPathString(const std::string& base, const std::string& path);
+  void DeleteFiles(const std::string& baseDirectory, const std::string& extension) const;
+  void ArchiveDirectories(const std::string& baseDirectory, const std::vector<std::string>& excludeDirectories) const;
+  std::string GetPathString(const std::string& base, const std::string& path) const;
   
   template<typename MsgType>
-  std::string PrepareMessage(const MsgType& message);
+  std::string PrepareMessage(const MsgType& message) const;
 };
 
 } // end namespace Cozmo

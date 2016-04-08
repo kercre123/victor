@@ -46,7 +46,7 @@ DevLoggingSystem::DevLoggingSystem(const std::string& baseDirectory)
   _engineToRobotLog.reset(new Util::RollingFileLogger(GetPathString(_devLoggingBaseDirectory, "engineToRobot")));
 }
   
-void DevLoggingSystem::DeleteFiles(const std::string& baseDirectory, const std::string& extension)
+void DevLoggingSystem::DeleteFiles(const std::string& baseDirectory, const std::string& extension) const
 {
   auto filesToDelete = Util::FileUtils::FilesInDirectory(baseDirectory, true, extension.c_str());
   for (auto& file : filesToDelete)
@@ -55,7 +55,7 @@ void DevLoggingSystem::DeleteFiles(const std::string& baseDirectory, const std::
   }
 }
   
-void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, const std::vector<std::string>& excludeDirectories)
+void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, const std::vector<std::string>& excludeDirectories) const
 {
   std::vector<std::string> directoryList;
   Util::FileUtils::ListAllDirectories(baseDirectory, directoryList);
@@ -81,7 +81,7 @@ void DevLoggingSystem::ArchiveDirectories(const std::string& baseDirectory, cons
   }
 }
   
-void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix)
+void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix) const
 {
   // TODO:(lc) Use the name prefix arg to either directly change the file names being saved or simply upload them with the name
   
@@ -110,7 +110,7 @@ void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix)
   // Post all to amazon
 }
 
-std::string DevLoggingSystem::GetPathString(const std::string& base, const std::string& path)
+std::string DevLoggingSystem::GetPathString(const std::string& base, const std::string& path) const
 {
   std::ostringstream pathStream;
   if (!base.empty())
@@ -125,7 +125,7 @@ std::string DevLoggingSystem::GetPathString(const std::string& base, const std::
 DevLoggingSystem::~DevLoggingSystem() = default;
 
 template<typename MsgType>
-std::string DevLoggingSystem::PrepareMessage(const MsgType& message)
+std::string DevLoggingSystem::PrepareMessage(const MsgType& message) const
 {
   // We want to repackage the clad messages with some extra information at the start
   // We'll add 4 bytes to hold the size and another 4 for the timestamp

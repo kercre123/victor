@@ -26,26 +26,7 @@ void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
     struct stat st;
     stat(filename.c_str(), &st);
     archive_entry_clear(entry);
-    std::string newFilename = filename;
-    // If we were given a file name base, go through and remove that from the files listed
-    if (!filenameBase.empty())
-    {
-      std::size_t lastMatchChar = std::string::npos;
-      auto lastSep = filename.find_last_of('/');
-      for (int i=0; i < filenameBase.length() && i <= lastSep && i != std::string::npos; i++)
-      {
-        if (filenameBase[i] != filename[i])
-        {
-          break;
-        }
-        lastMatchChar = i;
-      }
-      
-      if (lastMatchChar != std::string::npos)
-      {
-        newFilename = newFilename.substr(lastMatchChar+1);
-      }
-    }
+    auto newFilename = RemoveFilenameBase(filenameBase, filename);
     archive_entry_set_pathname(entry, newFilename.c_str());
     archive_entry_set_size(entry, st.st_size);
     archive_entry_set_filetype(entry, AE_IFREG);
@@ -63,6 +44,30 @@ void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
   archive_entry_free(entry);
   archive_write_close(newArchive);
   archive_write_free(newArchive);
+}
+  
+std::string ArchiveUtil::RemoveFilenameBase(const std::string& filenameBase, const std::string& filename)
+{
+  auto lastSep = filename.find_last_of('/');
+  // We don't want to mess with a filename that has no path separators in it
+  if (!filenameBase.empty() && lastSep != std::string::npos)
+  {
+    std::size_t lastMatchChar = std::string::npos;
+    for (int i=0; i < filenameBase.length() && i <= lastSep; i++)
+    {
+      if (filenameBase[i] != filename[i])
+      {
+        break;
+      }
+      lastMatchChar = i;
+    }
+    
+    if (lastMatchChar != std::string::npos)
+    {
+      return filename.substr(lastMatchChar+1);
+    }
+  }
+  return filename;
 }
 
 } // end namespace Cozmo
