@@ -163,6 +163,8 @@ void user_init(void)
   
   wifi_set_opmode(NULL_MODE);
   wifi_set_phy_mode(PHY_MODE_11G);
+  wifi_softap_dhcps_stop();
+  wifi_station_dhcpc_stop();
 
   // Register callbacks
   system_init_done_cb(&system_init_done);

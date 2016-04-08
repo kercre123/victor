@@ -4,7 +4,7 @@
 Script to configure Cozmo's WiFi over BLE
 """
 __author__ = "Daniel Casner <daniel@anki.com>"
-import sys, os, time, hashlib, struct, logging, uuid, random
+import sys, os, time, hashlib, struct, logging, uuid, random, getpass
 import Adafruit_BluefruitLE
 
 sys.path.insert(0, os.path.join("tools"))
@@ -45,6 +45,10 @@ def paddedString(s):
             return [ord(b) for b in padded]
         else:
             return padded
+            
+def ipStr2u32(s):
+    octets = [int(o) for o in s.split('.')]
+    return sum([o << s for o, s in zip(octets, [24, 16, 8, 0])])
 
 class CozmoBLE:
     "Class for communicating with robot over Bluetooth Low-Energy"
@@ -66,8 +70,8 @@ class CozmoBLE:
         # Scan
         try:
             adapter.start_scan()
-            # Search for the first device found (will time out after 60 seconds but you can specify an optional timeout_sec
-            # parameter to change it).
+            # Search for the first device found (will time out after 60 seconds but you can specify an optional
+            # timeout_sec parameter to change it).
             while not self.ble.list_devices():
                 time.sleep(1)
             self.device = self.ble.find_device(service_uuids=[COZMO_SERVICE_UUID])
@@ -90,15 +94,43 @@ class CozmoBLE:
         self.tx = robot.find_characteristic(TO_ROBOT_UUID)
         self.rx.start_notify(self.onReceive)
         
+        ssid = (getpass.getuser()+"bot")[:32] # Maximum of 32 bytes long
+        
         print("Sending data")
         self.send(RI.EngineToRobot(appConCfgString=RI.AppConnectConfigString(
             RI.APConfigStringID.AP_AP_SSID_0,
-            paddedString("IM0BB8")
+            paddedString(ssid[:CONFIG_STRING_LENGTH])
         )))
         if not self.waitForAck(): return
+        if len(ssid) > CONFIG_STRING_LENGTH:
+            self.send(RI.EngineToRobot(appConCfgString=RI.AppConnectConfigString(
+                RI.APConfigStringID.AP_AP_SSID_1,
+                paddedString(ssid[CONFIG_STRING_LENGTH:])
+            )))
+            if not self.waitForAck(): return
         self.send(RI.EngineToRobot(appConCfgString=RI.AppConnectConfigString(
             RI.APConfigStringID.AP_AP_PSK_0,
             paddedString("2manysecrets")
+        )))
+        if not self.waitForAck(): return
+        if False:
+            self.send(RI.EngineToRobot(appConCfgIPInfo=RI.AppConnectConfigIPInfo(
+                ipStr2u32("172.31.1.1"),
+                ipStr2u32("255.255.255.0"),
+                ipStr2u32("172.31.1.1"),
+                1 # SoftAP interface
+            )))
+            if not self.waitForAck(): return
+        self.send(RI.EngineToRobot(appConCfgFlags=RI.AppConnectConfigFlags(
+            RI.APFlags.AP_AP_DHCP | RI.APFlags.AP_PHY_G | RI.APFlags.AP_SOFTAP | RI.APFlags.AP_APPLY_SETTINGS,
+            120, # DHCPS lease time in minutes
+            100, # WiFi beacon interval in ms
+            int(random.uniform(0, 12)), # WiFi channel
+            3, # Max wifi connections
+            3, # Auth mode WPA2_PSK
+            0, # apMinMaxSupRate not if Used
+            0, # WiFi Fixed rate if used
+            0 # sta DHCP max retry if used
         )))
         if not self.waitForAck(): return
         
@@ -191,6 +223,8 @@ class CozmoBLE:
             if clad.tag == clad.Tag.wifiCfgResult:
                 if clad.wifiCfgResult.result == 0:
                     self.acked = True
+                else:
+                    self._continue = False
             self.dechunkBuffer = b""
 
 if __name__ == '__main__':

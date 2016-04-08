@@ -20,10 +20,10 @@ static struct softap_config  apConfig;
 static struct station_config staConfig;
 static uint8_t sessionToken[16];
 
-#define SET_IP_ERROR_OFFSET (-0x100)
-#define UNSUPPORTED_STRING_OFFSET (-0x200)
-#define FLAGS_ERR_OFFSET (-0x300)
-#define BAD_HOSTNAME_ERR (-0x400)
+#define SET_IP_ERROR_OFFSET (-100)
+#define UNSUPPORTED_STRING_OFFSET (-200)
+#define FLAGS_ERR_OFFSET (-300)
+#define BAD_HOSTNAME_ERR (-400)
 
 namespace Anki {
 namespace Cozmo {
@@ -194,7 +194,7 @@ namespace WiFiConfiguration {
     
     if (msg.apFlags & AP_STATION)
     {
-      conditionalFlagsError(wifi_station_set_config_current(&staConfig), FLAGS_ERR_OFFSET-10, "Failed to set station config");
+      if (msg.apFlags & AP_APPLY_SETTINGS) conditionalFlagsError(wifi_station_set_config_current(&staConfig), FLAGS_ERR_OFFSET-10, "Failed to set station config");
       //conditionalFlagsError(wifi_station_set_auto_connect(msg.apFlags & AP_STA_AUTOCON ? 1 : 0), FLAGS_ERR_OFFSET-11, "Couldn't set station auto-connect"); // This writes to flash, don't do it
       conditionalFlagsError(wifi_station_set_reconnect_policy(msg.apFlags & AP_STA_RECON ? true : false), FLAGS_ERR_OFFSET-12, "Couldn't set station reconnect policy");
 
@@ -211,7 +211,7 @@ namespace WiFiConfiguration {
     
     if (msg.apFlags & AP_SOFTAP)
     {
-      conditionalFlagsError(wifi_softap_set_config_current(&apConfig), FLAGS_ERR_OFFSET-20, "Failed to set softAP config");
+      if (msg.apFlags & AP_APPLY_SETTINGS) conditionalFlagsError(wifi_softap_set_config_current(&apConfig), FLAGS_ERR_OFFSET-20, "Failed to set softAP config");
       if (msg.apFlags & AP_LIMIT_RATES)
       {
         conditionalFlagsError(wifi_set_user_sup_rate(msg.apMinMaxSupRate & 0x0f, msg.apMinMaxSupRate >> 4) == 0, FLAGS_ERR_OFFSET-21, "Failed to limit supported wifi rates");
@@ -220,15 +220,14 @@ namespace WiFiConfiguration {
       {
         uint8_t mode = msg.apFlags & AP_ROUTE ? 0x01 : 0x00;
         conditionalFlagsError(wifi_softap_set_dhcps_offer_option(OFFER_ROUTER, &mode), FLAGS_ERR_OFFSET-23, "Failed to set softap DHCP offer options");
-        conditionalFlagsError(wifi_softap_set_dhcps_lease_time(msg.apDHCPLeaseTime), FLAGS_ERR_OFFSET-22, "Failed to set softap DHCP lease time");
         conditionalFlagsError(wifi_softap_dhcps_start(), FLAGS_ERR_OFFSET-24, "Failed to start softap DHCP server");
+        conditionalFlagsError(wifi_softap_set_dhcps_lease_time(msg.apDHCPLeaseTime), FLAGS_ERR_OFFSET-25, "Failed to set softap DHCP lease time");
       }
       else
       {
-        conditionalFlagsError(wifi_softap_dhcps_stop(), FLAGS_ERR_OFFSET-25, "Failed to stop softap DHCP server");
+        conditionalFlagsError(wifi_softap_dhcps_stop(), FLAGS_ERR_OFFSET-30, "Failed to stop softap DHCP server");
       }
     }
-    
     
   }
   
