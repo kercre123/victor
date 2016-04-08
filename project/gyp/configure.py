@@ -13,8 +13,8 @@ import json
 import errno
 
 ASSET_REPO = 'cozmo-assets'
+ASSET_REPO_SUBDIRS = ['animations']
 ASSET_DIR = 'lib/anki/products-cozmo-assets'
-CONFIG_FILE = 'DEPS'
 BACKUP_DIR = '/tmp/anim_assets_backup'
 
 #set up default logger
@@ -38,11 +38,7 @@ def _readConfigFile(configFile):
       configData = json.load(fileObj)
   return configData
 
-def _checkSubdirs(assetDir, repoConfig):
-  try:
-    subdirs = repoConfig['subdirs']
-  except KeyError:
-    return
+def _checkSubdirs(assetDir, subdirs=ASSET_REPO_SUBDIRS):
   for subdir in subdirs:
     subdir = os.path.join(assetDir, subdir)
     if not os.path.exists(subdir):
@@ -110,12 +106,7 @@ def _makeRoomForSymlink(dst, src):
     else:
       print("Deleted the existing %s directory (to be replaced by a symlink)" % dst)
 
-def _setupSymlinks(sourceDir, destDir, repoConfig):
-  try:
-    subdirs = repoConfig['subdirs']
-  except KeyError:
-    return
-
+def _setupSymlinks(sourceDir, destDir, subdirs=ASSET_REPO_SUBDIRS):
   for subdir in subdirs:
     src = os.path.join(sourceDir, subdir)
     dst = os.path.join(destDir, subdir)
@@ -139,22 +130,16 @@ def _setupSymlinks(sourceDir, destDir, repoConfig):
     print("Symlinking %s -> %s" % (dst, src))
     os.symlink(src, dst)
 
-def checkCozmoAssetDir(options, configFile=CONFIG_FILE, assetRepo=ASSET_REPO, assetDir=ASSET_DIR):
+def checkCozmoAssetDir(options, assetRepo=ASSET_REPO, assetDir=ASSET_DIR):
   if not options.cozmoAssetPath:
     options.cozmoAssetPath = os.path.join(options.projectRoot, assetDir)
   if not os.path.exists(options.cozmoAssetPath):
     raise RuntimeError('Asset directory not found [%s]' % options.cozmoAssetPath)
-  configFile = os.path.join(options.projectRoot, configFile)
-  configData = _readConfigFile(configFile)
-  try:
-    repoConfig = configData['svn']['repo_names'][assetRepo]
-  except (KeyError, TypeError):
-    UtilLog.error("No data found for '%s' in %s" % (assetRepo, configFile))
-  else:
-    symlinkSrc = os.path.join(options.externalsPath, assetRepo)
-    if os.path.exists(symlinkSrc):
-      _setupSymlinks(symlinkSrc, options.cozmoAssetPath, repoConfig)
-    _checkSubdirs(options.cozmoAssetPath, repoConfig)
+
+  symlinkSrc = os.path.join(options.externalsPath, assetRepo)
+  if os.path.exists(symlinkSrc):
+    _setupSymlinks(symlinkSrc, options.cozmoAssetPath)
+  _checkSubdirs(options.cozmoAssetPath)
 
 def main(scriptArgs):
   version = '1.0'
@@ -647,4 +632,3 @@ if __name__ == '__main__':
     sys.exit(0)
   else:
     sys.exit(1)
-
