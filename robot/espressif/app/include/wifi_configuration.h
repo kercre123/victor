@@ -16,6 +16,8 @@ namespace Anki {
   namespace Cozmo {
     namespace WiFiConfiguration {
       
+      extern uint8_t sessionToken[16];
+      
       // Sets up data structures, call before any other methods
       Result Init();
       

@@ -18,7 +18,6 @@ extern "C" {
 
 static struct softap_config  apConfig;
 static struct station_config staConfig;
-static uint8_t sessionToken[16];
 
 #define SET_IP_ERROR_OFFSET (-100)
 #define UNSUPPORTED_STRING_OFFSET (-200)
@@ -28,6 +27,8 @@ static uint8_t sessionToken[16];
 namespace Anki {
 namespace Cozmo {
 namespace WiFiConfiguration {
+
+  uint8_t sessionToken[16];
 
   static bool sendResult(int32_t result, uint8_t command)
   {
