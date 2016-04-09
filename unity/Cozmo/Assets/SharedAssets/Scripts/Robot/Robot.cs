@@ -230,6 +230,8 @@ public class Robot : IRobot {
 
   public string CurrentBehaviorString { get; set; }
 
+  public string CurrentDebugAnimationString { get; set; }
+
   private PathMotionProfile PathMotionProfileDefault;
 
   private uint _LastIdTag;
