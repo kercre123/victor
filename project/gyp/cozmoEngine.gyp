@@ -1466,7 +1466,9 @@
             ],
 
             'libraries': [ # why is this in #if android? shouldn't mac and ios have same libs to link against?
+              '-Wl,--whole-archive',
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkao.a',      # Common
+              '-Wl,--no-whole-archive',
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoCo.a',    # 
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoDt.a',    # Face Detection
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoPt.a',    # Face Parts Detection
