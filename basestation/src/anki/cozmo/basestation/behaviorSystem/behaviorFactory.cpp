@@ -15,9 +15,13 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 
 // Behaviors:
+#include "../behaviors/exploration/behaviorExploreCliff.h"
+#include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
+#include "../behaviors/exploration/behaviorExploreMarkedCube.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
+#include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
@@ -27,12 +31,9 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
+#include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
-#include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
-#include "../behaviors/exploration/behaviorExploreMarkedCube.h"
-#include "../behaviors/exploration/behaviorExploreCliff.h"
-#include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -153,6 +154,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ExploreLookAroundInPlace:
     {
       newBehavior = new BehaviorExploreLookAroundInPlace(robot, config);
+      break;
+    }
+    case BehaviorType::RollBlock:
+    {
+      newBehavior = new BehaviorRollBlock(robot, config);
       break;
     }
    case BehaviorType::Count:

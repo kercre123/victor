@@ -31,6 +31,7 @@ message FWVersionInfo
 
 message SyncTimeAck
 {
+  bool isPhysical
 }
 
 message RobotPoked
@@ -61,10 +62,16 @@ message RobotAvailable
   uint_16 modelID,
 }
 
-message NVReadResult
+message NVReadResultToEngine
 {
   uint_32 robotAddress,
   NVStorage::NVStorageBlob blob,
+}
+
+message NVOpResultToEngine
+{
+  uint_32 robotAddress,
+  NVStorage::NVOpResult report
 }
 
 message FlashWriteAcknowledge
@@ -127,8 +134,8 @@ union RobotToEngine {
   RobotAvailable             robotAvailable         = 0xC9,
   AnimationStarted           animStarted            = 0xCA,
   AnimationEnded             animEnded              = 0xCB,
-  NVReadResult               nvData                 = 0xCD,
-  NVStorage::NVOpResult      nvResult               = 0xCE,
+  NVReadResultToEngine       nvData                 = 0xCD,
+  NVOpResultToEngine         nvResult               = 0xCE,
   CrashReport                crashReport            = 0xCF,
   ObjectConnectionState activeObjectConnectionState = 0xD0,
   MotorCalibration           motorCalibration       = 0xD1,

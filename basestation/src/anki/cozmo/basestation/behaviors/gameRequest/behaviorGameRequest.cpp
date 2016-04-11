@@ -13,6 +13,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorGameRequest.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -27,6 +28,7 @@ static const char* kMaxFaceAgeKey = "maxFaceAge_ms";
 
 IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
+  , _blockworldFilter( new BlockWorldFilter )
 {
   if( config.isNull() ) {
     PRINT_NAMED_WARNING("IBehaviorRequestGame.Config.Error",
@@ -40,6 +42,12 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
       }
     }
   }
+
+  _blockworldFilter->OnlyConsiderLatestUpdate(false);
+  _blockworldFilter->SetFilterFcn( std::bind( &IBehaviorRequestGame::FilterBlocks,
+                                                    this,
+                                                    &robot,
+                                                    std::placeholders::_1) );
 
   SubscribeToTags({{
     EngineToGameTag::RobotObservedFace,
@@ -92,40 +100,36 @@ void IBehaviorRequestGame::SendDeny(Robot& robot)
   robot.Broadcast( MessageEngineToGame( DenyGameStart() ) );
 }
 
-u32 IBehaviorRequestGame::GetNumBlocks(const Robot& robot) const
-{  
-  BlockWorldFilter filter;
-  filter.OnlyConsiderLatestUpdate(false);
-  filter.SetFilterFcn( [](ObservableObject* obj) {
-    // Observable Objects includes "markerlessObject" cliffs.
-    return obj->IsExistenceConfirmed() &&
-      obj->GetPoseState() == ObservableObject::PoseState::Known &&
-      obj->GetFamily() == ObjectFamily::LightCube;
-    } );
+bool IBehaviorRequestGame::FilterBlocks( const Robot* robotPtr, ObservableObject* obj) const
+{
 
-  // TODO:(bn) make a helper function to avoid code duplication
+  // if we have the "cube roll" behavior unlocked, then only do a game request with an upright
+  // cube. Otherwise, we don't care about the direction
 
+  const bool upAxisOk = ! robotPtr->GetProgressionUnlockComponent().IsUnlocked(UnlockId::CubeRollAction) ||
+    obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
+  
   // TODO:(bn) lee suggested we use != UNKNOWN instead of == known, so that we will still attempt to interact
   // with dirty blocks. I think the best would be to prefer Known, but fall back to Dirty as well
-  
+
+  return upAxisOk &&
+    obj->IsExistenceConfirmed() &&
+    obj->IsPoseStateKnown() && 
+    obj->GetFamily() == ObjectFamily::LightCube;
+
+}
+
+u32 IBehaviorRequestGame::GetNumBlocks(const Robot& robot) const
+{  
   std::vector<ObservableObject*> blocks;
-  robot.GetBlockWorld().FindMatchingObjects(filter, blocks);
+  robot.GetBlockWorld().FindMatchingObjects(*_blockworldFilter, blocks);
   
   return Util::numeric_cast<u32>( blocks.size() );
 }
 
 ObservableObject* IBehaviorRequestGame::GetClosestBlock(const Robot& robot) const
 {
-  // TODO:(bn) re-ruse the filter?
-  BlockWorldFilter filter;
-  filter.OnlyConsiderLatestUpdate(false);
-  filter.SetFilterFcn( [](ObservableObject* obj) {
-      return obj->IsExistenceConfirmed() &&
-        obj->GetPoseState() == ObservableObject::PoseState::Known &&
-        obj->GetFamily() == ObjectFamily::LightCube;
-    } );
-
-  return robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );
+  return robot.GetBlockWorld().FindMostRecentlyObservedObject( *_blockworldFilter );
 }
 
 
@@ -156,13 +160,10 @@ bool IBehaviorRequestGame::SwitchRobotsBlock(const Robot& robot)
   // otherwise, try to find a new block that doesn't match this ID
   _badBlocks.insert(_robotsBlockID);
 
-  BlockWorldFilter filter;
-  filter.OnlyConsiderLatestUpdate(false);
-  filter.SetFilterFcn( [this](ObservableObject* obj) {
-      return obj->IsExistenceConfirmed() &&
-        obj->GetPoseState() == ObservableObject::PoseState::Known &&
-        obj->GetFamily() == ObjectFamily::LightCube &&
-        _badBlocks.find( obj->GetID() ) == _badBlocks.end();
+  // In this case (and only this case) we want to filter out _badBlocks, so make a new filter
+  BlockWorldFilter filter( *_blockworldFilter );
+  filter.SetFilterFcn( [this,&robot](ObservableObject* obj) {
+      return FilterBlocks(&robot, obj) && _badBlocks.find( obj->GetID() ) == _badBlocks.end();
     } );
 
   ObservableObject* newBlock = robot.GetBlockWorld().FindMostRecentlyObservedObject( filter );

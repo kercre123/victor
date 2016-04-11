@@ -76,12 +76,13 @@ static void dh_finish(DiffieHellman* dh) {
   nrf_ecb_hal_data_t ecb;
   
   memcpy(ecb.key, temp.digits, AES_KEY_LENGTH);
-  memcpy(ecb.cleartext, AES_KEY, AES_BLOCK_LENGTH);
+  memcpy(ecb.cleartext, aes_key(), AES_BLOCK_LENGTH);
   
   aes_ecb(&ecb);
 
   memcpy(dh->encoded_key, ecb.ciphertext, AES_BLOCK_LENGTH);
 }
+
 
 void Crypto::init() {
   fifoHead = 0;

@@ -26,6 +26,8 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/helpers/cleanupHelper.h"
+#include "util/console/consoleInterface.h"
 
 //
 // Embedded implementation holdovers:
@@ -65,6 +67,18 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
+  CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
+  
+  CONSOLE_VAR(f32, kCalibDotSearchSize_mm,    "Vision.ToolCode",  4.5f);
+  CONSOLE_VAR(f32, kCalibDotMinContrastRatio, "Vision.ToolCode",  1.1f);
+  
+  CONSOLE_VAR(bool, kUseHalfResMotionDetection,       "Vision.MotionDetection", true);
+  CONSOLE_VAR(u32,  kLastMotionDelay_ms,              "Vision.MotionDetection", 500);
+  CONSOLE_VAR(u8,   kMinBrightnessForMotionDetection, "Vision.MotionDetection", 10);
+  CONSOLE_VAR(f32,  kMotionDetectRatioThreshold,      "Vision.MotionDetection", 1.25f);
+  CONSOLE_VAR(f32,  kMinMotionAreaFraction,           "Vision.MotionDetection", 1.f/225.f); // 1/15 of each image dimension
   
   using namespace Embedded;
   
@@ -1386,19 +1400,18 @@ namespace Cozmo {
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &imageIn)
   {
     const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
-                                _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD(0.1));
+                                _prevPoseData.poseStamp.GetHeadAngle(), (f32)DEG_TO_RAD(0.1));
     
     const bool poseSame = (NEAR(_poseData.poseStamp.GetPose().GetTranslation().x(),
                                 _prevPoseData.poseStamp.GetPose().GetTranslation().x(), .5f) &&
                            NEAR(_poseData.poseStamp.GetPose().GetTranslation().y(),
                                 _prevPoseData.poseStamp.GetPose().GetTranslation().y(), .5f) &&
-                           NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
-                                _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
-                                DEG_TO_RAD(0.1)));
+                           NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+                                _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
+                                (f32)DEG_TO_RAD(0.1)));
     Vision::ImageRGB image;
     f32 scaleMultiplier = 1.f;
-    const bool useHalfRes = true;
-    if(useHalfRes) {
+    if(kUseHalfResMotionDetection) {
       image = Vision::ImageRGB(imageIn.GetNumRows()/2,imageIn.GetNumCols()/2);
       imageIn.Resize(image, Vision::ResizeMethod::NearestNeighbor);
       scaleMultiplier = 2.f;
@@ -1411,7 +1424,7 @@ namespace Cozmo {
 #      if USE_THREE_FRAME_MOTION_DETECTION
        !_prevPrevImage.IsEmpty() &&
 #      endif
-       image.GetTimestamp() - _lastMotionTime > 500)
+       image.GetTimestamp() - _lastMotionTime > kLastMotionDelay_ms)
     {
       s32 numAboveThresh = 0;
       
@@ -1427,14 +1440,13 @@ namespace Cozmo {
         };
         
         u8 retVal = 0;
-        const u8 minBrightness = 10;
-        if(p1.IsBrighterThan(minBrightness) && p2.IsBrighterThan(minBrightness)) {
-          
-          const f32 ratioThreshold = 1.25f; // TODO: pass in or capture?
+        if(p1.IsBrighterThan(kMinBrightnessForMotionDetection) &&
+           p2.IsBrighterThan(kMinBrightnessForMotionDetection))
+        {
           const f32 ratioR = ratioTestHelper(p1.r(), p2.r());
           const f32 ratioG = ratioTestHelper(p1.g(), p2.g());
           const f32 ratioB = ratioTestHelper(p1.b(), p2.b());
-          if(ratioR > ratioThreshold || ratioG > ratioThreshold || ratioB > ratioThreshold) {
+          if(ratioR > kMotionDetectRatioThreshold || ratioG > kMotionDetectRatioThreshold || ratioB > kMotionDetectRatioThreshold) {
             ++numAboveThresh;
             retVal = 255; // use 255 because it will actually display
           }
@@ -1467,12 +1479,7 @@ namespace Cozmo {
       Anki::Point2f groundPlaneCentroid(0.f,0.f);
       
       // Get overall image centroid
-      //#       if USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
-      const size_t minAreaDivisor = 225; // 1/15 of each image dimension
-                                         //#       else
-                                         //        const size_t minAreaDivisor = 36; // 1/6 of each image dimension
-                                         //#       endif
-      const size_t minArea = image.GetNumElements() / minAreaDivisor;
+      const size_t minArea = (f32)image.GetNumElements() * kMinMotionAreaFraction;
       f32 imgRegionArea    = 0.f;
       f32 groundRegionArea = 0.f;
       if(numAboveThresh > minArea) {
@@ -1482,7 +1489,10 @@ namespace Cozmo {
       // Get centroid of all the motion within the ground plane, if we have one to reason about
       if(_poseData.groundPlaneVisible && _prevPoseData.groundPlaneVisible)
       {
-        Quad2f imgQuad = _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography);
+        Quad2f imgQuad;
+        _poseData.groundPlaneROI.GetImageQuad(_poseData.groundPlaneHomography,
+                                              image.GetNumCols(), image.GetNumRows(),
+                                              imgQuad);
         
         imgQuad *= 1.f / scaleMultiplier;
         
@@ -1515,7 +1525,7 @@ namespace Cozmo {
         // Find centroid of largest connected component inside the ground plane
         const f32 imgQuadArea = imgQuad.ComputeArea();
         groundRegionArea = GetCentroid(groundPlaneForegroundMotion,
-                                       imgQuadArea/static_cast<f32>(minAreaDivisor),
+                                       imgQuadArea*kMinMotionAreaFraction,
                                        groundPlaneCentroid);
         
         // Move back to image coordinates from ROI coordinates
@@ -1671,111 +1681,6 @@ namespace Cozmo {
   } // DetectMotion()
   
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void VisionSystem::SetGroundROIToImageLimits(const PoseData& poseData, const float imgX, const float imgY, Quad2f& groundPlane)
-  {
-    ASSERT_NAMED(poseData.groundPlaneVisible, "VisionSystem..SetGoundROIToImageLimits.groundPlaneNotVisible");
-    const Matrix_3x3f& H = _poseData.groundPlaneHomography;
-    const GroundPlaneROI& roi = _poseData.groundPlaneROI;
-    
-    // project roi into 2d image
-    const Quad2f& groundInImage = roi.GetImageQuad(H);
-  
-    kmRay2 imageTopLine;
-    kmVec2 imageTL{   0, 0};
-    kmVec2 imageTR{imgX, 0};
-    kmRay2FillWithEndpoints(&imageTopLine, &imageTL, &imageTR);
-
-    kmRay2 imageBotLine;
-    kmVec2 imageBL{   0, imgY-1};
-    kmVec2 imageBR{imgX, imgY-1};
-    kmRay2FillWithEndpoints(&imageBotLine, &imageBL, &imageBR);
-
-    kmRay2 groundLeftLine;
-    kmVec2 groundBL{groundInImage[Quad::BottomLeft].x(), groundInImage[Quad::BottomLeft].y()};
-    kmVec2 groundTL{groundInImage[Quad::TopLeft   ].x(), groundInImage[Quad::TopLeft   ].y()};
-    kmRay2FillWithEndpoints(&groundLeftLine, &groundBL, &groundTL);
-    
-    kmRay2 groundRightLine;
-    kmVec2 groundBR{groundInImage[Quad::BottomRight].x(), groundInImage[Quad::BottomRight].y()};
-    kmVec2 groundTR{groundInImage[Quad::TopRight   ].x(), groundInImage[Quad::TopRight   ].y()};
-    kmRay2FillWithEndpoints(&groundRightLine, &groundBR, &groundTR);
-
-    // find intersections of ground lines in image bounds
-    kmVec2 interLT, interRT, interLB, interRB;
-    const kmBool leftTopInter  = kmSegment2WithSegmentIntersection(&imageTopLine, &groundLeftLine , &interLT);
-    const kmBool rightTopInter = kmSegment2WithSegmentIntersection(&imageTopLine, &groundRightLine, &interRT);
-    const kmBool leftBotInter  = kmSegment2WithSegmentIntersection(&imageBotLine, &groundLeftLine , &interLB);
-    const kmBool rightBotInter = kmSegment2WithSegmentIntersection(&imageBotLine, &groundRightLine, &interRB);
-
-    const bool hasTopCollision = (leftTopInter || rightTopInter);
-    const bool hasBotCollision = (leftBotInter || rightBotInter);
-
-    // assert quadY < imageY, otherwise more than one collision can happen
-    ASSERT_NAMED( groundLeftLine.dir.y  < imgY, "DetectOverheadEdges.BadGroundPlaneYL" );
-    ASSERT_NAMED( groundRightLine.dir.y < imgY, "DetectOverheadEdges.BadGroundPlaneYR" );
-    // assert top and bot don't have collisions at the same time
-    ASSERT_NAMED(!(hasTopCollision && hasBotCollision), "DetectOverheadEdges.MultipleLineCollision");
-    ASSERT_NAMED(leftTopInter==rightTopInter, "DetectOverheadEdges.AssumedCenteredQuad");
-    ASSERT_NAMED(leftBotInter==rightBotInter, "DetectOverheadEdges.AssumedCenteredQuad");
-    
-    Quad2f finalQuad2D;
-    if ( hasTopCollision )
-    {
-      Anki::Point2f topLeft (interLT.x, interLT.y);
-      Anki::Point2f topRight(interRT.x, interRT.y);
-      finalQuad2D = Quad2f(
-        topLeft,  // TL
-        groundInImage[Quad::BottomLeft], // BL
-        topRight, // TR
-        groundInImage[Quad::BottomRight] // BR
-      );
-    }
-    else if ( hasBotCollision )
-    {
-      Anki::Point2f botLeft (interLB.x, interLB.y);
-      Anki::Point2f botRight(interRB.x, interRB.y);
-      finalQuad2D = Quad2f(
-        groundInImage[Quad::TopLeft],  // TL
-        botLeft, // BL
-        groundInImage[Quad::TopRight], // TR
-        botRight // BR
-      );
-    }
-    else
-    {
-      // we can assume groundInImage is fully contained in the image, otherwise ROI groundPlaneVisible would be false
-      finalQuad2D = groundInImage;
-      groundPlane = roi.GetGroundQuad();
-    }
-
-    // if there were collisions and we limited the ROI, project new ROI back into ground plane
-    if ( hasTopCollision || hasBotCollision )
-    {
-      Quad3f finalQuad2DAs3f(
-        Anki::Point3f(finalQuad2D[Quad::TopLeft    ].x(),finalQuad2D[Quad::TopLeft    ].y(), 1.0f),
-        Anki::Point3f(finalQuad2D[Quad::BottomLeft ].x(),finalQuad2D[Quad::BottomLeft ].y(), 1.0f),
-        Anki::Point3f(finalQuad2D[Quad::TopRight   ].x(),finalQuad2D[Quad::TopRight   ].y(), 1.0f),
-        Anki::Point3f(finalQuad2D[Quad::BottomRight].x(),finalQuad2D[Quad::BottomRight].y(), 1.0f) );
-      
-      // project back into ground
-      Matrix_3x3f invH;
-      H.GetInverse(invH);
-      for(Quad::CornerName iCorner = Quad::CornerName::FirstCorner;
-          iCorner != Quad::CornerName::NumCorners;
-          ++iCorner)
-      {
-        Point3f temp = invH * finalQuad2DAs3f[iCorner];
-        ASSERT_NAMED(temp.z() > 0, "VisionSystem.SetGroundROIToImageLimits.BadProjectedZ");
-        const f32 divisor = 1.f / temp.z();
-        groundPlane[iCorner].x() = temp.x() * divisor;
-        groundPlane[iCorner].y() = temp.y() * divisor;
-      }
-    }
-    
-  //  _vizManager->DrawCameraQuad(finalQuad2D, ::Anki::NamedColors::RED);
-  //  _vizManager->DrawCameraQuad(groundInImage, ::Anki::NamedColors::BLUE);
-  }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void AddEdgePoint(const OverheadEdgePoint& pointInfo, bool isBorder, std::vector<OverheadEdgePointChain>& imageChains )
@@ -1830,14 +1735,30 @@ namespace Cozmo {
   }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result VisionSystem::DetectOverheadEdges(const Vision::ImageRGB& image)
-  {
-    // TODO: Expose parameters
-    // Parameters:
-    //const s32 kKernelSize = -1; // +ve for Sobel edge detection, -1 for Scharr
-    const f32 kEdgeThreshold = 50.f;
-    const u32 kMinChainLength = 3; // in number of edge pixels
+ 
+#define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
+  
+  namespace {
     
+    inline void SetEdgePosition(const Matrix_3x3f& invH,
+                                s32 i, s32 j,
+                                OverheadEdgePoint& edgePoint)
+    {
+      // Project point onto ground plane
+      // Note that b/c we are working transposed, i is x and j is y in the
+      // original image.
+      Point3f temp = invH * Point3f(i, j, 1.f);
+      ASSERT_NAMED(temp.z() > 0, "VisionSystem.SetEdgePositionHelper.BadProjectedZ");
+      const f32 divisor = 1.f / temp.z();
+      
+      edgePoint.position.x() = temp.x() * divisor;
+      edgePoint.position.y() = temp.y() * divisor;
+    }
+    
+  } // anonymous namespace
+  
+  Result VisionSystem::DetectOverheadEdges(const Vision::ImageRGB &image)
+  {
     // if the ground plane is not currently visible, do not detect edges
     if ( !_poseData.groundPlaneVisible )
     {
@@ -1848,103 +1769,122 @@ namespace Cozmo {
       return RESULT_OK;
     }
     
+    // Get ROI around ground plane quad in image
     const Matrix_3x3f& H = _poseData.groundPlaneHomography;
     const GroundPlaneROI& roi = _poseData.groundPlaneROI;
-    const Vision::ImageRGB& overheadImg = roi.GetOverheadImage(image, H, false);
+    Quad2f groundInImage;
+    roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), groundInImage);
     
-    // calculate the actual ground plane ROI once we apply camera limits
-    Quad2f clampedGroundPlaneROI;
-    SetGroundROIToImageLimits(_poseData, image.GetNumCols(), image.GetNumRows(), clampedGroundPlaneROI);
+    Anki::Rectangle<s32> bbox(groundInImage);
+    Vision::ImageRGB imageROI = image.GetROI(bbox);
     
-    f32 nearX = clampedGroundPlaneROI[Quad::BottomRight].x();
-    f32 farX  = clampedGroundPlaneROI[Quad::TopRight].x();
-    
-    // since it involves collision math they can be a little different, but they should be fairly close
-    ASSERT_NAMED( NEAR(nearX,clampedGroundPlaneROI[Quad::BottomLeft].x(), 1e-3f),
-      "VisionSystem.DetectOverheadEdges.BadClampedBottomX");
-    ASSERT_NAMED( NEAR(farX,clampedGroundPlaneROI[Quad::TopLeft].x(), 1e-3f),
-      "VisionSystem.DetectOverheadEdges.BadClampedTopX");
-    
-    // Get derivatives along the X direction
-    Array2d<Vision::PixelRGB_<f32>> edgeImgX(overheadImg.GetNumRows(), overheadImg.GetNumCols());
-    //Array2d<Vision::PixelRGB_<f32>> edgeImgY(overheadImg.GetNumRows(), overheadImg.GetNumCols());
-    //cv::Sobel(overheadImg.get_CvMat_(), edgeImgX.get_CvMat_(), CV_32F, 1, 0, kKernelSize);
-    //cv::Sobel(overheadImg.get_CvMat_(), edgeImgY.get_CvMat_(), CV_32F, 0, 1, kKernelSize);
-    
+    // Find edges in that ROI
     // Custom Gaussian derivative in x direction, sigma=1, with a little extra space
     // in the middle to help detect soft edges
     // (scaled such that each half has absolute sum of 1.0, so it's normalized)
-    SmallMatrix<5,7, f32> kernel{
-      0.0168,    0.0377,         0,0,0,   -0.0377,   -0.0168,
-      0.0754,    0.1689,         0,0,0,   -0.1689,   -0.0754,
-      0.1242,    0.2784,         0,0,0,   -0.2784,   -0.1242,
-      0.0754,    0.1689,         0,0,0,   -0.1689,   -0.0754,
-      0.0168,    0.0377,         0,0,0,   -0.0377,   -0.0168
+    Tic("EdgeDetection");
+    const SmallMatrix<7,5, f32> kernel{
+      0.0168,    0.0754,    0.1242,   0.0754,  0.0168,
+      0.0377,    0.1689,    0.2784,   0.1689,  0.0377,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      -0.0377,  -0.1689,   -0.2784,  -0.1689, -0.0377,
+      -0.0168,  -0.0754,   -0.1242,  -0.0754, -0.0168,
     };
-    //cv::Mat kx, ky;
-    //cv::getDerivKernels(kx, ky, 1, 0, 5, true);
     
-    cv::filter2D(overheadImg.get_CvMat_(), edgeImgX.get_CvMat_(), CV_32F, kernel.get_CvMatx_());
+    /*
+    const SmallMatrix<7, 5, s16> kernel{
+      9,    39,    64,    39,     9,
+      19,    86,   143,    86,    19,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      0,0,0,0,0,
+      -19,   -86,  -143,   -86,   -19,
+      -9,   -39,   -64,   -39,    -9
+    };
+    */
+    
+    Array2d<Vision::PixelRGB_<s16>> edgeImgX(image.GetNumRows(), image.GetNumCols());
+    cv::filter2D(imageROI.get_CvMat_(), edgeImgX.GetROI(bbox).get_CvMat_(), CV_16S, kernel.get_CvMatx_());
+    Toc("EdgeDetection");
+    
+    Tic("GroundQuadEdgeMasking");
+    // Remove edges that aren't in the ground plane quad (as opposed to its bounding rectangle)
+    Vision::Image mask(edgeImgX.GetNumRows(), edgeImgX.GetNumCols());
+    mask.FillWith(255);
+    cv::fillConvexPoly(mask.get_CvMat_(), std::vector<cv::Point>{
+        groundInImage[Quad::CornerName::TopLeft].get_CvPoint_(),
+        groundInImage[Quad::CornerName::TopRight].get_CvPoint_(),
+        groundInImage[Quad::CornerName::BottomRight].get_CvPoint_(),
+        groundInImage[Quad::CornerName::BottomLeft].get_CvPoint_(),
+      }, 0);
+    
+    edgeImgX.SetMaskTo(mask, 0);
+    Toc("GroundQuadEdgeMasking");
     
     std::vector<OverheadEdgePointChain> candidateChains;
     
-    // Look for the first strong edge along the x axis
-    //const f32 edgeThresholdSq = kEdgeThreshold * kEdgeThreshold;
-    const s32 jNear = std::ceil(nearX) - roi.GetDist() + kernel.GetNumCols()/2;
-    const s32 jFar  = std::floor(farX) - roi.GetDist();
-    for(s32 i=0; i<edgeImgX.GetNumRows(); ++i)
+    // Find first strong edge in each column, in the ground plane mask, working
+    // upward from bottom.
+    // Note: looping only over the ROI portion of full image, but working in
+    //       full-image coordinates so that H directly applies
+    // Note: transposing so we can work along rows, which is more efficient.
+    //       (this also means using bbox.X for transposed rows and bbox.Y for transposed cols)
+    Tic("FindingGroundEdgePoints");
+    Matrix_3x3f invH;
+    H.GetInverse(invH);
+    Array2d<Vision::PixelRGB_<f32>> edgeTrans(edgeImgX.get_CvMat_().t());
+    OverheadEdgePoint edgePoint;
+    for(s32 i=bbox.GetX(); i<bbox.GetXmax(); ++i)
     {
-      const u8* mask_i = roi.GetOverheadMask().GetRow(i);
-      const Vision::PixelRGB_<f32>* edgeImgX_i = edgeImgX.GetRow(i);
-      //const Vision::PixelRGB_<f32>* edgeImgY_i = edgeImgY.GetRow(i);
       bool foundBorder = false;
-      for(s32 j=jNear; j<jFar; ++j)
-      {
-        // filter out by mask
-        const bool isInMask = (mask_i[j] > 0 && j);
-        if (!isInMask ) {
-          continue;
-        }
+      const Vision::PixelRGB_<f32>* edgeTrans_i = edgeTrans.GetRow(i);
       
-        // An edge above threshold in _any_ channel is an edge
-        auto & edgePixelX = edgeImgX_i[j];
-        //auto & edgePixelY = edgeImgY_i[j];
-        //if(edgePixelX.r()*edgePixelX.r() + edgePixelY.r()*edgePixelY.r() > edgeThresholdSq ||
-        //   edgePixelX.g()*edgePixelX.g() + edgePixelY.g()*edgePixelY.g() > edgeThresholdSq ||
-        //   edgePixelX.b()*edgePixelX.b() + edgePixelY.b()*edgePixelY.b() > edgeThresholdSq)
+      // Right to left in transposed image ==> bottom to top in original image
+      for(s32 j=bbox.GetYmax()-1; j>=bbox.GetY(); --j)
+      {
+        auto & edgePixelX = edgeTrans_i[j];
         if(std::abs(edgePixelX.r()) > kEdgeThreshold ||
            std::abs(edgePixelX.g()) > kEdgeThreshold ||
            std::abs(edgePixelX.b()) > kEdgeThreshold)
         {
-          OverheadEdgePoint edgePoint = {
-            .position  = Anki::Point2f(j + roi.GetDist(), roi.GetWidthFar()*0.5f - i),
-            .gradient  = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()}
-          };
+          // Project point onto ground plane
+          // Note that b/c we are working transposed, i is x and j is y in the
+          // original image.
+          SetEdgePosition(invH, i, j, edgePoint);
+          edgePoint.gradient = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()};
           
-          // add the point as a border
-          const bool isBorder = true;
-          AddEdgePoint(edgePoint, isBorder, candidateChains);
           foundBorder = true;
-          break; // only keep first edge found in each row
+          AddEdgePoint(edgePoint, foundBorder, candidateChains);
+          break; // only keep first edge found in each row (working right to left)
         }
       }
       
       // if we did not find border, report lack of border for this row
       if ( !foundBorder )
       {
-        // add the point as a no_border
-        OverheadEdgePoint noBorderLimitPoint = {
-          .position  = Anki::Point2f(jFar + roi.GetDist(), roi.GetWidthFar()*0.5f - i),
-          .gradient  = {0,0,0}
-        };
-        const bool isBorder = false;
-        AddEdgePoint(noBorderLimitPoint, isBorder, candidateChains);
+        const bool isInsideGroundQuad = (i >= groundInImage[Quad::TopLeft].x() &&
+                                         i <= groundInImage[Quad::TopRight].x());
+        
+        if(isInsideGroundQuad)
+        {
+          // Project point onto ground plane
+          // Note that b/c we are working transposed, i is x and j is y in the
+          // original image.
+          SetEdgePosition(invH, i, bbox.GetY(), edgePoint);
+          edgePoint.gradient = 0;
+          AddEdgePoint(edgePoint, foundBorder, candidateChains);
+        }
       }
+      
     }
+    Toc("FindingGroundEdgePoints");
     
-    #define DRAW_OVERHEAD_IMAGE_EDGES_DEBUG 0
     if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
     {
+      Vision::ImageRGB overheadImg = roi.GetOverheadImage(image, H);
+      
       static const std::vector<ColorRGBA> lineColorList = {
         NamedColors::RED, NamedColors::GREEN, NamedColors::BLUE,
         NamedColors::ORANGE, NamedColors::CYAN, NamedColors::YELLOW,
@@ -1956,18 +1896,12 @@ namespace Cozmo {
       Quad2f tempQuad(roi.GetGroundQuad());
       tempQuad += dispOffset;
       dispImg.DrawQuad(tempQuad, NamedColors::RED, 1);
-      dispImg.DrawLine(Anki::Point2f(jNear, 0), Anki::Point2f(jNear, dispImg.GetNumRows()),
-                       NamedColors::MAGENTA, 1);
-      dispImg.DrawLine(Anki::Point2f(jFar, 0), Anki::Point2f(jFar, dispImg.GetNumRows()),
-                       NamedColors::YELLOW, 1);
       
       for(auto & chain : candidateChains)
       {
         if(chain.points.size() >= kMinChainLength)
         {
           for(s32 i=1; i<chain.points.size(); ++i) {
-            ASSERT_NAMED(chain.points[i-1].position.y() != chain.points[i].position.y(),
-                         "There should only be one edge per row");
             Anki::Point2f startPoint(chain.points[i-1].position);
             startPoint.y() = -startPoint.y();
             startPoint += dispOffset;
@@ -1982,26 +1916,40 @@ namespace Cozmo {
           }
         }
       }
-      Vision::ImageRGB dispEdgeImg(overheadImg.GetNumRows(), overheadImg.GetNumCols());
-      std::function<Vision::PixelRGB(const Vision::PixelRGB_<f32>&)> fcn = [](const Vision::PixelRGB_<f32>& pixelF32)
+      Vision::ImageRGB dispEdgeImg(edgeImgX.GetNumRows(), edgeImgX.GetNumCols());
+      std::function<Vision::PixelRGB(const Vision::PixelRGB_<s16>&)> fcn = [](const Vision::PixelRGB_<s16>& pixelS16)
       {
-        return Vision::PixelRGB((u8)std::abs(pixelF32.r()),
-                                (u8)std::abs(pixelF32.g()),
-                                (u8)std::abs(pixelF32.b()));
+        return Vision::PixelRGB((u8)std::abs(pixelS16.r()),
+                                (u8)std::abs(pixelS16.g()),
+                                (u8)std::abs(pixelS16.b()));
       };
       edgeImgX.ApplyScalarFunction(fcn, dispEdgeImg);
+      
+      // Project edges on the ground back into image for display
+      for(auto & chain : candidateChains)
+      {
+        for(s32 i=0; i<chain.points.size(); ++i) {
+          const Anki::Point2f& groundPoint = chain.points[i].position;
+          Point3f temp = H * Anki::Point3f(groundPoint.x(), groundPoint.y(), 1.f);
+          ASSERT_NAMED(temp.z() > 0.f, "VisionSystem.DetectOverheadEdges.BadDisplayZ");
+          const f32 divisor = 1.f / temp.z();
+          dispEdgeImg.DrawPoint({temp.x()*divisor, temp.y()*divisor}, NamedColors::RED, 1);
+        }
+      }
+      dispEdgeImg.DrawQuad(groundInImage, NamedColors::GREEN, 1);
       //dispImg.Display("OverheadImage", 1);
       //dispEdgeImg.Display("OverheadEdgeImage");
       _debugImageRGBMailbox.putMessage({"OverheadImage", dispImg});
-      _debugImageRGBMailbox.putMessage({"OverheadEdgeImage", dispEdgeImg});
+      _debugImageRGBMailbox.putMessage({"EdgeImage", dispEdgeImg});
     } // if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
     
     // create edge frame info to send
     OverheadEdgeFrame edgeFrame;
     edgeFrame.timestamp = image.GetTimestamp();
     edgeFrame.groundPlaneValid = true;
-    edgeFrame.groundplane = clampedGroundPlaneROI;
-
+    
+    roi.GetVisibleGroundQuad(H, image.GetNumCols(), image.GetNumRows(), edgeFrame.groundplane);
+    
     // Copy only the chains with at least k points (less is considered noise)
     for(auto& chain : candidateChains)
     {
@@ -2016,7 +1964,7 @@ namespace Cozmo {
     _overheadEdgeFrameMailbox.putMessage( std::move(edgeFrame) );
     
     return RESULT_OK;
-  } // DetectOverheadEdges()
+  }
   
 #if 0
 #pragma mark --- Public VisionSystem API Implementations ---
@@ -2107,6 +2055,8 @@ namespace Cozmo {
   Result VisionSystem::Init(Vision::CameraCalibration& camCalib)
   {
     Result result = RESULT_OK;
+    
+    Profiler::SetProfileGroupName("VisionSystem");
     
     bool calibSizeValid = false;
     switch(camCalib.GetNcols())
@@ -2274,9 +2224,9 @@ namespace Cozmo {
       sortedQuad = marker.corners;
     }
     
-    ASSERT_NAMED(_camera.IsCalibrated(), "Camera should be calibrated");
+    ASSERT_NAMED(_camera.IsCalibrated(), "VisionSystem.GetVisionMarkerPose.CameraNotCalibrated");
     auto calib = _camera.GetCalibration();
-    ASSERT_NAMED(calib != nullptr, "Calibration should not be null");
+    ASSERT_NAMED(calib != nullptr, "VisionSystem.GetVisionMarkerPose.NullCalibration");
     
     return P3P::computePose(sortedQuad,
                             _canonicalMarker3d[0], _canonicalMarker3d[1],
@@ -2392,10 +2342,12 @@ namespace Cozmo {
     std::vector<Quad2f> markerQuads;
 
     if(IsModeEnabled(VisionMode::DetectingMarkers)) {
+      Tic("TotalDetectingMarkers");
       if((lastResult = DetectMarkers(inputImageGray, markerQuads)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.LookForMarkersFailed", "");
         return lastResult;
       }
+      Toc("TotalDetectingMarkers");
     }
     
     if(IsModeEnabled(VisionMode::Tracking)) {
@@ -2407,10 +2359,12 @@ namespace Cozmo {
     }
     
     if(IsModeEnabled(VisionMode::DetectingFaces)) {
+      Tic("TotalDetectingFaces");
       if((lastResult = DetectFaces(inputImageGray, markerQuads)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
         return lastResult;
       }
+      Toc("TotalDetectingFaces");
     }
     
     // DEBUG!!!!
@@ -2426,10 +2380,12 @@ namespace Cozmo {
     
     if(IsModeEnabled(VisionMode::DetectingOverheadEdges))
     {
+      Tic("TotalDetectingOverheadEdges");
       if((lastResult = DetectOverheadEdges(inputImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
         return lastResult;
       }
+      Toc("TotalDetectingOverheadEdges");
     }
     
     if(IsModeEnabled(VisionMode::CheckingToolCode))
@@ -2440,6 +2396,11 @@ namespace Cozmo {
       }
     }
     
+    static s32 profilePrintCtr = 60;
+    if(--profilePrintCtr == 0) {
+      Profiler::PrintAverageTiming();
+      profilePrintCtr = 60;
+    }
     /*
     // Store a copy of the current image for next time
     // NOTE: Now _prevImage should correspond to _prevRobotState
@@ -2496,25 +2457,13 @@ namespace Cozmo {
     _faceDetectionParameters.maxWidth = maxObjectWidth;
   }
   
-  // TODO: Move this to Anki::Util
-  // Instantiate this class with a function you want called when it goes out of
-  // scope, to do cleanup for you, e.g. in case of early returns from a function.
-  class Cleanup
-  {
-    std::function<void()> _cleanupFcn;
-  public:
-    Cleanup(std::function<void()>&& fcn) : _cleanupFcn(fcn) { }
-    ~Cleanup() { _cleanupFcn(); }
-  };
-  
-  
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
     ToolCode codeRead = ToolCode::UnknownTool;
     
     // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
     // no matter how we return from this function
-    Cleanup disableCheckToolCode([this,&codeRead]() {
+    Util::CleanupHelper disableCheckToolCode([this,&codeRead]() {
       this->_toolCodeMailbox.putMessage(codeRead);
       this->EnableMode(VisionMode::CheckingToolCode, false);
       PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledCheckingToolCode", "");
@@ -2580,17 +2529,14 @@ namespace Cozmo {
 #   endif
     
     // Tool code calibration dot parameters
-    // TODO: Expose the non-computed ones somewhere? Cozmo Config?
     const f32 kDotWidth_mm = 2.5f;
     const f32 kDotHole_mm  = 2.5f/3.f;
-    const f32 kQuadPad_mm  = 4.5f; // search area
     const f32 kDotAreaFrac = ((kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) /
-                              (4.f*kQuadPad_mm * kQuadPad_mm));
+                              (4.f*kCalibDotSearchSize_mm * kCalibDotSearchSize_mm));
     const f32 kMinDotAreaFrac   = 0.5f * kDotAreaFrac;
     const f32 kMaxDotAreaFrac   = 1.5f * kDotAreaFrac;
     const f32 kHoleAreaFrac     = kDotHole_mm * kDotHole_mm / (kDotWidth_mm*kDotWidth_mm);
     const f32 kMaxHoleAreaFrac  = 2.f * kHoleAreaFrac;
-    const f32 kMinContrastRatio = 1.1f;
     
     Anki::Point2f camCen;
     std::vector<Anki::Point2f> observedPoints;
@@ -2599,10 +2545,10 @@ namespace Cozmo {
       // Get an ROI around where we expect to see the dot in the image
       const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[iDot];
       Quad3f dotQuadRoi3d = {
-        {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
       };
       
       Quad3f dotQuadRoi3dWrtCam;
@@ -2735,7 +2681,7 @@ namespace Cozmo {
                 // Hole should neither leak to the outside, nor should it be too big,
                 // and its brightness should be sufficiently brighter than the dot
                 const bool holeSmallEnough = holeArea < compArea * kMaxHoleAreaFrac;
-                const bool enoughContrast = (f32)avgHoleBrightness > kMinContrastRatio * (f32)avgDotBrightness;
+                const bool enoughContrast = (f32)avgHoleBrightness > kCalibDotMinContrastRatio * (f32)avgDotBrightness;
                 if(holeSmallEnough && enoughContrast)
                 {
                   // Yay, passed all checks! Thus "must" be a tool code.
@@ -2837,7 +2783,7 @@ namespace Cozmo {
     }
     
     Result lsqResult = LeastSquares(A,b,calibParams);
-    ASSERT_NAMED(lsqResult == RESULT_OK, "LeastSquares failed");
+    ASSERT_NAMED(lsqResult == RESULT_OK, "VisionSystem.ReadToolCode.LeastSquaresFailed");
     
     camCen.x()  = calibParams[0];
     camCen.y()  = calibParams[1];

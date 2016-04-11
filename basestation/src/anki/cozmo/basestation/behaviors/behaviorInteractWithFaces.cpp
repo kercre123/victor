@@ -42,6 +42,7 @@ namespace Cozmo {
   //static const char * const kStrongFriendlyReactAnimName = "ID_react2face_friendly_01";
   static const char * const kMinorFriendlyReactAnimName = "anim_speedTap_findsPlayer_01";
   static const char * const kStrongScaredReactAnimName = "ID_react2face_disgust";
+  static const float kHackTimeoutLength_s = 5.0f;
   
   static const std::vector<const char *> kReactionAnimNames = {
     "ID_react2face_A01",
@@ -78,6 +79,8 @@ namespace Cozmo {
     // Make sure we've done this at least once in case StopTracking gets called somehow
     // before StartTracking (which is where we normally store off the original params).
     _originalLiveIdleParams = robot.GetAnimationStreamer().GetAllParams();
+
+    _hackTimeout_s = currentTime_sec + kHackTimeoutLength_s;
     
     return RESULT_OK;
   }
@@ -185,7 +188,7 @@ namespace Cozmo {
     
     // Always turn to look at the face before any reaction
     TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot, face->GetHeadPose(), DEG_TO_RAD(179));
-    turnTowardsPoseAction->SetPanTolerance( DEG_TO_RAD(0.5) );
+    turnTowardsPoseAction->SetPanTolerance( DEG_TO_RAD(2.0) );
     robot.GetActionList().QueueAction(QueueActionPosition::NOW, turnTowardsPoseAction);
                                       
     
@@ -196,7 +199,7 @@ namespace Cozmo {
       PlayAnimation(robot, kMinorFriendlyReactAnimName, QueueActionPosition::AT_END);
       dataIter->second._playedNewFaceAnim = true;
 
-      robot.GetMoodManager().TriggerEmotionEvent("SeeSometingNew", currentTime_sec);
+      // robot.GetMoodManager().TriggerEmotionEvent("SeeSometingNew", currentTime_sec);
       _newFaceAnimCooldownTime = currentTime_sec + kSeeNewFaceAnimationCooldown_sec;
     }
     
@@ -360,7 +363,17 @@ namespace Cozmo {
                         trackingFacesStr.c_str(), interestingFacesStr.c_str());
     }
     */
-    
+
+    if( currentTime_sec > _hackTimeout_s ) {
+      PRINT_NAMED_INFO("BehaviorInteractWithFaces.TimeOut",
+                       "Behavior is timing out so it doesn't get stuck");
+      StopTracking(robot);
+      _currentState = State::Interrupted;
+      SetStateName("Interrupted");
+      return Status::Complete;
+    }
+      
+  
     // Update cooldown times:
     for(auto & faceData : _interestingFacesData) {
       if(currentTime_sec > faceData.second._coolDownUntil_sec) {

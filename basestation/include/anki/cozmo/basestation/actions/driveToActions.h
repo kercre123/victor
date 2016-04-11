@@ -237,6 +237,12 @@ namespace Anki {
       // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
       // the start, otherwise you may break things (e.g. sounds might never stop playing).
       void SetDrivingSounds(const std::string& drivingSoundStartClipName, const std::string& drivingSoundStopClipName);
+
+    protected:
+
+      // If set, instead of driving to the nearest preActionPose, only the preActionPose
+      // that is most closely aligned with the approach angle is considered.
+      void SetApproachAngle(const f32 angle_rad);
       
     private:
 
@@ -408,6 +414,10 @@ namespace Anki {
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
                               const bool useManualSpeed = false);
+
+      // Sets the approach angle so that, if possible, the roll action will roll the block to land upright. If
+      // the block is upside down or already upright, and roll action will be allowed
+      void RollToUpright();
       
       // GetType returns the type from the PlaceRelObjectAction, which is
       // determined dynamically
@@ -427,6 +437,9 @@ namespace Anki {
           completionUnion = _completedActionInfoStack.back().first;
         }
       }
+
+    private:
+      ObjectID _objectID;
 
     };
     

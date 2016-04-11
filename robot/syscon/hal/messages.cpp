@@ -4,6 +4,7 @@
 #include "nrf.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/logging.h"
+#include "hardware.h"
 #include "lights.h"
 #include "radio.h"
 #include "messages.h"
@@ -43,6 +44,10 @@ static void Process_setPropSlot(const SetPropSlot& msg)
   Radio::assignProp(msg.slot, msg.factory_id);
 }
 
+static void Process_configureBluetooth(const RobotInterface::ConfigureBluetooth& msg) {
+  enterOperatingMode(msg.enable ? BLUETOOTH_OPERATING_MODE : WIFI_OPERATING_MODE);
+}
+
 static void Process_bleRecvHelloMessage(const BLE_RecvHello& msg)
 {
   Bluetooth::authChallenge(msg);
@@ -51,6 +56,14 @@ static void Process_bleRecvHelloMessage(const BLE_RecvHello& msg)
 static void Process_bleEnterPairing(const BLE_EnterPairing& msg)
 {
   Bluetooth::enterPairing(msg);
+}
+
+static void Process_nvReadToBody(const RobotInterface::NVReadResultToBody& msg)
+{
+}
+
+static void Process_nvOpResultToBody(const RobotInterface::NVOpResultToBody& msg)
+{
 }
 
 static void Process_killBodyCode(const KillBodyCode& msg)

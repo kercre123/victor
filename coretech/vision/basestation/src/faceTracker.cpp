@@ -93,7 +93,7 @@ namespace Vision {
   
   void FaceTracker::PrintTiming()
   {
-    _pImpl->Print();
+    _pImpl->PrintAverageTiming();
   }
   
   /*

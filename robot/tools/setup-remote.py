@@ -3,18 +3,26 @@ import sys, os, shutil
 import py2exe
 
 BUILD_DIR = "dist"
+DIST_PKG = "remote-dist.zip"
 STRING_TABLE_FILE = os.path.join("..", "resources", "config", "basestation", "AnkiLogStringTables.json")
 CLAD_DIR = os.path.join("generated", "cladPython")
 
-shutil.rmtree(BUILD_DIR, True)
-os.remove("remote-dist.zip")
-
+try:
+    shutil.rmtree(BUILD_DIR)
+except:
+    sys.stderr.write("Couldn't delete old dist directory, you may need to remove \"{}\" yourself{linesep}".format(BUILD_DIR, linesep=os.linesep))
+try:
+    if os.path.isfile(DIST_PKG):
+        os.remove(DIST_PKG)
+except:
+    sys.stderr.write("Couldn't remove old dist zip. You need to remove \"{}\" yourself{linesep}".format(DIST_PKG, linesep))
+    
 setup(name="Remote",
       version="1.0",
       description="Factory test remote control app",
       author="Daniel Casner",
       author_email="daniel@anki.com",
-      console=[os.path.join('tools', 'remote.py')],
+      console=[os.path.join('tools', 'remote.py'), os.path.join('tools', 'storeCameraCalibration.py')],
       packages = ['ReliableTransport', 'clad', 'clad.robotInterface', 'clad.types', 'msgbuffers'],
       package_dir = {'ReliableTransport': os.path.join("tools", "ReliableTransport"),
                      'clad': os.path.join("generated", "cladPython", "robot", "clad"),
@@ -30,4 +38,5 @@ else:
     shutil.copy2(STRING_TABLE_FILE, BUILD_DIR)
 shutil.copytree("releases", os.path.join(BUILD_DIR, "releases"))
 
-shutil.make_archive("remote-dist", "zip", BUILD_DIR, verbose=1)
+base, ext = os.path.splitext(DIST_PKG)
+shutil.make_archive(base, ext[1:], BUILD_DIR, verbose=1)

@@ -15,65 +15,117 @@ extern "C" {
 #include "anki/types.h"
 #include "clad/types/nvStorage.h"
 
-/// Storage starts at 256 bytes before the end of the 2MB flash
+/// Header on the start of each data segment. Not written until the entire segment is valid.
+struct NVDataAreaHeader
+{
+  u32 dataAreaMagic;    ///< Must equal NV_STORAGE_AREA_HEADER_MAGIC
+  s32 nvStorageVersion; ///< Version of the NVStorage protocol
+  s32 journalNumber;    ///< Monotonically incrementing number indicating which region is more recent
+};
+
+/// 0th word of valid NVStorage area
+#define NV_STORAGE_AREA_HEADER_MAGIC 0xDEADBEEF
+
+/// The version number for data in flash, magic to distinquish from all previous data
+#define NV_STORAGE_FORMAT_VERSION 1
+
+#define NV_STORAGE_NUM_AREAS 2
+
 #define NV_STORAGE_START_ADDRESS (0x1c0000)
+#define NV_STORAGE_END_ADDRESS   (0x200000)
+#define NV_STORAGE_AREA_SIZE     ((NV_STORAGE_END_ADDRESS - NV_STORAGE_START_ADDRESS) / NV_STORAGE_NUM_AREAS)
+#define NV_STORAGE_CAPACITY      (NV_STORAGE_AREA_SIZE - sizeof(NVDataAreaHeader))
 
 namespace Anki {
   namespace Cozmo {
     namespace NVStorage {
       
+      /** Callback prototype for NVCheckIntegrity completion
+       * parameter receives if the flash system is OK or corrupted
+       */
+      typedef void (*NVInitDoneCB)(const int8_t);
+      /** Callback prototype for NV Write operations.
+       * Parameters are the tag written and success
+       */
+      typedef void (*WriteDoneCB)(const NVStorageBlob*, const NVResult);
+      /** Callback prototype for NV Erase operations
+       * Parameters are the tag erased and success
+       */
+      typedef void (*EraseDoneCB)(const NVEntryTag, const NVResult);
+      /** Callback prototype for NV Read operations
+       * Parameters are the retrieved storage entry and result
+       */
+      typedef void (*ReadDoneCB)(NVStorageBlob*, const NVResult);
+      /** Callback prototype for NV multi-operations
+       */
+      typedef void (*MultiOpDoneCB)(const NVResult);
+      
+      /// Run pending tasks for NVStorage system and call any pending callbacks
+      Result Update();
+      
       /** Writes an NV storage entry into flash.
        * @param[in] entry The data to write. If the entry tag matches and existing entry, the existing entry will be
        *              overwritten.
+       * @param callback Function to call when write operation completes either successfully or with error
        * @return Result code for the operation
        */
-      NVResult Write(NVStorageBlob& entry);
+      NVResult Write(NVStorageBlob* entry, WriteDoneCB callback=0);
       
       /** Erases (invalidates) entry for given tag if present
        * @param tag The tag to erase
-       * @return Result code for the operation, NV_NOT_FOUND shouldn't be considered an error in this case since there
-       *                being no entry matching the tag means there was no nothing needing to be erased.
+       * @param callback Function to call when erase operation completes either successfully or with error
+       * @return Either scheduled or busy
        */
-      NVResult Erase(const u32 tag);
+      NVResult Erase(const u32 tag, EraseDoneCB callback=0);
+      
+      /** Erases (invalidates) a range of tags if present
+       * @warning entries are not garunteed to be erased in any particular order
+       * @param start The lowest tag value to invalidate (inclusive)
+       * @param end The highest tag value to invalidate (inclusive)
+       * @param eachCallback Function to call after each individual erase operation
+       * @param finishCallback Function to call after all entries in range have been erased
+       * @return Either scheduled or busy
+       */
+      NVResult EraseRange(const u32 start, const u32 end,
+                          EraseDoneCB eachCallback=0, MultiOpDoneCB finishedCallback=0);
       
       /** Reads an NV storage entry from flash.
-       * @param[inout] entry A pointer to an NVStorageBlob instance. The tag should be set to the tag to be retrieved.
-       * @return Result code for the read
+       * @param tag The tag to retrieve
+       * @param callback Function to call with read data result. Must not be NULL.
+       * @return Either scheduled or busy
        */
-       NVResult Read(NVStorageBlob& entry);
+       NVResult Read(const u32 tag, ReadDoneCB callback);
+       
+       /** Reads all entries in NV storage who's tags fall in the range
+        * @warning entries are not garunteed to be retrieved in any particular order
+        * @param start The lowest tag value to retrieve (inclusive)
+        * @param end The highes tag value to retreive (inclusive)
+        * @param readCallback Function to call with each retrieved entry. Must not be NULL
+        * @param finishCallback Function to call after all entries in range have been read.
+        * @return either scheduled or busy
+        */
+      NVResult ReadRange(const u32 start, const u32 end, ReadDoneCB readCallback, MultiOpDoneCB finishedCallback=0);
        
        extern "C" {
-         /** Checks the integrity of the non-volatile storge flash file system and completes and interrupted operations.
-          * If either recollect or defragment is specified, this function will do SPI erase operations which may
-          * interfere with processor scheduling. This should only be done at startup or shutdown.
-          * @param recollect If true any blocks marked for erasure will be erased and then usable for new data again
-          * @param defragment If true fragmented blocks will be defragmented to try and free up space.
-          * @return The number of operations completed.
+         /** Run garbage collection
+          * @warning This method must only be called when it is safe to do flash erase operations.
+          * @param finishedCallback Function to call when garbage collection is complete
+          * @return Result code for garbage collection. NV_SCHEDULED is the normal case.
           */
-        int NVCheckIntegrity(const bool recollect, const bool defragment);
+         int8_t GarbageCollect(NVInitDoneCB finishedCallback);
+         
+         /** Initalizes and checks the integrity of the non-volatile storge flash file system and completes any
+          * interrupted operations.
+          * @param garbageCollect If true, run garbage collection.
+          * @param finishCallback Function to call when integrity check is complete
+          * @return 0 If the integrity check was successfully started or something else on error.
+          */
+        int8_t NVInit(const bool garbageCollect, NVInitDoneCB finishedCallback);
         
         /** Erase the entire contents of NV storage destroying all data.
          * This function will interfere with CPU scheduling so it should only be called during startup or shutown.
          */
         void NVWipeAll(void);
-        
-         /** Retrieve non-volatile WiFi AP configuration if present
-          * @param[out] config A softap_config structure to write configuration into
-          * @param[out] info A pointer to write IP address configuration into
-          * @return true if NV configuration was found, false if nothing available.
-          */
-         bool NVGetWiFiAPConfig(struct softap_config* config, struct ip_info* info);
-         
-          /** Retrieve non-volatile WiFi station configuration if present
-           * @param[out] config A station_config structure to write data into
-           * @param[out] info A pointer to write IP address configuration into, if DHCP is to be used, the IP address
-           *                  will be set to 255.255.255.255.
-           * @return NULL_MODE      On error
-           *         STATION_MODE   If station info was found and was set to operate without AP
-           *         SOFTAP_MODE    If no station info was found or it was set to inactive
-           *         STATIONAP_MODE If station info was found and was set to operate with AP
-           */
-          u8 NVGetWiFiStaConfig(struct station_config* config, struct ip_info* info);
        }
     }
   }

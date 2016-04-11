@@ -365,6 +365,9 @@ Result CozmoEngine::InitInternal()
   AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( *_context->GetExternalInterface() );
   _context->GetAudioServer()->RegisterClientConnection( unityConnection );
   
+  // Setup Text To Speach with Audio Controller
+  _textToSpeech->SetAudioController(_context->GetAudioServer()->GetAudioController());
+  
   
   return RESULT_OK;
 }

@@ -333,7 +333,7 @@ namespace Cozmo {
   Result VisionComponent::SetNextImage(const Vision::ImageRGB& image)
   {
     if(_isCamCalibSet) {
-      ASSERT_NAMED(nullptr != _visionSystem, "VisionSystem should not be NULL.");
+      ASSERT_NAMED(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
       if(!_visionSystem->IsInitialized()) {
         _visionSystem->Init(_camCalib);
         
@@ -457,7 +457,7 @@ namespace Cozmo {
   {
     const Pose3d& robotPose = _robot.GetPose();
     
-    ASSERT_NAMED(_camera.IsCalibrated(), "Camera must be calibrated to populate homography LUT.");
+    ASSERT_NAMED(_camera.IsCalibrated(), "VisionComponent.PopulateGroundPlaneHomographyLUT.CameraNotCalibrated");
     
     const Matrix_3x3f K = _camera.GetCalibration()->GetCalibrationMatrix();
     
@@ -484,7 +484,8 @@ namespace Cozmo {
       // image plane
       const Matrix_3x3f H = K*Matrix_3x3f{R.GetColumn(0),R.GetColumn(1),T};
       
-      Quad2f imgQuad = groundPlaneROI.GetImageQuad(H);
+      Quad2f imgQuad;
+      groundPlaneROI.GetImageQuad(H, _camCalib.GetNcols(), _camCalib.GetNrows(), imgQuad);
       
       if(_camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::TopLeft]) ||
          _camera.IsWithinFieldOfView(imgQuad[Quad::CornerName::BottomLeft]))
@@ -539,7 +540,7 @@ namespace Cozmo {
                      "Starting Robot VisionComponent::Processor thread...");
     
     ASSERT_NAMED(_visionSystem != nullptr && _visionSystem->IsInitialized(),
-                 "VisionSystem should already be initialized.");
+                 "VisionComponent.Processor.VisionSystemNotReady");
     
     while (_running) {
       
@@ -565,7 +566,7 @@ namespace Cozmo {
         // Save the image we just processed
         _lastImg = _currentImg;
         ASSERT_NAMED(_lastImg.GetTimestamp() == _currentImg.GetTimestamp(),
-                     "Last image should now have current image's timestamp.");
+                     "VisionComponent.Processor.WrongImageTimestamp");
         
         // Clear it when done.
         _currentImg = {};
@@ -921,7 +922,8 @@ namespace Cozmo {
       
       const GroundPlaneROI& roi = poseData.groundPlaneROI;
       
-      Quad2f imgGroundQuad = roi.GetImageQuad(H);
+      Quad2f imgGroundQuad;
+      roi.GetImageQuad(H, image.GetNumCols(), image.GetNumRows(), imgGroundQuad);
       
       static Vision::ImageRGB overheadMap(1000.f, 1000.f);
       

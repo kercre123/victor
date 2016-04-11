@@ -325,8 +325,8 @@ namespace Anki
 
     ASSERT_NAMED(result.GetNumRows() == this->GetNumRows() &&
                  result.GetNumCols() == this->GetNumCols(),
-                 "Result Array2d must be the same size as this one.");
-
+                 "Array2d.ApplyScalarFunctionOneArg.ResultArraySizeMismatch");
+    
     if (this->IsContinuous() && result.IsContinuous() ) {
       ncols *= nrows;
       nrows = 1;
@@ -355,11 +355,11 @@ namespace Anki
 
     ASSERT_NAMED(otherArray.GetNumRows() == this->GetNumRows() &&
                  otherArray.GetNumCols() == this->GetNumCols(),
-                 "Both arrays should be same size to ApplyScalarFunction");
+                 "Array2d.ApplyScalarFunction.OtherArraySizeMismatch");
     
     ASSERT_NAMED(result.GetNumRows() == this->GetNumRows() &&
                  result.GetNumCols() == this->GetNumCols(),
-                 "Result Array2d must be the same size as this one.");
+                 "Array2d.ApplyScalarFunctionTwoArg.ResultArraySizeMismatch");
 
     if (this->IsContinuous() && otherArray.IsContinuous() && result.IsContinuous() ) {
       ncols *= nrows;
@@ -469,6 +469,17 @@ namespace Anki
     assert(false);
 #   endif
   }
+
+  template<typename T>
+  void Array2d<T>::SetMaskTo(const Array2d<u8>& mask, T value)
+  {
+#   if ANKICORETECH_USE_OPENCV
+    this->setTo(value, mask.get_CvMat_());
+#   else
+    assert(false);
+#   endif
+  }
+
   
   /* OLD: Inherit from unmanaged
 

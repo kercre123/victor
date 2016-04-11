@@ -51,7 +51,7 @@ public:
   void SetRobotVolume(float volume);
 
   // Create an Audio Animation for a specific animation. Only one animation can be played at a time
-  void CreateAudioAnimation( Animation* anAnimation, AnimationMode mode );
+  void CreateAudioAnimation( Animation* anAnimation, const AnimationMode mode );
 
   RobotAudioAnimation* GetCurrentAnimation() { return _currentAnimation; }
   

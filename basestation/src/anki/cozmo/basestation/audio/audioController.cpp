@@ -17,11 +17,12 @@
 #include "clad/types/animationKeyFrames.h"
 #include "clad/audio/audioGameObjectTypes.h"
 #include "clad/audio/audioParameterTypes.h"
-#include <util/dispatchQueue/dispatchQueue.h>
-#include <util/helpers/templateHelpers.h>
-#include <util/logging/logging.h>
+#include "util/dispatchQueue/dispatchQueue.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
 #include <unordered_map>
 
+#include "anki/cozmo/basestation/audio/audioControllerPluginInterface.h"
 #include "anki/cozmo/basestation/audio/audioWaveFileReader.h"
 
 #if HijackAudioPlugInDebugLogs
@@ -53,6 +54,7 @@ using namespace AudioEngine;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
+  : _pluginInterface( new AudioControllerPluginInterface(*this) )
 {
 #if USE_AUDIO_ENGINE
   {
@@ -157,16 +159,14 @@ AudioController::~AudioController()
     _taskHandle->Invalidate();
   }
   Util::Dispatch::Release( _dispatchQueue );
+  Util::SafeDelete( _pluginInterface );
   
   ClearGarbageCollector();
   
 #if USE_AUDIO_ENGINE
   {
     Util::SafeDelete( _audioEngine );
-    
     Util::SafeDelete( _hijackAudioPlugIn );
-    
-    Util::SafeDelete( _reader );
     Util::SafeDelete( _wavePortalPlugIn );
   }
 #endif
