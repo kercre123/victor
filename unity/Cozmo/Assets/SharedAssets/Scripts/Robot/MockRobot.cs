@@ -22,6 +22,11 @@ public class MockRobot : IRobot {
   public MockRobot(byte id) {
     ID = id;
     Rotation = Quaternion.identity;
+    Dictionary<Anki.Cozmo.UnlockId, bool> defaultValues = new Dictionary<UnlockId, bool>();
+    for (int i = 0; i < (int)Anki.Cozmo.UnlockId.Count; ++i) {
+      defaultValues.Add((Anki.Cozmo.UnlockId)i, true);
+    }
+    UnlockablesManager.Instance.OnConnectLoad(defaultValues);
   }
 
   public void SetLocalBusyTimer(float localBusyTimer) {
@@ -307,6 +312,10 @@ public class MockRobot : IRobot {
 
   public void AssignNameToFace(int faceID, string name) {
     
+  }
+
+  public void PrepareFaceNameAnimation(int faceId, string name) {
+  
   }
 
   public void SendAnimation(string animName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
@@ -821,6 +830,11 @@ public class MockRobot : IRobot {
   public string CurrentBehaviorString {
     get;
     set;
+  }
+
+  public string CurrentDebugAnimationString { 
+    get; 
+    set; 
   }
 
   private ObservedObject _CarryingObject;

@@ -91,6 +91,8 @@ public interface IRobot : IDisposable {
 
   string CurrentBehaviorString { get; set; }
 
+  string CurrentDebugAnimationString { get; set; }
+
   ObservedObject CarryingObject { get; }
 
   event Action<ObservedObject> OnCarryingObjectSet;
@@ -186,6 +188,8 @@ public interface IRobot : IDisposable {
   void EnableNewFaceEnrollment(int numToEnroll = 1);
 
   void AssignNameToFace(int faceID, string name);
+
+  void PrepareFaceNameAnimation(int faceId, string name);
 
   void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 

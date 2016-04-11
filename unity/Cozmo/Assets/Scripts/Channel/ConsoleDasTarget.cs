@@ -24,4 +24,8 @@ public class ConsoleDasTarget : IDASTarget {
   public void Debug(string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null) {
     Console.WriteLine("[Debug][" + eventName + "] " + eventValue);
   }
+
+  public void SetGlobal(string key, string value) {
+    Console.WriteLine("[SetGlobal][" + key + "] " + value);
+  }
 }

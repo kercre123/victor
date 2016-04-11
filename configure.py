@@ -14,7 +14,8 @@ GAME_ROOT = os.path.normpath(
 
 ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
 CERT_ROOT = os.path.join(GAME_ROOT, 'project', 'ios', 'ProvisioningProfiles')
-EXTERNAL_ROOT = os.path.join(GAME_ROOT, 'EXTERNALS')
+EXTERNALS_ROOT = os.path.join (ENGINE_ROOT, 'EXTERNALS')
+CTE_ROOT = os.path.join (EXTERNALS_ROOT,'coretech_external')
 sys.path.insert(0, ENGINE_ROOT)
 PRODUCT_NAME = 'Cozmo'
 
@@ -26,9 +27,6 @@ import ankibuild.ios_deploy
 import ankibuild.util
 import ankibuild.unity
 import ankibuild.xcode
-import importlib
-
-dependencies = importlib.import_module("project.build-scripts.dependencies")
 
 
 ####################
@@ -176,6 +174,13 @@ def parse_game_arguments():
         action='store_true',
         help='Use this flag to NOT pull down the latest dependencies (i.e. audio and animation)')
 
+    parser.add_argument(
+        '--use-external',
+        required=False,
+        default=EXTERNALS_ROOT,
+        metavar='path',
+        help='Use this flag to specify external dependency location.')
+
     return parser.parse_args()
 
 
@@ -232,11 +237,9 @@ class GamePlatformConfiguration(object):
 
             self.unity_opencv_symlink = os.path.join(self.unity_xcode_project_dir, 'opencv')
 
-            if not os.environ.get("CORETECH_EXTERNAL_DIR"):
-                sys.exit('ERROR: Environment variable "CORETECH_EXTERNAL_DIR" must be defined.')
-            self.unity_opencv_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"), 'build', 'opencv-ios')
+            self.unity_opencv_symlink_target = os.path.join(CTE_ROOT, 'build', 'opencv-ios')
             self.unity_sphinx_symlink = os.path.join(self.unity_xcode_project_dir, 'sphinx')
-            self.unity_sphinx_symlink_target = os.path.join(os.environ.get("CORETECH_EXTERNAL_DIR"),
+            self.unity_sphinx_symlink_target = os.path.join(CTE_ROOT,
                                                             'pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos')
             self.unity_hockeyapp_symlink = os.path.join(self.unity_xcode_project_dir, 'HockeyApp')
             self.unity_hockeyapp_symlink_target = os.path.join(GAME_ROOT, 'lib', 'anki', 'vendor',"HockeySDK-iOS")
@@ -263,16 +266,10 @@ class GamePlatformConfiguration(object):
         if self.options.verbose:
             print_status('Generating files for platform {0}...'.format(self.platform))
 
-        if not self.options.do_not_check_dependencies:
-            assert isinstance(dependencies, object)
-            dependencies.extract_dependencies("DEPS", EXTERNAL_ROOT)
-
-        os.environ['EXTERNALS_DIR'] = "{0}".format(EXTERNAL_ROOT)
-
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
-
-        generate_gyp(self.gyp_dir, self.platform, self.options)
+        #Calling generate gyp instead of generate() for engine.
+        generate_gyp(self.gyp_dir, self.platform, self.options, os.path.join(ENGINE_ROOT, 'DEPS'))
 
         relative_gyp_project = os.path.relpath(self.gyp_project_path, self.platform_output_dir)
         workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
@@ -302,7 +299,7 @@ class GamePlatformConfiguration(object):
                 'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo', #{0}'.format(PRODUCT_NAME),
                 'ANKI_BUILD_UNITY_BUILD_DIR={0}'.format(self.unity_build_dir),
                 'ANKI_BUILD_UNITY_XCODE_BUILD_DIR=${ANKI_BUILD_UNITY_BUILD_DIR}/${CONFIGURATION}-${PLATFORM_NAME}',
-                'CORETECH_EXTERNAL_DIR={0}'.format(os.environ.get("CORETECH_EXTERNAL_DIR")),
+                'CORETECH_EXTERNAL_DIR={0}'.format(CTE_ROOT),
                 'ANKI_BUILD_UNITY_EXE={0}'.format(self.options.unity_binary_path),
                 'ANKI_BUILD_TARGET={0}'.format(self.platform),
                 '// ANKI_BUILD_USE_PREBUILT_UNITY=1',

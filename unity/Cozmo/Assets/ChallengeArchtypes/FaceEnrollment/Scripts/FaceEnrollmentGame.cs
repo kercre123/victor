@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.UI;
@@ -7,7 +7,6 @@ namespace FaceEnrollment {
   public class FaceEnrollmentGame : GameBase {
 
     public Dictionary<int, string> _FaceNameDictionary = new Dictionary<int, string>();
-    public Dictionary<int, string> _FaceIDToReaction = new Dictionary<int, string>();
 
     private string[] _ReactionBank = {
       AnimationName.kFaceEnrollmentReaction_00,
@@ -16,8 +15,7 @@ namespace FaceEnrollment {
       AnimationName.kFaceEnrollmentReaction_03,
       AnimationName.kFaceEnrollmentReaction_04
     };
-
-    private int _ReactionIndex = 0;
+    private int _LastAnimationPlayedIdx = 0;
 
     private float _LastPlayedReaction = 0.0f;
     private int _LastReactedID = 0;
@@ -58,9 +56,6 @@ namespace FaceEnrollment {
     public void EnrollFace(string nameForFace) {
       _FaceNameDictionary.Add(_NewSeenFaceID, nameForFace);
       CurrentRobot.AssignNameToFace(_NewSeenFaceID, nameForFace);
-
-      _FaceIDToReaction.Add(_NewSeenFaceID, _ReactionBank[_ReactionIndex]);
-      _ReactionIndex = (_ReactionIndex + 1) % _ReactionBank.Length;
     }
 
     private void HandleObservedNewFace(int faceID, Vector3 facePos, Quaternion faceRot) {
@@ -75,7 +70,9 @@ namespace FaceEnrollment {
 
     private void HandleSubmitButton(string name) {
       EnrollFace(name);
-      CurrentRobot.SendAnimation(_FaceIDToReaction[_NewSeenFaceID], HandleReactionDone);
+
+      // Perform Name for the first time
+      PlayFaceReactionAnimation(_NewSeenFaceID);
     }
 
     private void HandleReactionDone(bool success) {
@@ -93,13 +90,13 @@ namespace FaceEnrollment {
     private void HandleOnAnyFaceSeen(int faceID, string name, Vector3 pos, Quaternion rot) {
       // check if we have an active face enroll view open
       if (_FaceEnrollmentView == null) {
-        if (faceID > 0 && string.IsNullOrEmpty(name) == false && _FaceIDToReaction.ContainsKey(faceID)) {
+        if (faceID > 0 && string.IsNullOrEmpty(name) == false && _FaceNameDictionary.ContainsKey(faceID)) {
           // this is a face we know...
           if (Time.time - _LastPlayedReaction > 6.0f || _LastReactedID != faceID && !_Reacting) {
             // been at least 10 seconds since we reacted or it's a new face.
-            CurrentRobot.TurnTowardsFacePose(CurrentRobot.Faces.Find(x => x.ID == faceID), callback: FacePoseDone);
             _LastTurnedToAttemptID = faceID;
             _Reacting = true;
+            CurrentRobot.TurnTowardsFacePose(CurrentRobot.Faces.Find(x => x.ID == faceID), callback: FacePoseDone);
           }
         }
       }
@@ -107,7 +104,9 @@ namespace FaceEnrollment {
 
     private void FacePoseDone(bool success) {
       if (success) {
-        CurrentRobot.SendAnimation(_FaceIDToReaction[_LastTurnedToAttemptID], ReactToFaceAnimationDone);
+        // Send Message to play react to face 
+        PlayFaceReactionAnimation(_LastTurnedToAttemptID);
+
         _LastReactedID = _LastTurnedToAttemptID;
       }
       else {
@@ -126,6 +125,12 @@ namespace FaceEnrollment {
       RobotEngineManager.Instance.RobotObservedFace -= HandleOnAnyFaceSeen;
     }
 
+    private void PlayFaceReactionAnimation(int faceId) {
+      DAS.Debug(this, "Attempt to Play Face Reaction Animation - FaceId: " + faceId);
+      CurrentRobot.PrepareFaceNameAnimation(faceId, _FaceNameDictionary[faceId]);
+      CurrentRobot.SendAnimation(_ReactionBank[_LastAnimationPlayedIdx], HandleReactionDone);
+      _LastAnimationPlayedIdx = (_LastAnimationPlayedIdx + 1) % _ReactionBank.Length;
+    }
 
   }
 

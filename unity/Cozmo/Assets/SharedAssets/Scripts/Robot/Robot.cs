@@ -230,6 +230,8 @@ public class Robot : IRobot {
 
   public string CurrentBehaviorString { get; set; }
 
+  public string CurrentDebugAnimationString { get; set; }
+
   private PathMotionProfile PathMotionProfileDefault;
 
   private uint _LastIdTag;
@@ -931,6 +933,12 @@ public class Robot : IRobot {
   public void AssignNameToFace(int faceID, string name) {
     DAS.Debug(this, "Assigning face " + faceID + " to " + name);
     RobotEngineManager.Instance.Message.AssignNameToFace = Singleton<AssignNameToFace>.Instance.Initialize(faceID, name);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void PrepareFaceNameAnimation(int faceId, string name) {
+    DAS.Debug(this, "Perform Face Name Animation - faceId: " + faceId + " name: " + name);
+    RobotEngineManager.Instance.Message.PrepareFaceNameAnimation = Singleton<PrepareFaceNameAnimation>.Instance.Initialize(faceId, name);
     RobotEngineManager.Instance.SendMessage();
   }
 
