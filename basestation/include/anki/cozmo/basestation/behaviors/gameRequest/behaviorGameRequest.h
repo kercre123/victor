@@ -14,7 +14,9 @@
 #define __Cozmo_Basestation_Behaviors_GameRequest_BehaviorGameRequest_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include <memory>
 #include <set>
 #include <string>
 
@@ -98,6 +100,10 @@ private:
   ObjectID   _robotsBlockID;
 
   std::set<ObjectID> _badBlocks;
+
+  std::unique_ptr<BlockWorldFilter>  _blockworldFilter;
+
+  bool FilterBlocks(const Robot* robot, ObservableObject* obj) const;
 
   ObservableObject* GetClosestBlock(const Robot& robot) const;
   

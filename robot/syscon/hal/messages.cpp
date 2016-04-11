@@ -53,6 +53,14 @@ static void Process_bleEnterPairing(const BLE_EnterPairing& msg)
   Bluetooth::enterPairing(msg);
 }
 
+static void Process_nvReadToBody(const RobotInterface::NVReadResultToBody& msg)
+{
+}
+
+static void Process_nvOpResultToBody(const RobotInterface::NVOpResultToBody& msg)
+{
+}
+
 static void Process_killBodyCode(const KillBodyCode& msg)
 {
   // This will destroy the first sector in the application layer
