@@ -49,8 +49,20 @@ namespace SpeedTap {
       _PlayReady = false;
       _CozmoTapRegistered = false;
       _MatchProbability = _kBaseMatchProbability;
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, RobotCompletedTapAnimation);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, AdjustCheck);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, AdjustCheck);
 
       _SpeedTapGame.CheckForAdjust(AdjustDone);
+    }
+
+    public override void Exit() {
+      base.Exit();
+      _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
+      _SpeedTapGame.CozmoTappedBlockEvent -= CozmoDidTap;
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, RobotCompletedTapAnimation);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, AdjustCheck);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, AdjustCheck);
     }
 
     void AdjustDone(bool success) {
@@ -84,7 +96,7 @@ namespace SpeedTap {
         if (_GotMatch) {
           if (!_CozmoTapping) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Tap, RobotCompletedTapAnimation);
+              GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
               _CozmoTapRegistered = false;
               _CozmoHitCube = false;
               _CozmoTapping = true;
@@ -96,7 +108,7 @@ namespace SpeedTap {
         else if (_TryFake) {
           if (!_TriedFake) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Fake, AdjustCheck);
+              GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapFakeout);
               _TriedFake = true;
               _TryPeek = false;
             }
@@ -117,15 +129,9 @@ namespace SpeedTap {
         }
         else if (_TryPeek && (currTimeMs - _StartTimeMs) >= _PeekDelayTimeMs) {
           _TryPeek = false;
-          _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Peek, AdjustCheck);
+          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapIdle);
         }
       }
-    }
-
-    public override void Exit() {
-      base.Exit();
-      _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
-      _SpeedTapGame.CozmoTappedBlockEvent -= CozmoDidTap;
     }
 
     void RobotCompletedTapAnimation(bool success) {

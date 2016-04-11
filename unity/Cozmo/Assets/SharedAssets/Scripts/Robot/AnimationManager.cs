@@ -83,6 +83,12 @@ public class AnimationManager {
     }
   }
 
+  /// <summary>
+  /// Adds the specified callback to be fired at the end of the AnimationGroup that is called from
+  /// the specified GameEvent.
+  /// </summary>
+  /// <param name="cozEvent">gameEvent</param>
+  /// <param name="newCallback">RobotCallback</param>
   public void AddAnimationEndedCallback(GameEvent cozEvent, RobotCallback newCallback) {
     if (!AnimationCallbackDict.ContainsKey(cozEvent)) {
       AnimationCallbackDict.Add(cozEvent, newCallback);
@@ -92,6 +98,12 @@ public class AnimationManager {
     }
   }
 
+  /// <summary>
+  /// Removes the specified callback to be fired at the end of the AnimationGroup that is called from
+  /// the specified GameEvent.
+  /// </summary>
+  /// <param name="cozEvent">gameEvent</param>
+  /// <param name="newCallback">RobotCallback</param>
   public void RemoveAnimationEndedCallback(GameEvent cozEvent, RobotCallback toRemove) {
     if (AnimationCallbackDict.ContainsKey(cozEvent)) {
       AnimationCallbackDict[cozEvent] -= toRemove;
