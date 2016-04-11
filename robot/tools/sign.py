@@ -53,51 +53,42 @@ def rom_info(file):
 			rom_data = rom_data[:addr] + data + rom_data[addr+len(data):]
 	return rom_data, base_addr, magic_location			
 
-print("Building rom")
-rom_data, base_addr, magic_location = rom_info(argv[1])
+def fix_header(fn):
+	print("Fixing header for %s" % fn)
 
-# Save modified ELF
-print("Fixing header rom")
-with open(argv[1], "rb+") as fo:
-	checksum = SHA1Hash(rom_data[HEADER_LENGTH:]).digest()
+	rom_data, base_addr, magic_location = rom_info(fn)
+	
+	with open(fn, "rb+") as fo:
+		checksum = SHA1Hash(rom_data[HEADER_LENGTH:]).digest()
 
-	fo.seek(magic_location)
-	fo.write(pack("<II20s", base_addr+HEADER_LENGTH, len(rom_data) - HEADER_LENGTH, checksum))
+		fo.seek(magic_location)
+		fo.write(pack("<II20s", base_addr+HEADER_LENGTH, len(rom_data) - HEADER_LENGTH, checksum))
 
-rom_data, base_addr, magic_location = rom_info(argv[1])
+	return 
 
-# Zero pad to a 4k block (flash area)
-while len(rom_data) % BLOCK_LENGTH:
-	rom_data += b"\x00"
+def get_image(fn):
+	rom_data, base_addr, _ = rom_info(fn)
 
-if len(argv) >= 4:
-	print("Outputting raw image")
-	with open(argv[3], "wb") as fo:
-		fo.write(rom_data)
+	# Zero pad to a 4k block (flash area)
+	while len(rom_data) % BLOCK_LENGTH:
+		rom_data += b"\xFF"
+	
+	return rom_data, base_addr
 
-if len(argv) >= 3:
-	print("Creating signed image")
-	with open(argv[2], "wb") as fo:
+# Fix headers
+with open(argv[-1], "wb") as fo:
+	for fn in argv[1:-1]:		
+		kind, fn = fn.split(":")
+		fix_header(fn)
+
+		# Write to our safe
+		rom_data, base_addr = get_image(fn)
+
+		kind =  { 'legacy': None, 'rtip': 0x01, 'body': 0x02 }[kind]
 		for block, data in enumerate(chunk(rom_data, BLOCK_LENGTH)):
+			if kind:
+				fo.write(pack("<HH", 0x5478,kind))
+			
 			fo.write(data)
 			fo.write(pack("<I", block*BLOCK_LENGTH+base_addr))
 			fo.write(SHA1Hash(data).digest())
-
-		# == TODO: UNCOMMENT THIS WHEN NEEDED
-		#aes_key = number.long_to_bytes(random.getrandbits(256))
-		#cypher = AESCipher(aes_key)
-		#encoded = cypher.encrypt(rom_data)
-
-		#checksum = SHA1Hash(encoded).digest()
-
-		#cert = checksum+aes_key
-
-		#key_path = path.join(path.dirname(argv[0]), 'mykey.pem')
-
-		#key = RSA.importKey(open(key_path).read())
-		#cipher = PKCS1_OAEP.new(key)
-		#ciphertext = cipher.encrypt(cert)
-
-		#fo.write(pack("<4sII", "CzmH", len(cert), len(encoded)))
-		#fo.write(cert)	
-		#fo.write(encoded)

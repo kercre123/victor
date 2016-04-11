@@ -45,7 +45,12 @@ nrf: $(ANKI_LOG_TABLE_JSON)
 k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
-release:
+safe:
+	python3 ./tools/sign.py rtip:./build/41/robot.out body:./syscon/build/app/syscon.axf ./releases/rtip.safe
+	python3 ./tools/sign.py legacy:./build/41/robot.out ./releases/robot.safe
+	python3 ./tools/sign.py legacy:./syscon/build/app/syscon.axf ./releases/syscon.safe
+
+release: safe
 	cp ./build/41/robot.safe releases
 	cp ./syscon/build/app/syscon.safe releases
 	cp ./espressif/bin/upgrade/user1.2048.new.3.bin releases/esp.user.bin
@@ -56,10 +61,6 @@ vesp:
 esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3
-
-safe:
-	python3 ./tools/sign.py ./build/41/robot.out ./build/41/robot.safe  ./build/robot.bin
-	python3 ./tools/sign.py ./syscon/build/app/syscon.axf ./syscon/build/app/syscon.safe ./syscon/build/app/syscon.bin
 
 espressif/bin/upgrade/user1.2048.new.3.bin: esp
 

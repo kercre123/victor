@@ -9,7 +9,6 @@ namespace RobotInterface {
   {
     OTA_WiFi_flash_address = 0x100000,
     OTA_RTIP_flash_address = 0x180000,
-    OTA_body_flash_address = 0x190000,
   }
 
   /// Erases flash
@@ -32,7 +31,6 @@ namespace RobotInterface {
     OTA_asset,
     OTA_WiFi,
     OTA_RTIP,
-    OTA_body,
     OTA_stage,
   }
 
