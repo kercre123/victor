@@ -31,6 +31,15 @@ public class AnimationManager {
 
   private IRobot _CurrRobot = null;
 
+  public IRobot CurrentRobot {
+    get {
+      if (_CurrRobot == null) {
+        _CurrRobot = RobotEngineManager.Instance.CurrentRobot;
+      }
+      return _CurrRobot;
+    }
+  }
+
   // Map Animation Group Names to Event Enums using the tool
   public Dictionary<GameEvent, string> AnimationGroupDict = new Dictionary<GameEvent, string>();
   // Map RobotCallbacks to GameEvents instead of AnimationGroups to separate game logic from Animation names
@@ -40,7 +49,6 @@ public class AnimationManager {
 
   public AnimationManager() {
     GameEventManager.Instance.OnGameEvent += GameEventReceived;
-    _CurrRobot = RobotEngineManager.Instance.CurrentRobot;
     // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
     if (Directory.Exists(sEventMapDirectory)) {
       string[] _EventMapFiles = Directory.GetFiles(sEventMapDirectory);
@@ -78,7 +86,7 @@ public class AnimationManager {
       RobotCallback newCallback = null;
       if (!string.IsNullOrEmpty(animGroup)) {
         AnimationCallbackDict.TryGetValue(cozEvent, out newCallback);
-        _CurrRobot.SendAnimationGroup(animGroup, newCallback);
+        CurrentRobot.SendAnimationGroup(animGroup, newCallback);
       }
     }
   }
