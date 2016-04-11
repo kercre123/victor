@@ -10,10 +10,6 @@ namespace DataPersistence {
 
     public List<TimelineEntryData> Sessions;
 
-    public int FriendshipPoints;
-
-    public int FriendshipLevel;
-
     public int GreenPoints;
 
     // TODO: replace with Dictionary<HexType, int>

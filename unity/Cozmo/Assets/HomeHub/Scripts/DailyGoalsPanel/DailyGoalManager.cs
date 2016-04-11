@@ -173,25 +173,19 @@ public class DailyGoalManager : MonoBehaviour {
   // generate a series of random goals for the day.
   public StatContainer GenerateDailyGoals() {
 
-    IRobot rob = RobotEngineManager.Instance.CurrentRobot;
     FriendshipProgressionConfig config = _FriendshipProgConfig;
 
-    int lvl = rob.FriendshipLevel;
-    if (lvl >= config.FriendshipLevels.Length) {
-      lvl = config.FriendshipLevels.Length - 1;
-    }
-    DAS.Event(this, string.Format("GoalGeneration({0},{1})", lvl, rob.GetFriendshipLevelName(lvl)));
     StatBitMask possibleStats = StatBitMask.None;
     int totalGoals = 0;
     int min = 0;
     int max = 0;
     // Iterate through each level and add in the stats introduced for that level
-    for (int i = 0; i <= lvl; i++) {
+    for (int i = 0; i <= 4; i++) {
       possibleStats |= config.FriendshipLevels[i].StatsIntroduced;
     }
-    totalGoals = config.FriendshipLevels[lvl].MaxGoals;
-    min = config.FriendshipLevels[lvl].MinTarget;
-    max = config.FriendshipLevels[lvl].MaxTarget;
+    totalGoals = config.FriendshipLevels[4].MaxGoals;
+    min = config.FriendshipLevels[4].MinTarget;
+    max = config.FriendshipLevels[4].MaxTarget;
 
     // Don't generate more goals than possible stats
     if (totalGoals > possibleStats.Count) {

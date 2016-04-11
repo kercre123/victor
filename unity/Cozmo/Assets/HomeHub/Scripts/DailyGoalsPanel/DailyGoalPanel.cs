@@ -105,8 +105,8 @@ public class DailyGoalPanel : MonoBehaviour {
 
       // start a new session
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today) {
-        StartingFriendshipLevel = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel,
-        StartingFriendshipPoints = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints
+        StartingFriendshipLevel = 4,
+        StartingFriendshipPoints = 10
       };
 
       StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
@@ -126,12 +126,6 @@ public class DailyGoalPanel : MonoBehaviour {
 
 
   private void CompleteSession(TimelineEntryData timelineEntry) {
-
-    int friendshipPoints = DailyGoalManager.Instance.CalculateFriendshipPoints(timelineEntry.Progress, timelineEntry.Goals);
-
-    RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
-    UpdateFriendshipPoints(timelineEntry, friendshipPoints);
-
     int stat_count = (int)Anki.Cozmo.ProgressionStatType.Count; 
     for (int i = 0; i < stat_count; ++i) {
       var targetStat = (Anki.Cozmo.ProgressionStatType)i;
@@ -147,7 +141,7 @@ public class DailyGoalPanel : MonoBehaviour {
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
 
-    ShowDailySessionPanel(timelineEntry, HandleOnFriendshipBarAnimateComplete);
+    ShowDailySessionPanel(timelineEntry);
   }
 
   private void ShowDailySessionPanel(TimelineEntryData session, OnFriendshipBarAnimateComplete onComplete = null) {
@@ -165,30 +159,8 @@ public class DailyGoalPanel : MonoBehaviour {
     _DailySummaryInstance.ViewClosed += HandleDailySummaryClosed;
   }
 
-
-  private void HandleOnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel) {
-
-    TimeSpan deltaTime = DataPersistenceManager.Instance.Data.Sessions.Count <= 1 ? new TimeSpan(1, 0, 0, 0) : 
-      (DataPersistenceManager.Instance.Data.Sessions[DataPersistenceManager.Instance.Data.Sessions.Count - 2].Date - DataPersistenceManager.Today);
-    int friendshipPoints = ((int)deltaTime.TotalDays + 1) * 10;
-    summaryPanel.FriendshipBarAnimateComplete -= HandleOnFriendshipBarAnimateComplete;
-
-    if (friendshipPoints < 0) {
-      RobotEngineManager.Instance.CurrentRobot.AddToFriendshipPoints(friendshipPoints);
-      UpdateFriendshipPoints(data, friendshipPoints);
-      summaryPanel.AnimateFriendshipBar(data);
-    }
-  }
-
   private void UpdateFriendshipPoints(TimelineEntryData timelineEntry, int friendshipPoints) {
-    timelineEntry.AwardedFriendshipPoints = friendshipPoints;
-    DataPersistenceManager.Instance.Data.FriendshipLevel
-    = timelineEntry.EndingFriendshipLevel
-      = RobotEngineManager.Instance.CurrentRobot.FriendshipLevel;
-    DataPersistenceManager.Instance.Data.FriendshipPoints
-    = timelineEntry.EndingFriendshipPoints
-      = RobotEngineManager.Instance.CurrentRobot.FriendshipPoints;
-    timelineEntry.Complete = true;
+
   }
 
   private void HandleDailySummaryClosed() {
