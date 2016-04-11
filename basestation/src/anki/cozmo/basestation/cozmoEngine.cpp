@@ -39,7 +39,6 @@
 #include "util/global/globalDefinitions.h"
 #if ANKI_DEV_CHEATS
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
-#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #endif
 
 namespace Anki {
@@ -90,18 +89,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   
   auto updateFirmwareCallback = std::bind(&CozmoEngine::HandleUpdateFirmware, this, std::placeholders::_1);
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::UpdateFirmware, updateFirmwareCallback));
-  
-#if ANKI_DEV_CHEATS
-  auto devLoggingCallback = [] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) {
-    auto devLoggingSystem = DevLoggingSystem::GetInstance();
-    auto msg = event.GetData().Get_UploadDevLogs();
-    if (nullptr != devLoggingSystem)
-    {
-      devLoggingSystem->PrepareForUpload(msg.namePrefix);
-    }
-  };
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::UploadDevLogs, devLoggingCallback));
-#endif
   
   _debugConsoleManager.Init(_context->GetExternalInterface());
 }

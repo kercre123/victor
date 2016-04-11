@@ -3,6 +3,7 @@
 #include "util/logging/rollingFileLogger.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/console/consoleInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -181,6 +182,19 @@ void DevLoggingSystem::LogMessage(const RobotInterface::RobotToEngine& message)
   _robotToEngineLog->Write(PrepareMessage(message));
 }
   
+#if REMOTE_CONSOLE_ENABLED
+void UploadDevLogs( ConsoleFunctionContextRef context )
+{
+  auto namePrefix = ConsoleArg_GetOptional_String( context, "namePrefix", "" );
+  
+  auto devLogging = DevLoggingSystem::GetInstance();
+  if (nullptr != devLogging)
+  {
+    devLogging->PrepareForUpload(namePrefix);
+  }
+}
+CONSOLE_FUNC( UploadDevLogs, "Dev", optional const char* namePrefix );
+#endif
 
 
 } // end namespace Cozmo
