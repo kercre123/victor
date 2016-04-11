@@ -514,7 +514,7 @@
 
   <Group>
     <GroupName>crypto</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -549,8 +549,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\crypto\sha1.cpp</PathWithFileName>
-      <FilenameWithoutPath>sha1.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\crypto\aes.cpp</PathWithFileName>
+      <FilenameWithoutPath>aes.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
@@ -561,8 +561,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\crypto\aes.cpp</PathWithFileName>
-      <FilenameWithoutPath>aes.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\crypto\sha1.cpp</PathWithFileName>
+      <FilenameWithoutPath>sha1.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

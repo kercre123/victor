@@ -568,14 +568,14 @@
               <FilePath>.\crypto\bignum.cpp</FilePath>
             </File>
             <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\sha1.cpp</FilePath>
-            </File>
-            <File>
               <FileName>aes.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\crypto\aes.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>sha1.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\crypto\sha1.cpp</FilePath>
             </File>
           </Files>
         </Group>
