@@ -311,8 +311,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\hal\sha1.cpp</PathWithFileName>
-      <FilenameWithoutPath>sha1.cpp</FilenameWithoutPath>
+      <PathWithFileName>.\hal\crc32.cpp</PathWithFileName>
+      <FilenameWithoutPath>crc32.cpp</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

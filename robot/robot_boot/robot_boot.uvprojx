@@ -411,9 +411,9 @@
               <FilePath>.\hal\spi.cpp</FilePath>
             </File>
             <File>
-              <FileName>sha1.cpp</FileName>
+              <FileName>crc32.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\hal\sha1.cpp</FilePath>
+              <FilePath>.\hal\crc32.cpp</FilePath>
             </File>
           </Files>
         </Group>
