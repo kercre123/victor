@@ -97,7 +97,7 @@ public class DailyGoalPanel : MonoBehaviour {
       }
     }
     else {
-      var lastSession = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+      var lastSession = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
 
       if (lastSession != null && !lastSession.Complete) {
         CompleteSession(lastSession);
@@ -116,7 +116,7 @@ public class DailyGoalPanel : MonoBehaviour {
 
       SetDailyGoals(newSession.Progress, newSession.Goals, rewardIcons);
 
-      DataPersistenceManager.Instance.Data.Sessions.Add(newSession);
+      DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
 
       DataPersistenceManager.Instance.Save();
     }

@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -190,7 +190,7 @@ public abstract class GameBase : MonoBehaviour {
     // sessions are in chronological order, completed challenges are as well.
     // using Reversed gets them in reverse chronological order
     var completedChallenges = 
-      DataPersistence.DataPersistenceManager.Instance.Data.Sessions
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions
           .Reversed().SelectMany(x => x.CompletedChallenges.Reversed());
 
     int noveltyPoints = 0;

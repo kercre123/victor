@@ -77,7 +77,7 @@ namespace Conversations {
     }
 
     public void SaveConversationToHistory() {
-      DataPersistence.DataPersistenceManager.Instance.Data.ConversationHistory.AddConversation(_CurrentConversationKey, _CurrentConversation);
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.ConversationHistory.AddConversation(_CurrentConversationKey, _CurrentConversation);
       DataPersistence.DataPersistenceManager.Instance.Save();
       StartNewConversation("Default");
     }

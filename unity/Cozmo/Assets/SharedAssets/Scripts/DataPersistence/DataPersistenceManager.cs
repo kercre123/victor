@@ -63,7 +63,7 @@ namespace DataPersistence {
 
     public TimelineEntryData CurrentSession { 
       get { 
-        var lastSession = Data.Sessions.LastOrDefault();
+        var lastSession = Data.DefaultProfile.Sessions.LastOrDefault();
         if (lastSession != null && lastSession.Date == DataPersistenceManager.Today) {            
           return lastSession;
         }

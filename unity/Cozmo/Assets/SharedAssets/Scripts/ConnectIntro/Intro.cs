@@ -154,8 +154,8 @@ public class Intro : MonoBehaviour {
     }
 
     // actually load default volume
-    if (DataPersistence.DataPersistenceManager.Instance.Data.VolumePreferences.ContainsKey(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot)) {
-      _Robot.SetRobotVolume(DataPersistence.DataPersistenceManager.Instance.Data.VolumePreferences[Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot]);
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences.ContainsKey(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot)) {
+      _Robot.SetRobotVolume(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences[Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot]);
     }
     else {
       #if UNITY_EDITOR

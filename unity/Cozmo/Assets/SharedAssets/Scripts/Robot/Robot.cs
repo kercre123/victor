@@ -599,7 +599,7 @@ public class Robot : IRobot {
       // Update data and save to actually grant progress.
       ProgressionStats[index] = value;
 
-      var session = DataPersistence.DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+      var session = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
       if (session != null) {
         session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
       }
@@ -943,7 +943,7 @@ public class Robot : IRobot {
 
   public float GetRobotVolume() {
     float volume = 1f;
-    Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> currentVolumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.VolumePreferences;
+    Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> currentVolumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
     currentVolumePrefs.TryGetValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot, out volume);
     return volume;
   }

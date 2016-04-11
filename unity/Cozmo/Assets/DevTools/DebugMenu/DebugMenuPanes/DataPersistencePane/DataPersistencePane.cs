@@ -88,7 +88,7 @@ namespace DataPersistence {
         days = 1;
       }
       if (days > 0) {
-        DataPersistenceManager.Instance.Data.Sessions.ForEach(x => x.Date = x.Date.AddDays(-days));
+        DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.ForEach(x => x.Date = x.Date.AddDays(-days));
         DataPersistenceManager.Instance.Save();
       }
 

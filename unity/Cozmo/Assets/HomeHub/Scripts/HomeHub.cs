@@ -265,10 +265,10 @@ namespace Cozmo.HomeHub {
     private void CompleteChallenge(CompletedChallengeData completedChallenge, bool won, StatContainer rewards) { 
       // the last session is not necessarily valid as the 'CurrentSession', as its possible
       // the day rolled over while we were playing the challenge.
-      var session = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+      var session = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
       if (session != null) {
         session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
-        DataPersistenceManager.Instance.Data.GreenPoints += 10;
+        DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints += 10;
       }
       else {
         DAS.Error(this, "Somehow managed to complete a challenge with no sessions saved!");
