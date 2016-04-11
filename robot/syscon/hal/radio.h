@@ -106,6 +106,7 @@ namespace Radio {
   void prepare(void* userdata);
   void resume(void* userdata);
   void manage();
+  void updateLights();
 }
 
 #endif

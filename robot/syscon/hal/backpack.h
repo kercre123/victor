@@ -20,7 +20,7 @@ struct charliePlex_s
 namespace Backpack {
   void init();
   void update(void);
-  void manage(void*);
+  void manage();
   void setLights(const LightState* lights);
   void lightsOff();
   void lightMode(LightDriverMode mode);

@@ -51,7 +51,6 @@ void Backpack::init()
 {
   currentChannel = &RGBLightPins[0];
   memset(drive_value, 0xFF, sizeof(drive_value));
-  RTOS::schedule(manage);
 }
 
 static inline void lights_out(void) {
@@ -144,7 +143,7 @@ void Backpack::update(void) {
   }
 }
 
-void Backpack::manage(void*) { 
+void Backpack::manage() { 
   // 8-bit pseudo log scale.  Gives us full bright (64 level)
   static const uint8_t AdjustTable[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
