@@ -32,7 +32,6 @@ namespace SpeedTap {
     private bool _TriedFake = false;
     private bool _TryFake = false;
     private bool _TryPeek = false;
-    private bool _MidHand = false;
     private bool _PlayReady = false;
     private bool _CozmoTapRegistered = false;
     private bool _CozmoHitCube = false;
@@ -46,7 +45,7 @@ namespace SpeedTap {
       _StartTimeMs = -1.0f;
       _LightsOn = false;
       _SpeedTapGame.PlayerHitFirst = false;
-      _MidHand = false;
+      _SpeedTapGame.MidHand = false;
       _PlayReady = false;
       _CozmoTapRegistered = false;
       _MatchProbability = _kBaseMatchProbability;
@@ -59,11 +58,11 @@ namespace SpeedTap {
       _CurrentRobot.SetLiftHeight(1.0f);
       _StartTimeMs = Time.time * 1000.0f;
       _PlayReady = true;
-      if (_MidHand == false) {
+      if (_SpeedTapGame.MidHand == false) {
         _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
         _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
         _SpeedTapGame.CozmoTappedBlockEvent += CozmoDidTap;
-        _MidHand = true;
+        _SpeedTapGame.MidHand = true;
       }
     }
 
@@ -71,7 +70,7 @@ namespace SpeedTap {
       base.Update();
       float currTimeMs = Time.time * 1000.0f;
       // Do not run game while not ready for play
-      if (_PlayReady == false || _MidHand == false) {
+      if (_PlayReady == false || _SpeedTapGame.MidHand == false) {
         // If Tapping, check timing
         if (_CozmoTapping && (currTimeMs - _TapStartTimeMs) >= _kTapAnimHitDelay) {
           if (_SpeedTapGame.PlayerHitFirst == false) {
@@ -89,7 +88,7 @@ namespace SpeedTap {
               _CozmoTapRegistered = false;
               _CozmoHitCube = false;
               _CozmoTapping = true;
-              _MidHand = false;
+              _SpeedTapGame.MidHand = false;
               _TapStartTimeMs = currTimeMs;
             }
           }

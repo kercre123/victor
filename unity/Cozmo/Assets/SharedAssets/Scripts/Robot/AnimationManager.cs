@@ -31,8 +31,10 @@ public class AnimationManager {
 
   private IRobot _CurrRobot = null;
 
-  // Map Animation Group Names to Event Enums
+  // Map Animation Group Names to Event Enums using the tool
   public Dictionary<GameEvent, string> AnimationGroupDict = new Dictionary<GameEvent, string>();
+  // Map RobotCallbacks to GameEvents instead of AnimationGroups to separate game logic from Animation names
+  private Dictionary<GameEvent, RobotCallback> AnimationCallbackDict = new Dictionary<GameEvent, RobotCallback>();
 
   public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroupMaps"; } }
 
@@ -73,10 +75,28 @@ public class AnimationManager {
   public void GameEventReceived(GameEvent cozEvent) {
     string animGroup = "";
     if (AnimationGroupDict.TryGetValue(cozEvent, out animGroup)) {
+      RobotCallback newCallback = null;
       if (!string.IsNullOrEmpty(animGroup)) {
-        _CurrRobot.SendAnimationGroup(animGroup);
+        AnimationCallbackDict.TryGetValue(cozEvent, out newCallback);
+        _CurrRobot.SendAnimationGroup(animGroup, newCallback);
       }
     }
   }
+
+  public void AddAnimationEndedCallback(GameEvent cozEvent, RobotCallback newCallback) {
+    if (!AnimationCallbackDict.ContainsKey(cozEvent)) {
+      AnimationCallbackDict.Add(cozEvent, newCallback);
+    }
+    else {
+      AnimationCallbackDict[cozEvent] += newCallback;
+    }
+  }
+
+  public void RemoveAnimationEndedCallback(GameEvent cozEvent, RobotCallback toRemove) {
+    if (AnimationCallbackDict.ContainsKey(cozEvent)) {
+      AnimationCallbackDict[cozEvent] -= toRemove;
+    }
+  }
+
 
 }

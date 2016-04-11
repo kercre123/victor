@@ -21,6 +21,7 @@ namespace SpeedTap {
     public LightCube PlayerBlock;
     public bool PlayerHitFirst = false;
     public bool AllRoundsOver = false;
+    public bool MidHand = false;
 
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
@@ -125,6 +126,7 @@ namespace SpeedTap {
       else {
         _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinHand, 
           HandleHandEndAnimDone));
+        
       }
     }
 
@@ -230,6 +232,10 @@ namespace SpeedTap {
       _DifficultyOptions = speedTapConfig.DifficultyOptions;
       _BetweenRoundsMusic = speedTapConfig.BetweenRoundMusic;
       InitializeMinigameObjects(1);
+    }
+
+    private void InitializeAnimationCallbacks() {
+      //AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.
     }
 
     private int HighestLevelCompleted() {
