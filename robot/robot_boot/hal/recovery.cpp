@@ -118,9 +118,8 @@ static inline bool FlashBlock() {
   return true;
 }
 
-void EnterRecovery(void) {
-  SPI0_PUSHR_SLAVE = STATE_IDLE;
-  for (;;) {
+void EnterRecovery(void) {  
+	for (;;) {
     while (WaitForWord() != COMMAND_HEADER);
     SPI0_PUSHR_SLAVE = STATE_BUSY;
     
@@ -133,6 +132,10 @@ void EnterRecovery(void) {
       case COMMAND_FLASH:
         SPI0_PUSHR_SLAVE = FlashBlock() ? STATE_IDLE : STATE_NACK;
         break ;
+			
+			case COMMAND_FLASH_BODY:
+				// TODO: WRITE TO BODY	
+				break ;
     }
   }
 }

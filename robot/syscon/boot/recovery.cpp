@@ -249,6 +249,8 @@ void BlinkALot(void) {
   }
 }
 
+extern bool CheckSig(void);
+
 void EnterRecovery(void) {
   UARTInit();
 
@@ -276,6 +278,10 @@ void EnterRecovery(void) {
 				setLight(ReadWord());
 				break ;
 			
+			case COMMAND_CHECK_SIG:
+				state = CheckSig() ? STATE_IDLE : STATE_NACK;
+				break ;
+
 			default:
         break ;
     }

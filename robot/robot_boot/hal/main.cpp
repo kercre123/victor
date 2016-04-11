@@ -64,10 +64,12 @@ int main (void) {
 	Power::init();
 	SPI::init();
 
-  if (*recovery_word == recovery_value || !CheckSig()) {
+  /* THIS LOGIC IS ALL GOING AWAY EVENTUALLY
+	if (*recovery_word == recovery_value || !CheckSig()) {
 		*recovery_word = 0;
 		EnterRecovery();
   }
+	*/
   
 	SCB->VTOR = (uint32_t) IMAGE_HEADER->vector_tbl;
   IMAGE_HEADER->entry_point();
