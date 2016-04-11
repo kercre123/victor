@@ -483,11 +483,6 @@
               <FilePath>.\k02_hal\hal\imu.cpp</FilePath>
             </File>
             <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\sha1.cpp</FilePath>
-            </File>
-            <File>
               <FileName>test.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\test.cpp</FilePath>
