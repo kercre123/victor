@@ -268,6 +268,8 @@ namespace Cozmo.HomeHub {
       var session = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
       if (session != null) {
         session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
+        // TODO: This is a placeholder for rewarding green points. Eventually the daily goals system
+        // will be the one responsible for rewarding green points.
         DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints += 10;
       }
       else {
