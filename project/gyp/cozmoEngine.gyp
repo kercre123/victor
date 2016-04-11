@@ -59,7 +59,7 @@
     'cte_lib_search_path_mac_release': [
       '<(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release', # NOTE WE USE RELEASE HERE INTENTIONALLY
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Release',
-      '<(coretech_external_path)/llibarchive/project/mac/DerivedData/Release',
+      '<(coretech_external_path)/libarchive/project/mac/DerivedData/Release',
     ],
 
     'cte_lib_search_path_ios_debug': [
