@@ -214,6 +214,11 @@ message EnableLiftPower
   bool enable
 }
 
+message ConfigureBluetooth
+{
+  bool enable
+}
+
 message EnableCamCalibMode
 {
   float_32 headPower,
@@ -302,6 +307,7 @@ union EngineToRobot
   CubeLights                    setCubeLights               = 0x04,
   SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
+  ConfigureBluetooth            configureBluetooth          = 0x07,
 
   NVReadResultToBody            nvReadToBody                = 0x08,
   NVOpResultToBody              nvOpResultToBody            = 0x09,

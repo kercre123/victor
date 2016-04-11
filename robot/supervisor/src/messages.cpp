@@ -819,6 +819,10 @@ namespace Anki {
       {
         // nothing to do here
       }
+      void Process_configureBluetooth(const RobotInterface::ConfigureBluetooth&)
+      {
+        // nothing to do here
+      }
       void Process_testState(const RobotInterface::TestState&)
       {
         // Nothing to do here

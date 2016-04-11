@@ -25,9 +25,6 @@ const uint16_t COZMO_UUID_TRANSMIT_CHAR     = 0xbee0;
 
 const uint16_t MFG_DATA_ID                  = 0xefbe;
 
-const uint8_t DEVICE_NAME[]                 = "Cozmet";
-const int DEVICE_NAME_LENGTH                = sizeof(DEVICE_NAME) - 1;
-
 // Gap connection parameters
 const ble_gap_conn_params_t gap_conn_params = {
   .min_conn_interval = MSEC_TO_UNITS(100, UNIT_1_25_MS),
@@ -67,16 +64,20 @@ const ble_gap_sec_params_t m_sec_params = {
   .max_key_size = 16
 };
 
+const uint8_t* DEVICE_NAME = "Cozmo";
+const int DEVICE_NAME_LENGTH = 5;
+
 // Advertising settings
-const ManufacturerData  manufactuerer_data = {
-  .identifer = {'C', 'Z'}, 
+// NOTE: THIS IS NOT CONSTANT SO I CAN COPY SOME REGISTER VALUES IN AT RUNTIME
+ManufacturerData  manif_data = {
   .revision = COZMO_VERSION_COMMIT 
 };
 
+
 const ble_advdata_manuf_data_t m_manuf_data = {
   .company_identifier = MFG_DATA_ID,
-  .data.size = sizeof(manufactuerer_data),
-  .data.p_data = (uint8_t*)&manufactuerer_data
+  .data.size = sizeof(manif_data),
+  .data.p_data = (uint8_t*)&manif_data
 };
 
 const ble_advdata_t m_advdata = {
