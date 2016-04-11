@@ -36,6 +36,9 @@ namespace Cozmo.HomeHub {
     private RectTransform _ScrollRectContent;
 
     [SerializeField]
+    private Cozmo.UI.ProgressBar _GreenPointsProgressBar;
+
+    [SerializeField]
     private UnityEngine.UI.ScrollRect _ScrollRect;
 
     private HomeHub _HomeHubInstance;
@@ -77,6 +80,8 @@ namespace Cozmo.HomeHub {
       _CozmoTabButton.onClick.AddListener(HandleCozmoTabButton);
       _PlayTabButton.onClick.AddListener(HandlePlayTabButton);
       _ProfileTabButton.onClick.AddListener(HandleProfileTabButton);
+
+      _GreenPointsProgressBar.SetProgress(DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints / 100.0f);
 
     }
 
