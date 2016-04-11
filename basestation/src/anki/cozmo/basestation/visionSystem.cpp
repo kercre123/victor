@@ -26,6 +26,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/helpers/cleanupHelper.h"
 #include "util/console/consoleInterface.h"
 
 //
@@ -2456,25 +2457,13 @@ namespace Cozmo {
     _faceDetectionParameters.maxWidth = maxObjectWidth;
   }
   
-  // TODO: Move this to Anki::Util
-  // Instantiate this class with a function you want called when it goes out of
-  // scope, to do cleanup for you, e.g. in case of early returns from a function.
-  class Cleanup
-  {
-    std::function<void()> _cleanupFcn;
-  public:
-    Cleanup(std::function<void()>&& fcn) : _cleanupFcn(fcn) { }
-    ~Cleanup() { _cleanupFcn(); }
-  };
-  
-  
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
     ToolCode codeRead = ToolCode::UnknownTool;
     
     // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
     // no matter how we return from this function
-    Cleanup disableCheckToolCode([this,&codeRead]() {
+    Util::CleanupHelper disableCheckToolCode([this,&codeRead]() {
       this->_toolCodeMailbox.putMessage(codeRead);
       this->EnableMode(VisionMode::CheckingToolCode, false);
       PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledCheckingToolCode", "");

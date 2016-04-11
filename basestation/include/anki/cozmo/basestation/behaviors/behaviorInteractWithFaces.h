@@ -104,6 +104,9 @@ namespace Cozmo {
     bool   _lookingAtLeftEye = true;
     AnimationStreamer::Tag            _eyeDartLayerTag = AnimationStreamer::NotAnimatingTag;
     AnimationStreamer::ParamContainer _originalLiveIdleParams;
+
+    // hack for now, only allow the behavior to run for a certain amount of time
+    float _hackTimeout_s = -1.0f;
     
     s32 _reactionAnimCtr = -1;
     
