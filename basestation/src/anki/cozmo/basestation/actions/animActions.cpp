@@ -198,7 +198,7 @@ namespace Anki {
       
       // Now actually check our animation to see if we have an initial face frame
       const Animation* ourAnimation = _robot.GetCannedAnimation(_animName);
-      assert(ourAnimation);
+      
       
       bool animHasInitialFaceFrame = false;
       if (nullptr != ourAnimation)
@@ -216,6 +216,12 @@ namespace Anki {
         {
           animHasInitialFaceFrame = true;
         }
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("PlayAnimationAction.NeedsAlteredAnimation.AnimNotFound",
+                          "Animation requested for unknown animation '%s'.\n",
+                          _animName.c_str());
       }
       
       // If we have an initial face frame, no need to alter the animation
