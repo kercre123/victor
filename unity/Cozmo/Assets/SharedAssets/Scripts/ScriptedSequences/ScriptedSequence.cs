@@ -31,7 +31,7 @@ namespace ScriptedSequences {
       get { return _IsComplete; } 
       private set { 
         if (value && !Repeatable) {
-          DataPersistence.DataPersistenceManager.Instance.Data.CompletedScriptedSequences[Name] = true;
+          DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.CompletedScriptedSequences[Name] = true;
           DataPersistence.DataPersistenceManager.Instance.Save();
         }
         _IsComplete = value; 
@@ -88,7 +88,7 @@ namespace ScriptedSequences {
 
     public void Initialize() {
       if (!Repeatable) {
-        DataPersistence.DataPersistenceManager.Instance.Data.CompletedScriptedSequences.TryGetValue(Name, out _IsComplete);
+        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.CompletedScriptedSequences.TryGetValue(Name, out _IsComplete);
       }
 
       #if DEBUG_SCRIPTED_SEQUENCES

@@ -148,7 +148,7 @@ namespace Anki {
           // TODO Need to cast for Invalid GameObj to set global RTPCs -- JMR Do I still need this?
           client.PostParameter((GameParameter.ParameterType)parameter, volume, GameObjectType.Invalid, timeInMS, curve);
 
-          System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.VolumePreferences;
+          System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
           if (volumePrefs.ContainsKey(parameter)) {
             volumePrefs[parameter] = volume;
           }

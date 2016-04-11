@@ -13,9 +13,6 @@ namespace DataPersistence {
     private Button _ResetSaveDataButton;
 
     [SerializeField]
-    private Button _GenerateFakeDataButton;
-
-    [SerializeField]
     private Button _StartNewSessionButton;
 
     [SerializeField]
@@ -29,7 +26,6 @@ namespace DataPersistence {
 
     [SerializeField]
     private ChallengeDataList _ChallengeDataList;
-
 
     [SerializeField]
     private InputField _NotificationTextInput;
@@ -65,7 +61,6 @@ namespace DataPersistence {
 
     private void Start() {
       _ResetSaveDataButton.onClick.AddListener(HandleResetSaveDataButtonClicked);
-      _GenerateFakeDataButton.onClick.AddListener(HandleGenerateFakeDataButtonClicked);
       _StartNewSessionButton.onClick.AddListener(StartNewSessionButtonClicked);
       _WinGameButton.onClick.AddListener(WinGameButtonClicked);
       _LoseGameButton.onClick.AddListener(LoseGameButtonClicked);
@@ -86,12 +81,6 @@ namespace DataPersistence {
       TryReloadHomeHub();
     }
 
-    private void HandleGenerateFakeDataButtonClicked() {
-      GenerateFakeData(_ChallengeDataList.ChallengeData.Select(x => x.ChallengeID).ToArray());
-      DataPersistenceManager.Instance.Save();
-      TryReloadHomeHub();
-    }
-
     private void StartNewSessionButtonClicked() {
 
       int days;
@@ -99,49 +88,11 @@ namespace DataPersistence {
         days = 1;
       }
       if (days > 0) {
-        DataPersistenceManager.Instance.Data.Sessions.ForEach(x => x.Date = x.Date.AddDays(-days));
+        DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.ForEach(x => x.Date = x.Date.AddDays(-days));
         DataPersistenceManager.Instance.Save();
       }
 
       TryReloadHomeHub();
-    }
-
-    private void GenerateFakeData(string[] challengeIds) {
-      DataPersistenceManager.Instance.Data.Sessions.Clear();
-
-      var today = DataPersistenceManager.Today;
-
-      var startDate = today.AddDays(-TimelineView.kGeneratedTimelineHistoryLength);
-
-      for (int i = 0; i < TimelineView.kGeneratedTimelineHistoryLength; i++) {
-        var date = startDate.AddDays(i);
-
-        var entry = new TimelineEntryData(date);
-
-        for (int j = 0; j < (int)Anki.Cozmo.ProgressionStatType.Count; j++) {
-          var stat = (Anki.Cozmo.ProgressionStatType)j;
-          if (UnityEngine.Random.Range(0f, 1f) > 0.6f) {
-            int goal = UnityEngine.Random.Range(0, 6);
-            int progress = UnityEngine.Random.Range(0, 12);
-            entry.Goals[stat] = goal;
-            entry.Progress[stat] = progress;
-          }
-        }
-
-        int challengeCount = UnityEngine.Random.Range(0, 20);
-
-        for (int j = 0; j < challengeCount; j++) {
-          entry.CompletedChallenges.Add(new CompletedChallengeData() {
-            ChallengeId = challengeIds[UnityEngine.Random.Range(0, challengeIds.Length)]
-          });
-        }
-
-        // don't add any days with goal of 0
-        if (entry.Goals.Total > 0) {
-          DataPersistenceManager.Instance.Data.Sessions.Add(entry);
-        }
-      }
-
     }
 
     private void WinGameButtonClicked() {

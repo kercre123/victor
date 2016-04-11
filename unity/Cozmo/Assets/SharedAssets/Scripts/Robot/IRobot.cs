@@ -33,8 +33,6 @@ public interface ILight {
 // Interface for Robot so we can mock it in unit tests
 public interface IRobot : IDisposable {
 
-  event FriendshipLevelUp OnFriendshipLevelUp;
-
   byte ID { get; }
 
   float HeadAngle { get; }
@@ -74,10 +72,6 @@ public interface IRobot : IDisposable {
   Dictionary<int, LightCube> LightCubes { get; }
 
   List<Face> Faces { get; }
-
-  int FriendshipPoints { get; }
-
-  int FriendshipLevel { get; }
 
   float[] EmotionValues { get; }
 
@@ -126,14 +120,6 @@ public interface IRobot : IDisposable {
   void UpdateInfo(G2U.RobotState message);
 
   void UpdateDirtyList(ObservedObject dirty);
-
-  void InitializeFriendshipPoints();
-
-  void AddToFriendshipPoints(int deltaValue);
-
-  string GetFriendshipLevelName(int friendshipLevel);
-
-  int GetFriendshipLevelByName(string friendshipName);
 
   int GetProgressionStat(Anki.Cozmo.ProgressionStatType index);
 
