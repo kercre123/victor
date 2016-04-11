@@ -781,6 +781,11 @@ public class MockRobot : IRobot {
     set;
   }
 
+  public string CurrentDebugAnimationString { 
+    get; 
+    set; 
+  }
+
   private ObservedObject _CarryingObject;
 
   public ObservedObject CarryingObject {

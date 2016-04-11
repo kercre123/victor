@@ -1,13 +1,13 @@
 ﻿using UnityEngine;
 using System.Collections;
 using Anki.UI;
-using Anki.Cozmo.Viz;
 
 public class RobotStateTextField : MonoBehaviour {
 
   [SerializeField]
   private AnkiTextLabel _RobotStateLabel;
 
+  // static can be toggled when textfield doesn't exist.
   private static bool _sUseAnimString = false;
 
   public static void UseAnimString(bool enable) {
@@ -17,8 +17,9 @@ public class RobotStateTextField : MonoBehaviour {
   private void Update() {
     if (RobotEngineManager.Instance.CurrentRobot != null) {
       if (_sUseAnimString) {
-        if (VizManager.Instance.AnimationName != _RobotStateLabel.text) {
-          _RobotStateLabel.text = VizManager.Instance.AnimationName;
+        IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+        if (robot.CurrentDebugAnimationString != _RobotStateLabel.text) {
+          _RobotStateLabel.text = "Anim: " + robot.CurrentDebugAnimationString;
         }
       }
       else {
