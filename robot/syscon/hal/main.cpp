@@ -140,5 +140,7 @@ int main(void)
     // This means that if the crypto engine is running, the lights will stop pulsing. 
     Crypto::manage();
     Lights::manage();
+    Backpack::manage();
+    Radio::updateLights();
   }
 }
