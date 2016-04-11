@@ -7,6 +7,7 @@
 #include "anki/cozmo/robot/drop.h"
 #include "hal/portable.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #include "spi.h"
 #include "uart.h"
@@ -71,12 +72,6 @@ static bool ProcessDrop(void) {
           SPI::EnterRecoveryMode();
           break;
         }
-        case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_bodyUpgradeData:
-        {
-          //assert(drop->payloadLen-1 == Anki::Cozmo::RobotInterface::BodyUpgradeData::MAX_SIZE);
-          UART::SendRecoveryData(payload_data+1, Anki::Cozmo::RobotInterface::BodyUpgradeData::MAX_SIZE);
-          break;
-        }
         default:
         {
           Anki::Cozmo::HAL::WiFi::ReceiveMessage(drop->payload, drop->payloadLen);
@@ -123,23 +118,16 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, bool eof) {
   
   const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - jpeglen;
 	drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
-	if ((drop_tx->payloadLen == 0) && (remainingSpace >= sizeof(RobotInterface::BodyFirmwareState))) // Have nothing to send so transmit body state info
-	{
-		Anki::Cozmo::RobotInterface::BodyFirmwareState bodyState;
-		bodyState.state = UART::recoveryMode;
-		bodyState.count = UART::RecoveryStateUpdated;
-		memcpy(drop_addr, &bodyState, sizeof(Anki::Cozmo::RobotInterface::BodyFirmwareState));
-		drop_tx->payloadLen = sizeof(Anki::Cozmo::RobotInterface::BodyFirmwareState);
-		drop_tx->droplet |= bootloaderStatus;
-	}
 }
 
 void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
-  __disable_irq();
   static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
   static const uint32_t recovery_value = 0xCAFEBABE;
+	
   *recovery_word = recovery_value;
-  NVIC_SystemReset();
+
+	Anki::Cozmo::RobotInterface::BodyReset m;
+	RobotInterface::SendMessage(m);
 };
 
 extern "C"
@@ -269,33 +257,8 @@ void SyncSPI(void) {
 }
 
 void Anki::Cozmo::HAL::SPI::Init(void) {
-  // Turn on power to DMA, PORTC and SPI0
-  SIM_SCGC6 |= SIM_SCGC6_SPI0_MASK | SIM_SCGC6_DMAMUX_MASK;
-  SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK | SIM_SCGC5_PORTE_MASK;
+  // Enable and configure our DMA
   SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
-
-  // Configure SPI pins
-  PORTD_PCR0  = PORT_PCR_MUX(2) |  // SPI0_PCS0 (internal)
-                PORT_PCR_PE_MASK;
-
-  PORTD_PCR4  = PORT_PCR_MUX(1);
-  GPIOD_PDDR &= ~(1 << 4);
-
-  PORTE_PCR18 = PORT_PCR_MUX(2); // SPI0_SOUT
-  PORTE_PCR19 = PORT_PCR_MUX(2); // SPI0_SIN
-
-  // Configure SPI perf to the magical value of magicalness
-  SPI0_MCR = SPI_MCR_DCONF(0) |
-             SPI_MCR_SMPL_PT(0) |
-             SPI_MCR_CLR_TXF_MASK |
-             SPI_MCR_CLR_RXF_MASK;
-
-  SPI0_CTAR0_SLAVE = SPI_CTAR_FMSZ(15);
-
-  SPI0_RSER = SPI_RSER_TFFF_RE_MASK |
-              SPI_RSER_TFFF_DIRS_MASK |
-              SPI_RSER_RFDF_RE_MASK |
-              SPI_RSER_RFDF_DIRS_MASK;
 
   // Clear all status flags
   SPI0_SR = SPI0_SR;

@@ -30,8 +30,6 @@ static const uint32_t     HEADER_SIGNATURE = 0x304D5A43;
 
 static const BootLoaderSignature* IMAGE_HEADER = (BootLoaderSignature*) BOOT_HEADER_LOCATION;
 
-uint32_t* MAGIC_LOCATION = (uint32_t*) 0x20003FFC;
-
 // Boot loader info
 bool CheckSig(void) {
   if (IMAGE_HEADER->sig != HEADER_SIGNATURE) return false;
@@ -54,20 +52,23 @@ bool CheckSig(void) {
 extern void BlinkALot(void);
 
 int main (void) {
-  TimerInit();
+	__disable_irq();
 
+  // Configure our system clock
+	TimerInit();
+
+	// Power on the system
   Battery::init();
+	Battery::powerOn();
 
-  BlinkALot();
-  
-  if (*MAGIC_LOCATION == SPI_ENTER_RECOVERY || !CheckSig())
+  // Display our reboot pattern
+	BlinkALot();
+
+	// Do recovery until our signature is okay
+  do
   {
-    *MAGIC_LOCATION = 0;
-    
-    Battery::powerOn();
     EnterRecovery();
-    NVIC_SystemReset();
-  }
+  } while (!CheckSig());
 
   __enable_irq();
   sd_mbr_command_t cmd;

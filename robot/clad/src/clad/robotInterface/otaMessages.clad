@@ -48,14 +48,8 @@ namespace RobotInterface {
   message BootloadRTIP
   {}
   
-  message BootloadBody
+  message BodyReset
   {}
-  
-  message BodyFirmwareState
-  {
-    uint_16 state,
-    uint_16 count,
-  }
   
 } // RobotInterface
 

@@ -1,13 +1,22 @@
 #include <stdint.h>
 #include "MK02F12810.h"
 #include "timer.h"
+#include "power.h"
 
 #include "portable.h"
 #include "../../k02_hal/hal/hardware.h"
 
 // This powers up the camera, OLED, and ESP8266 while respecting power sequencing rules
-extern void PowerInit()
+void Anki::Cozmo::HAL::Power::init()
 { 
+  // Power up all ports
+  SIM_SCGC5 |=
+    SIM_SCGC5_PORTA_MASK |
+    SIM_SCGC5_PORTB_MASK |
+    SIM_SCGC5_PORTC_MASK |
+    SIM_SCGC5_PORTD_MASK |
+    SIM_SCGC5_PORTE_MASK;
+
   // Clear any I/Os that are default driven in K02
   // PTA0-3 are taken care of (SWD and POWER pins)
   // PTA18 and 19 are driven by default

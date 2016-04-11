@@ -17,16 +17,14 @@ extern GlobalDataToBody g_dataToBody;
 
 using namespace Anki::Cozmo;
 
-extern void EnterRecovery(void);
-
 static const int QUEUE_DEPTH = 4;
 static CladBufferUp spinebuffer[QUEUE_DEPTH];
 static volatile int spine_enter = 0;
 static volatile int spine_exit  = 0;
 
-static void Process_bootloadBody(const RobotInterface::BootloadBody& msg)
+static void Process_bodyReset(const RobotInterface::BodyReset& msg)
 {
-  EnterRecovery();
+  NVIC_SystemReset();
 }
 
 static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)

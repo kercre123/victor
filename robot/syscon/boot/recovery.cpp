@@ -270,16 +270,20 @@ void EnterRecovery(void) {
     } while (!WaitWord(COMMAND_HEADER));
 
     // Receive command packet
-    switch (ReadWord()) {
-      case COMMAND_DONE:
+    switch (ReadWord()) {				
+			case COMMAND_DONE:
         state = STATE_IDLE;
         return ;
      
-      case COMMAND_FLASH:
+      case COMMAND_FLASH_BODY:
         state = FlashBlock() ? STATE_IDLE : STATE_NACK;
         break ;
       
-      default:
+      case COMMAND_SET_LED:
+				setLight(ReadWord());
+				break ;
+			
+			default:
         break ;
     }
   }

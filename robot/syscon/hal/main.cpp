@@ -65,13 +65,6 @@ extern "C" void HardFault_Handler(void) {
   NVIC_SystemReset();
 }
 
-extern void EnterRecovery(void) {
-  Motors::teardown();
-
-  MAGIC_LOCATION = SPI_ENTER_RECOVERY;
-  NVIC_SystemReset();
-}
-
 void enterOperatingMode(BodyOperatingMode mode) {
   switch (mode) {
     case LOW_POWER_OPERATING_MODE:

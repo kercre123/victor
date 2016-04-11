@@ -1,6 +1,8 @@
 #include <string.h>
 #include <stdint.h>
+#include "spi.h"
 
+#include "power.h"
 #include "sha1.h"
 #include "timer.h"
 #include "recovery.h"
@@ -33,19 +35,6 @@ extern "C" void init_data_bss(void);
 extern "C" void GoSlow(void);
 extern void PowerInit();
 
-static inline void StopDevices() {
-  // Magic numbers taken from inital boot settings
-  SIM_SCGC4 = 0xF0100030;
-  SIM_SCGC5 = 0x00040380 |
-    SIM_SCGC5_PORTA_MASK |
-    SIM_SCGC5_PORTB_MASK |
-    SIM_SCGC5_PORTC_MASK |
-    SIM_SCGC5_PORTD_MASK |
-    SIM_SCGC5_PORTE_MASK;
-  SIM_SCGC6 = 0x00000001;
-  SIM_SCGC7 = 0x00000002;
-}
-
 bool CheckSig(void) {
   if (IMAGE_HEADER->sig != HEADER_SIGNATURE) return false;
 
@@ -74,26 +63,20 @@ static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
 static const uint32_t recovery_value = 0xCAFEBABE;
 
 // This is the remote entry point recovery mode
-extern "C" void SVC_Handler(void) { 
-  *recovery_word = 0;
-
-  __disable_irq();
-  StopDevices();
-  GoSlow();
-  PowerInit();
-  init_data_bss();
-  MicroWait(2000000);
-  EnterRecovery();
-  NVIC_SystemReset();
-}
-
 int main (void) {
-  TimerInit();
+	using namespace Anki::Cozmo::HAL;
+	
+	__disable_irq();
+
+	TimerInit();
+	Power::init();
+	SPI::init();
 
   if (*recovery_word == recovery_value || !CheckSig()) {
-    SVC_Handler();
+		*recovery_word = 0;
+		EnterRecovery();
   }
   
-  SCB->VTOR = (uint32_t) IMAGE_HEADER->vector_tbl;
+	SCB->VTOR = (uint32_t) IMAGE_HEADER->vector_tbl;
   IMAGE_HEADER->entry_point();
 }

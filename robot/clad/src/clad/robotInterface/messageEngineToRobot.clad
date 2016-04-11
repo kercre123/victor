@@ -301,7 +301,7 @@ union EngineToRobot
   
   // 0x01 to 0x27: Messages to the body / test fixture
   // 0x28 to 0x2f: Allocated to BLE response messages
-  BootloadBody                  bootloadBody                = 0x01,
+  BodyReset                     bodyReset                   = 0x01,
   // Reserved for bootloader data message to get moved here = 0x02,
   BackpackLights                setBackpackLights           = 0x03,
   CubeLights                    setCubeLights               = 0x04,
@@ -353,7 +353,6 @@ union EngineToRobot
   EnablePickupParalysis         enablePickupParalysis       = 0x4F,
   EnableLiftPower               enableLiftPower             = 0x50,
   SetMotionModelParams          setMotionModelParams        = 0x51,
-  BodyUpgradeData               bodyUpgradeData             = 0x52,
   PowerState                    powerState                  = 0x53,
   PropState                     getPropState                = 0x54,
   EnableCamCalibMode            enableCamCalibMode          = 0x55,
@@ -369,7 +368,6 @@ union EngineToRobot
   NVStorage::NVStorageWrite     writeNV                     = 0x83,
   NVStorage::NVStorageRead      readNV                      = 0x84,
   // Reserved for FlashWriteAcknowledge message in OTA      = 0x85,
-  BodyFirmwareState             bodyState                   = 0x86,
   RTIPVersionInfo               rtipVersion                 = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   AbortAnimation                abortAnimation              = 0x90,

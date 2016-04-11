@@ -34,8 +34,6 @@ namespace Anki
       // Import init functions from all HAL components
       void CameraInit(void);
       void CameraStart(void);
-      void TimerInit(void);
-      void PowerInit(void);
 
       TimeStamp_t t_;
       TimeStamp_t GetTimeStamp(void){ return t_; }
@@ -80,38 +78,12 @@ int main (void)
 {
   using namespace Anki::Cozmo::HAL;
 
-  // Power up all ports
-  SIM_SCGC5 |=
-    SIM_SCGC5_PORTA_MASK |
-    SIM_SCGC5_PORTB_MASK |
-    SIM_SCGC5_PORTC_MASK |
-    SIM_SCGC5_PORTD_MASK |
-    SIM_SCGC5_PORTE_MASK;
-
-  // Initialize everything we can, while waiting for Espressif to boot
   UART::DebugInit();
-  TimerInit();
-  PowerInit();
-
+	SPI::Init();
   DAC::Init();
 
-  // Wait for Espressif to toggle out 4 words of I2SPI
-  for (int i = 0; i < 32; i++)
-  {
-    while (GPIO_READ(GPIO_WS) & PIN_WS)     ;
-    while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;
-  }
-  
-  // Switch to 10MHz Espressif/external reference and 100MHz clock
-  MCG_C1 &= ~MCG_C1_IREFS_MASK;
-  // Wait for IREF to turn off
-  while((MCG->S & MCG_S_IREFST_MASK))   ;
-  // Wait for FLL to lock
-  while((MCG->S & MCG_S_CLKST_MASK))    ;
-
-  MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
-
-  DAC::Tone();
+  // Boot boop
+	DAC::Tone();
   MicroWait(10);
   DAC::Mute();
 

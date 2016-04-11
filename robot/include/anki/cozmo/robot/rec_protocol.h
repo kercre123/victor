@@ -12,7 +12,6 @@ typedef uint16_t commandWord;
 
 // These are used for the Head communication protocol
 static const commandWord COMMAND_HEADER = 0x5478;
-static const uint32_t SPI_ENTER_RECOVERY = 0x444d7852;
 
 #ifndef SHA1_BLOCK_SIZE
 #define SHA1_BLOCK_SIZE 20
@@ -25,8 +24,10 @@ typedef struct {
 } FirmwareBlock;
 
 enum RECOVERY_COMMAND {
-  COMMAND_DONE  = 0x00,
-  COMMAND_FLASH = 0x01
+  COMMAND_DONE  			= 0x00,
+  COMMAND_FLASH 			= 0x01,
+	COMMAND_FLASH_BODY 	= 0x02,
+	COMMAND_SET_LED 		= 0x03
 };
 
 enum RECOVERY_STATE {
