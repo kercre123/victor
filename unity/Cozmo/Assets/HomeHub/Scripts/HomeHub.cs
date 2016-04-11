@@ -268,6 +268,7 @@ namespace Cozmo.HomeHub {
       var session = DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
       if (session != null) {
         session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
+        DataPersistenceManager.Instance.Data.GreenPoints += 10;
       }
       else {
         DAS.Error(this, "Somehow managed to complete a challenge with no sessions saved!");
