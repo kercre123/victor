@@ -51,10 +51,6 @@ __Signature     DCB     'C','Z','M','0'
                 DCD     0xDEADFACE
                 DCD     0xDEADFACE
                 DCD     0xDEADFACE
-                DCD     0xDEADFACE
-                DCD     0xDEADFACE
-                DCD     0xDEADFACE
-                DCD     0xDEADFACE
 
 ; Vector Table Mapped, aligned to a a 1kbyte boundary
 

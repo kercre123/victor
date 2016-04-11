@@ -3,7 +3,7 @@
 #include "spi.h"
 
 #include "power.h"
-#include "sha1.h"
+#include "crc32.h"
 #include "timer.h"
 #include "recovery.h"
 #include "MK02F12810.h"
@@ -23,7 +23,7 @@ struct BootLoaderSignature {
   uint32_t  vector_tbl;
   uint8_t   *rom_start;
   uint32_t  rom_length;
-  uint8_t   checksum[SHA1_BLOCK_SIZE];
+  uint32_t  checksum;
 };
 
 static const int          BOOT_LOADER_LENGTH = 0x1000;
@@ -46,17 +46,9 @@ bool CheckSig(void) {
   }
 
   // Compute signature length
-  SHA1_CTX ctx;
-  sha1_init(&ctx);
-  sha1_update(&ctx, IMAGE_HEADER->rom_start, IMAGE_HEADER->rom_length);
-
-  uint8_t sig[SHA1_BLOCK_SIZE];
-  sha1_final(&ctx, sig);
-
-  for (int i = 0; i < SHA1_BLOCK_SIZE; i++) {
-    if (sig[i] != IMAGE_HEADER->checksum[i]) return false;
-  }
-  return true;
+  uint32_t crc = calc_crc32(IMAGE_HEADER->rom_start, IMAGE_HEADER->rom_length);
+	
+	return crc == IMAGE_HEADER->checksum;
 }
 
 static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;

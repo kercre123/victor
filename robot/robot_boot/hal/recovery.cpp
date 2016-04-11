@@ -2,7 +2,7 @@
 
 #include "MK02F12810.h"
 #include "recovery.h"
-#include "sha1.h"
+#include "crc32.h"
 #include "timer.h"
 
 static const int FLASH_BLOCK_SIZE = 0x800;
@@ -93,14 +93,6 @@ static inline bool FlashBlock() {
 
   MicroWait(5000);
   
-  // Check the SHA-1 of the packet to verify that transmission actually worked
-  SHA1_CTX ctx;
-  sha1_init(&ctx);
-  sha1_update(&ctx, (uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
-
-  uint8_t sig[SHA1_BLOCK_SIZE];
-  sha1_final(&ctx, sig);
-
   int writeAdddress = packet.blockAddress;
 
   // We will not override the boot loader
@@ -109,12 +101,12 @@ static inline bool FlashBlock() {
   }
   
   // Verify block before writting to flash
-  for (int i = 0; i < SHA1_BLOCK_SIZE; i++) {
-    if (sig[i] != packet.checkSum[i])
-    {
-      return false;
-    }
-  }
+	uint32_t crc = calc_crc32((uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
+	
+	if (crc != packet.checkSum)
+	{
+		return false;
+	}
 
   // Write sectors to flash
   for (int i = 0; i < TRANSMIT_BLOCK_SIZE; i+= FLASH_BLOCK_SIZE) {

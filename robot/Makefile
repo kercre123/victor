@@ -47,8 +47,6 @@ k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 
 safe:
 	python3 ./tools/sign.py rtip:./build/41/robot.out body:./syscon/build/app/syscon.axf ./releases/rtip.safe
-	python3 ./tools/sign.py legacy:./build/41/robot.out ./releases/robot.safe
-	python3 ./tools/sign.py legacy:./syscon/build/app/syscon.axf ./releases/syscon.safe
 
 release: safe
 	cp ./build/41/robot.safe releases

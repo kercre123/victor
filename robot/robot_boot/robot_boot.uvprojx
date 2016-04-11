@@ -391,11 +391,6 @@
               <FilePath>.\hal\timer.cpp</FilePath>
             </File>
             <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\sha1.cpp</FilePath>
-            </File>
-            <File>
               <FileName>recovery.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\recovery.cpp</FilePath>
@@ -414,6 +409,11 @@
               <FileName>spi.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\spi.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>sha1.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\sha1.cpp</FilePath>
             </File>
           </Files>
         </Group>

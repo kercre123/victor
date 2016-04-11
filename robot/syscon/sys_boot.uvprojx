@@ -400,6 +400,11 @@
               <FileType>2</FileType>
               <FilePath>.\boot\startup_nrf51.s</FilePath>
             </File>
+            <File>
+              <FileName>crc32.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\crypto\crc32.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -409,16 +414,6 @@
               <FileName>system_nrf51.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\lib\system_nrf51.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>crypto</GroupName>
-          <Files>
-            <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\sha1.cpp</FilePath>
             </File>
           </Files>
         </Group>

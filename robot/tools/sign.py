@@ -1,11 +1,5 @@
 from __future__ import print_function
-from Crypto.Hash.SHA import SHA1Hash
-from Crypto.Cipher.AES import AESCipher
-from Crypto.Random import random
-from Crypto.Util import number
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA
-
+import zlib
 import os.path as path
 from sys import argv
 from struct import pack
@@ -13,7 +7,7 @@ from struct import pack
 from elftools.elf.elffile import ELFFile
 
 HEADER_LENGTH = 128
-BLOCK_LENGTH = 0x1000
+BLOCK_LENGTH = 0x800
 
 def chunk(i, size):
 	for x in range(0, len(i), size):
@@ -59,10 +53,10 @@ def fix_header(fn):
 	rom_data, base_addr, magic_location = rom_info(fn)
 	
 	with open(fn, "rb+") as fo:
-		checksum = SHA1Hash(rom_data[HEADER_LENGTH:]).digest()
+		checksum = zlib.crc32(rom_data[HEADER_LENGTH:])
 
 		fo.seek(magic_location)
-		fo.write(pack("<II20s", base_addr+HEADER_LENGTH, len(rom_data) - HEADER_LENGTH, checksum))
+		fo.write(pack("<III", base_addr+HEADER_LENGTH, len(rom_data) - HEADER_LENGTH, checksum))
 
 	return 
 
@@ -91,4 +85,4 @@ with open(argv[-1], "wb") as fo:
 			
 			fo.write(data)
 			fo.write(pack("<I", block*BLOCK_LENGTH+base_addr))
-			fo.write(SHA1Hash(data).digest())
+			fo.write(pack("<I", zlib.crc32(data)))

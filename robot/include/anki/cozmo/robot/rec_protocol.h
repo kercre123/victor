@@ -6,7 +6,7 @@
 typedef uint16_t commandWord;
 
 #define SHA1_DIGEST_LENGTH 20
-#define TRANSMIT_BLOCK_SIZE 0x1000
+#define TRANSMIT_BLOCK_SIZE 0x800
 #define SECURE_SPACE 0x18000
 #define BOOTLOADER 0x1F000
 
@@ -20,7 +20,7 @@ static const commandWord COMMAND_HEADER = 0x5478;
 typedef struct {
   uint32_t   flashBlock[TRANSMIT_BLOCK_SIZE / sizeof(uint32_t)];
   uint32_t   blockAddress;
-  uint8_t    checkSum[SHA1_BLOCK_SIZE];
+  uint32_t   checkSum;
 } FirmwareBlock;
 
 enum RECOVERY_COMMAND {

@@ -4,7 +4,7 @@
 #include "nrf_gpio.h"
 
 #include "recovery.h"
-#include "sha1.h"
+#include "crc32.h"
 #include "timer.h"
 #include "battery.h"
 #include "hal/hardware.h"
@@ -210,7 +210,6 @@ bool FlashSector(int target, const uint32_t* data)
 
 static inline bool FlashBlock() {
   static FirmwareBlock packet;
-  uint8_t sig[SHA1_BLOCK_SIZE];
   uint8_t* raw = (uint8_t*) &packet;
   
   // Load raw packet into memory
@@ -219,24 +218,18 @@ static inline bool FlashBlock() {
     raw[index] = ReadByte();
   }
  
-  // Check the SHA-1 of the packet to verify that transmission actually worked
-  SHA1_CTX ctx;
-  sha1_init(&ctx);
-  sha1_update(&ctx, (uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
-
-  sha1_final(&ctx, sig);
-
   int writeAddress = packet.blockAddress;
 
   // We will not override the boot loader
   if (writeAddress < SECURE_SPACE || writeAddress >= BOOTLOADER) {
     return false;
   }
-  
+ 
+  // Check the SHA-1 of the packet to verify that transmission actually worked
+  uint32_t crc = calc_crc32((uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
+	
   // Verify block before writting to flash
-  for (int i = 0; i < SHA1_BLOCK_SIZE; i++) {
-    if (sig[i] != packet.checkSum[i]) return false;
-  }
+	if (crc != packet.checkSum) return false;
 
   // Write sectors to flash
   const int FLASH_BLOCK_SIZE = NRF_FICR->CODEPAGESIZE;
