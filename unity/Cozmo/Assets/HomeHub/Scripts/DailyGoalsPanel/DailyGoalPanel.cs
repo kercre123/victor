@@ -103,13 +103,7 @@ public class DailyGoalPanel : MonoBehaviour {
         CompleteSession(lastSession);
       }
 
-      // start a new session. hardcoding this for now because we will eventually
-      // rip out friendship stuff entirely anyhow. this is here pending refactor of all of
-      // the daily goals / summary stuff.
-      TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today) {
-        StartingFriendshipLevel = 4,
-        StartingFriendshipPoints = 10
-      };
+      TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
 
       StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
       newSession.Goals.Set(goals);
