@@ -25,10 +25,11 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+#define AUTO_GATHER
+
 using namespace Anki::Cozmo;
 
 static void EnterState(RadioState state);
-static void send_capture_packet(void* userdata);
 
 // Global head / body sync values
 extern GlobalDataToHead g_dataToHead;
@@ -39,88 +40,41 @@ static RadioState        radioState;
 
 extern uesb_mainstate_t  m_uesb_mainstate;
 
-static RTOS_Task*        capture_task;
-
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
-  UNUSED_BASE, 
-  ADVERTISE_BASE,
-  ADVERTISE_PREFIX,
-  0xFF
+  UNUSED_ADDRESS,
+  ADVERTISE_ADDRESS,
+  0x3,
+	sizeof(AdvertisePacket)
 };
 
 static const uesb_address_desc_t TalkingAddress = {
   0,
-  UNUSED_BASE,
-  ADVERTISE_BASE,
-  COMMUNICATE_PREFIX,
-  0x03
+  UNUSED_ADDRESS,
+  ADVERTISE_ADDRESS,
+  0x03,
+	31
 };
 
-//static struct {
-  static AccessorySlot accessories[MAX_ACCESSORIES];
+static AccessorySlot accessories[MAX_ACCESSORIES];
 
-  // Variables for talking to an accessory
-  static uint8_t currentAccessory;
-//} __attribute((at(0x20000004));
-
-// Integer square root calculator
-uint8_t isqrt(uint32_t op)
-{
-  if (op >= 0xFC04) {
-    return 0xFE;
-  }
-  
-  uint32_t res = 0;
-  uint32_t one = 1uL << 18; // Second to top bit (255^2 * 16)
-
-  // "one" starts at the highest power of four <= than the argument.
-  while (one > op)
-  {
-    one >>= 2;
-  }
-
-  while (one != 0) {
-    if (op >= res + one) {
-      op -= res + one;
-      res += 2 * one;
-    }
-
-    res >>= 1;
-    one >>= 2;
-  }
-  return res;
-}
+// Variables for talking to an accessory
+static uint8_t currentAccessory;
 
 static void createAddress(uesb_address_desc_t& address) { 
-  // Generate random values
-  Crypto::random(&address.prefix[0], 1);
-  address.base0 = 0xE7E7E7E7;
-
-  // Create a random RF channel
-  Crypto::random(&address.rf_channel, sizeof(address.rf_channel));
-  address.rf_channel %= MAX_TX_CHANNELS;
+	address.address0 = 0xE7E7E7E7;
+	address.rf_channel = 81;
 }
-
-// This will move to the next frequency (channel hopping)
-#ifdef CHANNEL_HOP
-static inline uint8_t next_channel(uint8_t channel) {
-  return (channel >> 1) ^ ((channel & 1) ? 0x2D : 0);
-}
-#endif
 
 void Radio::init() {
-  // Create a task for capturing cubes
-  capture_task = RTOS::create(send_capture_packet, false);
 }
 
 void Radio::advertise(void) {
   const uesb_config_t uesb_config = {
     RADIO_MODE_MODE_Nrf_1Mbit,
-    UESB_CRC_8BIT,
+    UESB_CRC_16BIT,
     RADIO_TXPOWER_TXPOWER_Pos4dBm,
-    PACKET_SIZE,
-    5,    // Address length
+    4,    // Address length
     RADIO_PRIORITY // Service speed doesn't need to be that fast (prevent blocking encoders)
   };
 
@@ -138,7 +92,6 @@ void Radio::advertise(void) {
 }
 
 void Radio::shutdown(void) {
-  RTOS::stop(capture_task);
   uesb_disable();
 }
 
@@ -172,25 +125,6 @@ static void EnterState(RadioState state) {
       uesb_set_rx_address(&accessories[currentAccessory].address);
       break ;
   }
-}
-
-static void send_capture_packet(void* userdata) {
-  int slot = (int) userdata;
-
-  uesb_address_desc_t& address = accessories[slot].address;
-  
-  // Send a pairing packet
-  CapturePacket pair;
-
-  pair.target_channel = address.rf_channel;
-  pair.interval_delay = RADIO_INTERVAL_DELAY;
-  pair.prefix = address.prefix[ROBOT_TALK_PIPE];
-  memcpy(&pair.base, &address.base0, sizeof(address.base0));
-  pair.timeout_msb = RADIO_TIMEOUT_MSB;
-  pair.wakeup_offset = RADIO_WAKEUP_OFFSET;
-
-  // Tell this accessory to come over to my side
-  uesb_write_tx_payload(&PairingAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
 }
 
 void SendObjectConnectionState(int slot)
@@ -249,9 +183,18 @@ void uesb_event_handler(uint32_t flags)
       SendObjectConnectionState(slot);
     }
 
-    // Schedule a one time capture for this slot
-    RTOS::start(capture_task, CAPTURE_OFFSET, (void*) slot);
-    break ;
+		// Send a pairing packet		
+		{
+			uesb_address_desc_t address = {
+				ADV_CHANNEL,
+				packet.id,
+			};
+
+			CapturePacket pair;
+
+			uesb_write_tx_payload(&address, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
+		}
+		break ;
     
   case RADIO_TALKING:
     if (rx_payload.pipe != CUBE_TALK_PIPE) {
@@ -259,14 +202,7 @@ void uesb_event_handler(uint32_t flags)
     }
 
     AccessorySlot* acc = &accessories[currentAccessory];
-
-    // XXX: START HACK
-    uint32_t id;
-    memcpy(&id, &rx_payload.data[12], 4);
-    if (id != acc->id) break ;
-    // XXX: END HACK
-
-    AcceleratorPacket* ap = (AcceleratorPacket*) &rx_payload.data;
+    AccessoryHandshake* ap = (AccessoryHandshake*) &rx_payload.data;
 
     acc->last_received = 0;
 
@@ -275,7 +211,7 @@ void uesb_event_handler(uint32_t flags)
     msg.x = ap->x;
     msg.y = ap->y;
     msg.z = ap->z;
-    msg.shockCount = ap->shockCount;
+    msg.shockCount = ap->tap_count;
     RobotInterface::SendMessage(msg);
 
     EnterState(RADIO_PAIRING);
@@ -340,8 +276,6 @@ void Radio::updateLights() {
         sum += rgbi[i] * rgbi[i];
       }
     }
-
-    acc->tx_state.ledDark = 0xFF - isqrt(sum);
   }
 }
 
@@ -363,13 +297,7 @@ void Radio::prepare(void* userdata) {
 
     // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
-    memcpy(&acc->tx_state.ledStatus[12], &acc->id, 4); // XXX: THIS IS A HACK FOR NOW
-    uesb_prepare_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(LEDPacket));
-
-    #ifdef CHANNEL_HOP
-    // Hop to next frequency (NOTE: DISABLED UNTIL CUBES SUPPORT IT)
-    address.rf_channel = next_channel(address.rf_channel);
-    #endif
+    uesb_prepare_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(acc->tx_state));
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
     if (acc->active)

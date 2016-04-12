@@ -72,10 +72,10 @@ enum uesb_mainstate_t {
 struct uesb_address_desc_t
 {
   uint8_t                 rf_channel;
-  uint32_t                base0;
-  uint32_t                base1;
-  uint8_t                 prefix[8];
+  uint32_t                address0;
+  uint32_t                address1;
   uint8_t                 rx_pipes_enabled;
+  uint8_t              		payload_length;
 };
 
 struct uesb_config_t
@@ -84,7 +84,6 @@ struct uesb_config_t
   uint32_t             bitrate;
   uesb_crc_t           crc;
   uint32_t             tx_output_power;
-  uint8_t              payload_length;
   uint8_t              rf_addr_length;
 
   uint8_t              radio_irq_priority;
@@ -101,8 +100,6 @@ struct uesb_payload_t
   int8_t  rssi;
 
   // This is the payload data
-  uint8_t pid;
-  uint8_t null;
   uint8_t data[UESB_CORE_MAX_PAYLOAD_LENGTH];
 };
 
