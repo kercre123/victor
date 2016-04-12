@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using Anki.UI;
 using System;
 
@@ -8,6 +9,10 @@ public class DifficultySelectOptionData {
   public int DifficultyId;
   public LocalizedString DifficultyName;
   public LocalizedString DifficultyDescription;
+  public float MinCozmoTapDelayMs;
+  public float MaxCozmoTapDelayMs;
+  public float CozmoMistakeChance;
+  public List<float> RoundSpeedModifier;
 }
 
 public class DifficultySelectOption : MonoBehaviour {

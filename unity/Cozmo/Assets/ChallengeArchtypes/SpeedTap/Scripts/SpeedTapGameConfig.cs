@@ -12,6 +12,11 @@ public class SpeedTapGameConfig : MinigameConfigBase {
 
   public int Rounds;
   public int MaxScorePerRound;
+  public float PlayNewHandIntervalMs;
+  public float MinIdleIntervalMs;
+  public float MaxIdleIntervalMs;
+  public float BaseMatchChance;
+  public float MatchChanceIncrease;
 
   [SerializeField]
   protected MusicStateWrapper _BetweenRoundMusic;
