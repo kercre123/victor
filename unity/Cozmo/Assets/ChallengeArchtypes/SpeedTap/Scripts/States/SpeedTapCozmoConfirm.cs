@@ -10,10 +10,13 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_Tap, HandleTapDone));
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapCozmoConfirm, HandleTapDone);
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapCozmoConfirm);
+
     }
 
     private void HandleTapDone(bool success) {
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapCozmoConfirm, HandleTapDone);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CubeCozmoTap);
       _SpeedTapGame.StopCycleCube(_SpeedTapGame.CozmoBlock);
       _SpeedTapGame.CozmoBlock.SetLEDs(Cozmo.CubePalette.ReadyColor.lightColor);
