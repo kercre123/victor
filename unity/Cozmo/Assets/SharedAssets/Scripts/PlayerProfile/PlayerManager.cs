@@ -34,17 +34,40 @@ public class PlayerManager : MonoBehaviour {
     int ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel;
     int ladderMaxValue = _ChestData.GreenPointMaxLadders.Last().Value; // default to max value
     for (int i = 1; i < _ChestData.GreenPointMaxLadders.Length; ++i) {
-      if (ladderLevel > _ChestData.GreenPointMaxLadders[i].Level) {
-        ladderMaxValue = _ChestData.GreenPointMaxLadders[i - 1].Level;
+      if (ladderLevel < _ChestData.GreenPointMaxLadders[i].Level) {
+        ladderMaxValue = _ChestData.GreenPointMaxLadders[i - 1].Value;
+        break;
       }
     }
     return ladderMaxValue;
   }
 
+  public int GetTreatCount() {
+    int ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel;
+    int treatValue = _ChestData.TreatRewardLadders.Last().Value; // default to max value
+    for (int i = 1; i < _ChestData.TreatRewardLadders.Length; ++i) {
+      if (ladderLevel > _ChestData.TreatRewardLadders[i].Level) {
+        treatValue = _ChestData.TreatRewardLadders[i - 1].Level;
+      }
+    }
+    return treatValue;
+  }
+
   public void AddGreenPoints(int points) {
-    DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints += points;
+    int greenPoints = DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints += points;
+    int currentLadderMax = GetGreenPointsLadderMax();
+
+    while (greenPoints >= currentLadderMax) {
+      if (ChestGained != null) {
+        ChestGained();
+      }
+      DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount += GetTreatCount();
+      DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel++;
+      greenPoints -= currentLadderMax;
+    }
+
     if (GreenPointsUpdate != null) {
-      GreenPointsUpdate(DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints, GetGreenPointsLadderMax());
+      GreenPointsUpdate(greenPoints, GetGreenPointsLadderMax());
     }
   }
 }
