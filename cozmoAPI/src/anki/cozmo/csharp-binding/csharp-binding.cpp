@@ -6,7 +6,8 @@
 //
 //
 
-#include "csharp-binding.h"
+#include "anki/cozmo/csharp-binding/csharp-binding.h"
+#include "anki/cozmo/csharp-binding/common/common-binding.h"
 
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -25,15 +26,15 @@
 #endif
 #endif
 
-#ifdef USE_IOS
-#include "ios/ios-binding.h"
-#endif
+//#ifdef USE_IOS
+//#include "anki/cozmo/csharp-binding/common/ios-binding.h"
+//#endif
 
 using namespace Anki;
 using namespace Anki::Cozmo;
-#ifdef USE_IOS
+//#ifdef USE_IOS
 using namespace Anki::Cozmo::CSharpBinding;
-#endif
+//#endif
 
 bool initialized = false;
 
@@ -61,9 +62,9 @@ int cozmo_startup(const char *configuration_data)
 {
     int result = (int)RESULT_OK;
     
-#ifdef USE_IOS
+//#ifdef USE_IOS
     result = cozmo_engine_create(configuration_data);
-#endif
+//#endif
     
     return result;
 }
@@ -72,9 +73,9 @@ int cozmo_shutdown()
 {
     int result = (int)RESULT_OK;
     
-#ifdef USE_IOS
+//#ifdef USE_IOS
     result = cozmo_engine_destroy();
-#endif
+//#endif
     
     return result;
 }
@@ -83,13 +84,13 @@ int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
 {
   int result = (int)RESULT_OK;
   
-#ifdef USE_IOS
+//#ifdef USE_IOS
   result = cozmo_engine_wifi_setup(wifiSSID, wifiPasskey);
-#endif
+//#endif
   
   return result;
 }
 
-void cozmo_send_to_clipboard(const char* log) {
-  cozmo_engine_send_to_clipboard(log);
-}
+//void cozmo_send_to_clipboard(const char* log) {
+//  cozmo_engine_send_to_clipboard(log);
+//}

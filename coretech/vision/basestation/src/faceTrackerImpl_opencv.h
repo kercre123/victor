@@ -138,9 +138,9 @@ namespace Vision {
       
       // Search entire frame
       std::vector<cv::Rect> newFaceRects;
-      _faceCascade.detectMultiScale(cvFrame, newFaceRects,
-                                    opencvDetectScaleFactor, 2, 0,
-                                    opencvDetectMinFaceSize);
+      //_faceCascade.detectMultiScale(cvFrame, newFaceRects,
+      //                              opencvDetectScaleFactor, 2, 0,
+      //                              opencvDetectMinFaceSize);
       
       // Match detections to existing faces if they overlap enough
       const f32 intersectionOverUnionThreshold = 0.5f;
@@ -200,9 +200,9 @@ namespace Vision {
         
         cv::Mat faceRoi = cvFrame(cvFaceRect);
         
-        _faceCascade.detectMultiScale(faceRoi, updatedRects,
-                                      opencvDetectScaleFactor, 2, 0,
-                                      cv::Size(cvFaceRect.width/2, cvFaceRect.height/2));
+        //_faceCascade.detectMultiScale(faceRoi, updatedRects,
+        //                              opencvDetectScaleFactor, 2, 0,
+        //                              cv::Size(cvFaceRect.width/2, cvFaceRect.height/2));
         if(updatedRects.empty()) {
           // Lost face
           faceIter = _faces.erase(faceIter);
@@ -231,8 +231,8 @@ namespace Vision {
       std::vector<cv::Rect> eyeRects;
       const cv::Rect_<float>& faceRect = face.GetRect().get_CvRect_();
       cv::Mat faceRoi = cvFrame(faceRect);
-      _eyeCascade.detectMultiScale(faceRoi, eyeRects, 1.25, 2, 0, cv::Size(5,5),
-                                    cv::Size(faceRoi.cols/4,faceRoi.rows/4));
+      //_eyeCascade.detectMultiScale(faceRoi, eyeRects, 1.25, 2, 0, cv::Size(5,5),
+      //                              cv::Size(faceRoi.cols/4,faceRoi.rows/4));
       if(eyeRects.size() == 2) {
         // Iff we find two eyes within the face rectangle, use them
         cv::Rect& leftEyeRect = eyeRects[0];
