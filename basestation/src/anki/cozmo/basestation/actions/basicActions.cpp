@@ -1355,14 +1355,55 @@ namespace Anki {
       if(robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(pose) != 0)
       {
         SetPose(pose);
+        _hasFace = true;
       }
     }
-    
+
+    ActionResult TurnTowardsLastFacePoseAction::Init()
+    {
+      if( _hasFace ) {
+        return TurnTowardsPoseAction::Init();
+      }
+      else {
+        // this action is just a no-op without a face
+        return ActionResult::SUCCESS;
+      }
+    }
+
+    ActionResult TurnTowardsLastFacePoseAction::CheckIfDone()
+    {
+      if( _hasFace ) {
+        return TurnTowardsPoseAction::CheckIfDone();
+      }
+      else {
+        return ActionResult::SUCCESS;
+      }
+    }
+
+  
     const std::string& TurnTowardsLastFacePoseAction::GetName() const
     {
       static const std::string name("TurnTowardsLastFacePoseAction");
       return name;
     }
+
+#pragma mark ---- TurnTowardsFaceWrapperAction ----
+
+    TurnTowardsFaceWrapperAction::TurnTowardsFaceWrapperAction(Robot& robot,
+                                                               IActionRunner* action,
+                                                               bool turnBeforeAction,
+                                                               bool turnAfterAction,
+                                                               Radians maxTurnAngle)
+      : CompoundActionSequential(robot)
+    {
+      if( turnBeforeAction ) {
+        AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle) );
+      }
+      AddAction(action);
+      if( turnAfterAction ) {
+        AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle) ) ;
+      }
+    }  
     
 #pragma mark ---- WaitAction ----
     

@@ -229,7 +229,9 @@ float BehaviorRequestGameSimple::EvaluateRunningScoreInternal(const Robot& robot
 
 void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot)
 {
-  IActionRunner* animationAction = new PlayAnimationAction(robot, _activeConfig->initialAnimationName);
+  IActionRunner* animationAction = new TurnTowardsFaceWrapperAction(
+    robot,
+    new PlayAnimationAction(robot, _activeConfig->initialAnimationName) );    
   StartActing( animationAction, &BehaviorRequestGameSimple::TransitionToFacingBlock );
   SET_STATE(State::PlayingInitialAnimation);
 }
