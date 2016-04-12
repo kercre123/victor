@@ -26,13 +26,6 @@ namespace ScriptedSequences {
 
     public static ScriptedSequenceManager Instance { 
       get { 
-        if (_instance == null) { 
-          var go = GameObject.Instantiate(Resources.Load("Prefabs/Managers/ScriptedSequenceManager") as GameObject);
-
-          go.name = "ScriptedSequenceManager";
-          _instance = go.GetComponent<ScriptedSequenceManager>();
-          GameObject.DontDestroyOnLoad(go);
-        }
         return _instance; 
       } 
     }

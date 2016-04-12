@@ -229,17 +229,18 @@ public class DailyGoalManager : MonoBehaviour {
     if (data == null) {
       return;
     }
+
     // Create alert view with Icon
-    AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
+    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(false);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleMiniGameConfirm);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, LearnToCopeWithMiniGameRejection);
-    alertView.SetIcon(data.ChallengeIcon);
+    alertView.SetIcon(_LastChallengeData.ChallengeIcon);
     alertView.ViewClosed += HandleRequestDialogClose;
     alertView.TitleLocKey = LocalizationKeys.kRequestGameTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kRequestGameDescription;
-    alertView.SetTitleArgs(new object[] { Localization.Get(data.ChallengeTitleLocKey) });
+    alertView.SetTitleArgs(new object[] { Localization.Get(_LastChallengeData.ChallengeTitleLocKey) });
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
     _RequestPending = false;
     _RequestDialog = alertView;

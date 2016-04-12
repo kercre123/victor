@@ -91,7 +91,7 @@ namespace Cozmo {
       #endregion
 
       private void CreateFullScreenCloseCollider() {
-        GameObject fullScreenButton = UIManager.CreateUIElement(UIPrefabHolder.Instance.FullScreenButtonPrefab,
+        GameObject fullScreenButton = UIManager.CreateUIElement(UIManager.Instance.TouchCatcherPrefab,
                                         this.transform);
 
         // Place the button underneath all the UI in this dialog
