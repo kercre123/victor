@@ -17,8 +17,8 @@ MonoBehaviour:
   PlayNewHandRevealMs: 1500
   MinIdleIntervalMs: 150
   MaxIdleIntervalMs: 450
-  BaseMatchChance: 0.25
-  MatchChanceIncrease: 0.15
+  BaseMatchChance: 0.2
+  MatchChanceIncrease: 0.1
   _BetweenRoundMusic:
     _Music: 658369771
   DifficultyOptions:
