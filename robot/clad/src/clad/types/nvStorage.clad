@@ -63,8 +63,8 @@ namespace NVStorage {
 
   message NVStorageRead
   {
-    NVEntryTag tag,
-    NVEntryTag tagRangeEnd,
+    uint_32 tag,
+    uint_32 tagRangeEnd,
     NVReportDest to,
   }
   
@@ -74,7 +74,7 @@ namespace NVStorage {
     bool writeNotErase,    // If true this is a write, if false erase
     bool reportEach,       // Report each operation completed
     bool reportDone,       // Report when final operation is done
-    NVEntryTag rangeEnd,   // If erasing a range, the end of the range, start is the entry tag
+    uint_32 rangeEnd,   // If erasing a range, the end of the range, start is the entry tag
     NVStorageBlob entry
   }
   
