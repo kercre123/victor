@@ -58,6 +58,8 @@ public:
   // todo: document. Is this behavior alway runnable, or we won't look around in an area we already know everything?
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
   
+  virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override { return 1.0f; }
+  
 protected:
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

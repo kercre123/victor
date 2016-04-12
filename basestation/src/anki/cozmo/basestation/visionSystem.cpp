@@ -2530,7 +2530,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
       }
     }
 
-    static s32 profilePrintCtr = 60;
+    static s32 profilePrintCtr = 600;
     if(--profilePrintCtr == 0) {
       Profiler::PrintAverageTiming();
       profilePrintCtr = 60;

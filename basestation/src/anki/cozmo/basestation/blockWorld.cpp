@@ -837,6 +837,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         const f32 distToObj = ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose());
         if (distToObj > MAX_LOCALIZATION_AND_ID_DISTANCE_MM) {
           //PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.IgnoringCuzObjectTooFar", "dist %fmm", distToObj);
+          BroadcastObjectObservation(objSeen, true);
           continue;
         }
 

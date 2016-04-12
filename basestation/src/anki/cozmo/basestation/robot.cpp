@@ -820,7 +820,11 @@ namespace Anki {
       
       const char* behaviorChooserName = "";
       std::string behaviorDebugStr("<disabled>");
-      if(_isBehaviorMgrEnabled) {
+
+      // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
+      static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
+      if(_isBehaviorMgrEnabled && ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
+      {
         _behaviorMgr.Update(currentTime);
         
         const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
@@ -844,6 +848,8 @@ namespace Anki {
         {
           behaviorChooserName = behaviorChooser->GetName();
         }
+      } else {
+        --ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242;
       }
       
       GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,

@@ -33,8 +33,8 @@ CONSOLE_VAR(float, kElaip_s0_MainTurnCWChance , "BehaviorExploreLookAroundInPlac
 // [min,max] range for random turn angles for step 1
 CONSOLE_VAR(float, kElaip_s1_BodyAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace",  10.0f);
 CONSOLE_VAR(float, kElaip_s1_BodyAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace",  30.0f);
-CONSOLE_VAR(float, kElaip_s1_HeadAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace", -20.0f);
-CONSOLE_VAR(float, kElaip_s1_HeadAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace", -12.0f);
+CONSOLE_VAR(float, kElaip_s1_HeadAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace", -15.0f);
+CONSOLE_VAR(float, kElaip_s1_HeadAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace",  -5.0f);
 // [min,max] range for pause for step 2
 CONSOLE_VAR(float, kElaip_s2_WaitMin_sec, "BehaviorExploreLookAroundInPlace", 0.50f);
 CONSOLE_VAR(float, kElaip_s2_WaitMax_sec, "BehaviorExploreLookAroundInPlace", 1.25f);
@@ -54,8 +54,8 @@ CONSOLE_VAR(float, kElaip_s5_HeadAngleRangeMax_deg, "BehaviorExploreLookAroundIn
 // [min,max] range for random angle turns for step 6
 CONSOLE_VAR(float, kElaip_s6_BodyAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace",  30.0f);
 CONSOLE_VAR(float, kElaip_s6_BodyAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace",  65.0f);
-CONSOLE_VAR(float, kElaip_s6_HeadAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace", -12.0f);
-CONSOLE_VAR(float, kElaip_s6_HeadAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace",  -5.0f);
+CONSOLE_VAR(float, kElaip_s6_HeadAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace", -20.0f);
+CONSOLE_VAR(float, kElaip_s6_HeadAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace", -15.0f);
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -80,6 +80,12 @@ BehaviorExploreLookAroundInPlace::~BehaviorExploreLookAroundInPlace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreLookAroundInPlace::IsRunnable(const Robot& robot, double currentTime_sec) const
 {
+  // Probably want to run if I don't have any other exploration behavior that wants to, unless I have completely
+  // mapped the floor around me 'recently'.
+  // Now this is the case for exploration, but some other supergroup that uses the same behavior would have different
+  // conditions. Maybe conditions should be datadriven?
+
+
   // TODO ask memory map for info and decide upon it
   return true;
 }
