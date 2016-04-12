@@ -35,10 +35,9 @@ static inline void setCathode(int pin, bool set) {
 }
 
 void setLight(int channel) {
-  static int clr = 0;
-  clr += 2;
-  clr = (clr == 8) ? 2 : clr;
-
+	int clr = channel >> 2;
+	channel %= 4;
+	
   static const charliePlex_s RGBLightPins[] =
   {
     // anode, cath_red, cath_gree, cath_blue
@@ -123,7 +122,7 @@ static commandWord ReadWord(void) {
   commandWord word = 0;
   
   for (int i = 0; i < sizeof(commandWord); i++) {
-    word = (ReadByte() << 8) | (word >> 8);
+    word = ReadByte() | (word << 8);
   }
 
   return word;
@@ -146,7 +145,7 @@ static bool WaitWord(commandWord target) {
 
     // We received a word
     NRF_UART0->EVENTS_RXDRDY = 0;
-    word = (NRF_UART0->RXD << 8) | (word >> 8);
+    word = NRF_UART0->RXD | (word << 8);
   }
 
   return word == target;
@@ -155,7 +154,7 @@ static bool WaitWord(commandWord target) {
 static void WriteWord(commandWord word) {
   setTransmit(true);
 
-  for (int i = sizeof(commandWord) - 1; i >= 0; i--) {
+  for (int i = 0; i < sizeof(commandWord); i++) {
     NRF_UART0->TXD = word >> (i * 8);
 
     while (!NRF_UART0->EVENTS_TXDRDY) ;
@@ -173,8 +172,6 @@ bool FlashSector(int target, const uint32_t* data)
   for (int i = 0; i < FLASH_BLOCK_SIZE / sizeof(uint32_t); i++) {
     if (original[i] == 0xFFFFFFFF) continue ;
     
-    setLight(3);
-
     // Block requires erasing
     if (original[i] != data[i])
     {
@@ -195,8 +192,6 @@ bool FlashSector(int target, const uint32_t* data)
       continue ;
     }
 
-    setLight(3);
-
     NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
     while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
     original[i] = data[i];
@@ -214,7 +209,6 @@ static inline bool FlashBlock() {
   
   // Load raw packet into memory
   for (int index = 0; index < sizeof(FirmwareBlock); index++) {
-    setLight(2);
     raw[index] = ReadByte();
   }
  
@@ -243,8 +237,8 @@ static inline bool FlashBlock() {
 }
 
 void BlinkALot(void) {
-  for (int i = 0; i < 20; i++) {
-    setLight(1+i%3);
+  for (int i = 0; i < 0x1F; i++) {
+    setLight(i);
     MicroWait(10000);
   }
 }
@@ -252,20 +246,21 @@ void BlinkALot(void) {
 extern bool CheckSig(void);
 
 void EnterRecovery(void) {
+	BlinkALot();
+	
   UARTInit();
 
   RECOVERY_STATE state = STATE_IDLE;
 
   for (;;) {
     do {
-      setLight(1);
       toggleTargetPin();
       WriteWord(COMMAND_HEADER);
       WriteWord(state);
     } while (!WaitWord(COMMAND_HEADER));
 
     // Receive command packet
-    switch (ReadWord()) {				
+    switch (ReadWord()) {
 			case COMMAND_DONE:
         state = STATE_IDLE;
         return ;
@@ -283,6 +278,7 @@ void EnterRecovery(void) {
 				break ;
 
 			default:
+				state = STATE_NACK;
         break ;
     }
   }

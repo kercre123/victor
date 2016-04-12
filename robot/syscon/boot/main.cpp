@@ -40,8 +40,6 @@ bool CheckSig(void) {
 	return crc == IMAGE_HEADER->checksum;
 }
 
-extern void BlinkALot(void);
-
 int main (void) {
 	__disable_irq();
 
@@ -51,9 +49,6 @@ int main (void) {
 	// Power on the system
   Battery::init();
 	Battery::powerOn();
-
-  // Display our reboot pattern
-	BlinkALot();
 
 	// Do recovery until our signature is okay
   do
