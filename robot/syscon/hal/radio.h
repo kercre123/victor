@@ -12,33 +12,17 @@ static const int NUM_PROP_LIGHTS = 4;
 static const int RADIO_TOTAL_PERIOD = CYCLES_MS(35.0f);
 static const int SCHEDULE_PERIOD = CYCLES_MS(5.0f);
 static const int CAPTURE_OFFSET = CYCLES_MS(0.5f);
+static const int SILENCE_PERIOD = CYCLES_MS(1.0f);
 
 static const int TICK_LOOP = RADIO_TOTAL_PERIOD / SCHEDULE_PERIOD;
 
 static const int ACCESSORY_TIMEOUT = 50;         // 0.5s timeout before accessory is considered lost
-static const int PACKET_SIZE = 10;
 static const int MAX_ACCESSORIES = TICK_LOOP;
-
-// These are the pipes allocated to communication
-static const int ROBOT_PAIR_PIPE = 0;
-static const int CUBE_PAIR_PIPE = 1;
-
-static const int ROBOT_TALK_PIPE = 0;
-static const int CUBE_TALK_PIPE = 1;
 
 static const int ADV_CHANNEL = 81;
 
-// 1/10th the time should be silence
-static const int SILENCE_PERIOD = CYCLES_MS(1.0f);
-
 // Advertising settings
-static const uint32_t UNUSED_ADDRESS = 0xE6E6E6E6;
 static const uint32_t ADVERTISE_ADDRESS = 0xCA5CADED;
-
-enum AccessoryType {
-  ACCESSORY_CUBE    = 0x00,
-  ACCESSORY_CHARGER = 0x80
-};
 
 enum RadioState {
   RADIO_PAIRING,        // We are listening for pairing results

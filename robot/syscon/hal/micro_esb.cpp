@@ -115,7 +115,7 @@ uint32_t uesb_disable(void)
   return UESB_SUCCESS;
 }
 
-uint32_t uesb_prepare_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *data, uint8_t length)
+uint32_t uesb_prepare_tx_payload(const uesb_address_desc_t *address, const void *data, uint8_t length)
 {
   if(m_uesb_mainstate == UESB_STATE_UNINITIALIZED) return UESB_ERROR_NOT_INITIALIZED;
   if(m_tx_fifo.count >= UESB_CORE_TX_FIFO_SIZE) return UESB_ERROR_TX_FIFO_FULL;
@@ -126,7 +126,6 @@ uint32_t uesb_prepare_tx_payload(const uesb_address_desc_t *address, uint8_t pip
   if(m_tx_fifo.entry_point >= UESB_CORE_TX_FIFO_SIZE) m_tx_fifo.entry_point = 0;
   m_tx_fifo.count++;
 
-  payload->pipe = pipe;
   payload->length = length;
   memcpy(&payload->address, address, sizeof(uesb_address_desc_t));
   memcpy(payload->data, data, length);
@@ -139,9 +138,9 @@ uint32_t uesb_prepare_tx_payload(const uesb_address_desc_t *address, uint8_t pip
   return UESB_SUCCESS;
 }
 
-uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *data, uint8_t length)
+uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, const void *data, uint8_t length)
 {
-  uint32_t error = uesb_prepare_tx_payload(address, pipe, data, length);
+  uint32_t error = uesb_prepare_tx_payload(address, data, length);
   
   if (error != UESB_SUCCESS) {
     return error;
@@ -157,7 +156,6 @@ uint32_t uesb_read_rx_payload(uesb_payload_t *payload)
 
   DISABLE_RF_IRQ;
   payload->length = m_rx_fifo.payload[m_rx_fifo.exit_point].length;
-  payload->pipe   = m_rx_fifo.payload[m_rx_fifo.exit_point].pipe;
   payload->rssi   = m_rx_fifo.payload[m_rx_fifo.exit_point].rssi;
 
   memcpy(payload->data, m_rx_fifo.payload[m_rx_fifo.exit_point].data, payload->length);
@@ -173,16 +171,11 @@ uint32_t uesb_read_rx_payload(uesb_payload_t *payload)
 }
 
 static void configure_addresses(const uesb_address_desc_t *address) {
-  uint8_t pipe0 = address->address0 >> 24;
-  uint8_t pipe1 = address->address1 >> 24;
+  uint8_t prefix = address->address >> 24;
 	
 	// Physical addresses
-  NRF_RADIO->PREFIX0 = bytewise_bit_swap(pipe1 << 8 |
-                                         pipe0);
-  NRF_RADIO->PREFIX1 = bytewise_bit_swap(0xFFFFFFFF);
-
-  NRF_RADIO->BASE0   = bytewise_bit_swap(address->address0 << 8);
-  NRF_RADIO->BASE1   = bytewise_bit_swap(address->address1 << 8);
+  NRF_RADIO->PREFIX0 = bytewise_bit_swap(prefix);
+  NRF_RADIO->BASE0   = bytewise_bit_swap(address->address << 8);
 
   // Set radio transmission buffer
   NRF_RADIO->FREQUENCY = address->rf_channel;
@@ -204,18 +197,12 @@ uint32_t uesb_start() {
     uesb_payload_t *current_payload = &m_tx_fifo.payload[m_tx_fifo.exit_point];
 
     // Dequeue fifo
-    uint8_t pipe = current_payload->pipe;
-    
-    if (pipe >= UESB_MAX_PIPES) {
-      return UESB_ERROR_INVALID_PARAMETERS;
-    }
-
     m_uesb_mainstate       = UESB_STATE_PTX;
 
     update_rf_payload_format(current_payload->length);
     configure_addresses(&current_payload->address);
 
-    NRF_RADIO->TXADDRESS   = current_payload->pipe;
+    NRF_RADIO->TXADDRESS   = 0;
     NRF_RADIO->PACKETPTR   = (uint32_t)&current_payload->data;
     
     NRF_RADIO->TASKS_TXEN  = 1;
@@ -229,7 +216,8 @@ uint32_t uesb_start() {
     update_rf_payload_format(m_config_local.rx_address.payload_length);
     configure_addresses(&m_config_local.rx_address);
     
-    NRF_RADIO->RXADDRESSES = m_config_local.rx_address.rx_pipes_enabled & 3;
+    // We will only be listening to base0
+		NRF_RADIO->RXADDRESSES = 1;
     NRF_RADIO->PACKETPTR = (uint32_t)&m_rx_payload->data;
 
     NRF_RADIO->TASKS_RXEN  = 1;
@@ -280,7 +268,6 @@ extern "C" void RADIO_IRQHandler()
       m_rx_fifo.count++;
     
       m_rx_payload->length = m_config_local.rx_address.payload_length;
-      m_rx_payload->pipe = NRF_RADIO->RXMATCH;
       m_rx_payload->rssi = NRF_RADIO->RSSISAMPLE;
     
       uesb_event_handler(UESB_INT_RX_DR_MSK);

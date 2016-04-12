@@ -42,29 +42,18 @@ extern uesb_mainstate_t  m_uesb_mainstate;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
-  UNUSED_ADDRESS,
   ADVERTISE_ADDRESS,
-  0x3,
 	sizeof(AdvertisePacket)
 };
 
-static const uesb_address_desc_t TalkingAddress = {
-  0,
-  UNUSED_ADDRESS,
-  ADVERTISE_ADDRESS,
-  0x03,
-	31
+static const uesb_address_desc_t NoiseAddress = {
+	1,
+	0xE7E7E7E7	
 };
-
-static AccessorySlot accessories[MAX_ACCESSORIES];
 
 // Variables for talking to an accessory
 static uint8_t currentAccessory;
-
-static void createAddress(uesb_address_desc_t& address) { 
-	address.address0 = 0xE7E7E7E7;
-	address.rf_channel = 81;
-}
+static AccessorySlot accessories[MAX_ACCESSORIES];
 
 void Radio::init() {
 }
@@ -81,12 +70,6 @@ void Radio::advertise(void) {
   // Clear our our states
   memset(accessories, 0, sizeof(accessories));
   currentAccessory = 0;
-
-  // Generate target address for the robot
-  for (int i = 0; i < MAX_ACCESSORIES; i++) {
-    accessories[i].address = TalkingAddress;
-    createAddress(accessories[i].address);
-  }
 
   uesb_init(&uesb_config);
 }
@@ -150,10 +133,6 @@ void uesb_event_handler(uint32_t flags)
 
   switch (radioState) {
   case RADIO_PAIRING:      
-    if (rx_payload.pipe != CUBE_PAIR_PIPE) {
-      break ;
-    }
-
     AdvertisePacket packet;
     memcpy(&packet, &rx_payload.data, sizeof(AdvertisePacket));
 
@@ -179,28 +158,28 @@ void uesb_event_handler(uint32_t flags)
     accessories[slot].last_received = 0;
     if (accessories[slot].active == false)
     {
+      accessories[slot].allocated = true;
       accessories[slot].active = true;
       SendObjectConnectionState(slot);
     }
 
 		// Send a pairing packet		
 		{
+			
 			uesb_address_desc_t address = {
 				ADV_CHANNEL,
 				packet.id,
 			};
+			memcpy(&accessories[slot].address, &address, sizeof(address));
 
 			CapturePacket pair;
+			// TODO: CONFIGURE HERE
 
-			uesb_write_tx_payload(&address, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
+			uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
 		}
 		break ;
     
   case RADIO_TALKING:
-    if (rx_payload.pipe != CUBE_TALK_PIPE) {
-      break ;
-    }
-
     AccessorySlot* acc = &accessories[currentAccessory];
     AccessoryHandshake* ap = (AccessoryHandshake*) &rx_payload.data;
 
@@ -297,7 +276,7 @@ void Radio::prepare(void* userdata) {
 
     // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
-    uesb_prepare_tx_payload(&address, ROBOT_TALK_PIPE, &acc->tx_state, sizeof(acc->tx_state));
+    uesb_prepare_tx_payload(&address, &acc->tx_state, sizeof(acc->tx_state));
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
     if (acc->active)
@@ -314,7 +293,7 @@ void Radio::prepare(void* userdata) {
     
     // This just send garbage and return to pairing mode when finished
     EnterState(RADIO_PAIRING);
-    uesb_prepare_tx_payload(&accessories[currentAccessory].address, 1, NULL, 0);
+    uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
   }
 }
 
