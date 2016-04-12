@@ -51,6 +51,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private float _GameStartTime;
 
+  [HideInInspector]
   public List<int> CubeIdsForGame;
 
   private Dictionary<int, CycleData> _CubeCycleTimers;
@@ -93,7 +94,7 @@ public abstract class GameBase : MonoBehaviour {
 
   private void FinishTurnToFace(bool success) {
     _SharedMinigameViewInstance = UIManager.OpenView(
-      UIPrefabHolder.Instance.SharedMinigameViewPrefab, 
+      MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       newView => {
         newView.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
           _ChallengeData.HowToPlayDialogContentLocKey);
@@ -274,7 +275,7 @@ public abstract class GameBase : MonoBehaviour {
   private void OpenChallengeEndedDialog(string subtitleText = null) {
     // Open confirmation dialog instead
     GameObject challengeEndSlide = _SharedMinigameViewInstance.ShowNarrowGameStateSlide(
-                                     UIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
+                                     MinigameUIPrefabHolder.Instance.ChallengeEndViewPrefab.gameObject, 
                                      "challenge_end_slide");
     _ChallengeEndViewInstance = challengeEndSlide.GetComponent<ChallengeEndedDialog>();
     _ChallengeEndViewInstance.SetupDialog(subtitleText);

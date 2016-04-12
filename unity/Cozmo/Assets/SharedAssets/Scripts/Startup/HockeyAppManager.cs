@@ -9,7 +9,7 @@ public class HockeyAppManager : MonoBehaviour {
 
   private const string kHockeyAppBaseUrl = "https://rink.hockeyapp.net/";
   private const string kHockeyAppCrashesPath = "api/2/apps/[APPID]/crashes/upload";
-  private const string kLogFileDir = "/unity_crash_logs/";
+  private const string kLogFileDir = "unity_crash_logs";
   private const int kMaxChars = 199800;
 
   private string _AppID = null;
@@ -135,7 +135,7 @@ public class HockeyAppManager : MonoBehaviour {
     List<string> logs = new List<string>();
 
     #if (UNITY_IPHONE && !UNITY_EDITOR)
-    string logsDirectoryPath = Application.persistentDataPath + kLogFileDir;
+    string logsDirectoryPath = Application.persistentDataPath + "/" + kLogFileDir;
 
     try {
       if (Directory.Exists(logsDirectoryPath) == false) {
@@ -207,6 +207,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// <param name="stackTrace">The stacktrace for the exception.</param>
   private void WriteLogToDisk(string logString, string stackTrace) {
     #if (UNITY_IPHONE && !UNITY_EDITOR)
+    DAS.Debug("game.log.write_log_to_disk", "logString: " + logString + " \n stackTrace: " + stackTrace);
     string logSession = System.DateTime.Now.ToString("yyyy-MM-dd-HH_mm_ss_fff");
     string log = logString.Replace("\n", " ");
     string[] stacktraceLines = stackTrace.Split('\n');
@@ -218,8 +219,13 @@ public class HockeyAppManager : MonoBehaviour {
       }
     }
     try {
+      string logsDirectoryPath = Application.persistentDataPath + "/" + kLogFileDir;
+      if (Directory.Exists(logsDirectoryPath) == false) {
+        Directory.CreateDirectory(logsDirectoryPath);
+      }
+
       List<string> logHeaders = GetLogHeaders();
-      using (StreamWriter file = new StreamWriter(Application.persistentDataPath + kLogFileDir + "LogFile_" + logSession + ".log", true)) {
+      using (StreamWriter file = new StreamWriter(logsDirectoryPath + "/" + "LogFile_" + logSession + ".log", true)) {
         foreach (string header in logHeaders) {
           file.WriteLine(header);
         }
