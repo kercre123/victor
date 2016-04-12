@@ -215,7 +215,7 @@ static inline bool FlashBlock() {
   int writeAddress = packet.blockAddress;
 
   // We will not override the boot loader
-  if (writeAddress < SECURE_SPACE || writeAddress >= BOOTLOADER) {
+  if (writeAddress < BODY_SECURE_SPACE || writeAddress >= BODY_BOOTLOADER) {
     return false;
   }
  

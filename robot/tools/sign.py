@@ -1,5 +1,6 @@
 from __future__ import print_function
 import zlib
+from hashlib import sha1
 import os.path as path
 from sys import argv
 from struct import pack
@@ -7,7 +8,7 @@ from struct import pack
 from elftools.elf.elffile import ELFFile
 
 HEADER_LENGTH = 128
-BLOCK_LENGTH = 0x800
+BLOCK_LENGTH = 0x1000
 
 def chunk(i, size):
 	for x in range(0, len(i), size):
@@ -78,11 +79,14 @@ with open(argv[-1], "wb") as fo:
 		# Write to our safe
 		rom_data, base_addr = get_image(fn)
 
-		kind =  { 'legacy': None, 'rtip': 0x01, 'body': 0x02 }[kind]
 		for block, data in enumerate(chunk(rom_data, BLOCK_LENGTH)):
-			if kind:
-				fo.write(pack("<HH", 0x5478,kind))
-			
+			if kind == 'body':
+				base_addr |= 0x80000000
+
 			fo.write(data)
 			fo.write(pack("<I", block*BLOCK_LENGTH+base_addr))
-			fo.write(pack("<I", zlib.crc32(data)))
+
+			if kind == 'legacy':
+				fo.write(sha1(data).digest())
+			else:
+				fo.write(pack("<IIIII", zlib.crc32(data), 0, 0, 0, 0))

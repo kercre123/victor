@@ -167,10 +167,14 @@ static inline bool FlashBlock() {
     rawWords[i] = WaitForWord();
   }
 
-  int writeAdddress = packet.blockAddress;
-
+	// Upper 2gB is body space
+	if (packet.blockAddress >= 0x80000000) {
+		packet.blockAddress &= ~0x80000000;
+		return SendBodyCommand(COMMAND_FLASH_BODY, &packet, sizeof(packet));
+	}
+	
   // We will not override the boot loader
-  if (writeAdddress < SECURE_SPACE) {
+  if (packet.blockAddress < ROBOT_BOOTLOADER) {
     return false;
   }
   
@@ -183,7 +187,7 @@ static inline bool FlashBlock() {
 
   // Write sectors to flash
   for (int i = 0; i < TRANSMIT_BLOCK_SIZE; i+= FLASH_BLOCK_SIZE) {
-    if (!FlashSector(writeAdddress + i,&packet.flashBlock[i / sizeof(uint32_t)])) {
+    if (!FlashSector(packet.blockAddress + i, &packet.flashBlock[i / sizeof(uint32_t)])) {
       return false;
     }
   }
