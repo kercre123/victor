@@ -66,7 +66,7 @@ namespace Vision {
     
     EnrolledFaceEntry GetRecognitionData(INT32 forTrackingID);
     
-    Result LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName);
+    Result LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName, std::list<std::string>& names);
     Result SaveAlbum(const std::string& albumName);
 
     // See FaceTracker for description
@@ -145,6 +145,9 @@ namespace Vision {
     // stored by Okao.
     std::map<TrackedFace::ID_t,EnrolledFaceEntry> _enrollmentData;
     
+    // For debugging what is in current enrollment images
+    std::map<TrackedFace::ID_t,std::array<Vision::ImageRGB, MaxAlbumDataPerFace>> _enrollmentImages;
+    void SetEnrollmentImage(TrackedFace::ID_t userID, s32 whichEnrollData, const EnrolledFaceEntry& enrollData);
     
   }; // class FaceRecognizer
   

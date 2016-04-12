@@ -86,9 +86,9 @@ namespace Vision {
     return _pImpl->SaveAlbum(albumName);
   }
   
-  Result FaceTracker::LoadAlbum(const std::string& albumName)
+  Result FaceTracker::LoadAlbum(const std::string& albumName, std::list<std::string>& names)
   {
-    return _pImpl->LoadAlbum(albumName);
+    return _pImpl->LoadAlbum(albumName, names);
   }
   
   void FaceTracker::PrintTiming()

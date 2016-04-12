@@ -57,7 +57,7 @@ namespace Vision {
     // No-ops but req'd by FaceTracker
     void   AssignNameToID(TrackedFace::ID_t faceID, const std::string &name) { }
     Result SaveAlbum(const std::string& albumName) { return RESULT_FAIL; }
-    Result LoadAlbum(const std::string& albumName) { return RESULT_FAIL; }
+    Result LoadAlbum(const std::string& albumName, std::list<std::string>& names) { return RESULT_FAIL; }
     void   PrintTiming() { }
     
   private:

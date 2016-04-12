@@ -40,7 +40,11 @@ struct EnrolledFaceEntry
   s32                       score      = 1000;      // [0,1000]
   s32                       oldestData = 0;         // index of last data update
   
+  bool                      isForThisSessionOnly = true;
+  
   EnrolledFaceEntry(TrackedFace::ID_t withID = TrackedFace::UnknownFace);
+  
+  // Faces constructed from Json default to _not_ being for this session only
   EnrolledFaceEntry(TrackedFace::ID_t withID, Json::Value& json);
   
   void MergeWith(EnrolledFaceEntry& otherEntry);

@@ -574,7 +574,7 @@ namespace Vision {
     return _recognizer.SaveAlbum(albumName);
   }
   
-  Result FaceTracker::Impl::LoadAlbum(const std::string& albumName)
+  Result FaceTracker::Impl::LoadAlbum(const std::string& albumName, std::list<std::string>& names)
   {
     // Initialize on first use
     if(!_isInitialized) {
@@ -586,7 +586,7 @@ namespace Vision {
       }
     }
     
-    return _recognizer.LoadAlbum(_okaoCommonHandle, albumName);
+    return _recognizer.LoadAlbum(_okaoCommonHandle, albumName, names);
   }
   
 } // namespace Vision

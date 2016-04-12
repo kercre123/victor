@@ -21,12 +21,14 @@ EnrolledFaceEntry::EnrolledFaceEntry(TrackedFace::ID_t withID)
 : faceID(withID)
 , enrollmentTime(time(0))
 , lastDataUpdateTime(time(0))
+, isForThisSessionOnly(true)
 {
   
 }
 
 EnrolledFaceEntry::EnrolledFaceEntry(TrackedFace::ID_t withID, Json::Value& json)
 : faceID(withID)
+, isForThisSessionOnly(false)
 {
   auto MissingFieldWarning = [withID](const char* fieldName) {
     PRINT_NAMED_WARNING("EnrolledFaceEntry.ConstructFromJson.MissingField",
