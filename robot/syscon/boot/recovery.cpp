@@ -154,7 +154,7 @@ static bool WaitWord(commandWord target) {
 static void WriteWord(commandWord word) {
   setTransmit(true);
 
-  for (int i = 0; i < sizeof(commandWord); i++) {
+  for (int i = sizeof(commandWord) - 1; i >= 0; i--) {
     NRF_UART0->TXD = word >> (i * 8);
 
     while (!NRF_UART0->EVENTS_TXDRDY) ;

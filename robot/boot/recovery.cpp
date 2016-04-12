@@ -94,39 +94,44 @@ bool FlashSector(int target, const uint32_t* data)
 }
 
 static void UpdateBodyState() {
-	while (UART0_RCFIFO > 0) {
-		static uint16_t header;
-		
-		while (header != COMMAND_HEADER) {
-			// Our fifo is empty, simply break
-			if (!UART0_RCFIFO) return ;
-			
-			header = (header >> 8) | (UART0_D << 8);
-		}	
+	static uint16_t header = 0;
 
-		uint16_t word;
-		UART::read(&word, sizeof(word));
-		body_state = (RECOVERY_STATE) word;
+	while (UART::rx_avail()) {	
+		// Try to syncronize to the header
+		if (header != COMMAND_HEADER) {
+			header = (header << 8) | UART::readByte();
+			continue ;
+		}
+		
+		if (UART0_RCFIFO < 2) {
+			return ;
+		}
+		
+		// Read body state
+		body_state = (RECOVERY_STATE) UART::readWord();
+		header = 0;
 	}
 }
 
 static void WaitForState(void) {
 	body_state = STATE_BUSY;
 	UART::flush();
-	do {
+	
+	while (body_state == STATE_BUSY) {
 		UpdateBodyState();
-	} while (body_state == STATE_BUSY);
+	}
 }
 
-static bool SendBodyCommand(const void* command, int length) {	
-	static const uint16_t header = COMMAND_HEADER;	
-	
+static bool SendBodyCommand(uint16_t command, const void* body = NULL, int length = 0) {	
 	SPI0_PUSHR_SLAVE = STATE_BUSY;
 	
 	WaitForState();
+	
 	MicroWait(50);
-	UART::write(&header, sizeof(header));
-	UART::write(command, length);
+	UART::writeWord(COMMAND_HEADER);
+	UART::writeWord(command);
+	UART::write(body, length);
+	
 	WaitForState();
 	
 	SPI0_PUSHR_SLAVE = body_state;
@@ -135,9 +140,7 @@ static bool SendBodyCommand(const void* command, int length) {
 }
 
 static bool CheckBodySig(void) {
-	static const uint16_t CHECK_SIG = COMMAND_CHECK_SIG;
-	
-	return SendBodyCommand(&CHECK_SIG, sizeof(CHECK_SIG));
+	return SendBodyCommand(COMMAND_CHECK_SIG);
 }
 
 bool CheckSig(void) {
@@ -196,18 +199,13 @@ static bool FlashBodyBlock() {
     rawWords[i] = WaitForWord();
   }
 
-	static const uint16_t write_block = COMMAND_FLASH_BODY;
-	SendBodyCommand(&write_block, sizeof(write_block));
-	return SendBodyCommand(&packet, sizeof(packet));
+	return SendBodyCommand(COMMAND_FLASH_BODY, &packet, sizeof(packet));
 }
 
 static void SetLight(int channel, int colors) {
-	uint16_t command[] = {
-		COMMAND_SET_LED,
-		(channel & 3) | (colors << 2)
-	};
+	uint16_t command = ((channel & 3) | (colors << 2)) << 8;
 	
-	SendBodyCommand(command, sizeof(command));
+	SendBodyCommand(COMMAND_SET_LED, &command, sizeof(command));
 }
 
 void EnterRecovery() {  
@@ -217,6 +215,12 @@ void EnterRecovery() {
 	// Start by getting the recovery state of the body
 	WaitForState();
 
+	for(;;) {
+		static int i = 0;
+		SetLight(i & 3, i >> 2);
+		i++;
+	}
+	
 	// These are the requirements to boot immediately into the application
 	bool recovery_escape = 
 		(recovery_word != recovery_value) &&
@@ -253,8 +257,7 @@ void EnterRecovery() {
 					break ;
 				}
 
-				static const uint16_t finished_cmd = COMMAND_DONE;
-				SendBodyCommand(&finished_cmd, sizeof(finished_cmd));
+				SendBodyCommand(COMMAND_DONE);
 				
 				SPI0_PUSHR_SLAVE = STATE_IDLE;
         return ;

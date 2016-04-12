@@ -9,14 +9,15 @@
 
 enum TRANSFER_MODE {
   TRANSMIT_RECEIVE,
-  TRANSMIT_SEND
+  TRANSMIT_SEND,
+	TRANSMIT_UNKNOWN
 };
 
 #define BAUD_SBR(baud)  (CORE_CLOCK * 2 / baud / 32)
 #define BAUD_BRFA(baud) (CORE_CLOCK * 2 / baud % 32)
 
 static const int uart_fifo_size = 8;
-static TRANSFER_MODE current_mode;
+static TRANSFER_MODE current_mode = TRANSMIT_UNKNOWN;
 
 inline void transmit_mode(TRANSFER_MODE mode);
 
@@ -49,36 +50,25 @@ void Anki::Cozmo::HAL::UART::shutdown(void) {
 }
 
 
-/*
-#include "anki/cozmo/robot/hal.h"
-#include "hal/portable.h"
-
-
-#include "spi.h"
-#include "uart.h"
-#include "spine.h"
-*/
-
 inline void transmit_mode(TRANSFER_MODE mode) { 
+	if (mode == current_mode) {
+		return ;
+	}
+	current_mode = mode;
+
 	switch (mode) {
     case TRANSMIT_SEND:
-    {
       PORTD_PCR6 = PORT_PCR_MUX(0);
       PORTD_PCR7 = PORT_PCR_MUX(3);
       UART0_C2 = UART_C2_TE_MASK;
       break ;
-    }
     case TRANSMIT_RECEIVE:
-    {
-      PORTD_PCR6 = PORT_PCR_MUX(3);
       PORTD_PCR7 = PORT_PCR_MUX(0);
+      PORTD_PCR6 = PORT_PCR_MUX(3);
       UART0_C2 = UART_C2_RE_MASK;
       break ;
-    }
     default:
-    {
       break ;
-    }
   }
 }
 
@@ -86,7 +76,7 @@ void Anki::Cozmo::HAL::UART::read(void* p, int length) {
 	transmit_mode(TRANSMIT_RECEIVE);
 
 	uint8_t* data = (uint8_t*) p;
-	for (int i = 0; i < 2; i++) {
+	while (length-- > 0) {
 		while (!UART0_RCFIFO) ;
 		*(data++) = UART0_D;
 	}
@@ -107,3 +97,27 @@ void Anki::Cozmo::HAL::UART::write(const void* p, int length) {
 void Anki::Cozmo::HAL::UART::flush(void) {
 	UART0->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
 }
+
+bool Anki::Cozmo::HAL::UART::rx_avail(void){
+	return UART0_RCFIFO > 0;
+}
+
+void Anki::Cozmo::HAL::UART::writeWord(uint16_t word) {
+	word = (word << 8) | (word >> 8);
+	write(&word, sizeof(word));
+}
+
+uint16_t Anki::Cozmo::HAL::UART::readWord(void) {
+	uint16_t word;
+	read(&word, sizeof(word));
+
+	return (word << 8) | (word >> 8);
+}
+
+uint8_t Anki::Cozmo::HAL::UART::readByte(void) {
+	uint8_t word;
+	read(&word, sizeof(word));
+
+	return word;
+}
+
