@@ -14,6 +14,7 @@
 #include "util/global/globalDefinitions.h"
 
 #include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
@@ -32,10 +33,6 @@
 
 #include <anki/messaging/basestation/IComms.h>
 #include <anki/messaging/basestation/advertisementService.h>
-
-#if ANKI_DEV_CHEATS
-#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
-#endif
 
 namespace Anki {
   namespace Cozmo {

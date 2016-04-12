@@ -12,6 +12,7 @@
 
 
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/messaging/basestation/IChannel.h"
@@ -19,10 +20,6 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/global/globalDefinitions.h"
-
-#if ANKI_DEV_CHEATS
-#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
-#endif
 
 namespace Anki {
 namespace Cozmo {

@@ -119,7 +119,7 @@ void DevLoggingSystem::PrepareForUpload(const std::string& namePrefix) const
     std::rename(GetPathString(_allLogsBaseDirectory, filename).c_str(), newFilename.c_str());
   }
   
-  // Post all to amazon
+  // TODO:(lc) Post all to amazon
 }
 
 std::string DevLoggingSystem::GetPathString(const std::string& base, const std::string& path) const
