@@ -137,6 +137,8 @@ public interface IRobot : IDisposable {
 
   void SetProgressionStats(StatContainer stats);
 
+  void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY);
+
   void SetEnableCliffSensor(bool enabled);
 
   void SetEnableAllBehaviors(bool enabled);
