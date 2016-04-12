@@ -26,6 +26,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/helpers/cleanupHelper.h"
 #include "util/console/consoleInterface.h"
 
 //
@@ -68,6 +69,18 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+  CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
+  CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
+  
+  CONSOLE_VAR(f32, kCalibDotSearchSize_mm,    "Vision.ToolCode",  4.5f);
+  CONSOLE_VAR(f32, kCalibDotMinContrastRatio, "Vision.ToolCode",  1.1f);
+  
+  CONSOLE_VAR(bool, kUseHalfResMotionDetection,       "Vision.MotionDetection", true);
+  CONSOLE_VAR(u32,  kLastMotionDelay_ms,              "Vision.MotionDetection", 500);
+  CONSOLE_VAR(u8,   kMinBrightnessForMotionDetection, "Vision.MotionDetection", 10);
+  CONSOLE_VAR(f32,  kMotionDetectRatioThreshold,      "Vision.MotionDetection", 1.25f);
+  CONSOLE_VAR(f32,  kMinMotionAreaFraction,           "Vision.MotionDetection", 1.f/225.f); // 1/15 of each image dimension
   
 CONSOLE_VAR(float, kMaxCalibBlobPixelArea, "kMaxCalibBlobPixelArea", 800.f); // max number of pixels in calibration pattern blob
 CONSOLE_VAR(float, kMinCalibBlobPixelArea, "kMinCalibBlobPixelArea", 20.f); // min number of pixels in calibration pattern blob
@@ -1426,8 +1439,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
                                 DEG_TO_RAD_F32(0.1)));
     Vision::ImageRGB image;
     f32 scaleMultiplier = 1.f;
-    const bool useHalfRes = true;
-    if(useHalfRes) {
+    if(kUseHalfResMotionDetection) {
       image = Vision::ImageRGB(imageIn.GetNumRows()/2,imageIn.GetNumCols()/2);
       imageIn.Resize(image, Vision::ResizeMethod::NearestNeighbor);
       scaleMultiplier = 2.f;
@@ -1440,7 +1452,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
 #      if USE_THREE_FRAME_MOTION_DETECTION
        !_prevPrevImage.IsEmpty() &&
 #      endif
-       image.GetTimestamp() - _lastMotionTime > 500)
+       image.GetTimestamp() - _lastMotionTime > kLastMotionDelay_ms)
     {
       s32 numAboveThresh = 0;
       
@@ -1456,14 +1468,13 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
         };
         
         u8 retVal = 0;
-        const u8 minBrightness = 10;
-        if(p1.IsBrighterThan(minBrightness) && p2.IsBrighterThan(minBrightness)) {
-          
-          const f32 ratioThreshold = 1.25f; // TODO: pass in or capture?
+        if(p1.IsBrighterThan(kMinBrightnessForMotionDetection) &&
+           p2.IsBrighterThan(kMinBrightnessForMotionDetection))
+        {
           const f32 ratioR = ratioTestHelper(p1.r(), p2.r());
           const f32 ratioG = ratioTestHelper(p1.g(), p2.g());
           const f32 ratioB = ratioTestHelper(p1.b(), p2.b());
-          if(ratioR > ratioThreshold || ratioG > ratioThreshold || ratioB > ratioThreshold) {
+          if(ratioR > kMotionDetectRatioThreshold || ratioG > kMotionDetectRatioThreshold || ratioB > kMotionDetectRatioThreshold) {
             ++numAboveThresh;
             retVal = 255; // use 255 because it will actually display
           }
@@ -1496,12 +1507,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
       Anki::Point2f groundPlaneCentroid(0.f,0.f);
       
       // Get overall image centroid
-      //#       if USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
-      const size_t minAreaDivisor = 225; // 1/15 of each image dimension
-                                         //#       else
-                                         //        const size_t minAreaDivisor = 36; // 1/6 of each image dimension
-                                         //#       endif
-      const size_t minArea = image.GetNumElements() / minAreaDivisor;
+      const size_t minArea = (f32)image.GetNumElements() * kMinMotionAreaFraction;
       f32 imgRegionArea    = 0.f;
       f32 groundRegionArea = 0.f;
       if(numAboveThresh > minArea) {
@@ -1547,7 +1553,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
         // Find centroid of largest connected component inside the ground plane
         const f32 imgQuadArea = imgQuad.ComputeArea();
         groundRegionArea = GetCentroid(groundPlaneForegroundMotion,
-                                       imgQuadArea/static_cast<f32>(minAreaDivisor),
+                                       imgQuadArea*kMinMotionAreaFraction,
                                        groundPlaneCentroid);
         
         // Move back to image coordinates from ROI coordinates
@@ -1781,12 +1787,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
   
   Result VisionSystem::DetectOverheadEdges(const Vision::ImageRGB &image)
   {
-    // TODO: Expose parameters
-    // Parameters:
-    //const s32 kKernelSize = -1; // +ve for Sobel edge detection, -1 for Scharr
-    const f32 kEdgeThreshold = 50.f;
-    const u32 kMinChainLength = 3; // in number of edge pixels
-    
     // if the ground plane is not currently visible, do not detect edges
     if ( !_poseData.groundPlaneVisible )
     {
@@ -2255,9 +2255,9 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
       sortedQuad = marker.corners;
     }
     
-    ASSERT_NAMED(_camera.IsCalibrated(), "Camera should be calibrated");
+    ASSERT_NAMED(_camera.IsCalibrated(), "VisionSystem.GetVisionMarkerPose.CameraNotCalibrated");
     auto calib = _camera.GetCalibration();
-    ASSERT_NAMED(calib != nullptr, "Calibration should not be null");
+    ASSERT_NAMED(calib != nullptr, "VisionSystem.GetVisionMarkerPose.NullCalibration");
     
     return P3P::computePose(sortedQuad,
                             _canonicalMarker3d[0], _canonicalMarker3d[1],
@@ -2523,18 +2523,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     _faceDetectionParameters.maxWidth = maxObjectWidth;
   }
   
-  // TODO: Move this to Anki::Util
-  // Instantiate this class with a function you want called when it goes out of
-  // scope, to do cleanup for you, e.g. in case of early returns from a function.
-  class Cleanup
-  {
-    std::function<void()> _cleanupFcn;
-  public:
-    Cleanup(std::function<void()>&& fcn) : _cleanupFcn(fcn) { }
-    ~Cleanup() { _cleanupFcn(); }
-  };
-  
-  
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
     ToolCode codeRead = ToolCode::UnknownTool;
@@ -2543,7 +2531,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     
     // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
     // no matter how we return from this function
-    Cleanup disableCheckToolCode([this,&codeRead]() {
+    Util::CleanupHelper disableCheckToolCode([this,&codeRead]() {
       this->_toolCodeMailbox.putMessage(codeRead);
       this->EnableMode(VisionMode::ReadingToolCode, false);
       PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
@@ -2615,17 +2603,14 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
 #   endif
     
     // Tool code calibration dot parameters
-    // TODO: Expose the non-computed ones somewhere? Cozmo Config?
     const f32 kDotWidth_mm = 2.5f;
     const f32 kDotHole_mm  = 2.5f/3.f;
-    const f32 kQuadPad_mm  = 4.5f; // search area
     const f32 kDotAreaFrac = ((kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) /
-                              (4.f*kQuadPad_mm * kQuadPad_mm));
+                              (4.f*kCalibDotSearchSize_mm * kCalibDotSearchSize_mm));
     const f32 kMinDotAreaFrac   = 0.5f * kDotAreaFrac;
     const f32 kMaxDotAreaFrac   = 1.5f * kDotAreaFrac;
     const f32 kHoleAreaFrac     = kDotHole_mm * kDotHole_mm / (kDotWidth_mm*kDotWidth_mm);
     const f32 kMaxHoleAreaFrac  = 2.f * kHoleAreaFrac;
-    const f32 kMinContrastRatio = 1.1f;
     
     Anki::Point2f camCen;
     std::vector<Anki::Point2f> observedPoints;
@@ -2634,10 +2619,10 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
       // Get an ROI around where we expect to see the dot in the image
       const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[iDot];
       Quad3f dotQuadRoi3d = {
-        {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() - kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kQuadPad_mm, dotWrtLift3d.y() - kQuadPad_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kQuadPad_mm, dotWrtLift3d.y() + kQuadPad_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
       };
       
       Quad3f dotQuadRoi3dWrtCam;
@@ -2770,7 +2755,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
                 // Hole should neither leak to the outside, nor should it be too big,
                 // and its brightness should be sufficiently brighter than the dot
                 const bool holeSmallEnough = holeArea < compArea * kMaxHoleAreaFrac;
-                const bool enoughContrast = (f32)avgHoleBrightness > kMinContrastRatio * (f32)avgDotBrightness;
+                const bool enoughContrast = (f32)avgHoleBrightness > kCalibDotMinContrastRatio * (f32)avgDotBrightness;
                 if(holeSmallEnough && enoughContrast)
                 {
                   // Yay, passed all checks! Thus "must" be a tool code.

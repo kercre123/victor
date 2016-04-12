@@ -16,17 +16,8 @@ fi
 # Remove file if it exists
 rm -f $VersionFile
 
-# find git
-GIT=`which git`
-if [ -z $GIT ]
-then
-  echo git not found
-  exit 1
-fi
-
-
 # Get git SHA-1
-Commit=`$GIT rev-parse --short HEAD`
+Commit=`git rev-parse --short HEAD`
 DasUser=`/usr/bin/whoami`
 Date=`date +%Y-%m-%d..%H:%M`
 

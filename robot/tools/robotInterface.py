@@ -204,9 +204,9 @@ class _Dispatcher(IDataReceiver):
                 for i, b in enumerate(msg.fwVersionInfo.toEngineCLADHash):
                     toEngine |= b << (8*i)
                 if toRobot  != messageEngineToRobotHash:
-                    sys.stderr.write("WARNING: ToRobot CLAD HASH missmatch!{linesep}\t Robot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toRobot,   messageEngineToRobotHash, linesep=os.linesep))
+                    sys.stderr.write("WARNING: ToRobot CLAD HASH missmatch!{linesep}\tRobot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toRobot,   messageEngineToRobotHash, linesep=os.linesep))
                 if toEngine != messageRobotToEngineHash:
-                    sys.stderr.write("WARNING: ToEngine CLAD HASH missmatch!{linesep}\t Robot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toEngine, messageRobotToEngineHash, linesep=os.linesep))
+                    sys.stderr.write("WARNING: ToEngine CLAD HASH missmatch!{linesep}\tRobot = {:x}{linesep}\tLocal = {:x}{linesep}".format(toEngine, messageRobotToEngineHash, linesep=os.linesep))
             for tag, subs in self.ReceiveDataSubscribers.items():
                 if msg.tag == tag:
                     for sub in subs:

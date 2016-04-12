@@ -220,6 +220,11 @@ message EnableLiftPower
   bool enable
 }
 
+message ConfigureBluetooth
+{
+  bool enable
+}
+
 message EnableCamCalibMode
 {
   float_32 headPower,
@@ -263,6 +268,16 @@ message DisplayRelease
 {  
 }
 
+message NVReadResultToBody
+{
+  NVStorage::NVStorageBlob entry
+}
+
+message NVOpResultToBody
+{
+  NVStorage::NVOpResult report
+}
+
 enum uint_32 ToRobotAddressSpace
 {
   GLOBAL_INVALID_TAG = 0,
@@ -298,6 +313,10 @@ union EngineToRobot
   CubeLights                    setCubeLights               = 0x04,
   SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
+  ConfigureBluetooth            configureBluetooth          = 0x07,
+
+  NVReadResultToBody            nvReadToBody                = 0x08,
+  NVOpResultToBody              nvOpResultToBody            = 0x09,
 
   BLE_RecvHello                 bleRecvHelloMessage         = 0x26,
   BLE_EnterPairing              bleEnterPairing             = 0x27,
@@ -353,7 +372,7 @@ union EngineToRobot
   EraseFlash                    eraseFlash                  = 0x80,
   WriteFlash                    writeFlash                  = 0x81,
   OTAUpgrade                    triggerOTAUpgrade           = 0x82,
-  NVStorage::NVStorageBlob      writeNV                     = 0x83,
+  NVStorage::NVStorageWrite     writeNV                     = 0x83,
   NVStorage::NVStorageRead      readNV                      = 0x84,
   // Reserved for FlashWriteAcknowledge message in OTA      = 0x85,
   BodyFirmwareState             bodyState                   = 0x86,

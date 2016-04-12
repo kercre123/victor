@@ -1421,7 +1421,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       // Now that the occlusion maps are complete, check each unobserved object's
       // visibility in each camera
       const Vision::Camera& camera = _robot->GetVisionComponent().GetCamera();
-      ASSERT_NAMED(camera.IsCalibrated(), "Camera should be calibrated");
+      ASSERT_NAMED(camera.IsCalibrated(), "BlockWorld.CheckForUnobservedObjects.CameraNotCalibrated");
       for(auto unobserved : unobservedObjects) {
         
         // Remove objects that should have been visible based on their last known

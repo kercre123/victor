@@ -414,7 +414,7 @@ namespace Vision {
   void ObservableObjectLibrary<ObsObjectType>::PoseCluster::RecomputePose()
   {
     if(GetSize() > 1) {
-      //fprintf(stdout, "Re-computing pose from all %zu members of cluster.\n", GetSize());
+      //fprintf(stdout, "Re-computing pose from all %zu members of cluster.", GetSize());
       
       std::vector<Point2f> imgPoints;
       std::vector<Point3f> objPoints;
@@ -442,10 +442,11 @@ namespace Vision {
           }
         }
         else {
-          fprintf(stdout, "Ability to re-estimate single object's "
-                  "pose from markers seen by two different cameras "
-                  "not yet implemented. Will just use markers from "
-                  "first camera in the cluster.\n");
+          PRINT_NAMED_WARNING("ObservableObjectLibrary.PoseCluster.RecomputePose.NotImplemented",
+                              "Ability to re-estimate single object's "
+                              "pose from markers seen by two different cameras "
+                              "not yet implemented. Will just use markers from "
+                              "first camera in the cluster.");
         }
         
       } // for each cluster member
@@ -457,7 +458,7 @@ namespace Vision {
       if(_pose.GetParent() != originalParent) {
         if(_pose.GetWithRespectTo(*originalParent, _pose) == false) {
           PRINT_NAMED_ERROR("ObservableObjectLibrary.PoseCluster.RecomputePose.OriginMisMatch",
-                            "Could not get object pose w.r.t. original parent.\n");
+                            "Could not get object pose w.r.t. original parent.");
         }
       }
     } // IF more than one member

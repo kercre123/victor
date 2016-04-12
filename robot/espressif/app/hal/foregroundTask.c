@@ -35,7 +35,7 @@ void foregroundTaskTask(os_event_t *event)
 
 int8_t foregroundTaskInit(void)
 {
-  os_printf("foregroundTask init\r\n");
+  //os_printf("foregroundTask init\r\n");
   if (system_os_task(foregroundTaskTask, foregroundTask_PRIO, foregroundTaskQueue, foregroundTaskQueueLen) == false)
   {
     os_printf("\tCouldn't register OS task\r\n");

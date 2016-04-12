@@ -316,22 +316,13 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   }
 }
 
-void Radio::prepare(void* userdata) {
-  uesb_stop();
-
-  // Transmit to accessories round-robin
-  if (++currentAccessory >= TICK_LOOP) {
-    currentAccessory = 0;
-  }
-
-  if (currentAccessory >= MAX_ACCESSORIES) return ;
-
-  AccessorySlot* acc = &accessories[currentAccessory];
-
-  if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
+void Radio::updateLights() {
+  for (int i = 0; i < MAX_ACCESSORIES; i++) {
+    AccessorySlot* acc = &accessories[currentAccessory];
+    
+    if (!acc->active) continue ;
+    
     // Update the color status of the lights
-    uint32_t currentFrame = GetFrame();
-
     int sum = 0;
     for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
       static const uint8_t light_index[NUM_PROP_LIGHTS][4] = {
@@ -351,7 +342,22 @@ void Radio::prepare(void* userdata) {
     }
 
     acc->tx_state.ledDark = 0xFF - isqrt(sum);
+  }
+}
 
+void Radio::prepare(void* userdata) {
+  uesb_stop();
+
+  // Transmit to accessories round-robin
+  if (++currentAccessory >= TICK_LOOP) {
+    currentAccessory = 0;
+  }
+
+  if (currentAccessory >= MAX_ACCESSORIES) return ;
+
+  AccessorySlot* acc = &accessories[currentAccessory];
+
+  if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
     // We send the previous LED state (so we don't get jitter on radio)
     uesb_address_desc_t& address = accessories[currentAccessory].address;
 

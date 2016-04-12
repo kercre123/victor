@@ -8,6 +8,7 @@ extern "C" {
 
 #include "hardware.h"
 
+#include "storage.h"
 #include "rtos.h"
 #include "battery.h"
 #include "motors.h"
@@ -103,6 +104,7 @@ void enterOperatingMode(BodyOperatingMode mode) {
 int main(void)
 {
   Bootloader::init();
+  Storage::init();
   
   // Initialize our scheduler
   RTOS::init();
@@ -138,5 +140,7 @@ int main(void)
     // This means that if the crypto engine is running, the lights will stop pulsing. 
     Crypto::manage();
     Lights::manage();
+    Backpack::manage();
+    Radio::updateLights();
   }
 }

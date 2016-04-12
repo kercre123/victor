@@ -14,6 +14,7 @@
 #include "anki/common/types.h"
 #include "clad/types/firmwareTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
+#include <assert.h>
 #include <map>
 #include <string>
 #include <thread>
@@ -106,6 +107,7 @@ private:
   
   bool SendToAllRobots(const RobotMap& robots, const RobotInterface::EngineToRobot& msg);
   bool HaveAllRobotsAcked() const;
+  bool AreAllRobotsDisconnected() const;
   
   bool ShouldRobotsBeRebooting() const;
   bool HaveAllRobotsRebooted() const;
@@ -125,6 +127,13 @@ private:
   void SendProgressToGame(const RobotMap& robots, float ratioComplete = 0.0f);
   void SendCompleteResultToGame(const RobotMap& robots, FirmwareUpdateResult updateResult);
   
+  std::string& GetFwSignature(FirmwareUpdateStage stage)
+  {
+    const size_t idx = (size_t)stage;
+    assert(idx < kFwSignatureCount);
+    return _fwSignatures[idx];
+  }
+  
   // ==================== Member Data ====================
   
   AsyncLoaderData _fileLoaderData;
@@ -134,6 +143,9 @@ private:
   
   std::vector<RobotUpgradeInfo> _robotsToUpgrade;
   std::vector<::Signal::SmartHandle> _eventHandles;
+  
+  static constexpr size_t kFwSignatureCount = (size_t)FirmwareUpdateStage::Done;
+  std::string     _fwSignatures[kFwSignatureCount];
   
   uint32_t        _numFramesInSubState;
   uint32_t        _numBytesWritten;

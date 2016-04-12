@@ -13,6 +13,7 @@
 
 #include "anki/cozmo/basestation/firmwareUpdater/firmwareUpdater.h"
 #include "anki/cozmo/basestation/firmwareUpdater/sha1/sha1.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/math/math.h"
@@ -300,34 +301,72 @@ bool FirmwareUpdater::HaveAllRobotsRebooted() const
 }
 
   
+bool FirmwareUpdater::AreAllRobotsDisconnected() const
+{
+  for (const RobotUpgradeInfo& robotUpgradeInfo : _robotsToUpgrade)
+  {
+    if (robotUpgradeInfo.IsConnected())
+    {
+      return false;
+    }
+  }
+  
+  return true;
+}
+
+
 void FirmwareUpdater::SendProgressToGame(const RobotMap& robots, float ratioComplete)
 {
   const uint8_t percentComplete = Util::Clamp(uint8_t(ratioComplete * 100.0f), uint8_t(0u), uint8_t(100u));
   
+  const std::string& fwSigWifi = GetFwSignature(FirmwareUpdateStage::Wifi);
+  const std::string& fwSigRTIP = GetFwSignature(FirmwareUpdateStage::RTIP);
+  const std::string& fwSigBody = GetFwSignature(FirmwareUpdateStage::Body);
+  
   for (const RobotUpgradeInfo& robotUpgradeInfo : _robotsToUpgrade)
   {
     auto it = robots.find(robotUpgradeInfo.GetId());
-    assert(it != robots.end());
+    if (it != robots.end())
+    {
+      Robot* robot = it->second;
     
-    Robot* robot = it->second;
-  
-    ExternalInterface::FirmwareUpdateProgress message(robot->GetID(), _state, _subState, percentComplete);
-    robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+      ExternalInterface::FirmwareUpdateProgress message(robot->GetID(), _state, _subState, fwSigWifi, fwSigRTIP, fwSigBody, percentComplete);
+      robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+    }
+    else
+    {
+      if (!ShouldRobotsBeRebooting())
+      {
+        PRINT_NAMED_ERROR("SendProgressToGame.MissingRobot", "Missing Robot %u", robotUpgradeInfo.GetId());
+      }
+    }
   }
 }
   
 
 void FirmwareUpdater::SendCompleteResultToGame(const RobotMap& robots, FirmwareUpdateResult updateResult)
 {
+  const std::string& fwSigWifi = GetFwSignature(FirmwareUpdateStage::Wifi);
+  const std::string& fwSigRTIP = GetFwSignature(FirmwareUpdateStage::RTIP);
+  const std::string& fwSigBody = GetFwSignature(FirmwareUpdateStage::Body);
+  
   for (const RobotUpgradeInfo& robotUpgradeInfo : _robotsToUpgrade)
   {
     auto it = robots.find(robotUpgradeInfo.GetId());
-    assert(it != robots.end());
-    
-    Robot* robot = it->second;
-    
-    ExternalInterface::FirmwareUpdateComplete message(robot->GetID(), updateResult);
-    robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+    if (it != robots.end())
+    {
+      Robot* robot = it->second;
+      
+      ExternalInterface::FirmwareUpdateComplete message(robot->GetID(), updateResult, fwSigWifi, fwSigRTIP, fwSigBody);
+      robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+    }
+    else
+    {
+      if (!ShouldRobotsBeRebooting())
+      {
+        PRINT_NAMED_ERROR("SendCompleteResultToGame.MissingRobot", "Missing Robot %u", robotUpgradeInfo.GetId());
+      }
+    }
   }
 }
   
@@ -430,6 +469,7 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
         }
         else
         {
+          _numFramesInSubState = 0; // only count the time sending a given chunk
           SendProgressToGame( robots, ((float)_numBytesWritten / (float)_fileLoaderData.GetBytes().size()) );
         }
       }
@@ -445,12 +485,12 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
         GenerateSHA1(_fileLoaderData.GetBytes(), sizeof(uint32_t), sig);
         Anki::Cozmo::RobotInterface::OTACommand oTACommand = GetOTACommandForState(_state);
         
+        GetFwSignature(_state) = Util::ConvertMessageBufferToString(&sig[0], SHA1_BLOCK_SIZE, Util::eBTTT_Hex, false);
+        
         RobotInterface::EngineToRobot msg(RobotInterface::OTAUpgrade(flashAddress, _version, sig, oTACommand));
         
         PRINT_NAMED_INFO("FirmwareUpdater.SendOTAUpgrade", "Sending OTAUpgrade(%u, %d, %s, %s)",
-                         flashAddress, _version,
-                         Util::ConvertMessageBufferToString(&sig[0], SHA1_BLOCK_SIZE, Util::eBTTT_Hex).c_str(),
-                         EnumToString(oTACommand));
+                         flashAddress, _version, GetFwSignature(_state).c_str(), EnumToString(oTACommand));
         
         if (!SendToAllRobots(robots, msg))
         {
@@ -465,11 +505,12 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
     case FirmwareUpdateSubStage::WaitOTAUpgrade:
     {
       const bool shouldRobotsBeRebooting = ShouldRobotsBeRebooting();
-      const bool haveAllRobotsRebooted = HaveAllRobotsRebooted();
+      const bool areAllRobotsDisconnected = AreAllRobotsDisconnected();
       
-      const uint32_t kNumFramesToWaitForOTAUpgrade = shouldRobotsBeRebooting ? (30 * 15) : 0;
+      // until we can reconnect to the robot after reboot, might as well go directly complete ASAP
+      const uint32_t kNumFramesToWaitForOTAUpgrade = shouldRobotsBeRebooting ? 1 : 0;
       
-      if ((shouldRobotsBeRebooting && haveAllRobotsRebooted) || (_numFramesInSubState >= kNumFramesToWaitForOTAUpgrade))
+      if ((shouldRobotsBeRebooting && areAllRobotsDisconnected) || (_numFramesInSubState >= kNumFramesToWaitForOTAUpgrade))
       {
         AdvanceState(robots);
       }
@@ -506,11 +547,30 @@ void FirmwareUpdater::HandleFlashWriteAck(RobotID_t robotId, const RobotInterfac
   
 bool FirmwareUpdater::InitUpdate(const RobotMap& robots, int version)
 {
+  IExternalInterface* externalInterface = _context->GetExternalInterface();
+  if (nullptr == externalInterface)
+  {
+    PRINT_NAMED_ERROR("FirmwareUpdater.InitUpdate.NullExternalInterface", "");
+  }
+  
   _robotsToUpgrade.clear();
   for (auto kv : robots)
   {
     RobotID_t robotId = kv.first;
+    
     _robotsToUpgrade.emplace_back(robotId);
+    
+    if (externalInterface)
+    {
+      // Cancel animations/sounds
+      ExternalInterface::CancelAction cancelActionMsg(RobotActionType::UNKNOWN, robotId);
+      externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(std::move(cancelActionMsg)));
+    }
+  }
+  
+  for (size_t i = 0; i < kFwSignatureCount; ++i)
+  {
+    _fwSignatures[i] = "";
   }
   
   if (robots.size() == 0)

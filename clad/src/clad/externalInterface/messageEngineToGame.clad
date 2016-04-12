@@ -56,6 +56,15 @@ message UiDeviceConnected {
     uint_8 successful
 }
 
+message EngineRobotCLADVersionMismatch {
+  bool engineToRobotMismatch,
+  bool robotToEngineMistmatch,
+  string  engineEnginetoRobotHash,	// Engine's calculated hash for the engine to robot messages
+  string  engineRobotToEngineHash,	// Engine's calculated hash for the robot to engine messages
+  string  robotEnginetoRobotHash,	// Robot's calculated hash for the engine to robot messages
+  string  robotRobotToEngineHash,	// Robot's calculated hash for the robot to engine messages
+}
+
 /*
 message Bogus {
 }
@@ -107,7 +116,9 @@ message RobotPoked {
 message DebugString {
     string    text
 }
-
+message DebugAnimationString {
+string    text
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////  VISION  ////////////////////////////////////
@@ -382,12 +393,18 @@ message FirmwareUpdateProgress {
   uint_32 robotID,
   FirmwareUpdateStage stage,
   FirmwareUpdateSubStage subStage,
+  string  fwSigWifi,
+  string  fwSigRTIP,
+  string  fwSigBody,
   uint_8  percentComplete
 }
 
 message FirmwareUpdateComplete {
   uint_32 robotID,
-  FirmwareUpdateResult  result
+  FirmwareUpdateResult  result,
+  string  fwSigWifi,
+  string  fwSigRTIP,
+  string  fwSigBody
 }
 
 ///////////////////////////////////////////////////////////////////////////////

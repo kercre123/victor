@@ -110,15 +110,6 @@ namespace Vision {
     // Parameters (initialized from Json config)
     //
     
-    INT32 _recognitionThreshold = 750;
-    INT32 _mergeThreshold       = 500;
-    
-    // Time between adding enrollment data for an existing user. "Initial" version
-    // is used until all the slots are filled.
-    // TODO: Expose as parameters
-    f32   _timeBetweenEnrollmentUpdates_sec = 60.f;
-    f32   _timeBetweenInitialEnrollmentUpdates_sec = 0.5f;
-    
     bool _isInitialized = false;
     
     // Okao handles allocated by this class

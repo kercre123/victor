@@ -210,6 +210,7 @@ namespace Anki {
       
       PoseState GetPoseState() const { return _poseState; }
       void SetPoseState(PoseState newState) { _poseState = newState; }
+      bool IsPoseStateKnown() const { return _poseState == PoseState::Known; }
       bool IsPoseStateUnknown() const { return _poseState == PoseState::Unknown; }
       
     protected:

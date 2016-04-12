@@ -64,6 +64,8 @@ typedef enum {
  * This value MUST change if a new bootloader is written with an incompatible structure and it will be flashed onto
  * devices with existing bootlaoders. */
 #define BOOT_CONFIG_HEADER 0xe1df0c05
+/// Pointer to robot serial number if factory flash
+#define SERIAL_NUMBER ((const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE))
 
 /** Boot configuration status structure
  */
