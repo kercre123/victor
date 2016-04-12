@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.999718 0.0138894 0.0192539 5.03291
-  position 0.102498 -0.676785 0.183497
+  orientation -0.996821 -0.0310187 -0.0733824 5.4809
+  position 0.178287 -0.657877 0.641493
 }
 Background {
   skyColor [
@@ -28,20 +28,21 @@ DirectionalLight {
 CozmoMat {
   showMarkers FALSE
 }
-LightCube {
-  translation 0.142 0 0.022
-}
-LightCube {
-  translation 0.212 0 0.022
-  ID 1
+Ruler {
+  translation 0.522149 -0.062404 -4.44089e-16
+  rotation 0 1 0 0
 }
 BlockWorldComms {
 }
-CozmoBot {
+DEF Cozmo_1 CozmoBot {
   name "CozmoBot_1"
 }
-BuildServerTestController {
-  controllerArgs "%COZMO_SIM_TEST%"
+CalibrationDrum {
+  # Approximately at height of Cozmo's camera
+  translation 0.15 0 0.04
+  rotation 0 0 1 1.5707963
+}
+WebotsKeyboardController {
 }
 CozmoVizDisplay {
 }

@@ -24,10 +24,10 @@ extern "C" {
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
+#include "clad/types/imageTypes.h"
 #include "anki/cozmo/robot/logging.h"
 #include "upgradeController.h"
 #include "animationController.h"
-#include "nvStorage.h"
 
 extern const unsigned int COZMO_VERSION_COMMIT;
 
@@ -127,7 +127,7 @@ void sendCameraCalibration(NVStorage::NVStorageBlob* entry, const NVStorage::NVR
 {
   os_printf("sendCameraCalibration: %d\r\n", result);
   AnkiConditionalWarnAndReturn(result == NVStorage::NV_OKAY, 96, "ReadAndSendCameraCal", 350, "Failed to read camera calibration: %d", 1, result);
-  const RobotInterface::CameraCalibration* const calib = (RobotInterface::CameraCalibration*)entry->blob;
+  const CameraCalibration* const calib = (CameraCalibration*)entry->blob;
   RobotInterface::SendMessage(*calib);
 }
 

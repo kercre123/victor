@@ -1395,8 +1395,9 @@ namespace Anki {
     
 #pragma mark ---- ReadToolCodeAction ----
     
-    ReadToolCodeAction::ReadToolCodeAction(Robot& robot)
+    ReadToolCodeAction::ReadToolCodeAction(Robot& robot, bool doCalibration)
     : IAction(robot)
+    , _doCalibration(doCalibration)
     {
       
     }
@@ -1424,8 +1425,7 @@ namespace Anki {
     {
       // Stop calibration mode on robot
       _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(0, 0, false)));
-      
-      _robot.GetVisionComponent().EnableMode(VisionMode::CheckingToolCode, false);
+      _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);
     }
     
     ActionResult ReadToolCodeAction::CheckIfDone()
@@ -1440,10 +1440,16 @@ namespace Anki {
         {
           if (currTimestamp - _toolCodeLastMovedTime > kRequiredStillTime_ms)
           {
-            // Tell the VisionSystem thread to check the tool code in the next image it gets.
-            // It will disable this mode when it completes.
-            _robot.GetVisionComponent().EnableMode(VisionMode::CheckingToolCode, true);
-            _state = State::WaitingForRead;
+            Result setCalibResult = _robot.GetVisionComponent().EnableToolCodeCalibration(_doCalibration);
+            if(RESULT_OK != setCalibResult) {
+              PRINT_NAMED_INFO("ReadToolCodeAction.CheckIfDone.FailedToSetCalibration", "");
+              result = ActionResult::FAILURE_ABORT;
+            } else {
+              // Tell the VisionSystem thread to check the tool code in the next image it gets.
+              // It will disable this mode when it completes.
+              _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, true);
+              _state = State::WaitingForRead;
+            }
           }
           else if (_robot.GetHeadAngle() != _toolCodeLastHeadAngle ||
                    _robot.GetLiftAngle() != _toolCodeLastLiftAngle)

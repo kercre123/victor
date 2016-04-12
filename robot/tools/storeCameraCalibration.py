@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.join("tools"))
 import robotInterface
 Anki = robotInterface.Anki
 RI = Anki.Cozmo.RobotInterface
+AC = Anki.Cozmo
 
 class CameraCalibStorer:
     def onConnect(self, dest):
@@ -33,7 +34,7 @@ class CameraCalibStorer:
         
     def __init__(self, params):
         "Store the specified parameters into the robot"
-        self.camCalib = RI.CameraCalibration(*params)
+        self.camCalib = AC.CameraCalibration(*params)
         robotInterface.Init()
         robotInterface.SubscribeToConnect(self.onConnect)
         robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.nvResult, self.onOpResult)
@@ -41,13 +42,13 @@ class CameraCalibStorer:
 
 if __name__ == "__main__":
     print("Camera Calibration parameter utility")
-    if len(sys.argv)-1 == len(RI.CameraCalibration.__slots__):
+    if len(sys.argv)-1 == len(AC.CameraCalibration.__slots__):
         try:
             params = [eval(a) for a in sys.argv[1:]]
         except:
             sys.exit("Couldn't evaluate arguments as parameters for CameraCalibration struct")
     else:
-        params = [eval(input("{} >>> ".format(s[1:]))) for s in RI.CameraCalibration.__slots__]
+        params = [eval(input("{} >>> ".format(s[1:]))) for s in AC.CameraCalibration.__slots__]
     print("Storing calibration parameters to robot, please wait.")
     CameraCalibStorer(params)
     time.sleep(5)

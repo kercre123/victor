@@ -46,6 +46,9 @@ namespace Anki {
                                     defaultDockAccel_mmps2,
                                     defaultReverseSpeed_mmps);
     
+    const f32 ROBOT_POSITION_TOL_MM = 15;
+    const f32 ROBOT_ANGLE_TOL_DEG = 5;
+    const f32 BLOCK_HEIGHT_TOL_MM = 10;
     
     // ============ Test class declaration ============
     class CST_StackBlocks : public CozmoSimTestController {
@@ -102,9 +105,9 @@ namespace Anki {
         case TestState::Stack:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 5) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 60, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().y(), 0, 10) &&
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, ROBOT_ANGLE_TOL_DEG) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 60, ROBOT_POSITION_TOL_MM) &&
+                                           NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM) &&
                                            GetCarryingObjectID() == 0, DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueCompoundAction m;
@@ -133,12 +136,19 @@ namespace Anki {
           GetObjectPose(0, pose0);
           Pose3d pose1;
           GetObjectPose(1, pose1);
+          
+          PRINT_NAMED_INFO("BAASDF", "BlockZ: %f %f, Robot (xy) %f %f",
+                           pose0.GetTranslation().z(),
+                           pose1.GetTranslation().z(),
+                           GetRobotPose().GetTranslation().x(),
+                           GetRobotPose().GetTranslation().y());
+          
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
-                                           NEAR(pose0.GetTranslation().z(), 65, 10) &&
-                                           NEAR(pose1.GetTranslation().z(), 22, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 130, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().y(), 0, 10), 20)
+                                           NEAR(pose0.GetTranslation().z(), 65, BLOCK_HEIGHT_TOL_MM) &&
+                                           NEAR(pose1.GetTranslation().z(), 22, BLOCK_HEIGHT_TOL_MM) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 130, ROBOT_POSITION_TOL_MM) &&
+                                           NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM), 20)
           {
             StopMovie();
             CST_EXIT();

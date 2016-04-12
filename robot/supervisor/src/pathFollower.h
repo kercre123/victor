@@ -92,7 +92,7 @@ namespace Anki
       //       SteeringController::ExecutePointTurn() calls, each of which assume a terminal angular
       //       velocity of 0, so you can see the robot stopping at the end of each phase of the turn.
       //       Need to allow a terminal rotational velocity to be specified in ExecutePointTurn().
-      bool DrivePointTurn(f32 angle_to_turn_rad, f32 acc_start_frac, f32 acc_end_frac, f32 duration_sec);
+      bool DrivePointTurn(f32 angle_to_turn_rad, f32 acc_start_frac, f32 acc_end_frac, f32 angleTolerance, f32 duration_sec);
       
       
     } // namespace PathFollower

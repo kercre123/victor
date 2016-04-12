@@ -92,7 +92,8 @@ void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
     PRINT_NAMED_INFO("MovementComponent.EventHandler.DriveWheels.WheelsLocked",
                      "Ignoring ExternalInterface::DriveWheels while wheels are locked.");
   } else {
-    _robot.SendRobotMessage<RobotInterface::DriveWheels>(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+    _robot.SendRobotMessage<RobotInterface::DriveWheels>(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
+                                                         msg.lwheel_accel_mmps2, msg.rwheel_accel_mmps2);
   }
 }
 

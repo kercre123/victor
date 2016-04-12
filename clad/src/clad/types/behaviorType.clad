@@ -26,6 +26,7 @@ enum uint_8 BehaviorType {
   ExploreLookAroundInPlace,
   RequestGameSimple,
   RollBlock,
+  FactoryTest,
 
   Count
 }

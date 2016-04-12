@@ -330,6 +330,16 @@ namespace Cozmo {
     }
   }
   
+  Result VisionComponent::EnableToolCodeCalibration(bool enable)
+  {
+    if(nullptr != _visionSystem) {
+      return _visionSystem->EnableToolCodeCalibration(enable);
+    } else {
+      PRINT_NAMED_ERROR("VisionComponent.EnableToolCodeCalibration.NullVisionSystem", "");
+      return RESULT_FAIL;
+    }
+  }
+  
   Result VisionComponent::SetNextImage(const Vision::ImageRGB& image)
   {
     if(_isCamCalibSet) {
@@ -432,15 +442,41 @@ namespace Cozmo {
         default:
           PRINT_NAMED_ERROR("VisionComponent.SetNextImage.InvalidRunMode", "");
       } // switch(_runMode)
+
+
+      // Store image for calibration
+      if (_storeNextImageForCalibration) {
+
+        if (IsModeEnabled(VisionMode::ComputingCalibration)) {
+          PRINT_NAMED_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
+          _storeNextImageForCalibration = false;
+        } else {
+          
+          // If we were moving too fast at the timestamp the image was taken then don't save it for calibration purposes
+          TimeStamp_t t;
+          RobotPoseStamp p;
+          _robot.GetPoseHistory()->ComputePoseAt(image.GetTimestamp(), t, p, true);
+          if(!WasMovingTooFast(image.GetTimestamp(), &p, DEG_TO_RAD(0.1), DEG_TO_RAD(0.1)))
+          {
+            _storeNextImageForCalibration = false;
+            Result addResult = _visionSystem->AddCalibrationImage(image.ToGray());
+            if(RESULT_OK != addResult) {
+              PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
+            }
+          } else {
+            PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
+          }
+        }
+      }
       
       // Display any debug images left by the vision system
-      std::pair<const char*, Vision::Image>    debugGray;
-      std::pair<const char*, Vision::ImageRGB> debugRGB;
+      std::pair<std::string, Vision::Image>    debugGray;
+      std::pair<std::string, Vision::ImageRGB> debugRGB;
       while(_visionSystem->CheckDebugMailbox(debugGray)) {
-        debugGray.second.Display(debugGray.first);
+        debugGray.second.Display(debugGray.first.c_str());
       }
       while(_visionSystem->CheckDebugMailbox(debugRGB)) {
-        debugRGB.second.Display(debugRGB.first);
+        debugRGB.second.Display(debugRGB.first.c_str());
       }
       
     } else {
@@ -585,12 +621,7 @@ namespace Cozmo {
       }
       
     } // while(_running)
-    
-    if(_visionSystem != nullptr) {
-      delete _visionSystem;
-      _visionSystem = nullptr;
-    }
-    
+
     PRINT_NAMED_INFO("VisionComponent.Processor",
                      "Terminated Robot VisionComponent::Processor thread");
   } // Processor()
@@ -1015,7 +1046,32 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  bool VisionComponent::WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p)
+  Result VisionComponent::UpdateComputedCalibration()
+  {
+    if(_visionSystem != nullptr)
+    {
+      Vision::CameraCalibration calib;
+      if(true == _visionSystem->CheckMailbox(calib))
+      {
+        CameraCalibration msg;
+        msg.center_x = calib.GetCenter_x();
+        msg.center_y = calib.GetCenter_y();
+        msg.focalLength_x = calib.GetFocalLength_x();
+        msg.focalLength_y = calib.GetFocalLength_y();
+        msg.nrows = calib.GetNrows();
+        msg.ncols = calib.GetNcols();
+        msg.skew = calib.GetSkew();
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      }
+    }
+    
+    return RESULT_OK;
+  }
+
+  
+  bool VisionComponent::WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
+                                         const f32 bodyTurnSpeedLimit_radPerSec,
+                                         const f32 headTurnSpeedLimit_radPerSec)
   {
     // Check to see if the robot's body or head are
     // moving too fast to queue this marker
@@ -1035,9 +1091,6 @@ namespace Cozmo {
         return true;
       }
       
-      const f32 ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 5.f;
-      const f32 HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC = 10.f;
-      
       assert(t_prev < t);
       assert(t_next > t);
       const f32 dtPrev_sec = static_cast<f32>(t - t_prev) * 0.001f;
@@ -1047,8 +1100,8 @@ namespace Cozmo {
       const f32 turnSpeedPrev = ComputePoseAngularSpeed(*p, p_prev, dtPrev_sec);
       const f32 turnSpeedNext = ComputePoseAngularSpeed(*p, p_next, dtNext_sec);
       
-      if(turnSpeedNext > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
-         turnSpeedPrev > DEG_TO_RAD(ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+      if(turnSpeedNext > bodyTurnSpeedLimit_radPerSec ||
+         turnSpeedPrev > bodyTurnSpeedLimit_radPerSec)
       {
         //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
         //                              "Ignoring vision marker seen while turning with angular "
@@ -1056,8 +1109,8 @@ namespace Cozmo {
         //                              RAD_TO_DEG(turnSpeedPrev), RAD_TO_DEG(turnSpeedNext),
         //                              ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC);
         return true;
-      } else if(headSpeedNext > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC) ||
-                headSpeedPrev > DEG_TO_RAD(HEAD_ANGULAR_VELOCITY_THRESHOLD_DEG_PER_SEC))
+      } else if(headSpeedNext > headTurnSpeedLimit_radPerSec ||
+                headSpeedPrev > headTurnSpeedLimit_radPerSec)
       {
         //          PRINT_NAMED_WARNING("VisionComponent.QueueObservedMarker",
         //                              "Ignoring vision marker seen while head moving with angular "
@@ -1178,6 +1231,23 @@ namespace Cozmo {
   template Result VisionComponent::CompressAndSendImage<Vision::PixelRGB>(const Vision::ImageBase<Vision::PixelRGB>& img,
                                                                           s32 quality);
   
+  Result VisionComponent::ClearCalibrationImages()
+  {
+    if(nullptr == _visionSystem || !_visionSystem->IsInitialized())
+    {
+      PRINT_NAMED_ERROR("VisionComponent.ClearCalibrationImages.VisionSystemNotReady", "");
+      return RESULT_FAIL;
+    }
+    else
+    {
+      return _visionSystem->ClearCalibrationImages();
+    }
+  }
+  
+  size_t VisionComponent::GetNumStoredCameraCalibrationImages() const
+  {
+    return _visionSystem->GetNumStoredCalibrationImages();
+  }
   
 } // namespace Cozmo
 } // namespace Anki

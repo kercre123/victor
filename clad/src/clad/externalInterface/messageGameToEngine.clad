@@ -66,7 +66,9 @@ message UpdateFirmware {
 // DriveWheels
 message DriveWheels {
     float_32 lwheel_speed_mmps,
-    float_32 rwheel_speed_mmps
+    float_32 rwheel_speed_mmps,
+    float_32 lwheel_accel_mmps2 = 0.0,
+    float_32 rwheel_accel_mmps2 = 0.0
 }
 
 // TurnInPlace
@@ -881,6 +883,10 @@ message SetEnableSOSLogging {
   bool enabled
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// BlockPool
+///////////////////////////////////////////////////////////////////////////////
+
 message BlockPoolEnabledMessage {
   bool enabled
 }
@@ -896,6 +902,23 @@ message GetBlockPoolMessage {
 message SendDiscoveredObjects {
   uint_8 robotID,
   bool enable
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Camera calibration
+///////////////////////////////////////////////////////////////////////////////
+
+message SaveCalibrationImage {
+  uint_8 robotID,
+}
+
+message ClearCalibrationImages {
+  uint_8 robotID,
+}
+
+message ComputeCameraCalibration {
+  uint_8 robotID,
 }
 
 // keep empty to generate an auto-union that includes all messages in this file
