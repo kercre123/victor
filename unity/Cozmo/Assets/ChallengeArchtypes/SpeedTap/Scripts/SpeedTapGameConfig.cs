@@ -13,6 +13,7 @@ public class SpeedTapGameConfig : MinigameConfigBase {
   public int Rounds;
   public int MaxScorePerRound;
   public float PlayNewHandIntervalMs;
+  public float PlayNewHandRevealMs;
   public float MinIdleIntervalMs;
   public float MaxIdleIntervalMs;
   public float BaseMatchChance;
@@ -25,6 +26,7 @@ public class SpeedTapGameConfig : MinigameConfigBase {
     get { return _BetweenRoundMusic.Music; }
   }
 
-
+  // These two lists must be the same length
   public List<DifficultySelectOptionData> DifficultyOptions = new List<DifficultySelectOptionData>();
+  public List<SpeedTapDifficultyData> DifficultySettings = new List<SpeedTapDifficultyData>();
 }

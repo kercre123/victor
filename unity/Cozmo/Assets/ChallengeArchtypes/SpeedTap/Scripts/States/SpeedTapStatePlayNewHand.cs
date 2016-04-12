@@ -13,6 +13,7 @@ namespace SpeedTap {
     private const float _kTapAnimHitDelay = 500.0f;
 
     private SpeedTapGame _SpeedTapGame = null;
+    // TODO : Clear most shit out of here that's been moved into config, still use the On/Off Delay time since that changes between rounds.
     private float _StartTimeMs = -1.0f;
     private float _TapStartTimeMs = -1.0f;
     private float _OnDelayTimeMs = 2000.0f;
@@ -133,7 +134,7 @@ namespace SpeedTap {
         }
       }
     }
-
+    // TODO:
     void RobotCompletedTapAnimation(bool success) {
       DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
       // Checks if we have Registered a Tap on Cozmo's cube since starting the animation

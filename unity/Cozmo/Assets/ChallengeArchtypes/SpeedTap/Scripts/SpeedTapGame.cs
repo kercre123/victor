@@ -14,6 +14,21 @@ namespace SpeedTap {
     private const float _kTapAdjustRange = 5.0f;
     private const float _kWinCycleSpeed = 0.1f;
 
+    /* New Config shit
+
+  public float PlayNewHandIntervalMs;
+  public float PlayNewHandRevealMs;
+  public float MinIdleIntervalMs;
+  public float MaxIdleIntervalMs;
+  public float BaseMatchChance;
+  public float MatchChanceIncrease;
+  public List<float> RoundSpeedModifier;
+  public float MinCozmoTapDelayMs;
+  public float MaxCozmoTapDelayMs;
+  public float CozmoMistakeChance;
+  
+     */
+
     private Vector3 _CozmoPos;
     private Quaternion _CozmoRot;
 
@@ -44,11 +59,22 @@ namespace SpeedTap {
       }
     }
 
+    private List<DifficultySelectOptionData> _DifficultyOptions;
+
     public List<DifficultySelectOptionData> DifficultyOptions {
       get {
         return _DifficultyOptions;
       }
     }
+
+    private List<SpeedTapDifficultyData> _DifficultySettings;
+
+    public List<SpeedTapDifficultyData> DifficultySettings {
+      get {
+        return _DifficultySettings;
+      }
+    }
+
 
     private MusicStateWrapper _BetweenRoundsMusic;
 
@@ -65,7 +91,6 @@ namespace SpeedTap {
     // excitement score rewards.
     private int _CloseRoundCount = 0;
 
-    private List<DifficultySelectOptionData> _DifficultyOptions;
 
     public event Action PlayerTappedBlockEvent;
     public event Action CozmoTappedBlockEvent;
@@ -227,6 +252,7 @@ namespace SpeedTap {
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
       _DifficultyOptions = speedTapConfig.DifficultyOptions;
+      _DifficultySettings = speedTapConfig.DifficultySettings;
       _BetweenRoundsMusic = speedTapConfig.BetweenRoundMusic;
       InitializeAnimationCallbacks();
       InitializeMinigameObjects(1);
