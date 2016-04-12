@@ -51,23 +51,27 @@
     ],
 
     'cte_lib_search_path_mac_debug': [
-    '<(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release', # NOTE WE USE RELEASE HERE INTENTIONALLY
+      '<(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release', # NOTE WE USE RELEASE HERE INTENTIONALLY
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Debug',
+      '<(coretech_external_path)/libarchive/project/mac/DerivedData/Debug',
     ],
 
     'cte_lib_search_path_mac_release': [
-    '<(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release', # NOTE WE USE RELEASE HERE INTENTIONALLY
+      '<(coretech_external_path)/routing_http_server/generated/mac/DerivedData/Release', # NOTE WE USE RELEASE HERE INTENTIONALLY
       '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/mac/DerivedData/Release',
+      '<(coretech_external_path)/libarchive/project/mac/DerivedData/Release',
     ],
 
     'cte_lib_search_path_ios_debug': [
-      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
       '<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos', # NOTE WE USE RELEASE HERE INTENTIONALLY
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Debug-iphoneos',
+      '<(coretech_external_path)/libarchive/project/mac/DerivedData/Debug-iphoneos',
     ],
 
     'cte_lib_search_path_ios_release': [
-      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
       '<(coretech_external_path)/routing_http_server/generated/ios/DerivedData/Release-iphoneos', # NOTE WE USE RELEASE HERE INTENTIONALLY
+      '<(coretech_external_path)/pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos',
+      '<(coretech_external_path)/libarchive/project/mac/DerivedData/Release-iphoneos',
     ],
 
     'flite_includes':[
@@ -90,6 +94,13 @@
       '<(coretech_external_path)/flite-2.0.0/generated/ios/DerivedData/Release-iphoneos',
     ],
 
+    'libarchive_libs': [
+      'libarchive.a',
+    ],
+
+    'libarchive_include': [
+      '<(coretech_external_path)/libarchive/project/include',
+    ],
 
     # Make sure these are always _after_ our opencv_includes!
     'webots_includes': [
@@ -1306,6 +1317,7 @@
         '../../cozmoAPI/src',
         '../../cozmoAPI/include',
         '../../generated/clad/game',
+        '<@(libarchive_include)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
@@ -1345,6 +1357,7 @@
               '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
               '<@(flite_libs)',
               '<@(routing_http_server_libs)',
+              '<@(libarchive_libs)',
             ],
           },
         ],

@@ -12,7 +12,7 @@
 
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 
-#ifdef ANKI_DEV_CHEATS
+#if ANKI_DEV_CHEATS
 
 #if __APPLE__
 #include "TargetConditionals.h" // must be included for TARGET_OS_IPHONE

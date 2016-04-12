@@ -26,9 +26,9 @@
         "builds": {
             "coretech_external": {
                 "build_type_id": "Cozmo_CoretechExternal_Build",
-                "build_id": "81207",
+                "build_id": "82788",
                 "package_name": "Cozmo_CoretechExternal",
-                "version": "111",
+                "version": "115",
                 "extension": "tar.gz"
             }
         },
