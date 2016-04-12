@@ -46,7 +46,7 @@ namespace Cozmo {
 
       private void HandleQuitButtonTap() {
         // Open confirmation dialog instead
-        AlertView alertView = UIManager.OpenView(UIPrefabHolder.Instance.AlertViewPrefab);
+        AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
         // Hook up callbacks
         alertView.SetCloseButtonEnabled(true);
         alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleQuitConfirmed);

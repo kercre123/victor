@@ -28,6 +28,21 @@ public class UIManager : MonoBehaviour {
     }
   }
 
+  public static Vector4 GetAtlasUVs(Sprite graphic) {
+    float textureAtlasPixelWidth = graphic.texture.width;
+    float xMinNormalizedUV = graphic.textureRect.xMin / textureAtlasPixelWidth;
+    float xMaxNormalizedUV = graphic.textureRect.xMax / textureAtlasPixelWidth;
+
+    float textureAtlasPixelHeight = graphic.texture.height;
+    float yMinNormalizedUV = graphic.textureRect.yMin / textureAtlasPixelHeight;
+    float yMaxNormalizedUV = graphic.textureRect.yMax / textureAtlasPixelHeight;
+
+    return new Vector4(xMinNormalizedUV,
+      yMinNormalizedUV,
+      xMaxNormalizedUV - xMinNormalizedUV,
+      yMaxNormalizedUV - yMinNormalizedUV);
+  }
+
   [SerializeField]
   private Canvas _HorizontalCanvas;
 
@@ -39,6 +54,10 @@ public class UIManager : MonoBehaviour {
 
   [SerializeField]
   private GameObject _TouchCatcherPrefab;
+
+  public GameObject TouchCatcherPrefab {
+    get { return _TouchCatcherPrefab; }
+  }
 
   [SerializeField]
   private GameObject _DimBackgroundPrefab;

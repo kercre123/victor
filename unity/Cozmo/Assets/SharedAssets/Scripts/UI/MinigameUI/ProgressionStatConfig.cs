@@ -7,16 +7,14 @@ namespace Cozmo {
   namespace UI {
     public class ProgressionStatConfig : ScriptableObject {
 
-      private static ProgressionStatConfig _Instance;
+      private static ProgressionStatConfig _sInstance;
+
+      public static void SetInstance(ProgressionStatConfig instance) {
+        _sInstance = instance;
+      }
 
       public static ProgressionStatConfig Instance {
-        get {
-          if (_Instance == null) {
-            _Instance = Resources.Load<ProgressionStatConfig>("Prefabs/UI/ProgressionStatConfig");
-            _Instance.TranslateStatsToDict();
-          }
-          return _Instance;
-        }
+        get { return _sInstance; }
       }
 
       [SerializeField]
@@ -30,6 +28,10 @@ namespace Cozmo {
 
       private Dictionary<ProgressionStatType, Sprite> _StatToIconMap;
       private Dictionary<ProgressionStatType, string> _StatToLocKeyMap;
+
+      public void Initialize() {
+        TranslateStatsToDict();
+      }
 
       private void TranslateStatsToDict() {
         _StatToIconMap = new Dictionary<ProgressionStatType, Sprite>();
