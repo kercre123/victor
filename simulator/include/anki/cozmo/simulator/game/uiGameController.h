@@ -238,6 +238,7 @@ protected:
   void SendSaveCalibrationImage();
   void SendClearCalibrationImages();
   void SendComputeCameraCalibration();
+  void SendCameraCalibration(f32 focalLength_x, f32 focalLength_y, f32 center_x, f32 center_y);
   
 
   // ====== Accessors =====

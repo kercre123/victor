@@ -1478,7 +1478,15 @@ namespace Anki {
               }
               case (s32)'%':
               {
-                SendComputeCameraCalibration();
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  f32 focalLength_x = root_->getField("focalLength_x")->getSFFloat();
+                  f32 focalLength_y = root_->getField("focalLength_y")->getSFFloat();
+                  f32 center_x = root_->getField("imageCenter_x")->getSFFloat();
+                  f32 center_y = root_->getField("imageCenter_y")->getSFFloat();
+                  SendCameraCalibration(focalLength_x, focalLength_y, center_x, center_y);
+                } else {
+                  SendComputeCameraCalibration();
+                }
                 break;
               }
               case (s32)'*':

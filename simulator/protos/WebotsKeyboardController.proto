@@ -131,6 +131,12 @@ PROTO WebotsKeyboardController [
   field SFFloat steerDistOffsetCap_mm 20
   field SFFloat steerAngOffsetCap_rad 0.5
 
+  # Camera calibration
+  field SFFloat focalLength_x 290
+  field SFFloat focalLength_y 290
+  field SFFloat imageCenter_x 160
+  field SFFloat imageCenter_y 120
+
   # Vision system params
   field SFString streamResolution "CVGA"
   field SFInt32 camera_autoexposureOn 1
