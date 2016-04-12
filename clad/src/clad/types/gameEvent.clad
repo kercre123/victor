@@ -12,12 +12,23 @@ enum uint_8 GameEvent
 {
   OnDriveStart,
   OnDriveEnd,
-  OnSpeedtapStarted,
   OnFidget,
   OnFollowMotionLookDown,
   OnFollowMotionLookUp,
   OnFollowMotionLookUpAndDown,
   OnFollowMotionReact,
+  OnSpeedtapStarted,
+  OnSpeedtapHandWin,
+  OnSpeedtapHandLose,
+  OnSpeedtapRoundWin,
+  OnSpeedtapRoundLose,
+  OnSpeedtapSessionWin,
+  OnSpeedtapSessionLose,
+  OnSpeedtapGetOut,
+  OnSpeedtapCozmoConfirm,
+  OnSpeedtapTap,
+  OnSpeedtapFakeout,
+  OnSpeedtapIdle,
   Count, // Keep count at end.
 }
 
