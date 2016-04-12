@@ -83,7 +83,7 @@ namespace Cozmo.HomeHub {
 
       PlayerManager.Instance.GreenPointsUpdate += HandleGreenPointsGained;
       PlayerManager.Instance.ChestGained += HandleChestGained;
-      _GreenPointsProgressBar.SetProgress(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints);
+      _GreenPointsProgressBar.SetProgress((float)DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints / (float)PlayerManager.Instance.GetGreenPointsLadderMax());
 
     }
 
