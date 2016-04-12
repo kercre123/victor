@@ -1,4 +1,16 @@
+/**
+ * File: archiveUtil.cpp
+ *
+ * Author: Lee Crippen
+ * Created: 4/4/2016
+ *
+ * Description: Utility wrapper around needed archive file creation functionality.
+ *
+ * Copyright: Anki, inc. 2016
+ *
+ */
 #include "anki/cozmo/basestation/util/file/archiveUtil.h"
+#include "util/logging/logging.h"
 
 #include "archive.h"
 #include "archive_entry.h"
@@ -14,11 +26,46 @@ void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
                                          const std::vector<std::string>& filenames)
 {
   struct archive* newArchive = archive_write_new();
-  archive_write_add_filter_gzip(newArchive);
-  archive_write_set_format_pax_restricted(newArchive);
-  archive_write_open_filename(newArchive, outputPath.c_str());
+  if (nullptr == newArchive)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateArchiveFromFiles", "Could not alloc new archive");
+  }
+  
+  int errorCode = ARCHIVE_OK;
+  errorCode = archive_write_add_filter_gzip(newArchive);
+  if (ARCHIVE_OK != errorCode)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateArchiveFromFiles", "Error %s setting up archive", GetArchiveErrorString(errorCode));
+    archive_write_free(newArchive);
+    return;
+  }
+  
+  errorCode = archive_write_set_format_pax_restricted(newArchive);
+  if (ARCHIVE_OK != errorCode)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateArchiveFromFiles", "Error %s setting up archive", GetArchiveErrorString(errorCode));
+    archive_write_free(newArchive);
+    return;
+  }
+  
+  errorCode = archive_write_open_filename(newArchive, outputPath.c_str());
+  if (ARCHIVE_OK != errorCode)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateArchiveFromFiles", "Error %s opening file for archive", GetArchiveErrorString(errorCode));
+    archive_write_close(newArchive);
+    archive_write_free(newArchive);
+    return;
+  }
   
   struct archive_entry* entry = archive_entry_new();
+  if (nullptr == entry)
+  {
+    PRINT_NAMED_ERROR("ArchiveUtil.CreateArchiveFromFiles", "Could not alloc new entry");
+    archive_write_close(newArchive);
+    archive_write_free(newArchive);
+    return;
+  }
+  
   char buff[8192];
   
   for (auto& filename : filenames)
@@ -31,7 +78,17 @@ void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
     archive_entry_set_size(entry, st.st_size);
     archive_entry_set_filetype(entry, AE_IFREG);
     archive_entry_set_perm(entry, 0644);
-    archive_write_header(newArchive, entry);
+    
+    errorCode = archive_write_header(newArchive, entry);
+    if (ARCHIVE_OK != errorCode)
+    {
+      PRINT_NAMED_ERROR("ArchiveUtil.CreateArchiveFromFiles", "Error %s writing file header", GetArchiveErrorString(errorCode));
+      archive_entry_free(entry);
+      archive_write_close(newArchive);
+      archive_write_free(newArchive);
+      return;
+    }
+    
     std::ifstream file(filename, std::ios::binary);
     file.read(buff, sizeof(buff));
     auto len = file.gcount();
@@ -41,6 +98,7 @@ void ArchiveUtil::CreateArchiveFromFiles(const std::string& outputPath,
       len = file.gcount();
     }
   }
+  
   archive_entry_free(entry);
   archive_write_close(newArchive);
   archive_write_free(newArchive);
@@ -68,6 +126,20 @@ std::string ArchiveUtil::RemoveFilenameBase(const std::string& filenameBase, con
     }
   }
   return filename;
+}
+  
+const char* ArchiveUtil::GetArchiveErrorString(int errorCode)
+{
+  switch (errorCode)
+  {
+    case ARCHIVE_EOF: return "ARCHIVE_EOF";
+    case ARCHIVE_OK: return "ARCHIVE_OK";
+    case ARCHIVE_RETRY: return "ARCHIVE_RETRY";
+    case ARCHIVE_WARN: return "ARCHIVE_WARN";
+    case ARCHIVE_FAILED: return "ARCHIVE_FAILED";
+    case ARCHIVE_FATAL: return "ARCHIVE_FATAL";
+    default: return "UNKNOWN";
+  }
 }
 
 } // end namespace Cozmo

@@ -29,7 +29,9 @@ public:
   
   // Removes an initial part of a filename (does nothing if the filename has no path separators)
   static std::string RemoveFilenameBase(const std::string& filenameBase, const std::string& filename);
+  
 private:
+  static const char* GetArchiveErrorString(int errorCode);
 
 };
   

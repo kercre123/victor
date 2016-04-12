@@ -28,15 +28,17 @@ namespace Util {
 
 namespace Anki {
 namespace Cozmo {
+  
+using DevLoggingClock = std::chrono::system_clock;
 
 class DevLoggingSystem : Util::noncopyable {
 public:
   static void CreateInstance(const std::string& loggingBaseDirectory);
   static void DestroyInstance();
   static DevLoggingSystem* GetInstance() { return sInstance; }
-  static const std::chrono::system_clock::time_point& GetAppRunStartTime() { return kAppRunStartTime; }
+  static const DevLoggingClock::time_point& GetAppRunStartTime() { return kAppRunStartTime; }
   
-  virtual ~DevLoggingSystem();
+  ~DevLoggingSystem();
   
   template<typename MsgType>
   void LogMessage(const MsgType& message);
@@ -47,7 +49,7 @@ public:
   
 private:
   static DevLoggingSystem* sInstance;
-  static const std::chrono::system_clock::time_point kAppRunStartTime;
+  static const DevLoggingClock::time_point kAppRunStartTime;
   static const std::string kWaitingForUploadDirName;
   static const std::string kArchiveExtensionString;
   

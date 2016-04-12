@@ -1,13 +1,24 @@
+/**
+* File: devLoggingSystem
+*
+* Author: Lee Crippen
+* Created: 3/30/2016
+*
+* Description: System for collecting, archiving, and uploading logs useful for debugging during development.
+*
+* Copyright: Anki, inc. 2016
+*
+*/
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/cozmo/basestation/util/file/archiveUtil.h"
-#include "util/logging/rollingFileLogger.h"
-#include "util/helpers/templateHelpers.h"
-#include "util/fileUtils/fileUtils.h"
-#include "util/console/consoleInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/logging/rollingFileLogger.h"
 
 #include <sstream>
 #include <cstdio>
@@ -16,7 +27,7 @@ namespace Anki {
 namespace Cozmo {
   
 DevLoggingSystem* DevLoggingSystem::sInstance                                   = nullptr;
-const std::chrono::system_clock::time_point DevLoggingSystem::kAppRunStartTime  = std::chrono::system_clock::now();
+const DevLoggingClock::time_point DevLoggingSystem::kAppRunStartTime            = DevLoggingClock::now();
 const std::string DevLoggingSystem::kWaitingForUploadDirName                    = "waiting_for_upload";
 const std::string DevLoggingSystem::kArchiveExtensionString                     = ".tar.gz";
 
@@ -142,9 +153,9 @@ std::string DevLoggingSystem::PrepareMessage(const MsgType& message) const
   data += sizeof(uint32_t);
   
   // Then write in the timestamp as a millisecond count since the app started running
-  auto timeNow = std::chrono::system_clock::now();
+  auto timeNow = DevLoggingClock::now();
   auto msElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(timeNow - kAppRunStartTime);
-  *((uint32_t*)data) = static_cast<uint32_t>(msElapsed.count());
+  *((uint32_t*)data) = Util::numeric_cast<uint32_t>(msElapsed.count());
   data += sizeof(uint32_t);
   
   message.Pack(data, messageSize);
