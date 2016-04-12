@@ -81,7 +81,7 @@ The basic commands are as follows:
     ./configure.py generate    # (default) create the Xcode projects and workspaces.
     ./configure.py build       # generate, then use xcodebuild to build the generated projects (including Unity on iOS).
     ./configure.py install     # generate, build, then install the app on a connected ios device.
-    ./configure.py run         # generate, build, install, then debug the app on a connected ios device using lldb.
+    ./configure.py run -p ios  # generate, build, install, then debug the app on a connected ios device using lldb.
     ./configure.py uninstall   # uninstall the app from a connected device.
     ./configure.py clean       # use xcodebuild to clean the generated projects (assuming they exist).
     ./configure.py delete      # delete all generated projects and compiled files.
