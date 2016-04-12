@@ -473,7 +473,7 @@ static void processFailure(const NVResult fail)
 
 static void endWrite(const NVResult writeResult)
 {
-  AnkiConditionalWarn(writeResult == NV_OKAY, 146, "NVStorage.WriteFailure", 410, "Failed to write to NV storage %d at 0x%x, phase %d", 3, writeResult, nv.flashPointer, nv.phase);
+  AnkiConditionalWarn(writeResult == NV_OKAY, 146, "NVStorage.WriteFailure", 416, "Failed to write to NV storage %d at 0x%x, phase %d", 3, writeResult, nv.flashPointer, nv.phase);
   if (nv.pendingWriteDoneCallback != NULL)
   {
     nv.pendingWriteDoneCallback(nv.pendingWrite, writeResult);
@@ -611,7 +611,7 @@ Result Update()
               }
               default:
               {
-                AnkiError( 146, "NVStorage.WriteFailure", 409, "Unexpected nv.phase = %d! aborting all", 1, nv.phase);
+                AnkiError( 146, "NVStorage.WriteFailure", 417, "Unexpected nv.phase = %d! aborting all", 1, nv.phase);
                 processFailure(NV_ERROR);
               }
             }
@@ -663,7 +663,7 @@ Result Update()
         { // This points toward the entry we are seeking
           if (((s32)header.successor < nv.startOfData) || ((s32)header.successor >= nv.endOfData))
           {
-            AnkiWarn( 147, "NVStorage.Seek.BadSuccessor", 403, "Bad successor 0x%x on tag 0x%x at 0x%x, skipping to 0x%x", 4, header.successor, header.tag, nv.flashPointer, nv.flashPointer + header.size);
+            AnkiWarn( 147, "NVStorage.Seek.BadSuccessor", 418, "Bad successor 0x%x on tag 0x%x at 0x%x, skipping to 0x%x", 4, header.successor, header.tag, nv.flashPointer, nv.flashPointer + header.size);
             nv.flashPointer += header.size;
           }
           else
@@ -684,7 +684,7 @@ Result Update()
         { // This is something we need to invalidate to "overwrite"
           if (nv.pendingOverwriteHeaderAddress != 0)
           {
-            AnkiWarn( 148, "NVStorage.Seek.MultiplePredicessors", 404, "Multiple predicessors for tag 0x%x, at 0x%x and 0x%x", 3, nv.pendingWrite->tag, nv.pendingOverwriteHeaderAddress, nv.flashPointer);
+            AnkiWarn( 148, "NVStorage.Seek.MultiplePredicessors", 419, "Multiple predicessors for tag 0x%x, at 0x%x and 0x%x", 3, nv.pendingWrite->tag, nv.pendingOverwriteHeaderAddress, nv.flashPointer);
           }
           else 
           {
@@ -704,7 +704,7 @@ Result Update()
             if (nv.retries-- <= 0)
             {
               const NVResult fail = FLASH_RESULT_TO_NV_RESULT(flashResult);
-              AnkiWarn( 149, "NVStorage.EraseFailure", 405, "Failed to erase entry 0x%x[%d] at 0x%x, %d", 4, header.tag, header.size, nv.flashPointer, fail);
+              AnkiWarn( 149, "NVStorage.EraseFailure", 420, "Failed to erase entry 0x%x[%d] at 0x%x, %d", 4, header.tag, header.size, nv.flashPointer, fail);
               if (nv.pendingEraseCallback != NULL) nv.pendingEraseCallback(header.tag, fail);
               if (nv.pendingMultiEraseDoneCallback != NULL) nv.pendingMultiEraseDoneCallback(fail);
               resetErase();
@@ -739,8 +739,8 @@ Result Update()
                 if (nv.retries -- <= 0)
                 {
                   const NVResult readResult = FLASH_RESULT_TO_NV_RESULT(flashResult);
-                  AnkiWarn( 150, "NVStorage.ReadFailure", 406, "Failed to read entry invalid tag at 0x%x, %d", 2, nv.flashPointer, readResult);
-                  AnkiAssert(nv.pendingReadCallback != NULL, 407);
+                  AnkiWarn( 150, "NVStorage.ReadFailure", 421, "Failed to read entry invalid tag at 0x%x, %d", 2, nv.flashPointer, readResult);
+                  AnkiAssert(nv.pendingReadCallback != NULL, 422);
                   nv.pendingReadCallback(&entry, readResult);
                   if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(readResult);
                   resetRead();
@@ -771,7 +771,7 @@ Result Update()
                 {
                   const NVResult readResult = FLASH_RESULT_TO_NV_RESULT(flashResult);
                   AnkiWarn( 150, "NVStorage.ReadFailure", 414, "Failed to read entry at 0x%x, %d", 2, nv.flashPointer, readResult);
-                  AnkiAssert(nv.pendingReadCallback != NULL, 407);
+                  AnkiAssert(nv.pendingReadCallback != NULL, 422);
                   nv.pendingReadCallback(&entry, readResult);
                   if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(readResult);
                   resetRead();
@@ -781,7 +781,7 @@ Result Update()
               {
                 nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
                 entry.blob_length = blobSize;
-                AnkiAssert(nv.pendingReadCallback != NULL, 407);
+                AnkiAssert(nv.pendingReadCallback != NULL, 422);
                 db_printf("Found something to read, sending it over\r\n");
                 nv.pendingReadCallback(&entry, NV_OKAY);
                 nv.lastReadTime = now;
@@ -798,7 +798,7 @@ Result Update()
             }
             default:
             {
-              AnkiError( 150, "NVStorage.ReadFailure", 409, "Unexpected nv.phase = %d! aborting all", 1, nv.phase);
+              AnkiError( 150, "NVStorage.ReadFailure", 417, "Unexpected nv.phase = %d! aborting all", 1, nv.phase);
               processFailure(NV_ERROR);
             }
           }

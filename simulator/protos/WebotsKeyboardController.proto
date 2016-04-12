@@ -47,6 +47,10 @@ PROTO WebotsKeyboardController [
   # Turbo speed in mm/s (hold alt)
   field SFFloat driveSpeedTurbo 150
 
+  # Drive acceleration
+  # 0 == instantaneous acceleration
+  field SFFloat driveAccel 0
+
   # Point turn angle (deg) and speed (deg/s)
   field SFFloat pointTurnAngle_deg        45
   field SFFloat pointTurnSpeed_degPerSec  250

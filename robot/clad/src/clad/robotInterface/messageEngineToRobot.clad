@@ -45,6 +45,8 @@ message DriveWheels
 {
   float_32 lwheel_speed_mmps,
   float_32 rwheel_speed_mmps,
+  float_32 lwheel_accel_mmps2 = 0.0,
+  float_32 rwheel_accel_mmps2 = 0.0
 }
 
 message DriveWheelsCurvature
@@ -173,6 +175,10 @@ message SyncTime
 {
   uint_32 robotID,
   uint_32 syncTime,
+
+  // Other random things to send to robot on init
+  // which can eventually be made constant
+  float_32 driveCenterOffset
 }
 
 message ImageRequest
@@ -210,6 +216,11 @@ message EnablePickupParalysis
 }
 
 message EnableLiftPower
+{
+  bool enable
+}
+
+message ConfigureBluetooth
 {
   bool enable
 }
@@ -302,6 +313,7 @@ union EngineToRobot
   CubeLights                    setCubeLights               = 0x04,
   SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
+  ConfigureBluetooth            configureBluetooth          = 0x07,
 
   NVReadResultToBody            nvReadToBody                = 0x08,
   NVOpResultToBody              nvOpResultToBody            = 0x09,

@@ -113,9 +113,10 @@ namespace Anki {
           {0, 1, 2, 3}
         };
         
-        // Mapping from activeID to FactoryID
+        // Mapping from type ID to FactoryID
         // This is just what it happens to be in EP2. Changes to this mapping should
-        // also be reflected in ActiveCube::GetTypeFromFactoryID()
+        // also be reflected in ActiveCube::GetTypeFromFactoryID().
+        // Alternatively, modify the LightCube ObjectTypes to match the factoryID.
         const u32 activeIDToFactoryIDMap_[MAX_NUM_CUBES] = {2, 1, 0, 3};
         u32 factoryID_ = 0;
         

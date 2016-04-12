@@ -153,7 +153,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
 
 void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const RobotInterface::CameraCalibration& payload = message.GetData().Get_cameraCalibration();
+  const CameraCalibration& payload = message.GetData().Get_cameraCalibration();
   PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
     "Received new %dx%d camera calibration from robot.", payload.ncols, payload.nrows);
 
@@ -550,7 +550,7 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
 
-  _blockWorld.SetIsOnCliff(cliffEvent.detected);
+  SetIsOnCliff(cliffEvent.detected);
   
   // Forward on with EngineToGame event
   CliffEvent payload = message.GetData().Get_cliffEvent();
@@ -583,7 +583,7 @@ void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& m
   }
   
   // always update the value
-  _blockWorld.SetForwardSensorValue(proxObs.distance_mm);
+  SetForwardSensorValue(proxObs.distance_mm);
   
 #endif
 }
@@ -834,7 +834,7 @@ void Robot::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message
     {
       PRINT_NAMED_INFO("Robot.HandleNVData.CameraCalibration","");
       
-      RobotInterface::CameraCalibration payload;
+      CameraCalibration payload;
       payload.Unpack(nvBlob.blob.data(), nvBlob.blob.size());
       PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
                        "Received new %dx%d camera calibration from robot.", payload.ncols, payload.nrows);

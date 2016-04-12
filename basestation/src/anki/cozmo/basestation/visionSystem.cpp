@@ -26,6 +26,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/helpers/cleanupHelper.h"
 #include "util/console/consoleInterface.h"
 
 //
@@ -42,6 +43,7 @@
 #include "anki/vision/robot/classifier.h"
 #include "anki/vision/robot/lbpcascade_frontalface.h"
 #include "anki/vision/robot/cameraImagingPipeline.h"
+#include "opencv2/calib3d/calib3d.hpp"
 
 // CoreTech Common Includes
 #include "anki/common/shared/radians.h"
@@ -59,6 +61,7 @@
 #define USE_THREE_FRAME_MOTION_DETECTION 0
 
 #define DRAW_TOOL_CODE_DEBUG 0
+#define DRAW_CALIB_IMAGES 0
 
 #if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
 #include "matlabVisionProcessor.h"
@@ -78,6 +81,10 @@ namespace Cozmo {
   CONSOLE_VAR(u8,   kMinBrightnessForMotionDetection, "Vision.MotionDetection", 10);
   CONSOLE_VAR(f32,  kMotionDetectRatioThreshold,      "Vision.MotionDetection", 1.25f);
   CONSOLE_VAR(f32,  kMinMotionAreaFraction,           "Vision.MotionDetection", 1.f/225.f); // 1/15 of each image dimension
+  
+CONSOLE_VAR(float, kMaxCalibBlobPixelArea, "kMaxCalibBlobPixelArea", 800.f); // max number of pixels in calibration pattern blob
+CONSOLE_VAR(float, kMinCalibBlobPixelArea, "kMinCalibBlobPixelArea", 20.f); // min number of pixels in calibration pattern blob
+CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlobs", 5.f); // min pixel distance between calibration pattern blobs
   
   using namespace Embedded;
   
@@ -205,7 +212,7 @@ namespace Cozmo {
       if(enabled) {
         const bool modeAlreadyEnabled = _mode & static_cast<u32>(whichMode);
         if(!modeAlreadyEnabled) {
-          PRINT_NAMED_INFO("VisionSystem.EnableModeHelper",
+          PRINT_NAMED_INFO("VisionSystem.EnablingMode",
                            "Adding mode %s to current mode %s.",
                            VisionSystem::GetModeName(whichMode).c_str(),
                            VisionSystem::GetModeName(static_cast<VisionMode>(_mode)).c_str());
@@ -215,16 +222,29 @@ namespace Cozmo {
       } else {
         const bool modeAlreadyDisabled = !(_mode & static_cast<u32>(whichMode));
         if(!modeAlreadyDisabled) {
-          PRINT_NAMED_WARNING("VisionSystem.EnableMode.DisablingMode",
-                              "Removing mode %s from current mode %s.",
-                              VisionSystem::GetModeName(whichMode).c_str(),
-                              VisionSystem::GetModeName(static_cast<VisionMode>(_mode)).c_str());
+          PRINT_NAMED_INFO("VisionSystem.DisablingMode",
+                           "Removing mode %s from current mode %s.",
+                           VisionSystem::GetModeName(whichMode).c_str(),
+                           VisionSystem::GetModeName(static_cast<VisionMode>(_mode)).c_str());
           _mode &= ~static_cast<u32>(whichMode);
         }
       }
     }
     return RESULT_OK;
   } // EnableMode()
+  
+  Result VisionSystem::EnableToolCodeCalibration(bool enable)
+  {
+    if(IsModeEnabled(VisionMode::ReadingToolCode)) {
+      PRINT_NAMED_WARNING("VisionSystem.EnableToolCodeCalibration.AlreadyReadingToolCode",
+                          "Cannot enable/disable tool code calibration while in the middle "
+                          "of reading tool code.");
+      return RESULT_FAIL;
+    }
+    
+    _calibrateFromToolCode = enable;
+    return RESULT_OK;
+  }
   
   void VisionSystem::StopTracking()
   {
@@ -447,8 +467,17 @@ namespace Cozmo {
     }
     return retVal;
   }
+
+  bool VisionSystem::CheckMailbox(Vision::CameraCalibration& msg)
+  {
+    bool retVal = false;
+    if(IsInitialized()) {
+      retVal = _calibrationMailbox.getMessage(msg);
+    }
+    return retVal;
+  }
   
-  bool VisionSystem::CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg)
+  bool VisionSystem::CheckDebugMailbox(std::pair<std::string, Vision::Image>& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -457,7 +486,7 @@ namespace Cozmo {
     return retVal;
   }
   
-  bool VisionSystem::CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg)
+  bool VisionSystem::CheckDebugMailbox(std::pair<std::string, Vision::ImageRGB>& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -1399,7 +1428,7 @@ namespace Cozmo {
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &imageIn)
   {
     const bool headSame =  NEAR(_poseData.poseStamp.GetHeadAngle(),
-                                _prevPoseData.poseStamp.GetHeadAngle(), (f32)DEG_TO_RAD(0.1));
+                                _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD_F32(0.1));
     
     const bool poseSame = (NEAR(_poseData.poseStamp.GetPose().GetTranslation().x(),
                                 _prevPoseData.poseStamp.GetPose().GetTranslation().x(), .5f) &&
@@ -1407,7 +1436,7 @@ namespace Cozmo {
                                 _prevPoseData.poseStamp.GetPose().GetTranslation().y(), .5f) &&
                            NEAR(_poseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
                                 _prevPoseData.poseStamp.GetPose().GetRotation().GetAngleAroundZaxis().ToFloat(),
-                                (f32)DEG_TO_RAD(0.1)));
+                                DEG_TO_RAD_F32(0.1)));
     Vision::ImageRGB image;
     f32 scaleMultiplier = 1.f;
     if(kUseHalfResMotionDetection) {
@@ -2022,13 +2051,14 @@ namespace Cozmo {
   {
     
     static const std::map<VisionMode, std::string> LUT = {
-      {VisionMode::Idle,                  "IDLE"}
-      ,{VisionMode::DetectingMarkers,     "MARKERS"}
-      ,{VisionMode::Tracking,             "TRACKING"}
-      ,{VisionMode::DetectingFaces,       "FACES"}
-      ,{VisionMode::DetectingMotion,      "MOTION"}
-      ,{VisionMode::CheckingToolCode,     "TOOLCODE"}
-      ,{VisionMode::DetectingOverheadEdges, "OVERHEADEDGES"}
+      {VisionMode::Idle,                     "IDLE"}
+      ,{VisionMode::DetectingMarkers,        "MARKERS"}
+      ,{VisionMode::Tracking,                "TRACKING"}
+      ,{VisionMode::DetectingFaces,          "FACES"}
+      ,{VisionMode::DetectingMotion,         "MOTION"}
+      ,{VisionMode::ReadingToolCode,         "READTOOLCODE"}
+      ,{VisionMode::ComputingCalibration,    "CALIBRATION"}
+      ,{VisionMode::DetectingOverheadEdges,  "OVERHEADEDGES"}
     };
 
     std::string retStr("");
@@ -2163,6 +2193,8 @@ namespace Cozmo {
     _newMarkerToTrackWasProvided = false;
     
     VisionMarker::SetDataPath(_dataPath);
+    
+    _isCalibrating = false;
     
     _isInitialized = true;
     
@@ -2301,6 +2333,32 @@ namespace Cozmo {
     return RESULT_OK;
   } // PreprocessImage()
   
+  Result VisionSystem::AddCalibrationImage(const Vision::Image& calibImg)
+  {
+    if(_isCalibrating) {
+      PRINT_NAMED_INFO("VisionSystem.AddCalibrationImage.AlreadyCalibrating",
+                       "Cannot add calibration image while already in the middle of doing calibration.");
+      return RESULT_FAIL;
+    }
+    
+    _calibImages.push_back(calibImg);
+    PRINT_NAMED_INFO("VisionSystem.AddCalibrationImage",
+                     "Num images including this: %u", (u32)_calibImages.size());
+    return RESULT_OK;
+  } // AddCalibrationImage()
+  
+  Result VisionSystem::ClearCalibrationImages()
+  {
+    if(_isCalibrating) {
+      PRINT_NAMED_INFO("VisionSystem.ClearCalibrationImages.AlreadyCalibrating",
+                       "Cannot clear calibration images while already in the middle of doing calibration.");
+      return RESULT_FAIL;
+    }
+    
+    _calibImages.clear();
+    return RESULT_OK;
+  }
+  
   // This is the regular Update() call
   Result VisionSystem::Update(const PoseData&            poseData,
                               const Vision::ImageRGB&    inputImage)
@@ -2387,7 +2445,7 @@ namespace Cozmo {
       Toc("TotalDetectingOverheadEdges");
     }
     
-    if(IsModeEnabled(VisionMode::CheckingToolCode))
+    if(IsModeEnabled(VisionMode::ReadingToolCode))
     {
       if((lastResult = ReadToolCode(inputImageGray)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.ReadToolCodeFailed", "");
@@ -2395,11 +2453,20 @@ namespace Cozmo {
       }
     }
     
+    if(IsModeEnabled(VisionMode::ComputingCalibration) && _calibImages.size() >= _kMinNumCalibImagesRequired)
+    {
+      if((lastResult = ComputeCalibration()) != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
+        return lastResult;
+      }
+    }
+
     static s32 profilePrintCtr = 60;
     if(--profilePrintCtr == 0) {
       Profiler::PrintAverageTiming();
       profilePrintCtr = 60;
     }
+
     /*
     // Store a copy of the current image for next time
     // NOTE: Now _prevImage should correspond to _prevRobotState
@@ -2456,28 +2523,18 @@ namespace Cozmo {
     _faceDetectionParameters.maxWidth = maxObjectWidth;
   }
   
-  // TODO: Move this to Anki::Util
-  // Instantiate this class with a function you want called when it goes out of
-  // scope, to do cleanup for you, e.g. in case of early returns from a function.
-  class Cleanup
-  {
-    std::function<void()> _cleanupFcn;
-  public:
-    Cleanup(std::function<void()>&& fcn) : _cleanupFcn(fcn) { }
-    ~Cleanup() { _cleanupFcn(); }
-  };
-  
-  
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
     ToolCode codeRead = ToolCode::UnknownTool;
+    ExternalInterface::RobotReadToolCode readToolCodeMessage;
+    readToolCodeMessage.code = ToolCode::UnknownTool;
     
     // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
     // no matter how we return from this function
-    Cleanup disableCheckToolCode([this,&codeRead]() {
+    Util::CleanupHelper disableCheckToolCode([this,&codeRead]() {
       this->_toolCodeMailbox.putMessage(codeRead);
-      this->EnableMode(VisionMode::CheckingToolCode, false);
-      PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledCheckingToolCode", "");
+      this->EnableMode(VisionMode::ReadingToolCode, false);
+      PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
     });
     
     // All the conditions that must be met to bother trying to read the tool code:
@@ -2501,9 +2558,10 @@ namespace Cozmo {
     
     // Center points of the calibration dots, in lift coordinate frame
     // TODO: Move these to be defined elsewhere
+    const s32 LEFT_DOT = 0, RIGHT_DOT = 1;
     const std::vector<Point3f> toolCodeDotsWrtLift = {
-      {1.5f, -10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
-      {1.5f,  10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT},
+      {1.5f,  10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT}, // Left in image
+      {1.5f, -10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT}, // Right in image
     };
     
     const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_poseData.poseStamp.GetPose(), "RobotLiftBase");
@@ -2534,6 +2592,11 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
     }
+    
+    readToolCodeMessage.expectedCalibDotLeft_x  = projectedToolCodeDots[LEFT_DOT].x();
+    readToolCodeMessage.expectedCalibDotLeft_y  = projectedToolCodeDots[LEFT_DOT].y();
+    readToolCodeMessage.expectedCalibDotRight_x = projectedToolCodeDots[RIGHT_DOT].x();
+    readToolCodeMessage.expectedCalibDotRight_y = projectedToolCodeDots[RIGHT_DOT].y();
     
 #   if DRAW_TOOL_CODE_DEBUG
     Vision::ImageRGB dispImg(image);
@@ -2762,139 +2825,281 @@ namespace Cozmo {
     ASSERT_NAMED(observedPoints.size() == 2,
                  "VisionSystem.ReadToolCode.WrongNumDotsObserved");
     
-    // Solve for camera center and focal length as a system of equations
-    //
-    // Let:
-    //   (x_i, y_i, z_i) = 3D location of tool code dot i
-    //   (u_i, v_i)      = observed 2D projection tool code dot i
-    //   (cx,cy)         = calibration center point
-    //   f               = calibration focal length
-    //
-    // Then:
-    //
-    //   [z_i  0   x_i] [cx]   [z_i * u_i]
-    //   [0   z_i  y_i] [cy] = [z_i * v_i]
-    //                  [f ]
+    readToolCodeMessage.observedCalibDotLeft_x  = observedPoints[LEFT_DOT].x();
+    readToolCodeMessage.observedCalibDotLeft_y  = observedPoints[LEFT_DOT].y();
+    readToolCodeMessage.observedCalibDotRight_x = observedPoints[RIGHT_DOT].x();
+    readToolCodeMessage.observedCalibDotRight_y = observedPoints[RIGHT_DOT].y();
     
-    SmallMatrix<4, 3, f32> A;
-    Anki::Point<4, f32> b;
-    Anki::Point<3, f32> calibParams;
+    // TODO: Actually read the code and put corresponding result in the mailbox (once we have more than one)
+    // NOTE: This gets put in the mailbox by the Cleanup object defined at the top of the function
+    readToolCodeMessage.code = ToolCode::CubeLiftingTool;
+    _lastToolCodeReadTime_ms = image.GetTimestamp();
     
-    for(s32 iDot=0; iDot<2; ++iDot)
+    if(_calibrateFromToolCode)
     {
-      A(iDot*2,0)   = toolCodeDotsWrtCam[iDot].z();
-      A(iDot*2,1)   = 0.f;
-      A(iDot*2,2)   = toolCodeDotsWrtCam[iDot].x();
-      b[iDot*2]     = toolCodeDotsWrtCam[iDot].z() * observedPoints[iDot].x();
+      // Solve for camera center and focal length as a system of equations
+      //
+      // Let:
+      //   (x_i, y_i, z_i) = 3D location of tool code dot i
+      //   (u_i, v_i)      = observed 2D projection tool code dot i
+      //   (cx,cy)         = calibration center point
+      //   f               = calibration focal length
+      //
+      // Then:
+      //
+      //   [z_i  0   x_i] [cx]   [z_i * u_i]
+      //   [0   z_i  y_i] [cy] = [z_i * v_i]
+      //                  [f ]
       
-      A(iDot*2+1,0) = 0.f;
-      A(iDot*2+1,1) = toolCodeDotsWrtCam[iDot].z();
-      A(iDot*2+1,2) = toolCodeDotsWrtCam[iDot].y();
-      b[iDot*2+1]   = toolCodeDotsWrtCam[iDot].z() * observedPoints[iDot].y();
-    }
-    
-    Result lsqResult = LeastSquares(A,b,calibParams);
-    ASSERT_NAMED(lsqResult == RESULT_OK, "VisionSystem.ReadToolCode.LeastSquaresFailed");
-    
-    camCen.x()  = calibParams[0];
-    camCen.y()  = calibParams[1];
-    const f32 f = calibParams[2];
-    
-#   if DRAW_TOOL_CODE_DEBUG
-    char dispStr[256];
-    snprintf(dispStr, 255, "f=%.1f, cen=(%.1f,%.1f)",
-             f, camCen.x(), camCen.y());
-    dispImg.DrawText(Anki::Point2f(0, 15), dispStr, NamedColors::RED, 0.6);
-    _debugImageRGBMailbox.putMessage({"ToolCode", dispImg});
-#   endif
-    
-    if(std::isnan(camCen.x()) || std::isnan(camCen.y())) {
-      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.CamCenNaN", "");
-      return RESULT_FAIL;
-    } else if(std::isnan(f) || f <= 0.f) {
-      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadFocalLength", "");
-      return RESULT_FAIL;
-    } else {
-      // Make sure we're not changing too drastically
-      const f32 kMaxChangeFraction = 0.25f;
-      const f32 fChangeFrac = f/_camera.GetCalibration()->GetFocalLength_x();
-      const f32 xChangeFrac = camCen.x() / _camera.GetCalibration()->GetCenter_x();
-      const f32 yChangeFrac = camCen.y() / _camera.GetCalibration()->GetCenter_y();
-      if(!NEAR(fChangeFrac, 1.f, kMaxChangeFraction) ||
-         !NEAR(xChangeFrac, 1.f, kMaxChangeFraction) ||
-         !NEAR(yChangeFrac, 1.f, kMaxChangeFraction))
+      SmallMatrix<4, 3, f32> A;
+      Anki::Point<4, f32> b;
+      Anki::Point<3, f32> calibParams;
+      
+      for(s32 iDot=0; iDot<2; ++iDot)
       {
-        PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ChangeTooLarge",
-                          "Calibration change too large from current: f=%f vs %f, "
-                          "cen=(%f,%f) vs (%f,%f)",
-                          f, _camera.GetCalibration()->GetFocalLength_x(),
-                          xChangeFrac, yChangeFrac,
-                          _camera.GetCalibration()->GetCenter_x(),
-                          _camera.GetCalibration()->GetCenter_y());
-        return RESULT_FAIL;
+        A(iDot*2,0)   = toolCodeDotsWrtCam[iDot].z();
+        A(iDot*2,1)   = 0.f;
+        A(iDot*2,2)   = toolCodeDotsWrtCam[iDot].x();
+        b[iDot*2]     = toolCodeDotsWrtCam[iDot].z() * observedPoints[iDot].x();
+        
+        A(iDot*2+1,0) = 0.f;
+        A(iDot*2+1,1) = toolCodeDotsWrtCam[iDot].z();
+        A(iDot*2+1,2) = toolCodeDotsWrtCam[iDot].y();
+        b[iDot*2+1]   = toolCodeDotsWrtCam[iDot].z() * observedPoints[iDot].y();
       }
       
+      Result lsqResult = LeastSquares(A,b,calibParams);
+      ASSERT_NAMED(lsqResult == RESULT_OK, "LeastSquares failed");
       
-      // Sanity check the new calibration:
-      if(true) // TODO: Only in debug?
+      camCen.x()  = calibParams[0];
+      camCen.y()  = calibParams[1];
+      const f32 f = calibParams[2];
+      
+#     if DRAW_TOOL_CODE_DEBUG
       {
-        Vision::Camera tempCamera;
-        Vision::CameraCalibration tempCalib(_camera.GetCalibration()->GetNrows(),
-                                            _camera.GetCalibration()->GetNcols(),
-                                            _camera.GetCalibration()->GetFocalLength_x(),
-                                            _camera.GetCalibration()->GetFocalLength_y(),
-                                            _camera.GetCalibration()->GetCenter_x(),
-                                            _camera.GetCalibration()->GetCenter_y());
-        tempCalib.SetFocalLength(f,f);
-        tempCalib.SetCenter(camCen);
-        tempCamera.SetCalibration(tempCalib);
-        std::vector<Anki::Point2f> sanityCheckPoints;
-        tempCamera.Project3dPoints(toolCodeDotsWrtCam, sanityCheckPoints);
-        for(s32 i=0; i<2; ++i)
+        char dispStr[256];
+        snprintf(dispStr, 255, "f=%.1f, cen=(%.1f,%.1f)",
+                 f, camCen.x(), camCen.y());
+        dispImg.DrawText(Anki::Point2f(0, 15), dispStr, NamedColors::RED, 0.6);
+        _debugImageRGBMailbox.putMessage({"ToolCode", dispImg});
+      }
+#     endif
+      
+      if(std::isnan(camCen.x()) || std::isnan(camCen.y())) {
+        PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.CamCenNaN", "");
+        return RESULT_FAIL;
+      } else if(std::isnan(f) || f <= 0.f) {
+        PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadFocalLength", "");
+        return RESULT_FAIL;
+      } else {
+        // Make sure we're not changing too drastically
+        const f32 kMaxChangeFraction = 0.25f;
+        const f32 fChangeFrac = f/_camera.GetCalibration()->GetFocalLength_x();
+        const f32 xChangeFrac = camCen.x() / _camera.GetCalibration()->GetCenter_x();
+        const f32 yChangeFrac = camCen.y() / _camera.GetCalibration()->GetCenter_y();
+        if(!NEAR(fChangeFrac, 1.f, kMaxChangeFraction) ||
+           !NEAR(xChangeFrac, 1.f, kMaxChangeFraction) ||
+           !NEAR(yChangeFrac, 1.f, kMaxChangeFraction))
         {
-          const f32 reprojErrorSq = (sanityCheckPoints[i] - observedPoints[i]).LengthSq();
-          if(reprojErrorSq > 5*5)
-          {
-            if(DRAW_TOOL_CODE_DEBUG)
-            {
-              Vision::ImageRGB dispImg(image);
-              dispImg.DrawPoint(sanityCheckPoints[0], NamedColors::RED, 1);
-              dispImg.DrawPoint(sanityCheckPoints[1], NamedColors::RED, 1);
-              dispImg.DrawPoint(observedPoints[0], NamedColors::GREEN, 1);
-              dispImg.DrawPoint(observedPoints[1], NamedColors::GREEN, 1);
-              _debugImageRGBMailbox.putMessage({"SanityCheck", dispImg});
-            }
-            PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadProjection",
-                              "Reprojection error of point %d = %f",
-                              i, std::sqrtf(reprojErrorSq));
-            return RESULT_FAIL;
-          }
+          PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ChangeTooLarge",
+                            "Calibration change too large from current: f=%f vs %f, "
+                            "cen=(%f,%f) vs (%f,%f)",
+                            f, _camera.GetCalibration()->GetFocalLength_x(),
+                            xChangeFrac, yChangeFrac,
+                            _camera.GetCalibration()->GetCenter_x(),
+                            _camera.GetCalibration()->GetCenter_y());
+          return RESULT_FAIL;
         }
-      } // if sanity checking the new calibration
-      
-      // Update the camera calibration
-      PRINT_NAMED_INFO("VisionSystem.ReadToolCode.CameraCalibUpdated",
-                       "OldCen=(%f,%f), NewCen=(%f,%f), OldF=(%f,%f), NewF=(%f,%f), t=%dms",
-                       _camera.GetCalibration()->GetCenter_x(),
-                       _camera.GetCalibration()->GetCenter_y(),
-                       camCen.x(), camCen.y(),
-                       _camera.GetCalibration()->GetFocalLength_x(),
-                       _camera.GetCalibration()->GetFocalLength_y(),
-                       f, f,
-                       image.GetTimestamp());
-      
-      _camera.GetCalibration()->SetCenter(camCen);
-      _camera.GetCalibration()->SetFocalLength(f, f);
-      _lastToolCodeReadTime_ms = image.GetTimestamp();
-      
-      // TODO: Actually read the code and put corresponding result in the mailbox (once we have more than one)
-      // NOTE: This gets put in the mailbox by the Cleanup object defined at the top of the function
-      codeRead = ToolCode::CubeLiftingTool;
-      
-    } // if(new calib values pass sanity / nan checks)
+        
+        
+        // Sanity check the new calibration:
+        if(true) // TODO: Only in debug?
+        {
+          Vision::Camera tempCamera;
+          Vision::CameraCalibration tempCalib(_camera.GetCalibration()->GetNrows(),
+                                              _camera.GetCalibration()->GetNcols(),
+                                              _camera.GetCalibration()->GetFocalLength_x(),
+                                              _camera.GetCalibration()->GetFocalLength_y(),
+                                              _camera.GetCalibration()->GetCenter_x(),
+                                              _camera.GetCalibration()->GetCenter_y());
+          tempCalib.SetFocalLength(f,f);
+          tempCalib.SetCenter(camCen);
+          tempCamera.SetCalibration(tempCalib);
+          std::vector<Anki::Point2f> sanityCheckPoints;
+          tempCamera.Project3dPoints(toolCodeDotsWrtCam, sanityCheckPoints);
+          for(s32 i=0; i<2; ++i)
+          {
+            const f32 reprojErrorSq = (sanityCheckPoints[i] - observedPoints[i]).LengthSq();
+            if(reprojErrorSq > 5*5)
+            {
+              if(DRAW_TOOL_CODE_DEBUG)
+              {
+                Vision::ImageRGB dispImg(image);
+                dispImg.DrawPoint(sanityCheckPoints[0], NamedColors::RED, 1);
+                dispImg.DrawPoint(sanityCheckPoints[1], NamedColors::RED, 1);
+                dispImg.DrawPoint(observedPoints[0], NamedColors::GREEN, 1);
+                dispImg.DrawPoint(observedPoints[1], NamedColors::GREEN, 1);
+                _debugImageRGBMailbox.putMessage({"SanityCheck", dispImg});
+              }
+              PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadProjection",
+                                "Reprojection error of point %d = %f",
+                                i, std::sqrtf(reprojErrorSq));
+              return RESULT_FAIL;
+            }
+          }
+        } // if sanity checking the new calibration
+        
+        // Update the camera calibration
+        PRINT_NAMED_INFO("VisionSystem.ReadToolCode.CameraCalibUpdated",
+                         "OldCen=(%f,%f), NewCen=(%f,%f), OldF=(%f,%f), NewF=(%f,%f), t=%dms",
+                         _camera.GetCalibration()->GetCenter_x(),
+                         _camera.GetCalibration()->GetCenter_y(),
+                         camCen.x(), camCen.y(),
+                         _camera.GetCalibration()->GetFocalLength_x(),
+                         _camera.GetCalibration()->GetFocalLength_y(),
+                         f, f,
+                         image.GetTimestamp());
+        
+        _camera.GetCalibration()->SetCenter(camCen);
+        _camera.GetCalibration()->SetFocalLength(f, f);
+    
+      } // if(new calib values pass sanity / nan checks)
+    } // if tool code calibration is enabled
   
     return RESULT_OK;
   } // ReadToolCode()
+  
+  
+  // Helper function for computing "corner" positions of the calibration board
+  void CalcBoardCornerPositions(cv::Size boardSize, float squareSize, std::vector<cv::Point3f>& corners)
+  {
+    corners.clear();
+    
+    //    switch(patternType)
+    //    {
+    //      case Settings::CHESSBOARD:
+    //      case Settings::CIRCLES_GRID:
+    //        for( int i = 0; i < boardSize.height; ++i )
+    //          for( int j = 0; j < boardSize.width; ++j )
+    //            corners.push_back(Point3f(float( j*squareSize ), float( i*squareSize ), 0));
+    //        break;
+    //
+    //      case Settings::ASYMMETRIC_CIRCLES_GRID:
+    for( int i = 0; i < boardSize.height; i++ )
+      for( int j = 0; j < boardSize.width; j++ )
+        corners.push_back(cv::Point3f(float((2*j + i % 2)*squareSize), float(i*squareSize), 0));
+    //        break;
+    //    }
+  }
+
+  
+  Result VisionSystem::ComputeCalibration()
+  {
+    Vision::CameraCalibration calibration;
+    _isCalibrating = true;
+    
+    // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
+    // no matter how we return from this function
+    Util::CleanupHelper disableComputingCalibration([this,&calibration]() {
+      this->_calibrationMailbox.putMessage(calibration);
+      this->EnableMode(VisionMode::ComputingCalibration, false);
+      _isCalibrating = false;
+      this->ClearCalibrationImages();
+    });
+    
+    // Check that there are enough images
+    if (_calibImages.size() < _kMinNumCalibImagesRequired) {
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NotEnoughImages", "Got %u. Need %u.", (u32)_calibImages.size(), _kMinNumCalibImagesRequired);
+      return RESULT_FAIL;
+    }
+    PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NumImages", "%u.", (u32)_calibImages.size());
+    
+    
+    // Description of asymmetric circles calibration target
+    cv::Size boardSize(4,11);
+    static constexpr f32 squareSize = 0.01; // TODO: Doesn't really matter for camera matrix intrinsics computation, but should probably measure this.
+    cv::Size imageSize(_calibImages.front().GetNumCols(), _calibImages.front().GetNumRows());
+    
+    
+    std::vector<std::vector<cv::Point2f> > imagePoints;
+    std::vector<std::vector<cv::Point3f> > objectPoints(1);
+    
+    // Parameters for circle grid search
+    cv::SimpleBlobDetector::Params params;
+    params.maxArea = kMaxCalibBlobPixelArea;
+    params.minArea = kMinCalibBlobPixelArea;
+    params.minDistBetweenBlobs = kMinCalibPixelDistBetweenBlobs;
+    cv::Ptr<cv::SimpleBlobDetector> blobDetector = cv::SimpleBlobDetector::create(params);
+    int findCirclesFlags = cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING;
+    
+    int imgCnt = 0;
+    for (auto img : _calibImages) {
+      
+      // Get image points
+      std::vector<cv::Point2f> pointBuf;
+      bool found = cv::findCirclesGrid(img.get_CvMat_(), boardSize, pointBuf, findCirclesFlags, blobDetector);
+
+      if (found) {
+        PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.FoundPoints", "");
+        imagePoints.push_back(pointBuf);
+      } else {
+        PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.NoPointsFound", "");
+      }
+      
+      
+      // Draw image
+      if (DRAW_CALIB_IMAGES) {
+        Vision::ImageRGB dispImg;
+        cv::cvtColor(img.get_CvMat_(), dispImg.get_CvMat_(), cv::COLOR_GRAY2BGR);
+        if (found) {
+          cv::drawChessboardCorners(dispImg.get_CvMat_(), boardSize, cv::Mat(pointBuf), found);
+        }
+        _debugImageRGBMailbox.putMessage({std::string("CalibImage") + std::to_string(imgCnt), dispImg});
+      }
+      ++imgCnt;
+    }
+    
+    // Were points found in enough of the images?
+    if (imagePoints.size() < _kMinNumCalibImagesRequired) {
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.InsufficientImagesWithPoints",
+                       "Points detected in only %u images. Need %u.",
+                       (u32)imagePoints.size(), _kMinNumCalibImagesRequired);
+      return RESULT_FAIL;
+    }
+    
+    
+    // Get object points
+    CalcBoardCornerPositions(boardSize, squareSize, objectPoints[0]);
+    objectPoints.resize(imagePoints.size(), objectPoints[0]);
+    
+
+    // Compute calibration
+    std::vector<cv::Mat> rvecs, tvecs;
+    cv::Mat cameraMatrix = cv::Mat::eye(3, 3, CV_64F);
+    cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
+    
+    double rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
+    
+    
+    calibration = Vision::CameraCalibration(imageSize.height, imageSize.width,
+                                            cameraMatrix.at<double>(0,0), cameraMatrix.at<double>(1,1),
+                                            cameraMatrix.at<double>(0,2), cameraMatrix.at<double>(1,2));
+
+    PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.CalibValues",
+                     "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
+                     calibration.GetFocalLength_x(), calibration.GetFocalLength_y(),
+                     calibration.GetCenter_x(), calibration.GetCenter_y(), rms);
+    
+                          
+    // Check if average reprojection error is too high
+    if (rms > 1.f) {
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh", "%f", rms);
+      return RESULT_FAIL;
+    }
+    
+    return RESULT_OK;
+  }
+  
   
 } // namespace Cozmo
 } // namespace Anki

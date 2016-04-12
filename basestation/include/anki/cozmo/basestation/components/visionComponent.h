@@ -26,6 +26,7 @@
 
 #include <thread>
 #include <mutex>
+#include <list>
 
 namespace Anki {
 
@@ -119,10 +120,19 @@ struct DockingErrorSignal;
     // See what tool we have on our lifter and calibrate the camera
     Result UpdateToolCode();
     
+    Result UpdateComputedCalibration();
+    
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     
     const Vision::CameraCalibration& GetCameraCalibration() const;
+    bool IsCameraCalibrationSet() const { return _isCamCalibSet; }
+    Result ClearCalibrationImages();
+    
+    // If enabled, the camera calibration will be updated based on the
+    // position of the centroids of the dots that are part of the tool codes.
+    // Fails if vision system is already in the middle of reading tool code.
+    Result EnableToolCodeCalibration(bool enable);
       
     // If the current image is newer than the specified timestamp, copy it into
     // the given img and return true.
@@ -148,7 +158,14 @@ struct DockingErrorSignal;
     void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                f32& headTurnSpeedThresh_degPerSec) const;
     
-    bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p);
+    bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
+                          const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(5),
+                          const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10));
+    
+    // Camera calibration
+    void StoreNextImageForCameraCalibration()           { _storeNextImageForCalibration = true;  }
+    bool WillStoreNextImageForCameraCalibration() const { return _storeNextImageForCalibration;  }
+    size_t  GetNumStoredCameraCalibrationImages() const;
     
   protected:
     
@@ -173,6 +190,8 @@ struct DockingErrorSignal;
     Vision::ImageRGB _currentImg;
     Vision::ImageRGB _nextImg;
     Vision::ImageRGB _lastImg; // the last image we processed
+    
+    bool _storeNextImageForCalibration = false;
     
     constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
     constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);

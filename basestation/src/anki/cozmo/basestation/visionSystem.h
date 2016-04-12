@@ -92,6 +92,8 @@ namespace Cozmo {
     u32    GetEnabledModes() const { return _mode; }
     void   SetModes(u32 modes) { _mode = modes; }
     
+    Result EnableToolCodeCalibration(bool enable);
+    
     // Accessors
     const Point2f& GetTrackingMarkerSize();
     
@@ -109,6 +111,10 @@ namespace Cozmo {
 
     Result Update(const PoseData&            robotState,
                   const Vision::ImageRGB&    inputImg);
+    
+    Result AddCalibrationImage(const Vision::Image& calibImg);
+    Result ClearCalibrationImages();
+    size_t GetNumStoredCalibrationImages() const { return _calibImages.size(); }
     
     void StopTracking();
 
@@ -226,9 +232,10 @@ namespace Cozmo {
     bool CheckMailbox(Vision::FaceTracker::UpdatedID&  msg);
     bool CheckMailbox(OverheadEdgeFrame& msg);
     bool CheckMailbox(ToolCode& msg);
+    bool CheckMailbox(Vision::CameraCalibration& msg);
     
-    bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
-    bool CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg);
+    bool CheckDebugMailbox(std::pair<std::string, Vision::Image>& msg);
+    bool CheckDebugMailbox(std::pair<std::string, Vision::ImageRGB>& msg);
     
   protected:
     
@@ -275,6 +282,8 @@ namespace Cozmo {
     
     u32 _mode = static_cast<u32>(VisionMode::Idle);
     u32 _modeBeforeTracking = static_cast<u32>(VisionMode::Idle);
+    
+    bool _calibrateFromToolCode = false;
     
     // Camera parameters
     // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
@@ -361,6 +370,11 @@ namespace Cozmo {
     TimeStamp_t                   _lastToolCodeReadTime_ms = 0;
     const TimeStamp_t             kToolCodeReadPeriod_ms = 500; // TODO: Increase
     
+    // Calibration stuff
+    static const u32              _kMinNumCalibImagesRequired = 4;
+    std::list<Vision::Image>      _calibImages;
+    bool                          _isCalibrating = false;
+    
     struct VisionMemory {
       /* 10X the memory for debugging on a PC
        static const s32 OFFCHIP_BUFFER_SIZE = 20000000;
@@ -434,6 +448,8 @@ namespace Cozmo {
     
     Result ReadToolCode(const Vision::Image& image);
     
+    Result ComputeCalibration();
+    
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                         DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
@@ -452,9 +468,10 @@ namespace Cozmo {
     MultiMailbox<OverheadEdgeFrame, 8> _overheadEdgeFrameMailbox;
     
     Mailbox<ToolCode> _toolCodeMailbox;
+    Mailbox<Vision::CameraCalibration> _calibrationMailbox;
     
-    MultiMailbox<std::pair<const char*, Vision::Image>, 10>     _debugImageMailbox;
-    MultiMailbox<std::pair<const char*, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;
+    MultiMailbox<std::pair<std::string, Vision::Image>, 10>     _debugImageMailbox;
+    MultiMailbox<std::pair<std::string, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;
     
     void RestoreNonTrackingMode();
     

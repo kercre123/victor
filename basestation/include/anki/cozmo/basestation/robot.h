@@ -199,6 +199,11 @@ public:
     // Sets the charger that it's docking to
     void   SetCharger(const ObjectID& chargerID) { _chargerID = chargerID; }
   
+    // Updates the pose of the robot.
+    // Sends new pose down to robot.
+    // Increments frameID
+    void SetNewPose(const Pose3d& newPose);
+  
     //
     // Camera / Vision
     //
@@ -242,9 +247,8 @@ public:
     Pose3d                 GetLiftPoseWrtCamera(f32 atLiftAngle, f32 atHeadAngle) const;
   
     // These change the robot's internal (basestation) representation of its
-    // pose, head angle, and lift angle, but do NOT actually command the
+    // head angle, and lift angle, but do NOT actually command the
     // physical robot to do anything!
-    void SetPose(const Pose3d &newPose);
     void SetHeadAngle(const f32& angle);
     void SetLiftAngle(const f32& angle);
 
@@ -412,6 +416,15 @@ public:
     */
 
     void SetEnableCliffSensor(bool val) { _enableCliffSensor = val; }
+  
+    // sets whether we are currently on a cliff or over ground
+    void SetIsOnCliff(bool value) { _isOnCliff = value; }
+    bool IsOnCliff() const { return _isOnCliff; }
+  
+    // sets distance detected by forward proximity sensor
+    void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
+    u16 GetForwardSensorValue() const { return _forwardSensorValue_mm; }
+
   
     // Set how to save incoming robot state messages
     void SetSaveStateMode(const SaveMode_t mode);
@@ -813,8 +826,16 @@ public:
     bool             _enableCliffSensor  = true;
     u32              _lastSentImageID    = 0;
     u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ALL_TRACKS;
+    bool             _isOnCliff          = false;
+    u16              _forwardSensorValue_mm = 0;
+
 
     std::vector<std::string> _idleAnimationNameStack;
+  
+    // Sets robot pose but does not update the pose on the robot.
+    // Unless you know what you're doing you probably want to use
+    // the public function SetNewPose()
+    void SetPose(const Pose3d &newPose);
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
@@ -862,7 +883,7 @@ public:
     std::string _lastPlayedAnimationId;
   
     ///////// Modifiers ////////
-    
+  
     void SetCurrPathSegment(const s8 s)     {_currPathSegment = s;}
     void SetNumFreeSegmentSlots(const u8 n) {_numFreeSegmentSlots = n;}
     void SetLastRecvdPathID(u16 path_id)    {_lastRecvdPathID = path_id;}

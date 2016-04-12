@@ -107,6 +107,7 @@
             'libopencv_imgproc.a',
             'libopencv_highgui.a',
             'libopencv_calib3d.a',
+            'libopencv_flann.a',
             #'libopencv_contrib.a',
             'libopencv_objdetect.a',
             'libopencv_video.a',

@@ -1,0 +1,50 @@
+// FactoryTest enumeration file
+//  for the C-Like Abstract Data language
+// Author: Kevin Yoon
+// Copyright: Anki Inc (c) 2016
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 FactoryTestState {
+  RequestCalibrationImages,
+  ChargerAndIMUCheck,       // Verify that robot is on charger and IMU is not drifting
+  DriveToSlot,              // Drive forward until cliff event. Set robot's pose.
+  GotoCalibrationPose,      // Drive to pose from which calibration images are to be taken
+  TakeCalibrationImages,    // Take and save images of calibration patterns
+  ComputeCameraCalibration, // Compute calibration and check that values are reasonable
+  WaitForCameraCalibration,
+  GotoPickupPose,
+  StartPickup,
+  PickingUpBlock,
+  StartPlacement,
+  PlacingBlock,
+  DockToCharger
+}
+
+enum uint_8 FactoryTestResultCode {
+  UNKNOWN = 0,
+  SUCCESS,
+  CHARGER_UNDETECTED,
+  IMU_DRIFTING,
+  STILL_ON_CHARGER,
+  GOTO_POSE_ACTION_FAILED,
+  CLIFF_UNDETECTED,
+  NOT_IN_CALIBRATION_POSE,
+  CALIBRATION_TIMED_OUT,
+  CALIBRATION_VALUES_OOR,
+  NOT_IN_PRE_PICKUP_POSE,
+  CUBE_NOT_FOUND,
+  CUBE_NOT_WHERE_EXPECTED,
+  PICKUP_FAILED,
+  PLACEMENT_FAILED,
+  UNEXPECTED_OBSERVED_OBJECT,
+  CHARGER_NOT_FOUND,
+  CHARGER_DOCK_FAILED,
+  QUEUE_ACTION_FAILED,
+  TEST_TIMED_OUT,
+  TEST_CANCELLED
+}
+
+} // namespace Cozmo
+} // namespace Anki

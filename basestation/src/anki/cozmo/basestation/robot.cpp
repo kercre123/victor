@@ -786,6 +786,7 @@ namespace Anki {
         TRY_AND_RETURN_ON_FAILURE(UpdateMotionCentroid);
         TRY_AND_RETURN_ON_FAILURE(UpdateOverheadEdges);
         TRY_AND_RETURN_ON_FAILURE(UpdateToolCode);
+        TRY_AND_RETURN_ON_FAILURE(UpdateComputedCalibration);
         
 #       undef TRY_AND_RETURN_ON_FAILURE
         
@@ -1088,6 +1089,16 @@ namespace Anki {
       
     } // IsValidHeadAngle()
 
+    
+    void Robot::SetNewPose(const Pose3d& newPose)
+    {
+      SetPose(newPose.GetWithRespectToOrigin());
+      ++_frameId;
+      
+      const TimeStamp_t timeStamp = _poseHistory->GetNewestTimeStamp();
+      
+      SendAbsLocalizationUpdate(_pose, timeStamp, _frameId);
+    }
     
     void Robot::SetPose(const Pose3d &newPose)
     {
@@ -2473,7 +2484,7 @@ namespace Anki {
     {
 
       Result result = SendMessage(RobotInterface::EngineToRobot(
-        RobotInterface::SyncTime(_ID, BaseStationTimer::getInstance()->GetCurrentTimeStamp())));
+        RobotInterface::SyncTime(_ID, BaseStationTimer::getInstance()->GetCurrentTimeStamp(), DRIVE_CENTER_OFFSET)));
       
       if(result == RESULT_OK) {
         result = SendMessage(RobotInterface::EngineToRobot(

@@ -280,6 +280,7 @@ namespace Anki {
         
         root_ = GetSupervisor()->getSelf();
         f32 wheelSpeed = root_->getField("driveSpeedNormal")->getSFFloat();
+        f32 driveAccel = root_->getField("driveAccel")->getSFFloat();
         
         f32 steeringCurvature = root_->getField("steeringCurvature")->getSFFloat();
         
@@ -1468,12 +1469,16 @@ namespace Anki {
               }
               case (s32)'$':
               {
-                SendAnimation("ANIM_LIFT_NOD", 1);
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendClearCalibrationImages();
+                } else {
+                  SendSaveCalibrationImage();
+                }
                 break;
               }
               case (s32)'%':
               {
-                SendAnimation("ANIM_ALERT", 1);
+                SendComputeCameraCalibration();
                 break;
               }
               case (s32)'*':
@@ -1754,11 +1759,11 @@ namespace Anki {
             rightSpeed = -steeringDir * wheelSpeed;
           }
           
-          SendDriveWheels(leftSpeed, rightSpeed);
+          SendDriveWheels(leftSpeed, rightSpeed, driveAccel, driveAccel);
           wasMovingWheels_ = true;
         } else if(wasMovingWheels_ && !movingWheels) {
           // If we just stopped moving the wheels:
-          SendDriveWheels(0, 0);
+          SendDriveWheels(0, 0, driveAccel, driveAccel);
           wasMovingWheels_ = false;
         }
         

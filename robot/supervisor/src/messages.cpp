@@ -209,6 +209,9 @@ namespace Anki {
         // Poor-man's time sync to basestation, for now.
         HAL::SetTimeStamp(msg.syncTime);
 
+        // Set drive center offset
+        Localization::SetDriveCenterOffset(msg.driveCenterOffset);
+        
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 #ifndef TARGET_K02
@@ -364,7 +367,8 @@ namespace Anki {
         //AnkiInfo( 116, "Messages.Process_drive.Executing", 364, "left=%f mm/s, right=%f mm/s", 2, msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
 
         //PathFollower::ClearPath();
-        SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps);
+        SteeringController::ExecuteDirectDrive(msg.lwheel_speed_mmps, msg.rwheel_speed_mmps,
+                                               msg.lwheel_accel_mmps2, msg.rwheel_accel_mmps2);
       }
 
       void Process_driveCurvature(const RobotInterface::DriveWheelsCurvature& msg) {
@@ -474,7 +478,7 @@ namespace Anki {
             headCamInfo = &headCamInfoScaled;
           }
 
-          RobotInterface::CameraCalibration headCalibMsg = {
+          CameraCalibration headCalibMsg = {
             headCamInfo->focalLength_x,
             headCamInfo->focalLength_y,
             headCamInfo->center_x,
@@ -816,6 +820,10 @@ namespace Anki {
         }
       }
       void Process_enterTestMode(const RobotInterface::EnterFactoryTestMode&)
+      {
+        // nothing to do here
+      }
+      void Process_configureBluetooth(const RobotInterface::ConfigureBluetooth&)
       {
         // nothing to do here
       }

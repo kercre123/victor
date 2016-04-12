@@ -6,6 +6,7 @@
 #include "bluetooth.h"
 #include "crypto.h"
 #include "messages.h"
+#include "storage.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -574,18 +575,7 @@ void Bluetooth::advertise(void) {
 
 
   // THIS IS TEMPORARY
-  uint32_t* AES_KEY = (uint32_t*) 0x1EFF0;
-  uint8_t hex[] = "0123456789ABCDEF";
-  uint8_t devname[32] = {
-    hex[(*AES_KEY >>  0) & 0xF],
-    hex[(*AES_KEY >>  4) & 0xF],
-    hex[(*AES_KEY >>  8) & 0xF],
-    hex[(*AES_KEY >> 12) & 0xF],
-    ' ', 0
-  };  
-  strcat((char*)devname, (char*)DEVICE_NAME);
-  
-  err_code = sd_ble_gap_device_name_set(&sec_mode, devname, strlen((char*)devname));
+  err_code = sd_ble_gap_device_name_set(&sec_mode, DEVICE_NAME, DEVICE_NAME_LENGTH);
   APP_ERROR_CHECK(err_code);
 
   err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
@@ -611,7 +601,10 @@ void Bluetooth::advertise(void) {
   err_code = transmit_char_add(uuid_type);
   APP_ERROR_CHECK(err_code);
 
-  // Initailize advertising 
+  // Initialize advertising 
+  manif_data.deviceid[0] = NRF_FICR->DEVICEID[0];
+  manif_data.deviceid[1] = NRF_FICR->DEVICEID[1];
+
   ble_advdata_t scanrsp;
   memset(&scanrsp, 0, sizeof(scanrsp));
   scanrsp.uuids_complete.uuid_cnt = sizeof(adv_uuids) / sizeof(ble_uuid_t);

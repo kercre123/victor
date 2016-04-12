@@ -227,10 +227,6 @@ namespace Anki
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Navigation memory
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      
-      // sets whether we are currently on a cliff or over ground
-      void SetIsOnCliff(bool value) { _isOnCliff = value; }
-      void SetForwardSensorValue(uint16_t value_mm) { _forwardSensorValue_mm = value_mm; }
 
       // return pointer to current INavMemoryMap (it may be null if not enabled)
       const INavMemoryMap* GetNavMemoryMap() const;
@@ -409,12 +405,6 @@ namespace Anki
       NavMemoryMapTable _navMemoryMaps;
       const Pose3d* _currentNavMemoryMapOrigin;
       
-      // set to true/false upon cliff sensor notifications
-      bool _isOnCliff;
-      
-      // set to the value of the forward sensor
-      uint16_t _forwardSensorValue_mm;
-                  
       // For allowing the calling of VizManager draw functions
       bool _enableDraw;
       

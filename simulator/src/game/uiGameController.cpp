@@ -652,11 +652,13 @@ namespace Anki {
       ++m.counter;
     }
     
-    void UiGameController::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps)
+    void UiGameController::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps, const f32 lwheel_accel_mmps2, const f32 rwheel_accel_mmps2)
     {
       ExternalInterface::DriveWheels m;
       m.lwheel_speed_mmps = lwheel_speed_mmps;
       m.rwheel_speed_mmps = rwheel_speed_mmps;
+      m.lwheel_accel_mmps2 = lwheel_accel_mmps2;
+      m.rwheel_accel_mmps2 = rwheel_accel_mmps2;
       ExternalInterface::MessageGameToEngine message;
       message.Set_DriveWheels(m);
       SendMessage(message);
@@ -1287,6 +1289,33 @@ namespace Anki {
       msg.robotID = 1;
       ExternalInterface::MessageGameToEngine message;
       message.Set_CancelAction(msg);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendSaveCalibrationImage()
+    {
+      ExternalInterface::SaveCalibrationImage msg;
+      msg.robotID = 1;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_SaveCalibrationImage(msg);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendClearCalibrationImages()
+    {
+      ExternalInterface::ClearCalibrationImages msg;
+      msg.robotID = 1;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_ClearCalibrationImages(msg);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendComputeCameraCalibration()
+    {
+      ExternalInterface::ComputeCameraCalibration msg;
+      msg.robotID = 1;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_ComputeCameraCalibration(msg);
       SendMessage(message);
     }
     

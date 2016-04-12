@@ -33,6 +33,8 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
+#include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 
 namespace Anki {
@@ -159,6 +161,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::RollBlock:
     {
       newBehavior = new BehaviorRollBlock(robot, config);
+      break;
+    }
+    case BehaviorType::FactoryTest:
+    {
+      newBehavior = new BehaviorFactoryTest(robot, config);
       break;
     }
    case BehaviorType::Count:
