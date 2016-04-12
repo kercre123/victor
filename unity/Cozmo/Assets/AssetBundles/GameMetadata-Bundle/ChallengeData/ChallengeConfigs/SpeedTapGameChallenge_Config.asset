@@ -43,31 +43,67 @@ MonoBehaviour:
     DifficultyDescription:
       Key: speedTap.difficulty.expertDescription
   DifficultySettings:
-  - MinCozmoTapDelayMs: 0
-    MaxCozmoTapDelayMs: 0
+  - MinCozmoTapDelayMs: 350
+    MaxCozmoTapDelayMs: 700
+    CozmoMistakeChance: 0.15
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+  - MinCozmoTapDelayMs: 300
+    MaxCozmoTapDelayMs: 550
+    CozmoMistakeChance: 0.1
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+  - MinCozmoTapDelayMs: 200
+    MaxCozmoTapDelayMs: 400
+    CozmoMistakeChance: 0.05
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+  - MinCozmoTapDelayMs: 50
+    MaxCozmoTapDelayMs: 300
     CozmoMistakeChance: 0
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 0
-      TimeHandDisplayed: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 0
-      TimeHandDisplayed: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 0
-      TimeHandDisplayed: 0
-  - MinCozmoTapDelayMs: 0
-    MaxCozmoTapDelayMs: 0
-    CozmoMistakeChance: 0
-    SpeedTapRoundSettings: []
-  - MinCozmoTapDelayMs: 0
-    MaxCozmoTapDelayMs: 0
-    CozmoMistakeChance: 0
-    SpeedTapRoundSettings: []
-  - MinCozmoTapDelayMs: 0
-    MaxCozmoTapDelayMs: 0
-    CozmoMistakeChance: 0
-    SpeedTapRoundSettings: []
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500

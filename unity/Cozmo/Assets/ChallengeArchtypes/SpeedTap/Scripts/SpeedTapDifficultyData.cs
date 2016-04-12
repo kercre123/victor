@@ -24,6 +24,7 @@ public class SpeedTapRoundData {
 public class SpeedTapDifficultyData {
   public float MinCozmoTapDelayMs;
   public float MaxCozmoTapDelayMs;
+  [Range(0.0f, 1.0f)]
   public float CozmoMistakeChance;
   public List<SpeedTapRoundData> SpeedTapRoundSettings;
 }
