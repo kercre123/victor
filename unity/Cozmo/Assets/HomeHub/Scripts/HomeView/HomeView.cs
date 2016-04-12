@@ -81,8 +81,18 @@ namespace Cozmo.HomeHub {
       _PlayTabButton.onClick.AddListener(HandlePlayTabButton);
       _ProfileTabButton.onClick.AddListener(HandleProfileTabButton);
 
-      _GreenPointsProgressBar.SetProgress(DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints / 100.0f);
+      PlayerManager.Instance.GreenPointsUpdate += HandleGreenPointsGained;
+      PlayerManager.Instance.ChestGained += HandleChestGained;
+      _GreenPointsProgressBar.SetProgress(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints);
 
+    }
+
+    private void HandleChestGained() {
+      _GreenPointsProgressBar.ResetProgress();
+    }
+
+    private void HandleGreenPointsGained(int greenPoints, int maxPoints) {
+      _GreenPointsProgressBar.SetProgress((float)greenPoints / (float)maxPoints);
     }
 
     public void SetChallengeStates(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
