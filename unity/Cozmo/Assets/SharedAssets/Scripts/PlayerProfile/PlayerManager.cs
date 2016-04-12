@@ -16,6 +16,9 @@ public class PlayerManager : MonoBehaviour {
     }
   }
 
+  [SerializeField]
+  private ChestData _ChestData;
+
   public delegate void GreenPointsUpdateHandler(int points, int maxPoints);
 
   public delegate void ChestGainedHandler();
@@ -25,8 +28,17 @@ public class PlayerManager : MonoBehaviour {
   public ChestGainedHandler ChestGained;
 
   public int GetGreenPointsLadderMax() {
-    //int ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel;
-    return 100;
+    if (_ChestData.GreenPointMaxLadders.Length == 0) {
+      DAS.Error(this, "No green point ladders");
+    }
+    int ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel;
+    int ladderMaxValue = _ChestData.GreenPointMaxLadders.Last().Value; // default to max value
+    for (int i = 1; i < _ChestData.GreenPointMaxLadders.Length; ++i) {
+      if (ladderLevel > _ChestData.GreenPointMaxLadders[i].Level) {
+        ladderMaxValue = _ChestData.GreenPointMaxLadders[i - 1].Level;
+      }
+    }
+    return ladderMaxValue;
   }
 
   public void AddGreenPoints(int points) {
