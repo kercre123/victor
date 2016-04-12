@@ -6,7 +6,7 @@ namespace Cozmo {
 
     private static SimpleObjectPool<Material> _sMaterialPool;
 
-    private static SimpleObjectPool<Material> GetMaterialPool() {
+    private static SimpleObjectPool<Material> LoadMaterialPool() {
       if (_sMaterialPool == null) {
         _sMaterialPool = new SimpleObjectPool<Material>(CreateMaterial, 1);
       }
@@ -14,11 +14,13 @@ namespace Cozmo {
     }
 
     private static Material CreateMaterial() {
-      return new Material(Shader.Find("Diffuse")){ hideFlags = HideFlags.HideAndDontSave };
+      Material newMaterial = new Material(ShaderHolder.Instance.DefaultMaterial);
+      newMaterial.hideFlags = HideFlags.HideAndDontSave;
+      return newMaterial;
     }
 
     public static Material GetMaterial(Shader shader, int renderQueue = -1) {
-      Material newMaterial = GetMaterialPool().GetObjectFromPool();
+      Material newMaterial = LoadMaterialPool().GetObjectFromPool();
       newMaterial.shader = shader;
       #if UNITY_EDITOR
       newMaterial.name = shader.name + " Material (Generated)";

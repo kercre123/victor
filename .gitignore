@@ -164,6 +164,11 @@ unity/Cozmo/*.userprefs
 unity/Cozmo/*.obj
 unity/Cozmo/obj/*
 
+# Unity-AssetBundles
+unity/Cozmo/AssetBundles/*
+unity/Cozmo/Assets/StreamingAssets/AssetBundles/*
+unity/Cozmo/Assets/StreamingAssets/AssetBundles.meta
+
 # Visual studio
 *.userprefs
 .vs
@@ -192,4 +197,4 @@ UnityDASDll/UnityDASDll/bin/*
 
 # Anki specific
 EXTERNALS
-animations
+lib/anki/products-cozmo-assets/animations

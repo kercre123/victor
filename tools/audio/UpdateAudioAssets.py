@@ -7,22 +7,25 @@ import json
 import os
 from os import path
 
-__scripDir = os.path.dirname(os.path.realpath(__file__))
+__scripDir = path.dirname(path.realpath(__file__))
 __projectRoot = path.join(__scripDir , '..', '..')
-__buildScripDir = path.join(__projectRoot, 'project', 'build-scripts')
-sys.path.append(__buildScripDir)
+__engineDir = path.join(__projectRoot, 'lib', 'anki', 'cozmo-engine')
+__projectScripDir = path.join(__projectRoot, 'project', 'build-scripts')
+__engineScripDir = path.join(__engineDir, 'project', 'buildScripts')
+sys.path.append(__projectScripDir)
+sys.path.append(__engineScripDir)
 import dependencies
 
 
 # Project specific files and directors to perform scripts
-__wwiseToAppMetadataScript = path.join(__projectRoot, 'lib', 'anki', 'cozmo-engine', 'lib', 'audio', 'tools', 'WWiseToAppMetadata', 'WWiseToAppMetadata.py')
+__externalsDir = path.join(__engineDir, 'EXTERNALS')
+__wwiseToAppMetadataScript = path.join(__engineDir, 'lib', 'audio', 'tools', 'WWiseToAppMetadata', 'WWiseToAppMetadata.py')
 __wwiseIdFileName = 'Wwise_IDs.h'
-__wwiseIdsFilePath = path.join(__projectRoot, 'EXTERNALS', 'cozmosoundbanks', 'GeneratedSoundBanks', __wwiseIdFileName)
+__wwiseIdsFilePath = path.join(__externalsDir, 'cozmosoundbanks', 'GeneratedSoundBanks', __wwiseIdFileName)
 __audioMetadataFileName= "audioEventMetadata.csv"
 __audioMetadataFilePath = path.join(__scripDir, __audioMetadataFileName)
-__audioCladDir = path.join(__projectRoot, 'lib', 'anki', 'cozmo-engine', 'clad', 'src', 'clad', 'audio')
-__depsFilePath = path.join(__projectRoot, 'DEPS')
-__externalsDir = path.join(__projectRoot, 'EXTERNALS')
+__audioCladDir = path.join(__engineDir, 'clad', 'src', 'clad', 'audio')
+__depsFilePath = path.join(__engineDir, 'DEPS')
 
 __errorMsg = "%s DOES NOT EXIST. Find your closest project Nerd!!"
 
@@ -202,3 +205,4 @@ def __abort(msg):
 
 if __name__ == '__main__':
     main()
+

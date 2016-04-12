@@ -70,7 +70,7 @@ namespace Cozmo {
         CreateMaterial();
         _MaskingFrame.material = _ClippingMaterial;
 
-        _ClippingMaterial.SetVector("_AtlasUV", UIPrefabHolder.GetAtlasUVs(_Graphic));
+        _ClippingMaterial.SetVector("_AtlasUV", UIManager.GetAtlasUVs(_Graphic));
       }
 
       private void OnEnable() {
@@ -80,24 +80,24 @@ namespace Cozmo {
       #if UNITY_EDITOR
       private void Update() {
         if (_ScreenSpace) {
-          if ((_SpecifyEndClipping && _ClippingMaterial.shader != UIPrefabHolder.Instance.GradiantComplexClippingScreenspaceShader)
-              || (!_SpecifyEndClipping && _ClippingMaterial.shader != UIPrefabHolder.Instance.GradiantSimpleClippingScreenspaceShader)) {
+          if ((_SpecifyEndClipping && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantComplexClippingScreenspaceShader)
+              || (!_SpecifyEndClipping && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantSimpleClippingScreenspaceShader)) {
             if (_SpecifyEndClipping) {
-              _ClippingMaterial.shader = UIPrefabHolder.Instance.GradiantComplexClippingScreenspaceShader;
+              _ClippingMaterial.shader = ShaderHolder.Instance.GradiantComplexClippingScreenspaceShader;
             }
             else {
-              _ClippingMaterial.shader = UIPrefabHolder.Instance.GradiantSimpleClippingScreenspaceShader;
+              _ClippingMaterial.shader = ShaderHolder.Instance.GradiantSimpleClippingScreenspaceShader;
             }
           }
         }
         else {
-          if ((_SpecifyEndClipping && _ClippingMaterial.shader != UIPrefabHolder.Instance.GradiantComplexClippingShader)
-              || (!_SpecifyEndClipping && _ClippingMaterial.shader != UIPrefabHolder.Instance.GradiantSimpleClippingShader)) {
+          if ((_SpecifyEndClipping && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantComplexClippingShader)
+              || (!_SpecifyEndClipping && _ClippingMaterial.shader != ShaderHolder.Instance.GradiantSimpleClippingShader)) {
             if (_SpecifyEndClipping) {
-              _ClippingMaterial.shader = UIPrefabHolder.Instance.GradiantComplexClippingShader;
+              _ClippingMaterial.shader = ShaderHolder.Instance.GradiantComplexClippingShader;
             }
             else {
-              _ClippingMaterial.shader = UIPrefabHolder.Instance.GradiantSimpleClippingShader;
+              _ClippingMaterial.shader = ShaderHolder.Instance.GradiantSimpleClippingShader;
             }
           }
         }
@@ -108,18 +108,18 @@ namespace Cozmo {
       private void CreateMaterial() {
         if (_ScreenSpace) {
           if (_SpecifyEndClipping) {
-            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantComplexClippingScreenspaceShader, _MaskingFrame.defaultMaterial.renderQueue);
+            _ClippingMaterial = MaterialPool.GetMaterial(ShaderHolder.Instance.GradiantComplexClippingScreenspaceShader, _MaskingFrame.defaultMaterial.renderQueue);
           }
           else {
-            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantSimpleClippingScreenspaceShader, _MaskingFrame.defaultMaterial.renderQueue);
+            _ClippingMaterial = MaterialPool.GetMaterial(ShaderHolder.Instance.GradiantSimpleClippingScreenspaceShader, _MaskingFrame.defaultMaterial.renderQueue);
           }
         }
         else {
           if (_SpecifyEndClipping) {
-            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantComplexClippingShader, _MaskingFrame.defaultMaterial.renderQueue);
+            _ClippingMaterial = MaterialPool.GetMaterial(ShaderHolder.Instance.GradiantComplexClippingShader, _MaskingFrame.defaultMaterial.renderQueue);
           }
           else {
-            _ClippingMaterial = MaterialPool.GetMaterial(UIPrefabHolder.Instance.GradiantSimpleClippingShader, _MaskingFrame.defaultMaterial.renderQueue);
+            _ClippingMaterial = MaterialPool.GetMaterial(ShaderHolder.Instance.GradiantSimpleClippingShader, _MaskingFrame.defaultMaterial.renderQueue);
           }
         }
       }

@@ -78,8 +78,6 @@ public class Robot : IRobot {
     public const uint FOREVER = uint.MaxValue;
   }
 
-  public event FriendshipLevelUp OnFriendshipLevelUp;
-
   private struct RobotCallbackWrapper {
     public readonly uint IdTag;
 
@@ -230,6 +228,8 @@ public class Robot : IRobot {
 
   public string CurrentBehaviorString { get; set; }
 
+  public string CurrentDebugAnimationString { get; set; }
+
   private PathMotionProfile PathMotionProfileDefault;
 
   private uint _LastIdTag;
@@ -328,8 +328,6 @@ public class Robot : IRobot {
     }
 
     ClearData(true);
-
-    InitializeFriendshipPoints();
 
     RobotEngineManager.Instance.DisconnectedFromClient += Reset;
 
@@ -511,96 +509,6 @@ public class Robot : IRobot {
     _RobotCallbacks.Add(new RobotCallbackWrapper(tag, callback));
   }
 
-  #region Friendship Points
-
-  public void InitializeFriendshipPoints() {
-
-    // Set FriendshipPoints and Level from Save Data.
-    FriendshipLevel = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipLevel;
-    FriendshipPoints = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipPoints;
-
-    RobotEngineManager.Instance.Message.ProgressionMessage = 
-      Singleton<ProgressionMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetFriendshipPoints>.Instance.Initialize(FriendshipPoints)
-    );
-    RobotEngineManager.Instance.SendMessage();
-
-    RobotEngineManager.Instance.Message.ProgressionMessage = 
-      Singleton<ProgressionMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetFriendshipLevel>.Instance.Initialize(FriendshipLevel)
-    );
-    RobotEngineManager.Instance.SendMessage();
-
-    // Now initialize progress stats
-    var currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
-
-    if (currentSession != null) {
-      SetProgressionStats(currentSession.Progress);
-    }
-  }
-
-  public void AddToFriendshipPoints(int deltaValue) {
-    FriendshipPoints += deltaValue;
-    RobotEngineManager.Instance.Message.ProgressionMessage = 
-      Singleton<ProgressionMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetFriendshipPoints>.Instance.Initialize(FriendshipPoints)
-    );
-    RobotEngineManager.Instance.SendMessage();
-
-    DAS.Event(DASConstants.Friendship.kAddPoints, FriendshipPoints.ToString());
-    ComputeFriendshipLevel();
-  }
-
-  public string GetFriendshipLevelName(int friendshipLevel) {
-    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
-    return levelConfig.FriendshipLevels[friendshipLevel].FriendshipLevelName;
-  }
-
-  public int GetFriendshipLevelByName(string friendshipName) {
-    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
-    for (int i = 0; i < levelConfig.FriendshipLevels.Length; ++i) {
-      if (levelConfig.FriendshipLevels[i].FriendshipLevelName == friendshipName) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  private void ComputeFriendshipLevel() {
-    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
-    bool friendshipLevelChanged = false;
-    while (FriendshipLevel + 1 < levelConfig.FriendshipLevels.Length &&
-           levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
-      FriendshipPoints -= levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired;
-      FriendshipLevel++;
-      friendshipLevelChanged = true;
-    }
-    if (friendshipLevelChanged) {
-      if (OnFriendshipLevelUp != null) {
-        OnFriendshipLevelUp(FriendshipLevel);
-      }
-      RobotEngineManager.Instance.Message.ProgressionMessage = 
-        Singleton<ProgressionMessage>.Instance.Initialize(
-        ID, 
-        Singleton<SetFriendshipLevel>.Instance.Initialize(FriendshipLevel)
-      );
-      RobotEngineManager.Instance.SendMessage();
-
-      RobotEngineManager.Instance.Message.ProgressionMessage = 
-        Singleton<ProgressionMessage>.Instance.Initialize(
-        ID,
-        Singleton<SetFriendshipPoints>.Instance.Initialize(FriendshipPoints)
-      );
-      RobotEngineManager.Instance.SendMessage();
-
-      DAS.Event(DASConstants.Friendship.kLevelUp, FriendshipLevel.ToString());
-    }
-  }
-
-  #endregion
 
   #region Progression and Mood Stats
 
@@ -691,7 +599,7 @@ public class Robot : IRobot {
       // Update data and save to actually grant progress.
       ProgressionStats[index] = value;
 
-      var session = DataPersistence.DataPersistenceManager.Instance.Data.Sessions.LastOrDefault();
+      var session = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
       if (session != null) {
         session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
       }
@@ -861,7 +769,7 @@ public class Robot : IRobot {
 
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
     RobotEngineManager.Instance.Message.DriveWheels = 
-      Singleton<DriveWheels>.Instance.Initialize(leftWheelSpeedMmps, rightWheelSpeedMmps);
+      Singleton<DriveWheels>.Instance.Initialize(leftWheelSpeedMmps, rightWheelSpeedMmps, 0, 0);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -1035,7 +943,7 @@ public class Robot : IRobot {
 
   public float GetRobotVolume() {
     float volume = 1f;
-    Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> currentVolumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.VolumePreferences;
+    Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> currentVolumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
     currentVolumePrefs.TryGetValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot, out volume);
     return volume;
   }

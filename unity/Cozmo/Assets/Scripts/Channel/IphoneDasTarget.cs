@@ -60,6 +60,12 @@ public class IphoneDasTarget : IDASTarget {
 #endif
   }
 
+  public void SetGlobal(string key, string value) {
+#if !UNITY_EDITOR && UNITY_IPHONE
+    Unity_DAS_SetGlobal(key,value);
+#endif
+  }
+
   #if UNITY_IPHONE
   // TODO: __Internal only works on certain platforms (iOS, but not Android, etc)
   [DllImport("__Internal")]
@@ -76,5 +82,8 @@ public class IphoneDasTarget : IDASTarget {
 
   [DllImport("__Internal")]
   private static extern void Unity_DAS_LogD(string eventName, string eventValue, string[] keys, string[] values, uint keyValueCount);
+
+  [DllImport("__Internal")]
+  private static extern void Unity_DAS_SetGlobal(string key, string value);
   #endif
 }

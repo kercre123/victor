@@ -153,11 +153,18 @@ public class Intro : MonoBehaviour {
       return;
     }
 
-    #if UNITY_EDITOR
-    _Robot.SetRobotVolume(0.06f);
-    #else
-    _Robot.SetRobotVolume(1.0f);
-    #endif
+    // actually load default volume
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences.ContainsKey(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot)) {
+      _Robot.SetRobotVolume(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences[Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot]);
+    }
+    else {
+      #if UNITY_EDITOR
+      _Robot.SetRobotVolume(0.06f);
+      #else
+      _Robot.SetRobotVolume(1.0f);
+      #endif
+    }
+
 
     Screen.sleepTimeout = SleepTimeout.NeverSleep;
 

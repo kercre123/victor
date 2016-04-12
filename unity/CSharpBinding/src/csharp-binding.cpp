@@ -77,6 +77,11 @@ void Unity_DAS_LogD(const char* eventName, const char* eventValue, const char** 
   Anki::Util::sDebugF(eventName, keyValues, "%s", eventValue);
 }
 
+void Unity_DAS_SetGlobal(const char* key, const char* value)
+{
+  Anki::Util::sSetGlobal(key,value);
+}
+
 int cozmo_startup(const char *configuration_data)
 {
     int result = (int)RESULT_OK;

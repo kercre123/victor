@@ -1,0 +1,44 @@
+{
+  "behaviorType": "RollBlock",
+  "name": "RollBlock",
+  "emotionScorers": [
+    {
+      "emotionType": "Social",
+      "scoreGraph": {
+        "nodes": [
+          {
+            "x": -1.0,
+            "y": 0.3
+          },
+          {
+            "x": -0.004,
+            "y": 0.9
+          },
+          {
+            "x": 1.0,
+            "y": 0.9
+          }
+        ]
+      },
+      "trackDelta": false
+    }
+  ],
+  "repetitionPenalty": {
+    "nodes": [
+      {
+        "x": 3.0,
+        "y": 0.0
+      },
+      {
+        "x": 8.0,
+        "y": 1.0
+      }
+    ]
+  },
+  "behaviorGroups": [
+    "ChangesPosition",
+    "ChangesOrientation",
+    "MovesLift",
+    "Unlock_CubeRoll"
+  ]
+}

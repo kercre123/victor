@@ -19,7 +19,7 @@ TOPLEVEL=`$GIT rev-parse --show-toplevel`
 cd $TOPLEVEL
 
 SPHINXDIR="$TOPLEVEL"/generated/resources/pocketsphinx
-ASSETS_SOUND_DIR="$TOPLEVEL"/EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/iOS
+ASSETS_SOUND_DIR="$TOPLEVEL"/lib/anki/cozmo-engine/EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/iOS
 DSTDIR_META=$DSTDIR/cozmo_resources/config/
 DSTDIR_SPHINX=$DSTDIR/cozmo_resources/pocketsphinx/
 DSTDIR_ASSET=$DSTDIR/cozmo_resources/assets/

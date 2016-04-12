@@ -11,7 +11,7 @@ public class BlurFilter : MonoBehaviour {
 
   private void Awake() {
     var image = GetComponent<Image>();
-    _Material = MaterialPool.GetMaterial(UIPrefabHolder.Instance.BlurShader, image.defaultMaterial.renderQueue);
+    _Material = MaterialPool.GetMaterial(ShaderHolder.Instance.BlurShader, image.defaultMaterial.renderQueue);
     image.material = _Material;
     image.enabled = true;
     OnRectTransformDimensionsChange();

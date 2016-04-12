@@ -86,11 +86,6 @@ public class DailySummaryPanel : BaseView {
       CreateChallengeBadge(data.CompletedChallenges[i].ChallengeId, _ChallengesContainer);
     }
 
-    AnimateFriendshipBar(data);
-  }
-
-  public void AnimateFriendshipBar(TimelineEntryData data) {
-    StartCoroutine(FriendshipBarCoroutine(data));
   }
 
   // Creates a goal badge
@@ -104,94 +99,6 @@ public class DailySummaryPanel : BaseView {
     ChallengeBadge newBadge = UIManager.CreateUIElement(_ChallengePrefab.gameObject, container).GetComponent<ChallengeBadge>();
     newBadge.Initialize(challengeId);
     return newBadge;
-  }
-
-  private IEnumerator FriendshipBarFill(float start, float end, float timeLimit) {
-    start = Mathf.Lerp(kInitialFillPoint, kFinalFillPoint, start);
-    end = Mathf.Lerp(kInitialFillPoint, kFinalFillPoint, end);
-
-    var startTime = Time.time;
-
-    while (true) {
-      float progress = Mathf.Clamp01((Time.time - startTime) / timeLimit);
-
-      float fill = Mathf.Lerp(start, end, progress);
-
-      _FriendBar.fillAmount = fill;
-
-      if (Time.time - startTime > timeLimit) {
-        yield break;
-      }
-      yield return null;
-    }
-  }
-
-  private IEnumerator FriendshipBarCoroutine(TimelineEntryData data) {
-
-    var levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
-
-    int startingPoints = data.StartingFriendshipPoints;
-    float pointsRequired, startingPercent, endingPercent;
-
-    // first go through all levels that we reached
-    for (int level = data.StartingFriendshipLevel; 
-          level < data.EndingFriendshipLevel; level++) {
-
-      // set up the labels
-      SetFriendshipTexts(
-        levelConfig.FriendshipLevels[level].FriendshipLevelName,
-        levelConfig.FriendshipLevels[level + 1].FriendshipLevelName);
-
-      pointsRequired = levelConfig.FriendshipLevels[level + 1].PointsRequired;
-
-      startingPercent = startingPoints / pointsRequired;
-
-      // fill the progress bar to the top
-      yield return StartCoroutine(FriendshipBarFill(startingPercent, 1f, kFillDuration / (data.EndingFriendshipLevel - level)));
-
-      // if there is another level after the next, play the animation
-      // where the next dot slides to where the current dot is
-      if (level + 2 < levelConfig.FriendshipLevels.Length) {
-        yield return StartCoroutine(FriendshipBarFill(1, 0, 0.0f));
-      }
-      else {
-        // otherwise, we are at max level. fill the next circle and keep it there
-        yield break;
-      }
-
-      // our next fill will start at point 0
-      startingPoints = 0;
-    }
-
-    // after filling all completed levels, we want to animate our progress on the current level
-    int endingPoints = data.EndingFriendshipPoints;
-
-    // if this isn't the max level, show our progress toward our next level
-    if (data.EndingFriendshipLevel + 1 < levelConfig.FriendshipLevels.Length) {
-
-      SetFriendshipTexts(
-        levelConfig.FriendshipLevels[data.EndingFriendshipLevel].FriendshipLevelName,
-        levelConfig.FriendshipLevels[data.EndingFriendshipLevel + 1].FriendshipLevelName, true);
-
-      pointsRequired = levelConfig.FriendshipLevels[data.EndingFriendshipLevel + 1].PointsRequired;
-
-      startingPercent = startingPoints / pointsRequired;
-      endingPercent = endingPoints / pointsRequired;
-
-    }
-    else {
-      // if we are at max level, just play the max level animation (leaves the end dot full)
-      startingPercent = endingPercent = 1f;
-
-      SetFriendshipTexts(
-        levelConfig.FriendshipLevels[data.EndingFriendshipLevel - 1].FriendshipLevelName,
-        levelConfig.FriendshipLevels[data.EndingFriendshipLevel].FriendshipLevelName);
-    }
-
-    yield return StartCoroutine(FriendshipBarFill(startingPercent, endingPercent, kFillDuration));
-    if (FriendshipBarAnimateComplete != null) {
-      FriendshipBarAnimateComplete(data, this);
-    }
   }
 
   // sets the labels on the friendship timeline

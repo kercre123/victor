@@ -12,5 +12,7 @@ public interface IDASTarget {
   void Info(string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null);
 
   void Debug(string eventName, string eventValue, object context = null, Dictionary<string, string> keyValues = null);
+
+  void SetGlobal(string key, string value);
 }
 

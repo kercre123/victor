@@ -21,6 +21,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   private int numberCachedLogMaximum = 100;
 
   private Queue<LogPacket> _MostRecentLogs;
+  private Queue<LogPacket> _ReceivedPackets;
 
   private ConsoleLogPane _ConsoleLogPaneView;
 
@@ -32,6 +33,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   private void Awake() {
     _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
     _MostRecentLogs = new Queue<LogPacket>();
+    _ReceivedPackets = new Queue<LogPacket>();
     _ConsoleLogPaneView = null;
 
     _LastToggleValues = new Dictionary<LogPacket.ELogKind, bool>();
@@ -40,11 +42,33 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     _LastToggleValues.Add(LogPacket.ELogKind.Error, true);
     _LastToggleValues.Add(LogPacket.ELogKind.Event, true);
     _LastToggleValues.Add(LogPacket.ELogKind.Debug, true);
+    _LastToggleValues.Add(LogPacket.ELogKind.Global, true);
 
     DAS.AddTarget(this);
 
     ConsoleLogPane.ConsoleLogPaneOpened += OnConsoleLogPaneOpened;
 
+  }
+
+  private void Update() {
+    lock(_ReceivedPackets) {
+      while (_ReceivedPackets.Count > 0) {
+        LogPacket newPacket;
+
+        // Packets could be trying to be saved from another thread while we are processing them here so we have to lock
+        newPacket = _ReceivedPackets.Dequeue();
+
+        _MostRecentLogs.Enqueue(newPacket);
+        while (_MostRecentLogs.Count > numberCachedLogMaximum) {
+          _MostRecentLogs.Dequeue();
+        }
+
+        // Update the UI, if it is open
+        if ((_ConsoleLogPaneView != null) && (_LastToggleValues[newPacket.LogKind])) {
+            _ConsoleLogPaneView.AppendLog(newPacket.ToString());
+        }
+      }
+    }
   }
 
   private void EnableSOSLogs() {
@@ -73,6 +97,9 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     }
     else if (log.Contains("[Event]")) {
       SaveLogPacket(LogPacket.ELogKind.Event, "", log, null, null);
+    }
+    else if (log.Contains("[Global]")) {
+      SaveLogPacket(LogPacket.ELogKind.Global, "", log, null, null);
     }
     else {
       SaveLogPacket(LogPacket.ELogKind.Debug, "", log, null, null);
@@ -109,20 +136,16 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     SaveLogPacket(LogPacket.ELogKind.Debug, eventName, eventValue, context, keyValues);
   }
 
+  void IDASTarget.SetGlobal(string eventName, string eventValue) {
+    SaveLogPacket(LogPacket.ELogKind.Global, eventName, eventValue, null, null);
+  }
+
   private void SaveLogPacket(LogPacket.ELogKind logKind, string eventName, string eventValue, object context, Dictionary<string, string> keyValues) {
-    // Add the new log to the queue
     LogPacket newPacket = new LogPacket(logKind, eventName, eventValue, context, keyValues);
-    _MostRecentLogs.Enqueue(newPacket);
-    while (_MostRecentLogs.Count > numberCachedLogMaximum) {
-      _MostRecentLogs.Dequeue();
-    }
-    
-    // Update the UI, if it is open
-    if (_ConsoleLogPaneView != null) {
-      // TODO: Only add the new log to the UI if the filter is toggled on
-      if (_LastToggleValues[newPacket.LogKind] == true) {
-        _ConsoleLogPaneView.AppendLog(newPacket.ToString());
-      }
+
+    // This can be called from multiple threads while the main one is processing the received packets so we have to lock
+    lock(_ReceivedPackets) {
+      _ReceivedPackets.Enqueue(newPacket);
     }
   }
 
@@ -219,7 +242,8 @@ public class LogPacket {
     Warning,
     Error,
     Debug,
-    Event
+    Event,
+    Global
   }
 
   public ELogKind LogKind {
@@ -259,6 +283,10 @@ public class LogPacket {
     string logKindStr = "";
     string colorStr = "";
     switch (LogKind) {
+    case ELogKind.Global:
+      logKindStr = "GLOBAL";
+      colorStr = "ff00cc";
+      break;
     case ELogKind.Info:
       logKindStr = "INFO";
       colorStr = "ffffff";
@@ -297,7 +325,16 @@ public class LogPacket {
       keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
     }
 
-    // TODO: Colorize the text
-    return string.Format("<color=#{0}>[{1}] {2}: {3} ({4}) ({5})</color>", colorStr, logKindStr, EventName, EventValue, contextStr, keyValuesStr);
+    StringBuilder formatStr = new StringBuilder("<color=#{0}>[{1}] {2}: {3}"); 
+    if (!string.IsNullOrEmpty(contextStr)) {
+      formatStr.Append(" ({4})");
+    }
+
+    if (!string.IsNullOrEmpty(keyValuesStr)) {
+      formatStr.Append(" ({5})");
+    }
+    formatStr.Append("</color>");
+
+    return string.Format(formatStr.ToString(), colorStr, logKindStr, EventName, EventValue, contextStr, keyValuesStr);
   }
 }
