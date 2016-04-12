@@ -1319,6 +1319,21 @@ namespace Anki {
       SendMessage(message);
     }
     
+    void UiGameController::SendCameraCalibration(f32 focalLength_x, f32 focalLength_y, f32 center_x, f32 center_y)
+    {
+      CameraCalibration msg;
+      msg.focalLength_x = focalLength_x;
+      msg.focalLength_y = focalLength_y;
+      msg.center_x = center_x;
+      msg.center_y = center_y;
+      msg.skew = 0;
+      msg.nrows = 240;
+      msg.ncols = 320;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_CameraCalibration(msg);
+      SendMessage(message);
+    }
+    
     void UiGameController::SendEnableVisionMode(VisionMode mode, bool enable)
     {
       ExternalInterface::EnableVisionMode m;

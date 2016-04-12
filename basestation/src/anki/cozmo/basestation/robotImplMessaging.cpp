@@ -155,7 +155,10 @@ void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngin
 {
   const CameraCalibration& payload = message.GetData().Get_cameraCalibration();
   PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
-    "Received new %dx%d camera calibration from robot.", payload.ncols, payload.nrows);
+                   "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f, cy: %f)",
+                   payload.ncols, payload.nrows,
+                   payload.focalLength_x, payload.focalLength_y,
+                   payload.center_x, payload.center_y);
 
   // Convert calibration message into a calibration object to pass to
   // the robot

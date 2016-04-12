@@ -62,6 +62,7 @@ protected:
   void HandleSaveCalibrationImage(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleClearCalibrationImages(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleComputeCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 };
 
   
