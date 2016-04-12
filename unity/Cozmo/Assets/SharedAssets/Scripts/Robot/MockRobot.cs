@@ -130,6 +130,10 @@ public class MockRobot : IRobot {
     _ProgressionStats.Set(stats);
   }
 
+  public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
+
+  }
+
   public void SetEnableAllBehaviors(bool enabled) {
     // Do nothing
   }

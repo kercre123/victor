@@ -608,6 +608,11 @@ public class Robot : IRobot {
 
   }
 
+  public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
+    RobotEngineManager.Instance.Message.CameraCalibration = Singleton<CameraCalibration>.Instance.Initialize(focalLengthX, focalLengthY, centerX, centerY, 0.0f, 240, 320);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   private void TrySendGoalCompleteDasEvent(Anki.Cozmo.ProgressionStatType index, int value) {
     // If the goal has been completed for the first time, send a DAS event on goal complete
     DataPersistence.TimelineEntryData currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
