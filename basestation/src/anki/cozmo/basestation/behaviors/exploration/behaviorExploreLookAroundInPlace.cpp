@@ -17,6 +17,8 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/robot.h"
 
+#include "anki/common/basestation/math/point_impl.h"
+
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
@@ -25,11 +27,16 @@
 namespace Anki {
 namespace Cozmo {
 
+// distance from previous location to not repeat this behavior near recent locations
+// note this should probably depend on the length of the groundplaneROI, but it does not have to be bound to it
+CONSOLE_VAR(float, kElaip_DistanceFromRecentLocationMin_mm, "BehaviorExploreLookAroundInPlace", 300.0f);
+CONSOLE_VAR(uint8_t, kElaip_RecentLocationsMax, "BehaviorExploreLookAroundInPlace", 5);
+// turn speed
 CONSOLE_VAR(float, kElaip_sx_BodyTurnSpeed_degPerSec, "BehaviorExploreLookAroundInPlace", 90.0f);
 CONSOLE_VAR(float, kElaip_sxt_HeadTurnSpeed_degPerSec, "BehaviorExploreLookAroundInPlace", 15.0f); // for turn states
 CONSOLE_VAR(float, kElaip_sxh_HeadTurnSpeed_degPerSec, "BehaviorExploreLookAroundInPlace", 60.0f); // for head move states
 // chance that the main turn will be counter clockwise (vs ccw)
-CONSOLE_VAR(float, kElaip_s0_MainTurnCWChance , "BehaviorExploreLookAroundInPlace", 0.75f);
+CONSOLE_VAR(float, kElaip_s0_MainTurnCWChance , "BehaviorExploreLookAroundInPlace", 0.5f);
 // [min,max] range for random turn angles for step 1
 CONSOLE_VAR(float, kElaip_s1_BodyAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace",  10.0f);
 CONSOLE_VAR(float, kElaip_s1_BodyAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace",  30.0f);
@@ -61,7 +68,8 @@ CONSOLE_VAR(float, kElaip_s6_HeadAngleRangeMax_deg, "BehaviorExploreLookAroundIn
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
-, _startingBodyFacing_rad(0.0f)
+, _iterationStartingBodyFacing_rad(0.0f)
+, _behaviorBodyFacingDone_rad(0.0f)
 , _mainTurnDirection(EClockDirection::CW)
 , _s4HeadMovesLeft(0)
 {
@@ -84,16 +92,35 @@ bool BehaviorExploreLookAroundInPlace::IsRunnable(const Robot& robot, double cur
   // mapped the floor around me 'recently'.
   // Now this is the case for exploration, but some other supergroup that uses the same behavior would have different
   // conditions. Maybe conditions should be datadriven?
+  bool nearRecentLocation = false;
+  for( const auto& recentLocation : _visitedLocations )
+  {
+    // if close to any recent location, flag
+    const float distSQ = (robot.GetPose().GetTranslation() - recentLocation).LengthSq();
+    const float maxDistSq = kElaip_DistanceFromRecentLocationMin_mm*kElaip_DistanceFromRecentLocationMin_mm;
+    if ( distSQ < maxDistSq ) {
+      nearRecentLocation = true;
+      break;
+    }
+  }
 
-
-  // TODO ask memory map for info and decide upon it
-  return true;
+  // TODO consider asking memory map for info and decide upon it instead of just based on recent locations?
+  const bool canRun = !nearRecentLocation;
+  return canRun;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot, double currentTime_sec)
 {
-  // start
+  // grab run values
+  _behaviorBodyFacingDone_rad = 0;
+  
+  // decide main turn direction
+  const double randomDirection = GetRNG().RandDbl();
+  _mainTurnDirection = (randomDirection<=kElaip_s0_MainTurnCWChance) ? EClockDirection::CW : EClockDirection::CCW;
+  // _mainTurnDirection = EClockDirection::CW;
+
+  // start first iteration
   TransitionToS1_OppositeTurn(robot);
 
   return Result::RESULT_OK;
@@ -116,19 +143,9 @@ IBehavior::Status BehaviorExploreLookAroundInPlace::UpdateInternal(Robot& robot,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(Robot& robot)
 {
-  // cache init values
-  _startingBodyFacing_rad = robot.GetPose().GetRotationAngle<'Z'>();
+  // cache iteration values
+  _iterationStartingBodyFacing_rad = robot.GetPose().GetRotationAngle<'Z'>();
   
-  // NOTE: Currently the behavior runs only 1 iteration (instead of running a full 360 loop). After that,
-  // a new main turn direction could be picked. This can cause a ping-pong effect, resulting in the robot taking
-  // a much longer time to clear the 360 degrees. Either the behavior should cover 360 degrees, or we need
-  // additional information here about the range that we still have to cover. Disable chance for the moment until
-  // I decide what to do
-//  // decide main turn direction
-//  const double randomDirection = GetRNG().RandDbl();
-//  _mainTurnDirection = (randomDirection<=kElaip_s0_MainTurnCWChance) ? EClockDirection::CW : EClockDirection::CCW;
-  _mainTurnDirection = EClockDirection::CW;
- 
   // create turn action for this state
   const EClockDirection turnDir = GetOpposite(_mainTurnDirection);
   IAction* turnAction = CreateBodyAndHeadTurnAction(robot, turnDir,
@@ -212,7 +229,37 @@ void BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal(Robot& robot
         kElaip_sx_BodyTurnSpeed_degPerSec, kElaip_sxt_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
-  StartActing( turnAction );
+  StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
+{
+  Radians currentZ_rad = robot.GetPose().GetRotationAngle<'Z'>();
+  float doneThisIteration_rad = (currentZ_rad - _iterationStartingBodyFacing_rad).ToFloat();
+  _behaviorBodyFacingDone_rad += doneThisIteration_rad;
+  
+  // assert we are not turning more than PI in one iteration (because of Radian rescaling)
+  ASSERT_NAMED( FLT_GT(doneThisIteration_rad,0.0f) == FLT_GT(GetTurnSign(_mainTurnDirection), 0.0f),
+    "BehaviorExploreLookAroundInPlace.TransitionToS7_IterationEnd.BadSign");
+
+  // while not completed a whole turn start another iteration
+  if ( fabsf(_behaviorBodyFacingDone_rad) < 2*PI )
+  {
+    TransitionToS1_OppositeTurn(robot);
+  }
+  else
+  {
+    // we have finished a location by iterating more than 360 degrees, note down as recent location
+    // make room if necessary
+    if ( _visitedLocations.size() >= kElaip_RecentLocationsMax ) {
+      assert( !_visitedLocations.empty() ); // otherwise the limit of locations is 0, so the behavior would run forever
+      _visitedLocations.pop_front();
+    }
+  
+    // note down this location so that we don't do it again in the same place
+    _visitedLocations.emplace_back( robot.GetPose().GetTranslation() );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -231,7 +278,7 @@ IAction* BehaviorExploreLookAroundInPlace::CreateBodyAndHeadTurnAction(Robot& ro
     GetRNG().RandDblInRange(headAbsoluteMin_deg, headAbsoluteMax_deg);
 
   // create proper action for body & head turn
-  const Radians bodyTargetAngleAbs_rad( _startingBodyFacing_rad + DEG_TO_RAD(bodyTargetAngleRelative_deg) );
+  const Radians bodyTargetAngleAbs_rad( _iterationStartingBodyFacing_rad + DEG_TO_RAD(bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
   PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
   turnAction->SetMaxPanSpeed( DEG_TO_RAD(kElaip_sx_BodyTurnSpeed_degPerSec) );
