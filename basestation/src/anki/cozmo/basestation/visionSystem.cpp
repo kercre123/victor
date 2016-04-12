@@ -3000,7 +3000,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     
     // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
     // no matter how we return from this function
-    Cleanup disableComputingCalibration([this,&calibration]() {
+    Util::CleanupHelper disableComputingCalibration([this,&calibration]() {
       this->_calibrationMailbox.putMessage(calibration);
       this->EnableMode(VisionMode::ComputingCalibration, false);
       _isCalibrating = false;

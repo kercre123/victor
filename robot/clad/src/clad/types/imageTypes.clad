@@ -70,7 +70,6 @@ message CameraCalibration
   float_32 skew,
   uint_16  nrows,
   uint_16  ncols,
-  bool     isPhysicalRobots,
 }
 
 } // namespace Cozmo

@@ -1061,7 +1061,6 @@ namespace Cozmo {
         msg.nrows = calib.GetNrows();
         msg.ncols = calib.GetNcols();
         msg.skew = calib.GetSkew();
-        msg.isPhysicalRobots = _robot.IsPhysical();
         _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       }
     }
