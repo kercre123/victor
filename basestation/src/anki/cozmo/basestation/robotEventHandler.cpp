@@ -116,6 +116,11 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     auto computeCameraCalibrationCallback = std::bind(&RobotEventHandler::HandleComputeCameraCalibration, this, std::placeholders::_1);
     _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ComputeCameraCalibration, computeCameraCalibrationCallback));
     
+    // Custom handler for CameraCalibration event
+    auto cameraCalibrationCallback = std::bind(&RobotEventHandler::HandleCameraCalibration, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::CameraCalibration, cameraCalibrationCallback));
+    
+    
     // Custom handlers for Progression events
     {
       auto progressionEventCallback = std::bind(&RobotEventHandler::HandleProgressionEvent, this, std::placeholders::_1);
@@ -1023,6 +1028,39 @@ void RobotEventHandler::HandleSendDiscoveredObjects(const AnkiEvent<ExternalInte
     
   }
   
+  void RobotEventHandler::HandleCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  {
+    // TODO: get RobotID in a non-hack way
+    RobotID_t robotID = 1;
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    // We need a robot
+    if (nullptr == robot)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      NVStorage::NVStorageWrite msg;
+      msg.reportTo = NVStorage::NVReportDest::ENGINE;
+      msg.writeNotErase = true;
+      msg.reportEach = false;
+      msg.reportDone = true;
+      msg.rangeEnd = NVStorage::NVEntryTag::NVEntry_CameraCalibration;
+      msg.entry.tag = (u32)NVStorage::NVEntryTag::NVEntry_CameraCalibration;
 
+      CameraCalibration calib = event.GetData().Get_CameraCalibration();
+      msg.entry.blob.resize(calib.Size());
+      calib.Pack(msg.entry.blob.data(), calib.Size());
+
+      PRINT_NAMED_INFO("RobotEventHandler.HandleCameraCalibration.SendingCalib",
+                       "fx: %f, fy: %f, cx: %f, cy: %f, nrows %d, ncols %d",
+                       calib.focalLength_x, calib.focalLength_y, calib.center_x, calib.center_y, calib.nrows, calib.ncols);
+      
+      robot->SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageWrite(msg)));
+      
+    }
+  }
+  
 } // namespace Cozmo
 } // namespace Anki
