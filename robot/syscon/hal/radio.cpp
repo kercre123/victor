@@ -11,7 +11,6 @@
 #include "micro_esb.h"
   
 #include "hardware.h"
-#include "rtos.h"
 #include "debug.h"
 #include "radio.h"
 #include "timer.h"
@@ -203,9 +202,9 @@ void Radio::setPropLights(unsigned int slot, const LightState *state) {
     return ;
   }
 
- for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
-   Lights::update(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * slot + c, &state[c]);
- }
+	for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
+	 Lights::update(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * slot + c, &state[c]);
+	}
 }
 
 void Radio::assignProp(unsigned int slot, uint32_t accessory) {
@@ -238,22 +237,23 @@ void Radio::updateLights() {
     if (!acc->active) continue ;
     
     // Update the color status of the lights
-    int sum = 0;
     for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
-      static const uint8_t light_index[NUM_PROP_LIGHTS][4] = {
-        {  0,  1,  2, 12},
-        {  3,  4,  5, 13},
-        {  6,  7,  8, 14},
-        {  9, 10, 11, 15}
+      static const uint8_t light_index[NUM_PROP_LIGHTS][3] = {
+        {  0,  1,  2 },
+        {  3,  4,  5 },
+        {  6,  7,  8 },
+        {  9, 10, 11 }
       };
 
       int group = CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * currentAccessory + c;
       uint8_t* rgbi = Lights::state(group);
 
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < 3; i++) {
         acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];
-        sum += rgbi[i] * rgbi[i];
       }
+
+			// XXX: THIS IS TEMPORARY
+			memset(acc->tx_state.ledStatus, 0x20, sizeof(acc->tx_state.ledStatus));
     }
   }
 }
@@ -270,6 +270,9 @@ void Radio::prepare(void* userdata) {
 
   AccessorySlot* acc = &accessories[currentAccessory];
 
+	// XXX: This is temporary
+	acc->last_received = 0;
+	
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
     // We send the previous LED state (so we don't get jitter on radio)
     uesb_address_desc_t& address = accessories[currentAccessory].address;
@@ -302,7 +305,6 @@ void Radio::resume(void* userdata) {
   uesb_start();
 }
 
-// THIS IS A TEMPORARY HACK AND I HATE IT
 void Radio::manage(void) {
   // We are in bluetooth mode, do not do this
   if (m_uesb_mainstate == UESB_STATE_UNINITIALIZED) {
