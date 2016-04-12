@@ -5,15 +5,14 @@ namespace Cozmo {
   namespace UI {
     public class UIColorPalette : ScriptableObject {
 
-      private static UIColorPalette _Instance;
+      private static UIColorPalette _sInstance;
+
+      public static void SetInstance(UIColorPalette instance) {
+        _sInstance = instance;
+      }
 
       public static UIColorPalette Instance {
-        get {
-          if (_Instance == null) {
-            _Instance = Resources.Load<UIColorPalette>("Prefabs/UI/UIColorPalette");
-          }
-          return _Instance;
-        }
+        get { return _sInstance; }
       }
 
       [SerializeField]

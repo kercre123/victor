@@ -21,22 +21,6 @@ public class ChallengeData : ScriptableObject {
     get { return _ChallengeID; }
   }
 
-  // whether or not we should show this challenge as part of the game.
-  [SerializeField]
-  private bool _EnableHubWorldChallenge = true;
-
-  public bool EnableHubWorldChallenge {
-    get { return _EnableHubWorldChallenge; }
-  }
-
-  // show or not on dev world challenge list
-  [SerializeField]
-  private bool _EnableDevWorldChallenge = true;
-
-  public bool EnableDevWorldChallenge {
-    get { return _EnableDevWorldChallenge; }
-  }
-
   // the key used to get the actual localized string for the
   // challenge title shown to the player.
   [SerializeField]

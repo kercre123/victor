@@ -19,18 +19,6 @@ namespace DataPersistence {
     // Is true once all daily goals have been completed
     public bool GoalsFinished;
 
-    public int StartingFriendshipPoints;
-
-    public int StartingFriendshipLevel;
-
-    public int EndingFriendshipPoints;
-
-    public int EndingFriendshipLevel;
-
-    // because each level resets friendship point count,
-    // we won't be able to simply do ending points - starting points
-    public int AwardedFriendshipPoints;
-
     public TimelineEntryData() {
       Goals = new StatContainer();
       Progress = new StatContainer();

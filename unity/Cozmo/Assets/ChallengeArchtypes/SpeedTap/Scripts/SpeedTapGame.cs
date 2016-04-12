@@ -12,6 +12,7 @@ namespace SpeedTap {
     private const float _kRetreatSpeed = -130.0f;
     private const float _kRetreatTime = 0.30f;
     private const float _kTapAdjustRange = 5.0f;
+    private const float _kWinCycleSpeed = 0.1f;
 
     private Vector3 _CozmoPos;
     private Quaternion _CozmoRot;
@@ -20,6 +21,7 @@ namespace SpeedTap {
     public LightCube PlayerBlock;
     public bool PlayerHitFirst = false;
     public bool AllRoundsOver = false;
+    public bool MidHand = false;
 
     public readonly Color[] PlayerWinColors = new Color[4];
     public readonly Color[] CozmoWinColors = new Color[4];
@@ -87,22 +89,42 @@ namespace SpeedTap {
     public void PlayerHitWrong() {
       DAS.Info("SpeedTapGame.PlayerHitWrong", "");
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapRed);
-      CozmoWinsHand();
+      CozmoWinsHand(true);
     }
 
-    public void CozmoWinsHand() {
+    private void SetWinningLightPattern(LightCube cube, Color[] lightColors) {
+      if (lightColors[0] == Color.white) {
+        StartCycleCubeSingleColor(cube, lightColors, _kWinCycleSpeed, Color.black);
+      }
+      else {
+        StartCycleCubeSingleColor(cube, lightColors, _kWinCycleSpeed, Color.white);
+      }
+    }
+
+    private void ClearWinningLightPatterns() {
+      StopCycleCube(PlayerBlock);
+      StopCycleCube(CozmoBlock);
+    }
+
+    public void CozmoWinsHand(bool playerHitWrong = false) {
       _CozmoScore++;
       UpdateUI();
-      PlayerBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
-      for (int i = 0; i < 4; i++) {
-        CozmoBlock.Lights[i].SetFlashingLED(CozmoWinColors[i], 100, 100, 0);
+      
+      // if player tapped Red or on mismatched colors
+      // else player tapped too late and just go dark
+      if (playerHitWrong) {
+        PlayerBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
       }
+      else {
+        PlayerBlock.SetLEDsOff();
+      }
+      SetWinningLightPattern(CozmoBlock, CozmoWinColors);
+
       if (IsRoundComplete()) {
         HandleRoundEnd();
       }
       else {
-        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinHand, 
-          HandleHandEndAnimDone));
+        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapHandWin);
       }
     }
 
@@ -110,16 +132,15 @@ namespace SpeedTap {
       _PlayerScore++;
       UpdateUI();
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
-      CozmoBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
-      for (int i = 0; i < 4; i++) {
-        PlayerBlock.Lights[i].SetFlashingLED(PlayerWinColors[i], 100, 100, 0);
-      }
+      
+      CozmoBlock.SetLEDsOff();
+
+      SetWinningLightPattern(PlayerBlock, PlayerWinColors);
       if (IsRoundComplete()) {
         HandleRoundEnd();
       }
       else {
-        _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseHand, 
-          HandleHandEndAnimDone));
+        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapHandLose);
       }
     }
 
@@ -152,33 +173,36 @@ namespace SpeedTap {
       if (IsSessionComplete()) {
         AllRoundsOver = true;
         if (_PlayerRoundsWon > _CozmoRoundsWon) {
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseSession, HandleSessionAnimDone));
+          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapSessionLose);
         }
         else {
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinSession, HandleSessionAnimDone));
+          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin);
         }
       }
       else {
-        if (_PlayerScore > _CozmoScore) {          
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_LoseRound, HandleRoundEndAnimDone));
+        if (_PlayerScore > _CozmoScore) {
+          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapRoundLose);
         }
         else {
-          _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kSpeedTap_WinRound, HandleRoundEndAnimDone));
+          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapRoundWin);
         }
       }
     }
 
     private void HandleHandEndAnimDone(bool success) {
       _StateMachine.SetNextState(new SpeedTapStatePlayNewHand());
+      ClearWinningLightPatterns();
     }
 
     private void HandleRoundEndAnimDone(bool success) {
       ResetScore();
+      ClearWinningLightPatterns();
       _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
     }
 
     private void HandleSessionAnimDone(bool success) {
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
+      ClearWinningLightPatterns();
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
         switch (CurrentDifficulty) {
         case 1:
@@ -204,7 +228,28 @@ namespace SpeedTap {
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
       _DifficultyOptions = speedTapConfig.DifficultyOptions;
       _BetweenRoundsMusic = speedTapConfig.BetweenRoundMusic;
+      InitializeAnimationCallbacks();
       InitializeMinigameObjects(1);
+    }
+
+    // Set animation callbacks
+    private void InitializeAnimationCallbacks() {
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapHandWin, HandleHandEndAnimDone);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapHandLose, HandleHandEndAnimDone);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundWin, HandleRoundEndAnimDone);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundLose, HandleRoundEndAnimDone);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleSessionAnimDone);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleSessionAnimDone);
+    }
+
+    // Remove animation callbacks
+    private void ClearAnimationCallbacks() {
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapHandWin, HandleHandEndAnimDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapHandLose, HandleHandEndAnimDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundWin, HandleRoundEndAnimDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundLose, HandleRoundEndAnimDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleSessionAnimDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleSessionAnimDone);
     }
 
     private int HighestLevelCompleted() {
@@ -251,7 +296,8 @@ namespace SpeedTap {
 
     protected override void CleanUpOnDestroy() {
       LightCube.TappedAction -= BlockTapped;
-      CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_GetOut);
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGetOut);
+      ClearAnimationCallbacks();
     }
 
     public void InitialCubesDone() {
@@ -353,7 +399,6 @@ namespace SpeedTap {
 
     protected override void RaiseMiniGameQuit() {
       base.RaiseMiniGameQuit();
-
       Dictionary<string, string> quitGameScoreKeyValues = new Dictionary<string, string>();
       Dictionary<string, string> quitGameRoundsWonKeyValues = new Dictionary<string, string>();
 

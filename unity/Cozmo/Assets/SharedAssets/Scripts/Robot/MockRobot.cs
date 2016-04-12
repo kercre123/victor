@@ -13,8 +13,6 @@ public class MockRobot : IRobot {
 
   private readonly List<CallbackWrapper> _Callbacks = new List<CallbackWrapper>();
 
-  public event FriendshipLevelUp OnFriendshipLevelUp;
-
   public event System.Action<ObservedObject> OnCarryingObjectSet;
 
   public event System.Action<ObservedObject> OnHeadTrackingObjectSet;
@@ -96,55 +94,6 @@ public class MockRobot : IRobot {
 
   public void UpdateDirtyList(ObservedObject dirty) {
     // won't get called
-  }
-
-  public void InitializeFriendshipPoints() {
-    // Set FriendshipPoints and Level from Save Data.
-    FriendshipLevel = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipLevel;
-    FriendshipPoints = DataPersistence.DataPersistenceManager.Instance.Data.FriendshipPoints;
-
-    // Now initialize progress stats
-    var currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
-
-    if (currentSession != null) {
-      SetProgressionStats(currentSession.Progress);
-    }
-  }
-
-  public void AddToFriendshipPoints(int deltaValue) {
-    FriendshipPoints += deltaValue;
-    ComputeFriendshipLevel();
-  }
-
-  public string GetFriendshipLevelName(int friendshipLevel) {
-    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
-    return levelConfig.FriendshipLevels[friendshipLevel].FriendshipLevelName;
-  }
-
-  public int GetFriendshipLevelByName(string friendshipName) {
-    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
-    for (int i = 0; i < levelConfig.FriendshipLevels.Length; ++i) {
-      if (levelConfig.FriendshipLevels[i].FriendshipLevelName == friendshipName) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  private void ComputeFriendshipLevel() {
-    FriendshipProgressionConfig levelConfig = DailyGoalManager.Instance.GetFriendshipProgressConfig();
-    bool friendshipLevelChanged = false;
-    while (FriendshipLevel + 1 < levelConfig.FriendshipLevels.Length &&
-           levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired <= FriendshipPoints) {
-      FriendshipPoints -= levelConfig.FriendshipLevels[FriendshipLevel + 1].PointsRequired;
-      FriendshipLevel++;
-      friendshipLevelChanged = true;
-    }
-    if (friendshipLevelChanged) {
-      if (OnFriendshipLevelUp != null) {
-        OnFriendshipLevelUp(FriendshipLevel);
-      }
-    }
   }
 
   private readonly StatContainer _ProgressionStats = new StatContainer();
