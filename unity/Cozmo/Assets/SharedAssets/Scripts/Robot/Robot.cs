@@ -769,7 +769,7 @@ public class Robot : IRobot {
 
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
     RobotEngineManager.Instance.Message.DriveWheels = 
-      Singleton<DriveWheels>.Instance.Initialize(leftWheelSpeedMmps, rightWheelSpeedMmps);
+      Singleton<DriveWheels>.Instance.Initialize(leftWheelSpeedMmps, rightWheelSpeedMmps, 0, 0);
     RobotEngineManager.Instance.SendMessage();
   }
 
