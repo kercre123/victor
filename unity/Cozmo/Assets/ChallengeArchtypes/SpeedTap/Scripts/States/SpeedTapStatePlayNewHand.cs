@@ -32,7 +32,6 @@ namespace SpeedTap {
     private bool _TriedFake = false;
     private bool _TryFake = false;
     private bool _TryPeek = false;
-    private bool _MidHand = false;
     private bool _PlayReady = false;
     private bool _CozmoTapRegistered = false;
     private bool _CozmoHitCube = false;
@@ -46,12 +45,24 @@ namespace SpeedTap {
       _StartTimeMs = -1.0f;
       _LightsOn = false;
       _SpeedTapGame.PlayerHitFirst = false;
-      _MidHand = false;
+      _SpeedTapGame.MidHand = false;
       _PlayReady = false;
       _CozmoTapRegistered = false;
       _MatchProbability = _kBaseMatchProbability;
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, RobotCompletedTapAnimation);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, AdjustCheck);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, AdjustCheck);
 
       _SpeedTapGame.CheckForAdjust(AdjustDone);
+    }
+
+    public override void Exit() {
+      base.Exit();
+      _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
+      _SpeedTapGame.CozmoTappedBlockEvent -= CozmoDidTap;
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, RobotCompletedTapAnimation);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, AdjustCheck);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, AdjustCheck);
     }
 
     void AdjustDone(bool success) {
@@ -59,11 +70,11 @@ namespace SpeedTap {
       _CurrentRobot.SetLiftHeight(1.0f);
       _StartTimeMs = Time.time * 1000.0f;
       _PlayReady = true;
-      if (_MidHand == false) {
+      if (_SpeedTapGame.MidHand == false) {
         _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
         _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
         _SpeedTapGame.CozmoTappedBlockEvent += CozmoDidTap;
-        _MidHand = true;
+        _SpeedTapGame.MidHand = true;
       }
     }
 
@@ -71,7 +82,7 @@ namespace SpeedTap {
       base.Update();
       float currTimeMs = Time.time * 1000.0f;
       // Do not run game while not ready for play
-      if (_PlayReady == false || _MidHand == false) {
+      if (_PlayReady == false || _SpeedTapGame.MidHand == false) {
         // If Tapping, check timing
         if (_CozmoTapping && (currTimeMs - _TapStartTimeMs) >= _kTapAnimHitDelay) {
           if (_SpeedTapGame.PlayerHitFirst == false) {
@@ -85,11 +96,11 @@ namespace SpeedTap {
         if (_GotMatch) {
           if (!_CozmoTapping) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Tap, RobotCompletedTapAnimation);
+              GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
               _CozmoTapRegistered = false;
               _CozmoHitCube = false;
               _CozmoTapping = true;
-              _MidHand = false;
+              _SpeedTapGame.MidHand = false;
               _TapStartTimeMs = currTimeMs;
             }
           }
@@ -97,7 +108,7 @@ namespace SpeedTap {
         else if (_TryFake) {
           if (!_TriedFake) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Fake, AdjustCheck);
+              GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapFakeout);
               _TriedFake = true;
               _TryPeek = false;
             }
@@ -118,15 +129,9 @@ namespace SpeedTap {
         }
         else if (_TryPeek && (currTimeMs - _StartTimeMs) >= _PeekDelayTimeMs) {
           _TryPeek = false;
-          _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Peek, AdjustCheck);
+          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapIdle);
         }
       }
-    }
-
-    public override void Exit() {
-      base.Exit();
-      _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
-      _SpeedTapGame.CozmoTappedBlockEvent -= CozmoDidTap;
     }
 
     void RobotCompletedTapAnimation(bool success) {
