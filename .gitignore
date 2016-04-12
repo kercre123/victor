@@ -197,4 +197,4 @@ UnityDASDll/UnityDASDll/bin/*
 
 # Anki specific
 EXTERNALS
-animations
+lib/anki/products-cozmo-assets/animations

@@ -12,6 +12,7 @@ namespace SpeedTap {
     private const float _kRetreatSpeed = -130.0f;
     private const float _kRetreatTime = 0.30f;
     private const float _kTapAdjustRange = 5.0f;
+    private const float _kWinCycleSpeed = 0.1f;
 
     private Vector3 _CozmoPos;
     private Quaternion _CozmoRot;
@@ -87,16 +88,37 @@ namespace SpeedTap {
     public void PlayerHitWrong() {
       DAS.Info("SpeedTapGame.PlayerHitWrong", "");
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapRed);
-      CozmoWinsHand();
+      CozmoWinsHand(true);
     }
 
-    public void CozmoWinsHand() {
+    private void SetWinningLightPattern(LightCube cube, Color[] lightColors) {
+      if (lightColors[0] == Color.white) {
+        StartCycleCubeSingleColor(cube, lightColors, _kWinCycleSpeed, Color.black);
+      }
+      else {
+        StartCycleCubeSingleColor(cube, lightColors, _kWinCycleSpeed, Color.white);
+      }
+    }
+
+    private void ClearWinningLightPatterns() {
+      StopCycleCube(PlayerBlock);
+      StopCycleCube(CozmoBlock);
+    }
+
+    public void CozmoWinsHand(bool playerHitWrong = false) {
       _CozmoScore++;
       UpdateUI();
-      PlayerBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
-      for (int i = 0; i < 4; i++) {
-        CozmoBlock.Lights[i].SetFlashingLED(CozmoWinColors[i], 100, 100, 0);
+      
+      // if player tapped Red or on mismatched colors
+      // else player tapped too late and just go dark
+      if (playerHitWrong) {
+        PlayerBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
       }
+      else {
+        PlayerBlock.SetLEDsOff();
+      }
+      SetWinningLightPattern(CozmoBlock, CozmoWinColors);
+
       if (IsRoundComplete()) {
         HandleRoundEnd();
       }
@@ -110,10 +132,10 @@ namespace SpeedTap {
       _PlayerScore++;
       UpdateUI();
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
-      CozmoBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
-      for (int i = 0; i < 4; i++) {
-        PlayerBlock.Lights[i].SetFlashingLED(PlayerWinColors[i], 100, 100, 0);
-      }
+      
+      CozmoBlock.SetLEDsOff();
+
+      SetWinningLightPattern(PlayerBlock, PlayerWinColors);
       if (IsRoundComplete()) {
         HandleRoundEnd();
       }
@@ -170,15 +192,18 @@ namespace SpeedTap {
 
     private void HandleHandEndAnimDone(bool success) {
       _StateMachine.SetNextState(new SpeedTapStatePlayNewHand());
+      ClearWinningLightPatterns();
     }
 
     private void HandleRoundEndAnimDone(bool success) {
       ResetScore();
+      ClearWinningLightPatterns();
       _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
     }
 
     private void HandleSessionAnimDone(bool success) {
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
+      ClearWinningLightPatterns();
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
         switch (CurrentDifficulty) {
         case 1:

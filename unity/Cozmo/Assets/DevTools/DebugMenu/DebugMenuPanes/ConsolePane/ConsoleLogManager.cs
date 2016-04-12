@@ -51,22 +51,22 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void Update() {
-    while (_ReceivedPackets.Count > 0) {
-      LogPacket newPacket;
+    lock(_ReceivedPackets) {
+      while (_ReceivedPackets.Count > 0) {
+        LogPacket newPacket;
 
-      // Packets could be trying to be saved from another thread while we are processing them here so we have to lock
-      lock(_ReceivedPackets) {
+        // Packets could be trying to be saved from another thread while we are processing them here so we have to lock
         newPacket = _ReceivedPackets.Dequeue();
-      }
 
-      _MostRecentLogs.Enqueue(newPacket);
-      while (_MostRecentLogs.Count > numberCachedLogMaximum) {
-        _MostRecentLogs.Dequeue();
-      }
+        _MostRecentLogs.Enqueue(newPacket);
+        while (_MostRecentLogs.Count > numberCachedLogMaximum) {
+          _MostRecentLogs.Dequeue();
+        }
 
-      // Update the UI, if it is open
-      if ((_ConsoleLogPaneView != null) && (_LastToggleValues[newPacket.LogKind])) {
-          _ConsoleLogPaneView.AppendLog(newPacket.ToString());
+        // Update the UI, if it is open
+        if ((_ConsoleLogPaneView != null) && (_LastToggleValues[newPacket.LogKind])) {
+            _ConsoleLogPaneView.AppendLog(newPacket.ToString());
+        }
       }
     }
   }

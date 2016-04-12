@@ -279,6 +279,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotDisconnected:
       ReceivedSpecificMessage(message.RobotDisconnected);
       break;
+    case G2U.MessageEngineToGame.Tag.EngineRobotCLADVersionMismatch:
+      ReceivedSpecificMessage(message.EngineRobotCLADVersionMismatch);
+      break;
     case G2U.MessageEngineToGame.Tag.RobotObservedObject:
       ReceivedSpecificMessage(message.RobotObservedObject);
       break;
@@ -347,6 +350,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.DebugString:
       ReceivedSpecificMessage(message.DebugString);
+      break;
+    case G2U.MessageEngineToGame.Tag.DebugAnimationString:
+      ReceivedSpecificMessage(message.DebugAnimationString);
       break;
     case G2U.MessageEngineToGame.Tag.RequestGameStart:
       ReceivedSpecificMessage(message.RequestGameStart);
@@ -424,6 +430,20 @@ public class RobotEngineManager : MonoBehaviour {
     DAS.Error("RobotEngineManager", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
     Disconnect();
     Disconnected(DisconnectionReason.RobotDisconnected);
+  }
+
+  private void ReceivedSpecificMessage(G2U.EngineRobotCLADVersionMismatch message) {
+    if (message.engineToRobotMismatch) {
+      string str = "Engine to Robot CLAD version mismatch. Engine's EngineToRobot hash = " + message.engineEnginetoRobotHash + ". Robot's EngineToRobot hash = " + message.robotEnginetoRobotHash;
+      DAS.Error("clad_version_mismatch_engine_to_robot", str);
+    }
+
+    if (message.robotToEngineMistmatch) {
+      string str = "Robot to Engine CLAD version mismatch. Engine's EngineToRobot hash = " + message.engineRobotToEngineHash + ". Robot's RobotToEngine hash = " + message.robotRobotToEngineHash;
+      DAS.Error("clad_version_mismatch_robot_to_engine", str);
+    }
+
+    DebugMenuManager.Instance.OnDebugMenuButtonTap();
   }
 
   private void ReceivedSpecificMessage(G2U.InitDebugConsoleVarMessage message) {
@@ -700,6 +720,14 @@ public class RobotEngineManager : MonoBehaviour {
     if (CurrentRobot != null) {
       if (CurrentRobot.CurrentBehaviorString != message.text) {
         CurrentRobot.CurrentBehaviorString = message.text;
+      }
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DebugAnimationString message) {
+    if (CurrentRobot != null) {
+      if (CurrentRobot.CurrentDebugAnimationString != message.text) {
+        CurrentRobot.CurrentDebugAnimationString = message.text;
       }
     }
   }

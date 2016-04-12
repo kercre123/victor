@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -62,6 +62,8 @@ public abstract class GameBase : MonoBehaviour {
     public float cycleIntervalSeconds;
     public Color[] cycleColors;
     public int colorIndex;
+    public bool cycleSingleColorOnly;
+    public uint singleColor;
   }
 
   private Dictionary<int, BlinkData> _BlinkCubeTimers;
@@ -191,7 +193,7 @@ public abstract class GameBase : MonoBehaviour {
     // sessions are in chronological order, completed challenges are as well.
     // using Reversed gets them in reverse chronological order
     var completedChallenges = 
-      DataPersistence.DataPersistenceManager.Instance.Data.Sessions
+      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions
           .Reversed().SelectMany(x => x.CompletedChallenges.Reversed());
 
     int noveltyPoints = 0;
@@ -378,6 +380,7 @@ public abstract class GameBase : MonoBehaviour {
     data.timeElaspedSeconds = 0f;
     data.colorIndex = 0;
     data.cycleColors = lightColorsCounterclockwise;
+    data.cycleSingleColorOnly = false;
 
     // Update data
     if (_CubeCycleTimers.ContainsKey(cubeID)) {
@@ -385,6 +388,14 @@ public abstract class GameBase : MonoBehaviour {
     }
     else {
       _CubeCycleTimers.Add(cubeID, data);
+    }
+  }
+
+  public void StartCycleCubeSingleColor(int cubeID, Color[] lightColors, float cycleIntervalSeconds, Color rotateColor) {
+    StartCycleCube(cubeID, lightColors, cycleIntervalSeconds);
+    if (_CubeCycleTimers.ContainsKey(cubeID)) {
+      _CubeCycleTimers[cubeID].cycleSingleColorOnly = true;
+      _CubeCycleTimers[cubeID].singleColor = rotateColor.ToUInt();
     }
   }
 
@@ -399,9 +410,27 @@ public abstract class GameBase : MonoBehaviour {
       kvp.Value.timeElaspedSeconds += Time.deltaTime;
 
       if (kvp.Value.timeElaspedSeconds > kvp.Value.cycleIntervalSeconds) {
-        CycleLightsClockwise(kvp.Value);
+        if (kvp.Value.cycleSingleColorOnly) {
+          CycleLightsSingleColor(kvp.Value);
+        }
+        else {
+          CycleLightsClockwise(kvp.Value);
+        }
         kvp.Value.timeElaspedSeconds %= kvp.Value.cycleIntervalSeconds;
       }
+    }
+  }
+
+  private void CycleLightsSingleColor(CycleData data) {
+    LightCube cube = CurrentRobot.LightCubes[data.cubeID];
+    data.colorIndex++;
+    data.colorIndex %= data.cycleColors.Length;
+    for (int i = 0; i < cube.Lights.Length; i++) {
+      cube.Lights[i].OnColor = data.cycleColors[i].ToUInt();
+      if (i == data.colorIndex) {
+        cube.Lights[i].OnColor = data.singleColor;
+      }
+      cube.Lights[i].OnPeriodMs = LightCube.Light.FOREVER;
     }
   }
 
