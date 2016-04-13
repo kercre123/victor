@@ -502,7 +502,7 @@ namespace Anki {
       isPointTurnWithTarget_ = false;
       ExecutePointTurn_Internal(angularVel, angularAccel);
 
-      prevAngle_ = Localization::GetCurrentMatOrientation();
+      prevAngle_ = Localization::GetCurrPose_angle();
       f32 currAngle = prevAngle_.ToFloat();
 
       // Generate velocity profile
@@ -533,10 +533,10 @@ namespace Anki {
 
       targetRad_ = targetAngle;
       pointTurnAngTol_ = ABS(angleTolerance);
-      prevAngle_ = Localization::GetCurrentMatOrientation();
+      prevAngle_ = Localization::GetCurrPose_angle();
       f32 currAngle = prevAngle_.ToFloat();
       f32 destAngle = targetRad_.ToFloat();
-      angularDistExpected_ = (targetAngle - Localization::GetCurrentMatOrientation()).ToFloat();
+      angularDistExpected_ = (targetAngle - Localization::GetCurrPose_angle()).ToFloat();
 
       angularDistTraversed_ = 0;
 
@@ -588,7 +588,7 @@ namespace Anki {
       f32 currDesiredAngularVel, currDesiredAngle;
       vpg_.Step(currDesiredAngularVel, currDesiredAngle);
 
-      Radians currAngle = Cozmo::Localization::GetCurrentMatOrientation();
+      Radians currAngle = Cozmo::Localization::GetCurrPose_angle();
       
       // Compute the velocity along the arc length equivalent of currAngularVel.
       // currDesiredAngularVel / PI = arcVel / (PI * R)
