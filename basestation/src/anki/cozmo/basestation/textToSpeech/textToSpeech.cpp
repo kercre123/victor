@@ -55,14 +55,14 @@ void TextToSpeech::CleanUp()
 
 }
 
-void TextToSpeech::HandleAssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name)
+void TextToSpeech::HandleAssignNameToFace(Vision::FaceID_t faceID, const std::string& name)
 {
   PRINT_NAMED_DEBUG("TextToSpeech.HandleAssignNameToFace", "FaceId %d Name: %s", faceID, name.c_str());
   std::string full_path = _dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, name + filePostfix);
   flite_text_to_speech(name.c_str(),_voice,full_path.c_str());
 }
   
-void TextToSpeech::HandlePlayFaceNameAnimation(Vision::TrackedFace::ID_t faceID,
+void TextToSpeech::HandlePlayFaceNameAnimation(Vision::FaceID_t faceID,
                                                const std::string& name)
 {
   PRINT_NAMED_DEBUG("TextToSpeech.HandlePlayFaceNameAnimation", "FaceId %d Name: %s", faceID, name.c_str());

@@ -161,7 +161,7 @@ namespace Cozmo {
     return isRunnable;
   }
   
-  void BehaviorInteractWithFaces::StartTracking(Robot& robot, const Face::ID_t faceID, double currentTime_sec)
+  void BehaviorInteractWithFaces::StartTracking(Robot& robot, const FaceID_t faceID, double currentTime_sec)
   {
     PRINT_NAMED_INFO("BehaviorInteractWithFaces.StartTracking", "FaceID = %d", faceID);
     
@@ -238,7 +238,7 @@ namespace Cozmo {
   void BehaviorInteractWithFaces::StopTracking(Robot& robot)
   {
     PRINT_NAMED_INFO("BehaviorInteractWithFaces.StopTracking", "");
-    _trackedFaceID = Face::UnknownFace;
+    _trackedFaceID = Vision::UnknownFaceID;
     robot.GetActionList().Cancel(_trackActionTag);
     _trackActionTag = (u32)ActionConstants::INVALID_TAG;
     _currentState = State::Inactive;
@@ -249,11 +249,11 @@ namespace Cozmo {
     robot.GetAnimationStreamer().SetAllParams(_originalLiveIdleParams);
   }
   
-  BehaviorInteractWithFaces::Face::ID_t BehaviorInteractWithFaces::GetRandIdHelper()
+  BehaviorInteractWithFaces::FaceID_t BehaviorInteractWithFaces::GetRandIdHelper()
   {
     // Add all faces other than the one we are currently tracking and ones that
     // are on cooldown to the candidate list to choose next face from.
-    std::vector<Face::ID_t> candidateList;
+    std::vector<FaceID_t> candidateList;
     for(auto & candidate : _interestingFacesData)
     {
       if(candidate.first != _trackedFaceID && candidate.second._coolDownUntil_sec == 0) {
@@ -264,14 +264,14 @@ namespace Cozmo {
     if(candidateList.empty()) {
       PRINT_NAMED_INFO("BehaviorInteractWithFaces.GetRandIdHelper.NoAvailableIDs",
                        "No faces available that are not on cooldown");
-      return Face::UnknownFace;
+      return Vision::UnknownFaceID;
     }
     
     const s32 index = GetRNG().RandIntInRange(0, static_cast<s32>(candidateList.size()-1));
     return candidateList[index];
   }
   
-  bool BehaviorInteractWithFaces::TrackNextFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec)
+  bool BehaviorInteractWithFaces::TrackNextFace(Robot& robot, FaceID_t currentFace, double currentTime_sec)
   {
     // We are switching away from tracking this face entirely, stop accumulating
     // total tracking time
@@ -287,8 +287,8 @@ namespace Cozmo {
       return false;
     } else {
       // Pick next face from those available to look at
-      Face::ID_t nextFace = GetRandIdHelper();
-      if(Face::UnknownFace == nextFace) {
+      FaceID_t nextFace = GetRandIdHelper();
+      if(Vision::UnknownFaceID == nextFace) {
         PRINT_NAMED_INFO("BehaviorInteractWithFaces.TrackNextFace.NoValidFaces",
                          "All remaining faces are on cooldown");
         return false;
@@ -302,7 +302,7 @@ namespace Cozmo {
   } // TrackNextFace()
   
   
-  void BehaviorInteractWithFaces::SwitchToDifferentFace(Robot& robot, Face::ID_t currentFace,
+  void BehaviorInteractWithFaces::SwitchToDifferentFace(Robot& robot, FaceID_t currentFace,
                                                         double currentTime_sec)
   {
     if(_interestingFacesOrder.size() > 1)
@@ -328,7 +328,7 @@ namespace Cozmo {
         }
       }
       
-      Face::ID_t nextFace = GetRandIdHelper();
+      FaceID_t nextFace = GetRandIdHelper();
       PRINT_NAMED_INFO("BehaviorInteractWithFaces.SwitchToDifferentFace",
                        "CurrentFace = %d, NextFace = %d", currentFace, nextFace);
       StartTracking(robot, nextFace, currentTime_sec);
@@ -650,7 +650,7 @@ namespace Cozmo {
     
     const RobotObservedFace& msg = event.GetData().Get_RobotObservedFace();
     
-    Face::ID_t faceID = static_cast<Face::ID_t>(msg.faceID);
+    FaceID_t faceID = static_cast<FaceID_t>(msg.faceID);
     
     // We need a valid face to work with
     const Face* face = robot.GetFaceWorld().GetFace(faceID);
@@ -743,11 +743,11 @@ namespace Cozmo {
   {
     const RobotDeletedFace& msg = event.GetData().Get_RobotDeletedFace();
     
-    RemoveFaceID(static_cast<Face::ID_t>(msg.faceID));
+    RemoveFaceID(static_cast<FaceID_t>(msg.faceID));
   }
   
   
-  void BehaviorInteractWithFaces::RemoveFaceID(Face::ID_t faceID)
+  void BehaviorInteractWithFaces::RemoveFaceID(FaceID_t faceID)
   {
     auto dataIter = _interestingFacesData.find(faceID);
     if (_interestingFacesData.end() != dataIter)

@@ -271,7 +271,7 @@ protected:
   
   const ObservedObject& GetLastObservedObject() const;
 
-  const Vision::TrackedFace::ID_t GetLastObservedFaceID() const;
+  const Vision::FaceID_t GetLastObservedFaceID() const;
   
   BehaviorType GetBehaviorType(const std::string& behaviorName) const;
 
@@ -326,7 +326,7 @@ private:
   std::map<ObjectFamily, std::map<ObjectType, std::vector<s32> > > _objectFamilyToTypeToIDMap;
   std::map<s32, Pose3d> _objectIDToPoseMap;
   
-  Vision::TrackedFace::ID_t _lastObservedFaceID;
+  Vision::FaceID_t _lastObservedFaceID;
   
   webots::Node* _root = nullptr;
   

@@ -71,7 +71,7 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
 # endif
   
   std::list<Vision::TrackedFace> faces;
-  std::list<Vision::FaceTracker::UpdatedID> updatedIDs;
+  std::list<Vision::UpdatedFaceID> updatedIDs;
   lastResult = faceTracker.Update(img, faces, updatedIDs);
   
   ASSERT_TRUE(RESULT_OK == lastResult);
@@ -158,7 +158,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   std::vector<std::string> peopleDirs;
   Util::FileUtils::ListAllDirectories(dataPath, peopleDirs);
   
-  std::set<Vision::TrackedFace::ID_t> allIDs;
+  std::set<Vision::FaceID_t> allIDs;
   
   struct TestDirData {
     const char* dirName;
@@ -257,7 +257,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
         
         for(auto observedID : observedFaceIDs)
         {
-          if(observedID != Vision::TrackedFace::UnknownFace)
+          if(observedID != Vision::UnknownFaceID)
           {
             allIDs.insert(observedID);
           }
@@ -273,7 +273,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
               //PRINT_NAMED_INFO("FaceRecognition.VideoRecognitionAndTracking.RecognizedFace",
               //                 "Correctly found %s", observedName.c_str());
               stats.facesRecognized++;
-            } else if(observedID != Vision::TrackedFace::UnknownFace && allNames.count(observedName) > 0) {
+            } else if(observedID != Vision::UnknownFaceID && allNames.count(observedName) > 0) {
               stats.falsePositives++;
             }
           } else if(observedID >= 0) {

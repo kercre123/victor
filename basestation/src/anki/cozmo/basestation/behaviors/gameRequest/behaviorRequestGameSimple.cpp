@@ -471,7 +471,7 @@ void BehaviorRequestGameSimple::TransitionToTrackingFace(Robot& robot)
 {
   SendRequest(robot);
 
-  if( GetFaceID() == Face::UnknownFace ) {
+  if( GetFaceID() == Vision::UnknownFaceID ) {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoValidFace",
                         "Can't do face tracking because there is no valid face!");
     // use an action that just hangs to simulate the track face logic

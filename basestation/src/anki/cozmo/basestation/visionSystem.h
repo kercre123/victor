@@ -201,7 +201,7 @@ namespace Cozmo {
     std::string GetModeName(VisionMode mode) const;
     std::string GetCurrentModeName() const;
     
-    void AssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name);
+    void AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
     
     void EnableNewFaceEnrollment(s32 numToEnroll);
     
@@ -232,7 +232,7 @@ namespace Cozmo {
     //bool CheckMailbox(RobotInterface::PanAndTilt& msg);
     bool CheckMailbox(ExternalInterface::RobotObservedMotion& msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
-    bool CheckMailbox(Vision::FaceTracker::UpdatedID&  msg);
+    bool CheckMailbox(Vision::UpdatedFaceID&  msg);
     bool CheckMailbox(OverheadEdgeFrame& msg);
     bool CheckMailbox(ToolCode& msg);
     bool CheckMailbox(Vision::CameraCalibration& msg);
@@ -476,7 +476,7 @@ namespace Cozmo {
     //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
     
     MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
-    MultiMailbox<Vision::FaceTracker::UpdatedID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
+    MultiMailbox<Vision::UpdatedFaceID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
     
     MultiMailbox<OverheadEdgeFrame, 8> _overheadEdgeFrameMailbox;
     

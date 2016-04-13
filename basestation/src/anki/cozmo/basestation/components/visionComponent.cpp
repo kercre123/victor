@@ -843,7 +843,7 @@ namespace Cozmo {
     Result lastResult = RESULT_OK;
     if(_visionSystem != nullptr)
     {
-      Vision::FaceTracker::UpdatedID updatedID;
+      Vision::UpdatedFaceID updatedID;
       while(true == _visionSystem->CheckMailbox(updatedID))
       {
         _robot.GetFaceWorld().ChangeFaceID(updatedID.oldID, updatedID.newID);

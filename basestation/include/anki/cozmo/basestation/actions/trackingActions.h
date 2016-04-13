@@ -162,7 +162,7 @@ class TrackFaceAction : public ITrackAction
 {
 public:
   
-  using FaceID = Vision::TrackedFace::ID_t;
+  using FaceID = Vision::FaceID_t;
   
   TrackFaceAction(Robot& robot, FaceID faceID);
   virtual ~TrackFaceAction();

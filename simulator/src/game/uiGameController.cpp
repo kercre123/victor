@@ -1538,7 +1538,7 @@ namespace Anki {
       return _lastObservedObject;
     }
     
-    const Vision::TrackedFace::ID_t UiGameController::GetLastObservedFaceID() const
+    const Vision::FaceID_t UiGameController::GetLastObservedFaceID() const
     {
       return _lastObservedFaceID;
     }

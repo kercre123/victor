@@ -40,9 +40,9 @@ namespace Vision {
     Impl(const std::string& modelPath, const Json::Value& config);
     ~Impl();
     
-    Result Update(const Vision::Image& frameOrig,
-                  std::list<TrackedFace>& faces,
-                  std::list<UpdatedID>&   updatedIDs);
+    Result Update(const Vision::Image&        frameOrig,
+                  std::list<TrackedFace>&     faces,
+                  std::list<UpdatedFaceID>&   updatedIDs);
     
     void EnableDisplay(bool enabled) { }
     
@@ -54,7 +54,7 @@ namespace Vision {
     void EnableEmotionDetection(bool enable) { _detectEmotion = enable; }
     bool IsEmotionDetectionEnabled() const   { return _detectEmotion;  }
 
-    void AssignNameToID(TrackedFace::ID_t faceID, const std::string& name);
+    void AssignNameToID(FaceID_t faceID, const std::string& name);
     
     Result LoadAlbum(const std::string& albumName, std::list<std::string>& names);
     Result SaveAlbum(const std::string& albumName);

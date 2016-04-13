@@ -442,7 +442,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(Vision::FaceTracker::UpdatedID&  msg)
+  bool VisionSystem::CheckMailbox(Vision::UpdatedFaceID&  msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -1323,7 +1323,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     return result;
   } // TrackerPredictionUpdate()
   
-  void VisionSystem::AssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name)
+  void VisionSystem::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name)
   {
     if(!_isInitialized) {
       PRINT_NAMED_WARNING("VisionSystem.AssignNameToFace.NotInitialized",
@@ -1365,7 +1365,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     }
     
     std::list<Vision::TrackedFace> faces;
-    std::list<Vision::FaceTracker::UpdatedID> updatedIDs;
+    std::list<Vision::UpdatedFaceID> updatedIDs;
     
     if(!markerQuads.empty())
     {
