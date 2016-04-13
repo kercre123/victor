@@ -187,7 +187,7 @@ IActionRunner* GetPickupActionHelper(Robot& robot, const ExternalInterface::Pick
                                          msg.useManualSpeed);
   } else {
     PickupObjectAction* action = new PickupObjectAction(robot, selectedObjectID, msg.useManualSpeed);
-    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -305,7 +305,7 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
                                        msg.useManualSpeed);
   } else {
     RollObjectAction* action = new RollObjectAction(robot, selectedObjectID, msg.useManualSpeed);
-    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -330,7 +330,7 @@ IActionRunner* GetPopAWheelieActionHelper(Robot& robot, const ExternalInterface:
                                         msg.useManualSpeed);
   } else {
     PopAWheelieAction* action = new PopAWheelieAction(robot, selectedObjectID, msg.useManualSpeed);
-    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -369,7 +369,7 @@ IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface
                                             msg.useManualSpeed);
   } else {
     MountChargerAction* chargerAction = new MountChargerAction(robot, selectedObjectID, msg.useManualSpeed);
-    chargerAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    chargerAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     return chargerAction;
   }
 }

@@ -76,6 +76,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::proxObstacle,                &Robot::HandleProxObstacle);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::chargerEvent,                &Robot::HandleChargerEvent);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::image,                       &Robot::HandleImageChunk);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::imageGyro,                   &Robot::HandleImageImuData);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::imuDataChunk,                &Robot::HandleImuData);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::imuRawDataChunk,             &Robot::HandleImuRawData);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::syncTimeAck,                 &Robot::HandleSyncTimeAck);
@@ -84,6 +85,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::nvResult,                    &Robot::HandleNVOpResult);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotAvailable,              &Robot::HandleRobotSetID);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::motorCalibration,            &Robot::HandleMotorCalibration);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,               &Robot::HandleDockingStatus);
   
 
   // lambda wrapper to call internal handler
@@ -258,8 +260,10 @@ void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& 
 {
   const BlockPickedUp& payload = message.GetData().Get_blockPickedUp();
   const char* successStr = (payload.didSucceed ? "succeeded" : "failed");
+  const char* resultStr = EnumToString(payload.result);
+
   PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageBlockPickedUp",
-    "Robot %d reported it %s picking up block. Stopping docking and turning on Look-for-Markers mode.", GetID(), successStr);
+    "Robot %d reported it %s picking up block with %s. Stopping docking and turning on Look-for-Markers mode.", GetID(), successStr, resultStr);
 
   if(payload.didSucceed) {
     SetDockObjectAsAttachedToLift();
@@ -292,6 +296,13 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
   _visionComponent.EnableMode(VisionMode::DetectingMarkers, true);
   _visionComponent.EnableMode(VisionMode::Tracking, false);
 
+}
+
+void Robot::HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  // TODO: Do something with the docking status message like play sound or animation
+  //const DockingStatus& payload = message.GetData().Get_dockingStatus();
+  
 }
   
 void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -660,7 +671,17 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     }
 
     Vision::ImageRGB image(height,width,cvImg.data);
-    image.SetTimestamp(payload.frameTimeStamp);
+    
+    if(IsPhysical())
+    {
+      image.SetTimestamp(payload.frameTimeStamp+RollingShutterCorrector::imageTimestampOffset_ms);
+    }
+    else
+    {
+      image.SetTimestamp(payload.frameTimeStamp);
+    }
+    
+    _visionComponent.GetImuDataHistory().CalculateTimestampForImageIMU(payload.imageId, payload.frameTimeStamp, RollingShutterCorrector::timeBetweenFrames_ms, height);
     
     /* For help debugging COZMO-694:
     PRINT_NAMED_INFO("Robot.HandleImageChunk.ImageReady",
@@ -807,6 +828,17 @@ void Robot::HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     PRINT_NAMED_INFO("Robot.HandleImuRawData.ClosingLogFile", "");
     _imuLogFileStream.close();
   }
+}
+
+void Robot::HandleImageImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const ImageImuData& payload = message.GetData().Get_imageGyro();
+  
+  _visionComponent.GetImuDataHistory().AddImuData(payload.imageId,
+                                                  payload.rateX,
+                                                  payload.rateY,
+                                                  payload.rateZ,
+                                                  payload.line2Number);
 }
 
   

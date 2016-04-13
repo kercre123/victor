@@ -61,6 +61,14 @@ message ImageChunk {
   uint_8 data[uint_16:1200], // ^ IMAGE_CHUNK_SIZE above
 }
 
+message ImageImuData {
+  uint_32  imageId,
+  float_32 rateX,
+  float_32 rateY,
+  float_32 rateZ,
+  uint_8   line2Number
+}
+
 message CameraCalibration
 {
   float_32 focalLength_x,

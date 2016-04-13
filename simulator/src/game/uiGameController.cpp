@@ -1571,6 +1571,62 @@ namespace Anki {
     {
       // TODO: Implement!
     }
+    
+    void UiGameController::SetLightCubePose(int lightCubeId, const Pose3d& newPose)
+    {
+      for(auto iter = _lightCubes.begin(); iter != _lightCubes.end(); iter++)
+      {
+        webots::Field* id = iter->first->getField("ID");
+        if(id && id->getSFInt32() == lightCubeId)
+        {
+          webots::Field* rotField = iter->first->getField("rotation");
+          assert(rotField != nullptr);
+          
+          webots::Field* transField = iter->first->getField("translation");
+          assert(transField != nullptr);
+          
+          const RotationVector3d Rvec = newPose.GetRotationVector();
+          const double rotation[4] = {
+            Rvec.GetAxis().x(), Rvec.GetAxis().y(), Rvec.GetAxis().z(),
+            Rvec.GetAngle().ToFloat()
+          };
+          rotField->setSFRotation(rotation);
+          
+          const double translation[3] = {
+            MM_TO_M(newPose.GetTranslation().x()),
+            MM_TO_M(newPose.GetTranslation().y()),
+            MM_TO_M(newPose.GetTranslation().z())
+          };
+          transField->setSFVec3f(translation);
+        }
+      }
+    }
+    
+    const Pose3d UiGameController::GetLightCubePoseActual(int lightCubeId)
+    {
+      for(auto iter = _lightCubes.begin(); iter != _lightCubes.end(); iter++)
+      {
+        webots::Field* id = iter->first->getField("ID");
+        if(id && id->getSFInt32() == lightCubeId)
+        {
+          webots::Field* rotField = iter->first->getField("rotation");
+          assert(rotField != nullptr);
+          
+          webots::Field* transField = iter->first->getField("translation");
+          assert(transField != nullptr);
+        
+          const double* rot = rotField->getSFRotation();
+          const RotationVector3d rotation(rot[3], Vec3f(rot[0], rot[1], rot[2]));
+          
+          const double* trans = transField->getSFVec3f();
+          const Vec3f translation(trans[0], trans[1], trans[2]);
+          
+          return Pose3d(rotation, translation);
+        }
+      }
+      PRINT_NAMED_ERROR("UiGameController.GetLightCubePoseActual", "Unable to get actual pose for light cube %d", lightCubeId);
+      return Pose3d();
+    }
 
   } // namespace Cozmo
 } // namespace Anki

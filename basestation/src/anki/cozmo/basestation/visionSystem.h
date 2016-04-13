@@ -38,6 +38,7 @@
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/groundPlaneROI.h"
 #include "anki/cozmo/basestation/overheadEdge.h"
+#include "anki/cozmo/basestation/rollingShutterCorrector.h"
 
 #include "anki/common/basestation/matlabInterface.h"
 
@@ -70,6 +71,18 @@ namespace Cozmo {
   // Forward declaration:
   class Robot;
   class VizManager;
+  
+  struct VisionPoseData {
+    TimeStamp_t           timeStamp;
+    RobotPoseStamp        poseStamp;  // contains historical head/lift/pose info
+    Pose3d                cameraPose; // w.r.t. pose in poseStamp
+    bool                  groundPlaneVisible;
+    Matrix_3x3f           groundPlaneHomography;
+    GroundPlaneROI        groundPlaneROI;
+    bool                  isMoving;
+    ImuDataHistory        imuDataHistory;
+    std::vector<RotationMatrix3d> historicCameraRots;
+  };
 
   class VisionSystem : public Vision::Profiler
   {
@@ -97,19 +110,9 @@ namespace Cozmo {
     // Accessors
     const Point2f& GetTrackingMarkerSize();
     
-    struct PoseData {
-      TimeStamp_t      timeStamp;
-      RobotPoseStamp   poseStamp;  // contains historical head/lift/pose info
-      Pose3d           cameraPose; // w.r.t. pose in poseStamp
-      bool             groundPlaneVisible;
-      Matrix_3x3f      groundPlaneHomography;
-      GroundPlaneROI   groundPlaneROI;
-      bool             isMoving;
-    };
-    
     // This is main Update() call to be called in a loop from above.
 
-    Result Update(const PoseData&            robotState,
+    Result Update(const VisionPoseData&            robotState,
                   const Vision::ImageRGB&    inputImg);
     
     Result AddCalibrationImage(const Vision::Image& calibImg);
@@ -216,8 +219,8 @@ namespace Cozmo {
                              const s32 minObjectWidth,
                              const s32 maxObjectHeight,
                              const s32 maxObjectWidth);
-    
-   const std::string GetDataPath() const { return _dataPath; }
+
+    const std::string& GetDataPath() const { return _dataPath; }
   
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
@@ -237,7 +240,15 @@ namespace Cozmo {
     bool CheckDebugMailbox(std::pair<std::string, Vision::Image>& msg);
     bool CheckDebugMailbox(std::pair<std::string, Vision::ImageRGB>& msg);
     
+    const RollingShutterCorrector& GetRollingShutterCorrector() { return _rollingShutterCorrector; }
+    void ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
+    bool IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
+    
   protected:
+  
+    RollingShutterCorrector _rollingShutterCorrector;
+
+    bool _doRollingShutterCorrection = false;
     
 #   if ANKI_COZMO_USE_MATLAB_VISION
     // For prototyping with Matlab
@@ -348,7 +359,7 @@ namespace Cozmo {
     // Snapshots of robot state
     bool _wasCalledOnce = false;
     bool _havePrevPoseData = false;
-    PoseData _poseData, _prevPoseData;
+    VisionPoseData _poseData, _prevPoseData;
     
     // Parameters defined in visionParameters.h
     DetectFiducialMarkersParameters _detectionParameters;
@@ -407,7 +418,7 @@ namespace Cozmo {
     VisionMemory _memory;
     
     Embedded::Quadrilateral<f32> GetTrackerQuad(Embedded::MemoryStack scratch);
-    Result UpdatePoseData(const PoseData& newPoseData);
+    Result UpdatePoseData(const VisionPoseData& newPoseData);
     void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange);
     Result UpdateMarkerToTrack();
     Radians GetCurrentHeadAngle();
@@ -454,11 +465,13 @@ namespace Cozmo {
                         DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
     
+    
+    
     // Mailboxes for different types of messages that the vision
     // system communicates back to the vision processing thread
     Mailbox<VizInterface::TrackerQuad>        _trackerMailbox;
     Mailbox<ExternalInterface::RobotObservedMotion>  _motionMailbox;
-    Mailbox<std::pair<Pose3d, TimeStamp_t> >  _dockingMailbox; // holds timestamped marker pose w.r.t. camera
+    MultiMailbox<std::pair<Pose3d, TimeStamp_t>, 4>  _dockingMailbox; // holds timestamped marker pose w.r.t. camera
     MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
     //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
     

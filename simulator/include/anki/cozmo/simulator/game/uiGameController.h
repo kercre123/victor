@@ -279,6 +279,8 @@ protected:
   // Actually move objects in the simulated world
   void SetActualRobotPose(const Pose3d& newPose);
   void SetActualObjectPose(const std::string& name, const Pose3d& newPose);
+  const Pose3d GetLightCubePoseActual(int lightCubeId);
+  void SetLightCubePose(int lightCubeId, const Pose3d& pose);
   
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);

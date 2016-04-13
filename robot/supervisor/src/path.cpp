@@ -98,7 +98,7 @@ namespace Anki
         case PST_POINT_TURN:
           return 0;
         default:
-          AnkiError( 6, "Path", 46, " (Path::GetLength): Undefined segment %d\n", 1, type_);
+          AnkiError( 6, "Path", 406, " (Path::GetLength): Undefined segment %d\n", 1, type_);
           AnkiAssert(false, 275);
       }
       return 0;

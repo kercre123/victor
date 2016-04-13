@@ -1,5 +1,5 @@
 /**
- * File: CST_RollBlock.cpp
+ * File: CST_VariableHeightMedium.cpp
  *
  * Author: Al Chaussee
  * Created: 2/12/16
@@ -21,7 +21,7 @@ namespace Anki {
     
     enum class TestState {
       Init,
-      RollObject,
+      PickupMedium,
       TestDone
     };
     
@@ -36,20 +36,20 @@ namespace Anki {
     const f32 defaultDockAccel_mmps2 = 200;
     const f32 defaultDockDecel_mmps2 = 100;
     const f32 defaultReverseSpeed_mmps = 30;
-    PathMotionProfile motionProfile4(defaultPathSpeed_mmps,
-                                    defaultPathAccel_mmps2,
-                                    defaultPathDecel_mmps2,
-                                    defaultPathPointTurnSpeed_rad_per_sec,
-                                    defaultPathPointTurnAccel_rad_per_sec2,
-                                    defaultPathPointTurnDecel_rad_per_sec2,
-                                    defaultDockSpeed_mmps,
-                                    defaultDockAccel_mmps2,
-                                    defaultDockDecel_mmps2,
-                                    defaultReverseSpeed_mmps);
+    PathMotionProfile motionProfile6(defaultPathSpeed_mmps,
+                                     defaultPathAccel_mmps2,
+                                     defaultPathDecel_mmps2,
+                                     defaultPathPointTurnSpeed_rad_per_sec,
+                                     defaultPathPointTurnAccel_rad_per_sec2,
+                                     defaultPathPointTurnDecel_rad_per_sec2,
+                                     defaultDockSpeed_mmps,
+                                     defaultDockAccel_mmps2,
+                                     defaultDockDecel_mmps2,
+                                     defaultReverseSpeed_mmps);
     
     
     // ============ Test class declaration ============
-    class CST_RollBlock : public CozmoSimTestController {
+    class CST_VariableHeightMedium : public CozmoSimTestController {
       
     private:
       
@@ -59,24 +59,24 @@ namespace Anki {
     };
     
     // Register class with factory
-    REGISTER_COZMO_SIM_TEST_CLASS(CST_RollBlock);
+    REGISTER_COZMO_SIM_TEST_CLASS(CST_VariableHeightMedium);
     
     
     // =========== Test class implementation ===========
     
-    s32 CST_RollBlock::UpdateInternal()
+    s32 CST_VariableHeightMedium::UpdateInternal()
     {
       switch (_testState) {
         case TestState::Init:
         {
           MakeSynchronous();
-          StartMovie("RollBlock");
+          StartMovie("VariableHeightMedium");
           
           SendMoveHeadToAngle(0, 100, 100);
-          _testState = TestState::RollObject;
+          _testState = TestState::PickupMedium;
           break;
         }
-        case TestState::RollObject:
+        case TestState::PickupMedium:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL) &&
@@ -85,10 +85,10 @@ namespace Anki {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
             m.position = QueueActionPosition::NOW;
-            m.idTag = 11;
+            m.idTag = 1;
             m.numRetries = 3;
-            // Roll object 0
-            m.action.Set_rollObject(ExternalInterface::RollObject(0, motionProfile4, 0, false, true, false));
+            // Pickup object 0
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(1, motionProfile6, 0, false, true, false));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -98,12 +98,8 @@ namespace Anki {
         }
         case TestState::TestDone:
         {
-          // Verify robot has rolled the block
-          Pose3d pose;
-          GetObjectPose(0, pose);
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           GetCarryingObjectID() == -1 &&
-                                           NEAR(pose.GetRotationAngle(), -1.5, 0.2), 25)
+                                           GetCarryingObjectID() == 1, 20)
           {
             StopMovie();
             CST_EXIT();

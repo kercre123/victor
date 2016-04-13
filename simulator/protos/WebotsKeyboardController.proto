@@ -66,8 +66,9 @@ PROTO WebotsKeyboardController [
   field SFFloat pathReverseSpeed_mmps 30
 
   # Docking speed/accel
-  field SFFloat dockSpeed_mmps  100
+  field SFFloat dockSpeed_mmps  60
   field SFFloat dockAccel_mmps2 200
+  field SFFloat dockDecel_mmps2 100
 
   # Value between 0 and 1 which determines how much the robot turns with 
   # the left/right arrow keys when going forward or backward.

@@ -140,12 +140,14 @@ union RobotToEngine {
   ObjectConnectionState activeObjectConnectionState = 0xD0,
   MotorCalibration           motorCalibration       = 0xD1,
   FWVersionInfo              fwVersionInfo          = 0xD2,
+  DockingStatus              dockingStatus          = 0xD3,
   
   //0xF0 to 0x FE: Unreliable message to the Engine
   RobotState                 state                  = 0xF0,
   AnimationState             animState              = 0xF1,
   ImageChunk                 image                  = 0xF2,
   ObjectDiscovered           activeObjectDiscovered = 0xF3,
+  ImageImuData               imageGyro              = 0xF4,
 }
 
 

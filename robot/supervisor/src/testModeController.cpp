@@ -20,7 +20,7 @@
 #include <math.h>
 #include "trig_fast.h"
 
-#define ENABLE_TEST_MODES 1
+#define ENABLE_TEST_MODES 0
 
 
 namespace Anki {
@@ -312,6 +312,7 @@ namespace Anki {
                  x_offset_mm, y_offset_mm, angle_offset_degrees);
         ticCnt_ = 0;
         PickAndPlaceController::PlaceOnGround(50,
+                                              100,
                                               100,
                                               x_offset_mm,
                                               y_offset_mm,
@@ -703,7 +704,7 @@ namespace Anki {
                   AnkiInfo( 77, "TestModeController.LiftTestUpdate", 405, "Lift UP %f power (maxSpeed %f rad/s)", 2, liftPower_, maxLiftSpeed_radPerSec_);
                   HAL::MotorSetPower(MOTOR_LIFT, liftPower_);
                 } else {
-                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 406, "Lift DOWN %f power (maxSpeed %f rad/s)", 2, -liftPower_, maxLiftSpeed_radPerSec_);
+                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 434, "Lift DOWN %f power (maxSpeed %f rad/s)", 2, -liftPower_, maxLiftSpeed_radPerSec_);
                   HAL::MotorSetPower(MOTOR_LIFT, -liftPower_);
                 }
 

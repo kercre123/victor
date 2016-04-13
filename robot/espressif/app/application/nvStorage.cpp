@@ -473,7 +473,8 @@ static void processFailure(const NVResult fail)
 
 static void endWrite(const NVResult writeResult)
 {
-  AnkiConditionalWarn(writeResult == NV_OKAY, 146, "NVStorage.WriteFailure", 416, "Failed to write to NV storage %d at 0x%x, phase %d", 3, writeResult, nv.flashPointer, nv.phase);
+  AnkiConditionalWarn(writeResult == NV_OKAY, 155, "NVStorage.WriteFailure", 435, "Failed to write to NV storage %d at 0x%x, phase %d", 3, writeResult, nv.flashPointer, nv.phase);
+
   if (nv.pendingWriteDoneCallback != NULL)
   {
     nv.pendingWriteDoneCallback(nv.pendingWrite, writeResult);
@@ -604,14 +605,14 @@ Result Update()
                 }
                 else
                 {
-                  AnkiWarn( 146, "NVStorage.WriteFailure", 412, "Couldn't overwrite old entry.", 0)
+                  AnkiWarn( 155, "NVStorage.WriteFailure", 412, "Couldn't overwrite old entry.", 0)
                   endWrite(NV_ERROR);
                 }
                 break;
               }
               default:
               {
-                AnkiError( 146, "NVStorage.WriteFailure", 417, "Unexpected nv.phase = %d! aborting all", 1, nv.phase);
+                AnkiError( 155, "NVStorage.WriteFailure", 417, "Unexpected nv.phase = %d! aborting all", 1, nv.phase);
                 processFailure(NV_ERROR);
               }
             }

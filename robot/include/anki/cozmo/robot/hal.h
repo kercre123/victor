@@ -268,6 +268,9 @@ namespace Anki
       // Read raw unscaled IMU values
       void IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp);
 
+      // Calculate the camera relative time of the latest sample
+      void IMUGetCameraTime(uint32_t* const frameNumber, uint8_t* const line2Number);
+
 // #pragma mark --- UART/Wifi ---
       /////////////////////////////////////////////////////////////////////
       // UART Debug Channel (aka Wifi)

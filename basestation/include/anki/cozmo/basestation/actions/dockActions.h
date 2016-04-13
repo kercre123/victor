@@ -54,9 +54,9 @@ namespace Anki {
       void SetPreActionPoseAngleTolerance(Radians angleTolerance);
       
       // Set docking speed and acceleration
-      void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2);
+      void SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2, f32 decel_mmps2);
       void SetSpeed(f32 speed_mmps);
-      void SetAccel(f32 accel_mmps2);
+      void SetAccel(f32 accel_mmps2, f32 decel_mmps2);
       
       // Set placement offset relative to marker
       void SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad);
@@ -78,6 +78,8 @@ namespace Anki {
         }
         return ignoredTracks;
       }
+      
+      void SetNumDockingRetries(u8 numRetries) { _numDockingRetries = numRetries; }
       
     protected:
       
@@ -126,8 +128,10 @@ namespace Anki {
       bool                       _placeObjectOnGroundIfCarrying  = false;
       f32                        _dockSpeed_mmps                 = DEFAULT_DOCK_SPEED_MMPS;
       f32                        _dockAccel_mmps2                = DEFAULT_DOCK_ACCEL_MMPS2;
+      f32                        _dockDecel_mmps2               = DEFAULT_DOCK_DECCEL_MMPS2;
       ObjectInteractionResult    _interactionResult              = ObjectInteractionResult::INCOMPLETE;
       bool                       _doNearPredockPoseCheck         = true;
+      u8                         _numDockingRetries              = 2;
       
     private:
       

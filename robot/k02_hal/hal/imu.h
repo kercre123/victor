@@ -20,6 +20,8 @@ namespace Anki
       namespace IMU
       {
         extern IMUData IMUState;
+        extern u32 frameNumberStamp;
+        extern u16 scanLineStamp;
         void Init(void);
         void Update(void);
         void Manage(void);

@@ -356,6 +356,7 @@ namespace Anki {
           // Dock speed
           const f32 dockSpeed_mmps = root_->getField("dockSpeed_mmps")->getSFFloat();
           const f32 dockAccel_mmps2 = root_->getField("dockAccel_mmps2")->getSFFloat();
+          const f32 dockDecel_mmps2 = root_->getField("dockDecel_mmps2")->getSFFloat();
           
           // Path speeds
           const f32 pathSpeed_mmps = root_->getField("pathSpeed_mmps")->getSFFloat();
@@ -374,8 +375,8 @@ namespace Anki {
           pathMotionProfile_.pointTurnDecel_rad_per_sec2 = pathPointTurnDecel_radPerSec2;
           pathMotionProfile_.dockSpeed_mmps = dockSpeed_mmps;
           pathMotionProfile_.dockAccel_mmps2 = dockAccel_mmps2;
+          pathMotionProfile_.dockDecel_mmps2 = dockDecel_mmps2;
           pathMotionProfile_.reverseSpeed_mmps = pathReverseSpeed_mmps;
-          
           
           // For pickup or placeRel, specify whether or not you want to use the
           // given approach angle for pickup, placeRel, or roll actions

@@ -12,7 +12,6 @@ WorldInfo {
   title IS title
   info IS info
   # Makes the world more "spongy", allows objects to slightly intersect before exploding them apart
-  CFM 0.007 # Don't increase over 0.01 
   gravity 0 0 -9.81
   physics "cozmo_physics"
   basicTimeStep 5
@@ -72,6 +71,7 @@ WorldInfo {
         3
       ]
       bounce 0
+      softCFM 0.007
     }
     DEF BLOCK_BLOCK ContactProperties {
       material1 "cmat_block"
@@ -80,6 +80,7 @@ WorldInfo {
         10
       ]
       bounce 0
+      softCFM 0.007
     }
     DEF RAMP_BLOCK ContactProperties {
       material1 "cmat_ramp"
@@ -113,6 +114,15 @@ WorldInfo {
       ]
       bounce 0
       softCFM 0.05
+    }
+    DEF LIFT_SOLIDBOX ContactProperties {
+      material1 "cmat_block"
+      material2 "soft_collision"
+      coulombFriction [
+        1
+      ]
+      bounce 0
+      softCFM 0.1
     }
   ]
 } 
