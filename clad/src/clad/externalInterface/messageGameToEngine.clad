@@ -24,6 +24,7 @@
 #include "clad/types/liveIdleAnimationParameters.clad"
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/audio/audioMessage.clad"
+#include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/visionModes.clad"
 
 namespace Anki {
@@ -36,11 +37,13 @@ message ConnectToRobot {
 
 // ConnectToUiDevice
 message ConnectToUiDevice {
+    UiConnectionType  connectionType,
     uint_8 deviceID
 }
 
 // DisconnectFromUiDevice
 message DisconnectFromUiDevice {
+    UiConnectionType  connectionType,
     uint_8 deviceID
 }
 

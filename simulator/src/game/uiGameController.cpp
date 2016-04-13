@@ -131,9 +131,9 @@ namespace Anki {
     {
       // Just send a message back to the game to connect to any UI device that's
       // advertising (since we don't have a selection mechanism here)
-      PRINT_NAMED_INFO("UiGameController.HandleUiDeviceConnectionBase", "Sending message to command connection to UI device %d.", msgIn.deviceID);
-      ExternalInterface::ConnectToUiDevice msgOut;
-      msgOut.deviceID = msgIn.deviceID;
+      PRINT_NAMED_INFO("UiGameController.HandleUiDeviceConnectionBase", "Sending message to command connection to %s device %d.",
+                       EnumToString(msgIn.connectionType), msgIn.deviceID);
+      ExternalInterface::ConnectToUiDevice msgOut(msgIn.connectionType, msgIn.deviceID);
       ExternalInterface::MessageGameToEngine message;
       message.Set_ConnectToUiDevice(msgOut);
       SendMessage(message);

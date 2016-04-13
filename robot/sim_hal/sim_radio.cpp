@@ -23,6 +23,9 @@
 #include "anki/messaging/shared/utilMessaging.h"
 #include "anki/messaging/basestation/advertisementService.h"
 
+#include "clad/types/advertisementTypes.h"
+#include "util/helpers/arrayHelpers.h"
+
 // For getting local host's IP address
 #define _GNU_SOURCE     /* To get defns of NI_MAXSERV and NI_MAXHOST */
 #include <arpa/inet.h>
@@ -50,7 +53,7 @@ namespace Anki {
       u8 recvBuf_[RECV_BUFFER_SIZE];
       size_t recvBufSize_ = 0;
 
-      Comms::AdvertisementRegistrationMsg regMsg;
+      AdvertisementRegistrationMsg regMsg;
     }
 
     // Register robot with advertisement service
@@ -63,7 +66,16 @@ namespace Anki {
         //      regMsg.id, regMsg.ip, regMsg.port, HAL::GetTimeStamp());
         regMsg.enableAdvertisement = 1;
         regMsg.oneShot = 1;
-        advRegClient.Send((char*)&regMsg, sizeof(regMsg));
+
+        // Add tag byte(s?) on the front of the message over the socket to validate on the other side
+        char msg[64];
+        memcpy(msg, &ROBOT_ADVERTISING_HEADER_TAG, sizeof(ROBOT_ADVERTISING_HEADER_TAG));
+        uint32_t msgSize = regMsg.Size() + sizeof(ROBOT_ADVERTISING_HEADER_TAG);
+        assert(msgSize <= sizeof(msg));
+        msgSize = (msgSize <= sizeof(msg)) ? msgSize : sizeof(msg);
+        memcpy(&msg[sizeof(ROBOT_ADVERTISING_HEADER_TAG)], &regMsg, msgSize-sizeof(ROBOT_ADVERTISING_HEADER_TAG));
+
+        advRegClient.Send(msg, msgSize);
 
         lastAdvertisedTime = HAL::GetTimeStamp();
       }
@@ -128,9 +140,16 @@ namespace Anki {
 
       // Fill in advertisement registration message
       regMsg.id = (u8)HAL::GetIDCard()->esn;
-      regMsg.port = ROBOT_RADIO_BASE_PORT + regMsg.id;
-      regMsg.protocol = (USE_UDP_ROBOT_COMMS == 1) ? Anki::Comms::UDP : Anki::Comms::TCP;
-      memcpy(regMsg.ip, HAL::GetLocalIP(), sizeof(regMsg.ip));
+      regMsg.toEnginePort = ROBOT_RADIO_BASE_PORT + regMsg.id;
+      regMsg.fromEnginePort = regMsg.toEnginePort;
+      
+      #if !USE_UDP_ROBOT_COMMS
+        #error TCP is no longer supported
+      #endif
+      
+      strncpy(regMsg.ip, HAL::GetLocalIP(), sizeof(regMsg.ip));
+      regMsg.ip[ARRAY_SIZE(regMsg.ip)-1] = 0; // ensure null termination in event of strncpy src > dest
+      regMsg.ip_length = strlen(regMsg.ip);
 
       recvBufSize_ = 0;
 

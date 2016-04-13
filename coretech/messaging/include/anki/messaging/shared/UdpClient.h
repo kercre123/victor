@@ -15,6 +15,8 @@ public:
   bool IsConnected() const { return socketfd >= 0; }
   int Send(const char* data, int size);
   int Recv(char* data, int maxSize);
+  
+  int GetSocketFd() const { return socketfd; }
 
 private:
   struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.

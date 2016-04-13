@@ -702,10 +702,12 @@
       'include_dirs': [
         '../../messaging/basestation/src',
         '../../messaging/include',
+        '../../../generated/clad/engine',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
           '../../messaging/include',
+          '../../../generated/clad/engine',
         ],
       },
       'dependencies': [
