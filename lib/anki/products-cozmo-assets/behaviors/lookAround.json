@@ -40,8 +40,5 @@
     ]
   },
   "behaviorGroups": [
-    "ChangesPosition",
-    "ChangesOrientation",
-    "MovesLift"
   ]
 }

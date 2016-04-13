@@ -57,9 +57,7 @@
   },
   "behaviorGroups" :
   [
-    "ChangesPosition",
-    "ChangesOrientation",
-    "MovesLift",
+    "AffectsBlocks",
     "MiniGame",
     "RequestCubePounce"
   ]

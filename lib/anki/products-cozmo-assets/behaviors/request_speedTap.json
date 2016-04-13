@@ -74,9 +74,7 @@
   },
   "behaviorGroups" :
   [
-    "ChangesPosition",
-    "ChangesOrientation",
-    "MovesLift",
+    "AffectsBlocks",
     "MiniGame",
     "RequestSpeedTap"
   ]
