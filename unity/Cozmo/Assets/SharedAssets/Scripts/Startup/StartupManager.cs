@@ -13,11 +13,17 @@ using Anki.Assets;
 /// </summary>
 public class StartupManager : MonoBehaviour {
 
-  // TODO: For now we're loading all asset bundles
-  // In the future we can add a loading screen between hub/minigame
-  // to load different UI
   [SerializeField]
   private string[] _AssetBundlesToLoad;
+
+  [SerializeField]
+  private string _MinigameUIPrefabAssetBundleName;
+
+  [SerializeField]
+  private string _BasicUIPrefabAssetBundleName;
+
+  [SerializeField]
+  private string _GameMetadataAssetBundleName;
 
   [SerializeField]
   private string _DebugAssetBundleName;
@@ -119,33 +125,33 @@ public class StartupManager : MonoBehaviour {
 
   private void LoadAssets() {
     // TODO: Don't hardcode this?
-    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.ShaderHolder>(CozmoAssetBundleNames.BasicUIPrefabsBundleName, 
+    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.ShaderHolder>(_BasicUIPrefabAssetBundleName, 
       "ShaderHolder", (Cozmo.ShaderHolder sh) => {
       Cozmo.ShaderHolder.SetInstance(sh);
     });
 
-    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.UI.AlertViewLoader>(CozmoAssetBundleNames.BasicUIPrefabsBundleName, 
+    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.UI.AlertViewLoader>(_BasicUIPrefabAssetBundleName, 
       "AlertViewLoader", (Cozmo.UI.AlertViewLoader avl) => {
       Cozmo.UI.AlertViewLoader.SetInstance(avl);
     });
 
-    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.UI.UIColorPalette>(CozmoAssetBundleNames.BasicUIPrefabsBundleName, 
+    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.UI.UIColorPalette>(_BasicUIPrefabAssetBundleName, 
       "UIColorPalette", (Cozmo.UI.UIColorPalette colorP) => {
       Cozmo.UI.UIColorPalette.SetInstance(colorP);
     });
 
-    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.UI.ProgressionStatConfig>(CozmoAssetBundleNames.GameMetadataBundleName, 
+    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.UI.ProgressionStatConfig>(_GameMetadataAssetBundleName, 
       "ProgressionStatConfig", (Cozmo.UI.ProgressionStatConfig psc) => {
       psc.Initialize();
       Cozmo.UI.ProgressionStatConfig.SetInstance(psc);
     });
 
-    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.CubePalette>(CozmoAssetBundleNames.GameMetadataBundleName, 
+    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.CubePalette>(_GameMetadataAssetBundleName, 
       "CubePalette", (Cozmo.CubePalette cp) => {
       Cozmo.CubePalette.SetInstance(cp);
     });
 
-    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(CozmoAssetBundleNames.MinigameUIPrefabsBundleName, 
+    AssetBundleManager.Instance.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(_MinigameUIPrefabAssetBundleName, 
       "MinigameUIPrefabHolder", (Cozmo.UI.MinigameUIPrefabHolder mph) => {
       Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);
     });

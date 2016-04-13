@@ -40,7 +40,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _AssetBundlesToLoad:
-  - main-scene
+  - main-assets
+  _MinigameUIPrefabAssetBundleName: minigame-ui-prefabs
+  _BasicUIPrefabAssetBundleName: basic-ui-prefabs
+  _GameMetadataAssetBundleName: game-metadata
   _DebugAssetBundleName: debug-prefabs
   _StartupDebugPrefabNames:
   - DebugMenuManager
