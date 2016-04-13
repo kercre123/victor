@@ -33,13 +33,12 @@ namespace Anki {
         
       } // "private" namespace
 
-      void QueueCliffEvent(f32 x, f32 y, f32 angle, bool drivingForward) {
+      void QueueCliffEvent(f32 x, f32 y, f32 angle) {
         if (_pendingCliffEvent == 0) {
           _pendingCliffEvent = HAL::GetTimeStamp() + CLIFF_EVENT_DELAY_MS;
           _cliffMsg.x_mm = x;
           _cliffMsg.y_mm = y;
           _cliffMsg.angle_rad = angle;
-          _cliffMsg.drivingForward = drivingForward;
           _cliffMsg.detected = true;
         }
       }
@@ -61,11 +60,11 @@ namespace Anki {
       // reason for the cliff was actually a pickup.
       void UpdateCliff()
       {
-        bool isDriving = ABS(WheelController::GetAverageFilteredWheelSpeed()) > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
+        bool isDrivingForward = WheelController::GetAverageFilteredWheelSpeed() > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S;
         if (_enableCliffDetect) {
           if (HAL::IsCliffDetected() &&
               !IMUFilter::IsPickedUp() &&
-              isDriving &&
+              isDrivingForward &&
               !_wasCliffDetected) {
             
             // TODO (maybe): Check for cases where cliff detect should not stop motors
@@ -85,8 +84,7 @@ namespace Anki {
             AnimationController::Clear();
 #endif
             // Queue cliff detected message
-            QueueCliffEvent(Localization::GetCurrPose_x(), Localization::GetCurrPose_y(), Localization::GetCurrPose_angle().ToFloat(),
-                            WheelController::GetAverageFilteredWheelSpeed() > WheelController::WHEEL_SPEED_CONSIDER_STOPPED_MM_S);
+            QueueCliffEvent(Localization::GetCurrPose_x(), Localization::GetCurrPose_y(), Localization::GetCurrPose_angle().ToFloat());
             
             _wasCliffDetected = true;
           } else if ((!HAL::IsCliffDetected() || IMUFilter::IsPickedUp()) &&

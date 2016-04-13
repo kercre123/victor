@@ -552,8 +552,8 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   }
 
   if (cliffEvent.detected) {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f while driving %s",
-                     cliffEvent.x_mm, cliffEvent.y_mm, cliffEvent.drivingForward ? "forwards" : "backwards");
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f",
+                     cliffEvent.x_mm, cliffEvent.y_mm);
     
     // Add cliff obstacle
     Pose3d cliffPose(cliffEvent.angle_rad, Z_AXIS_3D(), {cliffEvent.x_mm, cliffEvent.y_mm, 0}, GetWorldOrigin());
