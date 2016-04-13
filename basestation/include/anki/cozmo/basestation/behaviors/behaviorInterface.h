@@ -387,8 +387,18 @@ namespace Cozmo {
     // Subscribe to tags that should immediately trigger this behavior
     void SubscribeToTriggerTags(std::set<EngineToGameTag>&& tags);
     void SubscribeToTriggerTags(std::set<GameToEngineTag>&& tags);
+
+    // if a trigger tag is received, this function will be called. If it returns true, this behavior will run
+    // immediately
+    virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const { return true; }
+    virtual bool ShouldRunForEvent(const ExternalInterface::MessageGameToEngine& event) const { return true; }
     
     virtual IReactionaryBehavior* AsReactionaryBehavior() override { return this; }
+
+    // if true, the previously running behavior will be resumed (if possible) after this behavior is
+    // complete. Otherwise, a new behavior will be selected by the chooser after this one runs
+    // NOTE: this is not implemented yet!
+    virtual bool ShouldResumeLastBehavior() const = 0;
     
   protected:
     std::set<EngineToGameTag> _engineToGameTags;

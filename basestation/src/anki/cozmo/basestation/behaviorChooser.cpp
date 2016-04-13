@@ -358,7 +358,8 @@ IReactionaryBehavior* ReactionaryBehaviorChooser::_GetReactionaryBehavior(
   {
     if (0 != getTagSet(*behavior).count(event.GetData().GetTag()))
     {
-      if ( behavior->IsRunnable(robot, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) ) {
+      if ( behavior->ShouldRunForEvent(event.GetData()) &&
+           behavior->IsRunnable(robot, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) ) {
         return behavior;
       }
     }

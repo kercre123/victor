@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
 
 #include <vector>
+#include <set>
 
 namespace Anki {
 namespace Cozmo {
@@ -40,6 +41,18 @@ public:
   void Init(Robot& robot);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Tracked values
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // enable or disable the request. The id can be anything, but is intended to be used as `this` from an
+  // object which is calling this function. The reaction will be disabled immediately when disable is called,
+  // and will only be re-enabled when the corresponding number of called to RequestEnableCliffReaction are
+  // made with the correct ids
+  void DisableCliffReaction(void* id);
+  void RequestEnableCliffReaction(void* id);
+  bool IsCliffReactionEnabled() const;
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
@@ -52,6 +65,8 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  std::multiset<void*> _disableCliffIds;
   
   // signal handles for events we register to. These are currently unsubscribed when destroyed
   std::vector<Signal::SmartHandle> _signalHandles;

@@ -10,6 +10,8 @@
  *
  **/
 
+// NOTE: this behavior is deprecated. We may bring it back, but it is currently disabled and not up to date
+
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToPoke_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToPoke_H__
 
@@ -32,6 +34,7 @@ private:
 public:
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
+  virtual bool ShouldResumeLastBehavior() const override { return true; }
   
 protected:
   

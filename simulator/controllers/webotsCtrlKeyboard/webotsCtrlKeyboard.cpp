@@ -925,6 +925,11 @@ namespace Anki {
                     SendMessage(ExternalInterface::MessageGameToEngine(
                                   ExternalInterface::SetBehaviorSystemEnabled(false)));
                   }
+                  else if( behaviorName == "ENABLED")
+                  {
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::SetBehaviorSystemEnabled(true)));
+                  }
                   else
                   {
                     printf("Selecting behavior: %s\n", behaviorName.c_str());
