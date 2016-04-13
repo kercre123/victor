@@ -311,8 +311,8 @@ namespace Anki
           }
         }
 
-      } else if (FLT_NEAR(line_m_, 0.f)) {
-        // Special case: Horizontal line
+      } else if (NEAR(line_m_, 0.f, 0.001f)) {
+        // Special case: Horizontal line (slope of less than 0.001 is considered horizontal)
         if (seg->endPt_x > seg->startPt_x) {
           shortestDistanceToPath = y - seg->startPt_y;
         } else {
@@ -341,7 +341,7 @@ namespace Anki
 
         f32 b_inv = y + x/line_m_;
 
-        f32 x_intersect = line_m_ * (b_inv - line_b_) / (line_m_*line_m_ + 1);
+        f32 x_intersect = (b_inv - line_b_) / (line_m_ + (1.0/line_m_));
         f32 y_intersect = - (x_intersect / line_m_) + b_inv;
 
         f32 dy = y - y_intersect;
