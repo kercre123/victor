@@ -13,12 +13,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Rounds: 3
   MaxScorePerRound: 5
-  PlayNewHandIntervalMs: 1500
-  PlayNewHandRevealMs: 1500
-  MinIdleIntervalMs: 150
-  MaxIdleIntervalMs: 450
-  BaseMatchChance: 0.2
-  MatchChanceIncrease: 0.1
+  MinIdleIntervalMs: 100
+  MaxIdleIntervalMs: 350
+  BaseMatchChance: 0.15
+  MatchChanceIncrease: 0.15
+  CozmoFakeoutChance: 0.25
   _BetweenRoundMusic:
     _Music: 658369771
   DifficultyOptions:
@@ -43,67 +42,71 @@ MonoBehaviour:
     DifficultyDescription:
       Key: speedTap.difficulty.expertDescription
   DifficultySettings:
-  - MinCozmoTapDelayMs: 350
+  - DifficultyID: 1
+    MinCozmoTapDelayMs: 300
     MaxCozmoTapDelayMs: 700
-    CozmoMistakeChance: 0.15
+    CozmoMistakeChance: 0.2
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      TimeBetweenHands: 1700
+      TimeHandDisplayed: 1700
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      TimeBetweenHands: 1400
+      TimeHandDisplayed: 1400
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
-  - MinCozmoTapDelayMs: 300
-    MaxCozmoTapDelayMs: 550
+      TimeBetweenHands: 1000
+      TimeHandDisplayed: 1000
+  - DifficultyID: 2
+    MinCozmoTapDelayMs: 250
+    MaxCozmoTapDelayMs: 500
     CozmoMistakeChance: 0.1
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      TimeBetweenHands: 1700
+      TimeHandDisplayed: 1700
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      TimeBetweenHands: 1400
+      TimeHandDisplayed: 1400
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
-  - MinCozmoTapDelayMs: 200
+      TimeBetweenHands: 1000
+      TimeHandDisplayed: 1000
+  - DifficultyID: 3
+    MinCozmoTapDelayMs: 175
     MaxCozmoTapDelayMs: 400
     CozmoMistakeChance: 0.05
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      TimeBetweenHands: 1700
+      TimeHandDisplayed: 1700
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      TimeBetweenHands: 1400
+      TimeHandDisplayed: 1400
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
-  - MinCozmoTapDelayMs: 50
+      TimeBetweenHands: 1000
+      TimeHandDisplayed: 1000
+  - DifficultyID: 4
+    MinCozmoTapDelayMs: 50
     MaxCozmoTapDelayMs: 300
     CozmoMistakeChance: 0
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      TimeBetweenHands: 1700
+      TimeHandDisplayed: 1700
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      TimeBetweenHands: 1400
+      TimeHandDisplayed: 1400
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      TimeBetweenHands: 1000
+      TimeHandDisplayed: 1000

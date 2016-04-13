@@ -22,6 +22,7 @@ public class SpeedTapRoundData {
 /// </summary>
 [System.Serializable]
 public class SpeedTapDifficultyData {
+  public int DifficultyID;
   public float MinCozmoTapDelayMs;
   public float MaxCozmoTapDelayMs;
   [Range(0.0f, 1.0f)]

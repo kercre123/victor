@@ -7,8 +7,6 @@ namespace SpeedTap {
   public class SpeedTapStatePlayNewHand : State {
 
     private const int _kMaxMisses = 3;
-    private const float _kBaseMatchProbability = 0.2f;
-    private const float _kMatchProbabilityIncrease = 0.15f;
     // TODO: Remove this once we have a way to get timestamp information directly from animations
     private const float _kTapAnimHitDelay = 500.0f;
 
@@ -26,6 +24,7 @@ namespace SpeedTap {
     private float _MatchProbability = 0.35f;
     private float _FakeProbability = 0.25f;
     private float _PeekProbability = 0.80f;
+    //
 
     private bool _LightsOn = false;
     private bool _GotMatch = false;
@@ -49,12 +48,18 @@ namespace SpeedTap {
       _SpeedTapGame.MidHand = false;
       _PlayReady = false;
       _CozmoTapRegistered = false;
-      _MatchProbability = _kBaseMatchProbability;
+      SetValues();
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, RobotCompletedTapAnimation);
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, AdjustCheck);
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, AdjustCheck);
 
       _SpeedTapGame.CheckForAdjust(AdjustDone);
+    }
+
+    private void SetValues() {
+      //int difficulty = _SpeedTapGame.CurrentDifficulty;
+      //int currRound = _SpeedTapGame.CurrentRound;
+      //_MatchProbability = _SpeedTapGame.;
     }
 
     public override void Exit() {
@@ -194,7 +199,7 @@ namespace SpeedTap {
       float matchExperiment = UnityEngine.Random.value;
       _GotMatch = matchExperiment < _MatchProbability;
       if (!_GotMatch) {
-        _MatchProbability += _kMatchProbabilityIncrease;
+        //_MatchProbability += _kMatchProbabilityIncrease;
         if (_TryPeek) {
           _PeekDelayTimeMs = UnityEngine.Random.Range(_PeekMinTimeMs, _PeekMaxTimeMs);
         }
