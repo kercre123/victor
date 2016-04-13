@@ -316,7 +316,7 @@ public class Robot : IRobot {
       pointTurnDecel_rad_per_sec2: 500.0f,
       dockSpeed_mmps: 60.0f, // should be less than speed_mmps
       dockAccel_mmps2: 200.0f,
-      dockDecel_mmps: 100.0f,
+      dockDecel_mmps2: 100.0f,
       reverseSpeed_mmps: 80.0f
     );
             
