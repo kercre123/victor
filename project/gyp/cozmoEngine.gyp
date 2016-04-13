@@ -592,6 +592,7 @@
             'sources': [ '<!@(cat <(ctrlGameEngine_source))' ],
             'libraries': [
               'libCppController.dylib',
+              '$(SDKROOT)/System/Library/Frameworks/Security.framework',
               '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
@@ -604,6 +605,11 @@
               '<@(routing_http_server_libs)',
             ],
 
+            #Force linked due to objective-C categories.
+            'xcode_settings': {
+              'OTHER_LDFLAGS': ['-force_load <(coretech_external_path)/routing_http_server/generated/Mac/DerivedData/Release/librouting_http_server.a'],
+            },
+                  
               
             'actions': [
               {
@@ -899,6 +905,7 @@
             },
             'libraries': [
               '<(ce-gtest_path)/gtest.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Security.framework',
               '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
               '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
