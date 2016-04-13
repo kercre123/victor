@@ -11,7 +11,7 @@ namespace Anki {
 				void shutdown(void);
 				
 				bool rx_avail(void);
-				uint16_t readWord(void);
+				void writeByte(uint8_t);
 				uint8_t readByte(void);
 				void writeWord(uint16_t);
 

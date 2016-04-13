@@ -33,7 +33,7 @@ static inline void setCathode(int pin, bool set) {
   }
 }
 
-void setLight(int clr) {
+void setLight(uint8_t clr) {
 	int channel = (clr >> 3) & 3;
 	
   static const charliePlex_s RGBLightPins[] =
@@ -66,7 +66,9 @@ void UARTInit(void) {
   NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
   NRF_UART0->TASKS_STARTTX = 1;
   NRF_UART0->TASKS_STARTRX = 1;
-
+	NRF_UART0->EVENTS_TXDRDY = 0;
+	NRF_UART0->EVENTS_RXDRDY = 0;
+	
   // Initialize the UART for the specified baudrate
   NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
 
@@ -103,61 +105,79 @@ void setTransmit(bool tx) {
   }
 
   // Clear our UART interrupts
-  NRF_UART0->EVENTS_RXDRDY = 0;
-  uint8_t test = NRF_UART0->RXD;
+  while (NRF_UART0->EVENTS_RXDRDY) {	
+		NRF_UART0->EVENTS_RXDRDY = 0;
+		uint8_t temp = NRF_UART0->RXD;
+	}
+	
   NRF_UART0->EVENTS_TXDRDY = 0;
 }
 
-static uint8_t ReadByte(void) {
-  while (!NRF_UART0->EVENTS_RXDRDY) {
-    Battery::manage();
-  }
-  NRF_UART0->EVENTS_RXDRDY = 0;
-  return NRF_UART0->RXD;
+static void readUart(void* p, int length) {
+	uint8_t* data = (uint8_t*) p;
+	setTransmit(false);
+	
+	while (length-- > 0) {
+		while (!NRF_UART0->EVENTS_RXDRDY) {
+			Battery::manage();
+		}
+
+		NRF_UART0->EVENTS_RXDRDY = 0;
+		*(data++) = NRF_UART0->RXD;
+	}
 }
 
-static commandWord ReadWord(void) {
-  commandWord word = 0;
-  
-  for (int i = 0; i < sizeof(commandWord); i++) {
-    word = ReadByte() | (word << 8);
-  }
+static void writeUart(const void* p, int length) {
+	uint8_t* data = (uint8_t*) p;
+	setTransmit(true);
+	
+	while (length-- > 0) {
+		NRF_UART0->TXD = *(data++);
 
-  return word;
+		while (!NRF_UART0->EVENTS_TXDRDY) ;
+
+		NRF_UART0->EVENTS_TXDRDY = 0;
+	}
 }
 
-static bool WaitWord(commandWord target) {
-  setTransmit(false);
-
-  commandWord word = 0;
-  
-  while (target != word) {
-    // Wait with timeout
-    int waitTime = GetCounter() + MAX_TIMEOUT;
-    while (!NRF_UART0->EVENTS_RXDRDY) {
-      Battery::manage();
-
-      signed int remaining = waitTime - GetCounter();
-      if (remaining <= 0) return false;
-    }
-
-    // We received a word
-    NRF_UART0->EVENTS_RXDRDY = 0;
-    word = NRF_UART0->RXD | (word << 8);
-  }
-
-  return word == target;
+static uint8_t readByte() {
+	uint8_t byte;
+	readUart(&byte, sizeof(byte));
+	
+	return byte;
 }
 
-static void WriteWord(commandWord word) {
-  setTransmit(true);
+static uint8_t writeByte(const uint8_t byte) {
+	writeUart(&byte, sizeof(byte));
+}
 
-  for (int i = sizeof(commandWord) - 1; i >= 0; i--) {
-    NRF_UART0->TXD = word >> (i * 8);
+static void SyncToHead(void) {
+	for (;;) {
+		static const uint32_t recovery_signal = BODY_RECOVERY_NOTICE;
+		writeUart(&recovery_signal, sizeof(recovery_signal));
+				
+		int waitTime = GetCounter() + MAX_TIMEOUT;
+		
+		uint32_t recoveryWord = 0;
 
-    while (!NRF_UART0->EVENTS_TXDRDY) ;
-    NRF_UART0->EVENTS_TXDRDY = 0;
-  }
+		for(;;) {
+			int ticks = waitTime - GetCounter();
+			if (ticks < 0) break ;
+			
+			Battery::manage();
+			
+			if (!NRF_UART0->EVENTS_RXDRDY) {
+				continue ;
+			}
+
+			NRF_UART0->EVENTS_RXDRDY = 0;
+			recoveryWord = (NRF_UART0->RXD << 24) | (recoveryWord >> 8);
+			
+			if (recoveryWord == HEAD_RECOVERY_NOTICE) {
+				return ;
+			}
+		}
+	}
 }
 
 bool FlashSector(int target, const uint32_t* data)
@@ -233,9 +253,7 @@ static inline bool FlashBlock() {
   uint8_t* raw = (uint8_t*) &packet;
   
   // Load raw packet into memory
-  for (int index = 0; index < sizeof(FirmwareBlock); index++) {
-    raw[index] = ReadByte();
-  }
+	readUart(&packet, sizeof(packet));
  
   int writeAddress = packet.blockAddress;
 
@@ -262,28 +280,23 @@ static inline bool FlashBlock() {
 }
 
 void BlinkALot(void) {
-  for (int i = 0; i < 0x1F; i++) {
+  for (int i = 0; i < 0x7F; i++) {
     setLight(i);
-    MicroWait(10000);
+    MicroWait(2500);
   }
 }
 
 void EnterRecovery(void) {
-	BlinkALot();
-	
   UARTInit();
 
-  RECOVERY_STATE state = STATE_IDLE;
-
+	BlinkALot();	
+	SyncToHead();
+	
   for (;;) {
-    do {
-      toggleTargetPin();
-      WriteWord(COMMAND_HEADER);
-      WriteWord(state);
-    } while (!WaitWord(COMMAND_HEADER));
-
     // Receive command packet
-    switch (ReadWord()) {
+    RECOVERY_STATE state;
+		
+		switch (readByte()) {
 			case COMMAND_DONE:
 				// Signature is invalid
 				if (!CheckSig()) {		
@@ -293,7 +306,6 @@ void EnterRecovery(void) {
 
 				ClearEvilWord();
 
-        state = STATE_IDLE;
         return ;
      
       case COMMAND_EVIL_WORD:
@@ -309,12 +321,14 @@ void EnterRecovery(void) {
         break ;
       
       case COMMAND_SET_LED:
-				setLight(ReadWord());
+				setLight(readByte());
 				break ;
 			
 			default:
 				state = STATE_NACK;
         break ;
     }
+		
+		writeByte((uint8_t) state);
   }
 }

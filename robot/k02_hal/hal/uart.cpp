@@ -118,11 +118,10 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
         // Re-sync
         if (txRxIndex < 4) {
           uint32_t body_mask = ~(0xFFFFFF00 << (txRxIndex * 8));
-          uint32_t recv_mask = body_mask & 0xFFFF; // we only care about the bottom two bits here
           
           // Verify that the header is valid (resync)
           if ((rx_source & body_mask) != (SPI_SOURCE_BODY & body_mask) &&
-              (rx_source & recv_mask) != (RECOVERY_HEADER & recv_mask)) {
+              (rx_source & body_mask) != (BODY_RECOVERY_NOTICE & body_mask)) {
             txRxIndex = 0;
             continue ;
           }
@@ -130,9 +129,8 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
 
         // We've detected that the body has entered recovery mode, we should
 				// do the same (recovery mode will check the magic value / signatures
-
 				if (txRxIndex == 4) {
-          if ((rx_source & 0xFFFF) == RECOVERY_HEADER) {
+          if (rx_source == BODY_RECOVERY_NOTICE) {
             NVIC_SystemReset();
           }
         }

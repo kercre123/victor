@@ -93,43 +93,12 @@ bool FlashSector(int target, const uint32_t* data)
   return true;
 }
 
-static void UpdateBodyState() {
-	static uint16_t header = 0;
-
-	while (UART::rx_avail()) {	
-		// Try to syncronize to the header
-		if (header != COMMAND_HEADER) {
-			header = (header << 8) | UART::readByte();
-			continue ;
-		}
-		
-		if (UART0_RCFIFO < 2) {
-			return ;
-		}
-		
-		// Read body state
-		body_state = (RECOVERY_STATE) UART::readWord();
-		header = 0;
-	}
-}
-
-static void WaitForState(void) {
-	body_state = STATE_BUSY;
-	UART::receive();
-	
-	while (body_state == STATE_BUSY) {
-		UpdateBodyState();
-	}
-}
-
-static bool SendBodyCommand(uint16_t command, const void* body = NULL, int length = 0) {	
+static bool SendBodyCommand(uint8_t command, const void* body = NULL, int length = 0) {	
 	SPI0_PUSHR_SLAVE = STATE_BUSY;
 	
-	WaitForState();
-	UART::writeWord(COMMAND_HEADER);
-	UART::writeWord(command);
+	UART::writeByte(command);
 	UART::write(body, length);
-	WaitForState();
+	body_state = (RECOVERY_STATE) UART::readByte();
 	
 	SPI0_PUSHR_SLAVE = body_state;
 	
@@ -214,16 +183,29 @@ static inline bool FlashBlock() {
   return true;
 }
 
-static bool SetLight(int colors) {
-	uint8_t command[] = {0, colors};
+static bool SetLight(uint8_t colors) {
+	return SendBodyCommand(COMMAND_SET_LED, &colors, sizeof(colors));
+}
+
+static void SyncToBody(void) {
+	uint32_t recovery_header = 0;
 	
-	return SendBodyCommand(COMMAND_SET_LED, &command, sizeof(command));
+	while (recovery_header != BODY_RECOVERY_NOTICE) {
+		recovery_header = (UART::readByte() << 24) | (recovery_header >> 8);
+	}
+	
+	MicroWait(10);
+	
+	static const uint32_t word = HEAD_RECOVERY_NOTICE;
+	UART::write(&word, sizeof(word));
 }
 
 void EnterRecovery() {  
 	// Let the espressif know we are still booting
 	SPI0_PUSHR_SLAVE = STATE_BUSY;
 
+	SyncToBody();
+	
 	// These are the requirements to boot immediately into the application
 	// if any test fails, the robot will not exit recovery mode
 	bool recovery_escape = 
@@ -241,9 +223,7 @@ void EnterRecovery() {
 	SPI0_PUSHR_SLAVE = STATE_IDLE;
 	for (;;) {
 		// Make sure that our 
-    do {
-			UpdateBodyState();
-		} while (WaitForWord() != COMMAND_HEADER);
+    while (WaitForWord() != COMMAND_HEADER);
     
 		SPI0_PUSHR_SLAVE = STATE_BUSY;
     

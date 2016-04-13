@@ -106,16 +106,8 @@ bool Anki::Cozmo::HAL::UART::rx_avail(void){
 	return UART0_RCFIFO > 0;
 }
 
-void Anki::Cozmo::HAL::UART::writeWord(uint16_t word) {
-	word = (word << 8) | (word >> 8);
-	write(&word, sizeof(word));
-}
-
-uint16_t Anki::Cozmo::HAL::UART::readWord(void) {
-	uint16_t word;
-	read(&word, sizeof(word));
-
-	return (word << 8) | (word >> 8);
+void Anki::Cozmo::HAL::UART::writeByte(uint8_t byte) {
+	write(&byte, sizeof(byte));
 }
 
 uint8_t Anki::Cozmo::HAL::UART::readByte(void) {

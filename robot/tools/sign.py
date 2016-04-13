@@ -24,7 +24,7 @@ def get_image(fn):
 	
 	return rom_data, base_addr
 
-# Fix headers
+# This generates a single file for RTIP that is actually both
 with open(argv[-1], "wb") as fo:
 	for fn in argv[1:-1]:		
 		kind, fn = fn.split(":")
