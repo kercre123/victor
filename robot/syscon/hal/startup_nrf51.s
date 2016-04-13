@@ -58,12 +58,13 @@ __heap_limit
 ; Magic signature
 
                 AREA    RESET, DATA, READONLY
-__Signature     DCB     'C','Z','M','0'
-                DCD     Reset_Handler
+__Signature     DCD     Reset_Handler
+				DCB     'C','Z','M','0'
                 DCD     __Vectors
-                DCD     0xDEADFACE
-                DCD     0xDEADFACE
-                DCD     0xDEADFACE
+                DCD     0xDEADFACE	; Rom Start
+                DCD     0xDEADFACE	; Rom Finish
+                DCD     0xDEADFACE	; Checksum
+				DCD		0x00000000	; "Evil" byte
 
                 ; This is the vector table for the application
                 EXPORT  __Vectors

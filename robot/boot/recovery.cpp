@@ -115,7 +115,7 @@ static void UpdateBodyState() {
 
 static void WaitForState(void) {
 	body_state = STATE_BUSY;
-	UART::flush();
+	UART::receive();
 	
 	while (body_state == STATE_BUSY) {
 		UpdateBodyState();
@@ -126,12 +126,9 @@ static bool SendBodyCommand(uint16_t command, const void* body = NULL, int lengt
 	SPI0_PUSHR_SLAVE = STATE_BUSY;
 	
 	WaitForState();
-	
-	MicroWait(50);
 	UART::writeWord(COMMAND_HEADER);
 	UART::writeWord(command);
 	UART::write(body, length);
-	
 	WaitForState();
 	
 	SPI0_PUSHR_SLAVE = body_state;
@@ -141,6 +138,10 @@ static bool SendBodyCommand(uint16_t command, const void* body = NULL, int lengt
 
 static bool CheckBodySig(void) {
 	return SendBodyCommand(COMMAND_CHECK_SIG);
+}
+
+static bool CheckBodyEvilWord(void) {
+	return SendBodyCommand(COMMAND_EVIL_WORD);
 }
 
 bool CheckSig(void) {
@@ -159,6 +160,24 @@ bool CheckSig(void) {
 	return crc == IMAGE_HEADER->checksum;
 }
 
+bool CheckEvilWord(void) {
+	return IMAGE_HEADER->evil_word == 0;
+}
+
+void ClearEvilWord(void) {
+	if (IMAGE_HEADER->evil_word != 0xFFFFFFFF) {
+		return ;
+	}
+
+	volatile uint32_t* flashcmd = (uint32_t*)&FTFA->FCCOB3;
+	int target = (uint32_t)&IMAGE_HEADER->evil_word;
+	
+	flashcmd[0] = (target & 0xFFFFFF) | 0x06000000;
+	flashcmd[1] = 0;
+
+	SendCommand();
+}
+
 static inline bool FlashBlock() {
   static const int length = sizeof(FirmwareBlock) / sizeof(commandWord);
   
@@ -170,7 +189,7 @@ static inline bool FlashBlock() {
 	// Upper 2gB is body space
 	if (packet.blockAddress >= 0x80000000) {
 		packet.blockAddress &= ~0x80000000;
-		return SendBodyCommand(COMMAND_FLASH_BODY, &packet, sizeof(packet));
+		return SendBodyCommand(COMMAND_FLASH, &packet, sizeof(packet));
 	}
 	
   // We will not override the boot loader
@@ -195,45 +214,26 @@ static inline bool FlashBlock() {
   return true;
 }
 
-static bool FlashBodyBlock() {
-  static const int length = sizeof(FirmwareBlock) / sizeof(commandWord);
-  
-  // Load raw packet into memory
-  for (int i = 0; i < length; i++) {
-    rawWords[i] = WaitForWord();
-  }
-
-	return SendBodyCommand(COMMAND_FLASH_BODY, &packet, sizeof(packet));
-}
-
-static void SetLight(int channel, int colors) {
-	uint16_t command = ((channel & 3) | (colors << 2)) << 8;
+static bool SetLight(int colors) {
+	uint8_t command[] = {0, colors};
 	
-	SendBodyCommand(COMMAND_SET_LED, &command, sizeof(command));
+	return SendBodyCommand(COMMAND_SET_LED, &command, sizeof(command));
 }
 
 void EnterRecovery() {  
 	// Let the espressif know we are still booting
 	SPI0_PUSHR_SLAVE = STATE_BUSY;
 
-	// Start by getting the recovery state of the body
-	WaitForState();
-
-	for(;;) {
-		static int i = 0;
-		SetLight(i & 3, i >> 2);
-		i++;
-	}
-	
 	// These are the requirements to boot immediately into the application
+	// if any test fails, the robot will not exit recovery mode
 	bool recovery_escape = 
 		(recovery_word != recovery_value) &&
 		CheckSig() &&
-		CheckBodySig();
+		CheckEvilWord() &&
+		CheckBodyEvilWord();
 
-	recovery_word = 0;
-
-	if (recovery_escape) {
+	// If the body says it's safe, feel free to exit
+	if (recovery_escape && SendBodyCommand(COMMAND_DONE)) {
 		return ;
 	}
 
@@ -256,23 +256,34 @@ void EnterRecovery() {
 					break ;
 				}
 				
-				if (!CheckBodySig()) {
+				// Body refused to reboot (probably back sig)
+				if (!SendBodyCommand(COMMAND_DONE)) {
 					SPI0_PUSHR_SLAVE = STATE_NACK;
 					break ;
 				}
+								
+				ClearEvilWord();
 
-				SendBodyCommand(COMMAND_DONE);
-				
+				recovery_word = 0;
 				SPI0_PUSHR_SLAVE = STATE_IDLE;
         return ;
      
+			case COMMAND_CHECK_SIG:
+				SPI0_PUSHR_SLAVE = (CheckSig() && CheckBodySig()) ? STATE_IDLE : STATE_NACK;
+				break ;
+
+      case COMMAND_EVIL_WORD:
+				SPI0_PUSHR_SLAVE = (CheckEvilWord() && CheckBodyEvilWord()) ? STATE_IDLE : STATE_NACK;
+				break ;
+				
+			case COMMAND_SET_LED:
+				;
+				SPI0_PUSHR_SLAVE = SetLight(WaitForWord()) ? STATE_IDLE : STATE_NACK;
+				break ;
+
       case COMMAND_FLASH:
         SPI0_PUSHR_SLAVE = FlashBlock() ? STATE_IDLE : STATE_NACK;
         break ;
-			
-			case COMMAND_FLASH_BODY:
-				SPI0_PUSHR_SLAVE = FlashBodyBlock() ? STATE_IDLE : STATE_NACK;
-				break ;
     }
   }
 }

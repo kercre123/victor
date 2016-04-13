@@ -29,7 +29,7 @@ def rom_info(file):
 		for section in elffile.iter_sections():
 			if section.name == b"ER_IROM1":
 				temp = fo.tell()
-				fo.seek(section.header.sh_offset)
+				fo.seek(section.header.sh_offset + 4)
 				if fo.read(4) != b"CZM0":
 					raise Exception("Could not locate cozmo header")
 				fo.seek(temp)
@@ -63,6 +63,9 @@ def fix_header(fn):
 
 def get_image(fn):
 	rom_data, base_addr, _ = rom_info(fn)
+
+	# Clear our our evil byte
+	rom_data = rom_data[:24] + b'\xFF\xFF\xFF\xFF' + rom_data[28:]
 
 	# Zero pad to a 4k block (flash area)
 	while len(rom_data) % BLOCK_LENGTH:

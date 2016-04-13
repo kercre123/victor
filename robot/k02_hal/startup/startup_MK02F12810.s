@@ -45,12 +45,13 @@
 
 
                 AREA    HEADER, DATA, READONLY
-__Signature     DCB     'C','Z','M','0'
-                DCD     Reset_Handler
+__Signature     DCD     Reset_Handler
+                DCB     'C','Z','M','0'
                 DCD     __Vectors
                 DCD     0xDEADFACE
                 DCD     0xDEADFACE
                 DCD     0xDEADFACE
+				DCD		0x00000000
 
 ; Vector Table Mapped, aligned to a a 1kbyte boundary
 

@@ -4,12 +4,13 @@
 #define __RECOVERY_H
 
 struct BootLoaderSignature {
-  uint32_t  sig;
   void (*entry_point)(void);
+  uint32_t  sig;
   uint32_t  vector_tbl;
   uint8_t   *rom_start;
   uint32_t  rom_length;
   uint32_t  checksum;
+	uint32_t	evil_word;
 };
 
 static const int          BOOT_LOADER_LENGTH = 0x1000;

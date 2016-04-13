@@ -12,8 +12,7 @@
 
 #include "anki/cozmo/robot/rec_protocol.h"
 
-static const int MAX_TIMEOUT = 1000000;
-
+// These are all the magic numbers for the boot loader
 static const int target_pin = PIN_TX_HEAD;
 static bool UartWritting;
 
@@ -34,9 +33,8 @@ static inline void setCathode(int pin, bool set) {
   }
 }
 
-void setLight(int channel) {
-	int clr = channel >> 2;
-	channel %= 4;
+void setLight(int clr) {
+	int channel = (clr >> 3) & 3;
 	
   static const charliePlex_s RGBLightPins[] =
   {
@@ -203,6 +201,33 @@ bool FlashSector(int target, const uint32_t* data)
   return true;
 }
 
+// Boot loader info
+bool CheckSig(void) {
+  if (IMAGE_HEADER->sig != HEADER_SIGNATURE) return false;
+  
+  // Compute signature length
+	uint32_t crc = calc_crc32(IMAGE_HEADER->rom_start, IMAGE_HEADER->rom_length);
+	
+	return crc == IMAGE_HEADER->checksum;
+}
+
+bool CheckEvilWord(void) {
+	return IMAGE_HEADER->evil_word == 0x00000000;
+}
+
+static inline void ClearEvilWord() {
+	if (IMAGE_HEADER->evil_word != 0xFFFFFFFF) {
+		return ;
+	}
+	
+	NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
+	while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+	*(uint32_t*)&IMAGE_HEADER->evil_word = 0x00000000;
+	while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+	NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+	while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+}
+
 static inline bool FlashBlock() {
   static FirmwareBlock packet;
   uint8_t* raw = (uint8_t*) &packet;
@@ -243,8 +268,6 @@ void BlinkALot(void) {
   }
 }
 
-extern bool CheckSig(void);
-
 void EnterRecovery(void) {
 	BlinkALot();
 	
@@ -262,10 +285,26 @@ void EnterRecovery(void) {
     // Receive command packet
     switch (ReadWord()) {
 			case COMMAND_DONE:
+				// Signature is invalid
+				if (!CheckSig()) {		
+					state = STATE_NACK;
+					break ;
+				}
+
+				ClearEvilWord();
+
         state = STATE_IDLE;
         return ;
      
-      case COMMAND_FLASH_BODY:
+      case COMMAND_EVIL_WORD:
+				state = CheckEvilWord() ? STATE_IDLE : STATE_NACK;
+				break ;
+				
+			case COMMAND_CHECK_SIG:
+				state = CheckSig() ? STATE_IDLE : STATE_NACK;
+				break ;
+
+			case COMMAND_FLASH:
         state = FlashBlock() ? STATE_IDLE : STATE_NACK;
         break ;
       
@@ -273,10 +312,6 @@ void EnterRecovery(void) {
 				setLight(ReadWord());
 				break ;
 			
-			case COMMAND_CHECK_SIG:
-				state = CheckSig() ? STATE_IDLE : STATE_NACK;
-				break ;
-
 			default:
 				state = STATE_NACK;
         break ;

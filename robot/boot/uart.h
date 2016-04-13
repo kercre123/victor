@@ -15,6 +15,7 @@ namespace Anki {
 				uint8_t readByte(void);
 				void writeWord(uint16_t);
 
+				void receive(void);
 				void flush(void);
 				void read(void* data, int length);
 				void write(const void* data, int length);

@@ -40,6 +40,9 @@ void Anki::Cozmo::HAL::UART::init(void) {
 	UART0_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(2) | UART_PFIFO_RXFE_MASK | UART_PFIFO_RXFIFOSIZE(2) ;
 	UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
 
+	PORTD_PCR6 = PORT_PCR_MUX(3);
+	PORTD_PCR7 = PORT_PCR_MUX(3);
+
 	transmit_mode(TRANSMIT_RECEIVE);
 }
 
@@ -58,15 +61,11 @@ inline void transmit_mode(TRANSFER_MODE mode) {
 
 	switch (mode) {
     case TRANSMIT_SEND:
-      PORTD_PCR6 = PORT_PCR_MUX(0);
-      PORTD_PCR7 = PORT_PCR_MUX(3);
       UART0_C2 = UART_C2_TE_MASK;
       break ;
     case TRANSMIT_RECEIVE:
-      PORTD_PCR7 = PORT_PCR_MUX(0);
-      PORTD_PCR6 = PORT_PCR_MUX(3);
       UART0_C2 = UART_C2_RE_MASK;
-      break ;
+			break ;
     default:
       break ;
   }
@@ -96,6 +95,11 @@ void Anki::Cozmo::HAL::UART::write(const void* p, int length) {
 
 void Anki::Cozmo::HAL::UART::flush(void) {
 	UART0->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
+}
+
+void Anki::Cozmo::HAL::UART::receive(void) {
+	UART::flush();
+	transmit_mode(TRANSMIT_RECEIVE);
 }
 
 bool Anki::Cozmo::HAL::UART::rx_avail(void){

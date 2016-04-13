@@ -15,31 +15,6 @@
 
 #include "anki/cozmo/robot/rec_protocol.h"
 
-// These are all the magic numbers for the boot loader
-struct BootLoaderSignature {
-  uint32_t  sig;
-  void (*entry_point)(void);
-  uint32_t  vector_tbl;
-  uint8_t   *rom_start;
-  uint32_t  rom_length;
-  uint32_t  checksum;
-};
-  
-static const int          BOOT_HEADER_LOCATION = 0x18000;
-static const uint32_t     HEADER_SIGNATURE = 0x304D5A43;
-
-static const BootLoaderSignature* IMAGE_HEADER = (BootLoaderSignature*) BOOT_HEADER_LOCATION;
-
-// Boot loader info
-bool CheckSig(void) {
-  if (IMAGE_HEADER->sig != HEADER_SIGNATURE) return false;
-  
-  // Compute signature length
-	uint32_t crc = calc_crc32(IMAGE_HEADER->rom_start, IMAGE_HEADER->rom_length);
-	
-	return crc == IMAGE_HEADER->checksum;
-}
-
 int main (void) {
 	__disable_irq();
 
@@ -51,11 +26,8 @@ int main (void) {
 	Battery::powerOn();
 
 	// Do recovery until our signature is okay
-  do
-  {
-    EnterRecovery();
-  } while (!CheckSig());
-
+	EnterRecovery();
+  
   __enable_irq();
   sd_mbr_command_t cmd;
   cmd.command = SD_MBR_COMMAND_INIT_SD;
