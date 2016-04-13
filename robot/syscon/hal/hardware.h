@@ -27,7 +27,6 @@ enum IRQ_Priority {
 };
 
 enum BodyOperatingMode {
-  LOW_POWER_OPERATING_MODE,
   BLUETOOTH_OPERATING_MODE,
   WIFI_OPERATING_MODE
 };
