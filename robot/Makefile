@@ -45,7 +45,13 @@ nrf: $(ANKI_LOG_TABLE_JSON)
 k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
-safe:
+k02_fix:
+	python3 ./tools/boot_header.py ./build/41/robot.out
+
+nrf_fix:
+	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
+
+safe: k02_fix nrf_fix
 	python3 ./tools/sign.py rtip:./build/41/robot.out body:./syscon/build/app/syscon.axf ./releases/rtip.safe
 
 release: safe
