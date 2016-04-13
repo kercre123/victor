@@ -46,9 +46,6 @@ namespace RobotInterface {
   message BootloadRTIP
   {}
   
-  message BodyReset
-  {}
-  
 } // RobotInterface
 
 } // Cozmo

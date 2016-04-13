@@ -125,9 +125,7 @@ void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
   static const uint32_t recovery_value = 0xCAFEBABE;
 	
   *recovery_word = recovery_value;
-
-	Anki::Cozmo::RobotInterface::BodyReset m;
-	RobotInterface::SendMessage(m);
+	NVIC_SystemReset();
 };
 
 extern "C"
@@ -258,7 +256,8 @@ void SyncSPI(void) {
 
 void Anki::Cozmo::HAL::SPI::Init(void) {
   // Enable and configure our DMA
-  SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
+  SIM_SCGC6 |= SIM_SCGC6_DMAMUX_MASK;
+	SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
 
   // Clear all status flags
   SPI0_SR = SPI0_SR;

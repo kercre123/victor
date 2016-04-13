@@ -301,8 +301,6 @@ union EngineToRobot
   
   // 0x01 to 0x27: Messages to the body / test fixture
   // 0x28 to 0x2f: Allocated to BLE response messages
-  BodyReset                     bodyReset                   = 0x01,
-  // Reserved for bootloader data message to get moved here = 0x02,
   BackpackLights                setBackpackLights           = 0x03,
   CubeLights                    setCubeLights               = 0x04,
   SetPropSlot                   setPropSlot                 = 0x05,

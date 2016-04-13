@@ -49,14 +49,19 @@ inline void transmit_mode(TRANSFER_MODE mode) {
       PORTD_PCR6 = PORT_PCR_MUX(0);
       PORTD_PCR7 = PORT_PCR_MUX(3);
       UART0_C2 = UART_C2_TE_MASK;
-      break ;
+     
+			txRxIndex = 0;
+			break ;
     }
     case TRANSMIT_RECEIVE:
     {
       PORTD_PCR6 = PORT_PCR_MUX(3);
       PORTD_PCR7 = PORT_PCR_MUX(0);
       UART0_C2 = UART_C2_RE_MASK;
-      break ;
+      
+			txRxIndex = 4;
+			rx_source = 0;
+			break ;
     }
     default:
     {
@@ -65,7 +70,6 @@ inline void transmit_mode(TRANSFER_MODE mode) {
   }
 
   uart_mode = mode;
-  txRxIndex = 0;
 }
 
 void Anki::Cozmo::HAL::UART::WaitForSync() {
@@ -109,34 +113,19 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
       break ;
     case TRANSMIT_RECEIVE:
       while (UART0_RCFIFO) {
-        txRxBuffer[txRxIndex] = UART0_D;
-        uint8_t temp = txRxBuffer[txRxIndex];
-        
-        // Words are big endian
-        const uint16_t RECOVERY_HEADER = (uint16_t)((COMMAND_HEADER << 8) | (COMMAND_HEADER >> 8));
-
-        // Re-sync
-        if (txRxIndex < 4) {
-          uint32_t body_mask = ~(0xFFFFFF00 << (txRxIndex * 8));
+        if (rx_source != SPI_SOURCE_BODY) {
+          // Shifty header
+          rx_source = (rx_source >> 8) | (UART0_D << 24);
           
-          // Verify that the header is valid (resync)
-          if ((rx_source & body_mask) != (SPI_SOURCE_BODY & body_mask) &&
-              (rx_source & body_mask) != (BODY_RECOVERY_NOTICE & body_mask)) {
-            txRxIndex = 0;
-            continue ;
-          }
-        }
-
-        // We've detected that the body has entered recovery mode, we should
-				// do the same (recovery mode will check the magic value / signatures
-				if (txRxIndex == 4) {
+          // The body isn't booted
           if (rx_source == BODY_RECOVERY_NOTICE) {
             NVIC_SystemReset();
           }
+          continue ;
+        }	else {
+          txRxBuffer[txRxIndex++] = UART0_D;
         }
-        
-        txRxIndex++;
-        
+
         if (txRxIndex >= sizeof(GlobalDataToHead)) {
           // We received a full packet
           memcpy(&g_dataToHead, txRxBuffer, sizeof(GlobalDataToHead));

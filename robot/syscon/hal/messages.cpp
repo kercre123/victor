@@ -22,11 +22,6 @@ static CladBufferUp spinebuffer[QUEUE_DEPTH];
 static volatile int spine_enter = 0;
 static volatile int spine_exit  = 0;
 
-static void Process_bodyReset(const RobotInterface::BodyReset& msg)
-{
-  NVIC_SystemReset();
-}
-
 static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 {
   Backpack::setLights(msg.lights);

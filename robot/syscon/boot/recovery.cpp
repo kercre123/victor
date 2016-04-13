@@ -15,7 +15,7 @@
 // These are all the magic numbers for the boot loader
 static const int target_pin = PIN_TX_HEAD;
 static bool UartWritting;
-static const int UART_TIMEOUT = (32768 * 2) << 8;
+static const int UART_TIMEOUT = 0x4000 << 8;
 
 void setTransmit(bool tx);
 
@@ -291,55 +291,54 @@ void BlinkALot(void) {
 }
 
 void EnterRecovery(void) {
-	BlinkALot();
+  BlinkALot();
   UARTInit();
-	SyncToHead();
-	BlinkALot();
-	
+  SyncToHead();
+
   for (;;) {
     // Receive command packet
     RECOVERY_STATE state;
-		
-		switch (readByte()) {
-			case COMMAND_DONE:
-				// Signature is invalid
-				if (!CheckSig()) {
-					state = STATE_NACK;
-					break ;
-				}
+    
+    switch (readByte()) {
+      case COMMAND_DONE:
+        // Signature is invalid
+        if (!CheckSig()) {
+          state = STATE_NACK;
+          break ;
+        }
 
-				ClearEvilWord();
-				writeByte((uint8_t) STATE_ACK);
+        ClearEvilWord();
+        writeByte((uint8_t) STATE_ACK);
         return ;
      
       case COMMAND_BOOT_READY:
-				state = (CheckEvilWord() && CheckSig()) ? STATE_ACK : STATE_NACK;
-				break ;
-				
-			case COMMAND_CHECK_SIG:
-				state = CheckSig() ? STATE_ACK : STATE_NACK;
-				break ;
+        state = (CheckEvilWord() && CheckSig()) ? STATE_ACK : STATE_NACK;
+        break ;
+        
+      case COMMAND_CHECK_SIG:
+        state = CheckSig() ? STATE_ACK : STATE_NACK;
+        break ;
 
-			case COMMAND_FLASH:
+      case COMMAND_FLASH:
         state = FlashBlock() ? STATE_ACK : STATE_NACK;
         break ;
       
       case COMMAND_SET_LED:
-				setLight(readByte());
-				state = STATE_ACK;
-				break ;
-			
-			case COMMAND_IDLE:
-				// This is a no op and we don't want to send a reply (so it doesn't stall out the k02)
-				static int color = 0x0E;
-				setLight(color ^= 0x07);
-				continue ;
-							
-			default:
-				state = STATE_NACK;
+        setLight(readByte());
+        state = STATE_ACK;
+        break ;
+      
+      case COMMAND_IDLE:
+        // This is a no op and we don't want to send a reply (so it doesn't stall out the k02)
+        static int color = 0x0E;
+        setLight(color ^= 0x07);
+        continue ;
+              
+      default:
+        state = STATE_NACK;
         break ;
     }
-		
-		writeByte((uint8_t) state);
+    
+    writeByte((uint8_t) state);
   }
 }
