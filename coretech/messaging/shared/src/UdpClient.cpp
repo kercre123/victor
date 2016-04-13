@@ -8,10 +8,8 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <netinet/in.h>
 
-#ifdef __ANDROID__
-#include <linux/in.h>
-#endif
 
 UdpClient::UdpClient()
 {
@@ -60,8 +58,15 @@ bool UdpClient::Connect(const char *host_address, const unsigned short port)
 
   DEBUG_UDP_CLIENT("UdpClient: Creating a socket on port " << portStr << "\n");
 
+  sockaddr_in socketAddress;
+  memset( &socketAddress, 0, sizeof(socketAddress) );
+  
+  socketAddress.sin_family = AF_INET;                  // IPv4
+  socketAddress.sin_addr.s_addr = htonl( INADDR_ANY ); // accept input from any address
+  socketAddress.sin_port = port;
   socketfd = socket(host_info_list->ai_family, host_info_list->ai_socktype,
                     host_info_list->ai_protocol);
+  
   if (socketfd == -1) {
     std::cout << "socket error\n" ;
     return false;
@@ -69,6 +74,21 @@ bool UdpClient::Connect(const char *host_address, const unsigned short port)
 
   set_nonblock(socketfd);
 
+  // Bind socket (so we can send and receive on it)
+  
+  const int bindResult = bind(socketfd, (struct sockaddr *)&socketAddress, sizeof(socketAddress));
+    
+  if ( bindResult < 0 )
+  {
+    if (EADDRINUSE == errno)
+    {
+      printf("UdpClient::Connect: Warning: Unable to bind to in-use socket, continuing as this is OK in case of running multiple instances on one machine.\n");
+    }
+    else
+    {
+      printf("UdpClient::Connect: Error: Unable to bind socket (res = %d), errno = %d '%s'\n", bindResult, errno, strerror(errno));
+    }
+  }
   // Send connection packet (i.e. something so that the server adds us to the client list)
   const char zero = 0;
   Send(&zero, 1);

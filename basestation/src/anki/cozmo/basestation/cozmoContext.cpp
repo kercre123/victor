@@ -5,6 +5,7 @@
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 #include "anki/cozmo/basestation/util/transferQueue/transferQueueMgr.h"
+#include "anki/cozmo/shared/cozmoConfig_common.h"
 //#include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/messaging/basestation/advertisementService.h"
@@ -17,7 +18,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   : _externalInterface(externalInterface)
   , _dataPlatform(dataPlatform)
   , _random(new Anki::Util::RandomGenerator())
-  , _robotAdvertisementService(new Comms::AdvertisementService("RobotAdvertisementService"))
+  , _robotAdvertisementService(new Comms::AdvertisementService("RobotAdvertisementService", ROBOT_ADVERTISING_HEADER_TAG))
   , _robotMgr(new RobotManager(this))
   , _robotMsgHandler(new RobotInterface::MessageHandler())
   , _vizManager(new VizManager())

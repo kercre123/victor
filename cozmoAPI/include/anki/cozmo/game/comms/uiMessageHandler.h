@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/events/ankiEventMgr.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/uiConnectionTypes.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -38,6 +39,53 @@ namespace Anki {
     class Robot;
     class RobotManager;
     class MultiClientComms;
+    
+    
+    class SocketComms
+    {
+    public:
+      
+      SocketComms();
+      ~SocketComms();
+      
+      void StartAdvertising(UiConnectionType type);
+      void Update();
+
+      void AddDevice(AdvertisingUiDevice newDevice)
+      {
+        _connectedDevices.push_back(newDevice);
+      }
+      
+      uint32_t GetNumConnectedDevices() const { return (uint32_t)_connectedDevices.size(); }
+      uint32_t GetNumActiveConnectedDevices() const;
+      
+      bool HasDesiredDevices() const
+      {
+        const uint32_t numConnectedDevices = GetNumConnectedDevices();
+        return (numConnectedDevices >= _desiredNumDevices) && (numConnectedDevices > 0);
+      }
+      
+      bool HasDesiredActiveDevices() const
+      {
+        const uint32_t numActiveConnectedDevices = GetNumActiveConnectedDevices();
+        return (numActiveConnectedDevices >= _desiredNumDevices) && (numActiveConnectedDevices > 0);
+      }
+      
+      MultiClientComms* GetComms() { return _comms; }
+      
+      ExternalInterface::Ping& GetPing() { return _pingToSocket; }
+      
+      void SetDesiredNumDevices(uint32_t newVal) { _desiredNumDevices = newVal; }
+      
+    private:
+      
+      MultiClientComms*                 _comms;
+      Comms::AdvertisementService*      _advertisementService;
+      ExternalInterface::Ping           _pingToSocket;
+      std::vector<AdvertisingUiDevice>  _connectedDevices;
+      uint32_t                          _desiredNumDevices = 0;
+    };
+
     
     class UiMessageHandler : public IExternalInterface
     {
@@ -67,20 +115,32 @@ namespace Anki {
       AnkiEventMgr<ExternalInterface::MessageEngineToGame>& GetEventMgrToGame() { return _eventMgrToGame; }
       AnkiEventMgr<ExternalInterface::MessageGameToEngine>& GetEventMgrToEngine() { return _eventMgrToEngine; }
       
-      bool HasDesiredNumUiDevices() const { return _hasDesiredUiDevices; }
+      bool HasDesiredNumUiDevices() const;
+
+    private:
+      
+      const SocketComms& GetSocketComms(UiConnectionType type) const
+      {
+        assert((type >= UiConnectionType(0)) && (type < UiConnectionType::Count));
+        return _socketComms[(uint32_t)type];
+      }
+      
+      SocketComms& GetSocketComms(UiConnectionType type)
+      {
+        assert((type >= UiConnectionType(0)) && (type < UiConnectionType::Count));
+        return _socketComms[(uint32_t)type];
+      }
+      
+      uint32_t GetNumConnectedDevicesOnAnySocket() const;
       
     protected:
       
-      std::unique_ptr<MultiClientComms>             _uiComms;
-      std::unique_ptr<Comms::AdvertisementService>  _uiAdvertisementService;
-      
+      SocketComms _socketComms[(size_t)UiConnectionType::Count];
+
       bool                                          _isInitialized = false;
       u32                                           _hostUiDeviceID = 0;
-      int                                           _desiredNumUiDevices = 0;
-      bool                                          _hasDesiredUiDevices = false;
-      ExternalInterface::Ping                       _pingToUI = {};
+      
       std::vector<Signal::SmartHandle>              _signalHandles;
-      std::vector<AdvertisingUiDevice>              _connectedUiDevices;
       
       // As long as there are messages available from the comms object,
       // process them and pass them along to robots.
@@ -93,7 +153,7 @@ namespace Anki {
       // Send a message to a specified ID
       virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) override;
       
-      bool ConnectToUiDevice(AdvertisingUiDevice whichDevice);
+      bool ConnectToUiDevice(AdvertisingUiDevice whichDevice, UiConnectionType connectionType);
       void HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
       
       AnkiEventMgr<ExternalInterface::MessageEngineToGame> _eventMgrToGame;

@@ -19,12 +19,46 @@
 
 #include "anki/cozmo/basestation/multiClientComms.h"
 
+#include "clad/externalInterface/messageGameToEngineTag.h"
+#include "util/debug/messageDebugging.h"
+
 #define DEBUG_COMMS 0
 
 namespace Anki {
 namespace Cozmo {
   
-  const size_t HEADER_SIZE = sizeof(RADIO_PACKET_HEADER);
+  
+  ConnectedDeviceInfo::ConnectedDeviceInfo()
+    : _inClient(nullptr)
+    , _outClient(nullptr)
+    , recvDataSize(0)
+  { 
+  }
+  
+  
+  ConnectedDeviceInfo::~ConnectedDeviceInfo()
+  {
+    DestroyClients();
+  }
+  
+  
+  void ConnectedDeviceInfo::DestroyClients()
+  {
+    if (_inClient && (_inClient != _outClient))
+    {
+      _inClient->Disconnect();
+      delete _inClient;
+    }
+    _inClient = nullptr;
+    
+    if (_outClient)
+    {
+      _outClient->Disconnect();
+      delete _outClient;
+      _outClient = nullptr;
+    }
+  }
+
 
   MultiClientComms::MultiClientComms()
   : isInitialized_(false)
@@ -85,7 +119,7 @@ namespace Cozmo {
     if (SIM_SEND_LATENCY_SEC == 0) {
       if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + p.dataLen > maxSentBytesPerTic_)) {
         #if(DEBUG_COMMS)
-        PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "queueing message\n");
+        PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "queueing message");
         #endif
       } else {
         bytesSentThisUpdateCycle_ += p.dataLen;
@@ -108,27 +142,10 @@ namespace Cozmo {
     #endif // #if(DO_SIM_COMMS_LATENCY)
     
     connectedDevicesIt_t it = connectedDevices_.find(p.destId);
-    if (it != connectedDevices_.end()) {
-      
-      bool isTCP = it->second.protocol == Anki::Comms::TCP;
-      
-      if (isTCP) {
-        // Wrap message in header/footer
-        char sendBuf[p.dataLen + 10]; // Extra bytes for TCP header stuff
-        int sendBufLen = 0;
-        
-        memcpy(sendBuf, RADIO_PACKET_HEADER, sizeof(RADIO_PACKET_HEADER));
-        sendBufLen += sizeof(RADIO_PACKET_HEADER);
-        sendBuf[sendBufLen++] = p.dataLen;
-        sendBuf[sendBufLen++] = p.dataLen >> 8;
-        sendBuf[sendBufLen++] = 0;
-        sendBuf[sendBufLen++] = 0;
-        memcpy(sendBuf + sendBufLen, p.data, p.dataLen);
-        sendBufLen += p.dataLen;
-        return ((TcpClient*)it->second.client)->Send(sendBuf, sendBufLen);
-      } else {
-        return ((UdpClient*)it->second.client)->Send((char*)p.data, p.dataLen);
-      }
+    if (it != connectedDevices_.end())
+    {
+      UdpClient* udpClient = it->second._outClient;
+      return udpClient->Send((const char*)p.data, p.dataLen);
     
 
       /*
@@ -139,6 +156,7 @@ namespace Cozmo {
       printf("\n");
       */
     }
+    
     return -1;
     
   }
@@ -150,25 +168,40 @@ namespace Cozmo {
     f32 currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
     // Read datagrams and update advertising device list.
-    Comms::AdvertisementMsg advMsg;
+    using EMessageTag = Cozmo::ExternalInterface::MessageGameToEngineTag;
+    const EMessageTag kAdvertisementMsgTag = EMessageTag::AdvertisementMsg;
+    AdvertisementMsg advMsg;
+    const size_t kMinAdMsgSize = sizeof(EMessageTag) + advMsg.Size(); // Size of message with an empty ip string
+    
     int bytes_recvd = 0;
     do {
-      bytes_recvd = advertisingChannelClient_.Recv((char*)&advMsg, sizeof(advMsg));
-      if (bytes_recvd == sizeof(advMsg)) {
+      uint8_t messageData[64];
+      bytes_recvd = advertisingChannelClient_.Recv((char*)messageData, sizeof(messageData));
+      if (bytes_recvd >= kMinAdMsgSize)
+      {
+        const EMessageTag messageTag = *(EMessageTag*)messageData;
         
-        // Check if already connected to this device.
-        // Advertisement may have arrived right after connection.
-        // If not already connected, add it to advertisement list.
-        if (connectedDevices_.find(advMsg.id) == connectedDevices_.end()) {
+        if (messageTag == kAdvertisementMsgTag)
+        {
+          const uint8_t* innerMessageBytes = &messageData[sizeof(EMessageTag)];
+          const size_t   innerMessageSize  = bytes_recvd - sizeof(EMessageTag);
           
-#if(DEBUG_COMMS)
-          if (advertisingDevices_.find(advMsg.id) == advertisingDevices_.end()) {
-            printf("Detected advertising device %d on host %s at port %d\n", advMsg.id, advMsg.ip, advMsg.port);
+          advMsg.Unpack(innerMessageBytes, innerMessageSize);
+          
+          // Check if already connected to this device.
+          // Advertisement may have arrived right after connection.
+          // If not already connected, add it to advertisement list.
+          if (connectedDevices_.find(advMsg.id) == connectedDevices_.end())
+          {
+            if (DEBUG_COMMS && (advertisingDevices_.find(advMsg.id) == advertisingDevices_.end()))
+            {
+              PRINT_NAMED_INFO("MultiClientComms.Update.NewDevice", "Detected advertising device %d on host %s at ports ToEng=%d, FromEng=%d",
+                               advMsg.id, advMsg.ip.c_str(), (int)advMsg.toEnginePort, (int)advMsg.fromEnginePort);
+            }
+            
+            advertisingDevices_[advMsg.id].devInfo = advMsg;
+            advertisingDevices_[advMsg.id].lastSeenTime = currTime;
           }
-#endif
-          
-          advertisingDevices_[advMsg.id].devInfo = advMsg;
-          advertisingDevices_[advMsg.id].lastSeenTime = currTime;
         }
       }
     } while(bytes_recvd > 0);
@@ -180,7 +213,7 @@ namespace Cozmo {
     while(it != advertisingDevices_.end()) {
       if (currTime - it->second.lastSeenTime > ROBOT_ADVERTISING_TIMEOUT_S) {
         #if(DEBUG_COMMS)
-        printf("Removing device %d from advertising list. (Last seen: %f, curr time: %f)\n", it->second.devInfo.id, it->second.lastSeenTime, currTime);
+        PRINT_NAMED_INFO("MultiClientComms.Update.TimeoutDevice", "Removing device %d from advertising list. (Last seen: %f, curr time: %f)", it->second.devInfo.id, it->second.lastSeenTime, currTime);
         #endif
         advertisingDevices_.erase(it++);
       } else {
@@ -216,7 +249,7 @@ namespace Cozmo {
             
             if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + pQueue->front().second.dataLen > maxSentBytesPerTic_)) {
               #if(DEBUG_COMMS)
-              PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "%d messages left in queue to send later\n", pQueue->size() - 1);
+              PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "%d messages left in queue to send later", (int)pQueue->size() - 1);
               #endif
               break;
             }
@@ -249,13 +282,9 @@ namespace Cozmo {
     #if(DEBUG_COMMS)
     if (connectedDevices_.find(devID) != connectedDevices_.end()) {
       int numBytes = connectedDevices_[devID].recvDataSize;
-      printf("Device %d recv buffer (%d bytes): ", devID, numBytes);
-      for (int i=0; i<numBytes;i++){
-        u8 t = connectedDevices_[devID].recvBuf[i];
-        printf("0x%x ", t);
-      }
-      printf("\n");
 
+      PRINT_NAMED_INFO("MultiClientComms.PrintRecvBuf", "Device %d recv buffer (%d bytes): %s", devID, numBytes,
+                       Util::ConvertMessageBufferToString(connectedDevices_[devID].recvBuf, numBytes, Util::eBTTT_Hex).c_str());
     }
     #endif
   }
@@ -263,31 +292,18 @@ namespace Cozmo {
   
   void MultiClientComms::ReadAllMsgPackets()
   {
-    
     // Read from all connected clients.
     // Enqueue complete messages.
     connectedDevicesIt_t it = connectedDevices_.begin();
-    while ( it != connectedDevices_.end() ) {
-      
-      ConnectedDeviceInfo &c = it->second;
-      bool isTCP = c.protocol == Anki::Comms::TCP;
+    while ( it != connectedDevices_.end() )
+    {
+      ConnectedDeviceInfo& c = it->second;
 
-      while(1) { // Keep reading socket until no bytes available
-      
-//        int bytes_recvd = c.client->Recv((char*)c.recvBuf + c.recvDataSize,
-//                                         ConnectedDeviceInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
-
+      while(1) // Keep reading socket until no bytes available
+      {
+        UdpClient* udpClient = c._inClient;
         
-        int bytes_recvd = 0;
-        if (isTCP) {
-          bytes_recvd = ((TcpClient*)c.client)->Recv((char*)c.recvBuf + c.recvDataSize,
-                                                     ConnectedDeviceInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
-        } else {
-          bytes_recvd = ((UdpClient*)c.client)->Recv((char*)c.recvBuf + c.recvDataSize,
-                                                     ConnectedDeviceInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
-        }
-        
-        
+        int bytes_recvd = udpClient->Recv((char*)c.recvBuf + c.recvDataSize, ConnectedDeviceInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
         
         if (bytes_recvd == 0) {
           it++;
@@ -295,100 +311,16 @@ namespace Cozmo {
         }
         if (bytes_recvd < 0) {
           // Disconnect client
-          #if(DEBUG_COMMS)
-          printf("MultiClientComms: Recv failed. Disconnecting client\n");
-          #endif
-//          c.client->Disconnect();
-//          delete c.client;
-          
-          if (isTCP) {
-            ((TcpClient*)c.client)->Disconnect();
-            delete (TcpClient*)(c.client);
-          } else {
-            ((UdpClient*)c.client)->Disconnect();
-            delete (UdpClient*)(c.client);
-          }
+          PRINT_NAMED_INFO("MultiClientComms.ReadAllMsgPackets", "Recv failed. Disconnecting client");
+
+          c.DestroyClients();
           
           connectedDevices_.erase(it++);
           break;
         }
 
-        if (isTCP) {
+        {
           c.recvDataSize += bytes_recvd;
-          //PrintRecvBuf(it->first);
-
-          // Look for valid header
-          while (c.recvDataSize >= sizeof(RADIO_PACKET_HEADER)) {
-            
-            // Look for 0xBEEF
-            u8* hPtr = NULL;
-            for(int i = 0; i < c.recvDataSize-1; ++i) {
-              if (c.recvBuf[i] == RADIO_PACKET_HEADER[0]) {
-                if (c.recvBuf[i+1] == RADIO_PACKET_HEADER[1]) {
-                  hPtr = &(c.recvBuf[i]);
-                  break;
-                }
-              }
-            }
-            
-            if (hPtr == NULL) {
-              // Header not found at all
-              // Delete everything
-              c.recvDataSize = 0;
-              break;
-            }
-            
-            std::size_t n = hPtr - c.recvBuf;
-            if (n != 0) {
-              // Header was not found at the beginning.
-              // Delete everything up until the header.
-              PRINT_STREAM_WARNING("MultiClientComms.PartialMsgRecvd",
-                                   "Header not found where expected. Dropping preceding " << n << " bytes");
-              c.recvDataSize -= n;
-              memcpy(c.recvBuf, hPtr, c.recvDataSize);
-            }
-            
-            // Check if expected number of bytes are in the msg
-            if (c.recvDataSize > HEADER_SIZE) {
-              u32 dataLen = c.recvBuf[HEADER_SIZE] +
-                                  (c.recvBuf[HEADER_SIZE + 1] << 8) +
-                                  (c.recvBuf[HEADER_SIZE + 2] << 16) +
-                                  (c.recvBuf[HEADER_SIZE + 3] << 24);
-              
-              if (c.recvDataSize >= HEADER_SIZE + 4 + dataLen) {
-                
-                f32 recvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-                
-                #if(DO_SIM_COMMS_LATENCY)
-                recvTime += SIM_RECV_LATENCY_SEC;
-                #endif
-                
-                recvdMsgPackets_.emplace_back(std::piecewise_construct,
-                                              std::forward_as_tuple(recvTime),
-                                              std::forward_as_tuple((s32)(it->first),
-                                                                    (s32)-1,
-                                                                    dataLen,
-                                                                    (u8*)(&c.recvBuf[HEADER_SIZE+4]),
-                                                                    BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds())
-                                              );
-                
-                // Shift recvBuf contents down
-                const u16 entireMsgSize = HEADER_SIZE + 4 + dataLen;
-                memcpy(c.recvBuf, c.recvBuf + entireMsgSize, c.recvDataSize - entireMsgSize);
-                c.recvDataSize -= entireMsgSize;
-                
-              } else {
-                break;
-              }
-            } else {
-              break;
-            }
-          
-          } // end while (there are still messages in the recvBuf)
-          
-        } else { // if (useTCP)
-
-          c.recvDataSize = bytes_recvd;
           
           f32 recvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           
@@ -424,63 +356,72 @@ namespace Cozmo {
     
     // Check if the device is available to connect to
     advertisingDevicesIt_t it = advertisingDevices_.find(devID);
-    if (it != advertisingDevices_.end()) {
+    if (it != advertisingDevices_.end())
+    {
+      const AdvertisementMsg& adMsg = it->second.devInfo;
       
-      /*
-#if(USE_UDP_ROBOT_COMMS)
-      UdpClient *client = new UdpClient();
-#else
-      TcpClient *client = new TcpClient();
-#endif
-       */
+      UdpClient* outClient = new UdpClient();
       
-      bool isTCP = it->second.devInfo.protocol == Anki::Comms::TCP;
-      
-      void* client;
-      if(isTCP) {
-        client = (void*)(new TcpClient());
-      } else {
-        client = (void*)(new UdpClient());
-      }
-      
-//      if (client->Connect((char*)it->second.devInfo.ip, it->second.devInfo.port)) {
-      if ( (isTCP  && ((TcpClient*)client)->Connect((char*)it->second.devInfo.ip, it->second.devInfo.port)) ||
-          (!isTCP && ((UdpClient*)client)->Connect((char*)it->second.devInfo.ip, it->second.devInfo.port)) ){
+      if (outClient->Connect(adMsg.ip.c_str(), adMsg.fromEnginePort))
+      {        
+        UdpClient* inClient = nullptr;
+        
+        if (adMsg.fromEnginePort != adMsg.toEnginePort)
+        {
+          inClient = new UdpClient();
+          
+          if (!inClient->Connect(adMsg.ip.c_str(), adMsg.toEnginePort))
+          {
+            delete inClient;
+            inClient = nullptr;
+            
+            PRINT_NAMED_WARNING("MultiClientComms.ConnectToDeviceByID.InFailed", "Connection attempt to device %d at %s:%d (ToEngine) failed",
+                   adMsg.id, adMsg.ip.c_str(), adMsg.toEnginePort);
+          }
+        }
+        else
+        {
+          inClient = outClient;
+        }
+        
+        if (inClient)
+        {
         #if(DEBUG_COMMS)
-        printf("Connected to device %d at %s:%d\n", it->second.devInfo.id, it->second.devInfo.ip, it->second.devInfo.port);
+          PRINT_NAMED_INFO("MultiClientComms.ConnectToDeviceByID", "Connected to device %d at %s:%d/%d",
+                           adMsg.id, adMsg.ip.c_str(), adMsg.toEnginePort, adMsg.fromEnginePort);
         #endif
-        connectedDevices_[devID].client = client;
-        connectedDevices_[devID].protocol = it->second.devInfo.protocol;
-        
-        // Remove from advertising list
-        advertisingDevices_.erase(it);
-        
-        return true;
+          
+          connectedDevices_[devID]._outClient = outClient;
+          connectedDevices_[devID]._inClient  = inClient;
+          
+          // Remove from advertising list
+          advertisingDevices_.erase(it);
+          
+          return true;
+        }
       }
-      printf("WARN: Connection attempt to device %d at %s:%d failed\n",
-             it->second.devInfo.id, it->second.devInfo.ip, it->second.devInfo.port);
+      
+      delete outClient;
+      
+      PRINT_NAMED_WARNING("MultiClientComms.ConnectToDeviceByID.OutFailed", "Connection attempt to device %d at %s:%d (FromEngine) failed",
+                          adMsg.id, adMsg.ip.c_str(), adMsg.fromEnginePort);
     }
     
     return false;
   }
   
-  void MultiClientComms::DisconnectDeviceByID(int devID)
+  bool MultiClientComms::DisconnectDeviceByID(int devID)
   {
     connectedDevicesIt_t it = connectedDevices_.find(devID);
-    if (it != connectedDevices_.end()) {
-//      it->second.client->Disconnect();
-//      delete it->second.client;
-      
-      if (it->second.protocol == Anki::Comms::TCP) {
-        ((TcpClient*)it->second.client)->Disconnect();
-        delete (TcpClient*)(it->second.client);
-      } else {
-        ((UdpClient*)it->second.client)->Disconnect();
-        delete (UdpClient*)(it->second.client);
-      }
+    if (it != connectedDevices_.end())
+    {
+      it->second.DestroyClients();
       
       connectedDevices_.erase(it);
+      return true;
     }
+    
+    return false;
   }
   
   
@@ -513,17 +454,9 @@ namespace Cozmo {
   
   void MultiClientComms::DisconnectAllDevices()
   {
-    for(connectedDevicesIt_t it = connectedDevices_.begin(); it != connectedDevices_.end();) {
-//      it->second.client->Disconnect();
-//      delete it->second.client;
-      
-      if (it->second.protocol == Anki::Comms::TCP) {
-        ((TcpClient*)it->second.client)->Disconnect();
-        delete (TcpClient*)(it->second.client);
-      } else {
-        ((UdpClient*)it->second.client)->Disconnect();
-        delete (UdpClient*)(it->second.client);
-      }
+    for(connectedDevicesIt_t it = connectedDevices_.begin(); it != connectedDevices_.end(); )
+    {
+      it->second.DestroyClients();
       
       it = connectedDevices_.erase(it);
     }
@@ -570,10 +503,12 @@ namespace Cozmo {
   
   u32 MultiClientComms::GetNumMsgPacketsInSendQueue(int devID)
   {
+  #if(DO_SIM_COMMS_LATENCY)
     std::map<int, PacketQueue_t>::iterator it = sendMsgPackets_.find(devID);
     if (it != sendMsgPackets_.end()) {
       return static_cast<u32>(it->second.size());
     }
+  #endif // #if(DO_SIM_COMMS_LATENCY)
     return 0;
   }
   
