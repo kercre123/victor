@@ -67,7 +67,8 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
   private readonly object sync = new object();
 
   // fixed messages
-  private readonly AdvertisementRegistrationMsg advertisementRegistrationMessage = new AdvertisementRegistrationMsg();
+  private readonly Anki.Cozmo.AdvertisementRegistrationMsg _AdvertisementRegistrationMsg = new Anki.Cozmo.AdvertisementRegistrationMsg();
+  private RobotMessageOut _MessageOut = new RobotMessageOut();
 
   // sockets
   private IPEndPoint localEndPoint = null;
@@ -184,22 +185,12 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
 
           // set up advertisement message
           DAS.Debug(this, "Advertising IP: " + localIP);
-          int length = Encoding.UTF8.GetByteCount(localIP);
-          if (length + 1 > advertisementRegistrationMessage.Ip.Length) {
-            DAS.Error(this, "Advertising host is too long: " +
-            advertisementRegistrationMessage.Ip.Length.ToString() + " bytes allowed, " +
-            length.ToString() + " bytes used.");
-            DestroySynchronously(DisconnectionReason.FailedToAdvertise);
-            return;
-          }
-          Encoding.UTF8.GetBytes(localIP, 0, localIP.Length, advertisementRegistrationMessage.Ip, 0);
-          advertisementRegistrationMessage.Ip[length] = 0;
-          
-          advertisementRegistrationMessage.Port = (ushort)realPort;
-          advertisementRegistrationMessage.Id = (byte)deviceID;
-          advertisementRegistrationMessage.Protocol = (byte)ChannelProtocol.Udp;
-          advertisementRegistrationMessage.EnableAdvertisement = 1;
-          advertisementRegistrationMessage.OneShot = 1;
+          _AdvertisementRegistrationMsg.ip = localIP;
+          _AdvertisementRegistrationMsg.toEnginePort = (ushort)realPort;
+          _AdvertisementRegistrationMsg.fromEnginePort = (ushort)realPort;
+          _AdvertisementRegistrationMsg.id = (byte)deviceID;
+          _AdvertisementRegistrationMsg.enableAdvertisement = true;
+          _AdvertisementRegistrationMsg.oneShot = true;
 
           // set up advertisement socket
           advertisementEndPoint = new IPEndPoint(advertisingAddress, advertisingPort);
@@ -667,8 +658,9 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
     advertisementSend = AllocateBufferState(advertisementClient, advertisementEndPoint);
     bool success = false;
     try {
-      advertisementSend.length = advertisementRegistrationMessage.Size;
-      advertisementRegistrationMessage.Pack(advertisementSend.stream);
+      _MessageOut.Message.AdvertisementRegistrationMsg = _AdvertisementRegistrationMsg;
+      advertisementSend.length = _MessageOut.Message.Size;
+      _MessageOut.Message.Pack(advertisementSend.stream);
 
       AsyncCallback callback = callback_SendAdvertisement_Complete;
       BeginSend(advertisementSend, callback);
