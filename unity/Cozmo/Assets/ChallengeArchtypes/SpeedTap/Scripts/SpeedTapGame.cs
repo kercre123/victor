@@ -20,6 +20,8 @@ namespace SpeedTap {
     public float MatchChanceIncrease;
     public float MinIdleIntervalMs;
     public float MaxIdleIntervalMs;
+    public float MinTapDelayMs;
+    public float MaxTapDelayMs;
     public float CozmoMistakeChance;
     public float CozmoFakeoutChance;
 
@@ -328,6 +330,7 @@ namespace SpeedTap {
       CurrentRobot.SetBehaviorSystem(false);
     }
 
+    // Set up Difficulty Settings that are not round specific
     protected override void OnDifficultySet(int difficulty) {
       Rules = GetRules((SpeedTapRuleSet)difficulty);
       _CurrentDifficultySettings = null;
@@ -340,6 +343,9 @@ namespace SpeedTap {
         DAS.Warn(this, "No Valid Difficulty Setting Found");
         _CurrentDifficultySettings = _AllDifficultySettings[0];
       }
+      CozmoMistakeChance = _CurrentDifficultySettings.CozmoMistakeChance;
+      MinTapDelayMs = _CurrentDifficultySettings.MinCozmoTapDelayMs;
+      MaxTapDelayMs = _CurrentDifficultySettings.MaxCozmoTapDelayMs;
     }
 
     protected override void CleanUpOnDestroy() {

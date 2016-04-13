@@ -11,18 +11,21 @@ namespace SpeedTap {
     private const float _kTapAnimHitDelay = 500.0f;
 
     private SpeedTapGame _SpeedTapGame = null;
-    // TODO : Clear most shit out of here that's been moved into config, still use the On/Off Delay time since that changes between rounds.
-    private float _StartTimeMs = -1.0f;
-    private float _TapStartTimeMs = -1.0f;
-    private float _OnDelayTimeMs = 2000.0f;
-    private float _OffDelayTimeMs = 2000.0f;
-    private float _PeekMinTimeMs = 400.0f;
-    private float _PeekMaxTimeMs = 1000.0f;
-    private float _PeekDelayTimeMs = 0.0f;
-    private float _MinCozmoTapDelayTimeMs = 280.0f;
-    private float _MaxCozmoTapDelayTimeMs = 700.0f;
-    private float _MatchProbability = 0.35f;
-    private float _FakeProbability = 0.25f;
+
+    #region Difficulty Config Values
+
+    private float _OnDelayTimeMs;
+    private float _OffDelayTimeMs;
+    private float _PeekMinTimeMs;
+    private float _PeekMaxTimeMs;
+    private float _MinCozmoTapDelayTimeMs;
+    private float _MaxCozmoTapDelayTimeMs;
+    private float _MatchProbability;
+    private float _FakeProbability;
+
+    #endregion
+
+    // TODO: Replace Peek Probability with interval idle logic
     private float _PeekProbability = 0.80f;
     //
 
@@ -33,9 +36,13 @@ namespace SpeedTap {
     private bool _TryFake = false;
     private bool _TryPeek = false;
     private bool _PlayReady = false;
+    private bool _PlayerTapRegistered = false;
     private bool _CozmoTapRegistered = false;
     private bool _CozmoHitCube = false;
     private float _CozmoTapDelayTimeMs = 0f;
+    private float _PeekDelayTimeMs;
+    private float _StartTimeMs = -1.0f;
+    private float _TapStartTimeMs = -1.0f;
 
     public override void Enter() {
       base.Enter();
@@ -48,7 +55,14 @@ namespace SpeedTap {
       _SpeedTapGame.MidHand = false;
       _PlayReady = false;
       _CozmoTapRegistered = false;
-      SetValues();
+      _PlayerTapRegistered = false;
+      _MatchProbability = _SpeedTapGame.BaseMatchChance;
+      _FakeProbability = _SpeedTapGame.CozmoFakeoutChance;
+      _PeekMinTimeMs = _SpeedTapGame.MinIdleIntervalMs;
+      _PeekMaxTimeMs = _SpeedTapGame.MaxIdleIntervalMs;
+      _MinCozmoTapDelayTimeMs = _SpeedTapGame.MinTapDelayMs;
+      _MaxCozmoTapDelayTimeMs = _SpeedTapGame.MaxTapDelayMs;
+      SetRoundValues();
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, RobotCompletedTapAnimation);
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, AdjustCheck);
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, AdjustCheck);
@@ -56,10 +70,17 @@ namespace SpeedTap {
       _SpeedTapGame.CheckForAdjust(AdjustDone);
     }
 
-    private void SetValues() {
-      //int difficulty = _SpeedTapGame.CurrentDifficulty;
-      //int currRound = _SpeedTapGame.CurrentRound;
-      //_MatchProbability = _SpeedTapGame.;
+    private void SetRoundValues() {
+      int currRound = _SpeedTapGame.CurrentRound;
+      SpeedTapRoundData currRoundData = _SpeedTapGame.CurrentDifficultySettings.SpeedTapRoundSettings[currRound];
+      _OnDelayTimeMs = currRoundData.TimeHandDisplayed;
+      _OffDelayTimeMs = currRoundData.TimeBetweenHands;
+      if (currRoundData.MidRoundMusic != Anki.Cozmo.Audio.GameState.Music.Invalid) {
+        GameAudioClient.SetMusicState(currRoundData.MidRoundMusic);
+      }
+      else {
+        GameAudioClient.SetMusicState(_SpeedTapGame.GetDefaultMusicState());
+      }
     }
 
     public override void Exit() {
@@ -178,6 +199,10 @@ namespace SpeedTap {
 
     void PlayerDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.player_tap", "");
+      if (_PlayerTapRegistered) {
+        return;
+      }
+      _PlayerTapRegistered = true;
       if (_GotMatch) {
         if (_CozmoHitCube == false) {
           _SpeedTapGame.PlayerHitFirst = true;
@@ -199,7 +224,7 @@ namespace SpeedTap {
       float matchExperiment = UnityEngine.Random.value;
       _GotMatch = matchExperiment < _MatchProbability;
       if (!_GotMatch) {
-        //_MatchProbability += _kMatchProbabilityIncrease;
+        _MatchProbability += _SpeedTapGame.MatchChanceIncrease;
         if (_TryPeek) {
           _PeekDelayTimeMs = UnityEngine.Random.Range(_PeekMinTimeMs, _PeekMaxTimeMs);
         }
