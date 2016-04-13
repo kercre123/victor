@@ -39,6 +39,11 @@ message RobotPoked
   uint_32 robotID
 }
 
+message RobotStopped
+{
+  uint_8 reason  // reserved for later in case we need reasons
+}
+
 message MotorCalibration
 {
   MotorID motorID,
@@ -140,6 +145,7 @@ union RobotToEngine {
   ObjectConnectionState activeObjectConnectionState = 0xD0,
   MotorCalibration           motorCalibration       = 0xD1,
   FWVersionInfo              fwVersionInfo          = 0xD2,
+  RobotStopped               robotStopped           = 0xD3,
   
   //0xF0 to 0x FE: Unreliable message to the Engine
   RobotState                 state                  = 0xF0,

@@ -44,15 +44,15 @@ namespace Anki {
         }
       }
       
-      // If a cliff detected event is already queued, queue
-      // this undetected event for the same time.
       // If no cliff event is queued, queue this undetected
       // event to go out immediately.
+      // If a cliff detected event is already queued,
+      // just cancel it.
       void QueueUncliffEvent() {
         if (_pendingCliffEvent == 0) {
           _pendingUncliffEvent = HAL::GetTimeStamp();
         } else {
-          _pendingUncliffEvent = _pendingCliffEvent;
+          _pendingCliffEvent = 0;
         }
       }
 
@@ -75,6 +75,10 @@ namespace Anki {
             
             // Stop all motors and animations
             PickAndPlaceController::Reset();
+            
+            // Send stopped message
+            RobotInterface::RobotStopped msg;
+            RobotInterface::SendMessage(msg);
             
 #ifndef TARGET_K02
             // TODO: On K02, need way to tell Espressif to cancel animations
