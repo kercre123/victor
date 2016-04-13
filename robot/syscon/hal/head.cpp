@@ -181,6 +181,7 @@ void UART0_IRQHandler()
       memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
       Spine::ProcessHeadData();
       Head::spokenTo = true;
+			RTOS::kick(WDOG_UART);
       
       setTransmitMode(TRANSMIT_DEBUG);
     }

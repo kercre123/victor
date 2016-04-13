@@ -15,6 +15,7 @@
 // These are all the magic numbers for the boot loader
 static const int target_pin = PIN_TX_HEAD;
 static bool UartWritting;
+static const int UART_TIMEOUT = (32768 * 2) << 8;
 
 void setTransmit(bool tx);
 
@@ -118,7 +119,14 @@ static void readUart(void* p, int length) {
 	setTransmit(false);
 	
 	while (length-- > 0) {
+		int waitTime = GetCounter() + UART_TIMEOUT;
+
 		while (!NRF_UART0->EVENTS_RXDRDY) {
+			int ticks = waitTime - GetCounter();
+			if (ticks < 0) {
+				NVIC_SystemReset();
+			}
+
 			Battery::manage();
 		}
 
@@ -152,31 +160,20 @@ static uint8_t writeByte(const uint8_t byte) {
 }
 
 static void SyncToHead(void) {
-	for (;;) {
-		static const uint32_t recovery_signal = BODY_RECOVERY_NOTICE;
-		writeUart(&recovery_signal, sizeof(recovery_signal));
-				
-		int waitTime = GetCounter() + MAX_TIMEOUT;
-		
-		uint32_t recoveryWord = 0;
+	uint8_t color;
 
-		for(;;) {
-			int ticks = waitTime - GetCounter();
-			if (ticks < 0) break ;
-			
-			Battery::manage();
-			
-			if (!NRF_UART0->EVENTS_RXDRDY) {
-				continue ;
-			}
+	// Write our recovery sync signal
+	writeUart(&BODY_RECOVERY_NOTICE, sizeof(BODY_RECOVERY_NOTICE));
+	setTransmit(false);
+	
+	uint32_t recoveryWord = 0;
 
-			NRF_UART0->EVENTS_RXDRDY = 0;
-			recoveryWord = (NRF_UART0->RXD << 24) | (recoveryWord >> 8);
-			
-			if (recoveryWord == HEAD_RECOVERY_NOTICE) {
-				return ;
-			}
-		}
+	// This will read a word, and attempt to sync to head
+	readUart(&recoveryWord, sizeof(recoveryWord));
+
+	// Simply restart when we receive bad data
+	if (recoveryWord != HEAD_RECOVERY_NOTICE) {
+		NVIC_SystemReset();
 	}
 }
 
@@ -280,17 +277,24 @@ static inline bool FlashBlock() {
 }
 
 void BlinkALot(void) {
-  for (int i = 0; i < 0x7F; i++) {
-    setLight(i);
-    MicroWait(2500);
+  uint8_t colors[] = {
+		0x02 + 16, 0x02 +  8, 0x04 + 24,
+		0x04 + 24, 0x04 +  8, 0x02 + 16,
+		0x06 + 16, 0x06 +  8, 0x06 + 24,
+		0x07 + 24, 0x07 +  8, 0x07 + 16
+	};
+	
+	for (int i = 0; i < sizeof(colors); i++) {
+		setLight(colors[i]);
+    MicroWait(50000);
   }
 }
 
 void EnterRecovery(void) {
+	BlinkALot();
   UARTInit();
-
-	BlinkALot();	
 	SyncToHead();
+	BlinkALot();
 	
   for (;;) {
     // Receive command packet
@@ -299,31 +303,38 @@ void EnterRecovery(void) {
 		switch (readByte()) {
 			case COMMAND_DONE:
 				// Signature is invalid
-				if (!CheckSig()) {		
+				if (!CheckSig()) {
 					state = STATE_NACK;
 					break ;
 				}
 
 				ClearEvilWord();
-
+				writeByte((uint8_t) STATE_ACK);
         return ;
      
-      case COMMAND_EVIL_WORD:
-				state = CheckEvilWord() ? STATE_IDLE : STATE_NACK;
+      case COMMAND_BOOT_READY:
+				state = (CheckEvilWord() && CheckSig()) ? STATE_ACK : STATE_NACK;
 				break ;
 				
 			case COMMAND_CHECK_SIG:
-				state = CheckSig() ? STATE_IDLE : STATE_NACK;
+				state = CheckSig() ? STATE_ACK : STATE_NACK;
 				break ;
 
 			case COMMAND_FLASH:
-        state = FlashBlock() ? STATE_IDLE : STATE_NACK;
+        state = FlashBlock() ? STATE_ACK : STATE_NACK;
         break ;
       
       case COMMAND_SET_LED:
 				setLight(readByte());
+				state = STATE_ACK;
 				break ;
 			
+			case COMMAND_IDLE:
+				// This is a no op and we don't want to send a reply (so it doesn't stall out the k02)
+				static int color = 0x0E;
+				setLight(color ^= 0x07);
+				continue ;
+							
 			default:
 				state = STATE_NACK;
         break ;

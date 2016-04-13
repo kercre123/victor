@@ -14,8 +14,6 @@ static const int FLASH_BLOCK_SIZE = 0x800;
 static uint32_t recovery_word __attribute__((at(0x20001FFC)));
 static const uint32_t recovery_value = 0xCAFEBABE;
 
-static RECOVERY_STATE body_state = STATE_UNKNOWN;
-
 static union {
 	FirmwareBlock packet;
 	commandWord rawWords[1];
@@ -98,19 +96,18 @@ static bool SendBodyCommand(uint8_t command, const void* body = NULL, int length
 	
 	UART::writeByte(command);
 	UART::write(body, length);
-	body_state = (RECOVERY_STATE) UART::readByte();
+
+	RECOVERY_STATE body_state = (RECOVERY_STATE) UART::readByte();
 	
-	SPI0_PUSHR_SLAVE = body_state;
-	
-	return (body_state == STATE_IDLE);
+	return (body_state == STATE_ACK);
+}
+
+static bool SetLight(uint8_t colors) {
+	return SendBodyCommand(COMMAND_SET_LED, &colors, sizeof(colors));
 }
 
 static bool CheckBodySig(void) {
 	return SendBodyCommand(COMMAND_CHECK_SIG);
-}
-
-static bool CheckBodyEvilWord(void) {
-	return SendBodyCommand(COMMAND_EVIL_WORD);
 }
 
 bool CheckSig(void) {
@@ -129,8 +126,12 @@ bool CheckSig(void) {
 	return crc == IMAGE_HEADER->checksum;
 }
 
-bool CheckEvilWord(void) {
-	return IMAGE_HEADER->evil_word == 0;
+bool CheckBootReady(void) {
+	if (IMAGE_HEADER->evil_word != 0) {
+		return false;
+	}
+	
+	return CheckSig();
 }
 
 void ClearEvilWord(void) {
@@ -154,7 +155,7 @@ static inline bool FlashBlock() {
   for (int i = 0; i < length; i++) {
     rawWords[i] = WaitForWord();
   }
-
+	
 	// Upper 2gB is body space
 	if (packet.blockAddress >= 0x80000000) {
 		packet.blockAddress &= ~0x80000000;
@@ -183,10 +184,6 @@ static inline bool FlashBlock() {
   return true;
 }
 
-static bool SetLight(uint8_t colors) {
-	return SendBodyCommand(COMMAND_SET_LED, &colors, sizeof(colors));
-}
-
 static void SyncToBody(void) {
 	uint32_t recovery_header = 0;
 	
@@ -196,34 +193,42 @@ static void SyncToBody(void) {
 	
 	MicroWait(10);
 	
-	static const uint32_t word = HEAD_RECOVERY_NOTICE;
-	UART::write(&word, sizeof(word));
+	UART::write(&HEAD_RECOVERY_NOTICE, sizeof(HEAD_RECOVERY_NOTICE));
 }
 
 void EnterRecovery() {  
 	// Let the espressif know we are still booting
 	SPI0_PUSHR_SLAVE = STATE_BUSY;
 
+	UART::flush();
 	SyncToBody();
 	
 	// These are the requirements to boot immediately into the application
 	// if any test fails, the robot will not exit recovery mode
-	bool recovery_escape = 
-		(recovery_word != recovery_value) &&
-		CheckSig() &&
-		CheckEvilWord() &&
-		CheckBodyEvilWord();
-
+	bool recovery_force = recovery_word != recovery_value;
+	bool remove_boot_ok = SendBodyCommand(COMMAND_BOOT_READY);
+	bool boot_ok = recovery_force && CheckBootReady() && remove_boot_ok;
+	
 	// If the body says it's safe, feel free to exit
-	if (recovery_escape && SendBodyCommand(COMMAND_DONE)) {
+	if (boot_ok && SendBodyCommand(COMMAND_DONE)) {
 		return ;
 	}
 
 	// We are now ready to start receiving commands
 	SPI0_PUSHR_SLAVE = STATE_IDLE;
+	int next_idle = 0;
 	for (;;) {
-		// Make sure that our 
-    while (WaitForWord() != COMMAND_HEADER);
+		// Keep the NRF happy by poking it occasionally
+		int count = GetMicroCounter();
+		if (next_idle - count <= 0) {
+			UART::writeByte(COMMAND_IDLE);
+			next_idle = count + 50000;
+		}
+		
+		// Wait for a command from the host
+    if (WaitForWord() != COMMAND_HEADER) {
+			continue ;
+		}
     
 		SPI0_PUSHR_SLAVE = STATE_BUSY;
     
@@ -252,12 +257,11 @@ void EnterRecovery() {
 				SPI0_PUSHR_SLAVE = (CheckSig() && CheckBodySig()) ? STATE_IDLE : STATE_NACK;
 				break ;
 
-      case COMMAND_EVIL_WORD:
-				SPI0_PUSHR_SLAVE = (CheckEvilWord() && CheckBodyEvilWord()) ? STATE_IDLE : STATE_NACK;
+      case COMMAND_BOOT_READY:
+				SPI0_PUSHR_SLAVE = (CheckBootReady() && SendBodyCommand(COMMAND_BOOT_READY)) ? STATE_IDLE : STATE_NACK;
 				break ;
 				
 			case COMMAND_SET_LED:
-				;
 				SPI0_PUSHR_SLAVE = SetLight(WaitForWord()) ? STATE_IDLE : STATE_NACK;
 				break ;
 

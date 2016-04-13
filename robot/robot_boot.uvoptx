@@ -150,11 +150,6 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>SCB-&gt;VTOR</ItemText>
-        </Ww>
-        <Ww>
-          <count>1</count>
-          <WinNumber>1</WinNumber>
           <ItemText>recovery_header</ItemText>
         </Ww>
       </WatchWindow1>
