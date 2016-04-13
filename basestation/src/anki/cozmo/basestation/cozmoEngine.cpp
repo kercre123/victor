@@ -416,7 +416,7 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalibration,
                                         [robot](u8* data, size_t size) {
                                         
-                                        RobotInterface::CameraCalibration payload;
+                                        CameraCalibration payload;
                                         payload.Unpack(data, size);
                                         PRINT_NAMED_INFO("CozmoEngine.ReadCameraCalibration",
                                                          "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f cy: %f)",

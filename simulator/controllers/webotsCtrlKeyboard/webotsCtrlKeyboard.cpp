@@ -1478,14 +1478,25 @@ namespace Anki {
               }
               case (s32)'%':
               {
+                SendComputeCameraCalibration();
+                break;
+              }
+              case (s32)'&':
+              {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  PRINT_NAMED_INFO("SendNVStorageEraseEntry", "NVEntry_CameraCalibration");
+                  SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CameraCalibration);
+                } else {
+
                   f32 focalLength_x = root_->getField("focalLength_x")->getSFFloat();
                   f32 focalLength_y = root_->getField("focalLength_y")->getSFFloat();
                   f32 center_x = root_->getField("imageCenter_x")->getSFFloat();
                   f32 center_y = root_->getField("imageCenter_y")->getSFFloat();
+                  PRINT_NAMED_INFO("SendCameraCalibrationraseEntry",
+                                   "fx: %f, fy: %f, cx: %f, cy: %f",
+                                   focalLength_x, focalLength_y, center_x, center_y);
+
                   SendCameraCalibration(focalLength_x, focalLength_y, center_x, center_y);
-                } else {
-                  SendComputeCameraCalibration();
                 }
                 break;
               }

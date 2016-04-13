@@ -20,6 +20,7 @@
 #include "clad/types/objectTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/visionModes.h"
+#include "clad/types/nvStorageTypes.h"
 #include <webots/Supervisor.hpp>
 #include <unordered_set>
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
@@ -239,6 +240,9 @@ protected:
   void SendClearCalibrationImages();
   void SendComputeCameraCalibration();
   void SendCameraCalibration(f32 focalLength_x, f32 focalLength_y, f32 center_x, f32 center_y);
+  void SendNVStorageWriteEntry(NVStorage::NVEntryTag tag, u8* data, size_t size);
+  void SendNVStorageReadEntry(NVStorage::NVEntryTag tag);
+  void SendNVStorageEraseEntry(NVStorage::NVEntryTag tag);
   
 
   // ====== Accessors =====

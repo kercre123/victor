@@ -12,7 +12,7 @@
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-//#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -31,8 +31,13 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
 
   if (context) {
     // Setup game message handlers
-    //auto callback = std::bind(&NVStorageComponent::HandleGameEvents, this, std::placeholders::_1);
-    //_signalHandles.push_back(context->Subscribe(ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage, callback));
+    IExternalInterface *extInterface = context->GetExternalInterface();
+    auto writeCallback = std::bind(&NVStorageComponent::HandleNVStorageWriteEntry, this, std::placeholders::_1);
+    _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageWriteEntry, writeCallback));
+    auto readCallback = std::bind(&NVStorageComponent::HandleNVStorageReadEntry, this, std::placeholders::_1);
+    _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageReadEntry, readCallback));
+    auto eraseCallback = std::bind(&NVStorageComponent::HandleNVStorageEraseEntry, this, std::placeholders::_1);
+    _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageEraseEntry, eraseCallback));
 
     
     // Setup robot message handlers
@@ -78,27 +83,30 @@ u32 NVStorageComponent::GetTagRangeEnd(u32 startTag) const {
   }
 }
 
-bool NVStorageComponent::Write(NVStorage::NVEntryTag tag, u8* data, int size)
+bool NVStorageComponent::Write(NVStorage::NVEntryTag tag, u8* data, size_t size, bool broadcastResultToGame)
 {
+  // Sanity check on size
+  if (size > _kMaxNvStorageEntrySize) {
+    PRINT_NAMED_WARNING("NVStorageComponent.Write.SizeTooBig",
+                        "%zu bytes (limit %d bytes)", size, _kMaxNvStorageEntrySize);
+    return false;
+  }
+  
   // Copy data locally and break up into as many messages as needed
-  _dataToSendQueue.emplace((u32)tag, std::vector<u8>(data,data+size));
+  _dataToSendQueue.emplace(tag, std::vector<u8>(data,data+size), true);
 
   return true;
 }
   
-void NVStorageComponent::Erase(NVStorage::NVEntryTag tag)
+void NVStorageComponent::Erase(NVStorage::NVEntryTag tag, bool broadcastResultToGame)
 {
-  NVStorage::NVStorageWrite eraseMsg;
-  eraseMsg.reportTo = NVStorage::NVReportDest::ENGINE;
-  eraseMsg.writeNotErase = false;
-  eraseMsg.reportEach = false;
-  eraseMsg.reportDone = true;
-  eraseMsg.rangeEnd = GetTagRangeEnd((u32)tag);
-  eraseMsg.entry.tag = (u32)tag;
-  _robot.SendMessage(RobotInterface::EngineToRobot(std::move(eraseMsg)));
+  _dataToSendQueue.emplace(tag, std::vector<u8>(), false);
 }
   
-bool NVStorageComponent::Read(NVStorage::NVEntryTag tag, NVStorageReadCallback callback, std::vector<u8>* data)
+bool NVStorageComponent::Read(NVStorage::NVEntryTag tag,
+                              NVStorageReadCallback callback,
+                              std::vector<u8>* data,
+                              bool broadcastResultToGame)
 {
   // Check if tag already requested
   u32 entryTag = (u32)tag;
@@ -132,6 +140,7 @@ bool NVStorageComponent::Read(NVStorage::NVEntryTag tag, NVStorageReadCallback c
     _recvDataMap[entryTag].deleteVectorWhenDone = false;
   }
   _recvDataMap[entryTag].callback = callback;
+  _recvDataMap[entryTag].broadcastResultToGame = broadcastResultToGame;
   
   return true;
 }
@@ -142,42 +151,58 @@ void NVStorageComponent::Update()
   // If there are things to send, send them.
   // Send up to one blob per Update() call.
   if (!_dataToSendQueue.empty()) {
-    SendDataObject* sendData = &_dataToSendQueue.front();
-    
-    u32 bytesLeftToSend = (u32)sendData->data.size() - sendData->sendIndex;
-    u32 bytesToSend = MIN(bytesLeftToSend, _kMaxNvStorageBlobSize);
-    assert(bytesToSend > 0);
-    
+    WriteDataObject* sendData = &_dataToSendQueue.front();
+
+    // Start constructing write message
     NVStorage::NVStorageWrite writeMsg;
     writeMsg.reportTo = NVStorage::NVReportDest::ENGINE;
-    writeMsg.writeNotErase = true;
+    writeMsg.writeNotErase = sendData->writeNotErase;
     writeMsg.reportEach = false;
     writeMsg.reportDone = true;
-    writeMsg.rangeEnd = (u32)NVStorage::NVEntryTag::NVEntry_Invalid;
+    writeMsg.rangeEnd = GetTagRangeEnd((u32)sendData->baseTag); // (u32)NVStorage::NVEntryTag::NVEntry_Invalid;
     writeMsg.entry.tag = sendData->nextTag;
-    writeMsg.entry.blob = std::vector<u8>(sendData->data.begin() + sendData->sendIndex,
-                                          sendData->data.begin() + sendData->sendIndex + bytesToSend);
-    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(writeMsg)));
-
-    _sentWriteTags[sendData->baseTag].insert(sendData->nextTag);
-    ++sendData->nextTag;
-    sendData->sendIndex += bytesToSend;
-
-
     
-    if (DEBUG_NVSTORAGE_COMPONENT) {
-      PRINT_NAMED_DEBUG("NVStorageComponent.Update.SendingWriteMsg",
-                        "tag: 0x%x, write: %d, bytesSent: %d",
-                        writeMsg.entry.tag,
-                        writeMsg.writeNotErase,
-                        bytesToSend);
-    }
+    if (sendData->writeNotErase) {
+      // Send the next blob of data to send for this multi-blob message
+      u32 bytesLeftToSend = (u32)sendData->data.size() - sendData->sendIndex;
+      u32 bytesToSend = MIN(bytesLeftToSend, _kMaxNvStorageBlobSize);
+      assert(bytesToSend > 0);
+      
+      writeMsg.entry.blob = std::vector<u8>(sendData->data.begin() + sendData->sendIndex,
+                                            sendData->data.begin() + sendData->sendIndex + bytesToSend);
 
-    
-    // Sent last blob?
-    if (bytesToSend < _kMaxNvStorageBlobSize) {
+      _sentWriteTags[(u32)sendData->baseTag].insert(sendData->nextTag);
+      ++sendData->nextTag;
+      sendData->sendIndex += bytesToSend;
+      
+      if (DEBUG_NVSTORAGE_COMPONENT) {
+        PRINT_NAMED_DEBUG("NVStorageComponent.Update.SendingWriteMsg",
+                          "BaseTag: %s, tag: 0x%x, write: %d, bytesSent: %d",
+                          EnumToString(sendData->baseTag),
+                          writeMsg.entry.tag,
+                          writeMsg.writeNotErase,
+                          bytesToSend);
+      }
+      
+      // Sent last blob?
+      if (bytesToSend < _kMaxNvStorageBlobSize) {
+        _dataToSendQueue.pop();
+      }
+
+      
+    } else {
+
+      if (DEBUG_NVSTORAGE_COMPONENT) {
+        PRINT_NAMED_DEBUG("NVStorageComponent.Update.SendingEraseMsg",
+                          "tag: %s", EnumToString(sendData->baseTag));
+      }
+      
+      // This is an erase message so we're definitely done with it
       _dataToSendQueue.pop();
     }
+    
+    _robot.SendMessage(RobotInterface::EngineToRobot(std::move(writeMsg)));
+
   }
   
 }
@@ -306,21 +331,33 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
 
 }
 
-
   
-/*
-  
-void NVStorageComponent::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void NVStorageComponent::HandleNVStorageWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
-  switch (event.GetData().GetTag())
-  {
-    default:
-    {
-      PRINT_NAMED_ERROR("NVStorageComponent::HandleGameEvents unexpected message","%hhu",event.GetData().GetTag());
-    }
-  }
+  ExternalInterface::NVStorageWriteEntry payload = event.GetData().Get_NVStorageWriteEntry();
+  PRINT_NAMED_INFO("NVStorageComponent::HandleNVStorageWriteEntry",
+                   "Tag: %s, size %zu",
+                   EnumToString(payload.tag), payload.Size());
+  
+  Write(payload.tag, payload.data.data(), payload.Size(), true);
 }
- */
+  
+void NVStorageComponent::HandleNVStorageReadEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  ExternalInterface::NVStorageReadEntry payload = event.GetData().Get_NVStorageReadEntry();
+  PRINT_NAMED_INFO("NVStorageComponent::HandleNVStorageReadEntry", "Tag: %s", EnumToString(payload.tag));
+  
+  Read(payload.tag, {}, nullptr, true);
+}
+
+void NVStorageComponent::HandleNVStorageEraseEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  ExternalInterface::NVStorageEraseEntry payload = event.GetData().Get_NVStorageEraseEntry();
+  PRINT_NAMED_INFO("NVStorageComponent::HandleNVStorageEraseEntry", "Tag: %s", EnumToString(payload.tag));
+
+  Erase(payload.tag, true);
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

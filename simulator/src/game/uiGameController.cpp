@@ -1334,6 +1334,43 @@ namespace Anki {
       SendMessage(message);
     }
     
+    void UiGameController::SendNVStorageWriteEntry(NVStorage::NVEntryTag tag, u8* data, size_t size)
+    {
+      if (size > 1024) {
+        PRINT_NAMED_WARNING("UiGameController.SendNVStorageWriteEntry.SizeTooBig",
+                            "Tag: %s, size: %zu (limit 1024)",
+                            EnumToString(tag), size);
+        return;
+      }
+      
+      ExternalInterface::NVStorageWriteEntry msg;
+      msg.tag = tag;
+      memcpy(msg.data.data(), data, size);
+      
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_NVStorageWriteEntry(msg);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendNVStorageReadEntry(NVStorage::NVEntryTag tag)
+    {
+      ExternalInterface::NVStorageReadEntry msg;
+      msg.tag = tag;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_NVStorageReadEntry(msg);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendNVStorageEraseEntry(NVStorage::NVEntryTag tag)
+    {
+      ExternalInterface::NVStorageEraseEntry msg;
+      msg.tag = tag;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_NVStorageEraseEntry(msg);
+      SendMessage(message);
+    }
+    
+    
     void UiGameController::SendEnableVisionMode(VisionMode mode, bool enable)
     {
       ExternalInterface::EnableVisionMode m;

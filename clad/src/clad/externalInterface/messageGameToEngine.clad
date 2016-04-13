@@ -25,6 +25,7 @@
 #include "clad/types/globalVizOrigin.clad"
 #include "clad/audio/audioMessage.clad"
 #include "clad/types/visionModes.clad"
+#include "clad/types/nvStorageTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -919,6 +920,26 @@ message ClearCalibrationImages {
 
 message ComputeCameraCalibration {
   uint_8 robotID,
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Robot flash
+///////////////////////////////////////////////////////////////////////////////
+
+message NVStorageEraseEntry {
+  NVStorage::NVEntryTag tag
+}
+
+message NVStorageWriteEntry {
+  NVStorage::NVEntryTag tag,
+  uint_8  data[1024],
+  uint_8  index       // If tag is a multi-blob entry, index is the blob index starting at 0 for the first blob.
+}
+
+// If multi-blob entry, game will have to dechunk.
+message NVStorageReadEntry {
+  NVStorage::NVEntryTag tag
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

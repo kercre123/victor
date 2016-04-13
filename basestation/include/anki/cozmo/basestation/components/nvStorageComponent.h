@@ -56,10 +56,10 @@ public:
   // Save data to robot under the given tag.
   // Returns true if data passes checks to be sent to robot.
   // Caller should expect a MessageEngineToGame indicating success/failure of write.
-  bool Write(NVStorage::NVEntryTag tag, u8* data, int size);
+  bool Write(NVStorage::NVEntryTag tag, u8* data, size_t size, bool broadcastResultToGame = false);
   
   // Erase the given entry from robot flash
-  void Erase(NVStorage::NVEntryTag tag);
+  void Erase(NVStorage::NVEntryTag tag, bool broadcastResultToGame = false);
   
   // Request data stored on robot under the given tag.
   // Executes specified callback when data is received.
@@ -67,7 +67,10 @@ public:
   // Returns true if request was successfully sent.
   // TODO: Some other message gets sent when the data is ready.
   using NVStorageReadCallback = std::function<void(u8* data, size_t size)>;
-  bool Read(NVStorage::NVEntryTag tag, NVStorageReadCallback callback = {}, std::vector<u8>* data = nullptr);
+  bool Read(NVStorage::NVEntryTag tag,
+            NVStorageReadCallback callback = {},
+            std::vector<u8>* data = nullptr,
+            bool broadcastResultToGame = false);
 
   void Update();
 
@@ -76,11 +79,15 @@ private:
   
   Robot&       _robot;
   
-  // Handlers
+  // Robot event handlers
   void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
   
-  void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  // Game event handlers
+  void HandleNVStorageWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleNVStorageReadEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleNVStorageEraseEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  
   
   std::vector<Signal::SmartHandle> _signalHandles;
 
@@ -93,17 +100,19 @@ private:
   // Given any tag, returns the assumed end-of-range tag
   u32 GetTagRangeEnd(u32 startTag) const;
   
-  struct SendDataObject {
-    SendDataObject(u32 tag, std::vector<u8>&& dataVec) {
+  struct WriteDataObject {
+    WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>&& dataVec, bool write) {
       baseTag = tag;
-      nextTag = tag;
+      nextTag = (u32)tag;
       sendIndex = 0;
       data = dataVec;
+      writeNotErase = write;
     }
-    u32 baseTag;
+    NVStorage::NVEntryTag baseTag;
     u32 nextTag;
     u32 sendIndex;
     std::vector<u8> data;
+    bool writeNotErase;
   };
   
   struct RecvDataObject {
@@ -115,11 +124,12 @@ private:
     std::vector<u8> *data;
     NVStorageReadCallback callback;
     bool deleteVectorWhenDone;
+    bool broadcastResultToGame;
   };
   
   
   // Queue of pairs of (nextSendIndex, data) to be sent to robot for saving
-  std::queue<SendDataObject> _dataToSendQueue;
+  std::queue<WriteDataObject> _dataToSendQueue;
   
   // Map of all tags sent for writing the specified NVEntryTag
   std::unordered_map<u32, std::unordered_set<u32> > _sentWriteTags;
@@ -127,6 +137,7 @@ private:
   // Map of requested tag from robot to vector where the data should be stored
   std::unordered_map<u32, RecvDataObject> _recvDataMap;
 
+  static constexpr u32 _kMaxNvStorageEntrySize       = 20000;
   static constexpr u32 _kMaxNvStorageBlobSize        = 1024;
   static constexpr u32 _kMaxNumBlobsInMultiBlobEntry = 40;
 };
