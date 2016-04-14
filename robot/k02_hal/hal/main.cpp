@@ -17,6 +17,7 @@
 #include "dac.h"
 #include "wifi.h"
 #include "spine.h"
+#include "watchdog.h"
 #include "hal/i2c.h"
 #include "hal/imu.h"
 
@@ -53,6 +54,7 @@ namespace Anki
         SPI::ManageDrop();
         UART::Transmit();
         IMU::Manage();
+        Watchdog::kick(WDOG_HAL_EXEC);
       }
     }
   }
@@ -84,12 +86,13 @@ int main (void)
 {
   using namespace Anki::Cozmo::HAL;
 
+  Watchdog::init();
   UART::DebugInit();
-	SPI::Init();
+  SPI::Init();
   DAC::Init();
 
   // Boot boop
-	DAC::Tone();
+  DAC::Tone();
   MicroWait(10);
   DAC::Mute();
 

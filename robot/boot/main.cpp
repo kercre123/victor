@@ -11,7 +11,7 @@
 
 // This is the remote entry point recovery mode
 int main (void) {
-	using namespace Anki::Cozmo::HAL;
+  using namespace Anki::Cozmo::HAL;
 
   // Power up all ports
   SIM_SCGC5 |=
@@ -20,18 +20,18 @@ int main (void) {
     SIM_SCGC5_PORTC_MASK |
     SIM_SCGC5_PORTD_MASK |
     SIM_SCGC5_PORTE_MASK;
-	
-	__disable_irq();
 
-	TimerInit();
-	Power::init();
-	SPI::init();
-	UART::init();
-	
-	EnterRecovery();
+  __disable_irq();
 
-	UART::shutdown();
-  
-	SCB->VTOR = (uint32_t) IMAGE_HEADER->vector_tbl;
+  TimerInit();
+  Power::init();
+  SPI::init();
+  UART::init();
+
+  EnterRecovery();
+
+  UART::shutdown();
+
+  SCB->VTOR = (uint32_t) IMAGE_HEADER->vector_tbl;
   IMAGE_HEADER->entry_point();
 }
