@@ -24,6 +24,7 @@ enum uint_8 BehaviorType {
   ExploreMarkedCube,
   ExploreCliff,
   ExploreLookAroundInPlace,
+  ExploreVisitPossibleMarker,
   RequestGameSimple,
   RollBlock,
   FactoryTest,

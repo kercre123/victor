@@ -60,6 +60,13 @@ void BehaviorWhiteboard::Init()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorWhiteboard::OnRobotDelocalized()
+{
+  // at the moment the whiteboard won't try to update origins, so just flush all poses
+  _possibleMarkers.clear();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorWhiteboard::DisableCliffReaction(void* id)
 {
   _disableCliffIds.insert(id);

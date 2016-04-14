@@ -1423,7 +1423,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       // visibility in each camera
       const Vision::Camera& camera = _robot->GetVisionComponent().GetCamera();
       ASSERT_NAMED(camera.IsCalibrated(), "BlockWorld.CheckForUnobservedObjects.CameraNotCalibrated");
-      for(auto unobserved : unobservedObjects) {
+      for(const auto& unobserved : unobservedObjects) {
         
         // Remove objects that should have been visible based on their last known
         // location, but which must not be there because we saw something behind

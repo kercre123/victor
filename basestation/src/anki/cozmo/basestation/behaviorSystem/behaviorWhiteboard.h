@@ -32,7 +32,18 @@ class Robot;
 class BehaviorWhiteboard
 {
 public:
-
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Types
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  struct PossibleMarker {
+    PossibleMarker( const Pose3d& p, ObjectType objType ) : pose(p), type(objType) {}
+    Pose3d pose;
+    ObjectType type;
+  };
+  using PossibleMarkerList = std::list<PossibleMarker>;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization/destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -42,6 +53,16 @@ public:
   
   // initializes the whiteboard, registers to events
   void Init();
+  
+  // what to do when the robot is delocalized
+  void OnRobotDelocalized();
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Accessors
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // list of possible markers
+  const PossibleMarkerList& GetPossibleMarkers() const { return _possibleMarkers; }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Tracked values
@@ -64,16 +85,6 @@ public:
   void HandleMessage(const T& msg);
 
 private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Types
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  struct PossibleMarker {
-    PossibleMarker( const Pose3d& p, ObjectType objType ) : pose(p), type(objType) {}
-    Pose3d pose;
-    ObjectType type;
-  };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods

@@ -38,6 +38,7 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -329,6 +330,9 @@ namespace Anki {
       
       // create a new memory map for this origin
       _blockWorld.CreateLocalizedMemoryMap(_worldOrigin);
+      
+      // notify behavior whiteboard
+      _behaviorMgr.GetWhiteboard().OnRobotDelocalized();
       
     } // Delocalize()
     
