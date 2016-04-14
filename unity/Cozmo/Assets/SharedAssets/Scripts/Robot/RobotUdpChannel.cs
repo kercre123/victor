@@ -95,7 +95,7 @@ public class RobotUdpChannel : UdpChannel<RobotMessageIn, RobotMessageOut> {
     pingMessage = new RobotMessageOut();
     pingMessage.Message.Ping = new Anki.Cozmo.ExternalInterface.Ping();
     disconnectionMessage = new RobotMessageOut();
-    disconnectionMessage.Message.DisconnectFromUiDevice = new DisconnectFromUiDevice();
+    disconnectionMessage.Message.DisconnectFromUiDevice = new DisconnectFromUiDevice( Anki.Cozmo.UiConnectionType.UI, 0);
   }
 
 
