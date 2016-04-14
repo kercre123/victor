@@ -229,7 +229,7 @@ public class AnimationEventEditor : EditorWindow {
     return pair;
   }
 
-  [MenuItem("Cozmo/Animation Event Map #%g")]
+  [MenuItem("Cozmo/Animation/Animation Event Map #%g")]
   public static void OpenAnimationGroupEventEditor() {
     AnimationEventEditor window = (AnimationEventEditor)EditorWindow.GetWindow(typeof(AnimationEventEditor));
     AnimationEventEditor.LoadData();

@@ -437,14 +437,14 @@ namespace Anki {
             // Unload the bundle itself
             loadedAssetBundle.AssetBundle.Unload(destroyObjectsCreatedFromBundle);
             _LoadedAssetBundles.Remove(assetBundleName);
+            Log(LogType.Log, "Unloaded asset bundle " + assetBundleName);
             PrintLoadedBundleInfo();
 
             // Unload the bundle dependencies
             if (loadedAssetBundle.Dependencies.Length != 0) {
-              Log(LogType.Log, "Unloading dependencies for asset bundle " + assetBundleName);
 
               for (int i = 0; i < loadedAssetBundle.Dependencies.Length; i++) {
-                Log(LogType.Log, "Unloading asset bundle " + loadedAssetBundle.Dependencies[i]);
+                Log(LogType.Log, "Try unloading " + loadedAssetBundle.Dependencies[i] + " which " + assetBundleName + " depends on");
                 UnloadAssetBundleInternal(loadedAssetBundle.Dependencies[i], destroyObjectsCreatedFromBundle);
               }
             }
@@ -463,10 +463,7 @@ namespace Anki {
           yield break;
         }
 
-        Log(LogType.Log, "Trying LoadAssetAsync " + assetName + " from asset bundle " + assetBundleName + ".");
         AssetBundleRequest request = loadedAssetBundle.AssetBundle.LoadAssetAsync<AssetType>(assetName);
-        Log(LogType.Log, "Trying LoadAssetAsync " + assetName + " from asset bundle " + assetBundleName + ". Request value is "
-        + ((request == null) ? "(NULL)" : request.asset.ToString()));
         yield return request;
 
         if (request.asset == null) {

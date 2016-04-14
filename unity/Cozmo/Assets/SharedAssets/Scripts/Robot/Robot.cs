@@ -319,7 +319,7 @@ public class Robot : IRobot {
       dockDecel_mmps2: 100.0f,
       reverseSpeed_mmps: 80.0f
     );
-            
+
     BackpackLights = new ILight[Singleton<SetBackpackLEDs>.Instance.onColor.Length];
 
     EmotionValues = new float[(int)Anki.Cozmo.EmotionType.Count];
