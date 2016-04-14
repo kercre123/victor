@@ -19,7 +19,7 @@ We are using [Unity 5.3.1p3](https://unity3d.com/unity/qa/patch-releases/5.3.1p3
 
 Right now we use one scene and load assets by code. The main scene is located here
 
-    /unity/Cozmo/Assets/AssetBundles/MainScene-Bundle/HomeHub.unity
+    /unity/Cozmo/Assets/Scenes/Bootstrap.unity
 
 ### Xcode
 

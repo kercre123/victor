@@ -107,7 +107,7 @@ namespace Anki {
         }
       }
 
-      [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles")]
+      [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles %#a")]
       public static void BuildAssetBundles() {
         BuildAssetBundlesInternal(EditorUserBuildSettings.activeBuildTarget);
       }

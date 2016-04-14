@@ -213,17 +213,7 @@ public class StartupManager : MonoBehaviour {
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
     StopCoroutine(UpdateLoadingDots());
-    assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: UnloadMainSceneAssetBundle);
-  }
-
-  private void UnloadMainSceneAssetBundle(bool successLoadScene) {
-    // INGO: This seems to also unload all the dependencies...
-    if (successLoadScene) {
-      AssetBundleManager.Instance.UnloadAssetBundle(_MainSceneAssetBundleName, destroyObjectsCreatedFromBundle: false);
-    }
-    else {
-      DAS.Error("StartupManager.UnloadMainSceneAssetBundle", "Could not load main scene!");
-    }
+    assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: null);
   }
 
   private IEnumerator UpdateLoadingDots() {
