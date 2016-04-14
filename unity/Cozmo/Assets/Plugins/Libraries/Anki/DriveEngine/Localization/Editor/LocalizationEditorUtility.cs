@@ -125,6 +125,7 @@ public static class LocalizationEditorUtility {
   private const string kLocalizationFolder = "Assets/StreamingAssets/LocalizedStrings/en-US/";
 
   public static string[] LocalizationFiles { get { return _LocalizationFiles; } }
+
   public static string[] LocalizationKeys { get { return _LocalizationKeys; } }
 
   public static LocalizationDictionary CreateLocalizationDictionary() {
@@ -190,7 +191,7 @@ public static class LocalizationEditorUtility {
 
   // find key in any file
   public static string GetTranslation(string key, out string fileName) {
-    foreach(var kvp in _LocalizationDictionaries) {
+    foreach (var kvp in _LocalizationDictionaries) {
       var dict = kvp.Value;
       fileName = kvp.Key;
       LocalizationDictionaryEntry entry;
@@ -228,7 +229,7 @@ public static class LocalizationEditorUtility {
     File.WriteAllText(kLocalizationFolder + fileName + ".json", JsonConvert.SerializeObject(dict, Formatting.Indented));
   }
 
-  private const string kGeneratedLocalizationKeysFilePath = "Assets/Libraries/Anki/DriveEngine/Localization/GeneratedKeys/LocalizationKeys.cs";
+  private const string kGeneratedLocalizationKeysFilePath = "Assets/Plugins/Libraries/Anki/DriveEngine/Localization/GeneratedKeys/LocalizationKeys.cs";
   private const string kGeneratedLocalizationKeysSourceLocale = "en-us";
 
   [MenuItem("Cozmo/Localization/Generate Localization Key Constants")]
