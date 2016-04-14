@@ -11,9 +11,6 @@ enum uint_8 BehaviorGroup {
 
     Reactionary = 0,
     AffectsBlocks,
-    ChangesPosition,
-    ChangesOrientation,
-    MovesLift,
     MiniGame,
     RequestSpeedTap,
     RequestSimon,

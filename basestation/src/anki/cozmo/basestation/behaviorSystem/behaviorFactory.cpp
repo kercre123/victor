@@ -19,14 +19,11 @@
 #include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 #include "../behaviors/exploration/behaviorExploreMarkedCube.h"
 #include "../behaviors/exploration/behaviorExploreVisitPossibleMarker.h"
-#include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
-#include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
-#include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPlayAnim.h"
 #include "anki/cozmo/basestation/behaviors/behaviorPounceOnMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
@@ -34,7 +31,6 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
-#include "anki/cozmo/basestation/behaviors/behaviorGatherBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 
@@ -77,16 +73,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::LookAround:
     {
       newBehavior = new BehaviorLookAround(robot, config);
-      break;
-    }
-    case BehaviorType::OCD:
-    {
-      newBehavior = new BehaviorOCD(robot, config);
-      break;
-    }
-    case BehaviorType::Fidget:
-    {
-      newBehavior = new BehaviorFidget(robot, config);
       break;
     }
     case BehaviorType::InteractWithFaces:
@@ -132,11 +118,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::FindFaces:
     {
       newBehavior = new BehaviorFindFaces(robot, config);
-      break;
-    }
-    case BehaviorType::GatherBlocks:
-    {
-      newBehavior = new BehaviorGatherBlocks(robot, config);
       break;
     }
     case BehaviorType::ExploreMarkedCube:

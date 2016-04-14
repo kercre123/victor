@@ -30,7 +30,7 @@ static const char* kTestBehavior1Json =
 "   \"name\" : \"Test1\","
 "   \"behaviorGroups\" : ["
 "     \"AffectsBlocks\","
-"     \"ChangesPosition\""
+"     \"RequestSpeedTap\""
 "   ]"
 "}";
 
@@ -39,8 +39,8 @@ static const char* kTestBehavior2Json =
 "   \"behaviorType\" : \"NoneBehavior\","
 "   \"name\" : \"Test2\","
 "   \"behaviorGroups\" : ["
-"     \"ChangesOrientation\","
-"     \"ChangesPosition\""
+"     \"RequestSimon\","
+"     \"RequestSpeedTap\""
 "   ]"
 "}";
 
@@ -49,8 +49,8 @@ static const char* kTestBehavior3Json =
 "   \"behaviorType\" : \"NoneBehavior\","
 "   \"name\" : \"Test3\","
 "   \"behaviorGroups\" : ["
-"     \"MovesLift\","
-"     \"ChangesPosition\""
+"     \"RequestCubePounce\","
+"     \"RequestSpeedTap\""
 "   ]"
 "}";
 
@@ -59,12 +59,12 @@ static const char* kTestBehavior3Json =
 static const char* kTestChooser1Json =
 "{"
 "   \"disabledGroups\" : ["
-"     \"MovesLift\","
-"     \"ChangesPosition\""
+"     \"RequestCubePounce\","
+"     \"RequestSpeedTap\""
 "   ],"
 "   \"enabledGroups\" : ["
-"     \"MovesLift\","
-"     \"ChangesOrientation\""
+"     \"RequestCubePounce\","
+"     \"RequestSimon\""
 "   ],"
 "   \"disabledBehaviors\" : ["
 "     \"Test3\""
@@ -79,8 +79,8 @@ static const char* kTestChooser1Json =
 static const char* kTestChooser2Json =
 "{"
 "   \"disabledGroups\" : ["
-"     \"MovesLift\","
-"     \"ChangesPosition\""
+"     \"RequestCubePounce\","
+"     \"RequestSpeedTap\""
 "   ],"
 "   \"enabledGroups\" : ["
 "   ],"
