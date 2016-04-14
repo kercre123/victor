@@ -80,8 +80,6 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::imuRawDataChunk,             &Robot::HandleImuRawData);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::syncTimeAck,                 &Robot::HandleSyncTimeAck);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotPoked,                  &Robot::HandleRobotPoked);
-//  doRobotSubscribe(RobotInterface::RobotToEngineTag::nvData,                      &Robot::HandleNVData);
-//  doRobotSubscribe(RobotInterface::RobotToEngineTag::nvResult,                    &Robot::HandleNVOpResult);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotAvailable,              &Robot::HandleRobotSetID);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::motorCalibration,            &Robot::HandleMotorCalibration);
   
@@ -826,50 +824,6 @@ void Robot::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked(payload.robotID)));
 }
 
-/*
-void Robot::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  NVStorage::NVStorageBlob nvBlob = message.GetData().Get_nvData().blob;
-
-  switch((NVStorage::NVEntryTag)nvBlob.tag)
-  {
-    case NVStorage::NVEntryTag::NVEntry_CameraCalibration:
-    {
-      PRINT_NAMED_INFO("Robot.HandleNVData.CameraCalibration","");
-      
-      CameraCalibration payload;
-      payload.Unpack(nvBlob.blob.data(), nvBlob.blob.size());
-      PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
-                       "Received new %dx%d camera calibration from robot.", payload.ncols, payload.nrows);
-      
-      // Convert calibration message into a calibration object to pass to the robot
-      Vision::CameraCalibration calib(payload.nrows,
-                                      payload.ncols,
-                                      payload.focalLength_x,
-                                      payload.focalLength_y,
-                                      payload.center_x,
-                                      payload.center_y,
-                                      payload.skew);
-      
-      _visionComponent.SetCameraCalibration(calib);
-      break;
-    }
-    case NVStorage::NVEntryTag::NVEntry_Invalid:
-      PRINT_NAMED_WARNING("Robot.HandleNVData.UnhandledTag", "TODO: Implement handler for tag %d", nvBlob.tag);
-      break;
-    default:
-      PRINT_NAMED_WARNING("Robot.HandleNVData.InvalidTag", "Invalid tag %d", nvBlob.tag);
-      break;
-  }
-
-}
-
-void Robot::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  NVStorage::NVOpResult payload = message.GetData().Get_nvResult().report;
-  PRINT_NAMED_INFO("Robot.HandleNVOpResult","Tag: %d, Result: %d, write: %d", payload.tag, (int)payload.result, payload.write);
-}
-*/
   
 void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
 {

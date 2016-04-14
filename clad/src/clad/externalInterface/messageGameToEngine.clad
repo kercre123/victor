@@ -933,6 +933,7 @@ message NVStorageEraseEntry {
 
 message NVStorageWriteEntry {
   NVStorage::NVEntryTag tag,
+  uint_16 data_length,
   uint_8  data[1024],
   uint_8  index       // If tag is a multi-blob entry, index is the blob index starting at 0 for the first blob.
 }

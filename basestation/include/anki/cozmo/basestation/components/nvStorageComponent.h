@@ -128,11 +128,11 @@ private:
   };
   
   
-  // Queue of pairs of (nextSendIndex, data) to be sent to robot for saving
+  // Queue of data to be sent to robot for saving
   std::queue<WriteDataObject> _dataToSendQueue;
   
-  // Map of all tags sent for writing the specified NVEntryTag
-  std::unordered_map<u32, std::unordered_set<u32> > _sentWriteTags;
+  // Map of NVEntryTag to the number of tags expected to be confirmed written.
+  std::unordered_map<u32, u32 > _numWriteTagsToConfirm;
   
   // Map of requested tag from robot to vector where the data should be stored
   std::unordered_map<u32, RecvDataObject> _recvDataMap;

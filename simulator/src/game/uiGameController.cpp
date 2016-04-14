@@ -1345,6 +1345,7 @@ namespace Anki {
       
       ExternalInterface::NVStorageWriteEntry msg;
       msg.tag = tag;
+      msg.data_length = size;
       memcpy(msg.data.data(), data, size);
       
       ExternalInterface::MessageGameToEngine message;
