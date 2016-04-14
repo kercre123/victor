@@ -35,14 +35,14 @@ protected:
   
 public:
 
-  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
+  virtual bool IsRunnable(const Robot& robot) const override;
 
 protected:
 
-  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
-  virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
-  virtual float  EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const override;
+  virtual Result InitInternal(Robot& robot) override;
+  virtual Result InterruptInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
+  virtual float  EvaluateRunningScoreInternal(const Robot& robot) const override;
 
 private:
 

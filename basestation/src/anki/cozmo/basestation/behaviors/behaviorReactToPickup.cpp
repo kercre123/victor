@@ -45,7 +45,7 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
 
 }
 
-bool BehaviorReactToPickup::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorReactToPickup::IsRunnable(const Robot& robot) const
 {
   switch (_currentState)
   {
@@ -64,12 +64,12 @@ bool BehaviorReactToPickup::IsRunnable(const Robot& robot, double currentTime_se
   return false;
 }
 
-Result BehaviorReactToPickup::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorReactToPickup::InitInternal(Robot& robot)
 {
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
 {
   switch (_currentState)
   {
@@ -122,7 +122,7 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot, double cur
   return Status::Complete;
 }
 
-Result BehaviorReactToPickup::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorReactToPickup::InterruptInternal(Robot& robot)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)
@@ -132,7 +132,7 @@ Result BehaviorReactToPickup::InterruptInternal(Robot& robot, double currentTime
   return Result::RESULT_OK;
 }
   
-void BehaviorReactToPickup::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorReactToPickup::StopInternal(Robot& robot)
 {
 }
 

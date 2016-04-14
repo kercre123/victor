@@ -30,20 +30,20 @@ private:
 public:
 
   // checks if the motion is within pouncing distance
-  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
+  virtual bool IsRunnable(const Robot& robot) const override;
 
   // this can only run if it detects some motion
-  virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override;
+  virtual float EvaluateScoreInternal(const Robot& robot) const override;
 
 protected:
 
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
   virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override;
 
-  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
-  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
-  virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
+  virtual Result InitInternal(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
+  virtual Result InterruptInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
 
   float _maxPounceDist = 110.0f;
   float _minGroundAreaForPounce = 0.01f;
