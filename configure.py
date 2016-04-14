@@ -425,7 +425,7 @@ class EnginePlatformConfiguration(object):
             if self.options.command == 'clean':
                 command += ['-t', 'clean']
             # if this needs more features should add as ankibuild.ninja.build
-            results = subprocess.call(command, cwd=cwd_loc, shell=True)
+            results = subprocess.call(command, cwd=cwd_loc)
             if results:
                 sys.exit('[ERROR] running %s' % command)
 
