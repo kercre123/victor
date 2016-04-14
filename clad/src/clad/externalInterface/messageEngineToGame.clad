@@ -115,6 +115,9 @@ message RobotPoked {
     uint_8   robotID
 }
 
+message RobotStopped {
+}
+
 // Generic string for sending debug string up to game
 message DebugString {
     string    text

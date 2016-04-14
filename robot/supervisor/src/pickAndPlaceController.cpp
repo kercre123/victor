@@ -367,7 +367,7 @@ namespace Anki {
                   f32 relAngleToMarker = atan2_acc(markerPose.GetY() - robotPose_y, markerPose.GetX() - robotPose_x);
                   relAngleToMarker -= robotPose_angle.ToFloat();
 
-                  f32 targetAngle = (Localization::GetCurrentMatOrientation() + PI_F + relAngleToMarker).ToFloat();
+                  f32 targetAngle = (Localization::GetCurrPose_angle() + PI_F + relAngleToMarker).ToFloat();
                   SteeringController::ExecutePointTurn(targetAngle, 2, 10, 10, DEG_TO_RAD(1), true);
                   mode_ = ROTATE_FOR_CHARGER_APPROACH;
                 } else {

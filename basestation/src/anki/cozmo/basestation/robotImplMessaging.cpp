@@ -72,6 +72,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectStopped,         &Robot::HandleActiveObjectStopped);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectTapped,          &Robot::HandleActiveObjectTapped);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::goalPose,                    &Robot::HandleGoalPose);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::robotStopped,                &Robot::HandleRobotStopped);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::cliffEvent,                  &Robot::HandleCliffEvent);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::proxObstacle,                &Robot::HandleProxObstacle);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::chargerEvent,                &Robot::HandleChargerEvent);
@@ -538,6 +539,18 @@ void Robot::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& messa
   }
 }
 
+void Robot::HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
+  PRINT_NAMED_INFO("RobotImplMessaging.HandleRobotStopped", "%d", payload.reason);
+    
+  // Stop whatever we were doing
+  GetActionList().Cancel();
+
+  // Forward on with EngineToGame event
+  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotStopped()));
+}
+
   
 
 void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -550,11 +563,8 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   }
 
   if (cliffEvent.detected) {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f while driving %s",
-                     cliffEvent.x_mm, cliffEvent.y_mm, cliffEvent.drivingForward ? "forwards" : "backwards");
-    
-    // Stop whatever we were doing
-    GetActionList().Cancel();
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f",
+                     cliffEvent.x_mm, cliffEvent.y_mm);
     
     // Add cliff obstacle
     Pose3d cliffPose(cliffEvent.angle_rad, Z_AXIS_3D(), {cliffEvent.x_mm, cliffEvent.y_mm, 0}, GetWorldOrigin());
@@ -567,8 +577,7 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   SetIsOnCliff(cliffEvent.detected);
   
   // Forward on with EngineToGame event
-  CliffEvent payload = message.GetData().Get_cliffEvent();
-  Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(payload)));
+  Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(cliffEvent)));
 }
   
 void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message)

@@ -932,6 +932,7 @@ public:
     void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);

@@ -372,7 +372,7 @@ namespace Anki
         const Planning::PathSegmentDef::s_turn* currSeg = &(path_[currPathSegment_].GetDef().turn);
 
 #if(DEBUG_PATH_FOLLOWER)
-        Radians currOrientation = Localization::GetCurrentMatOrientation();
+        Radians currOrientation = Localization::GetCurrPose_angle();
         AnkiDebug( 33, "PathFollower", 220, "currPathSeg: %d, TURN  currAngle: %f, targetAngle: %f", 3,
                currPathSegment_, currOrientation.ToFloat(), currSeg->targetAngle);
 #endif

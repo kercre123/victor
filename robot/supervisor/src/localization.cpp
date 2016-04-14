@@ -759,6 +759,22 @@ namespace Anki {
         angle = orientation_;
       } // GetCurrentMatPose()
 
+      
+      f32 GetCurrPose_x()
+      {
+        return x_;
+      }
+      
+      f32 GetCurrPose_y()
+      {
+        return y_;
+      }
+      
+      Radians GetCurrPose_angle()
+      {
+        return orientation_;
+      }
+      
       Embedded::Pose2d GetCurrPose()
       {
         Embedded::Pose2d p(x_, y_, orientation_);
@@ -790,10 +806,6 @@ namespace Anki {
         robotOriginPose.angle() = driveCenterPose.GetAngle();
       }
 
-      Radians GetCurrentMatOrientation()
-      {
-        return orientation_;
-      }
 
       PoseFrameID_t GetPoseFrameId()
       {
