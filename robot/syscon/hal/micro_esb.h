@@ -26,7 +26,6 @@
 #define     UESB_CORE_RX_FIFO_SIZE          8
 
 #define     UESB_MAX_CHANNEL                125
-#define     UESB_MAX_PIPES                  8
 
 // Interrupt flags
 #define     UESB_INT_TX_SUCCESS_MSK         0x01
@@ -72,10 +71,8 @@ enum uesb_mainstate_t {
 struct uesb_address_desc_t
 {
   uint8_t                 rf_channel;
-  uint32_t                base0;
-  uint32_t                base1;
-  uint8_t                 prefix[8];
-  uint8_t                 rx_pipes_enabled;
+  uint32_t                address;
+  uint8_t              		payload_length;
 };
 
 struct uesb_config_t
@@ -84,7 +81,6 @@ struct uesb_config_t
   uint32_t             bitrate;
   uesb_crc_t           crc;
   uint32_t             tx_output_power;
-  uint8_t              payload_length;
   uint8_t              rf_addr_length;
 
   uint8_t              radio_irq_priority;
@@ -96,13 +92,10 @@ struct uesb_payload_t
 {
   // This is information regarding the state of the radio
   uint8_t length;
-  uint8_t pipe;
   uesb_address_desc_t address;
   int8_t  rssi;
 
   // This is the payload data
-  uint8_t pid;
-  uint8_t null;
   uint8_t data[UESB_CORE_MAX_PAYLOAD_LENGTH];
 };
 
@@ -116,8 +109,8 @@ struct uesb_payload_fifo_t
 
 uint32_t uesb_init(const uesb_config_t *parameters);
 uint32_t uesb_disable(void);
-uint32_t uesb_prepare_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *data, uint8_t length);
-uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, uint8_t pipe, const void *data, uint8_t length);
+uint32_t uesb_prepare_tx_payload(const uesb_address_desc_t *address, const void *data, uint8_t length);
+uint32_t uesb_write_tx_payload(const uesb_address_desc_t *address, const void *data, uint8_t length);
 uint32_t uesb_read_rx_payload(uesb_payload_t *payload);
 uint32_t uesb_start(void);
 uint32_t uesb_stop(void);
