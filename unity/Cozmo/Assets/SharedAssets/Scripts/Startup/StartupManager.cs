@@ -14,6 +14,18 @@ using Anki.Assets;
 public class StartupManager : MonoBehaviour {
 
   [SerializeField]
+  private Cozmo.UI.ProgressBar _LoadingBar;
+
+  [SerializeField]
+  private Anki.UI.AnkiTextLabel _LoadingBarLabel;
+
+  [SerializeField]
+  private float _AddDotSeconds = 0.25f;
+
+  private float _CurrentProgress;
+  private int _CurrentNumDots;
+
+  [SerializeField]
   private string[] _AssetBundlesToLoad;
 
   [SerializeField]
@@ -41,7 +53,11 @@ public class StartupManager : MonoBehaviour {
 
   // Use this for initialization
   private IEnumerator Start() {
-    // TODO: Start loading bar at 0
+    // Start loading bar at close to 0
+    _CurrentProgress = 0.05f;
+    _LoadingBar.SetProgress(_CurrentProgress);
+    _CurrentNumDots = 0;
+    StartCoroutine(UpdateLoadingDots());
 
     // Load asset bundler
     AssetBundleManager.IsLogEnabled = true;
@@ -49,13 +65,19 @@ public class StartupManager : MonoBehaviour {
     AssetBundleManager assetBundleManager = gameObject.AddComponent<AssetBundleManager>();
     yield return InitializeAssetBundleManager(assetBundleManager);
 
+    AddLoadingBarProgress(0.1f);
+
     // INGO: QA is testing on a release build so manually set to true for now
     // _IsDebugBuild = Debug.isDebugBuild;
     _IsDebugBuild = true;
 
     yield return LoadDebugAssetBundle(assetBundleManager, _IsDebugBuild);
 
+    AddLoadingBarProgress(0.1f);
+
     assetBundleManager.AddActiveVariant(GetActiveVariant());
+
+    AddLoadingBarProgress(0.1f);
 
     // Load initial asset bundles
     yield return LoadAssetBundles(assetBundleManager);
@@ -67,10 +89,11 @@ public class StartupManager : MonoBehaviour {
     if (Application.isPlaying) {
       // TODO: Localization based on variant?
       Localization.LoadStrings();
+
       AddComponents();
     }
 
-    // TODO: Destory loading bar
+    _LoadingBar.SetProgress(1.0f);
 
     // Load main scene
     LoadMainScene(assetBundleManager);
@@ -189,6 +212,7 @@ public class StartupManager : MonoBehaviour {
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
+    StopCoroutine(UpdateLoadingDots());
     assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: UnloadMainSceneAssetBundle);
   }
 
@@ -199,6 +223,26 @@ public class StartupManager : MonoBehaviour {
     }
     else {
       DAS.Error("StartupManager.UnloadMainSceneAssetBundle", "Could not load main scene!");
+    }
+  }
+
+  private IEnumerator UpdateLoadingDots() {
+    string loadingText = "Loading";
+    for (int i = 0; i < _CurrentNumDots; i++) {
+      loadingText += ".";
+    }
+    _CurrentNumDots = (_CurrentNumDots + 1) % 4;
+    _LoadingBarLabel.text = loadingText;
+    yield return new WaitForSeconds(_AddDotSeconds);
+  }
+
+  private void AddLoadingBarProgress(float amount) {
+    if (_CurrentProgress + amount > 0.95f) {
+      _LoadingBar.SetProgress(0.95f);
+    }
+    else {
+      _CurrentProgress += amount;
+      _LoadingBar.SetProgress(_CurrentProgress);
     }
   }
 }

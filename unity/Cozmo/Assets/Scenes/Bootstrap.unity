@@ -142,7 +142,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 32
+    m_FontSize: 20
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 0
@@ -289,7 +289,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 713063a23dd2042ddb0fd52e72645d5d, type: 3}
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -394,6 +394,18 @@ Prefab:
       propertyPath: m_RootOrder
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
+      propertyPath: _LoadingBarContainer
+      value: 
+      objectReference: {fileID: 1852183772}
+    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
+      propertyPath: _LoadingBar
+      value: 
+      objectReference: {fileID: 1317867611}
+    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
+      propertyPath: _LoadingBarLabel
+      value: 
+      objectReference: {fileID: 735345286}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 96563fa7c044a44afa01f530712be672, type: 2}
   m_IsPrefabParent: 0
@@ -446,7 +458,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0.019607844}
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 0.019607844}
   m_NormalizedViewPortRect:
     serializedVersion: 2
     x: 0
@@ -478,11 +490,11 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1831635511}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.4912033, y: 9.085854, z: 500.82257}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -961.5693, y: -510.87387, z: 1599.9657}
+  m_LocalScale: {x: 3.1946757, y: 3.1946757, z: 3.1946757}
   m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 2
+  m_Father: {fileID: 1852183776}
+  m_RootOrder: 1
 --- !u!1 &1852183772
 GameObject:
   m_ObjectHideFlags: 0
@@ -571,6 +583,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_Children:
   - {fileID: 1317867610}
+  - {fileID: 1831635516}
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
