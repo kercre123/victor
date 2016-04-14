@@ -45,6 +45,7 @@ public class AnimationManager {
 
 
 
+
 #else
   public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroupMaps"; } }
   #endif
@@ -95,7 +96,6 @@ public class AnimationManager {
       RobotCallback newCallback = null;
       if (!string.IsNullOrEmpty(animGroup)) {
         AnimationCallbackDict.TryGetValue(cozEvent, out newCallback);
-        Debug.LogWarning(string.Format("Received Event from EventManager, sending animgroup : {0}", animGroup));
         CurrentRobot.SendAnimationGroup(animGroup, newCallback);
       }
       else if (AnimationCallbackDict.TryGetValue(cozEvent, out newCallback)) {
