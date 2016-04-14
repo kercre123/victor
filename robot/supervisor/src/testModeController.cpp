@@ -289,6 +289,7 @@ namespace Anki {
         // Stop wheels and vision system
         WheelController::Enable();
         PickAndPlaceController::Reset();
+        SteeringController::ExecuteDirectDrive(0,0);
 
         // Stop lift and head
         LiftController::Enable();

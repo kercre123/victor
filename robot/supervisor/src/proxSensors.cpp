@@ -4,6 +4,7 @@
 #include "liftController.h"
 #include "animationController.h"
 #include "pickAndPlaceController.h"
+#include "steeringController.h"
 #include "wheelController.h"
 #include "imuFilter.h"
 #include "anki/cozmo/robot/hal.h"
@@ -74,6 +75,7 @@ namespace Anki {
             
             // Stop all motors and animations
             PickAndPlaceController::Reset();
+            SteeringController::ExecuteDirectDrive(0,0);
             
             // Send stopped message
             RobotInterface::RobotStopped msg;
