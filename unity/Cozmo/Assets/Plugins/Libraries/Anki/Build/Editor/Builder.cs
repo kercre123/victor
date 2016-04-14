@@ -273,11 +273,8 @@ namespace Anki {
 
       // Returns build options apropriate for the given build config
       private static BuildOptions GetBuildOptions(BuildTarget target, bool isDebugBuild, bool enableDebugging, bool connectWithProfiler) {
-        BuildOptions options = BuildOptions.AcceptExternalModificationsToPlayer;
-        if (target == BuildTarget.iOS) {
-          // Overwrite any existing xcodeproject files for iOS
-          options = BuildOptions.None;
-        }
+        BuildOptions options = BuildOptions.None;
+
         if (isDebugBuild) {
           options |= BuildOptions.Development;
         }
@@ -357,7 +354,7 @@ namespace Anki {
           {
             string configuration = Debug.isDebugBuild ? "Debug" : "Release";
             string platformName = Assets.AssetBundleManager.GetPlatformName(buildTarget);
-            string path = _kBuildOuputFolder + platformName + "/" + "unity-" + platformName + "/" + configuration + "-iphoneos/";
+            string path = _kBuildOuputFolder + platformName + "/" + "unity-" + platformName + "/" + configuration + "-" + platformName;
             return path;
           }
         default:
