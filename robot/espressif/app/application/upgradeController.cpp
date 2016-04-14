@@ -51,23 +51,6 @@ typedef struct
   RobotInterface::OTACommand cmd; ///< The command we are processing
 } OTAUpgradeTaskState;
 
-/// A task that just waits for the I2SPI message queue to clear before changing mode
-LOCAL bool TaskI2SPISwitchMode(uint32 mode)
-{
-  if (i2spiMessageQueueIsEmpty())
-  {
-    i2spiSwitchMode((I2SpiMode)mode);
-    return false;
-  }
-  else
-  {
-#ifdef DEBUG_OTA__
-    os_printf("w");
-#endif
-    return true;
-  }
-}
-
 LOCAL bool TaskDoEraseFlash(uint32 param)
 {
   RobotInterface::EraseFlash* msg = reinterpret_cast<RobotInterface::EraseFlash*>(param);
@@ -415,168 +398,6 @@ LOCAL bool TaskOtaRTIP(uint32 param)
   }
 }
 
-LOCAL bool TaskOtaBody(uint32 param)
-{
-  OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
-  
-  const uint32_t bodyBootloaderCode  = i2spiGetBodyBootloaderCode();
-  const uint16_t bodyBootloaderState = bodyBootloaderCode & 0xFFFF;
-  const uint16_t bodyBootloaderCount = bodyBootloaderCode >> 16;
-  
-#ifdef DEBUG_OTA__
-  static int32_t  prevIndex = 0xFFFF;
-  static int32_t  prevPhase = 0xFFFF;
-  static uint16_t prevState = 0xFFFF;
-  static uint16_t prevCount = 0;
-  if ((prevIndex != state->index) || (prevPhase != state->phase) || (prevState != bodyBootloaderState) || prevCount != bodyBootloaderCount)
-  {
-    prevIndex = state->index;
-    prevPhase = state->phase;
-    prevState = bodyBootloaderState;
-    prevCount = bodyBootloaderCount;
-    os_printf("TaskOtaBody: state = %x (%d)\tphase = %d\tindex = %d\r\n",
-              prevState, bodyBootloaderCount, prevPhase, prevIndex);
-  }
-#endif
-  
-  switch(bodyBootloaderState)
-  {
-    case STATE_SYNC:
-    case STATE_BUSY:
-    case STATE_RUNNING:
-    case STATE_UNKNOWN:
-    {
-      return true; // Just wait
-    }
-    case STATE_NACK: // Last try failed, try again
-    {
-      os_printf("N");
-      // Fall through to next case
-    }
-    case STATE_IDLE: // Ready to receive packet
-    {
-      if (bodyBootloaderCount != state->count) // Ready for another chunk
-      {
-        struct BodyUpgradeData {
-          uint8_t  PADDING[3];
-          uint8_t  command;
-          union {
-            uint32_t word;
-            uint8_t  bytes[4];
-          };
-        } msg;
-        ct_assert(sizeof(msg) == 8);
-        msg.command = RobotInterface::EngineToRobot::Tag_bodyUpgradeData;
-        
-        if (state->index >= state->fwSize) // Done loading firmware
-        {
-          os_printf("Done loading body, commanding reboot\r\n");
-          msg.bytes[1] = COMMAND_HEADER >> 8;
-          msg.bytes[0] = COMMAND_HEADER & 0xff;
-          msg.bytes[3] = COMMAND_DONE   >> 8;
-          msg.bytes[2] = COMMAND_DONE   & 0xff;
-          if (i2spiQueueMessage(&msg.command, 5) == false)
-          {
-            os_printf("Couldn't send flash done command, will retry\r\n");
-            return true;
-          }
-          else
-          {
-            if (flashStagedFlags[0] == 0xFFFFffff)
-            {
-              foregroundTaskPost(TaskI2SPISwitchMode, I2SPI_REBOOT);
-            }
-            else
-            {
-              foregroundTaskPost(TaskI2SPISwitchMode, I2SPI_RECOVERY);
-            }
-            return false;
-          }
-        }
-        else
-        {
-          const int remainingWords = (sizeof(FirmwareBlock) - state->phase)/4;
-          if (remainingWords > 0)
-          {
-            if (state->phase == 0) // Starting another block
-            {
-#ifdef DEBUG_OTA
-              os_printf("Starting chunk to body\r\n");
-#endif
-              msg.bytes[1] = COMMAND_HEADER >> 8;
-              msg.bytes[0] = COMMAND_HEADER & 0xff;
-              msg.bytes[3] = COMMAND_FLASH  >> 8;
-              msg.bytes[2] = COMMAND_FLASH  & 0xff;
-              if (i2spiQueueMessage(&msg.command, 5) == false)
-              {
-#ifdef DEBUG_OTA
-                os_printf(".");
-#endif
-                return true; // Just retry later
-              }
-            }
-            
-            switch (spi_flash_read(state->fwStart + state->index + state->phase, &(msg.word), 4))
-            {
-              case SPI_FLASH_RESULT_OK:
-              {
-                retries = MAX_RETRIES;
-                break;
-              }
-              case SPI_FLASH_RESULT_ERR:
-              {
-                AnkiError( 29, "UpgradeController", 181, "BODY OTA flash readback failure, aborting", 0);
-                os_free(state);
-                return false;
-              }
-              case SPI_FLASH_RESULT_TIMEOUT:
-              {
-                if (retries-- > 0)
-                {
-                  return true;
-                }
-                else
-                {
-                  AnkiError( 29, "UpgradeController", 182, "BODY OTA flash readback timeout, aborting", 0);
-                  os_free(state);
-                  return false;
-                }
-              }
-            }
-            if (i2spiQueueMessage(&msg.command, 5) == true)
-            {
-              state->phase += 4;
-              //os_printf("W %08x\r\n", msg.word);
-            }
-            return true;
-          }
-          else // Done sending chunk
-          {
-#ifdef DEBUG_OTA
-            os_printf("Finished chunk to body\r\n");
-#endif
-            state->index += state->phase;
-            state->phase = 0;
-            state->count = bodyBootloaderCount;
-            return true;
-          }
-        }
-      }
-      else // Waiting for advance to next count
-      {
-        return true;
-      }
-    }
-    default:
-    {
-      os_printf("UpgradeController: Unexpected body bootloader state %d, %08x, aborting\r\n", bodyBootloaderState, bodyBootloaderCode);
-    }
-  }
-  
-  os_free(state);
-  return false;
-}
-
 LOCAL bool TaskCheckSig(uint32 param)
 {
   OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
@@ -673,15 +494,6 @@ LOCAL bool TaskCheckSig(uint32 param)
 #endif
         os_free(state);
         i2spiSwitchMode(I2SPI_RECOVERY);
-        return false;
-      }
-      case RobotInterface::OTA_body:
-      {
-#ifdef DEBUG_OTA
-        os_printf("Body signature OKAY, switching mode and posting task\r\n");
-#endif
-        os_free(state);
-        i2spiSwitchMode(I2SPI_REBOOT);
         return false;
       }
       case RobotInterface::OTA_stage:
@@ -838,16 +650,7 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
   {
     if (flashStagedFlags[0] != 0xFFFFFFFF)
     {
-      if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
-      {
-        u8 msg = RobotInterface::EngineToRobot::Tag_bootloadBody;
-        os_printf("Flash staged, starting upgrade sequence\r\n");
-        return RTIP::SendMessage(&msg, 1);
-      }
-      else
-      {
-        StartWiFiUpgrade(true);
-      }
+      StartWiFiUpgrade(true);
       return true;
     }
     return false;
@@ -881,39 +684,6 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
         else
         {
           os_printf("Starting RTIP upgrade from address 0x%x, 0x%x bytes\r\n", otaState->fwStart, otaState->fwSize);
-        }
-      }
-    }
-  }
-  
-  void StartBodyUpgrade(void)
-  {
-    OTAUpgradeTaskState* otaState = static_cast<OTAUpgradeTaskState*>(os_zalloc(sizeof(OTAUpgradeTaskState)));
-    if (otaState == NULL)
-    {
-      os_printf("Failed to allocate memory for upgrade task\r\n");
-    }
-    else
-    {
-      os_memset(otaState, 0 , sizeof(OTAUpgradeTaskState));
-      otaState->fwStart = RobotInterface::OTA_body_flash_address + 4;
-      if (spi_flash_read(RobotInterface::OTA_body_flash_address, (uint32*)&(otaState->fwSize), 4) != SPI_FLASH_RESULT_OK)
-      {
-        os_printf("Couldn't read back body image size, aborting!\r\n");
-        os_free(otaState);
-      }
-      else
-      {
-        otaState->cmd = RobotInterface::OTA_body;
-        retries = MAX_RETRIES;
-        if (foregroundTaskPost(TaskOtaBody, (uint32)otaState) == false)
-        {
-          os_printf("Couldn't post TaskOtaBody! Aborting\r\n");
-          os_free(otaState);
-        }
-        else
-        {
-          os_printf("Starting body upgrade from 0x%x, 0x%x bytes\r\n", otaState->fwStart, otaState->fwSize);
         }
       }
     }

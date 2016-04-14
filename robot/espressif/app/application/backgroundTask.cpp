@@ -43,14 +43,7 @@ namespace BackgroundTask {
 
 void CheckForUpgrades(void)
 {
-  const uint32 bodyCode  = i2spiGetBodyBootloaderCode();
-  const uint16 bodyState = bodyCode & 0xffff;
-  const uint16 bodyCount = bodyCode >> 16;
-  if (((bodyState == STATE_IDLE) || (bodyState == STATE_NACK)) && (bodyCount > 10 && bodyCount < 100))
-  {
-    UpgradeController::StartBodyUpgrade();
-  }
-  else if (i2spiGetRtipBootloaderState() == STATE_IDLE)
+  if (i2spiGetRtipBootloaderState() == STATE_IDLE)
   {
     UpgradeController::StartRTIPUpgrade();
   }
