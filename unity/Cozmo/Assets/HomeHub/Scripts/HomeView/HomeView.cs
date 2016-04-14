@@ -93,7 +93,7 @@ namespace Cozmo.HomeHub {
 
     }
 
-    private void HandleChestGained(int treatsGained) {
+    private void HandleChestGained(int treatsGained, int hexGained) {
       _GreenPointsProgressBar.ResetProgress();
     }
 

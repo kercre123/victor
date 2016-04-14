@@ -19,3 +19,6 @@ MonoBehaviour:
   TreatRewardLadders:
   - Level: 0
     Value: 10
+  HexRewardLadders:
+  - Level: 0
+    Value: 2

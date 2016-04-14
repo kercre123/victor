@@ -21,61 +21,56 @@ public class PlayerManager : MonoBehaviour {
 
   public delegate void GreenPointsUpdateHandler(int points, int maxPoints);
 
-  public delegate void ChestGainedHandler(int treatsGained);
+  public delegate void ChestGainedHandler(int treatsGained, int hexGained);
 
   public GreenPointsUpdateHandler GreenPointsUpdate;
 
   public ChestGainedHandler ChestGained;
 
   public int GetGreenPointsLadderMax() {
-    if (_ChestData.GreenPointMaxLadders.Length == 0) {
-      DAS.Error(this, "No green point ladders");
+    return GetLadderCount(_ChestData.GreenPointMaxLadders);
+  }
+
+  public int GetLadderCount(Ladder[] ladder) {
+    int ladderLevel = 0;
+    if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault() != null) {
+      ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel;
     }
-    int ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel;
-    int ladderMaxValue = _ChestData.GreenPointMaxLadders.Last().Value; // default to max value
-    for (int i = 1; i < _ChestData.GreenPointMaxLadders.Length; ++i) {
-      if (ladderLevel < _ChestData.GreenPointMaxLadders[i].Level) {
-        ladderMaxValue = _ChestData.GreenPointMaxLadders[i - 1].Value;
+    int value = ladder.Last().Value; // default to max value
+    for (int i = 0; i < ladder.Length - 1; ++i) {
+      if (ladderLevel >= ladder[i].Level && ladderLevel < ladder[i + 1].Level) {
+        value = ladder[i].Value;
         break;
       }
     }
-    return ladderMaxValue;
-  }
-
-  public int GetTreatCount() {
-    int ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel;
-    int treatValue = _ChestData.TreatRewardLadders.Last().Value; // default to max value
-    for (int i = 1; i < _ChestData.TreatRewardLadders.Length; ++i) {
-      if (ladderLevel > _ChestData.TreatRewardLadders[i].Level) {
-        treatValue = _ChestData.TreatRewardLadders[i - 1].Level;
-      }
-    }
-    return treatValue;
+    return value;
   }
 
   public void SetGreenPoints(int points) {
     int greenPoints = points;
-    int currentLadderMax = GetGreenPointsLadderMax();
+    int currentLadderMax = GetLadderCount(_ChestData.GreenPointMaxLadders);
     while (greenPoints >= currentLadderMax) {
-      int treatsGained = GetTreatCount();
+      int treatsGained = GetLadderCount(_ChestData.TreatRewardLadders);
+      int hexGained = GetLadderCount(_ChestData.HexRewardLadders);
 
       DAS.Info(this, "Chest unlocked! Gained " + treatsGained + " treats");
 
       DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount += treatsGained;
+      DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces += hexGained;
       DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel++;
 
       if (ChestGained != null) {
-        ChestGained(treatsGained);
+        ChestGained(treatsGained, hexGained);
       }
 
       greenPoints -= currentLadderMax;
-      currentLadderMax = GetGreenPointsLadderMax();
+      currentLadderMax = GetLadderCount(_ChestData.GreenPointMaxLadders);
     }
 
     DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints = greenPoints;
 
     if (GreenPointsUpdate != null) {
-      GreenPointsUpdate(greenPoints, GetGreenPointsLadderMax());
+      GreenPointsUpdate(greenPoints, GetLadderCount(_ChestData.GreenPointMaxLadders));
     }
   }
 
