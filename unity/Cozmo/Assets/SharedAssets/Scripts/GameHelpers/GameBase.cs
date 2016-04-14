@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -44,6 +44,15 @@ public abstract class GameBase : MonoBehaviour {
   protected ChallengeData _ChallengeData;
   private ChallengeEndedDialog _ChallengeEndViewInstance;
   private bool _WonChallenge;
+
+  private List<DifficultySelectOptionData> _DifficultyOptions;
+
+  public List<DifficultySelectOptionData> DifficultyOptions {
+    get {
+      return _DifficultyOptions;
+    }
+  }
+
 
   protected StateMachine _StateMachine = new StateMachine();
 
@@ -82,6 +91,7 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.SetGameRef(this);
 
     _ChallengeData = challengeData;
+    _DifficultyOptions = _ChallengeData.DifficultyOptions;
     _WonChallenge = false;
 
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());

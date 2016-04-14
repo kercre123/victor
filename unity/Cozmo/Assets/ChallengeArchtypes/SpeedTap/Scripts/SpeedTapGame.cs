@@ -14,6 +14,19 @@ namespace SpeedTap {
     private const float _kTapAdjustRange = 5.0f;
     private const float _kWinCycleSpeed = 0.1f;
 
+    #region Config Values
+
+    public float BaseMatchChance;
+    public float MatchChanceIncrease;
+    public float MinIdleIntervalMs;
+    public float MaxIdleIntervalMs;
+    public float MinTapDelayMs;
+    public float MaxTapDelayMs;
+    public float CozmoMistakeChance;
+    public float CozmoFakeoutChance;
+
+    #endregion
+
     private Vector3 _CozmoPos;
     private Quaternion _CozmoRot;
 
@@ -44,11 +57,15 @@ namespace SpeedTap {
       }
     }
 
-    public List<DifficultySelectOptionData> DifficultyOptions {
+    private List<SpeedTapDifficultyData> _AllDifficultySettings;
+    private SpeedTapDifficultyData _CurrentDifficultySettings;
+
+    public SpeedTapDifficultyData CurrentDifficultySettings {
       get {
-        return _DifficultyOptions;
+        return _CurrentDifficultySettings;
       }
     }
+
 
     private MusicStateWrapper _BetweenRoundsMusic;
 
@@ -59,13 +76,19 @@ namespace SpeedTap {
     private int _PlayerRoundsWon;
     private int _CozmoRoundsWon;
     private int _Rounds;
+
+    public int CurrentRound {
+      get {
+        return _PlayerRoundsWon + _CozmoRoundsWon;
+      }
+    }
+
     private int _MaxScorePerRound;
     public int ConsecutiveMisses = 0;
     // how many rounds were close in score? used to calculate
     // excitement score rewards.
     private int _CloseRoundCount = 0;
 
-    private List<DifficultySelectOptionData> _DifficultyOptions;
 
     public event Action PlayerTappedBlockEvent;
     public event Action CozmoTappedBlockEvent;
@@ -224,10 +247,18 @@ namespace SpeedTap {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
+      // Set all Config based values
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
-      _DifficultyOptions = speedTapConfig.DifficultyOptions;
+      _AllDifficultySettings = speedTapConfig.DifficultySettings;
       _BetweenRoundsMusic = speedTapConfig.BetweenRoundMusic;
+      BaseMatchChance = speedTapConfig.BaseMatchChance;
+      MatchChanceIncrease = speedTapConfig.MatchChanceIncrease;
+      MinIdleIntervalMs = speedTapConfig.MinIdleIntervalMs;
+      MaxIdleIntervalMs = speedTapConfig.MaxIdleIntervalMs;
+      CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
+
+      // End config based values
       InitializeAnimationCallbacks();
       InitializeMinigameObjects(1);
     }
@@ -239,7 +270,7 @@ namespace SpeedTap {
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundWin, HandleRoundEndAnimDone);
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundLose, HandleRoundEndAnimDone);
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleSessionAnimDone);
-      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleSessionAnimDone);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionLose, HandleSessionAnimDone);
     }
 
     // Remove animation callbacks
@@ -249,7 +280,7 @@ namespace SpeedTap {
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundWin, HandleRoundEndAnimDone);
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundLose, HandleRoundEndAnimDone);
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleSessionAnimDone);
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleSessionAnimDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionLose, HandleSessionAnimDone);
     }
 
     private int HighestLevelCompleted() {
@@ -290,8 +321,22 @@ namespace SpeedTap {
       CurrentRobot.SetBehaviorSystem(false);
     }
 
+    // Set up Difficulty Settings that are not round specific
     protected override void OnDifficultySet(int difficulty) {
       Rules = GetRules((SpeedTapRuleSet)difficulty);
+      _CurrentDifficultySettings = null;
+      for (int i = 0; i < _AllDifficultySettings.Count; i++) {
+        if (_AllDifficultySettings[i].DifficultyID == difficulty) {
+          _CurrentDifficultySettings = _AllDifficultySettings[i];
+        }
+      }
+      if (_CurrentDifficultySettings == null) {
+        DAS.Warn(this, "No Valid Difficulty Setting Found");
+        _CurrentDifficultySettings = _AllDifficultySettings[0];
+      }
+      CozmoMistakeChance = _CurrentDifficultySettings.CozmoMistakeChance;
+      MinTapDelayMs = _CurrentDifficultySettings.MinCozmoTapDelayMs;
+      MaxTapDelayMs = _CurrentDifficultySettings.MaxCozmoTapDelayMs;
     }
 
     protected override void CleanUpOnDestroy() {

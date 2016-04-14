@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 using AskCozmo;
 using System;
 using Anki.Cozmo;
@@ -77,6 +78,8 @@ public class ChallengeData : ScriptableObject {
 
   // string path to MinigameConfig
   public MinigameConfigBase MinigameConfig;
+
+  public List<DifficultySelectOptionData> DifficultyOptions = new List<DifficultySelectOptionData>();
 }
 
 [System.Serializable]
