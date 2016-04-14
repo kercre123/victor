@@ -31,6 +31,7 @@ private:
 public:
 
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
+  virtual bool ShouldResumeLastBehavior() const override { return false; }
   
 protected:
   

@@ -81,6 +81,18 @@ namespace Vision {
 #   endif
   }
 
+  template<typename T>
+  void ImageBase<T>::CloseDisplayWindow(const char *windowName)
+  {
+    cv::destroyWindow(windowName);
+  }
+  
+  template<typename T>
+  void ImageBase<T>::CloseAllDisplayWindows()
+  {
+    cv::destroyAllWindows();
+  }
+  
   inline cv::Scalar GetCvColor(const ColorRGBA& color) {
     return CV_RGB(color.b(), color.g(), color.r());
   }

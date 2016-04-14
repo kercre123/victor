@@ -431,7 +431,7 @@ namespace Vision {
   
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
                                    std::list<TrackedFace>& faces,
-                                   std::list<UpdatedID>&   updatedIDs)
+                                   std::list<UpdatedFaceID>&   updatedIDs)
   {
     // Initialize on first use
     if(!_isInitialized) {
@@ -542,15 +542,15 @@ namespace Vision {
       
       if(recognitionData.faceID != recognitionData.prevID) {
         //face.SetThumbnail(_recognizer.GetEnrollmentImage(recognitionData.faceID));
-        UpdatedID update{
-          .oldID = (recognitionData.prevID == TrackedFace::UnknownFace ? -detectionInfo.nID : recognitionData.prevID),
+        UpdatedFaceID update{
+          .oldID = (recognitionData.prevID == UnknownFaceID ? -detectionInfo.nID : recognitionData.prevID),
           .newID = recognitionData.faceID
         };
         updatedIDs.push_back(std::move(update));
       }
       
       face.SetScore(recognitionData.score); // could still be zero!
-      if(TrackedFace::UnknownFace == recognitionData.faceID) {
+      if(UnknownFaceID == recognitionData.faceID) {
         // No recognition ID: use the tracker ID as the face's handle/ID
         ASSERT_NAMED(detectionInfo.nID > 0, "FaceTrackerImpl.Update.InvalidTrackerID");
         face.SetID(-detectionInfo.nID);
@@ -564,7 +564,7 @@ namespace Vision {
     return RESULT_OK;
   } // Update()
   
-  void FaceTracker::Impl::AssignNameToID(TrackedFace::ID_t faceID, const std::string& name)
+  void FaceTracker::Impl::AssignNameToID(FaceID_t faceID, const std::string& name)
   {
     _recognizer.AssignNameToID(faceID, name);
   }
@@ -574,7 +574,7 @@ namespace Vision {
     return _recognizer.SaveAlbum(albumName);
   }
   
-  Result FaceTracker::Impl::LoadAlbum(const std::string& albumName)
+  Result FaceTracker::Impl::LoadAlbum(const std::string& albumName, std::list<std::string>& names)
   {
     // Initialize on first use
     if(!_isInitialized) {
@@ -586,7 +586,7 @@ namespace Vision {
       }
     }
     
-    return _recognizer.LoadAlbum(_okaoCommonHandle, albumName);
+    return _recognizer.LoadAlbum(_okaoCommonHandle, albumName, names);
   }
   
 } // namespace Vision

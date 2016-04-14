@@ -270,8 +270,8 @@ void IBehaviorRequestGame::HandleObservedFace(const Robot& robot,
                                               const ExternalInterface::RobotObservedFace& msg)
 {
   // If faceID not already set or we're not currently tracking the update the faceID
-  if (_faceID == Face::UnknownFace) {
-    _faceID = static_cast<Face::ID_t>(msg.faceID);
+  if (_faceID == Vision::UnknownFaceID) {
+    _faceID = static_cast<FaceID_t>(msg.faceID);
   }
 
   _lastFaceSeenTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -280,7 +280,7 @@ void IBehaviorRequestGame::HandleObservedFace(const Robot& robot,
 void IBehaviorRequestGame::HandleDeletedFace(const ExternalInterface::RobotDeletedFace& msg)
 {
   if (_faceID == msg.faceID) {
-    _faceID = Face::UnknownFace;
+    _faceID = Vision::UnknownFaceID;
   }
 }
 

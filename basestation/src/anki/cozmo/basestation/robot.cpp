@@ -1316,6 +1316,7 @@ namespace Anki {
       return SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0,
                                                                 DEFAULT_DOCK_SPEED_MMPS,
                                                                 DEFAULT_DOCK_ACCEL_MMPS2,
+                                                                DEFAULT_DOCK_ACCEL_MMPS2,
                                                                 useManualSpeed);
     }
     
@@ -2123,28 +2124,33 @@ namespace Anki {
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const f32 speed_mmps,
                                  const f32 accel_mmps2,
+                                 const f32 decel_mmps2,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
                                  const DockAction dockAction,
                                  const f32 placementOffsetX_mm,
                                  const f32 placementOffsetY_mm,
                                  const f32 placementOffsetAngle_rad,
-                                 const bool useManualSpeed)
+                                 const bool useManualSpeed,
+                                 const u8 numRetries)
     {
       return DockWithObject(objectID,
                             speed_mmps,
                             accel_mmps2,
+                            decel_mmps2,
                             marker,
                             marker2,
                             dockAction,
                             0, 0, u8_MAX,
                             placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
-                            useManualSpeed);
+                            useManualSpeed,
+                            numRetries);
     }
     
     Result Robot::DockWithObject(const ObjectID objectID,
                                  const f32 speed_mmps,
                                  const f32 accel_mmps2,
+                                 const f32 decel_mmps2,
                                  const Vision::KnownMarker* marker,
                                  const Vision::KnownMarker* marker2,
                                  const DockAction dockAction,
@@ -2154,7 +2160,8 @@ namespace Anki {
                                  const f32 placementOffsetX_mm,
                                  const f32 placementOffsetY_mm,
                                  const f32 placementOffsetAngle_rad,
-                                 const bool useManualSpeed)
+                                 const bool useManualSpeed,
+                                 const u8 numRetries)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
@@ -2189,7 +2196,7 @@ namespace Anki {
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
-      Result sendResult = SendRobotMessage<::Anki::Cozmo::DockWithObject>(0.0f, speed_mmps, accel_mmps2, dockAction, useManualSpeed);
+      Result sendResult = SendRobotMessage<::Anki::Cozmo::DockWithObject>(0.0f, speed_mmps, accel_mmps2, decel_mmps2, dockAction, useManualSpeed, numRetries);
       
       
       if(sendResult == RESULT_OK) {

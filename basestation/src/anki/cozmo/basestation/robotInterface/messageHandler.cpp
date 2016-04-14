@@ -12,12 +12,14 @@
 
 
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/messaging/basestation/IChannel.h"
 #include "anki/messaging/basestation/IComms.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "util/global/globalDefinitions.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -51,6 +53,13 @@ Result MessageHandler::SendMessage(const RobotID_t robotId, const RobotInterface
 {
   if (_isInitialized)
   {
+#if ANKI_DEV_CHEATS
+    if (nullptr != DevLoggingSystem::GetInstance())
+    {
+      DevLoggingSystem::GetInstance()->LogMessage(msg);
+    }
+#endif
+    
     Comms::OutgoingPacket p;
     p.bufferSize = (uint32_t)msg.Pack(p.buffer, p.MAX_SIZE);
     p.destId = robotId;
@@ -127,6 +136,13 @@ void MessageHandler::ProcessPacket(const Comms::IncomingPacket& packet)
                       msgID, static_cast<int>(unpackSize), packet.bufferSize);
     return;
   }
+  
+#if ANKI_DEV_CHEATS
+  if (nullptr != DevLoggingSystem::GetInstance())
+  {
+    DevLoggingSystem::GetInstance()->LogMessage(message);
+  }
+#endif
 
   Broadcast(robotID, std::move(message));
 }

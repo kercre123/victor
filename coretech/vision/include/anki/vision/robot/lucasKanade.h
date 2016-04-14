@@ -353,6 +353,7 @@ namespace Anki
           const Transformations::TransformType transformType,
           const s32 numFiducialSquareSamples,
           const Point<f32>& fiducialSquareThicknessFraction,
+          const Point<f32>& roundedCornersFraction,
           const s32 maxSamplesAtBaseLevel,
           const s32 numSamplingRegions,
           const f32 focalLength_x,

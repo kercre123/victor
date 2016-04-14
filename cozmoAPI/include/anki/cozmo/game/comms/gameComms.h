@@ -18,6 +18,7 @@
 #include "anki/messaging/shared/TcpServer.h"
 #include "anki/messaging/shared/UdpClient.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "clad/externalInterface/messageShared.h"
 
 
 namespace Anki {
@@ -66,7 +67,7 @@ namespace Cozmo {
     
     // For connecting to advertisement service
     UdpClient regClient_;
-    Comms::AdvertisementRegistrationMsg regMsg_;
+    AdvertisementRegistrationMsg regMsg_;
     void AdvertiseToService();
     
     void ReadAllMsgPackets();
@@ -85,8 +86,8 @@ namespace Cozmo {
     const char*    advertisementRegIP_;
     int            advertisementRegPort_;
     
-    static const int MAX_RECV_BUF_SIZE = 1920000;
-    u8 recvBuf[MAX_RECV_BUF_SIZE];
+    static const int MAX_RECV_BUF_SIZE = 1920000; // [TODO] 1.9MB seems excessive?
+    u8  _recvBuf[MAX_RECV_BUF_SIZE];
     int recvDataSize = 0;
     
   };

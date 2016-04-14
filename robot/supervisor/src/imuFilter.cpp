@@ -663,6 +663,23 @@ namespace Anki {
 
         //PERIODIC_PRINT(50, "Pitch %f deg\n", RAD_TO_DEG_F32(pitch_));
       }
+      
+#ifndef SIMULATOR
+      void UpdateCameraMotion()
+      {
+        static u8 cameraMotionDecimationCounter = 0;
+        if (cameraMotionDecimationCounter++ > 3)
+        {
+          ImageImuData msg;
+          HAL::IMUGetCameraTime(&msg.imageId, &msg.line2Number);
+          msg.rateX = gyro_robot_frame_filt[0];
+          msg.rateY = gyro_robot_frame_filt[1];
+          msg.rateZ = gyro_robot_frame_filt[2];
+          RobotInterface::SendMessage(msg);
+          cameraMotionDecimationCounter = 0;
+        }
+      }
+#endif
 
       Result Update()
       {
@@ -779,6 +796,10 @@ namespace Anki {
         UpdateEventDetection();
 
         HandlePickupParalysis();
+        
+        #ifndef SIMULATOR
+        UpdateCameraMotion();
+        #endif
 
         // Recording IMU data for sending to basestation
         if (isRecording_) {

@@ -13,6 +13,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
@@ -87,7 +88,9 @@ void BehaviorRollBlock::TransitionToSelectingTargetBlock(Robot& robot)
   else {
     _targetBlock = closestObj->GetID();
 
-    StartActing(new PlayAnimationGroupAction(robot, _initialAnimGroup),
+    StartActing(new TurnTowardsFaceWrapperAction(
+                  robot,
+                  new PlayAnimationGroupAction(robot, _initialAnimGroup)),                  
                 &BehaviorRollBlock::TransitionToRollingBlock);
   }
 }

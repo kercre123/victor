@@ -328,15 +328,17 @@ namespace Anki {
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        AnkiInfo( 104, "Messages.Process_dockWithObject.Recvd", 353, "action %d, speed %f, acccel %f, manualSpeed %d", 4,
-              msg.action, msg.speed_mmps, msg.accel_mmps2, msg.useManualSpeed);
+        AnkiInfo( 104, "Messages.Process_dockWithObject.Recvd", 353, "action %d, speed %f, acccel %f, decel %f, manualSpeed %d", 5,
+              msg.action, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2, msg.useManualSpeed);
 
         // Currently passing in default values for rel_x, rel_y, and rel_angle
         PickAndPlaceController::DockToBlock(msg.action,
                                             msg.speed_mmps,
                                             msg.accel_mmps2,
+                                            msg.decel_mmps2,
                                             0, 0, 0,
-                                            msg.useManualSpeed);
+                                            msg.useManualSpeed,
+                                            msg.numRetries);
       }
 
       void Process_placeObjectOnGround(const PlaceObjectOnGround& msg)
@@ -344,6 +346,7 @@ namespace Anki {
         //AnkiInfo( 108, "Messages.Process_placeObjectOnGround.Recvd", 305, "", 0);
         PickAndPlaceController::PlaceOnGround(msg.speed_mmps,
                                               msg.accel_mmps2,
+                                              msg.decel_mmps2,
                                               msg.rel_x_mm,
                                               msg.rel_y_mm,
                                               msg.rel_angle,
@@ -537,7 +540,7 @@ namespace Anki {
       
       void Process_abortDocking(const AbortDocking& msg)
       {
-        DockingController::ResetDocker();
+        DockingController::StopDocking();
       }
 
       void Process_abortAnimation(const RobotInterface::AbortAnimation& msg)
@@ -588,7 +591,7 @@ namespace Anki {
 
       void Process_enableCamCalibMode(const RobotInterface::EnableCamCalibMode& msg)
       {
-        AnkiDebug( 154, "CameraCalibMode", 413, "enabled: %d", 1, msg.enable);
+        AnkiDebug( 154, "CameraCalibMode", 433, "enabled: %d", 1, msg.enable);
         if (msg.enable) {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
@@ -786,7 +789,6 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      
       void Process_killBodyCode(Anki::Cozmo::KillBodyCode const&)
       {
         // Nothing to do here

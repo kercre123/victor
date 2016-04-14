@@ -88,6 +88,9 @@ namespace Cozmo {
     
     const BehaviorFactory& GetBehaviorFactory() const { assert(_behaviorFactory); return *_behaviorFactory; }
           BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
+
+    const BehaviorWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
+          BehaviorWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
     
     IBehavior* LoadBehaviorFromJson(const Json::Value& behaviorJson);
     

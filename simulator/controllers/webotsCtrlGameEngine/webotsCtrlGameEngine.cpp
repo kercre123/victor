@@ -17,11 +17,17 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/sosLoggerProvider.h"
 #include "util/logging/multiFormattedLoggerProvider.h"
+#include "util/global/globalDefinitions.h"
 
 #include "util/time/stopWatch.h"
 
 #include <fstream>
 
+#if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+#include "util/logging/saveToFileLoggerProvider.h"
+#include "util/logging/rollingFileLogger.h"
+#endif
 
 #ifndef NO_WEBOTS
 #include <webots/Supervisor.hpp>
@@ -62,6 +68,7 @@ BSTimer basestationController;
 #endif
 
 #define ROBOT_ADVERTISING_HOST_IP "127.0.0.1"
+#define SDK_ADVERTISING_HOST_IP   "127.0.0.1"
 #define VIZ_HOST_IP               "127.0.0.1"
 
 /*
@@ -79,11 +86,7 @@ using namespace Anki::Cozmo;
 
 
 int main(int argc, char **argv)
-{  
-  Anki::Util::MultiFormattedLoggerProvider loggerProvider({new Util::SosLoggerProvider(), new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN)});
-  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
-  Anki::Util::gLoggerProvider = &loggerProvider;
-  Anki::Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
+{
   // Get the last position of '/'
   std::string aux(argv[0]);
 #if defined(_WIN32) || defined(WIN32)
@@ -99,6 +102,21 @@ int main(int argc, char **argv)
   std::string cachePath = path + "temp";
   std::string externalPath = path + "temp";
   Util::Data::DataPlatform dataPlatform(filesPath, cachePath, externalPath, resourcePath);
+  
+#if ANKI_DEV_CHEATS
+  DevLoggingSystem::CreateInstance(dataPlatform.pathToResource(Util::Data::Scope::CurrentGameLog, ""));
+#endif
+  
+  Anki::Util::MultiFormattedLoggerProvider loggerProvider({
+    new Util::SosLoggerProvider()
+    , new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN)
+#if ANKI_DEV_CHEATS
+    , new Util::SaveToFileLoggerProvider(DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory() + "/print")
+#endif
+  });
+  loggerProvider.SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
+  Anki::Util::gLoggerProvider = &loggerProvider;
+  Anki::Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
 
   // Start with a step so that we can attach to the process here for debugging
   basestationController.step(BS_TIME_STEP);
@@ -123,6 +141,14 @@ int main(int argc, char **argv)
   if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
   }
+
+  if(!config.isMember(AnkiUtil::kP_SDK_ADVERTISING_HOST_IP)) {
+    config[AnkiUtil::kP_SDK_ADVERTISING_HOST_IP] = SDK_ADVERTISING_HOST_IP;
+  }
+  
+  if(!config.isMember(AnkiUtil::kP_SDK_ADVERTISING_PORT)) {
+    config[AnkiUtil::kP_SDK_ADVERTISING_PORT] = SDK_ADVERTISING_PORT;
+  }
   
   int numUIDevicesToWaitFor = 1;
 #ifndef NO_WEBOTS
@@ -136,7 +162,8 @@ int main(int argc, char **argv)
   
   
   config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
-  config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
+  config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 1;
+  config[AnkiUtil::kP_NUM_SDK_DEVICES_TO_WAIT_FOR] = 1;
   
   // Initialize the API
   CozmoAPI myCozmo;
@@ -188,6 +215,10 @@ int main(int argc, char **argv)
 #endif
     
   } // while still stepping
+  
+#if ANKI_DEV_CHEATS
+  DevLoggingSystem::DestroyInstance();
+#endif
 
   Anki::Util::gLoggerProvider = nullptr;
   return 0;

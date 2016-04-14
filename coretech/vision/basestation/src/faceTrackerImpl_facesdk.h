@@ -53,7 +53,7 @@ namespace Vision {
     
     HTracker _tracker;
     
-    std::map<TrackedFace::ID_t, TrackedFace> _faces;
+    std::map<FaceID_t, TrackedFace> _faces;
     
   }; // class FaceTracker::Impl
   
@@ -331,7 +331,7 @@ namespace Vision {
       
       // Only check faces that weren't updated this timestamp
       if(face.GetTimeStamp() < frameOrig.GetTimestamp()) {
-        TrackedFace::ID_t reassignedID;
+        FaceID_t reassignedID;
         FSDK_GetIDReassignment(_tracker, face.GetID(), &reassignedID);
         if(reassignedID != face.GetID()) {
           // Face's ID got reassigned!

@@ -15,6 +15,7 @@
 
 #include "anki/common/types.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "anki/vision/basestation/faceIdTypes.h"
 
 #include <list>
 
@@ -36,13 +37,13 @@ namespace Vision {
     
     ~FaceTracker();
     
-    using UpdatedID = struct { TrackedFace::ID_t oldID, newID; };
+    
     
     // Returns the faces found and any IDs that may have been updated (e.g. due
     // to a new recognition or a merge of existing records)
     Result Update(const Vision::Image&    frameOrig,
                   std::list<TrackedFace>& faces,
-                  std::list<UpdatedID>&   updatedIDs);
+                  std::list<UpdatedFaceID>&   updatedIDs);
     
     void EnableDisplay(bool enabled);
     
@@ -55,10 +56,10 @@ namespace Vision {
     // Will return false if the private implementation does not support face recognition
     static bool IsRecognitionSupported();
     
-    void AssignNameToID(TrackedFace::ID_t faceID, const std::string& name);
+    void AssignNameToID(FaceID_t faceID, const std::string& name);
     
     Result SaveAlbum(const std::string& albumName);
-    Result LoadAlbum(const std::string& albumName);
+    Result LoadAlbum(const std::string& albumName, std::list<std::string>& names);
     
     void PrintTiming();
     

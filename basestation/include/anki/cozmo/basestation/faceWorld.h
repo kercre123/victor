@@ -26,21 +26,21 @@ namespace Cozmo {
     Result Update();
     Result AddOrUpdateFace(Vision::TrackedFace& face);
   
-    Result ChangeFaceID(Vision::TrackedFace::ID_t oldID,
-                        Vision::TrackedFace::ID_t newID);
+    Result ChangeFaceID(Vision::FaceID_t oldID,
+                        Vision::FaceID_t newID);
     
     // Returns nullptr if not found
-    const Vision::TrackedFace* GetFace(Vision::TrackedFace::ID_t faceID) const;
+    const Vision::TrackedFace* GetFace(Vision::FaceID_t faceID) const;
     
     // Returns number of known faces
     // Actual face IDs returned in faceIDs
-    std::vector<Vision::TrackedFace::ID_t> GetKnownFaceIDs() const;
+    std::vector<Vision::FaceID_t> GetKnownFaceIDs() const;
     
-    Vision::TrackedFace::ID_t GetOwnerID() const                            { return _ownerID; }
-    void                      SetOwnerID(Vision::TrackedFace::ID_t ownerID) { _ownerID = ownerID; }
+    Vision::FaceID_t GetOwnerID() const                            { return _ownerID; }
+    void                      SetOwnerID(Vision::FaceID_t ownerID) { _ownerID = ownerID; }
     
     // Returns known face IDs observed since seenSinceTime_ms (inclusive)
-    std::list<Vision::TrackedFace::ID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const;
+    std::list<Vision::FaceID_t> GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const;
 
     // If the robot has observed a face, sets p to the pose of the last observed face and returns the
     // timestamp when that face was last seen. Otherwise, returns 0    
@@ -59,7 +59,7 @@ namespace Cozmo {
     
     Robot& _robot;
     
-    Vision::TrackedFace::ID_t  _ownerID = Vision::TrackedFace::UnknownFace;
+    Vision::FaceID_t  _ownerID = Vision::UnknownFaceID;
     
     struct KnownFace {
       Vision::TrackedFace      face;
@@ -69,13 +69,13 @@ namespace Cozmo {
       KnownFace(Vision::TrackedFace& faceIn);
     };
     
-    using FaceContainer = std::map<Vision::TrackedFace::ID_t, KnownFace>;
+    using FaceContainer = std::map<Vision::FaceID_t, KnownFace>;
     using KnownFaceIter = FaceContainer::iterator;
     FaceContainer _knownFaces;
     
     TimeStamp_t _deletionTimeout_ms = 4000;
 
-    Vision::TrackedFace::ID_t _idCtr = 0;
+    Vision::FaceID_t _idCtr = 0;
     
     Pose3d      _lastObservedFacePose;
     TimeStamp_t _lastObservedFaceTimeStamp = 0;
@@ -87,7 +87,7 @@ namespace Cozmo {
     // the face was removed if broadcast==true.
     void RemoveFace(KnownFaceIter& faceIter, bool broadcast = true);
     
-    void RemoveFaceByID(Vision::TrackedFace::ID_t faceID);
+    void RemoveFaceByID(Vision::FaceID_t faceID);
 
     void SetupEventHandlers(IExternalInterface& externalInterface);
     

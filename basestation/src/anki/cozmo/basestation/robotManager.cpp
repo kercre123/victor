@@ -137,8 +137,9 @@ namespace Anki {
     // Get a pointer to a robot by ID
     Robot* RobotManager::GetRobotByID(const RobotID_t robotID)
     {
-      if (_robots.find(robotID) != _robots.end()) {
-        return _robots[robotID];
+      auto it = _robots.find(robotID);
+      if (it != _robots.end()) {
+        return it->second;
       }
       
       PRINT_NAMED_WARNING("RobotManager.GetRobotByID.InvalidID", "No robot with ID=%d", robotID);
@@ -174,6 +175,7 @@ namespace Anki {
       //for (auto &r : _robots) {
       for(auto r = _robots.begin(); r != _robots.end(); ) {
         // Call update
+        const RobotID_t robotId = r->first; // have to cache this prior to any ++r calls...
         Robot* robot = r->second;
         Result result = robot->Update();
         
@@ -202,7 +204,7 @@ namespace Anki {
         } else {
           PRINT_NAMED_WARNING("RobotManager.UpdateAllRobots",
                               "Not sending robot %d state (none available).",
-                              r->first);
+                              robotId);
         }
       } // End loop on _robots
       

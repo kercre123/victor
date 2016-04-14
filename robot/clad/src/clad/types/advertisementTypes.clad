@@ -1,0 +1,30 @@
+/** Clad message definitions for connection advertisement messages between, game/sdk, engine and robot
+ * ROBOT_CLAD_SHARED
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+
+
+message AdvertisementRegistrationMsg
+{
+  uint_16 toEnginePort,
+  uint_16 fromEnginePort,
+  uint_8 id,
+  bool enableAdvertisement,   // true = register, false = de-register a device
+  bool oneShot,               // if true, will only advertise this once on the next Update call
+  string ip, // not fixed length so must be the last item for cpp-lite
+}
+
+message AdvertisementMsg
+{
+  uint_16 toEnginePort,
+  uint_16 fromEnginePort,
+  uint_8 id,
+  string ip, // not fixed length so must be the last item for cpp-lite
+}
+
+
+} // namespace Cozmo
+} // namespace Anki

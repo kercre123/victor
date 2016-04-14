@@ -32,8 +32,9 @@ namespace Anki {
     const f32 defaultPathPointTurnSpeed_rad_per_sec = 1.5;
     const f32 defaultPathPointTurnAccel_rad_per_sec2 = 100;
     const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
-    const f32 defaultDockSpeed_mmps = 100;
+    const f32 defaultDockSpeed_mmps = 60;
     const f32 defaultDockAccel_mmps2 = 200;
+    const f32 defaultDockDecel_mmps2 = 100;
     const f32 defaultReverseSpeed_mmps = 30;
     PathMotionProfile motionProfile4(defaultPathSpeed_mmps,
                                     defaultPathAccel_mmps2,
@@ -43,6 +44,7 @@ namespace Anki {
                                     defaultPathPointTurnDecel_rad_per_sec2,
                                     defaultDockSpeed_mmps,
                                     defaultDockAccel_mmps2,
+                                    defaultDockDecel_mmps2,
                                     defaultReverseSpeed_mmps);
     
     
@@ -101,9 +103,7 @@ namespace Anki {
           GetObjectPose(0, pose);
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
-                                           NEAR(pose.GetRotationAxis().x(), 0.0, 0.1) &&
-                                           NEAR(pose.GetRotationAxis().z(), 0.0, 0.1) &&
-                                           NEAR(pose.GetRotationAxis().y(), 1.0, 0.1), DEFAULT_TIMEOUT)
+                                           NEAR(pose.GetRotationAngle(), -1.5, 0.2), 25)
           {
             StopMovie();
             CST_EXIT();

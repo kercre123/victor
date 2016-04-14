@@ -89,7 +89,8 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
   using namespace Embedded;
   
   VisionSystem::VisionSystem(const std::string& dataPath, VizManager* vizMan)
-  : _isInitialized(false)
+  : _rollingShutterCorrector(_camera)
+  , _isInitialized(false)
   , _dataPath(dataPath)
   , _faceTracker(nullptr)
   , _vizManager(vizMan)
@@ -294,7 +295,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
 #endif
   } // GetTrackerQuad()
   
-  Result VisionSystem::UpdatePoseData(const PoseData& poseData)
+  Result VisionSystem::UpdatePoseData(const VisionPoseData& poseData)
   {
     std::swap(_prevPoseData, _poseData);
     _poseData = poseData;
@@ -441,7 +442,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(Vision::FaceTracker::UpdatedID&  msg)
+  bool VisionSystem::CheckMailbox(Vision::UpdatedFaceID&  msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -650,7 +651,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
         
         // Construct a basestation quad from an embedded one:
         Quad2f quad({crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].x,
-          crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
+                      crntMarker.corners[Embedded::Quadrilateral<f32>::TopLeft].y},
                     {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].x,
                       crntMarker.corners[Embedded::Quadrilateral<f32>::BottomLeft].y},
                     {crntMarker.corners[Embedded::Quadrilateral<f32>::TopRight].x,
@@ -658,12 +659,25 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
                     {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
                       crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
         
-        markerQuads.emplace_back(quad);
+        // Instead of warpping the entire image only warp the quads
+        // Apply the appropriate warp to each of the corners of the quad to get a warpped quad
+        if(_doRollingShutterCorrection)
+        {
+          for(auto iter = quad.begin(); iter != quad.end(); iter++)
+          {
+            Point3f corner(iter->x(), iter->y(), 1.0);
+            int warpIndex = floor(iter->y() / (inputImageGray.GetNumRows() / _rollingShutterCorrector.GetNumDivisions()));
+            corner = _rollingShutterCorrector.GetRollingShutterWarps()[warpIndex] * corner;
+            iter->x() = corner.x();
+            iter->y() = corner.y();
+          }
+        }
         
+        // The warped quad is drawn in red in the simulator
+        markerQuads.emplace_back(quad);
         Vision::ObservedMarker obsMarker(inputImageGray.GetTimestamp(),
                                          crntMarker.markerType,
                                          quad, _camera);
-        
         _visionMarkerMailbox.putMessage(obsMarker);
         
         // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
@@ -671,14 +685,45 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
            _markerToTrack.IsSpecified() &&
            _markerToTrack.Matches(crntMarker))
         {
-          if((lastResult = InitTemplate(grayscaleImage, crntMarker.corners)) != RESULT_OK) {
-            PRINT_NAMED_ERROR("VisionSystem.LookForMarkers.InitTemplateFailed","");
-            return lastResult;
-          }
-          
-          // Template initialization succeeded, switch to tracking mode:
+          // Switch to tracking mode
           EnableMode(VisionMode::Tracking, true);
           
+          Anki::Embedded::Quadrilateral<f32> quad = crntMarker.corners;
+          
+          if(_doRollingShutterCorrection)
+          {
+            // The tracker needs corrected images and since we were doing marker detection (ie not warping images)
+            // we need to warp the image and the marker's quad that get passed into InitTemplate
+            Vision::Image warpedImage = _rollingShutterCorrector.WarpImage(inputImageGray);
+            
+            GetImageHelper(warpedImage, grayscaleImage);
+            PreprocessImage(grayscaleImage);
+            
+            for(int i=0; i<4; i++)
+            {
+              Point3f corner(quad.corners[i].x, quad.corners[i].y, 1.0);
+              int warpIndex = floor(quad.corners[i].y / (inputImageGray.GetNumRows() / _rollingShutterCorrector.GetNumDivisions()));
+              corner = _rollingShutterCorrector.GetRollingShutterWarps()[warpIndex] * corner;
+              quad.corners[i].x = corner.x();
+              quad.corners[i].y = corner.y();
+              if(quad.corners[i].x >= inputImageGray.GetNumCols() ||
+                 quad.corners[i].y >= inputImageGray.GetNumRows() ||
+                 quad.corners[i].x < 0 ||
+                 quad.corners[i].y < 0)
+              {
+                quad = crntMarker.corners;
+                PRINT_NAMED_INFO("VisionSystem.DetectMarkers", "Reiniting tracker and warping quad put it off the image using unwarped quad");
+                break;
+              }
+            }
+          }
+          
+          if((lastResult = InitTemplate(grayscaleImage, quad)) != RESULT_OK) {
+            PRINT_NAMED_ERROR("VisionSystem.LookForMarkers.InitTemplateFailed","");
+            // If InitTemplate failed then make sure to disable tracking mode
+            EnableMode(VisionMode::Tracking, false);
+            return lastResult;
+          }
         } // if(isTrackingMarkerSpecified && !isTrackingMarkerFound && markerType == markerToTrack)
       } // for(each marker)
     } // for(invertImage)
@@ -857,7 +902,9 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
                                                                     Transformations::TRANSFORM_PROJECTIVE,
                                                                     _trackerParameters.numFiducialEdgeSamples,
                                                                      Embedded::Point<f32>(_detectionParameters.fiducialThicknessFraction.x(),
-                                                                               _detectionParameters.fiducialThicknessFraction.y()),
+                                                                                          _detectionParameters.fiducialThicknessFraction.y()),
+                                                                     Embedded::Point<f32>(_trackerParameters.roundedCornersFraction.x(),
+                                                                                          _trackerParameters.roundedCornersFraction.y()),
                                                                     _trackerParameters.numInteriorSamples,
                                                                     _trackerParameters.numSamplingRegions,
                                                                     calib->GetFocalLength_x(),
@@ -901,7 +948,22 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     return RESULT_OK;
   } // InitTemplate()
   
-  
+  template<typename T>
+  static void GetVizQuad(const Embedded::Quadrilateral<T>&  embeddedQuad,
+                         Anki::Quadrilateral<2, T>&         vizQuad)
+  {
+    vizQuad[Quad::TopLeft].x() = embeddedQuad[Quad::TopLeft].x;
+    vizQuad[Quad::TopLeft].y() = embeddedQuad[Quad::TopLeft].y;
+    
+    vizQuad[Quad::TopRight].x() = embeddedQuad[Quad::TopRight].x;
+    vizQuad[Quad::TopRight].y() = embeddedQuad[Quad::TopRight].y;
+    
+    vizQuad[Quad::BottomLeft].x() = embeddedQuad[Quad::BottomLeft].x;
+    vizQuad[Quad::BottomLeft].y() = embeddedQuad[Quad::BottomLeft].y;
+    
+    vizQuad[Quad::BottomRight].x() = embeddedQuad[Quad::BottomRight].x;
+    vizQuad[Quad::BottomRight].y() = embeddedQuad[Quad::BottomRight].y;
+  }
   
   Result VisionSystem::TrackTemplate(const Vision::Image& inputImageGray)
   {
@@ -979,6 +1041,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
       
       bool converged = false;
       ++_trackingIteration;
+
       const Result trackerResult = _tracker.UpdateTrack(grayscaleImage,
                                                         _trackerParameters.maxIterations,
                                                         _trackerParameters.convergenceTolerance_angle,
@@ -989,7 +1052,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
                                                         verify_numInBounds,
                                                         verify_numSimilarPixels,
                                                         onchipScratch);
-      
+
       // TODO: Do we care if converged == false?
       
       //
@@ -1066,9 +1129,16 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
        */
     } // if(_trackingJustInitialized)
     
+    // Draw the converged tracker quad in either cyan or magenta
+    Embedded::Quadrilateral<f32> quad = GetTrackerQuad(onchipScratch);
+    Anki::Quad2f vizQuad;
+    GetVizQuad(quad, vizQuad);
+    _vizManager->DrawCameraQuad(vizQuad, (trackingSucceeded ? Anki::NamedColors::CYAN : Anki::NamedColors::MAGENTA));
+    
     if(trackingSucceeded)
     {
       Embedded::Quadrilateral<f32> currentQuad = GetTrackerQuad(onchipScratch);
+      
       
       //FillDockErrMsg(currentQuad, dockErrMsg, _memory._onchipScratch);
       
@@ -1156,23 +1226,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     return RESULT_OK;
   } // TrackTemplate()
   
-  template<typename T>
-  static void GetVizQuad(const Embedded::Quadrilateral<T>&  embeddedQuad,
-                         Anki::Quadrilateral<2, T>&         vizQuad)
-  {
-    vizQuad[Quad::TopLeft].x() = embeddedQuad[Quad::TopLeft].x;
-    vizQuad[Quad::TopLeft].y() = embeddedQuad[Quad::TopLeft].y;
-    
-    vizQuad[Quad::TopRight].x() = embeddedQuad[Quad::TopRight].x;
-    vizQuad[Quad::TopRight].y() = embeddedQuad[Quad::TopRight].y;
-    
-    vizQuad[Quad::BottomLeft].x() = embeddedQuad[Quad::BottomLeft].x;
-    vizQuad[Quad::BottomLeft].y() = embeddedQuad[Quad::BottomLeft].y;
-    
-    vizQuad[Quad::BottomRight].x() = embeddedQuad[Quad::BottomRight].x;
-    vizQuad[Quad::BottomRight].y() = embeddedQuad[Quad::BottomRight].y;
-  }
-  
   
   //
   // Tracker Prediction
@@ -1183,7 +1236,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
   Result VisionSystem::TrackerPredictionUpdate(const Array<u8>& grayscaleImage, MemoryStack scratch)
   {
     Result result = RESULT_OK;
-    
+
     const Embedded::Quadrilateral<f32> currentQuad = GetTrackerQuad(scratch);
     
     // TODO: Re-enable tracker prediction viz on Basestation
@@ -1195,9 +1248,9 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     // Ask VisionState how much we've moved since last call (in robot coordinates)
     Radians theta_robot;
     f32 T_fwd_robot, T_hor_robot;
-    
+
     GetPoseChange(T_fwd_robot, T_hor_robot, theta_robot);
-    
+
 #   if USE_MATLAB_TRACKER
     MatlabVisionProcessor::UpdateTracker(T_fwd_robot, T_hor_robot,
                                          theta_robot, theta_head);
@@ -1213,7 +1266,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     
     const f32 cR = cosf(theta_robot.ToFloat());
     const f32 sR = sinf(theta_robot.ToFloat());
-    
+
     // NOTE: these "geometry" entries were computed symbolically with Sage
     // In the derivation, it was assumed the head and neck positions' Y
     // components are zero.
@@ -1270,7 +1323,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     return result;
   } // TrackerPredictionUpdate()
   
-  void VisionSystem::AssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name)
+  void VisionSystem::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name)
   {
     if(!_isInitialized) {
       PRINT_NAMED_WARNING("VisionSystem.AssignNameToFace.NotInitialized",
@@ -1312,7 +1365,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     }
     
     std::list<Vision::TrackedFace> faces;
-    std::list<Vision::FaceTracker::UpdatedID> updatedIDs;
+    std::list<Vision::UpdatedFaceID> updatedIDs;
     
     if(!markerQuads.empty())
     {
@@ -2160,7 +2213,9 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     
     // Just make all the vision parameters' resolutions match capture resolution:
     _detectionParameters.Initialize(_captureResolution);
-    _trackerParameters.Initialize(_captureResolution, _detectionParameters.fiducialThicknessFraction);
+    _trackerParameters.Initialize(_captureResolution,
+                                  _detectionParameters.fiducialThicknessFraction,
+                                  _detectionParameters.roundedCornersFraction);
     _faceDetectionParameters.Initialize(_captureResolution);
     
     Simulator::Initialize();
@@ -2360,7 +2415,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
   }
   
   // This is the regular Update() call
-  Result VisionSystem::Update(const PoseData&            poseData,
+  Result VisionSystem::Update(const VisionPoseData&      poseData,
                               const Vision::ImageRGB&    inputImage)
   {
     Result lastResult = RESULT_OK;
@@ -2389,7 +2444,21 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
                                        "VisionSystem::Update()", "UpdateMarkerToTrack failed.\n");
     
     // Lots of the processing below needs a grayscale version of the image:
-    const Vision::Image inputImageGray = inputImage.ToGray();
+    //const Vision::Image inputImageGray = inputImage.ToGray();
+    
+    Vision::Image inputImageGray = inputImage.ToGray();
+    if(_doRollingShutterCorrection)
+    {
+      Tic("RollingShutterComputeWarps");
+      _rollingShutterCorrector.ComputeWarps(poseData, _prevPoseData);
+      Toc("RollingShutterComputeWarps");
+      if(IsModeEnabled(VisionMode::Tracking))
+      {
+        Tic("RollingShutterWarpImage");
+        inputImageGray = _rollingShutterCorrector.WarpImage(inputImageGray);
+        Toc("RollingShutterWarpImage");
+      }
+    }
     
     // TODO: Provide a way to specify camera parameters from basestation
     //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);

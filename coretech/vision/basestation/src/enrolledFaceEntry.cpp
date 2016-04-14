@@ -11,22 +11,25 @@
  **/
 
 #include "anki/vision/basestation/enrolledFaceEntry.h"
+#include "util/logging/logging.h"
 
 #include <json/json.h>
 
 namespace Anki {
 namespace Vision {
 
-EnrolledFaceEntry::EnrolledFaceEntry(TrackedFace::ID_t withID)
+EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID)
 : faceID(withID)
 , enrollmentTime(time(0))
 , lastDataUpdateTime(time(0))
+, isForThisSessionOnly(true)
 {
   
 }
 
-EnrolledFaceEntry::EnrolledFaceEntry(TrackedFace::ID_t withID, Json::Value& json)
+EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
 : faceID(withID)
+, isForThisSessionOnly(false)
 {
   auto MissingFieldWarning = [withID](const char* fieldName) {
     PRINT_NAMED_WARNING("EnrolledFaceEntry.ConstructFromJson.MissingField",

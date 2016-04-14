@@ -15,23 +15,23 @@
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "26"
+                "version": "30"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
     },
     "teamcity": {
-        "default_usr": "puller_cozmo",
-        "pwd": "TQqNwp4ijqboGsjF3rCWDhUtwsvTKLpb",
         "builds": {
             "coretech_external": {
+                "build_id": "82788",
                 "build_type_id": "Cozmo_CoretechExternal_Build",
-                "build_id": "81207",
+                "extension": "tar.gz",
                 "package_name": "Cozmo_CoretechExternal",
-                "version": "111",
-                "extension": "tar.gz"
+                "version": "115"
             }
         },
+        "default_usr": "puller_cozmo",
+        "pwd": "TQqNwp4ijqboGsjF3rCWDhUtwsvTKLpb",
         "root_url": "https://teamcity.ankicore.com/"
     }
 }

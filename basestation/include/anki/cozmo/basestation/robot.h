@@ -362,6 +362,7 @@ public:
     Result DockWithObject(const ObjectID objectID,
                           const f32 speed_mmps,
                           const f32 accel_mmps2,
+                          const f32 decel_mmps2,
                           const Vision::KnownMarker* marker,
                           const Vision::KnownMarker* marker2,
                           const DockAction dockAction,
@@ -371,19 +372,22 @@ public:
                           const f32 placementOffsetX_mm = 0,
                           const f32 placementOffsetY_mm = 0,
                           const f32 placementOffsetAngle_rad = 0,
-                          const bool useManualSpeed = false);
+                          const bool useManualSpeed = false,
+                          const u8 numRetries = 2);
   
     // Same as above but without specifying image location for marker
     Result DockWithObject(const ObjectID objectID,
                           const f32 speed_mmps,
                           const f32 accel_mmps2,
+                          const f32 decel_mmps2,
                           const Vision::KnownMarker* marker,
                           const Vision::KnownMarker* marker2,
                           const DockAction dockAction,
                           const f32 placementOffsetX_mm = 0,
                           const f32 placementOffsetY_mm = 0,
                           const f32 placementOffsetAngle_rad = 0,
-                          const bool useManualSpeed = false);
+                          const bool useManualSpeed = false,
+                          const u8 numRetries = 2);
     
     // Transitions the object that robot was docking with to the one that it
     // is carrying, and puts it in the robot's pose chain, attached to the
@@ -560,8 +564,7 @@ public:
     bool UpdateCurrPoseFromHistory(const Pose3d& wrtParent);
 
     Result GetComputedPoseAt(const TimeStamp_t t_request, Pose3d& pose) const;
-
-    
+  
     // ============= Reactions =============
     using ReactionCallback = std::function<Result(Robot*,Vision::ObservedMarker*)>;
     using ReactionCallbackIter = std::list<ReactionCallback>::const_iterator;
@@ -789,8 +792,7 @@ public:
     bool              _isLocalized = true;  // May be true even if not localized to an object, if robot has not been picked up
     bool              _localizedToFixedObject; // false until robot sees a _fixed_ mat
     f32               _localizedMarkerDistToCameraSq; // Stores (squared) distance to the closest observed marker of the object we're localized to
-
-    
+  
     Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
     
     const Pose3d     _neckPose;     // joint around which head rotates
@@ -928,12 +930,14 @@ public:
     void HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::RobotToEngine>& message);  
     void HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message);
@@ -946,6 +950,7 @@ public:
     // can be read in from Matlab. (See robot/util/imuLogsTool.m)
     void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+    void HandleImageImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);

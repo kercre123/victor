@@ -47,6 +47,8 @@ For internal use only. No part of this code may be used without a signed non-dis
 #include "data/cozmo_date2014_01_29_time11_41_05_frame10_320x240.h"
 #include "data/cozmo_date2014_01_29_time11_41_05_frame12_320x240.h"
 #include "data/cozmo_date2014_04_04_time17_40_08_frame0.h"
+#include "data/imgTemplate.h"
+#include "data/imgNext.h"
 
 #include "anki/vision/robot/lbpcascade_frontalface.h"
 
@@ -3033,14 +3035,14 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
 
   ASSERT_TRUE(AreValid(scratchCcm, scratchOnchip, scratchOffchip));
 
-  Array<u8> templateImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
-  Array<u8> nextImage(cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH, scratchOnchip);
+  Array<u8> templateImage(imgTemplate_HEIGHT, imgTemplate_WIDTH, scratchOffchip);
+  Array<u8> nextImage(imgNext_HEIGHT, imgNext_WIDTH, scratchOnchip);
 
-  const Quadrilateral<f32> templateQuad(Point<f32>(128,78), Point<f32>(220,74), Point<f32>(229,167), Point<f32>(127,171));
+  const Quadrilateral<f32> templateQuad(Point<f32>(145,98), Point<f32>(219,98), Point<f32>(220,174), Point<f32>(144,175));
 
   const s32 numPyramidLevels = 3;
 
-  const s32 maxIterations = 100;
+  const s32 maxIterations = 50;
 
   const f32 convergenceTolerance_angle = 0.05f * PI_F / 180.0f;
   const f32 convergenceTolerance_distance = 0.05f;
@@ -3049,24 +3051,25 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
 
   const u8 verify_maxPixelDifference = 30;
 
-  const s32 numFiducialSquareSamples = 100;
+  const s32 numFiducialSquareSamples = 500;
   const Point<f32> fiducialSquareWidthFraction(0.1f, 0.1f);
+  const Point<f32> roundedCornersFraction(0.15f, 0.15f);
 
   const s32 maxSamplesAtBaseLevel = 500;
   
   const s32 numSamplingRegions = 5;
 
   // Are these correct?
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 317.23763f;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 318.38113f;
-  const f32 HEAD_CAM_CALIB_CENTER_X       = 151.88373f;
-  const f32 HEAD_CAM_CALIB_CENTER_Y       = 129.03379f;
-  const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 26.f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 293.3018692f;
+  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 293.8413113f;
+  const f32 HEAD_CAM_CALIB_CENTER_X       = 166.20078f;
+  const f32 HEAD_CAM_CALIB_CENTER_Y       = 121.8759768f;
+  const f32 DEFAULT_BLOCK_MARKER_WIDTH_MM = 25.f;
 
   // TODO: add check that images were loaded correctly
+  templateImage.Set(&imgTemplate[0], imgTemplate_WIDTH*imgTemplate_HEIGHT);
+  nextImage.Set(&imgTemplate[0], imgNext_WIDTH*imgNext_HEIGHT);
 
-  templateImage.Set(&cozmo_date2014_01_29_time11_41_05_frame10_320x240[0], cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT);
-  nextImage.Set(&cozmo_date2014_01_29_time11_41_05_frame12_320x240[0], cozmo_date2014_01_29_time11_41_05_frame12_320x240_WIDTH*cozmo_date2014_01_29_time11_41_05_frame12_320x240_HEIGHT);
 
   // Projective LK_SampledPlanar6dof
   {
@@ -3086,6 +3089,7 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
       Transformations::TRANSFORM_PROJECTIVE,
       numFiducialSquareSamples,
       fiducialSquareWidthFraction,
+      roundedCornersFraction,
       maxSamplesAtBaseLevel,
       numSamplingRegions,
       HEAD_CAM_CALIB_FOCAL_LENGTH_X,
@@ -3120,11 +3124,10 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
         scratchCcm);
     
     ASSERT_TRUE(updateResult == RESULT_OK);
-
     ASSERT_TRUE(verify_converged == true);
-    ASSERT_TRUE(verify_meanAbsoluteDifference == 8);
-    ASSERT_TRUE(verify_numInBounds == 1024);
-    ASSERT_TRUE(verify_numSimilarPixels == 945);
+    ASSERT_TRUE(verify_meanAbsoluteDifference <= 10);
+    ASSERT_TRUE(verify_numInBounds >= 1024);
+    ASSERT_TRUE(verify_numSimilarPixels >= 934);
 
     const f64 time2 = GetTimeF64();
 
@@ -3133,17 +3136,17 @@ GTEST_TEST(CoreTech_Vision, LucasKanadeTracker_SampledPlanar6dof)
 
     tracker.get_transformation().Print("Projective LK_SampledPlanar6dof");
 
-    Array<u8> warpedImage(cozmo_date2014_01_29_time11_41_05_frame10_320x240_HEIGHT, cozmo_date2014_01_29_time11_41_05_frame10_320x240_WIDTH, scratchOffchip);
+    Array<u8> warpedImage(imgTemplate_HEIGHT, imgTemplate_WIDTH, scratchOffchip);
     tracker.get_transformation().Transform(templateImage, warpedImage, scratchOffchip);
     
-    //warpedImage.Show("projectiveWarped", false, false, false);
-    //nextImage.Show("nextImage", true, false, false);
+//    warpedImage.Show("projectiveWarped", false, false, false);
+//    nextImage.Show("nextImage", true, false, false);
 
     // This ground truth is from the PC c++ version
     Array<f32> transform_groundTruth = Eye<f32>(3,3,scratchOffchip);
-    transform_groundTruth[0][0] = 316.928528f; transform_groundTruth[0][1] = 4.862291f;   transform_groundTruth[0][2] = 2220.859619f;
-    transform_groundTruth[1][0] = -7.790151f;  transform_groundTruth[1][1] = 309.719971f; transform_groundTruth[1][2] = -1013.155518f;
-    transform_groundTruth[2][0] = -0.036730f;  transform_groundTruth[2][1] = -0.231155f;  transform_groundTruth[2][2] = 81.568863f;
+    transform_groundTruth[0][0] = 292.786255f; transform_groundTruth[0][1] = 1.002035f;   transform_groundTruth[0][2] = 1542.169800f;
+    transform_groundTruth[1][0] = 0.174737f;  transform_groundTruth[1][1] = 293.168365f; transform_groundTruth[1][2] = 1376.420410f;
+    transform_groundTruth[2][0] = 0.059267f;  transform_groundTruth[2][1] = -0.067553f;  transform_groundTruth[2][2] = 97.044777f;
 
     ASSERT_TRUE(AreElementwiseEqual_PercentThreshold<f32>(tracker.get_transformation().get_homography(), transform_groundTruth, .01, .01));
   } // Projective LK_SampledPlanar6dof

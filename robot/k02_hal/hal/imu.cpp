@@ -10,9 +10,14 @@
 
 //#define IMU_DEBUG   // Uncomment for low level debugging printed out the UART
 
-static const int IMU_UPDATE_FREQUENCY = 200; // 200hz (5ms)
-
+static const float IMU_UPDATE_FREQUENCY_HZ = 1.0/0.005;
+static const float IMU_TIMESTAMP_TICKS_PER_UPDATE = 128;
+static const float IMU_LATENCY_S = 0.010f; // 10ms TODO Better estimate of this
+#define IMU_TIMESTAMP_TO_SECONDS(timestamp) ((timestamp) / (IMU_TIMESTAMP_TICKS_PER_UPDATE * IMU_UPDATE_FREQUENCY_HZ))
+  
 IMUData Anki::Cozmo::HAL::IMU::IMUState;
+u32 Anki::Cozmo::HAL::IMU::frameNumberStamp;
+u16 Anki::Cozmo::HAL::IMU::scanLineStamp;
 
 static const uint8_t CMD = 0x7e;
 static const uint8_t STEP_CONF_1 = 0x7b;
@@ -146,6 +151,8 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
 
 static void copy_state() {
   using namespace Anki::Cozmo::HAL;
+  Anki::Cozmo::HAL::IMU::frameNumberStamp = CameraGetFrameNumber();
+  Anki::Cozmo::HAL::IMU::scanLineStamp    = CameraGetScanLine();
   memcpy(&IMU::IMUState, &imu_state, sizeof(IMUData));
 
 #ifdef IMU_DEBUG
@@ -199,4 +206,29 @@ void Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
   imuData.rate_y = GYRO_CONVERT(IMU::IMUState.gyro[1]);
   imuData.acc_z  = ACC_CONVERT(-IMU::IMUState.acc[0]);
   imuData.rate_z = GYRO_CONVERT(-IMU::IMUState.gyro[0]);
+}
+
+void Anki::Cozmo::HAL::IMUGetCameraTime(uint32_t* const frameNumber, uint8_t* const line2Number)
+{
+	static const int SCAN_LINES_PER_FRAME = 500; ///< In future this may be 500 +/- 1 for multi-player synchronization
+  static const int SCAN_LINE_RATE_HZ = 7440;
+  const float LINES_PER_FRAME = static_cast<float>(SCAN_LINES_PER_FRAME);
+  float scanLine = static_cast<float>(IMU::scanLineStamp)
+                 - (IMU_TIMESTAMP_TO_SECONDS(IMU::IMUState.timestamp) * SCAN_LINE_RATE_HZ)
+                 - (IMU_LATENCY_S * SCAN_LINE_RATE_HZ)
+                 + CameraGetExposureDelay();
+  uint32_t correctedFrameNumber = IMU::frameNumberStamp;
+  while(scanLine < 0.0f)
+  {
+    correctedFrameNumber--;
+    scanLine += LINES_PER_FRAME;
+  }
+  while(scanLine >= LINES_PER_FRAME)
+  {
+    correctedFrameNumber++;
+    scanLine -= LINES_PER_FRAME;
+  }
+  
+  *frameNumber = correctedFrameNumber;
+  *line2Number = static_cast<uint8_t>(scanLine/2.0f);
 }

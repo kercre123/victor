@@ -55,9 +55,9 @@ namespace Vision {
     Result SetSerializedAlbum(const std::vector<u8>& serializedAlbum) { return RESULT_FAIL; }
     
     // No-ops but req'd by FaceTracker
-    void   AssignNameToID(TrackedFace::ID_t faceID, const std::string &name) { }
+    void   AssignNameToID(FaceID_t faceID, const std::string &name) { }
     Result SaveAlbum(const std::string& albumName) { return RESULT_FAIL; }
-    Result LoadAlbum(const std::string& albumName) { return RESULT_FAIL; }
+    Result LoadAlbum(const std::string& albumName, std::list<std::string>& names) { return RESULT_FAIL; }
     void   PrintTiming() { }
     
   private:
@@ -72,7 +72,7 @@ namespace Vision {
     u32 _frameCtr = 0;
     const u32 _checkForNewFacesEveryNthFrame = 5; // TODO: Make a settable parameter?
     
-    std::map<TrackedFace::ID_t, TrackedFace> _faces;
+    std::map<FaceID_t, TrackedFace> _faces;
     
     cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE();
 

@@ -11,7 +11,6 @@ message CliffEvent {
   float_32 x_mm,
   float_32 y_mm,
   float_32 angle_rad,
-  bool   drivingForward,
   bool   detected
 }
 

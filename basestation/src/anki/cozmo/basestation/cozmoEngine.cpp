@@ -377,16 +377,17 @@ void CozmoEngine::ForceAddRobot(AdvertisingRobot robotID,
                                         bool             robotIsSimulated)
 {
   if(_isInitialized) {
-    PRINT_NAMED_INFO("CozmoEngine.ForceAddRobot", "Force-adding %s robot with ID %d and IP %s",
-                     (robotIsSimulated ? "simulated" : "real"), robotID, robotIP);
     
     // Force add physical robot since it's not registering by itself yet.
-    Anki::Comms::AdvertisementRegistrationMsg forcedRegistrationMsg;
+    AdvertisementRegistrationMsg forcedRegistrationMsg;
     forcedRegistrationMsg.id = robotID;
-    forcedRegistrationMsg.port = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (robotIsSimulated ? robotID : 0);
-    forcedRegistrationMsg.protocol = USE_UDP_ROBOT_COMMS == 1 ? Anki::Comms::UDP : Anki::Comms::TCP;
+    forcedRegistrationMsg.toEnginePort = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (robotIsSimulated ? robotID : 0);
+    forcedRegistrationMsg.fromEnginePort = forcedRegistrationMsg.toEnginePort;
     forcedRegistrationMsg.enableAdvertisement = 1;
-    snprintf((char*)forcedRegistrationMsg.ip, sizeof(forcedRegistrationMsg.ip), "%s", robotIP);
+    forcedRegistrationMsg.ip = robotIP;
+    
+    PRINT_NAMED_INFO("CozmoEngine.ForceAddRobot", "Force-adding %s robot with ID %d and IP %s:%d",
+                     (robotIsSimulated ? "simulated" : "real"), robotID, robotIP, (int)forcedRegistrationMsg.toEnginePort);
     
     _context->GetRobotAdvertisementService()->ProcessRegistrationMsg(forcedRegistrationMsg);
     

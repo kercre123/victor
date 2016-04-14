@@ -17,6 +17,7 @@
 #include "clad/types/factoryTestTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/gameEvent.clad"
+#include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
@@ -38,6 +39,7 @@ message RobotAvailable {
 }
 
 message UiDeviceAvailable {
+    UiConnectionType  connectionType,
     uint_32 deviceID
 }
 
@@ -53,6 +55,7 @@ message RobotDisconnected {
 
 
 message UiDeviceConnected {
+    UiConnectionType  connectionType,
     uint_32 deviceID,
     uint_8 successful
 }
@@ -111,6 +114,9 @@ message RobotPutDown {
 
 message RobotPoked {
     uint_8   robotID
+}
+
+message RobotStopped {
 }
 
 // Generic string for sending debug string up to game

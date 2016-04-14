@@ -11,10 +11,10 @@
 #include "localization.h"
 #include "speedController.h"
 #include "steeringController.h"
+#include "pickAndPlaceController.h"
 #include "pathFollower.h"
 #include "imuFilter.h"
 #include <math.h>
-
 
 #define DEBUG_DOCK_CONTROLLER 0
 
@@ -28,13 +28,19 @@
 // The purpose being to mitigate the error introduced by rolling shutter on marker pose.
 // TODO: Eventually, accurate stamping of images with time and gyro data should make it
 //       possible to do rolling shutter correction on the engine. Then we can take this stuff out.
-#define DOCK_ANGLE_DAMPING 1
+#define DOCK_ANGLE_DAMPING 0
 
 // Whether or not to use Dubins path. If 0, just uses marker normal vector as approach path.
 #define USE_DUBINS_PATH 0
 
-// Whether or not to only use the first error signal
-#define USE_FIRST_ERROR_SIGNAL_ONLY 1
+// Whether or not to ignore the error signal if it was calculated while rotating fast
+#define IGNORE_FAST_ROTATING_ERRSIG 0
+
+// Whether or not to adjust the head angle to try to look towards the block based on our error signal
+#define TRACK_BLOCK 0
+
+// Whether or not to do blind docking
+#define USE_BLIND_DOCKING 0
 
 
 namespace Anki {
@@ -92,9 +98,14 @@ namespace Anki {
         // Speeds and accels
         f32 dockSpeed_mmps_ = 0;
         f32 dockAccel_mmps2_ = 0;
+        f32 dockDecel_mmps2_ = 0;
 
         // Lateral tolerance at dock pose
-        const f32 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = 1.75f;
+        // Is directly affected by camera extrinsics so it is slightly larger to try
+        // to account for rotated cameras
+        const f32 BLOCK_ON_GROUND_LATERAL_DOCK_TOLERANCE_MM = 3.f;
+        const f32 BLOCK_NOT_ON_GROUND_LATERAL_DOCK_TOLERACNCE_MM = 5.f;
+        f32 LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = BLOCK_ON_GROUND_LATERAL_DOCK_TOLERANCE_MM;
 
         // If non-zero, once we get within this distance of the marker
         // it will continue to follow the last path and ignore timeouts.
@@ -105,9 +116,6 @@ namespace Anki {
         bool pastPointOfNoReturn_ = false;
 
         Mode mode_ = IDLE;
-
-        // Whether or not the last docking attempt succeeded
-        bool success_  = false;
 
         // True if docking off one relative position signal
         // received via StartDockingToRelPose().
@@ -151,14 +159,10 @@ namespace Anki {
 
         // Start raising lift for high dock only when
         // the block is at least START_LIFT_TRACKING_DIST_MM close and START_LIFT_TRACKING_HEIGHT_MM high
-        const f32 START_LIFT_TRACKING_DIST_MM = 80.f;
-        const f32 START_LIFT_TRACKING_HEIGHT_MM = 44.f;
+        const f32 START_LIFT_TRACKING_DIST_MM = 90.f;
 
-        // First commanded lift height when START_LIFT_TRACKING_DIST_MM is reached
-        const f32 START_LIFT_HEIGHT_MM = LIFT_HEIGHT_HIGHDOCK_PICKUP - 15.f;
-
-        // Whether or not to raise lift in prep for high docking
-        bool doHighDockLiftTracking_ = false;
+        bool dockingToBlockOnGround = true;
+        const f32 DOCK_HEIGHT_LIMIT_MM = 80.f;
 
         // Remember the last marker pose that was fully within the
         // field of view of the camera.
@@ -175,7 +179,92 @@ namespace Anki {
 
         DockingErrorSignal dockingErrSignalMsg_;
         bool dockingErrSignalMsgReady_ = false;
+        
+        u8 numDockingFails_ = 0;
+        u8 maxDockRetries_ = 2;
+        Anki::Embedded::Pose2d backupPose_; // Pose of robot when it started to backup
+        
+       
+        const u8 DIST_TO_BACKUP_ON_FAILURE_MM = 60;
+#if(!USE_BLIND_DOCKING)
+        // The docking speed for the final path segment right in front of the thing we are docking with
+        // Allows us to slow down when we are close to the dockPose
+        const f32 finalDockSpeed_mmps_ = 40;
 
+
+        // If the robot's pose relative to the dockPose is more than these tolerances off it is not in position and
+        // should backup and retry docking
+        const u8 VERT_DOCK_TOL_MM = 11; // Distance to block in robot's x direction
+        const u8 HORZ_DOCK_TOL_MM = 3; // Distance to block in robot's y direction
+        const u32 TIME_SINCE_LAST_ERRSIG = 1600;
+
+        const s8 BACKUP_SPEED_MMPS = -50;
+        const u8 DOCKSPEED_ON_FAILURE_MMPS = 40;
+        const u8 DOCKDECEL_ON_FAILURE_MMPS2 = 40;
+
+        // Constants for the Hanns maneuver (HM)
+        const u8 HM_DIST_MM = 30;
+        const f32 HM_SPEED_MMPS = 300;
+        const u8 HM_ACCEL_MMPS2 = 100;
+        const f32 HM_TURN_ANGLE_RAD = DEG_TO_RAD(25);
+        const f32 HM_ROT_SPEED_RADPS = 7.0;
+        const f32 HM_ROT_ACCEL_MMPS2 = 4.0;
+
+        // Tolerances for doing the Hanns Maneuver when we are checking our position with the last docking error message
+        const f32 ERRMSG_HM_ANGLE_TOL = DEG_TO_RAD(16);
+        const u8 ERRMSG_HM_LATERAL_DOCK_TOL_MM = 18;
+        const u8 ERRMSG_HM_DIST_TOL = 15;
+        
+        // Tolerances for doing the Hanns Maneuver when we are checking our position with our pose relative to dockPose
+        const u8 POSE_HM_DIST_TOL = 10;
+        const u8 POSE_HM_HORZ_TOL_MM = 9;
+        const f32 POSE_HM_ANGLE_TOL = DEG_TO_RAD(10);
+        
+        // Angle tolerances for checking whether or not we are in position based on what we are using to check pose
+        const f32 ERRMSG_NOT_IN_POSITION_ANGLE_TOL = DEG_TO_RAD(10);
+        const f32 POSE_NOT_IN_POSITION_ANGLE_TOL = DEG_TO_RAD(5);
+        
+        // Steering controller gains for docking
+        const f32 DOCKING_K1 = 0.05f;
+        const f32 DOCKING_K2 = 12.f;
+        const f32 DOCKING_PATH_DIST_OFFSET_CAP_MM = 10;
+        const f32 DOCKING_PATH_ANG_OFFSET_CAP_RAD = 0.4;
+        
+        // Values related to our path to get use from our current pose to dockPose
+        const u8 MIN_DIST_TO_DECEL_MM = 30;
+        const u8 DIST_AWAY_FROM_BLOCK_FOR_PT_MM = 60;
+        const u8 DIST_TO_DECEL_OFFSET_MM = 5;
+        const u8 DIST_AWAY_FROM_BLOCK_FOR_ADDITIONAL_PATH_MM = 100;
+        const f32 ANGLE_FROM_BLOCK_FOR_ADDITIONAL_PATH_RAD = DEG_TO_RAD(25);
+        const f32 ANGLE_FROM_BLOCK_FOR_POINT_TURN_RAD = DEG_TO_RAD(15);
+        const u8 PATH_END_DIST_INTO_BLOCK_MM = 10;
+        const u8 PATH_START_DIST_BEHIND_ROBOT_MM = 60;
+        
+#endif
+        // If the block and cozmo are on the same plane the dock err signal z_height will be below this value
+        // Normally it is ~22mm
+        const u8 BLOCK_ON_GROUND_DOCK_ERR_Z_HEIGHT_MM = 25;
+        
+        const u8 DOCK_OFFSET_DIST_X_OFFSET = 10;
+        
+        // The different failure cases that can occur when cozmo is not in position during docking
+        enum FailureMode {
+          NO_FAILURE,
+          BACKING_UP,
+          HANNS_MANEUVER
+        };
+        FailureMode failureMode_ = NO_FAILURE;
+        
+        // Save previous controller gains
+        f32 prevK1_;
+        f32 prevK2_;
+        f32 prevPathDistOffsetCap_;
+        f32 prevPathAngOffsetCap_;
+        
+        bool dockingStarted = false;
+        
+        DockingResult dockingResult_ = DOCK_UNKNOWN;
+        
       } // "private" namespace
 
       bool IsBusy()
@@ -185,7 +274,13 @@ namespace Anki {
 
       bool DidLastDockSucceed()
       {
-        return success_;
+        if(dockingResult_ == DOCK_SUCCESS ||
+           dockingResult_ == DOCK_SUCCESS_HANNS_MANEUVER ||
+           dockingResult_ == DOCK_SUCCESS_RETRY)
+        {
+          return true;
+        }
+        return false;
       }
 
       f32 GetVerticalFOV() {
@@ -194,6 +289,27 @@ namespace Anki {
 
       f32 GetHorizontalFOV() {
         return headCamFOV_hor_;
+      }
+      
+      DockingResult GetDockingResult()
+      {
+        return dockingResult_;
+      }
+      
+      Result SendDockingStatusMessage(Status status)
+      {
+        DockingStatus msg;
+        msg.timestamp = HAL::GetTimeStamp();
+        msg.status = status;
+        if(RobotInterface::SendMessage(msg)) {
+          return RESULT_OK;
+        }
+        return RESULT_FAIL;
+      }
+      
+      void SetMaxRetries(u8 numRetries)
+      {
+        maxDockRetries_ = numRetries;
       }
 
 
@@ -279,32 +395,46 @@ namespace Anki {
       // Gradually lift block from a height of START_LIFT_HEIGHT_MM to LIFT_HEIGHT_HIGH_DOCK
       // over the marker distance ranging from START_LIFT_TRACKING_DIST_MM to dockOffsetDistX_.
       void HighDockLiftUpdate() {
-        if (doHighDockLiftTracking_) {
-
+        // Don't want to move the lift while we are backing up or carrying a block
+        if(failureMode_ != BACKING_UP && !PickAndPlaceController::IsCarryingBlock())
+        {
           f32 lastCommandedHeight = LiftController::GetDesiredHeight();
-          if (lastCommandedHeight == LIFT_HEIGHT_HIGHDOCK_PICKUP) {
+          if (lastCommandedHeight == dockingErrSignalMsg_.z_height) {
             // We're already at the high lift position.
             // No need to repeatedly command it.
             return;
           }
+          
+          // If the height of the block is higher than our normal docking height (the block is off the ground)
+          // then we are doing high docking so adjust our lateral dock tolerance
+          if(dockingErrSignalMsg_.z_height > BLOCK_ON_GROUND_DOCK_ERR_Z_HEIGHT_MM)
+          {
+            dockingToBlockOnGround = false;
+            LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = BLOCK_NOT_ON_GROUND_LATERAL_DOCK_TOLERACNCE_MM;
+          }
+          else
+          {
+            dockingToBlockOnGround = true;
+            LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = BLOCK_ON_GROUND_LATERAL_DOCK_TOLERANCE_MM;
+          }
 
           // Compute desired slope of lift height during approach.
-          const f32 liftApproachSlope = (LIFT_HEIGHT_HIGHDOCK_PICKUP - START_LIFT_HEIGHT_MM) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
+          // The ending lift height is made smaller the heigher the block is so that the lift doesn't rise
+          // above the block which it can if just using z_height
+          const f32 liftApproachSlope = (dockingErrSignalMsg_.z_height - ABS(dockingErrSignalMsg_.z_height-BLOCK_ON_GROUND_DOCK_ERR_Z_HEIGHT_MM)/10.f) / (START_LIFT_TRACKING_DIST_MM - dockOffsetDistX_);
 
           // Compute current estimated distance to marker
           f32 robotX, robotY;
           Radians robotAngle;
           Localization::GetCurrentMatPose(robotX, robotY, robotAngle);
 
-          f32 diffX = (blockPose_.GetX() - robotX);
-          f32 diffY = (blockPose_.GetY() - robotY);
+          f32 diffX = (dockPose_.GetX() - robotX);
+          f32 diffY = (dockPose_.GetY() - robotY);
           f32 estDistToMarker = sqrtf(diffX * diffX + diffY * diffY);
 
-
           if (estDistToMarker < START_LIFT_TRACKING_DIST_MM) {
-
             // Compute current desired lift height based on current distance to block.
-            f32 liftHeight = START_LIFT_HEIGHT_MM + liftApproachSlope * (START_LIFT_TRACKING_DIST_MM - estDistToMarker);
+            f32 liftHeight = liftApproachSlope * (START_LIFT_TRACKING_DIST_MM - estDistToMarker);
 
             // Keep between current desired height and high dock height
             liftHeight = CLIP(liftHeight, lastCommandedHeight, LIFT_HEIGHT_HIGHDOCK_PICKUP);
@@ -313,7 +443,6 @@ namespace Anki {
             LiftController::SetDesiredHeight(liftHeight);
           }
         }
-
       }
 
 
@@ -335,7 +464,6 @@ namespace Anki {
 
       Result Update()
       {
-
         // Get any docking error signal available from the vision system
         // and update our path accordingly.
         while( dockingErrSignalMsgReady_ )
@@ -344,6 +472,31 @@ namespace Anki {
 
           // If we're not actually docking, just toss the dockingErrSignalMsg_.
           if (mode_ == IDLE) {
+            break;
+          }
+          
+          // Fail immediatly if the block height is above our docking limit
+          if(dockingErrSignalMsg_.z_height > DOCK_HEIGHT_LIMIT_MM ||
+             (PickAndPlaceController::IsCarryingBlock() &&
+              dockingErrSignalMsg_.z_height > BLOCK_ON_GROUND_DOCK_ERR_Z_HEIGHT_MM))
+          {
+            StopDocking(DOCK_FAILURE_TOO_HIGH);
+            return RESULT_FAIL;
+          }
+          
+          // If we failed to dock and are now backing up ignore error signals until we are
+          // DIST_TO_BACKUP_ON_FAILURE_MM away from our initial backing up pose
+          if(failureMode_ == BACKING_UP)
+          {
+            if(Localization::GetDistTo(backupPose_.x(), backupPose_.y()) > DIST_TO_BACKUP_ON_FAILURE_MM)
+            {
+              failureMode_ = NO_FAILURE;
+            }
+            else
+            {
+              // While we are backing up we don't want to time out due to ignoring error signals so fake time
+              lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
+            }
             break;
           }
 
@@ -358,21 +511,23 @@ namespace Anki {
           lastTime = currTime;
 #endif
 
-          //PRINT("ErrSignal %d (msgTime %d)\n", HAL::GetMicroCounter(), dockingErrSignalMsg_.timestamp);
-
           // Check if we are beyond point of no return distance
           if (pastPointOfNoReturn_) {
+            // If we believe we are past the point of no return distance but are actually not
+            if(dockingErrSignalMsg_.x_distErr > pointOfNoReturnDistMM_)
+            {
 #if(DEBUG_DOCK_CONTROLLER)
-            AnkiDebug( 5, "DockingController", 31, "Ignoring error msg because past point of no return (%f < %d)", 2, dockingErrSignalMsg_.x_distErr, pointOfNoReturnDistMM_);
+              AnkiDebug( 5, "DockingController", 427, "No longer past point of no return (%f > %d)", 2,
+                        dockingErrSignalMsg_.x_distErr, pointOfNoReturnDistMM_);
 #endif
-            break; // out of while
+              pastPointOfNoReturn_ = false;
+            }
           }
 
 
 #if(DEBUG_DOCK_CONTROLLER)
-          AnkiDebug( 5, "DockingController", 32, "Received (approximate=%d) docking error signal: x_distErr=%f, y_horErr=%f, "
-                "z_height=%f, angleErr=%fdeg", 5,
-                dockMsg.isApproximate,
+          AnkiDebug( 5, "DockingController", 32, "Received docking error signal: time=%d, x_distErr=%f, y_horErr=%f, z_height=%f, angleErr=%fdeg", 5,
+                dockingErrSignalMsg_.timestamp,
                 dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr,
                 dockingErrSignalMsg_.z_height, RAD_TO_DEG_F32(dockingErrSignalMsg_.angleErr));
 #endif
@@ -388,35 +543,10 @@ namespace Anki {
             // Set relative block pose to start/continue docking
             SetRelDockPose(dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, dockingErrSignalMsg_.angleErr, dockingErrSignalMsg_.timestamp);
 
-            // If we have the height of the marker for docking, we can also
-            // compute the head angle to keep it centered
-            //HeadController::SetMaxSpeedAndAccel(2.5, 10);
-            //f32 desiredHeadAngle = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
-
-            // Make sure bottom of camera FOV doesn't tilt below the bottom of the block
-            // or that the camera FOV center doesn't tilt below the marker center.
-            // Otherwise try to maintain the lowest tilt possible
-
-            // Compute angle the head needs to face such that the bottom of the marker
-            // is at the bottom of the image.
-            //f32 minDesiredHeadAngle1 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2] - 20.f)/dockMsg.x_distErr) + 0.5f*GetVerticalFOV(); // TODO: Marker size should come from VisionSystem?
-
-            // Compute the angle the head needs to face such that it is looking
-            // directly at the center of the marker
-            //f32 minDesiredHeadAngle2 = atan_fast( (dockMsg.z_height - NECK_JOINT_POSITION[2])/dockMsg.x_distErr);
-
-            // Use the min of both angles
-            //f32 desiredHeadAngle = MIN(minDesiredHeadAngle1, minDesiredHeadAngle2);
-
-            // KEVIN: Lens is wide enough now that we don't really need to do head tracking.
-            //        Docking is smoother without it!
-            //HeadController::SetDesiredAngle(desiredHeadAngle);
-            //PRINT("desHeadAngle %f (min1: %f, min2: %f)\n", desiredHeadAngle, minDesiredHeadAngle1, minDesiredHeadAngle2);
-
-            // If docking to a high block, assumes we're trying to pick it up!
-            if (dockingErrSignalMsg_.z_height > START_LIFT_TRACKING_HEIGHT_MM) {
-              doHighDockLiftTracking_ = true;
-            }
+#if(TRACK_BLOCK)
+            f32 desiredHeadAngle = atan_fast( (dockingErrSignalMsg_.z_height - NECK_JOINT_POSITION[2])/dockingErrSignalMsg_.x_distErr);
+            HeadController::SetDesiredAngle(desiredHeadAngle);
+#endif
 
             continue;
           }
@@ -468,7 +598,7 @@ namespace Anki {
         // Check if we are beyond point of no return distance
         if (!pastPointOfNoReturn_ && (pointOfNoReturnDistMM_ != 0) && (distToMarker < pointOfNoReturnDistMM_)) {
 #if(DEBUG_DOCK_CONTROLLER)
-          AnkiDebug( 5, "DockingController", 35, "Point of no return (%f < %d)", 2, distToMarker, pointOfNoReturnDistMM_);
+          AnkiDebug( 5, "DockingController", 35, "Point of no return (%f < %d) mode:%i", 3, distToMarker, pointOfNoReturnDistMM_, mode_);
 #endif
           pastPointOfNoReturn_ = true;
           mode_ = APPROACH_FOR_DOCK;
@@ -487,7 +617,7 @@ namespace Anki {
             if ((!pastPointOfNoReturn_)
                 && !markerOutOfFOV_
               && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_MS)) {
-              ResetDocker();
+              StopDocking(DOCK_FAILURE_TOO_LONG_WITHOUT_BLOCKPOSE);
               AnkiDebug( 5, "DockingController", 36, "Too long without block pose (currTime %d, lastErrSignal %d). Giving up.", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
             }
             break;
@@ -506,29 +636,221 @@ namespace Anki {
               AnkiDebug( 5, "DockingController", 37, "Too long without block pose (currTime %d, lastErrSignal %d). Looking for block...\n", 2, HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
               break;
             }
-
-            // If finished traversing path
-            if (createdValidPath_ && !PathFollower::IsTraversingPath()) {
-#if(DEBUG_DOCK_CONTROLLER)
-              AnkiDebug( 5, "DockingController", 38, "*** DOCKING SUCCESS ***", 0);
-#endif
-              ResetDocker();
-              success_ = true;
+            
+            // If we did the Hanns maneuver assume it succedded since we should only be doing when we
+            // believe it will work
+            if(failureMode_ == HANNS_MANEUVER && createdValidPath_ && !PathFollower::IsTraversingPath())
+            {
+              StopDocking(DOCK_SUCCESS_HANNS_MANEUVER);
               break;
             }
+            
+            // If finished traversing path
+            if (createdValidPath_ &&
+                !PathFollower::IsTraversingPath() &&
+                failureMode_ == NO_FAILURE)
+            {
+              // Get our current pose and compute relative x,y distances to dockPose
+              Anki::Embedded::Pose2d curPose = Localization::GetCurrPose();
+              Localization::ConvertToDriveCenterPose(curPose, curPose);
+              Anki::Embedded::Pose2d relPose = dockPose_.GetWithRespectTo(curPose);
+              f32 rel_vert_dist_block = relPose.y();
+              f32 rel_horz_dist_block = ABS(relPose.x());
+              
+              bool inPosition = true;
+              
+#if(!USE_BLIND_DOCKING)
+              bool doHannsManeuver = false;
+              f32 rel_angle_to_block = relPose.GetAngle().ToFloat();
 
+              // Depending on when our last docking error signal was we will either use it or the robot's relative
+              // distances to the dock pose to determine if we are in position
+              if(!markerlessDocking_)
+              {
+                if((HAL::GetTimeStamp() - dockingErrSignalMsg_.timestamp) <= TIME_SINCE_LAST_ERRSIG &&
+                   (dockingErrSignalMsg_.x_distErr > pointOfNoReturnDistMM_ ||
+                    ABS(dockingErrSignalMsg_.y_horErr) > LATERAL_DOCK_TOLERANCE_AT_DOCK_MM ||
+                    ABS(dockingErrSignalMsg_.angleErr) > ERRMSG_NOT_IN_POSITION_ANGLE_TOL))
+                {
+                  AnkiDebug( 5, "DockingController", 44, "Finished path but error signal (rel_x:%f > ponr:%d) or (rel_y:%f > tol:%f) (a:%f > %f) %d", 7,
+                            dockingErrSignalMsg_.x_distErr,
+                            pointOfNoReturnDistMM_,
+                            ABS(dockingErrSignalMsg_.y_horErr),
+                            LATERAL_DOCK_TOLERANCE_AT_DOCK_MM,
+                            ABS(RAD_TO_DEG(dockingErrSignalMsg_.angleErr)),
+                            ERRMSG_NOT_IN_POSITION_ANGLE_TOL,
+                            HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp);
+                  inPosition = false;
+                  
+                  // If we aren't in position but are relativly close then we want to do the Hanns maneuver
+                  // The x_distErr can be fairly large due it not being that recent so reduce it by a ratio of
+                  // how long ago the error was and the x_distErr at that time
+                  if(dockingErrSignalMsg_.x_distErr-((HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp)/dockingErrSignalMsg_.x_distErr) <= pointOfNoReturnDistMM_+ERRMSG_HM_DIST_TOL &&
+                      ABS(dockingErrSignalMsg_.y_horErr) <= ERRMSG_HM_LATERAL_DOCK_TOL_MM &&
+                      ABS(dockingErrSignalMsg_.angleErr) <= ERRMSG_HM_ANGLE_TOL)
+                  {
+                    AnkiDebug( 5, "DockingController", 40, "Able to do Hanns maneuver %f<=%d or %f<=%f or %f<=%f", 6,
+                                dockingErrSignalMsg_.x_distErr,
+                                pointOfNoReturnDistMM_+ERRMSG_HM_DIST_TOL,
+                                ABS(dockingErrSignalMsg_.y_horErr),
+                                ERRMSG_HM_LATERAL_DOCK_TOL_MM,
+                                ABS(RAD_TO_DEG(dockingErrSignalMsg_.angleErr)),
+                                ERRMSG_HM_ANGLE_TOL);
+#if(!SIMULATOR)
+                    doHannsManeuver = true;
+#endif
+                  }
+                }
+                // If we can't use the last docking error signal then check if the robot's pose is within some
+                // tolerenaces of the dockPose
+                else if((HAL::GetTimeStamp() - dockingErrSignalMsg_.timestamp) > TIME_SINCE_LAST_ERRSIG &&
+                        (rel_vert_dist_block > VERT_DOCK_TOL_MM ||
+                         ABS(rel_horz_dist_block) > HORZ_DOCK_TOL_MM ||
+                         ABS(rel_angle_to_block) > POSE_NOT_IN_POSITION_ANGLE_TOL))
+                {
+                  AnkiDebug( 5, "DockingController", 428, "Finished path but pose (rel_x:%f > vert_tol:%d) or (rel_y:%f > horz_tol:%d) or (angle:%f > %f) %d", 7,
+                            rel_vert_dist_block,
+                            VERT_DOCK_TOL_MM,
+                            ABS(rel_horz_dist_block),
+                            HORZ_DOCK_TOL_MM,
+                            RAD_TO_DEG(rel_angle_to_block),
+                            POSE_NOT_IN_POSITION_ANGLE_TOL,
+                            HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp);
+                  inPosition = false;
+                  
+                  if(rel_vert_dist_block < VERT_DOCK_TOL_MM+POSE_HM_DIST_TOL &&
+                      ABS(rel_horz_dist_block) < POSE_HM_HORZ_TOL_MM &&
+                      ABS(rel_angle_to_block) < POSE_HM_ANGLE_TOL)
+                  {
+                    AnkiDebug( 5, "DockingController", 436, "Able to do Hanns maneuver (rel_x:%f <= vert_tol:%d) or (rel_y:%f <= horz_tol:%d) or (angle:%f <= %f)", 6,
+                              rel_vert_dist_block,
+                              VERT_DOCK_TOL_MM+POSE_HM_DIST_TOL,
+                              ABS(rel_horz_dist_block),
+                              POSE_HM_HORZ_TOL_MM,
+                              RAD_TO_DEG(rel_angle_to_block),
+                              POSE_HM_ANGLE_TOL);
+#if(!SIMULATOR)
+                    doHannsManeuver = true;
+#endif
+                  }
+                }
+              }
+#endif //!USE_BLIND_DOCKING
+
+              // If we know we are not in position and we are not currently backing up due to an already recognized
+              // failure then fail this dock and either backup or do Hanns maneuver. We are only able to fail
+              // docking this way if the docking involves markers
+              if(!markerlessDocking_ && !inPosition)
+              {
+#if(!USE_BLIND_DOCKING)
+                // If we have determined we should do the Hanns maneuver and we aren't currently doing it,
+                // are docking to a block on the ground, and not carrying a block
+                if(doHannsManeuver &&
+                   failureMode_ != HANNS_MANEUVER &&
+                   dockingToBlockOnGround &&
+                   !PickAndPlaceController::IsCarryingBlock())
+                {
+                  SendDockingStatusMessage(STATUS_DOING_HANNS_MANEUVER);
+                  AnkiDebug( 5, "DockingController", 425, "Executing Hanns maneuver", 0);
+                  f32 x;
+                  f32 y;
+                  Radians a;
+                  Localization::GetDriveCenterPose(x, y, a);
+
+                  PathFollower::ClearPath();
+                  
+                  f32 turnAngle = 0;
+                  // Depending on which source of information we used to determine we are not in position
+                  // use the same one to get the turn angle
+                  if((HAL::GetTimeStamp() - dockingErrSignalMsg_.timestamp) <= TIME_SINCE_LAST_ERRSIG)
+                  {
+                    turnAngle = (dockingErrSignalMsg_.y_horErr >= 0 ? -HM_TURN_ANGLE_RAD : HM_TURN_ANGLE_RAD);
+                  }
+                  else
+                  {
+                    turnAngle = (rel_horz_dist_block >= 0 ? HM_TURN_ANGLE_RAD : -HM_TURN_ANGLE_RAD);
+                  }
+                  
+                  PathFollower::AppendPathSegment_PointTurn(0, x, y,
+                                                            a.ToFloat()-turnAngle,
+                                                            HM_ROT_SPEED_RADPS,
+                                                            HM_ROT_ACCEL_MMPS2,
+                                                            HM_ROT_ACCEL_MMPS2,
+                                                            0.1, true);
+                  
+                  PathFollower::AppendPathSegment_Line(0,
+                                                       x,
+                                                       y,
+                                                       x+(HM_DIST_MM)*cosf(a.ToFloat()),
+                                                       y+(HM_DIST_MM)*sinf(a.ToFloat()),
+                                                       HM_SPEED_MMPS,
+                                                       HM_ACCEL_MMPS2,
+                                                       HM_ACCEL_MMPS2);
+                  
+                  createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
+                  failureMode_ = HANNS_MANEUVER;
+                }
+                // Otherwise we are not in position and should just back up
+                else
+                {
+                  SendDockingStatusMessage(STATUS_BACKING_UP);
+                  AnkiDebug( 5, "DockingController", 437, "Backing up", 0);
+                  
+                  // If we have failed too many times just give up
+                  if(numDockingFails_++ >= maxDockRetries_)
+                  {
+                    StopDocking(DOCK_FAILURE_RETRY);
+                    AnkiDebug( 5, "DockingController", 438, "Num docking fails reached", 0);
+                    break;
+                  }
+                  
+                  pastPointOfNoReturn_ = false;
+                  mode_ = LOOKING_FOR_BLOCK;
+                  
+                  backupPose_ = curPose;
+                  
+                  PathFollower::ClearPath();
+                  createdValidPath_ = false;
+                  SteeringController::ExecuteDirectDrive(BACKUP_SPEED_MMPS, BACKUP_SPEED_MMPS);
+                  dockSpeed_mmps_ = DOCKSPEED_ON_FAILURE_MMPS;
+                  dockDecel_mmps2_ = DOCKDECEL_ON_FAILURE_MMPS2;
+                  
+                  if(PickAndPlaceController::GetCurAction() == DA_ROLL_LOW)
+                  {
+                    LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                  }
+                  else
+                  {
+                    LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, 0.25, 0.25, 1);
+                  }
+                  dockingToBlockOnGround = true;
+                  
+                  failureMode_ = BACKING_UP;
+                }
+#endif //!USE_BLIND_DOCKING
+              }
+              // Otherwise we are in position and docking can succeed
+              else if(inPosition && failureMode_ == NO_FAILURE)
+              {
+                AnkiDebug( 5, "DockingController", 416, "vert:%f hort:%f rel_x:%f rel_y:%f t:%d", 5, rel_vert_dist_block, ABS(rel_horz_dist_block), dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, (int)(HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp));
+                AnkiDebug( 5, "DockingController", 38, "*** DOCKING SUCCESS ***", 0);
+                StopDocking(DOCK_SUCCESS);
+                if(numDockingFails_ > 0)
+                {
+                  StopDocking(DOCK_SUCCESS_RETRY);
+                }
+              }
+            }
             break;
           }
           default:
             mode_ = IDLE;
-            success_ = false;
             AnkiDebug( 5, "DockingController", 39, "Reached default case in DockingController "
                   "mode switch statement.(1)", 0);
             break;
         }
 
-
-        if(success_ == false)
+        if(!DidLastDockSucceed())
         {
           retVal = RESULT_FAIL;
         }
@@ -543,34 +865,28 @@ namespace Anki {
         // Check for readings that we do not expect to get
         if (rel_x < 0.f || ABS(rel_rad) > 0.75f*PIDIV2_F
             ) {
-          AnkiWarn( 5, "DockingController", 40, "Ignoring out of range docking error signal (%f, %f, %f)", 3, rel_x, rel_y, rel_rad);
+          AnkiWarn( 5, "DockingController", 429, "Ignoring out of range docking error signal (%f, %f, %f)", 3, rel_x, rel_y, rel_rad);
           return;
         }
 
-        if (mode_ == IDLE || success_) {
+        if (mode_ == IDLE || DidLastDockSucceed()) {
           // We already accomplished the dock. We're done!
           return;
         }
         
-#if(USE_FIRST_ERROR_SIGNAL_ONLY)
-        // TEMP (maybe): Just use the first error signal that starts docking.
-        //               This way we skip error signals that were potentially generated from a wonky marker due to motion.
+#if(USE_BLIND_DOCKING)
         if (PathFollower::IsTraversingPath()) {
           return;
         }
 #endif
 
 
-        // Ignore error signals received while turning "fast" since they're generated
-        // from a potentially warped marker due to rolling shutter.
-        //
-        // TODO: The better thing to do would be to not send the error the signal
-        //       from the engine in the first place by checking it against historical rotation speed.
-        //       (Doing it here for now because it's quicker and I don't want to trip the
-        //       no error signal received timeout.)
+#if(IGNORE_FAST_ROTATING_ERRSIG || USE_BLIND_DOCKING)
         if (ABS(IMUFilter::GetRotationSpeed()) > 0.3f) {
+          AnkiDebug( 5, "DockingController", 430, "Ignoring error signal due to fast rotation", 0);
           return;
         }
+#endif
 
 
 #if(RESET_LOC_ON_BLOCK_UPDATE)
@@ -621,13 +937,14 @@ namespace Anki {
         //               /
         //              +ve y-axis
 
-        if (rel_x <= dockOffsetDistX_ && ABS(rel_y) < LATERAL_DOCK_TOLERANCE_AT_DOCK_MM) {
+        // DOCK_OFFSET_DIST_X_OFFSET is added to the dockOffsetDistX_ here because when the robot is docked with the block
+        // rel_x is generally greater than dockOffsetDistX_ which is origin_to_lift_distance
+        if (rel_x <= dockOffsetDistX_+DOCK_OFFSET_DIST_X_OFFSET && ABS(rel_y) <= LATERAL_DOCK_TOLERANCE_AT_DOCK_MM) {
 #if(DEBUG_DOCK_CONTROLLER)
-          AnkiDebug( 5, "DockingController", 41, "DOCK POSE REACHED (dockOffsetDistX = %f)", 1, dockOffsetDistX_);
+          AnkiDebug( 5, "DockingController", 41, "DOCK POSE REACHED (dockOffsetDistX = %f)", 1, dockOffsetDistX_+DOCK_OFFSET_DIST_X_OFFSET);
 #endif
           return;
         }
-
 
         // This error signal is with respect to the pose the robot was at at time dockMsg.timestamp
         // Find the pose the robot was at at that time and transform it to be with respect to the
@@ -641,10 +958,10 @@ namespace Anki {
 
 #if(DEBUG_DOCK_CONTROLLER)
         Anki::Embedded::Pose2d currPose;
-        Localization::GetCurrentMatPose(currPose.x(), currPose.y(), currPose.angle);
-        AnkiDebug( 5, "DockingController", 42, "HistPose %f %f %f (t=%d), currPose %f %f %f (t=%d)", 8,
-              histPose.x(), histPose.y(), histPose.angle.getDegrees(), t,
-              currPose.x(), currPose.y(), currPose.angle.getDegrees(), HAL::GetTimeStamp());
+        Localization::GetCurrentMatPose(currPose.x(), currPose.y(), currPose.angle());
+        AnkiDebug( 5, "DockingController", 42, "HistPose %f %f %f (t=%d), currPose %f %f %f (t=%d)\n", 8,
+              histPose.x(), histPose.y(), histPose.angle().getDegrees(), t,
+              currPose.x(), currPose.y(), currPose.angle().getDegrees(), HAL::GetTimeStamp());
 #endif
 
         // Compute absolute block pose using error relative to pose at the time image was taken.
@@ -663,7 +980,7 @@ namespace Anki {
             AnkiInfo( 5, "DockingController", 43, "Marker signal is INSIDE FOV\n", 0);
             markerOutOfFOV_ = false;
           } else {
-            //AnkiInfo( 5, "DockingController", 44, "Marker is expected to be out of FOV. Ignoring error signal\n", 0);
+            //AnkiInfo( 5, "DockingController", 431, "Marker is expected to be out of FOV. Ignoring error signal\n", 0);
             return;
           }
         }
@@ -711,7 +1028,11 @@ namespace Anki {
         // Convert goal pose to drive center pose for pathFollower
         Localization::ConvertToDriveCenterPose(dockPose_, dockPose_);
 
-
+        // Get current drive center pose
+        f32 x;
+        f32 y;
+        Radians a;
+        Localization::GetDriveCenterPose(x, y, a);
 #if(USE_DUBINS_PATH)
         s8 endRadiiIdx = -1;
         f32 path_length;
@@ -722,14 +1043,14 @@ namespace Anki {
           PathFollower::ClearPath();
 
           if (++endRadiiIdx == NUM_END_RADII) {
-            //PRINT("Could not generate Dubins path\n");
+            AnkiDebug( 5, "DockingController", 439, "Could not find Dubins Path", 0);
             followingBlockNormalPath_ = true;
             break;
           }
 
-          numPathSegments = PathFollower::GenerateDubinsPath(approachStartPose_.x(),
-                                                             approachStartPose_.y(),
-                                                             approachStartPose_.GetAngle().ToFloat(),
+          numPathSegments = PathFollower::GenerateDubinsPath(x,
+                                                             y,
+                                                             a.ToFloat(),
                                                              dockPose_.x(),
                                                              dockPose_.y(),
                                                              dockPose_.GetAngle().ToFloat(),
@@ -737,7 +1058,7 @@ namespace Anki {
                                                              DOCK_PATH_END_RADII_MM[endRadiiIdx],
                                                              dockSpeed_mmps_,
                                                              dockAccel_mmps2_,
-                                                             dockAccel_mmps2_,
+                                                             dockDecel_mmps2_,
                                                              FINAL_APPROACH_STRAIGHT_SEGMENT_LENGTH_MM,
                                                              &path_length);
 
@@ -762,23 +1083,122 @@ namespace Anki {
         // Skipping Dubins path since the straight line path seems to work fine as long as the steeringController gains
         // are set appropriately according to docking speed.
         followingBlockNormalPath_ = true;
-#endif // #if(USE_DUBINS_PATH)
+#endif
 
         // No reasonable Dubins path exists.
         // Either try again with smaller radii or just let the controller
         // attempt to get on to a straight line normal path.
         if (followingBlockNormalPath_) {
-
+#if(USE_BLIND_DOCKING)
           // Compute new starting point for path
           // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
           f32 x_start_mm = dockPose_.x() - 3 * distToBlock * cosf(dockPose_.GetAngle().ToFloat());
           f32 y_start_mm = dockPose_.y() - 3 * distToBlock * sinf(dockPose_.GetAngle().ToFloat());
-
+          
           PathFollower::ClearPath();
           PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
                                                dockSpeed_mmps_, dockAccel_mmps2_, dockAccel_mmps2_);
-
+          
           //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
+#else
+          
+          // Distance it takes in order to decelerate from dockSpeed to finalDockSpeed + DIST_TO_DECEL_OFFSET_MM
+          // The 5mm gives us a little extra distance to ensure we reach the final docking speed
+          f32 distToDecel = ((finalDockSpeed_mmps_*finalDockSpeed_mmps_)-(dockSpeed_mmps_*dockSpeed_mmps_)) / (-2*dockDecel_mmps2_) + DIST_TO_DECEL_OFFSET_MM;
+          
+          // Clip the distToDecel because if it is larger than the distance to the block the robot will
+          // turnaround to get to the point
+          distToDecel = CLIP(distToDecel, MIN_DIST_TO_DECEL_MM, distToBlock);
+          
+          // If we need to do a point turn in order to turn towards the block than this padding will ensure we are
+          // DIST_AWAY_FROM_BLOCK_FOR_PT_MM away from the block when we turn.
+          // This is so that we don't turn and collide with the block
+          f32 distToDecelPadding = 0;
+          if(distToDecel < DIST_AWAY_FROM_BLOCK_FOR_PT_MM && distToBlock > DIST_AWAY_FROM_BLOCK_FOR_PT_MM)
+          {
+            distToDecelPadding = DIST_AWAY_FROM_BLOCK_FOR_PT_MM - distToDecel;
+          }
+          
+          f32 dockPoseAngleCos = cosf(dockPose_.GetAngle().ToFloat());
+          f32 dockPoseAngleSin = sinf(dockPose_.GetAngle().ToFloat());
+          
+          f32 x_inFrontOfBlock = dockPose_.x()-(distToDecelPadding + distToDecel)*dockPoseAngleCos;
+          f32 y_inFrontOfBlock = dockPose_.y()-(distToDecelPadding + distToDecel)*dockPoseAngleSin;
+          
+          // Make sure our starting point is behind us
+          x -= PATH_START_DIST_BEHIND_ROBOT_MM*dockPoseAngleCos;
+          y -= PATH_START_DIST_BEHIND_ROBOT_MM*dockPoseAngleSin;
+
+          PathFollower::ClearPath();
+          
+          // If we are more than DIST_AWAY_FROM_BLOCK_FOR_ADDITIONAL_PATH_MM away from the block or the
+          // blocks angle reletive to robot is greater than ANGLE_FROM_BLOCK_FOR_ADDITIONAL_PATH_RAD plan
+          // a path to the point DIST_AWAY_FROM_BLOCK_FOR_PT_MM directly in front of the block
+          if(distToBlock > DIST_AWAY_FROM_BLOCK_FOR_ADDITIONAL_PATH_MM ||
+             ABS(rel_rad) > ANGLE_FROM_BLOCK_FOR_ADDITIONAL_PATH_RAD)
+          {
+            PathFollower::AppendPathSegment_Line(0,
+                                                 x,
+                                                 y,
+                                                 x_inFrontOfBlock,
+                                                 y_inFrontOfBlock,
+                                                 dockSpeed_mmps_,
+                                                 dockAccel_mmps2_,
+                                                 dockDecel_mmps2_);
+            
+            // If the angle of the block relative to the robot is greater than ANGLE_FROM_BLOCK_FOR_POINT_TURN_RAD
+            // we will want to do a point turn in order face the block
+            if(ABS(rel_rad) > ANGLE_FROM_BLOCK_FOR_POINT_TURN_RAD)
+            {
+              PathFollower::AppendPathSegment_PointTurn(0,
+                                                        x_inFrontOfBlock,
+                                                        y_inFrontOfBlock,
+                                                        dockPose_.GetAngle().ToFloat(), 3.0, 1.0, 1.0, 0.1, true);
+            }
+            
+            // If we added padding to place us 60mm away from the block then we need to add a path segment to get us
+            // from that point to the point where we will start to decelerate otherwise we will already be at
+            // the point of deceleration
+            if(distToDecelPadding > 0)
+            {
+              PathFollower::AppendPathSegment_Line(0,
+                                                   x_inFrontOfBlock,
+                                                   y_inFrontOfBlock,
+                                                   dockPose_.x()-(distToDecel)*dockPoseAngleCos,
+                                                   dockPose_.y()-(distToDecel)*dockPoseAngleSin,
+                                                   dockSpeed_mmps_,
+                                                   dockAccel_mmps2_,
+                                                   dockDecel_mmps2_);
+            }
+          }
+          // Else we are close enough and roughly directly in front of the block that we can just go straight
+          // to the deceleration point
+          else if(distToBlock > distToDecel)
+          {
+            PathFollower::AppendPathSegment_Line(0,
+                                                 x,
+                                                 y,
+                                                 dockPose_.x()-(distToDecel)*dockPoseAngleCos,
+                                                 dockPose_.y()-(distToDecel)*dockPoseAngleSin,
+                                                 dockSpeed_mmps_,
+                                                 dockAccel_mmps2_,
+                                                 dockDecel_mmps2_);
+          }
+          
+          // Finally add a segment from our deceleration point to a point PATH_END_DIST_INTO_BLOCK_MM
+          // (or if docking to a block off the ground 0mm) inside of the block
+          // Placing the point inside the block causes us to push the block and maybe it will slide sideways onto
+          // the lift if we are ever so slightly off the marker due to camera extrinsics
+          f32 distIntoBlock = ((!dockingToBlockOnGround || PickAndPlaceController::IsCarryingBlock()) ? 0 : PATH_END_DIST_INTO_BLOCK_MM);
+          PathFollower::AppendPathSegment_Line(0,
+                                               dockPose_.x()-(distToDecel)*dockPoseAngleCos,
+                                               dockPose_.y()-(distToDecel)*dockPoseAngleSin,
+                                               dockPose_.x()+(distIntoBlock)*dockPoseAngleCos,
+                                               dockPose_.y()+(distIntoBlock)*dockPoseAngleSin,
+                                               finalDockSpeed_mmps_,
+                                               dockAccel_mmps2_,
+                                               dockDecel_mmps2_);
+#endif
         }
 
         // Start following path
@@ -786,57 +1206,77 @@ namespace Anki {
 
         // Debug
         if (!createdValidPath_) {
-          AnkiError( 5, "DockingController", 45, "DockingController: Failed to create path\n", 0);
+          AnkiError( 5, "DockingController", 432, "DockingController: Failed to create path\n", 0);
           PathFollower::PrintPath();
         }
 
       }
 
+      void StartDocking_internal(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
+                                 const bool useManualSpeed)
+      {
+        dockingStarted = true;
+        dockingResult_ = DOCK_UNKNOWN;
+      
+        dockSpeed_mmps_ = speed_mmps;
+        dockAccel_mmps2_ = accel_mmps;
+        dockDecel_mmps2_ = decel_mmps;
+        useManualSpeed_ = useManualSpeed;
+        mode_ = LOOKING_FOR_BLOCK;
+        lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
+        
+#if(!USE_BLIND_DOCKING)
+        prevK1_ = SteeringController::GetK1Gain();
+        prevK2_ = SteeringController::GetK2Gain();
+        prevPathDistOffsetCap_ = SteeringController::GetPathDistOffsetCap();
+        prevPathAngOffsetCap_ = SteeringController::GetPathAngOffsetCap();
+        
+        SteeringController::SetGains(DOCKING_K1,
+                                     DOCKING_K2,
+                                     DOCKING_PATH_DIST_OFFSET_CAP_MM,
+                                     DOCKING_PATH_ANG_OFFSET_CAP_RAD);
+#endif
+      }
 
-      void StartDocking(const f32 speed_mmps, const f32 accel_mmps,
+      void StartDocking(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
                         const bool useManualSpeed,
                         const u32 pointOfNoReturnDistMM)
       {
-        dockSpeed_mmps_ = speed_mmps;
-        dockAccel_mmps2_ = accel_mmps;
+        StartDocking_internal(speed_mmps, accel_mmps, decel_mmps, useManualSpeed);
+        
         dockOffsetDistX_ = dockOffsetDistX;
-
-        useManualSpeed_ = useManualSpeed;
         pointOfNoReturnDistMM_ = pointOfNoReturnDistMM;
         pastPointOfNoReturn_ = false;
-        lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
-        doHighDockLiftTracking_ = false;
-        mode_ = LOOKING_FOR_BLOCK;
+        dockingToBlockOnGround = true;
         markerlessDocking_ = false;
-        success_ = false;
 
 #if(DOCK_ANGLE_DAMPING)
         dockPoseAngleInitialized_ = false;
 #endif
       }
 
-      void StartDockingToRelPose(const f32 speed_mmps, const f32 accel_mmps,
+      void StartDockingToRelPose(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
                                  const f32 rel_x, const f32 rel_y, const f32 rel_angle,
                                  const bool useManualSpeed)
       {
-        dockSpeed_mmps_ = speed_mmps;
-        dockAccel_mmps2_ = accel_mmps;
+        StartDocking_internal(speed_mmps, accel_mmps, decel_mmps, useManualSpeed);
 
-        useManualSpeed_ = useManualSpeed;
-        lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
-        mode_ = LOOKING_FOR_BLOCK;
         markerlessDocking_ = true;
-        success_ = false;
 
         // NOTE: mode_ must be set to LOOKING_FOR_BLOCK and success_ must be false
         //       before we call SetRelDockPose()
         SetRelDockPose(rel_x, rel_y, rel_angle);
       }
 
-      void ResetDocker() {
-
-
+      void StopDocking(DockingResult result) {
+        if(!dockingStarted)
+        {
+          return;
+        }
+        
+        dockingResult_ = result;
+      
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
         PathFollower::ClearPath();
         SteeringController::ExecuteDirectDrive(0,0);
@@ -847,8 +1287,20 @@ namespace Anki {
         markerlessDocking_ = false;
         markerOutOfFOV_ = false;
         lastMarkerPoseObservedIsSet_ = false;
-        doHighDockLiftTracking_ = false;
-        success_ = false;
+        dockingToBlockOnGround = false;
+        numDockingFails_ = 0;
+        LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = BLOCK_ON_GROUND_LATERAL_DOCK_TOLERANCE_MM;
+        
+        failureMode_ = NO_FAILURE;
+        
+#if(!USE_BLIND_DOCKING)
+        // Only set the gains back if we actually started docking
+        if(dockingStarted)
+        {
+          SteeringController::SetGains(prevK1_, prevK2_, prevPathDistOffsetCap_, prevPathAngOffsetCap_);
+        }
+#endif
+        dockingStarted = false;
       }
 
       const Anki::Embedded::Pose2d& GetLastMarkerAbsPose()

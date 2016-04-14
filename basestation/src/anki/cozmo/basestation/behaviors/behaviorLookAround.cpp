@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -139,6 +140,10 @@ Result BehaviorLookAround::InitInternal(Robot& robot, double currentTime_sec)
   ResetSafeRegion(robot);
   
   TransitionToWaitForOtherActions(robot);
+
+  // disable because this behavior manages it internally (for now)
+  robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
+  
   return Result::RESULT_OK;
 }
 
@@ -404,7 +409,7 @@ void BehaviorLookAround::StopInternal(Robot& robot, double currentTime_sec)
   if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
     robot.PopIdleAnimation();
   }
-
+  robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
   ResetBehavior(robot, currentTime_sec);
 }
   

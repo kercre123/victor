@@ -26,6 +26,8 @@
 
 #include <fstream>
 
+#define DEBUG_ENROLLMENT_IMAGES 0 // Everything will need to be running synchronously!
+
 namespace Anki {
 namespace Vision {
   
@@ -35,6 +37,8 @@ namespace Vision {
   CONSOLE_VAR_RANGED(s32, kFaceMergeThreshold,       "Vision.FaceRecognition", 900, 0, 1000);
   CONSOLE_VAR(f32, kTimeBetweenFaceEnrollmentUpdates_sec,        "Vision.FaceRecognition", 60.f);
   CONSOLE_VAR(f32, kTimeBetweenInitialFaceEnrollmentUpdates_sec, "Vision.FaceRecognition", 0.5f);
+  CONSOLE_VAR(f32, kMinFaceAreaFractionToEnroll,                 "Vision.FaceRecognition", 0.2f*0.2f); // as fraction of whole image area
+  CONSOLE_VAR_RANGED(s32, kMinFaceDetectConfidenceToEnroll, "Vision.FaceRecognition", 750, 0, 1000);
   
   FaceRecognizer::FaceRecognizer(const Json::Value& config)
   {
@@ -131,7 +135,7 @@ namespace Vision {
     {
       // Feature extraction thread is done: finish the rest of the recognition
       // process so we can start accepting new requests to recognize
-      TrackedFace::ID_t recognizedID = TrackedFace::UnknownFace;
+      FaceID_t recognizedID = UnknownFaceID;
       s32 score = 0;
       Result result = RecognizeFace(recognizedID, score);
       
@@ -141,19 +145,19 @@ namespace Vision {
       if(RESULT_OK == result)
       {
         // See who we're currently recognizing this tracker ID as
-        TrackedFace::ID_t faceID = TrackedFace::UnknownFace;
+        FaceID_t faceID = UnknownFaceID;
         auto iter = _trackingToFaceID.find(_detectionInfo.nID);
         if(iter != _trackingToFaceID.end()) {
           faceID = iter->second;
         }
         
-        if(TrackedFace::UnknownFace == recognizedID) {
+        if(UnknownFaceID == recognizedID) {
           // We did not recognize the tracked face in its current position, just leave
           // the faceID alone
           
           // (Nothing to do)
           
-        } else if(TrackedFace::UnknownFace == faceID) {
+        } else if(UnknownFaceID == faceID) {
           // We have not yet assigned a recognition ID to this tracker ID. Use the
           // one we just found via recognition.
           faceID = recognizedID;
@@ -171,17 +175,38 @@ namespace Vision {
             ASSERT_NAMED(recIDenrollData  != _enrollmentData.end(),
                          "FaceRecognizer.GetRecognitionData.MissingEnrollmentData");
             
-            TrackedFace::ID_t mergeTo, mergeFrom;
+            FaceID_t mergeTo, mergeFrom;
             
-            if(faceIDenrollData->second.enrollmentTime <= recIDenrollData->second.enrollmentTime)
+            if(false == recIDenrollData->second.isForThisSessionOnly &&
+               true  == faceIDenrollData->second.isForThisSessionOnly)
             {
-              mergeFrom = recognizedID;
-              mergeTo   = faceID;
-            } else {
+              // If the recognized ID is a "permanent" one, and the tracked ID
+              // is for this session only, make sure to keep the "permanent" one
               mergeFrom = faceID;
               mergeTo   = recognizedID;
-              
-              faceID = mergeTo;
+              faceID    = mergeTo;
+            }
+            else if(true  == recIDenrollData->second.isForThisSessionOnly &&
+                    false == faceIDenrollData->second.isForThisSessionOnly)
+            {
+              // If the tracked ID is a "permanent" one, and the recognized ID
+              // is for this session only, make sure to keep the "permanent" one
+              mergeFrom = recognizedID;
+              mergeTo   = faceID;
+            }
+            else {
+              // Both IDs are for this session only or are "permament". Keep the
+              // oldest one
+              if(faceIDenrollData->second.enrollmentTime <= recIDenrollData->second.enrollmentTime)
+              { 
+                mergeFrom = recognizedID;
+                mergeTo   = faceID;
+              } else {
+                mergeFrom = faceID;
+                mergeTo   = recognizedID;
+                
+                faceID = mergeTo;
+              }
             }
             
             PRINT_NAMED_INFO("FaceRecognizer.GetRecognitionData.MergingFaces",
@@ -204,7 +229,7 @@ namespace Vision {
         // Update the stored faceID assigned to this trackerID
         // (This creates an entry for the current trackerID if there wasn't one already,
         //  and an entry for this faceID if there wasn't one already)
-        if(TrackedFace::UnknownFace != faceID) {
+        if(UnknownFaceID != recognizedID) {
           _trackingToFaceID[_detectionInfo.nID] = faceID;
           _enrollmentData[faceID].score = score;
         }
@@ -212,6 +237,36 @@ namespace Vision {
       } else {
         PRINT_NAMED_ERROR("FaceRecognizer.Run.RecognitionFailed", "");
       }
+      
+      if(DEBUG_ENROLLMENT_IMAGES) {
+        for(auto & enrollmentImageData : _enrollmentImages)
+        {
+          // Parameters for creating tiled display of enrollment images
+          const s32 dispRows[10] = {0,0,0,0, 1,1,1,1, 2,2};
+          const s32 dispCols[10] = {0,1,2,3, 0,1,2,3, 0,1};
+          const s32 numDispRows = 3, numDispCols = 4;
+          const s32 dispResDownsample = 2;
+          const s32 dispWidth  = _img.GetNumCols() / dispResDownsample;
+          const s32 dispHeight = _img.GetNumRows() / dispResDownsample;
+          
+          Vision::ImageRGB dispImg(dispHeight*numDispRows, dispWidth*numDispCols);
+          dispImg.FillWith(0);
+          
+          for(s32 iEnroll=0; iEnroll<enrollmentImageData.second.size(); ++iEnroll)
+          {
+            // Get ROI for this tile in the display image
+            Rectangle<s32> dispRect(dispCols[iEnroll]*dispWidth, dispRows[iEnroll]*dispHeight,
+                                   dispWidth, dispHeight);
+            Vision::ImageRGB dispROI = dispImg.GetROI(dispRect);
+            const Vision::ImageRGB& enrollmentImage = enrollmentImageData.second[iEnroll];
+            if(!enrollmentImage.IsEmpty())
+            {
+              enrollmentImage.Resize(dispROI, Vision::ResizeMethod::NearestNeighbor);
+            }
+          }
+          dispImg.Display(("User" + std::to_string(enrollmentImageData.first)).c_str());
+        }
+      } // if(DEBUG_ENROLLMENT_IMAGES)
       
       // Signify we're done and ready for next face
       //PRINT_NAMED_DEBUG("FaceRecognizer.Run.DoneWithFace",
@@ -223,8 +278,8 @@ namespace Vision {
     
     auto iter = _trackingToFaceID.find(forTrackingID);
     if(iter != _trackingToFaceID.end()) {
-      const TrackedFace::ID_t faceID = iter->second;
-      ASSERT_NAMED(faceID != TrackedFace::UnknownFace,
+      const FaceID_t faceID = iter->second;
+      ASSERT_NAMED(faceID != UnknownFaceID,
                    "FaceRecognizer.GetRecognitionData.EnrolledEntryWithUnknownID");
       auto & enrolledEntry = _enrollmentData.at(faceID);
       entry = enrolledEntry;
@@ -313,43 +368,62 @@ namespace Vision {
     }
     
     if(numUsersInAlbum >= MaxAlbumFaces) {
-      PRINT_NAMED_ERROR("FaceRecognizer.RegisterNewUser.TooManyUsers",
-                        "Already have %d users, could not add another", MaxAlbumFaces);
-      return RESULT_FAIL;
-    }
-    
-    // Find unused ID
-    BOOL isRegistered = true;
-    auto tries = 0;
-    do {
-      okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, _lastRegisteredUserID-1, 0, &isRegistered);
-      
-      if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceRecognizer.RegisterNewUser.IsRegisteredCheckFailed",
-                          "Failed to determine if user ID %d is already registered",
-                          numUsersInAlbum);
-        return RESULT_FAIL;
-      }
-      
-      if(isRegistered) {
-        // Try next ID
-        ++_lastRegisteredUserID;
-        if(_lastRegisteredUserID > MaxAlbumFaces) {
-          // Roll over
-          _lastRegisteredUserID = 1;
+      // See if there are any session-only faces we can overwrite before giving up.
+      // If so, choose the one that it's been the longest since we updated.
+      FaceID_t oldestSessionOnlyID = UnknownFaceID;
+      time_t oldestUpdateTime = std::numeric_limits<time_t>::max();
+      for(auto & enrollData : _enrollmentData) {
+        if(enrollData.second.isForThisSessionOnly && enrollData.second.lastDataUpdateTime < oldestUpdateTime) {
+          oldestSessionOnlyID = enrollData.second.faceID;
+          oldestUpdateTime    = enrollData.second.lastDataUpdateTime;
         }
       }
       
-      ASSERT_NAMED(_lastRegisteredUserID != Vision::TrackedFace::UnknownFace,
-                   "FaceRecognizer.RegisterNewUser.LastRegisteredIdIsUnknown");
+      if(UnknownFaceID != oldestSessionOnlyID) {
+        PRINT_NAMED_DEBUG("FaceRecognizer.RegisterNewUser.ReplacingOldestSessionOnlyUser",
+                          "Session-only face %d not updated since %s and will be replaced.",
+                          oldestSessionOnlyID, ctime(&oldestUpdateTime));
+        _lastRegisteredUserID = oldestSessionOnlyID;
+      } else {
+        PRINT_NAMED_ERROR("FaceRecognizer.RegisterNewUser.TooManyUsers",
+                          "Already have %d users, could not add another", MaxAlbumFaces);
+        return RESULT_FAIL;
+      }
+    } else {
       
-    } while(isRegistered && tries++ < MaxAlbumFaces);
-    
-    if(tries >= MaxAlbumFaces) {
-      PRINT_NAMED_ERROR("FaceRecognizer.RegisturNewUser.NoIDsAvailable",
-                        "Could not find a free ID to use for new face");
-      return RESULT_FAIL;
-    }
+      // Find unused ID
+      BOOL isRegistered = true;
+      auto tries = 0;
+      do {
+        okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, _lastRegisteredUserID-1, 0, &isRegistered);
+        
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_ERROR("FaceRecognizer.RegisterNewUser.IsRegisteredCheckFailed",
+                            "Failed to determine if user ID %d is already registered",
+                            numUsersInAlbum);
+          return RESULT_FAIL;
+        }
+        
+        if(isRegistered) {
+          // Try next ID
+          ++_lastRegisteredUserID;
+          if(_lastRegisteredUserID > MaxAlbumFaces) {
+            // Roll over
+            _lastRegisteredUserID = 1;
+          }
+        }
+        
+        ASSERT_NAMED(_lastRegisteredUserID != Vision::UnknownFaceID,
+                     "FaceRecognizer.RegisterNewUser.LastRegisteredIdIsUnknown");
+        
+      } while(isRegistered && tries++ < MaxAlbumFaces);
+      
+      if(tries >= MaxAlbumFaces) {
+        PRINT_NAMED_ERROR("FaceRecognizer.RegisturNewUser.NoIDsAvailable",
+                          "Could not find a free ID to use for new face");
+        return RESULT_FAIL;
+      }
+    } // if/else numUsersInAlbum > max
     
     okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, _lastRegisteredUserID-1, 0);
     if(OKAO_NORMAL != okaoResult) {
@@ -360,6 +434,7 @@ namespace Vision {
 
     // Create new enrollment entry (defaults set by constructor)
     // NOTE: enrollData.prevID == UnknownID now, which indicates this is "new"
+    // NOTE: will start out "session only" if no name is assigned
     EnrolledFaceEntry enrollData(_lastRegisteredUserID);
 
     // TODO: Populate enrollment image
@@ -381,7 +456,13 @@ namespace Vision {
     enrollData.image = _img.GetROI(roi);
     */
     _enrollmentData.emplace(_lastRegisteredUserID, std::move(enrollData));
-    --_numToEnroll;
+    if(_numToEnroll > 0) {
+      --_numToEnroll;
+    }
+    
+    if(DEBUG_ENROLLMENT_IMAGES) {
+      SetEnrollmentImage(_lastRegisteredUserID, 0, enrollData);
+    }
     
     PRINT_NAMED_INFO("FaceRecognizer.RegisterNewUser.Success",
                      "Added user number %d to album", _lastRegisteredUserID);
@@ -392,10 +473,13 @@ namespace Vision {
   bool FaceRecognizer::IsEnrollable()
   {
     bool retVal = false;
+    const s32 minArea = std::round(kMinFaceAreaFractionToEnroll*(f32)_img.GetNumElements());
+    
     // TODO: Add checks for eyes open and smiling?
     if(_numToEnroll != 0 &&
        _detectionInfo.nPose == POSE_YAW_FRONT &&
-       _detectionInfo.nWidth*_detectionInfo.nHeight > 1000)
+       _detectionInfo.nConfidence > kMinFaceDetectConfidenceToEnroll &&
+       _detectionInfo.nWidth*_detectionInfo.nHeight > minArea)
     {
       return true;
     }
@@ -488,12 +572,37 @@ namespace Vision {
         if(enrollData.oldestData == MaxAlbumDataPerFace) {
           enrollData.oldestData = 0;
         }
+        
+        if(DEBUG_ENROLLMENT_IMAGES) {
+          SetEnrollmentImage(userID, enrollData.oldestData, enrollData);
+        }
       }
     }
     
     return result;
   } // UpdateExistingUser()
   
+  void FaceRecognizer::SetEnrollmentImage(FaceID_t userID, s32 whichEnrollData,
+                                          const EnrolledFaceEntry& enrollData)
+  {
+    _enrollmentImages[userID][whichEnrollData] = Vision::ImageRGB(_img);
+    
+    POINT ptLeftTop, ptRightTop, ptLeftBottom, ptRightBottom;
+    INT32 okaoResult = OKAO_CO_ConvertCenterToSquare(_detectionInfo.ptCenter,
+                                                     _detectionInfo.nHeight,
+                                                     0, &ptLeftTop, &ptRightTop,
+                                                     &ptLeftBottom, &ptRightBottom);
+    ASSERT_NAMED(OKAO_NORMAL == okaoResult, "FaceRecognizer.SetEnrollmentImage.GetDetectionSquareFail");
+    
+    const Rectangle<f32> detectionRect(ptLeftTop.x, ptLeftTop.y,
+                                       ptRightBottom.x-ptLeftTop.x,
+                                       ptRightBottom.y-ptLeftTop.y);
+    
+    _enrollmentImages[userID][whichEnrollData].DrawRect(detectionRect, NamedColors::RED, 3);
+    _enrollmentImages[userID][whichEnrollData].DrawText({0,_img.GetNumRows()}, std::string("Score: ") + std::to_string(enrollData.score), NamedColors::RED);
+    _enrollmentImages[userID][whichEnrollData].DrawText({0,20}, std::string(ctime(&enrollData.lastDataUpdateTime)), NamedColors::RED, 0.75F);
+
+  }
   
   Result FaceRecognizer::RemoveUser(INT32 userID)
   {
@@ -505,6 +614,16 @@ namespace Vision {
     }
     
     _enrollmentData.erase(userID);
+    
+    if(DEBUG_ENROLLMENT_IMAGES) {
+      for(s32 iEnroll=0; iEnroll<_enrollmentImages[userID].size(); ++iEnroll)
+      {
+        if(!_enrollmentImages[userID][iEnroll].IsEmpty()) {
+          Vision::Image::CloseDisplayWindow(("User"+std::to_string(userID)).c_str());
+        }
+      }
+      _enrollmentImages.erase(userID);
+    }
     
     // TODO: Keep a reference to which trackerIDs are pointing to each faceID to avoid this search
     for(auto iter = _trackingToFaceID.begin(); iter != _trackingToFaceID.end(); )
@@ -520,7 +639,7 @@ namespace Vision {
   }
   
 
-  Result FaceRecognizer::RecognizeFace(TrackedFace::ID_t& faceID, INT32& recognitionScore)
+  Result FaceRecognizer::RecognizeFace(FaceID_t& faceID, INT32& recognitionScore)
   {
     ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
                  "FaceRecognizer.RecognizerFace.FeaturesShouldBeReady");
@@ -576,6 +695,7 @@ namespace Vision {
                        "FaceRecognizer.RecognizeFace.MissingEnrollmentDataForOldestID");
           
           auto earliestEnrollmentTime = enrollStatusIter->second.enrollmentTime;
+          bool anyPermanentEnrollments = !enrollStatusIter->second.isForThisSessionOnly;
           
           // Merge all results that are above threshold together, keeping the one enrolled earliest
           INT32 lastResult = 1;
@@ -592,7 +712,16 @@ namespace Vision {
               oldestEnrollIter = enrollStatusIter;
             }
             
+            anyPermanentEnrollments |= !enrollStatusIter->second.isForThisSessionOnly;
+            
             ++lastResult;
+          }
+          
+          if(anyPermanentEnrollments) {
+            // If any of the faces being merged are marked as "permanent" ones
+            // make sure the one we end up keeping as a result of this merge
+            // is still marked as "permanent"
+            oldestEnrollIter->second.isForThisSessionOnly = false;
           }
           
           for(INT32 iResult = 0; iResult < lastResult; ++iResult)
@@ -602,7 +731,7 @@ namespace Vision {
               Result result = MergeFaces(oldestID, userIDs[iResult]);
               if(RESULT_OK != result) {
                 PRINT_NAMED_INFO("FaceRecognizer.RecognizeFace.MergeFail",
-                                 "Failed to merge frace %d with %d",
+                                 "Failed to merge face %d with %d",
                                  userIDs[iResult], oldestID);
                 return result;
               } else {
@@ -638,8 +767,8 @@ namespace Vision {
     return RESULT_OK;
   } // RecognizeFace()
   
-  Result FaceRecognizer::MergeFaces(TrackedFace::ID_t keepID,
-                                    TrackedFace::ID_t mergeID)
+  Result FaceRecognizer::MergeFaces(FaceID_t keepID,
+                                    FaceID_t mergeID)
   {
     INT32 okaoResult = OKAO_NORMAL;
     
@@ -771,13 +900,14 @@ namespace Vision {
   } // SetSerializedAlbum()
   
   
-  void FaceRecognizer::AssignNameToID(TrackedFace::ID_t faceID, const std::string& name)
+  void FaceRecognizer::AssignNameToID(FaceID_t faceID, const std::string& name)
   {
     std::lock_guard<std::mutex> lock(_mutex);
 
     auto iter = _enrollmentData.find(faceID);
     if(iter != _enrollmentData.end()) {
       iter->second.name = name;
+      iter->second.isForThisSessionOnly = false;
       
       // Check for duplicate name
       for(auto dupIter = _enrollmentData.begin(); dupIter != _enrollmentData.end(); ++dupIter)
@@ -834,11 +964,14 @@ namespace Vision {
             Json::Value json;
             for(auto & enrollData : _enrollmentData)
             {
-              Json::Value entry;
-              enrollData.second.FillJson(entry);
-              json[std::to_string(enrollData.first)] = std::move(entry);
-              
-              // TODO: Save enrollment image?? Privacy issues??
+              if(false == enrollData.second.isForThisSessionOnly)
+              {
+                Json::Value entry;
+                enrollData.second.FillJson(entry);
+                json[std::to_string(enrollData.first)] = std::move(entry);
+                
+                // TODO: Save enrollment image?? Privacy issues??
+              }
             }
             
             const std::string enrollDataFilename(albumName + "/enrollData.json");
@@ -860,7 +993,7 @@ namespace Vision {
   } // SaveAlbum()
   
   
-  Result FaceRecognizer::LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName)
+  Result FaceRecognizer::LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName, std::list<std::string>& names)
   {
     Result result = RESULT_OK;
     
@@ -907,18 +1040,22 @@ namespace Vision {
           } else {
             _enrollmentData.clear();
             for(auto & idStr : json.getMemberNames()) {
-              TrackedFace::ID_t faceID = std::stoi(idStr);
+              FaceID_t faceID = std::stoi(idStr);
               if(!json.isMember(idStr)) {
                 PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.BadFaceIdString",
                                   "Could not find member for string %s with value %d",
                                   idStr.c_str(), faceID);
                 result = RESULT_FAIL;
               } else {
-                _enrollmentData[faceID] = EnrolledFaceEntry(faceID, json[idStr]);
+                EnrolledFaceEntry enrollData(faceID, json[idStr]);
+                enrollData.isForThisSessionOnly = false;
+                names.push_back(enrollData.name);
                 
                 // TODO: Load enrollment image??
                 
-                PRINT_NAMED_INFO("FaceRecognizer.LoadAlbum.LoadedEnrollmentData", "ID=%d", faceID);
+                _enrollmentData[faceID] = enrollData;
+                PRINT_NAMED_INFO("FaceRecognizer.LoadAlbum.LoadedEnrollmentData", "ID=%d, '%s'",
+                                 faceID, enrollData.name.c_str());
               }
             }
           }

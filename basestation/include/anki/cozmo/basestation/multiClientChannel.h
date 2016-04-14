@@ -111,14 +111,16 @@ namespace Cozmo {
   
   private:
     
-    struct AdvertisementConnectionInfo {
-      Comms::AdvertisementMsg message;
-      double lastSeenTime = 0;
+    struct AdvertisementConnectionInfo
+    {
+      AdvertisementMsg message;
+      double lastSeenTime = 0.0;
       
       AdvertisementConnectionInfo()
       {
       }
-      AdvertisementConnectionInfo(const Comms::AdvertisementMsg& message, double lastSeenTime)
+
+      AdvertisementConnectionInfo(const AdvertisementMsg& message, double lastSeenTime)
       : message(message)
       , lastSeenTime(lastSeenTime)
       {
