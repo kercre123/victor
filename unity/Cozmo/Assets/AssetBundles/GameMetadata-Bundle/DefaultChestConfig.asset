@@ -16,4 +16,6 @@ MonoBehaviour:
     Value: 100
   - Level: 5
     Value: 150
-  TreatRewardLadders: []
+  TreatRewardLadders:
+  - Level: 0
+    Value: 10

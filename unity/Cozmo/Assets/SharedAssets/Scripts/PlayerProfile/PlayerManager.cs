@@ -53,8 +53,8 @@ public class PlayerManager : MonoBehaviour {
     return treatValue;
   }
 
-  public void AddGreenPoints(int points) {
-    int greenPoints = DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints += points;
+  public void SetGreenPoints(int points) {
+    int greenPoints = points;
     int currentLadderMax = GetGreenPointsLadderMax();
     while (greenPoints >= currentLadderMax) {
       int treatsGained = GetTreatCount();
@@ -77,5 +77,9 @@ public class PlayerManager : MonoBehaviour {
     if (GreenPointsUpdate != null) {
       GreenPointsUpdate(greenPoints, GetGreenPointsLadderMax());
     }
+  }
+
+  public void AddGreenPoints(int points) {
+    SetGreenPoints(DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints + points);
   }
 }
