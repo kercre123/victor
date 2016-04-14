@@ -14,8 +14,8 @@ namespace SpeedTap {
 
     #region Difficulty Config Values
 
-    private float _OnDelayTimeMs;
-    private float _OffDelayTimeMs;
+    private float _OnDurationMs;
+    private float _OffDurationMs;
     private float _PeekMinTimeMs;
     private float _PeekMaxTimeMs;
     private float _MinCozmoTapDelayTimeMs;
@@ -73,8 +73,8 @@ namespace SpeedTap {
     private void SetRoundValues() {
       int currRound = _SpeedTapGame.CurrentRound;
       SpeedTapRoundData currRoundData = _SpeedTapGame.CurrentDifficultySettings.SpeedTapRoundSettings[currRound];
-      _OnDelayTimeMs = currRoundData.TimeHandDisplayed;
-      _OffDelayTimeMs = currRoundData.TimeBetweenHands;
+      _OnDurationMs = currRoundData.TimeHandDisplayed;
+      _OffDurationMs = currRoundData.TimeBetweenHands;
       if (currRoundData.MidRoundMusic != Anki.Cozmo.Audio.GameState.Music.Invalid) {
         GameAudioClient.SetMusicState(currRoundData.MidRoundMusic);
       }
@@ -141,7 +141,7 @@ namespace SpeedTap {
             }
           }
         }
-        if ((currTimeMs - _StartTimeMs) >= _OnDelayTimeMs) {
+        if ((currTimeMs - _StartTimeMs) >= _OnDurationMs) {
           _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
           _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
           _LightsOn = false;
@@ -149,7 +149,7 @@ namespace SpeedTap {
         }
       }
       else {
-        if ((currTimeMs - _StartTimeMs) >= _OffDelayTimeMs) {
+        if ((currTimeMs - _StartTimeMs) >= _OffDurationMs) {
           RollForLights();
           _LightsOn = true;
           _StartTimeMs = currTimeMs;

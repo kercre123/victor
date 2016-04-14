@@ -28,7 +28,5 @@ public class SpeedTapGameConfig : MinigameConfigBase {
     get { return _BetweenRoundMusic.Music; }
   }
 
-  // These two lists must be the same length
-  public List<DifficultySelectOptionData> DifficultyOptions = new List<DifficultySelectOptionData>();
   public List<SpeedTapDifficultyData> DifficultySettings = new List<SpeedTapDifficultyData>();
 }

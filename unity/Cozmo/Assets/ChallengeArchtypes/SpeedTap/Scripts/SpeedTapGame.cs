@@ -57,14 +57,6 @@ namespace SpeedTap {
       }
     }
 
-    private List<DifficultySelectOptionData> _DifficultyOptions;
-
-    public List<DifficultySelectOptionData> DifficultyOptions {
-      get {
-        return _DifficultyOptions;
-      }
-    }
-
     private List<SpeedTapDifficultyData> _AllDifficultySettings;
     private SpeedTapDifficultyData _CurrentDifficultySettings;
 
@@ -258,7 +250,6 @@ namespace SpeedTap {
       // Set all Config based values
       _Rounds = speedTapConfig.Rounds;
       _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
-      _DifficultyOptions = speedTapConfig.DifficultyOptions;
       _AllDifficultySettings = speedTapConfig.DifficultySettings;
       _BetweenRoundsMusic = speedTapConfig.BetweenRoundMusic;
       BaseMatchChance = speedTapConfig.BaseMatchChance;
