@@ -270,7 +270,7 @@ namespace Cozmo.HomeHub {
         session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
         // TODO: This is a placeholder for rewarding green points. Eventually the daily goals system
         // will be the one responsible for rewarding green points.
-        DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints += 10;
+        PlayerManager.Instance.AddGreenPoints(10);
       }
       else {
         DAS.Error(this, "Somehow managed to complete a challenge with no sessions saved!");

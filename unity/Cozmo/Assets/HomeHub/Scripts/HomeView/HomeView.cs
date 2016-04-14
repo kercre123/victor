@@ -36,6 +36,15 @@ namespace Cozmo.HomeHub {
     private RectTransform _ScrollRectContent;
 
     [SerializeField]
+    private Cozmo.UI.ProgressBar _GreenPointsProgressBar;
+
+    [SerializeField]
+    private UnityEngine.UI.Text _GreenPointsText;
+
+    [SerializeField]
+    private UnityEngine.UI.Text _GreenPointsTotal;
+
+    [SerializeField]
     private UnityEngine.UI.ScrollRect _ScrollRect;
 
     private HomeHub _HomeHubInstance;
@@ -78,6 +87,24 @@ namespace Cozmo.HomeHub {
       _PlayTabButton.onClick.AddListener(HandlePlayTabButton);
       _ProfileTabButton.onClick.AddListener(HandleProfileTabButton);
 
+      PlayerManager.Instance.GreenPointsUpdate += HandleGreenPointsGained;
+      PlayerManager.Instance.ChestGained += HandleChestGained;
+      UpdateGreenBar(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints, PlayerManager.Instance.GetGreenPointsLadderMax());
+
+    }
+
+    private void HandleChestGained(int treatsGained, int hexGained) {
+      _GreenPointsProgressBar.ResetProgress();
+    }
+
+    private void HandleGreenPointsGained(int greenPoints, int maxPoints) {
+      UpdateGreenBar(greenPoints, maxPoints);
+    }
+
+    private void UpdateGreenBar(int greenPoints, int maxPoints) {
+      _GreenPointsProgressBar.SetProgress((float)greenPoints / (float)maxPoints);
+      _GreenPointsText.text = greenPoints.ToString();
+      _GreenPointsTotal.text = maxPoints.ToString();
     }
 
     public void SetChallengeStates(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
@@ -131,7 +158,8 @@ namespace Cozmo.HomeHub {
     }
 
     protected override void CleanUp() {
-      
+      PlayerManager.Instance.GreenPointsUpdate -= HandleGreenPointsGained;
+      PlayerManager.Instance.ChestGained -= HandleChestGained;
     }
 
   }

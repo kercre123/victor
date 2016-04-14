@@ -83,5 +83,14 @@
   },
   "button.save": {
     "translation": "Save"
+  },
+  "cozmoTab.title": {
+    "translation": "Core Upgrades"
+  },
+  "cozmoTab.sparkCount": {
+    "translation": "Sparks: {0}"
+  },
+  "cozmoTab.hexCount": {
+    "translation": "Hex Pieces: {0}"
   }
 }
