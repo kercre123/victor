@@ -40,7 +40,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _AssetBundlesToLoad:
-  - main-assets
+  - main-scene
+  _MainSceneAssetBundleName: main-scene
+  _MainSceneName: HomeHub
   _MinigameUIPrefabAssetBundleName: minigame-ui-prefabs
   _BasicUIPrefabAssetBundleName: basic-ui-prefabs
   _GameMetadataAssetBundleName: game-metadata
