@@ -18,6 +18,7 @@
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/console/consoleInterface.h"
+#include "util/helpers/cleanupHelper.h"
 
 #include "json/json.h"
 #include "anki/common/basestation/jsonTools.h"
@@ -98,19 +99,26 @@ namespace Vision {
   
   Result FaceRecognizer::Init(HCOMMON okaoCommonHandle)
   {
-    _okaoRecognitionFeatureHandle = OKAO_FR_CreateFeatureHandle(okaoCommonHandle);
+    if(NULL == okaoCommonHandle) {
+      PRINT_NAMED_ERROR("FaceRecognizer.Init.NullCommonHandle", "");
+      return RESULT_FAIL;
+    }
+    
+    _okaoCommonHandle = okaoCommonHandle;
+    
+    _okaoRecognitionFeatureHandle = OKAO_FR_CreateFeatureHandle(_okaoCommonHandle);
     if(NULL == _okaoRecognitionFeatureHandle) {
       PRINT_NAMED_ERROR("FaceRecognizer.Init.OkaoFeatureHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
-    _okaoRecogMergeFeatureHandle = OKAO_FR_CreateFeatureHandle(okaoCommonHandle);
+    _okaoRecogMergeFeatureHandle = OKAO_FR_CreateFeatureHandle(_okaoCommonHandle);
     if(NULL == _okaoRecogMergeFeatureHandle) {
       PRINT_NAMED_ERROR("FaceRecognizer.Init.OkaoMergeFeatureHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
     }
     
-    _okaoFaceAlbum = OKAO_FR_CreateAlbumHandle(okaoCommonHandle, MaxAlbumFaces, MaxAlbumDataPerFace);
+    _okaoFaceAlbum = OKAO_FR_CreateAlbumHandle(_okaoCommonHandle, MaxAlbumFaces, MaxAlbumDataPerFace);
     if(NULL == _okaoFaceAlbum) {
       PRINT_NAMED_ERROR("FaceRecognizer.Init.OkaoAlbumHandleAllocFail", "");
       return RESULT_FAIL_MEMORY;
@@ -267,6 +275,46 @@ namespace Vision {
           dispImg.Display(("User" + std::to_string(enrollmentImageData.first)).c_str());
         }
       } // if(DEBUG_ENROLLMENT_IMAGES)
+      
+      if(ANKI_DEVELOPER_CODE)
+      {
+        // Sanity checks to make sure enrollment data and Okao albums are in sync
+        
+        // 1. Number of users should match
+        INT32 numUsers = 0;
+        OKAO_FR_GetRegisteredUserNum(_okaoFaceAlbum, &numUsers);
+        ASSERT_NAMED(numUsers == _enrollmentData.size(),
+                     "FaceRecognizer.GetRecognitionData.AlbumAndEnrollDataSizeMismatch");
+       
+        // 2. There should be enrollment data for every face in the Okao album
+        for(s32 userID=1; userID<=MaxAlbumFaces; ++userID)
+        {
+          BOOL isRegistered = false;
+          INT32 dataNum=0;
+          while(!isRegistered && dataNum < MaxAlbumDataPerFace)
+          {
+            OKAO_FR_IsRegistered(_okaoFaceAlbum, userID-1, dataNum, &isRegistered);
+            dataNum++;
+          }
+          if(isRegistered) {
+            ASSERT_NAMED(_enrollmentData.find(userID) != _enrollmentData.end(),
+                         "FaceRecognizer.GetRecognitionData.MissingEnrollmentData");
+          }
+        }
+        
+        // 3. There should be an Okao album entry for every face in enrollment data
+        for(auto const& enrollData : _enrollmentData)
+        {
+          BOOL isRegistered = false;
+          INT32 dataNum=0;
+          while(!isRegistered && dataNum < MaxAlbumDataPerFace)
+          {
+            OKAO_FR_IsRegistered(_okaoFaceAlbum, enrollData.first-1, dataNum, &isRegistered);
+            dataNum++;
+          }
+          ASSERT_NAMED(isRegistered, "FaceRecognizer.GetRecognitionData.MissingAlbumData");
+        }
+      } // if(ANKI_DEVELOPER_CODE)
       
       // Signify we're done and ready for next face
       //PRINT_NAMED_DEBUG("FaceRecognizer.Run.DoneWithFace",
@@ -841,30 +889,91 @@ namespace Vision {
   } // MergeFaces()
   
   
-  std::vector<u8> FaceRecognizer::GetSerializedAlbum()
+  Result FaceRecognizer::GetSerializedAlbum(std::vector<u8>& serializedAlbum) const
   {
-    std::vector<u8> serializedAlbum;
+    if(!_isInitialized) {
+      PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.NotInitialized", "");
+      return RESULT_FAIL;
+    }
+
+    HALBUM  tempAlbumHandle  = NULL;
     
-    if(_isInitialized)
-    {
-      UINT32 albumSize = 0;
-      INT32 okaoResult = OKAO_FR_GetSerializedAlbumSize(_okaoFaceAlbum, &albumSize);
-      if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.GetSizeFail",
-                          "OKAO Result=%d", okaoResult);
-      } else {
-        serializedAlbum.resize(albumSize);
-        okaoResult = OKAO_FR_SerializeAlbum(_okaoFaceAlbum, &(serializedAlbum[0]), albumSize);
-        if(OKAO_NORMAL != okaoResult) {
-          PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.SerializeFail",
-                            "OKAO Result=%d", okaoResult);
+    // Make sure temp album gets cleaned up in case of early returns below
+    Util::CleanupHelper cleanup([&tempAlbumHandle](){
+      if(NULL != tempAlbumHandle) {
+        if(OKAO_NORMAL != OKAO_FR_ClearAlbum(tempAlbumHandle)) {
+          PRINT_NAMED_WARNING("FaceRecognizer.GetSerializedAlbum.ClearTempAlbumFail", "");
+        } else if(OKAO_NORMAL != OKAO_FR_DeleteAlbumHandle(tempAlbumHandle)) {
+          PRINT_NAMED_WARNING("FaceRecognizer.GetSerializedAlbum.DeleteTempAlbumFail", "");
         }
       }
-    } else {
-      PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.NotInitialized", "");
+    });
+    
+    INT32 okaoResult = OKAO_NORMAL;
+    
+    tempAlbumHandle = OKAO_FR_CreateAlbumHandle(_okaoCommonHandle, MaxAlbumFaces, MaxAlbumDataPerFace);
+    if(tempAlbumHandle == NULL) {
+      PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.AlbumHandleFail",
+                        "Could not create temporary album handle for serializing.");
+      return RESULT_FAIL;
     }
     
-    return serializedAlbum;
+    for(auto const& enrollData : _enrollmentData)
+    {
+      const auto userID = enrollData.first;
+      if(enrollData.second.isForThisSessionOnly == false)
+      {
+        for(s32 iData=0; iData<MaxAlbumDataPerFace; ++iData)
+        {
+          BOOL isRegistered = false;
+          okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, userID-1, iData, &isRegistered);
+          if(OKAO_NORMAL != okaoResult) {
+            PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.IsRegisteredFail",
+                              "Could not get registration status for user %d, data %d",
+                              userID, iData);
+            return RESULT_FAIL;
+          }
+          
+          if(isRegistered)
+          {
+            // Copy this user's registered feature data to temp album for serialization
+            okaoResult = OKAO_FR_GetFeatureFromAlbum(_okaoFaceAlbum, userID-1, iData, _okaoRecognitionFeatureHandle);
+            if(OKAO_NORMAL != okaoResult) {
+              PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.GetFeatureFail",
+                                "Could not get feature for user %d, data %d",
+                                userID, iData);
+              return RESULT_FAIL;
+            }
+            
+            okaoResult = OKAO_FR_RegisterData(tempAlbumHandle, _okaoRecognitionFeatureHandle, userID-1, iData);
+            if(OKAO_NORMAL != okaoResult) {
+              PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.IsRegisteredFail",
+                                "Could not register temp feature for user %d, data %d",
+                                userID, iData);
+              return RESULT_FAIL;
+            }
+          } // if isRegistered
+        } // for each data
+      } // if enrollData isForThisSessionOnly == false
+    } // for each enrollData
+    
+    UINT32 albumSize = 0;
+    okaoResult = OKAO_FR_GetSerializedAlbumSize(tempAlbumHandle, &albumSize);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.GetSizeFail",
+                        "OKAO Result=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    serializedAlbum.resize(albumSize);
+    okaoResult = OKAO_FR_SerializeAlbum(tempAlbumHandle, &(serializedAlbum[0]), albumSize);
+    if(OKAO_NORMAL != okaoResult) {
+      PRINT_NAMED_ERROR("FaceRecognizer.GetSerializedAlbum.SerializeFail",
+                        "OKAO Result=%d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    return RESULT_OK;
   } // GetSerializedAlbum()
   
   
@@ -933,7 +1042,12 @@ namespace Vision {
   {
     Result result = RESULT_OK;
     
-    std::vector<u8> serializedAlbum = GetSerializedAlbum();
+    std::vector<u8> serializedAlbum;
+    result = GetSerializedAlbum(serializedAlbum);
+    if(RESULT_OK != result) {
+      return result;
+    }
+
     if(serializedAlbum.empty()) {
       PRINT_NAMED_ERROR("FaceRecognizer.SaveAlbum.EmptyAlbum",
                         "No serialized data returned from private implementation");

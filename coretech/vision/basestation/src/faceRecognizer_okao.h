@@ -93,7 +93,7 @@ namespace Vision {
     
     Result RemoveUser(INT32 userID);
 
-    std::vector<u8> GetSerializedAlbum();
+    Result GetSerializedAlbum(std::vector<u8>& serializedAlbum) const;
     
     Result SetSerializedAlbum(HCOMMON okaoCommonHandle, const std::vector<u8>&serializedAlbum);
 
@@ -105,12 +105,9 @@ namespace Vision {
                   "MaxAlbumFaces should be between 1 and 1000 for OKAO Library.");
     static_assert(MaxAlbumDataPerFace > 1 && MaxAlbumDataPerFace <= 10,
                   "MaxAlbumDataPerFace should be between 1 and 10 for OKAO Library.");
-
-    //
-    // Parameters (initialized from Json config)
-    //
     
-    bool _isInitialized = false;
+    bool _isInitialized                        = false;
+    HCOMMON     _okaoCommonHandle              = NULL; // not allocated here, passed in
     
     // Okao handles allocated by this class
     HFEATURE    _okaoRecognitionFeatureHandle  = NULL;

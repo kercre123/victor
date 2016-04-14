@@ -431,7 +431,7 @@ namespace Vision {
   
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
                                    std::list<TrackedFace>& faces,
-                                   std::list<UpdatedFaceID>&   updatedIDs)
+                                   std::list<UpdatedFaceID>& updatedIDs)
   {
     // Initialize on first use
     if(!_isInitialized) {
