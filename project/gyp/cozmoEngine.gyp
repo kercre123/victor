@@ -1474,6 +1474,7 @@
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoPt.a',    # Face Parts Detection
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoEx.a',    # Facial Expression estimation
               '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoFr.a',    # Face Recognition
+              '<(coretech_external_path)/libarchive/project/android/DerivedData/libarchive.a',
               # does not work with ninja?!?!
               # '<@(face_library_libs)',
               # '<@(opencv_libs)',
