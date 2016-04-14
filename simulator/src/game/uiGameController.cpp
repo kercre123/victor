@@ -250,6 +250,24 @@ namespace Anki {
       HandleDebugString(msg);
     }
     
+    void UiGameController::HandleNVStorageDataBase(ExternalInterface::NVStorageData const& msg)
+    {
+      PRINT_NAMED_INFO("HandleNVStorageData",
+                       "%s - index: %d, size %d",
+                       EnumToString(msg.tag), msg.index, msg.data_length);
+      
+      HandleNVStorageData(msg);
+    }
+
+    void UiGameController::HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg)
+    {
+      PRINT_NAMED_INFO("HandleNVStorageOpResult",
+                       "%s - res: %s, write %d",
+                       EnumToString(msg.tag), EnumToString(msg.result), msg.write);
+      
+      HandleNVStorageOpResult(msg);
+    }
+    
     // ===== End of message handler callbacks ====
     
   
@@ -358,6 +376,12 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::DebugString:
             HandleDebugStringBase(message.Get_DebugString());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::NVStorageData:
+            HandleNVStorageDataBase(message.Get_NVStorageData());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::NVStorageOpResult:
+            HandleNVStorageOpResultBase(message.Get_NVStorageOpResult());
             break;
           default:
             // ignore

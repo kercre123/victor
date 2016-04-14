@@ -59,7 +59,7 @@ public:
   bool Write(NVStorage::NVEntryTag tag, u8* data, size_t size, bool broadcastResultToGame = false);
   
   // Erase the given entry from robot flash
-  void Erase(NVStorage::NVEntryTag tag, bool broadcastResultToGame = false);
+  bool Erase(NVStorage::NVEntryTag tag, bool broadcastResultToGame = false);
   
   // Request data stored on robot under the given tag.
   // Executes specified callback when data is received.
@@ -115,6 +115,12 @@ private:
     bool writeNotErase;
   };
   
+  struct WriteDataAckInfo {
+    u32  numTagsLeftToAck;
+    bool broadcastResultToGame;
+    bool writeNotErase;
+  };
+  
   struct RecvDataObject {
     ~RecvDataObject() {
       if (deleteVectorWhenDone)
@@ -129,10 +135,10 @@ private:
   
   
   // Queue of data to be sent to robot for saving
-  std::queue<WriteDataObject> _dataToSendQueue;
+  std::queue<WriteDataObject> _writeDataQueue;
   
   // Map of NVEntryTag to the number of tags expected to be confirmed written.
-  std::unordered_map<u32, u32 > _numWriteTagsToConfirm;
+  std::unordered_map<u32, WriteDataAckInfo > _writeDataAckMap;
   
   // Map of requested tag from robot to vector where the data should be stored
   std::unordered_map<u32, RecvDataObject> _recvDataMap;

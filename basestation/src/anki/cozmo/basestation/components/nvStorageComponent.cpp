@@ -88,19 +88,61 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag, u8* data, size_t size,
   // Sanity check on size
   if (size > _kMaxNvStorageEntrySize) {
     PRINT_NAMED_WARNING("NVStorageComponent.Write.SizeTooBig",
-                        "%zu bytes (limit %d bytes)", size, _kMaxNvStorageEntrySize);
+                        "Tag: %s, %zu bytes (limit %d bytes)",
+                        EnumToString(tag), size, _kMaxNvStorageEntrySize);
+    return false;
+  }
+  
+  // Check if this tag is already in the process of being written
+  u32 t = static_cast<u32>(tag);
+  if (_writeDataAckMap.find(t) != _writeDataAckMap.end()) {
+    PRINT_NAMED_WARNING("NVStorageComponent.Write.AlreadyBeingWritten",
+                        "Tag: %s", EnumToString(tag));
     return false;
   }
   
   // Copy data locally and break up into as many messages as needed
-  _dataToSendQueue.emplace(tag, std::vector<u8>(data,data+size), true);
+  _writeDataQueue.emplace(tag, std::vector<u8>(data,data+size), true);
+  
+  // Set associated ack info
+  _writeDataAckMap[t].broadcastResultToGame = broadcastResultToGame;
+  _writeDataAckMap[t].writeNotErase = true;
+  _writeDataAckMap[t].numTagsLeftToAck = static_cast<u32>(ceilf(static_cast<f32>(size) / _kMaxNvStorageBlobSize));
+  
+  if (DEBUG_NVSTORAGE_COMPONENT) {
+    PRINT_NAMED_DEBUG("NVStorageComponent.Write.DataQueued",
+                      "%s - numBytes: %zu, numExpectedConfirmations: %d",
+                      EnumToString(tag),
+                      size,
+                      _writeDataAckMap[t].numTagsLeftToAck);
+  }
 
   return true;
 }
   
-void NVStorageComponent::Erase(NVStorage::NVEntryTag tag, bool broadcastResultToGame)
+bool NVStorageComponent::Erase(NVStorage::NVEntryTag tag, bool broadcastResultToGame)
 {
-  _dataToSendQueue.emplace(tag, std::vector<u8>(), false);
+  // Check if this tag is already in the process of being written/erased
+  u32 t = static_cast<u32>(tag);
+  if (_writeDataAckMap.find(t) != _writeDataAckMap.end()) {
+    PRINT_NAMED_WARNING("NVStorageComponent.Erase.AlreadyBeingWritten",
+                        "Tag: %s", EnumToString(tag));
+    return false;
+  }
+  
+  _writeDataQueue.emplace(tag, std::vector<u8>(), false);
+  
+  // Set associated ack info
+  _writeDataAckMap[t].broadcastResultToGame = broadcastResultToGame;
+  _writeDataAckMap[t].writeNotErase = false;
+  _writeDataAckMap[t].numTagsLeftToAck = IsMultiBlobEntryTag(t) ? 2 : 1;  // For multiErase, expect one NvOpResult for the first blob and one at the end when all erases are complete.
+  
+  if (DEBUG_NVSTORAGE_COMPONENT) {
+    PRINT_NAMED_DEBUG("NVStorageComponent.Erase.Queued",
+                      "%s", EnumToString(tag));
+  }
+
+  return true;
 }
   
 bool NVStorageComponent::Read(NVStorage::NVEntryTag tag,
@@ -109,9 +151,10 @@ bool NVStorageComponent::Read(NVStorage::NVEntryTag tag,
                               bool broadcastResultToGame)
 {
   // Check if tag already requested
-  u32 entryTag = (u32)tag;
+  u32 entryTag = static_cast<u32>(tag);
   if (_recvDataMap.find(entryTag) != _recvDataMap.end()) {
-    PRINT_NAMED_WARNING("NVStorageComponent.Read.TagAlreadyRequested", "Ignoring tag 0x%x", (u32)tag);
+    PRINT_NAMED_WARNING("NVStorageComponent.Read.TagAlreadyRequested",
+                        "Ignoring tag 0x%x", entryTag);
     return false;
   }
   
@@ -150,42 +193,29 @@ void NVStorageComponent::Update()
 {
   // If there are things to send, send them.
   // Send up to one blob per Update() call.
-  if (!_dataToSendQueue.empty()) {
-    WriteDataObject* sendData = &_dataToSendQueue.front();
+  if (!_writeDataQueue.empty()) {
+    WriteDataObject* sendData = &_writeDataQueue.front();
 
     // Start constructing write message
     NVStorage::NVStorageWrite writeMsg;
     writeMsg.reportTo = NVStorage::NVReportDest::ENGINE;
     writeMsg.writeNotErase = sendData->writeNotErase;
-    writeMsg.reportEach = false;
-    writeMsg.reportDone = true;
-    writeMsg.rangeEnd = GetTagRangeEnd((u32)sendData->baseTag);
+    writeMsg.reportEach = true;  // Note: Write is ackd (with NVOpResult) if reportEach || reportDone.
+    writeMsg.reportDone = true;  //       Erase is acked iff reportEach.
+                                 //       MultiErase is acked per blob if reportEach and at the end if reportDone.
+    writeMsg.rangeEnd = GetTagRangeEnd(static_cast<u32>(sendData->baseTag));
     writeMsg.entry.tag = sendData->nextTag;
     
     
     if (sendData->writeNotErase) {
       // Send the next blob of data to send for this multi-blob message
-      u32 bytesLeftToSend = (u32)sendData->data.size() - sendData->sendIndex;
+      u32 bytesLeftToSend = static_cast<u32>(sendData->data.size()) - sendData->sendIndex;
       u32 bytesToSend = MIN(bytesLeftToSend, _kMaxNvStorageBlobSize);
       AnkiAssert(bytesToSend > 0);
       
       writeMsg.entry.blob = std::vector<u8>(sendData->data.begin() + sendData->sendIndex,
                                             sendData->data.begin() + sendData->sendIndex + bytesToSend);
 
-      
-      // If this is the first blob of a multi-blob write set the number of confirmed writes that are expected
-      if (sendData->sendIndex == 0) {
-        _numWriteTagsToConfirm[(u32)sendData->baseTag] = static_cast<u32>(ceilf(static_cast<f32>(bytesLeftToSend) / _kMaxNvStorageBlobSize));
-        
-        if (DEBUG_NVSTORAGE_COMPONENT) {
-          PRINT_NAMED_DEBUG("NVStorageComponent.Update.SendingWriteMsg.SetExpectedConfirmations",
-                            "%s - numBytes: %zu, numExpectedConfirmations: %d",
-                            EnumToString(sendData->baseTag),
-                            sendData->data.size(),
-                            _numWriteTagsToConfirm[(u32)sendData->baseTag]);
-        }
-      }
-      
       ++sendData->nextTag;
       sendData->sendIndex += bytesToSend;
       
@@ -200,9 +230,8 @@ void NVStorageComponent::Update()
       
       // Sent last blob?
       if (bytesToSend < _kMaxNvStorageBlobSize) {
-        _dataToSendQueue.pop();
+        _writeDataQueue.pop();
       }
-
       
     } else {
 
@@ -211,10 +240,8 @@ void NVStorageComponent::Update()
                           "tag: %s", EnumToString(sendData->baseTag));
       }
       
-      _numWriteTagsToConfirm[(u32)sendData->baseTag] = 1;
-      
       // This is an erase message so we're definitely done with it
-      _dataToSendQueue.pop();
+      _writeDataQueue.pop();
     }
     
     _robot.SendMessage(RobotInterface::EngineToRobot(std::move(writeMsg)));
@@ -236,14 +263,24 @@ void NVStorageComponent::HandleNVData(const AnkiEvent<RobotInterface::RobotToEng
     return;
   }
 
-  u32 blobSize = (u32)nvBlob.blob.size();
+  u32 blobSize = static_cast<u32>(nvBlob.blob.size());
+  
+  // Broadcast msg up to game
+  if (_recvDataMap[baseTag].broadcastResultToGame) {
+    ExternalInterface::NVStorageData msg;
+    msg.tag = static_cast<NVStorage::NVEntryTag>(baseTag);
+    msg.index = nvBlob.tag - baseTag;
+    msg.data_length = blobSize;
+    memcpy(msg.data.data(), nvBlob.blob.data(), blobSize);
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+  }
   
   if (IsMultiBlobEntryTag(nvBlob.tag)) {
-    // Make sure receive vector is large enough to hold data
     u32 blobIndex = nvBlob.tag - baseTag;
     u32 startWriteIndex = blobIndex *_kMaxNvStorageBlobSize;
     u32 newTotalEntrySize = startWriteIndex + blobSize;
 
+    // Make sure receive vector is large enough to hold data
     std::vector<u8>* vec = _recvDataMap[baseTag].data;
     if (vec->size() < newTotalEntrySize) {
       vec->resize(newTotalEntrySize);
@@ -287,7 +324,7 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
   }
   
   u32 tag = payload.report.tag;
-  if (tag == (u32)NVStorage::NVEntryTag::NVEntry_Invalid) {
+  if (tag == static_cast<u32>(NVStorage::NVEntryTag::NVEntry_Invalid)) {
     PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.InvalidTag", "");
     return;
   }
@@ -296,19 +333,31 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
   u32 baseTag = GetBaseEntryTag(tag);
   if (payload.report.write) {
     // Check that this was actually written data
-    if (_numWriteTagsToConfirm.find(baseTag) == _numWriteTagsToConfirm.end()) {
+    if (_writeDataAckMap.find(baseTag) == _writeDataAckMap.end()) {
       PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.AckdTagBaseTagWasNeverSent",
                           "BaseTag: 0x%x, tag 0x%x", baseTag, tag);
       return;
     }
     
-    if (_numWriteTagsToConfirm[baseTag] == 0) {
-      PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.RecvdMoreThanExpectedWriteConfirmations",
-                          "BaseTag: 0x%x, tag 0x%x", baseTag, tag);
-      return;
+    AnkiAssert(_writeDataAckMap[baseTag].numTagsLeftToAck > 0);
+   
+
+    // On writes, count each one.
+    // On erases, only count the ones that match the base tag since we don't know how many
+    // to expect in total. We only know that there'll be one for the baseTag if it's a single erase
+    // or if it's multiErase.
+    if (_writeDataAckMap[baseTag].writeNotErase || baseTag == tag) {
+      --_writeDataAckMap[baseTag].numTagsLeftToAck;
+      
+      // Check if this should be forwarded on to game
+      if (_writeDataAckMap[baseTag].broadcastResultToGame) {
+        ExternalInterface::NVStorageOpResult msg;
+        msg.tag = static_cast<NVStorage::NVEntryTag>(baseTag);
+        msg.result = payload.report.result;
+        msg.write = payload.report.write;
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      }
     }
-    
-    --_numWriteTagsToConfirm[baseTag];
     
     if (payload.report.result != NVStorage::NVResult::NV_OKAY) {
       PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.WriteOpFailed",
@@ -316,11 +365,13 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
                           tag, payload.report.write, EnumToString(payload.report.result));
       return;
     }
-
-    if (_numWriteTagsToConfirm[baseTag] == 0) {
+    
+    // Just a printout to indicate all sent writes were ackd
+    if (_writeDataAckMap[baseTag].numTagsLeftToAck == 0) {
       PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.MsgWriteConfirmed",
                        "BaseTag: %s, lastTag: 0x%x",
                        EnumToString((NVStorage::NVEntryTag)baseTag), tag);
+      _writeDataAckMap.erase(baseTag);
     }
 
     
@@ -330,6 +381,16 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
       PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.AckdTagNeverRequested", "tag 0x%x", tag);
       return;
     }
+
+    // Check if this should be forwarded on to game
+    if (_recvDataMap[baseTag].broadcastResultToGame) {
+      ExternalInterface::NVStorageOpResult msg;
+      msg.tag = static_cast<NVStorage::NVEntryTag>(baseTag);
+      msg.result = payload.report.result;
+      msg.write = payload.report.write;
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    }
+    
     
     if (payload.report.result != NVStorage::NVResult::NV_OKAY) {
       PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.ReadOpFailed",

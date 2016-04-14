@@ -17,6 +17,7 @@
 #include "clad/types/factoryTestTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/gameEvent.clad"
+#include "clad/types/nvStorageTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -376,6 +377,24 @@ message InitBlockPoolMessage {
   uint_8              blockPoolEnabled,
   BlockPoolBlockData  blockData[uint_8]
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Robot flash
+///////////////////////////////////////////////////////////////////////////////
+
+message NVStorageData {
+  NVStorage::NVEntryTag tag,
+  uint_16 data_length,
+  uint_8  data[1024],
+  uint_8  index
+}
+
+message NVStorageOpResult {
+  NVStorage::NVEntryTag tag,
+  NVStorage::NVResult   result,
+  bool                  write
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // FactoryTest

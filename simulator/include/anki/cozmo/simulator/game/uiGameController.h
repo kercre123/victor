@@ -99,6 +99,8 @@ protected:
   virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
   virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg){};
   virtual void HandleDebugString(ExternalInterface::DebugString const& msg){};
+  virtual void HandleNVStorageData(ExternalInterface::NVStorageData const& msg){};
+  virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
   
   
   // Message senders
@@ -301,6 +303,8 @@ private:
   void HandleActiveObjectTappedBase(ObjectTapped const& msg);
   void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);
   void HandleDebugStringBase(ExternalInterface::DebugString const& msg);
+  void HandleNVStorageDataBase(ExternalInterface::NVStorageData const& msg);
+  void HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg);
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();
