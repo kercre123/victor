@@ -11,7 +11,7 @@
                 "subdirs": [
                     "animations"
                 ],
-                "version": "27"
+                "version": "31"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
