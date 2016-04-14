@@ -15,7 +15,7 @@
 #include "steeringController.h"
 #include "wheelController.h"
 //#include "animationController.h"
-//#include "backpackLightController.h"
+#include "backpackLightController.h"
 #include "proxSensors.h"
 #include <math.h>
 #include "trig_fast.h"
@@ -173,6 +173,7 @@ namespace Anki {
         s32 liftNodCycleTime_ms_ = 2000;
         f32 avgLiftSpeed_ = 0;
         f32 startLiftHeightMM_ = 0;
+        f32 maxLiftSpeed_radPerSec_ = 0;
         //// End of LiftTest  //////
 
 
@@ -187,6 +188,7 @@ namespace Anki {
         const f32 HEAD_DES_LOW_ANGLE = MIN_HEAD_ANGLE;
         HeadTestFlags headTestMode_ = HTF_TEST_POWER;
         s32 headNodCycleTime_ms_ = 2000;
+        f32 maxHeadSpeed_radPerSec_ = 0;
         
         //// End of HeadTest //////
 #if(ENABLE_TEST_MODES)
@@ -241,9 +243,10 @@ namespace Anki {
         ///////// IMUTest ////////
         bool imuTestDoTurns_ = false;
         bool IT_turnLeft;
-        const f32 IT_TARGET_ANGLE = 3.14;
-        const f32 IT_MAX_ROT_VEL = 1.5f;
-        const f32 IT_ROT_ACCEL = 10.f;
+        const f32 IT_TARGET_ANGLE = DEG_TO_RAD(180);
+        const f32 IT_MAX_ROT_VEL = DEG_TO_RAD(90);
+        const f32 IT_ROT_ACCEL = DEG_TO_RAD(720);
+        const f32 IT_ROT_TOL = DEG_TO_RAD(5);
         ///// End of IMUTest /////
 
 
@@ -286,6 +289,7 @@ namespace Anki {
         // Stop wheels and vision system
         WheelController::Enable();
         PickAndPlaceController::Reset();
+        SteeringController::ExecuteDirectDrive(0,0);
 
         // Stop lift and head
         LiftController::Enable();
@@ -309,6 +313,7 @@ namespace Anki {
                  x_offset_mm, y_offset_mm, angle_offset_degrees);
         ticCnt_ = 0;
         PickAndPlaceController::PlaceOnGround(50,
+                                              100,
                                               100,
                                               x_offset_mm,
                                               y_offset_mm,
@@ -641,6 +646,7 @@ namespace Anki {
         }
         avgLiftSpeed_ = 0;
         startLiftHeightMM_ = 0;
+        maxLiftSpeed_radPerSec_ = 0;
         return RESULT_OK;
       }
 
@@ -670,8 +676,14 @@ namespace Anki {
             static bool up = false;
 
             // As long as the lift is moving reset the counter
-            if (ABS(LiftController::GetAngularVelocity()) > 0.1f) {
+            f32 rotSpeed_radPerSec = ABS(LiftController::GetAngularVelocity());
+            if (rotSpeed_radPerSec > 0.1f) {
               ticCnt_ = 0;
+            }
+            
+            // Check for max speed
+            if (rotSpeed_radPerSec > maxLiftSpeed_radPerSec_) {
+              maxLiftSpeed_radPerSec_ = rotSpeed_radPerSec;
             }
 
             // Change direction
@@ -680,20 +692,20 @@ namespace Anki {
               if (liftTestMode_ == LiftTF_TEST_HEIGHTS) {
                 up = !up;
                 if (up) {
-                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 318, "Lift HIGH %f mm", 1, LIFT_DES_HIGH_HEIGHT);
+                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 403, "Lift HIGH %f mm (maxSpeed %f rad/s)", 2, LIFT_DES_HIGH_HEIGHT, maxLiftSpeed_radPerSec_);
                   LiftController::SetDesiredHeight(LIFT_DES_HIGH_HEIGHT);
                 } else {
-                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 319, "Lift LOW %f mm", 1, LIFT_DES_LOW_HEIGHT);
+                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 404, "Lift LOW %f mm (maxSpeed %f rad/s)", 2, LIFT_DES_LOW_HEIGHT, maxLiftSpeed_radPerSec_);
                   LiftController::SetDesiredHeight(LIFT_DES_LOW_HEIGHT);
                 }
 
               } else {
                 up = !up;
                 if (up) {
-                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 320, "Lift UP %f power", 1, liftPower_);
+                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 405, "Lift UP %f power (maxSpeed %f rad/s)", 2, liftPower_, maxLiftSpeed_radPerSec_);
                   HAL::MotorSetPower(MOTOR_LIFT, liftPower_);
                 } else {
-                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 321, "Lift DOWN %f power", 1, -liftPower_);
+                  AnkiInfo( 77, "TestModeController.LiftTestUpdate", 434, "Lift DOWN %f power (maxSpeed %f rad/s)", 2, -liftPower_, maxLiftSpeed_radPerSec_);
                   HAL::MotorSetPower(MOTOR_LIFT, -liftPower_);
                 }
 
@@ -806,6 +818,7 @@ namespace Anki {
         if (headTestMode_ == HTF_TEST_POWER) {
           HeadController::Disable();
         }
+        maxHeadSpeed_radPerSec_ = 0;
         return RESULT_OK;
       }
 
@@ -819,25 +832,31 @@ namespace Anki {
           {
             static bool up = false;
 
+            // Check for max speed
+            f32 rotSpeed_radPerSec = ABS(HeadController::GetAngularVelocity());
+            if (rotSpeed_radPerSec > maxHeadSpeed_radPerSec_) {
+              maxHeadSpeed_radPerSec_ = rotSpeed_radPerSec;
+            }
+            
             // Change direction
             if (ticCnt_++ >= headNodCycleTime_ms_ / TIME_STEP) {
 
               if (headTestMode_ == HTF_TEST_ANGLES) {
                 up = !up;
                 if (up) {
-                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 326, "Head HIGH %f rad", 1, HEAD_DES_HIGH_ANGLE);
+                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 407, "Head HIGH %f rad (maxSpeed %f rad/s)", 2, HEAD_DES_HIGH_ANGLE, maxHeadSpeed_radPerSec_);
                   HeadController::SetDesiredAngle(HEAD_DES_HIGH_ANGLE);
                 } else {
-                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 327, "Head LOW %f rad", 1, HEAD_DES_LOW_ANGLE);
+                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 408, "Head LOW %f rad (maxSpeed %f rad/s)", 2, HEAD_DES_LOW_ANGLE, maxHeadSpeed_radPerSec_);
                   HeadController::SetDesiredAngle(HEAD_DES_LOW_ANGLE);
                 }
               } else {
                 up = !up;
                 if (up) {
-                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 328, "Head UP %f power", 1, headPower_);
+                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 409, "Head UP %f power (maxSpeed %f rad/s)", 2, headPower_, maxHeadSpeed_radPerSec_);
                   HAL::MotorSetPower(MOTOR_HEAD, headPower_);
                 } else {
-                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 329, "Head DOWN %f power", 1, -headPower_);
+                  AnkiInfo( 81, "TestModeController.HeadTestUpdate", 410, "Head DOWN %f power (maxSpeed %f rad/s)", 2, -headPower_, maxHeadSpeed_radPerSec_);
                   HAL::MotorSetPower(MOTOR_HEAD, -headPower_);
                 }
 
@@ -911,11 +930,11 @@ namespace Anki {
             if (IT_turnLeft) {
               // Turn left 180 degrees
               AnkiInfo( 83, "TestModeController.IMUTestUpdate", 332, "Turning to 180", 0);
-              SteeringController::ExecutePointTurn(IT_TARGET_ANGLE, IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL, false);
+              SteeringController::ExecutePointTurn(IT_TARGET_ANGLE, IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL, IT_ROT_TOL, false);
             } else {
               // Turn right 180 degrees
               AnkiInfo( 83, "TestModeController.IMUTestUpdate", 333, "Turning to 0", 0);
-              SteeringController::ExecutePointTurn(0.f, -IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL, false);
+              SteeringController::ExecutePointTurn(0.f, -IT_MAX_ROT_VEL, IT_ROT_ACCEL, IT_ROT_ACCEL, IT_ROT_TOL, false);
             }
             IT_turnLeft = !IT_turnLeft;
           }

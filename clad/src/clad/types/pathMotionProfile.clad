@@ -16,8 +16,9 @@ structure PathMotionProfile {
     float_32     pointTurnSpeed_rad_per_sec = 2.0,
     float_32     pointTurnAccel_rad_per_sec2 = 100.0,
     float_32     pointTurnDecel_rad_per_sec2 = 100.0,
-    float_32     dockSpeed_mmps = 100.0,
+    float_32     dockSpeed_mmps = 60.0,
     float_32     dockAccel_mmps2 = 200.0,
+    float_32     dockDecel_mmps2 = 100.0,
     float_32     reverseSpeed_mmps = 30.0
 }
 

@@ -76,7 +76,6 @@ void Anki::Cozmo::HAL::UART::WaitForSync() {
   while (!HeadDataReceived) {
     __asm { WFI }
   }
-
   HeadDataReceived = false;
 }
 
@@ -97,14 +96,29 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
 
       SIM_SCGC4 |= SIM_SCGC4_UART0_MASK;
 
-      // Enable UART for this shiz
-      UART0_BDL = UART_BDL_SBR(BAUD_SBR(spine_baud_rate));
-      UART0_BDH = 0;
+      // Reset UART faults
+      volatile u8 dummy;
+      UART0_C2 = 0;
+      dummy = UART0_S1;
+      dummy = UART0_D;
 
+      // Enable UART for this shiz
+      UART0_BDH = 0;
+      UART0_BDL = UART_BDL_SBR(BAUD_SBR(spine_baud_rate));
+      UART0_C4 = UART_C4_BRFA(BAUD_BRFA(spine_baud_rate));
+#ifdef XXX_UNBRICK_BADBAUD
+      static u8 slow = 0;
+      if (slow)
+      {
+        UART0_BDL = UART_BDL_SBR(BAUD_SBR(350000));
+        UART0_C4 = UART_C4_BRFA(BAUD_BRFA(350000));
+      }
+      slow = !slow;
+#endif
+    
       UART0_C1 = 0; // 8 bit, 1 bit stop no parity (single wire)
       UART0_S2 |= UART_S2_RXINV_MASK;
       UART0_C3 = UART_C3_TXINV_MASK;
-      UART0_C4 = UART_C4_BRFA(BAUD_BRFA(spine_baud_rate));
 
       UART0_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(2) | UART_PFIFO_RXFE_MASK | UART_PFIFO_RXFIFOSIZE(2) ;
       UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;

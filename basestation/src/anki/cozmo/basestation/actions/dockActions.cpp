@@ -86,9 +86,11 @@ namespace Anki {
       Util::SafeDelete(_faceAndVerifyAction);
     }
 
-    void IDockAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2)
+    void IDockAction::SetSpeedAndAccel(f32 speed_mmps, f32 accel_mmps2, f32 decel_mmps2)
     {
-      _dockSpeed_mmps = speed_mmps; _dockAccel_mmps2 = accel_mmps2;
+      _dockSpeed_mmps = speed_mmps;
+      _dockAccel_mmps2 = accel_mmps2;
+      _dockDecel_mmps2 = decel_mmps2;
     }
 
     void IDockAction::SetSpeed(f32 speed_mmps)
@@ -96,9 +98,10 @@ namespace Anki {
       _dockSpeed_mmps = speed_mmps;
     }
 
-    void IDockAction::SetAccel(f32 accel_mmps2)
+    void IDockAction::SetAccel(f32 accel_mmps2, f32 decel_mmps2)
     {
       _dockAccel_mmps2 = accel_mmps2;
+      _dockDecel_mmps2 = decel_mmps2;
     }
 
     void IDockAction::SetPlacementOffset(f32 offsetX_mm, f32 offsetY_mm, f32 offsetAngle_rad)
@@ -323,12 +326,14 @@ namespace Anki {
             if(_robot.DockWithObject(_dockObjectID,
                                       _dockSpeed_mmps,
                                       _dockAccel_mmps2,
+                                      _dockDecel_mmps2,
                                       _dockMarker, _dockMarker2,
                                       _dockAction,
                                       _placementOffsetX_mm,
                                       _placementOffsetY_mm,
                                       _placementOffsetAngle_rad,
-                                      _useManualSpeed) == RESULT_OK)
+                                      _useManualSpeed,
+                                      _numDockingRetries) == RESULT_OK)
             {
               //NOTE: Any completion (success or failure) after this point should tell
               // the robot to stop tracking and go back to looking for markers!

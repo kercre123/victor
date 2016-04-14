@@ -57,6 +57,8 @@ namespace Anki {
       Result Update();
 
       Mode GetMode();
+      
+      DockAction GetCurAction();
 
       bool IsBusy();
       bool IsCarryingBlock();
@@ -72,14 +74,17 @@ namespace Anki {
       void DockToBlock(const DockAction action,
                        const f32 speed_mmps,
                        const f32 accel_mmps2,
+                       const f32 decel_mmps2,
                        const f32 rel_x = 0,
                        const f32 rel_y = 0,
                        const f32 rel_angle = 0,
-                       const bool useManualSpeed = false);
+                       const bool useManualSpeed = false,
+                       const u8 numRetries = 2);
 
       // Places block on ground and backs out.
       void PlaceOnGround(const f32 speed_mmps,
                          const f32 accel_mmps2,
+                         const f32 decel_mmps2,
                          const f32 rel_x,
                          const f32 rel_y,
                          const f32 rel_angle,

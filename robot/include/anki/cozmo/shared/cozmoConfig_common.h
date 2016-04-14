@@ -35,7 +35,7 @@ const f32 ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM = 29.f;
 // located for the treaded robot when not carrying a block.
 // (If you were to model the treaded robot as a two-wheel robot,
 // the drive center is the location between the two wheels)
-const f32 DRIVE_CENTER_OFFSET = -15.f;
+const f32 DRIVE_CENTER_OFFSET = -20.f;
 
 // Length of the forward collision sensor (with respect to origin)
 const u8 FORWARD_COLLISION_SENSOR_LENGTH_MM = 160;
@@ -215,6 +215,9 @@ const u16 ROBOT_RADIO_BASE_PORT = 5551;
  const f32 BASESTATION_MODEL_LATENCY_SEC = 2.f*MSG_RECEIVE_LATENCY_SEC;
  */
 
+// Header required at front of all AdvertisementRegistrationMsg CLAD messages sent to a Robot Ad Service
+const u8 ROBOT_ADVERTISING_HEADER_TAG = 0xCA;
+
 // Rate at which the robot advertises itself
 const u32 ROBOT_ADVERTISING_PERIOD_MS = 100;
 
@@ -229,6 +232,12 @@ const u32 UI_ADVERTISING_PORT = 5102;
 
 // Port on which UI device should connect to (de)register for advertisement
 const u32 UI_ADVERTISEMENT_REGISTRATION_PORT = 5103;
+
+// Port on which registered SDK devices advertise.
+const u32 SDK_ADVERTISING_PORT = 5104;
+
+// Port on which SDK device should connect to (de)register for advertisement
+const u32 SDK_ADVERTISEMENT_REGISTRATION_PORT = 5105;
 
 // If most recent advertisement message is older than this,
 // then it is no longer considered to be advertising.

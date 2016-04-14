@@ -15,14 +15,28 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <anki/messaging/basestation/advertisementService.h>
-
+#include "anki/messaging/basestation/advertisementService.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/externalInterface/messageGameToEngineTag.h"
+#include "util/debug/messageDebugging.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
   namespace Comms {
 
-    AdvertisementService::AdvertisementService(const char* serviceName)
+    AdvertisementService::AdvertisementService(const char* serviceName, RegMsgTag regMsgTag)
     {
+      if (regMsgTag == kInvalidRegMsgTag)
+      {
+        using EMessageTag = Cozmo::ExternalInterface::MessageGameToEngineTag;
+        static_assert(sizeof(EMessageTag) == sizeof(RegMsgTag), "Robot and Game tag size must match");
+        _regMsgTag = Util::numeric_cast<RegMsgTag>(EMessageTag::AdvertisementRegistrationMsg);
+      }
+      else
+      {
+        _regMsgTag = regMsgTag;
+      }
+      
       strcpy(serviceName_, serviceName);
     }
 
@@ -46,23 +60,48 @@ namespace Anki {
     void AdvertisementService::Update()
     {
       // Message from device that wants to (de)register for advertising.
-      AdvertisementRegistrationMsg regMsg;
+      Cozmo::AdvertisementRegistrationMsg regMsg;
+      const size_t kMinAdRegMsgSize = sizeof(RegMsgTag) + regMsg.Size(); // Size of message with an empty ip string
   
       connectionInfoMapIt it;
-  
-      //double lastAdvertisingTime = 0;
-  
       
       // Update registered devices
       int bytes_recvd = 0;
       do {
-        // For now, assume that only one kind of message comes in
-        bytes_recvd = regServer_.Recv((char*)&regMsg, sizeof(regMsg));
-    
-        if (bytes_recvd == sizeof(regMsg)) {
-          ProcessRegistrationMsg(regMsg);
-        } else if (bytes_recvd > 0){
-          printf("Recvd datagram with %d bytes. Expecting %d bytes.\n", bytes_recvd, (int)sizeof(regMsg));
+        uint8_t messageData[64];
+        
+        bytes_recvd = regServer_.Recv((char*)messageData, sizeof(messageData));
+        
+        if (bytes_recvd >= kMinAdRegMsgSize)
+        {
+          const RegMsgTag messageTag = *(RegMsgTag*)messageData;
+          
+          if (messageTag == _regMsgTag)
+          {
+            const uint8_t* innerMessageBytes = &messageData[sizeof(RegMsgTag)];
+            const size_t   innerMessageSize  = bytes_recvd - sizeof(RegMsgTag);
+          
+            regMsg.Unpack(innerMessageBytes, innerMessageSize);
+            
+            ProcessRegistrationMsg(regMsg);
+          }
+          else
+          {
+            namespace CoEx = Cozmo::ExternalInterface;
+            using GToETag = CoEx::MessageGameToEngineTag;
+            PRINT_NAMED_WARNING("AdvertisementService.Recv.BadTag",
+                                "%s: Received %d byte message with tag %u('%s') when expected %u('%s')\n%s",
+                                serviceName_, bytes_recvd, (int)messageTag, CoEx::MessageGameToEngineTagToString((GToETag)messageTag),
+                                (int)_regMsgTag, CoEx::MessageGameToEngineTagToString((GToETag)_regMsgTag),
+                                Util::ConvertMessageBufferToString(messageData, bytes_recvd, Util::eBTTT_Ascii).c_str());
+          }
+        }
+        else if (bytes_recvd > 0)
+        {
+          PRINT_NAMED_WARNING("AdvertisementService.Recv.AdRegTooSmall",
+                              "%s: Received datagram with %d bytes. < %zu bytes min\n%s",
+                              serviceName_, bytes_recvd, kMinAdRegMsgSize,
+                              Util::ConvertMessageBufferToString(messageData, bytes_recvd, Util::eBTTT_Ascii).c_str());
         }
         
       } while (bytes_recvd > 0);
@@ -70,10 +109,10 @@ namespace Anki {
       
       // Get clients that are interested in knowing about advertising devices
       do {
-        // Don't actually expect to get AdvertisementRegistrationMsg here,
-        // but just need something to put stuff in.
+        // The type of data is irrelevant and we don't do anything with it
         // Server automatically adds client to internal list when recv is called.
-        bytes_recvd = advertisingServer_.Recv((char*)&regMsg, sizeof(regMsg));
+        uint8_t messageData[64];
+        bytes_recvd = advertisingServer_.Recv((char*)messageData, sizeof(messageData));
         
         //if (bytes_recvd > 0) {
         //  std::cout << serviceName_ << ": " << "Received ping from advertisement listener\n";
@@ -84,75 +123,65 @@ namespace Anki {
       // Notify all clients of advertising devices
       if (advertisingServer_.GetNumClients() > 0 && (!connectionInfoMap_.empty() || !oneShotAdvertiseConnectionInfoMap_.empty() )) {
         
-        std::cout << serviceName_ << ": "
-                  << "Notifying " <<  advertisingServer_.GetNumClients() << " clients of advertising devices\n";
+        PRINT_NAMED_INFO("AdvertisementService.NotifyClients",
+                         "%s: Notifying %d clients of advertising devices",
+                         serviceName_, advertisingServer_.GetNumClients());
         
         // Send registered devices' advertisement
-        for (it = connectionInfoMap_.begin(); it != connectionInfoMap_.end(); it++) {
+        for (int mapType = 0; mapType < 2; ++mapType)
+        {
+          const ConnectionInfoMap& connectionMap = (mapType == 0) ? connectionInfoMap_ : oneShotAdvertiseConnectionInfoMap_;
           
-          std::cout << serviceName_ << ": "
-            << "Sending Connected Advertisment: Device " << it->second.id
-            << " on host " << it->second.ip
-            << " at port " << it->second.port
-            << "(size=" << sizeof(AdvertisementMsg) << ")\n";
-           
-          advertisingServer_.Send((char*)&(it->second), sizeof(AdvertisementMsg));
-        }
-        
-        // Send one-shot advertisements
-        for (it = oneShotAdvertiseConnectionInfoMap_.begin(); it != oneShotAdvertiseConnectionInfoMap_.end(); it++) {
+          for (const auto& kv : connectionMap)
+          {
+            const Cozmo::AdvertisementMsg& adMsg = kv.second;
+            Anki::Cozmo::ExternalInterface::MessageGameToEngine message; // We pretend that this came directly from Game
+            message.Set_AdvertisementMsg(adMsg);
 
-          std::cout << serviceName_ << ": "
-            << "Sending One-shot Advertisment: Device " << int(it->second.id)
-            << " on host " << it->second.ip
-            << " at port " << it->second.port
-            << "(size=" << sizeof(AdvertisementMsg) << ")\n";
-          
-          advertisingServer_.Send((char*)&(it->second), sizeof(AdvertisementMsg));
+            PRINT_NAMED_INFO("AdvertisementService.NotifyClients",
+                             "%s: Sending %s Advertisement: Device %d on host %s at ports ToEngine: %d FromEngine: %d",
+                             serviceName_, (mapType == 0) ? "Connected" : "One-shot",
+                             (int)adMsg.id, adMsg.ip.c_str(), (int)adMsg.toEnginePort, (int)adMsg.fromEnginePort);
+            
+            uint8_t messageData[64];
+            size_t bytesPacked = message.Pack(messageData, sizeof(messageData));
+            
+            advertisingServer_.Send((char*)messageData, (int)bytesPacked);
+          }
         }
         
-        // Clearing advertising devices
+        // Clear all one-shots now that adverts have been sent for them
         oneShotAdvertiseConnectionInfoMap_.clear();
       }
       
     }
     
   
-    void AdvertisementService::ProcessRegistrationMsg(const AdvertisementRegistrationMsg &regMsg)
+    void AdvertisementService::ProcessRegistrationMsg(const Cozmo::AdvertisementRegistrationMsg& regMsg)
     {
-      if (regMsg.enableAdvertisement) {
-        
-        if (regMsg.oneShot) {
-          std::cout << serviceName_ << ": "
-          << "Received One-shot advertisment from device " << (int)regMsg.id
-          << " on host " << regMsg.ip
-          << " at port " << regMsg.port
-          << " with advertisement service\n";
+      if (regMsg.enableAdvertisement)
+      {
+        PRINT_NAMED_INFO(regMsg.oneShot ? "ProcessRegistrationMsg.ReceivedOneShot" : "ProcessRegistrationMsg.ReceivedRegReq",
+                         "%s: Received from device %d on host %s at ports ToEngine: %d FromEngine: %d with advertisement service",
+                         serviceName_, (int)regMsg.id, regMsg.ip.c_str(), (int)regMsg.toEnginePort, (int)regMsg.fromEnginePort);
 
-          oneShotAdvertiseConnectionInfoMap_[regMsg.id].id = regMsg.id;
-          oneShotAdvertiseConnectionInfoMap_[regMsg.id].port = regMsg.port;
-          oneShotAdvertiseConnectionInfoMap_[regMsg.id].protocol = regMsg.protocol;
-          memcpy(oneShotAdvertiseConnectionInfoMap_[regMsg.id].ip, regMsg.ip, sizeof(AdvertisementMsg::ip));
-        } else {
-          std::cout << serviceName_ << ": "
-          << "Received Registration request from device " << (int)regMsg.id
-          << " on host " << regMsg.ip
-          << " at port " << regMsg.port
-          << " with advertisement service\n";
-
-          connectionInfoMap_[regMsg.id].id = regMsg.id;
-          connectionInfoMap_[regMsg.id].port = regMsg.port;
-          connectionInfoMap_[regMsg.id].protocol = regMsg.protocol;
-          memcpy(connectionInfoMap_[regMsg.id].ip, regMsg.ip, sizeof(AdvertisementMsg::ip));
-        }
+        Cozmo::AdvertisementMsg& destMsg = regMsg.oneShot ? oneShotAdvertiseConnectionInfoMap_[regMsg.id] : connectionInfoMap_[regMsg.id];
         
-      } else {
-        std::cout << serviceName_ << ": "
-                  << "Received Deregistration from device " << (int)regMsg.id << " from advertisement service\n";
+        destMsg.id = regMsg.id;
+        destMsg.toEnginePort   = regMsg.toEnginePort;
+        destMsg.fromEnginePort = regMsg.fromEnginePort;
+        destMsg.ip = regMsg.ip;
+      }
+      else
+      {
+        PRINT_NAMED_INFO("ProcessRegistrationMsg.ReceivedDereg",
+                         "%s: Received from device %d on host %s at ports ToEngine: %d FromEngine: %d with advertisement service",
+                         serviceName_, (int)regMsg.id, regMsg.ip.c_str(), (int)regMsg.toEnginePort, (int)regMsg.fromEnginePort);
+
         connectionInfoMap_.erase(regMsg.id);
       }
-
     }
+    
   
     void AdvertisementService::DeregisterAllAdvertisers()
     {

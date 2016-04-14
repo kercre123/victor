@@ -10,17 +10,18 @@ namespace Anki {
 
       Result Init();
 
+      f32 GetCurrPose_x();
+      f32 GetCurrPose_y();
+      Radians GetCurrPose_angle();
       Embedded::Pose2d GetCurrPose();
 
       void GetCurrentMatPose(f32& x, f32& y, Radians& angle);
       void SetCurrentMatPose(const f32 &x, const f32 &y, const Radians &angle);
 
-      // Get orientation of robot on current mat
-      Radians GetCurrentMatOrientation();
-
       void GetDriveCenterPose(f32& x, f32& y, Radians& angle);
       void SetDriveCenterPose(const f32 &x, const f32 &y, const Radians &angle);
 
+      void SetDriveCenterOffset(f32 offset_mm);
       f32 GetDriveCenterOffset();
 
       // Given a robotOriginPose, returns the pose of the drive center

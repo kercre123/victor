@@ -20,7 +20,7 @@ namespace Anki
         void ManageDrop(void);
           
         // Finalize the drop for transmission next time
-        void FinalizeDrop(int jpeglen, bool eof);
+        void FinalizeDrop(int jpeglen, const bool eof, const uint32_t frameNumber);
       }
     }
   }

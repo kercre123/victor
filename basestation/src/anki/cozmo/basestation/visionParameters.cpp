@@ -124,7 +124,8 @@ namespace Anki {
       }
       
       void TrackerParameters::Initialize(ImageResolution resolution,
-                                         const Point2f& fiducialThicknessFraction)
+                                         const Point2f& fiducialThicknessFraction,
+                                         const Point2f& roundedCornersFractionArg)
       {
         // This is size of the box filter used to locally normalize the image
         // as a fraction of the size of the current tracking quad.
@@ -152,6 +153,8 @@ namespace Anki {
         // Split total samples between fiducial and interior
         numInteriorSamples            = 500;
         numFiducialEdgeSamples        = 500;
+        
+        roundedCornersFraction = roundedCornersFractionArg;
         
         if(numFiducialEdgeSamples > 0) {
           scaleTemplateRegionPercent    = 1.f - 0.5f*(fiducialThicknessFraction.x() +

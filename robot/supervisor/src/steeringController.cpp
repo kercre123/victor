@@ -38,8 +38,8 @@ namespace Anki {
 
       //The gains for the steering controller
       //Heading tracking gain K1, Crosstrack approach rate K2
-      const float DEFAULT_STEERING_K1 = 0.1f;
-      const float DEFAULT_STEERING_K2 = 12.f;
+      const f32 DEFAULT_STEERING_K1 = 0.1f;
+      const f32 DEFAULT_STEERING_K2 = 12.f;
 
       //Steering gains: Heading tracking gain K1, Crosstrack approach rate K2
       f32 K1_ = DEFAULT_STEERING_K1;
@@ -126,12 +126,32 @@ namespace Anki {
     //sets the steering controller constants
     void SetGains(f32 k1, f32 k2, f32 dockPathDistOffsetCap_mm, f32 dockPathAngularOffsetCap_rad)
     {
-      AnkiInfo( 11, "SteeringController", 103, "New gains: k1 %f, k2 %f, dist_cap %f mm, ang_cap %f rad", 4,
+      AnkiInfo( 11, "SteeringController", 424, "New gains: k1 %f, k2 %f, dist_cap %f mm, ang_cap %f rad", 4,
             k1, k2, dockPathDistOffsetCap_mm, dockPathAngularOffsetCap_rad);
       K1_ = k1;
       K2_ = k2;
       PATH_DIST_OFFSET_CAP_MM = dockPathDistOffsetCap_mm;
       PATH_ANGULAR_OFFSET_CAP_RAD = dockPathAngularOffsetCap_rad;
+    }
+    
+    f32 GetK1Gain()
+    {
+      return K1_;
+    }
+    
+    f32 GetK2Gain()
+    {
+      return K2_;
+    }
+    
+    f32 GetPathDistOffsetCap()
+    {
+      return PATH_DIST_OFFSET_CAP_MM;
+    }
+    
+    f32 GetPathAngOffsetCap()
+    {
+      return PATH_ANGULAR_OFFSET_CAP_RAD;
     }
 
     void SetPointTurnGains(f32 kp, f32 ki, f32 kd, f32 maxIntegralError)
@@ -182,6 +202,11 @@ namespace Anki {
     void SetRotationSpeedLimit(f32 rad_per_s)
     {
       maxRotationWheelSpeedDiff = rad_per_s * WHEEL_DIST_MM;
+    }
+    
+    f32 GetRotationSpeedLimit()
+    {
+      return maxRotationWheelSpeedDiff;
     }
 
     void DisableRotationSpeedLimit()
@@ -241,7 +266,7 @@ namespace Anki {
           f32 speedAdjust = 0.5f*(wheelSpeedDiff - maxRotationWheelSpeedDiff);
           *higherWheelSpeed -= speedAdjust;
           *lowerWheelSpeed += speedAdjust;
-          AnkiInfo( 11, "SteeringController", 105, "  Wheel speed adjust: (%f, %f), adjustment %f", 3, *higherWheelSpeed, *lowerWheelSpeed, speedAdjust);
+//          AnkiInfo( 11, "SteeringController", 105, "  Wheel speed adjust: (%f, %f), adjustment %f", 3, *higherWheelSpeed, *lowerWheelSpeed, speedAdjust);
         }
       }
 
@@ -502,7 +527,7 @@ namespace Anki {
       isPointTurnWithTarget_ = false;
       ExecutePointTurn_Internal(angularVel, angularAccel);
 
-      prevAngle_ = Localization::GetCurrentMatOrientation();
+      prevAngle_ = Localization::GetCurrPose_angle();
       f32 currAngle = prevAngle_.ToFloat();
 
       // Generate velocity profile
@@ -533,10 +558,10 @@ namespace Anki {
 
       targetRad_ = targetAngle;
       pointTurnAngTol_ = ABS(angleTolerance);
-      prevAngle_ = Localization::GetCurrentMatOrientation();
+      prevAngle_ = Localization::GetCurrPose_angle();
       f32 currAngle = prevAngle_.ToFloat();
       f32 destAngle = targetRad_.ToFloat();
-      angularDistExpected_ = (targetAngle - Localization::GetCurrentMatOrientation()).ToFloat();
+      angularDistExpected_ = (targetAngle - Localization::GetCurrPose_angle()).ToFloat();
 
       angularDistTraversed_ = 0;
 
@@ -588,7 +613,7 @@ namespace Anki {
       f32 currDesiredAngularVel, currDesiredAngle;
       vpg_.Step(currDesiredAngularVel, currDesiredAngle);
 
-      Radians currAngle = Cozmo::Localization::GetCurrentMatOrientation();
+      Radians currAngle = Cozmo::Localization::GetCurrPose_angle();
       
       // Compute the velocity along the arc length equivalent of currAngularVel.
       // currDesiredAngularVel / PI = arcVel / (PI * R)
@@ -610,7 +635,7 @@ namespace Anki {
         f32 absAngularDistToTarget = ABS(angularDistToTarget);
         if (absAngularDistToTarget < pointTurnAngTol_) {
           if (inPositionStartTime_ == 0) {
-            AnkiDebug( 126, "ManagePointTurn.InRange", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+            AnkiDebug( 146, "ManagePointTurn.InRange", 413, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
             inPositionStartTime_ = HAL::GetTimeStamp();
           } else if (HAL::GetTimeStamp() - inPositionStartTime_ > IN_POSITION_THRESHOLD_MS) {
 #           if(DEBUG_STEERING_CONTROLLER)
@@ -624,7 +649,7 @@ namespace Anki {
             return;
           }
         } else {
-          AnkiDebugPeriodic(100, 127, "ManagePointTurn.OOR", 374, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+          AnkiDebugPeriodic(100, 127, "ManagePointTurn.OOR", 413, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
           inPositionStartTime_ = 0;
 
           

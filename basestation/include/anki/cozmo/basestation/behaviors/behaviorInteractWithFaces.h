@@ -45,6 +45,7 @@ namespace Cozmo {
 
   private:
     using Face = Vision::TrackedFace;
+    using FaceID_t = Vision::FaceID_t;
     
     virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
@@ -54,25 +55,25 @@ namespace Cozmo {
     void HandleRobotCompletedAction(Robot& robot, const EngineToGameEvent& event);
     
     void UpdateBaselineFace(Robot& robot, const Face* face);
-    void RemoveFaceID(Face::ID_t faceID);
+    void RemoveFaceID(FaceID_t faceID);
     void UpdateRobotFace(Robot& robot);
     void PlayAnimation(Robot& robot, const std::string& animName, QueueActionPosition position);
     
     // Sets face tracking ID and queues TrackFaceAction "now".
-    void StartTracking(Robot& robot, Face::ID_t faceID, double currentTime_sec);
+    void StartTracking(Robot& robot, FaceID_t faceID, double currentTime_sec);
     
     // Unsets face tracking ID and cancels last action tag. Also sets current state to Inactive.
     void StopTracking(Robot& robot);
     
     // If any interesting faces left, pick the next random one to track and return true.
     // If not, StopTracking, go back to Inactive, and return false.
-    bool TrackNextFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec);
+    bool TrackNextFace(Robot& robot, FaceID_t currentFace, double currentTime_sec);
     
     // Like TrackNextFace, but does not remove current face from list. Just switches
     // to a different face in the list. If the list only has one face in it, does nothing.
-    void SwitchToDifferentFace(Robot& robot, Face::ID_t currentFace, double currentTime_sec);
+    void SwitchToDifferentFace(Robot& robot, FaceID_t currentFace, double currentTime_sec);
   
-    Face::ID_t GetRandIdHelper();
+    FaceID_t GetRandIdHelper();
     
     enum class State {
       Inactive,
@@ -121,13 +122,13 @@ namespace Cozmo {
     };
     
     // ID of face we are currently tracking
-    Face::ID_t _trackedFaceID = Face::UnknownFace;
+    FaceID_t _trackedFaceID = Vision::UnknownFaceID;
     
     // List of faces to choose from when not tracking
-    std::list<Face::ID_t> _interestingFacesOrder;
+    std::list<FaceID_t> _interestingFacesOrder;
     
     // Known face data
-    std::unordered_map<Face::ID_t, FaceData> _interestingFacesData;
+    std::unordered_map<FaceID_t, FaceData> _interestingFacesData;
     
     // Length of time we'll allow the tracking action to go without an update
     // before completing and returning to Inactive state

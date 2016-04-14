@@ -239,6 +239,7 @@ generated/android
 coretech/project/gyp/build
 project/gyp/build
 generated/clad
+generated/cladPython
 generated/webots/src/plugins/physics/physics.c
 robot/generated/clad*
 resources/config/faciometric

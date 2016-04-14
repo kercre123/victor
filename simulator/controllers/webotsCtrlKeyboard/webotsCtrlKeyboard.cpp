@@ -280,6 +280,7 @@ namespace Anki {
         
         root_ = GetSupervisor()->getSelf();
         f32 wheelSpeed = root_->getField("driveSpeedNormal")->getSFFloat();
+        f32 driveAccel = root_->getField("driveAccel")->getSFFloat();
         
         f32 steeringCurvature = root_->getField("steeringCurvature")->getSFFloat();
         
@@ -355,6 +356,7 @@ namespace Anki {
           // Dock speed
           const f32 dockSpeed_mmps = root_->getField("dockSpeed_mmps")->getSFFloat();
           const f32 dockAccel_mmps2 = root_->getField("dockAccel_mmps2")->getSFFloat();
+          const f32 dockDecel_mmps2 = root_->getField("dockDecel_mmps2")->getSFFloat();
           
           // Path speeds
           const f32 pathSpeed_mmps = root_->getField("pathSpeed_mmps")->getSFFloat();
@@ -373,8 +375,8 @@ namespace Anki {
           pathMotionProfile_.pointTurnDecel_rad_per_sec2 = pathPointTurnDecel_radPerSec2;
           pathMotionProfile_.dockSpeed_mmps = dockSpeed_mmps;
           pathMotionProfile_.dockAccel_mmps2 = dockAccel_mmps2;
+          pathMotionProfile_.dockDecel_mmps2 = dockDecel_mmps2;
           pathMotionProfile_.reverseSpeed_mmps = pathReverseSpeed_mmps;
-          
           
           // For pickup or placeRel, specify whether or not you want to use the
           // given approach angle for pickup, placeRel, or roll actions
@@ -923,6 +925,11 @@ namespace Anki {
                     SendMessage(ExternalInterface::MessageGameToEngine(
                                   ExternalInterface::SetBehaviorSystemEnabled(false)));
                   }
+                  else if( behaviorName == "ENABLED")
+                  {
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::SetBehaviorSystemEnabled(true)));
+                  }
                   else
                   {
                     printf("Selecting behavior: %s\n", behaviorName.c_str());
@@ -1468,12 +1475,24 @@ namespace Anki {
               }
               case (s32)'$':
               {
-                SendAnimation("ANIM_LIFT_NOD", 1);
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendClearCalibrationImages();
+                } else {
+                  SendSaveCalibrationImage();
+                }
                 break;
               }
               case (s32)'%':
               {
-                SendAnimation("ANIM_ALERT", 1);
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  f32 focalLength_x = root_->getField("focalLength_x")->getSFFloat();
+                  f32 focalLength_y = root_->getField("focalLength_y")->getSFFloat();
+                  f32 center_x = root_->getField("imageCenter_x")->getSFFloat();
+                  f32 center_y = root_->getField("imageCenter_y")->getSFFloat();
+                  SendCameraCalibration(focalLength_x, focalLength_y, center_x, center_y);
+                } else {
+                  SendComputeCameraCalibration();
+                }
                 break;
               }
               case (s32)'*':
@@ -1754,11 +1773,11 @@ namespace Anki {
             rightSpeed = -steeringDir * wheelSpeed;
           }
           
-          SendDriveWheels(leftSpeed, rightSpeed);
+          SendDriveWheels(leftSpeed, rightSpeed, driveAccel, driveAccel);
           wasMovingWheels_ = true;
         } else if(wasMovingWheels_ && !movingWheels) {
           // If we just stopped moving the wheels:
-          SendDriveWheels(0, 0);
+          SendDriveWheels(0, 0, driveAccel, driveAccel);
           wasMovingWheels_ = false;
         }
         

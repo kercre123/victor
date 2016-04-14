@@ -885,19 +885,6 @@ namespace Anki {
       
     }
     
-    Radians TurnTowardsObjectAction::GetHeadAngle(f32 heightDiff)
-    {
-      // TODO: Just commanding fixed head angle depending on height of object.
-      //       Verify this is ok with the wide angle lens. If not, dynamically compute
-      //       head angle so that it is at the bottom (for high blocks) or top (for low blocks)
-      //       of the image.
-      Radians headAngle = DEG_TO_RAD_F32(-15);
-      if (heightDiff > 0) {
-        headAngle = DEG_TO_RAD_F32(17);
-      }
-      return headAngle;
-    }
-    
     ActionResult TurnTowardsObjectAction::Init()
     {
       ObservableObject* object = _robot.GetBlockWorld().GetObjectByID(_objectID);
@@ -1071,13 +1058,13 @@ namespace Anki {
            object->GetType() == ObjectType::Bridge_SHORT)
         {
           CrossBridgeAction* bridgeAction = new CrossBridgeAction(_robot, _objectID, _useManualSpeed);
-          bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
+          bridgeAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
           bridgeAction->ShouldSuppressTrackLocking(true);
           _chosenAction = bridgeAction;
         }
         else if(object->GetType() == ObjectType::Ramp_Basic) {
           AscendOrDescendRampAction* rampAction = new AscendOrDescendRampAction(_robot, _objectID, _useManualSpeed);
-          rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2);
+          rampAction->SetSpeedAndAccel(_speed_mmps, _accel_mmps2, _decel_mmps2);
           rampAction->ShouldSuppressTrackLocking(true);
           _chosenAction = rampAction;
         }
@@ -1174,7 +1161,6 @@ namespace Anki {
       //  rotates around the neck.
       const f32 heightDiff = _poseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
       Radians headAngle = GetHeadAngle(heightDiff);
-      
       SetHeadTiltAngle(headAngle);
       
       // Proceed with base class's Init()
@@ -1355,14 +1341,55 @@ namespace Anki {
       if(robot.GetFaceWorld().GetLastObservedFaceWithRespectToRobot(pose) != 0)
       {
         SetPose(pose);
+        _hasFace = true;
       }
     }
-    
+
+    ActionResult TurnTowardsLastFacePoseAction::Init()
+    {
+      if( _hasFace ) {
+        return TurnTowardsPoseAction::Init();
+      }
+      else {
+        // this action is just a no-op without a face
+        return ActionResult::SUCCESS;
+      }
+    }
+
+    ActionResult TurnTowardsLastFacePoseAction::CheckIfDone()
+    {
+      if( _hasFace ) {
+        return TurnTowardsPoseAction::CheckIfDone();
+      }
+      else {
+        return ActionResult::SUCCESS;
+      }
+    }
+
+  
     const std::string& TurnTowardsLastFacePoseAction::GetName() const
     {
       static const std::string name("TurnTowardsLastFacePoseAction");
       return name;
     }
+
+#pragma mark ---- TurnTowardsFaceWrapperAction ----
+
+    TurnTowardsFaceWrapperAction::TurnTowardsFaceWrapperAction(Robot& robot,
+                                                               IActionRunner* action,
+                                                               bool turnBeforeAction,
+                                                               bool turnAfterAction,
+                                                               Radians maxTurnAngle)
+      : CompoundActionSequential(robot)
+    {
+      if( turnBeforeAction ) {
+        AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle) );
+      }
+      AddAction(action);
+      if( turnAfterAction ) {
+        AddAction( new TurnTowardsLastFacePoseAction(robot, maxTurnAngle) ) ;
+      }
+    }  
     
 #pragma mark ---- WaitAction ----
     
@@ -1395,8 +1422,9 @@ namespace Anki {
     
 #pragma mark ---- ReadToolCodeAction ----
     
-    ReadToolCodeAction::ReadToolCodeAction(Robot& robot)
+    ReadToolCodeAction::ReadToolCodeAction(Robot& robot, bool doCalibration)
     : IAction(robot)
+    , _doCalibration(doCalibration)
     {
       
     }
@@ -1424,8 +1452,7 @@ namespace Anki {
     {
       // Stop calibration mode on robot
       _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(0, 0, false)));
-      
-      _robot.GetVisionComponent().EnableMode(VisionMode::CheckingToolCode, false);
+      _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);
     }
     
     ActionResult ReadToolCodeAction::CheckIfDone()
@@ -1440,10 +1467,16 @@ namespace Anki {
         {
           if (currTimestamp - _toolCodeLastMovedTime > kRequiredStillTime_ms)
           {
-            // Tell the VisionSystem thread to check the tool code in the next image it gets.
-            // It will disable this mode when it completes.
-            _robot.GetVisionComponent().EnableMode(VisionMode::CheckingToolCode, true);
-            _state = State::WaitingForRead;
+            Result setCalibResult = _robot.GetVisionComponent().EnableToolCodeCalibration(_doCalibration);
+            if(RESULT_OK != setCalibResult) {
+              PRINT_NAMED_INFO("ReadToolCodeAction.CheckIfDone.FailedToSetCalibration", "");
+              result = ActionResult::FAILURE_ABORT;
+            } else {
+              // Tell the VisionSystem thread to check the tool code in the next image it gets.
+              // It will disable this mode when it completes.
+              _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, true);
+              _state = State::WaitingForRead;
+            }
           }
           else if (_robot.GetHeadAngle() != _toolCodeLastHeadAngle ||
                    _robot.GetLiftAngle() != _toolCodeLastLiftAngle)

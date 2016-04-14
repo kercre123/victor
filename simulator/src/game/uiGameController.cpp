@@ -131,9 +131,9 @@ namespace Anki {
     {
       // Just send a message back to the game to connect to any UI device that's
       // advertising (since we don't have a selection mechanism here)
-      PRINT_NAMED_INFO("UiGameController.HandleUiDeviceConnectionBase", "Sending message to command connection to UI device %d.", msgIn.deviceID);
-      ExternalInterface::ConnectToUiDevice msgOut;
-      msgOut.deviceID = msgIn.deviceID;
+      PRINT_NAMED_INFO("UiGameController.HandleUiDeviceConnectionBase", "Sending message to command connection to %s device %d.",
+                       EnumToString(msgIn.connectionType), msgIn.deviceID);
+      ExternalInterface::ConnectToUiDevice msgOut(msgIn.connectionType, msgIn.deviceID);
       ExternalInterface::MessageGameToEngine message;
       message.Set_ConnectToUiDevice(msgOut);
       SendMessage(message);
@@ -652,11 +652,13 @@ namespace Anki {
       ++m.counter;
     }
     
-    void UiGameController::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps)
+    void UiGameController::SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps, const f32 lwheel_accel_mmps2, const f32 rwheel_accel_mmps2)
     {
       ExternalInterface::DriveWheels m;
       m.lwheel_speed_mmps = lwheel_speed_mmps;
       m.rwheel_speed_mmps = rwheel_speed_mmps;
+      m.lwheel_accel_mmps2 = lwheel_accel_mmps2;
+      m.rwheel_accel_mmps2 = rwheel_accel_mmps2;
       ExternalInterface::MessageGameToEngine message;
       message.Set_DriveWheels(m);
       SendMessage(message);
@@ -1290,6 +1292,48 @@ namespace Anki {
       SendMessage(message);
     }
     
+    void UiGameController::SendSaveCalibrationImage()
+    {
+      ExternalInterface::SaveCalibrationImage msg;
+      msg.robotID = 1;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_SaveCalibrationImage(msg);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendClearCalibrationImages()
+    {
+      ExternalInterface::ClearCalibrationImages msg;
+      msg.robotID = 1;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_ClearCalibrationImages(msg);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendComputeCameraCalibration()
+    {
+      ExternalInterface::ComputeCameraCalibration msg;
+      msg.robotID = 1;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_ComputeCameraCalibration(msg);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendCameraCalibration(f32 focalLength_x, f32 focalLength_y, f32 center_x, f32 center_y)
+    {
+      CameraCalibration msg;
+      msg.focalLength_x = focalLength_x;
+      msg.focalLength_y = focalLength_y;
+      msg.center_x = center_x;
+      msg.center_y = center_y;
+      msg.skew = 0;
+      msg.nrows = 240;
+      msg.ncols = 320;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_CameraCalibration(msg);
+      SendMessage(message);
+    }
+    
     void UiGameController::SendEnableVisionMode(VisionMode mode, bool enable)
     {
       ExternalInterface::EnableVisionMode m;
@@ -1494,7 +1538,7 @@ namespace Anki {
       return _lastObservedObject;
     }
     
-    const Vision::TrackedFace::ID_t UiGameController::GetLastObservedFaceID() const
+    const Vision::FaceID_t UiGameController::GetLastObservedFaceID() const
     {
       return _lastObservedFaceID;
     }
@@ -1526,6 +1570,62 @@ namespace Anki {
     void SetActualObjectPose(const std::string& name, const Pose3d& newPose)
     {
       // TODO: Implement!
+    }
+    
+    void UiGameController::SetLightCubePose(int lightCubeId, const Pose3d& newPose)
+    {
+      for(auto iter = _lightCubes.begin(); iter != _lightCubes.end(); iter++)
+      {
+        webots::Field* id = iter->first->getField("ID");
+        if(id && id->getSFInt32() == lightCubeId)
+        {
+          webots::Field* rotField = iter->first->getField("rotation");
+          assert(rotField != nullptr);
+          
+          webots::Field* transField = iter->first->getField("translation");
+          assert(transField != nullptr);
+          
+          const RotationVector3d Rvec = newPose.GetRotationVector();
+          const double rotation[4] = {
+            Rvec.GetAxis().x(), Rvec.GetAxis().y(), Rvec.GetAxis().z(),
+            Rvec.GetAngle().ToFloat()
+          };
+          rotField->setSFRotation(rotation);
+          
+          const double translation[3] = {
+            MM_TO_M(newPose.GetTranslation().x()),
+            MM_TO_M(newPose.GetTranslation().y()),
+            MM_TO_M(newPose.GetTranslation().z())
+          };
+          transField->setSFVec3f(translation);
+        }
+      }
+    }
+    
+    const Pose3d UiGameController::GetLightCubePoseActual(int lightCubeId)
+    {
+      for(auto iter = _lightCubes.begin(); iter != _lightCubes.end(); iter++)
+      {
+        webots::Field* id = iter->first->getField("ID");
+        if(id && id->getSFInt32() == lightCubeId)
+        {
+          webots::Field* rotField = iter->first->getField("rotation");
+          assert(rotField != nullptr);
+          
+          webots::Field* transField = iter->first->getField("translation");
+          assert(transField != nullptr);
+        
+          const double* rot = rotField->getSFRotation();
+          const RotationVector3d rotation(rot[3], Vec3f(rot[0], rot[1], rot[2]));
+          
+          const double* trans = transField->getSFVec3f();
+          const Vec3f translation(trans[0], trans[1], trans[2]);
+          
+          return Pose3d(rotation, translation);
+        }
+      }
+      PRINT_NAMED_ERROR("UiGameController.GetLightCubePoseActual", "Unable to get actual pose for light cube %d", lightCubeId);
+      return Pose3d();
     }
 
   } // namespace Cozmo

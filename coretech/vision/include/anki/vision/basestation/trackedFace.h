@@ -20,6 +20,7 @@
 #include "anki/common/shared/radians.h"
 
 #include "anki/vision/basestation/image.h"
+#include "anki/vision/basestation/faceIdTypes.h"
 
 namespace Anki {
 namespace Vision {
@@ -31,20 +32,16 @@ namespace Vision {
   {
   public:
     
-    using ID_t = int32_t;
-    
-    static const ID_t UnknownFace = 0;
-    
     // Constructor:
     TrackedFace();
     
     float       GetScore()       const;
-    ID_t        GetID()          const;
+    FaceID_t    GetID()          const;
     TimeStamp_t GetTimeStamp()   const;
     
-    void SetScore(float score);
-    void SetID(ID_t newID);
-    void SetTimeStamp(TimeStamp_t timestamp);
+    void        SetScore(float score);
+    void        SetID(FaceID_t newID);
+    void        SetTimeStamp(TimeStamp_t timestamp);
     
     const std::string& GetName() const;
     void SetName(const std::string& newName);
@@ -133,12 +130,12 @@ namespace Vision {
     
   private:
     
-    ID_t           _id;
+    FaceID_t       _id             = UnknownFaceID;
+    float          _score          = 0.f;
+    bool           _isBeingTracked = false;
+    TimeStamp_t    _timestamp      = 0;
+
     std::string    _name;
-    
-    float          _score;
-    bool           _isBeingTracked;
-    TimeStamp_t    _timestamp;
     
     Rectangle<f32> _rect;
     
@@ -188,11 +185,11 @@ namespace Vision {
     _score = score;
   }
   
-  inline TrackedFace::ID_t TrackedFace::GetID() const {
+  inline FaceID_t TrackedFace::GetID() const {
     return _id;
   }
   
-  inline void TrackedFace::SetID(ID_t newID) {
+  inline void TrackedFace::SetID(FaceID_t newID) {
     _id = newID;
   }
   

@@ -23,9 +23,11 @@
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/visionModes.h"
 #include "util/helpers/noncopyable.h"
+#include "anki/cozmo/basestation/rollingShutterCorrector.h"
 
 #include <thread>
 #include <mutex>
+#include <list>
 
 namespace Anki {
 
@@ -104,7 +106,7 @@ struct DockingErrorSignal;
     
     // Set whether or not markers queued while robot is "moving" (meaning it is
     // turning too fast or head is moving too fast) will be considered
-    void   EnableVisionWhileMoving(bool enable);
+    void   EnableVisionWhileMovingFast(bool enable);
     
     Result UpdateFaces();
     Result UpdateVisionMarkers();
@@ -112,17 +114,26 @@ struct DockingErrorSignal;
     Result UpdateDockingErrorSignal();
     Result UpdateMotionCentroid();
     Result UpdateOverheadMap(const Vision::ImageRGB& image,
-                             const VisionSystem::PoseData& poseData);
+                             const VisionPoseData& poseData);
     
     Result UpdateOverheadEdges();
     
     // See what tool we have on our lifter and calibrate the camera
     Result UpdateToolCode();
     
+    Result UpdateComputedCalibration();
+    
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     
     const Vision::CameraCalibration& GetCameraCalibration() const;
+    bool IsCameraCalibrationSet() const { return _isCamCalibSet; }
+    Result ClearCalibrationImages();
+    
+    // If enabled, the camera calibration will be updated based on the
+    // position of the centroids of the dots that are part of the tool codes.
+    // Fails if vision system is already in the middle of reading tool code.
+    Result EnableToolCodeCalibration(bool enable);
       
     // If the current image is newer than the specified timestamp, copy it into
     // the given img and return true.
@@ -148,7 +159,22 @@ struct DockingErrorSignal;
     void GetMarkerDetectionTurnSpeedThresholds(f32& bodyTurnSpeedThresh_degPerSec,
                                                f32& headTurnSpeedThresh_degPerSec) const;
     
-    bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p);
+    bool WasHeadMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
+                              const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10));
+    bool WasBodyMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
+                              const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(5));
+    bool WasMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
+                          const f32 bodyTurnSpeedLimit_radPerSec = DEG_TO_RAD(5),
+                          const f32 headTurnSpeedLimit_radPerSec = DEG_TO_RAD(10));
+
+    
+    // Camera calibration
+    void StoreNextImageForCameraCalibration()           { _storeNextImageForCalibration = true;  }
+    bool WillStoreNextImageForCameraCalibration() const { return _storeNextImageForCalibration;  }
+    size_t  GetNumStoredCameraCalibrationImages() const;
+    
+    const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
+    ImuDataHistory& GetImuDataHistory() { return _imuHistory; }
     
   protected:
     
@@ -174,6 +200,10 @@ struct DockingErrorSignal;
     Vision::ImageRGB _nextImg;
     Vision::ImageRGB _lastImg; // the last image we processed
     
+    ImuDataHistory _imuHistory;
+
+    bool _storeNextImageForCalibration = false;
+    
     constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
     constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);
     f32 _markerDetectionBodyTurnSpeedThreshold_radPerSec = kDefaultBodySpeedThresh;
@@ -181,9 +211,9 @@ struct DockingErrorSignal;
     
     TimeStamp_t _processingPeriod = 0;
 
-    VisionSystem::PoseData   _currentPoseData;
-    VisionSystem::PoseData   _nextPoseData;
-    bool                     _visionWhileMovingEnabled = false;
+    VisionPoseData   _currentPoseData;
+    VisionPoseData   _nextPoseData;
+    bool             _visionWhileMovingFastEnabled = false;
     
     std::thread _processingThread;
     
@@ -224,8 +254,8 @@ struct DockingErrorSignal;
     return _camCalib;
   }
   
-  inline void VisionComponent::EnableVisionWhileMoving(bool enable) {
-    _visionWhileMovingEnabled = enable;
+  inline void VisionComponent::EnableVisionWhileMovingFast(bool enable) {
+    _visionWhileMovingFastEnabled = enable;
   }
   
   inline void VisionComponent::SetMarkerDetectionTurnSpeedThresholds(f32 bodyTurnSpeedThresh_degPerSec,

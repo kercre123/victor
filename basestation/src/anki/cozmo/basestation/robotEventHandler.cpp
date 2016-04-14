@@ -104,6 +104,21 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     auto sendDiscoveredObjectsCallback = std::bind(&RobotEventHandler::HandleSendDiscoveredObjects, this, std::placeholders::_1);
     _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SendDiscoveredObjects, sendDiscoveredObjectsCallback));
 
+    // Custom handler for SaveCalibrationImage event
+    auto saveCalibrationImageCallback = std::bind(&RobotEventHandler::HandleSaveCalibrationImage, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SaveCalibrationImage, saveCalibrationImageCallback));
+    
+    // Custom handler for ClearCalibrationImages event
+    auto clearCalibrationImagesCallback = std::bind(&RobotEventHandler::HandleClearCalibrationImages, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ClearCalibrationImages, clearCalibrationImagesCallback));
+    
+    // Custom handler for ComputeCameraCalibration event
+    auto computeCameraCalibrationCallback = std::bind(&RobotEventHandler::HandleComputeCameraCalibration, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ComputeCameraCalibration, computeCameraCalibrationCallback));
+    
+    // Custom handler for CameraCalibration event
+    auto cameraCalibrationCallback = std::bind(&RobotEventHandler::HandleCameraCalibration, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::CameraCalibration, cameraCalibrationCallback));
     
     
     // Custom handlers for Progression events
@@ -172,7 +187,7 @@ IActionRunner* GetPickupActionHelper(Robot& robot, const ExternalInterface::Pick
                                          msg.useManualSpeed);
   } else {
     PickupObjectAction* action = new PickupObjectAction(robot, selectedObjectID, msg.useManualSpeed);
-    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -290,7 +305,7 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
                                        msg.useManualSpeed);
   } else {
     RollObjectAction* action = new RollObjectAction(robot, selectedObjectID, msg.useManualSpeed);
-    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -315,7 +330,7 @@ IActionRunner* GetPopAWheelieActionHelper(Robot& robot, const ExternalInterface:
                                         msg.useManualSpeed);
   } else {
     PopAWheelieAction* action = new PopAWheelieAction(robot, selectedObjectID, msg.useManualSpeed);
-    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
   }
@@ -354,7 +369,7 @@ IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface
                                             msg.useManualSpeed);
   } else {
     MountChargerAction* chargerAction = new MountChargerAction(robot, selectedObjectID, msg.useManualSpeed);
-    chargerAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
+    chargerAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     return chargerAction;
   }
 }
@@ -949,7 +964,103 @@ void RobotEventHandler::HandleSendDiscoveredObjects(const AnkiEvent<ExternalInte
   }
 
 }
+  
+  void RobotEventHandler::HandleSaveCalibrationImage(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  {
+    
+    const auto& eventData = event.GetData();
+    const auto& message = eventData.Get_SaveCalibrationImage();
+    const RobotID_t robotID = message.robotID;
+    
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    // We need a robot
+    if (nullptr == robot)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleSaveCalibrationImage.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      robot->GetVisionComponent().StoreNextImageForCameraCalibration();
+    }
+    
+  }
+  
+  void RobotEventHandler::HandleClearCalibrationImages(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  {
+    
+    const auto& eventData = event.GetData();
+    const auto& message = eventData.Get_ClearCalibrationImages();
+    const RobotID_t robotID = message.robotID;
+    
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    // We need a robot
+    if (nullptr == robot)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleClearCalibrationImages.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      robot->GetVisionComponent().ClearCalibrationImages();
+    }
+    
+  }
+  
+  void RobotEventHandler::HandleComputeCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  {
+    
+    const auto& eventData = event.GetData();
+    const auto& message = eventData.Get_ComputeCameraCalibration();
+    const RobotID_t robotID = message.robotID;
+    
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    // We need a robot
+    if (nullptr == robot)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleComputeCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      robot->GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
+    }
+    
+  }
+  
+  void RobotEventHandler::HandleCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  {
+    // TODO: get RobotID in a non-hack way
+    RobotID_t robotID = 1;
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    // We need a robot
+    if (nullptr == robot)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      NVStorage::NVStorageWrite msg;
+      msg.reportTo = NVStorage::NVReportDest::ENGINE;
+      msg.writeNotErase = true;
+      msg.reportEach = false;
+      msg.reportDone = true;
+      msg.rangeEnd = NVStorage::NVEntryTag::NVEntry_CameraCalibration;
+      msg.entry.tag = (u32)NVStorage::NVEntryTag::NVEntry_CameraCalibration;
 
+      CameraCalibration calib = event.GetData().Get_CameraCalibration();
+      msg.entry.blob.resize(calib.Size());
+      calib.Pack(msg.entry.blob.data(), calib.Size());
 
+      PRINT_NAMED_INFO("RobotEventHandler.HandleCameraCalibration.SendingCalib",
+                       "fx: %f, fy: %f, cx: %f, cy: %f, nrows %d, ncols %d",
+                       calib.focalLength_x, calib.focalLength_y, calib.center_x, calib.center_y, calib.nrows, calib.ncols);
+      
+      robot->SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageWrite(msg)));
+      
+    }
+  }
+  
 } // namespace Cozmo
 } // namespace Anki

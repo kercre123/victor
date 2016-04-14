@@ -54,9 +54,9 @@ namespace Vision {
 
   }
   
-  Result FaceTracker::Update(const Vision::Image &frameOrig,
-                             std::list<TrackedFace>& faces,
-                             std::list<UpdatedID>&   updatedIDs)
+  Result FaceTracker::Update(const Vision::Image&        frameOrig,
+                             std::list<TrackedFace>&     faces,
+                             std::list<UpdatedFaceID>&   updatedIDs)
   {
     return _pImpl->Update(frameOrig, faces, updatedIDs);
   }
@@ -76,7 +76,7 @@ namespace Vision {
     return _pImpl->IsNewFaceEnrollmentEnabled();
   }
   
-  void FaceTracker::AssignNameToID(TrackedFace::ID_t faceID, const std::string &name)
+  void FaceTracker::AssignNameToID(FaceID_t faceID, const std::string &name)
   {
     _pImpl->AssignNameToID(faceID, name);
   }
@@ -86,9 +86,9 @@ namespace Vision {
     return _pImpl->SaveAlbum(albumName);
   }
   
-  Result FaceTracker::LoadAlbum(const std::string& albumName)
+  Result FaceTracker::LoadAlbum(const std::string& albumName, std::list<std::string>& names)
   {
-    return _pImpl->LoadAlbum(albumName);
+    return _pImpl->LoadAlbum(albumName, names);
   }
   
   void FaceTracker::PrintTiming()

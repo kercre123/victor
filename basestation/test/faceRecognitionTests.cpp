@@ -13,6 +13,9 @@
 #include <dirent.h>
 #include <regex>
 
+// TODO: Remove this once we sort build failures (See COZMO-797)
+#define SKIP_FACE_RECOGNITION_TESTS 1
+
 #define SHOW_IMAGES 0
 
 // Increase this (e.g. to max int) in order to run longer tests using all the available video frames
@@ -68,7 +71,7 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
 # endif
   
   std::list<Vision::TrackedFace> faces;
-  std::list<Vision::FaceTracker::UpdatedID> updatedIDs;
+  std::list<Vision::UpdatedFaceID> updatedIDs;
   lastResult = faceTracker.Update(img, faces, updatedIDs);
   
   ASSERT_TRUE(RESULT_OK == lastResult);
@@ -126,9 +129,10 @@ static void Recognize(Robot& robot, Vision::Image& img, Vision::FaceTracker& fac
 
 TEST(FaceRecognition, VideoRecognitionAndTracking)
 {
-  // TODO: Remove this once we sort build failures (See COZMO-797)
-  return;
-  
+  if(SKIP_FACE_RECOGNITION_TESTS) {
+    return;
+  }
+
   Result lastResult = RESULT_OK;
   
   RobotInterface::MessageHandlerStub  msgHandler;
@@ -154,7 +158,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   std::vector<std::string> peopleDirs;
   Util::FileUtils::ListAllDirectories(dataPath, peopleDirs);
   
-  std::set<Vision::TrackedFace::ID_t> allIDs;
+  std::set<Vision::FaceID_t> allIDs;
   
   struct TestDirData {
     const char* dirName;
@@ -193,8 +197,15 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
                                           config);
     
     if(iReload > 0) {
-      Result loadResult = faceTracker->LoadAlbum("testAlbum");
+      std::list<std::string> loadedNames;
+      Result loadResult = faceTracker->LoadAlbum("testAlbum", loadedNames);
       ASSERT_EQ(loadResult, RESULT_OK);
+      ASSERT_EQ(loadedNames.size(), allNames.size());
+      
+      // All loaded names should be in the all names set
+      for(auto & name : loadedNames) {
+        ASSERT_TRUE(allNames.count(name) > 0);
+      }
       
       for(auto & test : testDirData)
       {
@@ -246,7 +257,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
         
         for(auto observedID : observedFaceIDs)
         {
-          if(observedID != Vision::TrackedFace::UnknownFace)
+          if(observedID != Vision::UnknownFaceID)
           {
             allIDs.insert(observedID);
           }
@@ -262,7 +273,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
               //PRINT_NAMED_INFO("FaceRecognition.VideoRecognitionAndTracking.RecognizedFace",
               //                 "Correctly found %s", observedName.c_str());
               stats.facesRecognized++;
-            } else if(observedID != Vision::TrackedFace::UnknownFace && allNames.count(observedName) > 0) {
+            } else if(observedID != Vision::UnknownFaceID && allNames.count(observedName) > 0) {
               stats.falsePositives++;
             }
           } else if(observedID >= 0) {

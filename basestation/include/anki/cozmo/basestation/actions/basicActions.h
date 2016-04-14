@@ -345,6 +345,7 @@ namespace Anki {
       IActionRunner* _chosenAction = nullptr;
       f32            _speed_mmps;
       f32            _accel_mmps2;
+      f32            _decel_mmps2;
       bool           _useManualSpeed;
       
     }; // class TraverseObjectAction
@@ -369,8 +370,9 @@ namespace Anki {
       void SetPose(const Pose3d& pose);
       virtual Radians GetHeadAngle(f32 heightDiff);
       
-    private:
       Pose3d    _poseWrtRobot;
+      
+    private:
       bool      _isPoseSet;
       Radians   _maxTurnAngle;
       
@@ -446,8 +448,6 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-
-      virtual Radians      GetHeadAngle(f32 heightDiff) override;
       
       bool                       _facePoseCompoundActionDone;
       
@@ -461,15 +461,39 @@ namespace Anki {
     }; // TurnTowardsObjectAction
     
     
-    // Turn towards the last known face pose
+    // Turn towards the last known face pose. Note that this action "succeeds" without doing anything if there
+    // is no face
     class TurnTowardsLastFacePoseAction : public TurnTowardsPoseAction
     {
-      public:
-        TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle);
+    public:
+      TurnTowardsLastFacePoseAction(Robot& robot, Radians maxTurnAngle = PI_F);
       
-        virtual const std::string& GetName() const override;
-        virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_LAST_FACE_POSE; }
+      virtual const std::string& GetName() const override;
+      virtual RobotActionType GetType() const override { return RobotActionType::TURN_TOWARDS_LAST_FACE_POSE; }
+
+    protected:
+
+      virtual ActionResult Init() override;
+      virtual ActionResult CheckIfDone() override;
+
+    private:
+      bool _hasFace = false;
+      
     }; // TurnTowardsLastFacePoseAction
+
+    // Turn towards the last face before or after another action
+    class TurnTowardsFaceWrapperAction : public CompoundActionSequential
+    {
+    public:
+
+      // Create a wrapper around the given action which looks towards a face before and/or after (default
+      // before) the action. This takes ownership of action, the pointer should not be used after this call
+      TurnTowardsFaceWrapperAction(Robot& robot,
+                                   IActionRunner* action,
+                                   bool turnBeforeAction = true,
+                                   bool turnAfterAction = false,
+                                   Radians maxTurnAngle = PI_F);
+    };
     
     
     // Waits for a specified amount of time in seconds, from the time the action
@@ -554,7 +578,7 @@ namespace Anki {
     {
     public:
       
-      ReadToolCodeAction(Robot& robot);
+      ReadToolCodeAction(Robot& robot, bool doCalibration = false);
       virtual ~ReadToolCodeAction();
       
       virtual const std::string& GetName() const override { return _name; }
@@ -575,6 +599,7 @@ namespace Anki {
     private:
       
       std::string       _name = "ReadToolCode";
+      bool              _doCalibration           = false;
       TimeStamp_t       _toolCodeLastMovedTime   = 0;
       f32               _toolCodeLastHeadAngle   = 0;
       f32               _toolCodeLastLiftAngle   = 0;

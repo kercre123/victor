@@ -47,6 +47,10 @@ PROTO WebotsKeyboardController [
   # Turbo speed in mm/s (hold alt)
   field SFFloat driveSpeedTurbo 150
 
+  # Drive acceleration
+  # 0 == instantaneous acceleration
+  field SFFloat driveAccel 0
+
   # Point turn angle (deg) and speed (deg/s)
   field SFFloat pointTurnAngle_deg        45
   field SFFloat pointTurnSpeed_degPerSec  250
@@ -62,8 +66,9 @@ PROTO WebotsKeyboardController [
   field SFFloat pathReverseSpeed_mmps 30
 
   # Docking speed/accel
-  field SFFloat dockSpeed_mmps  100
+  field SFFloat dockSpeed_mmps  60
   field SFFloat dockAccel_mmps2 200
+  field SFFloat dockDecel_mmps2 100
 
   # Value between 0 and 1 which determines how much the robot turns with 
   # the left/right arrow keys when going forward or backward.
@@ -126,6 +131,12 @@ PROTO WebotsKeyboardController [
   field SFFloat steerK2 12
   field SFFloat steerDistOffsetCap_mm 20
   field SFFloat steerAngOffsetCap_rad 0.5
+
+  # Camera calibration
+  field SFFloat focalLength_x 290
+  field SFFloat focalLength_y 290
+  field SFFloat imageCenter_x 160
+  field SFFloat imageCenter_y 120
 
   # Vision system params
   field SFString streamResolution "CVGA"

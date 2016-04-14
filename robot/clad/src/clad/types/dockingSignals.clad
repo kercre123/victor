@@ -11,8 +11,10 @@ message DockWithObject
   float_32   horizontalOffset_mm, // Offset wrt to docking object. Don't know if this will work yet.
   float_32   speed_mmps,          // Docking speed/accel only used if useManualSpeed == false
   float_32   accel_mmps2,
+  float_32   decel_mmps2,
   DockAction action,
   bool       useManualSpeed,
+  uint_8     numRetries,
 }
 
 message AbortDocking
@@ -26,6 +28,7 @@ message PlaceObjectOnGround
   float_32 rel_angle, // Angle between of object face normal and robot. (Block normal pointing right of robot is +ve)
   float_32 speed_mmps,// Docking speed/accel only used if useManualSpeed == false
   float_32 accel_mmps2,
+  float_32 decel_mmps2,
   bool     useManualSpeed,
 }
 
@@ -41,10 +44,36 @@ message DockingErrorSignal
   bool isApproximate,
 }
 
+enum int_8 DockingResult
+{
+  DOCK_UNKNOWN,
+  DOCK_INTERRUPTED,
+  DOCK_SUCCESS,
+  DOCK_SUCCESS_RETRY,
+  DOCK_SUCCESS_HANNS_MANEUVER,
+  DOCK_FAILURE,
+  DOCK_FAILURE_TOO_LONG_WITHOUT_BLOCKPOSE,
+  DOCK_FAILURE_TOO_HIGH,
+  DOCK_FAILURE_RETRY,
+}
+
+enum int_8 Status
+{
+  STATUS_BACKING_UP,
+  STATUS_DOING_HANNS_MANEUVER,
+}
+
+message DockingStatus
+{
+  uint_32 timestamp,
+  Status status,
+}
+
 message BlockPickedUp
 {
   uint_32  timestamp,
   bool didSucceed,
+  DockingResult result,
 }
 
 message BlockPlaced

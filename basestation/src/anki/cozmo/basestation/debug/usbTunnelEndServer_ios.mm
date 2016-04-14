@@ -12,13 +12,10 @@
 
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 
-#ifdef ANKI_DEV_CHEATS
+#if ANKI_DEV_CHEATS
 
 #if __APPLE__
 #include "TargetConditionals.h" // must be included for TARGET_OS_IPHONE
-#endif
-
-#if TARGET_OS_IPHONE
 #import <Foundation/Foundation.h>
 
 #import "HTTPConnection.h"
@@ -182,7 +179,7 @@ namespace Anki {
         [_impl->_httpServer SetDataPlatform:dataPlatform];
         [_impl->_httpServer SetExternalInterface:externalInterface];
         // The maya script talks to this port, must be known
-        [_impl->_httpServer setPort:2223];
+        [_impl->_httpServer setPort: (TARGET_OS_IPHONE) ? 2223 :8080];
         // Custom class that has a bunch of our overrides
         [_impl->_httpServer setConnectionClass:[CozmoUSBTunnelHTTPConnection class]];
         
@@ -213,7 +210,7 @@ namespace Anki {
     }
   }
 }
-#else // not on iphone, just mac build
+#else // not apple
 #include <string>
 namespace Anki {
   namespace Cozmo {

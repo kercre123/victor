@@ -25,14 +25,6 @@ namespace Anki {
 
       Result Update();
 
-      // Returns the proximity sensor values
-      void GetValues(u8 &left, u8 &forward, u8 &right);
-      
-      // Returns whether or not prox sensor beam is
-      // blocked by the lift.
-      bool IsSideBlocked();
-      bool IsForwardBlocked();
-
       void EnableCliffDetector(bool enable);
       
     } // namespace ProxSensors

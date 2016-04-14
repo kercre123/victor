@@ -59,6 +59,9 @@ namespace Vision {
     TimeStamp_t GetTimestamp() const;
     
     void Display(const char *windowName, s32 pauseTime_ms = 5) const;
+    
+    static void CloseDisplayWindow(const char *windowName);
+    static void CloseAllDisplayWindows();
 
     // Resize in place by scaleFactor
     void Resize(f32 scaleFactor, ResizeMethod method = ResizeMethod::Linear);

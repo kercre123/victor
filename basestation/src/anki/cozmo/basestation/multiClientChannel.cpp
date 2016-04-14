@@ -22,6 +22,10 @@
 #include <utility>
 
 
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/externalInterface/messageGameToEngineTag.h"
+
+
 // TODO: Get rid of this.
 // Using old UDPClient to talk to AdvertisingService because I don't want to update the
 // advertisement service class to use the new UDP lib.
@@ -84,7 +88,7 @@ void MultiClientChannel::Start(const TransportAddress& advertisingAddress)
   u16 port = advertisingAddress.GetIPPort();
   _advertisingClient.Disconnect();
   _advertisingClient.Connect(ss.str().c_str(), port);
-  printf("MultiClientChannel connecting to advertising service at %s:%d\n", ss.str().c_str(), port);
+  PRINT_NAMED_INFO("MultiClientChannel.Start", "Connecting to advertising service at %s:%d", ss.str().c_str(), port);
 #else
   _advertisingChannel.StartClient();
   _advertisingChannel.AddConnection(ADVERTISING_CLIENT_CONNECTION_ID, advertisingAddress);
@@ -118,53 +122,43 @@ void MultiClientChannel::Update()
   
 #if(USE_OLD_UDP_CLIENT_FOR_ADVERTISING)
   // Read datagrams and update advertising device list.
-  Comms::AdvertisementMsg advertisementMessage;
+  using EMessageTag = Cozmo::ExternalInterface::MessageGameToEngineTag;
+  const EMessageTag kAdvertisementMsgTag = EMessageTag::AdvertisementMsg;
+  AdvertisementMsg advertisementMessage;
+  const size_t kMinAdMsgSize = sizeof(EMessageTag) + advertisementMessage.Size(); // Size of message with an empty ip string
+  uint8_t messageData[64];
   int bytes_recvd = 0;
   do {
-    bytes_recvd = _advertisingClient.Recv((char*)&advertisementMessage, sizeof(Comms::AdvertisementMsg));
-    if (bytes_recvd == sizeof(Comms::AdvertisementMsg)) {
+    bytes_recvd = _advertisingClient.Recv((char*)messageData, sizeof(messageData));
+    if (bytes_recvd >= kMinAdMsgSize)
+    {
+      const EMessageTag messageTag = *(EMessageTag*)messageData;
       
-      advertisementMessage.ip[sizeof(advertisementMessage.ip) - 1] = 0;
-      
-      if (!_reliableChannel.IsConnectionActive(advertisementMessage.id)) {
+      if (messageTag == kAdvertisementMsgTag)
+      {
+        const uint8_t* innerMessageBytes = &messageData[1];
+        const size_t   innerMessageSize  = bytes_recvd - sizeof(messageTag);
         
-        if (_advertisingInfo.count(advertisementMessage.id) == 0) {
-          PRINT_STREAM_DEBUG("MultiClientChannel.Update",
-                             "Detected advertising connection id " << ((uint)advertisementMessage.id) <<
-                             " when hosting on host " << advertisementMessage.ip <<
-                             " at port " << advertisementMessage.port <<  ".");
-        }
-        _advertisingInfo[advertisementMessage.id] = AdvertisementConnectionInfo(advertisementMessage, currentTime);
+        advertisementMessage.Unpack(innerMessageBytes, innerMessageSize);
 
+        if (!_reliableChannel.IsConnectionActive(advertisementMessage.id))
+        {
+          if (_advertisingInfo.count(advertisementMessage.id) == 0)
+          {
+            PRINT_STREAM_DEBUG("[MultiClientChannel] MultiClientChannel.Update",
+                               "Detected advertising connection id " << ((uint)advertisementMessage.id) <<
+                               " when hosting on host " << advertisementMessage.ip <<
+                               " at ports ToEng:" << advertisementMessage.toEnginePort << " FromEng:" << advertisementMessage.fromEnginePort <<  ".");
+          }
+          
+          _advertisingInfo[advertisementMessage.id] = AdvertisementConnectionInfo(advertisementMessage, currentTime);
+        }
       }
     }
   } while(bytes_recvd > 0);
 
 #else
-  IncomingPacket packet;
-  while (_advertisingChannel.PopIncomingPacket(packet)) {
-    if (packet.tag == IncomingPacket::Tag::NormalMessage) {
-      PRINT_STREAM_DEBUG("MultiClientChannel.Update",
-                         "GOT PACKET! " << packet.sourceId << " " << packet.sourceAddress << " " << (int)packet.tag);
-      if (packet.bufferSize == sizeof(Comms::AdvertisementMsg)) {
-        Comms::AdvertisementMsg advertisementMessage;
-        std::memcpy(&advertisementMessage, packet.buffer, sizeof(Comms::AdvertisementMsg));
-        // prevent buffer overruns
-        advertisementMessage.ip[sizeof(advertisementMessage.ip) - 1] = 0;
-        
-        if (!_reliableChannel.IsConnectionActive(advertisementMessage.id)) {
-          
-          if (_advertisingInfo.count(advertisementMessage.id) == 0) {
-            PRINT_STREAM_DEBUG("MultiClientChannel.Update",
-                                 "Detected advertising connection id " << ((uint)advertisementMessage.id) <<
-                              " when hosting on host " << advertisementMessage.ip <<
-                              " at port " << advertisementMessage.port << ".");
-          }
-          _advertisingInfo[advertisementMessage.id] = AdvertisementConnectionInfo(advertisementMessage, currentTime);
-        }
-      }
-    }
-  }
+  #error This code path is unsupported (message is now a CLAD message, the old code here was extremely out of date)
 #endif
 
   
@@ -444,9 +438,18 @@ void MultiClientChannel::SendZeroPacket()
 
 bool MultiClientChannel::AcceptAdvertisingConnectionInternal(ConnectionId connectionId, const AdvertisementConnectionInfo& info)
 {
-  const char *ipString = reinterpret_cast<const char *>(info.message.ip);
-  uint32_t ipAddress = TransportAddress::IPAddressStringToU32(ipString);
-  uint16_t port = info.message.port;
+  const char *ipString = info.message.ip.c_str();
+  const uint32_t ipAddress = TransportAddress::IPAddressStringToU32(ipString);
+  
+  // reliable channel requires same port in both directions
+  const uint16_t port = info.message.toEnginePort;
+  if (port != info.message.fromEnginePort)
+  {
+    PRINT_NAMED_WARNING("MultiClientChannel.ReliableChannel.PortMismatch",
+                      "ToEnginePort %d != FromEnginePort %d - using ToEnginePort only!", port, info.message.fromEnginePort);
+    return false;
+  }
+  
   // won't always happen; sometimes it'll half-parse and give you garbage
   if (ipAddress == 0) {
     PRINT_STREAM_WARNING("MultiClientChannel.AcceptAdvertisingConnectionInternal",

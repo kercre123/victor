@@ -231,7 +231,7 @@ namespace Anki
       {
         InitDMA();
         while (!timingSynced_)  ;
-      }          
+      }
 
       void CameraSetParameters(f32 exposure, bool enableVignettingCorrection)
       {
@@ -251,7 +251,7 @@ namespace Anki
 
         // Set exposure - let it get picked up during next vblank
       }
-
+      
       const CameraInfo* GetHeadCamInfo(void)
       {
         const u16 HEAD_CAM_CALIB_WIDTH  = 400;
@@ -259,10 +259,10 @@ namespace Anki
 
         // @TODO get stuff from the Espressif flash storage if nessisary
         static HAL::CameraInfo camCal = {
-          278.116827643f,  // focalLength_x
-          278.911858028f,  // focalLength_y
-          192.335473712f,  // center_x
-          159.149178809f,  // center_y
+          280.0,  // focalLength_x
+          280.0,  // focalLength_y
+          HEAD_CAM_CALIB_WIDTH/2.0f,  // center_x
+          HEAD_CAM_CALIB_HEIGHT/2.0f,  // center_y
           0.f,
           HEAD_CAM_CALIB_HEIGHT,
           HEAD_CAM_CALIB_WIDTH
@@ -279,7 +279,7 @@ namespace Anki
       u32 CameraGetFrameNumber()
       {
         return frameNumber;
-    }
+      }
       
       u16 CameraGetExposureDelay()
       {
@@ -379,7 +379,7 @@ void FTM2_IRQHandler(void)
   if (line < 498)   // XXX: This is apparently compensating for a JPEGCompress bug
     JPEGCompress(line, TOTAL_ROWS);
   else
-    Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0);
+    Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0, 0);
 #else
   // If JPEG encoder is disabled, try various test modes
   #ifdef TEST_VIDEO
@@ -387,19 +387,19 @@ void FTM2_IRQHandler(void)
     if (0==(line&7) && line < TOTAL_ROWS) {
       for (int i = 0; i < 20; i++)
         spi_write_buff->payload[i] = ((frame + i) % 20) > (line > TOTAL_ROWS/2 ? 10 : 8) ? 0x4a : 0x5a;
-      Anki::Cozmo::HAL::SPI::FinalizeDrop(20, false);
+      Anki::Cozmo::HAL::SPI::FinalizeDrop(20, false, frameNumber);
     } else if (line == TOTAL_ROWS) {
       *((int*)spi_write_buff->payload) = 0xffffff4a;
-      Anki::Cozmo::HAL::SPI::FinalizeDrop(4, true);
+      Anki::Cozmo::HAL::SPI::FinalizeDrop(4, true, frameNumber);
       frame++;
       if (frame >= 20)
         frame = 0;
     } else
-      Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0);
+      Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0, frameNumber);
   #else
     
   // Video streaming disabled - stream nothing at all
-  Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0);
+  Anki::Cozmo::HAL::SPI::FinalizeDrop(0, 0, frameNumber);
 
   #ifdef SERIAL_IMAGE
     static int pclkoffset = 0;

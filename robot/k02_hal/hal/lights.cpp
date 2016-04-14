@@ -12,6 +12,8 @@ namespace Anki
     namespace HAL
     {
       static const uint32_t DROP_LEVEL = 20;
+      static const uint32_t UNDROP_LEVEL = 120;  // hysteresis
+      static bool cliffDetected = false;
       static uint16_t colorState[4];
 
       // Light up one of the backpack LEDs to the specified 24-bit RGB color
@@ -25,14 +27,12 @@ namespace Anki
 
       bool IsCliffDetected()
       {
-        switch(HAL::GetID()) {
-          // Cliff sensors not working on these robots
-          case 0x3AA7:
-          case 0x3A94:
-            return false;
-          default:
-            return g_dataToHead.cliffLevel < DROP_LEVEL;
+        if (!cliffDetected && g_dataToHead.cliffLevel < DROP_LEVEL) {
+          cliffDetected = true;
+        } else if (cliffDetected && g_dataToHead.cliffLevel > UNDROP_LEVEL) {
+          cliffDetected = false;
         }
+        return cliffDetected;
       }
     }
   }

@@ -49,7 +49,8 @@ namespace Anki {
 
         // private members
         ::Anki::Embedded::Pose2d currMatPose;
-
+        
+        f32 defaultDriveCenterOffset_ = DRIVE_CENTER_OFFSET;
 
         // Localization:
         f32 x_=0.f, y_=0.f;  // mm
@@ -437,16 +438,20 @@ namespace Anki {
         return onBridge_;
       }
 
+      void SetDriveCenterOffset(f32 offset_mm)
+      {
+        defaultDriveCenterOffset_ = offset_mm;
+      }
+      
       f32 GetDriveCenterOffset()
       {
         // Get offset of the drive center from robot origin depending on carry state
-        f32 drive_offset = DRIVE_CENTER_OFFSET;
         if (PickAndPlaceController::IsCarryingBlock()) {
           // If carrying a block the drive center goes forward, possibly to robot origin
-          drive_offset = 0;
+          return 0;
         }
 
-        return drive_offset;
+        return defaultDriveCenterOffset_;
       }
 
       void Update()
@@ -754,6 +759,22 @@ namespace Anki {
         angle = orientation_;
       } // GetCurrentMatPose()
 
+      
+      f32 GetCurrPose_x()
+      {
+        return x_;
+      }
+      
+      f32 GetCurrPose_y()
+      {
+        return y_;
+      }
+      
+      Radians GetCurrPose_angle()
+      {
+        return orientation_;
+      }
+      
       Embedded::Pose2d GetCurrPose()
       {
         Embedded::Pose2d p(x_, y_, orientation_);
@@ -785,10 +806,6 @@ namespace Anki {
         robotOriginPose.angle() = driveCenterPose.GetAngle();
       }
 
-      Radians GetCurrentMatOrientation()
-      {
-        return orientation_;
-      }
 
       PoseFrameID_t GetPoseFrameId()
       {

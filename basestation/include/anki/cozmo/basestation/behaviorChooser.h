@@ -122,6 +122,9 @@ protected:
 class ReactionaryBehaviorChooser : public SimpleBehaviorChooser
 {
 public:
+
+  ReactionaryBehaviorChooser(Robot& robot, const Json::Value& config) : SimpleBehaviorChooser(robot, config) {}
+  
   virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) override
   {
     _reactionaryBehaviorList.push_back(behavior);

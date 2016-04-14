@@ -33,8 +33,9 @@ namespace Anki {
     const f32 defaultPathPointTurnSpeed_rad_per_sec = 1.5;
     const f32 defaultPathPointTurnAccel_rad_per_sec2 = 100;
     const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
-    const f32 defaultDockSpeed_mmps = 100;
+    const f32 defaultDockSpeed_mmps = 60;
     const f32 defaultDockAccel_mmps2 = 200;
+    const f32 defaultDockDecel_mmps2 = 100;
     const f32 defaultReverseSpeed_mmps = 30;
     PathMotionProfile motionProfile3(defaultPathSpeed_mmps,
                                     defaultPathAccel_mmps2,
@@ -44,8 +45,12 @@ namespace Anki {
                                     defaultPathPointTurnDecel_rad_per_sec2,
                                     defaultDockSpeed_mmps,
                                     defaultDockAccel_mmps2,
+                                    defaultDockDecel_mmps2,
                                     defaultReverseSpeed_mmps);
     
+    const f32 ROBOT_POSITION_TOL_MM = 10;
+    const f32 ROBOT_ANGLE_TOL_DEG = 5;
+    const f32 BLOCK_HEIGHT_TOL_MM = 10;
     
     // ============ Test class declaration ============
     class CST_StackBlocks : public CozmoSimTestController {
@@ -102,10 +107,10 @@ namespace Anki {
         case TestState::Stack:
         {
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 5) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 60, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().y(), 0, 10) &&
-                                           GetCarryingObjectID() == 0, DEFAULT_TIMEOUT)
+                                           NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, ROBOT_ANGLE_TOL_DEG) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 60, ROBOT_POSITION_TOL_MM) &&
+                                           NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM) &&
+                                           GetCarryingObjectID() == 0, 20)
           {
             ExternalInterface::QueueCompoundAction m;
             m.robotID = 1;
@@ -133,12 +138,19 @@ namespace Anki {
           GetObjectPose(0, pose0);
           Pose3d pose1;
           GetObjectPose(1, pose1);
+          
+          PRINT_NAMED_INFO("BAASDF", "BlockZ: %f %f, Robot (xy) %f %f",
+                           pose0.GetTranslation().z(),
+                           pose1.GetTranslation().z(),
+                           GetRobotPose().GetTranslation().x(),
+                           GetRobotPose().GetTranslation().y());
+          
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
                                            GetCarryingObjectID() == -1 &&
-                                           NEAR(pose0.GetTranslation().z(), 65, 10) &&
-                                           NEAR(pose1.GetTranslation().z(), 22, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 130, 10) &&
-                                           NEAR(GetRobotPose().GetTranslation().y(), 0, 10), 20)
+                                           NEAR(pose0.GetTranslation().z(), 65, BLOCK_HEIGHT_TOL_MM) &&
+                                           NEAR(pose1.GetTranslation().z(), 22, BLOCK_HEIGHT_TOL_MM) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 130, ROBOT_POSITION_TOL_MM) &&
+                                           NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM), 20)
           {
             StopMovie();
             CST_EXIT();

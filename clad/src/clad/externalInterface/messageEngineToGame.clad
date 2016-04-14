@@ -14,8 +14,10 @@
 #include "clad/types/engineState.clad"
 #include "clad/types/firmwareTypes.clad"
 #include "clad/types/toolCodes.clad"
+#include "clad/types/factoryTestTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/gameEvent.clad"
+#include "clad/types/uiConnectionTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -36,6 +38,7 @@ message RobotAvailable {
 }
 
 message UiDeviceAvailable {
+    UiConnectionType  connectionType,
     uint_32 deviceID
 }
 
@@ -51,6 +54,7 @@ message RobotDisconnected {
 
 
 message UiDeviceConnected {
+    UiConnectionType  connectionType,
     uint_32 deviceID,
     uint_8 successful
 }
@@ -109,6 +113,9 @@ message RobotPutDown {
 
 message RobotPoked {
     uint_8   robotID
+}
+
+message RobotStopped {
 }
 
 // Generic string for sending debug string up to game
@@ -227,7 +234,17 @@ message RobotMarkedObjectPoseUnknown {
 }
 
 // RobotReadToolCode
+//  Code will be "UnknownTool" if unsuccessfully read
+//  All coordinates will be -1 if not found / not computed
 message RobotReadToolCode {
+    float_32 expectedCalibDotLeft_x  = -1.0,
+    float_32 expectedCalibDotLeft_y  = -1.0,
+    float_32 expectedCalibDotRight_x = -1.0,
+    float_32 expectedCalibDotRight_y = -1.0,
+    float_32 observedCalibDotLeft_x  = -1.0,
+    float_32 observedCalibDotLeft_y  = -1.0,
+    float_32 observedCalibDotRight_x = -1.0,
+    float_32 observedCalibDotRight_y = -1.0,
     ToolCode code
 }
 
@@ -364,6 +381,14 @@ structure BlockPoolBlockData {
 message InitBlockPoolMessage {
   uint_8              blockPoolEnabled,
   BlockPoolBlockData  blockData[uint_8]
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// FactoryTest
+///////////////////////////////////////////////////////////////////////////////
+
+message FactoryTestResult {
+  FactoryTestResultCode resultCode
 }
 
 ///////////////////////////////////////////////////////////////////////////////

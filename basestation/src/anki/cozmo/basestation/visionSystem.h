@@ -38,6 +38,7 @@
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/groundPlaneROI.h"
 #include "anki/cozmo/basestation/overheadEdge.h"
+#include "anki/cozmo/basestation/rollingShutterCorrector.h"
 
 #include "anki/common/basestation/matlabInterface.h"
 
@@ -70,6 +71,18 @@ namespace Cozmo {
   // Forward declaration:
   class Robot;
   class VizManager;
+  
+  struct VisionPoseData {
+    TimeStamp_t           timeStamp;
+    RobotPoseStamp        poseStamp;  // contains historical head/lift/pose info
+    Pose3d                cameraPose; // w.r.t. pose in poseStamp
+    bool                  groundPlaneVisible;
+    Matrix_3x3f           groundPlaneHomography;
+    GroundPlaneROI        groundPlaneROI;
+    bool                  isMoving;
+    ImuDataHistory        imuDataHistory;
+    std::vector<RotationMatrix3d> historicCameraRots;
+  };
 
   class VisionSystem : public Vision::Profiler
   {
@@ -92,23 +105,19 @@ namespace Cozmo {
     u32    GetEnabledModes() const { return _mode; }
     void   SetModes(u32 modes) { _mode = modes; }
     
+    Result EnableToolCodeCalibration(bool enable);
+    
     // Accessors
     const Point2f& GetTrackingMarkerSize();
     
-    struct PoseData {
-      TimeStamp_t      timeStamp;
-      RobotPoseStamp   poseStamp;  // contains historical head/lift/pose info
-      Pose3d           cameraPose; // w.r.t. pose in poseStamp
-      bool             groundPlaneVisible;
-      Matrix_3x3f      groundPlaneHomography;
-      GroundPlaneROI   groundPlaneROI;
-      bool             isMoving;
-    };
-    
     // This is main Update() call to be called in a loop from above.
 
-    Result Update(const PoseData&            robotState,
+    Result Update(const VisionPoseData&            robotState,
                   const Vision::ImageRGB&    inputImg);
+    
+    Result AddCalibrationImage(const Vision::Image& calibImg);
+    Result ClearCalibrationImages();
+    size_t GetNumStoredCalibrationImages() const { return _calibImages.size(); }
     
     void StopTracking();
 
@@ -192,7 +201,7 @@ namespace Cozmo {
     std::string GetModeName(VisionMode mode) const;
     std::string GetCurrentModeName() const;
     
-    void AssignNameToFace(Vision::TrackedFace::ID_t faceID, const std::string& name);
+    void AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
     
     void EnableNewFaceEnrollment(s32 numToEnroll);
     
@@ -210,8 +219,8 @@ namespace Cozmo {
                              const s32 minObjectWidth,
                              const s32 maxObjectHeight,
                              const s32 maxObjectWidth);
-    
-   const std::string GetDataPath() const { return _dataPath; }
+
+    const std::string& GetDataPath() const { return _dataPath; }
   
     // These return true if a mailbox messages was available, and they copy
     // that message into the passed-in message struct.
@@ -223,14 +232,23 @@ namespace Cozmo {
     //bool CheckMailbox(RobotInterface::PanAndTilt& msg);
     bool CheckMailbox(ExternalInterface::RobotObservedMotion& msg);
     bool CheckMailbox(Vision::TrackedFace&        msg);
-    bool CheckMailbox(Vision::FaceTracker::UpdatedID&  msg);
+    bool CheckMailbox(Vision::UpdatedFaceID&  msg);
     bool CheckMailbox(OverheadEdgeFrame& msg);
     bool CheckMailbox(ToolCode& msg);
+    bool CheckMailbox(Vision::CameraCalibration& msg);
     
-    bool CheckDebugMailbox(std::pair<const char*, Vision::Image>& msg);
-    bool CheckDebugMailbox(std::pair<const char*, Vision::ImageRGB>& msg);
+    bool CheckDebugMailbox(std::pair<std::string, Vision::Image>& msg);
+    bool CheckDebugMailbox(std::pair<std::string, Vision::ImageRGB>& msg);
+    
+    const RollingShutterCorrector& GetRollingShutterCorrector() { return _rollingShutterCorrector; }
+    void ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
+    bool IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
   protected:
+  
+    RollingShutterCorrector _rollingShutterCorrector;
+
+    bool _doRollingShutterCorrection = false;
     
 #   if ANKI_COZMO_USE_MATLAB_VISION
     // For prototyping with Matlab
@@ -275,6 +293,8 @@ namespace Cozmo {
     
     u32 _mode = static_cast<u32>(VisionMode::Idle);
     u32 _modeBeforeTracking = static_cast<u32>(VisionMode::Idle);
+    
+    bool _calibrateFromToolCode = false;
     
     // Camera parameters
     // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
@@ -339,7 +359,7 @@ namespace Cozmo {
     // Snapshots of robot state
     bool _wasCalledOnce = false;
     bool _havePrevPoseData = false;
-    PoseData _poseData, _prevPoseData;
+    VisionPoseData _poseData, _prevPoseData;
     
     // Parameters defined in visionParameters.h
     DetectFiducialMarkersParameters _detectionParameters;
@@ -360,6 +380,11 @@ namespace Cozmo {
     // Tool code stuff
     TimeStamp_t                   _lastToolCodeReadTime_ms = 0;
     const TimeStamp_t             kToolCodeReadPeriod_ms = 500; // TODO: Increase
+    
+    // Calibration stuff
+    static const u32              _kMinNumCalibImagesRequired = 4;
+    std::list<Vision::Image>      _calibImages;
+    bool                          _isCalibrating = false;
     
     struct VisionMemory {
       /* 10X the memory for debugging on a PC
@@ -393,7 +418,7 @@ namespace Cozmo {
     VisionMemory _memory;
     
     Embedded::Quadrilateral<f32> GetTrackerQuad(Embedded::MemoryStack scratch);
-    Result UpdatePoseData(const PoseData& newPoseData);
+    Result UpdatePoseData(const VisionPoseData& newPoseData);
     void GetPoseChange(f32& xChange, f32& yChange, Radians& angleChange);
     Result UpdateMarkerToTrack();
     Radians GetCurrentHeadAngle();
@@ -434,27 +459,32 @@ namespace Cozmo {
     
     Result ReadToolCode(const Vision::Image& image);
     
+    Result ComputeCalibration();
+    
     void FillDockErrMsg(const Embedded::Quadrilateral<f32>& currentQuad,
                         DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
+    
+    
     
     // Mailboxes for different types of messages that the vision
     // system communicates back to the vision processing thread
     Mailbox<VizInterface::TrackerQuad>        _trackerMailbox;
     Mailbox<ExternalInterface::RobotObservedMotion>  _motionMailbox;
-    Mailbox<std::pair<Pose3d, TimeStamp_t> >  _dockingMailbox; // holds timestamped marker pose w.r.t. camera
+    MultiMailbox<std::pair<Pose3d, TimeStamp_t>, 4>  _dockingMailbox; // holds timestamped marker pose w.r.t. camera
     MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
     //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
     
     MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
-    MultiMailbox<Vision::FaceTracker::UpdatedID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
+    MultiMailbox<Vision::UpdatedFaceID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
     
     MultiMailbox<OverheadEdgeFrame, 8> _overheadEdgeFrameMailbox;
     
     Mailbox<ToolCode> _toolCodeMailbox;
+    Mailbox<Vision::CameraCalibration> _calibrationMailbox;
     
-    MultiMailbox<std::pair<const char*, Vision::Image>, 10>     _debugImageMailbox;
-    MultiMailbox<std::pair<const char*, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;
+    MultiMailbox<std::pair<std::string, Vision::Image>, 10>     _debugImageMailbox;
+    MultiMailbox<std::pair<std::string, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;
     
     void RestoreNonTrackingMode();
     

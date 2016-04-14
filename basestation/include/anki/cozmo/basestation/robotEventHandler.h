@@ -59,6 +59,10 @@ protected:
   void HandleProgressionEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleBehaviorManagerEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleSendDiscoveredObjects(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleSaveCalibrationImage(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleClearCalibrationImages(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleComputeCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
 };
 
   

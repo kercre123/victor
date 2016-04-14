@@ -72,10 +72,12 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectStopped,         &Robot::HandleActiveObjectStopped);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::activeObjectTapped,          &Robot::HandleActiveObjectTapped);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::goalPose,                    &Robot::HandleGoalPose);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::robotStopped,                &Robot::HandleRobotStopped);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::cliffEvent,                  &Robot::HandleCliffEvent);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::proxObstacle,                &Robot::HandleProxObstacle);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::chargerEvent,                &Robot::HandleChargerEvent);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::image,                       &Robot::HandleImageChunk);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::imageGyro,                   &Robot::HandleImageImuData);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::imuDataChunk,                &Robot::HandleImuData);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::imuRawDataChunk,             &Robot::HandleImuRawData);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::syncTimeAck,                 &Robot::HandleSyncTimeAck);
@@ -84,6 +86,7 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   doRobotSubscribe(RobotInterface::RobotToEngineTag::nvResult,                    &Robot::HandleNVOpResult);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::robotAvailable,              &Robot::HandleRobotSetID);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::motorCalibration,            &Robot::HandleMotorCalibration);
+  doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,               &Robot::HandleDockingStatus);
   
 
   // lambda wrapper to call internal handler
@@ -153,9 +156,12 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
 
 void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const RobotInterface::CameraCalibration& payload = message.GetData().Get_cameraCalibration();
+  const CameraCalibration& payload = message.GetData().Get_cameraCalibration();
   PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
-    "Received new %dx%d camera calibration from robot.", payload.ncols, payload.nrows);
+                   "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f, cy: %f)",
+                   payload.ncols, payload.nrows,
+                   payload.focalLength_x, payload.focalLength_y,
+                   payload.center_x, payload.center_y);
 
   // Convert calibration message into a calibration object to pass to
   // the robot
@@ -255,8 +261,10 @@ void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& 
 {
   const BlockPickedUp& payload = message.GetData().Get_blockPickedUp();
   const char* successStr = (payload.didSucceed ? "succeeded" : "failed");
+  const char* resultStr = EnumToString(payload.result);
+
   PRINT_NAMED_INFO("RobotMessageHandler.ProcessMessage.MessageBlockPickedUp",
-    "Robot %d reported it %s picking up block. Stopping docking and turning on Look-for-Markers mode.", GetID(), successStr);
+    "Robot %d reported it %s picking up block with %s. Stopping docking and turning on Look-for-Markers mode.", GetID(), successStr, resultStr);
 
   if(payload.didSucceed) {
     SetDockObjectAsAttachedToLift();
@@ -289,6 +297,13 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
   _visionComponent.EnableMode(VisionMode::DetectingMarkers, true);
   _visionComponent.EnableMode(VisionMode::Tracking, false);
 
+}
+
+void Robot::HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  // TODO: Do something with the docking status message like play sound or animation
+  //const DockingStatus& payload = message.GetData().Get_dockingStatus();
+  
 }
   
 void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -524,6 +539,18 @@ void Robot::HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& messa
   }
 }
 
+void Robot::HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
+  PRINT_NAMED_INFO("RobotImplMessaging.HandleRobotStopped", "%d", payload.reason);
+    
+  // Stop whatever we were doing
+  GetActionList().Cancel();
+
+  // Forward on with EngineToGame event
+  Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotStopped()));
+}
+
   
 
 void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -536,11 +563,8 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   }
 
   if (cliffEvent.detected) {
-    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f while driving %s",
-                     cliffEvent.x_mm, cliffEvent.y_mm, cliffEvent.drivingForward ? "forwards" : "backwards");
-    
-    // Stop whatever we were doing
-    GetActionList().Cancel();
+    PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %f,%f",
+                     cliffEvent.x_mm, cliffEvent.y_mm);
     
     // Add cliff obstacle
     Pose3d cliffPose(cliffEvent.angle_rad, Z_AXIS_3D(), {cliffEvent.x_mm, cliffEvent.y_mm, 0}, GetWorldOrigin());
@@ -550,11 +574,10 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
 
-  _blockWorld.SetIsOnCliff(cliffEvent.detected);
+  SetIsOnCliff(cliffEvent.detected);
   
   // Forward on with EngineToGame event
-  CliffEvent payload = message.GetData().Get_cliffEvent();
-  Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(payload)));
+  Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(cliffEvent)));
 }
   
 void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -583,7 +606,7 @@ void Robot::HandleProxObstacle(const AnkiEvent<RobotInterface::RobotToEngine>& m
   }
   
   // always update the value
-  _blockWorld.SetForwardSensorValue(proxObs.distance_mm);
+  SetForwardSensorValue(proxObs.distance_mm);
   
 #endif
 }
@@ -657,7 +680,17 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     }
 
     Vision::ImageRGB image(height,width,cvImg.data);
-    image.SetTimestamp(payload.frameTimeStamp);
+    
+    if(IsPhysical())
+    {
+      image.SetTimestamp(payload.frameTimeStamp+RollingShutterCorrector::imageTimestampOffset_ms);
+    }
+    else
+    {
+      image.SetTimestamp(payload.frameTimeStamp);
+    }
+    
+    _visionComponent.GetImuDataHistory().CalculateTimestampForImageIMU(payload.imageId, payload.frameTimeStamp, RollingShutterCorrector::timeBetweenFrames_ms, height);
     
     /* For help debugging COZMO-694:
     PRINT_NAMED_INFO("Robot.HandleImageChunk.ImageReady",
@@ -806,6 +839,17 @@ void Robot::HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   }
 }
 
+void Robot::HandleImageImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message)
+{
+  const ImageImuData& payload = message.GetData().Get_imageGyro();
+  
+  _visionComponent.GetImuDataHistory().AddImuData(payload.imageId,
+                                                  payload.rateX,
+                                                  payload.rateY,
+                                                  payload.rateZ,
+                                                  payload.line2Number);
+}
+
   
 void Robot::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
@@ -834,7 +878,7 @@ void Robot::HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message
     {
       PRINT_NAMED_INFO("Robot.HandleNVData.CameraCalibration","");
       
-      RobotInterface::CameraCalibration payload;
+      CameraCalibration payload;
       payload.Unpack(nvBlob.blob.data(), nvBlob.blob.size());
       PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
                        "Received new %dx%d camera calibration from robot.", payload.ncols, payload.nrows);

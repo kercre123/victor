@@ -43,7 +43,8 @@ public:
 protected:
 
   using Face = Vision::TrackedFace;
-
+  using FaceID_t = Vision::FaceID_t;
+  
   // --------------------------------------------------------------------------------
   // Functions to be overridden by sub classes
   
@@ -61,7 +62,7 @@ protected:
   // the time at which it will be OK to end the behavior (allowing us a delay after the request), or -1
   virtual f32 GetRequestMinDelayComplete_s() const = 0;
 
-  Face::ID_t GetFaceID() const { return _faceID; }
+  FaceID_t GetFaceID() const { return _faceID; }
   f32 GetLastSeenFaceTime() const {return _lastFaceSeenTime_s;}
     
   u32 GetNumBlocks(const Robot& robot) const;
@@ -94,7 +95,7 @@ private:
 
   u32        _maxFaceAge_ms = 30000;
   f32        _lastFaceSeenTime_s = -1.0f;
-  Face::ID_t _faceID = Face::UnknownFace;
+  FaceID_t   _faceID = Vision::UnknownFaceID;
   bool       _hasBlockPose = false;
   Pose3d     _lastBlockPose;
   ObjectID   _robotsBlockID;
