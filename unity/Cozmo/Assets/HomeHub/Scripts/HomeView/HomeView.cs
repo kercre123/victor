@@ -158,7 +158,8 @@ namespace Cozmo.HomeHub {
     }
 
     protected override void CleanUp() {
-      
+      PlayerManager.Instance.GreenPointsUpdate -= HandleGreenPointsGained;
+      PlayerManager.Instance.ChestGained -= HandleChestGained;
     }
 
   }
