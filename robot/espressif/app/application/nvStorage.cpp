@@ -461,11 +461,15 @@ static void processFailure(const NVResult fail)
   resetWrite();
   
   if (nv.pendingEraseCallback != NULL) nv.pendingEraseCallback(nv.pendingEraseStart, fail);
-  if (nv.pendingMultiEraseDoneCallback != NULL) nv.pendingMultiEraseDoneCallback(fail);
+  if (nv.pendingMultiEraseDoneCallback != NULL) nv.pendingMultiEraseDoneCallback(nv.pendingEraseStart, fail);
   resetErase();
 
-  if (nv.pendingReadCallback != NULL) nv.pendingReadCallback(nv.pendingWrite, fail);
-  if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(fail);
+  if (nv.pendingReadCallback != NULL) {
+     NVStorageBlob temp;
+     temp.tag = nv.pendingReadStart;
+     nv.pendingReadCallback(&temp, fail);
+  }
+  if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(nv.pendingReadStart, fail);
   resetRead();
 
   nv.flashPointer = nv.startOfData;
@@ -622,7 +626,7 @@ Result Update()
         { // We were erasing anything
           if (nv.pendingMultiEraseDoneCallback != NULL)
           {
-            nv.pendingMultiEraseDoneCallback(nv.multiEraseDidAny ? NV_OKAY : NV_NO_DO);
+            nv.pendingMultiEraseDoneCallback(nv.pendingEraseStart, nv.multiEraseDidAny ? NV_OKAY : NV_NO_DO);
           }
           resetErase();
         } // Done with erase operations at end of flash
@@ -638,7 +642,7 @@ Result Update()
           }
           else if (nv.pendingMultiReadDoneCallback != NULL)
           {
-            nv.pendingMultiReadDoneCallback(nv.multiReadFoundAny ? NV_OKAY : NV_NOT_FOUND);
+            nv.pendingMultiReadDoneCallback(nv.pendingReadStart, nv.multiReadFoundAny ? NV_OKAY : NV_NOT_FOUND);
           }
           resetRead();
         } // Done with read operations at end of flash
@@ -706,7 +710,7 @@ Result Update()
               const NVResult fail = FLASH_RESULT_TO_NV_RESULT(flashResult);
               AnkiWarn( 149, "NVStorage.EraseFailure", 420, "Failed to erase entry 0x%x[%d] at 0x%x, %d", 4, header.tag, header.size, nv.flashPointer, fail);
               if (nv.pendingEraseCallback != NULL) nv.pendingEraseCallback(header.tag, fail);
-              if (nv.pendingMultiEraseDoneCallback != NULL) nv.pendingMultiEraseDoneCallback(fail);
+              if (nv.pendingMultiEraseDoneCallback != NULL) nv.pendingMultiEraseDoneCallback(nv.pendingEraseStart, fail);
               resetErase();
             }
           }
@@ -742,7 +746,7 @@ Result Update()
                   AnkiWarn( 150, "NVStorage.ReadFailure", 421, "Failed to read entry invalid tag at 0x%x, %d", 2, nv.flashPointer, readResult);
                   AnkiAssert(nv.pendingReadCallback != NULL, 422);
                   nv.pendingReadCallback(&entry, readResult);
-                  if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(readResult);
+                  if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(nv.pendingReadStart, readResult);
                   resetRead();
                 }
               }
@@ -773,7 +777,7 @@ Result Update()
                   AnkiWarn( 150, "NVStorage.ReadFailure", 414, "Failed to read entry at 0x%x, %d", 2, nv.flashPointer, readResult);
                   AnkiAssert(nv.pendingReadCallback != NULL, 422);
                   nv.pendingReadCallback(&entry, readResult);
-                  if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(readResult);
+                  if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(nv.pendingReadStart, readResult);
                   resetRead();
                 }
               }
@@ -842,7 +846,7 @@ NVResult EraseRange(const u32 start, const u32 end, EraseDoneCB eachCallback, Mu
   nv.pendingEraseStart = start;
   nv.pendingEraseEnd   = end;
   nv.pendingEraseCallback = eachCallback;
-  nv.pendingMultiReadDoneCallback = finishedCallback;
+  nv.pendingMultiEraseDoneCallback = finishedCallback;
   db_printf("NVS EraseRange %d-%d scheduled\r\n", start, end);
   return NV_SCHEDULED;
 }

@@ -42,7 +42,7 @@ namespace NVStorage {
   }
 
   structure NVOpResult {
-    NVEntryTag tag,
+    uint_32 tag,
     NVResult   result,
     bool       write,
   }

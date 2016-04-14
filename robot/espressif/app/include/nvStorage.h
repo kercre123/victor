@@ -51,14 +51,14 @@ namespace Anki {
       /** Callback prototype for NV Erase operations
        * Parameters are the tag erased and success
        */
-      typedef void (*EraseDoneCB)(const NVEntryTag, const NVResult);
+      typedef void (*EraseDoneCB)(const u32, const NVResult);
       /** Callback prototype for NV Read operations
        * Parameters are the retrieved storage entry and result
        */
       typedef void (*ReadDoneCB)(NVStorageBlob*, const NVResult);
       /** Callback prototype for NV multi-operations
        */
-      typedef void (*MultiOpDoneCB)(const NVResult);
+      typedef void (*MultiOpDoneCB)(const u32, const NVResult);
       
       /// Run pending tasks for NVStorage system and call any pending callbacks
       Result Update();
