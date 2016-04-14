@@ -38,6 +38,8 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageReadEntry, readCallback));
     auto eraseCallback = std::bind(&NVStorageComponent::HandleNVStorageEraseEntry, this, std::placeholders::_1);
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageEraseEntry, eraseCallback));
+    auto clearPendingCallback = std::bind(&NVStorageComponent::HandleNVStorageClearPartialPendingWriteEntry, this, std::placeholders::_1);
+    _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageClearPartialPendingWriteEntry,clearPendingCallback));
 
     
     // Setup robot message handlers
@@ -414,6 +416,94 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
 
 }
 
+void NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
+                                        u8* data, u16 dataLength,
+                                        u8 blobIndex, u8 numTotalBlobs)
+{
+  AnkiAssert(IsMultiBlobEntryTag(static_cast<u32>(tag)));
+ 
+  if (tag == NVStorage::NVEntryTag::NVEntry_Invalid) {
+    PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.InvalidTag", "");
+    return;
+  }
+  
+  if (numTotalBlobs > _kMaxNumBlobsInMultiBlobEntry) {
+    PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.TooManyBlobs",
+                        "Num total blobs %d exceeds max of %d",
+                        numTotalBlobs, _kMaxNumBlobsInMultiBlobEntry);
+    return;
+  }
+  
+  if (_pendingWriteData.tag != tag) {
+    if (_pendingWriteData.tag == NVStorage::NVEntryTag::NVEntry_Invalid) {
+      PRINT_NAMED_DEBUG("NVStorageComponent.QueueWriteBlob.FirstBlobRecvd", "Tag: %s", EnumToString(tag));
+    } else {
+      PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.UnexpectedTag",
+                          "Deleting old data for %s and starting %s",
+                          EnumToString(_pendingWriteData.tag),
+                          EnumToString(tag));
+    }
+    
+    _pendingWriteData.tag = tag;
+    _pendingWriteData.data.resize(numTotalBlobs * _kMaxNvStorageBlobSize);
+    _pendingWriteData.data.shrink_to_fit();
+
+    for (u8 i=0; i<numTotalBlobs; ++i) {
+      _pendingWriteData.remainingIndices.insert(i);
+    }
+  }
+
+  
+  // Remove index
+  if (_pendingWriteData.remainingIndices.erase(static_cast<u32>(tag) + blobIndex) == 0) {
+    PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.UnexpectedIndex",
+                        "index %d, numTotalBlobs: %d",
+                        blobIndex, numTotalBlobs);
+    return;
+  }
+  
+  
+  // Check that blob size is correct given blobIndex
+  if (blobIndex < numTotalBlobs-1) {
+    if (dataLength != _kMaxNvStorageBlobSize) {
+      PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.NotLastBlobIsTooSmall",
+                          "Only the last blob is allowed to be smaller than %d bytes. Ignoring message so this write is definitely going to fail! (Tag: %s, index: %d (total %d), size: %d)",
+                          _kMaxNvStorageBlobSize,
+                          EnumToString(tag),
+                          blobIndex,
+                          numTotalBlobs,
+                          dataLength);
+      return;
+    }
+  } else if (blobIndex > numTotalBlobs - 1) {
+    
+    PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.IndexTooBig",
+                        "Tag: %s, index: %d (total %d)",
+                        EnumToString(tag), blobIndex, numTotalBlobs);
+    return;
+  } else { // (blobIndex == numTotalBlobs - 1)
+    // This is the last blob so we can know what the total size of the entry is now
+    _pendingWriteData.data.resize((numTotalBlobs-1) * _kMaxNvStorageBlobSize + dataLength);
+  }
+
+  
+  // Add blob data
+  memcpy(_pendingWriteData.data.data() + (blobIndex * _kMaxNvStorageBlobSize), data, dataLength);
+  
+  
+  // Ready to send to robot?
+  if (_pendingWriteData.remainingIndices.size() == 0) {
+    PRINT_NAMED_INFO("NVStorageComponent.QueueWriteBlob.SendingToRobot",
+                     "Tag: %s, Bytes: %zu",
+                     EnumToString(tag),
+                     _pendingWriteData.data.size());
+    Write(tag, _pendingWriteData.data.data(), _pendingWriteData.data.size(), true);
+    
+    // Clear pending write data for next message
+    _pendingWriteData.tag = NVStorage::NVEntryTag::NVEntry_Invalid;
+  }
+}
+  
   
 void NVStorageComponent::HandleNVStorageWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
@@ -421,6 +511,13 @@ void NVStorageComponent::HandleNVStorageWriteEntry(const AnkiEvent<ExternalInter
   PRINT_NAMED_INFO("NVStorageComponent::HandleNVStorageWriteEntry",
                    "Tag: %s, size %u",
                    EnumToString(payload.tag), payload.data_length);
+
+  if (IsMultiBlobEntryTag(static_cast<u32>(payload.tag))) {
+    QueueWriteBlob(payload.tag,
+                   payload.data.data(), payload.data_length,
+                   payload.index, payload.numTotalBlobs);
+    return;
+  }
   
   Write(payload.tag, payload.data.data(), payload.data_length, true);
 }
@@ -439,6 +536,11 @@ void NVStorageComponent::HandleNVStorageEraseEntry(const AnkiEvent<ExternalInter
   PRINT_NAMED_INFO("NVStorageComponent::HandleNVStorageEraseEntry", "Tag: %s", EnumToString(payload.tag));
 
   Erase(payload.tag, true);
+}
+  
+void NVStorageComponent::HandleNVStorageClearPartialPendingWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+{
+  _pendingWriteData.tag = NVStorage::NVEntryTag::NVEntry_Invalid;
 }
 
 

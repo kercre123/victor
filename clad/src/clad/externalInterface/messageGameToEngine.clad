@@ -931,17 +931,40 @@ message ComputeCameraCalibration {
 ///////////////////////////////////////////////////////////////////////////////
 
 // All non-volatile storage operations result in a NVStorageOpResult message
-// being sent back from engine upon completion.
+// being sent back from engine upon completion except for single-blob reads.
+// Whether or not an entry is single blob or multi-blob entry is determined by
+// the NVEntryTag value.
+// NOTE: Do not follow one operation with another before acking the previous
+//       operation as the flash can only handle one at a time.
+//       The only exception is you can send multiple NVStorageWriteEntry messages
+//       for a multi-blob message since these don't actually get sent to robot
+//       until all blobs have been received by engine.
+
 
 message NVStorageEraseEntry {
   NVStorage::NVEntryTag tag
 }
 
+// Multi-blob messages (determined by tag) are queued on engine
+// and sent out all at once only when all blobs have been received.
+// (This also means that writes won't be ackd with NVStorageOpResult until all
+// blobs have been sent to engine.)
+// This is to help make it harder to write junk to the robot.'
+// Single-blob messages are sent to robot immediately.
 message NVStorageWriteEntry {
   NVStorage::NVEntryTag tag,
   uint_16 data_length,
   uint_8  data[1024],
-  uint_8  index       // If tag is a multi-blob entry, index is the blob index starting at 0 for the first blob.
+  uint_8  index,         // If tag is a multi-blob entry, this is the blob index starting at 0 for the first blob.
+  uint_8  numTotalBlobs  // If tag is a multi-blob entry, this is the total number of blobs expected.
+}
+
+// Clears any queued data received by engine for a multi-blob entry via NVStorageWriteEntry.
+// Does not directly affect robot flash.
+// This should be called once before sending a sequence of NVStorageWriteEntry messages
+// for a mult-blob entry. It should only be necessary if something went wrong
+// with a previous write attempt, but doesn't hurt to call it every time.
+message NVStorageClearPartialPendingWriteEntry {
 }
 
 // Data is returned in NVStorageData messages.

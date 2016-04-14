@@ -242,9 +242,10 @@ protected:
   void SendClearCalibrationImages();
   void SendComputeCameraCalibration();
   void SendCameraCalibration(f32 focalLength_x, f32 focalLength_y, f32 center_x, f32 center_y);
-  void SendNVStorageWriteEntry(NVStorage::NVEntryTag tag, u8* data, size_t size);
+  void SendNVStorageWriteEntry(NVStorage::NVEntryTag tag, u8* data, size_t size, u8 blobIndex, u8 numTotalBlobs);
   void SendNVStorageReadEntry(NVStorage::NVEntryTag tag);
   void SendNVStorageEraseEntry(NVStorage::NVEntryTag tag);
+  void SendNVClearPartialPendingWriteData();
   
 
   // ====== Accessors =====
@@ -281,6 +282,10 @@ protected:
   
   BehaviorType GetBehaviorType(const std::string& behaviorName) const;
 
+  // NVStorage
+  const std::vector<u8>* GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const;
+  void ClearReceivedNVStorageData(NVStorage::NVEntryTag tag);
+  bool IsMultiBlobEntryTag(u32 tag) const;
   
   // Actually move objects in the simulated world
   void SetActualRobotPose(const Pose3d& newPose);

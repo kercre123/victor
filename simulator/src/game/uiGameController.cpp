@@ -24,7 +24,10 @@ namespace Anki {
     
       // Private members:
       namespace {
-
+        
+        // Stores data received for requested reads from robot flash
+        std::map<NVStorage::NVEntryTag, std::vector<u8> >_recvdNVStorageData;
+        
       } // private namespace
 
     
@@ -256,6 +259,16 @@ namespace Anki {
                        "%s - index: %d, size %d",
                        EnumToString(msg.tag), msg.index, msg.data_length);
       
+      // Compute new max size of the data we expect to receive and resize if necessary
+      size_t currSize = _recvdNVStorageData[msg.tag].size();
+      size_t potentialNewSize = msg.index * msg.data.size() + msg.data_length;
+      if (potentialNewSize > currSize) {
+        _recvdNVStorageData[msg.tag].resize(potentialNewSize);
+      }
+      
+      // Copy into appropriate place in receive data vector
+      memcpy(_recvdNVStorageData[msg.tag].data() + msg.index * msg.data.size(), msg.data.data(), msg.data_length);
+      
       HandleNVStorageData(msg);
     }
 
@@ -267,6 +280,24 @@ namespace Anki {
       
       HandleNVStorageOpResult(msg);
     }
+    
+    const std::vector<u8>* UiGameController::GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const
+    {
+      if (_recvdNVStorageData.find(tag) != _recvdNVStorageData.end()) {
+        return &_recvdNVStorageData[tag];
+      }
+      return nullptr;
+    }
+    
+    void UiGameController::ClearReceivedNVStorageData(NVStorage::NVEntryTag tag)
+    {
+      _recvdNVStorageData.erase(tag);
+    }
+    
+    bool UiGameController::IsMultiBlobEntryTag(u32 tag) const {
+      return (tag & 0x7fff0000) > 0;
+    }
+
     
     // ===== End of message handler callbacks ====
     
@@ -1358,7 +1389,7 @@ namespace Anki {
       SendMessage(message);
     }
     
-    void UiGameController::SendNVStorageWriteEntry(NVStorage::NVEntryTag tag, u8* data, size_t size)
+    void UiGameController::SendNVStorageWriteEntry(NVStorage::NVEntryTag tag, u8* data, size_t size, u8 blobIndex, u8 numTotalBlobs)
     {
       if (size > 1024) {
         PRINT_NAMED_WARNING("UiGameController.SendNVStorageWriteEntry.SizeTooBig",
@@ -1370,6 +1401,8 @@ namespace Anki {
       ExternalInterface::NVStorageWriteEntry msg;
       msg.tag = tag;
       msg.data_length = size;
+      msg.index = blobIndex;
+      msg.numTotalBlobs = numTotalBlobs;
       memcpy(msg.data.data(), data, size);
       
       ExternalInterface::MessageGameToEngine message;
@@ -1379,6 +1412,9 @@ namespace Anki {
     
     void UiGameController::SendNVStorageReadEntry(NVStorage::NVEntryTag tag)
     {
+      // Clear the receive vector for this tag
+      _recvdNVStorageData[tag].clear();
+      
       ExternalInterface::NVStorageReadEntry msg;
       msg.tag = tag;
       ExternalInterface::MessageGameToEngine message;
@@ -1392,6 +1428,14 @@ namespace Anki {
       msg.tag = tag;
       ExternalInterface::MessageGameToEngine message;
       message.Set_NVStorageEraseEntry(msg);
+      SendMessage(message);
+    }
+    
+    void UiGameController::SendNVClearPartialPendingWriteData()
+    {
+      ExternalInterface::NVStorageClearPartialPendingWriteEntry msg;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_NVStorageClearPartialPendingWriteEntry(msg);
       SendMessage(message);
     }
     

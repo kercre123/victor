@@ -89,6 +89,10 @@ private:
   void HandleNVStorageWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleNVStorageReadEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleNVStorageEraseEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleNVStorageClearPartialPendingWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  
+  // Queues blobs for a multi-blob message from game and sends them to robot when all blobs received.
+  void QueueWriteBlob(const NVStorage::NVEntryTag tag, u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
   
   
   std::vector<Signal::SmartHandle> _signalHandles;
@@ -138,6 +142,14 @@ private:
     bool broadcastResultToGame;
   };
   
+  // Stores blobs of a multi-blob messgage.
+  // When all blobs received remainingIndices
+  struct PendingWriteData {
+    PendingWriteData() { tag = NVStorage::NVEntryTag::NVEntry_Invalid; }
+    NVStorage::NVEntryTag tag;
+    std::vector<u8> data;
+    std::unordered_set<u8> remainingIndices;
+  };
   
   // Queue of data to be sent to robot for writing/erasing
   std::queue<WriteDataObject> _writeDataQueue;
@@ -147,6 +159,9 @@ private:
   
   // Map of requested NVEntryTag to received data handling struct
   std::unordered_map<u32, RecvDataObject> _recvDataMap;
+
+  // Storage for in-progress-of-receiving multi-blob data
+  PendingWriteData _pendingWriteData;
   
   // Maximum size of a single blob
   static constexpr u32 _kMaxNvStorageBlobSize        = 1024;

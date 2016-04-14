@@ -39,6 +39,9 @@
 #include <webots/ImageRef.hpp>
 
 
+// CAUTION: If enabled, you can mess up stuff stored on the robot's flash.
+#define ENABLE_NVSTORAGE_WRITE 0
+
 namespace Anki {
   namespace Cozmo {
       
@@ -1490,19 +1493,97 @@ namespace Anki {
               case (s32)'&':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  PRINT_NAMED_INFO("SendNVStorageEraseEntry", "NVEntry_CameraCalibration");
-                  SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CameraCalibration);
+                  PRINT_NAMED_INFO("SendNVStorageReadEntry", "NVEntry_CameraCalibration");
+                  ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CameraCalibration);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalibration);
                 } else {
+                  
+                  if (ENABLE_NVSTORAGE_WRITE) {
+                    // Toggle write/erase
+                    static bool writeNotErase = true;
+                    if (writeNotErase) {
+                      f32 focalLength_x = root_->getField("focalLength_x")->getSFFloat();
+                      f32 focalLength_y = root_->getField("focalLength_y")->getSFFloat();
+                      f32 center_x = root_->getField("imageCenter_x")->getSFFloat();
+                      f32 center_y = root_->getField("imageCenter_y")->getSFFloat();
+                      PRINT_NAMED_INFO("SendCameraCalibrationraseEntry",
+                                       "fx: %f, fy: %f, cx: %f, cy: %f",
+                                       focalLength_x, focalLength_y, center_x, center_y);
 
-                  f32 focalLength_x = root_->getField("focalLength_x")->getSFFloat();
-                  f32 focalLength_y = root_->getField("focalLength_y")->getSFFloat();
-                  f32 center_x = root_->getField("imageCenter_x")->getSFFloat();
-                  f32 center_y = root_->getField("imageCenter_y")->getSFFloat();
-                  PRINT_NAMED_INFO("SendCameraCalibrationraseEntry",
-                                   "fx: %f, fy: %f, cx: %f, cy: %f",
-                                   focalLength_x, focalLength_y, center_x, center_y);
+                      // Method 1
+                      //SendCameraCalibration(focalLength_x, focalLength_y, center_x, center_y);
+                      
+                      // Method 2
+                      CameraCalibration calib(focalLength_x, focalLength_y,
+                                              center_x, center_y,
+                                              0, 240, 320);
+                      std::vector<u8> calibVec(calib.Size());
+                      calib.Pack(calibVec.data(), calib.Size());
+                      SendNVStorageWriteEntry(NVStorage::NVEntryTag::NVEntry_CameraCalibration,
+                                              calibVec.data(), calibVec.size(),
+                                              0, 1);
+                    } else {
+                      PRINT_NAMED_INFO("SendNVStorageEraseEntry", "NVEntry_CameraCalibration");
+                      SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CameraCalibration);
+                    }
+                    writeNotErase = !writeNotErase;
+                    
+                  } else {
+                    PRINT_NAMED_INFO("SendNVStorageWriteEntry.CameraCalibration.Disabled",
+                                     "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                  }
+                  
+                }
+                break;
+              }
+              case (s32)'(':
+              {
+                // NVStorage multiWrite / multiRead test
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  PRINT_NAMED_INFO("SendNVStorageReadEntry", "NVEntry_CalibImage1");
+                  ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CalibImage1);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
+                } else {
+                  
+                  if (ENABLE_NVSTORAGE_WRITE) {
+                    // Toggle write/erase
+                    static bool writeNotErase = true;
+                    if (writeNotErase) {
+                      static const char* inFile = "testCalibImage1_input.jpg";
+                      FILE* fp = fopen(inFile, "rb");
+                      if (fp) {
+                        std::vector<u8> d(30000);
+                        size_t numBytes = fread(d.data(), 1, d.size(), fp);
+                        d.resize(numBytes);
+                        PRINT_NAMED_INFO("SendNVStorageWriteEntry.CalibImage1.ReadInputImage", "read %zu bytes\n", numBytes);
+                        
+                        ExternalInterface::NVStorageWriteEntry temp;
+                        u32 MAX_BLOB_SIZE = temp.data.size();
+                        u8 numTotalBlobs = static_cast<u8>(ceilf(static_cast<f32>(numBytes) / MAX_BLOB_SIZE));
+                        
+                        PRINT_NAMED_INFO("SendNVStorageWriteEntry.CalibImage1.Sending",
+                                         "NumBlobs %d, maxBlobSize %d",
+                                         numTotalBlobs, MAX_BLOB_SIZE);
 
-                  SendCameraCalibration(focalLength_x, focalLength_y, center_x, center_y);
+                        for (int i=0; i<numTotalBlobs; ++i) {
+                          SendNVStorageWriteEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1,
+                                                  d.data() + i * MAX_BLOB_SIZE, MIN(MAX_BLOB_SIZE, numBytes - (i*MAX_BLOB_SIZE)),
+                                                  i, numTotalBlobs);
+                        }
+                      } else {
+                        printf("%s open failed\n", inFile);
+                      }
+                    } else {
+                      
+                      PRINT_NAMED_INFO("SendNVStorageEraseEntry", "NVEntry_CalibImage1");
+                      SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
+                    }
+                    writeNotErase = !writeNotErase;
+                  } else {
+                    PRINT_NAMED_INFO("SendNVStorageWriteEntry.CalibImage1.Disabled",
+                                     "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                  }
+                  
                 }
                 break;
               }
@@ -1894,8 +1975,85 @@ namespace Anki {
           return 0;
         }
       }
+  
     
+      void WebotsKeyboardController::HandleNVStorageData(const ExternalInterface::NVStorageData &msg)
+      {
+        switch(msg.tag) {
+          case NVStorage::NVEntryTag::NVEntry_CameraCalibration:
+          {
+            CameraCalibration calib;
+            calib.Unpack(msg.data.data(), msg.data_length);
+            
+            PRINT_NAMED_INFO("HandleNVStorageData.CamCalibration",
+                             "fx: %f, fy: %f, cx: %f, cy: %f, skew: %f, nrows: %d, ncols: %d",
+                             calib.focalLength_x, calib.focalLength_y,
+                             calib.center_x, calib.center_y,
+                             calib.skew,
+                             calib.nrows, calib.ncols);
+            break;
+          }
+          default:
+          {
+            PRINT_NAMED_INFO("HandleNVStorageData.UnhandledTag", "%s", EnumToString(msg.tag));
+            break;
+          }
+        }
+      }
+    
+    
+      void WebotsKeyboardController::HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg)
+      {
+        if (msg.write) {
+          // Do nothing for write acks
+        } else {
+
+          // Check result flag
+          if (msg.result != NVStorage::NVResult::NV_OKAY) {
+            PRINT_NAMED_WARNING("HandleNVStorageOpResult.Read.Failed",
+                                "tag: %s, res: %s",
+                                EnumToString(msg.tag),
+                                EnumToString(msg.result));
+            return;
+          }
       
+          // Check that this a multi-blob message.
+          // Single blob messages don't get a NVOpResult so they need to be handled when NVStorageData is received.
+          if (!IsMultiBlobEntryTag(static_cast<u32>(msg.tag))) {
+            PRINT_NAMED_WARNING("HandleNVStorageOpResult.Read.UnexpectedSingleReadResult", "%s", EnumToString(msg.tag));
+            return;
+          }
+          
+          const std::vector<u8>* recvdData = GetReceivedNVStorageData(msg.tag);
+          if (recvdData == nullptr) {
+            PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.NoDataReceived", "Tag: %s", EnumToString(msg.tag));
+          }
+          
+          switch(msg.tag) {
+            case NVStorage::NVEntryTag::NVEntry_CalibImage1:
+            {
+
+                static const char* outFile = "testCalibImage1_output.jpg";
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.CalibImage1",
+                                 "Writing to %s, size: %zu",
+                                 outFile, recvdData->size());
+                
+                FILE* fp = fopen(outFile, "wb");
+                if (fp) {
+                  fwrite(recvdData->data(),1,recvdData->size(),fp);
+                  fclose(fp);
+                } else {
+                  printf("%s open failed\n", outFile);
+                }
+              
+              break;
+            }
+            default:
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.UnhandledTag", "%s", EnumToString(msg.tag));
+              break;
+          }
+        }
+      }
 
   } // namespace Cozmo
 } // namespace Anki
