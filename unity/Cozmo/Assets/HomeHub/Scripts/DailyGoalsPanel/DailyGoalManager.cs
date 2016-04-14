@@ -7,7 +7,12 @@ using Cozmo.UI;
 using Anki.Cozmo;
 
 // TODO: Scrap most of this bullshit. Move HomeHub related stuff into DailyGoalPanel.
+// Remove ALL MENTIONS of StatContainer. BURN IT ALL DOWN.
+// Set everything to take in DailyGoalConfig file (json created by editor tool) instead
+// also do everything in terms of the DailyGoal.cs class.
 public class DailyGoalManager : MonoBehaviour {
+
+  public Dictionary<GameEvent,DailyGoal> _DailyGoals = new Dictionary<GameEvent,DailyGoal>();
 
   #region constants
 
