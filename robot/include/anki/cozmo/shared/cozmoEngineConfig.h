@@ -115,8 +115,9 @@ namespace Anki {
     const f32 DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE = DEG_TO_RAD(7.5);
     
     // Default docking speed/accel
-    const u16 DEFAULT_DOCK_SPEED_MMPS = 100;
+    const u16 DEFAULT_DOCK_SPEED_MMPS = 60;
     const u16 DEFAULT_DOCK_ACCEL_MMPS2 = 200;
+    const u16 DEFAULT_DOCK_DECCEL_MMPS2 = 100;
     
     // DON'T CHANGE THESE VALUES. ROBOT WON'T STOP WHERE IT'S SUPPOSED TO IF YOU DECREASE THEM.
     // TODO: Using a high fixed deceleration for all paths until we have support for
@@ -140,6 +141,7 @@ namespace Anki {
                                                         DEFAULT_PATH_POINT_TURN_DECEL_RAD_PER_SEC2,
                                                         DEFAULT_DOCK_SPEED_MMPS,
                                                         DEFAULT_DOCK_ACCEL_MMPS2,
+                                                        DEFAULT_DOCK_DECCEL_MMPS2,
                                                         DEFAULT_PATH_REVERSE_SPEED_MMPS);
     
   } // namespace Cozmo

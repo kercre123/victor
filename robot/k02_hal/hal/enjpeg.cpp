@@ -392,6 +392,7 @@ stop:
 // Note there is an 8-line latency, because JPEG works in 8x8 blocks
 void JPEGCompress(int line, int height)
 {
+  static uint32_t frameNumber;
   // Current state of the encoder for this frame
   static uint16_t readline = 0;       // Pointer to next line to compress (lags by 8 lines)
   static uint16_t xpitch = SLICEW;    // To put lines in and pull blocks out, slice pitch changes every 8 lines
@@ -407,6 +408,8 @@ void JPEGCompress(int line, int height)
   // Do we have anything ready to compress sitting in the pipeline?
   int docompress = readline < height && (readline > line || line >= BLOCKH);
   int eof = 0, buflen = 0;
+  
+  if (line < 8) frameNumber = CameraGetFrameNumber();
   
   if (subsample)
   {
@@ -445,7 +448,7 @@ void JPEGCompress(int line, int height)
     STOP(timeDMA);
 
     // QVGA:  We only have data on every other line
-    SPI::FinalizeDrop(0, 0);
+    SPI::FinalizeDrop(0, 0, 0);
   } else {
     // Continue with row DCT, then emit bits
     if (docompress)
@@ -486,7 +489,7 @@ void JPEGCompress(int line, int height)
       xpitch = ypitch;
     
     // Write the data to the drop buffer
-    SPI::FinalizeDrop(buflen, eof);
+    SPI::FinalizeDrop(buflen, eof, frameNumber);
   }
 }
 

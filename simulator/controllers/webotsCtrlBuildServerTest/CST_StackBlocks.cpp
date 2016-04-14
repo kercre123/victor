@@ -33,8 +33,9 @@ namespace Anki {
     const f32 defaultPathPointTurnSpeed_rad_per_sec = 1.5;
     const f32 defaultPathPointTurnAccel_rad_per_sec2 = 100;
     const f32 defaultPathPointTurnDecel_rad_per_sec2 = 500;
-    const f32 defaultDockSpeed_mmps = 100;
+    const f32 defaultDockSpeed_mmps = 60;
     const f32 defaultDockAccel_mmps2 = 200;
+    const f32 defaultDockDecel_mmps2 = 100;
     const f32 defaultReverseSpeed_mmps = 30;
     PathMotionProfile motionProfile3(defaultPathSpeed_mmps,
                                     defaultPathAccel_mmps2,
@@ -44,9 +45,10 @@ namespace Anki {
                                     defaultPathPointTurnDecel_rad_per_sec2,
                                     defaultDockSpeed_mmps,
                                     defaultDockAccel_mmps2,
+                                    defaultDockDecel_mmps2,
                                     defaultReverseSpeed_mmps);
     
-    const f32 ROBOT_POSITION_TOL_MM = 15;
+    const f32 ROBOT_POSITION_TOL_MM = 10;
     const f32 ROBOT_ANGLE_TOL_DEG = 5;
     const f32 BLOCK_HEIGHT_TOL_MM = 10;
     
@@ -108,7 +110,7 @@ namespace Anki {
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, ROBOT_ANGLE_TOL_DEG) &&
                                            NEAR(GetRobotPose().GetTranslation().x(), 60, ROBOT_POSITION_TOL_MM) &&
                                            NEAR(GetRobotPose().GetTranslation().y(), 0, ROBOT_POSITION_TOL_MM) &&
-                                           GetCarryingObjectID() == 0, DEFAULT_TIMEOUT)
+                                           GetCarryingObjectID() == 0, 20)
           {
             ExternalInterface::QueueCompoundAction m;
             m.robotID = 1;

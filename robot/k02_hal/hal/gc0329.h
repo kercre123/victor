@@ -597,16 +597,16 @@
 	0xfe , 0x01,  // Page 1 
 	0x29 , 0x00,  //anti-flicker step [11:8]
 	0x2a , 0x60,  //anti-flicker step [7:0]
-  0x2b , 0x01,  // Auto exposure levels are all equal to 500 lines (max framerate)
-  0x2c , 0xf4,
-  0x2d , 0x01,  // Auto exposure levels are all equal to 500 lines (max framerate)
-  0x2e , 0xf4,
-  0x2f , 0x01,  // Auto exposure levels are all equal to 500 lines (max framerate)
-  0x30 , 0xf4,
-  0x31 , 0x01,  // Auto exposure levels are all equal to 500 lines (max framerate)
-  0x32 , 0xf4,
-  0x33 , 0x01,  // Auto exposure levels are all equal to 500 lines (max framerate)
-  0x34 , 0xf4,
+  0x2b , 0x00,  // Auto exposure levels are all equal to 125 lines
+  0x2c , 0x7d,
+  0x2d , 0x00,  // Auto exposure levels are all equal to 125 lines
+  0x2e , 0x7d,
+  0x2f , 0x00,  // Auto exposure levels are all equal to 125 lines
+  0x30 , 0x7d,
+  0x31 , 0x00,  // Auto exposure levels are all equal to 125 lines
+  0x32 , 0x7d,
+  0x33 , 0x00,  // Auto exposure levels are all equal to 125 lines
+  0x34 , 0x7d,
   
   /* Defaults from GalaxyCore
 	0x2b , 0x02,  //exp level 0 , 0x14.28fps

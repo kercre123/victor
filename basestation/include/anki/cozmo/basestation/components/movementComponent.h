@@ -83,11 +83,11 @@ public:
   // Tracking is handled by actions now, but we will continue to maintain the
   // state of what is being tracked in this class.
   const ObjectID& GetTrackToObject() const { return _trackToObjectID; }
-  const Vision::TrackedFace::ID_t GetTrackToFace() const { return _trackToFaceID; }
+  const Vision::FaceID_t GetTrackToFace() const { return _trackToFaceID; }
   void  SetTrackToObject(ObjectID objectID) { _trackToObjectID = objectID; }
-  void  SetTrackToFace(Vision::TrackedFace::ID_t faceID) { _trackToFaceID = faceID; }
+  void  SetTrackToFace(Vision::FaceID_t faceID) { _trackToFaceID = faceID; }
   void  UnSetTrackToObject() { _trackToObjectID.UnSet(); }
-  void  UnSetTrackToFace()   { _trackToFaceID = Vision::TrackedFace::UnknownFace; }
+  void  UnSetTrackToFace()   { _trackToFaceID = Vision::UnknownFaceID; }
   
   template<typename T>
   void HandleMessage(const T& msg);
@@ -109,7 +109,7 @@ private:
   
   // Object/Face being tracked
   ObjectID _trackToObjectID;
-  Vision::TrackedFace::ID_t _trackToFaceID = Vision::TrackedFace::UnknownFace;
+  Vision::FaceID_t _trackToFaceID = Vision::UnknownFaceID;
   
   //bool _trackWithHeadOnly = false;
 

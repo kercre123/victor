@@ -43,6 +43,7 @@ namespace Anki {
 
     // Set maximum rotation speed
     void SetRotationSpeedLimit(f32 rad_per_s);
+    f32  GetRotationSpeedLimit();
     void DisableRotationSpeedLimit();
     
     //This manages at a high level what the steering controller needs to do (steer, use open loop, etc.)
@@ -81,6 +82,10 @@ namespace Anki {
     //Steering controllers gains and caps for path offsets when docking
     //(since cozmo can be fairly far off path when docking)
     void SetGains(f32 k1, f32 k2, f32 dockPathDistOffsetCap_mm, f32 dockPathAngularOffsetCap_rad);
+    f32 GetK1Gain();
+    f32 GetK2Gain();
+    f32 GetPathDistOffsetCap();
+    f32 GetPathAngOffsetCap();
     
     // Set gains for point turning
     void SetPointTurnGains(f32 kp, f32 ki, f32 kd, f32 maxIntegralError);

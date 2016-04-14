@@ -159,17 +159,20 @@ namespace Cozmo {
           message.statusMessage = buffer;
           _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
         }
+        else
+        {
+          PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.RunDebugConsoleFuncMessage", "No Func named '%s'",msg.funcName.c_str());
+        }
       }
       break;
       case ExternalInterface::MessageGameToEngineTag::SetDebugConsoleVarMessage:
       {
         const Anki::Cozmo::ExternalInterface::SetDebugConsoleVarMessage& msg = eventData.Get_SetDebugConsoleVarMessage();
         Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(msg.varName.c_str());
-        
-        if( consoleVar && !consoleVar->ParseText(msg.tryValue.c_str()) )
+        if (!consoleVar || !consoleVar->ParseText(msg.tryValue.c_str()) )
         {
-          // Error message that doesn't wig out when entering decimals etcs?
-          PRINT_NAMED_ERROR("DebugConsoleManager.HandleEvent.SetDebugConsoleVarMessage", "Unparsable text when setting var %s",msg.varName.c_str());
+          PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.SetDebugConsoleVarMessage", "Error setting %svar '%s' to '%s'",
+                            consoleVar ? "" : "UNKNOWN ", msg.varName.c_str(), msg.tryValue.c_str());
         }
       }
       break;

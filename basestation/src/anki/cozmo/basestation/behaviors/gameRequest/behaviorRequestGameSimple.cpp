@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 #include "anki/cozmo/basestation/pathMotionProfileHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -130,6 +131,9 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
       TransitionToPlayingInitialAnimation(robot);
     }
   }
+
+  // disable because this behavior manages it internally (for now)
+  robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
   
   return RESULT_OK;
 }
@@ -191,6 +195,8 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot, double currentTime_se
 
   // don't use transition to because we don't want to do anything.
   _state = State::PlayingInitialAnimation;
+
+  robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
 
   if( _shouldPopIdle ) {
     _shouldPopIdle = false;
@@ -471,7 +477,7 @@ void BehaviorRequestGameSimple::TransitionToTrackingFace(Robot& robot)
 {
   SendRequest(robot);
 
-  if( GetFaceID() == Face::UnknownFace ) {
+  if( GetFaceID() == Vision::UnknownFaceID ) {
     PRINT_NAMED_WARNING("BehaviorRequestGameSimple.NoValidFace",
                         "Can't do face tracking because there is no valid face!");
     // use an action that just hangs to simulate the track face logic

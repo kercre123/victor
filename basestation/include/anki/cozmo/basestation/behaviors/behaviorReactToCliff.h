@@ -30,22 +30,17 @@ private:
 public:
   
   virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
+  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const override;
+  virtual bool ShouldResumeLastBehavior() const override { return true; }
   
 protected:
     
   virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
-  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
   virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
   virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
   
 private:
-  enum class State {
-    Inactive,
-    CliffDetected,
-    PlayingAnimation
-    };
-  
-  State _currentState = State::Inactive;
+
   bool _cliffDetected = false;
   bool _waitingForAnimComplete = false;
   u32 _animTagToWaitFor = 0;

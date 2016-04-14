@@ -25,7 +25,7 @@ non-disclosure agreement with Anki, inc.
 
 //#define SEND_BINARY_IMAGES_TO_MATLAB
 
-#define USE_OPENCV_ITERATIVE_POSE_INIT 0
+#define USE_OPENCV_ITERATIVE_POSE_INIT 1
 
 #define COMPUTE_CONVERGENCE_FROM_CORNER_CHANGE 0
 
@@ -208,6 +208,7 @@ namespace Anki
         const Transformations::TransformType transformType,
         const s32 numFiducialSquareSamples,
         const Point<f32>& fiducialSquareThicknessFraction,
+        const Point<f32>& roundedCornersFraction,
         const s32 maxSamplesAtBaseLevel,
         const s32 numSamplingRegions,
         const f32 focalLength_x,
@@ -261,6 +262,7 @@ namespace Anki
         // size of the template.  This gives us R matrix and T vector.
         // TODO: is single precision enough for the P3P::computePose call here?
 #if USE_OPENCV_ITERATIVE_POSE_INIT
+        Result lastResult = RESULT_FAIL;
         {
           cv::Vec3d cvRvec, cvTranslation;
 
@@ -786,16 +788,23 @@ namespace Anki
 #if SAMPLE_TOP_HALF_ONLY
             // If only sampling from top half, increment half as fast to use all
             // the samples on only one half.
-            const f32 outerInc = 0.5f*templateWidth_mm / static_cast<f32>(numFiducialSamplesPerEdge-1);
-            const f32 innerInc = 0.5f*innerTemplateWidth / static_cast<f32>(numFiducialSamplesPerEdge-1);
+            const f32 outerInc_x = 0.5f*(1 - 2*roundedCornersFraction.x)*(templateSize_mm.x) / (numFiducialSamplesPerEdge - 1);
+            const f32 innerInc_x = 0.5f*(1 - 2*std::max(fiducialSquareThicknessFraction.x, roundedCornersFraction.x)) * (templateSize_mm.x) / (numFiducialSamplesPerEdge-1);
+            
+            const f32 outerInc_y = 0.5f*(1 - 2*roundedCornersFraction.y)*(templateSize_mm.y) / (numFiducialSamplesPerEdge - 1);
+            const f32 innerInc_y = 0.5f*(1 - 2*std::max(fiducialSquareThicknessFraction.y, roundedCornersFraction.y)) * (templateSize_mm.y) / (numFiducialSamplesPerEdge-1);
 
             // And concentrate twice as many samples on the top line (by
             // splitting in half and using "top" to point to the left side and
             // and "bottom" to point to the right)
             const f32 signFlip = -1.f;
 #else
-            const f32 outerInc = 0.5f*(templateSize_mm.x + templateSize_mm.y) / static_cast<f32>(numFiducialSamplesPerEdge-1);
-            const f32 innerInc = 0.5f*(innerTemplateWidth + innerTemplateHeight) / static_cast<f32>(numFiducialSamplesPerEdge-1);
+            const f32 outerInc_x = (1 - 2*roundedCornersFraction.x)*(templateSize_mm.x) / (numFiducialSamplesPerEdge - 1);
+            const f32 innerInc_x = (1 - 2*std::max(fiducialSquareThicknessFraction.x, roundedCornersFraction.x)) * (templateSize_mm.x) / (numFiducialSamplesPerEdge-1);
+            
+            const f32 outerInc_y = (1 - 2*roundedCornersFraction.y)*(templateSize_mm.y) / (numFiducialSamplesPerEdge - 1);
+            const f32 innerInc_y = (1 - 2*std::max(fiducialSquareThicknessFraction.y, roundedCornersFraction.y)) * (templateSize_mm.y) / (numFiducialSamplesPerEdge-1);
+            
             const f32 signFlip = 1.f;
 #endif
             TemplateSample * restrict pOuterTop = this->templateSamplePyramid[iScale].Pointer(0);
@@ -808,142 +817,158 @@ namespace Anki
             TemplateSample * restrict pInnerLeft  = this->templateSamplePyramid[iScale].Pointer(6*numFiducialSamplesPerEdge);
             TemplateSample * restrict pInnerRight = this->templateSamplePyramid[iScale].Pointer(7*numFiducialSamplesPerEdge);
 
-            f32 outer = -templateHalfWidth;
-            f32 inner = -innerTemplateHalfWidth;
+            f32 outer_x = -(1 - roundedCornersFraction.x)*templateHalfWidth;
+            f32 inner_x = -(1 - std::max(roundedCornersFraction.x, fiducialSquareThicknessFraction.x))*innerTemplateHalfWidth;
+            
+            f32 outer_y = -(1 - roundedCornersFraction.y)*templateHalfHeight;
+            f32 inner_y = -(1 - std::max(roundedCornersFraction.y, fiducialSquareThicknessFraction.y))*innerTemplateHalfHeight;
 
-            // Top/Bottom Edges' Left Corners:
-            pOuterTop[0] = ComputeTemplateSample(fiducialSampleGrayValue, outer, -templateHalfHeight,
-              -derivMagnitude, -derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+            if(roundedCornersFraction.x == 0 && roundedCornersFraction.y == 0)
+            {
+              // Top/Bottom Edges' Left Corners:
+              pOuterTop[0] = ComputeTemplateSample(fiducialSampleGrayValue, outer_x, -templateHalfHeight,
+                -derivMagnitude, -derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pInnerTop[0] = ComputeTemplateSample(fiducialSampleGrayValue, inner, -innerTemplateHalfHeight,
-              derivMagnitude, derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pInnerTop[0] = ComputeTemplateSample(fiducialSampleGrayValue, inner_x, -innerTemplateHalfHeight,
+                derivMagnitude, derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pOuterBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfHeight*signFlip,
-              -derivMagnitude, derivMagnitude*signFlip,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pOuterBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, outer_x*signFlip, templateHalfHeight*signFlip,
+                -derivMagnitude, derivMagnitude*signFlip,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pInnerBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfHeight*signFlip,
-              derivMagnitude, -derivMagnitude*signFlip,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pInnerBtm[0] = ComputeTemplateSample(fiducialSampleGrayValue, inner_x*signFlip, innerTemplateHalfHeight*signFlip,
+                derivMagnitude, -derivMagnitude*signFlip,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            // Left/Right Edges' Top Corners:
-            pOuterLeft[0]  = ComputeTemplateSample(fiducialSampleGrayValue, -templateHalfWidth, outer,
-              -derivMagnitude, -derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              // Left/Right Edges' Top Corners:
+              pOuterLeft[0]  = ComputeTemplateSample(fiducialSampleGrayValue, -templateHalfWidth, outer_x,
+                -derivMagnitude, -derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pOuterRight[0] = ComputeTemplateSample(fiducialSampleGrayValue, templateHalfWidth, outer,
-              derivMagnitude, -derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pOuterRight[0] = ComputeTemplateSample(fiducialSampleGrayValue, templateHalfWidth, outer_x,
+                derivMagnitude, -derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pInnerLeft[0]  = ComputeTemplateSample(fiducialSampleGrayValue, -innerTemplateHalfWidth, inner,
-              derivMagnitude, derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pInnerLeft[0]  = ComputeTemplateSample(fiducialSampleGrayValue, -innerTemplateHalfWidth, inner_x,
+                derivMagnitude, derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pInnerRight[0] = ComputeTemplateSample(fiducialSampleGrayValue, innerTemplateHalfWidth, inner,
-              -derivMagnitude, derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pInnerRight[0] = ComputeTemplateSample(fiducialSampleGrayValue, innerTemplateHalfWidth, inner_x,
+                -derivMagnitude, derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            // Interior of each edge (non-corners)
-            outer += outerInc;
-            inner += innerInc;
+              // Interior of each edge (non-corners)
+              outer_x += outerInc_x;
+              inner_x += innerInc_x;
+              
+              outer_y += outerInc_y;
+              inner_y += innerInc_y;
+            }
+            
             for(s32 iSample=1; iSample<numFiducialSamplesPerEdge-1;
-              iSample++, outer+=outerInc, inner += innerInc)
+              iSample++, outer_x+=outerInc_x, inner_x += innerInc_x)
             {
               // Top / Bottom Edges
-              pOuterTop[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, outer, -templateHalfHeight,
+              pOuterTop[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, outer_x, -templateHalfHeight,
                 0.f, -derivMagnitude,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
 
-              pInnerTop[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, inner, -innerTemplateHalfHeight,
+              pInnerTop[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, inner_x, -innerTemplateHalfHeight,
                 0.f, derivMagnitude,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
 
-              pOuterBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfHeight*signFlip,
+              pOuterBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, outer_x*signFlip, templateHalfHeight*signFlip,
                 0.f, derivMagnitude*signFlip,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
 
-              pInnerBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfHeight*signFlip,
+              pInnerBtm[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, inner_x*signFlip, innerTemplateHalfHeight*signFlip,
                 0.f, -derivMagnitude*signFlip,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
-
+            }
+            
+            for(s32 iSample=1; iSample<numFiducialSamplesPerEdge-1;
+                iSample++, outer_y+=outerInc_y, inner_y += innerInc_y)
+            {
               // Left / Right Edges
-              pOuterLeft[iSample]  = ComputeTemplateSample(fiducialSampleGrayValue, -templateHalfWidth, outer,
+              pOuterLeft[iSample]  = ComputeTemplateSample(fiducialSampleGrayValue, -templateHalfWidth, outer_y,
                 -derivMagnitude, 0.f,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
 
-              pOuterRight[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, templateHalfWidth, outer,
+              pOuterRight[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, templateHalfWidth, outer_y,
                 derivMagnitude, 0.f,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
 
-              pInnerLeft[iSample]  = ComputeTemplateSample(fiducialSampleGrayValue, -innerTemplateHalfWidth, inner,
+              pInnerLeft[iSample]  = ComputeTemplateSample(fiducialSampleGrayValue, -innerTemplateHalfWidth, inner_y,
                 derivMagnitude, 0.f,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
 
-              pInnerRight[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, innerTemplateHalfWidth, inner,
+              pInnerRight[iSample] = ComputeTemplateSample(fiducialSampleGrayValue, innerTemplateHalfWidth, inner_y,
                 -derivMagnitude, 0.f,
                 currentH, dR_dtheta,
                 this->focalLength_x, this->focalLength_y, curAtA);
             } // for each interior point
 
-            // Top/Bottom Edges' Right Corners:
+            if(roundedCornersFraction.x == 0 && roundedCornersFraction.y == 0)
+            {
+              // Top/Bottom Edges' Right Corners:
+              pInnerTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner_x, -innerTemplateHalfHeight,
+                -derivMagnitude, derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pInnerTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner, -innerTemplateHalfHeight,
-              -derivMagnitude, derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pOuterTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer_x, -templateHalfHeight,
+                derivMagnitude, -derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pOuterTop[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer, -templateHalfHeight,
-              derivMagnitude, -derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pInnerBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner_x*signFlip, innerTemplateHalfHeight*signFlip,
+                -derivMagnitude, -derivMagnitude*signFlip,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pInnerBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, inner*signFlip, innerTemplateHalfHeight*signFlip,
-              -derivMagnitude, -derivMagnitude*signFlip,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pOuterBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer_x*signFlip, templateHalfHeight*signFlip,
+                derivMagnitude, derivMagnitude*signFlip,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pOuterBtm[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, outer*signFlip, templateHalfHeight*signFlip,
-              derivMagnitude, derivMagnitude*signFlip,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              // Left / Right Edges' Bottom Corners
+              pOuterLeft[numFiducialSamplesPerEdge-1]  = ComputeTemplateSample(fiducialSampleGrayValue, -templateHalfWidth, outer_x,
+                -derivMagnitude, derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            // Left / Right Edges' Bottom Corners
-            pOuterLeft[numFiducialSamplesPerEdge-1]  = ComputeTemplateSample(fiducialSampleGrayValue, -templateHalfWidth, outer,
-              -derivMagnitude, derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pOuterRight[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, templateHalfWidth, outer_x,
+                derivMagnitude, derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pOuterRight[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, templateHalfWidth, outer,
-              derivMagnitude, derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pInnerLeft[numFiducialSamplesPerEdge-1]  = ComputeTemplateSample(fiducialSampleGrayValue, -innerTemplateHalfWidth, inner_x,
+                derivMagnitude, -derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
 
-            pInnerLeft[numFiducialSamplesPerEdge-1]  = ComputeTemplateSample(fiducialSampleGrayValue, -innerTemplateHalfWidth, inner,
-              derivMagnitude, -derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
-
-            pInnerRight[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, innerTemplateHalfWidth, inner,
-              -derivMagnitude, -derivMagnitude,
-              currentH, dR_dtheta,
-              this->focalLength_x, this->focalLength_y, curAtA);
+              pInnerRight[numFiducialSamplesPerEdge-1] = ComputeTemplateSample(fiducialSampleGrayValue, innerTemplateHalfWidth, inner_x,
+                -derivMagnitude, -derivMagnitude,
+                currentH, dR_dtheta,
+                this->focalLength_x, this->focalLength_y, curAtA);
+            }
           } // if(numFiducialSquareSamples > 0)
 
           // All interior and fiducial square samples completed, each of which

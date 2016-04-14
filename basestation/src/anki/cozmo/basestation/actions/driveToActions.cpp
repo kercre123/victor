@@ -897,7 +897,7 @@ namespace Anki {
     {
       AlignWithObjectAction* action = new AlignWithObjectAction(robot, objectID,
                                                                 distanceFromMarker_mm, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
       AddAction(action);
     }
     
@@ -919,7 +919,7 @@ namespace Anki {
                                  useManualSpeed)
     {
       PickupObjectAction* action = new PickupObjectAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
       AddAction(action);
     }
     
@@ -945,7 +945,7 @@ namespace Anki {
                                                               false,
                                                               0,
                                                               useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
       AddAction(action);
     }
     
@@ -972,7 +972,7 @@ namespace Anki {
                                                               true,
                                                               placementOffsetX_mm,
                                                               useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
       AddAction(action);
     }
     
@@ -995,7 +995,7 @@ namespace Anki {
     , _objectID(objectID)
     {
       RollObjectAction* action = new RollObjectAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
       AddAction(action);
     }
 
@@ -1065,7 +1065,7 @@ namespace Anki {
                                  useManualSpeed)
     {
       PopAWheelieAction* action = new PopAWheelieAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
       AddAction(action);
     }
     
@@ -1105,7 +1105,7 @@ namespace Anki {
                                  useManualSpeed)
     {
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
       AddAction(action);
     }
   }

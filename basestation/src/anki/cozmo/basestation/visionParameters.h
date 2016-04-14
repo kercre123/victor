@@ -16,6 +16,8 @@
 #include "anki/common/types.h"
 #include "anki/common/basestation/math/point.h"
 
+#include "anki/common/robot/geometry_declarations.h"
+
 #include "anki/vision/robot/binaryTracker.h"
 #include "anki/vision/robot/lucasKanade.h"
 
@@ -127,6 +129,7 @@ struct TrackerParameters
   s32 numInteriorSamples;            // number of samples on the code within the fiducial
   s32 numSamplingRegions;            // NxN grid of sampling regions within fiducial
   s32 numFiducialEdgeSamples;        // Number of samples on fiducial square's edges
+  Point2f roundedCornersFraction;
   
   f32 successTolerance_angle;
   f32 successTolerance_distance;
@@ -139,7 +142,9 @@ struct TrackerParameters
   static const f32 MAX_DOCKING_FOV_ANGLE;
   
   TrackerParameters();
-  void Initialize(ImageResolution resolution, const Point2f& fiducialThicknessFraction);
+  void Initialize(ImageResolution resolution,
+                  const Point2f& fiducialThicknessFraction,
+                  const Point2f& roundedCornersFractionArg);
   
 }; // struct TrackerParameters
 

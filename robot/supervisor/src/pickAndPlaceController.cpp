@@ -37,7 +37,7 @@ namespace Anki {
 
         // The distance from the last-observed position of the target that we'd
         // like to be after backing out
-        const f32 BACKOUT_DISTANCE_MM = 50.f;
+        const f32 BACKOUT_DISTANCE_MM = 60;
         const f32 BACKOUT_SPEED_MMPS = 60;
         
         // Max amount of time to wait for lift to get into position before backing out.
@@ -53,11 +53,11 @@ namespace Anki {
 
         // Distance at which robot should start driving blind
         // along last generated docking path during DA_PICKUP_HIGH.
-        const u32 HIGH_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_HIGH_LIFT_DIST_MM + 30;
+        const u32 HIGH_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_HIGH_LIFT_DIST_MM + 40;
 
         // Distance at which robot should start driving blind
         // along last generated docking path during PICKUP_LOW and PLACE_HIGH.
-        const u32 LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_LOW_LIFT_DIST_MM + 20;
+        const u32 LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_LOW_LIFT_DIST_MM + 10;
 
         const f32 DEFAULT_LIFT_SPEED_RAD_PER_SEC = 1.5;
         const f32 DEFAULT_LIFT_ACCEL_RAD_PER_SEC2 = 10;
@@ -75,6 +75,7 @@ namespace Anki {
 
         f32 dockSpeed_mmps_ = 0;
         f32 dockAccel_mmps2_ = 0;
+        f32 dockDecel_mmps2_ = 0;
 
         // Distance to last known docking marker pose
         f32 lastMarkerDist_;
@@ -109,11 +110,15 @@ namespace Anki {
         return RESULT_OK;
       }
 
+      DockAction GetCurAction()
+      {
+        return action_;
+      }
 
       void Reset()
       {
         mode_ = IDLE;
-        DockingController::ResetDocker();
+        DockingController::StopDocking();
       }
 
       void UpdatePoseSnapshot()
@@ -126,6 +131,7 @@ namespace Anki {
         BlockPickedUp msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.didSucceed = success;
+        msg.result = DockingController::GetDockingResult();
         if(RobotInterface::SendMessage(msg)) {
           return RESULT_OK;
         }
@@ -166,7 +172,7 @@ namespace Anki {
 
       static void StartBackingOut()
       {
-        static const f32 MIN_BACKOUT_DIST = 10.f;
+        static const f32 MIN_BACKOUT_DIST = 15.f;
 
         if (action_ == DA_PLACE_LOW_BLIND) {
           lastMarkerDist_ = 30.f;
@@ -263,6 +269,7 @@ namespace Anki {
               if (action_ == DA_PLACE_LOW_BLIND) {
                 DockingController::StartDockingToRelPose(dockSpeed_mmps_,
                                                          dockAccel_mmps2_,
+                                                         dockDecel_mmps2_,
                                                          dockOffsetDistX_,
                                                          dockOffsetDistY_,
                                                          dockOffsetAng_,
@@ -296,6 +303,7 @@ namespace Anki {
 
                 DockingController::StartDocking(dockSpeed_mmps_,
                                                 dockAccel_mmps2_,
+                                                dockDecel_mmps2_,
                                                 dockOffsetDistX_,
                                                 dockOffsetDistY_,
                                                 dockOffsetAng_,
@@ -322,7 +330,7 @@ namespace Anki {
               if (DockingController::DidLastDockSucceed())
               {
                 // Docking is complete
-                DockingController::ResetDocker();
+                DockingController::StopDocking();
 
                 // Take snapshot of pose
                 UpdatePoseSnapshot();
@@ -410,7 +418,7 @@ namespace Anki {
             }
             else if (action_ == DA_RAMP_ASCEND && (ABS(IMUFilter::GetPitch()) > ON_RAMP_ANGLE_THRESH) )
             {
-              DockingController::ResetDocker();
+              DockingController::StopDocking();
               SteeringController::ExecuteDirectDrive(RAMP_TRAVERSE_SPEED_MMPS, RAMP_TRAVERSE_SPEED_MMPS);
               mode_ = TRAVERSE_RAMP;
               Localization::SetOnRamp(true);
@@ -725,10 +733,12 @@ namespace Anki {
       void DockToBlock(const DockAction action,
                        const f32 speed_mmps,
                        const f32 accel_mmps2,
+                       const f32 decel_mmps2,
                        const f32 rel_x,
                        const f32 rel_y,
                        const f32 rel_angle,
-                       const bool useManualSpeed)
+                       const bool useManualSpeed,
+                       const u8 numRetries)
       {
 #if(DEBUG_PAP_CONTROLLER)
         AnkiDebug( 14, "PAP", 143, "DOCK TO BLOCK (action %d)", 1, action);
@@ -738,6 +748,7 @@ namespace Anki {
 
         dockSpeed_mmps_ = speed_mmps;
         dockAccel_mmps2_ = accel_mmps2;
+        dockDecel_mmps2_ = decel_mmps2;
 
         if (action_ == DA_PLACE_LOW_BLIND) {
           dockOffsetDistX_ = rel_x;
@@ -754,11 +765,14 @@ namespace Anki {
         transitionTime_ = 0;
         mode_ = SET_LIFT_PREDOCK;
         lastActionSucceeded_ = false;
+        
+        DockingController::SetMaxRetries(numRetries);
 
       }
 
       void PlaceOnGround(const f32 speed_mmps,
                          const f32 accel_mmps2,
+                         const f32 decel_mmps2,
                          const f32 rel_x,
                          const f32 rel_y,
                          const f32 rel_angle,
@@ -767,6 +781,7 @@ namespace Anki {
         DockToBlock(DA_PLACE_LOW_BLIND,
                     speed_mmps,
                     accel_mmps2,
+                    decel_mmps2,
                     rel_x,
                     rel_y,
                     rel_angle,

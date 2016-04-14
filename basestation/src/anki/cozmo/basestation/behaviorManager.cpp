@@ -53,13 +53,13 @@ namespace Cozmo {
     {
       const Json::Value& chooserConfigJson = config[kChooserConfigKey];
       Util::SafeDelete(_defaultChooser);
-      _defaultChooser = new SimpleBehaviorChooser(_robot, chooserConfigJson);
+      _defaultChooser = new ReactionaryBehaviorChooser(_robot, chooserConfigJson);
       SetBehaviorChooser( _defaultChooser );
 
       BehaviorFactory& behaviorFactory = GetBehaviorFactory();
-      AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
+      // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
       AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
-      AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
+      // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
     }
     
     // initialize whiteboard
@@ -124,7 +124,10 @@ namespace Cozmo {
     // Callback for EngineToGame event that a reactionary behavior (possibly) cares about
     auto reactionsEngineToGameCallback = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
     {
-      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(_robot, event);
+      IBehavior* newForcedBehavior = _behaviorChooser->GetReactionaryBehavior(_robot, event);
+      if( nullptr != newForcedBehavior ) {
+        _forceSwitchBehavior = newForcedBehavior;
+      }
     };
     
     // Subscribe our own callback to these events
@@ -137,7 +140,10 @@ namespace Cozmo {
     // Callback for GameToEngine event that a reactionary behavior (possibly) cares about
     auto reactionsGameToEngineCallback = [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
-      _forceSwitchBehavior = _behaviorChooser->GetReactionaryBehavior(_robot, event);
+      IBehavior* newForcedBehavior = _behaviorChooser->GetReactionaryBehavior(_robot, event);
+      if( nullptr != newForcedBehavior ) {
+        _forceSwitchBehavior = newForcedBehavior;
+      }
     };
     
     // Subscribe our own callback to these events

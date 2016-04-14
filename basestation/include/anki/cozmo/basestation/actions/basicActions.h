@@ -345,6 +345,7 @@ namespace Anki {
       IActionRunner* _chosenAction = nullptr;
       f32            _speed_mmps;
       f32            _accel_mmps2;
+      f32            _decel_mmps2;
       bool           _useManualSpeed;
       
     }; // class TraverseObjectAction
@@ -369,8 +370,9 @@ namespace Anki {
       void SetPose(const Pose3d& pose);
       virtual Radians GetHeadAngle(f32 heightDiff);
       
-    private:
       Pose3d    _poseWrtRobot;
+      
+    private:
       bool      _isPoseSet;
       Radians   _maxTurnAngle;
       
@@ -446,8 +448,6 @@ namespace Anki {
       
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override;
-
-      virtual Radians      GetHeadAngle(f32 heightDiff) override;
       
       bool                       _facePoseCompoundActionDone;
       

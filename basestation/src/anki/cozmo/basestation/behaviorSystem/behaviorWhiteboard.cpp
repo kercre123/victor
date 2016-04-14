@@ -44,6 +44,31 @@ void BehaviorWhiteboard::Init(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorWhiteboard::DisableCliffReaction(void* id)
+{
+  _disableCliffIds.insert(id);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorWhiteboard::RequestEnableCliffReaction(void* id)
+{
+  size_t numErased = _disableCliffIds.erase(id);
+
+  if( numErased == 0 ){
+    PRINT_NAMED_WARNING("BehaviorWhiteboard.RequestEnableCliffReaction.InvalidId",
+                        "tried to request enabling cliff reaction with id %p, but no id found. %zu in set",
+                        id,
+                        _disableCliffIds.size());
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorWhiteboard::IsCliffReactionEnabled() const
+{
+  return _disableCliffIds.empty();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
 void BehaviorWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleObject& msg)
 {

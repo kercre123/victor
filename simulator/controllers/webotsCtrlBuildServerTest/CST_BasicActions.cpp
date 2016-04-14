@@ -127,7 +127,7 @@ namespace Anki {
         {
           // Verify robot is 50 mm forwards
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 50, 15), DEFAULT_TIMEOUT)
+                                           NEAR(GetRobotPose().GetTranslation().x(), 50, 10), DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;
             m.robotID = 1;
@@ -146,7 +146,7 @@ namespace Anki {
         {
           // Verify robot is at starting point
           IF_CONDITION_WITH_TIMEOUT_ASSERT(!IsRobotStatus(RobotStatusFlag::IS_MOVING) &&
-                                           NEAR(GetRobotPose().GetTranslation().x(), 0, 15) &&
+                                           NEAR(GetRobotPose().GetTranslation().x(), 0, 10) &&
                                            NEAR(GetRobotPose().GetRotation().GetAngleAroundZaxis().getDegrees(), 0, 10), DEFAULT_TIMEOUT)
           {
             ExternalInterface::QueueSingleAction m;

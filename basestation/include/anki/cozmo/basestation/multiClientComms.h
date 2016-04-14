@@ -37,7 +37,7 @@ namespace Anki {
 namespace Cozmo {
 
   typedef struct {
-    Comms::AdvertisementMsg devInfo;
+    AdvertisementMsg devInfo;
     f32 lastSeenTime;
   } DeviceConnectionInfo_t;
   
@@ -45,6 +45,11 @@ namespace Cozmo {
   class ConnectedDeviceInfo {
   public:
     static const int MAX_RECV_BUF_SIZE = 1920000; // TODO: Shrink this?
+    
+    ConnectedDeviceInfo();
+    ~ConnectedDeviceInfo();
+    
+    void DestroyClients();
     /*
 #if(USE_UDP_ROBOT_COMMS)
     UdpClient* client;
@@ -52,8 +57,9 @@ namespace Cozmo {
     TcpClient* client;
 #endif
      */
-    void* client;
-    u8 protocol;
+    // Note: in/out Client ptrs can be identical (if in and out are on the same port)
+    UdpClient* _inClient;
+    UdpClient* _outClient;
     u8 recvBuf[MAX_RECV_BUF_SIZE];
     int recvDataSize = 0;
   };
@@ -101,7 +107,7 @@ namespace Cozmo {
     bool ConnectToDeviceByID(int devID);
     
     // Disconnect from a device
-    void DisconnectDeviceByID(int devID);
+    bool DisconnectDeviceByID(int devID);
     
     // Connect to all advertising devices.
     // Returns the total number of devices that are connected.

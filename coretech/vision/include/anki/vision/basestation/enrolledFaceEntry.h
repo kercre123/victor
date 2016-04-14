@@ -13,7 +13,7 @@
 #ifndef __Anki_Vision_EnrolledFaceEntry_H__
 #define __Anki_Vision_EnrolledFaceEntry_H__
 
-#include "anki/vision/basestation/trackedFace.h"
+#include "anki/vision/basestation/faceIdTypes.h"
 
 #include <ctime>
 
@@ -26,11 +26,10 @@ namespace Json {
 namespace Anki {
 namespace Vision {
 
-  
 struct EnrolledFaceEntry
 {
-  TrackedFace::ID_t         faceID;
-  TrackedFace::ID_t         prevID = TrackedFace::UnknownFace;
+  FaceID_t         faceID;
+  FaceID_t         prevID = UnknownFaceID;
   
   std::string               name;
   
@@ -42,10 +41,10 @@ struct EnrolledFaceEntry
   
   bool                      isForThisSessionOnly = true;
   
-  EnrolledFaceEntry(TrackedFace::ID_t withID = TrackedFace::UnknownFace);
+  EnrolledFaceEntry(FaceID_t withID = UnknownFaceID);
   
   // Faces constructed from Json default to _not_ being for this session only
-  EnrolledFaceEntry(TrackedFace::ID_t withID, Json::Value& json);
+  EnrolledFaceEntry(FaceID_t withID, Json::Value& json);
   
   void MergeWith(EnrolledFaceEntry& otherEntry);
   

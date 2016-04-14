@@ -39,9 +39,8 @@ const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 12.f;
 const f32 ORIGIN_TO_HIGH_PLACEMENT_DIST_MM = 20.f;
 #endif
 
-
-const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 22.f;
-const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 17.f;
+const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 23.f;
+const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 20.f;
 const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 13.f;
 
 
@@ -63,6 +62,10 @@ namespace Anki {
 
       // Returns true if last attempt to a block succeeded
       bool DidLastDockSucceed();
+      
+      void SetMaxRetries(u8 numRetries);
+      
+      Result SendDockingStatusMessage(Status status);
 
       // Tells the docker what the relative position of the block is.
       // rel_x: Distance to center of block along robot's x-axis
@@ -75,7 +78,7 @@ namespace Anki {
 
       // Resets state machine and configures VisionSystem to track
       // appropriate block
-      void ResetDocker();
+      void StopDocking(DockingResult result = DOCK_INTERRUPTED);
 
       // The robot will follow a docking path generated from an error signal to a marker
       // that it expects to be receiving from cozmo-engine immediately after this is called.
@@ -85,7 +88,7 @@ namespace Anki {
       //                  e.g. To place a block on top of two other blocks, the robot would need to "dock" to
       //                       one of the blocks at some horizontal offset.
       // dockOffsetAngle: Docking offset angle. +ve means block is facing robot's right side.
-      void StartDocking(const f32 speed_mmps, const f32 accel_mmps,
+      void StartDocking(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0,
                         const bool useManualSpeed = false,
                         const u32 pointOfNoReturnDistMM = 0);
@@ -94,7 +97,7 @@ namespace Anki {
       // were in that pose, the block face facing the robot would be aligned with the pose specified
       // relative to the pose of the robot at the time "docking" started.
       // No vision markers are required as this is a "blind docking" maneuver.
-      void StartDockingToRelPose(const f32 speed_mmps, const f32 accel_mmps,
+      void StartDockingToRelPose(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
                                  const f32 rel_x, const f32 rel_y, const f32 rel_angle,
                                  const bool useManualSpeed = false);
 
@@ -107,6 +110,8 @@ namespace Anki {
       
       // Sets the latest docking error signal message coming from engine
       void SetDockingErrorSignalMessage(const DockingErrorSignal& msg);
+      
+      DockingResult GetDockingResult();
 
     } // namespace DockingController
   } // namespace Cozmo

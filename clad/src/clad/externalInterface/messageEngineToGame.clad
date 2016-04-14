@@ -17,6 +17,7 @@
 #include "clad/types/factoryTestTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/gameEvent.clad"
+#include "clad/types/uiConnectionTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -37,6 +38,7 @@ message RobotAvailable {
 }
 
 message UiDeviceAvailable {
+    UiConnectionType  connectionType,
     uint_32 deviceID
 }
 
@@ -52,6 +54,7 @@ message RobotDisconnected {
 
 
 message UiDeviceConnected {
+    UiConnectionType  connectionType,
     uint_32 deviceID,
     uint_8 successful
 }

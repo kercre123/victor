@@ -43,7 +43,7 @@ namespace Cozmo {
                                                         {
                                                           const s32 ownerID = event.GetData().Get_SetOwnerFace().ownerID;
                                                           if(ownerID < 0) {
-                                                            SetOwnerID(Vision::TrackedFace::UnknownFace);
+                                                            SetOwnerID(Vision::UnknownFaceID);
                                                           } else {
                                                             SetOwnerID(ownerID);
                                                           }
@@ -71,7 +71,7 @@ namespace Cozmo {
     _lastObservedFaceTimeStamp = 0;
   }
   
-  void FaceWorld::RemoveFaceByID(Vision::TrackedFace::ID_t faceID)
+  void FaceWorld::RemoveFaceByID(Vision::FaceID_t faceID)
   {
     auto knownFaceIter = _knownFaces.find(faceID);
     
@@ -84,8 +84,8 @@ namespace Cozmo {
     }
   }
   
-  Result FaceWorld::ChangeFaceID(Vision::TrackedFace::ID_t oldID,
-                                 Vision::TrackedFace::ID_t newID)
+  Result FaceWorld::ChangeFaceID(Vision::FaceID_t oldID,
+                                 Vision::FaceID_t newID)
   {
     auto knownFaceIter = _knownFaces.find(oldID);
     if(knownFaceIter != _knownFaces.end()) {
@@ -201,7 +201,7 @@ namespace Cozmo {
       } // for each known face
       
       if(foundMatch) {
-        const Vision::TrackedFace::ID_t matchedID = knownFace->face.GetID();
+        const Vision::FaceID_t matchedID = knownFace->face.GetID();
         
         // Verbose! Useful for debugging
         //PRINT_NAMED_DEBUG("FaceWorld.UpdateFace.UpdatingKnownFaceByPose",
@@ -396,7 +396,7 @@ namespace Cozmo {
     return RESULT_OK;
   } // Update()
   
-  const Vision::TrackedFace* FaceWorld::GetFace(Vision::TrackedFace::ID_t faceID) const
+  const Vision::TrackedFace* FaceWorld::GetFace(Vision::FaceID_t faceID) const
   {
     auto faceIter = _knownFaces.find(faceID);
     if(faceIter == _knownFaces.end()) {
@@ -406,18 +406,18 @@ namespace Cozmo {
     }
   }
 
-  std::vector<Vision::TrackedFace::ID_t> FaceWorld::GetKnownFaceIDs() const
+  std::vector<Vision::FaceID_t> FaceWorld::GetKnownFaceIDs() const
   {
-    std::vector<Vision::TrackedFace::ID_t> faceIDs;
+    std::vector<Vision::FaceID_t> faceIDs;
     for (auto pair : _knownFaces) {
       faceIDs.push_back(pair.first);
     }
     return faceIDs;
   }
   
-  std::list<Vision::TrackedFace::ID_t> FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const
+  std::list<Vision::FaceID_t> FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const
   {
-    std::list<Vision::TrackedFace::ID_t> faceIDs;
+    std::list<Vision::FaceID_t> faceIDs;
     for (auto pair : _knownFaces) {
       if (pair.second.face.GetTimeStamp() >= seenSinceTime_ms) {
         faceIDs.push_back(pair.second.face.GetID());

@@ -135,7 +135,7 @@ namespace Vision {
     {
       // Feature extraction thread is done: finish the rest of the recognition
       // process so we can start accepting new requests to recognize
-      TrackedFace::ID_t recognizedID = TrackedFace::UnknownFace;
+      FaceID_t recognizedID = UnknownFaceID;
       s32 score = 0;
       Result result = RecognizeFace(recognizedID, score);
       
@@ -145,19 +145,19 @@ namespace Vision {
       if(RESULT_OK == result)
       {
         // See who we're currently recognizing this tracker ID as
-        TrackedFace::ID_t faceID = TrackedFace::UnknownFace;
+        FaceID_t faceID = UnknownFaceID;
         auto iter = _trackingToFaceID.find(_detectionInfo.nID);
         if(iter != _trackingToFaceID.end()) {
           faceID = iter->second;
         }
         
-        if(TrackedFace::UnknownFace == recognizedID) {
+        if(UnknownFaceID == recognizedID) {
           // We did not recognize the tracked face in its current position, just leave
           // the faceID alone
           
           // (Nothing to do)
           
-        } else if(TrackedFace::UnknownFace == faceID) {
+        } else if(UnknownFaceID == faceID) {
           // We have not yet assigned a recognition ID to this tracker ID. Use the
           // one we just found via recognition.
           faceID = recognizedID;
@@ -175,7 +175,7 @@ namespace Vision {
             ASSERT_NAMED(recIDenrollData  != _enrollmentData.end(),
                          "FaceRecognizer.GetRecognitionData.MissingEnrollmentData");
             
-            TrackedFace::ID_t mergeTo, mergeFrom;
+            FaceID_t mergeTo, mergeFrom;
             
             if(false == recIDenrollData->second.isForThisSessionOnly &&
                true  == faceIDenrollData->second.isForThisSessionOnly)
@@ -229,7 +229,7 @@ namespace Vision {
         // Update the stored faceID assigned to this trackerID
         // (This creates an entry for the current trackerID if there wasn't one already,
         //  and an entry for this faceID if there wasn't one already)
-        if(TrackedFace::UnknownFace != recognizedID) {
+        if(UnknownFaceID != recognizedID) {
           _trackingToFaceID[_detectionInfo.nID] = faceID;
           _enrollmentData[faceID].score = score;
         }
@@ -278,8 +278,8 @@ namespace Vision {
     
     auto iter = _trackingToFaceID.find(forTrackingID);
     if(iter != _trackingToFaceID.end()) {
-      const TrackedFace::ID_t faceID = iter->second;
-      ASSERT_NAMED(faceID != TrackedFace::UnknownFace,
+      const FaceID_t faceID = iter->second;
+      ASSERT_NAMED(faceID != UnknownFaceID,
                    "FaceRecognizer.GetRecognitionData.EnrolledEntryWithUnknownID");
       auto & enrolledEntry = _enrollmentData.at(faceID);
       entry = enrolledEntry;
@@ -370,7 +370,7 @@ namespace Vision {
     if(numUsersInAlbum >= MaxAlbumFaces) {
       // See if there are any session-only faces we can overwrite before giving up.
       // If so, choose the one that it's been the longest since we updated.
-      TrackedFace::ID_t oldestSessionOnlyID = TrackedFace::UnknownFace;
+      FaceID_t oldestSessionOnlyID = UnknownFaceID;
       time_t oldestUpdateTime = std::numeric_limits<time_t>::max();
       for(auto & enrollData : _enrollmentData) {
         if(enrollData.second.isForThisSessionOnly && enrollData.second.lastDataUpdateTime < oldestUpdateTime) {
@@ -379,7 +379,7 @@ namespace Vision {
         }
       }
       
-      if(TrackedFace::UnknownFace != oldestSessionOnlyID) {
+      if(UnknownFaceID != oldestSessionOnlyID) {
         PRINT_NAMED_DEBUG("FaceRecognizer.RegisterNewUser.ReplacingOldestSessionOnlyUser",
                           "Session-only face %d not updated since %s and will be replaced.",
                           oldestSessionOnlyID, ctime(&oldestUpdateTime));
@@ -413,7 +413,7 @@ namespace Vision {
           }
         }
         
-        ASSERT_NAMED(_lastRegisteredUserID != Vision::TrackedFace::UnknownFace,
+        ASSERT_NAMED(_lastRegisteredUserID != Vision::UnknownFaceID,
                      "FaceRecognizer.RegisterNewUser.LastRegisteredIdIsUnknown");
         
       } while(isRegistered && tries++ < MaxAlbumFaces);
@@ -582,7 +582,7 @@ namespace Vision {
     return result;
   } // UpdateExistingUser()
   
-  void FaceRecognizer::SetEnrollmentImage(TrackedFace::ID_t userID, s32 whichEnrollData,
+  void FaceRecognizer::SetEnrollmentImage(FaceID_t userID, s32 whichEnrollData,
                                           const EnrolledFaceEntry& enrollData)
   {
     _enrollmentImages[userID][whichEnrollData] = Vision::ImageRGB(_img);
@@ -639,7 +639,7 @@ namespace Vision {
   }
   
 
-  Result FaceRecognizer::RecognizeFace(TrackedFace::ID_t& faceID, INT32& recognitionScore)
+  Result FaceRecognizer::RecognizeFace(FaceID_t& faceID, INT32& recognitionScore)
   {
     ASSERT_NAMED(ProcessingState::FeaturesReady == _state,
                  "FaceRecognizer.RecognizerFace.FeaturesShouldBeReady");
@@ -767,8 +767,8 @@ namespace Vision {
     return RESULT_OK;
   } // RecognizeFace()
   
-  Result FaceRecognizer::MergeFaces(TrackedFace::ID_t keepID,
-                                    TrackedFace::ID_t mergeID)
+  Result FaceRecognizer::MergeFaces(FaceID_t keepID,
+                                    FaceID_t mergeID)
   {
     INT32 okaoResult = OKAO_NORMAL;
     
@@ -900,7 +900,7 @@ namespace Vision {
   } // SetSerializedAlbum()
   
   
-  void FaceRecognizer::AssignNameToID(TrackedFace::ID_t faceID, const std::string& name)
+  void FaceRecognizer::AssignNameToID(FaceID_t faceID, const std::string& name)
   {
     std::lock_guard<std::mutex> lock(_mutex);
 
@@ -1040,7 +1040,7 @@ namespace Vision {
           } else {
             _enrollmentData.clear();
             for(auto & idStr : json.getMemberNames()) {
-              TrackedFace::ID_t faceID = std::stoi(idStr);
+              FaceID_t faceID = std::stoi(idStr);
               if(!json.isMember(idStr)) {
                 PRINT_NAMED_ERROR("FaceRecognizer.LoadAlbum.BadFaceIdString",
                                   "Could not find member for string %s with value %d",

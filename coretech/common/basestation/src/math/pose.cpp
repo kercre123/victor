@@ -264,7 +264,7 @@ namespace Anki {
 #pragma mark --- Member Methods ---
   Pose3d Pose3d::GetInverse(void) const
   {
-    Pose3d returnPose(*this);
+    Pose3d returnPose(this->GetRotation(), this->GetTranslation());
     returnPose.Invert();
     return returnPose;
   }
