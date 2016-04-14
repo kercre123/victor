@@ -202,14 +202,15 @@ namespace SpeedTap {
       if (_PlayerTapRegistered) {
         return;
       }
-      _PlayerTapRegistered = true;
       if (_GotMatch) {
         if (_CozmoHitCube == false) {
           _SpeedTapGame.PlayerHitFirst = true;
+          _PlayerTapRegistered = true;
         }
       }
       else if (_LightsOn) {
         _SpeedTapGame.PlayerHitWrong();
+        _PlayerTapRegistered = true;
       }
     }
 
