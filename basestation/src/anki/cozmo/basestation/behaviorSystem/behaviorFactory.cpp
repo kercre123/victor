@@ -18,6 +18,7 @@
 #include "../behaviors/exploration/behaviorExploreCliff.h"
 #include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 #include "../behaviors/exploration/behaviorExploreMarkedCube.h"
+#include "../behaviors/exploration/behaviorExploreVisitPossibleMarker.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFidget.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
@@ -156,6 +157,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ExploreLookAroundInPlace:
     {
       newBehavior = new BehaviorExploreLookAroundInPlace(robot, config);
+      break;
+    }
+    case BehaviorType::ExploreVisitPossibleMarker:
+    {
+      newBehavior = new BehaviorExploreVisitPossibleMarker(robot, config);
       break;
     }
     case BehaviorType::RollBlock:

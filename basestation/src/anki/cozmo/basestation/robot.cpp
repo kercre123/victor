@@ -38,6 +38,7 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -329,6 +330,9 @@ namespace Anki {
       
       // create a new memory map for this origin
       _blockWorld.CreateLocalizedMemoryMap(_worldOrigin);
+      
+      // notify behavior whiteboard
+      _behaviorMgr.GetWhiteboard().OnRobotDelocalized();
       
     } // Delocalize()
     
@@ -820,7 +824,11 @@ namespace Anki {
       
       const char* behaviorChooserName = "";
       std::string behaviorDebugStr("<disabled>");
-      if(_isBehaviorMgrEnabled) {
+
+      // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
+      static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
+      if(_isBehaviorMgrEnabled && ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
+      {
         _behaviorMgr.Update(currentTime);
         
         const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
@@ -844,6 +852,8 @@ namespace Anki {
         {
           behaviorChooserName = behaviorChooser->GetName();
         }
+      } else {
+        --ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242;
       }
       
       GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,

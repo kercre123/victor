@@ -13,6 +13,8 @@
 #ifndef __Anki_Cozmo_Basestation_ExternalInterface_ExternalInterfaceFwd_H__
 #define __Anki_Cozmo_Basestation_ExternalInterface_ExternalInterfaceFwd_H__
 
+#include <cstdint>
+
 namespace Anki {
 namespace Cozmo {
 

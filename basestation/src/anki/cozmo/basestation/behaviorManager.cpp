@@ -38,7 +38,7 @@ namespace Cozmo {
   , _forceReInit(false)
   , _robot(robot)
   , _behaviorFactory(new BehaviorFactory())
-  , _whiteboard( new BehaviorWhiteboard() )
+  , _whiteboard( new BehaviorWhiteboard(robot) )
   , _minBehaviorTime_sec(1)
   {
 
@@ -64,7 +64,7 @@ namespace Cozmo {
     
     // initialize whiteboard
     assert( _whiteboard );
-    _whiteboard->Init(_robot);
+    _whiteboard->Init();
     
     if (_robot.HasExternalInterface())
     {
