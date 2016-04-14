@@ -1,0 +1,80 @@
+﻿using UnityEngine;
+using System.Collections;
+using System.Linq;
+using DataPersistence;
+
+public class PlayerManager : MonoBehaviour {
+  public static PlayerManager Instance { get; private set; }
+
+  private void OnEnable() {
+    if (Instance != null && Instance != this) {
+      Destroy(gameObject);
+      return;
+    }
+    else {
+      Instance = this;
+    }
+  }
+
+  [SerializeField]
+  private ChestData _ChestData;
+
+  public delegate void GreenPointsUpdateHandler(int points, int maxPoints);
+
+  public delegate void ChestGainedHandler(int treatsGained, int hexGained);
+
+  public GreenPointsUpdateHandler GreenPointsUpdate;
+
+  public ChestGainedHandler ChestGained;
+
+  public int GetGreenPointsLadderMax() {
+    return GetLadderCount(_ChestData.GreenPointMaxLadders);
+  }
+
+  public int GetLadderCount(Ladder[] ladder) {
+    int ladderLevel = 0;
+    if (DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault() != null) {
+      ladderLevel = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel;
+    }
+    int value = ladder.Last().Value; // default to max value
+    for (int i = 0; i < ladder.Length - 1; ++i) {
+      if (ladderLevel >= ladder[i].Level && ladderLevel < ladder[i + 1].Level) {
+        value = ladder[i].Value;
+        break;
+      }
+    }
+    return value;
+  }
+
+  public void SetGreenPoints(int points) {
+    int greenPoints = points;
+    int currentLadderMax = GetLadderCount(_ChestData.GreenPointMaxLadders);
+    while (greenPoints >= currentLadderMax) {
+      int treatsGained = GetLadderCount(_ChestData.TreatRewardLadders);
+      int hexGained = GetLadderCount(_ChestData.HexRewardLadders);
+
+      DAS.Info(this, "Chest unlocked! Gained " + treatsGained + " treats");
+
+      DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount += treatsGained;
+      DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces += hexGained;
+      DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel++;
+
+      if (ChestGained != null) {
+        ChestGained(treatsGained, hexGained);
+      }
+
+      greenPoints -= currentLadderMax;
+      currentLadderMax = GetLadderCount(_ChestData.GreenPointMaxLadders);
+    }
+
+    DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints = greenPoints;
+
+    if (GreenPointsUpdate != null) {
+      GreenPointsUpdate(greenPoints, GetLadderCount(_ChestData.GreenPointMaxLadders));
+    }
+  }
+
+  public void AddGreenPoints(int points) {
+    SetGreenPoints(DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints + points);
+  }
+}

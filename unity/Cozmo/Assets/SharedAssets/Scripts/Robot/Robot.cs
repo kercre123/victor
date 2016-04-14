@@ -314,11 +314,11 @@ public class Robot : IRobot {
       pointTurnSpeed_rad_per_sec: 2.0f, // 2.5 max
       pointTurnAccel_rad_per_sec2: 100.0f,
       pointTurnDecel_rad_per_sec2: 500.0f,
-      dockSpeed_mmps: 100.0f, // should be less than speed_mmps
+      dockSpeed_mmps: 60.0f, // should be less than speed_mmps
       dockAccel_mmps2: 200.0f,
       reverseSpeed_mmps: 80.0f
     );
-            
+
     BackpackLights = new ILight[Singleton<SetBackpackLEDs>.Instance.onColor.Length];
 
     EmotionValues = new float[(int)Anki.Cozmo.EmotionType.Count];

@@ -14,9 +14,17 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   [SerializeField]
   private GameObject _UnlocksTilePrefab;
 
+  [SerializeField]
+  private Anki.UI.AnkiTextLabel _SparksLabel;
+
+  [SerializeField]
+  private Anki.UI.AnkiTextLabel _HexLabel;
+
   void Start() { 
     LoadTiles();
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleRequestSetUnlockResult;
+    _SparksLabel.FormattingArgs = new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount };
+    _HexLabel.FormattingArgs = new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces };
   }
 
   void OnDestroy() {
