@@ -349,14 +349,24 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
     if (_writeDataAckMap[baseTag].writeNotErase || baseTag == tag) {
       --_writeDataAckMap[baseTag].numTagsLeftToAck;
       
-      // Check if this should be forwarded on to game
-      if (_writeDataAckMap[baseTag].broadcastResultToGame) {
+      // Check if this should be forwarded on to game.
+      // For multi-erase, only forward the final (i.e. 2nd) result
+      if (_writeDataAckMap[baseTag].broadcastResultToGame &&
+          (_writeDataAckMap[baseTag].writeNotErase || _writeDataAckMap[baseTag].numTagsLeftToAck == 0)) {
         ExternalInterface::NVStorageOpResult msg;
         msg.tag = static_cast<NVStorage::NVEntryTag>(baseTag);
         msg.result = payload.report.result;
         msg.write = payload.report.write;
         _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       }
+    }
+
+    // Just a printout to indicate all sent writes were ackd
+    if (_writeDataAckMap[baseTag].numTagsLeftToAck == 0) {
+      PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.MsgWriteConfirmed",
+                       "BaseTag: %s, lastTag: 0x%x",
+                       EnumToString((NVStorage::NVEntryTag)baseTag), tag);
+      _writeDataAckMap.erase(baseTag);
     }
     
     if (payload.report.result != NVStorage::NVResult::NV_OKAY) {
@@ -365,15 +375,6 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
                           tag, payload.report.write, EnumToString(payload.report.result));
       return;
     }
-    
-    // Just a printout to indicate all sent writes were ackd
-    if (_writeDataAckMap[baseTag].numTagsLeftToAck == 0) {
-      PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.MsgWriteConfirmed",
-                       "BaseTag: %s, lastTag: 0x%x",
-                       EnumToString((NVStorage::NVEntryTag)baseTag), tag);
-      _writeDataAckMap.erase(baseTag);
-    }
-
     
   } else {
     // Check that this was actually requested data
@@ -396,6 +397,7 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
       PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.ReadOpFailed",
                           "Tag: 0x%x, write: %d, result: %s",
                           tag, payload.report.write, EnumToString(payload.report.result));
+      _recvDataMap.erase(baseTag);
       return;
     }
 

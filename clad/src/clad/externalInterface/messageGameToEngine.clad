@@ -930,6 +930,9 @@ message ComputeCameraCalibration {
 // Robot flash
 ///////////////////////////////////////////////////////////////////////////////
 
+// All non-volatile storage operations result in a NVStorageOpResult message
+// being sent back from engine upon completion.
+
 message NVStorageEraseEntry {
   NVStorage::NVEntryTag tag
 }
@@ -941,6 +944,7 @@ message NVStorageWriteEntry {
   uint_8  index       // If tag is a multi-blob entry, index is the blob index starting at 0 for the first blob.
 }
 
+// Data is returned in NVStorageData messages.
 // If multi-blob entry, game will have to dechunk.
 message NVStorageReadEntry {
   NVStorage::NVEntryTag tag

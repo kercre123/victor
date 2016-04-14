@@ -34,16 +34,12 @@ class CozmoContext;
 
 namespace ExternalInterface {
   class MessageGameToEngine;
-  class MessageEngineToGame;
+//  class MessageEngineToGame;
 }
   
 namespace RobotInterface {
-//  class MessageHandler;
-//  class EngineToRobot;
   class RobotToEngine;
-//  enum class EngineToRobotTag : uint8_t;
-//  enum class RobotToEngineTag : uint8_t;
-} // end namespace RobotInterface
+}
   
   
 class NVStorageComponent : private Util::noncopyable
@@ -54,18 +50,24 @@ public:
   virtual ~NVStorageComponent() {};
   
   // Save data to robot under the given tag.
-  // Returns true if data passes checks to be sent to robot.
-  // Caller should expect a MessageEngineToGame indicating success/failure of write.
+  // Returns true if request was successfully sent.
+  // If broadcastResultToGame == true, each write (there are potentially multiple)
+  // is acked with MessageEngineToGame::NVStorageOpResult.
   bool Write(NVStorage::NVEntryTag tag, u8* data, size_t size, bool broadcastResultToGame = false);
   
-  // Erase the given entry from robot flash
+  // Erase the given entry from robot flash.
+  // Returns true if request was successfully sent.
+  // If broadcastToGame == true, a single MessageEngineToGame::NVStorageOpResult
+  // will be broadcast when the operation is complete.
   bool Erase(NVStorage::NVEntryTag tag, bool broadcastResultToGame = false);
   
   // Request data stored on robot under the given tag.
   // Executes specified callback when data is received.
-  // Copies data into specified data vector if non-null.
+  // Copies data directly into specified data vector if non-null.
   // Returns true if request was successfully sent.
-  // TODO: Some other message gets sent when the data is ready.
+  // If broadcastResultToGame == true, each data blob received from robot
+  // is forwarded to game via MessageEngineToGame::NVDataStorage and when
+  // all blobs are received it will also trigger MessageEngineToGame::NVStorageOpResult.
   using NVStorageReadCallback = std::function<void(u8* data, size_t size)>;
   bool Read(NVStorage::NVEntryTag tag,
             NVStorageReadCallback callback = {},
@@ -100,6 +102,7 @@ private:
   // Given any tag, returns the assumed end-of-range tag
   u32 GetTagRangeEnd(u32 startTag) const;
   
+  // Info about a single write/erase request
   struct WriteDataObject {
     WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>&& dataVec, bool write) {
       baseTag = tag;
@@ -115,12 +118,14 @@ private:
     bool writeNotErase;
   };
   
+  // Info on how to handle ACK'd writes/erases
   struct WriteDataAckInfo {
     u32  numTagsLeftToAck;
     bool broadcastResultToGame;
     bool writeNotErase;
   };
   
+  // Info on how to handle read-requested data
   struct RecvDataObject {
     ~RecvDataObject() {
       if (deleteVectorWhenDone)
@@ -134,18 +139,24 @@ private:
   };
   
   
-  // Queue of data to be sent to robot for saving
+  // Queue of data to be sent to robot for writing/erasing
   std::queue<WriteDataObject> _writeDataQueue;
   
-  // Map of NVEntryTag to the number of tags expected to be confirmed written.
+  // Map of NVEntryTag to ACK handling struct.
   std::unordered_map<u32, WriteDataAckInfo > _writeDataAckMap;
   
-  // Map of requested tag from robot to vector where the data should be stored
+  // Map of requested NVEntryTag to received data handling struct
   std::unordered_map<u32, RecvDataObject> _recvDataMap;
-
-  static constexpr u32 _kMaxNvStorageEntrySize       = 20000;
+  
+  // Maximum size of a single blob
   static constexpr u32 _kMaxNvStorageBlobSize        = 1024;
-  static constexpr u32 _kMaxNumBlobsInMultiBlobEntry = 40;
+  
+  // Maximum number of blobs allowed in a multi-blob entry
+  static constexpr u32 _kMaxNumBlobsInMultiBlobEntry = 20;
+  
+  // Maximum size of a single multi-blob write entry
+  static constexpr u32 _kMaxNvStorageEntrySize       = _kMaxNvStorageBlobSize * _kMaxNumBlobsInMultiBlobEntry;
+  
 };
 
 } // namespace Cozmo
