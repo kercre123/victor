@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Cozmo.UI;
 using Anki.Cozmo;
 
+// TODO: Scrap most of this bullshit. Move HomeHub related stuff into DailyGoalPanel.
 public class DailyGoalManager : MonoBehaviour {
 
   #region constants
