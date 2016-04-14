@@ -11,14 +11,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17823566cff2e44afb8716a55e378104, type: 3}
   m_Name: DefaultChestConfig
   m_EditorClassIdentifier: 
-  GreenPointMaxLadders:
+  GreenPointMaxLadder:
   - Level: 0
     Value: 100
   - Level: 5
     Value: 150
-  TreatRewardLadders:
+  TreatRewardLadder:
   - Level: 0
     Value: 10
-  HexRewardLadders:
+  HexRewardLadder:
   - Level: 0
     Value: 2
