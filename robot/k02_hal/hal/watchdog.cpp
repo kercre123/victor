@@ -11,6 +11,9 @@ static int watchdogChannels = 0;
 void Anki::Cozmo::HAL::Watchdog::init(void) {
   static const uint32_t RESET_TIME = 2048;  // 2seconds (1khz LPO)
   
+  WDOG_UNLOCK = 0xC520;
+  WDOG_UNLOCK = 0xD928;
+
   // Using the LPO (1khz clock)
   WDOG_TOVALL = RESET_TIME & 0xFFFF;
   WDOG_TOVALH = RESET_TIME >> 16;
