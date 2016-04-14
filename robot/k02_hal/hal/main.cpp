@@ -76,17 +76,11 @@ void * __aeabi_vec_ctor_nocookie_nodtor(   void* user_array,
     return user_array;
 }
 
-extern "C"
-void HardFault_Handler(void) {
-	// TODO: LOG THIS
-	NVIC_SystemReset();
-}
-
 int main (void)
 {
   using namespace Anki::Cozmo::HAL;
 
-  Watchdog::init();
+  //Watchdog::init();
   UART::DebugInit();
   SPI::Init();
   DAC::Init();
