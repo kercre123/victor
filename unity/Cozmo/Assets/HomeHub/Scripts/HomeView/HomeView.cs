@@ -87,7 +87,7 @@ namespace Cozmo.HomeHub {
 
     }
 
-    private void HandleChestGained() {
+    private void HandleChestGained(int treatsGained) {
       _GreenPointsProgressBar.ResetProgress();
     }
 

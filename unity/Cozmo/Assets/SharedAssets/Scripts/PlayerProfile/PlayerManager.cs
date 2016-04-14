@@ -21,7 +21,7 @@ public class PlayerManager : MonoBehaviour {
 
   public delegate void GreenPointsUpdateHandler(int points, int maxPoints);
 
-  public delegate void ChestGainedHandler();
+  public delegate void ChestGainedHandler(int treatsGained);
 
   public GreenPointsUpdateHandler GreenPointsUpdate;
 
@@ -56,15 +56,23 @@ public class PlayerManager : MonoBehaviour {
   public void AddGreenPoints(int points) {
     int greenPoints = DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints += points;
     int currentLadderMax = GetGreenPointsLadderMax();
-
     while (greenPoints >= currentLadderMax) {
-      if (ChestGained != null) {
-        ChestGained();
-      }
-      DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount += GetTreatCount();
+      int treatsGained = GetTreatCount();
+
+      DAS.Info(this, "Chest unlocked! Gained " + treatsGained + " treats");
+
+      DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount += treatsGained;
       DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault().GreenPointsLadderLevel++;
+
+      if (ChestGained != null) {
+        ChestGained(treatsGained);
+      }
+
       greenPoints -= currentLadderMax;
+      currentLadderMax = GetGreenPointsLadderMax();
     }
+
+    DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints = greenPoints;
 
     if (GreenPointsUpdate != null) {
       GreenPointsUpdate(greenPoints, GetGreenPointsLadderMax());
