@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include <cmath>
 
 #define DISABLE_IDLE_DURING_LOOK_AROUND 0
 
@@ -39,7 +40,6 @@ namespace Cozmo {
 
 // TODO:(bn) ask Mooly, maybe we can use some of the alts here as well?
 static const char* kBlockReactAnim = "ID_react2block_02";
-static const char* kCliffReactAnimName = "anim_VS_loco_cliffReact";
 
 using namespace ExternalInterface;
 
@@ -122,7 +122,7 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
       break;
 
     case EngineToGameTag::CliffEvent:
-      HandleCliffEvent(event, robot);
+      // handled below
       break;
 
     default:
@@ -132,24 +132,51 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
       break;
   }
 }
-  
-Result BehaviorLookAround::InitInternal(Robot& robot)
+
+void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  switch(event.GetData().GetTag())
+  {
+    case EngineToGameTag::RobotObservedObject:
+    case EngineToGameTag::RobotObservedPossibleObject:
+    case EngineToGameTag::RobotPutDown:
+      // Handled above
+      break;
+
+    case EngineToGameTag::CliffEvent:
+      // always handle cliff events. Most of the time we'll reset the safe region anyway, but if we get
+      // resumed we won't
+      HandleCliffEvent(event, robot);
+      break;
+
+    default:
+      PRINT_NAMED_ERROR("BehaviorLookAround.HandleWhileRunning.InvalidTag",
+                        "Received event with unhandled tag %hhu.",
+                        event.GetData().GetTag());
+      break;
+  }
+
+}
+Result BehaviorLookAround::ResumeInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
     robot.PushIdleAnimation("NONE");
   }
-  
-  // Update explorable area center to current robot pose
-  ResetSafeRegion(robot);
-  
+    
   TransitionToWaitForOtherActions(robot);
-
-  // disable because this behavior manages it internally (for now)
-  robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
   
   return Result::RESULT_OK;
 }
 
+
+Result BehaviorLookAround::InitInternal(Robot& robot)
+{
+  // Update explorable area center to current robot pose
+  ResetSafeRegion(robot);
+  
+  return ResumeInternal(robot);
+}
+  
 void BehaviorLookAround::TransitionToWaitForOtherActions(Robot& robot)
 {
   // Special state so that we can wait for other actions (from other behaviors) to complete before we do anything
@@ -305,14 +332,6 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(Robot& robot)
              });
 }
 
-void BehaviorLookAround::TransitionToBackingUpFromCliff(Robot& robot)
-{
-  SET_STATE(State::BackingUpFromCliff);
-  StopActing(false);
-  StartActing(new PlayAnimationAction(robot, kCliffReactAnimName),
-              &BehaviorLookAround::TransitionToInactive);
-}
-
 IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot)
 {
 
@@ -399,20 +418,12 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   
   return destPose;
 }
-
-Result BehaviorLookAround::InterruptInternal(Robot& robot)
-{
-  ResetBehavior(robot);
-  StopActing();
-  return Result::RESULT_OK;
-}
   
 void BehaviorLookAround::StopInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
     robot.PopIdleAnimation();
   }
-  robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
   ResetBehavior(robot);
 }
   
@@ -465,21 +476,12 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
     ObservableObject* object = robot.GetBlockWorld().GetObjectByID(msg.objectID);
     if (nullptr != object)
     {
-      UpdateSafeRegion(object->GetPose().GetTranslation());
+      UpdateSafeRegionForCube(object->GetPose().GetTranslation());
     }
   }
 }
 
-void BehaviorLookAround::HandleCliffEvent(const EngineToGameEvent& event, Robot& robot)
-{
-  if( event.GetData().Get_CliffEvent().detected ) {
-    // consider this location an obstacle
-    UpdateSafeRegion(robot.GetPose().GetTranslation());
-    TransitionToBackingUpFromCliff(robot);
-  }
-}
-
-void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
+void BehaviorLookAround::UpdateSafeRegionForCube(const Vec3f& objectPosition)
 {
   Vec3f translationDiff = objectPosition - _moveAreaCenter.GetTranslation();
   // We're only going to care about the XY plane distance
@@ -494,12 +496,115 @@ void BehaviorLookAround::UpdateSafeRegion(const Vec3f& objectPosition)
     
     // Ratio is ratio of distance to new center point to distance of observed object
     const f32 newCenterRatio = 0.5f - _safeRadius / (2.0f * distance);
-    
     // The new center is calculated as: C1 = C0 + (ObjectPosition - C0) * Ratio
     _moveAreaCenter.SetTranslation(_moveAreaCenter.GetTranslation() + translationDiff * newCenterRatio);
-    
+
     // The new radius is simply half the distance between the far side of the previus circle and the observed object
     _safeRadius = 0.5f * (distance + _safeRadius);
+
+    PRINT_NAMED_DEBUG("BehaviorLookAround.UpdateSafeRegion.Cube", "New safe radius is %fmm", _safeRadius);
+  }
+}
+
+void BehaviorLookAround::UpdateSafeRegionForCliff(const Pose3d& cliffPose)
+{
+  Vec3f translationDiff = cliffPose.GetTranslation() - _moveAreaCenter.GetTranslation();
+  // We're only going to care about the XY plane distance
+  translationDiff.z() = 0;
+  const f32 distanceSqr = translationDiff.LengthSq();
+
+  // if the cliff is inside our safe radius, we need to update the safe region
+  if (_safeRadius * _safeRadius > distanceSqr)
+  {
+    const f32 distance = std::sqrt(distanceSqr);
+
+
+    // see if we can just shrink it, but never shrink smaller than the original size
+    if( distance > kDefaultSafeRadius ) {
+      PRINT_NAMED_DEBUG("BehaviorLookAround.UpdateSafeRegion.Cliff.ShrinkR",
+                        "new safe radius = %fmm",
+                        kDefaultSafeRadius);
+      _safeRadius = kDefaultSafeRadius;
+    }
+    else {
+      // otherwise we need to move the safe radius. Use the angle in the pose, since this is the angle at
+      // which the robot approached the cliff, so moving in the opposite of that direction seems like a good
+      // idea. Move the safe region so that the radius is kDefaultSafeRadius and the center is moved backwards
+      // enough so that the radius just touches the the cliff pose
+
+      // NOTE: assume everything is in the xy plane
+
+      // You can see a crappy little python script to plot this stuff in python/behaviors/lookAroundSafeRegion.py
+
+      // imagine centering the world at the cliff (and rotating as well). Take the current safe region center
+      // point and move backwards along the direction of the cliff for distance "d" to find a new center such
+      // that the distance between C1 and the cliff is kDefaultSafeRadius. This means that, in cliff coordinates:
+      // x^2 + (y + d)^2 = kDefaultSafeRadius^2
+      // solve the above for d (quadratic equation) and you get the code below
+      float dx = _moveAreaCenter.GetTranslation().x() - cliffPose.GetTranslation().x();
+      float dy = _moveAreaCenter.GetTranslation().y() - cliffPose.GetTranslation().y();
+      float cliffTheta = cliffPose.GetRotationAngle<'Z'>().ToFloat();
+      float x = dx * std::cos(cliffTheta) - dy * std::sin(cliffTheta);
+      float y = dx * std::sin(cliffTheta) + dy * std::cos(cliffTheta);
+
+      float op = std::pow(y,2) - (std::pow(x,2) + std::pow(y,2) - std::pow(kDefaultSafeRadius,2));
+      if( op < 0.0f ) {
+        PRINT_NAMED_DEBUG("BehaviorLookAround.UpdateSafeRegion.Cliff.Failure.NegativeSqrt",
+                          "Operand is negative (%f), not updating safe region",
+                          op);
+        return;
+      }
+      float sqrtOp = std::sqrt(op);
+      float ans1 = -y + sqrtOp;
+      float ans2 = -y - sqrtOp;
+
+      float shiftDist;
+
+      if( ans1 > 0.0f && ans2 > 0.0f ) {
+        shiftDist = std::min(ans1, ans2);
+      }
+      else if( ans1 > 0.0f ) {
+        shiftDist = ans1;
+      }
+      else if( ans2 > 0.0f ) {
+        shiftDist = ans2;
+      }
+      else {
+        PRINT_NAMED_DEBUG("BehaviorLookAround.UpdateSafeRegion.Cliff.Failure.NoPositiveAnswer",
+                          "answers %f and %f both negative, not updating safe region",
+                          ans1,
+                          ans2);
+        return;
+      }
+
+      if( shiftDist > kMaxCliffShiftDist ) {
+        PRINT_NAMED_DEBUG("BehaviorLookAround.UpdateSafeRegion.Cliff.ShiftTooFar",
+                          "Computed that we should shift %fmm, which is > %f, so clipping",
+                          shiftDist,
+                          kMaxCliffShiftDist);
+        shiftDist = kMaxCliffShiftDist;
+      }
+
+
+      // PRINT_NAMED_DEBUG("DEBUG.SafeRegion",
+      //                   "c0 = [%f, %f], r=%f, cliff = [%f,%f], theta = %f",
+      //                   _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y(),
+      //                   kDefaultSafeRadius,
+      //                   cliffPose.GetTranslation().x(), cliffPose.GetTranslation().y(),
+      //                   cliffTheta);
+
+      PRINT_NAMED_DEBUG("BehaviorLookAround.UpdateSafeRegion.Cliff",
+                        "moving center by %fmm and resetting radius",
+                        shiftDist);
+      
+      Vec3f newTranslation( _moveAreaCenter.GetTranslation() );
+      newTranslation.x() -= shiftDist * std::cos( cliffTheta );
+      newTranslation.y() -= shiftDist * std::sin( cliffTheta );
+      newTranslation.z() = 0.0f;
+      
+      _moveAreaCenter.SetTranslation(newTranslation);
+      _safeRadius = kDefaultSafeRadius;
+    }
   }
 }
 
@@ -561,11 +666,20 @@ void BehaviorLookAround::HandleRobotPutDown(const EngineToGameEvent& event, Robo
     ResetSafeRegion(robot);
   }
 }
-  
+
+void BehaviorLookAround::HandleCliffEvent(const EngineToGameEvent& event, const Robot& robot)
+{
+  if( event.GetData().Get_CliffEvent().detected ) {
+    // consider this location an obstacle
+    UpdateSafeRegionForCliff(robot.GetPose());
+  }
+}
+
 void BehaviorLookAround::ResetSafeRegion(Robot& robot)
 {
   _moveAreaCenter = robot.GetPose();
   _safeRadius = kDefaultSafeRadius;
+  PRINT_NAMED_DEBUG("BehaviorLookAround.ResetSafeRegion", "safe region reset");
 }
 
 void BehaviorLookAround::SetState_internal(State state, const std::string& stateName)

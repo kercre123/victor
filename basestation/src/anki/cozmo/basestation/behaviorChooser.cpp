@@ -12,17 +12,17 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
-#include "anki/cozmo/basestation/viz/vizManager.h"
+#include "anki/cozmo/basestation/messageHelpers.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/viz/vizManager.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
-
 
 #if ANKI_DEV_CHEATS
   #define VIZ_BEHAVIOR_SELECTION  1
@@ -340,65 +340,6 @@ SimpleBehaviorChooser::~SimpleBehaviorChooser()
   }
   #endif //ANKI_DEVELOPER_CODE
 }
-  
-#pragma mark --- ReactionaryBehaviorChooser Members ---
-  
-// This helper function implements the logic to use when we want to find the behavior that's going to care about
-// a particular input event. It goes through our list of reactionary Behaviors, and if the behavior's set of event
-// tags includes the type associated with this event, we return it
-template <typename EventType>
-IReactionaryBehavior* ReactionaryBehaviorChooser::_GetReactionaryBehavior(
-  const Robot& robot,
-  const AnkiEvent<EventType>& event,
-  std::function<const std::set<typename EventType::Tag>&(const IReactionaryBehavior&)> getTagSet) const
-{
-  // Note this current implementation simply returns the first behavior in the list that cares about this
-  // event, and is runnable. There could be others but simply the first is returned.
-  for (auto& behavior : _reactionaryBehaviorList)
-  {
-    if (0 != getTagSet(*behavior).count(event.GetData().GetTag()))
-    {
-      if ( behavior->ShouldRunForEvent(event.GetData()) &&
-           behavior->IsRunnable(robot) ) {
-        return behavior;
-      }
-    }
-  }
-  return nullptr;
-}
-
-IBehavior* ReactionaryBehaviorChooser::GetReactionaryBehavior(
-  const Robot& robot,
-  const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const
-{
-  auto getEngineToGameTags = [](const IReactionaryBehavior& behavior) -> const std::set<ExternalInterface::MessageEngineToGameTag>&
-  {
-    return behavior.GetEngineToGameTags();
-  };
-  return _GetReactionaryBehavior(robot, event, getEngineToGameTags);
-}
-
-IBehavior* ReactionaryBehaviorChooser::GetReactionaryBehavior(
-  const Robot& robot,
-  const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const
-{
-  auto getGameToEngineTags = [](const IReactionaryBehavior& behavior) -> const std::set<ExternalInterface::MessageGameToEngineTag>&
-  {
-    return behavior.GetGameToEngineTags();
-  };
-  return _GetReactionaryBehavior(robot, event, getGameToEngineTags);
-}
-  
-ReactionaryBehaviorChooser::~ReactionaryBehaviorChooser()
-{
-  #if ANKI_DEVELOPER_CODE
-  for (auto& behavior : _reactionaryBehaviorList)
-  {
-    ASSERT_NAMED(behavior->IsOwnedByFactory(), "Behavior not owned by factory - shouldn't be possible!");
-  }
-  #endif //ANKI_DEVELOPER_CODE
-}
-
   
 } // namespace Cozmo
 } // namespace Anki

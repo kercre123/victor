@@ -123,17 +123,9 @@ BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robo
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot)
-{
-  // Note: at the moment anything can interrupt us, revisit rules of interruption
-  _currentActionTag = ActionConstants::INVALID_TAG;
-  
-  return Result::RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreMarkedCube::StopInternal(Robot& robot)
 {
+  _currentActionTag = ActionConstants::INVALID_TAG;
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
 }
 

@@ -49,11 +49,12 @@ public:
 protected:
   
   virtual Result InitInternal(Robot& robot) override;
+  virtual Result ResumeInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
-  virtual Result InterruptInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
 
   virtual float EvaluateRunningScoreInternal(const Robot& robot) const override;
 
@@ -63,8 +64,7 @@ private:
     Inactive,
     Roaming,
     LookingAtPossibleObject,
-    ExaminingFoundObject,
-    BackingUpFromCliff
+    ExaminingFoundObject
   };
 
   void TransitionToWaitForOtherActions(Robot& robot);
@@ -72,7 +72,6 @@ private:
   void TransitionToRoaming(Robot& robot);
   void TransitionToLookingAtPossibleObject(Robot& robot);
   void TransitionToExaminingFoundObject(Robot& robot);
-  void TransitionToBackingUpFromCliff(Robot& robot);
 
   void SetState_internal(State state, const std::string& stateName);
 
@@ -94,6 +93,8 @@ private:
   constexpr static f32 kDegreesRotatePerSec = 25;
   // The default radius (in mm) we assume exists for us to move around in
   constexpr static f32 kDefaultSafeRadius = 150;
+  // How far back (at most) to move the center when we encounter a cliff
+  constexpr static f32 kMaxCliffShiftDist = 100.0f;
   // Number of destinations we want to reach before resting for a bit (needs to be at least 2)
   constexpr static u32 kDestinationsToReach = 6;
   // How far back from a possible object to observe it (at most)
@@ -106,6 +107,8 @@ private:
   State _currentState = State::Inactive;
   Destination _currentDestination = Destination::North;
   f32 _lastLookAroundTime = 0;
+
+  // note that this is reset when the robot is put down, so no need to worry about origins
   Pose3d _moveAreaCenter;
   f32 _safeRadius = kDefaultSafeRadius;
   u32 _currentDriveActionID = 0;
@@ -119,12 +122,20 @@ private:
   Pose3d GetDestinationPose(Destination destination);
   void ResetBehavior(Robot& robot);
   Destination GetNextDestination(Destination current);
-  void UpdateSafeRegion(const Vec3f& objectPosition);
+
   void ResetSafeRegion(Robot& robot);
+
+  // this function may extend the safe region, since we know that if a cube can rest there, we probably can as
+  // well
+  void UpdateSafeRegionForCube(const Vec3f& objectPosition);
+
+  // This version may shrink the safe region, and/or move it away from the position of the cliff
+  void UpdateSafeRegionForCliff(const Pose3d& objectPose);
 
   void HandleObjectObserved(const ExternalInterface::RobotObservedObject& msg, bool confirmed, Robot& robot);
   void HandleRobotPutDown(const EngineToGameEvent& event, Robot& robot);
-  void HandleCliffEvent(const EngineToGameEvent& event, Robot& robot);
+  void HandleCliffEvent(const EngineToGameEvent& event, const Robot& robot);
+
 };
   
 

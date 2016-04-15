@@ -131,17 +131,9 @@ BehaviorExploreCliff::Status BehaviorExploreCliff::UpdateInternal(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreCliff::InterruptInternal(Robot& robot)
-{
-  // Note: at the moment anything can interrupt us, revisit rules of interruption
-  _currentActionTag = ActionConstants::INVALID_TAG;
-  
-  return Result::RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreCliff::StopInternal(Robot& robot)
 {
+  _currentActionTag = ActionConstants::INVALID_TAG;
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreCliff::InitInternal");
 }
 

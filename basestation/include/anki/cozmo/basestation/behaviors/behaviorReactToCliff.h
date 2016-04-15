@@ -36,16 +36,7 @@ public:
 protected:
     
   virtual Result InitInternal(Robot& robot) override;
-  virtual Result InterruptInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
-  
-private:
-
-  bool _cliffDetected = false;
-  bool _waitingForAnimComplete = false;
-  u32 _animTagToWaitFor = 0;
-  
-  void HandleCliffEvent(const EngineToGameEvent& event);
 }; // class BehaviorReactToCliff
   
 
