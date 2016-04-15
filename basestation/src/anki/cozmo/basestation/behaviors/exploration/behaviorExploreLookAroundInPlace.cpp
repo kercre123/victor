@@ -86,7 +86,7 @@ BehaviorExploreLookAroundInPlace::~BehaviorExploreLookAroundInPlace()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreLookAroundInPlace::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorExploreLookAroundInPlace::IsRunnable(const Robot& robot) const
 {
   // Probably want to run if I don't have any other exploration behavior that wants to, unless I have completely
   // mapped the floor around me 'recently'.
@@ -110,7 +110,7 @@ bool BehaviorExploreLookAroundInPlace::IsRunnable(const Robot& robot, double cur
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
 {
   // grab run values
   _behaviorBodyFacingDone_rad = 0;
@@ -127,7 +127,7 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot, double curre
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBehavior::Status BehaviorExploreLookAroundInPlace::UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status BehaviorExploreLookAroundInPlace::UpdateInternal(Robot& robot)
 {
   // while we are acting
   if ( IsActing() )

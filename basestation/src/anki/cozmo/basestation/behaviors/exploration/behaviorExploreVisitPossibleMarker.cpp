@@ -52,7 +52,7 @@ BehaviorExploreVisitPossibleMarker::~BehaviorExploreVisitPossibleMarker()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreVisitPossibleMarker::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorExploreVisitPossibleMarker::IsRunnable(const Robot& robot) const
 {
   // check whiteboard for known markers
   const BehaviorWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
@@ -63,7 +63,7 @@ bool BehaviorExploreVisitPossibleMarker::IsRunnable(const Robot& robot, double c
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
 {
   // 1) pick possible marker
   const BehaviorWhiteboard::PossibleMarker* closestMarker = nullptr;

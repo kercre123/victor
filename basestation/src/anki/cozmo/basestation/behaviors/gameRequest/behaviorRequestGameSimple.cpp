@@ -107,8 +107,7 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
   SubscribeToTags({EngineToGameTag::CliffEvent});
 }
 
-Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
-                                                             double currentTime_sec)
+Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
 {
   _verifyStartTime_s = std::numeric_limits<float>::max();
 
@@ -138,8 +137,10 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot,
   return RESULT_OK;
 }
 
-IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& robot)
 {
+  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
   if( _state == State::SearchingForBlock ) {
     // if we are searching for a block, stop immediately when we find one
     if( GetNumBlocks(robot) > 0 ) {
@@ -168,19 +169,19 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
   return Status::Complete;
 }
 
-Result BehaviorRequestGameSimple::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorRequestGameSimple::InterruptInternal(Robot& robot)
 {
   if( _state == State::HandlingCliff ) {
     return Result::RESULT_FAIL;
   }
   
-  StopInternal(robot, currentTime_sec);
+  StopInternal(robot);
   StopActing(false);
   
   return Result::RESULT_OK;
 }
 
-void BehaviorRequestGameSimple::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorRequestGameSimple::StopInternal(Robot& robot)
 {
   PRINT_NAMED_INFO("BehaviorRequestGameSimple.StopInternal", "");
 
@@ -204,14 +205,14 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot, double currentTime_se
   }
 }
 
-float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
+float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot) const
 {
   if( _state == State::HandlingCliff ) {
     return 1.0f;
   }
   
   // NOTE: can't use _activeConfig because we haven't been Init'd yet  
-  float score = IBehavior::EvaluateScoreInternal(robot, currentTime_sec);
+  float score = IBehavior::EvaluateScoreInternal(robot);
   if( GetNumBlocks(robot) == 0 ) {
     score *= _zeroBlockConfig.scoreFactor;
   }
@@ -221,7 +222,7 @@ float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot, doubl
   return score;
 }
 
-float BehaviorRequestGameSimple::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+float BehaviorRequestGameSimple::EvaluateRunningScoreInternal(const Robot& robot) const
 {
   // if we have requested, and are past the timeout, then we don't want to keep running
   if( IsActing() ) {
@@ -230,7 +231,7 @@ float BehaviorRequestGameSimple::EvaluateRunningScoreInternal(const Robot& robot
   }
 
   // otherwise, fall back to running score
-  return EvaluateScoreInternal(robot, currentTime_sec);
+  return EvaluateScoreInternal(robot);
 }
 
 void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot)

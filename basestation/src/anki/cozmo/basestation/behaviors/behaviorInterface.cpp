@@ -9,10 +9,12 @@
  * Copyright: Anki, Inc. 2015
  **/
 
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -156,7 +158,55 @@ void IBehavior::SubscribeToTags(std::set<EngineToGameTag> &&tags)
   }
 }
 
-IBehavior::Status IBehavior::UpdateInternal(Robot& robot, double currentTime_sec)
+Result IBehavior::Init()
+{
+  _isRunning = true;
+  _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  Result initResult = InitInternal(_robot);
+  if ( initResult != RESULT_OK ) {
+    _isRunning = false;
+  }
+  return initResult;
+}
+
+IBehavior::Status IBehavior::Update()
+{
+  ASSERT_NAMED(IsRunning(), "IBehavior::UpdateNotRunning");
+  return UpdateInternal(_robot);
+}
+
+void IBehavior::Stop()
+{
+  _isRunning = false;
+  StopInternal(_robot);
+  _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  StopActing(false);
+}
+
+Result IBehavior::Interrupt()
+{
+  Result interruptResult = InterruptInternal(_robot);
+  if( interruptResult != RESULT_OK ) {
+    PRINT_NAMED_DEBUG("BehaviorInterface.Interrupt.Failure",
+                      "interrupting behavior '%s' failed",
+                      GetName().c_str());
+  }
+  return interruptResult;
+}
+
+Util::RandomGenerator& IBehavior::GetRNG() const {
+  static Util::RandomGenerator sRNG;
+  return sRNG;
+}
+
+void IBehavior::SetDefaultName(const char* inName)
+{
+  if (_name == kBaseDefaultName) {
+    _name = inName;
+  }
+}
+
+IBehavior::Status IBehavior::UpdateInternal(Robot& robot)
 {
   if( IsActing() ) {
     return Status::Running;
@@ -165,10 +215,11 @@ IBehavior::Status IBehavior::UpdateInternal(Robot& robot, double currentTime_sec
   return Status::Complete;
 }
   
-double IBehavior::GetRunningDuration(double currentTime_sec) const
-{
+double IBehavior::GetRunningDuration() const
+{  
   if (_isRunning)
   {
+    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const double timeSinceStarted = currentTime_sec - _startedRunningTime_s;
     return timeSinceStarted;
   }
@@ -181,21 +232,22 @@ float IBehavior::EvaluateEmotionScore(const MoodManager& moodManager) const
 }
   
 // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
-float IBehavior::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
+float IBehavior::EvaluateScoreInternal(const Robot& robot) const
 {
   return EvaluateEmotionScore(robot.GetMoodManager());
 }
 
 // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
-float IBehavior::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+float IBehavior::EvaluateRunningScoreInternal(const Robot& robot) const
 {
   return EvaluateEmotionScore(robot.GetMoodManager());
 }
   
-float IBehavior::EvaluateRepetitionPenalty(double currentTime_sec) const
-{
+float IBehavior::EvaluateRepetitionPenalty() const
+{  
   if (_lastRunTime_s > 0.0)
   {
+    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     const float timeSinceRun = Util::numeric_cast<float>(currentTime_sec - _lastRunTime_s);
     const float repetitionPenalty = _repetitionPenalty.EvaluateY(timeSinceRun);
     return repetitionPenalty;
@@ -204,9 +256,9 @@ float IBehavior::EvaluateRepetitionPenalty(double currentTime_sec) const
   return 1.0f;
 }
   
-float IBehavior::EvaluateScore(const Robot& robot, double currentTime_sec) const
+float IBehavior::EvaluateScore(const Robot& robot) const
 {
-  if (IsRunnable(robot, currentTime_sec))
+  if (IsRunnable(robot))
   {
     const bool doOverrideScore = (_overrideScore >= 0.0f);
     const bool isRunning = IsRunning();
@@ -219,17 +271,17 @@ float IBehavior::EvaluateScore(const Robot& robot, double currentTime_sec) const
     }
     else if (isRunning)
     {
-      score = EvaluateRunningScoreInternal(robot, currentTime_sec);
+      score = EvaluateRunningScoreInternal(robot);
     }
     else
     {
-      score = EvaluateScoreInternal(robot, currentTime_sec);
+      score = EvaluateScoreInternal(robot);
     }
       
     // no repetition penalty when running
     if (_enableRepetitionPenalty && !isRunning)
     {
-      const float repetitionPenalty = EvaluateRepetitionPenalty(currentTime_sec);
+      const float repetitionPenalty = EvaluateRepetitionPenalty();
       score *= repetitionPenalty;
     }
       

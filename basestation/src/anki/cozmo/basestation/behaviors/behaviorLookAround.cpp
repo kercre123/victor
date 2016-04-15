@@ -11,6 +11,7 @@
  **/
 
 #include "anki/common/basestation/utils/helpers/boundedWhile.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/common/shared/radians.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
@@ -67,8 +68,10 @@ BehaviorLookAround::~BehaviorLookAround()
 {
 }
   
-bool BehaviorLookAround::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorLookAround::IsRunnable(const Robot& robot) const
 {
+  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   switch (_currentState)
   {
     case State::Inactive:
@@ -87,7 +90,7 @@ bool BehaviorLookAround::IsRunnable(const Robot& robot, double currentTime_sec) 
   return false;
 }
 
-float BehaviorLookAround::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+float BehaviorLookAround::EvaluateRunningScoreInternal(const Robot& robot) const
 {
   float minScore = 0.0f;
   // if we are going to examine (or searching for) a possible block, increase the minimum score
@@ -95,7 +98,7 @@ float BehaviorLookAround::EvaluateRunningScoreInternal(const Robot& robot, doubl
     minScore = 0.8f;
   }
 
-  return std::max( minScore, IBehavior::EvaluateRunningScoreInternal(robot, currentTime_sec) );
+  return std::max( minScore, IBehavior::EvaluateRunningScoreInternal(robot) );
 }
 
 void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
@@ -130,7 +133,7 @@ void BehaviorLookAround::HandleWhileRunning(const EngineToGameEvent& event, Robo
   }
 }
   
-Result BehaviorLookAround::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorLookAround::InitInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
     robot.PushIdleAnimation("NONE");
@@ -310,7 +313,7 @@ void BehaviorLookAround::TransitionToBackingUpFromCliff(Robot& robot)
               &BehaviorLookAround::TransitionToInactive);
 }
 
-IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status BehaviorLookAround::UpdateInternal(Robot& robot)
 {
 
 #if SAFE_ZONE_VIZ
@@ -397,24 +400,26 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   return destPose;
 }
 
-Result BehaviorLookAround::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorLookAround::InterruptInternal(Robot& robot)
 {
-  ResetBehavior(robot, currentTime_sec);
+  ResetBehavior(robot);
   StopActing();
   return Result::RESULT_OK;
 }
   
-void BehaviorLookAround::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorLookAround::StopInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
     robot.PopIdleAnimation();
   }
   robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
-  ResetBehavior(robot, currentTime_sec);
+  ResetBehavior(robot);
 }
   
-void BehaviorLookAround::ResetBehavior(Robot& robot, float currentTime_sec)
+void BehaviorLookAround::ResetBehavior(Robot& robot)
 {
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   // This is the last update before we stop running, so store off time
   _lastLookAroundTime = currentTime_sec;
       

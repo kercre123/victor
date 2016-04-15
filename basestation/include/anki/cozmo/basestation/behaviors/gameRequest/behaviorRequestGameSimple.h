@@ -33,12 +33,12 @@ public:
   virtual ~BehaviorRequestGameSimple() {}
 
 protected:
-  virtual Result RequestGame_InitInternal(Robot& robot, double currentTime_sec) override;
-  virtual Status RequestGame_UpdateInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
-  virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
-  virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override;
-  virtual float EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const override;
+  virtual Result RequestGame_InitInternal(Robot& robot) override;
+  virtual Status RequestGame_UpdateInternal(Robot& robot) override;
+  virtual Result InterruptInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
+  virtual float EvaluateScoreInternal(const Robot& robot) const override;
+  virtual float EvaluateRunningScoreInternal(const Robot& robot) const override;
 
   virtual void HandleGameDeniedRequest(Robot& robot) override;
   virtual f32 GetRequestMinDelayComplete_s() const override;

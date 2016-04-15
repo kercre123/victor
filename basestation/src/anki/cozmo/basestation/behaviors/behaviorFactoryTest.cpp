@@ -102,13 +102,15 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Inherited Virtual Implementations
   
-  bool BehaviorFactoryTest::IsRunnable(const Robot& robot, double currentTime_sec) const
+  bool BehaviorFactoryTest::IsRunnable(const Robot& robot) const
   {
     return _testResult == FactoryTestResultCode::UNKNOWN;
   }
   
-  Result BehaviorFactoryTest::InitInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorFactoryTest::InitInternal(Robot& robot)
   {
+    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
     Result lastResult = RESULT_OK;
     
     _testResult = FactoryTestResultCode::UNKNOWN;
@@ -154,9 +156,11 @@ namespace Cozmo {
   }
   
   
-  IBehavior::Status BehaviorFactoryTest::UpdateInternal(Robot& robot, double currentTime_sec)
+  IBehavior::Status BehaviorFactoryTest::UpdateInternal(Robot& robot)
   {
     #define END_TEST(ERRCODE) EndTest(robot, ERRCODE); return Status::Failure;
+
+    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
     // If test is complete
     if (_testResult != FactoryTestResultCode::UNKNOWN) {
@@ -500,13 +504,13 @@ namespace Cozmo {
     return Status::Running;
   }
 
-  Result BehaviorFactoryTest::InterruptInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorFactoryTest::InterruptInternal(Robot& robot)
   {
-    StopInternal(robot, currentTime_sec);
+    StopInternal(robot);
     return RESULT_OK;
   }
   
-  void BehaviorFactoryTest::StopInternal(Robot& robot, double currentTime_sec)
+  void BehaviorFactoryTest::StopInternal(Robot& robot)
   {
     // Cancel all actions
     for (auto tag : _actionCallbackMap) {
@@ -525,19 +529,16 @@ namespace Cozmo {
     switch(event.GetData().GetTag())
     {
       case EngineToGameTag::RobotCompletedAction:
-        _lastHandlerResult = HandleActionCompleted(robot, event.GetData().Get_RobotCompletedAction(),
-                                                  event.GetCurrentTime());
+        _lastHandlerResult = HandleActionCompleted(robot, event.GetData().Get_RobotCompletedAction());
         break;
         
       case EngineToGameTag::RobotObservedObject:
         _lastHandlerResult = HandleObservedObject(robot,
-                                                  event.GetData().Get_RobotObservedObject(),
-                                                  event.GetCurrentTime());
+                                                  event.GetData().Get_RobotObservedObject());
         break;
         
       case EngineToGameTag::RobotDeletedObject:
-        _lastHandlerResult = HandleDeletedObject(event.GetData().Get_RobotDeletedObject(),
-                                                 event.GetCurrentTime());
+        _lastHandlerResult = HandleDeletedObject(event.GetData().Get_RobotDeletedObject());
         break;
         
       case EngineToGameTag::ObjectMoved:
@@ -594,8 +595,7 @@ namespace Cozmo {
   
   
   Result BehaviorFactoryTest::HandleActionCompleted(Robot& robot,
-                                                  const ExternalInterface::RobotCompletedAction &msg,
-                                                  double currentTime_sec)
+                                                  const ExternalInterface::RobotCompletedAction &msg)
   {
     Result lastResult = RESULT_OK;
     
@@ -624,8 +624,7 @@ namespace Cozmo {
 
 
   Result BehaviorFactoryTest::HandleObservedObject(Robot& robot,
-                                                   const ExternalInterface::RobotObservedObject &msg,
-                                                   double currentTime_sec)
+                                                   const ExternalInterface::RobotObservedObject &msg)
   {
 
     ObjectID objectID = msg.objectID;
@@ -675,7 +674,7 @@ namespace Cozmo {
     return RESULT_OK;
   }
 
-  Result BehaviorFactoryTest::HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg, double currentTime_sec)
+  Result BehaviorFactoryTest::HandleDeletedObject(const ExternalInterface::RobotDeletedObject &msg)
   {
     // remove the object if we knew about it
     ObjectID objectID;

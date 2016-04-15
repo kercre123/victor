@@ -41,14 +41,16 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
 
 }
 
-bool BehaviorPounceOnMotion::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorPounceOnMotion::IsRunnable(const Robot& robot) const
 {
   // we can only run if there is a pounce pose to pounce on
   return _numValidPouncePoses > 1 || _state != State::Inactive;
 }
 
-float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
+float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot) const
 {
+  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   // TODO:(bn) emotion stuff here?
 
   // if we are running, always give a score of 1.0 so we keep running
@@ -179,7 +181,7 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
 }
 
   
-Result BehaviorPounceOnMotion::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
 {
   if( _numValidPouncePoses == 0 ) {
     PRINT_NAMED_WARNING("BehaviorPounceOnMotion.Init.NoPouncePose", "");
@@ -257,7 +259,7 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
   robot.GetMoveComponent().EnableLiftPower(true);
 }
 
-IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
 {
 
   float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -285,7 +287,7 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot, double cu
   return Status::Running;
 }
 
-Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot)
 {
   // We don't want to be interrupted unless we're done reacting
   if( _state == State::Inactive ) {
@@ -297,7 +299,7 @@ Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot, double currentTim
   return Result::RESULT_FAIL;
 }
   
-void BehaviorPounceOnMotion::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorPounceOnMotion::StopInternal(Robot& robot)
 {
   Cleanup(robot);
 }

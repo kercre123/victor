@@ -47,7 +47,7 @@ BehaviorExploreMarkedCube::~BehaviorExploreMarkedCube()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreMarkedCube::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorExploreMarkedCube::IsRunnable(const Robot& robot) const
 {
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   if ( nullptr == memoryMap ) {
@@ -59,7 +59,7 @@ bool BehaviorExploreMarkedCube::IsRunnable(const Robot& robot, double currentTim
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorExploreMarkedCube::InitInternal(Robot& robot)
 {
   // select borders we want to visit
   BorderScoreVector borderGoals;
@@ -108,7 +108,7 @@ Result BehaviorExploreMarkedCube::InitInternal(Robot& robot, double currentTime_
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robot& robot, double currentTime_sec)
+BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robot& robot)
 {
   // while we are moving towards a vantage point, wait patiently
   if ( _currentActionTag != ActionConstants::INVALID_TAG )
@@ -123,7 +123,7 @@ BehaviorExploreMarkedCube::Status BehaviorExploreMarkedCube::UpdateInternal(Robo
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot)
 {
   // Note: at the moment anything can interrupt us, revisit rules of interruption
   _currentActionTag = ActionConstants::INVALID_TAG;
@@ -132,7 +132,7 @@ Result BehaviorExploreMarkedCube::InterruptInternal(Robot& robot, double current
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreMarkedCube::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorExploreMarkedCube::StopInternal(Robot& robot)
 {
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreMarkedCube::InitInternal");
 }

@@ -66,14 +66,14 @@ void BehaviorPlayAnim::SetAnimationName(const std::string& inName)
 }
 
   
-bool BehaviorPlayAnim::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorPlayAnim::IsRunnable(const Robot& robot) const
 {
   const bool retVal = true;
   return retVal;
 }
   
 
-Result BehaviorPlayAnim::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorPlayAnim::InitInternal(Robot& robot)
 {
   _isInterrupted = false;
   _isActing = false;
@@ -84,7 +84,7 @@ Result BehaviorPlayAnim::InitInternal(Robot& robot, double currentTime_sec)
 }
 
   
-BehaviorPlayAnim::Status BehaviorPlayAnim::UpdateInternal(Robot& robot, double currentTime_sec)
+BehaviorPlayAnim::Status BehaviorPlayAnim::UpdateInternal(Robot& robot)
 {
   if (!_isActing && !_isInterrupted && ((_loopsLeft > 0) || (_loopCount < 0)))
   {
@@ -96,7 +96,7 @@ BehaviorPlayAnim::Status BehaviorPlayAnim::UpdateInternal(Robot& robot, double c
 }
 
 
-Result BehaviorPlayAnim::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorPlayAnim::InterruptInternal(Robot& robot)
 {
   if (_isInterruptable)
   {
@@ -107,7 +107,7 @@ Result BehaviorPlayAnim::InterruptInternal(Robot& robot, double currentTime_sec)
 }
 
   
-void BehaviorPlayAnim::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorPlayAnim::StopInternal(Robot& robot)
 {
 }
 

@@ -53,8 +53,8 @@ public:
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
-  virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override { return 1.0f; }
+  virtual bool IsRunnable(const Robot& robot) const override;
+  virtual float EvaluateScoreInternal(const Robot& robot) const override { return 1.0f; }
   
 protected:
   
@@ -62,9 +62,9 @@ protected:
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override { return Result::RESULT_OK; } // TODO?
-  virtual void StopInternal(Robot& robot, double currentTime_sec) override {} // TODO?
+  virtual Result InitInternal(Robot& robot) override;
+  virtual Result InterruptInternal(Robot& robot) override { return Result::RESULT_OK; } // TODO?
+  virtual void StopInternal(Robot& robot) override {} // TODO?
   
 private:
 

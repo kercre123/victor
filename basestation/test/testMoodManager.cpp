@@ -14,23 +14,25 @@
 
 #include "gtest/gtest.h"
 
-#include "util/math/math.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
-#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/moodSystem/emotionAffector.h"
 #include "anki/cozmo/basestation/moodSystem/emotionEvent.h"
 #include "anki/cozmo/basestation/moodSystem/emotionEventMapper.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/moodSystem/staticMoodData.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 #include <assert.h>
 
 
+using namespace Anki;
 using namespace Anki::Cozmo;
 
 
@@ -50,6 +52,7 @@ void TickMoodManager(MoodManager& moodManager, uint32_t numTicks, float tickTime
   {
     gCurrentTime += tickTimeStep;
     moodManager.Update(gCurrentTime);
+    BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
   }
 }
 
@@ -465,50 +468,52 @@ TEST(MoodManager, BehaviorScoring)
   testBehaviorReqHappy->AddEmotionScorer(EmotionScorer(EmotionType::Happy, Anki::Util::GraphEvaluator2d({{-1.0f, 0.0f}, {0.5f, 1.0f}, {1.0f, 0.6f}}), false));
   testBehaviorReqCalm->ClearEmotionScorers();
   testBehaviorReqCalm->AddEmotionScorer( EmotionScorer(EmotionType::Calm,  Anki::Util::GraphEvaluator2d({{-1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}}), false));
+
+  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
   
-  float score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
-  float score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
+  float score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
+  float score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
   
   EXPECT_FLOAT_EQ(score1, 0.6666666666f);
   EXPECT_FLOAT_EQ(score2, 0.16666666f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, gCurrentTime);
+    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
   moodManager.AddToEmotion(EmotionType::Happy, 0.25f, "Test1", gCurrentTime);
   moodManager.AddToEmotion(EmotionType::Calm,  0.5f, "Test2", gCurrentTime);
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
   
   EXPECT_FLOAT_EQ(score1, 0.83333331f);
   EXPECT_FLOAT_EQ(score2, 0.0f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, gCurrentTime);
+    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot);
     EXPECT_EQ(behaviorChosen, testBehaviorReqHappy);
   }
   
   moodManager.AddToEmotion(EmotionType::Happy, -2.0f, "Test3", gCurrentTime);
   moodManager.AddToEmotion(EmotionType::Calm,  -2.0f, "Test4", gCurrentTime);
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
   
   EXPECT_FLOAT_EQ(score1, 0.0f);
   EXPECT_FLOAT_EQ(score2, 0.5f);
   
   {
-    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, gCurrentTime);
+    IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot);
     EXPECT_EQ(behaviorChosen, testBehaviorReqCalm);
   }
 
   moodManager.AddToEmotion(EmotionType::Happy, 0.75f, "Test5", gCurrentTime);
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
   
   EXPECT_FLOAT_EQ(score1, 0.5f);
   EXPECT_FLOAT_EQ(score2, 0.5f);
@@ -521,7 +526,7 @@ TEST(MoodManager, BehaviorScoring)
 
     for (uint32_t i=0; i < kNumTests; ++i)
     {
-      IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot, gCurrentTime);
+      IBehavior* behaviorChosen = behaviorChooser.ChooseNextBehavior(testRobot);
       if (behaviorChosen == testBehaviorReqHappy)
       {
         ++behaviorCountHappy;
@@ -544,66 +549,71 @@ TEST(MoodManager, BehaviorScoring)
 
   // 1) never happened:
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
-  EXPECT_FLOAT_EQ(score1, 0.5f);
-  EXPECT_FLOAT_EQ(score2, 0.5f);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  EXPECT_NEAR(score1, 0.5f, 1e-4);
+  EXPECT_NEAR(score2, 0.5f, 1e-4);
   
   // 2) happy happened 0.0 seconds ago:
   
-  testBehaviorReqHappy->Stop(gCurrentTime);
+  testBehaviorReqHappy->Stop();
 
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
-  EXPECT_FLOAT_EQ(score1, 0.0f);
-  EXPECT_FLOAT_EQ(score2, 0.5f);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  EXPECT_NEAR(score1, 0.0f, 1e-4);
+  EXPECT_NEAR(score2, 0.5f, 1e-4);
 
   // 3) happy happened 1.0 seconds ago, calm 0.0 seconds agos
   
   gCurrentTime += 1.0;
+
+  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
+  testBehaviorReqCalm->Stop();
   
-  testBehaviorReqCalm->Stop(gCurrentTime);
-  
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
-  EXPECT_FLOAT_EQ(score1, 0.0f);
-  EXPECT_FLOAT_EQ(score2, 0.0f);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  EXPECT_NEAR(score1, 0.0f, 1e-4);
+  EXPECT_NEAR(score2, 0.0f, 1e-4);
   
   // 4) happy happened 2.0 seconds ago, calm 1.0 seconds agos
   
   gCurrentTime += 1.0;
+  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
-  EXPECT_FLOAT_EQ(score1, 0.25f * 0.5f);
-  EXPECT_FLOAT_EQ(score2, 0.0f);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  EXPECT_NEAR(score1, 0.25f * 0.5f, 1e-4);
+  EXPECT_NEAR(score2, 0.0f, 1e-4);
 
   // 5) happy happened 3.0 seconds ago, calm 2.0 seconds agos
   
   gCurrentTime += 1.0;
+  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
-  EXPECT_FLOAT_EQ(score1, 0.5f * 0.5f);
-  EXPECT_FLOAT_EQ(score2, 0.0f);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  EXPECT_NEAR(score1, 0.5f * 0.5f, 1e-4);
+  EXPECT_NEAR(score2, 0.0f, 1e-4);
 
   // 5) happy happened 4.0 seconds ago, calm 3.0 seconds agos
   
   gCurrentTime += 1.0;
+  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
-  EXPECT_FLOAT_EQ(score1, 0.75f * 0.5f);
-  EXPECT_FLOAT_EQ(score2, 0.5f * 0.5f);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  EXPECT_NEAR(score1, 0.75f * 0.5f, 1e-4);
+  EXPECT_NEAR(score2, 0.5f * 0.5f, 1e-4);
 
   // 5) happy happened 5.0 seconds ago, calm 4.0 seconds agos
   
   gCurrentTime += 1.0;
+  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( gCurrentTime ) );
   
-  score1 = testBehaviorReqHappy->EvaluateScore(testRobot, gCurrentTime);
-  score2 = testBehaviorReqCalm->EvaluateScore(testRobot, gCurrentTime);
-  EXPECT_FLOAT_EQ(score1, 0.5f);
-  EXPECT_FLOAT_EQ(score2, 0.5f);
+  score1 = testBehaviorReqHappy->EvaluateScore(testRobot);
+  score2 = testBehaviorReqCalm->EvaluateScore(testRobot);
+  EXPECT_NEAR(score1, 0.5f, 1e-4);
+  EXPECT_NEAR(score2, 0.5f, 1e-4);
 }
 
 

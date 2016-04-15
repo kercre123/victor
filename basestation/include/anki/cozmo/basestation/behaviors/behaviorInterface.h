@@ -12,6 +12,9 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 
+
+// TEMP: audit these // TODO:(bn) 
+
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
 #include "anki/cozmo/basestation/moodSystem/moodScorer.h"
@@ -38,6 +41,7 @@ namespace Anki {
 namespace Cozmo {
   
 // Forward declarations
+// TEMP: audit these // TODO:(bn) 
 class IReactionaryBehavior;
 class MoodManager;
 class Robot;
@@ -73,35 +77,35 @@ public:
     
   bool IsRunning() const { return _isRunning; }
     
-  double GetRunningDuration(double currentTime_sec) const;
+  double GetRunningDuration() const;
     
   // Will be called upon first switching to a behavior before calling update.
   // Calls protected virtual InitInternal() method, which each derived class
   // should implement.
-  Result Init(double currentTime_sec);
+  Result Init();
 
   // Step through the behavior and deliver rewards to the robot along the way
   // This calls the protected virtual UpdateInternal() method, which each
   // derived class should implement.
-  Status Update(double currentTime_sec) ;
+  Status Update() ;
     
   // This behavior was the currently running behavior, but is now stopping (to make way for a new current
-  // behavior). Any behaviors from StartActing will be canceled
-  void Stop(double currentTime_sec);
-    
+  // behavior). Any behaviors from StartActing will be canceled.
+  void Stop();
+
+  // Tell this behavior to finish up ASAP so we can switch to a new one.
+  // This should trigger any cleanup and get Update() to return COMPLETE
+  // as quickly as possible.
+  Result Interrupt();
+
   //
   // Abstract methods to be overloaded:
   //
     
   // Returns true iff the state of the world/robot is sufficient for this
   // behavior to be executed
-  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const = 0;
-    
-  // Tell this behavior to finish up ASAP so we can switch to a new one.
-  // This should trigger any cleanup and get Update() to return COMPLETE
-  // as quickly as possible.
-  Result Interrupt(double currentTime_sec);
-    
+  virtual bool IsRunnable(const Robot& robot) const = 0;
+  
   const std::string& GetName() const { return _name; }
   const std::string& GetStateName() const { return _stateName; }
 
@@ -113,13 +117,8 @@ public:
     
   // EvaluateEmotionScore is a score directly based on the given emotion rules
   float EvaluateEmotionScore(const MoodManager& moodManager) const;
-    
-  // EvaluateScoreInternal is used to score each behavior for behavior selection - by default it just uses
-  // EvaluateEmotionScore
-  virtual float EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const;
-  virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const;
-    
-  float EvaluateScore(const Robot& robot, double currentTime_sec) const;
+  
+  float EvaluateScore(const Robot& robot) const;
 
   const MoodScorer& GetMoodScorer() const { return _moodScorer; }
     
@@ -131,7 +130,7 @@ public:
     
   void SetOverrideScore(float newVal) { _overrideScore = newVal; }
     
-  float EvaluateRepetitionPenalty(double currentTime_sec) const;
+  float EvaluateRepetitionPenalty() const;
   const Util::GraphEvaluator2d& GetRepetionalPenalty() const { return _repetitionPenalty; }
     
   bool IsOwnedByFactory() const { return _isOwnedByFactory; }
@@ -159,15 +158,21 @@ protected:
   // Going forward we don't want names being set arbitrarily (they can come from data etc.)
   void DEMO_HACK_SetName(const char* inName) { _name = inName; }
   // Only sets the name if it's currenty the base default name
-  inline void SetDefaultName(const char* inName);
+  void SetDefaultName(const char* inName);
   inline void SetStateName(const std::string& inName) { _stateName = inName; }
     
-  virtual Result InitInternal(Robot& robot, double currentTime_sec) = 0;
+  virtual Result InitInternal(Robot& robot) = 0;
+
+  // EvaluateScoreInternal is used to score each behavior for behavior selection - by default it just uses
+  // EvaluateEmotionScore. If the behavior is running, it uses the Running score to decide if it should keep
+  // running
+  virtual float EvaluateRunningScoreInternal(const Robot& robot) const;
+  virtual float EvaluateScoreInternal(const Robot& robot) const;
 
   // default implementation is to return Running while IsActing, and Complete otherwise
-  virtual Status UpdateInternal(Robot& robot, double currentTime_sec);
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) = 0;
-  virtual void   StopInternal(Robot& robot, double currentTime_sec) = 0;
+  virtual Status UpdateInternal(Robot& robot);
+  virtual Result InterruptInternal(Robot& robot) = 0;
+  virtual void   StopInternal(Robot& robot) = 0;
     
   bool ReadFromJson(const Json::Value& config);
 
@@ -299,54 +304,7 @@ private:
     
 }; // class IBehavior
   
-inline Result IBehavior::Init(double currentTime_sec)
-{
-  _isRunning = true;
-  _startedRunningTime_s = currentTime_sec;
-  Result initResult = InitInternal(_robot, currentTime_sec);
-  if ( initResult != RESULT_OK ) {
-    _isRunning = false;
-  }
-  return initResult;
-}
   
-inline IBehavior::Status IBehavior::Update(double currentTime_sec)
-{
-  ASSERT_NAMED(IsRunning(), "IBehavior::UpdateNotRunning");
-  return UpdateInternal(_robot, currentTime_sec);
-}
-
-inline void IBehavior::Stop(double currentTime_sec)
-{
-  _isRunning = false;
-  StopInternal(_robot, currentTime_sec);
-  _lastRunTime_s = currentTime_sec;
-  StopActing(false);
-}
-  
-inline Result IBehavior::Interrupt(double currentTime_sec)
-{
-  Result interruptResult = InterruptInternal(_robot, currentTime_sec);
-  if( interruptResult != RESULT_OK ) {
-    PRINT_NAMED_DEBUG("BehaviorInterface.Interrupt.Failure",
-                      "interrupting behavior '%s' failed",
-                      GetName().c_str());
-  }
-  return interruptResult;
-}
-  
-inline Util::RandomGenerator& IBehavior::GetRNG() const {
-  static Util::RandomGenerator sRNG;
-  return sRNG;
-}
-  
-inline void IBehavior::SetDefaultName(const char* inName)
-{
-  if (_name == kBaseDefaultName) {
-    _name = inName;
-  }
-}
-
 template<typename T>
 bool IBehavior::StartActing(IActionRunner* action, void(T::*callback)(Robot&))
 {
