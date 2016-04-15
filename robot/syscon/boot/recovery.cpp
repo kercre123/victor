@@ -114,25 +114,33 @@ void setTransmit(bool tx) {
   NRF_UART0->EVENTS_TXDRDY = 0;
 }
 
-static void readUart(void* p, int length) {
-	uint8_t* data = (uint8_t*) p;
-	setTransmit(false);
-	
-	while (length-- > 0) {
-		int waitTime = GetCounter() + UART_TIMEOUT;
+static void readUart(void* p, int length, bool timeout = true) {
+  uint8_t* data = (uint8_t*) p;
+  setTransmit(false);
 
-		while (!NRF_UART0->EVENTS_RXDRDY) {
-			int ticks = waitTime - GetCounter();
-			if (ticks < 0) {
-				NVIC_SystemReset();
-			}
+  while (length-- > 0) {
+    int waitTime = GetCounter() + UART_TIMEOUT;
 
-			Battery::manage();
-		}
+    while (!NRF_UART0->EVENTS_RXDRDY) {
+      int ticks = waitTime - GetCounter();
+      if (ticks < 0) {
+        if (timeout) {
+          NVIC_SystemReset();
+        } else {
+          static uint8_t color = 0x10;
+          color = ((color + 1) & 7) | 0x10;
+          setLight(color);
+        }
+        
+        waitTime = GetCounter() + UART_TIMEOUT;
+      }
 
-		NRF_UART0->EVENTS_RXDRDY = 0;
-		*(data++) = NRF_UART0->RXD;
-	}
+      Battery::manage();
+    }
+
+    NRF_UART0->EVENTS_RXDRDY = 0;
+    *(data++) = NRF_UART0->RXD;
+  }
 }
 
 static void writeUart(const void* p, int length) {
@@ -148,9 +156,9 @@ static void writeUart(const void* p, int length) {
 	}
 }
 
-static uint8_t readByte() {
+static uint8_t readByte(bool timeout = true) {
 	uint8_t byte;
-	readUart(&byte, sizeof(byte));
+	readUart(&byte, sizeof(byte), timeout);
 	
 	return byte;
 }
@@ -278,14 +286,12 @@ static inline bool FlashBlock() {
 
 void BlinkALot(void) {
   uint8_t colors[] = {
-		0x02 + 16, 0x02 +  8, 0x04 + 24,
-		0x04 + 24, 0x04 +  8, 0x02 + 16,
-		0x06 + 16, 0x06 +  8, 0x06 + 24,
-		0x07 + 24, 0x07 +  8, 0x07 + 16
-	};
-	
-	for (int i = 0; i < sizeof(colors); i++) {
-		setLight(colors[i]);
+    0x02 + 16, 0x02 +  8, 0x04 + 24,
+    0x04 + 24, 0x02 +  8, 0x02 + 16,
+  };
+
+  for (int i = 0; i < sizeof(colors); i++) {
+    setLight(colors[i]);
     MicroWait(50000);
   }
 }
@@ -326,6 +332,10 @@ void EnterRecovery(void) {
       case COMMAND_SET_LED:
         setLight(readByte());
         state = STATE_ACK;
+        break ;
+      
+      case COMMAND_PAUSE:
+        while(readByte(false) != COMMAND_RESUME) ;
         break ;
       
       case COMMAND_IDLE:
