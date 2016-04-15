@@ -14,13 +14,6 @@ message ObjectDiscovered
   int_8       rssi
 }
 
-// Only sent from engine to game
-message ObjectUndiscovered
-{
-  uint_32 factory_id
-}
-
-
 message ObjectConnectionState
 {
   uint_32 objectID,   // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!

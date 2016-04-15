@@ -40,6 +40,8 @@
 // talking to a robot. Prints roughly once/sec.
 #define PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS 0
 
+// Filter that makes chargers not discoverable
+#define IGNORE_CHARGER_DISCOVERY 0
 
 namespace Anki {
 namespace Cozmo {
@@ -308,21 +310,36 @@ void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotTo
 {
   if (_enableDiscoveredObjectsBroadcasting) {
     const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
-
-    // TODO: Include charger support but for now ignore them.
-    //       Chargers have MSB set.
-    if (payload.factory_id >= s32_MAX) {
-      return;
+    
+    // Check object type
+    ObjectType objType = ObservableObject::GetTypeFromFactoryID(payload.factory_id);
+    switch(objType) {
+      case ObjectType::Charger_Basic:
+      {
+        if (IGNORE_CHARGER_DISCOVERY) {
+          return;
+        }
+        break;
+      }
+      case ObjectType::Unknown:
+      {
+        PRINT_NAMED_WARNING("Robot.HandleActiveObjectDiscovered.UnknownType", "FactoryID: 0x%x", payload.factory_id);
+        return;
+      }
+      default:
+        break;
     }
     
-    if (_discoveredObjects.find(payload.factory_id) == _discoveredObjects.end()) {
-      PRINT_NAMED_INFO("ObjectDiscovered", "FactoryID 0x%x (currTime %d)", payload.factory_id, GetLastMsgTimestamp());
+    if (_discoveredObjects.find(payload.factory_id) == _discoveredObjects.end() || PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS) {
+      PRINT_NAMED_INFO("Robot.HandleActiveObjectDiscovered.ObjectDiscovered",
+                       "Type: %s, FactoryID 0x%x, rssi %d, (currTime %d)",
+                       EnumToString(objType), payload.factory_id, payload.rssi, GetLastMsgTimestamp());
     }
     _discoveredObjects[payload.factory_id] = GetLastMsgTimestamp();  // Not super accurate, but this doesn't need to be
-#   if (PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS)
-    PRINT_NAMED_INFO("ObjectDiscovered", "FactoryID 0x%x, rssi %d, (currTime %d)", payload.factory_id, payload.rssi, GetLastMsgTimestamp());
-#   endif
-    Broadcast(ExternalInterface::MessageEngineToGame(ObjectDiscovered(payload)));
+
+    // Send ObjectAvailable to game
+    ExternalInterface::ObjectAvailable m(payload.factory_id, objType, payload.rssi);
+    Broadcast(ExternalInterface::MessageEngineToGame(std::move(m)));
   }
 }
 
