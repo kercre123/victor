@@ -75,6 +75,7 @@ void Anki::Cozmo::HAL::SPI::init(void) {
   // Clear all status flags
   SPI0_SR = SPI0_SR;
 
+  // Turn on the espressif and start clocking data
   Power::enableEspressif();
   sync();
 }

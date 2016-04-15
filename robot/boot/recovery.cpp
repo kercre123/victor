@@ -208,6 +208,7 @@ static void SyncToBody(void) {
 }
 
 void EnterRecovery() {  
+  // Pin to our body
   SyncToBody();
 
   // These are the requirements to boot immediately into the application
@@ -216,8 +217,6 @@ void EnterRecovery() {
   bool remove_boot_ok = SendBodyCommand(COMMAND_BOOT_READY);
   bool boot_ok = recovery_force && CheckBootReady() && remove_boot_ok;
 
-  boot_ok = false;
-  
   // If the body says it's safe, feel free to exit
   if (boot_ok && SendBodyCommand(COMMAND_DONE)) {
     return ;
@@ -226,9 +225,7 @@ void EnterRecovery() {
   // We know that booting the espressif will take awhile, so we should
   // just tell the body to pause until that finishes
   UART::writeByte(COMMAND_PAUSE);
-
   SPI::init();
-
   UART::writeByte(COMMAND_RESUME);
 
   // We are now ready to start receiving commands

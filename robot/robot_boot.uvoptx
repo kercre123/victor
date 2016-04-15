@@ -150,22 +150,17 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>recovery_header</ItemText>
+          <ItemText>ret</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>packet</ItemText>
+          <ItemText>SPI0_PUSHR_SLAVE</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>i</ItemText>
-        </Ww>
-        <Ww>
-          <count>3</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>(char*)0x40020000</ItemText>
+          <ItemText>*recovery_word</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
