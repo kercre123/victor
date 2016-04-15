@@ -792,6 +792,14 @@ message ForceDelocalizeRobot {
   uint_8 robotID
 }
 
+message EnableSparkUnlock {
+  UnlockId enableSparkId
+}
+
+message StopSparkUnlock {
+
+}
+
 // Mood / Emotions
 
 structure GetEmotions {
