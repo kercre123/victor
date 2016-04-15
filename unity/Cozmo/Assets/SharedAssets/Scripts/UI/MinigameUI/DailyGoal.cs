@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
@@ -7,12 +8,55 @@ namespace Cozmo {
   namespace UI {
     [System.Serializable]
     public class DailyGoal {
+      
       public GameEvent GameEvent;
       public LocalizedString Title;
       public LocalizedString Description;
+      public Sprite GoalIcon;
       public int Progress;
       public int Target;
       public int PointsRewarded;
+      // TODO: Add some Action or Event (Probably into DailyGoalManager) that fires "OnDailyGoalComplete" Event and passes in itself when target is met
+      // TODO: Replace PointsRewarded with a more generalized "Reward" class. Potentially replace
+      // with an Action instead to match QuestEngine.
+      // Example : ActionGrantReward (Reward) but we can also use it to trigger other things such as ActionGoalFeedback (VFX/Audio) or ActionAlertPopup (Text)
+      // TODO: Create Trigger Conditions to allow for more situation based events.
+      // Example : Replace SpeedTapSessionWin with MinigameSessionEnded, but the related Goal would then
+      // have a MinigameTypeCondition (SpeedTap) and a DidWinCondition (True).
+      public Action<DailyGoal> OnDailyGoalUpdated;
+
+      public DailyGoal() {
+        GameEventManager.Instance.OnGameEvent += ProgressGoal;
+      }
+
+      public bool GoalComplete {
+        get {
+          return (Progress >= Target);
+        }
+      }
+
+      private void ProgressGoal(GameEvent gEvent) {
+        if (gEvent != GameEvent) {
+          return;
+        }
+        // TODO: Check Availability Conditions
+        // Return false if false.
+        // TODO: Check Trigger Conditions
+        // Return false if false.
+        // Progress Goal
+        Progress++;
+        DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
+        // Check if Completed
+        if (Progress >= Target) {
+          // Grant Reward
+          // TODO: Use a more generic Reward Action
+          DAS.Event(this, string.Format("{0} Completed", Title));
+          PlayerManager.Instance.AddGreenPoints(PointsRewarded);
+        }
+        if (OnDailyGoalUpdated != null) {
+          OnDailyGoalUpdated.Invoke(this);
+        }
+      }
     }
   }
 }

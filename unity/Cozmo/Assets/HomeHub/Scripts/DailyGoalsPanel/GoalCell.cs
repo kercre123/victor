@@ -26,7 +26,10 @@ namespace Cozmo {
         }
       }
 
+      // TODO: Remove ProgressionStatType entirely
       public Anki.Cozmo.ProgressionStatType Type;
+      // TODO: Replace with DailyGoal
+      private DailyGoal _Goal;
 
       [SerializeField]
       private Image _GoalIcon;
@@ -48,6 +51,9 @@ namespace Cozmo {
             else {
               _GoalLabel.text = ProgressionStatConfig.Instance.GetLocNameForStat(Type);
               _GoalLabel.color = UIColorPalette.NeutralTextColor();
+            }
+            if (OnProgChanged != null) {
+              OnProgChanged.Invoke();
             }
           }
         }
@@ -76,28 +82,31 @@ namespace Cozmo {
       public void Initialize(Anki.Cozmo.ProgressionStatType type, int currProg, int goal, bool update = true) {
         _GoalTarget = goal;
         Type = type;
-        if (update) {
-          RobotEngineManager.Instance.OnProgressionStatRecieved += OnProgressionStatUpdate;
-        }
         _GoalIcon.sprite = ProgressionStatConfig.Instance.GetIconForStat(type);
         _GoalLabel.text = ProgressionStatConfig.Instance.GetLocNameForStat(type);
         SetProgress((float)currProg / (float)goal);
       }
 
-      void OnProgressionStatUpdate(Anki.Cozmo.ProgressionStatType type, int count) {
-        if (Type == type) {
-          if (count != _CurrStatVal) {
-            _CurrStatVal = count;
-            SetProgress((float)count / (float)_GoalTarget);
-            if (OnProgChanged != null) {
-              OnProgChanged.Invoke();
-            }
-          }
+      // New Initialization Function for DailyGoal instead of ProgressionStatType
+      public void Initialize(DailyGoal goal, bool update = true) {
+        _Goal = goal;
+        if (update) {
+          goal.OnDailyGoalUpdated += OnGoalUpdate;
         }
+        _GoalTarget = goal.Target;
+        _GoalIcon.sprite = goal.GoalIcon;
+        _GoalLabel.text = goal.Title;
+        SetProgress((float)goal.Progress / (float)_GoalTarget);
+
+      }
+
+      private void OnGoalUpdate(DailyGoal goal) {
+        SetProgress((float)goal.Progress / (float)goal.Target);
+
       }
 
       void OnDestroy() {
-        RobotEngineManager.Instance.OnProgressionStatRecieved -= OnProgressionStatUpdate;
+        _Goal.OnDailyGoalUpdated -= OnGoalUpdate;
       }
     }
   }
