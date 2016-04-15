@@ -21,8 +21,7 @@ int main (void) {
     SIM_SCGC5_PORTD_MASK |
     SIM_SCGC5_PORTE_MASK;
 
-  __disable_irq();
-
+  __disable_irq();  
   TimerInit();
   Power::init();
   UART::init();
