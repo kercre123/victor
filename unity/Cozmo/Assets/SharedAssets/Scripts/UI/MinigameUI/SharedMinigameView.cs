@@ -348,8 +348,7 @@ namespace Cozmo {
 
       public void ShowHowToPlayButton() {
         CreateWidgetIfNull<HowToPlayButton>(ref _HowToPlayButtonInstance, _HowToPlayButtonPrefab);
-        _HowToPlayButtonInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
-        _HowToPlayButtonInstance.Initialize(_HowToPlayContentLocKey, _HowToPlayContentPrefab);
+        _HowToPlayButtonInstance.Initialize(_HowToPlayContentLocKey, _HowToPlayContentPrefab, ComposeDasViewName(_CurrentSlideName));
       }
 
       public void OpenHowToPlayView() {
@@ -369,7 +368,7 @@ namespace Cozmo {
       #region ContinueButtonShelfWidget
 
       public void ShowContinueButtonOnShelf(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
-                                            string buttonText, string shelfText, Color shelfColor) {
+                                            string buttonText, string shelfText, Color shelfColor, string dasButtonName) {
         if (_IsContinueButtonShelfCentered) {
           if (_ContinueButtonShelfInstance != null) {
             HideContinueButtonShelf();
@@ -377,13 +376,13 @@ namespace Cozmo {
         }
         CreateWidgetIfNull<ContinueGameShelfWidget>(ref _ContinueButtonShelfInstance, _ContinueButtonShelfPrefab);
         _IsContinueButtonShelfCentered = false;
-        _ContinueButtonShelfInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfColor);
-        _ContinueButtonShelfInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
+        string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
+        _ContinueButtonShelfInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfColor, dasButtonName, dasViewControllerName);
         EnableContinueButton(true);
       }
 
       public void ShowContinueButtonCentered(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
-                                             string buttonText) {
+                                             string buttonText, string dasButtonName) {
         if (!_IsContinueButtonShelfCentered) {
           if (_ContinueButtonShelfInstance != null) {
             HideContinueButtonShelf();
@@ -391,8 +390,8 @@ namespace Cozmo {
         }
         CreateWidgetIfNull<ContinueGameShelfWidget>(ref _ContinueButtonShelfInstance, _ContinueButtonCenterPrefab);
         _IsContinueButtonShelfCentered = true;
-        _ContinueButtonShelfInstance.Initialize(buttonClickHandler, buttonText, string.Empty, Color.clear);
-        _ContinueButtonShelfInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
+        string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
+        _ContinueButtonShelfInstance.Initialize(buttonClickHandler, buttonText, string.Empty, Color.clear, dasButtonName, dasViewControllerName);
         EnableContinueButton(true);
       }
 

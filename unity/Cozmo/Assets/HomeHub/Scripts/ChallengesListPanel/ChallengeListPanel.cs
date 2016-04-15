@@ -25,7 +25,7 @@ namespace Cozmo.HomeHub {
         if (kvp.Value.ChallengeUnlocked) {
           _ChallengeButtons.Add(kvp.Value.Data.ChallengeID, 
             CreateChallengeButton(kvp.Value.Data, _UnlockedChallengeButtonPrefab.gameObject, 
-              HandleUnlockedChallengeClicked, "challenge_list_panel"));
+              HandleUnlockedChallengeClicked, "home_hub_challenge_list_panel"));
         }
       }
     }

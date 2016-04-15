@@ -27,7 +27,7 @@ namespace Cozmo {
       private bool _ConfimedQuit = false;
 
       private void Awake() {
-        _QuitButtonInstance.DASEventButtonName = "quit_button";
+        _QuitButtonInstance.DASEventButtonName = "open_quit_game_confirm_view_button";
         _QuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
       }
 
