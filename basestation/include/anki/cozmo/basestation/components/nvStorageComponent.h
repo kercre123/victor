@@ -4,7 +4,7 @@
  * Author: Kevin Yoon
  * Date:   3/28/2016
  *
- * Description: Interface for storing and retrieving data from robot flash
+ * Description: Interface for storing and retrieving data from robot's non-volatile storage
  *
  * Copyright: Anki, Inc. 2016
  **/
@@ -15,6 +15,7 @@
 
 #include "util/signals/simpleSignal_fwd.h"
 #include "util/helpers/noncopyable.h"
+#include "util/helpers/templateHelpers.h"
 #include "clad/types/nvStorage.h"
 #include "anki/common/types.h"
 
@@ -63,11 +64,20 @@ public:
   
   // Request data stored on robot under the given tag.
   // Executes specified callback when data is received.
-  // Copies data directly into specified data vector if non-null.
+  //
+  // Parameters
+  // =====================
+  // data: If null, a vector is allocated automatically internally to hold the
+  //       data that is received from the robot.
+  //       Otherwise, the specified vector is used to hold the received data.
+  //
+  // callback: When all the data is received, this function is called on it.
+  //
+  // broadcastResultToGame: If true, each data blob received from robot
+  //                        is forwarded to game via MessageEngineToGame::NVDataStorage and when
+  //                        all blobs are received it will also trigger MessageEngineToGame::NVStorageOpResult.
+  //
   // Returns true if request was successfully sent.
-  // If broadcastResultToGame == true, each data blob received from robot
-  // is forwarded to game via MessageEngineToGame::NVDataStorage and when
-  // all blobs are received it will also trigger MessageEngineToGame::NVStorageOpResult.
   using NVStorageReadCallback = std::function<void(u8* data, size_t size)>;
   bool Read(NVStorage::NVEntryTag tag,
             NVStorageReadCallback callback = {},
@@ -92,8 +102,9 @@ private:
   void HandleNVStorageClearPartialPendingWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   
   // Queues blobs for a multi-blob message from game and sends them to robot when all blobs received.
-  void QueueWriteBlob(const NVStorage::NVEntryTag tag, u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
+  bool QueueWriteBlob(const NVStorage::NVEntryTag tag, u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
   
+  void BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag, NVStorage::NVResult res, NVStorage::NVOperation op);
   
   std::vector<Signal::SmartHandle> _signalHandles;
 
@@ -108,13 +119,14 @@ private:
   
   // Info about a single write/erase request
   struct WriteDataObject {
-    WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>&& dataVec, bool write) {
-      baseTag = tag;
-      nextTag = (u32)tag;
-      sendIndex = 0;
-      data = dataVec;
-      writeNotErase = write;
-    }
+    WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>&& dataVec, bool write)
+    : baseTag(tag)
+    , nextTag(static_cast<u32>(tag))
+    , sendIndex(0)
+    , data(dataVec)
+    , writeNotErase(write)
+    { }
+    
     NVStorage::NVEntryTag baseTag;
     u32 nextTag;
     u32 sendIndex;
@@ -131,9 +143,17 @@ private:
   
   // Info on how to handle read-requested data
   struct RecvDataObject {
+    RecvDataObject()
+    : data(nullptr)
+    , callback({})
+    , deleteVectorWhenDone(true)
+    , broadcastResultToGame(false)
+    { }
+    
     ~RecvDataObject() {
-      if (deleteVectorWhenDone)
-        delete data;
+      if (deleteVectorWhenDone) {
+        Util::SafeDelete(data);
+      }
     }
     
     std::vector<u8> *data;

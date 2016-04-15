@@ -1979,33 +1979,15 @@ namespace Anki {
     
       void WebotsKeyboardController::HandleNVStorageData(const ExternalInterface::NVStorageData &msg)
       {
-        switch(msg.tag) {
-          case NVStorage::NVEntryTag::NVEntry_CameraCalibration:
-          {
-            CameraCalibration calib;
-            calib.Unpack(msg.data.data(), msg.data_length);
-            
-            PRINT_NAMED_INFO("HandleNVStorageData.CamCalibration",
-                             "fx: %f, fy: %f, cx: %f, cy: %f, skew: %f, nrows: %d, ncols: %d",
-                             calib.focalLength_x, calib.focalLength_y,
-                             calib.center_x, calib.center_y,
-                             calib.skew,
-                             calib.nrows, calib.ncols);
-            break;
-          }
-          default:
-          {
-            PRINT_NAMED_INFO("HandleNVStorageData.UnhandledTag", "%s", EnumToString(msg.tag));
-            break;
-          }
-        }
+        // Could handle single-blob reads here, but for consistency all reads are handled upon
+        // receipt of NVStorageOpResult message below.
       }
     
     
       void WebotsKeyboardController::HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg)
       {
-        if (msg.write) {
-          // Do nothing for write acks
+        if (msg.op != NVStorage::NVOperation::NVOP_READ) {
+          // Do nothing for write/erase acks
         } else {
 
           // Check result flag
@@ -2016,35 +1998,41 @@ namespace Anki {
                                 EnumToString(msg.result));
             return;
           }
-      
-          // Check that this a multi-blob message.
-          // Single blob messages don't get a NVOpResult so they need to be handled when NVStorageData is received.
-          if (!IsMultiBlobEntryTag(static_cast<u32>(msg.tag))) {
-            PRINT_NAMED_WARNING("HandleNVStorageOpResult.Read.UnexpectedSingleReadResult", "%s", EnumToString(msg.tag));
-            return;
-          }
           
           const std::vector<u8>* recvdData = GetReceivedNVStorageData(msg.tag);
           if (recvdData == nullptr) {
             PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.NoDataReceived", "Tag: %s", EnumToString(msg.tag));
+            return;
           }
           
           switch(msg.tag) {
+            case NVStorage::NVEntryTag::NVEntry_CameraCalibration:
+            {
+              CameraCalibration calib;
+              calib.Unpack(recvdData->data(), recvdData->size());
+              
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.CamCalibration",
+                               "fx: %f, fy: %f, cx: %f, cy: %f, skew: %f, nrows: %d, ncols: %d",
+                               calib.focalLength_x, calib.focalLength_y,
+                               calib.center_x, calib.center_y,
+                               calib.skew,
+                               calib.nrows, calib.ncols);
+              break;
+            }
             case NVStorage::NVEntryTag::NVEntry_CalibImage1:
             {
-
-                static const char* outFile = "testCalibImage1_output.jpg";
-                PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.CalibImage1",
-                                 "Writing to %s, size: %zu",
-                                 outFile, recvdData->size());
-                
-                FILE* fp = fopen(outFile, "wb");
-                if (fp) {
-                  fwrite(recvdData->data(),1,recvdData->size(),fp);
-                  fclose(fp);
-                } else {
-                  printf("%s open failed\n", outFile);
-                }
+              static const char* outFile = "testCalibImage1_output.jpg";
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.CalibImage1",
+                               "Writing to %s, size: %zu",
+                               outFile, recvdData->size());
+              
+              FILE* fp = fopen(outFile, "wb");
+              if (fp) {
+                fwrite(recvdData->data(),1,recvdData->size(),fp);
+                fclose(fp);
+              } else {
+                printf("%s open failed\n", outFile);
+              }
               
               break;
             }

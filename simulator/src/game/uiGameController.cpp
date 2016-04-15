@@ -267,7 +267,7 @@ namespace Anki {
       }
       
       // Copy into appropriate place in receive data vector
-      memcpy(_recvdNVStorageData[msg.tag].data() + msg.index * msg.data.size(), msg.data.data(), msg.data_length);
+      std::copy(msg.data.begin(), msg.data.begin() + msg.data_length, _recvdNVStorageData[msg.tag].begin() + msg.index * msg.data.size());
       
       HandleNVStorageData(msg);
     }
@@ -275,8 +275,8 @@ namespace Anki {
     void UiGameController::HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg)
     {
       PRINT_NAMED_INFO("HandleNVStorageOpResult",
-                       "%s - res: %s, write %d",
-                       EnumToString(msg.tag), EnumToString(msg.result), msg.write);
+                       "%s - res: %s,  operation: %s",
+                       EnumToString(msg.tag), EnumToString(msg.result), EnumToString(msg.op));
       
       HandleNVStorageOpResult(msg);
     }
@@ -1403,7 +1403,7 @@ namespace Anki {
       msg.data_length = size;
       msg.index = blobIndex;
       msg.numTotalBlobs = numTotalBlobs;
-      memcpy(msg.data.data(), data, size);
+      std::copy(data, data+size,msg.data.begin());
       
       ExternalInterface::MessageGameToEngine message;
       message.Set_NVStorageWriteEntry(msg);

@@ -4,7 +4,7 @@
  * Author: Kevin Yoon
  * Date:   3/28/2016
  *
- * Description: Interface for storing and retrieving data from robot flash
+ * Description: Interface for storing and retrieving data from robot's non-volatile storage
  *
  * Copyright: Anki, Inc. 2016
  **/
@@ -32,15 +32,16 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
   if (context) {
     // Setup game message handlers
     IExternalInterface *extInterface = context->GetExternalInterface();
-    auto writeCallback = std::bind(&NVStorageComponent::HandleNVStorageWriteEntry, this, std::placeholders::_1);
-    _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageWriteEntry, writeCallback));
-    auto readCallback = std::bind(&NVStorageComponent::HandleNVStorageReadEntry, this, std::placeholders::_1);
-    _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageReadEntry, readCallback));
-    auto eraseCallback = std::bind(&NVStorageComponent::HandleNVStorageEraseEntry, this, std::placeholders::_1);
-    _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageEraseEntry, eraseCallback));
-    auto clearPendingCallback = std::bind(&NVStorageComponent::HandleNVStorageClearPartialPendingWriteEntry, this, std::placeholders::_1);
-    _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageClearPartialPendingWriteEntry,clearPendingCallback));
-
+    if (extInterface != nullptr) {
+      auto writeCallback = std::bind(&NVStorageComponent::HandleNVStorageWriteEntry, this, std::placeholders::_1);
+      _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageWriteEntry, writeCallback));
+      auto readCallback = std::bind(&NVStorageComponent::HandleNVStorageReadEntry, this, std::placeholders::_1);
+      _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageReadEntry, readCallback));
+      auto eraseCallback = std::bind(&NVStorageComponent::HandleNVStorageEraseEntry, this, std::placeholders::_1);
+      _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageEraseEntry, eraseCallback));
+      auto clearPendingCallback = std::bind(&NVStorageComponent::HandleNVStorageClearPartialPendingWriteEntry, this, std::placeholders::_1);
+      _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::NVStorageClearPartialPendingWriteEntry,clearPendingCallback));
+    }
     
     // Setup robot message handlers
     RobotInterface::MessageHandler *messageHandler = context->GetRobotMsgHandler();
@@ -68,6 +69,9 @@ bool NVStorageComponent::IsMultiBlobEntryTag(u32 tag) const {
 }
 
 
+// Returns the base (i.e. lowest) tag of the multi-blob entry range
+// in which the given tag falls.
+// See NVEntryTag definition for more details.
 u32 NVStorageComponent::GetBaseEntryTag(u32 tag) const {
   u32 baseTag = tag & 0xffff0000;
   if (baseTag == 0) {
@@ -77,6 +81,9 @@ u32 NVStorageComponent::GetBaseEntryTag(u32 tag) const {
   return baseTag;
 }
   
+// Returns the end (i.e. highest) tag of the multi-blob entry range
+// in which the given tag falls.
+// See NVEntryTag definition for more details.
 u32 NVStorageComponent::GetTagRangeEnd(u32 startTag) const {
   if (IsMultiBlobEntryTag(startTag)) {
     return startTag | 0xffff;
@@ -100,6 +107,14 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag, u8* data, size_t size,
   if (_writeDataAckMap.find(t) != _writeDataAckMap.end()) {
     PRINT_NAMED_WARNING("NVStorageComponent.Write.AlreadyBeingWritten",
                         "Tag: %s", EnumToString(tag));
+    return false;
+  }
+  
+  // Check if this is a single-blob entry that has more than one blob's worth of data
+  if (!IsMultiBlobEntryTag(static_cast<u32>(tag)) && size > _kMaxNvStorageBlobSize) {
+    PRINT_NAMED_WARNING("NVStorageComponent.Write.SingleBlobEntryHasTooMuchData",
+                        "Tag: %s, size: %zu",
+                        EnumToString(tag), size);
     return false;
   }
   
@@ -213,7 +228,7 @@ void NVStorageComponent::Update()
       // Send the next blob of data to send for this multi-blob message
       u32 bytesLeftToSend = static_cast<u32>(sendData->data.size()) - sendData->sendIndex;
       u32 bytesToSend = MIN(bytesLeftToSend, _kMaxNvStorageBlobSize);
-      AnkiAssert(bytesToSend > 0);
+      ASSERT_NAMED(bytesToSend > 0, "NVStorageComponent.Update.ExpectedPositiveNumBytesToSend");
       
       writeMsg.entry.blob = std::vector<u8>(sendData->data.begin() + sendData->sendIndex,
                                             sendData->data.begin() + sendData->sendIndex + bytesToSend);
@@ -231,7 +246,7 @@ void NVStorageComponent::Update()
       }
       
       // Sent last blob?
-      if (bytesToSend < _kMaxNvStorageBlobSize) {
+      if (sendData->sendIndex >= sendData->data.size()) {
         _writeDataQueue.pop();
       }
       
@@ -302,13 +317,20 @@ void NVStorageComponent::HandleNVData(const AnkiEvent<RobotInterface::RobotToEng
     // If this is not a multiblob message, execute callback now.
     PRINT_NAMED_INFO("NVStorageComponent.HandleNVData.MsgRecvd",
                      "BaseTag: %s, Tag: 0x%x, size: %u",
-                     EnumToString((NVStorage::NVEntryTag)baseTag), baseTag, blobSize);
+                     EnumToString(static_cast<NVStorage::NVEntryTag>(baseTag)), nvBlob.tag, blobSize);
     if (_recvDataMap[baseTag].callback) {
       PRINT_NAMED_INFO("NVStorageComponent.HandleNVData.ExecutingCallback",
                        "BaseTag: %s, Tag: 0x%x",
-                       EnumToString((NVStorage::NVEntryTag)baseTag), baseTag);
+                       EnumToString(static_cast<NVStorage::NVEntryTag>(baseTag)), nvBlob.tag);
       _recvDataMap[baseTag].callback(nvBlob.blob.data(), nvBlob.blob.size());
     }
+
+    // Sending a result message since the robot doesn't actually send one back
+    // for successful single-blob reads.
+    if (_recvDataMap[baseTag].broadcastResultToGame) {
+      BroadcastNVStorageOpResult(static_cast<NVStorage::NVEntryTag>(baseTag), NVStorage::NVResult::NV_OKAY, NVStorage::NVOperation::NVOP_READ);
+    }
+
     _recvDataMap.erase(baseTag);
   }
 }
@@ -355,11 +377,9 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
       // For multi-erase, only forward the final (i.e. 2nd) result
       if (_writeDataAckMap[baseTag].broadcastResultToGame &&
           (_writeDataAckMap[baseTag].writeNotErase || _writeDataAckMap[baseTag].numTagsLeftToAck == 0)) {
-        ExternalInterface::NVStorageOpResult msg;
-        msg.tag = static_cast<NVStorage::NVEntryTag>(baseTag);
-        msg.result = payload.report.result;
-        msg.write = payload.report.write;
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+        BroadcastNVStorageOpResult(static_cast<NVStorage::NVEntryTag>(baseTag),
+                                   payload.report.result,
+                                   _writeDataAckMap[baseTag].writeNotErase ? NVStorage::NVOperation::NVOP_WRITE : NVStorage::NVOperation::NVOP_ERASE);
       }
     }
 
@@ -387,11 +407,9 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
 
     // Check if this should be forwarded on to game
     if (_recvDataMap[baseTag].broadcastResultToGame) {
-      ExternalInterface::NVStorageOpResult msg;
-      msg.tag = static_cast<NVStorage::NVEntryTag>(baseTag);
-      msg.result = payload.report.result;
-      msg.write = payload.report.write;
-      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      BroadcastNVStorageOpResult(static_cast<NVStorage::NVEntryTag>(baseTag),
+                                 payload.report.result,
+                                 NVStorage::NVOperation::NVOP_READ);
     }
     
     
@@ -413,10 +431,18 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
     // Delete recvData object
     _recvDataMap.erase(baseTag);
   }
-
+}
+  
+  void NVStorageComponent::BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag, NVStorage::NVResult res, NVStorage::NVOperation op)
+{
+  ExternalInterface::NVStorageOpResult msg;
+  msg.tag = tag;
+  msg.result = res;
+  msg.op = op;
+  _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
 }
 
-void NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
+bool NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
                                         u8* data, u16 dataLength,
                                         u8 blobIndex, u8 numTotalBlobs)
 {
@@ -424,14 +450,14 @@ void NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
  
   if (tag == NVStorage::NVEntryTag::NVEntry_Invalid) {
     PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.InvalidTag", "");
-    return;
+    return false;
   }
   
   if (numTotalBlobs > _kMaxNumBlobsInMultiBlobEntry) {
     PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.TooManyBlobs",
                         "Num total blobs %d exceeds max of %d",
                         numTotalBlobs, _kMaxNumBlobsInMultiBlobEntry);
-    return;
+    return false;
   }
   
   if (_pendingWriteData.tag != tag) {
@@ -459,7 +485,7 @@ void NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
     PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.UnexpectedIndex",
                         "index %d, numTotalBlobs: %d",
                         blobIndex, numTotalBlobs);
-    return;
+    return false;
   }
   
   
@@ -473,14 +499,14 @@ void NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
                           blobIndex,
                           numTotalBlobs,
                           dataLength);
-      return;
+      return false;
     }
   } else if (blobIndex > numTotalBlobs - 1) {
     
     PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.IndexTooBig",
                         "Tag: %s, index: %d (total %d)",
                         EnumToString(tag), blobIndex, numTotalBlobs);
-    return;
+    return false;
   } else { // (blobIndex == numTotalBlobs - 1)
     // This is the last blob so we can know what the total size of the entry is now
     _pendingWriteData.data.resize((numTotalBlobs-1) * _kMaxNvStorageBlobSize + dataLength);
@@ -488,54 +514,76 @@ void NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
 
   
   // Add blob data
-  memcpy(_pendingWriteData.data.data() + (blobIndex * _kMaxNvStorageBlobSize), data, dataLength);
+  std::copy(data, data + dataLength, _pendingWriteData.data.begin() + (blobIndex * _kMaxNvStorageBlobSize));
+
   
   
   // Ready to send to robot?
-  if (_pendingWriteData.remainingIndices.size() == 0) {
+  bool res = true;
+  if (_pendingWriteData.remainingIndices.empty()) {
     PRINT_NAMED_INFO("NVStorageComponent.QueueWriteBlob.SendingToRobot",
                      "Tag: %s, Bytes: %zu",
                      EnumToString(tag),
                      _pendingWriteData.data.size());
-    Write(tag, _pendingWriteData.data.data(), _pendingWriteData.data.size(), true);
+    res = Write(tag, _pendingWriteData.data.data(), _pendingWriteData.data.size(), true);
     
     // Clear pending write data for next message
     _pendingWriteData.tag = NVStorage::NVEntryTag::NVEntry_Invalid;
   }
+  
+  return res;
 }
   
   
 void NVStorageComponent::HandleNVStorageWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   ExternalInterface::NVStorageWriteEntry payload = event.GetData().Get_NVStorageWriteEntry();
-  PRINT_NAMED_INFO("NVStorageComponent::HandleNVStorageWriteEntry",
+  PRINT_NAMED_INFO("NVStorageComponent.HandleNVStorageWriteEntry.Recvd",
                    "Tag: %s, size %u",
                    EnumToString(payload.tag), payload.data_length);
 
+  bool res = true;
   if (IsMultiBlobEntryTag(static_cast<u32>(payload.tag))) {
-    QueueWriteBlob(payload.tag,
-                   payload.data.data(), payload.data_length,
-                   payload.index, payload.numTotalBlobs);
-    return;
+    res = QueueWriteBlob(payload.tag,
+                         payload.data.data(), payload.data_length,
+                         payload.index, payload.numTotalBlobs);
+  } else {
+    res = Write(payload.tag, payload.data.data(), payload.data_length, true);
   }
   
-  Write(payload.tag, payload.data.data(), payload.data_length, true);
+  // If failed before request is event sent to robot, then send OpResult now.
+  if (!res) {
+    PRINT_NAMED_WARNING("NVStorageComponent.HandleNVStorageWriteEntry.FailedToQueueOrSend",
+                        "Tag: %s, size: %d, blobIndex: %d, numTotalBlobs: %d",
+                        EnumToString(payload.tag), payload.data_length, payload.index, payload.numTotalBlobs);
+    BroadcastNVStorageOpResult(payload.tag, NVStorage::NVResult::NV_ERROR, NVStorage::NVOperation::NVOP_WRITE);
+  }
 }
   
 void NVStorageComponent::HandleNVStorageReadEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   ExternalInterface::NVStorageReadEntry payload = event.GetData().Get_NVStorageReadEntry();
-  PRINT_NAMED_INFO("NVStorageComponent::HandleNVStorageReadEntry", "Tag: %s", EnumToString(payload.tag));
+  PRINT_NAMED_INFO("NVStorageComponent.HandleNVStorageReadEntry.Recvd", "Tag: %s", EnumToString(payload.tag));
   
-  Read(payload.tag, {}, nullptr, true);
+  if (!Read(payload.tag, {}, nullptr, true)) {
+    // If failed before request is event sent to robot, then send OpResult now.
+    PRINT_NAMED_WARNING("NVStorageComponent.HandleNVStorageReadEntry.FailedToQueueOrSend",
+                        "Tag: %s", EnumToString(payload.tag));
+    BroadcastNVStorageOpResult(payload.tag, NVStorage::NVResult::NV_ERROR, NVStorage::NVOperation::NVOP_READ);
+  }
 }
 
 void NVStorageComponent::HandleNVStorageEraseEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   ExternalInterface::NVStorageEraseEntry payload = event.GetData().Get_NVStorageEraseEntry();
-  PRINT_NAMED_INFO("NVStorageComponent::HandleNVStorageEraseEntry", "Tag: %s", EnumToString(payload.tag));
+  PRINT_NAMED_INFO("NVStorageComponent.HandleNVStorageEraseEntry.Recvd", "Tag: %s", EnumToString(payload.tag));
 
-  Erase(payload.tag, true);
+  if (!Erase(payload.tag, true)) {
+    // If failed before request is event sent to robot, then send OpResult now.
+    PRINT_NAMED_WARNING("NVStorageComponent.HandleNVStorageEraseEntry.FailedToQueueOrSend",
+                        "Tag: %s", EnumToString(payload.tag));
+    BroadcastNVStorageOpResult(payload.tag, NVStorage::NVResult::NV_ERROR, NVStorage::NVOperation::NVOP_ERASE);
+  }
 }
   
 void NVStorageComponent::HandleNVStorageClearPartialPendingWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)

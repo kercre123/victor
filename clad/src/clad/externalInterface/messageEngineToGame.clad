@@ -396,9 +396,9 @@ message NVStorageData {
 }
 
 message NVStorageOpResult {
-  NVStorage::NVEntryTag tag,
-  NVStorage::NVResult   result,
-  bool                  write
+  NVStorage::NVEntryTag  tag,
+  NVStorage::NVResult    result,
+  NVStorage::NVOperation op
 }
 
 

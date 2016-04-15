@@ -948,7 +948,9 @@ message NVStorageEraseEntry {
 // Multi-blob messages (determined by tag) are queued on engine
 // and sent out all at once only when all blobs have been received.
 // (This also means that writes won't be ackd with NVStorageOpResult until all
-// blobs have been sent to engine.)
+// blobs have been sent to engine, unless there's a problem found before all the blobs
+// have been received in which case engine will send an NVStorageOpResult failure for
+// each problematic NVStorageWriteEntry received.)
 // This is to help make it harder to write junk to the robot.'
 // Single-blob messages are sent to robot immediately.
 message NVStorageWriteEntry {
