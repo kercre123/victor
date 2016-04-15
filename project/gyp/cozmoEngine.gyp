@@ -10,7 +10,6 @@
     'api_source': 'cozmoAPI.lst',
     'api_library_type': 'static_library',
     'engine_test_source': 'cozmoEngine-test.lst',
-    'engine_library_type': 'shared_library',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
     'ctrlViz_source': 'ctrlViz.lst',
@@ -1440,11 +1439,11 @@
         '<(ce-audio_path):DriveAudioEngine',
         '<(ce-ble_cozmo_path):BLECozmo',
       ],
-      'type': '<(engine_library_type)',
       'conditions': [    
         [
           'OS=="ios" or OS=="mac"',
           {
+            'type': 'static_library',
             'libraries': [
               '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
@@ -1456,6 +1455,7 @@
           },
       	  'OS=="android"',
           {
+            'type': 'shared_library',
             'library_dirs':
             [
               #these are empty?!?!
@@ -1478,13 +1478,13 @@
               # does not work with ninja?!?!
               # '<@(face_library_libs)',
               # '<@(opencv_libs)',
-              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/3rdparty/libs/armeabi-v7a/libIlmImf.a',
-              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/3rdparty/libs/armeabi-v7a/liblibjasper.a',
-              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/3rdparty/libs/armeabi-v7a/liblibjpeg.a',
-              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/3rdparty/libs/armeabi-v7a/liblibpng.a',
-              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/3rdparty/libs/armeabi-v7a/liblibtiff.a',
-              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/3rdparty/libs/armeabi-v7a/liblibwebp.a',
-              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/3rdparty/libs/armeabi-v7a/libtbb.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/libIlmImf.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjasper.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjpeg.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibpng.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibtiff.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibwebp.a',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libtbb.so',
               '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_calib3d.so',
               '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_core.so',
               '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_features2d.so',
