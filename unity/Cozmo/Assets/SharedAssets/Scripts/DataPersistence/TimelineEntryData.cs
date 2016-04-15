@@ -5,6 +5,7 @@ namespace DataPersistence {
   public class TimelineEntryData {
     public Date Date;
 
+    // TODO: Replace StatContainers with lists of Current DailyGoals
     public StatContainer Goals;
 
     public StatContainer Progress;

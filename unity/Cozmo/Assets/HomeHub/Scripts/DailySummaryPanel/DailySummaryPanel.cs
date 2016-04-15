@@ -88,12 +88,20 @@ public class DailySummaryPanel : BaseView {
 
   }
 
-  // Creates a goal badge
+  // Creates a goal badge TODO: Kill this
   private GoalCell CreateGoalCell(ProgressionStatType type, int progress, int goal) {
     GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
     newBadge.Initialize(type, progress, goal, false);
     return newBadge;
   }
+
+  // Creates a goal badge TODO: Use this instead
+  private GoalCell CreateGoalCell(DailyGoal goal) {
+    GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
+    newBadge.Initialize(goal, false);
+    return newBadge;
+  }
+
 
   private ChallengeBadge CreateChallengeBadge(string challengeId, RectTransform container) {
     ChallengeBadge newBadge = UIManager.CreateUIElement(_ChallengePrefab.gameObject, container).GetComponent<ChallengeBadge>();

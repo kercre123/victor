@@ -16,7 +16,7 @@ public class DailyGoalPanel : MonoBehaviour {
   private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
   private const float _kFadeTweenDuration = 0.25f;
 
-  public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data, DailySummaryPanel summaryPanel);
+  public delegate void OnFriendshipBarAnimateComplete(TimelineEntryData data,DailySummaryPanel summaryPanel);
 
   // Prefab for GoalCells
   [SerializeField]
@@ -191,13 +191,23 @@ public class DailyGoalPanel : MonoBehaviour {
     }
   }
 
-  // Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
+  // TODO: Kill this. Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
   private GoalCell CreateGoalCell(ProgressionStatType type, int prog, int goal) {
     DAS.Event(this, string.Format("CreateGoalCell({0},{1},{2})", type, prog, goal));
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
     newBadge.Initialize(type, prog, goal);
     _GoalCells.Add(newBadge);
     _GoalCellsByStat[(int)type] = newBadge;
+    newBadge.OnProgChanged += RefreshProgress;
+    return newBadge;
+  }
+
+  // TODO: Use this instead. Creates a goal badge based on a specified DailyGoal, then hooks in to DailyGoalManager.
+  private GoalCell CreateGoalCell(DailyGoal goal) {
+    DAS.Event(this, string.Format("CreateGoalCell({0})", goal.Title));
+    GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
+    newBadge.Initialize(goal);
+    _GoalCells.Add(newBadge);
     newBadge.OnProgChanged += RefreshProgress;
     return newBadge;
   }
