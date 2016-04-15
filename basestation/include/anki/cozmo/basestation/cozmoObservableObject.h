@@ -73,7 +73,26 @@ namespace Cozmo {
     virtual bool IsActive()                     const   { return false; }
     FactoryID    GetFactoryID()                 const   { return _factoryID; }
     
-    
+    static ObjectType GetTypeFromFactoryID(FactoryID id) {
+        static constexpr ObjectType factoryIDToObjectType[4] = {
+          ObjectType::Block_LIGHTCUBE3,
+          ObjectType::Block_LIGHTCUBE2,
+          ObjectType::Block_LIGHTCUBE1,
+          ObjectType::Unknown
+        };
+        
+        if (id & 0x80000000) {
+          // This is a charger
+          return ObjectType::Charger_Basic;
+        }
+        
+        // This is a light cube
+        u8 typeID = id & 0x3;
+        return factoryIDToObjectType[typeID];
+    };
+
+
+  
     struct LEDstate {
       ColorRGBA onColor;
       ColorRGBA offColor;

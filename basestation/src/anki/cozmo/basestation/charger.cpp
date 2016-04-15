@@ -44,8 +44,8 @@ namespace Anki {
     } // GetCanonicalCorners()
     
     
-    Charger::Charger()
-    : ActionableObject(ObjectFamily::Charger, ObjectType::Charger_Basic)
+    Charger::Charger(ObjectType type)
+    : ActionableObject(ObjectFamily::Charger, type)
     , _size(Length, Width, Height)
     , _vizHandle(VizManager::INVALID_HANDLE)
     
@@ -68,6 +68,16 @@ namespace Anki {
       AddPreActionPose(PreActionPose::ENTRY, _marker, preActionPose);
       
     } // Charger() Constructor
+    
+    Charger::Charger(ActiveID activeID, FactoryID factoryID)
+    : Charger(GetTypeFromFactoryID(factoryID))
+    {
+      ASSERT_NAMED(GetTypeFromFactoryID(factoryID) == ObjectType::Charger_Basic, "Charger.InvalidFactoryID");
+      
+      _activeID = activeID;
+      _factoryID = factoryID;
+    }
+
     
     Charger::~Charger()
     {

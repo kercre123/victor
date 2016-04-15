@@ -333,8 +333,8 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
   ObjectID objID;
   
   if (payload.connected) {
-    // Add cube to blockworld if not already there
-    objID = GetBlockWorld().AddLightCube(payload.objectID, payload.factoryID);
+    // Add active object to blockworld if not already there
+    objID = GetBlockWorld().AddActiveObject(payload.objectID, payload.factoryID);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
                        "Object %d (activeID %d, factoryID 0x%x)",
@@ -345,7 +345,7 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
       SendRobotMessage<CubeLights>(lights, payload.objectID);
     }
   } else {
-    // Remove cube from blockworld if it exists
+    // Remove active object from blockworld if it exists
     ObservableObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
     if (obj) {
       objID = obj->GetID();
