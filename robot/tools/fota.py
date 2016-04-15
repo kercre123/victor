@@ -123,7 +123,7 @@ def UpgradeAssets(up, flashAddresss, assetPathNames, version=0):
         time.sleep(1.0) # Wait for finish
 
 DEFAULT_WIFI_IMAGE = os.path.join("releases", "esp.user.bin")
-DEFAULT_RTIP_IMAGE = os.path.join("releases", "robot.safe")
+DEFAULT_RTIP_IMAGE = os.path.join("releases", "rtip.safe")
 
 def UpgradeAll(up, version=0, wifiImage=DEFAULT_WIFI_IMAGE, rtipImage=DEFAULT_RTIP_IMAGE):
     "Stages all firmware upgrades and triggers upgrade"

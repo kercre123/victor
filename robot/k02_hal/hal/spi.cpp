@@ -256,7 +256,7 @@ void SyncSPI(void) {
 void Anki::Cozmo::HAL::SPI::Init(void) {
   // Enable and configure our DMA
   SIM_SCGC6 |= SIM_SCGC6_DMAMUX_MASK;
-	SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
+  SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
 
   // Clear all status flags
   SPI0_SR = SPI0_SR;

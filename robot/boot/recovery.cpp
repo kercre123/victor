@@ -5,18 +5,20 @@
 #include "crc32.h"
 #include "timer.h"
 #include "uart.h"
+#include "spi.h"
+#include "power.h"
 
 using namespace Anki::Cozmo::HAL;
 
 extern bool CheckSig(void);
 
 static const int FLASH_BLOCK_SIZE = 0x800;
-static uint32_t recovery_word __attribute__((at(0x20001FFC)));
+static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
 static const uint32_t recovery_value = 0xCAFEBABE;
 
 static union {
-	FirmwareBlock packet;
-	commandWord rawWords[1];
+  FirmwareBlock packet;
+  commandWord rawWords[1];
 };
 
 static inline commandWord WaitForWord(void) {
@@ -92,8 +94,6 @@ bool FlashSector(int target, const uint32_t* data)
 }
 
 static bool SendBodyCommand(uint8_t command, const void* body = NULL, int length = 0) {	
-  SPI0_PUSHR_SLAVE = STATE_BUSY;
-
   UART::writeByte(command);
   UART::write(body, length);
 
@@ -148,6 +148,14 @@ void ClearEvilWord(void) {
   SendCommand();
 }
 
+static inline void SetChannelBlink(int channel) {
+  // This is the color for the blink pattern
+  static int color = 0x2;
+  color = (color + 2) % 7;
+
+  SetLight((channel << 3) | color);
+}
+
 static inline bool FlashBlock() {
   static const int length = sizeof(FirmwareBlock) / sizeof(commandWord);
   
@@ -158,8 +166,11 @@ static inline bool FlashBlock() {
 
   // Upper 2gB is body space
   if (packet.blockAddress >= 0x80000000) {
+    SetChannelBlink(1);
     packet.blockAddress &= ~0x80000000;
     return SendBodyCommand(COMMAND_FLASH, &packet, sizeof(packet));
+  } else {
+    SetChannelBlink(3);
   }
 
   // We will not override the boot loader
@@ -182,9 +193,9 @@ static inline bool FlashBlock() {
   }
 
   return true;
-  }
+}
 
-  static void SyncToBody(void) {
+static void SyncToBody(void) {
   uint32_t recovery_header = 0;
 
   while (recovery_header != BODY_RECOVERY_NOTICE) {
@@ -197,15 +208,12 @@ static inline bool FlashBlock() {
 }
 
 void EnterRecovery() {  
-  // Let the espressif know we are still booting
-  SPI0_PUSHR_SLAVE = STATE_BUSY;
-
   UART::flush();
   SyncToBody();
 
   // These are the requirements to boot immediately into the application
   // if any test fails, the robot will not exit recovery mode
-  bool recovery_force = recovery_word != recovery_value;
+  bool recovery_force = *recovery_word != recovery_value;
   bool remove_boot_ok = SendBodyCommand(COMMAND_BOOT_READY);
   bool boot_ok = recovery_force && CheckBootReady() && remove_boot_ok;
 
@@ -213,6 +221,9 @@ void EnterRecovery() {
   if (boot_ok && SendBodyCommand(COMMAND_DONE)) {
     return ;
   }
+
+  Power::enableEspressif();
+  SPI::init();
 
   // We are now ready to start receiving commands
   SPI0_PUSHR_SLAVE = STATE_IDLE;
@@ -249,7 +260,7 @@ void EnterRecovery() {
                 
         ClearEvilWord();
 
-        recovery_word = 0;
+        *recovery_word = 0;
         SPI0_PUSHR_SLAVE = STATE_IDLE;
         return ;
      

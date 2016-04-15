@@ -25,12 +25,13 @@ int main (void) {
 
   TimerInit();
   Power::init();
-  SPI::init();
   UART::init();
 
   EnterRecovery();
 
+  // Tear down unnessessary components
   UART::shutdown();
+  Power::disableEspressif();
 
   SCB->VTOR = (uint32_t) IMAGE_HEADER->vector_tbl;
   IMAGE_HEADER->entry_point();

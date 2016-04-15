@@ -17,9 +17,10 @@
 #include "dac.h"
 #include "wifi.h"
 #include "spine.h"
+#include "power.h"
 #include "watchdog.h"
-#include "hal/i2c.h"
-#include "hal/imu.h"
+#include "i2c.h"
+#include "imu.h"
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -79,6 +80,8 @@ void * __aeabi_vec_ctor_nocookie_nodtor(   void* user_array,
 int main (void)
 {
   using namespace Anki::Cozmo::HAL;
+
+  Power::enableEspressif();
 
   //Watchdog::init();
   UART::DebugInit();

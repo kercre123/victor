@@ -158,13 +158,3 @@ void SystemInit (void)
   }
 #endif
 }
-
-void GoSlow(void) {
-  SIM->CLKDIV1 = FLASH_SIM_CLKDIV1_VALUE;
-  SMC->PMCTRL = (uint8_t)((FLASH_SMC_PMCTRL_VALUE) & (SMC_PMCTRL_RUNM_MASK)); /* Enable RUN mode */
-
-  /* Wait until the system is in RUN mode */  
-  while(SMC->PMSTAT != 0x01U) ;
-
-  SMC->PMPROT = FLASH_SMC_PMPROT_VALUE;   // XXX: This doesn't do anything, since the reg is write-once
-}

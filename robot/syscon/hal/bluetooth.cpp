@@ -405,10 +405,10 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       ble_gatts_evt_write_t * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
 
       // Ignore probing messages, but don't disconnect
-      if ((p_evt_write->handle == Bluetooth::receive_handles.value_handle) &&
-          (p_evt_write->len == sizeof(CozmoFrame)))
-      {
-        frame_receive(*(CozmoFrame*) p_evt_write->data);
+      if ((p_evt_write->handle == Bluetooth::receive_handles.value_handle)) {
+        if (p_evt_write->len == sizeof(CozmoFrame)) {
+          frame_receive(*(CozmoFrame*) p_evt_write->data);
+        }
       }
       break;
     }

@@ -88,10 +88,7 @@ void enterOperatingMode(BodyOperatingMode mode) {
 
 int main(void)
 {
-  // WARNING: DO NOT COMMIT WITH THIS COMMENTED OUT
-	//Bootloader::init();
-  
-	Storage::init();
+  Storage::init();
   
   // Initialize our scheduler
   RTOS::init();

@@ -59,10 +59,10 @@ __initial_sp
                 EXPORT  __Vectors
                 EXPORT  __Vectors_End
                 EXPORT  __Vectors_Size
-				EXPORT __initial_sp
+                EXPORT __initial_sp
 
-__Vectors       DCD     __initial_sp 						; Top of Stack
-                DCD     Reset_Handler  						; Reset Handler
+__Vectors       DCD     __initial_sp                        ; Top of Stack
+                DCD     Reset_Handler                       ; Reset Handler
                 DCD     NMI_Handler                         ;NMI Handler
                 DCD     HardFault_Handler                   ;Hard Fault Handler
                 DCD     MemManage_Handler                   ;MPU Fault Handler
@@ -78,7 +78,7 @@ __Vectors       DCD     __initial_sp 						; Top of Stack
                 DCD     PendSV_Handler                      ;PendSV Handler
                 DCD     SysTick_Handler                     ;SysTick Handler
 
-				; NOTE: We deleted a bunch of vectors because IRQs are disabled during boot
+                ; NOTE: We deleted a bunch of vectors because IRQs are disabled during boot
 __Vectors_End
 __Vectors_Size 	EQU     __Vectors_End - __Vectors
 
@@ -95,7 +95,7 @@ Reset_Handler   PROC
                 EXPORT  Reset_Handler             [WEAK]
                 IMPORT  SystemInit
                 IMPORT  __main
-				IMPORT 	FlashConfig
+                IMPORT  FlashConfig
 
                 IF      :LNOT::DEF:RAM_TARGET
                 LDR R0, =FlashConfig    ; dummy read, workaround for flashConfig
@@ -168,10 +168,10 @@ SysTick_Handler\
                 ENDP
 
 DefaultISR\
-				PROC
+                PROC
                 B      DefaultISR
                 ENDP
-			    ALIGN
+                ALIGN
 
 
                 END

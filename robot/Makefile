@@ -51,12 +51,8 @@ k02_fix:
 nrf_fix:
 	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
 
-safe: k02_fix nrf_fix
+release: k02_fix nrf_fix
 	python3 ./tools/sign.py rtip:./build/41/robot.out body:./syscon/build/app/syscon.axf ./releases/rtip.safe
-
-release: safe
-	cp ./build/41/robot.safe releases
-	cp ./syscon/build/app/syscon.safe releases
 	cp ./espressif/bin/upgrade/user1.2048.new.3.bin releases/esp.user.bin
 
 vesp:

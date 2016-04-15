@@ -6,7 +6,7 @@ from sys import argv
 from struct import pack
 from elfInfo import rom_info, HEADER_LENGTH
 
-BLOCK_LENGTH = 0x1000
+BLOCK_LENGTH = 0x800
 
 def chunk(i, size):
 	for x in range(0, len(i), size):
@@ -36,9 +36,4 @@ with open(argv[-1], "wb") as fo:
 				base_addr |= 0x80000000
 
 			fo.write(data)
-			fo.write(pack("<I", block*BLOCK_LENGTH+base_addr))
-
-			if kind == 'legacy':
-				fo.write(sha1(data).digest())
-			else:
-				fo.write(pack("<IIIII", crc32(data), 0, 0, 0, 0))
+			fo.write(pack("<II", block*BLOCK_LENGTH+base_addr, crc32(data)))

@@ -16,17 +16,17 @@
 #include "anki/cozmo/robot/rec_protocol.h"
 
 int main (void) {
-	__disable_irq();
+  __disable_irq();
 
   // Configure our system clock
-	TimerInit();
+  TimerInit();
 
-	// Power on the system
+  // Power on the system
   Battery::init();
-	Battery::powerOn();
+  Battery::powerOn();
 
-	// Do recovery until our signature is okay
-	EnterRecovery();
+  // Do recovery until our signature is okay
+  EnterRecovery();
   
   __enable_irq();
   sd_mbr_command_t cmd;

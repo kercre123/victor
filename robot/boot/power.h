@@ -6,6 +6,8 @@ namespace Anki {
 		namespace HAL {
 			namespace Power {
 				void init(void);
+        void enableEspressif(void);
+        void disableEspressif(void);
 			}
 		}
   }
