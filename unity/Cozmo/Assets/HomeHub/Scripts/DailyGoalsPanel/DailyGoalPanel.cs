@@ -84,14 +84,13 @@ public class DailyGoalPanel : MonoBehaviour {
 
   public void UpdateDailySession(Transform[] rewardIcons = null) {
     var currentSession = DataPersistenceManager.Instance.CurrentSession;
-    IRobot currentRobot = RobotEngineManager.Instance.CurrentRobot;
 
     if (currentSession != null) {
 
-      SetDailyGoals(currentSession.Progress, currentSession.Goals, rewardIcons);
+      SetDailyGoals(currentSession.DailyGoals);
 
       if (currentSession.GoalsFinished == false &&
-          DailyGoalManager.Instance.AreAllDailyGoalsComplete(currentSession.Progress, currentSession.Goals)) {
+          DailyGoalManager.Instance.AreAllDailyGoalsComplete()) {
         currentSession.GoalsFinished = true;
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.DailyGoal);
       }
@@ -102,15 +101,12 @@ public class DailyGoalPanel : MonoBehaviour {
       if (lastSession != null && !lastSession.Complete) {
         CompleteSession(lastSession);
       }
-
+      // TODO: Generate new Daily Goals and set them properly here
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
 
-      StatContainer goals = DailyGoalManager.Instance.GenerateDailyGoals();
-      newSession.Goals.Set(goals);
+      newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
 
-      currentRobot.SetProgressionStats(newSession.Progress);
-
-      SetDailyGoals(newSession.Progress, newSession.Goals, rewardIcons);
+      SetDailyGoals(newSession.DailyGoals);
 
       DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Add(newSession);
 
@@ -122,14 +118,13 @@ public class DailyGoalPanel : MonoBehaviour {
 
 
   private void CompleteSession(TimelineEntryData timelineEntry) {
-    int stat_count = (int)Anki.Cozmo.ProgressionStatType.Count; 
-    for (int i = 0; i < stat_count; ++i) {
-      var targetStat = (Anki.Cozmo.ProgressionStatType)i;
-      if (timelineEntry.Goals[targetStat] > 0) {
+    
+    if (timelineEntry.DailyGoals.Count > 0) {
+      for (int i = 0; i < timelineEntry.DailyGoals.Count; i++) {
         DAS.Event(DASConstants.Goal.kProgressSummary, DASUtil.FormatDate(timelineEntry.Date), 
           new Dictionary<string,string> { {
               "$data",
-              DASUtil.FormatGoal(targetStat, timelineEntry.Progress[targetStat], timelineEntry.Goals[targetStat])
+              DASUtil.FormatGoal(timelineEntry.DailyGoals[i])
             }
           });
       }
@@ -163,6 +158,8 @@ public class DailyGoalPanel : MonoBehaviour {
     DailyGoalManager.Instance.SetMinigameNeed();
   }
 
+  // TODO: Kill this. Create DailyGoals based on DailyGoalList. Do we even want reward Icons?
+  /*
   public void SetDailyGoals(StatContainer progress, StatContainer goals, Transform[] rewardIcons = null) {
     for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
       var targetStat = (ProgressionStatType)i;
@@ -189,17 +186,15 @@ public class DailyGoalPanel : MonoBehaviour {
         StartCoroutine(DelayedAnimateRewards(rewardIcons));
       }
     }
-  }
+  }*/
 
-  // TODO: Kill this. Creates a goal badge based on a progression stat and adds to the DailyGoal in RobotEngineManager
-  private GoalCell CreateGoalCell(ProgressionStatType type, int prog, int goal) {
-    DAS.Event(this, string.Format("CreateGoalCell({0},{1},{2})", type, prog, goal));
-    GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();
-    newBadge.Initialize(type, prog, goal);
-    _GoalCells.Add(newBadge);
-    _GoalCellsByStat[(int)type] = newBadge;
-    newBadge.OnProgChanged += RefreshProgress;
-    return newBadge;
+  // TODO: Flesh this out if necessary, do we want to salvage the rewardIcons?
+  public void SetDailyGoals(List<DailyGoal> dailyGoals) {
+    for (int i = 0; i < dailyGoals.Count; i++) {
+      CreateGoalCell(dailyGoals[i]);
+    }
+    _TotalProgressBar.SetProgress(DailyGoalManager.Instance.GetTodayProgress());
+    DailyGoalManager.Instance.SetMinigameNeed();
   }
 
   // TODO: Use this instead. Creates a goal badge based on a specified DailyGoal, then hooks in to DailyGoalManager.
@@ -213,12 +208,7 @@ public class DailyGoalPanel : MonoBehaviour {
   }
 
   private void RefreshProgress() {
-    StatContainer progress = DataPersistence.DataPersistenceManager.Instance.CurrentSession.Progress;
-    StatContainer goals = DataPersistence.DataPersistenceManager.Instance.CurrentSession.Goals;
-    float dailyProg = DailyGoalManager.Instance.CalculateDailyGoalProgress(progress, goals);
-    float bonusMult = DailyGoalManager.Instance.CalculateBonusMult(progress, goals);
-    _TotalProgressBar.SetProgress(dailyProg);
-    _BonusBarPanel.SetFriendshipBonus(bonusMult);
+    _TotalProgressBar.SetProgress(DataPersistence.DataPersistenceManager.Instance.CurrentSession.GetTotalProgress());
   }
 
   // Show Hidden UI Elements when Expanding back to full

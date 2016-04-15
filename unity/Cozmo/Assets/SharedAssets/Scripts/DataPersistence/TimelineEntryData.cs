@@ -1,4 +1,5 @@
 ﻿using System;
+using Cozmo.UI;
 using System.Collections.Generic;
 
 namespace DataPersistence {
@@ -6,9 +7,19 @@ namespace DataPersistence {
     public Date Date;
 
     // TODO: Replace StatContainers with lists of Current DailyGoals
-    public StatContainer Goals;
-
-    public StatContainer Progress;
+    // Use this
+    public List<DailyGoal> DailyGoals;
+    // TODO: Replace Progress with getter that returns collective progress of DailyGoals list
+    public float GetTotalProgress() {
+      float totalG = 0.0f;
+      float totalP = 0.0f;
+      for (int i = 0; i < DailyGoals.Count; i++) {
+        totalG += DailyGoals[i].Target;
+        totalP += DailyGoals[i].Progress;
+      }
+      float finalP = totalP / totalG;
+      return finalP;
+    }
 
     public float PlayTime;
 
@@ -23,9 +34,8 @@ namespace DataPersistence {
     public int ChestsGained;
 
     public TimelineEntryData() {
-      Goals = new StatContainer();
-      Progress = new StatContainer();
       CompletedChallenges = new List<CompletedChallengeData>();
+      DailyGoals = new List<DailyGoal>();
     }
 
     public TimelineEntryData(Date date) : this() {

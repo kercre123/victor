@@ -23,8 +23,11 @@ namespace Cozmo {
       // TODO: Create Trigger Conditions to allow for more situation based events.
       // Example : Replace SpeedTapSessionWin with MinigameSessionEnded, but the related Goal would then
       // have a MinigameTypeCondition (SpeedTap) and a DidWinCondition (True).
+
+      // Action that fires when this Daily Goal is updated, passes through the DailyGoal itself so listeners can handle it.
       public Action<DailyGoal> OnDailyGoalUpdated;
 
+      // TODO: Set up Constructor to properly work?
       public DailyGoal() {
         GameEventManager.Instance.OnGameEvent += ProgressGoal;
       }

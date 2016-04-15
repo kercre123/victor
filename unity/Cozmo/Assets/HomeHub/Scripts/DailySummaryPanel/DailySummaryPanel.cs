@@ -69,18 +69,17 @@ public class DailySummaryPanel : BaseView {
     _Title.FormattingArgs = new object[] { month, day };
     _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
 
-    float dailyProg = DailyGoalManager.Instance.CalculateDailyGoalProgress(data.Progress, data.Goals);
-    float bonusMult = DailyGoalManager.Instance.CalculateBonusMult(data.Progress, data.Goals);
+    float dailyProg = DailyGoalManager.Instance.CalculateDailyGoalProgress(data.GetTotalProgress());
     _DailyProgressBar.SetProgress(dailyProg);
-    _BonusBarPanel.SetFriendshipBonus(bonusMult);
-
+    // TODO: Create GoalCells for the data off of DailyGoal info
+    /*
     for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
       var stat = (ProgressionStatType)i;
       if (data.Goals[stat] > 0) {
         CreateGoalCell(stat, data.Progress[stat], data.Goals[stat]);
       }
     }
-
+    */
     //RectTransform subContainer = null;
     for (int i = 0; i < data.CompletedChallenges.Count; i++) {
       CreateChallengeBadge(data.CompletedChallenges[i].ChallengeId, _ChallengesContainer);

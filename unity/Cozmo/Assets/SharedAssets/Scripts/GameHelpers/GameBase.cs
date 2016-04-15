@@ -308,6 +308,9 @@ public abstract class GameBase : MonoBehaviour {
 
     _RewardedXp = new StatContainer();
 
+    // TODO: Replace this with Adding Rewards and Triggering the appropiate events
+    // Should have nothing to do with fucking StatContainers
+    /*
     foreach (var statType in StatContainer.sKeys) {
       // Check that this is a goal xp
       if (DailyGoalManager.Instance.HasGoalForStat(statType)) {
@@ -321,7 +324,7 @@ public abstract class GameBase : MonoBehaviour {
           CurrentRobot.AddToProgressionStat(statType, grantedXp);
         }
       }
-    }
+    }*/
   }
 
   private void HandleChallengeResultViewClosed() {

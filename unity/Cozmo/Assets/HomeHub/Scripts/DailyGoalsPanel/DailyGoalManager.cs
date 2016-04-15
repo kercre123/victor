@@ -43,21 +43,9 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
 
-  public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
-    int val = 0;
-    if (DataPersistenceManager.Instance.CurrentSession.Goals.TryGetValue(type, out val)) {
-      if (val > 0) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public float GetTodayProgress() {
     if (DataPersistenceManager.Instance.CurrentSession != null) {
-      StatContainer prog = DataPersistenceManager.Instance.CurrentSession.Progress;
-      StatContainer goal = DataPersistenceManager.Instance.CurrentSession.Goals;
-      return CalculateDailyGoalProgress(prog, goal);
+      return DataPersistenceManager.Instance.CurrentSession.GetTotalProgress();
     }
     else {
       return 0.0f;
@@ -108,27 +96,6 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   /// <summary>
-  /// Returns the current goal that's the furthest from being complete.
-  /// Use to help determine which minigame cozmo wants to play
-  /// NOTE - Currently not in use
-  /// </summary>
-  /// <returns>The stat.</returns>
-  public Anki.Cozmo.ProgressionStatType PrimaryStat() {
-    int greatestVal = 0;
-    Anki.Cozmo.ProgressionStatType greatestType = Anki.Cozmo.ProgressionStatType.Count;
-    foreach (KeyValuePair<Anki.Cozmo.ProgressionStatType, int> kVp in DataPersistenceManager.Instance.CurrentSession.Goals) {
-      int currProg = 0;
-      DataPersistenceManager.Instance.CurrentSession.Progress.TryGetValue(kVp.Key, out currProg);
-      int currGoal = kVp.Value - currProg;
-      if (currGoal > greatestVal) {
-        greatestVal = currGoal;
-        greatestType = kVp.Key;
-      }
-    }
-    return greatestType;
-  }
-
-  /// <summary>
   ///  Returns a value between -1 and 1 based on how close AND far you are from completing daily goal
   /// </summary>
   /// <returns>The minigame need.</returns>
@@ -174,42 +141,12 @@ public class DailyGoalManager : MonoBehaviour {
     RobotEngineManager.Instance.OnRequestGameStart -= HandleAskForMinigame;
     RobotEngineManager.Instance.OnDenyGameStart -= HandleExternalRejection;
   }
-	
-  // Using current friendship level and the appropriate config file,
-  // generate a series of random goals for the day.
-  public StatContainer GenerateDailyGoals() {
 
-    FriendshipProgressionConfig config = _FriendshipProgConfig;
-
-    StatBitMask possibleStats = StatBitMask.None;
-    int totalGoals = 0;
-    int min = 0;
-    int max = 0;
-    // Iterate through each level and add in the stats introduced for that level
-    for (int i = 0; i <= 4; i++) {
-      possibleStats |= config.FriendshipLevels[i].StatsIntroduced;
-    }
-    totalGoals = config.FriendshipLevels[4].MaxGoals;
-    min = config.FriendshipLevels[4].MinTarget;
-    max = config.FriendshipLevels[4].MaxTarget;
-
-    // Don't generate more goals than possible stats
-    if (totalGoals > possibleStats.Count) {
-      DAS.Warn(this, "More Goals than Potential Stats");
-      totalGoals = possibleStats.Count;
-    }
-    StatContainer goals = new StatContainer();
-    // Generate Goals from the possible stats, set stats to false as you pick them
-    // to prevent duplicates.
-    for (int i = 0; i < totalGoals; i++) {
-      Anki.Cozmo.ProgressionStatType targetStat = possibleStats.Random();
-      possibleStats[targetStat] = false;
-      goals[targetStat] = UnityEngine.Random.Range(min, max);
-    }
-
-    SendDasEventsForGoalGeneration(goals);
-
-    return goals;
+  public List<DailyGoal> GenerateDailyGoals() {
+    List<DailyGoal> newGoals = new List<DailyGoal>();
+    newGoals.Add(new DailyGoal());
+    SendDasEventsForGoalGeneration(newGoals);
+    return newGoals;
   }
 
   private void SendDasEventsForGoalGeneration(StatContainer goals) {
@@ -219,6 +156,19 @@ public class DailyGoalManager : MonoBehaviour {
         DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today),
           new Dictionary<string,string> {
             { "$data", DASUtil.FormatStatAmount(index, goals[index]) }
+          });
+      }
+    }
+  }
+
+  private void SendDasEventsForGoalGeneration(List<DailyGoal> goals) {
+    if (goals.Count > 0) {
+      for (int i = 0; i < goals.Count; i++) {
+        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today), 
+          new Dictionary<string,string> { {
+              "$data",
+              DASUtil.FormatGoal(goals[i])
+            }
           });
       }
     }
@@ -319,7 +269,7 @@ public class DailyGoalManager : MonoBehaviour {
   public float CalculateBonusMult(StatContainer progress, StatContainer goal) {
     int totalProgress = 0, totalGoal = 0;
     float bonusMult = 0.0f;
-    if (AreAllDailyGoalsComplete(progress, goal) == true) {
+    if (AreAllDailyGoalsComplete()) {
       for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
         var stat = (Anki.Cozmo.ProgressionStatType)i;
         totalProgress += progress[stat];
@@ -335,16 +285,8 @@ public class DailyGoalManager : MonoBehaviour {
     return bonusMult;
   }
 
-  public bool AreAllDailyGoalsComplete(StatContainer progress, StatContainer goal) {
-    bool isDone = true;
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
-      var stat = (Anki.Cozmo.ProgressionStatType)i;
-      if (progress[stat] < goal[stat]) {
-        isDone = false;
-        break;
-      }
-    }
-    return isDone;
+  public bool AreAllDailyGoalsComplete() {
+    return GetTodayProgress() >= 1.0f;
   }
 
   #endregion
