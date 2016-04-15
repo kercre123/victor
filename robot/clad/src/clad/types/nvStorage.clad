@@ -9,7 +9,7 @@ namespace Anki {
 namespace Cozmo {
 namespace NVStorage {
 
-    /// Used to store a retrive serialized NV storage structures without caring whats in them
+  /// Used to store a retrieve serialized NV storage structures without caring whats in them
   structure NVStorageBlob
   {
     uint_32 tag,
