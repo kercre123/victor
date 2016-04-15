@@ -3,15 +3,15 @@ using System.Collections;
 using System;
 
 public class ChestData : ScriptableObject {
-  public Ladder[] GreenPointMaxLadders;
-  public Ladder[] TreatRewardLadders;
+  public LadderLevel[] GreenPointMaxLadder;
+  public LadderLevel[] TreatRewardLadder;
   // TODO: Eventually replace this with Level, HexPeiceCount, HexValue when
   // we have multiple hex types.
-  public Ladder[] HexRewardLadders;
+  public LadderLevel[] HexRewardLadder;
 }
 
 [Serializable]
-public class Ladder {
+public class LadderLevel {
   public int Level;
   public int Value;
 }
