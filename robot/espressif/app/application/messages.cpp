@@ -111,19 +111,19 @@ namespace Anki {
         }
       }
 
-      static void NVMultiEraseDoneCB(const NVStorage::NVResult result)
+      static void NVMultiEraseDoneCB(const u32 tag, const NVStorage::NVResult result)
       {
         NVStorage::NVOpResult msg;
-        msg.tag    = NVStorage::NVEntry_Invalid;
+        msg.tag    = tag;
         msg.result = result;
         msg.write  = true;
         SendNVOpResult(&msg, nvOpReportTo);
       }
       
-      static void NVMultiReadDoneCB(const NVStorage::NVResult result)
+      static void NVMultiReadDoneCB(const u32 tag, const NVStorage::NVResult result)
       {
         NVStorage::NVOpResult msg;
-        msg.tag    = NVStorage::NVEntry_Invalid;
+        msg.tag    = tag;
         msg.result = result;
         msg.write  = false;
         SendNVOpResult(&msg, nvOpReportTo);

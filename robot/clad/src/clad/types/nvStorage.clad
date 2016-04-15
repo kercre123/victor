@@ -2,38 +2,20 @@
  * WARNING For backwards forward compatibility, all structures must be left as defined and new versions added with their
  * Own unique identifier when needed.
  */
- 
+
+#include "clad/types/nvStorageTypes.clad"
+
 namespace Anki {
 namespace Cozmo {
 namespace NVStorage {
 
-  enum uint_32 NVEntryTag
-  {
-    NVEntry_Invalid = 0xFFFFffff,
-    NVEntry_CameraCalibration = 1,
-  }
-
-  // Nominally 0 is success > 0 is conditional success and < 0 is error
-  enum int_8 NVResult {
-    NV_OKAY = 0,
-    NV_SCHEDULED =  1, // Scheduled for opertation
-    NV_NO_DO     =  2, // Nothing to do
-    NV_NOT_FOUND = -1,
-    NV_NO_ROOM   = -2,
-    NV_ERROR     = -3,
-    NV_TIMEOUT   = -4,
-    NV_BUSY      = -5, // Operations pending. try again later
-    NV_BAD_ARGS  = -6, // Invalid arguments to call
-    NV_NO_MEM    = -7,
-  }
-
-  /// Used to store a retrive serialized NV storage structures without caring whats in them
+    /// Used to store a retrive serialized NV storage structures without caring whats in them
   structure NVStorageBlob
   {
     uint_32 tag,
     uint_8  blob[uint_32:1024],
   }
-  
+
   enum int_8 NVReportDest
   {
     ENGINE,
@@ -44,23 +26,23 @@ namespace NVStorage {
 
   message NVStorageRead
   {
-    NVEntryTag tag,
-    NVEntryTag tagRangeEnd,
+    uint_32 tag,
+    uint_32 tagRangeEnd,
     NVReportDest to,
   }
-  
+
   message NVStorageWrite
   {
     NVReportDest reportTo, // Where we send reports
     bool writeNotErase,    // If true this is a write, if false erase
     bool reportEach,       // Report each operation completed
     bool reportDone,       // Report when final operation is done
-    NVEntryTag rangeEnd,   // If erasing a range, the end of the range, start is the entry tag
+    uint_32 rangeEnd,   // If erasing a range, the end of the range, start is the entry tag
     NVStorageBlob entry
   }
-  
+
   structure NVOpResult {
-    NVEntryTag tag,
+    uint_32 tag,
     NVResult   result,
     bool       write,
   }

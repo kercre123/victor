@@ -413,6 +413,32 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     PRINT_NAMED_INFO("CozmoEngine.AddRobot", "Sending init to the robot %d.", robotID);
     lastResult = robot->SyncTime();
     
+    // Requesting camera calibration
+    robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalibration,
+                                        [robot](u8* data, size_t size) {
+                                        
+                                        CameraCalibration payload;
+                                        payload.Unpack(data, size);
+                                        PRINT_NAMED_INFO("CozmoEngine.ReadCameraCalibration",
+                                                         "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f cy: %f)",
+                                                         payload.ncols, payload.nrows,
+                                                         payload.focalLength_x, payload.focalLength_y,
+                                                         payload.center_x, payload.center_y);
+                                        
+                                        // Convert calibration message into a calibration object to pass to the robot
+                                        Vision::CameraCalibration calib(payload.nrows,
+                                                                        payload.ncols,
+                                                                        payload.focalLength_x,
+                                                                        payload.focalLength_y,
+                                                                        payload.center_x,
+                                                                        payload.center_y,
+                                                                        payload.skew);
+                                        
+                                        robot->GetVisionComponent().SetCameraCalibration(calib);
+                                        });
+
+    
+    
     // Setup Audio Server with Robot Audio Connection & Client
     using namespace Audio;
     AudioEngineMessageHandler* engineMessageHandler = new AudioEngineMessageHandler();

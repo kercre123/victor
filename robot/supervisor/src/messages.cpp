@@ -741,13 +741,27 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageWrite const&)
+      void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageWrite const& msg)
       {
-        // Nothing to do here
+        AnkiInfo( 156, "Messages.Process_writeNV.NotSupported", 440, "Tag: 0x%x", 1, msg.entry.tag);
+        
+        RobotInterface::NVOpResultToEngine m;
+        m.robotAddress = 1;
+        m.report.tag = static_cast<u32>(msg.entry.tag);
+        m.report.result = NVStorage::NV_ERROR;
+        m.report.write = true;
+        SendMessage(m);
       }
-      void Process_readNV(Anki::Cozmo::NVStorage::NVStorageRead const&)
+      void Process_readNV(Anki::Cozmo::NVStorage::NVStorageRead const& msg)
       {
-        // Nothing to do here
+        AnkiInfo( 157, "Messages.Process_readNV.NotSupported", 440, "Tag: 0x%x", 1, msg.tag);
+        
+        RobotInterface::NVOpResultToEngine m;
+        m.robotAddress = 1;
+        m.report.tag = static_cast<u32>(msg.tag);
+        m.report.result = NVStorage::NV_ERROR;
+        m.report.write = false;
+        SendMessage(m);
       }
       void Process_bodyState(Anki::Cozmo::RobotInterface::BodyFirmwareState const&)
       {

@@ -31,6 +31,8 @@ protected:
   virtual void HandleRobotObservedObject(ExternalInterface::RobotObservedObject const& msg) override;
   virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg) override;
   virtual void HandleDebugString(ExternalInterface::DebugString const& msg) override;
+  virtual void HandleNVStorageData(const ExternalInterface::NVStorageData &msg) override;
+  virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg) override;
 
 private:
 
