@@ -11,6 +11,7 @@ namespace Anki
 			{
 				void espInit(void);
 				void init(void);
+        void disable(void);
 				void sync(void);
 				
 				uint16_t readWord(void);

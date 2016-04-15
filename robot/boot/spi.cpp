@@ -4,6 +4,7 @@
 #include "MK02F12810.h"
 
 #include "spi.h"
+#include "power.h"
 #include "timer.h"
 #include "portable.h"
 #include "../../k02_hal/hal/hardware.h"
@@ -74,5 +75,12 @@ void Anki::Cozmo::HAL::SPI::init(void) {
   // Clear all status flags
   SPI0_SR = SPI0_SR;
 
+  Power::enableEspressif();
   sync();
+}
+
+void Anki::Cozmo::HAL::SPI::disable(void) {
+  SIM_SCGC6 &= ~SIM_SCGC6_SPI0_MASK;
+  
+  Power::disableEspressif();
 }

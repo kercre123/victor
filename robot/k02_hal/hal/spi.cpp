@@ -254,12 +254,36 @@ void SyncSPI(void) {
 }
 
 void Anki::Cozmo::HAL::SPI::Init(void) {
-  // Enable and configure our DMA
-  SIM_SCGC6 |= SIM_SCGC6_DMAMUX_MASK;
+	// Turn on power to DMA, PORTC and SPI0
+  SIM_SCGC6 |= SIM_SCGC6_SPI0_MASK | SIM_SCGC6_DMAMUX_MASK;
   SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
+
+  // Configure SPI pins
+  PORTD_PCR0  = PORT_PCR_MUX(2) |  // SPI0_PCS0 (internal)
+                PORT_PCR_PE_MASK;
+
+  PORTD_PCR4  = PORT_PCR_MUX(1);
+  GPIOD_PDDR &= ~(1 << 4);
+
+  PORTE_PCR18 = PORT_PCR_MUX(2); // SPI0_SOUT
+  PORTE_PCR19 = PORT_PCR_MUX(2); // SPI0_SIN
+
+  // Configure SPI perf to the magical value of magicalness
+  SPI0_MCR = SPI_MCR_DCONF(0) |
+             SPI_MCR_SMPL_PT(0) |
+             SPI_MCR_CLR_TXF_MASK |
+             SPI_MCR_CLR_RXF_MASK;
+
+  SPI0_CTAR0_SLAVE = SPI_CTAR_FMSZ(15);
+
+  SPI0_RSER = SPI_RSER_TFFF_RE_MASK |
+              SPI_RSER_TFFF_DIRS_MASK |
+              SPI_RSER_RFDF_RE_MASK |
+              SPI_RSER_RFDF_DIRS_MASK;
 
   // Clear all status flags
   SPI0_SR = SPI0_SR;
+  
 
   SPI::InitDMA();
   SyncSPI();

@@ -222,7 +222,6 @@ void EnterRecovery() {
     return ;
   }
 
-  Power::enableEspressif();
   SPI::init();
 
   // We are now ready to start receiving commands
