@@ -54,24 +54,14 @@ bool FlashSector(int target, const uint32_t* data)
   volatile uint32_t* flashcmd = (uint32_t*)&FTFA->FCCOB3;
 
   // Test for sector erase nessessary
-  for (int i = 0; i < FLASH_BLOCK_SIZE / sizeof(uint32_t); i++) {
-    if (original[i] == 0xFFFFFFFF) continue ;
+  FTFA->FCCOB0 = 0x09;
+  FTFA->FCCOB1 = target >> 16;
+  FTFA->FCCOB2 = target >> 8;
+  FTFA->FCCOB3 = target;
     
-    // Block requires erasing
-    if (original[i] != data[i])
-    {
-      FTFA->FCCOB0 = 0x09;
-      FTFA->FCCOB1 = target >> 16;
-      FTFA->FCCOB2 = target >> 8;
-      FTFA->FCCOB3 = target;
-      
-      // Erase block
-      if (SendCommand()) { 
-        return false;
-      }
-
-      break ;
-    }
+  // Erase block
+  if (SendCommand()) { 
+    return false;
   }
 
   for (int i = 0; i < FLASH_BLOCK_SIZE / sizeof(uint32_t); i++, target += sizeof(uint32_t)) {
@@ -166,7 +156,7 @@ static inline bool FlashBlock() {
 
   // Upper 2gB is body space
   if (packet.blockAddress >= 0x80000000) {
-    SetChannelBlink(1);
+    SetChannelBlink(2);
     packet.blockAddress &= ~0x80000000;
     return SendBodyCommand(COMMAND_FLASH, &packet, sizeof(packet));
   } else {

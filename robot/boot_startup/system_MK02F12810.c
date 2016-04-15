@@ -51,7 +51,7 @@ void GoSlow (void);
 /* OSC_CR: ERCLKEN=1,EREFSTEN=0,SC2P=0,SC4P=0,SC8P=0,SC16P=0 */
 #define SYSTEM_OSC_CR_VALUE          0x80U               /* OSC_CR */
 /* SMC_PMCTRL: RUNM=3,STOPA=0,STOPM=0 */
-#define SYSTEM_SMC_PMCTRL_VALUE      0x60U               /* SMC_PMCTRL */
+#define SYSTEM_SMC_PMCTRL_VALUE      0x00U               /* SMC_PMCTRL */
 #define FLASH_SMC_PMCTRL_VALUE       0x00U               /* SMC_PMCTRL */
 /* SIM_CLKDIV1: OUTDIV1=0,OUTDIV2=1,OUTDIV4=3 */
 #define SYSTEM_SIM_CLKDIV1_VALUE     0x01030000U         /* SIM_CLKDIV1 */

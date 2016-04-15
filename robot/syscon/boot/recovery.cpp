@@ -191,23 +191,13 @@ bool FlashSector(int target, const uint32_t* data)
   
   volatile uint32_t* original = (uint32_t*)target;
 
-  // Test for sector erase nessessary
-  for (int i = 0; i < FLASH_BLOCK_SIZE / sizeof(uint32_t); i++) {
-    if (original[i] == 0xFFFFFFFF) continue ;
-    
-    // Block requires erasing
-    if (original[i] != data[i])
-    {
-      // Erase the sector and continue
-      NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos;
-      while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-      NRF_NVMC->ERASEPAGE = target;
-      while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-      NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
-      while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-      break ;
-    }
-  }
+  // Erase the sector and continue
+  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  NRF_NVMC->ERASEPAGE = target;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
 
   for (int i = 0; i < FLASH_BLOCK_SIZE / sizeof(uint32_t); i++, target += sizeof(uint32_t)) {
     // Program word does not need to be written
@@ -231,26 +221,26 @@ bool CheckSig(void) {
   if (IMAGE_HEADER->sig != HEADER_SIGNATURE) return false;
   
   // Compute signature length
-	uint32_t crc = calc_crc32(IMAGE_HEADER->rom_start, IMAGE_HEADER->rom_length);
-	
-	return crc == IMAGE_HEADER->checksum;
+  uint32_t crc = calc_crc32(IMAGE_HEADER->rom_start, IMAGE_HEADER->rom_length);
+
+  return crc == IMAGE_HEADER->checksum;
 }
 
 bool CheckEvilWord(void) {
-	return IMAGE_HEADER->evil_word == 0x00000000;
+  return IMAGE_HEADER->evil_word == 0x00000000;
 }
 
 static inline void ClearEvilWord() {
-	if (IMAGE_HEADER->evil_word != 0xFFFFFFFF) {
-		return ;
-	}
-	
-	NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
-	while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-	*(uint32_t*)&IMAGE_HEADER->evil_word = 0x00000000;
-	while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-	NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
-	while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  if (IMAGE_HEADER->evil_word != 0xFFFFFFFF) {
+    return ;
+  }
+
+  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  *(uint32_t*)&IMAGE_HEADER->evil_word = 0x00000000;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
 }
 
 static inline bool FlashBlock() {
@@ -258,7 +248,7 @@ static inline bool FlashBlock() {
   uint8_t* raw = (uint8_t*) &packet;
   
   // Load raw packet into memory
-	readUart(&packet, sizeof(packet));
+  readUart(&packet, sizeof(packet));
  
   int writeAddress = packet.blockAddress;
 
@@ -269,9 +259,9 @@ static inline bool FlashBlock() {
  
   // Check the SHA-1 of the packet to verify that transmission actually worked
   uint32_t crc = calc_crc32((uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
-	
+
   // Verify block before writting to flash
-	if (crc != packet.checkSum) return false;
+  if (crc != packet.checkSum) return false;
 
   // Write sectors to flash
   const int FLASH_BLOCK_SIZE = NRF_FICR->CODEPAGESIZE;
