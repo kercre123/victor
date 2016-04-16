@@ -10,11 +10,22 @@
 
 #include "hal/cube.h"
 
-// PROG = PA8
+// PROG = PA9 (was PA8)
 // RESET = PC5
-// VDD = PB1
+// CS = PA4 (was PB7)
 
-static const int CUBE_PAGE_SIZE = 512;
+// SPI pins
+static GPIO_TypeDef* MOSI_PORT = GPIOA;
+static GPIO_TypeDef* MISO_PORT = GPIOA;
+static GPIO_TypeDef* SCK_PORT = GPIOA;
+static const uint32_t MOSI_PIN = GPIO_Pin_7;
+static const uint32_t MISO_PIN = GPIO_Pin_6;
+static const uint32_t SCK_PIN = GPIO_Pin_5;
+static const uint32_t MOSI_SOURCE = GPIO_PinSource7;
+static const uint32_t MISO_SOURCE = GPIO_PinSource6;
+static const uint32_t SCK_SOURCE = GPIO_PinSource5;
+
+static const int CUBE_PAGE_SIZE = 128;
 static const int CUBE_MAX_PROGRAM_SIZE = 8192;
 
 enum CUBE_FSR_FLAGS {
@@ -47,33 +58,69 @@ void InitCube(void) {
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
 
-  // Setup outputs
   GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+
+  // Configure the pins for SPI in AF mode
+  GPIO_PinAFConfig(MOSI_PORT, MOSI_SOURCE, GPIO_AF_SPI1);
+  GPIO_PinAFConfig(MISO_PORT, MISO_SOURCE, GPIO_AF_SPI1);
+  GPIO_PinAFConfig(SCK_PORT, SCK_SOURCE, GPIO_AF_SPI1);
+
+  // Configure the SPI pins
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Pin = MOSI_PIN | MISO_PIN; 
+  GPIO_Init(SCK_PORT, &GPIO_InitStructure);
+  GPIO_InitStructure.GPIO_Pin = SCK_PIN;
+  GPIO_Init(SCK_PORT, &GPIO_InitStructure);
+  
+  // Setup outputs
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
   
-  // Low-voltage PROG pin - PB0
+  // VDD pin - PB0
   GPIO_ResetBits(GPIOB, GPIO_Pin_0);
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   
-  // XXX: NEVER enable PA8 (high-voltage PROG) - it DOES NOT WORK IN EP1 (since we're using nRF24LE1s)
-  GPIO_ResetBits(GPIOA, GPIO_Pin_8);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_8;
+  // Pull PA4 (CS#) high.
+  GPIO_SetBits(GPIOA, GPIO_Pin_4);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
   GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-  // Pull PB7 (CS#) high.
-  GPIO_SetBits(GPIOB, GPIO_Pin_7);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
   
   // Pull PC5 (Reset) low. 
   GPIO_ResetBits(GPIOC, GPIO_Pin_5);
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+  // High-voltage PROG is off (floating) - low voltage PROG doesn't work
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
+  GPIO_SetBits(GPIOA, GPIO_Pin_9);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  
+  // Initialize SPI in master mode
+  SPI_I2S_DeInit(SPI1);
+  SPI_InitTypeDef SPI_InitStructure;
+  SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
+  SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
+  SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+  SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
+  SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
+  SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
+  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_256;
+  SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
+  SPI_InitStructure.SPI_CRCPolynomial = 7;
+  SPI_Init(SPI1, &SPI_InitStructure);
+  SPI_Cmd(SPI1, ENABLE);
+
+  SPI1->SR = 0;
 }
 
 static inline int PageCount(int length) {
@@ -95,9 +142,9 @@ static uint8_t CubeWrite(uint8_t data)
 static inline void CubeAssert(bool assert) {
   MicroWait(10);
   if (assert) {
-    GPIO_ResetBits(GPIOB, GPIO_Pin_7); // #CS
+    GPIO_ResetBits(GPIOA, GPIO_Pin_4); // #CS
   } else {
-    GPIO_SetBits(GPIOB, GPIO_Pin_7); // #CS
+    GPIO_SetBits(GPIOA, GPIO_Pin_4); // #CS
   }
   MicroWait(10);
 }
@@ -187,6 +234,8 @@ void LoadRom(const uint8_t *rom, int length) {
     int left =  length - addr;
     SlowPrintf("\nWriting %i", addr / CUBE_PAGE_SIZE);
 
+    MicroWait(25000);
+    
     CubeWriteEn();
     if (~CubeReadFSR() & CUBE_FSR_WEN) { throw ERROR_CUBE_CANNOT_WRITE; }
 
@@ -217,10 +266,9 @@ int GetSequence(void);
 extern FixtureType g_fixtureType;
 
 void ProgramCube(void) {
-  EnableBAT();
-
-  GPIO_SetBits(GPIOB, GPIO_Pin_0);  // Low-voltage PROG
+  GPIO_ResetBits(GPIOA, GPIO_Pin_9);  // High-voltage PROG
   MicroWait(2000);
+  PIN_OUT(GPIOC, 5);
   GPIO_ResetBits(GPIOC, GPIO_Pin_5);  // #Reset
   MicroWait(2000);
   GPIO_SetBits(GPIOC, GPIO_Pin_5);  // #Reset
@@ -247,6 +295,5 @@ void ProgramCube(void) {
   }
     
   GPIO_ResetBits(GPIOC, GPIO_Pin_5);  // Put in #Reset
-  GPIO_ResetBits(GPIOB, GPIO_Pin_0);  // Turn off Low-voltage PROG
-  DisableBAT();
+  GPIO_SetBits(GPIOA, GPIO_Pin_9);    // Turn off high-voltage PROG
 }

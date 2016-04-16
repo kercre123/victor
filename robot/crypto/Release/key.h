@@ -1,5 +1,5 @@
 /**
- * THIS IS THE COZMO FIXTURE KEY.. If you have a new purpose, go use keygen.exe to make a new one.
+ * NOCOMMIT XXX TBD DANGER!  DO NOT COMMIT SECRET KEYS!
 **/
 #ifndef _KEY_H
 #define _KEY_H

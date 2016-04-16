@@ -23,12 +23,10 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define GPIOB_SWD       GPIO_Pin_0
-#define PINB_SWD        GPIO_PinSource0
-#define GPIOB_SWC       GPIO_Pin_2
-#define PINB_SWC        GPIO_PinSource2
-
-#define GPIOA_TXRX    GPIO_Pin_2
+#define GPIOB_SWD       GPIO_Pin_10
+#define PINB_SWD        GPIO_PinSource10
+#define GPIOB_SWC       GPIO_Pin_11
+#define PINB_SWC        GPIO_PinSource11
 
 #define GSET(gp, pin)      gp->BSRRL = (pin)
 #define GRESET(gp, pin)    gp->BSRRH = (pin)
@@ -559,9 +557,6 @@ void InitSWD(void)
   GPIO_InitStructure.GPIO_Pin = GPIOB_SWC;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-  GPIO_InitStructure.GPIO_Pin = GPIOA_TXRX;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
 }
 
 // Be nice and stop driving power into turned-off boards

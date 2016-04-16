@@ -3,16 +3,18 @@
 #include "hal/timers.h"
 #include "lib/stm32f2xx.h"
 #include "lib/stm32f2xx_rcc.h"
+#include "hal/console.h"
 
 // These addresses are shifted left by 1 for the R/nW bit in the LSB
 #define CHARGE_CONTACT_ADDRESS  (0x80)  // 8'b10000000
 #define BATTERY_ADDRESS         (0x88)  // 8'b10001000
+#define SET_VBAT_ADDRESS        (0x5E)  // 7'b0101111. (see MCP4018T datasheeet)
 
 #define READ                    1
 
-#define CLOCK_WAIT              1
-#define GPIOB_SCL               8
-#define GPIOB_SDA               9
+#define CLOCK_WAIT              5
+#define GPIOB_SCL               9   // XXX: Backward for digital pot
+#define GPIOB_SDA               8
 
 static void I2C_Pulse(void)
 {  
@@ -173,4 +175,36 @@ s32 MonitorGetVoltage(void)
   I2C_Send8(CHARGE_CONTACT_ADDRESS, 2);
   s16 value = I2C_Receive16(CHARGE_CONTACT_ADDRESS);
   return (s32)value;
+}
+
+void VBATMillivolts(int mv)
+{
+  // Make this fast to call
+  static int currentmv = 2500;
+  if (mv == currentmv)
+    return;
+  
+  // Funky calculation goes like this:
+  // Regulator wants:
+  //    R1 = R2 [(VOUT / 1.25) – 1]
+  //    R2 >= 25K
+  //    Thus, VOUT = ((R1/R2)+1) * 1.25
+  // VBAT controller gives:
+  //    R1 = 100K - 787.4*value
+  //    R2 = 787.4*value
+  // "value" is between 32 (75&25K/5V) and 127 (0&100K/1.25V)
+  // Or integer terms, mv = ((127-value)*1250/value) + 1250
+  int minError = 10000, bestValue = 0;
+  for (int i = 32; i < 128; i++)
+  {
+    int error = mv - (((127-i)*1250/i)+1250);
+    if (error < 0) error = -error;    // Absolute value
+    if (error < minError)
+    {
+      minError = error;
+      bestValue = i;
+    }
+  }
+  I2C_Send8(SET_VBAT_ADDRESS, bestValue);
+  currentmv = mv;
 }

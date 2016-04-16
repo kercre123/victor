@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>syscon</TargetName>
+      <TargetName>sys_boot</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
@@ -44,8 +44,8 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\app\</OutputDirectory>
-          <OutputName>syscon</OutputName>
+          <OutputDirectory>.\build\boot\</OutputDirectory>
+          <OutputName>sys_boot</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
@@ -66,9 +66,9 @@
             <nStopU2X>0</nStopU2X>
           </BeforeCompile>
           <BeforeMake>
-            <RunUserProg1>1</RunUserProg1>
+            <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>bash -c "make -C .. nrf"</UserProg1Name>
+            <UserProg1Name></UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -76,7 +76,7 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>bash -c "make -C .. safe"</UserProg1Name>
+            <UserProg1Name>fromelf --bin build\boot\sys_boot.axf --output build\boot\sys_boot.bin</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -102,7 +102,7 @@
         </CommonProperty>
         <DllOption>
           <SimDllName>SARMCM3.DLL</SimDllName>
-          <SimDllArguments> </SimDllArguments>
+          <SimDllArguments>  </SimDllArguments>
           <SimDlgDll>DARMCM1.DLL</SimDlgDll>
           <SimDlgDllArguments>-pCM0</SimDlgDllArguments>
           <TargetDllName>SARMCM3.DLL</TargetDllName>
@@ -119,7 +119,7 @@
             <Oh166RecLen>16</Oh166RecLen>
           </OPTHX>
           <Simulator>
-            <UseSimulator>0</UseSimulator>
+            <UseSimulator>1</UseSimulator>
             <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
             <RunToMain>1</RunToMain>
             <RestoreBreakpoints>1</RestoreBreakpoints>
@@ -130,7 +130,7 @@
             <LimitSpeedToRealTime>0</LimitSpeedToRealTime>
           </Simulator>
           <Target>
-            <UseTarget>1</UseTarget>
+            <UseTarget>0</UseTarget>
             <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
             <RunToMain>1</RunToMain>
             <RestoreBreakpoints>1</RestoreBreakpoints>
@@ -141,7 +141,7 @@
             <RestoreTracepoints>1</RestoreTracepoints>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>7</TargetSelection>
+          <TargetSelection>5</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -165,10 +165,10 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>4099</DriverSelection>
+            <DriverSelection>4096</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
-          <Flash2>Segger\JL2CM3.dll</Flash2>
+          <Flash2>BIN\UL2CM3.DLL</Flash2>
           <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
@@ -190,7 +190,7 @@
             <ldmm>1</ldmm>
             <ldXref>1</ldXref>
             <BigEnd>0</BigEnd>
-            <AdsALst>0</AdsALst>
+            <AdsALst>1</AdsALst>
             <AdsACrf>1</AdsACrf>
             <AdsANop>0</AdsANop>
             <AdsANot>0</AdsANot>
@@ -303,8 +303,8 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x18000</StartAddress>
-                <Size>0x7000</Size>
+                <StartAddress>0x1f000</StartAddress>
+                <Size>0x1000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -328,8 +328,8 @@
               </OCR_RVCT8>
               <OCR_RVCT9>
                 <Type>0</Type>
-                <StartAddress>0x20002000</StartAddress>
-                <Size>0x2000</Size>
+                <StartAddress>0x20000008</StartAddress>
+                <Size>0x3ff8</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
@@ -354,10 +354,10 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <VariousControls>
-              <MiscControls>--gnu</MiscControls>
-              <Define>NRF51,COZMO_ROBOT,SOFTDEVICE_PRESENT,BLE_STACK_SUPPORT_REQD</Define>
+              <MiscControls></MiscControls>
+              <Define>NRF51,COZMO_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/device;./components/toolchain;./components/drivers_nrf/hal;./components/libraries/util/;./components/drivers_nrf/config/;./components/drivers_nrf/common/;./components/drivers_nrf/rng;./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/common;./components/ble/ble_services/ble_bas;./components/ble/ble_services/ble_dis;./components/ble/ble_advertising;../include;.;./components/libraries/trace;./components/drivers_nrf/pstorage;./components/drivers_nrf/pstorage/config;./components/ble/device_manager;./components/ble/device_manager/config;./components/libraries/timer;./components/softdevice/s110/headers;./components/ble/ble_services/ble_bps;../generated/clad/robot;./crypto</IncludePath>
+              <IncludePath>./components/device;./components/toolchain;./components/drivers_nrf/hal;../include;.;./components/softdevice/s110/headers;./crypto</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -396,93 +396,38 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>hal</GroupName>
+          <GroupName>boot</GroupName>
           <Files>
             <File>
               <FileName>battery.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\hal\battery.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>debug.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\debug.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>head.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\head.cpp</FilePath>
+              <FilePath>.\boot\battery.cpp</FilePath>
             </File>
             <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\hal\main.cpp</FilePath>
+              <FilePath>.\boot\main.cpp</FilePath>
             </File>
             <File>
-              <FileName>micro_esb.cpp</FileName>
+              <FileName>recovery.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\hal\micro_esb.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>motors.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\motors.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>radio.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\radio.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>rtos.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\rtos.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>tests.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\tests.cpp</FilePath>
+              <FilePath>.\boot\recovery.cpp</FilePath>
             </File>
             <File>
               <FileName>timer.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\hal\timer.cpp</FilePath>
+              <FilePath>.\boot\timer.cpp</FilePath>
             </File>
             <File>
-              <FileName>logging.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\logging.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>backpack.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\backpack.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>lights.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\lights.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>messages.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\messages.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>storage.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\storage.cpp</FilePath>
+              <FileName>startup_nrf51.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\boot\startup_nrf51.s</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
           <GroupName>lib</GroupName>
           <Files>
-            <File>
-              <FileName>startup_nrf51.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\hal\startup_nrf51.s</FilePath>
-            </File>
             <File>
               <FileName>system_nrf51.c</FileName>
               <FileType>1</FileType>
@@ -491,123 +436,12 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>ble</GroupName>
-          <Files>
-            <File>
-              <FileName>bluetooth.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\bluetooth.cpp</FilePath>
-              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>2</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>2</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>1</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>2</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>
-            </File>
-            <File>
-              <FileName>app_timer.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\app_timer.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>ble_advdata.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\components\ble\common\ble_advdata.c</FilePath>
-            </File>
-            <File>
-              <FileName>ble_conn_params.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\components\ble\common\ble_conn_params.c</FilePath>
-            </File>
-            <File>
-              <FileName>settings.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\hal\settings.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>clad</GroupName>
-          <Files>
-            <File>
-              <FileName>clad.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>..\generated\clad\clad.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>crypto</GroupName>
           <Files>
-            <File>
-              <FileName>crypto.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\crypto.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bignum.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\bignum.cpp</FilePath>
-            </File>
             <File>
               <FileName>sha1.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\crypto\sha1.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>aes.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\aes.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>bootloader</GroupName>
-          <Files>
-            <File>
-              <FileName>bootloader.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\bootloader.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bootbin.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\hal\bootbin.s</FilePath>
             </File>
           </Files>
         </Group>

@@ -6,36 +6,33 @@
 #include "hal/console.h"
 #include "hal/uart.h"
 #include "hal/cube.h"
+#include "hal/monitor.h"
 #include "app/fixture.h"
 
-#define GPIOA_SCK  5
-#define GPIOA_MOSI 7
-#define GPIOB_CS   7
+#define GPIOB_VDD   0
+#define GPIOC_RESET 5
 
 // Return true if device is detected on contacts
 bool CubeDetect(void)
 {
-  // Set CS high (probably was already) and set SCK as pull-down input
-  // The IR LED on the charger and cube will pull SCK high if the board is present
-  GPIO_SET(GPIOB, GPIOB_CS);
+  DisableBAT();
+  DisableVEXT();
   
-  PIN_IN(GPIOA, GPIOA_SCK);
-  PIN_PULL_DOWN(GPIOA, GPIOA_SCK);
+  // Set VDD high (probably was already) 
+  GPIO_SET(GPIOB, GPIOB_VDD);
   
-  // Must float MOSI since it shares a leg with the LED we're trying to light
-  PIN_IN(GPIOA, GPIOA_MOSI);
-  PIN_PULL_NONE(GPIOA, GPIOA_MOSI);
+  // Pull down RESET - max 30K fights a 10K yielding 0.25 - or just barely low
+  PIN_IN(GPIOC, GPIOC_RESET);
+  PIN_PULL_DOWN(GPIOC, GPIOC_RESET);
   
-  // Wait for LED to do its business
+  // Wait for pull-ups to fight it out
   MicroWait(10);
   
-  // Return true if SCK is pulled up by board
-  bool detect = !!(GPIO_READ(GPIOA) & (1 << GPIOA_SCK));
+  // Return true if reset is pulled up by board
+  bool detect = !!(GPIO_READ(GPIOC) & (1 << GPIOC_RESET));
   
   // Put everything back to normal
-  PIN_PULL_NONE(GPIOA, GPIOA_SCK);  
-  PIN_AF(GPIOA, GPIOA_SCK);
-  PIN_AF(GPIOA, GPIOA_MOSI);
+  PIN_PULL_NONE(GPIOC, GPIOC_RESET);
   
   return detect;
 }

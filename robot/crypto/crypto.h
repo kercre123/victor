@@ -21,8 +21,8 @@
 #   define TARGET_IMAGE_SIZE	 (56*1024)	 // 56KB is all the flash we have (minus bootloader)
 #   define TARGET_IMAGE_BASE	 0x08002000	 // Base address of image
 #else
-#   define TARGET_IMAGE_SIZE     (384 * 1024)
-#   define TARGET_IMAGE_BASE     0x080A0000
+#   define TARGET_IMAGE_SIZE     (640 * 1024)
+#   define TARGET_IMAGE_BASE     0x08060000
 #endif
 
 #define SAFE_PAYLOAD_SIZE    2048	     // Must be a power of 2!	Does not need to match flash block size.

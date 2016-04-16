@@ -1,13 +1,15 @@
-  ; Factory binaries
-  
+  ; Factory binaries  
   AREA    ER_BINARIES, DATA, READONLY
 
+// Uncomment this line to build a mini-version without binaries (to speed debugging)
+//#define INCBIN ;
+    
   ; Note:  Cube and charger share the same binary
   ALIGN
   EXPORT g_Cube
   EXPORT g_CubeEnd
 g_Cube
-  INCBIN releases\\cube.bin
+  INCBIN releases\\cube31.bin
 g_CubeEnd
 
 
@@ -24,6 +26,13 @@ g_BodyEnd
 g_BodyBoot
   INCBIN releases\\sys_boot.bin
 g_BodyBootEnd
+
+  ALIGN
+  EXPORT g_BodyBLE
+  EXPORT g_BodyBLEEnd
+g_BodyBLE
+  INCBIN releases\\s110_softdevice.bin
+g_BodyBLEEnd
 
   ALIGN
   EXPORT g_stubBody
@@ -83,8 +92,6 @@ g_EspBootEnd
 g_EspInit
   INCBIN releases\\esp.init.bin
 g_EspInitEnd
-
-
 
   ALIGN
   EXPORT g_canary

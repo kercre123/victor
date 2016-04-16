@@ -11,14 +11,11 @@ int main(void)
     FLASH_Unlock();
     
     // Clear all flash pages in Block A (@ 128 KB each)
-    // Voltage Range 1 is used because the POR controller does not reset until 2V
-    // On Drive fixtures, the OLED has a huge inrush problem that causes voltage dips during updates
+    // Voltage Range 1 is used because the POR controller does not reset until 2V - cheap insurance!
     FLASH_EraseSector(FLASH_BLOCK_A_SECTOR_0, VoltageRange_1);
-    FLASH_EraseSector(FLASH_BLOCK_A_SECTOR_1, VoltageRange_1);
-    FLASH_EraseSector(FLASH_BLOCK_A_SECTOR_2, VoltageRange_1);
     
     // Write 32-bits at a time from the end
-    for (i = FLASH_BLOCK_LENGTH - 1; i >= 0; i -= 1)
+    for (i = FLASH_CODE_LENGTH - 1; i >= 0; i -= 1)
     {
       FLASH_ProgramByte(FLASH_BLOCK_A + i, blockB[i]);
     }

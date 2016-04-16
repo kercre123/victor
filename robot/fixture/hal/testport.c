@@ -18,11 +18,11 @@
 #include "hal/uart.h"
 #include "../app/fixture.h"
 
-#define TESTPORT_TX       UART5
+#define TESTPORT_TX       USART3
 #define TESTPORT_RX       USART3
 #define BAUD_RATE         500000
 
-#define PINC_TX           12
+#define PINC_TX           11
 #define GPIOC_TX          (1 << PINC_TX)
 #define PINC_RX           10
 #define GPIOC_RX          (1 << PINC_RX)
@@ -53,36 +53,29 @@ void InitTestPort(int baudRate)
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);
   
-  USART_HalfDuplexCmd(TESTPORT_RX, ENABLE);  // Enable the pin for transmitting and receiving
+//  USART_HalfDuplexCmd(TESTPORT_RX, ENABLE);  // Enable the pin for transmitting and receiving
   
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_Pin =  GPIOC_TX;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOC, PINC_TX, GPIO_AF_UART5);
+  GPIO_PinAFConfig(GPIOC, PINC_TX, GPIO_AF_USART3);
   
   GPIO_InitStructure.GPIO_Pin =  GPIOC_RX;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
   GPIO_PinAFConfig(GPIOC, PINC_RX, GPIO_AF_USART3);
   
-  // TESTPORT_TX config
+  // TESTPORT_TX/RX config
   USART_Cmd(TESTPORT_TX, DISABLE);
   USART_InitStructure.USART_BaudRate = baudRate;
   USART_InitStructure.USART_WordLength = USART_WordLength_8b;
   USART_InitStructure.USART_StopBits = USART_StopBits_1;
   USART_InitStructure.USART_Parity = USART_Parity_No;
   USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-  USART_InitStructure.USART_Mode = USART_Mode_Tx;
+  USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
   USART_Init(TESTPORT_TX, &USART_InitStructure);  
   USART_Cmd(TESTPORT_TX, ENABLE);
-  
-  // TESTPORT_RX config
-  USART_Cmd(TESTPORT_RX, DISABLE);
-  
-  USART_InitStructure.USART_Mode = USART_Mode_Rx;
-  USART_Init(TESTPORT_RX, &USART_InitStructure);  
-  USART_Cmd(TESTPORT_RX, ENABLE);
   
   // Pull PC10 low
   GPIO_ResetBits(GPIOC, GPIO_Pin_10);
@@ -93,9 +86,9 @@ void InitTestPort(int baudRate)
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
   
-  // Pull PC12 low
-  GPIO_ResetBits(GPIOC, GPIO_Pin_12);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+  // Pull PC11 low
+  GPIO_ResetBits(GPIOC, GPIO_Pin_11);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_11;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
   
   TestEnableRx();
@@ -188,7 +181,7 @@ void TestEnableTx(void)
     PIN_OUT(GPIOC, PINC_RX);
     PIN_AF(GPIOC, PINC_TX);
     volatile u32 v = TESTPORT_RX->SR;
-    USART_Cmd(TESTPORT_RX, DISABLE);
+//  XXX    USART_Cmd(TESTPORT_RX, DISABLE);
     MicroWait(40);
     m_isInTxMode = 1;
   }
@@ -207,7 +200,7 @@ void TestEnableRx(void)
     PIN_OUT(GPIOC, PINC_TX);
     PIN_AF(GPIOC, PINC_RX);
     MicroWait(20);
-    USART_Cmd(TESTPORT_RX, ENABLE);
+// XXX    USART_Cmd(TESTPORT_RX, ENABLE);
     v = TESTPORT_RX->SR;
     v = TESTPORT_RX->DR;
     m_isInTxMode = 0;
