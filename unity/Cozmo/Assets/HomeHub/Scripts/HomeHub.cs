@@ -178,7 +178,7 @@ namespace Cozmo.HomeHub {
     private void HandleMiniGameCompleted(StatContainer rewards, Transform[] rewardIcons, bool didWin) {
       // If we are in a challenge that needs to be completed, complete it
       if (_CurrentChallengePlaying != null) {
-        CompleteChallenge(_CurrentChallengePlaying, didWin, rewards);
+        CompleteChallenge(_CurrentChallengePlaying, didWin);
         _CurrentChallengePlaying = null;
       }
       ShowTimelineDialog();
@@ -261,14 +261,11 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private void CompleteChallenge(CompletedChallengeData completedChallenge, bool won, StatContainer rewards) { 
+    private void CompleteChallenge(CompletedChallengeData completedChallenge, bool won) { 
       // the last session is not necessarily valid as the 'CurrentSession', as its possible
       // the day rolled over while we were playing the challenge.
       var session = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
-      if (session != null) {
-        session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
-      }
-      else {
+      if (session == null) {
         DAS.Error(this, "Somehow managed to complete a challenge with no sessions saved!");
       }
 
@@ -287,7 +284,7 @@ namespace Cozmo.HomeHub {
 
         CompleteChallenge(new CompletedChallengeData() {
           ChallengeId = completedChallengeId 
-        }, true, new StatContainer());
+        }, true);
 
         // Force refresh of the dialog
         DeregisterDialogEvents();

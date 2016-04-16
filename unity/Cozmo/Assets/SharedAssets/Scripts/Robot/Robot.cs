@@ -327,7 +327,6 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.SuccessOrFailure += RobotEngineMessages;
     RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
-    RobotEngineManager.Instance.OnProgressionStatRecieved += UpdateProgressionStatFromEngineRobotManager;
     RobotEngineManager.Instance.OnObjectConnectionState += ObjectConnectionState;
     RobotEngineManager.Instance.OnSparkUnlockEnded += SparkUnlockEnded;
   }
@@ -585,22 +584,6 @@ public class Robot : IRobot {
     }
   }
 
-  private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, int value) {
-    bool valueChanged = ProgressionStats[index] != value;
-    if (valueChanged) {
-      TrySendGoalCompleteDasEvent(index, value);
-
-      // Update data and save to actually grant progress.
-      ProgressionStats[index] = value;
-
-      var session = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
-      if (session != null) {
-        session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
-      }
-      DataPersistence.DataPersistenceManager.Instance.Save();
-    }
-
-  }
 
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
     RobotEngineManager.Instance.Message.CameraCalibration = Singleton<CameraCalibration>.Instance.Initialize(focalLengthX, focalLengthY, centerX, centerY, 0.0f, 240, 320);
@@ -609,8 +592,10 @@ public class Robot : IRobot {
 
   private void TrySendGoalCompleteDasEvent(Anki.Cozmo.ProgressionStatType index, int value) {
     // If the goal has been completed for the first time, send a DAS event on goal complete
-    DataPersistence.TimelineEntryData currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
-    StatContainer goals = currentSession.Goals;
+    //DataPersistence.TimelineEntryData currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
+
+    //TODO: Update to work based on new DailyGoal class instead of ProgressionStatType
+    /*
     bool wasGoalComplete = ProgressionStats[index] >= goals[index];
     bool isGoalCompleteNow = value >= goals[index];
     if (!wasGoalComplete && isGoalCompleteNow) {
@@ -618,7 +603,7 @@ public class Robot : IRobot {
       DAS.Event(DASConstants.Goal.kComplete, goalDate, new Dictionary<string,string> { 
         { "$data", DASUtil.FormatGoal(index, value, goals[index]) } 
       });
-    }
+    }*/
   }
 
   private void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {

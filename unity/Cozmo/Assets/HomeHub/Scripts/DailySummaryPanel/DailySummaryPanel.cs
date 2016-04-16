@@ -52,7 +52,6 @@ public class DailySummaryPanel : BaseView {
   private Transform _BonusBarContainer;
   [SerializeField]
   private BonusBarPanel _BonusBarPrefab;
-  private BonusBarPanel _BonusBarPanel;
 
   // Config file for friendship progression
   [SerializeField]
@@ -67,9 +66,8 @@ public class DailySummaryPanel : BaseView {
     int month = data.Date.Month;
 
     _Title.FormattingArgs = new object[] { month, day };
-    _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
 
-    float dailyProg = DailyGoalManager.Instance.CalculateDailyGoalProgress(data.GetTotalProgress());
+    float dailyProg = data.GetTotalProgress();
     _DailyProgressBar.SetProgress(dailyProg);
     // TODO: Create GoalCells for the data off of DailyGoal info
     /*
