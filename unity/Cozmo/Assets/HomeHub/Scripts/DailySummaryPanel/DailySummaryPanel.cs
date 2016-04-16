@@ -69,30 +69,20 @@ public class DailySummaryPanel : BaseView {
 
     float dailyProg = data.GetTotalProgress();
     _DailyProgressBar.SetProgress(dailyProg);
-    // TODO: Create GoalCells for the data off of DailyGoal info
-    /*
-    for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
-      var stat = (ProgressionStatType)i;
-      if (data.Goals[stat] > 0) {
-        CreateGoalCell(stat, data.Progress[stat], data.Goals[stat]);
-      }
+
+    // Create a goal cell for each Daily Goal
+    for (int i = 0; i < data.DailyGoals.Count; i++) {
+      CreateGoalCell(data.DailyGoals[i]);
     }
-    */
+
     //RectTransform subContainer = null;
     for (int i = 0; i < data.CompletedChallenges.Count; i++) {
       CreateChallengeBadge(data.CompletedChallenges[i].ChallengeId, _ChallengesContainer);
     }
 
   }
-
-  // Creates a goal badge TODO: Kill this
-  private GoalCell CreateGoalCell(ProgressionStatType type, int progress, int goal) {
-    GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
-    newBadge.Initialize(type, progress, goal, false);
-    return newBadge;
-  }
-
-  // Creates a goal badge TODO: Use this instead
+    
+  // Creates a goal badge
   private GoalCell CreateGoalCell(DailyGoal goal) {
     GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
     newBadge.Initialize(goal, false);
