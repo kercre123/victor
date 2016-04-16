@@ -6,6 +6,8 @@ public abstract class MinigameConfigBase : ScriptableObject {
   public abstract int NumCubesRequired();
 
   public abstract int NumPlayersRequired();
+
+  public GameSkillConfig _skillConfig;
 }
 
 

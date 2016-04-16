@@ -17,6 +17,8 @@ public class PlayerProfile {
 
   public int TreatCount;
 
+  public Dictionary<string, GameSkillData> CozmoSkillLevels;
+
   public Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> VolumePreferences;
 
   public PlayerProfile() {
