@@ -38,25 +38,22 @@ static const u8 ResetCursorCmd[] = {
   PAGEADDR, 0, (DISPLAY_HEIGHT / 8) - 1
 };
 
-static GPIO_TypeDef* MOSI_PORT = GPIOA;
-static GPIO_TypeDef* MISO_PORT = GPIOA;
-static GPIO_TypeDef* SCK_PORT = GPIOA;
+static GPIO_TypeDef* MOSI_PORT = GPIOB;
+static GPIO_TypeDef* SCK_PORT = GPIOB;
 
-static const uint32_t MOSI_PIN = GPIO_Pin_7;
-static const uint32_t MISO_PIN = GPIO_Pin_6;
-static const uint32_t SCK_PIN = GPIO_Pin_5;
+static const uint32_t MOSI_PIN = GPIO_Pin_5;
+static const uint32_t SCK_PIN = GPIO_Pin_3;
 
-static const uint32_t MOSI_SOURCE = GPIO_PinSource7;
-static const uint32_t MISO_SOURCE = GPIO_PinSource6;
-static const uint32_t SCK_SOURCE = GPIO_PinSource5;
+static const uint32_t MOSI_SOURCE = GPIO_PinSource5;
+static const uint32_t SCK_SOURCE = GPIO_PinSource3;
 
-static GPIO_TypeDef* CS_PORT = GPIOB;
+static GPIO_TypeDef* CS_PORT = GPIOC;
 static GPIO_TypeDef* CMD_PORT = GPIOB;
 static GPIO_TypeDef* RES_PORT = GPIOB;
 
-static const uint32_t CS_SOURCE = GPIO_PinSource11;
-static const uint32_t CMD_SOURCE = GPIO_PinSource10;
-static const uint32_t RES_SOURCE = GPIO_PinSource15;
+static const uint32_t CS_SOURCE = GPIO_PinSource0;
+static const uint32_t CMD_SOURCE = GPIO_PinSource7;
+static const uint32_t RES_SOURCE = GPIO_PinSource4;
 
 static uint64_t frame[DISPLAY_WIDTH];  // 1 bit per pixel
 static int display_x = 0;
@@ -78,13 +75,13 @@ static void DisplayWrite(bool cmd, const u8* p, int count)
   MicroWait(1);
 
   while (count-- > 0) {
-    while (!(SPI1->SR & SPI_FLAG_TXE)) ;
-    SPI1->DR = *(p++);
+    while (!(SPI3->SR & SPI_FLAG_TXE)) ;
+    SPI3->DR = *(p++);
   }
   
   // Make sure SPI is totally drained
-  while (!(SPI1->SR & SPI_FLAG_TXE)) ;
-  while (SPI1->SR & SPI_FLAG_BSY) ;
+  while (!(SPI3->SR & SPI_FLAG_TXE)) ;
+  while (SPI3->SR & SPI_FLAG_BSY) ;
 
   GPIO_SET(CS_PORT, CS_SOURCE);
   MicroWait(1);
@@ -95,7 +92,7 @@ void InitDisplay(void)
 {
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE);
 
   GPIO_InitTypeDef GPIO_InitStructure;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
@@ -104,13 +101,13 @@ void InitDisplay(void)
   GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
 
   // Configure the pins for SPI in AF mode
-  GPIO_PinAFConfig(MOSI_PORT, MOSI_SOURCE, GPIO_AF_SPI1);
-  GPIO_PinAFConfig(MISO_PORT, MISO_SOURCE, GPIO_AF_SPI1);
-  GPIO_PinAFConfig(SCK_PORT, SCK_SOURCE, GPIO_AF_SPI1);
+  GPIO_PinAFConfig(MOSI_PORT, MOSI_SOURCE, GPIO_AF_SPI3);
+  //GPIO_PinAFConfig(MISO_PORT, MISO_SOURCE, GPIO_AF_SPI3);
+  GPIO_PinAFConfig(SCK_PORT, SCK_SOURCE, GPIO_AF_SPI3);
 
   // Configure the SPI pins
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Pin = MOSI_PIN | MISO_PIN; 
+  GPIO_InitStructure.GPIO_Pin = MOSI_PIN; // | MISO_PIN; 
   GPIO_Init(SCK_PORT, &GPIO_InitStructure);
   GPIO_InitStructure.GPIO_Pin = SCK_PIN;
   GPIO_Init(SCK_PORT, &GPIO_InitStructure);
@@ -124,7 +121,7 @@ void InitDisplay(void)
   PIN_OUT(RES_PORT, RES_SOURCE);
 
   // Initialize SPI in master mode
-  SPI_I2S_DeInit(SPI1);
+  SPI_I2S_DeInit(SPI3);
   SPI_InitTypeDef SPI_InitStructure;
   SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
   SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
@@ -132,16 +129,16 @@ void InitDisplay(void)
   SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
   SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
   SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
-  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_256;
+  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_32;
   SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
   SPI_InitStructure.SPI_CRCPolynomial = 7;
-  SPI_Init(SPI1, &SPI_InitStructure);
-  SPI_Cmd(SPI1, ENABLE);
+  SPI_Init(SPI3, &SPI_InitStructure);
+  SPI_Cmd(SPI3, ENABLE);
 
   MicroWait(10000);
   GPIO_SET(RES_PORT, RES_SOURCE);
 
-  SPI1->SR = 0;
+  SPI3->SR = 0;
 
 
   DisplayWrite(true, InitDisplayCmd, sizeof(InitDisplayCmd));

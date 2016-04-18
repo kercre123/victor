@@ -43,17 +43,17 @@ BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& conf
   }});
 }
   
-bool BehaviorFollowMotion::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorFollowMotion::IsRunnable(const Robot& robot) const
 {
   return true;
 }
 
-float BehaviorFollowMotion::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
+float BehaviorFollowMotion::EvaluateScoreInternal(const Robot& robot) const
 {
   return 0.3f; // for the investor demo, just use a fixed score
 }
 
-Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorFollowMotion::InitInternal(Robot& robot)
 {
 
 # if DO_BACK_UP_AFTER_POUNCE
@@ -68,6 +68,7 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec)
 
   // Do the initial reaction for first motion each time we restart this behavior
   // (but only if it's been long enough since last interruption)
+  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if(currentTime_sec - _lastInterruptTime_sec > _initialReactionWaitTime_sec) {
     _initialReactionAnimPlayed = false;
     if( _state != State::BackingUp ) {
@@ -86,7 +87,7 @@ Result BehaviorFollowMotion::InitInternal(Robot& robot, double currentTime_sec)
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot)
 {
   IBehavior::Status status = Status::Running;
 
@@ -163,7 +164,7 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot, double curr
   return status;
 }
 
-Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorFollowMotion::InterruptInternal(Robot& robot)
 {
   _state = State::Interrupted;
   SetStateName("Interrupted");
@@ -171,10 +172,12 @@ Result BehaviorFollowMotion::InterruptInternal(Robot& robot, double currentTime_
   return Result::RESULT_OK;
 }
   
-void BehaviorFollowMotion::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorFollowMotion::StopInternal(Robot& robot)
 {
+  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    
   robot.GetActionList().Cancel(_actionRunning);
-  
+
   _actionRunning = (u32)ActionConstants::INVALID_TAG;
   _lastInterruptTime_sec = currentTime_sec;
   _holdHeadDownUntil = -1.0f;

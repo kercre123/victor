@@ -251,7 +251,7 @@ float SimpleBehaviorChooser::ScoreBonusForCurrentBehavior(float runningDuration)
 }
   
 
-IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double currentTime_sec) const
+IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
 {
   const float kRandomFactor = 0.1f;
   
@@ -272,7 +272,7 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
         
     VizInterface::BehaviorScoreData scoreData;
     
-    scoreData.behaviorScore = behavior->EvaluateScore(robot, currentTime_sec);
+    scoreData.behaviorScore = behavior->EvaluateScore(robot);
     scoreData.totalScore    = scoreData.behaviorScore;
     VIZ_BEHAVIOR_SELECTION_ONLY( scoreData.name = behavior->GetName() );
     
@@ -280,7 +280,7 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot, double 
     {
       if (behavior->IsRunning())
       {
-        const float runningDuration = Util::numeric_cast<float>(behavior->GetRunningDuration(currentTime_sec));
+        const float runningDuration = Util::numeric_cast<float>(behavior->GetRunningDuration());
         const float runningBonus = ScoreBonusForCurrentBehavior(runningDuration);
         
         scoreData.totalScore += runningBonus;
@@ -359,7 +359,7 @@ IReactionaryBehavior* ReactionaryBehaviorChooser::_GetReactionaryBehavior(
     if (0 != getTagSet(*behavior).count(event.GetData().GetTag()))
     {
       if ( behavior->ShouldRunForEvent(event.GetData()) &&
-           behavior->IsRunnable(robot, BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()) ) {
+           behavior->IsRunnable(robot) ) {
         return behavior;
       }
     }

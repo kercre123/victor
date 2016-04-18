@@ -12,11 +12,14 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorWhiteboard_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorWhiteboard_H__
 
-#include "util/signals/simpleSignal_fwd.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
+#include "anki/common/basestation/math/pose.h"
+#include "clad/types/objectTypes.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include <vector>
 #include <set>
+#include <list>
 
 namespace Anki {
 namespace Cozmo {
@@ -29,16 +32,37 @@ class Robot;
 class BehaviorWhiteboard
 {
 public:
-
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Types
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  struct PossibleMarker {
+    PossibleMarker( const Pose3d& p, ObjectType objType ) : pose(p), type(objType) {}
+    Pose3d pose;
+    ObjectType type;
+  };
+  using PossibleMarkerList = std::list<PossibleMarker>;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization/destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor
-  BehaviorWhiteboard();
+  BehaviorWhiteboard(Robot& robot);
   
   // initializes the whiteboard, registers to events
-  void Init(Robot& robot);
+  void Init();
+  
+  // what to do when the robot is delocalized
+  void OnRobotDelocalized();
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Accessors
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // list of possible markers
+  const PossibleMarkerList& GetPossibleMarkers() const { return _possibleMarkers; }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Tracked values
@@ -63,13 +87,32 @@ public:
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Methods
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // remove possible markers currently stored that
+  void RemovePossibleMarkersMatching(ObjectType objectType, const Pose3d& pose);
+  
+  // update render of possible markers since they may have changed
+  void UpdatePossibleMarkerRender();
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  std::multiset<void*> _disableCliffIds;
+  // the robot this whiteboard belongs to
+  Robot& _robot;
   
   // signal handles for events we register to. These are currently unsubscribed when destroyed
   std::vector<Signal::SmartHandle> _signalHandles;
+  
+  std::multiset<void*> _disableCliffIds;  
+ 
+  
+  // list of markers we have not checked out yet. Using list because we make assume possible markers of same type
+  // can be found at different locations
+  std::list<PossibleMarker> _possibleMarkers;
+  
 };
   
 

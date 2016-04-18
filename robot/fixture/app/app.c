@@ -19,7 +19,7 @@
 #include "app/cubeTest.h"
 #include "app/headTest.h"
 
-u8 g_fixtureReleaseVersion = 9;
+u8 g_fixtureReleaseVersion = 5;
 
 BOOL g_isDevicePresent = 0;
 FixtureType g_fixtureType = FIXTURE_NONE;
@@ -103,8 +103,12 @@ void SetFixtureText(void)
   
   if (g_fixtureType == FIXTURE_CHARGER_TEST) {    
     DisplayBigCenteredText("CHARGE");
-  } else if (g_fixtureType == FIXTURE_CUBE_TEST) {    
-    DisplayBigCenteredText("CUBE");
+  } else if (g_fixtureType == FIXTURE_CUBE1_TEST) {    
+    DisplayBigCenteredText("CUBE 1");
+  } else if (g_fixtureType == FIXTURE_CUBE2_TEST) {    
+    DisplayBigCenteredText("CUBE 2");
+  } else if (g_fixtureType == FIXTURE_CUBE3_TEST) {    
+    DisplayBigCenteredText("CUBE 3");
   } else if (g_fixtureType == FIXTURE_HEAD_TEST) {    
     DisplayBigCenteredText("HEAD");  
   } else if (g_fixtureType == FIXTURE_BODY_TEST) {    
@@ -122,6 +126,8 @@ void SetFixtureText(void)
   DisplayPutChar('v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
+  DisplayMoveCursor(55, 0);
+  DisplayPutString("NOT FOR FACTORY");
   
   DisplayFlip();
 }
@@ -164,7 +170,9 @@ bool DetectDevice(void)
   switch (g_fixtureType)
   {
     case FIXTURE_CHARGER_TEST:
-    case FIXTURE_CUBE_TEST:
+    case FIXTURE_CUBE1_TEST:
+    case FIXTURE_CUBE2_TEST:
+    case FIXTURE_CUBE3_TEST:
       return CubeDetect();
     case FIXTURE_HEAD_TEST:
       return HeadDetect();
@@ -390,7 +398,9 @@ static void MainExecution()
   switch (g_fixtureType)
   {
     case FIXTURE_CHARGER_TEST:
-    case FIXTURE_CUBE_TEST:
+    case FIXTURE_CUBE1_TEST:
+    case FIXTURE_CUBE2_TEST:
+    case FIXTURE_CUBE3_TEST:      
       m_functions = GetCubeTestFunctions();
       break;
     case FIXTURE_BODY_TEST:
@@ -550,28 +560,29 @@ int main(void)
   // Initialize PB13-PB15 as the ID inputs with pullups
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-  
+
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
   GPIO_InitStructure.GPIO_Pin = GPIO_Pin_14;
   GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_15;
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
 
   // Wait for lines to initialize and not float
   // 2 us was not long enough, just being safe...
   MicroWait(100);
 
-  // Read the pins with pull-down resistors on GPIOB[14:12]
-  g_fixtureType = (FixtureType)((GPIO_READ(GPIOB) >> 12) & 7);
+  // Read the pins with pull-down resistors on GPIOB[15:12]
+  g_fixtureType = (FixtureType)(~(GPIO_READ(GPIOB) >> 12) & 15);
 
-  SlowPrintf("fixture: %i\r\n", g_fixtureType);
+  SlowPrintf("Fixture: %i\r\n", g_fixtureType);
   
   InitBAT();
   
   SlowPutString("Initializing Display...\r\n");
   
-  // XXX: EP1 test fixtures unfortunately share display lines with DUT lines, so cube must be in reset for OLED to work!
   InitCube();  
   InitDisplay();
 
@@ -579,14 +590,14 @@ int main(void)
   
   // Cozmo doesn't support this yet
   SlowPutString("Initializing Test Port...\r\n");
-  InitTestPort(0);
+  // XXX InitTestPort(0);
 
   SlowPutString("Initializing Monitor...\r\n");
   InitMonitor();
   
   SlowPutString("Ready...\r\n");
 
-  //InitEspressif();
+  InitEspressif();
 
   STM_EVAL_LEDOn(LEDRED);
 

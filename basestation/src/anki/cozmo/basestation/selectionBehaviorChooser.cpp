@@ -14,7 +14,6 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
-#include "anki/cozmo/basestation/behaviors/behaviorOCD.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -55,11 +54,11 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Val
   }
 }
   
-IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(const Robot& robot, double currentTime_sec) const
+IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
 {
-  auto runnable = [&robot,currentTime_sec](const IBehavior* behavior)
+  auto runnable = [&robot](const IBehavior* behavior)
   {
-    return (nullptr != behavior && behavior->IsRunnable(robot,currentTime_sec));
+    return (nullptr != behavior && behavior->IsRunnable(robot));
   };
   
   if (runnable(_selectedBehavior))

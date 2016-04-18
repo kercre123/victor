@@ -5,6 +5,7 @@
 #include "hal/timers.h"
 #include "hal/flash.h"
 #include "hal/uart.h"
+#include "hal/display.h"
 #include "../../crypto/crypto.h"
 #include "../app/fixture.h"
 #include <stdarg.h>
@@ -261,8 +262,12 @@ static void SetMode(void)
     g_fixtureType = FIXTURE_HEAD_TEST;
   } else if (!strcasecmp(arg, "charge")) {
     g_fixtureType = FIXTURE_CHARGER_TEST;
-  } else if (!strcasecmp(arg, "cube")) {
-    g_fixtureType = FIXTURE_CUBE_TEST;
+  } else if (!strcasecmp(arg, "cube1")) {
+    g_fixtureType = FIXTURE_CUBE1_TEST;
+  } else if (!strcasecmp(arg, "cube2")) {
+    g_fixtureType = FIXTURE_CUBE2_TEST;
+  } else if (!strcasecmp(arg, "cube3")) {
+    g_fixtureType = FIXTURE_CUBE3_TEST;
   } else if (!strcasecmp(arg, "debug")) {
     g_fixtureType = FIXTURE_DEBUG;
   } else {
@@ -311,6 +316,14 @@ static void GetSerial(void)
     FIXTURE_SERIAL, 
     g_fixtureType & FIXTURE_DEBUG ? "DEBUG" : FIXTYPES[g_fixtureType],
     g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de);    // This part is hard to explain
+}
+
+static void SetVBAT(void)
+{
+  int mv;
+  char* arg = GetArgument(1);  
+  sscanf(arg, "%i", &mv);
+  VBATMillivolts(mv);
 }
 
 static void SetLotCode(void)
@@ -401,6 +414,7 @@ static CommandFunction m_functions[] =
   {"DumpFixtureSerials", DumpFixtureSerials, FALSE},
   {"Voltage", TestVoltage, FALSE},
   {"Burn", CubeBurn, FALSE},
+  {"SetVBAT", SetVBAT, FALSE},
 };
 
 static void ParseCommand(void)
@@ -543,14 +557,18 @@ void ConsoleUpdate(void)
         
         if (*(u32*)buffer == SAFE_PLATFORM_TAG_A && !m_isReceivingSafe)
         {
-          //SlowPutString("RECEIVING FILE\r\n");
           m_isReceivingSafe = 1;
           FLASH_Unlock();
-          // Why voltage range 2?  The handshake on this erase in old AnkiLog has an early timeout - _1 is not fast enough
-          // I'm assuming the dreaded "voltage dip" issue we saw in the bootloader is related to OLED inrush and is well past
-          FLASH_EraseSector(FLASH_BLOCK_B_SECTOR_0, VoltageRange_2);
-          FLASH_EraseSector(FLASH_BLOCK_B_SECTOR_1, VoltageRange_2);
-          FLASH_EraseSector(FLASH_BLOCK_B_SECTOR_2, VoltageRange_2);
+          FlashProgress(0);
+          FLASH_EraseSector(FLASH_BLOCK_B_SECTOR_0, VoltageRange_3);
+          FlashProgress(10);
+          FLASH_EraseSector(FLASH_BLOCK_SECTOR_1, VoltageRange_3);
+          FlashProgress(20);
+          FLASH_EraseSector(FLASH_BLOCK_SECTOR_2, VoltageRange_3);
+          FlashProgress(30);
+          FLASH_EraseSector(FLASH_BLOCK_SECTOR_3, VoltageRange_3);
+          FlashProgress(40);
+          FLASH_EraseSector(FLASH_BLOCK_SECTOR_4, VoltageRange_3);
           FLASH_Lock();
           
           ConsolePutChar('1');  // Acknowledge erase

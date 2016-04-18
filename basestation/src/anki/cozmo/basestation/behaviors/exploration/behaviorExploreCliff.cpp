@@ -50,7 +50,7 @@ BehaviorExploreCliff::~BehaviorExploreCliff()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreCliff::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorExploreCliff::IsRunnable(const Robot& robot) const
 {
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   if ( nullptr == memoryMap ) {
@@ -67,7 +67,7 @@ bool BehaviorExploreCliff::IsRunnable(const Robot& robot, double currentTime_sec
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreCliff::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorExploreCliff::InitInternal(Robot& robot)
 {
   // select borders we want to visit
   BorderScoreVector borderGoals;
@@ -116,7 +116,7 @@ Result BehaviorExploreCliff::InitInternal(Robot& robot, double currentTime_sec)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorExploreCliff::Status BehaviorExploreCliff::UpdateInternal(Robot& robot, double currentTime_sec)
+BehaviorExploreCliff::Status BehaviorExploreCliff::UpdateInternal(Robot& robot)
 {
   // while we are moving towards a vantage point, wait patiently
   if ( _currentActionTag != ActionConstants::INVALID_TAG )
@@ -131,7 +131,7 @@ BehaviorExploreCliff::Status BehaviorExploreCliff::UpdateInternal(Robot& robot, 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result BehaviorExploreCliff::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorExploreCliff::InterruptInternal(Robot& robot)
 {
   // Note: at the moment anything can interrupt us, revisit rules of interruption
   _currentActionTag = ActionConstants::INVALID_TAG;
@@ -140,7 +140,7 @@ Result BehaviorExploreCliff::InterruptInternal(Robot& robot, double currentTime_
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorExploreCliff::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorExploreCliff::StopInternal(Robot& robot)
 {
   robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreCliff::InitInternal");
 }

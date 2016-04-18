@@ -837,6 +837,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         const f32 distToObj = ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose());
         if (distToObj > MAX_LOCALIZATION_AND_ID_DISTANCE_MM) {
           //PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.IgnoringCuzObjectTooFar", "dist %fmm", distToObj);
+          BroadcastObjectObservation(objSeen, true);
           continue;
         }
 
@@ -1422,7 +1423,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       // visibility in each camera
       const Vision::Camera& camera = _robot->GetVisionComponent().GetCamera();
       ASSERT_NAMED(camera.IsCalibrated(), "BlockWorld.CheckForUnobservedObjects.CameraNotCalibrated");
-      for(auto unobserved : unobservedObjects) {
+      for(const auto& unobserved : unobservedObjects) {
         
         // Remove objects that should have been visible based on their last known
         // location, but which must not be there because we saw something behind

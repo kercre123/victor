@@ -1,0 +1,62 @@
+/** CLAD definitions for robot non-volatile storage
+ * WARNING For backwards forward compatibility, all structures must be left as defined and new versions added with their
+ * Own unique identifier when needed.
+ * ROBOT_CLAD_SHARED
+ */
+
+namespace Anki {
+namespace Cozmo {
+namespace NVStorage {
+
+  enum uint_32 NVEntryTag
+  {
+    // ===== Non-factory entries ======
+
+    // Single blob entries start here
+    // Upper 16 bits must be zero
+    NVEntry_Invalid = 0xFFFFffff,
+    NVEntry_CameraCalibration = 1,
+
+    // Multi-blob entries start here
+    // Upper 16 bits must be non-zero and the bottom 16 bits must all be zero
+    // The number of blobs that can be associated with a multi-blob tag is 0xffff
+    // (e.g. The NVEntryTag 0x10000 reserves tags 0x10000 through 0x1ffff)
+    // though this value is actually lower because it is limited in NVStorageComponent.
+
+
+    // ====== Factory entries ========
+    // Same rules as regarding single and multi-blob entries
+    // except that the MSB is 1 for potential special treatment during
+    // garbage collection in the future.
+    NVEntry_CalibImage1 = 0x80010000,
+    NVEntry_CalibImage2 = 0x80020000,
+    NVEntry_CalibImage3 = 0x80030000,
+    NVEntry_CalibImage4 = 0x80040000,
+    NVEntry_CalibImage5 = 0x80050000,
+
+  }
+
+  // Nominally 0 is success > 0 is conditional success and < 0 is error
+  enum int_8 NVResult {
+    NV_OKAY = 0,
+    NV_SCHEDULED =  1, // Scheduled for opertation
+    NV_NO_DO     =  2, // Nothing to do
+    NV_NOT_FOUND = -1,
+    NV_NO_ROOM   = -2,
+    NV_ERROR     = -3,
+    NV_TIMEOUT   = -4,
+    NV_BUSY      = -5, // Operations pending. try again later
+    NV_BAD_ARGS  = -6, // Invalid arguments to call
+    NV_NO_MEM    = -7,
+  }
+
+  enum uint_8 NVOperation {
+    NVOP_READ = 0,
+    NVOP_WRITE,
+    NVOP_ERASE,
+  }
+
+}
+
+}
+}

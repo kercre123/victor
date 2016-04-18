@@ -9,8 +9,6 @@ namespace Cozmo {
 enum uint_8 BehaviorType {
   NoneBehavior, // Named differently to not conflict with the Python keyword
   LookAround,
-  OCD,
-  Fidget,
   InteractWithFaces,
   ReactToCliff,
   ReactToPickup,
@@ -20,10 +18,10 @@ enum uint_8 BehaviorType {
   UnityDriven,
   PounceOnMotion,
   FindFaces,
-  GatherBlocks,
   ExploreMarkedCube,
   ExploreCliff,
   ExploreLookAroundInPlace,
+  ExploreVisitPossibleMarker,
   RequestGameSimple,
   RollBlock,
   FactoryTest,

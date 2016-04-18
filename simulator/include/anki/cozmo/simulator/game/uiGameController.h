@@ -20,6 +20,7 @@
 #include "clad/types/objectTypes.h"
 #include "clad/types/objectFamilies.h"
 #include "clad/types/visionModes.h"
+#include "clad/types/nvStorageTypes.h"
 #include <webots/Supervisor.hpp>
 #include <unordered_set>
 #include "anki/cozmo/game/comms/gameMessageHandler.h"
@@ -98,6 +99,8 @@ protected:
   virtual void HandleActiveObjectTapped(ObjectTapped const& msg){};
   virtual void HandleAnimationAvailable(ExternalInterface::AnimationAvailable const& msg){};
   virtual void HandleDebugString(ExternalInterface::DebugString const& msg){};
+  virtual void HandleNVStorageData(ExternalInterface::NVStorageData const& msg){};
+  virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
   
   
   // Message senders
@@ -239,6 +242,10 @@ protected:
   void SendClearCalibrationImages();
   void SendComputeCameraCalibration();
   void SendCameraCalibration(f32 focalLength_x, f32 focalLength_y, f32 center_x, f32 center_y);
+  void SendNVStorageWriteEntry(NVStorage::NVEntryTag tag, u8* data, size_t size, u8 blobIndex, u8 numTotalBlobs);
+  void SendNVStorageReadEntry(NVStorage::NVEntryTag tag);
+  void SendNVStorageEraseEntry(NVStorage::NVEntryTag tag);
+  void SendNVClearPartialPendingWriteData();
   
 
   // ====== Accessors =====
@@ -275,6 +282,10 @@ protected:
   
   BehaviorType GetBehaviorType(const std::string& behaviorName) const;
 
+  // NVStorage
+  const std::vector<u8>* GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const;
+  void ClearReceivedNVStorageData(NVStorage::NVEntryTag tag);
+  bool IsMultiBlobEntryTag(u32 tag) const;
   
   // Actually move objects in the simulated world
   void SetActualRobotPose(const Pose3d& newPose);
@@ -299,6 +310,8 @@ private:
   void HandleActiveObjectTappedBase(ObjectTapped const& msg);
   void HandleAnimationAvailableBase(ExternalInterface::AnimationAvailable const& msg);
   void HandleDebugStringBase(ExternalInterface::DebugString const& msg);
+  void HandleNVStorageDataBase(ExternalInterface::NVStorageData const& msg);
+  void HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg);
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();

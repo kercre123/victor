@@ -588,9 +588,9 @@
               <FilePath>.\hal\bootloader.cpp</FilePath>
             </File>
             <File>
-              <FileName>bootloader.s</FileName>
+              <FileName>bootbin.s</FileName>
               <FileType>2</FileType>
-              <FilePath>.\hal\bootloader.s</FilePath>
+              <FilePath>.\hal\bootbin.s</FilePath>
             </File>
           </Files>
         </Group>

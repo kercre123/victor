@@ -41,7 +41,7 @@ BehaviorUnityDriven::~BehaviorUnityDriven()
 }
 
 
-Result BehaviorUnityDriven::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorUnityDriven::InitInternal(Robot& robot)
 {
   _isRunnable     = true;
   _wasInterrupted = false;
@@ -51,26 +51,26 @@ Result BehaviorUnityDriven::InitInternal(Robot& robot, double currentTime_sec)
 }
 
   
-BehaviorUnityDriven::Status BehaviorUnityDriven::UpdateInternal(Robot& robot, double currentTime_sec)
+BehaviorUnityDriven::Status BehaviorUnityDriven::UpdateInternal(Robot& robot)
 {
   const Status retval = _isComplete ? Status::Complete : Status::Running;
   return retval;
 }
 
 
-Result BehaviorUnityDriven::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorUnityDriven::InterruptInternal(Robot& robot)
 {
   _wasInterrupted = true;
   return Result::RESULT_OK;
 }
 
   
-void BehaviorUnityDriven::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorUnityDriven::StopInternal(Robot& robot)
 {
 }
   
 
-float BehaviorUnityDriven::EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const
+float BehaviorUnityDriven::EvaluateScoreInternal(const Robot& robot) const
 {
   if (_isScoredExternally)
   {
@@ -78,7 +78,7 @@ float BehaviorUnityDriven::EvaluateScoreInternal(const Robot& robot, double curr
   }
   else
   {
-    return IBehavior::EvaluateScoreInternal(robot, currentTime_sec);
+    return IBehavior::EvaluateScoreInternal(robot);
   }
 }
 

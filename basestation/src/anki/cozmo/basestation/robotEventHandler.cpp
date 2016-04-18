@@ -1041,23 +1041,14 @@ void RobotEventHandler::HandleSendDiscoveredObjects(const AnkiEvent<ExternalInte
     }
     else
     {
-      NVStorage::NVStorageWrite msg;
-      msg.reportTo = NVStorage::NVReportDest::ENGINE;
-      msg.writeNotErase = true;
-      msg.reportEach = false;
-      msg.reportDone = true;
-      msg.rangeEnd = NVStorage::NVEntryTag::NVEntry_CameraCalibration;
-      msg.entry.tag = (u32)NVStorage::NVEntryTag::NVEntry_CameraCalibration;
-
       CameraCalibration calib = event.GetData().Get_CameraCalibration();
-      msg.entry.blob.resize(calib.Size());
-      calib.Pack(msg.entry.blob.data(), calib.Size());
-
+      std::vector<u8> calibVec(calib.Size());
+      calib.Pack(calibVec.data(), calib.Size());
+      robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalibration, calibVec.data(), calibVec.size());
+      
       PRINT_NAMED_INFO("RobotEventHandler.HandleCameraCalibration.SendingCalib",
                        "fx: %f, fy: %f, cx: %f, cy: %f, nrows %d, ncols %d",
                        calib.focalLength_x, calib.focalLength_y, calib.center_x, calib.center_y, calib.nrows, calib.ncols);
-      
-      robot->SendMessage(RobotInterface::EngineToRobot(NVStorage::NVStorageWrite(msg)));
       
     }
   }

@@ -37,13 +37,13 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   _blockworldFilter->SetFilterFcn( std::bind( &BehaviorRollBlock::FilterBlocks, this, std::placeholders::_1) );
 }
   
-bool BehaviorRollBlock::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorRollBlock::IsRunnable(const Robot& robot) const
 {
   // if we are already acting, keep running. Otherwise, run if we have a block we'd like to roll
   return IsActing() || HasValidTargetBlock(robot);
 }
 
-float BehaviorRollBlock::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+float BehaviorRollBlock::EvaluateRunningScoreInternal(const Robot& robot) const
 {
   // if we have requested, and are past the timeout, then we don't want to keep running
   float minScore = 0.0f;
@@ -53,24 +53,24 @@ float BehaviorRollBlock::EvaluateRunningScoreInternal(const Robot& robot, double
   }
 
   // otherwise, fall back to running score
-  return std::max( minScore, EvaluateScoreInternal(robot, currentTime_sec) );
+  return std::max( minScore, EvaluateScoreInternal(robot) );
 }
 
 
-Result BehaviorRollBlock::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorRollBlock::InitInternal(Robot& robot)
 {
   TransitionToSelectingTargetBlock(robot);
   return Result::RESULT_OK;
 }
 
-Result BehaviorRollBlock::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorRollBlock::InterruptInternal(Robot& robot)
 {
   ResetBehavior(robot);
   StopActing(false);
   return Result::RESULT_OK;
 }
   
-void BehaviorRollBlock::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorRollBlock::StopInternal(Robot& robot)
 {
   ResetBehavior(robot);
 }

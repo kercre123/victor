@@ -46,7 +46,7 @@ class IBehaviorChooser : private Util::noncopyable
 {
 public:
   virtual Result AddBehavior(IBehavior *newBehavior) = 0;
-  virtual IBehavior* ChooseNextBehavior(const Robot& robot, double currentTime_sec) const = 0;
+  virtual IBehavior* ChooseNextBehavior(const Robot& robot) const = 0;
   virtual IBehavior* GetBehaviorByName(const std::string& name) const = 0;
   
   virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) = 0;
@@ -55,7 +55,7 @@ public:
   virtual IBehavior* GetReactionaryBehavior(const Robot& robot,
                                             const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const = 0;
   
-  virtual Result Update(double currentTime_sec) { return Result::RESULT_OK; }
+  virtual Result Update() { return Result::RESULT_OK; }
 
   virtual ~IBehaviorChooser() { }
   
@@ -84,7 +84,7 @@ public:
   
   // For IBehaviorChooser
   virtual Result AddBehavior(IBehavior *newBehavior) override;
-  virtual IBehavior* ChooseNextBehavior(const Robot& robot, double currentTime_sec) const override;
+  virtual IBehavior* ChooseNextBehavior(const Robot& robot) const override;
   virtual IBehavior* GetBehaviorByName(const std::string& name) const override;
   
   virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) override { }

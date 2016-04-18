@@ -10,15 +10,16 @@
  *
  **/
 
-#include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
-#include "util/math/math.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/actionTypes.h"
+#include "util/math/math.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -73,28 +74,29 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   }
 }
   
-bool BehaviorFindFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorFindFaces::IsRunnable(const Robot& robot) const
 {
   return true;
 }
   
-float BehaviorFindFaces::EvaluateScoreInternal(const Anki::Cozmo::Robot &robot, double currentTime_sec) const
+float BehaviorFindFaces::EvaluateScoreInternal(const Anki::Cozmo::Robot &robot) const
 {
   Pose3d facePose;
   auto lastFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
-  
+  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   if (_currentState != State::Inactive ||
       lastFaceTime == 0 ||
       lastFaceTime < SEC_TO_MILIS(currentTime_sec - _minimumTimeSinceSeenLastFace_sec))
   {
-    return IBehavior::EvaluateScoreInternal(robot, currentTime_sec);
+    return IBehavior::EvaluateScoreInternal(robot);
   }
   
   return 0.0f;
 }
   
 
-float BehaviorFindFaces::EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const
+float BehaviorFindFaces::EvaluateRunningScoreInternal(const Robot& robot) const
 {
   double startTime_s = GetTimeStartedRunning_s();
   Pose3d facePose;
@@ -106,7 +108,7 @@ float BehaviorFindFaces::EvaluateRunningScoreInternal(const Robot& robot, double
     return 0.0f;
   }
   else {
-    return super::EvaluateRunningScoreInternal(robot, currentTime_sec);
+    return super::EvaluateRunningScoreInternal(robot);
   }
 }
   
@@ -145,7 +147,7 @@ void BehaviorFindFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot
   }
 }
   
-Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorFindFaces::InitInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_FIND_FACES ) {
     robot.PushIdleAnimation("NONE");
@@ -155,7 +157,7 @@ Result BehaviorFindFaces::InitInternal(Robot& robot, double currentTime_sec)
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorFindFaces::UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status BehaviorFindFaces::UpdateInternal(Robot& robot)
 {
   // First time we're updating, set our face angle center
   if (_useFaceAngleCenter && !_faceAngleCenterSet)
@@ -163,7 +165,9 @@ IBehavior::Status BehaviorFindFaces::UpdateInternal(Robot& robot, double current
     _faceAngleCenter = robot.GetPose().GetRotationAngle();
     _faceAngleCenterSet = true;
   }
-  
+
+  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   switch (_currentState)
   {
     case State::Inactive:
@@ -252,13 +256,13 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
   _currentState = State::WaitToFinishMoving;
 }
 
-Result BehaviorFindFaces::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorFindFaces::InterruptInternal(Robot& robot)
 {
   _currentState = State::Inactive;
   return Result::RESULT_OK;
 }
   
-void BehaviorFindFaces::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorFindFaces::StopInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_FIND_FACES ) {
     robot.PopIdleAnimation();

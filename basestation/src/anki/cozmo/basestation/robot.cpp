@@ -38,6 +38,7 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -103,6 +104,7 @@ namespace Anki {
     , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _movementComponent(*this)
     , _visionComponent(*this, VisionComponent::RunMode::Asynchronous, _context)
+    , _nvStorageComponent(*this, _context)
     , _neckPose(0.f,Y_AXIS_3D(), {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
     , _headCamPose(_kDefaultHeadCamRotation, {HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
@@ -329,6 +331,9 @@ namespace Anki {
       
       // create a new memory map for this origin
       _blockWorld.CreateLocalizedMemoryMap(_worldOrigin);
+      
+      // notify behavior whiteboard
+      _behaviorMgr.GetWhiteboard().OnRobotDelocalized();
       
     } // Delocalize()
     
@@ -820,8 +825,12 @@ namespace Anki {
       
       const char* behaviorChooserName = "";
       std::string behaviorDebugStr("<disabled>");
-      if(_isBehaviorMgrEnabled) {
-        _behaviorMgr.Update(currentTime);
+
+      // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
+      static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
+      if(_isBehaviorMgrEnabled && ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
+      {
+        _behaviorMgr.Update();
         
         const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
         if(behavior != nullptr) {
@@ -844,6 +853,8 @@ namespace Anki {
         {
           behaviorChooserName = behaviorChooser->GetName();
         }
+      } else {
+        --ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242;
       }
       
       GetContext()->GetVizManager()->SetText(VizManager::BEHAVIOR_STATE, NamedColors::MAGENTA,
@@ -864,6 +875,8 @@ namespace Anki {
         }
       }
 
+      /////////// Update NVStorage //////////
+      _nvStorageComponent.Update();
 
       /////////// Update path planning / following ////////////
 

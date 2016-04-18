@@ -17,10 +17,12 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 
+#include "anki/common/basestation/math/point.h"
 #include "anki/common/basestation/math/pose.h"
 
-#include <vector>
+#include <list>
 #include <set>
+#include <vector>
 
 namespace Anki {
 namespace Cozmo {
@@ -56,7 +58,9 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // todo: document. Is this behavior alway runnable, or we won't look around in an area we already know everything?
-  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
+  virtual bool IsRunnable(const Robot& robot) const override;
+  
+  virtual float EvaluateScoreInternal(const Robot& robot) const override { return 1.0f; }
   
 protected:
   
@@ -64,10 +68,10 @@ protected:
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
-  virtual IBehavior::Status UpdateInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override { return Result::RESULT_OK; } // TODO?
-  virtual void StopInternal(Robot& robot, double currentTime_sec) override {} // TODO?
+  virtual Result InitInternal(Robot& robot) override;
+  virtual IBehavior::Status UpdateInternal(Robot& robot) override;
+  virtual Result InterruptInternal(Robot& robot) override { return Result::RESULT_OK; } // TODO?
+  virtual void StopInternal(Robot& robot) override {} // TODO?
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions
@@ -79,6 +83,7 @@ protected:
   void TransitionToS4_HeadOnlyUp(Robot& robot);
   void TransitionToS5_HeadOnlyDown(Robot& robot);
   void TransitionToS6_MainTurnFinal(Robot& robot);
+  void TransitionToS7_IterationEnd(Robot& robot);
   
 private:
 
@@ -115,14 +120,21 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // facing direction when start an iteration
-  Radians _startingBodyFacing_rad;
+  // facing direction when we start an iteration
+  Radians _iterationStartingBodyFacing_rad;
+  
+  // amount of radians we have turned since we started at this location
+  float _behaviorBodyFacingDone_rad;
 
   // the robot completes a turn in this direction, but in between angles, it moves back and forth and it moves the head
   // up and down
   EClockDirection _mainTurnDirection;
   
+  // number of head moves left for step4
   uint8_t _s4HeadMovesLeft;
+  
+  // positions we have recently done
+  std::list<Vec3f> _visitedLocations;
 };
   
 

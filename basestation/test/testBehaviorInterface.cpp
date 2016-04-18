@@ -10,6 +10,7 @@
  *
  **/
 
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -37,24 +38,24 @@ public:
   bool _interrupted = false;
   bool _stopped = false;
 
-  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const {
+  virtual bool IsRunnable(const Robot& robot) const {
     return true;
   }
 
-  virtual Result InitInternal(Robot& robot, double currentTime_sec) {
+  virtual Result InitInternal(Robot& robot) {
     _inited = true;
     return RESULT_OK;
   }
   
-  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) {
+  virtual Status UpdateInternal(Robot& robot) {
     _numUpdates++;
     return Status::Running;
   }
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) {
+  virtual Result InterruptInternal(Robot& robot) {
     _interrupted = true;
     return RESULT_OK;
   }
-  virtual void   StopInternal(Robot& robot, double currentTime_sec) {
+  virtual void   StopInternal(Robot& robot) {
     _stopped = true;
   }
 
@@ -112,7 +113,7 @@ TEST(BehaviorInterface, Create)
   TestBehavior b(robot, empty);
 
   EXPECT_FALSE( b.IsRunning() );
-  EXPECT_TRUE( b.IsRunnable(robot, 0.0) );
+  EXPECT_TRUE( b.IsRunnable(robot) );
   EXPECT_FALSE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._interrupted );
@@ -128,7 +129,7 @@ TEST(BehaviorInterface, Init)
   TestBehavior b(robot, empty);
 
   EXPECT_FALSE( b._inited );
-  b.Init(0.0f);
+  b.Init();
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._interrupted );
@@ -145,7 +146,7 @@ TEST(BehaviorInterface, InitWithInterface)
   TestBehavior b(robot, empty);
 
   EXPECT_FALSE( b._inited );
-  b.Init(0.0f);
+  b.Init();
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
   EXPECT_FALSE( b._interrupted );
@@ -160,13 +161,18 @@ TEST(BehaviorInterface, Run)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
+
+  BaseStationTimer::getInstance()->UpdateTime(0);
   
-  b.Init(0.0f);
+  b.Init();
   for(int i=0; i<5; i++) {
-    b.Update(0.01 * i);
+    BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 0.01 * i ) );
+    b.Update();
   }
-  
-  b.Stop(2.0);
+
+  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 2.0 ) );
+
+  b.Stop();
   
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 5 );
@@ -182,8 +188,9 @@ TEST(BehaviorInterface, HandleMessages)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
-  
-  b.Init(0.0f);
+
+  BaseStationTimer::getInstance()->UpdateTime(0);
+  b.Init();
 
   EXPECT_EQ(b._alwaysHandleCalls, 0);
   EXPECT_EQ(b._handleWhileRunningCalls, 0);
@@ -197,8 +204,8 @@ TEST(BehaviorInterface, HandleMessages)
   EXPECT_EQ(b._handleWhileRunningCalls, 1);
   EXPECT_EQ(b._handleWhileNotRunningCalls,  0);
 
-  
-  b.Stop(2.0);
+  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 2.0 ) );  
+  b.Stop();
 
   robot.Broadcast( MessageEngineToGame( Ping() ) );
   
@@ -211,7 +218,7 @@ void DoTicks(Robot& robot, IBehavior& behavior, int num=1)
 {
   for(int i=0; i<num; i++) {
     robot.GetActionList().Update();
-    behavior.Update(0.0f);
+    behavior.Update();
   }
 }
 
@@ -223,11 +230,12 @@ TEST(BehaviorInterface, OutsideAction)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
+
+  BaseStationTimer::getInstance()->UpdateTime(0);
+  b.Init();
   
-  b.Init(0.0f);
-  
-  b.Update(0.0f);
-  b.Update(0.0f);
+  b.Update();
+  b.Update();
 
   bool done = false;
 
@@ -307,8 +315,10 @@ TEST(BehaviorInterface, StartActingSimple)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
+
+  BaseStationTimer::getInstance()->UpdateTime(0);
   
-  b.Init(0.0f);
+  b.Init();
 
   DoTicks(robot, b, 3);
 
@@ -340,8 +350,10 @@ TEST(BehaviorInterface, StartActingFailures)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
+
+  BaseStationTimer::getInstance()->UpdateTime(0);
   
-  b.Init(0.0f);
+  b.Init();
 
   DoTicks(robot, b, 3);
 
@@ -403,7 +415,9 @@ TEST(BehaviorInterface, StartActingCallbacks)
 
   TestBehavior b(robot, empty);
   
-  b.Init(0.0f);
+  BaseStationTimer::getInstance()->UpdateTime(0);
+
+  b.Init();
 
   bool done = false;
   bool callbackCalled = false;
@@ -466,13 +480,16 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
-  
-  b.Init(0.0f);
+
+  BaseStationTimer::getInstance()->UpdateTime(0);
+
+  b.Init();
 
   DoTicks(robot, b, 3);
 
-  
-  b.Stop(2.0);
+  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 2.0 ) );
+
+  b.Stop();
 
   bool done1 = false;
   bool callbackCalled1 = false;
@@ -483,9 +500,9 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
 
   EXPECT_FALSE(ret) << "should fail to start acting since the behavior isn't running";
 
-
+  BaseStationTimer::getInstance()->UpdateTime(0);
   
-  b.Init(0.0f);
+  b.Init();
 
   DoTicks(robot, b, 3);
 
@@ -505,8 +522,9 @@ TEST(BehaviorInterface, StartActingWhenNotRunning)
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty());
   
-  
-  b.Stop(2.0);
+  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 2.0 ) );  
+
+  b.Stop();
   
   robot.GetActionList().Update();
   robot.GetActionList().Update();
@@ -526,8 +544,10 @@ TEST(BehaviorInterface, StopActingWithoutCallback)
   Json::Value empty;
 
   TestBehavior b(robot, empty);
+
+  BaseStationTimer::getInstance()->UpdateTime( 0 );
   
-  b.Init(0.0f);
+  b.Init();
 
   DoTicks(robot, b, 3);
 
@@ -590,11 +610,11 @@ public:
 
   bool _stopAction = false;
   
-  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const {
+  virtual bool IsRunnable(const Robot& robot) const {
     return true;
   }
 
-  virtual Result InitInternal(Robot& robot, double currentTime_sec) {
+  virtual Result InitInternal(Robot& robot) {
     _inited = true;
     WaitForLambdaAction* action = new WaitForLambdaAction(robot, [this](Robot& r){ return _stopAction; });
     StartActing(action);
@@ -602,15 +622,15 @@ public:
     return RESULT_OK;
   }
   
-  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) {
+  virtual Status UpdateInternal(Robot& robot) {
     _numUpdates++;
     return Status::Running;
   }
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) {
+  virtual Result InterruptInternal(Robot& robot) {
     _interrupted = true;
     return RESULT_OK;
   }
-  virtual void   StopInternal(Robot& robot, double currentTime_sec) {
+  virtual void   StopInternal(Robot& robot) {
     _stopped = true;
   }
 
@@ -625,8 +645,7 @@ TEST(BehaviorInterface, StartActingInsideInit)
 
   TestInitBehavior b(robot, empty);
 
-  
-  b.Init(0.0f);
+  b.Init();
 
   EXPECT_FALSE(robot.GetActionList().IsEmpty()) << "action should be started by Init";
 

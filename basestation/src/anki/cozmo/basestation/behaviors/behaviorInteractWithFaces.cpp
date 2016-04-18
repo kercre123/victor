@@ -72,8 +72,10 @@ namespace Cozmo {
     }
   }
   
-  Result BehaviorInteractWithFaces::InitInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorInteractWithFaces::InitInternal(Robot& robot)
   {
+    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
     _currentState = State::Inactive;
     
     // Make sure we've done this at least once in case StopTracking gets called somehow
@@ -148,8 +150,10 @@ namespace Cozmo {
 #   endif
   }
   
-  bool BehaviorInteractWithFaces::IsRunnable(const Robot& robot, double currentTime_sec) const
+  bool BehaviorInteractWithFaces::IsRunnable(const Robot& robot) const
   {
+    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    
     bool isRunnable = false;
     for(auto & faceData : _interestingFacesData) {
       if(currentTime_sec > faceData.second._coolDownUntil_sec) {
@@ -161,10 +165,12 @@ namespace Cozmo {
     return isRunnable;
   }
   
-  void BehaviorInteractWithFaces::StartTracking(Robot& robot, const FaceID_t faceID, double currentTime_sec)
+  void BehaviorInteractWithFaces::StartTracking(Robot& robot, const FaceID_t faceID)
   {
     PRINT_NAMED_INFO("BehaviorInteractWithFaces.StartTracking", "FaceID = %d", faceID);
     
+    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
     const Face* face = robot.GetFaceWorld().GetFace(faceID);
     if(nullptr == face) {
       PRINT_NAMED_ERROR("BehaviorInteractWithFaces.StartTracking.NullFace",
@@ -182,7 +188,7 @@ namespace Cozmo {
     }
     
     if (_newFaceAnimCooldownTime == 0.0)
-    {
+    {      
       _newFaceAnimCooldownTime = currentTime_sec;
     }
     
@@ -271,7 +277,7 @@ namespace Cozmo {
     return candidateList[index];
   }
   
-  bool BehaviorInteractWithFaces::TrackNextFace(Robot& robot, FaceID_t currentFace, double currentTime_sec)
+  bool BehaviorInteractWithFaces::TrackNextFace(Robot& robot, FaceID_t currentFace)
   {
     // We are switching away from tracking this face entirely, stop accumulating
     // total tracking time
@@ -296,15 +302,16 @@ namespace Cozmo {
       
       PRINT_NAMED_INFO("BehaviorInteractWithFaces.TrackNextFace",
                        "CurrentFace = %d, NextFace = %d", currentFace, nextFace);
-      StartTracking(robot, nextFace, currentTime_sec);
+      StartTracking(robot, nextFace);
       return true;
     }
   } // TrackNextFace()
   
   
-  void BehaviorInteractWithFaces::SwitchToDifferentFace(Robot& robot, FaceID_t currentFace,
-                                                        double currentTime_sec)
+  void BehaviorInteractWithFaces::SwitchToDifferentFace(Robot& robot, FaceID_t currentFace)
   {
+    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
     if(_interestingFacesOrder.size() > 1)
     {
       // Update cumulative tracking time for the current face before we switch
@@ -323,7 +330,7 @@ namespace Cozmo {
                            dataIter->second._cumulativeTrackingTime_sec, kFaceInterestingDuration_sec);
           
           dataIter->second._coolDownUntil_sec = currentTime_sec + kFaceCooldownDuration_sec;
-          TrackNextFace(robot, currentFace, currentTime_sec);
+          TrackNextFace(robot, currentFace);
           return;
         }
       }
@@ -331,7 +338,7 @@ namespace Cozmo {
       FaceID_t nextFace = GetRandIdHelper();
       PRINT_NAMED_INFO("BehaviorInteractWithFaces.SwitchToDifferentFace",
                        "CurrentFace = %d, NextFace = %d", currentFace, nextFace);
-      StartTracking(robot, nextFace, currentTime_sec);
+      StartTracking(robot, nextFace);
     } else {
       PRINT_NAMED_WARNING("BehaviorInteractWithFaces.SwitchToDifferentFace.NoMoreFaces",
                           "Face %d is the only one in the tracking list", currentFace);
@@ -339,10 +346,12 @@ namespace Cozmo {
   } // SwitchToDifferentFace()
   
   
-  IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot, double currentTime_sec)
+  IBehavior::Status BehaviorInteractWithFaces::UpdateInternal(Robot& robot)
   {
     Status status = Status::Running;
-    
+
+    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
     // If we're still finishing an action, just wait
     if(_isActing) {
       return status;
@@ -409,7 +418,7 @@ namespace Cozmo {
         
         // Try to start tracking next face in the list. This will put us in TrackinFace
         // state if it succeeds
-        if(false == TrackNextFace(robot, _trackedFaceID, currentTime_sec)) {
+        if(false == TrackNextFace(robot, _trackedFaceID)) {
           PRINT_NAMED_INFO("BehaviorInteractWithFaces.UpdateInternal.NoMoreFaces",
                            "Ran out of interesting faces. Stopping.");
           status = IBehavior::Status::Complete;
@@ -433,7 +442,7 @@ namespace Cozmo {
           // a different face.
           if(watchingFaceDuration >= _currentMultiFaceInterestingDuration_sec)
           {
-            SwitchToDifferentFace(robot, faceID, currentTime_sec);
+            SwitchToDifferentFace(robot, faceID);
             
             PRINT_NAMED_INFO("BehaviorInteractWithFaces.Update.SwitchFaces",
                              "WatchingFaceDuration %.2f >= InterestingDuration %.2f.",
@@ -556,14 +565,14 @@ namespace Cozmo {
     _isActing = true;
   }
   
-  Result BehaviorInteractWithFaces::InterruptInternal(Robot& robot, double currentTime_sec)
+  Result BehaviorInteractWithFaces::InterruptInternal(Robot& robot)
   {
     _currentState = State::Interrupted;
     
     return RESULT_OK;
   }
   
-  void BehaviorInteractWithFaces::StopInternal(Robot& robot, double currentTime_sec)
+  void BehaviorInteractWithFaces::StopInternal(Robot& robot)
   {
     //robot.GetMoveComponent().DisableTrackToFace();
     StopTracking(robot);
@@ -938,7 +947,7 @@ namespace Cozmo {
           robot.GetMoodManager().TriggerEmotionEvent("LostFace", MoodManager::GetCurrentTimeInSeconds());          
         }
         
-        TrackNextFace(robot, lastFaceID, event.GetCurrentTime());
+        TrackNextFace(robot, lastFaceID);
       }
     }
   } // HandleRobotCompletedAction()

@@ -2,16 +2,19 @@
 #ifndef FIXTURE_H
 #define FIXTURE_H
 
-#define FIXTURE_CHARGER_TEST  2    // ID 4, ID 1
-#define FIXTURE_CUBE_TEST     3    // ID 4
-#define FIXTURE_HEAD_TEST     5    // ID 2
-#define FIXTURE_BODY_TEST     6    // ID 1
-#define FIXTURE_NONE          7    // No ID resistors
+#define FIXTURE_CUBE3_TEST    7     // ID 3 + 2 + 1
+#define FIXTURE_CUBE2_TEST    6     // ID 3 + 2
+#define FIXTURE_CUBE1_TEST    5     // ID 3 + 1
+#define FIXTURE_CHARGER_TEST  4     // ID 3
+#define FIXTURE_HEAD_TEST     2     // ID 2
+#define FIXTURE_BODY_TEST     1     // ID 1
+#define FIXTURE_NONE          0     // No ID resistors
   
-#define FIXTURE_DEBUG         8
+#define FIXTURE_DEBUG         16
 
 typedef unsigned char FixtureType;
-#define FIXTURE_TYPES { "?", "?", "CHARGE", "CUBE", "?", "HEAD", "BODY", "NO ID", "DEBUG" }
+#define FIXTURE_TYPES { "NO ID", "BODY", "HEAD", "?", "CHARGE", "CUBE 1", "CUBE 2", "CUBE 3", \
+                        "?", "?", "?", "?",  "?", "?", "?", "?", "DEBUG" }
 
 extern char g_lotCode[15];
 extern u32 g_time;

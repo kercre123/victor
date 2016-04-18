@@ -348,15 +348,19 @@ namespace Cozmo {
     if(_isCamCalibSet) {
       ASSERT_NAMED(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
       if(!_visionSystem->IsInitialized()) {
-        _visionSystem->Init(_camCalib);
-        
-        // Wait for initialization to complete (i.e. Matlab to start up, if needed)
-        while(!_visionSystem->IsInitialized()) {
-          std::this_thread::sleep_for(std::chrono::microseconds(500));
-        }
-        
-        if(_runMode == RunMode::Asynchronous) {
-          Start();
+
+        Result initResult = _visionSystem->Init(_camCalib);
+        if (initResult == RESULT_OK) {
+          // Wait for initialization to complete (i.e. Matlab to start up, if needed)
+          while(!_visionSystem->IsInitialized()) {
+            std::this_thread::sleep_for(std::chrono::microseconds(500));
+          }
+          
+          if(_runMode == RunMode::Asynchronous) {
+            Start();
+          }
+        } else {
+          PRINT_NAMED_WARNING("VisionComponent.SetNextImage.VisionSystemInitFailed", "Result: %d", initResult);
         }
       }
 

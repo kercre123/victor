@@ -42,20 +42,20 @@ public:
 
   virtual ~BehaviorLookAround() override;
   
-  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
+  virtual bool IsRunnable(const Robot& robot) const override;
 
   void SetLookAroundHeadAngle(float angle_rads) { _lookAroundHeadAngle_rads = angle_rads; }
   
 protected:
   
-  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
-  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
-  virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
+  virtual Result InitInternal(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
+  virtual Result InterruptInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
 
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
 
-  virtual float EvaluateRunningScoreInternal(const Robot& robot, double currentTime_sec) const override;
+  virtual float EvaluateRunningScoreInternal(const Robot& robot) const override;
 
 private:
   enum class State {
@@ -117,7 +117,7 @@ private:
   Pose3d _lastPossibleObjectPose;
   
   Pose3d GetDestinationPose(Destination destination);
-  void ResetBehavior(Robot& robot, float currentTime_sec);
+  void ResetBehavior(Robot& robot);
   Destination GetNextDestination(Destination current);
   void UpdateSafeRegion(const Vec3f& objectPosition);
   void ResetSafeRegion(Robot& robot);

@@ -47,7 +47,7 @@ namespace Cozmo {
 
     virtual ~BehaviorFactoryTest() { }
     
-    virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
+    virtual bool IsRunnable(const Robot& robot) const override;
     
   private:
     
@@ -75,25 +75,23 @@ namespace Cozmo {
     // As long as the cube is upright, it's fine.
     static const std::vector<RotationMatrix3d> _kBlockRotationAmbiguities;
     
-    virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
-    virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
+    virtual Result InitInternal(Robot& robot) override;
+    virtual Status UpdateInternal(Robot& robot) override;
     void EndTest(Robot& robot, FactoryTestResultCode resCode);
    
     // Finish placing current object if there is one, otherwise good to go
-    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
+    virtual Result InterruptInternal(Robot& robot) override;
     
-    virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
+    virtual void   StopInternal(Robot& robot) override;
     
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
 
     
     // Handlers for signals coming from the engine
     Result HandleObservedObject(Robot& robot,
-                                const ExternalInterface::RobotObservedObject& msg,
-                                double currentTime_sec);
+                                const ExternalInterface::RobotObservedObject& msg);
     
-    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg,
-                               double currentTime_sec);
+    Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg);
 
     Result HandleObjectMoved(const Robot& robot,
                              const ObjectMoved &msg);
@@ -102,8 +100,7 @@ namespace Cozmo {
                                    const CameraCalibration &msg);
     
     Result HandleActionCompleted(Robot& robot,
-                                 const ExternalInterface::RobotCompletedAction& msg,
-                                 double currentTime_sec);
+                                 const ExternalInterface::RobotCompletedAction& msg);
 
     
     void InitState(const Robot& robot);

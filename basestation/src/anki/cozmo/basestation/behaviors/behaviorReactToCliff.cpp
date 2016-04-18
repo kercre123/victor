@@ -38,12 +38,12 @@ BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& conf
   });
 }
 
-bool BehaviorReactToCliff::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorReactToCliff::IsRunnable(const Robot& robot) const
 {
   return robot.GetBehaviorManager().GetWhiteboard().IsCliffReactionEnabled();
 }
 
-Result BehaviorReactToCliff::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorReactToCliff::InitInternal(Robot& robot)
 {
   robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
 
@@ -52,13 +52,13 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot, double currentTime_sec)
   return Result::RESULT_OK;
 }
 
-Result BehaviorReactToCliff::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorReactToCliff::InterruptInternal(Robot& robot)
 {
   StopActing();
   return Result::RESULT_OK;
 }
   
-void BehaviorReactToCliff::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorReactToCliff::StopInternal(Robot& robot)
 {
 }
 

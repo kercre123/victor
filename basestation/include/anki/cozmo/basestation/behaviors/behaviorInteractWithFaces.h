@@ -34,14 +34,14 @@ namespace Cozmo {
     
     virtual ~BehaviorInteractWithFaces() override;
     
-    virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
+    virtual bool IsRunnable(const Robot& robot) const override;
     
   protected:
     
-    virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
-    virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override;
-    virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override;
-    virtual void   StopInternal(Robot& robot, double currentTime_sec) override;
+    virtual Result InitInternal(Robot& robot) override;
+    virtual Status UpdateInternal(Robot& robot) override;
+    virtual Result InterruptInternal(Robot& robot) override;
+    virtual void   StopInternal(Robot& robot) override;
 
   private:
     using Face = Vision::TrackedFace;
@@ -60,18 +60,18 @@ namespace Cozmo {
     void PlayAnimation(Robot& robot, const std::string& animName, QueueActionPosition position);
     
     // Sets face tracking ID and queues TrackFaceAction "now".
-    void StartTracking(Robot& robot, FaceID_t faceID, double currentTime_sec);
+    void StartTracking(Robot& robot, FaceID_t faceID);
     
     // Unsets face tracking ID and cancels last action tag. Also sets current state to Inactive.
     void StopTracking(Robot& robot);
     
     // If any interesting faces left, pick the next random one to track and return true.
     // If not, StopTracking, go back to Inactive, and return false.
-    bool TrackNextFace(Robot& robot, FaceID_t currentFace, double currentTime_sec);
+    bool TrackNextFace(Robot& robot, FaceID_t currentFace);
     
     // Like TrackNextFace, but does not remove current face from list. Just switches
     // to a different face in the list. If the list only has one face in it, does nothing.
-    void SwitchToDifferentFace(Robot& robot, FaceID_t currentFace, double currentTime_sec);
+    void SwitchToDifferentFace(Robot& robot, FaceID_t currentFace);
   
     FaceID_t GetRandIdHelper();
     
