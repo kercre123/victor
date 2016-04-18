@@ -226,7 +226,6 @@ void i2spiTask(os_event_t *event)
       uint16_t* buf = (uint16_t*)(desc->buf_ptr);
       while(true)
       {
-        os_put_char('A' + dropWrInd);
         if (dropWrInd == 0) // If we're looking for the next drop, not in the middle of an existing one
         {
           while(dropPhase < DMA_BUF_SIZE/2) // Search for preamble
