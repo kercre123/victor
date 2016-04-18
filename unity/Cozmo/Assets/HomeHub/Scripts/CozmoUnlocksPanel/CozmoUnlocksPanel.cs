@@ -23,6 +23,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   void Start() { 
     LoadTiles();
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleRequestSetUnlockResult;
+
+    // TODO: Get value from inventory or make a new component that works with AnkiTextLabel directly
     _SparksLabel.FormattingArgs = new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount };
     _HexLabel.FormattingArgs = new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces };
   }

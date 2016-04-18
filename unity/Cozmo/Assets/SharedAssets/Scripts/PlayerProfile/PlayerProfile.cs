@@ -10,6 +10,7 @@ public class PlayerProfile {
 
   public List<DataPersistence.TimelineEntryData> Sessions;
 
+  // INGO TODO: Replace with Inventory
   public int GreenPoints;
 
   // TODO: replace with Dictionary<HexType, int>

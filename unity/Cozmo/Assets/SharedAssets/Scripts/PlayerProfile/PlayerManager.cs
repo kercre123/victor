@@ -19,13 +19,19 @@ public class PlayerManager : MonoBehaviour {
   [SerializeField]
   private ChestData _ChestData;
 
-  public delegate void GreenPointsUpdateHandler(int points, int maxPoints);
+  public delegate void GreenPointsUpdateHandler(int points,int maxPoints);
 
-  public delegate void ChestGainedHandler(int treatsGained, int hexGained);
+  public delegate void ChestGainedHandler(int treatsGained,int hexGained);
 
   public GreenPointsUpdateHandler GreenPointsUpdate;
 
   public ChestGainedHandler ChestGained;
+
+  public void Start() {
+    // TODO: Listen for inventory values changing
+    // Check requirements ladder for changes in ladder level
+    // Grant rewards
+  }
 
   public int GetGreenPointsLadderMax() {
     return GetCurrentLadderValue(_ChestData.GreenPointMaxLadder);
@@ -50,6 +56,8 @@ public class PlayerManager : MonoBehaviour {
     int greenPoints = points;
     int currentLadderMax = GetCurrentLadderValue(_ChestData.GreenPointMaxLadder);
     while (greenPoints >= currentLadderMax) {
+      
+      // TODO: Grant rewards generically
       int treatsGained = GetCurrentLadderValue(_ChestData.TreatRewardLadder);
       int hexGained = GetCurrentLadderValue(_ChestData.HexRewardLadder);
 

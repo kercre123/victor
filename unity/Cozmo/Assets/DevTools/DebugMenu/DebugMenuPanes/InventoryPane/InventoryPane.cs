@@ -25,6 +25,10 @@ public class InventoryPane : MonoBehaviour {
     _GreenPoints.onValueChanged.AddListener(GreenPointsChanged);
     _GreenLadderLevel.onValueChanged.AddListener(GreenLadderLevelChanged);
     _Treats.onValueChanged.AddListener(TreatsChanged);
+
+
+    // TODO: Add generic input field and int field for adding / removing / setting items
+    // Plus short-cut buttons for treats and green points (+100, -100)
   }
 
   private void GreenPointsChanged(string newValue) {

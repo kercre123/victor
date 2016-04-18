@@ -79,6 +79,7 @@ namespace Cozmo.HomeHub {
       _PlayTabButton.Initialize(HandlePlayTabButton, "switch_to_play_tab_button", DASEventViewName);
       _ProfileTabButton.Initialize(HandleProfileTabButton, "switch_to_profile_tab_button", DASEventViewName);
 
+      // TODO: Listen for inventory changing instead
       PlayerManager.Instance.GreenPointsUpdate += HandleGreenPointsGained;
       PlayerManager.Instance.ChestGained += HandleChestGained;
       UpdateGreenBar(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints, PlayerManager.Instance.GetGreenPointsLadderMax());
