@@ -157,6 +157,14 @@ namespace Anki {
 
       protected override void Start() {
         base.Start();
+      }
+
+      public void Initialize(UnityAction clickCallback, string dasEventButtonName, string dasEventViewController) {
+        if (clickCallback != null) {
+          onClick.AddListener(clickCallback);
+        }
+        _DASEventButtonName = dasEventButtonName;
+        _DASEventViewController = dasEventViewController;
 
         if (string.IsNullOrEmpty(_DASEventButtonName)) {
           DAS.Error(this, string.Format("gameObject={0} is missing a DASButtonName! Falling back to gameObject name.", 

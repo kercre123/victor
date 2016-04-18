@@ -39,35 +39,38 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     _Available = UnlockablesManager.Instance.GetAvailableAndLockedExplicit();
     _Unavailable = UnlockablesManager.Instance.GetUnavailableExplicit();
 
+    string tileName;
+    string viewControllerName = "home_hub_cozmo_unlock_panel";
     for (int i = 0; i < _Unlocked.Count; ++i) {
       GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
       tileInstance.transform.SetParent(_UnlocksContainer, false);
       tileInstance.name = _Unlocked[i].Id.Value.ToString();
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventButtonName = tileInstance.name;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventViewController = "cozmo_unlock_panel";
-      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileInstance.name + "\n(unlocked)";
+      tileName = tileInstance.name + "\n(unlocked)";
+      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileName;
       int unlockIndex = i;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().onClick.AddListener(() => HandleTappedUnlocked(_Unlocked[unlockIndex]));
+      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().Initialize(() => HandleTappedUnlocked(_Unlocked[unlockIndex]),
+        tileName, viewControllerName);
     }
 
     for (int i = 0; i < _Available.Count; ++i) {
       GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
       tileInstance.transform.SetParent(_UnlocksContainer, false);
       tileInstance.name = _Available[i].Id.Value.ToString();
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventButtonName = tileInstance.name;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventViewController = "cozmo_unlock_panel";
-      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileInstance.name + "\n(available)";
+      tileName = tileInstance.name + "\n(available)";
+      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileName;
       int unlockIndex = i;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().onClick.AddListener(() => HandleTappedAvailable(_Available[unlockIndex]));
+      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().Initialize(() => HandleTappedAvailable(_Available[unlockIndex]),
+        tileName, viewControllerName);
     }
 
     for (int i = 0; i < _Unavailable.Count; ++i) {
       GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
       tileInstance.transform.SetParent(_UnlocksContainer, false);
       tileInstance.name = _Unavailable[i].Id.Value.ToString();
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventButtonName = tileInstance.name;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventViewController = "cozmo_unlock_panel";
-      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileInstance.name + "\n(locked)";
+      tileName = tileInstance.name + "\n(locked)";
+      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileName;
+      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().Initialize(null,
+        tileName, viewControllerName);
     }
   }
 

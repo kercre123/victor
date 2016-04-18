@@ -343,7 +343,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: daa075ad0ae694f99810197cf8beeddc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: StartView
+  _DASEventViewName: start_view
   _DASEventViewType: 0
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
@@ -568,7 +568,7 @@ Prefab:
     m_Modifications:
     - target: {fileID: 0}
       propertyPath: _DASEventViewName
-      value: StartView
+      value: start_view
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

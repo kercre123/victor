@@ -26,17 +26,13 @@ namespace Cozmo {
         set { _ContinueButton.DASEventViewController = value; }
       }
 
-      private void Awake() {
-        _ContinueButton.DASEventButtonName = "continue_button";
-        _ContinueButton.onClick.AddListener(HandleContinueButtonClicked);
-      }
-
       private void OnDestroy() {
         _ContinueButton.onClick.RemoveListener(HandleContinueButtonClicked);
       }
 
       public void Initialize(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
-                             string buttonText, string shelfText, Color shelfColor) {
+                             string buttonText, string shelfText, Color shelfColor, string dasButtonName, string dasViewControllerName) {
+        _ContinueButton.Initialize(HandleContinueButtonClicked, dasButtonName, dasViewControllerName);
         _ContinueButton.Text = buttonText;
         _OnClickCallback = buttonClickHandler;
         SetShelfText(shelfText, shelfColor);
