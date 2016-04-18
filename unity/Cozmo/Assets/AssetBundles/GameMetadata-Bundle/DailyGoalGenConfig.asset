@@ -11,5 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 501db6e24a333411dac425a102a7f395, type: 3}
   m_Name: DailyGoalGenConfig
   m_EditorClassIdentifier: 
+  DailyGoalFileName: DailyGoalGeneration.json
   MaxGoals: 3
   MinGoals: 1

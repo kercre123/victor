@@ -35,6 +35,8 @@ public class DailyGoalManager : MonoBehaviour {
 
   #region FriendshipProgression and DailyGoals
 
+
+
   // Config file for friendship progression and daily goal generation
   [SerializeField]
   private DailyGoalGenerationConfig _DailyGoalGenConfig;
@@ -135,11 +137,18 @@ public class DailyGoalManager : MonoBehaviour {
     Instance = this;
     RobotEngineManager.Instance.OnRequestGameStart += HandleAskForMinigame;
     RobotEngineManager.Instance.OnDenyGameStart += HandleExternalRejection;
+    LoadDailyGoalData();
   }
 
   private void OnDestroy() {
     RobotEngineManager.Instance.OnRequestGameStart -= HandleAskForMinigame;
     RobotEngineManager.Instance.OnDenyGameStart -= HandleExternalRejection;
+  }
+
+  private void LoadDailyGoalData() {
+    //string toLoad = _DailyGoalGenConfig.DailyGoalFileName;
+    //_DailyGoalList = new List<DailyGoal>();
+    // TODO : Deserialize here, add each to the DailyGoalList
   }
 
   public List<DailyGoal> GenerateDailyGoals() {
