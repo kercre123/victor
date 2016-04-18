@@ -630,8 +630,8 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>.\hal\bootloader.s</PathWithFileName>
-      <FilenameWithoutPath>bootloader.s</FilenameWithoutPath>
+      <PathWithFileName>.\hal\bootbin.s</PathWithFileName>
+      <FilenameWithoutPath>bootbin.s</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>
