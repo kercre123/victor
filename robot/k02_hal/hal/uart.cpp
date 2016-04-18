@@ -7,6 +7,7 @@
 #include "spi.h"
 #include "uart.h"
 #include "spine.h"
+#include "watchdog.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -106,15 +107,7 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
       UART0_BDH = 0;
       UART0_BDL = UART_BDL_SBR(BAUD_SBR(spine_baud_rate));
       UART0_C4 = UART_C4_BRFA(BAUD_BRFA(spine_baud_rate));
-#ifdef XXX_UNBRICK_BADBAUD
-      static u8 slow = 0;
-      if (slow)
-      {
-        UART0_BDL = UART_BDL_SBR(BAUD_SBR(350000));
-        UART0_C4 = UART_C4_BRFA(BAUD_BRFA(350000));
-      }
-      slow = !slow;
-#endif
+
     
       UART0_C1 = 0; // 8 bit, 1 bit stop no parity (single wire)
       UART0_S2 |= UART_S2_RXINV_MASK;
@@ -143,6 +136,7 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
         if (txRxIndex >= sizeof(GlobalDataToHead)) {
           // We received a full packet
           memcpy(&g_dataToHead, txRxBuffer, sizeof(GlobalDataToHead));
+          Watchdog::kick(WDOG_SPINE_COMMS);
           HeadDataReceived = true;
           
           transmit_mode(TRANSMIT_SEND);

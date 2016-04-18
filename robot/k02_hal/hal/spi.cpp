@@ -15,6 +15,7 @@
 #include "oled.h"
 #include "i2c.h"
 #include "wifi.h"
+#include "watchdog.h"
 
 typedef uint16_t transmissionWord;
 const int RX_OVERFLOW = 8;  // Adjust this to fix screen - possibly at expense of camera
@@ -49,6 +50,7 @@ static bool ProcessDrop(void) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
     DropToRTIP* drop = (DropToRTIP*)target;
+    Watchdog::kick(WDOG_WIFI_COMMS);
     
     // Buffer the data that needs to be fed into the devices for next cycle
     audioUpdated = drop->droplet & audioDataValid;

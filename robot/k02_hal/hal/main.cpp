@@ -56,6 +56,7 @@ namespace Anki
         UART::Transmit();
         IMU::Manage();
         Watchdog::kick(WDOG_HAL_EXEC);
+        Watchdog::pet();
       }
     }
   }
@@ -83,7 +84,7 @@ int main (void)
 
   Power::enableEspressif();
 
-  //Watchdog::init();
+  Watchdog::init();
   UART::DebugInit();
   SPI::Init();
   DAC::Init();
