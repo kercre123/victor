@@ -87,8 +87,6 @@ static uint16_t messageBufferWind;
 static uint16_t messageBufferRind;
 /// The last state we've received from the RTIP bootloader regarding it's state
 static int16_t rtipBootloaderState;
-/// The last state we've received from the RTIP updating the Body bootloader state
-static uint32_t bodyBootloaderCode;
 /// The number of bytes we estimate are in the RTIP's CLAD rx queue
 static int16_t rtipRXQueueEstimate;
 
@@ -123,17 +121,7 @@ void processDrop(DropToWiFi* drop)
 {
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
   if (rxJpegLen > 0) imageSenderQueueData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
-  if (unlikely(drop->droplet & bootloaderStatus && drop->payloadLen == sizeof(bodyBootloaderCode)))
-  {
-    //static unsigned int prevValue;
-    os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, drop->payloadLen);
-    /*if (bodyBootloaderCode != prevValue)
-    {
-      os_printf("BS: %08x\r\n", bodyBootloaderCode);
-      prevValue = bodyBootloaderCode;
-    }*/
-  }
-  else if (drop->payloadLen > 0)
+  if (drop->payloadLen > 0)
   {
     AcceptRTIPMessage(drop->payload + rxJpegLen, drop->payloadLen);
   }
@@ -471,7 +459,6 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   messageBufferWind     = 0;
   messageBufferRind     = 0;
   rtipBootloaderState   = STATE_UNKNOWN;
-  bodyBootloaderCode    = STATE_UNKNOWN;
   rtipRXQueueEstimate   = 0;
 
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
@@ -691,12 +678,6 @@ int16_t ICACHE_FLASH_ATTR i2spiGetRtipBootloaderState(void)
 {
   if (outgoingPhase > PHASE_FLAGS) return STATE_RUNNING; 
   else return rtipBootloaderState;
-}
-
-uint32_t ICACHE_FLASH_ATTR i2spiGetBodyBootloaderCode(void)
-{
-  if (outgoingPhase < PHASE_FLAGS) return STATE_UNKNOWN;
-  else return bodyBootloaderCode;
 }
 
 bool ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)

@@ -11,17 +11,17 @@
 // This powers up the camera, OLED, and ESP8266 while respecting power sequencing rules
 void Anki::Cozmo::HAL::Power::init()
 { 
-	// Clear any I/Os that are default driven in K02
-	// PTA0-3 are taken care of (SWD and POWER pins)
-	// PTA18 and 19 are driven by default
-	GPIO_IN(PTA, (1<<18) | (1<<19));
-	SOURCE_SETUP(PTA, 18, SourceGPIO);
-	SOURCE_SETUP(PTA, 19, SourceGPIO);
+  // Clear any I/Os that are default driven in K02
+  // PTA0-3 are taken care of (SWD and POWER pins)
+  // PTA18 and 19 are driven by default
+  GPIO_IN(PTA, (1<<18) | (1<<19));
+  SOURCE_SETUP(PTA, 18, SourceGPIO);
+  SOURCE_SETUP(PTA, 19, SourceGPIO);
 
-	// Drive CAM_PWDN once analog power comes on
-	GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-	GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
-	SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
+  // Drive CAM_PWDN once analog power comes on
+  GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
+  GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
+  SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
 }
 
 void Anki::Cozmo::HAL::Power::enableEspressif(void)
@@ -53,7 +53,6 @@ void Anki::Cozmo::HAL::Power::enableEspressif(void)
     while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;
   }
 }
-
 
 void Anki::Cozmo::HAL::Power::disableEspressif(void)
 {

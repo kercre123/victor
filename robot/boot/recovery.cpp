@@ -207,6 +207,8 @@ void EnterRecovery() {
   bool remove_boot_ok = SendBodyCommand(COMMAND_BOOT_READY);
   bool boot_ok = recovery_force && CheckBootReady() && remove_boot_ok;
 
+  boot_ok = false;
+  
   // If the body says it's safe, feel free to exit
   if (boot_ok && SendBodyCommand(COMMAND_DONE)) {
     return ;
