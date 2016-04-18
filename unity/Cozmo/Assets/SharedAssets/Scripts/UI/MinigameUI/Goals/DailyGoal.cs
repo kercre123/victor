@@ -9,13 +9,22 @@ namespace Cozmo {
     [System.Serializable]
     public class DailyGoal {
       
-      public GameEvent GameEvent;
+      public GameEvent GoalEvent;
       public LocalizedString Title;
       public LocalizedString Description;
       public Sprite GoalIcon;
       public int Progress;
       public int Target;
       public int PointsRewarded;
+
+      private bool _Completed;
+
+      public bool GoalComplete {
+        get {
+          return (Progress >= Target);
+        }
+      }
+
       // TODO: Add some Action or Event (Probably into DailyGoalManager) that fires "OnDailyGoalComplete" Event and passes in itself when target is met
       // TODO: Replace PointsRewarded with a more generalized "Reward" class. Potentially replace
       // with an Action instead to match QuestEngine.
@@ -26,20 +35,22 @@ namespace Cozmo {
 
       // Action that fires when this Daily Goal is updated, passes through the DailyGoal itself so listeners can handle it.
       public Action<DailyGoal> OnDailyGoalUpdated;
+      public Action<DailyGoal> OnDailyGoalCompleted;
 
-      // TODO: Set up Constructor to properly work?
-      public DailyGoal() {
+      public DailyGoal(GameEvent gEvent, LocalizedString title, LocalizedString desc, Sprite icon, int reward, int target, int currProg = 0) {
+        GoalEvent = gEvent;
+        Title = title;
+        Description = desc;
+        GoalIcon = icon;
+        PointsRewarded = reward;
+        Target = target;
+        Progress = currProg;
+        _Completed = GoalComplete;
         GameEventManager.Instance.OnGameEvent += ProgressGoal;
       }
 
-      public bool GoalComplete {
-        get {
-          return (Progress >= Target);
-        }
-      }
-
       private void ProgressGoal(GameEvent gEvent) {
-        if (gEvent != GameEvent) {
+        if (gEvent != GoalEvent) {
           return;
         }
         // TODO: Check Availability Conditions
@@ -50,11 +61,14 @@ namespace Cozmo {
         Progress++;
         DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
         // Check if Completed
-        if (Progress >= Target) {
+        if (GoalComplete && _Completed) {
           // Grant Reward
           // TODO: Use a more generic Reward Action
           DAS.Event(this, string.Format("{0} Completed", Title));
           PlayerManager.Instance.AddGreenPoints(PointsRewarded);
+          if (OnDailyGoalCompleted != null) {
+            OnDailyGoalCompleted.Invoke(this);
+          }
         }
         if (OnDailyGoalUpdated != null) {
           OnDailyGoalUpdated.Invoke(this);

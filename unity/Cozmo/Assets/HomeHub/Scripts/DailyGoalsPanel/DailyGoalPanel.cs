@@ -10,7 +10,9 @@ using System;
 using Anki.Cozmo;
 using DataPersistence;
 
-// Panel for generating and displaying the ProgressionStat goals for the Day.
+/// <summary>
+/// Daily goal panel. Displays list of tasks and progress for the day.
+/// </summary>
 public class DailyGoalPanel : MonoBehaviour {
 
   private readonly List<GoalCell> _GoalCells = new List<GoalCell>();
@@ -50,9 +52,6 @@ public class DailyGoalPanel : MonoBehaviour {
 
   private bool _Expanded = true;
 
-  private GoalCell[] _GoalCellsByStat;
-  private readonly List<Sequence> _RewardTweens = new List<Sequence>();
-
   [SerializeField]
   private DailySummaryPanel _DailySummaryPrefab;
   private DailySummaryPanel _DailySummaryInstance;
@@ -60,7 +59,6 @@ public class DailyGoalPanel : MonoBehaviour {
   void Awake() {
     _RectTransform = GetComponent<RectTransform>();
     _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
-    _GoalCellsByStat = new GoalCell[(int)ProgressionStatType.Count];
   }
 
   void Start() {
@@ -72,14 +70,6 @@ public class DailyGoalPanel : MonoBehaviour {
       _GoalCells[i].OnProgChanged -= RefreshProgress;
     }
     _GoalCells.Clear();
-
-    if (_RewardTweens != null) {
-      StopCoroutine(DelayedAnimateRewards(null));
-      foreach (var tween in _RewardTweens) {
-        tween.Kill();
-      }
-      _RewardTweens.Clear();
-    }
   }
 
   public void UpdateDailySession(Transform[] rewardIcons = null) {
@@ -158,36 +148,6 @@ public class DailyGoalPanel : MonoBehaviour {
     DailyGoalManager.Instance.SetMinigameNeed();
   }
 
-  // TODO: Kill this. Create DailyGoals based on DailyGoalList. Do we even want reward Icons?
-  /*
-  public void SetDailyGoals(StatContainer progress, StatContainer goals, Transform[] rewardIcons = null) {
-    for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
-      var targetStat = (ProgressionStatType)i;
-      if (goals[targetStat] > 0) {
-        CreateGoalCell(targetStat, progress[targetStat], goals[targetStat]);
-      }
-    }
-    float dailyProg = DailyGoalManager.Instance.CalculateDailyGoalProgress(progress, goals);
-    float bonusMult = DailyGoalManager.Instance.CalculateBonusMult(progress, goals);
-    _TotalProgressBar.SetProgress(dailyProg);
-    _BonusBarPanel.SetFriendshipBonus(bonusMult);
-
-    DailyGoalManager.Instance.SetMinigameNeed();
-
-    if (rewardIcons != null) {
-      bool anyExists = false; 
-      foreach (var reward in rewardIcons) {
-        if (reward != null) {
-          anyExists = true;
-          break;
-        }
-      }
-      if (anyExists) {
-        StartCoroutine(DelayedAnimateRewards(rewardIcons));
-      }
-    }
-  }*/
-
   // TODO: Flesh this out if necessary, do we want to salvage the rewardIcons?
   public void SetDailyGoals(List<DailyGoal> dailyGoals) {
     for (int i = 0; i < dailyGoals.Count; i++) {
@@ -245,37 +205,4 @@ public class DailyGoalPanel : MonoBehaviour {
     _TitleGlow.localScale = _Title.localScale = Vector3.one * _TitleScaleCurve.Evaluate(rect.width);
   }
 
-  private IEnumerator DelayedAnimateRewards(Transform[] rewardIconsByStat) {
-    // Wait so that the goal cells can lay out
-    yield return new WaitForSeconds(0.1f);
-
-    // TODO: For each reward, tween it to the target goal
-    _RewardTweens.Clear();
-
-    for (int stat = 0; stat < (int)ProgressionStatType.Count; stat++) {
-      if (rewardIconsByStat[stat] != null) {
-        if (_GoalCellsByStat[stat] != null) {
-          CreateSequenceForRewardIcon(rewardIconsByStat[stat], _GoalCellsByStat[stat].transform);
-        }
-        else {
-          DAS.Error(this, string.Format("Could not find GoalCell for stat {0} when tweening Rewards!", 
-            (ProgressionStatType)stat));
-        }
-      }
-    }
-    if (rewardIconsByStat.Length > 0) {
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.RelationshipGain);
-    }
-  }
-
-  private void CreateSequenceForRewardIcon(Transform target, Transform goalCell) {
-    var rewardTweenSequence = DOTween.Sequence();
-    var rewardIconTween = target.DOMove(goalCell.position, 1.5f)
-      .SetDelay(_RewardTweens.Count * 0.1f).SetEase(Ease.InCubic).OnComplete(() => {
-      Destroy(target.gameObject);
-    });
-    rewardTweenSequence.Join(rewardIconTween);
-    rewardTweenSequence.Play();
-    _RewardTweens.Add(rewardTweenSequence);
-  }
 }

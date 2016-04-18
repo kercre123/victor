@@ -6,8 +6,6 @@ namespace DataPersistence {
   public class TimelineEntryData {
     public Date Date;
 
-    // TODO: Replace StatContainers with lists of Current DailyGoals
-    // Use this
     public List<DailyGoal> DailyGoals;
     // TODO: Replace Progress with getter that returns collective progress of DailyGoals list
     public float GetTotalProgress() {
@@ -48,17 +46,12 @@ namespace DataPersistence {
 
     public DateTime EndTime;
 
-    public readonly StatContainer AvailableStats;
-
-    public readonly StatContainer RecievedStats;
-
     public string ChallengeId;
 
     public bool Won;
 
     public CompletedChallengeData() {
-      AvailableStats = new StatContainer();
-      RecievedStats = new StatContainer();
+      // TODO: Include Count of how often Rewarded events triggered?
     }
   }
 }

@@ -6,10 +6,9 @@ using System.Collections.Generic;
 using Cozmo.UI;
 using Anki.Cozmo;
 
-// TODO: Scrap most of this bullshit. Move HomeHub related stuff into DailyGoalPanel.
-// Remove ALL MENTIONS of StatContainer. BURN IT ALL DOWN.
-// Set everything to take in DailyGoalConfig file (json created by editor tool) instead
-// also do everything in terms of the DailyGoal.cs class.
+/// <summary>
+/// Daily goal manager. Loads in DailyGoal information and manages 
+/// </summary>
 public class DailyGoalManager : MonoBehaviour {
 
   public Dictionary<GameEvent,DailyGoal> _DailyGoals = new Dictionary<GameEvent,DailyGoal>();
@@ -41,7 +40,6 @@ public class DailyGoalManager : MonoBehaviour {
   public FriendshipProgressionConfig GetFriendshipProgressConfig() {
     return _FriendshipProgConfig;
   }
-
 
   public float GetTodayProgress() {
     if (DataPersistenceManager.Instance.CurrentSession != null) {
@@ -144,21 +142,9 @@ public class DailyGoalManager : MonoBehaviour {
 
   public List<DailyGoal> GenerateDailyGoals() {
     List<DailyGoal> newGoals = new List<DailyGoal>();
-    newGoals.Add(new DailyGoal());
+    // TODO: Properly Generate Daily Goals based on information loaded from tool.
     SendDasEventsForGoalGeneration(newGoals);
     return newGoals;
-  }
-
-  private void SendDasEventsForGoalGeneration(StatContainer goals) {
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
-      Anki.Cozmo.ProgressionStatType index = (Anki.Cozmo.ProgressionStatType)i;
-      if (goals[index] > 0) {
-        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today),
-          new Dictionary<string,string> {
-            { "$data", DASUtil.FormatStatAmount(index, goals[index]) }
-          });
-      }
-    }
   }
 
   private void SendDasEventsForGoalGeneration(List<DailyGoal> goals) {
@@ -238,52 +224,6 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   #region Calculate Friendship Points and DailyGoal Progress
-
-  // Returns the % progression towards your daily goals
-  // Range from 0-1. Does not take overflow into account.
-  public float CalculateDailyGoalProgress(StatContainer progress, StatContainer goal) {
-    int totalProgress = 0, totalGoal = 0;
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
-      var stat = (Anki.Cozmo.ProgressionStatType)i;
-      totalProgress += Mathf.Min(progress[stat], goal[stat]);
-      totalGoal += goal[stat];
-    }
-    return ((float)totalProgress / (float)totalGoal);
-  }
-
-  // Calculates friendship points earned for the day based on stats earned and Bonus Mult
-  public int CalculateFriendshipPoints(StatContainer progress, StatContainer goal) {
-    int totalProgress = 0;
-    float mult = CalculateBonusMult(progress, goal);
-    if (mult < 1.0f) {
-      mult = 1.0f;
-    }
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
-      var stat = (Anki.Cozmo.ProgressionStatType)i;
-      totalProgress += progress[stat];
-    }
-    return (totalProgress * Mathf.CeilToInt(mult));
-  }
-
-  // Calculates the current Bonus Multiplier for calculating friendship points
-  public float CalculateBonusMult(StatContainer progress, StatContainer goal) {
-    int totalProgress = 0, totalGoal = 0;
-    float bonusMult = 0.0f;
-    if (AreAllDailyGoalsComplete()) {
-      for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
-        var stat = (Anki.Cozmo.ProgressionStatType)i;
-        totalProgress += progress[stat];
-        totalGoal += goal[stat];
-      }
-      bonusMult = ((float)totalProgress / (float)totalGoal);
-      // Register x2 mult including at exactly 100%
-      if (bonusMult == 1.0f) {
-        bonusMult += 0.001f;
-      }
-    }
-
-    return bonusMult;
-  }
 
   public bool AreAllDailyGoalsComplete() {
     return GetTodayProgress() >= 1.0f;

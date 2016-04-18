@@ -167,15 +167,15 @@ namespace Cozmo.HomeHub {
       _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
     }
 
-    private void HandleMiniGameLose(StatContainer rewards, Transform[] rewardIcons) {
-      HandleMiniGameCompleted(rewards, rewardIcons, didWin: false);
+    private void HandleMiniGameLose(Transform[] rewardIcons) {
+      HandleMiniGameCompleted(rewardIcons, didWin: false);
     }
 
-    private void HandleMiniGameWin(StatContainer rewards, Transform[] rewardIcons) {
-      HandleMiniGameCompleted(rewards, rewardIcons, didWin: true);
+    private void HandleMiniGameWin(Transform[] rewardIcons) {
+      HandleMiniGameCompleted(rewardIcons, didWin: true);
     }
 
-    private void HandleMiniGameCompleted(StatContainer rewards, Transform[] rewardIcons, bool didWin) {
+    private void HandleMiniGameCompleted(Transform[] rewardIcons, bool didWin) {
       // If we are in a challenge that needs to be completed, complete it
       if (_CurrentChallengePlaying != null) {
         CompleteChallenge(_CurrentChallengePlaying, didWin);

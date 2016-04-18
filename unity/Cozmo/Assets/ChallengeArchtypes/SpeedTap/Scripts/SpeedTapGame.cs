@@ -413,10 +413,6 @@ namespace SpeedTap {
       }
     }
 
-    protected override int CalculateExcitementStatRewards() {
-      return 1 + _CloseRoundCount * 2;
-    }
-
     public void ShowPlayerTapConfirmSlide() {
       SharedMinigameView.ShowWideGameStateSlide(_PlayerTapSlidePrefab, "PlayerTapConfirmSlide");
     }

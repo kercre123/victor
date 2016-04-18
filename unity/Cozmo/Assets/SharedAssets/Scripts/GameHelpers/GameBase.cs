@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -55,8 +55,6 @@ public abstract class GameBase : MonoBehaviour {
 
 
   protected StateMachine _StateMachine = new StateMachine();
-
-  private StatContainer _RewardedXp;
 
   private float _GameStartTime;
 
@@ -195,54 +193,6 @@ public abstract class GameBase : MonoBehaviour {
 
   // end Clean Up
 
-  #region Calculate Stats
-
-  protected virtual int CalculateTimeStatRewards() {
-    return Mathf.CeilToInt((Time.time - _GameStartTime) / 30.0f);
-  }
-
-  protected virtual int CalculateNoveltyStatRewards() {
-    const int maxPoints = 5;
-
-    // sessions are in chronological order, completed challenges are as well.
-    // using Reversed gets them in reverse chronological order
-    var completedChallenges = 
-      DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions
-          .Reversed().SelectMany(x => x.CompletedChallenges.Reversed());
-
-    int noveltyPoints = 0;
-    bool found = false;
-    foreach (var challenge in completedChallenges) {
-      if (challenge.ChallengeId == this._ChallengeData.ChallengeID || noveltyPoints == maxPoints) {
-        found = true;
-        break;
-      }
-      noveltyPoints++;
-    }
-    return found ? noveltyPoints : maxPoints;
-  }
-
-  // should be override for each mini game that wants to grant excitement rewards.
-  protected virtual int CalculateExcitementStatRewards() {
-    return 0;
-  }
-
-  private int ComputeXpForStat(Anki.Cozmo.ProgressionStatType statType) {
-    switch (statType) {
-    case Anki.Cozmo.ProgressionStatType.Time:
-      return CalculateTimeStatRewards();
-    case Anki.Cozmo.ProgressionStatType.Novelty:
-      return CalculateNoveltyStatRewards();
-    case Anki.Cozmo.ProgressionStatType.Excitement:
-      return CalculateExcitementStatRewards();
-    default: 
-      return 0;
-    }
-  }
-
-  #endregion
-
-  // end Calculate Stats
 
   #region Minigame Exit
 
@@ -305,26 +255,6 @@ public abstract class GameBase : MonoBehaviour {
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
       Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
     
-
-    _RewardedXp = new StatContainer();
-
-    // TODO: Replace this with Adding Rewards and Triggering the appropiate events
-    // Should have nothing to do with fucking StatContainers
-    /*
-    foreach (var statType in StatContainer.sKeys) {
-      // Check that this is a goal xp
-      if (DailyGoalManager.Instance.HasGoalForStat(statType)) {
-        int grantedXp = ComputeXpForStat(statType);
-        if (grantedXp != 0) {
-          _RewardedXp[statType] = grantedXp;
-          _ChallengeEndViewInstance.AddReward(statType, grantedXp);
-
-          // TODO: Move granting to after animation?
-          // Grant right away even if there are animations in the daily goal ui
-          CurrentRobot.AddToProgressionStat(statType, grantedXp);
-        }
-      }
-    }*/
   }
 
   private void HandleChallengeResultViewClosed() {
@@ -340,17 +270,16 @@ public abstract class GameBase : MonoBehaviour {
     if (_WonChallenge) {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerWon);
       if (OnMiniGameWin != null) {
-        OnMiniGameWin(_RewardedXp, rewardIconObjects);
+        OnMiniGameWin(rewardIconObjects);
       } 
     }
     else {
       DAS.Event(DASConstants.Game.kEndWithRank, DASConstants.Game.kRankPlayerLose);
       if (OnMiniGameLose != null) {
-        OnMiniGameLose(_RewardedXp, rewardIconObjects);
+        OnMiniGameLose(rewardIconObjects);
       }
     }
 
-    SendEventForRewards(_RewardedXp);
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameEnd);
 
     // Close minigame UI
@@ -548,17 +477,6 @@ public abstract class GameBase : MonoBehaviour {
 
   private string GetGameTimeElapsedAsStr() {
     return string.Format("{0}", Time.time - _GameStartTime);
-  }
-
-  private void SendEventForRewards(StatContainer rewards) {
-    int rewardAmount;
-    foreach (var statType in StatContainer.sKeys) {
-      if (rewards.TryGetValue(statType, out rewardAmount)) {
-        DAS.Event(
-          string.Format(DASConstants.Game.kEndPointsEarned, statType.ToString().ToLower()), 
-          DASUtil.FormatStatAmount(statType, rewardAmount));
-      }
-    }
   }
 
   #endregion
