@@ -291,7 +291,7 @@ namespace Anki
         {
           AnkiError( 158, "Camera", 441, "Exposure %d is not equal to expected exposure 125", 1, exposureLv0);
         }
-        return 125; // TODO need to figure this out more accurately / dynamically
+        return exposureLv0; // TODO need to figure this out more accurately / dynamically
       }
     }
   }

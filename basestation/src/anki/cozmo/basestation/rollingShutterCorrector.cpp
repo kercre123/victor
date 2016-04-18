@@ -60,7 +60,7 @@ namespace Anki {
       
       for(int i=1;i<=_rsNumDivisions;i++)
       {
-        Vec3f pixelShifts;
+        Vec2f pixelShifts;
         ComputePixelShiftsWithImageIMU((TimeStamp_t)(poseData.timeStamp - (i*timeDif)),
                                        pixelShifts,
                                        poseData,
@@ -79,12 +79,12 @@ namespace Anki {
       
       for(int i=1;i<=_rsNumDivisions;i++)
       {
-        Vec3f pixelShifts = _pixelShifts[i-1];
+        Vec2f pixelShifts = _pixelShifts[i-1];
         
         for(int y = numRows - (i*1.0/_rsNumDivisions * numRows); y < (int)(numRows - ((i-1)*1.0/_rsNumDivisions * numRows)); y++)
         {
-          const unsigned char* row = imgOrig.get_CvMat_().ptr<unsigned char>(y);
-          unsigned char* shiftRow = img.get_CvMat_().ptr<unsigned char>(y);
+          const unsigned char* row = imgOrig.GetRow(y);
+          unsigned char* shiftRow = img.GetRow(y);
           for(int x=0;x<img.GetNumCols();x++)
           {
             int xIdx = x - pixelShifts.x();
@@ -102,8 +102,8 @@ namespace Anki {
       return img;
     }
     
-    bool RollingShutterCorrector::ComputePixelShiftsWithImageIMU(TimeStamp_t t,
-                                                                 Vec3f& shift,
+    void RollingShutterCorrector::ComputePixelShiftsWithImageIMU(TimeStamp_t t,
+                                                                 Vec2f& shift,
                                                                  const VisionPoseData& poseData,
                                                                  const VisionPoseData& prevPoseData,
                                                                  f32 frac)
@@ -127,7 +127,9 @@ namespace Anki {
                                 "No ImageIMU data before timestamp %i have data from time %i:%i", t,
                                 poseData.imuDataHistory.front().timestamp,
                                 poseData.imuDataHistory.back().timestamp);
-            return false;
+            
+            shift = Vec2f(0, 0);
+            return;
           }
           else
           {
@@ -152,11 +154,8 @@ namespace Anki {
       }
       
       // The rates are in world coordinate frame but we want them in camera frame which is why Z and X are switched
-      shift = Vec3f(rateZ * rateToPixelProportionalityConst * frac,
-                    rateY * rateToPixelProportionalityConst * frac,
-                    rateX * rateToPixelProportionalityConst * frac);
-
-      return true;
+      shift = Vec2f(rateZ * rateToPixelProportionalityConst * frac,
+                    rateY * rateToPixelProportionalityConst * frac);
     }
   }
 }

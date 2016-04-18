@@ -72,22 +72,22 @@ namespace Anki {
       // Shifts the image by the calculated pixel shifts
       Vision::Image WarpImage(const Vision::Image& img);
       
-      // Calculates pixel shifts based on gyro rates from ImageIMUData messages
-      // Returns false if unable to calculate shifts due to not having relevant gyro data
-      bool ComputePixelShiftsWithImageIMU(TimeStamp_t t,
-                                          Vec3f& shift,
-                                          const VisionPoseData& poseData,
-                                          const VisionPoseData& prevPoseData,
-                                          f32 frac);
-      
-      std::vector<Vec3f> GetPixelShifts() const { return _pixelShifts; }
+      std::vector<Vec2f> GetPixelShifts() const { return _pixelShifts; }
       int GetNumDivisions() const { return _rsNumDivisions; }
       
       static constexpr f32 timeBetweenFrames_ms = 65.0;
       
     private:
+      // Calculates pixel shifts based on gyro rates from ImageIMUData messages
+      // Returns false if unable to calculate shifts due to not having relevant gyro data
+      void ComputePixelShiftsWithImageIMU(TimeStamp_t t,
+                                          Vec2f& shift,
+                                          const VisionPoseData& poseData,
+                                          const VisionPoseData& prevPoseData,
+                                          f32 frac);
+    
       // Vector of vectors of varying pixel shift amounts based on gyro rates and vertical position in the image
-      std::vector<Vec3f> _pixelShifts;
+      std::vector<Vec2f> _pixelShifts;
       
       // The number of rows to divide the image into and calculate warps for
       static const int _rsNumDivisions = 120;
