@@ -217,6 +217,7 @@ void EnterRecovery() {
   // We know that booting the espressif will take awhile, so we should
   // just tell the body to pause until that finishes
   UART::writeByte(COMMAND_PAUSE);
+  Power::enableEspressif();
   SPI::init();
   UART::writeByte(COMMAND_RESUME);
 
