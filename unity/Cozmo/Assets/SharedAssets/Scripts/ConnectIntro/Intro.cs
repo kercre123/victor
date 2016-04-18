@@ -76,7 +76,6 @@ public class Intro : MonoBehaviour {
     Input.gyro.enabled = true;
     Input.compass.enabled = true;
     Input.multiTouchEnabled = true;
-    Input.location.Start();
   }
 
   private void OnDestroy() {

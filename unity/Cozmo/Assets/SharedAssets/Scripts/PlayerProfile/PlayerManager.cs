@@ -72,6 +72,7 @@ public class PlayerManager : MonoBehaviour {
     if (GreenPointsUpdate != null) {
       GreenPointsUpdate(greenPoints, GetCurrentLadderValue(_ChestData.GreenPointMaxLadder));
     }
+    DataPersistenceManager.Instance.Save();
   }
 
   public void AddGreenPoints(int points) {

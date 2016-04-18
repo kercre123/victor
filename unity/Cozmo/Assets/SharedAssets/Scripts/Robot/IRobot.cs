@@ -77,6 +77,10 @@ public interface IRobot : IDisposable {
 
   ILight[] BackpackLights { get; }
 
+  bool IsSparked { get; }
+
+  Anki.Cozmo.UnlockId SparkUnlockId { get; }
+
   ObservedObject TargetLockedObject { get; set; }
 
   int CarryingObjectID { get; }
@@ -140,6 +144,10 @@ public interface IRobot : IDisposable {
   void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY);
 
   void SetEnableCliffSensor(bool enabled);
+
+  void EnableSparkUnlock(Anki.Cozmo.UnlockId id);
+
+  void StopSparkUnlock();
 
   void SetEnableAllBehaviors(bool enabled);
 

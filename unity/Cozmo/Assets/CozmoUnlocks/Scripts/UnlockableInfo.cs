@@ -26,6 +26,10 @@ public class UnlockableInfo : ScriptableObject {
   // unlocked by default if the robot profile is new.
   public bool DefaultUnlock;
 
+  public string DescriptionKey;
+
+  public string TitleKey;
+
   public int TreatCost;
 
   [Serializable]
