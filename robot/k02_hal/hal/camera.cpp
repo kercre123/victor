@@ -9,6 +9,8 @@
 #include "hal/spi.h"
 #include "hal/uart.h"
 
+#include "anki/cozmo/robot/logging.h"
+
 #include "anki/cozmo/robot/drop.h"
 extern DropToWiFi* spi_write_buff;  // To save RAM, we write directly into spi_write_buff
 
@@ -283,7 +285,13 @@ namespace Anki
       
       u16 CameraGetExposureDelay()
       {
-        return 500; // TODO need to figure this out more accurately / dynamically
+        // Exposure level 0 as defined in gc0329.h
+        u16 exposureLv0 = (CAM_SCRIPT[493] << 8) | CAM_SCRIPT[495];
+        if(exposureLv0 != 125)
+        {
+          AnkiError( 158, "Camera", 441, "Exposure %d is not equal to expected exposure 125", 1, exposureLv0);
+        }
+        return 125; // TODO need to figure this out more accurately / dynamically
       }
     }
   }

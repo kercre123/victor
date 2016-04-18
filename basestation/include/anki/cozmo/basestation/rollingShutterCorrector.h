@@ -42,11 +42,11 @@ namespace Anki {
       
         struct ImuData
         {
-          u32 imageId;
-          float rateX;
-          float rateY;
-          float rateZ;
-          u8 line2Number;
+          u32 imageId = 0;
+          float rateX = 0;
+          float rateY = 0;
+          float rateZ = 0;
+          u8 line2Number = 0;
           TimeStamp_t timestamp = 0;
         };
       
@@ -63,43 +63,37 @@ namespace Anki {
     class RollingShutterCorrector
     {
     public:
-      RollingShutterCorrector(Vision::Camera& camera);
+      RollingShutterCorrector() { };
     
-      // Calculates the warp matricies to account for rolling shutter
-      void ComputeWarps(const VisionPoseData& poseData,
-                        const VisionPoseData& prevPoseData);
+      // Calculates the amount of pixel shift to account for rolling shutter
+      void ComputePixelShifts(const VisionPoseData& poseData,
+                              const VisionPoseData& prevPoseData);
       
+      // Shifts the image by the calculated pixel shifts
       Vision::Image WarpImage(const Vision::Image& img);
       
-      // Saves the historical camera rotations for each of the subdivided rows in the image we will be correction
-      std::vector<RotationMatrix3d> PrecomputeHistoricalCameraRotations(Robot& robot, TimeStamp_t timestamp) const;
+      // Calculates pixel shifts based on gyro rates from ImageIMUData messages
+      // Returns false if unable to calculate shifts due to not having relevant gyro data
+      bool ComputePixelShiftsWithImageIMU(TimeStamp_t t,
+                                          Vec3f& shift,
+                                          const VisionPoseData& poseData,
+                                          const VisionPoseData& prevPoseData,
+                                          f32 frac);
       
-      // Calculates our rotation at time t using gyro rates from ImageIMUData messages
-      // Returns false if unable to calculate rotation
-      bool ComputeCameraRotationWithImageIMU(TimeStamp_t t,
-                                             RotationMatrix3d& r,
-                                             const VisionPoseData& poseData,
-                                             const VisionPoseData& prevPoseData);
-      
-      std::vector<Matrix_3x3f> GetRollingShutterWarps() const { return _rollingShutterWarps; }
+      std::vector<Vec3f> GetPixelShifts() const { return _pixelShifts; }
       int GetNumDivisions() const { return _rsNumDivisions; }
       
       static constexpr f32 timeBetweenFrames_ms = 65.0;
       
-      // We believe, due to camera exposure changes, the image timestamps need to be adjusted by this amount
-      // Without the offset, imu data recorded during a frame did not match the movement seen in the frame
-      static const int imageTimestampOffset_ms = 55;
-      
     private:
+      // Vector of vectors of varying pixel shift amounts based on gyro rates and vertical position in the image
+      std::vector<Vec3f> _pixelShifts;
+      
       // The number of rows to divide the image into and calculate warps for
-      static const int _rsNumDivisions = 10;
+      static const int _rsNumDivisions = 120;
       
-      // Vector of warping matricies to correct for rolling shutter
-      // The first matrix corresponds to the warp for the top row of the image
-      std::vector<Matrix_3x3f> _rollingShutterWarps;
-      
-      Vision::Camera& _camera;
-      
+      // Proportionality constant that relates gyro rates to pixel shift
+      static constexpr f32 rateToPixelProportionalityConst = 22.0;
       
     };
   } // namespace Cozmo

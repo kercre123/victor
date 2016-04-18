@@ -81,7 +81,6 @@ namespace Cozmo {
     GroundPlaneROI        groundPlaneROI;
     bool                  isMoving;
     ImuDataHistory        imuDataHistory;
-    std::vector<RotationMatrix3d> historicCameraRots;
   };
 
   class VisionSystem : public Vision::Profiler
