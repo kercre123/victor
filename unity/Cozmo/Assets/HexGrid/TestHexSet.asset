@@ -11,6 +11,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8bf39f69f798c49e8b31975489eba962, type: 3}
   m_Name: TestHexSet
   m_EditorClassIdentifier: 
-  HexList:
+  CoordsList:
   - X: 0
     Y: 0
