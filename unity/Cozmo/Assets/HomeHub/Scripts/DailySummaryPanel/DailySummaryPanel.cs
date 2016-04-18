@@ -55,7 +55,7 @@ public class DailySummaryPanel : BaseView {
 
   // Config file for friendship progression
   [SerializeField]
-  private FriendshipProgressionConfig _Config;
+  private DailyGoalGenerationConfig _Config;
 
   protected override void CleanUp() {
 

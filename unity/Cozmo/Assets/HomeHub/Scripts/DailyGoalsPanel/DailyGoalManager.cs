@@ -11,7 +11,9 @@ using Anki.Cozmo;
 /// </summary>
 public class DailyGoalManager : MonoBehaviour {
 
-  public Dictionary<GameEvent,DailyGoal> _DailyGoals = new Dictionary<GameEvent,DailyGoal>();
+  // TODO: Load from JSON and set up this list. Reference this list to generate
+  // Daily Goals.
+  private List<DailyGoal> _DailyGoalList;
 
   #region constants
 
@@ -35,10 +37,10 @@ public class DailyGoalManager : MonoBehaviour {
 
   // Config file for friendship progression and daily goal generation
   [SerializeField]
-  private FriendshipProgressionConfig _FriendshipProgConfig;
+  private DailyGoalGenerationConfig _DailyGoalGenConfig;
 
-  public FriendshipProgressionConfig GetFriendshipProgressConfig() {
-    return _FriendshipProgConfig;
+  public DailyGoalGenerationConfig GetDailyGoalGenConfig() {
+    return _DailyGoalGenConfig;
   }
 
   public float GetTodayProgress() {
@@ -143,6 +145,7 @@ public class DailyGoalManager : MonoBehaviour {
   public List<DailyGoal> GenerateDailyGoals() {
     List<DailyGoal> newGoals = new List<DailyGoal>();
     // TODO: Properly Generate Daily Goals based on information loaded from tool.
+
     SendDasEventsForGoalGeneration(newGoals);
     return newGoals;
   }

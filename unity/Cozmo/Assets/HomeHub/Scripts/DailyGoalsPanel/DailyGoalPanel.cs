@@ -59,6 +59,8 @@ public class DailyGoalPanel : MonoBehaviour {
   void Awake() {
     _RectTransform = GetComponent<RectTransform>();
     _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
+    //TODO: Refactor BonusBarPanel based on new design or remove entirely
+    _BonusBarPanel.gameObject.SetActive(false);
   }
 
   void Start() {
