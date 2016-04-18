@@ -89,6 +89,10 @@ namespace Anki {
       // Vector of vectors of varying pixel shift amounts based on gyro rates and vertical position in the image
       std::vector<Vec2f> _pixelShifts;
       
+      // Whether or not to do vertical rolling shutter correction
+      // TODO: Do we want to be doing vertical correction?
+      bool doVerticalCorrection = false;
+      
       // The number of rows to divide the image into and calculate warps for
       static const int _rsNumDivisions = 120;
       

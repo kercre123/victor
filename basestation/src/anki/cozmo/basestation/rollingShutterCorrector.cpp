@@ -111,7 +111,6 @@ namespace Anki {
       std::deque<ImuDataHistory::ImuData>::const_iterator ImuBeforeT;
       std::deque<ImuDataHistory::ImuData>::const_iterator ImuAfterT;
       
-      float rateX = 0;
       float rateY = 0;
       float rateZ = 0;
       
@@ -138,7 +137,6 @@ namespace Anki {
             beforeAfterSet = true;
           }
           
-          rateX = (((t - ImuBeforeT->timestamp)*(ImuAfterT->rateX - ImuBeforeT->rateX)) / (ImuAfterT->timestamp - ImuBeforeT->timestamp)) + ImuBeforeT->rateX;
           rateY = (((t - ImuBeforeT->timestamp)*(ImuAfterT->rateY - ImuBeforeT->rateY)) / (ImuAfterT->timestamp - ImuBeforeT->timestamp)) + ImuBeforeT->rateY;
           rateZ = (((t - ImuBeforeT->timestamp)*(ImuAfterT->rateZ - ImuBeforeT->rateZ)) / (ImuAfterT->timestamp - ImuBeforeT->timestamp)) + ImuBeforeT->rateZ;
         }
@@ -148,9 +146,14 @@ namespace Anki {
       // use the latest data
       if(!beforeAfterSet)
       {
-        rateX = poseData.imuDataHistory.back().rateX;
         rateY = poseData.imuDataHistory.back().rateY;
         rateZ = poseData.imuDataHistory.back().rateZ;
+      }
+      
+      // If we aren't doing vertical correction than setting rateY to zero will ensure no Y shift
+      if(!doVerticalCorrection)
+      {
+        rateY = 0;
       }
       
       // The rates are in world coordinate frame but we want them in camera frame which is why Z and X are switched
