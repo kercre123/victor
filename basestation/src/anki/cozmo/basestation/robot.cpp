@@ -221,6 +221,10 @@ namespace Anki {
       }
       _behaviorMgr.Init(behaviorConfig);
       
+      
+      // TEMP DO NOT COMMIT
+      _behaviorMgr.GetWhiteboard().AddBeacon( _pose );
+      
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(_context->GetRobotMsgHandler(), robotID);
 

@@ -40,10 +40,6 @@ BehaviorExploreVisitPossibleMarker::BehaviorExploreVisitPossibleMarker(Robot& ro
 : IBehavior(robot, config)
 {
   SetDefaultName("BehaviorExploreVisitPossibleMarker");
-
-  SubscribeToTags({
-    EngineToGameTag::RobotCompletedAction
-  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

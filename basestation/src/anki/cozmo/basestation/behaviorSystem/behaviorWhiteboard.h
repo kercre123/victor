@@ -27,6 +27,22 @@ namespace Cozmo {
 class Robot;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Beacon
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// info for beacons (beacons is a concept for exploration, it's a 'base/headquarters' to put cubes for localization)
+class Beacon {
+public:
+  Beacon( const Pose3d& p ) : _pose(p) {}
+  const Pose3d& GetPose() const { return _pose;}
+  
+  // returns true if given position is within this beacon
+  bool IsLocWithinBeacon(const Vec3f& loc) const;
+  
+private:
+  Pose3d _pose;
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // BehaviorWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BehaviorWhiteboard
@@ -37,12 +53,15 @@ public:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  // info for every marker that is a possible cube but we don't trust (based on distance or how quickly we saw it)
   struct PossibleMarker {
     PossibleMarker( const Pose3d& p, ObjectType objType ) : pose(p), type(objType) {}
     Pose3d pose;
     ObjectType type;
   };
   using PossibleMarkerList = std::list<PossibleMarker>;
+  
+  using BeaconList = std::vector<Beacon>;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization/destruction
@@ -63,6 +82,10 @@ public:
   
   // list of possible markers
   const PossibleMarkerList& GetPossibleMarkers() const { return _possibleMarkers; }
+
+  // beacons
+  void AddBeacon( const Pose3d& beaconPos );
+  const BeaconList& GetBeacons() const { return _beacons; }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Tracked values
@@ -95,6 +118,8 @@ private:
   
   // update render of possible markers since they may have changed
   void UpdatePossibleMarkerRender();
+  // update render of beacons
+  void UpdateBeaconRender();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -108,11 +133,12 @@ private:
   
   std::multiset<void*> _disableCliffIds;  
  
-  
   // list of markers we have not checked out yet. Using list because we make assume possible markers of same type
   // can be found at different locations
-  std::list<PossibleMarker> _possibleMarkers;
+  PossibleMarkerList _possibleMarkers;
   
+  // container of beacons currently defined (high level AI concept)
+  BeaconList _beacons;
 };
   
 

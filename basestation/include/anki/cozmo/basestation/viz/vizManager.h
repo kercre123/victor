@@ -315,6 +315,11 @@ namespace Anki {
       void DrawQuadVector(const std::string& identifier, const SimpleQuadVector& quads);
       void EraseQuadVector(const std::string& identifier);
       
+      // circle as segments
+      template <typename T>
+      void DrawXYCircleAsSegments(const std::string& identifier, const Point<3, T>& center, const T radius, const ColorRGBA& color,
+        bool clearPrevious, u32 numSegments=8);
+      
       // non-axis aligned quads as 4 segments
       template <typename T>
       void DrawQuadAsSegments(const std::string& identifier, const Quadrilateral<2, T>& quad, T z, const ColorRGBA& color, bool clearPrevious);
@@ -606,6 +611,43 @@ namespace Anki {
          clearPrevious
         })
       );
+    }
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    template <typename T>
+    void VizManager::DrawXYCircleAsSegments(const std::string& identifier, const Point<3, T>& center, const T radius,
+                                const ColorRGBA& color, bool clearPrevious, u32 numSegments)
+    {
+      // Note we create the polygon clockwise intentionally
+      T anglePerSegment = static_cast<T>(-2) * static_cast<T>(PI) / static_cast<T>(numSegments);
+      
+      // Use the tangential and radial factors to draw the segments without recalculating every time.
+      // Algorithm found here: http://slabode.exofire.net/circle_draw.shtml
+      T tangentialFactor = std::tan(anglePerSegment);
+      T radialFactor = std::cos(anglePerSegment);
+      
+      // Start at angle 0
+      T newX = radius;
+      T newY = 0;
+
+      for (u32 i=0; i<numSegments; ++i)
+      {
+        T prevX = newX;
+        T prevY = newY;
+        
+        T tx = -newY;
+        T ty = newX;
+        
+        newX += tx * tangentialFactor;
+        newY += ty * tangentialFactor;
+        
+        newX *= radialFactor;
+        newY *= radialFactor;
+        
+        Point<3,T> prevPoint(prevX + center.x(), prevY + center.y(), center.z());
+        Point<3,T> newPoint(newX + center.x(), newY + center.y(), center.z());
+        DrawSegment(identifier, prevPoint, newPoint, color, (i==0)&&(clearPrevious));
+      }
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
