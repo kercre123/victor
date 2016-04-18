@@ -5,6 +5,10 @@ using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
+[Serializable]
+public class SerializableGameEvents : SerializableEnum<Anki.Cozmo.GameEvent> {
+
+}
 
 public class GameEventManager {
   

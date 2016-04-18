@@ -7,7 +7,12 @@ public abstract class MinigameConfigBase : ScriptableObject {
 
   public abstract int NumPlayersRequired();
 
-  public GameSkillConfig _skillConfig;
+  public GameSkillConfig SkillConfig {
+    get { return _SkillConfig; }
+  }
+
+  [SerializeField]
+  protected GameSkillConfig _SkillConfig;
 }
 
 

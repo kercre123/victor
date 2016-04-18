@@ -11,6 +11,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a449b0de3bc04d88802548a816083a6, type: 3}
   m_Name: SpeedTapGameChallenge_Config
   m_EditorClassIdentifier: 
+  _SkillConfig:
+    _EvaluateLevelChangeEvent:
+      _EnumValueAsString: OnSpeedtapGetOut
+      _EnumValue: 15
+    _GainChallengePointEvent:
+      _EnumValueAsString: OnSpeedtapHandLose
+      _EnumValue: 10
+    _LoseChallengePointEvent:
+      _EnumValueAsString: OnSpeedtapHandWin
+      _EnumValue: 9
+    _UsePointThreshold: 0
+    _ComparedPointThreshold: 0
+    _Levels: []
   Rounds: 3
   MaxScorePerRound: 5
   MinIdleIntervalMs: 100
