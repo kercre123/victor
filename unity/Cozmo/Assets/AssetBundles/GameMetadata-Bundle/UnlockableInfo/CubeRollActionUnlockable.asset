@@ -17,7 +17,8 @@ MonoBehaviour:
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0
-  CubesRequired: 0
   ExplicitUnlock: 1
   DefaultUnlock: 0
-  TreatCost: 0
+  DescriptionKey: unlockable.CubeRollAction.Description
+  TitleKey: unlockable.CubeRollAction.Title
+  TreatCost: 5

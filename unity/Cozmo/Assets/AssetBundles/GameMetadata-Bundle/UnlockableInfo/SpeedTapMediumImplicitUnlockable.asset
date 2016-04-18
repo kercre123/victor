@@ -13,10 +13,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: SpeedTapMediumImplicit
-    _EnumValue: 8
+    _EnumValue: 9
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
   ExplicitUnlock: 0
   DefaultUnlock: 0
+  DescriptionKey: unlockable.Default.Title
+  TitleKey: unlockable.Default.Title
   TreatCost: 0

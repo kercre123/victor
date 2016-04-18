@@ -9,9 +9,7 @@ public class FirmwarePane : MonoBehaviour {
   private Anki.UI.AnkiButton _UpgradeButton;
 
   void Start() {
-    _UpgradeButton.DASEventButtonName = "debug_upgrade_firmware_button";
-    _UpgradeButton.DASEventViewController = "debug_upgrade_firmware_view";
-    _UpgradeButton.onClick.AddListener(() => RobotEngineManager.Instance.UpdateFirmware(0));
+    _UpgradeButton.Initialize(() => RobotEngineManager.Instance.UpdateFirmware(0), "debug_upgrade_firmware_button", "debug_upgrade_firmware_view");
 
     RobotEngineManager.Instance.OnFirmwareUpdateProgress += OnFirmwareUpdateProgress;
     RobotEngineManager.Instance.OnFirmwareUpdateComplete += OnFirmwareUpdateComplete;

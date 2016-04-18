@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using DataPersistence;
 
 public class CozmoUnlocksPanel : MonoBehaviour {
 
@@ -20,11 +21,19 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   [SerializeField]
   private Anki.UI.AnkiTextLabel _HexLabel;
 
+  [SerializeField]
+  private RequestTricksView _RequestSparkViewPrefab;
+  private RequestTricksView _RequestSparkViewInstance;
+
   void Start() { 
     LoadTiles();
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleRequestSetUnlockResult;
-    _SparksLabel.FormattingArgs = new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount };
-    _HexLabel.FormattingArgs = new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces };
+    UpdateInventoryCounts();
+  }
+
+  public void UpdateInventoryCounts() {
+    _SparksLabel.FormattingArgs = new object[] { DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount };
+    _HexLabel.FormattingArgs = new object[] { DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces };
   }
 
   void OnDestroy() {
@@ -39,35 +48,38 @@ public class CozmoUnlocksPanel : MonoBehaviour {
     _Available = UnlockablesManager.Instance.GetAvailableAndLockedExplicit();
     _Unavailable = UnlockablesManager.Instance.GetUnavailableExplicit();
 
+    string tileName;
+    string viewControllerName = "home_hub_cozmo_unlock_panel";
     for (int i = 0; i < _Unlocked.Count; ++i) {
       GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
       tileInstance.transform.SetParent(_UnlocksContainer, false);
       tileInstance.name = _Unlocked[i].Id.Value.ToString();
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventButtonName = tileInstance.name;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventViewController = "cozmo_unlock_panel";
-      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileInstance.name + "\n(unlocked)";
+      tileName = tileInstance.name + "\n(unlocked)";
+      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileName;
       int unlockIndex = i;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().onClick.AddListener(() => HandleTappedUnlocked(_Unlocked[unlockIndex]));
+      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().Initialize(() => HandleTappedUnlocked(_Unlocked[unlockIndex]),
+        tileName, viewControllerName);
     }
 
     for (int i = 0; i < _Available.Count; ++i) {
       GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
       tileInstance.transform.SetParent(_UnlocksContainer, false);
       tileInstance.name = _Available[i].Id.Value.ToString();
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventButtonName = tileInstance.name;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventViewController = "cozmo_unlock_panel";
-      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileInstance.name + "\n(available)";
+      tileName = tileInstance.name + "\n(available)";
+      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileName;
       int unlockIndex = i;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().onClick.AddListener(() => HandleTappedAvailable(_Available[unlockIndex]));
+      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().Initialize(() => HandleTappedAvailable(_Available[unlockIndex]),
+        tileName, viewControllerName);
     }
 
     for (int i = 0; i < _Unavailable.Count; ++i) {
       GameObject tileInstance = GameObject.Instantiate(_UnlocksTilePrefab);
       tileInstance.transform.SetParent(_UnlocksContainer, false);
       tileInstance.name = _Unavailable[i].Id.Value.ToString();
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventButtonName = tileInstance.name;
-      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().DASEventViewController = "cozmo_unlock_panel";
-      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileInstance.name + "\n(locked)";
+      tileName = tileInstance.name + "\n(locked)";
+      tileInstance.transform.Find("Text").GetComponent<UnityEngine.UI.Text>().text = tileName;
+      tileInstance.GetComponent<Cozmo.UI.CozmoButton>().Initialize(null,
+        tileName, viewControllerName);
     }
   }
 
@@ -80,7 +92,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private void HandleTappedUnlocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped Unlocked: " + unlockInfo.Id);
     if (unlockInfo.UnlockableType == UnlockableType.Action) {
-      // TODO: Send message to engine to trigger unlockable action.
+      _RequestSparkViewInstance = UIManager.OpenView<RequestTricksView>(_RequestSparkViewPrefab, verticalCanvas: true);
+      _RequestSparkViewInstance.Initialize(unlockInfo, this);
     }
     else if (unlockInfo.UnlockableType == UnlockableType.Game) {
       // TODO: run the game that was unlocked.
@@ -89,6 +102,14 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   private void HandleTappedAvailable(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
+    // TODO: This const should be replaced by the actual hex puzzle system when that's done.
+    int unlockCost = 2;
+
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces < unlockCost) {
+      return;
+    }
+    DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces -= unlockCost;
+    UpdateInventoryCounts();
     UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
   }
 

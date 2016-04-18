@@ -150,6 +150,14 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
+  public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
+    
+  }
+
+  public void StopSparkUnlock() {
+    
+  }
+
   public void ClearAllBehaviorScoreOverrides() {
     // Do nothing
   }
@@ -762,6 +770,10 @@ public class MockRobot : IRobot {
       return _BackpackLights;
     }
   }
+
+  public bool IsSparked { get; private set; }
+
+  public Anki.Cozmo.UnlockId SparkUnlockId { get; private set; }
 
   public ObservedObject TargetLockedObject {
     get;

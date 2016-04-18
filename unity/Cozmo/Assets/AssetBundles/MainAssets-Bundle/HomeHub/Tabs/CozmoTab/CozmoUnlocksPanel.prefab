@@ -359,6 +359,8 @@ MonoBehaviour:
   _UnlocksTilePrefab: {fileID: 110330, guid: 8ab911dc7ee844400aacb3da9b5028f6, type: 2}
   _SparksLabel: {fileID: 11455104}
   _HexLabel: {fileID: 11471502}
+  _RequestSparkViewPrefab: {fileID: 11454172, guid: 004aa32e5f8004fffa7f51c3a4061e75,
+    type: 2}
 --- !u!222 &22234858
 CanvasRenderer:
   m_ObjectHideFlags: 1

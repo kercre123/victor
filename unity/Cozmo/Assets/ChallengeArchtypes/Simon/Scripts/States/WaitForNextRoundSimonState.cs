@@ -18,7 +18,7 @@ namespace Simon {
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.BetweenRoundsMusic);
 
       _GameInstance.SharedMinigameView.ShowContinueButtonCentered(HandleContinuePressed,
-        Localization.Get(LocalizationKeys.kButtonContinue));
+        Localization.Get(LocalizationKeys.kButtonContinue), "next_round_of_play_continue_button");
 
       string headerTextKey = (_NextPlayer == PlayerType.Human) ? 
         LocalizationKeys.kSimonGameLabelYourTurn : LocalizationKeys.kSimonGameLabelCozmoTurn;

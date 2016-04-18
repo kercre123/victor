@@ -30,7 +30,8 @@ public class InitialCubesState : State {
     _Game.SharedMinigameView.ShowContinueButtonOnShelf(HandleContinueButtonClicked,
       Localization.Get(LocalizationKeys.kButtonContinue), 
       Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound, 0),
-      Cozmo.UI.UIColorPalette.NeutralTextColor());
+      Cozmo.UI.UIColorPalette.NeutralTextColor(),
+      "cubes_are_ready_continue_button");
     _Game.SharedMinigameView.EnableContinueButton(false);
     _Game.CubeIdsForGame = new List<int>();
     _CubeIdToTimeout = new Dictionary<int, float>();

@@ -56,9 +56,7 @@ public class ChallengeDetailsDialog : BaseView {
       
     _PlayersAndCubesLabel.text = Localization.GetWithArgs(locKey, players, cubes);
     _ChallengeIcon.SetIcon(challengeData.ChallengeIcon);
-    _StartChallengeButton.DASEventButtonName = string.Format("{0}_start_button", challengeData.ChallengeID);
-    _StartChallengeButton.DASEventViewController = DASEventViewName;
-    _StartChallengeButton.onClick.AddListener(HandleStartButtonClicked);
+    _StartChallengeButton.Initialize(HandleStartButtonClicked, string.Format("{0}_start_button", challengeData.ChallengeID), DASEventViewName);
     _ChallengeId = challengeData.ChallengeID;
   }
 
