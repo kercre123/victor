@@ -2,7 +2,7 @@
 using System.Collections;
 
 [System.Serializable]
-public class HexItem {
+public class PuzzlePiece {
   public string InventoryId;
   public HexSet HexSet;
   public Color TileColor;
