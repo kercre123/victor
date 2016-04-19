@@ -59,7 +59,7 @@ static inline Fixed getADCsample(AnalogInput channel, const Fixed scale)
   return calcResult(scale);
 }
 
-void SendPowerStateUpdate(void *userdata)
+static void SendPowerStateUpdate(void *userdata)
 {
   Anki::Cozmo::PowerState msg;
   msg.VBatFixed = vBat;
@@ -190,15 +190,9 @@ void Battery::manage(void* userdata)
 
     case ANALOG_V_EXT_SENSE:
       {
-        uint32_t raw = NRF_ADC->RESULT;
-        static int ground_short = 0;
-
-        if (raw >= 0x30){
+        // Are our power pins shorted?
+        if (NRF_ADC->RESULT >= 0x30){
           RTOS::kick(WDOG_NERVE_PINCH);
-          ground_short = 0;
-        } else if (ground_short++ >= 30) {
-          Battery::powerOff();
-          while(true) ;
         }
 
         vExt = calcResult(VEXT_SCALE);
@@ -209,10 +203,6 @@ void Battery::manage(void* userdata)
       break ;
     case ANALOG_CLIFF_SENSE:
       sampleCliffSensor();
-      break ;
-    default:
-      // Panic because something cause the stack to freak out
-      Battery::powerOff();
       break ;
   }
 }

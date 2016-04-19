@@ -258,7 +258,7 @@ message DebugSetRTTO
 // Display a 
 message DisplayNumber
 {
-  uint_32 value,
+  uint_16 value,
   uint_8  x,
   uint_8  y
 }

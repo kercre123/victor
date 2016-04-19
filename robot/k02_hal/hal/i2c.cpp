@@ -22,7 +22,7 @@ enum I2C_Control {
 };
 
 static const uint8_t UNUSED_SLAVE = 0xFF;
-static const int MAX_QUEUE = 128; // 256 bytes worth of i2c buffer (excessive)
+static const int MAX_QUEUE = 256; // This needs to be fairly large because of pin numbers
 
 static uint8_t _active_slave = UNUSED_SLAVE;
 
@@ -30,7 +30,6 @@ extern "C" void (*I2C0_Proc)(void);
 
 // Queue registers
 static uint16_t i2c_queue[MAX_QUEUE];
-static volatile int _fifo_count;
 static volatile int _fifo_start;
 static volatile int _fifo_end;
 
@@ -49,16 +48,19 @@ static volatile i2c_callback _read_callback = NULL;
 static void Write_Handler(void);
 static void Read_Handler(void);
 
+static inline int inc_pointer(volatile int& pointer) {
+  int temp = pointer++;
+  if (pointer >= MAX_QUEUE) pointer = 0;
+  return temp;
+}
+
 static inline void write_queue(uint8_t mode, uint8_t data = 0) {
-  i2c_queue[_fifo_start++] = (mode << 8) | data;
+  i2c_queue[inc_pointer(_fifo_start)] = (mode << 8) | data;
   if (_fifo_start >= MAX_QUEUE) { _fifo_start = 0; }
-  _fifo_count++;
 }
 
 static inline void read_queue(uint8_t& mode, uint8_t& data) {
-  uint16_t temp = i2c_queue[_fifo_end++];
-  if (_fifo_end >= MAX_QUEUE) { _fifo_end = 0; }
-  _fifo_count--;
+  uint16_t temp = i2c_queue[inc_pointer(_fifo_end)];
   
   mode = temp >> 8;
   data = temp;
@@ -92,7 +94,6 @@ void Anki::Cozmo::HAL::I2C::Init()
   SendEmergencyStop();
   
   // Clear our FIFO
-  _fifo_count = 0;
   _fifo_start = 0;
   _fifo_end = 0;
 
@@ -127,7 +128,7 @@ void Anki::Cozmo::HAL::I2C::Enable(void) {
   _enabled = true;
   NVIC_EnableIRQ(I2C0_IRQn);
   
-  if (!_active && _fifo_count > 0) {
+  if (!_active && _fifo_start != _fifo_end) {
     _active = true;
     I2C0_Proc();
   }
@@ -159,7 +160,7 @@ uint8_t Anki::Cozmo::HAL::I2C::ReadReg(uint8_t slave, uint8_t addr) {
 }
 
 void Anki::Cozmo::HAL::I2C::Flush(void) {
-  while (_active || _fifo_count > 0) {
+  while (_active || _fifo_start != _fifo_end) {
     Enable();
     __asm { WFI }
   }
@@ -201,7 +202,7 @@ static void Enqueue(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags)
     if (_send_reset) {
       write_queue(I2C_CTRL_RST | I2C_CTRL_SEND, slave);
     } else {
-      write_queue(I2C_CTRL_SEND, slave);
+       write_queue(I2C_CTRL_SEND, slave);
     }
   } else if (flags & I2C_OPTIONAL) {
     return ;
@@ -273,7 +274,7 @@ static void Write_Handler(void) {
   
   I2C0_S |= I2C_S_IICIF_MASK;
 
-  if (!_fifo_count) {
+  if (_fifo_start == _fifo_end) {
     _active = false;
     return ;
   }

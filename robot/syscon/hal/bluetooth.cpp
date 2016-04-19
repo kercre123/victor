@@ -97,7 +97,7 @@ void Bluetooth::authChallenge(const Anki::Cozmo::BLE_RecvHello& msg) {
   m_authenticated = true;
 }
 
-static void dh_complete(const void*) {
+static void dh_complete(const void*, int) {
   using namespace Anki::Cozmo;
   
   // Transmit our encryped key
@@ -156,9 +156,9 @@ static bool message_authenticated(uint8_t op) {
   return true;
 }
 
-static void frame_data_received(const void* _ = NULL) {
+static void frame_data_received(const void*, int length) {
   // Attempted to underflow the receive buffer
-  if (rx_buffer.length > rx_buffer.message_size) {
+  if (rx_buffer.length > length) {
     permissions_error(BLE_ERROR_BUFFER_UNDERFLOW);
     return ;
   }
@@ -220,16 +220,16 @@ static void frame_receive(CozmoFrame& receive)
     t.op = CRYPTO_AES_DECODE;
     t.callback = frame_data_received;
     t.state = rx_buffer.raw;
-    t.length = &rx_buffer.message_size;
+    t.length = rx_buffer.message_size;
 
     Crypto::execute(&t);
   } else {
     // Feed unencrypted data through to the engine
-    frame_data_received();
+    frame_data_received(NULL, rx_buffer.message_size);
   }
 }
 
-static void send_welcome_message(const void*) {  
+static void send_welcome_message(const void*, int) {  
   using namespace Anki::Cozmo;
   
   BLE_SendHello msg; 
@@ -280,7 +280,7 @@ static void manage_ble(void*) {
   }
 }
 
-static void start_message_transmission(const void*) {
+static void start_message_transmission(const void*, int) {
   tx_pending = true;
 }
 
@@ -312,7 +312,7 @@ bool Bluetooth::transmit(const uint8_t* data, int length, uint8_t op) {
     tx_buffer.message_size = tx_buffer.length + 2;
     t.callback = start_message_transmission;
     t.state = tx_buffer.raw;
-    t.length = &tx_buffer.message_size;
+    t.length = tx_buffer.message_size;
         
     Crypto::execute(&t);
   } else {
@@ -343,12 +343,11 @@ static void on_ble_event(ble_evt_t * p_ble_evt)
       t.state = &dh_state;
       t.callback = NULL;
       Crypto::execute(&t);
-    
+
       // Generate our welcome nonce
-      static const int nonce_length = sizeof(m_nonce);
       t.op = CRYPTO_GENERATE_RANDOM;
       t.state = &m_nonce;
-      t.length = (int*)&nonce_length;
+      t.length = sizeof(m_nonce);
       t.callback = send_welcome_message;
       Crypto::execute(&t);
 
@@ -538,7 +537,7 @@ uint32_t Bluetooth::init() {
   m_sd_enabled      = true;
 
   task = RTOS::create(manage_ble);
-  
+
   // Enable BLE event interrupt (interrupt priority has already been set by the stack).
   return sd_nvic_EnableIRQ(SWI2_IRQn);
 }

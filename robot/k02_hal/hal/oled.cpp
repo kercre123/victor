@@ -65,26 +65,26 @@ struct ScreenRect {
 
 static const uint8_t StartWrite = I2C_DATA | I2C_CONTINUATION;
 
-static const uint8_t PinFont[][16] = {
-  {0,248,252,204,12,252,248,0,0,31,63,48,51,63,31,0},
-  {0,0,24,252,252,0,0,0,0,0,0,63,63,0,0,0},
-  {0,56,60,140,140,252,248,0,0,62,63,51,49,49,48,0},
-  {0,56,60,140,140,252,120,0,0,28,60,49,49,63,31,0},
-  {0,240,240,128,128,252,252,0,0,1,1,1,1,63,63,0},
-  {0,124,252,204,204,204,140,0,0,28,60,48,48,63,31,0},
-  {0,248,252,204,204,220,152,0,0,31,63,48,48,63,31,0},
-  {0,28,28,12,12,252,252,0,0,0,0,0,0,63,63,0},
-  {0,120,252,204,204,252,120,0,0,31,63,48,48,63,31,0},
-  {0,120,252,204,204,252,248,0,0,24,56,48,48,63,31,0},
-  {0,248,252,204,204,252,248,0,0,63,63,0,0,63,63,0},
-  {0,252,252,204,204,252,184,0,0,63,63,48,48,63,31,0},
-  {0,248,252,12,12,60,56,0,0,31,63,48,48,60,28,0},
-  {0,252,252,12,12,252,248,0,0,63,63,48,48,63,31,0},
-  {0,252,252,204,204,12,12,0,0,63,63,48,48,48,48,0},
-  {0,252,252,204,204,12,12,0,0,63,63,0,0,0,0,0}
+static const uint8_t PinFont[16][17] = {
+  { I2C_DATA | I2C_CONTINUATION,  0,248,252,204, 12,252,248,  0,  0, 31, 63, 48,51, 63, 31,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,  0, 24,252,252,  0,  0,  0,  0,  0,  0, 63,63,  0,  0,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0, 56, 60,140,140,252,248,  0,  0, 62, 63, 51,49, 49, 48,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0, 56, 60,140,140,252,120,  0,  0, 28, 60, 49,49, 63, 31,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,240,240,128,128,252,252,  0,  0,  1,  1,  1, 1, 63, 63,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,124,252,204,204,204,140,  0,  0, 28, 60, 48,48, 63, 31,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,248,252,204,204,220,152,  0,  0, 31, 63, 48,48, 63, 31,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0, 28, 28, 12, 12,252,252,  0,  0,  0,  0,  0, 0, 63, 63,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,120,252,204,204,252,120,  0,  0, 31, 63, 48,48, 63, 31,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,120,252,204,204,252,248,  0,  0, 24, 56, 48,48, 63, 31,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,248,252,204,204,252,248,  0,  0, 63, 63,  0, 0, 63, 63,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,252,252,204,204,252,184,  0,  0, 63, 63, 48,48, 63, 31,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,248,252, 12, 12, 60, 56,  0,  0, 31, 63, 48,48, 60, 28,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,252,252, 12, 12,252,248,  0,  0, 63, 63, 48,48, 63, 31,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,252,252,204,204, 12, 12,  0,  0, 63, 63, 48,48, 48, 48,  0},
+  { I2C_DATA | I2C_CONTINUATION,  0,252,252,204,204, 12, 12,  0,  0, 63, 63,  0, 0,  0,  0,  0}
 };
 
-static bool FaceLock = false;
+static volatile bool FaceLock = false;
 static int FaceRemaining = 0;
 
 void Anki::Cozmo::HAL::OLED::Init(void) {
@@ -146,30 +146,27 @@ void Anki::Cozmo::HAL::OLED::ReleaseFace() {
 }
 
 void Anki::Cozmo::HAL::OLED::DisplayNumber(int code, int x, int y) {
-  static const int TOTAL_DIGITS = 5;	
-  static const int SYMBOL_BITS = 4;
+  #define TOTAL_DIGITS  4
+  #define SYMBOL_BITS   4
 
-  static const int FONT_WIDTH = 8;
-  static const int FONT_HEIGHT = 2;
+  #define FONT_WIDTH    8
+  #define FONT_HEIGHT   2
 
-  // Bind to proper rectangle
-  const uint8_t Rectangle[] = {
-    I2C_COMMAND | I2C_CONTINUATION,
-    COLUMNADDR, x, x + (TOTAL_DIGITS * FONT_WIDTH) - 1,
-    PAGEADDR, y, y + FONT_HEIGHT - 1
-  };
-
+  // Stop all other devices from drawing on the screen
   FaceLock = true;
 
-  // Start writting the font
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)Rectangle, sizeof(Rectangle), I2C_FORCE_START);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), I2C_FORCE_START);
-    
-  for (int o = 0; o < FONT_HEIGHT * FONT_WIDTH; o += FONT_WIDTH) {
-    for (int i = (TOTAL_DIGITS - 1) * SYMBOL_BITS; i >= 0; i -= SYMBOL_BITS) {
-      int character = (code >> i) & 0xF;
-      I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &PinFont[character][o], FONT_WIDTH);
-    }
+  // Start writting the characters
+  for (int c = 0; c < TOTAL_DIGITS; c++, x += FONT_WIDTH) {
+    int ch = (code >> ((TOTAL_DIGITS - c - 1) * 4)) & 0xF;
+      
+    uint8_t rect[] = {
+      I2C_COMMAND | I2C_CONTINUATION,
+      COLUMNADDR, x, x + FONT_WIDTH - 1,
+      PAGEADDR, y, y + FONT_HEIGHT - 1
+    };
+
+    I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), rect, sizeof(rect), I2C_FORCE_START);
+    I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), PinFont[ch], sizeof(PinFont[ch]), I2C_FORCE_START);
   }
 }
 

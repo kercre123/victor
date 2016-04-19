@@ -51,6 +51,8 @@ void Anki::Cozmo::HAL::DAC::Init(void) {
  
   // Start counting
   PDB0_SC |= PDB_SC_SWTRIG_MASK ;       // Trigger the PDB because why not
+
+  Mute();
 }
 
 void Anki::Cozmo::HAL::DAC::EnableAudio(bool enable) {
@@ -85,14 +87,6 @@ void Anki::Cozmo::HAL::DAC::Feed(uint8_t* samples) {
   for (int length = MAX_AUDIO_BYTES_PER_DROP; length > 0; length--) {
     DAC_WRITE[write_pointer] = MuLawDecompress(*(samples++));
     write_pointer = (write_pointer+1) % DAC_WORDS;
-  }
-}
-
-void Anki::Cozmo::HAL::DAC::Tone(void) {
-  EnableAudio(true);
-
-  for (int i = 0; i < DAC_WORDS; i++) {
-    DAC_WRITE[i] = 0x100 + 0xFF * sinf(i * M_PI_2 / 16);
   }
 }
 

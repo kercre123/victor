@@ -89,11 +89,6 @@ int main (void)
   SPI::Init();
   DAC::Init();
 
-  // Boot boop
-  DAC::Tone();
-  MicroWait(10);
-  DAC::Mute();
-
   I2C::Init();
   UART::Init();
   IMU::Init();

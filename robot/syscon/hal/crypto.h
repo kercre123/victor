@@ -38,13 +38,13 @@ struct DiffieHellman {
   big_num_t         state;
 };
 
-typedef void (*crypto_callback)(const void *state);
+typedef void (*crypto_callback)(const void *state, int length);
 
 struct CryptoTask {
   CryptoOperation op;
   crypto_callback callback;
   const void *state;
-  int* length;
+  int length;
 };
 
 namespace Crypto {

@@ -153,18 +153,20 @@ void Crypto::manage(void) {
     return ;
   }
 
+  int length = task->length;
+  
   switch (task->op) {
     case CRYPTO_GENERATE_RANDOM:
-      random((uint8_t*)task->state, *task->length);
+      random((uint8_t*)task->state, task->length);
       break ;
     case CRYPTO_ECB:
       aes_ecb((nrf_ecb_hal_data_t*) task->state);
       break ;
     case CRYPTO_AES_DECODE:
-      *task->length = aes_decode((uint8_t*) task->state, *task->length);
+      length = aes_decode((uint8_t*) task->state, task->length);
       break ;
     case CRYPTO_AES_ENCODE:
-      *task->length = aes_encode((uint8_t*) task->state, *task->length);
+      length = aes_encode((uint8_t*) task->state, task->length);
       break ;
     case CRYPTO_START_DIFFIE_HELLMAN:
       dh_start((DiffieHellman*) task->state);
@@ -175,7 +177,7 @@ void Crypto::manage(void) {
   }
 
   if (task->callback) {
-    task->callback(task->state);
+    task->callback(task->state, length);
   }
 
   // Dequeue message
