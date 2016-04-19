@@ -1,0 +1,60 @@
+﻿using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using Anki.Cozmo;
+using Newtonsoft.Json;
+using Cozmo.UI;
+
+/// <summary>
+/// Full List of Pairs for CladEvents to AnimationGroups.
+/// </summary>
+namespace Anki.Cozmo {
+  public class DailyGoalGenMap {
+
+    // Comparer to properly sort Daily Goal Gen by the GoalEvents
+    public class DailyGoalGenComparer : IComparer<DailyGoalGenData> {
+      public int Compare(DailyGoalGenData x, DailyGoalGenData y) {
+        if (x == null) {
+          if (y == null) {
+            // If both null, equals
+            return 0;
+          }
+          else {
+            // If x null and y isn't, y is greater
+            return -1;
+          }
+        }
+        else {
+          // If y null, x is greater
+          if (y == null) {
+            return 1;
+          }
+          else {
+            // If both aren't null, actually compare CladEvent values
+            return ((int)x.CladEvent).CompareTo((int)y.CladEvent);
+          }
+        }
+      }
+    }
+
+    public List<DailyGoalGenData> GenList = new List<DailyGoalGenData>();
+
+    // TODO: Set up all necessary DailyGoal info, as well as additional info for determining generation
+    [System.Serializable]
+    public class DailyGoalGenData {
+      public DailyGoalGenData(GameEvent cEvent) {
+        CladEvent = cEvent;
+      }
+      // TODO: Preconditions for limiting generation
+      // TODO: Everything to do with the goal, implement
+      public LocalizedString Title;
+      public LocalizedString Description;
+      public Sprite GoalIcon;
+      public int Target;
+      public int PointsRewarded;
+      //
+      public GameEvent CladEvent;
+    }
+  }
+}
+

@@ -45,6 +45,7 @@ public class RewardedActionManager : MonoBehaviour {
     }
   }
 
+  // TODO: Replace config with json
   [SerializeField]
   private GenericRewardsConfig _RewardConfig;
 

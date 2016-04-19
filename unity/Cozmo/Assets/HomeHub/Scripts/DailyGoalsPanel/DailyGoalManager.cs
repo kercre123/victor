@@ -33,8 +33,7 @@ public class DailyGoalManager : MonoBehaviour {
   // The Last Challenge ID Cozmo has requested to play
   private ChallengeData _LastChallengeData;
 
-  #region FriendshipProgression and DailyGoals
-
+  #region DailyGoal Generation
 
 
   // Config file for friendship progression and daily goal generation
