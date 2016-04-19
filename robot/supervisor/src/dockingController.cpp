@@ -396,7 +396,9 @@ namespace Anki {
       // over the marker distance ranging from START_LIFT_TRACKING_DIST_MM to dockOffsetDistX_.
       void HighDockLiftUpdate() {
         // Don't want to move the lift while we are backing up or carrying a block
-        if(failureMode_ != BACKING_UP && !PickAndPlaceController::IsCarryingBlock())
+        if(failureMode_ != BACKING_UP &&
+           !PickAndPlaceController::IsCarryingBlock() &&
+           PickAndPlaceController::GetCurAction() != DA_ALIGN)
         {
           f32 lastCommandedHeight = LiftController::GetDesiredHeight();
           if (lastCommandedHeight == dockingErrSignalMsg_.z_height) {
@@ -604,9 +606,11 @@ namespace Anki {
           mode_ = APPROACH_FOR_DOCK;
         }
 
-
-
+        
         Result retVal = RESULT_OK;
+        
+        // There are some special cases for aligning with a block
+        const bool isAligning = PickAndPlaceController::GetCurAction() == DA_ALIGN;
 
         switch(mode_)
         {
@@ -748,7 +752,8 @@ namespace Anki {
                 if(doHannsManeuver &&
                    failureMode_ != HANNS_MANEUVER &&
                    dockingToBlockOnGround &&
-                   !PickAndPlaceController::IsCarryingBlock())
+                   !PickAndPlaceController::IsCarryingBlock() &&
+                   !isAligning)
                 {
                   SendDockingStatusMessage(STATUS_DOING_HANNS_MANEUVER);
                   AnkiDebug( 5, "DockingController", 425, "Executing Hanns maneuver", 0);
@@ -790,6 +795,12 @@ namespace Anki {
                   createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
                   failureMode_ = HANNS_MANEUVER;
                 }
+                // Special case for DA_ALIGN - will occur if we are in position for hanns maneuver then we won't do it
+                // and just succeed
+                else if(isAligning && doHannsManeuver)
+                {
+                  StopDocking(DOCK_SUCCESS);
+                }
                 // Otherwise we are not in position and should just back up
                 else
                 {
@@ -815,11 +826,14 @@ namespace Anki {
                   dockSpeed_mmps_ = DOCKSPEED_ON_FAILURE_MMPS;
                   dockDecel_mmps2_ = DOCKDECEL_ON_FAILURE_MMPS2;
                   
+                  // Raise the lift if rolling, don't do anything to the lift if aligning or carrying a block, everything else
+                  // we want to lower the lift when backing up
                   if(PickAndPlaceController::GetCurAction() == DA_ROLL_LOW)
                   {
                     LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                   }
-                  else
+                  else if(!isAligning &&
+                          !PickAndPlaceController::IsCarryingBlock())
                   {
                     LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, 0.25, 0.25, 1);
                   }
@@ -1189,7 +1203,9 @@ namespace Anki {
           // (or if docking to a block off the ground 0mm) inside of the block
           // Placing the point inside the block causes us to push the block and maybe it will slide sideways onto
           // the lift if we are ever so slightly off the marker due to camera extrinsics
-          f32 distIntoBlock = ((!dockingToBlockOnGround || PickAndPlaceController::IsCarryingBlock()) ? 0 : PATH_END_DIST_INTO_BLOCK_MM);
+          f32 distIntoBlock = ((!dockingToBlockOnGround ||
+                                PickAndPlaceController::IsCarryingBlock() ||
+                                PickAndPlaceController::GetCurAction() == DA_ALIGN) ? 0 : PATH_END_DIST_INTO_BLOCK_MM);
           PathFollower::AppendPathSegment_Line(0,
                                                dockPose_.x()-(distToDecel)*dockPoseAngleCos,
                                                dockPose_.y()-(distToDecel)*dockPoseAngleSin,
