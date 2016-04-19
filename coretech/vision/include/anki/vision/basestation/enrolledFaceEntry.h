@@ -15,7 +15,8 @@
 
 #include "anki/vision/basestation/faceIdTypes.h"
 
-#include <ctime>
+#include <chrono>
+#include <string>
 
 // Forward declaration
 namespace Json {
@@ -33,11 +34,14 @@ struct EnrolledFaceEntry
   
   std::string               name;
   
-  time_t                    enrollmentTime;         // when first added to album
-  time_t                    lastDataUpdateTime;     // last time data was updated
+  using Time = std::chrono::time_point<std::chrono::system_clock>;
   
-  s32                       score      = 1000;      // [0,1000]
-  s32                       oldestData = 0;         // index of last data update
+  Time                      enrollmentTime;         // when first added to album
+  Time                      lastDataUpdateTime;     // last time data was updated
+  
+  s32                       score          = 1000;  // [0,1000]
+  s32                       oldestData     = 0;     // index of last data update
+  s32                       numEnrollments = 0;     // how many enrollment "examples" stored
   
   bool                      isForThisSessionOnly = true;
   
@@ -46,6 +50,7 @@ struct EnrolledFaceEntry
   // Faces constructed from Json default to _not_ being for this session only
   EnrolledFaceEntry(FaceID_t withID, Json::Value& json);
   
+  // NOTE: Just sums numEnrollments
   void MergeWith(EnrolledFaceEntry& otherEntry);
   
   void FillJson(Json::Value& json) const;

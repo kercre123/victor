@@ -197,14 +197,14 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
                                           config);
     
     if(iReload > 0) {
-      std::list<std::string> loadedNames;
+      std::list<Vision::FaceNameAndID> loadedNames;
       Result loadResult = faceTracker->LoadAlbum("testAlbum", loadedNames);
       ASSERT_EQ(loadResult, RESULT_OK);
       ASSERT_EQ(loadedNames.size(), allNames.size());
       
       // All loaded names should be in the all names set
-      for(auto & name : loadedNames) {
-        ASSERT_TRUE(allNames.count(name) > 0);
+      for(auto & nameAndID : loadedNames) {
+        ASSERT_TRUE(allNames.count(nameAndID.name) > 0);
       }
       
       for(auto & test : testDirData)
@@ -216,9 +216,9 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     for(auto & test : testDirData)
     {
       if(test.isForTraining) {
-        faceTracker->EnableNewFaceEnrollment(1);
+        faceTracker->SetFaceEnrollmentMode(Vision::FaceEnrollmentMode::LookingStraight);
       } else {
-        faceTracker->EnableNewFaceEnrollment(0);
+        faceTracker->SetFaceEnrollmentMode(Vision::FaceEnrollmentMode::Disabled);
       }
       
       const char* testDir = test.dirName;
