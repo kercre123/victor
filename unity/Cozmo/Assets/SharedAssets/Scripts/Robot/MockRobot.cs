@@ -267,7 +267,7 @@ public class MockRobot : IRobot {
     _Callbacks.Clear();
   }
 
-  public void EnableNewFaceEnrollment(int numToEnroll = 1) {
+  public void SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode mode) {
     
   }
 
