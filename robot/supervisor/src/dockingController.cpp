@@ -793,8 +793,14 @@ namespace Anki {
                   createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
                   failureMode_ = HANNS_MANEUVER;
                 }
+                // Special case for DA_ALIGN - will occur if we are in position for hanns maneuver then we won't do it
+                // and just succeed
+                else if(PickAndPlaceController::GetCurAction() == DA_ALIGN && doHannsManeuver)
+                {
+                  StopDocking(DOCK_SUCCESS);
+                }
                 // Otherwise we are not in position and should just back up
-                else if(!doHannsManeuver)
+                else
                 {
                   SendDockingStatusMessage(STATUS_BACKING_UP);
                   AnkiDebug( 5, "DockingController", 437, "Backing up", 0);
@@ -822,19 +828,14 @@ namespace Anki {
                   {
                     LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                   }
-                  else if(PickAndPlaceController::GetCurAction() != DA_ALIGN)
+                  else if(PickAndPlaceController::GetCurAction() != DA_ALIGN &&
+                          PickAndPlaceController::GetCurAction() != DA_PLACE_HIGH)
                   {
                     LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, 0.25, 0.25, 1);
                   }
                   dockingToBlockOnGround = true;
                   
                   failureMode_ = BACKING_UP;
-                }
-                // Special case for DA_ALIGN - will occur if we are in position for hanns maneuver then we won't do it
-                // and just succeed
-                else if(PickAndPlaceController::GetCurAction() == DA_ALIGN)
-                {
-                  StopDocking(DOCK_SUCCESS);
                 }
 #endif //!USE_BLIND_DOCKING
               }
