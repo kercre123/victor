@@ -54,6 +54,15 @@ namespace Anki {
       [SerializeField]
       private AnkiTextLabel _TextLabel;
 
+      public object[] FormattingArgs {
+        get {
+          return _TextLabel.FormattingArgs;
+        }
+        set {
+          _TextLabel.FormattingArgs = value;
+        }
+      }
+
       [SerializeField]
       private float _TextLabelOffset = -5f;
       private Vector3? _TextDefaultPosition = null;

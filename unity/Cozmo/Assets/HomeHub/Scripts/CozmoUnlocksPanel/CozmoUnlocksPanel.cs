@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using DataPersistence;
 
 public class CozmoUnlocksPanel : MonoBehaviour {
 
@@ -17,12 +18,19 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   [SerializeField]
   private Anki.UI.AnkiTextLabel _HexLabel;
 
+  [SerializeField]
+  private RequestTricksView _RequestSparkViewPrefab;
+  private RequestTricksView _RequestSparkViewInstance;
+
   void Start() { 
     LoadTiles();
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleRequestSetUnlockResult;
+    UpdateInventoryCounts();
+  }
 
+  public void UpdateInventoryCounts() {
     // TODO: Get # hex pieces based on all the item ids in HexPieceMap
-    _HexLabel.FormattingArgs = new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces };
+    _HexLabel.FormattingArgs = new object[] { DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces };
   }
 
   void OnDestroy() {
@@ -81,7 +89,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private void HandleTappedUnlocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped Unlocked: " + unlockInfo.Id);
     if (unlockInfo.UnlockableType == UnlockableType.Action) {
-      // TODO: Send message to engine to trigger unlockable action.
+      _RequestSparkViewInstance = UIManager.OpenView<RequestTricksView>(_RequestSparkViewPrefab, verticalCanvas: true);
+      _RequestSparkViewInstance.Initialize(unlockInfo, this);
     }
     else if (unlockInfo.UnlockableType == UnlockableType.Game) {
       // TODO: run the game that was unlocked.
@@ -90,6 +99,14 @@ public class CozmoUnlocksPanel : MonoBehaviour {
 
   private void HandleTappedAvailable(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
+    // TODO: This const should be replaced by the actual hex puzzle system when that's done.
+    int unlockCost = 2;
+
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces < unlockCost) {
+      return;
+    }
+    DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces -= unlockCost;
+    UpdateInventoryCounts();
     UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
   }
 

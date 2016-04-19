@@ -92,5 +92,11 @@
   },
   "cozmoTab.hexCount": {
     "translation": "Hex Pieces: {0}"
+  },
+  "requestSparkView.sparkunlockbutton": {
+    "translation": "{0} sparks"
+  },
+  "requestSparkView.TreatCount": {
+    "translation": "Total Sparks: {0}"
   }
 }

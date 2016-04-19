@@ -88,6 +88,8 @@ public class ChestRewardManager {
     }
 
     RegisterEvents(playerInventory);
+
+    DataPersistenceManager.Instance.Save();
   }
 
   private void RegisterEvents(Cozmo.Inventory inventory) {
