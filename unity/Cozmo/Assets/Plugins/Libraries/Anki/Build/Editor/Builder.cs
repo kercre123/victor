@@ -128,7 +128,7 @@ namespace Anki {
         }
         Debug.Log(result);
       }
-
+	  
       // Build the project from a set of arguments. This method is used for automated builds
       public static string BuildWithArgs(string[] argv) {
 
@@ -138,9 +138,9 @@ namespace Anki {
         string sdk = null;
         bool enableDebugging = false;
         bool connectWithProfiler = false;
-
         int i = 0;
-        while (i < argv.Length) {
+        
+		while (i < argv.Length) {
           string arg = argv[i++];
           switch (arg) {
           case "--platform":
