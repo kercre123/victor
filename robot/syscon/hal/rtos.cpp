@@ -22,7 +22,7 @@ void RTOS::init(void) {
   NRF_WDT->CRV = 0x8000*5; // 2 seconds before everything explodes
   NRF_WDT->RREN = wdog_channel_mask;
   NRF_WDT->TASKS_START = 1;
-
+  
   // Manage trigger set
   NVIC_EnableIRQ(SWI0_IRQn);
   NVIC_SetPriority(SWI0_IRQn, RTOS_PRIORITY);
