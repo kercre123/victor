@@ -173,7 +173,7 @@ public interface IRobot : IDisposable {
 
   void CancelAllCallbacks();
 
-  void EnableNewFaceEnrollment(int numToEnroll = 1);
+  void SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode mode);
 
   void AssignNameToFace(int faceID, string name);
 
