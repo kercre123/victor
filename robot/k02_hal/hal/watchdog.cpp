@@ -4,12 +4,19 @@
 #include "MK02F12810.h"
 
 #include "watchdog.h"
+#include "spi.h"
 
 static const int totalReset = (1 << WDOG_TOTAL_CHANNELS) - 1;
 static int watchdogChannels = 0;
 
+static const uint32_t TARGET_MAGIC = 'ANKI';
+static const uint32_t MAXIMUM_RESET_COUNT = 5;
+
+static uint32_t reset_magic __attribute__((section("UNINIT"),zero_init));
+static uint32_t reset_count __attribute__((section("UNINIT"),zero_init));
+
 void Anki::Cozmo::HAL::Watchdog::init(void) {
-  static const uint32_t RESET_TIME = 2 * 1024;  // 2seconds (1khz LPO)
+  static const uint32_t RESET_TIME = 5 * 1024;  // 5 seconds (1khz LPO)
 
   __disable_irq();
   WDOG_UNLOCK = 0xC520;
@@ -21,9 +28,17 @@ void Anki::Cozmo::HAL::Watchdog::init(void) {
   WDOG_TOVALH = RESET_TIME >> 16;
   WDOG_PRESC  = 0;
   
-  WDOG_STCTRLH = WDOG_STCTRLH_WDOGEN_MASK; // Turn on the watchdog
-
+  // Turn on the watchdog (with interrupts)
+  WDOG_STCTRLH = WDOG_STCTRLH_WDOGEN_MASK | WDOG_STCTRLH_IRQRSTEN_MASK; 
+  NVIC_EnableIRQ(WDOG_EWM_IRQn);
+  NVIC_SetPriority(WDOG_EWM_IRQn, 0);
+  
   watchdogChannels = 0;
+
+  if (reset_magic != TARGET_MAGIC) {
+    reset_magic = TARGET_MAGIC;
+    reset_count = 0;
+  }
 }
 
 void Anki::Cozmo::HAL::Watchdog::kick(const uint8_t channel) {
@@ -41,4 +56,12 @@ void Anki::Cozmo::HAL::Watchdog::pet() {
   WDOG_REFRESH = 0xA602;
   WDOG_REFRESH = 0xB480;
   __enable_irq();
+}
+
+extern "C"
+void WDOG_EWM_IRQHandler(void)
+{
+  if (++reset_count > MAXIMUM_RESET_COUNT) {
+    Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
+  }
 }
