@@ -42,7 +42,10 @@ namespace Cozmo {
     /// </summary>
     public bool RemoveItemAmount(string itemId, int count = 1) {
       bool removedItem = false;
-      if (count > 0) {
+      if (count == 0) {
+        removedItem = true;
+      }
+      else if (count > 0) {
         if (CanRemoveItemAmount(itemId, count)) {
           removedItem = true;
           RemoveItemInternal(itemId, count);

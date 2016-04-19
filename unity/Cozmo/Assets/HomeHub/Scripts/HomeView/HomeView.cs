@@ -85,7 +85,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleChestGained() {
-      _RequirementPointsProgressBar.ResetProgress();
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     }
 
     private void HandleChestRequirementsGained(int currentPoints, int numPointsNeeded) {
