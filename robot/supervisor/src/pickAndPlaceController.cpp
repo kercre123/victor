@@ -58,6 +58,8 @@ namespace Anki {
         // Distance at which robot should start driving blind
         // along last generated docking path during PICKUP_LOW and PLACE_HIGH.
         const u32 LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_LOW_LIFT_DIST_MM + 10;
+        
+        const u32 MOUNT_CHARGER_POINT_OF_NO_RETURN_DIST_MM = 10;
 
         const f32 DEFAULT_LIFT_SPEED_RAD_PER_SEC = 1.5;
         const f32 DEFAULT_LIFT_ACCEL_RAD_PER_SEC2 = 10;
@@ -285,6 +287,7 @@ namespace Anki {
 
                 // Set the distance to the marker beyond which
                 // we should ignore docking error signals since the lift occludes our view anyway.
+                bool useFirstErrorSignalOnly = false;
                 u32 pointOfNoReturnDist = 0;
                 switch(action_) {
                   case DA_PICKUP_HIGH:
@@ -297,6 +300,10 @@ namespace Anki {
                   case DA_ALIGN:
                     pointOfNoReturnDist = LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM;
                     break;
+                  case DA_MOUNT_CHARGER:
+                    pointOfNoReturnDist = dockOffsetDistX_ + MOUNT_CHARGER_POINT_OF_NO_RETURN_DIST_MM;
+                    useFirstErrorSignalOnly = true;
+                    break;
                   default:
                     break;
                 }
@@ -308,7 +315,8 @@ namespace Anki {
                                                 dockOffsetDistY_,
                                                 dockOffsetAng_,
                                                 useManualSpeed_,
-                                                pointOfNoReturnDist);
+                                                pointOfNoReturnDist,
+                                                useFirstErrorSignalOnly);
               }
               mode_ = DOCKING;
 #if(DEBUG_PAP_CONTROLLER)
@@ -362,7 +370,7 @@ namespace Anki {
                   // Compute angle to turn in order to face marker
                   f32 robotPose_x, robotPose_y;
                   Radians robotPose_angle;
-                  Localization::GetCurrentMatPose(robotPose_x, robotPose_y, robotPose_angle);
+                  Localization::GetDriveCenterPose(robotPose_x, robotPose_y, robotPose_angle);
                   const Anki::Embedded::Pose2d& markerPose = DockingController::GetLastMarkerAbsPose();
                   f32 relAngleToMarker = atan2_acc(markerPose.GetY() - robotPose_y, markerPose.GetX() - robotPose_x);
                   relAngleToMarker -= robotPose_angle.ToFloat();

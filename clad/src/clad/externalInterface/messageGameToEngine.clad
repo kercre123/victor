@@ -917,7 +917,7 @@ message BlockSelectedMessage {
 message GetBlockPoolMessage {
 }
 
-message SendDiscoveredObjects {
+message SendAvailableObjects {
   uint_8 robotID,
   bool enable
 }

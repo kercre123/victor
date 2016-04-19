@@ -91,7 +91,8 @@ namespace Anki {
       void StartDocking(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY = 0, const f32 dockOffsetAngle = 0,
                         const bool useManualSpeed = false,
-                        const u32 pointOfNoReturnDistMM = 0);
+                        const u32 pointOfNoReturnDistMM = 0,
+                        const bool useFirstErrSignalOnly = false);
 
       // Goes to a pose such that if the robot were to lower a block that it was carrying once it
       // were in that pose, the block face facing the robot would be aligned with the pose specified

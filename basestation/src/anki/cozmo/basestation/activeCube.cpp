@@ -69,24 +69,18 @@ namespace Anki {
     ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID)
     : ActiveCube(GetTypeFromFactoryID(factoryID))
     {
+      
+      ObjectType objType = GetTypeFromFactoryID(factoryID);
+      ASSERT_NAMED(objType == ObjectType::Block_LIGHTCUBE1 ||
+                   objType == ObjectType::Block_LIGHTCUBE2 ||
+                   objType == ObjectType::Block_LIGHTCUBE3,
+                   "ActiveCube.InvalidFactoryID");
+      
       _activeID = activeID;
       _factoryID = factoryID;
       
       if (_activeID >= 0)
         _identityState = ActiveIdentityState::Identified;
-    }
-    
-    // Changes to this mapping should also be reflected in ActiveBlock::activeIDToFactoryIDMap_
-    ActiveCube::Type ActiveCube::GetTypeFromFactoryID(FactoryID id)
-    {
-      static constexpr ObjectType factoryIDToObjectType[3] = {
-        ObjectType::Block_LIGHTCUBE3,
-        ObjectType::Block_LIGHTCUBE2,
-        ObjectType::Block_LIGHTCUBE1
-      };
-      
-      u8 typeID = id & 0x3;
-      return factoryIDToObjectType[typeID];
     }
   
     void ActiveCube::SetLEDs(const WhichCubeLEDs whichLEDs,

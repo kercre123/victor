@@ -240,6 +240,7 @@ namespace Anki {
         
         // Generate a factory ID
         factoryID_ = currTime_ms * 100000 + nodeIndex * 1000 + activeIDToFactoryIDMap_[blockID_];
+        factoryID_ &= 0x7FFFFFFF; // Make sure it doesn't get mistaken for a charger
         printf("Starting ActiveBlock %d (factoryID %d)\n", blockID_, factoryID_);
         
         

@@ -1387,7 +1387,9 @@ namespace Anki {
     MountChargerAction::MountChargerAction(Robot& robot, ObjectID chargerID, const bool useManualSpeed)
     : IDockAction(robot, chargerID, useManualSpeed)
     {
-      
+      // TODO: Charger marker pose still oscillates so just do your best from where you are
+      //       rather than oscillating between jumpy predock poses.
+      SetDoNearPredockPoseCheck(false);
     }
     
     const std::string& MountChargerAction::GetName() const

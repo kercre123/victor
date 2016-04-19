@@ -69,6 +69,19 @@ message EngineRobotCLADVersionMismatch {
   string  robotRobotToEngineHash,	// Robot's calculated hash for the robot to engine messages
 }
 
+message ObjectAvailable
+{
+  uint_32     factory_id,
+  ObjectType  type,
+  int_8       rssi,
+}
+
+message ObjectUnavailable
+{
+  uint_32      factory_id,
+}
+
+
 /*
 message Bogus {
 }
@@ -376,6 +389,7 @@ message UpdateEngineState {
 
 structure BlockPoolBlockData {
   uint_32 id,
+  ObjectType type,
   bool enabled
 }
 

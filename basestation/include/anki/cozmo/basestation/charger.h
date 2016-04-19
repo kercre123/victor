@@ -43,7 +43,8 @@ namespace Anki {
     {
     public:
       
-      Charger();
+      Charger(ObjectType type = ObjectType::Charger_Basic);
+      Charger(ActiveID activeID, FactoryID factoryID);
       
       virtual const Point3f& GetSize() const override { return _size; }
       
@@ -53,6 +54,8 @@ namespace Anki {
       
       // Return pose of the robot when it's in the charger
       Pose3d GetDockedPose()  const;
+      
+      virtual bool IsActive() const override  { return true; }
       
       //
       // Inherited Virtual Methods

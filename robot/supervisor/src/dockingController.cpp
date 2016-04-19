@@ -74,6 +74,11 @@ namespace Anki {
 
         // Distance from block face at which robot should "dock"
         f32 dockOffsetDistX_ = 0.f;
+        
+        // Whether or not to use only the first error signal received for docking purposes.
+        // Results in smoother, albeit less accurate, docking. Useful for charger docking
+        // since the marker pose estimation isn't great.
+        bool useFirstErrorSignalOnly_ = false;
 
         TimeStamp_t lastDockingErrorSignalRecvdTime_ = 0;
 
@@ -632,6 +637,7 @@ namespace Anki {
             // Stop if we haven't received error signal for a while
             if (!markerlessDocking_
                 && (!pastPointOfNoReturn_)
+                && (!useFirstErrorSignalOnly_)
                 && !markerOutOfFOV_
                 && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_MS) ) {
               PathFollower::ClearPath();
@@ -646,6 +652,17 @@ namespace Anki {
             if(failureMode_ == HANNS_MANEUVER && createdValidPath_ && !PathFollower::IsTraversingPath())
             {
               StopDocking(DOCK_SUCCESS_HANNS_MANEUVER);
+              break;
+            }
+            
+            // If this is DA_MOUNT_CHARGER, don't bother with all the checks below
+            // and just assume we got to where we want. (Charger marker pose signal is
+            // too noisy to trust. We just need to get roughly in front of the thing so
+            // we can turn around to back into it.
+            if (createdValidPath_ &&
+            !PathFollower::IsTraversingPath() &&
+                PickAndPlaceController::GetCurAction() == DA_MOUNT_CHARGER) {
+              StopDocking(DOCK_SUCCESS);
               break;
             }
             
@@ -682,7 +699,7 @@ namespace Anki {
                             ABS(dockingErrSignalMsg_.y_horErr),
                             LATERAL_DOCK_TOLERANCE_AT_DOCK_MM,
                             ABS(RAD_TO_DEG(dockingErrSignalMsg_.angleErr)),
-                            ERRMSG_NOT_IN_POSITION_ANGLE_TOL,
+                            RAD_TO_DEG(ERRMSG_NOT_IN_POSITION_ANGLE_TOL),
                             HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp);
                   inPosition = false;
                   
@@ -1257,7 +1274,8 @@ namespace Anki {
       void StartDocking(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
                         const bool useManualSpeed,
-                        const u32 pointOfNoReturnDistMM)
+                        const u32 pointOfNoReturnDistMM,
+                        const bool useFirstErrSignalOnly)
       {
         StartDocking_internal(speed_mmps, accel_mmps, decel_mmps, useManualSpeed);
         
@@ -1266,6 +1284,7 @@ namespace Anki {
         pastPointOfNoReturn_ = false;
         dockingToBlockOnGround = true;
         markerlessDocking_ = false;
+        useFirstErrorSignalOnly_ = useFirstErrSignalOnly;
 
 #if(DOCK_ANGLE_DAMPING)
         dockPoseAngleInitialized_ = false;
@@ -1340,6 +1359,12 @@ namespace Anki {
 
       void SetDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
+        // If the path is already going then ignore any incoming error signals if
+        // only using the first error signal.
+        if (useFirstErrorSignalOnly_ && PathFollower::IsTraversingPath()) {
+          return;
+        }
+        
         dockingErrSignalMsg_ = msg;
         dockingErrSignalMsgReady_ = true;
       }

@@ -368,6 +368,12 @@ namespace Anki {
       ActionResult result = _compoundAction.Update();
       
       if(result == ActionResult::SUCCESS) {
+        
+        if (!_doPositionCheckOnPathCompletion) {
+          PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone.SkippingPositionCheck", "Action complete");
+          return result;
+        }
+        
         // We completed driving to the pose and visually verifying the object
         // is still there. This could have updated the object's pose (hopefully
         // to a more accurate one), meaning the pre-action pose we selected at
@@ -1112,6 +1118,19 @@ namespace Anki {
                                  0,
                                  useManualSpeed)
     {
+      // Get DriveToObjectAction
+      DriveToObjectAction* driveAction = nullptr;
+      for (auto a : GetActionList()) {
+        if (a->GetType() == RobotActionType::DRIVE_TO_OBJECT) {
+          driveAction = dynamic_cast<DriveToObjectAction*>(a);
+          if (driveAction) {
+            driveAction->DoPositionCheckOnPathCompletion(false);
+            break;
+          }
+        }
+      }
+      ASSERT_NAMED(driveAction != nullptr, "DriveToAndMountChargerAction.DriveToObjectSubActionNotFound");
+      
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
       AddAction(action);

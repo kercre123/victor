@@ -44,8 +44,8 @@ namespace Anki {
     } // GetCanonicalCorners()
     
     
-    Charger::Charger()
-    : ActionableObject(ObjectFamily::Charger, ObjectType::Charger_Basic)
+    Charger::Charger(ObjectType type)
+    : ActionableObject(ObjectFamily::Charger, type)
     , _size(Length, Width, Height)
     , _vizHandle(VizManager::INVALID_HANDLE)
     
@@ -68,6 +68,16 @@ namespace Anki {
       AddPreActionPose(PreActionPose::ENTRY, _marker, preActionPose);
       
     } // Charger() Constructor
+    
+    Charger::Charger(ActiveID activeID, FactoryID factoryID)
+    : Charger(GetTypeFromFactoryID(factoryID))
+    {
+      ASSERT_NAMED(GetTypeFromFactoryID(factoryID) == ObjectType::Charger_Basic, "Charger.InvalidFactoryID");
+      
+      _activeID = activeID;
+      _factoryID = factoryID;
+    }
+
     
     Charger::~Charger()
     {
@@ -130,6 +140,9 @@ namespace Anki {
                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const
     {
       bool isValid = ActionableObject::IsPreActionPoseValid(preActionPose, reachableFromPose, obstacles);
+      
+      // TODO: While charger pose estimation is as jumpy as it currently is, skip height check
+      /*
       if(isValid && reachableFromPose != nullptr && preActionPose.GetActionType() == PreActionPose::ENTRY) {
         // Valid according to default check, now continue with checking reachability:
         // Make sure reachableFrom pose is at about the same height of the ENTRY pose.
@@ -144,6 +157,7 @@ namespace Anki {
           isValid = std::fabsf(reachableFromWrtEntryPose.GetTranslation().z()) < zThreshold;
         }
       }
+       */
       
       return isValid;
     }
