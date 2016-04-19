@@ -14,16 +14,70 @@ MonoBehaviour:
   _SkillConfig:
     _EvaluateLevelChangeEvent:
       _EnumValueAsString: OnSpeedtapGetOut
-      _EnumValue: 15
+      _EnumValue: 14
     _GainChallengePointEvent:
-      _EnumValueAsString: OnSpeedtapHandLose
-      _EnumValue: 10
-    _LoseChallengePointEvent:
       _EnumValueAsString: OnSpeedtapHandWin
+      _EnumValue: 8
+    _LoseChallengePointEvent:
+      _EnumValueAsString: OnSpeedtapHandLose
       _EnumValue: 9
     _UsePointThreshold: 0
     _ComparedPointThreshold: 0
-    _Levels: []
+    _Levels:
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 600
+      - name: TapDelayMax
+        val: 700
+      - name: WrongTapChance
+        val: 0.5
+      LevelUpMinThreshold: 0.7
+      LevelDownMaxThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 500
+      - name: TapDelayMax
+        val: 600
+      - name: WrongTapChance
+        val: 0.4
+      LevelUpMinThreshold: 0.7
+      LevelDownMaxThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 400
+      - name: TapDelayMax
+        val: 300
+      - name: WrongTapChance
+        val: 0.3
+      LevelUpMinThreshold: 0.7
+      LevelDownMaxThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 300
+      - name: TapDelayMax
+        val: 400
+      - name: WrongTapChance
+        val: 0.2
+      LevelUpMinThreshold: 0.7
+      LevelDownMaxThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 200
+      - name: TapDelayMax
+        val: 300
+      - name: WrongTapChance
+        val: 0.1
+      LevelUpMinThreshold: 0.7
+      LevelDownMaxThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 100
+      - name: TapDelayMax
+        val: 200
+      - name: WrongTapChance
+        val: 0
+      LevelUpMinThreshold: 0.7
+      LevelDownMaxThreshold: 0.3
   Rounds: 3
   MaxScorePerRound: 5
   MinIdleIntervalMs: 100

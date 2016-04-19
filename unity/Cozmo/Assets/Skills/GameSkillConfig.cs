@@ -15,21 +15,27 @@ public class GameSkillTuple {
 public class GameSkillLevelConfig: ISerializationCallbackReceiver {
   // Work Around for unity not having Serializable or Drawer of dictionaryies
   // And there are only a few skills per game so quering won't be that expensive to loop through
-  public GameSkillTuple[] SkillsArray;
+  [SerializeField]
+  private GameSkillTuple[] SkillsArray;
 
-  private Dictionary<string,float> _SkillMap = new Dictionary<string,float>();
+  public Dictionary<string,float> SkillMap = new Dictionary<string,float>();
+  // Level up if winning more than 70% of the time, Level down if we're losing more than 40%
+  [Range(0.0f, 1.0f)]
+  public float LevelUpMinThreshold = 0.7f;
+  [Range(0.0f, 1.0f)]
+  public float LevelDownMaxThreshold = 0.39f;
 
   public void OnBeforeSerialize() {
   }
 
   public void OnAfterDeserialize() {
-    _SkillMap = new Dictionary<string,float>();
+    SkillMap = new Dictionary<string,float>();
     for (int i = 0; i < SkillsArray.Length; ++i) {
-      if (_SkillMap.ContainsKey(SkillsArray[i].name)) {
-        _SkillMap[SkillsArray[i].name] = SkillsArray[i].val;
+      if (SkillMap.ContainsKey(SkillsArray[i].name)) {
+        SkillMap[SkillsArray[i].name] = SkillsArray[i].val;
       }
       else {
-        _SkillMap.Add(SkillsArray[i].name, SkillsArray[i].val);
+        SkillMap.Add(SkillsArray[i].name, SkillsArray[i].val);
       }
     }
   }
@@ -59,6 +65,17 @@ public class GameSkillConfig {
     get { return _LoseChallengePointEvent.Value; }
   }
 
+  public GameSkillLevelConfig GetCurrLevelConfig(int level) {
+    if (level >= 0 && level < GetMaxLevel()) {
+      return _Levels[level];
+    }
+    return null;
+  }
+
+  public int GetMaxLevel() {
+    return _Levels != null ? _Levels.Length : 0;
+  }
+
   [SerializeField]
   private bool _UsePointThreshold;
   // for when you only compare after X points scored.
@@ -67,3 +84,4 @@ public class GameSkillConfig {
   [SerializeField]
   private GameSkillLevelConfig[] _Levels;
 }
+// end GameSkillConfig

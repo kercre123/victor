@@ -7,7 +7,10 @@ using Newtonsoft.Json;
 
 [Serializable]
 public class SerializableGameEvents : SerializableEnum<Anki.Cozmo.GameEvent> {
-
+  // Init as invalid
+  public SerializableGameEvents() {
+    Value = GameEvent.Count;
+  }
 }
 
 public class GameEventManager {

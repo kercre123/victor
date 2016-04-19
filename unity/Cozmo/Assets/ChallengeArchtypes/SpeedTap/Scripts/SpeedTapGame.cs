@@ -258,6 +258,16 @@ namespace SpeedTap {
       MaxIdleIntervalMs = speedTapConfig.MaxIdleIntervalMs;
       CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
 
+      CozmoMistakeChance = SkillSystem.Instance.GetSkillVal("WrongTapChance");
+      MinTapDelayMs = SkillSystem.Instance.GetSkillVal("TapDelayMin");
+      MaxTapDelayMs = SkillSystem.Instance.GetSkillVal("TapDelayMax");
+
+
+      DAS.Warn("SkillSystem.CozmoMistakeChance", "SkillSystem.Initialize " + CozmoMistakeChance);
+      DAS.Warn("SkillSystem.MinTapDelayMs", "SkillSystem.Initialize " + MinTapDelayMs);
+      DAS.Warn("SkillSystem.MaxTapDelayMs", "SkillSystem.Initialize " + MaxTapDelayMs);
+
+
       // End config based values
       InitializeAnimationCallbacks();
       InitializeMinigameObjects(1);
@@ -334,9 +344,6 @@ namespace SpeedTap {
         DAS.Warn(this, "No Valid Difficulty Setting Found");
         _CurrentDifficultySettings = _AllDifficultySettings[0];
       }
-      CozmoMistakeChance = _CurrentDifficultySettings.CozmoMistakeChance;
-      MinTapDelayMs = _CurrentDifficultySettings.MinCozmoTapDelayMs;
-      MaxTapDelayMs = _CurrentDifficultySettings.MaxCozmoTapDelayMs;
     }
 
     protected override void CleanUpOnDestroy() {

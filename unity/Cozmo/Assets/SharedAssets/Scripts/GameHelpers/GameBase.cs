@@ -100,6 +100,8 @@ public abstract class GameBase : MonoBehaviour {
 
     _CubeCycleTimers = new Dictionary<int, CycleData>();
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
+
+    SkillSystem.Instance.StartGame(_ChallengeData);
   }
 
   private void FinishTurnToFace(bool success) {
