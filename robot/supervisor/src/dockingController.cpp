@@ -396,7 +396,9 @@ namespace Anki {
       // over the marker distance ranging from START_LIFT_TRACKING_DIST_MM to dockOffsetDistX_.
       void HighDockLiftUpdate() {
         // Don't want to move the lift while we are backing up or carrying a block
-        if(failureMode_ != BACKING_UP && !PickAndPlaceController::IsCarryingBlock())
+        if(failureMode_ != BACKING_UP &&
+           !PickAndPlaceController::IsCarryingBlock() &&
+           PickAndPlaceController::GetCurAction() != DA_ALIGN)
         {
           f32 lastCommandedHeight = LiftController::GetDesiredHeight();
           if (lastCommandedHeight == dockingErrSignalMsg_.z_height) {
@@ -748,7 +750,8 @@ namespace Anki {
                 if(doHannsManeuver &&
                    failureMode_ != HANNS_MANEUVER &&
                    dockingToBlockOnGround &&
-                   !PickAndPlaceController::IsCarryingBlock())
+                   !PickAndPlaceController::IsCarryingBlock() &&
+                   PickAndPlaceController::GetCurAction() != DA_ALIGN)
                 {
                   SendDockingStatusMessage(STATUS_DOING_HANNS_MANEUVER);
                   AnkiDebug( 5, "DockingController", 425, "Executing Hanns maneuver", 0);
@@ -791,7 +794,7 @@ namespace Anki {
                   failureMode_ = HANNS_MANEUVER;
                 }
                 // Otherwise we are not in position and should just back up
-                else
+                else if(!doHannsManeuver)
                 {
                   SendDockingStatusMessage(STATUS_BACKING_UP);
                   AnkiDebug( 5, "DockingController", 437, "Backing up", 0);
@@ -819,13 +822,19 @@ namespace Anki {
                   {
                     LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                   }
-                  else
+                  else if(PickAndPlaceController::GetCurAction() != DA_ALIGN)
                   {
                     LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, 0.25, 0.25, 1);
                   }
                   dockingToBlockOnGround = true;
                   
                   failureMode_ = BACKING_UP;
+                }
+                // Special case for DA_ALIGN - will occur if we are in position for hanns maneuver then we won't do it
+                // and just succeed
+                else if(PickAndPlaceController::GetCurAction() == DA_ALIGN)
+                {
+                  StopDocking(DOCK_SUCCESS);
                 }
 #endif //!USE_BLIND_DOCKING
               }
@@ -1189,7 +1198,9 @@ namespace Anki {
           // (or if docking to a block off the ground 0mm) inside of the block
           // Placing the point inside the block causes us to push the block and maybe it will slide sideways onto
           // the lift if we are ever so slightly off the marker due to camera extrinsics
-          f32 distIntoBlock = ((!dockingToBlockOnGround || PickAndPlaceController::IsCarryingBlock()) ? 0 : PATH_END_DIST_INTO_BLOCK_MM);
+          f32 distIntoBlock = ((!dockingToBlockOnGround ||
+                                PickAndPlaceController::IsCarryingBlock() ||
+                                PickAndPlaceController::GetCurAction() == DA_ALIGN) ? 0 : PATH_END_DIST_INTO_BLOCK_MM);
           PathFollower::AppendPathSegment_Line(0,
                                                dockPose_.x()-(distToDecel)*dockPoseAngleCos,
                                                dockPose_.y()-(distToDecel)*dockPoseAngleSin,
