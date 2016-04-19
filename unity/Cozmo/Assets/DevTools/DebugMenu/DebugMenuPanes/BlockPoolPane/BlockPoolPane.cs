@@ -76,7 +76,7 @@ public class BlockPoolPane : MonoBehaviour {
     }
     // The first one gets previous ones serialized that may or may exist, this message gets the one we see.
     RobotEngineManager.Instance.OnObjectAvailableMsg += HandleObjectAvailableMsg;
-    RobotEngineManager.Instance.OnObjectUnavailableMsg -= HandleObjectUnavailableMsg;
+    RobotEngineManager.Instance.OnObjectUnavailableMsg += HandleObjectUnavailableMsg;
     SendAvailableObjects(true);
   }
 
