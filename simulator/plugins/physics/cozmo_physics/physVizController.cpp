@@ -90,6 +90,29 @@ void PhysVizController::Update()
   }
 
 }
+  
+// Draws axes at current point
+void DrawAxes(f32 length)
+{
+  glColor4ub(255, 0, 0, 255);
+  glBegin(GL_LINES);
+  glVertex3f(0,0,0);
+  glVertex3f(length, 0, 0);
+  glEnd();
+  
+  glColor4ub(0, 255, 0, 255);
+  glBegin(GL_LINES);
+  glVertex3f(0, 0, 0);
+  glVertex3f(0, length, 0);
+  glEnd();
+  
+  glColor4ub(0, 0, 255, 255);
+  glBegin(GL_LINES);
+  glVertex3f(0, 0, 0);
+  glVertex3f(0, 0, length);
+  glEnd();
+}
+  
 
 void PhysVizController::Draw(int pass, const char *view)
 {
@@ -198,30 +221,10 @@ void PhysVizController::Draw(int pass, const char *view)
           std::string idString = std::to_string(obj->objectID - Anki::Cozmo::VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CUBOID]);
           DrawTextAtOffset(idString, 0.6*obj->x_size_m, 0.6*obj->y_size_m, 0.6*obj->z_size_m);
           DrawTextAtOffset(idString, -0.6*obj->x_size_m, -0.6*obj->y_size_m, -0.6*obj->z_size_m);
-
-          const float axisLineFactor = 0.1f;
-          // AXES:
-          glColor4ub(255, 0, 0, 255);
-          glBegin(GL_LINES);
-          glVertex3f(0,0,0);
-          glVertex3f(obj->x_size_m*axisLineFactor, 0, 0);
-          glEnd();
-
-          glColor4ub(0, 255, 0, 255);
-          glBegin(GL_LINES);
-          glVertex3f(0, 0, 0);
-          glVertex3f(0, obj->y_size_m*axisLineFactor, 0);
-          glEnd();
-
-          glColor4ub(0, 0, 255, 255);
-          glBegin(GL_LINES);
-          glVertex3f(0, 0, 0);
-          glVertex3f(0, 0, obj->z_size_m*axisLineFactor);
-          glEnd();
-
+          
           break;
         }
-        case VizObjectType::VIZ_OBJECT_RAMP:
+          case VizObjectType::VIZ_OBJECT_RAMP:
         {
           float slopeLength = obj->objParameters[0]*obj->x_size_m;
           DrawRamp(obj->x_size_m, slopeLength, obj->y_size_m, obj->z_size_m);
@@ -229,8 +232,14 @@ void PhysVizController::Draw(int pass, const char *view)
         }
         case VizObjectType::VIZ_OBJECT_CHARGER:
         {
+          // Draw charger
           float slopeLength = obj->objParameters[0]*obj->x_size_m;
           DrawRamp(obj->x_size_m, slopeLength, obj->y_size_m, obj->z_size_m);
+          
+          // Object ID label
+          std::string idString = std::to_string(obj->objectID - Anki::Cozmo::VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CHARGER]);
+          DrawTextAtOffset(idString, 0, 0.6*obj->y_size_m, 0.6*obj->z_size_m);
+          
           break;
         }
         case VizObjectType::VIZ_OBJECT_PREDOCKPOSE:
@@ -246,6 +255,8 @@ void PhysVizController::Draw(int pass, const char *view)
           break;
       }
 
+      DrawAxes(0.005);
+      
       glFlush();
 
       glPopMatrix();

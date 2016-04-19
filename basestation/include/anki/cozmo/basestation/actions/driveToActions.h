@@ -137,12 +137,14 @@ namespace Anki {
                           const f32 predockOffsetDistX_mm = 0,
                           const bool useApproachAngle = false,
                           const f32 approachAngle_rad = 0,
+                          const bool doPositionCheckOnPathCompletion = true,
                           const bool useManualSpeed = false);
       
       DriveToObjectAction(Robot& robot,
                           const ObjectID& objectID,
                           const f32 distance_mm,
                           const PathMotionProfile& motionProf = DEFAULT_PATH_MOTION_PROFILE,
+                          const bool doPositionCheckOnPathCompletion = true,
                           const bool useManualSpeed = false);
       virtual ~DriveToObjectAction() { };
       
@@ -184,6 +186,8 @@ namespace Anki {
       bool                       _useApproachAngle;
       Radians                    _approachAngle_rad;
 
+      bool                       _doPositionCheckOnPathCompletion;
+      
       std::string _startDrivingAnimClip;
       std::string _stopDrivingAnimClip;
       bool _hasCustomDrivingSounds = false;
@@ -229,6 +233,7 @@ namespace Anki {
                                  const f32 distanceFromMarker_mm,
                                  const bool useApproachAngle,
                                  const f32 approachAngle_rad,
+                                 const bool doPositionCheckOnPathCompletion,
                                  const bool useManualSpeed);
 
     public:

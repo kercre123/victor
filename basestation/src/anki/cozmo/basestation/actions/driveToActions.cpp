@@ -80,6 +80,7 @@ namespace Anki {
                                              const f32 predockOffsetDistX_mm,
                                              const bool useApproachAngle,
                                              const f32 approachAngle_rad,
+                                             const bool doPositionCheckOnPathCompletion,
                                              const bool useManualSpeed)
     : IAction(robot)
     , _objectID(objectID)
@@ -90,6 +91,7 @@ namespace Anki {
     , _compoundAction(robot)
     , _useApproachAngle(useApproachAngle)
     , _approachAngle_rad(approachAngle_rad)
+    , _doPositionCheckOnPathCompletion(doPositionCheckOnPathCompletion)
     , _pathMotionProfile(motionProfile)
     {
 
@@ -99,6 +101,7 @@ namespace Anki {
                                              const ObjectID& objectID,
                                              const f32 distance,
                                              const PathMotionProfile& motionProfile,
+                                             const bool doPositionCheckOnPathCompletion,
                                              const bool useManualSpeed)
     : IAction(robot)
     , _objectID(objectID)
@@ -109,6 +112,7 @@ namespace Anki {
     , _compoundAction(robot)
     , _useApproachAngle(false)
     , _approachAngle_rad(0)
+    , _doPositionCheckOnPathCompletion(doPositionCheckOnPathCompletion)
     , _pathMotionProfile(motionProfile)
     {
 
@@ -368,6 +372,12 @@ namespace Anki {
       ActionResult result = _compoundAction.Update();
       
       if(result == ActionResult::SUCCESS) {
+        
+        if (!_doPositionCheckOnPathCompletion) {
+          PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone.SkippingPositionCheck", "Action complete");
+          return result;
+        }
+        
         // We completed driving to the pose and visually verifying the object
         // is still there. This could have updated the object's pose (hopefully
         // to a more accurate one), meaning the pre-action pose we selected at
@@ -838,6 +848,7 @@ namespace Anki {
                                                            const f32 distanceFromMarker_mm,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
+                                                           const bool doPositionCheckOnPathCompletion,
                                                            const bool useManualSpeed)
     : CompoundActionSequential(robot)
     {
@@ -848,6 +859,7 @@ namespace Anki {
                                                      distanceFromMarker_mm,
                                                      useApproachAngle,
                                                      approachAngle_rad,
+                                                     doPositionCheckOnPathCompletion,
                                                      useManualSpeed);
 
       AddAction(_driveToObjectAction);
@@ -893,6 +905,7 @@ namespace Anki {
                                  distanceFromMarker_mm,
                                  useApproachAngle,
                                  approachAngle_rad,
+                                 true,
                                  useManualSpeed)
     {
       AlignWithObjectAction* action = new AlignWithObjectAction(robot, objectID,
@@ -916,6 +929,7 @@ namespace Anki {
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
+                                 true,
                                  useManualSpeed)
     {
       PickupObjectAction* action = new PickupObjectAction(robot, objectID, useManualSpeed);
@@ -938,6 +952,7 @@ namespace Anki {
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
+                                 true,
                                  useManualSpeed)
     {
       PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
@@ -965,6 +980,7 @@ namespace Anki {
                                  placementOffsetX_mm,
                                  useApproachAngle,
                                  approachAngle_rad,
+                                 true,
                                  useManualSpeed)
     {
       PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
@@ -991,6 +1007,7 @@ namespace Anki {
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
+                                 true,
                                  useManualSpeed)
     , _objectID(objectID)
     {
@@ -1062,6 +1079,7 @@ namespace Anki {
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
+                                 true,
                                  useManualSpeed)
     {
       PopAWheelieAction* action = new PopAWheelieAction(robot, objectID, useManualSpeed);
@@ -1082,6 +1100,7 @@ namespace Anki {
                                  0,
                                  false,
                                  0,
+                                 true,
                                  useManualSpeed)
     {
       TraverseObjectAction* action = new TraverseObjectAction(robot, objectID, useManualSpeed);
@@ -1102,6 +1121,7 @@ namespace Anki {
                                  0,
                                  false,
                                  0,
+                                 false,
                                  useManualSpeed)
     {
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);

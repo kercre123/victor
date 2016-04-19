@@ -140,6 +140,9 @@ namespace Anki {
                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const
     {
       bool isValid = ActionableObject::IsPreActionPoseValid(preActionPose, reachableFromPose, obstacles);
+      
+      // TODO: While charger pose estimation is as jumpy as it currently is, skip height check
+      /*
       if(isValid && reachableFromPose != nullptr && preActionPose.GetActionType() == PreActionPose::ENTRY) {
         // Valid according to default check, now continue with checking reachability:
         // Make sure reachableFrom pose is at about the same height of the ENTRY pose.
@@ -154,6 +157,7 @@ namespace Anki {
           isValid = std::fabsf(reachableFromWrtEntryPose.GetTranslation().z()) < zThreshold;
         }
       }
+       */
       
       return isValid;
     }
