@@ -19,11 +19,9 @@ public class RequestTricksView : BaseView {
   private Anki.UI.AnkiTextLabel _UnlockableState;
 
   private UnlockableInfo _UnlockInfo;
-  private CozmoUnlocksPanel _CozmoUnlocksPanel;
 
-  public void Initialize(UnlockableInfo unlockInfo, CozmoUnlocksPanel cozmoUnlocksPanel) {
+  public void Initialize(UnlockableInfo unlockInfo) {
     _UnlockInfo = unlockInfo;
-    _CozmoUnlocksPanel = cozmoUnlocksPanel;
     _TrickRequestButton.onClick.AddListener(OnSparkClicked);
 
     Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetData(_UnlockInfo.CostItemId);
@@ -53,8 +51,6 @@ public class RequestTricksView : BaseView {
     if (playerInventory.CanRemoveItemAmount(_UnlockInfo.CostItemId, _UnlockInfo.CostAmountNeeded)) {
       playerInventory.RemoveItemAmount(_UnlockInfo.CostItemId, _UnlockInfo.CostAmountNeeded);
       RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
-      // update UI for the cozmo unlocks panel for treat count.
-      _CozmoUnlocksPanel.UpdateInventoryCounts();
       UpdateState();
     }
   }

@@ -10,9 +10,6 @@ public class PlayerProfile {
 
   public List<DataPersistence.TimelineEntryData> Sessions;
 
-  // TODO: Fold into Inventory system once HexItem dictionary is ready
-  public int HexPieces;
-
   public Cozmo.Inventory Inventory;
 
   public Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> VolumePreferences;

@@ -219,6 +219,11 @@ public class StartupManager : MonoBehaviour {
       ChestData.SetInstance(cd);
     });
 
+    assetBundleManager.LoadAssetAsync<Cozmo.HexItemList>(_GameMetadataAssetBundleName, 
+      "HexItemList", (Cozmo.HexItemList cd) => {
+      Cozmo.HexItemList.SetInstance(cd);
+    });
+
     assetBundleManager.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(_MinigameUIPrefabAssetBundleName, 
       "MinigameUIPrefabHolder", (Cozmo.UI.MinigameUIPrefabHolder mph) => {
       Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);

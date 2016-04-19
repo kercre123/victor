@@ -63,7 +63,7 @@ namespace Cozmo {
 
     public bool RemoveItemAmounts(IEnumerable<KeyValuePair<string, int>> itemsById) {
       bool removedItems = false;
-      if (CanRemoveItemAmount(itemsById)) {
+      if (CanRemoveItemAmounts(itemsById)) {
         foreach (var kvp in itemsById) {
           RemoveItemInternal(kvp.Key, kvp.Value);
         }
@@ -94,7 +94,7 @@ namespace Cozmo {
       return canRemove;
     }
 
-    public bool CanRemoveItemAmount(IEnumerable<KeyValuePair<string, int>> itemsById) {
+    public bool CanRemoveItemAmounts(IEnumerable<KeyValuePair<string, int>> itemsById) {
       bool canRemove = true;
       foreach (var kvp in itemsById) {
         if (!CanRemoveItemAmount(kvp.Key, kvp.Value)) {
