@@ -50,6 +50,7 @@ namespace Vision {
     Result Init(HCOMMON okaoCommonHandle);
 
     void AssignNameToID(FaceID_t faceID, const std::string& name);
+    void EraseName(const std::string& name);
     
     // Request that the recognizer work on assigning a new or existing FaceID
     // from its album of known faces to the specified trackerID, using the
@@ -60,18 +61,15 @@ namespace Vision {
     // If running synchronously, always returns true.
     bool SetNextFaceToRecognize(const Image& img,
                                 const DETECTION_INFO& detectionInfo,
-                                HPTRESULT okaoPartDetectionResultHandle);
+                                HPTRESULT okaoPartDetectionResultHandle,
+                                bool enableEnrollment);
     
     void RemoveTrackingID(INT32 trackerID);
     
     EnrolledFaceEntry GetRecognitionData(INT32 forTrackingID);
     
-    Result LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName, std::list<std::string>& names);
+    Result LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
     Result SaveAlbum(const std::string& albumName);
-
-    // See FaceTracker for description
-    void EnableNewFaceEnrollment(s32 numToEnroll);
-    bool IsNewFaceEnrollmentEnabled() const   { return _numToEnroll != 0; }
 
   private:
     
@@ -82,8 +80,6 @@ namespace Vision {
     void ExtractFeatures();
     
     Result RegisterNewUser(HFEATURE& hFeature);
-    
-    bool   IsEnrollable();
     
     Result UpdateExistingUser(INT32 userID, HFEATURE& hFeature);
     
@@ -106,7 +102,7 @@ namespace Vision {
     static_assert(MaxAlbumDataPerFace > 1 && MaxAlbumDataPerFace <= 10,
                   "MaxAlbumDataPerFace should be between 1 and 10 for OKAO Library.");
     
-    bool _isInitialized                        = false;
+    bool        _isInitialized                 = false;
     HCOMMON     _okaoCommonHandle              = NULL; // not allocated here, passed in
     
     // Okao handles allocated by this class
@@ -131,12 +127,12 @@ namespace Vision {
     Image          _img;
     HPTRESULT      _okaoPartDetectionResultHandle = NULL;
     DETECTION_INFO _detectionInfo;
+    bool           _isEnrollmentEnabled;
     
     // Internal bookkeeping and parameters
     std::map<INT32, FaceID_t> _trackingToFaceID;
     
     INT32 _lastRegisteredUserID = 1; // Don't start at zero: that's the UnknownFace ID!
-    s32   _numToEnroll = 0;
     
     // Store additinal bookkeeping information we need, on top of the album data
     // stored by Okao.

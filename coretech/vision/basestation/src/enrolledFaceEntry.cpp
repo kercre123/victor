@@ -20,11 +20,12 @@ namespace Vision {
 
 EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID)
 : faceID(withID)
-, enrollmentTime(time(0))
-, lastDataUpdateTime(time(0))
+, enrollmentTime(std::chrono::milliseconds(0))
+, lastDataUpdateTime(std::chrono::milliseconds(0))
+, numEnrollments(1)
 , isForThisSessionOnly(true)
 {
-  
+
 }
 
 EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
@@ -36,13 +37,13 @@ EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
                         "Missing '%s' field for ID %d", fieldName, withID);
   };
   
-  
+  Json::LargestInt numTicks = 0;
   if(!json.isMember("enrollmentTime")) {
     MissingFieldWarning("enrollmentTime");
-    enrollmentTime = time(0);
   } else {
-    enrollmentTime = (time_t)json["enrollmentTime"].asLargestInt();
+    numTicks = json["enrollmentTime"].asLargestInt();
   }
+  enrollmentTime = Time(std::chrono::milliseconds(numTicks));
   
   if(!json.isMember("oldestData")) {
     MissingFieldWarning("oldestData");
@@ -53,15 +54,23 @@ EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
   
   if(!json.isMember("lastDataUpdateTime")) {
     MissingFieldWarning("lastDataUpdateTime");
-    lastDataUpdateTime = time(0);
+    numTicks = 0;
   } else {
-    lastDataUpdateTime = (time_t)json["lastDataUpdateTime"].asLargestInt();
+    numTicks = json["lastDataUpdateTime"].asLargestInt();
   }
+  lastDataUpdateTime = Time(std::chrono::milliseconds(numTicks));
   
   if(!json.isMember("name")) {
     MissingFieldWarning("name");
   } else {
     name = json["name"].asString();
+  }
+  
+  if(!json.isMember("numEnrollments")) {
+    MissingFieldWarning("numEnrollments");
+    numEnrollments = 1;
+  } else {
+    numEnrollments = json["numEnrollments"].asInt();
   }
 }
 
@@ -87,14 +96,17 @@ void EnrolledFaceEntry::MergeWith(EnrolledFaceEntry& otherEntry)
   
   enrollmentTime = std::min(enrollmentTime, otherEntry.enrollmentTime);
   score = std::max(score, otherEntry.score);
+  numEnrollments += otherEntry.numEnrollments;
 }
   
 void EnrolledFaceEntry::FillJson(Json::Value& entry) const
 {
+  // NOTE: Save times as "number of ticks since epoch"
   entry["name"]               = name;
   entry["oldestData"]         = oldestData;
-  entry["enrollmentTime"]     = (Json::LargestInt)enrollmentTime;
-  entry["lastDataUpdateTime"] = (Json::LargestInt)lastDataUpdateTime;
+  entry["enrollmentTime"]     = (Json::LargestInt)enrollmentTime.time_since_epoch().count();
+  entry["lastDataUpdateTime"] = (Json::LargestInt)lastDataUpdateTime.time_since_epoch().count();
+  entry["numEnrollments"]     = numEnrollments;
 }
 
 } // namespace Vision

@@ -1333,10 +1333,15 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     
     _faceTracker->AssignNameToID(faceID, name);
   }
-  
-  void VisionSystem::EnableNewFaceEnrollment(s32 numToEnroll)
+    
+  void VisionSystem::EraseFace(const std::string& name)
   {
-    _faceTracker->EnableNewFaceEnrollment(numToEnroll);
+    _faceTracker->EraseName(name);
+  }
+  
+  void VisionSystem::SetFaceEnrollmentMode(Vision::FaceEnrollmentMode mode)
+  {
+    _faceTracker->SetFaceEnrollmentMode(mode);
   }
   
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,

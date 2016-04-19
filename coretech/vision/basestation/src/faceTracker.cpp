@@ -66,19 +66,14 @@ namespace Vision {
     return Impl::IsRecognitionSupported();
   }
   
-  void FaceTracker::EnableNewFaceEnrollment(s32 numToEnroll)
-  {
-    _pImpl->EnableNewFaceEnrollment(numToEnroll);
-  }
-  
-  bool FaceTracker::IsNewFaceEnrollmentEnabled() const
-  {
-    return _pImpl->IsNewFaceEnrollmentEnabled();
-  }
-  
   void FaceTracker::AssignNameToID(FaceID_t faceID, const std::string &name)
   {
     _pImpl->AssignNameToID(faceID, name);
+  }
+  
+  void FaceTracker::EraseName(const std::string& name)
+  {
+    _pImpl->EraseName(name);
   }
   
   Result FaceTracker::SaveAlbum(const std::string& albumName)
@@ -86,14 +81,19 @@ namespace Vision {
     return _pImpl->SaveAlbum(albumName);
   }
   
-  Result FaceTracker::LoadAlbum(const std::string& albumName, std::list<std::string>& names)
+  Result FaceTracker::LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs)
   {
-    return _pImpl->LoadAlbum(albumName, names);
+    return _pImpl->LoadAlbum(albumName, namesAndIDs);
   }
   
   void FaceTracker::PrintTiming()
   {
     _pImpl->PrintAverageTiming();
+  }
+  
+  void FaceTracker::SetFaceEnrollmentMode(FaceEnrollmentMode mode)
+  {
+    _pImpl->SetFaceEnrollmentMode(mode);
   }
   
   /*

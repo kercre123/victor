@@ -35,13 +35,18 @@ namespace Vision {
     // Constructor:
     TrackedFace();
     
-    float       GetScore()       const;
-    FaceID_t    GetID()          const;
     TimeStamp_t GetTimeStamp()   const;
+    void        SetTimeStamp(TimeStamp_t timestamp);
     
+    // Recognition related getters / setters
     void        SetScore(float score);
     void        SetID(FaceID_t newID);
-    void        SetTimeStamp(TimeStamp_t timestamp);
+    void        SetNumEnrollments(s32 N);
+    
+    float       GetScore()          const;
+    FaceID_t    GetID()             const;
+    s32         GetNumEnrollments() const;
+    
     
     const std::string& GetName() const;
     void SetName(const std::string& newName);
@@ -100,9 +105,6 @@ namespace Vision {
     
     void SetRect(Rectangle<f32>&& rect);
     
-    void SetThumbnail(const Image& image) { _thumbnailImage = image; }
-    const Image& GetThumbnail() { return _thumbnailImage; }
-    
     // These are w.r.t. the original observer (i.e. the camera at observation time)
     Radians GetHeadYaw()   const;
     Radians GetHeadPitch() const;
@@ -131,10 +133,11 @@ namespace Vision {
   private:
     
     FaceID_t       _id             = UnknownFaceID;
+    s32            _numEnrollments = 0;
     float          _score          = 0.f;
     bool           _isBeingTracked = false;
     TimeStamp_t    _timestamp      = 0;
-
+    
     std::string    _name;
     
     Rectangle<f32> _rect;
@@ -148,8 +151,6 @@ namespace Vision {
     Radians _roll, _pitch, _yaw;
     
     Pose3d _headPose;
-    
-    Image _thumbnailImage;
     
   }; // class TrackedFace
   
@@ -191,6 +192,14 @@ namespace Vision {
   
   inline void TrackedFace::SetID(FaceID_t newID) {
     _id = newID;
+  }
+  
+  inline s32 TrackedFace::GetNumEnrollments() const {
+    return _numEnrollments;
+  }
+  
+  inline void TrackedFace::SetNumEnrollments(s32 N) {
+    _numEnrollments = N;
   }
   
   inline void TrackedFace::ClearFature(FeatureName whichFeature) {

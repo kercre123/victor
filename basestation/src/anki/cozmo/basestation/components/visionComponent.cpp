@@ -89,10 +89,9 @@ namespace Cozmo {
         }));
       
       // EnableNewFaceEnrollment
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EnableNewFaceEnrollment,
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::SetFaceEnrollmentMode,
         [this] (const AnkiEvent<MessageGameToEngine>& event) {
-          const ExternalInterface::EnableNewFaceEnrollment& msg = event.GetData().Get_EnableNewFaceEnrollment();
-          _visionSystem->EnableNewFaceEnrollment(msg.numToEnroll);
+          _visionSystem->SetFaceEnrollmentMode(event.GetData().Get_SetFaceEnrollmentMode().mode);
         }));
       
       // StartFaceTracking
@@ -117,6 +116,12 @@ namespace Cozmo {
          {
            const ExternalInterface::VisionRunMode& msg = event.GetData().Get_VisionRunMode();
            SetRunMode((msg.isSync ? RunMode::Synchronous : RunMode::Asynchronous));
+         }));
+      
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::EraseFaceByName,
+         [this] (const AnkiEvent<MessageGameToEngine>& event)
+         {
+           _visionSystem->EraseFace(event.GetData().Get_EraseFaceByName().name);
          }));
     }
     

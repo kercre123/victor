@@ -1759,10 +1759,10 @@ namespace Anki {
                       SendMessage(ExternalInterface::MessageGameToEngine(std::move(assignNameToFace)));
                     } else {
                       // No user name, enable enrollment
-                      ExternalInterface::EnableNewFaceEnrollment enableEnrollment;
-                      enableEnrollment.numToEnroll = 1;
+                      ExternalInterface::SetFaceEnrollmentMode setEnrollmentMode;
+                      setEnrollmentMode.mode = Vision::FaceEnrollmentMode::LookingStraight;
                       printf("Enabling enrollment of next face\n");
-                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(enableEnrollment)));
+                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(setEnrollmentMode)));
                     }
                     
                   } else {

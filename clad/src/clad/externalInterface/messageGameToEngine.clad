@@ -27,6 +27,7 @@
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/visionModes.clad"
 #include "clad/types/nvStorageTypes.clad"
+#include "clad/types/faceEnrollmentModes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -463,8 +464,13 @@ message PrepareFaceNameAnimation {
 //   Use numToEnroll = 0 to stop enrollment.
 //   Use numToEnroll = -1 to enable ongoing enrollment.
 //   Use numToEnroll = N to enroll N faces and then turn off automaticall (N=1 is the mostly likely usage)
-message EnableNewFaceEnrollment {
-  int_32 numToEnroll
+message SetFaceEnrollmentMode {
+  Vision::FaceEnrollmentMode mode
+}
+
+// Erase a face by name
+message EraseFaceByName {
+  string name
 }
 
 // SetBehaviorSystemEnabled
