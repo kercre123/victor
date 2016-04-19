@@ -1456,13 +1456,13 @@ namespace Anki {
               case (s32)'@':
               {
                 static bool enable = true;
-                ExternalInterface::SendDiscoveredObjects msg;
+                ExternalInterface::SendAvailableObjects msg;
                 msg.robotID = 1;
                 msg.enable = enable;
                 
-                PRINT_NAMED_INFO("SendDiscoveredObjects", "enable: %d", enable);
+                PRINT_NAMED_INFO("SendAvailableObjects", "enable: %d", enable);
                 ExternalInterface::MessageGameToEngine msgWrapper;
-                msgWrapper.Set_SendDiscoveredObjects(msg);
+                msgWrapper.Set_SendAvailableObjects(msg);
                 SendMessage(msgWrapper);
                 
                 enable = !enable;

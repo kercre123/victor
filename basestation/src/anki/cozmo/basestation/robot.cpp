@@ -3044,7 +3044,7 @@ namespace Anki {
     }
     
     
-    void Robot::BroadcastDiscoveredObjects(bool enable)
+    void Robot::BroadcastAvailableObjects(bool enable)
     {
       _enableDiscoveredObjectsBroadcasting = enable;
     }

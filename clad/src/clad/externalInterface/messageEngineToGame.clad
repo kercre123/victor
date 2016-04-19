@@ -71,9 +71,9 @@ message EngineRobotCLADVersionMismatch {
 
 message ObjectAvailable
 {
-  uint_32      factory_id,
-  ObjectType   type,
-  uint_8       rssi,
+  uint_32     factory_id,
+  ObjectType  type,
+  int_8       rssi,
 }
 
 message ObjectUnavailable
@@ -389,6 +389,7 @@ message UpdateEngineState {
 
 structure BlockPoolBlockData {
   uint_32 id,
+  ObjectType type,
   bool enabled
 }
 

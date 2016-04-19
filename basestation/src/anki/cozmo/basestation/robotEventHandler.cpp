@@ -100,9 +100,9 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     auto delocalizeCallabck = std::bind(&RobotEventHandler::HandleForceDelocalizeRobot, this, std::placeholders::_1);
     _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceDelocalizeRobot, delocalizeCallabck));
     
-    // Custom handler for SendDiscoveredObjects event
-    auto sendDiscoveredObjectsCallback = std::bind(&RobotEventHandler::HandleSendDiscoveredObjects, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SendDiscoveredObjects, sendDiscoveredObjectsCallback));
+    // Custom handler for SendAvailableObjects event
+    auto sendAvailableObjectsCallback = std::bind(&RobotEventHandler::HandleSendAvailableObjects, this, std::placeholders::_1);
+    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SendAvailableObjects, sendAvailableObjectsCallback));
 
     // Custom handler for SaveCalibrationImage event
     auto saveCalibrationImageCallback = std::bind(&RobotEventHandler::HandleSaveCalibrationImage, this, std::placeholders::_1);
@@ -944,11 +944,11 @@ void RobotEventHandler::HandleBehaviorManagerEvent(const AnkiEvent<ExternalInter
   }
 }
 
-void RobotEventHandler::HandleSendDiscoveredObjects(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleSendAvailableObjects(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
 
   const auto& eventData = event.GetData();
-  const auto& message = eventData.Get_SendDiscoveredObjects();
+  const auto& message = eventData.Get_SendAvailableObjects();
   const RobotID_t robotID = message.robotID;
   
   Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
@@ -956,11 +956,11 @@ void RobotEventHandler::HandleSendDiscoveredObjects(const AnkiEvent<ExternalInte
   // We need a robot
   if (nullptr == robot)
   {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleSendDiscoveredObjects.InvalidRobotID", "Failed to find robot %u.", robotID);
+    PRINT_NAMED_WARNING("RobotEventHandler.HandleSendAvailableObjects.InvalidRobotID", "Failed to find robot %u.", robotID);
   }
   else
   {
-    robot->BroadcastDiscoveredObjects(message.enable);
+    robot->BroadcastAvailableObjects(message.enable);
   }
 
 }
