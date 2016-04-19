@@ -11,6 +11,7 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "localization.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/shared/cozmoConfig.h"
 
 
 namespace Anki {
@@ -26,7 +27,6 @@ namespace Anki {
         CliffEvent _cliffMsg;
         TimeStamp_t _pendingCliffEvent = 0;
         TimeStamp_t _pendingUncliffEvent = 0;
-        const u32 CLIFF_EVENT_DELAY_MS = 500;
         
         // Forward prox sensor
         u8 _lastForwardObstacleDetectedDist = FORWARD_COLLISION_SENSOR_LENGTH_MM + 1;
