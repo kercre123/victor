@@ -841,6 +841,14 @@ namespace Anki {
                                                            const bool useManualSpeed)
     : CompoundActionSequential(robot)
     {
+      if(objectID == robot.GetCarryingObject())
+      {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor",
+                            "Robot is currently carrying action object with ID=%d",
+                            objectID.GetValue());
+        return;
+      }
+    
       _driveToObjectAction = new DriveToObjectAction(robot,
                                                      objectID,
                                                      actionType,
