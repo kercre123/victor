@@ -2383,10 +2383,12 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         case ObjectType::Block_LIGHTCUBE3:
         {
           newObject = new ActiveCube(activeID, factoryID);
+          break;
         }
         case ObjectType::Charger_Basic:
         {
           newObject = new Charger(activeID, factoryID);
+          break;
         }
         default:
           PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.UnsupportActiveObjectType", "%s", objTypeStr);
