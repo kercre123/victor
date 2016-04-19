@@ -12,7 +12,11 @@ namespace Cozmo {
     public event InventoryValueChangedHandler ItemRemoved;
     public event InventoryValueChangedHandler ItemCountSet;
 
-    private Dictionary<string, int> _ItemIdToCount;
+    /// <summary>
+    /// DO NOT MODIFY OUTSIDE OF CLASS.
+    /// Public so that serialization for saving works.
+    /// </summary>
+    public Dictionary<string, int> _ItemIdToCount;
 
     public Inventory() {
       _ItemIdToCount = new Dictionary<string, int>();
