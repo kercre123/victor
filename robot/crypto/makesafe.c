@@ -2,6 +2,8 @@
 ** This is a command-line image packager that encrypts to .safe format
 ** Run without arguments for usage information
 */
+#define _CRT_SECURE_NO_WARNINGS
+#include "cube.h"
 #include "crypto.h"
 #include "key.h"
 #include "stdio.h"
@@ -54,7 +56,9 @@ void usage(char* msg, char* arg)
   printf("  Valid options include:\n");
   printf("    -nocrypto  create a clear file for use with #define NO_CRYPTO in opensafe.c\n");
   printf("    -scramble  for testing, scramble and duplicate the order of blocks\n\n");
-  printf("makesafe -opensafe input.safe output.bin\n");
+  printf("makesafe -cube [-option ...] output.safe input.bin\n");
+  printf("  Create a cube image in .safe format - the .bin must be zero-based\n\n");
+  printf("makesafe -opensafe [-cube] input.safe output.bin\n");
   printf("  Decode the .safe file into a binary image of main memory\n");
   exit(1);
 }
@@ -64,7 +68,8 @@ typedef enum {
   OPT_OTA = 4,      // ota flag - if absent, this is a prod build
   OPT_NOCRYPTO = 8,
   OPT_SCRAMBLE = 16,
-  OPT_GUID = 32
+  OPT_GUID = 32,
+  OPT_CUBE = 64
 } cmdline;
 
 // Return bits of the safe image when testing opensafe()
@@ -149,7 +154,7 @@ void safeWriteBlock(FILE *fp, CryptoContext* ctx, safe_header* head, int i, int 
 	    head->blockFlags = i;
 	    if (!m_blockMap[i+1])
 		    head->blockFlags |= BLOCK_FLAG_LAST;
-	    if (!m_blockMap[i+1] || i == 63)	// Set for backward compatibility with old 7128KB fixtures
+	    if (!m_blockMap[i+1] || i == 63)	// Set for backward compatibility with old 128KB fixtures
 		    head->blockFlags |= BLOCK_FLAG_SHORT_LAST;
       CryptoSetupNonce(ctx, (u08p)head);          // The nonce is the first 16-bytes of the header
       CryptoEncryptBytes(ctx, (u08p)srcPtr, (u08p)(head + 1), SAFE_PAYLOAD_SIZE);
@@ -196,6 +201,35 @@ void safeWrite(char* filename, int options)
   fclose(fp);
 
   printf("wrote %d bytes, %d blocks, version 0x%04x, GUID 0x%08x\n", blocks * SAFE_BLOCK_SIZE, blocks, head->guid & 0xffff, head->guid);
+}
+
+// Write a cube image
+void cubeWrite(char* filename, int options)
+{
+  // XXX: Implement a patching mechanism for interrupt vectors (when you need it)
+  // For now, just wipe the interrupt vectors
+  for (int i = 0; i < 128; i++)
+    m_stageImage[i] = 0xFF;
+
+  // Figure out the "version" bitfield - set according to which 1KB blocks have content
+  int version = 0, base = 0;
+  for (int i = CUBE_LEN; i >= 0; i--)
+    if (0xff != (u8)m_stageImage[i]) {
+      version |= 1<<(i>>10);
+      base = i;
+    }
+  
+  // XXX: Once cubeboot is frozen, add the code to change the advertising version pre-encrypt!
+  // Advertising version always gets written last (since we write bytes in order)
+  int len = cubeEncrypt((u8*)m_stageImage, (u8*)m_safeImage, !!(options & OPT_NOCRYPTO));
+  
+  FILE *fp = fopen(filename, "wb");
+  printf("Writing %s...", filename);
+  if (NULL == fp || len != fwrite(m_safeImage, 1, len, fp))
+    bye("could not create file");
+  fclose(fp);
+
+  printf("wrote %d bytes, %d blocks, base 0%04x, version 0x%04x\n", len, len >> 8, base, version);
 }
 
 // Write the requested image
@@ -315,6 +349,8 @@ int main(int argc, char **argv)
         options |= OPT_PKG | OPT_OTA;
       else if (0 == strcmp("-opensafe", *argin))
         options |= OPT_UNSAFE;
+	  else if (0 == strcmp("-cube", *argin))
+        options |= OPT_PKG | OPT_CUBE;
       else if (0 == strcmp("-nocrypto", *argin))
         options |= OPT_NOCRYPTO;
       else if (0 == strcmp("-scramble", *argin))
@@ -331,13 +367,13 @@ int main(int argc, char **argv)
   }
   // Enforce rules for options
   if ((options & OPT_PKG) && (options & OPT_UNSAFE))
-    usage("-prod/-ota/-opensafe are mutually exclusive", NULL);
+    usage("-prod/-ota/-cube/-opensafe are mutually exclusive", NULL);
   else if (!(options & OPT_PKG) && !(options & OPT_UNSAFE))
     usage("No -options specified", NULL);
 
   // Initialize structures
-  memset(m_stageImage, 0, sizeof(m_stageImage));
-  memset(m_verifyImage, 0, sizeof(m_verifyImage));
+  memset(m_stageImage, (options & OPT_CUBE) ? 0xff : 0, sizeof(m_stageImage));
+  memset(m_verifyImage, (options & OPT_CUBE) ? 0xff : 0, sizeof(m_verifyImage));
   memset(m_otaImage, 0, sizeof(m_otaImage));
   memset(m_safeImage, 0, sizeof(m_safeImage));
   memset(m_blockMap, 0, sizeof(m_blockMap));
@@ -346,12 +382,16 @@ int main(int argc, char **argv)
   if (options & OPT_PKG)
   {
     if (argc != 3)
-      usage("-prod/-ota need 2 arguments", NULL);
+      usage("-prod/-cube/-ota need 2 arguments", NULL);
     filelen = load(argv[2], m_stageImage, 0, TARGET_IMAGE_SIZE);
 
 	  if (!(options & OPT_GUID))
 	    m_guid = (getGUID() << 16) + getVersion(argv[1]);   // Generate guid
-	  safeWrite(argv[1], options);     // Write out an encrypted memory image based on m_stageImage
+
+    if (options & OPT_CUBE)
+      cubeWrite(argv[1], options);
+    else
+	    safeWrite(argv[1], options);     // Write out an encrypted memory image based on m_stageImage
 
     // Add OTA if requested
     if (options & OPT_OTA) {
@@ -361,18 +401,22 @@ int main(int argc, char **argv)
   }
 
   // Check args for opensafeing
-  if (options & OPT_UNSAFE && argc != 3)
+  if ((options & OPT_UNSAFE) && argc != 3)
     usage("-opensafe needs 2 arguments", NULL);
 
   // Always attempt to decode the file (even if just to verify the optPackage)
   load(argv[1], m_safeImage, 0, TARGET_IMAGE_SIZE*2);
   printf("Checking the image...\n");
-  opensafe(m_safeImage, m_verifyImage);
+  if (options & OPT_CUBE)
+    openCube((u8*)m_safeImage, (u8*)m_verifyImage);
+  else
+    opensafe(m_safeImage, m_verifyImage);
 
   // If we're decoding, write out the verify image for inspection, else just compare it
   if (options & OPT_UNSAFE) {
     // Wipe out the version info - this will be replaced when we resign it
-    m_verifyImage[0x18] = m_verifyImage[0x19] = m_verifyImage[0x1a] = m_verifyImage[0x1b] = 0;
+    if (!(options & OPT_CUBE))
+      m_verifyImage[0x18] = m_verifyImage[0x19] = m_verifyImage[0x1a] = m_verifyImage[0x1b] = 0;
     writeBin(argv[2], m_verifyImage, TARGET_IMAGE_SIZE);
   } else
     diff(m_stageImage, m_verifyImage, TARGET_IMAGE_SIZE);

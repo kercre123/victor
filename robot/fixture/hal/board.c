@@ -63,23 +63,16 @@ void STM_EVAL_LEDToggle(Led_TypeDef Led)
 
 #include "hal/console.h"
 
-#define PINC_VEXTEN 12  // Also TX, so don't use this on head fixtures!
+#define PINC_VEXTEN 11  // Also TX, so don't use this on head fixtures!
     
 void InitBAT(void)
 {
   GPIO_InitTypeDef  GPIO_InitStructure;
-  GPIO_SetBits(GPIOA, GPIO_Pin_9);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
-  
-  MicroWait(400);
   
   // PINC_VEXTEN - default low (VEXT disabled)
   GPIO_RESET(GPIOC, PINC_VEXTEN);
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStructure.GPIO_Pin = PINC_VEXTEN;
@@ -87,7 +80,7 @@ void InitBAT(void)
   
   // ENBAT_LC, ENBAT, NBATSINK
   GPIO_InitStructure.GPIO_OType = GPIO_OType_OD;
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2; // XXX: No sink anymore | GPIO_Pin_3;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
   
   DisableBAT();
@@ -105,19 +98,25 @@ void DisableVEXT(void)
   PIN_OUT(GPIOC, PINC_VEXTEN);  
 }
 
+static u8 isEnabled = 1;
 void EnableBAT(void)
 {  
-  GPIO_SetBits(GPIOC, GPIO_Pin_3);    // Disable sink (to prevent blowing up the fixture)
+  // XXX: No sink anymore // GPIO_SetBits(GPIOC, GPIO_Pin_3);    // Disable sink (to prevent blowing up the fixture)
   GPIO_ResetBits(GPIOC, GPIO_Pin_2);
+  isEnabled = 1;
 }
 
 void DisableBAT(void)
 {
-  GPIO_SetBits(GPIOC, GPIO_Pin_2);
-  MicroWait(1);
-  GPIO_ResetBits(GPIOC, GPIO_Pin_3);  // Enable sink to quickly discharge any remaining power
-  GPIO_ResetBits(GPIOC, GPIO_Pin_1);  // Sink even more current (down to 0.3V at least)
-  MicroWait(50000);
-  GPIO_SetBits(GPIOC, GPIO_Pin_3);    // Disable sink (to prevent blowing up the fixture)  
-  GPIO_SetBits(GPIOC, GPIO_Pin_1);
+  if (isEnabled)
+  {
+    GPIO_SetBits(GPIOC, GPIO_Pin_2);
+    MicroWait(1);
+  // XXX: No sink anymore //   GPIO_ResetBits(GPIOC, GPIO_Pin_3);  // Enable sink to quickly discharge any remaining power
+    GPIO_ResetBits(GPIOC, GPIO_Pin_1);  // Sink even more current (down to 0.3V at least)
+    MicroWait(50000);
+  // XXX: No sink anymore // GPIO_SetBits(GPIOC, GPIO_Pin_3);    // Disable sink (to prevent blowing up the fixture)  
+    GPIO_SetBits(GPIOC, GPIO_Pin_1);
+  }
+  isEnabled = 0;
 }

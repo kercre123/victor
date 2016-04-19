@@ -415,8 +415,6 @@ namespace Cozmo {
                                   imagePoseStamp.GetPose().GetRotation().GetAngleAroundZaxis(),
                                   DEG_TO_RAD(0.1)));
       
-      std::vector<RotationMatrix3d> histCameraRots = _visionSystem->GetRollingShutterCorrector().PrecomputeHistoricalCameraRotations(_robot, image.GetTimestamp());
-      
       Lock();
       _nextPoseData.poseStamp = imagePoseStamp;
       _nextPoseData.timeStamp = imagePoseStampTimeStamp;
@@ -425,7 +423,6 @@ namespace Cozmo {
       _nextPoseData.groundPlaneVisible = LookupGroundPlaneHomography(_nextPoseData.poseStamp.GetHeadAngle(),
                                                                      _nextPoseData.groundPlaneHomography);
       _nextPoseData.imuDataHistory = _imuHistory;
-      _nextPoseData.historicCameraRots = histCameraRots;
       Unlock();
       
       // Experimental:

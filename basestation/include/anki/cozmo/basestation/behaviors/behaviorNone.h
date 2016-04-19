@@ -36,27 +36,27 @@ public:
   //
   // Abstract methods to be overloaded:
   //
-  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override { return true; }
+  virtual bool IsRunnable(const Robot& robot) const override { return true; }
   
 protected:
   
-  virtual Result InitInternal(Robot& robot, double currentTime_sec) override
+  virtual Result InitInternal(Robot& robot) override
   {
     _isInterrupted = false; return Result::RESULT_OK;
   }
   
-  virtual Status UpdateInternal(Robot& robot, double currentTime_sec) override
+  virtual Status UpdateInternal(Robot& robot) override
   {
     Status retval = _isInterrupted ? Status::Complete : Status::Running;
     return retval;
   }
 
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override
+  virtual Result InterruptInternal(Robot& robot) override
   {
     _isInterrupted = true; return Result::RESULT_OK;
   }
 
-  virtual void StopInternal(Robot& robot, double currentTime_sec) override
+  virtual void StopInternal(Robot& robot) override
   {
   }
   

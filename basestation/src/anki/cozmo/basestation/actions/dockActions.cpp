@@ -140,6 +140,15 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
       
+      if(_dockObjectID == _robot.GetCarryingObject())
+      {
+        PRINT_NAMED_ERROR("IDockAction.Init.CarryingSelectedObject",
+                          "Robot is currently carrying action object with ID=%d",
+                          _dockObjectID.GetValue());
+        _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
+        return ActionResult::FAILURE_ABORT;
+      }
+      
       // select the object so it shows up properly in viz
       _robot.GetBlockWorld().SelectObject(_dockObjectID);
       

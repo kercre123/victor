@@ -328,8 +328,8 @@ namespace AnkiLog
                 while (port.BytesToRead > 0)
                     port.ReadByte();
 
-                // Erase is 7.8s worst case, 3.9s typical case at voltage level 2 * 3 128KB blocks
-                port.ReadTimeout = 8000;
+                // Erase is 7.8s worst case, 6.5s typical case at voltage level 2 * 5 128KB blocks
+                port.ReadTimeout = 13000;
 
                 // Send Tag A
                 int index;

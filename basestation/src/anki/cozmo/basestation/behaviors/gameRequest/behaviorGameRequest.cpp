@@ -59,7 +59,7 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
   });
 }
 
-bool IBehaviorRequestGame::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool IBehaviorRequestGame::IsRunnable(const Robot& robot) const
 {
   const bool hasFace = HasFace(robot);
   const bool ret = IsActing() || hasFace;
@@ -76,13 +76,13 @@ bool IBehaviorRequestGame::IsRunnable(const Robot& robot, double currentTime_sec
   return ret;
 }
 
-Result IBehaviorRequestGame::InitInternal(Robot& robot, double currentTime_sec)
+Result IBehaviorRequestGame::InitInternal(Robot& robot)
 {
   _requestTime_s = -1.0f;
   _robotsBlockID.UnSet();
   _badBlocks.clear();
   
-  return RequestGame_InitInternal(robot, currentTime_sec);
+  return RequestGame_InitInternal(robot);
 }
 
 void IBehaviorRequestGame::SendRequest(Robot& robot)
@@ -187,7 +187,7 @@ bool IBehaviorRequestGame::GetLastBlockPose(Pose3d& pose) const
   return _hasBlockPose;
 }
 
-IBehavior::Status IBehaviorRequestGame::UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status IBehaviorRequestGame::UpdateInternal(Robot& robot)
 {
   ObservableObject* obj = GetClosestBlock(robot);
   if( obj != nullptr ) {
@@ -195,7 +195,7 @@ IBehavior::Status IBehaviorRequestGame::UpdateInternal(Robot& robot, double curr
     _lastBlockPose = obj->GetPose();
   }
   
-  return RequestGame_UpdateInternal(robot, currentTime_sec);
+  return RequestGame_UpdateInternal(robot);
 }
 
 

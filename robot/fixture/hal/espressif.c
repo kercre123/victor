@@ -9,19 +9,18 @@
 #include "hal/espressif.h"
 #include "hal/uart.h"
 
-#define TESTPORT_TX       UART5
-#define TESTPORT_RX       USART3
+#define DUTUART       USART2
 
 // Espressif baudrate detection only knows 'common' baudrates (57600 * 2^n)
 // Note:  BAUD_RATE is unstable beyond 230400
 #define BAUD_RATE         230400
 
-#define PINC_TX           12
-#define GPIOC_TX          (1 << PINC_TX)
-#define PINC_RX           10
-#define GPIOC_RX          (1 << PINC_RX)
+#define PINA_TX           2
+#define GPIOA_TX          (1 << PINA_TX)
+#define PINA_RX           3
+#define GPIOA_RX          (1 << PINA_RX)
 
-#define PINB_BOOT         7
+#define PINA_BOOT         4
 
 // Uncomment the below to see why programming is failing
 // #define ESP_DEBUG
@@ -93,71 +92,60 @@ static const FlashLoadLocation ESPRESSIF_ROMS[] = {
 
 void InitEspressif(void)
 {
-  // Pull PB7 (CS#) low.  This MUST happen before ProgramEspressif()
+  // Clock configuration
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
+  
+  // Pull PA4 (CS#) low.  This MUST happen before ProgramEspressif()
   GPIO_InitTypeDef GPIO_InitStructure;
-  GPIO_ResetBits(GPIOB, GPIO_Pin_7);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_7;
+  GPIO_ResetBits(GPIOA, GPIO_Pin_4);
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-  // Clock configuration
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
-  RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART5, ENABLE);
-  
   // Reset the UARTs since they tend to clog with framing errors
-  RCC_APB1PeriphResetCmd(RCC_APB1Periph_USART3, ENABLE);
-  RCC_APB1PeriphResetCmd(RCC_APB1Periph_UART5, ENABLE);
-  RCC_APB1PeriphResetCmd(RCC_APB1Periph_USART3, DISABLE);
-  RCC_APB1PeriphResetCmd(RCC_APB1Periph_UART5, DISABLE);
-
+  RCC_APB1PeriphResetCmd(RCC_APB1Periph_USART2, ENABLE);
+  RCC_APB1PeriphResetCmd(RCC_APB1Periph_USART2, DISABLE);
+  
   USART_InitTypeDef USART_InitStructure;
 
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_Pin =  GPIOC_TX;
+  GPIO_InitStructure.GPIO_Pin =  GPIOA_TX;
   GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOC, PINC_TX, GPIO_AF_UART5);
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  GPIO_PinAFConfig(GPIOA, PINA_TX, GPIO_AF_USART2);
   
-  GPIO_InitStructure.GPIO_Pin =  GPIOC_RX;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOC, PINC_RX, GPIO_AF_USART3);
+  GPIO_InitStructure.GPIO_Pin =  GPIOA_RX;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  GPIO_PinAFConfig(GPIOA, PINA_RX, GPIO_AF_USART2);
   
-  // TESTPORT_TX config
-  USART_Cmd(TESTPORT_TX, DISABLE);
+  // DUTUART config
+  USART_Cmd(DUTUART, DISABLE);
   USART_InitStructure.USART_BaudRate = BAUD_RATE;
   USART_InitStructure.USART_WordLength = USART_WordLength_8b;
   USART_InitStructure.USART_StopBits = USART_StopBits_1;
   USART_InitStructure.USART_Parity = USART_Parity_No;
   USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-  USART_InitStructure.USART_Mode = USART_Mode_Tx;
-  USART_Init(TESTPORT_TX, &USART_InitStructure);
-  USART_Cmd(TESTPORT_TX, ENABLE);
+  USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
+  USART_Init(DUTUART, &USART_InitStructure);
+  USART_Cmd(DUTUART, ENABLE);
   
-  // TESTPORT_RX config
-  USART_Cmd(TESTPORT_RX, DISABLE);
-  
-  USART_InitStructure.USART_Mode = USART_Mode_Rx;
-  USART_Init(TESTPORT_RX, &USART_InitStructure);  
-  USART_Cmd(TESTPORT_RX, ENABLE);
-      
-  USART_HalfDuplexCmd(TESTPORT_RX, ENABLE);  // Enable the pin for transmitting and receiving
-
-  PIN_AF(GPIOC, PINC_TX);
-  PIN_AF(GPIOC, PINC_RX);
+  //PIN_AF(GPIOA, PINA_TX);
+  //PIN_AF(GPIOA, PINA_RX);
 }
 
 void DeinitEspressif(void)
 {
   // Don't leave the Espressif powered, that's mean
-  PIN_IN(GPIOC, PINC_TX);
+  PIN_IN(GPIOA, PINA_TX);
   
-  // XXX: I'm at a loss who is driving PINB_BOOT high - but make sure it's not!
-  GPIO_RESET(GPIOB, PINB_BOOT);
+  // XXX: I'm at a loss who is driving PINA_BOOT high - but make sure it's not!
+  GPIO_RESET(GPIOA, PINA_BOOT);
 }
 
 static inline int BlockCount(int length) {
@@ -167,19 +155,19 @@ static inline int BlockCount(int length) {
 // Send a character over the test port
 static inline void ESPPutChar(u8 c)
 {    
-  while (!(TESTPORT_TX->SR & USART_FLAG_TXE)) ;
-  TESTPORT_TX->DR = c;
+  while (!(DUTUART->SR & USART_FLAG_TXE)) ;
+  DUTUART->DR = c;
 }
 
 static inline int ESPGetChar(int timeout = -1)
 {
   int countdown = timeout + getMicroCounter();
   
-  TESTPORT_RX->SR = 0;
+  DUTUART->SR = 0;
 
   while (timeout < 0 || countdown > getMicroCounter()) {
-    if (TESTPORT_RX->SR & USART_SR_RXNE) {
-      return TESTPORT_RX->DR & 0xFF;
+    if (DUTUART->SR & USART_SR_RXNE) {
+      return DUTUART->DR & 0xFF;
     }
   }
 

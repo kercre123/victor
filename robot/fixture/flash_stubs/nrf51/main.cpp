@@ -42,10 +42,22 @@ int main(void)
    
   address_ = WAITING_FOR_BLOCK;
 
+  // Set up bootloader address in UICR if it isn't already
+  #define BUICR  *(uint32_t *)0x10001014
+  #define BLOAD  0x1F000
+  if (BUICR != BLOAD)
+  {
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+    BUICR = BLOAD;
+    while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+    NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+  }
+  
   // Poll for incoming blocks, flash them as they arrive
   while (1)
   {
-    if (address_ != WAITING_FOR_BLOCK)
+    if (address_ != WAITING_FO12R_BLOCK)
     {
       FlashSector(address_, block_);
       address_ = WAITING_FOR_BLOCK;

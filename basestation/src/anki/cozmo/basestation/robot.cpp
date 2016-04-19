@@ -830,7 +830,7 @@ namespace Anki {
       static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
       if(_isBehaviorMgrEnabled && ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
       {
-        _behaviorMgr.Update(currentTime);
+        _behaviorMgr.Update();
         
         const IBehavior* behavior = _behaviorMgr.GetCurrentBehavior();
         if(behavior != nullptr) {

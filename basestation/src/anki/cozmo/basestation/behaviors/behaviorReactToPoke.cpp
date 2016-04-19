@@ -11,12 +11,14 @@
  **/
 
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
+
+#include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -62,20 +64,22 @@ BehaviorReactToPoke::BehaviorReactToPoke(Robot& robot, const Json::Value& config
   
 }
 
-bool BehaviorReactToPoke::IsRunnable(const Robot& robot, double currentTime_sec) const
+bool BehaviorReactToPoke::IsRunnable(const Robot& robot) const
 {
   return true;
 }
 
-Result BehaviorReactToPoke::InitInternal(Robot& robot, double currentTime_sec)
+Result BehaviorReactToPoke::InitInternal(Robot& robot)
 {
   robot.GetActionList().Cancel(RobotActionType::TRACK_FACE);
   robot.GetActionList().Cancel(RobotActionType::TRACK_OBJECT);
   return Result::RESULT_OK;
 }
 
-IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double currentTime_sec)
+IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot)
 {
+  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
   if (_isActing) {
     return Status::Running;
   }
@@ -153,7 +157,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot, double curre
   return Status::Running;
 } 
   
-Result BehaviorReactToPoke::InterruptInternal(Robot& robot, double currentTime_sec)
+Result BehaviorReactToPoke::InterruptInternal(Robot& robot)
 {
   // We don't want to be interrupted unless we're done reacting
   if (State::Inactive != _currentState)
@@ -163,7 +167,7 @@ Result BehaviorReactToPoke::InterruptInternal(Robot& robot, double currentTime_s
   return Result::RESULT_OK;
 }
 
-void BehaviorReactToPoke::StopInternal(Robot& robot, double currentTime_sec)
+void BehaviorReactToPoke::StopInternal(Robot& robot)
 {
 }
 

@@ -10,12 +10,15 @@
 
 #include "app/binaries.h"
 #include "app/fixture.h"
+#include "hal/monitor.h"
 
-#define GPIOB_SWD   0
+#define GPIOB_SWD   10
 
 // Return true if device is detected on contacts
 bool HeadDetect(void)
 {
+  VBATMillivolts(3600);   // 3.6V is good for heads
+  
   // XXX: HORRIBLE EP1 HACK TIME - if we leave battery power enabled, the CPU will pull SWD high
   // Main problem is that power is always enabled, not exactly what we want
   EnableBAT();
