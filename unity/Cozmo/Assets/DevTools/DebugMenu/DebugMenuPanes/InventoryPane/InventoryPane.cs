@@ -14,9 +14,9 @@ public class InventoryPane : MonoBehaviour {
   UnityEngine.UI.InputField _Treats;
 
   void Start() {
-    _GreenPoints.text = DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints.ToString();
-    _GreenLadderLevel.text = DataPersistenceManager.Instance.CurrentSession.GreenPointsLadderLevel.ToString();
-    _Treats.text = DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount.ToString();
+    //_GreenPoints.text = DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints.ToString();
+    _GreenLadderLevel.text = DataPersistenceManager.Instance.CurrentSession.ChestsGained.ToString();
+    //_Treats.text = DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount.ToString();
 
     _GreenPoints.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
     _GreenLadderLevel.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
@@ -32,14 +32,14 @@ public class InventoryPane : MonoBehaviour {
   }
 
   private void GreenPointsChanged(string newValue) {
-    PlayerManager.Instance.SetGreenPoints(int.Parse(newValue));
+    // PlayerManager.Instance.SetGreenPoints(int.Parse(newValue));
   }
 
   private void GreenLadderLevelChanged(string newValue) {
-    DataPersistenceManager.Instance.CurrentSession.GreenPointsLadderLevel = int.Parse(newValue);
+    DataPersistenceManager.Instance.CurrentSession.ChestsGained = int.Parse(newValue);
   }
 
   private void TreatsChanged(string newValue) {
-    DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount = int.Parse(newValue);
+    // DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount = int.Parse(newValue);
   }
 }

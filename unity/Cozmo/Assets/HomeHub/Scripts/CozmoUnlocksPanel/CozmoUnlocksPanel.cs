@@ -15,17 +15,13 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private GameObject _UnlocksTilePrefab;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _SparksLabel;
-
-  [SerializeField]
   private Anki.UI.AnkiTextLabel _HexLabel;
 
   void Start() { 
     LoadTiles();
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleRequestSetUnlockResult;
 
-    // TODO: Get value from inventory or make a new component that works with AnkiTextLabel directly
-    _SparksLabel.FormattingArgs = new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount };
+    // TODO: Get # hex pieces based on all the item ids in HexPieceMap
     _HexLabel.FormattingArgs = new object[] { DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces };
   }
 

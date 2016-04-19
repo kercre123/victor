@@ -2,7 +2,6 @@
 using System.Collections;
 
 namespace Cozmo {
-  [CreateAssetMenu]
   public class ShaderHolder : ScriptableObject {
 
     private static ShaderHolder _sInstance;

@@ -3,15 +3,16 @@ using System.Collections;
 using System;
 
 public class ChestData : ScriptableObject {
-  // INGO TODO delete this
-  public LadderLevel[] GreenPointMaxLadder;
-  public LadderLevel[] TreatRewardLadder;
-  // TODO: Eventually replace this with Level, HexPeiceCount, HexValue when
-  // we have multiple hex types.
-  public LadderLevel[] HexRewardLadder;
+  private static ChestData _sInstance;
 
+  public static void SetInstance(ChestData instance) {
+    _sInstance = instance;
+  }
 
-  // INGO
+  public static ChestData Instance {
+    get { return _sInstance; }
+  }
+
   public Ladder RequirementLadder;
   public Ladder[] RewardLadders;
 }

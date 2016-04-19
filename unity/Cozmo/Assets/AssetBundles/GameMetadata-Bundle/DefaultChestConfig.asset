@@ -11,14 +11,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17823566cff2e44afb8716a55e378104, type: 3}
   m_Name: DefaultChestConfig
   m_EditorClassIdentifier: 
-  GreenPointMaxLadder:
-  - Level: 0
-    Value: 100
-  - Level: 5
-    Value: 150
-  TreatRewardLadder:
-  - Level: 0
-    Value: 10
-  HexRewardLadder:
-  - Level: 0
-    Value: 2
+  RequirementLadder:
+    ItemId: experience
+    LadderLevels:
+    - Level: 0
+      Value: 10
+    - Level: 4
+      Value: 20
+    - Level: 8
+      Value: 30
+    - Level: 12
+      Value: 40
+    - Level: 15
+      Value: 50
+  RewardLadders:
+  - ItemId: treat
+    LadderLevels:
+    - Level: 0
+      Value: 1
+    - Level: 5
+      Value: 2
+    - Level: 10
+      Value: 3
