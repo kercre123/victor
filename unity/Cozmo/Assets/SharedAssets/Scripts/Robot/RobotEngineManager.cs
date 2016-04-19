@@ -695,7 +695,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-	private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.ObjectUnavailable message) {
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.ObjectUnavailable message) {
     if (OnObjectUnavailableMsg != null) {
       OnObjectUnavailableMsg(message);
     }

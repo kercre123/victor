@@ -21,14 +21,14 @@ public class BlockPoolPane : MonoBehaviour {
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
 
   private class BlockData {
-	public BlockData(Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength, Button btn) {
-	  this.ObjectType = type;
+    public BlockData(Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength, Button btn) {
+      this.ObjectType = type;
       this.IsEnabled = is_enabled;
       this.SignalStrength = signal_strength;
       this.Btn = btn;
     }
 
-	public Anki.Cozmo.ObjectType ObjectType { get; set; }
+    public Anki.Cozmo.ObjectType ObjectType { get; set; }
 
     public bool IsEnabled { get; set; }
 
@@ -72,7 +72,7 @@ public class BlockPoolPane : MonoBehaviour {
     for (int i = 0; i < initMsg.blockData.Length; ++i) {
       // Never get an rssi value for things that were previously connected and won't be discovered 
       // if they connected to something else properly, so just indicate with a 0.
-	  AddButton(initMsg.blockData[i].id, initMsg.blockData[i].type, initMsg.blockData[i].enabled, 0);
+      AddButton(initMsg.blockData[i].id, initMsg.blockData[i].type, initMsg.blockData[i].enabled, 0);
     }
     // The first one gets previous ones serialized that may or may exist, this message gets the one we see.
     RobotEngineManager.Instance.OnObjectAvailableMsg += HandleObjectAvailableMsg;
@@ -92,15 +92,15 @@ public class BlockPoolPane : MonoBehaviour {
   }
 
   private void HandleObjectAvailableMsg(Anki.Cozmo.ExternalInterface.ObjectAvailable objAvailableMsg) {
-	switch (objAvailableMsg.type) {
-	  case Anki.Cozmo.ObjectType.Block_LIGHTCUBE1:
-	  case Anki.Cozmo.ObjectType.Block_LIGHTCUBE2:
-	  case Anki.Cozmo.ObjectType.Block_LIGHTCUBE3:
-		AddButton (objAvailableMsg.factory_id, objAvailableMsg.type, false, objAvailableMsg.rssi);
-		break;
-	  default:
-		break;
-	}
+    switch (objAvailableMsg.type) {
+    case Anki.Cozmo.ObjectType.Block_LIGHTCUBE1:
+    case Anki.Cozmo.ObjectType.Block_LIGHTCUBE2:
+    case Anki.Cozmo.ObjectType.Block_LIGHTCUBE3:
+      AddButton(objAvailableMsg.factory_id, objAvailableMsg.type, false, objAvailableMsg.rssi);
+      break;
+    default:
+      break;
+    }
   }
 
   // haven't heard from this block in 10 seconds, remove it.
@@ -164,7 +164,7 @@ public class BlockPoolPane : MonoBehaviour {
       Text txt = data.Btn.GetComponentInChildren<Text>();
       if (txt) {
         txt.text = "ID: " + id.ToString("X") + " \n " +
-		"type: " + data.ObjectType + "\n" +	
+        "type: " + data.ObjectType + "\n" +
         "enabled: " + (data.IsEnabled ? "Y" : "N") + "\n" +
         "rssi: " + data.SignalStrength;
       }
