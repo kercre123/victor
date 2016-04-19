@@ -6,19 +6,34 @@ public class HexMap {
   private Dictionary<Coord, PuzzlePiece> _OccupancyMap = new Dictionary<Coord, PuzzlePiece>();
   private HexSet _Map;
 
-  // determines if hexItem at coord can fit inside of _Map.
-  public bool CanAdd(PuzzlePiece hexItem, Coord coord) {
-    return false;
-  }
-
-  // actually attempts to add hexItem at coord. returns false
-  // if it does not fit. returns true when it has been successfully
-  // added to _Map
-  public bool TryAdd(PuzzlePiece hexItem, Coord coord) {
-    if (!CanAdd(hexItem, coord)) {
+  public bool TryRemove(Coord mapCoord) {
+    if (!_OccupancyMap.ContainsKey(mapCoord)) {
       return false;
     }
-    _OccupancyMap.Add(coord, hexItem);
+
+    HashSet<Coord> toRemoveLocalCoords = _OccupancyMap[mapCoord].PieceData.HexSet.HexSetData;
+    foreach (Coord localCoord in toRemoveLocalCoords) {
+      _OccupancyMap.Remove(localCoord + _OccupancyMap[mapCoord].MapPosition);
+    }
+    return true;
+  }
+
+  public bool CanAdd(PuzzlePiece hexItem, Coord mapCoord) {
+    foreach (Coord localCoord in hexItem.PieceData.HexSet.HexSetData) {
+      if (_OccupancyMap.ContainsKey(mapCoord + localCoord)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public bool TryAdd(PuzzlePiece hexItem, Coord mapCoord) {
+    if (!CanAdd(hexItem, mapCoord)) {
+      return false;
+    }
+    foreach (Coord localCoord in hexItem.PieceData.HexSet.HexSetData) {
+      _OccupancyMap.Add(mapCoord + localCoord, hexItem);
+    }
     return true;
   }
 }

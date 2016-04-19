@@ -2,5 +2,5 @@
 using System.Collections;
 
 public class HexItemList : ScriptableObject {
-  public PuzzlePiece[] HexItems;
+  public PuzzlePieceData[] HexItems;
 }
