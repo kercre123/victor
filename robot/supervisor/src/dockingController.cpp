@@ -606,9 +606,11 @@ namespace Anki {
           mode_ = APPROACH_FOR_DOCK;
         }
 
-
-
+        
         Result retVal = RESULT_OK;
+        
+        // There are some special cases for aligning with a block
+        const bool isAligning = PickAndPlaceController::GetCurAction() == DA_ALIGN;
 
         switch(mode_)
         {
@@ -751,7 +753,7 @@ namespace Anki {
                    failureMode_ != HANNS_MANEUVER &&
                    dockingToBlockOnGround &&
                    !PickAndPlaceController::IsCarryingBlock() &&
-                   PickAndPlaceController::GetCurAction() != DA_ALIGN)
+                   !isAligning)
                 {
                   SendDockingStatusMessage(STATUS_DOING_HANNS_MANEUVER);
                   AnkiDebug( 5, "DockingController", 425, "Executing Hanns maneuver", 0);
@@ -795,7 +797,7 @@ namespace Anki {
                 }
                 // Special case for DA_ALIGN - will occur if we are in position for hanns maneuver then we won't do it
                 // and just succeed
-                else if(PickAndPlaceController::GetCurAction() == DA_ALIGN && doHannsManeuver)
+                else if(isAligning && doHannsManeuver)
                 {
                   StopDocking(DOCK_SUCCESS);
                 }
@@ -824,12 +826,14 @@ namespace Anki {
                   dockSpeed_mmps_ = DOCKSPEED_ON_FAILURE_MMPS;
                   dockDecel_mmps2_ = DOCKDECEL_ON_FAILURE_MMPS2;
                   
+                  // Raise the lift if rolling, don't do anything to the lift if aligning or carrying a block, everything else
+                  // we want to lower the lift when backing up
                   if(PickAndPlaceController::GetCurAction() == DA_ROLL_LOW)
                   {
                     LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                   }
-                  else if(PickAndPlaceController::GetCurAction() != DA_ALIGN &&
-                          PickAndPlaceController::GetCurAction() != DA_PLACE_HIGH)
+                  else if(!isAligning &&
+                          !PickAndPlaceController::IsCarryingBlock())
                   {
                     LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, 0.25, 0.25, 1);
                   }
