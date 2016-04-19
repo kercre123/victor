@@ -42,12 +42,12 @@ extern uesb_mainstate_t  m_uesb_mainstate;
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
   ADVERTISE_ADDRESS,
-	sizeof(AdvertisePacket)
+  sizeof(AdvertisePacket)
 };
 
 static const uesb_address_desc_t NoiseAddress = {
-	1,
-	0xE7E7E7E7	
+  1,
+  0xE7E7E7E7	
 };
 
 // Variables for talking to an accessory
@@ -162,21 +162,21 @@ void uesb_event_handler(uint32_t flags)
       SendObjectConnectionState(slot);
     }
 
-		// Send a pairing packet		
-		{
-			
-			uesb_address_desc_t address = {
-				ADV_CHANNEL,
-				packet.id,
-			};
-			memcpy(&accessories[slot].address, &address, sizeof(address));
+    // Send a pairing packet
+    {
+      
+      uesb_address_desc_t address = {
+        ADV_CHANNEL,
+        packet.id,
+      };
+      memcpy(&accessories[slot].address, &address, sizeof(address));
 
-			CapturePacket pair;
-			// TODO: CONFIGURE HERE
+      CapturePacket pair;
+      // TODO: CONFIGURE HERE
 
-			uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
-		}
-		break ;
+      uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
+    }
+    break ;
     
   case RADIO_TALKING:
     AccessorySlot* acc = &accessories[currentAccessory];
@@ -270,9 +270,9 @@ void Radio::prepare(void* userdata) {
 
   AccessorySlot* acc = &accessories[currentAccessory];
 
-	// XXX: This is temporary
-	acc->last_received = 0;
-	
+  // XXX: This is temporary
+  acc->last_received = 0;
+
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
     // We send the previous LED state (so we don't get jitter on radio)
     uesb_address_desc_t& address = accessories[currentAccessory].address;

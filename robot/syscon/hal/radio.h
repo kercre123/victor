@@ -54,22 +54,22 @@ struct AccessorySlot {
 
 __packed struct AdvertisePacket {
   uint32_t id;
-	uint16_t type;
-	uint8_t  hardware_ver;
-	uint8_t	 firmware_ver;
-	uint16_t _reserved;
+  uint16_t type;
+  uint8_t  hardware_ver;
+  uint8_t	 firmware_ver;
+  uint16_t _reserved;
 };
 
 __packed struct CapturePacket {
-	uint16_t ticksUntilStart;
-	uint8_t  hopIndex;
-	uint8_t  hopBlackout;
-	uint8_t  ticksPerBeat;
-	uint8_t  beatsPerHandshake;
-	uint8_t  ticksToListen;
-	uint8_t  ticksToTurn;
-	uint8_t  beatsPerRead;
-	uint8_t  beatsUntilRead;
+  uint16_t ticksUntilStart;
+  uint8_t  hopIndex;
+  uint8_t  hopBlackout;
+  uint8_t  ticksPerBeat;
+  uint8_t  beatsPerHandshake;
+  uint8_t  ticksToListen;
+  uint8_t  ticksToTurn;
+  uint8_t  beatsPerRead;
+  uint8_t  beatsUntilRead;
 };
 
 namespace Radio {
