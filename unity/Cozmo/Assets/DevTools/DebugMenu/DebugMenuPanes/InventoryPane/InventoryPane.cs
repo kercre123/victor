@@ -16,6 +16,8 @@ public class InventoryPane : MonoBehaviour {
   [SerializeField]
   UnityEngine.UI.InputField _HexPoints;
 
+  // TODO: Allow add / remove any item
+  // TODO: Add shortcut buttons for common items (treats, experience)
   void Start() {
     // _GreenPoints.text = DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints.ToString();
     _GreenPoints.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
