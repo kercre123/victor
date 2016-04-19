@@ -62,7 +62,8 @@ void configure_engine(Json::Value config)
 int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_data)
 {
   //Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({new Util::SosLoggerProvider(), new Util::DasLoggerProvider()});
-  //Anki::Util::gLoggerProvider = loggerProvider;
+  Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
+  Anki::Util::gLoggerProvider = loggerProvider;
   PRINT_NAMED_INFO("CSharpBinding.cozmo_game_create", "engine creating engine");
 
   //dataPlatform = CreateDataPlatform();
