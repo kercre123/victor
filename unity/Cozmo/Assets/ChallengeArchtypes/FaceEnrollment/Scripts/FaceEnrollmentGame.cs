@@ -50,7 +50,7 @@ namespace FaceEnrollment {
 
     private void LookForNewFaceToEnroll() {
       ResetPose();
-      CurrentRobot.EnableNewFaceEnrollment();
+      CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.LookingStraight);
     }
 
     public void EnrollFace(string nameForFace) {

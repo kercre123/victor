@@ -842,9 +842,9 @@ public class Robot : IRobot {
     _RobotCallbacks.Clear();
   }
 
-  public void EnableNewFaceEnrollment(int numToEnroll = 1) {
-    DAS.Debug(this, "Enable new face enrollment: " + numToEnroll);
-    RobotEngineManager.Instance.Message.EnableNewFaceEnrollment = Singleton<EnableNewFaceEnrollment>.Instance.Initialize(numToEnroll);
+  public void SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode mode) {
+    DAS.Debug(this, "Setting face enrollment to " + mode);
+    RobotEngineManager.Instance.Message.SetFaceEnrollmentMode = Singleton<SetFaceEnrollmentMode>.Instance.Initialize(mode);
     RobotEngineManager.Instance.SendMessage();
   }
 

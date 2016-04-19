@@ -21,11 +21,14 @@ public class BlockPoolPane : MonoBehaviour {
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
 
   private class BlockData {
-    public BlockData(bool is_enabled, sbyte signal_strength, Button btn) {
+    public BlockData(Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength, Button btn) {
+      this.ObjectType = type;
       this.IsEnabled = is_enabled;
       this.SignalStrength = signal_strength;
       this.Btn = btn;
     }
+
+    public Anki.Cozmo.ObjectType ObjectType { get; set; }
 
     public bool IsEnabled { get; set; }
 
@@ -69,35 +72,43 @@ public class BlockPoolPane : MonoBehaviour {
     for (int i = 0; i < initMsg.blockData.Length; ++i) {
       // Never get an rssi value for things that were previously connected and won't be discovered 
       // if they connected to something else properly, so just indicate with a 0.
-      AddButton(initMsg.blockData[i].id, initMsg.blockData[i].enabled, 0);
+      AddButton(initMsg.blockData[i].id, initMsg.blockData[i].type, initMsg.blockData[i].enabled, 0);
     }
     // The first one gets previous ones serialized that may or may exist, this message gets the one we see.
-    RobotEngineManager.Instance.OnObjectDiscoveredMsg += HandleObjectDiscoveredMsg;
-    RobotEngineManager.Instance.OnObjectUndiscoveredMsg -= HandleObjectUndiscoveredMsg;
-    SendDiscoveredObjects(true);
+    RobotEngineManager.Instance.OnObjectAvailableMsg += HandleObjectAvailableMsg;
+    RobotEngineManager.Instance.OnObjectUnavailableMsg += HandleObjectUnavailableMsg;
+    SendAvailableObjects(true);
   }
 
   void OnDestroy() {
     RobotEngineManager.Instance.OnInitBlockPoolMsg -= HandleInitBlockPool;
-    RobotEngineManager.Instance.OnObjectDiscoveredMsg -= HandleObjectDiscoveredMsg;
-    RobotEngineManager.Instance.OnObjectUndiscoveredMsg -= HandleObjectUndiscoveredMsg;
-    SendDiscoveredObjects(false);
+    RobotEngineManager.Instance.OnObjectAvailableMsg -= HandleObjectAvailableMsg;
+    RobotEngineManager.Instance.OnObjectUnavailableMsg -= HandleObjectUnavailableMsg;
+    SendAvailableObjects(false);
     // clear the lights we've turned blue to show connections
     foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
       kvp.Value.SetLEDs(0, 0, 0, 0);
     }
   }
 
-  private void HandleObjectDiscoveredMsg(Anki.Cozmo.ObjectDiscovered objDiscoveredMsg) {
-    AddButton(objDiscoveredMsg.factory_id, false, objDiscoveredMsg.rssi);
+  private void HandleObjectAvailableMsg(Anki.Cozmo.ExternalInterface.ObjectAvailable objAvailableMsg) {
+    switch (objAvailableMsg.type) {
+    case Anki.Cozmo.ObjectType.Block_LIGHTCUBE1:
+    case Anki.Cozmo.ObjectType.Block_LIGHTCUBE2:
+    case Anki.Cozmo.ObjectType.Block_LIGHTCUBE3:
+      AddButton(objAvailableMsg.factory_id, objAvailableMsg.type, false, objAvailableMsg.rssi);
+      break;
+    default:
+      break;
+    }
   }
 
   // haven't heard from this block in 10 seconds, remove it.
-  private void HandleObjectUndiscoveredMsg(Anki.Cozmo.ObjectUndiscovered objUnDiscoveredMsg) {
+  private void HandleObjectUnavailableMsg(Anki.Cozmo.ExternalInterface.ObjectUnavailable objUnAvailableMsg) {
     BlockPoolPane.BlockData data;
-    if (_BlockStates.TryGetValue(objUnDiscoveredMsg.factory_id, out data)) {
+    if (_BlockStates.TryGetValue(objUnAvailableMsg.factory_id, out data)) {
       Destroy(data.Btn.gameObject);
-      _BlockStates.Remove(objUnDiscoveredMsg.factory_id);
+      _BlockStates.Remove(objUnAvailableMsg.factory_id);
     }
   }
 
@@ -115,12 +126,12 @@ public class BlockPoolPane : MonoBehaviour {
     }
   }
 
-  private void SendDiscoveredObjects(bool enable) {
-    // Will get a series of "Object Discovered" messages that represent blocks cozmo has "Heard" to connect to
-    G2U.SendDiscoveredObjects msg = new G2U.SendDiscoveredObjects();
+  private void SendAvailableObjects(bool enable) {
+    // Will get a series of "Object Available" messages that represent blocks cozmo has "Heard" to connect to
+    G2U.SendAvailableObjects msg = new G2U.SendAvailableObjects();
     msg.enable = enable;
     msg.robotID = (byte)RobotEngineManager.Instance.CurrentRobotID;
-    RobotEngineManager.Instance.Message.SendDiscoveredObjects = msg;
+    RobotEngineManager.Instance.Message.SendAvailableObjects = msg;
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -130,12 +141,12 @@ public class BlockPoolPane : MonoBehaviour {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  private void AddButton(uint id, bool is_enabled, sbyte signal_strength) {
+  private void AddButton(uint id, Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength) {
     BlockPoolPane.BlockData data;
     if (!_BlockStates.TryGetValue(id, out data)) {
       GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, _UIContainer);
       Button btn = gameObject.GetComponent<Button>();
-      data = new BlockPoolPane.BlockData(is_enabled, signal_strength, btn);
+      data = new BlockPoolPane.BlockData(type, is_enabled, signal_strength, btn);
       _BlockStates.Add(id, data);
       UpdateButton(id);
       btn.onClick.AddListener(() => HandleButtonClick(id));
@@ -153,6 +164,7 @@ public class BlockPoolPane : MonoBehaviour {
       Text txt = data.Btn.GetComponentInChildren<Text>();
       if (txt) {
         txt.text = "ID: " + id.ToString("X") + " \n " +
+        "type: " + data.ObjectType + "\n" +
         "enabled: " + (data.IsEnabled ? "Y" : "N") + "\n" +
         "rssi: " + data.SignalStrength;
       }
