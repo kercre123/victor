@@ -10,6 +10,8 @@ public class SkillSystem {
 
   private static SkillSystem _sInstance;
 
+  public event System.Action<int> OnLevelUp;
+
   private SkillSystem() {
     GameEventManager.Instance.OnGameEvent += HandleGameEvent;
   }
@@ -29,8 +31,8 @@ public class SkillSystem {
     _CurrChallengeData = data;
   }
 
-  public void EndGame(ChallengeData data) { 
-    //_CurrChallengeData = null;
+  public void EndGame() { 
+    _CurrChallengeData = null;
   }
 
   private GameSkillData GetSkillDataForGame() {
@@ -64,16 +66,32 @@ public class SkillSystem {
         if (skill_level_config != null) {
           // Reset the for next calculation if our percent has changed.
           float point_total = (float)(curr_skill_data.WinPointsTotal + curr_skill_data.LossPointsTotal);
-          float win_percent = (curr_skill_data.WinPointsTotal / point_total);
-          DAS.Warn("SkillSystem.EvaluateLevelChangeEvent Point Total", "SkillSystem.EvaluateLevelChangeEvent2 " + point_total);
-          DAS.Warn("SkillSystem.EvaluateLevelChangeEvent Point Percent", "SkillSystem.EvaluateLevelChangeEvent3 " + win_percent);
-          DAS.Warn("SkillSystem.EvaluateLevelChangeEvent Level Up threshold", "SkillSystem.EvaluateLevelChangeEvent3 " + skill_level_config.LevelUpMinThreshold);
-          if (win_percent > skill_level_config.LevelUpMinThreshold) {
-            // TODO: if new high, put in an optional popup here.
-            curr_skill_data.ChangeLevel(curr_skill_data.LastLevel + 1);
+          // Only evaluate after a certain number of points scored.
+          bool threshold_passed = true;
+          if (skill_config.UsePointThreshold && skill_config.ComparedPointThreshold < point_total) {
+            threshold_passed = false;
           }
-          if (win_percent < skill_level_config.LevelDownMaxThreshold) {
-            curr_skill_data.ChangeLevel(curr_skill_data.LastLevel - 1);
+          if (threshold_passed) {
+            float win_percent = (curr_skill_data.WinPointsTotal / point_total);
+            // We're losing too much, level up
+            if (win_percent > skill_level_config.LevelUpMinThreshold) {
+              //  if new high, let the player know
+              if (curr_skill_data.LastLevel + 1 < skill_config.GetMaxLevel()) {
+                bool new_highest_level = curr_skill_data.LastLevel == curr_skill_data.HighestLevel;
+                curr_skill_data.ChangeLevel(curr_skill_data.LastLevel + 1);
+              
+                DAS.Event("game.cozmoskill.levelup", _CurrChallengeData.ChallengeID, null, 
+                  DASUtil.FormatExtraData(curr_skill_data.LastLevel.ToString() + "," + curr_skill_data.HighestLevel.ToString()));
+                if (OnLevelUp != null && new_highest_level) {
+                  OnLevelUp(curr_skill_data.LastLevel);
+                }
+              }
+            }
+            else if (win_percent < skill_level_config.LevelDownMaxThreshold) {
+              curr_skill_data.ChangeLevel(curr_skill_data.LastLevel - 1);
+              DAS.Event("game.cozmoskill.leveldown", _CurrChallengeData.ChallengeID, null, 
+                DASUtil.FormatExtraData(curr_skill_data.LastLevel.ToString() + "," + curr_skill_data.HighestLevel.ToString()));
+            }
           }
         }
       }

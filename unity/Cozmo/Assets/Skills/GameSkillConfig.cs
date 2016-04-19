@@ -65,9 +65,25 @@ public class GameSkillConfig {
     get { return _LoseChallengePointEvent.Value; }
   }
 
+  public bool UsePointThreshold {
+    get { return _UsePointThreshold; }
+  }
+
+  public int ComparedPointThreshold {
+    get { return _ComparedPointThreshold; }
+  }
+
   public GameSkillLevelConfig GetCurrLevelConfig(int level) {
-    if (level >= 0 && level < GetMaxLevel()) {
-      return _Levels[level];
+    if (_Levels != null) {
+      if (level < 0) {
+        return _Levels[0];
+      }
+      if (level >= GetMaxLevel()) {
+        return _Levels[_Levels.Length - 1];
+      }
+      else {
+        return _Levels[level];
+      }
     }
     return null;
   }
@@ -81,6 +97,8 @@ public class GameSkillConfig {
   // for when you only compare after X points scored.
   [SerializeField]
   private int _ComparedPointThreshold;
+
+
   [SerializeField]
   private GameSkillLevelConfig[] _Levels;
 }
