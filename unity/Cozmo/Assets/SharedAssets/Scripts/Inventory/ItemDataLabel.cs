@@ -12,10 +12,10 @@ namespace Cozmo {
 
       private void Start() {
         Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-        _CountLabel.FormattingArgs = new object[] { playerInventory.GetItemAmount(_ItemId) };
         playerInventory.ItemAdded += HandleItemValueChanged;
         playerInventory.ItemRemoved += HandleItemValueChanged;
         playerInventory.ItemCountSet += HandleItemValueChanged;
+        _CountLabel.FormattingArgs = new object[] { GetItemNamePlural(), playerInventory.GetItemAmount(_ItemId) };
       }
 
       private void OnDestroy() {
@@ -27,8 +27,17 @@ namespace Cozmo {
 
       private void HandleItemValueChanged(string itemId, int delta, int newCount) {
         if (itemId == _ItemId) {
-          _CountLabel.FormattingArgs = new object[] { newCount };
+          _CountLabel.FormattingArgs = new object[] { GetItemNamePlural(), newCount };
         }
+      }
+
+      private string GetItemNamePlural() {
+        ItemData itemData = ItemDataConfig.GetData(_ItemId);
+        string itemName = "(null)";
+        if (itemData != null) {
+          itemName = itemData.GetPluralName();
+        }
+        return itemName;
       }
     }
   }

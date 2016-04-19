@@ -21,4 +21,5 @@ MonoBehaviour:
   DefaultUnlock: 1
   DescriptionKey: unlockable.Default.Title
   TitleKey: unlockable.Default.Title
-  TreatCost: 0
+  CostItemId: treat
+  CostAmountNeeded: 2

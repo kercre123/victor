@@ -10,7 +10,7 @@ public class PlayerProfile {
 
   public List<DataPersistence.TimelineEntryData> Sessions;
 
-  // TODO: replace with Dictionary<HexType, int>
+  // TODO: Fold into Inventory system once HexItem dictionary is ready
   public int HexPieces;
 
   public Cozmo.Inventory Inventory;

@@ -27,8 +27,12 @@ namespace Cozmo {
       get { return _ItemIcon; } 
     }
 
-    public string GetName() {
-      return Localization.Get(LocKey);
+    public string GetSingularName() {
+      return Localization.Get(LocKey + ".singular");
+    }
+
+    public string GetPluralName() {
+      return Localization.Get(LocKey + ".plural");
     }
 
     public override string ToString() {
@@ -68,9 +72,9 @@ namespace Cozmo {
       }
     }
 
-    public ItemData GetData(string itemId) {
+    public static ItemData GetData(string itemId) {
       ItemData data = null;
-      if (!_IdToData.TryGetValue(itemId, out data)) {
+      if (!_sInstance._IdToData.TryGetValue(itemId, out data)) {
         DAS.Error("ItemDataMap.GetData", "Could not find item='" + itemId + "' in dictionary!");
       }
       return data;

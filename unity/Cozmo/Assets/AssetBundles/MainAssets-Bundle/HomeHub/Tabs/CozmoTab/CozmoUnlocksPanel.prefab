@@ -241,7 +241,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: '#cozmoTab.sparkCount'
+  m_Text: '#label.colonCount'
   _AllUppercase: 1
   GlowText: 0
 --- !u!114 &11460766

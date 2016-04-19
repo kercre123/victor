@@ -18,10 +18,16 @@
       "/{*}"
     ]
   },
-  "item.experience": {
+  "item.experience.singular": {
+    "translation": "Green Point"
+  },
+  "item.experience.plural": {
     "translation": "Green Points"
   },
-  "item.treat": {
+  "item.treat.singular": {
+    "translation": "Spark"
+  },
+  "item.treat.plural": {
     "translation": "Sparks"
   }
 }
