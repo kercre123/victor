@@ -678,15 +678,7 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     }
 
     Vision::ImageRGB image(height,width,cvImg.data);
-    
-    if(IsPhysical())
-    {
-      image.SetTimestamp(payload.frameTimeStamp+RollingShutterCorrector::imageTimestampOffset_ms);
-    }
-    else
-    {
-      image.SetTimestamp(payload.frameTimeStamp);
-    }
+    image.SetTimestamp(payload.frameTimeStamp);
     
     _visionComponent.GetImuDataHistory().CalculateTimestampForImageIMU(payload.imageId, payload.frameTimeStamp, RollingShutterCorrector::timeBetweenFrames_ms, height);
     

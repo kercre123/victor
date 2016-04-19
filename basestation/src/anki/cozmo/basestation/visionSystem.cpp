@@ -89,7 +89,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
   using namespace Embedded;
   
   VisionSystem::VisionSystem(const std::string& dataPath, VizManager* vizMan)
-  : _rollingShutterCorrector(_camera)
+  : _rollingShutterCorrector()
   , _isInitialized(false)
   , _dataPath(dataPath)
   , _faceTracker(nullptr)
@@ -659,17 +659,15 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
                     {crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].x,
                       crntMarker.corners[Embedded::Quadrilateral<f32>::BottomRight].y});
         
-        // Instead of warpping the entire image only warp the quads
-        // Apply the appropriate warp to each of the corners of the quad to get a warpped quad
+        // Instead of correcting the entire image only correct the quads
+        // Apply the appropriate shift to each of the corners of the quad to get a shifted quad
         if(_doRollingShutterCorrection)
         {
           for(auto iter = quad.begin(); iter != quad.end(); iter++)
           {
-            Point3f corner(iter->x(), iter->y(), 1.0);
             int warpIndex = floor(iter->y() / (inputImageGray.GetNumRows() / _rollingShutterCorrector.GetNumDivisions()));
-            corner = _rollingShutterCorrector.GetRollingShutterWarps()[warpIndex] * corner;
-            iter->x() = corner.x();
-            iter->y() = corner.y();
+            iter->x() -= _rollingShutterCorrector.GetPixelShifts()[warpIndex].x();
+            iter->y() -= _rollingShutterCorrector.GetPixelShifts()[warpIndex].y();
           }
         }
         
@@ -701,11 +699,10 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
             
             for(int i=0; i<4; i++)
             {
-              Point3f corner(quad.corners[i].x, quad.corners[i].y, 1.0);
               int warpIndex = floor(quad.corners[i].y / (inputImageGray.GetNumRows() / _rollingShutterCorrector.GetNumDivisions()));
-              corner = _rollingShutterCorrector.GetRollingShutterWarps()[warpIndex] * corner;
-              quad.corners[i].x = corner.x();
-              quad.corners[i].y = corner.y();
+              quad.corners[i].x -= _rollingShutterCorrector.GetPixelShifts()[warpIndex].x();
+              quad.corners[i].y -= _rollingShutterCorrector.GetPixelShifts()[warpIndex].y();
+              
               if(quad.corners[i].x >= inputImageGray.GetNumCols() ||
                  quad.corners[i].y >= inputImageGray.GetNumRows() ||
                  quad.corners[i].x < 0 ||
@@ -2449,9 +2446,10 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     Vision::Image inputImageGray = inputImage.ToGray();
     if(_doRollingShutterCorrection)
     {
-      Tic("RollingShutterComputeWarps");
-      _rollingShutterCorrector.ComputeWarps(poseData, _prevPoseData);
-      Toc("RollingShutterComputeWarps");
+      Tic("RollingShutterComputePixelShifts");
+      _rollingShutterCorrector.ComputePixelShifts(poseData, _prevPoseData);
+      Toc("RollingShutterComputePixelShifts");
+      
       if(IsModeEnabled(VisionMode::Tracking))
       {
         Tic("RollingShutterWarpImage");

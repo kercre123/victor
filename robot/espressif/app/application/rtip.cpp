@@ -80,7 +80,7 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
           {
             if ((relayBuffer[0] == RobotInterface::RobotToEngine::Tag_trace) && (clientQueueAvailable() < 200))
             {
-              AnkiWarn( 50, "RTIP.AcceptRTIPMessage", 400, "dropping RTIP trace", 0);
+              AnkiWarn( 50, "RTIP.AcceptRTIPMessage", 442, "dropping RTIP trace", 0);
             }
             else
             {
