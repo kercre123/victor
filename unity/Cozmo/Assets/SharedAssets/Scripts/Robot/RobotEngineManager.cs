@@ -76,6 +76,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.UnlockId, bool> OnRequestSetUnlockResult;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress> OnFirmwareUpdateProgress;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete> OnFirmwareUpdateComplete;
+  public event Action OnSparkUnlockEnded;
 
   #region Audio Callback events
 
@@ -389,6 +390,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.FirmwareUpdateComplete:
       ReceivedSpecificMessage(message.FirmwareUpdateComplete);
+      break;
+    case G2U.MessageEngineToGame.Tag.SparkUnlockEnded:
+      ReceivedSpecificMessage(message.SparkUnlockEnded);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -763,6 +767,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
     if (OnFirmwareUpdateComplete != null) {
       OnFirmwareUpdateComplete(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.SparkUnlockEnded message) {
+    if (OnSparkUnlockEnded != null) {
+      OnSparkUnlockEnded();
     }
   }
 

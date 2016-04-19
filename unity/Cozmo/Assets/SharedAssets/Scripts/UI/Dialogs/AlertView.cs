@@ -69,12 +69,13 @@ namespace Cozmo {
         string viewName = GenerateDasName();
 
         if (_CloseButton != null) {
-          _CloseButton.DASEventViewController = viewName;
-          _CloseButton.DASEventButtonName = "close_button";
-          _CloseButton.onClick.AddListener(() => {
-            Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.ClickBack);
-            CloseView();
-          });
+          _CloseButton.Initialize(
+            () => {
+              Anki.Cozmo.Audio.GameAudioClient.PostUIEvent(Anki.Cozmo.Audio.GameEvent.UI.ClickBack);
+              CloseView();
+            },
+            viewName,
+            "close_alert_view_button");
           _CloseButton.gameObject.SetActive(false);
         }
 
@@ -85,13 +86,11 @@ namespace Cozmo {
         // Hide all buttons
         if (_PrimaryButton != null) {
           _PrimaryButton.DASEventViewController = viewName;
-          _PrimaryButton.DASEventButtonName = "primary_button";
           _PrimaryButton.gameObject.SetActive(false);
         }
 
         if (_SecondaryButton != null) {
           _SecondaryButton.DASEventViewController = viewName;
-          _SecondaryButton.DASEventButtonName = "secondary_button";
           _SecondaryButton.gameObject.SetActive(false);
         }
       }
@@ -151,12 +150,12 @@ namespace Cozmo {
 
       public void SetPrimaryButton(string titleKey, Action action = null, 
                                    Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
-        SetupButton(_PrimaryButton, Localization.Get(titleKey), action, audioParam);
+        SetupButton(_PrimaryButton, titleKey, action, audioParam);
       }
 
       public void SetSecondaryButton(string titleKey, Action action = null, 
                                      Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
-        SetupButton(_SecondaryButton, Localization.Get(titleKey), action, audioParam);
+        SetupButton(_SecondaryButton, titleKey, action, audioParam);
       }
 
       public void SetTitleArgs(object[] args) {
@@ -178,21 +177,22 @@ namespace Cozmo {
         }
       }
 
-      private void SetupButton(Cozmo.UI.CozmoButton button, String title, Action action, 
+      private void SetupButton(Cozmo.UI.CozmoButton button, string titleKey, Action action, 
                                Anki.Cozmo.Audio.AudioEventParameter audioParam = default(Anki.Cozmo.Audio.AudioEventParameter)) {
         if (button != null) {
+          string title = Localization.Get(titleKey);
           button.gameObject.SetActive(true);
           button.Text = title;
           if (!audioParam.IsInvalid()) {
             button.SoundEvent = audioParam;
           }
-          button.onClick.RemoveAllListeners();
           button.onClick.AddListener(() => {
             if (action != null) {
               action();
             }
             CloseView();
           });
+          button.DASEventButtonName = string.Format("{0}_button", title);
         }
         else {
           DAS.Warn(this, "Tried to set up a button that doesn't exist in this AlertView! " + gameObject.name);

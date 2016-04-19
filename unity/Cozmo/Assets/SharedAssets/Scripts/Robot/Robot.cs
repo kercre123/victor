@@ -174,6 +174,10 @@ public class Robot : IRobot {
 
   public ILight[] BackpackLights { get; private set; }
 
+  public bool IsSparked { get; private set; }
+
+  public Anki.Cozmo.UnlockId SparkUnlockId { get; private set; }
+
   private bool _LightsChanged {
     get {
       for (int i = 0; i < BackpackLights.Length; ++i) {
@@ -336,12 +340,14 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
     RobotEngineManager.Instance.OnProgressionStatRecieved += UpdateProgressionStatFromEngineRobotManager;
     RobotEngineManager.Instance.OnObjectConnectionState += ObjectConnectionState;
+    RobotEngineManager.Instance.OnSparkUnlockEnded += SparkUnlockEnded;
   }
 
   public void Dispose() {
     RobotEngineManager.Instance.DisconnectedFromClient -= Reset;
     RobotEngineManager.Instance.SuccessOrFailure -= RobotEngineMessages;
     RobotEngineManager.Instance.OnObjectConnectionState -= ObjectConnectionState;
+    RobotEngineManager.Instance.OnSparkUnlockEnded -= SparkUnlockEnded;
   }
 
   public void CooldownTimers(float delta) {
@@ -1229,6 +1235,25 @@ public class Robot : IRobot {
   public void SetEnableCliffSensor(bool enabled) {
     RobotEngineManager.Instance.Message.EnableCliffSensor = Singleton<EnableCliffSensor>.Instance.Initialize(enabled);
     RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
+    RobotEngineManager.Instance.Message.EnableSparkUnlock = Singleton<EnableSparkUnlock>.Instance.Initialize(id);
+    RobotEngineManager.Instance.SendMessage();
+    IsSparked = true;
+    SparkUnlockId = id;
+  }
+
+  public void StopSparkUnlock() {
+    RobotEngineManager.Instance.Message.StopSparkUnlock = Singleton<StopSparkUnlock>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+    IsSparked = false;
+    SparkUnlockId = UnlockId.Count;
+  }
+
+  private void SparkUnlockEnded() {
+    IsSparked = false;
+    SparkUnlockId = UnlockId.Count;
   }
 
   public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {

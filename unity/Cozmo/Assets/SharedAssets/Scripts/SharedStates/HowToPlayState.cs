@@ -15,7 +15,7 @@ public class HowToPlayState : State {
     _Game = _StateMachine.GetGame();
     _Game.SharedMinigameView.ShowContinueButtonOnShelf(HandleContinueButtonClicked, 
       Localization.Get(LocalizationKeys.kButtonStartChallenge), Localization.Get(LocalizationKeys.kMinigameLabelReadyToPlay), 
-      Cozmo.UI.UIColorPalette.NeutralTextColor());
+      Cozmo.UI.UIColorPalette.NeutralTextColor(), "from_how_to_play_to_start_game_continue_button");
     _Game.SharedMinigameView.ShowHowToPlayButton();
     _Game.SharedMinigameView.OpenHowToPlayView();
   }

@@ -54,7 +54,7 @@ namespace Cozmo.HomeHub {
       private set { _HomeHubInstance = value; }
     }
 
-    public delegate void ButtonClickedHandler(string challengeClicked, Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClicked,Transform buttonTransform);
 
     public event ButtonClickedHandler OnLockedChallengeClicked;
     public event ButtonClickedHandler OnUnlockedChallengeClicked;
@@ -75,17 +75,9 @@ namespace Cozmo.HomeHub {
       _CurrentTab.transform.SetParent(_ScrollRectContent, false);
       _CurrentTab.Initialize(this);
 
-      _CozmoTabButton.DASEventButtonName = "cozmo_tab_botton";
-      _PlayTabButton.DASEventButtonName = "play_tab_button";
-      _ProfileTabButton.DASEventButtonName = "profile_tab_button";
-
-      _CozmoTabButton.DASEventViewController = "home_view";
-      _PlayTabButton.DASEventViewController = "home_view";
-      _ProfileTabButton.DASEventViewController = "home_view";
-
-      _CozmoTabButton.onClick.AddListener(HandleCozmoTabButton);
-      _PlayTabButton.onClick.AddListener(HandlePlayTabButton);
-      _ProfileTabButton.onClick.AddListener(HandleProfileTabButton);
+      _CozmoTabButton.Initialize(HandleCozmoTabButton, "switch_to_cozmo_tab_button", DASEventViewName);
+      _PlayTabButton.Initialize(HandlePlayTabButton, "switch_to_play_tab_button", DASEventViewName);
+      _ProfileTabButton.Initialize(HandleProfileTabButton, "switch_to_profile_tab_button", DASEventViewName);
 
       PlayerManager.Instance.GreenPointsUpdate += HandleGreenPointsGained;
       PlayerManager.Instance.ChestGained += HandleChestGained;

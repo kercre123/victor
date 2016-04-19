@@ -19,4 +19,6 @@ MonoBehaviour:
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   DefaultUnlock: 0
+  DescriptionKey: unlockable.Default.Title
+  TitleKey: unlockable.Default.Title
   TreatCost: 0

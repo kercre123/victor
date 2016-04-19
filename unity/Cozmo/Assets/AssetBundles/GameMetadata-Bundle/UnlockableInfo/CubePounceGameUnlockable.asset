@@ -17,7 +17,8 @@ MonoBehaviour:
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
-  CubesRequired: 0
   ExplicitUnlock: 1
   DefaultUnlock: 0
+  DescriptionKey: Unlock Description
+  TitleKey: unlockable.Default.Description
   TreatCost: 0

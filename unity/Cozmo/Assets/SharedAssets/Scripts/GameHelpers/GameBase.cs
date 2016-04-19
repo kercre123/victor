@@ -299,7 +299,7 @@ public abstract class GameBase : MonoBehaviour {
 
     // Listen for dialog close
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
-      Localization.Get(LocalizationKeys.kButtonContinue));
+      Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
     
 
     _RewardedXp = new StatContainer();

@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace Cozmo.HubWorld {
   public class HubWorldButton : MonoBehaviour {
-    public delegate void ButtonClickedHandler(string challengeClickedId, Transform buttonTransform);
+    public delegate void ButtonClickedHandler(string challengeClickedId,Transform buttonTransform);
 
     public event ButtonClickedHandler OnButtonClicked;
 
@@ -25,9 +25,7 @@ namespace Cozmo.HubWorld {
         _IconImage.overrideSprite = challengeData.ChallengeIcon;
         _ChallengeTitle.text = Localization.Get(challengeData.ChallengeTitleLocKey);
       }
-      _ButtonScript.onClick.AddListener(HandleButtonClicked);
-      _ButtonScript.DASEventButtonName = string.Format("{0}_button", _ChallengeId);
-      _ButtonScript.DASEventViewController = dasParentViewName;
+      _ButtonScript.Initialize(HandleButtonClicked, string.Format("see_{0}_details_button", _ChallengeId), dasParentViewName);
     }
 
     private void Update() {

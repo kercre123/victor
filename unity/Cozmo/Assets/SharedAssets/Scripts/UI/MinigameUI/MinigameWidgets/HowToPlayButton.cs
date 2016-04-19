@@ -27,14 +27,10 @@ namespace Cozmo {
         set { _HowToPlayButtonInstance.DASEventViewController = value; }
       }
 
-      public void Initialize(string howToPlayTextLocKey, GameObject howToPlayViewContents) {
+      public void Initialize(string howToPlayTextLocKey, GameObject howToPlayViewContents, string dasEventViewControllerName) {
         _HowToPlayLocKey = howToPlayTextLocKey;
         _HowToPlayViewContentPrefab = howToPlayViewContents;
-      }
-
-      private void Start() {
-        _HowToPlayButtonInstance.DASEventButtonName = "how_to_play_button";
-        _HowToPlayButtonInstance.onClick.AddListener(HandleHowToPlayButtonTap);
+        _HowToPlayButtonInstance.Initialize(HandleHowToPlayButtonTap, "open_how_to_play_view_button", dasEventViewControllerName);
       }
 
       public override void DestroyWidgetImmediately() {
