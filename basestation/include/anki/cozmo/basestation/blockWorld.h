@@ -310,7 +310,7 @@ namespace Anki
       
       // Helpers for actually inserting a new object into a new family using
       // its type and ID. Object's ID will be set if it isn't already.
-      void AddNewObject(const ObjectFamily toFamily, ObservableObject* object);
+      void AddNewObject(ObservableObject* object);
       void AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object);
       
       //template<class ObjectType>
@@ -491,9 +491,9 @@ namespace Anki
       return GetActiveObjectByActiveIDHelper(activeID, inFamily); // returns const*
     }
     
-    inline void BlockWorld::AddNewObject(const ObjectFamily toFamily, ObservableObject* object)
+    inline void BlockWorld::AddNewObject(ObservableObject* object)
     {
-      AddNewObject(_existingObjects[toFamily], object);
+      AddNewObject(_existingObjects[object->GetFamily()], object);
     }
 
     /*

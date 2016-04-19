@@ -638,7 +638,7 @@ namespace Anki {
         f32 absAngularDistToTarget = ABS(angularDistToTarget);
         if (absAngularDistToTarget < pointTurnAngTol_) {
           if (inPositionStartTime_ == 0) {
-            AnkiDebug( 158, "ManagePointTurn.InRange", 441, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+            AnkiDebug( 161, "ManagePointTurn.InRange", 443, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
             inPositionStartTime_ = HAL::GetTimeStamp();
           } else if (HAL::GetTimeStamp() - inPositionStartTime_ > IN_POSITION_THRESHOLD_MS) {
 #           if(DEBUG_STEERING_CONTROLLER)
@@ -652,7 +652,7 @@ namespace Anki {
             return;
           }
         } else {
-          AnkiDebugPeriodic(100, 159, "ManagePointTurn.OOR", 441, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+          AnkiDebugPeriodic(100, 159, "ManagePointTurn.OOR", 443, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
           inPositionStartTime_ = 0;
 
           
@@ -685,7 +685,7 @@ namespace Anki {
           pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularDistToCurrDesiredAngle, -pointTurnMaxIntegralError_, pointTurnMaxIntegralError_);
         }
         
-        //AnkiDebugPeriodic(50, 160, "ManagePointTurn.Controller", 442, "currAngle %f, currDesired %f, errSum %f, arcVel %d", 4, currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), pointTurnAngleErrorSum_, arcVel);
+        //AnkiDebugPeriodic(50, 160, "ManagePointTurn.Controller", 444, "currAngle %f, currDesired %f, errSum %f, arcVel %d", 4, currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), pointTurnAngleErrorSum_, arcVel);
 
 
         

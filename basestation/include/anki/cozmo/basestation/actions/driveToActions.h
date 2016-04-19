@@ -137,14 +137,12 @@ namespace Anki {
                           const f32 predockOffsetDistX_mm = 0,
                           const bool useApproachAngle = false,
                           const f32 approachAngle_rad = 0,
-                          const bool doPositionCheckOnPathCompletion = true,
                           const bool useManualSpeed = false);
       
       DriveToObjectAction(Robot& robot,
                           const ObjectID& objectID,
                           const f32 distance_mm,
                           const PathMotionProfile& motionProf = DEFAULT_PATH_MOTION_PROFILE,
-                          const bool doPositionCheckOnPathCompletion = true,
                           const bool useManualSpeed = false);
       virtual ~DriveToObjectAction() { };
       
@@ -159,6 +157,10 @@ namespace Anki {
       // If set, instead of driving to the nearest preActionPose, only the preActionPose
       // that is most closely aligned with the approach angle is considered.
       void SetApproachAngle(const f32 angle_rad);
+      
+      // Whether or not to verify the final pose, once the path is complete,
+      // according to the latest know preAction pose for the specified object.
+      void DoPositionCheckOnPathCompletion(bool doCheck) { _doPositionCheckOnPathCompletion = doCheck; }
 
       // Sets the driving animations (usually just sounds, expected not to lock anything). Set to empty
       // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
@@ -233,7 +235,6 @@ namespace Anki {
                                  const f32 distanceFromMarker_mm,
                                  const bool useApproachAngle,
                                  const f32 approachAngle_rad,
-                                 const bool doPositionCheckOnPathCompletion,
                                  const bool useManualSpeed);
 
     public:

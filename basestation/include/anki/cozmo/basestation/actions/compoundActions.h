@@ -31,6 +31,8 @@ namespace Anki {
       // from this compound action completely.
       void ClearActions();
       
+      const std::list<IActionRunner*>& GetActionList() const { return _actions; }
+      
       // Constituent actions will be deleted upon destruction of the group
       virtual ~ICompoundAction();
       

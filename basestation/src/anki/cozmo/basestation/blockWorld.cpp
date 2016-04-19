@@ -1627,7 +1627,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         m->SetLastObservedTime(lastTimestamp);
       }
 
-      AddNewObject(ObjectFamily::MarkerlessObject, m);
+      AddNewObject(m);
       _didObjectsChange = true;
       _currentObservedObjects.push_back(m);
       
@@ -2376,37 +2376,32 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       }
   
       // An existing object with activeID was not found so add it
+      ObservableObject* newObject = nullptr;
       switch(objType) {
         case ObjectType::Block_LIGHTCUBE1:
         case ObjectType::Block_LIGHTCUBE2:
         case ObjectType::Block_LIGHTCUBE3:
         {
-          ActiveCube* cube = new ActiveCube(activeID, factoryID);
-          cube->SetPoseParent(_robot->GetWorldOrigin());
-          cube->SetPoseState(ObservableObject::PoseState::Unknown);
-          AddNewObject(ObjectFamily::LightCube, cube);
-          PRINT_NAMED_INFO("BlockWorld.AddActiveObject.AddedCube",
-                           "objectID %d, type %s, activeID %d, factoryID 0x%x",
-                           cube->GetID().GetValue(), objTypeStr, cube->GetActiveID(), cube->GetFactoryID());
-          return cube->GetID();
+          newObject = new ActiveCube(activeID, factoryID);
         }
         case ObjectType::Charger_Basic:
         {
-          Charger* charger = new Charger(activeID, factoryID);
-          charger->SetPoseParent(_robot->GetWorldOrigin());
-          charger->SetPoseState(ObservableObject::PoseState::Unknown);
-          AddNewObject(ObjectFamily::Charger, charger);
-          PRINT_NAMED_INFO("BlockWorld.AddActiveObject.AddedCharger",
-                           "objectID %d, type %s, activeID %d, factoryID 0x%x",
-                           charger->GetID().GetValue(), objTypeStr, charger->GetActiveID(), charger->GetFactoryID());
-          return charger->GetID();
+          newObject = new Charger(activeID, factoryID);
         }
         default:
           PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.UnsupportActiveObjectType", "%s", objTypeStr);
-          break;
+          return ObjectID();
       }
       
-      return ObjectID();
+      newObject->SetPoseParent(_robot->GetWorldOrigin());
+      newObject->SetPoseState(ObservableObject::PoseState::Unknown);
+      AddNewObject(newObject);
+      PRINT_NAMED_INFO("BlockWorld.AddActiveObject.AddedNewObject",
+                       "objectID %d, type %s, activeID %d, factoryID 0x%x",
+                       newObject->GetID().GetValue(), objTypeStr, newObject->GetActiveID(), newObject->GetFactoryID());
+      return newObject->GetID();
+      
+
 
     }
   

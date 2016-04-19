@@ -75,7 +75,9 @@ namespace Anki {
         // Distance from block face at which robot should "dock"
         f32 dockOffsetDistX_ = 0.f;
         
-        // Number of remainining error signals from engine to use.
+        // Whether or not to use only the first error signal received for docking purposes.
+        // Results in smoother, albeit less accurate, docking. Useful for charger docking
+        // since the marker pose estimation isn't great.
         bool useFirstErrorSignalOnly_ = false;
 
         TimeStamp_t lastDockingErrorSignalRecvdTime_ = 0;
