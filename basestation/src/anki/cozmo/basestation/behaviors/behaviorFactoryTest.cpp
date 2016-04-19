@@ -245,7 +245,7 @@ namespace Cozmo {
       }
       case FactoryTestState::DriveToSlot:
       {
-        if (!robot.IsOnCliff()) {
+        if (!robot.IsCliffSensorOn()) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingCliff", "");
           END_TEST(FactoryTestResultCode::CLIFF_UNDETECTED);
         }
