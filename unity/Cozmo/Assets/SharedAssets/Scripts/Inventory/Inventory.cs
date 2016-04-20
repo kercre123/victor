@@ -84,7 +84,10 @@ namespace Cozmo {
 
     public bool CanRemoveItemAmount(string itemId, int count = 1) {
       bool canRemove = false;
-      if (count > 0) {
+      if (count == 0) {
+        canRemove = true;
+      }
+      else if (count > 0) {
         int currentCount = GetItemAmount(itemId);
         canRemove = (currentCount >= count);
       }

@@ -116,11 +116,9 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   }
 
   private void HandleItemValueChanged(string itemId, int delta, int count) {
-    if (!Cozmo.HexItemList.IsPuzzlePiece(itemId)) {
-      return;
+    if (Cozmo.HexItemList.IsPuzzlePiece(itemId)) {
+      UpdatePuzzlePieceCount();
     }
-
-    UpdatePuzzlePieceCount();
   }
 
   private void UpdatePuzzlePieceCount() {

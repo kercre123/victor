@@ -59,7 +59,7 @@ namespace DataPersistence {
       }
     }
 
-    public static void InitializeInstance() {
+    public static void CreateInstance() {
       if (_Instance == null) {
         _Instance = new DataPersistenceManager();
       }

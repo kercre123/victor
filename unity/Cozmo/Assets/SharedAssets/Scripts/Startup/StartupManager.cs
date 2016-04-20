@@ -173,7 +173,7 @@ public class StartupManager : MonoBehaviour {
     AnimationManager.Instance.Initialize();
 
     // Initialize persistance manager
-    DataPersistence.DataPersistenceManager.InitializeInstance();
+    DataPersistence.DataPersistenceManager.CreateInstance();
     ChestRewardManager.CreateInstance();
 
     if (_IsDebugBuild) {
