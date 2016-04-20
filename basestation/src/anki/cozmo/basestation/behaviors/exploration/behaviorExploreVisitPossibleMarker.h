@@ -63,7 +63,6 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual Result InitInternal(Robot& robot) override;
-  virtual Result InterruptInternal(Robot& robot) override { return Result::RESULT_OK; } // TODO?
   virtual void StopInternal(Robot& robot) override {} // TODO?
   
 private:

@@ -163,14 +163,6 @@ IBehavior::Status BehaviorFollowMotion::UpdateInternal(Robot& robot)
   
   return status;
 }
-
-Result BehaviorFollowMotion::InterruptInternal(Robot& robot)
-{
-  _state = State::Interrupted;
-  SetStateName("Interrupted");
-  
-  return Result::RESULT_OK;
-}
   
 void BehaviorFollowMotion::StopInternal(Robot& robot)
 {

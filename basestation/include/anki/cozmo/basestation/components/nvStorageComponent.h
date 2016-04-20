@@ -35,7 +35,6 @@ class CozmoContext;
 
 namespace ExternalInterface {
   class MessageGameToEngine;
-//  class MessageEngineToGame;
 }
   
 namespace RobotInterface {
@@ -54,13 +53,19 @@ public:
   // Returns true if request was successfully sent.
   // If broadcastResultToGame == true, each write (there are potentially multiple)
   // is acked with MessageEngineToGame::NVStorageOpResult.
-  bool Write(NVStorage::NVEntryTag tag, u8* data, size_t size, bool broadcastResultToGame = false);
+  using NVStorageWriteEraseCallback = std::function<void(NVStorage::NVResult res)>;
+  bool Write(NVStorage::NVEntryTag tag,
+             u8* data, size_t size,
+             NVStorageWriteEraseCallback callback = {},
+             bool broadcastResultToGame = false);
   
   // Erase the given entry from robot flash.
   // Returns true if request was successfully sent.
   // If broadcastToGame == true, a single MessageEngineToGame::NVStorageOpResult
   // will be broadcast when the operation is complete.
-  bool Erase(NVStorage::NVEntryTag tag, bool broadcastResultToGame = false);
+  bool Erase(NVStorage::NVEntryTag tag,
+             NVStorageWriteEraseCallback callback = {},
+             bool broadcastResultToGame = false);
   
   // Request data stored on robot under the given tag.
   // Executes specified callback when data is received.
@@ -78,7 +83,7 @@ public:
   //                        all blobs are received it will also trigger MessageEngineToGame::NVStorageOpResult.
   //
   // Returns true if request was successfully sent.
-  using NVStorageReadCallback = std::function<void(u8* data, size_t size)>;
+  using NVStorageReadCallback = std::function<void(u8* data, size_t size, NVStorage::NVResult res)>;
   bool Read(NVStorage::NVEntryTag tag,
             NVStorageReadCallback callback = {},
             std::vector<u8>* data = nullptr,
@@ -136,9 +141,16 @@ private:
   
   // Info on how to handle ACK'd writes/erases
   struct WriteDataAckInfo {
+    WriteDataAckInfo()
+    : numTagsLeftToAck(0)
+    , callback({})
+    , writeNotErase(true)
+    , broadcastResultToGame(false)
+    { }
     u32  numTagsLeftToAck;
-    bool broadcastResultToGame;
+    NVStorageWriteEraseCallback callback;
     bool writeNotErase;
+    bool broadcastResultToGame;
   };
   
   // Info on how to handle read-requested data

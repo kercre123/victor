@@ -628,12 +628,12 @@ message ReplayLastAnimation {
 }
 
 // SetIdleAnimation
-//  Set the animation that will be played (in a continuous loop) if no other
+//  Set the animation group that will be played (in a continuous loop) if no other
 //  animation has been set using PlayAnimation above.
 //  Use the empty string to disable the idle animation.
 message SetIdleAnimation {
     uint_8 robotID,
-    string animationName
+    string animationName // Group name, not individual animation!
 }
 
 // ReadAnimationFile

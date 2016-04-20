@@ -13,22 +13,20 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorInterface_H__
 
 
-// TEMP: audit these // TODO:(bn) 
-
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupFlags.h"
-#include "anki/cozmo/basestation/moodSystem/moodScorer.h"
 #include "anki/cozmo/basestation/moodSystem/emotionScorer.h"
-#include "util/random/randomGenerator.h"
-#include "json/json.h"
+#include "anki/cozmo/basestation/moodSystem/moodScorer.h"
+#include "json/json-forwards.h"
 #include <set>
 
-#include "util/bitFlags/bitFlags.h"
-#include "util/logging/logging.h"
-#include "util/signals/simpleSignal_fwd.h"
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/types/behaviorGroup.h"
+#include "util/bitFlags/bitFlags.h"
+#include "util/logging/logging.h"
+#include "util/random/randomGenerator.h"
+#include "util/signals/simpleSignal_fwd.h"
 
 // This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
 // All args following the first are passed directly to the chosen print macro
@@ -41,7 +39,6 @@ namespace Anki {
 namespace Cozmo {
   
 // Forward declarations
-// TEMP: audit these // TODO:(bn) 
 class IReactionaryBehavior;
 class MoodManager;
 class Robot;
@@ -84,6 +81,13 @@ public:
   // should implement.
   Result Init();
 
+  // If this behavior is resuming after a short interruption (e.g. a cliff reaction), this Resume function
+  // will be called instead. It calls ResumeInternal(), which defaults to simply calling InitInternal, but can
+  // be implemented by children to do specific resume behavior (e.g. start at a specific state). If this
+  // function returns anything other than RESULT_OK, the behavior will not be resumed (but may still be Init'd
+  // later)
+  Result Resume();  
+
   // Step through the behavior and deliver rewards to the robot along the way
   // This calls the protected virtual UpdateInternal() method, which each
   // derived class should implement.
@@ -92,11 +96,6 @@ public:
   // This behavior was the currently running behavior, but is now stopping (to make way for a new current
   // behavior). Any behaviors from StartActing will be canceled.
   void Stop();
-
-  // Tell this behavior to finish up ASAP so we can switch to a new one.
-  // This should trigger any cleanup and get Update() to return COMPLETE
-  // as quickly as possible.
-  Result Interrupt();
 
   //
   // Abstract methods to be overloaded:
@@ -147,6 +146,12 @@ public:
   bool MatchesAnyBehaviorGroups(const BehaviorGroupFlags& groupFlags) const {
     return MatchesAnyBehaviorGroups(groupFlags.GetFlags());
   }
+
+  // if true, the previously running behavior will be resumed (if possible) after this behavior is
+  // complete. Otherwise, a new behavior will be selected by the chooser after this one runs. This should
+  // generally only be true for reactionary behaviors
+  virtual bool ShouldResumeLastBehavior() const { return false; }
+
     
 protected:
   
@@ -162,6 +167,7 @@ protected:
   inline void SetStateName(const std::string& inName) { _stateName = inName; }
     
   virtual Result InitInternal(Robot& robot) = 0;
+  virtual Result ResumeInternal(Robot& robot) { return InitInternal(robot); }
 
   // EvaluateScoreInternal is used to score each behavior for behavior selection - by default it just uses
   // EvaluateEmotionScore. If the behavior is running, it uses the Running score to decide if it should keep
@@ -169,9 +175,10 @@ protected:
   virtual float EvaluateRunningScoreInternal(const Robot& robot) const;
   virtual float EvaluateScoreInternal(const Robot& robot) const;
 
-  // default implementation is to return Running while IsActing, and Complete otherwise
+  // This function can be implemented by behaviors. It should return Running while it is running, and Complete
+  // or Failure as needed. If it returns Complete, Stop will be called. Default implementation is to
+  // return Running while IsActing, and Complete otherwise
   virtual Status UpdateInternal(Robot& robot);
-  virtual Result InterruptInternal(Robot& robot) = 0;
   virtual void   StopInternal(Robot& robot) = 0;
     
   bool ReadFromJson(const Json::Value& config);
@@ -256,6 +263,12 @@ protected:
   template<typename T>
   bool StartActing(IActionRunner* action, void(T::*callback)(void));
 
+  // Called after StartActing, will add extraScore to the result of EvaluateRunningScoreInternal. This makes
+  // it easy to encourage the system to keep a behavior running while it is acting. NOTE: multiple calls to
+  // this function (for the same action) will be cumulative. The bonus will be reset as soon as the action is
+  // complete, or the behavior is no longer running
+  void IncreaseScoreWhileActing(float extraScore);
+  
   // This function cancels the action started by StartActing (if there is one). Returns true if an action
   // was canceled, false otherwise. Note that if you are running, this will trigger a callback for the
   // cancellation unless you set allowCallback to false
@@ -293,6 +306,7 @@ private:
   // for Start/StopActing if invalid, no action
   u32 _lastActionTag = ActionConstants::INVALID_TAG;
   RobotCompletedActionCallback  _actingCallback;
+  float _extraRunningScore;
     
   BehaviorGroupFlags  _behaviorGroups;
 
@@ -344,7 +358,7 @@ protected:
   virtual ~IReactionaryBehavior() {}
     
 public:
-    
+
   virtual const std::set<EngineToGameTag>& GetEngineToGameTags() const { return _engineToGameTags; }
   virtual const std::set<GameToEngineTag>& GetGameToEngineTags() const { return _gameToEngineTags; }
     
@@ -361,13 +375,32 @@ public:
 
   // if true, the previously running behavior will be resumed (if possible) after this behavior is
   // complete. Otherwise, a new behavior will be selected by the chooser after this one runs
-  // NOTE: this is not implemented yet!
-  virtual bool ShouldResumeLastBehavior() const = 0;
+  virtual bool ShouldResumeLastBehavior() const override = 0;
     
 protected:
+  
   std::set<EngineToGameTag> _engineToGameTags;
   std::set<GameToEngineTag> _gameToEngineTags;
 }; // class IReactionaryBehavior
+
+template<typename EventTag>
+inline const std::set<EventTag>& GetReactionaryBehaviorTags(const IReactionaryBehavior* behavior);
+
+////////////////////////////////////////////////////////////////////////////////
+
+template<>
+inline const std::set<ExternalInterface::MessageEngineToGameTag>&
+GetReactionaryBehaviorTags<ExternalInterface::MessageEngineToGameTag>(const IReactionaryBehavior* behavior)
+{
+  return behavior->GetEngineToGameTags();
+}
+
+template<>
+inline const std::set<ExternalInterface::MessageGameToEngineTag>&
+GetReactionaryBehaviorTags<ExternalInterface::MessageGameToEngineTag>(const IReactionaryBehavior* behavior)
+{
+  return behavior->GetGameToEngineTags();
+}
 
 
 } // namespace Cozmo

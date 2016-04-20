@@ -79,9 +79,6 @@ namespace Cozmo {
     virtual Status UpdateInternal(Robot& robot) override;
     void EndTest(Robot& robot, FactoryTestResultCode resCode);
    
-    // Finish placing current object if there is one, otherwise good to go
-    virtual Result InterruptInternal(Robot& robot) override;
-    
     virtual void   StopInternal(Robot& robot) override;
     
     virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;

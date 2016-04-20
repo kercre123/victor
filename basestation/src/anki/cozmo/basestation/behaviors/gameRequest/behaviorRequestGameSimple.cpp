@@ -45,8 +45,6 @@ static const char* kPlaceMotionProfileKey = "place_motion_profile";
 static const char* kDriveToPlacePoseThreshold_mmKey = "place_position_threshold_mm";
 static const char* kDriveToPlacePoseThreshold_radsKey = "place_position_threshold_rads";
 
-static const char* kCliffReactAnimName = "anim_VS_loco_cliffReact";
-
 // TODO:(bn) replace these with animation groups
 static const char* kDrivingFailAnimName = "ID_react2block_align_fail";
 static const char* kPickupFailAnimName = "ID_rollBlock_fail_01";
@@ -103,8 +101,6 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
     _afterPlaceBackupSpeed_mmps = config.get(kAfterPlaceBackupSpeed_mmpsKey,
                                              kAfterPlaceBackupSpeed_mmpsDefault).asFloat();
   }
-
-  SubscribeToTags({EngineToGameTag::CliffEvent});
 }
 
 Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
@@ -130,9 +126,6 @@ Result BehaviorRequestGameSimple::RequestGame_InitInternal(Robot& robot)
       TransitionToPlayingInitialAnimation(robot);
     }
   }
-
-  // disable because this behavior manages it internally (for now)
-  robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
   
   return RESULT_OK;
 }
@@ -169,18 +162,6 @@ IBehavior::Status BehaviorRequestGameSimple::RequestGame_UpdateInternal(Robot& r
   return Status::Complete;
 }
 
-Result BehaviorRequestGameSimple::InterruptInternal(Robot& robot)
-{
-  if( _state == State::HandlingCliff ) {
-    return Result::RESULT_FAIL;
-  }
-  
-  StopInternal(robot);
-  StopActing(false);
-  
-  return Result::RESULT_OK;
-}
-
 void BehaviorRequestGameSimple::StopInternal(Robot& robot)
 {
   PRINT_NAMED_INFO("BehaviorRequestGameSimple.StopInternal", "");
@@ -197,8 +178,6 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot)
   // don't use transition to because we don't want to do anything.
   _state = State::PlayingInitialAnimation;
 
-  robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
-
   if( _shouldPopIdle ) {
     _shouldPopIdle = false;
     robot.PopIdleAnimation();
@@ -207,10 +186,6 @@ void BehaviorRequestGameSimple::StopInternal(Robot& robot)
 
 float BehaviorRequestGameSimple::EvaluateScoreInternal(const Robot& robot) const
 {
-  if( _state == State::HandlingCliff ) {
-    return 1.0f;
-  }
-  
   // NOTE: can't use _activeConfig because we haven't been Init'd yet  
   float score = IBehavior::EvaluateScoreInternal(robot);
   if( GetNumBlocks(robot) == 0 ) {
@@ -500,22 +475,6 @@ void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
   SET_STATE(State::PlayingDenyAnim);
 }
 
-void BehaviorRequestGameSimple::TransitionToHandlingCliff(Robot& robot)
-{
-  // cancel any other action when we enter this state
-  StopActing(false);
-  CompoundActionSequential* action = new CompoundActionSequential(robot);
-  action->AddAction(new PlayAnimationAction(robot, kCliffReactAnimName));
-  if( robot.IsCarryingObject() ) {
-    action->AddAction(new PlaceObjectOnGroundAction(robot));
-  }
-
-  // after action is complete, let the behavior end, resetting the state
-  StartActing( action , [this]() { SET_STATE(State::PlayingInitialAnimation); });
-
-  SET_STATE(State::HandlingCliff);
-}
-
 void BehaviorRequestGameSimple::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;
@@ -619,15 +578,6 @@ f32 BehaviorRequestGameSimple::GetRequestMinDelayComplete_s() const
   }
   
   return _requestTime_s + minRequestDelay;
-}
-
-void BehaviorRequestGameSimple::HandleCliffEvent(Robot& robot, const EngineToGameEvent& event)
-{
-  if( event.GetData().Get_CliffEvent().detected ) {
-    PRINT_NAMED_INFO("BehaviorRequestGameSimple.Cliff",
-                     "handling cliff event");
-    TransitionToHandlingCliff(robot);
-  }
 }
 
 }

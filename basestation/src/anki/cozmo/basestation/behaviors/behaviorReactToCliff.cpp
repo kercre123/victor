@@ -51,12 +51,6 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot)
   
   return Result::RESULT_OK;
 }
-
-Result BehaviorReactToCliff::InterruptInternal(Robot& robot)
-{
-  StopActing();
-  return Result::RESULT_OK;
-}
   
 void BehaviorReactToCliff::StopInternal(Robot& robot)
 {
