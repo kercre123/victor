@@ -36,13 +36,13 @@ namespace Cozmo.HomeHub {
     private RectTransform _ScrollRectContent;
 
     [SerializeField]
-    private Cozmo.UI.ProgressBar _GreenPointsProgressBar;
+    private Cozmo.UI.ProgressBar _RequirementPointsProgressBar;
 
     [SerializeField]
-    private UnityEngine.UI.Text _GreenPointsText;
+    private UnityEngine.UI.Text _CurrentRequirementPointsLabel;
 
     [SerializeField]
-    private UnityEngine.UI.Text _GreenPointsTotal;
+    private UnityEngine.UI.Text _RequirementPointsNeededLabel;
 
     [SerializeField]
     private UnityEngine.UI.ScrollRect _ScrollRect;
@@ -79,24 +79,23 @@ namespace Cozmo.HomeHub {
       _PlayTabButton.Initialize(HandlePlayTabButton, "switch_to_play_tab_button", DASEventViewName);
       _ProfileTabButton.Initialize(HandleProfileTabButton, "switch_to_profile_tab_button", DASEventViewName);
 
-      PlayerManager.Instance.GreenPointsUpdate += HandleGreenPointsGained;
-      PlayerManager.Instance.ChestGained += HandleChestGained;
-      UpdateGreenBar(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints, PlayerManager.Instance.GetGreenPointsLadderMax());
-
+      ChestRewardManager.Instance.ChestRequirementsGained += HandleChestRequirementsGained;
+      ChestRewardManager.Instance.ChestGained += HandleChestGained;
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     }
 
-    private void HandleChestGained(int treatsGained, int hexGained) {
-      _GreenPointsProgressBar.ResetProgress();
+    private void HandleChestGained() {
+      UpdateChestProgressBar(ChestRewardManager.Instance.GetCurrentRequirementPoints(), ChestRewardManager.Instance.GetNextRequirementPoints());
     }
 
-    private void HandleGreenPointsGained(int greenPoints, int maxPoints) {
-      UpdateGreenBar(greenPoints, maxPoints);
+    private void HandleChestRequirementsGained(int currentPoints, int numPointsNeeded) {
+      UpdateChestProgressBar(currentPoints, numPointsNeeded);
     }
 
-    private void UpdateGreenBar(int greenPoints, int maxPoints) {
-      _GreenPointsProgressBar.SetProgress((float)greenPoints / (float)maxPoints);
-      _GreenPointsText.text = greenPoints.ToString();
-      _GreenPointsTotal.text = maxPoints.ToString();
+    private void UpdateChestProgressBar(int currentPoints, int numPointsNeeded) {
+      _RequirementPointsProgressBar.SetProgress((float)currentPoints / (float)numPointsNeeded);
+      _CurrentRequirementPointsLabel.text = currentPoints.ToString();
+      _RequirementPointsNeededLabel.text = numPointsNeeded.ToString();
     }
 
     public void SetChallengeStates(Dictionary<string, ChallengeStatePacket> challengeStatesById) {
@@ -150,8 +149,8 @@ namespace Cozmo.HomeHub {
     }
 
     protected override void CleanUp() {
-      PlayerManager.Instance.GreenPointsUpdate -= HandleGreenPointsGained;
-      PlayerManager.Instance.ChestGained -= HandleChestGained;
+      ChestRewardManager.Instance.ChestRequirementsGained -= HandleChestRequirementsGained;
+      ChestRewardManager.Instance.ChestGained -= HandleChestGained;
     }
 
   }

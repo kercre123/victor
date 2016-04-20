@@ -16,28 +16,26 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private GameObject _UnlocksTilePrefab;
 
   [SerializeField]
-  private Anki.UI.AnkiTextLabel _SparksLabel;
-
-  [SerializeField]
   private Anki.UI.AnkiTextLabel _HexLabel;
 
   [SerializeField]
-  private RequestTricksView _RequestSparkViewPrefab;
-  private RequestTricksView _RequestSparkViewInstance;
+  private RequestTricksView _RequestTricksViewPrefab;
+  private RequestTricksView _RequestTricksViewInstance;
 
   void Start() { 
     LoadTiles();
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleRequestSetUnlockResult;
-    UpdateInventoryCounts();
-  }
-
-  public void UpdateInventoryCounts() {
-    _SparksLabel.FormattingArgs = new object[] { DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount };
-    _HexLabel.FormattingArgs = new object[] { DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces };
+    UpdatePuzzlePieceCount();
+    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemAdded += HandleItemValueChanged;
+    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemRemoved += HandleItemValueChanged;
+    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemCountSet += HandleItemValueChanged;
   }
 
   void OnDestroy() {
     RobotEngineManager.Instance.OnRequestSetUnlockResult -= HandleRequestSetUnlockResult;
+    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemAdded -= HandleItemValueChanged;
+    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemRemoved -= HandleItemValueChanged;
+    DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.ItemCountSet -= HandleItemValueChanged;
   }
 
   public void LoadTiles() {
@@ -92,8 +90,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private void HandleTappedUnlocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped Unlocked: " + unlockInfo.Id);
     if (unlockInfo.UnlockableType == UnlockableType.Action) {
-      _RequestSparkViewInstance = UIManager.OpenView<RequestTricksView>(_RequestSparkViewPrefab, verticalCanvas: true);
-      _RequestSparkViewInstance.Initialize(unlockInfo, this);
+      _RequestTricksViewInstance = UIManager.OpenView<RequestTricksView>(_RequestTricksViewPrefab, verticalCanvas: true);
+      _RequestTricksViewInstance.Initialize(unlockInfo);
     }
     else if (unlockInfo.UnlockableType == UnlockableType.Game) {
       // TODO: run the game that was unlocked.
@@ -103,17 +101,33 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private void HandleTappedAvailable(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped available: " + unlockInfo.Id);
     // TODO: This const should be replaced by the actual hex puzzle system when that's done.
+    string hexPieceId = "TestHexItem0";
     int unlockCost = 2;
 
-    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces < unlockCost) {
-      return;
+    Cozmo.Inventory playerInventory = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+    if (playerInventory.CanRemoveItemAmount(hexPieceId, unlockCost)) {
+      playerInventory.RemoveItemAmount(hexPieceId, unlockCost);
+      UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
     }
-    DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces -= unlockCost;
-    UpdateInventoryCounts();
-    UnlockablesManager.Instance.TrySetUnlocked(unlockInfo.Id.Value, true);
   }
 
   private void HandleRequestSetUnlockResult(Anki.Cozmo.UnlockId unlockId, bool unlocked) {
     LoadTiles();
+  }
+
+  private void HandleItemValueChanged(string itemId, int delta, int count) {
+    if (Cozmo.HexItemList.IsPuzzlePiece(itemId)) {
+      UpdatePuzzlePieceCount();
+    }
+  }
+
+  private void UpdatePuzzlePieceCount() {
+    IEnumerable<string> puzzlePieceIds = Cozmo.HexItemList.GetPuzzlePieceIds();
+    int totalNumberHexes = 0;
+    Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+    foreach (string puzzlePieceId in puzzlePieceIds) {
+      totalNumberHexes += playerInventory.GetItemAmount(puzzlePieceId);
+    }
+    _HexLabel.FormattingArgs = new object[] { totalNumberHexes };
   }
 }

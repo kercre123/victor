@@ -59,6 +59,12 @@ namespace DataPersistence {
       }
     }
 
+    public static void CreateInstance() {
+      if (_Instance == null) {
+        _Instance = new DataPersistenceManager();
+      }
+    }
+
     public readonly SaveData Data;
 
     public TimelineEntryData CurrentSession { 

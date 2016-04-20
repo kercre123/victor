@@ -68,8 +68,8 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.InitBlockPoolMessage> OnInitBlockPoolMsg;
-  public event Action<Anki.Cozmo.ObjectDiscovered> OnObjectDiscoveredMsg;
-  public event Action<Anki.Cozmo.ObjectUndiscovered> OnObjectUndiscoveredMsg;
+  public event Action<Anki.Cozmo.ExternalInterface.ObjectAvailable> OnObjectAvailableMsg;
+  public event Action<Anki.Cozmo.ExternalInterface.ObjectUnavailable> OnObjectUnavailableMsg;
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
@@ -364,11 +364,11 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.InitBlockPoolMessage:
       ReceivedSpecificMessage(message.InitBlockPoolMessage);
       break;
-    case G2U.MessageEngineToGame.Tag.ObjectDiscovered:
-      ReceivedSpecificMessage(message.ObjectDiscovered);
+    case G2U.MessageEngineToGame.Tag.ObjectAvailable:
+      ReceivedSpecificMessage(message.ObjectAvailable);
       break;
-    case G2U.MessageEngineToGame.Tag.ObjectUndiscovered:
-      ReceivedSpecificMessage(message.ObjectUndiscovered);
+    case G2U.MessageEngineToGame.Tag.ObjectUnavailable:
+      ReceivedSpecificMessage(message.ObjectUnavailable);
       break;
     case G2U.MessageEngineToGame.Tag.ObjectConnectionState:
       ReceivedSpecificMessage(message.ObjectConnectionState);
@@ -689,15 +689,15 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ReceivedSpecificMessage(Anki.Cozmo.ObjectDiscovered message) {
-    if (OnObjectDiscoveredMsg != null) {
-      OnObjectDiscoveredMsg(message);
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.ObjectAvailable message) {
+    if (OnObjectAvailableMsg != null) {
+      OnObjectAvailableMsg(message);
     }
   }
 
-  private void ReceivedSpecificMessage(Anki.Cozmo.ObjectUndiscovered message) {
-    if (OnObjectUndiscoveredMsg != null) {
-      OnObjectUndiscoveredMsg(message);
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.ObjectUnavailable message) {
+    if (OnObjectUnavailableMsg != null) {
+      OnObjectUnavailableMsg(message);
     }
   }
 
