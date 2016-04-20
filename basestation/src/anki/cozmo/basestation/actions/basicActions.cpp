@@ -1112,11 +1112,15 @@ namespace Anki {
     Radians TurnTowardsPoseAction::GetHeadAngle()
     {
       const f32 heightDiff = _poseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
-      const f32 distanceX = _poseWrtRobot.GetTranslation().x() - NECK_JOINT_POSITION[0];
+      const f32 distanceXY = Point2f(_poseWrtRobot.GetTranslation()).Length() - NECK_JOINT_POSITION[0];
       
       // Adding bias to account for the fact that the camera tends to look lower than
-      // desired on account of it being lower wrt neck joint
-      const Radians headAngle = std::atan2(heightDiff, distanceX) + DEG_TO_RAD(5);
+      // desired on account of it being lower wrt neck joint.
+      // Ramp bias down to 0 for distanceXY values from 150mm to 300mm.
+      const f32 kFullBiasDist_mm = 150;
+      const f32 kNoBiasDist_mm = 300;
+      const f32 biasScaleFactor = CLIP((kNoBiasDist_mm - distanceXY) / (kNoBiasDist_mm - kFullBiasDist_mm), 0, 1);
+      const Radians headAngle = std::atan2(heightDiff, distanceXY) + DEG_TO_RAD(5) * biasScaleFactor;
 
       return headAngle;
     }
