@@ -74,8 +74,8 @@ Result BehaviorManager::Init(const Json::Value &config)
     BehaviorFactory& behaviorFactory = GetBehaviorFactory();
     AddReactionaryBehavior(
       behaviorFactory.CreateBehavior(BehaviorType::ReactToStop,  _robot, config)->AsReactionaryBehavior() );
-    // AddReactionaryBehavior(
-    //   behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
+    AddReactionaryBehavior(
+      behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior(
       behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
     // AddReactionaryBehavior(
@@ -299,21 +299,32 @@ Result BehaviorManager::Update()
         break;
           
       case IBehavior::Status::Complete:
-        // behavior is complete, switch to null (will also handle stopping current)
+        // behavior is complete, switch to null (will also handle stopping current). If it was reactionary,
+        // switch now to give the last behavior a chance to resume (if appropriate)
         PRINT_NAMED_DEBUG("BehaviorManager.Update.BehaviorComplete",
                           "Behavior '%s' returned Status::Complete",
                           _currentBehavior->GetName().c_str());
-        SwitchToBehavior(nullptr);
-        _runningReactionaryBehavior = false;
+        if( _runningReactionaryBehavior ) {
+          _runningReactionaryBehavior = false;
+          SwitchToNextBehavior();
+        }
+        else {
+          SwitchToBehavior(nullptr);
+        }
         break;
           
       case IBehavior::Status::Failure:
         PRINT_NAMED_ERROR("BehaviorManager.Update.FailedUpdate",
                           "Behavior '%s' failed to Update().",
                           _currentBehavior->GetName().c_str());
-        // just like in the complete case, stop behavior and set it to null
-        SwitchToBehavior(nullptr);
-        _runningReactionaryBehavior = false;
+        // same as the Complete case
+        if( _runningReactionaryBehavior ) {
+          _runningReactionaryBehavior = false;
+          SwitchToNextBehavior();
+        }
+        else {
+          SwitchToBehavior(nullptr);
+        }
         break;
         
       default:
@@ -321,6 +332,7 @@ Result BehaviorManager::Update()
                           "Behavior '%s' returned unknown status %d",
                           _currentBehavior->GetName().c_str(), status);
         lastResult = RESULT_FAIL;
+        break;
     } // switch(status)
   }
     
