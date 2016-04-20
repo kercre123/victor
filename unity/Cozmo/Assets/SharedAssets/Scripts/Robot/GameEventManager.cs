@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
+// Saves the GameEvents as a string so they don't get out of order.
 [Serializable]
 public class SerializableGameEvents : SerializableEnum<Anki.Cozmo.GameEvent> {
   // Init as invalid

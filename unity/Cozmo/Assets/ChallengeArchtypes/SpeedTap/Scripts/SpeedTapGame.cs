@@ -262,12 +262,6 @@ namespace SpeedTap {
       MinTapDelayMs = SkillSystem.Instance.GetSkillVal("TapDelayMin");
       MaxTapDelayMs = SkillSystem.Instance.GetSkillVal("TapDelayMax");
 
-
-      DAS.Warn("SkillSystem.CozmoMistakeChance", "SkillSystem.Initialize " + CozmoMistakeChance);
-      DAS.Warn("SkillSystem.MinTapDelayMs", "SkillSystem.Initialize " + MinTapDelayMs);
-      DAS.Warn("SkillSystem.MaxTapDelayMs", "SkillSystem.Initialize " + MaxTapDelayMs);
-
-
       // End config based values
       InitializeAnimationCallbacks();
       InitializeMinigameObjects(1);
@@ -347,7 +341,6 @@ namespace SpeedTap {
     }
 
     protected override void CleanUpOnDestroy() {
-      DAS.Warn("CleanUpOnDestroy", "CleanUpOnDestroy");
       LightCube.TappedAction -= BlockTapped;
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGetOut);
       ClearAnimationCallbacks();

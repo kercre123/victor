@@ -23,7 +23,7 @@ public class GameSkillLevelConfig: ISerializationCallbackReceiver {
   [Range(0.0f, 1.0f)]
   public float UpperBoundThreshold = 0.7f;
   [Range(0.0f, 1.0f)]
-  public float LowerBoundThreshold = 0.39f;
+  public float LowerBoundThreshold = 0.3f;
 
   public void OnBeforeSerialize() {
   }
