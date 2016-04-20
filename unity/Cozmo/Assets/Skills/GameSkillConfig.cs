@@ -19,11 +19,11 @@ public class GameSkillLevelConfig: ISerializationCallbackReceiver {
   private GameSkillTuple[] SkillsArray;
 
   public Dictionary<string,float> SkillMap = new Dictionary<string,float>();
-  // Level up if winning more than 70% of the time, Level down if we're losing more than 40%
+  // Level down if winning more than 70% of the time, Level up if we're winning less than 30%
   [Range(0.0f, 1.0f)]
-  public float LevelUpMinThreshold = 0.7f;
+  public float UpperBoundThreshold = 0.7f;
   [Range(0.0f, 1.0f)]
-  public float LevelDownMaxThreshold = 0.39f;
+  public float LowerBoundThreshold = 0.39f;
 
   public void OnBeforeSerialize() {
   }

@@ -66,7 +66,7 @@ public class SkillSystem {
         if (skill_level_config != null) {
           // Reset the for next calculation if our percent has changed.
           float point_total = (float)(curr_skill_data.WinPointsTotal + curr_skill_data.LossPointsTotal);
-          // Only evaluate after a certain number of points scored.
+          // Only evaluate after a certain number of points scored if desired
           bool threshold_passed = true;
           if (skill_config.UsePointThreshold && skill_config.ComparedPointThreshold < point_total) {
             threshold_passed = false;
@@ -74,7 +74,7 @@ public class SkillSystem {
           if (threshold_passed) {
             float win_percent = (curr_skill_data.WinPointsTotal / point_total);
             // We're losing too much, level up
-            if (win_percent > skill_level_config.LevelUpMinThreshold) {
+            if (win_percent < skill_level_config.LowerBoundThreshold) {
               //  if new high, let the player know
               if (curr_skill_data.LastLevel + 1 < skill_config.GetMaxLevel()) {
                 bool new_highest_level = curr_skill_data.LastLevel == curr_skill_data.HighestLevel;
@@ -87,7 +87,8 @@ public class SkillSystem {
                 }
               }
             }
-            else if (win_percent < skill_level_config.LevelDownMaxThreshold) {
+// we're winning to much, level up
+            else if (win_percent > skill_level_config.UpperBoundThreshold) {
               curr_skill_data.ChangeLevel(curr_skill_data.LastLevel - 1);
               DAS.Event("game.cozmoskill.leveldown", _CurrChallengeData.ChallengeID, null, 
                 DASUtil.FormatExtraData(curr_skill_data.LastLevel.ToString() + "," + curr_skill_data.HighestLevel.ToString()));
