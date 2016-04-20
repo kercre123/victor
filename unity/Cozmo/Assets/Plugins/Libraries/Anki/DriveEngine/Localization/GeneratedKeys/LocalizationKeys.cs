@@ -210,6 +210,7 @@ public static class LocalizationKeys {
   public const string kUnlockableDefaultTitle = "unlockable.Default.Title";
   public const string kUnlockableDefaultDescription = "unlockable.Default.Description";
   public const string kSkillsLevelUpDescription = "skills.LevelUp.Description";
+  public const string kSkillsLevelUpTitle = "skills.LevelUp.Title";
 
   #endregion
 }

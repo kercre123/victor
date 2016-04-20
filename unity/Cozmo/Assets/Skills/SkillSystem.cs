@@ -7,7 +7,6 @@ using DataPersistence;
 // skill level values.
 // This system calculates when thresholds should be calculated and changed.
 public class SkillSystem {
-
   private static SkillSystem _sInstance;
 
   public event System.Action<int> OnLevelUp;
@@ -15,6 +14,10 @@ public class SkillSystem {
   private SkillSystem() {
     GameEventManager.Instance.OnGameEvent += HandleGameEvent;
   }
+
+  private ChallengeData _CurrChallengeData;
+
+  #region GameAPI
 
   public static SkillSystem Instance {
     get { 
@@ -25,8 +28,6 @@ public class SkillSystem {
     }
   }
 
-  private ChallengeData _CurrChallengeData;
-
   public void StartGame(ChallengeData data) { 
     _CurrChallengeData = data;
   }
@@ -34,6 +35,35 @@ public class SkillSystem {
   public void EndGame() { 
     _CurrChallengeData = null;
   }
+
+  public GameSkillLevelConfig GetSkillLevelConfig() {
+    GameSkillData currSkillData = GetSkillDataForGame();
+    if (currSkillData != null) {
+      GameSkillConfig skillConfig = _CurrChallengeData.MinigameConfig.SkillConfig;
+      GameSkillLevelConfig skillLevelConfig = skillConfig.GetCurrLevelConfig(currSkillData.LastLevel);
+      return skillLevelConfig;
+    }
+    return null;
+  }
+
+  public float GetSkillVal(string skillName) {
+    GameSkillLevelConfig skillLevelConfig = GetSkillLevelConfig();
+    float val = 0.0f;
+    if (skillLevelConfig != null) {
+      skillLevelConfig.SkillMap.TryGetValue(skillName, out val);
+    }
+    return val;
+  }
+
+  public bool HasSkillVal(string skillName) {
+    GameSkillLevelConfig skillLevelConfig = GetSkillLevelConfig();
+    if (skillLevelConfig != null) {
+      return skillLevelConfig.SkillMap.ContainsKey(skillName);
+    }
+    return false;
+  }
+
+  #endregion
 
   private GameSkillData GetSkillDataForGame() {
 // In the event we've never played this game before and they have old save data.
@@ -50,82 +80,55 @@ public class SkillSystem {
   }
 
   public void HandleGameEvent(Anki.Cozmo.GameEvent cozEvent) {
-    GameSkillData curr_skill_data = GetSkillDataForGame();
-    if (curr_skill_data != null) {
-      GameSkillConfig skill_config = _CurrChallengeData.MinigameConfig.SkillConfig;
-      if (skill_config.GainChallengePointEvent == cozEvent) {
-        curr_skill_data.WinPointsTotal++;
+    GameSkillData currSkillData = GetSkillDataForGame();
+    if (currSkillData != null) {
+      GameSkillConfig skillConfig = _CurrChallengeData.MinigameConfig.SkillConfig;
+      if (skillConfig.GainChallengePointEvent == cozEvent) {
+        currSkillData.WinPointsTotal++;
       }
-      if (skill_config.LoseChallengePointEvent == cozEvent) {
-        curr_skill_data.LossPointsTotal++;
+      if (skillConfig.LoseChallengePointEvent == cozEvent) {
+        currSkillData.LossPointsTotal++;
       }
-      if (skill_config.EvaluateLevelChangeEvent == cozEvent) {
+      if (skillConfig.EvaluateLevelChangeEvent == cozEvent) {
         // See if things are pass the level up/down thresholds...
         // TODO: this needs to get the max of LastLevel player and Highest level cozmo
-        GameSkillLevelConfig skill_level_config = GetSkillLevelConfig();
-        if (skill_level_config != null) {
+        GameSkillLevelConfig skillLevelConfig = GetSkillLevelConfig();
+        if (skillLevelConfig != null) {
           // Reset the for next calculation if our percent has changed.
-          float point_total = (float)(curr_skill_data.WinPointsTotal + curr_skill_data.LossPointsTotal);
-          // Only evaluate after a certain number of points scored if desired
-          bool threshold_passed = true;
-          if (skill_config.UsePointThreshold && skill_config.ComparedPointThreshold < point_total) {
-            threshold_passed = false;
+          float pointTotal = (float)(currSkillData.WinPointsTotal + currSkillData.LossPointsTotal);
+          // Only evaluate after a certain number of points scored if desired so players can't just quit.
+          bool thresholdPassed = true;
+          if (skillConfig.UsePointThreshold && skillConfig.ComparedPointThreshold < pointTotal) {
+            thresholdPassed = false;
           }
-          if (threshold_passed) {
-            float win_percent = (curr_skill_data.WinPointsTotal / point_total);
+          if (thresholdPassed) {
+            float winPercent = (currSkillData.WinPointsTotal / pointTotal);
             // We're losing too much, level up
-            if (win_percent < skill_level_config.LowerBoundThreshold) {
+
+            if (winPercent < skillLevelConfig.LowerBoundThreshold) {
               //  if new high, let the player know
-              if (curr_skill_data.LastLevel + 1 < skill_config.GetMaxLevel()) {
-                bool new_highest_level = curr_skill_data.LastLevel == curr_skill_data.HighestLevel;
-                curr_skill_data.ChangeLevel(curr_skill_data.LastLevel + 1);
+              if (currSkillData.LastLevel + 1 < skillConfig.GetMaxLevel()) {
+                bool newHighestLevel = currSkillData.LastLevel == currSkillData.HighestLevel;
+                currSkillData.ChangeLevel(currSkillData.LastLevel + 1);
               
                 DAS.Event("game.cozmoskill.levelup", _CurrChallengeData.ChallengeID, null, 
-                  DASUtil.FormatExtraData(curr_skill_data.LastLevel.ToString() + "," + curr_skill_data.HighestLevel.ToString()));
-                if (OnLevelUp != null && new_highest_level) {
-                  OnLevelUp(curr_skill_data.LastLevel);
+                  DASUtil.FormatExtraData(currSkillData.LastLevel.ToString() + "," + currSkillData.HighestLevel.ToString()));
+                if (OnLevelUp != null && newHighestLevel) {
+                  OnLevelUp(currSkillData.LastLevel);
                 }
               }
             }
-// we're winning to much, level up
-            else if (win_percent > skill_level_config.UpperBoundThreshold) {
-              curr_skill_data.ChangeLevel(curr_skill_data.LastLevel - 1);
+            // we're winning too much, level down
+            else if (winPercent > skillLevelConfig.UpperBoundThreshold) {
+              currSkillData.ChangeLevel(currSkillData.LastLevel - 1);
               DAS.Event("game.cozmoskill.leveldown", _CurrChallengeData.ChallengeID, null, 
-                DASUtil.FormatExtraData(curr_skill_data.LastLevel.ToString() + "," + curr_skill_data.HighestLevel.ToString()));
+                DASUtil.FormatExtraData(currSkillData.LastLevel.ToString() + "," + currSkillData.HighestLevel.ToString()));
             }
           }
         }
       }
-      // Just look at the file for testing
-// TODO: DELETE THIS!!
-      DataPersistence.DataPersistenceManager.Instance.Save();
     }
   }
 
-  public GameSkillLevelConfig GetSkillLevelConfig() {
-    GameSkillData curr_skill_data = GetSkillDataForGame();
-    if (curr_skill_data != null) {
-      GameSkillConfig skill_config = _CurrChallengeData.MinigameConfig.SkillConfig;
-      GameSkillLevelConfig skill_level_config = skill_config.GetCurrLevelConfig(curr_skill_data.LastLevel);
-      return skill_level_config;
-    }
-    return null;
-  }
 
-  public float GetSkillVal(string skill_name) {
-    GameSkillLevelConfig skill_level_config = GetSkillLevelConfig();
-    float val = 0.0f;
-    if (skill_level_config != null) {
-      skill_level_config.SkillMap.TryGetValue(skill_name, out val);
-    }
-    return val;
-  }
-
-  public bool HasSkillVal(string skill_name) {
-    GameSkillLevelConfig skill_level_config = GetSkillLevelConfig();
-    if (skill_level_config != null) {
-      return skill_level_config.SkillMap.ContainsKey(skill_name);
-    }
-    return false;
-  }
 }

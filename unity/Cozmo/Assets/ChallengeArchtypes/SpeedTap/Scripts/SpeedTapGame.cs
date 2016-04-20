@@ -347,6 +347,7 @@ namespace SpeedTap {
     }
 
     protected override void CleanUpOnDestroy() {
+      DAS.Warn("CleanUpOnDestroy", "CleanUpOnDestroy");
       LightCube.TappedAction -= BlockTapped;
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGetOut);
       ClearAnimationCallbacks();

@@ -5,12 +5,12 @@
     public int HighestLevel = 0;
     public int LastLevel = 0;
 
-    public void ChangeLevel(int new_level) {
-      if (new_level > HighestLevel) {
-        HighestLevel = new_level;
+    public void ChangeLevel(int newLevel) {
+      if (newLevel > HighestLevel) {
+        HighestLevel = newLevel;
       }
-      if (new_level >= 0) {
-        LastLevel = new_level;
+      if (newLevel >= 0) {
+        LastLevel = newLevel;
       }
       WinPointsTotal = 0;
       LossPointsTotal = 0;

@@ -169,7 +169,6 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance = null;
     }
     DAS.Info(this, "Finished GameBase On Destroy");
-
     SkillSystem.Instance.EndGame();
     SkillSystem.Instance.OnLevelUp -= HandleCozmoSkillLevelUp;
   }
@@ -375,14 +374,14 @@ public abstract class GameBase : MonoBehaviour {
   protected virtual void OnDifficultySet(int difficulty) {
   }
 
-  protected void HandleCozmoSkillLevelUp(int new_level) {
+  protected void HandleCozmoSkillLevelUp(int newLevel) {
     AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
     // Hook up callbacks
     alertView.SetCloseButtonEnabled(true);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue);
+    alertView.TitleLocKey = LocalizationKeys.kSkillsLevelUpTitle;
     alertView.DescriptionLocKey = LocalizationKeys.kSkillsLevelUpDescription;
-    alertView.SetMessageArgs(new object[] { new_level, _ChallengeData.MinigameConfig.name });
-    DAS.Warn("CozmoLevelUp", "CozmoLevelUpCalled");
+    alertView.SetMessageArgs(new object[] { newLevel, _ChallengeData.name });
   }
 
   #endregion
