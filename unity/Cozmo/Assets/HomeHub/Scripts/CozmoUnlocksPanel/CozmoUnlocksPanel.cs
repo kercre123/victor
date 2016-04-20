@@ -19,8 +19,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private Anki.UI.AnkiTextLabel _HexLabel;
 
   [SerializeField]
-  private RequestTricksView _RequestSparkViewPrefab;
-  private RequestTricksView _RequestSparkViewInstance;
+  private RequestTricksView _RequestTricksViewPrefab;
+  private RequestTricksView _RequestTricksViewInstance;
 
   void Start() { 
     LoadTiles();
@@ -90,8 +90,8 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private void HandleTappedUnlocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped Unlocked: " + unlockInfo.Id);
     if (unlockInfo.UnlockableType == UnlockableType.Action) {
-      _RequestSparkViewInstance = UIManager.OpenView<RequestTricksView>(_RequestSparkViewPrefab, verticalCanvas: true);
-      _RequestSparkViewInstance.Initialize(unlockInfo);
+      _RequestTricksViewInstance = UIManager.OpenView<RequestTricksView>(_RequestTricksViewPrefab, verticalCanvas: true);
+      _RequestTricksViewInstance.Initialize(unlockInfo);
     }
     else if (unlockInfo.UnlockableType == UnlockableType.Game) {
       // TODO: run the game that was unlocked.
