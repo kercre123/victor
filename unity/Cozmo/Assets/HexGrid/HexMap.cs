@@ -23,11 +23,11 @@ public class HexMap {
     removedPiece = _OccupancyMap[mapCoord];
 
     // get the coordinates to remove in local puzzle piece space
-    HashSet<Coord> toRemoveLocalCoords = _OccupancyMap[mapCoord].PieceData.HexSet.HexSetData;
+    HashSet<Coord> toRemoveLocalCoords = removedPiece.PieceData.HexSet.HexSetData;
     foreach (Coord localCoord in toRemoveLocalCoords) {
       // convert to mapCoord space by adding the map position of the puzzle piece we are
       // removing
-      _OccupancyMap.Remove(localCoord + _OccupancyMap[mapCoord].MapPosition);
+      _OccupancyMap.Remove(localCoord + removedPiece.MapPosition);
     }
 
     return true;
