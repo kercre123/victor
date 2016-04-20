@@ -172,6 +172,10 @@ public class StartupManager : MonoBehaviour {
     gameObject.AddComponent<ObjectTagRegistryManager>();
     AnimationManager.Instance.Initialize();
 
+    // Initialize persistance manager
+    DataPersistence.DataPersistenceManager.CreateInstance();
+    ChestRewardManager.CreateInstance();
+
     if (_IsDebugBuild) {
       gameObject.AddComponent<SOSLogManager>();
     }
@@ -203,6 +207,21 @@ public class StartupManager : MonoBehaviour {
     assetBundleManager.LoadAssetAsync<Cozmo.CubePalette>(_GameMetadataAssetBundleName, 
       "CubePalette", (Cozmo.CubePalette cp) => {
       Cozmo.CubePalette.SetInstance(cp);
+    });
+
+    assetBundleManager.LoadAssetAsync<Cozmo.ItemDataConfig>(_GameMetadataAssetBundleName, 
+      "ItemDataConfig", (Cozmo.ItemDataConfig idc) => {
+      Cozmo.ItemDataConfig.SetInstance(idc);
+    });
+        
+    assetBundleManager.LoadAssetAsync<ChestData>(_GameMetadataAssetBundleName, 
+      "DefaultChestConfig", (ChestData cd) => {
+      ChestData.SetInstance(cd);
+    });
+
+    assetBundleManager.LoadAssetAsync<Cozmo.HexItemList>(_GameMetadataAssetBundleName, 
+      "HexItemList", (Cozmo.HexItemList cd) => {
+      Cozmo.HexItemList.SetInstance(cd);
     });
 
     assetBundleManager.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(_MinigameUIPrefabAssetBundleName, 

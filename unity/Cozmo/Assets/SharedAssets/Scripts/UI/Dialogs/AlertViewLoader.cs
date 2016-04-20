@@ -3,7 +3,6 @@ using System.Collections;
 
 namespace Cozmo {
   namespace UI {
-    [CreateAssetMenu]
     public class AlertViewLoader : ScriptableObject {
 
       private static AlertViewLoader _sInstance;

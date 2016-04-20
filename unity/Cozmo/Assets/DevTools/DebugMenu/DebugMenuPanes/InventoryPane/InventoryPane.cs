@@ -5,52 +5,141 @@ using DataPersistence;
 public class InventoryPane : MonoBehaviour {
 
   [SerializeField]
-  UnityEngine.UI.InputField _GreenPoints;
+  UnityEngine.UI.Button _QuickAddTreatButton;
 
   [SerializeField]
-  UnityEngine.UI.InputField _GreenLadderLevel;
+  UnityEngine.UI.Button _QuickRemoveTreatButton;
 
   [SerializeField]
-  UnityEngine.UI.InputField _Treats;
+  UnityEngine.UI.Button _QuickAddExperienceButton;
 
   [SerializeField]
-  UnityEngine.UI.InputField _HexPoints;
+  UnityEngine.UI.Button _QuickRemoveExperienceButton;
 
+  [SerializeField]
+  UnityEngine.UI.InputField _ChestLevelInputField;
+
+  [SerializeField]
+  UnityEngine.UI.Button _SetChestLevelButton;
+
+  // TODO: Validate id
+  [SerializeField]
+  UnityEngine.UI.Dropdown _ItemIdDropdown;
+
+  [SerializeField]
+  UnityEngine.UI.InputField _NumToAddInputField;
+
+  [SerializeField]
+  UnityEngine.UI.Button _AddItemButton;
+
+  [SerializeField]
+  UnityEngine.UI.InputField _NumToRemoveInputField;
+
+  [SerializeField]
+  UnityEngine.UI.Button _RemoveItemButton;
+
+  [SerializeField]
+  UnityEngine.UI.InputField _NumToSetInputField;
+
+  [SerializeField]
+  UnityEngine.UI.Button _SetItemAmountButton;
+
+  private const string _kTreatItemId = "treat";
+  private const string _kExperienceItemId = "experience";
+
+  private Cozmo.Inventory _PlayerInventory;
+
+  // TODO: Allow add / remove any item
+  // TODO: Add shortcut buttons for common items (treats, experience)
   void Start() {
-    _GreenPoints.text = DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints.ToString();
-    _GreenPoints.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
-    _GreenPoints.onValueChanged.AddListener(GreenPointsChanged);
+    _PlayerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
 
-    _GreenLadderLevel.text = DataPersistenceManager.Instance.CurrentSession.GreenPointsLadderLevel.ToString();
-    _GreenLadderLevel.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
-    _GreenLadderLevel.onValueChanged.AddListener(GreenLadderLevelChanged);
+    _QuickAddTreatButton.onClick.AddListener(HandleQuickAddTreatsClicked);
+    _QuickRemoveTreatButton.onClick.AddListener(HandleQuickRemoveTreatsClicked);
+    _QuickAddExperienceButton.onClick.AddListener(HandleQuickAddExperienceClicked);
+    _QuickRemoveExperienceButton.onClick.AddListener(HandleQuickRemoveExperienceClicked);
 
-    _Treats.text = DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount.ToString();
-    _Treats.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
-    _Treats.onValueChanged.AddListener(TreatsChanged);
+    _ChestLevelInputField.text = DataPersistenceManager.Instance.CurrentSession.ChestsGained.ToString();
+    _ChestLevelInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
+    _SetChestLevelButton.onClick.AddListener(HandleSetChestLevelButtonClicked);
 
-    _HexPoints.text = DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces.ToString();
-    _HexPoints.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
-    _HexPoints.onValueChanged.AddListener(HexPointsChanged);
+    _ItemIdDropdown.ClearOptions();
+    _ItemIdDropdown.AddOptions(Cozmo.ItemDataConfig.GetAllItemIds());
+
+    string defaultValue = "10";
+    _NumToAddInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
+    _NumToAddInputField.text = defaultValue;
+    _AddItemButton.onClick.AddListener(HandleAddItemClicked);
+
+    _NumToRemoveInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
+    _NumToRemoveInputField.text = defaultValue;
+    _RemoveItemButton.onClick.AddListener(HandleRemoveItemClicked);
+
+    _NumToSetInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
+    _NumToSetInputField.text = defaultValue;
+    _SetItemAmountButton.onClick.AddListener(HandleSetItemAmountClicked);
   }
 
-  private void HexPointsChanged(string newValue) {
-    DataPersistenceManager.Instance.Data.DefaultProfile.HexPieces = int.Parse(newValue);
+  private void HandleQuickAddTreatsClicked() {
+    DebugAddItem(_kTreatItemId, 100);
+  }
+
+  private void HandleQuickRemoveTreatsClicked() {
+    DebugRemoveItem(_kTreatItemId, 100);
+  }
+
+  private void HandleQuickAddExperienceClicked() {
+    DebugAddItem(_kExperienceItemId, 100);
+  }
+
+  private void HandleQuickRemoveExperienceClicked() {
+    DebugRemoveItem(_kExperienceItemId, 100);
+  }
+
+  private void HandleSetChestLevelButtonClicked() {
+    DataPersistenceManager.Instance.CurrentSession.ChestsGained = GetValidInt(_ChestLevelInputField);
+
+    // Trigger UI to update
+    DebugAddItem(_kExperienceItemId, 0);
+
     DataPersistenceManager.Instance.Save();
   }
 
-  private void GreenPointsChanged(string newValue) {
-    PlayerManager.Instance.SetGreenPoints(int.Parse(newValue));
+  private void HandleAddItemClicked() {
+    DebugAddItem(_ItemIdDropdown.captionText.text, GetValidInt(_NumToAddInputField));
+  }
+
+  private void HandleRemoveItemClicked() {
+    DebugRemoveItem(_ItemIdDropdown.captionText.text, GetValidInt(_NumToRemoveInputField));
+  }
+
+  private void HandleSetItemAmountClicked() {
+    DebugSetItem(_ItemIdDropdown.captionText.text, GetValidInt(_NumToSetInputField));
+  }
+
+  private void DebugAddItem(string itemId, int delta) {
+    _PlayerInventory.AddItemAmount(itemId, delta);
     DataPersistenceManager.Instance.Save();
   }
 
-  private void GreenLadderLevelChanged(string newValue) {
-    DataPersistenceManager.Instance.CurrentSession.GreenPointsLadderLevel = int.Parse(newValue);
+  private void DebugRemoveItem(string itemId, int delta) {
+    int currentAmount = _PlayerInventory.GetItemAmount(itemId);
+    delta = Mathf.Min(currentAmount, delta);
+    _PlayerInventory.RemoveItemAmount(itemId, delta);
     DataPersistenceManager.Instance.Save();
   }
 
-  private void TreatsChanged(string newValue) {
-    DataPersistenceManager.Instance.Data.DefaultProfile.TreatCount = int.Parse(newValue);
+  private void DebugSetItem(string itemId, int delta) {
+    _PlayerInventory.SetItemAmount(itemId, delta);
     DataPersistenceManager.Instance.Save();
+  }
+
+  private int GetValidInt(UnityEngine.UI.InputField inputField) {
+    int validInt = int.Parse(inputField.text);
+    if (validInt < 0) {
+      validInt = 0;
+      inputField.text = "0";
+    }
+    return validInt;
   }
 }

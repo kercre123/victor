@@ -10,12 +10,7 @@ public class PlayerProfile {
 
   public List<DataPersistence.TimelineEntryData> Sessions;
 
-  public int GreenPoints;
-
-  // TODO: replace with Dictionary<HexType, int>
-  public int HexPieces;
-
-  public int TreatCount;
+  public Cozmo.Inventory Inventory;
 
   public Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> VolumePreferences;
 
@@ -24,5 +19,6 @@ public class PlayerProfile {
     ConversationHistory = new Conversations.ConversationHistory();
     Sessions = new List<DataPersistence.TimelineEntryData>();
     VolumePreferences = new Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float>();
+    Inventory = new Cozmo.Inventory();
   }
 }

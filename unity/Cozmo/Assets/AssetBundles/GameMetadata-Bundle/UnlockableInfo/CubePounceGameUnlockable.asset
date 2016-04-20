@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: CubePounceGame
-    _EnumValue: 5
+    _EnumValue: 9
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
@@ -21,4 +21,5 @@ MonoBehaviour:
   DefaultUnlock: 0
   DescriptionKey: Unlock Description
   TitleKey: unlockable.Default.Description
-  TreatCost: 0
+  CostItemId: treat
+  CostAmountNeeded: 2
