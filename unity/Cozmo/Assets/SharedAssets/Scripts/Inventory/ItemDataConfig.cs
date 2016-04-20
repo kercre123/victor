@@ -3,6 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace Cozmo {
+  public class ItemIdAttribute : PropertyAttribute {
+    public ItemIdAttribute() {
+    }
+  }
+
   [System.Serializable]
   public class ItemData {
 
@@ -79,5 +84,15 @@ namespace Cozmo {
       }
       return data;
     }
+
+    #if UNITY_EDITOR
+    public IEnumerable<string> EditorGetItemIds() {
+      List<string> itemIds = new List<string>();
+      foreach (var data in _ItemMap) {
+        itemIds.Add(data.ID);
+      }
+      return itemIds;
+    }
+    #endif
   }
 }

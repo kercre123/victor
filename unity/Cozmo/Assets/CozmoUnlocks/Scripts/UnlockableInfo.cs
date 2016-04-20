@@ -30,7 +30,7 @@ public class UnlockableInfo : ScriptableObject {
 
   public string TitleKey;
 
-  // TODO: Add validation (does it exist in ItemDataConfig or HexItemList
+  [Cozmo.ItemId]
   public string CostItemId;
   public int CostAmountNeeded;
 

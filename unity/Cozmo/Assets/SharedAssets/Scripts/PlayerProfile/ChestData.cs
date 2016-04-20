@@ -19,8 +19,9 @@ public class ChestData : ScriptableObject {
 
 [Serializable]
 public class Ladder {
-  // TODO: Add validation (does it exist in ItemDataConfig or HexItemList
+  [Cozmo.ItemId]
   public string ItemId;
+
   public LadderLevel[] LadderLevels;
 }
 

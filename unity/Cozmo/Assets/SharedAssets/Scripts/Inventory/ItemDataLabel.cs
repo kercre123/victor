@@ -7,8 +7,7 @@ namespace Cozmo {
       [SerializeField]
       private Anki.UI.AnkiTextLabel _CountLabel;
 
-      // TODO: Add validation (does it exist in ItemDataConfig or HexItemList
-      [SerializeField]
+      [SerializeField, Cozmo.ItemId]
       private string _ItemId;
 
       private void Start() {
