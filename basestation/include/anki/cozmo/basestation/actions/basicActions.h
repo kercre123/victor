@@ -368,7 +368,7 @@ namespace Anki {
       TurnTowardsPoseAction(Robot& robot, Radians maxTurnAngle);
       
       void SetPose(const Pose3d& pose);
-      virtual Radians GetHeadAngle(f32 heightDiff);
+      virtual Radians GetHeadAngle();
       
       Pose3d    _poseWrtRobot;
       
