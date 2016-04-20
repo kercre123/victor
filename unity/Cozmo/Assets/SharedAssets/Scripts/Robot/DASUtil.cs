@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 public static class DASUtil {
   public enum ViewType {
@@ -25,6 +26,12 @@ public static class DASUtil {
 
   public static string FormatViewTypeForClose(ViewType type) {
     return string.Format("ui.{0}.exit", GetStringFromViewType(type));
+  }
+
+  public static Dictionary<string,string> FormatExtraData(string str) {
+    Dictionary<string, string> DASData = new Dictionary<string, string>();
+    DASData.Add("$data", str);
+    return DASData;
   }
 
   private static string GetStringFromViewType(ViewType type) {

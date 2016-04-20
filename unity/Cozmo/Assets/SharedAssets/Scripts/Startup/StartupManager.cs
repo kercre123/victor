@@ -175,10 +175,15 @@ public class StartupManager : MonoBehaviour {
     // Initialize persistance manager
     DataPersistence.DataPersistenceManager.CreateInstance();
     ChestRewardManager.CreateInstance();
+    SkillSystem.Instance.InitInstance();
 
     if (_IsDebugBuild) {
       gameObject.AddComponent<SOSLogManager>();
     }
+  }
+
+  private void OnDestroy() {
+    SkillSystem.Instance.DestroyInstance();
   }
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {
