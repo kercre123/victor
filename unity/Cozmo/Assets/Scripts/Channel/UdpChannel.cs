@@ -820,6 +820,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
 
   // adapted from http://stackoverflow.com/a/24814027
   public static IPAddress GetLocalIPv4() {
+    #if UNITY_EDITOR || !UNITY_ANDROID
     NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
     Array.Sort(interfaces, CompareInterfaces);
 
@@ -831,6 +832,11 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
       }
     }
     return null;
+    #else
+    Debug.Log("IP address: " + Network.player.ipAddress);
+//    return IPAddress.Parse(Network.player.ipAddress);
+    return IPAddress.Parse("172.31.1.3");
+    #endif
   }
 
   private static int CompareInterfaces(NetworkInterface a, NetworkInterface b) {
