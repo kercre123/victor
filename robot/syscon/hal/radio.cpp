@@ -10,6 +10,7 @@
 
 #include "micro_esb.h"
   
+#include "random.h"
 #include "hardware.h"
 #include "rtos.h"
 #include "debug.h"
@@ -94,11 +95,11 @@ uint8_t isqrt(uint32_t op)
 
 static void createAddress(uesb_address_desc_t& address) { 
   // Generate random values
-  Crypto::random(&address.prefix[0], 1);
+  gen_random(&address.prefix[0], 1);
   address.base0 = 0xE7E7E7E7;
 
   // Create a random RF channel
-  Crypto::random(&address.rf_channel, sizeof(address.rf_channel));
+  gen_random(&address.rf_channel, sizeof(address.rf_channel));
   address.rf_channel %= MAX_TX_CHANNELS;
 }
 
