@@ -271,7 +271,7 @@ namespace Cozmo.HomeHub {
         // TODO: This is a placeholder for rewarding green points. Eventually the daily goals system
         // will be the one responsible for rewarding green points.
         // TODO: Don't hardcode "experience"
-        DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount("experience", 10);
+        DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount("experience", 8);
       }
       else {
         DAS.Error(this, "Somehow managed to complete a challenge with no sessions saved!");
