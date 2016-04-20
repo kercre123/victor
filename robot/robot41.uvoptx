@@ -158,7 +158,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>0</BreakIfRCount>
-          <Filename>&lt;2&gt;.\boot_startup\startup_MK02F12810.s</Filename>
+          <Filename>&lt;1&gt;.\boot_startup\startup_MK02F12810.s</Filename>
           <ExecCommand></ExecCommand>
           <Expression></Expression>
         </Bp>
@@ -174,7 +174,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>0</BreakIfRCount>
-          <Filename>&lt;2&gt;.\boot_startup\startup_MK02F12810.s</Filename>
+          <Filename>&lt;1&gt;.\boot_startup\startup_MK02F12810.s</Filename>
           <ExecCommand></ExecCommand>
           <Expression></Expression>
         </Bp>
