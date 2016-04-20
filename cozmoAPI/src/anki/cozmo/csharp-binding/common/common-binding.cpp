@@ -59,17 +59,60 @@ void configure_engine(Json::Value config)
   config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
 }
 
+#if defined(ANDROID)
+#include <android/log.h>
+#endif
+
+std::string parseString(const Json::Value& config, const char* key)
+{
+  if (!config.isMember(key)) {
+    __android_log_print(ANDROID_LOG_INFO, "CozmoEngine", "Can't find key %s in the config", key);
+    return std::string();
+  } else {
+    const char* str = config[key].asCString();
+    return std::string(str);
+  }
+}
+
 int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_data)
 {
+  __android_log_print(ANDROID_LOG_INFO, "CozmoEngine", "cozmo_engine_create");
+  
   //Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({new Util::SosLoggerProvider(), new Util::DasLoggerProvider()});
   Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
   Anki::Util::gLoggerProvider = loggerProvider;
+
   PRINT_NAMED_INFO("CSharpBinding.cozmo_game_create", "engine creating engine");
 
+  __android_log_print(ANDROID_LOG_INFO, "CozmoEngine", "about to parse config %s", configuration_data);
+
+  Json::Reader reader;
+  Json::Value config;
+  if (!reader.parse(configuration_data, configuration_data + std::strlen(configuration_data), config)) {
+    PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "json configuration parsing error: " << reader.getFormattedErrorMessages());
+    return (int)RESULT_FAIL;
+  }
+  
   //dataPlatform = CreateDataPlatform();
   //ConfigureDASForPlatform(dataPlatform);
   //CreateHockeyApp();
   
+#if defined(ANDROID)
+  __android_log_print(ANDROID_LOG_INFO, "CozmoEngine", "about to read paths");
+
+  std::string filesPath = parseString(config, "DataPlatformFilesPath");
+  std::string cachePath = parseString(config, "DataPlatformCachePath");
+  std::string externalPath = parseString(config, "DataPlatformExternalPath");
+  std::string resourcesPath = parseString(config, "DataPlatformResourcesPath");
+    
+  PRINT_NAMED_DEBUG("DataPlatform", "filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s",
+                      filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());
+    
+  dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
+#endif
+  
+  __android_log_print(ANDROID_LOG_INFO, "CozmoEngine", "Paths read");
+
   using namespace Cozmo;
 
   if (engineAPI != nullptr) {
@@ -82,13 +125,6 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_da
       return (int)RESULT_FAIL_INVALID_PARAMETER;
   }
   
-  Json::Reader reader;
-  Json::Value config;
-  if (!reader.parse(configuration_data, configuration_data + std::strlen(configuration_data), config)) {
-      PRINT_STREAM_ERROR("Anki.Cozmo.CSharpBinding.cozmo_game_create", "json configuration parsing error: " << reader.getFormattedErrorMessages());
-      return (int)RESULT_FAIL;
-  }
-
   configure_engine(config);
 
   CozmoAPI* created_engine = new CozmoAPI();
