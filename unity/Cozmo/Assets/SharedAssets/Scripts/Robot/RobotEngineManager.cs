@@ -128,7 +128,6 @@ public class RobotEngineManager : MonoBehaviour {
     #endif
   }
 
-
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
     if (Instance != null && Instance != this) {
@@ -149,7 +148,16 @@ public class RobotEngineManager : MonoBehaviour {
       DAS.Error("RobotEngineManager.ErrorInitializingCozmoBinding.NoConfig", string.Empty);
     }
     else {
-      CozmoBinding.Startup(config.text);
+
+      StringBuilder sb = new StringBuilder(config.text);
+      sb.Remove(config.text.IndexOf('}') - 1, 3);
+      sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
+        ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
+        ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
+        ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
+        "\n}");
+      
+      CozmoBinding.Startup(sb.ToString());
       _CozmoBindingStarted = true;
     }
 
