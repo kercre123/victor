@@ -47,8 +47,8 @@ enum uint_32 GenericEvent
   Dev_Robot_Tone_1K_1Sec_Play = 1083086921,
   Dev_Robot_Tone_1K_5Sec_Play = 1323780941,
   Dev_Robot_Tone_440Hz_5Sec_Play = 1348811033,
-  Hijack_Audio_Disable_Bypass = 3535474666,  // This is only used by Robot Audio Clinet
-  Hijack_Audio_Enable_Bypass = 2589144983,  // This is only used by Robot Audio Clinet
+  Hijack_Audio_Disable_Bypass = 3535474666,  // This is only used by Robot Audio Client
+  Hijack_Audio_Enable_Bypass = 2589144983,  // This is only used by Robot Audio Client
   Invalid = 0,  // Use this to check for Invalid events
   Music_Play = 202194903,
   Music_Stop = 3227181061,
@@ -67,26 +67,36 @@ enum uint_32 GenericEvent
   Sfx_Gp_St_Tap_Red_Play = 2305458725,
   Sfx_Gp_St_Win_Play = 2930798326,
   Sfx_Placeholder_Play = 1074988205,
+  Sfx_Srcn_Angry_Long_Play = 1044379185,
   Sfx_Srcn_Angry_Play = 2970495120,
   Sfx_Srcn_Angry_Short_Play = 675033713,
   Sfx_Srcn_Blink_Play = 1510112699,
+  Sfx_Srcn_Curious_Long_Play = 2987440268,
   Sfx_Srcn_Curious_Play = 2929357367,
   Sfx_Srcn_Curious_Short_Play = 2196664550,
+  Sfx_Srcn_Happy_Long_Play = 144217264,
   Sfx_Srcn_Happy_Play = 3840498363,
   Sfx_Srcn_Happy_Short_Play = 611773730,
   Sfx_Srcn_Look_Play = 4031269698,
+  Sfx_Srcn_Sad_Long_Play = 3678151406,
   Sfx_Srcn_Sad_Play = 3029951397,
   Sfx_Srcn_Sad_Short_Play = 2802070604,
+  Sfx_Srcn_Surprised_Long_Play = 608225353,
   Sfx_Srcn_Surprised_Play = 2745956824,
   Sfx_Srcn_Surprised_Short_Play = 4045766953,
+  Sfx_Srv_Angry_Long_Play = 1361765892,
   Sfx_Srv_Angry_Play = 1524483935,
   Sfx_Srv_Angry_Short_Play = 2458788830,
+  Sfx_Srv_Curious_Long_Play = 3521283021,
   Sfx_Srv_Curious_Play = 832775516,
   Sfx_Srv_Curious_Short_Play = 1235542933,
+  Sfx_Srv_Happy_Long_Play = 2346894009,
   Sfx_Srv_Happy_Play = 1625478856,
   Sfx_Srv_Happy_Short_Play = 3290998809,
+  Sfx_Srv_Sad_Long_Play = 3532444159,
   Sfx_Srv_Sad_Play = 2993802690,
   Sfx_Srv_Sad_Short_Play = 1279356523,
+  Sfx_Srv_Surprised_Long_Play = 3526083160,
   Sfx_Srv_Surprised_Play = 963363667,
   Sfx_Srv_Surprised_Short_Play = 2913987754,
   Sfx_Ui_Click_Back_Play = 352968677,
@@ -175,8 +185,8 @@ enum uint_32 Music
 
 enum uint_32 PlugInControl
 {
-  HijackAudioDisableBypass = 3535474666,  // This is only used by Robot Audio Clinet
-  HijackAudioEnableBypass = 2589144983,  // This is only used by Robot Audio Clinet
+  HijackAudioDisableBypass = 3535474666,  // This is only used by Robot Audio Client
+  HijackAudioEnableBypass = 2589144983,  // This is only used by Robot Audio Client
   Invalid = 0,  // Use this to check for Invalid events
 }
 
@@ -205,27 +215,37 @@ enum uint_32 Robot
   ReactFace3 = 715610799,
   ReactFace4 = 4168344386,
   ScreenAngry = 2970495120,
+  ScreenAngryLong = 1044379185,
   ScreenAngryShort = 675033713,
   ScreenBlink = 1510112699,
   ScreenCurious = 2929357367,
+  ScreenCuriousLong = 2987440268,
   ScreenCuriousShort = 2196664550,
   ScreenHappy = 3840498363,
+  ScreenHappyLong = 144217264,
   ScreenHappyShort = 611773730,
   ScreenLook = 4031269698,
   ScreenSad = 3029951397,
+  ScreenSadLong = 3678151406,
   ScreenSadShort = 2802070604,
   ScreenSurprised = 2745956824,
+  ScreenSurprisedLong = 608225353,
   ScreenSurprisedShort = 4045766953,
   SeeCubeFirst = 2830862605,
   ServoAngry = 1524483935,
+  ServoAngryLong = 1361765892,
   ServoAngryShort = 2458788830,
   ServoCurious = 832775516,
+  ServoCuriousLong = 3521283021,
   ServoCuriousShort = 1235542933,
   ServoHappy = 1625478856,
+  ServoHappyLong = 2346894009,
   ServoHappyShort = 3290998809,
   ServoSad = 2993802690,
+  ServoSadLong = 3532444159,
   ServoSadShort = 1279356523,
   ServoSurprised = 963363667,
+  ServoSurprisedLong = 3526083160,
   ServoSurprisedShort = 2913987754,
   SharedAlignFrustrated_Loop = 1590494918,
   SharedAlignHappy_Loop = 2922294162,

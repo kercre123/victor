@@ -1101,10 +1101,27 @@ namespace Anki {
     {
     }
     
-    Radians TurnTowardsPoseAction::GetHeadAngle(f32 heightDiff)
+    
+    // Compute the required head angle to face the object
+    // NOTE: It would be more accurate to take head tilt into account, but I'm
+    //  just using neck joint height as an approximation for the camera's
+    //  current height, since its actual height changes slightly as the head
+    //  rotates around the neck.
+    //  Also, the equation for computing the actual angle in closed form gets
+    //  surprisingly nasty very quickly.
+    Radians TurnTowardsPoseAction::GetHeadAngle()
     {
-      const f32 distanceXY = Point2f(_poseWrtRobot.GetTranslation()).Length();
-      const Radians headAngle = std::atan2(heightDiff, distanceXY);
+      const f32 heightDiff = _poseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
+      const f32 distanceXY = Point2f(_poseWrtRobot.GetTranslation()).Length() - NECK_JOINT_POSITION[0];
+      
+      // Adding bias to account for the fact that the camera tends to look lower than
+      // desired on account of it being lower wrt neck joint.
+      // Ramp bias down to 0 for distanceXY values from 150mm to 300mm.
+      const f32 kFullBiasDist_mm = 150;
+      const f32 kNoBiasDist_mm = 300;
+      const f32 biasScaleFactor = CLIP((kNoBiasDist_mm - distanceXY) / (kNoBiasDist_mm - kFullBiasDist_mm), 0, 1);
+      const Radians headAngle = std::atan2(heightDiff, distanceXY) + DEG_TO_RAD(5) * biasScaleFactor;
+
       return headAngle;
     }
     
@@ -1155,12 +1172,7 @@ namespace Anki {
       }
       
       // Compute the required head angle to face the object
-      // NOTE: It would be more accurate to take head tilt into account, but I'm
-      //  just using neck joint height as an approximation for the camera's
-      //  current height, since its actual height changes slightly as the head
-      //  rotates around the neck.
-      const f32 heightDiff = _poseWrtRobot.GetTranslation().z() - NECK_JOINT_POSITION[2];
-      Radians headAngle = GetHeadAngle(heightDiff);
+      Radians headAngle = GetHeadAngle();
       SetHeadTiltAngle(headAngle);
       
       // Proceed with base class's Init()

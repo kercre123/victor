@@ -21,6 +21,12 @@
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+namespace {
+const float kNotRunningScore = 0.25f;
+const float kRunningScore = 0.5f;
+}
+
+
 class TestBehavior : public IBehavior
 {
 public:
@@ -35,42 +41,37 @@ public:
 
   bool _inited = false;
   int _numUpdates = 0;
-  bool _interrupted = false;
   bool _stopped = false;
 
-  virtual bool IsRunnable(const Robot& robot) const {
+  virtual bool IsRunnable(const Robot& robot) const override {
     return true;
   }
 
-  virtual Result InitInternal(Robot& robot) {
+  virtual Result InitInternal(Robot& robot) override {
     _inited = true;
     return RESULT_OK;
   }
   
-  virtual Status UpdateInternal(Robot& robot) {
+  virtual Status UpdateInternal(Robot& robot) override {
     _numUpdates++;
     return Status::Running;
   }
-  virtual Result InterruptInternal(Robot& robot) {
-    _interrupted = true;
-    return RESULT_OK;
-  }
-  virtual void   StopInternal(Robot& robot) {
+  virtual void   StopInternal(Robot& robot) override {
     _stopped = true;
   }
 
   int _alwaysHandleCalls = 0;
-  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) {
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override {
     _alwaysHandleCalls++;
   }
 
   int _handleWhileRunningCalls = 0;
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) {
+  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override { 
     _handleWhileRunningCalls++;
   }
 
   int _handleWhileNotRunningCalls = 0;
-  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) {
+  virtual void HandleWhileNotRunning(const EngineToGameEvent& event, const Robot& robot) override {
     _handleWhileNotRunningCalls++;
   }
 
@@ -85,6 +86,8 @@ public:
   }
 
   bool CallStartActing(Robot& robot, bool& actionCompleteRef);
+
+  void CallIncreaseScoreWhileActing(float extraScore) { IncreaseScoreWhileActing(extraScore); }
 
   bool CallStartActingExternalCallback1(Robot& robot,
                                         bool& actionCompleteRef,
@@ -101,6 +104,16 @@ public:
 
   bool CallStopActing() { return StopActing(); }
   bool CallStopActing(bool val) { return StopActing(val); }
+
+protected:
+
+  virtual float EvaluateRunningScoreInternal(const Robot& robot) const override {
+    return kRunningScore;
+  }
+  virtual float EvaluateScoreInternal(const Robot& robot) const override {
+    return kNotRunningScore;
+  }
+
 };
 
 
@@ -113,10 +126,10 @@ TEST(BehaviorInterface, Create)
   TestBehavior b(robot, empty);
 
   EXPECT_FALSE( b.IsRunning() );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
   EXPECT_TRUE( b.IsRunnable(robot) );
   EXPECT_FALSE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
-  EXPECT_FALSE( b._interrupted );
   EXPECT_FALSE( b._stopped );
 }
 
@@ -129,10 +142,11 @@ TEST(BehaviorInterface, Init)
   TestBehavior b(robot, empty);
 
   EXPECT_FALSE( b._inited );
+  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
   b.Init();
+  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kRunningScore );
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
-  EXPECT_FALSE( b._interrupted );
   EXPECT_FALSE( b._stopped );
 }
 
@@ -149,7 +163,6 @@ TEST(BehaviorInterface, InitWithInterface)
   b.Init();
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 0 );
-  EXPECT_FALSE( b._interrupted );
   EXPECT_FALSE( b._stopped );
 }
 
@@ -163,9 +176,12 @@ TEST(BehaviorInterface, Run)
   TestBehavior b(robot, empty);
 
   BaseStationTimer::getInstance()->UpdateTime(0);
-  
+
+  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
+
   b.Init();
   for(int i=0; i<5; i++) {
+    EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kRunningScore );
     BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 0.01 * i ) );
     b.Update();
   }
@@ -173,10 +189,94 @@ TEST(BehaviorInterface, Run)
   BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 2.0 ) );
 
   b.Stop();
-  
+
+  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
+
   EXPECT_TRUE( b._inited );
   EXPECT_EQ( b._numUpdates, 5 );
-  EXPECT_FALSE( b._interrupted );
+  EXPECT_TRUE( b._stopped );
+}
+
+void TickAndCheckScore( Robot& robot, IBehavior& behavior, int num, float expectedScore )
+{
+  auto startTime = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
+  const float dt = 0.01;
+  
+  for( int i=0; i<num; ++i ) {
+    BaseStationTimer::getInstance()->UpdateTime( startTime + SEC_TO_NANOS( dt * i ) );
+    robot.GetActionList().Update();
+    behavior.Update();
+    EXPECT_FLOAT_EQ( expectedScore, behavior.EvaluateScore(robot) ) << "i=" << i;
+  }
+}
+
+
+TEST(BehaviorInterface, ScoreWhileRunning)
+{
+  UiMessageHandler handler(0);
+  CozmoContext context(nullptr, &handler);
+  Robot robot(0, &context);
+  Json::Value empty;
+
+  TestBehavior b(robot, empty);
+
+  BaseStationTimer::getInstance()->UpdateTime(0);
+
+  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
+
+  {
+    SCOPED_TRACE("");
+    b.Init();
+    TickAndCheckScore(robot, b, 5, kRunningScore);
+  }
+
+  // this should have no effect, since we aren't acting
+  b.CallIncreaseScoreWhileActing(0.1f);
+
+  {
+    SCOPED_TRACE("");
+    TickAndCheckScore(robot, b, 5, kRunningScore);
+  }
+
+  bool done = false;
+  {
+    SCOPED_TRACE("");
+    EXPECT_TRUE( b.CallStartActing(robot, done) );
+    TickAndCheckScore(robot, b, 5, kRunningScore);
+  }
+
+  {
+    SCOPED_TRACE("");
+    b.CallIncreaseScoreWhileActing(0.1f);
+    TickAndCheckScore(robot, b, 5, kRunningScore + 0.1f);
+  }
+
+  {
+    SCOPED_TRACE("");
+    b.CallIncreaseScoreWhileActing(1.0f);
+    TickAndCheckScore(robot, b, 5, kRunningScore + 0.1f + 1.0f);
+  }
+
+  {
+    SCOPED_TRACE("");
+    done = true;
+    // now the behavior is not acting so the score should revert back
+    TickAndCheckScore(robot, b, 5, kRunningScore);
+  }
+
+  {
+    SCOPED_TRACE("");
+    b.CallIncreaseScoreWhileActing(0.999f);
+    TickAndCheckScore(robot, b, 5, kRunningScore);
+  }
+
+  BaseStationTimer::getInstance()->UpdateTime( SEC_TO_NANOS( 2.0 ) );
+
+  b.Stop();
+
+  EXPECT_FLOAT_EQ( b.EvaluateScore(robot), kNotRunningScore );
+
+  EXPECT_TRUE( b._inited );
   EXPECT_TRUE( b._stopped );
 }
 
@@ -605,16 +705,15 @@ public:
 
   bool _inited = false;
   int _numUpdates = 0;
-  bool _interrupted = false;
   bool _stopped = false;
 
   bool _stopAction = false;
   
-  virtual bool IsRunnable(const Robot& robot) const {
+  virtual bool IsRunnable(const Robot& robot) const override {
     return true;
   }
 
-  virtual Result InitInternal(Robot& robot) {
+  virtual Result InitInternal(Robot& robot) override {
     _inited = true;
     WaitForLambdaAction* action = new WaitForLambdaAction(robot, [this](Robot& r){ return _stopAction; });
     StartActing(action);
@@ -622,15 +721,11 @@ public:
     return RESULT_OK;
   }
   
-  virtual Status UpdateInternal(Robot& robot) {
+  virtual Status UpdateInternal(Robot& robot) override {
     _numUpdates++;
     return Status::Running;
   }
-  virtual Result InterruptInternal(Robot& robot) {
-    _interrupted = true;
-    return RESULT_OK;
-  }
-  virtual void   StopInternal(Robot& robot) {
+  virtual void   StopInternal(Robot& robot) override {
     _stopped = true;
   }
 

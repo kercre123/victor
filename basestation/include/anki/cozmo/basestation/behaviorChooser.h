@@ -36,7 +36,6 @@ namespace Cozmo {
   
 //Forward declarations
 class IBehavior;
-class IReactionaryBehavior;
 class MoodManager;
 class Robot;
 template <typename Type> class AnkiEvent;
@@ -48,13 +47,7 @@ public:
   virtual Result AddBehavior(IBehavior *newBehavior) = 0;
   virtual IBehavior* ChooseNextBehavior(const Robot& robot) const = 0;
   virtual IBehavior* GetBehaviorByName(const std::string& name) const = 0;
-  
-  virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) = 0;
-  virtual IBehavior* GetReactionaryBehavior(const Robot& robot,
-                                            const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const = 0;
-  virtual IBehavior* GetReactionaryBehavior(const Robot& robot,
-                                            const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const = 0;
-  
+    
   virtual Result Update() { return Result::RESULT_OK; }
 
   virtual ~IBehaviorChooser() { }
@@ -86,15 +79,7 @@ public:
   virtual Result AddBehavior(IBehavior *newBehavior) override;
   virtual IBehavior* ChooseNextBehavior(const Robot& robot) const override;
   virtual IBehavior* GetBehaviorByName(const std::string& name) const override;
-  
-  virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) override { }
-  virtual IBehavior* GetReactionaryBehavior(
-    const Robot& robot,
-    const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const override { return nullptr; }
-  virtual IBehavior* GetReactionaryBehavior(
-    const Robot& robot,
-    const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const override { return nullptr; }
-  
+    
   virtual const char* GetName() const override { return "Simple"; }
   
   virtual void EnableAllBehaviors(bool newVal = true) override;
@@ -117,42 +102,7 @@ protected:
   
   IBehavior* _behaviorNone = nullptr;
 };
-  
-// Builds upon the SimpleBehaviorChooser to also directly trigger a specific behavior on certain events
-class ReactionaryBehaviorChooser : public SimpleBehaviorChooser
-{
-public:
-
-  ReactionaryBehaviorChooser(Robot& robot, const Json::Value& config) : SimpleBehaviorChooser(robot, config) {}
-  
-  virtual void AddReactionaryBehavior(IReactionaryBehavior* behavior) override
-  {
-    _reactionaryBehaviorList.push_back(behavior);
-  }
-  virtual IBehavior* GetReactionaryBehavior(
-    const Robot& robot,
-    const AnkiEvent<ExternalInterface::MessageEngineToGame>& event) const override;
-  virtual IBehavior* GetReactionaryBehavior(
-    const Robot& robot,
-    const AnkiEvent<ExternalInterface::MessageGameToEngine>& event) const override;
-  
-  virtual const char* GetName() const override { return "Reactionary"; }
-  
-  // We need to clean up the behaviors we've been given to hold onto
-  virtual ~ReactionaryBehaviorChooser();
-  
-protected:
-  std::vector<IReactionaryBehavior*> _reactionaryBehaviorList;
-  
-private:
-  // Helper function to do the common functionality of the GetReactionaryBehavior calls
-  template <typename EventType>
-  IReactionaryBehavior* _GetReactionaryBehavior(
-    const Robot& robot,
-    const AnkiEvent<EventType>& event,
-    std::function<const std::set<typename EventType::Tag>&(const IReactionaryBehavior&)> getTagSet) const;
-};
-  
+   
 } // namespace Cozmo
 } // namespace Anki
 

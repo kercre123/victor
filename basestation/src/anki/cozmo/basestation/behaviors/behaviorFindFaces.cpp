@@ -57,8 +57,8 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
     debugOutput[kPauseMinSecKey] = _pauseMin_s;
     debugOutput[kPauseMaxSecKey] = _pauseMax_s;
 
-    PRINT_NAMED_INFO("BehaviorFindFaces.Config.Debug", "\n%s",
-                     debugOutput.toStyledString().c_str());
+    // PRINT_NAMED_INFO("BehaviorFindFaces.Config.Debug", "\n%s",
+    //                  debugOutput.toStyledString().c_str());
   }
     
   SubscribeToTags({{
@@ -255,12 +255,6 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
   
   _currentState = State::WaitToFinishMoving;
 }
-
-Result BehaviorFindFaces::InterruptInternal(Robot& robot)
-{
-  _currentState = State::Inactive;
-  return Result::RESULT_OK;
-}
   
 void BehaviorFindFaces::StopInternal(Robot& robot)
 {
@@ -272,6 +266,7 @@ void BehaviorFindFaces::StopInternal(Robot& robot)
     robot.GetActionList().Cancel(_currentDriveActionID);
     _currentDriveActionID = (uint32_t)ActionConstants::INVALID_TAG;
   }
+  _currentState = State::Inactive;
 }
   
 } // namespace Cozmo

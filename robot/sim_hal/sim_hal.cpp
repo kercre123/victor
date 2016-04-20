@@ -391,9 +391,6 @@ namespace Anki {
         motorSpeeds_[i] = 0;
         motorSpeedCoeffs_[i] = 0.5;
       }
-      
-      motorSpeedCoeffs_[MOTOR_LEFT_WHEEL] = 0.925;
-      motorSpeedCoeffs_[MOTOR_RIGHT_WHEEL] = 0.925;
 
       // Enable position measurements on head, lift, and wheel motors
       leftWheelPosSensor_->enable(TIME_STEP);

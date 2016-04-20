@@ -186,42 +186,31 @@ namespace Cozmo {
   
   Result AnimationStreamer::SetIdleAnimation(const std::string &name)
   {
-
-    Animation* oldIdleAnimation = _idleAnimation;
-    
-    // Special cases for disabling, animation tool, or "live"
     if(name.empty() || name == "NONE") {
 #     if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation",
                        "Disabling idle animation.\n");
 #     endif
+      _idleAnimationGroupName = "";
       _idleAnimation = nullptr;
-    } else if(name == LiveAnimation) {
-      _idleAnimation = &_liveAnimation;
-      _isLiveTwitchEnabled = true;
-    } else if(name == AnimToolAnimation) {
-      _idleAnimation = &_liveAnimation;
-      _isLiveTwitchEnabled = false;
-    }
-    else {
-    
-      // Otherwise find the specified name and use that as the idle
-      _idleAnimation = _animationContainer.GetAnimation(name);
-      if(_idleAnimation == nullptr) {
-        return RESULT_FAIL;
+      _isIdling = false;
+    } else {
+      if(name == LiveAnimation) {
+        // Special case: point idle animation at the "live" animation container
+        _idleAnimation = &_liveAnimation;
+        _isLiveTwitchEnabled = true;
       }
+      // NOTE: _idleAnimation will get set from the group inside Update() for non-live case
+      
+      _idleAnimationGroupName = name;
+    }
     
 #   if DEBUG_ANIMATION_STREAMING
       PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation",
                        "Setting idle animation to '%s'.\n",
                        name.c_str());
 #   endif
-    }
 
-    if( oldIdleAnimation != _idleAnimation ) {
-      _isIdling = false;
-    }
-    
     return RESULT_OK;
   }
 
@@ -1229,20 +1218,54 @@ namespace Cozmo {
         streamUpdated = true;
         _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
-    } else if(_idleAnimation != nullptr) {
+    } else if(_idleAnimation != nullptr || !_idleAnimationGroupName.empty()) {
       
-      // Update the live animation if we're using it
-      if(_idleAnimation == &_liveAnimation)
+      Animation* oldIdleAnimation = _idleAnimation;
+      
+      if(_idleAnimationGroupName == LiveAnimation)
       {
+        // Update the live animation if we're using it
         lastResult = UpdateLiveAnimation(robot);
         if(RESULT_OK != lastResult) {
           PRINT_NAMED_ERROR("AnimationStreamer.Update.LiveUpdateFailed",
                             "Failed updating live animation from current robot state.");
           return lastResult;
         }
+      } else if(_idleAnimation == nullptr || IsFinished(_idleAnimation) || !_isIdling) {
+        // We aren't doing "live" idle and the robot is either done with the last
+        // idle animation or hasn't started idling yet. So it's time to select the
+        // next idle from the group.
+        const std::string animName = robot.GetAnimationNameFromGroup(_idleAnimationGroupName);
+        if(animName.empty()) {
+          PRINT_NAMED_ERROR("AnimationStreamer.Update.EmptyIdleAnimationFromGroup",
+                            "Returned empty animation name for group %s",
+                            _idleAnimationGroupName.c_str());
+          _idleAnimationGroupName = "";
+          _idleAnimation = nullptr;
+          return RESULT_FAIL;
+        }
+        _idleAnimation = _animationContainer.GetAnimation(animName);
+        if(_idleAnimation == nullptr) {
+          PRINT_NAMED_ERROR("AnimationStreamer.Update.InvalidIdleAnimationFromGroup",
+                            "Returned null animation for name '%s' from group '%s'",
+                            animName.c_str(), _idleAnimationGroupName.c_str());
+          _idleAnimationGroupName = "";
+          return RESULT_FAIL;
+        }
+        
+        PRINT_NAMED_DEBUG("AnimationStreamer.Update.SelectedNewIdle",
+                          "Selected idle animation '%s' from group '%s'",
+                          animName.c_str(), _idleAnimationGroupName.c_str());
       }
       
-      if((!robot.IsAnimating() && IsFinished(_idleAnimation)) || !_isIdling) {
+      ASSERT_NAMED(_idleAnimation != nullptr, "AnimationStreamer.Update.NullIdleAnimation");
+      
+      if( oldIdleAnimation != _idleAnimation ) {
+        // We just changed idle animations, so we need to force re-init.
+        _isIdling = false;
+      }
+      
+      if(!_isIdling || IsFinished(_idleAnimation)) { // re-check because isIdling could have changed
 #       if DEBUG_ANIMATION_STREAMING
         PRINT_NAMED_INFO("AnimationStreamer.Update.IdleAnimInit",
                          "(Re-)Initializing idle animation: '%s'.\n",
@@ -1253,10 +1276,8 @@ namespace Cozmo {
         // (re-)init the animation so it can be played (again)
         InitStream(robot, _idleAnimation, IdleAnimationTag);
         _isIdling = true;
-        //InitIdleAnimation();
-      }
-      
-      if(_idleAnimation->HasFramesLeft()) {
+        
+      } else {
         // This is just an idle animation, so we don't want to save the face to the robot
         lastResult = UpdateStream(robot, _idleAnimation, false);
         streamUpdated = true;
@@ -1271,6 +1292,20 @@ namespace Cozmo {
     {
       if(HaveFaceLayersToSend()) {
         lastResult = StreamFaceLayersOrAudio(robot);
+      } else if(!_sendBuffer.empty()) {
+        PRINT_NAMED_WARNING("AnimationStreamer.Update.SendBufferNotEmpty",
+                            "Expect send buffer to be emptied by UpdateStream or StreamFaceLayersOrAudio "
+                            "by now, has %zu messages",
+                            _sendBuffer.size());
+        
+        // Stream anything left in the send buffer (we should not really get here)
+        UpdateAmountToSend(robot);
+        lastResult = SendBufferedMessages(robot);
+        if(RESULT_OK != lastResult) {
+          PRINT_NAMED_ERROR("AnimationStreamer.Update.SendBufferedMessagesFailed",
+                            "Could not send %zu remaining messages in send buffer",
+                            _sendBuffer.size());
+        }
       }
     }
     

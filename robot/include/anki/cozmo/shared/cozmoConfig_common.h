@@ -160,6 +160,8 @@ const f32 CONTROL_DT = TIME_STEP*0.001f;
 
 const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
 
+// how long there is between stopping the motors and issuing a cliff event (because we have decided there isn't a pickup event)
+const u32 CLIFF_EVENT_DELAY_MS = 500;
 
 /***************************************************************************
  *
