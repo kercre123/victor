@@ -772,9 +772,9 @@ MonoBehaviour:
   _PlayTabButton: {fileID: 11411434}
   _ProfileTabButton: {fileID: 11438976}
   _ScrollRectContent: {fileID: 22415210}
-  _GreenPointsProgressBar: {fileID: 11401482}
-  _GreenPointsText: {fileID: 11417262}
-  _GreenPointsTotal: {fileID: 11474242}
+  _RequirementPointsProgressBar: {fileID: 11401482}
+  _CurrentRequirementPointsLabel: {fileID: 11417262}
+  _RequirementPointsNeededLabel: {fileID: 11474242}
   _ScrollRect: {fileID: 11465266}
 --- !u!114 &11478560
 MonoBehaviour:

@@ -132,7 +132,6 @@ namespace Cozmo.HomeHub {
       };
 
       // Close dialog
-      // TODO: Don't close the hub dialog during minigames
       CloseTimelineDialog();
       _ChallengeDetailsDialogInstance.CloseViewImmediately();
 
@@ -268,9 +267,11 @@ namespace Cozmo.HomeHub {
       var session = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
       if (session != null) {
         session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
+
         // TODO: This is a placeholder for rewarding green points. Eventually the daily goals system
         // will be the one responsible for rewarding green points.
-        PlayerManager.Instance.AddGreenPoints(10);
+        // TODO: Don't hardcode "experience"
+        DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount("experience", 10);
       }
       else {
         DAS.Error(this, "Somehow managed to complete a challenge with no sessions saved!");
@@ -278,8 +279,6 @@ namespace Cozmo.HomeHub {
 
       DataPersistenceManager.Instance.Save();
     }
-
-    // TODO: Pragma out for production
 
     #region Testing
 
