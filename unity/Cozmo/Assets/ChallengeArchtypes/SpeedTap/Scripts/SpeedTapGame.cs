@@ -14,6 +14,10 @@ namespace SpeedTap {
     private const float _kTapAdjustRange = 5.0f;
     private const float _kWinCycleSpeed = 0.1f;
 
+    private const string _kWrongTapChance = "WrongTapChance";
+    private const string _kTapDelayMin = "TapDelayMin";
+    private const string _kTapDelayMax = "TapDelayMax";
+
     #region Config Values
 
     public float BaseMatchChance;
@@ -258,9 +262,9 @@ namespace SpeedTap {
       MaxIdleIntervalMs = speedTapConfig.MaxIdleIntervalMs;
       CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
 
-      CozmoMistakeChance = SkillSystem.Instance.GetSkillVal("WrongTapChance");
-      MinTapDelayMs = SkillSystem.Instance.GetSkillVal("TapDelayMin");
-      MaxTapDelayMs = SkillSystem.Instance.GetSkillVal("TapDelayMax");
+      CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
+      MinTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
+      MaxTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
 
       // End config based values
       InitializeAnimationCallbacks();

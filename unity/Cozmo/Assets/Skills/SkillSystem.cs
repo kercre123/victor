@@ -11,9 +11,6 @@ public class SkillSystem {
 
   public event System.Action<int> OnLevelUp;
 
-  private SkillSystem() {
-    GameEventManager.Instance.OnGameEvent += HandleGameEvent;
-  }
 
   private ChallengeData _CurrChallengeData;
 
@@ -26,6 +23,23 @@ public class SkillSystem {
       }
       return _sInstance; 
     }
+  }
+
+  public void InitInstance() {
+    SkillSystem.Instance.Init();
+  }
+
+  public void DestroyInstance() {
+    SkillSystem.Instance.Destroy();
+    _sInstance = null;
+  }
+
+  private void Init() {
+    GameEventManager.Instance.OnGameEvent += HandleGameEvent;
+  }
+
+  private void Destroy() {
+    GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
   }
 
   public void StartGame(ChallengeData data) { 
