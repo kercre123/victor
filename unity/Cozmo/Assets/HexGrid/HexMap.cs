@@ -5,8 +5,11 @@ using System.Collections.Generic;
 public class HexMap {
   private Dictionary<Coord, PuzzlePiece> _OccupancyMap = new Dictionary<Coord, PuzzlePiece>();
 
-  [SerializeField]
   private HexSet _Map;
+
+  public void Initialize(HexSet map) {
+    _Map = map;
+  }
 
   // tries to remove the PuzzlePiece at mapCoord. returns true if a piece was successfully removed.
   // returns false if mapCoord was an available cell.
