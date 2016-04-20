@@ -94,6 +94,9 @@ public:
   // Remove all audio data from memory
   void ClearAllCachedWaveData();
   
+  // Check if wave data is already cached
+  bool IsWaveDataWithKeyCached( const std::string& key ) const;
+  
   
 private:
   
