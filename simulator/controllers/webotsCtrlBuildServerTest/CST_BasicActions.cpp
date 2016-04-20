@@ -214,7 +214,7 @@ namespace Anki {
             m.idTag = 7;
             // Face the position (0,-100,0) wrt robot
             m.action.Set_turnTowardsPose(ExternalInterface::TurnTowardsPose(GetRobotPose().GetTranslation().x(),
-                                                              GetRobotPose().GetTranslation().y() + -100,
+                                                              GetRobotPose().GetTranslation().y() + -1000,
                                                               NECK_JOINT_POSITION[2], PI, 0, 0, 0, 0, 0, 0, 1));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
