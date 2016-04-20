@@ -29,5 +29,11 @@
   },
   "unlockable.Default.Description": {
     "translation": "Unlockable Default Description"
+  },
+  "skills.LevelUp.Description": {
+    "translation": "Skills Leveled up to {0} in {1}"
+  },
+  "skills.LevelUp.Title": {
+    "translation": "Level Up"
   }
 }
