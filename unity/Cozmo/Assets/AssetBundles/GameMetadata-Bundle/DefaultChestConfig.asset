@@ -33,3 +33,11 @@ MonoBehaviour:
       Value: 2
     - Level: 10
       Value: 3
+  - ItemId: TestHexItem0
+    LadderLevels:
+    - Level: 0
+      Value: 1
+    - Level: 5
+      Value: 2
+    - Level: 10
+      Value: 3
