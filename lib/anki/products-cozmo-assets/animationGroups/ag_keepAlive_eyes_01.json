@@ -4,19 +4,19 @@
       "Name": "anim_keepAlive_eyes_01_updown",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
-      "Mood": "Happy"
+      "Mood": "Default"
     },
     {
       "Name": "anim_keepAlive_eyes_01_right",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
-      "Mood": "Happy"
+      "Mood": "Default"
     },
     {
       "Name": "anim_keepAlive_eyes_01_forward",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
-      "Mood": "Happy"
+      "Mood": "Default"
     }
   ]
 }
