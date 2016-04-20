@@ -73,7 +73,8 @@ namespace Cozmo {
           goal.OnDailyGoalUpdated += OnGoalUpdate;
         }
         _GoalTarget = goal.Target;
-        _GoalIcon.sprite = goal.GoalIcon;
+        // TODO: Load by string? Or set up a config file for mapping icons to enums?
+        //_GoalIcon.sprite = goal.GoalIcon;
         _GoalLabel.text = goal.Title;
         SetProgress((float)goal.Progress / (float)_GoalTarget);
       }

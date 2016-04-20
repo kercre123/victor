@@ -1,0 +1,46 @@
+{
+  "GenList": [
+    {
+      "TitleKey": "Generic Goal",
+      "DescKey": "",
+      "Target": 100,
+      "PointsRewarded": 999,
+      "CladEvent": "OnSpeedtapStarted"
+    },
+    {
+      "TitleKey": "Another Placeholder",
+      "DescKey": "",
+      "Target": 50,
+      "PointsRewarded": 5,
+      "CladEvent": "OnSpeedtapStarted"
+    },
+    {
+      "TitleKey": "Win 5 Speed Tap Rounds",
+      "DescKey": "",
+      "Target": 5,
+      "PointsRewarded": 10,
+      "CladEvent": "OnSpeedtapRoundWin"
+    },
+    {
+      "TitleKey": "Win 8 Speed Tap Hands",
+      "DescKey": "",
+      "Target": 8,
+      "PointsRewarded": 15,
+      "CladEvent": "OnSpeedtapHandWin"
+    },
+    {
+      "TitleKey": "Win 15 Speed Tap Hands",
+      "DescKey": "",
+      "Target": 15,
+      "PointsRewarded": 30,
+      "CladEvent": "OnSpeedtapHandWin"
+    },
+    {
+      "TitleKey": "Win Speed Tap",
+      "DescKey": "",
+      "Target": 1,
+      "PointsRewarded": 10,
+      "CladEvent": "OnSpeedtapSessionWin"
+    }
+  ]
+}

@@ -9,11 +9,11 @@ using Cozmo.UI;
 /// Full List of Pairs for CladEvents to AnimationGroups.
 /// </summary>
 namespace Anki.Cozmo {
-  public class DailyGoalGenMap {
+  public class DailyGoalGenerationData {
 
     // Comparer to properly sort Daily Goal Gen by the GoalEvents
-    public class DailyGoalGenComparer : IComparer<DailyGoalGenData> {
-      public int Compare(DailyGoalGenData x, DailyGoalGenData y) {
+    public class GoalDataComparer : IComparer<GoalEntry> {
+      public int Compare(GoalEntry x, GoalEntry y) {
         if (x == null) {
           if (y == null) {
             // If both null, equals
@@ -37,19 +37,22 @@ namespace Anki.Cozmo {
       }
     }
 
-    public List<DailyGoalGenData> GenList = new List<DailyGoalGenData>();
+    public List<GoalEntry> GenList = new List<GoalEntry>();
 
     // TODO: Set up all necessary DailyGoal info, as well as additional info for determining generation
     [System.Serializable]
-    public class DailyGoalGenData {
-      public DailyGoalGenData(GameEvent cEvent) {
-        CladEvent = cEvent;
+    public class GoalEntry {
+      public GoalEntry() {
+        TitleKey = "";
+        DescKey = "";
+        Target = 0;
+        PointsRewarded = 0;
+        CladEvent = GameEvent.Count;
       }
       // TODO: Preconditions for limiting generation
       // TODO: Everything to do with the goal, implement
-      public LocalizedString Title;
-      public LocalizedString Description;
-      public Sprite GoalIcon;
+      public string TitleKey;
+      public string DescKey;
       public int Target;
       public int PointsRewarded;
       //

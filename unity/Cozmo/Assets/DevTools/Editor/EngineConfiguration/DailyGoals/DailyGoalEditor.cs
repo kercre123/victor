@@ -17,22 +17,23 @@ using Cozmo.UI;
 public class DailyGoalEditor : EditorWindow {
 
 
-  private static string[] _AnimationGroupNameOptions;
-  private static string[] _FilteredAnimationOptions;
+  private static string[] _GoalGenNameOptions;
+  private static string[] _FilteredCladNameOptions;
+  private static GameEvent[] _FilteredCladList;
+
 
   private static string[] _DailyGoalGenFiles;
 
-  private static List<DailyGoal> _DailyGoalList;
-  private static string _CurrentEventMapFile;
-  private static string _CurrentEventMapName;
+  private static DailyGoalGenerationData _CurrentGenData;
+  private static string _CurrentGoalGenFile;
+  private static string _CurrentGoalGenName;
   private static string _EventSearchField = "";
-  private static string _AnimSearchField = "";
 
   private static Vector2 _scrollPos = new Vector2();
 
   public static string sDailyGoalDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/DailyGoals"; } }
 
-  public static string[] AnimationGroupNameOptions { get { return _AnimationGroupNameOptions; } }
+  public static string[] GoalGenNameOptions { get { return _GoalGenNameOptions; } }
 
   static DailyGoalEditor() {
     LoadData();
@@ -42,84 +43,84 @@ public class DailyGoalEditor : EditorWindow {
     // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
     if (Directory.Exists(sDailyGoalDirectory)) {
       _DailyGoalGenFiles = Directory.GetFiles(sDailyGoalDirectory);
+      _GoalGenNameOptions = _DailyGoalGenFiles.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
     }
     else {
       Directory.CreateDirectory(sDailyGoalDirectory);
       _DailyGoalGenFiles = new string[0];
+      _GoalGenNameOptions = _DailyGoalGenFiles;
     }
 
   }
 
   private bool CheckDiscardUnsaved() {
     bool canOpen = true;
-    /*
-    if (_CurrentEventMap != null && (string.IsNullOrEmpty(_CurrentEventMapFile) || JsonConvert.SerializeObject(_CurrentEventMap, Formatting.Indented, GlobalSerializerSettings.JsonSettings) != File.ReadAllText(_CurrentEventMapFile))) {
-      canOpen = EditorUtility.DisplayDialog("Warning", "Opening a different EventMap will Discard Unsaved Changes. Are you Sure?", "Yes", "No");
+
+    if (_CurrentGenData != null && (string.IsNullOrEmpty(_CurrentGoalGenFile) || JsonConvert.SerializeObject(_CurrentGenData, Formatting.Indented, GlobalSerializerSettings.JsonSettings) != File.ReadAllText(_CurrentGoalGenFile))) {
+      canOpen = EditorUtility.DisplayDialog("Warning", "Opening a different file will Discard Unsaved Changes. Are you Sure?", "Yes", "No");
     }
-    */
+
     return canOpen;
   }
 
   // Deserialize the list, potentially create an object like AnimationEventMap that's just a serializable holder for DailyGoals
   private void LoadFile(string path) {
-    /*
     if (CheckDiscardUnsaved()) {
       try {
-        _CurrentEventMap = null;
-        _CurrentEventMapFile = null;
+        _CurrentGenData = null;
+        _CurrentGoalGenFile = null;
 
         string json = File.ReadAllText(path);
-        _CurrentEventMap = JsonConvert.DeserializeObject<AnimationEventMap>(json, GlobalSerializerSettings.JsonSettings);
-        _CurrentEventMapName = Path.GetFileNameWithoutExtension(path);
-        _CurrentEventMapFile = path;
-        // Update the map in case there are new events since we last opened it
-        string newStuff = "";
-        if (_CurrentEventMap.MapUpdate(out newStuff)) {
-          EditorUtility.DisplayDialog("Heads up", string.Format("Just so you know, there are new game events added since you last opened this file, including {0}", newStuff), "Thanks!");
-        }
+        _CurrentGenData = JsonConvert.DeserializeObject<DailyGoalGenerationData>(json, GlobalSerializerSettings.JsonSettings);
+        _CurrentGoalGenName = Path.GetFileNameWithoutExtension(path);
+        _CurrentGoalGenFile = path;
       }
       catch (Exception ex) {
         DAS.Error(this, ex.Message);
       }
-    }*/
+    }
   }
 
   public void OnGUI() {
-    /*
+    
     DrawToolbar();
 
-    if (_CurrentEventMap != null) {
-
-      _CurrentEventMapName = EditorGUILayout.TextField("File Name", _CurrentEventMapName ?? string.Empty);
-      _EventSearchField = EditorGUILayout.TextField("Filter CLAD Events", _EventSearchField ?? string.Empty);
-      _AnimSearchField = EditorGUILayout.TextField("Filter Animation Groups", _AnimSearchField ?? string.Empty);
-      FilterAnimFields();
-      DrawEventMap(_CurrentEventMap);
+    if (_CurrentGenData != null) {
+      _CurrentGoalGenName = EditorGUILayout.TextField("File Name", _CurrentGoalGenName ?? string.Empty);
+      string eventFilter = EditorGUILayout.TextField("Filter CLAD Events", _EventSearchField ?? string.Empty);
+      // Only filter if the event filter has been changed
+      if (eventFilter != _EventSearchField) {
+        _EventSearchField = eventFilter;
+        FilterGoalNames();
+      }
+      DrawDailyGoalGenerationData(_CurrentGenData);
     }
-    */
   }
 
   // Filter Event Names
-  private void FilterAnimFields() {
-    List<string> filterList = new List<string>();
-    for (int i = 0; i < _AnimationGroupNameOptions.Length; i++) {
-      string aName = _AnimationGroupNameOptions[i];
-      if (aName.Contains(_AnimSearchField)) {
-        filterList.Add(aName);
+  private void FilterGoalNames() {
+    List<string> filterNameList = new List<string>();
+    List<GameEvent> filterEventList = new List<GameEvent>();
+    for (int i = 0; i < (int)GameEvent.Count; i++) {
+      GameEvent gEvent = (GameEvent)i;
+      string eName = gEvent.ToString();
+      if (eName.Contains(_EventSearchField)) {
+        filterNameList.Add(eName);
+        filterEventList.Add(gEvent);
       }
     }
-    filterList.Insert(0, "");
-    _FilteredAnimationOptions = filterList.ToArray();
+    _FilteredCladNameOptions = filterNameList.ToArray();
+    _FilteredCladList = filterEventList.ToArray();
   }
 
   private void DrawToolbar() {
-    /*
+    
     EditorGUILayout.BeginHorizontal(EditorDrawingUtility.ToolbarStyle);
 
     if (GUILayout.Button("Load", EditorDrawingUtility.ToolbarButtonStyle)) {
       GenericMenu menu = new GenericMenu();
 
-      foreach (var file in _EventMapFiles.Where(x => x.EndsWith(".json"))) {
+      foreach (var file in _DailyGoalGenFiles.Where(x => x.EndsWith(".json"))) {
         Action<string> closureAction = (string f) => {
 
           menu.AddItem(new GUIContent(Path.GetFileNameWithoutExtension(f)), false, () => {
@@ -132,39 +133,38 @@ public class DailyGoalEditor : EditorWindow {
     }
 
     // New Event Map Button
-    if (GUILayout.Button("New EventToAnimationMap", EditorDrawingUtility.ToolbarButtonStyle)) {
+    if (GUILayout.Button("New DailyGoalGeneration File", EditorDrawingUtility.ToolbarButtonStyle)) {
       if (CheckDiscardUnsaved()) {
-        _CurrentEventMap = new AnimationEventMap();
-        _CurrentEventMap.NewMap();
-        _CurrentEventMapName = string.Empty;
-        _CurrentEventMapFile = null;
+        _CurrentGenData = new DailyGoalGenerationData();
+        _CurrentGoalGenName = string.Empty;
+        _CurrentGoalGenFile = null;
         GUI.FocusControl("EditNameField");
       }
     }
     // Save Current Event Map Button
-    if (_CurrentEventMap != null) {
+    if (_CurrentGenData != null) {
       if (GUILayout.Button("Save", EditorDrawingUtility.ToolbarButtonStyle)) {         
-        if (string.IsNullOrEmpty(_CurrentEventMapFile)) {
-          _CurrentEventMapFile = EditorUtility.SaveFilePanel("Save EventMap", sEventMapDirectory, _CurrentEventMapName, "json");
+        if (string.IsNullOrEmpty(_CurrentGoalGenFile)) {
+          _CurrentGoalGenFile = EditorUtility.SaveFilePanel("Save EventMap", sDailyGoalDirectory, _CurrentGoalGenName, "json");
         }
 
-        if (!string.IsNullOrEmpty(_CurrentEventMapFile)) {
-          if (string.IsNullOrEmpty(_CurrentEventMapName)) {
+        if (!string.IsNullOrEmpty(_CurrentGoalGenFile)) {
+          if (string.IsNullOrEmpty(_CurrentGoalGenName)) {
             EditorUtility.DisplayDialog("Error!", "Name your file before you save it!", "Ok");
           }
-          else if (_CurrentEventMap.Pairs.Count == 0) {
-            EditorUtility.DisplayDialog("Error!", "Cannot save a map with no Pairs!", "Ok");
+          else if (_CurrentGenData.GenList.Count == 0) {
+            EditorUtility.DisplayDialog("Error!", "Cannot save with no Daily Goals!", "Ok");
           }
           else {
-            string newFileName = Path.Combine(sEventMapDirectory, _CurrentEventMapName + ".json");
+            string newFileName = Path.Combine(sDailyGoalDirectory, _CurrentGoalGenName + ".json");
 
             bool good = true;
-            if (Path.GetFileName(_CurrentEventMapFile) != Path.GetFileName(newFileName)) {
-              if (EditorUtility.DisplayDialog("Alert!", "EventMap has been renamed. Save Anyway?", "Yes", "No")) {
-                if (File.Exists(_CurrentEventMapFile) && EditorUtility.DisplayDialog("Hold up!", "Should we delete this old file?\n" + _CurrentEventMapFile, "Yes", "No")) {
-                  File.Delete(_CurrentEventMapFile);
+            if (Path.GetFileName(_CurrentGoalGenFile) != Path.GetFileName(newFileName)) {
+              if (EditorUtility.DisplayDialog("Alert!", "Daily Goal File has been renamed. Save Anyway?", "Yes", "No")) {
+                if (File.Exists(_CurrentGoalGenFile) && EditorUtility.DisplayDialog("Hold up!", "Should we delete this old file?\n" + _CurrentGoalGenFile, "Yes", "No")) {
+                  File.Delete(_CurrentGoalGenFile);
                 }
-                _CurrentEventMapFile = newFileName;
+                _CurrentGoalGenFile = newFileName;
               }
               else {
                 good = false;
@@ -173,11 +173,11 @@ public class DailyGoalEditor : EditorWindow {
 
             if (good) {
 
-              File.WriteAllText(_CurrentEventMapFile, JsonConvert.SerializeObject(_CurrentEventMap, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
+              File.WriteAllText(_CurrentGoalGenFile, JsonConvert.SerializeObject(_CurrentGenData, Formatting.Indented, GlobalSerializerSettings.JsonSettings));
 
               // Reload groups
               LoadData();
-              EditorUtility.DisplayDialog("Save Successful!", "EventMap '" + _CurrentEventMapName + "' has been saved to " + _CurrentEventMapFile, "OK");
+              EditorUtility.DisplayDialog("Save Successful!", "EventMap '" + _CurrentGoalGenName + "' has been saved to " + _CurrentGoalGenFile, "OK");
             }
           }
         }
@@ -187,51 +187,50 @@ public class DailyGoalEditor : EditorWindow {
     GUILayout.FlexibleSpace();
 
     EditorGUILayout.EndHorizontal();
-    */
+
   }
 
   // TODO: Draw DailyGoalGeneration.json -> New class that's holder for all DailyGoalGen classes?
-  private void DrawEventMap(AnimationEventMap eMap) {
-    /*
+  private void DrawDailyGoalGenerationData(DailyGoalGenerationData genData) {
+    
     EditorGUILayout.BeginVertical();
     _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
-
-    EditorGUILayout.BeginHorizontal();
-    GUILayout.Label("CLAD Events");
-    EditorGUILayout.EndHorizontal();
-
-    for (int i = 0; i < _CurrentEventMap.Pairs.Count; i++) {
-      _CurrentEventMap.Pairs[i] = DrawCladEventEntry(_CurrentEventMap.Pairs[i]);
-    }
-
+    EditorDrawingUtility.DrawGroupedList("DailyGoals", genData.GenList, DrawGoalDataEntry, () => new DailyGoalGenerationData.GoalEntry(), x => x.CladEvent, e => e.ToString());
     EditorGUILayout.EndScrollView();
     EditorGUILayout.EndVertical();
-    */
+
   }
 
-  // TODO:
-  public AnimationEventMap.CladAnimPair DrawCladEventEntry(AnimationEventMap.CladAnimPair pair) {
-    /*
-    EditorGUILayout.BeginHorizontal();
-    string eventName = pair.CladEvent.ToString();
-    if (string.IsNullOrEmpty(_EventSearchField) || eventName.Contains(_EventSearchField)) {
-      if (string.IsNullOrEmpty(_AnimSearchField) || pair.AnimName == "" || pair.AnimName.Contains(_AnimSearchField)) {
-        pair.AnimName = _FilteredAnimationOptions[EditorGUILayout.Popup(eventName, Mathf.Max(0, Array.IndexOf(_FilteredAnimationOptions, pair.AnimName)), _FilteredAnimationOptions)];
+  // TODO: Draw DailyGoalGenEntry
+  public DailyGoalGenerationData.GoalEntry DrawGoalDataEntry(DailyGoalGenerationData.GoalEntry genData) {
+
+    EditorGUILayout.BeginVertical();
+    string eventName = genData.CladEvent.ToString();
+    if (string.IsNullOrEmpty(_EventSearchField) || eventName.Contains(_EventSearchField) || genData.CladEvent == GameEvent.Count) {
+      EditorGUILayout.LabelField(Localization.Get(genData.TitleKey));
+      EditorGUILayout.BeginHorizontal();
+      genData.TitleKey = EditorGUILayout.TextField("TitleLocKey", genData.TitleKey ?? string.Empty);
+      genData.DescKey = EditorGUILayout.TextField("DescriptionLocKey", genData.DescKey ?? string.Empty);
+      EditorGUILayout.EndHorizontal();
+      if (string.IsNullOrEmpty(_EventSearchField) || genData.CladEvent == GameEvent.Count) {
+        genData.CladEvent = (GameEvent)EditorGUILayout.EnumPopup("GameEvent", genData.CladEvent);
       }
-      else if (!string.IsNullOrEmpty(_AnimSearchField) && !pair.AnimName.Contains(_AnimSearchField)) {
-        pair.AnimName = _AnimationGroupNameOptions[EditorGUILayout.Popup(eventName, Mathf.Max(0, Array.IndexOf(_AnimationGroupNameOptions, pair.AnimName)), _AnimationGroupNameOptions)];
+      else {
+        genData.CladEvent = _FilteredCladList[EditorGUILayout.Popup("GameEvent", Mathf.Max(0, Array.IndexOf(_FilteredCladNameOptions, eventName)), _FilteredCladNameOptions)];
       }
-      if (GUILayout.Button("X", GUILayout.Width(30))) {
-        pair.AnimName = "";
-      }
+      EditorGUILayout.BeginHorizontal();
+      genData.Target = EditorGUILayout.IntField("Target", genData.Target);
+      genData.PointsRewarded = EditorGUILayout.IntField("Reward", genData.PointsRewarded);
+      EditorGUILayout.EndHorizontal();
     }
-    EditorGUILayout.EndHorizontal();
-    */
-    return pair;
+    
+    EditorGUILayout.EndVertical();
+
+    return genData;
   }
 
   [MenuItem("Cozmo/Progression/Daily Goal Editor #%d")]
-  public static void OpenAnimationGroupEventEditor() {
+  public static void OpenDailyGoalEditor() {
     DailyGoalEditor window = (DailyGoalEditor)EditorWindow.GetWindow(typeof(DailyGoalEditor));
     DailyGoalEditor.LoadData();
     window.titleContent = new GUIContent("DailyGoal Editor");

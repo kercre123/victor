@@ -4,6 +4,8 @@ using DataPersistence;
 using System.Collections;
 using System.Collections.Generic;
 using Cozmo.UI;
+using Newtonsoft.Json;
+using System.IO;
 using Anki.Cozmo;
 
 /// <summary>
@@ -14,6 +16,14 @@ public class DailyGoalManager : MonoBehaviour {
   // TODO: Load from JSON and set up this list. Reference this list to generate
   // Daily Goals.
   private List<DailyGoal> _DailyGoalList;
+  private DailyGoalGenerationData _CurrentGenData;
+
+  #if UNITY_IOS && !UNITY_EDITOR
+  public static string sDailyGoalDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/DailyGoals"); } }
+   
+#else
+  public static string sDailyGoalDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/DailyGoals"; } }
+  #endif
 
   #region constants
 
@@ -136,7 +146,30 @@ public class DailyGoalManager : MonoBehaviour {
     Instance = this;
     RobotEngineManager.Instance.OnRequestGameStart += HandleAskForMinigame;
     RobotEngineManager.Instance.OnDenyGameStart += HandleExternalRejection;
-    LoadDailyGoalData();
+    // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
+    if (Directory.Exists(sDailyGoalDirectory)) {
+      string[] _DailyGoalFiles = Directory.GetFiles(sDailyGoalDirectory);
+      // TODO : Specify the event map file to use in a config
+      if (_DailyGoalFiles.Length > 0) {
+        bool didMatch = false;
+        for (int i = 0; i < _DailyGoalFiles.Length; i++) {
+          if (_DailyGoalFiles[i] == _DailyGoalGenConfig.DailyGoalFileName) {
+            LoadDailyGoalData(_DailyGoalFiles[i]);
+            didMatch = true;
+          }
+        }
+        if (!didMatch) {
+          DAS.Warn(this, string.Format("Could not find {0}, defaulting to {1}", _DailyGoalGenConfig.DailyGoalFileName, _DailyGoalFiles[0]));
+          LoadDailyGoalData(_DailyGoalFiles[0]);
+        }
+      }
+      else {
+        DAS.Warn(this, string.Format("No DailyGoal Data to load in {0}", sDailyGoalDirectory));
+      }
+    }
+    else {
+      DAS.Warn(this, string.Format("No DailyGoal Data to load in {0}", sDailyGoalDirectory));
+    }
   }
 
   private void OnDestroy() {
@@ -144,16 +177,24 @@ public class DailyGoalManager : MonoBehaviour {
     RobotEngineManager.Instance.OnDenyGameStart -= HandleExternalRejection;
   }
 
-  private void LoadDailyGoalData() {
-    //string toLoad = _DailyGoalGenConfig.DailyGoalFileName;
-    //_DailyGoalList = new List<DailyGoal>();
-    // TODO : Deserialize here, add each to the DailyGoalList
+  private void LoadDailyGoalData(string path) {
+    string json = File.ReadAllText(path);
+    DAS.Event(this, string.Format("LoadDailyGoalData {0}", Path.GetFileName(path)));
+    _CurrentGenData = JsonConvert.DeserializeObject<DailyGoalGenerationData>(json, GlobalSerializerSettings.JsonSettings);
   }
 
   public List<DailyGoal> GenerateDailyGoals() {
     List<DailyGoal> newGoals = new List<DailyGoal>();
-    // TODO: Properly Generate Daily Goals based on information loaded from tool.
-
+    // TODO: More intelligent goal selection once preconditions are built
+    int goalCount = Mathf.Min(_CurrentGenData.GenList.Count, UnityEngine.Random.Range(_DailyGoalGenConfig.MinGoals, _DailyGoalGenConfig.MaxGoals));
+    List<DailyGoalGenerationData.GoalEntry> goalList = _CurrentGenData.GenList;
+    DailyGoalGenerationData.GoalEntry toAdd;
+    for (int i = 0; i < goalCount; i++) {
+      toAdd = goalList[i];
+      // Remove from list to prevent dupes
+      goalList.Remove(toAdd);
+      newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.DescKey, toAdd.PointsRewarded, toAdd.Target));
+    }
     SendDasEventsForGoalGeneration(newGoals);
     return newGoals;
   }

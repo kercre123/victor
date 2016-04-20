@@ -12,7 +12,6 @@ namespace Cozmo {
       public GameEvent GoalEvent;
       public LocalizedString Title;
       public LocalizedString Description;
-      public Sprite GoalIcon;
       public int Progress;
       public int Target;
       public int PointsRewarded;
@@ -37,11 +36,10 @@ namespace Cozmo {
       public Action<DailyGoal> OnDailyGoalUpdated;
       public Action<DailyGoal> OnDailyGoalCompleted;
 
-      public DailyGoal(GameEvent gEvent, LocalizedString title, LocalizedString desc, Sprite icon, int reward, int target, int currProg = 0) {
+      public DailyGoal(GameEvent gEvent, string titleKey, string descKey, int reward, int target, int currProg = 0) {
         GoalEvent = gEvent;
-        Title = title;
-        Description = desc;
-        GoalIcon = icon;
+        Title.Key = titleKey;
+        Description.Key = descKey;
         PointsRewarded = reward;
         Target = target;
         Progress = currProg;
@@ -63,7 +61,7 @@ namespace Cozmo {
         // Check if Completed
         if (GoalComplete && _Completed) {
           // Grant Reward
-          // TODO: Use a more generic Reward Action
+          // TODO: Use a more generic Reward Action? Assuming we would want something green points related
           DAS.Event(this, string.Format("{0} Completed", Title));
           PlayerManager.Instance.AddGreenPoints(PointsRewarded);
           if (OnDailyGoalCompleted != null) {
