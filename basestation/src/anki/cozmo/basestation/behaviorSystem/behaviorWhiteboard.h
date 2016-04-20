@@ -12,6 +12,8 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorWhiteboard_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorWhiteboard_H__
 
+#include "behaviorBeacon.h" 
+
 #include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
 #include "anki/common/basestation/math/pose.h"
 #include "clad/types/objectTypes.h"
@@ -25,22 +27,6 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Beacon
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// info for beacons (beacons is a concept for exploration, it's a 'base/headquarters' to put cubes for localization)
-class Beacon {
-public:
-  Beacon( const Pose3d& p ) : _pose(p) {}
-  const Pose3d& GetPose() const { return _pose;}
-  
-  // returns true if given position is within this beacon
-  bool IsLocWithinBeacon(const Vec3f& loc) const;
-  
-private:
-  Pose3d _pose;
-};
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // BehaviorWhiteboard
@@ -86,6 +72,9 @@ public:
   // beacons
   void AddBeacon( const Pose3d& beaconPos );
   const BeaconList& GetBeacons() const { return _beacons; }
+
+  // return current active beacon if any, or nullptr if none are active
+  const Beacon* GetActiveBeacon() const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Tracked values

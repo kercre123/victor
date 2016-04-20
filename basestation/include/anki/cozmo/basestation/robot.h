@@ -713,6 +713,8 @@ public:
   
     ExternalInterface::RobotState GetRobotState();
   
+    const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
+  
   protected:
     const CozmoContext* _context;
   

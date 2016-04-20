@@ -28,9 +28,6 @@
 namespace Anki {
 namespace Cozmo {
 
-// beacon radius (it could be problem if we had too many cubes and not enough beacons to place them)
-CONSOLE_VAR(float, kB_BeaconRadius_mm, "BehaviorWhiteboard.Beacons", 150.0f);
-
 // all coordinates have to be this close from their counterpart to be considered the same observation (and thus override it)
 CONSOLE_VAR(float, kBW_PossibleMarkerClose_mm, "BehaviorWhiteboard", 50.0f);
 CONSOLE_VAR(float, kBW_PossibleMarkerClose_rad, "BehaviorWhiteboard", PI_F); // current markers flip due to distance, consider 360 since we don't care
@@ -41,16 +38,6 @@ CONSOLE_VAR(bool, kBW_DebugRenderPossibleMarkers, "BehaviorWhiteboard", true);
 CONSOLE_VAR(float, kBW_DebugRenderPossibleMarkersZ, "BehaviorWhiteboard", 35.0f);
 CONSOLE_VAR(bool, kBW_DebugRenderBeacons, "BehaviorWhiteboard", true);
 CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "BehaviorWhiteboard", 35.0f);
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Beacon
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool Beacon::IsLocWithinBeacon(const Vec3f& loc) const
-{
-  const float distSQ = (_pose.GetTranslation() - loc).LengthSq();
-  const bool inRadius = FLT_LE(distSQ, (kB_BeaconRadius_mm*kB_BeaconRadius_mm));
-  return inRadius;
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // BehaviorWhiteboard
@@ -95,6 +82,16 @@ void BehaviorWhiteboard::AddBeacon( const Pose3d& beaconPos )
 
   // update render
   UpdateBeaconRender();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const Beacon* BehaviorWhiteboard::GetActiveBeacon() const
+{
+  if ( _beacons.empty() ) {
+    return nullptr;
+  }
+  
+  return &_beacons[0];
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -257,7 +254,7 @@ void BehaviorWhiteboard::UpdateBeaconRender()
   // re-draw all beacons since they all use the same id
   if ( kBW_DebugRenderBeacons )
   {
-    const std::string renderId("BehaviorWhiteboard.AddBeacon");
+    const std::string renderId("BehaviorWhiteboard.UpdateBeaconRender");
     _robot.GetContext()->GetVizManager()->EraseSegments(renderId);
   
     // iterate all beacons and render
@@ -265,8 +262,8 @@ void BehaviorWhiteboard::UpdateBeaconRender()
     {
       Vec3f center = beacon.GetPose().GetTranslation();
       center.z() += kBW_DebugRenderBeaconZ;
-      _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("BehaviorWhiteboard.AddBeacon",
-          center, kB_BeaconRadius_mm, NamedColors::GREEN, false);
+      _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("BehaviorWhiteboard.UpdateBeaconRender",
+          center, beacon.GetRadius(), NamedColors::GREEN, false);
     }
   }
 }

@@ -2395,7 +2395,6 @@ namespace Anki {
       // mark it as being carried too
       // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
 
-      const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
       ObservableObject* objectOnTop = _blockWorld.FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
       if(objectOnTop != nullptr) {
         ActionableObject* actionObjectOnTop = dynamic_cast<ActionableObject*>(objectOnTop);

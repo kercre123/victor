@@ -13,6 +13,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorExploreBringCubeToBeacon_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorBeacon.h"
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
@@ -29,6 +30,7 @@ struct RobotObservedObject;
 }
 class IAction;
 class ObservableObject;
+class Beacon;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // BehaviorExploreBringCubeToBeacon
@@ -54,13 +56,12 @@ public:
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual bool IsRunnable(const Robot& robot, double currentTime_sec) const override;
-  virtual float EvaluateScoreInternal(const Robot& robot, double currentTime_sec) const override { return 1.1f; }
+  virtual bool IsRunnable(const Robot& robot) const override;
+  virtual float EvaluateScoreInternal(const Robot& robot) const override { return 1.1f; }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State functions
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
   void TransitionToPickUpObject(Robot& robot);   // state when we are ready to go pick up a cube
   void TransitionToObjectPickedUp(Robot& robot); // state when the object is picked up
   
@@ -70,14 +71,24 @@ protected:
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual Result InitInternal(Robot& robot, double currentTime_sec) override;
-  virtual Result InterruptInternal(Robot& robot, double currentTime_sec) override { return Result::RESULT_OK; } // TODO?
-  virtual void StopInternal(Robot& robot, double currentTime_sec) override {} // TODO?
+  virtual Result InitInternal(Robot& robot) override;
+  virtual Result InterruptInternal(Robot& robot) override { return Result::RESULT_OK; } // TODO?
+  virtual void StopInternal(Robot& robot) override {} // TODO?
   
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // find cube in the beacon to stack the one we have on top of the former
+  static const ObservableObject* FindFreeCubeToStackOn(const ObservableObject* object, const Beacon* beacon, const Robot& robot);
+  
+  // find pose to drop the object inside the selected beacon. Return true/false on success/failure
+  static bool FindFreePoseInBeacon(const ObservableObject* object, const Beacon* selectedBeacon, const Robot& robot, Pose3d& freePose);
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // list of objects selected in IsRunnable. Cached as a performance optimization
