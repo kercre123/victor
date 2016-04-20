@@ -44,6 +44,11 @@ namespace Anki {
           _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EnableKeepFaceAlive, true);
         }
       }
+
+      if( IsRunning() ) {
+        // stop the robot turning if the action is destroyed while running
+        _robot.GetMoveComponent().StopAllMotors();
+      }
     }
     
     const std::string& TurnInPlaceAction::GetName() const

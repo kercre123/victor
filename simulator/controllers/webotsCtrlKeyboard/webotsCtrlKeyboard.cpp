@@ -236,6 +236,7 @@ namespace Anki {
         printf("    Travel up/down selected ramp:  r\n");
         printf("              Abort current path:  q\n");
         printf("                Abort everything:  Shift+q\n");
+        printf("           Cancel current action:  Alt+q\n");
         printf("         Update controller gains:  k\n");
         printf("                 Request IMU log:  o\n");
         printf("           Toggle face detection:  f\n");
