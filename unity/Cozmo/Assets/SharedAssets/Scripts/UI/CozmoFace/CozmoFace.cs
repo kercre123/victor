@@ -47,8 +47,8 @@ public class CozmoFace : MonoBehaviour {
     string fileName = "";
 #if UNITY_EDITOR
     fileName = Application.dataPath + string.Format("/../../../lib/anki/products-cozmo-assets/animations/{0}.json", name);
-#elif UNITY_IOS
-    fileName = Application.dataPath + string.Format("/../cozmo_resources/assets/animations/{0}.json", name);
+#else
+    fileName = Application.persistentDataPath + string.Format("/cozmo_resources/assets/animations/{0}.json", name);
 #endif
     try {
       var jsonText = System.IO.File.ReadAllText(fileName);
