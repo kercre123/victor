@@ -24,7 +24,7 @@ public class InventoryPane : MonoBehaviour {
 
   // TODO: Validate id
   [SerializeField]
-  UnityEngine.UI.InputField _ItemIdInputField;
+  UnityEngine.UI.Dropdown _ItemIdDropdown;
 
   [SerializeField]
   UnityEngine.UI.InputField _NumToAddInputField;
@@ -63,8 +63,8 @@ public class InventoryPane : MonoBehaviour {
     _ChestLevelInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
     _SetChestLevelButton.onClick.AddListener(HandleSetChestLevelButtonClicked);
 
-    _ItemIdInputField.contentType = UnityEngine.UI.InputField.ContentType.Alphanumeric;
-    _ItemIdInputField.text = _kTreatItemId;
+    _ItemIdDropdown.ClearOptions();
+    _ItemIdDropdown.AddOptions(Cozmo.ItemDataConfig.GetAllItemIds());
 
     string defaultValue = "10";
     _NumToAddInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
@@ -106,15 +106,15 @@ public class InventoryPane : MonoBehaviour {
   }
 
   private void HandleAddItemClicked() {
-    DebugAddItem(_ItemIdInputField.text, GetValidInt(_NumToAddInputField));
+    DebugAddItem(_ItemIdDropdown.captionText.text, GetValidInt(_NumToAddInputField));
   }
 
   private void HandleRemoveItemClicked() {
-    DebugRemoveItem(_ItemIdInputField.text, GetValidInt(_NumToRemoveInputField));
+    DebugRemoveItem(_ItemIdDropdown.captionText.text, GetValidInt(_NumToRemoveInputField));
   }
 
   private void HandleSetItemAmountClicked() {
-    DebugSetItem(_ItemIdInputField.text, GetValidInt(_NumToSetInputField));
+    DebugSetItem(_ItemIdDropdown.captionText.text, GetValidInt(_NumToSetInputField));
   }
 
   private void DebugAddItem(string itemId, int delta) {

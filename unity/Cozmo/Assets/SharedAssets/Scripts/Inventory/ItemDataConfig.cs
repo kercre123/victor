@@ -85,6 +85,17 @@ namespace Cozmo {
       return data;
     }
 
+    public static List<string> GetAllItemIds() {
+      List<string> allItemIds = new List<string>();
+      allItemIds.AddRange(GetItemIds());
+      allItemIds.AddRange(HexItemList.GetPuzzlePieceIds());
+      return allItemIds;
+    }
+
+    public static IEnumerable<string> GetItemIds() {
+      return _sInstance._IdToData.Keys;
+    }
+
     #if UNITY_EDITOR
     public IEnumerable<string> EditorGetItemIds() {
       List<string> itemIds = new List<string>();
