@@ -55,20 +55,29 @@ void TextToSpeech::CleanUp()
 
 }
 
-void TextToSpeech::HandleAssignNameToFace(Vision::FaceID_t faceID, const std::string& name)
+void TextToSpeech::HandleAssignNameToFace(Vision::FaceID_t faceId, const std::string& name)
 {
-  PRINT_NAMED_DEBUG("TextToSpeech.HandleAssignNameToFace", "FaceId %d Name: %s", faceID, name.c_str());
+  PRINT_NAMED_DEBUG("TextToSpeech.HandleAssignNameToFace", "FaceId %d Name: %s", faceId, name.c_str());
   std::string full_path = _dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, name + filePostfix);
   flite_text_to_speech(name.c_str(),_voice,full_path.c_str());
 }
   
-void TextToSpeech::HandlePlayFaceNameAnimation(Vision::FaceID_t faceID,
+void TextToSpeech::HandlePlayFaceNameAnimation(Vision::FaceID_t faceId,
                                                const std::string& name)
 {
-  PRINT_NAMED_DEBUG("TextToSpeech.HandlePlayFaceNameAnimation", "FaceId %d Name: %s", faceID, name.c_str());
+  PRINT_NAMED_DEBUG("TextToSpeech.HandlePlayFaceNameAnimation", "FaceId %d Name: %s", faceId, name.c_str());
   
   using namespace Audio;
   ASSERT_NAMED(_audioController != nullptr, "Must Set Audio Controller before preforming text to speach event");
+  
+  // Check if the WavePortal Plugin is available
+  AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
+  if ( pluginInterface->WavePortalIsActive() ) {
+    PRINT_NAMED_ERROR("TextToSpeech.HandlePlayFaceNameAnimation", "Wave Portal Plugin is already active faceId %d", faceId);
+    
+    // Don't change Wave Protal plugin's Audio Data
+    return;
+  }
   
   // Load file
   // TODO: Need to investigate if this needs to load asynchronously
@@ -83,7 +92,7 @@ void TextToSpeech::HandlePlayFaceNameAnimation(Vision::FaceID_t faceID,
   }
   // Set Wave Portal Plugin buffer
   const AudioWaveFileReader::StandardWaveDataContainer* data = _waveFileReader.GetCachedWaveDataWithKey(fileName);
-  AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
+  
   ASSERT_NAMED(pluginInterface != nullptr, "AudioControllerPluginInterface Must be allocated before using it!");
   if ( pluginInterface->WavePortalHasAudioDataInfo() ) {
     pluginInterface->ClearWavePortalAudioDataInfo();
