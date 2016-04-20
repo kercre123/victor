@@ -15,24 +15,24 @@ namespace Cozmo {
       get { return _sInstance; }
     }
 
-    public PuzzlePiece[] HexItems;
+    public PuzzlePieceData[] HexItems;
 
-    private Dictionary<string, PuzzlePiece> _IdToData;
+    private Dictionary<string, PuzzlePieceData> _IdToData;
 
     private void PopulateDictionary() {
-      _IdToData = new Dictionary<string, PuzzlePiece>();
-      foreach (PuzzlePiece data in HexItems) {
-        if (!_IdToData.ContainsKey(data.PieceData.InventoryId)) {
-          _IdToData.Add(data.PieceData.InventoryId, data);
+      _IdToData = new Dictionary<string, PuzzlePieceData>();
+      foreach (PuzzlePieceData data in HexItems) {
+        if (!_IdToData.ContainsKey(data.InventoryId)) {
+          _IdToData.Add(data.InventoryId, data);
         }
         else {
-          DAS.Error("HexItemList.PopulateDictionary", "Trying to add item to dictionary, but the item already exists! item=" + data.PieceData.InventoryId);
+          DAS.Error("HexItemList.PopulateDictionary", "Trying to add item to dictionary, but the item already exists! item=" + data.InventoryId);
         }
       }
     }
 
-    public static PuzzlePiece PuzzlePiece(string puzzlePieceId) {
-      PuzzlePiece data = null;
+    public static PuzzlePieceData PuzzlePiece(string puzzlePieceId) {
+      PuzzlePieceData data = null;
       if (!_sInstance._IdToData.TryGetValue(puzzlePieceId, out data)) {
         DAS.Error("HexItemList.GetData", "Could not find item='" + puzzlePieceId + "' in dictionary!");
       }
@@ -51,7 +51,7 @@ namespace Cozmo {
     public IEnumerable<string> EditorGetPuzzlePieceIds() {
       List<string> puzzleIds = new List<string>();
       foreach (var data in HexItems) {
-        puzzleIds.Add(data.PieceData.InventoryId);
+        puzzleIds.Add(data.InventoryId);
       }
       return puzzleIds;
     }
