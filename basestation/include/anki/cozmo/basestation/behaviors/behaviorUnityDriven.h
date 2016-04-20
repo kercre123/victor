@@ -41,7 +41,6 @@ protected:
   
   virtual Result InitInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
-  virtual Result InterruptInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   
   virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
@@ -53,7 +52,6 @@ private:
   bool  _isScoredExternally;
   
   bool  _isRunnable;
-  bool  _wasInterrupted;
   bool  _isComplete;
 };
   

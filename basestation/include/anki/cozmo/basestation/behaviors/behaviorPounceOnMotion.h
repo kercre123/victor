@@ -42,7 +42,6 @@ protected:
 
   virtual Result InitInternal(Robot& robot) override;
   virtual Status UpdateInternal(Robot& robot) override;
-  virtual Result InterruptInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
   float _maxPounceDist = 110.0f;

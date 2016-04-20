@@ -25,7 +25,6 @@ BehaviorUnityDriven::BehaviorUnityDriven(Robot& robot, const Json::Value& config
   : IBehavior(robot, config)
   , _isScoredExternally(false)
   , _isRunnable(true)
-  , _wasInterrupted(false)
   , _isComplete(false)
 {
   SetDefaultName("UnityDriven");
@@ -44,7 +43,6 @@ BehaviorUnityDriven::~BehaviorUnityDriven()
 Result BehaviorUnityDriven::InitInternal(Robot& robot)
 {
   _isRunnable     = true;
-  _wasInterrupted = false;
   _isComplete     = false;
   
   return Result::RESULT_OK;
@@ -56,14 +54,6 @@ BehaviorUnityDriven::Status BehaviorUnityDriven::UpdateInternal(Robot& robot)
   const Status retval = _isComplete ? Status::Complete : Status::Running;
   return retval;
 }
-
-
-Result BehaviorUnityDriven::InterruptInternal(Robot& robot)
-{
-  _wasInterrupted = true;
-  return Result::RESULT_OK;
-}
-
   
 void BehaviorUnityDriven::StopInternal(Robot& robot)
 {

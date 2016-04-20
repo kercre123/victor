@@ -94,21 +94,13 @@ BehaviorPlayAnim::Status BehaviorPlayAnim::UpdateInternal(Robot& robot)
   Status retval = (_isInterrupted || !_isActing) ? Status::Complete : Status::Running;
   return retval;
 }
-
-
-Result BehaviorPlayAnim::InterruptInternal(Robot& robot)
+  
+void BehaviorPlayAnim::StopInternal(Robot& robot)
 {
   if (_isInterruptable)
   {
     _isInterrupted = true;
   }
-  
-  return Result::RESULT_OK;
-}
-
-  
-void BehaviorPlayAnim::StopInternal(Robot& robot)
-{
 }
 
 

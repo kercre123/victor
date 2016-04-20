@@ -564,16 +564,11 @@ namespace Cozmo {
     _lastActionTag = animAction->GetTag();
     _isActing = true;
   }
-  
-  Result BehaviorInteractWithFaces::InterruptInternal(Robot& robot)
-  {
-    _currentState = State::Interrupted;
     
-    return RESULT_OK;
-  }
-  
   void BehaviorInteractWithFaces::StopInternal(Robot& robot)
   {
+    _currentState = State::Interrupted;
+    _isActing = false;
     //robot.GetMoveComponent().DisableTrackToFace();
     StopTracking(robot);
   }

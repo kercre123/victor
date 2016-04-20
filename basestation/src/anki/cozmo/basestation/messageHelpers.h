@@ -1,0 +1,36 @@
+/**
+ * File: messageHelpers.h
+ *
+ * Author: Brad Neuman
+ * Created: 2016-04-18
+ *
+ * Description: Helpers for message types
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+#ifndef __Cozmo_Basestation_MessageHelpers_H__
+#define __Cozmo_Basestation_MessageHelpers_H__
+
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include <string>
+
+namespace Anki {
+namespace Cozmo {
+
+inline const char* MessageTagToString(const ExternalInterface::MessageEngineToGameTag& tag)
+{
+  return MessageEngineToGameTagToString(tag);
+}
+
+inline const char* MessageTagToString(const ExternalInterface::MessageGameToEngineTag& tag)
+{
+  return MessageGameToEngineTagToString(tag);
+}
+
+}
+}
+
+#endif

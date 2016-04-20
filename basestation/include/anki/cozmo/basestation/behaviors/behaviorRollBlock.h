@@ -40,7 +40,6 @@ public:
 protected:
 
   virtual Result InitInternal(Robot& robot) override;
-  virtual Result InterruptInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
   virtual float  EvaluateRunningScoreInternal(const Robot& robot) const override;
 

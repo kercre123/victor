@@ -43,6 +43,7 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   , _startedRunningTime_s(0.0)
   , _lastRunTime_s(0.0)
   , _overrideScore(-1.0f)
+  , _extraRunningScore(0.0f)
   , _isRunning(false)
   , _isOwnedByFactory(false)
   , _isChoosable(true)
@@ -169,6 +170,18 @@ Result IBehavior::Init()
   return initResult;
 }
 
+Result IBehavior::Resume()
+{
+  _isRunning = true;
+  _startedRunningTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  Result initResult = ResumeInternal(_robot);
+  if ( initResult != RESULT_OK ) {
+    _isRunning = false;
+  }
+  return initResult;
+}
+
+
 IBehavior::Status IBehavior::Update()
 {
   ASSERT_NAMED(IsRunning(), "IBehavior::UpdateNotRunning");
@@ -181,17 +194,6 @@ void IBehavior::Stop()
   StopInternal(_robot);
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   StopActing(false);
-}
-
-Result IBehavior::Interrupt()
-{
-  Result interruptResult = InterruptInternal(_robot);
-  if( interruptResult != RESULT_OK ) {
-    PRINT_NAMED_DEBUG("BehaviorInterface.Interrupt.Failure",
-                      "interrupting behavior '%s' failed",
-                      GetName().c_str());
-  }
-  return interruptResult;
 }
 
 Util::RandomGenerator& IBehavior::GetRNG() const {
@@ -271,7 +273,7 @@ float IBehavior::EvaluateScore(const Robot& robot) const
     }
     else if (isRunning)
     {
-      score = EvaluateRunningScoreInternal(robot);
+      score = EvaluateRunningScoreInternal(robot) + _extraRunningScore;
     }
     else
     {
@@ -309,6 +311,7 @@ bool IBehavior::StartActing(IActionRunner* action, RobotCompletedActionCallback 
 
   _actingCallback = callback;
   _lastActionTag = action->GetTag();
+  _extraRunningScore = 0.0f;
   _robot.GetActionList().QueueActionNow(action);
   return true;
 }
@@ -335,6 +338,7 @@ void IBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedActi
 {
   if( IsActing() && msg.idTag == _lastActionTag ) {
     _lastActionTag = ActionConstants::INVALID_TAG;
+    _extraRunningScore = 0.0f;
 
     if( IsRunning() && _actingCallback ) {
       _actingCallback(msg);
@@ -342,8 +346,17 @@ void IBehavior::HandleActionComplete(const ExternalInterface::RobotCompletedActi
   }
 }
 
+void IBehavior::IncreaseScoreWhileActing(float extraScore)
+{
+  if( IsActing() ) {
+    _extraRunningScore += extraScore;
+  }
+}
+
 bool IBehavior::StopActing(bool allowCallback)
 {
+  _extraRunningScore = 0.0f;
+
   if( IsActing() ) {
     u32 tagToCancel = _lastActionTag;
       
