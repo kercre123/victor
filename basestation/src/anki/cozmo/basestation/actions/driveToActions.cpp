@@ -19,10 +19,11 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "driveToActions.h"
 
-static const char* kDefaultDrivingSoundsSadClipStart = "ID_AlignToObject_Frustrated_Start";
-static const char* kDefaultDrivingSoundsSadClipStop = "ID_AlignToObject_Frustrated_Stop";
-static const char* kDefaultDrivingSoundsDefaultClipStart = "ID_AlignToObject_Content_Start";
-static const char* kDefaultDrivingSoundsDefaultClipStop = "ID_AlignToObject_Content_Stop";
+// TEMP: disabled default sounds for now to avoid animation bugs
+static const char* kDefaultDrivingSoundsSadClipStart = ""; // "ID_AlignToObject_Frustrated_Start";
+static const char* kDefaultDrivingSoundsSadClipStop = ""; //"ID_AlignToObject_Frustrated_Stop";
+static const char* kDefaultDrivingSoundsDefaultClipStart = ""; //"ID_AlignToObject_Content_Start";
+static const char* kDefaultDrivingSoundsDefaultClipStop = ""; //"ID_AlignToObject_Content_Stop";
 
 namespace Anki {
   
