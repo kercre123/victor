@@ -15,7 +15,8 @@ namespace NVStorage {
     // Single blob entries start here
     // Upper 16 bits must be zero
     NVEntry_Invalid           = 0xFFFFffff,
-    // Tag 0 is RESERVED. Don't use it!
+    NVEntry_EraseAll          = 0,  // The only operation that can be done on this tag is erase
+                                    // and doing so ERASES ALL non-factory entries.
     NVEntry_CameraCalibration = 1,  // NOTE: This will eventually be removed and replaced by NVEntry_CameraCalib
 
 

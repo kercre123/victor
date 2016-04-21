@@ -97,40 +97,23 @@ public:
  
 private:
   
-  // Info about a single write/erase request
+  // Info about a single write request
   struct WriteDataObject {
-    WriteDataObject()
-    : baseTag(NVStorage::NVEntryTag::NVEntry_Invalid)
-    , nextTag(0)
-    , sendIndex(0)
-    , writeNotErase(true)
-    {}
-    WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>* dataVec, bool writeNotErase)
+    WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>* dataVec)
     : baseTag(tag)
     , nextTag(static_cast<u32>(tag))
     , sendIndex(0)
     , data(dataVec)
-    , writeNotErase(writeNotErase)
-    { }
-    
-    WriteDataObject(const WriteDataObject& other)
-    : baseTag(other.baseTag)
-    , nextTag(other.nextTag)
-    , sendIndex(other.sendIndex)
-    , data(other.data)
-    , writeNotErase(other.writeNotErase)
     { }
     
     ~WriteDataObject() {
       Util::SafeDelete(data);
     }
 
-    
     NVStorage::NVEntryTag baseTag;
     u32 nextTag;
     u32 sendIndex;
     std::vector<u8> *data;
-    bool writeNotErase;
   };
   
   // Info on how to handle ACK'd writes/erases
@@ -141,6 +124,7 @@ private:
     , writeNotErase(true)
     , broadcastResultToGame(false)
     { }
+    
     u32  numTagsLeftToAck;
     NVStorageWriteEraseCallback callback;
     bool writeNotErase;
@@ -178,7 +162,7 @@ private:
   };
   
   
-  
+  // Struct for holding any type of request to the robot's non-volatile storage
   struct NVStorageRequest {
     
     // Write request
@@ -248,10 +232,10 @@ private:
   // Queue of write/erase/read requests to be sent to robot
   std::queue<NVStorageRequest> _requestQueue;
   
-  // Queue of data to be sent to robot for writing/erasing
+  // Queue of data to be sent to robot for writing
   std::queue<WriteDataObject> _writeDataQueue;
   
-  // Map of NVEntryTag to ACK handling struct.
+  // Map of NVEntryTag to ACK handling struct for write and erase requests
   std::unordered_map<u32, WriteDataAckInfo > _writeDataAckMap;
   
   // Map of requested NVEntryTag to received data handling struct
