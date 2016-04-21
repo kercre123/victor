@@ -39,6 +39,8 @@ namespace Cozmo {
 
       public DailyGoal(GameEvent gEvent, string titleKey, string descKey, int reward, int target, int currProg = 0) {
         GoalEvent = gEvent;
+        Title = new LocalizedString();
+        Description = new LocalizedString();
         Title.Key = titleKey;
         Description.Key = descKey;
         PointsRewarded = reward;

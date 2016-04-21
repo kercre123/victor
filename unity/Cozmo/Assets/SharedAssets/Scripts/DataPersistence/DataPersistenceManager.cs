@@ -91,8 +91,10 @@ namespace DataPersistence {
         DAS.Error(this, "Exception backing up save file: " + ex);
       }
 
+      // TODO: Figure out where the Self referencing Loop happens, fix it
+      DAS.Event(this, "START SERIALIZING SAVE DATA");
       string jsonValue = JsonConvert.SerializeObject(Data, Formatting.None, GlobalSerializerSettings.JsonSettings);
-
+      DAS.Event(this, "DONE SERIALIZING SAVE DATA");
       File.WriteAllText(sSaveFilePath, jsonValue);
     }
   }

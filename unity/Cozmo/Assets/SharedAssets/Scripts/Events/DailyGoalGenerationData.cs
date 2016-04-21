@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
-using Newtonsoft.Json;
 using Cozmo.UI;
 
 /// <summary>

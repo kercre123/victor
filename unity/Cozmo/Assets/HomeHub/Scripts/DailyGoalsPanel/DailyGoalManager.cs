@@ -21,6 +21,9 @@ public class DailyGoalManager : MonoBehaviour {
   #if UNITY_IOS && !UNITY_EDITOR
   public static string sDailyGoalDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/DailyGoals"); } }
  
+
+
+
 #else
   public static string sDailyGoalDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/DailyGoals"; } }
   #endif
