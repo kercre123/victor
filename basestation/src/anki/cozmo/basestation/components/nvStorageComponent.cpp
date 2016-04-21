@@ -639,6 +639,101 @@ void NVStorageComponent::HandleNVStorageClearPartialPendingWriteEntry(const Anki
   _pendingWriteData.tag = NVStorage::NVEntryTag::NVEntry_Invalid;
 }
 
+  
+void NVStorageComponent::Test()
+{
+  
+  NVStorage::NVEntryTag testMultiBlobTag = NVStorage::NVEntryTag::NVEntry_MultiBlobJunk;
+  
 
+  static u8 nvAction = 0;
+  switch(nvAction) {
+    case 0: {
+      const u32 BUFSIZE = 1100;
+      u8 d[BUFSIZE] = {0};
+      d[0] = 1;
+      d[1023] = 2;
+      d[1024] = 3;
+      d[1034] = 4;
+      PRINT_NAMED_DEBUG("NVStorageComponent.Test.Writing", "tag: %s, size: %u",
+                        EnumToString(testMultiBlobTag), BUFSIZE);
+      Write(testMultiBlobTag, d, BUFSIZE,
+            [](NVStorage::NVResult res) {
+            PRINT_NAMED_DEBUG("NVStorageComponent.Test.WriteResult", "%s", EnumToString(res));
+            });
+      break;
+    }
+    case 1:
+    case 3:
+    {
+      PRINT_NAMED_DEBUG("NVStorageComponent.Test.Read", "tag: %s", EnumToString(testMultiBlobTag));
+      Read(testMultiBlobTag,
+           [](u8* data, size_t size, NVStorage::NVResult res) {
+             if (res == NVStorage::NVResult::NV_OKAY) {
+               PRINT_NAMED_DEBUG("NVStorageComponent.Test.ReadSUCCESS",
+                                 "size: %lu, data[0]: %d, data[1023]: %d, data[1024]: %d, data[1034]: %d",
+                                 size, data[0], data[1023], data[1024], data[1034]);
+             } else {
+               PRINT_NAMED_DEBUG("NVStorageComponent.Test.ReadFAIL", "");
+             }
+           });
+      break;
+    }
+    case 2:
+    {
+      PRINT_NAMED_DEBUG("NVStorageComponent.Test.Erase", "tag: %s", EnumToString(testMultiBlobTag));
+      Erase(testMultiBlobTag,
+            [](NVStorage::NVResult res) {
+              PRINT_NAMED_DEBUG("NVStorageComponent.Test.EraseResult", "%s", EnumToString(res));
+            });
+      break;
+    }
+  }
+  if (++nvAction == 4) {
+    nvAction = 0;
+  }
+
+  
+  
+  /*
+  static bool write = true;
+  static const char* inFile = "in.jpg";
+  static const char* outFile = "out.jpg";
+  if (write) {
+    // Open input image and send data to robot
+    FILE* fp = fopen(inFile, "rb");
+    if (fp) {
+      std::vector<u8> d(30000);
+      size_t numBytes = fread(d.data(), 1, d.size(), fp);
+      d.resize(numBytes);
+  
+      PRINT_NAMED_DEBUG("NVStorageComponent.Test.WritingTestImage", "size: %zu", numBytes);
+      Write(testMultiBlobTag, d.data(), numBytes);
+    } else {
+      PRINT_NAMED_DEBUG("NVStorageComponent.Test.InputFileOpenFailed", "File: %s", inFile);
+    }
+  } else {
+    PRINT_NAMED_DEBUG("NVStorageComponent.Test.ReadingTestImage", "");
+    Read(testMultiBlobTag,
+         [](u8* data, size_t size, NVStorage::NVResult res) {
+           
+           PRINT_NAMED_DEBUG("NVStorageComponent.Test.TestImageRecvd", "size: %zu", size);
+   
+           // Write image data to file
+           FILE* fp = fopen(outFile, "wb");
+           if (fp) {
+             fwrite(data,1,size,fp);
+             fclose(fp);
+           } else {
+             PRINT_NAMED_DEBUG("NVStorageComponent.Test.OutputFileOpenFailed", "File: %s", outFile);
+           }
+         });
+  }
+  write = !write;
+  */
+
+}
+  
+  
 } // namespace Cozmo
 } // namespace Anki

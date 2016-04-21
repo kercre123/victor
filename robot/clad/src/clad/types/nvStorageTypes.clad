@@ -17,12 +17,15 @@ namespace NVStorage {
     NVEntry_Invalid = 0xFFFFffff,
     NVEntry_CameraCalibration = 1,
 
+    NVEntry_Junk = 0xFFFF,
+
     // Multi-blob entries start here
     // Upper 16 bits must be non-zero and the bottom 16 bits must all be zero
     // The number of blobs that can be associated with a multi-blob tag is 0xffff
     // (e.g. The NVEntryTag 0x10000 reserves tags 0x10000 through 0x1ffff)
     // though this value is actually lower because it is limited in NVStorageComponent.
 
+    NVEntry_MultiBlobJunk = 0x7FFF0000,
 
     // ====== Factory entries ========
     // Same rules as regarding single and multi-blob entries

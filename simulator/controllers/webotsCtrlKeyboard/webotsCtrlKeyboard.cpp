@@ -1540,33 +1540,33 @@ namespace Anki {
               {
                 // NVStorage multiWrite / multiRead test
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  PRINT_NAMED_INFO("SendNVStorageReadEntry", "NVEntry_CalibImage1");
-                  ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CalibImage1);
-                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
+                  PRINT_NAMED_INFO("SendNVStorageReadEntry", "Putting image in NVEntry_MultiBlobJunk");
+                  ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_MultiBlobJunk);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_MultiBlobJunk);
                 } else {
                   
                   if (ENABLE_NVSTORAGE_WRITE) {
                     // Toggle write/erase
                     static bool writeNotErase = true;
                     if (writeNotErase) {
-                      static const char* inFile = "testCalibImage1_input.jpg";
+                      static const char* inFile = "nvstorage_input.jpg";
                       FILE* fp = fopen(inFile, "rb");
                       if (fp) {
                         std::vector<u8> d(30000);
                         size_t numBytes = fread(d.data(), 1, d.size(), fp);
                         d.resize(numBytes);
-                        PRINT_NAMED_INFO("SendNVStorageWriteEntry.CalibImage1.ReadInputImage", "read %zu bytes\n", numBytes);
+                        PRINT_NAMED_INFO("SendNVStorageWriteEntry.NVEntry_MultiBlobJunk.ReadInputImage", "read %zu bytes\n", numBytes);
                         
                         ExternalInterface::NVStorageWriteEntry temp;
                         u32 MAX_BLOB_SIZE = temp.data.size();
                         u8 numTotalBlobs = static_cast<u8>(ceilf(static_cast<f32>(numBytes) / MAX_BLOB_SIZE));
                         
-                        PRINT_NAMED_INFO("SendNVStorageWriteEntry.CalibImage1.Sending",
+                        PRINT_NAMED_INFO("SendNVStorageWriteEntry.NVEntry_MultiBlobJunk.Sending",
                                          "NumBlobs %d, maxBlobSize %d",
                                          numTotalBlobs, MAX_BLOB_SIZE);
 
                         for (int i=0; i<numTotalBlobs; ++i) {
-                          SendNVStorageWriteEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1,
+                          SendNVStorageWriteEntry(NVStorage::NVEntryTag::NVEntry_MultiBlobJunk,
                                                   d.data() + i * MAX_BLOB_SIZE, MIN(MAX_BLOB_SIZE, numBytes - (i*MAX_BLOB_SIZE)),
                                                   i, numTotalBlobs);
                         }
@@ -1575,12 +1575,12 @@ namespace Anki {
                       }
                     } else {
                       
-                      PRINT_NAMED_INFO("SendNVStorageEraseEntry", "NVEntry_CalibImage1");
-                      SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
+                      PRINT_NAMED_INFO("SendNVStorageEraseEntry", "NVEntry_MultiBlobJunk");
+                      SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_MultiBlobJunk);
                     }
                     writeNotErase = !writeNotErase;
                   } else {
-                    PRINT_NAMED_INFO("SendNVStorageWriteEntry.CalibImage1.Disabled",
+                    PRINT_NAMED_INFO("SendNVStorageWriteEntry.NVEntry_MultiBlobJunk.Disabled",
                                      "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
                   }
                   
@@ -2019,9 +2019,9 @@ namespace Anki {
                                calib.nrows, calib.ncols);
               break;
             }
-            case NVStorage::NVEntryTag::NVEntry_CalibImage1:
+            case NVStorage::NVEntryTag::NVEntry_MultiBlobJunk:
             {
-              static const char* outFile = "testCalibImage1_output.jpg";
+              static const char* outFile = "nvstorage_output.jpg";
               PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.CalibImage1",
                                "Writing to %s, size: %zu",
                                outFile, recvdData->size());
