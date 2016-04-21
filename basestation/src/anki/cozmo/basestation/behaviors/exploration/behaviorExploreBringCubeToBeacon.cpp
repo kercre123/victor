@@ -408,12 +408,11 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
         const bool isBlockInSelectedBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose().GetTranslation(), inwardThreshold_mm);
         if ( isBlockInSelectedBeacon )
         {
-          // find if there's an object on top of this cube
-          const ObservableObject* objectOnTop = robot.GetBlockWorld().FindObjectOnTopOf(*blockPtr, robot.STACKED_HEIGHT_TOL_MM);
-          if ( nullptr == objectOnTop )
+          // check if we can stack on top of this object
+          const bool canStackOnObject = robot.CanStackOnTopOfObject(*blockPtr);
+          if ( canStackOnObject )
           {
             // TODO rsam: this stops at the first found, not closest or anything fancy
-            // no, then we can stack our cube on top of this one (if pathfinding is ok)
             return blockPtr;
           }
         }
