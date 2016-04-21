@@ -67,6 +67,9 @@ namespace Anki {
     
     IDockAction::~IDockAction()
     {
+      // the action automatically selects the block, deselect now to remove Viz
+      _robot.GetBlockWorld().DeselectCurrentObject();
+    
       // Make sure we back to looking for markers (and stop tracking) whenever
       // and however this action finishes
       _robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
