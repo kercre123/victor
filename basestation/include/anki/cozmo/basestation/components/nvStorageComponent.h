@@ -128,12 +128,14 @@ private:
     , callback({})
     , writeNotErase(true)
     , broadcastResultToGame(false)
+    , timeoutTimeStamp(0)
     { }
     
     u32  numTagsLeftToAck;
     NVStorageWriteEraseCallback callback;
     bool writeNotErase;
     bool broadcastResultToGame;
+    TimeStamp_t timeoutTimeStamp;
   };
   
   // Info on how to handle read-requested data
@@ -143,6 +145,7 @@ private:
     , callback({})
     , deleteVectorWhenDone(true)
     , broadcastResultToGame(false)
+    , timeoutTimeStamp(0)    
     { }
     
     ~RecvDataObject() {
@@ -155,6 +158,7 @@ private:
     NVStorageReadCallback callback;
     bool deleteVectorWhenDone;
     bool broadcastResultToGame;
+    TimeStamp_t timeoutTimeStamp;
   };
   
   // Stores blobs of a multi-blob messgage.
@@ -258,6 +262,11 @@ private:
   
   // Maximum size of a single multi-blob write entry
   static constexpr u32 _kMaxNvStorageEntrySize       = _kMaxNvStorageBlobSize * _kMaxNumBlobsInMultiBlobEntry;
+  
+  // Ack timeout
+  // If an operation is not acked within this timeout then give up waiting for it.
+  // (Average write/read rate is ~10KB/s)
+  static constexpr u32 _kAckTimeout_ms = 12800;
   
 };
 
