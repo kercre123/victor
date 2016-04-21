@@ -4,6 +4,7 @@ extern "C" {
   #include "user_interface.h"
 }
 #include "anki/cozmo/robot/hal.h"
+#include "rtip.h"
 #include "clad/types/imageTypes.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -14,12 +15,19 @@ namespace Anki {
       bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID)
       {
         const u8 realID = (msgID == RobotInterface::GLOBAL_INVALID_TAG) ? *((u8*)buffer) : msgID;
-        // Check if this is a trace or text message (debugging)
-        if ((realID == RobotInterface::RobotToEngine::Tag_trace) || (realID == RobotInterface::RobotToEngine::Tag_printText))
+        if (realID < RobotInterface::TO_WIFI_START)
         {
-          if (clientQueueAvailable() < 200) return false;
+          return RTIP::SendMessage((const u8*)buffer, size, msgID);
         }
-        return clientSendMessage((u8*)buffer, size, msgID, msgID < RobotInterface::TO_ENG_UNREL, false);
+        else
+        {
+          // Check if this is a trace or text message (debugging)
+          if ((realID == RobotInterface::RobotToEngine::Tag_trace) || (realID == RobotInterface::RobotToEngine::Tag_printText))
+          {
+            if (clientQueueAvailable() < 200) return false;
+          }
+          return clientSendMessage((u8*)buffer, size, msgID, msgID < RobotInterface::TO_ENG_UNREL, false);
+        }
       }
     }
     

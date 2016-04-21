@@ -131,7 +131,7 @@ int main(void)
   TestFixtures::run();
   #endif
 
-  enterOperatingMode(WIFI_OPERATING_MODE);
+  enterOperatingMode(BLUETOOTH_OPERATING_MODE);
 
   Timer::start();
 

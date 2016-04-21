@@ -41,7 +41,7 @@ int8_t i2spiInit(void);
  *               Must be no more than DROP_TO_RTIP_MAX_VAR_PAYLOAD
  * @return true if the data was successfully queued or false if it could not be queued.
  */
-bool i2spiQueueMessage(uint8_t* msgData, int msgLen);
+bool i2spiQueueMessage(const uint8_t* msgData, const int msgLen);
 
 /** Check if the I2SPI message queue is empty
  * @return True if there are no clad messages waiting to be sent
