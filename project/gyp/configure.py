@@ -233,6 +233,7 @@ def main(scriptArgs):
                                   audio_library_type=static_library
                                   audio_library_build=profile
                                   kazmath_library_type=static_library
+                                  tiny-AES128-C_library_type=static_library
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
                                   worldviz_library_type=static_library
@@ -278,6 +279,7 @@ def main(scriptArgs):
                                 audio_library_type=static_library
                                 audio_library_build=profile
                                 kazmath_library_type=static_library
+                                tiny-AES128-C_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
@@ -318,6 +320,7 @@ def main(scriptArgs):
                                   audio_library_type=static_library
                                   audio_library_build=profile
                                   kazmath_library_type=static_library
+                                  tiny-AES128-C_library_type=static_library
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
                                   worldviz_library_type=static_library
@@ -384,6 +387,7 @@ def main(scriptArgs):
                                 audio_library_type=static_library
                                 audio_library_build=profile
                                 kazmath_library_type=static_library
+                                tiny-AES128-C_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
@@ -440,6 +444,7 @@ def main(scriptArgs):
                                   audio_library_type=static_library
                                   audio_library_build=profile
                                   kazmath_library_type=static_library
+                                  tiny-AES128-C_library_type=static_library
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
                                   worldviz_library_type=static_library
