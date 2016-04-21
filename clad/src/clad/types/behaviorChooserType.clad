@@ -7,7 +7,7 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_8 BehaviorChooserType {
-  Default,
+  Freeplay,
   Selection,
   Count
 }

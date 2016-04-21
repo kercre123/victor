@@ -236,6 +236,7 @@ namespace Anki {
         printf("    Travel up/down selected ramp:  r\n");
         printf("              Abort current path:  q\n");
         printf("                Abort everything:  Shift+q\n");
+        printf("           Cancel current action:  Alt+q\n");
         printf("         Update controller gains:  k\n");
         printf("                 Request IMU log:  o\n");
         printf("           Toggle face detection:  f\n");
@@ -923,33 +924,18 @@ namespace Anki {
                     break;
                   }
                   
-                  if (behaviorName == "DISABLED")
-                  {
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::SetBehaviorSystemEnabled(false)));
-                  }
-                  else if( behaviorName == "ENABLED")
-                  {
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::SetBehaviorSystemEnabled(true)));
-                  }
-                  else
-                  {
-                    printf("Selecting behavior: %s\n", behaviorName.c_str());
+                  printf("Selecting behavior: %s\n", behaviorName.c_str());
 
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::SetBehaviorSystemEnabled(true)));
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+                  SendMessage(ExternalInterface::MessageGameToEngine(
+                                ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
 
-                    if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
-                      SendMessage(ExternalInterface::MessageGameToEngine(
-                                    ExternalInterface::ExecuteBehaviorByName(behaviorName)));
-                    }
-                    else {
-                      SendMessage(ExternalInterface::MessageGameToEngine(
-                                    ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
-                    }                
+                  if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::ExecuteBehaviorByName(behaviorName)));
+                  }
+                  else {
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
                   }
                 }
                 else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
@@ -973,10 +959,6 @@ namespace Anki {
                     printf("ERROR: invalid hotkey\n");
                     break;
                   }
-
-                  // TODO:(bn) don't spam this so often?
-                  SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::SetBehaviorSystemEnabled(true)));
 
                   bool enable = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
                   
@@ -1039,9 +1021,6 @@ namespace Anki {
 
                   printf("sending behavior chooser '%s'\n", BehaviorChooserTypeToString(chooser));
                 
-                  SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::SetBehaviorSystemEnabled(true)));
-
                   SendMessage(ExternalInterface::MessageGameToEngine(
                                 ExternalInterface::ActivateBehaviorChooser(chooser)));
                 }
