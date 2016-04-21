@@ -18,6 +18,8 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
 
+#include "clad/types/objectFamilies.h"
+
 #include <vector>
 #include <set>
 
@@ -31,6 +33,7 @@ struct RobotObservedObject;
 class IAction;
 class ObservableObject;
 class Beacon;
+class BlockWorld;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // BehaviorExploreBringCubeToBeacon
@@ -72,8 +75,7 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual Result InitInternal(Robot& robot) override;
-  virtual Result InterruptInternal(Robot& robot) override { return Result::RESULT_OK; } // TODO?
-  virtual void StopInternal(Robot& robot) override {} // TODO?
+  virtual void StopInternal(Robot& robot) override;
   
 private:
 
@@ -87,12 +89,20 @@ private:
   // find pose to drop the object inside the selected beacon. Return true/false on success/failure
   static bool FindFreePoseInBeacon(const ObservableObject* object, const Beacon* selectedBeacon, const Robot& robot, Pose3d& freePose);
   
+  // helper to simplify code. Returns object addressed by index in the _candidateObjects vector, null if not a valid entry
+  const ObservableObject* GetCandidate(const BlockWorld& world, size_t index) const;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // list of objects selected in IsRunnable. Cached as a performance optimization
-  mutable std::vector<const ObservableObject*> _candidateObjects;
+  struct CandidateInfo {
+    CandidateInfo(ObjectID objId, ObjectFamily fam) : id(objId), family(fam) {}
+    ObjectID id;
+    ObjectFamily family;
+  };
+  mutable std::vector<CandidateInfo> _candidateObjects;
   
   // store ID in case something happen to the object while we move there
   ObjectID _selectedObjectID;

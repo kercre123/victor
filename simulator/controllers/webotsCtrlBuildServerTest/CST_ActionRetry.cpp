@@ -149,7 +149,8 @@ namespace Anki {
             m.position = QueueActionPosition::NOW;
             m.idTag = 10;
             // Place object 0 facing -x
-            m.action.Set_placeObjectOnGround(ExternalInterface::PlaceObjectOnGround(100, 100, 0, 0, 0, 1, motionProfile2, 0, false, true));
+            const bool checkDestinationFree = false;
+            m.action.Set_placeObjectOnGround(ExternalInterface::PlaceObjectOnGround(100, 100, 0, 0, 0, 1, motionProfile2, 0, false, true, checkDestinationFree));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

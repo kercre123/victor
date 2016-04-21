@@ -432,7 +432,8 @@ namespace Anki {
                                                                      const Pose3d& placementPose,
                                                                      const bool placeOnGround,
                                                                      const bool useExactRotation,
-                                                                     const bool useManualSpeed)
+                                                                     const bool useManualSpeed,
+                                                                     const bool checkDestinationFree)
     : DriveToObjectAction(robot,
                           robot.GetCarryingObject(),
                           placeOnGround ? PreActionPose::PLACE_ON_GROUND : PreActionPose::PLACE_RELATIVE,
@@ -442,6 +443,7 @@ namespace Anki {
                           useManualSpeed)
     , _placementPose(placementPose)
     , _useExactRotation(useExactRotation)
+    , _checkDestinationFree(checkDestinationFree)
     {
     }
     
@@ -500,9 +502,21 @@ namespace Anki {
       
     } // DriveToPlaceCarriedObjectAction::Init()
     
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     ActionResult DriveToPlaceCarriedObjectAction::CheckIfDone()
     {
       ActionResult result = _compoundAction.Update();
+      
+      // check if the destination is free
+      if ( _checkDestinationFree )
+      {
+        const bool isFree = IsPlacementGoalFree();
+        if ( !isFree ) {
+          PRINT_NAMED_INFO("DriveToPlaceCarriedObjectAction.PlacementGoalNotFree",
+                           "Placement goal is not free to drop the cube, failing with retry.");
+          result = ActionResult::FAILURE_RETRY;
+        }
+      }
       
       // We completed driving to the pose. Unlike driving to an object for
       // pickup, we can't re-verify the accuracy of our final position, so
@@ -511,6 +525,35 @@ namespace Anki {
       return result;
     } // DriveToPlaceCarriedObjectAction::CheckIfDone()
     
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    bool DriveToPlaceCarriedObjectAction::IsPlacementGoalFree() const
+    {
+      ObservableObject* object = _robot.GetBlockWorld().GetObjectByID( _robot.GetCarryingObject() );
+      if ( nullptr != object )
+      {
+        BlockWorldFilter ignoreSelfFilter;
+        ignoreSelfFilter.AddIgnoreID( object->GetID() );
+      
+        // calculate quad at candidate destination
+        Quad2f candidateQuad = object->GetBoundingQuadXY(_placementPose);
+
+        // TODO rsam: set somewhere else? If the behavior doesn't have access to this, it can run
+        // into ping-pong issues, cause the behavior would pick this location, but the action will reject it
+        const float kPadding_mm = 5.0f;
+        
+        // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
+        std::vector<ObservableObject *> intersectingObjects;
+        _robot.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, kPadding_mm, ignoreSelfFilter);
+        bool isFree = intersectingObjects.empty();
+        return isFree;
+      }
+      
+      // no object :(
+      return true;
+    }
+    
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #pragma mark ---- DriveToPoseAction ----
     
     DriveToPoseAction::DriveToPoseAction(Robot& robot,

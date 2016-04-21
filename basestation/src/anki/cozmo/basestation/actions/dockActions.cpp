@@ -920,13 +920,15 @@ namespace Anki {
     PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(Robot& robot,
                                                                      const Pose3d& placementPose,
                                                                      const bool useExactRotation,
-                                                                     const bool useManualSpeed)
+                                                                     const bool useManualSpeed,
+                                                                     const bool checkFreeDestination)
     : CompoundActionSequential(robot, {
       new DriveToPlaceCarriedObjectAction(robot,
                                           placementPose,
                                           true,
                                           useExactRotation,
-                                          useManualSpeed),
+                                          useManualSpeed,
+                                          checkFreeDestination),
       new PlaceObjectOnGroundAction(robot)})
     {
       

@@ -45,7 +45,10 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 struct LocationCalculator {
   LocationCalculator(const ObservableObject* pickedUpObject, const Vec3f& beaconCenter, const Rotation3d& directionality, float beaconRadius, const Robot& robot)
-  : object(pickedUpObject), center(beaconCenter), rotation(directionality), radiusSQ(beaconRadius*beaconRadius), robotRef(robot), isFirstFind(true) {}
+  : object(pickedUpObject), center(beaconCenter), rotation(directionality), radiusSQ(beaconRadius*beaconRadius), robotRef(robot), isFirstFind(true)
+  {
+    ASSERT_NAMED( nullptr != object, "BehaviorExploreBringCubeToBeacon.LocationCalculator.NullObjectWillCrash" );
+  }
   
   const ObservableObject* object;
   const Vec3f& center;
@@ -92,23 +95,32 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
     }
     return false;
   }
-  
-  // calculate quad at candidate destination
-  outPose = Pose3d(rotation, candidateLoc, &robotRef.GetPose().FindOrigin());
-  Quad2f candidateQuad = object->GetBoundingQuadXY(outPose);
 
-  // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
-  std::vector<ObservableObject *> intersectingObjects;
-  robotRef.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, kBebctb_PaddingBetweenCubes_mm*0.5f);
+  bool isFree = true;
   
-  bool isFree = intersectingObjects.empty();
+  // calculate if candidate pose is free for this object
+  {
+    // note: this part of the code is similar to the DriveToPlaceCarriedObjectAction free goal check, standarize?
+    BlockWorldFilter ignoreSelfFilter;
+    ignoreSelfFilter.AddIgnoreID( object->GetID() );
+    
+    // calculate quad at candidate destination
+    outPose = Pose3d(rotation, candidateLoc, &robotRef.GetPose().FindOrigin());
+    Quad2f candidateQuad = object->GetBoundingQuadXY(outPose);
 
-  // debug render
-  if ( kBebctb_DebugRenderAll ) {
-    robotRef.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorExploreBringCubeToBeacon.Locations",
-      candidateQuad, 20.0f, isFree ? (isFirstFind ? NamedColors::YELLOW : NamedColors::WHITE) : NamedColors::RED, false);
+    // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
+    std::vector<ObservableObject *> intersectingObjects;
+    robotRef.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, kBebctb_PaddingBetweenCubes_mm*0.5f);
+    
+    isFree = intersectingObjects.empty();
+
+    // debug render
+    if ( kBebctb_DebugRenderAll ) {
+      robotRef.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorExploreBringCubeToBeacon.Locations",
+        candidateQuad, 20.0f, isFree ? (isFirstFind ? NamedColors::YELLOW : NamedColors::WHITE) : NamedColors::RED, false);
+    }
+    isFirstFind = isFirstFind && !isFree;
   }
-  isFirstFind = isFirstFind && !isFree;
   
   return isFree;
 }
@@ -145,8 +157,6 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnable(const Robot& robot) const
   }
   #endif
 
-robot.GetContext()->GetVizManager()->EraseSegments("rsam");
-  
   _candidateObjects.clear();
   if ( !beaconList.empty() )
   {
@@ -168,9 +178,6 @@ robot.GetContext()->GetVizManager()->EraseSegments("rsam");
           // check if the object is within any beacon
           for ( const auto& beacon : beaconList ) {
             isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose().GetTranslation());
-            
-robot.GetContext()->GetVizManager()->DrawSegment("rsam", beacon.GetPose().GetTranslation(), blockPtr->GetPose().GetTranslation(), isBlockInAnyBeacon ? NamedColors::GREEN : NamedColors::ORANGE, false);
-            
             if ( isBlockInAnyBeacon ) {
               break;
             }
@@ -178,7 +185,7 @@ robot.GetContext()->GetVizManager()->DrawSegment("rsam", beacon.GetPose().GetTra
           
           // this block should be carried to a beacon
           if ( !isBlockInAnyBeacon ) {
-            _candidateObjects.push_back( blockPtr );
+            _candidateObjects.emplace_back( blockPtr->GetID(), family );
           }
         }
       }
@@ -193,6 +200,9 @@ robot.GetContext()->GetVizManager()->DrawSegment("rsam", beacon.GetPose().GetTra
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
 {
+  // clear previous selection
+  _selectedObjectID.UnSet();
+  
   // starting state
   TransitionToPickUpObject(robot);
 
@@ -201,34 +211,84 @@ Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreBringCubeToBeacon::StopInternal(Robot& robot)
+{
+  // clear render on exit just in case
+  if ( kBebctb_DebugRenderAll ) {
+    robot.GetContext()->GetVizManager()->EraseSegments("BehaviorExploreBringCubeToBeacon.Locations");
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot)
 {
   if ( !_candidateObjects.empty() )
   {
-    const Vec3f& robotLoc = robot.GetPose().GetTranslation();
-
-    // pick closest block
-    // TODO rsam/brad: consider using path distance here
-    size_t bestIndex = 0;
-    float bestDistSQ = (_candidateObjects[bestIndex]->GetPose().GetTranslation() - robotLoc).LengthSq();
-    for( size_t idx=1; idx<_candidateObjects.size(); ++idx)
+    // if _selectedObjectID is set this is a retry
+    const bool isRetry = _selectedObjectID.IsSet();
+    if ( !isRetry )
     {
-      float candidateDistSQ = (_candidateObjects[idx]->GetPose().GetTranslation() - robotLoc).LengthSq();
-      if ( candidateDistSQ < bestDistSQ )
+      // pick closest block
+      const Vec3f& robotLoc = robot.GetPose().GetTranslation();
+      const BlockWorld& world = robot.GetBlockWorld();
+      // TODO rsam/brad: consider using path distance here
+      size_t bestIndex = 0;
+      const ObservableObject* candidateObj = GetCandidate(world, bestIndex);
+      float bestDistSQ = (nullptr != candidateObj) ? (candidateObj->GetPose().GetTranslation() - robotLoc).LengthSq() : FLT_MAX;
+      for( size_t idx=1; idx<_candidateObjects.size(); ++idx)
       {
-        bestDistSQ = candidateDistSQ;
-        bestIndex = idx;
+        candidateObj = GetCandidate(world, bestIndex);
+        float candidateDistSQ = (nullptr != candidateObj) ? (candidateObj->GetPose().GetTranslation() - robotLoc).LengthSq() : FLT_MAX;
+        if ( candidateDistSQ < bestDistSQ )
+        {
+          bestDistSQ = candidateDistSQ;
+          bestIndex = idx;
+        }
+      }
+
+      // did we find a candidate?
+      const bool foundCandidate = FLT_LT(bestDistSQ, FLT_MAX);
+      if ( foundCandidate ) {
+        _selectedObjectID = _candidateObjects[bestIndex].id;
+      } else {
+        PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.InvalidCandidates", "Could not pick candidate");
+        return;
       }
     }
 
-    // pick up the cube
-    _selectedObjectID = _candidateObjects[bestIndex]->GetID();
+
+    // fire action with proper callback
     DriveToPickupObjectAction* pickUpAction = new DriveToPickupObjectAction(robot, _selectedObjectID );
-    StartActing(pickUpAction, &BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp );
+    RobotCompletedActionCallback onActionResult = [this, &robot, isRetry](const ExternalInterface::RobotCompletedAction& actionRet)
+    {
+      if ( actionRet.result == ActionResult::SUCCESS ) {
+        // object was picked up
+        TransitionToObjectPickedUp(robot);
+      }
+      else if (actionRet.result == ActionResult::FAILURE_RETRY)
+      {
+        // do we currently have the object in the lift?
+        const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
+        if ( isCarrying )
+        {
+          // TODO rsam: set a max number of retries?
+          // we were already carrying the object, try to find a new position for it
+          TransitionToObjectPickedUp( robot );
+        }
+        else if ( !isRetry )
+        {
+          // something else failed, maybe we failed to align with the cube, try to pick up the cube again
+          TransitionToPickUpObject( robot );
+        }
+      } else {
+        // PRINT_NAMED_INFO("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.DriveToPickUpFailed", "Unhandled result");
+      }
+    };
+    StartActing(pickUpAction, onActionResult);
   }
   else
   {
-    PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.InitInternal.NoSelectedObjects", "Can't run with no selected objects");
+    PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.NoCandidates", "Can't run with no selected objects");
   }
 }
 
@@ -273,16 +333,40 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
       const bool foundPose = FindFreePoseInBeacon(pickedUpObject, selectedBeacon, robot, dropPose);
       if ( foundPose )
       {
+        const bool checkFreeDestination = true;
         // create action to drive to the drop location
-        PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, dropPose);
-        StartActing( placeObjectAction );
+        PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, dropPose,
+          DEFAULT_PATH_MOTION_PROFILE, false, false, checkFreeDestination);
+        RobotCompletedActionCallback onPlaceActionResult = [this, &robot](const ExternalInterface::RobotCompletedAction& actionRet)
+        {
+          if (actionRet.result == ActionResult::FAILURE_RETRY)
+          {
+            // do we currently have the object in the lift?
+            const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
+            if ( isCarrying )
+            {
+              // TODO rsam: set a max number of retries?
+              // we were already carrying the object, try to find a new position for it
+              TransitionToObjectPickedUp( robot );
+            }
+          } else {
+            // PRINT_NAMED_INFO("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.DriveToPickUpFailed", "Unhandled result");
+          }
+        };
+        
+        StartActing( placeObjectAction, onPlaceActionResult );
       }
       else
       {
-          PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NoFreePoses",
-            "Could not decide where to drop the cube in the beacon");
+        PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NoFreePoses",
+          "Could not decide where to drop the cube in the beacon");
       }
     }
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NotPickedUp",
+      "We did not pick up the cube. Retry?");
   }
 
 }
@@ -313,7 +397,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
           const ObservableObject* objectOnTop = robot.GetBlockWorld().FindObjectOnTopOf(*blockPtr, robot.STACKED_HEIGHT_TOL_MM);
           if ( nullptr == objectOnTop )
           {
-            // TODO rsam this stops at the first found, not closest or anything fancy
+            // TODO rsam: this stops at the first found, not closest or anything fancy
             // no, then we can stack our cube on top of this one (if pathfinding is ok)
             return blockPtr;
           }
@@ -330,14 +414,14 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
   const Beacon* beacon, const Robot& robot, Pose3d& freePose)
 {
   // store directionallity of beacon
-  // TODO: rsam it would be cool so all cubes lined up together. Maybe we should check the closest cube to the selected
+  // TODO rsam: it would be cool so all cubes lined up together. Maybe we should check the closest cube to the selected
   // location, but that would require making more collision computations. A solution might be do the location selection
   // as a sphere, that way we can turn the cube around Z and the location would still be valid (at the same time
   // sphere checks are faster than
   const Vec3f& kUpVector = Z_AXIS_3D();
   Rotation3d beaconDirectionality(0.0f, kUpVector);
   {
-    // TODO put this utility somewhere: create Rotation3d from vector in XY plane
+    // TODO rsam put this utility somewhere: create Rotation3d from vector in XY plane
     Vec3f beaconNormal = (beacon->GetPose().GetTranslation() - robot.GetPose().GetTranslation());
     beaconNormal.z() = 0.0f;
     float distance = beaconNormal.MakeUnitLength();
@@ -406,6 +490,15 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
   return foundLocation;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const ObservableObject* BehaviorExploreBringCubeToBeacon::GetCandidate(const BlockWorld& world, size_t index) const
+{
+  const ObservableObject* ret = nullptr;
+  if ( index < _candidateObjects.size() ) {
+    ret = world.GetObjectByIDandFamily(_candidateObjects[index].id, _candidateObjects[index].family);
+  }
+  return ret;
+}
 
 } // namespace Cozmo
 } // namespace Anki
