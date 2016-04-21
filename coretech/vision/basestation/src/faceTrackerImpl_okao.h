@@ -48,15 +48,15 @@ namespace Vision {
     
     static bool IsRecognitionSupported() { return true; }
     
-    void EnableNewFaceEnrollment(s32 numToEnroll) { _recognizer.EnableNewFaceEnrollment(numToEnroll); }
-    bool IsNewFaceEnrollmentEnabled() const   { return _recognizer.IsNewFaceEnrollmentEnabled(); }
+    void SetFaceEnrollmentMode(FaceEnrollmentMode mode) { _enrollMode = mode; }
     
     void EnableEmotionDetection(bool enable) { _detectEmotion = enable; }
     bool IsEmotionDetectionEnabled() const   { return _detectEmotion;  }
 
     void AssignNameToID(FaceID_t faceID, const std::string& name);
+    void EraseName(const std::string& name);
     
-    Result LoadAlbum(const std::string& albumName, std::list<std::string>& names);
+    Result LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
     Result SaveAlbum(const std::string& albumName);
 
   private:
@@ -67,9 +67,9 @@ namespace Vision {
                            INT32 detectionIndex, Vision::TrackedFace& face);
     
     Result EstimateExpression(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
-                              Vision::TrackedFace& face);
+                              TrackedFace& face);
   
-    bool IsEnrollable(const DETECTION_INFO& detectionInfo);
+    bool IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face);
     
     bool _isInitialized = false;
     bool _detectEmotion = true;
@@ -98,6 +98,8 @@ namespace Vision {
     POINT _facialParts[PT_POINT_KIND_MAX];
     INT32 _facialPartConfs[PT_POINT_KIND_MAX];
     INT32 _expressionValues[EX_EXPRESSION_KIND_MAX];
+    
+    FaceEnrollmentMode _enrollMode = FaceEnrollmentMode::LookingStraight;
     
     // Runs on a separate thread
     FaceRecognizer _recognizer;

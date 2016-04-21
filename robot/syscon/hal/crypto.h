@@ -3,13 +3,13 @@
 
 #include "aes.h"
 #include "bignum.h"
+#include "diffie.h"
 
 #ifndef MAX
 #define MAX(x,y) ((x < y) ? (y) : (x))
 #endif
 
 static const int MAX_CRYPTO_TASKS = 4;
-static const int SECRET_LENGTH = AES_BLOCK_LENGTH;
 
 enum CryptoOperation {
   // Generate random number
@@ -25,19 +25,6 @@ enum CryptoOperation {
   CRYPTO_FINISH_DIFFIE_HELLMAN
 };
 
-struct DiffieHellman {
-  // These are the numbers for our diffie group
-  const big_mont_t* mont;
-  const big_num_t*  gen;
-  
-  int               pin;
-  uint8_t           local_secret[MAX(SECRET_LENGTH, AES_KEY_LENGTH)];
-  uint8_t           remote_secret[MAX(SECRET_LENGTH, AES_KEY_LENGTH)];
-  uint8_t           encoded_key[AES_KEY_LENGTH];
-  
-  big_num_t         state;
-};
-
 typedef void (*crypto_callback)(const void *state, int length);
 
 struct CryptoTask {
@@ -50,7 +37,6 @@ struct CryptoTask {
 namespace Crypto {
   void init();
   void manage();
-  void random(void* data, int length);
   void execute(const CryptoTask* task);
 }
 

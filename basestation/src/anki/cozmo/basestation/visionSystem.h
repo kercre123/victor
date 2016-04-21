@@ -81,7 +81,6 @@ namespace Cozmo {
     GroundPlaneROI        groundPlaneROI;
     bool                  isMoving;
     ImuDataHistory        imuDataHistory;
-    std::vector<RotationMatrix3d> historicCameraRots;
   };
 
   class VisionSystem : public Vision::Profiler
@@ -203,7 +202,9 @@ namespace Cozmo {
     
     void AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
     
-    void EnableNewFaceEnrollment(s32 numToEnroll);
+    void SetFaceEnrollmentMode(Vision::FaceEnrollmentMode mode);
+    
+    void EraseFace(const std::string& name);
     
     void SetParams(const bool autoExposureOn,
                    const f32 exposureTime,

@@ -449,17 +449,19 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         
         Radians topMarkerOrientation(0);
         if(observedObject->IsActive()) {
-          const ActiveCube* activeCube = dynamic_cast<const ActiveCube*>(observedObject);
-          if(activeCube == nullptr) {
-            PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
-                              "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.",
-                              observedObject->GetID().GetValue());
-            return RESULT_FAIL;
-          } else {
-            topMarkerOrientation = activeCube->GetTopMarkerOrientation();
-            
-            //PRINT_INFO("Object %d's rotation around Z = %.1fdeg\n", obsID.GetValue(),
-            //           topMarkerOrientation.getDegrees());
+          if (observedObject->GetFamily() == ObjectFamily::LightCube) {
+            const ActiveCube* activeCube = dynamic_cast<const ActiveCube*>(observedObject);
+            if(activeCube == nullptr) {
+              PRINT_NAMED_ERROR("BlockWorld.AddAndUpdateObjects",
+                                "ObservedObject %d with IsActive()==true could not be cast to ActiveCube.",
+                                observedObject->GetID().GetValue());
+              return RESULT_FAIL;
+            } else {
+              topMarkerOrientation = activeCube->GetTopMarkerOrientation();
+              
+              //PRINT_INFO("Object %d's rotation around Z = %.1fdeg\n", obsID.GetValue(),
+              //           topMarkerOrientation.getDegrees());
+            }
           }
         }
         
@@ -1625,7 +1627,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         m->SetLastObservedTime(lastTimestamp);
       }
 
-      AddNewObject(ObjectFamily::MarkerlessObject, m);
+      AddNewObject(m);
       _didObjectsChange = true;
       _currentObservedObjects.push_back(m);
       
@@ -2311,77 +2313,98 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     */
 
   
-    ObjectID BlockWorld::AddLightCube(ActiveID activeID, FactoryID factoryID)
+    ObjectID BlockWorld::AddActiveObject(ActiveID activeID, FactoryID factoryID)
     {
       if (activeID >= 4 || activeID < 0) {
-        PRINT_NAMED_WARNING("BlockWorld.AddLightCube.InvalidActiveID", "activeID %d", activeID);
+        PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.InvalidActiveID", "activeID %d", activeID);
         return ObjectID();
       }
       
       // Is there an active object with the same activeID that already exists?
-      ObjectType cubeType = ActiveCube::GetTypeFromFactoryID(factoryID);
+      ObjectType objType = ObservableObject::GetTypeFromFactoryID(factoryID);
+      const char* objTypeStr = EnumToString(objType);
       ObservableObject* matchingObject = GetActiveObjectByActiveID(activeID);
       if (matchingObject == nullptr) {
         // If no match found, find one of the same type with an invalid activeID and assume it's that
-        const ObjectsMapByID_t& objectsOfSameType = GetExistingObjectsByType(cubeType);
-        for (auto& cubeIt : objectsOfSameType) {
-          ObservableObject* sameTypeCube = cubeIt.second;
-          if (sameTypeCube->GetActiveID() < 0) {
-            sameTypeCube->SetActiveID(activeID);
-            PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatchingObjectWithNoActiveID",
-                             "objectID %d, activeID %d, type %d",
-                             sameTypeCube->GetID().GetValue(), sameTypeCube->GetActiveID(), cubeType);
-            return sameTypeCube->GetID();
+        const ObjectsMapByID_t& objectsOfSameType = GetExistingObjectsByType(objType);
+        for (auto& objIt : objectsOfSameType) {
+          ObservableObject* sameTypeObject = objIt.second;
+          if (sameTypeObject->GetActiveID() < 0) {
+            sameTypeObject->SetActiveID(activeID);
+            PRINT_NAMED_INFO("BlockWorld.AddActiveObject.FoundMatchingObjectWithNoActiveID",
+                             "objectID %d, activeID %d, type %s",
+                             sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), objTypeStr);
+            return sameTypeObject->GetID();
           } else {
             // If found an existing object of the same type but not same factoryID then ignore it
             // until we figure out how to deal with multiple objects of same type.
-            if ( sameTypeCube->GetFactoryID() != factoryID ) {
-              PRINT_NAMED_WARNING("BlockWorld.AddLightCube.FoundOtherCubeOfSameType",
-                                  "ActiveID %d (factoryID 0x%x) is same type as another existing object (objectID %d, activeID %d, factoryID 0x%x, type %d). Multiple objects of same type not supported!",
+            if ( sameTypeObject->GetFactoryID() != factoryID ) {
+              PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.FoundOtherActiveObjectOfSameType",
+                                  "ActiveID %d (factoryID 0x%x) is same type as another existing object (objectID %d, activeID %d, factoryID 0x%x, type %s). Multiple objects of same type not supported!",
                                   activeID, factoryID,
-                                  sameTypeCube->GetID().GetValue(), sameTypeCube->GetActiveID(), sameTypeCube->GetFactoryID(), cubeType);
+                                  sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), sameTypeObject->GetFactoryID(), objTypeStr);
               return ObjectID();
             } else {
-              PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundIdenticalObjectOnDifferentSlot",
+              PRINT_NAMED_INFO("BlockWorld.AddActiveObject.FoundIdenticalObjectOnDifferentSlot",
                                "Updating activeID of block with factoryID 0x%x from %d to %d",
-                               sameTypeCube->GetFactoryID(), sameTypeCube->GetActiveID(), activeID);
-              sameTypeCube->SetActiveID(activeID);
-              return sameTypeCube->GetID();
+                               sameTypeObject->GetFactoryID(), sameTypeObject->GetActiveID(), activeID);
+              sameTypeObject->SetActiveID(activeID);
+              return sameTypeObject->GetID();
             }
           }
         }
       } else {
         // A match was found but does it have the same factory ID?
         if(matchingObject->GetFactoryID() == factoryID) {
-          PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatchingActiveObject",
-                           "objectID %d, activeID %d, type %d, factoryID 0x%x",
-                           matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), cubeType, matchingObject->GetFactoryID());
+          PRINT_NAMED_INFO("BlockWorld.AddActiveObject.FoundMatchingActiveObject",
+                           "objectID %d, activeID %d, type %s, factoryID 0x%x",
+                           matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
           return matchingObject->GetID();
         } else if (matchingObject->GetFactoryID() == 0) {
           // Existing object was only previously observed, never connected, so its factoryID is 0
-          PRINT_NAMED_INFO("BlockWorld.AddLightCube.FoundMatchingActiveObjectThatWasNeverConnected",
-                           "objectID %d, activeID %d, type %d, factoryID 0x%x",
-                           matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), cubeType, matchingObject->GetFactoryID());
+          PRINT_NAMED_INFO("BlockWorld.AddActiveObject.FoundMatchingActiveObjectThatWasNeverConnected",
+                           "objectID %d, activeID %d, type %s, factoryID 0x%x",
+                           matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, matchingObject->GetFactoryID());
           return matchingObject->GetID();
         } else {
           // FactoryID mismatch. Delete the current object and fall through to add a new one
-          PRINT_NAMED_WARNING("BlockWorld.AddLightCube.MismatchedFactoryID",
-                              "objectID %d, activeID %d, type %d, factoryID 0x%x (expected 0x%x)",
-                              matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), cubeType, factoryID, matchingObject->GetFactoryID());
+          PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.MismatchedFactoryID",
+                              "objectID %d, activeID %d, type %s, factoryID 0x%x (expected 0x%x)",
+                              matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), objTypeStr, factoryID, matchingObject->GetFactoryID());
           DeleteObject(matchingObject->GetID());
         }
       }
   
-      
       // An existing object with activeID was not found so add it
-      ActiveCube* cube = new ActiveCube(activeID, factoryID);
-      cube->SetPoseParent(_robot->GetWorldOrigin());
-      cube->SetPoseState(ObservableObject::PoseState::Unknown);
-      AddNewObject(ObjectFamily::LightCube, cube);
-      PRINT_NAMED_INFO("BlockWorld.AddLightCube.Added",
-                       "objectID %d (activeID %d)",
-                       cube->GetID().GetValue(), cube->GetActiveID());
-      return cube->GetID();
+      ObservableObject* newObject = nullptr;
+      switch(objType) {
+        case ObjectType::Block_LIGHTCUBE1:
+        case ObjectType::Block_LIGHTCUBE2:
+        case ObjectType::Block_LIGHTCUBE3:
+        {
+          newObject = new ActiveCube(activeID, factoryID);
+          break;
+        }
+        case ObjectType::Charger_Basic:
+        {
+          newObject = new Charger(activeID, factoryID);
+          break;
+        }
+        default:
+          PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.UnsupportActiveObjectType", "%s", objTypeStr);
+          return ObjectID();
+      }
+      
+      newObject->SetPoseParent(_robot->GetWorldOrigin());
+      newObject->SetPoseState(ObservableObject::PoseState::Unknown);
+      AddNewObject(newObject);
+      PRINT_NAMED_INFO("BlockWorld.AddActiveObject.AddedNewObject",
+                       "objectID %d, type %s, activeID %d, factoryID 0x%x",
+                       newObject->GetID().GetValue(), objTypeStr, newObject->GetActiveID(), newObject->GetFactoryID());
+      return newObject->GetID();
+      
+
+
     }
   
     Result BlockWorld::AddCliff(const Pose3d& p)

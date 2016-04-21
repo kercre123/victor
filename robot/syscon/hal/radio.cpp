@@ -10,6 +10,7 @@
 
 #include "micro_esb.h"
   
+#include "random.h"
 #include "hardware.h"
 #include "radio.h"
 #include "timer.h"

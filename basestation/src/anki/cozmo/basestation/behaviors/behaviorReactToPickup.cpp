@@ -121,16 +121,6 @@ IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
   
   return Status::Complete;
 }
-
-Result BehaviorReactToPickup::InterruptInternal(Robot& robot)
-{
-  // We don't want to be interrupted unless we're done reacting
-  if (State::Inactive != _currentState)
-  {
-    return Result::RESULT_FAIL;
-  }
-  return Result::RESULT_OK;
-}
   
 void BehaviorReactToPickup::StopInternal(Robot& robot)
 {

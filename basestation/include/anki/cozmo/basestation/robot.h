@@ -597,8 +597,8 @@ public:
     // Max size of set is ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS.
     Result ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids);
   
-    // Set whether or not to broadcast to game which blocks have been discovered
-    void BroadcastDiscoveredObjects(bool enable);
+    // Set whether or not to broadcast to game which blocks are available for connection
+    void BroadcastAvailableObjects(bool enable);
   
     // Set the LED colors/flashrates individually (ordered by BlockLEDPosition)
     Result SetObjectLights(const ObjectID& objectID,

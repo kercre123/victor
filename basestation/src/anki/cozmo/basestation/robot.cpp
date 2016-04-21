@@ -975,8 +975,13 @@ namespace Anki {
       if (_enableDiscoveredObjectsBroadcasting) {
         for (auto obj : _discoveredObjects) {
           if (GetLastMsgTimestamp() - obj.second > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
-            PRINT_NAMED_INFO("ObjectUndiscovered", "FactoryID 0x%x (lastObservedTime %d, currTime %d)", obj.first, obj.second, GetLastMsgTimestamp());
-            Broadcast(ExternalInterface::MessageEngineToGame(ObjectUndiscovered(obj.first)));
+            PRINT_NAMED_INFO("Robot.Update.ObjectUndiscovered",
+                             "FactoryID 0x%x (lastObservedTime %d, currTime %d)",
+                             obj.first, obj.second, GetLastMsgTimestamp());
+            
+            // Send unavailable message for this object
+            ExternalInterface::ObjectUnavailable m(obj.first);
+            Broadcast(ExternalInterface::MessageEngineToGame(std::move(m)));
             _discoveredObjects.erase(obj.first);
           }
         }
@@ -3039,7 +3044,7 @@ namespace Anki {
     }
     
     
-    void Robot::BroadcastDiscoveredObjects(bool enable)
+    void Robot::BroadcastAvailableObjects(bool enable)
     {
       _enableDiscoveredObjectsBroadcasting = enable;
     }

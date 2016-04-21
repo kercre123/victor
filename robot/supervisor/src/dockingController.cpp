@@ -74,6 +74,11 @@ namespace Anki {
 
         // Distance from block face at which robot should "dock"
         f32 dockOffsetDistX_ = 0.f;
+        
+        // Whether or not to use only the first error signal received for docking purposes.
+        // Results in smoother, albeit less accurate, docking. Useful for charger docking
+        // since the marker pose estimation isn't great.
+        bool useFirstErrorSignalOnly_ = false;
 
         TimeStamp_t lastDockingErrorSignalRecvdTime_ = 0;
 
@@ -396,7 +401,9 @@ namespace Anki {
       // over the marker distance ranging from START_LIFT_TRACKING_DIST_MM to dockOffsetDistX_.
       void HighDockLiftUpdate() {
         // Don't want to move the lift while we are backing up or carrying a block
-        if(failureMode_ != BACKING_UP && !PickAndPlaceController::IsCarryingBlock())
+        if(failureMode_ != BACKING_UP &&
+           !PickAndPlaceController::IsCarryingBlock() &&
+           PickAndPlaceController::GetCurAction() != DA_ALIGN)
         {
           f32 lastCommandedHeight = LiftController::GetDesiredHeight();
           if (lastCommandedHeight == dockingErrSignalMsg_.z_height) {
@@ -604,9 +611,11 @@ namespace Anki {
           mode_ = APPROACH_FOR_DOCK;
         }
 
-
-
+        
         Result retVal = RESULT_OK;
+        
+        // There are some special cases for aligning with a block
+        const bool isAligning = PickAndPlaceController::GetCurAction() == DA_ALIGN;
 
         switch(mode_)
         {
@@ -628,6 +637,7 @@ namespace Anki {
             // Stop if we haven't received error signal for a while
             if (!markerlessDocking_
                 && (!pastPointOfNoReturn_)
+                && (!useFirstErrorSignalOnly_)
                 && !markerOutOfFOV_
                 && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > STOPPED_TRACKING_TIMEOUT_MS) ) {
               PathFollower::ClearPath();
@@ -642,6 +652,17 @@ namespace Anki {
             if(failureMode_ == HANNS_MANEUVER && createdValidPath_ && !PathFollower::IsTraversingPath())
             {
               StopDocking(DOCK_SUCCESS_HANNS_MANEUVER);
+              break;
+            }
+            
+            // If this is DA_MOUNT_CHARGER, don't bother with all the checks below
+            // and just assume we got to where we want. (Charger marker pose signal is
+            // too noisy to trust. We just need to get roughly in front of the thing so
+            // we can turn around to back into it.
+            if (createdValidPath_ &&
+            !PathFollower::IsTraversingPath() &&
+                PickAndPlaceController::GetCurAction() == DA_MOUNT_CHARGER) {
+              StopDocking(DOCK_SUCCESS);
               break;
             }
             
@@ -678,7 +699,7 @@ namespace Anki {
                             ABS(dockingErrSignalMsg_.y_horErr),
                             LATERAL_DOCK_TOLERANCE_AT_DOCK_MM,
                             ABS(RAD_TO_DEG(dockingErrSignalMsg_.angleErr)),
-                            ERRMSG_NOT_IN_POSITION_ANGLE_TOL,
+                            RAD_TO_DEG(ERRMSG_NOT_IN_POSITION_ANGLE_TOL),
                             HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp);
                   inPosition = false;
                   
@@ -748,7 +769,8 @@ namespace Anki {
                 if(doHannsManeuver &&
                    failureMode_ != HANNS_MANEUVER &&
                    dockingToBlockOnGround &&
-                   !PickAndPlaceController::IsCarryingBlock())
+                   !PickAndPlaceController::IsCarryingBlock() &&
+                   !isAligning)
                 {
                   SendDockingStatusMessage(STATUS_DOING_HANNS_MANEUVER);
                   AnkiDebug( 5, "DockingController", 425, "Executing Hanns maneuver", 0);
@@ -790,6 +812,12 @@ namespace Anki {
                   createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
                   failureMode_ = HANNS_MANEUVER;
                 }
+                // Special case for DA_ALIGN - will occur if we are in position for hanns maneuver then we won't do it
+                // and just succeed
+                else if(isAligning && doHannsManeuver)
+                {
+                  StopDocking(DOCK_SUCCESS);
+                }
                 // Otherwise we are not in position and should just back up
                 else
                 {
@@ -815,11 +843,14 @@ namespace Anki {
                   dockSpeed_mmps_ = DOCKSPEED_ON_FAILURE_MMPS;
                   dockDecel_mmps2_ = DOCKDECEL_ON_FAILURE_MMPS2;
                   
+                  // Raise the lift if rolling, don't do anything to the lift if aligning or carrying a block, everything else
+                  // we want to lower the lift when backing up
                   if(PickAndPlaceController::GetCurAction() == DA_ROLL_LOW)
                   {
                     LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                   }
-                  else
+                  else if(!isAligning &&
+                          !PickAndPlaceController::IsCarryingBlock())
                   {
                     LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, 0.25, 0.25, 1);
                   }
@@ -1189,7 +1220,9 @@ namespace Anki {
           // (or if docking to a block off the ground 0mm) inside of the block
           // Placing the point inside the block causes us to push the block and maybe it will slide sideways onto
           // the lift if we are ever so slightly off the marker due to camera extrinsics
-          f32 distIntoBlock = ((!dockingToBlockOnGround || PickAndPlaceController::IsCarryingBlock()) ? 0 : PATH_END_DIST_INTO_BLOCK_MM);
+          f32 distIntoBlock = ((!dockingToBlockOnGround ||
+                                PickAndPlaceController::IsCarryingBlock() ||
+                                PickAndPlaceController::GetCurAction() == DA_ALIGN) ? 0 : PATH_END_DIST_INTO_BLOCK_MM);
           PathFollower::AppendPathSegment_Line(0,
                                                dockPose_.x()-(distToDecel)*dockPoseAngleCos,
                                                dockPose_.y()-(distToDecel)*dockPoseAngleSin,
@@ -1241,7 +1274,8 @@ namespace Anki {
       void StartDocking(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps,
                         const f32 dockOffsetDistX, const f32 dockOffsetDistY, const f32 dockOffsetAngle,
                         const bool useManualSpeed,
-                        const u32 pointOfNoReturnDistMM)
+                        const u32 pointOfNoReturnDistMM,
+                        const bool useFirstErrSignalOnly)
       {
         StartDocking_internal(speed_mmps, accel_mmps, decel_mmps, useManualSpeed);
         
@@ -1250,6 +1284,7 @@ namespace Anki {
         pastPointOfNoReturn_ = false;
         dockingToBlockOnGround = true;
         markerlessDocking_ = false;
+        useFirstErrorSignalOnly_ = useFirstErrSignalOnly;
 
 #if(DOCK_ANGLE_DAMPING)
         dockPoseAngleInitialized_ = false;
@@ -1288,6 +1323,7 @@ namespace Anki {
         markerOutOfFOV_ = false;
         lastMarkerPoseObservedIsSet_ = false;
         dockingToBlockOnGround = false;
+        useFirstErrorSignalOnly_ = false;
         numDockingFails_ = 0;
         LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = BLOCK_ON_GROUND_LATERAL_DOCK_TOLERANCE_MM;
         
@@ -1324,6 +1360,12 @@ namespace Anki {
 
       void SetDockingErrorSignalMessage(const DockingErrorSignal& msg)
       {
+        // If the path is already going then ignore any incoming error signals if
+        // only using the first error signal.
+        if (useFirstErrorSignalOnly_ && PathFollower::IsTraversingPath()) {
+          return;
+        }
+        
         dockingErrSignalMsg_ = msg;
         dockingErrSignalMsgReady_ = true;
       }

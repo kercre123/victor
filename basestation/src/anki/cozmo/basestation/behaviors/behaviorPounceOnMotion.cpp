@@ -286,18 +286,6 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
   
   return Status::Running;
 }
-
-Result BehaviorPounceOnMotion::InterruptInternal(Robot& robot)
-{
-  // We don't want to be interrupted unless we're done reacting
-  if( _state == State::Inactive ) {
-    PRINT_NAMED_INFO("BehaviorPounceOnMotion.Interrupt", "stopping behavior");
-    Cleanup(robot);
-    return Result::RESULT_OK;
-  }
-
-  return Result::RESULT_FAIL;
-}
   
 void BehaviorPounceOnMotion::StopInternal(Robot& robot)
 {

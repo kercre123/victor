@@ -157,6 +157,10 @@ namespace Anki {
       // If set, instead of driving to the nearest preActionPose, only the preActionPose
       // that is most closely aligned with the approach angle is considered.
       void SetApproachAngle(const f32 angle_rad);
+      
+      // Whether or not to verify the final pose, once the path is complete,
+      // according to the latest know preAction pose for the specified object.
+      void DoPositionCheckOnPathCompletion(bool doCheck) { _doPositionCheckOnPathCompletion = doCheck; }
 
       // Sets the driving animations (usually just sounds, expected not to lock anything). Set to empty
       // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
@@ -184,6 +188,8 @@ namespace Anki {
       bool                       _useApproachAngle;
       Radians                    _approachAngle_rad;
 
+      bool                       _doPositionCheckOnPathCompletion;
+      
       std::string _startDrivingAnimClip;
       std::string _stopDrivingAnimClip;
       bool _hasCustomDrivingSounds = false;

@@ -42,25 +42,17 @@ protected:
   
   virtual Result InitInternal(Robot& robot) override
   {
-    _isInterrupted = false; return Result::RESULT_OK;
+    return Result::RESULT_OK;
   }
   
   virtual Status UpdateInternal(Robot& robot) override
   {
-    Status retval = _isInterrupted ? Status::Complete : Status::Running;
-    return retval;
-  }
-
-  virtual Result InterruptInternal(Robot& robot) override
-  {
-    _isInterrupted = true; return Result::RESULT_OK;
+    return Status::Running;
   }
 
   virtual void StopInternal(Robot& robot) override
   {
   }
-  
-  bool _isInterrupted = false;
 };
   
 

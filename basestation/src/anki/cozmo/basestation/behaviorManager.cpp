@@ -3,15 +3,15 @@
  *
  * Author: Kevin Yoon
  * Date:   2/27/2014
+ * Overhaul: 2016-04-18 Brad Neuman
  *
  * Description:
  *
- * Copyright: Anki, Inc. 2014
+ * Copyright: Anki, Inc. 2014-2016
  **/
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 
-#include "anki/common/basestation/utils/timer.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/messageHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/selectionBehaviorChooser.h"
@@ -32,524 +33,438 @@
 namespace Anki {
 namespace Cozmo {
   
+static const char* kChooserConfigKey = "chooserConfig";
   
-  BehaviorManager::BehaviorManager(Robot& robot)
+BehaviorManager::BehaviorManager(Robot& robot)
   : _isInitialized(false)
-  , _forceReInit(false)
   , _robot(robot)
   , _behaviorFactory(new BehaviorFactory())
   , _whiteboard( new BehaviorWhiteboard(robot) )
-  , _minBehaviorTime_sec(1)
-  {
+{
+}
 
-  }
-  
-  static const char* kChooserConfigKey = "chooserConfig";
-  
-  Result BehaviorManager::Init(const Json::Value &config)
-  {
-    BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Init.Initializing", "");
-    
-    {
-      const Json::Value& chooserConfigJson = config[kChooserConfigKey];
-      Util::SafeDelete(_defaultChooser);
-      _defaultChooser = new ReactionaryBehaviorChooser(_robot, chooserConfigJson);
-      SetBehaviorChooser( _defaultChooser );
+BehaviorManager::~BehaviorManager()
+{
 
-      BehaviorFactory& behaviorFactory = GetBehaviorFactory();
-      // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
-      AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
-      // AddReactionaryBehavior( behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
-    }
-    
-    // initialize whiteboard
-    assert( _whiteboard );
-    _whiteboard->Init();
-    
-    if (_robot.HasExternalInterface())
-    {
-      IExternalInterface* externalInterface = _robot.GetExternalInterface();
-      _eventHandlers.push_back(externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
-       [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-       {
-         const BehaviorChooserType chooserType = event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType;
-         switch (chooserType)
-         {
-           case BehaviorChooserType::Default:
-           {
-             if (_behaviorChooser != _defaultChooser)
-             {
-               SetBehaviorChooser( _defaultChooser );
-             }
-             break;
-           }
-           case BehaviorChooserType::Selection:
-           {
-             // DEMO HACK: clean the idle animation here
-             // TODO:(bn) better way to do this
-             _robot.SetIdleAnimation("NONE");
-             
-             SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
-             break;
-           }
-           default:
-           {
-             PRINT_NAMED_WARNING("BehaviorManager.ActivateBehaviorChooser.InvalidChooser",
-                                 "don't know how to create a chooser of type '%s'",
-                                 BehaviorChooserTypeToString(chooserType));
-             break;
-           }
-         }
-       }));
-    }
-    _isInitialized = true;
-    
-    _lastSwitchTime_sec = 0.f;
-    
-    return RESULT_OK;
-  }
-
-  // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
-  // reacted to correctly - events will be given to the Chooser which may return a behavior to force switch to
-  void BehaviorManager::AddReactionaryBehavior(IReactionaryBehavior* behavior)
-  {
-    // We map reactionary behaviors to the tag types they're going to care about
-    _behaviorChooser->AddReactionaryBehavior(behavior);
-    
-    // If we don't have an external interface (Unit tests), bail early; we can't setup callbacks
-    if (!_robot.HasExternalInterface()) {
-      return;
-    }
-    
-    // Callback for EngineToGame event that a reactionary behavior (possibly) cares about
-    auto reactionsEngineToGameCallback = [this](const AnkiEvent<ExternalInterface::MessageEngineToGame>& event)
-    {
-      IBehavior* newForcedBehavior = _behaviorChooser->GetReactionaryBehavior(_robot, event);
-      if( nullptr != newForcedBehavior ) {
-        _forceSwitchBehavior = newForcedBehavior;
-      }
-    };
-    
-    // Subscribe our own callback to these events
-    IExternalInterface* interface = _robot.GetExternalInterface();
-    for (auto tag : behavior->GetEngineToGameTags())
-    {
-      _eventHandlers.push_back(interface->Subscribe(tag, reactionsEngineToGameCallback));
-    }
-    
-    // Callback for GameToEngine event that a reactionary behavior (possibly) cares about
-    auto reactionsGameToEngineCallback = [this](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-    {
-      IBehavior* newForcedBehavior = _behaviorChooser->GetReactionaryBehavior(_robot, event);
-      if( nullptr != newForcedBehavior ) {
-        _forceSwitchBehavior = newForcedBehavior;
-      }
-    };
-    
-    // Subscribe our own callback to these events
-    for (auto tag : behavior->GetGameToEngineTags())
-    {
-      _eventHandlers.push_back(interface->Subscribe(tag, reactionsGameToEngineCallback));
-    }
-  }
+  // everything in _reactionaryBehaviors is a factory behavior, so the factory will delete it
+  _reactionaryBehaviors.clear();
   
-  BehaviorManager::~BehaviorManager()
+  if (_behaviorChooser == _defaultChooser)
   {
-    if (_behaviorChooser == _defaultChooser)
-    {
-      // prevent double deletion
-      _behaviorChooser = nullptr;
-    }
-    Util::SafeDelete(_behaviorChooser);
+    // prevent double deletion
+    _behaviorChooser = nullptr;
+  }
+    
+  Util::SafeDelete(_behaviorChooser);
+  Util::SafeDelete(_defaultChooser);
+  Util::SafeDelete(_behaviorFactory);
+}
+  
+Result BehaviorManager::Init(const Json::Value &config)
+{
+  BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Init.Initializing", "");
+    
+  {
+    const Json::Value& chooserConfigJson = config[kChooserConfigKey];
     Util::SafeDelete(_defaultChooser);
-    Util::SafeDelete(_behaviorFactory);
+    _defaultChooser = new SimpleBehaviorChooser(_robot, chooserConfigJson);
+    SetBehaviorChooser( _defaultChooser );
+
+    // TODO:(bn) load these from json? A special reactionary behaviors list?
+    BehaviorFactory& behaviorFactory = GetBehaviorFactory();
+    AddReactionaryBehavior(
+      behaviorFactory.CreateBehavior(BehaviorType::ReactToStop,  _robot, config)->AsReactionaryBehavior() );
+    // AddReactionaryBehavior(
+    //   behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
+    AddReactionaryBehavior(
+      behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
+    // AddReactionaryBehavior(
+    //   behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
+  }
+    
+  // initialize whiteboard
+  assert( _whiteboard );
+  _whiteboard->Init();
+    
+  if (_robot.HasExternalInterface())
+  {
+    IExternalInterface* externalInterface = _robot.GetExternalInterface();
+    _eventHandlers.push_back(externalInterface->Subscribe(
+                               ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
+                               [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                               {
+                                 const BehaviorChooserType chooserType =
+                                   event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType;
+                                 switch (chooserType)
+                                 {
+                                   case BehaviorChooserType::Default:
+                                   {
+                                     if (_behaviorChooser != _defaultChooser)
+                                     {
+                                       SetBehaviorChooser( _defaultChooser );
+                                     }
+                                     break;
+                                   }
+                                   case BehaviorChooserType::Selection:
+                                   {
+                                     SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
+                                     break;
+                                   }
+                                   default:
+                                   {
+                                     PRINT_NAMED_WARNING("BehaviorManager.ActivateBehaviorChooser.InvalidChooser",
+                                                         "don't know how to create a chooser of type '%s'",
+                                                         BehaviorChooserTypeToString(chooserType));
+                                     break;
+                                   }
+                                 }
+                               }));
+  }
+  _isInitialized = true;
+    
+  return RESULT_OK;
+}
+
+// The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
+// reacted to correctly - events will be given to the Chooser which may return a behavior to force switch to
+void BehaviorManager::AddReactionaryBehavior(IReactionaryBehavior* behavior)
+{
+  _reactionaryBehaviors.push_back(behavior);
+    
+  // If we don't have an external interface (Unit tests), bail early; we can't setup callbacks
+  if (!_robot.HasExternalInterface()) {
+    return;
   }
   
-  void BehaviorManager::SwitchToNextBehavior()
+  // Subscribe our own callback to these events
+  IExternalInterface* interface = _robot.GetExternalInterface();
+  for (auto tag : behavior->GetEngineToGameTags())
   {
-    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
-    // If we're currently running our forced behavior but now switching away, clear it
-    if (_currentBehavior == _forceSwitchBehavior)
-    {
-      _forceSwitchBehavior = nullptr;
-    }
-    
-    // Initialize next behavior and make it the current one
-    if (nullptr != _nextBehavior)
-    {
-      #if SEND_MOOD_TO_VIZ_DEBUG
-      {
-        VizInterface::NewBehaviorSelected newBehaviorSelected;
-        newBehaviorSelected.newCurrentBehavior = _nextBehavior ? _nextBehavior->GetName() : "null";
-        _robot.GetContext()->GetVizManager()->SendNewBehaviorSelected(std::move(newBehaviorSelected));
-      }
-      #endif // SEND_MOOD_TO_VIZ_DEBUG
-      
-      if( _currentBehavior != _nextBehavior ) {
-        Anki::Util::sEvent("robot.behavior_transition",
-                           {{DDATA,
-                                 nullptr != _currentBehavior
-                                 ? _currentBehavior->GetName().c_str()
-                                 : "NULL"}},
-                           nullptr != _nextBehavior
-                           ? _nextBehavior->GetName().c_str()
-                           : "NULL");
-        _lastSwitchTime_sec = currentTime_sec;
-      }
-      
-      SetCurrentBehavior(_nextBehavior);
-      _nextBehavior = nullptr;
-    }
+    _eventHandlers.push_back(
+      interface->Subscribe(
+        tag,
+        std::bind(&BehaviorManager::ConsiderReactionaryBehaviorForEvent<ExternalInterface::MessageEngineToGame>,
+                  this,
+                  std::placeholders::_1)));
   }
   
-  Result BehaviorManager::Update()
+  // Subscribe our own callback to these events
+  for (auto tag : behavior->GetGameToEngineTags())
   {
-    const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    
-    Result lastResult = RESULT_OK;
-    
-    if(!_isInitialized) {
-      PRINT_NAMED_ERROR("BehaviorManager.Update.NotInitialized", "");
-      return RESULT_FAIL;
-    }
-    
-    _behaviorChooser->Update();
-    
-    // If we happen to have a behavior we really want to switch to, do so
-    if (nullptr != _forceSwitchBehavior && _currentBehavior != _forceSwitchBehavior)
-    {
-      _nextBehavior = _forceSwitchBehavior;
-      
-      lastResult = InitNextBehaviorHelper();
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_WARNING("BehaviorManager.Update.InitForcedBehavior",
-                            "Failed trying to force next behavior, continuing with current.");
-        lastResult = RESULT_OK;
-      }
-    }
-    else if (nullptr == _currentBehavior ||
-             currentTime_sec - _lastSwitchTime_sec > _minBehaviorTime_sec )
-    // This check should not be needed. The current behavior should decide when it's done and
-    // return Status::Complete, which will trigger a new selection immediately
-    // ( nullptr != _currentBehavior && ! _currentBehavior->IsRunnable(_robot, currentTime_sec) ))
-    {
-      // We've been in the current behavior long enough to consider switching
-      lastResult = SelectNextBehavior();
-      if(lastResult != RESULT_OK) {
-        PRINT_NAMED_INFO("BehaviorManager.Update.SelectNextFailed",
-                         "Failed trying to select next behavior, continuing with current.");
-        lastResult = RESULT_OK;
-      }
-      
-      
-      if (_currentBehavior != _nextBehavior && nullptr != _nextBehavior)
-      {
-        std::string nextName = _nextBehavior->GetName();
-        BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Update.SelectedNext",
-                               "Selected next behavior '%s' at t=%.1f, last was t=%.1f",
-                               nextName.c_str(), currentTime_sec, _lastSwitchTime_sec);
-      }
-    }
-    
-    if(nullptr != _currentBehavior) {
-      // We have a current behavior, update it.
-      IBehavior::Status status = _currentBehavior->Update();
-     
-      switch(status)
-      {
-        case IBehavior::Status::Running:
-          // Nothing to do! Just keep on truckin'....
-          break;
-          
-        case IBehavior::Status::Complete:
-          // Behavior complete, try to select and switch to next
-          StopCurrentBehavior();
-          lastResult = SelectNextBehavior();
-          if(lastResult != RESULT_OK) {
-            PRINT_NAMED_WARNING("BehaviorManager.Update.Complete.SelectNextFailed",
-                                "Failed trying to select next behavior.");
-            lastResult = RESULT_OK;
-          }
-          else {
-            SwitchToNextBehavior();
-          }
-          break;
-          
-        case IBehavior::Status::Failure:
-          PRINT_NAMED_ERROR("BehaviorManager.Update.FailedUpdate",
-                            "Behavior '%s' failed to Update().",
-                            _currentBehavior->GetName().c_str());
-          lastResult = RESULT_FAIL;
+    _eventHandlers.push_back(
+      interface->Subscribe(
+        tag,
+        std::bind(&BehaviorManager::ConsiderReactionaryBehaviorForEvent<ExternalInterface::MessageGameToEngine>,
+                  this,
+                  std::placeholders::_1)));
+  }
+}
 
-          StopCurrentBehavior();
-          
-          // Force a re-init so if we reselect this behavior
-          _forceReInit = true;
-          SelectNextBehavior();
-          if(lastResult != RESULT_OK) {
-            PRINT_NAMED_WARNING("BehaviorManager.Update.Failure.SelectNextFailed",
-                                "Failed trying to select next behavior.");
-            lastResult = RESULT_OK;
-          }
-          SwitchToNextBehavior();
-          // WARNING: While working here I realized that lastResult is not updated with the result of SelectNextBehavior
-          // this may be because we want to notify outside that the current behavior failed. But we actually try to
-          // recover from it nicely, so we may want to update lastResult after all. It seems calling code is ignoring
-          // the result code anyway..
-          break;
-          
-        default:
-          PRINT_NAMED_ERROR("BehaviorManager.Update.UnknownStatus",
-                            "Behavior '%s' returned unknown status %d",
-                            _currentBehavior->GetName().c_str(), status);
-          lastResult = RESULT_FAIL;
-      } // switch(status)
-    }
-    else if(nullptr != _nextBehavior) {
-      // No current behavior, but next behavior defined, so switch to it.
-      SwitchToNextBehavior();
-    }
-    
-    return lastResult;
-  } // Update()
-  
-  
-  Result BehaviorManager::InitNextBehaviorHelper()
+template<typename EventType>
+void BehaviorManager::ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventType>& event)
+{
+  for (auto& behavior : _reactionaryBehaviors)
   {
-    Result initResult = RESULT_OK;
-    
-    // Interrupt the current behavior, if it's different from the one we want to switch to
-    if(_nextBehavior != _currentBehavior || _forceReInit)
+    if (0 != GetReactionaryBehaviorTags<typename EventType::Tag>(behavior).count(event.GetData().GetTag()))
     {
-      _forceReInit = false;
-      if(nullptr != _currentBehavior) {
-        // Interrupt the current behavior that's running if there is one. It will continue
-        // to run on calls to Update() until it completes and then we will switch
-        // to the selected next behavior
-        initResult = _currentBehavior->Interrupt();
-        
-        if (nullptr != _nextBehavior && initResult == RESULT_OK)
-        {
-          BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManger.InitNextBehaviorHelper.Selected",
-                                 "Selected %s to run next. %s successfully interrupted",
-                                 _nextBehavior->GetName().c_str(),
-                                 nullptr != _currentBehavior
-                                 ? _currentBehavior->GetName().c_str()
-                                 : "NULL");
-        }
+      if ( behavior->ShouldRunForEvent(event.GetData()) &&
+           behavior->IsRunnable(_robot) ) {
+        PRINT_NAMED_INFO("ReactionaryBehavior.Found",
+                         "found reactionary behavior '%s' in response to event of type '%s'",
+                         behavior->GetName().c_str(),
+                         MessageTagToString(event.GetData().GetTag()));
+        SwitchToReactionaryBehavior( behavior );
+        return;
       }
     }
-    return initResult;
   }
-  
-  Result BehaviorManager::SelectNextBehavior()
-  {
-    if (_forceSwitchBehavior && (_nextBehavior == _forceSwitchBehavior))
-    {
-      // Keep it in forced behavior
-      return RESULT_OK;
-    }
-    
-    _nextBehavior = _behaviorChooser->ChooseNextBehavior(_robot);
+}
 
-    if(nullptr == _nextBehavior) {
-      PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.NoneRunnable", "");
-      return RESULT_FAIL;
-    }
-    
-    // Initialize the selected behavior
-    return InitNextBehaviorHelper();
-    
-  } // SelectNextBehavior()
-  
-  Result BehaviorManager::SelectNextBehavior(const std::string& name)
-  {
-    _nextBehavior = _behaviorChooser->GetBehaviorByName(name);
-    if(nullptr == _nextBehavior) {
-      PRINT_NAMED_ERROR("BehaviorManager.SelectNextBehavior.UnknownName",
-                        "No behavior named '%s'", name.c_str());
-      return RESULT_FAIL;
-    }
-    else if(_nextBehavior->IsRunnable(_robot) == false) {
-      PRINT_NAMED_ERROR("BehaviorManager.SelecteNextBehavior.NotRunnable",
-                        "Behavior '%s' is not runnable.", name.c_str());
-      return RESULT_FAIL;
-    }
-    
-    return InitNextBehaviorHelper();
-  }
-  
-  void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
-  {
-    // These behavior pointers might be invalidated, so clear them
-    // SetCurrentBehavior ensures that any existing current behavior is stopped first
-    
-    SetCurrentBehavior(nullptr);
-    _nextBehavior = nullptr;
-    _forceSwitchBehavior = nullptr;
+void BehaviorManager::SendDasTransitionMessage(IBehavior* oldBehavior, IBehavior* newBehavior)
+{
+  Anki::Util::sEvent("robot.behavior_transition",
+                     {{DDATA,
+                           nullptr != oldBehavior
+                           ? oldBehavior->GetName().c_str()
+                           : "NULL"}},
+                     nullptr != newBehavior
+                     ? newBehavior->GetName().c_str()
+                     : "NULL");
+}
 
-    if ((_behaviorChooser != nullptr) && (_behaviorChooser != _defaultChooser)) {
-      PRINT_NAMED_INFO("BehaviorManager.SetBehaviorChooser.DeleteOld",
-                       "deleting behavior chooser '%s'",
-                       _behaviorChooser->GetName());
-      
-      Util::SafeDelete(_behaviorChooser);
-    }
-    
-    _behaviorChooser = newChooser;
-
-    if( _behaviorChooser == _defaultChooser ) {
-      _robot.GetProgressionUnlockComponent().IterateUnlockedFreeplayBehaviors(
-        [this](BehaviorGroup group, bool enabled){
-          _behaviorChooser->EnableBehaviorGroup(group, enabled);
-        });
-    }
-
-    // force the new behavior chooser to select something now, instead of waiting for it to be ready
-    SelectNextBehavior();
-  }
-
-  void BehaviorManager::StopCurrentBehavior()
-  {
-    // stop current
-    if (_currentBehavior) {
-      _currentBehavior->Stop();
-    }
-  }
-
-  void BehaviorManager::SetCurrentBehavior(IBehavior* newBehavior)
-  {
-    if (_currentBehavior && _currentBehavior->IsRunning())
-    {
-      // Behavior wasn't stopped yet - happens if e.g. chooser is switched
-      _currentBehavior->Stop();
-    }
-    
-    // set current <- new
-    _currentBehavior = newBehavior;
-    
-    // initialize new
-    if (_currentBehavior) {    
-      const Result initRet = _currentBehavior->Init();
-      if ( initRet != RESULT_OK ) {
-        PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.InitFailed",
-                        "Failed to initialize %s behavior.",
-                        _currentBehavior->GetName().c_str());
-      }
-      else {
-        PRINT_NAMED_DEBUG("BehaviorManger.InitBehavior.Success",
-                          "Behavior '%s' initialized",
-                          _currentBehavior->GetName().c_str());
-      }
-      
-    }
-    
-  }
-
-  IBehavior* BehaviorManager::LoadBehaviorFromJson(const Json::Value& behaviorJson)
-  {
-    IBehavior* newBehavior = _behaviorFactory->CreateBehavior(behaviorJson, _robot);
-    return newBehavior;
-  }
-  
-  void BehaviorManager::ClearAllBehaviorOverrides()
-  {
-    const BehaviorFactory::NameToBehaviorMap& nameToBehaviorMap = _behaviorFactory->GetBehaviorMap();
-    for(const auto& it : nameToBehaviorMap)
-    {
-      IBehavior* behavior = it.second;
-      behavior->SetOverrideScore(-1.0f);
-    }
-  }
-  
-  bool BehaviorManager::OverrideBehaviorScore(const std::string& behaviorName, float newScore)
-  {
-    IBehavior* behavior = _behaviorFactory->FindBehaviorByName(behaviorName);
-    if (behavior)
-    {
-      behavior->SetOverrideScore(newScore);
-      return true;
-    }
+bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
+{
+  if( _currentBehavior == nextBehavior ) {
+    // nothing to do if the behavior hasn't changed
     return false;
   }
-  
-  void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message)
-  {
-    switch (message.GetTag())
-    {
-      case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableAllBehaviors:
-      {
-        const auto& msg = message.Get_SetEnableAllBehaviors();
-        if (_behaviorChooser)
-        {
-          PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableAllBehaviors", "%s",
-                            msg.enable ? "true" : "false");
-          _behaviorChooser->EnableAllBehaviors(msg.enable);
-        }
-        else
-        {
-          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.SetEnableAllBehaviorGroups.NullChooser",
-                              "Ignoring EnableAllBehaviorGroups(%d)", (int)msg.enable);
-        }
-        break;
-      }
-      case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableBehaviorGroup:
-      {
-        const auto& msg = message.Get_SetEnableBehaviorGroup();
-        if (_behaviorChooser)
-        {
-          PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableBehaviorGroup", "%s: %s",
-                            BehaviorGroupToString(msg.behaviorGroup),
-                            msg.enable ? "true" : "false");
 
-          _behaviorChooser->EnableBehaviorGroup(msg.behaviorGroup, msg.enable);
-        }
-        else
-        {
-          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.SetEnableBehaviorGroup.NullChooser",
-                              "Ignoring EnableBehaviorGroup('%s', %d)", BehaviorGroupToString(msg.behaviorGroup), (int)msg.enable);
-        }
-        break;
-      }
-      case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableBehavior:
-      {
-        const auto& msg = message.Get_SetEnableBehavior();
-        if (_behaviorChooser)
-        {
-          PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableBehavior", "%s: %s",
-                            msg.behaviorName.c_str(),
-                            msg.enable ? "true" : "false");
-          _behaviorChooser->EnableBehavior(msg.behaviorName, msg.enable);
-        }
-        else
-        {
-          PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.DisableBehaviorGroup.NullChooser",
-                              "Ignoring DisableBehaviorGroup('%s', %d)", msg.behaviorName.c_str(), (int)msg.enable);
-        }
-        break;
-      }
-      case ExternalInterface::BehaviorManagerMessageUnionTag::ClearAllBehaviorScoreOverrides:
-      {
-        ClearAllBehaviorOverrides();
-        break;
-      }
-      case ExternalInterface::BehaviorManagerMessageUnionTag::OverrideBehaviorScore:
-      {
-        const auto& msg = message.Get_OverrideBehaviorScore();
-        OverrideBehaviorScore(msg.behaviorName, msg.newScore);
-        break;
-      }
-      default:
-      {
-        PRINT_NAMED_ERROR("BehaviorManager.HandleEvent.UnhandledMessageUnionTag",
-                          "Unexpected tag %u '%s'", (uint32_t)message.GetTag(),
-                          BehaviorManagerMessageUnionTagToString(message.GetTag()));
-        assert(0);
-        break;
-      }
+  StopCurrentBehavior();
+
+  if( nullptr != nextBehavior ) {
+    const Result initRet = nextBehavior->Init();
+    if ( initRet != RESULT_OK ) {
+      PRINT_NAMED_ERROR("BehaviorManager.SetCurrentBehavior.InitFailed",
+                        "Failed to initialize %s behavior.",
+                        nextBehavior->GetName().c_str());
+      // in this case, the current behavior is still running, not nextBehavior
+      return false;
+    }
+    else {
+      SendDasTransitionMessage(_currentBehavior, nextBehavior);
+      _currentBehavior = nextBehavior;
+      return true;
     }
   }
+  else {
+    // a null argument to this function means "switch to no behavior"
+    _currentBehavior = nullptr;
+    return true;
+  }
+}
+
+void BehaviorManager::SwitchToNextBehavior()
+{
+  if( _behaviorToResume != nullptr ) {
+    if( _currentBehavior == nullptr || _currentBehavior->ShouldResumeLastBehavior() ) {
+      PRINT_NAMED_INFO("BehaviorManager.ResumeBehavior",
+                       "Behavior '%s' will be resumed",
+                       _behaviorToResume->GetName().c_str());
+      StopCurrentBehavior();
+      const Result resumeResult = _behaviorToResume->Resume();
+      if( resumeResult == RESULT_OK ) {
+        SendDasTransitionMessage(_currentBehavior, _behaviorToResume);
+        _currentBehavior = _behaviorToResume;
+        _behaviorToResume = nullptr;
+        return;
+      }
+      else {
+        PRINT_NAMED_INFO("BehaviorManager.ResumeFailed",
+                         "Tried to resume behavior '%s', but failed. Selecting new behavior from chooser",
+                         _behaviorToResume->GetName().c_str());
+        // clear the resume behavior because we won't want to resume it after the next behavior
+        _behaviorToResume = nullptr;
+      }
+    }
+    else {
+      // current behavior says we shouldn't resume, so just clear resume
+      _behaviorToResume = nullptr;
+    }
+  }
+  
+  SwitchToBehavior( _behaviorChooser->ChooseNextBehavior(_robot) );
+}
+
+void BehaviorManager::SwitchToReactionaryBehavior(IBehavior* nextBehavior)
+{
+  // a null here means "no reaction", not "switch to the null behavior"
+  if( nullptr == nextBehavior ) {
+    return;
+  }
+  
+  if( nullptr == _behaviorToResume ) {
+    // only set the behavior to resume if we don't already have one. This way, if one reactionary behavior
+    // interrupts another, we'll keep the original value.
+    _behaviorToResume = _currentBehavior;
+  }
+
+  if( SwitchToBehavior(nextBehavior) ) {
+    _runningReactionaryBehavior = true;
+  }
+}
+  
+Result BehaviorManager::Update()
+{
+  Result lastResult = RESULT_OK;
+    
+  if(!_isInitialized) {
+    PRINT_NAMED_ERROR("BehaviorManager.Update.NotInitialized", "");
+    return RESULT_FAIL;
+  }
+    
+  _behaviorChooser->Update();
+
+  if( ! _runningReactionaryBehavior ) {
+    SwitchToNextBehavior();
+  }
+    
+  if(nullptr != _currentBehavior) {
+    // We have a current behavior, update it.
+    IBehavior::Status status = _currentBehavior->Update();
+     
+    switch(status)
+    {
+      case IBehavior::Status::Running:
+        // Nothing to do! Just keep on truckin'....
+        break;
+          
+      case IBehavior::Status::Complete:
+        // behavior is complete, switch to null (will also handle stopping current)
+        PRINT_NAMED_DEBUG("BehaviorManager.Update.BehaviorComplete",
+                          "Behavior '%s' returned Status::Complete",
+                          _currentBehavior->GetName().c_str());
+        SwitchToBehavior(nullptr);
+        _runningReactionaryBehavior = false;
+        break;
+          
+      case IBehavior::Status::Failure:
+        PRINT_NAMED_ERROR("BehaviorManager.Update.FailedUpdate",
+                          "Behavior '%s' failed to Update().",
+                          _currentBehavior->GetName().c_str());
+        // just like in the complete case, stop behavior and set it to null
+        SwitchToBehavior(nullptr);
+        _runningReactionaryBehavior = false;
+        break;
+        
+      default:
+        PRINT_NAMED_ERROR("BehaviorManager.Update.UnknownStatus",
+                          "Behavior '%s' returned unknown status %d",
+                          _currentBehavior->GetName().c_str(), status);
+        lastResult = RESULT_FAIL;
+    } // switch(status)
+  }
+    
+  return lastResult;
+} // Update()
+
+void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
+{
+  // The behavior pointers may no longer be valid, so clear them
+  SwitchToBehavior(nullptr);
+  _behaviorToResume = nullptr;
+  _runningReactionaryBehavior = false;
+
+  if ((_behaviorChooser != nullptr) && (_behaviorChooser != _defaultChooser)) {
+    PRINT_NAMED_INFO("BehaviorManager.SetBehaviorChooser.DeleteOld",
+                     "deleting behavior chooser '%s'",
+                     _behaviorChooser->GetName());
+      
+    Util::SafeDelete(_behaviorChooser);
+  }
+    
+  _behaviorChooser = newChooser;
+
+  if( _behaviorChooser == _defaultChooser ) {
+    _robot.GetProgressionUnlockComponent().IterateUnlockedFreeplayBehaviors(
+      [this](BehaviorGroup group, bool enabled){
+        _behaviorChooser->EnableBehaviorGroup(group, enabled);
+      });
+  }
+
+  // force the new behavior chooser to select something now, instead of waiting for the next tick
+  SwitchToNextBehavior();
+}
+
+void BehaviorManager::StopCurrentBehavior()
+{
+  if ( nullptr != _currentBehavior && _currentBehavior->IsRunning() ) {
+    _currentBehavior->Stop();
+  }
+}
+
+IBehavior* BehaviorManager::LoadBehaviorFromJson(const Json::Value& behaviorJson)
+{
+  IBehavior* newBehavior = _behaviorFactory->CreateBehavior(behaviorJson, _robot);
+  return newBehavior;
+}
+  
+void BehaviorManager::ClearAllBehaviorOverrides()
+{
+  const BehaviorFactory::NameToBehaviorMap& nameToBehaviorMap = _behaviorFactory->GetBehaviorMap();
+  for(const auto& it : nameToBehaviorMap)
+  {
+    IBehavior* behavior = it.second;
+    behavior->SetOverrideScore(-1.0f);
+  }
+}
+  
+bool BehaviorManager::OverrideBehaviorScore(const std::string& behaviorName, float newScore)
+{
+  IBehavior* behavior = _behaviorFactory->FindBehaviorByName(behaviorName);
+  if (behavior)
+  {
+    behavior->SetOverrideScore(newScore);
+    return true;
+  }
+  return false;
+}
+  
+void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message)
+{
+  switch (message.GetTag())
+  {
+    case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableAllBehaviors:
+    {
+      const auto& msg = message.Get_SetEnableAllBehaviors();
+      if (_behaviorChooser)
+      {
+        PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableAllBehaviors", "%s",
+                          msg.enable ? "true" : "false");
+        _behaviorChooser->EnableAllBehaviors(msg.enable);
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.SetEnableAllBehaviorGroups.NullChooser",
+                            "Ignoring EnableAllBehaviorGroups(%d)", (int)msg.enable);
+      }
+      break;
+    }
+    case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableBehaviorGroup:
+    {
+      const auto& msg = message.Get_SetEnableBehaviorGroup();
+      if (_behaviorChooser)
+      {
+        PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableBehaviorGroup", "%s: %s",
+                          BehaviorGroupToString(msg.behaviorGroup),
+                          msg.enable ? "true" : "false");
+
+        _behaviorChooser->EnableBehaviorGroup(msg.behaviorGroup, msg.enable);
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.SetEnableBehaviorGroup.NullChooser",
+                            "Ignoring EnableBehaviorGroup('%s', %d)", BehaviorGroupToString(msg.behaviorGroup), (int)msg.enable);
+      }
+      break;
+    }
+    case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableBehavior:
+    {
+      const auto& msg = message.Get_SetEnableBehavior();
+      if (_behaviorChooser)
+      {
+        PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableBehavior", "%s: %s",
+                          msg.behaviorName.c_str(),
+                          msg.enable ? "true" : "false");
+        _behaviorChooser->EnableBehavior(msg.behaviorName, msg.enable);
+      }
+      else
+      {
+        PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.DisableBehaviorGroup.NullChooser",
+                            "Ignoring DisableBehaviorGroup('%s', %d)", msg.behaviorName.c_str(), (int)msg.enable);
+      }
+      break;
+    }
+    case ExternalInterface::BehaviorManagerMessageUnionTag::ClearAllBehaviorScoreOverrides:
+    {
+      ClearAllBehaviorOverrides();
+      break;
+    }
+    case ExternalInterface::BehaviorManagerMessageUnionTag::OverrideBehaviorScore:
+    {
+      const auto& msg = message.Get_OverrideBehaviorScore();
+      OverrideBehaviorScore(msg.behaviorName, msg.newScore);
+      break;
+    }
+    default:
+    {
+      PRINT_NAMED_ERROR("BehaviorManager.HandleEvent.UnhandledMessageUnionTag",
+                        "Unexpected tag %u '%s'", (uint32_t)message.GetTag(),
+                        BehaviorManagerMessageUnionTagToString(message.GetTag()));
+      assert(0);
+      break;
+    }
+  }
+}
   
 } // namespace Cozmo
 } // namespace Anki

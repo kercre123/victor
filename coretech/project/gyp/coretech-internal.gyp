@@ -791,6 +791,7 @@
       'include_dirs': [
         '../../vision/basestation/src',
         '../../vision/include',
+        '../../../generated/clad/engine', # NOTE: Reaching out of coretech internal into cozmo! :-(
         '<@(opencv_includes)',
         '<(coretech_external_path)/matconvnet/matlab/src/bits',
         '<@(face_library_includes)',

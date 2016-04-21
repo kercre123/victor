@@ -26,8 +26,6 @@ namespace Cozmo {
     ActiveCube(Type type);
     ActiveCube(ActiveID activeID, FactoryID factoryID);
     
-    static Type GetTypeFromFactoryID(FactoryID id);
-    
     virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
     
     virtual ActiveCube* CloneType() const override {

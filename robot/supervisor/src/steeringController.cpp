@@ -102,6 +102,9 @@ namespace Anki {
       const u32 POINT_TURN_STUCK_THRESHOLD_MS = 500;
       const f32 POINT_TURN_STUCK_THRESHOLD_RAD = DEG_TO_RAD(0.5);
       
+      // If desired wheel speed exceeds this limit there is no integral error accumulation
+      const s16 POINT_TURN_INTEGRAL_ERROR_ACCUMULATE_SPEED_LIMIT_MMPS = 10;
+      
       // Maximum rotation speed of robot
       f32 maxRotationWheelSpeedDiff = 0.f;
 
@@ -635,7 +638,7 @@ namespace Anki {
         f32 absAngularDistToTarget = ABS(angularDistToTarget);
         if (absAngularDistToTarget < pointTurnAngTol_) {
           if (inPositionStartTime_ == 0) {
-            AnkiDebug( 146, "ManagePointTurn.InRange", 413, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+            AnkiDebug( 161, "ManagePointTurn.InRange", 443, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
             inPositionStartTime_ = HAL::GetTimeStamp();
           } else if (HAL::GetTimeStamp() - inPositionStartTime_ > IN_POSITION_THRESHOLD_MS) {
 #           if(DEBUG_STEERING_CONTROLLER)
@@ -649,7 +652,7 @@ namespace Anki {
             return;
           }
         } else {
-          AnkiDebugPeriodic(100, 127, "ManagePointTurn.OOR", 413, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
+          AnkiDebugPeriodic(100, 159, "ManagePointTurn.OOR", 443, "distToTarget %f, currAngle %f, currDesired %f (currTime %d, inPosTime %d)", 5, RAD_TO_DEG(angularDistToTarget), currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), HAL::GetTimeStamp(), inPositionStartTime_);
           inPositionStartTime_ = 0;
 
           
@@ -676,10 +679,14 @@ namespace Anki {
                      + pointTurnAngleErrorSum_ * pointTurnKi_);
         prevPointTurnAngleError_ = angularDistToCurrDesiredAngle;
         
-        // Only accumulate integral error if desired wheel speed is below max
-        if (ABS(arcVel) < MAX_WHEEL_SPEED_MMPS) {
+        // Integral windup protection
+        // Only accumulate integral error if desired wheel speed is below specified limit
+        if (ABS(arcVel) < POINT_TURN_INTEGRAL_ERROR_ACCUMULATE_SPEED_LIMIT_MMPS) {
           pointTurnAngleErrorSum_ = CLIP(pointTurnAngleErrorSum_ + angularDistToCurrDesiredAngle, -pointTurnMaxIntegralError_, pointTurnMaxIntegralError_);
         }
+        
+        //AnkiDebugPeriodic(50, 160, "ManagePointTurn.Controller", 444, "currAngle %f, currDesired %f, errSum %f, arcVel %d", 4, currAngle.getDegrees(), RAD_TO_DEG(currDesiredAngle), pointTurnAngleErrorSum_, arcVel);
+
 
         
       } else {

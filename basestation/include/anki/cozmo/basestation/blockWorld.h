@@ -75,10 +75,10 @@ namespace Anki
       // Processes the edges found in the given frame
       Result ProcessVisionOverheadEdges(const OverheadEdgeFrame& frameInfo);
       
-      // Adds a light cube object with the specified activeID and factoryID at
-      // an unknown pose. To be used when the cube first comes into radio contact.
-      // This function does nothing if a cube with the active ID already exists.
-      ObjectID AddLightCube(ActiveID activeID, FactoryID factoryID);
+      // Adds an active object of the appropriate type based on factoryID at
+      // an unknown pose. To be used when the active object first comes into radio contact.
+      // This function does nothing if an active object of the same type with the active ID already exists.
+      ObjectID AddActiveObject(ActiveID activeID, FactoryID factoryID);
       
       //
       // Object Access
@@ -310,7 +310,7 @@ namespace Anki
       
       // Helpers for actually inserting a new object into a new family using
       // its type and ID. Object's ID will be set if it isn't already.
-      void AddNewObject(const ObjectFamily toFamily, ObservableObject* object);
+      void AddNewObject(ObservableObject* object);
       void AddNewObject(ObjectsMapByType_t& existingFamily, ObservableObject* object);
       
       //template<class ObjectType>
@@ -491,9 +491,9 @@ namespace Anki
       return GetActiveObjectByActiveIDHelper(activeID, inFamily); // returns const*
     }
     
-    inline void BlockWorld::AddNewObject(const ObjectFamily toFamily, ObservableObject* object)
+    inline void BlockWorld::AddNewObject(ObservableObject* object)
     {
-      AddNewObject(_existingObjects[toFamily], object);
+      AddNewObject(_existingObjects[object->GetFamily()], object);
     }
 
     /*

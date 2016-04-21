@@ -140,6 +140,15 @@ namespace Anki {
         return ActionResult::FAILURE_ABORT;
       }
       
+      if(_dockObjectID == _robot.GetCarryingObject())
+      {
+        PRINT_NAMED_ERROR("IDockAction.Init.CarryingSelectedObject",
+                          "Robot is currently carrying action object with ID=%d",
+                          _dockObjectID.GetValue());
+        _interactionResult = ObjectInteractionResult::INVALID_OBJECT;
+        return ActionResult::FAILURE_ABORT;
+      }
+      
       // select the object so it shows up properly in viz
       _robot.GetBlockWorld().SelectObject(_dockObjectID);
       
@@ -1378,7 +1387,9 @@ namespace Anki {
     MountChargerAction::MountChargerAction(Robot& robot, ObjectID chargerID, const bool useManualSpeed)
     : IDockAction(robot, chargerID, useManualSpeed)
     {
-      
+      // TODO: Charger marker pose still oscillates so just do your best from where you are
+      //       rather than oscillating between jumpy predock poses.
+      SetDoNearPredockPoseCheck(false);
     }
     
     const std::string& MountChargerAction::GetName() const

@@ -153,7 +153,8 @@ namespace Cozmo {
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
 
-    Animation*  _idleAnimation      = nullptr; // default points to "live" animation
+    std::string _idleAnimationGroupName;
+    Animation*  _idleAnimation = nullptr;
     Animation*  _streamingAnimation = nullptr;
     TimeStamp_t _timeSpentIdling_ms = 0;
     

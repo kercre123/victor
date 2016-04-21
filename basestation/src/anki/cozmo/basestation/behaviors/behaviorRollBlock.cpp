@@ -62,13 +62,6 @@ Result BehaviorRollBlock::InitInternal(Robot& robot)
   TransitionToSelectingTargetBlock(robot);
   return Result::RESULT_OK;
 }
-
-Result BehaviorRollBlock::InterruptInternal(Robot& robot)
-{
-  ResetBehavior(robot);
-  StopActing(false);
-  return Result::RESULT_OK;
-}
   
 void BehaviorRollBlock::StopInternal(Robot& robot)
 {

@@ -157,16 +157,6 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot)
   return Status::Running;
 } 
   
-Result BehaviorReactToPoke::InterruptInternal(Robot& robot)
-{
-  // We don't want to be interrupted unless we're done reacting
-  if (State::Inactive != _currentState)
-  {
-    return Result::RESULT_FAIL;
-  }
-  return Result::RESULT_OK;
-}
-
 void BehaviorReactToPoke::StopInternal(Robot& robot)
 {
 }

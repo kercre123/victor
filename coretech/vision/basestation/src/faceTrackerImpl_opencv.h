@@ -43,14 +43,6 @@ namespace Vision {
     
     static bool IsRecognitionSupported() { return false; }
     
-    void EnableNewFaceEnrollment(s32 numToEnroll=0) {
-      if(numToEnroll !=0) {
-        PRINT_NAMED_ERROR("FaceTracker.Impl.NoRecognitionSupport", "");
-      }
-    }
-    
-    bool IsNewFaceEnrollmentEnabled() const { return false; }
-    
     std::vector<u8> GetSerializedAlbum() { return std::vector<u8>(); }
     Result SetSerializedAlbum(const std::vector<u8>& serializedAlbum) { return RESULT_FAIL; }
     
@@ -137,7 +129,7 @@ namespace Vision {
       
       // Keep a list of existing faces to check and remove any that we find matches
       // for in the loop below
-      std::list<std::map<TrackedFace::ID_t,TrackedFace>::iterator> existingFacesToCheck;
+      std::list<std::map<FaceID_t,TrackedFace>::iterator> existingFacesToCheck;
       for(auto iter = _faces.begin(); iter != _faces.end(); ++iter) {
         existingFacesToCheck.emplace_back(iter);
       }

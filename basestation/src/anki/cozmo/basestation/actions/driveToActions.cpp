@@ -19,10 +19,11 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "driveToActions.h"
 
-static const char* kDefaultDrivingSoundsSadClipStart = "ID_AlignToObject_Frustrated_Start";
-static const char* kDefaultDrivingSoundsSadClipStop = "ID_AlignToObject_Frustrated_Stop";
-static const char* kDefaultDrivingSoundsDefaultClipStart = "ID_AlignToObject_Content_Start";
-static const char* kDefaultDrivingSoundsDefaultClipStop = "ID_AlignToObject_Content_Stop";
+// TEMP: disabled default sounds for now to avoid animation bugs
+static const char* kDefaultDrivingSoundsSadClipStart = ""; // "ID_AlignToObject_Frustrated_Start";
+static const char* kDefaultDrivingSoundsSadClipStop = ""; //"ID_AlignToObject_Frustrated_Stop";
+static const char* kDefaultDrivingSoundsDefaultClipStart = ""; //"ID_AlignToObject_Content_Start";
+static const char* kDefaultDrivingSoundsDefaultClipStop = ""; //"ID_AlignToObject_Content_Stop";
 
 namespace Anki {
   
@@ -368,6 +369,12 @@ namespace Anki {
       ActionResult result = _compoundAction.Update();
       
       if(result == ActionResult::SUCCESS) {
+        
+        if (!_doPositionCheckOnPathCompletion) {
+          PRINT_NAMED_INFO("DriveToObjectAction.CheckIfDone.SkippingPositionCheck", "Action complete");
+          return result;
+        }
+        
         // We completed driving to the pose and visually verifying the object
         // is still there. This could have updated the object's pose (hopefully
         // to a more accurate one), meaning the pre-action pose we selected at
@@ -841,6 +848,14 @@ namespace Anki {
                                                            const bool useManualSpeed)
     : CompoundActionSequential(robot)
     {
+      if(objectID == robot.GetCarryingObject())
+      {
+        PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor",
+                            "Robot is currently carrying action object with ID=%d",
+                            objectID.GetValue());
+        return;
+      }
+    
       _driveToObjectAction = new DriveToObjectAction(robot,
                                                      objectID,
                                                      actionType,
@@ -1104,6 +1119,19 @@ namespace Anki {
                                  0,
                                  useManualSpeed)
     {
+      // Get DriveToObjectAction
+      DriveToObjectAction* driveAction = nullptr;
+      for (auto a : GetActionList()) {
+        if (a->GetType() == RobotActionType::DRIVE_TO_OBJECT) {
+          driveAction = dynamic_cast<DriveToObjectAction*>(a);
+          if (driveAction) {
+            driveAction->DoPositionCheckOnPathCompletion(false);
+            break;
+          }
+        }
+      }
+      ASSERT_NAMED(driveAction != nullptr, "DriveToAndMountChargerAction.DriveToObjectSubActionNotFound");
+      
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
       action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
       AddAction(action);

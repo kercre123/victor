@@ -503,12 +503,6 @@ namespace Cozmo {
     
     return Status::Running;
   }
-
-  Result BehaviorFactoryTest::InterruptInternal(Robot& robot)
-  {
-    StopInternal(robot);
-    return RESULT_OK;
-  }
   
   void BehaviorFactoryTest::StopInternal(Robot& robot)
   {

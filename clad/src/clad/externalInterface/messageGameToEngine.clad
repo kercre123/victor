@@ -27,6 +27,7 @@
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/visionModes.clad"
 #include "clad/types/nvStorageTypes.clad"
+#include "clad/types/faceEnrollmentModes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -463,8 +464,13 @@ message PrepareFaceNameAnimation {
 //   Use numToEnroll = 0 to stop enrollment.
 //   Use numToEnroll = -1 to enable ongoing enrollment.
 //   Use numToEnroll = N to enroll N faces and then turn off automaticall (N=1 is the mostly likely usage)
-message EnableNewFaceEnrollment {
-  int_32 numToEnroll
+message SetFaceEnrollmentMode {
+  Vision::FaceEnrollmentMode mode
+}
+
+// Erase a face by name
+message EraseFaceByName {
+  string name
 }
 
 // SetBehaviorSystemEnabled
@@ -622,12 +628,12 @@ message ReplayLastAnimation {
 }
 
 // SetIdleAnimation
-//  Set the animation that will be played (in a continuous loop) if no other
+//  Set the animation group that will be played (in a continuous loop) if no other
 //  animation has been set using PlayAnimation above.
 //  Use the empty string to disable the idle animation.
 message SetIdleAnimation {
     uint_8 robotID,
-    string animationName
+    string animationName // Group name, not individual animation!
 }
 
 // ReadAnimationFile
@@ -911,7 +917,7 @@ message BlockSelectedMessage {
 message GetBlockPoolMessage {
 }
 
-message SendDiscoveredObjects {
+message SendAvailableObjects {
   uint_8 robotID,
   bool enable
 }

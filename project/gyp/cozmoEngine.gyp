@@ -1033,6 +1033,77 @@
 
             ], #end actions
           }, # end unittest target
+          
+          {
+            'target_name': 'recognizeFacesTool',
+            'type': 'executable',
+            'include_dirs': [
+              '<@(opencv_includes)',
+            ],
+            'dependencies': [
+              'cozmoEngine',
+              '<(ce-cti_gyp_path):ctiCommon',
+              '<(ce-cti_gyp_path):ctiCommonRobot',
+              '<(ce-cti_gyp_path):ctiMessaging',
+              '<(ce-cti_gyp_path):ctiPlanning',
+              '<(ce-cti_gyp_path):ctiVision',
+              '<(ce-cti_gyp_path):ctiVisionRobot',
+              '<(ce-util_gyp_path):jsoncpp',
+              '<(ce-util_gyp_path):util',
+              #'<(ce-audio_path):DriveAudioEngine',
+            ],
+            'sources': [
+              '../../tools/recognizeFaces/recognizeFaces.cpp',
+            ],
+            'libraries': [
+              '$(SDKROOT)/System/Library/Frameworks/Security.framework',
+              '$(SDKROOT)/System/Library/Frameworks/Cocoa.framework',
+              '$(SDKROOT)/System/Library/Frameworks/AppKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
+              '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
+              '<@(opencv_libs)',
+              '<@(face_library_libs)',
+            ],
+            
+            'conditions': [
+              [
+                'OS=="ios" or OS=="mac"',
+                {
+                  'libraries': [
+                  '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
+                  '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
+                  '$(SDKROOT)/System/Library/Frameworks/AudioUnit.framework',
+                  ],
+                },
+              ],
+            ],
+
+            'actions': [
+              #Simlinks don't create a parent directory, so create it only if it doesn't exist...
+              {
+                'action_name': 'setup_dir_for_simlink',
+                'inputs':[],
+                'outputs':[],
+                'action': [
+                'mkdir', '-p','<(PRODUCT_DIR)/resources',
+                ],
+              },
+              #These have empty inputs and outputs and are instead in the action
+              #so gyp doesn't think that they're dupes
+              {
+                'action_name': 'create_symlink_resources_configs',
+                'inputs':[],
+                'outputs':[],
+                #'message':'create_symlink_resources_configs -> ln -s -f -n <(cozmo_engine_path)/resources/config <(PRODUCT_DIR)/resources/config',
+                'action': [
+                  'ln', '-s', '-f', '-n',
+                  '<(cozmo_engine_path)/resources/config',
+                  '<(PRODUCT_DIR)/resources/config',
+                ],
+              },
+            ], #end actions
+          }, # end recognizeFacesTool target
+          
         ], # end targets
       },
     ], # end if mac

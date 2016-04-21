@@ -48,7 +48,7 @@ LightCube {
 LightCube {
   translation 0.0748146 0.154211 0.022
   rotation 0 0 1 0.23
-  ID 3
+  ID 2
 }
 SolidBox {
   translation -0.0310205 0.357748 6.66134e-16
