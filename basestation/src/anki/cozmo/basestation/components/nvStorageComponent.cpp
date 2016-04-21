@@ -105,14 +105,6 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
     return false;
   }
   
-  // Check if this tag is already in the process of being written
-  u32 t = static_cast<u32>(tag);
-  if (_writeDataAckMap.find(t) != _writeDataAckMap.end()) {
-    PRINT_NAMED_WARNING("NVStorageComponent.Write.AlreadyBeingWritten",
-                        "Tag: %s", EnumToString(tag));
-    return false;
-  }
-  
   // Check if this is a single-blob entry that has more than one blob's worth of data
   if (!IsMultiBlobEntryTag(static_cast<u32>(tag)) && size > _kMaxNvStorageBlobSize) {
     PRINT_NAMED_WARNING("NVStorageComponent.Write.SingleBlobEntryHasTooMuchData",
@@ -121,23 +113,15 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
     return false;
   }
   
-  // Copy data locally and break up into as many messages as needed
-  _writeDataQueue.emplace(tag, std::vector<u8>(data,data+size), true);
-  
-  // Set associated ack info
-  _writeDataAckMap[t].broadcastResultToGame = broadcastResultToGame;
-  _writeDataAckMap[t].writeNotErase = true;
-  _writeDataAckMap[t].numTagsLeftToAck = static_cast<u32>(ceilf(static_cast<f32>(size) / _kMaxNvStorageBlobSize));
-  _writeDataAckMap[t].callback = callback;
+  _requestQueue.emplace(tag, callback, new std::vector<u8>(data,data+size), broadcastResultToGame);
   
   if (DEBUG_NVSTORAGE_COMPONENT) {
     PRINT_NAMED_DEBUG("NVStorageComponent.Write.DataQueued",
-                      "%s - numBytes: %zu, numExpectedConfirmations: %d",
+                      "%s - numBytes: %zu",
                       EnumToString(tag),
-                      size,
-                      _writeDataAckMap[t].numTagsLeftToAck);
+                      size);
   }
-
+  
   return true;
 }
   
@@ -145,21 +129,7 @@ bool NVStorageComponent::Erase(NVStorage::NVEntryTag tag,
                                NVStorageWriteEraseCallback callback,
                                bool broadcastResultToGame)
 {
-  // Check if this tag is already in the process of being written/erased
-  u32 t = static_cast<u32>(tag);
-  if (_writeDataAckMap.find(t) != _writeDataAckMap.end()) {
-    PRINT_NAMED_WARNING("NVStorageComponent.Erase.AlreadyBeingWritten",
-                        "Tag: %s", EnumToString(tag));
-    return false;
-  }
-  
-  _writeDataQueue.emplace(tag, std::vector<u8>(), false);
-  
-  // Set associated ack info
-  _writeDataAckMap[t].broadcastResultToGame = broadcastResultToGame;
-  _writeDataAckMap[t].writeNotErase = false;
-  _writeDataAckMap[t].callback = callback;
-  _writeDataAckMap[t].numTagsLeftToAck = IsMultiBlobEntryTag(t) ? 2 : 1;  // For multiErase, expect one NvOpResult for the first blob and one at the end when all erases are complete.
+  _requestQueue.emplace(tag, callback, broadcastResultToGame);
   
   if (DEBUG_NVSTORAGE_COMPONENT) {
     PRINT_NAMED_DEBUG("NVStorageComponent.Erase.Queued",
@@ -174,48 +144,112 @@ bool NVStorageComponent::Read(NVStorage::NVEntryTag tag,
                               std::vector<u8>* data,
                               bool broadcastResultToGame)
 {
-  // Check if tag already requested
-  u32 entryTag = static_cast<u32>(tag);
-  if (_recvDataMap.find(entryTag) != _recvDataMap.end()) {
-    PRINT_NAMED_WARNING("NVStorageComponent.Read.TagAlreadyRequested",
-                        "Ignoring tag 0x%x", entryTag);
-    return false;
-  }
-  
-  // Request message from tag to to endTag
-  NVStorage::NVStorageRead readMsg;
-  readMsg.tag = entryTag;
-  readMsg.tagRangeEnd = GetTagRangeEnd(entryTag);
-  readMsg.to = NVStorage::NVReportDest::ENGINE;
-  _robot.SendMessage(RobotInterface::EngineToRobot(std::move(readMsg)));
-  
-  
-  if (DEBUG_NVSTORAGE_COMPONENT) {
-    PRINT_NAMED_DEBUG("NVStorageComponent.Read.SendingRead",
-                      "StartTag: 0x%x, EndTag: 0x%x, reportTo: %s",
-                      readMsg.tag,
-                      readMsg.tagRangeEnd,
-                      EnumToString(readMsg.to));
-  }
-  
-  // Create RecvDataObject
-  if (nullptr == data) {
-    _recvDataMap[entryTag].data = new std::vector<u8>();
-    _recvDataMap[entryTag].deleteVectorWhenDone = true;
-  } else {
-    _recvDataMap[entryTag].data = data;
-    _recvDataMap[entryTag].deleteVectorWhenDone = false;
-  }
-  _recvDataMap[entryTag].callback = callback;
-  _recvDataMap[entryTag].broadcastResultToGame = broadcastResultToGame;
+  PRINT_NAMED_INFO("NVStorageComponent.Read.QueueingReadRequest", "%s", EnumToString(tag));
+  _requestQueue.emplace(tag, callback, data, broadcastResultToGame);
   
   return true;
 }
+
+  
+void NVStorageComponent::SendRequest(NVStorageRequest req)
+{
+  u32 entryTag = static_cast<u32>(req.tag);
+  
+  switch(req.op) {
+    case NVStorage::NVOperation::NVOP_WRITE:
+    {
+      // Copy data locally and break up into as many messages as needed
+      _writeDataQueue.emplace(req.tag, req.data, true);
+      
+      // Set associated ack info
+      u32 t = static_cast<u32>(req.tag);
+      _writeDataAckMap[t].broadcastResultToGame = req.broadcastResultToGame;
+      _writeDataAckMap[t].writeNotErase = true;
+      _writeDataAckMap[t].numTagsLeftToAck = static_cast<u32>(ceilf(static_cast<f32>(req.data->size()) / _kMaxNvStorageBlobSize));
+      _writeDataAckMap[t].callback = req.writeCallback;
+
+      if (DEBUG_NVSTORAGE_COMPONENT) {
+        PRINT_NAMED_DEBUG("NVStorageComponent.SendRequest.SendingWrite",
+                          "StartTag: 0x%x",
+                          req.tag );
+      }
+      
+      break;
+    }
+    case NVStorage::NVOperation::NVOP_ERASE:
+    {
+      _writeDataQueue.emplace(req.tag, nullptr, false);
+      
+      
+      // Set associated ack info
+      u32 t = static_cast<u32>(req.tag);
+      _writeDataAckMap[t].broadcastResultToGame = req.broadcastResultToGame;
+      _writeDataAckMap[t].writeNotErase = false;
+      _writeDataAckMap[t].callback = req.writeCallback;
+      _writeDataAckMap[t].numTagsLeftToAck = IsMultiBlobEntryTag(t) ? 2 : 1;  // For multiErase, expect one NvOpResult for the first blob and one at the end when all erases are complete.
+
+      if (DEBUG_NVSTORAGE_COMPONENT) {
+        PRINT_NAMED_DEBUG("NVStorageComponent.SendRequest.SendingErase",
+                          "StartTag: 0x%x",
+                          req.tag );
+      }
+      break;
+    }
+    case NVStorage::NVOperation::NVOP_READ:
+    {
+      // Request message from tag to to endTag
+      NVStorage::NVStorageRead readMsg;
+      readMsg.tag = entryTag;
+      readMsg.tagRangeEnd = GetTagRangeEnd(entryTag);
+      readMsg.to = NVStorage::NVReportDest::ENGINE;
+      _robot.SendMessage(RobotInterface::EngineToRobot(std::move(readMsg)));
+      
+      
+      if (DEBUG_NVSTORAGE_COMPONENT) {
+        PRINT_NAMED_DEBUG("NVStorageComponent.SendRequest.SendingRead",
+                          "StartTag: 0x%x, EndTag: 0x%x",
+                          readMsg.tag,
+                          readMsg.tagRangeEnd);
+      }
+      
+      // Create RecvDataObject
+      if (nullptr == req.data) {
+        _recvDataMap[entryTag].data = new std::vector<u8>();
+        _recvDataMap[entryTag].deleteVectorWhenDone = true;
+      } else {
+        _recvDataMap[entryTag].data = req.data;
+        _recvDataMap[entryTag].deleteVectorWhenDone = false;
+      }
+      _recvDataMap[entryTag].callback = req.readCallback;
+      _recvDataMap[entryTag].broadcastResultToGame = req.broadcastResultToGame;
+
+      break;
+    }
+    default:
+      PRINT_NAMED_WARNING("NVStorageComponent.SendRequest.UnsupportOperation", "%s", EnumToString(req.op));
+      break;
+  }
+  
+  
+}
+  
   
   
 void NVStorageComponent::Update()
 {
-  // If there are things to send, send them.
+  // If expecting read data to arrive, do nothing.
+  if (!_recvDataMap.empty()) {
+    return;
+  }
+  
+  // Send requests if there are any in the queue and we're not currently processing a write
+  if (_writeDataQueue.empty() && _writeDataAckMap.empty() && !_requestQueue.empty()) {
+    SendRequest(_requestQueue.front());
+    _requestQueue.pop();
+  }
+  
+  
+  // If there are writes to send, send them.
   // Send up to one blob per Update() call.
   if (!_writeDataQueue.empty()) {
     WriteDataObject* sendData = &_writeDataQueue.front();
@@ -233,12 +267,12 @@ void NVStorageComponent::Update()
     
     if (sendData->writeNotErase) {
       // Send the next blob of data to send for this multi-blob message
-      u32 bytesLeftToSend = static_cast<u32>(sendData->data.size()) - sendData->sendIndex;
+      u32 bytesLeftToSend = static_cast<u32>(sendData->data->size()) - sendData->sendIndex;
       u32 bytesToSend = MIN(bytesLeftToSend, _kMaxNvStorageBlobSize);
       ASSERT_NAMED(bytesToSend > 0, "NVStorageComponent.Update.ExpectedPositiveNumBytesToSend");
       
-      writeMsg.entry.blob = std::vector<u8>(sendData->data.begin() + sendData->sendIndex,
-                                            sendData->data.begin() + sendData->sendIndex + bytesToSend);
+      writeMsg.entry.blob = std::vector<u8>(sendData->data->begin() + sendData->sendIndex,
+                                            sendData->data->begin() + sendData->sendIndex + bytesToSend);
 
       ++sendData->nextTag;
       sendData->sendIndex += bytesToSend;
@@ -253,7 +287,7 @@ void NVStorageComponent::Update()
       }
       
       // Sent last blob?
-      if (sendData->sendIndex >= sendData->data.size()) {
+      if (sendData->sendIndex >= sendData->data->size()) {
         _writeDataQueue.pop();
       }
       

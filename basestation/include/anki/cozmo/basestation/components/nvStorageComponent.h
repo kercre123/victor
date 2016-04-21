@@ -94,48 +94,39 @@ public:
  
 private:
   
-  Robot&       _robot;
-  
-  // Robot event handlers
-  void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  
-  // Game event handlers
-  void HandleNVStorageWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleNVStorageReadEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleNVStorageEraseEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleNVStorageClearPartialPendingWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  
-  // Queues blobs for a multi-blob message from game and sends them to robot when all blobs received.
-  bool QueueWriteBlob(const NVStorage::NVEntryTag tag, u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
-  
-  void BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag, NVStorage::NVResult res, NVStorage::NVOperation op);
-  
-  std::vector<Signal::SmartHandle> _signalHandles;
-
-  // Whether or not this tag is composed of (potentially) multiple blobs
-  bool IsMultiBlobEntryTag(u32 tag) const;
-  
-  // Given any tag, returns the assumed base tag
-  u32 GetBaseEntryTag(u32 tag) const;
-  
-  // Given any tag, returns the assumed end-of-range tag
-  u32 GetTagRangeEnd(u32 startTag) const;
-  
   // Info about a single write/erase request
   struct WriteDataObject {
-    WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>&& dataVec, bool write)
+    WriteDataObject()
+    : baseTag(NVStorage::NVEntryTag::NVEntry_Invalid)
+    , nextTag(0)
+    , sendIndex(0)
+    , writeNotErase(true)
+    {}
+    WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>* dataVec, bool writeNotErase)
     : baseTag(tag)
     , nextTag(static_cast<u32>(tag))
     , sendIndex(0)
     , data(dataVec)
-    , writeNotErase(write)
+    , writeNotErase(writeNotErase)
     { }
+    
+    WriteDataObject(const WriteDataObject& other)
+    : baseTag(other.baseTag)
+    , nextTag(other.nextTag)
+    , sendIndex(other.sendIndex)
+    , data(other.data)
+    , writeNotErase(other.writeNotErase)
+    { }
+    
+    ~WriteDataObject() {
+      Util::SafeDelete(data);
+    }
+
     
     NVStorage::NVEntryTag baseTag;
     u32 nextTag;
     u32 sendIndex;
-    std::vector<u8> data;
+    std::vector<u8> *data;
     bool writeNotErase;
   };
   
@@ -183,6 +174,77 @@ private:
     std::unordered_set<u8> remainingIndices;
   };
   
+  
+  
+  struct NVStorageRequest {
+    
+    // Write request
+    NVStorageRequest(NVStorage::NVEntryTag tag, NVStorageWriteEraseCallback callback, std::vector<u8>* data, bool broadcastResultToGame)
+    : op(NVStorage::NVOperation::NVOP_WRITE)
+    , tag(tag)
+    , writeCallback(callback)
+    , data(data)
+    , broadcastResultToGame(broadcastResultToGame)
+    {}
+    
+    // Erase request
+    NVStorageRequest(NVStorage::NVEntryTag tag, NVStorageWriteEraseCallback callback, bool broadcastResultToGame)
+    : op(NVStorage::NVOperation::NVOP_ERASE)
+    , tag(tag)
+    , writeCallback(callback)
+    , broadcastResultToGame(broadcastResultToGame)
+    {}
+    
+    // Read request
+    NVStorageRequest(NVStorage::NVEntryTag tag, NVStorageReadCallback callback, std::vector<u8>* data, bool broadcastResultToGame)
+    : op(NVStorage::NVOperation::NVOP_READ)
+    , tag(tag)
+    , readCallback(callback)
+    , data(data)
+    , broadcastResultToGame(broadcastResultToGame)
+    {}
+    
+    NVStorage::NVOperation op;
+    NVStorage::NVEntryTag tag;
+    NVStorageWriteEraseCallback writeCallback;
+    NVStorageReadCallback readCallback;
+    std::vector<u8>* data;
+    bool broadcastResultToGame;
+  };
+  
+  Robot&       _robot;
+  
+  // Robot event handlers
+  void HandleNVData(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  void HandleNVOpResult(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+  
+  // Game event handlers
+  void HandleNVStorageWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleNVStorageReadEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleNVStorageEraseEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void HandleNVStorageClearPartialPendingWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  
+  void SendRequest(NVStorageRequest req);
+  
+  // Queues blobs for a multi-blob message from game and sends them to robot when all blobs received.
+  bool QueueWriteBlob(const NVStorage::NVEntryTag tag, u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
+  
+  void BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag, NVStorage::NVResult res, NVStorage::NVOperation op);
+  
+  std::vector<Signal::SmartHandle> _signalHandles;
+
+  // Whether or not this tag is composed of (potentially) multiple blobs
+  bool IsMultiBlobEntryTag(u32 tag) const;
+  
+  // Given any tag, returns the assumed base tag
+  u32 GetBaseEntryTag(u32 tag) const;
+  
+  // Given any tag, returns the assumed end-of-range tag
+  u32 GetTagRangeEnd(u32 startTag) const;
+  
+  // Queue of write/erase/read requests to be sent to robot
+  std::queue<NVStorageRequest> _requestQueue;
+  
   // Queue of data to be sent to robot for writing/erasing
   std::queue<WriteDataObject> _writeDataQueue;
   
@@ -193,6 +255,7 @@ private:
   std::unordered_map<u32, RecvDataObject> _recvDataMap;
 
   // Storage for in-progress-of-receiving multi-blob data
+  // via MessageGameToEngine::NVStorageWriteEntry
   PendingWriteData _pendingWriteData;
   
   // Maximum size of a single blob
