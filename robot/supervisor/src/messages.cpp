@@ -847,6 +847,15 @@ namespace Anki {
       {
         // Nothing to do here
       }
+      
+      // These are stubbed out just to get things compiling
+      void Process_robotIpInfo(const Anki::Cozmo::RobotInterface::AppConnectRobotIP& msg) {}
+      void Process_wifiCfgResult(const Anki::Cozmo::RobotInterface::AppConnectConfigResult& msg) {}
+      void Process_appConCfgString(const Anki::Cozmo::RobotInterface::AppConnectConfigString& msg) {}
+      void Process_appConCfgFlags(const Anki::Cozmo::RobotInterface::AppConnectConfigFlags& msg) {}
+      void Process_appConCfgIPInfo(const Anki::Cozmo::RobotInterface::AppConnectConfigIPInfo& msg) {}
+      void Process_appConGetRobotIP(const Anki::Cozmo::RobotInterface::AppConnectGetRobotIP& msg) {}
+      void Process_wifiOff(const Anki::Cozmo::RobotInterface::WiFiOff& msg) {}
 #endif
 
 // ----------- Send messages -----------------
