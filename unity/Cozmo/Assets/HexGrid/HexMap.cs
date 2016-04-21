@@ -33,28 +33,28 @@ public class HexMap {
     return true;
   }
 
-  public bool CanAdd(PuzzlePiece hexItem, Coord mapCoord) {
+  public bool CanAdd(PuzzlePiece hexItem) {
     foreach (Coord localCoord in hexItem.PieceData.HexSet.HexSetData) {
       // check to see if the coordinate has been occupied by another piece.
-      if (_OccupancyMap.ContainsKey(mapCoord + localCoord)) {
+      if (_OccupancyMap.ContainsKey(hexItem.MapPosition + localCoord)) {
         return false;
       }
       // check to see if the coordinate exists in the map hex set.
-      if (_Map.HexSetData.Contains(mapCoord + localCoord) == false) {
+      if (_Map.HexSetData.Contains(hexItem.MapPosition + localCoord) == false) {
         return false;
       }
     }
     return true;
   }
 
-  public bool TryAdd(PuzzlePiece hexItem, Coord mapCoord) {
-    if (!CanAdd(hexItem, mapCoord)) {
+  public bool TryAdd(PuzzlePiece hexItem) {
+    if (!CanAdd(hexItem)) {
       return false;
     }
 
     // update the occupancy map
     foreach (Coord localCoord in hexItem.PieceData.HexSet.HexSetData) {
-      _OccupancyMap.Add(mapCoord + localCoord, hexItem);
+      _OccupancyMap.Add(hexItem.MapPosition + localCoord, hexItem);
     }
     return true;
   }
