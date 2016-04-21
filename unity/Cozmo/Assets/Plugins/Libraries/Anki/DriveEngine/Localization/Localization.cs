@@ -112,14 +112,7 @@ public static class Localization {
     #if UNITY_EDITOR || !UNITY_ANDROID
     return Directory.GetFiles(Application.streamingAssetsPath + kLocalizationStreamingAssetsFolderPath + locale, "*.json");
     #else
-    return new string[] { 
-      Application.persistentDataPath + kLocalizationStreamingAssetsFolderPath + "en-US/" + "ChallengeTitleStrings.json",
-      Application.persistentDataPath + kLocalizationStreamingAssetsFolderPath + "en-US/" + "ConversationStrings.json",
-      Application.persistentDataPath + kLocalizationStreamingAssetsFolderPath + "en-US/" + "MinigameStrings.json",
-      Application.persistentDataPath + kLocalizationStreamingAssetsFolderPath + "en-US/" + "NotificationStrings.json",
-      Application.persistentDataPath + kLocalizationStreamingAssetsFolderPath + "en-US/" + "SimpleStrings.json",
-      Application.persistentDataPath + kLocalizationStreamingAssetsFolderPath + "en-US/" + "StatStrings.json"
-    };
+    return Directory.GetFiles(Application.persistentDataPath + kLocalizationStreamingAssetsFolderPath +  locale, "*.json");
     #endif
   }
 
