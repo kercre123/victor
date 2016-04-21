@@ -200,8 +200,9 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnable(const Robot& robot) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
 {
-  // clear previous selection
+  // clear variables from previous run
   _selectedObjectID.UnSet();
+  _invalidCubesToStackOn.clear();
   
   // starting state
   TransitionToPickUpObject(robot);
@@ -374,7 +375,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(const ObservableObject* object,
-  const Beacon* beacon, const Robot& robot)
+  const Beacon* beacon, const Robot& robot) const
 {
   // ask for all cubes we know, and if any is not inside a beacon, then we want to bring that one to the closest beacon
   static const std::vector<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };
@@ -385,12 +386,26 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
     {
       for(const auto& block : blocksOfSameType.second)
       {
+        // if this is our block or state is not good, skip
         const ObservableObject* blockPtr = block.second;
-        if ( !blockPtr->IsPoseStateKnown() || blockPtr == object ) {
+        if ( blockPtr == object || !blockPtr->IsPoseStateKnown() ) {
           continue;
         }
         
-        const bool isBlockInSelectedBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose().GetTranslation());
+        // if we don't want to stack on this cube, skip
+        if ( _invalidCubesToStackOn.find(blockPtr->GetID()) != _invalidCubesToStackOn.end() )
+        {
+          continue;
+        }
+        
+        // additional threshold so that we don't stack on top of a cube in the border. This prevents stacking on
+        // a cube close to the border, which would cause the stacked cube to be out of the beacon
+        const float kPrecisionOffset_mm = 10.0f; // this is just to account for errors when readjusting cube positions
+        const float inwardThreshold_mm = object->GetSize().x() + kPrecisionOffset_mm;
+        ASSERT_NAMED( FLT_NEAR(object->GetSize().x(), object->GetSize().y()) , "BehaviorExploreBringCubeToBeacon.FindFreeCubeToStackOn.AssumedXYEqual");
+        
+        // check it this cube is in beacon, but also if it's actually closer than
+        const bool isBlockInSelectedBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose().GetTranslation(), inwardThreshold_mm);
         if ( isBlockInSelectedBeacon )
         {
           // find if there's an object on top of this cube

@@ -84,7 +84,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // find cube in the beacon to stack the one we have on top of the former
-  static const ObservableObject* FindFreeCubeToStackOn(const ObservableObject* object, const Beacon* beacon, const Robot& robot);
+  const ObservableObject* FindFreeCubeToStackOn(const ObservableObject* object, const Beacon* beacon, const Robot& robot) const;
   
   // find pose to drop the object inside the selected beacon. Return true/false on success/failure
   static bool FindFreePoseInBeacon(const ObservableObject* object, const Beacon* selectedBeacon, const Robot& robot, Pose3d& freePose);
@@ -103,6 +103,9 @@ private:
     ObjectFamily family;
   };
   mutable std::vector<CandidateInfo> _candidateObjects;
+  
+  // cubes on which we have failed to stack, so that we don't try to restack on them
+  std::set<ObjectID> _invalidCubesToStackOn;
   
   // store ID in case something happen to the object while we move there
   ObjectID _selectedObjectID;

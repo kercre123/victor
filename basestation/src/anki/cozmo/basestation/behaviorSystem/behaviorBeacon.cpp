@@ -25,11 +25,15 @@ CONSOLE_VAR(float, kB_BeaconRadius_mm, "BehaviorBeacon", 150.0f);
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Beacon
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool Beacon::IsLocWithinBeacon(const Vec3f& loc) const
+bool Beacon::IsLocWithinBeacon(const Vec3f& loc, float inwardThreshold_mm) const
 {
+  ASSERT_NAMED(inwardThreshold_mm < kB_BeaconRadius_mm, "Beacon.IsLocWithinBeacon.InvalidInwardTreshold");
+
   const float distSQ = (_pose.GetTranslation() - loc).LengthSq();
-  const bool inRadius = FLT_LE(distSQ, (kB_BeaconRadius_mm*kB_BeaconRadius_mm));
-  return inRadius;
+  const float innerRad = (kB_BeaconRadius_mm-inwardThreshold_mm);
+  const float innerRadSQ = innerRad*innerRad;
+  const bool inInnerRadius = FLT_LE(distSQ, innerRadSQ);
+  return inInnerRadius;
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

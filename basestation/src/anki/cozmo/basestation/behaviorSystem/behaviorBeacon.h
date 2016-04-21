@@ -28,8 +28,9 @@ public:
   Beacon( const Pose3d& p ) : _pose(p) {}
   const Pose3d& GetPose() const { return _pose;}
   
-  // returns true if given position is within this beacon
-  bool IsLocWithinBeacon(const Vec3f& loc) const;
+  // returns true if given position is within this beacon. If inwardThreshold is set, the location has to be inside
+  // the beacon radius by that additional distance
+  bool IsLocWithinBeacon(const Vec3f& loc, float inwardThreshold_mm=0.0f) const;
   
   // return radius of this beacon
   float GetRadius() const;
