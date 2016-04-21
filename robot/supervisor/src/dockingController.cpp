@@ -1323,6 +1323,7 @@ namespace Anki {
         markerOutOfFOV_ = false;
         lastMarkerPoseObservedIsSet_ = false;
         dockingToBlockOnGround = false;
+        useFirstErrorSignalOnly_ = false;
         numDockingFails_ = 0;
         LATERAL_DOCK_TOLERANCE_AT_DOCK_MM = BLOCK_ON_GROUND_LATERAL_DOCK_TOLERANCE_MM;
         

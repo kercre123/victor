@@ -31,11 +31,13 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioControllerPluginInterface::AudioControllerPluginInterface( AudioController& parentAudioController )
 : _parentAudioController( parentAudioController )
 {
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioControllerPluginInterface::SetWavePortalAudioDataInfo( uint32_t sampleRate,
                                                                  uint16_t numberOfChannels,
                                                                  float duration_ms,
@@ -53,6 +55,7 @@ void AudioControllerPluginInterface::SetWavePortalAudioDataInfo( uint32_t sample
 #endif
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioControllerPluginInterface::ClearWavePortalAudioDataInfo()
 {
 #if USE_AUDIO_ENGINE
@@ -62,7 +65,8 @@ void AudioControllerPluginInterface::ClearWavePortalAudioDataInfo()
 #endif
 }
 
-bool AudioControllerPluginInterface::WavePortalHasAudioDataInfo()
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AudioControllerPluginInterface::WavePortalHasAudioDataInfo() const
 {
 #if USE_AUDIO_ENGINE
   if ( _parentAudioController._wavePortalPlugIn != nullptr ) {
@@ -72,6 +76,62 @@ bool AudioControllerPluginInterface::WavePortalHasAudioDataInfo()
   return false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AudioControllerPluginInterface::WavePortalIsActive() const
+{
+#if USE_AUDIO_ENGINE
+  if ( _parentAudioController._wavePortalPlugIn != nullptr ) {
+    return _parentAudioController._wavePortalPlugIn->IsActive();
+  }
+#endif
+  return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioControllerPluginInterface::SetWavePortalInitCallback( PluginCallbackFunc callback )
+{
+  _wavePortalInitFunc = callback;
+#if USE_AUDIO_ENGINE
+  if ( _parentAudioController._wavePortalPlugIn != nullptr ) {
+    // Wrap the Plug-in interface callback inside of the plugin instance's callback
+    if ( _wavePortalInitFunc != nullptr ) {
+      using namespace AudioEngine::PlugIns;
+      _parentAudioController._wavePortalPlugIn->SetInitCallback( [this] (const WavePortalPlugIn* pluginInstance)
+      {
+        if ( _wavePortalInitFunc != nullptr ) {
+          _wavePortalInitFunc( this );
+        }
+      });
+    }
+    else {
+      _parentAudioController._wavePortalPlugIn->SetInitCallback( nullptr );
+    }
+  }
+#endif
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AudioControllerPluginInterface::SetWavePortalTerminateCallback( PluginCallbackFunc callback )
+{
+  _wavePortalTermFunc = callback;
+#if USE_AUDIO_ENGINE
+  if ( _parentAudioController._wavePortalPlugIn != nullptr ) {
+    // Wrap the Plug-in interface callback inside of the plugin instance's callback
+    if ( _wavePortalTermFunc != nullptr ) {
+      using namespace AudioEngine::PlugIns;
+      _parentAudioController._wavePortalPlugIn->SetTerminateCallback( [this] (const WavePortalPlugIn* pluginInstance)
+      {
+        if ( _wavePortalTermFunc != nullptr ) {
+          _wavePortalTermFunc( this );
+        }
+      });
+    }
+    else {
+      _parentAudioController._wavePortalPlugIn->SetTerminateCallback( nullptr );
+    }
+  }
+#endif
+}
 
 } // Audio
 } // Cozmo

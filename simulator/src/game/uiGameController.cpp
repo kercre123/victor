@@ -148,7 +148,7 @@ namespace Anki {
     {
       // Once robot connects, set resolution
       //SendSetRobotImageSendMode(ISM_STREAM);
-      
+      _firstRobotPoseUpdate = true;
       HandleRobotConnected(msg);
     }
     
@@ -582,17 +582,7 @@ namespace Anki {
         }
       }
       
-      // if it's the first time that we set the proper pose for the robot, update the visualization origin to
-      // the robot, since debug render expects to be centered around the robot
-      if ( _firstRobotPoseUpdate )
-      {
-        PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
-                         "Auto aligning viz to match robot's pose.");
-        
-        Pose3d initialWorldPose = _robotPoseActual * _robotPose.GetInverse();
-        UpdateVizOrigin(initialWorldPose);
-        _firstRobotPoseUpdate = false;
-      }
+      
       
       const double* transActual = _robotNode->getPosition();
       _robotPoseActual.SetTranslation( {static_cast<f32>(M_TO_MM(transActual[0])),
@@ -629,6 +619,19 @@ namespace Anki {
           static_cast<f32>(orientationActual[6]),
           static_cast<f32>(orientationActual[7]),
           static_cast<f32>(orientationActual[8])} );
+      }
+      
+      // if it's the first time that we set the proper pose for the robot, update the visualization origin to
+      // the robot, since debug render expects to be centered around the robot
+      if ( _firstRobotPoseUpdate )
+      {
+        PRINT_NAMED_INFO("UiGameController.UpdateVizOrigin",
+                         "Auto aligning viz to match robot's pose. %f %f %f",
+                         _robotPoseActual.GetTranslation().x(), _robotPoseActual.GetTranslation().y(), _robotPoseActual.GetTranslation().z());
+        
+        Pose3d initialWorldPose = _robotPoseActual * _robotPose.GetInverse();
+        UpdateVizOrigin(initialWorldPose);
+        _firstRobotPoseUpdate = false;
       }
     }
     
