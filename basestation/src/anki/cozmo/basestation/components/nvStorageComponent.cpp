@@ -705,7 +705,7 @@ void NVStorageComponent::Test()
            [](u8* data, size_t size, NVStorage::NVResult res) {
              if (res == NVStorage::NVResult::NV_OKAY) {
                PRINT_NAMED_DEBUG("NVStorageComponent.Test.ReadSUCCESS",
-                                 "size: %lu, data[0]: %d, data[1023]: %d, data[1024]: %d, data[1034]: %d",
+                                 "size: %zu, data[0]: %d, data[1023]: %d, data[1024]: %d, data[1034]: %d",
                                  size, data[0], data[1023], data[1024], data[1034]);
              } else {
                PRINT_NAMED_DEBUG("NVStorageComponent.Test.ReadFAIL", "");
