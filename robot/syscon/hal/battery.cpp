@@ -1,7 +1,6 @@
 #include "battery.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
-#include "debug.h"
 #include "timer.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "messages.h"
@@ -71,7 +70,7 @@ static void SendPowerStateUpdate(void *userdata)
 void Battery::init()
 {
   // Configure charge pins
-  nrf_gpio_pin_set(PIN_CHARGE_EN);
+  nrf_gpio_pin_clear(PIN_CHARGE_EN);
   nrf_gpio_cfg_output(PIN_CHARGE_EN);
  
   // Configure cliff sensor pins
@@ -197,6 +196,13 @@ void Battery::manage(void* userdata)
 
         vExt = calcResult(VEXT_SCALE);
         onContacts = vExt > VEXT_DETECT_THRESHOLD;
+
+        if (onContacts) {
+          // THIS SHOULD TIMEOUT AFTER ~30 minutes
+          nrf_gpio_pin_set(PIN_CHARGE_EN);
+        } else {
+          nrf_gpio_pin_clear(PIN_CHARGE_EN);
+        }
 
         startADCsample(ANALOG_CLIFF_SENSE);
       }

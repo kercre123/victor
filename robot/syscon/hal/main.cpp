@@ -13,7 +13,6 @@ extern "C" {
 #include "battery.h"
 #include "motors.h"
 #include "head.h"
-#include "debug.h"
 #include "timer.h"
 #include "backpack.h"
 #include "lights.h"

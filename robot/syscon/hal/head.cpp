@@ -1,6 +1,5 @@
 #include "string.h"
 
-#include "debug.h"
 #include "head.h"
 #include "timer.h"
 #include "nrf.h"
@@ -25,17 +24,16 @@ using namespace Anki::Cozmo;
 uint8_t txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
 
 enum TRANSMIT_MODE {
+  TRANSMIT_UNKNOWN,
   TRANSMIT_SEND,
   TRANSMIT_RECEIVE,
-  TRANSMIT_DEBUG
+  TRANSMIT_CHARGER_RX,
 };
 
-static const int DEBUG_BYTES = 32;
-
 static int txRxIndex;
-static int debugSafeWords;
 static TRANSMIT_MODE uart_mode;
 static bool m_enabled;
+static const int charger_baud_rate = 100000;
 
 bool Head::spokenTo = false;
 
@@ -72,9 +70,6 @@ void Head::init()
   NVIC_EnableIRQ(UART0_IRQn);
 
   // We begin in receive mode (slave)
-  setTransmitMode(TRANSMIT_RECEIVE);
-  MicroWait(80);
-
   m_enabled = true;
 
   RTOS::schedule(Head::manage);
@@ -88,9 +83,9 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
   switch (mode) {
     case TRANSMIT_SEND:
       // Prevent debug words from transmitting
-      debugSafeWords = 0;
-
       NRF_UART0->PSELRXD = 0xFFFFFFFF;
+      NRF_UART0->PSELTXD = 0xFFFFFFFF;
+      NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
       MicroWait(10);
       NRF_UART0->PSELTXD = PIN_TX_HEAD;
 
@@ -102,29 +97,30 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
                                     | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
       break ;
     case TRANSMIT_RECEIVE:
-      #ifndef DUMP_DISCOVER
       nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
 
+      NRF_UART0->PSELRXD = 0xFFFFFFFF;
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
+      NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
       MicroWait(10);
       NRF_UART0->PSELRXD = PIN_TX_HEAD;
       break ;
-      #endif
-    case TRANSMIT_DEBUG:
-      if (!UART::DebugQueue()) return ;
+    case TRANSMIT_CHARGER_RX:
+      nrf_gpio_pin_clear(PIN_TX_VEXT);
+      nrf_gpio_cfg_output(PIN_TX_VEXT);
 
       NRF_UART0->PSELRXD = 0xFFFFFFFF;
-      NRF_UART0->PSELTXD = PIN_TX_VEXT;
+      NRF_UART0->PSELTXD = 0xFFFFFFFF;
+      NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
 
-      // Configure pin so it is open-drain
-      nrf_gpio_cfg_output(PIN_TX_VEXT);
-      
-      // We are in debug transmit mode, these are the safe bytes
-      debugSafeWords = DEBUG_BYTES;
-      uart_mode = TRANSMIT_DEBUG;
-      
-      UART::DebugChar();
-      break;
+      nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_PULLUP);
+      MicroWait(10);
+      NRF_UART0->PSELRXD = PIN_TX_VEXT;
+    
+      break ;
+
+    default:
+      break ;
   }
   
   // Clear our UART interrupts
@@ -155,6 +151,8 @@ void Head::manage(void* userdata) {
   transmitByte();
 }
 
+static uint8_t charger_byte = 0xCD;
+
 extern "C"
 void UART0_IRQHandler()
 {
@@ -164,26 +162,35 @@ void UART0_IRQHandler()
   if (NRF_UART0->EVENTS_RXDRDY) {
     NRF_UART0->EVENTS_RXDRDY = 0;
 
-    // Re-sync to header
-    if (txRxIndex < 4) {
-      header_shift = (header_shift >> 8) | (NRF_UART0->RXD << 24);
-      
-      if (header_shift == SPI_SOURCE_HEAD) {
-        txRxIndex = 4;
-        return ;
-      }
-    } else {
-      txRxBuffer[txRxIndex] = NRF_UART0->RXD;
-    }
+    switch (uart_mode) {
+      case TRANSMIT_RECEIVE:
+          // Re-sync to header
+        if (txRxIndex < 4) {
+          header_shift = (header_shift >> 8) | (NRF_UART0->RXD << 24);
+          
+          if (header_shift == SPI_SOURCE_HEAD) {
+            txRxIndex = 4;
+            return ;
+          }
+        } else {
+          txRxBuffer[txRxIndex] = NRF_UART0->RXD;
+        }
 
-    // We received a full packet
-    if (++txRxIndex >= sizeof(GlobalDataToBody)) {
-      memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
-      Spine::ProcessHeadData();
-      Head::spokenTo = true;
-			RTOS::kick(WDOG_UART);
-      
-      setTransmitMode(TRANSMIT_DEBUG);
+        // We received a full packet
+        if (++txRxIndex >= sizeof(GlobalDataToBody)) {
+          memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
+          Spine::ProcessHeadData();
+          Head::spokenTo = true;
+          RTOS::kick(WDOG_UART);
+          
+          setTransmitMode(TRANSMIT_CHARGER_RX);
+        }
+        break ;
+      case TRANSMIT_CHARGER_RX:
+        charger_byte = NRF_UART0->RXD;
+        break ;
+      default:
+        break ;
     }
   }
 
@@ -192,29 +199,16 @@ void UART0_IRQHandler()
     NRF_UART0->EVENTS_TXDRDY = 0;
 
     switch(uart_mode) {
-      case TRANSMIT_RECEIVE:
       case TRANSMIT_SEND:
         // We are in regular head transmission mode
         if (txRxIndex >= sizeof(GlobalDataToHead)) {
-          #ifdef DUMP_DISCOVER
-          setTransmitMode(TRANSMIT_DEBUG);
-          #else
           setTransmitMode(TRANSMIT_RECEIVE);
           header_shift = 0;
-          #endif
         } else {
           transmitByte();
         }
         break ;
-      case TRANSMIT_DEBUG:
-        if (debugSafeWords-- > 0) {
-          // We are stuffing debug words
-          if (UART::DebugQueue()) {
-            UART::DebugChar();
-            return ;
-          }
-        }
-
+      default:
         break ;
     }
   }

@@ -7,8 +7,6 @@
 #include "timer.h"
 #include "radio.h"
 
-#include "debug.h"
-
 #include "rtos.h"
 #include "hardware.h"
 #include "hal/portable.h"

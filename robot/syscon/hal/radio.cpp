@@ -11,7 +11,6 @@
 #include "micro_esb.h"
   
 #include "hardware.h"
-#include "debug.h"
 #include "radio.h"
 #include "timer.h"
 #include "head.h"
