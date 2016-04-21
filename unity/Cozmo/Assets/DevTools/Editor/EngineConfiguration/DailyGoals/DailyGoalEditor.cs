@@ -190,11 +190,11 @@ public class DailyGoalEditor : EditorWindow {
 
   }
 
-  // TODO: Draw DailyGoalGeneration.json -> New class that's holder for all DailyGoalGen classes?
   private void DrawDailyGoalGenerationData(DailyGoalGenerationData genData) {
     
     EditorGUILayout.BeginVertical();
     _scrollPos = EditorGUILayout.BeginScrollView(_scrollPos);
+    EditorGUIUtility.labelWidth = 100;
     EditorDrawingUtility.DrawGroupedList("DailyGoals", genData.GenList, DrawGoalDataEntry, () => new DailyGoalGenerationData.GoalEntry(), x => x.CladEvent, e => e.ToString());
     EditorGUILayout.EndScrollView();
     EditorGUILayout.EndVertical();
@@ -203,30 +203,35 @@ public class DailyGoalEditor : EditorWindow {
 
   // TODO: Draw DailyGoalGenEntry
   public DailyGoalGenerationData.GoalEntry DrawGoalDataEntry(DailyGoalGenerationData.GoalEntry genData) {
-
-    EditorGUILayout.BeginVertical();
     string eventName = genData.CladEvent.ToString();
     if (string.IsNullOrEmpty(_EventSearchField) || eventName.Contains(_EventSearchField) || genData.CladEvent == GameEvent.Count) {
-      EditorGUILayout.LabelField(Localization.Get(genData.TitleKey));
+      EditorGUILayout.BeginVertical();
+      EditorGUILayout.LabelField(Localization.Get(genData.TitleKey).ToUpper());
+      EditorGUILayout.LabelField(">>GOAL");
       EditorGUILayout.BeginHorizontal();
-      genData.TitleKey = EditorGUILayout.TextField("TitleLocKey", genData.TitleKey ?? string.Empty);
-      genData.DescKey = EditorGUILayout.TextField("DescriptionLocKey", genData.DescKey ?? string.Empty);
-      EditorGUILayout.EndHorizontal();
       if (string.IsNullOrEmpty(_EventSearchField) || genData.CladEvent == GameEvent.Count) {
-        genData.CladEvent = (GameEvent)EditorGUILayout.EnumPopup("GameEvent", genData.CladEvent);
+        genData.CladEvent = (GameEvent)EditorGUILayout.EnumPopup("GameEvent", genData.CladEvent, GUILayout.Width(250));
       }
       else {
-        genData.CladEvent = _FilteredCladList[EditorGUILayout.Popup("GameEvent", Mathf.Max(0, Array.IndexOf(_FilteredCladNameOptions, eventName)), _FilteredCladNameOptions)];
+        genData.CladEvent = _FilteredCladList[EditorGUILayout.Popup("GameEvent", Mathf.Max(0, Array.IndexOf(_FilteredCladNameOptions, eventName)), _FilteredCladNameOptions, GUILayout.Width(250))];
       }
-      EditorGUILayout.BeginHorizontal();
       genData.Target = EditorGUILayout.IntField("Target", genData.Target);
-      genData.PointsRewarded = EditorGUILayout.IntField("Reward", genData.PointsRewarded);
-
       EditorGUILayout.EndHorizontal();
-    }
-    
-    EditorGUILayout.EndVertical();
 
+      EditorGUILayout.LabelField(">>REWARD");
+      EditorGUILayout.BeginHorizontal();
+      genData.RewardType = EditorGUILayout.TextField("Reward Type", genData.RewardType ?? string.Empty);
+      genData.PointsRewarded = EditorGUILayout.IntField("Reward", genData.PointsRewarded);
+      EditorGUILayout.EndHorizontal();
+
+      EditorGUILayout.LabelField(">>LOC KEYS");
+      EditorGUILayout.BeginHorizontal();
+      genData.TitleKey = EditorGUILayout.TextField("TitleLocKey", genData.TitleKey ?? string.Empty);
+      genData.DescKey = EditorGUILayout.TextField("DescLocKey", genData.DescKey ?? string.Empty);
+      EditorGUILayout.EndHorizontal();
+
+      EditorGUILayout.EndVertical();
+    }
     return genData;
   }
 
@@ -245,7 +250,7 @@ public class DailyGoalEditor : EditorWindow {
     window.titleContent = new GUIContent("DailyGoal Editor");
     window.Show();
     window.Focus();
-    window.position = new Rect(0, 0, 500, 500);
+    window.position = new Rect(100, 100, 800, 800);
   }
 
 

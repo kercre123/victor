@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
+using DataPersistence;
 
 namespace Cozmo {
   namespace UI {
@@ -13,6 +14,7 @@ namespace Cozmo {
       public GameEvent GoalEvent;
       public LocalizedString Title;
       public LocalizedString Description;
+      public string RewardType;
       public int Progress;
       public int Target;
       public int PointsRewarded;
@@ -37,7 +39,7 @@ namespace Cozmo {
       public Action<DailyGoal> OnDailyGoalUpdated;
       public Action<DailyGoal> OnDailyGoalCompleted;
 
-      public DailyGoal(GameEvent gEvent, string titleKey, string descKey, int reward, int target, int currProg = 0) {
+      public DailyGoal(GameEvent gEvent, string titleKey, string descKey, int reward, int target, string rewardType, int currProg = 0) {
         GoalEvent = gEvent;
         Title = new LocalizedString();
         Description = new LocalizedString();
@@ -47,6 +49,7 @@ namespace Cozmo {
         Target = target;
         Progress = currProg;
         _Completed = GoalComplete;
+        RewardType = rewardType;
         GameEventManager.Instance.OnGameEvent += ProgressGoal;
       }
 
@@ -66,7 +69,7 @@ namespace Cozmo {
           // Grant Reward
           // TODO: Use a more generic Reward Action? Assuming we would want something green points related
           DAS.Event(this, string.Format("{0} Completed", Title));
-          PlayerManager.Instance.AddGreenPoints(PointsRewarded);
+          DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(RewardType, PointsRewarded);
           if (OnDailyGoalCompleted != null) {
             OnDailyGoalCompleted.Invoke(this);
           }

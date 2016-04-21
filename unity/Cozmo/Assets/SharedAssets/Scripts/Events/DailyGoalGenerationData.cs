@@ -46,6 +46,7 @@ namespace Anki.Cozmo {
         DescKey = "";
         Target = 0;
         PointsRewarded = 0;
+        RewardType = "experience";
         CladEvent = GameEvent.Count;
         GenConditions = new List<GoalCondition>();
       }
@@ -53,6 +54,7 @@ namespace Anki.Cozmo {
       // TODO: Everything to do with the goal, implement
       public string TitleKey;
       public string DescKey;
+      public string RewardType;
       public int Target;
       public int PointsRewarded;
       //
