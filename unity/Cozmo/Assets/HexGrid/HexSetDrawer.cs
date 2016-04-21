@@ -21,7 +21,7 @@ public class HexSetDrawer : MonoBehaviour {
       hexInstance.color = _HexColor;
 
       hexInstance.transform.SetParent(this.transform);
-      hexInstance.transform.position = GetLocalHexPosition(hexCoord);
+      hexInstance.transform.localPosition = GetLocalHexPosition(hexCoord);
 
       _HexGameObjects.Add(hexInstance);
     }
