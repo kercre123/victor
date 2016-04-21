@@ -73,7 +73,7 @@ bool NVStorageComponent::IsMultiBlobEntryTag(u32 tag) const {
 // in which the given tag falls.
 // See NVEntryTag definition for more details.
 u32 NVStorageComponent::GetBaseEntryTag(u32 tag) const {
-  u32 baseTag = tag & 0xffff0000;
+  u32 baseTag = tag & 0x7fff0000;
   if (baseTag == 0) {
     // For single blob message, the base tag is the same as tag
     baseTag = tag;
