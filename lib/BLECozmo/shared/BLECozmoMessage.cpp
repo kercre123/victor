@@ -84,6 +84,7 @@ uint8_t BLECozmoMessage::ChunkifyMessage(const uint8_t* bytes, const uint32_t nu
   assert(chunkIndex <= kMessageMaxChunks);
   
   _numChunksUsed = chunkIndex + 1;
+  _isEncrypted = encrypted;
   
   return _numChunksUsed;
 }

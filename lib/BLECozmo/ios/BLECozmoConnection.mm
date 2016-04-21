@@ -194,7 +194,7 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
 
 - (void)clearQueuedMessages
 {
-  __weak typeof(self) weakSelf = self;
+  __weak __typeof(self) weakSelf = self;
   dispatch_async(self.throttlingQueue, ^{
     [weakSelf.enqueuedMessages removeAllObjects];
     weakSelf.canWrite = YES;
@@ -295,7 +295,7 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
     return YES;
   }
   
-  __weak typeof(self) weakSelf = self;
+  __weak __typeof(self) weakSelf = self;
   dispatch_async(self.throttlingQueue, ^{
     if ( !weakSelf.canWrite ) {
       [weakSelf.enqueuedMessages addObject:data];

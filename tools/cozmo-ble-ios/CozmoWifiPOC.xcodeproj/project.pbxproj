@@ -7,18 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		855DE9621CBEC88600F98709 /* BLEAdvertisement.m in Sources */ = {isa = PBXBuildFile; fileRef = 855DE9591CBEC88600F98709 /* BLEAdvertisement.m */; settings = {ASSET_TAGS = (); }; };
-		855DE9631CBEC88600F98709 /* BLECentralMultiplexer.m in Sources */ = {isa = PBXBuildFile; fileRef = 855DE95B1CBEC88600F98709 /* BLECentralMultiplexer.m */; settings = {ASSET_TAGS = (); }; };
-		855DE9641CBEC88600F98709 /* BLECentralServiceDescription.m in Sources */ = {isa = PBXBuildFile; fileRef = 855DE95D1CBEC88600F98709 /* BLECentralServiceDescription.m */; settings = {ASSET_TAGS = (); }; };
-		855DE9651CBEC88600F98709 /* BLEPeripheralConnectionAttempt.m in Sources */ = {isa = PBXBuildFile; fileRef = 855DE95F1CBEC88600F98709 /* BLEPeripheralConnectionAttempt.m */; settings = {ASSET_TAGS = (); }; };
-		859BE5111C97A7F700A521F0 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 859BE5101C97A7F700A521F0 /* libxml2.tbd */; };
-		85D632001CC5662C00A5FB8A /* BLECozmoMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D631FF1CC5662C00A5FB8A /* BLECozmoMessage.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D632041CC57C5000A5FB8A /* BLECozmoConnection.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85D632031CC57C5000A5FB8A /* BLECozmoConnection.mm */; settings = {ASSET_TAGS = (); }; };
-		85D632061CC593FA00A5FB8A /* BLECozmoManager.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85D632051CC593FA00A5FB8A /* BLECozmoManager.mm */; settings = {ASSET_TAGS = (); }; };
 		85D632601CC59EDD00A5FB8A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85D6325F1CC59EDD00A5FB8A /* AppDelegate.mm */; settings = {ASSET_TAGS = (); }; };
 		85D632621CC59EEB00A5FB8A /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85D632611CC59EEB00A5FB8A /* ViewController.mm */; settings = {ASSET_TAGS = (); }; };
 		85D632641CC59EF100A5FB8A /* AppTableData.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85D632631CC59EF100A5FB8A /* AppTableData.mm */; settings = {ASSET_TAGS = (); }; };
-		85D6341A1CC70E7300A5FB8A /* BLECozmoRandom.m in Sources */ = {isa = PBXBuildFile; fileRef = 85D634191CC70E7300A5FB8A /* BLECozmoRandom.m */; settings = {ASSET_TAGS = (); }; };
 		85D634421CC8885E00A5FB8A /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D6343E1CC8885E00A5FB8A /* aes.cpp */; settings = {ASSET_TAGS = (); }; };
 		85D634431CC8885E00A5FB8A /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 85D634401CC8885E00A5FB8A /* README.md */; settings = {ASSET_TAGS = (); }; };
 		85D634441CC8885E00A5FB8A /* unlicense.txt in Resources */ = {isa = PBXBuildFile; fileRef = 85D634411CC8885E00A5FB8A /* unlicense.txt */; settings = {ASSET_TAGS = (); }; };
@@ -52,6 +43,7 @@
 		85D634FE1CC88A2F00A5FB8A /* robotStatusAndActions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634DD1CC88A2F00A5FB8A /* robotStatusAndActions.cpp */; settings = {ASSET_TAGS = (); }; };
 		85D634FF1CC88A2F00A5FB8A /* robotTestModes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634DF1CC88A2F00A5FB8A /* robotTestModes.cpp */; settings = {ASSET_TAGS = (); }; };
 		85D635001CC88A2F00A5FB8A /* rtipTraces.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634E11CC88A2F00A5FB8A /* rtipTraces.cpp */; settings = {ASSET_TAGS = (); }; };
+		85D635251CC987D100A5FB8A /* libBLECozmo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85D635241CC9866E00A5FB8A /* libBLECozmo.a */; };
 		85DEFA4B1C44690A00A714FE /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 85DEFA4A1C44690A00A714FE /* main.m */; };
 		85DEFA541C44690A00A714FE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 85DEFA521C44690A00A714FE /* Main.storyboard */; };
 		85DEFA561C44690A00A714FE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 85DEFA551C44690A00A714FE /* Assets.xcassets */; };
@@ -61,6 +53,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		85D635231CC9866E00A5FB8A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 85D6351F1CC9866E00A5FB8A /* BLECozmo.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 9BE8A55F7A13782F3F99CEF2;
+			remoteInfo = BLECozmo;
+		};
 		85DEFA601C44690A00A714FE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 85DEFA3E1C44690A00A714FE /* Project object */;
@@ -78,32 +77,11 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		855DE9561CBEC87900F98709 /* BLELog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLELog.h; sourceTree = "<group>"; };
-		855DE9581CBEC88600F98709 /* BLEAdvertisement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLEAdvertisement.h; sourceTree = "<group>"; };
-		855DE9591CBEC88600F98709 /* BLEAdvertisement.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLEAdvertisement.m; sourceTree = "<group>"; };
-		855DE95A1CBEC88600F98709 /* BLECentralMultiplexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLECentralMultiplexer.h; sourceTree = "<group>"; };
-		855DE95B1CBEC88600F98709 /* BLECentralMultiplexer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLECentralMultiplexer.m; sourceTree = "<group>"; };
-		855DE95C1CBEC88600F98709 /* BLECentralServiceDescription.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLECentralServiceDescription.h; sourceTree = "<group>"; };
-		855DE95D1CBEC88600F98709 /* BLECentralServiceDescription.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLECentralServiceDescription.m; sourceTree = "<group>"; };
-		855DE95E1CBEC88600F98709 /* BLEPeripheralConnectionAttempt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BLEPeripheralConnectionAttempt.h; sourceTree = "<group>"; };
-		855DE95F1CBEC88600F98709 /* BLEPeripheralConnectionAttempt.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLEPeripheralConnectionAttempt.m; sourceTree = "<group>"; };
-		855DE9601CBEC88600F98709 /* TestBLECentralMultiplexer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestBLECentralMultiplexer.h; sourceTree = "<group>"; };
-		855DE9611CBEC88600F98709 /* TestBLECentralMultiplexer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TestBLECentralMultiplexer.m; sourceTree = "<group>"; };
-		855DE9671CBED10700F98709 /* BLECozmoManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLECozmoManager.h; sourceTree = "<group>"; };
-		855DE96C1CBEE43600F98709 /* BLECozmoConnection.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLECozmoConnection.h; sourceTree = "<group>"; };
 		855DE97D1CBF2D0800F98709 /* AppTableData.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppTableData.h; sourceTree = "<group>"; };
 		859BE41B1C9201ED00A521F0 /* CozmoWifiPOC.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = CozmoWifiPOC.entitlements; sourceTree = "<group>"; };
-		859BE5101C97A7F700A521F0 /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
-		85D631FF1CC5662C00A5FB8A /* BLECozmoMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BLECozmoMessage.cpp; sourceTree = "<group>"; };
-		85D632021CC57BB000A5FB8A /* BLECozmoMessage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLECozmoMessage.h; sourceTree = "<group>"; };
-		85D632031CC57C5000A5FB8A /* BLECozmoConnection.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BLECozmoConnection.mm; sourceTree = "<group>"; };
-		85D632051CC593FA00A5FB8A /* BLECozmoManager.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = BLECozmoManager.mm; sourceTree = "<group>"; };
 		85D6325F1CC59EDD00A5FB8A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		85D632611CC59EEB00A5FB8A /* ViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
 		85D632631CC59EF100A5FB8A /* AppTableData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AppTableData.mm; sourceTree = "<group>"; };
-		85D634171CC5E26C00A5FB8A /* BLECozmoServiceDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLECozmoServiceDelegate.h; sourceTree = "<group>"; };
-		85D634181CC70D4A00A5FB8A /* BLECozmoRandom.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BLECozmoRandom.h; sourceTree = "<group>"; };
-		85D634191CC70E7300A5FB8A /* BLECozmoRandom.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BLECozmoRandom.m; sourceTree = "<group>"; };
 		85D6343E1CC8885E00A5FB8A /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = aes.cpp; sourceTree = "<group>"; };
 		85D6343F1CC8885E00A5FB8A /* aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes.h; sourceTree = "<group>"; };
 		85D634401CC8885E00A5FB8A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -169,6 +147,7 @@
 		85D634E01CC88A2F00A5FB8A /* robotTestModes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = robotTestModes.h; sourceTree = "<group>"; };
 		85D634E11CC88A2F00A5FB8A /* rtipTraces.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = rtipTraces.cpp; sourceTree = "<group>"; };
 		85D634E21CC88A2F00A5FB8A /* rtipTraces.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = rtipTraces.h; sourceTree = "<group>"; };
+		85D6351F1CC9866E00A5FB8A /* BLECozmo.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = BLECozmo.xcodeproj; path = ../../lib/BLECozmo/project/ios/BLECozmo.xcodeproj; sourceTree = "<group>"; };
 		85DEFA461C44690A00A714FE /* CozmoWifiPOC.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CozmoWifiPOC.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		85DEFA4A1C44690A00A714FE /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		85DEFA4C1C44690A00A714FE /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -190,7 +169,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				859BE5111C97A7F700A521F0 /* libxml2.tbd in Frameworks */,
+				85D635251CC987D100A5FB8A /* libBLECozmo.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -211,31 +190,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		855DE9551CBEC87900F98709 /* Logging */ = {
-			isa = PBXGroup;
-			children = (
-				855DE9561CBEC87900F98709 /* BLELog.h */,
-			);
-			path = Logging;
-			sourceTree = "<group>";
-		};
-		855DE9571CBEC88600F98709 /* Central */ = {
-			isa = PBXGroup;
-			children = (
-				855DE9581CBEC88600F98709 /* BLEAdvertisement.h */,
-				855DE9591CBEC88600F98709 /* BLEAdvertisement.m */,
-				855DE95A1CBEC88600F98709 /* BLECentralMultiplexer.h */,
-				855DE95B1CBEC88600F98709 /* BLECentralMultiplexer.m */,
-				855DE95C1CBEC88600F98709 /* BLECentralServiceDescription.h */,
-				855DE95D1CBEC88600F98709 /* BLECentralServiceDescription.m */,
-				855DE95E1CBEC88600F98709 /* BLEPeripheralConnectionAttempt.h */,
-				855DE95F1CBEC88600F98709 /* BLEPeripheralConnectionAttempt.m */,
-				855DE9601CBEC88600F98709 /* TestBLECentralMultiplexer.h */,
-				855DE9611CBEC88600F98709 /* TestBLECentralMultiplexer.m */,
-			);
-			path = Central;
-			sourceTree = "<group>";
-		};
 		85D6343D1CC8885E00A5FB8A /* tiny-AES128-C */ = {
 			isa = PBXGroup;
 			children = (
@@ -333,10 +287,18 @@
 			path = types;
 			sourceTree = "<group>";
 		};
+		85D635201CC9866E00A5FB8A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				85D635241CC9866E00A5FB8A /* libBLECozmo.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		85DEFA3D1C44690A00A714FE = {
 			isa = PBXGroup;
 			children = (
-				859BE5101C97A7F700A521F0 /* libxml2.tbd */,
+				85D6351F1CC9866E00A5FB8A /* BLECozmo.xcodeproj */,
 				85DEFA481C44690A00A714FE /* CozmoWifiPOC */,
 				85DEFA621C44690A00A714FE /* CozmoWifiPOCTests */,
 				85DEFA6D1C44690A00A714FE /* CozmoWifiPOCUITests */,
@@ -359,8 +321,6 @@
 			children = (
 				85D634A31CC88A2F00A5FB8A /* clad */,
 				85D6343D1CC8885E00A5FB8A /* tiny-AES128-C */,
-				855DE9571CBEC88600F98709 /* Central */,
-				855DE9551CBEC87900F98709 /* Logging */,
 				859BE41B1C9201ED00A521F0 /* CozmoWifiPOC.entitlements */,
 				85DEFA4C1C44690A00A714FE /* AppDelegate.h */,
 				85D6325F1CC59EDD00A5FB8A /* AppDelegate.mm */,
@@ -373,15 +333,6 @@
 				85DEFA571C44690A00A714FE /* LaunchScreen.storyboard */,
 				85DEFA5A1C44690A00A714FE /* Info.plist */,
 				85DEFA491C44690A00A714FE /* Supporting Files */,
-				855DE9671CBED10700F98709 /* BLECozmoManager.h */,
-				85D632051CC593FA00A5FB8A /* BLECozmoManager.mm */,
-				855DE96C1CBEE43600F98709 /* BLECozmoConnection.h */,
-				85D632031CC57C5000A5FB8A /* BLECozmoConnection.mm */,
-				85D632021CC57BB000A5FB8A /* BLECozmoMessage.h */,
-				85D631FF1CC5662C00A5FB8A /* BLECozmoMessage.cpp */,
-				85D634171CC5E26C00A5FB8A /* BLECozmoServiceDelegate.h */,
-				85D634181CC70D4A00A5FB8A /* BLECozmoRandom.h */,
-				85D634191CC70E7300A5FB8A /* BLECozmoRandom.m */,
 			);
 			path = CozmoWifiPOC;
 			sourceTree = "<group>";
@@ -510,6 +461,12 @@
 			mainGroup = 85DEFA3D1C44690A00A714FE;
 			productRefGroup = 85DEFA471C44690A00A714FE /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 85D635201CC9866E00A5FB8A /* Products */;
+					ProjectRef = 85D6351F1CC9866E00A5FB8A /* BLECozmo.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				85DEFA451C44690A00A714FE /* CozmoWifiPOC */,
@@ -518,6 +475,16 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		85D635241CC9866E00A5FB8A /* libBLECozmo.a */ = {
+			isa = PBXReferenceProxy;
+			fileType = archive.ar;
+			path = libBLECozmo.a;
+			remoteRef = 85D635231CC9866E00A5FB8A /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXResourcesBuildPhase section */
 		85DEFA441C44690A00A714FE /* Resources */ = {
@@ -556,7 +523,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				855DE9631CBEC88600F98709 /* BLECentralMultiplexer.m in Sources */,
 				85D634F31CC88A2F00A5FB8A /* dockingSignals.cpp in Sources */,
 				85D634EC1CC88A2F00A5FB8A /* messageToActiveObject.cpp in Sources */,
 				85D634E41CC88A2F00A5FB8A /* lightCubeMessage.cpp in Sources */,
@@ -567,13 +533,8 @@
 				85D635001CC88A2F00A5FB8A /* rtipTraces.cpp in Sources */,
 				85D634F91CC88A2F00A5FB8A /* nvStorage.cpp in Sources */,
 				85D632601CC59EDD00A5FB8A /* AppDelegate.mm in Sources */,
-				855DE9651CBEC88600F98709 /* BLEPeripheralConnectionAttempt.m in Sources */,
-				85D632001CC5662C00A5FB8A /* BLECozmoMessage.cpp in Sources */,
 				85D634F01CC88A2F00A5FB8A /* animationKeyFrames.cpp in Sources */,
-				855DE9641CBEC88600F98709 /* BLECentralServiceDescription.m in Sources */,
 				85D632621CC59EEB00A5FB8A /* ViewController.mm in Sources */,
-				85D632041CC57C5000A5FB8A /* BLECozmoConnection.mm in Sources */,
-				85D6341A1CC70E7300A5FB8A /* BLECozmoRandom.m in Sources */,
 				85D634F21CC88A2F00A5FB8A /* controllerChannels.cpp in Sources */,
 				85D634E71CC88A2F00A5FB8A /* messageEngineToRobot.cpp in Sources */,
 				85D634F61CC88A2F00A5FB8A /* imu.cpp in Sources */,
@@ -581,7 +542,6 @@
 				85D634EF1CC88A2F00A5FB8A /* advertisementTypes.cpp in Sources */,
 				85D634FE1CC88A2F00A5FB8A /* robotStatusAndActions.cpp in Sources */,
 				85D634EE1CC88A2F00A5FB8A /* activeObjectTypes.cpp in Sources */,
-				85D632061CC593FA00A5FB8A /* BLECozmoManager.mm in Sources */,
 				85D634E31CC88A2F00A5FB8A /* appConnectMessage.cpp in Sources */,
 				85D634F11CC88A2F00A5FB8A /* bleMessages.cpp in Sources */,
 				85D634F51CC88A2F00A5FB8A /* imageTypes.cpp in Sources */,
@@ -593,7 +553,6 @@
 				85D634ED1CC88A2F00A5FB8A /* otaMessages.cpp in Sources */,
 				85DEFA4B1C44690A00A714FE /* main.m in Sources */,
 				85D634FD1CC88A2F00A5FB8A /* robotLogging.cpp in Sources */,
-				855DE9621CBEC88600F98709 /* BLEAdvertisement.m in Sources */,
 				85D634FC1CC88A2F00A5FB8A /* proxMessages.cpp in Sources */,
 				85D634421CC8885E00A5FB8A /* aes.cpp in Sources */,
 			);
@@ -742,7 +701,7 @@
 				OTHER_LDFLAGS = "-all_load";
 				PRODUCT_BUNDLE_IDENTIFIER = com.anki.CozmoWifiPOC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = ../../robot/generated/clad/robot;
+				USER_HEADER_SEARCH_PATHS = "../../robot/generated/clad/robot ../../lib/BLECozmo/shared ../../lib/BLECozmo/ios ../../lib/BLECozmo/ios/Central ../../lib/BLECozmo/ios/Logging";
 			};
 			name = Debug;
 		};
@@ -756,7 +715,7 @@
 				OTHER_LDFLAGS = "-all_load";
 				PRODUCT_BUNDLE_IDENTIFIER = com.anki.CozmoWifiPOC;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				USER_HEADER_SEARCH_PATHS = ../../robot/generated/clad/robot;
+				USER_HEADER_SEARCH_PATHS = "../../robot/generated/clad/robot ../../lib/BLECozmo/shared ../../lib/BLECozmo/ios ../../lib/BLECozmo/ios/Central ../../lib/BLECozmo/ios/Logging";
 			};
 			name = Release;
 		};
