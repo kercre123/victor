@@ -98,7 +98,12 @@ public class UIManager : MonoBehaviour {
   /// For BaseViews, use OpenView instead.
   /// </summary>
   public static GameObject CreateUIElement(GameObject uiPrefab) {
-    return CreateUIElement(uiPrefab, Instance._HorizontalCanvas.transform);
+    GameObject go = null;
+    // INGO: Trying fix for https://ankiinc.atlassian.net/browse/COZMO-1172
+    if (Instance != null && Instance._HorizontalCanvas != null) {
+      go = CreateUIElement(uiPrefab, Instance._HorizontalCanvas.transform);
+    }
+    return go;
   }
 
   /// <summary>

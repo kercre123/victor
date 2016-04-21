@@ -130,7 +130,9 @@ namespace Cozmo {
 
       protected override void CleanUp() {
         foreach (MinigameWidget widget in _ActiveWidgets) {
-          widget.DestroyWidgetImmediately();
+          if (widget != null && widget.gameObject != null) {
+            widget.DestroyWidgetImmediately();
+          }
         }
         _ActiveWidgets.Clear();
 
