@@ -5,42 +5,48 @@
       "DescKey": "",
       "Target": 100,
       "PointsRewarded": 999,
-      "CladEvent": "OnSpeedtapStarted"
+      "CladEvent": "OnSpeedtapStarted",
+      "GenConditions": []
     },
     {
       "TitleKey": "Another Placeholder",
       "DescKey": "",
       "Target": 50,
       "PointsRewarded": 5,
-      "CladEvent": "OnSpeedtapStarted"
+      "CladEvent": "OnSpeedtapStarted",
+      "GenConditions": []
     },
     {
       "TitleKey": "Win 5 Speed Tap Rounds",
       "DescKey": "",
       "Target": 5,
       "PointsRewarded": 10,
-      "CladEvent": "OnSpeedtapRoundWin"
+      "CladEvent": "OnSpeedtapRoundWin",
+      "GenConditions": []
     },
     {
       "TitleKey": "Win 8 Speed Tap Hands",
       "DescKey": "",
       "Target": 8,
       "PointsRewarded": 15,
-      "CladEvent": "OnSpeedtapHandWin"
+      "CladEvent": "OnSpeedtapHandWin",
+      "GenConditions": []
     },
     {
       "TitleKey": "Win 15 Speed Tap Hands",
       "DescKey": "",
       "Target": 15,
       "PointsRewarded": 30,
-      "CladEvent": "OnSpeedtapHandWin"
+      "CladEvent": "OnSpeedtapHandWin",
+      "GenConditions": []
     },
     {
       "TitleKey": "Win Speed Tap",
       "DescKey": "",
       "Target": 1,
       "PointsRewarded": 10,
-      "CladEvent": "OnSpeedtapSessionWin"
+      "CladEvent": "OnSpeedtapSessionWin",
+      "GenConditions": []
     }
   ]
 }

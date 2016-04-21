@@ -7,7 +7,7 @@ using System.Reflection;
 using System.Collections.Generic;
 
 namespace Anki.Cozmo {
-  internal class ConditionHelper<T> where T : GoalCondition {
+  public abstract class GoalConditionHelper<T> where T : GoalCondition {
     //TODO: Write ConditionHelper based on the ScriptedSequenceHelper
   }
 }
