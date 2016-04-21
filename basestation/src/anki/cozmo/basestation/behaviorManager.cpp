@@ -45,18 +45,11 @@ BehaviorManager::BehaviorManager(Robot& robot)
 
 BehaviorManager::~BehaviorManager()
 {
-
   // everything in _reactionaryBehaviors is a factory behavior, so the factory will delete it
   _reactionaryBehaviors.clear();
-  
-  if (_behaviorChooser == _defaultChooser)
-  {
-    // prevent double deletion
-    _behaviorChooser = nullptr;
-  }
-    
-  Util::SafeDelete(_behaviorChooser);
-  Util::SafeDelete(_defaultChooser);
+
+  Util::SafeDelete(_selectionChooser);
+  Util::SafeDelete(_freeplayBehaviorChooser);
   Util::SafeDelete(_behaviorFactory);
 }
   
@@ -66,9 +59,14 @@ Result BehaviorManager::Init(const Json::Value &config)
     
   {
     const Json::Value& chooserConfigJson = config[kChooserConfigKey];
-    Util::SafeDelete(_defaultChooser);
-    _defaultChooser = new SimpleBehaviorChooser(_robot, chooserConfigJson);
-    SetBehaviorChooser( _defaultChooser );
+
+    Util::SafeDelete(_selectionChooser);
+    Util::SafeDelete(_freeplayBehaviorChooser);
+
+    _selectionChooser = new SelectionBehaviorChooser(_robot, chooserConfigJson);
+    _freeplayBehaviorChooser = new SimpleBehaviorChooser(_robot, chooserConfigJson);
+                                   
+    SetBehaviorChooser( _selectionChooser );
 
     // TODO:(bn) load these from json? A special reactionary behaviors list?
     BehaviorFactory& behaviorFactory = GetBehaviorFactory();
@@ -97,17 +95,14 @@ Result BehaviorManager::Init(const Json::Value &config)
                                    event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType;
                                  switch (chooserType)
                                  {
-                                   case BehaviorChooserType::Default:
+                                   case BehaviorChooserType::Freeplay:
                                    {
-                                     if (_behaviorChooser != _defaultChooser)
-                                     {
-                                       SetBehaviorChooser( _defaultChooser );
-                                     }
+                                     SetBehaviorChooser( _freeplayBehaviorChooser );
                                      break;
                                    }
                                    case BehaviorChooserType::Selection:
                                    {
-                                     SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
+                                     SetBehaviorChooser( _selectionChooser );
                                      break;
                                    }
                                    default:
@@ -341,22 +336,18 @@ Result BehaviorManager::Update()
 
 void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
 {
+  if( _behaviorChooser == newChooser ) {
+    return;
+  }
+
   // The behavior pointers may no longer be valid, so clear them
   SwitchToBehavior(nullptr);
   _behaviorToResume = nullptr;
   _runningReactionaryBehavior = false;
 
-  if ((_behaviorChooser != nullptr) && (_behaviorChooser != _defaultChooser)) {
-    PRINT_NAMED_INFO("BehaviorManager.SetBehaviorChooser.DeleteOld",
-                     "deleting behavior chooser '%s'",
-                     _behaviorChooser->GetName());
-      
-    Util::SafeDelete(_behaviorChooser);
-  }
-    
   _behaviorChooser = newChooser;
 
-  if( _behaviorChooser == _defaultChooser ) {
+  if( _behaviorChooser == _freeplayBehaviorChooser ) {
     _robot.GetProgressionUnlockComponent().IterateUnlockedFreeplayBehaviors(
       [this](BehaviorGroup group, bool enabled){
         _behaviorChooser->EnableBehaviorGroup(group, enabled);

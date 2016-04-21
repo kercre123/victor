@@ -98,7 +98,6 @@ namespace Anki {
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
-    , _isBehaviorMgrEnabled(false)
     , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimations())
     , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
     , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
@@ -828,7 +827,7 @@ namespace Anki {
 
       // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
       static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
-      if(_isBehaviorMgrEnabled && ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
+      if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
       {
         _behaviorMgr.Update();
         
