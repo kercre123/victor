@@ -8,7 +8,8 @@ namespace Cozmo {
   namespace UI {
     [System.Serializable]
     public class DailyGoal {
-      
+      // TODO: Implement Conditions, Goal will only advance progress if all conditions return true as well
+      //public List<GoalCondition> Conditions;
       public GameEvent GoalEvent;
       public LocalizedString Title;
       public LocalizedString Description;

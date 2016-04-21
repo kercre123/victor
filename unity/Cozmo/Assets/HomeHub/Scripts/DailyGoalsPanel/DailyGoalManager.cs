@@ -20,7 +20,7 @@ public class DailyGoalManager : MonoBehaviour {
 
   #if UNITY_IOS && !UNITY_EDITOR
   public static string sDailyGoalDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/DailyGoals"); } }
-   
+ 
 #else
   public static string sDailyGoalDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/DailyGoals"; } }
   #endif
@@ -185,12 +185,18 @@ public class DailyGoalManager : MonoBehaviour {
 
   public List<DailyGoal> GenerateDailyGoals() {
     List<DailyGoal> newGoals = new List<DailyGoal>();
-    // TODO: More intelligent goal selection once preconditions are built
     int goalCount = Mathf.Min(_CurrentGenData.GenList.Count, UnityEngine.Random.Range(_DailyGoalGenConfig.MinGoals, _DailyGoalGenConfig.MaxGoals));
-    List<DailyGoalGenerationData.GoalEntry> goalList = _CurrentGenData.GenList;
+    List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
+    // Look at a list of exclusively goals that have their conditions met
+    for (int i = 0; i < _CurrentGenData.GenList.Count; i++) {
+      if (_CurrentGenData.GenList[i].CanGen()) {
+        goalList.Add(_CurrentGenData.GenList[i]);
+      }
+    }
+    // Grab random DailyGoals from the available goal list
     DailyGoalGenerationData.GoalEntry toAdd;
     for (int i = 0; i < goalCount; i++) {
-      toAdd = goalList[i];
+      toAdd = goalList[UnityEngine.Random.Range(0, goalList.Count)];
       // Remove from list to prevent dupes
       goalList.Remove(toAdd);
       newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.DescKey, toAdd.PointsRewarded, toAdd.Target));

@@ -48,6 +48,7 @@ namespace Anki.Cozmo {
         Target = 0;
         PointsRewarded = 0;
         CladEvent = GameEvent.Count;
+        GenConditions = new List<GoalCondition>();
       }
       // TODO: Preconditions for limiting generation
       // TODO: Everything to do with the goal, implement
@@ -57,6 +58,16 @@ namespace Anki.Cozmo {
       public int PointsRewarded;
       //
       public GameEvent CladEvent;
+      public List<GoalCondition> GenConditions;
+
+      public bool CanGen() {
+        for (int i = 0; i < GenConditions.Count; i++) {
+          if (GenConditions[i].ConditionMet() == false) {
+            return false;
+          }
+        }
+        return true;
+      }
     }
   }
 }

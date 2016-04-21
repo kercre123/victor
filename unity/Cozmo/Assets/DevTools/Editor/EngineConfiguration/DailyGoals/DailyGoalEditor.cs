@@ -221,12 +221,21 @@ public class DailyGoalEditor : EditorWindow {
       EditorGUILayout.BeginHorizontal();
       genData.Target = EditorGUILayout.IntField("Target", genData.Target);
       genData.PointsRewarded = EditorGUILayout.IntField("Reward", genData.PointsRewarded);
+
       EditorGUILayout.EndHorizontal();
     }
     
     EditorGUILayout.EndVertical();
 
     return genData;
+  }
+
+  public GoalCondition DrawGoalCondition(GoalCondition cond) {
+    EditorGUILayout.BeginVertical();
+    // TODO: Figure out how to display Conditions
+    // Look to ScriptedSequenceEditor to see how they get GoalConditions based on the actual classes
+    EditorGUILayout.EndVertical();
+    return cond;
   }
 
   [MenuItem("Cozmo/Progression/Daily Goal Editor #%d")]
