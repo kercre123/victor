@@ -27,7 +27,7 @@ public class HexMap {
     foreach (Coord localCoord in toRemoveLocalCoords) {
       // convert to mapCoord space by adding the map position of the puzzle piece we are
       // removing
-      _OccupancyMap.Remove(localCoord + removedPiece.MapPosition);
+      _OccupancyMap.Remove(removedPiece.LocalToMapCoord(localCoord));
     }
 
     return true;
@@ -36,11 +36,11 @@ public class HexMap {
   public bool CanAdd(PuzzlePiece hexItem) {
     foreach (Coord localCoord in hexItem.PieceData.HexSet.HexSetData) {
       // check to see if the coordinate has been occupied by another piece.
-      if (_OccupancyMap.ContainsKey(hexItem.MapPosition + localCoord)) {
+      if (_OccupancyMap.ContainsKey(hexItem.LocalToMapCoord(localCoord))) {
         return false;
       }
       // check to see if the coordinate exists in the map hex set.
-      if (_Map.HexSetData.Contains(hexItem.MapPosition + localCoord) == false) {
+      if (_Map.HexSetData.Contains(hexItem.LocalToMapCoord(localCoord)) == false) {
         return false;
       }
     }
@@ -54,7 +54,7 @@ public class HexMap {
 
     // update the occupancy map
     foreach (Coord localCoord in hexItem.PieceData.HexSet.HexSetData) {
-      _OccupancyMap.Add(hexItem.MapPosition + localCoord, hexItem);
+      _OccupancyMap.Add(hexItem.LocalToMapCoord(localCoord), hexItem);
     }
     return true;
   }
