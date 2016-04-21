@@ -63,7 +63,9 @@ namespace Cozmo {
     else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames))
     {
       newColor = ledParams.onColor;
-      return false;
+      
+      // Return true for the first frame in the onColor to make sure it's set
+      return phaseFrame <= ledParams.transitionOffFrames + 1;
     }
     else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames))
     {
@@ -74,7 +76,9 @@ namespace Cozmo {
     else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offFrames))
     {
       newColor = ledParams.offColor;
-      return false;
+      
+      // Return true for the first frame in the offColor to make sure it's set
+      return phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames) + 1;
     }
 
     newColor = ledParams.offColor;

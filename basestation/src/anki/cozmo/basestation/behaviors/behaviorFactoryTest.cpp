@@ -23,6 +23,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
@@ -32,6 +33,10 @@
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+// Set to 1 if you want the test to actually be able to write
+// new camera calibration, calibration images, and test results to flash.
+#define ENABLE_NVSTORAGE_WRITES 0
 
 #define DEBUG_FACTORY_TEST_BEHAVIOR 1
 
@@ -117,8 +122,14 @@ namespace Cozmo {
     _actionCallbackMap.clear();
     _holdUntilTime = -1;
     _watchdogTriggerTime = currentTime_sec + _kWatchdogTimeout;
+    _waitingForWriteAck = false;
     
     robot.GetActionList().Cancel();
+    
+    // Disable reactionary behaviors
+    if (robot.GetBehaviorManager().GetWhiteboard().IsCliffReactionEnabled()) {
+      robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
+    }
     
     // Go to the appropriate state
     InitState(robot);
@@ -134,20 +145,83 @@ namespace Cozmo {
     // ...
   }
 
+  // Print result and display lights on robot
+  void BehaviorFactoryTest::PrintAndLightResult(Robot& robot, FactoryTestResultCode res)
+  {
+    // Backpack lights
+    static const size_t NUM_LIGHTS = (size_t)LEDId::NUM_BACKPACK_LEDS;
+    static const std::array<u32,NUM_LIGHTS> pass_onColor{{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}};
+    static const std::array<u32,NUM_LIGHTS> pass_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
+    static const std::array<u32,NUM_LIGHTS> pass_onPeriod_ms{{1000,1000,1000,1000,1000}};
+    static const std::array<u32,NUM_LIGHTS> pass_offPeriod_ms{{100,100,100,100,100}};
+    static const std::array<u32,NUM_LIGHTS> pass_transitionOnPeriod_ms{{450,450,450,450,450}};
+    static const std::array<u32,NUM_LIGHTS> pass_transitionOffPeriod_ms{{450,450,450,450,450}};
+    
+    static const std::array<u32,NUM_LIGHTS> fail_onColor{{NamedColors::BLACK,NamedColors::RED,NamedColors::RED,NamedColors::RED,NamedColors::BLACK}};
+    static const std::array<u32,NUM_LIGHTS> fail_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
+    static const std::array<u32,NUM_LIGHTS> fail_onPeriod_ms{{500,500,500,500,500}};
+    static const std::array<u32,NUM_LIGHTS> fail_offPeriod_ms{{500,500,500,500,500}};
+    static const std::array<u32,NUM_LIGHTS> fail_transitionOnPeriod_ms{};
+    static const std::array<u32,NUM_LIGHTS> fail_transitionOffPeriod_ms{};
+    
+    if (res == FactoryTestResultCode::SUCCESS) {
+      PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.TestPASSED", "");
+      robot.SetBackpackLights(pass_onColor, pass_offColor,
+                              pass_onPeriod_ms, pass_offPeriod_ms,
+                              pass_transitionOnPeriod_ms, pass_transitionOffPeriod_ms);
+    } else {
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestFAILED",
+                          "%s (code %d, state %s)",
+                          EnumToString(res), static_cast<u8>(res), GetStateName().c_str());
+      robot.SetBackpackLights(fail_onColor, fail_offColor,
+                              fail_onPeriod_ms, fail_offPeriod_ms,
+                              fail_transitionOnPeriod_ms, fail_transitionOffPeriod_ms);
+    }
+    
+  };
+  
   void BehaviorFactoryTest::EndTest(Robot& robot, FactoryTestResultCode resCode)
   {
     // Send test result out and make this behavior stop running
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
-      _testResult = resCode;
-      if (_testResult == FactoryTestResultCode::SUCCESS) {
-        PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.TestComplete", "PASS");
-      } else {
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestComplete",
-                            "FAIL: %s (code %d, state %s)",
-                            EnumToString(_testResult), (int)_testResult, GetStateName().c_str());
+      
+      if (_waitingForWriteAck) {
+        PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WritingTestResultInProgress", "Ignoring result %s", EnumToString(resCode));
+        return;
       }
       
-      robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
+      if (ENABLE_NVSTORAGE_WRITES) {
+        // Generate result struct
+        FactoryTestResultEntry testRes;
+        testRes.result = resCode;
+        testRes.utcTime = time(0);
+        testRes.stationID = 0;   // TODO: How to get this?
+        
+        u8 buf[2*testRes.Size()];
+        size_t numBytes = testRes.Pack(buf, sizeof(buf));
+        
+        // Store test result to robot flash
+        _waitingForWriteAck = true;
+        robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, buf, numBytes,
+                                            [this,&robot,resCode](NVStorage::NVResult res){
+                                              if (res == NVStorage::NVResult::NV_OKAY) {
+                                                _testResult = resCode;
+                                                
+                                              } else {
+                                                PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WriteFailed",
+                                                                    "WriteResult: %s (Original test result: %s)",
+                                                                    EnumToString(res), EnumToString(resCode));
+                                                _testResult = FactoryTestResultCode::TEST_RESULT_FLASH_WRITE_FAILED;
+                                              }
+                                              _waitingForWriteAck = false;
+                                              PrintAndLightResult(robot,_testResult);
+                                              robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
+                                            });
+      } else {
+        _testResult = resCode;
+        PrintAndLightResult(robot,_testResult);
+        robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
+      }
     } else {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestAlreadyComplete",
                           "Existing result %s (new result %s)",
