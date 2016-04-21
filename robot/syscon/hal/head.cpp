@@ -61,9 +61,6 @@ void Head::init()
   NRF_UART0->TASKS_STARTTX = 1;
   NRF_UART0->TASKS_STARTRX = 1;
 
-  // Initialize the UART for the specified baudrate
-  NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
-
   // Extremely low priorty IRQ
   NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
   NVIC_SetPriority(UART0_IRQn, UART_PRIORITY);
@@ -80,42 +77,48 @@ void Head::enable(bool enable) {
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
+  NRF_UART0->TASKS_STOPRX = 1;
+  NRF_UART0->TASKS_STOPTX = 1;
+  
   switch (mode) {
     case TRANSMIT_SEND:
-      // Prevent debug words from transmitting
-      NRF_UART0->PSELRXD = 0xFFFFFFFF;
-      NRF_UART0->PSELTXD = 0xFFFFFFFF;
-      NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
-      MicroWait(10);
-      NRF_UART0->PSELTXD = PIN_TX_HEAD;
-
       // Configure pin so it is open-drain
       NRF_GPIO->PIN_CNF[PIN_TX_HEAD] = (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos)
                                     | (GPIO_PIN_CNF_DRIVE_H0D1 << GPIO_PIN_CNF_DRIVE_Pos)
                                     | (GPIO_PIN_CNF_PULL_Disabled << GPIO_PIN_CNF_PULL_Pos)
                                     | (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos)
                                     | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
+
+      // Prevent debug words from transmitting
+      NRF_UART0->PSELRXD = 0xFFFFFFFF;
+      NRF_UART0->PSELTXD = PIN_TX_HEAD;
+      NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
+
+      NRF_UART0->TASKS_STARTTX = 1;
+
       break ;
     case TRANSMIT_RECEIVE:
       nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
 
-      NRF_UART0->PSELRXD = 0xFFFFFFFF;
+      NRF_UART0->PSELRXD = PIN_TX_HEAD;
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
       NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
-      MicroWait(10);
-      NRF_UART0->PSELRXD = PIN_TX_HEAD;
+
+      NRF_UART0->TASKS_STARTRX = 1;
+
       break ;
     case TRANSMIT_CHARGER_RX:
       nrf_gpio_pin_clear(PIN_TX_VEXT);
       nrf_gpio_cfg_output(PIN_TX_VEXT);
-
-      NRF_UART0->PSELRXD = 0xFFFFFFFF;
+    
+      NRF_UART0->PSELRXD = PIN_TX_VEXT;
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
       NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
 
+      nrf_gpio_pin_set(PIN_TX_VEXT);
       nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_PULLUP);
-      MicroWait(10);
-      NRF_UART0->PSELRXD = PIN_TX_VEXT;
+
+      NRF_UART0->TASKS_STARTRX = 1;
     
       break ;
 

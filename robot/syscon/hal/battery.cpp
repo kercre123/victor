@@ -10,6 +10,9 @@
 #include "hardware.h"
 #include "rtos.h"
 
+static const int MaxContactTime = 90000; // (30min) 20ms per count
+static int ContactTime = 0;
+
 // Updated to 3.0
 const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
 const u32 V_PRESCALE    = 3;
@@ -20,8 +23,6 @@ const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
 
 const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
 const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.30); // V
-
-//const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(2.90); // V
 
 const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 
@@ -196,15 +197,17 @@ void Battery::manage(void* userdata)
 
         vExt = calcResult(VEXT_SCALE);
         onContacts = vExt > VEXT_DETECT_THRESHOLD;
-
+        startADCsample(ANALOG_CLIFF_SENSE);
+        
         if (onContacts) {
-          // THIS SHOULD TIMEOUT AFTER ~30 minutes
-          nrf_gpio_pin_set(PIN_CHARGE_EN);
+          if (ContactTime++ < MaxContactTime) {
+            nrf_gpio_pin_set(PIN_CHARGE_EN);
+          } else {
+            nrf_gpio_pin_clear(PIN_CHARGE_EN);
+          }
         } else {
           nrf_gpio_pin_clear(PIN_CHARGE_EN);
         }
-
-        startADCsample(ANALOG_CLIFF_SENSE);
       }
       break ;
     case ANALOG_CLIFF_SENSE:

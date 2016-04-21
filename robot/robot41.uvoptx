@@ -149,34 +149,34 @@
         <Bp>
           <Number>0</Number>
           <Type>0</Type>
-          <LineNumber>100</LineNumber>
+          <LineNumber>139</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>0</Address>
+          <Address>38464</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>0</BreakIfRCount>
-          <Filename>C:\Users\unicd\GitHub\products-cozmo\robot\boot_startup\startup_MK02F12810.s</Filename>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>.\k02_hal\hal\uart.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression></Expression>
+          <Expression>\\robot\k02_hal/hal/uart.cpp\139</Expression>
         </Bp>
         <Bp>
           <Number>1</Number>
           <Type>0</Type>
-          <LineNumber>104</LineNumber>
+          <LineNumber>53</LineNumber>
           <EnabledFlag>1</EnabledFlag>
-          <Address>0</Address>
+          <Address>6740</Address>
           <ByteObject>0</ByteObject>
           <HtxType>0</HtxType>
           <ManyObjects>0</ManyObjects>
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>0</BreakIfRCount>
-          <Filename>C:\Users\unicd\GitHub\products-cozmo\robot\boot_startup\startup_MK02F12810.s</Filename>
+          <BreakIfRCount>1</BreakIfRCount>
+          <Filename>.\k02_hal\hal\spi.cpp</Filename>
           <ExecCommand></ExecCommand>
-          <Expression></Expression>
+          <Expression>\\robot\k02_hal/hal/spi.cpp\53</Expression>
         </Bp>
       </Breakpoint>
       <WatchWindow1>
