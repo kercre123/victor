@@ -37,13 +37,22 @@ public class SimpleObjectPool<T> where T : class {
       DAS.Error(this, "Tried to return a null object to the pool!");
       throw new ArgumentNullException();
     }
-    if (_ResetFunction != null) {
-      _ResetFunction(item, false);
+
+    bool isDestroyedObject = false;
+    if (item is MonoBehaviour) {
+      MonoBehaviour script = item as MonoBehaviour;
+      isDestroyedObject = (script.gameObject == null || script.transform == null);
     }
+    if (!isDestroyedObject) {
+      if (_ResetFunction != null) {
+        _ResetFunction(item, false);
+      }
+      _InactiveObjects.Enqueue(item);
+    }
+
     if (_ActiveObjects.Contains(item)) {
       _ActiveObjects.Remove(item);
     }
-    _InactiveObjects.Enqueue(item);
   }
 
   public T GetObjectFromPool() {
