@@ -93,6 +93,20 @@ u32 NVStorageComponent::GetTagRangeEnd(u32 startTag) const {
 }
 
 bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
+                               std::vector<u8>* data,
+                               NVStorageWriteEraseCallback callback,
+                               bool broadcastResultToGame)
+{
+  // Check for null data
+  if (data == nullptr) {
+    PRINT_NAMED_INFO("NVStorageComponent.Write.NullData", "%s", EnumToString(tag));
+    return false;
+  }
+  
+  return Write(tag, data->data(), data->size(), callback, broadcastResultToGame);
+}
+  
+bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
                                u8* data, size_t size,
                                NVStorageWriteEraseCallback callback,
                                bool broadcastResultToGame)
@@ -101,6 +115,12 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
   if (tag == NVStorage::NVEntryTag::NVEntry_EraseAll ||
       tag == NVStorage::NVEntryTag::NVEntry_Invalid) {
     PRINT_NAMED_INFO("NVStorageComponent.Write.InvalidTag", "%s", EnumToString(tag));
+    return false;
+  }
+  
+  // Check for null data
+  if (data == nullptr) {
+    PRINT_NAMED_INFO("NVStorageComponent.Write.NullData", "%s", EnumToString(tag));
     return false;
   }
   
@@ -676,6 +696,11 @@ void NVStorageComponent::HandleNVStorageClearPartialPendingWriteEntry(const Anki
   
 void NVStorageComponent::Test()
 {
+  // For development only
+  if (!ANKI_DEVELOPER_CODE) {
+    return;
+  }
+  
   
   NVStorage::NVEntryTag testMultiBlobTag = NVStorage::NVEntryTag::NVEntry_MultiBlobJunk;
   

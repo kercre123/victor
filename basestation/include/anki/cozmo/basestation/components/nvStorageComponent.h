@@ -59,6 +59,11 @@ public:
              NVStorageWriteEraseCallback callback = {},
              bool broadcastResultToGame = false);
   
+  bool Write(NVStorage::NVEntryTag tag,
+             std::vector<u8>* data,
+             NVStorageWriteEraseCallback callback = {},
+             bool broadcastResultToGame = false);
+  
   // Erase the given entry from robot flash.
   // Returns true if request was successfully sent.
   // If broadcastToGame == true, a single MessageEngineToGame::NVStorageOpResult
