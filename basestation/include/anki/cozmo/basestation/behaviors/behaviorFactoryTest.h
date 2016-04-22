@@ -90,11 +90,11 @@ namespace Cozmo {
     
     Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg);
 
-    Result HandleObjectMoved(const Robot& robot,
-                             const ObjectMoved &msg);
+    Result HandleObjectMoved(const Robot& robot, const ObjectMoved &msg);
     
-    Result HandleCameraCalibration(Robot& robot,
-                                   const CameraCalibration &msg);
+    Result HandleCameraCalibration(Robot& robot, const CameraCalibration &msg);
+    
+    Result HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg);
     
     Result HandleActionCompleted(Robot& robot,
                                  const ExternalInterface::RobotCompletedAction& msg);

@@ -7,7 +7,6 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_8 FactoryTestState {
-  RequestCalibrationImages,
   ChargerAndIMUCheck,       // Verify that robot is on charger and IMU is not drifting
   DriveToSlot,              // Drive forward until cliff event. Set robot's pose.
   GotoCalibrationPose,      // Drive to pose from which calibration images are to be taken
@@ -30,9 +29,11 @@ enum uint_8 FactoryTestResultCode {
   STILL_ON_CHARGER,
   GOTO_POSE_ACTION_FAILED,
   CLIFF_UNDETECTED,
+  CLIFF_UNEXPECTED,
   NOT_IN_CALIBRATION_POSE,
   CALIBRATION_TIMED_OUT,
   CALIBRATION_VALUES_OOR,
+  CAMERA_CALIB_FLASH_WRITE_FAILED,
   NOT_IN_PRE_PICKUP_POSE,
   CUBE_NOT_FOUND,
   CUBE_NOT_WHERE_EXPECTED,

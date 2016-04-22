@@ -65,7 +65,7 @@ namespace Cozmo {
   , _prePickupPose( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 150, 0}, &robot.GetPose().FindOrigin())
   , _expectedLightCubePose(0, Z_AXIS_3D(), {-50, 300, 0}, &robot.GetPose().FindOrigin())
   , _expectedChargerPose(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin())
-  , _currentState(FactoryTestState::RequestCalibrationImages)
+  , _currentState(FactoryTestState::ChargerAndIMUCheck)
   , _lastHandlerResult(RESULT_OK)
   , _testResult(FactoryTestResultCode::UNKNOWN)
   {
@@ -96,12 +96,10 @@ namespace Cozmo {
       EngineToGameTag::RobotObservedObject,
       EngineToGameTag::RobotDeletedObject,
       EngineToGameTag::ObjectMoved,
-      EngineToGameTag::CameraCalibration
+      EngineToGameTag::CameraCalibration,
+      EngineToGameTag::RobotStopped
     }});
 
-    SubscribeToTags({
-      GameToEngineTag::ClearAllObjects
-    });
   }
   
 #pragma mark -
@@ -133,6 +131,16 @@ namespace Cozmo {
     
     // Go to the appropriate state
     InitState(robot);
+    
+    // Set fake calibration if not already set so that we can actually run
+    // calibration from images.
+    if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
+      PRINT_NAMED_INFO("BehaviorFactoryTest.Update.SettingFakeCalib", "");
+      Vision::CameraCalibration fakeCalib(240, 320,
+                                          290, 290,
+                                          160, 120);
+      robot.GetVisionComponent().SetCameraCalibration(fakeCalib);
+    }
     
     return lastResult;
   } // Init()
@@ -272,22 +280,6 @@ namespace Cozmo {
     
     switch(_currentState)
     {
-      case FactoryTestState::RequestCalibrationImages:
-      {
-        // Set calibration if not already set
-        if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
-          PRINT_NAMED_INFO("BehaviorFactoryTest.Update.SettingFakeCalib", "");
-          Vision::CameraCalibration fakeCalib(240, 320,
-                                              290, 290,
-                                              160, 120);
-          robot.GetVisionComponent().SetCameraCalibration(fakeCalib);
-        }
-        
-        
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.RequestCalibrationImages", "TODO");
-        SetCurrState(FactoryTestState::ChargerAndIMUCheck);
-        break;
-      }
       case FactoryTestState::ChargerAndIMUCheck:
       {
         // Check that robot is on charger
@@ -617,6 +609,10 @@ namespace Cozmo {
         _lastHandlerResult = HandleCameraCalibration(robot, event.GetData().Get_CameraCalibration());
         break;
         
+      case EngineToGameTag::RobotStopped:
+        _lastHandlerResult = HandleRobotStopped(robot, event.GetData().Get_RobotStopped());
+        break;
+        
       default:
         PRINT_NAMED_ERROR("BehaviorFactoryTest.HandleWhileRunning.InvalidTag",
                           "Received unexpected event with tag %hhu.", event.GetData().GetTag());
@@ -793,14 +789,51 @@ namespace Cozmo {
     PRINT_NAMED_INFO("BehaviorFactoryTest.HandleCameraCalibration.SettingNewCalibration", "");
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
     
-    // TODO: Save calibration to robot
-    // ...
+    // Save calibration to robot
+    if (ENABLE_NVSTORAGE_WRITES) {
+      
+      // Save calibration
+      CameraCalibration calibMsg;
+      calibMsg.focalLength_x = camCalib.GetFocalLength_x();
+      calibMsg.focalLength_y = camCalib.GetFocalLength_y();
+      calibMsg.center_x = camCalib.GetCenter_x();
+      calibMsg.center_y = camCalib.GetCenter_y();
+      calibMsg.skew = camCalib.GetSkew();
+      calibMsg.nrows = camCalib.GetNrows();
+      calibMsg.ncols = camCalib.GetNcols();
+      
+      u8 buf[2*calibMsg.Size()];
+      size_t numBytes = calibMsg.Pack(buf, sizeof(buf));
+      
+      robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, numBytes,
+                                          [this,&robot](NVStorage::NVResult res) {
+                                            if (res == NVStorage::NVResult::NV_OKAY) {
+                                              PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCameraCalib.SUCCESS", "");
+                                            } else {
+                                              EndTest(robot, FactoryTestResultCode::CAMERA_CALIB_FLASH_WRITE_FAILED);
+                                            }
+                                          });
+      
+    }
 
     
     robot.GetVisionComponent().ClearCalibrationImages();
     _calibrationReceived = true;
     return RESULT_OK;
   }
+  
+  Result BehaviorFactoryTest::HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg)
+  {
+    // This is expected when driving to slot
+    if (_currentState == FactoryTestState::DriveToSlot) {
+      StartActing(robot, new WaitAction(robot, 0.03));
+    } else {
+      EndTest(robot, FactoryTestResultCode::CLIFF_UNEXPECTED);
+    }
+    
+    return RESULT_OK;
+  }
+  
 
   void BehaviorFactoryTest::StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback)
   {
