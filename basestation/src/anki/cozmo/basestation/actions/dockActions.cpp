@@ -919,14 +919,12 @@ namespace Anki {
     
     PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(Robot& robot,
                                                                      const Pose3d& placementPose,
-                                                                     const PathMotionProfile motionProfile,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed)
     : CompoundActionSequential(robot, {
       new DriveToPlaceCarriedObjectAction(robot,
                                           placementPose,
                                           true,
-                                          motionProfile,
                                           useExactRotation,
                                           useManualSpeed),
       new PlaceObjectOnGroundAction(robot)})
@@ -942,6 +940,12 @@ namespace Anki {
       } else {
         completionUnion = _completedActionInfoStack.back().first;
       }
+    }
+    
+    void PlaceObjectOnGroundAtPoseAction::SetMotionProfile(const PathMotionProfile& motionProfile)
+    {
+      DriveToPlaceCarriedObjectAction* driveAction = dynamic_cast<DriveToPlaceCarriedObjectAction*>(GetActionList().front());
+      driveAction->SetMotionProfile(motionProfile);
     }
     
 #pragma mark ---- PlaceRelObjectAction ----

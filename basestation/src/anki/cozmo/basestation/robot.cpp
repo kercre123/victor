@@ -45,6 +45,7 @@
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
+#include "anki/cozmo/basestation/speedChooser.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
@@ -112,6 +113,7 @@ namespace Anki {
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
     , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
+    , _speedChooser(new SpeedChooser(*this))
     , _blockFilter(new BlockFilter(this))
     , _imageDeChunker(new ImageDeChunker())
     , _traceHandler(_context->GetDataPlatform())

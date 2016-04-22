@@ -270,11 +270,12 @@ namespace Anki {
     public:
       PlaceObjectOnGroundAtPoseAction(Robot& robot,
                                       const Pose3d& placementPose,
-                                      const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                       const bool useExactRotation = false,
                                       const bool useManualSpeed = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
+      
+      void SetMotionProfile(const PathMotionProfile& motionProfile);
       
     protected:
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;

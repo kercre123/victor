@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
+#include "anki/cozmo/basestation/speedChooser.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "driveToActions.h"
 
@@ -77,7 +78,6 @@ namespace Anki {
     DriveToObjectAction::DriveToObjectAction(Robot& robot,
                                              const ObjectID& objectID,
                                              const PreActionPose::ActionType& actionType,
-                                             const PathMotionProfile& motionProfile,
                                              const f32 predockOffsetDistX_mm,
                                              const bool useApproachAngle,
                                              const f32 approachAngle_rad,
@@ -91,7 +91,6 @@ namespace Anki {
     , _compoundAction(robot)
     , _useApproachAngle(useApproachAngle)
     , _approachAngle_rad(approachAngle_rad)
-    , _pathMotionProfile(motionProfile)
     {
 
     }
@@ -99,7 +98,6 @@ namespace Anki {
     DriveToObjectAction::DriveToObjectAction(Robot& robot,
                                              const ObjectID& objectID,
                                              const f32 distance,
-                                             const PathMotionProfile& motionProfile,
                                              const bool useManualSpeed)
     : IAction(robot)
     , _objectID(objectID)
@@ -110,7 +108,6 @@ namespace Anki {
     , _compoundAction(robot)
     , _useApproachAngle(false)
     , _approachAngle_rad(0)
-    , _pathMotionProfile(motionProfile)
     {
 
     }
@@ -139,6 +136,12 @@ namespace Anki {
       _startDrivingAnimClip = drivingSoundStartClipName;
       _stopDrivingAnimClip = drivingSoundStopClipName;
       _hasCustomDrivingSounds = true;
+    }
+    
+    void DriveToObjectAction::SetMotionProfile(const PathMotionProfile& motionProfile)
+    {
+      _hasMotionProfile = true;
+      _pathMotionProfile = motionProfile;
     }
     
     ActionResult DriveToObjectAction::GetPossiblePoses(ActionableObject* object,
@@ -307,8 +310,12 @@ namespace Anki {
 
           f32 preActionPoseDistThresh = ComputePreActionPoseDistThreshold(possiblePoses[0], object, DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE);
           
-          DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(_robot, _pathMotionProfile, true, _useManualSpeed);
+          DriveToPoseAction* driveToPoseAction = new DriveToPoseAction(_robot, true, _useManualSpeed);
           driveToPoseAction->SetGoals(possiblePoses, preActionPoseDistThresh);
+          if(_hasMotionProfile)
+          {
+            driveToPoseAction->SetMotionProfile(_pathMotionProfile);
+          }
           if( _hasCustomDrivingSounds ) {
             driveToPoseAction->SetDrivingSounds(_startDrivingAnimClip, _stopDrivingAnimClip);
           }
@@ -424,13 +431,11 @@ namespace Anki {
     DriveToPlaceCarriedObjectAction::DriveToPlaceCarriedObjectAction(Robot& robot,
                                                                      const Pose3d& placementPose,
                                                                      const bool placeOnGround,
-                                                                     const PathMotionProfile& motionProfile,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed)
     : DriveToObjectAction(robot,
                           robot.GetCarryingObject(),
                           placeOnGround ? PreActionPose::PLACE_ON_GROUND : PreActionPose::PLACE_RELATIVE,
-                          motionProfile,
                           0,
                           false,
                           0,
@@ -509,13 +514,11 @@ namespace Anki {
 #pragma mark ---- DriveToPoseAction ----
     
     DriveToPoseAction::DriveToPoseAction(Robot& robot,
-                                         const PathMotionProfile& motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed) //, const Pose3d& pose)
     : IAction(robot)
     , _isGoalSet(false)
     , _driveWithHeadDown(forceHeadDown)
-    , _pathMotionProfile(motionProf)
     , _goalDistanceThreshold(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM)
     , _goalAngleThreshold(DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD)
     , _useManualSpeed(useManualSpeed)
@@ -533,14 +536,13 @@ namespace Anki {
     
     DriveToPoseAction::DriveToPoseAction(Robot& robot,
                                          const Pose3d& pose,
-                                         const PathMotionProfile& motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-    : DriveToPoseAction(robot, motionProf, forceHeadDown, useManualSpeed)
+    : DriveToPoseAction(robot, forceHeadDown, useManualSpeed)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -550,14 +552,13 @@ namespace Anki {
     
     DriveToPoseAction::DriveToPoseAction(Robot& robot,
                                          const std::vector<Pose3d>& poses,
-                                         const PathMotionProfile& motionProf,
                                          const bool forceHeadDown,
                                          const bool useManualSpeed,
                                          const Point3f& distThreshold,
                                          const Radians& angleThreshold,
                                          const float maxPlanningTime,
                                          const float maxReplanPlanningTime)
-    : DriveToPoseAction(robot, motionProf, forceHeadDown, useManualSpeed)
+    : DriveToPoseAction(robot, forceHeadDown, useManualSpeed)
     {
       _maxPlanningTime = maxPlanningTime;
       _maxReplanPlanningTime = maxReplanPlanningTime;
@@ -646,6 +647,12 @@ namespace Anki {
       return name;
     }
     
+    void DriveToPoseAction::SetMotionProfile(const PathMotionProfile& motionProfile)
+    {
+      _hasMotionProfile = true;
+      _pathMotionProfile = motionProfile;
+    }
+    
     ActionResult DriveToPoseAction::Init()
     {
       ActionResult result = ActionResult::SUCCESS;
@@ -671,6 +678,11 @@ namespace Anki {
         Result planningResult = RESULT_OK;
         
         _selectedGoalIndex = 0;
+        
+        if(!_hasMotionProfile)
+        {
+          _pathMotionProfile = GetRobot().GetSpeedChooser().GetPathMotionProfile(_goalPoses);
+        }
         
         if(_goalPoses.size() == 1) {
           planningResult = _robot.StartDrivingToPose(_goalPoses.back(), _pathMotionProfile, _useManualSpeed);
@@ -841,7 +853,6 @@ namespace Anki {
     IDriveToInteractWithObject::IDriveToInteractWithObject(Robot& robot,
                                                            const ObjectID& objectID,
                                                            const PreActionPose::ActionType& actionType,
-                                                           const PathMotionProfile& motionProfile,
                                                            const f32 distanceFromMarker_mm,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
@@ -859,7 +870,6 @@ namespace Anki {
       _driveToObjectAction = new DriveToObjectAction(robot,
                                                      objectID,
                                                      actionType,
-                                                     motionProfile,
                                                      distanceFromMarker_mm,
                                                      useApproachAngle,
                                                      approachAngle_rad,
@@ -890,6 +900,22 @@ namespace Anki {
       assert(nullptr != _driveToObjectAction);
       _driveToObjectAction->SetApproachAngle(angle_rad);
     }
+    
+    void IDriveToInteractWithObject::SetMotionProfile(const PathMotionProfile& motionProfile)
+    {
+      _driveToObjectAction->SetMotionProfile(motionProfile);
+      
+      // If any of our children are dockActions (which they likely are) we need to update their
+      // speeds/accels to use the ones specified in the motionProfile
+      for(auto& action : GetActionList())
+      {
+        IDockAction* dockAction;
+        if((dockAction = dynamic_cast<IDockAction*>(action)) != nullptr)
+        {
+          dockAction->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
+        }
+      }
+    }
 
     
 #pragma mark ---- DriveToAlignWithObjectAction ----
@@ -897,14 +923,12 @@ namespace Anki {
     DriveToAlignWithObjectAction::DriveToAlignWithObjectAction(Robot& robot,
                                                                const ObjectID& objectID,
                                                                const f32 distanceFromMarker_mm,
-                                                               const PathMotionProfile& motionProfile,
                                                                const bool useApproachAngle,
                                                                const f32 approachAngle_rad,
                                                                const bool useManualSpeed)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::DOCKING,
-                                 motionProfile,
                                  distanceFromMarker_mm,
                                  useApproachAngle,
                                  approachAngle_rad,
@@ -912,7 +936,7 @@ namespace Anki {
     {
       AlignWithObjectAction* action = new AlignWithObjectAction(robot, objectID,
                                                                 distanceFromMarker_mm, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
+      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
     
@@ -920,21 +944,19 @@ namespace Anki {
     
     DriveToPickupObjectAction::DriveToPickupObjectAction(Robot& robot,
                                                          const ObjectID& objectID,
-                                                         const PathMotionProfile& motionProfile,
                                                          const bool useApproachAngle,
                                                          const f32 approachAngle_rad,
                                                          const bool useManualSpeed)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::DOCKING,
-                                 motionProfile,
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
                                  useManualSpeed)
     {
       PickupObjectAction* action = new PickupObjectAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
+      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
     
@@ -942,14 +964,12 @@ namespace Anki {
     
     DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(Robot& robot,
                                                            const ObjectID& objectID,
-                                                           const PathMotionProfile& motionProfile,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
                                                            const bool useManualSpeed)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::PLACE_RELATIVE,
-                                 motionProfile,
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
@@ -960,7 +980,7 @@ namespace Anki {
                                                               false,
                                                               0,
                                                               useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
+      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
     
@@ -968,7 +988,6 @@ namespace Anki {
     
     DriveToPlaceRelObjectAction::DriveToPlaceRelObjectAction(Robot& robot,
                                                              const ObjectID& objectID,
-                                                             const PathMotionProfile& motionProfile,
                                                              const f32 placementOffsetX_mm,
                                                              const bool useApproachAngle,
                                                              const f32 approachAngle_rad,
@@ -976,7 +995,6 @@ namespace Anki {
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::PLACE_RELATIVE,
-                                 motionProfile,
                                  placementOffsetX_mm,
                                  useApproachAngle,
                                  approachAngle_rad,
@@ -987,7 +1005,7 @@ namespace Anki {
                                                               true,
                                                               placementOffsetX_mm,
                                                               useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
+      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
     
@@ -995,14 +1013,12 @@ namespace Anki {
     
     DriveToRollObjectAction::DriveToRollObjectAction(Robot& robot,
                                                      const ObjectID& objectID,
-                                                     const PathMotionProfile& motionProfile,
                                                      const bool useApproachAngle,
                                                      const f32 approachAngle_rad,
                                                      const bool useManualSpeed)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::ROLLING,
-                                 motionProfile,
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
@@ -1010,7 +1026,7 @@ namespace Anki {
     , _objectID(objectID)
     {
       RollObjectAction* action = new RollObjectAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
+      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
 
@@ -1066,21 +1082,19 @@ namespace Anki {
     
     DriveToPopAWheelieAction::DriveToPopAWheelieAction(Robot& robot,
                                                        const ObjectID& objectID,
-                                                       const PathMotionProfile& motionProfile,
                                                        const bool useApproachAngle,
                                                        const f32 approachAngle_rad,
                                                        const bool useManualSpeed)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::ROLLING,
-                                 motionProfile,
                                  0,
                                  useApproachAngle,
                                  approachAngle_rad,
                                  useManualSpeed)
     {
       PopAWheelieAction* action = new PopAWheelieAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
+      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
     
@@ -1088,19 +1102,17 @@ namespace Anki {
     
     DriveToAndTraverseObjectAction::DriveToAndTraverseObjectAction(Robot& robot,
                                                                    const ObjectID& objectID,
-                                                                   const PathMotionProfile& motionProfile,
                                                                    const bool useManualSpeed)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::ENTRY,
-                                 motionProfile,
                                  0,
                                  false,
                                  0,
                                  useManualSpeed)
     {
       TraverseObjectAction* action = new TraverseObjectAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2);
+      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2);
       AddAction(action);
     }
     
@@ -1108,12 +1120,10 @@ namespace Anki {
     
     DriveToAndMountChargerAction::DriveToAndMountChargerAction(Robot& robot,
                                                                const ObjectID& objectID,
-                                                               const PathMotionProfile& motionProfile,
                                                                const bool useManualSpeed)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::ENTRY,
-                                 motionProfile,
                                  0,
                                  false,
                                  0,
@@ -1133,7 +1143,7 @@ namespace Anki {
       ASSERT_NAMED(driveAction != nullptr, "DriveToAndMountChargerAction.DriveToObjectSubActionNotFound");
       
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(motionProfile.dockSpeed_mmps, motionProfile.dockAccel_mmps2, motionProfile.dockDecel_mmps2);
+      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
   }
