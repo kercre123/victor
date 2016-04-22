@@ -175,15 +175,11 @@ public class StartupManager : MonoBehaviour {
     // Initialize persistance manager
     DataPersistence.DataPersistenceManager.CreateInstance();
     ChestRewardManager.CreateInstance();
-    SkillSystem.Instance.InitInstance();
+    
 
     if (_IsDebugBuild) {
       gameObject.AddComponent<SOSLogManager>();
     }
-  }
-
-  private void OnDestroy() {
-    SkillSystem.Instance.DestroyInstance();
   }
 
   private void LoadAssets(AssetBundleManager assetBundleManager) {
@@ -229,10 +225,18 @@ public class StartupManager : MonoBehaviour {
       Cozmo.HexItemList.SetInstance(cd);
     });
 
+    assetBundleManager.LoadAssetAsync<ChallengeDataList>(_GameMetadataAssetBundleName, 
+      "ChallengeList", (ChallengeDataList cd) => {
+      ChallengeDataList.SetInstance(cd);
+    });
+
     assetBundleManager.LoadAssetAsync<Cozmo.UI.MinigameUIPrefabHolder>(_MinigameUIPrefabAssetBundleName, 
       "MinigameUIPrefabHolder", (Cozmo.UI.MinigameUIPrefabHolder mph) => {
       Cozmo.UI.MinigameUIPrefabHolder.SetInstance(mph);
     });
+
+
+
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {

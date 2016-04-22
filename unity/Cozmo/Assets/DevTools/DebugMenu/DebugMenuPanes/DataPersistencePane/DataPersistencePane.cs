@@ -44,6 +44,21 @@ namespace DataPersistence {
     [SerializeField]
     private InputField _NotificationMinute;
 
+    [SerializeField]
+    private InputField _SaveStringInput;
+
+    [SerializeField]
+    private Button _SubmitSaveButton;
+
+    [SerializeField]
+    private InputField _SkillProfileCurrentLevel;
+    [SerializeField]
+    private InputField _SkillProfileHighLevel;
+    [SerializeField]
+    private InputField _SkillRobotHighLevel;
+    [SerializeField]
+    private Button _SubmitSkillsButton;
+
     private HomeHub GetHomeHub() {
       var go = GameObject.Find("HomeHub(Clone)");
       if (go != null) {
