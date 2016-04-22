@@ -19,7 +19,7 @@ namespace DataPersistence {
     // Is true once all daily goals have been completed
     public bool GoalsFinished;
 
-    public int GreenPointsLadderLevel;
+    public int ChestsGained;
 
     public TimelineEntryData() {
       Goals = new StatContainer();

@@ -183,6 +183,8 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void OnConsoleLogPaneClosed() {
+    _ConsoleLogPaneView.ConsoleSOSLogButtonEnable -= EnableSOSLogs;
+    _ConsoleLogPaneView.ConsoleLogCopyToClipboard -= CopyLogsToClipboard;
     _ConsoleLogPaneView.ConsoleLogToggleChanged -= OnConsoleToggleChanged;
     _ConsoleLogPaneView = null;
   }

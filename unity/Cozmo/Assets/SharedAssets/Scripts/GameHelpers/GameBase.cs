@@ -100,6 +100,9 @@ public abstract class GameBase : MonoBehaviour {
 
     _CubeCycleTimers = new Dictionary<int, CycleData>();
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
+
+    SkillSystem.Instance.StartGame(_ChallengeData);
+    SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
   }
 
   private void FinishTurnToFace(bool success) {
@@ -166,6 +169,8 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance = null;
     }
     DAS.Info(this, "Finished GameBase On Destroy");
+    SkillSystem.Instance.EndGame();
+    SkillSystem.Instance.OnLevelUp -= HandleCozmoSkillLevelUp;
   }
 
   public void CloseMinigameImmediately() {
@@ -178,8 +183,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void EndGameRobotReset() {
-    RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
-    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
+    RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
@@ -367,6 +371,16 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void OnDifficultySet(int difficulty) {
+  }
+
+  protected void HandleCozmoSkillLevelUp(int newLevel) {
+    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+    // Hook up callbacks
+    alertView.SetCloseButtonEnabled(true);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue);
+    alertView.TitleLocKey = LocalizationKeys.kSkillsLevelUpTitle;
+    alertView.DescriptionLocKey = LocalizationKeys.kSkillsLevelUpDescription;
+    alertView.SetMessageArgs(new object[] { newLevel, _ChallengeData.name });
   }
 
   #endregion

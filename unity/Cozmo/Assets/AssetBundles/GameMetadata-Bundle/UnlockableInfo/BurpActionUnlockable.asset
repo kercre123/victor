@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: BurpAction
-    _EnumValue: 5
+    _EnumValue: 9
   UnlockableType: 1
   Prerequisites:
   - _EnumValueAsString: SpeedTapGame
@@ -25,4 +25,5 @@ MonoBehaviour:
   DefaultUnlock: 0
   DescriptionKey: Unlock Description
   TitleKey: unlockable.Default.Description
-  TreatCost: 0
+  CostItemId: treat
+  CostAmountNeeded: 2

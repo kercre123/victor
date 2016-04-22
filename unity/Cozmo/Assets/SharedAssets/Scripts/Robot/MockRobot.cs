@@ -527,7 +527,7 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void SetBehaviorSystem(bool enable) {
+  public void SetEnableFreeplayBehaviorChooser(bool enable) {
     // Do nothing
   }
 

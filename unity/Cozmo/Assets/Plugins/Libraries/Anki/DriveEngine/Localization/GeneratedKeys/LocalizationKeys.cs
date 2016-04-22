@@ -189,6 +189,8 @@ public static class LocalizationKeys {
   public const string kCozmoTabTitle = "cozmoTab.title";
   public const string kCozmoTabSparkCount = "cozmoTab.sparkCount";
   public const string kCozmoTabHexCount = "cozmoTab.hexCount";
+  public const string kRequestSparkViewSparkunlockbutton = "requestSparkView.sparkunlockbutton";
+  public const string kRequestSparkViewTreatCount = "requestSparkView.TreatCount";
 
   #endregion
 
@@ -198,6 +200,17 @@ public static class LocalizationKeys {
   public const string kProgStatExcitement = "progStat.Excitement";
   public const string kProgStatNovelty = "progStat.Novelty";
   public const string kProgStatDefault = "progStat.Default";
+
+  #endregion
+
+  #region UnlockText
+
+  public const string kUnlockableCubeRollActionTitle = "unlockable.CubeRollAction.Title";
+  public const string kUnlockableCubeRollActionDescription = "unlockable.CubeRollAction.Description";
+  public const string kUnlockableDefaultTitle = "unlockable.Default.Title";
+  public const string kUnlockableDefaultDescription = "unlockable.Default.Description";
+  public const string kSkillsLevelUpDescription = "skills.LevelUp.Description";
+  public const string kSkillsLevelUpTitle = "skills.LevelUp.Title";
 
   #endregion
 }

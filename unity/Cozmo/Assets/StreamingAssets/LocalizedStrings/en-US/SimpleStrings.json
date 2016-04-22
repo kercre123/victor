@@ -51,6 +51,9 @@
   "label.xCount": {
     "translation": "x{0}"
   },
+  "label.colonCount": {
+    "translation": "{0}: {1}"
+  },
   "dailySummary.title": {
     "translation": "Daily Summary for {0}/{1}"
   },
@@ -87,16 +90,13 @@
   "cozmoTab.title": {
     "translation": "Core Upgrades"
   },
-  "cozmoTab.sparkCount": {
-    "translation": "Sparks: {0}"
-  },
   "cozmoTab.hexCount": {
     "translation": "Hex Pieces: {0}"
   },
   "requestSparkView.sparkunlockbutton": {
-    "translation": "{0} sparks"
+    "translation": "Give {0} {1}"
   },
   "requestSparkView.TreatCount": {
-    "translation": "Total Sparks: {0}"
+    "translation": "Total {0}: {1}"
   }
 }

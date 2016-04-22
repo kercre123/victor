@@ -63,7 +63,7 @@ namespace CubePounce {
 
     protected void InitializeMinigameObjects(int numCubes) {
 
-      CurrentRobot.SetBehaviorSystem(false);
+      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
       RobotEngineManager.Instance.OnCliffEvent += HandleCliffEvent;

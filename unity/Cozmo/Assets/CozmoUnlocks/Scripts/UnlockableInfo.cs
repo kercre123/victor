@@ -30,7 +30,9 @@ public class UnlockableInfo : ScriptableObject {
 
   public string TitleKey;
 
-  public int TreatCost;
+  [Cozmo.ItemId]
+  public string CostItemId;
+  public int CostAmountNeeded;
 
   [Serializable]
   public class SerializableUnlockIds : SerializableEnum<Anki.Cozmo.UnlockId> {

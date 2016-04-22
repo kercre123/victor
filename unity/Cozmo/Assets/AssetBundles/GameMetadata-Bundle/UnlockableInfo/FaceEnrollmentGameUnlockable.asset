@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: FaceEnrollmentGame
-    _EnumValue: 6
+    _EnumValue: 9
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
@@ -21,4 +21,5 @@ MonoBehaviour:
   DefaultUnlock: 0
   DescriptionKey: unlockable.Default.Title
   TitleKey: unlockable.Default.Title
-  TreatCost: 0
+  CostItemId: treat
+  CostAmountNeeded: 2

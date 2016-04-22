@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: CubeRollAction
-    _EnumValue: 2
+    _EnumValue: 9
   UnlockableType: 1
   Prerequisites: []
   AnyPrereqUnlock: 0
@@ -21,4 +21,5 @@ MonoBehaviour:
   DefaultUnlock: 0
   DescriptionKey: unlockable.CubeRollAction.Description
   TitleKey: unlockable.CubeRollAction.Title
-  TreatCost: 5
+  CostItemId: treat
+  CostAmountNeeded: 2

@@ -14,6 +14,10 @@ namespace SpeedTap {
     private const float _kTapAdjustRange = 5.0f;
     private const float _kWinCycleSpeed = 0.1f;
 
+    private const string _kWrongTapChance = "WrongTapChance";
+    private const string _kTapDelayMin = "TapDelayMin";
+    private const string _kTapDelayMax = "TapDelayMax";
+
     #region Config Values
 
     public float BaseMatchChance;
@@ -258,6 +262,10 @@ namespace SpeedTap {
       MaxIdleIntervalMs = speedTapConfig.MaxIdleIntervalMs;
       CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
 
+      CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
+      MinTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
+      MaxTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
+
       // End config based values
       InitializeAnimationCallbacks();
       InitializeMinigameObjects(1);
@@ -318,7 +326,7 @@ namespace SpeedTap {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
-      CurrentRobot.SetBehaviorSystem(false);
+      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
     }
 
     // Set up Difficulty Settings that are not round specific
@@ -334,9 +342,6 @@ namespace SpeedTap {
         DAS.Warn(this, "No Valid Difficulty Setting Found");
         _CurrentDifficultySettings = _AllDifficultySettings[0];
       }
-      CozmoMistakeChance = _CurrentDifficultySettings.CozmoMistakeChance;
-      MinTapDelayMs = _CurrentDifficultySettings.MinCozmoTapDelayMs;
-      MaxTapDelayMs = _CurrentDifficultySettings.MaxCozmoTapDelayMs;
     }
 
     protected override void CleanUpOnDestroy() {
