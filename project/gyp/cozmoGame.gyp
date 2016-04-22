@@ -410,6 +410,7 @@
               '<(cg-util_gyp_path):jsoncpp',
               '<(cg-audio_path):DriveAudioEngine',
               '<(cg-das_path):DAS',
+              '<(cg-ble_cozmo_path):BLECozmo',
             ]
           },
         ],
@@ -556,9 +557,11 @@
               '<(cg-util_gyp_path):util',
               '<(cg-util_gyp_path):jsoncpp',
               '<(cg-util_gyp_path):kazmath',
+              '<(cg-util_gyp_path):tiny-AES128-C',
               '<(cg-util_gyp_path):UtilUnitTest',
               '<(cg-audio_path):DriveAudioEngine',
               '<(cg-das_path):DAS',
+              '<(cg-ble_cozmo_path):BLECozmo',
               #'<(cg-audio_path):CozmoFxPlugIn',
             ],
             'conditions': [
@@ -588,6 +591,7 @@
               '<(cg-util_gyp_path):util',
               '<(cg-util_gyp_path):jsoncpp',
               '<(cg-audio_path):DriveAudioEngine',
+              '<(cg-ble_cozmo_path):BLECozmo',
             ]
           },
           #Build server requires this for webots tests that require assets.
