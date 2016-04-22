@@ -47,22 +47,25 @@ public:
 protected:
   const CozmoContext* _context;
   std::vector<Signal::SmartHandle> _signalHandles;
-    
-  void HandleActionEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleQueueSingleAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleQueueCompoundAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleEnableLiftPower(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleEnableCliffSensor(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleDisplayProceduralFace(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleProgressionEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleBehaviorManagerEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleSendAvailableObjects(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleSaveCalibrationImage(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleClearCalibrationImages(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleComputeCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  
+  using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
+  
+  void HandleActionEvents(const GameToEngineEvent& event);
+  void HandleQueueSingleAction(const GameToEngineEvent& event);
+  void HandleQueueCompoundAction(const GameToEngineEvent& event);
+  void HandleSetLiftHeight(const GameToEngineEvent& event);
+  void HandleEnableLiftPower(const GameToEngineEvent& event);
+  void HandleEnableCliffSensor(const GameToEngineEvent& event);
+  void HandleDisplayProceduralFace(const GameToEngineEvent& event);
+  void HandleForceDelocalizeRobot(const GameToEngineEvent& event);
+  void HandleProgressionEvent(const GameToEngineEvent& event);
+  void HandleBehaviorManagerEvent(const GameToEngineEvent& event);
+  void HandleSendAvailableObjects(const GameToEngineEvent& event);
+  void HandleSaveCalibrationImage(const GameToEngineEvent& event);
+  void HandleClearCalibrationImages(const GameToEngineEvent& event);
+  void HandleComputeCameraCalibration(const GameToEngineEvent& event);
+  void HandleCameraCalibration(const GameToEngineEvent& event);
+  void HandleAssignNameToFaceEvent(const GameToEngineEvent& event);
 };
 
   
