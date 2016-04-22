@@ -162,7 +162,7 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void FactoryResult(FactoryTestResult result) {
-    SetStatusText("Result Code: " + result.resultCode);
+    SetStatusText("Result Code: " + (int)result.resultCode + " (" + result.resultCode + ")");
     if (result.resultCode == Anki.Cozmo.FactoryTestResultCode.SUCCESS) {
       TestPassed();
     }
