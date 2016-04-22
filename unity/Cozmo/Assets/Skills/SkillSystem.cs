@@ -20,8 +20,9 @@ public class SkillSystem {
 
   public event System.Action<int> OnLevelUp;
 
-
+  private byte[] _CozmoHighestLevels;
   private ChallengeData _CurrChallengeData;
+  private int _ChallengeIndex;
 
   #region GameAPI
 
@@ -47,16 +48,30 @@ public class SkillSystem {
 
   public void StartGame(ChallengeData data) { 
     _CurrChallengeData = data;
+
+    ChallengeData[] challengeList = ChallengeDataList.Instance.ChallengeData;
+    for (int i = 0; i < challengeList.Length; ++i) {
+      if (challengeList[i].ChallengeID == _CurrChallengeData.ChallengeID) {
+        _ChallengeIndex = i;
+        break;
+      }
+    }
+
+    DAS.Warn("Blarg SkillSystem::StartGame PlayerLevel " + GetSkillDataForGame().LastLevel.ToString(), 
+      "Blarg SkillSystem::StartGame CozmoLevel" + _CozmoHighestLevels[_ChallengeIndex].ToString());
   }
 
   public void EndGame() { 
     _CurrChallengeData = null;
+    _ChallengeIndex = -1;
   }
 
-  public int GetCozmoSkillLevel(GameSkillData playerSkill) {
-    return playerSkill.LastLevel;
-  }
   // If player last level was 10 but on a new cozmo thats only level 3. That cozmo should play at level 3
+  public int GetCozmoSkillLevel(GameSkillData playerSkill) {
+
+    return Mathf.Min(_CozmoHighestLevels[_ChallengeIndex], playerSkill.LastLevel);
+  }
+
 
   public GameSkillLevelConfig GetSkillLevelConfig() {
     GameSkillData currSkillData = GetSkillDataForGame();
@@ -88,6 +103,42 @@ public class SkillSystem {
 
   #endregion
 
+  #region DebugMenuAPI
+
+  public bool GetDebugSkillsForGame(out int profileCurrSkill, out int profileHighSkill, out int robotHighSkill) {
+    profileCurrSkill = -1;
+    profileHighSkill = -1;
+    robotHighSkill = -1;
+    GameSkillData profileData = GetSkillDataForGame();
+    if (profileData != null && _ChallengeIndex >= 0) {
+      profileCurrSkill = profileData.LastLevel;
+      profileHighSkill = profileData.HighestLevel;
+      robotHighSkill = _CozmoHighestLevels[_ChallengeIndex];
+    }
+    return profileData != null;
+  }
+
+  public bool SetDebugSkillsForGame(int profileCurrSkill, int profileHighSkill, int robotHighSkill) {
+    GameSkillData profileData = GetSkillDataForGame();
+    if (profileData != null && _ChallengeIndex >= 0) {
+      profileData.LastLevel = profileCurrSkill;
+      profileData.HighestLevel = profileHighSkill;
+      _CozmoHighestLevels[_ChallengeIndex] = (byte)robotHighSkill;
+
+      UpdateHighestSkillsOnRobot();
+      DataPersistenceManager.Instance.Save();
+    }
+    return profileData != null;
+  }
+
+  public void DebugEraseStorage() {
+    RobotEngineManager.Instance.Message.NVStorageEraseEntry = new G2U.NVStorageEraseEntry();
+    RobotEngineManager.Instance.Message.NVStorageEraseEntry.tag = NVEntryTag.NVEntry_GameSkillLevels;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  #endregion
+
   private GameSkillData GetSkillDataForGame() {
 // In the event we've never played this game before and they have old save data.
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.CozmoSkillLevels == null) {
@@ -114,7 +165,6 @@ public class SkillSystem {
       }
       if (skillConfig.EvaluateLevelChangeEvent == cozEvent) {
         // See if things are pass the level up/down thresholds...
-        // TODO: this needs to get the max of LastLevel player and Highest level cozmo
         GameSkillLevelConfig skillLevelConfig = GetSkillLevelConfig();
         if (skillLevelConfig != null) {
           // Reset the for next calculation if our percent has changed.
@@ -134,9 +184,12 @@ public class SkillSystem {
               //  if new high, let the player know
               if (cozmoSkillLevel + 1 < skillConfig.GetMaxLevel()) {
                 bool newHighestLevel = cozmoSkillLevel == currSkillData.HighestLevel;
-// this is explicity player profile based
+                // this is explicity player profile based, ignore robot level.
                 if (cozmoSkillLevel == currSkillData.LastLevel) {
                   currSkillData.ChangeLevel(currSkillData.LastLevel + 1);
+                }
+                if (_CozmoHighestLevels[_ChallengeIndex] < currSkillData.LastLevel) {
+                  _CozmoHighestLevels[_ChallengeIndex]++;
                 }
                 UpdateHighestSkillsOnRobot();
 
@@ -152,7 +205,7 @@ public class SkillSystem {
             // we're winning too much, level down
             else if (winPercent > skillLevelConfig.UpperBoundThreshold) {
               currSkillData.ChangeLevel(currSkillData.LastLevel - 1);
-// cozmosHighestRobotLevel never levels down
+              // cozmosHighestRobotLevel never levels down
 
               DAS.Event("game.cozmoskill.leveldown", _CurrChallengeData.ChallengeID, null, 
                 DASUtil.FormatExtraData(currSkillData.LastLevel.ToString() + "," + currSkillData.HighestLevel.ToString()));
@@ -163,34 +216,27 @@ public class SkillSystem {
     }
   }
 
-
-  private byte[] _CozmoHighestLevels;
-
   private void Destroy() {
     GameEventManager.Instance.OnGameEvent -= HandleGameEvent;
+
+    RobotEngineManager.Instance.RobotConnected -= HandleRobotConnected;
+    RobotEngineManager.Instance.OnGotNVStorageData -= HandleNVStorageRead;
+    RobotEngineManager.Instance.OnGotNVStorageOpResult -= HandleNVStorageOpResult;
   }
 
   private void Init() {
-
     GameEventManager.Instance.OnGameEvent += HandleGameEvent;
     
     RobotEngineManager.Instance.RobotConnected += HandleRobotConnected;
     RobotEngineManager.Instance.OnGotNVStorageData += HandleNVStorageRead;
     RobotEngineManager.Instance.OnGotNVStorageOpResult += HandleNVStorageOpResult;
-    
 
-  }
-
-  private void DebugEraseStorage() {
-    DAS.Warn("Blarg SkillSystem::DebugEraseStorage ", "Blarg SkillSystem::DebugEraseStorage ");
-    RobotEngineManager.Instance.Message.NVStorageEraseEntry = new G2U.NVStorageEraseEntry();
-    RobotEngineManager.Instance.Message.NVStorageEraseEntry.tag = NVEntryTag.NVEntry_GameSkillLevels;
-    RobotEngineManager.Instance.SendMessage();
+    _ChallengeIndex = -1;
+    _CurrChallengeData = null;
   }
 
   private void HandleRobotConnected(int rbt_id) {
     DAS.Warn("Blarg SkillSystem::HandleRobotConnected ", "Blarg SkillSystem::HandleRobotConnected ");
-    //DebugEraseStorage();
 
     RobotEngineManager.Instance.Message.NVStorageReadEntry = new G2U.NVStorageReadEntry();
     RobotEngineManager.Instance.Message.NVStorageReadEntry.tag = NVEntryTag.NVEntry_GameSkillLevels;
@@ -211,7 +257,8 @@ public class SkillSystem {
       if (opResult.result != NVResult.NV_OKAY &&
           opResult.result != NVResult.NV_SCHEDULED) {
         SetCozmoHighestLevelsReached(null, 0);
-        // write out defaults so we have some 0s for next time
+        // write out defaults so we have some 0s for next time,
+        // This was likely the first time and was just a "not found"
         UpdateHighestSkillsOnRobot();
       }
     }
@@ -219,7 +266,9 @@ public class SkillSystem {
 
   private void HandleNVStorageRead(G2U.NVStorageData robotData) {
     DAS.Warn("Blarg SkillSystem::HandleNVStorageRead ", "Blarg SkillSystem::HandleNVStorageRead ");
-    SetCozmoHighestLevelsReached(robotData.data, robotData.data_length);
+    if (robotData.tag == NVEntryTag.NVEntry_GameSkillLevels) {
+      SetCozmoHighestLevelsReached(robotData.data, robotData.data_length);
+    }
   }
 
   private void SetCozmoHighestLevelsReached(byte[] robotData, int robotDataLen) {
@@ -227,18 +276,9 @@ public class SkillSystem {
 
     ChallengeDataList challengeList = ChallengeDataList.Instance;
 
-//ChallengeDataList challengeList = ScriptableObject.CreateInstance(typeof(ChallengeDataList)) as ChallengeDataList;
-
     int tempNumChallenges = 3;
-    DAS.Warn("Blarg challengeList " + challengeList, "Blarg challengeList " + challengeList);
     if (challengeList != null) {
-      DAS.Warn("Blarg challengeData " + challengeList.ChallengeData, "Blarg challengeData " + challengeList.ChallengeData);
       if (challengeList.ChallengeData != null) {
-        DAS.Warn("Blarg challengeData Len" + challengeList.ChallengeData.Length, "Blarg challengeData Len " + challengeList.ChallengeData.Length);
-        for (int i = 0; i < challengeList.ChallengeData.Length; ++i) {
-          DAS.Warn("Blarg SkillSystem::HandleNVStorageRead Loop1" + challengeList.ChallengeData[i].ChallengeID, 
-            "Blarg SkillSystem::HandleNVStorageRead Loop1" + challengeList.ChallengeData[i].ChallengeID);
-        }
         tempNumChallenges = challengeList.ChallengeData.Length;
       }
     }
