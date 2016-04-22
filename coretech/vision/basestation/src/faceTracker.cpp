@@ -24,7 +24,7 @@
 #if FACE_TRACKER_PROVIDER == FACE_TRACKER_FACIOMETRIC || \
 FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
   // Parameters used by cv::detectMultiScale for both of these face trackers
-  //static const f32 opencvDetectScaleFactor = 1.3f;
+  static const f32 opencvDetectScaleFactor = 1.3f;
   static const cv::Size opencvDetectMinFaceSize(48,48);
 #endif
 

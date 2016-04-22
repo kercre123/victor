@@ -392,8 +392,7 @@ class EnginePlatformConfiguration(object):
         
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
-        
-        generate_gyp(self.gyp_dir, self.platform, self.options, "DEPS")
+        generate_gyp(self.gyp_dir, self.platform, self.options, os.path.join(ENGINE_ROOT, "DEPS"))
         if self.platform == 'mac' or self.platform == 'ios':
             ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
 
