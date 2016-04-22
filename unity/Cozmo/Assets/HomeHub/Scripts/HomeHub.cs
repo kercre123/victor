@@ -91,6 +91,8 @@ namespace Cozmo.HomeHub {
 
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
       DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
     }
 
     private void HandleSessionEndClicked() {
