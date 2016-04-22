@@ -401,9 +401,7 @@ public class Robot : IRobot {
     DriveWheels(0.0f, 0.0f);
     TrackToObject(null);
     CancelAllCallbacks();
-    SetBehaviorSystem(false);
-    ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-    ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    SetEnableFreeplayBehaviorChooser(false);
     SetIdleAnimation("NONE");
     Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
     float[] paramValues = { };
@@ -1303,10 +1301,14 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SetBehaviorSystem(bool enable) {
-
-    RobotEngineManager.Instance.Message.SetBehaviorSystemEnabled = Singleton<SetBehaviorSystemEnabled>.Instance.Initialize(enable);
-    RobotEngineManager.Instance.SendMessage();
+  public void SetEnableFreeplayBehaviorChooser(bool enable) {
+    if (enable) {
+      ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Freeplay);
+    }
+    else {
+      ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+      ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    }
   }
 
   public void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType) {
