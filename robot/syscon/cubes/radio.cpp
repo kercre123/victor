@@ -55,7 +55,7 @@ static const uesb_address_desc_t NoiseAddress = {
 
 
 // These are variables used for handling OTA
-static uesb_address_desc_t OTAAddress;
+static uesb_address_desc_t OTAAddress = { 0x63, 0, sizeof(OTAFirmwareBlock) };
 static int ota_block_index;
 static RTOS_Task *ota_task;
 static void ota_ack_timeout(void* userdata);
@@ -158,9 +158,9 @@ static void OTARemoteDevice(uint32_t id) {
   
   // This is address
   OTAAddress.address = id;
-  OTAAddress.rf_channel = 81; // This is just a random one
-  OTAAddress.payload_length = sizeof(OTAFirmwareBlock);
-  
+  OTAAddress.rf_channel = (OTAAddress.rf_channel >> 1) ^ (OTAAddress.rf_channel & 1 ? 0x2D : 0);
+  OTAAddress.rf_channel = 80;
+
   EnterState(RADIO_OTA);
 
   // Tell our device to begin
@@ -226,7 +226,7 @@ void uesb_event_handler(uint32_t flags)
       }
 
       // Check if the device firmware is out of date
-      if (advert.patchLevel & CUBE_UPDATE.patchLevel) {
+      if (advert.patchLevel & ~CUBE_UPDATE.patchLevel) {
         OTARemoteDevice(advert.id);
         break ;
       }
@@ -253,7 +253,11 @@ void uesb_event_handler(uint32_t flags)
       memcpy(&accessories[slot].address, &address, sizeof(address));
 
       CapturePacket pair;
+      
       // TODO: CONFIGURE HERE
+      pair.hopIndex = 0;
+      //pair.hopBlackout = OTAAddress.rf_channel;
+      pair.patchStart = CUBE_UPDATE.patchStart;
 
       uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
     }
