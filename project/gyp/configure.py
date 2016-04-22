@@ -49,6 +49,8 @@ def main(scriptArgs):
                       help='Use coretech-internal repo checked out at CORETECH_INTERNAL_DIR')
   parser.add_argument('--audio', metavar='AUDIO_PATH', dest='audioPath', action='store', default=None,
                       help='Use audio repo checked out at AUDIO_PATH')
+  parser.add_argument('--bleCozmo', metavar='BLE_COZMO_PATH', dest='bleCozmoPath', action='store', default=None,
+                      help='Use BLECozmo repo checked out at BLE_COZMO_PATH')
   parser.add_argument('--projectRoot', dest='projectRoot', action='store', default=None,
                       help='project location, assumed to be same as git repo root')
   parser.add_argument('--updateListsOnly', dest='updateListsOnly', action='store_true', default=False,
@@ -125,6 +127,13 @@ def main(scriptArgs):
     return False
   audioProjectPath = options.audioPath
   audioProjectGypPath = os.path.join(audioProjectPath, 'gyp/audioengine.gyp')
+
+  if not options.bleCozmoPath:
+    options.bleCozmoPath = os.path.join(options.projectRoot, 'lib/BLECozmo')
+  if not os.path.exists(options.bleCozmoPath):
+    UtilLog.error('BLECozmo path not found [%s]' % options.bleCozmoPath)
+    return False
+  bleCozmoProjectPath = os.path.join(options.bleCozmoPath, 'project/gyp/BLECozmo.gyp')
 
 
   # do not check for coretech external, and gyp if we are only updating list files
@@ -222,6 +231,7 @@ def main(scriptArgs):
   coretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
   audioProjectGypPath = os.path.relpath(audioProjectGypPath, configurePath)
   audioProjectPath = os.path.relpath(options.audioPath, configurePath)
+  bleCozmoProjectPath = os.path.relpath(bleCozmoProjectPath, configurePath)
 
   print "Set audio project relpath: %s" % audioProjectPath
 
@@ -249,6 +259,7 @@ def main(scriptArgs):
                                   ce-util_gyp_path={8}
                                   ce-cti_gyp_path={9}
                                   ce-audio_path={10}
+                                  ce-ble_cozmo_path={11}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -260,7 +271,8 @@ def main(scriptArgs):
                                     gtestPath, 
                                     ankiUtilProjectPath, 
                                     coretechInternalProjectPath,
-                                    audioProjectGypPath
+                                    audioProjectGypPath,
+                                    bleCozmoProjectPath,
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
@@ -294,6 +306,7 @@ def main(scriptArgs):
                                 ce-util_gyp_path={8}
                                 ce-cti_gyp_path={9}
                                 ce-audio_path={10}
+                                ce-ble_cozmo_path={11}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -305,7 +318,8 @@ def main(scriptArgs):
                                   gtestPath, 
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
-                                  audioProjectGypPath
+                                  audioProjectGypPath,
+                                  bleCozmoProjectPath,
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
@@ -335,6 +349,7 @@ def main(scriptArgs):
                                   ce-util_gyp_path={8}
                                   ce-cti_gyp_path={9}
                                   ce-audio_path={10}
+                                  ce-ble_cozmo_path={11}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mex'),
@@ -346,7 +361,8 @@ def main(scriptArgs):
                                     gtestPath, 
                                     ankiUtilProjectPath, 
                                     coretechInternalProjectPath,
-                                    audioProjectGypPath
+                                    audioProjectGypPath,
+                                    bleCozmoProjectPath,
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mex', gypFile]
       gyp.main(gypArgs)
@@ -410,6 +426,7 @@ def main(scriptArgs):
                                 ce-cti_gyp_path={9}
                                 ndk_root={10}
                                 ce-audio_path={11}
+                                ce-ble_cozmo_path={12}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -423,6 +440,7 @@ def main(scriptArgs):
                                   coretechInternalProjectPath,
                                   ndk_root,
                                   audioProjectGypPath,
+                                  bleCozmoProjectPath,
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
@@ -460,6 +478,7 @@ def main(scriptArgs):
                                   ce-util_gyp_path={8}
                                   ce-cti_gyp_path={9}
                                   ce-audio_path={10}
+                                  ce-ble_cozmo_path={11}
                                   """.format(
                                     options.arch,
                                     os.path.join(options.projectRoot, 'generated/linux'),
@@ -471,7 +490,8 @@ def main(scriptArgs):
                                     gtestPath,
                                     ankiUtilProjectPath,
                                     coretechInternalProjectPath,
-                                    audioProjectGypPath
+                                    audioProjectGypPath,
+                                    bleCozmoProjectPath,
                                   )
       os.environ['CC_target'] = '/usr/bin/clang'
       os.environ['CXX_target'] = '/usr/bin/clang++'
