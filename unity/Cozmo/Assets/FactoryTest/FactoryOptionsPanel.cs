@@ -19,12 +19,20 @@ public class FactoryOptionsPanel : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Toggle _SimToggle;
 
+  [SerializeField]
+  private UnityEngine.UI.Button _OTAButton;
+
   // Use this for initialization
   void Start() {
     _CloseButton.onClick.AddListener(() => GameObject.Destroy(gameObject));
     _StationNumberInput.onEndEdit.AddListener(HandleOnSetStationNumber);
     _TestNumberInput.onEndEdit.AddListener(HandleOnSetTestNumber);
     _SimToggle.onValueChanged.AddListener(HandleOnSetSimType);
+    _OTAButton.onClick.AddListener(OnOTAButton);
+  }
+
+  void OnOTAButton() {
+    
   }
 
   void HandleOnSetTestNumber(string input) {
