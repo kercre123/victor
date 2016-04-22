@@ -32,7 +32,7 @@ public class FactoryOptionsPanel : MonoBehaviour {
   }
 
   void OnOTAButton() {
-    
+    RobotEngineManager.Instance.UpdateFirmware(0);
   }
 
   void HandleOnSetTestNumber(string input) {
