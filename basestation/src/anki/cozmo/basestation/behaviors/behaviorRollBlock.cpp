@@ -39,8 +39,8 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   
 bool BehaviorRollBlock::IsRunnable(const Robot& robot) const
 {
-  // if we are already acting, keep running. Otherwise, run if we have a block we'd like to roll
-  return IsActing() || HasValidTargetBlock(robot);
+  // runnable if we have a block we'd like to roll
+  return HasValidTargetBlock(robot);
 }
 
 float BehaviorRollBlock::EvaluateRunningScoreInternal(const Robot& robot) const

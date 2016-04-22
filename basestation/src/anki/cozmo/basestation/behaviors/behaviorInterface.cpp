@@ -260,7 +260,7 @@ float IBehavior::EvaluateRepetitionPenalty() const
   
 float IBehavior::EvaluateScore(const Robot& robot) const
 {
-  if (IsRunnable(robot))
+  if (IsRunnable(robot) || IsRunning())
   {
     const bool doOverrideScore = (_overrideScore >= 0.0f);
     const bool isRunning = IsRunning();
