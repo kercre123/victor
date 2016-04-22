@@ -1329,5 +1329,82 @@ namespace Cozmo {
     return _visionSystem->GetNumStoredCalibrationImages();
   }
   
+  Result VisionComponent::WriteCalibrationImagesToRobot(WriteCalibrationImagesToRobotCallback callback)
+  {
+    const std::list<Vision::Image> calibImages = _visionSystem->GetCalibrationImages();
+    
+    // Make sure there is no more than 5 images in the list
+    if (calibImages.size() > 5 || calibImages.size() < 4) {
+      PRINT_NAMED_INFO("VisionComponent.WriteCalibrationImagesToRobot.TooManyOrTooFewImages",
+                       "%zu images (Need 4 or 5)", _visionSystem->GetNumStoredCalibrationImages());
+      return RESULT_FAIL;
+    }
+
+    PRINT_NAMED_INFO("VisionComponent.WriteCalibrationImagesToRobot.StartingWrite",
+                     "%zu images", _visionSystem->GetNumStoredCalibrationImages());
+    _writeCalibImagesToRobotResults.clear();
+
+    static const NVStorage::NVEntryTag calibImageTags[5] = {NVStorage::NVEntryTag::NVEntry_CalibImage1,
+                                                            NVStorage::NVEntryTag::NVEntry_CalibImage2,
+                                                            NVStorage::NVEntryTag::NVEntry_CalibImage3,
+                                                            NVStorage::NVEntryTag::NVEntry_CalibImage4,
+                                                            NVStorage::NVEntryTag::NVEntry_CalibImage5};
+    
+    // Write images to robot
+    u32 imgIdx = 0;
+    for (auto img : calibImages) {
+      // Compress to jpeg
+      std::vector<u8> imgVec;
+      cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 85}));
+      
+      std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
+      FILE* fp = fopen(imgFilename.c_str(), "w");
+      fwrite(imgVec.data(), imgVec.size(), 1, fp);
+      fclose(fp);
+      
+      // Write to robot
+      bool res = true;
+      if (imgIdx < calibImages.size() - 1) {
+        PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingWrite", "Image %d", imgIdx);
+        res = _robot.GetNVStorageComponent().Write(calibImageTags[imgIdx], &imgVec,
+                                                   [this](NVStorage::NVResult res) {
+                                                    _writeCalibImagesToRobotResults.push_back(res);
+                                                  });
+      } else {
+        res = _robot.GetNVStorageComponent().Write(calibImageTags[imgIdx], &imgVec,
+                                                   [this, callback](NVStorage::NVResult res) {
+                                                     _writeCalibImagesToRobotResults.push_back(res);
+                                               
+                                                     std::string resStr = "";
+                                                     for(auto r : _writeCalibImagesToRobotResults) {
+                                                       resStr += EnumToString(r) + std::string(", ");
+                                                     }
+                                                     PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.Complete", "%s", resStr.c_str());
+                                               
+                                                     if (callback) {
+                                                       callback(_writeCalibImagesToRobotResults);
+                                                     }
+                                                   });
+      }
+      
+      if (!res) {
+        return RESULT_FAIL;
+      }
+      
+      ++imgIdx;
+    }
+    
+
+    // Erase remaining calib image tags
+    for (u32 i = imgIdx; i < 5; ++i) {
+        PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingErase", "Image %d", i);
+      _robot.GetNVStorageComponent().Erase(calibImageTags[i]);
+    }
+
+    return RESULT_OK;
+    
+    
+  }
+  
 } // namespace Cozmo
 } // namespace Anki

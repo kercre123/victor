@@ -219,7 +219,7 @@ namespace Cozmo {
                                                 PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WriteFailed",
                                                                     "WriteResult: %s (Original test result: %s)",
                                                                     EnumToString(res), EnumToString(resCode));
-                                                _testResult = FactoryTestResultCode::TEST_RESULT_FLASH_WRITE_FAILED;
+                                                _testResult = FactoryTestResultCode::TEST_RESULT_WRITE_FAILED;
                                               }
                                               _waitingForWriteAck = false;
                                               PrintAndLightResult(robot,_testResult);
@@ -789,10 +789,9 @@ namespace Cozmo {
     PRINT_NAMED_INFO("BehaviorFactoryTest.HandleCameraCalibration.SettingNewCalibration", "");
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
     
-    // Save calibration to robot
     if (ENABLE_NVSTORAGE_WRITES) {
       
-      // Save calibration
+      // Save calibration to robot
       CameraCalibration calibMsg;
       calibMsg.focalLength_x = camCalib.GetFocalLength_x();
       calibMsg.focalLength_y = camCalib.GetFocalLength_y();
@@ -810,14 +809,41 @@ namespace Cozmo {
                                             if (res == NVStorage::NVResult::NV_OKAY) {
                                               PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCameraCalib.SUCCESS", "");
                                             } else {
-                                              EndTest(robot, FactoryTestResultCode::CAMERA_CALIB_FLASH_WRITE_FAILED);
+                                              EndTest(robot, FactoryTestResultCode::CAMERA_CALIB_WRITE_FAILED);
                                             }
                                           });
       
+      // Save calibration images to robot
+      Result writeImagesResult = robot.GetVisionComponent().WriteCalibrationImagesToRobot(
+                                                                                          
+        [this,&robot](std::vector<NVStorage::NVResult>& results){
+          
+          // Clear calibration images from VisionSystem
+          robot.GetVisionComponent().ClearCalibrationImages();
+          
+          u32 numFailures = 0;
+          for (auto r : results) {
+            if (r != NVStorage::NVResult::NV_OKAY) {
+              ++numFailures;
+            }
+          }
+          
+          if (numFailures > 0) {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibImages.FAILED", "%d failures", numFailures);
+            EndTest(robot, FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED);
+          } else {
+            PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCalibImages.SUCCESS", "");
+          }
+        }
+      );
+      
+      if (writeImagesResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibImages.SendFAILED", "");
+        EndTest(robot, FactoryTestResultCode::CALIB_IMAGES_SEND_FAILED);
+      }
+      
     }
 
-    
-    robot.GetVisionComponent().ClearCalibrationImages();
     _calibrationReceived = true;
     return RESULT_OK;
   }
