@@ -52,6 +52,7 @@ MonoBehaviour:
   _StatusText: {fileID: 0}
   _StationNumberText: {fileID: 0}
   _Canvas: {fileID: 0}
+  _InProgressSpinner: {fileID: 0}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
