@@ -68,8 +68,8 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.InitBlockPoolMessage> OnInitBlockPoolMsg;
-  public event Action<Anki.Cozmo.ObjectDiscovered> OnObjectDiscoveredMsg;
-  public event Action<Anki.Cozmo.ObjectUndiscovered> OnObjectUndiscoveredMsg;
+  public event Action<Anki.Cozmo.ExternalInterface.ObjectAvailable> OnObjectAvailableMsg;
+  public event Action<Anki.Cozmo.ExternalInterface.ObjectUnavailable> OnObjectUnavailableMsg;
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
@@ -77,6 +77,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.UnlockId, bool> OnRequestSetUnlockResult;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress> OnFirmwareUpdateProgress;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete> OnFirmwareUpdateComplete;
+  public event Action OnSparkUnlockEnded;
 
   #region Audio Callback events
 
@@ -103,7 +104,7 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.StartEngine StartEngineMessage = new U2G.StartEngine();
   private U2G.ForceAddRobot ForceAddRobotMessage = new U2G.ForceAddRobot();
   private U2G.ConnectToRobot ConnectToRobotMessage = new U2G.ConnectToRobot();
-  private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice();
+  private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice(UiConnectionType.UI, 0);
 
   private U2G.GetAllDebugConsoleVarMessage _GetAllDebugConsoleVarMessage = new U2G.GetAllDebugConsoleVarMessage();
   private U2G.SetDebugConsoleVarMessage _SetDebugConsoleVarMessage = new U2G.SetDebugConsoleVarMessage();
@@ -364,11 +365,11 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.InitBlockPoolMessage:
       ReceivedSpecificMessage(message.InitBlockPoolMessage);
       break;
-    case G2U.MessageEngineToGame.Tag.ObjectDiscovered:
-      ReceivedSpecificMessage(message.ObjectDiscovered);
+    case G2U.MessageEngineToGame.Tag.ObjectAvailable:
+      ReceivedSpecificMessage(message.ObjectAvailable);
       break;
-    case G2U.MessageEngineToGame.Tag.ObjectUndiscovered:
-      ReceivedSpecificMessage(message.ObjectUndiscovered);
+    case G2U.MessageEngineToGame.Tag.ObjectUnavailable:
+      ReceivedSpecificMessage(message.ObjectUnavailable);
       break;
     case G2U.MessageEngineToGame.Tag.ObjectConnectionState:
       ReceivedSpecificMessage(message.ObjectConnectionState);
@@ -393,6 +394,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.FirmwareUpdateComplete:
       ReceivedSpecificMessage(message.FirmwareUpdateComplete);
+      break;
+    case G2U.MessageEngineToGame.Tag.SparkUnlockEnded:
+      ReceivedSpecificMessage(message.SparkUnlockEnded);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -427,7 +431,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.UiDeviceConnected message) {
-    DAS.Debug("RobotEngineManager", "Device connected: " + message.deviceID.ToString());
+    DAS.Debug("RobotEngineManager", "Device connected: " + message.connectionType.ToString() + "," + message.deviceID.ToString());
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDisconnected message) {
@@ -689,15 +693,15 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ReceivedSpecificMessage(Anki.Cozmo.ObjectDiscovered message) {
-    if (OnObjectDiscoveredMsg != null) {
-      OnObjectDiscoveredMsg(message);
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.ObjectAvailable message) {
+    if (OnObjectAvailableMsg != null) {
+      OnObjectAvailableMsg(message);
     }
   }
 
-  private void ReceivedSpecificMessage(Anki.Cozmo.ObjectUndiscovered message) {
-    if (OnObjectUndiscoveredMsg != null) {
-      OnObjectUndiscoveredMsg(message);
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.ObjectUnavailable message) {
+    if (OnObjectUnavailableMsg != null) {
+      OnObjectUnavailableMsg(message);
     }
   }
 
@@ -773,6 +777,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete message) {
     if (OnFirmwareUpdateComplete != null) {
       OnFirmwareUpdateComplete(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.SparkUnlockEnded message) {
+    if (OnSparkUnlockEnded != null) {
+      OnSparkUnlockEnded();
     }
   }
 

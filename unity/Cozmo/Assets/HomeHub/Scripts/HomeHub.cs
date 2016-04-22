@@ -68,7 +68,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void ShowStartView() {
-      RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(false);
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       _StartViewInstance = UIManager.OpenView(_StartViewPrefab);
       _StartViewInstance.OnConnectClicked += HandleConnectClicked;
     }
@@ -89,10 +89,7 @@ namespace Cozmo.HomeHub {
       // Show the current state of challenges being locked/unlocked
       _HomeViewInstance.Initialize(_ChallengeStatesById, this);
 
-      // The Default chooser is used for freeplay. 
-      RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
-
-      RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
       DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
     }
 
@@ -132,7 +129,6 @@ namespace Cozmo.HomeHub {
       };
 
       // Close dialog
-      // TODO: Don't close the hub dialog during minigames
       CloseTimelineDialog();
       _ChallengeDetailsDialogInstance.CloseViewImmediately();
 
@@ -198,8 +194,7 @@ namespace Cozmo.HomeHub {
     private void PlayMinigame(ChallengeData challengeData) {
       // Reset the robot behavior
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-        RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+        RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       }
 
       GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
@@ -268,9 +263,11 @@ namespace Cozmo.HomeHub {
       var session = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
       if (session != null) {
         session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
+
         // TODO: This is a placeholder for rewarding green points. Eventually the daily goals system
         // will be the one responsible for rewarding green points.
-        DataPersistenceManager.Instance.Data.DefaultProfile.GreenPoints += 10;
+        // TODO: Don't hardcode "experience"
+        DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount("experience", 8);
       }
       else {
         DAS.Error(this, "Somehow managed to complete a challenge with no sessions saved!");
@@ -278,8 +275,6 @@ namespace Cozmo.HomeHub {
 
       DataPersistenceManager.Instance.Save();
     }
-
-    // TODO: Pragma out for production
 
     #region Testing
 

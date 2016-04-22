@@ -29,6 +29,8 @@ public static class LocalizationKeys {
   public const string kCodeBreaker01Description = "codeBreaker01.description";
   public const string kCubeSlapTitle = "cubeSlap.title";
   public const string kCubeSlapDescription = "cubeSlap.description";
+  public const string kPlayhouseGame01Title = "playhouseGame01.title";
+  public const string kPlayhouseGame01Description = "playhouseGame01.description";
   public const string kSpeedTapTitle = "speedTap.title";
   public const string kSpeedTapDescription = "speedTap.description";
   public const string kSpeedTapLightCountTitle = "speedTapLightCount.title";
@@ -42,6 +44,8 @@ public static class LocalizationKeys {
   public const string kWhackAMoleTitle = "whackAMole.title";
   public const string kWhackAMoleDescription = "whackAMole.description";
   public const string kChallengeEndedLabelReward = "challengeEnded.label.reward";
+  public const string kArtistCozmoTitle = "artistCozmo.title";
+  public const string kArtistCozmoDescription = "artistCozmo.description";
 
   #endregion
 
@@ -82,9 +86,11 @@ public static class LocalizationKeys {
   public const string kMinigameLabelCubesReady = "minigame.label.cubesReady";
   public const string kMinigameLabelReadyToPlay = "minigame.label.readyToPlay";
   public const string kMinigamesLabelGamesAndActivities = "minigames.label.gamesAndActivities";
+  public const string kMinigamesLabelCozmoUnlocksPanel = "minigames.label.cozmoUnlocksPanel";
   public const string kMinigameLabelDifficultySelect = "minigame.label.difficultySelect";
   public const string kAskCozmoTitle = "askCozmo.title";
   public const string kAskCozmoButton = "askCozmo.button";
+  public const string kPlayhouseGame01TextHowToPlay = "playhouseGame01.text.howToPlay";
   public const string kSimonGameLabelWatchCozmoPattern = "simonGame.label.watchCozmoPattern";
   public const string kSimonGameLabelWatchCozmoGuess = "simonGame.label.watchCozmoGuess";
   public const string kSimonGameLabelCreateYourPattern = "simonGame.label.createYourPattern";
@@ -108,6 +114,7 @@ public static class LocalizationKeys {
   public const string kSpeedTapTextHowToPlayLightCountSameColorNoRed = "speedTap.text.howToPlayLightCountSameColorNoRed";
   public const string kSpeedTapTextHowToPlayLightCountNoColor = "speedTap.text.howToPlayLightCountNoColor";
   public const string kSpeedTapTapBlock = "speedTap.tapBlock";
+  public const string kSpeedTapTapBlockForRound = "speedTap.tapBlockForRound";
   public const string kTreasureHuntTitle = "treasureHunt.title";
   public const string kVortexTitle = "vortex.title";
   public const string kVortexSubtitle = "vortex.subtitle";
@@ -133,6 +140,16 @@ public static class LocalizationKeys {
   public const string kCubePounceHeaderCozmoWinPoint = "cubePounce.header.cozmoWinPoint";
   public const string kCubePounceHeaderSetupText = "cubePounce.header.setupText";
   public const string kMinigameTextHowToPlay = "minigame.text.howToPlay";
+  public const string kMinigameDifficultyEasy = "minigame.difficulty.easy";
+  public const string kMinigameDifficultyMedium = "minigame.difficulty.medium";
+  public const string kMinigameDifficultyHard = "minigame.difficulty.hard";
+  public const string kMinigameDifficultyExpert = "minigame.difficulty.expert";
+  public const string kSpeedTapDifficultyEasyDescription = "speedTap.difficulty.easyDescription";
+  public const string kSpeedTapDifficultyMediumDescription = "speedTap.difficulty.mediumDescription";
+  public const string kSpeedTapDifficultyHardDescription = "speedTap.difficulty.hardDescription";
+  public const string kSpeedTapDifficultyExpertDescription = "speedTap.difficulty.expertDescription";
+  public const string kButtonRetry = "button.retry";
+  public const string kSpeedTapTextWaitForCozmo = "speedTap.text.waitForCozmo";
 
   #endregion
 
@@ -168,6 +185,12 @@ public static class LocalizationKeys {
   public const string kDailyGoalComplete = "dailyGoal.Complete";
   public const string kTimelineWeekLabel = "timeline.weekLabel";
   public const string kLabelConnect = "label.connect";
+  public const string kButtonSave = "button.save";
+  public const string kCozmoTabTitle = "cozmoTab.title";
+  public const string kCozmoTabSparkCount = "cozmoTab.sparkCount";
+  public const string kCozmoTabHexCount = "cozmoTab.hexCount";
+  public const string kRequestSparkViewSparkunlockbutton = "requestSparkView.sparkunlockbutton";
+  public const string kRequestSparkViewTreatCount = "requestSparkView.TreatCount";
 
   #endregion
 
@@ -177,6 +200,17 @@ public static class LocalizationKeys {
   public const string kProgStatExcitement = "progStat.Excitement";
   public const string kProgStatNovelty = "progStat.Novelty";
   public const string kProgStatDefault = "progStat.Default";
+
+  #endregion
+
+  #region UnlockText
+
+  public const string kUnlockableCubeRollActionTitle = "unlockable.CubeRollAction.Title";
+  public const string kUnlockableCubeRollActionDescription = "unlockable.CubeRollAction.Description";
+  public const string kUnlockableDefaultTitle = "unlockable.Default.Title";
+  public const string kUnlockableDefaultDescription = "unlockable.Default.Description";
+  public const string kSkillsLevelUpDescription = "skills.LevelUp.Description";
+  public const string kSkillsLevelUpTitle = "skills.LevelUp.Title";
 
   #endregion
 }

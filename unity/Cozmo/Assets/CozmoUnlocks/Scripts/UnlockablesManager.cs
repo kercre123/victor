@@ -26,6 +26,10 @@ public class UnlockablesManager : MonoBehaviour {
     RobotEngineManager.Instance.OnRequestSetUnlockResult += HandleOnUnlockRequestSuccess;
   }
 
+  private void OnDestroy() {
+    RobotEngineManager.Instance.OnRequestSetUnlockResult -= HandleOnUnlockRequestSuccess;
+  }
+
   // should be called when connected to the robot and loaded unlock info from the physical robot.
   public void OnConnectLoad(Dictionary<Anki.Cozmo.UnlockId, bool> loadedUnlockables) {
     _UnlockablesState = loadedUnlockables;

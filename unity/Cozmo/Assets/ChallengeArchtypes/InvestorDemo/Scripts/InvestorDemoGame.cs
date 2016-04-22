@@ -34,12 +34,12 @@ namespace InvestorDemo {
 
     protected void InitializeMinigameObjects() {
       CurrentRobot.SetRobotVolume(1.0f);
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicVolume(1.0f);
+      Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Music, 1.0f);
       Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.SFX, 1.0f);
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab);
 
-      CurrentRobot.SetBehaviorSystem(true);
+      CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
 
       if (_DemoConfig.UseSequence) {
         CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);

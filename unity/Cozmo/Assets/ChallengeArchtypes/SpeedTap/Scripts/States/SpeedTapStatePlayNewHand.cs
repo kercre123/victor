@@ -7,24 +7,27 @@ namespace SpeedTap {
   public class SpeedTapStatePlayNewHand : State {
 
     private const int _kMaxMisses = 3;
-    private const float _kBaseMatchProbability = 0.2f;
-    private const float _kMatchProbabilityIncrease = 0.15f;
     // TODO: Remove this once we have a way to get timestamp information directly from animations
     private const float _kTapAnimHitDelay = 500.0f;
 
     private SpeedTapGame _SpeedTapGame = null;
-    private float _StartTimeMs = -1.0f;
-    private float _TapStartTimeMs = -1.0f;
-    private float _OnDelayTimeMs = 2000.0f;
-    private float _OffDelayTimeMs = 2000.0f;
-    private float _PeekMinTimeMs = 400.0f;
-    private float _PeekMaxTimeMs = 1000.0f;
-    private float _PeekDelayTimeMs = 0.0f;
-    private float _MinCozmoTapDelayTimeMs = 280.0f;
-    private float _MaxCozmoTapDelayTimeMs = 700.0f;
-    private float _MatchProbability = 0.35f;
-    private float _FakeProbability = 0.25f;
+
+    #region Difficulty Config Values
+
+    private float _OnDurationMs;
+    private float _OffDurationMs;
+    private float _PeekMinTimeMs;
+    private float _PeekMaxTimeMs;
+    private float _MinCozmoTapDelayTimeMs;
+    private float _MaxCozmoTapDelayTimeMs;
+    private float _MatchProbability;
+    private float _FakeProbability;
+
+    #endregion
+
+    // TODO: Replace Peek Probability with interval idle logic
     private float _PeekProbability = 0.80f;
+    //
 
     private bool _LightsOn = false;
     private bool _GotMatch = false;
@@ -32,11 +35,14 @@ namespace SpeedTap {
     private bool _TriedFake = false;
     private bool _TryFake = false;
     private bool _TryPeek = false;
-    private bool _MidHand = false;
     private bool _PlayReady = false;
+    private bool _PlayerTapRegistered = false;
     private bool _CozmoTapRegistered = false;
     private bool _CozmoHitCube = false;
     private float _CozmoTapDelayTimeMs = 0f;
+    private float _PeekDelayTimeMs;
+    private float _StartTimeMs = -1.0f;
+    private float _TapStartTimeMs = -1.0f;
 
     public override void Enter() {
       base.Enter();
@@ -46,12 +52,44 @@ namespace SpeedTap {
       _StartTimeMs = -1.0f;
       _LightsOn = false;
       _SpeedTapGame.PlayerHitFirst = false;
-      _MidHand = false;
+      _SpeedTapGame.MidHand = false;
       _PlayReady = false;
       _CozmoTapRegistered = false;
-      _MatchProbability = _kBaseMatchProbability;
+      _PlayerTapRegistered = false;
+      _MatchProbability = _SpeedTapGame.BaseMatchChance;
+      _FakeProbability = _SpeedTapGame.CozmoFakeoutChance;
+      _PeekMinTimeMs = _SpeedTapGame.MinIdleIntervalMs;
+      _PeekMaxTimeMs = _SpeedTapGame.MaxIdleIntervalMs;
+      _MinCozmoTapDelayTimeMs = _SpeedTapGame.MinTapDelayMs;
+      _MaxCozmoTapDelayTimeMs = _SpeedTapGame.MaxTapDelayMs;
+      SetRoundValues();
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, RobotCompletedTapAnimation);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, AdjustCheck);
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, AdjustCheck);
 
       _SpeedTapGame.CheckForAdjust(AdjustDone);
+    }
+
+    private void SetRoundValues() {
+      int currRound = _SpeedTapGame.CurrentRound;
+      SpeedTapRoundData currRoundData = _SpeedTapGame.CurrentDifficultySettings.SpeedTapRoundSettings[currRound];
+      _OnDurationMs = currRoundData.TimeHandDisplayed;
+      _OffDurationMs = currRoundData.TimeBetweenHands;
+      if (currRoundData.MidRoundMusic != Anki.Cozmo.Audio.GameState.Music.Invalid) {
+        GameAudioClient.SetMusicState(currRoundData.MidRoundMusic);
+      }
+      else {
+        GameAudioClient.SetMusicState(_SpeedTapGame.GetDefaultMusicState());
+      }
+    }
+
+    public override void Exit() {
+      base.Exit();
+      _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
+      _SpeedTapGame.CozmoTappedBlockEvent -= CozmoDidTap;
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, RobotCompletedTapAnimation);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, AdjustCheck);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, AdjustCheck);
     }
 
     void AdjustDone(bool success) {
@@ -59,11 +97,11 @@ namespace SpeedTap {
       _CurrentRobot.SetLiftHeight(1.0f);
       _StartTimeMs = Time.time * 1000.0f;
       _PlayReady = true;
-      if (_MidHand == false) {
+      if (_SpeedTapGame.MidHand == false) {
         _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
         _SpeedTapGame.PlayerTappedBlockEvent += PlayerDidTap;
         _SpeedTapGame.CozmoTappedBlockEvent += CozmoDidTap;
-        _MidHand = true;
+        _SpeedTapGame.MidHand = true;
       }
     }
 
@@ -71,7 +109,7 @@ namespace SpeedTap {
       base.Update();
       float currTimeMs = Time.time * 1000.0f;
       // Do not run game while not ready for play
-      if (_PlayReady == false || _MidHand == false) {
+      if (_PlayReady == false || _SpeedTapGame.MidHand == false) {
         // If Tapping, check timing
         if (_CozmoTapping && (currTimeMs - _TapStartTimeMs) >= _kTapAnimHitDelay) {
           if (_SpeedTapGame.PlayerHitFirst == false) {
@@ -85,11 +123,11 @@ namespace SpeedTap {
         if (_GotMatch) {
           if (!_CozmoTapping) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Tap, RobotCompletedTapAnimation);
+              GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
               _CozmoTapRegistered = false;
               _CozmoHitCube = false;
               _CozmoTapping = true;
-              _MidHand = false;
+              _SpeedTapGame.MidHand = false;
               _TapStartTimeMs = currTimeMs;
             }
           }
@@ -97,13 +135,13 @@ namespace SpeedTap {
         else if (_TryFake) {
           if (!_TriedFake) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
-              _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Fake, AdjustCheck);
+              GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapFakeout);
               _TriedFake = true;
               _TryPeek = false;
             }
           }
         }
-        if ((currTimeMs - _StartTimeMs) >= _OnDelayTimeMs) {
+        if ((currTimeMs - _StartTimeMs) >= _OnDurationMs) {
           _SpeedTapGame.CozmoBlock.SetLEDs(0, 0, 0xFF);
           _SpeedTapGame.PlayerBlock.SetLEDs(0, 0, 0xFF);
           _LightsOn = false;
@@ -111,24 +149,18 @@ namespace SpeedTap {
         }
       }
       else {
-        if ((currTimeMs - _StartTimeMs) >= _OffDelayTimeMs) {
+        if ((currTimeMs - _StartTimeMs) >= _OffDurationMs) {
           RollForLights();
           _LightsOn = true;
           _StartTimeMs = currTimeMs;
         }
         else if (_TryPeek && (currTimeMs - _StartTimeMs) >= _PeekDelayTimeMs) {
           _TryPeek = false;
-          _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Peek, AdjustCheck);
+          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapIdle);
         }
       }
     }
-
-    public override void Exit() {
-      base.Exit();
-      _SpeedTapGame.PlayerTappedBlockEvent -= PlayerDidTap;
-      _SpeedTapGame.CozmoTappedBlockEvent -= CozmoDidTap;
-    }
-
+    // TODO:
     void RobotCompletedTapAnimation(bool success) {
       DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
       // Checks if we have Registered a Tap on Cozmo's cube since starting the animation
@@ -167,13 +199,18 @@ namespace SpeedTap {
 
     void PlayerDidTap() {
       DAS.Info("SpeedTapStatePlayNewHand.player_tap", "");
+      if (_PlayerTapRegistered) {
+        return;
+      }
       if (_GotMatch) {
         if (_CozmoHitCube == false) {
           _SpeedTapGame.PlayerHitFirst = true;
+          _PlayerTapRegistered = true;
         }
       }
       else if (_LightsOn) {
         _SpeedTapGame.PlayerHitWrong();
+        _PlayerTapRegistered = true;
       }
     }
 
@@ -188,7 +225,7 @@ namespace SpeedTap {
       float matchExperiment = UnityEngine.Random.value;
       _GotMatch = matchExperiment < _MatchProbability;
       if (!_GotMatch) {
-        _MatchProbability += _kMatchProbabilityIncrease;
+        _MatchProbability += _SpeedTapGame.MatchChanceIncrease;
         if (_TryPeek) {
           _PeekDelayTimeMs = UnityEngine.Random.Range(_PeekMinTimeMs, _PeekMaxTimeMs);
         }

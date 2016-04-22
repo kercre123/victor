@@ -13,31 +13,13 @@ First install [brew](http://brew.sh/). Then use brew to install the following de
     brew install cmake
     brew install python3
 
-### coretech-external
-
-Get the latest [coretech-external binaries](https://teamcity.ankicore.com/viewType.html?buildTypeId=Cozmo_CoretechExternal_Build). Click the most recent Artifacts->View. Download and extract the .tar.gz
-
-Modify your paths (eg. open ~/.bash_profile) to include the line:
-
-    export CORETECH_EXTERNAL_DIR="<PATH_TO_CORETECH_EXTERNAL>"
-
-Make sure you don't use something like OS X's default textedit because they use non-ascii quotes “” which will cause the path variables to not work properly. We recommend [sublime text](http://www.sublimetext.com/2) for your text editing needs.
-
-Once you set your paths you need to restart your terminal for the settings to take effect. Alternatively you can refresh your environment:
-
-    source ~/.bash_profile
-
 ### Unity
 
 We are using [Unity 5.3.1p3](https://unity3d.com/unity/qa/patch-releases/5.3.1p3). Make sure you also install the iOS and Android components.
 
-A dev scene that includes a simple list of challenges for Cozmo. Useful for skipping the metagame stuff to work on the individual challenges.
+Right now we use one scene and load assets by code. The main scene is located here
 
-    /unity/Cozmo/Assets/Scenes/Dev.unity
-
-The production scene used for when we deploy. This is where the final experience will live.
-
-    /unity/Cozmo/Assets/Scenes/HomeHub.unity
+    /unity/Cozmo/Assets/Scenes/Bootstrap.unity
 
 ### Xcode
 
@@ -81,7 +63,7 @@ The basic commands are as follows:
     ./configure.py generate    # (default) create the Xcode projects and workspaces.
     ./configure.py build       # generate, then use xcodebuild to build the generated projects (including Unity on iOS).
     ./configure.py install     # generate, build, then install the app on a connected ios device.
-    ./configure.py run         # generate, build, install, then debug the app on a connected ios device using lldb.
+    ./configure.py run -p ios  # generate, build, install, then debug the app on a connected ios device using lldb.
     ./configure.py uninstall   # uninstall the app from a connected device.
     ./configure.py clean       # use xcodebuild to clean the generated projects (assuming they exist).
     ./configure.py delete      # delete all generated projects and compiled files.

@@ -72,7 +72,6 @@ namespace WhackAMole {
       ActivatedFaces = new List<KeyValuePair<int, int>>();
       _FaceActive = new Dictionary<KeyValuePair<int, int>, bool>();
       _ActivatedTimestamp = new Dictionary<KeyValuePair<int, int>, float>();
-      CurrentRobot.SetBehaviorSystem(true);
       CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
       CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.LookAround);
 

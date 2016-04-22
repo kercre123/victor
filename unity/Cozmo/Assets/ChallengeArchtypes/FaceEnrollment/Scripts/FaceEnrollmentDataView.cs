@@ -10,16 +10,10 @@ public class FaceEnrollmentDataView : MonoBehaviour {
   private Cozmo.UI.CozmoButton _EnrollNewFaceButton;
 
   void Start() {
-    _EnrollNewFaceButton.onClick.AddListener(HandleEnrollNewFaceButton);
-    _EnrollNewFaceButton.DASEventButtonName = "enroll_new_face_button";
-    _EnrollNewFaceButton.DASEventViewController = "enroll_data_view";
+    _EnrollNewFaceButton.Initialize(HandleEnrollNewFaceButton, "enroll_new_face_button", "face_enrollment_data_view");
   }
 
   private void HandleEnrollNewFaceButton() {
     OnEnrollNewFace();
-  }
-
-  void Update() {
-	  
   }
 }

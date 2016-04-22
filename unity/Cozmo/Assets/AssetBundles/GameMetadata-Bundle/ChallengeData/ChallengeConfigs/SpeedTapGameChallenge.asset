@@ -24,3 +24,24 @@ MonoBehaviour:
   _Music:
     _Music: 1944187438
   MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}
+  DifficultyOptions:
+  - DifficultyId: 1
+    DifficultyName:
+      Key: minigame.difficulty.easy
+    DifficultyDescription:
+      Key: speedTap.difficulty.easyDescription
+  - DifficultyId: 2
+    DifficultyName:
+      Key: minigame.difficulty.medium
+    DifficultyDescription:
+      Key: speedTap.difficulty.mediumDescription
+  - DifficultyId: 3
+    DifficultyName:
+      Key: minigame.difficulty.hard
+    DifficultyDescription:
+      Key: speedTap.difficulty.hardDescription
+  - DifficultyId: 4
+    DifficultyName:
+      Key: minigame.difficulty.expert
+    DifficultyDescription:
+      Key: speedTap.difficulty.expertDescription

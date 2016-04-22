@@ -19,6 +19,7 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/sosLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
+#include "util/global/globalDefinitions.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "dasLoggerProvider.h"
 #include "dasConfiguration.h"
@@ -27,6 +28,12 @@
 #include <string>
 #include <vector>
 #include "clipboardPaster.h"
+
+#if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+#include "util/logging/saveToFileLoggerProvider.h"
+#include "util/logging/rollingFileLogger.h"
+#endif
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -61,11 +68,22 @@ void configure_engine(Json::Value config)
 
 int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_data)
 {
-  Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({new Util::SosLoggerProvider(), new Util::DasLoggerProvider()});
-  Anki::Util::gLoggerProvider = loggerProvider;
   PRINT_NAMED_INFO("CSharpBinding.cozmo_game_create", "engine creating engine");
 
   dataPlatform = CreateDataPlatform();
+#if ANKI_DEV_CHEATS
+  DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, ""));
+#endif
+  
+  Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({
+    new Util::SosLoggerProvider()
+    , new Util::DasLoggerProvider()
+#if ANKI_DEV_CHEATS
+    , new Util::SaveToFileLoggerProvider(DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory() + "/print")
+#endif
+  });
+  Anki::Util::gLoggerProvider = loggerProvider;
+  
   ConfigureDASForPlatform(dataPlatform);
   CreateHockeyApp();
   
@@ -113,6 +131,9 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_destroy()
   
   Anki::Util::SafeDelete(engineAPI);
   Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
+#if ANKI_DEV_CHEATS
+  DevLoggingSystem::DestroyInstance();
+#endif
   Anki::Util::SafeDelete(dataPlatform);
   return (int)RESULT_OK;
 }

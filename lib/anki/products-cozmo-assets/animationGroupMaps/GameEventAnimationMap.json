@@ -1,0 +1,80 @@
+{
+  "Pairs": [
+    {
+      "CladEvent": "OnDriveStart",
+      "AnimName": ""
+    },
+    {
+      "CladEvent": "OnDriveEnd",
+      "AnimName": ""
+    },
+    {
+      "CladEvent": "OnFidget",
+      "AnimName": ""
+    },
+    {
+      "CladEvent": "OnFollowMotionLookDown",
+      "AnimName": ""
+    },
+    {
+      "CladEvent": "OnFollowMotionLookUp",
+      "AnimName": ""
+    },
+    {
+      "CladEvent": "OnFollowMotionLookUpAndDown",
+      "AnimName": ""
+    },
+    {
+      "CladEvent": "OnFollowMotionReact",
+      "AnimName": ""
+    },
+    {
+      "CladEvent": "OnSpeedtapStarted",
+      "AnimName": ""
+    },
+    {
+      "CladEvent": "OnSpeedtapHandWin",
+      "AnimName": "speedTap_WinHand"
+    },
+    {
+      "CladEvent": "OnSpeedtapHandLose",
+      "AnimName": "speedTap_LoseHand"
+    },
+    {
+      "CladEvent": "OnSpeedtapRoundWin",
+      "AnimName": "speedTap_WinRound"
+    },
+    {
+      "CladEvent": "OnSpeedtapRoundLose",
+      "AnimName": "speedTap_LoseRound"
+    },
+    {
+      "CladEvent": "OnSpeedtapSessionWin",
+      "AnimName": "speedTap_WinSession"
+    },
+    {
+      "CladEvent": "OnSpeedtapSessionLose",
+      "AnimName": "speedTap_LoseSession"
+    },
+    {
+      "CladEvent": "OnSpeedtapGetOut",
+      "AnimName": "speedTap_GetOut"
+    },
+    {
+      "CladEvent": "OnSpeedtapCozmoConfirm",
+      "AnimName": "speedTap_Tap"
+    },
+    {
+      "CladEvent": "OnSpeedtapTap",
+      "AnimName": "speedTap_Tap"
+    },
+    {
+      "CladEvent": "OnSpeedtapFakeout",
+      "AnimName": "speedTap_Fake"
+    },
+    {
+      "CladEvent": "OnSpeedtapIdle",
+      "AnimName": "speedTap_Peek"
+    }
+  ]
+}

@@ -26,7 +26,13 @@ public class UnlockableInfo : ScriptableObject {
   // unlocked by default if the robot profile is new.
   public bool DefaultUnlock;
 
-  public int TreatCost;
+  public string DescriptionKey;
+
+  public string TitleKey;
+
+  [Cozmo.ItemId]
+  public string CostItemId;
+  public int CostAmountNeeded;
 
   [Serializable]
   public class SerializableUnlockIds : SerializableEnum<Anki.Cozmo.UnlockId> {

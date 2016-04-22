@@ -36,9 +36,7 @@
     ]
   },
   "behaviorGroups": [
-    "ChangesPosition",
-    "ChangesOrientation",
-    "MovesLift",
+    "AffectsBlocks",
     "Unlock_CubeRoll"
   ]
 }

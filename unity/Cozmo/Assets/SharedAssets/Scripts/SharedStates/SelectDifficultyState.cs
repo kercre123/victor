@@ -21,7 +21,8 @@ public class SelectDifficultyState : State {
     _Game.SharedMinigameView.ShowDifficultySelectView(_DifficultyOptions, 
       _HighestLevelCompleted);
     _Game.SharedMinigameView.ShowContinueButtonOnShelf(HandleContinueButtonClicked,
-      Localization.Get(LocalizationKeys.kButtonContinue), string.Empty, UnityEngine.Color.clear);
+      Localization.Get(LocalizationKeys.kButtonContinue), string.Empty, UnityEngine.Color.clear,
+      "selected_difficulty_continue_button");
   }
 
   public override void Exit() {

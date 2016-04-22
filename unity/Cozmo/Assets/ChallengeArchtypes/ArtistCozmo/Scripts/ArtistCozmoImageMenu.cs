@@ -20,11 +20,9 @@ public class ArtistCozmoImageMenu : MonoBehaviour {
   public event Action OnRetryClick;
 
   private void Awake() {
-    _SaveButton.onClick.AddListener(HandleSaveClick);
-    _SaveButton.DASEventButtonName = "save_button";
-    _RetryButton.onClick.AddListener(HandleRetryClick);
-    _RetryButton.DASEventButtonName = "retry_button";
-    _SaveButton.DASEventViewController = _RetryButton.DASEventViewController = "artist_cozmo_image_menu";
+    string viewControllerName = "artist_cozmo_image_menu";
+    _SaveButton.Initialize(HandleSaveClick, "save_filtered_photo_button", viewControllerName);
+    _RetryButton.Initialize(HandleRetryClick, "retry_taking_photo_button", viewControllerName);
   }
 
   private void HandleSaveClick() {

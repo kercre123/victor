@@ -13,10 +13,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: SpeedTapGame
-    _EnumValue: 4
+    _EnumValue: 9
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
   ExplicitUnlock: 1
   DefaultUnlock: 1
-  TreatCost: 0
+  DescriptionKey: unlockable.Default.Title
+  TitleKey: unlockable.Default.Title
+  CostItemId: treat
+  CostAmountNeeded: 2

@@ -19,11 +19,11 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameQuitHandler OnMiniGameQuit;
 
-  public delegate void MiniGameWinHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameWinHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameWin;
 
-  public delegate void MiniGameLoseHandler(StatContainer rewardedXp, Transform[] rewardIcons);
+  public delegate void MiniGameLoseHandler(StatContainer rewardedXp,Transform[] rewardIcons);
 
   public event MiniGameWinHandler OnMiniGameLose;
 
@@ -44,6 +44,15 @@ public abstract class GameBase : MonoBehaviour {
   protected ChallengeData _ChallengeData;
   private ChallengeEndedDialog _ChallengeEndViewInstance;
   private bool _WonChallenge;
+
+  private List<DifficultySelectOptionData> _DifficultyOptions;
+
+  public List<DifficultySelectOptionData> DifficultyOptions {
+    get {
+      return _DifficultyOptions;
+    }
+  }
+
 
   protected StateMachine _StateMachine = new StateMachine();
 
@@ -82,6 +91,7 @@ public abstract class GameBase : MonoBehaviour {
     _StateMachine.SetGameRef(this);
 
     _ChallengeData = challengeData;
+    _DifficultyOptions = _ChallengeData.DifficultyOptions;
     _WonChallenge = false;
 
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
@@ -90,6 +100,9 @@ public abstract class GameBase : MonoBehaviour {
 
     _CubeCycleTimers = new Dictionary<int, CycleData>();
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
+
+    SkillSystem.Instance.StartGame(_ChallengeData);
+    SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
   }
 
   private void FinishTurnToFace(bool success) {
@@ -156,6 +169,8 @@ public abstract class GameBase : MonoBehaviour {
       _SharedMinigameViewInstance = null;
     }
     DAS.Info(this, "Finished GameBase On Destroy");
+    SkillSystem.Instance.EndGame();
+    SkillSystem.Instance.OnLevelUp -= HandleCozmoSkillLevelUp;
   }
 
   public void CloseMinigameImmediately() {
@@ -168,8 +183,7 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void EndGameRobotReset() {
-    RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
-    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
+    RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
     CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
@@ -289,7 +303,7 @@ public abstract class GameBase : MonoBehaviour {
 
     // Listen for dialog close
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
-      Localization.Get(LocalizationKeys.kButtonContinue));
+      Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
     
 
     _RewardedXp = new StatContainer();
@@ -357,6 +371,16 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void OnDifficultySet(int difficulty) {
+  }
+
+  protected void HandleCozmoSkillLevelUp(int newLevel) {
+    AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+    // Hook up callbacks
+    alertView.SetCloseButtonEnabled(true);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonContinue);
+    alertView.TitleLocKey = LocalizationKeys.kSkillsLevelUpTitle;
+    alertView.DescriptionLocKey = LocalizationKeys.kSkillsLevelUpDescription;
+    alertView.SetMessageArgs(new object[] { newLevel, _ChallengeData.name });
   }
 
   #endregion

@@ -69,7 +69,6 @@ namespace SpeedTap {
         _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
       }
 
-      GameAudioClient.SetMusicState(_SpeedTapGame.GetDefaultMusicState());
 
       _SpeedTapGame.ResetScore();
     }

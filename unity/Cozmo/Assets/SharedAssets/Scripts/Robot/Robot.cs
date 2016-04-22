@@ -174,6 +174,10 @@ public class Robot : IRobot {
 
   public ILight[] BackpackLights { get; private set; }
 
+  public bool IsSparked { get; private set; }
+
+  public Anki.Cozmo.UnlockId SparkUnlockId { get; private set; }
+
   private bool _LightsChanged {
     get {
       for (int i = 0; i < BackpackLights.Length; ++i) {
@@ -314,11 +318,12 @@ public class Robot : IRobot {
       pointTurnSpeed_rad_per_sec: 2.0f, // 2.5 max
       pointTurnAccel_rad_per_sec2: 100.0f,
       pointTurnDecel_rad_per_sec2: 500.0f,
-      dockSpeed_mmps: 100.0f, // should be less than speed_mmps
+      dockSpeed_mmps: 60.0f, // should be less than speed_mmps
       dockAccel_mmps2: 200.0f,
+      dockDecel_mmps2: 100.0f,
       reverseSpeed_mmps: 80.0f
     );
-            
+
     BackpackLights = new ILight[Singleton<SetBackpackLEDs>.Instance.onColor.Length];
 
     EmotionValues = new float[(int)Anki.Cozmo.EmotionType.Count];
@@ -335,12 +340,14 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
     RobotEngineManager.Instance.OnProgressionStatRecieved += UpdateProgressionStatFromEngineRobotManager;
     RobotEngineManager.Instance.OnObjectConnectionState += ObjectConnectionState;
+    RobotEngineManager.Instance.OnSparkUnlockEnded += SparkUnlockEnded;
   }
 
   public void Dispose() {
     RobotEngineManager.Instance.DisconnectedFromClient -= Reset;
     RobotEngineManager.Instance.SuccessOrFailure -= RobotEngineMessages;
     RobotEngineManager.Instance.OnObjectConnectionState -= ObjectConnectionState;
+    RobotEngineManager.Instance.OnSparkUnlockEnded -= SparkUnlockEnded;
   }
 
   public void CooldownTimers(float delta) {
@@ -394,9 +401,7 @@ public class Robot : IRobot {
     DriveWheels(0.0f, 0.0f);
     TrackToObject(null);
     CancelAllCallbacks();
-    SetBehaviorSystem(false);
-    ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-    ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    SetEnableFreeplayBehaviorChooser(false);
     SetIdleAnimation("NONE");
     Anki.Cozmo.LiveIdleAnimationParameter[] paramNames = { };
     float[] paramValues = { };
@@ -606,6 +611,11 @@ public class Robot : IRobot {
       DataPersistence.DataPersistenceManager.Instance.Save();
     }
 
+  }
+
+  public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
+    RobotEngineManager.Instance.Message.CameraCalibration = Singleton<CameraCalibration>.Instance.Initialize(focalLengthX, focalLengthY, centerX, centerY, 0.0f, 240, 320);
+    RobotEngineManager.Instance.SendMessage();
   }
 
   private void TrySendGoalCompleteDasEvent(Anki.Cozmo.ProgressionStatType index, int value) {
@@ -830,9 +840,9 @@ public class Robot : IRobot {
     _RobotCallbacks.Clear();
   }
 
-  public void EnableNewFaceEnrollment(int numToEnroll = 1) {
-    DAS.Debug(this, "Enable new face enrollment: " + numToEnroll);
-    RobotEngineManager.Instance.Message.EnableNewFaceEnrollment = Singleton<EnableNewFaceEnrollment>.Instance.Initialize(numToEnroll);
+  public void SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode mode) {
+    DAS.Debug(this, "Setting face enrollment to " + mode);
+    RobotEngineManager.Instance.Message.SetFaceEnrollmentMode = Singleton<SetFaceEnrollmentMode>.Instance.Initialize(mode);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -1225,6 +1235,25 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
+  public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
+    RobotEngineManager.Instance.Message.EnableSparkUnlock = Singleton<EnableSparkUnlock>.Instance.Initialize(id);
+    RobotEngineManager.Instance.SendMessage();
+    IsSparked = true;
+    SparkUnlockId = id;
+  }
+
+  public void StopSparkUnlock() {
+    RobotEngineManager.Instance.Message.StopSparkUnlock = Singleton<StopSparkUnlock>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+    IsSparked = false;
+    SparkUnlockId = UnlockId.Count;
+  }
+
+  private void SparkUnlockEnded() {
+    IsSparked = false;
+    SparkUnlockId = UnlockId.Count;
+  }
+
   public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     SendQueueSingleAction(Singleton<TurnInPlace>.Instance.Initialize(
@@ -1272,10 +1301,14 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void SetBehaviorSystem(bool enable) {
-
-    RobotEngineManager.Instance.Message.SetBehaviorSystemEnabled = Singleton<SetBehaviorSystemEnabled>.Instance.Initialize(enable);
-    RobotEngineManager.Instance.SendMessage();
+  public void SetEnableFreeplayBehaviorChooser(bool enable) {
+    if (enable) {
+      ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Freeplay);
+    }
+    else {
+      ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+      ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    }
   }
 
   public void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType) {

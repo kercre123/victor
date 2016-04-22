@@ -201,7 +201,7 @@ public class AnimationGroupEditor : EditorWindow {
     return entry;
   }
 
-  [MenuItem("Cozmo/Animation Group Editor %g")]
+  [MenuItem("Cozmo/Animation/Animation Group Editor %g")]
   public static void OpenAnimationGroupEditor() {
     AnimationGroupEditor window = (AnimationGroupEditor)EditorWindow.GetWindow(typeof(AnimationGroupEditor));
     window.titleContent = new GUIContent("Animation Group Editor");

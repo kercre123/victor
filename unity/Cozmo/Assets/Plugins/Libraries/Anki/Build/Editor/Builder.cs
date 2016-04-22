@@ -13,7 +13,7 @@ namespace Anki {
     
     public class Builder {
 
-      private const string _kProjectName = "Cozmo";
+      public const string _kProjectName = "Cozmo";
       private const string _kBuildOuputFolder = "../../build/";
 
       #if UNITY_EDITOR
@@ -30,8 +30,84 @@ namespace Anki {
         return true;
       }
       #endif
+        
+      [MenuItem(Build.Builder._kProjectName + "/Build/Find Duplicate Assets in Bundles")]
+      public static void FindDuplicateAssetsInBundles() {
+        BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
+        string platformName = Assets.AssetBundleManager.GetPlatformName(buildTarget);
+        string assetBundleRoot = Path.Combine(Assets.AssetBundleManager.kAssetBundlesFolder, platformName);
 
-      [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles")]
+        if (Directory.Exists(assetBundleRoot)) {
+          // Foreach manifest file in AssetBundles folder
+          Dictionary<string, List<string>> assetToBundle = new Dictionary<string, List<string>>();
+          string[] manifestFileNames = Directory.GetFiles(assetBundleRoot, "*.manifest", SearchOption.AllDirectories);
+          string[] splitFileName;
+          StreamReader file;
+          string line;
+          foreach (string fileName in manifestFileNames) {
+            // Only check if not the main manifest file and if any variants, an hd variant 
+            splitFileName = fileName.Split('.');
+            if (splitFileName[0] != platformName && (splitFileName.Length <= 2 || splitFileName[1] == "hd")) {
+              Debug.Log("Searching... " + fileName);
+              file = new StreamReader(fileName);
+              try {
+                // Skip to assets section
+                while ((line = file.ReadLine()) != null) {
+                  if (line.StartsWith("Assets:")) {
+                    break;
+                  }
+                }
+
+                // Foreach asset
+                while ((line = file.ReadLine()) != null && !line.StartsWith("Dependencies:")) {
+                  // Check if asset is already in dictionary
+                  if (!assetToBundle.ContainsKey(line)) {
+                    List<string> assetBundles = new List<string>();
+                    assetBundles.Add(fileName);
+                    assetToBundle.Add(line, assetBundles);
+                  }
+                  else {
+                    assetToBundle[line].Add(fileName);
+                  }
+                }
+              }
+              catch (Exception e) {
+                Debug.LogError("Builder.FindDuplicateAssetsInBundles: Error reading file: " + fileName + " error: " + e.Message);
+              }
+            }
+            else {
+              Debug.Log("Skipping... " + fileName);
+            }
+          }
+
+          // Iterate over dictionary to find duplicates
+          bool foundDuplicates = false;
+          System.Text.StringBuilder sb = new System.Text.StringBuilder("ERROR: Duplicate Assets:");
+          foreach (KeyValuePair<string, List<string>> kvp in assetToBundle) {
+            // If count > 1 append error with offending asset and offending asset bundles
+            if (kvp.Value.Count > 1) {
+              sb.AppendLine("-- " + kvp.Key);
+              foreach (string assetBundle in kvp.Value) {
+                sb.AppendLine("---- " + assetBundle);
+              }
+              foundDuplicates = true;
+            }
+          }
+
+          // Print error / log depending on success
+          if (foundDuplicates) {
+            Debug.LogError(sb.ToString());
+          }
+          else {
+            Debug.Log("SUCCESS! No duplicate assets found!");
+          }
+        }
+        else {
+          Debug.LogError("Builder.FindDuplicateAssetsInBundles: Could not find <projectroot>/AssetBundles folder for platform: " + platformName);
+        }
+      }
+
+      [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles %#a")]
       public static void BuildAssetBundles() {
         BuildAssetBundlesInternal(EditorUserBuildSettings.activeBuildTarget);
       }
@@ -40,7 +116,7 @@ namespace Anki {
       public static void BuildPlayer() {
         BuildTarget buildTarget = EditorUserBuildSettings.activeBuildTarget;
         if (buildTarget == BuildTarget.StandaloneOSXIntel) {
-          Debug.LogError("Standalone build not supported, aborting");
+          Debug.LogError("Builder.BuildPlayer: Standalone build not supported, aborting");
           return;
         }
 
@@ -48,7 +124,7 @@ namespace Anki {
         BuildOptions options = GetBuildOptions(buildTarget, Debug.isDebugBuild, EditorUserBuildSettings.allowDebugging, EditorUserBuildSettings.connectProfiler);
         string result = BuildPlayerInternal(outputFolder, buildTarget, options);
         if (string.IsNullOrEmpty(result)) {
-          result = "Successfully built for " + buildTarget + " at " + outputFolder;
+          result = "Builder.BuildPlayer: Successfully built for " + buildTarget + " at " + outputFolder;
         }
         Debug.Log(result);
       }

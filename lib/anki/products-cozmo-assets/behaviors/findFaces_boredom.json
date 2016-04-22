@@ -52,7 +52,5 @@
     ]
   },
   "behaviorGroups": [
-    "ChangesPosition",
-    "ChangesOrientation"
   ]
 }

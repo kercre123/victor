@@ -130,6 +130,10 @@ public class MockRobot : IRobot {
     _ProgressionStats.Set(stats);
   }
 
+  public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
+
+  }
+
   public void SetEnableAllBehaviors(bool enabled) {
     // Do nothing
   }
@@ -144,6 +148,14 @@ public class MockRobot : IRobot {
 
   public void SetEnableCliffSensor(bool enabled) {
     // Do nothing
+  }
+
+  public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
+    
+  }
+
+  public void StopSparkUnlock() {
+    
   }
 
   public void ClearAllBehaviorScoreOverrides() {
@@ -255,7 +267,7 @@ public class MockRobot : IRobot {
     _Callbacks.Clear();
   }
 
-  public void EnableNewFaceEnrollment(int numToEnroll = 1) {
+  public void SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode mode) {
     
   }
 
@@ -515,7 +527,7 @@ public class MockRobot : IRobot {
     // Do nothing
   }
 
-  public void SetBehaviorSystem(bool enable) {
+  public void SetEnableFreeplayBehaviorChooser(bool enable) {
     // Do nothing
   }
 
@@ -758,6 +770,10 @@ public class MockRobot : IRobot {
       return _BackpackLights;
     }
   }
+
+  public bool IsSparked { get; private set; }
+
+  public Anki.Cozmo.UnlockId SparkUnlockId { get; private set; }
 
   public ObservedObject TargetLockedObject {
     get;

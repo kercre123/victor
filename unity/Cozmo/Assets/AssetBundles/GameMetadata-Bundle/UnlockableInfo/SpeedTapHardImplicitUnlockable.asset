@@ -19,4 +19,7 @@ MonoBehaviour:
   AnyPrereqUnlock: 0
   ExplicitUnlock: 0
   DefaultUnlock: 0
-  TreatCost: 0
+  DescriptionKey: unlockable.Default.Title
+  TitleKey: unlockable.Default.Title
+  CostItemId: treat
+  CostAmountNeeded: 2

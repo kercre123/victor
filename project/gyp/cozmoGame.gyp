@@ -541,6 +541,7 @@
               '<(cg-ce_gyp_path):robotClad',
               '<(cg-ce_gyp_path):cozmo_physics',
               '<(cg-ce_gyp_path):cozmoEngineUnitTest',
+              '<(cg-ce_gyp_path):recognizeFacesTool',
               '<(cg-ce_gyp_path):webotsControllers',
               '<(cg-cti_gyp_path):ctiCommon',
               '<(cg-cti_gyp_path):ctiCommonRobot',

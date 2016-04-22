@@ -167,7 +167,6 @@ GameObject:
   - 224: {fileID: 22469506}
   - 222: {fileID: 22282830}
   - 114: {fileID: 11439614}
-  - 114: {fileID: 11466202}
   m_Layer: 5
   m_Name: TextTitle
   m_TagString: Untagged
@@ -1336,20 +1335,6 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: Simulator IP
---- !u!114 &11466202
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 141130}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 1573420865, guid: f5f67c52d1564df4a8936ccd202a3bd8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
-  m_EffectDistance: {x: 2, y: -2}
-  m_UseGraphicAlpha: 1
 --- !u!114 &11467542
 MonoBehaviour:
   m_ObjectHideFlags: 1

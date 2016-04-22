@@ -77,6 +77,10 @@ public interface IRobot : IDisposable {
 
   ILight[] BackpackLights { get; }
 
+  bool IsSparked { get; }
+
+  Anki.Cozmo.UnlockId SparkUnlockId { get; }
+
   ObservedObject TargetLockedObject { get; set; }
 
   int CarryingObjectID { get; }
@@ -137,7 +141,13 @@ public interface IRobot : IDisposable {
 
   void SetProgressionStats(StatContainer stats);
 
+  void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY);
+
   void SetEnableCliffSensor(bool enabled);
+
+  void EnableSparkUnlock(Anki.Cozmo.UnlockId id);
+
+  void StopSparkUnlock();
 
   void SetEnableAllBehaviors(bool enabled);
 
@@ -171,7 +181,7 @@ public interface IRobot : IDisposable {
 
   void CancelAllCallbacks();
 
-  void EnableNewFaceEnrollment(int numToEnroll = 1);
+  void SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode mode);
 
   void AssignNameToFace(int faceID, string name);
 
@@ -248,7 +258,7 @@ public interface IRobot : IDisposable {
 
   void ExecuteBehavior(BehaviorType type);
 
-  void SetBehaviorSystem(bool enable);
+  void SetEnableFreeplayBehaviorChooser(bool enable);
 
   void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType);
 

@@ -13,11 +13,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Id:
     _EnumValueAsString: SimonGame
-    _EnumValue: 3
+    _EnumValue: 9
   UnlockableType: 0
   Prerequisites: []
   AnyPrereqUnlock: 0
-  CubesRequired: 0
   ExplicitUnlock: 1
   DefaultUnlock: 0
-  TreatCost: 0
+  DescriptionKey: unlockable.Default.Title
+  TitleKey: unlockable.Default.Title
+  CostItemId: treat
+  CostAmountNeeded: 2

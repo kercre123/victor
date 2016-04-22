@@ -11,28 +11,136 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a449b0de3bc04d88802548a816083a6, type: 3}
   m_Name: SpeedTapGameChallenge_Config
   m_EditorClassIdentifier: 
+  _SkillConfig:
+    _EvaluateLevelChangeEvent:
+      _EnumValueAsString: OnSpeedtapGetOut
+      _EnumValue: 14
+    _GainChallengePointEvent:
+      _EnumValueAsString: OnSpeedtapHandWin
+      _EnumValue: 8
+    _LoseChallengePointEvent:
+      _EnumValueAsString: OnSpeedtapHandLose
+      _EnumValue: 9
+    _UsePointThreshold: 0
+    _ComparedPointThreshold: 0
+    _Levels:
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 400
+      - name: TapDelayMax
+        val: 700
+      - name: WrongTapChance
+        val: 0.3
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 250
+      - name: TapDelayMax
+        val: 600
+      - name: WrongTapChance
+        val: 0.3
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 200
+      - name: TapDelayMax
+        val: 500
+      - name: WrongTapChance
+        val: 0.2
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 200
+      - name: TapDelayMax
+        val: 400
+      - name: WrongTapChance
+        val: 0.1
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 200
+      - name: TapDelayMax
+        val: 300
+      - name: WrongTapChance
+        val: 0.05
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
+    - SkillsArray:
+      - name: TapDelayMin
+        val: 100
+      - name: TapDelayMax
+        val: 300
+      - name: WrongTapChance
+        val: 0
+      UpperBoundThreshold: 0.7
+      LowerBoundThreshold: 0.3
   Rounds: 3
   MaxScorePerRound: 5
+  MinIdleIntervalMs: 100
+  MaxIdleIntervalMs: 300
+  BaseMatchChance: 0.2
+  MatchChanceIncrease: 0.1
+  CozmoFakeoutChance: 0.2
   _BetweenRoundMusic:
     _Music: 658369771
-  DifficultyOptions:
-  - DifficultyId: 1
-    DifficultyName:
-      Key: minigame.difficulty.easy
-    DifficultyDescription:
-      Key: speedTap.difficulty.easyDescription
-  - DifficultyId: 2
-    DifficultyName:
-      Key: minigame.difficulty.medium
-    DifficultyDescription:
-      Key: speedTap.difficulty.mediumDescription
-  - DifficultyId: 3
-    DifficultyName:
-      Key: minigame.difficulty.hard
-    DifficultyDescription:
-      Key: speedTap.difficulty.hardDescription
-  - DifficultyId: 4
-    DifficultyName:
-      Key: minigame.difficulty.expert
-    DifficultyDescription:
-      Key: speedTap.difficulty.expertDescription
+  DifficultySettings:
+  - DifficultyID: 1
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1125
+      TimeHandDisplayed: 1125
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 750
+      TimeHandDisplayed: 750
+  - DifficultyID: 2
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1125
+      TimeHandDisplayed: 1125
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 750
+      TimeHandDisplayed: 750
+  - DifficultyID: 3
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1125
+      TimeHandDisplayed: 1125
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 750
+      TimeHandDisplayed: 750
+  - DifficultyID: 4
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1125
+      TimeHandDisplayed: 1125
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 750
+      TimeHandDisplayed: 750
