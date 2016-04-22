@@ -7,22 +7,19 @@
 //
 
 #import "AppTableData.h"
+#import "ViewController.h"
 
 @interface AppTableData () <UITableViewDataSource, UITableViewDelegate>
 
-@property (strong, nonatomic) NSMutableSet* cozmoNames;
-@property (strong, nonatomic) NSString* selectedName;
-@property (weak, nonatomic) UITableView* idListTable;
+@property (weak, nonatomic) ViewController* viewController;
 
 @end
 
 @implementation AppTableData
 
--(id)initWithTableView:(UITableView*)tableView
+-(id)initWithViewController:(ViewController*)viewController
 {
-  _cozmoNames = [NSMutableSet set];
-  _selectedName = nil;
-  _idListTable = tableView;
+  _viewController = viewController;
   return self;
 }
 
@@ -32,13 +29,13 @@
     cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"MyIdentifier"];
     cell.selectionStyle = UITableViewCellSelectionStyleDefault;
   }
-  NSArray* allObjects = [_cozmoNames allObjects];
-  cell.textLabel.text = (NSString*)[allObjects objectAtIndex:indexPath.row];
+  
+  cell.textLabel.text = [_viewController getStringForRow:indexPath.row];
   return cell;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-  return [_cozmoNames count];
+  return [_viewController getNumRows];
 }
 
 // Allow for deselecting the selected row
@@ -51,41 +48,6 @@
   }
   
   return indexPath;
-}
-
--(void)addCozmo:(NSString*)name
-{
-  dispatch_async(dispatch_get_main_queue(), ^{
-    [_cozmoNames addObject:name];
-    [_idListTable reloadData];
-  });
-}
-
--(void)removeCozmo:(NSString*)name
-{
-  dispatch_async(dispatch_get_main_queue(), ^{
-    [_cozmoNames removeObject:name];
-    [_idListTable reloadData];
-  });
-}
-
--(void)clearList
-{
-  dispatch_async(dispatch_get_main_queue(), ^{
-    [_cozmoNames removeAllObjects];
-    [_idListTable reloadData];
-  });
-}
-
--(NSString*)getSelectedCozmo
-{
-  NSIndexPath* path = [_idListTable indexPathForSelectedRow];
-  if (!path) return nil;
-  
-  UITableViewCell* cell = [_idListTable cellForRowAtIndexPath:path];
-  if (!cell) return nil;
-  
-  return cell.textLabel.text;
 }
 
 @end

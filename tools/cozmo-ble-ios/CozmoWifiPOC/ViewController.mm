@@ -9,13 +9,15 @@
 #import "ViewController.h"
 #import "AppDelegate.h"
 #import "AppTableData.h"
+#import "BLECozmoConnection.h"
 #import <UIKit/UIKit.h>
 
 @interface ViewController ()
 
 @property (nonatomic, strong) AppTableData* appTableData;
 @property (nonatomic, weak) AppDelegate* appDelegate;
-@property (assign, nonatomic) UInt64 lastConnectMfgID;
+@property (strong, nonatomic) NSMutableArray* cozmoConnections;
+@property (nonatomic, weak) BLECozmoConnection* lastSelectedConnection;
 
 @end
 
@@ -24,10 +26,11 @@
 - (void)viewDidLoad {
   [super viewDidLoad];
   _appDelegate = (AppDelegate *)[[UIApplication sharedApplication] delegate];
-  _appTableData = [[AppTableData alloc] initWithTableView:_idListTable];
+  _appTableData = [[AppTableData alloc] initWithViewController:self];
   _idListTable.dataSource = _appTableData;
   _idListTable.delegate = _appTableData;
-  _lastConnectMfgID = 0;
+  _cozmoConnections = [NSMutableArray array];
+  _lastSelectedConnection = nil;
 }
 
 - (void)didReceiveMemoryWarning {
@@ -37,7 +40,7 @@
 
 - (IBAction)startDiscoverAction:(id)sender {
   [_appDelegate stopDiscovering];
-  [_appTableData clearList];
+  [self clearList];
   [_appDelegate startDiscovering];
 }
 
@@ -46,44 +49,43 @@
 }
 
 - (IBAction)connectDeviceAction:(id)sender {
-  if (0 != _lastConnectMfgID)
+  if (_lastSelectedConnection)
   {
-    [_appDelegate doDisconnection:_lastConnectMfgID];
-    _lastConnectMfgID = 0;
+    [_appDelegate doDisconnection:_lastSelectedConnection];
+    _lastSelectedConnection = nil;
   }
-  NSString* selectedName = [_appTableData getSelectedCozmo];
-  if (nil == selectedName)
+  _lastSelectedConnection = [self getSelectedCozmo];
+  if (!_lastSelectedConnection)
   {
     return;
   }
-  _lastConnectMfgID = strtoull([selectedName UTF8String], NULL, 16);
-  [_appDelegate doConnection:_lastConnectMfgID];
+  [_appDelegate doConnection:_lastSelectedConnection];
 }
 
 - (IBAction)disconnectDeviceAction:(id)sender {
-  if (0 != _lastConnectMfgID)
+  if (_lastSelectedConnection)
   {
-    [_appDelegate doDisconnection:_lastConnectMfgID];
-    [_appTableData removeCozmo:[NSString stringWithFormat:@"0x%llx", _lastConnectMfgID]];
-    _lastConnectMfgID = 0;
+    [_appDelegate doDisconnection:_lastSelectedConnection];
+    [self removeCozmo:_lastSelectedConnection];
+    _lastSelectedConnection = nil;
   }
 }
 
 - (IBAction)testLightsAction:(id)sender {
-  if (0 != _lastConnectMfgID)
+  if (_lastSelectedConnection)
   {
-    [_appDelegate doSendTestLightsMessage:_lastConnectMfgID];
+    [_appDelegate doSendTestLightsMessage:_lastSelectedConnection];
   }
 }
 
 - (IBAction)configWifiAction:(id)sender {
-  if (0 != _lastConnectMfgID)
+  if (_lastSelectedConnection)
   {
     NSString* ssid = _ssidTextField.text;
     NSString* password = _passwordTextField.text;
     if (ssid && password)
     {
-      [_appDelegate doConfigWifiMessage:_lastConnectMfgID ssid:ssid password:password];
+      [_appDelegate doConfigWifiMessage:_lastSelectedConnection ssid:ssid password:password];
     }
   }
 }
@@ -92,7 +94,55 @@
 {
 }
 
--(AppTableData*)getAppTableData {
-  return _appTableData;
+-(void)addCozmo:(BLECozmoConnection*)connection
+{
+  dispatch_async(dispatch_get_main_queue(), ^{
+    if (![_cozmoConnections containsObject:connection])
+    {
+      [_cozmoConnections addObject:connection];
+      [_idListTable reloadData];
+    }
+  });
+}
+
+-(void)removeCozmo:(BLECozmoConnection*)connection
+{
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [_cozmoConnections removeObject:connection];
+    [_idListTable reloadData];
+  });
+}
+
+-(void)clearList
+{
+  dispatch_async(dispatch_get_main_queue(), ^{
+    [_cozmoConnections removeAllObjects];
+    [_idListTable reloadData];
+  });
+}
+
+-(BLECozmoConnection*)getSelectedCozmo
+{
+  NSIndexPath* path = [_idListTable indexPathForSelectedRow];
+  if (!path) return nil;
+  
+  return [_cozmoConnections objectAtIndex:path.row];
+}
+
+-(NSUInteger)getNumRows
+{
+  return [_cozmoConnections count];
+}
+
+-(NSString*) getStringForRow:(NSUInteger)row
+{
+  NSUUID* uuid = ((BLECozmoConnection*)[_cozmoConnections objectAtIndex:row]).carPeripheral.identifier;
+  //NSString* uuidString = [uuid UUIDString];
+  //return [NSString stringWithFormat:@"0x%llx-%@", ((BLECozmoConnection*)[_cozmoConnections objectAtIndex:row]).mfgID, uuidString];
+  uint8_t uuidBytes[16]{};
+  [uuid getUUIDBytes:uuidBytes];
+  // Represent each connection as the first 4 bytes of the peripheral UUID in hex
+  NSString* shortUuidString = [NSString stringWithFormat:@"%02X%02X%02X%02X", uuidBytes[0], uuidBytes[1], uuidBytes[2], uuidBytes[3]];
+  return shortUuidString;
 }
 @end

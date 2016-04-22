@@ -12,6 +12,7 @@
 
 @class BLECentralMultiplexer;
 @class ViewController;
+@class BLECozmoConnection;
 
 @interface AppDelegate : UIResponder <UIApplicationDelegate, BLECozmoServiceDelegate>
 {
@@ -25,9 +26,9 @@
 
 - (void) startDiscovering;
 - (void) stopDiscovering;
-- (void) doConnection:(UInt64)mfgID;
-- (void) doDisconnection:(UInt64)mfgID;
-- (void) doSendTestLightsMessage:(UInt64)mfgID;
-- (void) doConfigWifiMessage:(UInt64)mfgID ssid:(NSString*)ssid password:(NSString*)password;
+- (void) doConnection:(BLECozmoConnection*)connection;
+- (void) doDisconnection:(BLECozmoConnection*)connection;
+- (void) doSendTestLightsMessage:(BLECozmoConnection*)connection;
+- (void) doConfigWifiMessage:(BLECozmoConnection*)connection ssid:(NSString*)ssid password:(NSString*)password;
 
 @end

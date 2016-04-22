@@ -435,16 +435,20 @@ UInt64 BLE_TimeInNanoseconds() {
     return NO;
   }
   
-  BLELogEvent("BLECozmoManager.disconnectVehicle",
-              "0x%llx connectionState: %d",
-              vehicleConn.mfgID, vehicleConn.connectionState);
+  [self disconnectConnection:vehicleConn];
   
-  // If the pipe is not up but we've already called connect, then call the os disconnect cause
-  // it's our best option
-  if (sendDisconnectMessages && vehicleConn.connectionState > kDisconnected ) {
-    [_centralMultiplexer disconnectPeripheral:vehicleConn.carPeripheral withService:[self serviceDescription]];
-  }
   return YES;
+}
+
+- (void)disconnectConnection:(BLECozmoConnection *)connection;
+{
+  BLELogEvent("BLECozmoManager.disconnectConnection",
+              "0x%llx connectionState: %d",
+              connection.mfgID, connection.connectionState);
+  
+  if (connection.connectionState > kDisconnected ) {
+    [_centralMultiplexer disconnectPeripheral:connection.carPeripheral withService:[self serviceDescription]];
+  }
 }
 
 #pragma mark - Vehicle I/O

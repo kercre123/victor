@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 
-@class AppTableData;
+@class BLECozmoConnection;
 
 @interface ViewController : UIViewController
 
@@ -27,7 +27,12 @@
 - (IBAction)configWifiAction:(id)sender;
 - (IBAction)userDoneEnteringText:(id)sender;
 
--(AppTableData*)getAppTableData;
+-(void)addCozmo:(BLECozmoConnection*)connection;
+-(void)removeCozmo:(BLECozmoConnection*)connection;
+-(BLECozmoConnection*)getSelectedCozmo;
+-(void)clearList;
+-(NSUInteger)getNumRows;
+-(NSString*)getStringForRow:(NSUInteger)row;
 
 @end
 

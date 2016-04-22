@@ -71,18 +71,18 @@
   });
 }
 
-- (void) doConnection:(UInt64)mfgID {
+- (void) doConnection:(BLECozmoConnection*)connection {
   __weak __typeof(_cozmoManager) weakManager = _cozmoManager;
   dispatch_async(_bleQueue, ^{
-    [weakManager connectToVehicleByMfgID: mfgID];
+    [weakManager connectPeripheralForVehicleConnection: connection];
     [weakManager stopDiscoveringVehicles];
   });
 }
 
-- (void) doDisconnection:(UInt64)mfgID {
+- (void) doDisconnection:(BLECozmoConnection*)connection {
   __weak __typeof(_cozmoManager) weakManager = _cozmoManager;
   dispatch_async(_bleQueue, ^{
-    [weakManager disconnectVehicleWithMfgId:mfgID sendDisconnectMessages:YES];
+    [weakManager disconnectConnection:connection];
   });
 }
 
@@ -113,8 +113,8 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
 
 
 
-- (void) doSendTestLightsMessage:(UInt64)mfgID {
-  __weak __typeof(_cozmoManager) weakManager = _cozmoManager;
+- (void) doSendTestLightsMessage:(BLECozmoConnection*)connection {
+  __weak __typeof(connection) weakConnection = connection;
   dispatch_async(_bleQueue, ^{
     Anki::Cozmo::RobotInterface::BackpackLights lightsData{};
     lightsData.lights[1].onColor = lightsData.lights[1].offColor = Anki::Cozmo::LED_ENC_BLU;
@@ -130,7 +130,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBackpackLights;
     robotMsg.setBackpackLights = lightsData;
     
-    [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                        error:nil
                                                    encrypted:NO];
   });
@@ -142,14 +142,14 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBackpackLights;
     robotMsg.setBackpackLights = Anki::Cozmo::RobotInterface::BackpackLights{}; // Use an empty message to shut off lights
     
-    [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                        error:nil
                                                    encrypted:NO];
   });
 }
 
-- (void) doConfigWifiMessage:(UInt64)mfgID ssid:(NSString*)ssid password:(NSString*)password {
-  __weak __typeof(_cozmoManager) weakManager = _cozmoManager;
+- (void) doConfigWifiMessage:(BLECozmoConnection*)connection ssid:(NSString*)ssid password:(NSString*)password {
+  __weak __typeof(connection) weakConnection = connection;
   dispatch_async(_bleQueue, ^{
     // First send the first half (or all if it's short enough) of new ssid
     static constexpr int kMaxStringMessageLength = 16;
@@ -161,7 +161,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     Anki::Cozmo::RobotInterface::EngineToRobot robotMsg{};
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
     robotMsg.appConCfgString = configString;
-    [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                        error:nil
                                                    encrypted:NO];
     
@@ -177,7 +177,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
       
       robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
       robotMsg.appConCfgString = configString;
-      [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+      [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                          error:nil
                                                      encrypted:NO];
     }
@@ -199,7 +199,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
     robotMsg.appConCfgString = configString;
-    [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                        error:nil
                                                    encrypted:NO];
     
@@ -214,7 +214,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
       
       robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
       robotMsg.appConCfgString = configString;
-      [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+      [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                          error:nil
                                                      encrypted:NO];
     }
@@ -230,7 +230,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
       
       robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
       robotMsg.appConCfgString = configString;
-      [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+      [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                          error:nil
                                                      encrypted:NO];
     }
@@ -246,7 +246,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
       
       robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
       robotMsg.appConCfgString = configString;
-      [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+      [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                          error:nil
                                                      encrypted:NO];
     }
@@ -260,7 +260,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgFlags;
     robotMsg.appConCfgFlags = configFlags;
-    [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                        error:nil
                                                    encrypted:NO];
     
@@ -270,7 +270,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgFlags;
     robotMsg.appConCfgFlags = configFlags;
-    [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                        error:nil
                                                    encrypted:NO];
     
@@ -283,7 +283,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgIPInfo;
     robotMsg.appConCfgIPInfo = configIPInfo;
-    [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                        error:nil
                                                    encrypted:NO];
     
@@ -293,7 +293,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgFlags;
     robotMsg.appConCfgFlags = configFlags;
-    [[weakManager connectionForMfgID:mfgID] writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
+    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
                                                        error:nil
                                                    encrypted:NO];
   });
@@ -302,11 +302,11 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
 
 #pragma mark BLECozmoServiceDelegate implementation
 -(void)vehicleManager:(BLECozmoManager*)manager vehicleDidAppear:(BLECozmoConnection *)connection {
-  [[_viewController getAppTableData] addCozmo:[NSString stringWithFormat:@"0x%llx", connection.mfgID]];
+  [_viewController addCozmo:connection];
 }
 
 -(void)vehicleManager:(BLECozmoManager *)manager vehicleDidDisappear:(BLECozmoConnection *)connection {
-  [[_viewController getAppTableData] removeCozmo:[NSString stringWithFormat:@"0x%llx", connection.mfgID]];
+  [_viewController removeCozmo:connection];
 }
 
 -(void)vehicleManager:(BLECozmoManager *)manager vehicleDidConnect:(BLECozmoConnection *)connection {

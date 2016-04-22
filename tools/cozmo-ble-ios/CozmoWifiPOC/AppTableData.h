@@ -9,12 +9,10 @@
 #import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
 
+@class ViewController;
+
 @interface AppTableData : UIViewController <UITableViewDataSource,UITableViewDelegate>
 
--(id)initWithTableView:(UITableView*)tableView;
--(void)addCozmo:(NSString*)name;
--(void)removeCozmo:(NSString*)name;
--(NSString*)getSelectedCozmo;
--(void)clearList;
+-(id)initWithViewController:(ViewController*)viewController;
 
 @end
