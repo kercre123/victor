@@ -110,13 +110,14 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
     case TRANSMIT_CHARGER_RX:
       nrf_gpio_pin_clear(PIN_TX_VEXT);
       nrf_gpio_cfg_output(PIN_TX_VEXT);
+      MicroWait(10);
+      nrf_gpio_pin_set(PIN_TX_VEXT);
     
       NRF_UART0->PSELRXD = PIN_TX_VEXT;
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
       NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
 
-      nrf_gpio_pin_set(PIN_TX_VEXT);
-      //nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_PULLUP);
+      nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_PULLUP);
 
       NRF_UART0->TASKS_STARTRX = 1;
     
@@ -184,7 +185,7 @@ void UART0_IRQHandler()
           memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
           Spine::ProcessHeadData();
           Head::spokenTo = true;
-          //RTOS::kick(WDOG_UART);
+          RTOS::kick(WDOG_UART);
           
           setTransmitMode(TRANSMIT_CHARGER_RX);
         }

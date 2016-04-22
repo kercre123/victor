@@ -203,7 +203,7 @@ void EnterRecovery() {
 
   // These are the requirements to boot immediately into the application
   // if any test fails, the robot will not exit recovery mode
-  bool recovery_force = *recovery_word != recovery_value;
+  bool recovery_force = true;//*recovery_word != recovery_value;
   bool remove_boot_ok = SendBodyCommand(COMMAND_BOOT_READY);
   bool boot_ok = recovery_force && CheckBootReady() && remove_boot_ok;
 
