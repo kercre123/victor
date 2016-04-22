@@ -45,6 +45,7 @@
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
+#include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
@@ -104,6 +105,7 @@ namespace Anki {
     , _movementComponent(*this)
     , _visionComponent(*this, VisionComponent::RunMode::Asynchronous, _context)
     , _nvStorageComponent(*this, _context)
+    , _textToSpeech(_context->GetDataPlatform(), _context->GetAudioServer()->GetAudioController())
     , _neckPose(0.f,Y_AXIS_3D(), {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
     , _headCamPose(_kDefaultHeadCamRotation, {HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
