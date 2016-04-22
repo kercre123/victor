@@ -24,85 +24,79 @@ extern "C" {
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
 
-const char* filePostfix = "_PlayerName.wav";
+const char* filePostfix = "_TextToSpeech.wav";
 
 namespace Anki {
 namespace Cozmo {
 
-TextToSpeech::TextToSpeech(IExternalInterface* externalInterface, Util::Data::DataPlatform* dataPlatform)
+  TextToSpeech::TextToSpeech(Util::Data::DataPlatform* dataPlatform,
+                             Audio::AudioController* audioController)
+: _dataPlatform(dataPlatform)
+, _audioController(audioController)
 {
-  _dataPlatform = dataPlatform;
   flite_init();
+  
   _voice = register_cmu_us_kal(NULL);
-  
-  _signalHandles.push_back(externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::AssignNameToFace,
-                                                        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-                                                        {
-                                                          const ExternalInterface::AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();
-                                                          HandleAssignNameToFace(msg.faceID, msg.name);
-                                                        }));
-    _signalHandles.push_back(externalInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::PrepareFaceNameAnimation,
-                                                        [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-                                                        {
-                                                          const ExternalInterface::PrepareFaceNameAnimation& msg = event.GetData().Get_PrepareFaceNameAnimation();
-                                                          HandlePlayFaceNameAnimation(msg.faceID, msg.name);
-                                                        }));
 }
 
-
-void TextToSpeech::CleanUp()
+TextToSpeech::~TextToSpeech()
 {
-
-}
-
-void TextToSpeech::HandleAssignNameToFace(Vision::FaceID_t faceId, const std::string& name)
-{
-  PRINT_NAMED_DEBUG("TextToSpeech.HandleAssignNameToFace", "FaceId %d Name: %s", faceId, name.c_str());
-  std::string full_path = _dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, name + filePostfix);
-  flite_text_to_speech(name.c_str(),_voice,full_path.c_str());
+  // Any tear-down needed for flite? (Un-init or unregister_cmu_us_kal?)
 }
   
-void TextToSpeech::HandlePlayFaceNameAnimation(Vision::FaceID_t faceId,
-                                               const std::string& name)
+std::string TextToSpeech::CacheSpeech(const std::string& text)
 {
-  PRINT_NAMED_DEBUG("TextToSpeech.HandlePlayFaceNameAnimation", "FaceId %d Name: %s", faceId, name.c_str());
+  auto cacheIter = _cachedSpeech.find(text);
   
-  using namespace Audio;
-  ASSERT_NAMED(_audioController != nullptr, "Must Set Audio Controller before preforming text to speach event");
-  
-  // Check if the WavePortal Plugin is available
-  AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  if ( pluginInterface->WavePortalIsActive() ) {
-    PRINT_NAMED_ERROR("TextToSpeech.HandlePlayFaceNameAnimation", "Wave Portal Plugin is already active faceId %d", faceId);
-    
-    // Don't change Wave Protal plugin's Audio Data
-    return;
+  if(cacheIter == _cachedSpeech.end())
+  {
+    // Don't already have a wave for this text string: make it now
+    PRINT_NAMED_DEBUG("TextToSpeech.CacheSpeech", "Text: %s", text.c_str());
+    // TODO: create filename that doesn't contain the text itself, in case that text is a name and we display the filename in a logged message at some point (privacy)
+    std::string fullPath = _dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, text + filePostfix);
+    flite_text_to_speech(text.c_str(),_voice,fullPath.c_str());
+    auto insertResult = _cachedSpeech.emplace(text, fullPath);
+    cacheIter = insertResult.first;
   }
   
-  // Load file
-  // TODO: Need to investigate if this needs to load asynchronously
-  std::string fileName = name + filePostfix;
-  std::string fullPath = _dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, fileName );
-  bool success = _waveFileReader.LoadWaveFile(fullPath, fileName);
+  return cacheIter->second;
+} // CacheText()
+
+  
+Result TextToSpeech::PrepareToSay(const std::string& text) 
+{
+  using namespace Audio;
+  
+  // Get (or create) the path for a wave file for this text
+  const std::string fullPath = CacheSpeech(text);
+  
+  // TODO: May need to be asynchronous
+  const bool success = _waveFileReader.LoadWaveFile(fullPath, text);
   
   if ( !success ) {
      // Fail =(
-    PRINT_NAMED_ERROR("TextToSpeech.HandlePlayFaceNameAnimation", "Failed to Load file: %s", fullPath.c_str());
-    return;
+    PRINT_NAMED_ERROR("TextToSpeech.PrepareToSay.LoadWaveFileFailed", "Failed to Load file: %s", fullPath.c_str());
+    return RESULT_FAIL;
   }
-  // Set Wave Portal Plugin buffer
-  const AudioWaveFileReader::StandardWaveDataContainer* data = _waveFileReader.GetCachedWaveDataWithKey(fileName);
   
-  ASSERT_NAMED(pluginInterface != nullptr, "AudioControllerPluginInterface Must be allocated before using it!");
+  // Set Wave Portal Plugin buffer
+  const AudioWaveFileReader::StandardWaveDataContainer* data = _waveFileReader.GetCachedWaveDataWithKey(text);
+  
+  AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
+  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeech.PrepareToSay.NullAudioControllerPluginInterface");
+  
   if ( pluginInterface->WavePortalHasAudioDataInfo() ) {
     pluginInterface->ClearWavePortalAudioDataInfo();
   }
+  
   pluginInterface->SetWavePortalAudioDataInfo( data->sampleRate,
                                                data->numberOfChannels,
                                                data->duration_ms,
                                                data->audioBuffer,
                                                static_cast<uint32_t>(data->bufferSize) );
-}
+                                               
+  return RESULT_OK;
+} // PrepareToSay()
 
 } // end namespace Cozmo
 } // end namespace Anki
