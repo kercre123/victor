@@ -3,14 +3,25 @@
     {
       "TitleKey": "Generic Goal",
       "DescKey": "",
+      "RewardType": "experience",
       "Target": 100,
       "PointsRewarded": 999,
       "CladEvent": "OnSpeedtapStarted",
-      "GenConditions": []
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.WeekdayCondition, Assembly-CSharp",
+          "Label": {
+            "text": "Weekday Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ]
     },
     {
       "TitleKey": "Another Placeholder",
       "DescKey": "",
+      "RewardType": "experience",
       "Target": 50,
       "PointsRewarded": 5,
       "CladEvent": "OnSpeedtapStarted",
@@ -19,6 +30,7 @@
     {
       "TitleKey": "Win 5 Speed Tap Rounds",
       "DescKey": "",
+      "RewardType": "experience",
       "Target": 5,
       "PointsRewarded": 10,
       "CladEvent": "OnSpeedtapRoundWin",
@@ -27,6 +39,7 @@
     {
       "TitleKey": "Win 8 Speed Tap Hands",
       "DescKey": "",
+      "RewardType": "experience",
       "Target": 8,
       "PointsRewarded": 15,
       "CladEvent": "OnSpeedtapHandWin",
@@ -35,6 +48,7 @@
     {
       "TitleKey": "Win 15 Speed Tap Hands",
       "DescKey": "",
+      "RewardType": "experience",
       "Target": 15,
       "PointsRewarded": 30,
       "CladEvent": "OnSpeedtapHandWin",
@@ -43,6 +57,7 @@
     {
       "TitleKey": "Win Speed Tap",
       "DescKey": "",
+      "RewardType": "experience",
       "Target": 1,
       "PointsRewarded": 10,
       "CladEvent": "OnSpeedtapSessionWin",

@@ -22,9 +22,6 @@ public class DailyGoalManager : MonoBehaviour {
   public static string sDailyGoalDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/DailyGoals"); } }
  
 
-
-
-
 #else
   public static string sDailyGoalDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/DailyGoals"; } }
   #endif
@@ -157,9 +154,10 @@ public class DailyGoalManager : MonoBehaviour {
       if (_DailyGoalFiles.Length > 0) {
         bool didMatch = false;
         for (int i = 0; i < _DailyGoalFiles.Length; i++) {
-          if (_DailyGoalFiles[i] == _DailyGoalGenConfig.DailyGoalFileName) {
+          if (_DailyGoalFiles[i] == Path.Combine(sDailyGoalDirectory, _DailyGoalGenConfig.DailyGoalFileName)) {
             LoadDailyGoalData(_DailyGoalFiles[i]);
             didMatch = true;
+            break;
           }
         }
         if (!didMatch) {

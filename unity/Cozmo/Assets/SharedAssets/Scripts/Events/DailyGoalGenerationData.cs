@@ -44,7 +44,7 @@ namespace Anki.Cozmo {
       public GoalEntry() {
         TitleKey = "";
         DescKey = "";
-        Target = 0;
+        Target = 1;
         PointsRewarded = 0;
         RewardType = "experience";
         CladEvent = GameEvent.Count;

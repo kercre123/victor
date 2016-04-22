@@ -9,6 +9,7 @@ using System.IO;
 using Newtonsoft.Json;
 using Anki.Cozmo;
 using Cozmo.UI;
+using System.Reflection;
 
 
 /// <summary>
@@ -22,14 +23,20 @@ public class DailyGoalEditor : EditorWindow {
   private static GameEvent[] _FilteredCladList;
 
 
+  // Required to display the Condition Select Popup
+  private static string[] _ConditionTypeNames;
+  private static Type[] _ConditionTypes;
+  private static int[] _ConditionIndices;
+  private int _SelectedConditionIndex = 0;
+
   private static string[] _DailyGoalGenFiles;
 
   private static DailyGoalGenerationData _CurrentGenData;
   private static string _CurrentGoalGenFile;
   private static string _CurrentGoalGenName;
   private static string _EventSearchField = "";
-
   private static Vector2 _scrollPos = new Vector2();
+
 
   public static string sDailyGoalDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/DailyGoals"; } }
 
@@ -37,6 +44,20 @@ public class DailyGoalEditor : EditorWindow {
 
   static DailyGoalEditor() {
     LoadData();
+
+    // get all conditions
+    var ctypes = Assembly.GetAssembly(typeof(GoalCondition))
+      .GetTypes()
+      .Where(t => typeof(GoalCondition).IsAssignableFrom(t) &&
+                 !t.IsAbstract);
+    _ConditionTypes = ctypes.ToArray();
+    _ConditionTypeNames = _ConditionTypes.Select(x => x.Name.ToHumanFriendly()).ToArray();
+
+    _ConditionIndices = new int[_ConditionTypeNames.Length];
+    for (int i = 0; i < _ConditionIndices.Length; i++) {
+      _ConditionIndices[i] = i;
+    }
+
   }
 
   private static void LoadData() {
@@ -206,8 +227,10 @@ public class DailyGoalEditor : EditorWindow {
     string eventName = genData.CladEvent.ToString();
     if (string.IsNullOrEmpty(_EventSearchField) || eventName.Contains(_EventSearchField) || genData.CladEvent == GameEvent.Count) {
       EditorGUILayout.BeginVertical();
-      EditorGUILayout.LabelField(Localization.Get(genData.TitleKey).ToUpper());
+      EditorGUILayout.LabelField(string.Format(">{0}", Localization.Get(genData.TitleKey).ToUpper()));
+      EditorGUI.indentLevel++;
       EditorGUILayout.LabelField(">>GOAL");
+      EditorGUI.indentLevel++;
       EditorGUILayout.BeginHorizontal();
       if (string.IsNullOrEmpty(_EventSearchField) || genData.CladEvent == GameEvent.Count) {
         genData.CladEvent = (GameEvent)EditorGUILayout.EnumPopup("GameEvent", genData.CladEvent, GUILayout.Width(250));
@@ -217,30 +240,32 @@ public class DailyGoalEditor : EditorWindow {
       }
       genData.Target = EditorGUILayout.IntField("Target", genData.Target);
       EditorGUILayout.EndHorizontal();
+      EditorGUI.indentLevel--;
+
+      //Draw list of conditions here
+      DrawConditionList(new GUIContent("CONDITIONS", 
+        "Conditions that must be met for the Goal to be selected for Generation"), genData.GenConditions);
+
 
       EditorGUILayout.LabelField(">>REWARD");
+      EditorGUI.indentLevel++;
       EditorGUILayout.BeginHorizontal();
       genData.RewardType = EditorGUILayout.TextField("Reward Type", genData.RewardType ?? string.Empty);
       genData.PointsRewarded = EditorGUILayout.IntField("Reward", genData.PointsRewarded);
       EditorGUILayout.EndHorizontal();
+      EditorGUI.indentLevel--;
 
       EditorGUILayout.LabelField(">>LOC KEYS");
+      EditorGUI.indentLevel++;
       EditorGUILayout.BeginHorizontal();
       genData.TitleKey = EditorGUILayout.TextField("TitleLocKey", genData.TitleKey ?? string.Empty);
       genData.DescKey = EditorGUILayout.TextField("DescLocKey", genData.DescKey ?? string.Empty);
       EditorGUILayout.EndHorizontal();
-
+      EditorGUI.indentLevel--;
+      EditorGUI.indentLevel--;
       EditorGUILayout.EndVertical();
     }
     return genData;
-  }
-
-  public GoalCondition DrawGoalCondition(GoalCondition cond) {
-    EditorGUILayout.BeginVertical();
-    // TODO: Figure out how to display Conditions
-    // Look to ScriptedSequenceEditor to see how they get GoalConditions based on the actual classes
-    EditorGUILayout.EndVertical();
-    return cond;
   }
 
   [MenuItem("Cozmo/Progression/Daily Goal Editor #%d")]
@@ -250,8 +275,59 @@ public class DailyGoalEditor : EditorWindow {
     window.titleContent = new GUIContent("DailyGoal Editor");
     window.Show();
     window.Focus();
-    window.position = new Rect(100, 100, 800, 800);
+    window.position = new Rect(0, 0, 800, 600);
   }
+
+  #region GoalConditions and Helpers
+
+  // some things ignore indent. This is a work around
+  public Rect GetIndentedLabelRect() {
+    var rect = EditorGUILayout.GetControlRect();
+    rect.x += 15 * (EditorGUI.indentLevel);
+    rect.width -= 15 * (EditorGUI.indentLevel);
+    return rect;
+  }
+
+
+  // Draws a list of Conditions
+  public void DrawConditionList<T>(GUIContent label, List<T> conditions) where T : GoalCondition {    
+    GUI.Label(GetIndentedLabelRect(), label);
+    for (int i = 0; i < conditions.Count; i++) {
+      var cond = conditions[i];
+      // clear out any null conditions
+      if (cond == null) {
+        conditions.RemoveAt(i);
+        i--;
+        continue;
+      }
+      cond.OnGUI();
+    }
+
+    var nextRect = EditorGUILayout.GetControlRect();
+
+    // show the add condition/action box at the bottom of the list
+    var newObject = ShowAddPopup<T>(nextRect, ref _SelectedConditionIndex, _ConditionTypeNames, _ConditionIndices, _ConditionTypes);
+
+    if (!EqualityComparer<T>.Default.Equals(newObject, default(T))) {
+      conditions.Add(newObject);
+    }
+
+  }
+
+  // internal function for ShowAddPopup, does the layout of the buttons and actual object creation
+  private T ShowAddPopup<T>(Rect rect, ref int index, string[] names, int[] indices, Type[] types) where T : GoalCondition {
+    var popupRect = new Rect(rect.x, rect.y, rect.width - 50, rect.height);
+    var plusRect = new Rect(rect.x + rect.width - 50, rect.y, 50, rect.height);
+    index = EditorGUI.IntPopup(popupRect, index, names, indices);
+
+    if (GUI.Button(plusRect, "+")) {
+      var result = (T)(Activator.CreateInstance(types[index]));
+      return result;
+    }
+    return default(T);
+  }
+
+  #endregion
 
 
 }

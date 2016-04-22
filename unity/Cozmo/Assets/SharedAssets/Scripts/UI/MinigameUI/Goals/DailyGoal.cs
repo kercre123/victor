@@ -4,13 +4,13 @@ using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
 using DataPersistence;
+using Newtonsoft.Json;
 
 namespace Cozmo {
   namespace UI {
     [System.Serializable]
     public class DailyGoal {
-      // TODO: Implement Conditions, Goal will only advance progress if all conditions return true as well
-      //public List<GoalCondition> Conditions;
+      
       public GameEvent GoalEvent;
       public LocalizedString Title;
       public LocalizedString Description;
@@ -27,16 +27,14 @@ namespace Cozmo {
         }
       }
 
-      // TODO: Add some Action or Event (Probably into DailyGoalManager) that fires "OnDailyGoalComplete" Event and passes in itself when target is met
-      // TODO: Replace PointsRewarded with a more generalized "Reward" class. Potentially replace
-      // with an Action instead to match QuestEngine.
-      // Example : ActionGrantReward (Reward) but we can also use it to trigger other things such as ActionGoalFeedback (VFX/Audio) or ActionAlertPopup (Text)
       // TODO: Create Trigger Conditions to allow for more situation based events.
       // Example : Replace SpeedTapSessionWin with MinigameSessionEnded, but the related Goal would then
       // have a MinigameTypeCondition (SpeedTap) and a DidWinCondition (True).
 
       // Action that fires when this Daily Goal is updated, passes through the DailyGoal itself so listeners can handle it.
+      [JsonIgnore]
       public Action<DailyGoal> OnDailyGoalUpdated;
+      [JsonIgnore]
       public Action<DailyGoal> OnDailyGoalCompleted;
 
       public DailyGoal(GameEvent gEvent, string titleKey, string descKey, int reward, int target, string rewardType, int currProg = 0) {

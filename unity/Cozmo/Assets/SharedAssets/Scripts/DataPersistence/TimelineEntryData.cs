@@ -7,7 +7,7 @@ namespace DataPersistence {
     public Date Date;
 
     public List<DailyGoal> DailyGoals;
-    // TODO: Replace Progress with getter that returns collective progress of DailyGoals list
+
     public float GetTotalProgress() {
       float totalG = 0.0f;
       float totalP = 0.0f;
