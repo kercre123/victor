@@ -217,7 +217,7 @@ uint32_t uesb_start() {
     configure_addresses(&m_config_local.rx_address);
     
     // We will only be listening to base0
-		NRF_RADIO->RXADDRESSES = 1;
+    NRF_RADIO->RXADDRESSES = 1;
     NRF_RADIO->PACKETPTR = (uint32_t)&m_rx_payload->data;
 
     NRF_RADIO->TASKS_RXEN  = 1;

@@ -154,7 +154,7 @@ void Head::manage(void* userdata) {
   transmitByte();
 }
 
-static uint8_t charger_byte = 0xCD;
+//static uint8_t charger_byte = 0xCD;
 
 extern "C"
 void UART0_IRQHandler()
@@ -184,13 +184,14 @@ void UART0_IRQHandler()
           memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
           Spine::ProcessHeadData();
           Head::spokenTo = true;
-          RTOS::kick(WDOG_UART);
+          //RTOS::kick(WDOG_UART);
           
           setTransmitMode(TRANSMIT_CHARGER_RX);
         }
         break ;
       case TRANSMIT_CHARGER_RX:
-        charger_byte = NRF_UART0->RXD;
+        //charger_byte = 
+        NRF_UART0->RXD;
         break ;
       default:
         break ;

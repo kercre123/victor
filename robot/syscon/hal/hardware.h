@@ -3,16 +3,10 @@
 
 #define NRF_BAUD(x) (int)(x * 4194304.0f / 15625.0f) // 2^28/1MHz
 
-//#define DEBUG_MESSAGES
-//#define RADIO_TIMING_TEST
-
-// Updated for EP1
-#define ROBOT_EP1_BODY
-
 enum watchdog_channels {
   WDOG_RTOS,
   WDOG_NERVE_PINCH,
-  WDOG_UART,
+  //WDOG_UART,
   WDOG_TOTAL_CHANNELS
 };
 

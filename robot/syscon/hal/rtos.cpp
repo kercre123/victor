@@ -114,8 +114,6 @@ extern "C" void SWI0_IRQHandler(void) {
       continue ;
     }
 
-    task->task(task->userdata);
-
     // Either release the task slice, or reinsert it with the period
     if (task->repeating) {
       do {
@@ -124,6 +122,8 @@ extern "C" void SWI0_IRQHandler(void) {
     } else {
       task->active = false;
     }
+
+    task->task(task->userdata);
   }
 
   RTOS::kick(WDOG_RTOS);

@@ -10,6 +10,7 @@
 
 #include "micro_esb.h"
   
+#include "protocol.h"
 #include "random.h"
 #include "hardware.h"
 #include "radio.h"
@@ -24,8 +25,6 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-#define AUTO_GATHER
-
 using namespace Anki::Cozmo;
 
 static void EnterState(RadioState state);
@@ -34,10 +33,14 @@ static void EnterState(RadioState state);
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;
 
-// Current status values of cubes/chargers
-static RadioState        radioState;
-
 extern uesb_mainstate_t  m_uesb_mainstate;
+
+// This is our internal copy of the cube firmware update
+extern "C" const uint32_t     CUBE_FIRMWARE_LENGTH;
+extern "C" const CubeFirmware CUBE_UPDATE;
+
+// Number of 16-byte chunks available
+static const int CubeFirmwareBlocks = (CUBE_FIRMWARE_LENGTH+15) / 16 - 1;
 
 static const uesb_address_desc_t PairingAddress = {
   ADV_CHANNEL,
@@ -47,14 +50,28 @@ static const uesb_address_desc_t PairingAddress = {
 
 static const uesb_address_desc_t NoiseAddress = {
   1,
-  0xE7E7E7E7	
+  0xE7E7E7E7
 };
+
+
+// These are variables used for handling OTA
+static uesb_address_desc_t OTAAddress;
+static int ota_block_index;
+static RTOS_Task *ota_task;
+static void ota_ack_timeout(void* userdata);
+static const int OTA_ACK_TIMEOUT = CYCLES_MS(2);
+static const int MAX_ACK_TIMEOUTS = CYCLES_MS(500) / OTA_ACK_TIMEOUT;
+static int ack_timeouts;
 
 // Variables for talking to an accessory
 static uint8_t currentAccessory;
 static AccessorySlot accessories[MAX_ACCESSORIES];
 
+// Current status values of cubes/chargers
+static RadioState        radioState;
+
 void Radio::init() {
+  ota_task = RTOS::create(ota_ack_timeout, false);
 }
 
 void Radio::advertise(void) {
@@ -71,6 +88,8 @@ void Radio::advertise(void) {
   currentAccessory = 0;
 
   uesb_init(&uesb_config);
+  
+  assignProp(0, 0xCA11AB1E); // XXX: TEMPORRAY
 }
 
 void Radio::shutdown(void) {
@@ -86,16 +105,6 @@ static int LocateAccessory(uint32_t id) {
   return -1;
 }
 
-static int FreeAccessory(void) {
-  #ifdef AUTO_GATHER
-  for (int i = 0; i < MAX_ACCESSORIES; i++) {
-    if (!accessories[i].allocated) return i;
-  }
-  #endif
-
-  return -1;
-}
-
 static void EnterState(RadioState state) { 
   radioState = state;
 
@@ -106,16 +115,64 @@ static void EnterState(RadioState state) {
     case RADIO_TALKING:
       uesb_set_rx_address(&accessories[currentAccessory].address);
       break ;
+    case RADIO_OTA:
+      uesb_set_rx_address(&OTAAddress);
+      break ;
   }
 }
 
-void SendObjectConnectionState(int slot)
+static void SendObjectConnectionState(int slot)
 {
   ObjectConnectionState msg;
   msg.objectID = slot;
   msg.factoryID = accessories[slot].id;
   msg.connected = accessories[slot].active;
   RobotInterface::SendMessage(msg);
+}
+
+static void ota_send_next_block() {
+  OTAFirmwareBlock msg;
+  
+  msg.messageId = 0xF0 | ota_block_index;
+  memcpy(msg.block, CUBE_UPDATE.data[ota_block_index], sizeof(CubeFirmwareBlock));
+  
+  uesb_write_tx_payload(&OTAAddress, &msg, sizeof(OTAFirmwareBlock));
+  RTOS::start(ota_task, OTA_ACK_TIMEOUT);
+}
+
+static void ota_ack_timeout(void* userdata) {
+  // Give up, we didn't receive any acks soon enough
+  if (++ack_timeouts >= MAX_ACK_TIMEOUTS) {
+    EnterState(RADIO_PAIRING);
+    uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
+    return ;
+  }
+
+  ota_send_next_block();
+}
+
+static void OTARemoteDevice(uint32_t id) {
+  // Reset our block count
+  ota_block_index = 0;
+  ack_timeouts = 0;
+  
+  // This is address
+  OTAAddress.address = id;
+  OTAAddress.rf_channel = 81; // This is just a random one
+  OTAAddress.payload_length = sizeof(OTAFirmwareBlock);
+  
+  EnterState(RADIO_OTA);
+
+  // Tell our device to begin
+  CapturePacket pair;
+  pair.hopIndex = 0;
+  pair.hopBlackout = OTAAddress.rf_channel;
+  pair.patchStart = 0;
+
+  uesb_address_desc_t address = { ADV_CHANNEL, id };  
+  uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
+
+  ota_send_next_block();
 }
 
 void uesb_event_handler(uint32_t flags)
@@ -131,29 +188,53 @@ void uesb_event_handler(uint32_t flags)
   int slot;
 
   switch (radioState) {
+  case RADIO_OTA:
+    // Message acked, kill ota_task
+    RTOS::stop(ota_task);
+
+    // Send noise and return to pairing
+    if (++ota_block_index >= CubeFirmwareBlocks) {
+      EnterState(RADIO_PAIRING);
+      uesb_prepare_tx_payload(&NoiseAddress, NULL, 0);
+      break ;
+    }
+    
+    ack_timeouts = 0;
+    ota_send_next_block();
+    break ;
   case RADIO_PAIRING:      
-    AdvertisePacket packet;
-    memcpy(&packet, &rx_payload.data, sizeof(AdvertisePacket));
+    AdvertisePacket advert;
+    memcpy(&advert, &rx_payload.data, sizeof(AdvertisePacket));
 
     // Attempt to locate existing accessory and repair
-    slot = LocateAccessory(packet.id);
+    slot = LocateAccessory(advert.id);
     if (slot < 0) {
       ObjectDiscovered msg;
-      msg.factory_id = packet.id;
+      msg.factory_id = advert.id;
       msg.rssi = rx_payload.rssi;
       RobotInterface::SendMessage(msg);
             
-      // Attempt to allocate a slot for it
-      slot = FreeAccessory();
+      // Do not auto allocate the cube
+      break ;
+    }
 
-      // We cannot find a place for it
-      if (slot < 0) {
+    // Radio firmware header is valid
+    if (CUBE_UPDATE.magic == CUBE_FIRMWARE_MAGIC) {
+      // This is an invalid hardware version and we should not try to do anything with it
+      if (advert.hwVersion != CUBE_UPDATE.hwVersion) {
+        break ;
+      }
+
+      // Check if the device firmware is out of date
+      if (advert.patchLevel & CUBE_UPDATE.patchLevel) {
+        OTARemoteDevice(advert.id);
         break ;
       }
     }
 
+
     // We are loading the slot
-    accessories[slot].id = packet.id;
+    accessories[slot].id = advert.id;
     accessories[slot].last_received = 0;
     if (accessories[slot].active == false)
     {
@@ -167,7 +248,7 @@ void uesb_event_handler(uint32_t flags)
       
       uesb_address_desc_t address = {
         ADV_CHANNEL,
-        packet.id,
+        advert.id,
       };
       memcpy(&accessories[slot].address, &address, sizeof(address));
 
@@ -202,9 +283,9 @@ void Radio::setPropLights(unsigned int slot, const LightState *state) {
     return ;
   }
 
-	for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
-	 Lights::update(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * slot + c, &state[c]);
-	}
+  for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
+   Lights::update(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * slot + c, &state[c]);
+  }
 }
 
 void Radio::assignProp(unsigned int slot, uint32_t accessory) {
@@ -252,8 +333,8 @@ void Radio::updateLights() {
         acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];
       }
 
-			// XXX: THIS IS TEMPORARY
-			memset(acc->tx_state.ledStatus, 0x20, sizeof(acc->tx_state.ledStatus));
+      // XXX: THIS IS TEMPORARY
+      memset(acc->tx_state.ledStatus, 0x20, sizeof(acc->tx_state.ledStatus));
     }
   }
 }
@@ -306,6 +387,11 @@ void Radio::resume(void* userdata) {
 }
 
 void Radio::manage(void) {
+  // We are in OTA mode which is free running
+  if (radioState == RADIO_OTA) {
+    return ;
+  }
+
   // We are in bluetooth mode, do not do this
   if (m_uesb_mainstate == UESB_STATE_UNINITIALIZED) {
     return ;
