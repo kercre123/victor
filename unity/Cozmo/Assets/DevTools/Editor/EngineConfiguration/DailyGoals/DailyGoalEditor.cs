@@ -222,7 +222,6 @@ public class DailyGoalEditor : EditorWindow {
 
   }
 
-  // TODO: Draw DailyGoalGenEntry
   public DailyGoalGenerationData.GoalEntry DrawGoalDataEntry(DailyGoalGenerationData.GoalEntry genData) {
     string eventName = genData.CladEvent.ToString();
     if (string.IsNullOrEmpty(_EventSearchField) || eventName.Contains(_EventSearchField) || genData.CladEvent == GameEvent.Count) {

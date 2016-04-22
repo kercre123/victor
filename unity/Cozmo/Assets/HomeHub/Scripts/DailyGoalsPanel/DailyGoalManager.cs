@@ -13,9 +13,9 @@ using Anki.Cozmo;
 /// </summary>
 public class DailyGoalManager : MonoBehaviour {
 
-  // TODO: Load from JSON and set up this list. Reference this list to generate
-  // Daily Goals.
+  // List of current Daily Goals
   private List<DailyGoal> _DailyGoalList;
+  // List of Current Generation Data
   private DailyGoalGenerationData _CurrentGenData;
 
   #if UNITY_IOS && !UNITY_EDITOR

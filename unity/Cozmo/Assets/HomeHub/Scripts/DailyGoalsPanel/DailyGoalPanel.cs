@@ -93,7 +93,7 @@ public class DailyGoalPanel : MonoBehaviour {
       if (lastSession != null && !lastSession.Complete) {
         CompleteSession(lastSession);
       }
-      // TODO: Generate new Daily Goals and set them properly here
+
       TimelineEntryData newSession = new TimelineEntryData(DataPersistenceManager.Today);
 
       newSession.DailyGoals = DailyGoalManager.Instance.GenerateDailyGoals();
@@ -159,7 +159,7 @@ public class DailyGoalPanel : MonoBehaviour {
     DailyGoalManager.Instance.SetMinigameNeed();
   }
 
-  // TODO: Use this instead. Creates a goal badge based on a specified DailyGoal, then hooks in to DailyGoalManager.
+  // Creates a goal badge based on a specified DailyGoal, then hooks in to DailyGoalManager.
   private GoalCell CreateGoalCell(DailyGoal goal) {
     DAS.Event(this, string.Format("CreateGoalCell({0})", goal.Title));
     GoalCell newBadge = UIManager.CreateUIElement(_GoalCellPrefab.gameObject, _GoalContainer).GetComponent<GoalCell>();

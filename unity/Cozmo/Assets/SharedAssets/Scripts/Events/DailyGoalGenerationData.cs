@@ -38,7 +38,6 @@ namespace Anki.Cozmo {
 
     public List<GoalEntry> GenList = new List<GoalEntry>();
 
-    // TODO: Set up all necessary DailyGoal info, as well as additional info for determining generation
     [System.Serializable]
     public class GoalEntry {
       public GoalEntry() {
@@ -50,14 +49,13 @@ namespace Anki.Cozmo {
         CladEvent = GameEvent.Count;
         GenConditions = new List<GoalCondition>();
       }
-      // TODO: Preconditions for limiting generation
-      // TODO: Everything to do with the goal, implement
+
       public string TitleKey;
       public string DescKey;
       public string RewardType;
       public int Target;
       public int PointsRewarded;
-      //
+
       public GameEvent CladEvent;
       public List<GoalCondition> GenConditions;
 

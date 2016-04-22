@@ -65,7 +65,6 @@ namespace Cozmo {
         // Check if Completed
         if (GoalComplete && _Completed) {
           // Grant Reward
-          // TODO: Use a more generic Reward Action? Assuming we would want something green points related
           DAS.Event(this, string.Format("{0} Completed", Title));
           DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(RewardType, PointsRewarded);
           if (OnDailyGoalCompleted != null) {
