@@ -201,7 +201,7 @@ void Battery::manage(void* userdata)
         
         if (onContacts) {
           if (ContactTime++ < MaxContactTime) {
-            nrf_gpio_pin_set(PIN_CHARGE_EN);
+            //nrf_gpio_pin_set(PIN_CHARGE_EN);
           } else {
             nrf_gpio_pin_clear(PIN_CHARGE_EN);
           }

@@ -116,7 +116,7 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
 
       nrf_gpio_pin_set(PIN_TX_VEXT);
-      nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_PULLUP);
+      //nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_PULLUP);
 
       NRF_UART0->TASKS_STARTRX = 1;
     
