@@ -1,9 +1,12 @@
 ﻿using UnityEngine;
-using UnityEditor;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 /// <summary>
 /// Goal condition that specifies a day of the week that must be met.
 /// </summary>
@@ -24,7 +27,9 @@ namespace Anki {
       }
 
       public override void DrawControls() {
+        #if UNITY_EDITOR
         day = (DayOfWeek)EditorGUILayout.EnumPopup("Day", day);
+        #endif
       }
     }
   }

@@ -6,7 +6,10 @@ using Newtonsoft.Json.Linq;
 using System.Linq;
 using System.Reflection;
 using System.ComponentModel;
+
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 /// <summary>
 /// Goal condition, checked during generation to determine whether or not we can select a daily goal from the pool.
@@ -25,7 +28,7 @@ namespace Anki {
       public virtual bool ConditionMet() {
         return true;
       }
-
+      #if UNITY_EDITOR
       private GUIContent _Label;
 
       public GUIContent Label {
@@ -41,11 +44,11 @@ namespace Anki {
           return _Label;
         }
       }
-
+      #endif
 
       // Function to draw the controls for this Condition/Action
       public virtual void OnGUI() {
-
+        #if UNITY_EDITOR
         var rect = EditorGUILayout.GetControlRect();
         EditorGUILayout.BeginVertical();
 
@@ -56,6 +59,7 @@ namespace Anki {
         EditorGUI.indentLevel--;
 
         EditorGUILayout.EndVertical();
+        #endif
       }
 
       public abstract void DrawControls();
