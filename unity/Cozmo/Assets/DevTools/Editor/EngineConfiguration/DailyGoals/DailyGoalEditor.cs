@@ -300,7 +300,7 @@ public class DailyGoalEditor : EditorWindow {
         i--;
         continue;
       }
-      cond.OnGUI();
+      (cond as T).OnGUI();
     }
 
     var nextRect = EditorGUILayout.GetControlRect();

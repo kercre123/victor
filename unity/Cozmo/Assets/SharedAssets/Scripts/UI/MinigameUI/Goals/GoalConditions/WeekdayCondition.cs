@@ -9,6 +9,7 @@ using System.Collections.Generic;
 /// </summary>
 namespace Anki {
   namespace Cozmo {
+    [System.Serializable]
     public class WeekdayCondition : GoalCondition {
       
       DayOfWeek day = DayOfWeek.Monday;
@@ -23,7 +24,6 @@ namespace Anki {
       }
 
       public override void DrawControls() {
-        base.DrawControls();
         day = (DayOfWeek)EditorGUILayout.EnumPopup("Day", day);
       }
     }
