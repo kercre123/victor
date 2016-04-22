@@ -85,7 +85,7 @@ public class FactoryIntroManager : MonoBehaviour {
     SetStatusText("Factory App Connected To Robot");
 
     // runs the factory test.
-    RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
+    RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.FactoryTest);
 
