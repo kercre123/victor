@@ -76,9 +76,9 @@ u32 NVStorageComponent::GetBaseEntryTag(u32 tag) const {
   u32 baseTag = tag & 0x7fff0000;
   if (baseTag == 0) {
     // For single blob message, the base tag is the same as tag
-    baseTag = tag;
+    return tag;
   }
-  return baseTag;
+  return tag & 0xffff0000;
 }
   
 // Returns the end (i.e. highest) tag of the multi-blob entry range
@@ -307,6 +307,7 @@ void NVStorageComponent::Update()
     if (_robot.GetLastMsgTimestamp() > _recvDataMap.begin()->second.timeoutTimeStamp) {
       PRINT_NAMED_WARNING("NVStorageComponent.Update.ReadTimeout",
                           "Tag: 0x%x", _recvDataMap.begin()->first);
+      _recvDataMap.erase(_recvDataMap.begin());
     }
     return;
   }
@@ -321,6 +322,7 @@ void NVStorageComponent::Update()
     if (_robot.GetLastMsgTimestamp() > _writeDataAckMap.begin()->second.timeoutTimeStamp) {
       PRINT_NAMED_WARNING("NVStorageComponent.Update.WriteTimeout",
                           "Tag: 0x%x", _writeDataAckMap.begin()->first);
+      _writeDataAckMap.erase(_writeDataAckMap.begin());
     }
     // Fall through because we still potentially need to send multi-blob data
   }
@@ -498,6 +500,14 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
     // or two if it's multiErase.
     if (_writeDataAckMap[baseTag].writeNotErase || baseTag == tag) {
       --_writeDataAckMap[baseTag].numTagsLeftToAck;
+      
+      
+      // If any not okay results come back as a result of an erase (like if the tag doesn't exist),
+      // don't expect anything more to come.
+      if (payload.report.result != NVStorage::NVResult::NV_OKAY && !_writeDataAckMap[baseTag].writeNotErase) {
+        _writeDataAckMap[baseTag].numTagsLeftToAck = 0;
+      }
+      
       
       // Check if this should be forwarded on to game.
       // For multi-erase, only forward the final (i.e. 2nd) result
