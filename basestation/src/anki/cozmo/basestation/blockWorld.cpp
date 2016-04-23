@@ -624,7 +624,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}}; // lo R
         _robot->GetPose().ApplyTo(cliffquad, cliffquad);
         
-        if ( _robot->IsOnCliff() )
+        if ( _robot->IsCliffDetected() )
         {
           // build data we want to embed for this quad
           NavMemoryMapQuadData_Cliff cliffData;

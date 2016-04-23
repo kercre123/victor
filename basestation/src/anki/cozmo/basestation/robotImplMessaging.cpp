@@ -589,7 +589,7 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
 
-  SetIsOnCliff(cliffEvent.detected);
+  _isCliffDetected = cliffEvent.detected;
   
   // Forward on with EngineToGame event
   Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(cliffEvent)));
