@@ -310,19 +310,8 @@ public class Robot : IRobot {
     LightCubes = new Dictionary<int, LightCube>();
     Faces = new List<global::Face>();
 
-    // These defaults should eventually be in clad
-    PathMotionProfileDefault = new PathMotionProfile(
-      speed_mmps: 100.0f, // 160 booking, 80-120 reasonable, 60 stately pace
-      accel_mmps2: 200.0f,
-      decel_mmps2: 500.0f,
-      pointTurnSpeed_rad_per_sec: 2.0f, // 2.5 max
-      pointTurnAccel_rad_per_sec2: 100.0f,
-      pointTurnDecel_rad_per_sec2: 500.0f,
-      dockSpeed_mmps: 60.0f, // should be less than speed_mmps
-      dockAccel_mmps2: 200.0f,
-      dockDecel_mmps2: 100.0f,
-      reverseSpeed_mmps: 80.0f
-    );
+    // Defaults in clad
+    PathMotionProfileDefault = new PathMotionProfile();
 
     BackpackLights = new ILight[Singleton<SetBackpackLEDs>.Instance.onColor.Length];
 
