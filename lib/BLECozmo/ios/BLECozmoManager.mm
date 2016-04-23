@@ -394,7 +394,7 @@ UInt64 BLE_TimeInNanoseconds() {
 }
 
 -(void)service:(BLECentralServiceDescription *)service peripheralDidDisappear:(CBPeripheral *)peripheral {
-  BLELogDebug("BLECozmoManager.peripheralDidDisappear", "peripheral=%p", peripheral);
+  BLELogDebug("BLECozmoManager.peripheralDidDisappear", "peripheral=%s", [[peripheral.identifier UUIDString] UTF8String]);
   BLECozmoConnection *connection = [self connectionForPeripheral:peripheral];
   if (connection && connection.connectionState <= kDisconnected) {
     [self setVehicleConnectionState:peripheral connectionState:kUnavailable];

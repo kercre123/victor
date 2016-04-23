@@ -1094,20 +1094,6 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
   }
 }
 
-- (void)peripheralDidUpdateRSSI:(CBPeripheral *)peripheral error:(NSError *)error {
-  [self assertOnOurQueue];
-  if (CBPeripheralStateConnected != peripheral.state)
-    return;
-  
-  NSSet* servicesForPeripheral = [_servicesForPeripheral objectForKey:peripheral];
-  for (CBUUID* serviceID in servicesForPeripheral) { // there may be no services at this point!
-    BLECentralServiceDescription* serviceDescription = [self serviceForUUID:serviceID];
-    if(serviceDescription) {
-      [serviceDescription.delegate service:serviceDescription peripheral:peripheral didUpdateRSSI:peripheral.RSSI];
-    }
-  }
-}
-
 @end
 
 @implementation BLECentralMultiplexer (TestSupport)
