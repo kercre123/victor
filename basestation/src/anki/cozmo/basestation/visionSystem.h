@@ -117,6 +117,7 @@ namespace Cozmo {
     Result AddCalibrationImage(const Vision::Image& calibImg);
     Result ClearCalibrationImages();
     size_t GetNumStoredCalibrationImages() const { return _calibImages.size(); }
+    const std::list<Vision::Image>& GetCalibrationImages() const {return _calibImages;}
     
     void StopTracking();
 

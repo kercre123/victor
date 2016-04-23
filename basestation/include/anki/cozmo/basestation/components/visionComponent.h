@@ -28,6 +28,7 @@
 #include <thread>
 #include <mutex>
 #include <list>
+#include <vector>
 
 namespace Anki {
 
@@ -173,6 +174,13 @@ struct DockingErrorSignal;
     bool WillStoreNextImageForCameraCalibration() const { return _storeNextImageForCalibration;  }
     size_t  GetNumStoredCameraCalibrationImages() const;
     
+    // Writes all currently stored calibration images to the robot.
+    // Executes callback when all writes have completed.
+    // Also erases remaining calibration image slots on robot.
+    // We don't want to have a mix of images from different calibration runs.
+    using WriteCalibrationImagesToRobotCallback = std::function<void(std::vector<NVStorage::NVResult>&)>;
+    Result WriteCalibrationImagesToRobot(WriteCalibrationImagesToRobotCallback callback = {});
+    
     const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
     ImuDataHistory& GetImuDataHistory() { return _imuHistory; }
     
@@ -203,6 +211,7 @@ struct DockingErrorSignal;
     ImuDataHistory _imuHistory;
 
     bool _storeNextImageForCalibration = false;
+    std::vector<NVStorage::NVResult> _writeCalibImagesToRobotResults;
     
     constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
     constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);

@@ -38,8 +38,10 @@ namespace NVStorage {
     // except that the MSB is 1 for potential special treatment during
     // garbage collection in the future.
 
+
     // Single blob manufacturing entries start here
-    NVEntry_CameraCalib = 0x80000001,
+    NVEntry_CameraCalib        = 0x80000001,
+    NVEntry_PlaypenTestResults = 0x80000002,
 
 
     // Multi-blob manufacturing entires start here

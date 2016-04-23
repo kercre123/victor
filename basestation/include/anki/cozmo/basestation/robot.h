@@ -422,9 +422,9 @@ public:
 
     void SetEnableCliffSensor(bool val) { _enableCliffSensor = val; }
   
-    // sets whether we are currently on a cliff or over ground
-    void SetIsOnCliff(bool value) { _isOnCliff = value; }
-    bool IsOnCliff() const { return _isOnCliff; }
+    // Returns true if a cliff event was detected
+    bool IsCliffDetected() const { return _isCliffDetected; }
+    bool IsCliffSensorOn() const { return _isCliffSensorOn; }
   
     // sets distance detected by forward proximity sensor
     void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
@@ -831,7 +831,8 @@ public:
     bool             _enableCliffSensor  = true;
     u32              _lastSentImageID    = 0;
     u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ALL_TRACKS;
-    bool             _isOnCliff          = false;
+    bool             _isCliffDetected    = false;
+    bool             _isCliffSensorOn    = false;
     u16              _forwardSensorValue_mm = 0;
 
 
