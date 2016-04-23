@@ -29,7 +29,6 @@ namespace Anki {
     public:
       DriveToPoseAction(Robot& robot,
                         const Pose3d& pose,
-                        const PathMotionProfile& motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
@@ -38,13 +37,11 @@ namespace Anki {
                         const float maxReplanPlanningTime = DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S);
       
       DriveToPoseAction(Robot& robot,
-                        const PathMotionProfile& motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false); // Note that SetGoal(s) must be called befure Update()!
       
       DriveToPoseAction(Robot& robot,
                         const std::vector<Pose3d>& poses,
-                        const PathMotionProfile& motionProf = DEFAULT_PATH_MOTION_PROFILE,
                         const bool forceHeadDown  = true,
                         const bool useManualSpeed = false,
                         const Point3f& distThreshold = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
@@ -69,6 +66,8 @@ namespace Anki {
       // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
       // the start, otherwise you may break things (e.g. sounds might never stop playing).
       void SetDrivingSounds(const std::string& drivingSoundStartClipName, const std::string& drivingSoundStopClipName);
+      
+      void SetMotionProfile(const PathMotionProfile& motionProfile);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_POSE; }
@@ -104,6 +103,7 @@ namespace Anki {
       size_t              _selectedGoalIndex;
       
       PathMotionProfile _pathMotionProfile;
+      bool _hasMotionProfile = false;
       
       Point3f  _goalDistanceThreshold;
       Radians  _goalAngleThreshold;
@@ -133,7 +133,6 @@ namespace Anki {
       DriveToObjectAction(Robot& robot,
                           const ObjectID& objectID,
                           const PreActionPose::ActionType& actionType,
-                          const PathMotionProfile& motionProf = DEFAULT_PATH_MOTION_PROFILE,
                           const f32 predockOffsetDistX_mm = 0,
                           const bool useApproachAngle = false,
                           const f32 approachAngle_rad = 0,
@@ -142,7 +141,6 @@ namespace Anki {
       DriveToObjectAction(Robot& robot,
                           const ObjectID& objectID,
                           const f32 distance_mm,
-                          const PathMotionProfile& motionProf = DEFAULT_PATH_MOTION_PROFILE,
                           const bool useManualSpeed = false);
       virtual ~DriveToObjectAction() { };
       
@@ -166,6 +164,8 @@ namespace Anki {
       // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
       // the start, otherwise you may break things (e.g. sounds might never stop playing).
       void SetDrivingSounds(const std::string& drivingSoundStartClipName, const std::string& drivingSoundStopClipName);
+      
+      void SetMotionProfile(const PathMotionProfile& motionProfile);
             
     protected:
       
@@ -194,7 +194,8 @@ namespace Anki {
       std::string _stopDrivingAnimClip;
       bool _hasCustomDrivingSounds = false;
       
-      PathMotionProfile          _pathMotionProfile;    
+      PathMotionProfile          _pathMotionProfile;
+      bool _hasMotionProfile = false;
     }; // DriveToObjectAction
 
   
@@ -204,7 +205,6 @@ namespace Anki {
       DriveToPlaceCarriedObjectAction(Robot& robot,
                                       const Pose3d& placementPose,
                                       const bool placeOnGround,
-                                      const PathMotionProfile& motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                       const bool useExactRotation = false,
                                       const bool useManualSpeed = false);
       
@@ -231,7 +231,6 @@ namespace Anki {
       IDriveToInteractWithObject(Robot& robot,
                                  const ObjectID& objectID,
                                  const PreActionPose::ActionType& actionType,
-                                 const PathMotionProfile& motionProfile,
                                  const f32 distanceFromMarker_mm,
                                  const bool useApproachAngle,
                                  const f32 approachAngle_rad,
@@ -243,6 +242,8 @@ namespace Anki {
       // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
       // the start, otherwise you may break things (e.g. sounds might never stop playing).
       void SetDrivingSounds(const std::string& drivingSoundStartClipName, const std::string& drivingSoundStopClipName);
+      
+      void SetMotionProfile(const PathMotionProfile& motionProfile);
 
     protected:
 
@@ -269,7 +270,6 @@ namespace Anki {
       DriveToAlignWithObjectAction(Robot& robot,
                                    const ObjectID& objectID,
                                    const f32 distanceFromMarker_mm,
-                                   const PathMotionProfile& motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                    const bool useApproachAngle = false,
                                    const f32 approachAngle_rad = 0,
                                    const bool useManualSpeed = false);
@@ -298,7 +298,6 @@ namespace Anki {
     public:
       DriveToPickupObjectAction(Robot& robot,
                                 const ObjectID& objectID,
-                                const PathMotionProfile& motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                 const bool useApproachAngle = false,
                                 const f32 approachAngle_rad = 0,
                                 const bool useManualSpeed = false);
@@ -335,7 +334,6 @@ namespace Anki {
       // Places carried object on top of objectID
       DriveToPlaceOnObjectAction(Robot& robot,
                                  const ObjectID& objectID,
-                                 const PathMotionProfile& motionProf = DEFAULT_PATH_MOTION_PROFILE,
                                  const bool useApproachAngle = false,
                                  const f32 approachAngle_rad = 0,
                                  const bool useManualSpeed = false);
@@ -377,7 +375,6 @@ namespace Anki {
       // chooses preAction pose closest to approachAngle_rad if useApproachAngle == true.
       DriveToPlaceRelObjectAction(Robot& robot,
                                   const ObjectID& objectID,
-                                  const PathMotionProfile& motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                   const f32 placementOffsetX_mm = 0,
                                   const bool useApproachAngle = false,
                                   const f32 approachAngle_rad = 0,
@@ -416,7 +413,6 @@ namespace Anki {
     public:
       DriveToRollObjectAction(Robot& robot,
                               const ObjectID& objectID,
-                              const PathMotionProfile& motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                               const bool useApproachAngle = false,
                               const f32 approachAngle_rad = 0,
                               const bool useManualSpeed = false);
@@ -459,7 +455,6 @@ namespace Anki {
     public:
       DriveToPopAWheelieAction(Robot& robot,
                                const ObjectID& objectID,
-                               const PathMotionProfile& motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                const bool useApproachAngle = false,
                                const f32 approachAngle_rad = 0,
                                const bool useManualSpeed = false);
@@ -491,7 +486,6 @@ namespace Anki {
     public:
       DriveToAndTraverseObjectAction(Robot& robot,
                                      const ObjectID& objectID,
-                                     const PathMotionProfile& motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                      const bool useManualSpeed = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_TRAVERSE_OBJECT; }
@@ -504,7 +498,6 @@ namespace Anki {
     public:
       DriveToAndMountChargerAction(Robot& robot,
                                    const ObjectID& objectID,
-                                   const PathMotionProfile& motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                    const bool useManualSpeed = false);
       
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_AND_MOUNT_CHARGER; }

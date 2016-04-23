@@ -226,8 +226,6 @@ void BehaviorLookAround::TransitionToRoaming(Robot& robot)
   
   IActionRunner* goToPoseAction = new DriveToPoseAction(robot,
                                                         destPose,
-                                                        // TODO:(bn) randomize profile
-                                                        DEFAULT_PATH_MOTION_PROFILE,
                                                         false);
 
   // move head and lift to reasonable place before we start Roaming
@@ -273,7 +271,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject(Robot& robot)
                            newTranslation * (oldLength - kPossibleObjectViewingDist_mm),
                            &robot.GetPose());
       // TODO:(bn) motion profile here?
-      action->AddAction(new DriveToPoseAction(robot, newTargetPose, DEFAULT_PATH_MOTION_PROFILE, false));
+      action->AddAction(new DriveToPoseAction(robot, newTargetPose, false));
     }
   }
   else {

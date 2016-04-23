@@ -189,6 +189,13 @@ size_t AudioWaveFileReader::ConvertPCMDataStream( WaveHeader& waveHeader,
   return sampleCount;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AudioWaveFileReader::IsWaveDataWithKeyCached( const std::string& key ) const
+{
+  const auto it = _cachedWaveData.find( key );
+  return ( it != _cachedWaveData.end() );
+}
+
 
 } // Audio
 } // Cozmo

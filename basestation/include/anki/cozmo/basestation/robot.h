@@ -107,6 +107,7 @@ class IExternalInterface;
 struct RobotState;
 class ActiveCube;
 class CannedAnimationContainer;
+class SpeedChooser;
 
 typedef enum {
   SAVE_OFF = 0,
@@ -421,9 +422,9 @@ public:
 
     void SetEnableCliffSensor(bool val) { _enableCliffSensor = val; }
   
-    // sets whether we are currently on a cliff or over ground
-    void SetIsOnCliff(bool value) { _isOnCliff = value; }
-    bool IsOnCliff() const { return _isOnCliff; }
+    // Returns true if a cliff event was detected
+    bool IsCliffDetected() const { return _isCliffDetected; }
+    bool IsCliffSensorOn() const { return _isCliffSensorOn; }
   
     // sets distance detected by forward proximity sensor
     void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
@@ -690,6 +691,9 @@ public:
 
     const NVStorageComponent& GetNVStorageComponent() const { return _nvStorageComponent; }
     NVStorageComponent& GetNVStorageComponent() { return _nvStorageComponent; }
+  
+    const SpeedChooser& GetSpeedChooser() const { return *_speedChooser; }
+          SpeedChooser& GetSpeedChooser()       { return *_speedChooser; }
 
     // Handle various message types
     template<typename T>
@@ -730,7 +734,6 @@ public:
     FaceWorld         _faceWorld;
   
     BehaviorManager  _behaviorMgr;
-    bool             _isBehaviorMgrEnabled;
     
   
   
@@ -828,7 +831,8 @@ public:
     bool             _enableCliffSensor  = true;
     u32              _lastSentImageID    = 0;
     u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ALL_TRACKS;
-    bool             _isOnCliff          = false;
+    bool             _isCliffDetected    = false;
+    bool             _isCliffSensorOn    = false;
     u16              _forwardSensorValue_mm = 0;
 
 
@@ -904,6 +908,9 @@ public:
     ///////// Progression/Skills ////////
     ProgressionManager*  _progressionManager;
     ProgressionUnlockComponent* _progressionUnlockComponent;
+  
+    ///////// Speed ////////
+    SpeedChooser* _speedChooser;
   
     //////// Block pool ////////
     BlockFilter*         _blockFilter;

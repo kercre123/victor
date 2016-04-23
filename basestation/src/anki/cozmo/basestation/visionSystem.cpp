@@ -3076,7 +3076,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
       this->_calibrationMailbox.putMessage(calibration);
       this->EnableMode(VisionMode::ComputingCalibration, false);
       _isCalibrating = false;
-      this->ClearCalibrationImages();
     });
     
     // Check that there are enough images

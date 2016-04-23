@@ -45,7 +45,8 @@ namespace Anki {
                                     defaultDockSpeed_mmps,
                                     defaultDockAccel_mmps2,
                                     defaultDockDecel_mmps2,
-                                    defaultReverseSpeed_mmps);
+                                    defaultReverseSpeed_mmps,
+                                    true);
     
     
     // ============ Test class declaration ============

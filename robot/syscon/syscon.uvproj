@@ -594,6 +594,16 @@
               <FileType>8</FileType>
               <FilePath>.\crypto\aes.cpp</FilePath>
             </File>
+            <File>
+              <FileName>diffie.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\crypto\diffie.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>random.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\crypto\random.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

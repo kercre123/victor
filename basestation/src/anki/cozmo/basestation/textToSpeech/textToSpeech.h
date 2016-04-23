@@ -49,9 +49,9 @@ public:
   void SetAudioController(Audio::AudioController* audioController) { _audioController = audioController; }
   
 private:
-  void HandleAssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
+  void HandleAssignNameToFace(Vision::FaceID_t faceId, const std::string& name);
   
-  void HandlePlayFaceNameAnimation(Vision::FaceID_t faceID, const std::string& name);
+  void HandlePlayFaceNameAnimation(Vision::FaceID_t faceId, const std::string& name);
   
   std::vector<Signal::SmartHandle> _signalHandles;
   cst_voice_struct* _voice;

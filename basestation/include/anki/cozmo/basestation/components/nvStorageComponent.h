@@ -59,6 +59,11 @@ public:
              NVStorageWriteEraseCallback callback = {},
              bool broadcastResultToGame = false);
   
+  bool Write(NVStorage::NVEntryTag tag,
+             std::vector<u8>* data,
+             NVStorageWriteEraseCallback callback = {},
+             bool broadcastResultToGame = false);
+  
   // Erase the given entry from robot flash.
   // Returns true if request was successfully sent.
   // If broadcastToGame == true, a single MessageEngineToGame::NVStorageOpResult
@@ -91,8 +96,117 @@ public:
 
   void Update();
 
+  // Kevin's sandbox function for testing
+  // For dev only!
+  void Test();
  
 private:
+  
+  // Info about a single write request
+  struct WriteDataObject {
+    WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>* dataVec)
+    : baseTag(tag)
+    , nextTag(static_cast<u32>(tag))
+    , sendIndex(0)
+    , data(dataVec)
+    { }
+    
+    ~WriteDataObject() {
+      Util::SafeDelete(data);
+    }
+
+    NVStorage::NVEntryTag baseTag;
+    u32 nextTag;
+    u32 sendIndex;
+    std::vector<u8> *data;
+  };
+  
+  // Info on how to handle ACK'd writes/erases
+  struct WriteDataAckInfo {
+    WriteDataAckInfo()
+    : numTagsLeftToAck(0)
+    , callback({})
+    , writeNotErase(true)
+    , broadcastResultToGame(false)
+    , timeoutTimeStamp(0)
+    { }
+    
+    u32  numTagsLeftToAck;
+    NVStorageWriteEraseCallback callback;
+    bool writeNotErase;
+    bool broadcastResultToGame;
+    TimeStamp_t timeoutTimeStamp;
+  };
+  
+  // Info on how to handle read-requested data
+  struct RecvDataObject {
+    RecvDataObject()
+    : data(nullptr)
+    , callback({})
+    , deleteVectorWhenDone(true)
+    , broadcastResultToGame(false)
+    , timeoutTimeStamp(0)    
+    { }
+    
+    ~RecvDataObject() {
+      if (deleteVectorWhenDone) {
+        Util::SafeDelete(data);
+      }
+    }
+    
+    std::vector<u8> *data;
+    NVStorageReadCallback callback;
+    bool deleteVectorWhenDone;
+    bool broadcastResultToGame;
+    TimeStamp_t timeoutTimeStamp;
+  };
+  
+  // Stores blobs of a multi-blob messgage.
+  // When all blobs received remainingIndices
+  struct PendingWriteData {
+    PendingWriteData() { tag = NVStorage::NVEntryTag::NVEntry_Invalid; }
+    NVStorage::NVEntryTag tag;
+    std::vector<u8> data;
+    std::unordered_set<u8> remainingIndices;
+  };
+  
+  
+  // Struct for holding any type of request to the robot's non-volatile storage
+  struct NVStorageRequest {
+    
+    // Write request
+    NVStorageRequest(NVStorage::NVEntryTag tag, NVStorageWriteEraseCallback callback, std::vector<u8>* data, bool broadcastResultToGame)
+    : op(NVStorage::NVOperation::NVOP_WRITE)
+    , tag(tag)
+    , writeCallback(callback)
+    , data(data)
+    , broadcastResultToGame(broadcastResultToGame)
+    {}
+    
+    // Erase request
+    NVStorageRequest(NVStorage::NVEntryTag tag, NVStorageWriteEraseCallback callback, bool broadcastResultToGame)
+    : op(NVStorage::NVOperation::NVOP_ERASE)
+    , tag(tag)
+    , writeCallback(callback)
+    , broadcastResultToGame(broadcastResultToGame)
+    {}
+    
+    // Read request
+    NVStorageRequest(NVStorage::NVEntryTag tag, NVStorageReadCallback callback, std::vector<u8>* data, bool broadcastResultToGame)
+    : op(NVStorage::NVOperation::NVOP_READ)
+    , tag(tag)
+    , readCallback(callback)
+    , data(data)
+    , broadcastResultToGame(broadcastResultToGame)
+    {}
+    
+    NVStorage::NVOperation op;
+    NVStorage::NVEntryTag tag;
+    NVStorageWriteEraseCallback writeCallback;
+    NVStorageReadCallback readCallback;
+    std::vector<u8>* data;
+    bool broadcastResultToGame;
+  };
   
   Robot&       _robot;
   
@@ -105,6 +219,8 @@ private:
   void HandleNVStorageReadEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleNVStorageEraseEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleNVStorageClearPartialPendingWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  
+  void SendRequest(NVStorageRequest req);
   
   // Queues blobs for a multi-blob message from game and sends them to robot when all blobs received.
   bool QueueWriteBlob(const NVStorage::NVEntryTag tag, u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
@@ -122,77 +238,20 @@ private:
   // Given any tag, returns the assumed end-of-range tag
   u32 GetTagRangeEnd(u32 startTag) const;
   
-  // Info about a single write/erase request
-  struct WriteDataObject {
-    WriteDataObject(NVStorage::NVEntryTag tag, std::vector<u8>&& dataVec, bool write)
-    : baseTag(tag)
-    , nextTag(static_cast<u32>(tag))
-    , sendIndex(0)
-    , data(dataVec)
-    , writeNotErase(write)
-    { }
-    
-    NVStorage::NVEntryTag baseTag;
-    u32 nextTag;
-    u32 sendIndex;
-    std::vector<u8> data;
-    bool writeNotErase;
-  };
+  // Queue of write/erase/read requests to be sent to robot
+  std::queue<NVStorageRequest> _requestQueue;
   
-  // Info on how to handle ACK'd writes/erases
-  struct WriteDataAckInfo {
-    WriteDataAckInfo()
-    : numTagsLeftToAck(0)
-    , callback({})
-    , writeNotErase(true)
-    , broadcastResultToGame(false)
-    { }
-    u32  numTagsLeftToAck;
-    NVStorageWriteEraseCallback callback;
-    bool writeNotErase;
-    bool broadcastResultToGame;
-  };
-  
-  // Info on how to handle read-requested data
-  struct RecvDataObject {
-    RecvDataObject()
-    : data(nullptr)
-    , callback({})
-    , deleteVectorWhenDone(true)
-    , broadcastResultToGame(false)
-    { }
-    
-    ~RecvDataObject() {
-      if (deleteVectorWhenDone) {
-        Util::SafeDelete(data);
-      }
-    }
-    
-    std::vector<u8> *data;
-    NVStorageReadCallback callback;
-    bool deleteVectorWhenDone;
-    bool broadcastResultToGame;
-  };
-  
-  // Stores blobs of a multi-blob messgage.
-  // When all blobs received remainingIndices
-  struct PendingWriteData {
-    PendingWriteData() { tag = NVStorage::NVEntryTag::NVEntry_Invalid; }
-    NVStorage::NVEntryTag tag;
-    std::vector<u8> data;
-    std::unordered_set<u8> remainingIndices;
-  };
-  
-  // Queue of data to be sent to robot for writing/erasing
+  // Queue of data to be sent to robot for writing
   std::queue<WriteDataObject> _writeDataQueue;
   
-  // Map of NVEntryTag to ACK handling struct.
+  // Map of NVEntryTag to ACK handling struct for write and erase requests
   std::unordered_map<u32, WriteDataAckInfo > _writeDataAckMap;
   
   // Map of requested NVEntryTag to received data handling struct
   std::unordered_map<u32, RecvDataObject> _recvDataMap;
 
   // Storage for in-progress-of-receiving multi-blob data
+  // via MessageGameToEngine::NVStorageWriteEntry
   PendingWriteData _pendingWriteData;
   
   // Maximum size of a single blob
@@ -203,6 +262,11 @@ private:
   
   // Maximum size of a single multi-blob write entry
   static constexpr u32 _kMaxNvStorageEntrySize       = _kMaxNvStorageBlobSize * _kMaxNumBlobsInMultiBlobEntry;
+  
+  // Ack timeout
+  // If an operation is not acked within this timeout then give up waiting for it.
+  // (Average write/read rate is ~10KB/s)
+  static constexpr u32 _kAckTimeout_ms = 12800;
   
 };
 

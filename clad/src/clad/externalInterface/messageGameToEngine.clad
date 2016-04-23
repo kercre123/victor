@@ -473,11 +473,6 @@ message EraseFaceByName {
   string name
 }
 
-// SetBehaviorSystemEnabled
-message SetBehaviorSystemEnabled {
-  bool enabled
-}
-
 // ActivateBehaviorChooser
 message ActivateBehaviorChooser {
   BehaviorChooserType behaviorChooserType

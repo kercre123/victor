@@ -121,8 +121,13 @@ private:
     
   // How we store and choose next behavior
   IBehaviorChooser* _behaviorChooser = nullptr;
-  // The default chooser is created once on startup
-  IBehaviorChooser* _defaultChooser = nullptr;
+
+  // This is a chooser which manually runs specific behaviors. The manager starts out using this chooser to
+  // avoid immediately executing a behavior when the engine starts
+  IBehaviorChooser* _selectionChooser = nullptr;
+
+  // This is the behavior used for freeplay. This is the default chooser
+  IBehaviorChooser* _freeplayBehaviorChooser = nullptr;
 
   bool _runningReactionaryBehavior = false;
   

@@ -23,6 +23,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
@@ -32,6 +33,10 @@
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+
+// Set to 1 if you want the test to actually be able to write
+// new camera calibration, calibration images, and test results to flash.
+#define ENABLE_NVSTORAGE_WRITES 0
 
 #define DEBUG_FACTORY_TEST_BEHAVIOR 1
 
@@ -60,7 +65,7 @@ namespace Cozmo {
   , _prePickupPose( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 150, 0}, &robot.GetPose().FindOrigin())
   , _expectedLightCubePose(0, Z_AXIS_3D(), {-50, 300, 0}, &robot.GetPose().FindOrigin())
   , _expectedChargerPose(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin())
-  , _currentState(FactoryTestState::RequestCalibrationImages)
+  , _currentState(FactoryTestState::InitRobot)
   , _lastHandlerResult(RESULT_OK)
   , _testResult(FactoryTestResultCode::UNKNOWN)
   {
@@ -77,12 +82,13 @@ namespace Cozmo {
     _motionProfile.pointTurnDecel_rad_per_sec2 = MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2;
     _motionProfile.dockSpeed_mmps = 80.0f; // slow it down a bit for reliability
     _motionProfile.reverseSpeed_mmps = 80.0f;
+    _motionProfile.isCustom = true;
 
     _camCalibPanAndTiltAngles = {{0,               0},
                                  {0,               DEG_TO_RAD(20)},
                                  {DEG_TO_RAD(-90), 0},
                                  {DEG_TO_RAD(-40), 0},
-                                 {DEG_TO_RAD( 40), 0},
+                                 {DEG_TO_RAD( 45), 0},
     };
     
     
@@ -91,12 +97,10 @@ namespace Cozmo {
       EngineToGameTag::RobotObservedObject,
       EngineToGameTag::RobotDeletedObject,
       EngineToGameTag::ObjectMoved,
-      EngineToGameTag::CameraCalibration
+      EngineToGameTag::CameraCalibration,
+      EngineToGameTag::RobotStopped
     }});
 
-    SubscribeToTags({
-      GameToEngineTag::ClearAllObjects
-    });
   }
   
 #pragma mark -
@@ -117,37 +121,99 @@ namespace Cozmo {
     _actionCallbackMap.clear();
     _holdUntilTime = -1;
     _watchdogTriggerTime = currentTime_sec + _kWatchdogTimeout;
+    _waitingForWriteAck = false;
     
     robot.GetActionList().Cancel();
     
-    // Go to the appropriate state
-    InitState(robot);
+    // Disable reactionary behaviors
+    if (robot.GetBehaviorManager().GetWhiteboard().IsCliffReactionEnabled()) {
+      robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
+    }
+
     
     return lastResult;
   } // Init()
 
   
-  
-  void BehaviorFactoryTest::InitState(const Robot& robot)
-  {
-    // Move robot motors to expected positions
-    // ...
-  }
 
+  // Print result and display lights on robot
+  void BehaviorFactoryTest::PrintAndLightResult(Robot& robot, FactoryTestResultCode res)
+  {
+    // Backpack lights
+    static const size_t NUM_LIGHTS = (size_t)LEDId::NUM_BACKPACK_LEDS;
+    static const std::array<u32,NUM_LIGHTS> pass_onColor{{NamedColors::BLACK,NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN,NamedColors::BLACK}};
+    static const std::array<u32,NUM_LIGHTS> pass_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
+    static const std::array<u32,NUM_LIGHTS> pass_onPeriod_ms{{1000,1000,1000,1000,1000}};
+    static const std::array<u32,NUM_LIGHTS> pass_offPeriod_ms{{100,100,100,100,100}};
+    static const std::array<u32,NUM_LIGHTS> pass_transitionOnPeriod_ms{{450,450,450,450,450}};
+    static const std::array<u32,NUM_LIGHTS> pass_transitionOffPeriod_ms{{450,450,450,450,450}};
+    
+    static const std::array<u32,NUM_LIGHTS> fail_onColor{{NamedColors::BLACK,NamedColors::RED,NamedColors::RED,NamedColors::RED,NamedColors::BLACK}};
+    static const std::array<u32,NUM_LIGHTS> fail_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
+    static const std::array<u32,NUM_LIGHTS> fail_onPeriod_ms{{500,500,500,500,500}};
+    static const std::array<u32,NUM_LIGHTS> fail_offPeriod_ms{{500,500,500,500,500}};
+    static const std::array<u32,NUM_LIGHTS> fail_transitionOnPeriod_ms{};
+    static const std::array<u32,NUM_LIGHTS> fail_transitionOffPeriod_ms{};
+    
+    if (res == FactoryTestResultCode::SUCCESS) {
+      PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.TestPASSED", "");
+      robot.SetBackpackLights(pass_onColor, pass_offColor,
+                              pass_onPeriod_ms, pass_offPeriod_ms,
+                              pass_transitionOnPeriod_ms, pass_transitionOffPeriod_ms);
+    } else {
+      PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestFAILED",
+                          "%s (code %d, state %s)",
+                          EnumToString(res), static_cast<u8>(res), GetStateName().c_str());
+      robot.SetBackpackLights(fail_onColor, fail_offColor,
+                              fail_onPeriod_ms, fail_offPeriod_ms,
+                              fail_transitionOnPeriod_ms, fail_transitionOffPeriod_ms);
+    }
+    
+  };
+  
   void BehaviorFactoryTest::EndTest(Robot& robot, FactoryTestResultCode resCode)
   {
     // Send test result out and make this behavior stop running
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
-      _testResult = resCode;
-      if (_testResult == FactoryTestResultCode::SUCCESS) {
-        PRINT_NAMED_INFO("BehaviorFactoryTest.EndTest.TestComplete", "PASS");
-      } else {
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestComplete",
-                            "FAIL: %s (code %d, state %s)",
-                            EnumToString(_testResult), (int)_testResult, GetStateName().c_str());
+      
+      if (_waitingForWriteAck) {
+        PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WritingTestResultInProgress",
+                            "Ignoring result %s", EnumToString(resCode));
+        return;
       }
       
-      robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
+      if (ENABLE_NVSTORAGE_WRITES) {
+        // Generate result struct
+        FactoryTestResultEntry testRes;
+        testRes.result = resCode;
+        testRes.utcTime = time(0);
+        testRes.stationID = 0;   // TODO: How to get this?
+        
+        u8 buf[2*testRes.Size()];
+        size_t numBytes = testRes.Pack(buf, sizeof(buf));
+        
+        // Store test result to robot flash
+        _waitingForWriteAck = true;
+        robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, buf, numBytes,
+                                            [this,&robot,resCode](NVStorage::NVResult res){
+                                              if (res == NVStorage::NVResult::NV_OKAY) {
+                                                _testResult = resCode;
+                                                
+                                              } else {
+                                                PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WriteFailed",
+                                                                    "WriteResult: %s (Original test result: %s)",
+                                                                    EnumToString(res), EnumToString(resCode));
+                                                _testResult = FactoryTestResultCode::TEST_RESULT_WRITE_FAILED;
+                                              }
+                                              _waitingForWriteAck = false;
+                                              PrintAndLightResult(robot,_testResult);
+                                              robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
+                                            });
+      } else {
+        _testResult = resCode;
+        PrintAndLightResult(robot,_testResult);
+        robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
+      }
     } else {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestAlreadyComplete",
                           "Existing result %s (new result %s)",
@@ -185,22 +251,14 @@ namespace Cozmo {
     if (IsActing()) {
       return Status::Running;
     }
-    
-    auto gotoPoseCallback = [this,&robot](ActionResult ret){
-      if (ret != ActionResult::SUCCESS) {
-        EndTest(robot, FactoryTestResultCode::GOTO_POSE_ACTION_FAILED);
-      } else {
-        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
-      }
-      return true;
-    };
-    
+
     
     switch(_currentState)
     {
-      case FactoryTestState::RequestCalibrationImages:
+      case FactoryTestState::InitRobot:
       {
-        // Set calibration if not already set
+        // Set fake calibration if not already set so that we can actually run
+        // calibration from images.
         if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
           PRINT_NAMED_INFO("BehaviorFactoryTest.Update.SettingFakeCalib", "");
           Vision::CameraCalibration fakeCalib(240, 320,
@@ -210,8 +268,16 @@ namespace Cozmo {
         }
         
         
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.RequestCalibrationImages", "TODO");
-        SetCurrState(FactoryTestState::ChargerAndIMUCheck);
+        // Move lift to correct height
+        StartActing(robot, new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK),
+                    [this,&robot](ActionResult ret){
+                      if (ret != ActionResult::SUCCESS) {
+                        EndTest(robot, FactoryTestResultCode::INIT_LIFT_HEIGHT_FAILED);
+                      }
+                      SetCurrState(FactoryTestState::ChargerAndIMUCheck);
+                      return true;
+                    });
+        
         break;
       }
       case FactoryTestState::ChargerAndIMUCheck:
@@ -237,17 +303,19 @@ namespace Cozmo {
           }
           
           // Drive off charger
-          DriveStraightAction *driveAction = new DriveStraightAction(robot, 250, 100);
-          StartActing(robot, driveAction );
+          StartActing(robot, new DriveStraightAction(robot, 250, 100) );
           SetCurrState(FactoryTestState::DriveToSlot);
         }
         break;
       }
       case FactoryTestState::DriveToSlot:
       {
-        if (!robot.IsOnCliff()) {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingCliff", "");
-          END_TEST(FactoryTestResultCode::CLIFF_UNDETECTED);
+        if (!robot.IsCliffSensorOn()) {
+          if (currentTime_sec > _holdUntilTime) {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingCliff", "");
+            END_TEST(FactoryTestResultCode::CLIFF_UNDETECTED);
+          }
+          break;
         }
         
         if (robot.IsOnCharger()) {
@@ -259,9 +327,19 @@ namespace Cozmo {
         // TODO: Create a function that's shared by LocalizeToObject and LocalizeToMat that does this?
         robot.SetNewPose(_cliffDetectPose);
         
+        DriveToPoseAction* action = new DriveToPoseAction(robot, _camCalibPose);
+        action->SetMotionProfile(_motionProfile);
         
         // Go to camera calibration pose
-        StartActing(robot, new DriveToPoseAction(robot, _camCalibPose, _motionProfile) );
+        StartActing(robot, action,
+                    [this,&robot](ActionResult ret){
+                      if (ret != ActionResult::SUCCESS) {
+                        EndTest(robot, FactoryTestResultCode::GOTO_CALIB_POSE_ACTION_FAILED);
+                      } else {
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
+                      }
+                      return true;
+                    });
         SetCurrState(FactoryTestState::GotoCalibrationPose);
         break;
       }
@@ -340,7 +418,19 @@ namespace Cozmo {
       {
         if (_calibrationReceived) {
           // Goto pose where block is visible
-          StartActing(robot, new DriveToPoseAction(robot, _prePickupPose, _motionProfile, false, false), gotoPoseCallback);
+          DriveToPoseAction* action = new DriveToPoseAction(robot, _prePickupPose);
+          action->SetMotionProfile(_motionProfile);
+          StartActing(robot, action,
+                      [this,&robot](ActionResult ret){
+                        if (ret != ActionResult::SUCCESS) {
+                          EndTest(robot, FactoryTestResultCode::GOTO_PRE_PICKUP_POSE_ACTION_FAILED);
+                        } else {
+                          _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
+                        }
+                        return true;
+                      });
+          
+          
           SetCurrState(FactoryTestState::GotoPickupPose);
         } else if (currentTime_sec > _holdUntilTime) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CalibrationTimedout", "");
@@ -419,8 +509,10 @@ namespace Cozmo {
         // Pickup block
         PRINT_NAMED_INFO("BehaviorFactory.Update.PickingUp", "Attempt %d", _attemptCounter);
         ++_attemptCounter;
+        DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _blockObjectID);
+        action->SetMotionProfile(_motionProfile);
         StartActing(robot,
-                    new DriveToPickupObjectAction(robot, _blockObjectID, _motionProfile),
+                    action,
                     pickupCallback);
         SetCurrState(FactoryTestState::PickingUpBlock);
         break;
@@ -438,8 +530,10 @@ namespace Cozmo {
         };
         
         // Put block down
+        PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot, _actualLightCubePose);
+        action->SetMotionProfile(_motionProfile);
         StartActing(robot,
-                    new PlaceObjectOnGroundAtPoseAction(robot, _actualLightCubePose, _motionProfile),
+                    action,
                     placementCallback);
         SetCurrState(FactoryTestState::PlacingBlock);
         break;
@@ -465,9 +559,22 @@ namespace Cozmo {
                               _actualLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
           END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
         }
+
+        // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
+        EndTest(robot, FactoryTestResultCode::SUCCESS);
+        return Status::Complete;
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         // Look at charger
-        StartActing(robot, new TurnTowardsPoseAction(robot, _expectedChargerPose, DEG_TO_RAD(180)), gotoPoseCallback );
+        StartActing(robot, new TurnTowardsPoseAction(robot, _expectedChargerPose, DEG_TO_RAD(180)),
+                    [this,&robot](ActionResult ret){
+                      if (ret != ActionResult::SUCCESS) {
+                        EndTest(robot, FactoryTestResultCode::GOTO_PRE_MOUNT_CHARGER_POSE_ACTION_FAILED);
+                      } else {
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
+                      }
+                      return true;
+                    });
         SetCurrState(FactoryTestState::DockToCharger);
         break;
       }
@@ -490,8 +597,10 @@ namespace Cozmo {
           return true;
         };
         
+        DriveToAndMountChargerAction* action = new DriveToAndMountChargerAction(robot, _chargerObjectID);
+        action->SetMotionProfile(_motionProfile);
         StartActing(robot,
-                    new DriveToAndMountChargerAction(robot, _chargerObjectID, _motionProfile),
+                    action,
                     chargerCallback);
         break;
       }
@@ -541,6 +650,10 @@ namespace Cozmo {
         
       case EngineToGameTag::CameraCalibration:
         _lastHandlerResult = HandleCameraCalibration(robot, event.GetData().Get_CameraCalibration());
+        break;
+        
+      case EngineToGameTag::RobotStopped:
+        _lastHandlerResult = HandleRobotStopped(robot, event.GetData().Get_RobotStopped());
         break;
         
       default:
@@ -641,6 +754,8 @@ namespace Cozmo {
         break;
         
       case ObjectType::Block_LIGHTCUBE1:
+      case ObjectType::Block_LIGHTCUBE2:
+      case ObjectType::Block_LIGHTCUBE3:
         if (!_blockObjectID.IsSet() || _blockObjectID == objectID) {
           _blockObjectID = objectID;
           return RESULT_OK;
@@ -719,14 +834,77 @@ namespace Cozmo {
     PRINT_NAMED_INFO("BehaviorFactoryTest.HandleCameraCalibration.SettingNewCalibration", "");
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
     
-    // TODO: Save calibration to robot
-    // ...
+    if (ENABLE_NVSTORAGE_WRITES) {
+      
+      // Save calibration to robot
+      CameraCalibration calibMsg;
+      calibMsg.focalLength_x = camCalib.GetFocalLength_x();
+      calibMsg.focalLength_y = camCalib.GetFocalLength_y();
+      calibMsg.center_x = camCalib.GetCenter_x();
+      calibMsg.center_y = camCalib.GetCenter_y();
+      calibMsg.skew = camCalib.GetSkew();
+      calibMsg.nrows = camCalib.GetNrows();
+      calibMsg.ncols = camCalib.GetNcols();
+      
+      u8 buf[2*calibMsg.Size()];
+      size_t numBytes = calibMsg.Pack(buf, sizeof(buf));
+      
+      robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, numBytes,
+                                          [this,&robot](NVStorage::NVResult res) {
+                                            if (res == NVStorage::NVResult::NV_OKAY) {
+                                              PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCameraCalib.SUCCESS", "");
+                                            } else {
+                                              EndTest(robot, FactoryTestResultCode::CAMERA_CALIB_WRITE_FAILED);
+                                            }
+                                          });
+      
+      // Save calibration images to robot
+      Result writeImagesResult = robot.GetVisionComponent().WriteCalibrationImagesToRobot(
+                                                                                          
+        [this,&robot](std::vector<NVStorage::NVResult>& results){
+          
+          // Clear calibration images from VisionSystem
+          robot.GetVisionComponent().ClearCalibrationImages();
+          
+          u32 numFailures = 0;
+          for (auto r : results) {
+            if (r != NVStorage::NVResult::NV_OKAY) {
+              ++numFailures;
+            }
+          }
+          
+          if (numFailures > 0) {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibImages.FAILED", "%d failures", numFailures);
+            EndTest(robot, FactoryTestResultCode::CALIB_IMAGES_WRITE_FAILED);
+          } else {
+            PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCalibImages.SUCCESS", "");
+          }
+        }
+      );
+      
+      if (writeImagesResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibImages.SendFAILED", "");
+        EndTest(robot, FactoryTestResultCode::CALIB_IMAGES_SEND_FAILED);
+      }
+      
+    }
 
-    
-    robot.GetVisionComponent().ClearCalibrationImages();
     _calibrationReceived = true;
     return RESULT_OK;
   }
+  
+  Result BehaviorFactoryTest::HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg)
+  {
+    // This is expected when driving to slot
+    if (_currentState == FactoryTestState::DriveToSlot) {
+      _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.06f;
+    } else {
+      EndTest(robot, FactoryTestResultCode::CLIFF_UNEXPECTED);
+    }
+    
+    return RESULT_OK;
+  }
+  
 
   void BehaviorFactoryTest::StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback)
   {

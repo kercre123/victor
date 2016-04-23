@@ -68,8 +68,7 @@ namespace Cozmo {
     static constexpr u32 _kMinNumberOfCalibrationImagesRequired = 5;
 
     // If no change in behavior state for this long then trigger failure
-    static constexpr f32 _kWatchdogTimeout = 20;
-    
+    static constexpr f32 _kWatchdogTimeout = 20;    
     
     // Compute rotation ambiguities.
     // As long as the cube is upright, it's fine.
@@ -78,6 +77,7 @@ namespace Cozmo {
     virtual Result InitInternal(Robot& robot) override;
     virtual Status UpdateInternal(Robot& robot) override;
     void EndTest(Robot& robot, FactoryTestResultCode resCode);
+    void PrintAndLightResult(Robot& robot, FactoryTestResultCode res);
    
     virtual void   StopInternal(Robot& robot) override;
     
@@ -90,17 +90,16 @@ namespace Cozmo {
     
     Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg);
 
-    Result HandleObjectMoved(const Robot& robot,
-                             const ObjectMoved &msg);
+    Result HandleObjectMoved(const Robot& robot, const ObjectMoved &msg);
     
-    Result HandleCameraCalibration(Robot& robot,
-                                   const CameraCalibration &msg);
+    Result HandleCameraCalibration(Robot& robot, const CameraCalibration &msg);
+    
+    Result HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg);
     
     Result HandleActionCompleted(Robot& robot,
                                  const ExternalInterface::RobotCompletedAction& msg);
 
     
-    void InitState(const Robot& robot);
     void SetCurrState(FactoryTestState s);
     void UpdateStateName();
     
@@ -113,11 +112,12 @@ namespace Cozmo {
     std::map<u32, ActionResultCallback> _actionCallbackMap;
     bool IsActing() const {return !_actionCallbackMap.empty(); }
     
-    FactoryTestState   _currentState;
-    f32     _holdUntilTime = -1.0f;
-    Radians _startingRobotOrientation;
-    Result  _lastHandlerResult;
+    FactoryTestState  _currentState;
+    f32               _holdUntilTime = -1.0f;
+    Radians           _startingRobotOrientation;
+    Result            _lastHandlerResult;
     PathMotionProfile _motionProfile;
+    bool              _waitingForWriteAck = false;
  
     // Map of action tags that have been commanded to callback functions
     std::map<u32, std::string> _animActionTags;

@@ -243,7 +243,9 @@ void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robo
 void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
 {
   ObjectID targetBlockID = GetRobotsBlockID(robot);
-  StartActing(new DriveToPickupObjectAction(robot, targetBlockID, _driveToPickupProfile),
+  DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, targetBlockID);
+  action->SetMotionProfile(_driveToPickupProfile);
+  StartActing(action,
               [this, &robot](const ExternalInterface::RobotCompletedAction& resultMsg) {                
                 if ( resultMsg.result == ActionResult::SUCCESS ) {
                   ComputeFaceInteractionPose(robot);
@@ -338,13 +340,14 @@ void BehaviorRequestGameSimple::TransitionToDrivingToFace(Robot& robot)
     return;
   }
   else {
-    StartActing(new DriveToPoseAction(robot,
-                                      _faceInteractionPose,
-                                      _driveToPlaceProfile,
-                                      false,
-                                      false,
-                                      _driveToPlacePoseThreshold_mm,
-                                      _driveToPlacePoseThreshold_rads),
+    DriveToPoseAction* action = new DriveToPoseAction(robot,
+                                                      _faceInteractionPose,
+                                                      false,
+                                                      false,
+                                                      _driveToPlacePoseThreshold_mm,
+                                                      _driveToPlacePoseThreshold_rads);
+    action->SetMotionProfile(_driveToPlaceProfile);
+    StartActing(action,
                 [this, &robot](ActionResult result) {
                   if ( result == ActionResult::SUCCESS ) {
                     // transition back here, but don't reset the face pose to drive to

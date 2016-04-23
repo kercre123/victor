@@ -45,6 +45,7 @@
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
+#include "anki/cozmo/basestation/speedChooser.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
@@ -98,7 +99,6 @@ namespace Anki {
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
-    , _isBehaviorMgrEnabled(false)
     , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimations())
     , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
     , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
@@ -113,6 +113,7 @@ namespace Anki {
     , _moodManager(new MoodManager(this))
     , _progressionManager(new ProgressionManager(this))
     , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
+    , _speedChooser(new SpeedChooser(*this))
     , _blockFilter(new BlockFilter(this))
     , _imageDeChunker(new ImageDeChunker())
     , _traceHandler(_context->GetDataPlatform())
@@ -496,6 +497,7 @@ namespace Anki {
       _isOnCharger  = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
       _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
       _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
+      _isCliffSensorOn = static_cast<bool>(msg.status & (uint16_t)RobotStatusFlag::CLIFF_DETECTED);
       
       _hasMovedSinceLocalization |= GetMoveComponent().IsMoving() || _isPickedUp;
       
@@ -828,7 +830,7 @@ namespace Anki {
 
       // https://ankiinc.atlassian.net/browse/COZMO-1242 : moving too early causes pose offset
       static int ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 = 60;
-      if(_isBehaviorMgrEnabled && ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
+      if(ticksToPreventBehaviorManagerFromRotatingTooEarly_Jira_1242 <=0)
       {
         _behaviorMgr.Update();
         

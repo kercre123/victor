@@ -18,6 +18,7 @@
 
 #include "util/helpers/noncopyable.h"
 #include <cstdint>
+#include <functional>
 
 
 namespace Anki {
@@ -32,6 +33,7 @@ public:
   AudioControllerPluginInterface( AudioController& parentAudioController );
   
   // WavePortal Interface
+  // TODO: At some point there will be more then 1 instance of the WavePortal Plug-in they will be tracked by their Id
   // Set Audio Data to be used when the plugin is used
   void SetWavePortalAudioDataInfo( uint32_t sampleRate,
                                    uint16_t numberOfChannels,
@@ -43,11 +45,24 @@ public:
   void ClearWavePortalAudioDataInfo();
   
   // Check if the plugin has Audio Data
-  bool WavePortalHasAudioDataInfo();
+  bool WavePortalHasAudioDataInfo() const;
+  
+  // Check if plugin is in uses
+  bool WavePortalIsActive() const;
+  
+  // Set plugin life cycle callback functions
+  // Note: If the plugin is compiled out the callback functions will not be called
+  using PluginCallbackFunc = std::function<void( const AudioControllerPluginInterface* pluginInstance )>;
+  void SetWavePortalInitCallback( PluginCallbackFunc callback );
+  void SetWavePortalTerminateCallback( PluginCallbackFunc callback );
   
 private:
   
   AudioController& _parentAudioController;
+  
+  // WavePortal
+  PluginCallbackFunc    _wavePortalInitFunc   = nullptr;    // Callback when the plugin's init method is completed
+  PluginCallbackFunc    _wavePortalTermFunc   = nullptr;    // Callback when plugin is going to be destroyed
   
 };
 
