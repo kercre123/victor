@@ -62,7 +62,6 @@ DEF Cozmo_1 CozmoBot {
 WebotsKeyboardController {
   robotVolume 0
   behaviorName "lookAround"
-  behaviorChooserName "Demo"
 }
 CozmoVizDisplay {
   moodViz TRUE

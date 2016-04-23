@@ -22,10 +22,9 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
-  
-static std::vector<std::string> _animReactions = {
-  "Demo_Face_Interaction_ShockedScared_A",
-};
+
+// this is a stand-in for the real pickup animation
+static const char* kPickupReactAnimName = "anim_keepAlive_blink_01";
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
@@ -38,85 +37,27 @@ BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& co
   });
   
   // These are additional tags that this behavior should handle
-  SubscribeToTags({{
-    EngineToGameTag::RobotPutDown,
-    EngineToGameTag::RobotCompletedAction
-  }});
+  SubscribeToTags({
+    EngineToGameTag::RobotPutDown
+  });
 
 }
 
 bool BehaviorReactToPickup::IsRunnable(const Robot& robot) const
 {
-  switch (_currentState)
-  {
-    case State::Inactive:
-    case State::IsPickedUp:
-    case State::PlayingAnimation:
-    {
-      return true;
-    }
-    default:
-    {
-      PRINT_NAMED_ERROR("BehaviorReactToPickup.IsRunnable.UnknownState",
-                        "Reached unknown state %d.", _currentState);
-    }
-  }
-  return false;
+  return true;
 }
 
 Result BehaviorReactToPickup::InitInternal(Robot& robot)
 {
+  StartActing(new PlayAnimationAction(robot, kPickupReactAnimName));
   return Result::RESULT_OK;
 }
 
 IBehavior::Status BehaviorReactToPickup::UpdateInternal(Robot& robot)
 {
-  switch (_currentState)
-  {
-    case State::Inactive:
-    {
-      if (_isInAir)
-      {
-        _currentState = State::IsPickedUp;
-        return Status::Running;
-      }
-      break; // Jump down and return Status::Complete
-    }
-    case State::IsPickedUp:
-    {
-      static u32 animIndex = 0;
-      // For now we simply rotate through the animations we want to play when picked up
-      if (!_animReactions.empty())
-      {
-        IActionRunner* newAction = new PlayAnimationAction(robot, _animReactions[animIndex]);
-        _animTagToWaitFor = newAction->GetTag();
-        robot.GetActionList().QueueActionNow(newAction);
-        animIndex = ++animIndex % _animReactions.size();
-      }
-      _waitingForAnimComplete = true;
-      _currentState = State::PlayingAnimation;
-      return Status::Running;
-    }
-    case State::PlayingAnimation:
-    {
-      if (!_waitingForAnimComplete)
-      {
-        // If our animation is done and we're not in the air, we're done
-        if (!_isInAir)
-        {
-          _currentState = State::Inactive;
-          break; // Jump down to Status::Complete
-        }
-        // Otherwise set our state to start the animation again
-        _currentState = State::IsPickedUp;
-      }
-      return Status::Running;
-    }
-    default:
-    {
-      PRINT_NAMED_ERROR("BehaviorReactToPickup.Update.UnknownState",
-                        "Reached unknown state %d.", _currentState);
-    }
+  if( IsActing() || _isInAir ) {
+    return Status::Running;
   }
   
   return Status::Complete;
@@ -129,10 +70,6 @@ void BehaviorReactToPickup::StopInternal(Robot& robot)
 void BehaviorReactToPickup::AlwaysHandle(const EngineToGameEvent& event,
                                          const Robot& robot)
 {
-  if( ! IsChoosable() ) {
-    return;
-  }
-
   // We want to get these messages, even when not running
   switch (event.GetData().GetTag())
   {
@@ -145,16 +82,7 @@ void BehaviorReactToPickup::AlwaysHandle(const EngineToGameEvent& event,
     {
       _isInAir = false;
       break;
-    }
-    case MessageEngineToGameTag::RobotCompletedAction:
-    {
-      const RobotCompletedAction& msg = event.GetData().Get_RobotCompletedAction();
-      if (_animTagToWaitFor == msg.idTag)
-      {
-        _waitingForAnimComplete = false;
-      }
-      break;
-    }
+    }    
     default:
     {
       break;

@@ -880,7 +880,6 @@ void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
   auto helper = MakeAnkiEventUtil(externalInterface, *this, _signalHandles);
   
   using namespace ExternalInterface;
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBehaviorSystemEnabled>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
@@ -896,12 +895,6 @@ void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
   helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
-}
-
-template<>
-void Robot::HandleMessage(const ExternalInterface::SetBehaviorSystemEnabled& msg)
-{
-  _isBehaviorMgrEnabled = msg.enabled;
 }
   
 template<>

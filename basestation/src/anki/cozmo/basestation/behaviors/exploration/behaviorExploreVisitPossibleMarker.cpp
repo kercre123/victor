@@ -160,7 +160,7 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot, cons
   const Pose3d goalPose(goalRotation_rad, kUpVector, goalLocation, &robot.GetPose().FindOrigin());
   
   // create action to go to that point
-  DriveToPoseAction* driveAction = new DriveToPoseAction(robot, goalPose, DEFAULT_PATH_MOTION_PROFILE, false);
+  DriveToPoseAction* driveAction = new DriveToPoseAction(robot, goalPose, false);
   
   // TODO Either set head up at end, or at start and as soon as we see the cube, react
   

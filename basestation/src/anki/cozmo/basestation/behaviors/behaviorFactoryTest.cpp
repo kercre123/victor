@@ -82,6 +82,7 @@ namespace Cozmo {
     _motionProfile.pointTurnDecel_rad_per_sec2 = MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2;
     _motionProfile.dockSpeed_mmps = 80.0f; // slow it down a bit for reliability
     _motionProfile.reverseSpeed_mmps = 80.0f;
+    _motionProfile.isCustom = true;
 
     _camCalibPanAndTiltAngles = {{0,               0},
                                  {0,               DEG_TO_RAD(20)},
@@ -326,9 +327,11 @@ namespace Cozmo {
         // TODO: Create a function that's shared by LocalizeToObject and LocalizeToMat that does this?
         robot.SetNewPose(_cliffDetectPose);
         
+        DriveToPoseAction* action = new DriveToPoseAction(robot, _camCalibPose);
+        action->SetMotionProfile(_motionProfile);
         
         // Go to camera calibration pose
-        StartActing(robot, new DriveToPoseAction(robot, _camCalibPose, _motionProfile),
+        StartActing(robot, action,
                     [this,&robot](ActionResult ret){
                       if (ret != ActionResult::SUCCESS) {
                         EndTest(robot, FactoryTestResultCode::GOTO_CALIB_POSE_ACTION_FAILED);
@@ -504,8 +507,10 @@ namespace Cozmo {
         // Pickup block
         PRINT_NAMED_INFO("BehaviorFactory.Update.PickingUp", "Attempt %d", _attemptCounter);
         ++_attemptCounter;
+        DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _blockObjectID);
+        action->SetMotionProfile(_motionProfile);
         StartActing(robot,
-                    new DriveToPickupObjectAction(robot, _blockObjectID, _motionProfile),
+                    action,
                     pickupCallback);
         SetCurrState(FactoryTestState::PickingUpBlock);
         break;
@@ -523,8 +528,10 @@ namespace Cozmo {
         };
         
         // Put block down
+        PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot, _actualLightCubePose);
+        action->SetMotionProfile(_motionProfile);
         StartActing(robot,
-                    new PlaceObjectOnGroundAtPoseAction(robot, _actualLightCubePose, _motionProfile),
+                    action,
                     placementCallback);
         SetCurrState(FactoryTestState::PlacingBlock);
         break;
@@ -588,8 +595,10 @@ namespace Cozmo {
           return true;
         };
         
+        DriveToAndMountChargerAction* action = new DriveToAndMountChargerAction(robot, _chargerObjectID);
+        action->SetMotionProfile(_motionProfile);
         StartActing(robot,
-                    new DriveToAndMountChargerAction(robot, _chargerObjectID, _motionProfile),
+                    action,
                     chargerCallback);
         break;
       }

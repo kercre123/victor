@@ -143,11 +143,17 @@ IActionRunner* GetPlaceObjectOnGroundActionHelper(Robot& robot, const ExternalIn
   // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
   Rotation3d rot(UnitQuaternion<f32>(msg.qw, msg.qx, msg.qy, msg.qz));
   Pose3d targetPose(rot, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot.GetWorldOrigin());
-  return new PlaceObjectOnGroundAtPoseAction(robot,
-                                             targetPose,
-                                             msg.motionProf,
-                                             msg.useExactRotation,
-                                             msg.useManualSpeed);
+  
+  PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot,
+                                                                                targetPose,
+                                                                                msg.useExactRotation,
+                                                                                msg.useManualSpeed);
+  
+  if(msg.motionProf.isCustom)
+  {
+    action->SetMotionProfile(msg.motionProf);
+  }
+  return action;
 }
 
 IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface::GotoPose& msg)
@@ -161,11 +167,16 @@ IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface:
   // (For now it is hard-coded to true)
   const bool driveWithHeadDown = true;
   
-  return new DriveToPoseAction(robot,
-                               targetPose,
-                               msg.motionProf,
-                               driveWithHeadDown,
-                               msg.useManualSpeed);
+  DriveToPoseAction* action = new DriveToPoseAction(robot,
+                                                    targetPose,
+                                                    driveWithHeadDown,
+                                                    msg.useManualSpeed);
+  
+  if(msg.motionProf.isCustom)
+  {
+    action->SetMotionProfile(msg.motionProf);
+  }
+  return action;
 }
   
   
@@ -179,12 +190,16 @@ IActionRunner* GetPickupActionHelper(Robot& robot, const ExternalInterface::Pick
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToPickupObjectAction(robot,
-                                         selectedObjectID,
-                                         msg.motionProf,
-                                         msg.useApproachAngle,
-                                         msg.approachAngle_rad,
-                                         msg.useManualSpeed);
+    DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot,
+                                                                      selectedObjectID,
+                                                                      msg.useApproachAngle,
+                                                                      msg.approachAngle_rad,
+                                                                      msg.useManualSpeed);
+    if(msg.motionProf.isCustom)
+    {
+      action->SetMotionProfile(msg.motionProf);
+    }
+    return action;
   } else {
     PickupObjectAction* action = new PickupObjectAction(robot, selectedObjectID, msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
@@ -204,13 +219,17 @@ IActionRunner* GetPlaceRelActionHelper(Robot& robot, const ExternalInterface::Pl
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToPlaceRelObjectAction(robot,
-                                           selectedObjectID,
-                                           msg.motionProf,
-                                           msg.placementOffsetX_mm,
-                                           msg.useApproachAngle,
-                                           msg.approachAngle_rad,
-                                           msg.useManualSpeed);
+    DriveToPlaceRelObjectAction* action = new DriveToPlaceRelObjectAction(robot,
+                                                                          selectedObjectID,
+                                                                          msg.placementOffsetX_mm,
+                                                                          msg.useApproachAngle,
+                                                                          msg.approachAngle_rad,
+                                                                          msg.useManualSpeed);
+    if(msg.motionProf.isCustom)
+    {
+      action->SetMotionProfile(msg.motionProf);
+    }
+    return action;
   } else {
     PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
                                                             selectedObjectID,
@@ -234,12 +253,16 @@ IActionRunner* GetPlaceOnActionHelper(Robot& robot, const ExternalInterface::Pla
   
   if(static_cast<bool>(msg.usePreDockPose)) {
 
-    return new DriveToPlaceOnObjectAction(robot,
-                                          selectedObjectID,
-                                          msg.motionProf,
-                                          msg.useApproachAngle,
-                                          msg.approachAngle_rad,
-                                          msg.useManualSpeed);
+    DriveToPlaceOnObjectAction* action = new DriveToPlaceOnObjectAction(robot,
+                                                                        selectedObjectID,
+                                                                        msg.useApproachAngle,
+                                                                        msg.approachAngle_rad,
+                                                                        msg.useManualSpeed);
+    if(msg.motionProf.isCustom)
+    {
+      action->SetMotionProfile(msg.motionProf);
+    }
+    return action;
   } else {
     PlaceRelObjectAction* action = new PlaceRelObjectAction(robot,
                                                             selectedObjectID,
@@ -262,11 +285,15 @@ IActionRunner* GetDriveToObjectActionHelper(Robot& robot, const ExternalInterfac
     selectedObjectID = msg.objectID;
   }
   
-  return new DriveToObjectAction(robot,
-                                 selectedObjectID,
-                                 msg.distanceFromObjectOrigin_mm,
-                                 msg.motionProf,
-                                 msg.useManualSpeed);
+  DriveToObjectAction* action = new DriveToObjectAction(robot,
+                                                        selectedObjectID,
+                                                        msg.distanceFromObjectOrigin_mm,
+                                                        msg.useManualSpeed);
+  if(msg.motionProf.isCustom)
+  {
+    action->SetMotionProfile(msg.motionProf);
+  }
+  return action;
 }
 
 IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const ExternalInterface::AlignWithObject& msg)
@@ -278,13 +305,18 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
     selectedObjectID = msg.objectID;
   }
   
-  return new DriveToAlignWithObjectAction(robot,
-                                          selectedObjectID,
-                                          msg.distanceFromMarker_mm,
-                                          msg.motionProf,
-                                          msg.useApproachAngle,
-                                          msg.approachAngle_rad,
-                                          msg.useManualSpeed);
+  DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(robot,
+                                                                          selectedObjectID,
+                                                                          msg.distanceFromMarker_mm,
+                                                                          msg.useApproachAngle,
+                                                                          msg.approachAngle_rad,
+                                                                          msg.useManualSpeed);
+  
+  if(msg.motionProf.isCustom)
+  {
+    action->SetMotionProfile(msg.motionProf);
+  }
+  return action;
 }
   
 IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::RollObject& msg)
@@ -297,12 +329,16 @@ IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToRollObjectAction(robot,
-                                       selectedObjectID,
-                                       msg.motionProf,
-                                       msg.useApproachAngle,
-                                       msg.approachAngle_rad,
-                                       msg.useManualSpeed);
+    DriveToRollObjectAction* action = new DriveToRollObjectAction(robot,
+                                                                  selectedObjectID,
+                                                                  msg.useApproachAngle,
+                                                                  msg.approachAngle_rad,
+                                                                  msg.useManualSpeed);
+    if(msg.motionProf.isCustom)
+    {
+      action->SetMotionProfile(msg.motionProf);
+    }
+    return action;
   } else {
     RollObjectAction* action = new RollObjectAction(robot, selectedObjectID, msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
@@ -322,12 +358,16 @@ IActionRunner* GetPopAWheelieActionHelper(Robot& robot, const ExternalInterface:
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToPopAWheelieAction(robot,
-                                        selectedObjectID,
-                                        msg.motionProf,
-                                        msg.useApproachAngle,
-                                        msg.approachAngle_rad,
-                                        msg.useManualSpeed);
+    DriveToPopAWheelieAction* action = new DriveToPopAWheelieAction(robot,
+                                                                    selectedObjectID,
+                                                                    msg.useApproachAngle,
+                                                                    msg.approachAngle_rad,
+                                                                    msg.useManualSpeed);
+    if(msg.motionProf.isCustom)
+    {
+      action->SetMotionProfile(msg.motionProf);
+    }
+    return action;
   } else {
     PopAWheelieAction* action = new PopAWheelieAction(robot, selectedObjectID, msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
@@ -342,10 +382,14 @@ IActionRunner* GetTraverseObjectActionHelper(Robot& robot, const ExternalInterfa
   ObjectID selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToAndTraverseObjectAction(robot,
-                                              selectedObjectID,
-                                              msg.motionProf,
-                                              msg.useManualSpeed);
+    DriveToAndTraverseObjectAction* action = new DriveToAndTraverseObjectAction(robot,
+                                                                                selectedObjectID,
+                                                                                msg.useManualSpeed);
+    if(msg.motionProf.isCustom)
+    {
+      action->SetMotionProfile(msg.motionProf);
+    }
+    return action;
   } else {
     TraverseObjectAction* traverseAction = new TraverseObjectAction(robot, selectedObjectID, msg.useManualSpeed);
     traverseAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2);
@@ -363,10 +407,15 @@ IActionRunner* GetMountChargerActionHelper(Robot& robot, const ExternalInterface
   }
   
   if(static_cast<bool>(msg.usePreDockPose)) {
-    return new DriveToAndMountChargerAction(robot,
-                                            selectedObjectID,
-                                            msg.motionProf,
-                                            msg.useManualSpeed);
+    DriveToAndMountChargerAction* action =  new DriveToAndMountChargerAction(robot,
+                                                                             selectedObjectID,
+                                                                             msg.useManualSpeed);
+    
+    if(msg.motionProf.isCustom)
+    {
+      action->SetMotionProfile(msg.motionProf);
+    }
+    return action;
   } else {
     MountChargerAction* chargerAction = new MountChargerAction(robot, selectedObjectID, msg.useManualSpeed);
     chargerAction->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);

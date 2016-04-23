@@ -64,8 +64,8 @@ int cubeEncrypt(u8* src, u8* dest, bool nocrypt)
 	{
     // Start up a new XXTEA block
     memset(_xx, 0, XX_LEN);
-    int out = 0;
-    while (out < XX_LEN-4-XX_FOOTER && in < CUBE_LEN)   // Make sure there's room for 4 byte minimum chunk
+    int out = XX_HEADER;    // Skip first 8 bytes (zeros)
+    while (out < XX_LEN-4 && in < CUBE_LEN)   // Make sure there's room for 4 byte minimum chunk
     {
       // Start by searching for a chunk of non-FF (we never start inside a chunk)
       while (0xff == src[in])
@@ -75,16 +75,19 @@ int cubeEncrypt(u8* src, u8* dest, bool nocrypt)
       int end = in;
       while (0xff != src[end] || 0xff != src[end+1] || 0xff != src[end+2] || 0xff != src[end+3])
         end++;
-      int len = end-in, space = XX_LEN-XX_FOOTER-3-out;   // Compute space remaining for data (-3 byte chunk header)
+      int len = end-in, space = XX_LEN-3-out;   // Compute space remaining for data (-3 byte chunk header)
       if (len > space)
         len = space;
       // Add the chunk header and copy the payload over
-      _xx[out++] = in >> 8;    // Base address: Keil C51 is big endian
-      _xx[out++] = in;
-      _xx[out++] = len;        // Payload length
-      memcpy(_xx+out, src+in, len);
-      in += len;
-      out += len;
+      if (len > 0)
+      {
+        _xx[out++] = in >> 8;    // Base address: Keil C51 is big endian
+        _xx[out++] = in;
+        _xx[out++] = len;        // Payload length
+        memcpy(_xx+out, src+in, len);
+        in += len;
+        out += len;
+      }
     }
     // Encrypt it
     if (!nocrypt) {
@@ -142,7 +145,7 @@ void openCube(u8* src, u8* dest)
   // Bail out when we run out of headers to parse
   while (1)
   {
-    int in = 0;
+    int in = XX_HEADER;
     memcpy(_xx, src+destp, XX_LEN);
     destp += XX_LEN;
 
@@ -153,19 +156,22 @@ void openCube(u8* src, u8* dest)
     //btea((long*)_xx, XX_LEN/4, _KEY);   // Alternate way to test it
 
     // Check header - bail out if we're past the end of the file
-    if (0 != *(u32*)(_xx+XX_LEN-4) || 0 != *(u32*)(_xx+XX_LEN-8))
+    if (0 != *(u32*)(_xx) || 0 != *(u32*)(_xx+4))
       break;
 
     // Parse the chunk until we find a length byte of 0
     do
     {
-      u16 out = _xx[in++] << 8; // Base address: Keil C51 is big endian
-      out |= _xx[in++];
-      u8 len = _xx[in++];
+      u16 out = _xx[in] << 8; // Base address: Keil C51 is big endian
+      in = (in + 1) & 255;
+      out |= _xx[in];
+      in = (in + 1) & 255;
+      u8 len = _xx[in];
+      in = (in + 1) & 255;
       if (!len)
         break;
       memcpy(dest+out, _xx+in, len);
-      in += len;
+      in = (in + len) & 255;
     } while (1);
   }
 }

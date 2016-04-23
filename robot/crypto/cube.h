@@ -6,7 +6,7 @@
 
 #define CUBE_LEN 16384
 #define XX_LEN 256
-#define XX_FOOTER 8
+#define XX_HEADER 8
 
 typedef unsigned char         u8;
 typedef unsigned int          u16;

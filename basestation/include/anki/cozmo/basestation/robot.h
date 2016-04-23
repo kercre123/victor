@@ -107,6 +107,7 @@ class IExternalInterface;
 struct RobotState;
 class ActiveCube;
 class CannedAnimationContainer;
+class SpeedChooser;
 
 typedef enum {
   SAVE_OFF = 0,
@@ -690,6 +691,9 @@ public:
 
     const NVStorageComponent& GetNVStorageComponent() const { return _nvStorageComponent; }
     NVStorageComponent& GetNVStorageComponent() { return _nvStorageComponent; }
+  
+    const SpeedChooser& GetSpeedChooser() const { return *_speedChooser; }
+          SpeedChooser& GetSpeedChooser()       { return *_speedChooser; }
 
     // Handle various message types
     template<typename T>
@@ -730,7 +734,6 @@ public:
     FaceWorld         _faceWorld;
   
     BehaviorManager  _behaviorMgr;
-    bool             _isBehaviorMgrEnabled;
     
   
   
@@ -905,6 +908,9 @@ public:
     ///////// Progression/Skills ////////
     ProgressionManager*  _progressionManager;
     ProgressionUnlockComponent* _progressionUnlockComponent;
+  
+    ///////// Speed ////////
+    SpeedChooser* _speedChooser;
   
     //////// Block pool ////////
     BlockFilter*         _blockFilter;
