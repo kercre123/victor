@@ -250,16 +250,7 @@ namespace Cozmo {
     if (IsActing()) {
       return Status::Running;
     }
-    
-    auto gotoPoseCallback = [this,&robot](ActionResult ret){
-      if (ret != ActionResult::SUCCESS) {
-        EndTest(robot, FactoryTestResultCode::GOTO_POSE_ACTION_FAILED);
-      } else {
-        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
-      }
-      return true;
-    };
-    
+
     
     switch(_currentState)
     {
@@ -319,8 +310,11 @@ namespace Cozmo {
       case FactoryTestState::DriveToSlot:
       {
         if (!robot.IsCliffSensorOn()) {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingCliff", "");
-          END_TEST(FactoryTestResultCode::CLIFF_UNDETECTED);
+          if (currentTime_sec > _holdUntilTime) {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingCliff", "");
+            END_TEST(FactoryTestResultCode::CLIFF_UNDETECTED);
+          }
+          break;
         }
         
         if (robot.IsOnCharger()) {
@@ -334,7 +328,15 @@ namespace Cozmo {
         
         
         // Go to camera calibration pose
-        StartActing(robot, new DriveToPoseAction(robot, _camCalibPose, _motionProfile) );
+        StartActing(robot, new DriveToPoseAction(robot, _camCalibPose, _motionProfile),
+                    [this,&robot](ActionResult ret){
+                      if (ret != ActionResult::SUCCESS) {
+                        EndTest(robot, FactoryTestResultCode::GOTO_CALIB_POSE_ACTION_FAILED);
+                      } else {
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
+                      }
+                      return true;
+                    });
         SetCurrState(FactoryTestState::GotoCalibrationPose);
         break;
       }
@@ -413,7 +415,17 @@ namespace Cozmo {
       {
         if (_calibrationReceived) {
           // Goto pose where block is visible
-          StartActing(robot, new DriveToPoseAction(robot, _prePickupPose, _motionProfile, false, false), gotoPoseCallback);
+          StartActing(robot, new DriveToPoseAction(robot, _prePickupPose, _motionProfile, false, false),
+                      [this,&robot](ActionResult ret){
+                        if (ret != ActionResult::SUCCESS) {
+                          EndTest(robot, FactoryTestResultCode::GOTO_PRE_PICKUP_POSE_ACTION_FAILED);
+                        } else {
+                          _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
+                        }
+                        return true;
+                      });
+          
+          
           SetCurrState(FactoryTestState::GotoPickupPose);
         } else if (currentTime_sec > _holdUntilTime) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CalibrationTimedout", "");
@@ -538,9 +550,22 @@ namespace Cozmo {
                               _actualLightCubePose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
           END_TEST(FactoryTestResultCode::CUBE_NOT_WHERE_EXPECTED);
         }
+
+        // %%%%%%%%%%%  END OF TEST %%%%%%%%%%%%%%%%%%
+        EndTest(robot, FactoryTestResultCode::SUCCESS);
+        return Status::Complete;
+        // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         // Look at charger
-        StartActing(robot, new TurnTowardsPoseAction(robot, _expectedChargerPose, DEG_TO_RAD(180)), gotoPoseCallback );
+        StartActing(robot, new TurnTowardsPoseAction(robot, _expectedChargerPose, DEG_TO_RAD(180)),
+                    [this,&robot](ActionResult ret){
+                      if (ret != ActionResult::SUCCESS) {
+                        EndTest(robot, FactoryTestResultCode::GOTO_PRE_MOUNT_CHARGER_POSE_ACTION_FAILED);
+                      } else {
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
+                      }
+                      return true;
+                    });
         SetCurrState(FactoryTestState::DockToCharger);
         break;
       }
@@ -859,7 +884,7 @@ namespace Cozmo {
   {
     // This is expected when driving to slot
     if (_currentState == FactoryTestState::DriveToSlot) {
-      StartActing(robot, new WaitAction(robot, 0.03));
+      _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.06f;
     } else {
       EndTest(robot, FactoryTestResultCode::CLIFF_UNEXPECTED);
     }

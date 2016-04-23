@@ -140,6 +140,15 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
     return false;
   }
   
+  // If this is a multi-blob write, queue an erase first in case this write has fewer blobs
+  // than what is already stored in the robot.
+  if (IsMultiBlobEntryTag(static_cast<u32>(tag))) {
+    PRINT_NAMED_INFO("NVStorageComponent.Write.PreceedingMultiBlobWriteWithErase",
+                     "Tag: %s", EnumToString(tag));
+    _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
+  }
+  
+  // Queue write request
   _requestQueue.emplace(tag, callback, new std::vector<u8>(data,data+size), broadcastResultToGame);
   
   if (DEBUG_NVSTORAGE_COMPONENT) {

@@ -1355,7 +1355,7 @@ namespace Cozmo {
     for (auto img : calibImages) {
       // Compress to jpeg
       std::vector<u8> imgVec;
-      cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 85}));
+      cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
       
       std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
       FILE* fp = fopen(imgFilename.c_str(), "w");
