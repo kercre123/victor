@@ -418,7 +418,9 @@ namespace Cozmo {
       {
         if (_calibrationReceived) {
           // Goto pose where block is visible
-          StartActing(robot, new DriveToPoseAction(robot, _prePickupPose, _motionProfile, false, false),
+          DriveToPoseAction* action = new DriveToPoseAction(robot, _prePickupPose);
+          action->SetMotionProfile(_motionProfile);
+          StartActing(robot, action,
                       [this,&robot](ActionResult ret){
                         if (ret != ActionResult::SUCCESS) {
                           EndTest(robot, FactoryTestResultCode::GOTO_PRE_PICKUP_POSE_ACTION_FAILED);
