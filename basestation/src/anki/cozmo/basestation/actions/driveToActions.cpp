@@ -928,7 +928,7 @@ namespace Anki {
                                                                const bool useManualSpeed)
     : IDriveToInteractWithObject(robot,
                                  objectID,
-                                 PreActionPose::DOCKING,
+                                 PreActionPose::PLACE_RELATIVE,
                                  distanceFromMarker_mm,
                                  useApproachAngle,
                                  approachAngle_rad,
