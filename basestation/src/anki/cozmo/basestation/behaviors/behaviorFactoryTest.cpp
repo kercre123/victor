@@ -88,7 +88,7 @@ namespace Cozmo {
                                  {0,               DEG_TO_RAD(20)},
                                  {DEG_TO_RAD(-90), 0},
                                  {DEG_TO_RAD(-40), 0},
-                                 {DEG_TO_RAD( 40), 0},
+                                 {DEG_TO_RAD( 45), 0},
     };
     
     
