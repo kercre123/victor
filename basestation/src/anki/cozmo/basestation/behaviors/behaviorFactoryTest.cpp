@@ -754,6 +754,8 @@ namespace Cozmo {
         break;
         
       case ObjectType::Block_LIGHTCUBE1:
+      case ObjectType::Block_LIGHTCUBE2:
+      case ObjectType::Block_LIGHTCUBE3:
         if (!_blockObjectID.IsSet() || _blockObjectID == objectID) {
           _blockObjectID = objectID;
           return RESULT_OK;
