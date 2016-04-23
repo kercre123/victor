@@ -100,7 +100,6 @@ namespace Cozmo {
                                  const ExternalInterface::RobotCompletedAction& msg);
 
     
-    void InitState(const Robot& robot);
     void SetCurrState(FactoryTestState s);
     void UpdateStateName();
     

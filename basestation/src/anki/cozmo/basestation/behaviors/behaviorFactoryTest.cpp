@@ -65,7 +65,7 @@ namespace Cozmo {
   , _prePickupPose( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 150, 0}, &robot.GetPose().FindOrigin())
   , _expectedLightCubePose(0, Z_AXIS_3D(), {-50, 300, 0}, &robot.GetPose().FindOrigin())
   , _expectedChargerPose(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin())
-  , _currentState(FactoryTestState::ChargerAndIMUCheck)
+  , _currentState(FactoryTestState::InitRobot)
   , _lastHandlerResult(RESULT_OK)
   , _testResult(FactoryTestResultCode::UNKNOWN)
   {
@@ -128,30 +128,12 @@ namespace Cozmo {
     if (robot.GetBehaviorManager().GetWhiteboard().IsCliffReactionEnabled()) {
       robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
     }
-    
-    // Go to the appropriate state
-    InitState(robot);
-    
-    // Set fake calibration if not already set so that we can actually run
-    // calibration from images.
-    if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
-      PRINT_NAMED_INFO("BehaviorFactoryTest.Update.SettingFakeCalib", "");
-      Vision::CameraCalibration fakeCalib(240, 320,
-                                          290, 290,
-                                          160, 120);
-      robot.GetVisionComponent().SetCameraCalibration(fakeCalib);
-    }
+
     
     return lastResult;
   } // Init()
 
   
-  
-  void BehaviorFactoryTest::InitState(const Robot& robot)
-  {
-    // Move robot motors to expected positions
-    // ...
-  }
 
   // Print result and display lights on robot
   void BehaviorFactoryTest::PrintAndLightResult(Robot& robot, FactoryTestResultCode res)
@@ -194,7 +176,8 @@ namespace Cozmo {
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
       
       if (_waitingForWriteAck) {
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WritingTestResultInProgress", "Ignoring result %s", EnumToString(resCode));
+        PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WritingTestResultInProgress",
+                            "Ignoring result %s", EnumToString(resCode));
         return;
       }
       
@@ -280,6 +263,31 @@ namespace Cozmo {
     
     switch(_currentState)
     {
+      case FactoryTestState::InitRobot:
+      {
+        // Set fake calibration if not already set so that we can actually run
+        // calibration from images.
+        if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
+          PRINT_NAMED_INFO("BehaviorFactoryTest.Update.SettingFakeCalib", "");
+          Vision::CameraCalibration fakeCalib(240, 320,
+                                              290, 290,
+                                              160, 120);
+          robot.GetVisionComponent().SetCameraCalibration(fakeCalib);
+        }
+        
+        
+        // Move lift to correct height
+        StartActing(robot, new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK),
+                    [this,&robot](ActionResult ret){
+                      if (ret != ActionResult::SUCCESS) {
+                        EndTest(robot, FactoryTestResultCode::INIT_LIFT_HEIGHT_FAILED);
+                      }
+                      SetCurrState(FactoryTestState::ChargerAndIMUCheck);
+                      return true;
+                    });
+        
+        break;
+      }
       case FactoryTestState::ChargerAndIMUCheck:
       {
         // Check that robot is on charger
@@ -303,8 +311,7 @@ namespace Cozmo {
           }
           
           // Drive off charger
-          DriveStraightAction *driveAction = new DriveStraightAction(robot, 250, 100);
-          StartActing(robot, driveAction );
+          StartActing(robot, new DriveStraightAction(robot, 250, 100) );
           SetCurrState(FactoryTestState::DriveToSlot);
         }
         break;

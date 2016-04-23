@@ -7,6 +7,7 @@ namespace Anki {
 namespace Cozmo {
 
 enum uint_8 FactoryTestState {
+  InitRobot,
   ChargerAndIMUCheck,       // Verify that robot is on charger and IMU is not drifting
   DriveToSlot,              // Drive forward until cliff event. Set robot's pose.
   GotoCalibrationPose,      // Drive to pose from which calibration images are to be taken
@@ -24,6 +25,7 @@ enum uint_8 FactoryTestState {
 enum uint_8 FactoryTestResultCode {
   UNKNOWN = 0,
   SUCCESS,
+  INIT_LIFT_HEIGHT_FAILED,
   CHARGER_UNDETECTED,
   IMU_DRIFTING,
   STILL_ON_CHARGER,
