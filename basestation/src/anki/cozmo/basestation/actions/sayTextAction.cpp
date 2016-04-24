@@ -12,6 +12,7 @@
 
 #include "sayTextAction.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "clad/audio/audioEventTypes.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -19,7 +20,7 @@ namespace Cozmo {
   SayTextAction::SayTextAction(Robot& robot, const std::string& text)
   : IAction(robot)
   , _text(text)
-  , _playAnimationAction(robot, ***NAME_OF_SPECIAL_ANIMATION***)
+  , _playAnimationAction(robot, Audio::GameEvent::Vo_Coz_Placeholder_Play)
   {
     if(ANKI_DEVELOPER_CODE)
     {
