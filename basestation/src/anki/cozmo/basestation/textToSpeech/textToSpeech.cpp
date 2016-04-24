@@ -63,7 +63,7 @@ std::string TextToSpeech::CacheSpeech(const std::string& text)
 } // CacheText()
 
   
-Result TextToSpeech::PrepareToSay(const std::string& text) 
+Result TextToSpeech::PrepareToSay(const std::string& text, SayTextStyle style) 
 {
   using namespace Audio;
   
@@ -89,6 +89,7 @@ Result TextToSpeech::PrepareToSay(const std::string& text)
     pluginInterface->ClearWavePortalAudioDataInfo();
   }
   
+  // TODO: Make use of specified SayTextStyle 
   pluginInterface->SetWavePortalAudioDataInfo( data->sampleRate,
                                                data->numberOfChannels,
                                                data->duration_ms,

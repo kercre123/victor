@@ -582,7 +582,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       return new ReadToolCodeAction(robot);
       
     case RobotActionUnionTag::sayText:
-      return new SayTextAction(robot, actionUnion.Get_sayText().text);
+      return new SayTextAction(robot, actionUnion.Get_sayText().text, actionUnion.Get_sayText().style);
       
       // TODO: Add cases for other actions
       
@@ -736,7 +736,7 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     }
     case ExternalInterface::MessageGameToEngineTag::SayText:
     {
-      newAction = new SayTextAction(robot, event.GetData().Get_SayText().text);
+      newAction = new SayTextAction(robot, event.GetData().Get_SayText().text, event.GetData().Get_SayText().style);
       break;
     }
     default:

@@ -18,6 +18,7 @@
 
 #include "anki/cozmo/basestation/audio/audioWaveFileReader.h"
 #include "anki/common/types.h"
+#include "clad/types/sayTextStyles.h"
 
 #include <unordered_map>
 
@@ -54,7 +55,7 @@ public:
   
   // Sets up the Audio Controller to play the associated text. If the wave file
   // has already been created, uses that one. Otherwise, creates it first.
-  Result PrepareToSay(const std::string& text);
+  Result PrepareToSay(const std::string& text, SayTextStyle style);
   
 private:
   

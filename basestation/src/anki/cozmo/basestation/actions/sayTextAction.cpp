@@ -17,9 +17,10 @@
 namespace Anki {
 namespace Cozmo {
 
-  SayTextAction::SayTextAction(Robot& robot, const std::string& text)
+  SayTextAction::SayTextAction(Robot& robot, const std::string& text, SayTextStyle style)
   : IAction(robot)
   , _text(text)
+  , _style(style)
   , _playAnimationAction(robot, Audio::GameEvent::Vo_Coz_Placeholder_Play)
   {
     if(ANKI_DEVELOPER_CODE)
@@ -37,7 +38,7 @@ namespace Cozmo {
   
   ActionResult SayTextAction::Init()
   {
-    Result result = _robot.GetTextToSpeech().PrepareToSay(_text);
+    Result result = _robot.GetTextToSpeech().PrepareToSay(_text, _style);
     if(RESULT_OK != result) {
       PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
       return ActionResult::FAILURE_ABORT;

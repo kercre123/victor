@@ -14,8 +14,10 @@
 #define __Anki_Cozmo_Actions_SayTextAction_H__
 
 #include "anki/cozmo/basestation/actions/actionInterface.h"
-#include "clad/types/actionTypes.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
+
+#include "clad/types/actionTypes.h"
+#include "clad/types/sayTextStyles.h"
 
 
 namespace Anki {
@@ -24,7 +26,7 @@ namespace Cozmo {
   class SayTextAction : public IAction
   {
   public:
-    SayTextAction(Robot& robot, const std::string& text);
+    SayTextAction(Robot& robot, const std::string& text, SayTextStyle style = SayTextStyle::Normal);
     
     virtual ~SayTextAction();
     
@@ -34,7 +36,9 @@ namespace Cozmo {
     // TODO: Use duration of the sound?
     virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
     
-    virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
+    virtual u8 GetTracksToLock() const override { 
+      return _playAnimationAction.GetTracksToLock(); 
+    }
     
   protected:
     
@@ -44,6 +48,7 @@ namespace Cozmo {
   private:
     std::string               _text = "SayTextAction";
     std::string               _name;
+    SayTextStyle              _style;
     PlayAnimationAction       _playAnimationAction;
     
   }; // class SayTextAction

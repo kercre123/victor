@@ -28,6 +28,7 @@
 #include "clad/types/visionModes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/faceEnrollmentModes.clad"
+#include "clad/types/sayTextStyles.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -604,8 +605,8 @@ message ReadToolCode {
 
 // SayText
 message SayText {
-    string text
-    // TODO: Add (enumeration?) for describing _how_ to say it (question, angry, sad, etc)
+    string       text
+    SayTextStyle style  // "How" to say the text
 }
 
 // PlayAnimation
