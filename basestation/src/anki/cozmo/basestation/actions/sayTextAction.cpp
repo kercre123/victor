@@ -1,0 +1,54 @@
+/**
+ * File: animActions.cpp
+ *
+ * Author: Andrew Stein
+ * Date:   8/29/2014
+ *
+ * Description: Implements animation and audio cozmo-specific actions, derived from the IAction interface.
+ *
+ *
+ * Copyright: Anki, Inc. 2014
+ **/
+
+#include "sayTextAction.h"
+#include "anki/cozmo/basestation/robot.h"
+
+namespace Anki {
+namespace Cozmo {
+
+  SayTextAction::SayTextAction(Robot& robot, const std::string& text)
+  : IAction(robot)
+  , _text(text)
+  , _playAnimationAction(robot, ***NAME_OF_SPECIAL_ANIMATION***)
+  {
+    if(ANKI_DEVELOPER_CODE)
+    {
+      // Only put the text in the action name in dev mode because the text
+      // could be a person's name and we don't want that logged for privacy reasons
+      _name = "SayText_" + _text + "_Action";
+    }
+  }
+  
+  SayTextAction:::~SayTextAction()
+  {
+    
+  }
+  
+  ActionResult SayTextAction::Init()
+  {
+    Result result = _robot.GetTextToSpeech().PrepareToSay(_text);
+    if(RESULT_OK != result) {
+      PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
+      return ActionResult::FAILURE_ABORT;
+    }
+    return _playAnimationAction.Init();
+  }
+  
+  ActionResult SayTextAction::CheckIfDone()
+  {
+    return _playAnimationAction.CheckIfDone();
+  }
+  
+  
+} // namespace Cozmo
+} // namespace Anki

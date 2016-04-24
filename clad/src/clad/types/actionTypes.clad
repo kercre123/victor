@@ -52,7 +52,8 @@ enum int_32 RobotActionType {
     TRACK_FACE,
     TRACK_MOTION,
     TURN_TOWARDS_LAST_FACE_POSE,
-    READ_TOOL_CODE
+    READ_TOOL_CODE,
+    SAY_TEXT
 }
 
 
