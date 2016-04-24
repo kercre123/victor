@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -68,7 +69,8 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::SetHeadAngle,
       MessageGameToEngineTag::PanAndTilt,
       MessageGameToEngineTag::TurnTowardsLastFacePose,
-      MessageGameToEngineTag::ReadToolCode
+      MessageGameToEngineTag::ReadToolCode, 
+      MessageGameToEngineTag::SayText,
     };
     
     // Subscribe to all action events
@@ -579,6 +581,9 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::readToolCode:
       return new ReadToolCodeAction(robot);
       
+    case RobotActionUnionTag::sayText:
+      return new SayTextAction(robot, actionUnion.Get_sayText().text);
+      
       // TODO: Add cases for other actions
       
     default:
@@ -727,6 +732,11 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     case ExternalInterface::MessageGameToEngineTag::ReadToolCode:
     {
       newAction = new ReadToolCodeAction(robot);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::SayText:
+    {
+      newAction = new SayTextAction(robot, event.GetData().Get_SayText().text);
       break;
     }
     default:

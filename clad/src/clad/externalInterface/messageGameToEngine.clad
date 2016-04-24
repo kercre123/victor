@@ -602,6 +602,12 @@ message ReadToolCode {
 
 }
 
+// SayText
+message SayText {
+    string text
+    // TODO: Add (enumeration?) for describing _how_ to say it (question, angry, sad, etc)
+}
+
 // PlayAnimation
 message PlayAnimation {
     uint_8  robotID,
@@ -764,7 +770,8 @@ union RobotActionUnion {
   Wait                      wait,
   MountCharger              mountCharger,
   TurnTowardsLastFacePose   turnTowardsLastFacePose,
-  ReadToolCode              readToolCode
+  ReadToolCode              readToolCode, 
+  SayText                   sayText
 }
 
 // QueueSingleAction
