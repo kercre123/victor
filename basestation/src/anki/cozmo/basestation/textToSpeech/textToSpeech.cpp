@@ -23,8 +23,9 @@ extern "C" {
 #include "anki/cozmo/basestation/audio/audioControllerPluginInterface.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
+#include "util/hashing/hashing.h"
 
-const char* filePostfix = "_TextToSpeech.wav";
+const char* filePrefix = "TextToSpeech_";
 
 namespace Anki {
 namespace Cozmo {
@@ -43,6 +44,24 @@ TextToSpeech::~TextToSpeech()
 {
   // Any tear-down needed for flite? (Un-init or unregister_cmu_us_kal?)
 }
+
+std::string TextToSpeech::MakeFullPath(const std::string& text)
+{
+  // In case text contains sensitive data (e.g. player name), hash it so we don't save names
+  // into logs if/when there's a message about this filename
+  // TODO: Do we need something more secure?
+  u32 hashedValue = 0;
+  for(auto c : text) {
+    AddHash(hashedValue, c, "TextToSpeech.MakeFullPath.HashText");
+  }
+
+  // Note that this text-to-hash mapping is only printed in debug mode!   
+  PRINT_NAMED_DEBUG("TextToSpeech.MakeFullPath.TextToHash",
+                    "'%s' hashed to %d", text.c_str(), hashedValue);
+                    
+  std::string fullPath = _dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, 
+                                                       filePrefix + std::to_string(hashedValue) + ".wav");
+}
   
 std::string TextToSpeech::CacheSpeech(const std::string& text)
 {
@@ -52,8 +71,7 @@ std::string TextToSpeech::CacheSpeech(const std::string& text)
   {
     // Don't already have a wave for this text string: make it now
     PRINT_NAMED_DEBUG("TextToSpeech.CacheSpeech", "Text: %s", text.c_str());
-    // TODO: create filename that doesn't contain the text itself, in case that text is a name and we display the filename in a logged message at some point (privacy)
-    std::string fullPath = _dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, text + filePostfix);
+    std::string fullPath = MakeFullPath(text);
     flite_text_to_speech(text.c_str(),_voice,fullPath.c_str());
     auto insertResult = _cachedSpeech.emplace(text, fullPath);
     cacheIter = insertResult.first;

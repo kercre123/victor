@@ -67,6 +67,10 @@ private:
   // Maps text to filename where it's stored
   std::unordered_map<std::string, std::string> _cachedSpeech;
   
+  // Helper to obscure filenames via a hash, in case text contains sensitive 
+  // data like a name
+  std::string MakeFullPath(const std::string& text);
+  
 }; // class TextToSpeech
 
 } // end namespace Cozmo
