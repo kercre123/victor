@@ -83,9 +83,7 @@ namespace Cozmo {
         [this] (const AnkiEvent<MessageGameToEngine>& event)
         {
           const ExternalInterface::AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();
-          Lock();
-          _visionSystem->AssignNameToFace(msg.faceID, msg.name);
-          Unlock();
+          AssignNameToFace(msg.faceID, msg.name);
         }));
       
       // EnableNewFaceEnrollment
@@ -1327,6 +1325,17 @@ namespace Cozmo {
   size_t VisionComponent::GetNumStoredCameraCalibrationImages() const
   {
     return _visionSystem->GetNumStoredCalibrationImages();
+  }
+  
+  void VisionComponent::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name)
+  {  
+    // Pair this name and ID in the vision system
+    Lock();
+    _visionSystem->AssignNameToFace(faceID, name);
+    Unlock();
+    
+    // Get the robot ready to be able to say the name
+    _robot.GetTextToSpeech().CacheSpeech(name);
   }
   
 } // namespace Cozmo

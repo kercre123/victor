@@ -175,6 +175,9 @@ struct DockingErrorSignal;
     
     const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
     ImuDataHistory& GetImuDataHistory() { return _imuHistory; }
+
+    // Links a name with a face ID and sets up the robot's ability to say that name
+    void AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
     
   protected:
     

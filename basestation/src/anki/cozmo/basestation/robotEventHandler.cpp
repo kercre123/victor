@@ -139,14 +139,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       auto eventCallback = std::bind(&RobotEventHandler::HandleBehaviorManagerEvent, this, std::placeholders::_1);
       _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
     }
-    
-    // Custom handler for AssignNameToFace
-    // (Here, just set up text to speech to say the name; also handled by VisionComponent)
-    {
-      auto eventCallback = std::bind(&RobotEventHandler::HandleAssignNameToFaceEvent, this, std::placeholders::_1);
-      _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::AssignNameToFace, eventCallback));
-    }
-    
+        
   }
 }
   
@@ -1075,19 +1068,6 @@ void RobotEventHandler::HandleSendAvailableObjects(const GameToEngineEvent& even
     }
   }
 
-  void RobotEventHandler::HandleAssignNameToFaceEvent(const GameToEngineEvent& event)
-  {
-    RobotID_t robotID = 1;
-    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-    if (nullptr == robot)
-    {
-      PRINT_NAMED_WARNING("RobotEventHandler.HandleAssignNameToFaceEvent.InvalidRobotID",
-                          "Failed to find robot %u.", robotID);
-    }
-    else {
-      robot->GetTextToSpeech().CacheSpeech(event.GetData().Get_AssignNameToFace().name);
-    }
-  }
   
 } // namespace Cozmo
 } // namespace Anki
