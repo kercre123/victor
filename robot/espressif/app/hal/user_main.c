@@ -203,7 +203,8 @@ void user_init(void)
   wifi_set_phy_mode(PHY_MODE_11G);
   // Disable radio sleep
   //wifi_set_sleep_type(NONE_SLEEP_T);
-  wifi_set_user_fixed_rate(FIXED_RATE_MASK_AP, PHY_RATE_24);
+  // XXX: This may help streaming performance, but seems to cause slow advertising - not sure which is worse
+  //wifi_set_user_fixed_rate(FIXED_RATE_MASK_AP, PHY_RATE_24);
   
   // Disable DHCP server before setting static IP info
   err = wifi_softap_dhcps_stop();
