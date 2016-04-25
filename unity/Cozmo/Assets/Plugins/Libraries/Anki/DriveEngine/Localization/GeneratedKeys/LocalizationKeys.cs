@@ -72,6 +72,15 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region ItemStrings
+
+  public const string kItemExperienceSingular = "item.experience.singular";
+  public const string kItemExperiencePlural = "item.experience.plural";
+  public const string kItemTreatSingular = "item.treat.singular";
+  public const string kItemTreatPlural = "item.treat.plural";
+
+  #endregion
+
   #region MinigameStrings
 
   public const string kConnectLabelShowCubes = "connect.label.showCubes";
@@ -175,6 +184,7 @@ public static class LocalizationKeys {
   public const string kLabelPercentComplete = "label.percentComplete";
   public const string kLabelPlusCount = "label.plusCount";
   public const string kLabelXCount = "label.xCount";
+  public const string kLabelColonCount = "label.colonCount";
   public const string kDailySummaryTitle = "dailySummary.title";
   public const string kEndSessionTitle = "endSession.title";
   public const string kEndSessionDescription = "endSession.description";
@@ -187,10 +197,17 @@ public static class LocalizationKeys {
   public const string kLabelConnect = "label.connect";
   public const string kButtonSave = "button.save";
   public const string kCozmoTabTitle = "cozmoTab.title";
-  public const string kCozmoTabSparkCount = "cozmoTab.sparkCount";
   public const string kCozmoTabHexCount = "cozmoTab.hexCount";
   public const string kRequestSparkViewSparkunlockbutton = "requestSparkView.sparkunlockbutton";
   public const string kRequestSparkViewTreatCount = "requestSparkView.TreatCount";
+  public const string kDailyGoalTitleMissing = "dailyGoal.title.missing";
+  public const string kDailyGoalDescriptionMissing = "dailyGoal.description.missing";
+  public const string kDailyGoalTitleWinSpeedTap = "dailyGoal.title.WinSpeedTap";
+  public const string kDailyGoalDescriptionWinSpeedTap = "dailyGoal.description.WinSpeedTap";
+  public const string kDailyGoalTitlePlaySpeedTap = "dailyGoal.title.PlaySpeedTap";
+  public const string kDailyGoalDescriptionPlaySpeedTap = "dailyGoal.description.PlaySpeedTap";
+  public const string kDailyGoalTitleWinSpeedTapHands = "dailyGoal.title.WinSpeedTapHands";
+  public const string kDailyGoalDescriptionWinSpeedTapHands = "dailyGoal.description.WinSpeedTapHands";
 
   #endregion
 

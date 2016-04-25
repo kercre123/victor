@@ -52,11 +52,10 @@ public class DailySummaryPanel : BaseView {
   private Transform _BonusBarContainer;
   [SerializeField]
   private BonusBarPanel _BonusBarPrefab;
-  private BonusBarPanel _BonusBarPanel;
 
   // Config file for friendship progression
   [SerializeField]
-  private FriendshipProgressionConfig _Config;
+  private DailyGoalGenerationConfig _Config;
 
   protected override void CleanUp() {
 
@@ -67,18 +66,13 @@ public class DailySummaryPanel : BaseView {
     int month = data.Date.Month;
 
     _Title.FormattingArgs = new object[] { month, day };
-    _BonusBarPanel = UIManager.CreateUIElement(_BonusBarPrefab.gameObject, _BonusBarContainer).GetComponent<BonusBarPanel>();
 
-    float dailyProg = DailyGoalManager.Instance.CalculateDailyGoalProgress(data.Progress, data.Goals);
-    float bonusMult = DailyGoalManager.Instance.CalculateBonusMult(data.Progress, data.Goals);
+    float dailyProg = data.GetTotalProgress();
     _DailyProgressBar.SetProgress(dailyProg);
-    _BonusBarPanel.SetFriendshipBonus(bonusMult);
 
-    for (int i = 0; i < (int)ProgressionStatType.Count; i++) {
-      var stat = (ProgressionStatType)i;
-      if (data.Goals[stat] > 0) {
-        CreateGoalCell(stat, data.Progress[stat], data.Goals[stat]);
-      }
+    // Create a goal cell for each Daily Goal
+    for (int i = 0; i < data.DailyGoals.Count; i++) {
+      CreateGoalCell(data.DailyGoals[i]);
     }
 
     //RectTransform subContainer = null;
@@ -87,13 +81,14 @@ public class DailySummaryPanel : BaseView {
     }
 
   }
-
+    
   // Creates a goal badge
-  private GoalCell CreateGoalCell(ProgressionStatType type, int progress, int goal) {
+  private GoalCell CreateGoalCell(DailyGoal goal) {
     GoalCell newBadge = UIManager.CreateUIElement(_ObjectivePrefab.gameObject, _ObjectivesContainer).GetComponent<GoalCell>();
-    newBadge.Initialize(type, progress, goal, false);
+    newBadge.Initialize(goal, false);
     return newBadge;
   }
+
 
   private ChallengeBadge CreateChallengeBadge(string challengeId, RectTransform container) {
     ChallengeBadge newBadge = UIManager.CreateUIElement(_ChallengePrefab.gameObject, container).GetComponent<ChallengeBadge>();
