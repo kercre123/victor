@@ -924,14 +924,16 @@ namespace Anki {
                                                                      const Pose3d& placementPose,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed,
-                                                                     const bool checkFreeDestination)
+                                                                     const bool checkFreeDestination,
+                                                                     const float destinationObjectPadding_mm)
     : CompoundActionSequential(robot, {
       new DriveToPlaceCarriedObjectAction(robot,
                                           placementPose,
                                           true,
                                           useExactRotation,
                                           useManualSpeed,
-                                          checkFreeDestination),
+                                          checkFreeDestination,
+                                          destinationObjectPadding_mm),
       new PlaceObjectOnGroundAction(robot)})
     {
       

@@ -15,8 +15,8 @@
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorBeacon.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIBeacon.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -31,8 +31,9 @@
 namespace Anki {
 namespace Cozmo {
 
-// beacon radius (it could be problem if we had too many cubes and not enough beacons to place them)
+// padding between cubes when calculating destination positions inside a beacon
 CONSOLE_VAR(float, kBebctb_PaddingBetweenCubes_mm, "BehaviorExploreBringCubeToBeacon", 10.0f);
+// debug render for the behavior
 CONSOLE_VAR(float, kBebctb_DebugRenderAll, "BehaviorExploreBringCubeToBeacon", true);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -110,7 +111,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
 
     // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
     std::vector<ObservableObject *> intersectingObjects;
-    robotRef.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, kBebctb_PaddingBetweenCubes_mm*0.5f);
+    robotRef.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, kBebctb_PaddingBetweenCubes_mm);
     
     isFree = intersectingObjects.empty();
 
@@ -145,8 +146,8 @@ BehaviorExploreBringCubeToBeacon::~BehaviorExploreBringCubeToBeacon()
 bool BehaviorExploreBringCubeToBeacon::IsRunnable(const Robot& robot) const
 {
   // check if any known cubes are not currently in a valid beacon
-  const BehaviorWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
-  const BehaviorWhiteboard::BeaconList& beaconList = whiteboard.GetBeacons();
+  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const AIWhiteboard::BeaconList& beaconList = whiteboard.GetBeacons();
   
   #if ANKI_DEVELOPER_CODE
   {
@@ -177,7 +178,7 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnable(const Robot& robot) const
           
           // check if the object is within any beacon
           for ( const auto& beacon : beaconList ) {
-            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose().GetTranslation());
+            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
             if ( isBlockInAnyBeacon ) {
               break;
             }
@@ -312,8 +313,8 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
     }
     
     // grab the selected beacon (there should be one)
-    const BehaviorWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
-    const Beacon* selectedBeacon = whiteboard.GetActiveBeacon();
+    const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+    const AIBeacon* selectedBeacon = whiteboard.GetActiveBeacon();
     if ( nullptr == selectedBeacon ) {
       ASSERT_NAMED( nullptr!= selectedBeacon, "BehaviorExploreBringCubeToBeacon.TransitionToObjectPickedUp.NullBeacon");
       return;
@@ -335,9 +336,10 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
       if ( foundPose )
       {
         const bool checkFreeDestination = true;
+        const float padding_mm = kBebctb_PaddingBetweenCubes_mm;
         // create action to drive to the drop location
         PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, dropPose,
-          DEFAULT_PATH_MOTION_PROFILE, false, false, checkFreeDestination);
+          DEFAULT_PATH_MOTION_PROFILE, false, false, checkFreeDestination, padding_mm);
         RobotCompletedActionCallback onPlaceActionResult = [this, &robot](const ExternalInterface::RobotCompletedAction& actionRet)
         {
           if (actionRet.result == ActionResult::FAILURE_RETRY)
@@ -375,7 +377,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(const ObservableObject* object,
-  const Beacon* beacon, const Robot& robot) const
+  const AIBeacon* beacon, const Robot& robot) const
 {
   // ask for all cubes we know, and if any is not inside a beacon, then we want to bring that one to the closest beacon
   static const std::vector<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };
@@ -405,7 +407,7 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
         ASSERT_NAMED( FLT_NEAR(object->GetSize().x(), object->GetSize().y()) , "BehaviorExploreBringCubeToBeacon.FindFreeCubeToStackOn.AssumedXYEqual");
         
         // check it this cube is in beacon, but also if it's actually closer than
-        const bool isBlockInSelectedBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose().GetTranslation(), inwardThreshold_mm);
+        const bool isBlockInSelectedBeacon = beacon->IsLocWithinBeacon(blockPtr->GetPose(), inwardThreshold_mm);
         if ( isBlockInSelectedBeacon )
         {
           // check if we can stack on top of this object
@@ -425,13 +427,13 @@ const ObservableObject* BehaviorExploreBringCubeToBeacon::FindFreeCubeToStackOn(
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObject* object,
-  const Beacon* beacon, const Robot& robot, Pose3d& freePose)
+  const AIBeacon* beacon, const Robot& robot, Pose3d& freePose)
 {
   // store directionallity of beacon
   // TODO rsam: it would be cool so all cubes lined up together. Maybe we should check the closest cube to the selected
   // location, but that would require making more collision computations. A solution might be do the location selection
   // as a sphere, that way we can turn the cube around Z and the location would still be valid (at the same time
-  // sphere checks are faster than
+  // sphere checks are faster than cube checks)
   const Vec3f& kUpVector = Z_AXIS_3D();
   Rotation3d beaconDirectionality(0.0f, kUpVector);
   {
@@ -477,6 +479,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
       if( foundLocation ) { break; }
     }
     
+    // this is necessary because the inner breaks affect columns only
     if( foundLocation ) { break; }
   }
   
@@ -497,6 +500,7 @@ bool BehaviorExploreBringCubeToBeacon::FindFreePoseInBeacon(const ObservableObje
         if( foundLocation ) { break; }
       }
       
+      // this is necessary because the inner breaks affect columns only
       if( foundLocation ) { break; }
     }
   }

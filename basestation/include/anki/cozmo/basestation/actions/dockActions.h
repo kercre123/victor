@@ -272,7 +272,8 @@ namespace Anki {
                                       const Pose3d& placementPose,
                                       const bool useExactRotation = false,
                                       const bool useManualSpeed = false);
-                                      const bool checkFreeDestination = false);
+                                      const bool checkFreeDestination = false,
+                                      const float destinationObjectPadding_mm = 0.0f);
       
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
       

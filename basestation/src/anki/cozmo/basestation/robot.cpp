@@ -38,7 +38,7 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"

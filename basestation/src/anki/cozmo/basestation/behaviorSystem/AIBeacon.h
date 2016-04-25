@@ -1,5 +1,5 @@
 /**
- * File: behaviorBeacon
+ * File: AIBeacon
  *
  * Author: Raul
  * Created: 03/25/16
@@ -9,8 +9,8 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorBeacon_H__
-#define __Cozmo_Basestation_BehaviorSystem_BehaviorBeacon_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_AIBeacon_H__
+#define __Cozmo_Basestation_BehaviorSystem_AIBeacon_H__
 
 #include "anki/common/basestation/math/pose.h"
 
@@ -23,14 +23,14 @@ class Robot;
 // Beacon
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // info for beacons (beacons is a concept for exploration, it's a 'base/headquarters' to put cubes for localization)
-class Beacon {
+class AIBeacon {
 public:
-  Beacon( const Pose3d& p ) : _pose(p) {}
+  AIBeacon( const Pose3d& p ) : _pose(p) {}
   const Pose3d& GetPose() const { return _pose;}
   
   // returns true if given position is within this beacon. If inwardThreshold is set, the location has to be inside
   // the beacon radius by that additional distance
-  bool IsLocWithinBeacon(const Vec3f& loc, float inwardThreshold_mm=0.0f) const;
+  bool IsLocWithinBeacon(const Pose3d& pose, float inwardThreshold_mm=0.0f) const;
   
   // return radius of this beacon
   float GetRadius() const;

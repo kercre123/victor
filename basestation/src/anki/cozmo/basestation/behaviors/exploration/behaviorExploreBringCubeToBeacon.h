@@ -13,7 +13,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorExploreBringCubeToBeacon_H__
 
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorBeacon.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIBeacon.h"
 
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
@@ -32,7 +32,7 @@ struct RobotObservedObject;
 }
 class IAction;
 class ObservableObject;
-class Beacon;
+class AIBeacon;
 class BlockWorld;
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -84,10 +84,10 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // find cube in the beacon to stack the one we have on top of the former
-  const ObservableObject* FindFreeCubeToStackOn(const ObservableObject* object, const Beacon* beacon, const Robot& robot) const;
+  const ObservableObject* FindFreeCubeToStackOn(const ObservableObject* object, const AIBeacon* beacon, const Robot& robot) const;
   
   // find pose to drop the object inside the selected beacon. Return true/false on success/failure
-  static bool FindFreePoseInBeacon(const ObservableObject* object, const Beacon* selectedBeacon, const Robot& robot, Pose3d& freePose);
+  static bool FindFreePoseInBeacon(const ObservableObject* object, const AIBeacon* selectedBeacon, const Robot& robot, Pose3d& freePose);
   
   // helper to simplify code. Returns object addressed by index in the _candidateObjects vector, null if not a valid entry
   const ObservableObject* GetCandidate(const BlockWorld& world, size_t index) const;

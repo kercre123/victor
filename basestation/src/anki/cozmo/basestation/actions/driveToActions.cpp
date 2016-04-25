@@ -433,7 +433,8 @@ namespace Anki {
                                                                      const bool placeOnGround,
                                                                      const bool useExactRotation,
                                                                      const bool useManualSpeed,
-                                                                     const bool checkDestinationFree)
+                                                                     const bool checkDestinationFree,
+                                                                     const float destinationObjectPadding_mm)
     : DriveToObjectAction(robot,
                           robot.GetCarryingObject(),
                           placeOnGround ? PreActionPose::PLACE_ON_GROUND : PreActionPose::PLACE_RELATIVE,
@@ -444,6 +445,7 @@ namespace Anki {
     , _placementPose(placementPose)
     , _useExactRotation(useExactRotation)
     , _checkDestinationFree(checkDestinationFree)
+    , _destinationObjectPadding_mm(destinationObjectPadding_mm)
     {
     }
     
@@ -537,14 +539,10 @@ namespace Anki {
       
         // calculate quad at candidate destination
         Quad2f candidateQuad = object->GetBoundingQuadXY(_placementPose);
-
-        // TODO rsam: set somewhere else? If the behavior doesn't have access to this, it can run
-        // into ping-pong issues, cause the behavior would pick this location, but the action will reject it
-        const float kPadding_mm = 5.0f;
         
         // TODO rsam: this only checks for other cubes, but not for unknown obstacles since we don't have collision sensor
         std::vector<ObservableObject *> intersectingObjects;
-        _robot.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, kPadding_mm, ignoreSelfFilter);
+        _robot.GetBlockWorld().FindIntersectingObjects(candidateQuad, intersectingObjects, _destinationObjectPadding_mm, ignoreSelfFilter);
         bool isFree = intersectingObjects.empty();
         return isFree;
       }

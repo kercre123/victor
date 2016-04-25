@@ -1,5 +1,5 @@
 /**
- * File: behaviorWhiteboard
+ * File: AIWhiteboard
  *
  * Author: Raul
  * Created: 03/25/16
@@ -9,10 +9,10 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorWhiteboard_H__
-#define __Cozmo_Basestation_BehaviorSystem_BehaviorWhiteboard_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
+#define __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
 
-#include "behaviorBeacon.h" 
+#include "AIBeacon.h" 
 
 #include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
 #include "anki/common/basestation/math/pose.h"
@@ -29,9 +29,9 @@ namespace Cozmo {
 class Robot;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// BehaviorWhiteboard
+// AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorWhiteboard
+class AIWhiteboard
 {
 public:
   
@@ -47,14 +47,14 @@ public:
   };
   using PossibleMarkerList = std::list<PossibleMarker>;
   
-  using BeaconList = std::vector<Beacon>;
+  using BeaconList = std::vector<AIBeacon>;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization/destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor
-  BehaviorWhiteboard(Robot& robot);
+  AIWhiteboard(Robot& robot);
   
   // initializes the whiteboard, registers to events
   void Init();
@@ -74,7 +74,7 @@ public:
   const BeaconList& GetBeacons() const { return _beacons; }
 
   // return current active beacon if any, or nullptr if none are active
-  const Beacon* GetActiveBeacon() const;
+  const AIBeacon* GetActiveBeacon() const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Tracked values
