@@ -51,11 +51,13 @@ public:
 
   // Creates the wave file for the given text, to be played later.
   // Returns the full path to the created file.
-  std::string CacheSpeech(const std::string& text);
+  std::string CreateSpeech(const std::string& text);
   
   // Sets up the Audio Controller to play the associated text. If the wave file
   // has already been created, uses that one. Otherwise, creates it first.
-  Result PrepareToSay(const std::string& text, SayTextStyle style);
+  // The callback is run once the text is ready to say.
+  using ReadyCallback = std::function<void(void)>;
+  Result PrepareToSay(const std::string& text, SayTextStyle style, ReadyCallback callback = {});
   
 private:
   
@@ -65,7 +67,7 @@ private:
   Audio::AudioWaveFileReader         _waveFileReader;
   
   // Maps text to filename where it's stored
-  std::unordered_map<std::string, std::string> _cachedSpeech;
+  std::unordered_map<std::string, std::string> _filenameLUT;
   
   // Helper to obscure filenames via a hash, in case text contains sensitive 
   // data like a name

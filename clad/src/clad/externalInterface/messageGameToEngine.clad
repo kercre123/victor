@@ -605,7 +605,7 @@ message ReadToolCode {
 
 // SayText
 message SayText {
-    string       text
+    string       text,
     SayTextStyle style  // "How" to say the text
 }
 

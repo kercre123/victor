@@ -21,7 +21,7 @@ namespace Cozmo {
   : IAction(robot)
   , _text(text)
   , _style(style)
-  , _playAnimationAction(robot, Audio::GameEvent::Vo_Coz_Placeholder_Play)
+  , _playAnimationGroupAction(robot, "SayText") // TODO: need to define the group
   {
     if(ANKI_DEVELOPER_CODE)
     {
@@ -29,26 +29,39 @@ namespace Cozmo {
       // could be a person's name and we don't want that logged for privacy reasons
       _name = "SayText_" + _text + "_Action";
     }
+    
+    // TODO: Create speech here
   }
   
-  SayTextAction:::~SayTextAction()
+  SayTextAction::~SayTextAction()
   {
-    
+
   }
   
   ActionResult SayTextAction::Init()
   {
-    Result result = _robot.GetTextToSpeech().PrepareToSay(_text, _style);
+    _isTextToSpeechReady = false;
+    TextToSpeech::ReadyCallback callback = [this]()
+    {
+      _isTextToSpeechReady = true;
+    };
+    
+    Result result = _robot.GetTextToSpeech().PrepareToSay(_text, _style, callback);
     if(RESULT_OK != result) {
       PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
       return ActionResult::FAILURE_ABORT;
     }
-    return _playAnimationAction.Init();
+    
+    return ActionResult::SUCCESS;
   }
   
   ActionResult SayTextAction::CheckIfDone()
   {
-    return _playAnimationAction.CheckIfDone();
+    if(_isTextToSpeechReady) {
+      return _playAnimationGroupAction.Update();
+    } else {
+      return ActionResult::RUNNING;
+    }
   }
   
   

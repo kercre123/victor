@@ -52,7 +52,7 @@ std::string TextToSpeech::MakeFullPath(const std::string& text)
   // TODO: Do we need something more secure?
   u32 hashedValue = 0;
   for(auto c : text) {
-    AddHash(hashedValue, c, "TextToSpeech.MakeFullPath.HashText");
+    Util::AddHash(hashedValue, c, "TextToSpeech.MakeFullPath.HashText");
   }
 
   // Note that this text-to-hash mapping is only printed in debug mode!   
@@ -61,34 +61,37 @@ std::string TextToSpeech::MakeFullPath(const std::string& text)
                     
   std::string fullPath = _dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, 
                                                        filePrefix + std::to_string(hashedValue) + ".wav");
+  
+  return fullPath;
 }
   
-std::string TextToSpeech::CacheSpeech(const std::string& text)
+std::string TextToSpeech::CreateSpeech(const std::string& text)
 {
-  auto cacheIter = _cachedSpeech.find(text);
+  auto lutIter = _filenameLUT.find(text);
   
-  if(cacheIter == _cachedSpeech.end())
+  if(lutIter == _filenameLUT.end())
   {
+    // TODO: if not in LUT, also check disk before creating
+    
     // Don't already have a wave for this text string: make it now
+    // TODO: Make asynchronous
     PRINT_NAMED_DEBUG("TextToSpeech.CacheSpeech", "Text: %s", text.c_str());
     std::string fullPath = MakeFullPath(text);
     flite_text_to_speech(text.c_str(),_voice,fullPath.c_str());
-    auto insertResult = _cachedSpeech.emplace(text, fullPath);
-    cacheIter = insertResult.first;
+    auto insertResult = _filenameLUT.emplace(text, fullPath);
+    lutIter = insertResult.first;
   }
   
-  return cacheIter->second;
-} // CacheText()
-
+  return lutIter->second;
+} // CreateSpeech()
   
-Result TextToSpeech::PrepareToSay(const std::string& text, SayTextStyle style) 
+Result TextToSpeech::PrepareToSay(const std::string& text, SayTextStyle style, ReadyCallback readyCallback)
 {
   using namespace Audio;
   
   // Get (or create) the path for a wave file for this text
-  const std::string fullPath = CacheSpeech(text);
-  
-  // TODO: May need to be asynchronous
+  // TODO: Make these two asynchronous
+  const std::string fullPath = CreateSpeech(text);
   const bool success = _waveFileReader.LoadWaveFile(fullPath, text);
   
   if ( !success ) {

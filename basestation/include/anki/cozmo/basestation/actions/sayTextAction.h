@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 
 #include "clad/types/actionTypes.h"
 #include "clad/types/sayTextStyles.h"
@@ -37,8 +38,10 @@ namespace Cozmo {
     virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
     
     virtual u8 GetTracksToLock() const override { 
-      return _playAnimationAction.GetTracksToLock(); 
+      return _playAnimationGroupAction.GetTracksToLock();
     }
+    
+    // TODO: Add ability to set which animation group (as long as it has special audio event)
     
   protected:
     
@@ -49,7 +52,8 @@ namespace Cozmo {
     std::string               _text = "SayTextAction";
     std::string               _name;
     SayTextStyle              _style;
-    PlayAnimationAction       _playAnimationAction;
+    bool                      _isTextToSpeechReady = false;
+    PlayAnimationGroupAction  _playAnimationGroupAction;
     
   }; // class SayTextAction
 
