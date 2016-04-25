@@ -50,7 +50,7 @@ static bool ProcessDrop(void) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
     DropToRTIP* drop = (DropToRTIP*)target;
-    Watchdog::kick(WDOG_WIFI_COMMS);
+    //Watchdog::kick(WDOG_WIFI_COMMS);
     
     // Buffer the data that needs to be fed into the devices for next cycle
     audioUpdated = drop->droplet & audioDataValid;
