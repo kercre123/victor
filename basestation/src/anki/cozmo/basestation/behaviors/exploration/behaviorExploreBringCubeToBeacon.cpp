@@ -338,8 +338,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
         const bool checkFreeDestination = true;
         const float padding_mm = kBebctb_PaddingBetweenCubes_mm;
         // create action to drive to the drop location
-        PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, dropPose,
-          DEFAULT_PATH_MOTION_PROFILE, false, false, checkFreeDestination, padding_mm);
+        PlaceObjectOnGroundAtPoseAction* placeObjectAction = new PlaceObjectOnGroundAtPoseAction(robot, dropPose, false, false, checkFreeDestination, padding_mm);
         RobotCompletedActionCallback onPlaceActionResult = [this, &robot](const ExternalInterface::RobotCompletedAction& actionRet)
         {
           if (actionRet.result == ActionResult::FAILURE_RETRY)
