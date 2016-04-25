@@ -558,7 +558,13 @@ void Robot::HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& m
 {
   RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
   PRINT_NAMED_INFO("RobotImplMessaging.HandleRobotStopped", "%d", payload.reason);
-    
+  
+  // This is a somewhat overloaded use of enableCliffSensor, but currently only cliffs
+  // trigger this RobotStopped message so it's not too crazy.
+  if( !_enableCliffSensor ) {
+    return;
+  }
+  
   // Stop whatever we were doing
   GetActionList().Cancel();
 
