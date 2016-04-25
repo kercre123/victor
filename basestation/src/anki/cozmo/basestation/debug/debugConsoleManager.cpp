@@ -59,6 +59,47 @@ namespace Cozmo {
     }
   }
   
+  static void SetCladVarUnionFromConsoleVar(Anki::Cozmo::ConsoleVarUnion& outVarValue, const Anki::Util::IConsoleVariable* consoleVar)
+  {
+    if( consoleVar->IsToggleable())
+    {
+      outVarValue.Set_varBool( consoleVar->GetAsUInt64() );
+    }
+    else if( consoleVar->IsIntegerType() )
+    {
+      if( consoleVar->IsSignedType())
+      {
+        outVarValue.Set_varInt( consoleVar->GetAsInt64() );
+      }
+      else
+      {
+        outVarValue.Set_varUint( consoleVar->GetAsUInt64() );
+      }
+    }
+    else
+    {
+      outVarValue.Set_varDouble( consoleVar->GetAsDouble() );
+    }
+  }
+  
+  static void SetCladVarFromConsoleVar(ExternalInterface::DebugConsoleVar& outDebugConsoleVar, const Anki::Util::IConsoleVariable* consoleVar)
+  {
+    outDebugConsoleVar.varName  = consoleVar->GetID();
+    outDebugConsoleVar.category = consoleVar->GetCategory();
+    SetCladVarUnionFromConsoleVar(outDebugConsoleVar.varValue, consoleVar);
+    outDebugConsoleVar.maxValue = consoleVar->GetMaxAsDouble();
+    outDebugConsoleVar.minValue = consoleVar->GetMinAsDouble();
+  }
+  
+  static void SetCladVarFromConsoleFunc(ExternalInterface::DebugConsoleVar& outDebugConsoleVar, const Anki::Util::IConsoleFunction* consoleFunc)
+  {
+    outDebugConsoleVar.varName  = consoleFunc->GetID();
+    outDebugConsoleVar.category = consoleFunc->GetCategory();
+    outDebugConsoleVar.varValue.Set_varFunction(consoleFunc->GetSignature());
+    outDebugConsoleVar.maxValue = 0.0;
+    outDebugConsoleVar.minValue = 0.0;
+  }
+  
   // Used for init of window.
   void DebugConsoleManager::SendAllDebugConsoleVars()
   {
@@ -68,76 +109,105 @@ namespace Cozmo {
     std::vector<ExternalInterface::DebugConsoleVar> dataVals;
     
     // Flush when we're about half full of the clad buffer it doesn't go over...
-    uint32_t string_size = 0;
+    // Note: There is an MTU limit too to avoid the message being split up into multiple packets - staying <1400 is good
+    uint32_t messageSize = 0;
     constexpr uint32_t kMaxFlushSize = 1024;
     
     for ( auto& entry : varDatabase )
     {
       const Anki::Util::IConsoleVariable* consoleVar = entry.second;
       ExternalInterface::DebugConsoleVar varObject;
-      varObject.varName = consoleVar->GetID();
-      varObject.category = consoleVar->GetCategory();
-      if( consoleVar->IsToggleable())
-      {
-        varObject.varValue.Set_varBool( consoleVar->GetAsUInt64() );
-      }
-      else if( consoleVar->IsIntegerType() )
-      {
-        if( consoleVar->IsSignedType())
-        {
-          varObject.varValue.Set_varInt( consoleVar->GetAsInt64() );
-        }
-        else
-        {
-          varObject.varValue.Set_varUint( consoleVar->GetAsUInt64() );
-        }
-      }
-      else
-      {
-        varObject.varValue.Set_varDouble( consoleVar->GetAsDouble() );
-      }
-      
-      varObject.maxValue = consoleVar->GetMaxAsDouble();
-      varObject.minValue = consoleVar->GetMinAsDouble();
+      SetCladVarFromConsoleVar(varObject, consoleVar);
       
       dataVals.push_back(varObject);
       
-      string_size += varObject.varName.length() + varObject.category.length();
-      if( string_size >= kMaxFlushSize)
+      messageSize += varObject.Size();
+      if( messageSize >= kMaxFlushSize)
       {
-        ASSERT_NAMED(string_size < Anki::Comms::MsgPacket::MAX_SIZE, "error.DebugConsoleInitOverMaxCLADSize");
+        ASSERT_NAMED(messageSize < Anki::Comms::MsgPacket::MAX_SIZE, "error.DebugConsoleInitOverMaxCLADSize");
         FlushBuffer(dataVals,_externalInterface);
-        string_size = 0;
+        messageSize = 0;
       }
     }
     
     const Anki::Util::ConsoleSystem::FunctionDatabase& funcDatabase = consoleSystem.GetFunctionDatabase();
     for ( auto& entry : funcDatabase )
     {
-      const Anki::Util::IConsoleFunction* consoleVar = entry.second;
+      const Anki::Util::IConsoleFunction* consoleFunc = entry.second;
       ExternalInterface::DebugConsoleVar varObject;
-      varObject.varName = consoleVar->GetID();
-      varObject.category = consoleVar->GetCategory();
-      varObject.varValue.Set_varFunction(consoleVar->GetSignature());
+      SetCladVarFromConsoleFunc(varObject, consoleFunc);
+      
       dataVals.push_back(varObject);
       
-      string_size += varObject.varName.length() + varObject.category.length();
-      if( string_size >= kMaxFlushSize)
+      messageSize += varObject.Size();
+      if( messageSize >= kMaxFlushSize)
       {
-        ASSERT_NAMED(string_size < Anki::Comms::MsgPacket::MAX_SIZE, "error.DebugConsoleInitOverMaxCLADSize");
+        ASSERT_NAMED(messageSize < Anki::Comms::MsgPacket::MAX_SIZE, "error.DebugConsoleInitOverMaxCLADSize");
         FlushBuffer(dataVals,_externalInterface);
-        string_size = 0;
+        messageSize = 0;
       }
     }
     // Flush remaining...
     FlushBuffer(dataVals,_externalInterface);
   }
   
+  
+  void SendVerifyDebugConsoleVarMessage(IExternalInterface* externalInterface,
+                                        const char* varName,
+                                        const char* statusMessageText,
+                                        const Anki::Util::IConsoleVariable* consoleVar,
+                                        bool success)
+  {
+    ExternalInterface::VerifyDebugConsoleVarMessage message;
+    message.varName = varName;
+    message.statusMessage = statusMessageText;
+    message.success = success;
+    if (consoleVar)
+    {
+      SetCladVarUnionFromConsoleVar(message.varValue, consoleVar);
+    }
+    else
+    {
+      message.varValue.Set_varFunction("");
+    }
+    
+    externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  }
+  
+  
+  void SendVerifyDebugConsoleFuncMessage(IExternalInterface* externalInterface,
+                                        const char* funcName,
+                                        const char* statusMessageText,
+                                        bool success)
+  {
+    ExternalInterface::VerifyDebugConsoleFuncMessage message;
+    message.funcName = funcName;
+    message.statusMessage = statusMessageText;
+    message.success = success;
+    externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+  }
+  
+  
   void DebugConsoleManager::HandleEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
   {
     const auto& eventData = event.GetData();
     switch (eventData.GetTag())
     {
+      case ExternalInterface::MessageGameToEngineTag::GetDebugConsoleVarMessage:
+      {
+        const Anki::Cozmo::ExternalInterface::GetDebugConsoleVarMessage& msg = eventData.Get_GetDebugConsoleVarMessage();
+        Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(msg.varName.c_str());
+        if (consoleVar)
+        {
+          SendVerifyDebugConsoleVarMessage(_externalInterface, msg.varName.c_str(), consoleVar->ToString().c_str(), consoleVar, true);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.NoConsoleVar", "No Console Var '%s'", msg.varName.c_str());
+          SendVerifyDebugConsoleVarMessage(_externalInterface, msg.varName.c_str(), "Error: No such variable", consoleVar, false);
+        }
+      }
+      break;
       case ExternalInterface::MessageGameToEngineTag::GetAllDebugConsoleVarMessage:
       {
         // Shoot back all the init messages
@@ -153,15 +223,12 @@ namespace Cozmo {
           enum { kBufferSize = 512 };
           char buffer[kBufferSize];
           NativeAnkiUtilConsoleCallFunction( msg.funcName.c_str(), msg.funcArgs.c_str(), kBufferSize, buffer);
-          
-          ExternalInterface::VerifyDebugConsoleVarMessage message;
-          message.varName = msg.funcName;
-          message.statusMessage = buffer;
-          _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
+          SendVerifyDebugConsoleFuncMessage(_externalInterface, msg.funcName.c_str(), buffer, true);
         }
         else
         {
-          PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.RunDebugConsoleFuncMessage", "No Func named '%s'",msg.funcName.c_str());
+          PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.NoConsoleFunc", "No Func named '%s'",msg.funcName.c_str());
+          SendVerifyDebugConsoleFuncMessage(_externalInterface, msg.funcName.c_str(), "Error: No such function", false);
         }
       }
       break;
@@ -169,10 +236,17 @@ namespace Cozmo {
       {
         const Anki::Cozmo::ExternalInterface::SetDebugConsoleVarMessage& msg = eventData.Get_SetDebugConsoleVarMessage();
         Anki::Util::IConsoleVariable* consoleVar = Anki::Util::ConsoleSystem::Instance().FindVariable(msg.varName.c_str());
-        if (!consoleVar || !consoleVar->ParseText(msg.tryValue.c_str()) )
+        if (consoleVar && consoleVar->ParseText(msg.tryValue.c_str()) )
+        {
+          SendVerifyDebugConsoleVarMessage(_externalInterface, msg.varName.c_str(), consoleVar->ToString().c_str(), consoleVar, true);
+        }
+        else
         {
           PRINT_NAMED_WARNING("DebugConsoleManager.HandleEvent.SetDebugConsoleVarMessage", "Error setting %svar '%s' to '%s'",
                             consoleVar ? "" : "UNKNOWN ", msg.varName.c_str(), msg.tryValue.c_str());
+          SendVerifyDebugConsoleVarMessage(_externalInterface, msg.varName.c_str(),
+                                           consoleVar ? "Error: Failed to Parse" : "Error: No such variable",
+                                           consoleVar, false);
         }
       }
       break;

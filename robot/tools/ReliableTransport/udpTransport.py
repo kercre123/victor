@@ -15,11 +15,12 @@ class UDPTransport(socket.socket, IUnreliableTransport):
 
     DEFAULT_PORT = 47817
 
-    def __init__(self, logInPackets=None, logOutPackets=None):
+    def __init__(self, logInPackets=None, logOutPackets=None, usePacketHeaders=True):
         socket.socket.__init__(self, socket.AF_INET, socket.SOCK_DGRAM)
         IUnreliableTransport.__init__(self)
         self.logInPackets  = open(logInPackets,  "wb") if logInPackets  is not None else None
         self.logOutPackets = open(logOutPackets, "wb") if logOutPackets is not None else None
+        self.usePacketHeaders = usePacketHeaders
         self.settimeout(0) # Make the socket non-blocking
 
     def OpenSocket(self, port=DEFAULT_PORT, interface=''):
@@ -35,7 +36,10 @@ class UDPTransport(socket.socket, IUnreliableTransport):
         if len(message) > self.MAX_MESSAGE_SIZE:
             raise ValueError("Max message size for UDPTransport is %d, given %d" % (self.MAX_MESSAGE_SIZE, len(message)))
         else:
-            pkt = self.PACKET_HEADER + message
+            if self.usePacketHeaders:
+                pkt = self.PACKET_HEADER + message
+            else:
+                pkt = message
             if self.logOutPackets: self.logOutPackets.write(pkt)
             self.sendto(pkt, destAddress)
 
@@ -48,7 +52,9 @@ If a packet is available returns data, sourceAddres. Otherwise returns None, Non
             return None, None
         else:
             if self.logInPackets: self.logInPackets.write(data)
-            if data.startswith(self.PACKET_HEADER):
+            if not self.usePacketHeaders:
+                return data, addr
+            elif data.startswith(self.PACKET_HEADER):
                 return data[len(self.PACKET_HEADER):], addr
             else:
                 sys.stderr.write("UDPTransport: received packed with invalid header")

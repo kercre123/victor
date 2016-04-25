@@ -876,21 +876,30 @@ message RequestSetUnlock {
   bool unlocked
 }
 
-// Debug console set
+///////////////////////////////////////////////////////////////////////////////
+// DebugConsole
+///////////////////////////////////////////////////////////////////////////////
+
 message SetDebugConsoleVarMessage {
   string varName,
   string tryValue
 }
+
 message RunDebugConsoleFuncMessage {
   string funcName,
   string funcArgs
 }
+
 message GetDebugConsoleVarMessage {
-  string varName,
-  ConsoleVarUnion varValue
+  string varName
 }
+
 message GetAllDebugConsoleVarMessage {
 }
+
+///////////////////////////////////////////////////////////////////////////////
+//
+///////////////////////////////////////////////////////////////////////////////
 
 message SetEnableSOSLogging {
   bool enabled
