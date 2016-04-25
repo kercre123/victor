@@ -51,8 +51,8 @@ inline void transmit_mode(TRANSFER_MODE mode) {
       PORTD_PCR7 = PORT_PCR_MUX(3);
       UART0_C2 = UART_C2_TE_MASK;
      
-			txRxIndex = 0;
-			break ;
+      txRxIndex = 0;
+      break ;
     }
     case TRANSMIT_RECEIVE:
     {
@@ -60,9 +60,9 @@ inline void transmit_mode(TRANSFER_MODE mode) {
       PORTD_PCR7 = PORT_PCR_MUX(0);
       UART0_C2 = UART_C2_RE_MASK;
       
-			txRxIndex = 4;
-			rx_source = 0;
-			break ;
+      txRxIndex = 4;
+      rx_source = 0;
+      break ;
     }
     default:
     {

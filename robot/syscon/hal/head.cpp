@@ -64,6 +64,8 @@ void Head::init()
   NVIC_SetPriority(UART0_IRQn, UART_PRIORITY);
   NVIC_EnableIRQ(UART0_IRQn);
 
+  nrf_gpio_pin_set(PIN_TX_HEAD);
+
   // We begin in receive mode (slave)
   m_enabled = true;
 
@@ -90,7 +92,7 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
     case TRANSMIT_SEND:
       // Configure pin so it is open-drain
       NRF_GPIO->PIN_CNF[PIN_TX_HEAD] = (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos)
-                                    | (GPIO_PIN_CNF_DRIVE_H0D1 << GPIO_PIN_CNF_DRIVE_Pos)
+                                    | (GPIO_PIN_CNF_DRIVE_H0S1 << GPIO_PIN_CNF_DRIVE_Pos)
                                     | (GPIO_PIN_CNF_PULL_Disabled << GPIO_PIN_CNF_PULL_Pos)
                                     | (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos)
                                     | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
@@ -112,6 +114,8 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->PSELRXD = PIN_TX_HEAD;
       NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
 
+      MicroWait(10);
+
       NRF_UART0->TASKS_STARTRX = 1;
 
       break ;
@@ -121,6 +125,8 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
       NRF_UART0->PSELRXD = PIN_TX_VEXT;
       NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
+
+      MicroWait(10);
 
       NRF_UART0->TASKS_STARTRX = 1;
       break ;

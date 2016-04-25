@@ -61,8 +61,10 @@ void Anki::Cozmo::HAL::Watchdog::pet() {
 extern "C"
 void WDOG_EWM_IRQHandler(void)
 {
+  /*
   if (++reset_count > MAXIMUM_RESET_COUNT) {
     reset_count = 0;
     Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
   }
+  */
 }
