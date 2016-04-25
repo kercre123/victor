@@ -1449,7 +1449,7 @@ namespace Anki {
     ActionResult ReadToolCodeAction::Init()
     {
       // Start calibration mode on robot
-      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(-0.5f, -0.3f, true)));
+      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableReadToolCodeMode(-0.5f, -0.3f, true)));
       
       _toolCodeLastMovedTime   = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       _state = State::WaitingToGetInPosition;
@@ -1468,7 +1468,7 @@ namespace Anki {
     ReadToolCodeAction::~ReadToolCodeAction()
     {
       // Stop calibration mode on robot
-      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(0, 0, false)));
+      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableReadToolCodeMode(0, 0, false)));
       _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);
     }
     

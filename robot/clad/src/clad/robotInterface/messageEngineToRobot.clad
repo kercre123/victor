@@ -225,7 +225,7 @@ message ConfigureBluetooth
   bool enable
 }
 
-message EnableCamCalibMode
+message EnableReadToolCodeMode
 {
   float_32 headPower,
   float_32 liftPower,
@@ -362,7 +362,7 @@ union EngineToRobot
   BodyUpgradeData               bodyUpgradeData             = 0x52,
   PowerState                    powerState                  = 0x53,
   PropState                     getPropState                = 0x54,
-  EnableCamCalibMode            enableCamCalibMode          = 0x55,
+  EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
   DisplayNumber                 oledDisplayNumber           = 0x57,
   DisplayRelease                oledRelease                 = 0x58,
