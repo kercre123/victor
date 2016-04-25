@@ -11,6 +11,8 @@ namespace DataPersistence {
 
     [SerializeField]
     private Button _ResetSaveDataButton;
+    [SerializeField]
+    private Button _ResetRobotDataButton;
 
     [SerializeField]
     private Button _StartNewSessionButton;
@@ -44,6 +46,21 @@ namespace DataPersistence {
     [SerializeField]
     private InputField _NotificationMinute;
 
+    [SerializeField]
+    private InputField _SaveStringInput;
+
+    [SerializeField]
+    private Button _SubmitSaveButton;
+
+    [SerializeField]
+    private InputField _SkillProfileCurrentLevel;
+    [SerializeField]
+    private InputField _SkillProfileHighLevel;
+    [SerializeField]
+    private InputField _SkillRobotHighLevel;
+    [SerializeField]
+    private Button _SubmitSkillsButton;
+
     private HomeHub GetHomeHub() {
       var go = GameObject.Find("HomeHub(Clone)");
       if (go != null) {
@@ -65,6 +82,10 @@ namespace DataPersistence {
       _WinGameButton.onClick.AddListener(WinGameButtonClicked);
       _LoseGameButton.onClick.AddListener(LoseGameButtonClicked);
       _SubmitNotificationButton.onClick.AddListener(SubmitNotificationButtonClicked);
+
+      _SubmitSaveButton.onClick.AddListener(SubmitSaveButtonClicked);
+      _SubmitSkillsButton.onClick.AddListener(SubmitSkillsButtonClicked);
+      _ResetRobotDataButton.onClick.AddListener(SubmitResetRobotData);
        
       var now = DateTime.Now;
       _NotificationYear.text = now.Year.ToString();
@@ -72,6 +93,9 @@ namespace DataPersistence {
       _NotificationDay.text = now.Day.ToString();
       _NotificationHour.text = now.Hour.ToString();
       _NotificationMinute.text = now.Minute.ToString();
+
+      _SaveStringInput.text = DataPersistenceManager.Instance.GetSaveJSON();
+      InitSkills();
     }
 
     private void HandleResetSaveDataButtonClicked() {
@@ -113,6 +137,31 @@ namespace DataPersistence {
           minigame.RaiseMiniGameLose();
         }
       }
+    }
+
+    private void SubmitSaveButtonClicked() {
+      DataPersistenceManager.Instance.DebugSave(_SaveStringInput.text);
+      TryReloadHomeHub();
+    }
+
+    private void InitSkills() {
+      int profileCurrLevel;
+      int profileHighLevel;
+      int robotHighLevel;
+      SkillSystem.Instance.GetDebugSkillsForGame(out profileCurrLevel, out profileHighLevel, out robotHighLevel);
+      _SkillProfileCurrentLevel.text = profileCurrLevel.ToString();
+      _SkillProfileHighLevel.text = profileHighLevel.ToString();
+      _SkillRobotHighLevel.text = robotHighLevel.ToString();
+    }
+
+    private void SubmitSkillsButtonClicked() {
+      SkillSystem.Instance.SetDebugSkillsForGame(int.Parse(_SkillProfileCurrentLevel.text),
+        int.Parse(_SkillProfileHighLevel.text), int.Parse(_SkillRobotHighLevel.text));
+    }
+
+    private void SubmitResetRobotData() {
+      // Add anything else we save on the robot here.
+      SkillSystem.Instance.DebugEraseStorage();
     }
 
     private void SubmitNotificationButtonClicked() {
