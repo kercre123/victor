@@ -270,9 +270,10 @@ namespace Cozmo {
         
         // Move lift to correct height
         StartActing(robot, new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK),
-                    [this,&robot](ActionResult ret){
-                      if (ret != ActionResult::SUCCESS) {
+                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                      if (result != ActionResult::SUCCESS) {
                         EndTest(robot, FactoryTestResultCode::INIT_LIFT_HEIGHT_FAILED);
+                        return false;
                       }
                       SetCurrState(FactoryTestState::ChargerAndIMUCheck);
                       return true;
@@ -332,8 +333,8 @@ namespace Cozmo {
         
         // Go to camera calibration pose
         StartActing(robot, action,
-                    [this,&robot](ActionResult ret){
-                      if (ret != ActionResult::SUCCESS) {
+                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                      if (result != ActionResult::SUCCESS) {
                         EndTest(robot, FactoryTestResultCode::GOTO_CALIB_POSE_ACTION_FAILED);
                       } else {
                         _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
@@ -411,31 +412,81 @@ namespace Cozmo {
                          "%zu images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
         robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
         _calibrationReceived = false;
-        _holdUntilTime = currentTime_sec + 30.f;
+        _holdUntilTime = currentTime_sec + 10.f;
         SetCurrState(FactoryTestState::WaitForCameraCalibration);
+        break;
       }
       case FactoryTestState::WaitForCameraCalibration:
       {
         if (_calibrationReceived) {
-          // Goto pose where block is visible
-          DriveToPoseAction* action = new DriveToPoseAction(robot, _prePickupPose);
-          action->SetMotionProfile(_motionProfile);
-          StartActing(robot, action,
-                      [this,&robot](ActionResult ret){
-                        if (ret != ActionResult::SUCCESS) {
-                          EndTest(robot, FactoryTestResultCode::GOTO_PRE_PICKUP_POSE_ACTION_FAILED);
-                        } else {
-                          _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
+          
+          // Read lift tool code
+          StartActing(robot, new ReadToolCodeAction(robot, false),
+                      [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                        if (result != ActionResult::SUCCESS) {
+                          EndTest(robot, FactoryTestResultCode::READ_TOOL_CODE_FAILED);
+                          return false;
+                        }
+                        
+                        const ToolCodeInfo &info = completionInfo.Get_readToolCodeCompleted().info;
+                        PRINT_NAMED_INFO("BehaviorFactoryTest.RecvdToolCodeInfo.Info",
+                                         "Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
+                                         info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y,
+                                         info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
+                                         info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
+                                         info.observedCalibDotRight_x, info.observedCalibDotRight_y);
+                        
+                        // Verify tool code data is in range
+                        static const f32 pixelDistThresh = 30.f;
+                        f32 distL = ComputeDistanceBetween(Point2f(info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y),
+                                                           Point2f(info.observedCalibDotLeft_x, info.observedCalibDotLeft_y));
+                        f32 distR = ComputeDistanceBetween(Point2f(info.expectedCalibDotRight_x, info.expectedCalibDotRight_y),
+                                                           Point2f(info.observedCalibDotRight_x, info.observedCalibDotRight_y));
+                        
+                        if (distL > pixelDistThresh || distR > pixelDistThresh) {
+                          EndTest(robot, FactoryTestResultCode::TOOL_CODE_POSITIONS_OOR);
+                          return false;
+                        }
+                        
+                        // Store results to nvStorage
+                        if (ENABLE_NVSTORAGE_WRITES) {
+                          u8 buf[2*info.Size()];
+                          size_t numBytes = info.Pack(buf, sizeof(buf));
+                          robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes,
+                                                              [this,&robot](NVStorage::NVResult res) {
+                                                                if (res != NVStorage::NVResult::NV_OKAY) {
+                                                                  EndTest(robot, FactoryTestResultCode::TOOL_CODE_WRITE_FAILED);
+                                                                } else {
+                                                                  PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCode.Success", "");
+                                                                }
+                                                              });
                         }
                         return true;
                       });
-          
-          
-          SetCurrState(FactoryTestState::GotoPickupPose);
+
+          SetCurrState(FactoryTestState::ReadLiftToolCode);
         } else if (currentTime_sec > _holdUntilTime) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CalibrationTimedout", "");
           END_TEST(FactoryTestResultCode::CALIBRATION_TIMED_OUT);
         }
+        break;
+      }
+      case FactoryTestState::ReadLiftToolCode:
+      {
+        // Goto pose where block is visible
+        DriveToPoseAction* action = new DriveToPoseAction(robot, _prePickupPose);
+        action->SetMotionProfile(_motionProfile);
+        StartActing(robot, action,
+                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                      if (result != ActionResult::SUCCESS) {
+                        EndTest(robot, FactoryTestResultCode::GOTO_PRE_PICKUP_POSE_ACTION_FAILED);
+                      } else {
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
+                      }
+                      return true;
+                    });
+        
+        SetCurrState(FactoryTestState::GotoPickupPose);
         break;
       }
       case FactoryTestState::GotoPickupPose:
@@ -493,8 +544,8 @@ namespace Cozmo {
       }
       case FactoryTestState::StartPickup:
       {
-        auto pickupCallback = [this,&robot](ActionResult ret){
-          if (ret == ActionResult::SUCCESS && robot.GetCarryingObject() == _blockObjectID) {
+        auto pickupCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+          if (result == ActionResult::SUCCESS && robot.GetCarryingObject() == _blockObjectID) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.pickupCallback.Success", "");
           } else if (_attemptCounter <= _kNumPickupRetries) {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.pickupCallback.FailedRetrying", "");
@@ -519,8 +570,8 @@ namespace Cozmo {
       }
       case FactoryTestState::PickingUpBlock:
       {
-        auto placementCallback = [this,&robot](ActionResult ret){
-          if (ret == ActionResult::SUCCESS && !robot.IsCarryingObject()) {
+        auto placementCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+          if (result == ActionResult::SUCCESS && !robot.IsCarryingObject()) {
             PRINT_NAMED_INFO("BehaviorFactoryTest.placementCallback.Success", "");
           } else {
             PRINT_NAMED_WARNING("BehaviorFactoryTest.placementCallback.Failed", "");
@@ -567,8 +618,8 @@ namespace Cozmo {
         
         // Look at charger
         StartActing(robot, new TurnTowardsPoseAction(robot, _expectedChargerPose, DEG_TO_RAD(180)),
-                    [this,&robot](ActionResult ret){
-                      if (ret != ActionResult::SUCCESS) {
+                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                      if (result != ActionResult::SUCCESS) {
                         EndTest(robot, FactoryTestResultCode::GOTO_PRE_MOUNT_CHARGER_POSE_ACTION_FAILED);
                       } else {
                         _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;
@@ -588,8 +639,8 @@ namespace Cozmo {
           break;
         }
         
-        auto chargerCallback = [this,&robot](ActionResult ret){
-          if (ret == ActionResult::SUCCESS && robot.IsOnCharger()) {
+        auto chargerCallback = [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+          if (result == ActionResult::SUCCESS && robot.IsOnCharger()) {
             EndTest(robot, FactoryTestResultCode::SUCCESS);
           } else {
             EndTest(robot, FactoryTestResultCode::CHARGER_DOCK_FAILED);
@@ -720,7 +771,7 @@ namespace Cozmo {
     
     if (_actionCallbackMap.count(msg.idTag) != 0) {
       if (_actionCallbackMap[msg.idTag]) {
-        _actionCallbackMap[msg.idTag](msg.result);
+        _actionCallbackMap[msg.idTag](msg.result, msg.completionInfo);
       }
       _actionCallbackMap.erase(msg.idTag);
     }

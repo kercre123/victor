@@ -14,6 +14,7 @@ enum uint_8 FactoryTestState {
   TakeCalibrationImages,    // Take and save images of calibration patterns
   ComputeCameraCalibration, // Compute calibration and check that values are reasonable
   WaitForCameraCalibration,
+  ReadLiftToolCode,
   GotoPickupPose,
   StartPickup,
   PickingUpBlock,
@@ -38,6 +39,9 @@ enum uint_8 FactoryTestResultCode {
   CAMERA_CALIB_WRITE_FAILED,
   CALIB_IMAGES_WRITE_FAILED,
   CALIB_IMAGES_SEND_FAILED,
+  READ_TOOL_CODE_FAILED,
+  TOOL_CODE_POSITIONS_OOR,
+  TOOL_CODE_WRITE_FAILED,
   GOTO_PRE_PICKUP_POSE_ACTION_FAILED,
   NOT_IN_PRE_PICKUP_POSE,
   CUBE_NOT_FOUND,
