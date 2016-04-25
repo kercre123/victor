@@ -265,6 +265,35 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::MISMATCHED_CLAD);
         }
         
+        // Check for past test results
+        robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults,
+                                           [this](u8* data, size_t size, NVStorage::NVResult res) {
+                                             if (res == NVStorage::NVResult::NV_OKAY) {
+                                               FactoryTestResultEntry resultEntry(data, size);
+                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.ReadPastTestResults",
+                                                                "Result: %s", EnumToString(resultEntry.result) );
+                                             } else {
+                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.NoPastTestResultsFound", "");
+                                             }
+                                           });
+        
+        robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo,
+                                           [this](u8* data, size_t size, NVStorage::NVResult res) {
+                                             if (res == NVStorage::NVResult::NV_OKAY) {
+                                               ToolCodeInfo info(data, size);
+                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.ReadPastToolCodeInfo",
+                                                                "Code: %s, Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
+                                                                EnumToString(info.code),
+                                                                info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y,
+                                                                info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
+                                                                info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
+                                                                info.observedCalibDotRight_x, info.observedCalibDotRight_y);
+
+                                             } else {
+                                               PRINT_NAMED_INFO("BehaviorFactoryTest.Update.NoPastToolCodeInfoFound", "");
+                                             }
+                                           });
+        
         // Set fake calibration if not already set so that we can actually run
         // calibration from images.
         if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
@@ -274,7 +303,6 @@ namespace Cozmo {
                                               160, 120);
           robot.GetVisionComponent().SetCameraCalibration(fakeCalib);
         }
-        
         
         // Move lift to correct height
         StartActing(robot, new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK),
@@ -439,7 +467,8 @@ namespace Cozmo {
                         
                         const ToolCodeInfo &info = completionInfo.Get_readToolCodeCompleted().info;
                         PRINT_NAMED_INFO("BehaviorFactoryTest.RecvdToolCodeInfo.Info",
-                                         "Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
+                                         "Code: %s, Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
+                                         EnumToString(info.code),
                                          info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y,
                                          info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
                                          info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
@@ -485,7 +514,7 @@ namespace Cozmo {
       {
         // Goto pose where block is visible
         DriveToPoseAction* action = new DriveToPoseAction(robot, _prePickupPose);
-        action->SetMotionProfile(_motionProfile);
+        //action->SetMotionProfile(_motionProfile);
         StartActing(robot, action,
                     [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                       if (result != ActionResult::SUCCESS) {
@@ -571,7 +600,7 @@ namespace Cozmo {
         PRINT_NAMED_INFO("BehaviorFactory.Update.PickingUp", "Attempt %d", _attemptCounter);
         ++_attemptCounter;
         DriveToPickupObjectAction* action = new DriveToPickupObjectAction(robot, _blockObjectID);
-        action->SetMotionProfile(_motionProfile);
+        //action->SetMotionProfile(_motionProfile);
         StartActing(robot,
                     action,
                     pickupCallback);
@@ -592,7 +621,7 @@ namespace Cozmo {
         
         // Put block down
         PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot, _actualLightCubePose);
-        action->SetMotionProfile(_motionProfile);
+        //action->SetMotionProfile(_motionProfile);
         StartActing(robot,
                     action,
                     placementCallback);
@@ -659,7 +688,7 @@ namespace Cozmo {
         };
         
         DriveToAndMountChargerAction* action = new DriveToAndMountChargerAction(robot, _chargerObjectID);
-        action->SetMotionProfile(_motionProfile);
+        //action->SetMotionProfile(_motionProfile);
         StartActing(robot,
                     action,
                     chargerCallback);
