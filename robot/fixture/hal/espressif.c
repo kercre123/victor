@@ -297,7 +297,8 @@ static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int leng
   SlowPrintf("%s=%02X {", debug, cmd);
   ESPCommand(cmd, data, length, checksum);
   
-  for (int retry = 0 ; retry < 100; retry++)
+  // I don't know how long to wait - during initial erase, I've seen as many as 19 retries
+  for (int retry = 0 ; retry < 50; retry++)
   {    
     int replySize = ESPRead(reply, max, timeout);
 
@@ -317,8 +318,8 @@ static int Command(const char* debug, uint8_t cmd, const uint8_t* data, int leng
 
     return replySize;
   }
-  SlowPrintf("\nGAVE UP\n");
-  return -1;
+  SlowPrintf("\nGAVE UP DUE TO TIMEOUT\n");
+  throw ERROR_HEAD_RADIO_TIMEOUT;
 }
 
 bool ESPFlashLoad(uint32_t address, int length, const uint8_t *data) {

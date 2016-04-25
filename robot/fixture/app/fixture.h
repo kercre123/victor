@@ -74,6 +74,7 @@ typedef enum
 #define ERROR_HEAD_RADIO_SYNC       510   // Can't sync with radio
 #define ERROR_HEAD_RADIO_ERASE      511   // Problem erasing flash
 #define ERROR_HEAD_RADIO_FLASH      512   // Problem programming radio
+#define ERROR_HEAD_RADIO_TIMEOUT    513   // Unable to send command due to ESP timeout (broken connection?)
 
 // Body errors
 #define ERROR_BODY_BOOTLOADER       600   // Can't load bootloader onto body

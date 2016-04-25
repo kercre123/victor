@@ -253,11 +253,6 @@ void cubeWrite(char* filename, int options)
   fclose(fp);
 
   printf("wrote %d bytes, %d blocks, patch level 0x%04X\n", len, len >> 8, version);
-
-  for (int i = 16; i < 272; i++) {
-    printf("0x%02x,", (u8)m_safeImage[i]);
-    if (31 == ((i-16) & 31)) printf("\n");
-  }
 }
 
 // Write the requested image
