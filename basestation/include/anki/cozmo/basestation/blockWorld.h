@@ -214,6 +214,7 @@ namespace Anki
       // Try to select the object with the specified ID. Return true if that
       // object ID is found and the object is successfully selected.
       bool SelectObject(const ObjectID objectID);
+      void DeselectCurrentObject();
       
       void EnableObjectDeletion(bool enable);
       void EnableObjectAddition(bool enable);

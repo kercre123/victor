@@ -1,0 +1,45 @@
+/**
+ * File: AIBeacon
+ *
+ * Author: Raul
+ * Created: 03/25/16
+ *
+ * Description: Beacon is a 'base or headquarters' to put cubes inside a radius for localization or to show purpose
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+#ifndef __Cozmo_Basestation_BehaviorSystem_AIBeacon_H__
+#define __Cozmo_Basestation_BehaviorSystem_AIBeacon_H__
+
+#include "anki/common/basestation/math/pose.h"
+
+namespace Anki {
+namespace Cozmo {
+
+class Robot;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Beacon
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// info for beacons (beacons is a concept for exploration, it's a 'base/headquarters' to put cubes for localization)
+class AIBeacon {
+public:
+  AIBeacon( const Pose3d& p ) : _pose(p) {}
+  const Pose3d& GetPose() const { return _pose;}
+  
+  // returns true if given position is within this beacon. If inwardThreshold is set, the location has to be inside
+  // the beacon radius by that additional distance
+  bool IsLocWithinBeacon(const Pose3d& pose, float inwardThreshold_mm=0.0f) const;
+  
+  // return radius of this beacon
+  float GetRadius() const;
+  
+private:
+  Pose3d _pose;
+};
+
+} // namespace Cozmo
+} // namespace Anki
+
+#endif //

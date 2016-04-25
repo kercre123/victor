@@ -11,6 +11,7 @@
       "MiniGame"
     ],
     "enabledGroups" : [
+      "FreeplayExplore"
     ],
     "disabledBehaviors" : [
     ],

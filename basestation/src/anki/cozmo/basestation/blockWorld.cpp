@@ -3350,21 +3350,28 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         return ++retIter;
       }
     }
+
+    void BlockWorld::DeselectCurrentObject()
+    {
+      if(_selectedObject.IsSet()) {
+        ActionableObject* curSel = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
+        if(curSel != nullptr) {
+          curSel->SetSelected(false);
+        }
+        _selectedObject.UnSet();
+      }
+    }
+
   
     bool BlockWorld::SelectObject(const ObjectID objectID)
     {
       ActionableObject* newSelection = dynamic_cast<ActionableObject*>(GetObjectByID(objectID));
       
       if(newSelection != nullptr) {
-        if(_selectedObject.IsSet()) {
-          // Unselect current object of interest, if it still exists (Note that it may just get
-          // reselected here, but I don't think we care.)
-          // Mark new object of interest as selected so it will draw differently
-          ActionableObject* oldSelection = dynamic_cast<ActionableObject*>(GetObjectByID(_selectedObject));
-          if(oldSelection != nullptr) {
-            oldSelection->SetSelected(false);
-          }
-        }
+        // Unselect current object of interest, if it still exists (Note that it may just get
+        // reselected here, but I don't think we care.)
+        // Mark new object of interest as selected so it will draw differently
+        DeselectCurrentObject();
         
         newSelection->SetSelected(true);
         _selectedObject = objectID;

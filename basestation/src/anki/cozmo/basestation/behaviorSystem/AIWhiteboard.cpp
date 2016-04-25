@@ -1,5 +1,5 @@
 /**
- * File: behaviorWhiteboard
+ * File: AIWhiteboard
  *
  * Author: Raul
  * Created: 03/25/16
@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -29,22 +29,26 @@ namespace Anki {
 namespace Cozmo {
 
 // all coordinates have to be this close from their counterpart to be considered the same observation (and thus override it)
-CONSOLE_VAR(float, kBW_PossibleMarkerClose_mm, "BehaviorWhiteboard", 50.0f);
-CONSOLE_VAR(float, kBW_PossibleMarkerClose_rad, "BehaviorWhiteboard", PI_F); // current markers flip due to distance, consider 360 since we don't care
+CONSOLE_VAR(float, kBW_PossibleMarkerClose_mm, "AIWhiteboard", 50.0f);
+CONSOLE_VAR(float, kBW_PossibleMarkerClose_rad, "AIWhiteboard", PI_F); // current markers flip due to distance, consider 360 since we don't care
 // limit to how many pending possible markers we have stored
-CONSOLE_VAR(uint32_t, kBW_MaxPossibleMarkers, "BehaviorWhiteboard", 10);
+CONSOLE_VAR(uint32_t, kBW_MaxPossibleMarkers, "AIWhiteboard", 10);
 // debug render
-CONSOLE_VAR(bool, kBW_DebugRenderPossibleMarkers, "BehaviorWhiteboard", true);
-CONSOLE_VAR(float, kBW_DebugRenderPossibleMarkersZ, "BehaviorWhiteboard", 35.0f);
+CONSOLE_VAR(bool, kBW_DebugRenderPossibleMarkers, "AIWhiteboard", true);
+CONSOLE_VAR(float, kBW_DebugRenderPossibleMarkersZ, "AIWhiteboard", 35.0f);
+CONSOLE_VAR(bool, kBW_DebugRenderBeacons, "AIWhiteboard", true);
+CONSOLE_VAR(float, kBW_DebugRenderBeaconZ, "AIWhiteboard", 35.0f);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorWhiteboard::BehaviorWhiteboard(Robot& robot)
+// AIWhiteboard
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AIWhiteboard::AIWhiteboard(Robot& robot)
 : _robot(robot)
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWhiteboard::Init()
+void AIWhiteboard::Init()
 {
   // register to possible object events
   if ( _robot.HasExternalInterface() )
@@ -55,30 +59,54 @@ void BehaviorWhiteboard::Init()
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedPossibleObject>();
   }
   else {
-    PRINT_NAMED_WARNING("BehaviorWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
+    PRINT_NAMED_WARNING("AIWhiteboard.Init", "Initialized whiteboard with no external interface. Will miss events.");
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWhiteboard::OnRobotDelocalized()
+void AIWhiteboard::OnRobotDelocalized()
 {
   // at the moment the whiteboard won't try to update origins, so just flush all poses
   _possibleMarkers.clear();
+  UpdatePossibleMarkerRender();
+  
+  // TODO rsam we probably want to rematch beacons when robot relocalizes.
+  _beacons.clear();
+  UpdateBeaconRender();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWhiteboard::DisableCliffReaction(void* id)
+void AIWhiteboard::AddBeacon( const Pose3d& beaconPos )
+{
+  _beacons.emplace_back( beaconPos );
+
+  // update render
+  UpdateBeaconRender();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const AIBeacon* AIWhiteboard::GetActiveBeacon() const
+{
+  if ( _beacons.empty() ) {
+    return nullptr;
+  }
+  
+  return &_beacons[0];
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::DisableCliffReaction(void* id)
 {
   _disableCliffIds.insert(id);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWhiteboard::RequestEnableCliffReaction(void* id)
+void AIWhiteboard::RequestEnableCliffReaction(void* id)
 {
   size_t numErased = _disableCliffIds.erase(id);
 
   if( numErased == 0 ){
-    PRINT_NAMED_WARNING("BehaviorWhiteboard.RequestEnableCliffReaction.InvalidId",
+    PRINT_NAMED_WARNING("AIWhiteboard.RequestEnableCliffReaction.InvalidId",
                         "tried to request enabling cliff reaction with id %p, but no id found. %zu in set",
                         id,
                         _disableCliffIds.size());
@@ -86,13 +114,13 @@ void BehaviorWhiteboard::RequestEnableCliffReaction(void* id)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorWhiteboard::IsCliffReactionEnabled() const
+bool AIWhiteboard::IsCliffReactionEnabled() const
 {
   return _disableCliffIds.empty();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWhiteboard::RemovePossibleMarkersMatching(ObjectType objectType, const Pose3d& pose)
+void AIWhiteboard::RemovePossibleMarkersMatching(ObjectType objectType, const Pose3d& pose)
 {
   // iterate all current possible markers
   auto possibleMarkerIt = _possibleMarkers.begin();
@@ -120,14 +148,14 @@ void BehaviorWhiteboard::RemovePossibleMarkersMatching(ObjectType objectType, co
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
-void BehaviorWhiteboard::HandleMessage(const ExternalInterface::RobotObservedObject& msg)
+void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedObject& msg)
 {
   const ExternalInterface::RobotObservedObject& possibleObject = msg;
   
   // this is for the future. In the future, should a white board of one robot get messages from another robot? Should
   // it just ignore them? This assert will fire when this whiteboard receives a message from another robot. Make a
   // decision then
-  ASSERT_NAMED( _robot.GetID() == possibleObject.robotID, "BehaviorWhiteboard.HandleMessage.RobotObservedObject.UnexpectedRobotID");
+  ASSERT_NAMED( _robot.GetID() == possibleObject.robotID, "AIWhiteboard.HandleMessage.RobotObservedObject.UnexpectedRobotID");
   
   // calculate pose for object
   const UnitQuaternion<float> obsQuat(possibleObject.quaternion_w, possibleObject.quaternion_x, possibleObject.quaternion_y, possibleObject.quaternion_z);
@@ -143,14 +171,14 @@ void BehaviorWhiteboard::HandleMessage(const ExternalInterface::RobotObservedObj
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
-void BehaviorWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleObject& msg)
+void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleObject& msg)
 {
   const ExternalInterface::RobotObservedObject& possibleObject = msg.possibleObject;
 
   // this is for the future. In the future, should a white board of one robot get messages from another robot? Should
   // it just ignore them? This assert will fire when this whiteboard receives a message from another robot. Make a
   // decision then
-  ASSERT_NAMED( _robot.GetID() == possibleObject.robotID, "BehaviorWhiteboard.HandleMessage.RobotObservedPossibleObject.UnexpectedRobotID");
+  ASSERT_NAMED( _robot.GetID() == possibleObject.robotID, "AIWhiteboard.HandleMessage.RobotObservedPossibleObject.UnexpectedRobotID");
   
   // calculate pose for new object
   const UnitQuaternion<float> obsQuat(possibleObject.quaternion_w, possibleObject.quaternion_x, possibleObject.quaternion_y, possibleObject.quaternion_z);
@@ -177,9 +205,9 @@ void BehaviorWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPos
   if ( _possibleMarkers.size() >= kBW_MaxPossibleMarkers )
   {
     // we reached the limit, remove oldest entry
-    ASSERT_NAMED(!_possibleMarkers.empty(), "BehaviorWhiteboard.HandleMessage.ReachedLimitEmpty");
+    ASSERT_NAMED(!_possibleMarkers.empty(), "AIWhiteboard.HandleMessage.ReachedLimitEmpty");
     _possibleMarkers.pop_front();
-    // PRINT_NAMED_INFO("BehaviorWhiteboard.HandleMessage.BeyondMarkerLimit", "Reached limit of pending markers, removing oldest one");
+    // PRINT_NAMED_INFO("AIWhiteboard.HandleMessage.BeyondMarkerLimit", "Reached limit of pending markers, removing oldest one");
   }
   
   // always add new entry
@@ -190,11 +218,11 @@ void BehaviorWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPos
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorWhiteboard::UpdatePossibleMarkerRender()
+void AIWhiteboard::UpdatePossibleMarkerRender()
 {
   if ( kBW_DebugRenderPossibleMarkers )
   {
-    _robot.GetContext()->GetVizManager()->EraseSegments("BehaviorWhiteboard.PossibleMarkers");
+    _robot.GetContext()->GetVizManager()->EraseSegments("AIWhiteboard.PossibleMarkers");
     for ( auto& possibleMarkerIt : _possibleMarkers )
     {
       // this offset should not be applied pose
@@ -209,17 +237,36 @@ void BehaviorWhiteboard::UpdatePossibleMarkerRender()
                    {-kLen, -kLen, 0});
       thisPose.ApplyTo(quad3, quad3);
       quad3 += zRenderOffset;
-      _robot.GetContext()->GetVizManager()->DrawQuadAsSegments("BehaviorWhiteboard.PossibleMarkers",
+      _robot.GetContext()->GetVizManager()->DrawQuadAsSegments("AIWhiteboard.PossibleMarkers",
           quad3, NamedColors::ORANGE, false);
 
       Vec3f directionEndPoint = X_AXIS_3D() * kLen*0.5f;
       directionEndPoint = thisPose * directionEndPoint;
-      _robot.GetContext()->GetVizManager()->DrawSegment("BehaviorWhiteboard.PossibleMarkers",
+      _robot.GetContext()->GetVizManager()->DrawSegment("AIWhiteboard.PossibleMarkers",
           thisPose.GetTranslation() + zRenderOffset, directionEndPoint + zRenderOffset, NamedColors::YELLOW, false);
     }
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::UpdateBeaconRender()
+{
+  // re-draw all beacons since they all use the same id
+  if ( kBW_DebugRenderBeacons )
+  {
+    const std::string renderId("AIWhiteboard.UpdateBeaconRender");
+    _robot.GetContext()->GetVizManager()->EraseSegments(renderId);
+  
+    // iterate all beacons and render
+    for( const auto& beacon : _beacons )
+    {
+      Vec3f center = beacon.GetPose().GetTranslation();
+      center.z() += kBW_DebugRenderBeaconZ;
+      _robot.GetContext()->GetVizManager()->DrawXYCircleAsSegments("AIWhiteboard.UpdateBeaconRender",
+          center, beacon.GetRadius(), NamedColors::GREEN, false);
+    }
+  }
+}
 
 } // namespace Cozmo
 } // namespace Anki
