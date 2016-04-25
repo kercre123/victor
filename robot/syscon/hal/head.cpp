@@ -58,8 +58,6 @@ void Head::init()
 
   // Enable the peripheral and start the tasks
   NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
-  NRF_UART0->TASKS_STARTTX = 1;
-  NRF_UART0->TASKS_STARTRX = 1;
 
   // Extremely low priorty IRQ
   NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
@@ -77,9 +75,17 @@ void Head::enable(bool enable) {
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
+  if (uart_mode == mode) {
+    return ;
+  }
+
+  // Shut it down (because reasons)
   NRF_UART0->TASKS_STOPRX = 1;
   NRF_UART0->TASKS_STOPTX = 1;
-  
+    
+  uart_mode = mode;
+  txRxIndex = 0;
+
   switch (mode) {
     case TRANSMIT_SEND:
       // Configure pin so it is open-drain
@@ -94,44 +100,34 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->PSELTXD = PIN_TX_HEAD;
       NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
 
+      MicroWait(10);
+
       NRF_UART0->TASKS_STARTTX = 1;
 
       break ;
     case TRANSMIT_RECEIVE:
       nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
 
-      NRF_UART0->PSELRXD = PIN_TX_HEAD;
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
+      NRF_UART0->PSELRXD = PIN_TX_HEAD;
       NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
 
       NRF_UART0->TASKS_STARTRX = 1;
 
       break ;
     case TRANSMIT_CHARGER_RX:
-      nrf_gpio_pin_clear(PIN_TX_VEXT);
-      nrf_gpio_cfg_output(PIN_TX_VEXT);
-      MicroWait(10);
-      nrf_gpio_pin_set(PIN_TX_VEXT);
-    
-      NRF_UART0->PSELRXD = PIN_TX_VEXT;
-      NRF_UART0->PSELTXD = 0xFFFFFFFF;
-      NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
-
       nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_PULLUP);
 
+      NRF_UART0->PSELTXD = 0xFFFFFFFF;
+      NRF_UART0->PSELRXD = PIN_TX_VEXT;
+      NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
+
       NRF_UART0->TASKS_STARTRX = 1;
-    
       break ;
 
     default:
       break ;
   }
-  
-  // Clear our UART interrupts
-  NRF_UART0->EVENTS_RXDRDY = 0;
-  NRF_UART0->EVENTS_TXDRDY = 0;
-  uart_mode = mode;
-  txRxIndex = 0;
 }
 
 static inline void transmitByte() { 
@@ -155,8 +151,6 @@ void Head::manage(void* userdata) {
   transmitByte();
 }
 
-//static uint8_t charger_byte = 0xCD;
-
 extern "C"
 void UART0_IRQHandler()
 {
@@ -166,18 +160,20 @@ void UART0_IRQHandler()
   if (NRF_UART0->EVENTS_RXDRDY) {
     NRF_UART0->EVENTS_RXDRDY = 0;
 
+    uint8_t data = NRF_UART0->RXD;
+
     switch (uart_mode) {
       case TRANSMIT_RECEIVE:
           // Re-sync to header
         if (txRxIndex < 4) {
-          header_shift = (header_shift >> 8) | (NRF_UART0->RXD << 24);
+          header_shift = (header_shift >> 8) | (data << 24);
           
           if (header_shift == SPI_SOURCE_HEAD) {
             txRxIndex = 4;
             return ;
           }
         } else {
-          txRxBuffer[txRxIndex] = NRF_UART0->RXD;
+          txRxBuffer[txRxIndex] = data;
         }
 
         // We received a full packet
@@ -188,11 +184,14 @@ void UART0_IRQHandler()
           RTOS::kick(WDOG_UART);
           
           setTransmitMode(TRANSMIT_CHARGER_RX);
+        } else if (txRxIndex + 1 == sizeof(GlobalDataToBody)) {
+          // Let our fixture know we are almost ready to receive data
+          nrf_gpio_pin_set(PIN_TX_VEXT);
+          nrf_gpio_cfg_output(PIN_TX_VEXT);
         }
+
         break ;
       case TRANSMIT_CHARGER_RX:
-        //charger_byte = 
-        NRF_UART0->RXD;
         break ;
       default:
         break ;

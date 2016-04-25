@@ -191,7 +191,7 @@ void Battery::manage(void* userdata)
     case ANALOG_V_EXT_SENSE:
       {
         // Are our power pins shorted?
-        if (NRF_ADC->RESULT >= 0x30){
+        if (NRF_ADC->RESULT >= 0x30) {
           RTOS::kick(WDOG_NERVE_PINCH);
         }
 
