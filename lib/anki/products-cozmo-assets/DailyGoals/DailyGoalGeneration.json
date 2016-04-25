@@ -3,7 +3,7 @@
     {
       "TitleKey": "dailyGoal.title.missing",
       "DescKey": "dailyGoal.description.missing",
-      "RewardType": "experience",
+      "RewardType": "treat",
       "PointsRewarded": 999,
       "Target": 100,
       "CladEvent": "OnSpeedtapStarted",
@@ -43,7 +43,16 @@
       "PointsRewarded": 10,
       "Target": 1,
       "CladEvent": "OnSpeedtapHandWin",
-      "GenConditions": []
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.WeekdayCondition, Assembly-CSharp",
+          "Label": {
+            "text": "Weekday Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ]
     }
   ]
 }

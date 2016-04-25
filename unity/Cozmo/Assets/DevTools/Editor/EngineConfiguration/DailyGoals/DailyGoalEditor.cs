@@ -1,13 +1,14 @@
 ﻿using UnityEngine;
-using System.Collections;
 using UnityEditor;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using AnimationGroups;
 using System.IO;
 using Newtonsoft.Json;
 using Anki.Cozmo;
+using Cozmo;
 using Cozmo.UI;
 using System.Reflection;
 
@@ -30,6 +31,7 @@ public class DailyGoalEditor : EditorWindow {
   private int _SelectedConditionIndex = 0;
 
   private static string[] _DailyGoalGenFiles;
+  private static string[] _ItemIDList;
 
   private static DailyGoalGenerationData _CurrentGenData;
   private static string _CurrentGoalGenFile;
@@ -71,7 +73,7 @@ public class DailyGoalEditor : EditorWindow {
       _DailyGoalGenFiles = new string[0];
       _GoalGenNameOptions = _DailyGoalGenFiles;
     }
-
+    _ItemIDList = GetAllItemIds();
   }
 
   private bool CheckDiscardUnsaved() {
@@ -100,6 +102,15 @@ public class DailyGoalEditor : EditorWindow {
         DAS.Error(this, ex.Message);
       }
     }
+  }
+
+  private static string[] GetAllItemIds() {
+    ItemDataConfig itemDataConfig = AssetDatabase.LoadAssetAtPath<ItemDataConfig>(ItemAttributeDrawer.kItemDataConfigLocation);
+    HexItemList hexItemList = AssetDatabase.LoadAssetAtPath<HexItemList>(ItemAttributeDrawer.kHexItemListLocation);
+    List<string> allIds = new List<string>();
+    allIds.AddRange(itemDataConfig.EditorGetItemIds());
+    allIds.AddRange(hexItemList.EditorGetPuzzlePieceIds());
+    return allIds.ToArray();
   }
 
   public void OnGUI() {
@@ -249,7 +260,7 @@ public class DailyGoalEditor : EditorWindow {
       EditorGUILayout.LabelField(">>REWARD");
       EditorGUI.indentLevel++;
       EditorGUILayout.BeginHorizontal();
-      genData.RewardType = EditorGUILayout.TextField("Reward Type", genData.RewardType ?? string.Empty);
+      genData.RewardType = _ItemIDList[EditorGUILayout.Popup("RewardType", Mathf.Max(0, Array.IndexOf(_ItemIDList, genData.RewardType)), _ItemIDList)];
       genData.PointsRewarded = EditorGUILayout.IntField("Reward", genData.PointsRewarded);
       EditorGUILayout.EndHorizontal();
       EditorGUI.indentLevel--;

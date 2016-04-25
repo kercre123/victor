@@ -6,8 +6,8 @@ using System.Collections.Generic;
 namespace Cozmo {
   [CustomPropertyDrawer(typeof(ItemIdAttribute))]
   public class ItemAttributeDrawer : PropertyDrawer {
-    private const string kItemDataConfigLocation = "Assets/AssetBundles/GameMetadata-Bundle/ItemDataConfig.asset";
-    private const string kHexItemListLocation = "Assets/AssetBundles/GameMetadata-Bundle/HexData/HexItemList.asset";
+    public const string kItemDataConfigLocation = "Assets/AssetBundles/GameMetadata-Bundle/ItemDataConfig.asset";
+    public const string kHexItemListLocation = "Assets/AssetBundles/GameMetadata-Bundle/HexData/HexItemList.asset";
 
     private string[] _ItemIds = null;
     // Draw the property inside the given rect
