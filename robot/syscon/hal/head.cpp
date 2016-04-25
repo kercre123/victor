@@ -102,8 +102,6 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->PSELTXD = PIN_TX_HEAD;
       NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
 
-      MicroWait(10);
-
       NRF_UART0->TASKS_STARTTX = 1;
 
       break ;
@@ -114,8 +112,6 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->PSELRXD = PIN_TX_HEAD;
       NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
 
-      MicroWait(10);
-
       NRF_UART0->TASKS_STARTRX = 1;
 
       break ;
@@ -125,8 +121,6 @@ static void setTransmitMode(TRANSMIT_MODE mode) {
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
       NRF_UART0->PSELRXD = PIN_TX_VEXT;
       NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
-
-      MicroWait(10);
 
       NRF_UART0->TASKS_STARTRX = 1;
       break ;
