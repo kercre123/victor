@@ -4,8 +4,8 @@
       "TitleKey": "dailyGoal.title.missing",
       "DescKey": "dailyGoal.description.missing",
       "RewardType": "experience",
-      "Target": 100,
       "PointsRewarded": 999,
+      "Target": 100,
       "CladEvent": "OnSpeedtapStarted",
       "GenConditions": [
         {
@@ -22,8 +22,8 @@
       "TitleKey": "dailyGoal.title.PlaySpeedTap",
       "DescKey": "dailyGoal.description.PlaySpeedTap",
       "RewardType": "experience",
-      "Target": 50,
       "PointsRewarded": 5,
+      "Target": 50,
       "CladEvent": "OnSpeedtapStarted",
       "GenConditions": []
     },
@@ -31,8 +31,8 @@
       "TitleKey": "dailyGoal.title.WinSpeedTap",
       "DescKey": "dailyGoal.description.WinSpeedTap",
       "RewardType": "experience",
-      "Target": 5,
       "PointsRewarded": 10,
+      "Target": 5,
       "CladEvent": "OnSpeedtapSessionWin",
       "GenConditions": []
     },
@@ -40,8 +40,8 @@
       "TitleKey": "dailyGoal.title.WinSpeedTapHands",
       "DescKey": "dailyGoal.description.WinSpeedTapHands",
       "RewardType": "experience",
-      "Target": 1,
       "PointsRewarded": 10,
+      "Target": 1,
       "CladEvent": "OnSpeedtapHandWin",
       "GenConditions": []
     }

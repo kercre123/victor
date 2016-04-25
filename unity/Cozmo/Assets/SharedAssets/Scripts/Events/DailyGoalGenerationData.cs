@@ -2,7 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using Anki.Cozmo;
+using Cozmo;
 using Cozmo.UI;
+using Cozmo.Util;
 
 /// <summary>
 /// Full List of Pairs for CladEvents to AnimationGroups.
@@ -50,13 +52,34 @@ namespace Anki.Cozmo {
         GenConditions = new List<GoalCondition>();
       }
 
+      /// <summary>
+      /// The title key for localization.
+      /// </summary>
       public string TitleKey;
+      /// <summary>
+      /// The description key for localization.
+      /// </summary>
       public string DescKey;
+      /// <summary>
+      /// The Item type of the reward.
+      /// </summary>
+      [ItemId]
       public string RewardType;
-      public int Target;
+      /// <summary>
+      /// The amount of the RewardType rewarded.
+      /// </summary>
       public int PointsRewarded;
-
+      /// <summary>
+      /// The Target amount of times the CladEvent must be fired to complete this goal.
+      /// </summary>
+      public int Target;
+      /// <summary>
+      /// The Game Event that this Daily Goal is progressed by.
+      /// </summary>
       public GameEvent CladEvent;
+      /// <summary>
+      /// The Conditions for if this goal is able to be selected for generation.
+      /// </summary>
       public List<GoalCondition> GenConditions;
 
       public bool CanGen() {

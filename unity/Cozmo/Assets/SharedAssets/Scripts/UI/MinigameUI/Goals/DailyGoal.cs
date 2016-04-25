@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 namespace Cozmo {
   namespace UI {
     [System.Serializable]
-    public class DailyGoal {
+    public class DailyGoal : IDisposable {
       
       public GameEvent GoalEvent;
       public LocalizedString Title;
@@ -51,7 +51,7 @@ namespace Cozmo {
         GameEventManager.Instance.OnGameEvent += ProgressGoal;
       }
 
-      public void OnDestroy() {
+      public void Dispose() {
         GameEventManager.Instance.OnGameEvent -= ProgressGoal;
       }
 
