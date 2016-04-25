@@ -34,6 +34,9 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+// Enable this when running on actual EP3 robots
+#define USING_EP3 0
+
 // Set to 1 if you want the test to actually be able to write
 // new camera calibration, calibration images, and test results to flash.
 #define ENABLE_NVSTORAGE_WRITES 0
@@ -425,6 +428,7 @@ namespace Cozmo {
       {
         if (_calibrationReceived) {
           
+          if (USING_EP3) {
           // Read lift tool code
           StartActing(robot, new ReadToolCodeAction(robot, false),
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
@@ -468,6 +472,7 @@ namespace Cozmo {
                         }
                         return true;
                       });
+          }; // if (USING_EP3)
 
           SetCurrState(FactoryTestState::ReadLiftToolCode);
         } else if (currentTime_sec > _holdUntilTime) {
