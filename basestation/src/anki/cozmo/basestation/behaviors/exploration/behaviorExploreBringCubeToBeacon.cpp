@@ -161,32 +161,49 @@ bool BehaviorExploreBringCubeToBeacon::IsRunnable(const Robot& robot) const
   _candidateObjects.clear();
   if ( !beaconList.empty() )
   {
-    // ask for all cubes we know, and if any is not inside a beacon, then we want to bring that one to the closest beacon
-    static const std::vector<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };
-    for(const auto& family : familyList)
+    // if we are currently a cube, validate right away, regardless of whether it's inside or outisde the cube.
+    // We would always want to drop it
+    if ( robot.IsCarryingObject() )
     {
-      const auto& blocksByType = robot.GetBlockWorld().GetExistingObjectsByFamily(family);
-      for (const auto& blocksOfSameType : blocksByType)
+      const ObservableObject* const carryingObject = robot.GetBlockWorld().GetObjectByID( robot.GetCarryingObject() );
+      if ( nullptr != carryingObject ) {
+        _candidateObjects.emplace_back( carryingObject->GetID(), carryingObject->GetFamily() );
+      } else {
+        // this can block us, since we don't want to try to run. We think we are carrying an object but it does not
+        // exist in the world?
+        PRINT_NAMED_ERROR("BehaviorExploreBringCubeToBeacon.IsRunnable.CarryingNullObject",
+          "Could not get carrying object pointer");
+      }
+    }
+    else
+    {
+      // ask for all cubes we know, and if any is not inside a beacon, then we want to bring that one to the closest beacon
+      static const std::vector<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };
+      for(const auto& family : familyList)
       {
-        for(const auto& block : blocksOfSameType.second)
+        const auto& blocksByType = robot.GetBlockWorld().GetExistingObjectsByFamily(family);
+        for (const auto& blocksOfSameType : blocksByType)
         {
-          bool isBlockInAnyBeacon = false;
-          const ObservableObject* blockPtr = block.second;
-          if ( !blockPtr->IsPoseStateKnown() ) {
-            continue;
-          }
-          
-          // check if the object is within any beacon
-          for ( const auto& beacon : beaconList ) {
-            isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
-            if ( isBlockInAnyBeacon ) {
-              break;
+          for(const auto& block : blocksOfSameType.second)
+          {
+            bool isBlockInAnyBeacon = false;
+            const ObservableObject* blockPtr = block.second;
+            if ( !blockPtr->IsPoseStateKnown() ) {
+              continue;
             }
-          }
-          
-          // this block should be carried to a beacon
-          if ( !isBlockInAnyBeacon ) {
-            _candidateObjects.emplace_back( blockPtr->GetID(), family );
+            
+            // check if the object is within any beacon
+            for ( const auto& beacon : beaconList ) {
+              isBlockInAnyBeacon = beacon.IsLocWithinBeacon(blockPtr->GetPose());
+              if ( isBlockInAnyBeacon ) {
+                break;
+              }
+            }
+            
+            // this block should be carried to a beacon
+            if ( !isBlockInAnyBeacon ) {
+              _candidateObjects.emplace_back( blockPtr->GetID(), family );
+            }
           }
         }
       }
@@ -205,8 +222,23 @@ Result BehaviorExploreBringCubeToBeacon::InitInternal(Robot& robot)
   _selectedObjectID.UnSet();
   _invalidCubesToStackOn.clear();
   
-  // starting state
-  TransitionToPickUpObject(robot);
+  // calculate starting state
+  if ( robot.IsCarryingObject() )
+  {
+    // we are carrying an object
+    // assert what we expect from IsRunnable cache
+    ASSERT_NAMED( _candidateObjects.size() == 1 && _candidateObjects[0].id == robot.GetCarryingObject(),
+      "BehaviorExploreBringCubeToBeacon.InitInternal.CarryingObjectNotCached" );
+    
+    // select it and pretend we just picked it up
+    _selectedObjectID = _candidateObjects[0].id;
+    TransitionToObjectPickedUp(robot);
+  }
+  else
+  {
+    // we are not currently carrying one, pick up one
+    TransitionToPickUpObject(robot);
+  }
 
   const Result ret = IsActing() ? RESULT_OK : RESULT_FAIL;
   return ret;
@@ -283,7 +315,7 @@ void BehaviorExploreBringCubeToBeacon::TransitionToPickUpObject(Robot& robot)
           TransitionToPickUpObject( robot );
         }
       } else {
-        // PRINT_NAMED_INFO("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.DriveToPickUpFailed", "Unhandled result");
+        PRINT_NAMED_INFO("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.DriveToPickUpFailed", "Unhandled result");
       }
     };
     StartActing(pickUpAction, onActionResult);
@@ -326,7 +358,23 @@ void BehaviorExploreBringCubeToBeacon::TransitionToObjectPickedUp(Robot& robot)
     {
       // create action to stack
       DriveToPlaceOnObjectAction* stackAction = new DriveToPlaceOnObjectAction(robot, bottomCube->GetID());
-      StartActing( stackAction );
+      RobotCompletedActionCallback onPlaceActionResult = [this, &robot](const ExternalInterface::RobotCompletedAction& actionRet)
+      {
+        if (actionRet.result == ActionResult::FAILURE_RETRY)
+        {
+          // do we currently have the object in the lift?
+          const bool isCarrying = (robot.IsCarryingObject() && robot.GetCarryingObject() == _selectedObjectID);
+          if ( isCarrying )
+          {
+            // TODO rsam: set a max number of retries?
+            // we were already carrying the object, try to find a new position for it
+            TransitionToObjectPickedUp( robot );
+          }
+        } else {
+          // PRINT_NAMED_INFO("BehaviorExploreBringCubeToBeacon.TransitionToPickUpObject.DriveToPickUpFailed", "Unhandled result");
+        }
+      };
+      StartActing( stackAction, onPlaceActionResult );
     }
     else
     {
