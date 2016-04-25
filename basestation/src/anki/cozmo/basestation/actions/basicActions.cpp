@@ -1443,7 +1443,7 @@ namespace Anki {
     : IAction(robot)
     , _doCalibration(doCalibration)
     {
-      
+      _toolCodeInfo.code = ToolCode::UnknownTool;
     }
     
     ActionResult ReadToolCodeAction::Init()
@@ -1456,9 +1456,9 @@ namespace Anki {
       
       _toolReadSignalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotReadToolCode,
          [this] (const AnkiEvent<ExternalInterface::MessageEngineToGame> &msg) {
-           _toolCodeRead = msg.GetData().Get_RobotReadToolCode().code;
+           _toolCodeInfo = msg.GetData().Get_RobotReadToolCode().info;
            PRINT_NAMED_INFO("ReadToolCodeAction.SignalHandler",
-                            "Read tool code: %s", EnumToString(_toolCodeRead));
+                            "Read tool code: %s", EnumToString(_toolCodeInfo.code));
            this->_state = State::ReadCompleted;
       });
       
@@ -1510,7 +1510,7 @@ namespace Anki {
           break;
           
         case State::ReadCompleted:
-          if(_toolCodeRead == ToolCode::UnknownTool) {
+          if(_toolCodeInfo.code == ToolCode::UnknownTool) {
             result = ActionResult::FAILURE_ABORT;
           } else {
             result = ActionResult::SUCCESS;
@@ -1523,9 +1523,9 @@ namespace Anki {
     
     void ReadToolCodeAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
-      ReadToolCodeCompleted info;
-      info.code = _toolCodeRead;
-      completionUnion.Set_readToolCodeCompleted(std::move( info ));
+      ReadToolCodeCompleted toolCodeComplete;
+      toolCodeComplete.info = _toolCodeInfo;
+      completionUnion.Set_readToolCodeCompleted(std::move( toolCodeComplete ));
     }
 
   }
