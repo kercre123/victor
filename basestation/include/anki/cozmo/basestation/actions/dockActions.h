@@ -271,7 +271,7 @@ namespace Anki {
       PlaceObjectOnGroundAtPoseAction(Robot& robot,
                                       const Pose3d& placementPose,
                                       const bool useExactRotation = false,
-                                      const bool useManualSpeed = false);
+                                      const bool useManualSpeed = false,
                                       const bool checkFreeDestination = false,
                                       const float destinationObjectPadding_mm = 0.0f);
       
