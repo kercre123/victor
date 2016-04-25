@@ -31,7 +31,7 @@ namespace Cozmo {
   ConnectedDeviceInfo::ConnectedDeviceInfo()
     : _inClient(nullptr)
     , _outClient(nullptr)
-    , recvDataSize(0)
+    , _lastRecvTime(0.0)
   { 
   }
   
@@ -39,6 +39,19 @@ namespace Cozmo {
   ConnectedDeviceInfo::~ConnectedDeviceInfo()
   {
     DestroyClients();
+  }
+  
+  
+  void ConnectedDeviceInfo::ConnectToClients(UdpClient* inClient, UdpClient* outClient)
+  {
+    assert(_inClient == nullptr);
+    assert(_outClient == nullptr);
+    
+    _inClient = inClient;
+    _outClient = outClient;
+    
+    // Pretend we just received something, so the timeout countdown starts from now
+    _lastRecvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
   
   
@@ -144,7 +157,7 @@ namespace Cozmo {
     connectedDevicesIt_t it = connectedDevices_.find(p.destId);
     if (it != connectedDevices_.end())
     {
-      UdpClient* udpClient = it->second._outClient;
+      UdpClient* udpClient = it->second.GetOutClient();
       return udpClient->Send((const char*)p.data, p.dataLen);
     
 
@@ -277,33 +290,26 @@ namespace Cozmo {
   }
   
   
-  void MultiClientComms::PrintRecvBuf(int devID)
-  {
-    #if(DEBUG_COMMS)
-    if (connectedDevices_.find(devID) != connectedDevices_.end()) {
-      int numBytes = connectedDevices_[devID].recvDataSize;
-
-      PRINT_NAMED_INFO("MultiClientComms.PrintRecvBuf", "Device %d recv buffer (%d bytes): %s", devID, numBytes,
-                       Util::ConvertMessageBufferToString(connectedDevices_[devID].recvBuf, numBytes, Util::eBTTT_Hex).c_str());
-    }
-    #endif
-  }
-  
-  
   void MultiClientComms::ReadAllMsgPackets()
   {
+    static const int kMaxRecvBufSize = 2048;
+    u8 recvBuf[kMaxRecvBufSize];
+    
     // Read from all connected clients.
     // Enqueue complete messages.
     connectedDevicesIt_t it = connectedDevices_.begin();
     while ( it != connectedDevices_.end() )
     {
       ConnectedDeviceInfo& c = it->second;
+      
+      bool receivedAnything = false;
+      double latestRecvTime = 0.0;
 
       while(1) // Keep reading socket until no bytes available
       {
-        UdpClient* udpClient = c._inClient;
+        UdpClient* udpClient = c.GetInClient();
         
-        int bytes_recvd = udpClient->Recv((char*)c.recvBuf + c.recvDataSize, ConnectedDeviceInfo::MAX_RECV_BUF_SIZE - c.recvDataSize);
+        int bytes_recvd = udpClient->Recv((char*)recvBuf, kMaxRecvBufSize);
         
         if (bytes_recvd == 0) {
           it++;
@@ -320,9 +326,16 @@ namespace Cozmo {
         }
 
         {
-          c.recvDataSize += bytes_recvd;
+          if (bytes_recvd >= kMaxRecvBufSize) // == indicated truncation
+          {
+            PRINT_NAMED_ERROR("MultiClientComms.ReadTruncated", "Read %d, buffer size only %d", bytes_recvd, kMaxRecvBufSize);
+          }
           
-          f32 recvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          receivedAnything = true;
+          
+          const double currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          latestRecvTime = currentTimeInSeconds;
+          f32 recvTime = currentTimeInSeconds;
           
           #if(DO_SIM_COMMS_LATENCY)
           recvTime += SIM_RECV_LATENCY_SEC;
@@ -332,16 +345,19 @@ namespace Cozmo {
                                         std::forward_as_tuple(recvTime),
                                         std::forward_as_tuple((s32)(it->first),
                                                               (s32)-1,
-                                                              c.recvDataSize,
-                                                              (u8*)(c.recvBuf),
+                                                              Util::numeric_cast<u16>(bytes_recvd),
+                                                              recvBuf,
                                                               BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds())
                                         );
           
-          c.recvDataSize = 0;
         }
         
-        
       } // end while(1) // keep reading socket until no bytes
+      
+      if (receivedAnything)
+      {
+        c.UpdateLastRecvTime(latestRecvTime);
+      }
       
     } // end for (each robot)
   }
@@ -391,8 +407,7 @@ namespace Cozmo {
                            adMsg.id, adMsg.ip.c_str(), adMsg.toEnginePort, adMsg.fromEnginePort);
         #endif
           
-          connectedDevices_[devID]._outClient = outClient;
-          connectedDevices_[devID]._inClient  = inClient;
+          connectedDevices_[devID].ConnectToClients(inClient, outClient);
           
           // Remove from advertising list
           advertisingDevices_.erase(it);
