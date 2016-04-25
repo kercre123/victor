@@ -232,6 +232,7 @@ namespace SpeedTap {
       ClearWinningLightPatterns();
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
         DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID] = CurrentDifficulty + 1;
+        DataPersistence.DataPersistenceManager.Instance.Save();
         RaiseMiniGameWin();
       }
       else {
