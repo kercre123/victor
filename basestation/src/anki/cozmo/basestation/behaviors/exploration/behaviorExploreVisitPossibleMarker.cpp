@@ -17,7 +17,7 @@
 //#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
 
@@ -40,10 +40,6 @@ BehaviorExploreVisitPossibleMarker::BehaviorExploreVisitPossibleMarker(Robot& ro
 : IBehavior(robot, config)
 {
   SetDefaultName("BehaviorExploreVisitPossibleMarker");
-
-  SubscribeToTags({
-    EngineToGameTag::RobotCompletedAction
-  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -55,8 +51,8 @@ BehaviorExploreVisitPossibleMarker::~BehaviorExploreVisitPossibleMarker()
 bool BehaviorExploreVisitPossibleMarker::IsRunnable(const Robot& robot) const
 {
   // check whiteboard for known markers
-  const BehaviorWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
-  const BehaviorWhiteboard::PossibleMarkerList& markerList = whiteboard.GetPossibleMarkers();
+  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const AIWhiteboard::PossibleMarkerList& markerList = whiteboard.GetPossibleMarkers();
 
   const bool canRun = !markerList.empty(); // consider distance limit
   return canRun;
@@ -66,12 +62,12 @@ bool BehaviorExploreVisitPossibleMarker::IsRunnable(const Robot& robot) const
 Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
 {
   // 1) pick possible marker
-  const BehaviorWhiteboard::PossibleMarker* closestMarker = nullptr;
+  const AIWhiteboard::PossibleMarker* closestMarker = nullptr;
   float distToClosestSQ = 0.0f;
 
   // get all markers from whiteboard
-  const BehaviorWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
-  const BehaviorWhiteboard::PossibleMarkerList& markerList = whiteboard.GetPossibleMarkers();
+  const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();
+  const AIWhiteboard::PossibleMarkerList& markerList = whiteboard.GetPossibleMarkers();
   for( const auto& marker : markerList )
   {
     // pick closes marker to us

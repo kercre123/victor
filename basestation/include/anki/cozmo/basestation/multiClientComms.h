@@ -42,26 +42,31 @@ namespace Cozmo {
   } DeviceConnectionInfo_t;
   
   
-  class ConnectedDeviceInfo {
+  class ConnectedDeviceInfo
+  {
   public:
-    static const int MAX_RECV_BUF_SIZE = 1920000; // TODO: Shrink this?
     
     ConnectedDeviceInfo();
     ~ConnectedDeviceInfo();
     
+    // Note: ConnectToClients takes ownership of the clients
+    void ConnectToClients(UdpClient* inClient, UdpClient* outClient);
+    
     void DestroyClients();
-    /*
-#if(USE_UDP_ROBOT_COMMS)
-    UdpClient* client;
-#else
-    TcpClient* client;
-#endif
-     */
+    
+    void UpdateLastRecvTime(double newTime) { _lastRecvTime = newTime; }
+    double GetLastRecvTime() const { return _lastRecvTime; }
+    
+    UdpClient* GetInClient()  { return _inClient; }
+    UdpClient* GetOutClient() { return _outClient; }
+    
+  private:
+    
     // Note: in/out Client ptrs can be identical (if in and out are on the same port)
     UdpClient* _inClient;
     UdpClient* _outClient;
-    u8 recvBuf[MAX_RECV_BUF_SIZE];
-    int recvDataSize = 0;
+    
+    double _lastRecvTime;
   };
   
   
@@ -141,8 +146,6 @@ namespace Cozmo {
     unsigned int maxSentBytesPerTic_;
     
     void ReadAllMsgPackets();
-    
-    void PrintRecvBuf(int robotID);
     
     // Map of advertising robots (key: dev id)
     using advertisingDevicesIt_t = std::map<int, DeviceConnectionInfo_t>::iterator;

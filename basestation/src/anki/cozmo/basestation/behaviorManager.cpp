@@ -15,7 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -39,7 +39,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
   : _isInitialized(false)
   , _robot(robot)
   , _behaviorFactory(new BehaviorFactory())
-  , _whiteboard( new BehaviorWhiteboard(robot) )
+  , _whiteboard( new AIWhiteboard(robot) )
 {
 }
 
