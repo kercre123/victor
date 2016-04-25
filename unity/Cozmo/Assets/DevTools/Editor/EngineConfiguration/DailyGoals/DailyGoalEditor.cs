@@ -242,7 +242,7 @@ public class DailyGoalEditor : EditorWindow {
       EditorGUI.indentLevel--;
 
       //Draw list of conditions here
-      DrawConditionList(new GUIContent("CONDITIONS", 
+      DrawConditionList(new GUIContent(">>CONDITIONS", 
         "Conditions that must be met for the Goal to be selected for Generation"), genData.GenConditions);
 
 

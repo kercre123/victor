@@ -41,8 +41,8 @@ namespace Anki.Cozmo {
     [System.Serializable]
     public class GoalEntry {
       public GoalEntry() {
-        TitleKey = "";
-        DescKey = "";
+        TitleKey = "dailyGoal.title.missing";
+        DescKey = "dailyGoal.description.missing";
         Target = 1;
         PointsRewarded = 0;
         RewardType = "experience";

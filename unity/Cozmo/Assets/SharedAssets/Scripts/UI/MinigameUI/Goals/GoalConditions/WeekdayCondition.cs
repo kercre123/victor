@@ -26,11 +26,11 @@ namespace Anki {
         return (DateTime.UtcNow.DayOfWeek == day);
       }
 
+      #if UNITY_EDITOR
       public override void DrawControls() {
-        #if UNITY_EDITOR
         day = (DayOfWeek)EditorGUILayout.EnumPopup("Day", day);
-        #endif
       }
+      #endif
     }
   }
 }

@@ -19,7 +19,7 @@ namespace Cozmo {
       public int Target;
       public int PointsRewarded;
 
-      private bool _Completed;
+      private bool _Completed = false;
 
       public bool GoalComplete {
         get {
@@ -51,6 +51,10 @@ namespace Cozmo {
         GameEventManager.Instance.OnGameEvent += ProgressGoal;
       }
 
+      public void OnDestroy() {
+        GameEventManager.Instance.OnGameEvent -= ProgressGoal;
+      }
+
       private void ProgressGoal(GameEvent gEvent) {
         if (gEvent != GoalEvent) {
           return;
@@ -63,13 +67,15 @@ namespace Cozmo {
         Progress++;
         DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
         // Check if Completed
-        if (GoalComplete && _Completed) {
+        if (GoalComplete && _Completed == false) {
           // Grant Reward
           DAS.Event(this, string.Format("{0} Completed", Title));
           DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount(RewardType, PointsRewarded);
           if (OnDailyGoalCompleted != null) {
             OnDailyGoalCompleted.Invoke(this);
           }
+          _Completed = true;
+          GameEventManager.Instance.OnGameEvent -= ProgressGoal;
         }
         if (OnDailyGoalUpdated != null) {
           OnDailyGoalUpdated.Invoke(this);

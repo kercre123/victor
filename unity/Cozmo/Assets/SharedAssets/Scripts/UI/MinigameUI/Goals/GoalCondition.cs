@@ -46,9 +46,9 @@ namespace Anki {
       }
       #endif
 
+      #if UNITY_EDITOR
       // Function to draw the controls for this Condition/Action
       public virtual void OnGUI() {
-        #if UNITY_EDITOR
         var rect = EditorGUILayout.GetControlRect();
         EditorGUILayout.BeginVertical();
 
@@ -59,10 +59,10 @@ namespace Anki {
         EditorGUI.indentLevel--;
 
         EditorGUILayout.EndVertical();
-        #endif
       }
 
       public abstract void DrawControls();
+      #endif
     }
   }
 }

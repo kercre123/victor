@@ -1,8 +1,8 @@
 {
   "GenList": [
     {
-      "TitleKey": "Generic Goal",
-      "DescKey": "",
+      "TitleKey": "dailyGoal.title.missing",
+      "DescKey": "dailyGoal.description.missing",
       "RewardType": "experience",
       "Target": 100,
       "PointsRewarded": 999,
@@ -19,8 +19,8 @@
       ]
     },
     {
-      "TitleKey": "Another Placeholder",
-      "DescKey": "",
+      "TitleKey": "dailyGoal.title.PlaySpeedTap",
+      "DescKey": "dailyGoal.description.PlaySpeedTap",
       "RewardType": "experience",
       "Target": 50,
       "PointsRewarded": 5,
@@ -28,39 +28,21 @@
       "GenConditions": []
     },
     {
-      "TitleKey": "Win 5 Speed Tap Rounds",
-      "DescKey": "",
+      "TitleKey": "dailyGoal.title.WinSpeedTap",
+      "DescKey": "dailyGoal.description.WinSpeedTap",
       "RewardType": "experience",
       "Target": 5,
       "PointsRewarded": 10,
-      "CladEvent": "OnSpeedtapRoundWin",
+      "CladEvent": "OnSpeedtapSessionWin",
       "GenConditions": []
     },
     {
-      "TitleKey": "Win 8 Speed Tap Hands",
-      "DescKey": "",
-      "RewardType": "experience",
-      "Target": 8,
-      "PointsRewarded": 15,
-      "CladEvent": "OnSpeedtapHandWin",
-      "GenConditions": []
-    },
-    {
-      "TitleKey": "Win 15 Speed Tap Hands",
-      "DescKey": "",
-      "RewardType": "experience",
-      "Target": 15,
-      "PointsRewarded": 30,
-      "CladEvent": "OnSpeedtapHandWin",
-      "GenConditions": []
-    },
-    {
-      "TitleKey": "Win Speed Tap",
-      "DescKey": "",
+      "TitleKey": "dailyGoal.title.WinSpeedTapHands",
+      "DescKey": "dailyGoal.description.WinSpeedTapHands",
       "RewardType": "experience",
       "Target": 1,
       "PointsRewarded": 10,
-      "CladEvent": "OnSpeedtapSessionWin",
+      "CladEvent": "OnSpeedtapHandWin",
       "GenConditions": []
     }
   ]
