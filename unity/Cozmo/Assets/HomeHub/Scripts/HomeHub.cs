@@ -91,6 +91,8 @@ namespace Cozmo.HomeHub {
 
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
       DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
     }
 
     private void HandleSessionEndClicked() {
@@ -120,7 +122,6 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleStartChallengeClicked(string challengeClicked) {
-      _ChallengeDetailsDialogInstance.ChallengeStarted -= HandleStartChallengeClicked;
 
       // Keep track of the current challenge
       _CurrentChallengePlaying = new CompletedChallengeData() {
@@ -130,7 +131,6 @@ namespace Cozmo.HomeHub {
 
       // Close dialog
       CloseTimelineDialog();
-      _ChallengeDetailsDialogInstance.CloseViewImmediately();
 
       // Play minigame immediately
       PlayMinigame(_ChallengeStatesById[challengeClicked].Data);
@@ -222,6 +222,10 @@ namespace Cozmo.HomeHub {
     }
 
     private void CloseTimelineDialog() {
+      if (_ChallengeDetailsDialogInstance != null) {
+        _ChallengeDetailsDialogInstance.ChallengeStarted -= HandleStartChallengeClicked;
+        _ChallengeDetailsDialogInstance.CloseViewImmediately();
+      }
       if (_HomeViewInstance != null) {
         DeregisterDialogEvents();
         _HomeViewInstance.CloseView();
