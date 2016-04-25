@@ -33,7 +33,7 @@ public class FactoryLogPanel : MonoBehaviour {
 
     for (int i = 0; i < logQueue.Count; ++i) {
       GameObject textInstance = GameObject.Instantiate(_TextPrefab.gameObject);
-      textInstance.transform.SetParent(_LogTextList);
+      textInstance.transform.SetParent(_LogTextList, false);
       textInstance.GetComponent<UnityEngine.UI.Text>().text = logQueue[i];
     }
 
