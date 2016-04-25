@@ -124,9 +124,9 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
 void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
   static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
   static const uint32_t recovery_value = 0xCAFEBABE;
-	
+
   *recovery_word = recovery_value;
-	NVIC_SystemReset();
+  NVIC_SystemReset();
 };
 
 extern "C"
