@@ -26,6 +26,7 @@ enum uint_8 FactoryTestState {
 enum uint_8 FactoryTestResultCode {
   UNKNOWN = 0,
   SUCCESS,
+  MISMATCHED_CLAD,
   INIT_LIFT_HEIGHT_FAILED,
   CHARGER_UNDETECTED,
   IMU_DRIFTING,

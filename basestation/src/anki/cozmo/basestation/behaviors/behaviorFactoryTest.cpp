@@ -257,6 +257,11 @@ namespace Cozmo {
     {
       case FactoryTestState::InitRobot:
       {
+        // Check for mismatched CLAD
+        if (robot.HasMismatchedCLAD()) {
+          END_TEST(FactoryTestResultCode::MISMATCHED_CLAD);
+        }
+        
         // Set fake calibration if not already set so that we can actually run
         // calibration from images.
         if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {

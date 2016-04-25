@@ -143,7 +143,11 @@ public:
     Result UpdateFullRobotState(const RobotState& msg);
     
     bool HasReceivedRobotState() const;
-    
+  
+    // Version checks
+    const RobotInterface::FWVersionInfo& GetFWVersionInfo() const { return _fwVersionInfo; }
+    bool HasMismatchedCLAD() const { return _hasMismatchedEngineToRobotCLAD || _hasMismatchedRobotToEngineCLAD; }
+  
     // Accessors
     const RobotID_t        GetID()         const;
     BlockWorld&            GetBlockWorld()       {return _blockWorld;}
@@ -928,6 +932,11 @@ public:
     std::ofstream _imuLogFileStream;
     TracePrinter _traceHandler;
 
+    // Copy of last received firmware version info from robot
+    RobotInterface::FWVersionInfo _fwVersionInfo;
+    bool _hasMismatchedEngineToRobotCLAD;
+    bool _hasMismatchedRobotToEngineCLAD;
+  
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
