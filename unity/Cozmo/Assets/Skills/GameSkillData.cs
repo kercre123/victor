@@ -15,5 +15,10 @@
       WinPointsTotal = 0;
       LossPointsTotal = 0;
     }
+
+    public void ResetPoints() {
+      WinPointsTotal = 0;
+      LossPointsTotal = 0;
+    }
   }
 }

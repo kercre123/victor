@@ -24,9 +24,9 @@ public class RequestTricksView : BaseView {
     _UnlockInfo = unlockInfo;
     _TrickRequestButton.onClick.AddListener(OnSparkClicked);
 
-    Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetData(_UnlockInfo.CostItemId);
+    Cozmo.ItemData itemData = Cozmo.ItemDataConfig.GetData(_UnlockInfo.RequestTrickCostItemId);
     string itemNamePlural = (itemData != null) ? itemData.GetPluralName() : "(null)";
-    _TrickRequestButton.FormattingArgs = new object[] { _UnlockInfo.CostAmountNeeded, itemNamePlural };
+    _TrickRequestButton.FormattingArgs = new object[] { _UnlockInfo.RequestTrickCostAmountNeeded, itemNamePlural };
 
     _UnlockableDescription.text = Localization.Get(unlockInfo.DescriptionKey);
     _UnlockableTitle.text = Localization.Get(unlockInfo.TitleKey);
@@ -48,8 +48,8 @@ public class RequestTricksView : BaseView {
 
   private void OnSparkClicked() {
     Cozmo.Inventory playerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
-    if (playerInventory.CanRemoveItemAmount(_UnlockInfo.CostItemId, _UnlockInfo.CostAmountNeeded)) {
-      playerInventory.RemoveItemAmount(_UnlockInfo.CostItemId, _UnlockInfo.CostAmountNeeded);
+    if (playerInventory.CanRemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded)) {
+      playerInventory.RemoveItemAmount(_UnlockInfo.RequestTrickCostItemId, _UnlockInfo.RequestTrickCostAmountNeeded);
       RobotEngineManager.Instance.CurrentRobot.EnableSparkUnlock(_UnlockInfo.Id.Value);
       UpdateState();
     }

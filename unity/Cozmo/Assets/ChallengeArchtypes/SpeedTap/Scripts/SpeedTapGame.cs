@@ -231,17 +231,8 @@ namespace SpeedTap {
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
       ClearWinningLightPatterns();
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
-        switch (CurrentDifficulty) {
-        case 1:
-          UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.SpeedTapMediumImplicit, true);
-          break;
-        case 2:
-          UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.SpeedTapHardImplicit, true);
-          break;
-        case 3:
-          UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.SpeedTapExpertImplicit, true);
-          break;
-        }
+        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID] = CurrentDifficulty + 1;
+        DataPersistence.DataPersistenceManager.Instance.Save();
         RaiseMiniGameWin();
       }
       else {
@@ -292,19 +283,9 @@ namespace SpeedTap {
     }
 
     private int HighestLevelCompleted() {
-      if (UnlockablesManager.Instance != null) {
-        if (UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.SpeedTapExpertImplicit)) {
-          return 4;
-        }
-        else if (UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.SpeedTapHardImplicit)) {
-          return 3;
-        }
-        else if (UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.SpeedTapMediumImplicit)) {
-          return 2;
-        }
-        else {
-          return 1;
-        }
+      int difficulty = 0;
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty.TryGetValue(_ChallengeData.ChallengeID, out difficulty)) {
+        return difficulty;
       }
       return 0;
     }

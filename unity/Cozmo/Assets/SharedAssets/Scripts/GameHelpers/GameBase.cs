@@ -325,6 +325,11 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   private void HandleChallengeResultViewClosed() {
+    // Turn off lights on robot
+    if (CurrentRobot != null) {
+      CurrentRobot.TurnOffAllLights();
+    }
+
     // Get unparented reward icons
     Transform[] rewardIconObjects = _ChallengeEndViewInstance.GetRewardIconsByStat();
 

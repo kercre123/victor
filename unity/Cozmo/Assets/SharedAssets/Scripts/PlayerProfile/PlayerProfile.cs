@@ -16,11 +16,14 @@ public class PlayerProfile {
 
   public Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float> VolumePreferences;
 
+  public Dictionary<string, int> GameDifficulty;
+
   // Bump if introducing breaking changes and compare in DataPersistenceManager Constructor.
   public int SaveVersion;
 
   public PlayerProfile() {
     CompletedScriptedSequences = new Dictionary<string, bool>();
+    GameDifficulty = new Dictionary<string, int>();
     ConversationHistory = new Conversations.ConversationHistory();
     Sessions = new List<DataPersistence.TimelineEntryData>();
     VolumePreferences = new Dictionary<Anki.Cozmo.Audio.VolumeParameters.VolumeType, float>();

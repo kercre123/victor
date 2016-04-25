@@ -27,7 +27,7 @@ namespace Cozmo {
         }
       }
 
-      int newOption = EditorGUI.Popup(position, currentOption, _ItemIds);
+      int newOption = EditorGUI.Popup(position, label.text, currentOption, _ItemIds);
       string newValue = _ItemIds[newOption];
 
       if (newValue != currentValue) {

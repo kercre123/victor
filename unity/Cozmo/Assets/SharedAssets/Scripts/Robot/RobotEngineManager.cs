@@ -77,6 +77,8 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress> OnFirmwareUpdateProgress;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete> OnFirmwareUpdateComplete;
   public event Action OnSparkUnlockEnded;
+  public event Action<Anki.Cozmo.ExternalInterface.NVStorageData> OnGotNVStorageData;
+  public event Action<Anki.Cozmo.ExternalInterface.NVStorageOpResult> OnGotNVStorageOpResult;
 
   #region Audio Callback events
 
@@ -153,6 +155,9 @@ public class RobotEngineManager : MonoBehaviour {
     _Channel.MessageReceived += ReceivedMessage;
 
     Robots = new Dictionary<int, IRobot>();
+
+// Startup Singletons depending on RobotEvents
+    SkillSystem.Instance.InitInstance();
   }
 
   private void OnDisable() {
@@ -169,6 +174,9 @@ public class RobotEngineManager : MonoBehaviour {
     if (_CozmoBindingStarted) {
       CozmoBinding.Shutdown();
     }
+
+// Destroy Singletons depending on RobotEvents
+    SkillSystem.Instance.DestroyInstance();
   }
 
   void Update() {
@@ -393,6 +401,12 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.SparkUnlockEnded:
       ReceivedSpecificMessage(message.SparkUnlockEnded);
+      break;
+    case G2U.MessageEngineToGame.Tag.NVStorageData:
+      ReceivedSpecificMessage(message.NVStorageData);
+      break;
+    case G2U.MessageEngineToGame.Tag.NVStorageOpResult:
+      ReceivedSpecificMessage(message.NVStorageOpResult);
       break;
     default:
       DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
@@ -779,6 +793,18 @@ public class RobotEngineManager : MonoBehaviour {
   public void StartEngine() {
     Message.StartEngine = StartEngineMessage;
     SendMessage();
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.NVStorageData message) {
+    if (OnGotNVStorageData != null) {
+      OnGotNVStorageData(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.NVStorageOpResult message) {
+    if (OnGotNVStorageOpResult != null) {
+      OnGotNVStorageOpResult(message);
+    }
   }
 
   public void UpdateFirmware(int firmwareVersion) {
