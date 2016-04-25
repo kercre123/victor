@@ -263,7 +263,10 @@ public class SkillSystem {
     ChallengeDataList challengeList = ChallengeDataList.Instance;
     int numChallenges = Mathf.Max(robotDataLen, challengeList.ChallengeData.Length);
     _CozmoHighestLevels = new byte[numChallenges];
-    System.Array.Copy(robotData, _CozmoHighestLevels, robotDataLen);
+    // first time init
+    if (robotData != null) {
+      System.Array.Copy(robotData, _CozmoHighestLevels, robotDataLen);
+    }
   }
 
   private void UpdateHighestSkillsOnRobot() {
