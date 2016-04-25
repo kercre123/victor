@@ -29,7 +29,8 @@ namespace ScriptedSequences.Editor {
 
     protected Action _OnDestroy;
 
-    public event Action OnDestroy { add { _OnDestroy += value; } remove { _OnDestroy -= value; } }
+    public event Action OnDestroy { add { _OnDestroy += value; } remove { _OnDestroy -= value; }
+    }
 
     private GUIContent _Label;
 
@@ -78,18 +79,17 @@ namespace ScriptedSequences.Editor {
     // By Default, we generate an editor for all fields that are int, float, string or bool
     // which lets us not write a custom editor for every single condition or action
     private System.Reflection.FieldInfo[] _Fields;
+
     private System.Reflection.FieldInfo[] Fields { 
-      get
-      {
-        if(_Fields == null)
-        {
-          _Fields = typeof(T).GetFields(System.Reflection.BindingFlags.Public | 
-                                        System.Reflection.BindingFlags.Instance)
-                             .Where(x => x.FieldType == typeof(int) || 
-                                         x.FieldType == typeof(float) || 
-                                         x.FieldType == typeof(bool) || 
-                                         x.FieldType == typeof(string) ||
-                                        typeof(Enum).IsAssignableFrom(x.FieldType))
+      get {
+        if (_Fields == null) {
+          _Fields = typeof(T).GetFields(System.Reflection.BindingFlags.Public |
+          System.Reflection.BindingFlags.Instance)
+                             .Where(x => x.FieldType == typeof(int) ||
+          x.FieldType == typeof(float) ||
+          x.FieldType == typeof(bool) ||
+          x.FieldType == typeof(string) ||
+          typeof(Enum).IsAssignableFrom(x.FieldType))
                             .ToArray();
         }
         return _Fields;
@@ -104,13 +104,15 @@ namespace ScriptedSequences.Editor {
     }
 
     // Constructors
-    public ScriptedSequenceHelper(T condition, ScriptedSequenceEditor editor, List<U> list) : base(condition, editor, list) {}
-    public ScriptedSequenceHelper(T condition, ScriptedSequenceEditor editor, Action<U> replaceAction) : base(condition, editor, replaceAction) {}
+    public ScriptedSequenceHelper(T condition, ScriptedSequenceEditor editor, List<U> list) : base(condition, editor, list) {
+    }
+
+    public ScriptedSequenceHelper(T condition, ScriptedSequenceEditor editor, Action<U> replaceAction) : base(condition, editor, replaceAction) {
+    }
 
 
     // Function to draw the controls for this Condition/Action
-    public override void OnGUI(Vector2 mousePosition, EventType eventType)
-    {
+    public override void OnGUI(Vector2 mousePosition, EventType eventType) {
 
       var lastColor = GUI.color;
       var lastBackgroundColor = GUI.backgroundColor;
@@ -148,16 +150,13 @@ namespace ScriptedSequences.Editor {
           if (_Editor.GetCopiedValue<U>() != null) {
             menu.AddItem(new GUIContent("Paste"), false, () => {
               var newCondition = _Editor.Copy(_Editor.GetCopiedValue<U>());
-              if(ReplaceInsteadOfInsert)
-              { 
+              if (ReplaceInsteadOfInsert) { 
                 ReplaceAction(newCondition);
-                if(_OnDestroy != null)
-                {
+                if (_OnDestroy != null) {
                   _OnDestroy();
                 }
               }
-              else
-              {
+              else {
                 List.Insert(Index, newCondition);
               }
             });
@@ -167,16 +166,13 @@ namespace ScriptedSequences.Editor {
           }
 
           menu.AddItem(new GUIContent("Delete"), false, () => {
-            if(ReplaceInsteadOfInsert)
-            {
+            if (ReplaceInsteadOfInsert) {
               ReplaceAction(default(U));
             }
-            else
-            { 
+            else { 
               List.RemoveAt(Index);
             }
-            if(_OnDestroy != null)
-            {
+            if (_OnDestroy != null) {
               _OnDestroy();
             }
           });
@@ -328,10 +324,11 @@ namespace ScriptedSequences.Editor {
     }
   }
 
-  // An Attribute used to mark the editor you want to use for an Action/Condition
+  // An Attribute used to mark the editor you want to use for a Condition
   public class ScriptedSequenceHelperAttribute : Attribute {
 
     public readonly Type Type;
+
     public ScriptedSequenceHelperAttribute(System.Type type) {
       Type = type;
     }

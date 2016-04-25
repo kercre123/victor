@@ -92,7 +92,6 @@ namespace DataPersistence {
       }
 
       string jsonValue = JsonConvert.SerializeObject(Data, Formatting.None, GlobalSerializerSettings.JsonSettings);
-
       File.WriteAllText(sSaveFilePath, jsonValue);
     }
 

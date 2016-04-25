@@ -211,10 +211,6 @@ namespace CubePounce {
       _CurrentPounceChance = _BasePounceChance;
     }
 
-    protected override int CalculateExcitementStatRewards() {
-      return 1 + _CloseRoundCount * 2;
-    }
-
     public void UpdateScoreboard() {
       int halfTotalRounds = (_Rounds + 1) / 2;
       Cozmo.MinigameWidgets.ScoreWidget cozmoScoreWidget = SharedMinigameView.CozmoScoreboard;

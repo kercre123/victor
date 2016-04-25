@@ -228,8 +228,6 @@ public class Robot : IRobot {
 
   private int _LastHeadTrackingObjectID;
 
-  private readonly StatContainer ProgressionStats = new StatContainer();
-
   public string CurrentBehaviorString { get; set; }
 
   public string CurrentDebugAnimationString { get; set; }
@@ -327,7 +325,6 @@ public class Robot : IRobot {
 
     RobotEngineManager.Instance.SuccessOrFailure += RobotEngineMessages;
     RobotEngineManager.Instance.OnEmotionRecieved += UpdateEmotionFromEngineRobotManager;
-    RobotEngineManager.Instance.OnProgressionStatRecieved += UpdateProgressionStatFromEngineRobotManager;
     RobotEngineManager.Instance.OnObjectConnectionState += ObjectConnectionState;
     RobotEngineManager.Instance.OnSparkUnlockEnded += SparkUnlockEnded;
   }
@@ -451,7 +448,6 @@ public class Robot : IRobot {
       BackpackLights[i].ClearData();
     }
 
-    ProgressionStats.Clear();
   }
 
   public void ClearVisibleObjects() {
@@ -504,24 +500,7 @@ public class Robot : IRobot {
   }
 
 
-  #region Progression and Mood Stats
-
-  public int GetProgressionStat(Anki.Cozmo.ProgressionStatType index) {
-    return ProgressionStats[index];
-  }
-
-  public StatContainer GetProgressionStats() {
-    return ProgressionStats;
-  }
-
-  public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, int deltaValue) {
-    RobotEngineManager.Instance.Message.ProgressionMessage = 
-      Singleton<ProgressionMessage>.Instance.Initialize(
-      ID,
-      Singleton<AddToProgressionStat>.Instance.Initialize(index, deltaValue)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
+  #region Mood Stats
 
   public void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight) {
 
@@ -569,56 +548,9 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  // You should not be calling this from a minigame/challenge.
-  public void SetProgressionStat(Anki.Cozmo.ProgressionStatType type, int value) {
-
-    RobotEngineManager.Instance.Message.ProgressionMessage = 
-      Singleton<ProgressionMessage>.Instance.Initialize(ID, 
-      Singleton<SetProgressionStat>.Instance.Initialize(type, value));
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  // You should not be calling this from a minigame/challenge.
-  public void SetProgressionStats(StatContainer stats) {
-    foreach (var key in StatContainer.sKeys) {
-      SetProgressionStat(key, stats[key]);
-    }
-  }
-
-  private void UpdateProgressionStatFromEngineRobotManager(Anki.Cozmo.ProgressionStatType index, int value) {
-    bool valueChanged = ProgressionStats[index] != value;
-    if (valueChanged) {
-      TrySendGoalCompleteDasEvent(index, value);
-
-      // Update data and save to actually grant progress.
-      ProgressionStats[index] = value;
-
-      var session = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
-      if (session != null) {
-        session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
-      }
-      DataPersistence.DataPersistenceManager.Instance.Save();
-    }
-
-  }
-
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
     RobotEngineManager.Instance.Message.CameraCalibration = Singleton<CameraCalibration>.Instance.Initialize(focalLengthX, focalLengthY, centerX, centerY, 0.0f, 240, 320);
     RobotEngineManager.Instance.SendMessage();
-  }
-
-  private void TrySendGoalCompleteDasEvent(Anki.Cozmo.ProgressionStatType index, int value) {
-    // If the goal has been completed for the first time, send a DAS event on goal complete
-    DataPersistence.TimelineEntryData currentSession = DataPersistence.DataPersistenceManager.Instance.CurrentSession;
-    StatContainer goals = currentSession.Goals;
-    bool wasGoalComplete = ProgressionStats[index] >= goals[index];
-    bool isGoalCompleteNow = value >= goals[index];
-    if (!wasGoalComplete && isGoalCompleteNow) {
-      string goalDate = DASUtil.FormatDate(currentSession.Date);
-      DAS.Event(DASConstants.Goal.kComplete, goalDate, new Dictionary<string,string> { 
-        { "$data", DASUtil.FormatGoal(index, value, goals[index]) } 
-      });
-    }
   }
 
   private void UpdateEmotionFromEngineRobotManager(Anki.Cozmo.EmotionType index, float value) {
