@@ -1103,7 +1103,8 @@ public class Robot : IRobot {
       motionProf: PathMotionProfileDefault,
       level: System.Convert.ToByte(level),
       useManualSpeed: useManualSpeed,
-      useExactRotation: false
+      useExactRotation: false,
+      checkDestinationFree: false
     ), 
       callback, 
       queueActionPosition);

@@ -5,6 +5,7 @@ using System.Collections;
 // We can store data from the engine we got from CLAD
 // as well as unity data if needed.
 using Anki.Cozmo;
+using System;
 using System.Collections.Generic;
 using Anki.Cozmo.ExternalInterface;
 
@@ -17,7 +18,7 @@ namespace Anki.Debug {
 
     public delegate void DebugConsoleVarEventHandler(System.Object setvar);
 
-    public class DebugConsoleVarData {
+    public class DebugConsoleVarData : IComparable {
 
       public string VarName;
       public string Category;
@@ -33,6 +34,26 @@ namespace Anki.Debug {
       // C# setter function
       public DebugConsoleVarEventHandler UnityVarHandler = null;
       public bool UIAdded = false;
+
+      public int CompareTo(object obj) {
+        if (obj != null) {
+          DebugConsoleVarData otherEntry = obj as DebugConsoleVarData;
+          if (otherEntry != null) {
+            // Sort primarily on category, then on name if category matches
+
+            int catCompare = (Category.CompareTo(otherEntry.Category));
+            if (catCompare == 0) {
+              return VarName.CompareTo(otherEntry.VarName);
+            }
+            else {
+              return catCompare;
+            }
+          }
+        }
+
+        // sort ahead of null / invalid objects
+        return 1;
+      }
     }
 
     private bool _NeedsUIUpdate;
@@ -97,6 +118,7 @@ namespace Anki.Debug {
     public bool RefreshCategory(Transform parentTransform, string category_name) {
       List<DebugConsoleVarData> lines;
       if (_DataByCategory.TryGetValue(category_name, out lines)) {
+        lines.Sort();
         for (int i = 0; i < lines.Count; ++i) {
           // check if this already exists...
           if (!lines[i].UIAdded) {
@@ -114,8 +136,10 @@ namespace Anki.Debug {
       _ConsolePane.PaneStatusText.text = text;
     }
 
-    public List<string> GetCategories() {
-      return new List<string>(_DataByCategory.Keys);
+    public List<string> GetSortedCategories() {
+      var categories = new List<string>(_DataByCategory.Keys);
+      categories.Sort();
+      return categories;
     }
     
     // Get with the singleton pattern, no creating ones outside instance
