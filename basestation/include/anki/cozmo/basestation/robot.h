@@ -107,6 +107,7 @@ class IExternalInterface;
 struct RobotState;
 class ActiveCube;
 class CannedAnimationContainer;
+class SpeedChooser;
 
 typedef enum {
   SAVE_OFF = 0,
@@ -398,14 +399,25 @@ public:
     // Same as above, but with specified object
     Result SetObjectAsAttachedToLift(const ObjectID& dockObjectID,
                                      const Vision::KnownMarker* dockMarker);
-    
-    void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf; _dockObjectID.UnSet(); }
+  
+    void UnsetDockObjectID() { _dockObjectID.UnSet(); }
+    void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf;  }
     bool GetLastPickOrPlaceSucceeded() const { return _lastPickOrPlaceSucceeded; }
     
     // Places the object that the robot was carrying in its current position
     // w.r.t. the world, and removes it from the lift pose chain so it is no
     // longer "attached" to the robot.
     Result SetCarriedObjectAsUnattached();
+
+    //
+    // Object Stacking
+    //
+  
+    // lets the robot decide if we should try to stack on top of the given object, so that we have a central place
+    // to make the appropriate checks.
+    // returns true if we should try to stack on top of the given object, false if something would prevent it,
+    // for example if we think that block has something on top or it's too high to reach
+    bool CanStackOnTopOfObject(const ObservableObject& object) const;
   
     /*
     //
@@ -421,9 +433,9 @@ public:
 
     void SetEnableCliffSensor(bool val) { _enableCliffSensor = val; }
   
-    // sets whether we are currently on a cliff or over ground
-    void SetIsOnCliff(bool value) { _isOnCliff = value; }
-    bool IsOnCliff() const { return _isOnCliff; }
+    // Returns true if a cliff event was detected
+    bool IsCliffDetected() const { return _isCliffDetected; }
+    bool IsCliffSensorOn() const { return _isCliffSensorOn; }
   
     // sets distance detected by forward proximity sensor
     void SetForwardSensorValue(u16 value_mm) { _forwardSensorValue_mm = value_mm; }
@@ -690,6 +702,9 @@ public:
 
     const NVStorageComponent& GetNVStorageComponent() const { return _nvStorageComponent; }
     NVStorageComponent& GetNVStorageComponent() { return _nvStorageComponent; }
+  
+    const SpeedChooser& GetSpeedChooser() const { return *_speedChooser; }
+          SpeedChooser& GetSpeedChooser()       { return *_speedChooser; }
 
     // Handle various message types
     template<typename T>
@@ -710,6 +725,8 @@ public:
     ExternalInterface::RobotState GetRobotState();
   
   protected:
+    static constexpr f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
+  
     const CozmoContext* _context;
   
     RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;
@@ -730,7 +747,6 @@ public:
     FaceWorld         _faceWorld;
   
     BehaviorManager  _behaviorMgr;
-    bool             _isBehaviorMgrEnabled;
     
   
   
@@ -828,7 +844,8 @@ public:
     bool             _enableCliffSensor  = true;
     u32              _lastSentImageID    = 0;
     u8               _enabledAnimTracks  = (u8)AnimTrackFlag::ALL_TRACKS;
-    bool             _isOnCliff          = false;
+    bool             _isCliffDetected    = false;
+    bool             _isCliffSensorOn    = false;
     u16              _forwardSensorValue_mm = 0;
 
 
@@ -904,6 +921,9 @@ public:
     ///////// Progression/Skills ////////
     ProgressionManager*  _progressionManager;
     ProgressionUnlockComponent* _progressionUnlockComponent;
+  
+    ///////// Speed ////////
+    SpeedChooser* _speedChooser;
   
     //////// Block pool ////////
     BlockFilter*         _blockFilter;

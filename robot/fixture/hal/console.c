@@ -401,6 +401,72 @@ static void Charge(void)
 
 void CubeBurn(void);
 
+#define PINC_TX           11
+#define GPIOC_TX          (1 << PINC_TX)
+#define PINC_RX           10
+#define GPIOC_RX          (1 << PINC_RX)
+
+void SendTestChar(int c)
+{
+  u32 start = getMicroCounter();
+  
+  // Receive mode - TX low is floating
+  GPIO_RESET(GPIOC, PINC_TX);
+  PIN_OUT(GPIOC, PINC_TX);
+  PIN_PULL_UP(GPIOC, PINC_RX);
+  PIN_IN(GPIOC, PINC_RX);
+
+  // Wait for RX to go low/be low
+  while (GPIO_READ(GPIOC) & PINC_RX)
+    if (getMicroCounter()-start > 1000000)
+      throw 2;
+  // Now wait for it to go high
+  while (!(GPIO_READ(GPIOC) & PINC_RX))
+    if (getMicroCounter()-start > 1000000)
+      throw 2;
+    
+  // Before we can send, we must drive the signal up via TX, and pull the signal down via RX
+  GPIO_SET(GPIOC, PINC_TX);
+  PIN_OUT(GPIOC, PINC_TX);
+  PIN_PULL_NONE(GPIOC, PINC_RX);
+  GPIO_RESET(GPIOC, PINC_RX);
+  PIN_OUT(GPIOC, PINC_RX);
+  
+  MicroWait(40);  // Enough time for robot to turn around
+  
+  // Bit bang the UART, since it's miswired on EP3
+  u32 now, last = getMicroCounter();
+  c <<= 1;      // Start bit
+  c |= (1<<9);  // Stop bit
+  for (int i = 0; i < 11; i++)
+  {
+    while ((u32)((now = getMicroCounter())-last) < 10)
+      ;
+    last = now;
+    if (c & (1<<i))
+      GPIO_SET(GPIOC, PINC_TX);
+    else
+      GPIO_RESET(GPIOC, PINC_TX);      
+  }
+  
+  // Receive mode - TX low is floating
+  GPIO_RESET(GPIOC, PINC_TX);
+  PIN_OUT(GPIOC, PINC_TX);
+  PIN_PULL_UP(GPIOC, PINC_RX);
+  PIN_IN(GPIOC, PINC_RX);
+}
+void SendTestMessage(void)
+{
+  int test = 0;
+  char* arg = GetArgument(1);  
+  sscanf(arg, "%i", &test);
+  
+  SendTestChar('W');
+  SendTestChar('t');
+  SendTestChar('f');
+  SendTestChar(test);
+}
+
 static CommandFunction m_functions[] =
 {
   {"GetSerial", GetSerial, FALSE},
@@ -415,6 +481,7 @@ static CommandFunction m_functions[] =
   {"Voltage", TestVoltage, FALSE},
   {"Burn", CubeBurn, FALSE},
   {"SetVBAT", SetVBAT, FALSE},
+  {"Send", SendTestMessage, FALSE},
 };
 
 static void ParseCommand(void)

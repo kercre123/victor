@@ -72,7 +72,7 @@ message EngineRobotCLADVersionMismatch {
 message ObjectAvailable
 {
   uint_32     factory_id,
-  ObjectType  type,
+  ObjectType  objectType,
   int_8       rssi,
 }
 
@@ -361,20 +361,28 @@ message UnlockStatus {
 structure DebugConsoleVar {
   string varName,
   string category,
-  float_32 minValue,
-  float_32 maxValue,
+  float_64 minValue,
+  float_64 maxValue,
   ConsoleVarUnion varValue
 }
 
-
 message InitDebugConsoleVarMessage {
-  DebugConsoleVar varData[uint_8]
+  DebugConsoleVar varData[uint_16]
 }
+
+message VerifyDebugConsoleFuncMessage {
+  string funcName,
+  string statusMessage,
+  bool success
+}
+
 message VerifyDebugConsoleVarMessage {
   string varName,
   string statusMessage,
-  ConsoleVarUnion varValue
+  ConsoleVarUnion varValue,
+  bool success
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 // State
 ///////////////////////////////////////////////////////////////////////////////
@@ -389,7 +397,7 @@ message UpdateEngineState {
 
 structure BlockPoolBlockData {
   uint_32 id,
-  ObjectType type,
+  ObjectType objectType,
   bool enabled
 }
 

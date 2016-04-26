@@ -40,16 +40,8 @@ protected:
   virtual void   StopInternal(Robot& robot) override;
 
 private:
-  enum class State {
-    Inactive,
-    IsPickedUp,
-    PlayingAnimation
-  };
-  
-  State _currentState = State::Inactive;
+
   bool _isInAir = false;
-  bool _waitingForAnimComplete = false;
-  u32 _animTagToWaitFor = 0;
   
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   

@@ -141,7 +141,9 @@ namespace Anki {
       
       void ResetState() { _state = ActionResult::FAILURE_NOT_STARTED; }
 
-      ActionResult GetState() const { return _state; } 
+      ActionResult GetState() const { return _state; }
+
+      bool IsRunning() const { return _state == ActionResult::RUNNING; }
       
     private:
 

@@ -86,32 +86,42 @@ namespace Cozmo {
       Abort(robot);
     }
     
-    // If we're cancelling a current anim with no replacement, make use of the live animation track to insert a
-    // face keyframe from the end of the animation being cancelled
+    // If we're cancelling a current anim with no replacement, jump to the last face
+    // and stream it first, to make sure we end up with the expected face.
     if (nullptr != _streamingAnimation && nullptr == anim)
     {
-      bool streamingHasProcFace = !_streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
-      
-      // Only bother if the streaming animation has some kind of face track
-      if (streamingHasProcFace ||
-          !_streamingAnimation->GetTrack<FaceAnimationKeyFrame>().IsEmpty())
+      const bool hasProcFace = !_streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
+      const bool hasAnimFace = !_streamingAnimation->GetTrack<FaceAnimationKeyFrame>().IsEmpty();
+      if(hasProcFace || hasAnimFace)
       {
-        anim = &_liveAnimation;
+        PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation.AbortAndSendEndingFace",
+                         "Aborting %s with no replacement. Will send final face keyframe",
+                         _streamingAnimation->GetName().c_str());
+
+        if(hasProcFace) {
+          _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().MoveToLastKeyFrame();
+          _streamingTime_ms = _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetCurrentKeyFrame().GetTriggerTime();
+        } else { // hasAnimFace
+          _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().MoveToLastKeyFrame();
+          _streamingTime_ms = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetCurrentKeyFrame().GetTriggerTime();
+        }
         
-        if (streamingHasProcFace)
-        {
-          // Create a copy of the last procedural face frame of the streaming animation with the trigger time defaulted to 0
-          auto lastFrame = _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetLastKeyFrame();
-          ProceduralFaceKeyFrame frameCopy(lastFrame->GetFace());
-          anim->AddKeyFrameToBack(frameCopy);
-        }
-        else
-        {
-          // Create a copy of the last animating face frame of the streaming animation with the trigger time defaulted to 0
-          auto lastFrame = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetLastKeyFrame();
-          FaceAnimationKeyFrame frameCopy(lastFrame->GetFaceImage(), lastFrame->GetName());
-          anim->AddKeyFrameToBack(frameCopy);
-        }
+        // Move all other tracks to the end, so they don't stream anything else
+        _streamingAnimation->GetTrack<HeadAngleKeyFrame>().MoveToEnd();
+        _streamingAnimation->GetTrack<LiftHeightKeyFrame>().MoveToEnd();
+        _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().MoveToEnd();
+        _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().MoveToEnd();
+        _streamingAnimation->GetTrack<FacePositionKeyFrame>().MoveToEnd();
+        _streamingAnimation->GetTrack<BlinkKeyFrame>().MoveToEnd();
+        _streamingAnimation->GetTrack<BackpackLightsKeyFrame>().MoveToEnd();
+        _streamingAnimation->GetTrack<BodyMotionKeyFrame>().MoveToEnd();
+        _streamingAnimation->GetTrack<DeviceAudioKeyFrame>().MoveToEnd();
+        _streamingAnimation->GetTrack<RobotAudioKeyFrame>().MoveToEnd();
+        
+        // Return existing tag counter because we haven't actually changed animations.
+        // Instead, we will simply let this animation finish it's one additional
+        // face keyframe on the next tick
+        return _tagCtr;
       }
     }
     

@@ -35,7 +35,7 @@ namespace Cozmo {
   
 // Forward declaration
 class BehaviorFactory;
-class BehaviorWhiteboard;
+class AIWhiteboard;
 class IBehavior;
 class IBehaviorChooser;
 class IReactionaryBehavior;
@@ -76,8 +76,8 @@ public:
         BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
 
   // accessors: whiteboard
-  const BehaviorWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
-        BehaviorWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
+  const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
+        AIWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
     
   IBehavior* LoadBehaviorFromJson(const Json::Value& behaviorJson);
     
@@ -121,8 +121,13 @@ private:
     
   // How we store and choose next behavior
   IBehaviorChooser* _behaviorChooser = nullptr;
-  // The default chooser is created once on startup
-  IBehaviorChooser* _defaultChooser = nullptr;
+
+  // This is a chooser which manually runs specific behaviors. The manager starts out using this chooser to
+  // avoid immediately executing a behavior when the engine starts
+  IBehaviorChooser* _selectionChooser = nullptr;
+
+  // This is the behavior used for freeplay. This is the default chooser
+  IBehaviorChooser* _freeplayBehaviorChooser = nullptr;
 
   bool _runningReactionaryBehavior = false;
   
@@ -132,7 +137,7 @@ private:
   IBehavior* _behaviorToResume = nullptr;
     
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
-  std::unique_ptr<BehaviorWhiteboard> _whiteboard;
+  std::unique_ptr<AIWhiteboard> _whiteboard;
 
   std::vector<IReactionaryBehavior*> _reactionaryBehaviors;
     

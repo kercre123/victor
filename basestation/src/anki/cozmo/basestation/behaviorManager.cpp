@@ -15,7 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -39,24 +39,17 @@ BehaviorManager::BehaviorManager(Robot& robot)
   : _isInitialized(false)
   , _robot(robot)
   , _behaviorFactory(new BehaviorFactory())
-  , _whiteboard( new BehaviorWhiteboard(robot) )
+  , _whiteboard( new AIWhiteboard(robot) )
 {
 }
 
 BehaviorManager::~BehaviorManager()
 {
-
   // everything in _reactionaryBehaviors is a factory behavior, so the factory will delete it
   _reactionaryBehaviors.clear();
-  
-  if (_behaviorChooser == _defaultChooser)
-  {
-    // prevent double deletion
-    _behaviorChooser = nullptr;
-  }
-    
-  Util::SafeDelete(_behaviorChooser);
-  Util::SafeDelete(_defaultChooser);
+
+  Util::SafeDelete(_selectionChooser);
+  Util::SafeDelete(_freeplayBehaviorChooser);
   Util::SafeDelete(_behaviorFactory);
 }
   
@@ -66,16 +59,21 @@ Result BehaviorManager::Init(const Json::Value &config)
     
   {
     const Json::Value& chooserConfigJson = config[kChooserConfigKey];
-    Util::SafeDelete(_defaultChooser);
-    _defaultChooser = new SimpleBehaviorChooser(_robot, chooserConfigJson);
-    SetBehaviorChooser( _defaultChooser );
+
+    Util::SafeDelete(_selectionChooser);
+    Util::SafeDelete(_freeplayBehaviorChooser);
+
+    _selectionChooser = new SelectionBehaviorChooser(_robot, chooserConfigJson);
+    _freeplayBehaviorChooser = new SimpleBehaviorChooser(_robot, chooserConfigJson);
+                                   
+    SetBehaviorChooser( _selectionChooser );
 
     // TODO:(bn) load these from json? A special reactionary behaviors list?
     BehaviorFactory& behaviorFactory = GetBehaviorFactory();
     AddReactionaryBehavior(
       behaviorFactory.CreateBehavior(BehaviorType::ReactToStop,  _robot, config)->AsReactionaryBehavior() );
-    // AddReactionaryBehavior(
-    //   behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
+    AddReactionaryBehavior(
+      behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior(
       behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
     // AddReactionaryBehavior(
@@ -97,17 +95,14 @@ Result BehaviorManager::Init(const Json::Value &config)
                                    event.GetData().Get_ActivateBehaviorChooser().behaviorChooserType;
                                  switch (chooserType)
                                  {
-                                   case BehaviorChooserType::Default:
+                                   case BehaviorChooserType::Freeplay:
                                    {
-                                     if (_behaviorChooser != _defaultChooser)
-                                     {
-                                       SetBehaviorChooser( _defaultChooser );
-                                     }
+                                     SetBehaviorChooser( _freeplayBehaviorChooser );
                                      break;
                                    }
                                    case BehaviorChooserType::Selection:
                                    {
-                                     SetBehaviorChooser(new SelectionBehaviorChooser(_robot, config));
+                                     SetBehaviorChooser( _selectionChooser );
                                      break;
                                    }
                                    default:
@@ -200,6 +195,7 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
   }
 
   StopCurrentBehavior();
+  _currentBehavior = nullptr; // immediately clear current since we just stopped it
 
   if( nullptr != nextBehavior ) {
     const Result initRet = nextBehavior->Init();
@@ -216,11 +212,9 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
       return true;
     }
   }
-  else {
-    // a null argument to this function means "switch to no behavior"
-    _currentBehavior = nullptr;
-    return true;
-  }
+  
+  // a null argument to this function means "switch to no behavior"
+  return true;
 }
 
 void BehaviorManager::SwitchToNextBehavior()
@@ -299,21 +293,32 @@ Result BehaviorManager::Update()
         break;
           
       case IBehavior::Status::Complete:
-        // behavior is complete, switch to null (will also handle stopping current)
+        // behavior is complete, switch to null (will also handle stopping current). If it was reactionary,
+        // switch now to give the last behavior a chance to resume (if appropriate)
         PRINT_NAMED_DEBUG("BehaviorManager.Update.BehaviorComplete",
                           "Behavior '%s' returned Status::Complete",
                           _currentBehavior->GetName().c_str());
-        SwitchToBehavior(nullptr);
-        _runningReactionaryBehavior = false;
+        if( _runningReactionaryBehavior ) {
+          _runningReactionaryBehavior = false;
+          SwitchToNextBehavior();
+        }
+        else {
+          SwitchToBehavior(nullptr);
+        }
         break;
           
       case IBehavior::Status::Failure:
         PRINT_NAMED_ERROR("BehaviorManager.Update.FailedUpdate",
                           "Behavior '%s' failed to Update().",
                           _currentBehavior->GetName().c_str());
-        // just like in the complete case, stop behavior and set it to null
-        SwitchToBehavior(nullptr);
-        _runningReactionaryBehavior = false;
+        // same as the Complete case
+        if( _runningReactionaryBehavior ) {
+          _runningReactionaryBehavior = false;
+          SwitchToNextBehavior();
+        }
+        else {
+          SwitchToBehavior(nullptr);
+        }
         break;
         
       default:
@@ -321,6 +326,7 @@ Result BehaviorManager::Update()
                           "Behavior '%s' returned unknown status %d",
                           _currentBehavior->GetName().c_str(), status);
         lastResult = RESULT_FAIL;
+        break;
     } // switch(status)
   }
     
@@ -329,22 +335,18 @@ Result BehaviorManager::Update()
 
 void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
 {
+  if( _behaviorChooser == newChooser ) {
+    return;
+  }
+
   // The behavior pointers may no longer be valid, so clear them
   SwitchToBehavior(nullptr);
   _behaviorToResume = nullptr;
   _runningReactionaryBehavior = false;
 
-  if ((_behaviorChooser != nullptr) && (_behaviorChooser != _defaultChooser)) {
-    PRINT_NAMED_INFO("BehaviorManager.SetBehaviorChooser.DeleteOld",
-                     "deleting behavior chooser '%s'",
-                     _behaviorChooser->GetName());
-      
-    Util::SafeDelete(_behaviorChooser);
-  }
-    
   _behaviorChooser = newChooser;
 
-  if( _behaviorChooser == _defaultChooser ) {
+  if( _behaviorChooser == _freeplayBehaviorChooser ) {
     _robot.GetProgressionUnlockComponent().IterateUnlockedFreeplayBehaviors(
       [this](BehaviorGroup group, bool enabled){
         _behaviorChooser->EnableBehaviorGroup(group, enabled);

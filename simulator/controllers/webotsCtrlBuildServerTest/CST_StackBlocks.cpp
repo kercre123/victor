@@ -46,7 +46,8 @@ namespace Anki {
                                     defaultDockSpeed_mmps,
                                     defaultDockAccel_mmps2,
                                     defaultDockDecel_mmps2,
-                                    defaultReverseSpeed_mmps);
+                                    defaultReverseSpeed_mmps,
+                                    true);
     
     const f32 ROBOT_POSITION_TOL_MM = 10;
     const f32 ROBOT_ANGLE_TOL_DEG = 5;

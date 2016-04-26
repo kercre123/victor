@@ -16,6 +16,7 @@
 
 // Behaviors:
 #include "../behaviors/exploration/behaviorExploreCliff.h"
+#include "../behaviors/exploration/behaviorExploreBringCubeToBeacon.h"
 #include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 #include "../behaviors/exploration/behaviorExploreMarkedCube.h"
 #include "../behaviors/exploration/behaviorExploreVisitPossibleMarker.h"
@@ -149,6 +150,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ExploreVisitPossibleMarker:
     {
       newBehavior = new BehaviorExploreVisitPossibleMarker(robot, config);
+      break;
+    }
+    case BehaviorType::ExploreBringCubeToBeacon:
+    {
+      newBehavior = new BehaviorExploreBringCubeToBeacon(robot, config);
       break;
     }
     case BehaviorType::RollBlock:

@@ -558,7 +558,19 @@ void Robot::HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& m
 {
   RobotInterface::RobotStopped payload = message.GetData().Get_robotStopped();
   PRINT_NAMED_INFO("RobotImplMessaging.HandleRobotStopped", "%d", payload.reason);
-    
+  
+  // This is a somewhat overloaded use of enableCliffSensor, but currently only cliffs
+  // trigger this RobotStopped message so it's not too crazy.
+  if( !_enableCliffSensor ) {
+    return;
+  }
+  
+  // Abort any running animation. This will be cleaner than letting a PlayAnimationAction
+  // get deleted during the ActionList.Cancel() below because the action will get notified
+  // of the abort first, and not generate a warning about being deleted without
+  // getting notified about a stop or abort.
+  _animationStreamer.SetStreamingAnimation(*this, nullptr);
+  
   // Stop whatever we were doing
   GetActionList().Cancel();
 
@@ -589,7 +601,7 @@ void Robot::HandleCliffEvent(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     PRINT_NAMED_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
 
-  SetIsOnCliff(cliffEvent.detected);
+  _isCliffDetected = cliffEvent.detected;
   
   // Forward on with EngineToGame event
   Broadcast(ExternalInterface::MessageEngineToGame(CliffEvent(cliffEvent)));
@@ -880,7 +892,6 @@ void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
   auto helper = MakeAnkiEventUtil(externalInterface, *this, _signalHandles);
   
   using namespace ExternalInterface;
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBehaviorSystemEnabled>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::CancelAction>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::DrawPoseMarker>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
@@ -896,12 +907,6 @@ void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
   helper.SubscribeGameToEngine<MessageGameToEngineTag::AbortAll>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetActiveObjectLEDs>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetAllActiveObjectLEDs>();
-}
-
-template<>
-void Robot::HandleMessage(const ExternalInterface::SetBehaviorSystemEnabled& msg)
-{
-  _isBehaviorMgrEnabled = msg.enabled;
 }
   
 template<>

@@ -236,6 +236,7 @@ namespace Anki {
         printf("    Travel up/down selected ramp:  r\n");
         printf("              Abort current path:  q\n");
         printf("                Abort everything:  Shift+q\n");
+        printf("           Cancel current action:  Alt+q\n");
         printf("         Update controller gains:  k\n");
         printf("                 Request IMU log:  o\n");
         printf("           Toggle face detection:  f\n");
@@ -923,33 +924,18 @@ namespace Anki {
                     break;
                   }
                   
-                  if (behaviorName == "DISABLED")
-                  {
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::SetBehaviorSystemEnabled(false)));
-                  }
-                  else if( behaviorName == "ENABLED")
-                  {
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::SetBehaviorSystemEnabled(true)));
-                  }
-                  else
-                  {
-                    printf("Selecting behavior: %s\n", behaviorName.c_str());
+                  printf("Selecting behavior: %s\n", behaviorName.c_str());
 
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::SetBehaviorSystemEnabled(true)));
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
+                  SendMessage(ExternalInterface::MessageGameToEngine(
+                                ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
 
-                    if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
-                      SendMessage(ExternalInterface::MessageGameToEngine(
-                                    ExternalInterface::ExecuteBehaviorByName(behaviorName)));
-                    }
-                    else {
-                      SendMessage(ExternalInterface::MessageGameToEngine(
-                                    ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
-                    }                
+                  if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::ExecuteBehaviorByName(behaviorName)));
+                  }
+                  else {
+                    SendMessage(ExternalInterface::MessageGameToEngine(
+                                  ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
                   }
                 }
                 else if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
@@ -973,10 +959,6 @@ namespace Anki {
                     printf("ERROR: invalid hotkey\n");
                     break;
                   }
-
-                  // TODO:(bn) don't spam this so often?
-                  SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::SetBehaviorSystemEnabled(true)));
 
                   bool enable = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
                   
@@ -1039,9 +1021,6 @@ namespace Anki {
 
                   printf("sending behavior chooser '%s'\n", BehaviorChooserTypeToString(chooser));
                 
-                  SendMessage(ExternalInterface::MessageGameToEngine(
-                                ExternalInterface::SetBehaviorSystemEnabled(true)));
-
                   SendMessage(ExternalInterface::MessageGameToEngine(
                                 ExternalInterface::ActivateBehaviorChooser(chooser)));
                 }
@@ -1538,35 +1517,37 @@ namespace Anki {
               }
               case (s32)'(':
               {
+                NVStorage::NVEntryTag tag = NVStorage::NVEntryTag::NVEntry_MultiBlobJunk;
+                
                 // NVStorage multiWrite / multiRead test
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  PRINT_NAMED_INFO("SendNVStorageReadEntry", "NVEntry_CalibImage1");
-                  ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CalibImage1);
-                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
+                  PRINT_NAMED_INFO("SendNVStorageReadEntry", "Putting image in %s", EnumToString(tag));
+                  ClearReceivedNVStorageData(tag);
+                  SendNVStorageReadEntry(tag);
                 } else {
                   
                   if (ENABLE_NVSTORAGE_WRITE) {
                     // Toggle write/erase
                     static bool writeNotErase = true;
                     if (writeNotErase) {
-                      static const char* inFile = "testCalibImage1_input.jpg";
+                      static const char* inFile = "nvstorage_input.jpg";
                       FILE* fp = fopen(inFile, "rb");
                       if (fp) {
                         std::vector<u8> d(30000);
                         size_t numBytes = fread(d.data(), 1, d.size(), fp);
                         d.resize(numBytes);
-                        PRINT_NAMED_INFO("SendNVStorageWriteEntry.CalibImage1.ReadInputImage", "read %zu bytes\n", numBytes);
+                        PRINT_NAMED_INFO("SendNVStorageWriteEntry.ReadInputImage", "Tag: %s, read %zu bytes\n", EnumToString(tag), numBytes);
                         
                         ExternalInterface::NVStorageWriteEntry temp;
                         u32 MAX_BLOB_SIZE = temp.data.size();
                         u8 numTotalBlobs = static_cast<u8>(ceilf(static_cast<f32>(numBytes) / MAX_BLOB_SIZE));
                         
-                        PRINT_NAMED_INFO("SendNVStorageWriteEntry.CalibImage1.Sending",
-                                         "NumBlobs %d, maxBlobSize %d",
-                                         numTotalBlobs, MAX_BLOB_SIZE);
+                        PRINT_NAMED_INFO("SendNVStorageWriteEntry.Sending",
+                                         "Tag: %s, NumBlobs %d, maxBlobSize %d",
+                                         EnumToString(tag), numTotalBlobs, MAX_BLOB_SIZE);
 
                         for (int i=0; i<numTotalBlobs; ++i) {
-                          SendNVStorageWriteEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1,
+                          SendNVStorageWriteEntry(tag,
                                                   d.data() + i * MAX_BLOB_SIZE, MIN(MAX_BLOB_SIZE, numBytes - (i*MAX_BLOB_SIZE)),
                                                   i, numTotalBlobs);
                         }
@@ -1575,13 +1556,13 @@ namespace Anki {
                       }
                     } else {
                       
-                      PRINT_NAMED_INFO("SendNVStorageEraseEntry", "NVEntry_CalibImage1");
-                      SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
+                      PRINT_NAMED_INFO("SendNVStorageEraseEntry", "%s", EnumToString(tag));
+                      SendNVStorageEraseEntry(tag);
                     }
                     writeNotErase = !writeNotErase;
                   } else {
-                    PRINT_NAMED_INFO("SendNVStorageWriteEntry.CalibImage1.Disabled",
-                                     "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                    PRINT_NAMED_INFO("SendNVStorageWriteEntry.Disabled",
+                                     "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this! (Tag: %s)", EnumToString(tag));
                   }
                   
                 }
@@ -2020,8 +2001,13 @@ namespace Anki {
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_CalibImage1:
+            case NVStorage::NVEntryTag::NVEntry_CalibImage2:
+            case NVStorage::NVEntryTag::NVEntry_CalibImage3:
+            case NVStorage::NVEntryTag::NVEntry_CalibImage4:
+            case NVStorage::NVEntryTag::NVEntry_CalibImage5:
+            case NVStorage::NVEntryTag::NVEntry_MultiBlobJunk:
             {
-              static const char* outFile = "testCalibImage1_output.jpg";
+              static const char* outFile = "nvstorage_output.jpg";
               PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.CalibImage1",
                                "Writing to %s, size: %zu",
                                outFile, recvdData->size());

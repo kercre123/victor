@@ -142,7 +142,8 @@ namespace Anki {
                                                         DEFAULT_DOCK_SPEED_MMPS,
                                                         DEFAULT_DOCK_ACCEL_MMPS2,
                                                         DEFAULT_DOCK_DECCEL_MMPS2,
-                                                        DEFAULT_PATH_REVERSE_SPEED_MMPS);
+                                                        DEFAULT_PATH_REVERSE_SPEED_MMPS,
+                                                        false);
     
   } // namespace Cozmo
 } // namespace Anki

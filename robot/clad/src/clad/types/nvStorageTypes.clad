@@ -14,8 +14,15 @@ namespace NVStorage {
 
     // Single blob entries start here
     // Upper 16 bits must be zero
-    NVEntry_Invalid = 0xFFFFffff,
-    NVEntry_CameraCalibration = 1,
+    NVEntry_Invalid           = 0xFFFFffff,
+    NVEntry_EraseAll          = 0,  // The only operation that can be done on this tag is erase
+                                    // and doing so ERASES ALL non-factory entries.
+    NVEntry_CameraCalibration = 1,  // NOTE: This will eventually be removed and replaced by NVEntry_CameraCalib
+    NVEntry_GameSkillLevels = 2,
+
+
+
+    NVEntry_Junk = 0xFFFF,
 
     // Multi-blob entries start here
     // Upper 16 bits must be non-zero and the bottom 16 bits must all be zero
@@ -24,10 +31,20 @@ namespace NVStorage {
     // though this value is actually lower because it is limited in NVStorageComponent.
 
 
+    NVEntry_MultiBlobJunk = 0x7FFF0000,
+
     // ====== Factory entries ========
     // Same rules as regarding single and multi-blob entries
     // except that the MSB is 1 for potential special treatment during
     // garbage collection in the future.
+
+
+    // Single blob manufacturing entries start here
+    NVEntry_CameraCalib        = 0x80000001,
+    NVEntry_PlaypenTestResults = 0x80000002,
+
+
+    // Multi-blob manufacturing entires start here
     NVEntry_CalibImage1 = 0x80010000,
     NVEntry_CalibImage2 = 0x80020000,
     NVEntry_CalibImage3 = 0x80030000,
