@@ -194,6 +194,7 @@ public class SkillSystem {
 
                 if (OnLevelUp != null && newHighestLevel) {
                   OnLevelUp(currSkillData.LastLevel);
+                  DataPersistenceManager.Instance.Save();
                 }
               }
             }
@@ -230,6 +231,7 @@ public class SkillSystem {
 
     _ChallengeIndex = -1;
     _CurrChallengeData = null;
+    SetCozmoHighestLevelsReached(null, 0);
   }
 
   private void HandleRobotConnected(int rbt_id) {
@@ -244,7 +246,6 @@ public class SkillSystem {
         opResult.tag == NVEntryTag.NVEntry_GameSkillLevels) {
       if (opResult.result != NVResult.NV_OKAY &&
           opResult.result != NVResult.NV_SCHEDULED) {
-        SetCozmoHighestLevelsReached(null, 0);
         // write out defaults so we have some 0s for next time,
         // This was likely the first time and was just a "not found"
         UpdateHighestSkillsOnRobot();
@@ -263,7 +264,10 @@ public class SkillSystem {
     ChallengeDataList challengeList = ChallengeDataList.Instance;
     int numChallenges = Mathf.Max(robotDataLen, challengeList.ChallengeData.Length);
     _CozmoHighestLevels = new byte[numChallenges];
-    System.Array.Copy(robotData, _CozmoHighestLevels, robotDataLen);
+    // first time init
+    if (robotData != null) {
+      System.Array.Copy(robotData, _CozmoHighestLevels, robotDataLen);
+    }
   }
 
   private void UpdateHighestSkillsOnRobot() {

@@ -73,7 +73,7 @@ namespace SpeedTap {
 
     private MusicStateWrapper _BetweenRoundsMusic;
 
-    public ISpeedTapRules Rules;
+    public SpeedTapRulesBase Rules;
 
     private int _CozmoScore;
     private int _PlayerScore;
@@ -323,6 +323,11 @@ namespace SpeedTap {
         DAS.Warn(this, "No Valid Difficulty Setting Found");
         _CurrentDifficultySettings = _AllDifficultySettings[0];
       }
+      else {
+        if (_CurrentDifficultySettings.Colors != null && _CurrentDifficultySettings.Colors.Length > 0) {
+          Rules.SetUsableColors(_CurrentDifficultySettings.Colors);
+        }
+      }
     }
 
     protected override void CleanUpOnDestroy() {
@@ -375,7 +380,7 @@ namespace SpeedTap {
       }
     }
 
-    private static ISpeedTapRules GetRules(SpeedTapRuleSet ruleSet) {
+    private static SpeedTapRulesBase GetRules(SpeedTapRuleSet ruleSet) {
       switch (ruleSet) {
       case SpeedTapRuleSet.NoRed:
         return new NoRedSpeedTapRules();

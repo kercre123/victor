@@ -2,11 +2,10 @@
 using System.Collections;
 
 namespace SpeedTap {
-  public class DefaultSpeedTapRules : ISpeedTapRules {
-  
-    private Color[] _Colors = { Color.white, Color.green, Color.blue, Color.magenta };
+  public class DefaultSpeedTapRules : SpeedTapRulesBase {
 
-    public virtual void SetLights(bool shouldTap, SpeedTapGame game) {
+
+    public override void SetLights(bool shouldTap, SpeedTapGame game) {
       
       if (shouldTap) {
         // Do match
