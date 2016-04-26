@@ -326,7 +326,6 @@
 		8441767ABE25B8DAE63ED332 /* Bulk_Generics_4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_4.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_4.cpp; sourceTree = "<group>"; };
 		85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDriveAudioEngine.a; path = "../../lib/anki/cozmo-engine/lib/audio/gyp/build/Debug-iphoneos/libDriveAudioEngine.a"; sourceTree = "<group>"; };
 		852C0B6C1C6965730003DCFD /* DASConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = DASConfig.json; sourceTree = "<group>"; };
-		85D635261CC99E4000A5FB8A /* libtiny-AES128-C.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "libtiny-AES128-C.a"; path = "../../lib/anki/cozmo-engine/tools/anki-util/project/gyp/build/Debug-iphoneos/libtiny-AES128-C.a"; sourceTree = "<group>"; };
 		85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libBLECozmo.a; path = "../../lib/anki/cozmo-engine/lib/BLECozmo/project/gyp/build/Debug-iphoneos/libBLECozmo.a"; sourceTree = "<group>"; };
 		85DEB8FE1C652A3C00202214 /* libDAS.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDAS.a; path = "../../lib/anki/cozmo-engine/tools/das-client/gyp/build/Debug-iphoneos/libDAS.a"; sourceTree = "<group>"; };
 		85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = CozmoWifiConfigTemplate.mobileconfig; sourceTree = "<group>"; };
@@ -572,7 +571,6 @@
 			isa = PBXGroup;
 			children = (
 				85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */,
-				85D635261CC99E4000A5FB8A /* libtiny-AES128-C.a */,
 				6F54323A1C8928C4006D3724 /* QuickLook.framework */,
 				6F5432381C8928AF006D3724 /* MobileCoreServices.framework */,
 				6F5432361C89288F006D3724 /* AssetsLibrary.framework */,
