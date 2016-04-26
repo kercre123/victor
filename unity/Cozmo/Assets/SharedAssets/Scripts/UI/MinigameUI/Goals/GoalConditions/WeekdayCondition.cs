@@ -18,10 +18,6 @@ namespace Anki {
       public string dayName;
       DayOfWeek day;
 
-      public override void Initialize() {
-        base.Initialize();
-      }
-
       // Returns true if day of the week is the desired day of the week
       public override bool ConditionMet() {
         return (DateTime.UtcNow.DayOfWeek.ToString() == dayName);

@@ -24,10 +24,6 @@ namespace Anki {
       public bool UseMaxSession;
       public int MaxSession;
 
-      public override void Initialize() {
-        base.Initialize();
-      }
-
       // Returns true if day of the week is the desired day of the week
       public override bool ConditionMet() {
         bool isMet = false;
