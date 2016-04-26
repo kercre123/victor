@@ -142,7 +142,7 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void HandleOTAConnected(int robotID) {
-    _FactoryOTAPanelInstance.OnFirmwareComplete += RestartTestApp;
+    _FactoryOTAPanelInstance.OnRestartButton += RestartTestApp;
     RobotEngineManager.Instance.UpdateFirmware(0);
   }
 
