@@ -406,6 +406,10 @@ namespace Anki
               AnkiConditionalWarn(lastResult == RESULT_OK, "DetectFiducialMarkers",
                                   "Marker extraction for quad %d of %d failed.\n",
                                   iMarker, markers.get_size());
+
+              if (currentMarker.markerType == Vision::MARKER_INVALID && !params.returnInvalidMarkers) {
+                currentMarker.validity = VisionMarker::UNKNOWN;
+              }
               
             } else {
               currentMarker.markerType = Vision::MARKER_UNKNOWN;
