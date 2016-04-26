@@ -34,6 +34,10 @@ public class FactoryIntroManager : MonoBehaviour {
   private FactoryOptionsPanel _FactoryOptionsPanelInstance;
 
   [SerializeField]
+  private FactoryOTAPanel _FactoryOTAPanelPrefab;
+  private FactoryOTAPanel _FactoryOTAPanelInstance;
+
+  [SerializeField]
   private UnityEngine.UI.Text _StatusText;
 
   [SerializeField]
@@ -52,15 +56,17 @@ public class FactoryIntroManager : MonoBehaviour {
   private List<string> _LogList = new List<string>();
 
   void Start() {
-    _RestartButton.onClick.AddListener(() => RestartTestApp());
     SetStatusText("Not Connected");
     RobotEngineManager.Instance.RobotConnected += HandleConnected;
     RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;
     RobotEngineManager.Instance.OnFactoryResult += FactoryResult;
     _RestartButton.gameObject.SetActive(false);
+
+    _RestartButton.onClick.AddListener(() => RestartTestApp());
     _LogsButton.onClick.AddListener(HandleLogButtonClick);
     _OptionsButton.onClick.AddListener(HandleOptionsButtonClick);
     _StartButton.onClick.AddListener(HandleStartButtonClick);
+
     _InProgressSpinner.gameObject.SetActive(false);
   }
 
@@ -124,6 +130,20 @@ public class FactoryIntroManager : MonoBehaviour {
     _FactoryOptionsPanelInstance.OnSetStationNumber += HandleStationNumberUpdate;
     _FactoryOptionsPanelInstance.OnSetTestNumber += HandleTestNumberUpdate;
     _FactoryOptionsPanelInstance.OnSetSim += HandleSetSimType;
+    _FactoryOptionsPanelInstance.OnOTAButton += HandleOTAButton;
+  }
+
+  private void HandleOTAButton() {
+    ShowDevConnectDialog();
+    RobotEngineManager.Instance.RobotConnected -= HandleConnected;
+    RobotEngineManager.Instance.RobotConnected += HandleOTAConnected;
+    _FactoryOTAPanelInstance = GameObject.Instantiate(_FactoryOTAPanelPrefab).GetComponent<FactoryOTAPanel>();
+    _FactoryOTAPanelInstance.transform.SetParent(_Canvas.transform, false);
+  }
+
+  private void HandleOTAConnected(int robotID) {
+    _FactoryOTAPanelInstance.OnFirmwareComplete += RestartTestApp;
+    RobotEngineManager.Instance.UpdateFirmware(0);
   }
 
   private void SetStatusText(string txt) {
@@ -179,7 +199,7 @@ public class FactoryIntroManager : MonoBehaviour {
     }
   }
 
-  private void ShowDevConnectDialog() {
+  public void ShowDevConnectDialog() {
     if (_DevConnectDialogInstance == null && _DevConnectDialog != null) {
       _DevConnectDialogInstance = GameObject.Instantiate(_DevConnectDialog.gameObject);
     }

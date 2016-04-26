@@ -6,6 +6,7 @@ public class FactoryOptionsPanel : MonoBehaviour {
   public System.Action<int> OnSetTestNumber;
   public System.Action<int> OnSetStationNumber;
   public System.Action<bool> OnSetSim;
+  public System.Action OnOTAButton;
 
   [SerializeField]
   private UnityEngine.UI.Button _CloseButton;
@@ -28,11 +29,13 @@ public class FactoryOptionsPanel : MonoBehaviour {
     _StationNumberInput.onEndEdit.AddListener(HandleOnSetStationNumber);
     _TestNumberInput.onEndEdit.AddListener(HandleOnSetTestNumber);
     _SimToggle.onValueChanged.AddListener(HandleOnSetSimType);
-    _OTAButton.onClick.AddListener(OnOTAButton);
+    _OTAButton.onClick.AddListener(HandleOTAButton);
   }
 
-  void OnOTAButton() {
-    RobotEngineManager.Instance.UpdateFirmware(0);
+  void HandleOTAButton() {
+    if (OnOTAButton != null) {
+      OnOTAButton();
+    }
   }
 
   void HandleOnSetTestNumber(string input) {

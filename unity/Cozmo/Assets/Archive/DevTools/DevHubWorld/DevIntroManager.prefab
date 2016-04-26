@@ -49,6 +49,8 @@ MonoBehaviour:
     type: 2}
   _FactoryOptionsPanelPrefab: {fileID: 11480756, guid: f8a6aeb9f46144736b24bf26416230b2,
     type: 2}
+  _FactoryOTAPanelPrefab: {fileID: 11463534, guid: ad75df988a669485b8910e355f76432b,
+    type: 2}
   _StatusText: {fileID: 0}
   _StationNumberText: {fileID: 0}
   _Canvas: {fileID: 0}
