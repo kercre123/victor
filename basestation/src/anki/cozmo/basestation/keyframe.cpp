@@ -359,6 +359,11 @@ return RESULT_FAIL; \
     //
     // RobotAudioKeyFrame
     //
+    RobotAudioKeyFrame::RobotAudioKeyFrame(Audio::GameEvent::GenericEvent audioEvent, TimeStamp_t triggerTime_ms)
+    {
+      SetTriggerTime(triggerTime_ms);
+      AddAudioRef(audioEvent);
+    }
     
     Result RobotAudioKeyFrame::AddAudioRef(const Audio::GameEvent::GenericEvent event)
     {
