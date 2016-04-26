@@ -76,7 +76,7 @@ void AIWhiteboard::OnRobotDelocalized()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::ClearQuad(const Quad2f& quad)
+void AIWhiteboard::ProcessClearQuad(const Quad2f& quad)
 {
   // remove all markers inside clear quads
   auto isMarkerInsideQuad = [&quad](const PossibleMarker& marker) {

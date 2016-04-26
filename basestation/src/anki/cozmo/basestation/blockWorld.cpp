@@ -637,13 +637,6 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         {
           currentNavMemoryMap->AddQuad(cliffquad, INavMemoryMap::EContentType::ClearOfCliff);
         }
-        
-        // also notify behavior whiteboard.
-        // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
-        // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
-        // robot component, like a VisualInformationProcessingComponent
-        // note: this is not necessary, but should be negligible
-        _robot->GetBehaviorManager().GetWhiteboard().ClearQuad(cliffquad);
       }
       
       // forward sensor
@@ -691,7 +684,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
           // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
           // robot component, like a VisualInformationProcessingComponent
-          _robot->GetBehaviorManager().GetWhiteboard().ClearQuad(clearCollisionQuad);
+          _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearCollisionQuad);
         
           // debug render detection lines
           if ( kDebugRenderForwardQuads )
@@ -750,7 +743,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
       // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
       // robot component, like a VisualInformationProcessingComponent
-      _robot->GetBehaviorManager().GetWhiteboard().ClearQuad(_robot->GetBoundingQuadXY());
+      _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(_robot->GetBoundingQuadXY());
     }
   }
   
@@ -2222,7 +2215,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
               // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
               // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
               // robot component, like a VisualInformationProcessingComponent
-              _robot->GetBehaviorManager().GetWhiteboard().ClearQuad(clearVisionQuad);
+              _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearVisionQuad);
             }
           }
           
@@ -2656,7 +2649,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         // rsam: should this information be in the map instead of the whiteboard? It seems a stretch that
         // blockworld knows now about behaviors, maybe all this processing of quads should be done in a separate
         // robot component, like a VisualInformationProcessingComponent
-        _robot->GetBehaviorManager().GetWhiteboard().ClearQuad(clearQuad2D);
+        _robot->GetBehaviorManager().GetWhiteboard().ProcessClearQuad(clearQuad2D);
       }
       
       // send quads to memory map
