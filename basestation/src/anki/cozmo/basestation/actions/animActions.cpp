@@ -71,10 +71,11 @@ namespace Anki {
     : IAction(robot)
     , _animName(animation->GetName())
     , _name("PlayAnimation" + _animName + "Action")
+    , _numLoops(numLoops)
+    , _interruptRunning(interruptRunning)
     , _animation(animation)
     {
-      
-
+     
     }
     
     PlayAnimationAction::~PlayAnimationAction()
@@ -136,11 +137,15 @@ namespace Anki {
       // If we've set our altered animation, use that
       if (_alteredAnimation)
       {
-        _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_robot, _alteredAnimation.get(), _numLoops, _interruptRunning);
+        _animTag = _robot.PlayAnimation(_alteredAnimation.get(), _numLoops, _interruptRunning);
       }
       else // do the normal thing
       {
-        _animTag = _robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
+        if(_animation != nullptr) {
+          _animTag = _robot.PlayAnimation(_animation, _numLoops, _interruptRunning);
+        } else {
+          _animTag = _robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
+        }
         
         _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(_animName);
       }
