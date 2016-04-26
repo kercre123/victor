@@ -403,14 +403,25 @@ public:
     // Same as above, but with specified object
     Result SetObjectAsAttachedToLift(const ObjectID& dockObjectID,
                                      const Vision::KnownMarker* dockMarker);
-    
-    void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf; _dockObjectID.UnSet(); }
+  
+    void UnsetDockObjectID() { _dockObjectID.UnSet(); }
+    void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf;  }
     bool GetLastPickOrPlaceSucceeded() const { return _lastPickOrPlaceSucceeded; }
     
     // Places the object that the robot was carrying in its current position
     // w.r.t. the world, and removes it from the lift pose chain so it is no
     // longer "attached" to the robot.
     Result SetCarriedObjectAsUnattached();
+
+    //
+    // Object Stacking
+    //
+  
+    // lets the robot decide if we should try to stack on top of the given object, so that we have a central place
+    // to make the appropriate checks.
+    // returns true if we should try to stack on top of the given object, false if something would prevent it,
+    // for example if we think that block has something on top or it's too high to reach
+    bool CanStackOnTopOfObject(const ObservableObject& object) const;
   
     /*
     //
@@ -718,6 +729,8 @@ public:
     ExternalInterface::RobotState GetRobotState();
   
   protected:
+    static constexpr f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
+  
     const CozmoContext* _context;
   
     RobotWorldOriginChangedSignal _robotWorldOriginChangedSignal;

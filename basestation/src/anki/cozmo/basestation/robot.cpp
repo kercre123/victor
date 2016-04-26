@@ -38,7 +38,7 @@
 #include "anki/cozmo/basestation/faceAnimationManager.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -2393,7 +2393,6 @@ namespace Anki {
       // mark it as being carried too
       // TODO: Do we need to be able to handle non-actionable objects on top of actionable ones?
 
-      const f32 STACKED_HEIGHT_TOL_MM = 15.f; // TODO: make this a parameter somewhere
       ObservableObject* objectOnTop = _blockWorld.FindObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
       if(objectOnTop != nullptr) {
         ActionableObject* actionObjectOnTop = dynamic_cast<ActionableObject*>(objectOnTop);
@@ -2493,6 +2492,37 @@ namespace Anki {
       return RESULT_OK;
       
     } // UnattachCarriedObject()
+    
+    
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    bool Robot::CanStackOnTopOfObject(const ObservableObject& objectToStackOn) const
+    {
+      // Note rsam/kevin: this only works currently for original cubes. Doing height checks would require more
+      // comparison of sizes, checks for I can stack but not pick up due to slack required to pick up, etc. In order
+      // to simplify just cover the most basic case here (for the moment)
+      
+      // check if we can transform to robot space
+      Pose3d relPos;
+      if ( !objectToStackOn.GetPose().GetWithRespectTo(GetPose(), relPos) ) {
+        return false;
+      }
+      
+      // check if it's too high to stack on
+      const float topZ = relPos.GetTranslation().z() + objectToStackOn.GetSize().z() * 0.5f;
+      const float isTooHigh = topZ > (objectToStackOn.GetSize().z() + STACKED_HEIGHT_TOL_MM);
+      if ( isTooHigh ) {
+        return false;
+      }
+    
+      // check if it already has something on top
+      const ObservableObject* objectOnTop = GetBlockWorld().FindObjectOnTopOf(objectToStackOn, STACKED_HEIGHT_TOL_MM);
+      if ( nullptr != objectOnTop ) {
+        return false;
+      }
+
+      // all checks clear
+      return true;
+    }
     
     // ============ Messaging ================
     

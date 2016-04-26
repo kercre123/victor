@@ -82,9 +82,9 @@ namespace Cozmo {
   CONSOLE_VAR(f32,  kMotionDetectRatioThreshold,      "Vision.MotionDetection", 1.25f);
   CONSOLE_VAR(f32,  kMinMotionAreaFraction,           "Vision.MotionDetection", 1.f/225.f); // 1/15 of each image dimension
   
-CONSOLE_VAR(float, kMaxCalibBlobPixelArea, "kMaxCalibBlobPixelArea", 800.f); // max number of pixels in calibration pattern blob
-CONSOLE_VAR(float, kMinCalibBlobPixelArea, "kMinCalibBlobPixelArea", 20.f); // min number of pixels in calibration pattern blob
-CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlobs", 5.f); // min pixel distance between calibration pattern blobs
+CONSOLE_VAR(float, kMaxCalibBlobPixelArea, "Vision.Calibration", 800.f); // max number of pixels in calibration pattern blob
+CONSOLE_VAR(float, kMinCalibBlobPixelArea, "Vision.Calibration", 20.f); // min number of pixels in calibration pattern blob
+CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); // min pixel distance between calibration pattern blobs
   
   using namespace Embedded;
   

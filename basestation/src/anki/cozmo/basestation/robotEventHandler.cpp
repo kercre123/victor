@@ -143,17 +143,11 @@ IActionRunner* GetPlaceObjectOnGroundActionHelper(Robot& robot, const ExternalIn
   // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
   Rotation3d rot(UnitQuaternion<f32>(msg.qw, msg.qx, msg.qy, msg.qz));
   Pose3d targetPose(rot, Vec3f(msg.x_mm, msg.y_mm, 22.f), robot.GetWorldOrigin());
-  
-  PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot,
-                                                                                targetPose,
-                                                                                msg.useExactRotation,
-                                                                                msg.useManualSpeed);
-  
-  if(msg.motionProf.isCustom)
-  {
-    action->SetMotionProfile(msg.motionProf);
-  }
-  return action;
+  return new PlaceObjectOnGroundAtPoseAction(robot,
+                                             targetPose,
+                                             msg.useExactRotation,
+                                             msg.useManualSpeed,
+                                             msg.checkDestinationFree);
 }
 
 IActionRunner* GetDriveToPoseActionHelper(Robot& robot, const ExternalInterface::GotoPose& msg)

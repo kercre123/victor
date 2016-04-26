@@ -202,22 +202,31 @@ namespace Anki {
     class DriveToPlaceCarriedObjectAction : public DriveToObjectAction
     {
     public:
+      // destinationObjectPadding_mm: padding around the object size at destination used if checkDestinationFree is true
       DriveToPlaceCarriedObjectAction(Robot& robot,
                                       const Pose3d& placementPose,
                                       const bool placeOnGround,
                                       const bool useExactRotation = false,
-                                      const bool useManualSpeed = false);
+                                      const bool useManualSpeed = false,
+                                      const bool checkDestinationFree = false,
+                                      const float destinationObjectPadding_mm = 0.0f);
       
       virtual const std::string& GetName() const override;
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT; }
       
     protected:
-      
+    
       virtual ActionResult Init() override;
       virtual ActionResult CheckIfDone() override; // Simplified version from DriveToObjectAction
+      
+      // checks if the placement destination is free (alternatively we could provide an std::function callback)
+      bool IsPlacementGoalFree() const;
+      
       Pose3d _placementPose;
       
       bool   _useExactRotation;
+      bool   _checkDestinationFree; // if true the action will often check that the destination is still free to place the object
+      float  _destinationObjectPadding_mm; // padding around the object size at destination if _checkDestinationFree is true
       
     }; // DriveToPlaceCarriedObjectAction()
 

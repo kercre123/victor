@@ -961,7 +961,7 @@ namespace Anki
         
         for(s32 iQuad=0; iQuad<3; ++iQuad) {
           const Quadrilateral<f32>& quad = *(quads[iQuad]);
-          cv::vector<cv::Point> cvQuad(4);
+          std::vector<cv::Point> cvQuad(4);
           
           for(s32 i=0; i<4; ++i) {
             

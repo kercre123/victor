@@ -23,7 +23,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
@@ -620,7 +620,8 @@ namespace Cozmo {
         };
         
         // Put block down
-        PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot, _actualLightCubePose);
+        const bool checkFreeDestination = true;
+        PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot, _actualLightCubePose, false, false, checkFreeDestination);
         //action->SetMotionProfile(_motionProfile);
         StartActing(robot,
                     action,
