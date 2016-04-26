@@ -14,6 +14,8 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/audio/audioEventTypes.h"
 
+#define DEBUG_SAYTEXT_ACTION 0
+
 namespace Anki {
 namespace Cozmo {
   
@@ -32,6 +34,9 @@ namespace Cozmo {
     }
     
     // Make our animation a "live" animation with a single audio keyframe at the beginning
+    if(DEBUG_SAYTEXT_ACTION){
+      PRINT_NAMED_DEBUG("SayTextAction.Constructor.CreatingAnimation", "");
+    }
     _animation.SetIsLive(true);
     _animation.AddKeyFrameToBack(RobotAudioKeyFrame(Audio::GameEvent::GenericEvent::Vo_Coz_External_Play, 0));
     
@@ -40,6 +45,10 @@ namespace Cozmo {
                                                               const std::string& text,
                                                               const std::string& fileName)
     {
+      if(DEBUG_SAYTEXT_ACTION){
+        PRINT_NAMED_DEBUG("SayTextAction.CompletionCallback", "success=%d, text=%s, filename=%s",
+                          success, text.c_str(), fileName.c_str());
+      }
       if (success) {
         _textToSpeechStatus = TextToSpeechStatus::Ready;
       }
@@ -49,6 +58,9 @@ namespace Cozmo {
       }
     };
     
+    if(DEBUG_SAYTEXT_ACTION){
+      PRINT_NAMED_DEBUG("SayTextAction.Constructor.LoadingSpeechData", "");
+    }
     _robot.GetTextToSpeechController().LoadSpeechData(_text, _style, callback);
   }
   
@@ -59,37 +71,55 @@ namespace Cozmo {
   
   ActionResult SayTextAction::Init()
   {
-    // Set Audio data right before action runs
-    float duration_ms = 0.0;
-    const bool success = _robot.GetTextToSpeechController().PrepareToSay(_text, _style, duration_ms);
-    if (!success) {
-      PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
-      return ActionResult::FAILURE_ABORT;
+    switch(_textToSpeechStatus)
+    {
+      case TextToSpeechStatus::Loading:
+        // Can't initialize until text to speech is ready
+        if(DEBUG_SAYTEXT_ACTION){
+          PRINT_NAMED_DEBUG("SayTextAction.Init.LoadingTextToSpeech", "");
+        }
+        return ActionResult::RUNNING;
+    
+      case TextToSpeechStatus::Failed:
+        // Audio load failed
+        if(DEBUG_SAYTEXT_ACTION){
+          PRINT_NAMED_DEBUG("SayTextAction.Init.TextToSpeechFailed", "");
+        }
+        return ActionResult::FAILURE_ABORT;
+        
+      case TextToSpeechStatus::Ready:
+      {
+        // Set Audio data right before action runs
+        float duration_ms = 0.0;
+        const bool success = _robot.GetTextToSpeechController().PrepareToSay(_text, _style, duration_ms);
+        if (!success) {
+          PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
+          return ActionResult::FAILURE_ABORT;
+        }
+        
+        // Make timeout relative to the length of the sound, in seconds, now that we know its duration
+        _timeout_sec = 3.f * .001f * duration_ms; // "3" is a fudge factor, .001 to convert from ms to sec
+        
+        if(DEBUG_SAYTEXT_ACTION){
+          PRINT_NAMED_DEBUG("SayTextAction.Init.TextToSpeechReady", "Got duration=%.2fms, timeout=%.1fsec",
+                            duration_ms, _timeout_sec);
+        }
+
+        return ActionResult::SUCCESS;
+      }
     }
     
-    // Make timeout relative to the length of the sound, in seconds, now that we know it's duration
-    _timeout_sec = 1.5f * .001f * duration_ms;
-    
-    return ActionResult::SUCCESS;
   } // Init()
   
   ActionResult SayTextAction::CheckIfDone()
   {
-    switch(_textToSpeechStatus)
-    {
-      case TextToSpeechStatus::Ready:
-        // Play the animation action once the audio is ready
-        return _playAnimationAction.Update();
-        
-      case TextToSpeechStatus::Loading:
-        // Wait for audio to load
-        return ActionResult::RUNNING;
-        
-      case TextToSpeechStatus::Failed:
-        // Audio load failed
-        return ActionResult::FAILURE_ABORT;
-        
-    } // switch(_textToSpeechStatus)
+    ASSERT_NAMED(_textToSpeechStatus == TextToSpeechStatus::Ready,
+                 "SayTextAction.CheckIfDone.TextToSpeechNotReady");
+    
+    if(DEBUG_SAYTEXT_ACTION){
+      PRINT_NAMED_DEBUG("SayTextAction.CheckIfDone.UpdatingAnimation", "");
+    }
+    return _playAnimationAction.Update();
     
   } // CheckIfDone()
   
