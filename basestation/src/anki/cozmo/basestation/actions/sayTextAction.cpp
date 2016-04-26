@@ -41,12 +41,12 @@ namespace Cozmo {
   ActionResult SayTextAction::Init()
   {
     _isTextToSpeechReady = false;
-    TextToSpeech::ReadyCallback callback = [this]()
+    TextToSpeechController::ReadyCallback callback = [this]()
     {
       _isTextToSpeechReady = true;
     };
     
-    Result result = _robot.GetTextToSpeech().PrepareToSay(_text, _style, callback);
+    Result result = _robot.GetTextToSpeechController().PrepareToSay(_text, _style, callback);
     if(RESULT_OK != result) {
       PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
       return ActionResult::FAILURE_ABORT;

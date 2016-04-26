@@ -53,7 +53,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/textToSpeech/textToSpeech.h"
+#include "anki/cozmo/basestation/textToSpeech/textToSpeechController.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -536,7 +536,7 @@ public:
     Result RequestIMU(const u32 length_ms) const;
 
     // Get text to speech component
-    TextToSpeech& GetTextToSpeech() { return _textToSpeech; }
+    TextToSpeechController& GetTextToSpeechController() { return _textToSpeechController; }
   
 
     // =========== Pose history =============
@@ -747,12 +747,12 @@ public:
     s32 _numAnimationAudioFramesStreamed = 0;
     u8  _animationTag                    = 0;
   
-    //ActionQueue       _actionQueue;
-    ActionList         _actionList;
-    MovementComponent  _movementComponent;
-    VisionComponent    _visionComponent;
-    NVStorageComponent _nvStorageComponent;
-    TextToSpeech       _textToSpeech;
+    //ActionQueue           _actionQueue;
+    ActionList              _actionList;
+    MovementComponent       _movementComponent;
+    VisionComponent         _visionComponent;
+    NVStorageComponent      _nvStorageComponent;
+    TextToSpeechController  _textToSpeechController;
   
     // Hash to not spam debug messages
     size_t            _lastDebugStringHash;

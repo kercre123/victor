@@ -1,5 +1,5 @@
 /**
-* File: textToSpeech
+* File: textToSpeechController.h
 *
 * Author: Molly Jameson
 * Created: 3/21/16
@@ -42,12 +42,12 @@ namespace Cozmo {
     class AudioWaveFileReader;
   }
   
-class TextToSpeech
+class TextToSpeechController
 {
 public:
-  TextToSpeech(Util::Data::DataPlatform* dataPlatform,
-               Audio::AudioController* audioController);
-  ~TextToSpeech();
+  TextToSpeechController(Util::Data::DataPlatform* dataPlatform,
+                         Audio::AudioController* audioController);
+  ~TextToSpeechController();
 
   // Creates the wave file for the given text, to be played later.
   // Returns the full path to the created file.

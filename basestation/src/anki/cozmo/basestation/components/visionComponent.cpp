@@ -1335,7 +1335,7 @@ namespace Cozmo {
     Unlock();
     
     // Get the robot ready to be able to say the name
-    _robot.GetTextToSpeech().CreateSpeech(name);
+    _robot.GetTextToSpeechController().CreateSpeech(name);
   }
   
 } // namespace Cozmo
