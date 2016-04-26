@@ -38,7 +38,7 @@ namespace Cozmo {
     virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
     
     virtual u8 GetTracksToLock() const override { 
-      return (u8)AnimTrackFlag::AUDIO_TRACK;
+      return (u8)AnimTrackFlag::NO_TRACKS;
     }
     
     // TODO: Add ability to set which animation group (as long as it has special audio event)
