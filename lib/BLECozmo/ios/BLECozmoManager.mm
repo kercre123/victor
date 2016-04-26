@@ -38,6 +38,7 @@ UInt64 BLE_TimeInNanoseconds() {
 
 @end
 
+static bool StateIsConnectingOrConnected(BLEConnectionState state);
 
 @implementation BLECozmoManager
 
@@ -51,7 +52,7 @@ UInt64 BLE_TimeInNanoseconds() {
 
 #define ANKI_STR_SERVICE_UUID @"763dbeef-5df1-405e-8aac-51572be5bab3"
 #define ANKI_STR_CHR_TOPHONE_UUID @"763dbee0-5df1-405e-8aac-51572be5bab3"
-#define ANKI_STR_CHR_TOCAR_UUID @"763dbee1-5df1-405e-8aac-51572be5bab3"
+#define ANKI_STR_CHR_TOCOZMO_UUID @"763dbee1-5df1-405e-8aac-51572be5bab3"
 #define BLECozmoManagerServiceName @"BLECozmoService"
 
 
@@ -68,7 +69,7 @@ UInt64 BLE_TimeInNanoseconds() {
   static CBUUID* characteristicID = nil;
   static dispatch_once_t onceToken;
   dispatch_once(&onceToken, ^{
-    characteristicID = [CBUUID UUIDWithString:ANKI_STR_CHR_TOCAR_UUID];
+    characteristicID = [CBUUID UUIDWithString:ANKI_STR_CHR_TOCOZMO_UUID];
   });
   return characteristicID;
 }
@@ -113,8 +114,9 @@ UInt64 BLE_TimeInNanoseconds() {
 #pragma mark - Connection Lookup
 
 -(BLECozmoConnection *)connectionForPeripheral:(CBPeripheral *)peripheral {
-  if ( !peripheral )
+  if ( !peripheral ) {
     return nil;
+  }
   
   return self.connectionsByPeripheralId[peripheral.identifier];
 }
@@ -279,8 +281,9 @@ UInt64 BLE_TimeInNanoseconds() {
 
 -(void)service:(BLECentralServiceDescription *)service discoveredCharacteristic:(CBCharacteristic *)characteristic forPeripheral:(CBPeripheral *)peripheral {
   BLECozmoConnection *vehicleConn = [self connectionForPeripheral:peripheral];
-  if ( !vehicleConn )
+  if ( !vehicleConn ) {
     return;
+  }
   
   if([[characteristic UUID] isEqual:[BLECozmoManager outboundCharacteristicID]]) {
     vehicleConn.toCarCharacteristic = characteristic;
@@ -313,8 +316,9 @@ UInt64 BLE_TimeInNanoseconds() {
 
 -(void)service:(BLECentralServiceDescription *)service didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic forPeripheral:(CBPeripheral *)peripheral error:(NSError *)error {
   BLECozmoConnection *vehicleConn = [self connectionForPeripheral:peripheral];
-  if (!vehicleConn)
+  if (!vehicleConn) {
     return;
+  }
   if([[characteristic UUID] isEqual:[BLECozmoManager inboundCharacteristicID]]) {
     vehicleConn.toPhoneCharacteristic = characteristic;
     if(vehicleConn.toCarCharacteristic) {
@@ -332,8 +336,9 @@ UInt64 BLE_TimeInNanoseconds() {
 
 -(void)service:(BLECentralServiceDescription *)service incomingMessage:(NSData *)message onCharacteristic:(CBCharacteristic*)characteristic forPeripheral:(CBPeripheral *)peripheral {
   BLECozmoConnection* vehicleConnection = [self connectionForPeripheral:peripheral];
-  if ( !vehicleConnection )
+  if ( !vehicleConnection ) {
     return;
+  }
   
   static Anki::Cozmo::BLECozmoMessage cozmoMessage{};
   BLEAssert(!cozmoMessage.IsMessageComplete());
@@ -362,8 +367,9 @@ UInt64 BLE_TimeInNanoseconds() {
 
 -(void)service:(BLECentralServiceDescription *)service peripheral:(CBPeripheral *)peripheral didUpdateRSSI:(NSNumber *)rssiVal {
   BLECozmoConnection *vehicleConn = [self connectionForPeripheral:peripheral];
-  if (!vehicleConn)
+  if (!vehicleConn) {
     return;
+  }
   
   vehicleConn.scannedRSSI = rssiVal.integerValue;
   BLELogDebug("BLECozmoManager.advertisedRSSI", "0x%llx = %ld", vehicleConn.mfgID, (long)rssiVal.integerValue);
@@ -372,8 +378,9 @@ UInt64 BLE_TimeInNanoseconds() {
 
 -(void)service:(BLECentralServiceDescription*)service peripheral:(CBPeripheral*)peripheral didUpdateAdvertisementData:(NSDictionary*)advertisementData {
   BLECozmoConnection *vehicleConn = [self connectionForPeripheral:peripheral];
-  if (!vehicleConn)
+  if (!vehicleConn) {
     return;
+  }
   
   [vehicleConn updateWithAdvertisementData:advertisementData];
   [self notifyVehicleDidUpdateAdvertisement:vehicleConn];
@@ -382,8 +389,9 @@ UInt64 BLE_TimeInNanoseconds() {
 -(void)service:(BLECentralServiceDescription*)service peripheral:(CBPeripheral*)peripheral didWriteValueForCharacteristic:(CBCharacteristic *)characteristic
          error:(NSError *)error {
   // We only care about this if it's an error..
-  if ( !error )
+  if ( !error ) {
     return;
+  }
   
   BLECozmoConnection *vehicleConn = [self connectionForPeripheral:peripheral];
   if (vehicleConn) {
@@ -405,11 +413,15 @@ UInt64 BLE_TimeInNanoseconds() {
 
 #pragma mark - Connect / Disconnect Vehicles
 
+static bool StateIsConnectingOrConnected(BLEConnectionState state) {
+  return state > kDisconnected;
+}
+
 - (void)connectPeripheralForVehicleConnection:(BLECozmoConnection *)connection {
   BLEAssert(connection != nil);
   
   // only connect to devices that aren't already in some phase of connection
-  if (connection.connectionState > kDisconnected) {
+  if (StateIsConnectingOrConnected(connection.connectionState)) {
     return;
   }
   
@@ -446,7 +458,7 @@ UInt64 BLE_TimeInNanoseconds() {
               "0x%llx connectionState: %d",
               connection.mfgID, connection.connectionState);
   
-  if (connection.connectionState > kDisconnected ) {
+  if (StateIsConnectingOrConnected(connection.connectionState)) {
     [_centralMultiplexer disconnectPeripheral:connection.carPeripheral withService:[self serviceDescription]];
   }
 }
@@ -460,7 +472,7 @@ UInt64 BLE_TimeInNanoseconds() {
     BLELogError("BLECozmoManager.setVehicleConnectionState.unknownPeripheral", "%p", peripheral);
     return;
   }
-  if (vehicleConn.connectionState > kDisconnected) {
+  if (StateIsConnectingOrConnected(vehicleConn.connectionState)) {
     BLELogInfo("BLECozmoManager.setVehicleConnectionState", "vehicle=0x%llx state=%d", vehicleConn.mfgID, connectionState);
   }
   vehicleConn.connectionState = connectionState;

@@ -247,16 +247,18 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
 {
   if ( self.connectionState != kConnectedPipeReady ) {
     NSError *e = [NSError errorWithDomain:@"com.anki.drive.BLECozmoConnection.error" code:BLECozmoConnectionErrorCodeNotConnected userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Cozmo is not connected.", nil)}];
-    if (error != NULL)
+    if (error != NULL) {
       *error = e;
+    }
     
     return NO;
   }
   
   if ( data.length != Anki::Cozmo::BLECozmoMessage::kMessageExactMessageLength ) {
     NSError *e = [NSError errorWithDomain:@"com.anki.drive.BLECozmoConnection.error" code:BLECozmoConnectionErrorCodeMessageSizeIncorrect userInfo:@{NSLocalizedDescriptionKey: NSLocalizedString(@"Cozmo message is not correct message length", nil)}];
-    if (error != NULL)
+    if (error != NULL) {
       *error = e;
+    }
     
     return NO;
   }

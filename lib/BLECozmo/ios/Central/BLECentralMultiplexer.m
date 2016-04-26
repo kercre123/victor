@@ -37,9 +37,9 @@ NSString* const BLECentralMultiplexerIsWedgedNotification = @"BLECentralMultiple
 #define BLE_SECONDS_BEFORE_LONG_EXPIRATION 90.0f
 
 #if TARGET_OS_MAC && !(TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR)
-static const BOOL _onMacOsX = YES;
+static const BOOL kOnMacOsX = YES;
 #else
-static const BOOL _onMacOsX = NO;
+static const BOOL kOnMacOsX = NO;
 #endif
 
 @interface BLECentralMultiplexer () <CBCentralManagerDelegate,CBPeripheralDelegate>
@@ -162,7 +162,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
     _centralManagerState = centralManager.state;
     _registeredServicesByServiceID = [NSMutableDictionary dictionaryWithCapacity:4];
     _scanningServices = [NSMutableSet setWithCapacity:4];
-    _usePeripheralNameIfLocalNameIsAbsent = _onMacOsX;
+    _usePeripheralNameIfLocalNameIsAbsent = kOnMacOsX;
     _advertisementsByPeripheralAddress = [NSMutableDictionary dictionary];
     _servicesForPeripheral = [NSMapTable mapTableWithKeyOptions:NSMapTableWeakMemory valueOptions:NSMapTableStrongMemory];
     _pendingConnections = [NSMutableArray arrayWithCapacity:20];
