@@ -31,7 +31,7 @@ public class FactoryLogPanel : MonoBehaviour {
       GameObject.Destroy(_LogTextList.GetChild(i).gameObject);
     }
 
-    for (int i = 0; i < logQueue.Count; ++i) {
+    for (int i = 0; i < Mathf.Min(logQueue.Count, 80); ++i) {
       GameObject textInstance = GameObject.Instantiate(_TextPrefab.gameObject);
       textInstance.transform.SetParent(_LogTextList, false);
       textInstance.GetComponent<UnityEngine.UI.Text>().text = logQueue[i];
