@@ -69,12 +69,17 @@ namespace Anki {
       // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
       // by animationStreamer (the source of the event that marks _wasAborted), then expliclty tell animationStreamer
       // to clean up
-      if(!_stoppedPlaying && !_wasAborted) {
+      if(_startedPlaying) {
+        if(!_stoppedPlaying && !_wasAborted) {
+        PRINT_NAMED_WARNING("PlayAnimationAction.Destructor.NotStoppedOrAborted",
+                            "Action destructing, but stopped/aborted message not "
+                            "received for animation %s", _animName.c_str());
         _robot.GetAnimationStreamer().SetStreamingAnimation(_robot, nullptr);
-      }
-      else
-      {
-        _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>("");
+        }
+      } else {
+        PRINT_NAMED_WARNING("PlayAnimationAction.Destructor.NotStoppedOrAborted",
+                            "Destructing action before %s ever started",
+                            _animName.c_str());
       }
     }
 
