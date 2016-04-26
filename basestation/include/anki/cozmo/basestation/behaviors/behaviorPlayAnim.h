@@ -30,19 +30,12 @@ public:
   
   virtual ~BehaviorPlayAnim();
   
-  void SetAnimationName(const std::string& inName);
-  
-  void SetLoopCount(int newVal) { _loopCount = newVal; } // -ve means loop forever
-  
   virtual bool IsRunnable(const Robot& robot) const override;
   
 protected:
   
   virtual Result InitInternal(Robot& robot) override;
-  virtual Status UpdateInternal(Robot& robot) override;
-  virtual void   StopInternal(Robot& robot) override;
-  
-  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override { }
   
 private:
   
@@ -50,17 +43,8 @@ private:
   
   // ========== Members ==========
   
-  std::string   _animationName;
-  
-  int           _loopCount;
-
-  int           _loopsLeft;
-  u32           _lastActionTag;
-
-  bool          _isInterruptable;
-  bool          _isInterrupted;
-
-  bool          _isActing;
+  std::string   _animationName;  
+  int           _numLoops;
 };
   
 
