@@ -16,13 +16,6 @@
 
 namespace Anki {
 namespace Cozmo {
-
-# define PLACEHOLDER_CODE 1
-  
-# if PLACEHOLDER_CODE
-  static Animation tempAnim;
-  static bool animSent = false;
-# endif
   
   SayTextAction::SayTextAction(Robot& robot, const std::string& text, SayTextStyle style)
   : IAction(robot)
@@ -38,7 +31,7 @@ namespace Cozmo {
       _name = "SayText_" + _text + "_Action";
     }
     
-    // Make our animation a "live" animation with a single audio keyframe
+    // Make our animation a "live" animation with a single audio keyframe at the beginning
     _animation.SetIsLive(true);
     _animation.AddKeyFrameToBack(RobotAudioKeyFrame(Audio::GameEvent::GenericEvent::Vo_Coz_External_Play, 0));
     
@@ -48,11 +41,11 @@ namespace Cozmo {
                                                               const std::string& fileName)
     {
       if (success) {
-        _isTextToSpeechReady = true;
+        _textToSpeechStatus = TextToSpeechStatus::Ready;
       }
       else {
-        PRINT_NAMED_ERROR("SayTextAction.SayTextAction.LoadSpeechData", "");
-        // Abort Action
+        PRINT_NAMED_ERROR("SayTextAction.SayTextAction.LoadSpeechDataFailed", "");
+        _textToSpeechStatus = TextToSpeechStatus::Failed;
       }
     };
     
@@ -66,44 +59,36 @@ namespace Cozmo {
   
   ActionResult SayTextAction::Init()
   {
-    // Run Action
     // Set Audio data right before action runs
     float duration_ms = 0.0;  // FIXME: hook up to action time out
     const bool success = _robot.GetTextToSpeechController().PrepareToSay(_text, _style, duration_ms);
     if (!success) {
+      PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
       return ActionResult::FAILURE_ABORT;
     }
     
-    
-#   if PLACEHOLDER_CODE
-    tempAnim.SetIsLive(true);
-    tempAnim.AddKeyFrameToBack(RobotAudioKeyFrame(Audio::GameEvent::GenericEvent::Vo_Coz_External_Play, 0));
-    animSent = false;
-#   endif
-    
     return ActionResult::SUCCESS;
-  }
+  } // Init()
   
   ActionResult SayTextAction::CheckIfDone()
   {
-    if(_isTextToSpeechReady) {
-#     if PLACEHOLDER_CODE
-      if(!animSent) {
-        _robot.GetAnimationStreamer().SetStreamingAnimation(_robot, &tempAnim);
-        animSent = true;
+    switch(_textToSpeechStatus)
+    {
+      case TextToSpeechStatus::Ready:
+        // Play the animation action once the audio is ready
+        return _playAnimationAction.Update();
+        
+      case TextToSpeechStatus::Loading:
+        // Wait for audio to load
         return ActionResult::RUNNING;
-      } else if(_robot.IsAnimating()) {
-        return ActionResult::RUNNING;
-      } else {
-        return ActionResult::SUCCESS;
-      }
-#     else
-      return _playAnimationGroupAction.Update();
-#     endif
-    } else {
-      return ActionResult::RUNNING;
-    }
-  }
+        
+      case TextToSpeechStatus::Failed:
+        // Audio load failed
+        return ActionResult::FAILURE_ABORT;
+        
+    } // switch(_textToSpeechStatus)
+    
+  } // CheckIfDone()
   
   
 } // namespace Cozmo
