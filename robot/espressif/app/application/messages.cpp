@@ -50,7 +50,7 @@ namespace Anki {
           }
           default:
           {
-            AnkiError( 151, "Messages.SendNVOpResult", 415, "Unhandled report destination %d", 1, dest);
+            AnkiError( 151, "Messages.SendNVOpResult", 445, "Unhandled report destination %d", 1, dest);
           }
         }
       }
@@ -105,7 +105,7 @@ namespace Anki {
             }
             default:
             {
-              AnkiError( 152, "Messages.NVReadDoneCB", 415, "Unhandled report destination %d", 1, nvOpReportTo);
+              AnkiError( 152, "Messages.NVReadDoneCB", 445, "Unhandled report destination %d", 1, nvOpReportTo);
             }
           }
         }

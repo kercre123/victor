@@ -1423,6 +1423,7 @@
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-cti_gyp_path):ctiVisionRobot',
         '<(ce-audio_path):DriveAudioEngine',
+        '<(ce-ble_cozmo_path):BLECozmo',
       ],
       'type': '<(engine_library_type)',
       'conditions': [    
