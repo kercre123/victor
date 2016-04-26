@@ -4,6 +4,8 @@
  * Author: Molly Jameson
  * Created: 3/21/16
  *
+ * Overhaul: Andrew Stein / Jordan Rivas, 4/22/16
+ *
  * Description: Flite wrapper to save a wav.
  *
  * Copyright: Anki, inc. 2016
@@ -75,7 +77,7 @@ void TextToSpeechController::CreateSpeech(const std::string& text, CompletionFun
         success = true;
       }
       else {
-        // Create text to speach file
+        // Create text to speech file
         float duration = flite_text_to_speech( text.c_str(), _voice, fullPath.c_str() );
         success = ( duration > 0.0 );
         auto emplaceIter = _filenameLUT.emplace( text, fullPath );
@@ -100,7 +102,7 @@ void TextToSpeechController::LoadSpeechData(const std::string& text, SayTextStyl
 {
   using namespace Audio;
   
-  // Check if text to speach file exist, if not created it
+  // Check if text to speech file exist, if not created it
   CreateSpeech( text, [this, text, completion] (bool successCreateSpeech, const std::string& text, const std::string& fileName)
   {
     if (successCreateSpeech) {
@@ -157,7 +159,7 @@ bool TextToSpeechController::PrepareToSay(const std::string& text, SayTextStyle 
 } // PrepareToSay()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechController::ClearLoadedSpeachData(const std::string& text, SayTextStyle style, SimpleCompletionFunc completion)
+void TextToSpeechController::ClearLoadedSpeechData(const std::string& text, SayTextStyle style, SimpleCompletionFunc completion)
 {
   using namespace Util;
   Dispatch::Async(_dispatchQueue, [this, text, style, completion]
@@ -180,7 +182,7 @@ void TextToSpeechController::ClearLoadedSpeachData(const std::string& text, SayT
       completion();
     }
   });
-} // ClearLoadedSpeachData()
+} // ClearLoadedSpeechData()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechController::ClearAllLoadedAudioData(bool deleteStaleFiles, SimpleCompletionFunc completion)
@@ -240,7 +242,7 @@ std::vector<std::string> TextToSpeechController::FindAllTextToSpeechFiles()
   for ( auto& aFileName : dirFiles ) {
     // Check if file starts with desired prefix
     if ( aFileName.compare( 0, prefixStr.length(), prefixStr ) == 0 ) {
-      fileNames.emplace_back(dirPath + "/" + aFileName);
+      fileNames.emplace_back(FileUtils::FullFilePath({dirPath, aFileName}));
     }
   }
   return fileNames;

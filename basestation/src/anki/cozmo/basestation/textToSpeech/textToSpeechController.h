@@ -4,7 +4,7 @@
 * Author: Molly Jameson
 * Created: 3/21/16
 *
-* Update: Andrew Stein, 4/22/16
+* Overhaul: Andrew Stein / Jordan Rivas, 4/22/16
 *
 * Description: Flite wrapper to save a wave made from a given text string.
 *
@@ -71,7 +71,7 @@ public:
   bool PrepareToSay(const std::string& text, SayTextStyle style, float& out_duration_ms);
   
   // Asynchronous clear loaded text's audio data from memory
-  void ClearLoadedSpeachData(const std::string& text, SayTextStyle style, SimpleCompletionFunc completion = nullptr);
+  void ClearLoadedSpeechData(const std::string& text, SayTextStyle style, SimpleCompletionFunc completion = nullptr);
   
   // Asynchronous clear ALL loaded text audio data from memory, if deleteStaleFiles is true all text to speech files
   // on disk will be deleted.
