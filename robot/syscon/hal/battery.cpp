@@ -11,7 +11,7 @@
 #include "rtos.h"
 
 static const int MaxContactTime = 90000; // (30min) 20ms per count
-static int ContactTime = 0;
+static const int MinContactTime = 100;   //
 
 // Updated to 3.0
 const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
@@ -198,13 +198,17 @@ void Battery::manage(void* userdata)
         vExt = calcResult(VEXT_SCALE);
         onContacts = vExt > VEXT_DETECT_THRESHOLD;
         startADCsample(ANALOG_CLIFF_SENSE);
+                
+        static int ContactTime = 0;
         
-        if (onContacts) {
-          if (ContactTime++ < MaxContactTime) {
-            //nrf_gpio_pin_set(PIN_CHARGE_EN);
-          } else {
-            nrf_gpio_pin_clear(PIN_CHARGE_EN);
-          }
+        if (!onContacts) {
+          ContactTime = 0;
+        } else {
+          ContactTime++;
+        }
+
+        if (ContactTime < MaxContactTime && ContactTime > MinContactTime) {
+          nrf_gpio_pin_set(PIN_CHARGE_EN);
         } else {
           nrf_gpio_pin_clear(PIN_CHARGE_EN);
         }
