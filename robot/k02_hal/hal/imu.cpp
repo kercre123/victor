@@ -1,5 +1,6 @@
 // Low-level driver for Bosch BMI160 combo gyro+accelerometer
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/drop.h"
 #include "hal/portable.h"
 #include "hal/i2c.h"
 #include "hal/imu.h"
@@ -19,98 +20,6 @@ IMUData Anki::Cozmo::HAL::IMU::IMUState;
 u32 Anki::Cozmo::HAL::IMU::frameNumberStamp;
 u16 Anki::Cozmo::HAL::IMU::scanLineStamp;
 
-static const uint8_t CMD = 0x7e;
-static const uint8_t STEP_CONF_1 = 0x7b;
-static const uint8_t STEP_CONF_0 = 0x7a;
-static const uint8_t STEP_CNT_1 = 0x79;
-static const uint8_t STEP_CNT_0 = 0x78;
-static const uint8_t OFFSET_6 = 0x77;
-static const uint8_t OFFSET_5 = 0x76;
-static const uint8_t OFFSET_4 = 0x75;
-static const uint8_t OFFSET_3 = 0x74;
-static const uint8_t OFFSET_2 = 0x73;
-static const uint8_t OFFSET_1 = 0x72;
-static const uint8_t OFFSET_0 = 0x71;
-static const uint8_t NV_CONF = 0x70;
-static const uint8_t SELF_TEST = 0x6d;
-static const uint8_t PMU_TRIGGER = 0x6c;
-static const uint8_t IF_CONF = 0x6b;
-static const uint8_t CONF = 0x6a;
-static const uint8_t FOC_CONF = 0x69;
-static const uint8_t INT_FLAT_1 = 0x68;
-static const uint8_t INT_FLAT_0 = 0x67;
-static const uint8_t INT_ORIENT_1 = 0x66;
-static const uint8_t INT_ORIENT_0 = 0x65;
-static const uint8_t INT_TAP_1 = 0x64;
-static const uint8_t INT_TAP_0 = 0x63;
-static const uint8_t INT_MOTION_3 = 0x62;
-static const uint8_t INT_MOTION_2 = 0x61;
-static const uint8_t INT_MOTION_1 = 0x60;
-static const uint8_t INT_MOTION_0 = 0x5f;
-static const uint8_t INT_LOWHIGH_4 = 0x5e;
-static const uint8_t INT_LOWHIGH_3 = 0x5d;
-static const uint8_t INT_LOWHIGH_2 = 0x5c;
-static const uint8_t INT_LOWHIGH_1 = 0x5b;
-static const uint8_t INT_LOWHIGH_0 = 0x5a;
-static const uint8_t INT_DATA_1 = 0x59;
-static const uint8_t INT_DATA_0 = 0x58;
-static const uint8_t INT_MAP_2 = 0x57;
-static const uint8_t INT_MAP_1 = 0x56;
-static const uint8_t INT_MAP_0 = 0x55;
-static const uint8_t INT_LATCH = 0x54;
-static const uint8_t INT_OUT_CTRL = 0x53;
-static const uint8_t INT_EN_2 = 0x52;
-static const uint8_t INT_EN_1 = 0x51;
-static const uint8_t INT_EN_0 = 0x50;
-static const uint8_t MAG_IF_4 = 0x4f;
-static const uint8_t MAG_IF_3 = 0x4e;
-static const uint8_t MAG_IF_2 = 0x4d;
-static const uint8_t MAG_IF_1 = 0x4c;
-static const uint8_t MAG_IF_0 = 0x4b;
-static const uint8_t FIFO_CONFIG_1 = 0x47;
-static const uint8_t FIFO_CONFIG_0 = 0x46;
-static const uint8_t FIFO_DOWNS = 0x45;
-static const uint8_t MAG_CONF = 0x44;
-static const uint8_t GYR_RANGE = 0x43;
-static const uint8_t GYR_CONF = 0x42;
-static const uint8_t ACC_RANGE = 0x41;
-static const uint8_t ACC_CONF = 0x40;
-static const uint8_t FIFO_DATA = 0x24;
-static const uint8_t FIFO_LENGTH_1 = 0x23;
-static const uint8_t FIFO_LENGTH_0 = 0x22;
-static const uint8_t TEMPERATURE_1 = 0x21;
-static const uint8_t TEMPERATURE_0 = 0x20;
-static const uint8_t INT_STATUS_3 = 0x1f;
-static const uint8_t INT_STATUS_2 = 0x1e;
-static const uint8_t INT_STATUS_1 = 0x1d;
-static const uint8_t INT_STATUS_0 = 0x1c;
-static const uint8_t STATUS = 0x1b;
-static const uint8_t SENSORTIME_2 = 0x1a;
-static const uint8_t SENSORTIME_1 = 0x19;
-static const uint8_t SENSORTIME_0 = 0x18;
-static const uint8_t DATA_19 = 0x17;
-static const uint8_t DATA_18 = 0x16;
-static const uint8_t DATA_17 = 0x15;
-static const uint8_t DATA_16 = 0x14;
-static const uint8_t DATA_15 = 0x13;
-static const uint8_t DATA_14 = 0x12;
-static const uint8_t DATA_13 = 0x11;
-static const uint8_t DATA_12 = 0x10;
-static const uint8_t DATA_11 = 0x0f;
-static const uint8_t DATA_10 = 0x0e;
-static const uint8_t DATA_9 = 0x0d;
-static const uint8_t DATA_8 = 0x0c;
-static const uint8_t DATA_7 = 0x0b;
-static const uint8_t DATA_6 = 0x0a;
-static const uint8_t DATA_5 = 0x09;
-static const uint8_t DATA_4 = 0x08;
-static const uint8_t DATA_3 = 0x07;
-static const uint8_t DATA_2 = 0x06;
-static const uint8_t DATA_1 = 0x05;
-static const uint8_t DATA_0 = 0x04;
-static const uint8_t PMU_STATUS = 0x03;
-static const uint8_t ERR_REG = 0x02;
-static const uint8_t CHIP_ID = 0x00;
 
 static const uint8_t RANGE_2G = 0x03;
 static const uint8_t INT_OPEN_DRAIN = 0x44;
@@ -121,8 +30,13 @@ static const uint8_t CONF_GYRO = 0x09;    // 4x oversample, 200Hz update
 static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;      //In 2g mode, 16384 LSB/g
 static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f);   //In FS500 mode, 65.6 deg/s / LSB
 
-static bool readyForIMU = true;
 static IMUData imu_state;
+static bool imu_updated = false;
+
+static const int IMU_UPDATE_FREQUENCY = 200;  // 200hz
+static const int MANAGE_FREQUENCY = DROPS_PER_SECOND;
+static const int ADJUST_OVERSHOOT = IMU_UPDATE_FREQUENCY * 4; // This is a guess on how long it takes for IMU data to transmit
+static int update_counter = 0;
 
 void Anki::Cozmo::HAL::IMU::Init(void) {
   // XXX: The first command is ignored - so power up twice - clearly I don't know what I'm doing here
@@ -150,11 +64,25 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
 }
 
 static void copy_state() {
+  // Attempt to find the adjustment for the update counter
+  uint8_t offset = 0x80 + 0x40 - (imu_state.timestamp & ~0x80);
+  update_counter = offset * MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY + ADJUST_OVERSHOOT;
+  
   using namespace Anki::Cozmo::HAL;
-  Anki::Cozmo::HAL::IMU::frameNumberStamp = CameraGetFrameNumber();
-  Anki::Cozmo::HAL::IMU::scanLineStamp    = CameraGetScanLine();
-  memcpy(&IMU::IMUState, &imu_state, sizeof(IMUData));
 
+  static bool imu_toggle = false;
+  bool new_toggle = (imu_state.timestamp & 0x80) != 0;
+  
+  // De-dupe
+  if (imu_toggle == new_toggle) {
+    return ;
+  }
+
+  IMU::frameNumberStamp = CameraGetFrameNumber();
+  IMU::scanLineStamp    = CameraGetScanLine();
+  memcpy(&IMU::IMUState, &imu_state, sizeof(IMUData));
+  imu_updated = true;
+  
 #ifdef IMU_DEBUG
   for (int i = 0; i < sizeof(IMUData); i++)
     UART::DebugPrintf("%02x ", ((uint8_t*) data)[i]);
@@ -162,15 +90,17 @@ static void copy_state() {
 #endif
 }
 
-void Anki::Cozmo::HAL::IMU::Update(void) {
-  readyForIMU = true;
-}
-
 void Anki::Cozmo::HAL::IMU::Manage(void) {
-  if (!readyForIMU) {
+
+  // Adjust up the IMU update frequency
+  update_counter -= IMU_UPDATE_FREQUENCY;
+  
+  if (update_counter > 0) {
     return ;
   }
-  readyForIMU = false;
+
+  // This will be overridden, but make sure we don't read too quickly if the IMU data doesn't get read fast enough
+  update_counter += MANAGE_FREQUENCY;
 
   // Configure I2C bus to read IMU data
   I2C::SetupRead(&imu_state, sizeof(IMUData), copy_state);
@@ -194,8 +124,11 @@ void Anki::Cozmo::HAL::IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* ti
   *timestamp = IMU::IMUState.timestamp;
 }
 
-void Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
+bool Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
 {
+  bool updated = imu_updated;
+  imu_updated = false;
+  
   // Accelerometer uses 12 most significant bits - gyro uses all 16
   #define ACC_CONVERT(raw)  (ACC_RANGE_CONST  * raw)
   #define GYRO_CONVERT(raw) (GYRO_RANGE_CONST * raw)
@@ -206,11 +139,13 @@ void Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
   imuData.rate_y = GYRO_CONVERT(IMU::IMUState.gyro[1]);
   imuData.acc_z  = ACC_CONVERT(-IMU::IMUState.acc[0]);
   imuData.rate_z = GYRO_CONVERT(-IMU::IMUState.gyro[0]);
+  
+  return updated;
 }
 
 void Anki::Cozmo::HAL::IMUGetCameraTime(uint32_t* const frameNumber, uint8_t* const line2Number)
 {
-	static const int SCAN_LINES_PER_FRAME = 500; ///< In future this may be 500 +/- 1 for multi-player synchronization
+  static const int SCAN_LINES_PER_FRAME = 500; ///< In future this may be 500 +/- 1 for multi-player synchronization
   static const int SCAN_LINE_RATE_HZ = 7440;
   const float LINES_PER_FRAME = static_cast<float>(SCAN_LINES_PER_FRAME);
   float scanLine = static_cast<float>(IMU::scanLineStamp)

@@ -109,6 +109,5 @@ int main (void)
   do {
     // Wait for head body sync to occur
     UART::WaitForSync();
-    Anki::Cozmo::HAL::IMU::Update();
   } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
 }

@@ -263,7 +263,7 @@ namespace Anki
       // y-axis points out of cozmo's left
       // z-axis points out the top of cozmo's head
       // NB: DO NOT CALL THIS MORE THAN ONCE PER MAINEXECUTION TIC!!!
-      void IMUReadData(IMU_DataStructure &IMUData);
+      bool IMUReadData(IMU_DataStructure &IMUData);
 
       // Read raw unscaled IMU values
       void IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp);
