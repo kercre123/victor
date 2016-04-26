@@ -19,7 +19,7 @@
 #include "app/cubeTest.h"
 #include "app/headTest.h"
 
-u8 g_fixtureReleaseVersion = 12;
+u8 g_fixtureReleaseVersion = 13;
 
 BOOL g_isDevicePresent = 0;
 FixtureType g_fixtureType = FIXTURE_NONE;
@@ -127,7 +127,7 @@ void SetFixtureText(void)
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
   DisplayMoveCursor(55, 0);
-  DisplayPutString("NOT FOR EP3");
+  DisplayPutString("EP3 ROBOT ONLY");
   
   DisplayFlip();
 }

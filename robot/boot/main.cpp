@@ -29,6 +29,7 @@ int main (void) {
 
   // XXX-NDM: I had to do this, since the test fixture needs the Espressif to come up
   Power::enableEspressif();
+  SPI::init();
   
   UART::init();
   EnterRecovery();

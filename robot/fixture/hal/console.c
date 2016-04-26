@@ -417,11 +417,11 @@ void SendTestChar(int c)
   PIN_IN(GPIOC, PINC_RX);
 
   // Wait for RX to go low/be low
-  while (GPIO_READ(GPIOC) & PINC_RX)
+  while (GPIO_READ(GPIOC) & GPIOC_RX)
     if (getMicroCounter()-start > 1000000)
       throw 2;
   // Now wait for it to go high
-  while (!(GPIO_READ(GPIOC) & PINC_RX))
+  while (!(GPIO_READ(GPIOC) & GPIOC_RX))
     if (getMicroCounter()-start > 1000000)
       throw 2;
     
@@ -437,7 +437,7 @@ void SendTestChar(int c)
   // Bit bang the UART, since it's miswired on EP3
   u32 now, last = getMicroCounter();
   c <<= 1;      // Start bit
-  c |= (1<<9);  // Stop bit
+  c |= (3<<9);  // Stop bits
   for (int i = 0; i < 11; i++)
   {
     while ((u32)((now = getMicroCounter())-last) < 10)
