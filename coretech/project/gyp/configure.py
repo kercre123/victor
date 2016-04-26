@@ -170,7 +170,6 @@ def main(scriptArgs):
                                 OS=mac
                                 ndk_root=INVALID
                                 kazmath_library_type=static_library
-                                tiny-AES128-C_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
@@ -197,7 +196,6 @@ def main(scriptArgs):
     os.environ['GYP_DEFINES'] = """  
                                 OS=ios
                                 kazmath_library_type=static_library
-                                tiny-AES128-C_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
@@ -224,7 +222,6 @@ def main(scriptArgs):
                                 OS=linux
                                 ndk_root=INVALID
                                 kazmath_library_type=static_library
-                                tiny-AES128-C_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
@@ -275,7 +272,6 @@ def main(scriptArgs):
     os.environ['ANDROID_BUILD_TOP'] = configurePath
     os.environ['GYP_DEFINES'] = """ 
                                 kazmath_library_type=static_library
-                                tiny-AES128-C_library_type=static_library
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
