@@ -76,6 +76,19 @@ void AIWhiteboard::OnRobotDelocalized()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::ProcessClearQuad(const Quad2f& quad)
+{
+  // remove all markers inside clear quads
+  auto isMarkerInsideQuad = [&quad](const PossibleMarker& marker) {
+    return quad.Contains( marker.pose.GetTranslation() );
+  };
+  _possibleMarkers.remove_if( isMarkerInsideQuad );
+  
+  // update render in case we removed something
+  UpdatePossibleMarkerRender();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIWhiteboard::AddBeacon( const Pose3d& beaconPos )
 {
   _beacons.emplace_back( beaconPos );

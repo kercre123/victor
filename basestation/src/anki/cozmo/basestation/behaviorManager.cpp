@@ -195,6 +195,7 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
   }
 
   StopCurrentBehavior();
+  _currentBehavior = nullptr; // immediately clear current since we just stopped it
 
   if( nullptr != nextBehavior ) {
     const Result initRet = nextBehavior->Init();
@@ -211,11 +212,9 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
       return true;
     }
   }
-  else {
-    // a null argument to this function means "switch to no behavior"
-    _currentBehavior = nullptr;
-    return true;
-  }
+  
+  // a null argument to this function means "switch to no behavior"
+  return true;
 }
 
 void BehaviorManager::SwitchToNextBehavior()

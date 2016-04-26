@@ -1443,22 +1443,22 @@ namespace Anki {
     : IAction(robot)
     , _doCalibration(doCalibration)
     {
-      
+      _toolCodeInfo.code = ToolCode::UnknownTool;
     }
     
     ActionResult ReadToolCodeAction::Init()
     {
       // Start calibration mode on robot
-      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(-0.5f, -0.3f, true)));
+      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableReadToolCodeMode(-0.5f, -0.3f, true)));
       
       _toolCodeLastMovedTime   = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       _state = State::WaitingToGetInPosition;
       
       _toolReadSignalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotReadToolCode,
          [this] (const AnkiEvent<ExternalInterface::MessageEngineToGame> &msg) {
-           _toolCodeRead = msg.GetData().Get_RobotReadToolCode().code;
+           _toolCodeInfo = msg.GetData().Get_RobotReadToolCode().info;
            PRINT_NAMED_INFO("ReadToolCodeAction.SignalHandler",
-                            "Read tool code: %s", EnumToString(_toolCodeRead));
+                            "Read tool code: %s", EnumToString(_toolCodeInfo.code));
            this->_state = State::ReadCompleted;
       });
       
@@ -1468,7 +1468,7 @@ namespace Anki {
     ReadToolCodeAction::~ReadToolCodeAction()
     {
       // Stop calibration mode on robot
-      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableCamCalibMode(0, 0, false)));
+      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableReadToolCodeMode(0, 0, false)));
       _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);
     }
     
@@ -1510,7 +1510,7 @@ namespace Anki {
           break;
           
         case State::ReadCompleted:
-          if(_toolCodeRead == ToolCode::UnknownTool) {
+          if(_toolCodeInfo.code == ToolCode::UnknownTool) {
             result = ActionResult::FAILURE_ABORT;
           } else {
             result = ActionResult::SUCCESS;
@@ -1523,9 +1523,9 @@ namespace Anki {
     
     void ReadToolCodeAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
-      ReadToolCodeCompleted info;
-      info.code = _toolCodeRead;
-      completionUnion.Set_readToolCodeCompleted(std::move( info ));
+      ReadToolCodeCompleted toolCodeComplete;
+      toolCodeComplete.info = _toolCodeInfo;
+      completionUnion.Set_readToolCodeCompleted(std::move( toolCodeComplete ));
     }
 
   }

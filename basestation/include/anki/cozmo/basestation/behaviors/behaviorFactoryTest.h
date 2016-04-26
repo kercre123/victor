@@ -105,7 +105,7 @@ namespace Cozmo {
     
 
     // returns true if the callback handled the action, false if we should continue to handle it in HandleActionCompleted
-    using ActionResultCallback = std::function<bool(ActionResult result)>;
+    using ActionResultCallback = std::function<bool(const ActionResult& result, const ActionCompletedUnion& completionInfo)>;
     
     void StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
 

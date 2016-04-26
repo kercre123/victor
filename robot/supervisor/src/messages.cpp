@@ -589,9 +589,9 @@ namespace Anki {
         }
       }
 
-      void Process_enableCamCalibMode(const RobotInterface::EnableCamCalibMode& msg)
+      void Process_enableReadToolCodeMode(const RobotInterface::EnableReadToolCodeMode& msg)
       {
-        AnkiDebug( 154, "CameraCalibMode", 433, "enabled: %d", 1, msg.enable);
+        AnkiDebug( 162, "ReadToolCodeMode", 445, "enabled: %d, liftPower: %f, headPower: %f", 3, msg.enable, msg.liftPower, msg.headPower);
         if (msg.enable) {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);

@@ -117,6 +117,8 @@ namespace Anki {
     , _blockFilter(new BlockFilter(this))
     , _imageDeChunker(new ImageDeChunker())
     , _traceHandler(_context->GetDataPlatform())
+    , _hasMismatchedEngineToRobotCLAD(false)
+    , _hasMismatchedRobotToEngineCLAD(false)
     {
       _poseHistory = new RobotPoseHistory();
       PRINT_NAMED_INFO("Robot.Robot", "Created");
