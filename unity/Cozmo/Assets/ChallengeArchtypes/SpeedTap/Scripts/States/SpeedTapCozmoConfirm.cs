@@ -18,6 +18,12 @@ namespace SpeedTap {
       }
     }
 
+    public override void Update() {
+      if (_SpeedTapGame.PlayerBlock != null) {
+        _SpeedTapGame.PlayerBlock.SetLEDsOff();
+      }
+    }
+
     private void HandleTapDone(bool success) {
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapCozmoConfirm, HandleTapDone);
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CubeCozmoTap);
