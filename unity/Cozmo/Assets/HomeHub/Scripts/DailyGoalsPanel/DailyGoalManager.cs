@@ -25,6 +25,8 @@ public class DailyGoalManager : MonoBehaviour {
 
 
 
+
+
 #else
   public static string sDailyGoalDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/DailyGoals"; } }
   #endif
@@ -204,7 +206,7 @@ public class DailyGoalManager : MonoBehaviour {
       toAdd = goalList[UnityEngine.Random.Range(0, goalList.Count)];
       // Remove from list to prevent dupes
       goalList.Remove(toAdd);
-      newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.DescKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType));
+      newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.DescKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType, toAdd.ProgressConditions));
     }
     SendDasEventsForGoalGeneration(newGoals);
     return newGoals;

@@ -242,10 +242,13 @@ public class DailyGoalEditor : EditorWindow {
       EditorGUI.indentLevel--;
 
       //Draw list of conditions here
-      DrawConditionList(new GUIContent(">>CONDITIONS", 
+      DrawConditionList(new GUIContent(">> GENERATION CONDITIONS", 
         "Conditions that must be met for the Goal to be selected for Generation"), genData.GenConditions);
-
-
+      
+      //Draw list of conditions here
+      DrawConditionList(new GUIContent(">> PROGRESS CONDITIONS", 
+        "Conditions that must be met for the Goal to be progressed MidGame"), genData.ProgressConditions);
+      
       EditorGUILayout.LabelField(">>REWARD");
       EditorGUI.indentLevel++;
       EditorGUILayout.BeginHorizontal();

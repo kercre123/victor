@@ -36,6 +36,18 @@
             "tooltip": ""
           }
         }
+      ],
+      "ProgressConditions": [
+        {
+          "$type": "Anki.Cozmo.InventoryCondition, Assembly-CSharp",
+          "ItemType": "treat",
+          "ItemCount": 1,
+          "Label": {
+            "text": "Inventory Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
       ]
     },
     {
@@ -58,7 +70,8 @@
             "tooltip": ""
           }
         }
-      ]
+      ],
+      "ProgressConditions": []
     },
     {
       "TitleKey": "dailyGoal.title.WinSpeedTap",
@@ -67,7 +80,8 @@
       "PointsRewarded": 10,
       "Target": 5,
       "CladEvent": "OnSpeedtapSessionWin",
-      "GenConditions": []
+      "GenConditions": [],
+      "ProgressConditions": []
     },
     {
       "TitleKey": "dailyGoal.title.WinSpeedTapHands",
@@ -86,7 +100,8 @@
             "tooltip": ""
           }
         }
-      ]
+      ],
+      "ProgressConditions": []
     }
   ]
 }

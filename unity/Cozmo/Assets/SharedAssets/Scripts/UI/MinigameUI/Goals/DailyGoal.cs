@@ -37,7 +37,9 @@ namespace Cozmo {
       [JsonIgnore]
       public Action<DailyGoal> OnDailyGoalCompleted;
 
-      public DailyGoal(GameEvent gEvent, string titleKey, string descKey, int reward, int target, string rewardType, int currProg = 0) {
+      public List<GoalCondition> TriggerConditions = new List<GoalCondition>();
+
+      public DailyGoal(GameEvent gEvent, string titleKey, string descKey, int reward, int target, string rewardType, List<GoalCondition> triggerCon, int currProg = 0) {
         GoalEvent = gEvent;
         Title = new LocalizedString();
         Description = new LocalizedString();
@@ -48,6 +50,7 @@ namespace Cozmo {
         Progress = currProg;
         _Completed = GoalComplete;
         RewardType = rewardType;
+        TriggerConditions = triggerCon;
         GameEventManager.Instance.OnGameEvent += ProgressGoal;
       }
 
