@@ -19,52 +19,72 @@
 #include "anki/cozmo/basestation/audio/audioWaveFileReader.h"
 #include "anki/common/types.h"
 #include "clad/types/sayTextStyles.h"
-
 #include <unordered_map>
+#include <vector>
 
 // Forward decl for f-lite
 struct cst_voice_struct;
 
 namespace Anki {
 
-  // Forward declaration
-  namespace Util {
-  namespace Data {
-    class DataPlatform;
-  }
-  }
+// Forward declaration
+namespace Util {
+namespace Data {
+  class DataPlatform;
+}
+  
+namespace Dispatch {
+  class Queue;
+}
+}
   
 namespace Cozmo {
-  
-  // Forward declarations
-  namespace Audio {
-    class AudioController;
-    class AudioWaveFileReader;
-  }
+namespace Audio {
+  class AudioController;
+  class AudioWaveFileReader;
+}
   
 class TextToSpeechController
 {
 public:
+  
+  using CompletionFunc = std::function<void(bool success, const std::string& text, const std::string& fileName)>;
+  using SimpleCompletionFunc = std::function<void(void)>;
+  
+  
   TextToSpeechController(Util::Data::DataPlatform* dataPlatform,
                          Audio::AudioController* audioController);
   ~TextToSpeechController();
 
-  // Creates the wave file for the given text, to be played later.
-  // Returns the full path to the created file.
-  std::string CreateSpeech(const std::string& text);
+  // Asynchronous create the wave file for the given text, to be played later.
+  // The completion callback will be called after the file has been stored on disk.
+  void CreateSpeech(const std::string& text, CompletionFunc completion = nullptr);
   
-  // Sets up the Audio Controller to play the associated text. If the wave file
-  // has already been created, uses that one. Otherwise, creates it first.
-  // The callback is run once the text is ready to say.
-  using ReadyCallback = std::function<void(void)>;
-  Result PrepareToSay(const std::string& text, SayTextStyle style, ReadyCallback callback = {});
+  // Asynchronous load text's audio data into memory, if the text's associated .wav file for hasn't already been created
+  // it will perform CreateSpeech() first.
+  // The completion callback is run once the text's audio data is loaded into memory.
+  void LoadSpeechData(const std::string& text, SayTextStyle style, CompletionFunc completion = nullptr);
   
+  // Set up Audio controller to play text's audio data.
+  // Return false if the text's .wav is not created or LoadSpeechData() method has not been called before performing
+  // this method, out_duration_ms will NOT be valid.
+  bool PrepareToSay(const std::string& text, SayTextStyle style, float& out_duration_ms);
+  
+  // Asynchronous clear loaded text's audio data from memory
+  void ClearLoadedSpeachData(const std::string& text, SayTextStyle style, SimpleCompletionFunc completion = nullptr);
+  
+  // Asynchronous clear ALL loaded text audio data from memory, if deleteStaleFiles is true all text to speech files
+  // on disk will be deleted.
+  void ClearAllLoadedAudioData(bool deleteStaleFiles, SimpleCompletionFunc completion = nullptr);
+
+
 private:
   
-  cst_voice_struct*                  _voice;
-  Util::Data::DataPlatform*          _dataPlatform;
-  Audio::AudioController*            _audioController;
-  Audio::AudioWaveFileReader         _waveFileReader;
+  Util::Data::DataPlatform*       _dataPlatform;
+  Util::Dispatch::Queue*          _dispatchQueue;
+  Audio::AudioController*         _audioController;
+  Audio::AudioWaveFileReader      _waveFileReader;
+  cst_voice_struct*               _voice;
   
   // Maps text to filename where it's stored
   std::unordered_map<std::string, std::string> _filenameLUT;
@@ -73,11 +93,14 @@ private:
   // data like a name
   std::string MakeFullPath(const std::string& text);
   
+  // Find all files in directory that begin with prefix "TextToSpeech_"
+  std::vector<std::string> FindAllTextToSpeechFiles();
+  
 }; // class TextToSpeech
+
 
 } // end namespace Cozmo
 } // end namespace Anki
-
 
 
 #endif //__Anki_cozmo_Basestation_textToSpeech_textToSpeech_H__

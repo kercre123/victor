@@ -24,101 +24,228 @@ extern "C" {
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
 #include "util/hashing/hashing.h"
+#include "util/dispatchQueue/dispatchQueue.h"
+#include "util/fileUtils/fileUtils.h"
 
-const char* filePrefix = "TextToSpeech_";
+const Anki::Util::Data::Scope kResourceScope = Anki::Util::Data::Scope::Cache;
+const char* kFilePrefix = "TextToSpeech_";
+const char* kFileExtension = "wav";
+
 
 namespace Anki {
 namespace Cozmo {
 
-  TextToSpeechController::TextToSpeechController(Util::Data::DataPlatform* dataPlatform,
-                             Audio::AudioController* audioController)
-: _dataPlatform(dataPlatform)
-, _audioController(audioController)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TextToSpeechController::TextToSpeechController(Util::Data::DataPlatform* dataPlatform,
+                                               Audio::AudioController* audioController)
+: _dataPlatform( dataPlatform )
+, _dispatchQueue( Util::Dispatch::Create("TextToSpeechController_File_Operations") )
+, _audioController( audioController )
 {
   flite_init();
   
   _voice = register_cmu_us_kal(NULL);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechController::~TextToSpeechController()
 {
   // Any tear-down needed for flite? (Un-init or unregister_cmu_us_kal?)
+  
+  Util::Dispatch::Stop(_dispatchQueue);
+  Util::Dispatch::Release(_dispatchQueue);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TextToSpeechController::CreateSpeech(const std::string& text, CompletionFunc completion)
+{
+  const auto lutIter = _filenameLUT.find( text );
+  if ( lutIter == _filenameLUT.end() ) {
+    // text string is not in LUT check
+    Util::Dispatch::Async( _dispatchQueue, [this, text, completion] ()
+    {
+      // First, check if it already exist
+      bool success = false;
+      std::string fullPath = MakeFullPath(text);
+      std::string* fullPathPointer = nullptr;
+      if ( Util::FileUtils::FileExists( fullPath ) ) {
+        // Check if file exist on disk
+        auto emplaceIter = _filenameLUT.emplace( text, fullPath );
+        fullPathPointer = &emplaceIter.first->second;
+        success = true;
+      }
+      else {
+        // Create text to speach file
+        float duration = flite_text_to_speech( text.c_str(), _voice, fullPath.c_str() );
+        success = ( duration > 0.0 );
+        auto emplaceIter = _filenameLUT.emplace( text, fullPath );
+        fullPathPointer = &emplaceIter.first->second;
+      }
+      
+      if ( completion != nullptr ) {
+        ASSERT_NAMED( !(!success && fullPathPointer == nullptr), "TextToSpeechController::CreateSpeech invalid path pointer");
+        completion( success, text, (fullPathPointer != nullptr) ? *fullPathPointer : "" );
+      }
+    });
+  }
+  
+  else if ( completion != nullptr ) {
+    // Text to speech file already exist
+    completion( true, text, lutIter->second );
+  }
+} // CreateSpeech()
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TextToSpeechController::LoadSpeechData(const std::string& text, SayTextStyle style, CompletionFunc completion)
+{
+  using namespace Audio;
+  
+  // Check if text to speach file exist, if not created it
+  CreateSpeech( text, [this, text, completion] (bool successCreateSpeech, const std::string& text, const std::string& fileName)
+  {
+    if (successCreateSpeech) {
+      // Load file into memory
+      Util::Dispatch::Async( _dispatchQueue, [this, text, fileName, completion] ()
+      {
+        const bool successLoadWaveFile = _waveFileReader.LoadWaveFile(fileName, fileName);
+        if ( completion != nullptr ) {
+         completion( successLoadWaveFile, text, fileName );
+        }
+      });
+    }
+    else if ( completion != nullptr ) {
+     // Failed to create speech =(
+     completion( false, text, fileName );
+    }
+  });
+} // LoadSpeechData()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool TextToSpeechController::PrepareToSay(const std::string& text, SayTextStyle style, float& out_duration_ms)
+{
+  using namespace Audio;
+  
+  // Find file name
+  const auto lutIter = _filenameLUT.find( text );
+  if ( lutIter == _filenameLUT.end() ) {
+    return false;
+  }
+  
+  // Set Wave Portal Plugin buffer
+  const AudioWaveFileReader::StandardWaveDataContainer* data = _waveFileReader.GetCachedWaveDataWithKey( lutIter->second );
+  if ( data == nullptr ) {
+    return false;
+  }
+
+  AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
+  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechController.PrepareToSay.NullAudioControllerPluginInterface");
+
+  // Clear previously loaded data
+  if ( pluginInterface->WavePortalHasAudioDataInfo() ) {
+    pluginInterface->ClearWavePortalAudioDataInfo();
+  }
+
+  // TODO: Make use of specified SayTextStyle
+  pluginInterface->SetWavePortalAudioDataInfo( data->sampleRate,
+                                               data->numberOfChannels,
+                                               data->duration_ms,
+                                               data->audioBuffer,
+                                               static_cast<uint32_t>(data->bufferSize) );
+  out_duration_ms = data->duration_ms;
+  
+  return true;
+} // PrepareToSay()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TextToSpeechController::ClearLoadedSpeachData(const std::string& text, SayTextStyle style, SimpleCompletionFunc completion)
+{
+  using namespace Util;
+  Dispatch::Async(_dispatchQueue, [this, text, style, completion]
+  {
+    const auto lutIter = _filenameLUT.find( text );
+    if ( lutIter != _filenameLUT.end() ) {
+      // Remove from LUT & disk
+      FileUtils::DeleteFile( lutIter->second );
+      _filenameLUT.erase( lutIter );
+    }
+    else {
+      // Check if file exist on disk
+      const std::string filePath = MakeFullPath( text );
+      if ( FileUtils::FileExists( filePath ) ) {
+        FileUtils::DeleteFile( filePath );
+      }
+    }
+    
+    if ( completion != nullptr ) {
+      completion();
+    }
+  });
+} // ClearLoadedSpeachData()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TextToSpeechController::ClearAllLoadedAudioData(bool deleteStaleFiles, SimpleCompletionFunc completion)
+{
+  using namespace Util;
+  Dispatch::Async(_dispatchQueue, [this, deleteStaleFiles, completion] ()
+  {
+    // Delete all files in LUT map
+    for ( auto& iter : _filenameLUT ) {
+      FileUtils::DeleteFile( iter.second );
+    }
+    _filenameLUT.clear();
+    
+    // Clear all untrack text to speech files
+    if ( deleteStaleFiles ) {
+      auto fileNames = FindAllTextToSpeechFiles();
+      for ( auto& iter : FindAllTextToSpeechFiles() ) {
+        FileUtils::DeleteFile( iter );
+      }
+    }
+    
+    if ( completion != nullptr ) {
+      completion();
+    }
+  });
+} // ClearAllLoadedAudioData()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string TextToSpeechController::MakeFullPath(const std::string& text)
 {
   // In case text contains sensitive data (e.g. player name), hash it so we don't save names
   // into logs if/when there's a message about this filename
   // TODO: Do we need something more secure?
   u32 hashedValue = 0;
-  for(auto c : text) {
+  for ( auto& c : text ) {
     Util::AddHash(hashedValue, c, "TextToSpeechController.MakeFullPath.HashText");
   }
-
-  // Note that this text-to-hash mapping is only printed in debug mode!   
+  
+  // Note that this text-to-hash mapping is only printed in debug mode!
   PRINT_NAMED_DEBUG("TextToSpeechController.MakeFullPath.TextToHash",
                     "'%s' hashed to %d", text.c_str(), hashedValue);
-                    
-  std::string fullPath = _dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, 
-                                                       filePrefix + std::to_string(hashedValue) + ".wav");
+  
+  std::string fullPath = _dataPlatform->pathToResource(kResourceScope,
+                                                       kFilePrefix + std::to_string(hashedValue) + "." + kFileExtension);
   
   return fullPath;
 }
-  
-std::string TextToSpeechController::CreateSpeech(const std::string& text)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<std::string> TextToSpeechController::FindAllTextToSpeechFiles()
 {
-  auto lutIter = _filenameLUT.find(text);
-  
-  if(lutIter == _filenameLUT.end())
-  {
-    // TODO: if not in LUT, also check disk before creating
-    
-    // Don't already have a wave for this text string: make it now
-    // TODO: Make asynchronous
-    PRINT_NAMED_DEBUG("TextToSpeechController.CacheSpeech", "Text: %s", text.c_str());
-    std::string fullPath = MakeFullPath(text);
-    flite_text_to_speech(text.c_str(),_voice,fullPath.c_str());
-    auto insertResult = _filenameLUT.emplace(text, fullPath);
-    lutIter = insertResult.first;
+  using namespace Util;
+  std::vector<std::string> fileNames;
+  const std::string dirPath = _dataPlatform->pathToResource(kResourceScope, "");
+  const auto dirFiles = FileUtils::FilesInDirectory( dirPath, false, kFileExtension, false );
+  const std::string prefixStr( kFilePrefix );
+  for ( auto& aFileName : dirFiles ) {
+    // Check if file starts with desired prefix
+    if ( aFileName.compare( 0, prefixStr.length(), prefixStr ) == 0 ) {
+      fileNames.emplace_back(dirPath + "/" + aFileName);
+    }
   }
-  
-  return lutIter->second;
-} // CreateSpeech()
-  
-Result TextToSpeechController::PrepareToSay(const std::string& text, SayTextStyle style, ReadyCallback readyCallback)
-{
-  using namespace Audio;
-  
-  // Get (or create) the path for a wave file for this text
-  // TODO: Make these two asynchronous
-  const std::string fullPath = CreateSpeech(text);
-  const bool success = _waveFileReader.LoadWaveFile(fullPath, text);
-  
-  if ( !success ) {
-     // Fail =(
-    PRINT_NAMED_ERROR("TextToSpeechController.PrepareToSay.LoadWaveFileFailed", "Failed to Load file: %s", fullPath.c_str());
-    return RESULT_FAIL;
-  }
-  
-  // Set Wave Portal Plugin buffer
-  const AudioWaveFileReader::StandardWaveDataContainer* data = _waveFileReader.GetCachedWaveDataWithKey(text);
-  
-  AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechController.PrepareToSay.NullAudioControllerPluginInterface");
-  
-  if ( pluginInterface->WavePortalHasAudioDataInfo() ) {
-    pluginInterface->ClearWavePortalAudioDataInfo();
-  }
-  
-  // TODO: Make use of specified SayTextStyle 
-  pluginInterface->SetWavePortalAudioDataInfo( data->sampleRate,
-                                               data->numberOfChannels,
-                                               data->duration_ms,
-                                               data->audioBuffer,
-                                               static_cast<uint32_t>(data->bufferSize) );
-                                               
-  return RESULT_OK;
-} // PrepareToSay()
+  return fileNames;
+}
+
 
 } // end namespace Cozmo
 } // end namespace Anki

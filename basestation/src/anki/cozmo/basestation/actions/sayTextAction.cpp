@@ -37,7 +37,21 @@ namespace Cozmo {
       _name = "SayText_" + _text + "_Action";
     }
     
-    _robot.GetTextToSpeechController().CreateSpeech(_text);
+    // Create and/or load speech data
+    TextToSpeechController::CompletionFunc callback = [this] (bool success,
+                                                              const std::string& text,
+                                                              const std::string& fileName)
+    {
+      if (success) {
+        _isTextToSpeechReady = true;
+      }
+      else {
+        PRINT_NAMED_ERROR("SayTextAction.SayTextAction.LoadSpeechData", "");
+        // Abort Action
+      }
+    };
+    
+    _robot.GetTextToSpeechController().LoadSpeechData(_text, _style, callback);
   }
   
   SayTextAction::~SayTextAction()
@@ -47,16 +61,11 @@ namespace Cozmo {
   
   ActionResult SayTextAction::Init()
   {
-    _isTextToSpeechReady = bool(PLACEHOLDER_CODE); // TODO: init to false once callbacks are ready
-    
-    TextToSpeechController::ReadyCallback callback = [this]()
-    {
-      _isTextToSpeechReady = true;
-    };
-    
-    Result result = _robot.GetTextToSpeechController().PrepareToSay(_text, _style, callback);
-    if(RESULT_OK != result) {
-      PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
+    // Run Action
+    // Set Audio data right before action runs
+    float duration_ms = 0.0;  // FIXME: hook up to action time out
+    const bool success = _robot.GetTextToSpeechController().PrepareToSay(_text, _style, duration_ms);
+    if (!success) {
       return ActionResult::FAILURE_ABORT;
     }
     
