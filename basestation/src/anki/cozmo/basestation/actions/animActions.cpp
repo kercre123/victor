@@ -64,6 +64,19 @@ namespace Anki {
       _name = "PlayAnimation" + _animName + "Action";
     }
     
+    PlayAnimationAction::PlayAnimationAction(Robot& robot,
+                                             Animation* animation,
+                                             u32 numLoops,
+                                             bool interruptRunning)
+    : IAction(robot)
+    , _animName(animation->GetName())
+    , _name("PlayAnimation" + _animName + "Action")
+    , _animation(animation)
+    {
+      
+
+    }
+    
     PlayAnimationAction::~PlayAnimationAction()
     {
       // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
@@ -92,7 +105,7 @@ namespace Anki {
       if (NeedsAlteredAnimation())
       {
         const Animation* streamingAnimation = _robot.GetAnimationStreamer().GetStreamingAnimation();
-        const Animation* ourAnimation = _robot.GetCannedAnimation(_animName);
+        const Animation* ourAnimation = GetOurAnimation();
         
         if( ourAnimation == nullptr)
         {
@@ -179,6 +192,11 @@ namespace Anki {
       }
     }
 
+    inline const Animation* PlayAnimationAction::GetOurAnimation() const
+    {
+      return (_animation == nullptr ? _robot.GetCannedAnimation(_animName) : _animation);
+    }
+    
     bool PlayAnimationAction::NeedsAlteredAnimation() const
     {
       // Animations that don't interrupt never need to be altered
@@ -202,7 +220,7 @@ namespace Anki {
       }
       
       // Now actually check our animation to see if we have an initial face frame
-      const Animation* ourAnimation = _robot.GetCannedAnimation(_animName);
+      const Animation* ourAnimation = GetOurAnimation();
       
       
       bool animHasInitialFaceFrame = false;
