@@ -283,8 +283,7 @@ namespace Anki {
     void IAction::Reset(bool shouldUnlockTracks)
     {
       _preconditionsMet = false;
-      _waitUntilTime = -1.f;
-      _timeoutTime = -1.f;
+      _startTime_sec = -1.f;
       if(shouldUnlockTracks)
       {
         UnlockTracks();
@@ -299,15 +298,21 @@ namespace Anki {
       
       // On first call to Update(), figure out the waitUntilTime
       const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      if(_waitUntilTime < 0.f) {
-        _waitUntilTime = currentTimeInSeconds + GetStartDelayInSeconds();
+      
+      if(_startTime_sec < 0.f) {
+        // Record first update time
+        _startTime_sec = currentTimeInSeconds;
       }
-      if(_timeoutTime < 0.f) {
-        _timeoutTime = currentTimeInSeconds + GetTimeoutInSeconds();
-      }
+      
+      // Update timeout/wait times in case they have been adjusted since the action
+      // started. Time to wait until is always relative to original start, however.
+      // (Include CheckIfDoneDelay in wait time if we have already met pre-conditions
+      const f32 waitUntilTime = (_startTime_sec + GetStartDelayInSeconds() +
+                                 (_preconditionsMet ? GetCheckIfDoneDelayInSeconds() : 0.f));
+      const f32 timeoutTime   = _startTime_sec + GetTimeoutInSeconds();
 
       // Fail if we have exceeded timeout time
-      if(currentTimeInSeconds >= _timeoutTime) {
+      if(currentTimeInSeconds >= timeoutTime) {
         if(IsMessageDisplayEnabled()) {
           PRINT_NAMED_INFO("IAction.Update.TimedOut",
                            "%s timed out after %.1f seconds.",
@@ -317,7 +322,7 @@ namespace Anki {
       }
       
       // Don't do anything until we have reached the waitUntilTime
-      else if(currentTimeInSeconds >= _waitUntilTime)
+      else if(currentTimeInSeconds >= waitUntilTime)
       {
         if(!_preconditionsMet) {
           //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking preconditions.", GetName().c_str());
@@ -343,15 +348,11 @@ namespace Anki {
             // TODO: there's probably a tidier way to do this.
             _preconditionsMet = true;
             result = ActionResult::RUNNING;
-            
-            // Don't check if done until a sufficient amount of time has passed
-            // after preconditions are met
-            _waitUntilTime = currentTimeInSeconds + GetCheckIfDoneDelayInSeconds();
           }
         }
 
         // Re-check if preconditions are met, since they could have _just_ been met
-        if(_preconditionsMet && currentTimeInSeconds >= _waitUntilTime) {
+        if(_preconditionsMet && currentTimeInSeconds >= waitUntilTime) {
           //PRINT_NAMED_INFO("IAction.Update", "Updating %s: checking if done.", GetName().c_str());
           SetStatus(GetName() + ": check if done");
           
