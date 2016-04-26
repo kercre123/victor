@@ -187,11 +187,11 @@ void Anki::Cozmo::HAL::SPI::InitDMA(void) {
   DMA_TCD2_DLASTSGA       = -sizeof(spi_rx_buff);
 
   DMA_TCD2_NBYTES_MLNO    = sizeof(transmissionWord);                   // The minor loop moves 32 bytes per transfer
-  DMA_TCD2_BITER_ELINKNO  = RX_SIZE;                          // Major loop iterations
-  DMA_TCD2_CITER_ELINKNO  = RX_SIZE;                          // Set current interation count  
+  DMA_TCD2_BITER_ELINKNO  = RX_SIZE;                                    // Major loop iterations
+  DMA_TCD2_CITER_ELINKNO  = RX_SIZE;                                    // Set current interation count  
   DMA_TCD2_ATTR           = (DMA_ATTR_SSIZE(1) | DMA_ATTR_DSIZE(1));    // Source/destination size (8bit)
  
-  DMA_TCD2_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration               
+  DMA_TCD2_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration
 
   // Configure transfer buffer
   DMAMUX_CHCFG3 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(15)); 

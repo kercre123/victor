@@ -35,7 +35,7 @@ static volatile int _fifo_end;
 
 // Random state values
 static volatile bool _active = false;
-static bool _enabled = false;
+static volatile bool _enabled = false;
 static bool _send_reset = false;
 
 // Read buffer

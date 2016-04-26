@@ -31,6 +31,7 @@ static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;      //In 2g mode
 static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f);   //In FS500 mode, 65.6 deg/s / LSB
 
 static IMUData imu_state;
+static bool imu_changed = false;
 static bool imu_updated = false;
 
 static const int IMU_UPDATE_FREQUENCY = 200;  // 200hz
@@ -63,34 +64,33 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   Manage();
 }
 
-static void copy_state() {
-  // Attempt to find the adjustment for the update counter
-  uint8_t offset = 0x80 + 0x40 - (imu_state.timestamp & ~0x80);
-  update_counter = offset * MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY + ADJUST_OVERSHOOT;
+static void state_updated() {
+  // This is deduplication code
+  static uint8_t last_timestamp = 0;
   
-  using namespace Anki::Cozmo::HAL;
-
-  static bool imu_toggle = false;
-  bool new_toggle = (imu_state.timestamp & 0x80) != 0;
-  
-  // De-dupe
-  if (imu_toggle == new_toggle) {
-    return ;
-  }
-
-  IMU::frameNumberStamp = CameraGetFrameNumber();
-  IMU::scanLineStamp    = CameraGetScanLine();
-  memcpy(&IMU::IMUState, &imu_state, sizeof(IMUData));
-  imu_updated = true;
-  
-#ifdef IMU_DEBUG
-  for (int i = 0; i < sizeof(IMUData); i++)
-    UART::DebugPrintf("%02x ", ((uint8_t*) data)[i]);
-  UART::DebugPrintf("\n");
-#endif
+  imu_changed = (imu_state.timestamp ^ last_timestamp) & 0x80;
+  last_timestamp = imu_state.timestamp;
 }
 
 void Anki::Cozmo::HAL::IMU::Manage(void) {
+  // We have a new bundle of IMU data, stuff it into the buffer
+  if (imu_changed) {
+    // Attempt to find the adjustment for the update counter
+    uint8_t offset = 0x80 + 0x40 - (imu_state.timestamp & ~0x80);
+    update_counter = offset * MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY + ADJUST_OVERSHOOT;
+    
+    IMU::frameNumberStamp = CameraGetFrameNumber();
+    IMU::scanLineStamp    = CameraGetScanLine();
+    memcpy(&IMU::IMUState, &imu_state, sizeof(IMUData));
+    imu_updated = true;
+    imu_changed = false;
+    
+  #ifdef IMU_DEBUG
+    for (int i = 0; i < sizeof(IMUData); i++)
+      UART::DebugPrintf("%02x ", ((uint8_t*) data)[i]);
+    UART::DebugPrintf("\n");
+  #endif
+  }
 
   // Adjust up the IMU update frequency
   update_counter -= IMU_UPDATE_FREQUENCY;
@@ -103,7 +103,7 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
   update_counter += MANAGE_FREQUENCY;
 
   // Configure I2C bus to read IMU data
-  I2C::SetupRead(&imu_state, sizeof(IMUData), copy_state);
+  I2C::SetupRead(&imu_state, sizeof(IMUData), state_updated);
 
   I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), I2C_FORCE_START);
   I2C::Read(SLAVE_READ(ADDR_IMU));
