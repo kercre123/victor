@@ -260,7 +260,10 @@ public class SkillSystem {
   }
 
   private void SetCozmoHighestLevelsReached(byte[] robotData, int robotDataLen) {
-// RobotData is just highest level in challengeList order
+    if (ChallengeDataList.Instance == null) {
+      return;
+    }
+    // RobotData is just highest level in challengeList order
     ChallengeDataList challengeList = ChallengeDataList.Instance;
     int numChallenges = Mathf.Max(robotDataLen, challengeList.ChallengeData.Length);
     _CozmoHighestLevels = new byte[numChallenges];
