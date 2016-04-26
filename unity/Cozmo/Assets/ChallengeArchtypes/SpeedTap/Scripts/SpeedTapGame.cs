@@ -73,7 +73,7 @@ namespace SpeedTap {
 
     private MusicStateWrapper _BetweenRoundsMusic;
 
-    public ISpeedTapRules Rules;
+    public SpeedTapRulesBase Rules;
 
     private int _CozmoScore;
     private int _PlayerScore;
@@ -231,17 +231,8 @@ namespace SpeedTap {
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
       ClearWinningLightPatterns();
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
-        switch (CurrentDifficulty) {
-        case 1:
-          UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.SpeedTapMediumImplicit, true);
-          break;
-        case 2:
-          UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.SpeedTapHardImplicit, true);
-          break;
-        case 3:
-          UnlockablesManager.Instance.TrySetUnlocked(Anki.Cozmo.UnlockId.SpeedTapExpertImplicit, true);
-          break;
-        }
+        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID] = CurrentDifficulty + 1;
+        DataPersistence.DataPersistenceManager.Instance.Save();
         RaiseMiniGameWin();
       }
       else {
@@ -292,19 +283,9 @@ namespace SpeedTap {
     }
 
     private int HighestLevelCompleted() {
-      if (UnlockablesManager.Instance != null) {
-        if (UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.SpeedTapExpertImplicit)) {
-          return 4;
-        }
-        else if (UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.SpeedTapHardImplicit)) {
-          return 3;
-        }
-        else if (UnlockablesManager.Instance.IsUnlocked(Anki.Cozmo.UnlockId.SpeedTapMediumImplicit)) {
-          return 2;
-        }
-        else {
-          return 1;
-        }
+      int difficulty = 0;
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty.TryGetValue(_ChallengeData.ChallengeID, out difficulty)) {
+        return difficulty;
       }
       return 0;
     }
@@ -326,7 +307,7 @@ namespace SpeedTap {
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
-      CurrentRobot.SetBehaviorSystem(false);
+      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
     }
 
     // Set up Difficulty Settings that are not round specific
@@ -341,6 +322,11 @@ namespace SpeedTap {
       if (_CurrentDifficultySettings == null) {
         DAS.Warn(this, "No Valid Difficulty Setting Found");
         _CurrentDifficultySettings = _AllDifficultySettings[0];
+      }
+      else {
+        if (_CurrentDifficultySettings.Colors != null && _CurrentDifficultySettings.Colors.Length > 0) {
+          Rules.SetUsableColors(_CurrentDifficultySettings.Colors);
+        }
       }
     }
 
@@ -394,7 +380,7 @@ namespace SpeedTap {
       }
     }
 
-    private static ISpeedTapRules GetRules(SpeedTapRuleSet ruleSet) {
+    private static SpeedTapRulesBase GetRules(SpeedTapRuleSet ruleSet) {
       switch (ruleSet) {
       case SpeedTapRuleSet.NoRed:
         return new NoRedSpeedTapRules();
@@ -411,10 +397,6 @@ namespace SpeedTap {
       default:
         return new DefaultSpeedTapRules();
       }
-    }
-
-    protected override int CalculateExcitementStatRewards() {
-      return 1 + _CloseRoundCount * 2;
     }
 
     public void ShowPlayerTapConfirmSlide() {

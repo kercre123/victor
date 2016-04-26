@@ -15,7 +15,6 @@ namespace Cozmo {
       public Action OnProgChanged;
 
       private int _GoalTarget;
-      private int _CurrStatVal;
 
       [SerializeField]
       private AnkiTextLabel _GoalLabel;
@@ -26,7 +25,7 @@ namespace Cozmo {
         }
       }
 
-      public Anki.Cozmo.ProgressionStatType Type;
+      private DailyGoal _Goal;
 
       [SerializeField]
       private Image _GoalIcon;
@@ -46,8 +45,11 @@ namespace Cozmo {
               _GoalLabel.color = UIColorPalette.CompleteTextColor();
             }
             else {
-              _GoalLabel.text = ProgressionStatConfig.Instance.GetLocNameForStat(Type);
+              _GoalLabel.text = _Goal.Title;
               _GoalLabel.color = UIColorPalette.NeutralTextColor();
+            }
+            if (OnProgChanged != null) {
+              OnProgChanged.Invoke();
             }
           }
         }
@@ -65,39 +67,24 @@ namespace Cozmo {
         Progress = progress;
       }
 
-      /// <summary>
-      /// Initialize the GoalCell with the target ProgressionStatType, Goal, Current Progress, and Whether or not it should
-      /// update OnProgressionStatRecieved. (Set that to false if you intend to use goal cell for history.)
-      /// </summary>
-      /// <param name="type">Type.</param>
-      /// <param name="goal">Goal.</param>
-      /// <param name="currProg">Curr prog.</param>
-      /// <param name="update">If set to <c>true</c> update.</param>
-      public void Initialize(Anki.Cozmo.ProgressionStatType type, int currProg, int goal, bool update = true) {
-        _GoalTarget = goal;
-        Type = type;
+      public void Initialize(DailyGoal goal, bool update = true) {
+        _Goal = goal;
         if (update) {
-          RobotEngineManager.Instance.OnProgressionStatRecieved += OnProgressionStatUpdate;
+          goal.OnDailyGoalUpdated += OnGoalUpdate;
         }
-        _GoalIcon.sprite = ProgressionStatConfig.Instance.GetIconForStat(type);
-        _GoalLabel.text = ProgressionStatConfig.Instance.GetLocNameForStat(type);
-        SetProgress((float)currProg / (float)goal);
+        _GoalTarget = goal.Target;
+        // TODO: Load by string? Or set up a config file for mapping icons to enums?
+        //_GoalIcon.sprite = goal.GoalIcon;
+        _GoalLabel.text = goal.Title;
+        SetProgress((float)goal.Progress / (float)_GoalTarget);
       }
 
-      void OnProgressionStatUpdate(Anki.Cozmo.ProgressionStatType type, int count) {
-        if (Type == type) {
-          if (count != _CurrStatVal) {
-            _CurrStatVal = count;
-            SetProgress((float)count / (float)_GoalTarget);
-            if (OnProgChanged != null) {
-              OnProgChanged.Invoke();
-            }
-          }
-        }
+      private void OnGoalUpdate(DailyGoal goal) {
+        SetProgress((float)goal.Progress / (float)goal.Target);
       }
 
       void OnDestroy() {
-        RobotEngineManager.Instance.OnProgressionStatRecieved -= OnProgressionStatUpdate;
+        _Goal.OnDailyGoalUpdated -= OnGoalUpdate;
       }
     }
   }

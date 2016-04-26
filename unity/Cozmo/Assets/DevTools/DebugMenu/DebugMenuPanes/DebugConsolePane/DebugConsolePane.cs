@@ -40,7 +40,7 @@ namespace Anki.Debug {
     void Update() {
       // if the static class is up, do a refresh of data.
       if (DebugConsoleData.Instance.NeedsUIUpdate()) {
-        List<string> categories = DebugConsoleData.Instance.GetCategories();
+        List<string> categories = DebugConsoleData.Instance.GetSortedCategories();
         for (int i = 0; i < categories.Count; ++i) {
           // Get existing child if it exists, otherwise create it.
           GameObject categoryPanel = null;

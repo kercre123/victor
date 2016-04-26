@@ -40,7 +40,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _ChallengeList: {fileID: 11400000, guid: 157f3c823804e4937a8cb9b8f914f00f, type: 2}
-  _FriendshipProgConfig: {fileID: 11400000, guid: 2440eff917f144553bdd73b9635669e1,
+  _DailyGoalGenConfig: {fileID: 11400000, guid: 2440eff917f144553bdd73b9635669e1,
     type: 2}
   _RequestMinigameConfig: {fileID: 11400000, guid: 2414404dd6db14cbb85e259d5192b9d2,
     type: 2}
@@ -50,7 +50,12 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _DailyGoalGenConfig
+      value: 
+      objectReference: {fileID: 11400000, guid: 2440eff917f144553bdd73b9635669e1,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 187916}

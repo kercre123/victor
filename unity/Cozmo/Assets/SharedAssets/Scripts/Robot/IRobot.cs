@@ -125,21 +125,11 @@ public interface IRobot : IDisposable {
 
   void UpdateDirtyList(ObservedObject dirty);
 
-  int GetProgressionStat(Anki.Cozmo.ProgressionStatType index);
-
-  StatContainer GetProgressionStats();
-
-  void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, int deltaValue);
-
   void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight);
 
   void AddToEmotion(Anki.Cozmo.EmotionType type, float deltaValue, string source);
 
   void SetEmotion(Anki.Cozmo.EmotionType type, float value);
-
-  void SetProgressionStat(Anki.Cozmo.ProgressionStatType type, int value);
-
-  void SetProgressionStats(StatContainer stats);
 
   void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY);
 
@@ -258,7 +248,7 @@ public interface IRobot : IDisposable {
 
   void ExecuteBehavior(BehaviorType type);
 
-  void SetBehaviorSystem(bool enable);
+  void SetEnableFreeplayBehaviorChooser(bool enable);
 
   void ActivateBehaviorChooser(BehaviorChooserType behaviorChooserType);
 

@@ -39,7 +39,7 @@ namespace InvestorDemo {
 
       _GamePanel = UIManager.OpenView(_GamePanelPrefab);
 
-      CurrentRobot.SetBehaviorSystem(true);
+      CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
 
       if (_DemoConfig.UseSequence) {
         CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);

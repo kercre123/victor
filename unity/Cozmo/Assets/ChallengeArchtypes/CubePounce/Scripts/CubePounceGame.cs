@@ -63,7 +63,7 @@ namespace CubePounce {
 
     protected void InitializeMinigameObjects(int numCubes) {
 
-      CurrentRobot.SetBehaviorSystem(false);
+      CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
 
       RobotEngineManager.Instance.OnCliffEvent += HandleCliffEvent;
@@ -209,10 +209,6 @@ namespace CubePounce {
 
     public void ResetPounceChance() {
       _CurrentPounceChance = _BasePounceChance;
-    }
-
-    protected override int CalculateExcitementStatRewards() {
-      return 1 + _CloseRoundCount * 2;
     }
 
     public void UpdateScoreboard() {

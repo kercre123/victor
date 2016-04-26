@@ -16,8 +16,8 @@ public static class DASUtil {
     return string.Format("{0}_{1}", type.ToString().ToLower(), amount);
   }
 
-  public static string FormatGoal(Anki.Cozmo.ProgressionStatType type, int currentAmount, int amountNeeded) {
-    return string.Format("{0}_{1}/{2}", type.ToString().ToLower(), currentAmount, amountNeeded);
+  public static string FormatGoal(Cozmo.UI.DailyGoal dailyGoal) {
+    return string.Format("{0}_{1}/{2}", dailyGoal.Title, dailyGoal.Progress, dailyGoal.Target);
   }
 
   public static string FormatViewTypeForOpen(ViewType type) {

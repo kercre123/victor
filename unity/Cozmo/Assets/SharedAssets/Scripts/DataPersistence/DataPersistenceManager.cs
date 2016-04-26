@@ -92,9 +92,36 @@ namespace DataPersistence {
       }
 
       string jsonValue = JsonConvert.SerializeObject(Data, Formatting.None, GlobalSerializerSettings.JsonSettings);
+      File.WriteAllText(sSaveFilePath, jsonValue);
+    }
+
+    #region DebugMenuAPI
+
+    public string GetSaveJSON() {
+      return JsonConvert.SerializeObject(Data, Formatting.None, GlobalSerializerSettings.JsonSettings);
+    }
+
+    public void DebugSave(string jsonValue) {
+      try {
+        if (File.Exists(sSaveFilePath)) {
+          if (File.Exists(sBackupSaveFilePath)) { 
+            File.Delete(sBackupSaveFilePath);
+          }
+
+          File.Copy(sSaveFilePath, sBackupSaveFilePath);
+        }
+      }
+      catch (Exception ex) {
+        DAS.Error(this, "Exception backing up save file: " + ex);
+      }
 
       File.WriteAllText(sSaveFilePath, jsonValue);
     }
+
+    #endregion
+
+
+
   }
 }
 

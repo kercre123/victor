@@ -68,7 +68,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void ShowStartView() {
-      RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(false);
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       _StartViewInstance = UIManager.OpenView(_StartViewPrefab);
       _StartViewInstance.OnConnectClicked += HandleConnectClicked;
     }
@@ -89,11 +89,10 @@ namespace Cozmo.HomeHub {
       // Show the current state of challenges being locked/unlocked
       _HomeViewInstance.Initialize(_ChallengeStatesById, this);
 
-      // The Default chooser is used for freeplay. 
-      RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Default);
-
-      RobotEngineManager.Instance.CurrentRobot.SetBehaviorSystem(true);
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
       DailyGoalManager.Instance.MinigameConfirmed += HandleStartChallengeRequest;
+
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
     }
 
     private void HandleSessionEndClicked() {
@@ -123,7 +122,6 @@ namespace Cozmo.HomeHub {
     }
 
     private void HandleStartChallengeClicked(string challengeClicked) {
-      _ChallengeDetailsDialogInstance.ChallengeStarted -= HandleStartChallengeClicked;
 
       // Keep track of the current challenge
       _CurrentChallengePlaying = new CompletedChallengeData() {
@@ -133,7 +131,6 @@ namespace Cozmo.HomeHub {
 
       // Close dialog
       CloseTimelineDialog();
-      _ChallengeDetailsDialogInstance.CloseViewImmediately();
 
       // Play minigame immediately
       PlayMinigame(_ChallengeStatesById[challengeClicked].Data);
@@ -170,18 +167,18 @@ namespace Cozmo.HomeHub {
       _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;
     }
 
-    private void HandleMiniGameLose(StatContainer rewards, Transform[] rewardIcons) {
-      HandleMiniGameCompleted(rewards, rewardIcons, didWin: false);
+    private void HandleMiniGameLose(Transform[] rewardIcons) {
+      HandleMiniGameCompleted(rewardIcons, didWin: false);
     }
 
-    private void HandleMiniGameWin(StatContainer rewards, Transform[] rewardIcons) {
-      HandleMiniGameCompleted(rewards, rewardIcons, didWin: true);
+    private void HandleMiniGameWin(Transform[] rewardIcons) {
+      HandleMiniGameCompleted(rewardIcons, didWin: true);
     }
 
-    private void HandleMiniGameCompleted(StatContainer rewards, Transform[] rewardIcons, bool didWin) {
+    private void HandleMiniGameCompleted(Transform[] rewardIcons, bool didWin) {
       // If we are in a challenge that needs to be completed, complete it
       if (_CurrentChallengePlaying != null) {
-        CompleteChallenge(_CurrentChallengePlaying, didWin, rewards);
+        CompleteChallenge(_CurrentChallengePlaying, didWin);
         _CurrentChallengePlaying = null;
       }
       ShowTimelineDialog();
@@ -197,8 +194,7 @@ namespace Cozmo.HomeHub {
     private void PlayMinigame(ChallengeData challengeData) {
       // Reset the robot behavior
       if (RobotEngineManager.Instance.CurrentRobot != null) {
-        RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-        RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+        RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       }
 
       GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
@@ -226,6 +222,10 @@ namespace Cozmo.HomeHub {
     }
 
     private void CloseTimelineDialog() {
+      if (_ChallengeDetailsDialogInstance != null) {
+        _ChallengeDetailsDialogInstance.ChallengeStarted -= HandleStartChallengeClicked;
+        _ChallengeDetailsDialogInstance.CloseViewImmediately();
+      }
       if (_HomeViewInstance != null) {
         DeregisterDialogEvents();
         _HomeViewInstance.CloseView();
@@ -261,19 +261,11 @@ namespace Cozmo.HomeHub {
       }
     }
 
-    private void CompleteChallenge(CompletedChallengeData completedChallenge, bool won, StatContainer rewards) { 
+    private void CompleteChallenge(CompletedChallengeData completedChallenge, bool won) { 
       // the last session is not necessarily valid as the 'CurrentSession', as its possible
       // the day rolled over while we were playing the challenge.
       var session = DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.LastOrDefault();
-      if (session != null) {
-        session.Progress.Set(RobotEngineManager.Instance.CurrentRobot.GetProgressionStats());
-
-        // TODO: This is a placeholder for rewarding green points. Eventually the daily goals system
-        // will be the one responsible for rewarding green points.
-        // TODO: Don't hardcode "experience"
-        DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount("experience", 8);
-      }
-      else {
+      if (session == null) {
         DAS.Error(this, "Somehow managed to complete a challenge with no sessions saved!");
       }
 
@@ -292,7 +284,7 @@ namespace Cozmo.HomeHub {
 
         CompleteChallenge(new CompletedChallengeData() {
           ChallengeId = completedChallengeId 
-        }, true, new StatContainer());
+        }, true);
 
         // Force refresh of the dialog
         DeregisterDialogEvents();

@@ -3,11 +3,9 @@ using System.Collections;
 
 namespace SpeedTap {
   // lights count and colors must match, cubes can have all different colored lights
-  public class LightCountMultiColorSpeedTapRules : ISpeedTapRules {
+  public class LightCountMultiColorSpeedTapRules : SpeedTapRulesBase {
 
-    private Color[] _Colors = { Color.white, Color.green, Color.blue, Color.magenta, Color.yellow };
-
-    public virtual void SetLights(bool shouldTap, SpeedTapGame game) {
+    public override void SetLights(bool shouldTap, SpeedTapGame game) {
 
       if (shouldTap) {
         // Do match
