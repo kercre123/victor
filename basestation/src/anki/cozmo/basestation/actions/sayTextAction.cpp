@@ -17,6 +17,13 @@
 namespace Anki {
 namespace Cozmo {
 
+# define PLACEHOLDER_CODE 1
+  
+# if PLACEHOLDER_CODE
+  static Animation tempAnim;
+  static bool animSent = false;
+# endif
+  
   SayTextAction::SayTextAction(Robot& robot, const std::string& text, SayTextStyle style)
   : IAction(robot)
   , _text(text)
@@ -30,7 +37,7 @@ namespace Cozmo {
       _name = "SayText_" + _text + "_Action";
     }
     
-    // TODO: Create speech here
+    _robot.GetTextToSpeechController().CreateSpeech(_text);
   }
   
   SayTextAction::~SayTextAction()
@@ -40,7 +47,8 @@ namespace Cozmo {
   
   ActionResult SayTextAction::Init()
   {
-    _isTextToSpeechReady = false;
+    _isTextToSpeechReady = bool(PLACEHOLDER_CODE); // TODO: init to false once callbacks are ready
+    
     TextToSpeechController::ReadyCallback callback = [this]()
     {
       _isTextToSpeechReady = true;
@@ -52,13 +60,32 @@ namespace Cozmo {
       return ActionResult::FAILURE_ABORT;
     }
     
+    
+#   if PLACEHOLDER_CODE
+    tempAnim.SetIsLive(true);
+    tempAnim.AddKeyFrameToBack(RobotAudioKeyFrame(Audio::GameEvent::GenericEvent::Vo_Coz_External_Play, 0));
+    animSent = false;
+#   endif
+    
     return ActionResult::SUCCESS;
   }
   
   ActionResult SayTextAction::CheckIfDone()
   {
     if(_isTextToSpeechReady) {
+#     if PLACEHOLDER_CODE
+      if(!animSent) {
+        _robot.GetAnimationStreamer().SetStreamingAnimation(_robot, &tempAnim);
+        animSent = true;
+        return ActionResult::RUNNING;
+      } else if(_robot.IsAnimating()) {
+        return ActionResult::RUNNING;
+      } else {
+        return ActionResult::SUCCESS;
+      }
+#     else
       return _playAnimationGroupAction.Update();
+#     endif
     } else {
       return ActionResult::RUNNING;
     }
