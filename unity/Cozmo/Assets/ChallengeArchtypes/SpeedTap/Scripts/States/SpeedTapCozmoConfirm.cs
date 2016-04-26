@@ -12,7 +12,16 @@ namespace SpeedTap {
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapCozmoConfirm, HandleTapDone);
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapCozmoConfirm);
+      if (_SpeedTapGame.PlayerBlock != null) {
+        _SpeedTapGame.StopCycleCube(_SpeedTapGame.PlayerBlock);
+        _SpeedTapGame.PlayerBlock.SetLEDsOff();
+      }
+    }
 
+    public override void Update() {
+      if (_SpeedTapGame.PlayerBlock != null) {
+        _SpeedTapGame.PlayerBlock.SetLEDsOff();
+      }
     }
 
     private void HandleTapDone(bool success) {

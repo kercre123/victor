@@ -1,13 +1,23 @@
 ﻿using System;
+using Cozmo.UI;
 using System.Collections.Generic;
 
 namespace DataPersistence {
   public class TimelineEntryData {
     public Date Date;
 
-    public StatContainer Goals;
+    public List<DailyGoal> DailyGoals;
 
-    public StatContainer Progress;
+    public float GetTotalProgress() {
+      float totalG = 0.0f;
+      float totalP = 0.0f;
+      for (int i = 0; i < DailyGoals.Count; i++) {
+        totalG += DailyGoals[i].Target;
+        totalP += DailyGoals[i].Progress;
+      }
+      float finalP = totalP / totalG;
+      return finalP;
+    }
 
     public float PlayTime;
 
@@ -22,9 +32,8 @@ namespace DataPersistence {
     public int ChestsGained;
 
     public TimelineEntryData() {
-      Goals = new StatContainer();
-      Progress = new StatContainer();
       CompletedChallenges = new List<CompletedChallengeData>();
+      DailyGoals = new List<DailyGoal>();
     }
 
     public TimelineEntryData(Date date) : this() {
@@ -37,17 +46,12 @@ namespace DataPersistence {
 
     public DateTime EndTime;
 
-    public readonly StatContainer AvailableStats;
-
-    public readonly StatContainer RecievedStats;
-
     public string ChallengeId;
 
     public bool Won;
 
     public CompletedChallengeData() {
-      AvailableStats = new StatContainer();
-      RecievedStats = new StatContainer();
+      // TODO: Include Count of how often Rewarded events triggered?
     }
   }
 }

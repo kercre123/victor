@@ -77,6 +77,7 @@ namespace FaceEnrollment {
 
     private void HandleReactionDone(bool success) {
       _NewSeenFaceID = 0;
+      _FaceEnrollmentView.OnSubmitButton -= HandleSubmitButton;
       UIManager.CloseView(_FaceEnrollmentView);
       _FaceEnrollmentView = null;
       ResetPose();
@@ -123,6 +124,12 @@ namespace FaceEnrollment {
     protected override void CleanUpOnDestroy() {
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
       RobotEngineManager.Instance.RobotObservedFace -= HandleOnAnyFaceSeen;
+
+      if (_FaceEnrollmentView != null) {
+        _FaceEnrollmentView.OnSubmitButton -= HandleSubmitButton;
+        UIManager.CloseViewImmediately(_FaceEnrollmentView);
+        _FaceEnrollmentView = null;
+      }
     }
 
     private void PlayFaceReactionAnimation(int faceId) {

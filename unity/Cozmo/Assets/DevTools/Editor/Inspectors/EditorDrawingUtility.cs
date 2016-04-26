@@ -11,7 +11,10 @@ public static class EditorDrawingUtility {
     EditorGUILayout.BeginHorizontal();
     GUILayout.Label(label);
     if (GUILayout.Button("+", GUILayout.Width(30))) {
-      list.Insert(0, createFunc());
+      list.Add(createFunc());
+    }
+    if (GUILayout.Button("-", GUILayout.Width(30))) {
+      list.RemoveAt(0);
     }
     EditorGUILayout.EndHorizontal();
 
@@ -19,15 +22,6 @@ public static class EditorDrawingUtility {
       EditorGUILayout.BeginHorizontal();
       list[i] = drawControls(list[i]);
 
-
-      if (GUILayout.Button("-", GUILayout.Width(30))) {
-        list.RemoveAt(i);
-        i--;
-      }
-
-      if (GUILayout.Button("+", GUILayout.Width(30))) {        
-        list.Insert(i + 1, createFunc());
-      }
 
       EditorGUILayout.EndHorizontal();
     }

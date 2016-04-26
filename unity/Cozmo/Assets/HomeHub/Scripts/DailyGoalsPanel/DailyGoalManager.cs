@@ -4,9 +4,27 @@ using DataPersistence;
 using System.Collections;
 using System.Collections.Generic;
 using Cozmo.UI;
+using Newtonsoft.Json;
+using System.IO;
 using Anki.Cozmo;
 
+/// <summary>
+/// Daily goal manager. Loads in DailyGoal information and manages 
+/// </summary>
 public class DailyGoalManager : MonoBehaviour {
+
+  // List of current Daily Goals
+  private List<DailyGoal> _DailyGoalList;
+  // List of Current Generation Data
+  private DailyGoalGenerationData _CurrentGenData;
+
+  #if UNITY_IOS && !UNITY_EDITOR
+  public static string sDailyGoalDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/DailyGoals"); } }
+ 
+
+#else
+  public static string sDailyGoalDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/DailyGoals"; } }
+  #endif
 
   #region constants
 
@@ -26,32 +44,20 @@ public class DailyGoalManager : MonoBehaviour {
   // The Last Challenge ID Cozmo has requested to play
   private ChallengeData _LastChallengeData;
 
-  #region FriendshipProgression and DailyGoals
+  #region DailyGoal Generation
+
 
   // Config file for friendship progression and daily goal generation
   [SerializeField]
-  private FriendshipProgressionConfig _FriendshipProgConfig;
+  private DailyGoalGenerationConfig _DailyGoalGenConfig;
 
-  public FriendshipProgressionConfig GetFriendshipProgressConfig() {
-    return _FriendshipProgConfig;
-  }
-
-
-  public bool HasGoalForStat(Anki.Cozmo.ProgressionStatType type) {
-    int val = 0;
-    if (DataPersistenceManager.Instance.CurrentSession.Goals.TryGetValue(type, out val)) {
-      if (val > 0) {
-        return true;
-      }
-    }
-    return false;
+  public DailyGoalGenerationConfig GetDailyGoalGenConfig() {
+    return _DailyGoalGenConfig;
   }
 
   public float GetTodayProgress() {
     if (DataPersistenceManager.Instance.CurrentSession != null) {
-      StatContainer prog = DataPersistenceManager.Instance.CurrentSession.Progress;
-      StatContainer goal = DataPersistenceManager.Instance.CurrentSession.Goals;
-      return CalculateDailyGoalProgress(prog, goal);
+      return DataPersistenceManager.Instance.CurrentSession.GetTotalProgress();
     }
     else {
       return 0.0f;
@@ -102,27 +108,6 @@ public class DailyGoalManager : MonoBehaviour {
   }
 
   /// <summary>
-  /// Returns the current goal that's the furthest from being complete.
-  /// Use to help determine which minigame cozmo wants to play
-  /// NOTE - Currently not in use
-  /// </summary>
-  /// <returns>The stat.</returns>
-  public Anki.Cozmo.ProgressionStatType PrimaryStat() {
-    int greatestVal = 0;
-    Anki.Cozmo.ProgressionStatType greatestType = Anki.Cozmo.ProgressionStatType.Count;
-    foreach (KeyValuePair<Anki.Cozmo.ProgressionStatType, int> kVp in DataPersistenceManager.Instance.CurrentSession.Goals) {
-      int currProg = 0;
-      DataPersistenceManager.Instance.CurrentSession.Progress.TryGetValue(kVp.Key, out currProg);
-      int currGoal = kVp.Value - currProg;
-      if (currGoal > greatestVal) {
-        greatestVal = currGoal;
-        greatestType = kVp.Key;
-      }
-    }
-    return greatestType;
-  }
-
-  /// <summary>
   ///  Returns a value between -1 and 1 based on how close AND far you are from completing daily goal
   /// </summary>
   /// <returns>The minigame need.</returns>
@@ -162,57 +147,74 @@ public class DailyGoalManager : MonoBehaviour {
     Instance = this;
     RobotEngineManager.Instance.OnRequestGameStart += HandleAskForMinigame;
     RobotEngineManager.Instance.OnDenyGameStart += HandleExternalRejection;
+    // Load all Event Map Configs (Can have multiple, so you can create different configs, game only uses one.)
+    if (Directory.Exists(sDailyGoalDirectory)) {
+      string[] _DailyGoalFiles = Directory.GetFiles(sDailyGoalDirectory);
+      // TODO : Specify the event map file to use in a config
+      if (_DailyGoalFiles.Length > 0) {
+        bool didMatch = false;
+        for (int i = 0; i < _DailyGoalFiles.Length; i++) {
+          if (_DailyGoalFiles[i] == Path.Combine(sDailyGoalDirectory, _DailyGoalGenConfig.DailyGoalFileName)) {
+            LoadDailyGoalData(_DailyGoalFiles[i]);
+            didMatch = true;
+            break;
+          }
+        }
+        if (!didMatch) {
+          DAS.Warn(this, string.Format("Could not find {0}, defaulting to {1}", _DailyGoalGenConfig.DailyGoalFileName, _DailyGoalFiles[0]));
+          LoadDailyGoalData(_DailyGoalFiles[0]);
+        }
+      }
+      else {
+        DAS.Warn(this, string.Format("No DailyGoal Data to load in {0}", sDailyGoalDirectory));
+      }
+    }
+    else {
+      DAS.Warn(this, string.Format("No DailyGoal Data to load in {0}", sDailyGoalDirectory));
+    }
   }
 
   private void OnDestroy() {
     RobotEngineManager.Instance.OnRequestGameStart -= HandleAskForMinigame;
     RobotEngineManager.Instance.OnDenyGameStart -= HandleExternalRejection;
   }
-	
-  // Using current friendship level and the appropriate config file,
-  // generate a series of random goals for the day.
-  public StatContainer GenerateDailyGoals() {
 
-    FriendshipProgressionConfig config = _FriendshipProgConfig;
-
-    StatBitMask possibleStats = StatBitMask.None;
-    int totalGoals = 0;
-    int min = 0;
-    int max = 0;
-    // Iterate through each level and add in the stats introduced for that level
-    for (int i = 0; i <= 4; i++) {
-      possibleStats |= config.FriendshipLevels[i].StatsIntroduced;
-    }
-    totalGoals = config.FriendshipLevels[4].MaxGoals;
-    min = config.FriendshipLevels[4].MinTarget;
-    max = config.FriendshipLevels[4].MaxTarget;
-
-    // Don't generate more goals than possible stats
-    if (totalGoals > possibleStats.Count) {
-      DAS.Warn(this, "More Goals than Potential Stats");
-      totalGoals = possibleStats.Count;
-    }
-    StatContainer goals = new StatContainer();
-    // Generate Goals from the possible stats, set stats to false as you pick them
-    // to prevent duplicates.
-    for (int i = 0; i < totalGoals; i++) {
-      Anki.Cozmo.ProgressionStatType targetStat = possibleStats.Random();
-      possibleStats[targetStat] = false;
-      goals[targetStat] = UnityEngine.Random.Range(min, max);
-    }
-
-    SendDasEventsForGoalGeneration(goals);
-
-    return goals;
+  private void LoadDailyGoalData(string path) {
+    string json = File.ReadAllText(path);
+    DAS.Event(this, string.Format("LoadDailyGoalData {0}", Path.GetFileName(path)));
+    _CurrentGenData = JsonConvert.DeserializeObject<DailyGoalGenerationData>(json, GlobalSerializerSettings.JsonSettings);
   }
 
-  private void SendDasEventsForGoalGeneration(StatContainer goals) {
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
-      Anki.Cozmo.ProgressionStatType index = (Anki.Cozmo.ProgressionStatType)i;
-      if (goals[index] > 0) {
-        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today),
-          new Dictionary<string,string> {
-            { "$data", DASUtil.FormatStatAmount(index, goals[index]) }
+  public List<DailyGoal> GenerateDailyGoals() {
+    List<DailyGoal> newGoals = new List<DailyGoal>();
+    int goalCount = Mathf.Min(_CurrentGenData.GenList.Count, UnityEngine.Random.Range(_DailyGoalGenConfig.MinGoals, _DailyGoalGenConfig.MaxGoals));
+    List<DailyGoalGenerationData.GoalEntry> goalList = new List<DailyGoalGenerationData.GoalEntry>();
+    // Look at a list of exclusively goals that have their conditions met
+    for (int i = 0; i < _CurrentGenData.GenList.Count; i++) {
+      if (_CurrentGenData.GenList[i].CanGen()) {
+        goalList.Add(_CurrentGenData.GenList[i]);
+      }
+    }
+    // Grab random DailyGoals from the available goal list
+    DailyGoalGenerationData.GoalEntry toAdd;
+    for (int i = 0; i < goalCount; i++) {
+      toAdd = goalList[UnityEngine.Random.Range(0, goalList.Count)];
+      // Remove from list to prevent dupes
+      goalList.Remove(toAdd);
+      newGoals.Add(new DailyGoal(toAdd.CladEvent, toAdd.TitleKey, toAdd.DescKey, toAdd.PointsRewarded, toAdd.Target, toAdd.RewardType));
+    }
+    SendDasEventsForGoalGeneration(newGoals);
+    return newGoals;
+  }
+
+  private void SendDasEventsForGoalGeneration(List<DailyGoal> goals) {
+    if (goals.Count > 0) {
+      for (int i = 0; i < goals.Count; i++) {
+        DAS.Event(DASConstants.Goal.kGeneration, DASUtil.FormatDate(DataPersistenceManager.Today), 
+          new Dictionary<string,string> { {
+              "$data",
+              DASUtil.FormatGoal(goals[i])
+            }
           });
       }
     }
@@ -283,62 +285,8 @@ public class DailyGoalManager : MonoBehaviour {
 
   #region Calculate Friendship Points and DailyGoal Progress
 
-  // Returns the % progression towards your daily goals
-  // Range from 0-1. Does not take overflow into account.
-  public float CalculateDailyGoalProgress(StatContainer progress, StatContainer goal) {
-    int totalProgress = 0, totalGoal = 0;
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
-      var stat = (Anki.Cozmo.ProgressionStatType)i;
-      totalProgress += Mathf.Min(progress[stat], goal[stat]);
-      totalGoal += goal[stat];
-    }
-    return ((float)totalProgress / (float)totalGoal);
-  }
-
-  // Calculates friendship points earned for the day based on stats earned and Bonus Mult
-  public int CalculateFriendshipPoints(StatContainer progress, StatContainer goal) {
-    int totalProgress = 0;
-    float mult = CalculateBonusMult(progress, goal);
-    if (mult < 1.0f) {
-      mult = 1.0f;
-    }
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
-      var stat = (Anki.Cozmo.ProgressionStatType)i;
-      totalProgress += progress[stat];
-    }
-    return (totalProgress * Mathf.CeilToInt(mult));
-  }
-
-  // Calculates the current Bonus Multiplier for calculating friendship points
-  public float CalculateBonusMult(StatContainer progress, StatContainer goal) {
-    int totalProgress = 0, totalGoal = 0;
-    float bonusMult = 0.0f;
-    if (AreAllDailyGoalsComplete(progress, goal) == true) {
-      for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
-        var stat = (Anki.Cozmo.ProgressionStatType)i;
-        totalProgress += progress[stat];
-        totalGoal += goal[stat];
-      }
-      bonusMult = ((float)totalProgress / (float)totalGoal);
-      // Register x2 mult including at exactly 100%
-      if (bonusMult == 1.0f) {
-        bonusMult += 0.001f;
-      }
-    }
-
-    return bonusMult;
-  }
-
-  public bool AreAllDailyGoalsComplete(StatContainer progress, StatContainer goal) {
-    bool isDone = true;
-    for (int i = 0; i < (int)Anki.Cozmo.ProgressionStatType.Count; i++) {
-      var stat = (Anki.Cozmo.ProgressionStatType)i;
-      if (progress[stat] < goal[stat]) {
-        isDone = false;
-        break;
-      }
-    }
-    return isDone;
+  public bool AreAllDailyGoalsComplete() {
+    return GetTodayProgress() >= 1.0f;
   }
 
   #endregion
