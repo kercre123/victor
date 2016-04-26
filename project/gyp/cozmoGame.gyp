@@ -557,7 +557,6 @@
               '<(cg-util_gyp_path):util',
               '<(cg-util_gyp_path):jsoncpp',
               '<(cg-util_gyp_path):kazmath',
-              '<(cg-util_gyp_path):tiny-AES128-C',
               '<(cg-util_gyp_path):UtilUnitTest',
               '<(cg-audio_path):DriveAudioEngine',
               '<(cg-das_path):DAS',
