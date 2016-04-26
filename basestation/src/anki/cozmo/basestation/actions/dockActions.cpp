@@ -83,6 +83,8 @@ namespace Anki {
         _robot.AbortDocking();
       }
       
+      _robot.UnsetDockObjectID();
+      
       // Stop squinting
       _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
       
