@@ -763,10 +763,6 @@ namespace Anki {
         m.report.write = false;
         SendMessage(m);
       }
-      void Process_bodyState(Anki::Cozmo::RobotInterface::BodyFirmwareState const&)
-      {
-        // Nothing to do here
-      }
       void Process_rtipVersion(Anki::Cozmo::RobotInterface::RTIPVersionInfo const&)
       {
         // Nothing to do here
@@ -804,10 +800,6 @@ namespace Anki {
         // Nothing to do here
       }
       void Process_killBodyCode(Anki::Cozmo::KillBodyCode const&)
-      {
-        // Nothing to do here
-      }
-      void Process_bootloadBody(Anki::Cozmo::RobotInterface::BootloadBody const&)
       {
         // Nothing to do here
       }
