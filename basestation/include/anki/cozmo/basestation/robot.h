@@ -399,8 +399,9 @@ public:
     // Same as above, but with specified object
     Result SetObjectAsAttachedToLift(const ObjectID& dockObjectID,
                                      const Vision::KnownMarker* dockMarker);
-    
-    void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf; _dockObjectID.UnSet(); }
+  
+    void UnsetDockObjectID() { _dockObjectID.UnSet(); }
+    void SetLastPickOrPlaceSucceeded(bool tf) { _lastPickOrPlaceSucceeded = tf;  }
     bool GetLastPickOrPlaceSucceeded() const { return _lastPickOrPlaceSucceeded; }
     
     // Places the object that the robot was carrying in its current position
