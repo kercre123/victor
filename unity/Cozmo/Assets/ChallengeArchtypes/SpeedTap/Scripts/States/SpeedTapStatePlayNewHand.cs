@@ -22,6 +22,7 @@ namespace SpeedTap {
     private float _MaxCozmoTapDelayTimeMs;
     private float _MatchProbability;
     private float _FakeProbability;
+    private float _MistakeProbability;
 
     #endregion
 
@@ -35,6 +36,7 @@ namespace SpeedTap {
     private bool _TriedFake = false;
     private bool _TryFake = false;
     private bool _TryPeek = false;
+    private bool _TryMistakeTap = false;
     private bool _PlayReady = false;
     private bool _PlayerTapRegistered = false;
     private bool _CozmoTapRegistered = false;
@@ -58,6 +60,7 @@ namespace SpeedTap {
       _PlayerTapRegistered = false;
       _MatchProbability = _SpeedTapGame.BaseMatchChance;
       _FakeProbability = _SpeedTapGame.CozmoFakeoutChance;
+      _MistakeProbability = _SpeedTapGame.CozmoMistakeChance;
       _PeekMinTimeMs = _SpeedTapGame.MinIdleIntervalMs;
       _PeekMaxTimeMs = _SpeedTapGame.MaxIdleIntervalMs;
       _MinCozmoTapDelayTimeMs = _SpeedTapGame.MinTapDelayMs;
@@ -120,7 +123,7 @@ namespace SpeedTap {
       }
 
       if (_LightsOn) {
-        if (_GotMatch) {
+        if (_GotMatch || _TryMistakeTap) {
           if (!_CozmoTapping) {
             if ((currTimeMs - _StartTimeMs) >= _CozmoTapDelayTimeMs) { 
               GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
@@ -160,7 +163,7 @@ namespace SpeedTap {
         }
       }
     }
-    // TODO:
+
     void RobotCompletedTapAnimation(bool success) {
       DAS.Info("SpeedTapStatePlayNewHand.tap_complete", "");
       // Checks if we have Registered a Tap on Cozmo's cube since starting the animation
@@ -179,8 +182,13 @@ namespace SpeedTap {
         _SpeedTapGame.PlayerWinsHand();
       }
       else {
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
-        _SpeedTapGame.CozmoWinsHand();
+        // Cozmo hit wrong
+        if (!_TryMistakeTap) {
+          _SpeedTapGame.CozmoWinsHand();
+        }
+        else {
+          _SpeedTapGame.PlayerWinsHand(true);
+        }
       }
     }
 
@@ -222,9 +230,12 @@ namespace SpeedTap {
 
       _TryFake = UnityEngine.Random.Range(0.0f, 1.0f) < _FakeProbability;
       _TryPeek = UnityEngine.Random.Range(0.0f, 1.0f) < _PeekProbability;
+      _TryMistakeTap = false;
       float matchExperiment = UnityEngine.Random.value;
       _GotMatch = matchExperiment < _MatchProbability;
       if (!_GotMatch) {
+        // it's only a mistake if not a match.
+        _TryMistakeTap = UnityEngine.Random.Range(0.0f, 1.0f) < _MistakeProbability;
         _MatchProbability += _SpeedTapGame.MatchChanceIncrease;
         if (_TryPeek) {
           _PeekDelayTimeMs = UnityEngine.Random.Range(_PeekMinTimeMs, _PeekMaxTimeMs);
