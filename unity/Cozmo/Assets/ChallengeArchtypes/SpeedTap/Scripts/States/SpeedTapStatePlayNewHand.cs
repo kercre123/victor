@@ -230,10 +230,12 @@ namespace SpeedTap {
 
       _TryFake = UnityEngine.Random.Range(0.0f, 1.0f) < _FakeProbability;
       _TryPeek = UnityEngine.Random.Range(0.0f, 1.0f) < _PeekProbability;
-      _TryMistakeTap = UnityEngine.Random.Range(0.0f, 1.0f) < _MistakeProbability;
+      _TryMistakeTap = false;
       float matchExperiment = UnityEngine.Random.value;
       _GotMatch = matchExperiment < _MatchProbability;
       if (!_GotMatch) {
+        // it's only a mistake if not a match.
+        _TryMistakeTap = UnityEngine.Random.Range(0.0f, 1.0f) < _MistakeProbability;
         _MatchProbability += _SpeedTapGame.MatchChanceIncrease;
         if (_TryPeek) {
           _PeekDelayTimeMs = UnityEngine.Random.Range(_PeekMinTimeMs, _PeekMaxTimeMs);
