@@ -158,20 +158,20 @@ namespace Cozmo {
     if (it != connectedDevices_.end())
     {
       UdpClient* udpClient = it->second.GetOutClient();
-      return udpClient->Send((const char*)p.data, p.dataLen);
+      const int sendRes = udpClient->Send((const char*)p.data, p.dataLen);
     
-
-      /*
-      printf("SENDBUF (hex): ");
-      PrintBytesHex(sendBuf, sendBufLen);
-      printf("\nSENDBUF (uint): ");
-      PrintBytesUInt(sendBuf, sendBufLen);
-      printf("\n");
-      */
+      if (sendRes < 0)
+      {
+        PRINT_NAMED_WARNING("MultiClientComms.RealSend.SendFailed", "destId: %d, socket %d, sendRes = %d", p.destId, udpClient->GetSocketFd(), sendRes);
+      }
+      
+      return sendRes;
     }
-    
-    return -1;
-    
+    else
+    {
+      PRINT_NAMED_WARNING("MultiClientComms.RealSend.NotConnected", "destId: %d", p.destId);
+      return -1;
+    }
   }
   
   
@@ -268,7 +268,7 @@ namespace Cozmo {
             }
             bytesSentThisUpdateCycle_ += pQueue->front().second.dataLen;
             if (RealSend(pQueue->front().second) < 0) {
-              PRINT_NAMED_WARNING("MultiClientComms.RealSendFail", "");
+              // Failed (RealSend prints a warning internally)
             }
             pQueue->pop_front();
           } else {
