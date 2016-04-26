@@ -1341,11 +1341,20 @@ namespace Anki {
                                                                 useManualSpeed);
     }
     
-    u8 Robot::PlayAnimation(const std::string& animName, u32 numLoops, bool interruptRunning)
+    AnimationStreamer::Tag Robot::PlayAnimation(const std::string& animName, u32 numLoops, bool interruptRunning)
     {
-      u8 tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops, interruptRunning);
+      AnimationStreamer::Tag tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops, interruptRunning);
       if(tag != AnimationStreamer::NotAnimatingTag) {
         _lastPlayedAnimationId = animName;
+      }
+      return tag;
+    }
+    
+    AnimationStreamer::Tag Robot::PlayAnimation(Animation* animation, u32 numLoops, bool interruptRunning)
+    {
+      AnimationStreamer::Tag tag = _animationStreamer.SetStreamingAnimation(*this, animation, numLoops, interruptRunning);
+      if(tag != AnimationStreamer::NotAnimatingTag) {
+        _lastPlayedAnimationId = animation->GetName();
       }
       return tag;
     }

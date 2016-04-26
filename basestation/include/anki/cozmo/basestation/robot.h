@@ -475,7 +475,8 @@ public:
     // If numLoops == 0, animation repeats forever.
     // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Returns the streaming tag, so you can find out when it is done.
-    u8 PlayAnimation(const std::string& animName, const u32 numLoops = 1, bool interruptRunning = true);
+    AnimationStreamer::Tag PlayAnimation(const std::string& animName, const u32 numLoops = 1, bool interruptRunning = true);
+    AnimationStreamer::Tag PlayAnimation(Animation* animation, u32 numLoops = 1, bool interruptRunning = true);
   
     // Set the animation to be played when no other animation has been specified.  Use the empty string to
     // disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
