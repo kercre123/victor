@@ -73,7 +73,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
- public event Action<Anki.Cozmo.ExternalInterface.FactoryTestResult> OnFactoryResult;
+  public event Action<Anki.Cozmo.ExternalInterface.FactoryTestResult> OnFactoryResult;
   public event Action<Anki.Cozmo.UnlockId, bool> OnRequestSetUnlockResult;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress> OnFirmwareUpdateProgress;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete> OnFirmwareUpdateComplete;
@@ -112,6 +112,8 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.SetDebugConsoleVarMessage _SetDebugConsoleVarMessage = new U2G.SetDebugConsoleVarMessage();
   private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
   private U2G.DenyGameStart _DenyGameStartMessage = new U2G.DenyGameStart();
+
+  public bool InitSkillSystem;
 
   private void Awake() {
     #if ANIMATION_TOOL
@@ -157,8 +159,11 @@ public class RobotEngineManager : MonoBehaviour {
 
     Robots = new Dictionary<int, IRobot>();
 
-// Startup Singletons depending on RobotEvents
-    SkillSystem.Instance.InitInstance();
+    // Startup Singletons depending on RobotEvents
+    if (InitSkillSystem) {
+      SkillSystem.Instance.InitInstance();
+    }
+
   }
 
   private void OnDisable() {
