@@ -14,11 +14,15 @@
 
 #include "BLECozmoMessage.h"
 
+#if defined(DEBUG)
 #define BLECOZMOCONNECTION_DEBUG 1
+#else
+#define BLECOZMOCONNECTION_DEBUG 0
+#endif
 
 static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
-  .batchLength = BLECozmoConnectionMessageBatchLength,
-  .batchDelayMillisec = BLECozmoConnectionMessageBatchDelay_MSEC,
+  ._batchLength = kBLECozmoConnectionMessageBatchLength,
+  ._batchDelayMillisec = kBLECozmoConnectionMessageBatchDelay_MSEC,
 };
 
 @interface BLECozmoConnection ()
@@ -79,8 +83,8 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
     _canWrite = YES;
     _latencyTimeout = 3.0;
     _throttlingDisabled = NO;
-    _messageBatchLength = sConnectionThrottlingParams.batchLength;
-    _messageBatchDelayMilliSec = sConnectionThrottlingParams.batchDelayMillisec;
+    _messageBatchLength = sConnectionThrottlingParams._batchLength;
+    _messageBatchDelayMilliSec = sConnectionThrottlingParams._batchDelayMillisec;
     self.throttlingQueue = self.cozmoManager.queue;
   }
   

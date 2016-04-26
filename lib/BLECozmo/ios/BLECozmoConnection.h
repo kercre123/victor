@@ -24,15 +24,15 @@ typedef NS_ENUM(NSInteger, BLECozmoConnectionErrorCode) {
 };
   
 typedef struct {
-  NSUInteger batchLength;
-  NSUInteger batchDelayMillisec;
+  NSUInteger _batchLength;
+  NSUInteger _batchDelayMillisec;
 } BLECozmoonnectionThrottlingParams;
   
 // Max number of messages to send in one batch
-#define BLECozmoConnectionMessageBatchLength 2
+constexpr int kBLECozmoConnectionMessageBatchLength = 2;
   
 // Delay (ms) between batched message writes
-#define BLECozmoConnectionMessageBatchDelay_MSEC 30
+constexpr int kBLECozmoConnectionMessageBatchDelay_MSEC = 30;
   
 enum _BLEConnectionState {
   kUnavailable           = -1,
@@ -48,33 +48,33 @@ typedef int BLEConnectionState;
 @interface BLECozmoConnection : NSObject
 
 // back pointer to parent manager
-@property (weak, nonatomic) BLECozmoManager* cozmoManager;
+@property (weak, nonatomic) BLECozmoManager*      cozmoManager;
 
-@property (assign, nonatomic)  NSInteger                  scannedRSSI;
-@property (assign, nonatomic) BLEConnectionState         connectionState;
+@property (assign, nonatomic)  NSInteger          scannedRSSI;
+@property (assign, nonatomic) BLEConnectionState  connectionState;
 
 // TODO: We might want to think about storing these as Identifiers/UUIDs
 // and letting BLECentralMultiplexer own the actual objects.
 // That would avoid any potential issues related to cached peripheral or characteristic state.
-@property (strong, nonatomic) CBPeripheral     *carPeripheral;
-@property (strong, nonatomic) CBCharacteristic *toCarCharacteristic;
-@property (strong, nonatomic) CBCharacteristic *toPhoneCharacteristic;
+@property (strong, nonatomic) CBPeripheral*       carPeripheral;
+@property (strong, nonatomic) CBCharacteristic*   toCarCharacteristic;
+@property (strong, nonatomic) CBCharacteristic*   toPhoneCharacteristic;
 
 // advertised data
-@property (strong, nonatomic) NSData           *mfgData;
-@property (readonly, nonatomic) NSDictionary   *advertisementData;
-@property (readonly, nonatomic) UInt64         mfgID;
+@property (strong, nonatomic) NSData*             mfgData;
+@property (readonly, nonatomic) NSDictionary*     advertisementData;
+@property (readonly, nonatomic) UInt64            mfgID;
 
 @property (assign, nonatomic) BOOL canWrite;
-@property (strong, nonatomic) NSMutableArray *enqueuedMessages;
+@property (strong, nonatomic) NSMutableArray*     enqueuedMessages;
 @property (assign, nonatomic, getter=isThrottlingDisabled) BOOL throttlingDisabled;
-@property (assign, nonatomic) NSUInteger messageBatchLength;
-@property (assign, nonatomic) NSUInteger messageBatchDelayMilliSec;
+@property (assign, nonatomic) NSUInteger          messageBatchLength;
+@property (assign, nonatomic) NSUInteger          messageBatchDelayMilliSec;
 
-@property (assign, nonatomic) UInt32 messagesSent;
-@property (assign, nonatomic) UInt32 bytesSent;
-@property (assign, nonatomic) UInt32 messagesReceived;
-@property (assign, nonatomic) UInt32 bytesReceived;
+@property (assign, nonatomic) UInt32              messagesSent;
+@property (assign, nonatomic) UInt32              bytesSent;
+@property (assign, nonatomic) UInt32              messagesReceived;
+@property (assign, nonatomic) UInt32              bytesReceived;
 
 // Max amount of time to wait between firmware packet writes
 // before the operation times out.
