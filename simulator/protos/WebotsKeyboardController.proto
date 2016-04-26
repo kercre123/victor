@@ -24,6 +24,9 @@ PROTO WebotsKeyboardController [
 
   # Name to assign to current faceID
   field SFString userName ""
+  
+  # String to say when using SayText
+  field SFString sayString "Hello"
 
   # Unlock ID to unlock / lock
   field SFString unlockName "CubeRollAction"
