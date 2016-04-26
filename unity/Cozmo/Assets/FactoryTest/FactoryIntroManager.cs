@@ -211,4 +211,19 @@ public class FactoryIntroManager : MonoBehaviour {
       Destroy(_DevConnectDialogInstance);
     }
   }
+
+  void Update() {
+    if (GetComponent<PingStatus>().GetPingStatus() || _IsSim) {
+      _StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "START";
+      _StartButton.image.color = Color.green;
+      _StartButton.interactable = true;
+    }
+    else {
+      _StartButton.image.color = Color.gray;
+      _StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "NO ROBOT CONNECTED";
+      _StartButton.interactable = false;
+    }
+
+
+  }
 }
