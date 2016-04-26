@@ -168,6 +168,8 @@ def main(scriptArgs):
                       help='Use coretech-internal repo checked out at CORETECH_INTERNAL_DIR')
   parser.add_argument('--audio', metavar='AUDIO_PATH', dest='audioPath', action='store', default=None,
                       help='Use audio repo checked out at AUDIO_PATH')
+  parser.add_argument('--bleCozmo', metavar='BLE_COZMO_PATH', dest='bleCozmoPath', action='store', default=None,
+                      help='Use BLECozmo repo checked out at BLE_COZMO_PATH')
   parser.add_argument('--cozmoEngine', metavar='COZMO_ENGINE_PATH', dest='cozmoEnginePath', action='store', default=None,
                       help='Use cozmo-engine repo checked out at COZMO_ENGINE_PATH')
   parser.add_argument('--cozmoAssets', metavar='COZMO_ASSET_PATH', dest='cozmoAssetPath', action='store', default=None,
@@ -249,6 +251,14 @@ def main(scriptArgs):
     return False
   audioProjectPath = options.audioPath
   audioProjectGypPath = os.path.join(audioProjectPath, 'gyp/audioengine.gyp')
+
+  if not options.bleCozmoPath:
+    options.bleCozmoPath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/lib/BLECozmo')
+  if not os.path.exists(options.bleCozmoPath):
+    UtilLog.error('BLECozmo path not found [%s]' % options.bleCozmoPath)
+    return False
+  bleCozmoProjectPath = os.path.join(options.bleCozmoPath, 'project/gyp/BLECozmo.gyp')
+
 
   sys.path.insert(0, os.path.join(options.buildToolsPath, 'tools/ankibuild'))
   import installBuildDeps
@@ -370,6 +380,8 @@ def main(scriptArgs):
   ceAudioProjectGypPath = os.path.relpath(audioProjectGypPath, cozmoEngineConfigurePath)
   cgAudioProjectGypPath = os.path.relpath(audioProjectGypPath, configurePath)
   cgDasProjectPath = os.path.relpath(dasProjectPath, configurePath)
+  cgBLECozmoProjectPath = os.path.relpath(bleCozmoProjectPath, configurePath)
+  ceBLECozmoProjectPath = os.path.relpath(bleCozmoProjectPath, cozmoEngineConfigurePath)
         
   buildMex = 'no'
   if options.mex:
@@ -422,6 +434,8 @@ def main(scriptArgs):
                                   cg-audio_path={18}
                                   externals_path={19}
                                   cg-das_path={20}
+                                  cg-ble_cozmo_path={21}
+                                  ce-ble_cozmo_path={22}
                                   """.format(
                                     options.arch,
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -443,7 +457,9 @@ def main(scriptArgs):
                                     ceAudioProjectGypPath,
                                     cgAudioProjectGypPath,
                                     externalsPath,
-                                    cgDasProjectPath
+                                    cgDasProjectPath,
+                                    cgBLECozmoProjectPath,
+                                    ceBLECozmoProjectPath,
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
@@ -488,6 +504,8 @@ def main(scriptArgs):
                                 cg-audio_path={15}
                                 externals_path={16}
                                 cg-das_path={17}
+                                cg-ble_cozmo_path={18}
+                                ce-ble_cozmo_path={19}
                                 """.format(
                                   options.arch,
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -506,7 +524,9 @@ def main(scriptArgs):
                                   ceAudioProjectGypPath,
                                   cgAudioProjectGypPath,
                                   externalsPath,
-                                  cgDasProjectPath
+                                  cgDasProjectPath,
+                                  cgBLECozmoProjectPath,
+                                  ceBLECozmoProjectPath,
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
@@ -579,6 +599,8 @@ def main(scriptArgs):
                                 cg-audio_path={16}
                                 externals_path={17}
                                 cg-das_path={18}
+                                cg-ble_cozmo_path={19}
+                                ce-ble_cozmo_path={20}
                                 """.format(
                                   options.arch,
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -598,7 +620,9 @@ def main(scriptArgs):
                                   ceAudioProjectGypPath,
                                   cgAudioProjectGypPath,
                                   externalsPath,
-                                  cgDasProjectPath
+                                  cgDasProjectPath,
+                                  cgBLECozmoProjectPath,
+                                  ceBLECozmoProjectPath,
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
