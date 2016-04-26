@@ -290,11 +290,7 @@ bool Bluetooth::transmit(const uint8_t* data, int length, uint8_t op) {
     return false;
   }
   
-  #ifndef DISABLE_AUTHENTIFICATION
-  const bool encrypted = message_encrypted(op);
-  #else
-  const bool encrypted = false;
-  #endif
+  bool encrypted = message_encrypted(op);
   
   tx_buffer.length = length;
   tx_buffer.msgID = op;

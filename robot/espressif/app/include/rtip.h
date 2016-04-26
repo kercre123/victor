@@ -13,7 +13,7 @@ namespace Anki {
       bool Init();
       
       // Send a message to the RTIP
-      bool SendMessage(const u8* buffer, const u16 bufferSize, const u8 tag=RobotInterface::GLOBAL_INVALID_TAG);
+      bool SendMessage(u8* buffer, u16 bufferSize);
       
       // Send a message to the RTIP
       bool SendMessage(RobotInterface::EngineToRobot& msg);

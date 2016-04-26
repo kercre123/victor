@@ -19,11 +19,9 @@ extern "C" {
 #include "face.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
-#include "wifi_configuration.h"
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "clad/types/imageTypes.h"
@@ -191,11 +189,6 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't initalize factory test framework\r\n");
     return -7;
   }
-  else if (Anki::Cozmo::WiFiConfiguration::Init() != Anki::RESULT_OK)
-  {
-    os_printf("\tCouldn't initalize WiFiConfiguration module\r\n");
-    return -8;
-  }
   else
   {
     return 0;
@@ -211,9 +204,10 @@ extern "C" bool i2spiSynchronizedCallback(uint32 param)
 
 static bool sendWifiConnectionState(const bool state)
 {
-  Anki::Cozmo::RobotInterface::RadioState rtipMsg;
-  rtipMsg.wifiConnected = state;
-  return Anki::Cozmo::RobotInterface::SendMessage(rtipMsg);
+  Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
+  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
+  rtipMsg.radioConnected.wifiConnected = state;
+  return Anki::Cozmo::RTIP::SendMessage(rtipMsg);
 }
 
 extern "C" void backgroundTaskOnConnect(void)

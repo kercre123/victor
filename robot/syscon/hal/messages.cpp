@@ -77,16 +77,6 @@ static void Process_killBodyCode(const KillBodyCode& msg)
   while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
 }
 
-static void Process_nvReadToBody(const RobotInterface::NVReadResultToBody& msg)
-{
-  // do something once we care about reading data
-}
-
-static void Process_nvOpResultToBody(const RobotInterface::NVOpResultToBody& msg)
-{
-  // do something once we're calling WiFi NVStorage API from body
-}
-
 void Spine::ProcessHeadData()
 {
   using namespace Anki::Cozmo;
@@ -112,18 +102,6 @@ void Spine::ProcessMessage(void* buf) {
   switch(msg.tag)
   {
     #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x27.def"
-    case 0x28:
-    case 0x29:
-    case 0x2A:
-    case 0x2B:
-    case 0x2C:
-    case 0x2D:
-    case 0x2E:
-    case 0x2F:
-    {
-      Bluetooth::transmit(msg.GetBuffer()+1, msg.Size()-1, msg.tag);
-      break;
-    }
     default:
       AnkiError( 140, "Head.ProcessMessage.BadTag", 385, "Message to body, unhandled tag 0x%x", 1, msg.tag);
   }

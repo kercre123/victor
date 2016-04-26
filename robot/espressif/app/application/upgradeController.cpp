@@ -21,7 +21,6 @@ extern "C" {
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #define MAX_RETRIES 2
 #define SHA_CHECK_READ_LENGTH 512
@@ -721,9 +720,8 @@ void EraseFlash(RobotInterface::EraseFlash& msg)
   }
   else
   {
-    Anki::Cozmo::RobotInterface::RadioState radioMsg;
-    radioMsg.wifiConnected = false;
-    RobotInterface::SendMessage(radioMsg);
+    u8 radioConnectedMsg[] = {Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected, false};
+    Anki::Cozmo::RTIP::SendMessage(radioConnectedMsg, 2);
     
     RobotInterface::EraseFlash* taskMsg = static_cast<RobotInterface::EraseFlash*>(os_zalloc(msg.Size()));
     if (taskMsg == NULL)
@@ -842,9 +840,9 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
     {
       if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
       {
-        RobotInterface::BootloadBody bbmsg;
+        u8 msg = RobotInterface::EngineToRobot::Tag_bootloadBody;
         os_printf("Flash staged, starting upgrade sequence\r\n");
-        return RobotInterface::SendMessage(bbmsg);
+        return RTIP::SendMessage(&msg, 1);
       }
       else
       {

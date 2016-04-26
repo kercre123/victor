@@ -14,10 +14,8 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "activeObjectManager.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
-#include "wifi_configuration.h"
 #include "upgradeController.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 static Anki::Cozmo::NVStorage::NVReportDest nvOpReportTo;
 
@@ -44,9 +42,10 @@ namespace Anki {
           }
           case NVStorage::BODY:
           {
-            RobotInterface::NVOpResultToBody msg;
-            os_memcpy(&msg.report, report, sizeof(NVStorage::NVOpResult));
-            RobotInterface::SendMessage(msg);
+            RobotInterface::EngineToRobot msg;
+            msg.tag = RobotInterface::EngineToRobot::Tag_nvOpResultToBody;
+            os_memcpy(&msg.nvOpResultToBody.report, report, sizeof(NVStorage::NVOpResult));
+            RTIP::SendMessage(msg);
             break;
           }
           default:
@@ -98,9 +97,10 @@ namespace Anki {
             }
             case NVStorage::BODY:
             {
-              RobotInterface::NVReadResultToBody msg;
-              os_memcpy(&msg.entry, entry, sizeof(NVStorage::NVStorageBlob));
-              RobotInterface::SendMessage(msg);
+              RobotInterface::EngineToRobot msg;
+              msg.tag = RobotInterface::EngineToRobot::Tag_nvReadToBody;
+              os_memcpy(&msg.nvReadToBody.entry, entry, sizeof(NVStorage::NVStorageBlob));
+              RTIP::SendMessage(msg);
               break;
             }
             default:
@@ -282,36 +282,6 @@ namespace Anki {
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               Factory::Process_EnterFactoryTestMode(msg.enterTestMode);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_appConCfgString:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              WiFiConfiguration::ProcessConfigString(msg.appConCfgString);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_appConCfgFlags:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              WiFiConfiguration::ProcessConfigFlags(msg.appConCfgFlags);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_appConCfgIPInfo:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              WiFiConfiguration::ProcessConfigIPInfo(msg.appConCfgIPInfo);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_appConGetRobotIP:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              WiFiConfiguration::SendRobotIpInfo(msg.appConGetRobotIP.ifId);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_wifiOff:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              WiFiConfiguration::Off(msg.wifiOff.sleep);
               break;
             }
             default:
