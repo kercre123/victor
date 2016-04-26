@@ -91,8 +91,6 @@ typedef int BLEConnectionState;
 
 - (void)clearConnectionState;
 
-//- (BOOL)sendUpdateWithName:(NSString *)name error:(NSError *__autoreleasing *)error;
-
 // used to query RSSI data when a peripheral is connected.
 - (void)readConnectedRSSI;
 
@@ -100,10 +98,6 @@ typedef int BLEConnectionState;
 // Send data to carPeripheral, using a throttling mechanism to avoid
 // saturating the connection.
 - (BOOL)writeMessageData:(NSData *)data error:(NSError *__autoreleasing *)error encrypted:(BOOL)encrypted;
-
-// Unbuffered I/O
-// Write data directly to the carPeripheral.
-- (void)disconnectFromPeripheral;
 
 @end
   

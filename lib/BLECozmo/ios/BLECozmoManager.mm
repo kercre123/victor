@@ -494,7 +494,6 @@ UInt64 BLE_TimeInNanoseconds() {
   [pendingPeripheralConnections removeAllObjects];
   
   for (BLECozmoConnection *vehicleConnection in vehicleConnections.copy) {
-    [vehicleConnection disconnectFromPeripheral];
     [self removeVehicleConnection:vehicleConnection];
   }
 }

@@ -27,7 +27,6 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
 
 @interface BLECozmoConnection ()
 - (BOOL)writeData:(NSData *)data error:(NSError *__autoreleasing *)error;
-- (BOOL)disconnect:(NSError *__autoreleasing *)error;
 - (void)writeDataToPeripheral:(NSData *)data;
 
 @property (nonatomic, strong) dispatch_block_t canWriteBlock;
@@ -152,36 +151,6 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
   NSData* nextData = self.enqueuedMessages[0];
   [self writeDataToPeripheral: nextData];
   [self.enqueuedMessages removeObjectAtIndex:0];
-}
-
-// Send a message to the car to tell it to initiate a disconnect. If we tell
-// CoreBluetooth to tear down connection directly, it doesn't always happen
-// immediately on iOS 6 so we have the car tear it down instead.
-- (void)disconnectFromPeripheral
-{
-  /*
-  if ( self.connectionState == kConnectedPipeReady ) {
-    unsigned char buffer[2];
-    buffer[0] = 1;
-    buffer[1] = MSG_B2V_BTLE_DISCONNECT;
-    [self writeDataToPeripheral:[NSData dataWithBytes:buffer length:2]];
-  }
-   */
-}
-
-// Send disconnect message using our buffer write method
-// This ensure that previous messages are flushed before disconnect
-- (BOOL)disconnect:(NSError *__autoreleasing *)error
-{
-  /*
-  unsigned char buffer[2];
-  buffer[0] = 1;
-  buffer[1] = MSG_B2V_BTLE_DISCONNECT;
-  NSData *message = [NSData dataWithBytes:buffer length:2];
-  
-  return [self writeData:message error:error];
-   */
-  return YES;
 }
 
 
