@@ -17,6 +17,9 @@
 
 #include "messages.h"
 
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+
 using namespace Anki::Cozmo;
 
 #define MAX(a, b) ((a > b) ? a : b)
@@ -192,6 +195,22 @@ void UART0_IRQHandler()
 
         break ;
       case TRANSMIT_CHARGER_RX:
+        static const uint32_t PREFIX = 0x57746600;
+        static const uint32_t MASK = 0xFFFFFF00;
+        static uint32_t fixture_data = 0;
+        
+        fixture_data = (fixture_data << 8) | data;
+      
+        if ((fixture_data & MASK) == PREFIX) {
+          using namespace Anki::Cozmo;
+
+          RobotInterface::EnterFactoryTestMode msg;
+          msg.mode = fixture_data & ~MASK;
+          RobotInterface::SendMessage(msg);
+          
+          fixture_data = 0;
+        }
+
         break ;
       default:
         break ;
