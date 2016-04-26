@@ -67,6 +67,9 @@ namespace Anki {
     
     IDockAction::~IDockAction()
     {
+      // the action automatically selects the block, deselect now to remove Viz
+      _robot.GetBlockWorld().DeselectCurrentObject();
+    
       // Make sure we back to looking for markers (and stop tracking) whenever
       // and however this action finishes
       _robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
@@ -79,6 +82,8 @@ namespace Anki {
       if(_robot.IsPickingOrPlacing()) {
         _robot.AbortDocking();
       }
+      
+      _robot.UnsetDockObjectID();
       
       // Stop squinting
       _robot.GetAnimationStreamer().RemovePersistentFaceLayer(_squintLayerTag, 250);
@@ -919,16 +924,18 @@ namespace Anki {
     
     PlaceObjectOnGroundAtPoseAction::PlaceObjectOnGroundAtPoseAction(Robot& robot,
                                                                      const Pose3d& placementPose,
-                                                                     const PathMotionProfile motionProfile,
                                                                      const bool useExactRotation,
-                                                                     const bool useManualSpeed)
+                                                                     const bool useManualSpeed,
+                                                                     const bool checkFreeDestination,
+                                                                     const float destinationObjectPadding_mm)
     : CompoundActionSequential(robot, {
       new DriveToPlaceCarriedObjectAction(robot,
                                           placementPose,
                                           true,
-                                          motionProfile,
                                           useExactRotation,
-                                          useManualSpeed),
+                                          useManualSpeed,
+                                          checkFreeDestination,
+                                          destinationObjectPadding_mm),
       new PlaceObjectOnGroundAction(robot)})
     {
       
@@ -942,6 +949,12 @@ namespace Anki {
       } else {
         completionUnion = _completedActionInfoStack.back().first;
       }
+    }
+    
+    void PlaceObjectOnGroundAtPoseAction::SetMotionProfile(const PathMotionProfile& motionProfile)
+    {
+      DriveToPlaceCarriedObjectAction* driveAction = dynamic_cast<DriveToPlaceCarriedObjectAction*>(GetActionList().front());
+      driveAction->SetMotionProfile(motionProfile);
     }
     
 #pragma mark ---- PlaceRelObjectAction ----

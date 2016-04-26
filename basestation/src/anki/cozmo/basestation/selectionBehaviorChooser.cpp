@@ -58,7 +58,7 @@ IBehavior* SelectionBehaviorChooser::ChooseNextBehavior(const Robot& robot) cons
 {
   auto runnable = [&robot](const IBehavior* behavior)
   {
-    return (nullptr != behavior && behavior->IsRunnable(robot));
+    return (nullptr != behavior && (behavior->IsRunning() || behavior->IsRunnable(robot)));
   };
   
   if (runnable(_selectedBehavior))

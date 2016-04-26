@@ -82,9 +82,9 @@ namespace Cozmo {
   CONSOLE_VAR(f32,  kMotionDetectRatioThreshold,      "Vision.MotionDetection", 1.25f);
   CONSOLE_VAR(f32,  kMinMotionAreaFraction,           "Vision.MotionDetection", 1.f/225.f); // 1/15 of each image dimension
   
-CONSOLE_VAR(float, kMaxCalibBlobPixelArea, "kMaxCalibBlobPixelArea", 800.f); // max number of pixels in calibration pattern blob
-CONSOLE_VAR(float, kMinCalibBlobPixelArea, "kMinCalibBlobPixelArea", 20.f); // min number of pixels in calibration pattern blob
-CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlobs", 5.f); // min pixel distance between calibration pattern blobs
+CONSOLE_VAR(float, kMaxCalibBlobPixelArea, "Vision.Calibration", 800.f); // max number of pixels in calibration pattern blob
+CONSOLE_VAR(float, kMinCalibBlobPixelArea, "Vision.Calibration", 20.f); // min number of pixels in calibration pattern blob
+CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); // min pixel distance between calibration pattern blobs
   
   using namespace Embedded;
   
@@ -460,7 +460,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(ToolCode& msg)
+  bool VisionSystem::CheckMailbox(ToolCodeInfo& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -2597,14 +2597,13 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
   
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
-    ToolCode codeRead = ToolCode::UnknownTool;
-    ExternalInterface::RobotReadToolCode readToolCodeMessage;
+    ToolCodeInfo readToolCodeMessage;
     readToolCodeMessage.code = ToolCode::UnknownTool;
     
     // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
     // no matter how we return from this function
-    Util::CleanupHelper disableCheckToolCode([this,&codeRead]() {
-      this->_toolCodeMailbox.putMessage(codeRead);
+    Util::CleanupHelper disableCheckToolCode([this,&readToolCodeMessage]() {
+      this->_toolCodeMailbox.putMessage(readToolCodeMessage);
       this->EnableMode(VisionMode::ReadingToolCode, false);
       PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
     });
@@ -3076,7 +3075,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "kMinCalibPixelDistBetweenBlo
       this->_calibrationMailbox.putMessage(calibration);
       this->EnableMode(VisionMode::ComputingCalibration, false);
       _isCalibrating = false;
-      this->ClearCalibrationImages();
     });
     
     // Check that there are enough images

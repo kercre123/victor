@@ -117,6 +117,7 @@ namespace Cozmo {
     Result AddCalibrationImage(const Vision::Image& calibImg);
     Result ClearCalibrationImages();
     size_t GetNumStoredCalibrationImages() const { return _calibImages.size(); }
+    const std::list<Vision::Image>& GetCalibrationImages() const {return _calibImages;}
     
     void StopTracking();
 
@@ -235,7 +236,7 @@ namespace Cozmo {
     bool CheckMailbox(Vision::TrackedFace&        msg);
     bool CheckMailbox(Vision::UpdatedFaceID&  msg);
     bool CheckMailbox(OverheadEdgeFrame& msg);
-    bool CheckMailbox(ToolCode& msg);
+    bool CheckMailbox(ToolCodeInfo& msg);
     bool CheckMailbox(Vision::CameraCalibration& msg);
     
     bool CheckDebugMailbox(std::pair<std::string, Vision::Image>& msg);
@@ -481,7 +482,7 @@ namespace Cozmo {
     
     MultiMailbox<OverheadEdgeFrame, 8> _overheadEdgeFrameMailbox;
     
-    Mailbox<ToolCode> _toolCodeMailbox;
+    Mailbox<ToolCodeInfo> _toolCodeMailbox;
     Mailbox<Vision::CameraCalibration> _calibrationMailbox;
     
     MultiMailbox<std::pair<std::string, Vision::Image>, 10>     _debugImageMailbox;

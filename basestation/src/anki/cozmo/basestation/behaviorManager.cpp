@@ -15,7 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
@@ -39,7 +39,7 @@ BehaviorManager::BehaviorManager(Robot& robot)
   : _isInitialized(false)
   , _robot(robot)
   , _behaviorFactory(new BehaviorFactory())
-  , _whiteboard( new BehaviorWhiteboard(robot) )
+  , _whiteboard( new AIWhiteboard(robot) )
 {
 }
 
@@ -195,6 +195,7 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
   }
 
   StopCurrentBehavior();
+  _currentBehavior = nullptr; // immediately clear current since we just stopped it
 
   if( nullptr != nextBehavior ) {
     const Result initRet = nextBehavior->Init();
@@ -211,11 +212,9 @@ bool BehaviorManager::SwitchToBehavior(IBehavior* nextBehavior)
       return true;
     }
   }
-  else {
-    // a null argument to this function means "switch to no behavior"
-    _currentBehavior = nullptr;
-    return true;
-  }
+  
+  // a null argument to this function means "switch to no behavior"
+  return true;
 }
 
 void BehaviorManager::SwitchToNextBehavior()

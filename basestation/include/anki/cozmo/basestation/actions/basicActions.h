@@ -603,7 +603,7 @@ namespace Anki {
       TimeStamp_t       _toolCodeLastMovedTime   = 0;
       f32               _toolCodeLastHeadAngle   = 0;
       f32               _toolCodeLastLiftAngle   = 0;
-      ToolCode          _toolCodeRead            = ToolCode::UnknownTool;
+      ToolCodeInfo      _toolCodeInfo;
       
       const TimeStamp_t kRequiredStillTime_ms    = 500;
   

@@ -1,5 +1,5 @@
 /**
- * File: behaviorWhiteboard
+ * File: AIWhiteboard
  *
  * Author: Raul
  * Created: 03/25/16
@@ -9,8 +9,10 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorWhiteboard_H__
-#define __Cozmo_Basestation_BehaviorSystem_BehaviorWhiteboard_H__
+#ifndef __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
+#define __Cozmo_Basestation_BehaviorSystem_AIWhiteboard_H__
+
+#include "AIBeacon.h" 
 
 #include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
 #include "anki/common/basestation/math/pose.h"
@@ -27,9 +29,9 @@ namespace Cozmo {
 class Robot;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// BehaviorWhiteboard
+// AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class BehaviorWhiteboard
+class AIWhiteboard
 {
 public:
   
@@ -37,6 +39,7 @@ public:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
+  // info for every marker that is a possible cube but we don't trust (based on distance or how quickly we saw it)
   struct PossibleMarker {
     PossibleMarker( const Pose3d& p, ObjectType objType ) : pose(p), type(objType) {}
     Pose3d pose;
@@ -44,12 +47,14 @@ public:
   };
   using PossibleMarkerList = std::list<PossibleMarker>;
   
+  using BeaconList = std::vector<AIBeacon>;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization/destruction
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor
-  BehaviorWhiteboard(Robot& robot);
+  AIWhiteboard(Robot& robot);
   
   // initializes the whiteboard, registers to events
   void Init();
@@ -58,11 +63,25 @@ public:
   void OnRobotDelocalized();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Markers
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // called when Cozmo can identify a clear quad (no borders, obstacles, etc)
+  void ProcessClearQuad(const Quad2f& quad);
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // list of possible markers
   const PossibleMarkerList& GetPossibleMarkers() const { return _possibleMarkers; }
+
+  // beacons
+  void AddBeacon( const Pose3d& beaconPos );
+  const BeaconList& GetBeacons() const { return _beacons; }
+
+  // return current active beacon if any, or nullptr if none are active
+  const AIBeacon* GetActiveBeacon() const;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Tracked values
@@ -95,6 +114,8 @@ private:
   
   // update render of possible markers since they may have changed
   void UpdatePossibleMarkerRender();
+  // update render of beacons
+  void UpdateBeaconRender();
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -108,11 +129,12 @@ private:
   
   std::multiset<void*> _disableCliffIds;  
  
-  
   // list of markers we have not checked out yet. Using list because we make assume possible markers of same type
   // can be found at different locations
-  std::list<PossibleMarker> _possibleMarkers;
+  PossibleMarkerList _possibleMarkers;
   
+  // container of beacons currently defined (high level AI concept)
+  BeaconList _beacons;
 };
   
 

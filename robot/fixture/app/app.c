@@ -19,7 +19,7 @@
 #include "app/cubeTest.h"
 #include "app/headTest.h"
 
-u8 g_fixtureReleaseVersion = 11;
+u8 g_fixtureReleaseVersion = 12;
 
 BOOL g_isDevicePresent = 0;
 FixtureType g_fixtureType = FIXTURE_NONE;
@@ -588,9 +588,9 @@ int main(void)
 
   SetFixtureText();
   
-  // Cozmo doesn't support this yet
+  // XXX: Doesn't work on EP3 fixtures because CHGTX/CHGRX are wired backward
   SlowPutString("Initializing Test Port...\r\n");
-  // XXX InitTestPort(0);
+  //InitTestPort(0);
 
   SlowPutString("Initializing Monitor...\r\n");
   InitMonitor();

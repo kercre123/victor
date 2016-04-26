@@ -206,30 +206,58 @@ void safeWrite(char* filename, int options)
 // Write a cube image
 void cubeWrite(char* filename, int options)
 {
+  // Check patch for valid start location
+  int start = (m_stageImage[1] << 8) | (u8)m_stageImage[2];
+  printf("Start address 0x%04x\n", start);
+  if (m_stageImage[0] != 0x2 || (start & 0xff))
+    bye("FAIL:  Cube patch must be linked to start on a 256 byte boundary");
+  // Wipe out the start address so it doesn't become part of the patch
+  m_stageImage[0] = m_stageImage[1] = m_stageImage[2] = -1;
+
   // XXX: Implement a patching mechanism for interrupt vectors (when you need it)
-  // For now, just wipe the interrupt vectors
   for (int i = 0; i < 128; i++)
-    m_stageImage[i] = 0xFF;
+    if (0xff != (u8)m_stageImage[i])
+      bye("FAIL:  Interrupts don't work in cube patches yet - add patch logic to cubeWrite in makesafe");
 
   // Figure out the "version" bitfield - set according to which 1KB blocks have content
-  int version = 0, base = 0;
+  int version = 0;
   for (int i = CUBE_LEN; i >= 0; i--)
-    if (0xff != (u8)m_stageImage[i]) {
+    if (0xff != (u8)m_stageImage[i])
       version |= 1<<(i>>10);
-      base = i;
-    }
-  
-  // XXX: Once cubeboot is frozen, add the code to change the advertising version pre-encrypt!
+  // Tack on -p%d to the filename
+  for (int i = 0; i < 16; i++)
+    if (version & (0x8000 >> i))
+      sprintf(filename+strlen(filename), "-p%d", i);
+  strcat(filename, ".safe");
+  version = 0xffff ^ version;
+
   // Advertising version always gets written last (since we write bytes in order)
-  int len = cubeEncrypt((u8*)m_stageImage, (u8*)m_safeImage, !!(options & OPT_NOCRYPTO));
+  m_stageImage[0x3fe6] = version;         // See accessories/boot/hal/advertise.c for details
+  m_stageImage[0x3fe7] = version >> 8;
+
+  // Leave space for header before encrypting
+  int len = 16;
+  len += cubeEncrypt((u8*)m_stageImage, (u8*)m_safeImage + len, !!(options & OPT_NOCRYPTO));
   
+  // Now add the header
+  m_safeImage[0] = 'C'; m_safeImage[1] = 'u'; m_safeImage[2] = 'b'; m_safeImage[3] = 'e';
+  m_safeImage[4] = (len-16);  m_safeImage[5] = (len-16)>>8;
+  m_safeImage[6] = version;   m_safeImage[7] = version>>8;
+  m_safeImage[8] = start>>8;
+  m_safeImage[9] = 3;         // HW version EP3
+
   FILE *fp = fopen(filename, "wb");
   printf("Writing %s...", filename);
   if (NULL == fp || len != fwrite(m_safeImage, 1, len, fp))
     bye("could not create file");
   fclose(fp);
 
-  printf("wrote %d bytes, %d blocks, base 0%04x, version 0x%04x\n", len, len >> 8, base, version);
+  printf("wrote %d bytes, %d blocks, patch level 0x%04X\n", len, len >> 8, version);
+
+  for (int i = 16; i < 272; i++) {
+    printf("0x%02x,", (u8)m_safeImage[i]);
+    if (31 == ((i-16) & 31)) printf("\n");
+  }
 }
 
 // Write the requested image
@@ -293,7 +321,7 @@ int load(char* filename, char* dest, int start, int end)
   // If we're writing a stage image, mark all loaded blocks in use
   if (dest == m_stageImage)
   {
-	  printf("%d bytes read (0x%08x-0x%08x)\n", len, TARGET_IMAGE_BASE + start, TARGET_IMAGE_BASE + end);
+	  printf("%d bytes read\n", len);
     for (i = start; i < end; i++)
       markBlock(i);
   } else {
@@ -379,17 +407,19 @@ int main(int argc, char **argv)
   memset(m_blockMap, 0, sizeof(m_blockMap));
 
   // Perform packaging
+  char destname[256];
+  memcpy(destname, argv[1], sizeof(destname));
   if (options & OPT_PKG)
   {
     if (argc != 3)
       usage("-prod/-cube/-ota need 2 arguments", NULL);
     filelen = load(argv[2], m_stageImage, 0, TARGET_IMAGE_SIZE);
 
-	  if (!(options & OPT_GUID))
+	  if (!(options & OPT_GUID) && !(options & OPT_CUBE))
 	    m_guid = (getGUID() << 16) + getVersion(argv[1]);   // Generate guid
 
     if (options & OPT_CUBE)
-      cubeWrite(argv[1], options);
+      cubeWrite(destname, options);
     else
 	    safeWrite(argv[1], options);     // Write out an encrypted memory image based on m_stageImage
 
@@ -405,10 +435,10 @@ int main(int argc, char **argv)
     usage("-opensafe needs 2 arguments", NULL);
 
   // Always attempt to decode the file (even if just to verify the optPackage)
-  load(argv[1], m_safeImage, 0, TARGET_IMAGE_SIZE*2);
+  load(destname, m_safeImage, 0, TARGET_IMAGE_SIZE*2);
   printf("Checking the image...\n");
   if (options & OPT_CUBE)
-    openCube((u8*)m_safeImage, (u8*)m_verifyImage);
+    openCube((u8*)m_safeImage+16, (u8*)m_verifyImage);  // Skip header
   else
     opensafe(m_safeImage, m_verifyImage);
 

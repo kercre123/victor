@@ -77,6 +77,14 @@ public:
   
   // Move to previous frame. Will not rewind before beginning.
   void MoveToPrevKeyFrame();
+  
+  // Move to the last keyframe in the track. Deletes keyframes along the way if
+  // this is a "live" track
+  void MoveToLastKeyFrame();
+  
+  // Move to the very end, deleting keyframes along the way if this is a "live"
+  // track. HasFramesLeft() will be false after this.
+  void MoveToEnd();
 
   bool HasFramesLeft() const { return _frameIter != _frames.end(); }
 
@@ -123,6 +131,36 @@ void Track<FRAME_TYPE>::MoveToPrevKeyFrame()
 {
   if(_frameIter != _frames.begin()) {
     --_frameIter;
+  }
+}
+  
+template<typename FRAME_TYPE>
+void Track<FRAME_TYPE>::MoveToLastKeyFrame()
+{
+  if(_frames.empty()) {
+    // nothing to do
+    return;
+  }
+
+  // For "live" tracks, remove everything up to last frame
+  if(_isLive) {
+    FRAME_TYPE lastKeyFrame(_frames.back()); // store a copy of last
+    _frames.clear(); // clear everything
+    _frames.push_back(lastKeyFrame); // put last frame back
+  }
+  
+  // Jump to end and then move back one
+  _frameIter = _frames.end();
+  --_frameIter;
+}
+  
+template<typename FRAME_TYPE>
+void Track<FRAME_TYPE>::MoveToEnd()
+{
+  if(_isLive) {
+    Clear();
+  } else {
+    _frameIter = _frames.end();
   }
 }
   

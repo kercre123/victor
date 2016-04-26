@@ -190,7 +190,7 @@ namespace Anki {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
-      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::DOCKING; }
+      virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::ActionType::PLACE_RELATIVE; }
       
       virtual Result SelectDockAction(ActionableObject* object) override;
       
@@ -270,11 +270,14 @@ namespace Anki {
     public:
       PlaceObjectOnGroundAtPoseAction(Robot& robot,
                                       const Pose3d& placementPose,
-                                      const PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE,
                                       const bool useExactRotation = false,
-                                      const bool useManualSpeed = false);
+                                      const bool useManualSpeed = false,
+                                      const bool checkFreeDestination = false,
+                                      const float destinationObjectPadding_mm = 0.0f);
       
       virtual RobotActionType GetType() const override { return RobotActionType::PLACE_OBJECT_LOW; }
+      
+      void SetMotionProfile(const PathMotionProfile& motionProfile);
       
     protected:
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
