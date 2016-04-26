@@ -37,7 +37,7 @@ namespace Cozmo {
       [JsonIgnore]
       public Action<DailyGoal> OnDailyGoalCompleted;
 
-      public List<GoalCondition> TriggerConditions = new List<GoalCondition>();
+      public List<GoalCondition> ProgConditions = new List<GoalCondition>();
 
       public DailyGoal(GameEvent gEvent, string titleKey, string descKey, int reward, int target, string rewardType, List<GoalCondition> triggerCon, int currProg = 0) {
         GoalEvent = gEvent;
@@ -50,7 +50,7 @@ namespace Cozmo {
         Progress = currProg;
         _Completed = GoalComplete;
         RewardType = rewardType;
-        TriggerConditions = triggerCon;
+        ProgConditions = triggerCon;
         GameEventManager.Instance.OnGameEvent += ProgressGoal;
       }
 
@@ -62,10 +62,10 @@ namespace Cozmo {
         if (gEvent != GoalEvent) {
           return;
         }
-        // TODO: Check Availability Conditions
-        // Return false if false.
-        // TODO: Check Trigger Conditions
-        // Return false if false.
+        // If ProgConditions aren't met, don't progress
+        if (!CanProg()) {
+          return;
+        }
         // Progress Goal
         Progress++;
         DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
@@ -83,6 +83,15 @@ namespace Cozmo {
         if (OnDailyGoalUpdated != null) {
           OnDailyGoalUpdated.Invoke(this);
         }
+      }
+
+      public bool CanProg() {
+        for (int i = 0; i < ProgConditions.Count; i++) {
+          if (ProgConditions[i].ConditionMet() == false) {
+            return false;
+          }
+        }
+        return true;
       }
     }
   }
