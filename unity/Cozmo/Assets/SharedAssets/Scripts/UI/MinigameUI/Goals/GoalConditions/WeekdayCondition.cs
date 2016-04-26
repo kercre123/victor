@@ -17,16 +17,6 @@ namespace Anki {
       [SerializeField]
       public string dayName;
       DayOfWeek day;
-      // Map strings to DayOfWeek because DayOfWeek is the worst... THE WORST
-      Dictionary<string, DayOfWeek> strToDay = new Dictionary<string, DayOfWeek>() {
-        { "Monday", DayOfWeek.Monday },
-        { "Tuesday", DayOfWeek.Tuesday },
-        { "Wednesday", DayOfWeek.Wednesday },
-        { "Thursday", DayOfWeek.Thursday },
-        { "Friday", DayOfWeek.Friday },
-        { "Saturday", DayOfWeek.Saturday },
-        { "Sunday", DayOfWeek.Sunday }
-      };
 
       public override void Initialize() {
         base.Initialize();
@@ -47,6 +37,16 @@ namespace Anki {
         day = (DayOfWeek)EditorGUILayout.EnumPopup("Day", day);
         dayName = day.ToString();
       }
+      // Map strings to DayOfWeek because DayOfWeek is the worst... THE WORST
+      Dictionary<string, DayOfWeek> strToDay = new Dictionary<string, DayOfWeek>() {
+        { "Monday", DayOfWeek.Monday },
+        { "Tuesday", DayOfWeek.Tuesday },
+        { "Wednesday", DayOfWeek.Wednesday },
+        { "Thursday", DayOfWeek.Thursday },
+        { "Friday", DayOfWeek.Friday },
+        { "Saturday", DayOfWeek.Saturday },
+        { "Sunday", DayOfWeek.Sunday }
+      };
       #endif
     }
   }

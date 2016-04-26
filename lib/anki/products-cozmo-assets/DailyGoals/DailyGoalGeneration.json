@@ -45,7 +45,20 @@
       "PointsRewarded": 5,
       "Target": 50,
       "CladEvent": "OnSpeedtapStarted",
-      "GenConditions": []
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.TotalSessionsCondition, Assembly-CSharp",
+          "UseMinSession": false,
+          "MinSession": 5,
+          "UseMaxSession": true,
+          "MaxSession": 10,
+          "Label": {
+            "text": "Total Sessions Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ]
     },
     {
       "TitleKey": "dailyGoal.title.WinSpeedTap",
