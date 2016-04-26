@@ -260,9 +260,6 @@ public class SkillSystem {
   }
 
   private void SetCozmoHighestLevelsReached(byte[] robotData, int robotDataLen) {
-    if (ChallengeDataList.Instance == null) {
-      return;
-    }
     // RobotData is just highest level in challengeList order
     ChallengeDataList challengeList = ChallengeDataList.Instance;
     int numChallenges = Mathf.Max(robotDataLen, challengeList.ChallengeData.Length);
@@ -274,7 +271,7 @@ public class SkillSystem {
   }
 
   private void UpdateHighestSkillsOnRobot() {
-// Write to updated array...
+    // Write to updated array...
     RobotEngineManager.Instance.Message.NVStorageWriteEntry = new G2U.NVStorageWriteEntry();
     RobotEngineManager.Instance.Message.NVStorageWriteEntry.tag = Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_GameSkillLevels;
     System.Array.Copy(_CozmoHighestLevels, RobotEngineManager.Instance.Message.NVStorageWriteEntry.data, _CozmoHighestLevels.Length);
