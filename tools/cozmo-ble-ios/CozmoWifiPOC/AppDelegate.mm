@@ -159,7 +159,12 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     
     if (charsToCopy > 0)
     {
-      charsToCopy = charsToCopy > kMaxStringMessageLength ? kMaxStringMessageLength : charsToCopy;
+      if (charsToCopy > kMaxStringMessageLength)
+      {
+        charsToCopy = kMaxStringMessageLength;
+        BLELogWarn("AppDelegate.doConfigWifiMessage","SSID truncated to %d characters!", kMaxStringMessageLength*2);
+      }
+      
       memcpy(configString.data, [ssid UTF8String] + kMaxStringMessageLength, charsToCopy);
       
       robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
@@ -170,7 +175,8 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     }
     
     // Set up password
-    static constexpr int kMaxPasswordLength = 4 * kMaxStringMessageLength;
+    static constexpr int kMaxPasswordChunks = 4;
+    static constexpr int kMaxPasswordLength = kMaxPasswordChunks * kMaxStringMessageLength;
     NSUInteger numCharsForPass = password.length;
     if (numCharsForPass > kMaxPasswordLength)
     {
@@ -178,64 +184,28 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
       BLELogError("AppDelegate.doConfigWifiMessage","Password truncated to %d characters!", kMaxPasswordLength);
     }
     
-    configString = Anki::Cozmo::RobotInterface::AppConnectConfigString{};
-    configString.id = Anki::Cozmo::RobotInterface::AP_AP_PSK_0;
-    charsToCopy = numCharsForPass < kMaxStringMessageLength ? numCharsForPass : kMaxStringMessageLength;
-    memcpy(configString.data, [password UTF8String], charsToCopy);
-    numCharsForPass -= charsToCopy;
+    static constexpr Anki::Cozmo::RobotInterface::APConfigStringID passChunkTags[kMaxPasswordChunks] =
+    {
+      Anki::Cozmo::RobotInterface::AP_AP_PSK_0,
+      Anki::Cozmo::RobotInterface::AP_AP_PSK_1,
+      Anki::Cozmo::RobotInterface::AP_AP_PSK_2,
+      Anki::Cozmo::RobotInterface::AP_AP_PSK_3
+    };
     
-    robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
-    robotMsg.appConCfgString = configString;
-    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                       error:nil
-                                                   encrypted:NO];
-    
-    // Repeat for 2nd password chunk if needed
-    if (numCharsForPass > 0)
+    // Send the required number of password chunks
+    for (NSUInteger index = 0; index < kMaxPasswordChunks && numCharsForPass > 0; ++index)
     {
       configString = Anki::Cozmo::RobotInterface::AppConnectConfigString{};
-      configString.id = Anki::Cozmo::RobotInterface::AP_AP_PSK_1;
+      configString.id = passChunkTags[index];
       charsToCopy = numCharsForPass < kMaxStringMessageLength ? numCharsForPass : kMaxStringMessageLength;
-      memcpy(configString.data, [password UTF8String] + kMaxStringMessageLength, charsToCopy);
+      memcpy(configString.data, [password UTF8String] + (kMaxStringMessageLength * index), charsToCopy);
       numCharsForPass -= charsToCopy;
       
       robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
       robotMsg.appConCfgString = configString;
       [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                         error:nil
-                                                     encrypted:NO];
-    }
-    
-    // Repeat for 3rd password chunk if needed
-    if (numCharsForPass > 0)
-    {
-      configString = Anki::Cozmo::RobotInterface::AppConnectConfigString{};
-      configString.id = Anki::Cozmo::RobotInterface::AP_AP_PSK_2;
-      charsToCopy = numCharsForPass < kMaxStringMessageLength ? numCharsForPass : kMaxStringMessageLength;
-      memcpy(configString.data, [password UTF8String] + (kMaxStringMessageLength * 2), charsToCopy);
-      numCharsForPass -= charsToCopy;
-      
-      robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
-      robotMsg.appConCfgString = configString;
-      [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                         error:nil
-                                                     encrypted:NO];
-    }
-    
-    // Repeat for 4th password chunk if needed
-    if (numCharsForPass > 0)
-    {
-      configString = Anki::Cozmo::RobotInterface::AppConnectConfigString{};
-      configString.id = Anki::Cozmo::RobotInterface::AP_AP_PSK_3;
-      charsToCopy = numCharsForPass < kMaxStringMessageLength ? numCharsForPass : kMaxStringMessageLength;
-      memcpy(configString.data, [password UTF8String] + (kMaxStringMessageLength * 3), charsToCopy);
-      numCharsForPass -= charsToCopy;
-      
-      robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
-      robotMsg.appConCfgString = configString;
-      [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                         error:nil
-                                                     encrypted:NO];
+                                 error:nil
+                             encrypted:NO];
     }
     
     // Set up config flags #1

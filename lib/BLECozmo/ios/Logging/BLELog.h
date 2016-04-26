@@ -17,7 +17,7 @@
 #include <DAS/DAS.h>
 
 //BLELogDebug
-#define BLELogDebug   DASDebug
+#define BLELogDebug DASDebug
 //BLELogInfo
 #define BLELogInfo  DASInfo
 //BLELogEvent
