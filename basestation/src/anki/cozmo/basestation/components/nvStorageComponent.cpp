@@ -68,7 +68,16 @@ bool NVStorageComponent::IsMultiBlobEntryTag(u32 tag) const {
   return (tag & 0x7fff0000) > 0;
 }
 
-
+bool NVStorageComponent::IsValidEntryTag(u32 tag) {
+  // If multi-blob tag, lower 16-bits must be zero.
+  // If single-blob tag, it can't be NVEntry_Invalid.
+  if (IsMultiBlobEntryTag(tag)) {
+    return (tag & 0xffff) == 0;
+  } else {
+    return tag != static_cast<u32>(NVStorage::NVEntryTag::NVEntry_Invalid);
+  }
+}
+  
 // Returns the base (i.e. lowest) tag of the multi-blob entry range
 // in which the given tag falls.
 // See NVEntryTag definition for more details.
@@ -112,15 +121,16 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
                                bool broadcastResultToGame)
 {
   // Check for invalid tags
-  if (tag == NVStorage::NVEntryTag::NVEntry_EraseAll ||
-      tag == NVStorage::NVEntryTag::NVEntry_Invalid) {
-    PRINT_NAMED_INFO("NVStorageComponent.Write.InvalidTag", "%s", EnumToString(tag));
+  if (!IsValidEntryTag(static_cast<u32>(tag)) ||
+      tag == NVStorage::NVEntryTag::NVEntry_EraseAll) {
+    PRINT_NAMED_WARNING("NVStorageComponent.Write.InvalidTag",
+                        "Tag: 0x%x", static_cast<u32>(tag));
     return false;
   }
   
   // Check for null data
   if (data == nullptr) {
-    PRINT_NAMED_INFO("NVStorageComponent.Write.NullData", "%s", EnumToString(tag));
+    PRINT_NAMED_WARNING("NVStorageComponent.Write.NullData", "%s", EnumToString(tag));
     return false;
   }
   
@@ -131,21 +141,25 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
                         EnumToString(tag), size, _kMaxNvStorageEntrySize);
     return false;
   }
+
   
-  // Check if this is a single-blob entry that has more than one blob's worth of data
-  if (!IsMultiBlobEntryTag(static_cast<u32>(tag)) && size > _kMaxNvStorageBlobSize) {
+  // If this is a multi-blob write...
+  if (IsMultiBlobEntryTag(static_cast<u32>(tag))) {
+    
+    // Queue an erase first in case this write has fewer blobs
+    // than what is already stored in the robot.
+    PRINT_NAMED_INFO("NVStorageComponent.Write.PreceedingMultiBlobWriteWithErase",
+                     "Tag: %s", EnumToString(tag));
+    _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
+  }
+  
+  // If this is a single blob write
+  // check that is has no more than one blob's worth of data
+  else if (size > _kMaxNvStorageBlobSize) {
     PRINT_NAMED_WARNING("NVStorageComponent.Write.SingleBlobEntryHasTooMuchData",
                         "Tag: %s, size: %zu",
                         EnumToString(tag), size);
     return false;
-  }
-  
-  // If this is a multi-blob write, queue an erase first in case this write has fewer blobs
-  // than what is already stored in the robot.
-  if (IsMultiBlobEntryTag(static_cast<u32>(tag))) {
-    PRINT_NAMED_INFO("NVStorageComponent.Write.PreceedingMultiBlobWriteWithErase",
-                     "Tag: %s", EnumToString(tag));
-    _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
   }
   
   // Queue write request
@@ -165,12 +179,12 @@ bool NVStorageComponent::Erase(NVStorage::NVEntryTag tag,
                                NVStorageWriteEraseCallback callback,
                                bool broadcastResultToGame)
 {
-  // Check for invalid tags
-  if (tag == NVStorage::NVEntryTag::NVEntry_Invalid) {
-    PRINT_NAMED_INFO("NVStorageComponent.Erase.InvalidTag", "%s", EnumToString(tag));
+  // Check if it's a legal tag (in case someone did some casting craziness)
+  if (!IsValidEntryTag(static_cast<u32>(tag))) {
+    PRINT_NAMED_WARNING("NVStorageComponent.Erase.InvalidEntryTag",
+                        "Tag: 0x%x", static_cast<u32>(tag));
     return false;
   }
-
   
   _requestQueue.emplace(tag, callback, broadcastResultToGame);
   
@@ -188,9 +202,10 @@ bool NVStorageComponent::Read(NVStorage::NVEntryTag tag,
                               bool broadcastResultToGame)
 {
   // Check for invalid tags
-  if (tag == NVStorage::NVEntryTag::NVEntry_EraseAll ||
-      tag == NVStorage::NVEntryTag::NVEntry_Invalid) {
-    PRINT_NAMED_INFO("NVStorageComponent.Read.InvalidTag", "%s", EnumToString(tag));
+  if (!IsValidEntryTag(static_cast<u32>(tag)) ||
+      tag == NVStorage::NVEntryTag::NVEntry_EraseAll) {
+    PRINT_NAMED_WARNING("NVStorageComponent.Read.InvalidTag",
+                        "Tag: 0x%x", static_cast<u32>(tag));
     return false;
   }
   
@@ -599,8 +614,10 @@ bool NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
 {
   AnkiAssert(IsMultiBlobEntryTag(static_cast<u32>(tag)));
  
-  if (tag == NVStorage::NVEntryTag::NVEntry_Invalid) {
-    PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.InvalidTag", "");
+  // Check for invalid tags
+  if (!IsValidEntryTag(static_cast<u32>(tag))) {
+    PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.InvalidTag",
+                        "Tag: 0x%x", static_cast<u32>(tag));
     return false;
   }
   
@@ -619,6 +636,7 @@ bool NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
                           "Deleting old data for %s and starting %s",
                           EnumToString(_pendingWriteData.tag),
                           EnumToString(tag));
+      ClearPendingWriteEntry();
     }
     
     _pendingWriteData.tag = tag;
@@ -632,7 +650,7 @@ bool NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
 
   
   // Remove index
-  if (_pendingWriteData.remainingIndices.erase(static_cast<u32>(tag) + blobIndex) == 0) {
+  if (_pendingWriteData.remainingIndices.erase(blobIndex) == 0) {
     PRINT_NAMED_WARNING("NVStorageComponent.QueueWriteBlob.UnexpectedIndex",
                         "index %d, numTotalBlobs: %d",
                         blobIndex, numTotalBlobs);
@@ -679,7 +697,7 @@ bool NVStorageComponent::QueueWriteBlob(const NVStorage::NVEntryTag tag,
     res = Write(tag, _pendingWriteData.data.data(), _pendingWriteData.data.size(), {}, true);
     
     // Clear pending write data for next message
-    _pendingWriteData.tag = NVStorage::NVEntryTag::NVEntry_Invalid;
+    ClearPendingWriteEntry();
   }
   
   return res;
@@ -739,9 +757,13 @@ void NVStorageComponent::HandleNVStorageEraseEntry(const AnkiEvent<ExternalInter
   
 void NVStorageComponent::HandleNVStorageClearPartialPendingWriteEntry(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
-  _pendingWriteData.tag = NVStorage::NVEntryTag::NVEntry_Invalid;
+  ClearPendingWriteEntry();
 }
 
+void NVStorageComponent::ClearPendingWriteEntry() {
+  _pendingWriteData.tag = NVStorage::NVEntryTag::NVEntry_Invalid;
+  _pendingWriteData.remainingIndices.clear();
+}
   
 void NVStorageComponent::Test()
 {
