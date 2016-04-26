@@ -14,8 +14,19 @@ namespace Anki {
   namespace Cozmo {
     [System.Serializable]
     public class WeekdayCondition : GoalCondition {
-      
-      DayOfWeek day = DayOfWeek.Monday;
+      [SerializeField]
+      public string dayName;
+      DayOfWeek day;
+      // Map strings to DayOfWeek because DayOfWeek is the worst... THE WORST
+      Dictionary<string, DayOfWeek> strToDay = new Dictionary<string, DayOfWeek>() {
+        { "Monday", DayOfWeek.Monday },
+        { "Tuesday", DayOfWeek.Tuesday },
+        { "Wednesday", DayOfWeek.Wednesday },
+        { "Thursday", DayOfWeek.Thursday },
+        { "Friday", DayOfWeek.Friday },
+        { "Saturday", DayOfWeek.Saturday },
+        { "Sunday", DayOfWeek.Sunday }
+      };
 
       public override void Initialize() {
         base.Initialize();
@@ -23,12 +34,18 @@ namespace Anki {
 
       // Returns true if day of the week is the desired day of the week
       public override bool ConditionMet() {
-        return (DateTime.UtcNow.DayOfWeek == day);
+        return (DateTime.UtcNow.DayOfWeek.ToString() == dayName);
       }
 
       #if UNITY_EDITOR
       public override void DrawControls() {
+        if (day.ToString() != dayName) {
+          if (!strToDay.TryGetValue(dayName, out day)) {
+            day = DayOfWeek.Sunday;
+          }
+        }
         day = (DayOfWeek)EditorGUILayout.EnumPopup("Day", day);
+        dayName = day.ToString();
       }
       #endif
     }

@@ -10,6 +10,26 @@
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.WeekdayCondition, Assembly-CSharp",
+          "dayName": "Friday",
+          "Label": {
+            "text": "Weekday Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.InventoryCondition, Assembly-CSharp",
+          "ItemType": "experience",
+          "ItemCount": 125,
+          "Label": {
+            "text": "Inventory Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        },
+        {
+          "$type": "Anki.Cozmo.WeekdayCondition, Assembly-CSharp",
+          "dayName": "Tuesday",
           "Label": {
             "text": "Weekday Condition",
             "image": null,
@@ -46,6 +66,7 @@
       "GenConditions": [
         {
           "$type": "Anki.Cozmo.WeekdayCondition, Assembly-CSharp",
+          "dayName": "Sunday",
           "Label": {
             "text": "Weekday Condition",
             "image": null,
