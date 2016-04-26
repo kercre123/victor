@@ -23,5 +23,6 @@ public class SpeedTapRoundData {
 [System.Serializable]
 public class SpeedTapDifficultyData {
   public int DifficultyID;
+  public Color[] Colors;
   public List<SpeedTapRoundData> SpeedTapRoundSettings;
 }

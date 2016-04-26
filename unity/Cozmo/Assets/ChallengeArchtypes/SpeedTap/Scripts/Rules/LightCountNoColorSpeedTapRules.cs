@@ -2,19 +2,19 @@
 using System.Collections;
 
 namespace SpeedTap {
-  public class LightCountNoColorSpeedTapRules : ISpeedTapRules {
+  public class LightCountNoColorSpeedTapRules : SpeedTapRulesBase {
 
-    public virtual void SetLights(bool shouldTap, SpeedTapGame game) {
+    public override void SetLights(bool shouldTap, SpeedTapGame game) {
 
       if (shouldTap) {
         // Do match
         int lightCount = UnityEngine.Random.Range(1, 5);
-        game.CozmoWinColor = game.PlayerWinColor = Color.white;
+        game.CozmoWinColor = game.PlayerWinColor = _Colors[0];
         game.CozmoBlock.SetLEDs(Color.black);
         game.PlayerBlock.SetLEDs(Color.black);
         for (int i = 0; i < lightCount; ++i) {
-          game.CozmoBlock.Lights[i].OnColor = Color.white.ToUInt();
-          game.PlayerBlock.Lights[i].OnColor = Color.white.ToUInt();
+          game.CozmoBlock.Lights[i].OnColor = _Colors[0].ToUInt();
+          game.PlayerBlock.Lights[i].OnColor = _Colors[0].ToUInt();
         }
 
       }
@@ -27,11 +27,11 @@ namespace SpeedTap {
         game.PlayerBlock.SetLEDs(Color.black);
 
         for (int i = 0; i < lightCountPlayer; ++i) {
-          game.PlayerBlock.Lights[i].OnColor = Color.white.ToUInt();
+          game.PlayerBlock.Lights[i].OnColor = _Colors[0].ToUInt();
         }
 
         for (int i = 0; i < lightCountCozmo; ++i) {
-          game.CozmoBlock.Lights[i].OnColor = Color.white.ToUInt();
+          game.CozmoBlock.Lights[i].OnColor = _Colors[0].ToUInt();
         }
 
       }

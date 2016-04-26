@@ -194,6 +194,7 @@ public class SkillSystem {
 
                 if (OnLevelUp != null && newHighestLevel) {
                   OnLevelUp(currSkillData.LastLevel);
+                  DataPersistenceManager.Instance.Save();
                 }
               }
             }
@@ -230,6 +231,7 @@ public class SkillSystem {
 
     _ChallengeIndex = -1;
     _CurrChallengeData = null;
+    SetCozmoHighestLevelsReached(null, 0);
   }
 
   private void HandleRobotConnected(int rbt_id) {
@@ -244,7 +246,6 @@ public class SkillSystem {
         opResult.tag == NVEntryTag.NVEntry_GameSkillLevels) {
       if (opResult.result != NVResult.NV_OKAY &&
           opResult.result != NVResult.NV_SCHEDULED) {
-        SetCozmoHighestLevelsReached(null, 0);
         // write out defaults so we have some 0s for next time,
         // This was likely the first time and was just a "not found"
         UpdateHighestSkillsOnRobot();
@@ -259,18 +260,18 @@ public class SkillSystem {
   }
 
   private void SetCozmoHighestLevelsReached(byte[] robotData, int robotDataLen) {
-    // RobotData is just highest level in challengeList order
-    if (ChallengeDataList.Instance != null) {
-      ChallengeDataList challengeList = ChallengeDataList.Instance;
-      int numChallenges = Mathf.Max(robotDataLen, challengeList.ChallengeData.Length);
-      _CozmoHighestLevels = new byte[numChallenges];
+// RobotData is just highest level in challengeList order
+    ChallengeDataList challengeList = ChallengeDataList.Instance;
+    int numChallenges = Mathf.Max(robotDataLen, challengeList.ChallengeData.Length);
+    _CozmoHighestLevels = new byte[numChallenges];
+    // first time init
+    if (robotData != null) {
       System.Array.Copy(robotData, _CozmoHighestLevels, robotDataLen);
     }
-
   }
 
   private void UpdateHighestSkillsOnRobot() {
-    // Write to updated array...
+// Write to updated array...
     RobotEngineManager.Instance.Message.NVStorageWriteEntry = new G2U.NVStorageWriteEntry();
     RobotEngineManager.Instance.Message.NVStorageWriteEntry.tag = Anki.Cozmo.NVStorage.NVEntryTag.NVEntry_GameSkillLevels;
     System.Array.Copy(_CozmoHighestLevels, RobotEngineManager.Instance.Message.NVStorageWriteEntry.data, _CozmoHighestLevels.Length);
