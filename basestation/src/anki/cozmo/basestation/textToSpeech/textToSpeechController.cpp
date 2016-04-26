@@ -47,7 +47,7 @@ TextToSpeechController::TextToSpeechController(Util::Data::DataPlatform* dataPla
   flite_init();
   
   _voice = register_cmu_us_kal(NULL);
-}
+} // TextToSpeechController()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechController::~TextToSpeechController()
@@ -56,7 +56,7 @@ TextToSpeechController::~TextToSpeechController()
   
   Util::Dispatch::Stop(_dispatchQueue);
   Util::Dispatch::Release(_dispatchQueue);
-}
+} // ~TextToSpeechController()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechController::CreateSpeech(const std::string& text, CompletionFunc completion)
@@ -121,6 +121,15 @@ void TextToSpeechController::LoadSpeechData(const std::string& text, SayTextStyl
     }
   });
 } // LoadSpeechData()
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TextToSpeechController::UnloadSpeachData(const std::string& text, SayTextStyle style)
+{
+  const auto iter = _filenameLUT.find( text );
+  if ( iter != _filenameLUT.end() ) {
+    _waveFileReader.ClearCachedWaveDataWithKey( iter->second );
+  }
+} // UnloadSpeachData()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool TextToSpeechController::PrepareToSay(const std::string& text, SayTextStyle style, float& out_duration_ms)
@@ -166,7 +175,8 @@ void TextToSpeechController::ClearLoadedSpeechData(const std::string& text, SayT
   {
     const auto lutIter = _filenameLUT.find( text );
     if ( lutIter != _filenameLUT.end() ) {
-      // Remove from LUT & disk
+      // Remove from memory, LUT & disk
+      _waveFileReader.ClearCachedWaveDataWithKey( lutIter->second );
       FileUtils::DeleteFile( lutIter->second );
       _filenameLUT.erase( lutIter );
     }
@@ -190,8 +200,9 @@ void TextToSpeechController::ClearAllLoadedAudioData(bool deleteStaleFiles, Simp
   using namespace Util;
   Dispatch::Async(_dispatchQueue, [this, deleteStaleFiles, completion] ()
   {
-    // Delete all files in LUT map
+    // Delete all files in memory & LUT map
     for ( auto& iter : _filenameLUT ) {
+      _waveFileReader.ClearCachedWaveDataWithKey( iter.second );
       FileUtils::DeleteFile( iter.second );
     }
     _filenameLUT.clear();
@@ -229,7 +240,7 @@ std::string TextToSpeechController::MakeFullPath(const std::string& text)
                                                        kFilePrefix + std::to_string(hashedValue) + "." + kFileExtension);
   
   return fullPath;
-}
+} // MakeFullPath()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::vector<std::string> TextToSpeechController::FindAllTextToSpeechFiles()
@@ -246,7 +257,7 @@ std::vector<std::string> TextToSpeechController::FindAllTextToSpeechFiles()
     }
   }
   return fileNames;
-}
+} // FindAllTextToSpeechFiles()
 
 
 } // end namespace Cozmo
