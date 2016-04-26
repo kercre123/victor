@@ -133,7 +133,7 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void HandleNewSOSLog(string log_entry) {
-    while (_LogList.Count > 2000) {
+    while (_LogList.Count > 9000) {
       _LogList.RemoveAt(0);
     }
     _LogList.Add(log_entry);
