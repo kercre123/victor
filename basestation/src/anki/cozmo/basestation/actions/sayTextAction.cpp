@@ -60,12 +60,15 @@ namespace Cozmo {
   ActionResult SayTextAction::Init()
   {
     // Set Audio data right before action runs
-    float duration_ms = 0.0;  // FIXME: hook up to action time out
+    float duration_ms = 0.0;
     const bool success = _robot.GetTextToSpeechController().PrepareToSay(_text, _style, duration_ms);
     if (!success) {
       PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
       return ActionResult::FAILURE_ABORT;
     }
+    
+    // Make timeout relative to the length of the sound, in seconds, now that we know it's duration
+    _timeout_sec = 1.5f * .001f * duration_ms;
     
     return ActionResult::SUCCESS;
   } // Init()

@@ -35,8 +35,7 @@ namespace Cozmo {
     virtual const std::string& GetName() const override { return _name; }
     virtual RobotActionType GetType() const override { return RobotActionType::SAY_TEXT; }
     
-    // TODO: Use duration of the sound?
-    virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
+    virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
     
     virtual u8 GetTracksToLock() const override { 
       return (u8)AnimTrackFlag::AUDIO_TRACK;
@@ -62,6 +61,7 @@ namespace Cozmo {
     TextToSpeechStatus        _textToSpeechStatus = TextToSpeechStatus::Loading;
     Animation                 _animation;
     PlayAnimationAction       _playAnimationAction;
+    f32                       _timeout_sec = 5.f;
     
   }; // class SayTextAction
 
