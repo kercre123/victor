@@ -12,6 +12,8 @@
 *
 */
 
+// TODO: Need to implement SayTextStyle in all methods!!
+
 
 #ifndef __Anki_cozmo_Basestation_textToSpeech_textToSpeech_H__
 #define __Anki_cozmo_Basestation_textToSpeech_textToSpeech_H__
@@ -64,6 +66,9 @@ public:
   // it will perform CreateSpeech() first.
   // The completion callback is run once the text's audio data is loaded into memory.
   void LoadSpeechData(const std::string& text, SayTextStyle style, CompletionFunc completion = nullptr);
+  
+  // Unload text's audio data from memory.
+  void UnloadSpeachData(const std::string& text, SayTextStyle style);
   
   // Set up Audio controller to play text's audio data.
   // Return false if the text's .wav is not created or LoadSpeechData() method has not been called before performing
