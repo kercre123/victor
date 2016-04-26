@@ -109,7 +109,7 @@ structure TrackFaceCompleted {
 
 // Used by ReadToolCodeAction
 structure ReadToolCodeCompleted {
-  ToolCode code // will be unknown if failure
+  ToolCodeInfo info // info.code will be UnknownTool if failure
 }
 
 // Use tag to determine what struct to use

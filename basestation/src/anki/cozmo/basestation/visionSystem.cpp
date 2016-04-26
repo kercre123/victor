@@ -460,7 +460,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     return retVal;
   }
   
-  bool VisionSystem::CheckMailbox(ToolCode& msg)
+  bool VisionSystem::CheckMailbox(ToolCodeInfo& msg)
   {
     bool retVal = false;
     if(IsInitialized()) {
@@ -2597,14 +2597,13 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
-    ToolCode codeRead = ToolCode::UnknownTool;
-    ExternalInterface::RobotReadToolCode readToolCodeMessage;
+    ToolCodeInfo readToolCodeMessage;
     readToolCodeMessage.code = ToolCode::UnknownTool;
     
     // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
     // no matter how we return from this function
-    Util::CleanupHelper disableCheckToolCode([this,&codeRead]() {
-      this->_toolCodeMailbox.putMessage(codeRead);
+    Util::CleanupHelper disableCheckToolCode([this,&readToolCodeMessage]() {
+      this->_toolCodeMailbox.putMessage(readToolCodeMessage);
       this->EnableMode(VisionMode::ReadingToolCode, false);
       PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
     });

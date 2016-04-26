@@ -1075,11 +1075,11 @@ namespace Cozmo {
   {
     if(_visionSystem != nullptr)
     {
-      ToolCode code;
-      if(true == _visionSystem->CheckMailbox(code))
+      ToolCodeInfo info;
+      if(true == _visionSystem->CheckMailbox(info))
       {
         ExternalInterface::RobotReadToolCode msg;
-        msg.code = code;
+        msg.info = info;
         _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       }
     }

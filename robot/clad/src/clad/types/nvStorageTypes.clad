@@ -41,7 +41,8 @@ namespace NVStorage {
 
     // Single blob manufacturing entries start here
     NVEntry_CameraCalib        = 0x80000001,
-    NVEntry_PlaypenTestResults = 0x80000002,
+    NVEntry_ToolCodeInfo       = 0x80000002,
+    NVEntry_PlaypenTestResults = 0x80000010,
 
 
     // Multi-blob manufacturing entires start here
