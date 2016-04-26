@@ -26,6 +26,9 @@ public class FactoryIntroManager : MonoBehaviour {
   private UnityEngine.UI.Button _StartButton;
 
   [SerializeField]
+  private UnityEngine.UI.Text _PingStatusText;
+
+  [SerializeField]
   private FactoryLogPanel _FactoryLogPanelPrefab;
   private FactoryLogPanel _FactoryLogPanelInstance;
 
@@ -217,11 +220,13 @@ public class FactoryIntroManager : MonoBehaviour {
       _StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "START";
       _StartButton.image.color = Color.green;
       _StartButton.interactable = true;
+      _PingStatusText.text = "Ping Status: Connected";
     }
     else {
       _StartButton.image.color = Color.gray;
       _StartButton.transform.FindChild("Text").GetComponent<UnityEngine.UI.Text>().text = "NO ROBOT CONNECTED";
       _StartButton.interactable = false;
+      _PingStatusText.text = "Ping Status: Not Connected";
     }
 
 

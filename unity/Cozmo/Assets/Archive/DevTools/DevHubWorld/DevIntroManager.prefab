@@ -9,6 +9,7 @@ GameObject:
   m_Component:
   - 4: {fileID: 415364}
   - 114: {fileID: 11479862}
+  - 114: {fileID: 11414538}
   m_Layer: 0
   m_Name: DevIntroManager
   m_TagString: Untagged
@@ -28,6 +29,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
+--- !u!114 &11414538
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 106742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 723899f7b24144737b256bf74bb620b8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &11479862
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -45,6 +57,7 @@ MonoBehaviour:
   _OptionsButton: {fileID: 0}
   _RestartButton: {fileID: 0}
   _StartButton: {fileID: 0}
+  _PingStatusText: {fileID: 0}
   _FactoryLogPanelPrefab: {fileID: 11453686, guid: 9f19c1cdd9a2e499a83850459fe76106,
     type: 2}
   _FactoryOptionsPanelPrefab: {fileID: 11480756, guid: f8a6aeb9f46144736b24bf26416230b2,
