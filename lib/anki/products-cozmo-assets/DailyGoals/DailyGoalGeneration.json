@@ -1,101 +1,31 @@
 {
   "GenList": [
     {
-      "TitleKey": "dailyGoal.title.missing",
-      "DescKey": "dailyGoal.description.missing",
-      "RewardType": "treat",
-      "PointsRewarded": 999,
-      "Target": 100,
-      "CladEvent": "OnSpeedtapStarted",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.WeekdayCondition, Assembly-CSharp",
-          "dayName": "Friday",
-          "Label": {
-            "text": "Weekday Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.InventoryCondition, Assembly-CSharp",
-          "ItemType": "experience",
-          "ItemCount": 125,
-          "Label": {
-            "text": "Inventory Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        },
-        {
-          "$type": "Anki.Cozmo.WeekdayCondition, Assembly-CSharp",
-          "dayName": "Tuesday",
-          "Label": {
-            "text": "Weekday Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": [
-        {
-          "$type": "Anki.Cozmo.InventoryCondition, Assembly-CSharp",
-          "ItemType": "treat",
-          "ItemCount": 1,
-          "Label": {
-            "text": "Inventory Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ]
-    },
-    {
-      "TitleKey": "dailyGoal.title.PlaySpeedTap",
-      "DescKey": "dailyGoal.description.PlaySpeedTap",
-      "RewardType": "experience",
-      "PointsRewarded": 5,
-      "Target": 50,
-      "CladEvent": "OnSpeedtapStarted",
-      "GenConditions": [
-        {
-          "$type": "Anki.Cozmo.TotalSessionsCondition, Assembly-CSharp",
-          "UseMinSession": false,
-          "MinSession": 5,
-          "UseMaxSession": true,
-          "MaxSession": 10,
-          "Label": {
-            "text": "Total Sessions Condition",
-            "image": null,
-            "tooltip": ""
-          }
-        }
-      ],
-      "ProgressConditions": []
-    },
-    {
       "TitleKey": "dailyGoal.title.WinSpeedTap",
       "DescKey": "dailyGoal.description.WinSpeedTap",
       "RewardType": "experience",
-      "PointsRewarded": 10,
-      "Target": 5,
+      "PointsRewarded": 100,
+      "Target": 1,
       "CladEvent": "OnSpeedtapSessionWin",
       "GenConditions": [],
       "ProgressConditions": []
     },
     {
-      "TitleKey": "dailyGoal.title.WinSpeedTapHands",
-      "DescKey": "dailyGoal.description.WinSpeedTapHands",
+      "TitleKey": "dailyGoal.title.PlaySpeedTap",
+      "DescKey": "dailyGoal.description.PlaySpeedTap",
       "RewardType": "experience",
-      "PointsRewarded": 10,
+      "PointsRewarded": 30,
       "Target": 1,
-      "CladEvent": "OnSpeedtapHandWin",
+      "CladEvent": "OnSpeedtapStarted",
       "GenConditions": [
         {
-          "$type": "Anki.Cozmo.WeekdayCondition, Assembly-CSharp",
-          "dayName": "Sunday",
+          "$type": "Anki.Cozmo.TotalSessionsCondition, Assembly-CSharp",
+          "UseMinSession": true,
+          "MinSession": 5,
+          "UseMaxSession": false,
+          "MaxSession": 0,
           "Label": {
-            "text": "Weekday Condition",
+            "text": "Total Sessions Condition",
             "image": null,
             "tooltip": ""
           }
