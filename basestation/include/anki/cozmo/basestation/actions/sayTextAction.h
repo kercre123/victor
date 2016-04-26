@@ -38,7 +38,7 @@ namespace Cozmo {
     virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
     
     virtual u8 GetTracksToLock() const override { 
-      return _playAnimationGroupAction.GetTracksToLock();
+      return (u8)AnimTrackFlag::AUDIO_TRACK;
     }
     
     // TODO: Add ability to set which animation group (as long as it has special audio event)
@@ -53,7 +53,8 @@ namespace Cozmo {
     std::string               _name;
     SayTextStyle              _style;
     bool                      _isTextToSpeechReady = false;
-    PlayAnimationGroupAction  _playAnimationGroupAction;
+    Animation                 _animation;
+    PlayAnimationAction       _playAnimationAction;
     
   }; // class SayTextAction
 

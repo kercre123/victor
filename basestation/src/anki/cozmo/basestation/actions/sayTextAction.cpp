@@ -28,7 +28,8 @@ namespace Cozmo {
   : IAction(robot)
   , _text(text)
   , _style(style)
-  , _playAnimationGroupAction(robot, "SayText") // TODO: need to define the group
+  , _animation("SayTextAnimation")
+  , _playAnimationAction(robot, &_animation)
   {
     if(ANKI_DEVELOPER_CODE)
     {
@@ -36,6 +37,10 @@ namespace Cozmo {
       // could be a person's name and we don't want that logged for privacy reasons
       _name = "SayText_" + _text + "_Action";
     }
+    
+    // Make our animation a "live" animation with a single audio keyframe
+    _animation.SetIsLive(true);
+    _animation.AddKeyFrameToBack(RobotAudioKeyFrame(Audio::GameEvent::GenericEvent::Vo_Coz_External_Play, 0));
     
     // Create and/or load speech data
     TextToSpeechController::CompletionFunc callback = [this] (bool success,
