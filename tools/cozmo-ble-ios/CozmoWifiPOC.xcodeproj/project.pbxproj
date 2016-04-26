@@ -7,42 +7,39 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		85D632601CC59EDD00A5FB8A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85D6325F1CC59EDD00A5FB8A /* AppDelegate.mm */; settings = {ASSET_TAGS = (); }; };
-		85D632621CC59EEB00A5FB8A /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85D632611CC59EEB00A5FB8A /* ViewController.mm */; settings = {ASSET_TAGS = (); }; };
-		85D632641CC59EF100A5FB8A /* AppTableData.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85D632631CC59EF100A5FB8A /* AppTableData.mm */; settings = {ASSET_TAGS = (); }; };
-		85D634421CC8885E00A5FB8A /* aes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D6343E1CC8885E00A5FB8A /* aes.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634431CC8885E00A5FB8A /* README.md in Sources */ = {isa = PBXBuildFile; fileRef = 85D634401CC8885E00A5FB8A /* README.md */; settings = {ASSET_TAGS = (); }; };
-		85D634441CC8885E00A5FB8A /* unlicense.txt in Resources */ = {isa = PBXBuildFile; fileRef = 85D634411CC8885E00A5FB8A /* unlicense.txt */; settings = {ASSET_TAGS = (); }; };
-		85D634E31CC88A2F00A5FB8A /* appConnectMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634A51CC88A2F00A5FB8A /* appConnectMessage.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634E41CC88A2F00A5FB8A /* lightCubeMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634A71CC88A2F00A5FB8A /* lightCubeMessage.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634E51CC88A2F00A5FB8A /* lightCubeMessage_declarations.def in Resources */ = {isa = PBXBuildFile; fileRef = 85D634A91CC88A2F00A5FB8A /* lightCubeMessage_declarations.def */; settings = {ASSET_TAGS = (); }; };
-		85D634E61CC88A2F00A5FB8A /* lightCubeMessage_switch.def in Resources */ = {isa = PBXBuildFile; fileRef = 85D634AB1CC88A2F00A5FB8A /* lightCubeMessage_switch.def */; settings = {ASSET_TAGS = (); }; };
-		85D634E71CC88A2F00A5FB8A /* messageEngineToRobot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634AC1CC88A2F00A5FB8A /* messageEngineToRobot.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634E81CC88A2F00A5FB8A /* messageEngineToRobot_declarations.def in Resources */ = {isa = PBXBuildFile; fileRef = 85D634AE1CC88A2F00A5FB8A /* messageEngineToRobot_declarations.def */; settings = {ASSET_TAGS = (); }; };
-		85D634E91CC88A2F00A5FB8A /* messageEngineToRobot_switch_group_anim.def in Resources */ = {isa = PBXBuildFile; fileRef = 85D634B11CC88A2F00A5FB8A /* messageEngineToRobot_switch_group_anim.def */; settings = {ASSET_TAGS = (); }; };
-		85D634EA1CC88A2F00A5FB8A /* messageFromActiveObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634B21CC88A2F00A5FB8A /* messageFromActiveObject.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634EB1CC88A2F00A5FB8A /* messageRobotToEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634B41CC88A2F00A5FB8A /* messageRobotToEngine.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634EC1CC88A2F00A5FB8A /* messageToActiveObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634B81CC88A2F00A5FB8A /* messageToActiveObject.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634ED1CC88A2F00A5FB8A /* otaMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634BA1CC88A2F00A5FB8A /* otaMessages.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634EE1CC88A2F00A5FB8A /* activeObjectTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634BD1CC88A2F00A5FB8A /* activeObjectTypes.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634EF1CC88A2F00A5FB8A /* advertisementTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634BF1CC88A2F00A5FB8A /* advertisementTypes.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634F01CC88A2F00A5FB8A /* animationKeyFrames.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634C11CC88A2F00A5FB8A /* animationKeyFrames.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634F11CC88A2F00A5FB8A /* bleMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634C31CC88A2F00A5FB8A /* bleMessages.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634F21CC88A2F00A5FB8A /* controllerChannels.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634C51CC88A2F00A5FB8A /* controllerChannels.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634F31CC88A2F00A5FB8A /* dockingSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634C71CC88A2F00A5FB8A /* dockingSignals.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634F41CC88A2F00A5FB8A /* fwTestMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634C91CC88A2F00A5FB8A /* fwTestMessages.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634F51CC88A2F00A5FB8A /* imageTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634CB1CC88A2F00A5FB8A /* imageTypes.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634F61CC88A2F00A5FB8A /* imu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634CD1CC88A2F00A5FB8A /* imu.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634F71CC88A2F00A5FB8A /* ledTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634CF1CC88A2F00A5FB8A /* ledTypes.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634F81CC88A2F00A5FB8A /* motorTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634D11CC88A2F00A5FB8A /* motorTypes.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634F91CC88A2F00A5FB8A /* nvStorage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634D31CC88A2F00A5FB8A /* nvStorage.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634FA1CC88A2F00A5FB8A /* nvStorageTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634D51CC88A2F00A5FB8A /* nvStorageTypes.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634FB1CC88A2F00A5FB8A /* powerMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634D71CC88A2F00A5FB8A /* powerMessages.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634FC1CC88A2F00A5FB8A /* proxMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634D91CC88A2F00A5FB8A /* proxMessages.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634FD1CC88A2F00A5FB8A /* robotLogging.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634DB1CC88A2F00A5FB8A /* robotLogging.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634FE1CC88A2F00A5FB8A /* robotStatusAndActions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634DD1CC88A2F00A5FB8A /* robotStatusAndActions.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D634FF1CC88A2F00A5FB8A /* robotTestModes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634DF1CC88A2F00A5FB8A /* robotTestModes.cpp */; settings = {ASSET_TAGS = (); }; };
-		85D635001CC88A2F00A5FB8A /* rtipTraces.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634E11CC88A2F00A5FB8A /* rtipTraces.cpp */; settings = {ASSET_TAGS = (); }; };
+		85D632601CC59EDD00A5FB8A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85D6325F1CC59EDD00A5FB8A /* AppDelegate.mm */; };
+		85D632621CC59EEB00A5FB8A /* ViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85D632611CC59EEB00A5FB8A /* ViewController.mm */; };
+		85D632641CC59EF100A5FB8A /* AppTableData.mm in Sources */ = {isa = PBXBuildFile; fileRef = 85D632631CC59EF100A5FB8A /* AppTableData.mm */; };
+		85D634E31CC88A2F00A5FB8A /* appConnectMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634A51CC88A2F00A5FB8A /* appConnectMessage.cpp */; };
+		85D634E41CC88A2F00A5FB8A /* lightCubeMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634A71CC88A2F00A5FB8A /* lightCubeMessage.cpp */; };
+		85D634E51CC88A2F00A5FB8A /* lightCubeMessage_declarations.def in Resources */ = {isa = PBXBuildFile; fileRef = 85D634A91CC88A2F00A5FB8A /* lightCubeMessage_declarations.def */; };
+		85D634E61CC88A2F00A5FB8A /* lightCubeMessage_switch.def in Resources */ = {isa = PBXBuildFile; fileRef = 85D634AB1CC88A2F00A5FB8A /* lightCubeMessage_switch.def */; };
+		85D634E71CC88A2F00A5FB8A /* messageEngineToRobot.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634AC1CC88A2F00A5FB8A /* messageEngineToRobot.cpp */; };
+		85D634E81CC88A2F00A5FB8A /* messageEngineToRobot_declarations.def in Resources */ = {isa = PBXBuildFile; fileRef = 85D634AE1CC88A2F00A5FB8A /* messageEngineToRobot_declarations.def */; };
+		85D634E91CC88A2F00A5FB8A /* messageEngineToRobot_switch_group_anim.def in Resources */ = {isa = PBXBuildFile; fileRef = 85D634B11CC88A2F00A5FB8A /* messageEngineToRobot_switch_group_anim.def */; };
+		85D634EA1CC88A2F00A5FB8A /* messageFromActiveObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634B21CC88A2F00A5FB8A /* messageFromActiveObject.cpp */; };
+		85D634EB1CC88A2F00A5FB8A /* messageRobotToEngine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634B41CC88A2F00A5FB8A /* messageRobotToEngine.cpp */; };
+		85D634EC1CC88A2F00A5FB8A /* messageToActiveObject.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634B81CC88A2F00A5FB8A /* messageToActiveObject.cpp */; };
+		85D634ED1CC88A2F00A5FB8A /* otaMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634BA1CC88A2F00A5FB8A /* otaMessages.cpp */; };
+		85D634EE1CC88A2F00A5FB8A /* activeObjectTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634BD1CC88A2F00A5FB8A /* activeObjectTypes.cpp */; };
+		85D634EF1CC88A2F00A5FB8A /* advertisementTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634BF1CC88A2F00A5FB8A /* advertisementTypes.cpp */; };
+		85D634F01CC88A2F00A5FB8A /* animationKeyFrames.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634C11CC88A2F00A5FB8A /* animationKeyFrames.cpp */; };
+		85D634F11CC88A2F00A5FB8A /* bleMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634C31CC88A2F00A5FB8A /* bleMessages.cpp */; };
+		85D634F21CC88A2F00A5FB8A /* controllerChannels.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634C51CC88A2F00A5FB8A /* controllerChannels.cpp */; };
+		85D634F31CC88A2F00A5FB8A /* dockingSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634C71CC88A2F00A5FB8A /* dockingSignals.cpp */; };
+		85D634F41CC88A2F00A5FB8A /* fwTestMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634C91CC88A2F00A5FB8A /* fwTestMessages.cpp */; };
+		85D634F51CC88A2F00A5FB8A /* imageTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634CB1CC88A2F00A5FB8A /* imageTypes.cpp */; };
+		85D634F61CC88A2F00A5FB8A /* imu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634CD1CC88A2F00A5FB8A /* imu.cpp */; };
+		85D634F71CC88A2F00A5FB8A /* ledTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634CF1CC88A2F00A5FB8A /* ledTypes.cpp */; };
+		85D634F81CC88A2F00A5FB8A /* motorTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634D11CC88A2F00A5FB8A /* motorTypes.cpp */; };
+		85D634F91CC88A2F00A5FB8A /* nvStorage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634D31CC88A2F00A5FB8A /* nvStorage.cpp */; };
+		85D634FA1CC88A2F00A5FB8A /* nvStorageTypes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634D51CC88A2F00A5FB8A /* nvStorageTypes.cpp */; };
+		85D634FB1CC88A2F00A5FB8A /* powerMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634D71CC88A2F00A5FB8A /* powerMessages.cpp */; };
+		85D634FC1CC88A2F00A5FB8A /* proxMessages.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634D91CC88A2F00A5FB8A /* proxMessages.cpp */; };
+		85D634FD1CC88A2F00A5FB8A /* robotLogging.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634DB1CC88A2F00A5FB8A /* robotLogging.cpp */; };
+		85D634FE1CC88A2F00A5FB8A /* robotStatusAndActions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634DD1CC88A2F00A5FB8A /* robotStatusAndActions.cpp */; };
+		85D634FF1CC88A2F00A5FB8A /* robotTestModes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634DF1CC88A2F00A5FB8A /* robotTestModes.cpp */; };
+		85D635001CC88A2F00A5FB8A /* rtipTraces.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 85D634E11CC88A2F00A5FB8A /* rtipTraces.cpp */; };
 		85D635251CC987D100A5FB8A /* libBLECozmo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85D635241CC9866E00A5FB8A /* libBLECozmo.a */; };
 		85DEFA4B1C44690A00A714FE /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 85DEFA4A1C44690A00A714FE /* main.m */; };
 		85DEFA541C44690A00A714FE /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 85DEFA521C44690A00A714FE /* Main.storyboard */; };
@@ -82,10 +79,6 @@
 		85D6325F1CC59EDD00A5FB8A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AppDelegate.mm; sourceTree = "<group>"; };
 		85D632611CC59EEB00A5FB8A /* ViewController.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ViewController.mm; sourceTree = "<group>"; };
 		85D632631CC59EF100A5FB8A /* AppTableData.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AppTableData.mm; sourceTree = "<group>"; };
-		85D6343E1CC8885E00A5FB8A /* aes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = aes.cpp; sourceTree = "<group>"; };
-		85D6343F1CC8885E00A5FB8A /* aes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = aes.h; sourceTree = "<group>"; };
-		85D634401CC8885E00A5FB8A /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		85D634411CC8885E00A5FB8A /* unlicense.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = unlicense.txt; sourceTree = "<group>"; };
 		85D634A51CC88A2F00A5FB8A /* appConnectMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = appConnectMessage.cpp; sourceTree = "<group>"; };
 		85D634A61CC88A2F00A5FB8A /* appConnectMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = appConnectMessage.h; sourceTree = "<group>"; };
 		85D634A71CC88A2F00A5FB8A /* lightCubeMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = lightCubeMessage.cpp; sourceTree = "<group>"; };
@@ -190,18 +183,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		85D6343D1CC8885E00A5FB8A /* tiny-AES128-C */ = {
-			isa = PBXGroup;
-			children = (
-				85D6343E1CC8885E00A5FB8A /* aes.cpp */,
-				85D6343F1CC8885E00A5FB8A /* aes.h */,
-				85D634401CC8885E00A5FB8A /* README.md */,
-				85D634411CC8885E00A5FB8A /* unlicense.txt */,
-			);
-			name = "tiny-AES128-C";
-			path = "../../anki-util/source/3rd/tiny-AES128-C";
-			sourceTree = "<group>";
-		};
 		85D634A31CC88A2F00A5FB8A /* clad */ = {
 			isa = PBXGroup;
 			children = (
@@ -320,7 +301,6 @@
 			isa = PBXGroup;
 			children = (
 				85D634A31CC88A2F00A5FB8A /* clad */,
-				85D6343D1CC8885E00A5FB8A /* tiny-AES128-C */,
 				859BE41B1C9201ED00A521F0 /* CozmoWifiPOC.entitlements */,
 				85DEFA4C1C44690A00A714FE /* AppDelegate.h */,
 				85D6325F1CC59EDD00A5FB8A /* AppDelegate.mm */,
@@ -493,7 +473,6 @@
 			files = (
 				85D634E51CC88A2F00A5FB8A /* lightCubeMessage_declarations.def in Resources */,
 				85DEFA591C44690A00A714FE /* LaunchScreen.storyboard in Resources */,
-				85D634441CC8885E00A5FB8A /* unlicense.txt in Resources */,
 				85D634E81CC88A2F00A5FB8A /* messageEngineToRobot_declarations.def in Resources */,
 				85D634E91CC88A2F00A5FB8A /* messageEngineToRobot_switch_group_anim.def in Resources */,
 				85D634E61CC88A2F00A5FB8A /* lightCubeMessage_switch.def in Resources */,
@@ -548,13 +527,11 @@
 				85D634EB1CC88A2F00A5FB8A /* messageRobotToEngine.cpp in Sources */,
 				85D632641CC59EF100A5FB8A /* AppTableData.mm in Sources */,
 				85D634FF1CC88A2F00A5FB8A /* robotTestModes.cpp in Sources */,
-				85D634431CC8885E00A5FB8A /* README.md in Sources */,
 				85D634FA1CC88A2F00A5FB8A /* nvStorageTypes.cpp in Sources */,
 				85D634ED1CC88A2F00A5FB8A /* otaMessages.cpp in Sources */,
 				85DEFA4B1C44690A00A714FE /* main.m in Sources */,
 				85D634FD1CC88A2F00A5FB8A /* robotLogging.cpp in Sources */,
 				85D634FC1CC88A2F00A5FB8A /* proxMessages.cpp in Sources */,
-				85D634421CC8885E00A5FB8A /* aes.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

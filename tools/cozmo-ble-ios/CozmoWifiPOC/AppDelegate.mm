@@ -15,7 +15,6 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "BLECozmoRandom.h"
-#include "aes.h"
 
 @interface AppDelegate ()
 
@@ -41,18 +40,6 @@
   [_cozmoManager setServiceDelegate:self];
   
   _viewController = (ViewController*)  self.window.rootViewController;
-  
-  // Testing out aes implementation
-  static constexpr uint32_t kKeySize = 16;
-  uint8_t key[kKeySize] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-  uint8_t message[kKeySize] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
-  AES128_ECB_encrypt(message, key, message);
-  NSMutableString *string = [NSMutableString stringWithCapacity:kKeySize*2];
-  for (NSInteger idx = 0; idx < kKeySize; ++idx) {
-    [string appendFormat:@"%02x", (message)[idx]];
-  }
-  BLELogDebug("AppDelegate.encryptedMessage","0x%s", [string UTF8String]);
-  AES128_ECB_decrypt(message, key, message);
   
   return YES;
 }
