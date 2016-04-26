@@ -1043,7 +1043,7 @@ namespace Anki {
       // So we can have an arbitrary number of data here that is likely to change want just hash it all
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
-               "r:%c%c%c%c <%8s> %2dHz %s ",
+               "r:%c%c%c%c <%8s> %2dHz %s%s ",
                GetMoveComponent().IsLiftMoving() ? 'L' : ' ',
                GetMoveComponent().IsHeadMoving() ? 'H' : ' ',
                GetMoveComponent().IsMoving() ? 'B' : ' ',
@@ -1053,6 +1053,7 @@ namespace Anki {
                // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
                // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
                (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
+               behaviorChooserName,
                behaviorDebugStr.c_str());
       
       std::hash<std::string> hasher;

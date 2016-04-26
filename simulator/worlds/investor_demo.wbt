@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation 0.0854219 -0.358817 -0.929491 2.70603
-  position -0.932877 1.66936 2.37168
+  orientation -0.0447006 0.392165 0.918808 3.35031
+  position -0.611599 1.92265 2.1975
 }
 Background {
   skyColor [
@@ -29,30 +29,36 @@ CozmoMat {
   showMarkers FALSE
 }
 Face {
-  translation 0.0355869 -0.646956 0.28
+  translation 0.723722 -0.559178 0.52
+  rotation 0 0 1 4.45059
 }
 Face {
-  translation 0.667478 -0.06002 0.57
+  translation 0.707153 -0.0771669 0.45
   rotation 0 0 1 4.71239
   image "face02.png"
 }
 Face {
-  translation 0.601694 0.136062 0.34
+  translation 0.6628 0.170429 0.45
   rotation 0 0 1 4.97419
   image "face03.png"
 }
 LightCube {
-  translation -0.101666 -0.254563 0.022
+  translation -0.129737 0.444911 0.022
   rotation -0.113999 0.986919 0.113999 1.58396
 }
 LightCube {
-  translation 0.0748146 0.154211 0.022
+  translation -0.0200182 0.441269 0.022
   rotation 0 0 1 0.23
   ID 2
 }
+LightCube {
+  translation 0.0509967 0.474244 0.062
+  rotation 0 0 1 0.23
+  ID 1
+}
 SolidBox {
   translation -0.0310205 0.357748 6.66134e-16
-  size 0.2 0.05 0.2
+  size 0.3 0.05 0.2
 }
 BlockWorldComms {
 }
@@ -62,6 +68,7 @@ DEF Cozmo_1 CozmoBot {
 WebotsKeyboardController {
   robotVolume 0
   behaviorName "lookAround"
+  behaviorChooserName "Demo"
 }
 CozmoVizDisplay {
   moodViz TRUE
