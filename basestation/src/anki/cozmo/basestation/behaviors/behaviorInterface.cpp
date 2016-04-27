@@ -167,6 +167,9 @@ Result IBehavior::Init()
   if ( initResult != RESULT_OK ) {
     _isRunning = false;
   }
+  else {
+    _startCount++;
+  }
   return initResult;
 }
 

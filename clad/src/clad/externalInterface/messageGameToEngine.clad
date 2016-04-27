@@ -7,7 +7,6 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/proceduralEyeParameters.clad"
-#include "clad/types/demoBehaviorState.clad"
 #include "clad/types/behaviorGroup.clad"
 #include "clad/types/behaviorType.clad"
 #include "clad/types/behaviorChooserType.clad"
@@ -784,8 +783,11 @@ message QueueCompoundAction {
   RobotActionUnion       actions[uint_8]
 }
 
-message SetDemoState {
-  DemoBehaviorState demoState
+message TransitionToNextDemoState {
+}
+
+message StartDemoWithEdge {
+  bool hasEdge = 1
 }
 
 message ForceDelocalizeRobot {

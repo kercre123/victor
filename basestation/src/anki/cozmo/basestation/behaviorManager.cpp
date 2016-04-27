@@ -14,10 +14,11 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
-#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/messageHelpers.h"
@@ -50,6 +51,7 @@ BehaviorManager::~BehaviorManager()
 
   Util::SafeDelete(_selectionChooser);
   Util::SafeDelete(_freeplayBehaviorChooser);
+  Util::SafeDelete(_demoChooser);
   Util::SafeDelete(_behaviorFactory);
 }
   
@@ -62,9 +64,11 @@ Result BehaviorManager::Init(const Json::Value &config)
 
     Util::SafeDelete(_selectionChooser);
     Util::SafeDelete(_freeplayBehaviorChooser);
+    Util::SafeDelete(_demoChooser);
 
     _selectionChooser = new SelectionBehaviorChooser(_robot, chooserConfigJson);
     _freeplayBehaviorChooser = new SimpleBehaviorChooser(_robot, chooserConfigJson);
+    _demoChooser = new DemoBehaviorChooser(_robot, chooserConfigJson);
                                    
     SetBehaviorChooser( _selectionChooser );
 
@@ -103,6 +107,11 @@ Result BehaviorManager::Init(const Json::Value &config)
                                    case BehaviorChooserType::Selection:
                                    {
                                      SetBehaviorChooser( _selectionChooser );
+                                     break;
+                                   }
+                                   case BehaviorChooserType::Demo:
+                                   {
+                                     SetBehaviorChooser(_demoChooser);
                                      break;
                                    }
                                    default:
@@ -352,6 +361,8 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
         _behaviorChooser->EnableBehaviorGroup(group, enabled);
       });
   }
+
+  _behaviorChooser->Init();
 
   // force the new behavior chooser to select something now, instead of waiting for the next tick
   SwitchToNextBehavior();
