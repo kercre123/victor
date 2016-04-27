@@ -41,8 +41,6 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
   , _blockworldFilter( new BlockWorldFilter )
   , _robot(robot)
 {
-  EnableAllBehaviors(false);
-
   if (_robot.HasExternalInterface() )
   {
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
@@ -60,6 +58,7 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
 
 void DemoBehaviorChooser::Init()
 {
+  EnableAllBehaviors(false);
   _initCalled = true;
   TransitionToNextState();
 }
