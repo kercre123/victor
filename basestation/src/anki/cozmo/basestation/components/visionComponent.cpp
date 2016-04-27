@@ -1520,7 +1520,9 @@ namespace Cozmo {
                            "Finished setting %zu-byte album data and %zu-byte enroll data",
                            _albumData.size(), _enrollData.size());
 
-          // Notify about the newly-available names and IDs
+          // Notify about the newly-available names and IDs, and create wave files
+          // for the names if they don't already exist, so we've already got them
+          // when we want to say them at some point later.
           using namespace ExternalInterface;
           _robot.Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
           for(auto & nameAndID : namesAndIDs)
@@ -1529,7 +1531,10 @@ namespace Cozmo {
             msg.name = nameAndID.name;
             msg.faceID = nameAndID.faceID;
             _robot.Broadcast(MessageEngineToGame(std::move(msg)));
+            
+            _robot.GetTextToSpeechComponent().CreateSpeech(nameAndID.name);
           }
+          
         } else {
           PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.Failure",
                             "Failed setting %zu-byte album data and %zu-byte enroll data",
