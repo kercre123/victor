@@ -549,7 +549,7 @@ namespace Anki {
 
 
 
-    void HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
+    bool HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
     {
       const double* vals = gyro_->getValues();  // rad/s
       IMUData.rate_x = (f32)(vals[0]);
@@ -560,6 +560,12 @@ namespace Anki {
       IMUData.acc_x = (f32)(vals[0] * 1000);  // convert to mm/s^2
       IMUData.acc_y = (f32)(vals[1] * 1000);
       IMUData.acc_z = (f32)(vals[2] * 1000);
+      
+      // Return true if IMU was already read this timestamp
+      static TimeStamp_t lastReadTimestamp = 0;
+      bool alreadyRead = lastReadTimestamp == HAL::GetTimeStamp();
+      lastReadTimestamp = HAL::GetTimeStamp();
+      return alreadyRead;
     }
     
     void HAL::IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp)

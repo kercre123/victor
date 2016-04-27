@@ -67,14 +67,19 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   Manage();
 }
 
+static IMUData read_buffer;
+
 static void state_updated() {
   // We received our IMU data
-  imu_changed = true;
+  static uint8_t lastTimestamp = 0x80;
+  imu_changed = ((read_buffer.timestamp ^ lastTimestamp) & 0x80) != 0;
+  
+  if (imu_changed) {
+    lastTimestamp = read_buffer.timestamp;
+  }
 }
 
 void Anki::Cozmo::HAL::IMU::Manage(void) {
-  static IMUData read_buffer;
-  
   // We have a new bundle of IMU data, stuff it into the buffer
   if (imu_changed) {
     // Attempt to find the adjustment for the update counter

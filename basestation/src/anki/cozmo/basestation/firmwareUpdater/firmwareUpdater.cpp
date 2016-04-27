@@ -149,9 +149,9 @@ uint32_t GetFlashAddressForState(FirmwareUpdateStage state)
     case FirmwareUpdateStage::RTIP:
       flashRegion = RobotInterface::OTAFlashRegions::OTA_RTIP_flash_address;
       break;
-    case FirmwareUpdateStage::Body:
-      flashRegion = RobotInterface::OTAFlashRegions::OTA_body_flash_address;
-      break;
+//    case FirmwareUpdateStage::Body:
+//      flashRegion = RobotInterface::OTAFlashRegions::OTA_body_flash_address;
+//      break;
     default:
       assert(0);
   }
