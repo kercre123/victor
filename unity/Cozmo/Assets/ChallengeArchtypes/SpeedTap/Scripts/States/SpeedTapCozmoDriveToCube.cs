@@ -4,7 +4,7 @@ using Anki.Cozmo.Audio;
 
 namespace SpeedTap {
 
-  public class SpeedTapWaitForCubePlace : State {
+  public class SpeedTapCozmoDriveToCube : State {
 
     private const float _kArriveAtCubeThreshold = 50.0f;
     private const float _kTargetDistanceToCube = 10.0f;
@@ -13,7 +13,7 @@ namespace SpeedTap {
 
     private bool _IsFirstTime = false;
 
-    public SpeedTapWaitForCubePlace(bool isFirstTime) {
+    public SpeedTapCozmoDriveToCube(bool isFirstTime) {
       _IsFirstTime = isFirstTime;
     }
 
@@ -66,7 +66,7 @@ namespace SpeedTap {
         }
         else {
           // restart this state
-          _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
+          _StateMachine.SetNextState(new SpeedTapCozmoDriveToCube(false));
         }
       }
     }

@@ -133,6 +133,10 @@ namespace SpeedTap {
       StopCycleCube(CozmoBlock);
     }
 
+    private void SetMistakeLightPattern(LightCube cube) {
+      cube.SetFlashingLEDs(Color.red, 100, 100, 0);
+    }
+
     public void CozmoWinsHand(bool playerHitWrong = false) {
       _CozmoScore++;
       UpdateUI();
@@ -141,7 +145,7 @@ namespace SpeedTap {
       // if player tapped Red or on mismatched colors
       // else player tapped too late and just go dark
       if (playerHitWrong) {
-        PlayerBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
+        SetMistakeLightPattern(PlayerBlock);
       }
       else {
         PlayerBlock.SetLEDsOff();
@@ -162,7 +166,7 @@ namespace SpeedTap {
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
 
       if (cozmoHitWrong) {
-        CozmoBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
+        SetMistakeLightPattern(CozmoBlock);
       }
       else {
         CozmoBlock.SetLEDsOff();
@@ -230,7 +234,7 @@ namespace SpeedTap {
     private void HandleRoundEndAnimDone(bool success) {
       ResetScore();
       ClearWinningLightPatterns();
-      _StateMachine.SetNextState(new SpeedTapWaitForCubePlace(false));
+      _StateMachine.SetNextState(new SpeedTapCozmoDriveToCube(false));
     }
 
     private void HandleSessionAnimDone(bool success) {
@@ -301,7 +305,7 @@ namespace SpeedTap {
 
       InitialCubesState initCubeState = new InitialCubesState(
                                           new SelectDifficultyState(
-                                            new HowToPlayState(new SpeedTapWaitForCubePlace(true)),
+                                            new HowToPlayState(new SpeedTapCozmoDriveToCube(true)),
                                             DifficultyOptions,
                                             Mathf.Max(HighestLevelCompleted(), 1)
                                           ), 
