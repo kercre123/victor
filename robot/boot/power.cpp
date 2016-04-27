@@ -22,6 +22,30 @@ void Anki::Cozmo::HAL::Power::init()
   GPIO_SET(GPIO_CAM_PWDN, PIN_CAM_PWDN);
   GPIO_OUT(GPIO_CAM_PWDN, PIN_CAM_PWDN);
   SOURCE_SETUP(GPIO_CAM_PWDN, SOURCE_CAM_PWDN, SourceGPIO);
+
+  // Check if body is pulled up
+  GPIO_IN(GPIO_BODY_UART, PIN_BODY_UART);
+  SOURCE_SETUP(GPIO_BODY_UART, SOURCE_BODY_UART, SourceGPIO);
+
+  // This is just a check to see if the body is connected
+  int timeout = GetMicroCounter() + 3000000;  
+  uint8_t last = 0;
+  int edges = 0;
+  
+  while (timeout - GetMicroCounter() > 0) {
+    uint8_t current = GPIO_READ(GPIO_BODY_UART) & PIN_BODY_UART;
+    if (last ^ current) {
+      if (edges > 0x10) {
+        return ;
+      }
+      edges++;
+    }
+    last = current;
+  }
+
+  // We are on likely on a test fixure, power up espressif
+  enableEspressif();
+  for(;;) ;
 }
 
 void Anki::Cozmo::HAL::Power::enableEspressif(void)
@@ -37,7 +61,7 @@ void Anki::Cozmo::HAL::Power::enableEspressif(void)
 
   // Pull WS high to set correct boot mode on Espressif GPIO2 (flash or bootloader)
   GPIO_IN(GPIO_WS, PIN_WS);
-  SOURCE_SETUP(GPIO_WS, SOURCE_WS, SourceGPIO | SourcePullUp); 
+  SOURCE_SETUP(GPIO_WS, SOURCE_WS, SourceGPIO | SourcePullUp);
 
   MicroWait(10000);
 

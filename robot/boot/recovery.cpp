@@ -215,10 +215,10 @@ void EnterRecovery() {
   // We know that booting the espressif will take awhile, so we should
   // just tell the body to pause until that finishes
   // XXX: We can restore this once we have a way to make fixtures keep Espressif powered
-  //UART::writeByte(COMMAND_PAUSE);
-  //Power::enableEspressif();
-  //SPI::init();
-  //UART::writeByte(COMMAND_RESUME);
+  UART::writeByte(COMMAND_PAUSE);
+  Power::enableEspressif();
+  SPI::init();
+  UART::writeByte(COMMAND_RESUME);
 
   // We are now ready to start receiving commands
   SPI0_PUSHR_SLAVE = STATE_IDLE;

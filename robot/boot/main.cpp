@@ -21,16 +21,12 @@ int main (void) {
     SIM_SCGC5_PORTD_MASK |
     SIM_SCGC5_PORTE_MASK;
   
-  __disable_irq();   
+  __disable_irq();
   TimerInit();
   MicroWait(100000);
 
   Power::init();
 
-  // XXX-NDM: I had to do this, since the test fixture needs the Espressif to come up
-  Power::enableEspressif();
-  SPI::init();
-  
   UART::init();
   EnterRecovery();
 
