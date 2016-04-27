@@ -15,7 +15,7 @@
 // These are all the magic numbers for the boot loader
 static const int target_pin = PIN_TX_HEAD;
 static bool UartWritting;
-static const int UART_TIMEOUT = 0x4000 << 8;
+static const int UART_TIMEOUT = 0x2000 << 8;
 
 void setTransmit(bool tx);
 
@@ -35,8 +35,8 @@ static inline void setCathode(int pin, bool set) {
 }
 
 void setLight(uint8_t clr) {
-	int channel = (clr >> 3) & 3;
-	
+  int channel = (clr >> 3) & 3;
+
   static const charliePlex_s RGBLightPins[] =
   {
     // anode, cath_red, cath_gree, cath_blue
@@ -67,9 +67,9 @@ void UARTInit(void) {
   NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
   NRF_UART0->TASKS_STARTTX = 1;
   NRF_UART0->TASKS_STARTRX = 1;
-	NRF_UART0->EVENTS_TXDRDY = 0;
-	NRF_UART0->EVENTS_RXDRDY = 0;
-	
+  NRF_UART0->EVENTS_TXDRDY = 0;
+  NRF_UART0->EVENTS_RXDRDY = 0;
+
   // Initialize the UART for the specified baudrate
   NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
 
@@ -85,7 +85,7 @@ void setTransmit(bool tx) {
   if (UartWritting == tx) return ;
 
   UartWritting = tx;
-  
+
   if (tx) {
     NRF_UART0->PSELRXD = 0xFFFFFFFF;
     MicroWait(10);
@@ -106,11 +106,11 @@ void setTransmit(bool tx) {
   }
 
   // Clear our UART interrupts
-  while (NRF_UART0->EVENTS_RXDRDY) {	
-		NRF_UART0->EVENTS_RXDRDY = 0;
-		uint8_t temp = NRF_UART0->RXD;
-	}
-	
+  while (NRF_UART0->EVENTS_RXDRDY) {
+    NRF_UART0->EVENTS_RXDRDY = 0;
+    uint8_t temp = NRF_UART0->RXD;
+  }
+
   NRF_UART0->EVENTS_TXDRDY = 0;
 }
 
@@ -144,45 +144,45 @@ static void readUart(void* p, int length, bool timeout = true) {
 }
 
 static void writeUart(const void* p, int length) {
-	uint8_t* data = (uint8_t*) p;
-	setTransmit(true);
-	
-	while (length-- > 0) {
-		NRF_UART0->TXD = *(data++);
+  uint8_t* data = (uint8_t*) p;
+  setTransmit(true);
 
-		while (!NRF_UART0->EVENTS_TXDRDY) ;
+  while (length-- > 0) {
+    NRF_UART0->TXD = *(data++);
 
-		NRF_UART0->EVENTS_TXDRDY = 0;
-	}
+    while (!NRF_UART0->EVENTS_TXDRDY) ;
+
+    NRF_UART0->EVENTS_TXDRDY = 0;
+  }
 }
 
 static uint8_t readByte(bool timeout = true) {
-	uint8_t byte;
-	readUart(&byte, sizeof(byte), timeout);
-	
-	return byte;
+  uint8_t byte;
+  readUart(&byte, sizeof(byte), timeout);
+
+  return byte;
 }
 
 static uint8_t writeByte(const uint8_t byte) {
-	writeUart(&byte, sizeof(byte));
+  writeUart(&byte, sizeof(byte));
 }
 
 static void SyncToHead(void) {
-	uint8_t color;
+  uint8_t color;
 
-	// Write our recovery sync signal
-	writeUart(&BODY_RECOVERY_NOTICE, sizeof(BODY_RECOVERY_NOTICE));
-	setTransmit(false);
-	
-	uint32_t recoveryWord = 0;
+  // Write our recovery sync signal
+  writeUart(&BODY_RECOVERY_NOTICE, sizeof(BODY_RECOVERY_NOTICE));
+  setTransmit(false);
 
-	// This will read a word, and attempt to sync to head
-	readUart(&recoveryWord, sizeof(recoveryWord));
+  uint32_t recoveryWord = 0;
 
-	// Simply restart when we receive bad data
-	if (recoveryWord != HEAD_RECOVERY_NOTICE) {
-		NVIC_SystemReset();
-	}
+  // This will read a word, and attempt to sync to head
+  readUart(&recoveryWord, sizeof(recoveryWord));
+
+  // Simply restart when we receive bad data
+  if (recoveryWord != HEAD_RECOVERY_NOTICE) {
+    NVIC_SystemReset();
+  }
 }
 
 bool FlashSector(int target, const uint32_t* data)
@@ -282,7 +282,7 @@ void BlinkALot(void) {
 
   for (int i = 0; i < sizeof(colors); i++) {
     setLight(colors[i]);
-    MicroWait(50000);
+    MicroWait(25000);
   }
 }
 
