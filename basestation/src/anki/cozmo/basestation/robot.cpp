@@ -1435,7 +1435,7 @@ namespace Anki {
     const std::string& Robot::GetAnimationNameFromGroup(const std::string& name) {
       const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
       if(group != nullptr && !group->IsEmpty()) {
-        return group->GetAnimationName(GetMoodManager(), _animationGroups);
+        return group->GetAnimationName(GetMoodManager(), _animationGroups, GetHeadAngle());
       }
       static const std::string empty("");
       return empty;

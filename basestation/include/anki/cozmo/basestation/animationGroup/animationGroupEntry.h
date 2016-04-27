@@ -46,6 +46,10 @@ namespace Anki {
       
       double GetCooldown() const { return _cooldownTime_s; }
       
+      bool GetUseHeadAngle() const { return _useHeadAngle; }
+      f32 GetHeadAngleMin() const { return _headAngleMin; }
+      f32 GetHeadAngleMax() const { return _headAngleMax; }
+      
     private:
       
       // Name of this animation
@@ -53,6 +57,10 @@ namespace Anki {
       double _cooldownTime_s;
       f32 _weight;
       SimpleMoodType _mood;
+      
+      bool _useHeadAngle;
+      f32  _headAngleMin;
+      f32  _headAngleMax;
       
     }; // class AnimationGroupEntry
   } // namespace Cozmo

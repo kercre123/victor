@@ -25,6 +25,9 @@ namespace Anki {
     static const char* kWeightKey = "Weight";
     static const char* kMoodKey = "Mood";
     static const char* kCooldownKey = "CooldownTime_Sec";
+    static const char* kUseHeadAngleKey = "UseHeadAngle";
+    static const char* kHeadAngleMinKey = "HeadAngleMin_Deg";
+    static const char* kHeadAngleMaxKey = "HeadAngleMax_Deg";
     
     AnimationGroupEntry::AnimationGroupEntry()
     {
@@ -79,6 +82,21 @@ namespace Anki {
       }
       else {
         _cooldownTime_s = 0;
+      }
+      // Use Head Angle is optional
+      _useHeadAngle = false;
+      if(JsonTools::GetValueOptional(jsonRoot, kUseHeadAngleKey, _useHeadAngle) && _useHeadAngle)
+      {
+        const Json::Value& minHeadAngle = jsonRoot[kHeadAngleMinKey];
+        const Json::Value& maxHeadAngle = jsonRoot[kHeadAngleMaxKey];
+        if(!minHeadAngle.isDouble() || !maxHeadAngle.isDouble()) {
+          PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.NoHeadAngleWhenUsingHeadAngles",
+                            "Missing '%s' or '%s' field for animation.", kHeadAngleMinKey,kHeadAngleMaxKey);
+          
+          return RESULT_FAIL;
+        }
+        _headAngleMin = DEG_TO_RAD_F32(minHeadAngle.asFloat());
+        _headAngleMax = DEG_TO_RAD_F32(maxHeadAngle.asFloat());
       }
       
       return RESULT_OK;
