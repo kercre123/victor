@@ -11,6 +11,7 @@
 #include "../sim_hal/transport/IReceiver.h"
 #include "../sim_hal/transport/reliableTransport.h"
 #include "anki/vision/CameraSettings.h"
+#include "../sim_hal/sim_nvStorage.h"
 #endif
 #include <string.h>
 
@@ -743,25 +744,11 @@ namespace Anki {
       }
       void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageWrite const& msg)
       {
-        AnkiInfo( 156, "Messages.Process_writeNV.NotSupported", 440, "Tag: 0x%x", 1, msg.entry.tag);
-        
-        RobotInterface::NVOpResultToEngine m;
-        m.robotAddress = 1;
-        m.report.tag = static_cast<u32>(msg.entry.tag);
-        m.report.result = NVStorage::NV_ERROR;
-        m.report.write = true;
-        SendMessage(m);
+        SimNVStorageSpace::Write(msg);
       }
       void Process_readNV(Anki::Cozmo::NVStorage::NVStorageRead const& msg)
       {
-        AnkiInfo( 157, "Messages.Process_readNV.NotSupported", 440, "Tag: 0x%x", 1, msg.tag);
-        
-        RobotInterface::NVOpResultToEngine m;
-        m.robotAddress = 1;
-        m.report.tag = static_cast<u32>(msg.tag);
-        m.report.result = NVStorage::NV_ERROR;
-        m.report.write = false;
-        SendMessage(m);
+        SimNVStorageSpace::Read(msg);
       }
       void Process_bodyState(Anki::Cozmo::RobotInterface::BodyFirmwareState const&)
       {

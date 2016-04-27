@@ -1076,6 +1076,63 @@ namespace Anki {
 
               case (s32)'M':
               {
+                const uint32_t tag = root_->getField("nvTag")->getSFInt32();
+                const uint32_t numBlobs = root_->getField("nvNumBlobs")->getSFInt32();
+                const uint32_t blobLength = root_->getField("nvBlobDataLength")->getSFInt32();
+                
+                // Shift + Alt + M: Erases specified tag
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT &&
+                   modifier_key & webots::Supervisor::KEYBOARD_ALT)
+                {
+                  if(ENABLE_NVSTORAGE_WRITE)
+                  {
+                    SendNVStorageEraseEntry((NVStorage::NVEntryTag)tag);
+                  }
+                  else
+                  {
+                    PRINT_NAMED_INFO("SendNVStorageEraseEntry.Disabled",
+                                     "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                  }
+                }
+                // Shift + M: Stores random data to tag
+                // If tag is a multi-tag, writes numBlobs blobs of random data blobLength long
+                // If tag is a single tag, writes 1 blob of random data that is blobLength long
+                else if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT)
+                {
+                  if(ENABLE_NVSTORAGE_WRITE)
+                  {
+                    Util::RandomGenerator r;
+                    
+                    for(int i=0;i<numBlobs;i++)
+                    {
+                      printf("blob data: %d\n", i);
+                      uint8_t data[blobLength];
+                      for(int i=0;i<blobLength;i++)
+                      {
+                        int n = r.RandInt(256);
+                        printf("%d ", n);
+                        data[i] = (uint8_t)n;
+                      }
+                      printf("\n\n");
+                      SendNVStorageWriteEntry((NVStorage::NVEntryTag)tag, data, blobLength, i, numBlobs);
+                    }
+                  }
+                  else
+                  {
+                    PRINT_NAMED_INFO("SendNVStorageWriteEntry.Disabled",
+                                     "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                  }
+                  
+                  break;
+                }
+                // Alt + M: Reads data at tag
+                else if(modifier_key & webots::Supervisor::KEYBOARD_ALT)
+                {
+                  ClearReceivedNVStorageData((NVStorage::NVEntryTag)tag);
+                  SendNVStorageReadEntry((NVStorage::NVEntryTag)tag);
+                  break;
+                }
+              
                 webots::Field* emotionNameField = root_->getField("emotionName");
                 if (emotionNameField == nullptr) {
                   printf("ERROR: No emotionNameField field found in WebotsKeyboardController.proto\n");
@@ -2063,6 +2120,11 @@ namespace Anki {
             }
             default:
               PRINT_NAMED_INFO("HandleNVStorageOpResult.UnhandledTag", "%s", EnumToString(msg.tag));
+              for(auto data : *recvdData)
+              {
+                printf("%d ", data);
+              }
+              printf("\n");
               break;
           }
         }
