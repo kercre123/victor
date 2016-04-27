@@ -1,5 +1,5 @@
 /**
- * File: textToSpeechController.cpp
+ * File: textToSpeechComponent.cpp
  *
  * Author: Molly Jameson
  * Created: 3/21/16

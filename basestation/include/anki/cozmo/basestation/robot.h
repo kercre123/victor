@@ -53,7 +53,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/textToSpeech/textToSpeechController.h"
+#include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
