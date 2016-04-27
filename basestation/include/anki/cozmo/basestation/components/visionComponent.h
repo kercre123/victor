@@ -184,6 +184,10 @@ struct DockingErrorSignal;
     const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
     ImuDataHistory& GetImuDataHistory() { return _imuHistory; }
     
+    // Load/Save face album data to robot
+    Result SaveFaceAlbumToRobot();
+    Result LoadFaceAlbumFromRobot();
+    
   protected:
     
     Robot& _robot;
@@ -223,6 +227,8 @@ struct DockingErrorSignal;
     VisionPoseData   _currentPoseData;
     VisionPoseData   _nextPoseData;
     bool             _visionWhileMovingFastEnabled = false;
+    
+    std::vector<u8> _albumData, _enrollData; // for loading / saving face data
     
     std::thread _processingThread;
     

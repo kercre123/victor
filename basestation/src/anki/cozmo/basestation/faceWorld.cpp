@@ -36,18 +36,6 @@ namespace Cozmo {
                                                         {
                                                           ClearAllFaces();
                                                         }));
-    
-    // SetOwnerFace
-    _eventHandles.push_back(externalInterface.Subscribe(ExternalInterface::MessageGameToEngineTag::SetOwnerFace,
-                                                        [this](const EventType& event)
-                                                        {
-                                                          const s32 ownerID = event.GetData().Get_SetOwnerFace().ownerID;
-                                                          if(ownerID < 0) {
-                                                            SetOwnerID(Vision::UnknownFaceID);
-                                                          } else {
-                                                            SetOwnerID(ownerID);
-                                                          }
-                                                        }));
   }
   
   void FaceWorld::RemoveFace(KnownFaceIter& knownFaceIter, bool broadcast)

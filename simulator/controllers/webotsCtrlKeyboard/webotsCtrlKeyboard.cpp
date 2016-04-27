@@ -185,6 +185,12 @@ namespace Anki {
       //printf("HandleDebugString: %s\n", msg.text.c_str());
     }
     
+    void WebotsKeyboardController::HandleRobotEnrolledFace(ExternalInterface::RobotEnrolledFace const& msg)
+    {
+      printf("HandleRobotEnrolledFace: Added '%s' with ID=%d\n",
+             msg.name.c_str(), msg.faceID);
+    }
+
     // ============== End of message handlers =================
     
     
@@ -1758,11 +1764,6 @@ namespace Anki {
                   turnTowardsPose.maxTurnAngle = M_PI;
                   turnTowardsPose.robotID = 1;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsPose)));
-                } else if(altPressed && shiftPressed) {
-                  // ALT+SHIFT+F: Set owner to next observed face
-                  ExternalInterface::SetOwnerFace setOwnerFace;
-                  setOwnerFace.ownerID = -1;
-                  SendMessage(ExternalInterface::MessageGameToEngine(std::move(setOwnerFace)));
                 } else {
                   // Just F: Toggle face detection
                   static bool isFaceDetectionEnabled = true;

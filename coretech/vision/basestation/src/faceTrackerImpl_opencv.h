@@ -46,8 +46,25 @@ namespace Vision {
     std::vector<u8> GetSerializedAlbum() { return std::vector<u8>(); }
     Result SetSerializedAlbum(const std::vector<u8>& serializedAlbum) { return RESULT_FAIL; }
     
+    Result GetSerializedData(std::vector<u8>& albumData,
+                             std::vector<u8>& enrollData)
+    {
+      return RESULT_FAIL;
+    }
+
+    Result SetSerializedData(const std::vector<u8>& albumData,
+                             const std::vector<u8>& enrollData,
+                             std::list<FaceNameAndID>& namesAndIDs)
+    {
+      return RESULT_FAIL;
+    }
+
     // No-ops but req'd by FaceTracker
-    void   AssignNameToID(FaceID_t faceID, const std::string &name) { }
+    Result AssignNameToID(FaceID_t faceID, const std::string &name) { return RESULT_FAIL; }
+
+    FaceID_t EraseFace(const std::string& name) { return UnknownFaceID; }
+    Result   EraseFace(FaceID_t faceID) { return RESULT_FAIL; }
+
     Result SaveAlbum(const std::string& albumName) { return RESULT_FAIL; }
     Result LoadAlbum(const std::string& albumName, std::list<std::string>& names) { return RESULT_FAIL; }
     void   PrintTiming() { }

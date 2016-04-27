@@ -66,14 +66,19 @@ namespace Vision {
     return Impl::IsRecognitionSupported();
   }
   
-  void FaceTracker::AssignNameToID(FaceID_t faceID, const std::string &name)
+  Result FaceTracker::AssignNameToID(FaceID_t faceID, const std::string &name)
   {
-    _pImpl->AssignNameToID(faceID, name);
+    return _pImpl->AssignNameToID(faceID, name);
   }
-  
-  void FaceTracker::EraseName(const std::string& name)
+
+  FaceID_t FaceTracker::EraseFace(const std::string& name)
   {
-    _pImpl->EraseName(name);
+    return _pImpl->EraseFace(name);
+  }
+
+  Result FaceTracker::EraseFace(FaceID_t faceID)
+  {
+    return _pImpl->EraseFace(faceID);
   }
   
   Result FaceTracker::SaveAlbum(const std::string& albumName)
@@ -94,6 +99,19 @@ namespace Vision {
   void FaceTracker::SetFaceEnrollmentMode(FaceEnrollmentMode mode)
   {
     _pImpl->SetFaceEnrollmentMode(mode);
+  }
+  
+  Result FaceTracker::GetSerializedData(std::vector<u8>& albumData,
+                                        std::vector<u8>& enrollData)
+  {
+    return _pImpl->GetSerializedData(albumData, enrollData);
+  }
+  
+  Result FaceTracker::SetSerializedData(const std::vector<u8>& albumData,
+                                        const std::vector<u8>& enrollData,
+                                        std::list<FaceNameAndID>& namesAndIDs)
+  {
+    return _pImpl->SetSerializedData(albumData, enrollData, namesAndIDs);
   }
   
   /*

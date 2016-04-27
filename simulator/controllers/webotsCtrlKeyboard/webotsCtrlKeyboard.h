@@ -34,6 +34,7 @@ protected:
   virtual void HandleNVStorageData(const ExternalInterface::NVStorageData &msg) override;
   virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg) override;
 
+  virtual void HandleRobotEnrolledFace(const ExternalInterface::RobotEnrolledFace& msg) override;
 private:
 
   bool _shouldQuit = false;

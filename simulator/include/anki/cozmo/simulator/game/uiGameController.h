@@ -103,6 +103,8 @@ protected:
   virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
   
   
+  virtual void HandleRobotEnrolledFace(const ExternalInterface::RobotEnrolledFace& msg){};
+  virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
   void SendPing();

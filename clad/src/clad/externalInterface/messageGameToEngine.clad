@@ -444,11 +444,6 @@ message VisionWhileMoving {
     uint_8 enable // True or false
 }
 
-// Set the face ID to treat as "Owner"
-message SetOwnerFace {
-  int_32 ownerID = -1 // Use ownerID < 0 to tell Cozmo to treat next "stable" face detection as owner
-}
-
 // Assign a name to a specific face ID
 message AssignNameToFace {
   int_32 faceID,
@@ -461,17 +456,19 @@ message PrepareFaceNameAnimation {
   // Add playback properties: length, pitch, etc.
 }
 
-// Start / stop face enrollment
-//   Use numToEnroll = 0 to stop enrollment.
-//   Use numToEnroll = -1 to enable ongoing enrollment.
-//   Use numToEnroll = N to enroll N faces and then turn off automaticall (N=1 is the mostly likely usage)
+// Set the face enrollment mode
 message SetFaceEnrollmentMode {
   Vision::FaceEnrollmentMode mode
 }
 
-// Erase a face by name
-message EraseFaceByName {
+// Erase a face record by name
+message EraseEnrolledFaceByName {
   string name
+}
+
+// Erase a face record by ID
+message EraseEnrolledFaceByID {
+  int_32 faceID
 }
 
 // ActivateBehaviorChooser
