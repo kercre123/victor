@@ -49,7 +49,7 @@ namespace Audio {
   class AudioWaveFileReader;
 }
   
-class TextToSpeechController
+class TextToSpeechComponent
 {
 public:
   
@@ -57,8 +57,8 @@ public:
   using SimpleCompletionFunc = std::function<void(void)>;
   
   
-  TextToSpeechController(const CozmoContext* context);
-  ~TextToSpeechController();
+  TextToSpeechComponent(const CozmoContext* context);
+  ~TextToSpeechComponent();
 
   // Asynchronous create the wave file for the given text, to be played later.
   // The completion callback will be called after the file has been stored on disk.

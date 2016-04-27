@@ -553,7 +553,7 @@ public:
     Result RequestIMU(const u32 length_ms) const;
 
     // Get text to speech component
-    TextToSpeechController& GetTextToSpeechController() { return _textToSpeechController; }
+    TextToSpeechComponent& GetTextToSpeechComponent() { return _textToSpeechComponent; }
   
 
     // =========== Pose history =============
@@ -774,7 +774,7 @@ public:
     MovementComponent       _movementComponent;
     VisionComponent         _visionComponent;
     NVStorageComponent      _nvStorageComponent;
-    TextToSpeechController  _textToSpeechController;
+    TextToSpeechComponent  _textToSpeechComponent;
   
     // Hash to not spam debug messages
     size_t            _lastDebugStringHash;

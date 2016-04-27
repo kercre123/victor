@@ -1588,7 +1588,7 @@ namespace Cozmo {
     SaveFaceAlbumToRobot();
 
     // Get the robot ready to be able to say the name
-    _robot.GetTextToSpeechController().CreateSpeech(name);
+    _robot.GetTextToSpeechComponent().CreateSpeech(name);
   }
   
 } // namespace Cozmo

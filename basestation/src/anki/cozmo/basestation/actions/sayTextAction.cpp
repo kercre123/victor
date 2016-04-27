@@ -33,7 +33,7 @@ namespace Cozmo {
     }
     
     // Create and/or load speech data
-    TextToSpeechController::CompletionFunc callback = [this] (bool success,
+    TextToSpeechComponent::CompletionFunc callback = [this] (bool success,
                                                               const std::string& text,
                                                               const std::string& fileName)
     {
@@ -53,13 +53,13 @@ namespace Cozmo {
     if(DEBUG_SAYTEXT_ACTION){
       PRINT_NAMED_DEBUG("SayTextAction.Constructor.LoadingSpeechData", "");
     }
-    _robot.GetTextToSpeechController().LoadSpeechData(_text, _style, callback);
+    _robot.GetTextToSpeechComponent().LoadSpeechData(_text, _style, callback);
   }
   
   SayTextAction::~SayTextAction()
   {
     // Now that we're all done, unload the sounds from memory
-    _robot.GetTextToSpeechController().UnloadSpeechData(_text, _style);
+    _robot.GetTextToSpeechComponent().UnloadSpeechData(_text, _style);
     
     Util::SafeDelete(_playAnimationAction);
   }
@@ -86,7 +86,7 @@ namespace Cozmo {
       {
         // Set Audio data right before action runs
         float duration_ms = 0.0;
-        const bool success = _robot.GetTextToSpeechController().PrepareToSay(_text, _style, duration_ms);
+        const bool success = _robot.GetTextToSpeechComponent().PrepareToSay(_text, _style, duration_ms);
         if (!success) {
           PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
           return ActionResult::FAILURE_ABORT;

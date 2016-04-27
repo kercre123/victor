@@ -18,7 +18,7 @@ extern "C" {
   cst_voice* register_cmu_us_kal(const char*);
 }
 
-#include "anki/cozmo/basestation/textToSpeech/textToSpeechController.h"
+#include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
@@ -40,8 +40,8 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechController::TextToSpeechController(const CozmoContext* context)
-: _dispatchQueue( Util::Dispatch::Create("TextToSpeechController_File_Operations") )
+TextToSpeechComponent::TextToSpeechComponent(const CozmoContext* context)
+: _dispatchQueue( Util::Dispatch::Create("TextToSpeechComponent_File_Operations") )
 {
   flite_init();
   
@@ -54,19 +54,19 @@ TextToSpeechController::TextToSpeechController(const CozmoContext* context)
     }
   }
 
-} // TextToSpeechController()
+} // TextToSpeechComponent()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechController::~TextToSpeechController()
+TextToSpeechComponent::~TextToSpeechComponent()
 {
   // Any tear-down needed for flite? (Un-init or unregister_cmu_us_kal?)
   
   Util::Dispatch::Stop(_dispatchQueue);
   Util::Dispatch::Release(_dispatchQueue);
-} // ~TextToSpeechController()
+} // ~TextToSpeechComponent()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechController::CreateSpeech(const std::string& text, CompletionFunc completion)
+void TextToSpeechComponent::CreateSpeech(const std::string& text, CompletionFunc completion)
 {
   const auto lutIter = _filenameLUT.find( text );
   if ( lutIter == _filenameLUT.end() ) {
@@ -92,7 +92,7 @@ void TextToSpeechController::CreateSpeech(const std::string& text, CompletionFun
       }
       
       if ( completion != nullptr ) {
-        ASSERT_NAMED( !(!success && fullPathPointer == nullptr), "TextToSpeechController::CreateSpeech invalid path pointer");
+        ASSERT_NAMED( !(!success && fullPathPointer == nullptr), "TextToSpeechComponent::CreateSpeech invalid path pointer");
         completion( success, text, (fullPathPointer != nullptr) ? *fullPathPointer : "" );
       }
     });
@@ -105,7 +105,7 @@ void TextToSpeechController::CreateSpeech(const std::string& text, CompletionFun
 } // CreateSpeech()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechController::LoadSpeechData(const std::string& text, SayTextStyle style, CompletionFunc completion)
+void TextToSpeechComponent::LoadSpeechData(const std::string& text, SayTextStyle style, CompletionFunc completion)
 {
   using namespace Audio;
   
@@ -130,7 +130,7 @@ void TextToSpeechController::LoadSpeechData(const std::string& text, SayTextStyl
 } // LoadSpeechData()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechController::UnloadSpeechData(const std::string& text, SayTextStyle style)
+void TextToSpeechComponent::UnloadSpeechData(const std::string& text, SayTextStyle style)
 {
   const auto iter = _filenameLUT.find( text );
   if ( iter != _filenameLUT.end() ) {
@@ -139,7 +139,7 @@ void TextToSpeechController::UnloadSpeechData(const std::string& text, SayTextSt
 } // UnloadSpeechData()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TextToSpeechController::PrepareToSay(const std::string& text, SayTextStyle style, float& out_duration_ms)
+bool TextToSpeechComponent::PrepareToSay(const std::string& text, SayTextStyle style, float& out_duration_ms)
 {
   using namespace Audio;
   
@@ -156,9 +156,9 @@ bool TextToSpeechController::PrepareToSay(const std::string& text, SayTextStyle 
   }
 
   ASSERT_NAMED(nullptr != _audioController,
-               "TextToSpeechController.PrepareToSay.NullAudioController");
+               "TextToSpeechComponent.PrepareToSay.NullAudioController");
   AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
-  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechController.PrepareToSay.NullAudioControllerPluginInterface");
+  ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechComponent.PrepareToSay.NullAudioControllerPluginInterface");
 
   // Clear previously loaded data
   if ( pluginInterface->WavePortalHasAudioDataInfo() ) {
@@ -177,7 +177,7 @@ bool TextToSpeechController::PrepareToSay(const std::string& text, SayTextStyle 
 } // PrepareToSay()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechController::ClearLoadedSpeechData(const std::string& text, SayTextStyle style, SimpleCompletionFunc completion)
+void TextToSpeechComponent::ClearLoadedSpeechData(const std::string& text, SayTextStyle style, SimpleCompletionFunc completion)
 {
   using namespace Util;
   Dispatch::Async(_dispatchQueue, [this, text, style, completion]
@@ -204,7 +204,7 @@ void TextToSpeechController::ClearLoadedSpeechData(const std::string& text, SayT
 } // ClearLoadedSpeechData()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechController::ClearAllLoadedAudioData(bool deleteStaleFiles, SimpleCompletionFunc completion)
+void TextToSpeechComponent::ClearAllLoadedAudioData(bool deleteStaleFiles, SimpleCompletionFunc completion)
 {
   using namespace Util;
   Dispatch::Async(_dispatchQueue, [this, deleteStaleFiles, completion] ()
@@ -231,21 +231,21 @@ void TextToSpeechController::ClearAllLoadedAudioData(bool deleteStaleFiles, Simp
 } // ClearAllLoadedAudioData()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string TextToSpeechController::MakeFullPath(const std::string& text)
+std::string TextToSpeechComponent::MakeFullPath(const std::string& text)
 {
   // In case text contains sensitive data (e.g. player name), hash it so we don't save names
   // into logs if/when there's a message about this filename
   // TODO: Do we need something more secure?
   u32 hashedValue = 0;
   for ( auto& c : text ) {
-    Util::AddHash(hashedValue, c, "TextToSpeechController.MakeFullPath.HashText");
+    Util::AddHash(hashedValue, c, "TextToSpeechComponent.MakeFullPath.HashText");
   }
   
   // Note that this text-to-hash mapping is only printed in debug mode!
-  PRINT_NAMED_DEBUG("TextToSpeechController.MakeFullPath.TextToHash",
+  PRINT_NAMED_DEBUG("TextToSpeechComponent.MakeFullPath.TextToHash",
                     "'%s' hashed to %d", text.c_str(), hashedValue);
   
-  ASSERT_NAMED(nullptr != _dataPlatform, "TextToSpeechController.MakeFullPath.NullDataPlatform");
+  ASSERT_NAMED(nullptr != _dataPlatform, "TextToSpeechComponent.MakeFullPath.NullDataPlatform");
   std::string fullPath = _dataPlatform->pathToResource(kResourceScope,
                                                        kFilePrefix + std::to_string(hashedValue) + "." + kFileExtension);
   
@@ -253,11 +253,11 @@ std::string TextToSpeechController::MakeFullPath(const std::string& text)
 } // MakeFullPath()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<std::string> TextToSpeechController::FindAllTextToSpeechFiles()
+std::vector<std::string> TextToSpeechComponent::FindAllTextToSpeechFiles()
 {
   using namespace Util;
   std::vector<std::string> fileNames;
-  ASSERT_NAMED(nullptr != _dataPlatform, "TextToSpeechController.FindAllTextToSpeechFiles.NullDataPlatform");
+  ASSERT_NAMED(nullptr != _dataPlatform, "TextToSpeechComponent.FindAllTextToSpeechFiles.NullDataPlatform");
   const std::string dirPath = _dataPlatform->pathToResource(kResourceScope, "");
   const auto dirFiles = FileUtils::FilesInDirectory( dirPath, false, kFileExtension, false );
   const std::string prefixStr( kFilePrefix );
