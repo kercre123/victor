@@ -196,7 +196,19 @@ public class AnimationGroupEditor : EditorWindow {
 
     entry.Weight = EditorGUILayout.FloatField("Weight", entry.Weight);
     entry.CooldownTime_Sec = EditorGUILayout.FloatField("Cooldown (Seconds)", entry.CooldownTime_Sec);   
+
     EditorGUILayout.EndHorizontal();
+    EditorGUILayout.BeginHorizontal();
+    entry.UseHeadAngle = EditorGUILayout.Toggle("UseHeadAngles", entry.UseHeadAngle);
+    EditorGUILayout.EndHorizontal();
+    if (entry.UseHeadAngle) {
+      EditorGUILayout.BeginHorizontal();
+      EditorGUI.indentLevel++;
+      entry.HeadAngleMin_Deg = EditorGUILayout.FloatField("HeadAngleMin", entry.HeadAngleMin_Deg);
+      entry.HeadAngleMax_Deg = EditorGUILayout.FloatField("HeadAngleMax", entry.HeadAngleMax_Deg);
+      EditorGUI.indentLevel--;
+      EditorGUILayout.EndHorizontal();
+    }
     EditorGUILayout.EndVertical();
     return entry;
   }

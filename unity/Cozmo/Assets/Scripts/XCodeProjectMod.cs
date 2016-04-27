@@ -26,6 +26,9 @@ public class XCodeProjectMod
       bgModes.AddString("fetch");
       bgModes.AddString("remote-notification");
       
+      // requires wifi
+      rootDict.SetBoolean("UIRequiresPersistentWiFi", true);
+      
       // Write to file
       File.WriteAllText(plistPath, plist.WriteToString());
     }
