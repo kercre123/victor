@@ -69,6 +69,7 @@ WebotsKeyboardController {
   robotVolume 0
   behaviorName "lookAround"
   behaviorChooserName "Demo"
+  autoConnect FALSE
 }
 CozmoVizDisplay {
   moodViz TRUE

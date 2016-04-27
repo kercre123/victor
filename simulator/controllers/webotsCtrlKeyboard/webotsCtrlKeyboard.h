@@ -18,12 +18,21 @@ class WebotsKeyboardController : public UiGameController {
 public:
   WebotsKeyboardController(s32 step_time_ms);
 
+  // Called before WaitOnKeyboardToConnect (and also before Init), sets up the basics needed for
+  // WaitOnKeyboardToConnect, including enabling the keyboard
+  void PreInit();
+  
+  // if the corresponding proto field is set to true, this function will wait until the user presses
+  // Shift+enter to return.This can be used to allow unity to connect. If we notice another connection
+  // attempt, we will exit the keyboard controller. This is called before Init
+  void WaitOnKeyboardToConnect();
+
 protected:
   void ProcessKeystroke();
   void PrintHelp();
   
   void TestLightCube();
-
+  
   virtual void InitInternal() override;
   virtual s32 UpdateInternal() override;
 
@@ -35,6 +44,7 @@ protected:
   virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg) override;
 
   virtual void HandleRobotEnrolledFace(const ExternalInterface::RobotEnrolledFace& msg) override;
+
 private:
 
   bool _shouldQuit = false;

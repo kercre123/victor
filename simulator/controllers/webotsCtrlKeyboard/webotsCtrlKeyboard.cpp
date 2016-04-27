@@ -191,21 +191,56 @@ namespace Anki {
     }
 
     // ============== End of message handlers =================
-    
-    
-    void WebotsKeyboardController::InitInternal()
-      { 
-        // Make root point to WebotsKeyBoardController node
-        root_ = GetSupervisor()->getSelf();
-        
-        GetSupervisor()->keyboardEnable(GetStepTimeMS());
-        
-        poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
-        
-        cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
 
+    void WebotsKeyboardController::PreInit()
+    {
+      // Make root point to WebotsKeyBoardController node
+      root_ = GetSupervisor()->getSelf();
+
+      // enable keyboard
+      GetSupervisor()->keyboardEnable(GetStepTimeMS());
+    }
+  
+    void WebotsKeyboardController::WaitOnKeyboardToConnect()
+    {
+      webots::Field* autoConnectField = root_->getField("autoConnect");
+      if( autoConnectField == nullptr ) {
+        PRINT_NAMED_ERROR("WebotsKeyboardController.MissingField",
+                          "missing autoConnect field, assuming we shoudl auto connect");
+        return;
       }
-    
+      else {
+        bool autoConnect = autoConnectField->getSFBool();
+        if( autoConnect ) {
+          return;
+        }
+      }
+
+      PRINT_NAMED_INFO("WebotsKeyboardController.WaitForStart",
+                       "Press Shift+Enter to start the engine");
+      
+      const int EnterKey = 4; // tested experimentally... who knows if this will work on other platforms
+      const int ShiftEnterKey = EnterKey | webots::Supervisor::KEYBOARD_SHIFT;
+
+      bool start = false;
+      while( !start && !_shouldQuit ) {
+        int key = -1;
+        while((key = GetSupervisor()->keyboardGetKey()) != 0 && !_shouldQuit) {
+          if(key == ShiftEnterKey) {
+            start = true;
+          }
+        }
+        // manually step simulation
+        GetSupervisor()->step(GetStepTimeMS());
+      }
+    }
+  
+    void WebotsKeyboardController::InitInternal()
+    { 
+      poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
+        
+      cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
+    }    
     
     WebotsKeyboardController::WebotsKeyboardController(s32 step_time_ms) :
     UiGameController(step_time_ms)
@@ -1961,7 +1996,6 @@ namespace Anki {
           return 0;
         }
       }
-  
     
       void WebotsKeyboardController::HandleNVStorageData(const ExternalInterface::NVStorageData &msg)
       {
@@ -2050,6 +2084,9 @@ int main(int argc, char **argv)
   loggerProvider.SetMinToStderrLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);  
   Anki::Util::gLoggerProvider = &loggerProvider;
   Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP);
+
+  webotsCtrlKeyboard.PreInit();
+  webotsCtrlKeyboard.WaitOnKeyboardToConnect();
   
   webotsCtrlKeyboard.Init();
   while (webotsCtrlKeyboard.Update() == 0)
