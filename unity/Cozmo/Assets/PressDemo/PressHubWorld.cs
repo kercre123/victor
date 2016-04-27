@@ -11,13 +11,26 @@ public class PressHubWorld : HubWorldBase {
   [SerializeField]
   private ChallengeData _FaceEnrollmentChallengeData;
 
+  [SerializeField]
+  private PressDemoView _PressDemoViewPrefab;
+  private PressDemoView _PressDemoViewInstance;
+
   public override bool LoadHubWorld() {
+
+    _PressDemoViewInstance = UIManager.OpenView(_PressDemoViewPrefab, verticalCanvas: true);
+    _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
+
     StartSpeedTapGame();
     return true;
   }
 
   public override bool DestroyHubWorld() {
+    GameObject.Destroy(_PressDemoViewInstance.gameObject);
     return true;
+  }
+
+  private void HandleForceProgressPressed() {
+    
   }
 
   private void StartFaceEnrollmentActivity() {

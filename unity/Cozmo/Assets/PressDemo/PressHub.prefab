@@ -43,6 +43,8 @@ MonoBehaviour:
     type: 2}
   _FaceEnrollmentChallengeData: {fileID: 11400000, guid: 50f11b42a064240cb915820e1768cee5,
     type: 2}
+  _PressDemoViewPrefab: {fileID: 11454378, guid: f9cd6f03aa2c84cada8ac15dd0635faa,
+    type: 2}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1
@@ -59,6 +61,11 @@ Prefab:
       propertyPath: _FaceEnrollmentChallengeData
       value: 
       objectReference: {fileID: 11400000, guid: 50f11b42a064240cb915820e1768cee5,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _PressDemoViewPrefab
+      value: 
+      objectReference: {fileID: 11454378, guid: f9cd6f03aa2c84cada8ac15dd0635faa,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
