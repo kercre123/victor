@@ -99,8 +99,19 @@ void Anki::Cozmo::HAL::OLED::Init(void) {
   GPIO_SET(GPIO_OLED_RST, PIN_OLED_RST);
 
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), InitDisplay, sizeof(InitDisplay), I2C_FORCE_START);
+
+  ClearFace();
+}
+
+void Anki::Cozmo::HAL::OLED::ClearFace() {
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), ResetCursor, sizeof(ResetCursor), I2C_FORCE_START);
-  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (uint8_t*)StartWrite, sizeof(StartWrite), I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), &StartWrite, sizeof(StartWrite), I2C_FORCE_START);
+  
+  static const uint32_t clear = 0;
+  for (int i = 0; i < 1024; i += sizeof(clear)) {
+    I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), (const uint8_t*)&clear, sizeof(clear));
+    I2C::Flush();
+  }
 }
 
 void Anki::Cozmo::HAL::OLED::FeedFace(bool rect, uint8_t *face_bytes) {

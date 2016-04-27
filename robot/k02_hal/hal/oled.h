@@ -60,6 +60,7 @@ namespace Anki
       namespace OLED
       {
         void Init(void);
+        void ClearFace(void);
         void FeedFace(bool rect, uint8_t *face_bytes);
         void ReleaseFace();
         void DisplayNumber(int code, int x, int y);
