@@ -52,6 +52,7 @@ public class FactoryIntroManager : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Image _InProgressSpinner;
 
+  private string _LogFilter = "";
   private int _StationNumber = 0;
   private int _TestNumber = 0;
   private bool _IsSim = false;
@@ -114,10 +115,11 @@ public class FactoryIntroManager : MonoBehaviour {
       GameObject.Destroy(_FactoryLogPanelInstance.gameObject);
     }
     if (_FactoryOptionsPanelInstance != null) {
-      GameObject.Destroy(_FactoryOptionsPanelInstance);
+      GameObject.Destroy(_FactoryOptionsPanelInstance.gameObject);
     }
     _FactoryLogPanelInstance = GameObject.Instantiate(_FactoryLogPanelPrefab).GetComponent<FactoryLogPanel>();
     _FactoryLogPanelInstance.transform.SetParent(_Canvas.transform, false);
+    _FactoryLogPanelInstance.LogFilter = _LogFilter;
     _FactoryLogPanelInstance.UpdateLogText(_LogList);
   }
 
@@ -134,6 +136,12 @@ public class FactoryIntroManager : MonoBehaviour {
     _FactoryOptionsPanelInstance.OnSetTestNumber += HandleTestNumberUpdate;
     _FactoryOptionsPanelInstance.OnSetSim += HandleSetSimType;
     _FactoryOptionsPanelInstance.OnOTAButton += HandleOTAButton;
+    _FactoryOptionsPanelInstance.OnConsoleLogFilter += HandleSetConsoleLogFilter;
+    _FactoryOptionsPanelInstance.Initialize(_IsSim, _LogFilter);
+  }
+
+  private void HandleSetConsoleLogFilter(string input) {
+    _LogFilter = input;
   }
 
   private void HandleOTAButton() {

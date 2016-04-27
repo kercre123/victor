@@ -20,6 +20,8 @@ public class FactoryLogPanel : MonoBehaviour {
 
   private List<string> _LogQueueCache = null;
 
+  public string LogFilter;
+
   void Start() {
     _CloseButton.onClick.AddListener(ClosePanel);
     _CopyLogsButton.onClick.AddListener(CopyLogs);
@@ -31,10 +33,17 @@ public class FactoryLogPanel : MonoBehaviour {
       GameObject.Destroy(_LogTextList.GetChild(i).gameObject);
     }
 
-    for (int i = 0; i < Mathf.Min(logQueue.Count, 80); ++i) {
-      GameObject textInstance = GameObject.Instantiate(_TextPrefab.gameObject);
-      textInstance.transform.SetParent(_LogTextList, false);
-      textInstance.GetComponent<UnityEngine.UI.Text>().text = logQueue[i];
+    int logCount = 0;
+    int logIndex = 0;
+
+    while (logCount < 80 && logIndex < logQueue.Count) {
+      if (logQueue[logIndex].Contains(LogFilter)) {
+        GameObject textInstance = GameObject.Instantiate(_TextPrefab.gameObject);
+        textInstance.transform.SetParent(_LogTextList, false);
+        textInstance.GetComponent<UnityEngine.UI.Text>().text = logQueue[logIndex];
+        logCount++;
+      }
+      logIndex++;
     }
 
     _TextScrollRect.verticalNormalizedPosition = 0;
