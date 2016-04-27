@@ -24,7 +24,6 @@ namespace Cozmo {
   , _text(text)
   , _style(style)
   , _animation("SayTextAnimation")
-  , _playAnimationAction(robot, &_animation)
   {
     if(ANKI_DEVELOPER_CODE)
     {
@@ -32,13 +31,6 @@ namespace Cozmo {
       // could be a person's name and we don't want that logged for privacy reasons
       _name = "SayText_" + _text + "_Action";
     }
-    
-    // Make our animation a "live" animation with a single audio keyframe at the beginning
-    if(DEBUG_SAYTEXT_ACTION){
-      PRINT_NAMED_DEBUG("SayTextAction.Constructor.CreatingAnimation", "");
-    }
-    _animation.SetIsLive(true);
-    _animation.AddKeyFrameToBack(RobotAudioKeyFrame(Audio::GameEvent::GenericEvent::Vo_Coz_External_Play, 0));
     
     // Create and/or load speech data
     TextToSpeechController::CompletionFunc callback = [this] (bool success,
@@ -68,6 +60,8 @@ namespace Cozmo {
   {
     // Now that we're all done, unload the sounds from memory
     _robot.GetTextToSpeechController().UnloadSpeechData(_text, _style);
+    
+    Util::SafeDelete(_playAnimationAction);
   }
   
   ActionResult SayTextAction::Init()
@@ -106,6 +100,22 @@ namespace Cozmo {
                             duration_ms, _timeout_sec);
         }
 
+        const bool useBuiltInAnim = (GameEvent::Count == _gameEvent);
+        if(useBuiltInAnim) {
+          // Make our animation a "live" animation with a single audio keyframe at the beginning
+          if(DEBUG_SAYTEXT_ACTION){
+            PRINT_NAMED_DEBUG("SayTextAction.Init.CreatingAnimation", "");
+          }
+          _animation.SetIsLive(true);
+          _animation.AddKeyFrameToBack(RobotAudioKeyFrame(Audio::GameEvent::GenericEvent::Vo_Coz_External_Play, 0));
+          _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
+        } else {
+          if(DEBUG_SAYTEXT_ACTION){
+            PRINT_NAMED_DEBUG("SayTextAction.Init.UsingAnimationGroup", "GameEvent=%hhu (%s)",
+                              _gameEvent, EnumToString(_gameEvent));
+          }
+          _playAnimationAction = new PlayAnimationGroupAction(_robot, _gameEvent);
+        }
         return ActionResult::SUCCESS;
       }
     }
@@ -120,10 +130,10 @@ namespace Cozmo {
     if(DEBUG_SAYTEXT_ACTION){
       PRINT_NAMED_DEBUG("SayTextAction.CheckIfDone.UpdatingAnimation", "");
     }
-    return _playAnimationAction.Update();
+    
+    return _playAnimationAction->Update();
     
   } // CheckIfDone()
-  
   
 } // namespace Cozmo
 } // namespace Anki

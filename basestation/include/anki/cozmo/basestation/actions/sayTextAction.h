@@ -41,7 +41,11 @@ namespace Cozmo {
       return (u8)AnimTrackFlag::NO_TRACKS;
     }
     
-    // TODO: Add ability to set which animation group (as long as it has special audio event)
+    // Use a the animation group tied to a specific GameEvent.
+    // Use GameEvent::Count to use built-in animation (default).
+    // The animation group should contain animations that have the special audio
+    // keyframe for Audio::GameEvent::GenericEvent::Vo_Coz_External_Play.
+    void SetGameEvent(GameEvent gameEvent) { _gameEvent = gameEvent; }
     
   protected:
     
@@ -60,7 +64,8 @@ namespace Cozmo {
     SayTextStyle              _style;
     TextToSpeechStatus        _textToSpeechStatus = TextToSpeechStatus::Loading;
     Animation                 _animation;
-    PlayAnimationAction       _playAnimationAction;
+    GameEvent                 _gameEvent = GameEvent::Count; // Count == use built-in animation
+    IActionRunner*            _playAnimationAction = nullptr;
     f32                       _timeout_sec = 5.f;
     
   }; // class SayTextAction
