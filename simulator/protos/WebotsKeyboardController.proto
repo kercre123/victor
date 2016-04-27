@@ -184,6 +184,10 @@ PROTO WebotsKeyboardController [
   field SFInt32  deviceID 1
 
   field SFBool demoHasEdge TRUE
+
+  # if false, wait until the user pressed Shift+Enter to connect and start the engine
+  # (this gives another thing, e.g. Unity, a chance to connect first)
+  field SFBool autoConnect TRUE
 ]
 {
 Supervisor {
