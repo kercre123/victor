@@ -274,4 +274,13 @@ public interface IRobot : IDisposable {
 
   void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
+
+  #region PressDemoMessages
+
+  void TransitionToNextDemoState();
+
+  void StartDemoWithEdge(bool demoWithEdge);
+
+  #endregion
+
 }

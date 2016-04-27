@@ -1383,4 +1383,18 @@ public class Robot : IRobot {
   }
 
   #endregion
+
+  #region PressDemoMessages
+
+  public void TransitionToNextDemoState() {
+    RobotEngineManager.Instance.Message.TransitionToNextDemoState = Singleton<TransitionToNextDemoState>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void StartDemoWithEdge(bool demoWithEdge) {
+    RobotEngineManager.Instance.Message.StartDemoWithEdge = Singleton<StartDemoWithEdge>.Instance.Initialize(demoWithEdge);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  #endregion
 }

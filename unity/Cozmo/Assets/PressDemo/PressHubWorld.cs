@@ -20,7 +20,8 @@ public class PressHubWorld : HubWorldBase {
     _PressDemoViewInstance = UIManager.OpenView(_PressDemoViewPrefab, verticalCanvas: true);
     _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
 
-    StartSpeedTapGame();
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+
     return true;
   }
 
@@ -30,14 +31,17 @@ public class PressHubWorld : HubWorldBase {
   }
 
   private void HandleForceProgressPressed() {
-    
+    Debug.Log("Force Progress Pressed");
+    StartSpeedTapGame();
   }
 
   private void StartFaceEnrollmentActivity() {
+    Debug.Log("Starting Face Enrollment Activity");
     PlayMinigame(_FaceEnrollmentChallengeData);
   }
 
   private void StartSpeedTapGame() {
+    Debug.Log("Starting Speed Tap Game");
     PlayMinigame(_SpeedTapChallengeData);
   }
 

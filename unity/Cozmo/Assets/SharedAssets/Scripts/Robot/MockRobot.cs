@@ -840,5 +840,16 @@ public class MockRobot : IRobot {
   }
 
   #endregion
+
+
+  #region PressDemoMessages
+
+  public void TransitionToNextDemoState() {
+  }
+
+  public void StartDemoWithEdge(bool demoWithEdge) {
+  }
+
+  #endregion
   
 }
