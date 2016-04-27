@@ -32,7 +32,7 @@ public class PressHubWorld : HubWorldBase {
 
   private void HandleForceProgressPressed() {
     Debug.Log("Force Progress Pressed");
-    StartSpeedTapGame();
+    RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
   }
 
   private void StartFaceEnrollmentActivity() {
@@ -59,7 +59,8 @@ public class PressHubWorld : HubWorldBase {
   }
 
   private void HandleMiniGameQuit() {
-    
+    Debug.Log("activity ended so force transitioning to the next thing");
+    RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
   }
 
 }
