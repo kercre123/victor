@@ -32,17 +32,17 @@ public class PressHubWorld : HubWorldBase {
   }
 
   private void HandleForceProgressPressed() {
-    Debug.Log("Force Progress Pressed");
+    DAS.Debug(this, "Force Progress Pressed");
     RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
   }
 
   private void StartFaceEnrollmentActivity() {
-    Debug.Log("Starting Face Enrollment Activity");
+    DAS.Debug(this, "Starting Face Enrollment Activity");
     PlayMinigame(_FaceEnrollmentChallengeData);
   }
 
   private void StartSpeedTapGame(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
-    Debug.Log("Starting Speed Tap Game");
+    DAS.Debug(this, "Starting Speed Tap Game");
     PlayMinigame(_SpeedTapChallengeData);
   }
 
@@ -60,7 +60,7 @@ public class PressHubWorld : HubWorldBase {
   }
 
   private void HandleMiniGameQuit() {
-    Debug.Log("activity ended so force transitioning to the next thing");
+    DAS.Debug(this, "activity ended so force transitioning to the next thing");
     RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
   }
 
