@@ -29,18 +29,14 @@ static const uint8_t CONF_GYRO = 0x09;    // 4x oversample, 200Hz update
 static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;      //In 2g mode, 16384 LSB/g
 static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f);   //In FS500 mode, 65.6 deg/s / LSB
 
-static const int MAX_IMU_CELLS = 4;
-static int _imu_fifo_start = 0;
-static int _imu_fifo_end = 0;
-
-static IMUData imu_fifo[MAX_IMU_CELLS];
+static IMUData imu_state;
 IMUData Anki::Cozmo::HAL::IMU::IMUState;
 static bool imu_changed = false;
+static bool imu_updated = false;
 
 static const int IMU_UPDATE_FREQUENCY = 200;  // 200hz
 static const int MANAGE_FREQUENCY = DROPS_PER_SECOND;
 static const int ADJUST_OVERSHOOT = IMU_UPDATE_FREQUENCY * 4; // This is a guess on how long it takes for IMU data to transmit
-static int update_counter = 0;
 
 void Anki::Cozmo::HAL::IMU::Init(void) {
   // XXX: The first command is ignored - so power up twice - clearly I don't know what I'm doing here
@@ -67,33 +63,29 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   Manage();
 }
 
-static IMUData read_buffer;
-
 static void state_updated() {
   // We received our IMU data
   static uint8_t lastTimestamp = 0x80;
-  imu_changed = ((read_buffer.timestamp ^ lastTimestamp) & 0x80) != 0;
-  
-  if (imu_changed) {
-    lastTimestamp = read_buffer.timestamp;
-  }
+  imu_changed = ((imu_state.timestamp ^ lastTimestamp) & 0x80) != 0;
+  lastTimestamp = imu_state.timestamp;
 }
 
 void Anki::Cozmo::HAL::IMU::Manage(void) {
+  static int update_counter = 0;
+
   // We have a new bundle of IMU data, stuff it into the buffer
   if (imu_changed) {
     // Attempt to find the adjustment for the update counter
-    uint8_t offset = 0x80 + 0x40 - (read_buffer.timestamp & ~0x80);
+    uint8_t offset = 0x80 + 0x40 - (imu_state.timestamp & ~0x80);
     update_counter = offset * MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY + ADJUST_OVERSHOOT;
     
     IMU::frameNumberStamp = CameraGetFrameNumber();
     IMU::scanLineStamp    = CameraGetScanLine();
 
-    memcpy(&IMUState, &read_buffer, sizeof(IMUData));
-    memcpy(&imu_fifo[_imu_fifo_end], &read_buffer, sizeof(IMUData));
+    memcpy(&IMUState, &imu_state, sizeof(IMUData));
 
-    if (++_imu_fifo_end >= MAX_IMU_CELLS) _imu_fifo_end = 0;
     imu_changed = false;
+    imu_updated = true;
 
     #ifdef IMU_DEBUG
       for (int i = 0; i < sizeof(IMUData); i++)
@@ -114,7 +106,7 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
   update_counter += MANAGE_FREQUENCY;
 
   // Configure I2C bus to read IMU data
-  I2C::SetupRead(&read_buffer, sizeof(IMUData), state_updated);
+  I2C::SetupRead(&imu_state, sizeof(imu_state), state_updated);
   
   I2C::Write(SLAVE_WRITE(ADDR_IMU), &DATA_8, sizeof(DATA_8), I2C_FORCE_START);
   I2C::Read(SLAVE_READ(ADDR_IMU));
@@ -140,23 +132,22 @@ void Anki::Cozmo::HAL::IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* ti
 
 bool Anki::Cozmo::HAL::IMUReadData(Anki::Cozmo::HAL::IMU_DataStructure &imuData)
 {  
-  if (_imu_fifo_start == _imu_fifo_end) {
+  if (!imu_updated) {
     return false;
   }
   
-  IMUData *state = &imu_fifo[_imu_fifo_start];
-  if (++_imu_fifo_start >= MAX_IMU_CELLS) _imu_fifo_start = 0;
-  
+  imu_updated = false;
+
   // Accelerometer uses 12 most significant bits - gyro uses all 16
   #define ACC_CONVERT(raw)  (ACC_RANGE_CONST  * raw)
   #define GYRO_CONVERT(raw) (GYRO_RANGE_CONST * raw)
 
-  imuData.acc_x  = ACC_CONVERT(state->acc[2]);
-  imuData.rate_x = GYRO_CONVERT(state->gyro[2]);
-  imuData.acc_y  = ACC_CONVERT(state->acc[1]);
-  imuData.rate_y = GYRO_CONVERT(state->gyro[1]);
-  imuData.acc_z  = ACC_CONVERT(-state->acc[0]);
-  imuData.rate_z = GYRO_CONVERT(-state->gyro[0]);
+  imuData.acc_x  = ACC_CONVERT(imu_state.acc[2]);
+  imuData.rate_x = GYRO_CONVERT(imu_state.gyro[2]);
+  imuData.acc_y  = ACC_CONVERT(imu_state.acc[1]);
+  imuData.rate_y = GYRO_CONVERT(imu_state.gyro[1]);
+  imuData.acc_z  = ACC_CONVERT(-imu_state.acc[0]);
+  imuData.rate_z = GYRO_CONVERT(-imu_state.gyro[0]);
   
   return true;
 }
