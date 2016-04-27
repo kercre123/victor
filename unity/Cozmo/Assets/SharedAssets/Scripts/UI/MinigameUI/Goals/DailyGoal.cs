@@ -27,9 +27,6 @@ namespace Cozmo {
         }
       }
 
-      // TODO: Create Trigger Conditions to allow for more situation based events.
-      // Example : Replace SpeedTapSessionWin with MinigameSessionEnded, but the related Goal would then
-      // have a MinigameTypeCondition (SpeedTap) and a DidWinCondition (True).
 
       // Action that fires when this Daily Goal is updated, passes through the DailyGoal itself so listeners can handle it.
       [JsonIgnore]
@@ -37,7 +34,15 @@ namespace Cozmo {
       [JsonIgnore]
       public Action<DailyGoal> OnDailyGoalCompleted;
 
-      public DailyGoal(GameEvent gEvent, string titleKey, string descKey, int reward, int target, string rewardType, int currProg = 0) {
+      // TODO: Refactor GameEvent to allow for more situation based events.
+      // Example : Replace SpeedTapSessionWin with MinigameSessionEnded, but the related Goal would then
+      // have a MinigameIDCondition (SpeedTap) and a DidWinCondition (True).
+      // NOTE : How do we plan to manage gamestate like this? Especially things like DidWin.
+
+      // Conditions that must be met in order for this to progress when its event is fired.
+      public List<GoalCondition> ProgConditions = new List<GoalCondition>();
+
+      public DailyGoal(GameEvent gEvent, string titleKey, string descKey, int reward, int target, string rewardType, List<GoalCondition> triggerCon, int currProg = 0) {
         GoalEvent = gEvent;
         Title = new LocalizedString();
         Description = new LocalizedString();
@@ -48,6 +53,7 @@ namespace Cozmo {
         Progress = currProg;
         _Completed = GoalComplete;
         RewardType = rewardType;
+        ProgConditions = triggerCon;
         GameEventManager.Instance.OnGameEvent += ProgressGoal;
       }
 
@@ -59,10 +65,10 @@ namespace Cozmo {
         if (gEvent != GoalEvent) {
           return;
         }
-        // TODO: Check Availability Conditions
-        // Return false if false.
-        // TODO: Check Trigger Conditions
-        // Return false if false.
+        // If ProgConditions aren't met, don't progress
+        if (!CanProg()) {
+          return;
+        }
         // Progress Goal
         Progress++;
         DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
@@ -80,6 +86,15 @@ namespace Cozmo {
         if (OnDailyGoalUpdated != null) {
           OnDailyGoalUpdated.Invoke(this);
         }
+      }
+
+      public bool CanProg() {
+        for (int i = 0; i < ProgConditions.Count; i++) {
+          if (ProgConditions[i].ConditionMet() == false) {
+            return false;
+          }
+        }
+        return true;
       }
     }
   }

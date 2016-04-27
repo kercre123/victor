@@ -1,13 +1,14 @@
 ﻿using UnityEngine;
-using System.Collections;
 using UnityEditor;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using AnimationGroups;
 using System.IO;
 using Newtonsoft.Json;
 using Anki.Cozmo;
+using Cozmo;
 using Cozmo.UI;
 using System.Reflection;
 
@@ -71,7 +72,6 @@ public class DailyGoalEditor : EditorWindow {
       _DailyGoalGenFiles = new string[0];
       _GoalGenNameOptions = _DailyGoalGenFiles;
     }
-
   }
 
   private bool CheckDiscardUnsaved() {
@@ -242,15 +242,18 @@ public class DailyGoalEditor : EditorWindow {
       EditorGUI.indentLevel--;
 
       //Draw list of conditions here
-      DrawConditionList(new GUIContent(">>CONDITIONS", 
+      DrawConditionList(new GUIContent(">> GENERATION CONDITIONS", 
         "Conditions that must be met for the Goal to be selected for Generation"), genData.GenConditions);
-
-
+      
+      //Draw list of conditions here
+      DrawConditionList(new GUIContent(">> PROGRESS CONDITIONS", 
+        "Conditions that must be met for the Goal to be progressed MidGame"), genData.ProgressConditions);
+      
       EditorGUILayout.LabelField(">>REWARD");
       EditorGUI.indentLevel++;
       EditorGUILayout.BeginHorizontal();
-      genData.RewardType = EditorGUILayout.TextField("Reward Type", genData.RewardType ?? string.Empty);
-      genData.PointsRewarded = EditorGUILayout.IntField("Reward", genData.PointsRewarded);
+      genData.RewardType = EditorGUILayout.TextField("Type", genData.RewardType ?? string.Empty);
+      genData.PointsRewarded = EditorGUILayout.IntField("Count", genData.PointsRewarded);
       EditorGUILayout.EndHorizontal();
       EditorGUI.indentLevel--;
 
