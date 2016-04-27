@@ -306,6 +306,11 @@ Prefab:
       propertyPath: m_RootOrder
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 11467268, guid: 24f9a8474570e41be953e79a4bc26e7a, type: 2}
+      propertyPath: _HubWorldPrefab
+      value: 
+      objectReference: {fileID: 11477898, guid: bd9cdefcf513c4aa38b7a3dd570334b2,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 24f9a8474570e41be953e79a4bc26e7a, type: 2}
   m_IsPrefabParent: 0
