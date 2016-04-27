@@ -66,7 +66,8 @@ namespace Cozmo {
   
   SayTextAction::~SayTextAction()
   {
-
+    // Now that we're all done, unload the sounds from memory
+    _robot.GetTextToSpeechController().UnloadSpeechData(_text, _style);
   }
   
   ActionResult SayTextAction::Init()

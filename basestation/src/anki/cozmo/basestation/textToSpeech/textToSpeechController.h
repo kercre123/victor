@@ -68,7 +68,7 @@ public:
   void LoadSpeechData(const std::string& text, SayTextStyle style, CompletionFunc completion = nullptr);
   
   // Unload text's audio data from memory.
-  void UnloadSpeachData(const std::string& text, SayTextStyle style);
+  void UnloadSpeechData(const std::string& text, SayTextStyle style);
   
   // Set up Audio controller to play text's audio data.
   // Return false if the text's .wav is not created or LoadSpeechData() method has not been called before performing

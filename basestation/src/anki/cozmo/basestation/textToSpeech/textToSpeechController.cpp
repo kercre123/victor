@@ -123,13 +123,13 @@ void TextToSpeechController::LoadSpeechData(const std::string& text, SayTextStyl
 } // LoadSpeechData()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TextToSpeechController::UnloadSpeachData(const std::string& text, SayTextStyle style)
+void TextToSpeechController::UnloadSpeechData(const std::string& text, SayTextStyle style)
 {
   const auto iter = _filenameLUT.find( text );
   if ( iter != _filenameLUT.end() ) {
     _waveFileReader.ClearCachedWaveDataWithKey( iter->second );
   }
-} // UnloadSpeachData()
+} // UnloadSpeechData()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool TextToSpeechController::PrepareToSay(const std::string& text, SayTextStyle style, float& out_duration_ms)
