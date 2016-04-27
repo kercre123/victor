@@ -41,7 +41,7 @@ public class PressHubWorld : HubWorldBase {
     PlayMinigame(_FaceEnrollmentChallengeData);
   }
 
-  private void StartSpeedTapGame() {
+  private void StartSpeedTapGame(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
     Debug.Log("Starting Speed Tap Game");
     PlayMinigame(_SpeedTapChallengeData);
   }
