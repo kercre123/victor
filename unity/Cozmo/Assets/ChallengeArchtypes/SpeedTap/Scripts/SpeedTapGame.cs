@@ -136,7 +136,8 @@ namespace SpeedTap {
     public void CozmoWinsHand(bool playerHitWrong = false) {
       _CozmoScore++;
       UpdateUI();
-      
+      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
+
       // if player tapped Red or on mismatched colors
       // else player tapped too late and just go dark
       if (playerHitWrong) {
@@ -155,13 +156,18 @@ namespace SpeedTap {
       }
     }
 
-    public void PlayerWinsHand() {
+    public void PlayerWinsHand(bool cozmoHitWrong = false) {
       _PlayerScore++;
       UpdateUI();
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
-      
-      CozmoBlock.SetLEDsOff();
 
+      if (cozmoHitWrong) {
+        CozmoBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
+      }
+      else {
+        CozmoBlock.SetLEDsOff();
+      }
+      
       SetWinningLightPattern(PlayerBlock, PlayerWinColors);
       if (IsRoundComplete()) {
         HandleRoundEnd();

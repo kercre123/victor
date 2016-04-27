@@ -118,7 +118,7 @@ PlayerSettings:
   iPhoneSdkVersion: 988
   iPhoneTargetOSVersion: 24
   uIPrerenderedIcon: 0
-  uIRequiresPersistentWiFi: 0
+  uIRequiresPersistentWiFi: 1
   uIRequiresFullScreen: 1
   uIStatusBarHidden: 1
   uIExitOnSuspend: 0
