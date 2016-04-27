@@ -225,12 +225,18 @@ private:
   // Queues blobs for a multi-blob message from game and sends them to robot when all blobs received.
   bool QueueWriteBlob(const NVStorage::NVEntryTag tag, u8* data, u16 dataLength, u8 blobIndex, u8 numTotalBlobs);
   
+  // Clear any data that was received from game (via NVStorageWriteEntry) for writing
+  void ClearPendingWriteEntry();
+  
   void BroadcastNVStorageOpResult(NVStorage::NVEntryTag tag, NVStorage::NVResult res, NVStorage::NVOperation op);
   
   std::vector<Signal::SmartHandle> _signalHandles;
 
   // Whether or not this tag is composed of (potentially) multiple blobs
   bool IsMultiBlobEntryTag(u32 tag) const;
+  
+  // Whether or not this is a legal entry tag
+  bool IsValidEntryTag(u32 tag);
   
   // Given any tag, returns the assumed base tag
   u32 GetBaseEntryTag(u32 tag) const;
