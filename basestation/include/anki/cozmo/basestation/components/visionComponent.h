@@ -187,6 +187,10 @@ struct DockingErrorSignal;
     // Links a name with a face ID and sets up the robot's ability to say that name
     void AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
     
+    // Load/Save face album data to robot
+    Result SaveFaceAlbumToRobot();
+    Result LoadFaceAlbumFromRobot();
+    
   protected:
     
     Robot& _robot;
@@ -226,6 +230,8 @@ struct DockingErrorSignal;
     VisionPoseData   _currentPoseData;
     VisionPoseData   _nextPoseData;
     bool             _visionWhileMovingFastEnabled = false;
+    
+    std::vector<u8> _albumData, _enrollData; // for loading / saving face data
     
     std::thread _processingThread;
     

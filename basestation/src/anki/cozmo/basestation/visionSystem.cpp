@@ -1319,24 +1319,29 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
     return result;
   } // TrackerPredictionUpdate()
-  
-  void VisionSystem::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name)
+
+  Result VisionSystem::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name)
   {
     if(!_isInitialized) {
       PRINT_NAMED_WARNING("VisionSystem.AssignNameToFace.NotInitialized",
                           "Cannot assign name '%s' to face ID %d before being initialized",
                           name.c_str(), faceID);
-      return;
+      return RESULT_FAIL;
     }
     
     ASSERT_NAMED(_faceTracker != nullptr, "VisionSystem.AssignNameToFace.NullFaceTracker");
     
-    _faceTracker->AssignNameToID(faceID, name);
+    return _faceTracker->AssignNameToID(faceID, name);
   }
-    
-  void VisionSystem::EraseFace(const std::string& name)
+
+  Vision::FaceID_t VisionSystem::EraseFace(const std::string& name)
   {
-    _faceTracker->EraseName(name);
+    return _faceTracker->EraseFace(name);
+  }
+
+  Result VisionSystem::EraseFace(Vision::FaceID_t faceID)
+  {
+    return _faceTracker->EraseFace(faceID);
   }
   
   void VisionSystem::SetFaceEnrollmentMode(Vision::FaceEnrollmentMode mode)
@@ -3170,6 +3175,18 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     return RESULT_OK;
   }
   
+  void VisionSystem::GetSerializedFaceData(std::vector<u8>& albumData,
+                                           std::vector<u8>& enrollData) const
+  {
+    _faceTracker->GetSerializedData(albumData, enrollData);
+  }
+  
+  Result VisionSystem::SetSerializedFaceData(const std::vector<u8>& albumData,
+                                             const std::vector<u8>& enrollData,
+                                             std::list<Vision::FaceNameAndID>& namesAndIDs)
+  {
+    return _faceTracker->SetSerializedData(albumData, enrollData, namesAndIDs);
+  }
   
 } // namespace Cozmo
 } // namespace Anki

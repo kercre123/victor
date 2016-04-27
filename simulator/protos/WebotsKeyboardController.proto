@@ -185,6 +185,8 @@ PROTO WebotsKeyboardController [
   # UI device ID 
   # TODO: Get rid of this. The UI should not be assigning it's own ID.
   field SFInt32  deviceID 1
+
+  field SFBool demoHasEdge TRUE
 ]
 {
 Supervisor {

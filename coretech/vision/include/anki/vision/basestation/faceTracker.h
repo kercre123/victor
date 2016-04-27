@@ -51,12 +51,20 @@ namespace Vision {
     // Will return false if the private implementation does not support face recognition
     static bool IsRecognitionSupported();
     
-    void AssignNameToID(FaceID_t faceID, const std::string& name);
-    void EraseName(const std::string& name);
     
+    Result   AssignNameToID(FaceID_t faceID, const std::string& name);
+    FaceID_t EraseFace(const std::string& name);
+    Result   EraseFace(FaceID_t faceID);
     Result SaveAlbum(const std::string& albumName);
     Result LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
     
+    Result GetSerializedData(std::vector<u8>& albumData,
+                             std::vector<u8>& enrollData);
+    
+    Result SetSerializedData(const std::vector<u8>& albumData,
+                             const std::vector<u8>& enrollData,
+                             std::list<FaceNameAndID>& namesAndIDs);
+
     void PrintTiming();
     
   private:

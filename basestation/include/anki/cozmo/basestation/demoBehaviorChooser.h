@@ -1,0 +1,106 @@
+/**
+ * File: demoBehaviorChooser.h
+ *
+ * Author: Brad Neuman
+ * Created: 2016-04-25
+ *
+ * Description: This is a chooser for the PR / announce demo. It handles enabling / disabling behavior groups,
+ *              as well as any other special logic that is needed for the demo
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+#ifndef __Cozmo_Basestation_DemoBehaviorChooser_H__
+#define __Cozmo_Basestation_DemoBehaviorChooser_H__
+
+#include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/behaviorChooser.h"
+#include "json/json-forwards.h"
+#include "util/signals/simpleSignal.hpp"
+
+namespace Anki {
+namespace Cozmo {
+
+class BlockWorldFilter;
+class ObservableObject;
+class Robot;
+
+class DemoBehaviorChooser : public SimpleBehaviorChooser
+{
+public:
+
+  // This disabled all behaviors from running, regardless of the config.
+  DemoBehaviorChooser(Robot& robot, const Json::Value& config);
+
+  virtual void Init() override;
+
+  virtual Result Update() override;
+
+  virtual const char* GetName() const override { return _name.c_str(); }
+
+  // Handle various message types
+  template<typename T>
+  void HandleMessage(const T& msg);
+
+private:
+
+  void TransitionToNextState();
+
+  void TransitionToWakeUp();
+  void TransitionToFearEdge();
+  void TransitionToPounce();
+  void TransitionToFaces();
+  void TransitionToCubes();
+  void TransitionToMiniGame();
+  void TransitionToSleep();
+
+  bool ShouldTransitionOutOfCubesState();
+
+  bool FilterBlocks(ObservableObject* obj) const;
+  
+  // This will be called from Update, and if it returns true, we will transition to the next state
+  std::function<bool(void)> _checkTransition;
+
+  bool DidBehaviorRunAndStop(const char* behaviorName) const;
+  
+  enum class State {
+    None,
+    WakeUp,
+    FearEdge,
+    Pounce,
+    Faces,
+    Cubes,
+    MiniGame,
+    Sleep
+  };
+
+  State _state = State::None;
+
+  std::string _name;
+
+  void SetState_internal(State state, const std::string& stateName);
+
+  bool _hasEdge = true;
+  bool _hasSeenBlock = false;
+
+  bool _initCalled = false;
+
+  // tracking for the cubes to determine when there are three that are upright (and have been for some time)
+  float _cubesUprightTime_s = -1.0f;
+  // true if the cube is upright and (nearly) level and on the ground. Set to false if it moves or is observed
+  // not upright or level
+  std::set< ObjectID > _uprightCubes;
+
+  std::vector<Signal::SmartHandle> _signalHandles;
+
+  std::unique_ptr<BlockWorldFilter>  _blockworldFilter;
+    
+  Robot& _robot;
+};
+
+}
+}
+
+
+#endif

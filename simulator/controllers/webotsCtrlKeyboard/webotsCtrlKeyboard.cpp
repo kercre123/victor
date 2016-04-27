@@ -25,7 +25,6 @@
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/behaviorChooserType.h"
 #include "clad/types/behaviorType.h"
-#include "clad/types/demoBehaviorState.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -185,6 +184,12 @@ namespace Anki {
       //printf("HandleDebugString: %s\n", msg.text.c_str());
     }
     
+    void WebotsKeyboardController::HandleRobotEnrolledFace(ExternalInterface::RobotEnrolledFace const& msg)
+    {
+      printf("HandleRobotEnrolledFace: Added '%s' with ID=%d\n",
+             msg.name.c_str(), msg.faceID);
+    }
+
     // ============== End of message handlers =================
     
     
@@ -253,9 +258,7 @@ namespace Anki {
         printf("            Set emotion to value:  m\n");
         printf("      Search side to side action:  Shift+l\n");
         printf("    Toggle cliff sensor handling:  Alt+l\n");
-        printf("           Set DemoState Default:  j\n");
-        printf("         Set DemoState FacesOnly:  Shift+j\n");
-        printf("        Set DemoState BlocksOnly:  Alt+j\n");
+        printf("                 Next Demo State:  j\n");
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Shift+Alt+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
@@ -1019,6 +1022,14 @@ namespace Anki {
                     break;
                   }
 
+                  // before we send the behavior chooser, also send the demo "has edge" so that if we are
+                  // testing the demo, we will have an updated value here
+                  webots::Field* hasEdgeField = root_->getField("demoHasEdge");
+                  if( hasEdgeField != nullptr ) {
+                    bool hasEdge = hasEdgeField->getSFBool();
+                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::StartDemoWithEdge(hasEdge)));
+                  }
+                  
                   printf("sending behavior chooser '%s'\n", BehaviorChooserTypeToString(chooser));
                 
                   SendMessage(ExternalInterface::MessageGameToEngine(
@@ -1758,11 +1769,6 @@ namespace Anki {
                   turnTowardsPose.maxTurnAngle = M_PI;
                   turnTowardsPose.robotID = 1;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsPose)));
-                } else if(altPressed && shiftPressed) {
-                  // ALT+SHIFT+F: Set owner to next observed face
-                  ExternalInterface::SetOwnerFace setOwnerFace;
-                  setOwnerFace.ownerID = -1;
-                  SendMessage(ExternalInterface::MessageGameToEngine(std::move(setOwnerFace)));
                 } else {
                   // Just F: Toggle face detection
                   static bool isFaceDetectionEnabled = true;
@@ -1774,21 +1780,20 @@ namespace Anki {
                 
               case (s32)'J':
               {
-                if (webots::Supervisor::KEYBOARD_SHIFT == modifier_key)
-                {
-                  // Send DemoState FacesOnly
-                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::FacesOnly)));
+
+                using namespace ExternalInterface;
+                
+                webots::Field* hasEdgeField = root_->getField("demoHasEdge");
+                if( hasEdgeField != nullptr ) {
+                  bool hasEdge = hasEdgeField->getSFBool();
+                  SendMessage(MessageGameToEngine(StartDemoWithEdge(hasEdge)));
                 }
-                else if (webots::Supervisor::KEYBOARD_ALT == modifier_key)
-                {
-                  // Send DemoState BlocksOnly
-                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::BlocksOnly)));
+                else {
+                  printf("ERROR: no field 'demoHasEdge', not sending edge message\n");
                 }
-                else
-                {
-                  // Send DemoState Default
-                  SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetDemoState(DemoBehaviorState::Default)));
-                }
+
+                SendMessage(MessageGameToEngine(TransitionToNextDemoState()));
+
                 break;
               }
 

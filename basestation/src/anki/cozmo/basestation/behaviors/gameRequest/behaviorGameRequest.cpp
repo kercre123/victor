@@ -62,18 +62,16 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
 bool IBehaviorRequestGame::IsRunnable(const Robot& robot) const
 {
   const bool hasFace = HasFace(robot);
-  const bool ret = IsActing() || hasFace;
 
   if( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
     PRINT_NAMED_DEBUG("IBehaviorRequestGame.IsRunnable",
-                      "'%s': %d: hasFace?%d (numBlocks=%d)",
+                      "'%s': hasFace?%d (numBlocks=%d)",
                       GetName().c_str(),
-                      ret,
                       hasFace,
                       GetNumBlocks(robot));
   }
 
-  return ret;
+  return hasFace;
 }
 
 Result IBehaviorRequestGame::InitInternal(Robot& robot)

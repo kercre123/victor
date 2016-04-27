@@ -119,7 +119,7 @@ private:
   // Factory creates and tracks data-driven behaviors etc
   BehaviorFactory* _behaviorFactory;
     
-  // How we store and choose next behavior
+  // How we store and choose next behavior (weak ptr)
   IBehaviorChooser* _behaviorChooser = nullptr;
 
   // This is a chooser which manually runs specific behaviors. The manager starts out using this chooser to
@@ -128,6 +128,10 @@ private:
 
   // This is the behavior used for freeplay. This is the default chooser
   IBehaviorChooser* _freeplayBehaviorChooser = nullptr;
+
+  // This is a special chooser for the demo. In addition to choosing behaviors, it is also the central place
+  // in engine for any demo-specific code. This is in reference to the announce / PR demo
+  IBehaviorChooser* _demoChooser = nullptr;
 
   bool _runningReactionaryBehavior = false;
   

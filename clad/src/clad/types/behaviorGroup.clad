@@ -17,6 +17,11 @@ enum uint_8 BehaviorGroup {
     RequestCubePounce,
     Unlock_CubeRoll,
     FreeplayExplore,
+
+    Demo,
+    DemoFingerPounce,
+    DemoFaces,
+    DemoCubes,
     
     Count
 }
