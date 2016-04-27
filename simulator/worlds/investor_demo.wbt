@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.0235548 -0.289137 -0.956998 3.29718
-  position 0.107695 1.5105 2.13597
+  orientation 0.0854219 -0.358817 -0.929491 2.70603
+  position -0.932877 1.66936 2.37168
 }
 Background {
   skyColor [
@@ -29,15 +29,15 @@ CozmoMat {
   showMarkers FALSE
 }
 Face {
-  translation -0.004046 -0.474987 -0.13
+  translation 0.0355869 -0.646956 0.28
 }
 Face {
-  translation -0.544046 0.0050129 0.45
+  translation 0.667478 -0.06002 0.57
   rotation 0 0 1 4.71239
   image "face02.png"
 }
 Face {
-  translation 0.501753 0.154257 0.2
+  translation 0.601694 0.136062 0.34
   rotation 0 0 1 4.97419
   image "face03.png"
 }
