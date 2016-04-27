@@ -21,6 +21,7 @@ public class PressHubWorld : HubWorldBase {
     _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
 
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+    RobotEngineManager.Instance.OnRequestGameStart += StartSpeedTapGame;
 
     return true;
   }
