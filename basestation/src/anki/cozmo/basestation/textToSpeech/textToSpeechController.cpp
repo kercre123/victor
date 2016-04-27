@@ -19,10 +19,12 @@ extern "C" {
 }
 
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechController.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioControllerPluginInterface.h"
+#include "anki/cozmo/basestation/audio/audioServer.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/logging/logging.h"
 #include "util/hashing/hashing.h"
@@ -38,15 +40,20 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechController::TextToSpeechController(Util::Data::DataPlatform* dataPlatform,
-                                               Audio::AudioController* audioController)
-: _dataPlatform( dataPlatform )
-, _dispatchQueue( Util::Dispatch::Create("TextToSpeechController_File_Operations") )
-, _audioController( audioController )
+TextToSpeechController::TextToSpeechController(const CozmoContext* context)
+: _dispatchQueue( Util::Dispatch::Create("TextToSpeechController_File_Operations") )
 {
   flite_init();
   
   _voice = register_cmu_us_kal(NULL);
+  
+  if(nullptr != context) {
+    _dataPlatform = context->GetDataPlatform();
+    if(nullptr != context->GetAudioServer()) {
+      _audioController = context->GetAudioServer()->GetAudioController();
+    }
+  }
+
 } // TextToSpeechController()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -148,6 +155,8 @@ bool TextToSpeechController::PrepareToSay(const std::string& text, SayTextStyle 
     return false;
   }
 
+  ASSERT_NAMED(nullptr != _audioController,
+               "TextToSpeechController.PrepareToSay.NullAudioController");
   AudioControllerPluginInterface* pluginInterface = _audioController->GetPluginInterface();
   ASSERT_NAMED(pluginInterface != nullptr, "TextToSpeechController.PrepareToSay.NullAudioControllerPluginInterface");
 
@@ -236,6 +245,7 @@ std::string TextToSpeechController::MakeFullPath(const std::string& text)
   PRINT_NAMED_DEBUG("TextToSpeechController.MakeFullPath.TextToHash",
                     "'%s' hashed to %d", text.c_str(), hashedValue);
   
+  ASSERT_NAMED(nullptr != _dataPlatform, "TextToSpeechController.MakeFullPath.NullDataPlatform");
   std::string fullPath = _dataPlatform->pathToResource(kResourceScope,
                                                        kFilePrefix + std::to_string(hashedValue) + "." + kFileExtension);
   
@@ -247,6 +257,7 @@ std::vector<std::string> TextToSpeechController::FindAllTextToSpeechFiles()
 {
   using namespace Util;
   std::vector<std::string> fileNames;
+  ASSERT_NAMED(nullptr != _dataPlatform, "TextToSpeechController.FindAllTextToSpeechFiles.NullDataPlatform");
   const std::string dirPath = _dataPlatform->pathToResource(kResourceScope, "");
   const auto dirFiles = FileUtils::FilesInDirectory( dirPath, false, kFileExtension, false );
   const std::string prefixStr( kFilePrefix );

@@ -41,6 +41,9 @@ namespace Dispatch {
 }
   
 namespace Cozmo {
+  
+// Forward declaration
+class CozmoContext;
 namespace Audio {
   class AudioController;
   class AudioWaveFileReader;
@@ -54,8 +57,7 @@ public:
   using SimpleCompletionFunc = std::function<void(void)>;
   
   
-  TextToSpeechController(Util::Data::DataPlatform* dataPlatform,
-                         Audio::AudioController* audioController);
+  TextToSpeechController(const CozmoContext* context);
   ~TextToSpeechController();
 
   // Asynchronous create the wave file for the given text, to be played later.
@@ -85,11 +87,11 @@ public:
 
 private:
   
-  Util::Data::DataPlatform*       _dataPlatform;
-  Util::Dispatch::Queue*          _dispatchQueue;
-  Audio::AudioController*         _audioController;
+  Util::Data::DataPlatform*       _dataPlatform = nullptr;
+  Util::Dispatch::Queue*          _dispatchQueue = nullptr;
+  Audio::AudioController*         _audioController = nullptr;
   Audio::AudioWaveFileReader      _waveFileReader;
-  cst_voice_struct*               _voice;
+  cst_voice_struct*               _voice = nullptr;
   
   // Maps text to filename where it's stored
   std::unordered_map<std::string, std::string> _filenameLUT;
