@@ -8,3 +8,4 @@ copy ..\..\syscon\build\boot\sys_boot.bin .
 copy ..\..\syscon\build\app\syscon.bin .
 copy ..\..\build\robot_boot.bin .
 copy ..\..\build\robot.bin .
+copy ..\..\espressif\bin\upgrade\user1.2048.new.3.bin esp.user.bin

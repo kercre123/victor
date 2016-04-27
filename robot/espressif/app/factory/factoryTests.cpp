@@ -165,6 +165,8 @@ void Update()
           msg.tag = RobotInterface::EngineToRobot::Tag_drive;
           msg.drive.lwheel_speed_mmps = wheelSpd;
           msg.drive.rwheel_speed_mmps = wheelSpd;
+          msg.drive.lwheel_accel_mmps2 = 500.0f;
+          msg.drive.rwheel_accel_mmps2 = 500.0f;
           RTIP::SendMessage(msg);
           msg.tag = RobotInterface::EngineToRobot::Tag_moveLift;
           msg.moveLift.speed_rad_per_sec = liftSpd;
