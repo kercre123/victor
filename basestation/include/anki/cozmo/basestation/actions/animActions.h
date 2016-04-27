@@ -71,9 +71,10 @@ namespace Anki {
       AnimationStreamer::Tag    _animTag = AnimationStreamer::NotAnimatingTag;
       bool                      _interruptRunning;
       
-      // For responding to AnimationStarted and AnimationEnded events
+      // For responding to AnimationStarted, AnimationEnded, and AnimationEvent events
       Signal::SmartHandle _startSignalHandle;
       Signal::SmartHandle _endSignalHandle;
+      Signal::SmartHandle _eventSignalHandle;
       Signal::SmartHandle _abortSignalHandle;
       
     private:

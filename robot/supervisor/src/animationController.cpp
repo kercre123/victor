@@ -668,51 +668,26 @@ namespace AnimationController {
             break;
           }
 
-          case RobotInterface::EngineToRobot::Tag_animFacePosition:
+          case RobotInterface::EngineToRobot::Tag_animEvent:
           {
             GetFromBuffer(&msg);
 
-            if(_tracksToPlay & FACE_POS_TRACK) {
+            if(_tracksToPlay & EVENT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 22, "[t=%dms(%d)] setting face position to (%d,%d).", 4,
-                    _currentTime_ms, system_get_time(), msg.animFacePosition.xCen, msg.animFacePosition.yCen);
+              AnkiDebug( 2, "AnimationController", 447, "[t=%dms(%d)] event %d.", 3,
+                    _currentTime_ms, system_get_time(), msg.event_id);
 #               endif
 
               #ifdef TARGET_ESPRESSIF
-                Face::Move(msg.animFacePosition.xCen, msg.animFacePosition.yCen);
+              RTIP::SendMessage(msg);
               #else
-                HAL::FaceMove(msg.animFacePosition.xCen, msg.animFacePosition.yCen);
+              RobotInterface::AnimationEvent emsg;
+              emsg.timestamp = HAL::GetTimeStamp();
+              emsg.event_id = msg.animEvent.event_id;
+              RobotInterface::SendMessage(emsg);
               #endif
-
-              _tracksInUse |= FACE_POS_TRACK;
-            }
-            break;
-          }
-
-          case RobotInterface::EngineToRobot::Tag_animBlink:
-          {
-            GetFromBuffer(&msg);
-
-            if(_tracksToPlay & BLINK_TRACK) {
-#               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 23, "[t=%dms(%d)] Blinking.", 2,
-                    _currentTime_ms, system_get_time());
-#               endif
-
-              if(msg.animBlink.blinkNow) {
-              #ifdef TARGET_ESPRESSIF
-                Face::Blink();
-              #else
-                HAL::FaceBlink();
-              } else {
-                if(msg.animBlink.enable) {
-                  //EyeController::Enable();
-                } else {
-                  //EyeController::Disable();
-                }
-              #endif
-              }
-              _tracksInUse |= BLINK_TRACK;
+              
+              _tracksInUse |= EVENT_TRACK;
             }
             break;
           }

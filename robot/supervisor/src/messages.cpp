@@ -99,6 +99,9 @@ namespace Anki {
           case RobotInterface::EngineToRobot::Tag_animLiftHeight:
             Process_animLiftHeight(msg.animLiftHeight);
             break;
+          case RobotInterface::EngineToRobot::Tag_animEvent:
+            Process_animEvent(msg.animEvent);
+            break;
 #else
             #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
 #endif
@@ -627,10 +630,6 @@ namespace Anki {
       }
 
       // ---------- Animation Key frame messages -----------
-      void Process_animBlink(const Anki::Cozmo::AnimKeyFrame::Blink& msg)
-      {
-        // Hangled by the Espressif
-      }
       void Process_animFaceImage(const Anki::Cozmo::AnimKeyFrame::FaceImage& msg)
       {
         // Handled by the Espressif
@@ -684,9 +683,12 @@ namespace Anki {
       {
         // Handled on the Espressif
       }
-      void Process_animFacePosition(const Anki::Cozmo::AnimKeyFrame::FacePosition&)
+      void Process_animEvent(const Anki::Cozmo::AnimKeyFrame::Event& msg)
       {
-        // Handled on the Espressif
+        RobotInterface::AnimationEvent emsg;
+        emsg.timestamp = HAL::GetTimeStamp();
+        emsg.event_id = msg.event_id;
+        SendMessage(emsg);
       }
 #ifndef TARGET_K02
       void Process_animBackpackLights(const Anki::Cozmo::AnimKeyFrame::BackpackLights& msg)
