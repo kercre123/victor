@@ -47,6 +47,7 @@ namespace Anki {
                           u32 numLoops = 1,
                           bool interruptRunning = true);
       // Constructor for playing an Animation object (e.g. a "live" one created dynamically)
+      // Caller owns the animation -- it will not be deleted by this action.
       PlayAnimationAction(Robot& robot,
                           Animation* animation,
                           u32 numLoops = 1,
@@ -76,7 +77,7 @@ namespace Anki {
       bool                      _wasAborted;
       AnimationStreamer::Tag    _animTag = AnimationStreamer::NotAnimatingTag;
       bool                      _interruptRunning;
-      Animation*                _animation = nullptr;
+      Animation*                _customAnimation = nullptr;
       
       // For responding to AnimationStarted and AnimationEnded events
       Signal::SmartHandle _startSignalHandle;

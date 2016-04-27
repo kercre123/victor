@@ -73,7 +73,7 @@ namespace Anki {
     , _name("PlayAnimation" + _animName + "Action")
     , _numLoops(numLoops)
     , _interruptRunning(interruptRunning)
-    , _animation(animation)
+    , _customAnimation(animation)
     {
      
     }
@@ -141,8 +141,8 @@ namespace Anki {
       }
       else // do the normal thing
       {
-        if(_animation != nullptr) {
-          _animTag = _robot.PlayAnimation(_animation, _numLoops, _interruptRunning);
+        if(_customAnimation != nullptr) {
+          _animTag = _robot.PlayAnimation(_customAnimation, _numLoops, _interruptRunning);
         } else {
           _animTag = _robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
         }
@@ -199,7 +199,7 @@ namespace Anki {
 
     inline const Animation* PlayAnimationAction::GetOurAnimation() const
     {
-      return (_animation == nullptr ? _robot.GetCannedAnimation(_animName) : _animation);
+      return (_customAnimation == nullptr ? _robot.GetCannedAnimation(_animName) : _customAnimation);
     }
     
     bool PlayAnimationAction::NeedsAlteredAnimation() const
