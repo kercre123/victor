@@ -60,6 +60,7 @@ public class FactoryIntroManager : MonoBehaviour {
   private List<string> _LogList = new List<string>();
 
   void Start() {
+    _LogFilter = PlayerPrefs.GetString("LogFilter");
     SetStatusText("Not Connected");
     RobotEngineManager.Instance.RobotConnected += HandleConnected;
     RobotEngineManager.Instance.DisconnectedFromClient += HandleDisconnectedFromClient;

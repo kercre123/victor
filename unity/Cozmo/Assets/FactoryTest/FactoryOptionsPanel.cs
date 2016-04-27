@@ -46,6 +46,8 @@ public class FactoryOptionsPanel : MonoBehaviour {
     if (OnConsoleLogFilter != null) {
       OnConsoleLogFilter(input);
     }
+    PlayerPrefs.SetString("LogFilter", input);
+    PlayerPrefs.Save();
   }
 
   void HandleOTAButton() {

@@ -36,8 +36,10 @@ public class FactoryLogPanel : MonoBehaviour {
     int logCount = 0;
     int logIndex = 0;
 
+    string[] filters = LogFilter.Split(',');
+
     while (logCount < 80 && logIndex < logQueue.Count) {
-      if (logQueue[logIndex].Contains(LogFilter)) {
+      if (Contains(logQueue[logIndex], filters)) {
         GameObject textInstance = GameObject.Instantiate(_TextPrefab.gameObject);
         textInstance.transform.SetParent(_LogTextList, false);
         textInstance.GetComponent<UnityEngine.UI.Text>().text = logQueue[logIndex];
@@ -47,6 +49,15 @@ public class FactoryLogPanel : MonoBehaviour {
     }
 
     _TextScrollRect.verticalNormalizedPosition = 0;
+  }
+
+  private bool Contains(string original, string[] filters) {
+    for (int i = 0; i < filters.Length; ++i) {
+      if (original.Contains(filters[i])) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void CopyLogs() {
