@@ -75,12 +75,10 @@ namespace Cozmo {
         addResult = _liftTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == FaceAnimationKeyFrame::GetClassName()) {
         addResult = _faceAnimTrack.AddKeyFrameToBack(jsonFrame, name);
-      } else if(frameName == FacePositionKeyFrame::GetClassName()) {
-        addResult = _facePosTrack.AddKeyFrameToBack(jsonFrame, name);
+      } else if(frameName == EventKeyFrame::GetClassName()) {
+        addResult = _eventTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == DeviceAudioKeyFrame::GetClassName()) {
         addResult = _deviceAudioTrack.AddKeyFrameToBack(jsonFrame, name);
-      } else if(frameName == BlinkKeyFrame::GetClassName()) {
-        addResult = _blinkTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == RobotAudioKeyFrame::GetClassName()) {
         addResult = _robotAudioTrack.AddKeyFrameToBack(jsonFrame, name);
       } else if(frameName == BackpackLightsKeyFrame::GetClassName()) {
@@ -124,8 +122,8 @@ namespace Cozmo {
   }
   
   template<>
-  Animations::Track<FacePositionKeyFrame>& Animation::GetTrack() {
-    return _facePosTrack;
+  Animations::Track<EventKeyFrame>& Animation::GetTrack() {
+    return _eventTrack;
   }
   
   template<>
@@ -149,11 +147,6 @@ namespace Cozmo {
   }
   
   template<>
-  Animations::Track<BlinkKeyFrame>& Animation::GetTrack() {
-    return _blinkTrack;
-  }
-  
-  template<>
   Animations::Track<ProceduralFaceKeyFrame>& Animation::GetTrack() {
     return _proceduralFaceTrack;
   }
@@ -173,12 +166,11 @@ _headTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _liftTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _faceAnimTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _proceduralFaceTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
-_facePosTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_eventTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _deviceAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _backpackLightsTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
-_bodyPosTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
-_blinkTrack.__METHOD__(__VA_ARGS__)
+_bodyPosTrack.__METHOD__(__VA_ARGS__)
   
   //# define ALL_TRACKS(__METHOD__, __ARG__, __COMBINE_WITH__) ALL_TRACKS_WITH_ARG(__METHOD__, void, __COMBINE_WITH__)
   

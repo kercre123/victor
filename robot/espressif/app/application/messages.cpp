@@ -240,8 +240,7 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_animAudioSilence:
             case RobotInterface::EngineToRobot::Tag_animHeadAngle:
             case RobotInterface::EngineToRobot::Tag_animLiftHeight:
-            case RobotInterface::EngineToRobot::Tag_animFacePosition:
-            case RobotInterface::EngineToRobot::Tag_animBlink:
+            case RobotInterface::EngineToRobot::Tag_animEvent:
             case RobotInterface::EngineToRobot::Tag_animFaceImage:
             case RobotInterface::EngineToRobot::Tag_animBackpackLights:
             case RobotInterface::EngineToRobot::Tag_animBodyMotion:

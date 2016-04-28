@@ -19,6 +19,7 @@
 #include "clad/types/gameEvent.clad"
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
+#include "clad/types/animationEvents.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -325,6 +326,11 @@ message AnimationAvailable {
 // before the last one finished.
 message AnimationAborted {
   uint_32 tag
+}
+
+message AnimationEvent {
+  uint_32   timestamp,
+  AnimEvent event_id
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -111,8 +111,7 @@ namespace Cozmo {
         _streamingAnimation->GetTrack<LiftHeightKeyFrame>().MoveToEnd();
         _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().MoveToEnd();
         _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<FacePositionKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<BlinkKeyFrame>().MoveToEnd();
+        _streamingAnimation->GetTrack<EventKeyFrame>().MoveToEnd();
         _streamingAnimation->GetTrack<BackpackLightsKeyFrame>().MoveToEnd();
         _streamingAnimation->GetTrack<BodyMotionKeyFrame>().MoveToEnd();
         _streamingAnimation->GetTrack<DeviceAudioKeyFrame>().MoveToEnd();
@@ -966,9 +965,8 @@ namespace Cozmo {
     auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
     auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
     auto & bodyTrack        = anim->GetTrack<BodyMotionKeyFrame>();
-    auto & facePosTrack     = anim->GetTrack<FacePositionKeyFrame>();
+    auto & eventTrack       = anim->GetTrack<EventKeyFrame>();
     auto & faceAnimTrack    = anim->GetTrack<FaceAnimationKeyFrame>();
-    auto & blinkTrack       = anim->GetTrack<BlinkKeyFrame>();
     auto & backpackLedTrack = anim->GetTrack<BackpackLightsKeyFrame>();
     
     // Is it time to play device audio? (using actual basestation time)
@@ -1073,8 +1071,8 @@ namespace Cozmo {
         DEBUG_STREAM_KEYFRAME_MESSAGE("LiftHeight");
       }
       
-      if(BufferMessageToSend(facePosTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-        DEBUG_STREAM_KEYFRAME_MESSAGE("FacePosition");
+      if(BufferMessageToSend(eventTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
+        DEBUG_STREAM_KEYFRAME_MESSAGE("Event");
       }
       
       bool streamedFaceAnimImage = false;
@@ -1084,10 +1082,6 @@ namespace Cozmo {
       }
       
       UpdateFace(robot, anim, storeFace);
-      
-      if(BufferMessageToSend(blinkTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
-        DEBUG_STREAM_KEYFRAME_MESSAGE("Blink");
-      }
       
       if(BufferMessageToSend(backpackLedTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms))) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("BackpackLights");

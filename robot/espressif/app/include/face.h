@@ -29,15 +29,6 @@ namespace Anki {
       // Decompresses a new image from the basestation into the image buffer
       void Update(AnimKeyFrame::FaceImage img);
       
-      // Shifts the image buffer to a new center
-      void Move(s8 xCenter, s8 yCenter);
-      
-      // Blanks the screen momentarily
-      void Blink();
-      
-      // Enables or disables periodic blinking
-      void EnableBlink(bool enable);
-
       extern "C"
       {
         // Check for screen updates when the screen is idle

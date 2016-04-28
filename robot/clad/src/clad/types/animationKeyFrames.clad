@@ -1,6 +1,7 @@
 /** Clad message definitions for the messages sent from the WiFi to the engine.
  */
 
+#include "clad/types/animationEvents.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -11,10 +12,10 @@ enum uint_8 AnimTrackFlag {
   LIFT_TRACK = 0x02,
   BODY_TRACK = 0x04,
   FACE_IMAGE_TRACK = 0x08,
-  FACE_POS_TRACK   = 0x10,
+  EVENT_TRACK = 0x10,
   BACKPACK_LIGHTS_TRACK = 0x20,
   AUDIO_TRACK = 0x40,
-  BLINK_TRACK = 0x80,
+  //RESERVED = 0x80,
   ALL_TRACKS = 0xFF
 }
 
@@ -78,6 +79,11 @@ namespace AnimKeyFrame {
     int_16 curvatureRadius_mm, // +ve: curves left, -ve: curves right, ...
                                // ...u16_MAX/MIN: drive straight...
                                // ...0: turn in place (+ve speed: left, -ve speed: right)
+  }
+
+  message Event
+  {
+    AnimEvent event_id
   }
 
   message EnableAnimTracks
