@@ -57,10 +57,6 @@ namespace SpeedTap {
       }
     }
 
-    public override void Update() {
-      base.Update();
-    }
-
     public override void Exit() {
       base.Exit();
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapHandWin, HandleHandEndAnimDone);

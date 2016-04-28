@@ -332,12 +332,12 @@ namespace SpeedTap {
 
     public float GetLightsOffDurationSec() {
       SpeedTapRoundData currRoundData = GetCurrentRoundData();
-      return currRoundData.TimeBetweenHands * 1000f;
+      return currRoundData.SecondsBetweenHands;
     }
 
     public float GetLightsOnDurationSec() {
       SpeedTapRoundData currRoundData = GetCurrentRoundData();
-      return currRoundData.TimeHandDisplayed * 1000f;
+      return currRoundData.SecondsHandDisplayed;
     }
 
     public void StartRoundMusic() {
