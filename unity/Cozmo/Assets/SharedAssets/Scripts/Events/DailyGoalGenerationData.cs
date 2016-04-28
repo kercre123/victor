@@ -50,6 +50,7 @@ namespace Anki.Cozmo {
         RewardType = "experience";
         CladEvent = GameEvent.Count;
         GenConditions = new List<GoalCondition>();
+        ProgressConditions = new List<GoalCondition>();
       }
 
       /// <summary>
@@ -81,6 +82,10 @@ namespace Anki.Cozmo {
       /// The Conditions for if this goal is able to be selected for generation.
       /// </summary>
       public List<GoalCondition> GenConditions;
+      /// <summary>
+      /// The Conditions for if this goal will progress when its event is fired.
+      /// </summary>
+      public List<GoalCondition> ProgressConditions;
 
       public bool CanGen() {
         for (int i = 0; i < GenConditions.Count; i++) {

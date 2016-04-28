@@ -21,9 +21,6 @@ namespace Anki {
     [System.Serializable]
     public abstract class GoalCondition {
 
-      public virtual void Initialize() {
-      }
-
       // Override with unique checks to see if certain conditions are met by the current game state
       public virtual bool ConditionMet() {
         return true;

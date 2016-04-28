@@ -14,21 +14,27 @@ namespace Anki {
   namespace Cozmo {
     [System.Serializable]
     public class WeekdayCondition : GoalCondition {
-      
-      DayOfWeek day = DayOfWeek.Monday;
-
-      public override void Initialize() {
-        base.Initialize();
-      }
+      [SerializeField]
+      private string _DayName;
+      private DayOfWeek _Day;
 
       // Returns true if day of the week is the desired day of the week
       public override bool ConditionMet() {
-        return (DateTime.UtcNow.DayOfWeek == day);
+        return (DateTime.UtcNow.DayOfWeek.ToString() == _DayName);
       }
 
       #if UNITY_EDITOR
       public override void DrawControls() {
-        day = (DayOfWeek)EditorGUILayout.EnumPopup("Day", day);
+        if (_Day.ToString() != _DayName) {
+          try {
+            _Day = (DayOfWeek)Enum.Parse(typeof(DayOfWeek), _DayName);
+          }
+          catch (ArgumentException) {
+            _Day = DayOfWeek.Sunday;
+          }
+        }
+        _Day = (DayOfWeek)EditorGUILayout.EnumPopup("Day", _Day);
+        _DayName = _Day.ToString();
       }
       #endif
     }

@@ -1,0 +1,43 @@
+{
+  "behaviorType": "PlayAnim",
+  "name": "demo_fearEdge",
+  "animName": "anim_keepAlive_blink_01",
+  "num_loops": 3,
+  "emotionScorers": [
+    {
+      "emotionType": "Excited",
+      "scoreGraph": {
+        "nodes": [
+          {
+            "x": -1.0,
+            "y": 0.5
+          },
+          {
+            "x": 1.0,
+            "y": 0.5
+          }
+        ]
+      },
+      "trackDelta": false
+    }
+  ],
+  "repetitionPenalty": {
+    "nodes": [
+      {
+        "x": 5.0,
+        "y": 0.0
+      },
+      {
+        "x": 10.0,
+        "y": 0.1
+      },
+      {
+        "x": 20.0,
+        "y": 1.0
+      }
+    ]
+  },
+  "behaviorGroups": [
+    "Demo"
+  ]
+}
