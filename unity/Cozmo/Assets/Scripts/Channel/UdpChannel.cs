@@ -833,9 +833,24 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
     }
     return null;
     #else
-    Debug.Log("IP address: " + Network.player.ipAddress);
-//    return IPAddress.Parse(Network.player.ipAddress);
-    return IPAddress.Parse("172.31.1.3");
+    int intIPAddress = 0;
+    using(var activityClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+    using(var contextClass = new AndroidJavaClass("android.content.Context")) 
+    {
+        string wifiString = contextClass.GetStatic<string>("WIFI_SERVICE");
+
+        using(var activityObject = activityClass.GetStatic<AndroidJavaObject>("currentActivity"))
+        using(var wifiManager = activityObject.Call<AndroidJavaObject>("getSystemService", wifiString))
+        using(var connectionInfo = wifiManager.Call<AndroidJavaObject>("getConnectionInfo"))
+        {
+          intIPAddress = connectionInfo.Call<int>("getIpAddress");
+        }
+    }
+
+    IPAddress ipAddress = new IPAddress(BitConverter.GetBytes(intIPAddress));
+    Debug.Log("WiFi IP address: " + ipAddress.ToString());
+ 
+    return ipAddress;
     #endif
   }
 
