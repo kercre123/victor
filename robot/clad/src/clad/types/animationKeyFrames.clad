@@ -1,6 +1,7 @@
 /** Clad message definitions for the messages sent from the WiFi to the engine.
  */
 
+#include "clad/types/animationEvents.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -82,7 +83,7 @@ namespace AnimKeyFrame {
 
   message Event
   {
-    uint_8 event_id
+    AnimEvent event_id
   }
 
   message EnableAnimTracks

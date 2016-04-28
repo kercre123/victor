@@ -15,6 +15,7 @@
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/types/nvStorage.clad"
 #include "clad/types/bleMessages.clad"
+#include "clad/types/animationEvents.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -63,8 +64,9 @@ message AnimationEnded
 
 message AnimationEvent
 {
-  uint_32 timestamp,
-  uint_8 event_id
+  uint_32   timestamp,
+  uint_8    tag,
+  AnimEvent event_id
 }
 
 message RobotAvailable

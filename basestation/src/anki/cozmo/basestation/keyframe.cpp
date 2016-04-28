@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "anki/cozmo/basestation/animations/animEventHelpers.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -460,8 +461,24 @@ return RESULT_FAIL; \
     
     Result EventKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
-      // Just store the event_id directly in the message.
-      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, event_id, streamMsg.event_id);
+      // Convert event_id string to AnimEvent enum
+      if (!jsonRoot.isMember("event_id")) {
+        PRINT_NAMED_WARNING("EventKeyFrame.NoEventIDFound", "");
+        return RESULT_FAIL;
+      } else {
+        if(jsonRoot["event_id"].isString()) {
+          const std::string& eventStr = jsonRoot["event_id"].asString();
+          AnimEvent e = AnimEventFromString(eventStr.c_str());
+          if (e == AnimEvent::Count) {
+            PRINT_NAMED_WARNING("EventKeyFrame.UnrecognizedEventName", "%s", eventStr.c_str());
+            return RESULT_FAIL;
+          }
+          _streamMsg.event_id = e;
+        } else {
+          PRINT_NAMED_WARNING("EventKeyFrame.EventIDNotString", "");
+          return RESULT_FAIL;
+        }
+      }
       
       return RESULT_OK;
     }

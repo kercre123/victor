@@ -679,11 +679,15 @@ namespace AnimationController {
 #               endif
 
               #ifdef TARGET_ESPRESSIF
+              msg.tag = RobotInterface::EngineToRobot::Tag_animEventToRTIP;
+              msg.animEventToRTIP.event_id = msg.animEvent.event_id;
+              msg.animEventToRTIP.tag = _currentTag;
               RTIP::SendMessage(msg);
               #else
               RobotInterface::AnimationEvent emsg;
               emsg.timestamp = HAL::GetTimeStamp();
               emsg.event_id = msg.animEvent.event_id;
+              emsg.tag = _currentTag;
               RobotInterface::SendMessage(emsg);
               #endif
               

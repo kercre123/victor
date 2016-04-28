@@ -99,8 +99,8 @@ namespace Anki {
           case RobotInterface::EngineToRobot::Tag_animLiftHeight:
             Process_animLiftHeight(msg.animLiftHeight);
             break;
-          case RobotInterface::EngineToRobot::Tag_animEvent:
-            Process_animEvent(msg.animEvent);
+          case RobotInterface::EngineToRobot::Tag_animEventToRTIP:
+            Process_animEventToRTIP(msg.animEventToRTIP);
             break;
 #else
             #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
@@ -685,9 +685,14 @@ namespace Anki {
       }
       void Process_animEvent(const Anki::Cozmo::AnimKeyFrame::Event& msg)
       {
+        // Handled on the Espressif
+      }
+      void Process_animEventToRTIP(const RobotInterface::AnimEventToRTIP& msg)
+      {
         RobotInterface::AnimationEvent emsg;
         emsg.timestamp = HAL::GetTimeStamp();
         emsg.event_id = msg.event_id;
+        emsg.tag = msg.tag;
         SendMessage(emsg);
       }
 #ifndef TARGET_K02

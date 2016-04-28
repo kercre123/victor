@@ -159,18 +159,16 @@ namespace Anki {
       auto eventLambda = [this](const AnkiEvent<RobotToEngine>& event)
       {
         RobotInterface::AnimationEvent payload = event.GetData().Get_animEvent();
-        
-        // TODO: How important is it to verify that this comes from the same animation that's playing?
-//        if(_startedPlaying && this->_animTag == payload.tag) {
+        if(_startedPlaying && this->_animTag == payload.tag) {
             PRINT_NAMED_INFO("PlayAnimation.AnimationEventHandler",
-                             "Event %d received at time %d while playing animation tag %d",
-                             payload.event_id, payload.timestamp, this->_animTag);
+                             "Event %s received at time %d while playing animation tag %d",
+                             EnumToString(payload.event_id), payload.timestamp, this->_animTag);
             
           ExternalInterface::AnimationEvent msg;
           msg.timestamp = payload.timestamp;
           msg.event_id = payload.event_id;
           _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationEvent>(std::move(msg));
-//        }
+        }
       };
       
       auto cancelLambda = [this](const AnkiEvent<MessageEngineToGame>& event)
