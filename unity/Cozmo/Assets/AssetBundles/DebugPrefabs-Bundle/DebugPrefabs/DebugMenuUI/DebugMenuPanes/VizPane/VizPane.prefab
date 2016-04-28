@@ -317,7 +317,7 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
-    m_FontSize: 28
+    m_FontSize: 36
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 0
@@ -328,7 +328,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'MemoryMapRender : ON'
+  m_Text: 'MemoryMap Render : ON'
 --- !u!114 &11492376
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -376,8 +376,8 @@ RectTransform:
   m_RootOrder: 3
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 592, y: 776}
-  m_SizeDelta: {x: 1000, y: 500}
+  m_AnchoredPosition: {x: 592, y: 736.33}
+  m_SizeDelta: {x: 1000, y: 450}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22443622
 RectTransform:
@@ -480,7 +480,7 @@ RectTransform:
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: -650, y: 600}
-  m_SizeDelta: {x: 640, y: 480}
+  m_SizeDelta: {x: 640, y: 360}
   m_Pivot: {x: 0, y: 0}
 --- !u!224 &22496404
 RectTransform:
