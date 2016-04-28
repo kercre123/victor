@@ -88,9 +88,9 @@ MonoBehaviour:
   _BetweenRoundMusic:
     _Music: 658369771
   DifficultySettings:
-  - DifficultyID: 1
+  - DifficultyID: 0
     Colors:
-    - {r: 1, g: 1, b: 0, a: 1}
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
     - {r: 0, g: 1, b: 0, a: 1}
     - {r: 0, g: 0, b: 1, a: 0}
     - {r: 1, g: 0, b: 1, a: 1}
@@ -107,9 +107,28 @@ MonoBehaviour:
         _Music: 0
       TimeBetweenHands: 750
       TimeHandDisplayed: 750
+  - DifficultyID: 1
+    Colors:
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
+    - {r: 0, g: 1, b: 0, a: 1}
+    - {r: 0, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0, b: 1, a: 1}
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1500
+      TimeHandDisplayed: 1500
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 1125
+      TimeHandDisplayed: 1125
+    - _MidRoundMusic:
+        _Music: 0
+      TimeBetweenHands: 750
+      TimeHandDisplayed: 750
   - DifficultyID: 2
     Colors:
-    - {r: 1, g: 1, b: 0, a: 1}
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
     - {r: 0, g: 1, b: 0, a: 1}
     - {r: 0, g: 0, b: 1, a: 1}
     - {r: 1, g: 0, b: 1, a: 1}
@@ -128,30 +147,10 @@ MonoBehaviour:
       TimeHandDisplayed: 750
   - DifficultyID: 3
     Colors:
-    - {r: 1, g: 1, b: 0, a: 1}
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
     - {r: 0, g: 1, b: 0, a: 1}
     - {r: 0, g: 0, b: 1, a: 1}
     - {r: 1, g: 0, b: 1, a: 1}
-    SpeedTapRoundSettings:
-    - _MidRoundMusic:
-        _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
-    - _MidRoundMusic:
-        _Music: 0
-      TimeBetweenHands: 1125
-      TimeHandDisplayed: 1125
-    - _MidRoundMusic:
-        _Music: 0
-      TimeBetweenHands: 750
-      TimeHandDisplayed: 750
-  - DifficultyID: 4
-    Colors:
-    - {r: 1, g: 1, b: 0, a: 1}
-    - {r: 0, g: 1, b: 0, a: 1}
-    - {r: 0, g: 0, b: 1, a: 1}
-    - {r: 1, g: 0, b: 1, a: 1}
-    - {r: 0, g: 1, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
