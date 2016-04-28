@@ -4,8 +4,8 @@ using Anki.Cozmo.Audio;
 
 namespace SpeedTap {
   public enum PointWinner {
-    COZMO,
-    PLAYER
+    Cozmo,
+    Player
   }
 
   public class SpeedTapHandReactToPoint : State {
@@ -29,7 +29,7 @@ namespace SpeedTap {
       Color[] winColors;
       LightCube winningBlock;
       LightCube losingBlock;
-      if (_CurrentWinner == PointWinner.PLAYER) {
+      if (_CurrentWinner == PointWinner.Player) {
         _SpeedTapGame.AddPlayerPoint();
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
         winColors = _SpeedTapGame.PlayerWinColors;
@@ -92,7 +92,7 @@ namespace SpeedTap {
     }
 
     private void ReactToHand() {
-      if (_CurrentWinner == PointWinner.PLAYER) {
+      if (_CurrentWinner == PointWinner.Player) {
         // TODO add event listener
         AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapHandLose, HandleHandEndAnimDone);
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapHandLose);
@@ -113,7 +113,7 @@ namespace SpeedTap {
 
       if (_SpeedTapGame.IsSessionComplete()) {
         _SpeedTapGame.UpdateUIForSessionEnd();
-        if (_CurrentWinner == PointWinner.PLAYER) {
+        if (_CurrentWinner == PointWinner.Player) {
           // TODO add event listener
           AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionLose, HandleSessionAnimDone);
           GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapSessionLose);
@@ -125,7 +125,7 @@ namespace SpeedTap {
         }
       }
       else {
-        if (_CurrentWinner == PointWinner.PLAYER) {
+        if (_CurrentWinner == PointWinner.Player) {
           // TODO add event listener
           AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundLose, HandleRoundEndAnimDone);
           GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapRoundLose);

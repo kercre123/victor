@@ -13,7 +13,7 @@ namespace SpeedTap {
     private bool _AnyTapRegistered;
 
     // TODO Change logic when animation keyframe is implemented
-    private float _kCozmoAnimationTapTime_sec = 0.5f;
+    private const float _kCozmoAnimationTapTime_sec = 0.5f;
     private float _StartTapAnimationTimestamp_sec;
 
     public override void Enter() {
@@ -50,7 +50,7 @@ namespace SpeedTap {
         // Move to react state with cozmo mistapping
         if (!_AnyTapRegistered) {
           _AnyTapRegistered = true;
-          _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.PLAYER, true));
+          _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Player, true));
         }
       }
 
@@ -75,7 +75,7 @@ namespace SpeedTap {
       // Move to react state with player mistapping
       if (!_AnyTapRegistered) {
         _AnyTapRegistered = true;
-        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.COZMO, true));
+        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Cozmo, true));
       }
     }
 

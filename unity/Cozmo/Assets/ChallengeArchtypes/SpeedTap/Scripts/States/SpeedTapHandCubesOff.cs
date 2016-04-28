@@ -9,8 +9,8 @@ namespace SpeedTap {
     private float _CubeOffStartTimestamp_sec;
     private float _OffDuration_sec;
 
-    private float _IdleDelayStartTimestamp_sec;
-    private float _IdleDelay_sec;
+    private float _PeekDelayStartTimestamp_sec;
+    private float _PeekDelay_sec;
 
     public override void Enter() {
       base.Enter();
@@ -22,8 +22,8 @@ namespace SpeedTap {
       _CubeOffStartTimestamp_sec = Time.time;
       _OffDuration_sec = _SpeedTapGame.GetLightsOffDurationSec();
 
-      _IdleDelayStartTimestamp_sec = float.MinValue;
-      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, HandleIdleAnimationEnd);
+      _PeekDelayStartTimestamp_sec = float.MinValue;
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, HandlePeekAnimationEnd);
       _SpeedTapGame.CheckForAdjust(HandleAdjustEnd);
 
       _SpeedTapGame.StartRoundMusic();
@@ -31,7 +31,7 @@ namespace SpeedTap {
 
     public override void Update() {
       base.Update();
-      UpdateIdleAnimation();
+      UpdatePeekAnimation();
       CheckExitCubeOffState();
     }
 
@@ -39,30 +39,30 @@ namespace SpeedTap {
       base.Exit();
 
       // Cancel animation callbacks if any
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, HandleIdleAnimationEnd);
-      _SpeedTapGame.CurrentRobot.CancelCallback(HandleIdleAnimationEnd);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, HandlePeekAnimationEnd);
+      _SpeedTapGame.CurrentRobot.CancelCallback(HandlePeekAnimationEnd);
       _SpeedTapGame.CurrentRobot.CancelCallback(HandleAdjustEnd);
     }
 
-    private void StartIdleAnimationCycle() {
+    private void StartPeekAnimationCycle() {
       // Figure out the next time we should peek
-      _IdleDelay_sec = 0.001f * UnityEngine.Random.Range(_SpeedTapGame.MinIdleIntervalMs, _SpeedTapGame.MaxIdleIntervalMs);
+      _PeekDelay_sec = 0.001f * UnityEngine.Random.Range(_SpeedTapGame.MinIdleIntervalMs, _SpeedTapGame.MaxIdleIntervalMs);
         
       // Reset peek timer
-      _IdleDelayStartTimestamp_sec = Time.time;
+      _PeekDelayStartTimestamp_sec = Time.time;
     }
 
-    private void UpdateIdleAnimation() {
+    private void UpdatePeekAnimation() {
       // After a delay, trigger a peek animation
-      if (_IdleDelayStartTimestamp_sec != float.MinValue
-          && (Time.time - _IdleDelayStartTimestamp_sec) > _IdleDelay_sec) {
+      if (_PeekDelayStartTimestamp_sec != float.MinValue
+          && (Time.time - _PeekDelayStartTimestamp_sec) > _PeekDelay_sec) {
         // Don't send another peek animation
-        _IdleDelayStartTimestamp_sec = float.MinValue;
+        _PeekDelayStartTimestamp_sec = float.MinValue;
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapIdle);
       }
     }
 
-    private void HandleIdleAnimationEnd(bool success) {
+    private void HandlePeekAnimationEnd(bool success) {
       _SpeedTapGame.CheckForAdjust(HandleAdjustEnd);
     }
 
@@ -70,7 +70,7 @@ namespace SpeedTap {
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _CurrentRobot.SetLiftHeight(1.0f);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
-      StartIdleAnimationCycle();
+      StartPeekAnimationCycle();
     }
 
     private void CheckExitCubeOffState() {

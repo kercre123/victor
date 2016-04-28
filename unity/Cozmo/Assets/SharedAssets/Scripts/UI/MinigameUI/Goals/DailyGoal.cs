@@ -89,11 +89,9 @@ namespace Cozmo {
       }
 
       public bool CanProg() {
-        if (ProgConditions != null) {
-          for (int i = 0; i < ProgConditions.Count; i++) {
-            if (ProgConditions[i].ConditionMet() == false) {
-              return false;
-            }
+        for (int i = 0; i < ProgConditions.Count; i++) {
+          if (ProgConditions[i].ConditionMet() == false) {
+            return false;
           }
         }
         return true;
