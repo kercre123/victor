@@ -46,14 +46,19 @@ k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
 k02_fix:
-	python3 ./tools/boot_header.py ./build/41/robot.out
+	python3 ./tools/boot_header.py ./build/app/robot.axf
 
 nrf_fix:
 	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
 
 release: k02_fix nrf_fix
-	python3 ./tools/sign.py rtip:./build/41/robot.out body:./syscon/build/app/syscon.axf ./releases/rtip.safe
+	cp ./syscon/build/app/syscon.axf ./releases
+	cp ./build/app/robot.axf ./releases
+	python3 ./tools/sign.py rtip:./build/app/robot.axf body:./syscon/build/app/syscon.axf ./releases/rtip.safe
 	cp ./espressif/bin/upgrade/user1.2048.new.3.bin releases/esp.user.bin
+
+kevin:
+	python3 ./tools/sign.py rtip:./build/app/robot.axf body:./releases/syscon.axf ./releases/rtip.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"
