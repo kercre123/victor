@@ -121,6 +121,8 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
 	drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
 }
 
+typedef void (*irq_handler)(void);
+
 void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
   /*
   static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
@@ -145,10 +147,12 @@ void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
   UART0_C2 = 0;
   UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
 
-  // Fire the SVC handler in the boot-loader
-  __enable_irq();
+  // Fire the SVC handler in the boot-loader force the SVC to have a high priority because otherwise this will fault
+  irq_handler call = (irq_handler) *(uint32_t*) 0x2C;
+  
   SCB->VTOR = 0;
-  __asm { SVC 0 };
+  __enable_irq();
+  call();
 };
 
 extern "C"
