@@ -71,7 +71,7 @@ static bool ProcessDrop(void) {
         // Handle OTA related messages here rather than in message dispatch loop so it's harder to break
         case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_bootloadRTIP:
         {
-          SPI::EnterOTAMode();
+          SPI::EnterRecoveryMode();
           break;
         }
         default:
@@ -121,8 +121,7 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
 	drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
 }
 
-typedef void (*irq_handler)(void);
-
+// This is Thors hammer.  Forces recovery mode
 void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
   static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
   static const uint32_t recovery_value = 0xCAFEBABE;
@@ -131,6 +130,7 @@ void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
   NVIC_SystemReset();
 }
 
+// This is the nice version, leave espressif synced and running
 void Anki::Cozmo::HAL::SPI::EnterOTAMode(void) {
   // Disable watchdog
   __disable_irq();
@@ -148,10 +148,9 @@ void Anki::Cozmo::HAL::SPI::EnterOTAMode(void) {
   UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
 
   // Fire the SVC handler in the boot-loader force the SVC to have a high priority because otherwise this will fault
-  irq_handler call = (irq_handler) *(uint32_t*) 0x2C;
+  void (* const call)(void) = (void (* const)(void)) (*(uint32_t*) 0x2C);
   
   SCB->VTOR = 0;
-  __enable_irq();
   call();
 };
 
