@@ -212,7 +212,7 @@ void EnterRecovery() {
   // just tell the body to pause until that finishes
   // NOTE: We don't start the espressif if it's already running
   
-  if (GPIO_POWEREN->PDDR & PIN_POWEREN) {
+  if (~GPIO_POWEREN->PDDR & PIN_POWEREN) {
     UART::writeByte(COMMAND_PAUSE);
     Power::enableEspressif();
     SPI::init();
