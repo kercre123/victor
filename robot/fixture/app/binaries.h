@@ -6,6 +6,7 @@
 extern "C" {
   // Cube firmware
   extern const uint8_t g_Cube[], g_CubeEnd[];
+  extern const uint8_t g_CubeFCC[], g_CubeFCCEnd[];
 
   // nRF51 firmware (boot and app)
   extern const uint8_t g_BodyBLE[], g_BodyBLEEnd[];

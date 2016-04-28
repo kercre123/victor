@@ -109,6 +109,8 @@ void SetFixtureText(void)
     DisplayBigCenteredText("CUBE 2");
   } else if (g_fixtureType == FIXTURE_CUBE3_TEST) {    
     DisplayBigCenteredText("CUBE 3");
+  } else if (g_fixtureType == FIXTURE_CUBEFCC_TEST) {    
+    DisplayBigCenteredText("CUBEFCC");
   } else if (g_fixtureType == FIXTURE_HEAD_TEST) {    
     DisplayBigCenteredText("HEAD");  
   } else if (g_fixtureType == FIXTURE_BODY_TEST) {    
@@ -173,6 +175,7 @@ bool DetectDevice(void)
     case FIXTURE_CUBE1_TEST:
     case FIXTURE_CUBE2_TEST:
     case FIXTURE_CUBE3_TEST:
+    case FIXTURE_CUBEFCC_TEST:
       return CubeDetect();
     case FIXTURE_HEAD_TEST:
       return HeadDetect();
@@ -400,7 +403,8 @@ static void MainExecution()
     case FIXTURE_CHARGER_TEST:
     case FIXTURE_CUBE1_TEST:
     case FIXTURE_CUBE2_TEST:
-    case FIXTURE_CUBE3_TEST:      
+    case FIXTURE_CUBE3_TEST:   
+    case FIXTURE_CUBEFCC_TEST:         
       m_functions = GetCubeTestFunctions();
       break;
     case FIXTURE_BODY_TEST:

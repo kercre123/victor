@@ -12,6 +12,12 @@ g_Cube
   INCBIN releases\\cube31.bin
 g_CubeEnd
 
+  ALIGN
+  EXPORT g_CubeFCC
+  EXPORT g_CubeFCCEnd
+g_CubeFCC
+  INCBIN releases\\cube31-fcc.bin
+g_CubeFCCEnd
 
   ALIGN
   EXPORT g_Body

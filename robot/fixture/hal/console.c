@@ -268,6 +268,8 @@ static void SetMode(void)
     g_fixtureType = FIXTURE_CUBE2_TEST;
   } else if (!strcasecmp(arg, "cube3")) {
     g_fixtureType = FIXTURE_CUBE3_TEST;
+  } else if (!strcasecmp(arg, "cubefcc")) {
+    g_fixtureType = FIXTURE_CUBEFCC_TEST;
   } else if (!strcasecmp(arg, "debug")) {
     g_fixtureType = FIXTURE_DEBUG;
   } else {

@@ -274,7 +274,10 @@ void ProgramCube(void) {
   GPIO_SetBits(GPIOC, GPIO_Pin_5);  // #Reset
   MicroWait(100000);
 
-  LoadRom(g_Cube, g_CubeEnd - g_Cube);
+  if (g_fixtureType == FIXTURE_CUBEFCC_TEST)
+    LoadRom(g_CubeFCC, g_CubeFCCEnd - g_CubeFCC); // FCC cube firmware
+  else
+    LoadRom(g_Cube, g_CubeEnd - g_Cube);          // Standard cube firmware
 
   // Check serial number from (possibly) last time
   // We don't want to reserialize the same block
