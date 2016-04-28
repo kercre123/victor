@@ -146,7 +146,7 @@ void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
   UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
 
   // Fire the SVC handler in the boot-loader
-  __enable_irq();  
+  __enable_irq();
   SCB->VTOR = 0;
   __asm { SVC 0 };
 };

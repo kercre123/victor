@@ -162,22 +162,6 @@
           <ExecCommand></ExecCommand>
           <Expression>\\robot\k02_hal/startup/startup_MK02F12810.s\202</Expression>
         </Bp>
-        <Bp>
-          <Number>1</Number>
-          <Type>0</Type>
-          <LineNumber>146</LineNumber>
-          <EnabledFlag>1</EnabledFlag>
-          <Address>37416</Address>
-          <ByteObject>0</ByteObject>
-          <HtxType>0</HtxType>
-          <ManyObjects>0</ManyObjects>
-          <SizeOfObject>0</SizeOfObject>
-          <BreakByAccess>0</BreakByAccess>
-          <BreakIfRCount>1</BreakIfRCount>
-          <Filename>.\k02_hal\hal\spi.cpp</Filename>
-          <ExecCommand></ExecCommand>
-          <Expression>\\robot\k02_hal/hal/spi.cpp\146</Expression>
-        </Bp>
       </Breakpoint>
       <WatchWindow1>
         <Ww>
