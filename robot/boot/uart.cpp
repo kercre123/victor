@@ -44,10 +44,6 @@ void Anki::Cozmo::HAL::UART::init(void) {
 
   PORTD_PCR6 = PORT_PCR_MUX(3);
   PORTD_PCR7 = PORT_PCR_MUX(3);
-
-  UART0_S1 = UART0_S1;
-
-  transmit_mode(TRANSMIT_RECEIVE);
 }
 
 void Anki::Cozmo::HAL::UART::shutdown(void) {
@@ -108,6 +104,7 @@ void Anki::Cozmo::HAL::UART::write(const void* p, int length) {
 
 void Anki::Cozmo::HAL::UART::flush(void) {
   UART0->CFIFO |= UART_CFIFO_RXFLUSH_MASK;
+  UART0_S1 = UART0_S1;
 }
 
 void Anki::Cozmo::HAL::UART::receive(void) {

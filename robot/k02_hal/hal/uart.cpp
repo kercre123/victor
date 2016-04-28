@@ -47,8 +47,6 @@ inline void transmit_mode(TRANSFER_MODE mode) {
       Anki::Cozmo::HAL::Spine::Dequeue(&(g_dataToBody.cladBuffer));
       memcpy(txRxBuffer, &g_dataToBody, sizeof(GlobalDataToBody));
 
-      PORTD_PCR6 = PORT_PCR_MUX(0);
-      PORTD_PCR7 = PORT_PCR_MUX(3);
       UART0_C2 = UART_C2_TE_MASK;
      
       txRxIndex = 0;
@@ -56,8 +54,6 @@ inline void transmit_mode(TRANSFER_MODE mode) {
     }
     case TRANSMIT_RECEIVE:
     {
-      PORTD_PCR6 = PORT_PCR_MUX(3);
-      PORTD_PCR7 = PORT_PCR_MUX(0);
       UART0_C2 = UART_C2_RE_MASK;
       
       txRxIndex = 4;
@@ -115,6 +111,9 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
 
       UART0_PFIFO = UART_PFIFO_TXFE_MASK | UART_PFIFO_TXFIFOSIZE(2) | UART_PFIFO_RXFE_MASK | UART_PFIFO_RXFIFOSIZE(2) ;
       UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
+
+      PORTD_PCR6 = PORT_PCR_MUX(3);
+      PORTD_PCR7 = PORT_PCR_MUX(3);
 
       transmit_mode(TRANSMIT_RECEIVE);
       break ;

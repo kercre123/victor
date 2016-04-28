@@ -71,7 +71,7 @@ static bool ProcessDrop(void) {
         // Handle OTA related messages here rather than in message dispatch loop so it's harder to break
         case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_bootloadRTIP:
         {
-          SPI::EnterRecoveryMode();
+          SPI::EnterOTAMode();
           break;
         }
         default:
@@ -121,12 +121,38 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
 	drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
 }
 
+typedef void (*irq_handler)(void);
+
 void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
   static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
   static const uint32_t recovery_value = 0xCAFEBABE;
 
   *recovery_word = recovery_value;
   NVIC_SystemReset();
+}
+
+void Anki::Cozmo::HAL::SPI::EnterOTAMode(void) {
+  // Disable watchdog
+  __disable_irq();
+  WDOG_UNLOCK = 0xC520;
+  WDOG_UNLOCK = 0xD928;
+  WDOG_STCTRLH = 0;
+
+  // Start turning the lights off of all the things we will no longer be using
+  SIM_SCGC6 &= ~(SIM_SCGC6_DMAMUX_MASK | SIM_SCGC6_FTM1_MASK | SIM_SCGC6_FTM2_MASK | SIM_SCGC6_PDB_MASK | SIM_SCGC6_DAC0_MASK);
+  SIM_SCGC7 &= ~SIM_SCGC7_DMA_MASK;
+  SIM_SCGC4 &= ~SIM_SCGC4_I2C0_MASK;
+  
+  // Flush our UART, and set it to idle
+  UART0_C2 = 0;
+  UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
+
+  // Fire the SVC handler in the boot-loader force the SVC to have a high priority because otherwise this will fault
+  irq_handler call = (irq_handler) *(uint32_t*) 0x2C;
+  
+  SCB->VTOR = 0;
+  __enable_irq();
+  call();
 };
 
 extern "C"

@@ -47,8 +47,8 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\41\</OutputDirectory>
-          <OutputName>robot.out</OutputName>
+          <OutputDirectory>.\build\app\</OutputDirectory>
+          <OutputName>robot</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>

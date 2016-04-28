@@ -195,13 +195,14 @@ static void SyncToBody(void) {
 
 void EnterRecovery() {  
   // Pin to our body
+  UART::receive();
   SyncToBody();
 
   // These are the requirements to boot immediately into the application
   // if any test fails, the robot will not exit recovery mode
   bool recovery_force = *recovery_word != recovery_value;
-  bool remove_boot_ok = SendBodyCommand(COMMAND_BOOT_READY);
-  bool boot_ok = recovery_force && CheckBootReady() && remove_boot_ok;
+  bool remote_boot_ok = SendBodyCommand(COMMAND_BOOT_READY);
+  bool boot_ok = recovery_force && CheckBootReady() && remote_boot_ok;
 
   // If the body says it's safe, feel free to exit
   if (boot_ok && SendBodyCommand(COMMAND_DONE)) {
