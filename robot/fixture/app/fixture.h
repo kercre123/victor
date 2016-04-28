@@ -2,6 +2,7 @@
 #ifndef FIXTURE_H
 #define FIXTURE_H
 
+#define FIXTURE_CUBEFCC_TEST  13    // ID 4 + 3 + 1
 #define FIXTURE_CUBE3_TEST    7     // ID 3 + 2 + 1
 #define FIXTURE_CUBE2_TEST    6     // ID 3 + 2
 #define FIXTURE_CUBE1_TEST    5     // ID 3 + 1
@@ -14,7 +15,7 @@
 
 typedef unsigned char FixtureType;
 #define FIXTURE_TYPES { "NO ID", "BODY", "HEAD", "?", "CHARGE", "CUBE 1", "CUBE 2", "CUBE 3", \
-                        "?", "?", "?", "?",  "?", "?", "?", "?", "DEBUG" }
+                        "?", "?", "?", "?",  "?", "CUBEFCC", "?", "?", "DEBUG" }
 
 extern char g_lotCode[15];
 extern u32 g_time;

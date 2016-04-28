@@ -274,7 +274,7 @@ void ProgramCube(void) {
   GPIO_SetBits(GPIOC, GPIO_Pin_5);  // #Reset
   MicroWait(100000);
 
-  LoadRom(g_Cube, g_CubeEnd - g_Cube);
+  else
 
   // Check serial number from (possibly) last time
   // We don't want to reserialize the same block
