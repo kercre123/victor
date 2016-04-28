@@ -11,6 +11,10 @@ namespace SpeedTap {
     private bool _IsCozmoMoving;
     private bool _AnyTapRegistered;
 
+    // TODO Change logic when animation keyframe is implemented
+    private float _kCozmoAnimationTapTime_sec = 0.5f;
+    private float _StartTapAnimationTimestamp_sec;
+
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
@@ -19,6 +23,7 @@ namespace SpeedTap {
       _CozmoMovementDelay_sec = 0.001f * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
       _IsCozmoMoving = false;
       _AnyTapRegistered = false;
+      _StartTapAnimationTimestamp_sec = float.MinValue;
 
       // Set lights on cubes
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
@@ -35,24 +40,22 @@ namespace SpeedTap {
       float secondsElapsed = Time.time - _StartTimestamp_sec;
       if (!_IsCozmoMoving && secondsElapsed > _CozmoMovementDelay_sec) {
         _IsCozmoMoving = true;
-        AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, HandleCozmoTapAnimationEnd);
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
+        _StartTapAnimationTimestamp_sec = Time.time;
+      }
+      else if (_IsCozmoMoving && (Time.time - _StartTapAnimationTimestamp_sec) > _kCozmoAnimationTapTime_sec) {
+        // TODO Change logic when animation keyframe is implemented
+        // Move to react state with cozmo mistapping
+        if (!_AnyTapRegistered) {
+          _AnyTapRegistered = true;
+          _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.COZMO, false));
+        }
       }
     }
 
     public override void Exit() {
       base.Exit();
       _SpeedTapGame.PlayerTappedBlockEvent -= HandlePlayerTap;
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, HandleCozmoTapAnimationEnd);
-    }
-
-    private void HandleCozmoTapAnimationEnd(bool success) {
-      // TODO Change logic when animation keyframe is implemented
-      // Move to react state with cozmo mistapping
-      if (!_AnyTapRegistered) {
-        _AnyTapRegistered = true;
-        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.COZMO, false));
-      }
     }
 
     private void HandlePlayerTap() {
