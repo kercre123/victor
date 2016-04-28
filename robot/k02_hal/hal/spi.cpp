@@ -71,7 +71,7 @@ static bool ProcessDrop(void) {
         // Handle OTA related messages here rather than in message dispatch loop so it's harder to break
         case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_bootloadRTIP:
         {
-          SPI::EnterRecoveryMode();
+          SPI::EnterOTAMode();
           break;
         }
         default:
@@ -124,14 +124,14 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
 typedef void (*irq_handler)(void);
 
 void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
-  /*
   static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
   static const uint32_t recovery_value = 0xCAFEBABE;
 
   *recovery_word = recovery_value;
   NVIC_SystemReset();
-  */
+}
 
+void Anki::Cozmo::HAL::SPI::EnterOTAMode(void) {
   // Disable watchdog
   __disable_irq();
   WDOG_UNLOCK = 0xC520;
