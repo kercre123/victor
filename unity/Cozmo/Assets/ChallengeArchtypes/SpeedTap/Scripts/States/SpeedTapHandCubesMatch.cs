@@ -9,14 +9,16 @@ namespace SpeedTap {
     private float _CozmoMovementDelay_sec;
     private float _StartTimestamp_sec;
     private bool _IsCozmoMoving;
+    private bool _AnyTapRegistered;
 
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
 
       _StartTimestamp_sec = Time.time;
-      _CozmoMovementDelay_sec = 1000f * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
+      _CozmoMovementDelay_sec = 0.001f * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
       _IsCozmoMoving = false;
+      _AnyTapRegistered = false;
 
       // Set lights on cubes
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
@@ -30,7 +32,7 @@ namespace SpeedTap {
       base.Update();
 
       // Check to tap after some time
-      float secondsElapsed = _StartTimestamp_sec - Time.time;
+      float secondsElapsed = Time.time - _StartTimestamp_sec;
       if (!_IsCozmoMoving && secondsElapsed > _CozmoMovementDelay_sec) {
         _IsCozmoMoving = true;
         AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, HandleCozmoTapAnimationEnd);
@@ -47,12 +49,18 @@ namespace SpeedTap {
     private void HandleCozmoTapAnimationEnd(bool success) {
       // TODO Change logic when animation keyframe is implemented
       // Move to react state with cozmo mistapping
-      _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.COZMO, false));
+      if (!_AnyTapRegistered) {
+        _AnyTapRegistered = true;
+        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.COZMO, false));
+      }
     }
 
     private void HandlePlayerTap() {
       // Move to react state with player mistapping
-      _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.PLAYER, false));
+      if (!_AnyTapRegistered) {
+        _AnyTapRegistered = true;
+        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.PLAYER, false));
+      }
     }
   }
 }

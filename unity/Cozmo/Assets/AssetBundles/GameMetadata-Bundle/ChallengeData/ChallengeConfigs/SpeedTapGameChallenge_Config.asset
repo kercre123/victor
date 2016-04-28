@@ -97,16 +97,16 @@ MonoBehaviour:
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1125
-      TimeHandDisplayed: 1125
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 750
-      TimeHandDisplayed: 750
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
   - DifficultyID: 1
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -116,16 +116,16 @@ MonoBehaviour:
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1125
-      TimeHandDisplayed: 1125
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 750
-      TimeHandDisplayed: 750
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
   - DifficultyID: 2
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -135,16 +135,16 @@ MonoBehaviour:
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1125
-      TimeHandDisplayed: 1125
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 750
-      TimeHandDisplayed: 750
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
   - DifficultyID: 3
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -154,13 +154,13 @@ MonoBehaviour:
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1125
-      TimeHandDisplayed: 1125
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 750
-      TimeHandDisplayed: 750
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
