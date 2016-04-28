@@ -32,11 +32,6 @@ namespace SpeedTap {
       _SpeedTapGame.StartCycleCube(_SpeedTapGame.CozmoBlock, 
         Cozmo.CubePalette.TapMeColor.lightColors, 
         Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
-      
-      // Just hold on this state if all rounds are over.
-      if (_SpeedTapGame.AllRoundsOver) {
-        return;
-      }
 
       _SpeedTapGame.ShowWaitForCozmoSlide();
       _GotoObjectComplete = false;
