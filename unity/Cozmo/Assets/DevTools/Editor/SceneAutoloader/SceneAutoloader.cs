@@ -14,10 +14,10 @@ using UnityEditor;
 /// http://forum.unity3d.com/threads/157502-Executing-first-scene-in-build-settings-when-pressing-play-button-in-editor
 /// </description>
 [InitializeOnLoad]
-static class SceneAutoLoader {
+static class SceneAutoloader {
   // Static constructor binds a playmode-changed callback.
   // [InitializeOnLoad] above makes sure this gets executed.
-  static SceneAutoLoader() {
+  static SceneAutoloader() {
     EditorApplication.playmodeStateChanged += OnPlayModeChanged;
   }
 
