@@ -195,6 +195,7 @@ static void SyncToBody(void) {
 
 void EnterRecovery() {  
   // Pin to our body
+  UART::receive();
   SyncToBody();
 
   // These are the requirements to boot immediately into the application
