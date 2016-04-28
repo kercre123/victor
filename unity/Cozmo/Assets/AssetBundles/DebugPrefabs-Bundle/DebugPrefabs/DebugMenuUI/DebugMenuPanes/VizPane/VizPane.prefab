@@ -12,7 +12,7 @@ GameObject:
   - 114: {fileID: 11424050}
   - 114: {fileID: 11419514}
   m_Layer: 5
-  m_Name: ToggleMap
+  m_Name: MMToggleButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,7 +46,7 @@ GameObject:
   - 222: {fileID: 22298610}
   - 114: {fileID: 11487116}
   m_Layer: 5
-  m_Name: Text
+  m_Name: MMText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -281,6 +281,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _InfoLabel: {fileID: 11413540}
+  _MemoryMapToggleText: {fileID: 11487116}
+  _MemoryMapToggleButton: {fileID: 11419514}
 --- !u!114 &11487062
 MonoBehaviour:
   m_ObjectHideFlags: 1
