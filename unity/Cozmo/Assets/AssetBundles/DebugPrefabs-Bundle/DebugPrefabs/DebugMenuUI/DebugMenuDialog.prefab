@@ -406,6 +406,8 @@ MonoBehaviour:
     panePrefab: {fileID: 179320, guid: 4682347e280f4412b81e3ee61f2e7a6c, type: 2}
   - name: Inventory
     panePrefab: {fileID: 149194, guid: 440942ce90caf4e13b4f07a870587f1b, type: 2}
+  - name: DailyGoal
+    panePrefab: {fileID: 149194, guid: 440942ce90caf4e13b4f07a870587f1b, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
   _TabContainer: {fileID: 188218}
   _ContentPaneContainer: {fileID: 121806}
@@ -700,7 +702,7 @@ Prefab:
       objectReference: {fileID: 149194, guid: 440942ce90caf4e13b4f07a870587f1b, type: 2}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[15].name
-      value: Inventory
+      value: DailyGoal
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[15].panePrefab
