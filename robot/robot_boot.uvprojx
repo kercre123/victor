@@ -47,14 +47,14 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\</OutputDirectory>
+          <OutputDirectory>.\build\boot\</OutputDirectory>
           <OutputName>robot_boot</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\build\</ListingPath>
+          <ListingPath>.\build\boot\</ListingPath>
           <HexFormatSelection>0</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -158,7 +158,7 @@
             <ldmm>1</ldmm>
             <ldXref>1</ldXref>
             <BigEnd>0</BigEnd>
-            <AdsALst>0</AdsALst>
+            <AdsALst>1</AdsALst>
             <AdsACrf>0</AdsACrf>
             <AdsANop>0</AdsANop>
             <AdsANot>0</AdsANot>
@@ -171,7 +171,7 @@
             <AdsLsun>1</AdsLsun>
             <AdsLven>1</AdsLven>
             <AdsLsxf>1</AdsLsxf>
-            <RvctClst>0</RvctClst>
+            <RvctClst>1</RvctClst>
             <GenPPlst>0</GenPPlst>
             <AdsCpuType>"Cortex-M4"</AdsCpuType>
             <RvctDeviceName></RvctDeviceName>
@@ -208,7 +208,7 @@
             <Ra2Chk>0</Ra2Chk>
             <Ra3Chk>0</Ra3Chk>
             <Im1Chk>1</Im1Chk>
-            <Im2Chk>1</Im2Chk>
+            <Im2Chk>0</Im2Chk>
             <OnChipMemories>
               <Ocm1>
                 <Type>0</Type>
@@ -297,13 +297,13 @@
               </OCR_RVCT8>
               <OCR_RVCT9>
                 <Type>0</Type>
-                <StartAddress>0x20000000</StartAddress>
-                <Size>0x1ff0</Size>
+                <StartAddress>0x1fffe000</StartAddress>
+                <Size>0x3ff0</Size>
               </OCR_RVCT9>
               <OCR_RVCT10>
                 <Type>0</Type>
-                <StartAddress>0x1fffe000</StartAddress>
-                <Size>0x2000</Size>
+                <StartAddress>0x0</StartAddress>
+                <Size>0x0</Size>
               </OCR_RVCT10>
             </OnChipMemories>
             <RvctStartVector></RvctStartVector>
@@ -364,7 +364,7 @@
             <TextAddressRange>0x00000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile>.\scatter.scf</ScatterFile>
+            <ScatterFile>.\boot\boot.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
             <Misc>--remove 
@@ -394,16 +394,6 @@
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\boot\main.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>power.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\boot\power.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>recovery.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\boot\recovery.cpp</FilePath>
               <FileOption>
                 <CommonProperty>
                   <UseCPPCompiler>2</UseCPPCompiler>
@@ -451,6 +441,16 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>power.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\boot\power.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>recovery.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\boot\recovery.cpp</FilePath>
             </File>
             <File>
               <FileName>spi.cpp</FileName>

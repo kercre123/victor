@@ -148,8 +148,12 @@ UsageFault_Handler\
                 ENDP
 SVC_Handler\
                 PROC
-                EXPORT  SVC_Handler         [WEAK]
-                B       .
+                IMPORT   OTA_EntryPoint
+
+                CPSID   I                       ; Mask interrupts
+                LDR     sp, =__Vectors          ; Setup our initial SP
+                LDR     R0, =OTA_EntryPoint
+                BX      R0
                 ENDP
 DebugMon_Handler\
                 PROC

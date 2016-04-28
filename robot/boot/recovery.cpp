@@ -8,13 +8,12 @@
 #include "spi.h"
 #include "power.h"
 
+#include "portable.h"
+#include "../../k02_hal/hal/hardware.h"
+
 using namespace Anki::Cozmo::HAL;
 
 extern bool CheckSig(void);
-
-static const int FLASH_BLOCK_SIZE = 0x800;
-static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
-static const uint32_t recovery_value = 0xCAFEBABE;
 
 static union {
   FirmwareBlock packet;
@@ -29,9 +28,6 @@ static inline commandWord WaitForWord(void) {
   return ret;
 }
 
-extern int counterVolume;
-int counterVolume = 0;
-
 int SendCommand()
 {
   const int FSTAT_ERROR = FTFA_FSTAT_FPVIOL_MASK | FTFA_FSTAT_ACCERR_MASK | FTFA_FSTAT_FPVIOL_MASK;
@@ -42,7 +38,7 @@ int SendCommand()
 
   // Start flash command (and wait for completion)
   FTFA->FSTAT = FTFA_FSTAT_CCIF_MASK;
-  while (FTFA_FSTAT_CCIF_MASK & ~FTFA->FSTAT) counterVolume++;
+  while (FTFA_FSTAT_CCIF_MASK & ~FTFA->FSTAT) ;
 
   // Return if there was an error
   return FTFA->FSTAT & FSTAT_ERROR;
@@ -140,7 +136,7 @@ void ClearEvilWord(void) {
 
 static inline void SetChannelBlink(int channel) {
   // This is the color for the blink pattern
-  static int color = 0x2;
+  static int color = 0;
   color = (color + 2) % 7;
 
   SetLight((channel << 3) | color);
@@ -214,11 +210,14 @@ void EnterRecovery() {
 
   // We know that booting the espressif will take awhile, so we should
   // just tell the body to pause until that finishes
-  // XXX: We can restore this once we have a way to make fixtures keep Espressif powered
-  UART::writeByte(COMMAND_PAUSE);
-  Power::enableEspressif();
-  SPI::init();
-  UART::writeByte(COMMAND_RESUME);
+  // NOTE: We don't start the espressif if it's already running
+  
+  if (GPIO_POWEREN->PDDR & PIN_POWEREN) {
+    UART::writeByte(COMMAND_PAUSE);
+    Power::enableEspressif();
+    SPI::init();
+    UART::writeByte(COMMAND_RESUME);
+  }
 
   // We are now ready to start receiving commands
   SPI0_PUSHR_SLAVE = STATE_IDLE;
@@ -257,6 +256,7 @@ void EnterRecovery() {
 
         *recovery_word = 0;
         SPI0_PUSHR_SLAVE = STATE_IDLE;
+
         return ;
      
       case COMMAND_CHECK_SIG:

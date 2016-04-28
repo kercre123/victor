@@ -9,7 +9,28 @@
 #include "recovery.h"
 #include "MK02F12810.h"
 
+// Setup a vector for entering recovery mode / OTA mode
+// NOTE: THIS REQUIRES THAT THE UART BE CONFIGURED AND 
+// THAT SPI BE SYNCED AND SET TO SLAVE MODE!
+
+// ALL NON-CRITICIAL SYSTEMS SHOULD BE SHUT DOWN TO PREVENT
+// THE SYSTEM FROM GOING NUCLEAR.
+
+// NOTE: MEMORY WILL BE ZEROED AT THIS ENTRY POINT
+
+extern "C" uint32_t __Vectors;
+
 // This is the remote entry point recovery mode
+extern "C" void OTA_EntryPoint (void) {
+  // Simple startup routine
+  SCB->VTOR = __Vectors;
+  memset((void*)0x1FFFE000, 0, 0x4000);
+  
+  *recovery_word = recovery_value;
+  EnterRecovery();
+  NVIC_SystemReset();
+}
+
 int main (void) {
   using namespace Anki::Cozmo::HAL;
 

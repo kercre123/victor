@@ -32,21 +32,22 @@ void MicroWait(uint32_t us)
 
 // Get the number of microseconds since boot
 uint32_t GetMicroCounter(void)
-{
+{ 
   // The code below turns the 24-bit core clock into a 32-bit microsecond timer
-  static uint16_t high = 0;	// Supply the missing high bits
-  static uint16_t last = 0;	// Last read of SysTick/US_DIVISOR
-  
+  static uint16_t high = 0; // Supply the missing high bits
+  static uint16_t last = 0; // Last read of SysTick/US_DIVISOR
+
   // NOTE:  This must be interrupt-safe, so take care below
   __disable_irq();
   uint32_t now = ((uint64_t)(MAX_COUNT - SysTick->VAL) * SYSTICK_RECIP) >> 32;
   
-  if (now < last)				// Each time we wrap the low part, increase the high part by 1
-    high++;	
+  if (now < last)       // Each time we wrap the low part, increase the high part by 1
+    high++;
   
   last = now;
   now |= (high << 16);
-  __enable_irq();
   
+  __enable_irq();
+
   return now;
 }
