@@ -162,7 +162,8 @@ namespace Cozmo {
     
       if (sendRes < 0)
       {
-        PRINT_NAMED_WARNING("MultiClientComms.RealSend.SendFailed", "destId: %d, socket %d, sendRes = %d", p.destId, udpClient->GetSocketFd(), sendRes);
+        PRINT_NAMED_WARNING("MultiClientComms.RealSend.SendFailed", "destId: %d, socket %d, sendRes = %d (errno = %d '%s')",
+                            p.destId, udpClient->GetSocketFd(), sendRes, errno, strerror(errno));
       }
       
       return sendRes;
