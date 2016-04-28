@@ -11,6 +11,10 @@ public class HexMap {
     _Map = map;
   }
 
+  public Dictionary<Coord, PuzzlePiece> GetOccupancyMap() {
+    return _OccupancyMap;
+  }
+
   // tries to remove the PuzzlePiece at mapCoord. returns true if a piece was successfully removed.
   // returns false if mapCoord was an available cell.
   public bool TryRemove(Coord mapCoord, out PuzzlePiece removedPiece) {

@@ -29,10 +29,29 @@ public class HexPuzzleView : BaseView {
     _HexMap = new HexMap();
     _HexMap.Initialize(mapHexSet);
 
+    // draws the current map slots
     _MapDrawer.Initialize(mapHexSet, _MapColor);
+
+    DrawOccupiedMapSlots();
 
     InitializeInventoryButtons();
 
+  }
+
+  private void DrawOccupiedMapSlots() {
+    ClearOccupiedMapSlots();
+    Dictionary<Coord, PuzzlePiece> occupancyMap = _HexMap.GetOccupancyMap();
+    foreach (KeyValuePair<Coord, PuzzlePiece> kvp in occupancyMap) {
+      HexSetDrawer hexDrawer = GameObject.Instantiate(_OccupiedMapDrawerPrefab.gameObject).GetComponent<HexSetDrawer>();
+      hexDrawer.Initialize(kvp.Value.PieceData.HexSet, kvp.Value.PieceData.TileColor);
+    }
+  }
+
+  private void ClearOccupiedMapSlots() {
+    for (int i = 0; i < _OccupiedMapDrawer.Count; ++i) {
+      GameObject.Destroy(_OccupiedMapDrawer[i].gameObject);
+    }
+    _OccupiedMapDrawer.Clear();
   }
 
   private void InitializeInventoryButtons() {
