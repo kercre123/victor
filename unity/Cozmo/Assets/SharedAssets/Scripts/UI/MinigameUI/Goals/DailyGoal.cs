@@ -15,7 +15,17 @@ namespace Cozmo {
       public LocalizedString Title;
       public LocalizedString Description;
       public string RewardType;
-      public int Progress;
+      private int _Progress;
+
+      public int Progress {
+        get {
+          return _Progress;
+        }
+        set {
+          _Progress = Mathf.Min(value, Target);
+        }
+      }
+
       public int Target;
       public int PointsRewarded;
 

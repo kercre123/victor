@@ -57,7 +57,7 @@ public class DailyGoalPane : MonoBehaviour {
   }
 
   private void HandleUndoProgressGoalClicked() {
-    _CurrentGoal = GetDailyGoalByName(_GoalListDropdown.captionText.text);
+    _CurrentGoal.DebugUndoGoalProgress();
   }
 
   private void HandleSetProgressGoalClicked() {
