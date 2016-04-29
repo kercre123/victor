@@ -44,7 +44,7 @@ public class GameEventManager {
   }
 
   // Fire the Action without sending a message base to engine
-  // Use this for
+  // Use this for when we receive a game event from engine
   public void HandleGameEvent(GameEvent cozEvent) {
     if (OnGameEvent != null) {
       OnGameEvent(cozEvent);

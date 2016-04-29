@@ -45,6 +45,7 @@ public class DailyGoalPane : MonoBehaviour {
 
     _GoalListDropdown.ClearOptions();
     _GoalListDropdown.AddOptions(DailyGoalManager.Instance.GetCurrentDailyGoalNames());
+    UpdateCurrentGoal(0);
     _GoalListDropdown.onValueChanged.AddListener(UpdateCurrentGoal);
   }
 
@@ -69,7 +70,7 @@ public class DailyGoalPane : MonoBehaviour {
     _CurrentGoal.DebugSetGoalProgress(validInt);
   }
 
-  private void UpdateCurrentGoal(int even) {
+  private void UpdateCurrentGoal(int eventInt) {
     _CurrentGoal = GetDailyGoalByName(_GoalListDropdown.captionText.text);
   }
 
