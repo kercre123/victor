@@ -62,29 +62,29 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   Manage();
 }
 
-static void state_updated(const void *state) {
-  using namespace Anki::Cozmo::HAL::IMU;
-  
-  // We received our IMU data
-  static uint8_t lastTimestamp = 0x80;
-  IMUData* imu_state = (IMUData*) state;
+static int update_counter = 0;
 
-  imu_changed = ((imu_state->timestamp ^ lastTimestamp) & 0x80) != 0;
-  lastTimestamp = imu_state->timestamp;
+static void state_updated(const void *state) {
+  using namespace Anki::Cozmo::HAL;
+
+  static uint8_t last_ts = 0;
+  uint8_t timestamp = ((IMUData*) state)->timestamp;
+
+  if (((last_ts ^ timestamp) & 0x80) == 0) {
+    return ;
+  }
+
+  uint8_t offset = 0x40 + 0x80 - (timestamp & ~0x80);
+
+  update_counter = offset * MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY + ADJUST_OVERSHOOT;
+  imu_changed = true;
 }
 
 void Anki::Cozmo::HAL::IMU::Manage(void) {
   static IMUData imu_state;
-  static int update_counter = 0;
 
-  // We have a new bundle of IMU data, stuff it into the buffer
-  if (imu_changed) {
-    if (imu_updated) { UART::DebugPutc('.'); }
-    
-    // Attempt to find the adjustment for the update counter
-    uint8_t offset = 0x40 + 0x80 - (imu_state.timestamp & ~0x80);
-    update_counter = offset * MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY + ADJUST_OVERSHOOT;
-    
+  // Dequeue IMU data if there is something in the back-buffer
+  if (imu_changed && !imu_updated) {        
     IMU::frameNumberStamp = CameraGetFrameNumber();
     IMU::scanLineStamp    = CameraGetScanLine();
 
@@ -92,21 +92,17 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
 
     imu_changed = false;
     imu_updated = true;
-
-    #ifdef IMU_DEBUG
-      for (int i = 0; i < sizeof(IMUData); i++)
-        UART::DebugPrintf("%02x ", ((uint8_t*) data)[i]);
-      UART::DebugPrintf("\n");
-    #endif
-    //UART::DebugPutc(imu_state.timestamp);
   }
 
   // Adjust up the IMU update frequency
   update_counter -= IMU_UPDATE_FREQUENCY;
   
-  if (update_counter > 0) {
+  // We need to wait a little longer
+  if (update_counter > 0 || imu_changed) {
     return ;
   }
+
+  //UART::DebugPutc(imu_state.timestamp);
 
   // This will be overridden, but make sure we don't read too quickly if the IMU data doesn't get read fast enough
   update_counter += MANAGE_FREQUENCY;
