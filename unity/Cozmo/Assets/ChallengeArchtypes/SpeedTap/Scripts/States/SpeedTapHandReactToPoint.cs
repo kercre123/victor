@@ -88,7 +88,9 @@ namespace SpeedTap {
 
     private void ClearWinningLightPatterns() {
       _SpeedTapGame.StopCycleCube(_SpeedTapGame.PlayerBlock);
+      _SpeedTapGame.PlayerBlock.SetLEDsOff();
       _SpeedTapGame.StopCycleCube(_SpeedTapGame.CozmoBlock);
+      _SpeedTapGame.PlayerBlock.SetLEDsOff();
     }
 
     private void ReactToHand() {
