@@ -16,7 +16,7 @@ namespace CubePounce {
       _CubeSlapGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderSetupText);
       _CubeSlapGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoSetupText);
       _CurrentRobot.SetHeadAngle(CozmoUtil.kIdealBlockViewHeadValue);
-      _CurrentRobot.SetLiftHeight(0.7f);
+      _CurrentRobot.SetLiftHeight(0.8f);
       _CubeSlapGame.ResetPounceChance();
       _CubeSlapGame.UpdateScoreboard();
     }

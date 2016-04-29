@@ -51,7 +51,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void Update() {
-    lock(_ReceivedPackets) {
+    lock (_ReceivedPackets) {
       while (_ReceivedPackets.Count > 0) {
         LogPacket newPacket;
 
@@ -65,7 +65,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
         // Update the UI, if it is open
         if ((_ConsoleLogPaneView != null) && (_LastToggleValues[newPacket.LogKind])) {
-            _ConsoleLogPaneView.AppendLog(newPacket.ToString());
+          _ConsoleLogPaneView.AppendLog(newPacket.ToString());
         }
       }
     }
@@ -144,7 +144,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     LogPacket newPacket = new LogPacket(logKind, eventName, eventValue, context, keyValues);
 
     // This can be called from multiple threads while the main one is processing the received packets so we have to lock
-    lock(_ReceivedPackets) {
+    lock (_ReceivedPackets) {
       _ReceivedPackets.Enqueue(newPacket);
     }
   }
@@ -176,7 +176,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     List<string> logDb = CompileRecentLogs();
     string logFull = "";
     for (int i = 0; i < logDb.Count; ++i) {
-      logFull += logDb[i];
+      logFull += logDb[i] + "\n";
     }
     CozmoBinding.SendToClipboard(logFull);
     GUIUtility.systemCopyBuffer = logFull;

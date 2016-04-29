@@ -26,7 +26,9 @@ namespace Anki.Cozmo.Viz {
 
     #if UNITY_IOS && !UNITY_EDITOR
     private const float _kZoomScale = 1f;
-    #else
+    
+
+#else
     private const float _kZoomScale = 0.1f;
     #endif
 
@@ -66,7 +68,7 @@ namespace Anki.Cozmo.Viz {
     private void Reset() {
       VizManager.Instance.ResetCamera();
     }
-    
+
     private class FingerState {
       public bool StartedInside;
       public Vector2 CurrentPosition;
@@ -75,7 +77,7 @@ namespace Anki.Cozmo.Viz {
     }
 
     // Update is called once per frame
-    private void Update () {
+    private void Update() {
 
       #if UNITY_IOS && !UNITY_EDITOR
       ProcessTouches();
@@ -107,7 +109,7 @@ namespace Anki.Cozmo.Viz {
             UpdateRotation(cameraTransform, delta);
           }
         }
-        else if(_LastTouchCount == 0) {
+        else if (_LastTouchCount == 0) {
           if (_RectTransform.rect.Contains(localPoint)) {
             _LastTouchCount = 1;
           }
@@ -155,7 +157,7 @@ namespace Anki.Cozmo.Viz {
           state.StartedInside = _RectTransform.rect.Contains(localPoint);
         }
 
-        if (touch.phase == TouchPhase.Ended) {
+        if ((touch.phase == TouchPhase.Ended) || (state.StartedInside == false)) {
           _FingerStates.Remove(touch.fingerId);
           continue;
         }

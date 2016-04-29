@@ -99,6 +99,19 @@ namespace Anki.Cozmo.Viz {
 
     private bool _ShowingObjects = true;
 
+    // Whether or not we should render the Memory Map
+    private bool _RenderMemoryMap = true;
+
+    public bool RenderMemoryMap {
+      get {
+        return _RenderMemoryMap;
+      }
+      set {
+        //TODO: Send engine message here
+        _RenderMemoryMap = value;
+      }
+    }
+
     private readonly Dictionary<uint, Dictionary<uint, VizQuad>> _Quads = new Dictionary<uint, Dictionary<uint, VizQuad>>();
     private readonly Dictionary<uint, VizQuad> _Objects = new Dictionary<uint, VizQuad>();
     private readonly Dictionary<uint, VizLabel> _ObjectLabels = new Dictionary<uint, VizLabel>();

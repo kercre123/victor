@@ -13,8 +13,8 @@ public class SpeedTapRoundData {
     get { return _MidRoundMusic.Music; }
   }
 
-  public float TimeBetweenHands;
-  public float TimeHandDisplayed;
+  public float SecondsBetweenHands = 1;
+  public float SecondsHandDisplayed = 1;
 }
 
 /// <summary>
