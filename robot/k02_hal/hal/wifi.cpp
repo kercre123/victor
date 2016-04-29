@@ -113,7 +113,7 @@ namespace HAL {
         return false;
       }
     }
-		
+
     Result Update()
     {
       const uint8_t wind = rxWind;

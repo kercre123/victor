@@ -9,7 +9,7 @@
 #define SLAVE_READ(x)   ((x << 1) | 1)
 
 
-typedef void (*i2c_callback)();
+typedef void (*i2c_callback)(const void*);
 
 enum I2C_FLAGS {
   I2C_NONE = 0,

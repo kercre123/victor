@@ -54,7 +54,7 @@
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\</ListingPath>
+          <ListingPath>.\build\app\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -332,7 +332,7 @@
               <MiscControls>--gnu</MiscControls>
               <Define>NRF51,COZMO_ROBOT,SOFTDEVICE_PRESENT,BLE_STACK_SUPPORT_REQD</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/device;./components/drivers_nrf/hal;./components/libraries/util/;./components/drivers_nrf/config/;./components/drivers_nrf/common/;./components/drivers_nrf/rng;./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/common;./components/ble/ble_services/ble_bas;./components/ble/ble_services/ble_dis;./components/ble/ble_advertising;../include;.;./components/libraries/trace;./components/drivers_nrf/pstorage;./components/drivers_nrf/pstorage/config;./components/ble/device_manager;./components/ble/device_manager/config;./components/libraries/timer;./components/softdevice/s110/headers;./components/ble/ble_services/ble_bps;../generated/clad/robot;./crypto;./hal;./cubes</IncludePath>
+              <IncludePath>./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/ble_services/ble_dtm;./components/ble/common;./components/drivers_nrf/hal;./components/libraries/util;./components/libraries/timer;../generated/clad/robot;../include;./crypto;./hal;./cubes;.</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -479,6 +479,11 @@
               <FileName>settings.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\hal\settings.c</FilePath>
+            </File>
+            <File>
+              <FileName>ble_dtm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\components\ble\ble_dtm\ble_dtm.c</FilePath>
             </File>
           </Files>
         </Group>

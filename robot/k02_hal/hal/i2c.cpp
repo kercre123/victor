@@ -262,7 +262,7 @@ static void Read_Handler(void) {
 
   if (complete) {
     if (_read_callback) {
-      _read_callback();
+      _read_callback((const void*)_read_target);
     }
     Write_Handler();
   }
