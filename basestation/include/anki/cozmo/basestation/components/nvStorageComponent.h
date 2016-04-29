@@ -96,6 +96,10 @@ public:
 
   void Update();
 
+  // Returns the word-aligned size that nvStorage automaticaly rounds up to on all saved content.
+  // e.g. If you write 10 bytes to tag 2 and then read back tag 2, you will receive 12 bytes.
+  static size_t MakeWordAligned(size_t size);
+  
   // Kevin's sandbox function for testing
   // For dev only!
   void Test();

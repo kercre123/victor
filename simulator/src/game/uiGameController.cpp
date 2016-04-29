@@ -1736,5 +1736,13 @@ namespace Anki {
       return Pose3d();
     }
 
+    size_t UiGameController::MakeWordAligned(size_t size) {
+      u8 numBytesToMakeAligned = 4 - (size % 4);
+      if (numBytesToMakeAligned < 4) {
+        return size + numBytesToMakeAligned;
+      }
+      return size;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki

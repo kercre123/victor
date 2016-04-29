@@ -148,8 +148,8 @@ bool NVStorageComponent::Write(NVStorage::NVEntryTag tag,
     
     // Queue an erase first in case this write has fewer blobs
     // than what is already stored in the robot.
-    PRINT_NAMED_INFO("NVStorageComponent.Write.PreceedingMultiBlobWriteWithErase",
-                     "Tag: %s", EnumToString(tag));
+    PRINT_NAMED_DEBUG("NVStorageComponent.Write.PreceedingMultiBlobWriteWithErase",
+                      "Tag: %s", EnumToString(tag));
     _requestQueue.emplace(tag, NVStorageWriteEraseCallback(), false);
   }
   
@@ -236,8 +236,8 @@ void NVStorageComponent::SendRequest(NVStorageRequest req)
 
       if (DEBUG_NVSTORAGE_COMPONENT) {
         PRINT_NAMED_DEBUG("NVStorageComponent.SendRequest.SendingWrite",
-                          "StartTag: 0x%x",
-                          req.tag );
+                          "StartTag: 0x%x, timeoutTime: %d, currTime: %d",
+                          req.tag, _writeDataAckMap[t].timeoutTimeStamp, _robot.GetLastMsgTimestamp() );
       }
       
       break;
@@ -251,14 +251,14 @@ void NVStorageComponent::SendRequest(NVStorageRequest req)
       _writeDataAckMap[t].writeNotErase = false;
       _writeDataAckMap[t].callback = req.writeCallback;
       
-      // For multiErase, expect one NvOpResult for the first blob and one at the end when all erases are complete.
-      _writeDataAckMap[t].numTagsLeftToAck = IsMultiBlobEntryTag(t) ? 2 : 1;
+      // Expect one NvOpResult when all erases are complete (reportEach == false, reportDone == true)
+      _writeDataAckMap[t].numTagsLeftToAck = 1;
       
       // Start constructing erase message
       NVStorage::NVStorageWrite eraseMsg;
       eraseMsg.reportTo = NVStorage::NVReportDest::ENGINE;
       eraseMsg.writeNotErase = false;
-      eraseMsg.reportEach = true;
+      eraseMsg.reportEach = false;
       eraseMsg.reportDone = true;
       eraseMsg.entry.tag = static_cast<u32>(req.tag);
       
@@ -763,6 +763,15 @@ void NVStorageComponent::HandleNVStorageClearPartialPendingWriteEntry(const Anki
 void NVStorageComponent::ClearPendingWriteEntry() {
   _pendingWriteData.tag = NVStorage::NVEntryTag::NVEntry_Invalid;
   _pendingWriteData.remainingIndices.clear();
+}
+  
+  
+size_t NVStorageComponent::MakeWordAligned(size_t size) {
+  u8 numBytesToMakeAligned = 4 - (size % 4);
+  if (numBytesToMakeAligned < 4) {
+    return size + numBytesToMakeAligned;
+  }
+  return size;
 }
   
 void NVStorageComponent::Test()
