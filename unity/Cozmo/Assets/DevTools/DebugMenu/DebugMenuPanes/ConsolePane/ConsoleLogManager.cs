@@ -112,7 +112,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
       RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
       SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
     }
-    if (_SOSLoggingEnabled && !enable) {
+    else if (_SOSLoggingEnabled && !enable) {
       _SOSLoggingEnabled = false;
       SOSLogManager.Instance.CleanUp();
     }
