@@ -977,7 +977,6 @@ namespace Anki {
     {
       AlignWithObjectAction* action = new AlignWithObjectAction(robot, objectID,
                                                                 distanceFromMarker_mm, useManualSpeed);
-      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
     
@@ -997,7 +996,6 @@ namespace Anki {
                                  useManualSpeed)
     {
       PickupObjectAction* action = new PickupObjectAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
     
@@ -1021,7 +1019,6 @@ namespace Anki {
                                                               false,
                                                               0,
                                                               useManualSpeed);
-      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
     
@@ -1046,7 +1043,6 @@ namespace Anki {
                                                               true,
                                                               placementOffsetX_mm,
                                                               useManualSpeed);
-      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
     
@@ -1067,7 +1063,6 @@ namespace Anki {
     , _objectID(objectID)
     {
       RollObjectAction* action = new RollObjectAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
 
@@ -1135,7 +1130,6 @@ namespace Anki {
                                  useManualSpeed)
     {
       PopAWheelieAction* action = new PopAWheelieAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
     
@@ -1153,7 +1147,6 @@ namespace Anki {
                                  useManualSpeed)
     {
       TraverseObjectAction* action = new TraverseObjectAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2);
       AddAction(action);
     }
     
@@ -1184,7 +1177,6 @@ namespace Anki {
       ASSERT_NAMED(driveAction != nullptr, "DriveToAndMountChargerAction.DriveToObjectSubActionNotFound");
       
       MountChargerAction* action = new MountChargerAction(robot, objectID, useManualSpeed);
-      action->SetSpeedAndAccel(DEFAULT_DOCK_SPEED_MMPS, DEFAULT_DOCK_ACCEL_MMPS2, DEFAULT_DOCK_DECCEL_MMPS2);
       AddAction(action);
     }
   }

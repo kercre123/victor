@@ -139,9 +139,9 @@ namespace Anki {
     private:
       
       f32 _dist_mm = 0.f;
-      f32 _speed_mmps  = DEFAULT_PATH_SPEED_MMPS;
-      f32 _accel_mmps2 = DEFAULT_PATH_ACCEL_MMPS2;
-      f32 _decel_mmps2 = DEFAULT_PATH_ACCEL_MMPS2;
+      f32 _speed_mmps  = DEFAULT_PATH_MOTION_PROFILE.speed_mmps;
+      f32 _accel_mmps2 = DEFAULT_PATH_MOTION_PROFILE.accel_mmps2;
+      f32 _decel_mmps2 = DEFAULT_PATH_MOTION_PROFILE.decel_mmps2;
       
       bool _hasStarted = false;
       

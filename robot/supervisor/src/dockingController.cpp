@@ -194,7 +194,7 @@ namespace Anki {
 #if(!USE_BLIND_DOCKING)
         // The docking speed for the final path segment right in front of the thing we are docking with
         // Allows us to slow down when we are close to the dockPose
-        const f32 finalDockSpeed_mmps_ = 40;
+        const f32 finalDockSpeed_mmps_ = 20;
 
 
         // If the robot's pose relative to the dockPose is more than these tolerances off it is not in position and
@@ -236,14 +236,13 @@ namespace Anki {
         const f32 DOCKING_PATH_ANG_OFFSET_CAP_RAD = 0.4;
         
         // Values related to our path to get use from our current pose to dockPose
-        const u8 MIN_DIST_TO_DECEL_MM = 30;
         const u8 DIST_AWAY_FROM_BLOCK_FOR_PT_MM = 60;
-        const u8 DIST_TO_DECEL_OFFSET_MM = 5;
         const u8 DIST_AWAY_FROM_BLOCK_FOR_ADDITIONAL_PATH_MM = 100;
         const f32 ANGLE_FROM_BLOCK_FOR_ADDITIONAL_PATH_RAD = DEG_TO_RAD(25);
         const f32 ANGLE_FROM_BLOCK_FOR_POINT_TURN_RAD = DEG_TO_RAD(15);
         const u8 PATH_END_DIST_INTO_BLOCK_MM = 10;
         const u8 PATH_START_DIST_BEHIND_ROBOT_MM = 60;
+        const u8 MAX_DECEL_DIST_MM = 30;
         
 #endif
         // If the block and cozmo are on the same plane the dock err signal z_height will be below this value
@@ -660,8 +659,9 @@ namespace Anki {
             // too noisy to trust. We just need to get roughly in front of the thing so
             // we can turn around to back into it.
             if (createdValidPath_ &&
-            !PathFollower::IsTraversingPath() &&
-                PickAndPlaceController::GetCurAction() == DA_MOUNT_CHARGER) {
+                !PathFollower::IsTraversingPath() &&
+                PickAndPlaceController::GetCurAction() == DA_MOUNT_CHARGER)
+            {
               StopDocking(DOCK_SUCCESS);
               break;
             }
@@ -1133,13 +1133,18 @@ namespace Anki {
           //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
 #else
           
-          // Distance it takes in order to decelerate from dockSpeed to finalDockSpeed + DIST_TO_DECEL_OFFSET_MM
-          // The 5mm gives us a little extra distance to ensure we reach the final docking speed
-          f32 distToDecel = ((finalDockSpeed_mmps_*finalDockSpeed_mmps_)-(dockSpeed_mmps_*dockSpeed_mmps_)) / (-2*dockDecel_mmps2_) + DIST_TO_DECEL_OFFSET_MM;
+          // Distance it takes in order to decelerate from dockSpeed to 0 with the given dock deceleration
+          // This is for the final path segment so we get a nice smooth ease-in when close to the block
+          f32 distToDecel = (-(dockSpeed_mmps_*dockSpeed_mmps_)) / (-2*dockDecel_mmps2_);
           
-          // Clip the distToDecel because if it is larger than the distance to the block the robot will
-          // turnaround to get to the point
-          distToDecel = CLIP(distToDecel, MIN_DIST_TO_DECEL_MM, distToBlock);
+          // If distToDecel is larger than our max decel distance calculate a new deceleration such that distToDecel will
+          // be equivalent to our max decel distance
+          if(distToDecel > MAX_DECEL_DIST_MM)
+          {
+            dockDecel_mmps2_ = (-(dockSpeed_mmps_*dockSpeed_mmps_)) / (-2*MAX_DECEL_DIST_MM);
+            distToDecel = MAX_DECEL_DIST_MM;
+          }
+          
           
           // If we need to do a point turn in order to turn towards the block than this padding will ensure we are
           // DIST_AWAY_FROM_BLOCK_FOR_PT_MM away from the block when we turn.

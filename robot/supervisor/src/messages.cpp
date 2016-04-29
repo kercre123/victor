@@ -595,7 +595,7 @@ namespace Anki {
 
       void Process_enableReadToolCodeMode(const RobotInterface::EnableReadToolCodeMode& msg)
       {
-        AnkiDebug( 162, "ReadToolCodeMode", 446, "enabled: %d, liftPower: %f, headPower: %f", 3, msg.enable, msg.liftPower, msg.headPower);
+        AnkiDebug( 162, "ReadToolCodeMode", 449, "enabled: %d, liftPower: %f, headPower: %f", 3, msg.enable, msg.liftPower, msg.headPower);
         if (msg.enable) {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
