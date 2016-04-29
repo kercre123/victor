@@ -73,6 +73,58 @@ namespace Cozmo {
         Progress++;
         DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
         // Check if Completed
+        CheckIfComplete();
+        if (OnDailyGoalUpdated != null) {
+          OnDailyGoalUpdated.Invoke(this);
+        }
+      }
+
+      public void DebugSetGoalProgress(int prog) {
+        Progress = prog;
+        if (!GoalComplete && _Completed) {
+          _Completed = false;
+          GameEventManager.Instance.OnGameEvent += ProgressGoal;
+        }
+        else if (_Completed == false) {
+          CheckIfComplete();
+        }
+        if (OnDailyGoalUpdated != null) {
+          OnDailyGoalUpdated.Invoke(this);
+        }
+        
+      }
+
+      public void DebugUndoGoalProgress() {
+        if (Progress > 0) {
+          Progress--;
+          if (!GoalComplete && _Completed) {
+            _Completed = false;
+            GameEventManager.Instance.OnGameEvent += ProgressGoal;
+          }
+          if (OnDailyGoalUpdated != null) {
+            OnDailyGoalUpdated.Invoke(this);
+          }
+        }
+        
+      }
+
+      public void DebugResetGoalProgress() {
+        Progress = 0;
+        if (_Completed) {
+          _Completed = false;
+          GameEventManager.Instance.OnGameEvent += ProgressGoal;
+        }
+        if (OnDailyGoalUpdated != null) {
+          OnDailyGoalUpdated.Invoke(this);
+        }
+
+      }
+
+      /// <summary>
+      /// Checks if the goal has just been completed, handles any logic that is fired when
+      /// a goal is completed.
+      /// </summary>
+      public void CheckIfComplete() {
         if (GoalComplete && _Completed == false) {
           // Grant Reward
           DAS.Event(this, string.Format("{0} Completed", Title));
@@ -83,21 +135,6 @@ namespace Cozmo {
           _Completed = true;
           GameEventManager.Instance.OnGameEvent -= ProgressGoal;
         }
-        if (OnDailyGoalUpdated != null) {
-          OnDailyGoalUpdated.Invoke(this);
-        }
-      }
-
-      public void DebugSetGoalProgress(int prog) {
-        
-      }
-
-      public void DebugUndoGoalProgress() {
-        
-      }
-
-      public void DebugResetGoalProgress() {
-
       }
 
       public bool CanProg() {
