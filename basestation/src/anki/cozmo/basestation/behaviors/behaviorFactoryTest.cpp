@@ -39,7 +39,7 @@
 
 // Set to 1 if you want the test to actually be able to write
 // new camera calibration, calibration images, and test results to flash.
-#define ENABLE_NVSTORAGE_WRITES 0
+#define ENABLE_NVSTORAGE_WRITES 1
 
 #define DEBUG_FACTORY_TEST_BEHAVIOR 1
 
@@ -124,7 +124,6 @@ namespace Cozmo {
     _actionCallbackMap.clear();
     _holdUntilTime = -1;
     _watchdogTriggerTime = currentTime_sec + _kWatchdogTimeout;
-    _waitingForWriteAck = false;
     
     robot.GetActionList().Cancel();
     
@@ -133,7 +132,6 @@ namespace Cozmo {
       robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
     }
 
-    
     return lastResult;
   } // Init()
 
@@ -178,12 +176,7 @@ namespace Cozmo {
   {
     // Send test result out and make this behavior stop running
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
-      
-      if (_waitingForWriteAck) {
-        PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WritingTestResultInProgress",
-                            "Ignoring result %s", EnumToString(resCode));
-        return;
-      }
+      _testResult = resCode;
       
       if (ENABLE_NVSTORAGE_WRITES) {
         // Generate result struct
@@ -192,28 +185,22 @@ namespace Cozmo {
         testRes.utcTime = time(0);
         testRes.stationID = 0;   // TODO: How to get this?
         
-        u8 buf[2*testRes.Size()];
+        u8 buf[testRes.Size()];
         size_t numBytes = testRes.Pack(buf, sizeof(buf));
         
         // Store test result to robot flash
-        _waitingForWriteAck = true;
         robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, buf, numBytes,
                                             [this,&robot,resCode](NVStorage::NVResult res){
-                                              if (res == NVStorage::NVResult::NV_OKAY) {
-                                                _testResult = resCode;
-                                                
-                                              } else {
+                                              if (res != NVStorage::NVResult::NV_OKAY) {
                                                 PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WriteFailed",
                                                                     "WriteResult: %s (Original test result: %s)",
                                                                     EnumToString(res), EnumToString(resCode));
                                                 _testResult = FactoryTestResultCode::TEST_RESULT_WRITE_FAILED;
                                               }
-                                              _waitingForWriteAck = false;
                                               PrintAndLightResult(robot,_testResult);
                                               robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
                                             });
       } else {
-        _testResult = resCode;
         PrintAndLightResult(robot,_testResult);
         robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
       }
@@ -269,9 +256,16 @@ namespace Cozmo {
         robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults,
                                            [this](u8* data, size_t size, NVStorage::NVResult res) {
                                              if (res == NVStorage::NVResult::NV_OKAY) {
-                                               FactoryTestResultEntry resultEntry(data, size);
+                                               FactoryTestResultEntry resultEntry;
+                                               if (size != NVStorageComponent::MakeWordAligned(resultEntry.Size())) {
+                                                 PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ReadPastTestResultSizeMismatch",
+                                                                     "Expected %zu, got %zu", resultEntry.Size(), size);
+                                                 return;
+                                               }
+                                               resultEntry.Unpack(data, resultEntry.Size());
+                                               time_t rawTime = static_cast<time_t>(resultEntry.utcTime);
                                                PRINT_NAMED_INFO("BehaviorFactoryTest.Update.ReadPastTestResults",
-                                                                "Result: %s", EnumToString(resultEntry.result) );
+                                                                "Result: %s, Time: %s", EnumToString(resultEntry.result), ctime(&rawTime) );
                                              } else {
                                                PRINT_NAMED_INFO("BehaviorFactoryTest.Update.NoPastTestResultsFound", "");
                                              }
@@ -280,7 +274,13 @@ namespace Cozmo {
         robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo,
                                            [this](u8* data, size_t size, NVStorage::NVResult res) {
                                              if (res == NVStorage::NVResult::NV_OKAY) {
-                                               ToolCodeInfo info(data, size);
+                                               ToolCodeInfo info;
+                                               if (size != NVStorageComponent::MakeWordAligned(info.Size())) {
+                                                PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ReadToolCodeInfoSizeMismatch",
+                                                                    "Expected %zu, got %zu", info.Size(), size);
+                                                 return;
+                                               }
+                                               info.Unpack(data, info.Size());
                                                PRINT_NAMED_INFO("BehaviorFactoryTest.Update.ReadPastToolCodeInfo",
                                                                 "Code: %s, Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
                                                                 EnumToString(info.code),
@@ -488,7 +488,7 @@ namespace Cozmo {
                         
                         // Store results to nvStorage
                         if (ENABLE_NVSTORAGE_WRITES) {
-                          u8 buf[2*info.Size()];
+                          u8 buf[info.Size()];
                           size_t numBytes = info.Pack(buf, sizeof(buf));
                           robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes,
                                                               [this,&robot](NVStorage::NVResult res) {
@@ -937,7 +937,7 @@ namespace Cozmo {
       calibMsg.nrows = camCalib.GetNrows();
       calibMsg.ncols = camCalib.GetNcols();
       
-      u8 buf[2*calibMsg.Size()];
+      u8 buf[calibMsg.Size()];
       size_t numBytes = calibMsg.Pack(buf, sizeof(buf));
       
       robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, numBytes,

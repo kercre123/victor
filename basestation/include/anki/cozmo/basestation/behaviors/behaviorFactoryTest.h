@@ -108,7 +108,6 @@ namespace Cozmo {
     Radians           _startingRobotOrientation;
     Result            _lastHandlerResult;
     PathMotionProfile _motionProfile;
-    bool              _waitingForWriteAck = false;
  
     // Map of action tags that have been commanded to callback functions
     std::map<u32, std::string> _animActionTags;

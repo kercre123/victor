@@ -295,6 +295,8 @@ protected:
   const Pose3d GetLightCubePoseActual(int lightCubeId);
   void SetLightCubePose(int lightCubeId, const Pose3d& pose);
   
+  static size_t MakeWordAligned(size_t size);
+  
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);
   void HandleRobotObservedObjectBase(ExternalInterface::RobotObservedObject const& msg);
