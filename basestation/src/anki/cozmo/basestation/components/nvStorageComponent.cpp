@@ -250,15 +250,13 @@ void NVStorageComponent::SendRequest(NVStorageRequest req)
       _writeDataAckMap[t].broadcastResultToGame = req.broadcastResultToGame;
       _writeDataAckMap[t].writeNotErase = false;
       _writeDataAckMap[t].callback = req.writeCallback;
-      
-      // Expect one NvOpResult when all erases are complete (reportEach == false, reportDone == true)
       _writeDataAckMap[t].numTagsLeftToAck = 1;
       
       // Start constructing erase message
       NVStorage::NVStorageWrite eraseMsg;
       eraseMsg.reportTo = NVStorage::NVReportDest::ENGINE;
       eraseMsg.writeNotErase = false;
-      eraseMsg.reportEach = false;
+      eraseMsg.reportEach = !IsMultiBlobEntryTag(t);
       eraseMsg.reportDone = true;
       eraseMsg.entry.tag = static_cast<u32>(req.tag);
       
