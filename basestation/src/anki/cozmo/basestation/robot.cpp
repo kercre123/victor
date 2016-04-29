@@ -1179,7 +1179,7 @@ namespace Anki {
       CORETECH_ASSERT(_liftPose.GetParent() == &_liftBasePose);
     }
     
-    f32 Robot::GetPitchAngle()
+    f32 Robot::GetPitchAngle() const
     {
       return _pitchAngle;
     }

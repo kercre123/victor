@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
+#include "anki/cozmo/basestation/behaviors/behaviorFlipDownFromWheelie.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
@@ -36,6 +37,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -171,6 +173,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::DemoFearEdge:
     {
       newBehavior = new BehaviorDemoFearEdge(robot, config);
+      break;
+    }
+    case BehaviorType::FlipDownFromWheelie:
+    {
+      newBehavior = new BehaviorFlipDownFromWheelie(robot, config);
       break;
     }
     case BehaviorType::Count:

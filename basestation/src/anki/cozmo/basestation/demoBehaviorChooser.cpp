@@ -32,6 +32,7 @@ namespace Cozmo {
 
 static const char* kWakeUpBehavior = "demo_wakeUp";
 static const char* kFearEdgeBehavior = "demo_fearEdge";
+static const char* kCliffBehavior = "ReactToCliff";
 static const char* kFlipDownFromBackBehavior = "demo_flipDownFromBack";
 static const char* kSleepBehavior = "demo_sleep";
 static const float kTimeCubesMustBeUpright_s = 3.0f;
@@ -149,7 +150,7 @@ void DemoBehaviorChooser::TransitionToFearEdge()
   EnableAllBehaviors(false);
   EnableBehavior(kFearEdgeBehavior, true);
 
-  _checkTransition = std::bind(&DemoBehaviorChooser::DidBehaviorRunAndStop, this, kFearEdgeBehavior);
+  _checkTransition = std::bind(&DemoBehaviorChooser::DidBehaviorRunAndStop, this, kCliffBehavior);
 }
 
 void DemoBehaviorChooser::TransitionToPounce()

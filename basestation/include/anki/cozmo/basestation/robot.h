@@ -278,7 +278,7 @@ public:
     static void ComputeLiftPose(const f32 atAngle, Pose3d& liftPose);
   
     // Get pitch angle of robot
-    f32 GetPitchAngle();
+    f32 GetPitchAngle() const;
   
     // Return current bounding height of the robot, taking into account whether lift
     // is raised
