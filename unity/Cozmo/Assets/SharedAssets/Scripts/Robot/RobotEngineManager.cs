@@ -148,16 +148,9 @@ public class RobotEngineManager : MonoBehaviour {
       DAS.Error("RobotEngineManager.ErrorInitializingCozmoBinding.NoConfig", string.Empty);
     }
     else {
+      string configuration = AddDataPlatformPathsToConfiguration(config.text);
 
-      StringBuilder sb = new StringBuilder(config.text);
-      sb.Remove(config.text.IndexOf('}') - 1, 3);
-      sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
-        ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
-        ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
-        ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
-        "\n}");
-      
-      CozmoBinding.Startup(sb.ToString());
+      CozmoBinding.Startup(configuration);
       _CozmoBindingStarted = true;
     }
 
@@ -894,6 +887,17 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
+  private string AddDataPlatformPathsToConfiguration(string configuration) {
+    StringBuilder sb = new StringBuilder(configuration);
+    sb.Remove(configuration.IndexOf('}') - 1, 3);
+    sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
+      ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
+      ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
+      ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
+      "\n}");
+
+    return sb.ToString();
+  }
 
   #region Mocks
 
