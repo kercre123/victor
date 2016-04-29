@@ -56,7 +56,6 @@ protected:
   void HandleEnableCliffSensor(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleDisplayProceduralFace(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
-  void HandleProgressionEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleBehaviorManagerEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleSendAvailableObjects(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
   void HandleSaveCalibrationImage(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
