@@ -49,9 +49,9 @@ namespace Vision {
     
     Result Init(HCOMMON okaoCommonHandle);
 
-    void AssignNameToID(FaceID_t faceID, const std::string& name);
-    void EraseName(const std::string& name);
-    
+    Result   AssignNameToID(FaceID_t faceID, const std::string& name);
+    FaceID_t EraseFace(const std::string& name);
+    Result   EraseFace(FaceID_t faceID);
     // Request that the recognizer work on assigning a new or existing FaceID
     // from its album of known faces to the specified trackerID, using the
     // given facial part data. Returns true if the request is accepted (i.e.,
@@ -70,8 +70,19 @@ namespace Vision {
     
     Result LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
     Result SaveAlbum(const std::string& albumName);
+    
+    
+    Result GetSerializedData(std::vector<u8>& albumData,
+                             std::vector<u8>& enrollData);
+    
+    // Populates the list of names and IDs recovered from the serialized data on success
+    Result SetSerializedData(const std::vector<u8>& albumData,
+                             const std::vector<u8>& enrollData,
+                             std::list<FaceNameAndID>& namesAndIDs);
 
   private:
+    
+    using EnrollmentData = std::map<FaceID_t,EnrolledFaceEntry>;
     
     // Called by Run() in async mode whenever there's a new image to be processed.
     // Called on each use of SetNextFaceToRecognize() when running synchronously.
@@ -91,8 +102,20 @@ namespace Vision {
 
     Result GetSerializedAlbum(std::vector<u8>& serializedAlbum) const;
     
-    Result SetSerializedAlbum(HCOMMON okaoCommonHandle, const std::vector<u8>&serializedAlbum);
+    static Result SetSerializedAlbum(HCOMMON okaoCommonHandle, const std::vector<u8>&serializedAlbum, HALBUM& album);
+    
+    Result GetSerializedEnrollData(std::vector<u8>& serializedEnrollData);
+    
+    static Result SetSerializedEnrollData(const std::vector<u8>& serializedEnrollData,
+                                          EnrollmentData& newEnrollmentData);
+    
+    // Makes sure the given album and enrollment data look consistent
+    static Result SanityCheckBookkeeping(const HALBUM& okaoFaceAlbum,
+                                         const EnrollmentData& enrollmentData);
 
+    Result UseLoadedAlbumAndEnrollData(HALBUM& loadedAlbumData,
+                                       EnrollmentData& loadedEnrollmentData);
+    
     // These cannot be changed while running (requires re-init of Okao album)
     static const INT32 MaxAlbumDataPerFace = 10; // can't be more than 10
     static const INT32 MaxAlbumFaces = 100; // can't be more than 1000
@@ -136,7 +159,7 @@ namespace Vision {
     
     // Store additinal bookkeeping information we need, on top of the album data
     // stored by Okao.
-    std::map<FaceID_t,EnrolledFaceEntry> _enrollmentData;
+    EnrollmentData _enrollmentData;
     
     // For debugging what is in current enrollment images
     std::map<FaceID_t,std::array<Vision::ImageRGB, MaxAlbumDataPerFace>> _enrollmentImages;

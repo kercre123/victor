@@ -79,14 +79,15 @@ bool AnimationGroup::IsEmpty() const
 }
     
 const std::string& AnimationGroup::GetAnimationName(const MoodManager& moodManager,
-                                                    AnimationGroupContainer& animationGroupContainer) const
+                                                    AnimationGroupContainer& animationGroupContainer, float headAngleRad) const
 {
-  return GetAnimationName(moodManager.GetSimpleMood(), moodManager.GetLastUpdateTime(), animationGroupContainer);
+  return GetAnimationName(moodManager.GetSimpleMood(), moodManager.GetLastUpdateTime(), animationGroupContainer,headAngleRad);
 }
     
 const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
                                                     float currentTime_s,
-                                                    AnimationGroupContainer& animationGroupContainer) const
+                                                    AnimationGroupContainer& animationGroupContainer,
+                                                    float headAngleRad) const
 {
   PRINT_NAMED_DEBUG("AnimationGroup.GetAnimation", "getting animation from group '%s', simple mood = '%s'",
                     _name.c_str(),
@@ -101,30 +102,55 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
       
   for (auto entry = _animations.begin(); entry != _animations.end(); entry++)
   {
-    if(entry->GetMood() == mood) {
+    if(entry->GetMood() == mood)
+    {
       anyAnimationsMatchingMood = true;
-      if( !animationGroupContainer.IsAnimationOnCooldown(entry->GetName(),currentTime_s)) {
-        totalWeight += entry->GetWeight();
-        availableAnimations.emplace_back(&(*entry));
+      bool validHeadAngle = true;
+      if( entry->GetUseHeadAngle())
+      {
+        if( !(headAngleRad > entry->GetHeadAngleMin() && headAngleRad < entry->GetHeadAngleMax()))
+        {
+          validHeadAngle = false;
+        }
+      }
+      if( validHeadAngle )
+      {
+        if( !animationGroupContainer.IsAnimationOnCooldown(entry->GetName(),currentTime_s))
+        {
+          totalWeight += entry->GetWeight();
+          availableAnimations.emplace_back(&(*entry));
 
-        if( DEBUG_ANIMATION_GROUP_SELECTION ) {
-          PRINT_NAMED_INFO("AnimationGroup.GetAnimation.ConsiderAnimation",
-                           "%s: considering animation '%s' with weight %f",
+          if( DEBUG_ANIMATION_GROUP_SELECTION )
+          {
+            PRINT_NAMED_INFO("AnimationGroup.GetAnimation.ConsiderAnimation",
+                             "%s: considering animation '%s' with weight %f",
+                             _name.c_str(),
+                             entry->GetName().c_str(),
+                             entry->GetWeight());
+          }
+        }
+        else if( DEBUG_ANIMATION_GROUP_SELECTION )
+        {
+          PRINT_NAMED_INFO("AnimationGroup.GetAnimation.RejectAnimation.Cooldown",
+                           "%s: rejecting animation %s with mood %s is on cooldown (timer=%f)",
                            _name.c_str(),
                            entry->GetName().c_str(),
-                           entry->GetWeight());
+                           SimpleMoodTypeToString(entry->GetMood()),
+                           entry->GetCooldown());
         }
       }
       else if( DEBUG_ANIMATION_GROUP_SELECTION ) {
-        PRINT_NAMED_INFO("AnimationGroup.GetAnimation.RejectAnimation.Cooldown",
-                         "%s: rejecting animation %s with mood %s is on cooldown (timer=%f)",
+        PRINT_NAMED_INFO("AnimationGroup.GetAnimation.RejectAnimation.HeadAngle",
+                         "%s: rejecting animation %s with head angle (%f) out of range (%f,%f)",
                          _name.c_str(),
                          entry->GetName().c_str(),
-                         SimpleMoodTypeToString(entry->GetMood()),
-                         entry->GetCooldown());
+                         RAD_TO_DEG(headAngleRad),
+                         entry->GetHeadAngleMin(),
+                         entry->GetHeadAngleMax());
       }
     }
-    else if( DEBUG_ANIMATION_GROUP_SELECTION ) {
+    else if( DEBUG_ANIMATION_GROUP_SELECTION )
+    {
       PRINT_NAMED_INFO("AnimationGroup.GetAnimation.RejectAnimation.WrongMood",
                        "%s: rejecting animation %s with mood %s %son cooldown",
                        _name.c_str(),
@@ -164,11 +190,11 @@ const std::string& AnimationGroup::GetAnimationName(SimpleMoodType mood,
                      _name.c_str(),
                      SimpleMoodTypeToString(mood));
     
-    return GetAnimationName(SimpleMoodType::Default, currentTime_s, animationGroupContainer);
+    return GetAnimationName(SimpleMoodType::Default, currentTime_s, animationGroupContainer,headAngleRad);
   }
 
   static const std::string empty = "";
-
+  // Since this is the backup emergency case, also ignore head angle and just play something
   if( anyAnimationsMatchingMood ) {
     // choose the animation closest to being off cooldown
     const AnimationGroupEntry* bestEntry = nullptr;

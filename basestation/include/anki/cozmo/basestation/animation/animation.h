@@ -93,8 +93,7 @@ private:
   Animations::Track<LiftHeightKeyFrame>     _liftTrack;
   Animations::Track<FaceAnimationKeyFrame>  _faceAnimTrack;
   Animations::Track<ProceduralFaceKeyFrame> _proceduralFaceTrack;
-  Animations::Track<FacePositionKeyFrame>   _facePosTrack;
-  Animations::Track<BlinkKeyFrame>          _blinkTrack;
+  Animations::Track<EventKeyFrame>          _eventTrack;
   Animations::Track<BackpackLightsKeyFrame> _backpackLightsTrack;
   Animations::Track<BodyMotionKeyFrame>     _bodyPosTrack;
   Animations::Track<DeviceAudioKeyFrame>    _deviceAudioTrack;

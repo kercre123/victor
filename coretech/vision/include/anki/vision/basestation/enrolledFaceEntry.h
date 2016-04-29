@@ -17,6 +17,7 @@
 
 #include <chrono>
 #include <string>
+#include <vector>
 
 // Forward declaration
 namespace Json {
@@ -29,8 +30,8 @@ namespace Vision {
 
 struct EnrolledFaceEntry
 {
-  FaceID_t         faceID;
-  FaceID_t         prevID = UnknownFaceID;
+  FaceID_t                  faceID;
+  FaceID_t                  prevID = UnknownFaceID;
   
   std::string               name;
   
@@ -55,6 +56,14 @@ struct EnrolledFaceEntry
   
   void FillJson(Json::Value& json) const;
   
+  // Does not clear input vector, just adds to it
+  void Serialize(std::vector<u8>& buffer) const;
+  
+  // Modifies startIndex to point to the next entry in the buffer.
+  // When startIndex == buffer.size(), everything has been read from the buffer.
+  // Returns RESULT_OK if serialization succeeds.
+  Result Deserialize(const std::vector<u8>& buffer, size_t& startIndex);
+    
 }; // class EnrolledFaceEntry
   
   

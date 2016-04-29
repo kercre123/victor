@@ -1,0 +1,16 @@
+/** Clad definitions of animation event types
+ * ROBOT_CLAD_SHARED
+ */
+
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 AnimEvent {
+  TAPPED_BLOCK,
+
+  Count
+}
+
+} // namespace Cozmo
+} // namespace Anki

@@ -73,6 +73,10 @@ public:
   };
     
   bool IsRunning() const { return _isRunning; }
+
+  // returns the number of times this behavior has been started (number of times Init was called and returned
+  // OK, not counting calls to Resume)
+  int GetNumTimesBehaviorStarted() const { return _startCount; }
     
   double GetRunningDuration() const;
     
@@ -300,6 +304,7 @@ private:
     
   double _startedRunningTime_s;
   double _lastRunTime_s;
+  int _startCount = 0;
 
   float _overrideScore; // any value >= 0 implies it should be used
 

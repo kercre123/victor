@@ -105,23 +105,6 @@ namespace Face {
     _mode = graphics;
     return RESULT_OK;
   }
-
-  void Move(s8 xCenter, s8 yCenter)
-  {
-    // Stub, probably to be deleted later
-  }
-  
-  // Blanks the screen momentarily
-  void Blink()
-  {
-    // Stub, probably to be deleted later
-  }
-  
-  // Enables or disables periodic blinking
-  void EnableBlink(bool enable)
-  {
-    // Stub, probably to be deleted later
-  }
   
   #define MAX_PENALTY (-(COLS*PAGES+10))
   #define MIN(a,b) ((a < b) ? (a) : (b))

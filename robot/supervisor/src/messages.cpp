@@ -11,6 +11,7 @@
 #include "../sim_hal/transport/IReceiver.h"
 #include "../sim_hal/transport/reliableTransport.h"
 #include "anki/vision/CameraSettings.h"
+#include "../sim_hal/sim_nvStorage.h"
 #endif
 #include <string.h>
 
@@ -98,6 +99,9 @@ namespace Anki {
             break;
           case RobotInterface::EngineToRobot::Tag_animLiftHeight:
             Process_animLiftHeight(msg.animLiftHeight);
+            break;
+          case RobotInterface::EngineToRobot::Tag_animEventToRTIP:
+            Process_animEventToRTIP(msg.animEventToRTIP);
             break;
 #else
             #include "clad/robotInterface/messageEngineToRobot_switch_group_anim.def"
@@ -591,7 +595,7 @@ namespace Anki {
 
       void Process_enableReadToolCodeMode(const RobotInterface::EnableReadToolCodeMode& msg)
       {
-        AnkiDebug( 162, "ReadToolCodeMode", 445, "enabled: %d, liftPower: %f, headPower: %f", 3, msg.enable, msg.liftPower, msg.headPower);
+        AnkiDebug( 162, "ReadToolCodeMode", 449, "enabled: %d, liftPower: %f, headPower: %f", 3, msg.enable, msg.liftPower, msg.headPower);
         if (msg.enable) {
           HeadController::Disable();
           f32 p = CLIP(msg.headPower, -0.5f, 0.5f);
@@ -627,10 +631,6 @@ namespace Anki {
       }
 
       // ---------- Animation Key frame messages -----------
-      void Process_animBlink(const Anki::Cozmo::AnimKeyFrame::Blink& msg)
-      {
-        // Hangled by the Espressif
-      }
       void Process_animFaceImage(const Anki::Cozmo::AnimKeyFrame::FaceImage& msg)
       {
         // Handled by the Espressif
@@ -684,9 +684,17 @@ namespace Anki {
       {
         // Handled on the Espressif
       }
-      void Process_animFacePosition(const Anki::Cozmo::AnimKeyFrame::FacePosition&)
+      void Process_animEvent(const Anki::Cozmo::AnimKeyFrame::Event& msg)
       {
         // Handled on the Espressif
+      }
+      void Process_animEventToRTIP(const RobotInterface::AnimEventToRTIP& msg)
+      {
+        RobotInterface::AnimationEvent emsg;
+        emsg.timestamp = HAL::GetTimeStamp();
+        emsg.event_id = msg.event_id;
+        emsg.tag = msg.tag;
+        SendMessage(emsg);
       }
 #ifndef TARGET_K02
       void Process_animBackpackLights(const Anki::Cozmo::AnimKeyFrame::BackpackLights& msg)
@@ -743,25 +751,11 @@ namespace Anki {
       }
       void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageWrite const& msg)
       {
-        AnkiInfo( 156, "Messages.Process_writeNV.NotSupported", 440, "Tag: 0x%x", 1, msg.entry.tag);
-        
-        RobotInterface::NVOpResultToEngine m;
-        m.robotAddress = 1;
-        m.report.tag = static_cast<u32>(msg.entry.tag);
-        m.report.result = NVStorage::NV_ERROR;
-        m.report.write = true;
-        SendMessage(m);
+        SimNVStorageSpace::Write(msg);
       }
       void Process_readNV(Anki::Cozmo::NVStorage::NVStorageRead const& msg)
       {
-        AnkiInfo( 157, "Messages.Process_readNV.NotSupported", 440, "Tag: 0x%x", 1, msg.tag);
-        
-        RobotInterface::NVOpResultToEngine m;
-        m.robotAddress = 1;
-        m.report.tag = static_cast<u32>(msg.tag);
-        m.report.result = NVStorage::NV_ERROR;
-        m.report.write = false;
-        SendMessage(m);
+        SimNVStorageSpace::Read(msg);
       }
       void Process_rtipVersion(Anki::Cozmo::RobotInterface::RTIPVersionInfo const&)
       {
@@ -839,6 +833,15 @@ namespace Anki {
       {
         // Nothing to do here
       }
+      
+      // These are stubbed out just to get things compiling
+      void Process_robotIpInfo(const Anki::Cozmo::RobotInterface::AppConnectRobotIP& msg) {}
+      void Process_wifiCfgResult(const Anki::Cozmo::RobotInterface::AppConnectConfigResult& msg) {}
+      void Process_appConCfgString(const Anki::Cozmo::RobotInterface::AppConnectConfigString& msg) {}
+      void Process_appConCfgFlags(const Anki::Cozmo::RobotInterface::AppConnectConfigFlags& msg) {}
+      void Process_appConCfgIPInfo(const Anki::Cozmo::RobotInterface::AppConnectConfigIPInfo& msg) {}
+      void Process_appConGetRobotIP(const Anki::Cozmo::RobotInterface::AppConnectGetRobotIP& msg) {}
+      void Process_wifiOff(const Anki::Cozmo::RobotInterface::WiFiOff& msg) {}
 #endif
 
 // ----------- Send messages -----------------

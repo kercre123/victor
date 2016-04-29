@@ -133,7 +133,7 @@ void LiveEnroll(Vision::FaceTracker& faceTracker, const std::string& name, const
     if(nameAndID.name == name) {
       PRINT_NAMED_WARNING("LiveEnroll.ReplacingUser",
                           "User '%s' already exists. Will re-enroll.", name.c_str());
-      faceTracker.EraseName(name);
+      faceTracker.EraseFace(name);
       break;
     }
   }

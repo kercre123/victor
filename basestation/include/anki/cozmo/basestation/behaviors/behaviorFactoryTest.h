@@ -15,7 +15,6 @@
  *                - Turn to take pictures of all calibration targets and calibrate
  *                - Go to pickup block
  *                - Place block back down
- *                - Dock to charger 2
  *
  *
  * Copyright: Anki, Inc. 2016
@@ -85,20 +84,12 @@ namespace Cozmo {
 
     
     // Handlers for signals coming from the engine
-    Result HandleObservedObject(Robot& robot,
-                                const ExternalInterface::RobotObservedObject& msg);
-    
+    Result HandleObservedObject(Robot& robot, const ExternalInterface::RobotObservedObject& msg);
     Result HandleDeletedObject(const ExternalInterface::RobotDeletedObject& msg);
-
     Result HandleObjectMoved(const Robot& robot, const ObjectMoved &msg);
-    
     Result HandleCameraCalibration(Robot& robot, const CameraCalibration &msg);
-    
     Result HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg);
-    
-    Result HandleActionCompleted(Robot& robot,
-                                 const ExternalInterface::RobotCompletedAction& msg);
-
+    Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
     
     void SetCurrState(FactoryTestState s);
     void UpdateStateName();
@@ -117,7 +108,6 @@ namespace Cozmo {
     Radians           _startingRobotOrientation;
     Result            _lastHandlerResult;
     PathMotionProfile _motionProfile;
-    bool              _waitingForWriteAck = false;
  
     // Map of action tags that have been commanded to callback functions
     std::map<u32, std::string> _animActionTags;

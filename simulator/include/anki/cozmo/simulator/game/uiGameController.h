@@ -103,6 +103,8 @@ protected:
   virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
   
   
+  virtual void HandleRobotEnrolledFace(const ExternalInterface::RobotEnrolledFace& msg){};
+  virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
   void SendPing();
@@ -292,6 +294,8 @@ protected:
   void SetActualObjectPose(const std::string& name, const Pose3d& newPose);
   const Pose3d GetLightCubePoseActual(int lightCubeId);
   void SetLightCubePose(int lightCubeId, const Pose3d& pose);
+  
+  static size_t MakeWordAligned(size_t size);
   
 private:
   void HandleRobotStateUpdateBase(ExternalInterface::RobotState const& msg);

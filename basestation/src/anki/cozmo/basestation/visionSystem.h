@@ -201,11 +201,20 @@ namespace Cozmo {
     std::string GetModeName(VisionMode mode) const;
     std::string GetCurrentModeName() const;
     
-    void AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
     
+    Result AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
     void SetFaceEnrollmentMode(Vision::FaceEnrollmentMode mode);
     
-    void EraseFace(const std::string& name);
+    void GetSerializedFaceData(std::vector<u8>& albumData,
+                               std::vector<u8>& enrollData) const;
+    
+    Result SetSerializedFaceData(const std::vector<u8>& albumData,
+                                 const std::vector<u8>& enrollData,
+                                 std::list<Vision::FaceNameAndID>& namesAndIDs);
+
+    // Returns the ID of the erased face, or UnknownFaceID if the name isn't found
+    Vision::FaceID_t EraseFace(const std::string& name);
+    Result           EraseFace(Vision::FaceID_t faceID);
     
     void SetParams(const bool autoExposureOn,
                    const f32 exposureTime,

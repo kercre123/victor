@@ -17,8 +17,10 @@
 #include "clad/robotInterface/messageFromActiveObject.clad"
 #include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/fwTestMessages.clad"
+#include "clad/robotInterface/appConnectMessage.clad"
 #include "clad/types/nvStorage.clad"
 #include "clad/types/bleMessages.clad"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -210,6 +212,13 @@ message AbortAnimation
 {
 }
 
+// For internal robot use only
+message AnimEventToRTIP
+{
+  uint_8    tag,
+  AnimEvent event_id
+}
+
 message EnablePickupParalysis
 {
   bool enable
@@ -321,6 +330,9 @@ union EngineToRobot
 
   BLE_SendHello                 bleSendHelloMessage         = 0x28,
   BLE_EncodedKey                bleEncodedKey               = 0x29,
+  
+  AppConnectRobotIP             robotIpInfo                 = 0x2e,
+  AppConnectConfigResult        wifiCfgResult               = 0x2f,
 
   // 0x30 to 0x7f: To RTIP
   BootloadRTIP                  bootloadRTIP                = 0x30,
@@ -379,8 +391,8 @@ union EngineToRobot
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,
   AnimKeyFrame::HeadAngle       animHeadAngle               = 0x93,
   AnimKeyFrame::LiftHeight      animLiftHeight              = 0x94,
-  AnimKeyFrame::FacePosition    animFacePosition            = 0x95,
-  AnimKeyFrame::Blink           animBlink                   = 0x96,
+  AnimKeyFrame::Event           animEvent                   = 0x95,
+  AnimEventToRTIP               animEventToRTIP             = 0x96,
   AnimKeyFrame::FaceImage       animFaceImage               = 0x97,
   AnimKeyFrame::BackpackLights  animBackpackLights          = 0x98,
   AnimKeyFrame::BodyMotion      animBodyMotion              = 0x99,
@@ -393,6 +405,12 @@ union EngineToRobot
   CubeSlots                     assignCubeSlots             = 0xA0,
   TestState                     testState                   = 0xA1,
   EnterFactoryTestMode          enterTestMode               = 0xA2,
+
+  AppConnectConfigString        appConCfgString             = 0xAA,
+  AppConnectConfigFlags         appConCfgFlags              = 0xAB,
+  AppConnectConfigIPInfo        appConCfgIPInfo             = 0xAC,
+  AppConnectGetRobotIP          appConGetRobotIP            = 0xAD,
+  WiFiOff                       wifiOff                     = 0xAE,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

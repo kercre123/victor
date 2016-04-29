@@ -29,7 +29,8 @@ namespace NVStorage {
     // The number of blobs that can be associated with a multi-blob tag is 0xffff
     // (e.g. The NVEntryTag 0x10000 reserves tags 0x10000 through 0x1ffff)
     // though this value is actually lower because it is limited in NVStorageComponent.
-
+    NVEntry_FaceAlbumData  = 0x00FA0000,
+    NVEntry_FaceEnrollData = 0x00FE0000,
 
     NVEntry_MultiBlobJunk = 0x7FFF0000,
 

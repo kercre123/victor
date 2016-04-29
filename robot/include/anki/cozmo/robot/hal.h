@@ -440,9 +440,6 @@ namespace Anki
       // Clear the currently animated face
       void FaceClear();
 
-      // Blink the eyes
-      void FaceBlink();
-
       // Print a message to the face - this will permanently replace the face with your message
       extern "C" void FacePrintf(const char *format, ...);
 

@@ -98,7 +98,6 @@ class IPathPlanner;
 class MatPiece;
 class MoodManager;
 class PathDolerOuter;
-class ProgressionManager;
 class ProgressionUnlockComponent;
 class BlockFilter;
 class RobotPoseHistory;
@@ -697,9 +696,6 @@ public:
 
     const BehaviorFactory& GetBehaviorFactory() const { return _behaviorMgr.GetBehaviorFactory(); }
           BehaviorFactory& GetBehaviorFactory()       { return _behaviorMgr.GetBehaviorFactory(); }
-  
-    inline const ProgressionManager& GetProgressionManager() const { assert(_progressionManager); return *_progressionManager; }
-    inline ProgressionManager& GetProgressionManager() { assert(_progressionManager); return *_progressionManager; }
 
     inline const ProgressionUnlockComponent& GetProgressionUnlockComponent() const { assert(_progressionUnlockComponent); return *_progressionUnlockComponent; }
     inline ProgressionUnlockComponent& GetProgressionUnlockComponent() { assert(_progressionUnlockComponent); return *_progressionUnlockComponent; }
@@ -923,7 +919,6 @@ public:
     MoodManager*         _moodManager;
 
     ///////// Progression/Skills ////////
-    ProgressionManager*  _progressionManager;
     ProgressionUnlockComponent* _progressionUnlockComponent;
   
     ///////// Speed ////////

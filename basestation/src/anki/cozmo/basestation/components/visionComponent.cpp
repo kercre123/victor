@@ -82,10 +82,20 @@ namespace Cozmo {
       _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::AssignNameToFace,
         [this] (const AnkiEvent<MessageGameToEngine>& event)
         {
-          const ExternalInterface::AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();
+          using namespace ExternalInterface;
+          const AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();
           Lock();
           _visionSystem->AssignNameToFace(msg.faceID, msg.name);
           Unlock();
+
+          // Assume it worked (?) and give game confirmation
+          RobotEnrolledFace addMsg;
+          addMsg.name = msg.name;
+          addMsg.faceID = msg.faceID;
+          _robot.Broadcast(MessageEngineToGame(std::move(addMsg)));
+
+          // Every time a new face is enrolled with a name, store the album on the robot
+          SaveFaceAlbumToRobot();
         }));
       
       // EnableNewFaceEnrollment
@@ -106,23 +116,44 @@ namespace Cozmo {
       _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::VisionWhileMoving,
          [this] (const AnkiEvent<MessageGameToEngine>& event)
          {
-           const ExternalInterface::VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
+           const VisionWhileMoving& msg = event.GetData().Get_VisionWhileMoving();
            EnableVisionWhileMovingFast(msg.enable);
          }));
       
       // VisionRunMode
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::VisionRunMode,
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::VisionRunMode,
          [this] (const AnkiEvent<MessageGameToEngine>& event)
          {
-           const ExternalInterface::VisionRunMode& msg = event.GetData().Get_VisionRunMode();
+           const VisionRunMode& msg = event.GetData().Get_VisionRunMode();
            SetRunMode((msg.isSync ? RunMode::Synchronous : RunMode::Asynchronous));
          }));
-      
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::EraseFaceByName,
+
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EraseEnrolledFaceByName,
          [this] (const AnkiEvent<MessageGameToEngine>& event)
          {
-           _visionSystem->EraseFace(event.GetData().Get_EraseFaceByName().name);
+           Vision::FaceID_t erasedID = _visionSystem->EraseFace(event.GetData().Get_EraseEnrolledFaceByName().name);
+           if(Vision::UnknownFaceID != erasedID) {
+             // Send back confirmation
+             RobotDeletedFace msg;
+             msg.robotID = _robot.GetID(); // Really necessary?
+             msg.faceID  = erasedID;
+             _robot.Broadcast(MessageEngineToGame(std::move(msg)));
+           }
          }));
+
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EraseEnrolledFaceByID,
+        [this] (const AnkiEvent<MessageGameToEngine>& event)
+        {
+          auto const faceID = event.GetData().Get_EraseEnrolledFaceByID().faceID;
+          Result result = _visionSystem->EraseFace(faceID);
+          if(RESULT_OK == result) {
+            // Send back confirmation
+            RobotDeletedFace msg;
+            msg.robotID = _robot.GetID(); // Really necessary?
+            msg.faceID  = faceID;
+            _robot.Broadcast(MessageEngineToGame(std::move(msg)));
+          }
+        }));
     }
     
   } // VisionSystem()
@@ -360,6 +391,8 @@ namespace Cozmo {
           while(!_visionSystem->IsInitialized()) {
             std::this_thread::sleep_for(std::chrono::microseconds(500));
           }
+          
+          LoadFaceAlbumFromRobot();
           
           if(_runMode == RunMode::Asynchronous) {
             Start();
@@ -1407,6 +1440,148 @@ namespace Cozmo {
     
     
   }
+  
+  
+  Result VisionComponent::SaveFaceAlbumToRobot()
+  {
+    Result lastResult = RESULT_OK;
+    
+    _albumData.clear();
+    _enrollData.clear();
+    
+    // Get album data from vision system
+    this->Lock();
+    _visionSystem->GetSerializedFaceData(_albumData, _enrollData);
+    this->Unlock();
+
+    if(_albumData.empty() && _enrollData.empty()) {
+      PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.EmptyAlbumData", "");
+      return RESULT_OK;
+    }
+    
+    // If one of the data is not empty, neither should be (we can't have album data with
+    // no enroll data or vice versa)
+    ASSERT_NAMED(!_albumData.empty() && !_enrollData.empty(),
+                 "VisionComponent.SaveFaceAblumToRobot.BadAlbumOrEnrollData");
+
+    // Callback to display result when NVStorage.Write finishes
+    NVStorageComponent::NVStorageWriteEraseCallback saveAlbumCallback = [](NVStorage::NVResult result) {
+      if(result == NVStorage::NVResult::NV_OKAY) {
+        PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.AlbumSuccess",
+                         "Successfully completed saving album data to robot");
+      } else {
+        PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.AlbumFailure",
+                            "Failed saving album data to robot: %s",
+                            EnumToString(result));
+      }
+    };
+    // Callback to display result when NVStorage.Write finishes
+    NVStorageComponent::NVStorageWriteEraseCallback saveEnrollCallback = [](NVStorage::NVResult result) {
+      if(result == NVStorage::NVResult::NV_OKAY) {
+        PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.EnrollSuccess",
+                         "Successfully completed saving enroll data to robot");
+      } else {
+        PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.EnrollFailure",
+                            "Failed saving enroll data to robot: %s",
+                            EnumToString(result));
+      }
+    };
+    
+    // Use NVStorage to save it
+    bool sendSucceeded = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FaceAlbumData,
+                                                              _albumData.data(), _albumData.size(), saveAlbumCallback);
+    if(!sendSucceeded) {
+      PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendWriteAlbumDataFail", "");
+      lastResult = RESULT_FAIL;
+    } else {
+      sendSucceeded = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FaceEnrollData,
+                                                         _enrollData.data(), _enrollData.size(), saveEnrollCallback);
+      if(!sendSucceeded) {
+        PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendWriteEnrollDataFail", "");
+        lastResult = RESULT_FAIL;
+      }
+    }
+    
+    PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.Initiated",
+                     "Initiated save of %zu-byte album data and %zu-byte enroll data to NVStorage",
+                     _albumData.size(), _enrollData.size());
+    
+    return lastResult;
+  } // SaveFaceAlbumToRobot()
+  
+  Result VisionComponent::LoadFaceAlbumFromRobot()
+  {
+    Result lastResult = RESULT_OK;
+    
+    ASSERT_NAMED(_visionSystem != nullptr && _visionSystem->IsInitialized(),
+                 "VisionComponent.LoadFaceAlbumFromRobot.VisionSystemNotReady");
+    
+    NVStorageComponent::NVStorageReadCallback readCallback =
+    [this](u8* data, size_t size, NVStorage::NVResult result)
+    {
+      if(result == NVStorage::NVResult::NV_OKAY)
+      {
+        // Read completed: try to use the data to update the face album/enroll data
+        Lock();
+        std::list<Vision::FaceNameAndID> namesAndIDs;
+        Result setResult = _visionSystem->SetSerializedFaceData(_albumData, _enrollData, namesAndIDs);
+        Unlock();
+        
+        if(RESULT_OK == setResult) {
+          PRINT_NAMED_INFO("VisionComponent.LoadFaceAlbumFromRobot.Success",
+                           "Finished setting %zu-byte album data and %zu-byte enroll data",
+                           _albumData.size(), _enrollData.size());
+
+          // Notify about the newly-available names and IDs
+          using namespace ExternalInterface;
+          _robot.Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
+          for(auto & nameAndID : namesAndIDs)
+          {
+            RobotEnrolledFace msg;
+            msg.name = nameAndID.name;
+            msg.faceID = nameAndID.faceID;
+            _robot.Broadcast(MessageEngineToGame(std::move(msg)));
+          }
+        } else {
+          PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.Failure",
+                            "Failed setting %zu-byte album data and %zu-byte enroll data",
+                            _albumData.size(), _enrollData.size());
+        }
+      } else {
+        PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceEnrollDataFail",
+                            "NVResult = %s", EnumToString(result));
+      }
+      
+      _albumData.clear();
+      _enrollData.clear();
+      
+    }; // ReadCallback
+    
+    _albumData.clear();
+    _enrollData.clear();
+    
+    // NOTE: We don't run the callback until both data items have been read
+    bool sendSucceeded = _robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_FaceAlbumData,
+                                                             {}, &_albumData, false);
+    
+    if(!sendSucceeded) {
+      PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceAlbumDataFail", "");
+      lastResult = RESULT_FAIL;
+    } else {
+      sendSucceeded = _robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_FaceEnrollData,
+                                                          readCallback, &_enrollData, false);
+      if(!sendSucceeded) {
+        PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceEnrollDataFail", "");
+        lastResult = RESULT_FAIL;
+      }
+    }
+    
+    PRINT_NAMED_INFO("VisionComponent.LoadFaceAlbumToRobot.Initiated",
+                     "Initiated load of album and enroll data from NVStorage");
+    
+    return lastResult;
+  } // LoadFaceAlbumFromRobot()
+  
   
 } // namespace Cozmo
 } // namespace Anki

@@ -19,6 +19,7 @@
 #include "clad/types/gameEvent.clad"
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
+#include "clad/types/animationEvents.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -206,8 +207,8 @@ message RobotObservedFace {
 }
 
 // RobotChangedObservedFaceID
-//  This generally happens when a tracked face (negative ID) is enrolled as a
-//  face to be recognized (positive ID)
+//  This generally happens when a tracked face (negative ID) is recognized and
+//  receives a positive ID or when face records get merged
 message RobotChangedObservedFaceID {
     int_32   oldID,
     int_32   newID
@@ -224,7 +225,7 @@ message RobotObservedMotion {
     int_16   ground_y
 }
 
-// RobotDeletedFace
+// RobotDeletedFace - sent when an _observed_ face has been deleted (e.g. if not seen for too long)
 message RobotDeletedFace {
     int_32  faceID,
     uint_32 robotID
@@ -252,6 +253,26 @@ message RobotReadToolCode {
   ToolCodeInfo info
 }
 
+// Sent when a new (named) face is registered (e.g. as confirmation for an
+// AssignNameToFace message) or a face is loaded from a saved album,
+// in order to keep the game's list of names and IDs in sync with the engine
+message RobotEnrolledFace {
+    int_32 faceID,
+    string name
+}
+
+// NOTE: This is separate from deleting an _observed_ face.
+message RobotErasedEnrolledFace {
+    int_32 faceID,
+    string name
+}
+
+// Sent if all enrolled faces are cleared, e.g. when a new face album is loaded from
+// memory (in which case RobotAddedNamedFaces messages should follow).
+// NOTE: This is separate from _observed_ faces.
+message RobotErasedAllEnrolledFaces {
+
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  ACTIONS  //////////////////////////////////
@@ -307,6 +328,11 @@ message AnimationAborted {
   uint_32 tag
 }
 
+message AnimationEvent {
+  uint_32   timestamp,
+  AnimEvent event_id
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Mood / Emotions
 ///////////////////////////////////////////////////////////////////////////////
@@ -314,15 +340,6 @@ message AnimationAborted {
 message MoodState {
   uint_8  robotID,
   float_32 emotionValues[uint_8]
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Progression / Stats
-///////////////////////////////////////////////////////////////////////////////
-
-message ProgressionStats {
-  uint_8  robotID,
-  int_32 statValues[uint_8]
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -371,6 +388,12 @@ message VerifyDebugConsoleVarMessage {
   string statusMessage,
   ConsoleVarUnion varValue,
   bool success
+}
+
+message DebugLatencyMessage {
+  float_32 averageLatency,
+  float_32 minLatency,
+  float_32 maxLatency
 }
 
 ///////////////////////////////////////////////////////////////////////////////

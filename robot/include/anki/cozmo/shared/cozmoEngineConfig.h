@@ -113,37 +113,9 @@ namespace Anki {
   
     // Tolerance on angular alignment with predock pose
     const f32 DEFAULT_PREDOCK_POSE_ANGLE_TOLERANCE = DEG_TO_RAD(7.5);
-    
-    // Default docking speed/accel
-    const u16 DEFAULT_DOCK_SPEED_MMPS = 60;
-    const u16 DEFAULT_DOCK_ACCEL_MMPS2 = 200;
-    const u16 DEFAULT_DOCK_DECCEL_MMPS2 = 100;
-    
-    // DON'T CHANGE THESE VALUES. ROBOT WON'T STOP WHERE IT'S SUPPOSED TO IF YOU DECREASE THEM.
-    // TODO: Using a high fixed deceleration for all paths until we have support for
-    // the planner to compute when it should need to start decelerating and modify
-    // the path accordingly.
-    const f32 DEFAULT_PATH_DECEL_MMPS2 = 500;
-    const f32 DEFAULT_PATH_POINT_TURN_DECEL_RAD_PER_SEC2 = 500;
-    
-    // Default path motion profile parameters
-    const f32 DEFAULT_PATH_SPEED_MMPS = 60;
-    const f32 DEFAULT_PATH_ACCEL_MMPS2 = 200;
-    const f32 DEFAULT_PATH_POINT_TURN_SPEED_RAD_PER_SEC = 2;
-    const f32 DEFAULT_PATH_POINT_TURN_ACCEL_RAD_PER_SEC2 = 100.f;
-    const f32 DEFAULT_PATH_REVERSE_SPEED_MMPS = 30;
   
-    const PathMotionProfile DEFAULT_PATH_MOTION_PROFILE(DEFAULT_PATH_SPEED_MMPS,
-                                                        DEFAULT_PATH_ACCEL_MMPS2,
-                                                        DEFAULT_PATH_DECEL_MMPS2,
-                                                        DEFAULT_PATH_POINT_TURN_SPEED_RAD_PER_SEC,
-                                                        DEFAULT_PATH_POINT_TURN_ACCEL_RAD_PER_SEC2,
-                                                        DEFAULT_PATH_POINT_TURN_DECEL_RAD_PER_SEC2,
-                                                        DEFAULT_DOCK_SPEED_MMPS,
-                                                        DEFAULT_DOCK_ACCEL_MMPS2,
-                                                        DEFAULT_DOCK_DECCEL_MMPS2,
-                                                        DEFAULT_PATH_REVERSE_SPEED_MMPS,
-                                                        false);
+    // Default values in clad
+    const PathMotionProfile DEFAULT_PATH_MOTION_PROFILE = PathMotionProfile();
     
   } // namespace Cozmo
 } // namespace Anki

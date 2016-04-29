@@ -86,8 +86,8 @@ namespace Anki {
         // === End of Pickup detection ===
 
 
-        u32 lastMotionDetectedTime_us = 0;
-        const u32 MOTION_DETECT_TIMEOUT_US = 250000;
+        u32 lastMotionDetectedTime_ms = 0;
+        const u32 MOTION_DETECT_TIMEOUT_MS = 250;
         const f32 GYRO_MOTION_THRESHOLD = DEG_TO_RAD(3);  // Maximum expected drift from gyro
 
 
@@ -457,7 +457,7 @@ namespace Anki {
 
 
       bool MotionDetected() {
-        return (lastMotionDetectedTime_us + MOTION_DETECT_TIMEOUT_US) >= HAL::GetMicroCounter();
+        return (lastMotionDetectedTime_ms + MOTION_DETECT_TIMEOUT_MS) >= HAL::GetTimeStamp();
       }
 
       // Robot pickup detector
@@ -605,17 +605,17 @@ namespace Anki {
       // Update the last time motion was detected
       void DetectMotion()
       {
-        u32 currTime = HAL::GetMicroCounter();
+        u32 currTime = HAL::GetTimeStamp();
         // Are wheels or head being powered?
         if (WheelController::AreWheelsPowered() || !HeadController::IsInPosition()) {
-          lastMotionDetectedTime_us = currTime;
+          lastMotionDetectedTime_ms = currTime;
         }
         
         // Check gyro for motion
         if (ABS(imu_data_.rate_x) > GYRO_MOTION_THRESHOLD ||
             ABS(imu_data_.rate_y) > GYRO_MOTION_THRESHOLD ||
             ABS(imu_data_.rate_z) > GYRO_MOTION_THRESHOLD) {
-          lastMotionDetectedTime_us = currTime;
+          lastMotionDetectedTime_ms = currTime;
         }
         
         // TODO: Gyro seems to be sensitive enough that it's sufficient for detecting motion, but if

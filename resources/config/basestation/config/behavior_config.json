@@ -8,7 +8,8 @@
     // 4) anything belonging in enabledBehaviors is re-enabled (to e.g. re-enable a few specific behaviors)
     
     "disabledGroups" : [
-      "MiniGame"
+      "MiniGame",
+      "Demo"
     ],
     "enabledGroups" : [
       "FreeplayExplore"

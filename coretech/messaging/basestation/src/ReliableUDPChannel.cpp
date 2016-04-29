@@ -338,6 +338,7 @@ void ReliableUDPChannel::ConfigureReliableTransport()
     Util::ReliableTransport::SetSendUnreliableMessagesImmediately(false);
     Util::ReliableTransport::SetMaxPacketsToReSendOnAck(0);
     Util::ReliableTransport::SetMaxPacketsToSendOnSendMessage(1);
+    Util::ReliableTransport::SetTrackAckLatency(true);
     // Set parameters for all reliable connections
     Util::ReliableConnection::SetTimeBetweenPingsInMS(33.3); // Heartbeat interval
     Util::ReliableConnection::SetTimeBetweenResendsInMS(33.3);

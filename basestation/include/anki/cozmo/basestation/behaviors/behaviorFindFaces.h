@@ -63,9 +63,9 @@ private:
   // Max angle to move relative to current, in degrees
   constexpr static float kPanMax = 80;
   // Min absolute angle to move head to, in degrees
-  constexpr static float kTiltMin = 17;
+  constexpr static float kTiltMin = 25;
   // Max absolute angle to move head to, in degrees
-  constexpr static float kTiltMax = 23;
+  constexpr static float kTiltMax = 42;
   // Width of zone to focus on
   constexpr static float kFocusAreaAngle_deg = 120;
   

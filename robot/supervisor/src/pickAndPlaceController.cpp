@@ -17,6 +17,7 @@
 #include "clad/types/dockingSignals.h"
 #include "speedController.h"
 #include "steeringController.h"
+#include "pathFollower.h"
 
 
 #define DEBUG_PAP_CONTROLLER 0
@@ -99,6 +100,22 @@ namespace Anki {
 
         // Whether or not docking path should be traversed with manually controlled speed
         bool useManualSpeed_ = false;
+        
+        typedef enum
+        {
+          WAITING_TO_MOVE,
+          MOVING_BACK,
+          NOTHING,
+        } PickupAnimMode;
+        
+        // State of the pickup animation
+        PickupAnimMode pickupAnimMode_ = NOTHING;
+        
+        const u8 PICKUP_ANIM_SPEED_MMPS = 20;
+        const u8 PICKUP_ANIM_DIST_MM = 8;
+        const u8 PICKUP_ANIM_STARTING_DIST_MM = 20;
+        const u8 PICKUP_ANIM_TRANSITION_TIME_MS = 100;
+        const u8 PICKUP_ANIM_ACCEL_MMPS2 = 100;
 
       } // "private" namespace
 
@@ -453,6 +470,26 @@ namespace Anki {
               case DA_PICKUP_HIGH:
               {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
+                
+                // When a block is picked up we want an "animation" to play where Cozmo moves forwards and backwards
+                // a little bit while picking up the block, gives a sense of momentum
+                PathFollower::ClearPath();
+                
+                f32 x, y;
+                Radians a;
+                Localization::GetDriveCenterPose(x, y, a);
+                
+                PathFollower::AppendPathSegment_Line(0,
+                                                     x-(PICKUP_ANIM_STARTING_DIST_MM)*cosf(a.ToFloat()),
+                                                     y-(PICKUP_ANIM_STARTING_DIST_MM)*sinf(a.ToFloat()),
+                                                     x+(PICKUP_ANIM_DIST_MM)*cosf(a.ToFloat()),
+                                                     y+(PICKUP_ANIM_DIST_MM)*sinf(a.ToFloat()),
+                                                     PICKUP_ANIM_SPEED_MMPS,
+                                                     PICKUP_ANIM_ACCEL_MMPS2,
+                                                     PICKUP_ANIM_ACCEL_MMPS2);
+                
+                PathFollower::StartPathTraversal();
+                mode_ = PICKUP_ANIM;
                 break;
               }
               case DA_PLACE_HIGH:
@@ -703,6 +740,46 @@ namespace Anki {
               mode_ = IDLE;
             }
             break;
+          case PICKUP_ANIM:
+          {
+            switch(pickupAnimMode_)
+            {
+              case(WAITING_TO_MOVE):
+              {
+                // Once enough time passes start driving backwards for the backwards part of the "animation"
+                if(HAL::GetTimeStamp() > transitionTime_)
+                {
+                  SteeringController::ExecuteDirectDrive(-PICKUP_ANIM_SPEED_MMPS, -PICKUP_ANIM_SPEED_MMPS);
+                  transitionTime_ = HAL::GetTimeStamp() + PICKUP_ANIM_TRANSITION_TIME_MS;
+                  pickupAnimMode_ = MOVING_BACK;
+                }
+                break;
+              }
+              case(MOVING_BACK):
+              {
+                // We have been driving backwards for long enough and the "animation" is complete
+                if(HAL::GetTimeStamp() > transitionTime_)
+                {
+                  SteeringController::ExecuteDirectDrive(0, 0);
+                  mode_ = MOVING_LIFT_POSTDOCK;
+                  pickupAnimMode_ = NOTHING;
+                }
+                break;
+              }
+              case(NOTHING):
+              {
+                // If we have finished doing the forwards part of the "animation" transition to waiting to do the
+                // backwards part
+                if(!PathFollower::IsTraversingPath())
+                {
+                  transitionTime_ = HAL::GetTimeStamp() + PICKUP_ANIM_TRANSITION_TIME_MS;
+                  pickupAnimMode_ = WAITING_TO_MOVE;
+                }
+                break;
+              }
+            }
+            break;
+          }
           default:
             mode_ = IDLE;
             AnkiError( 14, "PAP", 39, "Reached default case in DockingController "

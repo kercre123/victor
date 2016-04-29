@@ -11,6 +11,10 @@
  **/
 
 
+#ifndef __Cozmo_Basestation_FirmwareUpdater_FirmwareUpdater_H__
+#define __Cozmo_Basestation_FirmwareUpdater_FirmwareUpdater_H__
+
+
 #include "anki/common/types.h"
 #include "clad/types/firmwareTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -159,3 +163,7 @@ private:
 
 } // namespace Cozmo
 } // namespace Anki
+
+
+#endif // __Cozmo_Basestation_FirmwareUpdater_FirmwareUpdater_H__
+

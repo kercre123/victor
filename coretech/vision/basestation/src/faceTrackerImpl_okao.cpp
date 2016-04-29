@@ -567,15 +567,20 @@ namespace Vision {
     
     return RESULT_OK;
   } // Update()
-  
-  void FaceTracker::Impl::AssignNameToID(FaceID_t faceID, const std::string& name)
+
+  Result FaceTracker::Impl::AssignNameToID(FaceID_t faceID, const std::string& name)
   {
-    _recognizer.AssignNameToID(faceID, name);
+    return _recognizer.AssignNameToID(faceID, name);
   }
-  
-  void FaceTracker::Impl::EraseName(const std::string& name)
+
+  FaceID_t FaceTracker::Impl::EraseFace(const std::string& name)
   {
-    _recognizer.EraseName(name);
+    return _recognizer.EraseFace(name);
+  }
+
+  Result FaceTracker::Impl::EraseFace(FaceID_t faceID)
+  {
+    return _recognizer.EraseFace(faceID);
   }
   
   Result FaceTracker::Impl::SaveAlbum(const std::string& albumName)
@@ -782,6 +787,20 @@ namespace Vision {
     return enableEnrollment;
     
   } // IsEnrollable()
+  
+  Result FaceTracker::Impl::GetSerializedData(std::vector<u8>& albumData,
+                                              std::vector<u8>& enrollData)
+  {
+    return _recognizer.GetSerializedData(albumData, enrollData);
+  }
+  
+  Result FaceTracker::Impl::SetSerializedData(const std::vector<u8>& albumData,
+                                              const std::vector<u8>& enrollData,
+                                              std::list<FaceNameAndID>& namesAndIDs)
+  {
+    return _recognizer.SetSerializedData(albumData, enrollData, namesAndIDs);
+  }
+
   
 } // namespace Vision
 } // namespace Anki
