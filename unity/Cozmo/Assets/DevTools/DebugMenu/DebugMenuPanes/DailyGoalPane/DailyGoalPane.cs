@@ -1,145 +1,80 @@
 ﻿using UnityEngine;
 using System.Collections;
 using DataPersistence;
+using Cozmo.UI;
 
 public class DailyGoalPane : MonoBehaviour {
 
   [SerializeField]
-  UnityEngine.UI.Button _QuickAddTreatButton;
+  UnityEngine.UI.Button _ResetGoalButton;
 
   [SerializeField]
-  UnityEngine.UI.Button _QuickRemoveTreatButton;
+  UnityEngine.UI.Button _ProgressGoalButton;
 
   [SerializeField]
-  UnityEngine.UI.Button _QuickAddExperienceButton;
+  UnityEngine.UI.Button _UndoProgressGoalButton;
 
   [SerializeField]
-  UnityEngine.UI.Button _QuickRemoveExperienceButton;
+  UnityEngine.UI.Dropdown _GoalListDropdown;
 
   [SerializeField]
-  UnityEngine.UI.InputField _ChestLevelInputField;
+  UnityEngine.UI.InputField _SetProgressInputField;
 
   [SerializeField]
-  UnityEngine.UI.Button _SetChestLevelButton;
+  UnityEngine.UI.Button _SetProgressGoalButton;
 
-  // TODO: Validate id
-  [SerializeField]
-  UnityEngine.UI.Dropdown _ItemIdDropdown;
+  private TimelineEntryData _CurrentSession;
 
-  [SerializeField]
-  UnityEngine.UI.InputField _NumToAddInputField;
-
-  [SerializeField]
-  UnityEngine.UI.Button _AddItemButton;
-
-  [SerializeField]
-  UnityEngine.UI.InputField _NumToRemoveInputField;
-
-  [SerializeField]
-  UnityEngine.UI.Button _RemoveItemButton;
-
-  [SerializeField]
-  UnityEngine.UI.InputField _NumToSetInputField;
-
-  [SerializeField]
-  UnityEngine.UI.Button _SetItemAmountButton;
-
-  private const string _kTreatItemId = "treat";
-  private const string _kExperienceItemId = "experience";
-
-  private Cozmo.Inventory _PlayerInventory;
+  private DailyGoal _CurrentGoal;
 
   // TODO: Allow add / remove any item
   // TODO: Add shortcut buttons for common items (treats, experience)
   void Start() {
-    _PlayerInventory = DataPersistenceManager.Instance.Data.DefaultProfile.Inventory;
+    _CurrentSession = DataPersistenceManager.Instance.CurrentSession;
+    if (_CurrentSession == null) {
+      Debug.LogError("No Current Session for DailyGoal Debug");
+    }
 
-    _QuickAddTreatButton.onClick.AddListener(HandleQuickAddTreatsClicked);
-    _QuickRemoveTreatButton.onClick.AddListener(HandleQuickRemoveTreatsClicked);
-    _QuickAddExperienceButton.onClick.AddListener(HandleQuickAddExperienceClicked);
-    _QuickRemoveExperienceButton.onClick.AddListener(HandleQuickRemoveExperienceClicked);
+    _ResetGoalButton.onClick.AddListener(HandleResetGoalClicked);
+    _ProgressGoalButton.onClick.AddListener(HandleProgressGoalClicked);
+    _UndoProgressGoalButton.onClick.AddListener(HandleUndoProgressGoalClicked);
 
-    _ChestLevelInputField.text = DataPersistenceManager.Instance.CurrentSession.ChestsGained.ToString();
-    _ChestLevelInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
-    _SetChestLevelButton.onClick.AddListener(HandleSetChestLevelButtonClicked);
+    _SetProgressInputField.text = "0";
+    _SetProgressInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
+    _SetProgressGoalButton.onClick.AddListener(HandleSetProgressGoalClicked);
 
-    _ItemIdDropdown.ClearOptions();
-    _ItemIdDropdown.AddOptions(Cozmo.ItemDataConfig.GetAllItemIds());
-
-    string defaultValue = "10";
-    _NumToAddInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
-    _NumToAddInputField.text = defaultValue;
-    _AddItemButton.onClick.AddListener(HandleAddItemClicked);
-
-    _NumToRemoveInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
-    _NumToRemoveInputField.text = defaultValue;
-    _RemoveItemButton.onClick.AddListener(HandleRemoveItemClicked);
-
-    _NumToSetInputField.contentType = UnityEngine.UI.InputField.ContentType.IntegerNumber;
-    _NumToSetInputField.text = defaultValue;
-    _SetItemAmountButton.onClick.AddListener(HandleSetItemAmountClicked);
+    _GoalListDropdown.ClearOptions();
+    _GoalListDropdown.AddOptions(DailyGoalManager.Instance.GetCurrentDailyGoalNames());
+    _GoalListDropdown.onValueChanged.AddListener(UpdateCurrentGoal);
   }
 
-  private void HandleQuickAddTreatsClicked() {
-    DebugAddItem(_kTreatItemId, 100);
+  private void HandleResetGoalClicked() {
+    _CurrentGoal.DebugResetGoalProgress();
   }
 
-  private void HandleQuickRemoveTreatsClicked() {
-    DebugRemoveItem(_kTreatItemId, 100);
+  private void HandleProgressGoalClicked() {
+    _CurrentGoal.ProgressGoal(_CurrentGoal.GoalEvent);
   }
 
-  private void HandleQuickAddExperienceClicked() {
-    DebugAddItem(_kExperienceItemId, 100);
+  private void HandleUndoProgressGoalClicked() {
+    _CurrentGoal = GetDailyGoalByName(_GoalListDropdown.captionText.text);
   }
 
-  private void HandleQuickRemoveExperienceClicked() {
-    DebugRemoveItem(_kExperienceItemId, 100);
-  }
-
-  private void HandleSetChestLevelButtonClicked() {
-    DataPersistenceManager.Instance.CurrentSession.ChestsGained = GetValidInt(_ChestLevelInputField);
-
-    // Trigger UI to update
-    DebugAddItem(_kExperienceItemId, 0);
-
-    DataPersistenceManager.Instance.Save();
-  }
-
-  private void HandleAddItemClicked() {
-    DebugAddItem(_ItemIdDropdown.captionText.text, GetValidInt(_NumToAddInputField));
-  }
-
-  private void HandleRemoveItemClicked() {
-    DebugRemoveItem(_ItemIdDropdown.captionText.text, GetValidInt(_NumToRemoveInputField));
-  }
-
-  private void HandleSetItemAmountClicked() {
-    DebugSetItem(_ItemIdDropdown.captionText.text, GetValidInt(_NumToSetInputField));
-  }
-
-  private void DebugAddItem(string itemId, int delta) {
-    _PlayerInventory.AddItemAmount(itemId, delta);
-    DataPersistenceManager.Instance.Save();
-  }
-
-  private void DebugRemoveItem(string itemId, int delta) {
-    int currentAmount = _PlayerInventory.GetItemAmount(itemId);
-    delta = Mathf.Min(currentAmount, delta);
-    _PlayerInventory.RemoveItemAmount(itemId, delta);
-    DataPersistenceManager.Instance.Save();
-  }
-
-  private void DebugSetItem(string itemId, int delta) {
-    _PlayerInventory.SetItemAmount(itemId, delta);
-    DataPersistenceManager.Instance.Save();
-  }
-
-  private int GetValidInt(UnityEngine.UI.InputField inputField) {
-    int validInt = int.Parse(inputField.text);
+  private void HandleSetProgressGoalClicked() {
+    int validInt = int.Parse(_SetProgressInputField.text);
     if (validInt < 0) {
       validInt = 0;
-      inputField.text = "0";
+      _SetProgressInputField.text = "0";
     }
-    return validInt;
+    _CurrentGoal.DebugSetGoalProgress(validInt);
   }
+
+  private void UpdateCurrentGoal(int even) {
+    _CurrentGoal = GetDailyGoalByName(_GoalListDropdown.captionText.text);
+  }
+
+  private DailyGoal GetDailyGoalByName(string name) {
+    return _CurrentSession.DailyGoals.Find(x => x.Title == name);
+  }
+
 }

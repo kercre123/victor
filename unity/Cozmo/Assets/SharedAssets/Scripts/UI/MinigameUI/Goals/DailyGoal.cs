@@ -61,7 +61,7 @@ namespace Cozmo {
         GameEventManager.Instance.OnGameEvent -= ProgressGoal;
       }
 
-      private void ProgressGoal(GameEvent gEvent) {
+      public void ProgressGoal(GameEvent gEvent) {
         if (gEvent != GoalEvent) {
           return;
         }
@@ -88,7 +88,22 @@ namespace Cozmo {
         }
       }
 
+      public void DebugSetGoalProgress(int prog) {
+        
+      }
+
+      public void DebugUndoGoalProgress() {
+        
+      }
+
+      public void DebugResetGoalProgress() {
+
+      }
+
       public bool CanProg() {
+        if (ProgConditions == null) {
+          return true;
+        }
         for (int i = 0; i < ProgConditions.Count; i++) {
           if (ProgConditions[i].ConditionMet() == false) {
             return false;
