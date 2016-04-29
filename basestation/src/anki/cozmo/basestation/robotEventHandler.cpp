@@ -22,7 +22,6 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -119,13 +118,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // Custom handler for CameraCalibration event
     auto cameraCalibrationCallback = std::bind(&RobotEventHandler::HandleCameraCalibration, this, std::placeholders::_1);
     _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::CameraCalibration, cameraCalibrationCallback));
-    
-    
-    // Custom handlers for Progression events
-    {
-      auto progressionEventCallback = std::bind(&RobotEventHandler::HandleProgressionEvent, this, std::placeholders::_1);
-      _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ProgressionMessage, progressionEventCallback));
-    }
 
     // Custom handlers for BehaviorManager events
     {
@@ -947,24 +939,6 @@ void RobotEventHandler::HandleForceDelocalizeRobot(const AnkiEvent<ExternalInter
                      "Forcibly delocalizing robot %d", robotID);
       
     robot->Delocalize();
-  }
-}
-  
-void RobotEventHandler::HandleProgressionEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
-{
-  const auto& eventData = event.GetData();
-  const RobotID_t robotID = eventData.Get_ProgressionMessage().robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleProgressionEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
-  }
-  else
-  {
-    robot->GetProgressionManager().HandleEvent(event);
   }
 }
   
