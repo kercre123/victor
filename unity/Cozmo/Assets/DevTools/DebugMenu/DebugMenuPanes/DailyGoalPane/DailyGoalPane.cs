@@ -27,8 +27,6 @@ public class DailyGoalPane : MonoBehaviour {
 
   private DailyGoal _CurrentGoal;
 
-  // TODO: Allow add / remove any item
-  // TODO: Add shortcut buttons for common items (treats, experience)
   void Start() {
     _CurrentSession = DataPersistenceManager.Instance.CurrentSession;
     if (_CurrentSession == null) {
