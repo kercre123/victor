@@ -28,6 +28,7 @@ enum uint_8 BehaviorType {
   RollBlock,
   FactoryTest,
   DemoFearEdge,
+  FlipDownFromWheelie,
 
   Count
 }
