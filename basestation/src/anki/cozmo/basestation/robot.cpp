@@ -1330,9 +1330,9 @@ namespace Anki {
       _lastPickOrPlaceSucceeded = false;
       
       return SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0,
-                                                                DEFAULT_DOCK_SPEED_MMPS,
-                                                                DEFAULT_DOCK_ACCEL_MMPS2,
-                                                                DEFAULT_DOCK_ACCEL_MMPS2,
+                                                                DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
+                                                                DEFAULT_PATH_MOTION_PROFILE.accel_mmps2,
+                                                                DEFAULT_PATH_MOTION_PROFILE.decel_mmps2,
                                                                 useManualSpeed);
     }
     

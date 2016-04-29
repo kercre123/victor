@@ -304,8 +304,8 @@ void BehaviorFollowMotion::HandleObservedMotion(const EngineToGameEvent &event, 
         // Move towards the motion since it's centered
         DriveStraightAction* driveAction = new DriveStraightAction(robot,
                                                                    _moveForwardDist_mm,
-                                                                   DEFAULT_PATH_SPEED_MMPS*_moveForwardSpeedIncrease);
-        driveAction->SetAccel(DEFAULT_PATH_ACCEL_MMPS2*_moveForwardSpeedIncrease);
+                                                                   DEFAULT_PATH_MOTION_PROFILE.speed_mmps*_moveForwardSpeedIncrease);
+        driveAction->SetAccel(DEFAULT_PATH_MOTION_PROFILE.accel_mmps2*_moveForwardSpeedIncrease);
         _actionRunning = driveAction->GetTag();
         
         _totalDriveForwardDist += _moveForwardDist_mm;

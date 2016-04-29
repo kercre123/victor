@@ -66,7 +66,7 @@ namespace Anki {
         
         double lastKeyPressTime_;
         
-        PathMotionProfile pathMotionProfile_ = DEFAULT_PATH_MOTION_PROFILE;
+        PathMotionProfile pathMotionProfile_ = PathMotionProfile();
         
         // For displaying cozmo's POV:
         webots::Display* cozmoCam_;
@@ -408,6 +408,21 @@ namespace Anki {
           const f32 pathPointTurnAccel_radPerSec2 = root_->getField("pathPointTurnAccel_radPerSec2")->getSFFloat();
           const f32 pathPointTurnDecel_radPerSec2 = root_->getField("pathPointTurnDecel_radPerSec2")->getSFFloat();
           const f32 pathReverseSpeed_mmps = root_->getField("pathReverseSpeed_mmps")->getSFFloat();
+
+          // If any of the pathMotionProfile fields are different than the default values use a custom profile
+          if(pathMotionProfile_.speed_mmps != pathSpeed_mmps ||
+             pathMotionProfile_.accel_mmps2 != pathAccel_mmps2 ||
+             pathMotionProfile_.decel_mmps2 != pathDecel_mmps2 ||
+             pathMotionProfile_.pointTurnSpeed_rad_per_sec != pathPointTurnSpeed_radPerSec ||
+             pathMotionProfile_.pointTurnAccel_rad_per_sec2 != pathPointTurnAccel_radPerSec2 ||
+             pathMotionProfile_.pointTurnDecel_rad_per_sec2 != pathPointTurnDecel_radPerSec2 ||
+             pathMotionProfile_.dockSpeed_mmps != dockSpeed_mmps ||
+             pathMotionProfile_.dockAccel_mmps2 != dockAccel_mmps2 ||
+             pathMotionProfile_.dockDecel_mmps2 != dockDecel_mmps2 ||
+             pathMotionProfile_.reverseSpeed_mmps != pathReverseSpeed_mmps)
+          {
+            pathMotionProfile_.isCustom = true;
+          }
 
           pathMotionProfile_.speed_mmps = pathSpeed_mmps;
           pathMotionProfile_.accel_mmps2 = pathAccel_mmps2;

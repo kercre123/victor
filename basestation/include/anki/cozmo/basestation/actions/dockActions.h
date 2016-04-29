@@ -126,9 +126,9 @@ namespace Anki {
       f32                        _placementOffsetY_mm            = 0;
       f32                        _placementOffsetAngle_rad       = 0;
       bool                       _placeObjectOnGroundIfCarrying  = false;
-      f32                        _dockSpeed_mmps                 = DEFAULT_DOCK_SPEED_MMPS;
-      f32                        _dockAccel_mmps2                = DEFAULT_DOCK_ACCEL_MMPS2;
-      f32                        _dockDecel_mmps2               = DEFAULT_DOCK_DECCEL_MMPS2;
+      f32                        _dockSpeed_mmps                 = DEFAULT_PATH_MOTION_PROFILE.dockSpeed_mmps;
+      f32                        _dockAccel_mmps2                = DEFAULT_PATH_MOTION_PROFILE.dockAccel_mmps2;
+      f32                        _dockDecel_mmps2                = DEFAULT_PATH_MOTION_PROFILE.dockDecel_mmps2;
       ObjectInteractionResult    _interactionResult              = ObjectInteractionResult::INCOMPLETE;
       bool                       _doNearPredockPoseCheck         = true;
       u8                         _numDockingRetries              = 2;
