@@ -11,9 +11,9 @@ public class ConsoleLogPane : MonoBehaviour {
 
   public static event ConsoleLogPaneOpenHandler ConsoleLogPaneOpened;
 
-  public delegate void ConsoleSOSLogButtonEnableHandler();
+  public delegate void ConsoleSOSLogButtonEnableHandler(bool enabled);
 
-  public event ConsoleSOSLogButtonEnableHandler ConsoleSOSLogButtonEnable;
+  public event ConsoleSOSLogButtonEnableHandler ConsoleSOSToggle;
 
   private static void RaiseConsoleLogPaneOpened(ConsoleLogPane consoleLogPane) {
     if (ConsoleLogPaneOpened != null) {
@@ -55,7 +55,7 @@ public class ConsoleLogPane : MonoBehaviour {
   private ConsoleLogToggle[] _LogToggles;
 
   [SerializeField]
-  private Button _EnableSOSButton;
+  private UnityEngine.UI.Toggle _SOSToggle;
 
   [SerializeField]
   private Button _CopyLogButton;
@@ -70,7 +70,9 @@ public class ConsoleLogPane : MonoBehaviour {
 
     RaiseConsoleLogPaneOpened(this);
 
-    _EnableSOSButton.onClick.AddListener(HandleOnEnableSOSLogButton);
+    bool sosEnabled = PlayerPrefs.GetInt("DebugSOSEnabled") != 0;
+    _SOSToggle.isOn = sosEnabled;
+    _SOSToggle.onValueChanged.AddListener(HandleToggleSOS);
     _CopyLogButton.onClick.AddListener(HandleOnCopyLogButton);
   }
 
@@ -87,9 +89,9 @@ public class ConsoleLogPane : MonoBehaviour {
     RaiseConsoleLogPaneClosed();
   }
 
-  private void HandleOnEnableSOSLogButton() {
-    if (ConsoleSOSLogButtonEnable != null) {
-      ConsoleSOSLogButtonEnable();
+  private void HandleToggleSOS(bool enable) {
+    if (ConsoleSOSToggle != null) {
+      ConsoleSOSToggle(enable);
     }
   }
 

@@ -7,6 +7,26 @@ using Anki.UI;
 
 public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
+  private static readonly IDAS sDAS = DAS.GetInstance(typeof(ConsoleLogManager));
+
+  private static ConsoleLogManager _Instance;
+
+  public static ConsoleLogManager Instance {
+    get {
+      if (_Instance == null) {
+        sDAS.Error("Don't access this until Start!");
+      }
+      return _Instance;
+    }
+    private set {
+      if (_Instance != null) {
+        sDAS.Error("There shouldn't be more than one UIManager");
+      }
+      _Instance = value;
+    }
+  }
+
+
   // Each string element should be < 16250 characters because
   // Unity uses a mesh to display text, 4 verts per letter, and has
   // a hard limit of 65000 verts per mesh
@@ -31,6 +51,8 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   // Use this for initialization
   private void Awake() {
+    Instance = this;
+
     _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
     _MostRecentLogs = new Queue<LogPacket>();
     _ReceivedPackets = new Queue<LogPacket>();
@@ -71,15 +93,29 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     }
   }
 
-  private void EnableSOSLogs() {
-    if (_SOSLoggingEnabled) {
-      DAS.Warn(this, "SOS log already enabled");
-      return;
+  public void EnableSOSLogs(bool enable) {
+
+    // using player prefs instead of player profile because this is a debug feature
+    // and I don't want this getting reset when QA is resetting save data for QA purposes.
+    if (enable) {
+      PlayerPrefs.SetInt("DebugSOSEnabled", 1);
     }
-    _SOSLoggingEnabled = true;
-    SOSLogManager.Instance.CreateListener();
-    RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
-    SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
+    else {
+      PlayerPrefs.SetInt("DebugSOSEnabled", 0);
+    }
+
+    PlayerPrefs.Save();
+
+    if (!_SOSLoggingEnabled && enable) {
+      _SOSLoggingEnabled = enable;
+      SOSLogManager.Instance.CreateListener();
+      RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
+      SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
+    }
+    else if (_SOSLoggingEnabled && !enable) {
+      _SOSLoggingEnabled = false;
+      SOSLogManager.Instance.CleanUp();
+    }
   }
 
   private void HandleNewSOSLog(string log) {
@@ -151,7 +187,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   private void OnConsoleLogPaneOpened(ConsoleLogPane logPane) {
     _ConsoleLogPaneView = logPane;
-    _ConsoleLogPaneView.ConsoleSOSLogButtonEnable += EnableSOSLogs;
+    _ConsoleLogPaneView.ConsoleSOSToggle += EnableSOSLogs;
     _ConsoleLogPaneView.ConsoleLogCopyToClipboard += CopyLogsToClipboard;
 
     List<string> consoleText = CompileRecentLogs();
@@ -183,7 +219,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void OnConsoleLogPaneClosed() {
-    _ConsoleLogPaneView.ConsoleSOSLogButtonEnable -= EnableSOSLogs;
+    _ConsoleLogPaneView.ConsoleSOSToggle -= EnableSOSLogs;
     _ConsoleLogPaneView.ConsoleLogCopyToClipboard -= CopyLogsToClipboard;
     _ConsoleLogPaneView.ConsoleLogToggleChanged -= OnConsoleToggleChanged;
     _ConsoleLogPaneView = null;
