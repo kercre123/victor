@@ -76,7 +76,7 @@ namespace Cozmo {
           return;
         }
         // If ProgConditions aren't met, don't progress
-        if (!CanProg()) {
+        if (!CanProgress()) {
           return;
         }
         // Progress Goal
@@ -147,7 +147,7 @@ namespace Cozmo {
         }
       }
 
-      public bool CanProg() {
+      public bool CanProgress() {
         if (ProgConditions == null) {
           return true;
         }
