@@ -1671,6 +1671,25 @@ namespace Anki {
                 }
                 break;
               }
+              case (s32)')':
+              {
+                PRINT_NAMED_INFO("RetrievingAllMfgTestData", "");
+                
+                // Get all Mfg test images and results
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
+                
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage2);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage3);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage4);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage5);
+                }
+                
+                break;
+              }
               case (s32)'*':
               {
                 using namespace ExternalInterface;
@@ -2084,16 +2103,55 @@ namespace Anki {
           
           switch(msg.tag) {
             case NVStorage::NVEntryTag::NVEntry_CameraCalibration:
+            case NVStorage::NVEntryTag::NVEntry_CameraCalib:
             {
               CameraCalibration calib;
-              calib.Unpack(recvdData->data(), recvdData->size());
-              
+              if (recvdData->size() != MakeWordAligned(calib.Size())) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.CamCalibration.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(calib.Size()), recvdData->size());
+                break;
+              }
+              calib.Unpack(recvdData->data(), calib.Size());
               PRINT_NAMED_INFO("HandleNVStorageOpResult.CamCalibration",
-                               "fx: %f, fy: %f, cx: %f, cy: %f, skew: %f, nrows: %d, ncols: %d",
+                               "Tag: %s: %f, fy: %f, cx: %f, cy: %f, skew: %f, nrows: %d, ncols: %d",
+                               EnumToString(msg.tag),
                                calib.focalLength_x, calib.focalLength_y,
                                calib.center_x, calib.center_y,
                                calib.skew,
                                calib.nrows, calib.ncols);
+              break;
+            }
+            case NVStorage::NVEntryTag::NVEntry_ToolCodeInfo:
+            {
+              ToolCodeInfo info;
+              if (recvdData->size() != MakeWordAligned(info.Size())) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.ToolCodeInfo.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+                break;
+              }
+              info.Unpack(recvdData->data(), info.Size());
+              
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.ToolCodeInfo",
+                               "Code: %s, Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
+                               EnumToString(info.code),
+                               info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y,
+                               info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
+                               info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
+                               info.observedCalibDotRight_x, info.observedCalibDotRight_y);
+              break;
+            }
+            case NVStorage::NVEntryTag::NVEntry_PlaypenTestResults:
+            {
+              FactoryTestResultEntry result;
+              if (recvdData->size() != MakeWordAligned(result.Size())) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.PlaypenTestResults.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
+                break;
+              }
+              result.Unpack(recvdData->data(), result.Size());
+              time_t rawtime = static_cast<time_t>(result.utcTime);
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.PlaypenTestResults",
+                               "Result: %s, Time: %s", EnumToString(result.result), ctime(&rawtime) );
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_CalibImage1:
@@ -2103,7 +2161,8 @@ namespace Anki {
             case NVStorage::NVEntryTag::NVEntry_CalibImage5:
             case NVStorage::NVEntryTag::NVEntry_MultiBlobJunk:
             {
-              static const char* outFile = "nvstorage_output.jpg";
+              char outFile[128];
+              sprintf(outFile, "nvstorage_output_%s.jpg", EnumToString(msg.tag));
               PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.CalibImage1",
                                "Writing to %s, size: %zu",
                                outFile, recvdData->size());
