@@ -2,70 +2,55 @@
 using System.Collections;
 
 namespace SpeedTap {
+  /// <summary>
+  /// Show one-two colors on each cube. Pattern can be ABBB or AABB or ABAB.
+  /// Colors on the same cube are allowed to match.
+  /// When player's cube and cozmo's are meant to NOT match, colors between
+  /// the two cubes are allowed to be the same.
+  /// </summary>
   public class LightCountTwoColorSpeedTapRules : SpeedTapRulesBase {
 
-    public override void SetLights(bool shouldTap, SpeedTapGame game) {
-
-      if (shouldTap) {
-        // Do match
-        int lightCount = UnityEngine.Random.Range(1, 5);
-        game.CozmoBlock.SetLEDs(Color.black);
-        game.PlayerBlock.SetLEDs(Color.black);
-
-        int randColor = UnityEngine.Random.Range(0, _Colors.Length);
-        int randColor2 = UnityEngine.Random.Range(0, _Colors.Length);
-
-        for (int i = 0; i < lightCount; ++i) {
-          game.PlayerWinColors[i] = game.CozmoWinColors[i] = _Colors[i % 2 == 0 ? randColor : randColor2];
+    public override void SetLights(bool shouldMatch, SpeedTapGame game) {
+      if (shouldMatch) {
+        // Pick two base colors; they can be the same.
+        // By design / Sean: randColorIndex and randColorIndex2 are allowed to match
+        int[] randColors = new int[2];
+        for (int i = 0; i < randColors.Length; i++) {
+          randColors[i] = PickRandomColor();
         }
+
+        SetLightsRandomly(game.PlayerWinColors, randColors);
+        CopyLights(game.CozmoWinColors, game.PlayerWinColors);
 
         game.PlayerBlock.SetLEDs(game.PlayerWinColors);
         game.CozmoBlock.SetLEDs(game.CozmoWinColors);
       }
       else {
         // Do non-match
+        if (!TrySetCubesRed(game)) {
+          // Pick different base colors for the player and Cozmo
+          int playerExclusiveColor, cozmoExclusiveColor;
+          PickTwoDifferentColors(out playerExclusiveColor, out cozmoExclusiveColor);
 
-        // first possibility, match red
-        if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.3f) {
-          int lightCount = UnityEngine.Random.Range(1, 5);
-
-          for (int i = 0; i < lightCount; ++i) {
-            game.PlayerWinColors[i] = game.CozmoWinColors[i] = Color.red;
-          }
-        }
-        // second posibility, match count but not colors
-        else if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.4f) {
-          int lightCount = UnityEngine.Random.Range(1, 5);
-          int playerColorIndex = UnityEngine.Random.Range(0, _Colors.Length);
-          int playerColorIndex2 = UnityEngine.Random.Range(0, _Colors.Length);
-          // pick the second from the remaining colors
-          int cozmoColorIndex = (playerColorIndex + UnityEngine.Random.Range(1, _Colors.Length)) % _Colors.Length;
-          int cozmoColorIndex2 = (playerColorIndex + UnityEngine.Random.Range(1, _Colors.Length)) % _Colors.Length;
-
-          for (int i = 0; i < lightCount; ++i) {
-            game.PlayerWinColors[i] = _Colors[i % 2 == 0 ? playerColorIndex : playerColorIndex2];
-            game.CozmoWinColors[i] = _Colors[i % 2 == 0 ? cozmoColorIndex : cozmoColorIndex2];
+          // The player's color should not match cozmo's exclusive color; can match their own
+          int playerColorIdx2 = PickRandomColor();
+          while (playerColorIdx2 == cozmoExclusiveColor) {
+            playerColorIdx2 = PickRandomColor();
           }
 
-          game.PlayerBlock.SetLEDs(game.PlayerWinColors);
-          game.CozmoBlock.SetLEDs(game.CozmoWinColors);
-        }
-        // third posibility, match color but not count.
-        else {
-
-          int colorIndex = UnityEngine.Random.Range(1, _Colors.Length);
-          int colorIndex2 = UnityEngine.Random.Range(1, _Colors.Length);
-
-          int lightCountPlayer = UnityEngine.Random.Range(1, 5);
-          int lightCountCozmo = 1 + ((lightCountPlayer + UnityEngine.Random.Range(0, 3)) % 4);
-
-          for (int i = 0; i < lightCountPlayer; ++i) {
-            game.PlayerWinColors[i] = _Colors[i % 2 == 0 ? colorIndex : colorIndex2];
+          // Cozmo's color should not match the player's exclusive color; can match their own
+          int cozmoColorIdx2 = PickRandomColor();
+          while (cozmoColorIdx2 == playerExclusiveColor) {
+            cozmoColorIdx2 = PickRandomColor();
           }
 
-          for (int i = 0; i < lightCountCozmo; ++i) {
-            game.CozmoWinColors[i] = _Colors[i % 2 == 0 ? colorIndex : colorIndex2];
-          }
+          int randIndex = UnityEngine.Random.Range(0, game.PlayerWinColors.Length);
+          game.PlayerWinColors[randIndex] = _Colors[playerExclusiveColor];
+          SetLightsRandomly(game.PlayerWinColors, new int[] { playerExclusiveColor, playerColorIdx2 }, randIndex);
+
+          randIndex = UnityEngine.Random.Range(0, game.CozmoWinColors.Length);
+          game.CozmoWinColors[randIndex] = _Colors[cozmoExclusiveColor];
+          SetLightsRandomly(game.CozmoWinColors, new int[] { cozmoExclusiveColor, cozmoColorIdx2 }, randIndex);
 
           game.PlayerBlock.SetLEDs(game.PlayerWinColors);
           game.CozmoBlock.SetLEDs(game.CozmoWinColors);

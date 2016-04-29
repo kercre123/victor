@@ -133,14 +133,14 @@ namespace SpeedTap {
       }
     }
 
-    public bool IsSessionComplete() {
+    public bool IsGameComplete() {
       int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
       int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
       int roundsLeft = _Rounds - losingScore - winningScore;
       return (winningScore > losingScore + roundsLeft);
     }
 
-    public void HandleSessionEnd() {
+    public void HandleGameEnd() {
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
         DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID] = CurrentDifficulty + 1;
         DataPersistence.DataPersistenceManager.Instance.Save();
@@ -251,7 +251,7 @@ namespace SpeedTap {
       SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
     }
 
-    public void UpdateUIForSessionEnd() {
+    public void UpdateUIForGameEnd() {
       // Hide Current Round at end
       SharedMinigameView.InfoTitleText = string.Empty;
     }

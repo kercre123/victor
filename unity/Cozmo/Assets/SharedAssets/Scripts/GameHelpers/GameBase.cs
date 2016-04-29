@@ -385,9 +385,9 @@ public abstract class GameBase : MonoBehaviour {
   private void CycleLightsSingleColor(CycleData data) {
     LightCube cube = CurrentRobot.LightCubes[data.cubeID];
     data.colorIndex++;
-    data.colorIndex %= data.cycleColors.Length;
+    data.colorIndex %= cube.Lights.Length;
     for (int i = 0; i < cube.Lights.Length; i++) {
-      cube.Lights[i].OnColor = data.cycleColors[i].ToUInt();
+      cube.Lights[i].OnColor = data.cycleColors[i % data.cycleColors.Length].ToUInt();
       if (i == data.colorIndex) {
         cube.Lights[i].OnColor = data.singleColor;
       }
