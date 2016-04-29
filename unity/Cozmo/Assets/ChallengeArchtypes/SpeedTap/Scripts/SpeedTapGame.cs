@@ -211,7 +211,7 @@ namespace SpeedTap {
         }
       }
       if (_CurrentDifficultySettings == null) {
-        DAS.Warn(this, "No Valid Difficulty Setting Found");
+        DAS.Warn("SpeedTapGame.OnDifficultySet.NoValidSettingFound", string.Empty);
         _CurrentDifficultySettings = _AllDifficultySettings[0];
       }
       else {

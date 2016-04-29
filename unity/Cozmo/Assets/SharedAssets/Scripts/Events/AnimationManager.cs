@@ -43,6 +43,8 @@ public class AnimationManager {
   #if UNITY_IOS && !UNITY_EDITOR
   public static string sEventMapDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/animationGroupMaps"); } }
   
+
+
 #else
   public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroupMaps"; } }
   #endif
