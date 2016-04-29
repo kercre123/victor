@@ -31,6 +31,7 @@ public class DailyGoalPane : MonoBehaviour {
     _CurrentSession = DataPersistenceManager.Instance.CurrentSession;
     if (_CurrentSession == null) {
       Debug.LogError("No Current Session for DailyGoal Debug");
+      _CurrentSession = null;
     }
 
     _ResetGoalButton.onClick.AddListener(HandleResetGoalClicked);
@@ -48,18 +49,30 @@ public class DailyGoalPane : MonoBehaviour {
   }
 
   private void HandleResetGoalClicked() {
+    if (_CurrentSession == null) {
+      return;
+    }
     _CurrentGoal.DebugResetGoalProgress();
   }
 
   private void HandleProgressGoalClicked() {
+    if (_CurrentSession == null) {
+      return;
+    }
     _CurrentGoal.ProgressGoal(_CurrentGoal.GoalEvent);
   }
 
   private void HandleUndoProgressGoalClicked() {
+    if (_CurrentSession == null) {
+      return;
+    }
     _CurrentGoal.DebugUndoGoalProgress();
   }
 
   private void HandleSetProgressGoalClicked() {
+    if (_CurrentSession == null) {
+      return;
+    }
     int validInt = int.Parse(_SetProgressInputField.text);
     if (validInt < 0) {
       validInt = 0;
@@ -73,6 +86,9 @@ public class DailyGoalPane : MonoBehaviour {
   }
 
   private DailyGoal GetDailyGoalByName(string name) {
+    if (_CurrentSession == null) {
+      return null;
+    }
     return _CurrentSession.DailyGoals.Find(x => x.Title == name);
   }
 
