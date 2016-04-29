@@ -164,6 +164,10 @@ public class Intro : MonoBehaviour {
       #endif
     }
 
+    bool sosEnable = PlayerPrefs.GetInt("DebugSOSEnabled") != 0;
+    if (sosEnable) {
+      ConsoleLogManager.Instance.EnableSOSLogs(true);
+    }
 
     Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
