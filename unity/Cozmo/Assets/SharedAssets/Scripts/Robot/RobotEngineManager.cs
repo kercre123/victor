@@ -79,6 +79,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action OnSparkUnlockEnded;
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageData> OnGotNVStorageData;
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageOpResult> OnGotNVStorageOpResult;
+  public event Action<Anki.Cozmo.ExternalInterface.DebugLatencyMessage> OnDebugLatencyMsg;
 
   #region Audio Callback events
 
@@ -338,9 +339,6 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.MoodState:
       ReceivedSpecificMessage(message.MoodState);
       break;
-    case G2U.MessageEngineToGame.Tag.ProgressionStats:
-      ReceivedSpecificMessage(message.ProgressionStats);
-      break;
     // Audio Callbacks
     case G2U.MessageEngineToGame.Tag.AudioCallback:
       ReceivedSpecificMessage(message.AudioCallback);
@@ -362,6 +360,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.DebugAnimationString:
       ReceivedSpecificMessage(message.DebugAnimationString);
+      break;
+    case G2U.MessageEngineToGame.Tag.DebugLatencyMessage:
+      ReceivedSpecificMessage(message.DebugLatencyMessage);
       break;
     case G2U.MessageEngineToGame.Tag.RequestGameStart:
       ReceivedSpecificMessage(message.RequestGameStart);
@@ -649,24 +650,6 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-  private void ReceivedSpecificMessage(G2U.ProgressionStats message) {
-    if (CurrentRobot == null)
-      return;
-
-    if (message.statValues.Length != (int)ProgressionStatType.Count) {
-      DAS.Error("ProgressionStats.statValues.BadLength", "Expected " + ProgressionStatType.Count + " entries but got " + message.statValues.Length);
-    }
-    else {
-     
-      for (ProgressionStatType i = 0; i < ProgressionStatType.Count; ++i) {
-        // DAS.Info("Progression", "Robot " + message.robotID.ToString() + ": Stat '" + i + "' = " + message.statValues[(int)i]);
-        if (OnProgressionStatRecieved != null) {
-          OnProgressionStatRecieved(i, message.statValues[(int)i]);
-        }
-      }
-    }
-  }
-
   private void ReceivedSpecificMessage(G2U.PlaySound message) {
     
   }
@@ -749,6 +732,13 @@ public class RobotEngineManager : MonoBehaviour {
       }
     }
   }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DebugLatencyMessage message) {
+    if (OnDebugLatencyMsg != null) {
+      OnDebugLatencyMsg(message);
+    }
+  }
+
 
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.UnlockStatus message) {
     if (UnlockablesManager.Instance != null) {

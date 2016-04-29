@@ -260,9 +260,14 @@ public class SkillSystem {
   }
 
   private void SetCozmoHighestLevelsReached(byte[] robotData, int robotDataLen) {
-// RobotData is just highest level in challengeList order
+    // RobotData is just highest level in challengeList order
     ChallengeDataList challengeList = ChallengeDataList.Instance;
-    int numChallenges = Mathf.Max(robotDataLen, challengeList.ChallengeData.Length);
+    // default if starting on the wrong scene or in factory 
+    int numChallenges = 1;
+    if (challengeList != null) {
+      numChallenges = challengeList.ChallengeData.Length;
+    }
+    numChallenges = Mathf.Max(robotDataLen, numChallenges);
     _CozmoHighestLevels = new byte[numChallenges];
     // first time init
     if (robotData != null) {

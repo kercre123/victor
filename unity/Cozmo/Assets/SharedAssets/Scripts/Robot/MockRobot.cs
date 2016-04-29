@@ -96,20 +96,6 @@ public class MockRobot : IRobot {
     // won't get called
   }
 
-  private readonly StatContainer _ProgressionStats = new StatContainer();
-
-  public int GetProgressionStat(Anki.Cozmo.ProgressionStatType index) {
-    return _ProgressionStats[index];
-  }
-
-  public StatContainer GetProgressionStats() {
-    return _ProgressionStats;
-  }
-
-  public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, int deltaValue) {
-    _ProgressionStats[index] += deltaValue;
-  }
-
   public void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight) {
     // Do nothing
   }
@@ -120,14 +106,6 @@ public class MockRobot : IRobot {
 
   public void SetEmotion(Anki.Cozmo.EmotionType type, float value) {
     _EmotionValues[(int)type] = value;
-  }
-
-  public void SetProgressionStat(Anki.Cozmo.ProgressionStatType type, int value) {
-    _ProgressionStats[type] = value;
-  }
-
-  public void SetProgressionStats(StatContainer stats) {
-    _ProgressionStats.Set(stats);
   }
 
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
