@@ -3,13 +3,10 @@ using System.Collections;
 
 namespace SpeedTap {
   public enum SpeedTapRuleSet {
-    Default,
     NoRed,
     TwoColor,
     LightCountTwoColor,
-    LightCountMultiColor,
-    LightCountNoColor,
-    LightCountSameColorNoTap,
+    LightCountMultiColor
   }
 
   public abstract class SpeedTapRulesBase {
