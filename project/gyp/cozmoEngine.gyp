@@ -906,7 +906,7 @@
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-util_gyp_path):jsoncpp',
               '<(ce-util_gyp_path):util',
-              '<(ce-audio_gyp_path):DriveAudioEngine',
+              '<(cg-audio_path):DriveAudioEngine',
             ],
             'sources': [ '<!@(cat <(engine_test_source))' ],
             'sources/': [
@@ -1436,7 +1436,7 @@
         '<(ce-cti_gyp_path):ctiVision',
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-cti_gyp_path):ctiVisionRobot',
-        '<(ce-audio_path):DriveAudioEngine',
+        '<(cg-audio_path):DriveAudioEngine',
         '<(ce-ble_cozmo_path):BLECozmo',
       ],
       'conditions': [    
