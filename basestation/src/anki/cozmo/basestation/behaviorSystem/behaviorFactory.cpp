@@ -15,11 +15,12 @@
 #include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 
 // Behaviors:
-#include "../behaviors/exploration/behaviorExploreCliff.h"
 #include "../behaviors/exploration/behaviorExploreBringCubeToBeacon.h"
+#include "../behaviors/exploration/behaviorExploreCliff.h"
 #include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 #include "../behaviors/exploration/behaviorExploreMarkedCube.h"
 #include "../behaviors/exploration/behaviorExploreVisitPossibleMarker.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
@@ -167,7 +168,12 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
       newBehavior = new BehaviorFactoryTest(robot, config);
       break;
     }
-   case BehaviorType::Count:
+    case BehaviorType::DemoFearEdge:
+    {
+      newBehavior = new BehaviorDemoFearEdge(robot, config);
+      break;
+    }
+    case BehaviorType::Count:
     {
       PRINT_NAMED_ERROR("BehaviorFactory.CreateBehavior.BadType", "Unexpected type '%s'", EnumToString(behaviorType));
       break;
