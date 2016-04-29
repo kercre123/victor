@@ -144,7 +144,7 @@ namespace Anki.Cozmo.Viz {
 
     private void OnEnable() {
       
-      DAS.Event("VizManager.OnEnable", string.Empty);
+      DAS.Info("VizManager.OnEnable", string.Empty);
       if (Instance != null && Instance != this) {
         Destroy(gameObject);
         return;
