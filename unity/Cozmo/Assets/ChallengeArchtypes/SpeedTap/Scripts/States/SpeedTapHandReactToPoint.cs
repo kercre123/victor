@@ -79,7 +79,7 @@ namespace SpeedTap {
     private void SetLosingLightPattern(LightCube losingBlock, bool madeMistake) {
       if (madeMistake) {
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapRed);
-        losingBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
+        _SpeedTapGame.StartCycleCubeSingleColor(losingBlock, new Color[] { Color.red }, _kWinCycleSpeed, Color.black);
       }
       else {
         losingBlock.SetLEDs(0);
@@ -139,8 +139,8 @@ namespace SpeedTap {
     }
 
     private void HandleHandEndAnimDone(bool success) {
-      _StateMachine.SetNextState(new SpeedTapHandCubesOff());
       ClearWinningLightPatterns();
+      _StateMachine.SetNextState(new SpeedTapHandCubesOff());
     }
 
     private void HandleRoundEndAnimDone(bool success) {

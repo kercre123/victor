@@ -27,7 +27,7 @@ namespace SpeedTap {
 
       // Set lights on cubes
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
-      _SpeedTapGame.Rules.SetLights(shouldTap: true, game: _SpeedTapGame);
+      _SpeedTapGame.Rules.SetLights(shouldMatch: true, game: _SpeedTapGame);
 
       // Listen for player taps
       _SpeedTapGame.PlayerTappedBlockEvent += HandlePlayerTap;
