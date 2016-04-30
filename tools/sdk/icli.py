@@ -20,6 +20,9 @@ class EngineRemoteCLI:
         self.keepRunning = True
         self.run()        
         
+    def __del__(self):
+        engineInterface.Shutdown()
+        
     def HandleExitCommand(self, *args):
         self.keepRunning = False
         return False
@@ -120,24 +123,14 @@ class EngineRemoteCLI:
                 sys.stderr.write("Unrecognized command \"{}\", try \"help\"{}".format(commandName, os.linesep))            
                 return False
             else:
-                
                 try:
                     params = [eval(a) for a in commandArgs]
                 except Exception as e:
                     sys.stderr.write("Couldn't parse command arguments for '{0}':{2}\t{1}{2}".format(commandName, e, os.linesep))
                     return False
                 else:
-
-                    try:
-                        t = getattr(GToEM.Tag, commandName)
-                    except Exception as e:
-                        sys.stderr.write("getattr failed [" + str(e) + "]" + os.linesep)
-                            
-                    try:
-                        y = GToEM.typeByTag(t)
-                    except Exception as e:
-                        sys.stderr.write("typeByTag failed" + os.linesep)
-                    
+                    t = getattr(GToEM.Tag, commandName)
+                    y = GToEM.typeByTag(t)                    
                     try:
                         p = y(*params)
                     except Exception as e:
@@ -149,7 +142,7 @@ class EngineRemoteCLI:
                         return engineInterface.gEngineInterfaceInstance.sendToEngine(m)
             
     def run(self):
-
+        "Update engine every loop and poll for commands to send"
         while self.keepRunning:
             try:
                 engineInterface.Update()
