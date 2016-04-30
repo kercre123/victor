@@ -191,8 +191,14 @@ void Battery::manage(void* userdata)
     case ANALOG_V_EXT_SENSE:
       {
         // Are our power pins shorted?
-        if (NRF_ADC->RESULT >= 0x30) {
-          RTOS::kick(WDOG_NERVE_PINCH);
+        static int ground_short = 0;
+        if (NRF_ADC->RESULT < 0x30) {
+          if (++ground_short > 30) {
+            Battery::powerOff();
+            for (;;) ;
+          }
+        } else {
+          ground_short = 0;
         }
 
         vExt = calcResult(VEXT_SCALE);
