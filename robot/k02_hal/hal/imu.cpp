@@ -29,13 +29,14 @@ static const uint8_t CONF_GYRO = 0x09;    // 4x oversample, 200Hz update
 static const float ACC_RANGE_CONST  = (1.0f/16384.0f)*9810.0f;      //In 2g mode, 16384 LSB/g
 static const float GYRO_RANGE_CONST = (1.0f/65.6f)*(M_PI/180.0f);   //In FS500 mode, 65.6 deg/s / LSB
 
+static IMUData imu_state;
 IMUData Anki::Cozmo::HAL::IMU::IMUState;
 static bool imu_changed = false;
 static bool imu_updated = false;
 
 static const int IMU_UPDATE_FREQUENCY = 200;  // 200hz
 static const int MANAGE_FREQUENCY = DROPS_PER_SECOND;
-static const int ADJUST_OVERSHOOT = 8 * MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY; // Assume 6 drops of transmission time
+static const int ADJUST_OVERSHOOT = IMU_UPDATE_FREQUENCY * 4; // This is a guess on how long it takes for IMU data to transmit
 
 void Anki::Cozmo::HAL::IMU::Init(void) {
   // XXX: The first command is ignored - so power up twice - clearly I don't know what I'm doing here
@@ -62,29 +63,22 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   Manage();
 }
 
-static int update_counter = 0;
-
-static void state_updated(const void *state) {
-  using namespace Anki::Cozmo::HAL;
-
-  static uint8_t last_ts = 0;
-  uint8_t timestamp = ((IMUData*) state)->timestamp;
-
-  if (((last_ts ^ timestamp) & 0x80) == 0) {
-    return ;
-  }
-
-  uint8_t offset = 0x40 + 0x80 - (timestamp & ~0x80);
-
-  update_counter = offset * MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY + ADJUST_OVERSHOOT;
-  imu_changed = true;
+static void state_updated() {
+  // We received our IMU data
+  static uint8_t lastTimestamp = 0x80;
+  imu_changed = ((imu_state.timestamp ^ lastTimestamp) & 0x80) != 0;
+  lastTimestamp = imu_state.timestamp;
 }
 
 void Anki::Cozmo::HAL::IMU::Manage(void) {
-  static IMUData imu_state;
+  static int update_counter = 0;
 
-  // Dequeue IMU data if there is something in the back-buffer
-  if (imu_changed && !imu_updated) {        
+  // We have a new bundle of IMU data, stuff it into the buffer
+  if (imu_changed) {
+    // Attempt to find the adjustment for the update counter
+    uint8_t offset = 0x80 + 0x40 - (imu_state.timestamp & ~0x80);
+    update_counter = offset * MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY + ADJUST_OVERSHOOT;
+    
     IMU::frameNumberStamp = CameraGetFrameNumber();
     IMU::scanLineStamp    = CameraGetScanLine();
 
@@ -92,17 +86,21 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
 
     imu_changed = false;
     imu_updated = true;
+
+    #ifdef IMU_DEBUG
+      for (int i = 0; i < sizeof(IMUData); i++)
+        UART::DebugPrintf("%02x ", ((uint8_t*) data)[i]);
+      UART::DebugPrintf("\n");
+    #endif
+    UART::DebugPutc('.');
   }
 
   // Adjust up the IMU update frequency
   update_counter -= IMU_UPDATE_FREQUENCY;
   
-  // We need to wait a little longer
-  if (update_counter > 0 || imu_changed) {
+  if (update_counter > 0) {
     return ;
   }
-
-  //UART::DebugPutc(imu_state.timestamp);
 
   // This will be overridden, but make sure we don't read too quickly if the IMU data doesn't get read fast enough
   update_counter += MANAGE_FREQUENCY;
