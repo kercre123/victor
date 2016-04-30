@@ -7,7 +7,6 @@
 
 enum watchdog_channels {
   WDOG_RTOS,
-  WDOG_NERVE_PINCH,
   WDOG_UART,
   WDOG_TOTAL_CHANNELS
 };
