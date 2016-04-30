@@ -152,9 +152,8 @@ class DebugConsoleVarWrapper:
 class _EngineInterfaceImpl:
     "Internal interface for talking to cozmo-engine"
     
-    def __init__(self, inTransport, outTransport):
-        self.inTransport = inTransport
-        self.outTransport = outTransport
+    def __init__(self):
+        self.udpTransport = UDPTransport(None, None, False)
         self.ipAddress = "127.0.0.1" # localhost, using raw "unreliable" udp
         self.engineIpAddress = "127.0.0.1"
         self.sdkToEngPort = 5114     # = 0x13FA, byte-swapped = 0xFA13 64019
@@ -163,8 +162,7 @@ class _EngineInterfaceImpl:
         self.engDest = (self.engineIpAddress, htons_sdkToEngPort)        
         self.adPort = 5105
         self.adDest = (self.engineIpAddress, self.adPort)
-        self.inTransport.OpenSocket(self.engToSdkPort)
-        #self.outTransport.OpenSocket(self.adPort) # we don't need to bind out-going transport
+        self.udpTransport.OpenSocket(self.engToSdkPort)
         self.state = ConnectionState.notConnected
         
         self.numAnims = 0
@@ -186,7 +184,7 @@ class _EngineInterfaceImpl:
     
         keepPumpingIncomingSocket = True
         while keepPumpingIncomingSocket:
-            d, a = self.inTransport.ReceiveData()
+            d, a = self.udpTransport.ReceiveData()
             if (d == None):
                 # nothing left to read
                 keepPumpingIncomingSocket = False
@@ -455,17 +453,16 @@ class _EngineInterfaceImpl:
         return self.state >= ConnectionState.connectedToRobot
         
     def Disconnect(self):
-        self.inTransport.CloseSocket()
-        self.outTransport.CloseSocket()
+        self.udpTransport.CloseSocket()
 
     def __del__(self):
         self.Disconnect()
 
     def sendToEngine(self, msg):
-        return self.outTransport.SendData(self.engDest, msg.pack())
+        return self.udpTransport.SendData(self.engDest, msg.pack())
         
     def sendToAd(self, msg):
-        return self.outTransport.SendData(self.adDest, msg.pack())
+        return self.udpTransport.SendData(self.adDest, msg.pack())
 
 
 # ================================================================================    
@@ -473,11 +470,11 @@ class _EngineInterfaceImpl:
 # ================================================================================
 
         
-def Init(inTransport=UDPTransport(None, None, False), outTransport=UDPTransport(None, None, False)):
+def Init():
     "Initalize the engine interface. Must be called before any other methods"
     global gEngineInterfaceInstance
     if gEngineInterfaceInstance is None:
-        gEngineInterfaceInstance = _EngineInterfaceImpl(inTransport, outTransport)
+        gEngineInterfaceInstance = _EngineInterfaceImpl()
     return gEngineInterfaceInstance
     
 def Update():
