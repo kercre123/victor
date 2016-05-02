@@ -3,7 +3,9 @@ Utility classes for interfacing with the Cozmo engine through a localhost UDP so
 """
 __author__ = "Mark Wesley"
 
-import sys, os, time, re, struct
+import sys, os, time
+import threading # for threaded engine
+from collections import deque # queue for threaded engine
 
 CLAD_SRC  = os.path.join("clad")
 CLAD_DIR  = os.path.join("generated", "cladPython")
@@ -45,8 +47,16 @@ GToEM = GToEI.MessageGameToEngine
 
 
 gEngineInterfaceInstance = None
+gAsyncEngineInterfaceInstance = None
 
 
+class EngineCommand:
+    ""
+    consoleVar = 0
+    consoleFunc = 1
+    sendMsg = 2
+    
+    
 class ConnectionState:
     "An enum for connection states"
     notConnected     = 0
@@ -57,6 +67,11 @@ class ConnectionState:
     connectingToRobot = 5    
     connectedToRobot = 6
     
+    
+# ================================================================================    
+# DebugConsoleVarWrapper - [MARKW:TODO] Move this to its own file
+# ================================================================================
+
 
 class DebugConsoleVarWrapper:
     "Wraps an Anki.Cozmo.ExternalInterface.DebugConsoleVar and supports sorting"
@@ -149,6 +164,11 @@ class DebugConsoleVarWrapper:
             return (self.category < rhs.category)
 
 
+# ================================================================================    
+# Internal Private _EngineInterfaceImpl for talking to/from cozmo-engine
+# ================================================================================
+
+
 class _EngineInterfaceImpl:
     "Internal interface for talking to cozmo-engine"
     
@@ -169,7 +189,10 @@ class _EngineInterfaceImpl:
         
         self.consoleVars = {}
         self.consoleFuncs = {}
-    
+        
+    def __del__(self):
+        self.Disconnect()    
+        
         
     def HandleInitDebugConsoleVarMessage(self, msg):
     
@@ -314,15 +337,13 @@ class _EngineInterfaceImpl:
                     sys.stdout.flush()
     
     
-    def HandleCVarCommand(self, *args):
+    def HandleConsoleVarCommand(self, *args):
     
         if (len(args) == 0):
-            sys.stdout.write("Error - expected 'list' or variable name" + os.linesep)
-            return
+            sys.stderr.write("[HandleConsoleVarCommand] Error: no args, expected 'list' or variable name" + os.linesep)
+            return False
         
         varName = args[0]
-        
-        sys.stdout.write("HandleCVarCommand(): Var=" + str(varName) + ", args = " + str(args) + os.linesep)
         
         if varName.lower() == 'list':
             
@@ -339,21 +360,23 @@ class _EngineInterfaceImpl:
                     currentCat = varValue.category
                     sys.stdout.write("  " + currentCat + ":" + os.linesep)
                 sys.stdout.write("    " + str(varName) + " = " + varValue.varValueToString() + " (" + varValue.varValueTypeName() + ")(" + varValue.minValueToString() + ".." + varValue.maxValueToString() + ")" + os.linesep)
+                
+            return True
         else:
         
             if varName in self.consoleVars:
                 varValue = self.consoleVars[varName]
                 sys.stdout.write("Pre  " + str(varName) + " = " + varValue.varValueToString() + " (" + varValue.varValueTypeName() + ")(" + varValue.minValueToString() + ".." + varValue.maxValueToString() + ")" + os.linesep)
             else:
-                sys.stdout.write("Error: No var named" + str(varName) + "'" + os.linesep)
-                return
+                sys.stderr.write("[HandleConsoleVarCommand] Error - unknown variable '" + varName + "'" + os.linesep)
+                return False
                                         
             setVarMsg = GToEI.SetDebugConsoleVarMessage()
             setVarMsg.varName = varName
             
             argsToString = ""
             for i in range(1, len(args)):
-                argsToString += args[i]
+                argsToString += args[i] + " "
             
             setVarMsg.tryValue = argsToString
     
@@ -361,6 +384,146 @@ class _EngineInterfaceImpl:
                 
             sys.stdout.write("Send SetDebugConsoleVarMessage = '" + str(toEngMessage) + "'" + os.linesep)
             self.sendToEngine(toEngMessage)
+            
+            return True
+            
+            
+    def HandleConsoleFuncCommand(self, *args):
+    
+        if (len(args) == 0):
+            sys.stderr.write("[HandleConsoleFuncCommand] Error: no args, expected 'list' or function name" + os.linesep)
+            return False
+        
+        funcName = args[0]
+        
+        if funcName.lower() == 'list':
+            
+            sys.stdout.write("List of Console Functions:" + os.linesep)
+            
+            # 1st sort the vars so we can display them in category and name order
+            sortedFuncs = sorted(self.consoleFuncs.values())
+            
+            currentCat = ""
+            
+            for funcValue in sortedFuncs:
+                funcName = funcValue.varName
+                if funcValue.category != currentCat:
+                    currentCat = funcValue.category
+                    sys.stdout.write("  " + currentCat + ":" + os.linesep)
+                sys.stdout.write("    " + str(funcName) + " : Args = '" + funcValue.varValueToString() + "'" + os.linesep)
+                
+            return True
+        else:
+        
+            if funcName not in self.consoleFuncs:
+                sys.stderr.write("[HandleConsoleFuncCommand] Error - unknown function '" + funcName + "'" + os.linesep)
+                return False
+                                        
+            runFuncMsg = GToEI.RunDebugConsoleFuncMessage()
+            runFuncMsg.funcName = funcName
+            
+            argsToString = ""
+            for i in range(1, len(args)):
+                argsToString += args[i] + " "
+            
+            runFuncMsg.funcArgs = argsToString
+    
+            toEngMessage = GToEM(RunDebugConsoleFuncMessage = runFuncMsg);
+                
+            sys.stdout.write("Send RunDebugConsoleFuncMessage = '" + str(toEngMessage) + "'" + os.linesep)
+            self.sendToEngine(toEngMessage)
+            
+            return True
+            
+    def HandleHelpSpecificMessage(self, cmd, oneLine = False): 
+        if not hasattr(GToEM, cmd):
+            sys.stdout.write("No message of type '{}'{}".format(cmd, os.linesep))
+            return False
+
+        msgTag = getattr(GToEM.Tag, cmd)
+        msgType = GToEM.typeByTag(msgTag)
+
+        # grab the arguments passed into the init function, excluding "self"
+        try:
+            args = msgType.__init__.__code__.co_varnames[1:]
+        except AttributeError:
+            # in case it's a primitive type like 'int'
+            #TODO: once we have enum to string, use that here and list possible values
+            args = [msgType.__name__]
+
+        defaults = []
+        try:
+            defaults = msgType.__init__.__defaults__
+        except AttributeError:
+            pass
+
+        if not oneLine:
+            print("{}: {} command".format(cmd, msgType.__name__))
+            print("usage: {} {}".format(cmd, ' '.join(args)))
+            if len(args) > 0:
+                print()
+
+            for argnum in range(len(args)):
+                arg = args[argnum]
+                if len(defaults) > argnum:
+                    defaultStr = "default = {}".format(defaults[argnum])
+                else:
+                    defaultStr = ""
+
+                typeStr = ""
+                try:
+                    doc = getattr(msgType, arg).__doc__
+                except AttributeError:
+                    pass
+                else:
+                    if doc:
+                        docSplit = doc.split()
+                        if len(docSplit) > 0:
+                            typeStr = docSplit[0]
+
+                    print("    {}: {} {}".format(arg, typeStr, defaultStr))
+        else:
+            print ("  {} {}".format(cmd, ' '.join(args)))
+
+        return True
+    
+    def HandleSendMessageCommand(self, *args):
+    
+        msgName = args[0]
+        
+        if msgName.lower() == "list":
+            for cmd in GToEM._tags_by_name:
+                self.HandleHelpSpecificMessage(cmd, oneLine = True)
+                
+            return True
+    
+        if not hasattr(GToEM, msgName):
+            sys.stderr.write("[HandleSendMessageCommand] Unrecognized message + '" + str(msgName) + "'" + os.linesep)            
+            return False
+            
+        commandArgs = args[1:]
+    
+        try:
+            params = [eval(a) for a in commandArgs]
+        except Exception as e:
+            sys.stderr.write("Couldn't parse command arguments for '{0}':{2}\t{1}{2}".format(msgName, e, os.linesep))
+            self.HandleHelpSpecificMessage(msgName, oneLine = False)
+            return False
+        else:
+            t = getattr(GToEM.Tag, msgName)
+            y = GToEM.typeByTag(t)                    
+            try:
+                p = y(*params)
+            except Exception as e:
+                sys.stderr.write("Couldn't create {0} message from params *{1}:{3}\t{2}{3}".format(msgName, repr(params), str(e), os.linesep))
+                self.HandleHelpSpecificMessage(msgName, oneLine = False)
+                return False
+            else:
+                m = GToEM(**{msgName: p})
+                #sys.stdout.write("[HandleSendMessageCommand] Sending: '" + str(m) + "'" + os.linesep)
+                return self.sendToEngine(m)
+                
+        return False
             
             
     def PlayAnim(self, *args):
@@ -375,6 +538,26 @@ class _EngineInterfaceImpl:
         sys.stdout.write("Send PlayAnimation = '" + str(toEngMessage) + "'" + os.linesep)
         self.sendToEngine(toEngMessage)
         
+        
+    def DoCommand(self, inCommand):
+        
+        sys.stdout.write(os.linesep) # clean new line after the CLI prompt
+        
+        commandType = inCommand[0]
+                
+        if (commandType == EngineCommand.consoleVar):
+            return self.HandleConsoleVarCommand(*inCommand[1])
+            
+        elif (commandType == EngineCommand.consoleFunc):
+            return self.HandleConsoleFuncCommand(*inCommand[1])
+            
+        elif (commandType == EngineCommand.sendMsg):
+            return self.HandleSendMessageCommand(*inCommand[1])
+            
+        else:
+            sys.stderr.write("[DoCommand] Unhandled commande type: " + str(commandType) + os.linesep)
+            return False
+            
         
     def Update(self):
 
@@ -447,7 +630,7 @@ class _EngineInterfaceImpl:
         elif (self.state == ConnectionState.connectedToRobot):
             pass # all is running
         else:
-            sys.stdout.write("Unexpected state: " + str(self.state) + os.linesep)
+            sys.stderr.write("[Update] Unexpected state: " + str(self.state) + os.linesep)
     
     def IsConnected(self):
         return self.state >= ConnectionState.connectedToRobot
@@ -455,14 +638,88 @@ class _EngineInterfaceImpl:
     def Disconnect(self):
         self.udpTransport.CloseSocket()
 
-    def __del__(self):
-        self.Disconnect()
-
     def sendToEngine(self, msg):
+        sys.stdout.write("[sendToEngine] '" + str(msg) + "'" + os.linesep)
         return self.udpTransport.SendData(self.engDest, msg.pack())
         
     def sendToAd(self, msg):
+        sys.stdout.write("[sendToAd] '" + str(msg) + "'" + os.linesep)
         return self.udpTransport.SendData(self.adDest, msg.pack())
+
+
+# ================================================================================    
+# Threaded Async Engine Interface (runs async)
+# ================================================================================
+
+class AsyncEngineInterface(threading.Thread):
+    "Async Wrapper of EngineInterface"
+    
+    def __init__(self, inEngineInterface):
+        self.engineInterface = inEngineInterface
+        if os.name == 'posix' and sys.version_info.major > 2:
+            threading.Thread.__init__(self, daemon=True)
+        else:
+            threading.Thread.__init__(self)
+        self.queue = deque([]) # deque of commands in the order they were input
+        self.queueLock = threading.Lock()
+        self.updateLock = threading.Lock()
+        self._continue = True
+        
+    def __del__(self):
+        self.KillThread()
+        if self.engineInterface is not None:
+            del self.engineInterface
+            self.engineInterface = None        
+            
+    def run(self):
+        while self._continue:     
+            try:
+            
+                self.updateLock.acquire()
+                
+                newCommand = self.PopCommand()
+                if newCommand is not None:
+                    self.engineInterface.DoCommand(newCommand)
+                        
+                self.engineInterface.Update()
+                
+                self.updateLock.release()
+                
+                time.sleep(0.1)
+            except Exception as e:
+                sys.stderr.write("[AsyncEngineInterface] Exception: " + str(e) + os.linesep)
+            else:
+                pass
+
+    def KillThread(self):
+        "Clean up the thread"
+        self.queueLock.acquire()
+        self._continue = False
+        self.queue = []
+        self.queueLock.release()
+        
+    def QueueCommand(self, inCommand):
+        "Thread safe queing of an Async command, will run later in update loop"
+        self.queueLock.acquire()
+        self.queue.append(inCommand)
+        self.queueLock.release()
+        
+    def SyncCommand(self, inCommand):
+        "Thread safe blocking to call a command synchronously"
+        self.updateLock.acquire()
+        retVal = self.engineInterface.DoCommand(newCommand)
+        self.updateLock.release()
+        return retVal
+        
+    def PopCommand(self):
+        "Thread safe pop of oldest command queued"
+        self.queueLock.acquire()
+        try:
+            poppedCommand = self.queue.popleft()
+        except IndexError:
+            poppedCommand = None
+        self.queueLock.release()
+        return poppedCommand;
 
 
 # ================================================================================    
@@ -470,17 +727,43 @@ class _EngineInterfaceImpl:
 # ================================================================================
 
         
-def Init():
+def Init(runAsync=False):
     "Initalize the engine interface. Must be called before any other methods"
     global gEngineInterfaceInstance
+    if gEngineInterfaceInstance is not None:
+        sys.stderr.write("Already Initialized!")
+        return None        
     if gEngineInterfaceInstance is None:
         gEngineInterfaceInstance = _EngineInterfaceImpl()
-    return gEngineInterfaceInstance
+    if runAsync:
+        global gAsyncEngineInterfaceInstance
+        if gAsyncEngineInterfaceInstance is None:            
+            gAsyncEngineInterfaceInstance = AsyncEngineInterface(gEngineInterfaceInstance)
+            gAsyncEngineInterfaceInstance.start()
+        return gAsyncEngineInterfaceInstance
+    else:   
+        return gEngineInterfaceInstance
     
 def Update():
     global gEngineInterfaceInstance
     if gEngineInterfaceInstance is not None:
         gEngineInterfaceInstance.Update()
+        
+def QueueCommand(inCommand):
+    global gAsyncEngineInterfaceInstance
+    global gEngineInterfaceInstance
+    if gAsyncEngineInterfaceInstance is not None:
+        gAsyncEngineInterfaceInstance.QueueCommand(inCommand)
+    elif gEngineInterfaceInstance is not None:
+        gEngineInterfaceInstance.DoCommand(inCommand)
+        
+def SyncCommand(inCommand):
+    global gAsyncEngineInterfaceInstance
+    global gEngineInterfaceInstance
+    if gAsyncEngineInterfaceInstance is not None:
+        return gAsyncEngineInterfaceInstance.SyncCommand(inCommand)
+    elif gEngineInterfaceInstance is not None:
+        return gEngineInterfaceInstance.DoCommand(newCommand)
 
 def Shutdown():
     global gEngineInterfaceInstance
