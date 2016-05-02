@@ -54,6 +54,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       ExternalInterface::MessageGameToEngineTag::TraverseObject,
       ExternalInterface::MessageGameToEngineTag::MountCharger,
       ExternalInterface::MessageGameToEngineTag::PlayAnimation,
+      ExternalInterface::MessageGameToEngineTag::PlayAnimationGroup,
       ExternalInterface::MessageGameToEngineTag::TurnTowardsObject,
       ExternalInterface::MessageGameToEngineTag::TurnTowardsPose,
       ExternalInterface::MessageGameToEngineTag::TurnInPlace,

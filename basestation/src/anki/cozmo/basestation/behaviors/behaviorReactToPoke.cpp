@@ -25,30 +25,14 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
-  
-// Randomly plays an animation from here after first being poked
-static std::vector<std::string> _animStartled = {
-  "ID_pokedReaction_01"
-};
 
-// Plays one of these animations after facing a person.
-// Animations are ordered from happy to irritated.
-static std::vector<std::string> _animReactions = {
-  "ID_poked_giggle",
-  "ID_pokedA",
-  "ID_pokedB"
-};
+static std::string _animStartledGroup = "pokeStartled";
+static std::string _animReactionsGroup = "pokeReactions";
 
-// Thresholds for when to play which of the animReactions
-static std::vector<f32> _animReactionHappyThresholds = {
-  -0.1f,
-  -0.8f
-};
   
 BehaviorReactToPoke::BehaviorReactToPoke(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
 {
-  assert(_animReactions.size() == _animReactionHappyThresholds.size() + 1);
   
   SetDefaultName("ReactToPoke");
   
@@ -101,8 +85,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot)
       robot.GetMoodManager().AddToEmotion(EmotionType::Happy, -kEmotionChangeLarge, "Poked", currentTime_sec);
       
       // Do startled animation
-      s32 animIndex = robot.GetLastMsgTimestamp() % _animStartled.size(); // Randomly select anim to play
-      StartActing(robot, new PlayAnimationAction(robot, _animStartled[animIndex]));
+      StartActing(robot, new PlayAnimationGroupAction(robot, _animStartledGroup));
       _currentState = State::TurnToFace;
       break;
     }
@@ -128,20 +111,7 @@ IBehavior::Status BehaviorReactToPoke::UpdateInternal(Robot& robot)
     }
     case State::ReactToFace:
     {
-      // Get happy reading
-      f32 happyVal = robot.GetMoodManager().GetEmotionValue(EmotionType::Happy);
-      
-      // Figure out which reaction to play
-      u32 animIndex = 0;
-      for (; animIndex < _animReactionHappyThresholds.size(); ++animIndex) {
-        if (happyVal > _animReactionHappyThresholds[animIndex]) {
-          break;
-        }
-      }
-      PRINT_NAMED_INFO("BehaviorReactToPoke.Update.HappyVal", "happy: %f, animIndex: %d", happyVal, animIndex);
-      
-      
-      StartActing(robot, new PlayAnimationAction(robot, _animReactions[animIndex]));
+      StartActing(robot, new PlayAnimationGroupAction(robot, _animReactionsGroup));
       _currentState = State::Inactive;
       _doReaction = false;
       

@@ -319,7 +319,7 @@ namespace Anki {
       const std::string animationGroupFolder =
       _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
       
-      auto filePaths = Util::FileUtils::FilesInDirectory(animationGroupFolder, true, "json");
+      auto filePaths = Util::FileUtils::FilesInDirectory(animationGroupFolder, true, "json",true);
       for (auto path : filePaths)
       {
         struct stat attrib{0};

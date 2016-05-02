@@ -1836,19 +1836,18 @@ namespace Anki {
               }
               case (s32)'~':
               {
-                //const s32 NUM_ANIM_TESTS = 4;
-                //const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_HEAD_NOD, ANIM_HEAD_NOD_SLOW, ANIM_BLINK, ANIM_UPDOWNLEFTRIGHT};
-                
-                const s32 NUM_ANIM_TESTS = 4;
-                const char* testAnims[NUM_ANIM_TESTS] = {"ANIM_BLINK", "ANIM_HEAD_NOD", "ANIM_HEAD_NOD_SLOW", "ANIM_LIFT_NOD"};
-                
-                static s32 iAnimTest = 0;
-                
-                SendAnimation(testAnims[iAnimTest++], 1);
-                
-                if(iAnimTest == NUM_ANIM_TESTS) {
-                  iAnimTest = 0;
+                // Send whatever animation is specified in the animationToSendName field
+                webots::Field* animToSendNameField = root_->getField("animationToSendName");
+                if (animToSendNameField == nullptr) {
+                  printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+                  break;
                 }
+                std::string animToSendName = animToSendNameField->getSFString();
+                if (animToSendName.empty()) {
+                  printf("ERROR: animationToSendName field is empty\n");
+                  break;
+                }
+                SendAnimationGroup(animToSendName.c_str());
                 break;
               }
                 
