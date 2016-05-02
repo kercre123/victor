@@ -7,20 +7,19 @@ using Anki.UI;
 
 public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
-  private static readonly IDAS sDAS = DAS.GetInstance(typeof(ConsoleLogManager));
 
   private static ConsoleLogManager _Instance;
 
   public static ConsoleLogManager Instance {
     get {
       if (_Instance == null) {
-        sDAS.Error("Don't access this until Start!");
+        DAS.Error("ConsoleLogManager.NullInstance", "Don't access ConsoleLogManager until Start!");
       }
       return _Instance;
     }
     private set {
       if (_Instance != null) {
-        sDAS.Error("There shouldn't be more than one UIManager");
+        DAS.Error("ConsoleLogManager.DuplicateInstance", "ConsoleLogManager already exists");
       }
       _Instance = value;
     }

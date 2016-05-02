@@ -9,20 +9,18 @@ using Cozmo.UI;
 
 public class UIManager : MonoBehaviour {
 
-  private static readonly IDAS sDAS = DAS.GetInstance(typeof(UIManager));
-
   private static UIManager _Instance;
 
   public static UIManager Instance {
     get {
       if (_Instance == null) {
-        sDAS.Error("Don't access this until Start!");
+        DAS.Error("UIManager.NullInstance", "Do not access UIManager until start");
       }
       return _Instance;
     }
     private set {
       if (_Instance != null) {
-        sDAS.Error("There shouldn't be more than one UIManager");
+        DAS.Error("UIManager.DuplicateInstance", "UIManager Instance already exists");
       }
       _Instance = value;
     }

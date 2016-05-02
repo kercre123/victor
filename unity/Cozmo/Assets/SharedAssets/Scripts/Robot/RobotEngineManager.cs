@@ -125,7 +125,7 @@ public class RobotEngineManager : MonoBehaviour {
 
 
   private void OnEnable() {
-    DAS.Info("RobotEngineManager", "Enabling Robot Engine Manager");
+    DAS.Event("RobotEngineManager.OnEnable", string.Empty);
     if (Instance != null && Instance != this) {
       Destroy(gameObject);
       return;
@@ -141,7 +141,7 @@ public class RobotEngineManager : MonoBehaviour {
     }
 
     if (config == null) {
-      DAS.Error("RobotEngineManager", "Error initializing CozmoBinding: No configuration.");
+      DAS.Error("RobotEngineManager.ErrorInitializingCozmoBinding.NoConfig", string.Empty);
     }
     else {
       CozmoBinding.Startup(config.text);
@@ -229,7 +229,7 @@ public class RobotEngineManager : MonoBehaviour {
       float limit = Time.realtimeSinceStartup + 2.0f;
       while (_Channel.HasPendingOperations) {
         if (limit < Time.realtimeSinceStartup) {
-          DAS.Warn("RobotEngineManager", "Not waiting for disconnect to finish sending.");
+          DAS.Warn("RobotEngineManager.NotWaitingForDisconnectToFinishSending", string.Empty);
           break;
         }
         System.Threading.Thread.Sleep(500);
@@ -251,7 +251,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void Disconnected(DisconnectionReason reason) {
-    DAS.Debug("RobotEngineManager", "Disconnected: " + reason.ToString());
+    DAS.Debug("RobotEngineManager.Disconnected", reason.ToString());
     _IsRobotConnected = false;
 
     _LastDisconnectionReason = reason;
@@ -262,7 +262,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void SendMessage() {
     if (!IsConnected) {
-      DAS.Warn("RobotEngineManager", "Message not sent because not connected");
+      DAS.Warn("RobotEngineManager.MessageNotSent", "Not Connected");
       return;
     }
 
@@ -410,7 +410,7 @@ public class RobotEngineManager : MonoBehaviour {
       ReceivedSpecificMessage(message.NVStorageOpResult);
       break;
     default:
-      DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
+      DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
     }
   }
@@ -442,11 +442,11 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.UiDeviceConnected message) {
-    DAS.Debug("RobotEngineManager", "Device connected: " + message.connectionType.ToString() + "," + message.deviceID.ToString());
+    DAS.Debug("RobotEngineManager.DeviceConnected", "Device connected: " + message.connectionType.ToString() + "," + message.deviceID.ToString());
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDisconnected message) {
-    DAS.Error("RobotEngineManager", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
+    DAS.Error("RobotEngineManager.RobotDisconnected", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
     Disconnect();
     Disconnected(DisconnectionReason.RobotDisconnected);
   }
@@ -466,7 +466,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.InitDebugConsoleVarMessage message) {
-    DAS.Info("RobotEngineManager", " Recieved Debug Console Init");
+    DAS.Info("RobotEngineManager.ReceivedDebugConsoleInit", " Recieved Debug Console Init");
     for (int i = 0; i < message.varData.Length; ++i) {
       Anki.Debug.DebugConsoleData.Instance.AddConsoleVar(message.varData[i]);
     }
@@ -562,7 +562,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (CurrentRobot == null)
       return;
 
-    DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
+    DAS.Debug("RobotEngineManager.DeletedObject", "Deleted ID " + message.objectID);
 
     CurrentRobot.SeenObjects.Remove(CurrentRobot.SeenObjects.Find(x => x == message.objectID));
     CurrentRobot.VisibleObjects.Remove(CurrentRobot.VisibleObjects.Find(x => x == message.objectID));
@@ -587,7 +587,7 @@ public class RobotEngineManager : MonoBehaviour {
     Face deleted = CurrentRobot.Faces.Find(x => x == message.faceID);
 
     if (deleted != null) {
-      DAS.Debug("RobotEngineManager", "Deleted face with ID " + message.faceID);
+      DAS.Debug("RobotEngineManager.DeletedFace", "Deleted ID " + message.faceID);
       CurrentRobot.Faces.Remove(deleted);
     }
 

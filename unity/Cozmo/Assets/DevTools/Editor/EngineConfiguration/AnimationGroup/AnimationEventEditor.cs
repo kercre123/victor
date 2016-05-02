@@ -88,7 +88,7 @@ public class AnimationEventEditor : EditorWindow {
         }
       }
       catch (Exception ex) {
-        DAS.Error(this, ex.Message);
+        Debug.LogError(ex.Message);
       }
     }
   }
