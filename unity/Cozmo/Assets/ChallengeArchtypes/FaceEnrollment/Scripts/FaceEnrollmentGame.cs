@@ -6,8 +6,6 @@ using UnityEngine.UI;
 namespace FaceEnrollment {
   public class FaceEnrollmentGame : GameBase {
 
-    public Dictionary<int, string> _FaceNameDictionary = new Dictionary<int, string>();
-
     private string[] _ReactionBank = {
       AnimationName.kFaceEnrollmentReaction_00,
       AnimationName.kFaceEnrollmentReaction_01,
@@ -39,7 +37,8 @@ namespace FaceEnrollment {
     }
 
     private void HandleNameEntered(string name) {
-      UIManager.CloseView(_EnterNameViewInstance);
+      UIManager.CloseViewImmediately(_EnterNameViewInstance);
+      _EnterNameViewInstance = null;
 
       _NameForFace = name;
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.LookingStraight);
@@ -48,16 +47,16 @@ namespace FaceEnrollment {
     }
 
     private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
-      UIManager.CloseView(_EnrollmentInstructionsViewInstance);
+      UIManager.CloseViewImmediately(_EnrollmentInstructionsViewInstance);
+      _EnrollmentInstructionsViewInstance = null;
 
-      // we've successfully enrolled a new face, lets assign the inputted name to it.
       CurrentRobot.AssignNameToFace(id, _NameForFace);
       PlayFaceReactionAnimation(id);
     }
 
     private void PlayFaceReactionAnimation(int faceId) {
       DAS.Debug(this, "Attempt to Play Face Reaction Animation - FaceId: " + faceId);
-      CurrentRobot.PrepareFaceNameAnimation(faceId, _FaceNameDictionary[faceId]);
+      CurrentRobot.PrepareFaceNameAnimation(faceId, _NameForFace);
       CurrentRobot.SendAnimation(_ReactionBank[Random.Range(0, _ReactionBank.Length)], HandleReactionDone);
     }
 
@@ -67,10 +66,10 @@ namespace FaceEnrollment {
 
     protected override void CleanUpOnDestroy() {
       if (_EnterNameViewInstance != null) {
-        UIManager.CloseView(_EnterNameViewInstance);
+        UIManager.CloseViewImmediately(_EnterNameViewInstance);
       }
       if (_EnrollmentInstructionsViewInstance != null) {
-        UIManager.CloseView(_EnrollmentInstructionsViewInstance);
+        UIManager.CloseViewImmediately(_EnrollmentInstructionsViewInstance);
       }
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
     }
