@@ -142,8 +142,12 @@ namespace SpeedTap {
 
     public void HandleGameEnd() {
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
-        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID] = CurrentDifficulty + 1;
-        DataPersistence.DataPersistenceManager.Instance.Save();
+        int currentDifficultyUnlocked = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID];
+        int newDifficultyUnlocked = CurrentDifficulty + 1;
+        if (currentDifficultyUnlocked < newDifficultyUnlocked) {
+          DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID] = newDifficultyUnlocked;
+          DataPersistence.DataPersistenceManager.Instance.Save();
+        }
         RaiseMiniGameWin();
       }
       else {
