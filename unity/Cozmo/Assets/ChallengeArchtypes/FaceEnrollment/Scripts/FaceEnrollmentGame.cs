@@ -66,6 +66,7 @@ namespace FaceEnrollment {
     }
 
     protected override void CleanUpOnDestroy() {
+      CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
       if (_EnterNameViewInstance != null) {
         UIManager.CloseViewImmediately(_EnterNameViewInstance);
       }
