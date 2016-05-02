@@ -245,13 +245,15 @@ public class StartupManager : MonoBehaviour {
   }
 
   private IEnumerator UpdateLoadingDots() {
-    string loadingText = "Loading";
-    for (int i = 0; i < _CurrentNumDots; i++) {
-      loadingText += ".";
+    while (true) {
+      string loadingText = "Loading";
+      for (int i = 0; i < _CurrentNumDots; i++) {
+        loadingText += ".";
+      }
+      _CurrentNumDots = (_CurrentNumDots + 1) % 4;
+      _LoadingBarLabel.text = loadingText;
+      yield return new WaitForSeconds(_AddDotSeconds);
     }
-    _CurrentNumDots = (_CurrentNumDots + 1) % 4;
-    _LoadingBarLabel.text = loadingText;
-    yield return new WaitForSeconds(_AddDotSeconds);
   }
 
   private void AddLoadingBarProgress(float amount) {
