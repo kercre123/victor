@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 using Anki.Assets;
+using System.IO;
+using System;
 
 /// <summary>
 /// Add managers to this object by calling
@@ -49,17 +51,40 @@ public class StartupManager : MonoBehaviour {
   [SerializeField]
   private string[] _StartupDebugPrefabNames;
 
+  private string _ExtractionErrorMessage;
+
   private bool _IsDebugBuild = false;
 
   private Coroutine _UpdateDotsCoroutine;
 
   // Use this for initialization
   private IEnumerator Start() {
+
+    // Initialize DAS first so we can have error messages during intialization
+    #if ANIMATION_TOOL
+    DAS.AddTarget(new ConsoleDasTarget());
+    #elif UNITY_IPHONE && !UNITY_EDITOR
+    DAS.AddTarget(new IphoneDasTarget());
+    #else
+    DAS.AddTarget(new UnityDasTarget());
+    #endif
+
     // Start loading bar at close to 0
     _CurrentProgress = 0.05f;
     _LoadingBar.SetProgress(_CurrentProgress);
     _CurrentNumDots = 0;
     _UpdateDotsCoroutine = StartCoroutine(UpdateLoadingDots());
+
+    // Extract resource files in platforms that need it
+    yield return ExtractResourceFiles();
+
+    // If there was any error extracting the files, this is blocker and we can't continue running the app
+    if (!string.IsNullOrEmpty(_ExtractionErrorMessage)) {
+      _LoadingBarLabel.color = Color.red;
+      _LoadingBarLabel.text = _ExtractionErrorMessage;
+      StopCoroutine(_UpdateDotsCoroutine);
+      yield break;
+    }
 
     // Load asset bundler
     AssetBundleManager.IsLogEnabled = true;
@@ -266,5 +291,80 @@ public class StartupManager : MonoBehaviour {
       _CurrentProgress += amount;
       _LoadingBar.SetProgress(_CurrentProgress);
     }
+  }
+
+  private IEnumerator ExtractResourceFiles() {
+    #if !UNITY_EDITOR && UNITY_ANDROID
+    string fromPath = Application.streamingAssetsPath + "/";
+    string toPath = Application.persistentDataPath + "/";
+
+    DAS.Info("StartupManager.Awake.ExtractResourceFiles", "About to extract resource files. fromPath = " + fromPath + ". toPath = " + toPath);
+
+    try {
+
+      // TODO: Implement some kind of hashing system so we don't have to extract the files every app launch
+      if (Directory.Exists(toPath)) {
+        Directory.Delete(toPath, true);
+      }
+
+      Directory.CreateDirectory(toPath);
+    }
+    catch (Exception e) {
+      _ExtractionErrorMessage = "There was an exception extracting the resource files: " + e.ToString();
+      DAS.Error("StartupManager.Awake.ExtractResourceFiles", _ExtractionErrorMessage);
+      yield break;
+    }
+
+    // Load the manifest file with all the resources
+    WWW resourcesWWW = new WWW(fromPath + "resources.txt");
+    yield return resourcesWWW;
+
+    if (!string.IsNullOrEmpty(resourcesWWW.error)) {
+      _ExtractionErrorMessage = "Error loading resources.txt: " + resourcesWWW.error;
+      DAS.Error("StartupManager.Awake.ExtractResourceFiles", _ExtractionErrorMessage);
+      yield break;
+    }
+
+    // Extract every individual file
+    string[] files = resourcesWWW.text.Split('\n');
+    foreach (string fileName in files) {
+      if (fileName.Contains(".")) {
+        WWW www = new WWW(fromPath + fileName);
+        yield return www;
+
+        if (!string.IsNullOrEmpty(www.error)) {
+          _ExtractionErrorMessage = "Error extracting file: " + www.error;
+          DAS.Error("StartupManager.Awake.ExtractResourceFiles", _ExtractionErrorMessage);
+          yield break;
+        }
+
+        try {
+          File.WriteAllBytes(toPath + fileName, www.bytes);
+        }
+        catch (Exception e) {
+          _ExtractionErrorMessage = "Error extracting file: " + e.ToString();
+          DAS.Error("StartupManager.Awake.ExtractResourceFiles", _ExtractionErrorMessage);
+          yield break;
+        }
+
+        www.Dispose();
+      } else {
+        // Assume this is a directory
+        try {
+          Directory.CreateDirectory(toPath + fileName);
+        }
+        catch (Exception e) {
+          _ExtractionErrorMessage = "Error extracting file: " + e.ToString();
+          DAS.Error("StartupManager.Awake.ExtractResourceFiles", _ExtractionErrorMessage);
+          yield break;
+        }
+      }
+    }
+
+    resourcesWWW.Dispose();
+    #endif
+
+    _ExtractionErrorMessage = null;
+    yield return null;
   }
 }
