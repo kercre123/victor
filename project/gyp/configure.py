@@ -377,8 +377,8 @@ def main(scriptArgs):
   cgMexProjectPath = os.path.relpath(os.path.join(options.cozmoEnginePath, 'project/gyp/cozmoEngineMex.gyp'), configurePath)
   cozmoConfigPath = os.path.join(options.cozmoEnginePath, 'resources')
   audioProjectPath = os.path.abspath(os.path.join(cozmoEngineConfigurePath, audioProjectPath))
-  ceAudioProjectGypPath = os.path.abspath(os.path.join(audioProjectGypPath, cozmoEngineConfigurePath))
   cgAudioProjectGypPath = os.path.abspath(os.path.join(configurePath, audioProjectGypPath))
+  ceAudioProjectGypPath = cgAudioProjectGypPath
   cgDasProjectPath = os.path.relpath(dasProjectPath, configurePath)
   cgBLECozmoProjectPath = os.path.relpath(bleCozmoProjectPath, configurePath)
   ceBLECozmoProjectPath = os.path.relpath(bleCozmoProjectPath, cozmoEngineConfigurePath)
