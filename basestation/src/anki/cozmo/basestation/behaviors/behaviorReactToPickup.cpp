@@ -24,7 +24,7 @@ namespace Cozmo {
 using namespace ExternalInterface;
 
 // this is a stand-in for the real pickup animation
-static const char* kPickupReactAnimName = "anim_keepAlive_blink_01";
+static const char* kPickupReactAnimName = "reactToPickup";
 
 BehaviorReactToPickup::BehaviorReactToPickup(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
@@ -50,7 +50,7 @@ bool BehaviorReactToPickup::IsRunnable(const Robot& robot) const
 
 Result BehaviorReactToPickup::InitInternal(Robot& robot)
 {
-  StartActing(new PlayAnimationAction(robot, kPickupReactAnimName));
+  StartActing(new PlayAnimationGroupAction(robot, kPickupReactAnimName));
   return Result::RESULT_OK;
 }
 

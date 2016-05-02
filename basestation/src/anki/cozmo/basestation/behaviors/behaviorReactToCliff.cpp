@@ -25,7 +25,7 @@ namespace Cozmo {
   
 using namespace ExternalInterface;
   
-static const char* kCliffReactAnimName = "anim_VS_loco_cliffReact";
+static const char* kCliffReactAnimName = "reactToCliff";
 
 BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
@@ -47,7 +47,7 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot)
 {
   robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
 
-  StartActing(new PlayAnimationAction(robot, kCliffReactAnimName));
+  StartActing(new PlayAnimationGroupAction(robot, kCliffReactAnimName));
   
   return Result::RESULT_OK;
 }

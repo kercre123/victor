@@ -38,8 +38,7 @@
 namespace Anki {
 namespace Cozmo {
 
-// TODO:(bn) ask Mooly, maybe we can use some of the alts here as well?
-static const char* kBlockReactAnim = "ID_react2block_02";
+static const char* kBlockReactAnimGroup = "blockReact";
 
 using namespace ExternalInterface;
 
@@ -313,8 +312,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject(Robot& robot)
   
   StartActing(new CompoundActionSequential(robot, {
                   new TurnTowardsObjectAction(robot, recentObjectID, PI_F),
-                  // TODO:(bn) vary animation here?
-                  new PlayAnimationAction(robot, kBlockReactAnim) }),
+                  new PlayAnimationGroupAction(robot, kBlockReactAnimGroup) }),
                [this, &robot, recentObjectID](ActionResult result) {
                  if( result == ActionResult::SUCCESS ) {
                    PRINT_NAMED_DEBUG("BehaviorLookAround.Objects",
