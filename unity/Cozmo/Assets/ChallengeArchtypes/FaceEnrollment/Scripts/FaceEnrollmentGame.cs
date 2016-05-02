@@ -50,7 +50,7 @@ namespace FaceEnrollment {
     private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
       UIManager.CloseView(_EnrollmentInstructionsViewInstance);
 
-      // we've successfully enrolled a new face.
+      // we've successfully enrolled a new face, lets assign the inputted name to it.
       CurrentRobot.AssignNameToFace(id, _NameForFace);
       PlayFaceReactionAnimation(id);
     }
