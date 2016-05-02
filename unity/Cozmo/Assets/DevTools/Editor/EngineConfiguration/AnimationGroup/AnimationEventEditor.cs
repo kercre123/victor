@@ -45,7 +45,7 @@ public class AnimationEventEditor : EditorWindow {
   private static void LoadData() {
     // Load All Animation Groups for reference
     if (Directory.Exists(sAnimationGroupDirectory)) {
-      _AnimationGroupFiles = Directory.GetFiles(sAnimationGroupDirectory);
+      _AnimationGroupFiles = Directory.GetFiles(sAnimationGroupDirectory, "*", System.IO.SearchOption.AllDirectories);
       _AnimationGroupNameOptions = _AnimationGroupFiles.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
     }
     else {

@@ -29,8 +29,10 @@ public class LatencyCalculator : MonoBehaviour {
   }
 
   private void OnDestroy() {
-    RobotEngineManager.Instance.OnDebugLatencyMsg -= HandleDebugLatencyMsg;
-    RobotEngineManager.Instance.RobotConnected -= HandleRobotConnected;
+    if (_IsInitted) {
+      RobotEngineManager.Instance.OnDebugLatencyMsg -= HandleDebugLatencyMsg;
+      RobotEngineManager.Instance.RobotConnected -= HandleRobotConnected;
+    }
   }
 
   private void HandleDebugLatencyMsg(Anki.Cozmo.ExternalInterface.DebugLatencyMessage msg) {

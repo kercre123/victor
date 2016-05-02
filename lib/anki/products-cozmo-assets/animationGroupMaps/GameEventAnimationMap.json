@@ -14,19 +14,19 @@
     },
     {
       "CladEvent": "OnFollowMotionLookDown",
-      "AnimName": ""
+      "AnimName": "followMotionLookDown"
     },
     {
       "CladEvent": "OnFollowMotionLookUp",
-      "AnimName": ""
+      "AnimName": "followMotionLookUp"
     },
     {
       "CladEvent": "OnFollowMotionLookUpAndDown",
-      "AnimName": ""
+      "AnimName": "followMotionLookUpAndDown"
     },
     {
       "CladEvent": "OnFollowMotionReact",
-      "AnimName": ""
+      "AnimName": "followMotionReact"
     },
     {
       "CladEvent": "OnSpeedtapStarted",
