@@ -40,9 +40,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CubeIdsForGame: 
-  _FaceEnrollmentDataViewPrefab: {fileID: 11469986, guid: 0ed0e2ebd5de7414a8bd3cc6222b2cdb,
+  _EnterNameViewPrefab: {fileID: 11431490, guid: e9fb59d52d3f64ef2825d07f7ed56372,
     type: 2}
-  _FaceEnrollmentViewPrefab: {fileID: 11446512, guid: 87495b7ac98694c32842d5dafe944287,
+  _EnrollmentInstructionsViewPrefab: {fileID: 11497634, guid: 7e9bf5b75a9614ab8ad9e0a0a15da855,
     type: 2}
 --- !u!1001 &100100000
 Prefab:
@@ -272,6 +272,16 @@ Prefab:
       propertyPath: _FaceEnrollmentDataViewPrefab
       value: 
       objectReference: {fileID: 11469986, guid: 0ed0e2ebd5de7414a8bd3cc6222b2cdb,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _EnterNameViewPrefab
+      value: 
+      objectReference: {fileID: 11431490, guid: e9fb59d52d3f64ef2825d07f7ed56372,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _EnrollmentInstructionsViewPrefab
+      value: 
+      objectReference: {fileID: 11497634, guid: 7e9bf5b75a9614ab8ad9e0a0a15da855,
         type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
