@@ -16,7 +16,15 @@ namespace FaceEnrollment {
       AnimationName.kFaceEnrollmentReaction_04
     };
 
-    private string _NameForSpace;
+    [SerializeField]
+    private FaceEnrollmentEnterNameView _EnterNameViewPrefab;
+    private FaceEnrollmentEnterNameView _EnterNameViewInstance;
+
+    [SerializeField]
+    private FaceEnrollmentInstructionsView _EnrollmentInstructionsViewPrefab;
+    private FaceEnrollmentInstructionsView _EnrollmentInstructionsViewInstance;
+
+    private string _NameForFace;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
@@ -26,18 +34,24 @@ namespace FaceEnrollment {
       base.InitializeView(newView, data);
 
       // create enter name dialog
+      _EnterNameViewInstance = UIManager.OpenView(_EnterNameViewPrefab, verticalCanvas: true);
+      _EnterNameViewInstance.OnNameEntered += HandleNameEntered;
     }
 
     private void HandleNameEntered(string name) {
-      _NameForSpace = name;
-      CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.LookingStraight);
+      UIManager.CloseView(_EnterNameViewInstance);
 
-      // create enrollment view
+      _NameForFace = name;
+      CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.LookingStraight);
+      _EnrollmentInstructionsViewInstance = UIManager.OpenView(_EnrollmentInstructionsViewPrefab, verticalCanvas: true);
+
     }
 
     private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
+      UIManager.CloseView(_EnrollmentInstructionsViewInstance);
+
       // we've successfully enrolled a new face.
-      CurrentRobot.AssignNameToFace(id, _NameForSpace);
+      CurrentRobot.AssignNameToFace(id, _NameForFace);
       PlayFaceReactionAnimation(id);
     }
 
@@ -52,6 +66,12 @@ namespace FaceEnrollment {
     }
 
     protected override void CleanUpOnDestroy() {
+      if (_EnterNameViewInstance != null) {
+        UIManager.CloseView(_EnterNameViewInstance);
+      }
+      if (_EnrollmentInstructionsViewInstance != null) {
+        UIManager.CloseView(_EnrollmentInstructionsViewInstance);
+      }
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
     }
 
