@@ -63,7 +63,7 @@ void Anki::Cozmo::HAL::IMU::Init(void) {
   Manage();
 }
 
-static void state_updated() {
+static void state_updated(const void*) {
   // We received our IMU data
   static uint8_t lastTimestamp = 0x80;
   imu_changed = ((imu_state.timestamp ^ lastTimestamp) & 0x80) != 0;

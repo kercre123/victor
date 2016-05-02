@@ -82,6 +82,10 @@ int main (void)
 {
   using namespace Anki::Cozmo::HAL;
 
+  // Enable reset filtering
+  RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
+  RCM_RPFW = 16;
+  
   Power::enableEspressif();
 
   Watchdog::init();
