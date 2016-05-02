@@ -229,9 +229,15 @@ message EnableLiftPower
   bool enable
 }
 
-message ConfigureBluetooth
+message SetBodyRadioMode
 {
-  bool enable
+  uint_8 radioMode
+}
+
+message SetDTMParameters
+{
+  uint_8 mode,
+  uint_8 channel 
 }
 
 message EnableReadToolCodeMode
@@ -303,6 +309,19 @@ enum uint_32 ToRobotAddressSpace
   TO_ENG_END    = 0xFE
 }
 
+enum uint_8 BodyRadioMode {
+  BODY_BLUETOOTH_OPERATING_MODE = 0,
+  BODY_WIFI_OPERATING_MODE = 1,
+  BODY_DTM_OPERATING_MODE = 2
+}
+
+enum uint_8 DTMTestMode {
+  DTM_DISABLED = 0,
+  DTM_LISTEN = 1,
+  DTM_CARRIER = 2,
+  DTM_TRANSMIT = 3
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from engine to robot and within the robot
@@ -320,10 +339,11 @@ union EngineToRobot
   CubeLights                    setCubeLights               = 0x04,
   SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
-  ConfigureBluetooth            configureBluetooth          = 0x07,
+  SetBodyRadioMode              setBodyRadioMode            = 0x07,
 
   NVReadResultToBody            nvReadToBody                = 0x08,
   NVOpResultToBody              nvOpResultToBody            = 0x09,
+  SetDTMParameters              setDTMParameters            = 0x0A,
 
   BLE_RecvHello                 bleRecvHelloMessage         = 0x26,
   BLE_EnterPairing              bleEnterPairing             = 0x27,

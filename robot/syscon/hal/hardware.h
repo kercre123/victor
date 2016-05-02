@@ -20,13 +20,6 @@ enum IRQ_Priority {
   RTOS_PRIORITY = 3
 };
 
-enum BodyOperatingMode {
-  BLUETOOTH_OPERATING_MODE,
-  WIFI_OPERATING_MODE
-};
-
-extern void enterOperatingMode(BodyOperatingMode mode);
-
 static const uint8_t wdog_channel_mask = (1 << WDOG_TOTAL_CHANNELS) - 1;
 
 enum e_nrf_gpio {

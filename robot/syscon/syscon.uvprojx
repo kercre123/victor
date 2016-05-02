@@ -569,7 +569,7 @@
                 <FileArmAds>
                   <Cads>
                     <interw>2</interw>
-                    <Optim>1</Optim>
+                    <Optim>0</Optim>
                     <oTime>0</oTime>
                     <SplitLS>2</SplitLS>
                     <OneElfS>2</OneElfS>
@@ -596,6 +596,11 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>dtm.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\dtm.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -10,8 +10,11 @@
 #include "messages.h"
 #include "bluetooth.h"
 #include "backpack.h"
+#include "dtm.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
+
+extern void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode);
 
 extern GlobalDataToBody g_dataToBody;
 
@@ -37,8 +40,12 @@ static void Process_setPropSlot(const SetPropSlot& msg)
   Radio::assignProp(msg.slot, msg.factory_id);
 }
 
-static void Process_configureBluetooth(const RobotInterface::ConfigureBluetooth& msg) {
-  enterOperatingMode(msg.enable ? BLUETOOTH_OPERATING_MODE : WIFI_OPERATING_MODE);
+static void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode& msg) {
+  enterOperatingMode(msg.radioMode);
+}
+
+static void Process_setDTMParameters(const RobotInterface::SetDTMParameters& msg) {
+  DTM::enterTestMode(msg.mode, msg.channel);
 }
 
 static void Process_bleRecvHelloMessage(const BLE_RecvHello& msg)
