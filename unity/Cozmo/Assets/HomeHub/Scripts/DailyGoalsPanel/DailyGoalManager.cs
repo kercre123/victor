@@ -18,9 +18,9 @@ public class DailyGoalManager : MonoBehaviour {
   // List of Current Generation Data
   private DailyGoalGenerationData _CurrentGenData;
 
-  #if UNITY_IOS && !UNITY_EDITOR
-  public static string sDailyGoalDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/DailyGoals"); } }
-  
+  #if !UNITY_EDITOR
+  public static string sDailyGoalDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/DailyGoals"); } }  
+
 #else
   public static string sDailyGoalDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/DailyGoals"; } }
   #endif
@@ -61,6 +61,16 @@ public class DailyGoalManager : MonoBehaviour {
     else {
       return 0.0f;
     }
+  }
+
+  public List<string> GetCurrentDailyGoalNames() {
+    List<string> dailyGoalList = new List<string>();
+    if (DataPersistenceManager.Instance.CurrentSession != null) {
+      for (int i = 0; i < DataPersistenceManager.Instance.CurrentSession.DailyGoals.Count; i++) {
+        dailyGoalList.Add(DataPersistenceManager.Instance.CurrentSession.DailyGoals[i].Title);
+      }
+    }
+    return dailyGoalList;
   }
 
   [SerializeField]

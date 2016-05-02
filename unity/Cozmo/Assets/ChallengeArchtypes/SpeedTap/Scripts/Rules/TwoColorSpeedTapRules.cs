@@ -2,47 +2,49 @@
 using System.Collections;
 
 namespace SpeedTap {
+  /// <summary>
+  /// Show one-two colors on each cube in a ABAB pattern.
+  /// Colors on the same cube are allowed to match.
+  /// When player's cube and cozmo's are meant to NOT match make
+  /// sure NONE are the colors are common between the two cubes.
+  /// </summary>
   public class TwoColorSpeedTapRules : SpeedTapRulesBase {
 
-    public override void SetLights(bool shouldTap, SpeedTapGame game) {
-
-      if (shouldTap) {
+    public override void SetLights(bool shouldMatch, SpeedTapGame game) {
+      if (shouldMatch) {
         // Do match
-        int randColorIndex = UnityEngine.Random.Range(0, _Colors.Length);
-        // they are allowed to match
-        int randColorIndex2 = UnityEngine.Random.Range(0, _Colors.Length);
+        // Pick two base colors; they can be the same.
+        // By design / Sean: randColorIndex and randColorIndex2 are allowed to match
+        int randColorIndex = PickRandomColor();
+        int randColorIndex2 = PickRandomColor();
 
-        for (int i = 0; i < 4; i++) {
-          game.PlayerWinColors[i] = game.CozmoWinColors[i] = _Colors[i % 2 == 0 ? randColorIndex : randColorIndex2];
-        }
+        SetABABLights(game.PlayerWinColors, randColorIndex, randColorIndex2);
+        SetABABLights(game.CozmoWinColors, randColorIndex, randColorIndex2);
 
         game.PlayerBlock.SetLEDs(game.PlayerWinColors);
         game.CozmoBlock.SetLEDs(game.CozmoWinColors);
       }
       else {
         // Do non-match
-        if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.38f) {
-          game.PlayerBlock.SetLEDs(Color.red);
-          game.CozmoBlock.SetLEDs(Color.red);
-        }
-        else {
-          int playerColorIdx = UnityEngine.Random.Range(0, _Colors.Length);
-          int cozmoColorIdx = (playerColorIdx + Random.Range(1, _Colors.Length)) % _Colors.Length;
+        if (!TrySetCubesRed(game)) {
+          // Pick different base colors for the player and Cozmo
+          int playerColorIdx, cozmoColorIdx;
+          PickTwoDifferentColors(out playerColorIdx, out cozmoColorIdx);
 
-          int playerColorIdx2 = UnityEngine.Random.Range(0, _Colors.Length);
-          // intentionally playerColorIdx instead of playerColorIdx2, so at most cozmo
-          // and player can match 1 color
-          int cozmoColorIdx2 = (playerColorIdx + Random.Range(1, _Colors.Length)) % _Colors.Length;
-
-          Color playerColor = _Colors[playerColorIdx];
-          Color cozmoColor = _Colors[cozmoColorIdx];
-          Color playerColor2 = _Colors[playerColorIdx2];
-          Color cozmoColor2 = _Colors[cozmoColorIdx2];
-
-          for (int i = 0; i < 4; i++) {
-            game.PlayerWinColors[i] = (i % 2 == 0 ? playerColor : playerColor2);
-            game.CozmoWinColors[i] = (i % 2 == 0 ? cozmoColor : cozmoColor2);
+          // The player's color should not match cozmo's at all; can match their own
+          int playerColorIdx2 = PickRandomColor();
+          while (playerColorIdx2 == cozmoColorIdx) {
+            playerColorIdx2 = PickRandomColor();
           }
+
+          // Cozmo's color should not match the player's at all; can match their own
+          int cozmoColorIdx2 = PickRandomColor();
+          while (cozmoColorIdx2 == playerColorIdx || cozmoColorIdx == playerColorIdx2) {
+            cozmoColorIdx2 = PickRandomColor();
+          }
+
+          SetABABLights(game.PlayerWinColors, playerColorIdx, playerColorIdx2);
+          SetABABLights(game.CozmoWinColors, cozmoColorIdx, cozmoColorIdx2);
 
           game.PlayerBlock.SetLEDs(game.PlayerWinColors);
           game.CozmoBlock.SetLEDs(game.CozmoWinColors);

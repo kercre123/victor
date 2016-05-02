@@ -184,7 +184,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
           int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
 
           // set up advertisement message
-          DAS.Debug(this, "Advertising IP: " + localIP);
+          DAS.Debug(string.Format("{0}.AdvertisingIP", this), localIP);
           _AdvertisementRegistrationMsg.ip = localIP;
           _AdvertisementRegistrationMsg.toEnginePort = (ushort)realPort;
           _AdvertisementRegistrationMsg.fromEnginePort = (ushort)realPort;

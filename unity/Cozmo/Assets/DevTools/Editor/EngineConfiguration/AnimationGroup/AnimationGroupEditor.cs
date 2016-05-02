@@ -37,7 +37,8 @@ public class AnimationGroupEditor : EditorWindow {
 
   private static void LoadAnimationGroups() {
     if (Directory.Exists(sAnimationGroupDirectory)) {
-      _AnimationGroupFiles = Directory.GetFiles(sAnimationGroupDirectory);
+      // We want subdirectories just for naming conventions, like "engine"
+      _AnimationGroupFiles = Directory.GetFiles(sAnimationGroupDirectory, "*", System.IO.SearchOption.AllDirectories);
       _AnimationGroupNameOptions = _AnimationGroupFiles.Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
     }
     else {

@@ -30,7 +30,7 @@ MonoBehaviour:
       - name: TapDelayMax
         val: 700
       - name: WrongTapChance
-        val: 0.3
+        val: 0.05
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
@@ -39,7 +39,7 @@ MonoBehaviour:
       - name: TapDelayMax
         val: 600
       - name: WrongTapChance
-        val: 0.3
+        val: 0.05
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
@@ -48,7 +48,7 @@ MonoBehaviour:
       - name: TapDelayMax
         val: 500
       - name: WrongTapChance
-        val: 0.2
+        val: 0.04
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
@@ -57,7 +57,7 @@ MonoBehaviour:
       - name: TapDelayMax
         val: 400
       - name: WrongTapChance
-        val: 0.1
+        val: 0.03
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
@@ -66,7 +66,7 @@ MonoBehaviour:
       - name: TapDelayMax
         val: 300
       - name: WrongTapChance
-        val: 0.05
+        val: 0.02
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
@@ -88,80 +88,79 @@ MonoBehaviour:
   _BetweenRoundMusic:
     _Music: 658369771
   DifficultySettings:
-  - DifficultyID: 1
+  - DifficultyID: 0
     Colors:
-    - {r: 1, g: 1, b: 0, a: 1}
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
     - {r: 0, g: 1, b: 0, a: 1}
     - {r: 0, g: 0, b: 1, a: 0}
     - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1125
-      TimeHandDisplayed: 1125
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 750
-      TimeHandDisplayed: 750
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
+  - DifficultyID: 1
+    Colors:
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
+    - {r: 0, g: 1, b: 0, a: 1}
+    - {r: 0, g: 0, b: 1, a: 1}
+    - {r: 1, g: 0, b: 1, a: 1}
+    SpeedTapRoundSettings:
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
+    - _MidRoundMusic:
+        _Music: 0
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
   - DifficultyID: 2
     Colors:
-    - {r: 1, g: 1, b: 0, a: 1}
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
     - {r: 0, g: 1, b: 0, a: 1}
     - {r: 0, g: 0, b: 1, a: 1}
     - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1125
-      TimeHandDisplayed: 1125
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 750
-      TimeHandDisplayed: 750
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
   - DifficultyID: 3
     Colors:
-    - {r: 1, g: 1, b: 0, a: 1}
+    - {r: 1, g: 0.5176471, b: 0, a: 1}
     - {r: 0, g: 1, b: 0, a: 1}
     - {r: 0, g: 0, b: 1, a: 1}
     - {r: 1, g: 0, b: 1, a: 1}
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 1125
-      TimeHandDisplayed: 1125
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2
     - _MidRoundMusic:
         _Music: 0
-      TimeBetweenHands: 750
-      TimeHandDisplayed: 750
-  - DifficultyID: 4
-    Colors:
-    - {r: 1, g: 1, b: 0, a: 1}
-    - {r: 0, g: 1, b: 0, a: 1}
-    - {r: 0, g: 0, b: 1, a: 1}
-    - {r: 1, g: 0, b: 1, a: 1}
-    - {r: 0, g: 1, b: 1, a: 1}
-    SpeedTapRoundSettings:
-    - _MidRoundMusic:
-        _Music: 0
-      TimeBetweenHands: 1500
-      TimeHandDisplayed: 1500
-    - _MidRoundMusic:
-        _Music: 0
-      TimeBetweenHands: 1125
-      TimeHandDisplayed: 1125
-    - _MidRoundMusic:
-        _Music: 0
-      TimeBetweenHands: 750
-      TimeHandDisplayed: 750
+      SecondsBetweenHands: 3
+      SecondsHandDisplayed: 2

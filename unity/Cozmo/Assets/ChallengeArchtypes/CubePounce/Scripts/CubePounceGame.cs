@@ -86,7 +86,8 @@ namespace CubePounce {
     }
 
     // Attempt the pounce
-    public void AttemptPounce() {
+    public bool AttemptPounce() {
+      bool didPounce = false;
       float PounceRoll;
       if (_MaxFakeouts <= 0) {
         PounceRoll = 0.0f;
@@ -98,6 +99,7 @@ namespace CubePounce {
         // Enter Animation State to attempt a pounce.
         _CliffFlagTrown = false;
         CurrentRobot.SendAnimationGroup(AnimationGroupName.kCubePounce_Pounce, HandlePounceEnd);
+        didPounce = true;
       }
       else {
         // If you do a fakeout instead, increase the likelyhood of a slap
@@ -105,6 +107,7 @@ namespace CubePounce {
         _CurrentPounceChance += ((1.0f - _BasePounceChance) / _MaxFakeouts);
         CurrentRobot.SendAnimationGroup(AnimationGroupName.kCubePounce_Fake, HandleFakeoutEnd);
       }
+      return didPounce;
     }
 
     private void HandlePounceEnd(bool success) {
@@ -148,6 +151,7 @@ namespace CubePounce {
       _CozmoScore++;
       UpdateScoreboard();
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
+      CurrentRobot.CancelCallback(HandleFakeoutEnd);
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinHand, HandEndAnimationDone));
     }
 

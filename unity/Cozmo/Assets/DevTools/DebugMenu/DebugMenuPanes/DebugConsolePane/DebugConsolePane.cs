@@ -32,6 +32,8 @@ namespace Anki.Debug {
 
       _CategoryPanels = new Dictionary<string, GameObject>();
       DebugConsoleData.Instance.ConsolePane = this;
+      // Clear UI update until we get back info from IniDebugConsole
+      DebugConsoleData.Instance.OnUIUpdated();
 
       // Query for our initial data so DebugConsoleData gets populated when dirty in update.
       RobotEngineManager.Instance.InitDebugConsole();
@@ -39,6 +41,7 @@ namespace Anki.Debug {
 
     void Update() {
       // if the static class is up, do a refresh of data.
+      // We get AddVars over multiple updates so this can add once the menu has been opened
       if (DebugConsoleData.Instance.NeedsUIUpdate()) {
         List<string> categories = DebugConsoleData.Instance.GetSortedCategories();
         for (int i = 0; i < categories.Count; ++i) {

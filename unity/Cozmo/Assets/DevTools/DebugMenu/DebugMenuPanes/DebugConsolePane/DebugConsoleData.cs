@@ -63,6 +63,25 @@ namespace Anki.Debug {
 
     public DebugConsolePane ConsolePane { set { _ConsolePane = value; } }
 
+    public void AddConsoleFunctionUnity(string varName, string categoryName, DebugConsoleVarEventHandler callback = null) {
+      Anki.Cozmo.ExternalInterface.DebugConsoleVar consoleVar = new Anki.Cozmo.ExternalInterface.DebugConsoleVar();
+      consoleVar.category = categoryName;
+      consoleVar.varName = varName;
+      consoleVar.varValue.varFunction = varName;
+      AddConsoleVar(consoleVar, callback);
+    }
+
+    private DebugConsoleVarData GetExistingLineUI(string categoryName, string varName) {
+      List<DebugConsoleVarData> lines;
+      if (_DataByCategory.TryGetValue(categoryName, out lines)) {
+        for (int i = 0; i < lines.Count; ++i) {
+          if (lines[i].VarName == varName) {
+            return lines[i];          
+          }
+        }
+      }
+      return null;
+    }
     // CSharp can't safely store pointers, so we need a setter delegates
     public void AddConsoleVar(DebugConsoleVar singleVar, DebugConsoleVarEventHandler callback = null) {
       _NeedsUIUpdate = true;
@@ -73,8 +92,12 @@ namespace Anki.Debug {
         categoryList = new List<DebugConsoleVarData>();
         _DataByCategory.Add(singleVar.category, categoryList);
       }
-
-      DebugConsoleVarData varData = new DebugConsoleVarData();
+      // try to find an existing one if exists or get a new one.
+      DebugConsoleVarData varData = GetExistingLineUI(singleVar.category, singleVar.varName);
+      if (varData == null) {
+        varData = new DebugConsoleVarData();
+        categoryList.Add(varData);
+      }
       varData.TagType = singleVar.varValue.GetTag();
       switch (varData.TagType) {
       case ConsoleVarUnion.Tag.varDouble:
@@ -96,8 +119,6 @@ namespace Anki.Debug {
       varData.MinValue = singleVar.minValue;
 
       varData.UnityVarHandler = callback;
-
-      categoryList.Add(varData);
     }
 
     private GameObject GetPrefabForType(DebugConsoleVarData data) {
@@ -125,7 +146,6 @@ namespace Anki.Debug {
             GameObject statLine = UIManager.CreateUIElement(GetPrefabForType(lines[i]), parentTransform);
             ConsoleVarLine uiLine = statLine.GetComponent<ConsoleVarLine>();
             uiLine.Init(lines[i]);
-            lines[i].UIAdded = true;
           }
         }
       }
@@ -133,7 +153,10 @@ namespace Anki.Debug {
     }
 
     public void SetStatusText(string text) {
-      _ConsolePane.PaneStatusText.text = text;
+      // If unity has forced a console var from code, this will be null.
+      if (_ConsolePane) {
+        _ConsolePane.PaneStatusText.text = text;
+      }
     }
 
     public List<string> GetSortedCategories() {

@@ -74,7 +74,7 @@ namespace Cozmo {
 
       public void SetProgress(float progress) {
         if (progress < 0 || progress > 1) {
-          DAS.Warn(this, "Tried to set progress to value=" + progress + " which is not in the range of 0 to 1! Clamping.");
+          DAS.Warn("ProgressBar.SetProgress.OutOfRange", "Tried to set progress to value=" + progress + " which is not in the range of 0 to 1! Clamping.");
         }
 
         float newProgress = Mathf.Clamp(progress, 0f, 1f);

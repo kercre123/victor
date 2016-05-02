@@ -14,6 +14,11 @@ namespace Anki.Debug {
     public virtual void Init(DebugConsoleData.DebugConsoleVarData singleVar) {
       _VarData = singleVar;
       _StatLabel.text = singleVar.VarName;
+      _VarData.UIAdded = true;
+    }
+
+    public void OnDestroy() {
+      _VarData.UIAdded = false;
     }
 
   }
