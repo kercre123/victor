@@ -21,6 +21,7 @@
 #include "watchdog.h"
 #include "i2c.h"
 #include "imu.h"
+#include "fcc.h"
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
@@ -109,9 +110,18 @@ int main (void)
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
   //StartupSelfTest();
 
+  #define ENABLE_FCC_TEST
+  #ifdef ENABLE_FCC_TEST
+  FCC::start();
+  for (;;) {
+    UART::WaitForSync();
+    FCC::mainExecution();
+  }
+  #else
   // Run the main thread
   do {
     // Wait for head body sync to occur
     UART::WaitForSync();
   } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
+  #endif
 }

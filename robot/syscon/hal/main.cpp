@@ -81,8 +81,8 @@ void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode) {
     case BODY_WIFI_OPERATING_MODE:
       DTM::stop();
       Bluetooth::shutdown();
-      Radio::advertise();
 
+      Radio::advertise();
       Backpack::lightMode(TIMER_LEDS);
       Timer::lowPowerMode(false);
 
@@ -91,6 +91,7 @@ void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode) {
       Radio::shutdown();
       
       DTM::start();
+      Backpack::lightMode(TIMER_LEDS);
       Timer::lowPowerMode(false);
       break ;
   }
