@@ -51,6 +51,7 @@ namespace FaceEnrollment {
       _EnrollmentInstructionsViewInstance = null;
 
       CurrentRobot.AssignNameToFace(id, _NameForFace);
+      CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
       PlayFaceReactionAnimation(id);
     }
 
