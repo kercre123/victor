@@ -15,6 +15,7 @@
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
@@ -119,7 +120,7 @@ void DemoBehaviorChooser::TransitionToNextState()
 
 bool DemoBehaviorChooser::DidBehaviorRunAndStop(const char* behaviorName) const
 {
-  IBehavior* behavior = GetBehaviorByName(behaviorName);
+  IBehavior* behavior = _robot.GetBehaviorFactory().FindBehaviorByName(behaviorName);
   if( nullptr == behavior ) {
     PRINT_NAMED_ERROR("DemoBehaviorChooser.NoNamedBehavior",
                       "couldn't get behavior behavior '%s' by name, skipping it",
@@ -137,6 +138,9 @@ bool DemoBehaviorChooser::DidBehaviorRunAndStop(const char* behaviorName) const
 void DemoBehaviorChooser::TransitionToWakeUp()
 {
   SET_STATE(WakeUp);
+
+  _robot.SetEnableCliffSensor(false);
+  
   EnableAllBehaviors(false);
   EnableBehavior(kWakeUpBehavior, true);
 
@@ -147,6 +151,8 @@ void DemoBehaviorChooser::TransitionToFearEdge()
 {
   SET_STATE(FearEdge);
 
+  _robot.SetEnableCliffSensor(true);
+
   EnableAllBehaviors(false);
   EnableBehavior(kFearEdgeBehavior, true);
 
@@ -156,6 +162,11 @@ void DemoBehaviorChooser::TransitionToFearEdge()
 void DemoBehaviorChooser::TransitionToPounce()
 {
   SET_STATE(Pounce);
+
+  _robot.SetEnableCliffSensor(true);
+
+  _robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
+  
   EnableAllBehaviors(false);
   EnableBehaviorGroup(BehaviorGroup::DemoFingerPounce);
 
@@ -167,6 +178,9 @@ void DemoBehaviorChooser::TransitionToPounce()
 void DemoBehaviorChooser::TransitionToFaces()
 {
   SET_STATE(Faces);
+
+  _robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, false);
+  
   EnableAllBehaviors(false);
   EnableBehaviorGroup(BehaviorGroup::DemoFaces);
 
