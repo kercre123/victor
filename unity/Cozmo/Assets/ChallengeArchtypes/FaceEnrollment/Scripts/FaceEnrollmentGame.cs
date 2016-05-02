@@ -62,7 +62,7 @@ namespace FaceEnrollment {
     }
 
     private void HandleReactionDone(bool success) {
-      base.RaiseMiniGameWin();
+      base.RaiseMiniGameQuit();
     }
 
     protected override void CleanUpOnDestroy() {
