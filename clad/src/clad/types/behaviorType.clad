@@ -27,6 +27,8 @@ enum uint_8 BehaviorType {
   RequestGameSimple,
   RollBlock,
   FactoryTest,
+  DemoFearEdge,
+  FlipDownFromWheelie,
 
   Count
 }
