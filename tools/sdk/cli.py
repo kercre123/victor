@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+"""
+Python command line interface for Engine, using cmd
+"""
+__author__ = "Mark Wesley"
+
+import sys, os, time    
+import cmd
+
+sys.path.insert(0, os.path.join("tools"))
+import engineInterface
+from engineInterface import GToEM # to get message definitions too
+from engineInterface import EngineCommand # for enum
+
+kCliCmdNames = [
+    "list",
+]
+
+class EngineRemoteCmd(cmd.Cmd):
+
+    def __init__(self):
+        super().__init__()
+        self.prompt = "CozmoSDK> "
+        
+    def emptyline(self):
+        pass # overriden to prevent an empty line entered repeating last command, and instead doing nothing
+      
+    # ================================================================================  
+    # send: Send a CLAD message
+        
+    def do_send(self, line):
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, line.split()) )
+        
+    def help_send(self):
+        self.stdout.write("send MsgName ..MsgArgs... ['send list' to list all messages]" + os.linesep)
+        
+    def complete_send(self, text, line, start_index, end_index):
+        suggestions = []
+        
+        for cliCmdName in kCliCmdNames:
+            if cliCmdName.startswith(text):
+                suggestions.append(cliCmdName)
+                    
+        for cmd in GToEM._tags_by_name:
+            if cmd.startswith(text):
+                suggestions.append(cmd)
+                
+        return suggestions
+        
+    # ================================================================================  
+    # cv: Set a Console Var  
+
+    def do_cv(self, line):
+        engineInterface.QueueCommand( (EngineCommand.consoleVar, line.split()) )
+        
+    def help_cv(self):
+        self.stdout.write("cv VariableName ...Args... ['cv list' to list all variables]" + os.linesep)
+
+    def complete_cv(self, text, line, start_index, end_index):
+    
+        suggestions = []
+        # [MARKW:TODO] Accessing consoleVars directly is technically unsafe, engine could be
+        #              modifying this at the same time. _But_ the map is built (via CLAD) at the start
+        #              and _unlikely_ to change at the same time so not too dangerous in practice
+        #              Need a way of either queuing this, blocking on it with a mutex, and/or having a double
+        #              buffered accessor to it (to minimize locking window)
+        consoleVars = engineInterface.gEngineInterfaceInstance.consoleVars.values()
+    
+        for cliCmdName in kCliCmdNames:
+            if cliCmdName.startswith(text):
+                suggestions.append(cliCmdName)
+                
+        for consoleVar in consoleVars:
+            if consoleVar.varName.startswith(text):
+                suggestions.append(consoleVar.varName)
+
+        return suggestions
+
+    # ================================================================================  
+    # cf: Call a Console Function  
+
+    def do_cf(self, line):
+        engineInterface.QueueCommand( (EngineCommand.consoleFunc, line.split()) )
+        
+    def help_cf(self):
+        # [MARKW:TODO] - extend help to pass in args, so we can do e.g. "help cf SomeFunc"
+        self.stdout.write("cf FunctionName ...Args... ['cf list' to list all functions]" + os.linesep)
+
+    def complete_cf(self, text, line, start_index, end_index):
+    
+        suggestions = []
+        # [MARKW:TODO] Accessing consoleFuncs directly is technically unsafe, engine could be
+        #              modifying this at the same time. _But_ the map is built (via CLAD) at the start
+        #              and _unlikely_ to change at the same time so not too dangerous in practice
+        #              Need a way of either queuing this, blocking on it with a mutex, and/or having a double
+        #              buffered accessor to it (to minimize locking window)
+        consoleFuncs = engineInterface.gEngineInterfaceInstance.consoleFuncs.values()
+    
+        for cliCmdName in kCliCmdNames:
+            if cliCmdName.startswith(text):
+                suggestions.append(cliCmdName)
+                
+        for consoleFunc in consoleFuncs:
+            if consoleFunc.varName.startswith(text):
+                suggestions.append(consoleFunc.varName)
+
+        return suggestions
+    
+    
+class EngineRemoteCLI:
+
+    def __init__(self):
+        engineInterface.Init(True)
+        self.keepRunning = True
+        self.run()
+        
+    def __del__(self):
+        engineInterface.Shutdown()        
+
+    def run(self):
+        
+        engineRemoteCmd = EngineRemoteCmd()
+        
+        while self.keepRunning:
+            try:                                    
+                engineRemoteCmd.cmdloop()                
+            except Exception as e:
+                self.keepRunning = False
+                sys.stderr.write(str(e) + os.linesep)
+                
+        engineInterface.Shutdown()
+        
+        
+if __name__ == '__main__':
+    EngineRemoteCLI()
+
+

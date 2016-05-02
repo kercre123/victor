@@ -114,9 +114,9 @@ class EngineRemoteCLI:
             elif commandNameLower == 'exit':
                 return self.HandleExitCommand(*commandArgs)
             elif commandNameLower == 'cv':
-                return engineInterface.gEngineInterfaceInstance.HandleCVarCommand(*commandArgs)
+                return engineInterface.gEngineInterfaceInstance.HandleConsoleVarCommand(*commandArgs)
             elif commandNameLower == 'cf':
-                return engineInterface.gEngineInterfaceInstance.HandleCVarCommand(*commandArgs)
+                return engineInterface.gEngineInterfaceInstance.HandleConsoleFuncCommand(*commandArgs)
             elif commandNameLower == 'playanim':
                 return self.HandlePlayAnimCommand(*commandArgs)
             elif not hasattr(GToEM, commandName):
