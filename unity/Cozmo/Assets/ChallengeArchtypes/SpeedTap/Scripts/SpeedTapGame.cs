@@ -188,7 +188,7 @@ namespace SpeedTap {
                                           new SelectDifficultyState(
                                             new HowToPlayState(new SpeedTapCozmoDriveToCube(true)),
                                             DifficultyOptions,
-                                            Mathf.Max(HighestLevelCompleted(), 1)
+                                            HighestLevelCompleted()
                                           ), 
                                           cubesRequired);
       _StateMachine.SetNextState(initCubeState);
