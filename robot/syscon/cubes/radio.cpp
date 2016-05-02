@@ -88,8 +88,6 @@ void Radio::advertise(void) {
   currentAccessory = 0;
 
   uesb_init(&uesb_config);
-  
-  assignProp(0, 0xCA11AB1E); // XXX: TEMPORRAY
 }
 
 void Radio::shutdown(void) {
