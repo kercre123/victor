@@ -163,7 +163,7 @@ static uint8_t readByte(bool timeout = true) {
   return byte;
 }
 
-static uint8_t writeByte(const uint8_t byte) {
+static void writeByte(const uint8_t byte) {
   writeUart(&byte, sizeof(byte));
 }
 
