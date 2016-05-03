@@ -142,8 +142,12 @@ namespace SpeedTap {
 
     public void HandleGameEnd() {
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
-        DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID] = CurrentDifficulty + 1;
-        DataPersistence.DataPersistenceManager.Instance.Save();
+        int currentDifficultyUnlocked = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID];
+        int newDifficultyUnlocked = CurrentDifficulty + 1;
+        if (currentDifficultyUnlocked < newDifficultyUnlocked) {
+          DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID] = newDifficultyUnlocked;
+          DataPersistence.DataPersistenceManager.Instance.Save();
+        }
         RaiseMiniGameWin();
       }
       else {
@@ -224,6 +228,8 @@ namespace SpeedTap {
 
     protected override void CleanUpOnDestroy() {
       LightCube.TappedAction -= BlockTapped;
+      RobotEngineManager.Instance.OnRobotPickedUp -= HandleCozmoPickedUpDisruption;
+      LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGetOut);
     }
 
@@ -349,6 +355,58 @@ namespace SpeedTap {
       else {
         GameAudioClient.SetMusicState(GetDefaultMusicState());
       }
+    }
+
+    // TODO: Promote to GameBase?
+    public void StartCozmoPickedUpDisruptionDetection() {
+      RobotEngineManager.Instance.OnRobotPickedUp -= HandleCozmoPickedUpDisruption;
+      RobotEngineManager.Instance.OnRobotPickedUp += HandleCozmoPickedUpDisruption;
+    }
+
+    // TODO: Promote to GameBase?
+    public void EndCozmoPickedUpDisruptionDetection() {
+      RobotEngineManager.Instance.OnRobotPickedUp -= HandleCozmoPickedUpDisruption;
+    }
+
+    // TODO: Promote to GameBase?
+    private void HandleCozmoPickedUpDisruption() {
+      RobotEngineManager.Instance.OnRobotPickedUp -= HandleCozmoPickedUpDisruption;
+      ShowPleaseDontCheatAlertView(LocalizationKeys.kSpeedTapDontMoveCozmoTitle, LocalizationKeys.kSpeedTapDontMoveCozmoDescription);
+    }
+
+    public void StartCozmoCubeMovedDisruptionDetection() {
+      LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
+      LightCube.OnMovedAction += HandleCozmoCubeMovedDisruption;
+    }
+
+    public void EndCozmoCubeMovedDisruptionDetection() {
+      LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
+    }
+
+    private void HandleCozmoCubeMovedDisruption(int cubeId, float xAccel, float yAccel, float zAccel) {
+      if (cubeId == CozmoBlock.ID) {
+        LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
+        ShowPleaseDontCheatAlertView(LocalizationKeys.kSpeedTapDontMoveBlockTitle, LocalizationKeys.kSpeedTapDontMoveBlockDescription);
+      }
+    }
+
+    private void ShowPleaseDontCheatAlertView(string titleKey, string descriptionKey) {
+      LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
+      RobotEngineManager.Instance.OnRobotPickedUp -= HandleCozmoPickedUpDisruption;
+      EndGameRobotReset();
+      PauseGame();
+
+      Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+      alertView.SetCloseButtonEnabled(false);
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonQuitGame, HandlePleaseDontCheatAlertViewClosed);
+      alertView.ViewClosed += HandlePleaseDontCheatAlertViewClosed;
+      alertView.TitleLocKey = titleKey;
+      alertView.DescriptionLocKey = descriptionKey;
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
+    }
+
+    private void HandlePleaseDontCheatAlertViewClosed() {
+      RaiseMiniGameQuit();
     }
   }
 }

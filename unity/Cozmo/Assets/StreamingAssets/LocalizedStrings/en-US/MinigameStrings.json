@@ -141,6 +141,18 @@
   "speedTap.tapBlockForRound": {
     "translation": "Ready? \nTap your cube to start the next round.\n\n(Make sure your and Cozmo's cubes are far apart.)"
   },
+  "speedTap.dontMoveCozmo.title": {
+    "translation": "Please Don't Move Cozmo"
+  },
+  "speedTap.dontMoveCozmo.description": {
+    "translation": "Cozmo doesn't appreciate being moved during games! Please don't do that."
+  },
+  "speedTap.dontMoveBlock.title": {
+    "translation": "Please Don't Move Cozmo's Cube"
+  },
+  "speedTap.dontMoveBlock.description": {
+    "translation": "Cozmo doesn't appreciate his cube being moved during games! Please don't do that."
+  },
   "treasureHunt.title": {
     "translation": "Treasure Hunt"
   },

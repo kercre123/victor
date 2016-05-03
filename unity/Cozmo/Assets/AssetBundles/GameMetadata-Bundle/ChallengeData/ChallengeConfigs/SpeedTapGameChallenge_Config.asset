@@ -85,8 +85,8 @@ MonoBehaviour:
       LowerBoundThreshold: 0.3
   Rounds: 3
   MaxScorePerRound: 5
-  MinIdleIntervalMs: 100
-  MaxIdleIntervalMs: 300
+  MinIdleIntervalMs: 400
+  MaxIdleIntervalMs: 600
   BaseMatchChance: 0.2
   MatchChanceIncrease: 0.1
   CozmoFakeoutChance: 0.2

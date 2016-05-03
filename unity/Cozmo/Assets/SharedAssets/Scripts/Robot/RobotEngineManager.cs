@@ -64,6 +64,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
   public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
+  public event Action OnRobotPickedUp;
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
   public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
@@ -80,6 +81,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageData> OnGotNVStorageData;
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageOpResult> OnGotNVStorageOpResult;
   public event Action<Anki.Cozmo.ExternalInterface.DebugLatencyMessage> OnDebugLatencyMsg;
+  public event Action<Anki.Cozmo.ExternalInterface.RobotEnrolledFace> OnRobotEnrolledFace;
 
   #region Audio Callback events
 
@@ -335,6 +337,7 @@ public class RobotEngineManager : MonoBehaviour {
       ReceivedSpecificMessage(message.AnimationAvailable);
       break;
     case G2U.MessageEngineToGame.Tag.RobotPickedUp:
+      ReceivedSpecificMessage(message.RobotPickedUp);
       break;
     case G2U.MessageEngineToGame.Tag.MoodState:
       ReceivedSpecificMessage(message.MoodState);
@@ -408,6 +411,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.NVStorageOpResult:
       ReceivedSpecificMessage(message.NVStorageOpResult);
+      break;
+    case G2U.MessageEngineToGame.Tag.RobotEnrolledFace:
+      ReceivedSpecificMessage(message.RobotEnrolledFace);
       break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
@@ -633,6 +639,12 @@ public class RobotEngineManager : MonoBehaviour {
       _RobotAnimationNames.Add(message.animName);
   }
 
+  private void ReceivedSpecificMessage(G2U.RobotPickedUp message) {
+    if (CurrentRobot != null && CurrentRobotID == message.robotID && OnRobotPickedUp != null) {
+      OnRobotPickedUp();
+    }
+  }
+
   private void ReceivedSpecificMessage(G2U.MoodState message) {
     if (CurrentRobot == null)
       return;
@@ -665,6 +677,13 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallback message) {
     if (ReceivedAudioCallback != null) {
       ReceivedAudioCallback(message);
+    }
+  }
+
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RobotEnrolledFace message) {
+    if (OnRobotEnrolledFace != null) {
+      OnRobotEnrolledFace(message);
     }
   }
 

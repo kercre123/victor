@@ -6,8 +6,6 @@ using UnityEngine.UI;
 namespace FaceEnrollment {
   public class FaceEnrollmentGame : GameBase {
 
-    public Dictionary<int, string> _FaceNameDictionary = new Dictionary<int, string>();
-
     private string[] _ReactionBank = {
       AnimationName.kFaceEnrollmentReaction_00,
       AnimationName.kFaceEnrollmentReaction_01,
@@ -15,128 +13,64 @@ namespace FaceEnrollment {
       AnimationName.kFaceEnrollmentReaction_03,
       AnimationName.kFaceEnrollmentReaction_04
     };
-    private int _LastAnimationPlayedIdx = 0;
-
-    private float _LastPlayedReaction = 0.0f;
-    private int _LastReactedID = 0;
-    private bool _Reacting = false;
 
     [SerializeField]
-    private FaceEnrollmentDataView _FaceEnrollmentDataViewPrefab;
-    private FaceEnrollmentDataView _FaceEnrollmentDataView;
+    private FaceEnrollmentEnterNameSlide _EnterNameSlidePrefab;
+    private FaceEnrollmentEnterNameSlide _EnterNameSlideInstance;
 
     [SerializeField]
-    private FaceEnrollmentNameView _FaceEnrollmentViewPrefab;
-    private FaceEnrollmentNameView _FaceEnrollmentView;
+    private FaceEnrollmentInstructionsSlide _EnrollmentInstructionsSlidePrefab;
 
-    private int _NewSeenFaceID = 0;
-    private int _LastTurnedToAttemptID = 0;
+    private bool _AttemptedEnrollFace = false;
+
+    private string _NameForFace;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      ResetPose();
       RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
-      RobotEngineManager.Instance.RobotObservedFace += HandleOnAnyFaceSeen;
     }
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
       base.InitializeView(newView, data);
 
-      _FaceEnrollmentDataView = 
-        newView.ShowWideGameStateSlide(_FaceEnrollmentDataViewPrefab.gameObject, 
-        "face_enrollment_data_view_panel").GetComponent<FaceEnrollmentDataView>();
-
-      _FaceEnrollmentDataView.OnEnrollNewFace += LookForNewFaceToEnroll;
+      // create enter name dialog
+      _EnterNameSlideInstance = newView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_name_slide").GetComponent<FaceEnrollmentEnterNameSlide>();
+      _EnterNameSlideInstance.OnNameEntered += HandleNameEntered;
     }
 
-    private void LookForNewFaceToEnroll() {
-      ResetPose();
+    private void HandleNameEntered(string name) {
+      _NameForFace = name;
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.LookingStraight);
+      SharedMinigameView.ShowWideGameStateSlide(_EnrollmentInstructionsSlidePrefab.gameObject, "enrollment_instructions_slide").GetComponent<FaceEnrollmentInstructionsSlide>();
     }
 
-    public void EnrollFace(string nameForFace) {
-      _FaceNameDictionary.Add(_NewSeenFaceID, nameForFace);
-      CurrentRobot.AssignNameToFace(_NewSeenFaceID, nameForFace);
-    }
+    private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
 
-    private void HandleObservedNewFace(int faceID, Vector3 facePos, Quaternion faceRot) {
-      if (_FaceEnrollmentView != null) {
-        return; // we already have a view open to ask for a name.
+      if (_AttemptedEnrollFace) {
+        return;
       }
-      // I found a new face! let's get the name from the user.
-      _FaceEnrollmentView = UIManager.OpenView<FaceEnrollmentNameView>(_FaceEnrollmentViewPrefab);
-      _FaceEnrollmentView.OnSubmitButton += HandleSubmitButton;
-      _NewSeenFaceID = faceID;
-    }
 
-    private void HandleSubmitButton(string name) {
-      EnrollFace(name);
+      SharedMinigameView.HideGameStateSlide();
 
-      // Perform Name for the first time
-      PlayFaceReactionAnimation(_NewSeenFaceID);
-    }
-
-    private void HandleReactionDone(bool success) {
-      _NewSeenFaceID = 0;
-      _FaceEnrollmentView.OnSubmitButton -= HandleSubmitButton;
-      UIManager.CloseView(_FaceEnrollmentView);
-      _FaceEnrollmentView = null;
-      ResetPose();
-    }
-
-    private void ResetPose() {
-      CurrentRobot.SetLiftHeight(0.0f);
-      CurrentRobot.SetHeadAngle(0.5f);
-    }
-
-    private void HandleOnAnyFaceSeen(int faceID, string name, Vector3 pos, Quaternion rot) {
-      // check if we have an active face enroll view open
-      if (_FaceEnrollmentView == null) {
-        if (faceID > 0 && string.IsNullOrEmpty(name) == false && _FaceNameDictionary.ContainsKey(faceID)) {
-          // this is a face we know...
-          if (Time.time - _LastPlayedReaction > 6.0f || _LastReactedID != faceID && !_Reacting) {
-            // been at least 10 seconds since we reacted or it's a new face.
-            _LastTurnedToAttemptID = faceID;
-            _Reacting = true;
-            CurrentRobot.TurnTowardsFacePose(CurrentRobot.Faces.Find(x => x.ID == faceID), callback: FacePoseDone);
-          }
-        }
-      }
-    }
-
-    private void FacePoseDone(bool success) {
-      if (success) {
-        // Send Message to play react to face 
-        PlayFaceReactionAnimation(_LastTurnedToAttemptID);
-
-        _LastReactedID = _LastTurnedToAttemptID;
-      }
-      else {
-        _Reacting = false;
-      }
-    }
-
-    private void ReactToFaceAnimationDone(bool success) {
-      ResetPose();
-      _Reacting = false;
-      _LastPlayedReaction = Time.time;
-    }
-
-    protected override void CleanUpOnDestroy() {
-      RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
-      RobotEngineManager.Instance.RobotObservedFace -= HandleOnAnyFaceSeen;
-
-      if (_FaceEnrollmentView != null) {
-        _FaceEnrollmentView.OnSubmitButton -= HandleSubmitButton;
-        UIManager.CloseViewImmediately(_FaceEnrollmentView);
-        _FaceEnrollmentView = null;
-      }
+      CurrentRobot.AssignNameToFace(id, _NameForFace);
+      CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
+      PlayFaceReactionAnimation(id);
+      _AttemptedEnrollFace = true;
     }
 
     private void PlayFaceReactionAnimation(int faceId) {
-      DAS.Debug(this, "Attempt to Play Face Reaction Animation - FaceId: " + faceId);
-      CurrentRobot.PrepareFaceNameAnimation(faceId, _FaceNameDictionary[faceId]);
-      CurrentRobot.SendAnimation(_ReactionBank[_LastAnimationPlayedIdx], HandleReactionDone);
-      _LastAnimationPlayedIdx = (_LastAnimationPlayedIdx + 1) % _ReactionBank.Length;
+      DAS.Debug("FaceEnrollmentGame.PlayFaceReactionAnimation", "Attempt to Play Face Reaction Animation - FaceId: " + faceId);
+      CurrentRobot.PrepareFaceNameAnimation(faceId, _NameForFace);
+      CurrentRobot.SendAnimation(_ReactionBank[Random.Range(0, _ReactionBank.Length)], HandleReactionDone);
+    }
+
+    private void HandleReactionDone(bool success) {
+      base.RaiseMiniGameQuit();
+    }
+
+    protected override void CleanUpOnDestroy() {
+      CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
+      SharedMinigameView.HideGameStateSlide();
+      RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
     }
 
   }
