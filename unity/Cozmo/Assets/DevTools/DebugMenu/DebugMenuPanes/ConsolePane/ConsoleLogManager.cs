@@ -94,16 +94,8 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   public void EnableSOSLogs(bool enable) {
 
-    // using player prefs instead of player profile because this is a debug feature
-    // and I don't want this getting reset when QA is resetting save data for QA purposes.
-    if (enable) {
-      PlayerPrefs.SetInt("DebugSOSEnabled", 1);
-    }
-    else {
-      PlayerPrefs.SetInt("DebugSOSEnabled", 0);
-    }
-
-    PlayerPrefs.Save();
+    DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = enable;
+    DataPersistence.DataPersistenceManager.Instance.Save();
 
     if (!_SOSLoggingEnabled && enable) {
       _SOSLoggingEnabled = enable;

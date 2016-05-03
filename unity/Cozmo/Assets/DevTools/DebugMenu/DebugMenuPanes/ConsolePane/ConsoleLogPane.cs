@@ -70,8 +70,7 @@ public class ConsoleLogPane : MonoBehaviour {
 
     RaiseConsoleLogPaneOpened(this);
 
-    bool sosEnabled = PlayerPrefs.GetInt("DebugSOSEnabled") != 0;
-    _SOSToggle.isOn = sosEnabled;
+    _SOSToggle.isOn = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled;
     _SOSToggle.onValueChanged.AddListener(HandleToggleSOS);
     _CopyLogButton.onClick.AddListener(HandleOnCopyLogButton);
   }

@@ -35,6 +35,11 @@ public class LatencyDisplay : MonoBehaviour {
     UpdateUI(msg.averageLatency, msg.minLatency, msg.maxLatency);
   }
 
+  public void SaveEnabled(bool isEnabled) {
+    DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled = isEnabled;
+    DataPersistence.DataPersistenceManager.Instance.Save();
+  }
+
   private void UpdateUI(float avg, float min, float max) {
     _LatencyAvgLabel.text = "Avg: " + avg.ToString("F2");
     _LatencyMaxLabel.text = "Max: " + max.ToString("F2");
@@ -45,6 +50,7 @@ public class LatencyDisplay : MonoBehaviour {
   }
 
   private void HandleCloseButtonClick() {
+    SaveEnabled(false);
     Destroy(gameObject);
   }
 }

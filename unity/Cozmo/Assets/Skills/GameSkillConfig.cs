@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Linq;
 
 using System.Collections.Generic;
 
@@ -47,22 +48,28 @@ public class GameSkillConfig {
   // Display for the dictionaries, String for serielizer
 
   [SerializeField]
-  private SerializableGameEvents _EvaluateLevelChangeEvent;
+  private List<SerializableGameEvents> _EvaluateLevelChangeEvent;
   [SerializeField]
-  private SerializableGameEvents _GainChallengePointEvent;
+  private List<SerializableGameEvents> _GainChallengePointEvent;
   [SerializeField]
-  private SerializableGameEvents _LoseChallengePointEvent;
+  private List<SerializableGameEvents> _LoseChallengePointEvent;
+  [SerializeField]
+  private List<SerializableGameEvents> _ResetPointsEvent;
 
-  public Anki.Cozmo.GameEvent EvaluateLevelChangeEvent {
-    get { return _EvaluateLevelChangeEvent.Value; }
+  public bool IsLevelChangeEvent(Anki.Cozmo.GameEvent gameEvent) {
+    return _EvaluateLevelChangeEvent != null && _EvaluateLevelChangeEvent.Find(x => x.Value == gameEvent) != null;
   }
 
-  public Anki.Cozmo.GameEvent GainChallengePointEvent {
-    get { return _GainChallengePointEvent.Value; }
+  public bool IsGainChallengePointEvent(Anki.Cozmo.GameEvent gameEvent) {
+    return _GainChallengePointEvent != null && _GainChallengePointEvent.Find(x => x.Value == gameEvent) != null;
   }
 
-  public Anki.Cozmo.GameEvent LoseChallengePointEvent {
-    get { return _LoseChallengePointEvent.Value; }
+  public bool IsLoseChallengePointEvent(Anki.Cozmo.GameEvent gameEvent) {
+    return _LoseChallengePointEvent != null && _LoseChallengePointEvent.Find(x => x.Value == gameEvent) != null;
+  }
+
+  public bool IsResetPointEvent(Anki.Cozmo.GameEvent gameEvent) {
+    return _ResetPointsEvent != null && _ResetPointsEvent.Find(x => x.Value == gameEvent) != null;
   }
 
   public bool UsePointThreshold {
