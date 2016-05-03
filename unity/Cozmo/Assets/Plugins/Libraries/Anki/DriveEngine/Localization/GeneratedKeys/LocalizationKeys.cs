@@ -124,6 +124,10 @@ public static class LocalizationKeys {
   public const string kSpeedTapTextHowToPlayLightCountNoColor = "speedTap.text.howToPlayLightCountNoColor";
   public const string kSpeedTapTapBlock = "speedTap.tapBlock";
   public const string kSpeedTapTapBlockForRound = "speedTap.tapBlockForRound";
+  public const string kSpeedTapDontMoveCozmoTitle = "speedTap.dontMoveCozmo.title";
+  public const string kSpeedTapDontMoveCozmoDescription = "speedTap.dontMoveCozmo.description";
+  public const string kSpeedTapDontMoveBlockTitle = "speedTap.dontMoveBlock.title";
+  public const string kSpeedTapDontMoveBlockDescription = "speedTap.dontMoveBlock.description";
   public const string kTreasureHuntTitle = "treasureHunt.title";
   public const string kVortexTitle = "vortex.title";
   public const string kVortexSubtitle = "vortex.subtitle";
@@ -173,6 +177,7 @@ public static class LocalizationKeys {
 
   #region SimpleStrings
 
+  public const string kButtonQuitGame = "button.quitGame";
   public const string kButtonQuit = "button.quit";
   public const string kButtonStartChallenge = "button.startChallenge";
   public const string kButtonYes = "button.yes";

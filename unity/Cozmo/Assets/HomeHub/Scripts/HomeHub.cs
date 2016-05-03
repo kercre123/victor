@@ -68,6 +68,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void ShowStartView() {
+      RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(0);
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       _StartViewInstance = UIManager.OpenView(_StartViewPrefab);
       _StartViewInstance.OnConnectClicked += HandleConnectClicked;
