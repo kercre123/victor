@@ -90,7 +90,7 @@ public class AnimationManager {
       RobotCallback newCallback = null;
       if (!string.IsNullOrEmpty(animGroup)) {
         AnimationCallbackDict.TryGetValue(cozEvent, out newCallback);
-        CurrentRobot.SendAnimationGroup(animGroup, newCallback);
+        CurrentRobot.SendAnimationGroup(animGroup, newCallback, QueueActionPosition.NEXT);
       }
       else if (AnimationCallbackDict.TryGetValue(cozEvent, out newCallback)) {
         DAS.Warn(this, string.Format("GameEvent {0} has an animation callback, but no animation group", cozEvent));
