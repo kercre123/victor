@@ -29,6 +29,7 @@ enum uint_8 GameEvent
   OnSpeedtapTap,
   OnSpeedtapFakeout,
   OnSpeedtapIdle,
+  OnLearnedPlayerName,
   Count, // Keep count at end.
 }
 
