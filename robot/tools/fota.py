@@ -130,7 +130,7 @@ def UpgradeAll(up, version=0, wifiImage=DEFAULT_WIFI_IMAGE, rtipImage=DEFAULT_RT
     assert os.path.isfile(wifiImage)
     assert os.path.isfile(rtipImage)
     up.ota(wifiImage, RI.OTACommand.OTA_none,  version, RI.OTAFlashRegions.OTA_WiFi_flash_address)
-    up.ota(rtipImage, RI.OTACommand.OTA_none,  version, RI.OTAFlashRegions.OTA_RTIP_flash_address)
+    up.ota(rtipImage, RI.OTACommand.OTA_stage, version, RI.OTAFlashRegions.OTA_RTIP_flash_address)
 
 # Script entry point
 if __name__ == '__main__':

@@ -360,14 +360,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
         else // Done writing firmware
         {
           AnkiInfo( 29, "UpgradeController", 180, "RTIP OTA transfer complete", 0);
-          if (flashStagedFlags[0] != 0xFFFFffff && flashStagedFlags[1] != 0)
-          {
-            uint32 flag = 0;
-            if (spi_flash_write(FLASH_STAGED_FLAG_ADDRESS+4, &flag, 4) != SPI_FLASH_RESULT_OK)
-            {
-              os_printf("Couldn't set stage 2 staged upgrade flag\r\n");
-            }
-          }
+
           if (i2spiBootloaderCommandDone())
           {
             i2spiSwitchMode(I2SPI_NORMAL);
@@ -510,8 +503,8 @@ LOCAL bool TaskCheckSig(uint32 param)
           os_printf("Successfully triggering staged upgrade");
 #endif
         }
-        i2spiSwitchMode(I2SPI_REBOOT);
         os_free(state);
+        i2spiSwitchMode(I2SPI_RECOVERY);
         return false;
       }
       default:

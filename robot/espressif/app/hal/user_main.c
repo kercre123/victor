@@ -120,6 +120,7 @@ static void nv_init_done(const int8_t result)
   i2spiInit();
 
   os_printf("User initalization complete\r\n");
+  os_printf("Fart popcicle\r\n");
 }
 
 /** Callback after all the chip system initalization is done.
