@@ -528,6 +528,7 @@ namespace Vision {
       if(facePartsFound)
       {
         const bool enableEnrollment = IsEnrollable(detectionInfo, face);
+        //PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable", "EnableEnrollment=%d", enableEnrollment);
         
         bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
                                                               detectionInfo,
@@ -613,7 +614,7 @@ namespace Vision {
     const f32 kCloseDistanceBetweenEyesMax  = 128.f;
     const f32 kFarDistanceBetweenEyesMin    = 16.f;
     const f32 kFarDistanceBetweenEyesMax    = 32.f;
-    //const f32 kLookingStraightMaxAngle_deg  = 5.f;
+    const f32 kLookingStraightMaxAngle_deg  = 20.f;
     //const f32 kLookingLeftRightMinAngle_deg = 10.f;
     //const f32 kLookingLeftRightMaxAngle_deg = 20.f;
     const f32 kLookingUpMinAngle_deg        = 25.f;
@@ -632,6 +633,9 @@ namespace Vision {
         case FaceEnrollmentMode::LookingStraight:
         {
           if(detectionInfo.nPose == POSE_YAW_FRONT &&
+             std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
+             std::abs(face.GetHeadPitch().getDegrees()) <= kLookingStraightMaxAngle_deg &&
+             std::abs(face.GetHeadYaw().getDegrees())   <= kLookingStraightMaxAngle_deg &&
              d >= kFarDistanceBetweenEyesMin)
           {
             enableEnrollment = true;

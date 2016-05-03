@@ -247,6 +247,7 @@ namespace Vision {
             // The tracker's assigned ID got removed (via merge while doing RecognizeFaces).
             faceID = recognizedID;
           } else {
+
             auto recIDenrollData  = _enrollmentData.find(recognizedID);
             ASSERT_NAMED(recIDenrollData  != _enrollmentData.end(),
                          "FaceRecognizer.GetRecognitionData.MissingEnrollmentData");
@@ -260,7 +261,6 @@ namespace Vision {
               // is for this session only, make sure to keep the "permanent" one
               mergeFrom = faceID;
               mergeTo   = recognizedID;
-              faceID    = mergeTo;
             }
             else if(true  == recIDenrollData->second.isForThisSessionOnly &&
                     false == faceIDenrollData->second.isForThisSessionOnly)
@@ -305,21 +305,39 @@ namespace Vision {
               } else {
                 mergeFrom = faceID;
                 mergeTo   = recognizedID;
-                
-                faceID = mergeTo;
               }
+              
+              auto t_faceID = std::chrono::system_clock::to_time_t(faceIDenrollData->second.enrollmentTime);
+              auto t_recID  = std::chrono::system_clock::to_time_t(recIDenrollData->second.enrollmentTime);
+              PRINT_NAMED_DEBUG("FaceRecognizer.GetRecognitionData.MergeBasedOnEnrollmentTime",
+                                "Merging ID=%d into ID=%d (%d enrolled at %s, %d enrolled at %s)",
+                                mergeFrom,  mergeTo, faceID, ctime(&t_faceID), recognizedID, ctime(&t_recID));
             }
             
             if(mergeFrom != Vision::UnknownFaceID && mergeTo != Vision::UnknownFaceID)
             {
-              PRINT_NAMED_INFO("FaceRecognizer.GetRecognitionData.MergingFaces",
-                               "Tracking %d: merging ID=%d into ID=%d",
-                               _detectionInfo.nID, mergeFrom, mergeTo);
-              Result mergeResult = MergeFaces(mergeTo, mergeFrom);
-              if(RESULT_OK != mergeResult) {
-                PRINT_NAMED_WARNING("FaceRecognizer.GetRecognitionData.MergeFail",
-                                    "Trying to merge %d with %d", faceID, recognizedID);
+              // Only merge the face we are currently tracking into another record
+              // if it passes the enrollment criteria from the tracker
+              if(mergeFrom == recognizedID || _isEnrollmentEnabled)
+              {
+                PRINT_NAMED_INFO("FaceRecognizer.GetRecognitionData.MergingFaces",
+                                 "Tracking %d: merging ID=%d into ID=%d (enroll enabled=%d)",
+                                 _detectionInfo.nID, mergeFrom, mergeTo, _isEnrollmentEnabled);
+                Result mergeResult = MergeFaces(mergeTo, mergeFrom);
+                
+                if(RESULT_OK != mergeResult) {
+                  PRINT_NAMED_WARNING("FaceRecognizer.GetRecognitionData.MergeFail",
+                                      "Trying to merge %d with %d", faceID, recognizedID);
+                }
+                
+              } else {
+                PRINT_NAMED_DEBUG("FaceRecognizer.GetRecognitionData.NotMergingTrackedFace",
+                                  "Enrollment disabled: not merging tracked face ID=%d into recognized ID=%d",
+                                  faceID, recognizedID);
               }
+              
+              // Either way we want to update the ID associated with this tracker ID
+              faceID = mergeTo;
             }
           }
           
@@ -554,7 +572,11 @@ namespace Vision {
     // NOTE: will start out "session only" if no name is assigned
     EnrolledFaceEntry enrollData(_lastRegisteredUserID);
     enrollData.numEnrollments = 1;
-
+    enrollData.nextDataToUpdate = 1;
+    enrollData.enrollmentTime = (kGetEnrollmentTimeFromImageTimestamp ?
+                                 EnrolledFaceEntry::Time(std::chrono::milliseconds(_img.GetTimestamp())) :
+                                 std::chrono::system_clock::now());
+    
     // TODO: Populate enrollment image
     /*
     POINT ptLeftTop, ptRightTop, ptLeftBottom, ptRightBottom;
@@ -640,6 +662,9 @@ namespace Vision {
                  "FaceRecognizer.UpdateExistingUser.MissingEnrollmentStatus");
     auto & enrollData = enrollDataIter->second;
     
+    // Update the last seen time for this entry
+    enrollDataIter->second.lastSeenTime = updateTime;
+    
     INT32 numDataStored = 0;
     INT32 okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, userID-1, &numDataStored);
     if(OKAO_NORMAL != okaoResult) {
@@ -649,48 +674,61 @@ namespace Vision {
       result = RESULT_FAIL;
     }
     
-    // Num data for user should be > 0 if we are updating!
-    ASSERT_NAMED(numDataStored > 0, "FaceRecognizer.UpdateExistingUser.BadNumData");
+    ASSERT_NAMED_EVENT(numDataStored == enrollDataIter->second.numEnrollments,
+                       "FaceRecognizer.UpdateExistingUser.WrongNumData",
+                       "numStored=%d, numEnrollments=%d",
+                       numDataStored, enrollDataIter->second.numEnrollments);
     
-    // Only update if it has been long enough (where "long enough" can depend on
-    // whether we've already filled up all data slots yet)
-    auto const timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(updateTime - enrollData.lastDataUpdateTime);
-    auto const timeBetweenEnrollments = std::chrono::milliseconds((long long)std::round(1000.f*kTimeBetweenFaceEnrollmentUpdates_sec));
-    auto const timeBetweenInitialEnrollments = std::chrono::seconds((long long)std::round(1000.f*kTimeBetweenInitialFaceEnrollmentUpdates_sec));
+    const bool hasEnrollSpaceLeft = enrollDataIter->second.numEnrollments < MaxAlbumDataPerFace;
     
-    if(timeSinceLastUpdate.count() > timeBetweenEnrollments.count() ||
-       ((numDataStored < MaxAlbumDataPerFace) && timeSinceLastUpdate.count() > timeBetweenInitialEnrollments.count()))
+    if(_isEnrollmentEnabled && (kEnableEnrollmentAfterFull || hasEnrollSpaceLeft))
     {
-      okaoResult =  OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID-1, enrollData.oldestData);
-      if(OKAO_NORMAL != okaoResult) {
-        PRINT_NAMED_WARNING("FaceRecognizer.UpdateExistingUser.RegisterFailed",
-                            "Failed to trying to register data %d for existing user %d",
-                            enrollData.oldestData, userID);
-        result = RESULT_FAIL;
-      } else {
-        // Update the enrollment data
-        auto t = std::chrono::system_clock::to_time_t(updateTime);
-        PRINT_NAMED_DEBUG("FaceRecognizer.UpdateExistingUser.AddNewData",
-                          "Updating data %d for face ID %d at %s",
-                          enrollData.oldestData, userID, ctime(&t));
-
-        enrollData.lastDataUpdateTime = updateTime;
-        enrollData.oldestData++;
-        if(enrollData.oldestData == MaxAlbumDataPerFace) {
-          enrollData.oldestData = 0;
-        }
-        enrollData.numEnrollments = numDataStored + 1;
-        
-        if(DEBUG_ENROLLMENT_IMAGES) {
-          SetEnrollmentImage(userID, enrollData.oldestData, enrollData);
-        }
-      }
+      // Num data for user should be > 0 if we are updating!
+      ASSERT_NAMED(numDataStored > 0, "FaceRecognizer.UpdateExistingUser.BadNumData");
       
-    } else {
-      //auto t = std::chrono::system_clock::to_time_t(updateTime);
-      //PRINT_NAMED_DEBUG("FaceRecognizer.UpdateExistingUser.NotAddingNewData",
-      //                  "NOT updating data %d for face ID %d at %s",
-      //                  enrollData.oldestData, userID, ctime(&t));
+      // Only update if it has been long enough (where "long enough" can depend on
+      // whether we've already filled up all data slots yet)
+      auto const timeSinceLastUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(updateTime - enrollData.lastDataUpdateTime);
+      auto const timeBetweenEnrollments = std::chrono::milliseconds((long long)std::round(1000.f*kTimeBetweenFaceEnrollmentUpdates_sec));
+      auto const timeBetweenInitialEnrollments = std::chrono::seconds((long long)std::round(1000.f*kTimeBetweenInitialFaceEnrollmentUpdates_sec));
+      
+      if(timeSinceLastUpdate.count() > timeBetweenEnrollments.count() ||
+         (hasEnrollSpaceLeft && timeSinceLastUpdate.count() > timeBetweenInitialEnrollments.count()))
+      {
+        okaoResult =  OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, userID-1, enrollData.nextDataToUpdate);
+        if(OKAO_NORMAL != okaoResult) {
+          PRINT_NAMED_WARNING("FaceRecognizer.UpdateExistingUser.RegisterFailed",
+                              "Failed to trying to register data %d for existing user %d",
+                              enrollData.nextDataToUpdate, userID);
+          result = RESULT_FAIL;
+        } else {
+          
+          if(DEBUG_ENROLLMENT_IMAGES) {
+            // Do this before we increment nextDataToUpdate
+            SetEnrollmentImage(userID, enrollData.nextDataToUpdate, enrollData);
+          }
+          
+          // Update the enrollment data
+          auto t = std::chrono::system_clock::to_time_t(updateTime);
+          PRINT_NAMED_DEBUG("FaceRecognizer.UpdateExistingUser.AddNewData",
+                            "Updating data %d for face ID %d at %s",
+                            enrollData.nextDataToUpdate, userID, ctime(&t));
+          
+          enrollData.lastDataUpdateTime = updateTime;
+          enrollData.nextDataToUpdate++;
+          if(enrollData.nextDataToUpdate == MaxAlbumDataPerFace) {
+            enrollData.nextDataToUpdate = 0;
+          }
+          enrollData.numEnrollments = numDataStored + 1;
+          
+        }
+        
+      } else {
+        //auto t = std::chrono::system_clock::to_time_t(updateTime);
+        //PRINT_NAMED_DEBUG("FaceRecognizer.UpdateExistingUser.NotAddingNewData",
+        //                  "NOT updating data %d for face ID %d at %s",
+        //                  enrollData.oldestData, userID, ctime(&t));
+      }
     }
     
     return result;
@@ -857,14 +895,9 @@ namespace Vision {
             }
           } // if(kAllowNonTrackingMerging)
           
-          const bool hasEnrollSpaceLeft = oldestEnrollIter->second.numEnrollments < MaxAlbumDataPerFace;
-          
-          if(_isEnrollmentEnabled && (kEnableEnrollmentAfterFull || hasEnrollSpaceLeft))
-          {
-            Result result = UpdateExistingUser(oldestID, _okaoRecognitionFeatureHandle);
-            if(RESULT_OK != result) {
-              return result;
-            }
+          Result result = UpdateExistingUser(oldestID, _okaoRecognitionFeatureHandle);
+          if(RESULT_OK != result) {
+            return result;
           }
           
           faceID = oldestID;
@@ -960,10 +993,23 @@ namespace Vision {
     
     keepEnrollIter->second.MergeWith(mergeEnrollIter->second);
     
+    // Override what MergeWith does here because it didn't know about which (and how many)
+    // enrollments from each face we kept
     keepEnrollIter->second.numEnrollments = numMergeData+numKeepData;
+    s32 newNextToUpdate = numMergeData+numKeepData;
+    if(newNextToUpdate >= MaxAlbumDataPerFace) {
+      newNextToUpdate = 0;
+    }
+    keepEnrollIter->second.nextDataToUpdate = newNextToUpdate;
     
     // After merging it, remove the old user that just got merged
     Result removeResult = RemoveUser((INT32)mergeID);
+    
+    PRINT_NAMED_DEBUG("FaceRecognizer.MergeFaces.Success",
+                      "Merged %d enrollments from ID=%d into %d enrollments from ID=%d, for %d total. NextToUpdate=%d",
+                      numMergeData, mergeID, numKeepData, keepID,
+                      keepEnrollIter->second.numEnrollments,
+                      keepEnrollIter->second.nextDataToUpdate);
     
     return removeResult;
     

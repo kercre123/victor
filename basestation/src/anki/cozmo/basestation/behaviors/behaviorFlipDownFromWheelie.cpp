@@ -51,7 +51,12 @@ void BehaviorFlipDownFromWheelie::Go(Robot& robot)
 
   // first check if we are still on our back
   if( !IsRunnable(robot) ) {
-    // we are finished!
+    // we are finished! Make sure the lift is lowered before we exit
+    MoveLiftToHeightAction* action = new MoveLiftToHeightAction(robot, MoveLiftToHeightAction::Preset::LOW_DOCK);
+    // TODO:(bn) just use the same slow movement for now, this will all be replaced anyway
+    // let the behavior exit after this action
+    action->SetDuration(kLiftHeightUpDuration_s);
+    StartActing(action);
     return;
   }
   
