@@ -244,6 +244,11 @@ namespace Anki {
         const u8 PATH_START_DIST_BEHIND_ROBOT_MM = 60;
         const u8 MAX_DECEL_DIST_MM = 30;
         
+        // Save previous controller gains
+        f32 prevK1_;
+        f32 prevK2_;
+        f32 prevPathDistOffsetCap_;
+        f32 prevPathAngOffsetCap_;
 #endif
         // If the block and cozmo are on the same plane the dock err signal z_height will be below this value
         // Normally it is ~22mm
@@ -258,12 +263,6 @@ namespace Anki {
           HANNS_MANEUVER
         };
         FailureMode failureMode_ = NO_FAILURE;
-        
-        // Save previous controller gains
-        f32 prevK1_;
-        f32 prevK2_;
-        f32 prevPathDistOffsetCap_;
-        f32 prevPathAngOffsetCap_;
         
         bool dockingStarted = false;
         
@@ -613,9 +612,11 @@ namespace Anki {
         
         Result retVal = RESULT_OK;
         
+#if(!USE_BLIND_DOCKING)
         // There are some special cases for aligning with a block
         const bool isAligning = PickAndPlaceController::GetCurAction() == DA_ALIGN;
-
+#endif
+        
         switch(mode_)
         {
           case IDLE:
