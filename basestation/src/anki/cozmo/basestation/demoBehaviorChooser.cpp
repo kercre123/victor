@@ -62,7 +62,6 @@ void DemoBehaviorChooser::Init()
 {
   EnableAllBehaviors(false);
   _initCalled = true;
-  TransitionToNextState();
 }
 
 Result DemoBehaviorChooser::Update()
@@ -288,6 +287,11 @@ template<>
 void DemoBehaviorChooser::HandleMessage(const ExternalInterface::StartDemoWithEdge& msg)
 {
   _hasEdge = msg.hasEdge;
+
+  // This serves as the "start demo" message, so also transition to the next state if we are at the start
+  if( _state == State::None) { 
+    TransitionToNextState();
+  }
 }
 
 void DemoBehaviorChooser::SetState_internal(State state, const std::string& stateName)
