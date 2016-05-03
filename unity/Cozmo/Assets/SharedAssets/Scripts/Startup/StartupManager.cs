@@ -96,6 +96,7 @@ public class StartupManager : MonoBehaviour {
     _LoadingBar.SetProgress(1.0f);
 
     // Load main scene
+    StopAllCoroutines();
     LoadMainScene(assetBundleManager);
   }
 
@@ -240,7 +241,6 @@ public class StartupManager : MonoBehaviour {
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
-    StopCoroutine(UpdateLoadingDots());
     assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: null);
   }
 

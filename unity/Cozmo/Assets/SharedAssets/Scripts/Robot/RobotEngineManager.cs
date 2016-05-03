@@ -64,6 +64,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
   public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
+  public event Action OnRobotPickedUp;
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
   public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
@@ -335,6 +336,7 @@ public class RobotEngineManager : MonoBehaviour {
       ReceivedSpecificMessage(message.AnimationAvailable);
       break;
     case G2U.MessageEngineToGame.Tag.RobotPickedUp:
+      ReceivedSpecificMessage(message.RobotPickedUp);
       break;
     case G2U.MessageEngineToGame.Tag.MoodState:
       ReceivedSpecificMessage(message.MoodState);
@@ -631,6 +633,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.AnimationAvailable message) {
     if (!_RobotAnimationNames.Contains(message.animName))
       _RobotAnimationNames.Add(message.animName);
+  }
+
+  private void ReceivedSpecificMessage(G2U.RobotPickedUp message) {
+    if (CurrentRobot != null && CurrentRobotID == message.robotID && OnRobotPickedUp != null) {
+      OnRobotPickedUp();
+    }
   }
 
   private void ReceivedSpecificMessage(G2U.MoodState message) {

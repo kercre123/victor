@@ -82,6 +82,8 @@ public abstract class GameBase : MonoBehaviour {
     public Color[] originalColor;
   }
 
+  private bool _IsPaused = false;
+
   #region Initialization
 
   public void InitializeMinigame(ChallengeData challengeData) {
@@ -144,7 +146,19 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void UpdateStateMachine() {
-    _StateMachine.UpdateStateMachine();
+    if (!_IsPaused) {
+      _StateMachine.UpdateStateMachine();
+    }
+
+    // Do we need to add ability to pause / unpause the states inside the machine?
+  }
+
+  protected void PauseGame() {
+    _IsPaused = true;
+  }
+
+  protected void UnpauseGame() {
+    _IsPaused = false;
   }
 
   #endregion
