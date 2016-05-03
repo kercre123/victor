@@ -152,9 +152,9 @@ $(OUTPUT_VIZ_CSHARP): $(INPUT_VIZ_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CSHARP)
 # in this target stem does not work. probably issue with patsubst,
 # instead of $*.clad use $(@:.cs=.clad)
 $(OUTPUT_CTI_VISION_CSHARP): $(INPUT_CTI_VISION_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CSHARP)
-	if test -f $(OUTPUT_DIR_CTI_VISION)/$@; then chmod -f 777 $(OUTPUT_DIR_CTI_VISION)/$@; fi
-	$(CLAD_CSHARP) -C $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_CTI_VISION)/ $(@:.cs=.clad)
-	chmod -f 555 $(OUTPUT_DIR_CTI_VISION)/$@
+	if test -f $(OUTPUT_DIR_CSHARP)/$@; then chmod -f 777 $(OUTPUT_DIR_CSHARP)/$@; fi
+	$(CLAD_CSHARP) -C $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_CSHARP)/ $(@:.cs=.clad)
+	chmod -f 555 $(OUTPUT_DIR_CSHARP)/$@
 
 # in this target stem does not work. probably issue with patsubst,
 # instead of $*.clad use $(@:.py=.clad)
