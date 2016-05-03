@@ -204,6 +204,7 @@ public class DailyGoalManager : MonoBehaviour {
         goalList.Add(_CurrentGenData.GenList[i]);
       }
     }
+    goalCount = Mathf.Min(goalCount, goalList.Count);
     // Grab random DailyGoals from the available goal list
     DailyGoalGenerationData.GoalEntry toAdd;
     for (int i = 0; i < goalCount; i++) {

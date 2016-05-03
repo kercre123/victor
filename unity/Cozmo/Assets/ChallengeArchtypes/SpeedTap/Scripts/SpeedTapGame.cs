@@ -169,6 +169,7 @@ namespace SpeedTap {
       MinTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
       MaxTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
 
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapStarted);
       // End config based values
       InitializeMinigameObjects(1);
     }
@@ -188,7 +189,7 @@ namespace SpeedTap {
                                           new SelectDifficultyState(
                                             new HowToPlayState(new SpeedTapCozmoDriveToCube(true)),
                                             DifficultyOptions,
-                                            Mathf.Max(HighestLevelCompleted(), 1)
+                                            HighestLevelCompleted()
                                           ), 
                                           cubesRequired);
       _StateMachine.SetNextState(initCubeState);

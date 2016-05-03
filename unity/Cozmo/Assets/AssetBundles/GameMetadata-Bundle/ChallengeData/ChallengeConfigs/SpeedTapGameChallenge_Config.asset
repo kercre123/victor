@@ -13,14 +13,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SkillConfig:
     _EvaluateLevelChangeEvent:
-      _EnumValueAsString: OnSpeedtapGetOut
-      _EnumValue: 14
+    - _EnumValueAsString: OnSpeedtapSessionWin
+      _EnumValue: 12
+    - _EnumValueAsString: OnSpeedtapSessionLose
+      _EnumValue: 13
     _GainChallengePointEvent:
-      _EnumValueAsString: OnSpeedtapHandWin
+    - _EnumValueAsString: OnSpeedtapHandWin
       _EnumValue: 8
     _LoseChallengePointEvent:
-      _EnumValueAsString: OnSpeedtapHandLose
+    - _EnumValueAsString: OnSpeedtapHandLose
       _EnumValue: 9
+    _ResetPointsEvent:
+    - _EnumValueAsString: OnSpeedtapStarted
+      _EnumValue: 7
     _UsePointThreshold: 0
     _ComparedPointThreshold: 0
     _Levels:
