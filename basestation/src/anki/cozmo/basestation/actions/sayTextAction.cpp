@@ -19,10 +19,11 @@
 namespace Anki {
 namespace Cozmo {
   
-  SayTextAction::SayTextAction(Robot& robot, const std::string& text, SayTextStyle style)
+  SayTextAction::SayTextAction(Robot& robot, const std::string& text, SayTextStyle style, bool clearOnCompletion)
   : IAction(robot)
   , _text(text)
   , _style(style)
+  , _clearOnCompletion(clearOnCompletion)
   , _animation("SayTextAnimation")
   {
     if(ANKI_DEVELOPER_CODE)
@@ -32,40 +33,48 @@ namespace Cozmo {
       _name = "SayText_" + _text + "_Action";
     }
     
-    // Create and/or load speech data
-    TextToSpeechComponent::CompletionFunc callback = [this] (bool success,
-                                                              const std::string& text,
-                                                              const std::string& fileName)
-    {
-      if(DEBUG_SAYTEXT_ACTION){
-        PRINT_NAMED_DEBUG("SayTextAction.CompletionCallback", "success=%d, text=%s, filename=%s",
-                          success, text.c_str(), fileName.c_str());
-      }
-      if (success) {
-        _textToSpeechStatus = TextToSpeechStatus::Ready;
-      }
-      else {
-        PRINT_NAMED_ERROR("SayTextAction.SayTextAction.LoadSpeechDataFailed", "");
-        _textToSpeechStatus = TextToSpeechStatus::Failed;
-      }
-    };
+    // We don't konw how long the audio after beeing proccessed.
+    // If there is an error we will set status state to Failed.
+    _timeout_sec = std::numeric_limits<f32>::max();
     
-    if(DEBUG_SAYTEXT_ACTION){
-      PRINT_NAMED_DEBUG("SayTextAction.Constructor.LoadingSpeechData", "");
+    // Create speech data
+    TextToSpeechComponent::PhraseState state = _robot.GetTextToSpeechComponent().CreateSpeech( _text, _style );
+    if (state == TextToSpeechComponent::PhraseState::None) {
+      PRINT_NAMED_ERROR("SayTextAction.SayTextAction.CreateSpeech", "PhraseState is None");
+      _textToSpeechStatus = TextToSpeechStatus::Failed;
     }
-    _robot.GetTextToSpeechComponent().LoadSpeechData(_text, _style, callback);
   }
   
   SayTextAction::~SayTextAction()
   {
     // Now that we're all done, unload the sounds from memory
-    _robot.GetTextToSpeechComponent().UnloadSpeechData(_text, _style);
+    if (_clearOnCompletion) {
+      _robot.GetTextToSpeechComponent().ClearLoadedSpeechData(_text, _style);
+    }
     
     Util::SafeDelete(_playAnimationAction);
   }
   
   ActionResult SayTextAction::Init()
   {
+    if (_textToSpeechStatus == TextToSpeechStatus::Loading) {
+      // Update speech state
+      TextToSpeechComponent::PhraseState state = _robot.GetTextToSpeechComponent().GetSpeechState( _text, _style );
+      switch (state) {
+        case TextToSpeechComponent::PhraseState::None:
+          _textToSpeechStatus = TextToSpeechStatus::Failed;
+          break;
+          
+        case TextToSpeechComponent::PhraseState::Ready:
+          _textToSpeechStatus = TextToSpeechStatus::Ready;
+          
+        default:
+          // Still loading
+          break;
+      }
+    }
+    
+    // Handle Status state
     switch(_textToSpeechStatus)
     {
       case TextToSpeechStatus::Loading:
@@ -85,21 +94,12 @@ namespace Cozmo {
       case TextToSpeechStatus::Ready:
       {
         // Set Audio data right before action runs
-        float duration_ms = 0.0;
-        const bool success = _robot.GetTextToSpeechComponent().PrepareToSay(_text, _style, duration_ms);
+        const bool success = _robot.GetTextToSpeechComponent().PrepareToSay(_text, _style);
         if (!success) {
           PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
           return ActionResult::FAILURE_ABORT;
         }
         
-        // Make timeout relative to the length of the sound, in seconds, now that we know its duration
-        _timeout_sec = 3.f * .001f * duration_ms; // "3" is a fudge factor, .001 to convert from ms to sec
-        
-        if(DEBUG_SAYTEXT_ACTION){
-          PRINT_NAMED_DEBUG("SayTextAction.Init.TextToSpeechReady", "Got duration=%.2fms, timeout=%.1fsec",
-                            duration_ms, _timeout_sec);
-        }
-
         const bool useBuiltInAnim = (GameEvent::Count == _gameEvent);
         if(useBuiltInAnim) {
           // Make our animation a "live" animation with a single audio keyframe at the beginning

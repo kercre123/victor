@@ -28,7 +28,7 @@ namespace Cozmo {
   {
   public:
     
-    SayTextAction(Robot& robot, const std::string& text, SayTextStyle style = SayTextStyle::Normal);
+    SayTextAction(Robot& robot, const std::string& text, SayTextStyle style = SayTextStyle::Normal, bool clearOnCompletion = true);
     
     virtual ~SayTextAction();
     
@@ -62,6 +62,7 @@ namespace Cozmo {
     std::string               _text;
     std::string               _name = "SayTextAction";
     SayTextStyle              _style;
+    bool                      _clearOnCompletion = true;
     TextToSpeechStatus        _textToSpeechStatus = TextToSpeechStatus::Loading;
     Animation                 _animation;
     GameEvent                 _gameEvent = GameEvent::Count; // Count == use built-in animation

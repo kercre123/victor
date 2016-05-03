@@ -95,7 +95,6 @@ bool AudioWaveFileReader::LoadWaveFile( const std::string& filePath, const std::
   // Create Standard Buffer to write formated data into
   StandardWaveDataContainer* standardData = new StandardWaveDataContainer( header.samplesPerSec,
                                                                            header.numberOfChannels,
-                                                                           header.CalculateDuration_ms(),
                                                                            header.CalculateNumberOfStandardSamples() );
   success = standardData->HasBuffer();
   if ( !success ) {
@@ -136,7 +135,7 @@ bool AudioWaveFileReader::LoadWaveFile( const std::string& filePath, const std::
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const AudioWaveFileReader::StandardWaveDataContainer* AudioWaveFileReader::GetCachedWaveDataWithKey( const std::string& key )
+const StandardWaveDataContainer* AudioWaveFileReader::GetCachedWaveDataWithKey( const std::string& key )
 {
   const auto it = _cachedWaveData.find( key );
   if ( it != _cachedWaveData.end() ) {

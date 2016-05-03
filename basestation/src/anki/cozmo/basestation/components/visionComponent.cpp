@@ -1532,7 +1532,8 @@ namespace Cozmo {
             msg.faceID = nameAndID.faceID;
             _robot.Broadcast(MessageEngineToGame(std::move(msg)));
             
-            _robot.GetTextToSpeechComponent().CreateSpeech(nameAndID.name);
+            // TODO: Need to determine what styles need to be created
+            _robot.GetTextToSpeechComponent().CreateSpeech(nameAndID.name, SayTextStyle::Normal);
           }
           
         } else {
@@ -1593,7 +1594,8 @@ namespace Cozmo {
     SaveFaceAlbumToRobot();
 
     // Get the robot ready to be able to say the name
-    _robot.GetTextToSpeechComponent().CreateSpeech(name);
+    // TODO: Need to determine what styles need to be created
+    _robot.GetTextToSpeechComponent().CreateSpeech(name, SayTextStyle::Normal);
   }
   
 } // namespace Cozmo
