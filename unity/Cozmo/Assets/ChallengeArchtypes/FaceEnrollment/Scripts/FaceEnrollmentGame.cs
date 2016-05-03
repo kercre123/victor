@@ -37,7 +37,7 @@ namespace FaceEnrollment {
     }
 
     private void HandleNameEntered(string name) {
-      UIManager.CloseViewImmediately(_EnterNameViewInstance);
+      UIManager.CloseView(_EnterNameViewInstance);
       _EnterNameViewInstance = null;
 
       _NameForFace = name;
@@ -47,8 +47,10 @@ namespace FaceEnrollment {
     }
 
     private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
-      UIManager.CloseViewImmediately(_EnrollmentInstructionsViewInstance);
-      _EnrollmentInstructionsViewInstance = null;
+      if (_EnrollmentInstructionsViewInstance != null) {
+        UIManager.CloseView(_EnrollmentInstructionsViewInstance);
+        _EnrollmentInstructionsViewInstance = null;
+      }
 
       CurrentRobot.AssignNameToFace(id, _NameForFace);
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
@@ -68,10 +70,10 @@ namespace FaceEnrollment {
     protected override void CleanUpOnDestroy() {
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
       if (_EnterNameViewInstance != null) {
-        UIManager.CloseViewImmediately(_EnterNameViewInstance);
+        UIManager.CloseView(_EnterNameViewInstance);
       }
       if (_EnrollmentInstructionsViewInstance != null) {
-        UIManager.CloseViewImmediately(_EnrollmentInstructionsViewInstance);
+        UIManager.CloseView(_EnrollmentInstructionsViewInstance);
       }
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
     }
