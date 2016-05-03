@@ -19,7 +19,7 @@
 #include "app/cubeTest.h"
 #include "app/headTest.h"
 
-u8 g_fixtureReleaseVersion = 13;
+u8 g_fixtureReleaseVersion = 14;
 
 BOOL g_isDevicePresent = 0;
 FixtureType g_fixtureType = FIXTURE_NONE;
@@ -129,7 +129,7 @@ void SetFixtureText(void)
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
   DisplayMoveCursor(55, 0);
-  DisplayPutString("EP3 ROBOT ONLY");
+  DisplayPutString("EP3");
   
   DisplayFlip();
 }
@@ -251,13 +251,7 @@ void TryToEnterDiagnosticMode(void)
   throw ERROR_ACK1;
 }
 #endif
-/*
-static __align(4) u8 m_globalBuffer[1024 * 5];
-u8* GetGlobalBuffer(void)
-{
-  return m_globalBuffer;
-}
-*/
+
 // Walk through tests one by one - logging to the PC and to the Device flash
 static void RunTests()
 {

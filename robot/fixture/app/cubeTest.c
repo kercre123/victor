@@ -8,6 +8,7 @@
 #include "hal/cube.h"
 #include "hal/monitor.h"
 #include "app/fixture.h"
+#include "binaries.h"
 
 #define GPIOB_VDD   0
 #define GPIOC_RESET 5
@@ -37,10 +38,16 @@ bool CubeDetect(void)
   return detect;
 }
 
+extern FixtureType g_fixtureType;
+
 // Connect to and burn the program into the cube or charger
 void CubeBurn(void)
 {  
-  ProgramCube();
+  // FCC firmware has no serial number
+  if (g_fixtureType == FIXTURE_CUBEFCC_TEST)
+    ProgramCubeTest((u8*)g_CubeFCC, g_CubeFCCEnd - g_CubeFCC); // FCC cube firmware
+  else
+    ProgramCubeWithSerial();    // Normal bootloader
 }
 
 // List of all functions invoked by the test, in order
