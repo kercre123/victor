@@ -1946,6 +1946,27 @@ namespace Anki {
                 break;
               }
                 
+              case (s32)'"':
+              {
+                webots::Field* sayStringField = root_->getField("sayString");
+                if(sayStringField == nullptr) {
+                  printf("ERROR: No sayString field found in WebotsKeyboardController.proto\n");
+                  break;
+                }
+                
+                ExternalInterface::SayText sayTextMsg;
+                sayTextMsg.text = sayStringField->getSFString();
+                if(sayTextMsg.text.empty()) {
+                  printf("ERROR: sayString field is empty\n");
+                }
+                // TODO: Add ability to set style from KB controller field too
+                sayTextMsg.style = SayTextStyle::Normal;
+                
+                printf("Saying '%s' in style '%s'\n", sayTextMsg.text.c_str(), EnumToString(sayTextMsg.style));
+                SendMessage(ExternalInterface::MessageGameToEngine(std::move(sayTextMsg)));
+                break;
+              }
+            
               default:
               {
                 // Unsupported key: ignore.
