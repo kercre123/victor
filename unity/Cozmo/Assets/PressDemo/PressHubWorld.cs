@@ -17,7 +17,7 @@ public class PressHubWorld : HubWorldBase {
 
   public override bool LoadHubWorld() {
 
-    _PressDemoViewInstance = UIManager.OpenView(_PressDemoViewPrefab, verticalCanvas: true);
+    _PressDemoViewInstance = UIManager.OpenView(_PressDemoViewPrefab);
     _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
 
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
