@@ -39,7 +39,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   [SerializeField]
   private int numberCachedLogMaximum = 100;
 
-  private int kClipboardLogMaximum = 9000;
+  private const int kClipboardLogMaximum = 9000;
 
   private Queue<LogPacket> _LogToClipboard;
   private Queue<LogPacket> _MostRecentLogs;
