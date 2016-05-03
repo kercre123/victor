@@ -237,7 +237,8 @@ message SetBodyRadioMode
 message SetDTMParameters
 {
   uint_8 mode,
-  uint_8 channel 
+  uint_8 channel,
+  uint_8 payload[uint_8:32]
 }
 
 message EnableReadToolCodeMode
