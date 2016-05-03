@@ -169,6 +169,7 @@ namespace SpeedTap {
       MinTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
       MaxTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
 
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapStarted);
       // End config based values
       InitializeMinigameObjects(1);
     }

@@ -12,8 +12,7 @@
       if (newLevel >= 0) {
         LastLevel = newLevel;
       }
-      WinPointsTotal = 0;
-      LossPointsTotal = 0;
+      ResetPoints();
     }
 
     public void ResetPoints() {
