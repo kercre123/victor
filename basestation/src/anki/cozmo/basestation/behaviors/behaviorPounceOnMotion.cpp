@@ -190,14 +190,14 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
 
   _prePouncePitch = robot.GetPitchAngle();
   
-  std::string _pounceAnimation = "invDemo_P05_CatchFwd";
+  std::string _pounceAnimation = "pounceOnMotionPounce";
 
   // disable idle
   _previousIdleAnimation = robot.GetIdleAnimationName();
   robot.SetIdleAnimation("NONE");
   
   _state = State::Pouncing;
-  IActionRunner* animAction = new PlayAnimationAction(robot, _pounceAnimation);
+  IActionRunner* animAction = new PlayAnimationGroupAction(robot, _pounceAnimation);
 
   IActionRunner* actionToRun = animAction;
 
@@ -238,17 +238,16 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
   bool caught = robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
 
   // disable idle while animation plays
-  // TEMP:  // TODO:(bn) should we do this inside PlayAnimationAction???
   _previousIdleAnimation = robot.GetIdleAnimationName();
   robot.SetIdleAnimation("NONE");
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
-    newAction = new PlayAnimationAction(robot, "ID_catch_success" );
+    newAction = new PlayAnimationGroupAction(robot, "pounceOnMotionSuccess" );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
-    newAction = new PlayAnimationAction(robot, "ID_catch_fail" );
+    newAction = new PlayAnimationGroupAction(robot, "pounceOnMotionFail" );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   

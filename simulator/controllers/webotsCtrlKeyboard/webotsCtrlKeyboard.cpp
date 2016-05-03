@@ -66,7 +66,7 @@ namespace Anki {
         
         double lastKeyPressTime_;
         
-        PathMotionProfile pathMotionProfile_ = DEFAULT_PATH_MOTION_PROFILE;
+        PathMotionProfile pathMotionProfile_ = PathMotionProfile();
         
         // For displaying cozmo's POV:
         webots::Display* cozmoCam_;
@@ -191,21 +191,56 @@ namespace Anki {
     }
 
     // ============== End of message handlers =================
-    
-    
-    void WebotsKeyboardController::InitInternal()
-      { 
-        // Make root point to WebotsKeyBoardController node
-        root_ = GetSupervisor()->getSelf();
-        
-        GetSupervisor()->keyboardEnable(GetStepTimeMS());
-        
-        poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
-        
-        cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
 
+    void WebotsKeyboardController::PreInit()
+    {
+      // Make root point to WebotsKeyBoardController node
+      root_ = GetSupervisor()->getSelf();
+
+      // enable keyboard
+      GetSupervisor()->keyboardEnable(GetStepTimeMS());
+    }
+  
+    void WebotsKeyboardController::WaitOnKeyboardToConnect()
+    {
+      webots::Field* autoConnectField = root_->getField("autoConnect");
+      if( autoConnectField == nullptr ) {
+        PRINT_NAMED_ERROR("WebotsKeyboardController.MissingField",
+                          "missing autoConnect field, assuming we shoudl auto connect");
+        return;
       }
-    
+      else {
+        bool autoConnect = autoConnectField->getSFBool();
+        if( autoConnect ) {
+          return;
+        }
+      }
+
+      PRINT_NAMED_INFO("WebotsKeyboardController.WaitForStart",
+                       "Press Shift+Enter to start the engine");
+      
+      const int EnterKey = 4; // tested experimentally... who knows if this will work on other platforms
+      const int ShiftEnterKey = EnterKey | webots::Supervisor::KEYBOARD_SHIFT;
+
+      bool start = false;
+      while( !start && !_shouldQuit ) {
+        int key = -1;
+        while((key = GetSupervisor()->keyboardGetKey()) != 0 && !_shouldQuit) {
+          if(key == ShiftEnterKey) {
+            start = true;
+          }
+        }
+        // manually step simulation
+        GetSupervisor()->step(GetStepTimeMS());
+      }
+    }
+  
+    void WebotsKeyboardController::InitInternal()
+    { 
+      poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
+        
+      cozmoCam_ = GetSupervisor()->getDisplay("uiCamDisplay");
+    }    
     
     WebotsKeyboardController::WebotsKeyboardController(s32 step_time_ms) :
     UiGameController(step_time_ms)
@@ -373,6 +408,21 @@ namespace Anki {
           const f32 pathPointTurnAccel_radPerSec2 = root_->getField("pathPointTurnAccel_radPerSec2")->getSFFloat();
           const f32 pathPointTurnDecel_radPerSec2 = root_->getField("pathPointTurnDecel_radPerSec2")->getSFFloat();
           const f32 pathReverseSpeed_mmps = root_->getField("pathReverseSpeed_mmps")->getSFFloat();
+
+          // If any of the pathMotionProfile fields are different than the default values use a custom profile
+          if(pathMotionProfile_.speed_mmps != pathSpeed_mmps ||
+             pathMotionProfile_.accel_mmps2 != pathAccel_mmps2 ||
+             pathMotionProfile_.decel_mmps2 != pathDecel_mmps2 ||
+             pathMotionProfile_.pointTurnSpeed_rad_per_sec != pathPointTurnSpeed_radPerSec ||
+             pathMotionProfile_.pointTurnAccel_rad_per_sec2 != pathPointTurnAccel_radPerSec2 ||
+             pathMotionProfile_.pointTurnDecel_rad_per_sec2 != pathPointTurnDecel_radPerSec2 ||
+             pathMotionProfile_.dockSpeed_mmps != dockSpeed_mmps ||
+             pathMotionProfile_.dockAccel_mmps2 != dockAccel_mmps2 ||
+             pathMotionProfile_.dockDecel_mmps2 != dockDecel_mmps2 ||
+             pathMotionProfile_.reverseSpeed_mmps != pathReverseSpeed_mmps)
+          {
+            pathMotionProfile_.isCustom = true;
+          }
 
           pathMotionProfile_.speed_mmps = pathSpeed_mmps;
           pathMotionProfile_.accel_mmps2 = pathAccel_mmps2;
@@ -1041,6 +1091,63 @@ namespace Anki {
 
               case (s32)'M':
               {
+                const uint32_t tag = root_->getField("nvTag")->getSFInt32();
+                const uint32_t numBlobs = root_->getField("nvNumBlobs")->getSFInt32();
+                const uint32_t blobLength = root_->getField("nvBlobDataLength")->getSFInt32();
+                
+                // Shift + Alt + M: Erases specified tag
+                if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT &&
+                   modifier_key & webots::Supervisor::KEYBOARD_ALT)
+                {
+                  if(ENABLE_NVSTORAGE_WRITE)
+                  {
+                    SendNVStorageEraseEntry((NVStorage::NVEntryTag)tag);
+                  }
+                  else
+                  {
+                    PRINT_NAMED_INFO("SendNVStorageEraseEntry.Disabled",
+                                     "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                  }
+                }
+                // Shift + M: Stores random data to tag
+                // If tag is a multi-tag, writes numBlobs blobs of random data blobLength long
+                // If tag is a single tag, writes 1 blob of random data that is blobLength long
+                else if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT)
+                {
+                  if(ENABLE_NVSTORAGE_WRITE)
+                  {
+                    Util::RandomGenerator r;
+                    
+                    for(int i=0;i<numBlobs;i++)
+                    {
+                      printf("blob data: %d\n", i);
+                      uint8_t data[blobLength];
+                      for(int i=0;i<blobLength;i++)
+                      {
+                        int n = r.RandInt(256);
+                        printf("%d ", n);
+                        data[i] = (uint8_t)n;
+                      }
+                      printf("\n\n");
+                      SendNVStorageWriteEntry((NVStorage::NVEntryTag)tag, data, blobLength, i, numBlobs);
+                    }
+                  }
+                  else
+                  {
+                    PRINT_NAMED_INFO("SendNVStorageWriteEntry.Disabled",
+                                     "Set ENABLE_NVSTORAGE_WRITE to 1 if you really want to do this!");
+                  }
+                  
+                  break;
+                }
+                // Alt + M: Reads data at tag
+                else if(modifier_key & webots::Supervisor::KEYBOARD_ALT)
+                {
+                  ClearReceivedNVStorageData((NVStorage::NVEntryTag)tag);
+                  SendNVStorageReadEntry((NVStorage::NVEntryTag)tag);
+                  break;
+                }
+              
                 webots::Field* emotionNameField = root_->getField("emotionName");
                 if (emotionNameField == nullptr) {
                   printf("ERROR: No emotionNameField field found in WebotsKeyboardController.proto\n");
@@ -1579,6 +1686,25 @@ namespace Anki {
                 }
                 break;
               }
+              case (s32)')':
+              {
+                PRINT_NAMED_INFO("RetrievingAllMfgTestData", "");
+                
+                // Get all Mfg test images and results
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
+                
+                if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage2);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage3);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage4);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage5);
+                }
+                
+                break;
+              }
               case (s32)'*':
               {
                 using namespace ExternalInterface;
@@ -1710,19 +1836,18 @@ namespace Anki {
               }
               case (s32)'~':
               {
-                //const s32 NUM_ANIM_TESTS = 4;
-                //const AnimationID_t testAnims[NUM_ANIM_TESTS] = {ANIM_HEAD_NOD, ANIM_HEAD_NOD_SLOW, ANIM_BLINK, ANIM_UPDOWNLEFTRIGHT};
-                
-                const s32 NUM_ANIM_TESTS = 4;
-                const char* testAnims[NUM_ANIM_TESTS] = {"ANIM_BLINK", "ANIM_HEAD_NOD", "ANIM_HEAD_NOD_SLOW", "ANIM_LIFT_NOD"};
-                
-                static s32 iAnimTest = 0;
-                
-                SendAnimation(testAnims[iAnimTest++], 1);
-                
-                if(iAnimTest == NUM_ANIM_TESTS) {
-                  iAnimTest = 0;
+                // Send whatever animation is specified in the animationToSendName field
+                webots::Field* animToSendNameField = root_->getField("animationToSendName");
+                if (animToSendNameField == nullptr) {
+                  printf("ERROR: No animationToSendName field found in WebotsKeyboardController.proto\n");
+                  break;
                 }
+                std::string animToSendName = animToSendNameField->getSFString();
+                if (animToSendName.empty()) {
+                  printf("ERROR: animationToSendName field is empty\n");
+                  break;
+                }
+                SendAnimationGroup(animToSendName.c_str());
                 break;
               }
                 
@@ -1982,7 +2107,6 @@ namespace Anki {
           return 0;
         }
       }
-  
     
       void WebotsKeyboardController::HandleNVStorageData(const ExternalInterface::NVStorageData &msg)
       {
@@ -2014,16 +2138,55 @@ namespace Anki {
           
           switch(msg.tag) {
             case NVStorage::NVEntryTag::NVEntry_CameraCalibration:
+            case NVStorage::NVEntryTag::NVEntry_CameraCalib:
             {
               CameraCalibration calib;
-              calib.Unpack(recvdData->data(), recvdData->size());
-              
+              if (recvdData->size() != MakeWordAligned(calib.Size())) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.CamCalibration.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(calib.Size()), recvdData->size());
+                break;
+              }
+              calib.Unpack(recvdData->data(), calib.Size());
               PRINT_NAMED_INFO("HandleNVStorageOpResult.CamCalibration",
-                               "fx: %f, fy: %f, cx: %f, cy: %f, skew: %f, nrows: %d, ncols: %d",
+                               "Tag: %s: %f, fy: %f, cx: %f, cy: %f, skew: %f, nrows: %d, ncols: %d",
+                               EnumToString(msg.tag),
                                calib.focalLength_x, calib.focalLength_y,
                                calib.center_x, calib.center_y,
                                calib.skew,
                                calib.nrows, calib.ncols);
+              break;
+            }
+            case NVStorage::NVEntryTag::NVEntry_ToolCodeInfo:
+            {
+              ToolCodeInfo info;
+              if (recvdData->size() != MakeWordAligned(info.Size())) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.ToolCodeInfo.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(info.Size()), recvdData->size());
+                break;
+              }
+              info.Unpack(recvdData->data(), info.Size());
+              
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.ToolCodeInfo",
+                               "Code: %s, Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
+                               EnumToString(info.code),
+                               info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y,
+                               info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
+                               info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
+                               info.observedCalibDotRight_x, info.observedCalibDotRight_y);
+              break;
+            }
+            case NVStorage::NVEntryTag::NVEntry_PlaypenTestResults:
+            {
+              FactoryTestResultEntry result;
+              if (recvdData->size() != MakeWordAligned(result.Size())) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.PlaypenTestResults.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(result.Size()), recvdData->size());
+                break;
+              }
+              result.Unpack(recvdData->data(), result.Size());
+              time_t rawtime = static_cast<time_t>(result.utcTime);
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.PlaypenTestResults",
+                               "Result: %s, Time: %s", EnumToString(result.result), ctime(&rawtime) );
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_CalibImage1:
@@ -2033,7 +2196,8 @@ namespace Anki {
             case NVStorage::NVEntryTag::NVEntry_CalibImage5:
             case NVStorage::NVEntryTag::NVEntry_MultiBlobJunk:
             {
-              static const char* outFile = "nvstorage_output.jpg";
+              char outFile[128];
+              sprintf(outFile, "nvstorage_output_%s.jpg", EnumToString(msg.tag));
               PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.CalibImage1",
                                "Writing to %s, size: %zu",
                                outFile, recvdData->size());
@@ -2050,6 +2214,11 @@ namespace Anki {
             }
             default:
               PRINT_NAMED_INFO("HandleNVStorageOpResult.UnhandledTag", "%s", EnumToString(msg.tag));
+              for(auto data : *recvdData)
+              {
+                printf("%d ", data);
+              }
+              printf("\n");
               break;
           }
         }
@@ -2071,6 +2240,9 @@ int main(int argc, char **argv)
   loggerProvider.SetMinToStderrLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN);  
   Anki::Util::gLoggerProvider = &loggerProvider;
   Anki::Cozmo::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP);
+
+  webotsCtrlKeyboard.PreInit();
+  webotsCtrlKeyboard.WaitOnKeyboardToConnect();
   
   webotsCtrlKeyboard.Init();
   while (webotsCtrlKeyboard.Update() == 0)

@@ -212,6 +212,13 @@ message AbortAnimation
 {
 }
 
+// For internal robot use only
+message AnimEventToRTIP
+{
+  uint_8    tag,
+  AnimEvent event_id
+}
+
 message EnablePickupParalysis
 {
   bool enable
@@ -388,8 +395,8 @@ union EngineToRobot
   AnimKeyFrame::AudioSilence    animAudioSilence            = 0x92,
   AnimKeyFrame::HeadAngle       animHeadAngle               = 0x93,
   AnimKeyFrame::LiftHeight      animLiftHeight              = 0x94,
-  AnimKeyFrame::FacePosition    animFacePosition            = 0x95,
-  AnimKeyFrame::Blink           animBlink                   = 0x96,
+  AnimKeyFrame::Event           animEvent                   = 0x95,
+  AnimEventToRTIP               animEventToRTIP             = 0x96,
   AnimKeyFrame::FaceImage       animFaceImage               = 0x97,
   AnimKeyFrame::BackpackLights  animBackpackLights          = 0x98,
   AnimKeyFrame::BodyMotion      animBodyMotion              = 0x99,

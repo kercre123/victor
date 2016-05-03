@@ -58,7 +58,6 @@ protected:
   void HandleEnableCliffSensor(const GameToEngineEvent& event);
   void HandleDisplayProceduralFace(const GameToEngineEvent& event);
   void HandleForceDelocalizeRobot(const GameToEngineEvent& event);
-  void HandleProgressionEvent(const GameToEngineEvent& event);
   void HandleBehaviorManagerEvent(const GameToEngineEvent& event);
   void HandleSendAvailableObjects(const GameToEngineEvent& event);
   void HandleSaveCalibrationImage(const GameToEngineEvent& event);

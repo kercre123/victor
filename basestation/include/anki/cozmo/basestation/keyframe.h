@@ -332,17 +332,17 @@ namespace Cozmo {
     Reset();
   }
   
-  // A FacePositionKeyFrame sets the center of the currently displayed face
-  // image/sprite, in LED screen coordinates.
-  class FacePositionKeyFrame : public IKeyFrame
+  // An EventKeyFrame simply returns an AnimEvent message from the robot
+  // for higher precision event timing... like in Speed Tap.
+  class EventKeyFrame : public IKeyFrame
   {
   public:
-    FacePositionKeyFrame() { }
+    EventKeyFrame() { }
     
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
     
     static const std::string& GetClassName() {
-      static const std::string ClassName("FacePositionKeyFrame");
+      static const std::string ClassName("EventKeyFrame");
       return ClassName;
     }
     
@@ -351,37 +351,9 @@ namespace Cozmo {
     
   private:
     
-    AnimKeyFrame::FacePosition _streamMsg;
+    AnimKeyFrame::Event _streamMsg;
     
-  }; // class FacePositionKeyFrame
-  
-  // BlinkKeyFrame either disables automatic blinking for a period fo time or
-  // commands a single blink to happen "now".
-  class BlinkKeyFrame : public IKeyFrame
-  {
-  public:
-    BlinkKeyFrame();
-    
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
-    
-    static const std::string& GetClassName() {
-      static const std::string ClassName("BlinkKeyFrame");
-      return ClassName;
-    }
-    
-    virtual bool IsDone() override;
-    
-  protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
-    
-  private:
-    
-    s32 _duration_ms;
-    s32 _curTime_ms;
-    
-    AnimKeyFrame::Blink _streamMsg;
-
-  }; // class BlinkKeyFrame
+  }; // class EventKeyFrame
   
   
   // A BackpackLightsKeyFrame sets the colors of the robot's five backpack lights

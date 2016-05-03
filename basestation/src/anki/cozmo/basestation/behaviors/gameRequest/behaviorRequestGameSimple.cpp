@@ -213,7 +213,7 @@ void BehaviorRequestGameSimple::TransitionToPlayingInitialAnimation(Robot& robot
 {
   IActionRunner* animationAction = new TurnTowardsFaceWrapperAction(
     robot,
-    new PlayAnimationAction(robot, _activeConfig->initialAnimationName) );    
+    CreatePlayAnimationAction(robot, _activeConfig->initialAnimationName) );
   StartActing( animationAction, &BehaviorRequestGameSimple::TransitionToFacingBlock );
   SET_STATE(State::PlayingInitialAnimation);
 }
@@ -235,7 +235,7 @@ void BehaviorRequestGameSimple::TransitionToFacingBlock(Robot& robot)
 
 void BehaviorRequestGameSimple::TransitionToPlayingPreDriveAnimation(Robot& robot)
 {
-  IActionRunner* animationAction = new PlayAnimationAction(robot, _activeConfig->preDriveAnimationName);
+  IActionRunner* animationAction = CreatePlayAnimationAction(robot, _activeConfig->preDriveAnimationName);
   StartActing(animationAction, &BehaviorRequestGameSimple::TransitionToPickingUpBlock);
   SET_STATE(State::PlayingPreDriveAnimation);
 }
@@ -260,12 +260,12 @@ void BehaviorRequestGameSimple::TransitionToPickingUpBlock(Robot& robot)
                     case ObjectInteractionResult::INCOMPLETE:
                     case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
                     {
-                      animAction = new PlayAnimationAction(robot, kDrivingFailAnimName);
+                      animAction = CreatePlayAnimationAction(robot, kDrivingFailAnimName);
                       break;
                     }
             
                     default: {
-                      animAction = new PlayAnimationAction(robot, kPickupFailAnimName);
+                      animAction = CreatePlayAnimationAction(robot, kPickupFailAnimName);
                       break;
                     }
                   }
@@ -442,11 +442,10 @@ void BehaviorRequestGameSimple::TransitionToVerifyingFace(Robot& robot)
   }
 }
 
-void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot)
-{
+void BehaviorRequestGameSimple::TransitionToPlayingRequstAnim(Robot& robot) {
   // always turn back to the face after the animation in case the animation moves the head
   StartActing(new CompoundActionSequential(robot, {
-        new PlayAnimationAction(robot, _activeConfig->requestAnimationName),
+        CreatePlayAnimationAction(robot, _activeConfig->requestAnimationName),
         new TurnTowardsLastFacePoseAction(robot, PI_F)}),
     &BehaviorRequestGameSimple::TransitionToTrackingFace);
   SET_STATE(State::PlayingRequstAnim);
@@ -473,7 +472,7 @@ void BehaviorRequestGameSimple::TransitionToTrackingFace(Robot& robot)
 void BehaviorRequestGameSimple::TransitionToPlayingDenyAnim(Robot& robot)
 {
   // no callback here, behavior is over once this is Done
-  StartActing( new PlayAnimationAction( robot, _activeConfig->denyAnimationName ) );
+  StartActing( CreatePlayAnimationAction( robot, _activeConfig->denyAnimationName ) );
 
   SET_STATE(State::PlayingDenyAnim);
 }

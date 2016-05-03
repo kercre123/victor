@@ -31,6 +31,7 @@
 #include "anki/cozmo/basestation/multiClientChannel.h"
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/sosLoggerProvider.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
@@ -38,6 +39,14 @@
 #include "util/global/globalDefinitions.h"
 #if ANKI_DEV_CHEATS
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
+#endif
+
+#if REMOTE_CONSOLE_ENABLED
+namespace Anki { namespace Util {
+CONSOLE_VAR_EXTERN(float,  gNetStat2LatencyAvg);
+CONSOLE_VAR_EXTERN(float,  gNetStat4LatencyMin);
+CONSOLE_VAR_EXTERN(float,  gNetStat5LatencyMax);
+}}
 #endif
 
 namespace Anki {
@@ -303,6 +312,12 @@ Result CozmoEngine::Update(const float currTime_sec)
       _context->GetRobotManager()->UpdateAllRobots();
       
       _keywordRecognizer->Update((uint32_t)(BaseStationTimer::getInstance()->GetTimeSinceLastTickInSeconds() * 1000.0f));
+      
+#if REMOTE_CONSOLE_ENABLED
+      _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugLatencyMessage>(Util::gNetStat2LatencyAvg,
+                                                                                                Util::gNetStat4LatencyMin,
+                                                                                                Util::gNetStat5LatencyMax);
+#endif
       break;
     }
     case EngineState::UpdatingFirmware:

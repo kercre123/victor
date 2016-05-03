@@ -79,9 +79,10 @@ namespace Anki {
       bool                      _interruptRunning;
       Animation*                _customAnimation = nullptr;
       
-      // For responding to AnimationStarted and AnimationEnded events
+      // For responding to AnimationStarted, AnimationEnded, and AnimationEvent events
       Signal::SmartHandle _startSignalHandle;
       Signal::SmartHandle _endSignalHandle;
+      Signal::SmartHandle _eventSignalHandle;
       Signal::SmartHandle _abortSignalHandle;
       
     private:
@@ -121,7 +122,8 @@ namespace Anki {
     // This will fallback on a hardcoded name if used.
     PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName,
                         u32 numLoops = 1,bool interruptRunning = true);
-
+    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, const std::string& animName,
+                                                   u32 numLoops = 1,bool interruptRunning = true);
 
     class DeviceAudioAction : public IAction
     {

@@ -19,6 +19,7 @@
 #include "clad/types/gameEvent.clad"
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
+#include "clad/types/animationEvents.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -327,6 +328,11 @@ message AnimationAborted {
   uint_32 tag
 }
 
+message AnimationEvent {
+  uint_32   timestamp,
+  AnimEvent event_id
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Mood / Emotions
 ///////////////////////////////////////////////////////////////////////////////
@@ -334,15 +340,6 @@ message AnimationAborted {
 message MoodState {
   uint_8  robotID,
   float_32 emotionValues[uint_8]
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Progression / Stats
-///////////////////////////////////////////////////////////////////////////////
-
-message ProgressionStats {
-  uint_8  robotID,
-  int_32 statValues[uint_8]
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -391,6 +388,12 @@ message VerifyDebugConsoleVarMessage {
   string statusMessage,
   ConsoleVarUnion varValue,
   bool success
+}
+
+message DebugLatencyMessage {
+  float_32 averageLatency,
+  float_32 minLatency,
+  float_32 maxLatency
 }
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -60,18 +60,18 @@ PROTO WebotsKeyboardController [
   field SFFloat pointTurnAccel_degPerSec2 10000 
   
   # Path speeds
-  field SFFloat pathSpeed_mmps  60
-  field SFFloat pathAccel_mmps2 100
+  field SFFloat pathSpeed_mmps  100
+  field SFFloat pathAccel_mmps2 200
   field SFFloat pathDecel_mmps2 500
-  field SFFloat pathPointTurnSpeed_radPerSec 1.5
-  field SFFloat pathPointTurnAccel_radPerSec2 10
-  field SFFloat pathPointTurnDecel_radPerSec2 50
-  field SFFloat pathReverseSpeed_mmps 30
+  field SFFloat pathPointTurnSpeed_radPerSec 2.0
+  field SFFloat pathPointTurnAccel_radPerSec2 100
+  field SFFloat pathPointTurnDecel_radPerSec2 500
+  field SFFloat pathReverseSpeed_mmps 80
 
   # Docking speed/accel
   field SFFloat dockSpeed_mmps  60
   field SFFloat dockAccel_mmps2 200
-  field SFFloat dockDecel_mmps2 100
+  field SFFloat dockDecel_mmps2 500
 
   # Value between 0 and 1 which determines how much the robot turns with 
   # the left/right arrow keys when going forward or backward.
@@ -170,6 +170,10 @@ PROTO WebotsKeyboardController [
   field SFInt32 headTest_nodCycleTimeMS 2000  
   field SFInt32 headTest_powerPercent 0             # 0-100: If 0 then cycles through increasing power levels
 
+  field SFInt32 nvTag 100
+  field SFInt32 nvNumBlobs 1
+  field SFInt32 nvBlobDataLength 1024
+
   # Force-add robot options
   field SFBool   forceAddRobot FALSE
   field SFString forcedRobotIP "172.31.1.1"
@@ -187,6 +191,10 @@ PROTO WebotsKeyboardController [
   field SFInt32  deviceID 1
 
   field SFBool demoHasEdge TRUE
+
+  # if false, wait until the user pressed Shift+Enter to connect and start the engine
+  # (this gives another thing, e.g. Unity, a chance to connect first)
+  field SFBool autoConnect TRUE
 ]
 {
 Supervisor {

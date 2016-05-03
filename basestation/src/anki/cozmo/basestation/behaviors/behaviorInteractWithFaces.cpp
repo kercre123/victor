@@ -304,15 +304,20 @@ namespace Cozmo {
     // serve to adjust the position
     compoundAction->AddAction(new TurnTowardsPoseAction(robot, face->GetHeadPose(), DEG_TO_RAD(179)));
 
-    if( faceData->_playedNewFaceAnim ) {
+    if( !faceData->_playedNewFaceAnim ) {
       compoundAction->AddAction( new PlayAnimationGroupAction(robot, _newFaceAnimGroup) );
       faceData->_playedNewFaceAnim = true;
       // NOTE: this is a bit wrong because something might interrupt this from happening, in which case it
       // didn't actually play the new animation, but its much simpler this way than to handle what might
       // happen if face ids change or merge before the action is complete
+
+      robot.GetMoodManager().TriggerEmotionEvent("NewFace", MoodManager::GetCurrentTimeInSeconds());
+
     }
     else {
       compoundAction->AddAction( new PlayAnimationGroupAction(robot, _unenrolledFaceAnimGroup) );
+
+      robot.GetMoodManager().TriggerEmotionEvent("KnownFace", MoodManager::GetCurrentTimeInSeconds());
     }
 
     StartActing(compoundAction, [this](Robot& robot) {

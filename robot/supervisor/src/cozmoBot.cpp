@@ -29,6 +29,7 @@
 
 #ifdef SIMULATOR
 #include "anki/vision/CameraSettings.h"
+#include "../sim_hal/sim_nvStorage.h"
 #include <math.h>
 #endif
 
@@ -253,6 +254,12 @@ namespace Anki {
         }
 */
 
+        //////////////////////////////////////////////////////////////
+        // Simulated NVStorage
+        //////////////////////////////////////////////////////////////
+#if SIMULATOR
+        SimNVStorageSpace::Update();
+#endif
 
         //////////////////////////////////////////////////////////////
         // Test Mode
@@ -273,7 +280,7 @@ namespace Anki {
 
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
-          AnkiEvent( 40, "Radio", 250, "Robot radio is connected.", 0);
+          AnkiEvent( 40, "Radio", 445, "Robot radio is connected.", 0);
           wasConnected_ = true;
           BackpackLightController::TurnOffAll();
         } else if (!HAL::RadioIsConnected() && wasConnected_) {

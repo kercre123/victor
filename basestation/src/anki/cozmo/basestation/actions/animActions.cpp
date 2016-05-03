@@ -174,6 +174,21 @@ namespace Anki {
         }
       };
       
+      auto eventLambda = [this](const AnkiEvent<RobotToEngine>& event)
+      {
+        RobotInterface::AnimationEvent payload = event.GetData().Get_animEvent();
+        if(_startedPlaying && this->_animTag == payload.tag) {
+            PRINT_NAMED_INFO("PlayAnimation.AnimationEventHandler",
+                             "Event %s received at time %d while playing animation tag %d",
+                             EnumToString(payload.event_id), payload.timestamp, this->_animTag);
+            
+          ExternalInterface::AnimationEvent msg;
+          msg.timestamp = payload.timestamp;
+          msg.event_id = payload.event_id;
+          _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::AnimationEvent>(std::move(msg));
+        }
+      };
+      
       auto cancelLambda = [this](const AnkiEvent<MessageEngineToGame>& event)
       {
         if(this->_animTag == event.GetData().Get_AnimationAborted().tag) {
@@ -187,6 +202,8 @@ namespace Anki {
       _startSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::animStarted, startLambda);
       
       _endSignalHandle   = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::animEnded,   endLambda);
+
+      _eventSignalHandle   = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::animEvent, eventLambda);
       
       _abortSignalHandle = _robot.GetExternalInterface()->Subscribe(MessageEngineToGameTag::AnimationAborted, cancelLambda);
       
@@ -320,38 +337,44 @@ namespace Anki {
       if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
       {
         std::string response_name = robot_mgr->GetAnimationResponseForEvent(animEvent);
-        if( robot_mgr->HasCannedAnimation(response_name) )
-        {
-          return new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
-        }
-        else if( robot_mgr->HasAnimationGroup(response_name)) // it's an animation group
+        if( robot_mgr->HasAnimationGroup(response_name)) // it's an animation group
         {
           return new PlayAnimationGroupAction(robot, animEvent, numLoops,interruptRunning);
+        }
+        else if( robot_mgr->HasCannedAnimation(response_name) )
+        {
+          return new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
         }
       }
       return nullptr;
     }
     PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName, u32 numLoops,bool interruptRunning)
     {
-      PlayAnimationAction* ret_action = nullptr;
       RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
       std::string response_name = backupAnimName;
       if( robot_mgr->HasAnimationResponseForEvent(animEvent) )
       {
         response_name = robot_mgr->GetAnimationResponseForEvent(animEvent);
       }
-      
-      if( robot_mgr->HasCannedAnimation(response_name) )
+      if( robot_mgr->HasAnimationGroup(response_name))
       {
-        // return new anim
-        ret_action = new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
+        return new PlayAnimationGroupAction(robot, response_name, numLoops,interruptRunning);
       }
-      else if( robot_mgr->HasAnimationGroup(response_name))
+      else if( robot_mgr->HasCannedAnimation(response_name) )
       {
-        ret_action = new PlayAnimationGroupAction(robot, response_name, numLoops,interruptRunning);
+        return new PlayAnimationAction(robot, animEvent, response_name,numLoops,interruptRunning);
       }
-      
-      return ret_action;
+      return nullptr;
+    }
+    PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, const std::string& animName, u32 numLoops,bool interruptRunning)
+    {
+      RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
+      if( robot_mgr->HasAnimationGroup(animName))
+      {
+        return new PlayAnimationGroupAction(robot, animName, numLoops,interruptRunning);
+      }
+      // similar to old behavior, can't return null and will error out on init.
+      return new PlayAnimationAction(robot, animName,numLoops,interruptRunning);;
     }
     
 

@@ -27,6 +27,24 @@
       ]
     },
     {
+      "name": "NewFace",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 0.15
+        }
+      ]
+    },
+    {
+      "name": "KnownFace",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 0.05
+        }
+      ]
+    },
+    {
       "name": "LostFace",
       "emotionAffectors" : [
         {

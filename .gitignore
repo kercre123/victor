@@ -20,6 +20,7 @@ EXTERNALS
 *.wbproj
 simulator/controllers/webotsCtrlViz/webotsCtrlViz
 simulator/controllers/webotsCtrlRobot/webotsCtrlRobot
+simulator/controllers/webotsCtrlRobot/nvStorage
 simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube
 simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine
 simulator/controllers/webotsCtrlGameEngine/resources

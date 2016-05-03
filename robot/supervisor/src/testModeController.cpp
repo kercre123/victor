@@ -394,8 +394,8 @@ namespace Anki {
 
       Result PathFollowTestUpdate()
       {
-        const u32 startDriveTime_us = 500000;
-        if (!pathStarted_ && HAL::GetMicroCounter() > startDriveTime_us) {
+        const u32 startDriveTime_ms = 500;
+        if (!pathStarted_ && HAL::GetTimeStamp() > startDriveTime_ms) {
 
           /*
           // Small circle drive test

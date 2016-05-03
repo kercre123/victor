@@ -19,6 +19,7 @@ namespace Cozmo {
 using namespace ExternalInterface;
   
 static const char* kAnimNameKey = "animName";
+static const char* kAnimGroupNameKey = "animGroupName";
 static const char* kLoopsKey = "num_loops";
 
 BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
@@ -29,12 +30,23 @@ BehaviorPlayAnim::BehaviorPlayAnim(Robot& robot, const Json::Value& config)
   
   if (!config.isNull())
   {
-    {
-      const Json::Value& valueJson = config[kAnimNameKey];
-      if (valueJson.isString())
-      {
-        _animationName = valueJson.asCString();
-      }
+    const Json::Value& animNameJson = config[kAnimNameKey];
+    const Json::Value& animGroupNameJson = config[kAnimGroupNameKey];
+
+    if( animNameJson.isString() ) {
+      _animationName = animNameJson.asCString();
+    }
+    if( animGroupNameJson.isString() ) {
+      _animationGroupName = animGroupNameJson.asCString();
+      _useGroup = true;
+    }
+      
+    if( animNameJson.isString() && animGroupNameJson.isString() ) {
+      PRINT_NAMED_WARNING("BehaviorPlayAnim.ConfigError",
+                          "config for behavior '%s' specified keys '%s' and '%s', the group will be used",
+                          GetName().c_str(),
+                          kAnimNameKey,
+                          kAnimGroupNameKey);
     }
   }
 
@@ -53,7 +65,12 @@ bool BehaviorPlayAnim::IsRunnable(const Robot& robot) const
 
 Result BehaviorPlayAnim::InitInternal(Robot& robot)
 {
-  StartActing(new PlayAnimationAction(robot, _animationName, _numLoops));
+  if( _useGroup ) {
+    StartActing(new PlayAnimationGroupAction(robot, _animationGroupName, _numLoops));
+  }
+  else {
+    StartActing(new PlayAnimationAction(robot, _animationName, _numLoops));
+  }
   
   return Result::RESULT_OK;
 }  

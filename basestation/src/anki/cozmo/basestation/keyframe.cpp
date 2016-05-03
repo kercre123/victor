@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/basestation/faceAnimationManager.h"
+#include "anki/cozmo/basestation/animations/animEventHelpers.h"
 #include "util/logging/logging.h"
 #include "anki/common/basestation/colorRGBA.h"
 #include "anki/common/basestation/utils/timer.h"
@@ -453,103 +454,35 @@ return RESULT_FAIL; \
     }
     
 #pragma mark -
-#pragma mark FacePositionKeyFrame
+#pragma mark EventKeyFrame
     //
-    // FacePositionKeyFrame
+    // EventKeyFrame
     //
     
-    RobotInterface::EngineToRobot* FacePositionKeyFrame::GetStreamMessage()
+    RobotInterface::EngineToRobot* EventKeyFrame::GetStreamMessage()
     {
-      //_streamMsg.xCen = _xcen;
-      //_streamMsg.yCen = _ycen;
-      
-      return new RobotInterface::EngineToRobot(AnimKeyFrame::FacePosition(_streamMsg));
+      return new RobotInterface::EngineToRobot(AnimKeyFrame::Event(_streamMsg));
     }
     
-    Result FacePositionKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
+    Result EventKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
-      // Just store the center point directly in the message.
-      // No need to duplicate since we don't do anything extra to the stored
-      // values before streaming.
-      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, xcen, streamMsg.xCen);
-      GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, ycen, streamMsg.yCen);
-      
-      return RESULT_OK;
-    }
-    
-#pragma mark -
-#pragma mark BlinkKeyFrame
-    
-    BlinkKeyFrame::BlinkKeyFrame()
-    : _curTime_ms(0)
-    {
-      
-    }
-    
-    bool BlinkKeyFrame::IsDone()
-    {
-      if(_streamMsg.blinkNow) {
-        return true;
-      } else if(_curTime_ms >= _duration_ms) {
-        _curTime_ms = 0; // Reset for next time
-        return true;
+      // Convert event_id string to AnimEvent enum
+      if (!jsonRoot.isMember("event_id")) {
+        PRINT_NAMED_WARNING("EventKeyFrame.NoEventIDFound", "");
+        return RESULT_FAIL;
       } else {
-        _curTime_ms += SAMPLE_LENGTH_MS;
-        return false;
-      }
-    }
-    
-    RobotInterface::EngineToRobot* BlinkKeyFrame::GetStreamMessage()
-    {
-      if(_streamMsg.blinkNow) {
-        _streamMsg.enable = true;
-      } else {
-        // If not a blink now message, then must be a "disable blink for
-        // some duration" keyframe.
-        if(_curTime_ms == 0) {
-          // Start of the keyframe period: disable blinking
-          _streamMsg.enable = false;
-        } else if(_curTime_ms >= _duration_ms) {
-          // Done with disable period: re-enable.
-          _streamMsg.enable = true;
+        if(jsonRoot["event_id"].isString()) {
+          const std::string& eventStr = jsonRoot["event_id"].asString();
+          AnimEvent e = AnimEventFromString(eventStr.c_str());
+          if (e == AnimEvent::Count) {
+            PRINT_NAMED_WARNING("EventKeyFrame.UnrecognizedEventName", "%s", eventStr.c_str());
+            return RESULT_FAIL;
+          }
+          _streamMsg.event_id = e;
         } else {
-          // Don't do anything in the middle (and return nullptr)
-          // Note that we will not advance to next keyframe during this period
-          // because IsDone() will be false.
-          return nullptr;
+          PRINT_NAMED_WARNING("EventKeyFrame.EventIDNotString", "");
+          return RESULT_FAIL;
         }
-      }
-      return new RobotInterface::EngineToRobot(AnimKeyFrame::Blink(_streamMsg));
-    }
-    
-    Result BlinkKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
-    {
-      if(!jsonRoot.isMember("command")) {
-        PRINT_NAMED_ERROR("BlinkKeyFrame.SetMembersFromJson.MissingCommand",
-                          "%s: Missing 'command' field.",
-                          animNameDebug.c_str());
-        return RESULT_FAIL;
-      } else if(!jsonRoot["command"].isString()) {
-        PRINT_NAMED_ERROR("BlinkKeyFrame.SetMembersFromJson.BadCommand",
-                          "%s: Expecting 'command' field to be a string.",
-                          animNameDebug.c_str());
-        return RESULT_FAIL;
-      }
-      
-      const std::string& commandStr = jsonRoot["command"].asString();
-      if(commandStr == "BLINK") {
-        // Blink now, duration and "enable" don't matter
-        _streamMsg.blinkNow = true;
-      } else if(commandStr == "DISABLE") {
-        // Disable blinking for the given duration
-        _streamMsg.blinkNow = false;
-        GET_MEMBER_FROM_JSON(jsonRoot, duration_ms);
-      } else {
-        PRINT_NAMED_ERROR("BlinkKeyFrame.SetMembersFromJson.BadCommandString",
-                          "%s: Unrecognized string for 'command' field: %s.",
-                          animNameDebug.c_str(),
-                          commandStr.c_str());
-        return RESULT_FAIL;
       }
       
       return RESULT_OK;

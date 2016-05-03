@@ -30,8 +30,8 @@ using namespace Anki::Cozmo;
 
 std::vector<std::string> actionsDestroyed;
 uint8_t track1 = (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
-uint8_t track2 = (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK | (u8)AnimTrackFlag::BLINK_TRACK | (u8)AnimTrackFlag::AUDIO_TRACK;
-uint8_t track3 = (u8)AnimTrackFlag::FACE_IMAGE_TRACK | (u8)AnimTrackFlag::FACE_POS_TRACK;
+uint8_t track2 = (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK | (u8)AnimTrackFlag::AUDIO_TRACK;
+uint8_t track3 = (u8)AnimTrackFlag::FACE_IMAGE_TRACK | (u8)AnimTrackFlag::EVENT_TRACK;
 
 // Simple action that can be set to complete
 class TestAction : public IAction

@@ -87,6 +87,74 @@
   return [super expectsRequestBodyFromMethod:method atPath:path];
 }
 
+- (BOOL)doAnimUpdate:(NSString *)path
+{
+  NSData *postData = [request body];
+  if (postData)
+  {
+    NSString* postStr = [[NSString alloc] initWithData:postData encoding:NSUTF8StringEncoding];
+    NSArray* path_list = [path componentsSeparatedByString:@"/"];
+    if( path_list && [path_list count] > 2)
+    {
+      // strip name from path
+      std::string anim_name = [[path_list objectAtIndex:2] UTF8String];
+      
+      CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
+      Anki::Util::Data::DataPlatform* data_platform = [cozmo_server GetDataPlatform];
+      Anki::Cozmo::IExternalInterface* external_interface = [cozmo_server GetExternalInterface];
+      if( data_platform && external_interface)
+      {
+        
+        // The "resource" file is not directly writable on device, so write to documents and then let reload overwrite.
+        std::string full_path = data_platform->pathToResource(Anki::Util::Data::Scope::Cache, Anki::Cozmo::USBTunnelServer::TempAnimFileName);
+        std::string content = [postStr UTF8String];
+        Anki::Util::FileUtils::WriteFile(full_path, content);
+        
+        // Since we're on our own thread make sure to call ThreadSafe Version.
+        Anki::Cozmo::ExternalInterface::MessageGameToEngine read_msg;
+        Anki::Cozmo::ExternalInterface::ReadAnimationFile m;
+        read_msg.Set_ReadAnimationFile(m);
+        external_interface->BroadcastDeferred(std::move(read_msg));
+        
+        Anki::Cozmo::ExternalInterface::MessageGameToEngine play_msg;
+        Anki::Cozmo::ExternalInterface::PlayAnimation play_msg_content;
+        play_msg_content.animationName = anim_name;
+        play_msg_content.numLoops = 1;
+        play_msg.Set_PlayAnimation(std::move(play_msg_content));
+        external_interface->BroadcastDeferred(std::move(play_msg));
+        return YES;
+      }
+    }
+  }
+  return NO;
+}
+
+- (BOOL)playAnimGroup:(NSString *)path
+{
+  NSData *postData = [request body];
+  if (postData)
+  {
+    NSArray* path_list = [path componentsSeparatedByString:@"/"];
+    if( path_list && [path_list count] > 2)
+    {
+      // strip name from path
+      std::string anim_name = [[path_list objectAtIndex:2] UTF8String];
+      
+      CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
+      Anki::Cozmo::IExternalInterface* external_interface = [cozmo_server GetExternalInterface];
+      if( external_interface)
+      {
+        Anki::Cozmo::ExternalInterface::MessageGameToEngine play_msg;
+        Anki::Cozmo::ExternalInterface::PlayAnimationGroup play_msg_content(1,1,anim_name);
+        play_msg.Set_PlayAnimationGroup(std::move(play_msg_content));
+        external_interface->BroadcastDeferred(std::move(play_msg));
+        return YES;
+      }
+    }
+  }
+  return NO;
+}
+
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path
 {
   @autoreleasepool
@@ -98,41 +166,11 @@
       //localhost:2223/cmd_anim_update/anim_name
       if( [path containsString:@"cmd_anim_update/"] )
       {
-        NSData *postData = [request body];
-        if (postData)
-        {
-          NSString* postStr = [[NSString alloc] initWithData:postData encoding:NSUTF8StringEncoding];
-          NSArray* path_list = [path componentsSeparatedByString:@"/"];
-          if( path_list && [path_list count] > 2)
-          {
-            // strip name from path
-            std::string anim_name = [[path_list objectAtIndex:2] UTF8String];
-            
-            CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
-            Anki::Util::Data::DataPlatform* data_platform = [cozmo_server GetDataPlatform];
-            Anki::Cozmo::IExternalInterface* external_interface = [cozmo_server GetExternalInterface];
-            if( data_platform && external_interface)
-            {
-              // The "resource" file is not directly writable on device, so write to documents and then let reload overwrite.
-              std::string full_path = data_platform->pathToResource(Anki::Util::Data::Scope::Cache, Anki::Cozmo::USBTunnelServer::TempAnimFileName);
-              std::string content = [postStr UTF8String];
-              Anki::Util::FileUtils::WriteFile(full_path, content);
-              
-              // Since we're on our own thread make sure to call ThreadSafe Version.
-              Anki::Cozmo::ExternalInterface::MessageGameToEngine read_msg;
-              Anki::Cozmo::ExternalInterface::ReadAnimationFile m;
-              read_msg.Set_ReadAnimationFile(m);
-              external_interface->BroadcastDeferred(std::move(read_msg));
-              
-              Anki::Cozmo::ExternalInterface::MessageGameToEngine play_msg;
-              Anki::Cozmo::ExternalInterface::PlayAnimation play_msg_content;
-              play_msg_content.animationName = anim_name;
-              play_msg_content.numLoops = 1;
-              play_msg.Set_PlayAnimation(play_msg_content);
-              external_interface->BroadcastDeferred(std::move(play_msg));
-            }
-          }
-        }
+        [self doAnimUpdate:path];
+      }
+      else if( [path containsString:@"cmd_play_group/"] )
+      {
+        [self playAnimGroup:path];
       }
       
       NSData *response = [@"Cozmo USB tunnel: Post Recieved\n" dataUsingEncoding:NSUTF8StringEncoding];

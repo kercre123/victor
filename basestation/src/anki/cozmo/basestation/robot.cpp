@@ -42,7 +42,6 @@
 #include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
-#include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/cozmo/basestation/speedChooser.h"
@@ -112,7 +111,6 @@ namespace Anki {
     , _liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, &_liftBasePose, "RobotLift")
     , _currentHeadAngle(MIN_HEAD_ANGLE)
     , _moodManager(new MoodManager(this))
-    , _progressionManager(new ProgressionManager(this))
     , _progressionUnlockComponent(new ProgressionUnlockComponent(*this))
     , _speedChooser(new SpeedChooser(*this))
     , _blockFilter(new BlockFilter(this))
@@ -254,7 +252,6 @@ namespace Anki {
       Util::SafeDelete(_shortPathPlanner);
       Util::SafeDelete(_shortMinAnglePathPlanner);
       Util::SafeDelete(_moodManager);
-      Util::SafeDelete(_progressionManager);
       Util::SafeDelete(_progressionUnlockComponent);
       Util::SafeDelete(_blockFilter);
 
@@ -825,7 +822,6 @@ namespace Anki {
       
       _moodManager->Update(currentTime);
       
-      _progressionManager->Update(currentTime);
       _progressionUnlockComponent->Update();
       
       const char* behaviorChooserName = "";
@@ -1180,7 +1176,7 @@ namespace Anki {
       CORETECH_ASSERT(_liftPose.GetParent() == &_liftBasePose);
     }
     
-    f32 Robot::GetPitchAngle()
+    f32 Robot::GetPitchAngle() const
     {
       return _pitchAngle;
     }
@@ -1335,9 +1331,9 @@ namespace Anki {
       _lastPickOrPlaceSucceeded = false;
       
       return SendRobotMessage<Anki::Cozmo::PlaceObjectOnGround>(0, 0, 0,
-                                                                DEFAULT_DOCK_SPEED_MMPS,
-                                                                DEFAULT_DOCK_ACCEL_MMPS2,
-                                                                DEFAULT_DOCK_ACCEL_MMPS2,
+                                                                DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
+                                                                DEFAULT_PATH_MOTION_PROFILE.accel_mmps2,
+                                                                DEFAULT_PATH_MOTION_PROFILE.decel_mmps2,
                                                                 useManualSpeed);
     }
     
@@ -1445,7 +1441,7 @@ namespace Anki {
     const std::string& Robot::GetAnimationNameFromGroup(const std::string& name) {
       const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
       if(group != nullptr && !group->IsEmpty()) {
-        return group->GetAnimationName(GetMoodManager(), _animationGroups);
+        return group->GetAnimationName(GetMoodManager(), _animationGroups, GetHeadAngle());
       }
       static const std::string empty("");
       return empty;

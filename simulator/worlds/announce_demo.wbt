@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.0447006 0.392165 0.918808 3.35031
-  position -0.611599 1.92265 2.1975
+  orientation -0.0372142 0.396876 0.917118 3.31318
+  position -0.541168 1.97733 2.17746
 }
 Background {
   skyColor [
@@ -27,6 +27,7 @@ DirectionalLight {
 }
 CozmoMat {
   showMarkers FALSE
+  xSize 0.35
 }
 Face {
   translation 0.723722 -0.559178 0.52
@@ -69,6 +70,7 @@ WebotsKeyboardController {
   robotVolume 0
   behaviorName "lookAround"
   behaviorChooserName "Demo"
+  autoConnect FALSE
 }
 CozmoVizDisplay {
   moodViz TRUE

@@ -23,7 +23,6 @@
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
-#include "anki/cozmo/basestation/progressionSystem/progressionManager.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -48,29 +47,30 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // These are the all action event tags
     std::vector<MessageGameToEngineTag> actionTagList =
     {
-      MessageGameToEngineTag::PlaceObjectOnGround,
-      MessageGameToEngineTag::PlaceObjectOnGroundHere,
-      MessageGameToEngineTag::GotoPose,
-      MessageGameToEngineTag::GotoObject,
-      MessageGameToEngineTag::AlignWithObject,
-      MessageGameToEngineTag::PickupObject,
-      MessageGameToEngineTag::PlaceOnObject,
-      MessageGameToEngineTag::PlaceRelObject,
-      MessageGameToEngineTag::RollObject,
-      MessageGameToEngineTag::PopAWheelie,
-      MessageGameToEngineTag::TraverseObject,
-      MessageGameToEngineTag::MountCharger,
-      MessageGameToEngineTag::PlayAnimation,
-      MessageGameToEngineTag::TurnTowardsObject,
-      MessageGameToEngineTag::TurnTowardsPose,
-      MessageGameToEngineTag::TurnInPlace,
-      MessageGameToEngineTag::TrackToObject,
-      MessageGameToEngineTag::TrackToFace,
-      MessageGameToEngineTag::SetHeadAngle,
-      MessageGameToEngineTag::PanAndTilt,
-      MessageGameToEngineTag::TurnTowardsLastFacePose,
-      MessageGameToEngineTag::ReadToolCode, 
-      MessageGameToEngineTag::SayText,
+      ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGround,
+      ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGroundHere,
+      ExternalInterface::MessageGameToEngineTag::GotoPose,
+      ExternalInterface::MessageGameToEngineTag::GotoObject,
+      ExternalInterface::MessageGameToEngineTag::AlignWithObject,
+      ExternalInterface::MessageGameToEngineTag::PickupObject,
+      ExternalInterface::MessageGameToEngineTag::PlaceOnObject,
+      ExternalInterface::MessageGameToEngineTag::PlaceRelObject,
+      ExternalInterface::MessageGameToEngineTag::RollObject,
+      ExternalInterface::MessageGameToEngineTag::PopAWheelie,
+      ExternalInterface::MessageGameToEngineTag::TraverseObject,
+      ExternalInterface::MessageGameToEngineTag::MountCharger,
+      ExternalInterface::MessageGameToEngineTag::PlayAnimation,
+      ExternalInterface::MessageGameToEngineTag::PlayAnimationGroup,
+      ExternalInterface::MessageGameToEngineTag::TurnTowardsObject,
+      ExternalInterface::MessageGameToEngineTag::TurnTowardsPose,
+      ExternalInterface::MessageGameToEngineTag::TurnInPlace,
+      ExternalInterface::MessageGameToEngineTag::TrackToObject,
+      ExternalInterface::MessageGameToEngineTag::TrackToFace,
+      ExternalInterface::MessageGameToEngineTag::SetHeadAngle,
+      ExternalInterface::MessageGameToEngineTag::PanAndTilt,
+      ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose,
+      ExternalInterface::MessageGameToEngineTag::ReadToolCode,
+ExternalInterface::MessageGameToEngineTag::SayText
     };
     
     // Subscribe to all action events
@@ -126,13 +126,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // Custom handler for CameraCalibration event
     auto cameraCalibrationCallback = std::bind(&RobotEventHandler::HandleCameraCalibration, this, std::placeholders::_1);
     _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::CameraCalibration, cameraCalibrationCallback));
-    
-    
-    // Custom handlers for Progression events
-    {
-      auto progressionEventCallback = std::bind(&RobotEventHandler::HandleProgressionEvent, this, std::placeholders::_1);
-      _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::ProgressionMessage, progressionEventCallback));
-    }
 
     // Custom handlers for BehaviorManager events
     {
@@ -962,24 +955,6 @@ void RobotEventHandler::HandleForceDelocalizeRobot(const GameToEngineEvent& even
                      "Forcibly delocalizing robot %d", robotID);
       
     robot->Delocalize();
-  }
-}
-  
-void RobotEventHandler::HandleProgressionEvent(const GameToEngineEvent& event)
-{
-  const auto& eventData = event.GetData();
-  const RobotID_t robotID = eventData.Get_ProgressionMessage().robotID;
-  
-  Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
-  
-  // We need a robot
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.HandleProgressionEvent.InvalidRobotID", "Failed to find robot %u.", robotID);
-  }
-  else
-  {
-    robot->GetProgressionManager().HandleEvent(event);
   }
 }
   

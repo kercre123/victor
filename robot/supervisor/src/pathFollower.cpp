@@ -349,13 +349,13 @@ namespace Anki
               SpeedController::SetUserCommandedDeceleration(requiredDecel);
               SpeedController::SetUserCommandedDesiredVehicleSpeed(copysign(END_OF_PATH_TARGET_SPEED_MMPS, path_[currPathSegment_].GetTargetSpeed()));
               startedDecelOnSegment_ = true;
-              //PRINT("PathFollower: Decel to end of segment %d (of %d) at %d mm/s^2 from speed of %d mm/s (meas %d mm/s) over %f mm\n",
+              //AnkiDebug( 33, "PathFollower", 219, "PathFollower: Decel to end of segment %d (of %d) at %d mm/s^2 from speed of %d mm/s (meas %d mm/s) over %f mm\n", 6,
               //      currPathSegment_, path_.GetNumSegments(), requiredDecel, currSpeed, (s32)SpeedController::GetCurrentMeasuredVehicleSpeed(), distToEnd);
             }
           }
 #         if(DEBUG_PATH_FOLLOWER)
           else {
-            AnkiDebug( 33, "PathFollower", 219, "PATH-DECEL: currCmdSpeed %d mm/s, currSpeed %d mm/s)", 2,
+            AnkiDebug( 33, "PathFollower", 446, "PATH-DECEL: currCmdSpeed %d mm/s, currSpeed %d mm/s)", 2,
                   (s32)SpeedController::GetUserCommandedCurrentVehicleSpeed(),
                   (s32)SpeedController::GetCurrentMeasuredVehicleSpeed());
           }

@@ -12,7 +12,6 @@
 #include "clad/types/behaviorChooserType.clad"
 #include "clad/types/emotionTypes.clad"
 #include "clad/types/debugConsoleTypes.clad"
-#include "clad/types/progressionStatTypes.clad"
 #include "clad/types/activeObjectTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/unlockTypes.clad"
@@ -836,21 +835,6 @@ message MoodMessage {
   MoodMessageUnion  MoodMessageUnion
 }
 
-// Progression / Stats
-
-structure GetProgressionStats {
-}
-
-structure SetProgressionStat {
-  ProgressionStatType statType,
-  int_32 newVal
-}
-
-structure AddToProgressionStat {
-  ProgressionStatType statType,
-  int_32 deltaVal
-}
-
 structure SetFriendshipPoints {
   int_32 newVal
 }
@@ -860,9 +844,6 @@ structure SetFriendshipLevel {
 }
 
 union ProgressionMessageUnion {
-  GetProgressionStats  GetProgressionStats,
-  SetProgressionStat   SetProgressionStat,
-  AddToProgressionStat AddToProgressionStat,
   SetFriendshipPoints  SetFriendshipPoints,
   SetFriendshipLevel   SetFriendshipLevel
 }

@@ -1301,6 +1301,23 @@ namespace Anki {
       }
       
     }
+    void UiGameController::SendAnimationGroup(const char* animName)
+    {
+      static double lastSendTime_sec = -1e6;
+      // Don't send repeated animation commands within a half second
+      if(_supervisor.getTime() > lastSendTime_sec + 0.5f)
+      {
+        PRINT_NAMED_INFO("SendAnimationGroup", "sending %s", animName);
+        ExternalInterface::PlayAnimationGroup m(1,1,animName);
+        ExternalInterface::MessageGameToEngine message;
+        message.Set_PlayAnimationGroup(m);
+        SendMessage(message);
+        lastSendTime_sec = _supervisor.getTime();
+      } else {
+        PRINT_NAMED_INFO("SendAnimationGroup", "Ignoring duplicate SendAnimation keystroke.");
+      }
+      
+    }
 
     void UiGameController::SendReplayLastAnimation()
     {
@@ -1736,5 +1753,13 @@ namespace Anki {
       return Pose3d();
     }
 
+    size_t UiGameController::MakeWordAligned(size_t size) {
+      u8 numBytesToMakeAligned = 4 - (size % 4);
+      if (numBytesToMakeAligned < 4) {
+        return size + numBytesToMakeAligned;
+      }
+      return size;
+    }
+    
   } // namespace Cozmo
 } // namespace Anki
