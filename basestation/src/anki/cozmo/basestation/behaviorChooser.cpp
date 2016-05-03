@@ -36,6 +36,7 @@
   #define VIZ_BEHAVIOR_SELECTION_ONLY(exp)
 #endif // VIZ_BEHAVIOR_SELECTION
 
+#define DEBUG_SHOW_ALL_SCORES 0
 
 namespace Anki {
 namespace Cozmo {
@@ -271,7 +272,7 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
     }
         
     VizInterface::BehaviorScoreData scoreData;
-    
+
     scoreData.behaviorScore = behavior->EvaluateScore(robot);
     scoreData.totalScore    = scoreData.behaviorScore;
     VIZ_BEHAVIOR_SELECTION_ONLY( scoreData.name = behavior->GetName() );
@@ -290,11 +291,29 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
 
         // don't allow margin and rand to push score out of >0 range
         scoreData.totalScore = Util::Max(scoreData.totalScore, 0.01f);
+
+        if( DEBUG_SHOW_ALL_SCORES ) {
+          PRINT_NAMED_DEBUG("BehaviorChooser.Score.Running",
+                            "behavior '%s' total=%f (raw=%f + running=%f + random=%f)",
+                            behavior->GetName().c_str(),
+                            scoreData.totalScore,
+                            scoreData.behaviorScore,
+                            runningBonus,
+                            kRandomFactor);
+        }        
       }
       else
       {
         // randomization only for non-running behaviors
         scoreData.totalScore += rng.RandDbl(kRandomFactor);
+
+        if( DEBUG_SHOW_ALL_SCORES ) {
+          PRINT_NAMED_DEBUG("BehaviorChooser.Score.NotRunning",
+                            "behavior '%s' total=%f (raw=%f + random)",
+                            behavior->GetName().c_str(),
+                            scoreData.totalScore,
+                            scoreData.behaviorScore);
+        }
       }
       
       if (scoreData.totalScore > bestScore)
@@ -302,6 +321,11 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
         bestBehavior = behavior;
         bestScore    = scoreData.totalScore;
       }
+    }
+    else if( DEBUG_SHOW_ALL_SCORES ) {
+      PRINT_NAMED_DEBUG("BehaviorChooser.Score.Zero",
+                        "behavior '%s' choosable but has 0 score",
+                        behavior->GetName().c_str());
     }
     
     VIZ_BEHAVIOR_SELECTION_ONLY( robotBehaviorSelectData.scoreData.push_back(scoreData) );

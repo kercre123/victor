@@ -233,6 +233,7 @@ protected:
   void SendIMURequest(u32 length_ms);
   void SendEnableRobotPickupParalysis(bool enable);
   void SendAnimation(const char* animName, u32 numLoops);
+  void SendAnimationGroup(const char* animName);
   void SendReplayLastAnimation();
   void SendReadAnimationFile();
   void SendEnableVisionMode(VisionMode mode, bool enable);

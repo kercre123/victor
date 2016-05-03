@@ -267,7 +267,7 @@ namespace Anki {
             PRINT_NAMED_INFO("IDockAction.MovingLiftPostDockHandler",
                              "Playing animation %s ",
                              _liftMovingAnimation.c_str());
-            IActionRunner* animAction = new PlayAnimationAction(_robot, _liftMovingAnimation, 1, false);
+            IActionRunner* animAction = new PlayAnimationGroupAction(_robot, _liftMovingAnimation, 1, false);
             animAction->ShouldEmitCompletionSignal(false);
             _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
           } else {

@@ -43,7 +43,9 @@ private:
   
   // ========== Members ==========
   
-  std::string   _animationName;  
+  std::string   _animationName;
+  std::string   _animationGroupName;
+  bool          _useGroup;
   int           _numLoops;
 };
   

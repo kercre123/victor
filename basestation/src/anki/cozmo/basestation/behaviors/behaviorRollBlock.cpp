@@ -120,12 +120,12 @@ void BehaviorRollBlock::TransitionToRollingBlock(Robot& robot)
                       case ObjectInteractionResult::INCOMPLETE:
                       case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
                       {
-                        animAction = new PlayAnimationAction(robot, _realignAnimGroup);
+                        animAction = new PlayAnimationGroupAction(robot, _realignAnimGroup);
                         break;
                       }
             
                       default: {
-                        animAction = new PlayAnimationAction(robot, _retryRollAnimGroup);
+                        animAction = new PlayAnimationGroupAction(robot, _retryRollAnimGroup);
                         break;
                       }
                     }
