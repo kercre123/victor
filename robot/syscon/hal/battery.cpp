@@ -81,7 +81,7 @@ void Battery::init()
   nrf_gpio_pin_set(PIN_PWR_EN);
   nrf_gpio_cfg_output(PIN_PWR_EN);
   
-  // Encoder and headboard power
+  // Encoder and LED power
   nrf_gpio_pin_set(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
 
@@ -126,7 +126,6 @@ void Battery::setHeadlight(bool status) {
 void Battery::powerOn()
 {
   // Let power drain out - 10ms is plenty long enough
-  MicroWait(10000);
   nrf_gpio_pin_clear(PIN_VDDs_EN);
 }
 
