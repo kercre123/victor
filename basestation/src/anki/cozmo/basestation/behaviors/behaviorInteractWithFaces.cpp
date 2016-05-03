@@ -34,6 +34,7 @@ namespace Cozmo {
   using namespace ExternalInterface;
 
   static const char * const kInitialTakeAnimGroupKey = "initial_take_anim_group";
+  static const char * const kWaitAnimGroupKey = "wait_anim_group";
   static const char * const kNewFaceAnimGroupKey = "new_face_anim_group";
   static const char * const kUnenrolledFaceAnimGroupKey = "unenrolled_face_anim_group";
 
@@ -58,6 +59,7 @@ namespace Cozmo {
     SetDefaultName("Faces");
 
     _initialTakeAnimGroup = config.get(kInitialTakeAnimGroupKey, "").asString();
+    _waitAnimGroup = config.get(kWaitAnimGroupKey, "").asString();
     _newFaceAnimGroup = config.get(kNewFaceAnimGroupKey, "").asString();
     _unenrolledFaceAnimGroup = config.get(kUnenrolledFaceAnimGroupKey, "").asString();
     
@@ -165,6 +167,23 @@ namespace Cozmo {
       return;
     }
 
+    FaceID_t bestFace = GetNewFace(robot);
+
+    if( bestFace == Vision::UnknownFaceID ) {
+      PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.NoGoodFace",
+                        "we have %zu faces but none have positive score (all are probably on cooldown)",
+                        _interestingFacesData.size());
+      return;
+    }
+
+    _currentFace = bestFace;
+    
+    TransitionToRecognizingFace(robot);
+  }
+
+
+  Vision::FaceID_t BehaviorInteractWithFaces::GetNewFace(const Robot& robot)
+  {
     FaceID_t bestFace = Vision::UnknownFaceID;
     float bestScore = 0.0f;
 
@@ -182,22 +201,13 @@ namespace Cozmo {
       }
     }
 
-    if( bestFace == Vision::UnknownFaceID ) {
-      PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.NoGoodFace",
-                        "we have %zu faces but none have positive score (all are probably on cooldown)",
-                        _interestingFacesData.size());
-      return;
-    }
-
     BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_INTERACT_WITH_FACES,
                            "BehaviorInteractWithFaces.Dispatch",
                            "selecting Face %d (with score of %f)",
                            bestFace,
                            bestScore);
 
-    _currentFace = bestFace;
-    
-    TransitionToRecognizingFace(robot);
+    return bestFace;
   }
 
 
@@ -285,8 +295,48 @@ namespace Cozmo {
     compoundAction->AddAction(turnTowardsPoseAction);
     compoundAction->AddAction( new PlayAnimationGroupAction(robot, _initialTakeAnimGroup) );
 
-    StartActing(compoundAction, &BehaviorInteractWithFaces::TransitionToReactingToFace);
+    StartActing(compoundAction, &BehaviorInteractWithFaces::TransitionToWaitingForRecognition);
   }
+
+  void BehaviorInteractWithFaces::TransitionToWaitingForRecognition(Robot& robot)
+  {
+    SET_STATE(WaitingForRecognition);
+
+    // check if we know the face yet. If it is still unknown (negative id) keep waiting, otherwise skip to
+    // reacting
+
+    if( _currentFace == Vision::UnknownFaceID ) {
+      return;
+    }
+
+    // TODO:(bn/as) use some confidence here? Want to wait to see if a "new session only" id is going to merge
+    // into a known name
+    if( _currentFace < 0 ) {
+      // continue to look
+      const Face* face = nullptr;
+      FaceData* faceData = nullptr;
+      if( ! GetCurrentFace(robot, face, faceData) ) {
+        return;
+      }
+
+      CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
+        
+      // Always turn to look at the face before any reaction
+      TurnTowardsPoseAction* turnTowardsPoseAction = new TurnTowardsPoseAction(robot,
+                                                                               face->GetHeadPose(),
+                                                                               DEG_TO_RAD(179));
+      turnTowardsPoseAction->SetPanTolerance( DEG_TO_RAD(2.0) );
+
+      compoundAction->AddAction(turnTowardsPoseAction);
+      compoundAction->AddAction( new PlayAnimationGroupAction(robot, _waitAnimGroup) );
+
+      StartActing(compoundAction, &BehaviorInteractWithFaces::TransitionToReactingToFace);
+    }
+    else {
+      TransitionToReactingToFace(robot);
+    }
+  }
+
 
   void BehaviorInteractWithFaces::TransitionToReactingToFace(Robot& robot)
   {
@@ -423,7 +473,7 @@ namespace Cozmo {
                            "BehaviorInteractWithFaces::HandleRobotDeletedFace",
                            "deleted face %d",
                            msg.faceID);
-
+    
     // if it was a temp face, delete it for real, otherwise keep it around but mark it deleted
     FaceID_t faceID = static_cast<FaceID_t>(msg.faceID);
     if( msg.faceID < 0 ) {
@@ -461,7 +511,7 @@ namespace Cozmo {
                        newFaceID);
       return;
     }
-
+    
     // if we don't have any data about the new face, this is simply a "rename"
     if( newIt == _interestingFacesData.end() ) {
       PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.FaceRename",
@@ -484,10 +534,29 @@ namespace Cozmo {
       // if we played a new face anim for either face, then we played it for the new face
       newIt->second._playedNewFaceAnim = newIt->second._playedNewFaceAnim || oldIt->second._playedNewFaceAnim;
 
+      // if the old id was unknown and the new id is known, and we are in the Wait state (where the robot is
+      // squinting to buy time), then stop the current action
+      if( _currentState == State::WaitingForRecognition &&
+          oldIt->first == _currentFace &&
+          oldIt->first < 0 &&
+          newIt->first > 0 ) {
+        PRINT_NAMED_INFO("BehaviorInteractWithFaces.RecognizedWhileWaiting",
+                         "stopping action so we can play recognition animation");
+        StopActing();
+      }
+
       _interestingFacesData.erase(oldIt);      
     }
     // else, we have data about the new face but not the old one, so ignore this message because there is
     // nothing to do about it
+
+
+    // if we are changing the old face, update current face as well
+    if( _currentFace != Vision::UnknownFaceID && _currentFace == oldIt->first ) {
+      _currentFace = newIt->first;
+      PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.UpdateCurrentFace",
+                        "Updating current face because of merge");
+    }
   }
   
   void BehaviorInteractWithFaces::MarkFaceDeleted(FaceID_t faceID)
@@ -502,7 +571,7 @@ namespace Cozmo {
   void BehaviorInteractWithFaces::SetState_internal(State state, const std::string& stateName)
   {
     _currentState = state;
-    PRINT_NAMED_DEBUG("Behaviorinteractwithfaces.TransitionTo", "%s", stateName.c_str());
+    PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.TransitionTo", "%s", stateName.c_str());
     SetStateName(stateName);
   }
 
