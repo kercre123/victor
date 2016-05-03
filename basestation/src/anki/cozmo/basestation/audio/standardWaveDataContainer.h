@@ -44,8 +44,10 @@ namespace Anki {
         // Allocate nessary memory for audio buffer
         bool CreateDataBuffer(const size_t size)
         {
-          ASSERT_NAMED( audioBuffer == nullptr, "Can NOT allocate memory, Audio Buffer is not NULL" );
-          ASSERT_NAMED( size > 0, "Must set buffer size" );
+          ASSERT_NAMED( audioBuffer == nullptr,
+                        "StandardWaveDataContainer.CreateDataBuffer.AudioBufferNotNull - \
+                        Can NOT allocate memory, Audio Buffer is not NULL" );
+          ASSERT_NAMED( size > 0, "StandardWaveDataContainer.CreateDataBuffer.SizeNotZero - Must set buffer size" );
           
           audioBuffer = new (std::nothrow) float[size];
           if ( audioBuffer == nullptr ) {
@@ -56,7 +58,7 @@ namespace Anki {
           return true;
         }
         
-        // Cheic there is an audio buffer
+        // Check if there is an audio buffer
         bool HasBuffer()
         {
           return ( (bufferSize > 0) && (audioBuffer != nullptr) );

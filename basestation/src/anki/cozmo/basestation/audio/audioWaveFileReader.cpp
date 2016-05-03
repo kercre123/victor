@@ -34,7 +34,7 @@ bool AudioWaveFileReader::LoadWaveFile( const std::string& filePath, const std::
 {
   // Check if file is already in cache
   if ( _cachedWaveData.find( filePath ) != _cachedWaveData.end() ) {
-    PRINT_NAMED_DEBUG("AudioWaveFileReader.LoadWaveFile", "Wave file \"%s\" is already cached", filePath.c_str());
+    PRINT_NAMED_DEBUG("AudioWaveFileReader.LoadWaveFile", "Wave file '%s' is already cached", filePath.c_str());
     return true;
   }
   

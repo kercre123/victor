@@ -14,9 +14,7 @@
 
 
 extern "C" {
-  
 #include "flite.h"
-  
   cst_voice* register_cmu_us_kal(const char*);
 }
 
@@ -34,6 +32,7 @@ extern "C" {
 #include "util/time/universalTime.h"
 
 #define DEBUG_TEXTTOSPEECH_COMPONENT 0
+
 
 namespace Anki {
 namespace Cozmo {
@@ -65,11 +64,11 @@ TextToSpeechComponent::~TextToSpeechComponent()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechComponent::PhraseState TextToSpeechComponent::CreateSpeech(const std::string& text, SayTextStyle style)
+TextToSpeechComponent::SpeechState TextToSpeechComponent::CreateSpeech(const std::string& text, SayTextStyle style)
 {
   // Setup meta data before async creation of audio data
   // Check if bundle already exist for text
-  PhraseState state;
+  SpeechState state;
   {
     std::lock_guard<std::mutex> lock( _lock );
     TextPhraseBundle* phraseBundle = GetTextPhraseBundle( text );
@@ -83,7 +82,7 @@ TextToSpeechComponent::PhraseState TextToSpeechComponent::CreateSpeech(const std
     state = phraseBundle->PrepareTextPhrase( style );
   }
   // Only create audio data if state is Preparing
-  if ( state != PhraseState::Preparing ) {
+  if ( state != SpeechState::Preparing ) {
     return state;
   }
   
@@ -94,11 +93,13 @@ TextToSpeechComponent::PhraseState TextToSpeechComponent::CreateSpeech(const std
     {
       std::lock_guard<std::mutex> lock( _lock );
       TextPhraseBundle* phraseBundle = GetTextPhraseBundle( text );
-      ASSERT_NAMED(phraseBundle != nullptr, "Phrase Bundle should have been created before creating Audio Data");
+      ASSERT_NAMED(phraseBundle != nullptr,
+                   "TextToSpeechComponent.CreateSpeech.DispatchAysnc.PhraseBundleNotNull - \
+                   Phrase Bundle should have been created before creating Audio Data");
       bool success = phraseBundle->SetStandardWaveDataContainer( audioData, style );
-      ASSERT_NAMED(success, "Must check if audio data already exist before creating new Audio Data");
-      // Caller is responsible for data if not successful
+      // The Caller (this class) is responsible for data if not successful
       if ( !success ) {
+        PRINT_NAMED_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAysnc", "Must prepare phraseBundle before using");
         Util::SafeDelete( audioData );
       }
     }
@@ -108,20 +109,20 @@ TextToSpeechComponent::PhraseState TextToSpeechComponent::CreateSpeech(const std
 } // CreateSpeech()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechComponent::PhraseState TextToSpeechComponent::GetSpeechState(const std::string& text, const SayTextStyle style)
+TextToSpeechComponent::SpeechState TextToSpeechComponent::GetSpeechState(const std::string& text, const SayTextStyle style)
 {
   // Find phrase
   std::lock_guard<std::mutex> lock( _lock );
   TextPhraseBundle* phraseBundle = GetTextPhraseBundle( text );
   if ( phraseBundle == nullptr ) {
-    return PhraseState::None;
+    return SpeechState::None;
   }
   
-  return phraseBundle->GetPhraseState( style );
+  return phraseBundle->GetSpeechState( style );
 } // GetSpeechState()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TextToSpeechComponent::PrepareToSay(const std::string& text, SayTextStyle style)
+bool TextToSpeechComponent::PrepareToSay(const std::string& text, SayTextStyle style, float& out_duration_ms)
 {
   std::lock_guard<std::mutex> lock( _lock );
   TextPhraseBundle* phraseBundle = GetTextPhraseBundle( text );
@@ -196,8 +197,9 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
                                                                                  (size_t)waveData->num_samples );
   
   // Convert waveData format into StandardWaveDataContainer's format
+  const float kOneOverSHRT_MAX = 1.0 / float(SHRT_MAX);
   for ( size_t sampleIdx = 0; sampleIdx < data->bufferSize; ++sampleIdx ) {
-    data->audioBuffer[sampleIdx] = waveData->samples[sampleIdx]/(float)(SHRT_MAX);
+    data->audioBuffer[sampleIdx] = waveData->samples[sampleIdx] * kOneOverSHRT_MAX;
   }
   
   if ( DEBUG_TEXTTOSPEECH_COMPONENT ) {
@@ -234,11 +236,117 @@ std::string TextToSpeechComponent::CreateHashForText(const std::string& text)
   
   // Note that this text-to-hash mapping is only printed in debug mode!
   PRINT_NAMED_DEBUG("TextToSpeechComponent.CreateHashForText.TextToHash",
-                    "'%s' hashed to %d", text.c_str(), hashedValue);
+                    "'%s' hashed to %u", text.c_str(), hashedValue);
   
   return std::to_string( hashedValue );
 } // CreateHashForText()
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// TextPhraseBundle Class Implementation
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+TextToSpeechComponent::SpeechState TextToSpeechComponent::TextPhraseBundle::GetSpeechState(const SayTextStyle style)
+{
+  PhraseCreationStyleBinding* phraseBinding = GetPhraseCreationStyleBinding( style );
+  if ( phraseBinding == nullptr ) {
+    return SpeechState::None;
+  }
+  return phraseBinding->state;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Audio::StandardWaveDataContainer* TextToSpeechComponent::TextPhraseBundle::GetWaveData(const SayTextStyle style)
+{
+  PhraseCreationStyleBinding* phraseBinding = GetPhraseCreationStyleBinding( style );
+  if ( phraseBinding == nullptr ) {
+    return nullptr;
+  }
+  return phraseBinding->waveData;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TextToSpeechComponent::SpeechState TextToSpeechComponent::TextPhraseBundle::PrepareTextPhrase(const SayTextStyle style)
+{
+  TextAudioCreationStyle creationStyle = GetTextAudioCreationStyle( style );
+  auto iter = _phraseStyleMap.find( creationStyle );
+  if ( iter == _phraseStyleMap.end() ) {
+    // Create entry for text creation style
+    PhraseCreationStyleBinding binding;
+    binding.state = SpeechState::Preparing;
+    iter = _phraseStyleMap.emplace( creationStyle, binding ).first;
+  }
+  // Track Styles using Phrase Style Binding
+  iter->second.registeredStyleSet.insert( style );
+  
+  return iter->second.state;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool TextToSpeechComponent::TextPhraseBundle::SetStandardWaveDataContainer(Audio::StandardWaveDataContainer* waveData , const SayTextStyle style)
+{
+  ASSERT_NAMED( waveData != nullptr, "WaveData can NOT == nullptr" );
+  // Check if audio data already exist
+  PhraseCreationStyleBinding* phraseBinding = GetPhraseCreationStyleBinding( style );
+  if ( phraseBinding == nullptr ) {
+    // Test audio style is NOT prepared
+    return false;
+  }
+  const auto styleIter = phraseBinding->registeredStyleSet.find( style );
+  if ( styleIter == phraseBinding->registeredStyleSet.end() ) {
+    PRINT_NAMED_WARNING("TextPhraseBundle.SetStandardWaveDataContainer",
+                        "Setting wave data for SayTextStyle [%hhu] that has not been registered. We are able to \
+                        continue because another SayTextStyle has already created the necessary Wave Data", style);
+  }
+  
+  // Add Wave data
+  phraseBinding->state = SpeechState::Ready;
+  phraseBinding->waveData = waveData;
+  
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TextToSpeechComponent::TextPhraseBundle::ClearTextPhrase(const SayTextStyle style)
+{
+  // Find TextAudioCreationStyle PhraseCreationStyleBinding for SayTextStyle
+  auto phraseStyleIter = _phraseStyleMap.find( GetTextAudioCreationStyle( style ) );
+  if ( phraseStyleIter == _phraseStyleMap.end() ) {
+    PRINT_NAMED_WARNING("TextPhraseBundle.ClearTextPhrase",
+                        "Could NOT find TextAudioCreationStyle for SayTextStyle [%hhu]", style);
+    return;
+  }
+  // Find registered SayTextStyle in PhraseCreationStyleBinding
+  auto& registeredStyleSet = phraseStyleIter->second.registeredStyleSet;
+  const auto iter = registeredStyleSet.find( style );
+  if ( iter == registeredStyleSet.end() ) {
+    PRINT_NAMED_WARNING("TextPhraseBundle.ClearTextPhrase", "Could NOT find registered SayTextStyle [%hhu]", style);
+  }
+  
+  // Unregister SayTextStyle in PhraseCreationStyleBinding
+  registeredStyleSet.erase(iter);
+  // If no other styles are using Creation Style, delete entry
+  if ( registeredStyleSet.empty() ) {
+    _phraseStyleMap.erase( phraseStyleIter );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TextToSpeechComponent::TextPhraseBundle::TextAudioCreationStyle TextToSpeechComponent::TextPhraseBundle::GetTextAudioCreationStyle(const SayTextStyle style) const
+{
+  // TODO: need method to map from SayTextStyle -> TextAudioCreationStyle
+  return TextAudioCreationStyle::Normal;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TextToSpeechComponent::TextPhraseBundle::PhraseCreationStyleBinding* TextToSpeechComponent::TextPhraseBundle::GetPhraseCreationStyleBinding(const SayTextStyle style)
+{
+  auto phraseStyleIter = _phraseStyleMap.find( GetTextAudioCreationStyle( style ) );
+  if ( phraseStyleIter == _phraseStyleMap.end() ) {
+    return nullptr;
+  }
+  return &phraseStyleIter->second;
+}
 
 } // end namespace Cozmo
 } // end namespace Anki

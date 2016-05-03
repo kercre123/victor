@@ -28,7 +28,7 @@ namespace Cozmo {
   {
   public:
     
-    SayTextAction(Robot& robot, const std::string& text, SayTextStyle style = SayTextStyle::Normal, bool clearOnCompletion = true);
+    SayTextAction(Robot& robot, const std::string& text, SayTextStyle style, bool clearOnCompletion);
     
     virtual ~SayTextAction();
     
@@ -53,21 +53,16 @@ namespace Cozmo {
     virtual ActionResult CheckIfDone() override;
 
   private:
-    enum class TextToSpeechStatus : u8 {
-      Loading,
-      Ready,
-      Failed
-    };
     
     std::string               _text;
-    std::string               _name = "SayTextAction";
+    std::string               _name                 = "SayTextAction";
     SayTextStyle              _style;
-    bool                      _clearOnCompletion = true;
-    TextToSpeechStatus        _textToSpeechStatus = TextToSpeechStatus::Loading;
+    bool                      _clearOnCompletion    = true;
+    bool                      _isAudioReady         = false;
     Animation                 _animation;
-    GameEvent                 _gameEvent = GameEvent::Count; // Count == use built-in animation
-    IActionRunner*            _playAnimationAction = nullptr;
-    f32                       _timeout_sec = 5.f;
+    GameEvent                 _gameEvent            = GameEvent::Count; // Count == use built-in animation
+    IActionRunner*            _playAnimationAction  = nullptr;
+    f32                       _timeout_sec          = 30.f;
     
   }; // class SayTextAction
 

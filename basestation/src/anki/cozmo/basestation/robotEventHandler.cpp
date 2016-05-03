@@ -70,7 +70,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       ExternalInterface::MessageGameToEngineTag::PanAndTilt,
       ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose,
       ExternalInterface::MessageGameToEngineTag::ReadToolCode,
-ExternalInterface::MessageGameToEngineTag::SayText
+      ExternalInterface::MessageGameToEngineTag::SayText
     };
     
     // Subscribe to all action events
@@ -611,7 +611,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       return new ReadToolCodeAction(robot);
       
     case RobotActionUnionTag::sayText:
-      return new SayTextAction(robot, actionUnion.Get_sayText().text, actionUnion.Get_sayText().style);
+      return new SayTextAction(robot, actionUnion.Get_sayText().text, actionUnion.Get_sayText().style, true);
       
       // TODO: Add cases for other actions
       
@@ -765,7 +765,7 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     }
     case ExternalInterface::MessageGameToEngineTag::SayText:
     {
-      newAction = new SayTextAction(robot, event.GetData().Get_SayText().text, event.GetData().Get_SayText().style);
+      newAction = new SayTextAction(robot, event.GetData().Get_SayText().text, event.GetData().Get_SayText().style, true);
       break;
     }
     default:

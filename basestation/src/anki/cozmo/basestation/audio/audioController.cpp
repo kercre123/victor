@@ -109,46 +109,6 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
     const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(10);
     _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
   }
-  
-  // TEST Playing Audio File
-  /*
-  _reader = new AudioWaveFileReader;
-  const std::string testWavFilePath = dataPlatfrom->pathToResource( Util::Data::Scope::Resources, "assets/testAudio/out2.wav" ); // out2 //NewSine.wav
-  _reader->LoadWaveFile(testWavFilePath);
-  const AudioWaveFileReader::StandardWaveDataContainer* data = nullptr;
-  data = _reader->GetCachedWaveDataWithKey(testWavFilePath);
-  
-  if ( data != nullptr ) {
-    // This temp
-    _wavePortalPlugIn->SetAudioDataInfo( data->sampleRate,
-                                         data->numberOfChannels,
-                                         data->duration_ms,
-                                         data->audioBuffer,
-                                         static_cast<uint32_t>( data->bufferSize ) );
-    
-    // FIXME: TEST Playing Wave
-    Util::Dispatch::After(_dispatchQueue, std::chrono::milliseconds( 8000 ), [this, testWavFilePath]() {
-      
-      AudioCallbackContext* callbackContext = new AudioCallbackContext();
-      // Set callback flags
-      callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
-      // Register callbacks for event
-      PRINT_NAMED_INFO("AudioController.TEST_WavePortal", "Post Event");
-      callbackContext->SetEventCallbackFunc( [this, testWavFilePath]
-                                            ( const AudioCallbackContext* thisContext,
-                                              const AudioEngine::AudioCallbackInfo& callbackInfo )
-      {
-        PRINT_NAMED_INFO("AudioController.TEST_WavePortal",
-                         "Event Complete Clear Cache:\n%s", callbackInfo.GetDescription().c_str());
-        _reader->ClearCachedWaveDataWithKey(testWavFilePath);
-      });
-      
-      _audioEngine->PostEvent("DEV_EXTERNAL_DEVICE_PLAY", 1, callbackContext);
-      
-    });
-  }
-  */
-  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
