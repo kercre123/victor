@@ -58,7 +58,7 @@ namespace FaceEnrollment {
     }
 
     private void PlayFaceReactionAnimation(int faceId) {
-      DAS.Debug(this, "Attempt to Play Face Reaction Animation - FaceId: " + faceId);
+      DAS.Debug("FaceEnrollmentGame.PlayFaceReactionAnimation", "Attempt to Play Face Reaction Animation - FaceId: " + faceId);
       CurrentRobot.PrepareFaceNameAnimation(faceId, _NameForFace);
       CurrentRobot.SendAnimation(_ReactionBank[Random.Range(0, _ReactionBank.Length)], HandleReactionDone);
     }
