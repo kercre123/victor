@@ -61,12 +61,15 @@ void configure_engine(Json::Value config)
 
 #if defined(ANDROID)
 #include <android/log.h>
+#define LOGI( message, args... ) __android_log_print( ANDROID_LOG_INFO, "CozmoEngine", message, ##args )
+#else
+#define LOGI(message, args...)
 #endif
 
 std::string parseString(const Json::Value& config, const char* key)
 {
   if (!config.isMember(key)) {
-    __android_log_print(ANDROID_LOG_INFO, "CozmoEngine", "Can't find key %s in the config", key);
+    LOGI("Can't find key %s in the config", key);
     return std::string();
   } else {
     const char* str = config[key].asCString();
@@ -76,7 +79,7 @@ std::string parseString(const Json::Value& config, const char* key)
 
 int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_data)
 {
-  __android_log_print(ANDROID_LOG_INFO, "CozmoEngine", "cozmo_engine_create");
+  LOGI("cozmo_engine_create");
   
   //Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({new Util::SosLoggerProvider(), new Util::DasLoggerProvider()});
   Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
@@ -84,7 +87,7 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_da
 
   PRINT_NAMED_INFO("CSharpBinding.cozmo_game_create", "engine creating engine");
 
-  __android_log_print(ANDROID_LOG_INFO, "CozmoEngine", "about to parse config %s", configuration_data);
+  LOGI("about to parse config %s", configuration_data);
 
   Json::Reader reader;
   Json::Value config;
@@ -98,7 +101,7 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_da
   //CreateHockeyApp();
   
 #if defined(ANDROID)
-  __android_log_print(ANDROID_LOG_INFO, "CozmoEngine", "about to read paths");
+  LOGI("about to read paths");
 
   std::string filesPath = parseString(config, "DataPlatformFilesPath");
   std::string cachePath = parseString(config, "DataPlatformCachePath");
@@ -111,7 +114,7 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_da
   dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
 #endif
   
-  __android_log_print(ANDROID_LOG_INFO, "CozmoEngine", "Paths read");
+  LOGI("Paths read");
 
   using namespace Cozmo;
 
