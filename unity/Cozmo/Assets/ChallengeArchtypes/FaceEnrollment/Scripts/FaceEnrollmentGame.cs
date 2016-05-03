@@ -22,6 +22,8 @@ namespace FaceEnrollment {
     private FaceEnrollmentInstructionsView _EnrollmentInstructionsViewPrefab;
     private FaceEnrollmentInstructionsView _EnrollmentInstructionsViewInstance;
 
+    private bool _AttemptedEnrollFace = false;
+
     private string _NameForFace;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
@@ -47,6 +49,11 @@ namespace FaceEnrollment {
     }
 
     private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
+
+      if (_AttemptedEnrollFace) {
+        return;
+      }
+
       if (_EnrollmentInstructionsViewInstance != null) {
         UIManager.CloseView(_EnrollmentInstructionsViewInstance);
         _EnrollmentInstructionsViewInstance = null;
@@ -55,6 +62,7 @@ namespace FaceEnrollment {
       CurrentRobot.AssignNameToFace(id, _NameForFace);
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
       PlayFaceReactionAnimation(id);
+      _AttemptedEnrollFace = true;
     }
 
     private void PlayFaceReactionAnimation(int faceId) {
