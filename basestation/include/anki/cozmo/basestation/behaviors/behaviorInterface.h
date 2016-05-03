@@ -118,9 +118,6 @@ public:
   // likely waiting for something to complete
   inline bool IsActing() const;
     
-  // EvaluateEmotionScore is a score directly based on the given emotion rules
-  float EvaluateEmotionScore(const MoodManager& moodManager) const;
-  
   float EvaluateScore(const Robot& robot) const;
 
   const MoodScorer& GetMoodScorer() const { return _moodScorer; }
@@ -173,9 +170,9 @@ protected:
   virtual Result InitInternal(Robot& robot) = 0;
   virtual Result ResumeInternal(Robot& robot) { return InitInternal(robot); }
 
-  // EvaluateScoreInternal is used to score each behavior for behavior selection - by default it just uses
-  // EvaluateEmotionScore. If the behavior is running, it uses the Running score to decide if it should keep
-  // running
+  // EvaluateScoreInternal is used to score each behavior for behavior selection - it uses mood scorer or
+  // flat score depending on configuration. If the behavior is running, it uses the Running score to decide if it should
+  // keep running
   virtual float EvaluateRunningScoreInternal(const Robot& robot) const;
   virtual float EvaluateScoreInternal(const Robot& robot) const;
 
@@ -294,9 +291,10 @@ private:
     
   std::string _name;
   std::string _stateName = "";
-        
-  MoodScorer                 _moodScorer;
-  Util::GraphEvaluator2d     _repetitionPenalty;
+  
+  MoodScorer              _moodScorer;
+  Util::GraphEvaluator2d  _repetitionPenalty;
+  float                   _flatScore;
     
   Robot& _robot;
     

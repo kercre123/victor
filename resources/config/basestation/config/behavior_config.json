@@ -43,5 +43,27 @@
         }
       ]
     }
+  },
+  
+  // -- main configuration
+  "goalsConfig" :
+  {
+    // parameters to decide between goals
+    "evaluator" :
+    {
+
+    },
+    // goals to create
+    "goals" :
+    [
+      {
+        "name" : "freeplayExploration",
+        "behaviorChooser" :
+        {
+          "type" : "simple"
+        }
+        
+      }
+    ]
   }
 }

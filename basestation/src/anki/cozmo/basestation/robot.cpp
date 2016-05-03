@@ -204,8 +204,11 @@ namespace Anki {
         _progressionUnlockComponent->SendUnlockStatus();
       }
       
-      
-      LoadBehaviors();
+      // load available behaviors into the behavior factory
+      // rsam: 05/02/16 we are moving behaviors to basestation, but at the moment we support both paths for legacy
+      // reasons. Eventually I will move them to BS
+      LoadBehaviors("assets/behaviors/");
+      LoadBehaviors("config/basestation/config/behaviors/");
       
       // Read in behavior manager Json
       Json::Value behaviorConfig;
@@ -215,12 +218,14 @@ namespace Anki {
         bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources, jsonFilename, behaviorConfig);
         if (!success)
         {
-          PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonNotFound",
-                            "Behavior Json config file %s not found.",
+          PRINT_NAMED_ERROR("Robot.BehaviorConfigJsonFailed",
+                            "Behavior Json config file %s failed to parse.",
                             jsonFilename.c_str());
+          behaviorConfig.clear();
         }
       }
-      _behaviorMgr.Init(behaviorConfig);
+      _behaviorMgr.InitConfiguration(behaviorConfig);
+
       
       SetHeadAngle(_currentHeadAngle);
       _pdo = new PathDolerOuter(_context->GetRobotMsgHandler(), robotID);
@@ -1484,39 +1489,30 @@ namespace Anki {
       }
     }
     
-    void Robot::LoadBehaviors()
+    void Robot::LoadBehaviors(const std::string& path)
     {
       if (_context->GetDataPlatform() == nullptr)
       {
         return;
       }
       
-      const std::string behaviorFolder = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/behaviors/");
-      
-      DIR* dir = opendir(behaviorFolder.c_str());
-      if ( dir != nullptr)
+      const std::string behaviorFolder = _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, path);
+      std::vector<std::string> behaviorJsonFiles = Util::FileUtils::FilesInDirectory(behaviorFolder, true, ".json", true);
+      for( const auto& fullFileName : behaviorJsonFiles )
       {
-        dirent* ent = nullptr;
-        while ( (ent = readdir(dir)) != nullptr)
+        Json::Value behaviorJson;
+        const bool success = _context->GetDataPlatform()->readAsJson(fullFileName, behaviorJson);
+        if (success && !behaviorJson.empty())
         {
-          if ((ent->d_type == DT_REG) && Util::FileUtils::FilenameHasSuffix(ent->d_name, ".json"))
-          {
-            std::string fullFileName = behaviorFolder + ent->d_name;
-            
-            Json::Value behaviorJson;
-            const bool success = _context->GetDataPlatform()->readAsJson(fullFileName, behaviorJson);
-            if (success && !behaviorJson.empty())
-            {
-              // PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
-              _behaviorMgr.LoadBehaviorFromJson(behaviorJson);
-            }
-            else if( ! success )
-            {
-              PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read '%s'", fullFileName.c_str());
-            }
-            // don't print anything if we read an empty json
-          }
+          // PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
+          _behaviorMgr.CreateBehaviorFromConfiguration(behaviorJson);
+          // ignoring return value because we expect internal error control
         }
+        else if( ! success )
+        {
+          PRINT_NAMED_WARNING("Robot.LoadBehavior", "Failed to read '%s'", fullFileName.c_str());
+        }
+        // don't print anything if we read an empty json
       }
     }
 

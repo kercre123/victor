@@ -36,6 +36,7 @@ namespace Cozmo {
 // Forward declaration
 class BehaviorFactory;
 class AIWhiteboard;
+class AIGoalEvaluator;
 class IBehavior;
 class IBehaviorChooser;
 class IReactionaryBehavior;
@@ -50,12 +51,24 @@ class BehaviorManagerMessageUnion;
 class BehaviorManager
 {
 public:
-    
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Initialization/Destruction
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
   BehaviorManager(Robot& robot);
   ~BehaviorManager();
-    
-  Result Init(const Json::Value& config);
-    
+
+  // initialize this behavior manager from the given Json config
+  Result InitConfiguration(const Json::Value& config);
+  
+  // create a behavior from the given config and add to the factory. Can fail if the configuration is not valid
+  Result CreateBehaviorFromConfiguration(const Json::Value& behaviorConfig);
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  //
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   // Calls the current behavior's Update() method until it returns COMPLETE or FAILURE.
   Result Update();
         
@@ -78,8 +91,6 @@ public:
   // accessors: whiteboard
   const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
         AIWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
-    
-  IBehavior* LoadBehaviorFromJson(const Json::Value& behaviorJson);
     
   void ClearAllBehaviorOverrides();
   bool OverrideBehaviorScore(const std::string& behaviorName, float newScore);
@@ -139,7 +150,10 @@ private:
 
   // This is the behavior to go back to after a reactionary behavior is completed
   IBehavior* _behaviorToResume = nullptr;
-    
+  
+  // module to store goals and decide which one we should be running
+  std::unique_ptr<AIGoalEvaluator> _goalEvaluator;
+  
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   std::unique_ptr<AIWhiteboard> _whiteboard;
 

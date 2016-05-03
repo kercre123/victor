@@ -75,15 +75,8 @@ std::string DataPlatform::pathToResource(const Scope& resourceScope, const std::
 // reads resource as json file. returns true if successful.
 bool DataPlatform::readAsJson(const Scope& resourceScope, const std::string& resourceName, Json::Value& data) const
 {
-  const std::string jsonFilename = pathToResource(resourceScope, resourceName);
-  std::ifstream jsonFile(jsonFilename);
-  Json::Reader reader;
-  bool success = reader.parse(jsonFile, data);
-  if(! success) {
-    PRINT_NAMED_ERROR("DataPlatform.readAsJson", "Failed to parse Json file %s.", resourceName.c_str());
-  }
-  jsonFile.close();
-  return success;
+  const std::string& jsonFilename = pathToResource(resourceScope, resourceName);
+  return readAsJson(jsonFilename, data);
 }
 
 // reads resource as json file. returns true if successful.
@@ -93,7 +86,10 @@ bool DataPlatform::readAsJson(const std::string& resourceName, Json::Value& data
   Json::Reader reader;
   bool success = reader.parse(jsonFile, data);
   if(! success) {
-    PRINT_NAMED_ERROR("DataPlatform.readAsJson", "Failed to parse Json file %s.", resourceName.c_str());
+    PRINT_NAMED_ERROR("DataPlatform.readAsJson",
+      "Failed to parse Json file %s. \n[%s]",
+        resourceName.c_str(),
+        reader.getFormattedErrorMessages().c_str());
   }
   jsonFile.close();
   return success;

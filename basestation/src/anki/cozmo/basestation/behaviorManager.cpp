@@ -15,6 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIGoalEvaluator.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
@@ -35,11 +36,14 @@ namespace Anki {
 namespace Cozmo {
   
 static const char* kChooserConfigKey = "chooserConfig";
+static const char* kGoalsConfigKey = "goalsConfig";
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorManager::BehaviorManager(Robot& robot)
   : _isInitialized(false)
   , _robot(robot)
   , _behaviorFactory(new BehaviorFactory())
+  , _goalEvaluator( new AIGoalEvaluator() )
   , _whiteboard( new AIWhiteboard(robot) )
 {
 }
@@ -54,8 +58,9 @@ BehaviorManager::~BehaviorManager()
   Util::SafeDelete(_demoChooser);
   Util::SafeDelete(_behaviorFactory);
 }
-  
-Result BehaviorManager::Init(const Json::Value &config)
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result BehaviorManager::InitConfiguration(const Json::Value &config)
 {
   BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Init.Initializing", "");
     
@@ -82,6 +87,11 @@ Result BehaviorManager::Init(const Json::Value &config)
       behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
     // AddReactionaryBehavior(
     //   behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
+  }
+  
+  {
+    const Json::Value& goalsConfig = config[kGoalsConfigKey];
+    _goalEvaluator->Init(_robot, goalsConfig);
   }
     
   // initialize whiteboard
@@ -128,6 +138,17 @@ Result BehaviorManager::Init(const Json::Value &config)
     
   return RESULT_OK;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result BehaviorManager::CreateBehaviorFromConfiguration(const Json::Value& behaviorJson)
+{
+  // try to create behavior, name should be unique here
+  IBehavior* newBehavior = _behaviorFactory->CreateBehavior(behaviorJson, _robot, BehaviorFactory::NameCollisionRule::Fail);
+  const Result ret = (nullptr != newBehavior) ? RESULT_OK : RESULT_FAIL;
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // The AddReactionaryBehavior wrapper is responsible for setting up the callbacks so that important events will be
 // reacted to correctly - events will be given to the Chooser which may return a behavior to force switch to
@@ -375,12 +396,6 @@ void BehaviorManager::StopCurrentBehavior()
   }
 }
 
-IBehavior* BehaviorManager::LoadBehaviorFromJson(const Json::Value& behaviorJson)
-{
-  IBehavior* newBehavior = _behaviorFactory->CreateBehavior(behaviorJson, _robot);
-  return newBehavior;
-}
-  
 void BehaviorManager::ClearAllBehaviorOverrides()
 {
   const BehaviorFactory::NameToBehaviorMap& nameToBehaviorMap = _behaviorFactory->GetBehaviorMap();

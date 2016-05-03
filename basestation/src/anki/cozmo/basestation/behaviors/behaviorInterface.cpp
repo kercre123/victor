@@ -33,12 +33,14 @@ const char* IBehavior::kBaseDefaultName = "no_name";
   
 static const char* kNameKey              = "name";
 static const char* kEmotionScorersKey    = "emotionScorers";
+static const char* kFlatScoreKey         = "flatScore";
 static const char* kRepetitionPenaltyKey = "repetitionPenalty";
 static const char* kBehaviorGroupsKey    = "behaviorGroups";
   
   
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   : _moodScorer()
+  , _flatScore(0.0f)
   , _robot(robot)
   , _startedRunningTime_s(0.0)
   , _lastRunTime_s(0.0)
@@ -63,11 +65,15 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::ReadFromJson(const Json::Value& config)
 {
   const Json::Value& nameJson = config[kNameKey];
   _name = nameJson.isString() ? nameJson.asCString() : kBaseDefaultName;
 
+  // - - - - - - - - - -
+  // Mood scorer
+  // - - - - - - - - - -
   _moodScorer.ClearEmotionScorers();
     
   const Json::Value& emotionScorersJson = config[kEmotionScorersKey];
@@ -75,7 +81,23 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   {
     _moodScorer.ReadFromJson(emotionScorersJson);
   }
-    
+  
+  // - - - - - - - - - -
+  // Flat score
+  // - - - - - - - - - -
+  
+  const Json::Value& flatScoreJson = config[kFlatScoreKey];
+  if (!flatScoreJson.isNull()) {
+    _flatScore = flatScoreJson.asFloat();
+  }
+  
+  // make sure we only set one scorer (flat or mood)
+  ASSERT_NAMED( flatScoreJson.isNull() || _moodScorer.IsEmpty(), "IBehavior.ReadFromJson.MultipleScorers" );
+  
+  // - - - - - - - - - -
+  // Repetition penalty
+  // - - - - - - - - - -
+  
   _repetitionPenalty.Clear();
     
   const Json::Value& repetitionPenaltyJson = config[kRepetitionPenaltyKey];
@@ -96,8 +118,10 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
     _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
   }
     
+  // - - - - - - - - - -
   // Behavior Groups
-    
+  // - - - - - - - - - -
+  
   ClearBehaviorGroups();
     
   const Json::Value& behaviorGroupsJson = config[kBehaviorGroupsKey];
@@ -230,22 +254,25 @@ double IBehavior::GetRunningDuration() const
   }
   return 0.0;
 }
-  
-float IBehavior::EvaluateEmotionScore(const MoodManager& moodManager) const
-{
-  return _moodScorer.EvaluateEmotionScore(moodManager);
-}
-  
+   
 // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
 float IBehavior::EvaluateScoreInternal(const Robot& robot) const
 {
-  return EvaluateEmotionScore(robot.GetMoodManager());
+  float score = _flatScore;
+  if ( !_moodScorer.IsEmpty() ) {
+    score = _moodScorer.EvaluateEmotionScore(robot.GetMoodManager());
+  }
+  return score;
 }
 
 // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
 float IBehavior::EvaluateRunningScoreInternal(const Robot& robot) const
 {
-  return EvaluateEmotionScore(robot.GetMoodManager());
+  float score = _flatScore;
+  if ( !_moodScorer.IsEmpty() ) {
+    score = _moodScorer.EvaluateEmotionScore(robot.GetMoodManager());
+  }
+  return score;
 }
   
 float IBehavior::EvaluateRepetitionPenalty() const
