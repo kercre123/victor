@@ -61,10 +61,14 @@ namespace FaceEnrollment {
       DAS.Debug("FaceEnrollmentGame.PlayFaceReactionAnimation", "Attempt to Play Face Reaction Animation - FaceId: " + faceId);
       CurrentRobot.PrepareFaceNameAnimation(faceId, _NameForFace);
       CurrentRobot.SendAnimation(_ReactionBank[Random.Range(0, _ReactionBank.Length)], HandleReactionDone);
+
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnLearnedPlayerName, HandleReactionDone);
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnLearnedPlayerName);
     }
 
     private void HandleReactionDone(bool success) {
       base.RaiseMiniGameQuit();
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnLearnedPlayerName, HandleReactionDone);
     }
 
     protected override void CleanUpOnDestroy() {
