@@ -685,7 +685,7 @@
       'conditions': [
         ['OS=="android"',{
           'sources/': [
-            ['exclude', 'radians|utilities_shared']
+            ['exclude', 'radians|utilities_shared|externalInterface']
           ]
         }],
       ], #'conditions'
@@ -711,7 +711,7 @@
       'conditions': [
         ['OS=="android"',{
           'sources/': [
-            ['exclude', 'utilMessaging']
+            ['exclude', 'utilMessaging|externalInterface|vision'], #TODO: COZMO-1271
           ]
         }],
       ], #'conditions'
