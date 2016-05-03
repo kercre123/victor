@@ -6,14 +6,6 @@ using UnityEngine.UI;
 namespace FaceEnrollment {
   public class FaceEnrollmentGame : GameBase {
 
-    private string[] _ReactionBank = {
-      AnimationName.kFaceEnrollmentReaction_00,
-      AnimationName.kFaceEnrollmentReaction_01,
-      AnimationName.kFaceEnrollmentReaction_02,
-      AnimationName.kFaceEnrollmentReaction_03,
-      AnimationName.kFaceEnrollmentReaction_04
-    };
-
     [SerializeField]
     private FaceEnrollmentEnterNameSlide _EnterNameSlidePrefab;
     private FaceEnrollmentEnterNameSlide _EnterNameSlideInstance;
