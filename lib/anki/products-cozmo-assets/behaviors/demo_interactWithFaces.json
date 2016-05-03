@@ -1,0 +1,31 @@
+{
+  "behaviorType": "InteractWithFaces",
+  "name": "demo_interactWithFaces",
+  "initial_take_anim_group": "interactWithFaces_initial",
+  "wait_anim_group": "interactWithFaces_squint",
+  "new_face_anim_group": "interactWithFaces_unenrolled",
+  "unenrolled_face_anim_group": "interactWithFaces_unenrolled",
+
+  "emotionScorers": [
+    {
+      "emotionType": "Social",
+      "scoreGraph": {
+        "nodes": [
+          {
+            "x": -1.0,
+            "y": 3.0
+          },
+          {
+            "x": 1.0,
+            "y": 3.0
+          }
+        ]
+      },
+      "trackDelta": false
+    }      
+  ],  
+  "behaviorGroups": [
+    "Demo",
+    "DemoFaces"
+  ]
+}

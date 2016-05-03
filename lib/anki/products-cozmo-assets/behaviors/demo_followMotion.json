@@ -1,6 +1,6 @@
 {
-  "behaviorType": "DemoFearEdge",
-  "name": "demo_fearEdge",
+  "behaviorType": "FollowMotion",
+  "name": "demo_FollowMotion",
   "emotionScorers": [
     {
       "emotionType": "Excited",
@@ -36,6 +36,7 @@
     ]
   },
   "behaviorGroups": [
-    "Demo"
+    "Demo",
+    "DemoFingerPounce"
   ]
 }
