@@ -39,6 +39,9 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   [SerializeField]
   private int numberCachedLogMaximum = 100;
 
+  private int kClipboardLogMaximum = 9000;
+
+  private Queue<LogPacket> _LogToClipboard;
   private Queue<LogPacket> _MostRecentLogs;
   private Queue<LogPacket> _ReceivedPackets;
 
@@ -55,6 +58,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
     _MostRecentLogs = new Queue<LogPacket>();
     _ReceivedPackets = new Queue<LogPacket>();
+    _LogToClipboard = new Queue<LogPacket>();
     _ConsoleLogPaneView = null;
 
     _LastToggleValues = new Dictionary<LogPacket.ELogKind, bool>();
@@ -82,6 +86,10 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
         _MostRecentLogs.Enqueue(newPacket);
         while (_MostRecentLogs.Count > numberCachedLogMaximum) {
           _MostRecentLogs.Dequeue();
+        }
+
+        while (_LogToClipboard.Count > kClipboardLogMaximum) {
+          _LogToClipboard.Dequeue();
         }
 
         // Update the UI, if it is open
@@ -173,6 +181,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     // This can be called from multiple threads while the main one is processing the received packets so we have to lock
     lock (_ReceivedPackets) {
       _ReceivedPackets.Enqueue(newPacket);
+      _LogToClipboard.Enqueue(newPacket);
     }
   }
 
@@ -200,10 +209,9 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void CopyLogsToClipboard() {
-    List<string> logDb = CompileRecentLogs();
     string logFull = "";
-    for (int i = 0; i < logDb.Count; ++i) {
-      logFull += logDb[i] + "\n";
+    foreach (LogPacket logPacket in _LogToClipboard) {
+      logFull += logPacket.ToString() + "\n";
     }
     CozmoBinding.SendToClipboard(logFull);
     GUIUtility.systemCopyBuffer = logFull;
