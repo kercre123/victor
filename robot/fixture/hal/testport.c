@@ -32,7 +32,7 @@
 //#define DEBUG_RECEIVE
 //#define DEBUG_TRANSMIT
 
-static __align(4) u8 m_globalBuffer[1024 * 5];
+static __align(4) u8 m_globalBuffer[1024 * 16];
 
 #define BUFFER_LENGTH (1024 + 8)
 static u8 m_buffer[BUFFER_LENGTH];

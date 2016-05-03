@@ -2,15 +2,18 @@
 #ifndef FIXTURE_H
 #define FIXTURE_H
 
-#define FIXTURE_CUBEFCC_TEST  13    // ID 4 + 3 + 1
-#define FIXTURE_CUBE3_TEST    7     // ID 3 + 2 + 1
-#define FIXTURE_CUBE2_TEST    6     // ID 3 + 2
-#define FIXTURE_CUBE1_TEST    5     // ID 3 + 1
-#define FIXTURE_CHARGER_TEST  4     // ID 3
-#define FIXTURE_HEAD_TEST     2     // ID 2
-#define FIXTURE_BODY_TEST     1     // ID 1
 #define FIXTURE_NONE          0     // No ID resistors
-  
+#define FIXTURE_BODY_TEST     1     // ID 1
+#define FIXTURE_HEAD_TEST     2     // ID 2  
+
+// Note:  The following accessory tests must be in order (charger, cube1, cube2, etc..) 
+#define FIXTURE_CHARGER_TEST  4     // ID 3
+#define FIXTURE_CUBE1_TEST    5     // ID 3 + 1
+#define FIXTURE_CUBE2_TEST    6     // ID 3 + 2
+#define FIXTURE_CUBE3_TEST    7     // ID 3 + 2 + 1
+
+#define FIXTURE_CUBEFCC_TEST  13    // ID 4 + 3 + 1
+
 #define FIXTURE_DEBUG         16
 
 typedef unsigned char FixtureType;
@@ -56,6 +59,8 @@ typedef enum
 #define ERROR_OUT_OF_SERIALS        10    // When the fixture itself runs out of 500,000 serial numbers
 
 #define ERROR_CUBE_ROM_OVERSIZE     11    // When you link a too-big cube ROM
+#define ERROR_CUBE_ROM_MISPATCH     12    // When you can't patch the cube ROM
+#define ERROR_SERIAL_INVALID        13    // When the serial number of this fixture exceeds 255, it can't make cubes!
 
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
