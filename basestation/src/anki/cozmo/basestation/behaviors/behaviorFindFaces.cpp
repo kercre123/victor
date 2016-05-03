@@ -32,7 +32,11 @@ static const char* kPauseMinSecKey = "minimum_pause_s";
 static const float kPauseMinSecDefault = 1.0f;
 static const char* kPauseMaxSecKey = "maximum_pause_s";
 static const float kPauseMaxSecDefault = 3.5f;
-
+static const char* kMinScoreWhileActiveKey = "min_score_while_active";
+static const float kMinScoreWhileActiveDefault = 0.0f;
+static const char* kStopOnAnyFaceKey = "stop_on_any_face";
+static const float kStopOnAnyFaceDefault = false;
+  
 #define DISABLE_IDLE_DURING_FIND_FACES 0
 
 using namespace ExternalInterface;
@@ -49,6 +53,8 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   _minimumTimeSinceSeenLastFace_sec = config.get(kMinimumFaceAgeKey, kMinimumFaceAgeDefault).asDouble();
   _pauseMin_s = config.get(kPauseMinSecKey, kPauseMinSecDefault).asFloat();
   _pauseMax_s = config.get(kPauseMaxSecKey, kPauseMaxSecDefault).asFloat();
+  _minScoreWhileActive = config.get(kMinScoreWhileActiveKey, kMinScoreWhileActiveDefault).asFloat();
+  _stopOnAnyFace = config.get(kStopOnAnyFaceKey, kStopOnAnyFaceDefault).asBool();
 
   if(DEBUG_BEHAVIOR_FIND_FACES_CONFIG) {
     Json::Value debugOutput;
@@ -83,12 +89,13 @@ float BehaviorFindFaces::EvaluateScoreInternal(const Anki::Cozmo::Robot &robot) 
 {
   Pose3d facePose;
   auto lastFaceTime = robot.GetFaceWorld().GetLastObservedFace(facePose);
-  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  // can't compare current basestation time with robot timestamp, so get last image timestamp from robot
+  auto currRobotTime = robot.GetLastMsgTimestamp();
 
   if (_currentState != State::Inactive ||
       lastFaceTime == 0 ||
-      lastFaceTime < SEC_TO_MILIS(currentTime_sec - _minimumTimeSinceSeenLastFace_sec))
-  {
+      lastFaceTime < currRobotTime + SEC_TO_MILIS(_minimumTimeSinceSeenLastFace_sec)) {
     return IBehavior::EvaluateScoreInternal(robot);
   }
   
@@ -103,12 +110,18 @@ float BehaviorFindFaces::EvaluateRunningScoreInternal(const Robot& robot) const
   auto lastFaceTime_ms = robot.GetFaceWorld().GetLastObservedFace(facePose);
   double lastFaceTime_s = MILIS_TO_SEC(lastFaceTime_ms);
 
-  if( lastFaceTime_s > startTime_s ) {
+  if( _stopOnAnyFace && lastFaceTime_s > startTime_s ) {
     // once this behavior finds a face, it doesn't want to run any more
     return 0.0f;
-  }
+  }  
   else {
-    return super::EvaluateRunningScoreInternal(robot);
+
+    float minScore = 0;
+    if( _currentState != State::Inactive ) {
+      minScore = _minScoreWhileActive;
+    }
+    
+    return std::max(minScore, super::EvaluateRunningScoreInternal(robot));
   }
 }
   
