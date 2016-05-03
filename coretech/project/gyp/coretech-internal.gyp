@@ -20,6 +20,7 @@
     'common_shared_test_source': 'common-shared-test.lst',
     'common_robot_source': 'common-robot.lst',
     'vision_source': 'vision.lst',
+    'vision_clad': 'vision-clad.lst',
     'vision_test_source': 'vision-test.lst',
     'vision_robot_source': 'vision-robot.lst',
     'planning_source': 'planning.lst',
@@ -100,7 +101,7 @@
       }],
       ['OS=="android"', {
         'target_archs%': ['armveabi-v7a'],
-	'target_cpu': ['arm'],
+       	'target_cpu': ['arm'],
         'compiler_flags': [
           '--sysroot=<(ndk_root)/platforms/android-18/arch-arm',
           '-DANDROID=1',
@@ -717,7 +718,8 @@
       'include_dirs': [
         '../../messaging/basestation/src',
         '../../messaging/include',
-        '../../../generated/clad/engine',
+        '../../generated/clad/vision',
+        '../../../generated/clad/engine', # TODO: Fix. Reaches out to engine :-(
       ],
       'direct_dependent_settings': {
         'include_dirs': [
@@ -802,11 +804,14 @@
     },
     {
       'target_name': 'ctiVision',
-      'sources': [ '<!@(cat <(vision_source))' ],
+      'sources': [
+        '<!@(cat <(vision_source))',
+        '<!@(cat <(vision_clad))',
+      ],
       'include_dirs': [
         '../../vision/basestation/src',
         '../../vision/include',
-        '../../../generated/clad/engine', # NOTE: Reaching out of coretech internal into cozmo! :-(
+        '../../generated/clad/vision',
         '<@(opencv_includes)',
         '<(coretech_external_path)/matconvnet/matlab/src/bits',
         '<@(face_library_includes)',

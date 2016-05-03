@@ -1441,6 +1441,14 @@ namespace Cozmo {
     
   }
   
+  inline static size_t GetPaddedNumBytes(size_t numBytes)
+  {
+    // Pad to a multiple of 4 for NVStorage
+    const size_t paddedNumBytes = (numBytes + 3) & ~0x03;
+    ASSERT_NAMED(paddedNumBytes % 4 == 0, "EnrolledFaceEntry.Serialize.PaddedSizeNotMultipleOf4");
+    
+    return paddedNumBytes;
+  }
   
   Result VisionComponent::SaveFaceAlbumToRobot()
   {
@@ -1458,6 +1466,10 @@ namespace Cozmo {
       PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.EmptyAlbumData", "");
       return RESULT_OK;
     }
+    
+    // Pad to a multiple of 4 for NVStorage
+    _albumData.resize(GetPaddedNumBytes(_albumData.size()));
+    _enrollData.resize(GetPaddedNumBytes(_enrollData.size()));
     
     // If one of the data is not empty, neither should be (we can't have album data with
     // no enroll data or vice versa)
