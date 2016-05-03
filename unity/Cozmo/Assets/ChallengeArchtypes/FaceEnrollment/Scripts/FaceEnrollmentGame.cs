@@ -15,12 +15,11 @@ namespace FaceEnrollment {
     };
 
     [SerializeField]
-    private FaceEnrollmentEnterNameView _EnterNameViewPrefab;
-    private FaceEnrollmentEnterNameView _EnterNameViewInstance;
+    private FaceEnrollmentEnterNameSlide _EnterNameSlidePrefab;
+    private FaceEnrollmentEnterNameSlide _EnterNameSlideInstance;
 
     [SerializeField]
-    private FaceEnrollmentInstructionsView _EnrollmentInstructionsViewPrefab;
-    private FaceEnrollmentInstructionsView _EnrollmentInstructionsViewInstance;
+    private FaceEnrollmentInstructionsSlide _EnrollmentInstructionsSlidePrefab;
 
     private bool _AttemptedEnrollFace = false;
 
@@ -34,18 +33,14 @@ namespace FaceEnrollment {
       base.InitializeView(newView, data);
 
       // create enter name dialog
-      _EnterNameViewInstance = UIManager.OpenView(_EnterNameViewPrefab, verticalCanvas: true);
-      _EnterNameViewInstance.OnNameEntered += HandleNameEntered;
+      _EnterNameSlideInstance = newView.ShowWideGameStateSlide(_EnterNameSlidePrefab.gameObject, "enter_name_slide").GetComponent<FaceEnrollmentEnterNameSlide>();
+      _EnterNameSlideInstance.OnNameEntered += HandleNameEntered;
     }
 
     private void HandleNameEntered(string name) {
-      UIManager.CloseView(_EnterNameViewInstance);
-      _EnterNameViewInstance = null;
-
       _NameForFace = name;
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.LookingStraight);
-      _EnrollmentInstructionsViewInstance = UIManager.OpenView(_EnrollmentInstructionsViewPrefab, verticalCanvas: true);
-
+      SharedMinigameView.ShowWideGameStateSlide(_EnrollmentInstructionsSlidePrefab.gameObject, "enrollment_instructions_slide").GetComponent<FaceEnrollmentInstructionsSlide>();
     }
 
     private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
@@ -54,10 +49,7 @@ namespace FaceEnrollment {
         return;
       }
 
-      if (_EnrollmentInstructionsViewInstance != null) {
-        UIManager.CloseView(_EnrollmentInstructionsViewInstance);
-        _EnrollmentInstructionsViewInstance = null;
-      }
+      SharedMinigameView.HideGameStateSlide();
 
       CurrentRobot.AssignNameToFace(id, _NameForFace);
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
@@ -77,12 +69,7 @@ namespace FaceEnrollment {
 
     protected override void CleanUpOnDestroy() {
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
-      if (_EnterNameViewInstance != null) {
-        UIManager.CloseView(_EnterNameViewInstance);
-      }
-      if (_EnrollmentInstructionsViewInstance != null) {
-        UIManager.CloseView(_EnrollmentInstructionsViewInstance);
-      }
+      SharedMinigameView.HideGameStateSlide();
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
     }
 

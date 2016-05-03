@@ -10,7 +10,7 @@ GameObject:
   - 4: {fileID: 462984}
   - 114: {fileID: 11410604}
   m_Layer: 0
-  m_Name: FaceEnrollment
+  m_Name: FaceEnrollmentGame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -40,9 +40,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CubeIdsForGame: 
-  _EnterNameViewPrefab: {fileID: 11431490, guid: e9fb59d52d3f64ef2825d07f7ed56372,
+  _EnterNameSlidePrefab: {fileID: 11431490, guid: e9fb59d52d3f64ef2825d07f7ed56372,
     type: 2}
-  _EnrollmentInstructionsViewPrefab: {fileID: 11497634, guid: 7e9bf5b75a9614ab8ad9e0a0a15da855,
+  _EnrollmentInstructionsSlidePrefab: {fileID: 11497634, guid: 7e9bf5b75a9614ab8ad9e0a0a15da855,
     type: 2}
 --- !u!1001 &100100000
 Prefab:
@@ -280,6 +280,16 @@ Prefab:
         type: 2}
     - target: {fileID: 0}
       propertyPath: _EnrollmentInstructionsViewPrefab
+      value: 
+      objectReference: {fileID: 11497634, guid: 7e9bf5b75a9614ab8ad9e0a0a15da855,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _EnterNameSlidePrefab
+      value: 
+      objectReference: {fileID: 11431490, guid: e9fb59d52d3f64ef2825d07f7ed56372,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _EnrollmentInstructionsSlidePrefab
       value: 
       objectReference: {fileID: 11497634, guid: 7e9bf5b75a9614ab8ad9e0a0a15da855,
         type: 2}

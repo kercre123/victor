@@ -183,14 +183,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 133816}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ad0092d5794214a7b8c901fcb75df7af, type: 3}
+  m_Script: {fileID: 11500000, guid: cea4e3233ed854fceb7ece07c2742816, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DASEventViewName: 
-  _DASEventViewType: 0
-  _CloseDialogOnTapOutside: 0
-  _OptionalCloseDialogButton: {fileID: 0}
-  DimBackground: 0
   _SubmitName: {fileID: 11433796}
   _NameInputField: {fileID: 11493992}
 --- !u!114 &11433796
@@ -418,7 +413,7 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -342}
+  m_AnchoredPosition: {x: 0, y: -212}
   m_SizeDelta: {x: 1000, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22440248

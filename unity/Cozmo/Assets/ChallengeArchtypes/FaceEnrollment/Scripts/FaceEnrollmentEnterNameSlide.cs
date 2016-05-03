@@ -2,7 +2,7 @@
 using System.Collections;
 using Cozmo.UI;
 
-public class FaceEnrollmentEnterNameView : BaseView {
+public class FaceEnrollmentEnterNameSlide : MonoBehaviour {
 
   public System.Action<string> OnNameEntered;
 
@@ -20,9 +20,5 @@ public class FaceEnrollmentEnterNameView : BaseView {
     if (OnNameEntered != null) {
       OnNameEntered(_NameInputField.text);
     }
-  }
-
-  protected override void CleanUp() {
-    
   }
 }
