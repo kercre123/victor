@@ -276,6 +276,18 @@
       ],
     }, # end mexFaceDetect
     
+    {
+      'target_name': 'mexCLAHE',
+      'sources': [
+        '../../matlab/mex/mexCLAHE.cpp',
+        '<@(common_mex_sources)',
+      ],
+      'dependencies': [
+        '<(ce-cti_gyp_path):ctiVision',
+        '<(ce-cti_gyp_path):ctiCommon',
+        '<(ce-util_gyp_path):util',
+      ],
+    }, # end mexCLAHE
 
   ] # end targets
 
