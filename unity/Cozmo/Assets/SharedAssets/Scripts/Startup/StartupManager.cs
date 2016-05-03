@@ -51,13 +51,15 @@ public class StartupManager : MonoBehaviour {
 
   private bool _IsDebugBuild = false;
 
+  private Coroutine _UpdateDotsCoroutine;
+
   // Use this for initialization
   private IEnumerator Start() {
     // Start loading bar at close to 0
     _CurrentProgress = 0.05f;
     _LoadingBar.SetProgress(_CurrentProgress);
     _CurrentNumDots = 0;
-    StartCoroutine(UpdateLoadingDots());
+    _UpdateDotsCoroutine = StartCoroutine(UpdateLoadingDots());
 
     // Load asset bundler
     AssetBundleManager.IsLogEnabled = true;
@@ -96,7 +98,7 @@ public class StartupManager : MonoBehaviour {
     _LoadingBar.SetProgress(1.0f);
 
     // Load main scene
-    StopAllCoroutines();
+    StopCoroutine(_UpdateDotsCoroutine);
     LoadMainScene(assetBundleManager);
   }
 
