@@ -70,6 +70,9 @@
 namespace Anki {
 namespace Cozmo {
   
+  CONSOLE_VAR(bool, kUseCLAHE, "Vision.PreProcessing", true);
+  CONSOLE_VAR(s32, kClaheClipLimit, "Vision.PreProcessing", 4);
+  
   CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
   CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
   
@@ -94,6 +97,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   , _dataPath(dataPath)
   , _faceTracker(nullptr)
   , _vizManager(vizMan)
+  , _clahe(cv::createCLAHE())
   {
     PRINT_NAMED_INFO("VisionSystem.Constructor", "");
    
@@ -2258,6 +2262,8 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
     _isCalibrating = false;
     
+    _clahe->setClipLimit(kClaheClipLimit);
+    
     _isInitialized = true;
     
     return result;
@@ -2423,7 +2429,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   
   // This is the regular Update() call
   Result VisionSystem::Update(const VisionPoseData&      poseData,
-                              const Vision::ImageRGB&    inputImage)
+                              const Vision::ImageRGB&    origImage)
   {
     Result lastResult = RESULT_OK;
     
@@ -2449,6 +2455,14 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     lastResult = UpdateMarkerToTrack();
     AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                        "VisionSystem::Update()", "UpdateMarkerToTrack failed.\n");
+    
+    // Apply CLAHE:
+    Vision::ImageRGB inputImage;
+    if(kUseCLAHE) {
+      _clahe->apply(origImage.get_CvMat_(), inputImage.get_CvMat_());
+    } else {
+      inputImage = origImage;
+    }
     
     // Lots of the processing below needs a grayscale version of the image:
     //const Vision::Image inputImageGray = inputImage.ToGray();
