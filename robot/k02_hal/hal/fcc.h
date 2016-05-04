@@ -6,7 +6,8 @@ namespace Anki {
     namespace HAL {
       namespace FCC {
         void start(void);
-        void mainExecution(void);
+        void mainDTMExecution(void);
+        void mainLEDExecution(void);
       }
     }
   }

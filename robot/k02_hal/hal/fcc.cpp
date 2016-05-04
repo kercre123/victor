@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "fcc.h"
 #include "oled.h"
 #include "anki/cozmo/robot/hal.h"
@@ -91,7 +93,8 @@ void Anki::Cozmo::HAL::FCC::start(void) {
 }
 
 
-void Anki::Cozmo::HAL::FCC::mainExecution(void) {
+
+void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
   // If the motors are not going crazy, use wheel positions for
   // selecting things
   if (!DTM_MODE[current_mode].motor_drive) {
@@ -122,4 +125,46 @@ void Anki::Cozmo::HAL::FCC::mainExecution(void) {
   }
 
   runTest(current_mode);
+}
+
+struct LightEnable {
+  int index;
+  uint16_t color;
+};
+
+static const LightEnable lights[] = {
+  { 0, 0x7FFF },
+  { 1, 0x001F },
+  { 1, 0x03E0 },
+  { 1, 0x7C00 },
+  { 2, 0x001F },
+  { 2, 0x03E0 },
+  { 2, 0x7C00 },
+  { 3, 0x001F },
+  { 3, 0x03E0 },
+  { 3, 0x7C00 },
+  { 4, 0x7FFF }
+};
+static int NUM_LIGHTS = sizeof(lights) / sizeof(LightEnable);
+
+void Anki::Cozmo::HAL::FCC::mainLEDExecution(void) {
+  // Select a color
+  static int color = - 1;
+  int select = (g_dataToHead.positions[0] >> 10) % NUM_LIGHTS;
+ 
+  if (select == color) { return ; }
+  color = select;
+  
+  // Tell the body to change it's colors
+  Anki::Cozmo::RobotInterface::BackpackLights msg;
+
+  memset(&msg, 0, sizeof(msg));
+
+  int idx = lights[color].index;
+  uint16_t clr = lights[color].color;
+  
+  msg.lights[idx].onColor = clr;
+  msg.lights[idx].offColor = clr;
+
+  SendMessage(msg);
 }
