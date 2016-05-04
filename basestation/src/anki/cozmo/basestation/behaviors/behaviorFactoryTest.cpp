@@ -141,6 +141,9 @@ namespace Cozmo {
     if (robot.GetBehaviorManager().GetWhiteboard().IsCliffReactionEnabled()) {
       robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
     }
+    
+    // Disable keep face alive animation
+    robot.GetAnimationStreamer().SetParam(Anki::Cozmo::LiveIdleAnimationParameter::EnableKeepFaceAlive, 0);
 
     return lastResult;
   } // Init()
@@ -447,6 +450,7 @@ namespace Cozmo {
                                                               true);
             ptAction->SetMaxPanSpeed(_motionProfile.pointTurnSpeed_rad_per_sec);
             ptAction->SetPanAccel(_motionProfile.pointTurnAccel_rad_per_sec2);
+            ptAction->SetMoveEyes(false);
             StartActing(robot, ptAction);
             ++_camCalibPoseIndex;
           } else {
