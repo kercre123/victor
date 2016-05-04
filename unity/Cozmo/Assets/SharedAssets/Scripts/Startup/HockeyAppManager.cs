@@ -13,12 +13,14 @@ public class HockeyAppManager : MonoBehaviour {
   private const int kMaxChars = 199800;
 
   private string _AppID = null;
-  #if (UNITY_IPHONE && !UNITY_EDITOR)
+  #if (!UNITY_EDITOR)
   private string _BundleIdentifier;
   private string _VersionCode;
   private string _VersionName;
   private string _SDKVersion;
   private string _SDKName;
+  private string _DeviceID;
+  private string _AppRun;
   #endif
   private void HandleDebugConsoleCrashFromUnityButton(System.Object setvar) {
     DAS.Event("HockeAppManager.ForceDebugCrash", "HockeAppManager.ForceDebugCrash");
@@ -31,21 +33,17 @@ public class HockeyAppManager : MonoBehaviour {
 
   void OnEnable() {
     
-    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    #if (!UNITY_EDITOR)
     System.AppDomain.CurrentDomain.UnhandledException += OnHandleUnresolvedException;
     Application.logMessageReceived += OnHandleLogCallback;
     #endif
 
-    // Crashing is useful in all platforms.
-    Anki.Cozmo.ExternalInterface.DebugConsoleVar consoleVar = new Anki.Cozmo.ExternalInterface.DebugConsoleVar();
-    consoleVar.category = "Debug";
-    consoleVar.varName = "Crash From Unity";
-    consoleVar.varValue.varFunction = "CrashFromUnityFunc";
-    DebugConsoleData.Instance.AddConsoleVar(consoleVar, this.HandleDebugConsoleCrashFromUnityButton);
+    // Exception Testing is useful in all platforms.
+    DebugConsoleData.Instance.AddConsoleFunctionUnity("Unity Exception", "Debug", HandleDebugConsoleCrashFromUnityButton);
   }
 
   void OnDisable() {
-    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    #if (!UNITY_EDITOR)
     System.AppDomain.CurrentDomain.UnhandledException -= OnHandleUnresolvedException;
     Application.logMessageReceived -= OnHandleLogCallback;
     #endif
@@ -57,7 +55,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// <returns>A list which contains the header fields for a log file.</returns>
   private List<string> GetLogHeaders() {
     List<string> list = new List<string>();
-    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    #if (!UNITY_EDITOR)
     list.Add("Package: " + _BundleIdentifier);
     list.Add("Version Code: " + _VersionCode);
     list.Add("Version Name: " + _VersionName);
@@ -66,6 +64,8 @@ public class HockeyAppManager : MonoBehaviour {
     list.Add(osVersion);
     list.Add("Model: " + SystemInfo.deviceModel);
     list.Add("Date: " + System.DateTime.UtcNow.ToString("ddd MMM dd HH:mm:ss {}zzzz yyyy").Replace("{}", "GMT").ToString());
+    list.Add("device: " + _DeviceID);
+    list.Add("apprun: " + _AppRun);
     #endif
     
     return list;
@@ -79,7 +79,7 @@ public class HockeyAppManager : MonoBehaviour {
   private WWWForm CreateForm(string log) {
     
     WWWForm form = new WWWForm();
-    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    #if (!UNITY_EDITOR)
     byte[] bytes = null;
     using (FileStream fs = File.OpenRead(log)) {
       if (fs.Length > kMaxChars) {
@@ -134,7 +134,7 @@ public class HockeyAppManager : MonoBehaviour {
 
     List<string> logs = new List<string>();
 
-    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    #if (!UNITY_EDITOR)
     string logsDirectoryPath = Application.persistentDataPath + "/" + kLogFileDir;
 
     try {
@@ -172,7 +172,7 @@ public class HockeyAppManager : MonoBehaviour {
 
     string crashPath = kHockeyAppCrashesPath;
     string url = kHockeyAppBaseUrl + crashPath.Replace("[APPID]", _AppID);
-    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    #if (!UNITY_EDITOR)
     if (_SDKName != null && _SDKVersion != null) {
       url += "?sdk=" + WWW.EscapeURL(_SDKName) + "&sdk_version=" + _SDKVersion;
     }
@@ -206,7 +206,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// <param name="logString">A string that contains the reason for the exception.</param>
   /// <param name="stackTrace">The stacktrace for the exception.</param>
   private void WriteLogToDisk(string logString, string stackTrace) {
-    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    #if (!UNITY_EDITOR)
     DAS.Debug("game.log.write_log_to_disk", "logString: " + logString + " \n stackTrace: " + stackTrace);
     string logSession = System.DateTime.Now.ToString("yyyy-MM-dd-HH_mm_ss_fff");
     string log = logString.Replace("\n", " ");
@@ -238,9 +238,10 @@ public class HockeyAppManager : MonoBehaviour {
     #endif
   }
 
+  // Called directly from engine in hockeyApp.mm but in the game project.
   public void UploadUnityCrashInfo(string hockey_params) {
-    // params are appId, versionCode, versionName, budleIdentifier, sdkversion, sdkname
-    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    // params are appId, versionCode, versionName, budleIdentifier, sdkversion, sdkname, anki device id, anki app run
+    #if (!UNITY_EDITOR)
     char[] delimiterChars = { ',' };
     string[] split_params = hockey_params.Split(delimiterChars);
     _AppID = split_params[0];
@@ -249,7 +250,9 @@ public class HockeyAppManager : MonoBehaviour {
     _BundleIdentifier = split_params[3];
     _SDKVersion = split_params[4];
     _SDKName = split_params[5];
-   
+    _DeviceID = split_params[6];
+    _AppRun = split_params[7];
+
     if ((Application.internetReachability == NetworkReachability.ReachableViaLocalAreaNetwork ||
         (Application.internetReachability == NetworkReachability.ReachableViaCarrierDataNetwork))) {
       DAS.Event("HockeAppManager.UploadUnityCrashInfo.Connected", "HockeAppManager.UploadUnityCrashInfo.Connected");
@@ -271,7 +274,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// <param name="stackTrace">The stacktrace for the exception.</param>
   private void HandleException(string logString, string stackTrace) {
     DAS.Event("HockeAppManager.HandleException", "HockeAppManager.HandleException");
-    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    #if (!UNITY_EDITOR)
     WriteLogToDisk(logString, stackTrace);
     #endif
   }
@@ -284,7 +287,7 @@ public class HockeyAppManager : MonoBehaviour {
   /// <param name="type">The type of the log message.</param>
   private void OnHandleLogCallback(string logString, string stackTrace, LogType type) {
     DAS.Event("HockeAppManager.OnHandleLogCallback", "HockeAppManager.OnHandleLogCallback");
-    #if (UNITY_IPHONE && !UNITY_EDITOR)
+    #if (!UNITY_EDITOR)
     if (LogType.Assert == type || LogType.Exception == type || LogType.Error == type) { 
       HandleException(logString, stackTrace);
     }   
