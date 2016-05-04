@@ -2621,6 +2621,16 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
+    //    // DEBUG!
+    //    Vision::Image image;
+    //    //image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_151585ms_0.jpg");
+    //    image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_251585ms_1.jpg");
+    //    if(image.IsEmpty()) {
+    //      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ReadImageFileFail", "");
+    //      return RESULT_FAIL;
+    //    }
+    //    _clahe->apply(image.get_CvMat_(), image.get_CvMat_());
+    
     ToolCodeInfo readToolCodeMessage;
     readToolCodeMessage.code = ToolCode::UnknownTool;
     
@@ -2700,6 +2710,8 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     // Tool code calibration dot parameters
     const f32 kDotWidth_mm = 2.5f;
     const f32 kDotHole_mm  = 2.5f/3.f;
+    const s32 kBinarizeKernelSize = 11;
+    const f32 kBinarizeKernelSigma = 7.f;
     const f32 kDotAreaFrac = ((kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) /
                               (4.f*kCalibDotSearchSize_mm * kCalibDotSearchSize_mm));
     const f32 kMinDotAreaFrac   = 0.5f * kDotAreaFrac;
@@ -2756,7 +2768,8 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       
       // Perform local binarization:
       Vision::Image dotRoi_blurred;
-      cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(), cv::Size(15,15), 11);
+      cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(),
+                       cv::Size(kBinarizeKernelSize,kBinarizeKernelSize), kBinarizeKernelSigma);
       Vision::Image binarizedDotRoi(dotRoi.GetNumRows(), dotRoi.GetNumCols());
       binarizedDotRoi.get_CvMat_() = dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_();
       
