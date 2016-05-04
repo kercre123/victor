@@ -15,6 +15,8 @@ public class PressHubWorld : HubWorldBase {
   private PressDemoView _PressDemoViewPrefab;
   private PressDemoView _PressDemoViewInstance;
 
+  private bool _ForceProgressWhenOver = false;
+
   public override bool LoadHubWorld() {
 
     _PressDemoViewInstance = UIManager.OpenView(_PressDemoViewPrefab);
@@ -38,15 +40,20 @@ public class PressHubWorld : HubWorldBase {
 
   private void StartFaceEnrollmentActivity() {
     DAS.Debug(this, "Starting Face Enrollment Activity");
-    PlayMinigame(_FaceEnrollmentChallengeData);
+    PlayMinigame(_FaceEnrollmentChallengeData, false);
   }
 
   private void StartSpeedTapGame(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
     DAS.Debug(this, "Starting Speed Tap Game");
-    PlayMinigame(_SpeedTapChallengeData);
+    PlayMinigame(_SpeedTapChallengeData, true);
   }
 
-  private void PlayMinigame(ChallengeData challengeData) {
+  private void PlayMinigame(ChallengeData challengeData, bool forceProgressWhenOver) {
+    _ForceProgressWhenOver = forceProgressWhenOver;
+
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
+    RobotEngineManager.Instance.CurrentRobot.SetEnableBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+
     GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
     _MiniGameInstance.InitializeMinigame(challengeData);
@@ -61,7 +68,11 @@ public class PressHubWorld : HubWorldBase {
 
   private void HandleMiniGameQuit() {
     DAS.Debug(this, "activity ended so force transitioning to the next thing");
-    RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+    if (_ForceProgressWhenOver) {
+      RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
+    }
+
   }
 
 }
