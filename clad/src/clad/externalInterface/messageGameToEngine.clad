@@ -26,6 +26,8 @@
 #include "clad/types/visionModes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/faceEnrollmentModes.clad"
+#include "clad/types/sayTextStyles.clad"
+#include "clad/types/gameEvent.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -448,12 +450,6 @@ message AssignNameToFace {
   string name
 }
 
-message PrepareFaceNameAnimation {
-  int_32 faceID,
-  string name
-  // Add playback properties: length, pitch, etc.
-}
-
 // Set the face enrollment mode
 message SetFaceEnrollmentMode {
   Vision::FaceEnrollmentMode mode
@@ -596,6 +592,13 @@ message EnableRobotPickupParalysis
 // ReadToolCode
 message ReadToolCode {
 
+}
+
+// SayText
+message SayText {
+    string       text,
+    GameEvent    playEvent,
+    SayTextStyle style  // "How" to say the text
 }
 
 // PlayAnimation
@@ -760,7 +763,8 @@ union RobotActionUnion {
   Wait                      wait,
   MountCharger              mountCharger,
   TurnTowardsLastFacePose   turnTowardsLastFacePose,
-  ReadToolCode              readToolCode
+  ReadToolCode              readToolCode, 
+  SayText                   sayText
 }
 
 // QueueSingleAction
