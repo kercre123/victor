@@ -6,14 +6,6 @@ using UnityEngine.UI;
 namespace FaceEnrollment {
   public class FaceEnrollmentGame : GameBase {
 
-    private string[] _ReactionBank = {
-      AnimationName.kFaceEnrollmentReaction_00,
-      AnimationName.kFaceEnrollmentReaction_01,
-      AnimationName.kFaceEnrollmentReaction_02,
-      AnimationName.kFaceEnrollmentReaction_03,
-      AnimationName.kFaceEnrollmentReaction_04
-    };
-
     [SerializeField]
     private FaceEnrollmentEnterNameSlide _EnterNameSlidePrefab;
     private FaceEnrollmentEnterNameSlide _EnterNameSlideInstance;
@@ -27,6 +19,7 @@ namespace FaceEnrollment {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
+      RobotEngineManager.Instance.OnRobotEnrolledFace += HandleEnrolledFace;
     }
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -53,25 +46,32 @@ namespace FaceEnrollment {
 
       CurrentRobot.AssignNameToFace(id, _NameForFace);
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
-      PlayFaceReactionAnimation(id);
+      RobotEngineManager.Instance.OnRobotEnrolledFace += HandleEnrolledFace;
       _AttemptedEnrollFace = true;
+    }
+
+    private void HandleEnrolledFace(Anki.Cozmo.ExternalInterface.RobotEnrolledFace message) {
+      PlayFaceReactionAnimation(message.faceID);
     }
 
     private void PlayFaceReactionAnimation(int faceId) {
       DAS.Debug("FaceEnrollmentGame.PlayFaceReactionAnimation", "Attempt to Play Face Reaction Animation - FaceId: " + faceId);
-      // TODO: Implement the Action that has been added to replace the PrepareFaceNameAnimation message which has been deprecated
-      //CurrentRobot.PrepareFaceNameAnimation(faceId, _NameForFace);
-      CurrentRobot.SendAnimation(_ReactionBank[Random.Range(0, _ReactionBank.Length)], HandleReactionDone);
+
+      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnLearnedPlayerName, HandleReactionDone);
+      GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnLearnedPlayerName);
     }
 
     private void HandleReactionDone(bool success) {
       base.RaiseMiniGameQuit();
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnLearnedPlayerName, HandleReactionDone);
     }
 
     protected override void CleanUpOnDestroy() {
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
       SharedMinigameView.HideGameStateSlide();
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
+      RobotEngineManager.Instance.OnRobotEnrolledFace -= HandleEnrolledFace;
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnLearnedPlayerName, HandleReactionDone);
     }
 
   }
