@@ -15,6 +15,7 @@
 #ifndef __Basestation_Audio_AudioWaveFileReader_H__
 #define __Basestation_Audio_AudioWaveFileReader_H__
 
+#include "anki/cozmo/basestation/audio/standardWaveDataContainer.h"
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 #include <cstdint>
@@ -30,54 +31,6 @@ class AudioWaveFileReader {
   
 public:
   
-  // Define a audio data in a standard form
-  struct StandardWaveDataContainer
-  {
-    uint32_t sampleRate       = 0;
-    uint16_t numberOfChannels = 0;
-    float    duration_ms      = 0.0;
-    size_t   bufferSize       = 0;
-    float*   audioBuffer      = nullptr;
-    
-    StandardWaveDataContainer( uint32_t sampleRate,
-                               uint16_t numberOfChannels,
-                               float    duration_ms,
-                               size_t   bufferSize = 0 ) :
-      sampleRate( sampleRate ),
-      numberOfChannels( numberOfChannels ),
-      duration_ms( duration_ms )
-    {
-      if ( bufferSize > 0 ) {
-        CreateDataBuffer( bufferSize );
-      }
-    }
-    
-    ~StandardWaveDataContainer()
-    {
-      Util::SafeDeleteArray(audioBuffer);
-    }
-    
-    // Allocate nessary memory for audio buffer
-    bool CreateDataBuffer(const size_t size)
-    {
-      ASSERT_NAMED( audioBuffer == nullptr, "Can NOT allocate memory, Audio Buffer is not NULL" );
-      ASSERT_NAMED( size > 0, "Must set buffer size" );
-      
-      audioBuffer = new (std::nothrow) float[size];
-      if ( audioBuffer == nullptr ) {
-        return false;
-      }
-      
-      bufferSize = size;
-      return true;
-    }
-    
-    // Cheic there is an audio buffer
-    bool HasBuffer()
-    {
-      return ( (bufferSize > 0) && (audioBuffer != nullptr) );
-    }
-  };
   
   ~AudioWaveFileReader();
   

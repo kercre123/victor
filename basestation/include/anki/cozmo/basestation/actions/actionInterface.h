@@ -239,8 +239,7 @@ namespace Anki {
     private:
       
       bool          _preconditionsMet;
-      f32           _waitUntilTime;
-      f32           _timeoutTime;
+      f32           _startTime_sec;
       
     }; // class IAction
     

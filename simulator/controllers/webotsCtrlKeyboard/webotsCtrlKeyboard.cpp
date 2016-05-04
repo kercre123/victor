@@ -294,6 +294,7 @@ namespace Anki {
         printf("      Search side to side action:  Shift+l\n");
         printf("    Toggle cliff sensor handling:  Alt+l\n");
         printf("                 Next Demo State:  j\n");
+        printf("            Start Demo (hasEdge):  Shift+j\n");
         printf("      Play 'animationToSendName':  Shift+6\n");
         printf("  Set idle to'idleAnimationName':  Shift+Alt+6\n");
         printf("     Update Viz origin alignment:  ` <backtick>\n");
@@ -1070,14 +1071,6 @@ namespace Anki {
                     printf("ERROR: could not convert string '%s' to valid behavior chooser type\n",
                            behaviorChooserName.c_str());
                     break;
-                  }
-
-                  // before we send the behavior chooser, also send the demo "has edge" so that if we are
-                  // testing the demo, we will have an updated value here
-                  webots::Field* hasEdgeField = root_->getField("demoHasEdge");
-                  if( hasEdgeField != nullptr ) {
-                    bool hasEdge = hasEdgeField->getSFBool();
-                    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::StartDemoWithEdge(hasEdge)));
                   }
                   
                   printf("sending behavior chooser '%s'\n", BehaviorChooserTypeToString(chooser));
@@ -1907,17 +1900,21 @@ namespace Anki {
               {
 
                 using namespace ExternalInterface;
+
+                if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT ) {
                 
-                webots::Field* hasEdgeField = root_->getField("demoHasEdge");
-                if( hasEdgeField != nullptr ) {
-                  bool hasEdge = hasEdgeField->getSFBool();
-                  SendMessage(MessageGameToEngine(StartDemoWithEdge(hasEdge)));
+                  webots::Field* hasEdgeField = root_->getField("demoHasEdge");
+                  if( hasEdgeField != nullptr ) {
+                    bool hasEdge = hasEdgeField->getSFBool();
+                    SendMessage(MessageGameToEngine(StartDemoWithEdge(hasEdge)));
+                  }
+                  else {
+                    printf("ERROR: no field 'demoHasEdge', not sending edge message\n");
+                  }
                 }
                 else {
-                  printf("ERROR: no field 'demoHasEdge', not sending edge message\n");
+                  SendMessage(MessageGameToEngine(TransitionToNextDemoState()));
                 }
-
-                SendMessage(MessageGameToEngine(TransitionToNextDemoState()));
 
                 break;
               }
@@ -1949,6 +1946,27 @@ namespace Anki {
                 break;
               }
                 
+              case (s32)'"':
+              {
+                webots::Field* sayStringField = root_->getField("sayString");
+                if(sayStringField == nullptr) {
+                  printf("ERROR: No sayString field found in WebotsKeyboardController.proto\n");
+                  break;
+                }
+                
+                ExternalInterface::SayText sayTextMsg;
+                sayTextMsg.text = sayStringField->getSFString();
+                if(sayTextMsg.text.empty()) {
+                  printf("ERROR: sayString field is empty\n");
+                }
+                // TODO: Add ability to set style from KB controller field too
+                sayTextMsg.style = SayTextStyle::Normal;
+                
+                printf("Saying '%s' in style '%s'\n", sayTextMsg.text.c_str(), EnumToString(sayTextMsg.style));
+                SendMessage(ExternalInterface::MessageGameToEngine(std::move(sayTextMsg)));
+                break;
+              }
+            
               default:
               {
                 // Unsupported key: ignore.

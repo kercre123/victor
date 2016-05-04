@@ -82,20 +82,8 @@ namespace Cozmo {
       _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::AssignNameToFace,
         [this] (const AnkiEvent<MessageGameToEngine>& event)
         {
-          using namespace ExternalInterface;
-          const AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();
-          Lock();
-          _visionSystem->AssignNameToFace(msg.faceID, msg.name);
-          Unlock();
-
-          // Assume it worked (?) and give game confirmation
-          RobotEnrolledFace addMsg;
-          addMsg.name = msg.name;
-          addMsg.faceID = msg.faceID;
-          _robot.Broadcast(MessageEngineToGame(std::move(addMsg)));
-
-          // Every time a new face is enrolled with a name, store the album on the robot
-          SaveFaceAlbumToRobot();
+          const ExternalInterface::AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();
+          AssignNameToFace(msg.faceID, msg.name);
         }));
       
       // EnableNewFaceEnrollment
@@ -1544,7 +1532,9 @@ namespace Cozmo {
                            "Finished setting %zu-byte album data and %zu-byte enroll data",
                            _albumData.size(), _enrollData.size());
 
-          // Notify about the newly-available names and IDs
+          // Notify about the newly-available names and IDs, and create wave files
+          // for the names if they don't already exist, so we've already got them
+          // when we want to say them at some point later.
           using namespace ExternalInterface;
           _robot.Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
           for(auto & nameAndID : namesAndIDs)
@@ -1553,7 +1543,11 @@ namespace Cozmo {
             msg.name = nameAndID.name;
             msg.faceID = nameAndID.faceID;
             _robot.Broadcast(MessageEngineToGame(std::move(msg)));
+            
+            // TODO: Need to determine what styles need to be created
+            _robot.GetTextToSpeechComponent().CreateSpeech(nameAndID.name, SayTextStyle::Normal);
           }
+          
         } else {
           PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.Failure",
                             "Failed setting %zu-byte album data and %zu-byte enroll data",
@@ -1594,6 +1588,27 @@ namespace Cozmo {
     return lastResult;
   } // LoadFaceAlbumFromRobot()
   
+  
+  void VisionComponent::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name)
+  {  
+    // Pair this name and ID in the vision system
+    Lock();
+    _visionSystem->AssignNameToFace(faceID, name);
+    Unlock();
+    
+    // Assume it worked (?) and give game confirmation
+    ExternalInterface::RobotEnrolledFace addMsg;
+    addMsg.name = name;
+    addMsg.faceID = faceID;
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(addMsg)));
+
+    // Every time a new face is enrolled with a name, store the album on the robot
+    SaveFaceAlbumToRobot();
+
+    // Get the robot ready to be able to say the name
+    // TODO: Need to determine what styles need to be created
+    _robot.GetTextToSpeechComponent().CreateSpeech(name, SayTextStyle::Normal);
+  }
   
 } // namespace Cozmo
 } // namespace Anki

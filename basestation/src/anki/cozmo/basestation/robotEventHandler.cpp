@@ -21,6 +21,7 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -34,12 +35,17 @@ namespace Cozmo {
 RobotEventHandler::RobotEventHandler(const CozmoContext* context)
   : _context(context)
 {
-  if (_context->GetExternalInterface() != nullptr)
+  auto externalInterface = _context->GetExternalInterface();
+  
+  if (externalInterface != nullptr)
   {
-    // We'll use this callback for simple events we care about
+    using namespace ExternalInterface;
+    
+    // We'll use this callback for all action events
     auto actionEventCallback = std::bind(&RobotEventHandler::HandleActionEvents, this, std::placeholders::_1);
     
-    std::vector<ExternalInterface::MessageGameToEngineTag> tagList =
+    // These are the all action event tags
+    std::vector<MessageGameToEngineTag> actionTagList =
     {
       ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGround,
       ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGroundHere,
@@ -63,69 +69,70 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       ExternalInterface::MessageGameToEngineTag::SetHeadAngle,
       ExternalInterface::MessageGameToEngineTag::PanAndTilt,
       ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose,
-      ExternalInterface::MessageGameToEngineTag::ReadToolCode
+      ExternalInterface::MessageGameToEngineTag::ReadToolCode,
+      ExternalInterface::MessageGameToEngineTag::SayText
     };
     
-    // Subscribe to desired events
-    for (auto tag : tagList)
+    // Subscribe to all action events
+    for (auto tag : actionTagList)
     {
-      _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(tag, actionEventCallback));
+      _signalHandles.push_back(externalInterface->Subscribe(tag, actionEventCallback));
     }
     
     // Custom handler for QueueSingleAction
     auto queueSingleActionCallback = std::bind(&RobotEventHandler::HandleQueueSingleAction, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::QueueSingleAction, queueSingleActionCallback));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::QueueSingleAction, queueSingleActionCallback));
     
     // Custom handler for QueueCompoundAction
     auto queueCompoundActionCallback = std::bind(&RobotEventHandler::HandleQueueCompoundAction, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::QueueCompoundAction, queueCompoundActionCallback));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::QueueCompoundAction, queueCompoundActionCallback));
     
     // Custom handler for SetLiftHeight
     auto setLiftHeightCallback = std::bind(&RobotEventHandler::HandleSetLiftHeight, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetLiftHeight, setLiftHeightCallback));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::SetLiftHeight, setLiftHeightCallback));
     
     // Custom handler for EnableLiftPower
     auto enableLiftPowerCallback = std::bind(&RobotEventHandler::HandleEnableLiftPower, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::EnableLiftPower, enableLiftPowerCallback));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::EnableLiftPower, enableLiftPowerCallback));
 
     // Custom handler for EnableCliffSensor
     auto enableCliffSensorCallback = std::bind(&RobotEventHandler::HandleEnableCliffSensor, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::EnableCliffSensor, enableCliffSensorCallback));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::EnableCliffSensor, enableCliffSensorCallback));
 
     // Custom handler for DisplayProceduralFace
     auto dispProcFaceCallback = std::bind(&RobotEventHandler::HandleDisplayProceduralFace, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::DisplayProceduralFace, dispProcFaceCallback));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::DisplayProceduralFace, dispProcFaceCallback));
     
     // Custom handler for ForceDelocalizeRobot
     auto delocalizeCallabck = std::bind(&RobotEventHandler::HandleForceDelocalizeRobot, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceDelocalizeRobot, delocalizeCallabck));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::ForceDelocalizeRobot, delocalizeCallabck));
     
     // Custom handler for SendAvailableObjects event
     auto sendAvailableObjectsCallback = std::bind(&RobotEventHandler::HandleSendAvailableObjects, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SendAvailableObjects, sendAvailableObjectsCallback));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::SendAvailableObjects, sendAvailableObjectsCallback));
 
     // Custom handler for SaveCalibrationImage event
     auto saveCalibrationImageCallback = std::bind(&RobotEventHandler::HandleSaveCalibrationImage, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SaveCalibrationImage, saveCalibrationImageCallback));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::SaveCalibrationImage, saveCalibrationImageCallback));
     
     // Custom handler for ClearCalibrationImages event
     auto clearCalibrationImagesCallback = std::bind(&RobotEventHandler::HandleClearCalibrationImages, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ClearCalibrationImages, clearCalibrationImagesCallback));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::ClearCalibrationImages, clearCalibrationImagesCallback));
     
     // Custom handler for ComputeCameraCalibration event
     auto computeCameraCalibrationCallback = std::bind(&RobotEventHandler::HandleComputeCameraCalibration, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ComputeCameraCalibration, computeCameraCalibrationCallback));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::ComputeCameraCalibration, computeCameraCalibrationCallback));
     
     // Custom handler for CameraCalibration event
     auto cameraCalibrationCallback = std::bind(&RobotEventHandler::HandleCameraCalibration, this, std::placeholders::_1);
-    _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::CameraCalibration, cameraCalibrationCallback));
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::CameraCalibration, cameraCalibrationCallback));
 
     // Custom handlers for BehaviorManager events
     {
       auto eventCallback = std::bind(&RobotEventHandler::HandleBehaviorManagerEvent, this, std::placeholders::_1);
-      _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
+      _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
     }
-    
+        
   }
 }
   
@@ -603,6 +610,13 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::readToolCode:
       return new ReadToolCodeAction(robot);
       
+    case RobotActionUnionTag::sayText:
+    {
+      SayTextAction* sayTextAction = new SayTextAction(robot, actionUnion.Get_sayText().text, actionUnion.Get_sayText().style, true);
+      sayTextAction->SetGameEvent(actionUnion.Get_sayText().playEvent);
+      return sayTextAction;
+    }
+      
       // TODO: Add cases for other actions
       
     default:
@@ -612,7 +626,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
   }
 }
   
-void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
 {
   RobotID_t robotID = 1; // We init the robotID to 1
   Robot* robotPointer = _context->GetRobotManager()->GetRobotByID(robotID);
@@ -753,6 +767,11 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
       newAction = new ReadToolCodeAction(robot);
       break;
     }
+    case ExternalInterface::MessageGameToEngineTag::SayText:
+    {
+      newAction = new SayTextAction(robot, event.GetData().Get_SayText().text, event.GetData().Get_SayText().style, true);
+      break;
+    }
     default:
     {
       PRINT_STREAM_ERROR("RobotEventHandler.HandleEvents",
@@ -768,7 +787,7 @@ void RobotEventHandler::HandleActionEvents(const AnkiEvent<ExternalInterface::Me
   robot.GetActionList().QueueAction(QueueActionPosition::NOW, newAction, numRetries);
 }
   
-void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleQueueSingleAction(const GameToEngineEvent& event)
 {
   const ExternalInterface::QueueSingleAction& msg = event.GetData().Get_QueueSingleAction();
   
@@ -794,7 +813,7 @@ void RobotEventHandler::HandleQueueSingleAction(const AnkiEvent<ExternalInterfac
   }
 }
   
-void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleQueueCompoundAction(const GameToEngineEvent& event)
 {
   const ExternalInterface::QueueCompoundAction& msg = event.GetData().Get_QueueCompoundAction();
   
@@ -836,7 +855,7 @@ void RobotEventHandler::HandleQueueCompoundAction(const AnkiEvent<ExternalInterf
   }
 }
   
-void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleSetLiftHeight(const GameToEngineEvent& event)
 {
   // TODO: get RobotID in a non-hack way
   RobotID_t robotID = 1;
@@ -873,7 +892,7 @@ void RobotEventHandler::HandleSetLiftHeight(const AnkiEvent<ExternalInterface::M
   }
 }
 
-void RobotEventHandler::HandleEnableLiftPower(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleEnableLiftPower(const GameToEngineEvent& event)
 {
   // TODO: get RobotID in a non-hack way
   RobotID_t robotID = 1;
@@ -895,7 +914,7 @@ void RobotEventHandler::HandleEnableLiftPower(const AnkiEvent<ExternalInterface:
 }
 
 
-void RobotEventHandler::HandleEnableCliffSensor(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleEnableCliffSensor(const GameToEngineEvent& event)
 {
   // TODO: get RobotID in a non-hack way
   RobotID_t robotID = 1;
@@ -908,7 +927,7 @@ void RobotEventHandler::HandleEnableCliffSensor(const AnkiEvent<ExternalInterfac
   }
 }
   
-void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleDisplayProceduralFace(const GameToEngineEvent& event)
 {
   const ExternalInterface::DisplayProceduralFace& msg = event.GetData().Get_DisplayProceduralFace();
 
@@ -923,7 +942,7 @@ void RobotEventHandler::HandleDisplayProceduralFace(const AnkiEvent<ExternalInte
   robot->GetAnimationStreamer().GetLastProceduralFace()->SetFromMessage(msg);
 }
   
-void RobotEventHandler::HandleForceDelocalizeRobot(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleForceDelocalizeRobot(const GameToEngineEvent& event)
 {
   RobotID_t robotID = event.GetData().Get_ForceDelocalizeRobot().robotID;
 
@@ -943,7 +962,7 @@ void RobotEventHandler::HandleForceDelocalizeRobot(const AnkiEvent<ExternalInter
   }
 }
   
-void RobotEventHandler::HandleBehaviorManagerEvent(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleBehaviorManagerEvent(const GameToEngineEvent& event)
 {
   const auto& eventData = event.GetData();
   const auto& message = eventData.Get_BehaviorManagerMessage();
@@ -962,7 +981,7 @@ void RobotEventHandler::HandleBehaviorManagerEvent(const AnkiEvent<ExternalInter
   }
 }
 
-void RobotEventHandler::HandleSendAvailableObjects(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+void RobotEventHandler::HandleSendAvailableObjects(const GameToEngineEvent& event)
 {
 
   const auto& eventData = event.GetData();
@@ -983,7 +1002,7 @@ void RobotEventHandler::HandleSendAvailableObjects(const AnkiEvent<ExternalInter
 
 }
   
-  void RobotEventHandler::HandleSaveCalibrationImage(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  void RobotEventHandler::HandleSaveCalibrationImage(const GameToEngineEvent& event)
   {
     
     const auto& eventData = event.GetData();
@@ -1004,7 +1023,7 @@ void RobotEventHandler::HandleSendAvailableObjects(const AnkiEvent<ExternalInter
     
   }
   
-  void RobotEventHandler::HandleClearCalibrationImages(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  void RobotEventHandler::HandleClearCalibrationImages(const GameToEngineEvent& event)
   {
     
     const auto& eventData = event.GetData();
@@ -1025,7 +1044,7 @@ void RobotEventHandler::HandleSendAvailableObjects(const AnkiEvent<ExternalInter
     
   }
   
-  void RobotEventHandler::HandleComputeCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  void RobotEventHandler::HandleComputeCameraCalibration(const GameToEngineEvent& event)
   {
     
     const auto& eventData = event.GetData();
@@ -1046,7 +1065,7 @@ void RobotEventHandler::HandleSendAvailableObjects(const AnkiEvent<ExternalInter
     
   }
   
-  void RobotEventHandler::HandleCameraCalibration(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+  void RobotEventHandler::HandleCameraCalibration(const GameToEngineEvent& event)
   {
     // TODO: get RobotID in a non-hack way
     RobotID_t robotID = 1;
@@ -1070,6 +1089,7 @@ void RobotEventHandler::HandleSendAvailableObjects(const AnkiEvent<ExternalInter
       
     }
   }
+
   
 } // namespace Cozmo
 } // namespace Anki

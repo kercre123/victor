@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "json/json.h"
@@ -62,7 +63,6 @@ void DemoBehaviorChooser::Init()
 {
   EnableAllBehaviors(false);
   _initCalled = true;
-  TransitionToNextState();
 }
 
 Result DemoBehaviorChooser::Update()
@@ -203,6 +203,11 @@ void DemoBehaviorChooser::TransitionToCubes()
 void DemoBehaviorChooser::TransitionToMiniGame()
 {
   SET_STATE(MiniGame);
+
+  _robot.GetMoodManager().SetEmotion(EmotionType::WantToPlay, 1.0f);
+  
+  // TEMP:  // TEMP: setModd here
+  
   // leave block behaviors active, but also enable speed tap game request
   EnableBehaviorGroup(BehaviorGroup::RequestSpeedTap);
 
@@ -288,6 +293,11 @@ template<>
 void DemoBehaviorChooser::HandleMessage(const ExternalInterface::StartDemoWithEdge& msg)
 {
   _hasEdge = msg.hasEdge;
+
+  // This serves as the "start demo" message, so also transition to the next state if we are at the start
+  if( _state == State::None) { 
+    TransitionToNextState();
+  }
 }
 
 void DemoBehaviorChooser::SetState_internal(State state, const std::string& stateName)
