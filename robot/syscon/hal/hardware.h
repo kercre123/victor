@@ -1,7 +1,7 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
-#define FAKE_EP3  //It's time for real EP3
+//#define FAKE_EP3  //It's time for real EP3
 
 #define NRF_BAUD(x) (int)(x * 4194304.0f / 15625.0f) // 2^28/1MHz
 
