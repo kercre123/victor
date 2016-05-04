@@ -773,12 +773,6 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void PrepareFaceNameAnimation(int faceId, string name) {
-    DAS.Debug(this, "Perform Face Name Animation - faceId: " + faceId + " name: " + name);
-    RobotEngineManager.Instance.Message.PrepareFaceNameAnimation = Singleton<PrepareFaceNameAnimation>.Instance.Initialize(faceId, name);
-    RobotEngineManager.Instance.SendMessage();
-  }
-
   public void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
