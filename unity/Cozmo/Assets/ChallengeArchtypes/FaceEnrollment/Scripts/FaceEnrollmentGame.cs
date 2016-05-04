@@ -19,6 +19,7 @@ namespace FaceEnrollment {
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
+      RobotEngineManager.Instance.OnRobotEnrolledFace += HandleEnrolledFace;
     }
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -45,8 +46,12 @@ namespace FaceEnrollment {
 
       CurrentRobot.AssignNameToFace(id, _NameForFace);
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
-      PlayFaceReactionAnimation(id);
+      RobotEngineManager.Instance.OnRobotEnrolledFace += HandleEnrolledFace;
       _AttemptedEnrollFace = true;
+    }
+
+    private void HandleEnrolledFace(Anki.Cozmo.ExternalInterface.RobotEnrolledFace message) {
+      PlayFaceReactionAnimation(message.faceID);
     }
 
     private void PlayFaceReactionAnimation(int faceId) {
@@ -65,6 +70,7 @@ namespace FaceEnrollment {
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
       SharedMinigameView.HideGameStateSlide();
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
+      RobotEngineManager.Instance.OnRobotEnrolledFace -= HandleEnrolledFace;
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnLearnedPlayerName, HandleReactionDone);
     }
 
