@@ -26,10 +26,10 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+#include "anki/cozmo/basestation/cozmoObservableObject.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/pathMotionProfile.h"
 #include "clad/types/factoryTestTypes.h"
-
 
 namespace Anki {
 namespace Cozmo {
@@ -67,6 +67,7 @@ namespace Cozmo {
     static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
     static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
     static constexpr u32 _kMinNumberOfCalibrationImagesRequired = 5;
+    static constexpr FactoryID _kChargerFactoryID = 0x80000001;
 
     // If no change in behavior state for this long then trigger failure
     static constexpr f32 _kWatchdogTimeout = 20;    
@@ -92,6 +93,8 @@ namespace Cozmo {
     Result HandleCameraCalibration(Robot& robot, const CameraCalibration &msg);
     Result HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg);
     Result HandleMotorCalibration(Robot& robot, const MotorCalibration &msg);
+    Result HandleObjectAvailable(Robot& robot, const ExternalInterface::ObjectAvailable &msg);
+    Result HandleObjectConnectionState(Robot& robot, const ObjectConnectionState &msg);
     Result HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
     
     void SetCurrState(FactoryTestState s);
@@ -127,6 +130,8 @@ namespace Cozmo {
     
     s32 _attemptCounter = 0;
     bool _calibrationReceived = false;
+    bool _chargerAvailable = false;
+    bool _chargerConnected = false;
     FactoryTestResultCode _testResult;
     
   }; // class BehaviorFactoryTest
