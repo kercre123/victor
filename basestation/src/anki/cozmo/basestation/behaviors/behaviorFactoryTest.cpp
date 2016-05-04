@@ -961,6 +961,13 @@ namespace Cozmo {
       calibMsg.nrows = camCalib.GetNrows();
       calibMsg.ncols = camCalib.GetNcols();
       
+      ASSERT_NAMED_EVENT(camCalib.GetDisortionCoeffs().size() <= calibMsg.distCoeffs.size(),
+                         "BehaviorFactoryTest.HandleCameraCalibration.TooManyDistCoeffs",
+                         "%zu > %zu", camCalib.GetDisortionCoeffs().size(),
+                         calibMsg.distCoeffs.size());
+      std::copy(camCalib.GetDisortionCoeffs().begin(), camCalib.GetDisortionCoeffs().end(),
+                calibMsg.distCoeffs.begin());
+
       u8 buf[calibMsg.Size()];
       size_t numBytes = calibMsg.Pack(buf, sizeof(buf));
       
