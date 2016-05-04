@@ -375,12 +375,14 @@ namespace SpeedTap {
     }
 
     public void StartCozmoCubeMovedDisruptionDetection() {
-      LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
-      LightCube.OnMovedAction += HandleCozmoCubeMovedDisruption;
+      // INGO: Temporarily disabling broken code to unblock QA
+      // LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
+      // LightCube.OnMovedAction += HandleCozmoCubeMovedDisruption;
     }
 
     public void EndCozmoCubeMovedDisruptionDetection() {
-      LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
+      // INGO: Temporarily disabling broken code to unblock QA
+      // LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
     }
 
     private void HandleCozmoCubeMovedDisruption(int cubeId, float xAccel, float yAccel, float zAccel) {
