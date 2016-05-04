@@ -143,6 +143,7 @@ void Update()
         switch (factoryAPPhase)
         {
           case 0:
+            i2spiSwitchMode(I2SPI_PAUSED);    // Scary - but cool that it works!
             break;
           case 1:    
             // Create config for test fixture open AP
@@ -150,10 +151,12 @@ void Update()
             wifi_softap_get_config(&ap_config);
             os_sprintf((char*)ap_config.ssid, "Afix01");
             ap_config.authmode = AUTH_OPEN;
+            ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
             ap_config.beacon_interval = 100;
             wifi_softap_set_config(&ap_config);
             break;
           case 2:
+            i2spiSwitchMode(I2SPI_RESUME);    // Scarier   
             break;
           case 3:
             SetMode(RobotInterface::FTM_None);
