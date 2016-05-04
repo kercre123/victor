@@ -27,6 +27,7 @@
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/faceEnrollmentModes.clad"
 #include "clad/types/sayTextStyles.clad"
+#include "clad/types/gameEvent.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -596,6 +597,7 @@ message ReadToolCode {
 // SayText
 message SayText {
     string       text,
+    GameEvent    playEvent,
     SayTextStyle style  // "How" to say the text
 }
 
