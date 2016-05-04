@@ -2469,7 +2469,8 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     if(kUseCLAHE) {
       _clahe->apply(inputImageGray.get_CvMat_(), inputImageGray.get_CvMat_());
       
-      _debugImageRGBMailbox.putMessage({"ImageCLAHE", inputImageGray});
+      // DEBUG!
+      //_debugImageRGBMailbox.putMessage({"ImageCLAHE", inputImageGray});
     }
     
     // Rolling shutter correction
