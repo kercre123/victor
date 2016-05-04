@@ -59,7 +59,8 @@ namespace FaceEnrollment {
 
     private void PlayFaceReactionAnimation(int faceId) {
       DAS.Debug("FaceEnrollmentGame.PlayFaceReactionAnimation", "Attempt to Play Face Reaction Animation - FaceId: " + faceId);
-      CurrentRobot.PrepareFaceNameAnimation(faceId, _NameForFace);
+      // TODO: Implement the Action that has been added to replace the PrepareFaceNameAnimation message which has been deprecated
+      //CurrentRobot.PrepareFaceNameAnimation(faceId, _NameForFace);
       CurrentRobot.SendAnimation(_ReactionBank[Random.Range(0, _ReactionBank.Length)], HandleReactionDone);
     }
 
