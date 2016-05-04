@@ -2777,7 +2777,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       if(false && DRAW_TOOL_CODE_DEBUG) {
         _debugImageMailbox.putMessage({(iDot==0 ? "dotRoi0" : "dotRoi1"), dotRoi});
         _debugImageMailbox.putMessage({(iDot==0 ? "dotRoi0_blurred" : "dotRoi1_blurred"), dotRoi_blurred});
-        _debugImageMailbox.putMessage({(iDot==0 ? "InvertedDotROI0" : "InvertedDotRoi1"), binarizedDotRoi});
+        _debugImageMailbox.putMessage({(iDot==0 ? "BinarizedDotROI0" : "BinarizedDotRoi1"), binarizedDotRoi});
       }
       
       // Get connected components in the ROI
@@ -2810,18 +2810,35 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
             // Note the x/y vs. row/col switch here
             const s32 centerLabel = labels(std::round(dotCentroid[1]),
                                            std::round(dotCentroid[0]));
+            
             if(centerLabel == 0)
             {
-              // Verify if we flood fill from center that we get a hole of
-              // reasonable size that doesn't "leak" outside of this component
-              cv::floodFill(labels.get_CvMat_(), cv::Point(dotCentroid[0], dotCentroid[1]),
-                            numComponents+1);
-              
               Anki::Rectangle<s32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
                                             compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
               
               Vision::Image compBrightnessROI = dotRoi.GetROI(compRect);
-              Array2d<s32> labelROI = labels.GetROI(compRect);
+              Array2d<s32> labelROI;
+              labels.GetROI(compRect).CopyTo(labelROI); // need copy!
+              
+              // Verify if we flood fill from center that we get a hole of
+              // reasonable size that doesn't "leak" outside of this component
+              cv::floodFill(labelROI.get_CvMat_(), cv::Point(dotCentroid[0]-compRect.GetX(), dotCentroid[1]-compRect.GetY()),
+                            numComponents+1);
+              
+              /*
+              // DEBUG!!!
+              if(iDot == 1){
+                Vision::Image temp;
+                temp.get_CvMat_() = (labels.get_CvMat_() == iComp);
+                PRINT_NAMED_DEBUG("Component", "iComp: %d, Area: %d, solidity: %.3f",
+                                  iComp, compArea, solidity);
+                temp.Display("Component");
+                
+                Vision::Image tempFill;
+                tempFill.get_CvMat_() = (labelROI.get_CvMat_() == numComponents+1);
+                tempFill.Display("FloodFill", 0);
+              }
+               */
               
               // Loop over an even smaller ROI right around the component to
               // compute the hole size, the brightness of that hole vs.
@@ -2834,7 +2851,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
               for(s32 i=0; i<labelROI.GetNumRows() && !touchesEdge; ++i)
               {
                 const u8* brightness_i = compBrightnessROI.GetRow(i);
-                s32* label_i = labelROI.GetRow(i);
+                const s32* label_i = labelROI.GetRow(i);
                 
                 for(s32 j=0; j<labelROI.GetNumCols() && !touchesEdge; ++j)
                 {
@@ -2848,7 +2865,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
                     {
                       touchesEdge = true;
                     }
-                    label_i[j] = 0; // un-fill
                   }
                   else if(label_i[j] == iComp)  {
                     avgDotBrightness += brightness_i[j];
