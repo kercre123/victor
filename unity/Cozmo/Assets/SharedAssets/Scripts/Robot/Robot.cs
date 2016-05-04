@@ -549,7 +549,8 @@ public class Robot : IRobot {
   }
 
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
-    RobotEngineManager.Instance.Message.CameraCalibration = Singleton<CameraCalibration>.Instance.Initialize(focalLengthX, focalLengthY, centerX, centerY, 0.0f, 240, 320);
+    float[] dummyDistortionCoeffs = {0,0,0,0,0,0,0,0};
+    RobotEngineManager.Instance.Message.CameraCalibration = Singleton<CameraCalibration>.Instance.Initialize(focalLengthX, focalLengthY, centerX, centerY, 0.0f, 240, 320, dummyDistortionCoeffs);
     RobotEngineManager.Instance.SendMessage();
   }
 
