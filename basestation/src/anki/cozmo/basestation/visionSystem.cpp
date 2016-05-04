@@ -3182,16 +3182,23 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
 
     // Compute calibration
+    const s32 kNumDistCoeffs = 8;
     std::vector<cv::Mat> rvecs, tvecs;
-    cv::Mat cameraMatrix = cv::Mat::eye(3, 3, CV_64F);
-    cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
+    cv::Mat_<f64> cameraMatrix = cv::Mat_<f64>::eye(3, 3);
+    cv::Mat_<f64> distCoeffs   = cv::Mat_<f64>::zeros(1, kNumDistCoeffs);
     
-    double rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
-    
-    
+    const f64 rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
+
+    // Copy distortion coefficients into a f32 vector to set CameraCalibration
+    const f64* distCoeffs_data = distCoeffs[0];
+    std::vector<f32> distCoeffsVec(kNumDistCoeffs);
+    std::copy(distCoeffs_data, distCoeffs_data+kNumDistCoeffs, distCoeffsVec.begin());
+
     calibration = Vision::CameraCalibration(imageSize.height, imageSize.width,
-                                            cameraMatrix.at<double>(0,0), cameraMatrix.at<double>(1,1),
-                                            cameraMatrix.at<double>(0,2), cameraMatrix.at<double>(1,2));
+                                            cameraMatrix(0,0), cameraMatrix(1,1),
+                                            cameraMatrix(0,2), cameraMatrix(1,2),
+                                            0.f, // skew
+                                            distCoeffsVec);
 
     PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.CalibValues",
                      "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
@@ -3200,8 +3207,10 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
                           
     // Check if average reprojection error is too high
-    if (rms > 1.f) {
-      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh", "%f", rms);
+    const f64 reprojErrThresh_pix = 1.0;
+    if (rms > reprojErrThresh_pix) {
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh",
+                       "%f > %f", rms, reprojErrThresh_pix);
       return RESULT_FAIL;
     }
     

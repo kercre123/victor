@@ -1606,7 +1606,7 @@ namespace Anki {
                       // Method 2
                       CameraCalibration calib(focalLength_x, focalLength_y,
                                               center_x, center_y,
-                                              0, 240, 320);
+                                              0, 240, 320, {});
                       std::vector<u8> calibVec(calib.Size());
                       calib.Pack(calibVec.data(), calib.Size());
                       SendNVStorageWriteEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib,

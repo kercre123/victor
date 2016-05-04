@@ -89,7 +89,7 @@ namespace Anki {
         }
         else {
 
-          CameraCalibration headCalib = {
+          CameraCalibration headCalib{
             headCamInfo->focalLength_x,
             headCamInfo->focalLength_y,
             headCamInfo->center_x,
@@ -98,6 +98,10 @@ namespace Anki {
             headCamInfo->nrows,
             headCamInfo->ncols
           };
+          
+          for(s32 iCoeff=0; iCoeff<NUM_RADIAL_DISTORTION_COEFFS; ++iCoeff) {
+            headCalib.distCoeffs[iCoeff] = headCamInfo->distortionCoeffs[iCoeff];
+          }
           
           NVStorage::NVStorageWrite nvWrite;
           nvWrite.entry.tag = NVStorage::NVEntry_CameraCalib;
