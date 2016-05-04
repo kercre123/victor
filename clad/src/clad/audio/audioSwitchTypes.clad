@@ -5,6 +5,15 @@ namespace Cozmo {
 namespace Audio {
 namespace SwitchState {
 
+enum uint_32 External
+{
+  External_Long = 3001056757,
+  External_Maximum = 1931150551,
+  External_Medium = 3619992510,
+  External_Short = 1727626579,
+  Invalid = 0,
+}
+
 enum uint_32 GenericSwitch
 {
   Invalid = 0,
@@ -28,6 +37,7 @@ enum uint_32 Relationship
 
 enum uint_32 SwitchGroupType
 {
+  External = 1442075084,
   Invalid = 0,
   Mood = 3128647864,
   Relationship = 3723222599,
