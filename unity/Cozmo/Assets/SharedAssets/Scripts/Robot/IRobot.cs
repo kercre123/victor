@@ -175,8 +175,6 @@ public interface IRobot : IDisposable {
 
   void AssignNameToFace(int faceID, string name);
 
-  void PrepareFaceNameAnimation(int faceId, string name);
-
   void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendAnimationGroup(string animGroupName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
@@ -273,5 +271,7 @@ public interface IRobot : IDisposable {
   ObservedObject GetCharger();
 
   void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+
+  void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
 }

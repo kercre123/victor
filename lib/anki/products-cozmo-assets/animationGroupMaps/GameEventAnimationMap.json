@@ -75,6 +75,10 @@
     {
       "CladEvent": "OnSpeedtapIdle",
       "AnimName": "speedTap_Peek"
+    },
+    {
+      "CladEvent": "OnLearnedPlayerName",
+      "AnimName": "faceEnrollment_LearnedPlayerName"
     }
   ]
 }

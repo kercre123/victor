@@ -253,10 +253,6 @@ public class MockRobot : IRobot {
     
   }
 
-  public void PrepareFaceNameAnimation(int faceId, string name) {
-  
-  }
-
   public void SendAnimation(string animName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
     // we can actually fake the callback by using CozmoFace
     float len = CozmoFace.PlayAnimation(animName);
@@ -818,5 +814,8 @@ public class MockRobot : IRobot {
   }
 
   #endregion
-  
+
+  public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    
+  }
 }
