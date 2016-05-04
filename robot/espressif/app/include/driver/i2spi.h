@@ -28,6 +28,7 @@ typedef enum {
   I2SPI_REBOOT,     ///< Inform the K02 we want to reboot
   I2SPI_RECOVERY,   ///< Inform the K02 we want to reboot into recovery
   I2SPI_SHUTDOWN,   ///< Inform the K02 we want to shut down
+  I2SPI_RESUME,     ///< Attempt to resume a paused connection without resyncing
 } I2SpiMode;
 
 /** Initalize the I2S peripheral, IO pins and DMA for bi-directional transfer

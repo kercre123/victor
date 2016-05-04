@@ -8,6 +8,7 @@ extern "C" {
 #include "osapi.h"
 #include "mem.h"
 #include "client.h"
+#include "driver/i2spi.h"
 }
 #include "anki/cozmo/robot/logging.h"
 #include "anki/common/constantsAndMacros.h"
@@ -45,6 +46,7 @@ static const FTMenuItem rootMenuItems[] = {
   {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      30000000 },
   {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
   {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 },
+  {"Playpen test",    RobotInterface::FTM_PlayPenTest,   30000000 },  
 };
 #define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
 
@@ -85,6 +87,8 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
     }
   }
 }
+
+static char factoryAPPhase = 0;
 
 void Update()
 {
@@ -131,6 +135,31 @@ void Update()
           menuBuf[bufIndex] = 0;
           Face::FacePrintf(menuBuf);
         }
+        break;
+      }
+      case RobotInterface::FTM_PlayPenTest:
+      {
+        // First time in this mode, switch our AP name to the fixture's
+        switch (factoryAPPhase)
+        {
+          case 0:
+            break;
+          case 1:    
+            // Create config for test fixture open AP
+            struct softap_config ap_config;
+            wifi_softap_get_config(&ap_config);
+            os_sprintf((char*)ap_config.ssid, "Afix01");
+            ap_config.authmode = AUTH_OPEN;
+            ap_config.beacon_interval = 100;
+            wifi_softap_set_config(&ap_config);
+            break;
+          case 2:
+            break;
+          case 3:
+            SetMode(RobotInterface::FTM_None);
+            break;
+        }
+        factoryAPPhase++;
         break;
       }
       case RobotInterface::FTM_WiFiInfo:
