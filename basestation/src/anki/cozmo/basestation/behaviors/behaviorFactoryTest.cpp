@@ -37,6 +37,8 @@
 // Enable this when running on actual EP3 robots
 #define USING_EP3 1
 
+#define TEST_CHARGER_CONNECT 0
+
 // Set to 1 if you want the test to actually be able to write
 // new camera calibration, calibration images, and test results to flash.
 #define ENABLE_NVSTORAGE_WRITES 1
@@ -111,7 +113,9 @@ namespace Cozmo {
       EngineToGameTag::ObjectMoved,
       EngineToGameTag::CameraCalibration,
       EngineToGameTag::RobotStopped,
-      EngineToGameTag::MotorCalibration
+      EngineToGameTag::MotorCalibration,
+      EngineToGameTag::ObjectAvailable,
+      EngineToGameTag::ObjectConnectionState
     }});
 
   }
@@ -307,6 +311,11 @@ namespace Cozmo {
                                              }
                                            });
         
+        if (TEST_CHARGER_CONNECT) {
+          // Check if charger is discovered
+          robot.BroadcastAvailableObjects(true);
+        }
+        
         // Set fake calibration if not already set so that we can actually run
         // calibration from images.
         if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
@@ -352,6 +361,18 @@ namespace Cozmo {
             END_TEST(FactoryTestResultCode::IMU_DRIFTING);
           }
           
+          if (TEST_CHARGER_CONNECT) {
+            // Verify that charger was discovered
+            if (!_chargerAvailable) {
+              PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingChargerAvailable","");
+              END_TEST(FactoryTestResultCode::CHARGER_UNAVAILABLE);
+            }
+          
+            // Connect to charger
+            const std::unordered_set<FactoryID> connectToIDs = {_kChargerFactoryID};
+            robot.ConnectToBlocks(connectToIDs);
+          }
+          
           // Drive off charger
           StartActing(robot, new DriveStraightAction(robot, 250, 100),
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
@@ -372,10 +393,18 @@ namespace Cozmo {
           break;
         }
         
+        // Verify robot is not still on charger
         if (robot.IsOnCharger()) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOffCharger", "");
           END_TEST(FactoryTestResultCode::STILL_ON_CHARGER);
         }
+        
+        // Verify robot is connected to charger
+        if (TEST_CHARGER_CONNECT && !_chargerConnected) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingChargerConnected","");
+          END_TEST(FactoryTestResultCode::CHARGER_UNCONNECTED);
+        }
+        
         
         // Set pose to expected
         // TODO: Create a function that's shared by LocalizeToObject and LocalizeToMat that does this?
@@ -771,6 +800,14 @@ namespace Cozmo {
         _lastHandlerResult = HandleMotorCalibration(robot, event.GetData().Get_MotorCalibration());
         break;
         
+      case EngineToGameTag::ObjectAvailable:
+        _lastHandlerResult = HandleObjectAvailable(robot, event.GetData().Get_ObjectAvailable());
+        break;
+        
+      case EngineToGameTag::ObjectConnectionState:
+        _lastHandlerResult = HandleObjectConnectionState(robot, event.GetData().Get_ObjectConnectionState());
+        break;
+        
       default:
         PRINT_NAMED_ERROR("BehaviorFactoryTest.HandleWhileRunning.InvalidTag",
                           "Received unexpected event with tag %hhu.", event.GetData().GetTag());
@@ -1031,6 +1068,21 @@ namespace Cozmo {
   {
     // This should never happen during the test!
     EndTest(robot, FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
+    return RESULT_OK;
+  }
+  
+  Result BehaviorFactoryTest::HandleObjectAvailable(Robot& robot, const ExternalInterface::ObjectAvailable &msg) {
+    if (msg.factory_id == _kChargerFactoryID) {
+      _chargerAvailable = true;
+    }
+    return RESULT_OK;
+  }
+  
+  Result BehaviorFactoryTest::HandleObjectConnectionState(Robot& robot, const ObjectConnectionState &msg)
+  {
+    if (msg.factoryID == _kChargerFactoryID && msg.connected) {
+      _chargerConnected = true;
+    }
     return RESULT_OK;
   }
   
