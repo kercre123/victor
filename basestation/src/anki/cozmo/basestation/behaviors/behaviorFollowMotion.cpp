@@ -27,10 +27,7 @@ namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
-  
-static std::vector<std::string> _animReactions = {
-  "Demo_Motion_Reaction",
-};
+
 
 BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)

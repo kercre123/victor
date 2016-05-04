@@ -663,6 +663,7 @@
               '<(cti-cozmo_engine_path)/simulator/include',
               '<@(opencv_includes)',
               '<@(webots_includes)', # After opencv!
+              '../../coretech/generated/clad/vision',
             ],
             'dependencies': [
               'cozmoEngine',
@@ -711,6 +712,7 @@
             '<(cti-cozmo_engine_path)/simulator/include',
               '<@(opencv_includes)',
               '<@(webots_includes)', # After opencv!
+              '../../coretech/generated/clad/vision',
             ],
             'dependencies': [
               'cozmoEngine',
@@ -881,6 +883,7 @@
               '../../basestation/test',
               '../../robot/include',
               '<@(opencv_includes)',
+              '../../coretech/generated/clad/vision',
             ],
             'dependencies': [
               'cozmoEngine',
@@ -1039,6 +1042,7 @@
             'type': 'executable',
             'include_dirs': [
               '<@(opencv_includes)',
+              '../../coretech/generated/clad/vision',
             ],
             'dependencies': [
               'cozmoEngine',
@@ -1388,6 +1392,7 @@
         '../../include',
         '../../robot/include',
         '../../generated/clad/engine',
+        '../../coretech/generated/clad/vision',
         '<@(opencv_includes)',
         '<@(pocketsphinx_includes)',
         '<@(flite_includes)',

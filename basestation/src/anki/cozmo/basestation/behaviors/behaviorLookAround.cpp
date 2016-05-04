@@ -69,24 +69,7 @@ BehaviorLookAround::~BehaviorLookAround()
   
 bool BehaviorLookAround::IsRunnable(const Robot& robot) const
 {
-  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-
-  switch (_currentState)
-  {
-    case State::Inactive:
-    {
-      if ((_lastLookAroundTime == 0.f) || (_lastLookAroundTime + kLookAroundCooldownDuration < currentTime_sec))
-      {
-        return true;
-      }
-      break;
-    }
-    default:
-    {
-      return true;
-    }
-  }
-  return false;
+  return true;
 }
 
 float BehaviorLookAround::EvaluateRunningScoreInternal(const Robot& robot) const

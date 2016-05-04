@@ -5,7 +5,7 @@
                 EXPORT  CUBE_FIRMWARE_LENGTH
 
 CUBE_UPDATE
-                INCBIN  cubes/firmware.safe
+;                INCBIN  ../../accessories/releases/xs-p2.safe
 CUBE_FIRMWARE_LENGTH
                 DCD     CUBE_FIRMWARE_LENGTH - CUBE_UPDATE
 

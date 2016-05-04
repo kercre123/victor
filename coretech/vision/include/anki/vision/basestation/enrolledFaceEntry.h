@@ -15,6 +15,8 @@
 
 #include "anki/vision/basestation/faceIdTypes.h"
 
+#include "clad/externalInterface/enrolledFaceMessage.h"
+
 #include <chrono>
 #include <string>
 #include <vector>
@@ -39,10 +41,11 @@ struct EnrolledFaceEntry
   
   Time                      enrollmentTime;         // when first added to album
   Time                      lastDataUpdateTime;     // last time data was updated
+  Time                      lastSeenTime;           // last time this person was seen
   
-  s32                       score          = 1000;  // [0,1000]
-  s32                       oldestData     = 0;     // index of last data update
-  s32                       numEnrollments = 0;     // how many enrollment "examples" stored
+  s32                       score            = 1000;  // [0,1000]
+  s32                       nextDataToUpdate = 0;     // index of next data to update
+  s32                       numEnrollments   = 0;     // how many enrollment "examples" stored
   
   bool                      isForThisSessionOnly = true;
   
@@ -50,6 +53,9 @@ struct EnrolledFaceEntry
   
   // Faces constructed from Json default to _not_ being for this session only
   EnrolledFaceEntry(FaceID_t withID, Json::Value& json);
+  
+  // Instantation from an EnrolledFaceMessage
+  EnrolledFaceEntry(const ExternalInterface::EnrolledFaceMessage& message);
   
   // NOTE: Just sums numEnrollments
   void MergeWith(EnrolledFaceEntry& otherEntry);
@@ -63,7 +69,10 @@ struct EnrolledFaceEntry
   // When startIndex == buffer.size(), everything has been read from the buffer.
   // Returns RESULT_OK if serialization succeeds.
   Result Deserialize(const std::vector<u8>& buffer, size_t& startIndex);
-    
+  
+  // Casting operator to convert to an EnrolledFaceMessage
+  explicit operator ExternalInterface::EnrolledFaceMessage() const;
+  
 }; // class EnrolledFaceEntry
   
   

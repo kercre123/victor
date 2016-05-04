@@ -61,6 +61,7 @@ namespace Cozmo {
       Dispatch,
       GlancingDown,
       RecognizingFace,
+      WaitingForRecognition,
       ReactingToFace
     };
     
@@ -69,6 +70,7 @@ namespace Cozmo {
     void TransitionToDispatch(Robot& robot);
     void TransitionToGlancingDown(Robot& robot);
     void TransitionToRecognizingFace(Robot& robot);
+    void TransitionToWaitingForRecognition(Robot& robot);
     void TransitionToReactingToFace(Robot& robot);
     void TransitionToSwitchingFace(Robot& robot);
 
@@ -89,6 +91,9 @@ namespace Cozmo {
     bool GetCurrentFace(const Robot& robot, const Face*& face, FaceData*& faceData);
 
     float ComputeFaceScore(FaceID_t faceID, const FaceData& faceData) const;
+
+    // return the face id of a face to track, or Vision::UnknownFaceID if there is none
+    FaceID_t GetNewFace(const Robot& robot);
     
     // ID of face we are currently interested int
     FaceID_t _currentFace = Vision::UnknownFaceID;
@@ -99,9 +104,11 @@ namespace Cozmo {
     std::unordered_map<FaceID_t, FaceData> _interestingFacesData;
         
     // The animation flow is as follows. Anytime we get a new face ID, we do the "take" anim, to give the
-    // recognition system some more time. Then we check if the face data hs _playedNewFaceAnim, and either play
-    // the new face group or the known face (unenrolled) group
+    // recognition system some more time. Then if we need more time, we play the _wait group (which can be cut
+    // at any time). Then we check if the face data hs _playedNewFaceAnim, and either play the new face group
+    // or the known face (unenrolled) group
     std::string _initialTakeAnimGroup;
+    std::string _waitAnimGroup;
     std::string _newFaceAnimGroup;
     std::string _unenrolledFaceAnimGroup;
 
