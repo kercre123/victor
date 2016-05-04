@@ -52,7 +52,7 @@ public class PressHubWorld : HubWorldBase {
     _ForceProgressWhenOver = forceProgressWhenOver;
 
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
-    RobotEngineManager.Instance.CurrentRobot.SetEnableBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
+    RobotEngineManager.Instance.CurrentRobot.SetEnableAllBehaviors(false);
 
     GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
