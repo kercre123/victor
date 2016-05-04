@@ -66,6 +66,7 @@ namespace FaceEnrollment {
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
       SharedMinigameView.HideGameStateSlide();
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnLearnedPlayerName, HandleReactionDone);
     }
 
   }
