@@ -16,7 +16,6 @@ public class LatencyCalculator : MonoBehaviour {
   // Use this for initialization
   private void Start() {
     _IsInitted = false;
-    DebugConsoleData.Instance.AddConsoleFunctionUnity("Show Latency Stats", "Network.Stats", this.HandleForceShowLatencyDisplay);
   }
 
   private void Update() {
@@ -26,7 +25,7 @@ public class LatencyCalculator : MonoBehaviour {
       RobotEngineManager.Instance.RobotConnected += HandleRobotConnected;
       _IsInitted = true;
       if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled) {
-        ForceShowLatencyDisplay();
+        ShowLatencyDisplay();
       }
     }
   }
@@ -44,7 +43,7 @@ public class LatencyCalculator : MonoBehaviour {
     }
     else if (msg.averageLatency > LatencyDisplay.kMaxThresholdBeforeWarning_ms) {
       // Warning we are over the limit Warn people disconnects might happen.
-      ForceShowLatencyDisplay();
+      ShowLatencyDisplay();
     }
   }
 
@@ -52,15 +51,8 @@ public class LatencyCalculator : MonoBehaviour {
     // Force init connection monitoring as long as we need this component.
     RobotEngineManager.Instance.SetDebugConsoleVar("NetConnStatsUpdate", "true");
   }
-  // Hide happens just by hitting the x on the display.
-  private void HandleForceShowLatencyDisplay(System.Object setvar = null) {
-    ForceShowLatencyDisplay();
-    if (_LatencyDisplayInst != null) {
-      _LatencyDisplayInst.SaveEnabled(true);
-    }
-  }
 
-  private void ForceShowLatencyDisplay() {
+  private void ShowLatencyDisplay() {
     if (_LatencyDisplayInst == null) {
       GameObject latencyDisplayInstance = GameObject.Instantiate(_LatencyDisplayPrefab.gameObject);
       latencyDisplayInstance.transform.SetParent(DebugMenuManager.Instance.DebugOverlayCanvas.transform, false);

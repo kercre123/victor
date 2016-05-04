@@ -272,7 +272,6 @@ public interface IRobot : IDisposable {
 
   void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-
   #region PressDemoMessages
 
   void TransitionToNextDemoState();
@@ -280,5 +279,7 @@ public interface IRobot : IDisposable {
   void StartDemoWithEdge(bool demoWithEdge);
 
   #endregion
+
+  void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
 }
