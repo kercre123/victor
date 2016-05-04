@@ -23,7 +23,11 @@ namespace Embedded {
   
   Result Matlab::PutPoints(const Point<s16> * values, s32 nValues, const std::string name)
   {
-    AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.Put", "Matlab engine is not started/connected");
+    if(!this->ep) {
+      mexErrMsgTxt("Matlab engine is not started/connected");
+      return RESULT_FAIL;
+    }
+    //AnkiConditionalErrorAndReturnValue(this->ep, RESULT_FAIL, "Anki.Put", "Matlab engine is not started/connected");
     
     const mwSize dims[2] = {2, static_cast<mwSize>(nValues)};
     const mxClassID matlabType = GetMatlabClassID<s16>();

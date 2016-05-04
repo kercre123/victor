@@ -176,6 +176,7 @@ namespace Anki {
       void SetMaxTiltSpeed(f32 maxSpeed_radPerSec);
       void SetTiltAccel(f32 accel_radPerSec2);
       void SetTiltTolerance(const Radians& angleTol_rad);
+      void SetMoveEyes(bool enable) { _moveEyes = enable; }
       
     protected:
       virtual ActionResult Init() override;
@@ -191,6 +192,7 @@ namespace Anki {
       Radians _headTiltAngle;
       bool    _isPanAbsolute;
       bool    _isTiltAbsolute;
+      bool    _moveEyes = true;
       
       const f32 _kDefaultPanAngleTol  = DEG_TO_RAD(5);
       const f32 _kDefaultMaxPanSpeed  = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;

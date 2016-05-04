@@ -477,6 +477,9 @@ namespace Cozmo {
                         Embedded::MemoryStack scratch);
     
     
+    // Contrast-limited adaptive histogram equalization (CLAHE)
+    cv::Ptr<cv::CLAHE> _clahe;
+    
     
     // Mailboxes for different types of messages that the vision
     // system communicates back to the vision processing thread

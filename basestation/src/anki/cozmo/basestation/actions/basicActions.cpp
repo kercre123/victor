@@ -821,12 +821,14 @@ namespace Anki {
       action->SetTolerance(_panAngleTol);
       action->SetMaxSpeed(_maxPanSpeed_radPerSec);
       action->SetAccel(_panAccel_radPerSec2);
+      action->SetMoveEyes(_moveEyes);
       _compoundAction.AddAction(action);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : _robot.GetHeadAngle() + _headTiltAngle;
       MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(_robot, newHeadAngle, _tiltAngleTol);
       headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
       headAction->SetAccel(_tiltAccel_radPerSec2);
+      headAction->SetMoveEyes(_moveEyes);
       _compoundAction.AddAction(headAction);
       
       // Put the angles in the name for debugging
