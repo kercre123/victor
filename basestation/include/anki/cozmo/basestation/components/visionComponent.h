@@ -64,6 +64,9 @@ struct DockingErrorSignal;
     VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context);
     virtual ~VisionComponent();
     
+    // SetNextImage does nothing until enabled
+    void Enable(bool enable) { _enabled = enable; }
+    
     void SetRunMode(RunMode mode);
 
     // Calibration must be provided before Update() can be called
@@ -201,6 +204,7 @@ struct DockingErrorSignal;
     Vision::Camera            _camera;
     Vision::CameraCalibration _camCalib;
     bool                      _isCamCalibSet = false;
+    bool                      _enabled = false;
     
     RunMode _runMode = RunMode::Asynchronous;
     

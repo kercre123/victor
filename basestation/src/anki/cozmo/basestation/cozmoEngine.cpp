@@ -455,6 +455,9 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
                                         } else {
                                           PRINT_NAMED_INFO("CozmoEngine.ReadCameraCalibration.Failed", "");
                                         }
+                                          
+                                        robot->GetVisionComponent().Enable(true);
+                                          
                                         });
     
     
