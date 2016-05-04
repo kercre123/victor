@@ -98,6 +98,15 @@
       'libflite.a',
     ],
 
+    'flite_libs_android': [
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite_cmu_grapheme_lang.a',
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite_cmu_grapheme_lex.a',
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite_cmu_us_kal.a',
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite_cmulex.a',
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite_usenglish.a',
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite.a',
+    ],
+
     'flite_lib_search_path_mac': [
       '<(coretech_external_path)/flite-2.0.0/generated/mac/DerivedData/Release',
     ],
@@ -1483,6 +1492,7 @@
               # does not work with ninja?!?!
               # '<@(face_library_libs)',
               # '<@(opencv_libs)',
+              '<@(flite_libs_android)',
               '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/libIlmImf.a',
               '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjasper.a',
               '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjpeg.a',
