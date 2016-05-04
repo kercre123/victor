@@ -3,17 +3,17 @@
   "name" : "RequestSpeedTap",
 
   "zero_block_config": {
-    "request_animName" : "anim_speedTap_ask2play_01",
-    "deny_animName" : "anim_speedTap_playerNo_01",
+    "request_animName" : "requestGame_speedTap_request",
+    "deny_animName" : "requestGame_speedTap_deny",
     "minRequestDelay_s" : 20.0,
     "score_factor": 0.2
   },
 
   "one_block_config": {
-    "initial_animName" : "anim_speedTap_look4Block_01",
-    "preDrive_animName" : "anim_speedTap_foundBlock_01",
-    "request_animName" : "anim_speedTap_ask2play_01",
-    "deny_animName" : "anim_speedTap_playerNo_01",
+    "initial_animName" : "requestGame_speedTap_initial",
+    "preDrive_animName" : "requestGame_speedTap_predrive",
+    "request_animName" : "requestGame_speedTap_request",
+    "deny_animName" : "requestGame_speedTap_deny",
     "minRequestDelay_s" : 20.0
   },
 

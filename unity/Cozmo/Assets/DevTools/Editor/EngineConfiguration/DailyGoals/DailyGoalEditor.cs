@@ -97,7 +97,7 @@ public class DailyGoalEditor : EditorWindow {
         _CurrentGoalGenFile = path;
       }
       catch (Exception ex) {
-        DAS.Error(this, ex.Message);
+        Debug.LogError(ex.Message);
       }
     }
   }

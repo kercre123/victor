@@ -4,33 +4,29 @@ using System.Collections;
 namespace SpeedTap {
   public class NoRedSpeedTapRules : SpeedTapRulesBase {
 
-    public override void SetLights(bool shouldTap, SpeedTapGame game) {
+    public override void SetLights(bool shouldMatch, SpeedTapGame game) {
 
-      if (shouldTap) {
+      if (shouldMatch) {
         // Do match
-        int randColorIndex = UnityEngine.Random.Range(0, _Colors.Length);
-        game.PlayerWinColor = game.CozmoWinColor = _Colors[randColorIndex];
-        game.CozmoBlock.SetLEDs(game.CozmoWinColor.ToUInt(), 0, 0xFF);
-        game.PlayerBlock.SetLEDs(game.PlayerWinColor.ToUInt(), 0, 0xFF);
+        Color matchColor = _Colors[PickRandomColor()];
+        game.CozmoWinColor = game.PlayerWinColor = matchColor;
+        game.CozmoBlock.SetLEDs(matchColor);
+        game.PlayerBlock.SetLEDs(matchColor);
       }
       else {
         // Do non-match
-        int playerColorIdx = UnityEngine.Random.Range(0, _Colors.Length);
-        int cozmoColorIdx = UnityEngine.Random.Range(0, _Colors.Length);
-        if (cozmoColorIdx == playerColorIdx) {
-          cozmoColorIdx = (cozmoColorIdx + 1) % _Colors.Length;
+        if (!TrySetCubesRed(game)) {
+          int playerColorIdx, cozmoColorIdx;
+          PickTwoDifferentColors(out playerColorIdx, out cozmoColorIdx);
+
+          Color playerColor = _Colors[playerColorIdx];
+          game.PlayerWinColor = playerColor;
+          game.PlayerBlock.SetLEDs(playerColor);
+
+          Color cozmoColor = _Colors[cozmoColorIdx];
+          game.CozmoWinColor = cozmoColor;
+          game.CozmoBlock.SetLEDs(cozmoColor);
         }
-
-        Color playerColor = _Colors[playerColorIdx];
-        Color cozmoColor = _Colors[cozmoColorIdx];
-
-        if (UnityEngine.Random.Range(0.0f, 1.0f) < 0.38f) {
-          playerColor = Color.red;
-          cozmoColor = Color.red;
-        }
-
-        game.PlayerBlock.SetLEDs(playerColor.ToUInt(), 0, 0xFF);
-        game.CozmoBlock.SetLEDs(cozmoColor.ToUInt(), 0, 0xFF);
       }
     }
   }

@@ -25,6 +25,8 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      _SpeedTapGame.EndCozmoPickedUpDisruptionDetection();
+      _SpeedTapGame.EndCozmoCubeMovedDisruptionDetection();
 
       Color[] winColors;
       LightCube winningBlock;
@@ -63,8 +65,8 @@ namespace SpeedTap {
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapHandLose, HandleHandEndAnimDone);
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundWin, HandleRoundEndAnimDone);
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundLose, HandleRoundEndAnimDone);
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleSessionAnimDone);
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionLose, HandleSessionAnimDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleEndGameAnimDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionLose, HandleEndGameAnimDone);
     }
 
     private void SetWinningLightPattern(LightCube winningBlock, Color[] winColors) {
@@ -79,7 +81,7 @@ namespace SpeedTap {
     private void SetLosingLightPattern(LightCube losingBlock, bool madeMistake) {
       if (madeMistake) {
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapRed);
-        losingBlock.SetFlashingLEDs(Color.red, 100, 100, 0);
+        _SpeedTapGame.StartCycleCubeSingleColor(losingBlock, new Color[] { Color.red }, _kWinCycleSpeed, Color.black);
       }
       else {
         losingBlock.SetLEDs(0);
@@ -88,7 +90,9 @@ namespace SpeedTap {
 
     private void ClearWinningLightPatterns() {
       _SpeedTapGame.StopCycleCube(_SpeedTapGame.PlayerBlock);
+      _SpeedTapGame.PlayerBlock.SetLEDsOff();
       _SpeedTapGame.StopCycleCube(_SpeedTapGame.CozmoBlock);
+      _SpeedTapGame.PlayerBlock.SetLEDsOff();
     }
 
     private void ReactToHand() {
@@ -111,16 +115,16 @@ namespace SpeedTap {
       _SpeedTapGame.UpdateRoundScore();
       _SpeedTapGame.UpdateUI();
 
-      if (_SpeedTapGame.IsSessionComplete()) {
-        _SpeedTapGame.UpdateUIForSessionEnd();
+      if (_SpeedTapGame.IsGameComplete()) {
+        _SpeedTapGame.UpdateUIForGameEnd();
         if (_CurrentWinner == PointWinner.Player) {
           // TODO add event listener
-          AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionLose, HandleSessionAnimDone);
+          AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionLose, HandleEndGameAnimDone);
           GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapSessionLose);
         }
         else {
           // TODO add event listener
-          AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleSessionAnimDone);
+          AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin, HandleEndGameAnimDone);
           GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapSessionWin);
         }
       }
@@ -139,8 +143,8 @@ namespace SpeedTap {
     }
 
     private void HandleHandEndAnimDone(bool success) {
-      _StateMachine.SetNextState(new SpeedTapHandCubesOff());
       ClearWinningLightPatterns();
+      _StateMachine.SetNextState(new SpeedTapHandCubesOff());
     }
 
     private void HandleRoundEndAnimDone(bool success) {
@@ -149,10 +153,10 @@ namespace SpeedTap {
       _StateMachine.SetNextState(new SpeedTapCozmoDriveToCube(false));
     }
 
-    private void HandleSessionAnimDone(bool success) {
+    private void HandleEndGameAnimDone(bool success) {
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
       ClearWinningLightPatterns();
-      _SpeedTapGame.HandleSessionEnd();
+      _SpeedTapGame.HandleGameEnd();
     }
   }
 }

@@ -51,13 +51,15 @@ public class StartupManager : MonoBehaviour {
 
   private bool _IsDebugBuild = false;
 
+  private Coroutine _UpdateDotsCoroutine;
+
   // Use this for initialization
   private IEnumerator Start() {
     // Start loading bar at close to 0
     _CurrentProgress = 0.05f;
     _LoadingBar.SetProgress(_CurrentProgress);
     _CurrentNumDots = 0;
-    StartCoroutine(UpdateLoadingDots());
+    _UpdateDotsCoroutine = StartCoroutine(UpdateLoadingDots());
 
     // Load asset bundler
     AssetBundleManager.IsLogEnabled = true;
@@ -96,6 +98,7 @@ public class StartupManager : MonoBehaviour {
     _LoadingBar.SetProgress(1.0f);
 
     // Load main scene
+    StopCoroutine(_UpdateDotsCoroutine);
     LoadMainScene(assetBundleManager);
   }
 
@@ -240,18 +243,19 @@ public class StartupManager : MonoBehaviour {
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
-    StopCoroutine(UpdateLoadingDots());
     assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: null);
   }
 
   private IEnumerator UpdateLoadingDots() {
-    string loadingText = "Loading";
-    for (int i = 0; i < _CurrentNumDots; i++) {
-      loadingText += ".";
+    while (true) {
+      string loadingText = "Loading";
+      for (int i = 0; i < _CurrentNumDots; i++) {
+        loadingText += ".";
+      }
+      _CurrentNumDots = (_CurrentNumDots + 1) % 4;
+      _LoadingBarLabel.text = loadingText;
+      yield return new WaitForSeconds(_AddDotSeconds);
     }
-    _CurrentNumDots = (_CurrentNumDots + 1) % 4;
-    _LoadingBarLabel.text = loadingText;
-    yield return new WaitForSeconds(_AddDotSeconds);
   }
 
   private void AddLoadingBarProgress(float amount) {

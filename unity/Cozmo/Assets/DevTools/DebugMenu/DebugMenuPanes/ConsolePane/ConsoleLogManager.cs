@@ -7,20 +7,19 @@ using Anki.UI;
 
 public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
-  private static readonly IDAS sDAS = DAS.GetInstance(typeof(ConsoleLogManager));
 
   private static ConsoleLogManager _Instance;
 
   public static ConsoleLogManager Instance {
     get {
       if (_Instance == null) {
-        sDAS.Error("Don't access this until Start!");
+        DAS.Error("ConsoleLogManager.NullInstance", "Don't access ConsoleLogManager until Start!");
       }
       return _Instance;
     }
     private set {
       if (_Instance != null) {
-        sDAS.Error("There shouldn't be more than one UIManager");
+        DAS.Error("ConsoleLogManager.DuplicateInstance", "ConsoleLogManager already exists");
       }
       _Instance = value;
     }
@@ -40,6 +39,9 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   [SerializeField]
   private int numberCachedLogMaximum = 100;
 
+  private const int kClipboardLogMaximum = 9000;
+
+  private Queue<LogPacket> _LogToClipboard;
   private Queue<LogPacket> _MostRecentLogs;
   private Queue<LogPacket> _ReceivedPackets;
 
@@ -56,6 +58,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
     _MostRecentLogs = new Queue<LogPacket>();
     _ReceivedPackets = new Queue<LogPacket>();
+    _LogToClipboard = new Queue<LogPacket>();
     _ConsoleLogPaneView = null;
 
     _LastToggleValues = new Dictionary<LogPacket.ELogKind, bool>();
@@ -85,6 +88,10 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
           _MostRecentLogs.Dequeue();
         }
 
+        while (_LogToClipboard.Count > kClipboardLogMaximum) {
+          _LogToClipboard.Dequeue();
+        }
+
         // Update the UI, if it is open
         if ((_ConsoleLogPaneView != null) && (_LastToggleValues[newPacket.LogKind])) {
           _ConsoleLogPaneView.AppendLog(newPacket.ToString());
@@ -95,16 +102,8 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   public void EnableSOSLogs(bool enable) {
 
-    // using player prefs instead of player profile because this is a debug feature
-    // and I don't want this getting reset when QA is resetting save data for QA purposes.
-    if (enable) {
-      PlayerPrefs.SetInt("DebugSOSEnabled", 1);
-    }
-    else {
-      PlayerPrefs.SetInt("DebugSOSEnabled", 0);
-    }
-
-    PlayerPrefs.Save();
+    DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = enable;
+    DataPersistence.DataPersistenceManager.Instance.Save();
 
     if (!_SOSLoggingEnabled && enable) {
       _SOSLoggingEnabled = enable;
@@ -182,6 +181,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     // This can be called from multiple threads while the main one is processing the received packets so we have to lock
     lock (_ReceivedPackets) {
       _ReceivedPackets.Enqueue(newPacket);
+      _LogToClipboard.Enqueue(newPacket);
     }
   }
 
@@ -209,10 +209,9 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void CopyLogsToClipboard() {
-    List<string> logDb = CompileRecentLogs();
     string logFull = "";
-    for (int i = 0; i < logDb.Count; ++i) {
-      logFull += logDb[i] + "\n";
+    foreach (LogPacket logPacket in _LogToClipboard) {
+      logFull += logPacket.GetStringNoFromatting() + "\n";
     }
     CozmoBinding.SendToClipboard(logFull);
     GUIUtility.systemCopyBuffer = logFull;
@@ -315,6 +314,56 @@ public class LogPacket {
     EventValue = eventValue;
     Context = context;
     KeyValues = keyValue;
+  }
+
+  public string GetStringNoFromatting() {
+    string logKindStr = "";
+    string contextStr = "";
+    switch (LogKind) {
+    case ELogKind.Global:
+      logKindStr = "GLOBAL";
+      break;
+    case ELogKind.Info:
+      logKindStr = "INFO";
+      break;
+    case ELogKind.Warning:
+      logKindStr = "WARN";
+      break;
+    case ELogKind.Error:
+      logKindStr = "ERROR";
+      break;
+    case ELogKind.Event:
+      logKindStr = "EVENT";
+      break;
+    case ELogKind.Debug:
+      logKindStr = "DEBUG";
+      break;
+    }
+    if (Context != null) {
+      Dictionary<string, string> contextDict = Context as Dictionary<string, string>;
+      if (contextDict != null) {
+        contextStr = string.Join(", ", contextDict.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
+      }
+      else {
+        contextStr = Context.ToString();
+      }
+    }
+
+    string keyValuesStr = "";
+    if (KeyValues != null) {
+      keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
+    }
+
+    StringBuilder formatStr = new StringBuilder("[{0}] {1}: {2}"); 
+    if (!string.IsNullOrEmpty(contextStr)) {
+      formatStr.Append(" ({3})");
+    }
+
+    if (!string.IsNullOrEmpty(keyValuesStr)) {
+      formatStr.Append(" ({4})");
+    }
+
+    return string.Format(formatStr.ToString(), logKindStr, EventName, EventValue, contextStr, keyValuesStr);
   }
 
   public override string ToString() {

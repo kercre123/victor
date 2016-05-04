@@ -27,7 +27,7 @@ namespace SpeedTap {
 
       // Set lights on cubes
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
-      _SpeedTapGame.Rules.SetLights(shouldTap: true, game: _SpeedTapGame);
+      _SpeedTapGame.Rules.SetLights(shouldMatch: true, game: _SpeedTapGame);
 
       // Listen for player taps
       _SpeedTapGame.PlayerTappedBlockEvent += HandlePlayerTap;
@@ -40,6 +40,8 @@ namespace SpeedTap {
       float secondsElapsed = Time.time - _StartTimestamp_sec;
       if (!_IsCozmoMoving && secondsElapsed > _CozmoMovementDelay_sec) {
         _IsCozmoMoving = true;
+
+        _SpeedTapGame.EndCozmoCubeMovedDisruptionDetection();
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
         _StartTapAnimationTimestamp_sec = Time.time;
       }
@@ -55,6 +57,7 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
+      _SpeedTapGame.StartCozmoCubeMovedDisruptionDetection();
       _SpeedTapGame.PlayerTappedBlockEvent -= HandlePlayerTap;
     }
 

@@ -25,12 +25,17 @@ public class LatencyCalculator : MonoBehaviour {
       RobotEngineManager.Instance.OnDebugLatencyMsg += HandleDebugLatencyMsg;
       RobotEngineManager.Instance.RobotConnected += HandleRobotConnected;
       _IsInitted = true;
+      if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled) {
+        ForceShowLatencyDisplay();
+      }
     }
   }
 
   private void OnDestroy() {
-    RobotEngineManager.Instance.OnDebugLatencyMsg -= HandleDebugLatencyMsg;
-    RobotEngineManager.Instance.RobotConnected -= HandleRobotConnected;
+    if (_IsInitted) {
+      RobotEngineManager.Instance.OnDebugLatencyMsg -= HandleDebugLatencyMsg;
+      RobotEngineManager.Instance.RobotConnected -= HandleRobotConnected;
+    }
   }
 
   private void HandleDebugLatencyMsg(Anki.Cozmo.ExternalInterface.DebugLatencyMessage msg) {
@@ -39,7 +44,7 @@ public class LatencyCalculator : MonoBehaviour {
     }
     else if (msg.averageLatency > LatencyDisplay.kMaxThresholdBeforeWarning_ms) {
       // Warning we are over the limit Warn people disconnects might happen.
-      HandleForceShowLatencyDisplay();
+      ForceShowLatencyDisplay();
     }
   }
 
@@ -49,6 +54,13 @@ public class LatencyCalculator : MonoBehaviour {
   }
   // Hide happens just by hitting the x on the display.
   private void HandleForceShowLatencyDisplay(System.Object setvar = null) {
+    ForceShowLatencyDisplay();
+    if (_LatencyDisplayInst != null) {
+      _LatencyDisplayInst.SaveEnabled(true);
+    }
+  }
+
+  private void ForceShowLatencyDisplay() {
     if (_LatencyDisplayInst == null) {
       GameObject latencyDisplayInstance = GameObject.Instantiate(_LatencyDisplayPrefab.gameObject);
       latencyDisplayInstance.transform.SetParent(DebugMenuManager.Instance.DebugOverlayCanvas.transform, false);

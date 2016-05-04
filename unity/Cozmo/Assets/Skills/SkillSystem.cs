@@ -153,13 +153,18 @@ public class SkillSystem {
     GameSkillData currSkillData = GetSkillDataForGame();
     if (currSkillData != null) {
       GameSkillConfig skillConfig = _CurrChallengeData.MinigameConfig.SkillConfig;
-      if (skillConfig.GainChallengePointEvent == cozEvent) {
+      if (skillConfig.IsGainChallengePointEvent(cozEvent)) {
         currSkillData.WinPointsTotal++;
       }
-      if (skillConfig.LoseChallengePointEvent == cozEvent) {
+      if (skillConfig.IsLoseChallengePointEvent(cozEvent)) {
         currSkillData.LossPointsTotal++;
       }
-      if (skillConfig.EvaluateLevelChangeEvent == cozEvent) {
+      // In the event we quit out early and didn't reach an evaluate event, force a clear
+      if (skillConfig.IsResetPointEvent(cozEvent)) {
+        currSkillData.ResetPoints();
+      }
+
+      if (skillConfig.IsLevelChangeEvent(cozEvent)) {
         // See if things are pass the level up/down thresholds...
         GameSkillLevelConfig skillLevelConfig = GetSkillLevelConfig();
         if (skillLevelConfig != null) {

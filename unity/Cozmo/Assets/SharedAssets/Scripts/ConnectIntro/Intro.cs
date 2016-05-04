@@ -164,8 +164,7 @@ public class Intro : MonoBehaviour {
       #endif
     }
 
-    bool sosEnable = PlayerPrefs.GetInt("DebugSOSEnabled") != 0;
-    if (sosEnable) {
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled) {
       ConsoleLogManager.Instance.EnableSOSLogs(true);
     }
 

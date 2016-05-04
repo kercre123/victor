@@ -14,19 +14,19 @@
     },
     {
       "CladEvent": "OnFollowMotionLookDown",
-      "AnimName": ""
+      "AnimName": "followMotionLookDown"
     },
     {
       "CladEvent": "OnFollowMotionLookUp",
-      "AnimName": ""
+      "AnimName": "followMotionLookUp"
     },
     {
       "CladEvent": "OnFollowMotionLookUpAndDown",
-      "AnimName": ""
+      "AnimName": "followMotionLookUpAndDown"
     },
     {
       "CladEvent": "OnFollowMotionReact",
-      "AnimName": ""
+      "AnimName": "followMotionReact"
     },
     {
       "CladEvent": "OnSpeedtapStarted",
@@ -75,6 +75,10 @@
     {
       "CladEvent": "OnSpeedtapIdle",
       "AnimName": "speedTap_Peek"
+    },
+    {
+      "CladEvent": "OnLearnedPlayerName",
+      "AnimName": "faceEnrollment_LearnedPlayerName"
     }
   ]
 }

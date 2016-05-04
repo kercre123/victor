@@ -37,6 +37,7 @@
   },
   "behaviorGroups": [
     "AffectsBlocks",
-    "Unlock_CubeRoll"
+    "Unlock_CubeRoll",
+    "DemoCubes"
   ]
 }

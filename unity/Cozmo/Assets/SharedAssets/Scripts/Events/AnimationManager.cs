@@ -40,9 +40,9 @@ public class AnimationManager {
   // Map RobotCallbacks to GameEvents instead of AnimationGroups to separate game logic from Animation names
   private Dictionary<GameEvent, RobotCallback> AnimationCallbackDict = new Dictionary<GameEvent, RobotCallback>();
 
-  #if UNITY_IOS && !UNITY_EDITOR
+  #if !UNITY_EDITOR
   public static string sEventMapDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/animationGroupMaps"); } }
-  
+
 #else
   public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroupMaps"; } }
   #endif
@@ -90,7 +90,7 @@ public class AnimationManager {
       RobotCallback newCallback = null;
       if (!string.IsNullOrEmpty(animGroup)) {
         AnimationCallbackDict.TryGetValue(cozEvent, out newCallback);
-        CurrentRobot.SendAnimationGroup(animGroup, newCallback);
+        CurrentRobot.SendAnimationGroup(animGroup, newCallback, QueueActionPosition.NEXT);
       }
       else if (AnimationCallbackDict.TryGetValue(cozEvent, out newCallback)) {
         DAS.Warn(this, string.Format("GameEvent {0} has an animation callback, but no animation group", cozEvent));

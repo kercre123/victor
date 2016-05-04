@@ -1,8 +1,6 @@
 {
-  "behaviorType": "PlayAnim",
+  "behaviorType": "DemoFearEdge",
   "name": "demo_fearEdge",
-  "animName": "anim_keepAlive_blink_01",
-  "num_loops": 3,
   "emotionScorers": [
     {
       "emotionType": "Excited",
