@@ -674,7 +674,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & EVENT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 447, "[t=%dms(%d)] event %d.", 3,
+              AnkiDebug( 2, "AnimationController", 448, "[t=%dms(%d)] event %d.", 3,
                     _currentTime_ms, system_get_time(), msg.event_id);
 #               endif
 

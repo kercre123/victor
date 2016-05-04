@@ -1590,9 +1590,9 @@ namespace Anki {
               case (s32)'&':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  PRINT_NAMED_INFO("SendNVStorageReadEntry", "NVEntry_CameraCalibration");
-                  ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CameraCalibration);
-                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalibration);
+                  PRINT_NAMED_INFO("SendNVStorageReadEntry", "NVEntry_CameraCalib");
+                  ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CameraCalib);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                 } else {
                   
                   if (ENABLE_NVSTORAGE_WRITE) {
@@ -1616,12 +1616,12 @@ namespace Anki {
                                               0, 240, 320);
                       std::vector<u8> calibVec(calib.Size());
                       calib.Pack(calibVec.data(), calib.Size());
-                      SendNVStorageWriteEntry(NVStorage::NVEntryTag::NVEntry_CameraCalibration,
+                      SendNVStorageWriteEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib,
                                               calibVec.data(), calibVec.size(),
                                               0, 1);
                     } else {
-                      PRINT_NAMED_INFO("SendNVStorageEraseEntry", "NVEntry_CameraCalibration");
-                      SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CameraCalibration);
+                      PRINT_NAMED_INFO("SendNVStorageEraseEntry", "NVEntry_CameraCalib");
+                      SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                     }
                     writeNotErase = !writeNotErase;
                     
@@ -2116,7 +2116,6 @@ namespace Anki {
           }
           
           switch(msg.tag) {
-            case NVStorage::NVEntryTag::NVEntry_CameraCalibration:
             case NVStorage::NVEntryTag::NVEntry_CameraCalib:
             {
               CameraCalibration calib;
