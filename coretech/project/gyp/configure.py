@@ -132,15 +132,17 @@ def main(scriptArgs):
   generator.processFolder(['common/basestation/test'], ['project/gyp/common-test.lst'])
   generator.processFolder(['common/shared/test'], ['project/gyp/common-shared-test.lst'])
   generator.processFolder(['common/robot/src', 'common/shared/src'], ['project/gyp/common-robot.lst'])
-  generator.processFolder(['vision/basestation/src', 'vision/include'], ['project/gyp/vision.lst'])
+  generator.processFolder(['vision/basestation/src', 'vision/include', 'generated/clad/vision'], ['project/gyp/vision.lst'])
   generator.processFolder(['vision/basestation/test'], ['project/gyp/vision-test.lst'])
+  generator.processFolder(['vision/clad/src'], ['project/gyp/vision-clad.lst'])
   generator.processFolder(['vision/robot/src'], ['project/gyp/vision-robot.lst'])
   generator.processFolder(['planning/basestation/src', 'planning/include', 'planning/shared/src'], ['project/gyp/planning.lst'])
   generator.processFolder(['planning/basestation/test'], ['project/gyp/planning-standalone.lst'])
   generator.processFolder(['planning/basestation/test'], ['project/gyp/planning-test.lst'])
   generator.processFolder(['planning/shared/src'], ['project/gyp/planning-robot.lst'])
-  generator.processFolder(['messaging/basestation/src', 'messaging/include', 'messaging/shared/src'], ['project/gyp/messaging.lst'])
+  generator.processFolder(['messaging/basestation/src', 'messaging/include', 'messaging/shared/src', 'generated/clad/vision'], ['project/gyp/messaging.lst'])
   generator.processFolder(['messaging/shared/src'], ['project/gyp/messaging-robot.lst'])
+  
   if options.updateListsOnly:
     # TODO: remove dependency on abspath. 
     # there is a bug due to 'os.chdir' and user passed rel path

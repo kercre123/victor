@@ -23,6 +23,7 @@
 #define FLASH_BLOCK_PARAMS        FLASH_Sector_1
 
 // The first 128KB of the binary must contain all the code - we keep a backup in B to prevent bricked updates
+// This could have been 768KB, since we never used 0x08020000
 #define FLASH_BLOCK_A             0x08060000
 #define FLASH_BLOCK_A_SECTOR_0    FLASH_Sector_7    // 640KB total
 #define FLASH_BLOCK_SECTOR_1      FLASH_Sector_8

@@ -44,32 +44,35 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
 bool BehaviorPounceOnMotion::IsRunnable(const Robot& robot) const
 {
   // we can only run if there is a pounce pose to pounce on
-  return _numValidPouncePoses > 1 || _state != State::Inactive;
+  return _numValidPouncePoses > 0 || _state != State::Inactive;
 }
 
 float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot) const
 {
-  const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // TODO:(bn) this entire behavior needs a massive cleanup. For now, for demo purposes, always run if we can
+  return 1.0f;
+  
+  // const double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  // TODO:(bn) emotion stuff here?
+  // // TODO:(bn) emotion stuff here?
 
-  // if we are running, always give a score of 1.0 so we keep running
-  if( _state != State::Inactive ) {
-    return 1.0f;
-  }
+  // // if we are running, always give a score of 1.0 so we keep running
+  // if( _state != State::Inactive ) {
+  //   return 1.0f;
+  // }
   
-  // give 0 score if it has been too long
-  if( currentTime_sec - _lastValidPouncePoseTime > 1.5f ) {
-    return 0.0f;
-  }
+  // // give 0 score if it has been too long
+  // if( currentTime_sec - _lastValidPouncePoseTime > 1.5f ) {
+  //   return 0.0f;
+  // }
   
-  // current hack: 1.0 when we've got 5, linearly down from there
-  int fullScoreNum = 5;
-  if( _numValidPouncePoses > fullScoreNum ) {
-    return 1.0f;
-  }
+  // // current hack: 1.0 when we've got 5, linearly down from there
+  // int fullScoreNum = 5;
+  // if( _numValidPouncePoses > fullScoreNum ) {
+  //   return 1.0f;
+  // }
   
-  return _numValidPouncePoses * (1.0 / fullScoreNum);
+  // return _numValidPouncePoses * (1.0 / fullScoreNum);
 }
 
 
@@ -100,13 +103,13 @@ void BehaviorPounceOnMotion::HandleWhileNotRunning(const EngineToGameEvent& even
                            dist, _numValidPouncePoses);
         }
         else {
-          PRINT_NAMED_INFO("BehaviorPounceOnMotion.IgnorePose", "got pose, but dist of %f is too large, ignoring",
-                           dist);
+          PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.IgnorePose", "got pose, but dist of %f is too large, ignoring",
+                            dist);
         }
       }
       else if(_numValidPouncePoses > 0) {
-        PRINT_NAMED_INFO("BehaviorPounceOnMotion.IgnorePose", "got pose, but ground plane area is %f, which is too low",
-                         motionObserved.ground_area);
+        PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.IgnorePose", "got pose, but ground plane area is %f, which is too low",
+                          motionObserved.ground_area);
       }
 
       // reset everything if it's been this long since we got a valid pose
@@ -148,14 +151,14 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
         robot.SetIdleAnimation(_previousIdleAnimation);
         
         if( _state == State::Pouncing ) {
-          PRINT_NAMED_INFO("BehaviorPounceOnMotion.RelaxLift", "pounce animation complete, relaxing lift");
+          PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.RelaxLift", "pounce animation complete, relaxing lift");
           robot.GetMoveComponent().EnableLiftPower(false); // TEMP: make sure this gets cleaned up
           _state = State::RelaxingLift;
           const float relaxTime = 0.15f;
           _stopRelaxingTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + relaxTime;
         }
         else if( _state == State::PlayingFinalReaction ) {
-          PRINT_NAMED_INFO("BehaviorPounceOnMotion.Complete", "post-pounce reaction animation complete");
+          PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.Complete", "post-pounce reaction animation complete");
           _state = State::Complete;
         }
       }
@@ -228,12 +231,12 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
   float robotBodyAngleDelta = robot.GetPitchAngle() - _prePouncePitch;
     
   // check the lift angle, after some time, transition state
-  PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
-                   robot.GetLiftHeight(),
-                   RAD_TO_DEG(robotBodyAngleDelta),
-                   robotBodyAngleDelta,
-                   RAD_TO_DEG(_prePouncePitch),
-                   RAD_TO_DEG(robot.GetPitchAngle()));
+  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
+                    robot.GetLiftHeight(),
+                    RAD_TO_DEG(robotBodyAngleDelta),
+                    robotBodyAngleDelta,
+                    RAD_TO_DEG(_prePouncePitch),
+                    RAD_TO_DEG(robot.GetPitchAngle()));
 
   bool caught = robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
 

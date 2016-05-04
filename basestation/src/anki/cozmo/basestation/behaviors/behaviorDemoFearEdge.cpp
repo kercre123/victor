@@ -30,6 +30,13 @@ BehaviorDemoFearEdge::BehaviorDemoFearEdge(Robot& robot, const Json::Value& conf
   SetDefaultName("DemoFearEdge");
 }
 
+Result BehaviorDemoFearEdge::ResumeInternal(Robot& robot)
+{
+  // if we are resuming, this probably means we saw a cliff, so we don't want to do anything. Return OK, but
+  // don't start an action so the behavior will complete immediately
+  return Result::RESULT_OK;
+}
+
 Result BehaviorDemoFearEdge::InitInternal(Robot& robot)
 {
   TransitionToDrivingForward(robot);

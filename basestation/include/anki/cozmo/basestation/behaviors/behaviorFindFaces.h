@@ -84,6 +84,8 @@ private:
   Radians _faceAngleCenter;
   bool _faceAngleCenterSet = false;
   bool _useFaceAngleCenter = true;
+  float _minScoreWhileActive = 0.0f;
+  bool _stopOnAnyFace = false;
   
   float GetRandomPanAmount() const;
   void StartMoving(Robot& robot);
