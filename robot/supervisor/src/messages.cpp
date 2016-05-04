@@ -931,7 +931,7 @@ namespace Anki {
       
       Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted)
       {
-        RobotInterface::MotorCalibration m;
+        MotorCalibration m;
         m.motorID = motor;
         m.calibStarted = calibStarted;
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;

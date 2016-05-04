@@ -155,8 +155,10 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   
 void Robot::HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const RobotInterface::MotorCalibration& payload = message.GetData().Get_motorCalibration();
+  const MotorCalibration& payload = message.GetData().Get_motorCalibration();
   PRINT_NAMED_INFO("MotorCalibration", "Motor %d, started %d", (int)payload.motorID, payload.calibStarted);
+  
+  Broadcast(ExternalInterface::MessageEngineToGame(MotorCalibration(payload)));
 }
   
 void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message)

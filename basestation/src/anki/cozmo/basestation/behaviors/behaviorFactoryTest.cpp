@@ -110,7 +110,8 @@ namespace Cozmo {
       EngineToGameTag::RobotDeletedObject,
       EngineToGameTag::ObjectMoved,
       EngineToGameTag::CameraCalibration,
-      EngineToGameTag::RobotStopped
+      EngineToGameTag::RobotStopped,
+      EngineToGameTag::MotorCalibration
     }});
 
   }
@@ -397,7 +398,7 @@ namespace Cozmo {
       case FactoryTestState::GotoCalibrationPose:
       {
         // Check that robot is in correct pose
-        if (!robot.GetPose().IsSameAs(_camCalibPose, _kRobotPoseSamenessDistThresh_mm, _kRbotPoseSamenessAngleThresh_rad)) {
+        if (!robot.GetPose().IsSameAs(_camCalibPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingInCalibPose",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
                               robot.GetPose().GetTranslation().x(),
@@ -545,7 +546,7 @@ namespace Cozmo {
       case FactoryTestState::GotoPickupPose:
       {
         // Verify that robot is where expected
-        if (!robot.GetPose().IsSameAs(_prePickupPose, _kRobotPoseSamenessDistThresh_mm, _kRbotPoseSamenessAngleThresh_rad)) {
+        if (!robot.GetPose().IsSameAs(_prePickupPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingInPrePickupPose",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
                               robot.GetPose().GetTranslation().x(),
@@ -574,8 +575,9 @@ namespace Cozmo {
         Radians angleDiff;
         if (!oObject->GetPose().IsSameAs_WithAmbiguity(_expectedLightCubePose,
                                                        _kBlockRotationAmbiguities,
-                                                       oObject->GetSameDistanceTolerance(),
-                                                       oObject->GetSameAngleTolerance()*0.5f, true,
+                                                       _kExpectedCubePoseDistThresh_mm,
+                                                       _kExpectedCubePoseAngleThresh_rad,
+                                                       true,
                                                        Tdiff, angleDiff)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpected",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f; tdiff: %f %f %f; angleDiff (deg): %f",
@@ -759,6 +761,10 @@ namespace Cozmo {
         
       case EngineToGameTag::RobotStopped:
         _lastHandlerResult = HandleRobotStopped(robot, event.GetData().Get_RobotStopped());
+        break;
+        
+      case EngineToGameTag::MotorCalibration:
+        _lastHandlerResult = HandleMotorCalibration(robot, event.GetData().Get_MotorCalibration());
         break;
         
       default:
@@ -1007,6 +1013,13 @@ namespace Cozmo {
       EndTest(robot, FactoryTestResultCode::CLIFF_UNEXPECTED);
     }
     
+    return RESULT_OK;
+  }
+  
+  Result BehaviorFactoryTest::HandleMotorCalibration(Robot& robot, const MotorCalibration &msg)
+  {
+    // This should never happen during the test!
+    EndTest(robot, FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
     return RESULT_OK;
   }
   
