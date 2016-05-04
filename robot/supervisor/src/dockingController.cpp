@@ -402,7 +402,8 @@ namespace Anki {
         // Don't want to move the lift while we are backing up or carrying a block
         if(failureMode_ != BACKING_UP &&
            !PickAndPlaceController::IsCarryingBlock() &&
-           PickAndPlaceController::GetCurAction() != DA_ALIGN)
+           PickAndPlaceController::GetCurAction() != DA_ALIGN &&
+           PickAndPlaceController::GetCurAction() != DA_ROLL_LOW)
         {
           f32 lastCommandedHeight = LiftController::GetDesiredHeight();
           if (lastCommandedHeight == dockingErrSignalMsg_.z_height) {
@@ -613,8 +614,9 @@ namespace Anki {
         
         Result retVal = RESULT_OK;
         
-        // There are some special cases for aligning with a block
-        const bool isAligning = PickAndPlaceController::GetCurAction() == DA_ALIGN;
+        // There are some special cases for aligning with a block (rolling is basically aligning)
+        const bool isAligning = PickAndPlaceController::GetCurAction() == DA_ALIGN ||
+                                PickAndPlaceController::GetCurAction() == DA_ROLL_LOW;
 
         switch(mode_)
         {
@@ -812,7 +814,7 @@ namespace Anki {
                   createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
                   failureMode_ = HANNS_MANEUVER;
                 }
-                // Special case for DA_ALIGN - will occur if we are in position for hanns maneuver then we won't do it
+                // Special case for aligning - will occur if we are in position for hanns maneuver then we won't do it
                 // and just succeed
                 else if(isAligning && doHannsManeuver)
                 {
@@ -1228,6 +1230,7 @@ namespace Anki {
           f32 distIntoBlock = ((!dockingToBlockOnGround ||
                                 PickAndPlaceController::IsCarryingBlock() ||
                                 PickAndPlaceController::GetCurAction() == DA_ALIGN) ? 0 : PATH_END_DIST_INTO_BLOCK_MM);
+          
           PathFollower::AppendPathSegment_Line(0,
                                                dockPose_.x()-(distToDecel)*dockPoseAngleCos,
                                                dockPose_.y()-(distToDecel)*dockPoseAngleSin,
