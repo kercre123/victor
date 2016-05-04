@@ -2620,7 +2620,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
     //const bool longEnoughSinceLastRead = image.GetTimestamp() - _lastToolCodeReadTime_ms > kToolCodeReadPeriod_ms;
     
-    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK;
+    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK + 1.f; // 1mm fudge
     
     // Sanity checks: we should not even be calling ReadToolCode if everybody
     // hasn't done their job and got us into position

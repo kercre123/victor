@@ -35,7 +35,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 // Enable this when running on actual EP3 robots
-#define USING_EP3 0
+#define USING_EP3 1
 
 // Set to 1 if you want the test to actually be able to write
 // new camera calibration, calibration images, and test results to flash.
@@ -87,11 +87,20 @@ namespace Cozmo {
     _motionProfile.reverseSpeed_mmps = 80.0f;
     _motionProfile.isCustom = true;
 
+    /*
     _camCalibPanAndTiltAngles = {{0,               0},
                                  {0,               DEG_TO_RAD(20)},
                                  {DEG_TO_RAD(-90), 0},
                                  {DEG_TO_RAD(-40), 0},
                                  {DEG_TO_RAD( 45), 0},
+     */
+    
+     // Fixture targets were smaller and lower than spec
+     _camCalibPanAndTiltAngles = {{0,               0},
+                                 {0,               DEG_TO_RAD(25)},
+                                 {DEG_TO_RAD(-90), DEG_TO_RAD(-8)},
+                                 {DEG_TO_RAD(-40), DEG_TO_RAD(-8)},
+                                 {DEG_TO_RAD( 45), DEG_TO_RAD(-8)},
     };
     
     
@@ -340,7 +349,11 @@ namespace Cozmo {
           }
           
           // Drive off charger
-          StartActing(robot, new DriveStraightAction(robot, 250, 100) );
+          StartActing(robot, new DriveStraightAction(robot, 250, 100),
+                      [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.06;
+                        return true;
+                      });
           SetCurrState(FactoryTestState::DriveToSlot);
         }
         break;
@@ -396,7 +409,7 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::NOT_IN_CALIBRATION_POSE);
         }
         
-        
+        /*
         // Check if all calibration images received from flash.
         // If so, go directly to ComputeCameraCalibration.
         // Otherwise, acquire images
@@ -406,10 +419,11 @@ namespace Cozmo {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.InsufficientCalibrationImagesInFlash",
                               "Only %zu images found in flash. Taking pictures now.",
                               robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
+         */
           _camCalibPoseIndex = 0;
           robot.GetVisionComponent().ClearCalibrationImages();
           SetCurrState(FactoryTestState::TakeCalibrationImages);
-        }
+        //}
         break;
       }
         
