@@ -5,7 +5,7 @@
 
 namespace DTM {
   void start(void);
-  void enterTestMode(uint8_t mode, uint8_t channel, const void* payload, int length);
+  void testCommand(int32_t command, int32_t freq, int32_t length, int32_t payload);
   void stop(void);
 }
 

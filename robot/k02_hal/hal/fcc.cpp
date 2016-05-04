@@ -8,6 +8,11 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+// Include command constants from the nordic API
+extern "C" {
+  #include "syscon/components/ble/ble_dtm/ble_dtm.h"
+}
+
 using namespace Anki::Cozmo::RobotInterface;
 
 extern GlobalDataToHead g_dataToHead;
@@ -15,19 +20,21 @@ extern GlobalDataToBody g_dataToBody;
 
 struct DTM_Mode_Settings {
   bool    motor_drive;
-  uint8_t mode;
-  uint8_t channel;
+  int32_t command;
+  int32_t freq;
+  int32_t payload;
+  int32_t length;
 };
 
 static const DTM_Mode_Settings DTM_MODE[] = {
-  { false, DTM_LISTEN, 3 },
-  { false, DTM_TRANSMIT, 3 },
-  { false, DTM_TRANSMIT, 42 },
-  { false, DTM_TRANSMIT, 81 },
-  { false, DTM_CARRIER, 3 },
-  { false, DTM_CARRIER, 42 },
-  { false, DTM_CARRIER, 81 },
-  { true,  DTM_DISABLED, 0 }
+  { false,    LE_RECEIVER_TEST,  1,                   0xFF,         0xFF },
+  { false, LE_TRANSMITTER_TEST,  1,          DTM_PKT_PRBS9,           31 },
+  { false, LE_TRANSMITTER_TEST, 20,          DTM_PKT_PRBS9,           31 },
+  { false, LE_TRANSMITTER_TEST, 40,          DTM_PKT_PRBS9,           31 },
+  { false, LE_TRANSMITTER_TEST,  1, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
+  { false, LE_TRANSMITTER_TEST, 20, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
+  { false, LE_TRANSMITTER_TEST, 40, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
+  { true,             LE_RESET,  0,                   0xFF,         0xFF }
 };
 
 static const int DTM_MODE_COUNT  = sizeof(DTM_MODE) / sizeof(DTM_Mode_Settings);
@@ -42,9 +49,12 @@ static const int abs(int x) {
 
 
 static void configureTest(int mode) {
-  SetDTMParameters msg;
-  msg.channel = DTM_MODE[mode].channel;
-  msg.mode = DTM_MODE[mode].mode;
+  SendDTMCommand msg;
+
+  msg.command = DTM_MODE[mode].command;
+  msg.freq = DTM_MODE[mode].freq;
+  msg.length = DTM_MODE[mode].length;
+  msg.payload = DTM_MODE[mode].payload;
     
   SendMessage(msg);
 

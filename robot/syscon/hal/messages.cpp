@@ -44,8 +44,8 @@ static void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode& msg
   enterOperatingMode(msg.radioMode);
 }
 
-static void Process_setDTMParameters(const RobotInterface::SetDTMParameters& msg) {
-  DTM::enterTestMode(msg.mode, msg.channel, &msg.payload, msg.payload_length);
+static void Process_sendDTMCommand(const RobotInterface::SendDTMCommand& msg) {
+  DTM::testCommand(msg.command, msg.freq, msg.length, msg.payload);
 }
 
 static void Process_bleRecvHelloMessage(const BLE_RecvHello& msg)

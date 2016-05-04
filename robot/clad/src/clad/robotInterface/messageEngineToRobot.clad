@@ -234,11 +234,12 @@ message SetBodyRadioMode
   uint_8 radioMode
 }
 
-message SetDTMParameters
+message SendDTMCommand
 {
-  uint_8 mode,
-  uint_8 channel,
-  uint_8 payload[uint_8:32]
+  int_32 command, 
+  int_32 freq, 
+  int_32 length, 
+  int_32 payload
 }
 
 message EnableReadToolCodeMode
@@ -316,13 +317,6 @@ enum uint_8 BodyRadioMode {
   BODY_DTM_OPERATING_MODE = 2
 }
 
-enum uint_8 DTMTestMode {
-  DTM_DISABLED = 0,
-  DTM_LISTEN = 1,
-  DTM_CARRIER = 2,
-  DTM_TRANSMIT = 3
-}
-
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from engine to robot and within the robot
@@ -344,7 +338,7 @@ union EngineToRobot
 
   NVReadResultToBody            nvReadToBody                = 0x08,
   NVOpResultToBody              nvOpResultToBody            = 0x09,
-  SetDTMParameters              setDTMParameters            = 0x0A,
+  SendDTMCommand                sendDTMCommand              = 0x0A,
 
   BLE_RecvHello                 bleRecvHelloMessage         = 0x26,
   BLE_EnterPairing              bleEnterPairing             = 0x27,
