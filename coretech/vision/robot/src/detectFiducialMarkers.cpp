@@ -361,10 +361,13 @@ namespace Anki
         VisionMarker &currentMarker = markers[iMarker];
         
         cv::Mat_<u8> cvImageROI, cvImageROI_orig;
-        lastResult = IlluminationNormalization(currentMarker.corners, params.fiducialThicknessFraction, cvImage, cvImageROI, cvImageROI_orig);
-        if(lastResult != RESULT_OK) {
-          AnkiWarn("DetectFiducialMarkers", "Illumination normalization failed, skipping marker %d.\n", iMarker);
-          continue;
+        if(params.useIlluminationNormalization)
+        {
+          lastResult = IlluminationNormalization(currentMarker.corners, params.fiducialThicknessFraction, cvImage, cvImageROI, cvImageROI_orig);
+          if(lastResult != RESULT_OK) {
+            AnkiWarn("DetectFiducialMarkers", "Illumination normalization failed, skipping marker %d.\n", iMarker);
+            continue;
+          }
         }
         
         if(currentMarker.validity == VisionMarker::UNKNOWN) {
@@ -383,8 +386,11 @@ namespace Anki
                                                    meanGrayvalueThreshold,
                                                    scratchOnchip);
 
-          // Put back the original (non-illumination-normalized) pixel values within the ROI
-          cvImageROI_orig.copyTo(cvImageROI);
+          if(params.useIlluminationNormalization)
+          {
+            // Put back the original (non-illumination-normalized) pixel values within the ROI
+            cvImageROI_orig.copyTo(cvImageROI);
+          }
           
           if(lastResult == RESULT_OK) {
             // Refinement succeeded...

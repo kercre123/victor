@@ -592,6 +592,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       // TODO: Merge the fiducial detection parameters structs
       Embedded::FiducialDetectionParameters embeddedParams;
       embeddedParams.useIntegralImageFiltering = true;
+      embeddedParams.useIlluminationNormalization = !kUseCLAHE;
       embeddedParams.scaleImage_numPyramidLevels = _detectionParameters.scaleImage_numPyramidLevels;
       embeddedParams.scaleImage_thresholdMultiplier = _detectionParameters.scaleImage_thresholdMultiplier;
       embeddedParams.component1d_minComponentWidth = _detectionParameters.component1d_minComponentWidth;
