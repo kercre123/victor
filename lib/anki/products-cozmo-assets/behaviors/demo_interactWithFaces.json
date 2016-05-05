@@ -3,9 +3,13 @@
   "name": "demo_interactWithFaces",
   "initial_take_anim_group": "interactWithFaces_initial",
   "wait_anim_group": "interactWithFaces_squint",
-  "new_face_anim_group": "interactWithFaces_unenrolled",
-  "unenrolled_face_anim_group": "interactWithFaces_unenrolled",
+  "new_unnamed_face_anim_group": "interactWithFaces_unenrolled",
+  "new_named_face_anim_group": "interactWithFaces_unenrolled",
+  "unnamed_face_anim_group": "interactWithFaces_unenrolled",
+  "named_face_anim_group": "interactWithFaces_unenrolled",
 
+  "enable_face_enrollment_request": true,
+  
   "emotionScorers": [
     {
       "emotionType": "Social",
