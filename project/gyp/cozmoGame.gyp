@@ -38,8 +38,8 @@
     ],
 
     'das_include': [
-      '../../lib/anki/das-client/include',
-      '../../lib/anki/das-client/ios',
+      '../../lib/anki/cozmo-engine/lib/das-client/include',
+      '../../lib/anki/cozmo-engine/lib/das-client/ios',
     ],
 
     'cte_lib_search_path_mac_debug': [
