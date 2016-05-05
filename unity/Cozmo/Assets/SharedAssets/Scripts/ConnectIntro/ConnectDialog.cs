@@ -4,7 +4,14 @@ using System.Collections;
 
 public class ConnectDialog : MonoBehaviour {
 
-  [SerializeField] protected Text _ConnectionStatus;
+  [SerializeField]
+  private Text _ConnectionStatus;
+
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _ConnectButton;
+
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _SimButton;
 
   private const int kRobotID = 1;
 
@@ -59,6 +66,9 @@ public class ConnectDialog : MonoBehaviour {
     Input.gyro.enabled = true;
     Input.compass.enabled = true;
     Input.multiTouchEnabled = true;
+
+    _ConnectButton.onClick.AddListener(() => this.Play(false));
+    _SimButton.onClick.AddListener(() => this.Play(true));
   }
 
 
@@ -81,6 +91,10 @@ public class ConnectDialog : MonoBehaviour {
   }
 
   public void Play(bool sim) {
+    _ConnectButton.Interactable = false;
+    _SimButton.Interactable = false;
+    _ConnectButton.Text = "LOADING";
+
     _Simulated = sim;
     RobotEngineManager.Instance.Disconnect();
 
