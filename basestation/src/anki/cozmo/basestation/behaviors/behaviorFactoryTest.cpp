@@ -35,7 +35,9 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 // Enable this when running on actual EP3 robots
-#define USING_EP3 0
+#define USING_EP3 1
+
+#define TEST_CHARGER_CONNECT 0
 
 // Set to 1 if you want the test to actually be able to write
 // new camera calibration, calibration images, and test results to flash.
@@ -87,11 +89,20 @@ namespace Cozmo {
     _motionProfile.reverseSpeed_mmps = 80.0f;
     _motionProfile.isCustom = true;
 
+    /*
     _camCalibPanAndTiltAngles = {{0,               0},
                                  {0,               DEG_TO_RAD(20)},
                                  {DEG_TO_RAD(-90), 0},
                                  {DEG_TO_RAD(-40), 0},
                                  {DEG_TO_RAD( 45), 0},
+     */
+    
+     // Fixture targets were smaller and lower than spec
+     _camCalibPanAndTiltAngles = {{0,               0},
+                                 {0,               DEG_TO_RAD(25)},
+                                 {DEG_TO_RAD(-90), DEG_TO_RAD(-8)},
+                                 {DEG_TO_RAD(-40), DEG_TO_RAD(-8)},
+                                 {DEG_TO_RAD( 45), DEG_TO_RAD(-8)},
     };
     
     
@@ -101,7 +112,10 @@ namespace Cozmo {
       EngineToGameTag::RobotDeletedObject,
       EngineToGameTag::ObjectMoved,
       EngineToGameTag::CameraCalibration,
-      EngineToGameTag::RobotStopped
+      EngineToGameTag::RobotStopped,
+      EngineToGameTag::MotorCalibration,
+      EngineToGameTag::ObjectAvailable,
+      EngineToGameTag::ObjectConnectionState
     }});
 
   }
@@ -131,6 +145,9 @@ namespace Cozmo {
     if (robot.GetBehaviorManager().GetWhiteboard().IsCliffReactionEnabled()) {
       robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
     }
+    
+    // Disable keep face alive animation
+    robot.GetAnimationStreamer().SetParam(Anki::Cozmo::LiveIdleAnimationParameter::EnableKeepFaceAlive, 0);
 
     return lastResult;
   } // Init()
@@ -294,6 +311,11 @@ namespace Cozmo {
                                              }
                                            });
         
+        if (TEST_CHARGER_CONNECT) {
+          // Check if charger is discovered
+          robot.BroadcastAvailableObjects(true);
+        }
+        
         // Set fake calibration if not already set so that we can actually run
         // calibration from images.
         if (!robot.GetVisionComponent().IsCameraCalibrationSet()) {
@@ -339,8 +361,24 @@ namespace Cozmo {
             END_TEST(FactoryTestResultCode::IMU_DRIFTING);
           }
           
+          if (TEST_CHARGER_CONNECT) {
+            // Verify that charger was discovered
+            if (!_chargerAvailable) {
+              PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingChargerAvailable","");
+              END_TEST(FactoryTestResultCode::CHARGER_UNAVAILABLE);
+            }
+          
+            // Connect to charger
+            const std::unordered_set<FactoryID> connectToIDs = {_kChargerFactoryID};
+            robot.ConnectToBlocks(connectToIDs);
+          }
+          
           // Drive off charger
-          StartActing(robot, new DriveStraightAction(robot, 250, 100) );
+          StartActing(robot, new DriveStraightAction(robot, 250, 100),
+                      [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.06;
+                        return true;
+                      });
           SetCurrState(FactoryTestState::DriveToSlot);
         }
         break;
@@ -355,10 +393,18 @@ namespace Cozmo {
           break;
         }
         
+        // Verify robot is not still on charger
         if (robot.IsOnCharger()) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOffCharger", "");
           END_TEST(FactoryTestResultCode::STILL_ON_CHARGER);
         }
+        
+        // Verify robot is connected to charger
+        if (TEST_CHARGER_CONNECT && !_chargerConnected) {
+          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingChargerConnected","");
+          END_TEST(FactoryTestResultCode::CHARGER_UNCONNECTED);
+        }
+        
         
         // Set pose to expected
         // TODO: Create a function that's shared by LocalizeToObject and LocalizeToMat that does this?
@@ -384,7 +430,7 @@ namespace Cozmo {
       case FactoryTestState::GotoCalibrationPose:
       {
         // Check that robot is in correct pose
-        if (!robot.GetPose().IsSameAs(_camCalibPose, _kRobotPoseSamenessDistThresh_mm, _kRbotPoseSamenessAngleThresh_rad)) {
+        if (!robot.GetPose().IsSameAs(_camCalibPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingInCalibPose",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
                               robot.GetPose().GetTranslation().x(),
@@ -396,7 +442,7 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::NOT_IN_CALIBRATION_POSE);
         }
         
-        
+        /*
         // Check if all calibration images received from flash.
         // If so, go directly to ComputeCameraCalibration.
         // Otherwise, acquire images
@@ -406,10 +452,11 @@ namespace Cozmo {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.InsufficientCalibrationImagesInFlash",
                               "Only %zu images found in flash. Taking pictures now.",
                               robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
+         */
           _camCalibPoseIndex = 0;
           robot.GetVisionComponent().ClearCalibrationImages();
           SetCurrState(FactoryTestState::TakeCalibrationImages);
-        }
+        //}
         break;
       }
         
@@ -432,6 +479,7 @@ namespace Cozmo {
                                                               true);
             ptAction->SetMaxPanSpeed(_motionProfile.pointTurnSpeed_rad_per_sec);
             ptAction->SetPanAccel(_motionProfile.pointTurnAccel_rad_per_sec2);
+            ptAction->SetMoveEyes(false);
             StartActing(robot, ptAction);
             ++_camCalibPoseIndex;
           } else {
@@ -531,7 +579,7 @@ namespace Cozmo {
       case FactoryTestState::GotoPickupPose:
       {
         // Verify that robot is where expected
-        if (!robot.GetPose().IsSameAs(_prePickupPose, _kRobotPoseSamenessDistThresh_mm, _kRbotPoseSamenessAngleThresh_rad)) {
+        if (!robot.GetPose().IsSameAs(_prePickupPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingInPrePickupPose",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
                               robot.GetPose().GetTranslation().x(),
@@ -560,8 +608,9 @@ namespace Cozmo {
         Radians angleDiff;
         if (!oObject->GetPose().IsSameAs_WithAmbiguity(_expectedLightCubePose,
                                                        _kBlockRotationAmbiguities,
-                                                       oObject->GetSameDistanceTolerance(),
-                                                       oObject->GetSameAngleTolerance()*0.5f, true,
+                                                       _kExpectedCubePoseDistThresh_mm,
+                                                       _kExpectedCubePoseAngleThresh_rad,
+                                                       true,
                                                        Tdiff, angleDiff)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CubeNotWhereExpected",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f; tdiff: %f %f %f; angleDiff (deg): %f",
@@ -745,6 +794,18 @@ namespace Cozmo {
         
       case EngineToGameTag::RobotStopped:
         _lastHandlerResult = HandleRobotStopped(robot, event.GetData().Get_RobotStopped());
+        break;
+        
+      case EngineToGameTag::MotorCalibration:
+        _lastHandlerResult = HandleMotorCalibration(robot, event.GetData().Get_MotorCalibration());
+        break;
+        
+      case EngineToGameTag::ObjectAvailable:
+        _lastHandlerResult = HandleObjectAvailable(robot, event.GetData().Get_ObjectAvailable());
+        break;
+        
+      case EngineToGameTag::ObjectConnectionState:
+        _lastHandlerResult = HandleObjectConnectionState(robot, event.GetData().Get_ObjectConnectionState());
         break;
         
       default:
@@ -937,6 +998,13 @@ namespace Cozmo {
       calibMsg.nrows = camCalib.GetNrows();
       calibMsg.ncols = camCalib.GetNcols();
       
+      ASSERT_NAMED_EVENT(camCalib.GetDisortionCoeffs().size() <= calibMsg.distCoeffs.size(),
+                         "BehaviorFactoryTest.HandleCameraCalibration.TooManyDistCoeffs",
+                         "%zu > %zu", camCalib.GetDisortionCoeffs().size(),
+                         calibMsg.distCoeffs.size());
+      std::copy(camCalib.GetDisortionCoeffs().begin(), camCalib.GetDisortionCoeffs().end(),
+                calibMsg.distCoeffs.begin());
+
       u8 buf[calibMsg.Size()];
       size_t numBytes = calibMsg.Pack(buf, sizeof(buf));
       
@@ -993,6 +1061,28 @@ namespace Cozmo {
       EndTest(robot, FactoryTestResultCode::CLIFF_UNEXPECTED);
     }
     
+    return RESULT_OK;
+  }
+  
+  Result BehaviorFactoryTest::HandleMotorCalibration(Robot& robot, const MotorCalibration &msg)
+  {
+    // This should never happen during the test!
+    EndTest(robot, FactoryTestResultCode::MOTOR_CALIB_UNEXPECTED);
+    return RESULT_OK;
+  }
+  
+  Result BehaviorFactoryTest::HandleObjectAvailable(Robot& robot, const ExternalInterface::ObjectAvailable &msg) {
+    if (msg.factory_id == _kChargerFactoryID) {
+      _chargerAvailable = true;
+    }
+    return RESULT_OK;
+  }
+  
+  Result BehaviorFactoryTest::HandleObjectConnectionState(Robot& robot, const ObjectConnectionState &msg)
+  {
+    if (msg.factoryID == _kChargerFactoryID && msg.connected) {
+      _chargerConnected = true;
+    }
     return RESULT_OK;
   }
   

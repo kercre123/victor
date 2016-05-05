@@ -80,6 +80,42 @@ namespace Anki {
 #ifndef TARGET_K02
         ReliableTransport_Init();
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
+        
+        
+        // Store camera calibration in nvStorage
+        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+        if(headCamInfo == NULL) {
+          AnkiWarn( 163, "Messages.Init.CalibNotFound", 359, "NULL HeadCamInfo retrieved from HAL.", 0);
+        }
+        else {
+
+          CameraCalibration headCalib{
+            headCamInfo->focalLength_x,
+            headCamInfo->focalLength_y,
+            headCamInfo->center_x,
+            headCamInfo->center_y,
+            headCamInfo->skew,
+            headCamInfo->nrows,
+            headCamInfo->ncols
+          };
+          
+          for(s32 iCoeff=0; iCoeff<NUM_RADIAL_DISTORTION_COEFFS; ++iCoeff) {
+            headCalib.distCoeffs[iCoeff] = headCamInfo->distortionCoeffs[iCoeff];
+          }
+          
+          NVStorage::NVStorageWrite nvWrite;
+          nvWrite.entry.tag = NVStorage::NVEntry_CameraCalib;
+          nvWrite.entry.blob_length = headCalib.Size();
+          memcpy(nvWrite.entry.blob, headCalib.GetBuffer(), headCalib.Size());
+          nvWrite.reportDone = false;
+          nvWrite.reportEach = false;
+          nvWrite.rangeEnd = NVStorage::NVEntry_Invalid;
+          nvWrite.writeNotErase = true;
+          nvWrite.reportTo = NVStorage::RTIP;
+          SimNVStorageSpace::Write(nvWrite);
+          
+        }
+        
 #endif
         return RESULT_OK;
       }
@@ -452,7 +488,7 @@ namespace Anki {
         AnkiInfo( 110, "Messages.Process_imageRequest.Recvd", 358, "mode: %d, resolution: %d", 2, msg.sendMode, msg.resolution);
 #ifndef TARGET_K02
         HAL::SetImageSendMode(msg.sendMode, msg.resolution);
-
+/*
         // Send back camera calibration for this resolution
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
 
@@ -499,6 +535,7 @@ namespace Anki {
             AnkiWarn( 113, "Messages.Process_imageRequest.SendCalibFailed", 361, "Failed to send camera calibration message.", 0);
           }
         }
+ */
 #endif
       } // ProcessImageRequestMessage()
 
@@ -898,7 +935,7 @@ namespace Anki {
       
       Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted)
       {
-        RobotInterface::MotorCalibration m;
+        MotorCalibration m;
         m.motorID = motor;
         m.calibStarted = calibStarted;
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;

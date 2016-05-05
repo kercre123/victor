@@ -116,14 +116,6 @@ void Exec(os_event_t *event)
   system_os_post(backgroundTask_PRIO, event->sig + 1, event->par);
 }
 
-void sendCameraCalibration(NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
-{
-  os_printf("sendCameraCalibration: %d\r\n", result);
-  AnkiConditionalWarnAndReturn(result == NVStorage::NV_OKAY, 96, "ReadAndSendCameraCal", 350, "Failed to read camera calibration: %d", 1, result);
-  const CameraCalibration* const calib = (CameraCalibration*)entry->blob;
-  RobotInterface::SendMessage(*calib);
-}
-
 bool readAndSendCrashReport(uint32_t param)
 {
   RobotInterface::CrashReport crMsg;
@@ -236,8 +228,6 @@ extern "C" void backgroundTaskOnConnect(void)
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
-
-  Anki::Cozmo::NVStorage::Read(Anki::Cozmo::NVStorage::NVEntry_CameraCalibration, Anki::Cozmo::BackgroundTask::sendCameraCalibration);
 }
 
 extern "C" void backgroundTaskOnDisconnect(void)

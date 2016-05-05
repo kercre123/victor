@@ -631,6 +631,8 @@ bool ICACHE_FLASH_ATTR i2spiMessageQueueIsEmpty(void)
 
 void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
 {
+  static int16_t lastPhase;
+  
   switch(mode)
   {
     case I2SPI_NORMAL:
@@ -649,8 +651,15 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
     }
     case I2SPI_PAUSED:
     {
+      lastPhase = outgoingPhase;
       outgoingPhase = PAUSED_PHASE;
       os_printf("I2Spi mode paused\r\n");
+      return;
+    }
+    case I2SPI_RESUME:
+    {
+      outgoingPhase = lastPhase;
+      os_printf("I2Spi mode resumed\r\n");
       return;
     }
     case I2SPI_REBOOT:

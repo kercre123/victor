@@ -648,6 +648,8 @@ void WriteFlash(RobotInterface::WriteFlash& msg)
   
   bool CheckForAndDoStaged(void)
   {
+    // XXX: This code bricks about 1% of robots - once flashStagedFlags is not fully erased, you go into an unrecoverable reboot loop
+    // What's wrong with using a global variable instead of easily-corrupted/non-transactional flash?  FLASH ALONE IS NOT TRUSTWORTHY 
     if (flashStagedFlags[0] != 0xFFFFFFFF)
     {
       StartWiFiUpgrade(true);

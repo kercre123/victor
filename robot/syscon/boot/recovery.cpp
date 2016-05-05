@@ -3,6 +3,7 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
+#include "lights.h"
 #include "recovery.h"
 #include "crc32.h"
 #include "timer.h"
@@ -19,41 +20,9 @@ static const int UART_TIMEOUT = 0x2000 << 8;
 
 void setTransmit(bool tx);
 
-// Define charlie wiring here:
-struct charliePlex_s {
-  int anode;
-  int cathodes[3];
-};
-
-static inline void setCathode(int pin, bool set) {
-  if (set) {
-    nrf_gpio_pin_clear(pin);
-    nrf_gpio_cfg_output(pin);
-  } else {
-    nrf_gpio_cfg_input(pin, NRF_GPIO_PIN_NOPULL);
-  }
-}
-
 void setLight(uint8_t clr) {
   int channel = (clr >> 3) & 3;
-
-  static const charliePlex_s RGBLightPins[] =
-  {
-    // anode, cath_red, cath_gree, cath_blue
-    {PIN_LED1, {PIN_LED2, PIN_LED3, PIN_LED4}},
-    {PIN_LED2, {PIN_LED1, PIN_LED3, PIN_LED4}},
-    {PIN_LED3, {PIN_LED1, PIN_LED2, PIN_LED4}},
-    {PIN_LED4, {PIN_LED1, PIN_LED2, PIN_LED3}}
-  };
-
-  // Setup anode
-  nrf_gpio_pin_set(RGBLightPins[channel].anode);
-  nrf_gpio_cfg_output(RGBLightPins[channel].anode);
-  
-  // Set lights for current charlie channel
-  setCathode(RGBLightPins[channel].cathodes[0], clr & 1);
-  setCathode(RGBLightPins[channel].cathodes[1], clr & 2);
-  setCathode(RGBLightPins[channel].cathodes[2], clr & 4);
+  Lights::set(channel, clr & 7, 0x80);
 }
 
 void UARTInit(void) {
@@ -75,10 +44,6 @@ void UARTInit(void) {
 
   // We begin in receive mode (slave)
   setTransmit(false);
-}
-
-void toggleTargetPin(void) {
-  //target_pin = (target_pin == PIN_TX_HEAD) ? PIN_TX_VEXT : PIN_TX_HEAD;
 }
 
 void setTransmit(bool tx) {
@@ -168,8 +133,6 @@ static void writeByte(const uint8_t byte) {
 }
 
 static void SyncToHead(void) {
-  uint8_t color;
-
   // Write our recovery sync signal
   writeUart(&BODY_RECOVERY_NOTICE, sizeof(BODY_RECOVERY_NOTICE));
   setTransmit(false);
@@ -245,7 +208,6 @@ static inline void ClearEvilWord() {
 
 static inline bool FlashBlock() {
   static FirmwareBlock packet;
-  uint8_t* raw = (uint8_t*) &packet;
   
   // Load raw packet into memory
   readUart(&packet, sizeof(packet));
@@ -275,15 +237,18 @@ static inline bool FlashBlock() {
 }
 
 void BlinkALot(void) {
-  uint8_t colors[] = {
-    0x02 + 16, 0x02 +  8, 0x04 + 24,
-    0x04 + 24, 0x02 +  8, 0x02 + 16,
-  };
-
-  for (int i = 0; i < sizeof(colors); i++) {
-    setLight(colors[i]);
-    MicroWait(25000);
-  }
+  Lights::set(1, 4, 0x80);
+  MicroWait(25000);
+  Lights::set(2, 4, 0x80);
+  MicroWait(25000);
+  Lights::set(3, 4, 0x80);
+  MicroWait(25000);
+  Lights::set(3, 4, 0x80);
+  MicroWait(25000);
+  Lights::set(2, 4, 0x80);
+  MicroWait(25000);
+  Lights::set(1, 4, 0x80);
+  MicroWait(25000);
 }
 
 void EnterRecovery(void) {

@@ -280,7 +280,7 @@ namespace Anki {
 
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
-          AnkiEvent( 40, "Radio", 445, "Robot radio is connected.", 0);
+          AnkiEvent( 40, "Radio", 447, "Robot radio is connected.", 0);
           wasConnected_ = true;
           BackpackLightController::TurnOffAll();
         } else if (!HAL::RadioIsConnected() && wasConnected_) {

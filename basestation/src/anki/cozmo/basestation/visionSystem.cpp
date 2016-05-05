@@ -70,6 +70,10 @@
 namespace Anki {
 namespace Cozmo {
   
+  CONSOLE_VAR(bool, kUseCLAHE, "Vision.PreProcessing", true);
+  CONSOLE_VAR(s32, kClaheClipLimit, "Vision.PreProcessing", 2); // Change requires re-Init()
+  CONSOLE_VAR(s32, kClaheTileSize, "Vision.PreProcessing", 8);  // Change requires re-Init()
+  
   CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
   CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
   
@@ -94,6 +98,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   , _dataPath(dataPath)
   , _faceTracker(nullptr)
   , _vizManager(vizMan)
+  , _clahe(cv::createCLAHE())
   {
     PRINT_NAMED_INFO("VisionSystem.Constructor", "");
    
@@ -2258,6 +2263,9 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
     _isCalibrating = false;
     
+    _clahe->setClipLimit(kClaheClipLimit);
+    _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
+    
     _isInitialized = true;
     
     return result;
@@ -2450,10 +2458,22 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                        "VisionSystem::Update()", "UpdateMarkerToTrack failed.\n");
     
+
+    
     // Lots of the processing below needs a grayscale version of the image:
     //const Vision::Image inputImageGray = inputImage.ToGray();
     
     Vision::Image inputImageGray = inputImage.ToGray();
+    
+    // Apply CLAHE:
+    if(kUseCLAHE) {
+      _clahe->apply(inputImageGray.get_CvMat_(), inputImageGray.get_CvMat_());
+      
+      // DEBUG!
+      //_debugImageRGBMailbox.putMessage({"ImageCLAHE", inputImageGray});
+    }
+    
+    // Rolling shutter correction
     if(_doRollingShutterCorrection)
     {
       Tic("RollingShutterComputePixelShifts");
@@ -2602,6 +2622,16 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
+    //    // DEBUG!
+    //    Vision::Image image;
+    //    //image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_151585ms_0.jpg");
+    //    image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_251585ms_1.jpg");
+    //    if(image.IsEmpty()) {
+    //      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ReadImageFileFail", "");
+    //      return RESULT_FAIL;
+    //    }
+    //    _clahe->apply(image.get_CvMat_(), image.get_CvMat_());
+    
     ToolCodeInfo readToolCodeMessage;
     readToolCodeMessage.code = ToolCode::UnknownTool;
     
@@ -2620,7 +2650,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
     //const bool longEnoughSinceLastRead = image.GetTimestamp() - _lastToolCodeReadTime_ms > kToolCodeReadPeriod_ms;
     
-    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK;
+    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK + 1.f; // 1mm fudge
     
     // Sanity checks: we should not even be calling ReadToolCode if everybody
     // hasn't done their job and got us into position
@@ -2681,6 +2711,8 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     // Tool code calibration dot parameters
     const f32 kDotWidth_mm = 2.5f;
     const f32 kDotHole_mm  = 2.5f/3.f;
+    const s32 kBinarizeKernelSize = 11;
+    const f32 kBinarizeKernelSigma = 7.f;
     const f32 kDotAreaFrac = ((kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) /
                               (4.f*kCalibDotSearchSize_mm * kCalibDotSearchSize_mm));
     const f32 kMinDotAreaFrac   = 0.5f * kDotAreaFrac;
@@ -2737,14 +2769,15 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       
       // Perform local binarization:
       Vision::Image dotRoi_blurred;
-      cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(), cv::Size(15,15), 11);
+      cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(),
+                       cv::Size(kBinarizeKernelSize,kBinarizeKernelSize), kBinarizeKernelSigma);
       Vision::Image binarizedDotRoi(dotRoi.GetNumRows(), dotRoi.GetNumCols());
       binarizedDotRoi.get_CvMat_() = dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_();
       
       if(false && DRAW_TOOL_CODE_DEBUG) {
         _debugImageMailbox.putMessage({(iDot==0 ? "dotRoi0" : "dotRoi1"), dotRoi});
         _debugImageMailbox.putMessage({(iDot==0 ? "dotRoi0_blurred" : "dotRoi1_blurred"), dotRoi_blurred});
-        _debugImageMailbox.putMessage({(iDot==0 ? "InvertedDotROI0" : "InvertedDotRoi1"), binarizedDotRoi});
+        _debugImageMailbox.putMessage({(iDot==0 ? "BinarizedDotROI0" : "BinarizedDotRoi1"), binarizedDotRoi});
       }
       
       // Get connected components in the ROI
@@ -2777,18 +2810,35 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
             // Note the x/y vs. row/col switch here
             const s32 centerLabel = labels(std::round(dotCentroid[1]),
                                            std::round(dotCentroid[0]));
+            
             if(centerLabel == 0)
             {
-              // Verify if we flood fill from center that we get a hole of
-              // reasonable size that doesn't "leak" outside of this component
-              cv::floodFill(labels.get_CvMat_(), cv::Point(dotCentroid[0], dotCentroid[1]),
-                            numComponents+1);
-              
               Anki::Rectangle<s32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
                                             compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
               
               Vision::Image compBrightnessROI = dotRoi.GetROI(compRect);
-              Array2d<s32> labelROI = labels.GetROI(compRect);
+              Array2d<s32> labelROI;
+              labels.GetROI(compRect).CopyTo(labelROI); // need copy!
+              
+              // Verify if we flood fill from center that we get a hole of
+              // reasonable size that doesn't "leak" outside of this component
+              cv::floodFill(labelROI.get_CvMat_(), cv::Point(dotCentroid[0]-compRect.GetX(), dotCentroid[1]-compRect.GetY()),
+                            numComponents+1);
+              
+              /*
+              // DEBUG!!!
+              if(iDot == 1){
+                Vision::Image temp;
+                temp.get_CvMat_() = (labels.get_CvMat_() == iComp);
+                PRINT_NAMED_DEBUG("Component", "iComp: %d, Area: %d, solidity: %.3f",
+                                  iComp, compArea, solidity);
+                temp.Display("Component");
+                
+                Vision::Image tempFill;
+                tempFill.get_CvMat_() = (labelROI.get_CvMat_() == numComponents+1);
+                tempFill.Display("FloodFill", 0);
+              }
+               */
               
               // Loop over an even smaller ROI right around the component to
               // compute the hole size, the brightness of that hole vs.
@@ -2801,7 +2851,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
               for(s32 i=0; i<labelROI.GetNumRows() && !touchesEdge; ++i)
               {
                 const u8* brightness_i = compBrightnessROI.GetRow(i);
-                s32* label_i = labelROI.GetRow(i);
+                const s32* label_i = labelROI.GetRow(i);
                 
                 for(s32 j=0; j<labelROI.GetNumCols() && !touchesEdge; ++j)
                 {
@@ -2815,7 +2865,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
                     {
                       touchesEdge = true;
                     }
-                    label_i[j] = 0; // un-fill
                   }
                   else if(label_i[j] == iComp)  {
                     avgDotBrightness += brightness_i[j];
@@ -3149,16 +3198,23 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
 
     // Compute calibration
+    const s32 kNumDistCoeffs = 8;
     std::vector<cv::Mat> rvecs, tvecs;
-    cv::Mat cameraMatrix = cv::Mat::eye(3, 3, CV_64F);
-    cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
+    cv::Mat_<f64> cameraMatrix = cv::Mat_<f64>::eye(3, 3);
+    cv::Mat_<f64> distCoeffs   = cv::Mat_<f64>::zeros(1, kNumDistCoeffs);
     
-    double rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
-    
-    
+    const f64 rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
+
+    // Copy distortion coefficients into a f32 vector to set CameraCalibration
+    const f64* distCoeffs_data = distCoeffs[0];
+    std::vector<f32> distCoeffsVec(kNumDistCoeffs);
+    std::copy(distCoeffs_data, distCoeffs_data+kNumDistCoeffs, distCoeffsVec.begin());
+
     calibration = Vision::CameraCalibration(imageSize.height, imageSize.width,
-                                            cameraMatrix.at<double>(0,0), cameraMatrix.at<double>(1,1),
-                                            cameraMatrix.at<double>(0,2), cameraMatrix.at<double>(1,2));
+                                            cameraMatrix(0,0), cameraMatrix(1,1),
+                                            cameraMatrix(0,2), cameraMatrix(1,2),
+                                            0.f, // skew
+                                            distCoeffsVec);
 
     PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.CalibValues",
                      "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
@@ -3167,8 +3223,10 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
                           
     // Check if average reprojection error is too high
-    if (rms > 1.f) {
-      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh", "%f", rms);
+    const f64 reprojErrThresh_pix = 1.0;
+    if (rms > reprojErrThresh_pix) {
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh",
+                       "%f > %f", rms, reprojErrThresh_pix);
       return RESULT_FAIL;
     }
     

@@ -381,6 +381,10 @@ namespace Cozmo {
   
   Result VisionComponent::SetNextImage(const Vision::ImageRGB& image)
   {
+    if (!_enabled) {
+      return RESULT_OK;
+    }
+    
     if(_isCamCalibSet) {
       ASSERT_NAMED(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
       if(!_visionSystem->IsInitialized()) {
@@ -538,7 +542,7 @@ namespace Cozmo {
       }
       
     } else {
-      PRINT_NAMED_ERROR("VisionComponent.Update.NoCamCalib",
+      PRINT_NAMED_WARNING("VisionComponent.Update.NoCamCalib",
                         "Camera calibration must be set before calling Update().\n");
       return RESULT_FAIL;
     }

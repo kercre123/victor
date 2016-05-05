@@ -1062,7 +1062,7 @@ void RobotEventHandler::HandleSendAvailableObjects(const AnkiEvent<ExternalInter
       CameraCalibration calib = event.GetData().Get_CameraCalibration();
       std::vector<u8> calibVec(calib.Size());
       calib.Pack(calibVec.data(), calib.Size());
-      robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalibration, calibVec.data(), calibVec.size());
+      robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, calibVec.data(), calibVec.size());
       
       PRINT_NAMED_INFO("RobotEventHandler.HandleCameraCalibration.SendingCalib",
                        "fx: %f, fy: %f, cx: %f, cy: %f, nrows %d, ncols %d",
