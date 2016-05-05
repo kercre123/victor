@@ -1444,16 +1444,17 @@ namespace Anki {
     ReadToolCodeAction::ReadToolCodeAction(Robot& robot, bool doCalibration)
     : IAction(robot)
     , _doCalibration(doCalibration)
+    , _headAndLiftDownAction(robot)
     {
       _toolCodeInfo.code = ToolCode::UnknownTool;
     }
     
     ActionResult ReadToolCodeAction::Init()
     {
-      // Start calibration mode on robot
-      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableReadToolCodeMode(-0.5f, -0.3f, true)));
+      // Put the head and lift down for read
+      _headAndLiftDownAction.AddAction(new MoveHeadToAngleAction(_robot, MIN_HEAD_ANGLE));
+      _headAndLiftDownAction.AddAction(new MoveLiftToHeightAction(_robot, LIFT_HEIGHT_LOWDOCK));
       
-      _toolCodeLastMovedTime   = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       _state = State::WaitingToGetInPosition;
       
       _toolReadSignalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotReadToolCode,
@@ -1469,8 +1470,6 @@ namespace Anki {
     
     ReadToolCodeAction::~ReadToolCodeAction()
     {
-      // Stop calibration mode on robot
-      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableReadToolCodeMode(0, 0, false)));
       _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);
     }
     
@@ -1478,14 +1477,16 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
-      TimeStamp_t currTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      
       switch(_state)
       {
         case State::WaitingToGetInPosition:
         {
-          if (currTimestamp - _toolCodeLastMovedTime > kRequiredStillTime_ms)
+          // Wait for head and lift to get into position (i.e. the action to complete)
+          result = _headAndLiftDownAction.Update();
+          if(ActionResult::SUCCESS == result)
           {
+            result = ActionResult::RUNNING; // return value should still be running
+            
             Result setCalibResult = _robot.GetVisionComponent().EnableToolCodeCalibration(_doCalibration);
             if(RESULT_OK != setCalibResult) {
               PRINT_NAMED_INFO("ReadToolCodeAction.CheckIfDone.FailedToSetCalibration", "");
@@ -1496,13 +1497,6 @@ namespace Anki {
               _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, true);
               _state = State::WaitingForRead;
             }
-          }
-          else if (_robot.GetHeadAngle() != _toolCodeLastHeadAngle ||
-                   _robot.GetLiftAngle() != _toolCodeLastLiftAngle)
-          {
-            _toolCodeLastHeadAngle = _robot.GetHeadAngle();
-            _toolCodeLastLiftAngle = _robot.GetLiftAngle();
-            _toolCodeLastMovedTime = currTimestamp;
           }
           break;
         }
