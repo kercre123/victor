@@ -18,10 +18,12 @@
 #include "app/bodyTest.h"
 #include "app/cubeTest.h"
 #include "app/headTest.h"
+#include "app/robotTest.h"
 
-u8 g_fixtureReleaseVersion = 14;
+u8 g_fixtureReleaseVersion = 15;
 
 BOOL g_isDevicePresent = 0;
+const char* FIXTYPES[] = FIXTURE_TYPES;
 FixtureType g_fixtureType = FIXTURE_NONE;
 FlashParams g_flashParams;
 
@@ -101,25 +103,7 @@ void SetFixtureText(void)
 {
   DisplayClear();
   
-  if (g_fixtureType == FIXTURE_CHARGER_TEST) {    
-    DisplayBigCenteredText("CHARGE");
-  } else if (g_fixtureType == FIXTURE_CUBE1_TEST) {    
-    DisplayBigCenteredText("CUBE 1");
-  } else if (g_fixtureType == FIXTURE_CUBE2_TEST) {    
-    DisplayBigCenteredText("CUBE 2");
-  } else if (g_fixtureType == FIXTURE_CUBE3_TEST) {    
-    DisplayBigCenteredText("CUBE 3");
-  } else if (g_fixtureType == FIXTURE_CUBEFCC_TEST) {    
-    DisplayBigCenteredText("CUBEFCC");
-  } else if (g_fixtureType == FIXTURE_HEAD_TEST) {    
-    DisplayBigCenteredText("HEAD");  
-  } else if (g_fixtureType == FIXTURE_BODY_TEST) {    
-    DisplayBigCenteredText("BODY");
-  } else if (g_fixtureType == FIXTURE_DEBUG) {    
-    DisplayBigCenteredText("DEBUG");
-  } else {    
-    DisplayBigCenteredText("NO ID");
-  }
+  DisplayBigCenteredText(FIXTYPES[g_fixtureType]);
   
   // Show the version number in the corner
   DisplayTextHeightMultiplier(1);
@@ -181,6 +165,8 @@ bool DetectDevice(void)
       return HeadDetect();
     case FIXTURE_BODY_TEST:
       return BodyDetect();
+    case FIXTURE_PLAYPEN_TEST:
+      return RobotDetect();
   }
 
   // If we don't know what kind of device to look for, it's not there!
@@ -212,10 +198,9 @@ void WaitForDeviceOff(void)
     {
       if (!DetectDevice())
       {
-        // 500 checks * 1000uS = 500ms delay showing error post removal
+        // 500 checks * 1ms = 500ms delay showing error post removal
         if (++debounce >= 500)
           g_isDevicePresent = 0;
-        MicroWait(1000);
       }
       
       DisplayUpdate();  // While we wait, let screen saver kick in
@@ -320,7 +305,6 @@ static BOOL IsDevicePresent(void)
       s_debounce = 0;
       return TRUE;
     }
-    MicroWait(1000);
   } else {
     s_debounce  = 0;
   }
@@ -409,6 +393,9 @@ static void MainExecution()
       break;    
     case FIXTURE_DEBUG:
       m_functions = GetDebugTestFunctions();
+      break;
+    case FIXTURE_PLAYPEN_TEST:
+      m_functions = GetRobotTestFunctions();
       break;
   }
   

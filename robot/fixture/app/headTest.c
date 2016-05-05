@@ -37,6 +37,9 @@ bool HeadDetect(void)
   // Now let it float and see if it ends up high
   PIN_IN(GPIOB, GPIOB_SWD);
   MicroWait(50);  // Reaches 1.72V after 25uS - so give it 50 just to be safe
+   
+  // Wait 1ms in detect
+  MicroWait(1000);
   
   // True if high
   return !!(GPIO_READ(GPIOB) & (1 << GPIOB_SWD));

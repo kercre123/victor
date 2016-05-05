@@ -35,6 +35,7 @@ bool CubeDetect(void)
   // Put everything back to normal
   PIN_PULL_NONE(GPIOC, GPIOC_RESET);
   
+  
   return detect;
 }
 
