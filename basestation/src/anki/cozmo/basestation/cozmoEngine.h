@@ -147,7 +147,7 @@ protected:
   
   EngineState _engineState = EngineState::Stopped;
 
-#if ANKI_DEV_CHEATS
+#if ANKI_DEV_CHEATS && !ANDROID
   std::unique_ptr<USBTunnelServer>                          _usbTunnelServerDebug;
 #endif
   

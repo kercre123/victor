@@ -26,6 +26,7 @@
 #include <opencv2/highgui/highgui.hpp>
 
 #include <list>
+#include <map>
 
 namespace Anki {
 namespace Vision {
@@ -33,7 +34,7 @@ namespace Vision {
   class FaceTracker::Impl : public Profiler
   {
   public:
-    Impl(const std::string& modelPath, FaceTracker::DetectionMode mode);
+    Impl(const std::string& modelPath, const Json::Value& config);
     
     Result Update(const Vision::Image& frameOrig,
                   std::list<TrackedFace>& faces,
@@ -88,7 +89,7 @@ namespace Vision {
   }; // class FaceTracker::Impl
   
   
-  FaceTracker::Impl::Impl(const std::string& modelPath, FaceTracker::DetectionMode mode)
+  FaceTracker::Impl::Impl(const std::string& modelPath, const Json::Value& config)
   {
     const std::string faceCascadeFilename = modelPath + "/haarcascade_frontalface_alt2.xml";
     
@@ -240,20 +241,18 @@ namespace Vision {
           std::swap(leftEyeRect, rightEyeRect);
         }
         
-        face.SetLeftEyeCenter(Point2f(faceRect.x + leftEyeRect.x + leftEyeRect.width/2,
-                                      faceRect.y + leftEyeRect.y + leftEyeRect.height/2));
-        face.SetRightEyeCenter(Point2f(faceRect.x + rightEyeRect.x + rightEyeRect.width/2,
-                                       faceRect.y + rightEyeRect.y + rightEyeRect.height/2));
-        
+        Point2f leftEyeCen(faceRect.x + leftEyeRect.x + leftEyeRect.width/2,
+                           faceRect.y + leftEyeRect.y + leftEyeRect.height/2);
+        Point2f rightEyeCen(faceRect.x + rightEyeRect.x + rightEyeRect.width/2,
+                            faceRect.y + rightEyeRect.y + rightEyeRect.height/2);
+
         // Use the line connecting the eyes to estimate head roll:
-        Point2f eyeLine(face.GetRightEyeCenter());
-        eyeLine -= face.GetLeftEyeCenter();
+        Point2f eyeLine(rightEyeCen);
+        eyeLine -= leftEyeCen;
         face.SetHeadOrientation(std::atan2f(eyeLine.y(), eyeLine.x()), 0, 0);
-                                
-      } else {
-        // Otherwise, just use assumed fake eye locations
-        face.SetFakeEyeCenters();
-      }
+        
+        face.SetEyeCenters(std::move(leftEyeCen), std::move(rightEyeCen));
+      } 
       
     }
     

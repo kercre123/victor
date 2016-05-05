@@ -10,7 +10,6 @@
     'api_source': 'cozmoAPI.lst',
     'api_library_type': 'static_library',
     'engine_test_source': 'cozmoEngine-test.lst',
-    'engine_library_type': 'static_library',
     'ctrlLightCube_source': 'ctrlLightCube.lst',
     'ctrlRobot_source': 'ctrlRobot.lst',
     'ctrlViz_source': 'ctrlViz.lst',
@@ -35,6 +34,18 @@
       'libpocketSphinx.a',
       'libsphinxad.a',
       'libsphinxBase.a',
+    ],
+
+    'okao_lib_search_path': [
+      '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
+    ],
+
+    'okao_libs': [
+      'libeOkao.a',
+      'libeOkaoCo.a',
+      'libeOkaoFr.a',
+      'libeOkaoDt.a',
+      'libeOkaoEx.a',
     ],
 
     'pocketsphinx_includes':[
@@ -85,6 +96,15 @@
       'libflite_cmulex.a',
       'libflite_usenglish.a',
       'libflite.a',
+    ],
+
+    'flite_libs_android': [
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite_cmu_grapheme_lang.a',
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite_cmu_grapheme_lex.a',
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite_cmu_us_kal.a',
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite_cmulex.a',
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite_usenglish.a',
+      '<(coretech_external_path)/flite-2.0.0/build/armeabiv7a-android/lib/libflite.a',
     ],
 
     'flite_lib_search_path_mac': [
@@ -211,12 +231,15 @@
             '-mthumb',
             '-L<(ndk_root)/platforms/android-18/arch-arm/usr/lib',
             '-L<(ndk_root)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a',
+            # '-L<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
+            # '-L<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a',
             '-lgcc',
             '-lc',
             '-lm',
             '-lc++_shared',
             '-lGLESv2',
             '-llog',
+            '-lz',
         ],
       },
       { # not android
@@ -900,7 +923,7 @@
               '<(ce-cti_gyp_path):ctiVisionRobot',
               '<(ce-util_gyp_path):jsoncpp',
               '<(ce-util_gyp_path):util',
-              '<(ce-audio_path):DriveAudioEngine',
+              '<(cg-audio_path):DriveAudioEngine',
             ],
             'sources': [ '<!@(cat <(engine_test_source))' ],
             'sources/': [
@@ -1433,15 +1456,15 @@
         '<(ce-cti_gyp_path):ctiVision',
         '<(ce-cti_gyp_path):ctiCommonRobot',
         '<(ce-cti_gyp_path):ctiVisionRobot',
-        '<(ce-audio_path):DriveAudioEngine',
+        '<(cg-audio_path):DriveAudioEngine',
         '<(ce-ble_cozmo_path):BLECozmo',
         '<(ce-das_path):DAS',
       ],
-      'type': '<(engine_library_type)',
       'conditions': [    
         [
           'OS=="ios" or OS=="mac"',
           {
+            'type': 'static_library',
             'libraries': [
               '$(SDKROOT)/System/Library/Frameworks/AudioToolbox.framework',
               '$(SDKROOT)/System/Library/Frameworks/CoreAudio.framework',
@@ -1451,6 +1474,83 @@
               '<@(libarchive_libs)',
             ],
           },
+      	  'OS=="android"',
+          {
+            'type': 'shared_library',
+            'library_dirs':
+            [
+              #these are empty?!?!
+              #'<(opencv_lib_search_path_debug)',
+              #'<(face_library_lib_path)',
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a',
+            ],
+
+            'libraries': [ # why is this in #if android? shouldn't mac and ios have same libs to link against?
+              '-Wl,--whole-archive',
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkao.a',      # Common
+              '-Wl,--no-whole-archive',
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoCo.a',    # 
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoDt.a',    # Face Detection
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoPt.a',    # Face Parts Detection
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoEx.a',    # Facial Expression estimation
+              '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a/libeOkaoFr.a',    # Face Recognition
+              '<(coretech_external_path)/libarchive/project/android/DerivedData/libarchive.a',
+              # does not work with ninja?!?!
+              # '<@(face_library_libs)',
+              # '<@(opencv_libs)',
+              '<@(flite_libs_android)',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/libIlmImf.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjasper.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibjpeg.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibpng.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibtiff.a',
+              '<(coretech_external_path)/build/opencv-android/o4a/3rdparty/lib/armeabi-v7a/liblibwebp.a',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libtbb.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_calib3d.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_core.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_features2d.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_flann.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_highgui.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_imgcodecs.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_imgproc.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_java3.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_ml.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_objdetect.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_photo.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_shape.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_stitching.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_superres.so',
+              #'<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_ts.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_video.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_videoio.so',
+              '<(coretech_external_path)/build/opencv-android/OpenCV-android-sdk/sdk/native/libs/armeabi-v7a/libopencv_videostab.so',
+
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libCommunicationCentral.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkStreamMgr.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkMusicEngine.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSoundEngine.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkMemoryMgr.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkDelayFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkRoomVerbFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSilenceSource.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkCompressorFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkPeakLimiterFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkParametricEQFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkHarmonizerFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkMeterFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkFlangerFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkGainFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkToneSource.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkVorbisDecoder.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkTimeStretchFX.a',
+              '<(ce-audio_path)/wwise/versions/current/libs/android/debug/libAkSineSource.a',
+              '-llog',
+              '-lOpenSLES',
+              '-landroid',
+
+            ],
+          }
         ],
         ['face_library=="faciometric"', {
           # Copy FacioMetric's models into the resources so they are available at runtime.

@@ -138,6 +138,7 @@
             '-mthumb',
             '-L<(ndk_root)/platforms/android-18/arch-arm/usr/lib',
             '-L<(ndk_root)/sources/cxx-stl/llvm-libc++/libs/armeabi-v7a',
+            '-L<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
             '-lgcc',
             '-lc',
             '-lm',
@@ -681,6 +682,13 @@
     {
       'target_name': 'ctiCommonRobot',
       'sources': [ '<!@(cat <(common_robot_source))' ],
+      'conditions': [
+        ['OS=="android"',{
+          'sources/': [
+            ['exclude', 'radians|utilities_shared|externalInterface']
+          ]
+        }],
+      ], #'conditions'
       'include_dirs': [
         '../../common/robot/src',
         '../../common/include',
@@ -700,6 +708,13 @@
     {
       'target_name': 'ctiMessaging',
       'sources': [ '<!@(cat <(messaging_source))' ],
+      'conditions': [
+        ['OS=="android"',{
+          'sources/': [
+            ['exclude', 'utilMessaging|externalInterface|vision'], #TODO: COZMO-1271
+          ]
+        }],
+      ], #'conditions'
       'include_dirs': [
         '../../messaging/basestation/src',
         '../../messaging/include',

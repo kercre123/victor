@@ -238,11 +238,10 @@ def main(scriptArgs):
   ctiAnkiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, coretechInternalConfigurePath)
   coretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
   audioProjectGypPath = os.path.relpath(audioProjectGypPath, configurePath)
-  audioProjectPath = os.path.relpath(options.audioPath, configurePath)
+  #audioProjectPath = os.path.relpath(options.audioPath, configurePath)
+  audioProjectPath = os.path.abspath(os.path.join(configurePath, options.audioPath))
   bleCozmoProjectPath = os.path.relpath(bleCozmoProjectPath, configurePath)
   dasProjectPath = os.path.relpath(dasProjectPath, configurePath)
-
-  print "Set audio project relpath: %s" % audioProjectPath
 
   # mac
   if 'mac' in options.platforms:
@@ -268,8 +267,9 @@ def main(scriptArgs):
                                   ce-util_gyp_path={8}
                                   ce-cti_gyp_path={9}
                                   ce-audio_path={10}
-                                  ce-ble_cozmo_path={11}
-                                  ce-das_path={12}
+                                  cg-audio_path={11}
+                                  ce-ble_cozmo_path={12}
+                                  ce-das_path={13}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -281,6 +281,7 @@ def main(scriptArgs):
                                     gtestPath, 
                                     ankiUtilProjectPath, 
                                     coretechInternalProjectPath,
+                                    audioProjectGypPath,
                                     audioProjectGypPath,
                                     bleCozmoProjectPath,
                                     dasProjectPath,
@@ -317,8 +318,9 @@ def main(scriptArgs):
                                 ce-util_gyp_path={8}
                                 ce-cti_gyp_path={9}
                                 ce-audio_path={10}
-                                ce-ble_cozmo_path={11}
-                                ce-das_path={12}
+                                cg-audio_path={11}
+                                ce-ble_cozmo_path={12}
+                                ce-das_path={13}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -330,6 +332,7 @@ def main(scriptArgs):
                                   gtestPath, 
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
+                                  audioProjectGypPath,
                                   audioProjectGypPath,
                                   bleCozmoProjectPath,
                                   dasProjectPath,
@@ -372,8 +375,8 @@ def main(scriptArgs):
                                     ctiGtestPath, 
                                     ctiAnkiUtilProjectPath,
                                     projectRoot,
-                                    gtestPath, 
-                                    ankiUtilProjectPath, 
+                                    gtestPath,
+                                    ankiUtilProjectPath,
                                     coretechInternalProjectPath,
                                     audioProjectGypPath,
                                     bleCozmoProjectPath,
@@ -383,6 +386,7 @@ def main(scriptArgs):
       gyp.main(gypArgs)
       
       
+
 
   if 'android' in options.platforms:
     ### Install android build deps if necessary
@@ -441,8 +445,9 @@ def main(scriptArgs):
                                 ce-cti_gyp_path={9}
                                 ndk_root={10}
                                 ce-audio_path={11}
-                                ce-ble_cozmo_path={12}
-                                ce-das_path={13}
+                                cg-audio_path={12}
+                                ce-ble_cozmo_path={13}
+                                ce-das_path={14}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -455,6 +460,7 @@ def main(scriptArgs):
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
                                   ndk_root,
+                                  audioProjectPath,
                                   audioProjectGypPath,
                                   bleCozmoProjectPath,
                                   dasProjectPath,
