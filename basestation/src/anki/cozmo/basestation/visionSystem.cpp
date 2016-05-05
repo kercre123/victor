@@ -2636,33 +2636,47 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
     ToolCodeInfo readToolCodeMessage;
     readToolCodeMessage.code = ToolCode::UnknownTool;
-    
-    // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
-    // no matter how we return from this function
-    Util::CleanupHelper disableCheckToolCode([this,&readToolCodeMessage]() {
+
+    auto cleanupLambda = [this,&readToolCodeMessage]() {
       this->_toolCodeMailbox.putMessage(readToolCodeMessage);
       this->EnableMode(VisionMode::ReadingToolCode, false);
+      this->_firstReadToolCodeTime_ms = 0;
       PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
-    });
+    };
+    
+    if(_firstReadToolCodeTime_ms == 0) {
+      _firstReadToolCodeTime_ms = image.GetTimestamp();
+    }
+    else if(image.GetTimestamp() - _firstReadToolCodeTime_ms > kToolCodeMotionTimeout_ms) {
+      PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.TimeoutWaitingForHeadOrLift",
+                          "start: %d, current: %d, timeout=%dms",
+                          _firstReadToolCodeTime_ms, image.GetTimestamp(), kToolCodeMotionTimeout_ms);
+      cleanupLambda();
+      return RESULT_FAIL;
+    }
     
     // All the conditions that must be met to bother trying to read the tool code:
-    const bool liftMoving = !NEAR_ZERO(_poseData.poseStamp.GetLiftAngle()-_prevPoseData.poseStamp.GetLiftAngle());
+    const bool headMoving = !NEAR(_poseData.poseStamp.GetHeadAngle(), _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD_F32(0.1));
     
-    const bool headMoving = !NEAR_ZERO(_poseData.poseStamp.GetHeadAngle()-_prevPoseData.poseStamp.GetHeadAngle());
-    
-    //const bool longEnoughSinceLastRead = image.GetTimestamp() - _lastToolCodeReadTime_ms > kToolCodeReadPeriod_ms;
+    const bool liftMoving = !NEAR(_poseData.poseStamp.GetLiftAngle(), _prevPoseData.poseStamp.GetLiftAngle(), DEG_TO_RAD_F32(0.1));
+
+    const bool headDown = _poseData.poseStamp.GetHeadAngle() <= MIN_HEAD_ANGLE + DEG_TO_RAD(1.5);
     
     const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK + 1.f; // 1mm fudge
     
     // Sanity checks: we should not even be calling ReadToolCode if everybody
     // hasn't done their job and got us into position
-    if(liftMoving || headMoving || !liftDown)
+    if(headMoving || liftMoving || !headDown || !liftDown)
     {
-      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.NotInPosition",
-                        "LiftMoving=%d, HeadMoving=%d, LiftDown=%d",
-                        liftMoving, headMoving, liftDown);
-      return RESULT_FAIL;
+      PRINT_NAMED_INFO("VisionSystem.ReadToolCode.NotInPosition",
+                       "Waiting for head / lift (headMoving %d, lifMoving %d, headDown %d, liftDown %d",
+                       headMoving, liftMoving, headDown, liftDown);
+      return RESULT_OK;
     }
+    
+    // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
+    // no matter how we return from this function
+    Util::CleanupHelper disableCheckToolCode(cleanupLambda);
     
     // Center points of the calibration dots, in lift coordinate frame
     // TODO: Move these to be defined elsewhere
@@ -2962,7 +2976,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     // TODO: Actually read the code and put corresponding result in the mailbox (once we have more than one)
     // NOTE: This gets put in the mailbox by the Cleanup object defined at the top of the function
     readToolCodeMessage.code = ToolCode::CubeLiftingTool;
-    _lastToolCodeReadTime_ms = image.GetTimestamp();
     
     if(_calibrateFromToolCode)
     {

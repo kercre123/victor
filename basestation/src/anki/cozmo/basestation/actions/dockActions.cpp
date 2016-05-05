@@ -871,6 +871,8 @@ namespace Anki {
       // If we were moving, stop moving.
       _robot.GetMoveComponent().StopAllMotors();
       
+      _startedPlacing = false;
+      
       return result;
       
     } // CheckPreconditions()
@@ -881,12 +883,11 @@ namespace Anki {
       
       // Wait for robot to report it is done picking/placing and that it's not
       // moving
-      static bool startedPlacing = false;
       if (_robot.IsPickingOrPlacing()) {
-        startedPlacing = true;
+        _startedPlacing = true;
       }
       
-      if (startedPlacing && !_robot.IsPickingOrPlacing() && !_robot.GetMoveComponent().IsMoving())
+      if (_startedPlacing && !_robot.IsPickingOrPlacing() && !_robot.GetMoveComponent().IsMoving())
       {
         // Stopped executing docking path, and should have placed carried block
         // and backed out by now, and have head pointed at an angle to see
