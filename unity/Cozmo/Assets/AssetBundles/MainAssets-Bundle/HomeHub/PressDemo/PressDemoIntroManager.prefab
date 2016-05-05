@@ -39,7 +39,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 925afa713f29940c7ad2d5d1d2d07018, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DevConnectDialog: {fileID: 11479636, guid: d73c982d72b7d4050937088024507432, type: 2}
+  _ConnectDialogPrefab: {fileID: 11419672, guid: d73c982d72b7d4050937088024507432,
+    type: 2}
   _HubWorldPrefab: {fileID: 11477898, guid: bd9cdefcf513c4aa38b7a3dd570334b2, type: 2}
   _IntroScriptedSequenceName: 
 --- !u!1001 &100100000

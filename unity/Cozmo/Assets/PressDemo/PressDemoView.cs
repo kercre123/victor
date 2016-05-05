@@ -4,6 +4,7 @@ using System.Collections;
 public class PressDemoView : Cozmo.UI.BaseView {
 
   public System.Action OnForceProgress;
+  public System.Action<bool> OnStartButton;
 
   [SerializeField]
   private UnityEngine.UI.Button _ForceProgressButton;
@@ -29,11 +30,17 @@ public class PressDemoView : Cozmo.UI.BaseView {
   }
 
   private void HandleStartButton() {
+    if (OnStartButton != null) {
+      OnStartButton(true);
+    }
     RobotEngineManager.Instance.CurrentRobot.StartDemoWithEdge(true);
     HideStartButtons();
   }
 
   private void HandleStartNoEdgeButton() {
+    if (OnStartButton != null) {
+      OnStartButton(false);
+    }
     RobotEngineManager.Instance.CurrentRobot.StartDemoWithEdge(false);
     HideStartButtons();
   }
