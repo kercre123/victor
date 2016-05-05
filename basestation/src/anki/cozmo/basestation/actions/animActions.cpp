@@ -30,7 +30,7 @@ namespace Anki {
     : IAction(robot)
     , _animName(animName)
     , _name("PlayAnimation" + animName + "Action")
-    , _numLoops(numLoops)
+    , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
     {
       
@@ -45,7 +45,7 @@ namespace Anki {
     PlayAnimationAction::PlayAnimationAction(Robot& robot, GameEvent animEvent, const std::string& backupAnimName,
                                              u32 numLoops, bool interruptRunning)
     : IAction(robot)
-    , _numLoops(numLoops)
+    , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
     {
       RobotManager* robot_mgr = robot.GetContext()->GetRobotManager();
@@ -71,7 +71,7 @@ namespace Anki {
     : IAction(robot)
     , _animName(animation->GetName())
     , _name("PlayAnimation" + _animName + "Action")
-    , _numLoops(numLoops)
+    , _numLoopsRemaining(numLoops)
     , _interruptRunning(interruptRunning)
     , _customAnimation(animation)
     {
@@ -134,17 +134,18 @@ namespace Anki {
         }
       }
       
-      // If we've set our altered animation, use that
+      // If we've set our altered animation, use that. Use num loops remaining since we haven't started yet,
+      // this will be == total number of loops
       if (_alteredAnimation)
       {
-        _animTag = _robot.PlayAnimation(_alteredAnimation.get(), _numLoops, _interruptRunning);
+        _animTag = _robot.PlayAnimation(_alteredAnimation.get(), _numLoopsRemaining, _interruptRunning);
       }
       else // do the normal thing
       {
         if(_customAnimation != nullptr) {
-          _animTag = _robot.PlayAnimation(_customAnimation, _numLoops, _interruptRunning);
+          _animTag = _robot.PlayAnimation(_customAnimation, _numLoopsRemaining, _interruptRunning);
         } else {
-          _animTag = _robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
+          _animTag = _robot.PlayAnimation(_animName, _numLoopsRemaining, _interruptRunning);
         }
         
         _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(_animName);
@@ -169,8 +170,23 @@ namespace Anki {
       auto endLambda = [this](const AnkiEvent<RobotToEngine>& event)
       {
         if(_startedPlaying && this->_animTag == event.GetData().Get_animEnded().tag) {
-          PRINT_NAMED_INFO("PlayAnimation.EndAnimationHandler", "Animation tag %d ended", this->_animTag);
-          _stoppedPlaying = true;
+          if( _numLoopsRemaining == 0 ) {
+            PRINT_NAMED_ERROR("PlayAnimation.EndAnimationHandler.TooManyLoops",
+                              "0 loops remaining, but animation tag %d ended another",
+                              this->_animTag);
+          }
+          else {
+            _numLoopsRemaining--;
+            if( _numLoopsRemaining == 0 ) {
+              PRINT_NAMED_INFO("PlayAnimation.EndAnimationHandler", "Animation tag %d ended", this->_animTag);
+              _stoppedPlaying = true;
+            }
+            else {
+              PRINT_NAMED_DEBUG("PlayAnimation.FinishedLoop", "Animation tag %d finished a loop, %d left",
+                                this->_animTag,
+                                _numLoopsRemaining);
+            }
+          }
         }
       };
       
@@ -199,13 +215,20 @@ namespace Anki {
         }
       };
       
-      _startSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::animStarted, startLambda);
+      _startSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(),
+                                                                      RobotToEngineTag::animStarted,
+                                                                      startLambda);
       
-      _endSignalHandle   = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::animEnded,   endLambda);
+      _endSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(),
+                                                                    RobotToEngineTag::animEnded,
+                                                                    endLambda);
 
-      _eventSignalHandle   = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(), RobotToEngineTag::animEvent, eventLambda);
+      _eventSignalHandle = _robot.GetRobotMessageHandler()->Subscribe(_robot.GetID(),
+                                                                      RobotToEngineTag::animEvent,
+                                                                      eventLambda);
       
-      _abortSignalHandle = _robot.GetExternalInterface()->Subscribe(MessageEngineToGameTag::AnimationAborted, cancelLambda);
+      _abortSignalHandle = _robot.GetExternalInterface()->Subscribe(MessageEngineToGameTag::AnimationAborted,
+                                                                    cancelLambda);
       
       if(_animTag != 0) {
         return ActionResult::SUCCESS;
