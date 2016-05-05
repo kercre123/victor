@@ -10,11 +10,12 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "sayTextAction.h"
+#include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/audio/audioEventTypes.h"
 
 #define DEBUG_SAYTEXT_ACTION 0
+
 
 namespace Anki {
 namespace Cozmo {

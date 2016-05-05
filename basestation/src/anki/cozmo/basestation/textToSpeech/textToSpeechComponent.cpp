@@ -15,7 +15,8 @@
 
 extern "C" {
 #include "flite.h"
-  cst_voice* register_cmu_us_kal(const char*);
+  cst_voice* register_cmu_us_rms(const char* voxdir);
+  void unregister_cmu_us_rms(cst_voice* vox);
 }
 
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
@@ -43,10 +44,14 @@ TextToSpeechComponent::TextToSpeechComponent(const CozmoContext* context)
 {
   flite_init();
   
-  _voice = register_cmu_us_kal(NULL);
+  _voice = register_cmu_us_rms( NULL );
+  // Add Duration Stretch feature to voice
+  // Create text with 2x length, Wwise will time stretch them to the desired length
+  feat_set_float( _voice->features, "duration_stretch", 2.0 );
   
-  if(nullptr != context) {
-    if(nullptr != context->GetAudioServer()) {
+  
+  if( nullptr != context ) {
+    if( nullptr != context->GetAudioServer() ) {
       _audioController = context->GetAudioServer()->GetAudioController();
     }
   }
@@ -56,12 +61,11 @@ TextToSpeechComponent::TextToSpeechComponent(const CozmoContext* context)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechComponent::~TextToSpeechComponent()
 {
-  // Any tear-down needed for flite? (Un-init or unregister_cmu_us_kal?)
-  
-  Util::Dispatch::Stop(_dispatchQueue);
-  Util::Dispatch::Release(_dispatchQueue);
+  // There is no tear-down for flite =(
+  unregister_cmu_us_rms( _voice );
+  Util::Dispatch::Stop( _dispatchQueue );
+  Util::Dispatch::Release( _dispatchQueue );
 } // ~TextToSpeechComponent()
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechComponent::SpeechState TextToSpeechComponent::CreateSpeech(const std::string& text, SayTextStyle style)
@@ -140,14 +144,15 @@ bool TextToSpeechComponent::PrepareToSay(const std::string& text, SayTextStyle s
   if ( pluginInterface->WavePortalHasAudioDataInfo() ) {
     pluginInterface->ClearWavePortalAudioDataInfo();
   }
-  
-  // TODO: Make use of specified SayTextStyle
+  // Set OUT value
+  out_duration_ms = waveData->ApproximateDuration_ms();
+  // Set audio data in plugin buffer
   pluginInterface->SetWavePortalAudioDataInfo( waveData->sampleRate,
                                                waveData->numberOfChannels,
-                                               waveData->ApproximateDuration_ms(),
+                                               out_duration_ms,
                                                waveData->audioBuffer,
                                                static_cast<uint32_t>(waveData->bufferSize) );
-  
+
   return true;
 } // PrepareToSay()
 

@@ -16,8 +16,6 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
-
-#include "clad/types/actionTypes.h"
 #include "clad/types/sayTextStyles.h"
 
 

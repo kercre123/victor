@@ -70,6 +70,7 @@ public:
   SpeechState GetSpeechState(const std::string& text, const SayTextStyle style);
   
   // Set up Audio controller to play text's audio data
+  // out_durration_ms provides approximate durration of event before proccessing in audio engine
   // Return false if the audio has NOT been created or is not yet ready, out_duration_ms will NOT be valid.
   bool PrepareToSay(const std::string& text, SayTextStyle style, float& out_duration_ms);
   
