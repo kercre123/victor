@@ -68,6 +68,8 @@ namespace Anki {
       private Vector3? _TextDefaultPosition = null;
       private Vector3 _TextPressedPosition;
 
+      private bool _Initialized = false;
+
       public Color TextEnabledColor = Color.white;
 
       public Color TextPressedColor = Color.gray;
@@ -166,6 +168,9 @@ namespace Anki {
 
       protected override void Start() {
         base.Start();
+        if (!_Initialized) {
+          DAS.Error("AnkiButton.Start", this.gameObject.name + " needs to be initialized.");
+        }
       }
 
       public void Initialize(UnityAction clickCallback, string dasEventButtonName, string dasEventViewController) {
@@ -185,6 +190,7 @@ namespace Anki {
         }
 
         UpdateVisuals();
+        _Initialized = true;
       }
 
       private void InitializeDefaultGraphics() {
@@ -313,7 +319,7 @@ namespace Anki {
       protected virtual void ShowPressedState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
-            if (graphic.targetImage != null && graphic.pressedSprite != null) {
+            if (graphic.targetImage != null && graphic.enabledSprite != null) {
               SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
             }
             else {
@@ -328,7 +334,7 @@ namespace Anki {
       protected virtual void ShowDisabledState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
-            if (graphic.targetImage != null && graphic.disabledSprite != null) {
+            if (graphic.targetImage != null && graphic.enabledSprite != null) {
               SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor, graphic.ignoreSprite);
             }
             else {
@@ -368,7 +374,11 @@ namespace Anki {
         public Image targetImage;
         public bool ignoreSprite = false;
 
+        // we will just grab it from targetImage;
+        [NonSerialized]
         public Sprite enabledSprite;
+
+        [NonSerialized]
         public Color enabledColor = Color.white;
 
         public Sprite pressedSprite;

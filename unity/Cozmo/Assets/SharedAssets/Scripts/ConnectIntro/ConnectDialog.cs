@@ -67,10 +67,17 @@ public class ConnectDialog : MonoBehaviour {
     Input.compass.enabled = true;
     Input.multiTouchEnabled = true;
 
-    _ConnectButton.onClick.AddListener(() => this.Play(false));
-    _SimButton.onClick.AddListener(() => this.Play(true));
+    _ConnectButton.Initialize(HandleConnectButton, "connect_button", "connect_dialog");
+    _SimButton.Initialize(HandleSimButton, "sim_button", "connect_dialog");
   }
 
+  private void HandleConnectButton() {
+    this.Play(false);
+  }
+
+  private void HandleSimButton() {
+    this.Play(true);
+  }
 
   private void OnDestroy() {
     if (RobotEngineManager.Instance != null) {
