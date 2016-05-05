@@ -50,10 +50,12 @@ namespace Cozmo {
     using FaceID_t = Vision::FaceID_t;
     
     virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
+    virtual void HandleWhileRunning(const GameToEngineEvent& event, Robot& robot) final override;
     
     void HandleRobotObservedFace(const Robot& robot, const EngineToGameEvent& event);
     void HandleRobotDeletedFace(const EngineToGameEvent& event);
     void HandleRobotChangedObservedFaceID(const EngineToGameEvent& event);
+    void HandleGameDeniedRequest(Robot& robot);
 
     void MarkFaceDeleted(FaceID_t faceID);
       
@@ -62,7 +64,8 @@ namespace Cozmo {
       GlancingDown,
       RecognizingFace,
       WaitingForRecognition,
-      ReactingToFace
+      ReactingToFace,
+      RequestingFaceEnrollment
     };
     
     State _currentState = State::Dispatch;
@@ -72,10 +75,14 @@ namespace Cozmo {
     void TransitionToRecognizingFace(Robot& robot);
     void TransitionToWaitingForRecognition(Robot& robot);
     void TransitionToReactingToFace(Robot& robot);
-    void TransitionToSwitchingFace(Robot& robot);
+    void TransitionToRequestingFaceEnrollment(Robot& robot);
 
     void SetState_internal(State state, const std::string& stateName);
 
+    bool ShouldEnrollCurrentFace(const Robot& robot);
+
+    void SendDenyRequest(Robot& robot);
+    
     struct FaceData
     {
       FaceData() = default;
@@ -94,23 +101,43 @@ namespace Cozmo {
 
     // return the face id of a face to track, or Vision::UnknownFaceID if there is none
     FaceID_t GetNewFace(const Robot& robot);
-    
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Members
+    ////////////////////////////////////////////////////////////////////////////////
+
     // ID of face we are currently interested int
     FaceID_t _currentFace = Vision::UnknownFaceID;
-        
+
+    // For the demo, we want to only enroll a face after we've "said the name" of a face we know, so track
+    // that here
+    bool _readyToEnrollFace = false;
+
+    float _requestEnrollOnCooldownUntil_s = -1.0f;
+
     float _lastGlanceTime = 0;
 
     // Known face data
     std::unordered_map<FaceID_t, FaceData> _interestingFacesData;
-        
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Config parameters
+    ////////////////////////////////////////////////////////////////////////////////
+    
+    // config can specify whether or not we do this at all
+    bool _faceEnrollEnabled;
+    
     // The animation flow is as follows. Anytime we get a new face ID, we do the "take" anim, to give the
     // recognition system some more time. Then if we need more time, we play the _wait group (which can be cut
-    // at any time). Then we check if the face data hs _playedNewFaceAnim, and either play the new face group
-    // or the known face (unenrolled) group
+    // at any time). Then we check if the face data has _playedNewFaceAnim, and either play a new group or a
+    // regular group. In either case, we play named or unnamed based on whether or not the face has an
+    // associated name
     std::string _initialTakeAnimGroup;
     std::string _waitAnimGroup;
-    std::string _newFaceAnimGroup;
-    std::string _unenrolledFaceAnimGroup;
+    std::string _newUnnamedFaceAnimGroup;
+    std::string _newNamedFaceAnimGroup;
+    std::string _unnamedFaceAnimGroup;
+    std::string _namedFaceAnimGroup;
 
   }; // BehaviorInteractWithFaces
   

@@ -35,8 +35,11 @@ namespace Cozmo {
 
   static const char * const kInitialTakeAnimGroupKey = "initial_take_anim_group";
   static const char * const kWaitAnimGroupKey = "wait_anim_group";
-  static const char * const kNewFaceAnimGroupKey = "new_face_anim_group";
-  static const char * const kUnenrolledFaceAnimGroupKey = "unenrolled_face_anim_group";
+  static const char * const kNewUnnamedFaceAnimGroupKey = "new_unnamed_face_anim_group";
+  static const char * const kNewNamedFaceAnimGroupKey = "new_named_face_anim_group";
+  static const char * const kUnnamedFaceAnimGroupKey = "unnamed_face_anim_group";
+  static const char * const kNamedFaceAnimGroupKey = "named_face_anim_group";
+  static const char * const kFaceEnrollRequestEnabledKey = "enable_face_enrollment_request";
 
   // Length of time in seconds to ignore a specific face that has hit the kFaceInterestingDuration limit
   // NOTE: if this is shorter than the length of the animations, this behavior may get stuck in a loop
@@ -53,6 +56,10 @@ namespace Cozmo {
   // stable face to focus on; this interval shouln't interrupt his interaction)
   CONSOLE_VAR_RANGED(f32, kGlanceDownInterval_sec, "Behavior.InteractWithFaces", 12.0f, -1.0f, 30.0f);
 
+  CONSOLE_VAR(u32, kRequestDelayNumLoops, "Behavior.InteractWithFaces", 5);
+
+  CONSOLE_VAR_RANGED(f32, kEnrollRequestCooldownInterval_s, "Behavior.InteractWithFaces", 10.0f, 0.0f, 30.0f);
+
   BehaviorInteractWithFaces::BehaviorInteractWithFaces(Robot &robot, const Json::Value& config)
   : IBehavior(robot, config)
   {
@@ -60,14 +67,24 @@ namespace Cozmo {
 
     _initialTakeAnimGroup = config.get(kInitialTakeAnimGroupKey, "").asString();
     _waitAnimGroup = config.get(kWaitAnimGroupKey, "").asString();
-    _newFaceAnimGroup = config.get(kNewFaceAnimGroupKey, "").asString();
-    _unenrolledFaceAnimGroup = config.get(kUnenrolledFaceAnimGroupKey, "").asString();
+
+    _unnamedFaceAnimGroup = config.get(kUnnamedFaceAnimGroupKey, "").asString();
+    _namedFaceAnimGroup = config.get(kNamedFaceAnimGroupKey, "").asString();
+    
+    _newUnnamedFaceAnimGroup = config.get(kNewUnnamedFaceAnimGroupKey, _unnamedFaceAnimGroup).asString();
+    _newNamedFaceAnimGroup = config.get(kNewNamedFaceAnimGroupKey, _namedFaceAnimGroup).asString();
+
+    _faceEnrollEnabled = config.get(kFaceEnrollRequestEnabledKey, false).asBool();
     
     SubscribeToTags({{
       EngineToGameTag::RobotObservedFace,
       EngineToGameTag::RobotDeletedFace,
       EngineToGameTag::RobotChangedObservedFaceID
     }});
+
+    SubscribeToTags({
+      GameToEngineTag::DenyGameStart
+    });
   }
   
   Result BehaviorInteractWithFaces::InitInternal(Robot& robot)
@@ -79,30 +96,6 @@ namespace Cozmo {
   BehaviorInteractWithFaces::~BehaviorInteractWithFaces()
   {
     
-  }
-  
-  void BehaviorInteractWithFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
-  {
-    switch(event.GetData().GetTag())
-    {
-      case EngineToGameTag::RobotObservedFace:
-        HandleRobotObservedFace(robot, event);
-        break;
-        
-      case EngineToGameTag::RobotDeletedFace:
-        HandleRobotDeletedFace(event);
-        break;
-        
-      case EngineToGameTag::RobotChangedObservedFaceID:
-        HandleRobotChangedObservedFaceID(event);
-        break;
-        
-      default:
-        PRINT_NAMED_ERROR("BehaviorInteractWithFaces.AlwaysHandle.InvalidTag",
-                          "Received event with unhandled tag %hhu.",
-                          event.GetData().GetTag());
-        break;
-    }
   }
 
   bool BehaviorInteractWithFaces::IsRunnable(const Robot& robot) const
@@ -333,7 +326,12 @@ namespace Cozmo {
       StartActing(compoundAction, &BehaviorInteractWithFaces::TransitionToReactingToFace);
     }
     else {
-      TransitionToReactingToFace(robot);
+      if( ShouldEnrollCurrentFace(robot) ) {
+        TransitionToRequestingFaceEnrollment(robot);
+      }
+      else {
+        TransitionToReactingToFace(robot);
+      }
     }
   }
 
@@ -347,7 +345,7 @@ namespace Cozmo {
     if( ! GetCurrentFace(robot, face, faceData) ) {
       return;
     }
-
+    
     CompoundActionSequential* compoundAction = new CompoundActionSequential(robot);
         
     // Always turn to look at the face before any reaction. Even if we were already looking at it, this will
@@ -355,19 +353,38 @@ namespace Cozmo {
     compoundAction->AddAction(new TurnTowardsPoseAction(robot, face->GetHeadPose(), DEG_TO_RAD(179)));
 
     if( !faceData->_playedNewFaceAnim ) {
-      compoundAction->AddAction( new PlayAnimationGroupAction(robot, _newFaceAnimGroup) );
+      if( face->GetName().empty() ) {
+        compoundAction->AddAction( new PlayAnimationGroupAction(robot, _newUnnamedFaceAnimGroup) );
+        robot.GetMoodManager().TriggerEmotionEvent("NewUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
+      }
+      else {
+        compoundAction->AddAction( new PlayAnimationGroupAction(robot, _newNamedFaceAnimGroup) );
+        robot.GetMoodManager().TriggerEmotionEvent("NewNamedFace", MoodManager::GetCurrentTimeInSeconds());
+
+        if( _faceEnrollEnabled ) {
+          _readyToEnrollFace = true;
+        }
+      }
+
       faceData->_playedNewFaceAnim = true;
       // NOTE: this is a bit wrong because something might interrupt this from happening, in which case it
       // didn't actually play the new animation, but its much simpler this way than to handle what might
       // happen if face ids change or merge before the action is complete
 
-      robot.GetMoodManager().TriggerEmotionEvent("NewFace", MoodManager::GetCurrentTimeInSeconds());
-
     }
     else {
-      compoundAction->AddAction( new PlayAnimationGroupAction(robot, _unenrolledFaceAnimGroup) );
-
-      robot.GetMoodManager().TriggerEmotionEvent("KnownFace", MoodManager::GetCurrentTimeInSeconds());
+      if( face->GetName().empty() ) {
+        compoundAction->AddAction( new PlayAnimationGroupAction(robot, _unnamedFaceAnimGroup) );
+        robot.GetMoodManager().TriggerEmotionEvent("OldUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
+      }
+      else {
+        compoundAction->AddAction( new PlayAnimationGroupAction(robot, _namedFaceAnimGroup) );
+        robot.GetMoodManager().TriggerEmotionEvent("OldNamedFace", MoodManager::GetCurrentTimeInSeconds());
+        
+        if( _faceEnrollEnabled ) {
+          _readyToEnrollFace = true;
+        }
+      }
     }
 
     StartActing(compoundAction, [this](Robot& robot) {
@@ -385,14 +402,105 @@ namespace Cozmo {
         TransitionToDispatch(robot);
       });
   }
+
+  void BehaviorInteractWithFaces::TransitionToRequestingFaceEnrollment(Robot& robot)
+  {
+    SET_STATE(RequestingFaceEnrollment);
+
+    robot.Broadcast( MessageEngineToGame( RequestEnrollFace() ) );
+
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _requestEnrollOnCooldownUntil_s = currTime_s + kEnrollRequestCooldownInterval_s;
+
+    // play a few loops of the wait animation. If this completes without a response, this is a time out
+    // condition, so go to the usual reaction (which should be the unenrolled one). We expect to either be
+    // interrupted by a denied message, or to be stopped by unity to run the activity
+    StartActing(new PlayAnimationGroupAction(robot, _waitAnimGroup, kRequestDelayNumLoops),
+                [this](Robot& robot) {
+                  // this is a timeout, so let the UI know
+                  SendDenyRequest(robot);
+                  TransitionToReactingToFace(robot);
+                });
+  }
   
   void BehaviorInteractWithFaces::StopInternal(Robot& robot)
   {
+    if( _currentState == State::RequestingFaceEnrollment ) {
+      // behavior was stopped during a request, cancel the request
+      SendDenyRequest(robot);
+    }
+    _currentState = State::Dispatch;
+  }
+
+  bool BehaviorInteractWithFaces::ShouldEnrollCurrentFace(const Robot& robot)
+  {
+    if( !_readyToEnrollFace ) {
+      return false;
+    }
+
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+    if( _requestEnrollOnCooldownUntil_s >= 0.0f && currTime_s < _requestEnrollOnCooldownUntil_s ) {
+      return false;
+    }
+      
+    // never enroll "temporary" face IDs
+    if( _currentFace <= 0 ) {
+      return false;
+    }
+    
+    const Face* face = nullptr;
+    FaceData* faceData = nullptr;
+    if( ! GetCurrentFace(robot, face, faceData) ) {
+      return false;
+    }
+
+    // TODO:(bn) eventually this should have some logic to check if a "slot" is available, or however this
+    // will work in the shipping game
+
+    // if we've said a name we know and we are looking at a face we don't know, enroll it
+    return face->GetName().empty();
   }
 
 
 #pragma mark -
 #pragma mark Signal Handlers
+
+  
+  void BehaviorInteractWithFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+  {
+    switch(event.GetData().GetTag())
+    {
+      case EngineToGameTag::RobotObservedFace:
+        HandleRobotObservedFace(robot, event);
+        break;
+        
+      case EngineToGameTag::RobotDeletedFace:
+        HandleRobotDeletedFace(event);
+        break;
+        
+      case EngineToGameTag::RobotChangedObservedFaceID:
+        HandleRobotChangedObservedFaceID(event);
+        break;
+        
+      default:
+        PRINT_NAMED_ERROR("BehaviorInteractWithFaces.AlwaysHandle.InvalidTag",
+                          "Received event with unhandled tag %hhu.",
+                          event.GetData().GetTag());
+        break;
+    }
+  }
+
+  void BehaviorInteractWithFaces::HandleWhileRunning(const GameToEngineEvent& event, Robot& robot)
+  {
+    if( event.GetData().GetTag() == GameToEngineTag::DenyGameStart ) {
+      HandleGameDeniedRequest(robot);
+    }
+    else {
+      PRINT_NAMED_WARNING("IBehaviorRequestGame.InvalidTag",
+                          "Received unexpected event with tag %hhu.", event.GetData().GetTag());
+    }
+  }
   
   void BehaviorInteractWithFaces::HandleRobotObservedFace(const Robot& robot, const EngineToGameEvent& event)
   {    
@@ -558,6 +666,16 @@ namespace Cozmo {
                         "Updating current face because of merge");
     }
   }
+
+  void BehaviorInteractWithFaces::HandleGameDeniedRequest(Robot& robot)
+  {
+    if( _currentState == State::RequestingFaceEnrollment ) {
+      // stop the animation action (with no callback)
+      StopActing(false);
+      // go to the reacting state, which should choose the "suspicious" animation for an unknown person
+      TransitionToReactingToFace(robot);
+    }
+  }
   
   void BehaviorInteractWithFaces::MarkFaceDeleted(FaceID_t faceID)
   {
@@ -567,6 +685,18 @@ namespace Cozmo {
       dataIter->second._deleted = true;
     }    
   }
+
+  void BehaviorInteractWithFaces::SendDenyRequest(Robot& robot)
+  {
+    using namespace ExternalInterface;
+
+    // update request cooldown
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _requestEnrollOnCooldownUntil_s = currTime_s + kEnrollRequestCooldownInterval_s;
+
+    robot.Broadcast( MessageEngineToGame( DenyGameStart() ) );
+  }
+
 
   void BehaviorInteractWithFaces::SetState_internal(State state, const std::string& stateName)
   {

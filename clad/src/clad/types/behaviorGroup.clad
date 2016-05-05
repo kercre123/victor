@@ -15,6 +15,7 @@ enum uint_8 BehaviorGroup {
     RequestSpeedTap,
     RequestSimon,
     RequestCubePounce,
+    RequestFaceEnroll,
     Unlock_CubeRoll,
     FreeplayExplore,
 

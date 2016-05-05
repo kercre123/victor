@@ -42,6 +42,8 @@ protected:
   virtual void HandleGameDeniedRequest(Robot& robot) override;
   virtual f32 GetRequestMinDelayComplete_s() const override;
 
+  virtual u32 GetNumBlocks(const Robot& robot) const override;
+
 private:
 
   // ========== Members ==========
@@ -95,6 +97,8 @@ private:
 
   bool   _shouldPopIdle = false;
 
+  bool   _shouldUseBlocks;
+  
   void SetState_internal(State state, const std::string& stateName);
 
   void TransitionToPlayingInitialAnimation(Robot& robot);

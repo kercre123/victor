@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.0496022 0.33158 0.942122 3.42164
-  position -0.513382 1.58219 2.37407
+  orientation -0.0721957 0.349872 0.934012 3.52241
+  position -0.63694 1.45986 2.19399
 }
 Background {
   skyColor [
@@ -30,7 +30,7 @@ CozmoMat {
   xSize 0.35
 }
 Face {
-  translation 0.723722 -0.559178 0.52
+  translation 0.61089 -0.52028 0.52
   rotation 0 0 1 4.45059
 }
 Face {
@@ -38,7 +38,7 @@ Face {
   rotation -0.476905 0.621515 0.621515 4.0316
 }
 Face {
-  translation 0.707153 -0.0771669 0.45
+  translation 0.711708 -0.368442 0.45
   rotation 0 0 1 4.71239
   image "face02.png"
 }
@@ -74,6 +74,7 @@ WebotsKeyboardController {
   robotVolume 0
   behaviorName "lookAround"
   behaviorChooserName "Demo"
+  userName "Billy"
   autoConnect FALSE
 }
 CozmoVizDisplay {
