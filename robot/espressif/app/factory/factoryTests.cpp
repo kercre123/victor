@@ -159,7 +159,7 @@ void Update()
             i2spiSwitchMode(I2SPI_RESUME);    // Scarier   
             break;
           case 3:
-            SetMode(RobotInterface::FTM_None);
+            SetMode(RobotInterface::FTM_WiFiInfo);
             break;
         }
         factoryAPPhase++;

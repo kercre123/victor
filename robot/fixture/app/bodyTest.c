@@ -26,8 +26,8 @@ bool BodyDetect(void)
   GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_Init(GPIOC, &GPIO_InitStructure);
   
-  // Wait for pull-up to do its business
-  MicroWait(10);
+  // Wait for 1ms (minimum detect time)
+  MicroWait(1000);
   
   // Return true if TRX is pulled down by body board
   return !(GPIO_READ(GPIOC) & (1 << GPIOC_TRX));

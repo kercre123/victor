@@ -513,6 +513,11 @@
               <FileType>8</FileType>
               <FilePath>.\app\headTest.c</FilePath>
             </File>
+            <File>
+              <FileName>robotTest.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\robotTest.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
