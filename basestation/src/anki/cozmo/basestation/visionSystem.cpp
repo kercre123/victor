@@ -2625,7 +2625,8 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     //    // DEBUG!
     //    Vision::Image image;
     //    //image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_151585ms_0.jpg");
-    //    image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_251585ms_1.jpg");
+    //    //image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_251585ms_1.jpg");
+    //    image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_366670ms_0.jpg");
     //    if(image.IsEmpty()) {
     //      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ReadImageFileFail", "");
     //      return RESULT_FAIL;
@@ -2772,7 +2773,9 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(),
                        cv::Size(kBinarizeKernelSize,kBinarizeKernelSize), kBinarizeKernelSigma);
       Vision::Image binarizedDotRoi(dotRoi.GetNumRows(), dotRoi.GetNumCols());
-      binarizedDotRoi.get_CvMat_() = dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_();
+      const u8 roiMean = cv::mean(dotRoi.get_CvMat_())[0];
+      binarizedDotRoi.get_CvMat_() = ((dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_()) &
+                                      (dotRoi.get_CvMat_() < roiMean));
       
       if(false && DRAW_TOOL_CODE_DEBUG) {
         _debugImageMailbox.putMessage({(iDot==0 ? "dotRoi0" : "dotRoi1"), dotRoi});
