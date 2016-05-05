@@ -2729,12 +2729,16 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     const f32 kDotHole_mm  = 2.5f/3.f;
     const s32 kBinarizeKernelSize = 11;
     const f32 kBinarizeKernelSigma = 7.f;
-    const f32 kDotAreaFrac = ((kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) /
-                              (4.f*kCalibDotSearchSize_mm * kCalibDotSearchSize_mm));
-    const f32 kMinDotAreaFrac   = 0.5f * kDotAreaFrac;
-    const f32 kMaxDotAreaFrac   = 1.5f * kDotAreaFrac;
-    const f32 kHoleAreaFrac     = kDotHole_mm * kDotHole_mm / (kDotWidth_mm*kDotWidth_mm);
-    const f32 kMaxHoleAreaFrac  = 2.f * kHoleAreaFrac;
+    const bool kIsCircularDot = true; // false for square dot with rounded corners
+    const f32 holeArea = kDotHole_mm*kDotHole_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
+    const f32 filledDotArea = kDotWidth_mm*kDotWidth_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
+    const f32 kDotAreaFrac =  (filledDotArea - holeArea) /
+                              (4.f*kCalibDotSearchSize_mm * kCalibDotSearchSize_mm);
+    const f32 kMinDotAreaFrac   = 0.25f * kDotAreaFrac;
+    const f32 kMaxDotAreaFrac   = 2.00f * kDotAreaFrac;
+    const f32 kHoleAreaFrac     = holeArea / filledDotArea;
+    const f32 kMaxHoleAreaFrac  = 4.f * kHoleAreaFrac;
+    //const f32 kMinSolidity      = 0.5f*(filledDotArea - holeArea) * (kIsCircularDot ? 1.f/(kDotWidth_mm*kDotWidth_mm) : 1.f);
     
     Anki::Point2f camCen;
     std::vector<Anki::Point2f> observedPoints;
@@ -2788,7 +2792,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(),
                        cv::Size(kBinarizeKernelSize,kBinarizeKernelSize), kBinarizeKernelSigma);
       Vision::Image binarizedDotRoi(dotRoi.GetNumRows(), dotRoi.GetNumCols());
-      const u8 roiMean = cv::mean(dotRoi.get_CvMat_())[0];
+      const u8 roiMean = cv::saturate_cast<u8>(1.5 * cv::mean(dotRoi.get_CvMat_())[0]); // 1.5 = fudge factor
       binarizedDotRoi.get_CvMat_() = ((dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_()) &
                                       (dotRoi.get_CvMat_() < roiMean));
       
@@ -2814,11 +2818,21 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       {
         const s32* compStats = stats.ptr<s32>(iComp);
         const s32 compArea = compStats[cv::CC_STAT_AREA];
-        const s32 bboxArea = compStats[cv::CC_STAT_HEIGHT]*compStats[cv::CC_STAT_WIDTH];
-        const f32 solidity = (f32)compArea/(f32)bboxArea;
+        //const s32 bboxArea = compStats[cv::CC_STAT_HEIGHT]*compStats[cv::CC_STAT_WIDTH];
+        //const f32 solidity = (f32)compArea/(f32)bboxArea;
+        
+        //        // DEBUG!!!
+        //        {
+        //          Vision::Image temp;
+        //          temp.get_CvMat_() = (labels.get_CvMat_() == iComp);
+        //          PRINT_NAMED_DEBUG("Component", "iComp: %d, Area: %d, solidity: %.3f",
+        //                            iComp, compArea, -1.f);
+        //          temp.Display("Component", 0);
+        //        }
+        
         if(compArea > kMinDotAreaFrac*binarizedDotRoi.GetNumElements() &&
-           compArea < kMaxDotAreaFrac*binarizedDotRoi.GetNumElements() &&
-           solidity > 0.5f*(1.f-kHoleAreaFrac))
+           compArea < kMaxDotAreaFrac*binarizedDotRoi.GetNumElements()
+           /* && solidity > kMinSolidity */)
         {
           const f64* dotCentroid = centroids.ptr<f64>(iComp);
           const f32 distSq = (Anki::Point2f(dotCentroid[0], dotCentroid[1]) - roiCen).LengthSq();
@@ -2843,20 +2857,19 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
               cv::floodFill(labelROI.get_CvMat_(), cv::Point(dotCentroid[0]-compRect.GetX(), dotCentroid[1]-compRect.GetY()),
                             numComponents+1);
               
-              /*
-              // DEBUG!!!
-              if(iDot == 1){
-                Vision::Image temp;
-                temp.get_CvMat_() = (labels.get_CvMat_() == iComp);
-                PRINT_NAMED_DEBUG("Component", "iComp: %d, Area: %d, solidity: %.3f",
-                                  iComp, compArea, solidity);
-                temp.Display("Component");
-                
-                Vision::Image tempFill;
-                tempFill.get_CvMat_() = (labelROI.get_CvMat_() == numComponents+1);
-                tempFill.Display("FloodFill", 0);
-              }
-               */
+              //              // DEBUG!!!
+              //              //if(iDot == 1){
+              //              {
+              //                Vision::Image temp;
+              //                temp.get_CvMat_() = (labels.get_CvMat_() == iComp);
+              //                PRINT_NAMED_DEBUG("Component", "iComp: %d, Area: %d, solidity: %.3f",
+              //                                  iComp, compArea, -1.f);
+              //                temp.Display("Component");
+              //
+              //                Vision::Image tempFill;
+              //                tempFill.get_CvMat_() = (labelROI.get_CvMat_() == numComponents+1);
+              //                tempFill.Display("FloodFill", 0);
+              //              }
               
               // Loop over an even smaller ROI right around the component to
               // compute the hole size, the brightness of that hole vs.

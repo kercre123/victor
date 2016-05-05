@@ -334,6 +334,12 @@ namespace Anki {
     
     ActionResult DriveStraightAction::Init()
     {
+      if(_dist_mm == 0.f) {
+        // special case
+        _hasStarted = true;
+        return ActionResult::SUCCESS;
+      }
+      
       const Radians heading = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
       
       const Vec3f& T = _robot.GetDriveCenterPose().GetTranslation();
