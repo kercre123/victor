@@ -15,6 +15,9 @@ struct LightChannel {
 static const int MAX_CONTRAST = 0xFFFF;  // must be at least 0x102
 
 static const LightChannel led_channel[] = {  
+  // Turn signals
+  { PIN_LED1, { PIN_LED2, PIN_LED4, PIN_LED4 } },
+
   // Front
   { PIN_LED3, { PIN_LED1, PIN_LED2, PIN_LED4 } },
   
@@ -23,9 +26,6 @@ static const LightChannel led_channel[] = {
 
   // Back
   { PIN_LED4, { PIN_LED1, PIN_LED3, PIN_LED2 } },
-
-  // Turn signals
-  { PIN_LED1, { PIN_LED2, PIN_LED4, PIN_LED4 } },
 };
 
 static const int MAX_CHANNEL = sizeof(led_channel) / sizeof(LightChannel);
@@ -49,22 +49,37 @@ void Lights::init(void) {
   nrf_gpiote_task_disable(0);
   
   // Configure PPI channels
-  NRF_PPI->CH[0].EEP = (uint32_t)&NRF_TIMER0->EVENTS_COMPARE[0];
-  NRF_PPI->CH[0].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[0];
-  NRF_PPI->CH[1].EEP = (uint32_t)&NRF_TIMER0->EVENTS_COMPARE[1];
-  NRF_PPI->CH[1].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[0];
+  NRF_PPI->CH[ 9].EEP = (uint32_t)&NRF_TIMER0->EVENTS_COMPARE[0];
+  NRF_PPI->CH[ 9].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[0];
+  NRF_PPI->CH[10].EEP = (uint32_t)&NRF_TIMER0->EVENTS_COMPARE[1];
+  NRF_PPI->CH[10].TEP = (uint32_t)&NRF_GPIOTE->TASKS_OUT[0];
   
-  NRF_PPI->CHENSET = 3;
+  NRF_PPI->CHENSET = PPI_CHEN_CH10_Msk | PPI_CHEN_CH9_Msk;
 }
 
 void Lights::stop(void) {
-  NRF_PPI->CHENCLR = 3;
-
-  nrf_gpiote_task_disable(0);
-  nrf_gpiote_task_disable(1);
+  // Disable our timer
+  NRF_TIMER0->TASKS_STOP = 1;
+  NRF_TIMER0->POWER = 0;  
   
+  // Tear down the PPI configuration
+  NRF_PPI->CHENCLR = PPI_CHEN_CH10_Msk | PPI_CHEN_CH9_Msk;
+
+  NRF_PPI->CH[ 9].EEP = 0;
+  NRF_PPI->CH[ 9].TEP = 0;
+  NRF_PPI->CH[10].EEP = 0;
+  NRF_PPI->CH[10].TEP = 0;
+
+  // Disable our GPIOTE tasks
+  NRF_GPIOTE->CONFIG[0] = 0;
+
   NRF_GPIOTE->POWER = 0;
-  NRF_TIMER0->POWER = 0;
+
+  // Disable the LED pins
+  nrf_gpio_cfg_input(PIN_LED1, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED2, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED3, NRF_GPIO_PIN_NOPULL);
+  nrf_gpio_cfg_input(PIN_LED4, NRF_GPIO_PIN_NOPULL);
 }
 
 void Lights::set(int channel, int colors, uint8_t brightness) {
