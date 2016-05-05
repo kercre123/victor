@@ -19,9 +19,7 @@ public class PressHubWorld : HubWorldBase {
 
   public override bool LoadHubWorld() {
 
-    _PressDemoViewInstance = UIManager.OpenView(_PressDemoViewPrefab);
-    _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
-    _PressDemoViewInstance.OnStartButton += HandleStartButtonPressed;
+    LoadPressDemoView();
 
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
     RobotEngineManager.Instance.OnRequestGameStart += StartSpeedTapGame;
@@ -35,6 +33,12 @@ public class PressHubWorld : HubWorldBase {
     RobotEngineManager.Instance.OnRequestGameStart -= StartSpeedTapGame;
     RobotEngineManager.Instance.OnRequestEnrollFace -= HandleRequestEnrollFace;
     return true;
+  }
+
+  private void LoadPressDemoView() {
+    _PressDemoViewInstance = UIManager.OpenView(_PressDemoViewPrefab);
+    _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
+    _PressDemoViewInstance.OnStartButton += HandleStartButtonPressed;
   }
 
   private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
@@ -63,6 +67,10 @@ public class PressHubWorld : HubWorldBase {
   private void PlayMinigame(ChallengeData challengeData, bool forceProgressWhenOver) {
     _ForceProgressWhenOver = forceProgressWhenOver;
 
+    _PressDemoViewInstance.OnForceProgress -= HandleForceProgressPressed;
+    _PressDemoViewInstance.OnStartButton -= HandleStartButtonPressed;
+    UIManager.CloseView(_PressDemoViewInstance);
+
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Selection);
     RobotEngineManager.Instance.CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
 
@@ -84,7 +92,8 @@ public class PressHubWorld : HubWorldBase {
     if (_ForceProgressWhenOver) {
       RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
     }
-
+    LoadPressDemoView();
+    _PressDemoViewInstance.HideStartButtons();
   }
 
   private void LoopRobotSleep() {

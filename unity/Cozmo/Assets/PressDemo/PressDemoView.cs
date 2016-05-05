@@ -24,7 +24,7 @@ public class PressDemoView : Cozmo.UI.BaseView {
     _StartNoEdgeButton.onClick.AddListener(HandleStartNoEdgeButton);
   }
 
-  private void HideStartButtons() {
+  public void HideStartButtons() {
     _StartButton.gameObject.SetActive(false);
     _StartNoEdgeButton.gameObject.SetActive(false);
   }
