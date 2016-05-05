@@ -25,13 +25,20 @@ public class PressHubWorld : HubWorldBase {
 
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
     RobotEngineManager.Instance.OnRequestGameStart += StartSpeedTapGame;
+    RobotEngineManager.Instance.OnRequestEnrollFace += HandleRequestEnrollFace;
     LoopRobotSleep();
     return true;
   }
 
   public override bool DestroyHubWorld() {
     GameObject.Destroy(_PressDemoViewInstance.gameObject);
+    RobotEngineManager.Instance.OnRequestGameStart -= StartSpeedTapGame;
+    RobotEngineManager.Instance.OnRequestEnrollFace -= HandleRequestEnrollFace;
     return true;
+  }
+
+  private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
+    StartFaceEnrollmentActivity();
   }
 
   private void HandleStartButtonPressed(bool startWithEdge) {
