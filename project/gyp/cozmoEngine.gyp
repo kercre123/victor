@@ -129,6 +129,11 @@
       '<(webots_path)/include',
     ],
   
+    'das_include': [
+      '../../lib/das-client/include',
+      '../../lib/das-client/ios',
+    ],
+
     'compiler_flags': [
       '-Wno-deprecated-declarations', # Supressed until system() usage is removed
       '-fdiagnostics-show-category=name',
@@ -1424,6 +1429,7 @@
         '../../cozmoAPI/include',
         '../../generated/clad/game',
         '<@(libarchive_include)',
+        '<@(das_include)',
       ],
       'direct_dependent_settings': {
         'include_dirs': [
@@ -1452,6 +1458,7 @@
         '<(ce-cti_gyp_path):ctiVisionRobot',
         '<(cg-audio_path):DriveAudioEngine',
         '<(ce-ble_cozmo_path):BLECozmo',
+        '<(ce-das_path):DAS',
       ],
       'conditions': [    
         [

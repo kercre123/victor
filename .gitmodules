@@ -4,3 +4,6 @@
 [submodule "lib/audio"]
 	path = lib/audio
 	url = git@github.com:anki/anki-audio.git
+[submodule "lib/das-client"]
+	path = lib/das-client
+	url = git@github.com:anki/DAS-Client.git

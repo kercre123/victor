@@ -27,20 +27,38 @@
       ]
     },
     {
-      "name": "NewFace",
+      "name": "NewUnnamedFace",
       "emotionAffectors" : [
         {
           "emotionType" : "Social",
-          "value" : 0.15
+          "value" : 0.4
         }
       ]
     },
     {
-      "name": "KnownFace",
+      "name": "NewNamedFace",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 0.75
+        }
+      ]
+    },
+    {
+      "name": "OldUnnamedFace",
       "emotionAffectors" : [
         {
           "emotionType" : "Social",
           "value" : 0.05
+        }
+      ]
+    },
+    {
+      "name": "OldNamedFace",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 0.1
         }
       ]
     },

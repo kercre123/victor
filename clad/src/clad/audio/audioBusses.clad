@@ -7,8 +7,7 @@ namespace Bus {
 
 enum uint_32 BusType
 {
-  Aria = 3484807970,
-  Cozmo = 2386142475,
+  Cozmo_Robot = 1723505802,
   Invalid = 0,
   Master_Audio_Bus = 3803692087,
   Master_Secondary_Bus = 805203703,

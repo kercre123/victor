@@ -71,7 +71,7 @@ namespace Cozmo {
     // Compute eye and lid polygons:
     //
     std::vector<cv::Point> eyePoly, segment, lowerLidPoly, upperLidPoly;
-    //const s32 ellipseDelta = 10;
+    const s32 ellipseDelta = 10;
     
     // 1. Eye shape poly
     {

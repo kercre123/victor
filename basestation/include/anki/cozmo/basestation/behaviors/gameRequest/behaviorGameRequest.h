@@ -65,7 +65,7 @@ protected:
   FaceID_t GetFaceID() const { return _faceID; }
   f32 GetLastSeenFaceTime() const {return _lastFaceSeenTime_s;}
     
-  u32 GetNumBlocks(const Robot& robot) const;
+  virtual u32 GetNumBlocks(const Robot& robot) const;
 
   // The first call to this will set the block ID, then it will be consistent until the behavior is reset
   ObjectID GetRobotsBlockID(const Robot& robot);
