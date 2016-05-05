@@ -6,6 +6,7 @@
 #include "hal/console.h"
 #include "hal/uart.h"
 #include "hal/swd.h"
+#include "hal/monitor.h"
 
 #include "app/fixture.h"
 #include "app/binaries.h"
@@ -82,7 +83,7 @@ void SendTestChar(int c)
   GPIO_RESET(GPIOC, PINC_RX);
   PIN_OUT(GPIOC, PINC_RX);
   
-  MicroWait(40);  // Enough time for robot to turn around
+  MicroWait(30);  // Enough time for robot to turn around
   
   // Bit bang the UART, since it's miswired on EP3
   u32 now, last = getMicroCounter();
@@ -107,6 +108,8 @@ void SendTestChar(int c)
 }
 void SendTestMode(int test)
 {
+  for (int i = 0; i < 200; i++)
+    SendTestChar(' ');
   SendTestChar('W');
   SendTestChar('t');
   SendTestChar('f');
@@ -118,12 +121,35 @@ void PlaypenTest(void)
   SendTestMode(7);    // Lucky 7 is Playpen fixture mode
 }
 
+void ChargerTest(void)
+{
+  int offContact = 0;
+  
+  // Act like a charger - the robot expects to start on one!
+  GPIO_SET(GPIOC, PINC_TX);
+  PIN_OUT(GPIOC, PINC_TX);
+
+  while (1)
+  {
+    MicroWait(50000);
+    int current = MonitorGetCurrent();
+    ConsolePrintf("%d..", current);
+    if (current < 20000)
+      offContact++;
+    else
+      offContact = 0;
+    if (offContact > 10)
+      return;
+  }
+}
+
 // List of all functions invoked by the test, in order
 TestFunction* GetRobotTestFunctions(void)
 {
   static TestFunction functions[] =
   {
     PlaypenTest,
+    ChargerTest,
     NULL
   };
 
