@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorFactory_H__
 
 
-#include "clad/types/behaviorType.h"
+#include "clad/types/behaviorTypes.h"
 #include "util/helpers/noncopyable.h"
 #include <map>
 

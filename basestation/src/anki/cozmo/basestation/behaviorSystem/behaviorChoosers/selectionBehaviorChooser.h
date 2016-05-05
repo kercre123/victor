@@ -13,8 +13,8 @@
 #ifndef __Cozmo_Basestation_SelectionBehaviorChooser_H__
 #define __Cozmo_Basestation_SelectionBehaviorChooser_H__
 
-#include "anki/cozmo/basestation/behaviorChooser.h"
-#include "clad/types/behaviorType.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
+#include "clad/types/behaviorTypes.h"
 #include "json/json.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <vector>
@@ -43,7 +43,6 @@ public:
   
 protected:
   Robot& _robot;
-  Json::Value _config;
   std::vector<Signal::SmartHandle> _eventHandlers;
   IBehavior* _selectedBehavior = nullptr;
   IBehavior* _behaviorNone = nullptr;

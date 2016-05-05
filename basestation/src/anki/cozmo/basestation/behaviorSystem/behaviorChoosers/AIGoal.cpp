@@ -11,8 +11,8 @@
  **/
 #include "AIGoal.h"
 
-#include "anki/cozmo/basestation/behaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
 
 #include "anki/common/basestation/jsonTools.h"
 

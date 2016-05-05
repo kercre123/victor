@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorTypesHelpers_H__
 
 
-#include "clad/types/behaviorType.h"
+#include "clad/types/behaviorTypes.h"
 #include "util/enums/enumOperators.h"
 #include <string>
 

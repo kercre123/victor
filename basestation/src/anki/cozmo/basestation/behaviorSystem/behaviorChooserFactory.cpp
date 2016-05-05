@@ -11,9 +11,11 @@
  **/
 #include "behaviorChooserFactory.h"
 
-// todo organize the choosers in a subfolder
-#include "anki/cozmo/basestation/behaviorChooser.h"
-
+// behavior choosers
+#include "behaviorChoosers/simpleBehaviorChooser.h"
+#include "behaviorChoosers/demoBehaviorChooser.h"
+#include "behaviorChoosers/selectionBehaviorChooser.h"
+#include "behaviorChoosers/AIGoalEvaluator.h"
 
 #include "anki/common/basestation/jsonTools.h"
 
@@ -30,7 +32,7 @@ namespace BehaviorChooserFactory {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
 {
-  IBehaviorChooser* newChooserBase = nullptr;
+  IBehaviorChooser* newChooser = nullptr;
 
   // extract type
   const Json::Value& type = config["type"];
@@ -40,17 +42,16 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   // should this be more sophisticated than string compare?
   if ( typeStr == "simple" )
   {
-    // create behavior
-    SimpleBehaviorChooser* newChooser = new SimpleBehaviorChooser(robot, config);
-    
-    // todo rsam: I would like to validate configs, but currenly chooser load in the constructor and never fail
-//    // try to initialize, and if it fails destroy the instance
-//    const bool initOk = newChooser->ReadFromJson(robot, config);
-//    if ( !initOk ) {
-//      DestroyBehaviorChooser(newChooser);
-//    } else {
-      newChooserBase = newChooser;
-//    }
+    newChooser = new SimpleBehaviorChooser(robot, config);
+  }
+  else if ( typeStr == "demo" ) {
+    newChooser = new DemoBehaviorChooser(robot, config);
+  }
+  else if ( typeStr == "selection" ) {
+    newChooser = new SelectionBehaviorChooser(robot, config);
+  }
+  else if ( typeStr == "goal" ) {
+    newChooser = new AIGoalEvaluator(robot, config);
   }
   else
   {
@@ -59,7 +60,7 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   }
   
   // if failed print information to debug
-  const bool failed = (nullptr == newChooserBase);
+  const bool failed = (nullptr == newChooser);
   if ( failed )
   {
     PRINT_NAMED_ERROR("BehaviorChooserFactory.CreateBehaviorChooser.Fail",
@@ -67,7 +68,7 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
     JsonTools::PrintJsonError(config, "BehaviorChooserFactory.CreateBehaviorChooser.Fail");
   }
   
-  return newChooserBase;
+  return newChooser;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

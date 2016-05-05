@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-#include "anki/cozmo/basestation/behaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -95,6 +95,7 @@ static const char* kTestChooser2Json =
 
 bool LoadTestBehaviors(Robot& testRobot, SimpleBehaviorChooser& behaviorChooser)
 {
+  bool allAddedOk = true;
   BehaviorFactory& behaviorFactory = testRobot.GetBehaviorFactory();
 
   Json::Reader reader;
@@ -115,7 +116,7 @@ bool LoadTestBehaviors(Robot& testRobot, SimpleBehaviorChooser& behaviorChooser)
       EXPECT_NE(newBehavior, nullptr);
       if (newBehavior)
       {
-        behaviorChooser.AddBehavior(newBehavior);
+        allAddedOk = (behaviorChooser.TryAddBehavior(newBehavior) == Anki::RESULT_OK);
       }
       else
       {
@@ -128,7 +129,7 @@ bool LoadTestBehaviors(Robot& testRobot, SimpleBehaviorChooser& behaviorChooser)
     }
   }
 
-  return true;
+  return allAddedOk;
 }
 
 
@@ -145,19 +146,13 @@ TEST(BehaviorChooser, EnabledBehaviors)
   
   if (loadedOK)
   {
-    BehaviorFactory& behaviorFactory = testRobot.GetBehaviorFactory();
+    const char* testName1 = "Test1";
+    const char* testName2 = "Test2";
+    const char* testName3 = "Test3";
     
-    const IBehavior* test1 = behaviorFactory.FindBehaviorByName("Test1");
-    const IBehavior* test2 = behaviorFactory.FindBehaviorByName("Test2");
-    const IBehavior* test3 = behaviorFactory.FindBehaviorByName("Test3");
-
-    ASSERT_NE(test1, nullptr);
-    ASSERT_NE(test2, nullptr);
-    ASSERT_NE(test3, nullptr);
-    
-    EXPECT_TRUE(test1->IsChoosable());
-    EXPECT_TRUE(test2->IsChoosable());
-    EXPECT_TRUE(test3->IsChoosable());
+    EXPECT_TRUE( behaviorChooser.IsBehaviorEnabled(testName1) );
+    EXPECT_TRUE( behaviorChooser.IsBehaviorEnabled(testName2) );
+    EXPECT_TRUE( behaviorChooser.IsBehaviorEnabled(testName3) );
 
     Json::Value  chooserConfig1;
     Json::Value  chooserConfig2;
@@ -168,18 +163,17 @@ TEST(BehaviorChooser, EnabledBehaviors)
     parsedOK = reader.parse(kTestChooser2Json, chooserConfig2, false);
     EXPECT_TRUE(parsedOK);
     
-    behaviorChooser.InitEnabledBehaviors(chooserConfig1);
+    behaviorChooser.ReadEnabledBehaviorsConfiguration(chooserConfig1);
+
+    EXPECT_TRUE( behaviorChooser.IsBehaviorEnabled(testName1) );
+    EXPECT_TRUE( behaviorChooser.IsBehaviorEnabled(testName2) );
+    EXPECT_FALSE( behaviorChooser.IsBehaviorEnabled(testName3) );
    
-    EXPECT_TRUE(test1->IsChoosable());
-    EXPECT_TRUE(test2->IsChoosable());
-    EXPECT_FALSE(test3->IsChoosable());
-  
-    behaviorChooser.EnableAllBehaviors();
-    behaviorChooser.InitEnabledBehaviors(chooserConfig2);
+    behaviorChooser.ReadEnabledBehaviorsConfiguration(chooserConfig2);
     
-    EXPECT_FALSE(test1->IsChoosable());
-    EXPECT_FALSE(test2->IsChoosable());
-    EXPECT_TRUE(test3->IsChoosable());
+    EXPECT_FALSE( behaviorChooser.IsBehaviorEnabled(testName1) );
+    EXPECT_FALSE( behaviorChooser.IsBehaviorEnabled(testName2) );
+    EXPECT_TRUE( behaviorChooser.IsBehaviorEnabled(testName3) );
   }
   
   

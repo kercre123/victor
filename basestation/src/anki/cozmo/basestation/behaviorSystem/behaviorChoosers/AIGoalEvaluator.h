@@ -13,6 +13,7 @@
 #define __Cozmo_Basestation_BehaviorSystem_AIGoalEvaluator_H__
 
 #include "json/json-forwards.h"
+#include "iBehaviorChooser.h"
 
 #include <memory>
 #include <vector>
@@ -26,7 +27,7 @@ class Robot;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // AIGoalEvaluator
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class AIGoalEvaluator
+class AIGoalEvaluator : public IBehaviorChooser
 {
 public:
   
@@ -39,12 +40,19 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // constructor/destructor
-  AIGoalEvaluator();
+  AIGoalEvaluator(Robot& robot, const Json::Value& config);
   ~AIGoalEvaluator();
-  
-  // initialize the goal evaluator from the given config. Return true on success, false if config is not valid
-  bool Init(Robot& robot, const Json::Value& config);
 
+  // read which groups/behaviors are enabled/disabled from json configuration
+  virtual void ReadEnabledBehaviorsConfiguration(const Json::Value& inJson) override { assert(false); } // todo rsam probably read goals, not behavior groups/behaviors
+
+  // get next behavior by properly managing the goals
+  virtual IBehavior* ChooseNextBehavior(const Robot& robot) const override { return nullptr; } // todo rsam: ask current goal
+
+  // name (for debug/identification)
+  // todo rsam: add current goal name to the name (like Demo does)
+  virtual const char* GetName() const override { return "GoalEvaluator"; }
+  
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -58,6 +66,9 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // create the proper goals from the given config
+  void CreateFromConfig(Robot& robot, const Json::Value& config);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes

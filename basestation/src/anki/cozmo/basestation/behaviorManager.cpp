@@ -13,19 +13,17 @@
 #include "anki/cozmo/basestation/behaviorManager.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/iBehaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChooserFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
-#include "anki/cozmo/basestation/behaviorSystem/AIGoalEvaluator.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
-#include "anki/cozmo/basestation/demoBehaviorChooser.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/messageHelpers.h"
 #include "anki/cozmo/basestation/moodSystem/moodDebug.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/cozmo/basestation/selectionBehaviorChooser.h"
 #include "clad/types/behaviorChooserType.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -35,46 +33,58 @@
 namespace Anki {
 namespace Cozmo {
   
-static const char* kChooserConfigKey = "chooserConfig";
-static const char* kGoalsConfigKey = "goalsConfig";
+static const char* kDemoChooserConfigKey = "demoBehaviorChooserConfig";
+static const char* kSelectionChooserConfigKey = "selectionBehaviorChooserConfig";
+static const char* kFreeplayChooserConfigKey = "freeplayBehaviorChooserConfig";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorManager::BehaviorManager(Robot& robot)
-  : _isInitialized(false)
-  , _robot(robot)
-  , _behaviorFactory(new BehaviorFactory())
-  , _goalEvaluator( new AIGoalEvaluator() )
+  : _robot(robot)
+  
+  , _behaviorFactory(new BehaviorFactory())  
   , _whiteboard( new AIWhiteboard(robot) )
 {
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorManager::~BehaviorManager()
 {
   // everything in _reactionaryBehaviors is a factory behavior, so the factory will delete it
   _reactionaryBehaviors.clear();
-
+  
+  // destroy choosers before factory
+  Util::SafeDelete(_freeplayChooser);
   Util::SafeDelete(_selectionChooser);
-  Util::SafeDelete(_freeplayBehaviorChooser);
   Util::SafeDelete(_demoChooser);
   Util::SafeDelete(_behaviorFactory);
 }
- 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorManager::InitConfiguration(const Json::Value &config)
 {
   BEHAVIOR_VERBOSE_PRINT(DEBUG_BEHAVIOR_MGR, "BehaviorManager.Init.Initializing", "");
-    
+  
+  // do not support multiple initialization. A) we don't need it, B) it's easy to forget to clean up everything properly
+  // when adding new stuff. During my refactoring I found several variables that were not properly reset, so
+  // potentially double Init was never supported
+  ASSERT_NAMED(!_isInitialized, "BehaviorManager.InitConfiguration.AlreadyInitialized");
+
+  // create choosers
+  if ( !config.isNull() )
   {
-    const Json::Value& chooserConfigJson = config[kChooserConfigKey];
+    // selection chooser - to force one specific behavior
+    const Json::Value& selectionChooserConfigJson = config[kSelectionChooserConfigKey];
+    _selectionChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, selectionChooserConfigJson);
 
-    Util::SafeDelete(_selectionChooser);
-    Util::SafeDelete(_freeplayBehaviorChooser);
-    Util::SafeDelete(_demoChooser);
+    // demo chooser - for scripted demos/setups (investor, etc)
+    const Json::Value& demoChooserConfigJson = config[kDemoChooserConfigKey];
+    _demoChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, demoChooserConfigJson);
+    
+    // freeplay chooser - AI controls cozmo
+    const Json::Value& freeplayChooserConfigJson = config[kFreeplayChooserConfigKey];
+    _freeplayChooser = BehaviorChooserFactory::CreateBehaviorChooser(_robot, freeplayChooserConfigJson);
 
-    _selectionChooser = new SelectionBehaviorChooser(_robot, chooserConfigJson);
-    _freeplayBehaviorChooser = new SimpleBehaviorChooser(_robot, chooserConfigJson);
-    _demoChooser = new DemoBehaviorChooser(_robot, chooserConfigJson);
-                                   
+    // start with selection that defaults to NoneBehavior
     SetBehaviorChooser( _selectionChooser );
 
     // TODO:(bn) load these from json? A special reactionary behaviors list?
@@ -89,15 +99,10 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     //   behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
   }
   
-  {
-    const Json::Value& goalsConfig = config[kGoalsConfigKey];
-    _goalEvaluator->Init(_robot, goalsConfig);
-  }
-    
   // initialize whiteboard
   assert( _whiteboard );
   _whiteboard->Init();
-    
+  
   if (_robot.HasExternalInterface())
   {
     IExternalInterface* externalInterface = _robot.GetExternalInterface();
@@ -111,7 +116,7 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
                                  {
                                    case BehaviorChooserType::Freeplay:
                                    {
-                                     SetBehaviorChooser( _freeplayBehaviorChooser );
+                                     SetBehaviorChooser( _freeplayChooser );
                                      break;
                                    }
                                    case BehaviorChooserType::Selection:
@@ -276,7 +281,7 @@ void BehaviorManager::SwitchToNextBehavior()
     }
   }
   
-  SwitchToBehavior( _behaviorChooser->ChooseNextBehavior(_robot) );
+  SwitchToBehavior( _currentChooserPtr->ChooseNextBehavior(_robot) );
 }
 
 void BehaviorManager::SwitchToReactionaryBehavior(IBehavior* nextBehavior)
@@ -306,7 +311,7 @@ Result BehaviorManager::Update()
     return RESULT_FAIL;
   }
     
-  _behaviorChooser->Update();
+  _currentChooserPtr->Update();
 
   if( ! _runningReactionaryBehavior ) {
     SwitchToNextBehavior();
@@ -365,8 +370,13 @@ Result BehaviorManager::Update()
 
 void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
 {
-  if( _behaviorChooser == newChooser ) {
+  if( _currentChooserPtr == newChooser ) {
     return;
+  }
+  
+  // notify all chooser it's no longer selected
+  if ( _currentChooserPtr ) {
+    _currentChooserPtr->OnDeselected();
   }
 
   // The behavior pointers may no longer be valid, so clear them
@@ -374,16 +384,19 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   _behaviorToResume = nullptr;
   _runningReactionaryBehavior = false;
 
-  _behaviorChooser = newChooser;
+  _currentChooserPtr = newChooser;
 
-  if( _behaviorChooser == _freeplayBehaviorChooser ) {
-    _robot.GetProgressionUnlockComponent().IterateUnlockedFreeplayBehaviors(
-      [this](BehaviorGroup group, bool enabled){
-        _behaviorChooser->EnableBehaviorGroup(group, enabled);
-      });
-  }
+// TODO we should not need to unlock behaviors when we switch choosers, only on load and when unlocks
+// happens. This has changed because this flag has moved from the behavior to the chooser, so different
+// choosers keep track of enabled/disabled behaviors separately
+//  if( _currentChooserPtr == _freeplayBehaviorChooser ) {
+//    _robot.GetProgressionUnlockComponent().IterateUnlockedFreeplayBehaviors(
+//      [this](BehaviorGroup group, bool enabled){
+//        _currentChooserPtr->EnableBehaviorGroup(group, enabled);
+//      });
+//  }
 
-  _behaviorChooser->Init();
+  _currentChooserPtr->OnSelected();
 
   // force the new behavior chooser to select something now, instead of waiting for the next tick
   SwitchToNextBehavior();
@@ -396,93 +409,27 @@ void BehaviorManager::StopCurrentBehavior()
   }
 }
 
-void BehaviorManager::ClearAllBehaviorOverrides()
-{
-  const BehaviorFactory::NameToBehaviorMap& nameToBehaviorMap = _behaviorFactory->GetBehaviorMap();
-  for(const auto& it : nameToBehaviorMap)
-  {
-    IBehavior* behavior = it.second;
-    behavior->SetOverrideScore(-1.0f);
-  }
-}
-  
-bool BehaviorManager::OverrideBehaviorScore(const std::string& behaviorName, float newScore)
-{
-  IBehavior* behavior = _behaviorFactory->FindBehaviorByName(behaviorName);
-  if (behavior)
-  {
-    behavior->SetOverrideScore(newScore);
-    return true;
-  }
-  return false;
-}
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message)
 {
   switch (message.GetTag())
   {
-    case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableAllBehaviors:
+    // Available games
+    case ExternalInterface::BehaviorManagerMessageUnionTag::SetAvailableGames:
     {
-      const auto& msg = message.Get_SetEnableAllBehaviors();
-      if (_behaviorChooser)
-      {
-        PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableAllBehaviors", "%s",
-                          msg.enable ? "true" : "false");
-        _behaviorChooser->EnableAllBehaviors(msg.enable);
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.SetEnableAllBehaviorGroups.NullChooser",
-                            "Ignoring EnableAllBehaviorGroups(%d)", (int)msg.enable);
-      }
+      const auto& msg = message.Get_SetAvailableGames();
+      SetBehaviorFlag(msg.behaviorGameFlag, msg.enable);
       break;
     }
-    case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableBehaviorGroup:
+    
+    // Sparks
+    case ExternalInterface::BehaviorManagerMessageUnionTag::SetActiveSpark:
     {
-      const auto& msg = message.Get_SetEnableBehaviorGroup();
-      if (_behaviorChooser)
-      {
-        PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableBehaviorGroup", "%s: %s",
-                          BehaviorGroupToString(msg.behaviorGroup),
-                          msg.enable ? "true" : "false");
+      const auto& msg = message.Get_SetActiveSpark();
+      SetSparkActive(msg.behaviorSpark);
+      break;
+    }
 
-        _behaviorChooser->EnableBehaviorGroup(msg.behaviorGroup, msg.enable);
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.SetEnableBehaviorGroup.NullChooser",
-                            "Ignoring EnableBehaviorGroup('%s', %d)", BehaviorGroupToString(msg.behaviorGroup), (int)msg.enable);
-      }
-      break;
-    }
-    case ExternalInterface::BehaviorManagerMessageUnionTag::SetEnableBehavior:
-    {
-      const auto& msg = message.Get_SetEnableBehavior();
-      if (_behaviorChooser)
-      {
-        PRINT_NAMED_DEBUG("BehaviorManager.HandleMessage.SetEnableBehavior", "%s: %s",
-                          msg.behaviorName.c_str(),
-                          msg.enable ? "true" : "false");
-        _behaviorChooser->EnableBehavior(msg.behaviorName, msg.enable);
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("BehaviorManager.HandleEvent.DisableBehaviorGroup.NullChooser",
-                            "Ignoring DisableBehaviorGroup('%s', %d)", msg.behaviorName.c_str(), (int)msg.enable);
-      }
-      break;
-    }
-    case ExternalInterface::BehaviorManagerMessageUnionTag::ClearAllBehaviorScoreOverrides:
-    {
-      ClearAllBehaviorOverrides();
-      break;
-    }
-    case ExternalInterface::BehaviorManagerMessageUnionTag::OverrideBehaviorScore:
-    {
-      const auto& msg = message.Get_OverrideBehaviorScore();
-      OverrideBehaviorScore(msg.behaviorName, msg.newScore);
-      break;
-    }
     default:
     {
       PRINT_NAMED_ERROR("BehaviorManager.HandleEvent.UnhandledMessageUnionTag",
@@ -492,6 +439,23 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
       break;
     }
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::SetBehaviorFlag(BehaviorGameFlag flag, bool value)
+{
+  const auto flagIntegral = Util::EnumToUnderlying(flag);
+  if ( value ) {
+    _availableGames |= flagIntegral; // add the flag
+  } else {
+    _availableGames &= (~flagIntegral); // take out that flag only
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorManager::SetSparkActive(BehaviorSpark spark)
+{
+  _activeSpark = spark;
 }
   
 } // namespace Cozmo

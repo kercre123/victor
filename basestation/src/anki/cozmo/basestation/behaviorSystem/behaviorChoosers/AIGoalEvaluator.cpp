@@ -26,9 +26,9 @@ const char* AIGoalEvaluator::kSelfConfigKey = "evaluator";
 const char* AIGoalEvaluator::kGoalsConfigKey = "goals";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AIGoalEvaluator::AIGoalEvaluator()
+AIGoalEvaluator::AIGoalEvaluator(Robot& robot, const Json::Value& config)
 {
-
+  CreateFromConfig(robot, config);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -38,13 +38,10 @@ AIGoalEvaluator::~AIGoalEvaluator()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AIGoalEvaluator::Init(Robot& robot, const Json::Value& config)
+void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
 {
-  bool initOk = true;
+  _goals.clear();
 
-  // read our own config
-  // todo
-  
   // read every goal and create them with their own config
   const Json::Value& goalsConfig = config[kGoalsConfigKey];
   if ( !goalsConfig.isNull() )
@@ -69,7 +66,6 @@ bool AIGoalEvaluator::Init(Robot& robot, const Json::Value& config)
       else
       {
         // flag as failed and log
-        initOk = false;
         PRINT_NAMED_ERROR("AIGoalEvaluator.Init", "Failed to initialize goal from config. Look for 'AIGoalEvaluator.Init.BadGoalConfig' event for information");
         JsonTools::PrintJsonError(goalConfig, "AIGoalEvaluator.Init.BadGoalConfig");
         
@@ -79,8 +75,6 @@ bool AIGoalEvaluator::Init(Robot& robot, const Json::Value& config)
       
     }
   }
-
-  return initOk;
 }
 
 } // namespace Cozmo

@@ -85,15 +85,19 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
 
   it->second.SetUnlock( unlocked );
 
-  if( it->second.HasFreeplayBehaviorGroup() ) {
-    // if there is a freeplay behavior associated with this unlock, enable it now (if we are in the selection
-    // chooser, this will have no effect)
-    _robot.GetExternalInterface()->Broadcast( ExternalInterface::MessageGameToEngine(
-                                                ExternalInterface::BehaviorManagerMessage(
-                                                  1,
-                                                  ExternalInterface::BehaviorManagerMessageUnion(
-                                                    ExternalInterface::SetEnableBehaviorGroup(
-                                                      it->second.GetFreeplayBehaviorGroup(), unlocked)))));
+  if( it->second.HasFreeplayBehaviorGroup() )
+  {
+  
+  // TODO rsam unlock behaviors
+  
+//    // if there is a freeplay behavior associated with this unlock, enable it now (if we are in the selection
+//    // chooser, this will have no effect)
+//    _robot.GetExternalInterface()->Broadcast( ExternalInterface::MessageGameToEngine(
+//                                                ExternalInterface::BehaviorManagerMessage(
+//                                                  1,
+//                                                  ExternalInterface::BehaviorManagerMessageUnion(
+//                                                    ExternalInterface::SetEnableBehaviorGroup(
+//                                                      it->second.GetFreeplayBehaviorGroup(), unlocked)))));
   }
   
   return true;

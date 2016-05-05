@@ -44,11 +44,9 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   , _robot(robot)
   , _startedRunningTime_s(0.0)
   , _lastRunTime_s(0.0)
-  , _overrideScore(-1.0f)
   , _extraRunningScore(0.0f)
   , _isRunning(false)
-  , _isOwnedByFactory(false)
-  , _isChoosable(true)
+  , _isOwnedByFactory(false)  
   , _enableRepetitionPenalty(true)
 {
   ReadFromJson(config);
@@ -292,16 +290,11 @@ float IBehavior::EvaluateScore(const Robot& robot) const
 {
   if (IsRunnable(robot) || IsRunning())
   {
-    const bool doOverrideScore = (_overrideScore >= 0.0f);
     const bool isRunning = IsRunning();
                 
     float score = 0.0f;
       
-    if (doOverrideScore)
-    {
-      score = _overrideScore;
-    }
-    else if (isRunning)
+    if (isRunning)
     {
       score = EvaluateRunningScoreInternal(robot) + _extraRunningScore;
     }
