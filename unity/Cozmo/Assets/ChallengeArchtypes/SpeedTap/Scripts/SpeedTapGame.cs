@@ -142,10 +142,14 @@ namespace SpeedTap {
 
     public void HandleGameEnd() {
       if (_PlayerRoundsWon > _CozmoRoundsWon) {
-        int currentDifficultyUnlocked = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID];
+        PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+        int currentDifficultyUnlocked = 0;
+        if (playerProfile.GameDifficulty.ContainsKey(_ChallengeData.ChallengeID)) {
+          currentDifficultyUnlocked = playerProfile.GameDifficulty[_ChallengeData.ChallengeID];
+        }
         int newDifficultyUnlocked = CurrentDifficulty + 1;
         if (currentDifficultyUnlocked < newDifficultyUnlocked) {
-          DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty[_ChallengeData.ChallengeID] = newDifficultyUnlocked;
+          playerProfile.GameDifficulty[_ChallengeData.ChallengeID] = newDifficultyUnlocked;
           DataPersistence.DataPersistenceManager.Instance.Save();
         }
         RaiseMiniGameWin();
@@ -375,12 +379,14 @@ namespace SpeedTap {
     }
 
     public void StartCozmoCubeMovedDisruptionDetection() {
-      LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
-      LightCube.OnMovedAction += HandleCozmoCubeMovedDisruption;
+      // INGO: Temporarily disabling broken code to unblock QA
+      // LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
+      // LightCube.OnMovedAction += HandleCozmoCubeMovedDisruption;
     }
 
     public void EndCozmoCubeMovedDisruptionDetection() {
-      LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
+      // INGO: Temporarily disabling broken code to unblock QA
+      // LightCube.OnMovedAction -= HandleCozmoCubeMovedDisruption;
     }
 
     private void HandleCozmoCubeMovedDisruption(int cubeId, float xAccel, float yAccel, float zAccel) {
