@@ -585,8 +585,10 @@ namespace Anki {
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::READ_TOOL_CODE; }
+      
+      // Let internal head and lift action do locking
       virtual u8 GetTracksToLock() const override {
-        return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
+        return (u8)AnimTrackFlag::NO_TRACKS;
       }
       
       virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
@@ -601,13 +603,12 @@ namespace Anki {
     private:
       
       std::string       _name = "ReadToolCode";
-      bool              _doCalibration           = false;
-      TimeStamp_t       _toolCodeLastMovedTime   = 0;
-      f32               _toolCodeLastHeadAngle   = 0;
-      f32               _toolCodeLastLiftAngle   = 0;
+      bool              _doCalibration = false;
       ToolCodeInfo      _toolCodeInfo;
       
-      const TimeStamp_t kRequiredStillTime_ms    = 500;
+      CompoundActionParallel _headAndLiftDownAction;
+      
+      //const TimeStamp_t kRequiredStillTime_ms    = 500;
   
       enum class State : u8 {
         WaitingToGetInPosition,
