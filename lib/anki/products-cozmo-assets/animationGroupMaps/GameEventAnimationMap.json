@@ -33,27 +33,27 @@
       "AnimName": ""
     },
     {
-      "CladEvent": "OnSpeedtapHandWin",
+      "CladEvent": "OnSpeedtapHandCozmoWin",
       "AnimName": "speedTap_WinHand"
     },
     {
-      "CladEvent": "OnSpeedtapHandLose",
+      "CladEvent": "OnSpeedtapHandPlayerWin",
       "AnimName": "speedTap_LoseHand"
     },
     {
-      "CladEvent": "OnSpeedtapRoundWin",
+      "CladEvent": "OnSpeedtapRoundCozmoWin",
       "AnimName": "speedTap_WinRound"
     },
     {
-      "CladEvent": "OnSpeedtapRoundLose",
+      "CladEvent": "OnSpeedtapRoundPlayerWin",
       "AnimName": "speedTap_LoseRound"
     },
     {
-      "CladEvent": "OnSpeedtapSessionWin",
+      "CladEvent": "OnSpeedtapGameCozmoWin",
       "AnimName": "speedTap_WinSession"
     },
     {
-      "CladEvent": "OnSpeedtapSessionLose",
+      "CladEvent": "OnSpeedtapGamePlayerWin",
       "AnimName": "speedTap_LoseSession"
     },
     {
