@@ -118,7 +118,8 @@ protected:
   bool _planningError;
   size_t _selectedTargetIdx;
   Planning::Path _path;
-  
+  static const int finalPathSegmentSpeed_mmps = 20;
+  static const int distToDecelSegLenTolerance_mm = 5;
   
   virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
                                         Planning::Path &path);
@@ -127,6 +128,8 @@ protected:
                                         size_t& selectedTargetIndex);
   
   // Modifies in path according to _pathMotionProfile to produce out path.
+  // Takes deceleration into account in order to produce a path with smooth deceleration
+  // over multiple path segments
   // TODO: This is where Cozmo mood/skill-based path wonkification would occur,
   //       but currently it just changes speeds and accel on each segment.
   static bool ApplyMotionProfile(const Planning::Path &in,

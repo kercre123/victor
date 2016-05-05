@@ -71,7 +71,7 @@ namespace Anki {
       
       std::string               _animName;
       std::string               _name;
-      u32                       _numLoops;
+      u32                       _numLoopsRemaining;
       bool                      _startedPlaying;
       bool                      _stoppedPlaying;
       bool                      _wasAborted;
