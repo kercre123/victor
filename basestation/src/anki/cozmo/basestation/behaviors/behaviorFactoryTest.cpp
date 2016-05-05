@@ -65,11 +65,6 @@ namespace Cozmo {
   
   BehaviorFactoryTest::BehaviorFactoryTest(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
-  , _cliffDetectPose(0, Z_AXIS_3D(), {50, 0, 0}, &robot.GetPose().FindOrigin())
-  , _camCalibPose(0, Z_AXIS_3D(), {0, 0, 0}, &robot.GetPose().FindOrigin())
-  , _prePickupPose( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 150, 0}, &robot.GetPose().FindOrigin())
-  , _expectedLightCubePose(0, Z_AXIS_3D(), {-50, 300, 0}, &robot.GetPose().FindOrigin())
-  , _expectedChargerPose(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin())
   , _currentState(FactoryTestState::InitRobot)
   , _lastHandlerResult(RESULT_OK)
   , _testResult(FactoryTestResultCode::UNKNOWN)
@@ -140,6 +135,14 @@ namespace Cozmo {
     _watchdogTriggerTime = currentTime_sec + _kWatchdogTimeout;
     
     robot.GetActionList().Cancel();
+ 
+    // Set known poses
+    _cliffDetectPose = Pose3d(0, Z_AXIS_3D(), {50, 0, 0}, &robot.GetPose().FindOrigin());
+    _camCalibPose = Pose3d(0, Z_AXIS_3D(), {0, 0, 0}, &robot.GetPose().FindOrigin());
+    _prePickupPose = Pose3d( DEG_TO_RAD(90), Z_AXIS_3D(), {-50, 100, 0}, &robot.GetPose().FindOrigin());
+    _expectedLightCubePose = Pose3d(0, Z_AXIS_3D(), {-50, 250, 0}, &robot.GetPose().FindOrigin());
+    _expectedChargerPose = Pose3d(0, Z_AXIS_3D(), {-300, 200, 0}, &robot.GetPose().FindOrigin());
+    
     
     // Disable reactionary behaviors
     if (robot.GetBehaviorManager().GetWhiteboard().IsCliffReactionEnabled()) {
@@ -504,9 +507,17 @@ namespace Cozmo {
       {
         if (_calibrationReceived) {
           
+          // Backup and read tool code at the same time.
+          // Backing up so that it is more likely to execute a straight line path to the
+          // the following predock pose.
+          ReadToolCodeAction* toolCodeAction = new ReadToolCodeAction(robot, false);
+          DriveStraightAction* backupAction = new DriveStraightAction(robot, -25.0, -100.f);
+          CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {toolCodeAction, backupAction});
+          toolCodeAction->ShouldEmitCompletionSignal(true);
+          
           if (USING_EP3) {
           // Read lift tool code
-          StartActing(robot, new ReadToolCodeAction(robot, false),
+          StartActing(robot, compoundAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
                           EndTest(robot, FactoryTestResultCode::READ_TOOL_CODE_FAILED);
@@ -548,7 +559,8 @@ namespace Cozmo {
                                                               });
                         }
                         return true;
-                      });
+                      },
+                      toolCodeAction->GetTag());
           }; // if (USING_EP3)
 
           SetCurrState(FactoryTestState::ReadLiftToolCode);
@@ -1086,13 +1098,17 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-
-  void BehaviorFactoryTest::StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback)
+  
+  void BehaviorFactoryTest::StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback, u32 actionCallbackTag)
   {
-    assert(_actionCallbackMap.count(action->GetTag()) == 0);
-
+    if (actionCallbackTag == static_cast<u32>(ActionConstants::INVALID_TAG)) {
+      actionCallbackTag = action->GetTag();
+    }
+    
+    assert(_actionCallbackMap.count(actionCallbackTag) == 0);
+    
     if (robot.GetActionList().QueueActionNow(action) == RESULT_OK) {
-      _actionCallbackMap[action->GetTag()] = callback;
+      _actionCallbackMap[actionCallbackTag] = callback;
     } else {
       PRINT_NAMED_WARNING("BehaviorFactory.StartActing.QueueActionFailed", "Action type %s", EnumToString(action->GetType()));
       EndTest(robot, FactoryTestResultCode::QUEUE_ACTION_FAILED);
