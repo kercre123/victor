@@ -15,13 +15,10 @@ namespace ExternalInterface {
 // are within a BehaviorManagerMessageUnion in BehaviorManagerMessage message)
 // See BehaviorManagerMessage in messagesGameToEngine.clad for usage of the union
 
-// Tells the behavior manager which games Cozmo can ask to play. Only the flags set in message will
-// be affected. For example SetAvailableGames(1, true) will set to true flag number 1, but will not do
-// anything to any other flags.
+// Tells the behavior manager which games Cozmo can ask to play
 structure SetAvailableGames
 {
-  BehaviorGameFlag behaviorGameFlag,
-  bool enable
+  BehaviorGameFlag availableGames
 }
 
 // Tells the behavior manager to activate the given spark. Sparks are used to steer Cozmo towards doing
@@ -34,10 +31,6 @@ structure SetActiveSpark
 union BehaviorManagerMessageUnion {
   SetAvailableGames SetAvailableGames,
   SetActiveSpark SetActiveSpark,
-//  SetEnableBehaviorGroup SetEnableBehaviorGroup,
-//  SetEnableBehavior SetEnableBehavior,
-//  ClearAllBehaviorScoreOverrides ClearAllBehaviorScoreOverrides,
-//  OverrideBehaviorScore OverrideBehaviorScore
 }
 
 } // namespace U2G

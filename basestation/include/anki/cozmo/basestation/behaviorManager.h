@@ -135,15 +135,15 @@ private:
   // Games
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // (un)sets the given flag
-  void SetBehaviorFlag(BehaviorGameFlag flag, bool value);
+  // sets which games are available by setting the mask/flag combination
+  void SetAvailableGame(BehaviorGameFlag availableGames) { _availableGames = Util::EnumToUnderlying(availableGames); }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Sparks
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // sets the given spark as currently active
-  void SetSparkActive(BehaviorSpark spark);
+  void SetActiveSpark(BehaviorSpark spark);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -195,7 +195,7 @@ private:
   
   // games that are available currently for Cozmo to request
   using BehaviorGameFlagMask = std::underlying_type<BehaviorGameFlag>::type;
-  BehaviorGameFlagMask _availableGames = Util::EnumToUnderlying( BehaviorGameFlag::NoGame );
+  BehaviorGameFlagMask _availableGames = Util::EnumToUnderlying( BehaviorGameFlag::All );
   
   // current active spark (this does guarantee that behaviors will kick in, only that Cozmo is in a Sparked state)
   BehaviorSpark _activeSpark = BehaviorSpark::NoSpark;

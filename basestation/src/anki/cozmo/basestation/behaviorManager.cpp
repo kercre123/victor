@@ -418,7 +418,7 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
     case ExternalInterface::BehaviorManagerMessageUnionTag::SetAvailableGames:
     {
       const auto& msg = message.Get_SetAvailableGames();
-      SetBehaviorFlag(msg.behaviorGameFlag, msg.enable);
+      SetAvailableGame(msg.availableGames);
       break;
     }
     
@@ -426,7 +426,7 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
     case ExternalInterface::BehaviorManagerMessageUnionTag::SetActiveSpark:
     {
       const auto& msg = message.Get_SetActiveSpark();
-      SetSparkActive(msg.behaviorSpark);
+      SetActiveSpark(msg.behaviorSpark);
       break;
     }
 
@@ -442,18 +442,7 @@ void BehaviorManager::HandleMessage(const Anki::Cozmo::ExternalInterface::Behavi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::SetBehaviorFlag(BehaviorGameFlag flag, bool value)
-{
-  const auto flagIntegral = Util::EnumToUnderlying(flag);
-  if ( value ) {
-    _availableGames |= flagIntegral; // add the flag
-  } else {
-    _availableGames &= (~flagIntegral); // take out that flag only
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorManager::SetSparkActive(BehaviorSpark spark)
+void BehaviorManager::SetActiveSpark(BehaviorSpark spark)
 {
   _activeSpark = spark;
 }
