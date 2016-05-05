@@ -313,7 +313,7 @@ namespace Anki {
       protected virtual void ShowPressedState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
-            if (graphic.targetImage != null && graphic.enabledSprite != null) {
+            if (graphic.targetImage != null && graphic.pressedSprite != null) {
               SetGraphic(graphic, graphic.pressedSprite, graphic.pressedColor, graphic.ignoreSprite);
             }
             else {
@@ -328,7 +328,7 @@ namespace Anki {
       protected virtual void ShowDisabledState() {
         if (ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
-            if (graphic.targetImage != null && graphic.enabledSprite != null) {
+            if (graphic.targetImage != null && graphic.disabledSprite != null) {
               SetGraphic(graphic, graphic.disabledSprite, graphic.disabledColor, graphic.ignoreSprite);
             }
             else {
@@ -368,10 +368,7 @@ namespace Anki {
         public Image targetImage;
         public bool ignoreSprite = false;
 
-        [NonSerialized]
         public Sprite enabledSprite;
-
-        [NonSerialized]
         public Color enabledColor = Color.white;
 
         public Sprite pressedSprite;
