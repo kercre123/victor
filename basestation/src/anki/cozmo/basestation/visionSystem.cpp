@@ -2404,7 +2404,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     return RESULT_OK;
   } // PreprocessImage()
   
-  Result VisionSystem::AddCalibrationImage(const Vision::Image& calibImg)
+  Result VisionSystem::AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI)
   {
     if(_isCalibrating) {
       PRINT_NAMED_INFO("VisionSystem.AddCalibrationImage.AlreadyCalibrating",
@@ -2412,7 +2412,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       return RESULT_FAIL;
     }
     
-    _calibImages.push_back(calibImg);
+    _calibImages.push_back({calibImg, targetROI});
     PRINT_NAMED_INFO("VisionSystem.AddCalibrationImage",
                      "Num images including this: %u", (u32)_calibImages.size());
     return RESULT_OK;
@@ -3172,8 +3172,8 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     // Description of asymmetric circles calibration target
     cv::Size boardSize(4,11);
     static constexpr f32 squareSize = 0.01; // TODO: Doesn't really matter for camera matrix intrinsics computation, but should probably measure this.
-    cv::Size imageSize(_calibImages.front().GetNumCols(), _calibImages.front().GetNumRows());
-    
+    const Vision::Image& firstImg = _calibImages.front().first;
+    cv::Size imageSize(firstImg.GetNumCols(), firstImg.GetNumRows());
     
     std::vector<std::vector<cv::Point2f> > imagePoints;
     std::vector<std::vector<cv::Point3f> > objectPoints(1);
@@ -3187,7 +3187,14 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     int findCirclesFlags = cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING;
     
     int imgCnt = 0;
-    for (auto img : _calibImages) {
+    Vision::Image img(firstImg.GetNumRows(), firstImg.GetNumCols());
+    for (auto const& calibImage : _calibImages)
+    {
+      // Extract the ROI (leaveing the rest as zeros)
+      Anki::Rectangle<s32> roiRect = calibImage.second;
+      img.FillWith(0);
+      Vision::Image imgROI = img.GetROI(roiRect);
+      calibImage.first.GetROI(roiRect).CopyTo(imgROI);
       
       // Get image points
       std::vector<cv::Point2f> pointBuf;
@@ -3229,7 +3236,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
 
     // Compute calibration
     const s32 kNumDistCoeffs = 8;
-    std::vector<cv::Mat> rvecs, tvecs;
+    std::vector<cv::Vec3d> rvecs, tvecs;
     cv::Mat_<f64> cameraMatrix = cv::Mat_<f64>::eye(3, 3);
     cv::Mat_<f64> distCoeffs   = cv::Mat_<f64>::zeros(1, kNumDistCoeffs);
     
@@ -3245,6 +3252,27 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
                                             cameraMatrix(0,2), cameraMatrix(1,2),
                                             0.f, // skew
                                             distCoeffsVec);
+    
+    ASSERT_NAMED_EVENT(rvecs.size() == tvecs.size(),
+                       "VisionSystem.ComputeCalibration.BadCalibPoseData",
+                       "Got %zu rotations and %zu translations",
+                       rvecs.size(), tvecs.size());
+    
+    ASSERT_NAMED_EVENT(rvecs.size() == _calibImages.size(),
+                       "VisionSystem.ComputeCalibration.WrongNumPoses",
+                       "Got %zu rotations/translations for %zu images",
+                       rvecs.size(), _calibImages.size());
+    
+    _calibPoses.reserve(rvecs.size());
+    for(s32 iPose=0; iPose<rvecs.size(); ++iPose)
+    {  
+      auto rvec = rvecs[iPose];
+      auto tvec = tvecs[iPose];
+      RotationVector3d R(Vec3f(rvec[0], rvec[1], rvec[2]));
+      Vec3f T(tvec[0], tvec[1], tvec[2]);
+      
+      _calibPoses.emplace_back(Pose3d(R, T));
+    }
 
     PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.CalibValues",
                      "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
