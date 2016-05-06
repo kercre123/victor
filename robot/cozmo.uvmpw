@@ -9,6 +9,7 @@
 
   <project>
     <PathAndName>.\robot_boot.uvprojx</PathAndName>
+    <NodeIsActive>1</NodeIsActive>
     <NodeIsCheckedInBatchBuild>1</NodeIsCheckedInBatchBuild>
   </project>
 
