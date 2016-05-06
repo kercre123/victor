@@ -61,7 +61,7 @@ namespace Cozmo {
     RotationMatrix3d({0,1,0,  1,0,0,  0,0,1})
   });
 
-  static const Rectangle<s32> firstCalibImageROI(55, 0, 210, 105);
+  static const Rectangle<s32> firstCalibImageROI(55, 0, 210, 90);
   
   BehaviorFactoryTest::BehaviorFactoryTest(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
