@@ -51,5 +51,14 @@ bool AIGoal::Init(Robot& robot, const Json::Value& config)
   return success;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBehavior* AIGoal::ChooseNextBehavior(const Robot& robot) const
+{
+  // at the moment delegate on chooser. At some point we'll have intro/outro and other reactions
+  IBehavior* ret = _behaviorChooserPtr->ChooseNextBehavior(robot);
+  return ret;
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

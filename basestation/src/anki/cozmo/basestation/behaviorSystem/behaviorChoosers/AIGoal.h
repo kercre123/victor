@@ -20,6 +20,7 @@ namespace Anki {
 namespace Cozmo {
 
 class IBehaviorChooser;
+class IBehavior;
 class Robot;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -42,6 +43,13 @@ public:
 
   // initialize a goal with the given config. Return true on success, false if config is not valids
   bool Init(Robot& robot, const Json::Value& config);
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Behaviors
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // choose next behavior for this goal
+  IBehavior* ChooseNextBehavior(const Robot& robot) const;
 
 private:
 

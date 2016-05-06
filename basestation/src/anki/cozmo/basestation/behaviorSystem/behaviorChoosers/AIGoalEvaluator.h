@@ -47,7 +47,7 @@ public:
   virtual void ReadEnabledBehaviorsConfiguration(const Json::Value& inJson) override { assert(false); } // todo rsam probably read goals, not behavior groups/behaviors
 
   // get next behavior by properly managing the goals
-  virtual IBehavior* ChooseNextBehavior(const Robot& robot) const override { return nullptr; } // todo rsam: ask current goal
+  virtual IBehavior* ChooseNextBehavior(const Robot& robot) const override;
 
   // name (for debug/identification)
   // todo rsam: add current goal name to the name (like Demo does)

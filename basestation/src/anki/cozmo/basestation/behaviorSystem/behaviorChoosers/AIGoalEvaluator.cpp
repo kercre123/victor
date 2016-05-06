@@ -77,5 +77,21 @@ void AIGoalEvaluator::CreateFromConfig(Robot& robot, const Json::Value& config)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBehavior* AIGoalEvaluator::ChooseNextBehavior(const Robot& robot) const
+{
+  // TODO rsam at the moment support only 1 goal until we get more with mood scoring and intro/outro
+  IBehavior* ret = nullptr;
+  if ( _goals.size() == 1 ) {
+    const AIGoal* currentGoal = _goals[0].get();
+    ret = currentGoal->ChooseNextBehavior(robot);
+  }
+  else {
+    ASSERT_NAMED(false, "AIGoalEvaluator.ChooseNextBehavior.NotImplemented");
+  }
+  return ret;
+}
+
+
 } // namespace Cozmo
 } // namespace Anki
