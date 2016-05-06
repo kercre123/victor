@@ -22,7 +22,7 @@ public class PressHubWorld : HubWorldBase {
     LoadPressDemoView();
 
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
-    RobotEngineManager.Instance.OnRequestGameStart += StartSpeedTapGame;
+    RobotEngineManager.Instance.OnRequestGameStart += HandleRequestSpeedTap;
     RobotEngineManager.Instance.OnRequestEnrollFace += HandleRequestEnrollFace;
     LoopRobotSleep();
     return true;
@@ -30,7 +30,7 @@ public class PressHubWorld : HubWorldBase {
 
   public override bool DestroyHubWorld() {
     GameObject.Destroy(_PressDemoViewInstance.gameObject);
-    RobotEngineManager.Instance.OnRequestGameStart -= StartSpeedTapGame;
+    RobotEngineManager.Instance.OnRequestGameStart -= HandleRequestSpeedTap;
     RobotEngineManager.Instance.OnRequestEnrollFace -= HandleRequestEnrollFace;
     return true;
   }
@@ -42,7 +42,21 @@ public class PressHubWorld : HubWorldBase {
   }
 
   private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
-    StartFaceEnrollmentActivity();
+    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+    alertView.SetCloseButtonEnabled(false);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartFaceEnrollmentActivity);
+    alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
+    alertView.TitleLocKey = "#pressDemo.faceEnrollTitle";
+    alertView.DescriptionLocKey = "#pressDemo.faceEnrollDesc";
+  }
+
+  private void HandleRequestSpeedTap(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
+    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+    alertView.SetCloseButtonEnabled(false);
+    alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
+    alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
+    alertView.TitleLocKey = "#pressDemo.speedTapTitle";
+    alertView.DescriptionLocKey = "#pressDemo.speedTapDesc";
   }
 
   private void HandleStartButtonPressed(bool startWithEdge) {
@@ -54,12 +68,16 @@ public class PressHubWorld : HubWorldBase {
     RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
   }
 
+  private void HandleRejection() {
+    RobotEngineManager.Instance.SendDenyGameStart();
+  }
+
   private void StartFaceEnrollmentActivity() {
     DAS.Debug(this, "Starting Face Enrollment Activity");
     PlayMinigame(_FaceEnrollmentChallengeData, false);
   }
 
-  private void StartSpeedTapGame(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
+  private void StartSpeedTapGame() {
     DAS.Debug(this, "Starting Speed Tap Game");
     PlayMinigame(_SpeedTapChallengeData, true);
   }
