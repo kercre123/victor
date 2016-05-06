@@ -152,10 +152,15 @@ namespace Cozmo {
     // Disable keep face alive animation
     robot.GetAnimationStreamer().SetParam(Anki::Cozmo::LiveIdleAnimationParameter::EnableKeepFaceAlive, 0);
 
-    // Call here to set timestamp
+    // Only enable vision modes we actually need
+    // NOTE: we do not (yet) restore vision modes afterwards!
+    robot.GetVisionComponent().EnableMode(VisionMode::Idle, true); // first, turn everything off
+    robot.GetVisionComponent().EnableMode(VisionMode::DetectingMarkers, true);
+    
+
     _stateTransitionTimestamps.resize(16);
     SetCurrState(FactoryTestState::InitRobot);
-    
+
     return lastResult;
   } // Init()
 
