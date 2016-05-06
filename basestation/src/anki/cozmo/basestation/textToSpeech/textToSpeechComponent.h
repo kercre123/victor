@@ -12,14 +12,14 @@
 *
 */
 
-// TODO: Need to finish implement SayTextStyle in all methods!!
-
 
 #ifndef __Anki_cozmo_Basestation_textToSpeech_textToSpeech_H__
 #define __Anki_cozmo_Basestation_textToSpeech_textToSpeech_H__
 
 #include "anki/cozmo/basestation/audio/standardWaveDataContainer.h"
 #include "anki/common/types.h"
+#include "clad/audio/audioEventTypes.h"
+#include "clad/audio/audioGameObjectTypes.h"
 #include "clad/types/sayTextStyles.h"
 #include "util/helpers/templateHelpers.h"
 #include <mutex>
@@ -72,13 +72,19 @@ public:
   // Set up Audio controller to play text's audio data
   // out_durration_ms provides approximate durration of event before proccessing in audio engine
   // Return false if the audio has NOT been created or is not yet ready, out_duration_ms will NOT be valid.
-  bool PrepareToSay(const std::string& text, SayTextStyle style, float& out_duration_ms);
+  bool PrepareToSay(const std::string& text,
+                    SayTextStyle style,
+                    Audio::GameObjectType audioGameObject,
+                    float& out_duration_ms);
   
   // Clear loaded text/style pair audio data from memory
   void ClearLoadedSpeechData(const std::string& text, SayTextStyle style);
   
   // Clear ALL loaded text audio data from memory
   void ClearAllLoadedAudioData();
+  
+  // Get appropriate Audio Event for SayTextStyle
+  Audio::GameEvent::GenericEvent GetAudioEvent(SayTextStyle style);
 
 
 private:
@@ -150,6 +156,9 @@ private:
   // Use Text to Speech lib to create audio data & reformat into StandardWaveData format
   // Return nullptr if Text to Speech lib fails to create audio data
   Audio::StandardWaveDataContainer* CreateAudioData(const std::string& text, const SayTextStyle style);
+  
+  // To improve how cozmo says words we provide the length of the audio to the audio engine
+  void PrepareSpeechAudioRtpc(const SayTextStyle style, Audio::GameObjectType audioGameObject, float duration_ms);
   
   // Helpers
   // Find TextPhraseBundle for text

@@ -17,8 +17,9 @@
 #include "anki/cozmo/basestation/audio/audioClientConnection.h"
 #include "clad/audio/audioMessage.h"
 #include "clad/audio/audioCallbackMessage.h"
-#include <util/helpers/templateHelpers.h>
-#include <util/logging/logging.h>
+#include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 #include <unordered_map>
 
 
@@ -77,7 +78,7 @@ const AudioClientConnection* AudioServer::GetConnection( uint8_t connectionId ) 
 void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdType connectionId )
 {
   // Decode Event Message
-  const AudioEventID eventId = static_cast<AudioEventID>( message.audioEvent );
+  const AudioEventID eventId = Util::numeric_cast<AudioEventID>( message.audioEvent );
   const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
   const uint16_t callbackId = message.callbackId;
   const AudioEngine::AudioCallbackFlag callbackFlags = (callbackId == 0) ?
@@ -121,8 +122,8 @@ void AudioServer::ProcessMessage( const StopAllAudioEvents& message, ConnectionI
 void AudioServer::ProcessMessage( const PostAudioGameState& message, ConnectionIdType connectionId )
 {
   // Decode Game State Message
-  const AudioStateGroupId groupId = static_cast<AudioStateGroupId>( message.stateGroup );
-  const AudioStateId stateId = static_cast<AudioStateId>( message.stateValue );
+  const AudioStateGroupId groupId = Util::numeric_cast<AudioStateGroupId>( message.stateGroup );
+  const AudioStateId stateId = Util::numeric_cast<AudioStateId>( message.stateValue );
   // Perform Game State
   const bool success = _audioController->SetState( groupId, stateId );
   if ( !success ) {
@@ -135,8 +136,8 @@ void AudioServer::ProcessMessage( const PostAudioGameState& message, ConnectionI
 void AudioServer::ProcessMessage( const PostAudioSwitchState& message, ConnectionIdType connectionId )
 {
   // Decode Switch State Message
-  const AudioSwitchGroupId groupId = static_cast<AudioStateGroupId>( message.switchStateGroup);
-  const AudioSwitchStateId stateId = static_cast<AudioSwitchStateId>( message.switchStateValue );
+  const AudioSwitchGroupId groupId = Util::numeric_cast<AudioStateGroupId>( message.switchStateGroup);
+  const AudioSwitchStateId stateId = Util::numeric_cast<AudioSwitchStateId>( message.switchStateValue );
   const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
   // Perform Switch State
   const bool success = _audioController->SetSwitchState( groupId, stateId, objectId );
@@ -151,9 +152,9 @@ void AudioServer::ProcessMessage( const PostAudioSwitchState& message, Connectio
 void AudioServer::ProcessMessage( const PostAudioParameter& message, ConnectionIdType connectionId )
 {
   // Decode Parameter Message
-  const AudioParameterId parameterId = static_cast<AudioParameterId>( message.parameter );
-  const AudioRTPCValue value = static_cast<AudioRTPCValue>( message.parameterValue );
-  const AudioTimeMs duration = static_cast<AudioTimeMs>( message.timeInMilliSeconds );
+  const AudioParameterId parameterId = Util::numeric_cast<AudioParameterId>( message.parameter );
+  const AudioRTPCValue value = Util::numeric_cast<AudioRTPCValue>( message.parameterValue );
+  const AudioTimeMs duration = Util::numeric_cast<AudioTimeMs>( message.timeInMilliSeconds );
   
   // Translate Invalid Game Object Id
   const AudioGameObject objectId = (message.gameObject == GameObjectType::Invalid) ?

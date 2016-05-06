@@ -7,12 +7,13 @@ namespace Anki {
 namespace Cozmo {
 
   // Styles for how Cozmo says given text
-  // Do not confuse this with cozmo mood, use SayTextStyle::Normal and update the the Audio Engine with the current mood
-  // states.
+  // Do not confuse this with cozmo mood, use SayTextStyle::Normal or Name_Normal along with updating the Audio Engine
+  // with the current mood states.
   enum uint_8 SayTextStyle
   {
-    Normal = 0,
-    First_Introduction,
+    Normal = 0,               // Say non-name text
+    Name_Normal,              // Say a name with current mood
+    Name_FirstIntroduction,   // Say name for the first time
     Count
   }
   

@@ -25,11 +25,13 @@ extern "C" {
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioControllerPluginInterface.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
+#include "clad/audio/audioParameterTypes.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/hashing/hashing.h"
 #include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 #include "util/time/universalTime.h"
 
 #define DEBUG_TEXTTOSPEECH_COMPONENT 0
@@ -44,7 +46,7 @@ TextToSpeechComponent::TextToSpeechComponent(const CozmoContext* context)
 {
   flite_init();
   
-  _voice = register_cmu_us_rms( NULL );
+  _voice = register_cmu_us_rms( nullptr );
   // Add Duration Stretch feature to voice
   // Create text with 2x length, Wwise will time stretch them to the desired length
   feat_set_float( _voice->features, "duration_stretch", 2.0 );
@@ -126,7 +128,10 @@ TextToSpeechComponent::SpeechState TextToSpeechComponent::GetSpeechState(const s
 } // GetSpeechState()
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TextToSpeechComponent::PrepareToSay(const std::string& text, SayTextStyle style, float& out_duration_ms)
+bool TextToSpeechComponent::PrepareToSay(const std::string& text,
+                                         SayTextStyle style,
+                                         Audio::GameObjectType audioGameObject,
+                                         float& out_duration_ms)
 {
   std::lock_guard<std::mutex> lock( _lock );
   TextPhraseBundle* phraseBundle = GetTextPhraseBundle( text );
@@ -152,6 +157,9 @@ bool TextToSpeechComponent::PrepareToSay(const std::string& text, SayTextStyle s
                                                out_duration_ms,
                                                waveData->audioBuffer,
                                                static_cast<uint32_t>(waveData->bufferSize) );
+  
+  // Set audio RTPC for event
+  PrepareSpeechAudioRtpc( style, audioGameObject, out_duration_ms );
 
   return true;
 } // PrepareToSay()
@@ -172,6 +180,30 @@ void TextToSpeechComponent::ClearAllLoadedAudioData()
 } // ClearAllLoadedAudioData()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Audio::GameEvent::GenericEvent TextToSpeechComponent::GetAudioEvent(SayTextStyle style)
+{
+  switch ( style ) {
+    case SayTextStyle::Normal:
+      // TODO: Create an event for non-name text to speech
+      return Audio::GameEvent::GenericEvent::Dev_External_Play;
+      break;
+      
+    case SayTextStyle::Name_Normal:
+      return Audio::GameEvent::GenericEvent::Vo_Coz_External_Name_Play;
+      break;
+      
+    case SayTextStyle::Name_FirstIntroduction:
+      return Audio::GameEvent::GenericEvent::Vo_Coz_External_Name_First_Play;
+      break;
+      
+    case SayTextStyle::Count:
+      PRINT_NAMED_ERROR("TextToSpeechComponent.GetAudioEvent", "Invalid SayTextStyle Count");
+      break;
+  }
+  return Audio::GameEvent::GenericEvent::Dev_External_Play;
+} // GetAudioEvent()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const std::string& text, const SayTextStyle style)
 {
   using namespace Util::Time;
@@ -188,7 +220,7 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
   
   if ( DEBUG_TEXTTOSPEECH_COMPONENT ) {
     PRINT_NAMED_DEBUG("TextToSpeechComponent.CreateAudioData",
-                      "finish text to wave - time_ms: %f", UniversalTime::GetNanosecondsElapsedSince(time) * 1E-6 );
+                      "finish text to wave - time_ms: %f", UniversalTime::GetNanosecondsElapsedSince(time) * 1E-6f );
   }
   
   if ( waveData->num_samples == 0) {
@@ -200,7 +232,7 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
   Audio::StandardWaveDataContainer* data = new Audio::StandardWaveDataContainer( waveData->sample_rate,
                                                                                  waveData->num_channels,
                                                                                  (size_t)waveData->num_samples );
-  
+
   // Convert waveData format into StandardWaveDataContainer's format
   const float kOneOverSHRT_MAX = 1.0 / float(SHRT_MAX);
   for ( size_t sampleIdx = 0; sampleIdx < data->bufferSize; ++sampleIdx ) {
@@ -209,13 +241,28 @@ Audio::StandardWaveDataContainer* TextToSpeechComponent::CreateAudioData(const s
   
   if ( DEBUG_TEXTTOSPEECH_COMPONENT ) {
     PRINT_NAMED_DEBUG("TextToSpeechComponent.CreateAudioData",
-                      "Finish convert samples - time_ms: %f", UniversalTime::GetNanosecondsElapsedSince(time) * 1E-6 );
+                      "Finish convert samples - time_ms: %f", UniversalTime::GetNanosecondsElapsedSince(time) * 1E-6f );
   }
   
   delete_wave( waveData );
   
   return data;
 } // CreateAudioData()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TextToSpeechComponent::PrepareSpeechAudioRtpc(const SayTextStyle style, Audio::GameObjectType audioGameObject, float duration_ms)
+{
+  // This is only used when saying names
+  if ( style == SayTextStyle::Name_Normal || style == SayTextStyle::Name_FirstIntroduction ) {
+    using namespace Audio;
+    ASSERT_NAMED(nullptr != _audioController, "TextToSpeechComponent.PrepareSpeechAudioRtpc.NullAudioController");
+    
+    const AudioEngine::AudioParameterId parameterId = static_cast<const AudioEngine::AudioParameterId>(GameParameter::ParameterType::External_Name_Duration);
+    const AudioEngine::AudioRTPCValue rtpcValue = Util::numeric_cast<const AudioEngine::AudioRTPCValue>( duration_ms * 0.001f );
+    const AudioEngine::AudioGameObject gameObject = static_cast<const AudioEngine::AudioGameObject>(audioGameObject);
+    _audioController->SetParameter(parameterId, rtpcValue, gameObject);
+  }
+} // PrepareSpeechAudioRtpc()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TextToSpeechComponent::TextPhraseBundle* TextToSpeechComponent::GetTextPhraseBundle(const std::string& text)
