@@ -47,8 +47,8 @@ enum uint_32 GenericEvent
   Dev_Robot_Tone_1K_1Sec_Play = 1083086921,
   Dev_Robot_Tone_1K_5Sec_Play = 1323780941,
   Dev_Robot_Tone_440Hz_5Sec_Play = 1348811033,
-  Hijack_Audio_Disable_Bypass = 3535474666,  // This is only used by Robot Audio Client
-  Hijack_Audio_Enable_Bypass = 2589144983,  // This is only used by Robot Audio Client
+  Hijack_Audio_Disable_Bypass = 3535474666,  // Deprecated - Working on new method
+  Hijack_Audio_Enable_Bypass = 2589144983,  // Deprecated - Working on new method
   Invalid = 0,  // Use this to check for Invalid events
   Music_Play = 202194903,
   Music_Stop = 3227181061,
@@ -187,8 +187,8 @@ enum uint_32 Music
 
 enum uint_32 PlugInControl
 {
-  HijackAudioDisableBypass = 3535474666,  // This is only used by Robot Audio Client
-  HijackAudioEnableBypass = 2589144983,  // This is only used by Robot Audio Client
+  HijackAudioDisableBypass = 3535474666,  // Deprecated - Working on new method
+  HijackAudioEnableBypass = 2589144983,  // Deprecated - Working on new method
   Invalid = 0,  // Use this to check for Invalid events
 }
 

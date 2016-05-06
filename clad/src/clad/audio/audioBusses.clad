@@ -8,11 +8,14 @@ namespace Bus {
 enum uint_32 BusType
 {
   Cozmo_Robot = 1723505802,
-  Cozmo_Robot_Aux = 1199188513,
   Invalid = 0,
   Master_Audio_Bus = 3803692087,
   Master_Secondary_Bus = 805203703,
   Music = 3991942870,
+  Robot_Bus_1 = 2678428988,
+  Robot_Bus_2 = 2678428991,
+  Robot_Bus_3 = 2678428990,
+  Robot_Bus_4 = 2678428985,
   Sfx = 393239870,
   Ui = 1551306167,
   Vo = 1534528548,
