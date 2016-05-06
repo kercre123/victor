@@ -378,7 +378,7 @@
             <File>
               <FileName>radio_tester.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\hal\radio_tester.cpp</FilePath>
+              <FilePath>.\radio_test\radio_tester.cpp</FilePath>
             </File>
           </Files>
         </Group>

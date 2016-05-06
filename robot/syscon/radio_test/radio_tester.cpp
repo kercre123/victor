@@ -53,22 +53,32 @@ int main(void)
   NRF_UART0->PSELTXD = TX_PIN;
   NRF_UART0->PSELRXD = RX_PIN;
 
-  NRF_UART0->TASKS_STARTRX = 1;
-  NRF_UART0->TASKS_STARTTX = 1;
-
   // Power our radio
   NRF_RADIO->POWER = 1;
 
   // Run forever, because we are awesome.
-  uint8_t channel = 71;
   for (;;) {    
+    NRF_UART0->TASKS_STARTRX = 1;
+
     while (!NRF_UART0->EVENTS_RXDRDY) ;
     uint8_t channel = NRF_UART0->RXD;
+
+    NRF_UART0->TASKS_STOPRX = 1;
     NRF_UART0->EVENTS_RXDRDY = 0;
+
     uint8_t reading = measure(channel);
 
-    
+
+    NRF_UART0->TASKS_STARTTX = 1;
+
     NRF_UART0->TXD = channel;
+    while (!NRF_UART0->EVENTS_TXDRDY) ;
+    NRF_UART0->EVENTS_TXDRDY = 0;
+
     NRF_UART0->TXD = reading;
+    while (!NRF_UART0->EVENTS_TXDRDY) ;
+    NRF_UART0->EVENTS_TXDRDY = 0;
+
+    NRF_UART0->TASKS_STOPTX = 1;
   }
 }
