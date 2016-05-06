@@ -15,6 +15,9 @@ public class PressDemoView : Cozmo.UI.BaseView {
   [SerializeField]
   private UnityEngine.UI.Button _StartNoEdgeButton;
 
+  [SerializeField]
+  private UnityEngine.UI.Text _FatalErrorText;
+
   void Start() {
     _ForceProgressButton.onClick.AddListener(HandleForceProgressPressed);
     _StartButton.onClick.AddListener(HandleStartButton);
@@ -46,6 +49,11 @@ public class PressDemoView : Cozmo.UI.BaseView {
     if (OnForceProgress != null) {
       OnForceProgress();
     }
+  }
+
+  void Update() {
+    // TODO: replace with fatal error text.
+    //_FatalErrorText.text = RobotEngineManager.Instance.CurrentRobot.CurrentBehaviorString;
   }
 
   protected override void CleanUp() {
