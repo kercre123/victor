@@ -71,18 +71,22 @@ int Anki::Cozmo::CSharpBinding::cozmo_engine_create(const char* configuration_da
   PRINT_NAMED_INFO("CSharpBinding.cozmo_game_create", "engine creating engine");
 
   dataPlatform = CreateDataPlatform();
-#if ANKI_DEV_CHEATS
-  DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, ""));
-#endif
-  
-  Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({
-    new Util::SosLoggerProvider()
-    , new Util::DasLoggerProvider()
-#if ANKI_DEV_CHEATS
-    , new Util::SaveToFileLoggerProvider(DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory() + "/print")
-#endif
-  });
-  Anki::Util::gLoggerProvider = loggerProvider;
+
+  // Disabling logging for factory test to help reduce CPU usage and help with
+  // disconnections on iOS.
+  // TODO: Re-enable?
+  //#if ANKI_DEV_CHEATS
+  //  DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, ""));
+  //#endif
+  //
+  //  Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({
+  //    new Util::SosLoggerProvider()
+  //    , new Util::DasLoggerProvider()
+  //#if ANKI_DEV_CHEATS
+  //    , new Util::SaveToFileLoggerProvider(DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory() + "/print")
+  //#endif
+  //  });
+  //  Anki::Util::gLoggerProvider = loggerProvider;
   
   ConfigureDASForPlatform(dataPlatform);
   CreateHockeyApp();
