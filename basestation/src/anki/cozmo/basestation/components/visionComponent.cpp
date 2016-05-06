@@ -509,7 +509,7 @@ namespace Cozmo {
           if(!WasMovingTooFast(image.GetTimestamp(), &p, DEG_TO_RAD(0.1), DEG_TO_RAD(0.1)))
           {
             _storeNextImageForCalibration = false;
-            Result addResult = _visionSystem->AddCalibrationImage(image.ToGray());
+            Result addResult = _visionSystem->AddCalibrationImage(image.ToGray(), _calibTargetROI);
             if(RESULT_OK != addResult) {
               PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
             }
@@ -1354,12 +1354,46 @@ namespace Cozmo {
     return _visionSystem->GetNumStoredCalibrationImages();
   }
   
+  Result VisionComponent::WriteCalibrationPoseToRobot(size_t whichPose,
+                                                      NVStorageComponent::NVStorageWriteEraseCallback callback)
+  {
+    Result lastResult = RESULT_OK;
+    
+    auto calibPoses = _visionSystem->GetCalibrationPoses();
+    if(whichPose >= calibPoses.size()) {
+      PRINT_NAMED_WARNING("VisionComponent.WriteCalibrationPoseToRobot.InvalidPoseIndex",
+                          "Requested %zu, only %zu available", whichPose, calibPoses.size());
+      lastResult = RESULT_FAIL;
+    } else {
+      
+      // Serialize the requested calibration pose
+      const Pose3d& calibPose = calibPoses[whichPose];
+      Radians angleX, angleY, angleZ;
+      calibPose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
+      const f32 poseData[6] = {
+        angleX.ToFloat(), angleY.ToFloat(), angleZ.ToFloat(),
+        calibPose.GetTranslation().x(),
+        calibPose.GetTranslation().y(),
+        calibPose.GetTranslation().z(),
+      };
+      
+      // Write to robot
+      const bool success = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CalibPose,
+                                                                (u8*)poseData, sizeof(poseData), callback);
+                                                        
+      lastResult = (success ? RESULT_OK : RESULT_FAIL);
+    }
+    
+    
+    return lastResult;
+  }
+  
   Result VisionComponent::WriteCalibrationImagesToRobot(WriteCalibrationImagesToRobotCallback callback)
   {
-    const std::list<Vision::Image> calibImages = _visionSystem->GetCalibrationImages();
+    auto calibImages = _visionSystem->GetCalibrationImages();
     
     // Make sure there is no more than 5 images in the list
-    if (calibImages.size() > 5 || calibImages.size() < 4) {
+    if (calibImages.size() > 6 || calibImages.size() < 4) {
       PRINT_NAMED_INFO("VisionComponent.WriteCalibrationImagesToRobot.TooManyOrTooFewImages",
                        "%zu images (Need 4 or 5)", _visionSystem->GetNumStoredCalibrationImages());
       return RESULT_FAIL;
@@ -1369,15 +1403,19 @@ namespace Cozmo {
                      "%zu images", _visionSystem->GetNumStoredCalibrationImages());
     _writeCalibImagesToRobotResults.clear();
 
-    static const NVStorage::NVEntryTag calibImageTags[5] = {NVStorage::NVEntryTag::NVEntry_CalibImage1,
+    static const NVStorage::NVEntryTag calibImageTags[6] = {NVStorage::NVEntryTag::NVEntry_CalibImage1,
                                                             NVStorage::NVEntryTag::NVEntry_CalibImage2,
                                                             NVStorage::NVEntryTag::NVEntry_CalibImage3,
                                                             NVStorage::NVEntryTag::NVEntry_CalibImage4,
-                                                            NVStorage::NVEntryTag::NVEntry_CalibImage5};
+                                                            NVStorage::NVEntryTag::NVEntry_CalibImage5,
+                                                            NVStorage::NVEntryTag::NVEntry_CalibImage6};
     
     // Write images to robot
     u32 imgIdx = 0;
-    for (auto img : calibImages) {
+    for (auto const& calibImage : calibImages)
+    {
+      const Vision::Image& img = calibImage.first;
+      
       // Compress to jpeg
       std::vector<u8> imgVec;
       cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));

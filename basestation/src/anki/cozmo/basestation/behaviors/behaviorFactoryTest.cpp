@@ -61,7 +61,7 @@ namespace Cozmo {
     RotationMatrix3d({0,1,0,  1,0,0,  0,0,1})
   });
 
-
+  static const Rectangle<s32> firstCalibImageROI(55, 0, 210, 105);
   
   BehaviorFactoryTest::BehaviorFactoryTest(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -334,61 +334,72 @@ namespace Cozmo {
           robot.GetVisionComponent().SetCameraCalibration(fakeCalib);
         }
         
-        // Move lift to correct height
-        StartActing(robot, new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK),
-                    [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                      if (result != ActionResult::SUCCESS) {
-                        EndTest(robot, FactoryTestResultCode::INIT_LIFT_HEIGHT_FAILED);
-                        return false;
-                      }
-                      SetCurrState(FactoryTestState::ChargerAndIMUCheck);
-                      return true;
-                    });
+        robot.GetVisionComponent().ClearCalibrationImages();
+        
+        // Move lift to correct height and head to correct angle
+        CompoundActionParallel* headAndLiftAction = new CompoundActionParallel(robot, {
+          new MoveLiftToHeightAction(robot, LIFT_HEIGHT_LOWDOCK),
+          new MoveHeadToAngleAction(robot, 0),
+        });
+        StartActing(robot, headAndLiftAction,
+            [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+              if (result != ActionResult::SUCCESS) {
+                EndTest(robot, FactoryTestResultCode::INIT_LIFT_HEIGHT_FAILED);
+                return false;
+              }
+              robot.GetVisionComponent().StoreNextImageForCameraCalibration(firstCalibImageROI);
+              SetCurrState(FactoryTestState::ChargerAndIMUCheck);
+              return true;
+            });
         
         break;
       }
       case FactoryTestState::ChargerAndIMUCheck:
       {
-        // Check that robot is on charger
-        if (!robot.IsOnCharger()) {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOnCharger", "");
-          END_TEST(FactoryTestResultCode::CHARGER_UNDETECTED);
-        }
-       
-        // Check for IMU drift
-        if (_holdUntilTime < 0) {
-          // Capture initial robot orientation and check if it changes over some period of time
-          _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
-          _holdUntilTime = currentTime_sec + _kIMUDriftDetectPeriod_sec;
-        } else if (currentTime_sec > _holdUntilTime) {
-          f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
-          if(angleChange > _kIMUDriftAngleThreshDeg) {
-            PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.IMUDrift",
-                                "Angle change of %f deg detected in %f seconds",
-                                angleChange, _kIMUDriftDetectPeriod_sec);
-            END_TEST(FactoryTestResultCode::IMU_DRIFTING);
+        // Wait for first image to be taken
+        if(robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() > 0)
+        { 
+          // Check that robot is on charger
+          if (!robot.IsOnCharger()) {
+            PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingOnCharger", "");
+            END_TEST(FactoryTestResultCode::CHARGER_UNDETECTED);
           }
           
-          if (TEST_CHARGER_CONNECT) {
-            // Verify that charger was discovered
-            if (!_chargerAvailable) {
-              PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingChargerAvailable","");
-              END_TEST(FactoryTestResultCode::CHARGER_UNAVAILABLE);
+          // Check for IMU drift
+          if (_holdUntilTime < 0) {
+            // Capture initial robot orientation and check if it changes over some period of time
+            _startingRobotOrientation = robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>();
+            _holdUntilTime = currentTime_sec + _kIMUDriftDetectPeriod_sec;
+          } else if (currentTime_sec > _holdUntilTime) {
+            f32 angleChange = std::fabsf((robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>() - _startingRobotOrientation).getDegrees());
+            if(angleChange > _kIMUDriftAngleThreshDeg) {
+              PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.IMUDrift",
+                                  "Angle change of %f deg detected in %f seconds",
+                                  angleChange, _kIMUDriftDetectPeriod_sec);
+              END_TEST(FactoryTestResultCode::IMU_DRIFTING);
             }
-          
-            // Connect to charger
-            const std::unordered_set<FactoryID> connectToIDs = {_kChargerFactoryID};
-            robot.ConnectToBlocks(connectToIDs);
+            
+            if (TEST_CHARGER_CONNECT) {
+              // Verify that charger was discovered
+              if (!_chargerAvailable) {
+                PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingChargerAvailable","");
+                END_TEST(FactoryTestResultCode::CHARGER_UNAVAILABLE);
+              }
+              
+              // Connect to charger
+              const std::unordered_set<FactoryID> connectToIDs = {_kChargerFactoryID};
+              robot.ConnectToBlocks(connectToIDs);
+            }
+            
+            // Drive off charger
+            StartActing(robot, new DriveStraightAction(robot, 250, 100),
+                        [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                          _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.06;
+                          return true;
+                        });
+            SetCurrState(FactoryTestState::DriveToSlot);
           }
-          
-          // Drive off charger
-          StartActing(robot, new DriveStraightAction(robot, 250, 100),
-                      [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                        _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 0.06;
-                        return true;
-                      });
-          SetCurrState(FactoryTestState::DriveToSlot);
-        }
+        } // if(robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() > 0)
         break;
       }
       case FactoryTestState::DriveToSlot:
@@ -462,7 +473,6 @@ namespace Cozmo {
                               robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
          */
           _camCalibPoseIndex = 0;
-          robot.GetVisionComponent().ClearCalibrationImages();
           SetCurrState(FactoryTestState::TakeCalibrationImages);
         //}
         break;
@@ -470,16 +480,18 @@ namespace Cozmo {
         
       case FactoryTestState::TakeCalibrationImages:
       {
-        // All calibration images acquired.
+        // All calibration images acquired. (NOTE: the "+1" is for the initial image taken on the charger,
+        // which has no stored pose in _camCalibPanAndTiltAngles)
         // Start computing calibration.
-        if (robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() >= _camCalibPanAndTiltAngles.size()) {
+        if (robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() >= _camCalibPanAndTiltAngles.size() + 1) {
           SetCurrState(FactoryTestState::ComputeCameraCalibration);
           break;
         }
 
         // Move to fixed calibration pose and take image
         if (!robot.GetMoveComponent().IsMoving()) {
-          if (robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() == _camCalibPoseIndex) {
+          // NOTE: "-1" is due to initial image take on the charger, which has no stored pose in _camCalibPoseIndex
+          if (robot.GetVisionComponent().GetNumStoredCameraCalibrationImages()-1 == _camCalibPoseIndex) {
             PanAndTiltAction *ptAction = new PanAndTiltAction(robot,
                                                               _camCalibPanAndTiltAngles[_camCalibPoseIndex].first,
                                                               _camCalibPanAndTiltAngles[_camCalibPoseIndex].second,
@@ -1061,6 +1073,22 @@ namespace Cozmo {
       if (writeImagesResult != RESULT_OK) {
         PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibImages.SendFAILED", "");
         EndTest(robot, FactoryTestResultCode::CALIB_IMAGES_SEND_FAILED);
+      }
+      
+      // Save computed camera pose when robot was on charger
+      Result writePoseResult = robot.GetVisionComponent().WriteCalibrationPoseToRobot(0,
+        [this,&robot](NVStorage::NVResult res)
+        {
+          if (res == NVStorage::NVResult::NV_OKAY) {
+            PRINT_NAMED_INFO("BehaviorFactoryTest.WriteCalibPose.SUCCESS", "");
+          } else {
+            EndTest(robot, FactoryTestResultCode::CALIB_POSE_WRITE_FAILED);
+          }
+        }
+      );
+      if (writePoseResult != RESULT_OK) {
+        PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteCalibPose.SendFAILED", "");
+        EndTest(robot, FactoryTestResultCode::CALIB_POSE_SEND_FAILED);
       }
       
     }
