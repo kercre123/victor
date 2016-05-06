@@ -19,7 +19,7 @@ namespace Anki {
       private DayOfWeek _Day;
 
       // Returns true if day of the week is the desired day of the week
-      public override bool ConditionMet() {
+      public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         return (DateTime.UtcNow.DayOfWeek.ToString() == _DayName);
       }
 

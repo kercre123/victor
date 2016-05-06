@@ -71,12 +71,12 @@ namespace Cozmo {
         GameEventManager.Instance.OnGameEvent -= ProgressGoal;
       }
 
-      public void ProgressGoal(GameEvent gEvent) {
-        if (gEvent != GoalEvent) {
+      public void ProgressGoal(GameEventWrapper gEvent) {
+        if (gEvent.GameEventEnum != GoalEvent) {
           return;
         }
         // If ProgConditions aren't met, don't progress
-        if (!CanProgress()) {
+        if (!CanProgress(gEvent)) {
           return;
         }
         // Progress Goal
@@ -147,12 +147,12 @@ namespace Cozmo {
         }
       }
 
-      public bool CanProgress() {
+      public bool CanProgress(GameEventWrapper gEvent) {
         if (ProgConditions == null) {
           return true;
         }
         for (int i = 0; i < ProgConditions.Count; i++) {
-          if (ProgConditions[i].ConditionMet() == false) {
+          if (ProgConditions[i].ConditionMet(gEvent) == false) {
             return false;
           }
         }

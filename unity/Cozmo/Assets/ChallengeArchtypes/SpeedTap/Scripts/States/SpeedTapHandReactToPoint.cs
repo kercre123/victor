@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using Anki.Cozmo.Audio;
 
@@ -120,12 +120,14 @@ namespace SpeedTap {
         if (_CurrentWinner == PointWinner.Player) {
           // TODO add event listener
           AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapGamePlayerWin, HandleEndGameAnimDone);
-          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGamePlayerWin);
+          GameEventManager.Instance.SendGameEventToEngine(GameEventWrapperFactory.Create(Anki.Cozmo.GameEvent.OnSpeedtapGamePlayerWin, 
+            _SpeedTapGame.CurrentDifficulty));
         }
         else {
           // TODO add event listener
           AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapGameCozmoWin, HandleEndGameAnimDone);
-          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGameCozmoWin);
+          GameEventManager.Instance.SendGameEventToEngine(GameEventWrapperFactory.Create(Anki.Cozmo.GameEvent.OnSpeedtapGameCozmoWin, 
+            _SpeedTapGame.CurrentDifficulty));
         }
       }
       else {

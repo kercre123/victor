@@ -74,11 +74,11 @@ public class RewardedActionManager : MonoBehaviour {
     GameEventManager.Instance.OnGameEvent -= GameEventReceived;
   }
 
-  public void GameEventReceived(GameEvent cozEvent) {
+  public void GameEventReceived(GameEventWrapper cozEvent) {
     int reward = 0;
     if (enabled) {
-      if (RewardEventMap.TryGetValue(cozEvent, out reward)) {
-        DAS.Info(this, string.Format("{0} rewarded {1} points", cozEvent, reward));
+      if (RewardEventMap.TryGetValue(cozEvent.GameEventEnum, out reward)) {
+        DAS.Info(this, string.Format("{0} rewarded {1} points", cozEvent.GameEventEnum, reward));
         DataPersistenceManager.Instance.Data.DefaultProfile.Inventory.AddItemAmount("experience", reward);
       }
     }

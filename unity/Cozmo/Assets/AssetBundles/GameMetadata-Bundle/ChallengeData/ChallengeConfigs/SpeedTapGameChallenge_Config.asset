@@ -83,8 +83,8 @@ MonoBehaviour:
         val: 0
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
-  Rounds: 1
-  MaxScorePerRound: 1
+  Rounds: 3
+  MaxScorePerRound: 5
   MinIdleIntervalMs: 400
   MaxIdleIntervalMs: 600
   BaseMatchChance: 0.2
