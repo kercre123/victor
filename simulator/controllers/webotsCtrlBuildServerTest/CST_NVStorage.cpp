@@ -115,8 +115,6 @@ namespace Anki {
       switch (_testState) {
         case TestState::WriteSingleBlob:
         {
-          MakeSynchronous();
-          
           ExternalInterface::NVStorageWriteEntry msg;
           RandomData(5, msg.data.data());
           memcpy(_dataWritten[0], msg.data.data(), 5);
