@@ -47,10 +47,10 @@ void AudioControllerPluginInterface::SetWavePortalAudioDataInfo( uint32_t sample
 #if USE_AUDIO_ENGINE
   if ( _parentAudioController._wavePortalPlugIn != nullptr ) {
     _parentAudioController._wavePortalPlugIn->SetAudioDataInfo( sampleRate,
-                                                                 numberOfChannels,
-                                                                 duration_ms,
-                                                                 audioBuffer,
-                                                                 bufferSize );
+                                                                numberOfChannels,
+                                                                duration_ms,
+                                                                audioBuffer,
+                                                                bufferSize );
   }
 #endif
 }

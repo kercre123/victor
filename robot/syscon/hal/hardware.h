@@ -1,7 +1,7 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
-#define FAKE_EP3  //It's time for real EP3
+//#define FAKE_EP3  //It's time for real EP3
 
 #define NRF_BAUD(x) (int)(x * 4194304.0f / 15625.0f) // 2^28/1MHz
 
@@ -19,13 +19,6 @@ enum IRQ_Priority {
   RADIO_PRIORITY = 2,
   RTOS_PRIORITY = 3
 };
-
-enum BodyOperatingMode {
-  BLUETOOTH_OPERATING_MODE,
-  WIFI_OPERATING_MODE
-};
-
-extern void enterOperatingMode(BodyOperatingMode mode);
 
 static const uint8_t wdog_channel_mask = (1 << WDOG_TOTAL_CHANNELS) - 1;
 

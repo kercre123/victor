@@ -73,6 +73,8 @@ static struct sdio_queue rxQueue[DMA_BUF_COUNT];
 static struct sdio_queue* nextOutgoingDesc;
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
+/// Also stores the alignment of outgoing drops, since outgoingPhase is sometimes unusable (being used as an enum)
+static int16_t resumePhase;
 /** Phase relationship between incoming drops and outgoing drops
  * This comes from the phase relationship between I2SPI transmission and reception required for DMA timing on the K02,
  * the phase offset introduced by the I2S FIFO on the Espressif, aiming for the middle of the SPI receive buffer on the
@@ -205,6 +207,8 @@ void makeDrop(void)
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
 #define DRIFT_MARGIN 2
 
+int16_t dropPhase = 0; ///< Stores the estiamted alightment of drops in the DMA buffer.
+
 void i2spiTask(os_event_t *event)
 {
   struct sdio_queue* desc = asDesc(event->par);
@@ -221,7 +225,6 @@ void i2spiTask(os_event_t *event)
     {
       static DropToWiFi drop;
       static uint8 dropWrInd = 0; // In 16bit half-words
-      static int16_t dropPhase = 0; ///< Stores the estiamted alightment of drops in the DMA buffer.
       static int16_t drift = 0;
       uint16_t* buf = (uint16_t*)(desc->buf_ptr);
       while(true)
@@ -371,6 +374,9 @@ void dmaisr(void* arg) {
       case SHUTDOWN_PHASE:
       {
         prepSdioQueue(asDesc(eofDesAddr), 0);
+        while (dropPhase < DMA_BUF_SIZE/2)
+          dropPhase += DROP_SPACING/2;
+        dropPhase -= DMA_BUF_SIZE/2;
         break;
       }
       case BOOTLOADER_SYNC_PHASE:
@@ -420,6 +426,9 @@ void dmaisr(void* arg) {
         int w;
         for (w=0; w<DMA_BUF_SIZE/4; w++) buf[w] = outWord;
         nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+        while (resumePhase < DMA_BUF_SIZE/2)
+          resumePhase += DROP_SPACING/2;
+        resumePhase -= DMA_BUF_SIZE/2;
         break;
       }
       case BOOTLOADER_SYNC_PHASE:
@@ -649,8 +658,15 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
     }
     case I2SPI_PAUSED:
     {
+      resumePhase = outgoingPhase;
       outgoingPhase = PAUSED_PHASE;
       os_printf("I2Spi mode paused\r\n");
+      return;
+    }
+    case I2SPI_RESUME:
+    {
+      outgoingPhase = resumePhase - DRIFT_MARGIN;
+      os_printf("I2Spi mode resumed\r\n");
       return;
     }
     case I2SPI_REBOOT:

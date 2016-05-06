@@ -61,7 +61,6 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   Anki::Util::sEvent("robot.InitRobotMessageComponent",{},"");
   
   // bind to specific handlers in the robot class
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::cameraCalibration,           &Robot::HandleCameraCalibration);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::printText,                   &Robot::HandlePrint);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,                       &Robot::HandleTrace);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,                 &Robot::HandleCrashReport);
@@ -153,36 +152,13 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     }));
 }
 
-
-void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  const CameraCalibration& payload = message.GetData().Get_cameraCalibration();
-  PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
-                   "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f, cy: %f)",
-                   payload.ncols, payload.nrows,
-                   payload.focalLength_x, payload.focalLength_y,
-                   payload.center_x, payload.center_y);
-
-  // Convert calibration message into a calibration object to pass to
-  // the robot
-  Vision::CameraCalibration calib(payload.nrows,
-    payload.ncols,
-    payload.focalLength_x,
-    payload.focalLength_y,
-    payload.center_x,
-    payload.center_y,
-    payload.skew);
-
-  _visionComponent.SetCameraCalibration(calib);  // Set intrisic calibration
-  SetCameraRotation(0, 0, 0);                           // Set extrinsic calibration (rotation only, assuming known position)
-                                                        // TODO: Set these from rotation calibration info to be sent in CameraCalibration message
-                                                        //       and/or when we do on-engine calibration with images of tool code.
-}
   
 void Robot::HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const RobotInterface::MotorCalibration& payload = message.GetData().Get_motorCalibration();
+  const MotorCalibration& payload = message.GetData().Get_motorCalibration();
   PRINT_NAMED_INFO("MotorCalibration", "Motor %d, started %d", (int)payload.motorID, payload.calibStarted);
+  
+  Broadcast(ExternalInterface::MessageEngineToGame(MotorCalibration(payload)));
 }
   
 void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message)

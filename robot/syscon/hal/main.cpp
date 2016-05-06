@@ -20,6 +20,7 @@ extern "C" {
 #include "radio.h"
 #include "crypto.h"
 #include "bluetooth.h"
+#include "dtm.h"
 
 #include "sha1.h"
 
@@ -28,7 +29,7 @@ extern "C" {
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/rec_protocol.h"
 
-#define SET_GREEN(v, b)  (b ? (v |= 0x00FF00) : (v &= ~0x00FF00))
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 __attribute((at(0x20003FFC))) static uint32_t MAGIC_LOCATION = 0;
 
@@ -64,9 +65,12 @@ extern "C" void HardFault_Handler(void) {
   NVIC_SystemReset();
 }
 
-void enterOperatingMode(BodyOperatingMode mode) {
+void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode) {
+  using namespace Anki::Cozmo::RobotInterface;
+  
   switch (mode) {
-    case BLUETOOTH_OPERATING_MODE:
+    case BODY_BLUETOOTH_OPERATING_MODE:
+      DTM::stop();
       Timer::lowPowerMode(true);
       Backpack::lightMode(RTC_LEDS);
 
@@ -74,19 +78,30 @@ void enterOperatingMode(BodyOperatingMode mode) {
       Bluetooth::advertise();
       break ;
     
-    case WIFI_OPERATING_MODE:
+    case BODY_WIFI_OPERATING_MODE:
+      DTM::stop();
       Bluetooth::shutdown();
-      Radio::advertise();
 
+      Radio::advertise();
       Backpack::lightMode(TIMER_LEDS);
       Timer::lowPowerMode(false);
+      break ;
 
+    case BODY_DTM_OPERATING_MODE:
+      Bluetooth::shutdown();
+      Radio::shutdown();
+      Timer::lowPowerMode(true);
+      Backpack::lightMode(RTC_LEDS);
+
+      DTM::start();
       break ;
   }
 }
 
 int main(void)
 {
+  using namespace Anki::Cozmo::RobotInterface;
+  
   Storage::init();
   
   // Initialize our scheduler
@@ -114,7 +129,7 @@ int main(void)
   TestFixtures::run();
   #endif
 
-  enterOperatingMode(WIFI_OPERATING_MODE);
+  enterOperatingMode(BODY_WIFI_OPERATING_MODE);
 
   Timer::start();
 

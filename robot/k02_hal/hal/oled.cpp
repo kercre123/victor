@@ -181,6 +181,22 @@ void Anki::Cozmo::HAL::OLED::DisplayNumber(int code, int x, int y) {
   }
 }
 
+void Anki::Cozmo::HAL::OLED::DisplayDigit(int code, int x, int y) {
+  #define FONT_WIDTH    8
+  #define FONT_HEIGHT   2
+    
+  uint8_t rect[] = {
+    I2C_COMMAND | I2C_CONTINUATION,
+    COLUMNADDR, x, x + FONT_WIDTH - 1,
+    PAGEADDR, y, y + FONT_HEIGHT - 1
+  };
+
+  // Stop all other devices from drawing on the screen
+  FaceLock = true;
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), rect, sizeof(rect), I2C_FORCE_START);
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), PinFont[code], sizeof(PinFont[code]), I2C_FORCE_START);
+}
+
 using namespace Anki::Cozmo::RobotInterface;
 
 namespace Anki {

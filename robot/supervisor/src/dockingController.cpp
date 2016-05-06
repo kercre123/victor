@@ -40,8 +40,15 @@
 #define TRACK_BLOCK 0
 
 // Whether or not to do blind docking
-#define USE_BLIND_DOCKING 0
+#define USE_BLIND_DOCKING 1
 
+// Whether or not to use special steeringController gains for docking
+#define USE_DOCKING_STEERING_GAINS 0
+
+// Whether or not to check if we think we're in final docking position at
+// the end of the docking approach.
+// Only applicable when !USE_BLIND_DOCKING
+#define CHECK_FINAL_POSE 0
 
 namespace Anki {
   namespace Cozmo {
@@ -229,11 +236,19 @@ namespace Anki {
         const f32 ERRMSG_NOT_IN_POSITION_ANGLE_TOL = DEG_TO_RAD(10);
         const f32 POSE_NOT_IN_POSITION_ANGLE_TOL = DEG_TO_RAD(5);
         
+#if(USE_DOCKING_STEERING_GAINS)
         // Steering controller gains for docking
         const f32 DOCKING_K1 = 0.05f;
         const f32 DOCKING_K2 = 12.f;
         const f32 DOCKING_PATH_DIST_OFFSET_CAP_MM = 10;
         const f32 DOCKING_PATH_ANG_OFFSET_CAP_RAD = 0.4;
+        
+        // Save previous controller gains
+        f32 prevK1_;
+        f32 prevK2_;
+        f32 prevPathDistOffsetCap_;
+        f32 prevPathAngOffsetCap_;
+#endif
         
         // Values related to our path to get use from our current pose to dockPose
         const u8 DIST_AWAY_FROM_BLOCK_FOR_PT_MM = 60;
@@ -243,7 +258,6 @@ namespace Anki {
         const u8 PATH_END_DIST_INTO_BLOCK_MM = 10;
         const u8 PATH_START_DIST_BEHIND_ROBOT_MM = 60;
         const u8 MAX_DECEL_DIST_MM = 30;
-        
 #endif
         // If the block and cozmo are on the same plane the dock err signal z_height will be below this value
         // Normally it is ~22mm
@@ -258,12 +272,6 @@ namespace Anki {
           HANNS_MANEUVER
         };
         FailureMode failureMode_ = NO_FAILURE;
-        
-        // Save previous controller gains
-        f32 prevK1_;
-        f32 prevK2_;
-        f32 prevPathDistOffsetCap_;
-        f32 prevPathAngOffsetCap_;
         
         bool dockingStarted = false;
         
@@ -402,7 +410,8 @@ namespace Anki {
         // Don't want to move the lift while we are backing up or carrying a block
         if(failureMode_ != BACKING_UP &&
            !PickAndPlaceController::IsCarryingBlock() &&
-           PickAndPlaceController::GetCurAction() != DA_ALIGN)
+           PickAndPlaceController::GetCurAction() != DA_ALIGN &&
+           PickAndPlaceController::GetCurAction() != DA_ROLL_LOW)
         {
           f32 lastCommandedHeight = LiftController::GetDesiredHeight();
           if (lastCommandedHeight == dockingErrSignalMsg_.z_height) {
@@ -613,9 +622,12 @@ namespace Anki {
         
         Result retVal = RESULT_OK;
         
-        // There are some special cases for aligning with a block
-        const bool isAligning = PickAndPlaceController::GetCurAction() == DA_ALIGN;
-
+#if(!USE_BLIND_DOCKING)
+        // There are some special cases for aligning with a block (rolling is basically aligning)
+        const bool isAligning = PickAndPlaceController::GetCurAction() == DA_ALIGN ||
+                                PickAndPlaceController::GetCurAction() == DA_ROLL_LOW;
+#endif
+        
         switch(mode_)
         {
           case IDLE:
@@ -758,6 +770,11 @@ namespace Anki {
               }
 #endif //!USE_BLIND_DOCKING
 
+              
+#if(!CHECK_FINAL_POSE)
+              inPosition = true;
+#endif
+              
               // If we know we are not in position and we are not currently backing up due to an already recognized
               // failure then fail this dock and either backup or do Hanns maneuver. We are only able to fail
               // docking this way if the docking involves markers
@@ -812,7 +829,7 @@ namespace Anki {
                   createdValidPath_ = PathFollower::StartPathTraversal(0, useManualSpeed_);
                   failureMode_ = HANNS_MANEUVER;
                 }
-                // Special case for DA_ALIGN - will occur if we are in position for hanns maneuver then we won't do it
+                // Special case for aligning - will occur if we are in position for hanns maneuver then we won't do it
                 // and just succeed
                 else if(isAligning && doHannsManeuver)
                 {
@@ -1228,6 +1245,7 @@ namespace Anki {
           f32 distIntoBlock = ((!dockingToBlockOnGround ||
                                 PickAndPlaceController::IsCarryingBlock() ||
                                 PickAndPlaceController::GetCurAction() == DA_ALIGN) ? 0 : PATH_END_DIST_INTO_BLOCK_MM);
+          
           PathFollower::AppendPathSegment_Line(0,
                                                dockPose_.x()-(distToDecel)*dockPoseAngleCos,
                                                dockPose_.y()-(distToDecel)*dockPoseAngleSin,
@@ -1263,7 +1281,7 @@ namespace Anki {
         mode_ = LOOKING_FOR_BLOCK;
         lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
         
-#if(!USE_BLIND_DOCKING)
+#if(!USE_BLIND_DOCKING && USE_DOCKING_STEERING_GAINS)
         prevK1_ = SteeringController::GetK1Gain();
         prevK2_ = SteeringController::GetK2Gain();
         prevPathDistOffsetCap_ = SteeringController::GetPathDistOffsetCap();
@@ -1334,7 +1352,7 @@ namespace Anki {
         
         failureMode_ = NO_FAILURE;
         
-#if(!USE_BLIND_DOCKING)
+#if(!USE_BLIND_DOCKING && USE_DOCKING_STEERING_GAINS)
         // Only set the gains back if we actually started docking
         if(dockingStarted)
         {

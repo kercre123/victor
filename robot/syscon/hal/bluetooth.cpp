@@ -622,6 +622,8 @@ void Bluetooth::advertise(void) {
 }
 
 void Bluetooth::shutdown(void) {
+  if (!m_sd_enabled) { return ; }
+
   RTOS::stop(task);
   sd_softdevice_disable();
   m_sd_enabled = false;

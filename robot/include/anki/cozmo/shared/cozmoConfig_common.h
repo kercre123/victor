@@ -116,7 +116,7 @@ const f32 CHARGER_ALIGNED_MARKER_DISTANCE = 140.f;
  *
  **************************************************************************/
 
-const u8 NUM_RADIAL_DISTORTION_COEFFS = 4;
+const u8 NUM_RADIAL_DISTORTION_COEFFS = 8;
 
 
 /***************************************************************************

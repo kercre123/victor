@@ -176,6 +176,7 @@ namespace Anki {
       void SetMaxTiltSpeed(f32 maxSpeed_radPerSec);
       void SetTiltAccel(f32 accel_radPerSec2);
       void SetTiltTolerance(const Radians& angleTol_rad);
+      void SetMoveEyes(bool enable) { _moveEyes = enable; }
       
     protected:
       virtual ActionResult Init() override;
@@ -191,6 +192,7 @@ namespace Anki {
       Radians _headTiltAngle;
       bool    _isPanAbsolute;
       bool    _isTiltAbsolute;
+      bool    _moveEyes = true;
       
       const f32 _kDefaultPanAngleTol  = DEG_TO_RAD(5);
       const f32 _kDefaultMaxPanSpeed  = MAX_BODY_ROTATION_SPEED_RAD_PER_SEC;
@@ -583,8 +585,10 @@ namespace Anki {
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::READ_TOOL_CODE; }
+      
+      // Let internal head and lift action do locking
       virtual u8 GetTracksToLock() const override {
-        return (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
+        return (u8)AnimTrackFlag::NO_TRACKS;
       }
       
       virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
@@ -599,13 +603,12 @@ namespace Anki {
     private:
       
       std::string       _name = "ReadToolCode";
-      bool              _doCalibration           = false;
-      TimeStamp_t       _toolCodeLastMovedTime   = 0;
-      f32               _toolCodeLastHeadAngle   = 0;
-      f32               _toolCodeLastLiftAngle   = 0;
+      bool              _doCalibration = false;
       ToolCodeInfo      _toolCodeInfo;
       
-      const TimeStamp_t kRequiredStillTime_ms    = 500;
+      CompoundActionParallel _headAndLiftDownAction;
+      
+      //const TimeStamp_t kRequiredStillTime_ms    = 500;
   
       enum class State : u8 {
         WaitingToGetInPosition,

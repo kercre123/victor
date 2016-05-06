@@ -22,7 +22,7 @@ enum I2C_Control {
 };
 
 static const uint8_t UNUSED_SLAVE = 0xFF;
-static const int MAX_QUEUE = 256; // This needs to be fairly large because of pin numbers
+static const int MAX_QUEUE = 512; // This needs to be fairly large because of pin numbers
 
 static uint8_t _active_slave = UNUSED_SLAVE;
 

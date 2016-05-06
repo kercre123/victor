@@ -82,20 +82,8 @@ namespace Cozmo {
       _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::AssignNameToFace,
         [this] (const AnkiEvent<MessageGameToEngine>& event)
         {
-          using namespace ExternalInterface;
-          const AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();
-          Lock();
-          _visionSystem->AssignNameToFace(msg.faceID, msg.name);
-          Unlock();
-
-          // Assume it worked (?) and give game confirmation
-          RobotEnrolledFace addMsg;
-          addMsg.name = msg.name;
-          addMsg.faceID = msg.faceID;
-          _robot.Broadcast(MessageEngineToGame(std::move(addMsg)));
-
-          // Every time a new face is enrolled with a name, store the album on the robot
-          SaveFaceAlbumToRobot();
+          const ExternalInterface::AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();
+          AssignNameToFace(msg.faceID, msg.name);
         }));
       
       // EnableNewFaceEnrollment
@@ -381,6 +369,10 @@ namespace Cozmo {
   
   Result VisionComponent::SetNextImage(const Vision::ImageRGB& image)
   {
+    if (!_enabled) {
+      return RESULT_OK;
+    }
+    
     if(_isCamCalibSet) {
       ASSERT_NAMED(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
       if(!_visionSystem->IsInitialized()) {
@@ -517,7 +509,7 @@ namespace Cozmo {
           if(!WasMovingTooFast(image.GetTimestamp(), &p, DEG_TO_RAD(0.1), DEG_TO_RAD(0.1)))
           {
             _storeNextImageForCalibration = false;
-            Result addResult = _visionSystem->AddCalibrationImage(image.ToGray());
+            Result addResult = _visionSystem->AddCalibrationImage(image.ToGray(), _calibTargetROI);
             if(RESULT_OK != addResult) {
               PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
             }
@@ -538,7 +530,7 @@ namespace Cozmo {
       }
       
     } else {
-      PRINT_NAMED_ERROR("VisionComponent.Update.NoCamCalib",
+      PRINT_NAMED_WARNING("VisionComponent.Update.NoCamCalib",
                         "Camera calibration must be set before calling Update().\n");
       return RESULT_FAIL;
     }
@@ -1362,12 +1354,59 @@ namespace Cozmo {
     return _visionSystem->GetNumStoredCalibrationImages();
   }
   
+  Result VisionComponent::WriteCalibrationPoseToRobot(size_t whichPose,
+                                                      NVStorageComponent::NVStorageWriteEraseCallback callback)
+  {
+    Result lastResult = RESULT_OK;
+    
+    auto & calibPoses = _visionSystem->GetCalibrationPoses();
+    if(whichPose >= calibPoses.size()) {
+      PRINT_NAMED_WARNING("VisionComponent.WriteCalibrationPoseToRobot.InvalidPoseIndex",
+                          "Requested %zu, only %zu available", whichPose, calibPoses.size());
+      lastResult = RESULT_FAIL;
+    } else {
+      auto & calibImages = _visionSystem->GetCalibrationImages();
+      ASSERT_NAMED_EVENT(calibImages.size() >= calibPoses.size(),
+                         "VisionComponent.WriteCalibrationPoseToRobot.SizeMismatch",
+                         "Expecting at least %zu calibration images, got %zu",
+                         calibPoses.size(), calibImages.size());
+      
+      f32 poseData[6] = {0,0,0,0,0,0};
+      
+      if(!calibImages[whichPose].dotsFound) {
+        PRINT_NAMED_INFO("VisionComponent.WriteCalibrationPoseToRobot.PoseNotComputed",
+                         "Dots not found in image %zu, no pose available",
+                         whichPose);
+      } else {
+        // Serialize the requested calibration pose
+        const Pose3d& calibPose = calibPoses[whichPose];
+        Radians angleX, angleY, angleZ;
+        calibPose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
+        poseData[0] = angleX.ToFloat();
+        poseData[1] = angleY.ToFloat();
+        poseData[2] = angleZ.ToFloat();
+        poseData[3] = calibPose.GetTranslation().x();
+        poseData[4] = calibPose.GetTranslation().y();
+        poseData[5] = calibPose.GetTranslation().z();
+      }
+      
+      // Write to robot
+      const bool success = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CalibPose,
+                                                                (u8*)poseData, sizeof(poseData), callback);
+                                                        
+      lastResult = (success ? RESULT_OK : RESULT_FAIL);
+    }
+    
+    
+    return lastResult;
+  }
+  
   Result VisionComponent::WriteCalibrationImagesToRobot(WriteCalibrationImagesToRobotCallback callback)
   {
-    const std::list<Vision::Image> calibImages = _visionSystem->GetCalibrationImages();
+    auto calibImages = _visionSystem->GetCalibrationImages();
     
     // Make sure there is no more than 5 images in the list
-    if (calibImages.size() > 5 || calibImages.size() < 4) {
+    if (calibImages.size() > 6 || calibImages.size() < 4) {
       PRINT_NAMED_INFO("VisionComponent.WriteCalibrationImagesToRobot.TooManyOrTooFewImages",
                        "%zu images (Need 4 or 5)", _visionSystem->GetNumStoredCalibrationImages());
       return RESULT_FAIL;
@@ -1377,15 +1416,24 @@ namespace Cozmo {
                      "%zu images", _visionSystem->GetNumStoredCalibrationImages());
     _writeCalibImagesToRobotResults.clear();
 
-    static const NVStorage::NVEntryTag calibImageTags[5] = {NVStorage::NVEntryTag::NVEntry_CalibImage1,
+    static const NVStorage::NVEntryTag calibImageTags[6] = {NVStorage::NVEntryTag::NVEntry_CalibImage1,
                                                             NVStorage::NVEntryTag::NVEntry_CalibImage2,
                                                             NVStorage::NVEntryTag::NVEntry_CalibImage3,
                                                             NVStorage::NVEntryTag::NVEntry_CalibImage4,
-                                                            NVStorage::NVEntryTag::NVEntry_CalibImage5};
+                                                            NVStorage::NVEntryTag::NVEntry_CalibImage5,
+                                                            NVStorage::NVEntryTag::NVEntry_CalibImage6};
     
     // Write images to robot
     u32 imgIdx = 0;
-    for (auto img : calibImages) {
+    u8 usedMask = 0;
+    for (auto const& calibImage : calibImages)
+    {
+      const Vision::Image& img = calibImage.img;
+      
+      if(calibImage.dotsFound) {
+        usedMask |= ((u8)1 << imgIdx);
+      }
+      
       // Compress to jpeg
       std::vector<u8> imgVec;
       cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
@@ -1397,7 +1445,7 @@ namespace Cozmo {
       fclose(fp);
       */
       
-      // Write to robot
+      // Write images to robot
       bool res = true;
       if (imgIdx < calibImages.size() - 1) {
         PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingWrite", "Image %d", imgIdx);
@@ -1426,17 +1474,22 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
+      
       ++imgIdx;
     }
     
-
     // Erase remaining calib image tags
     for (u32 i = imgIdx; i < 5; ++i) {
         PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingErase", "Image %d", i);
       _robot.GetNVStorageComponent().Erase(calibImageTags[i]);
     }
+    
+    // Write bit flag indicating in which images dots were found
+    // TODO: Add callback?
+    bool res = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CalibImagesUsed, &usedMask, 1);
 
-    return RESULT_OK;
+
+    return (res == true ? RESULT_OK : RESULT_FAIL);
     
     
   }
@@ -1544,7 +1597,9 @@ namespace Cozmo {
                            "Finished setting %zu-byte album data and %zu-byte enroll data",
                            _albumData.size(), _enrollData.size());
 
-          // Notify about the newly-available names and IDs
+          // Notify about the newly-available names and IDs, and create wave files
+          // for the names if they don't already exist, so we've already got them
+          // when we want to say them at some point later.
           using namespace ExternalInterface;
           _robot.Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
           for(auto & nameAndID : namesAndIDs)
@@ -1553,7 +1608,11 @@ namespace Cozmo {
             msg.name = nameAndID.name;
             msg.faceID = nameAndID.faceID;
             _robot.Broadcast(MessageEngineToGame(std::move(msg)));
+            
+            // TODO: Need to determine what styles need to be created
+            _robot.GetTextToSpeechComponent().CreateSpeech(nameAndID.name, SayTextStyle::Normal);
           }
+          
         } else {
           PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.Failure",
                             "Failed setting %zu-byte album data and %zu-byte enroll data",
@@ -1594,6 +1653,27 @@ namespace Cozmo {
     return lastResult;
   } // LoadFaceAlbumFromRobot()
   
+  
+  void VisionComponent::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name)
+  {  
+    // Pair this name and ID in the vision system
+    Lock();
+    _visionSystem->AssignNameToFace(faceID, name);
+    Unlock();
+    
+    // Assume it worked (?) and give game confirmation
+    ExternalInterface::RobotEnrolledFace addMsg;
+    addMsg.name = name;
+    addMsg.faceID = faceID;
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(addMsg)));
+
+    // Every time a new face is enrolled with a name, store the album on the robot
+    SaveFaceAlbumToRobot();
+
+    // Get the robot ready to be able to say the name
+    // TODO: Need to determine what styles need to be created
+    _robot.GetTextToSpeechComponent().CreateSpeech(name, SayTextStyle::Normal);
+  }
   
 } // namespace Cozmo
 } // namespace Anki

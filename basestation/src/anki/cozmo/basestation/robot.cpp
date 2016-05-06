@@ -75,21 +75,23 @@
 namespace Anki {
   namespace Cozmo {
     
+    /*
     // static initializers
     const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
        0, 0, 1,
       -1, 0, 0,
        0,-1, 0
     });
+     */
     
-    /* For tool code reading
+    // For tool code reading
     // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
     const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
       0,             -0.0698,    0.9976,
       -1.0000,         0,         0,
       0,             -0.9976,   -0.0698,
     });
-     */
+    
     
     Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     : _context(context)
@@ -104,6 +106,7 @@ namespace Anki {
     , _movementComponent(*this)
     , _visionComponent(*this, VisionComponent::RunMode::Asynchronous, _context)
     , _nvStorageComponent(*this, _context)
+    , _textToSpeechComponent(_context)
     , _neckPose(0.f,Y_AXIS_3D(), {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
     , _headCamPose(_kDefaultHeadCamRotation, {HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}, &_neckPose, "RobotHeadCam")
     , _liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, &_pose, "RobotLiftBase")
@@ -1336,11 +1339,20 @@ namespace Anki {
                                                                 useManualSpeed);
     }
     
-    u8 Robot::PlayAnimation(const std::string& animName, u32 numLoops, bool interruptRunning)
+    AnimationStreamer::Tag Robot::PlayAnimation(const std::string& animName, u32 numLoops, bool interruptRunning)
     {
-      u8 tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops, interruptRunning);
+      AnimationStreamer::Tag tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops, interruptRunning);
       if(tag != AnimationStreamer::NotAnimatingTag) {
         _lastPlayedAnimationId = animName;
+      }
+      return tag;
+    }
+    
+    AnimationStreamer::Tag Robot::PlayAnimation(Animation* animation, u32 numLoops, bool interruptRunning)
+    {
+      AnimationStreamer::Tag tag = _animationStreamer.SetStreamingAnimation(*this, animation, numLoops, interruptRunning);
+      if(tag != AnimationStreamer::NotAnimatingTag) {
+        _lastPlayedAnimationId = animation->GetName();
       }
       return tag;
     }

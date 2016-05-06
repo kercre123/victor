@@ -10,6 +10,7 @@
 #include "timer.h"
 #include "recovery.h"
 #include "battery.h"
+#include "lights.h"
 #include "hal/hardware.h"
 #include "anki/cozmo/robot/spineData.h"
 
@@ -20,6 +21,7 @@ int main (void) {
 
   // Configure our system clock
   TimerInit();
+  Lights::init();
 
   // Power on the system
   Battery::init();
@@ -27,6 +29,8 @@ int main (void) {
 
   // Do recovery until our signature is okay
   EnterRecovery();
+  
+  Lights::stop();
   
   __enable_irq();
   sd_mbr_command_t cmd;

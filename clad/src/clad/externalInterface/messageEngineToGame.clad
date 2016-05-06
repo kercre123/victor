@@ -20,6 +20,7 @@
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/animationEvents.clad"
+#include "clad/types/motorTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -460,7 +461,6 @@ message FirmwareUpdateProgress {
   FirmwareUpdateSubStage subStage,
   string  fwSigWifi,
   string  fwSigRTIP,
-  string  fwSigBody,
   uint_8  percentComplete
 }
 
@@ -468,8 +468,7 @@ message FirmwareUpdateComplete {
   uint_32 robotID,
   FirmwareUpdateResult  result,
   string  fwSigWifi,
-  string  fwSigRTIP,
-  string  fwSigBody
+  string  fwSigRTIP
 }
 
 ///////////////////////////////////////////////////////////////////////////////

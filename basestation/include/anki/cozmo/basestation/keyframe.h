@@ -183,6 +183,7 @@ namespace Cozmo {
   {
   public:
     RobotAudioKeyFrame() { }
+    RobotAudioKeyFrame(Audio::GameEvent::GenericEvent audioEvent, TimeStamp_t triggerTime_ms);
     
     // NOTE: Always returns nullptr for RobotAudioKeyframe!
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override { return nullptr; };

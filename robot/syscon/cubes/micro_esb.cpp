@@ -172,8 +172,8 @@ uint32_t uesb_read_rx_payload(uesb_payload_t *payload)
 
 static void configure_addresses(const uesb_address_desc_t *address) {
   uint8_t prefix = address->address >> 24;
-	
-	// Physical addresses
+
+  // Physical addresses
   NRF_RADIO->PREFIX0 = bytewise_bit_swap(prefix);
   NRF_RADIO->BASE0   = bytewise_bit_swap(address->address << 8);
 

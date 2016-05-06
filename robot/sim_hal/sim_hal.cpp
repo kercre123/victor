@@ -550,9 +550,9 @@ namespace Anki {
       
       // Return true if IMU was already read this timestamp
       static TimeStamp_t lastReadTimestamp = 0;
-      bool alreadyRead = lastReadTimestamp == HAL::GetTimeStamp();
+      bool newReading = lastReadTimestamp != HAL::GetTimeStamp();
       lastReadTimestamp = HAL::GetTimeStamp();
-      return alreadyRead;
+      return newReading;
     }
     
     void HAL::IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp)

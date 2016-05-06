@@ -27,6 +27,7 @@ namespace Anki
 
     struct FiducialDetectionParameters {
       bool useIntegralImageFiltering;
+      bool useIlluminationNormalization;
       s32 scaleImage_numPyramidLevels;
       s32 scaleImage_thresholdMultiplier;
       s16 component1d_minComponentWidth;

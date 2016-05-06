@@ -42,7 +42,7 @@ Ruler {
 }
 LightCube {
   # translation 0 0.25 0.0219952   # Should be here
-  translation -0.05 0.30 0.0219952
+  translation -0.05 0.25 0.0219952
 }
 BlockWorldComms {
 }

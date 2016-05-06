@@ -23,6 +23,7 @@ extern BOOL g_isDevicePresent;
 extern u8 g_modelIndex;
 extern u32 g_modelIDs[8];
 extern FixtureType g_fixtureType;
+extern char* FIXTYPES[];
 
 extern void SetFixtureText(void);
 extern void SetOKText(void);
@@ -255,28 +256,15 @@ static void SetMode(void)
 {
   char* arg = GetArgument(1);
   
-  if (!strcasecmp(arg, "body"))
-  {
-    g_fixtureType = FIXTURE_BODY_TEST;
-  } else if (!strcasecmp(arg, "head")) {
-    g_fixtureType = FIXTURE_HEAD_TEST;
-  } else if (!strcasecmp(arg, "charge")) {
-    g_fixtureType = FIXTURE_CHARGER_TEST;
-  } else if (!strcasecmp(arg, "cube1")) {
-    g_fixtureType = FIXTURE_CUBE1_TEST;
-  } else if (!strcasecmp(arg, "cube2")) {
-    g_fixtureType = FIXTURE_CUBE2_TEST;
-  } else if (!strcasecmp(arg, "cube3")) {
-    g_fixtureType = FIXTURE_CUBE3_TEST;
-  } else if (!strcasecmp(arg, "cubefcc")) {
-    g_fixtureType = FIXTURE_CUBEFCC_TEST;
-  } else if (!strcasecmp(arg, "debug")) {
-    g_fixtureType = FIXTURE_DEBUG;
-  } else {
-    throw ERROR_UNKNOWN_MODE;
-  }
-  
-  SetFixtureText();
+  for (int i = 0; i <= FIXTURE_DEBUG; i++)
+    if (!strcasecmp(arg, FIXTYPES[i]))
+    {
+      g_fixtureType = i;
+      SetFixtureText();
+      return;
+    }
+    
+  throw ERROR_UNKNOWN_MODE;
 }
 
 static void RedoTest(void)
@@ -309,7 +297,6 @@ static void SetSerial(void)
   __enable_irq();
 }
 
-const char* FIXTYPES[] = FIXTURE_TYPES;
 extern int g_canary;
 static void GetSerial(void)
 {
@@ -402,71 +389,14 @@ static void Charge(void)
 #endif
 
 void CubeBurn(void);
+void SendTestMode(int i);
 
-#define PINC_TX           11
-#define GPIOC_TX          (1 << PINC_TX)
-#define PINC_RX           10
-#define GPIOC_RX          (1 << PINC_RX)
-
-void SendTestChar(int c)
-{
-  u32 start = getMicroCounter();
-  
-  // Receive mode - TX low is floating
-  GPIO_RESET(GPIOC, PINC_TX);
-  PIN_OUT(GPIOC, PINC_TX);
-  PIN_PULL_UP(GPIOC, PINC_RX);
-  PIN_IN(GPIOC, PINC_RX);
-
-  // Wait for RX to go low/be low
-  while (GPIO_READ(GPIOC) & GPIOC_RX)
-    if (getMicroCounter()-start > 1000000)
-      throw 2;
-  // Now wait for it to go high
-  while (!(GPIO_READ(GPIOC) & GPIOC_RX))
-    if (getMicroCounter()-start > 1000000)
-      throw 2;
-    
-  // Before we can send, we must drive the signal up via TX, and pull the signal down via RX
-  GPIO_SET(GPIOC, PINC_TX);
-  PIN_OUT(GPIOC, PINC_TX);
-  PIN_PULL_NONE(GPIOC, PINC_RX);
-  GPIO_RESET(GPIOC, PINC_RX);
-  PIN_OUT(GPIOC, PINC_RX);
-  
-  MicroWait(40);  // Enough time for robot to turn around
-  
-  // Bit bang the UART, since it's miswired on EP3
-  u32 now, last = getMicroCounter();
-  c <<= 1;      // Start bit
-  c |= (3<<9);  // Stop bits
-  for (int i = 0; i < 11; i++)
-  {
-    while ((u32)((now = getMicroCounter())-last) < 10)
-      ;
-    last = now;
-    if (c & (1<<i))
-      GPIO_SET(GPIOC, PINC_TX);
-    else
-      GPIO_RESET(GPIOC, PINC_TX);      
-  }
-  
-  // Receive mode - TX low is floating
-  GPIO_RESET(GPIOC, PINC_TX);
-  PIN_OUT(GPIOC, PINC_TX);
-  PIN_PULL_UP(GPIOC, PINC_RX);
-  PIN_IN(GPIOC, PINC_RX);
-}
 void SendTestMessage(void)
 {
   int test = 0;
   char* arg = GetArgument(1);  
   sscanf(arg, "%i", &test);
-  
-  SendTestChar('W');
-  SendTestChar('t');
-  SendTestChar('f');
-  SendTestChar(test);
+  SendTestMode(test);
 }
 
 static CommandFunction m_functions[] =

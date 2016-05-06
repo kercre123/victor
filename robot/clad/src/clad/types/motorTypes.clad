@@ -14,5 +14,11 @@ enum uint_8 MotorID {
   MOTOR_COUNT
 }
 
+message MotorCalibration
+{
+  MotorID motorID,
+  bool calibStarted
+}
+
 } // namespace Cozmo
 } // namespace Anki

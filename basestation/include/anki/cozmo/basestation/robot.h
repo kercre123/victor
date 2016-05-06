@@ -53,6 +53,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
@@ -473,7 +474,8 @@ public:
     // If numLoops == 0, animation repeats forever.
     // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Returns the streaming tag, so you can find out when it is done.
-    u8 PlayAnimation(const std::string& animName, const u32 numLoops = 1, bool interruptRunning = true);
+    AnimationStreamer::Tag PlayAnimation(const std::string& animName, const u32 numLoops = 1, bool interruptRunning = true);
+    AnimationStreamer::Tag PlayAnimation(Animation* animation, u32 numLoops = 1, bool interruptRunning = true);
   
     // Set the animation to be played when no other animation has been specified.  Use the empty string to
     // disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
@@ -549,6 +551,9 @@ public:
   
     Result RequestIMU(const u32 length_ms) const;
 
+    // Get text to speech component
+    TextToSpeechComponent& GetTextToSpeechComponent() { return _textToSpeechComponent; }
+  
 
     // =========== Pose history =============
   
@@ -760,11 +765,12 @@ public:
     s32 _numAnimationAudioFramesStreamed = 0;
     u8  _animationTag                    = 0;
   
-    //ActionQueue       _actionQueue;
-    ActionList         _actionList;
-    MovementComponent  _movementComponent;
-    VisionComponent    _visionComponent;
-    NVStorageComponent _nvStorageComponent;
+    //ActionQueue           _actionQueue;
+    ActionList              _actionList;
+    MovementComponent       _movementComponent;
+    VisionComponent         _visionComponent;
+    NVStorageComponent      _nvStorageComponent;
+    TextToSpeechComponent  _textToSpeechComponent;
   
     // Hash to not spam debug messages
     size_t            _lastDebugStringHash;
@@ -947,7 +953,6 @@ public:
   
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-    void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);

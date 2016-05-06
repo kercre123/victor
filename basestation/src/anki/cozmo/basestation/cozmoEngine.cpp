@@ -23,7 +23,6 @@
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
 #include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
 #include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
-#include "anki/cozmo/basestation/textToSpeech/textToSpeech.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -57,7 +56,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   : _robotChannel(new MultiClientChannel{})
   , _uiMsgHandler(new UiMessageHandler(1))
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
-  , _textToSpeech(new TextToSpeech(_uiMsgHandler.get(),dataPlatform))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
 #if ANKI_DEV_CHEATS
   , _usbTunnelServerDebug(new USBTunnelServer(_uiMsgHandler.get(),dataPlatform))
@@ -380,10 +378,6 @@ Result CozmoEngine::InitInternal()
   AudioUnityClientConnection *unityConnection = new AudioUnityClientConnection( *_context->GetExternalInterface() );
   _context->GetAudioServer()->RegisterClientConnection( unityConnection );
   
-  // Setup Text To Speach with Audio Controller
-  _textToSpeech->SetAudioController(_context->GetAudioServer()->GetAudioController());
-  
-  
   return RESULT_OK;
 }
 
@@ -429,81 +423,45 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     lastResult = robot->SyncTime();
     
     // Requesting camera calibration
-    robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalibration,
+    robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib,
                                         [robot](u8* data, size_t size, NVStorage::NVResult res) {
                                         
                                         if (res == NVStorage::NVResult::NV_OKAY) {
                                           CameraCalibration payload;
-                                          payload.Unpack(data, size);
-                                          PRINT_NAMED_INFO("CozmoEngine.ReadCameraCalibration",
-                                                           "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f cy: %f)",
-                                                           payload.ncols, payload.nrows,
-                                                           payload.focalLength_x, payload.focalLength_y,
-                                                           payload.center_x, payload.center_y);
                                           
-                                          // Convert calibration message into a calibration object to pass to the robot
-                                          Vision::CameraCalibration calib(payload.nrows,
-                                                                          payload.ncols,
-                                                                          payload.focalLength_x,
-                                                                          payload.focalLength_y,
-                                                                          payload.center_x,
-                                                                          payload.center_y,
-                                                                          payload.skew);
-                                          
-                                          robot->GetVisionComponent().SetCameraCalibration(calib);
-                                          
-                                          
-                                          
+                                          if (size != NVStorageComponent::MakeWordAligned(payload.Size())) {
+                                            PRINT_NAMED_WARNING("CozmoEngine.ReadCameraCalibration.SizeMismatch",
+                                                                "Expected %zu, got %zu",
+                                                                NVStorageComponent::MakeWordAligned(payload.Size()), size);
+                                          } else {
+                                            
+                                            payload.Unpack(data, size);
+                                            PRINT_NAMED_INFO("CozmoEngine.ReadCameraCalibration.Recvd",
+                                                             "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f cy: %f)",
+                                                             payload.ncols, payload.nrows,
+                                                             payload.focalLength_x, payload.focalLength_y,
+                                                             payload.center_x, payload.center_y);
+                                            
+                                            const std::vector<f32> tempVector(payload.distCoeffs.begin(), payload.distCoeffs.end());
+                                            
+                                            // Convert calibration message into a calibration object to pass to the robot
+                                            Vision::CameraCalibration calib(payload.nrows,
+                                                                            payload.ncols,
+                                                                            payload.focalLength_x,
+                                                                            payload.focalLength_y,
+                                                                            payload.center_x,
+                                                                            payload.center_y,
+                                                                            payload.skew,
+                                                                            tempVector);
+                                            
+                                            robot->GetVisionComponent().SetCameraCalibration(calib);
+                                          }
                                           
                                         } else {
                                           PRINT_NAMED_INFO("CozmoEngine.ReadCameraCalibration.Failed", "");
                                         }
-                                        });
-
-    // TEMP: Copy calibration over to NVEntry_CameraCalib, which is in the manufacturing partition.
-    //       Eventually we'll delete NVEntry_CameraCalibration.
-    robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib,
-                                        [robot](u8* data, size_t size, NVStorage::NVResult res) {
-                                          CameraCalibration payload;
-                                          if (res == NVStorage::NVResult::NV_OKAY) {
-                                            payload.Unpack(data, size);
-                                            PRINT_NAMED_INFO("CozmoEngine.ReadMfgCameraCalib",
-                                                             "Mfg camera calib received from robot (size: %dx%d, fx: %f, fy: %f, cx: %f cy: %f)",
-                                                             payload.ncols, payload.nrows,
-                                                             payload.focalLength_x, payload.focalLength_y,
-                                                             payload.center_x, payload.center_y);
-                                          } else {
-                                            
-                                            if (!robot->GetVisionComponent().IsCameraCalibrationSet()) {
-                                              PRINT_NAMED_INFO("CozmoEngine.CopyCamCalibToMfg.FailedBecauseCalibNotSet", "");
-                                              return;
-                                            }
-                                            
-                                            // Camera calibration was not found in manufacturing partition
-                                            // Write it!
-                                            Vision::CameraCalibration calib = robot->GetVisionComponent().GetCameraCalibration();
-                                            payload.focalLength_x = calib.GetFocalLength_x();
-                                            payload.focalLength_y = calib.GetFocalLength_y();
-                                            payload.center_x = calib.GetCenter_x();
-                                            payload.center_y = calib.GetCenter_y();
-                                            payload.skew = calib.GetSkew();
-                                            payload.nrows = calib.GetNrows();
-                                            payload.ncols = calib.GetNcols();
-                                            
-                                            u8 buf[2*sizeof(payload)];
-                                            size_t numBytes = payload.Pack(buf, sizeof(buf));
-                                            
-                                            PRINT_NAMED_INFO("CozmoEngine.CopyCamCalibToMfg.Copying",
-                                                             "size: %dx%d, fx: %f, fy: %f, cx: %f cy: %f",
-                                                             payload.ncols, payload.nrows,
-                                                             payload.focalLength_x, payload.focalLength_y,
-                                                             payload.center_x, payload.center_y);
-                                            
-                                            robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, numBytes,
-                                                                                 [](NVStorage::NVResult res) {
-                                                                                   PRINT_NAMED_INFO("CozmoEngine.CopyCamCalibToMfg.Complete", "%s", EnumToString(res));
-                                                                                 });
-                                          }
+                                          
+                                        robot->GetVisionComponent().Enable(true);
                                           
                                         });
     

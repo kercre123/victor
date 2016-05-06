@@ -36,8 +36,7 @@ static uint8_t AudioBackBuffer[MAX_AUDIO_BYTES_PER_DROP];
 
 void Anki::Cozmo::HAL::SPI::ManageDrop(void) {
   // This should probably bias
-  DAC::Feed(AudioBackBuffer);
-  DAC::EnableAudio(audioUpdated);
+  DAC::Feed(audioUpdated, AudioBackBuffer);
 }
 
 static bool ProcessDrop(void) {

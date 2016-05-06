@@ -242,21 +242,26 @@ void uesb_event_handler(uint32_t flags)
     }
 
     // Send a pairing packet
+    // XXX: FIX ALL THIS SO IT'S NOT DUMB
     {
+      // This is where the cube shall live
+      uesb_address_desc_t* new_addr = &accessories[slot].address;
+
+      new_addr->address = advert.id;
+      new_addr->payload_length = sizeof(AccessoryHandshake);
+      new_addr->rf_channel = (new_addr->rf_channel >> 1) ^ (new_addr->rf_channel & 1 ? 0 : 0x2D);
       
+      // Tell the cube to listen on channel 42
       uesb_address_desc_t address = {
         ADV_CHANNEL,
         advert.id,
       };
-      memcpy(&accessories[slot].address, &address, sizeof(address));
-
       CapturePacket pair;
       
-      // TODO: CONFIGURE HERE
       pair.hopIndex = 0;
-      //pair.hopBlackout = OTAAddress.rf_channel;
+      pair.hopBlackout = new_addr->rf_channel;
       pair.patchStart = CUBE_UPDATE.patchStart;
-
+      
       uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
     }
     break ;
@@ -352,9 +357,6 @@ void Radio::prepare(void* userdata) {
   if (currentAccessory >= MAX_ACCESSORIES) return ;
 
   AccessorySlot* acc = &accessories[currentAccessory];
-
-  // XXX: This is temporary
-  acc->last_received = 0;
 
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
     // We send the previous LED state (so we don't get jitter on radio)
