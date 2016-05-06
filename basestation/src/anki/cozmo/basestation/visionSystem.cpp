@@ -3257,11 +3257,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
                        "Got %zu rotations and %zu translations",
                        rvecs.size(), tvecs.size());
     
-    ASSERT_NAMED_EVENT(rvecs.size() == _calibImages.size(),
-                       "VisionSystem.ComputeCalibration.WrongNumPoses",
-                       "Got %zu rotations/translations for %zu images",
-                       rvecs.size(), _calibImages.size());
-    
     _calibPoses.reserve(rvecs.size());
     for(s32 iPose=0; iPose<rvecs.size(); ++iPose)
     {  

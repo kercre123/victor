@@ -122,7 +122,7 @@ namespace Cozmo {
       Rectangle<s32>   roiRect;
       bool             dotsFound;
     };
-    const std::list<CalibImage>& GetCalibrationImages() const {return _calibImages;}
+    const std::vector<CalibImage>& GetCalibrationImages() const {return _calibImages;}
     const std::vector<Pose3d>& GetCalibrationPoses() const { return _calibPoses;}
     
     void StopTracking();
@@ -400,7 +400,7 @@ namespace Cozmo {
     
     // Calibration stuff
     static const u32              _kMinNumCalibImagesRequired = 4;
-    std::list<CalibImage>         _calibImages;
+    std::vector<CalibImage>       _calibImages;
     bool                          _isCalibrating = false;
     std::vector<Pose3d>           _calibPoses;
     

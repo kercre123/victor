@@ -1359,23 +1359,36 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
-    auto calibPoses = _visionSystem->GetCalibrationPoses();
+    auto & calibPoses = _visionSystem->GetCalibrationPoses();
     if(whichPose >= calibPoses.size()) {
       PRINT_NAMED_WARNING("VisionComponent.WriteCalibrationPoseToRobot.InvalidPoseIndex",
                           "Requested %zu, only %zu available", whichPose, calibPoses.size());
       lastResult = RESULT_FAIL;
     } else {
+      auto & calibImages = _visionSystem->GetCalibrationImages();
+      ASSERT_NAMED_EVENT(calibImages.size() >= calibPoses.size(),
+                         "VisionComponent.WriteCalibrationPoseToRobot.SizeMismatch",
+                         "Expecting at least %zu calibration images, got %zu",
+                         calibPoses.size(), calibImages.size());
       
-      // Serialize the requested calibration pose
-      const Pose3d& calibPose = calibPoses[whichPose];
-      Radians angleX, angleY, angleZ;
-      calibPose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
-      const f32 poseData[6] = {
-        angleX.ToFloat(), angleY.ToFloat(), angleZ.ToFloat(),
-        calibPose.GetTranslation().x(),
-        calibPose.GetTranslation().y(),
-        calibPose.GetTranslation().z(),
-      };
+      f32 poseData[6] = {0,0,0,0,0,0};
+      
+      if(!calibImages[whichPose].dotsFound) {
+        PRINT_NAMED_INFO("VisionComponent.WriteCalibrationPoseToRobot.PoseNotComputed",
+                         "Dots not found in image %zu, no pose available",
+                         whichPose);
+      } else {
+        // Serialize the requested calibration pose
+        const Pose3d& calibPose = calibPoses[whichPose];
+        Radians angleX, angleY, angleZ;
+        calibPose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
+        poseData[0] = angleX.ToFloat();
+        poseData[1] = angleY.ToFloat();
+        poseData[2] = angleZ.ToFloat();
+        poseData[3] = calibPose.GetTranslation().x();
+        poseData[4] = calibPose.GetTranslation().y();
+        poseData[5] = calibPose.GetTranslation().z();
+      }
       
       // Write to robot
       const bool success = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CalibPose,
