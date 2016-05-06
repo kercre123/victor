@@ -25,6 +25,7 @@ using namespace Anki::Planning;
 #error No TEST_DATA_PATH defined. You may need to re-run cmake.
 #endif
 #define TEST_PRIM_FILE "/planning/matlab/test_mprim.json"
+#define TEST_PRIM_FILE2 "/planning/matlab/test_mprim2.json"
 
 
 GTEST_TEST(TestPlanner, PlanOnceEmptyEnv)
@@ -806,7 +807,8 @@ GTEST_TEST(TestPlanner, CorrectlyRoundStateNearBox)
 
   // TODO:(bn) open something saved in the test dir isntead, so we
   // know not to change or remove it
-  EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
+  EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) +
+                                                std::string(TEST_PRIM_FILE)).c_str()));
 
   xythetaPlanner planner(context);
 
@@ -822,3 +824,29 @@ GTEST_TEST(TestPlanner, CorrectlyRoundStateNearBox)
   EXPECT_TRUE(planner.StartIsValid()) << "set start near box should pass";
   
 }
+
+GTEST_TEST(TestPlanner, ZeroSizePathFilterBug)
+{
+  xythetaPlannerContext context;
+
+  EXPECT_TRUE(context.env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) +
+                                                std::string(TEST_PRIM_FILE2)).c_str()));
+
+  xythetaPlan plan;
+
+  plan.start_ = {-2, 0, 2};
+  plan.Push(6);
+  plan.Push(4);
+  plan.Push(2);
+  plan.Push(5);
+  
+  context.env.PrintPlan(plan);
+
+  Path path;
+  context.env.AppendToPath(plan, path, 0);
+
+  path.PrintPath();
+
+  EXPECT_GT(path.GetNumSegments(), 0) << "path should not be empty";
+}
+
