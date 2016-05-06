@@ -2412,7 +2412,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       return RESULT_FAIL;
     }
     
-    _calibImages.push_back({calibImg, targetROI});
+    _calibImages.push_back({.img = calibImg, .roiRect = targetROI, .dotsFound = false});
     PRINT_NAMED_INFO("VisionSystem.AddCalibrationImage",
                      "Num images including this: %u", (u32)_calibImages.size());
     return RESULT_OK;
@@ -3172,7 +3172,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     // Description of asymmetric circles calibration target
     cv::Size boardSize(4,11);
     static constexpr f32 squareSize = 0.01; // TODO: Doesn't really matter for camera matrix intrinsics computation, but should probably measure this.
-    const Vision::Image& firstImg = _calibImages.front().first;
+    const Vision::Image& firstImg = _calibImages.front().img;
     cv::Size imageSize(firstImg.GetNumCols(), firstImg.GetNumRows());
     
     std::vector<std::vector<cv::Point2f> > imagePoints;
@@ -3188,19 +3188,18 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
     int imgCnt = 0;
     Vision::Image img(firstImg.GetNumRows(), firstImg.GetNumCols());
-    for (auto const& calibImage : _calibImages)
+    for (auto & calibImage : _calibImages)
     {
       // Extract the ROI (leaveing the rest as zeros)
-      Anki::Rectangle<s32> roiRect = calibImage.second;
       img.FillWith(0);
-      Vision::Image imgROI = img.GetROI(roiRect);
-      calibImage.first.GetROI(roiRect).CopyTo(imgROI);
+      Vision::Image imgROI = img.GetROI(calibImage.roiRect);
+      calibImage.img.GetROI(calibImage.roiRect).CopyTo(imgROI);
       
       // Get image points
       std::vector<cv::Point2f> pointBuf;
-      bool found = cv::findCirclesGrid(img.get_CvMat_(), boardSize, pointBuf, findCirclesFlags, blobDetector);
+      calibImage.dotsFound = cv::findCirclesGrid(img.get_CvMat_(), boardSize, pointBuf, findCirclesFlags, blobDetector);
 
-      if (found) {
+      if (calibImage.dotsFound) {
         PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.FoundPoints", "");
         imagePoints.push_back(pointBuf);
       } else {
@@ -3212,8 +3211,8 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       if (DRAW_CALIB_IMAGES) {
         Vision::ImageRGB dispImg;
         cv::cvtColor(img.get_CvMat_(), dispImg.get_CvMat_(), cv::COLOR_GRAY2BGR);
-        if (found) {
-          cv::drawChessboardCorners(dispImg.get_CvMat_(), boardSize, cv::Mat(pointBuf), found);
+        if (calibImage.dotsFound) {
+          cv::drawChessboardCorners(dispImg.get_CvMat_(), boardSize, cv::Mat(pointBuf), calibImage.dotsFound);
         }
         _debugImageRGBMailbox.putMessage({std::string("CalibImage") + std::to_string(imgCnt), dispImg});
       }

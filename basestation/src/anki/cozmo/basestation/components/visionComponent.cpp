@@ -1412,9 +1412,14 @@ namespace Cozmo {
     
     // Write images to robot
     u32 imgIdx = 0;
+    u8 usedMask = 0;
     for (auto const& calibImage : calibImages)
     {
-      const Vision::Image& img = calibImage.first;
+      const Vision::Image& img = calibImage.img;
+      
+      if(calibImage.dotsFound) {
+        usedMask |= ((u8)1 << imgIdx);
+      }
       
       // Compress to jpeg
       std::vector<u8> imgVec;
@@ -1427,7 +1432,7 @@ namespace Cozmo {
       fclose(fp);
       */
       
-      // Write to robot
+      // Write images to robot
       bool res = true;
       if (imgIdx < calibImages.size() - 1) {
         PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingWrite", "Image %d", imgIdx);
@@ -1456,17 +1461,22 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
+      
       ++imgIdx;
     }
     
-
     // Erase remaining calib image tags
     for (u32 i = imgIdx; i < 5; ++i) {
         PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingErase", "Image %d", i);
       _robot.GetNVStorageComponent().Erase(calibImageTags[i]);
     }
+    
+    // Write bit flag indicating in which images dots were found
+    // TODO: Add callback?
+    bool res = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CalibImagesUsed, &usedMask, 1);
 
-    return RESULT_OK;
+
+    return (res == true ? RESULT_OK : RESULT_FAIL);
     
     
   }

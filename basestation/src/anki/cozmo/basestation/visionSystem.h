@@ -117,7 +117,11 @@ namespace Cozmo {
     Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI);
     Result ClearCalibrationImages();
     size_t GetNumStoredCalibrationImages() const { return _calibImages.size(); }
-    using CalibImage = std::pair<Vision::Image, Rectangle<s32>>;
+    using CalibImage = struct {
+      Vision::Image    img;
+      Rectangle<s32>   roiRect;
+      bool             dotsFound;
+    };
     const std::list<CalibImage>& GetCalibrationImages() const {return _calibImages;}
     const std::vector<Pose3d>& GetCalibrationPoses() const { return _calibPoses;}
     
