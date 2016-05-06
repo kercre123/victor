@@ -62,11 +62,11 @@ public:
   ~AudioController();
 
   // Note: Transfer's callback context ownership to Audio Controller
-  AudioEngine::AudioPlayingID PostAudioEvent( const std::string& eventName,
+  AudioEngine::AudioPlayingId PostAudioEvent( const std::string& eventName,
                                               AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject,
                                               AudioEngine::AudioCallbackContext* callbackContext = nullptr );
   
-  AudioEngine::AudioPlayingID PostAudioEvent( AudioEngine::AudioEventID eventId,
+  AudioEngine::AudioPlayingId PostAudioEvent( AudioEngine::AudioEventId eventId,
                                               AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject,
                                               AudioEngine::AudioCallbackContext* callbackContext = nullptr );
 
@@ -121,7 +121,7 @@ private:
   
   bool _isInitialized = false;
   
-  using CallbackContextMap = std::unordered_map< AudioEngine::AudioPlayingID, AudioEngine::AudioCallbackContext* >;
+  using CallbackContextMap = std::unordered_map< AudioEngine::AudioPlayingId, AudioEngine::AudioCallbackContext* >;
   CallbackContextMap _eventCallbackContexts;
   
   std::vector< AudioEngine::AudioCallbackContext* > _callbackGarbageCollector;

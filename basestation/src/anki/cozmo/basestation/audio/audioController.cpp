@@ -136,15 +136,15 @@ AudioController::~AudioController()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& eventName,
+AudioEngine::AudioPlayingId AudioController::PostAudioEvent( const std::string& eventName,
                                                              AudioEngine::AudioGameObject gameObjectId,
                                                              AudioEngine::AudioCallbackContext* callbackContext )
 {
-  AudioPlayingID playingId = kInvalidAudioPlayingID;
+  AudioPlayingId playingId = kInvalidAudioPlayingId;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
     playingId = _audioEngine->PostEvent( eventName, gameObjectId, callbackContext );
-    if ( kInvalidAudioPlayingID != playingId &&
+    if ( kInvalidAudioPlayingId != playingId &&
         nullptr != callbackContext ) {
       callbackContext->SetPlayId( playingId );
       callbackContext->SetDestroyCallbackFunc( [this] ( const AudioCallbackContext* thisContext )
@@ -153,13 +153,13 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& 
                                               } );
       _eventCallbackContexts.emplace( playingId, callbackContext );
     }
-    else if ( kInvalidAudioPlayingID == playingId &&
+    else if ( kInvalidAudioPlayingId == playingId &&
              nullptr != callbackContext ) {
       // Event Failed and there is a callback
       // Perform Error callback for Event Failed and delete callbackContext
-      const AudioEventID eventId = _audioEngine->GetAudioHashFromString( eventName );
+      const AudioEventId eventId = _audioEngine->GetAudioHashFromString( eventName );
       callbackContext->HandleCallback( AudioErrorCallbackInfo( gameObjectId,
-                                                               kInvalidAudioPlayingID,
+                                                               kInvalidAudioPlayingId,
                                                                eventId,
                                                                AudioEngine::AudioCallbackErrorType::EventFailed ) );
       Util::SafeDelete( callbackContext );
@@ -170,15 +170,15 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioEventID eventId,
+AudioEngine::AudioPlayingId AudioController::PostAudioEvent( AudioEngine::AudioEventId eventId,
                                                              AudioEngine::AudioGameObject gameObjectId,
                                                              AudioEngine::AudioCallbackContext* callbackContext  )
 {
-  AudioPlayingID playingId = kInvalidAudioPlayingID;
+  AudioPlayingId playingId = kInvalidAudioPlayingId;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
     playingId = _audioEngine->PostEvent( eventId, gameObjectId, callbackContext );
-    if ( kInvalidAudioPlayingID != playingId &&
+    if ( kInvalidAudioPlayingId != playingId &&
          nullptr != callbackContext ) {
       callbackContext->SetPlayId( playingId );
       callbackContext->SetDestroyCallbackFunc( [this] ( const AudioCallbackContext* thisContext )
@@ -187,12 +187,12 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioE
       } );
       _eventCallbackContexts.emplace( playingId, callbackContext );
     }
-    else if ( kInvalidAudioPlayingID == playingId &&
+    else if ( kInvalidAudioPlayingId == playingId &&
               nullptr != callbackContext ) {
       // Event Failed and there is a callback
       // Perform Error callback for Event Failed and delete callbackContext
       callbackContext->HandleCallback( AudioErrorCallbackInfo( gameObjectId,
-                                                               kInvalidAudioPlayingID,
+                                                               kInvalidAudioPlayingId,
                                                                eventId,
                                                                AudioEngine::AudioCallbackErrorType::EventFailed ) );
       Util::SafeDelete( callbackContext );
