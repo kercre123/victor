@@ -73,6 +73,10 @@ public class ConnectDialog : MonoBehaviour {
 
     _ConnectButton.Initialize(HandleConnectButton, "connect_button", "connect_dialog");
     _SimButton.Initialize(HandleSimButton, "sim_button", "connect_dialog");
+
+    #if !UNITY_EDITOR
+    _SimButton.gameObject.SetActive(false);
+    #endif
   }
 
   private void HandleConnectButton() {
