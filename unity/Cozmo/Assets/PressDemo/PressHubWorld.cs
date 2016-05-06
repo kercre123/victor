@@ -18,7 +18,7 @@ public class PressHubWorld : HubWorldBase {
   private bool _ForceProgressWhenOver = false;
 
   public override bool LoadHubWorld() {
-
+    DebugMenuManager.Instance.EnableLatencyPopup(false);
     LoadPressDemoView();
 
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
