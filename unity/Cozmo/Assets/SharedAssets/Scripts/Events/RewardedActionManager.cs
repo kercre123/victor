@@ -59,7 +59,7 @@ public class RewardedActionManager : MonoBehaviour {
     GameEvent gEvent;
     int amount;
     for (int i = 0; i < _RewardConfig.RewardedActions.Count; i++) {
-      gEvent = _RewardConfig.RewardedActions[i].GameEvent;
+      gEvent = _RewardConfig.RewardedActions[i].GameEvent.Value;
       amount = _RewardConfig.RewardedActions[i].Amount;
       if (!RewardEventMap.ContainsKey(gEvent)) {
         RewardEventMap.Add(gEvent, amount);

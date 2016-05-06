@@ -12,9 +12,15 @@ MonoBehaviour:
   m_Name: GenericRewardsConfig
   m_EditorClassIdentifier: 
   RewardedActions:
-  - GameEvent: 12
+  - GameEvent:
+      _EnumValueAsString: OnSpeedtapGamePlayerWin
+      _EnumValue: 13
     Amount: 15
-  - GameEvent: 7
+  - GameEvent:
+      _EnumValueAsString: OnSpeedtapStarted
+      _EnumValue: 7
     Amount: 3
-  - GameEvent: 6
+  - GameEvent:
+      _EnumValueAsString: OnFollowMotionReact
+      _EnumValue: 6
     Amount: 5
