@@ -608,7 +608,7 @@ namespace Cozmo {
     const FaceID_t oldFaceID = static_cast<FaceID_t>(msg.oldID);
     const FaceID_t newFaceID = static_cast<FaceID_t>(msg.newID);
 
-    const auto& oldIt = _interestingFacesData.find(oldFaceID);
+    auto oldIt = _interestingFacesData.find(oldFaceID);
     const auto& newIt = _interestingFacesData.find(newFaceID);
 
     // we should have data about at least once face
@@ -628,6 +628,7 @@ namespace Cozmo {
                         newFaceID);
       _interestingFacesData.insert( std::make_pair(newFaceID, oldIt->second) );
       _interestingFacesData.erase(oldIt);
+      oldIt = _interestingFacesData.end(); // clear the old iterator
     }
     else if( oldIt != _interestingFacesData.end() ) {
       // this is a merge because we had data for both
@@ -653,14 +654,15 @@ namespace Cozmo {
         StopActing();
       }
 
-      _interestingFacesData.erase(oldIt);      
+      _interestingFacesData.erase(oldIt);
+      oldIt = _interestingFacesData.end(); // clear the old iterator
     }
     // else, we have data about the new face but not the old one, so ignore this message because there is
     // nothing to do about it
 
 
     // if we are changing the old face, update current face as well
-    if( _currentFace != Vision::UnknownFaceID && _currentFace == oldIt->first ) {
+    if( _currentFace != Vision::UnknownFaceID && _currentFace == oldFaceID ) {
       _currentFace = newIt->first;
       PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.UpdateCurrentFace",
                         "Updating current face because of merge");
