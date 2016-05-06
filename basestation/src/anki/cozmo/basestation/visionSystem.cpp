@@ -3171,7 +3171,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
     // Description of asymmetric circles calibration target
     cv::Size boardSize(4,11);
-    static constexpr f32 squareSize = 0.01; // TODO: Doesn't really matter for camera matrix intrinsics computation, but should probably measure this.
+    static constexpr f32 squareSize = 0.05;
     const Vision::Image& firstImg = _calibImages.front().first;
     cv::Size imageSize(firstImg.GetNumCols(), firstImg.GetNumRows());
     
