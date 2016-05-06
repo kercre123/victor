@@ -2662,7 +2662,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
 
     const bool headDown = _poseData.poseStamp.GetHeadAngle() <= MIN_HEAD_ANGLE + DEG_TO_RAD(1.5);
     
-    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK + 1.f; // 1mm fudge
+    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK + 2.f; // 2mm fudge
     
     // Sanity checks: we should not even be calling ReadToolCode if everybody
     // hasn't done their job and got us into position

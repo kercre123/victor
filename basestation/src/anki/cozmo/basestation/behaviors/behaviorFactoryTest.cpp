@@ -509,6 +509,11 @@ namespace Cozmo {
         
       case FactoryTestState::ComputeCameraCalibration:
       {
+        // Move head down to line up for readToolCode.
+        // Hopefully this reduces some readToolCode errors
+        StartActing(robot, new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE));
+        
+        
         // Start calibration computation
         PRINT_NAMED_INFO("BehaviorFactoryTest.Update.StartingCalibration",
                          "%zu images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
