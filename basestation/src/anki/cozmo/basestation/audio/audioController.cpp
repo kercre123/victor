@@ -261,7 +261,7 @@ AudioEngine::AudioGameObject AudioController::GetAvailableRobotAudioBuffer( Robo
 {
   // TODO: Need to finish this!!!
   // Need a method to find an audio buffer it's coresponding game object that are ready to use
-  out_buffer = GetAudioBuffer( 1 ); // This is just until we update the wwise project with multiple buffers
+  out_buffer = GetAudioBuffer( 0 ); // This is just until we update the wwise project with multiple buffers
 
   return static_cast<AudioEngine::AudioGameObject>( GameObjectType::CozmoAnimation );
 }
@@ -299,13 +299,12 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   // Posible plug-ids
   // TODO: Need to pair with game object
 //  std::vector<int32_t> ids = { 1, 2, 3, 4 };
-  std::vector<int32_t> ids = { 1 }; // Use this until we setup wwise to work with multiple plug-ins
+  std::vector<int32_t> ids = { 0 }; // Use this until we setup wwise to work with multiple plug-ins
 
   
   for ( auto anId : ids ) {
     _robotAudioBufferPool.emplace( anId, new RobotAudioBuffer() );
-  }
-
+  } 
 
   // Setup Callbacks
   _hijackAudioPlugIn->SetCreatePlugInCallback( [this] ( const uint32_t plugInId )

@@ -10,11 +10,12 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "sayTextAction.h"
+#include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/audio/audioEventTypes.h"
 
 #define DEBUG_SAYTEXT_ACTION 0
+
 
 namespace Anki {
 namespace Cozmo {
@@ -67,13 +68,16 @@ namespace Cozmo {
       {
         // Set Audio data right before action runs
         float duration_ms = 0.0f;
-        const bool success = _robot.GetTextToSpeechComponent().PrepareToSay(_text, _style, duration_ms);
+        const bool success = _robot.GetTextToSpeechComponent().PrepareToSay(_text,
+                                                                            _style,
+                                                                            Audio::GameObjectType::CozmoAnimation,
+                                                                            duration_ms);
         if (!success) {
           PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayFailed", "");
           return ActionResult::FAILURE_ABORT;
         }
         
-        if (duration_ms > _timeout_sec) {
+        if (duration_ms * 0.001f > _timeout_sec) {
           PRINT_NAMED_DEBUG("SayTextAction.Init.PrepareToSayDurrationTooLong",
                             "Text: %s Style: %hhu", _text.c_str(), _style);
           PRINT_NAMED_ERROR("SayTextAction.Init.PrepareToSayDurrationTooLong", "Durration: %f", duration_ms);
@@ -85,8 +89,11 @@ namespace Cozmo {
           if (DEBUG_SAYTEXT_ACTION) {
             PRINT_NAMED_DEBUG("SayTextAction.Init.CreatingAnimation", "");
           }
+          // Get appropriate audio event for style
+          const Audio::GameEvent::GenericEvent audioEvent = _robot.GetTextToSpeechComponent().GetAudioEvent(_style);
+          
           _animation.SetIsLive(true);
-          _animation.AddKeyFrameToBack(RobotAudioKeyFrame(Audio::GameEvent::GenericEvent::Vo_Coz_External_Play, 0));
+          _animation.AddKeyFrameToBack(RobotAudioKeyFrame(audioEvent, 0));
           _playAnimationAction = new PlayAnimationAction(_robot, &_animation);
         } else {
           if (DEBUG_SAYTEXT_ACTION) {
