@@ -38,6 +38,7 @@
   "behaviorGroups": [
     "AffectsBlocks",
     "Unlock_CubeRoll",
-    "DemoCubes"
+    "DemoCubes",
+    "FreeplayOne"
   ]
 }

@@ -111,19 +111,7 @@ public class MockRobot : IRobot {
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
 
   }
-
-  public void SetEnableAllBehaviors(bool enabled) {
-    // Do nothing
-  }
-
-  public void SetEnableBehaviorGroup(Anki.Cozmo.BehaviorGroup behaviorGroup, bool enabled) {
-    // Do nothing
-  }
-
-  public void SetEnableBehavior(string behaviorName, bool enabled) {
-    // Do nothing
-  }
-
+		
   public void SetEnableCliffSensor(bool enabled) {
     // Do nothing
   }
@@ -136,12 +124,10 @@ public class MockRobot : IRobot {
     
   }
 
-  public void ClearAllBehaviorScoreOverrides() {
-    // Do nothing
-  }
+  // enable/disable games available for Cozmo to request
+  public void SetAvailableGames(BehaviorGameFlag games)
+  {
 
-  public void OverrideBehaviorScore(string behaviorName, float newScore) {
-    // Do nothing
   }
 
   public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {

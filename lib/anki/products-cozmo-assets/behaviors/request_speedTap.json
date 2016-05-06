@@ -76,6 +76,7 @@
   [
     "AffectsBlocks",
     "MiniGame",
-    "RequestSpeedTap"
+    "RequestSpeedTap",
+    "FreeplayOne"
   ]
 }

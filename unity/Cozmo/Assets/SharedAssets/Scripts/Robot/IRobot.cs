@@ -139,15 +139,8 @@ public interface IRobot : IDisposable {
 
   void StopSparkUnlock();
 
-  void SetEnableAllBehaviors(bool enabled);
-
-  void SetEnableBehaviorGroup(BehaviorGroup behaviorGroup, bool enabled);
-
-  void SetEnableBehavior(string behaviorName, bool enabled);
-
-  void ClearAllBehaviorScoreOverrides();
-
-  void OverrideBehaviorScore(string behaviorName, float newScore);
+  // enable/disable games available for Cozmo to request
+  void SetAvailableGames(BehaviorGameFlag games);
 
   void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message);
 
