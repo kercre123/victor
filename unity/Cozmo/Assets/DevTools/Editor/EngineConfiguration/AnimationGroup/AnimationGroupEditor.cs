@@ -47,7 +47,7 @@ public class AnimationGroupEditor : EditorWindow {
     }
 
     if (Directory.Exists(sAnimationDirectory)) {
-      _AnimationNameOptions = Directory.GetFiles(sAnimationDirectory).Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
+      _AnimationNameOptions = Directory.GetFiles(sAnimationDirectory).Where(x => x.EndsWith(".json")).Select(x => Path.GetFileNameWithoutExtension(x)).ToArray();
     }
     else {
       _AnimationNameOptions = new string[0];
