@@ -13,11 +13,15 @@ public class ConnectDialog : MonoBehaviour {
   [SerializeField]
   private Cozmo.UI.CozmoButton _SimButton;
 
+  [SerializeField]
+  private PingStatus _PingStatus;
+
   private const int kRobotID = 1;
 
   private bool _Simulated = false;
   private string _CurrentRobotIP;
   private string _CurrentScene;
+  private bool _Connecting = false;
 
   private IRobot _Robot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
@@ -89,6 +93,13 @@ public class ConnectDialog : MonoBehaviour {
 
   private void Update() {
 
+    if (_Connecting || !_PingStatus.GetPingStatus()) {
+      _ConnectButton.Interactable = false;
+    }
+    else {
+      _ConnectButton.Interactable = true;
+    }
+
     if (RobotEngineManager.Instance != null) {
       DisconnectionReason reason = RobotEngineManager.Instance.GetLastDisconnectionReason();
       if (reason != DisconnectionReason.None) {
@@ -98,6 +109,7 @@ public class ConnectDialog : MonoBehaviour {
   }
 
   public void Play(bool sim) {
+    _Connecting = true;
     _ConnectButton.Interactable = false;
     _SimButton.Interactable = false;
     _ConnectButton.Text = "LOADING";
@@ -142,7 +154,7 @@ public class ConnectDialog : MonoBehaviour {
       DAS.Error(this, "Unknown robot connected: " + robotID.ToString());
       return;
     }
-
+      
     // actually load default volume
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences.ContainsKey(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot)) {
       _Robot.SetRobotVolume(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences[Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot]);

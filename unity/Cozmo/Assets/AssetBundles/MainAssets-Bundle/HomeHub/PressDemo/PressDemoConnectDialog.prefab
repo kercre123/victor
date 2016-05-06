@@ -77,6 +77,7 @@ GameObject:
   m_Component:
   - 224: {fileID: 22463296}
   - 114: {fileID: 11419672}
+  - 114: {fileID: 11444738}
   m_Layer: 5
   m_Name: PressDemoConnectDialog
   m_TagString: Untagged
@@ -278,6 +279,7 @@ MonoBehaviour:
   _ConnectionStatus: {fileID: 11409176}
   _ConnectButton: {fileID: 11439468}
   _SimButton: {fileID: 11493334}
+  _PingStatus: {fileID: 11444738}
 --- !u!114 &11422778
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -416,6 +418,17 @@ MonoBehaviour:
     _Event: -1705717452
     _EventType: 7
     _GameObjectType: 2
+--- !u!114 &11444738
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 154098}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 035991f9bd3ad4473bc1ada057e27796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &11459668
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -856,6 +869,10 @@ Prefab:
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _PingStatus
+      value: 
+      objectReference: {fileID: 11444738}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 154098}
