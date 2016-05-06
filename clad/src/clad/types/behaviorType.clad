@@ -14,6 +14,7 @@ enum uint_8 BehaviorType {
   ReactToCliff,
   ReactToPickup,
   ReactToPoke,
+  ReactToRobotOnBack,
   FollowMotion,
   PlayAnim,
   UnityDriven,
