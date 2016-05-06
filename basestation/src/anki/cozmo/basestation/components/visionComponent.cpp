@@ -1604,10 +1604,6 @@ namespace Cozmo {
 
     // Every time a new face is enrolled with a name, store the album on the robot
     SaveFaceAlbumToRobot();
-
-    // Get the robot ready to be able to say the name
-    // TODO: Need to determine what styles need to be created
-    _robot.GetTextToSpeechComponent().CreateSpeech(name, SayTextStyle::Name_Normal);
   }
   
 } // namespace Cozmo
