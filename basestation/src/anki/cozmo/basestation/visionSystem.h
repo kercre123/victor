@@ -389,8 +389,8 @@ namespace Cozmo {
     VizManager*                   _vizManager = nullptr;
 
     // Tool code stuff
-    TimeStamp_t                   _lastToolCodeReadTime_ms = 0;
-    const TimeStamp_t             kToolCodeReadPeriod_ms = 500; // TODO: Increase
+    TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
+    const TimeStamp_t             kToolCodeMotionTimeout_ms = 1000;
     
     // Calibration stuff
     static const u32              _kMinNumCalibImagesRequired = 4;

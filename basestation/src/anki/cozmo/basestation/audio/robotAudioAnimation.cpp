@@ -96,12 +96,14 @@ void RobotAudioAnimation::InitAnimation( Animation* anAnimation, RobotAudioClien
   AnimationEvent::AnimationEventId eventId = AnimationEvent::kInvalidAnimationEventId;
   while ( audioTrack.HasFramesLeft() ) {
     RobotAudioKeyFrame& aFrame = audioTrack.GetCurrentKeyFrame();
-    audioTrack.MoveToNextKeyFrame();
     
     const GameEvent::GenericEvent event = aFrame.GetAudioRef().audioEvent;
     if ( GameEvent::GenericEvent::Invalid != event ) {
       _animationEvents.emplace_back( ++eventId, aFrame.GetAudioRef().audioEvent, aFrame.GetTriggerTime() );
     }
+    
+    // Don't advance before we've had a chance to use aFrame, because it could be "live"
+    audioTrack.MoveToNextKeyFrame();
   }
   
   if ( _animationEvents.empty() ) {

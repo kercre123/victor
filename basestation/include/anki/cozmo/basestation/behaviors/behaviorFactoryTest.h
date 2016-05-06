@@ -51,16 +51,16 @@ namespace Cozmo {
   private:
     
     // Test constants
-    const Pose3d _cliffDetectPose;
-    const Pose3d _camCalibPose;
-    const Pose3d _prePickupPose;
-    const Pose3d _expectedLightCubePose;
-          Pose3d _actualLightCubePose;
-    const Pose3d _expectedChargerPose;
+    Pose3d _cliffDetectPose;
+    Pose3d _camCalibPose;
+    Pose3d _prePickupPose;
+    Pose3d _expectedLightCubePose;
+    Pose3d _actualLightCubePose;
+    Pose3d _expectedChargerPose;
     std::vector<std::pair<f32,f32> > _camCalibPanAndTiltAngles;
     
     static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
-    static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(5);
+    static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
     static constexpr f32 _kExpectedCubePoseDistThresh_mm = 30;
     static constexpr f32 _kExpectedCubePoseAngleThresh_rad = DEG_TO_RAD(10);
     static constexpr u32 _kNumPickupRetries = 1;
@@ -104,7 +104,10 @@ namespace Cozmo {
     // returns true if the callback handled the action, false if we should continue to handle it in HandleActionCompleted
     using ActionResultCallback = std::function<bool(const ActionResult& result, const ActionCompletedUnion& completionInfo)>;
     
-    void StartActing(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
+    void StartActing(Robot& robot,
+                     IActionRunner* action,
+                     ActionResultCallback callback = {},
+                     u32 actionCallbackTag = static_cast<u32>(ActionConstants::INVALID_TAG));
 
     std::map<u32, ActionResultCallback> _actionCallbackMap;
     bool IsActing() const {return !_actionCallbackMap.empty(); }
