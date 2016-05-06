@@ -152,6 +152,10 @@ namespace Cozmo {
     // Disable keep face alive animation
     robot.GetAnimationStreamer().SetParam(Anki::Cozmo::LiveIdleAnimationParameter::EnableKeepFaceAlive, 0);
 
+    // Call here to set timestamp
+    _stateTransitionTimestamps.resize(16);
+    SetCurrState(FactoryTestState::InitRobot);
+    
     return lastResult;
   } // Init()
 
@@ -202,7 +206,13 @@ namespace Cozmo {
         // Generate result struct
         FactoryTestResultEntry testRes;
         testRes.result = resCode;
+        //testRes.engineSHA1 = COZMO_VERSION_COMMIT; // TODO
         testRes.utcTime = time(0);
+        
+        // Mark end time
+        _stateTransitionTimestamps[testRes.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + testRes.timestamps.size(), testRes.timestamps.begin());
+        
         testRes.stationID = 0;   // TODO: How to get this?
         
         u8 buf[testRes.Size()];
@@ -572,6 +582,12 @@ namespace Cozmo {
       }
       case FactoryTestState::ReadLiftToolCode:
       {
+        // Wait for it to finish backing up
+        if (robot.GetMoveComponent().IsMoving()) {
+          break;
+        }
+        
+        
         // Goto pose where block is visible
         DriveToPoseAction* action = new DriveToPoseAction(robot, _prePickupPose);
         //action->SetMotionProfile(_motionProfile);
@@ -842,6 +858,8 @@ namespace Cozmo {
     
     _currentState = s;
 
+    _stateTransitionTimestamps[static_cast<u32>(s)] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    
     UpdateStateName();
 
     BEHAVIOR_VERBOSE_PRINT(DEBUG_FACTORY_TEST_BEHAVIOR, "BehaviorFactoryTest.SetState",

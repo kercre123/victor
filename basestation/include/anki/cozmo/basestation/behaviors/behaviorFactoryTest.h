@@ -136,6 +136,7 @@ namespace Cozmo {
     bool _chargerAvailable = false;
     bool _chargerConnected = false;
     FactoryTestResultCode _testResult;
+    std::vector<u32> _stateTransitionTimestamps;
     
   }; // class BehaviorFactoryTest
 
