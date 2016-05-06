@@ -8,7 +8,7 @@ namespace Anki {
         void Init(void);
         void Mute(void);
         void EnableAudio(bool enable);
-        void Feed(uint8_t* samples);
+        void Feed(bool enable, uint8_t* samples);
         void Sync();
       }
     }

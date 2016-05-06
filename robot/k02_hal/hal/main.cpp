@@ -110,7 +110,7 @@ int main (void)
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
   //StartupSelfTest();
 
-  #define ENABLE_FCC_TEST
+  //#define ENABLE_FCC_TEST
   #ifdef ENABLE_FCC_TEST
   FCC::start();
   for (;;) {
