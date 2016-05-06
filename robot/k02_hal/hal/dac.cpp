@@ -83,8 +83,6 @@ void Anki::Cozmo::HAL::DAC::Sync() {
   write_pointer = ((DAC0_C2 >> 4) - 1) % DAC_WORDS;
 }
 
-#define GENERATE_WHITE_NOISE
-
 void Anki::Cozmo::HAL::DAC::Feed(bool enabled, uint8_t* samples) {  
   #ifdef GENERATE_WHITE_NOISE
   static uint64_t lsfr = ~0L;
