@@ -59,4 +59,8 @@ public class DebugMenuManager : MonoBehaviour {
   public bool IsDialogOpen() {
     return _DebugMenuDialogInstance != null;
   }
+
+  public void EnableLatencyPopup(bool enable) {
+    GetComponent<LatencyCalculator>().EnableLatencyPopup(enable);
+  }
 }
