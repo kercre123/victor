@@ -114,10 +114,12 @@ namespace Cozmo {
     Result Update(const VisionPoseData&            robotState,
                   const Vision::ImageRGB&    inputImg);
     
-    Result AddCalibrationImage(const Vision::Image& calibImg);
+    Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI);
     Result ClearCalibrationImages();
     size_t GetNumStoredCalibrationImages() const { return _calibImages.size(); }
-    const std::list<Vision::Image>& GetCalibrationImages() const {return _calibImages;}
+    using CalibImage = std::pair<Vision::Image, Rectangle<s32>>;
+    const std::list<CalibImage>& GetCalibrationImages() const {return _calibImages;}
+    const std::vector<Pose3d>& GetCalibrationPoses() const { return _calibPoses;}
     
     void StopTracking();
 
@@ -394,8 +396,9 @@ namespace Cozmo {
     
     // Calibration stuff
     static const u32              _kMinNumCalibImagesRequired = 4;
-    std::list<Vision::Image>      _calibImages;
+    std::list<CalibImage>         _calibImages;
     bool                          _isCalibrating = false;
+    std::vector<Pose3d>           _calibPoses;
     
     struct VisionMemory {
       /* 10X the memory for debugging on a PC
