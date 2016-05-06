@@ -64,6 +64,20 @@ namespace Anki {
       _name = "PlayAnimation" + _animName + "Action";
     }
     
+    PlayAnimationAction::PlayAnimationAction(Robot& robot,
+                                             Animation* animation,
+                                             u32 numLoops,
+                                             bool interruptRunning)
+    : IAction(robot)
+    , _animName(animation->GetName())
+    , _name("PlayAnimation" + _animName + "Action")
+    , _numLoops(numLoops)
+    , _interruptRunning(interruptRunning)
+    , _customAnimation(animation)
+    {
+     
+    }
+    
     PlayAnimationAction::~PlayAnimationAction()
     {
       // If we're cleaning up but we didn't hit the end of this animation and we haven't been cleanly aborted
@@ -92,7 +106,7 @@ namespace Anki {
       if (NeedsAlteredAnimation())
       {
         const Animation* streamingAnimation = _robot.GetAnimationStreamer().GetStreamingAnimation();
-        const Animation* ourAnimation = _robot.GetCannedAnimation(_animName);
+        const Animation* ourAnimation = GetOurAnimation();
         
         if( ourAnimation == nullptr)
         {
@@ -123,11 +137,15 @@ namespace Anki {
       // If we've set our altered animation, use that
       if (_alteredAnimation)
       {
-        _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_robot, _alteredAnimation.get(), _numLoops, _interruptRunning);
+        _animTag = _robot.PlayAnimation(_alteredAnimation.get(), _numLoops, _interruptRunning);
       }
       else // do the normal thing
       {
-        _animTag = _robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
+        if(_customAnimation != nullptr) {
+          _animTag = _robot.PlayAnimation(_customAnimation, _numLoops, _interruptRunning);
+        } else {
+          _animTag = _robot.PlayAnimation(_animName, _numLoops, _interruptRunning);
+        }
         
         _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(_animName);
       }
@@ -196,6 +214,11 @@ namespace Anki {
       }
     }
 
+    inline const Animation* PlayAnimationAction::GetOurAnimation() const
+    {
+      return (_customAnimation == nullptr ? _robot.GetCannedAnimation(_animName) : _customAnimation);
+    }
+    
     bool PlayAnimationAction::NeedsAlteredAnimation() const
     {
       // Animations that don't interrupt never need to be altered
@@ -219,7 +242,7 @@ namespace Anki {
       }
       
       // Now actually check our animation to see if we have an initial face frame
-      const Animation* ourAnimation = _robot.GetCannedAnimation(_animName);
+      const Animation* ourAnimation = GetOurAnimation();
       
       
       bool animHasInitialFaceFrame = false;

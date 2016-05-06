@@ -46,6 +46,13 @@ namespace Anki {
                           const std::string& backupAnimName,
                           u32 numLoops = 1,
                           bool interruptRunning = true);
+      // Constructor for playing an Animation object (e.g. a "live" one created dynamically)
+      // Caller owns the animation -- it will not be deleted by this action.
+      PlayAnimationAction(Robot& robot,
+                          Animation* animation,
+                          u32 numLoops = 1,
+                          bool interruptRunning = true);
+      
       virtual ~PlayAnimationAction();
       
       virtual const std::string& GetName() const override { return _name; }
@@ -70,6 +77,7 @@ namespace Anki {
       bool                      _wasAborted;
       AnimationStreamer::Tag    _animTag = AnimationStreamer::NotAnimatingTag;
       bool                      _interruptRunning;
+      Animation*                _customAnimation = nullptr;
       
       // For responding to AnimationStarted, AnimationEnded, and AnimationEvent events
       Signal::SmartHandle _startSignalHandle;
@@ -81,6 +89,7 @@ namespace Anki {
       // For handling playing an altered copy of an animation
       std::unique_ptr<Animation> _alteredAnimation;
       
+      const Animation* GetOurAnimation() const;
       bool NeedsAlteredAnimation() const;
       
     }; // class PlayAnimationAction

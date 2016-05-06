@@ -1302,13 +1302,20 @@ namespace Cozmo {
                             "by now, has %zu messages",
                             _sendBuffer.size());
         
-        // Stream anything left in the send buffer (we should not really get here)
+        // Stream anything left in the send buffer. This can happen sometimes when it's taking awhile  
         UpdateAmountToSend(robot);
         lastResult = SendBufferedMessages(robot);
         if(RESULT_OK != lastResult) {
           PRINT_NAMED_ERROR("AnimationStreamer.Update.SendBufferedMessagesFailed",
                             "Could not send %zu remaining messages in send buffer",
                             _sendBuffer.size());
+        }
+        
+        // If we've finished sending whatever messages
+        if(_startOfAnimationSent &&
+           _sendBuffer.empty() &&
+           !_endOfAnimationSent) {
+          lastResult = SendEndOfAnimation(robot);
         }
       }
     }

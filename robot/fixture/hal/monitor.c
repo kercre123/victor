@@ -5,6 +5,8 @@
 #include "lib/stm32f2xx_rcc.h"
 #include "hal/console.h"
 
+#define PLAYPEN_ONLY    // XXX: Only way to share sensors right now, arrgh
+
 // These addresses are shifted left by 1 for the R/nW bit in the LSB
 #define CHARGE_CONTACT_ADDRESS  (0x80)  // 8'b10000000
 #define BATTERY_ADDRESS         (0x88)  // 8'b10001000
@@ -13,8 +15,13 @@
 #define READ                    1
 
 #define CLOCK_WAIT              5
+#ifdef PLAYPEN_ONLY
+#define GPIOB_SCL               8
+#define GPIOB_SDA               9
+#else
 #define GPIOB_SCL               9   // XXX: Backward for digital pot
 #define GPIOB_SDA               8
+#endif
 
 static void I2C_Pulse(void)
 {  
