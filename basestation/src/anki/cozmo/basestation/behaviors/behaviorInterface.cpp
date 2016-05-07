@@ -82,7 +82,7 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
     ASSERT_NAMED(requiredUnlockJson.isString(), "IBehavior.ReadFromJson.NonStringUnlockId");
     
     // this is probably the only place where we need this, otherwise please refactor to proper header
-    const UnlockId requiredUnlock = UnlockIdFromString(requiredUnlockJson.asString());
+    const UnlockId requiredUnlock = UnlockIdsFromString(requiredUnlockJson.asString());
     if ( requiredUnlock != UnlockId::Count ) {
       PRINT_NAMED_INFO("IBehavior.ReadFromJson.RequiredUnlock", "Behavior '%s' requires unlock '%s'",
                         GetName().c_str(), requiredUnlockJson.asString().c_str() );
