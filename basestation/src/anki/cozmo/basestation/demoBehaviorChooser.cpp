@@ -59,6 +59,20 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
   _name = "Demo[]";
 }
 
+unsigned int DemoBehaviorChooser::GetStateNum(State state)
+{
+  switch( state ) {
+    case State::None: return 0;
+    case State::WakeUp: return 1;
+    case State::FearEdge: return 2;
+    case State::Pounce: return 3;
+    case State::Faces: return 4;
+    case State::Cubes: return 5;
+    case State::MiniGame: return 6;
+    case State::Sleep: return 7;
+  }
+}
+
 void DemoBehaviorChooser::Init()
 {
   EnableAllBehaviors(false);
@@ -116,6 +130,8 @@ void DemoBehaviorChooser::TransitionToNextState()
       break;
     }
   }
+
+  _robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::DemoState( GetStateNum( _state ))));
 }
 
 bool DemoBehaviorChooser::DidBehaviorRunAndStop(const char* behaviorName) const
