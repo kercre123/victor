@@ -28,6 +28,8 @@
 
 #define DEBUG_BEHAVIOR_INTERACT_WITH_FACES 0
 
+#define SKIP_REQUIRE_KNOWN_FACE 1
+
 namespace Anki {
 namespace Cozmo {
 
@@ -85,6 +87,12 @@ namespace Cozmo {
     SubscribeToTags({
       GameToEngineTag::DenyGameStart
     });
+
+    if( SKIP_REQUIRE_KNOWN_FACE ) {
+      PRINT_NAMED_WARNING("BehaviorInteractWithFaces.DEMO",
+                          "Disabling requirement to see a known face in order to enroll. This needs to be changed for the demo at some point");
+      _readyToEnrollFace = true;
+    }
   }
   
   Result BehaviorInteractWithFaces::InitInternal(Robot& robot)
