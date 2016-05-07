@@ -19,13 +19,12 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "json/json.h"
-
-
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -44,7 +43,7 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
   , _blockworldFilter( new BlockWorldFilter )
   , _robot(robot)
 {
-  if (_robot.HasExternalInterface() )
+  if ( _robot.HasExternalInterface() )
   {
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
@@ -77,6 +76,8 @@ void DemoBehaviorChooser::OnSelected()
 {
   SetAllBehaviorsEnabled(false);
   _initCalled = true;
+
+  // TransitionToCubes();
 }
 
 Result DemoBehaviorChooser::Update()
@@ -208,10 +209,12 @@ void DemoBehaviorChooser::TransitionToFaces()
 void DemoBehaviorChooser::TransitionToCubes()
 {
   SET_STATE(Cubes);
+
+  _robot.GetProgressionUnlockComponent().SetUnlock(UnlockId::CubeRollAction, true);
+
   SetAllBehaviorsEnabled(false);
   SetBehaviorGroupEnabled(BehaviorGroup::DemoCubes);
 
-  // transition out of cubes is a special case
   _cubesUprightTime_s = -1.0f;
   _checkTransition = std::bind(&DemoBehaviorChooser::ShouldTransitionOutOfCubesState, this);
 }
