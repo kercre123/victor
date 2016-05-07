@@ -35,7 +35,7 @@ namespace Cozmo {
 static const char* kWakeUpBehavior = "demo_wakeUp";
 static const char* kFearEdgeBehavior = "demo_fearEdge";
 static const char* kCliffBehavior = "ReactToCliff";
-static const char* kFlipDownFromBackBehavior = "demo_flipDownFromBack";
+static const char* kFlipDownFromBackBehavior = "ReactToRobotOnBack";
 static const char* kSleepBehavior = "demo_sleep";
 static const float kTimeCubesMustBeUpright_s = 3.0f;
 
@@ -205,8 +205,6 @@ void DemoBehaviorChooser::TransitionToMiniGame()
   SET_STATE(MiniGame);
 
   _robot.GetMoodManager().SetEmotion(EmotionType::WantToPlay, 1.0f);
-  
-  // TEMP:  // TEMP: setModd here
   
   // leave block behaviors active, but also enable speed tap game request
   EnableBehaviorGroup(BehaviorGroup::RequestSpeedTap);

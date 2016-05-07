@@ -853,6 +853,10 @@ public:
     bool             _isCliffDetected    = false;
     bool             _isCliffSensorOn    = false;
     u16              _forwardSensorValue_mm = 0;
+    bool             _isOnBack = false;
+    TimeStamp_t      _robotFirstOnBack_ms = 0;
+    bool             _lastSendOnBackValue = false;
+
 
 
     std::vector<std::string> _idleAnimationNameStack;
