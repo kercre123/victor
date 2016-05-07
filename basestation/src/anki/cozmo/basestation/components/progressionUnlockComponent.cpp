@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "util/helpers/templateHelpers.h"
 #include "json/json.h"
 
 // for now, fake that it takes this long to "write and confirm" the data to the robot
@@ -25,45 +26,17 @@
 namespace Anki {
 namespace Cozmo {
 
-static const char* kConfigGroupName = "unlockedFreeplayBehaviors";
-
 ProgressionUnlockComponent::ProgressionUnlockComponent(Robot& robot)
   : _robot(robot)
 {
 }
 
-void ProgressionUnlockComponent::Init(const Json::Value& inJson)
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ProgressionUnlockComponent::Init()
 {
+  // todo rsam remove Json if we don't need it
 
-  Json::Value config = inJson[kConfigGroupName];
-  if( config.isNull() ) {
-    PRINT_NAMED_WARNING("ProgressionUnlockComponent.InvalidConfig",
-                        "json config did not contain key '%s'",
-                        kConfigGroupName);
-  }
-
-  // keep track of a set of freeplay behaviors to make sure there are no duplicates
-  std::set<BehaviorGroup> freeplayGroups;
-  
-  for(UnlockId unlock = UnlockId(0); unlock < UnlockId::Count; unlock++) {
-    const Json::Value& entryConfig = config[ UnlockIdToString( unlock ) ];
-    ProgressionUnlockEntry entry(entryConfig);
-
-    if(entry.HasFreeplayBehaviorGroup()) {
-      if( freeplayGroups.count( entry.GetFreeplayBehaviorGroup() ) > 0 ) {
-        PRINT_NAMED_ERROR("ProgressionUnlockComponent.Init.DuplicateFreeplayBehavior",
-                          "Unlock '%s' has freeplay behavior group '%s' which is a duplicate",
-                          UnlockIdToString(unlock),
-                          BehaviorGroupToString( entry.GetFreeplayBehaviorGroup() ));
-      }
-      else {
-        freeplayGroups.insert( entry.GetFreeplayBehaviorGroup() );
-      }
-    }
-    
-    _unlocks.insert( std::make_pair( unlock, std::move( entry ) ));
-  }
-
+  // register to get unlock requests
   if( _robot.HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
@@ -71,78 +44,94 @@ void ProgressionUnlockComponent::Init(const Json::Value& inJson)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
 {
-  auto it = _unlocks.find(unlock);
-  if( it == _unlocks.end() ) {
-    PRINT_NAMED_ERROR("ProgressionUnlockComponent.SetUnlock.UnlockNotFound",
-                      "could not find unlock '%s' (%d) in map (map size %zu)",
-                      UnlockIdToString(unlock),
-                      (int)unlock,
-                      _unlocks.size());
-    return false;
-  }
+  bool success = false;
 
-  it->second.SetUnlock( unlocked );
-
-  if( it->second.HasFreeplayBehaviorGroup() )
+  // depending on whether we want to set/unset the unlock
+  if ( unlocked )
   {
-  
-  // TODO rsam unlock behaviors
-  
-//    // if there is a freeplay behavior associated with this unlock, enable it now (if we are in the selection
-//    // chooser, this will have no effect)
-//    _robot.GetExternalInterface()->Broadcast( ExternalInterface::MessageGameToEngine(
-//                                                ExternalInterface::BehaviorManagerMessage(
-//                                                  1,
-//                                                  ExternalInterface::BehaviorManagerMessageUnion(
-//                                                    ExternalInterface::SetEnableBehaviorGroup(
-//                                                      it->second.GetFreeplayBehaviorGroup(), unlocked)))));
+    // we want to unlock (= add to the set of unlocked)
+    auto ret = _currentUnlocks.insert(unlock);
+    
+    // debug the result
+    if ( ret.second ) {
+      // successfully unlocked
+      success = true;
+      PRINT_NAMED_DEBUG("ProgressionUnlockComponent.SetUnlock.Unlocked",
+                        "Unlocked '%s' (%d)",
+                        UnlockIdToString(unlock), (int)unlock);
+    } else {
+      // already unlocked
+      PRINT_NAMED_ERROR("ProgressionUnlockComponent.SetUnlock.DuplicatedUnlock",
+                        "Tried to unlock '%s' (%d), but it's already unlocked",
+                        UnlockIdToString(unlock), (int)unlock);
+    }
+  }
+  else
+  {
+    // we want to lock back (= remove from the set)
+    const size_t erasedCount = _currentUnlocks.erase(unlock);
+    const bool successfullyLocked = erasedCount > 0;
+    if ( successfullyLocked )
+    {
+      // successfully locked
+      success = true;
+      PRINT_NAMED_DEBUG("ProgressionUnlockComponent.SetUnlock.Locked",
+                        "Locked '%s' (%d)",
+                        UnlockIdToString(unlock), (int)unlock);
+    }
+    else
+    {
+      // already locked
+      PRINT_NAMED_ERROR("ProgressionUnlockComponent.SetUnlock.MissingUnlock",
+                        "Tried to lock '%s' (%d), but it was already locked",
+                        UnlockIdToString(unlock), (int)unlock);
+    }
   }
   
   return true;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ProgressionUnlockComponent::IsUnlocked(UnlockId unlock) const
 {
-  const auto it = _unlocks.find(unlock);
-  if( it == _unlocks.end() ) {
-    PRINT_NAMED_ERROR("ProgressionUnlockComponent.IsUnlocked.UnlockNotFound",
-                      "could not find unlock '%s' (%d) in map (map size %zu)",
-                      UnlockIdToString(unlock),
-                      (int)unlock,
-                      _unlocks.size());
-    return false;
-  }
-  return it->second.IsUnlocked();
+  const auto matchIt = _currentUnlocks.find(unlock);
+  const bool isUnlocked = (matchIt != _currentUnlocks.end());
+  return isUnlocked;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ProgressionUnlockComponent::SendUnlockStatus() const
 {
   if( ! _robot.HasExternalInterface() ) {
     return;
   }
 
-  std::vector<ExternalInterface::UnlockEntry> unlocks;
-  for( const auto& unlock : _unlocks ) {
-    unlocks.emplace_back( ExternalInterface::UnlockEntry{ unlock.first, unlock.second.IsUnlocked() } );
+  // vector we are going to send
+  std::vector<ExternalInterface::UnlockEntry> allUnlocks;
+
+  // fill the vector with entries from 0 to count-1 all set to false
+  using EnumSize_t = std::underlying_type<UnlockId>::type;
+  EnumSize_t unlockTypeCount = Util::EnumToUnderlying( UnlockId::Count );
+  allUnlocks.reserve(unlockTypeCount);
+  for(EnumSize_t typeIt=0; typeIt<unlockTypeCount; ++typeIt) {
+    allUnlocks.emplace_back( (UnlockId)typeIt, false );
+  }
+  
+  // iterate actually unlocked ones and set their entry flag to true
+  for( const auto& unlockIt : _currentUnlocks ) {
+    allUnlocks[ Util::EnumToUnderlying( unlockIt ) ].unlocked = true;
   }
 
+  // now send
   _robot.GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame(
                                               ExternalInterface::UnlockStatus(
-                                                unlocks)));
+                                                allUnlocks)));
 }
 
-void ProgressionUnlockComponent::IterateUnlockedFreeplayBehaviors(
-  ProgressionUnlockComponent::UnlockBehaviorCallback callback)
-{
-  for( const auto& unlock : _unlocks ) {
-    if( unlock.second.HasFreeplayBehaviorGroup() ) {
-      callback(unlock.second.GetFreeplayBehaviorGroup(), unlock.second.IsUnlocked());
-    }
-  }
-}
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ProgressionUnlockComponent::Update()
 {
   float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

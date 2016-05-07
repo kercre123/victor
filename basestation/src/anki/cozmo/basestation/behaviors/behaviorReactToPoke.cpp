@@ -48,7 +48,7 @@ BehaviorReactToPoke::BehaviorReactToPoke(Robot& robot, const Json::Value& config
   
 }
 
-bool BehaviorReactToPoke::IsRunnable(const Robot& robot) const
+bool BehaviorReactToPoke::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

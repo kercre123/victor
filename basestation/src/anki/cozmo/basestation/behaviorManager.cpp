@@ -385,17 +385,6 @@ void BehaviorManager::SetBehaviorChooser(IBehaviorChooser* newChooser)
   _runningReactionaryBehavior = false;
 
   _currentChooserPtr = newChooser;
-
-// TODO we should not need to unlock behaviors when we switch choosers, only on load and when unlocks
-// happens. This has changed because this flag has moved from the behavior to the chooser, so different
-// choosers keep track of enabled/disabled behaviors separately
-//  if( _currentChooserPtr == _freeplayBehaviorChooser ) {
-//    _robot.GetProgressionUnlockComponent().IterateUnlockedFreeplayBehaviors(
-//      [this](BehaviorGroup group, bool enabled){
-//        _currentChooserPtr->EnableBehaviorGroup(group, enabled);
-//      });
-//  }
-
   _currentChooserPtr->OnSelected();
 
   // force the new behavior chooser to select something now, instead of waiting for the next tick

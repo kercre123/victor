@@ -23,6 +23,7 @@
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/types/behaviorGroup.h"
+#include "clad/types/unlockTypes.h"
 #include "util/bitFlags/bitFlags.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
@@ -107,7 +108,7 @@ public:
     
   // Returns true iff the state of the world/robot is sufficient for this
   // behavior to be executed
-  virtual bool IsRunnable(const Robot& robot) const = 0;
+  bool IsRunnable(const Robot& robot) const;
   
   const std::string& GetName() const { return _name; }
   const std::string& GetStateName() const { return _stateName; }
@@ -164,6 +165,7 @@ protected:
     
   virtual Result InitInternal(Robot& robot) = 0;
   virtual Result ResumeInternal(Robot& robot) { return InitInternal(robot); }
+  virtual bool IsRunnableInternal(const Robot& robot) const = 0;
 
   // EvaluateScoreInternal is used to score each behavior for behavior selection - it uses mood scorer or
   // flat score depending on configuration. If the behavior is running, it uses the Running score to decide if it should
@@ -287,10 +289,12 @@ private:
   std::string _name;
   std::string _stateName = "";
   
+  UnlockId _requiredUnlockId;
+  
   MoodScorer              _moodScorer;
   Util::GraphEvaluator2d  _repetitionPenalty;
   float                   _flatScore;
-    
+  
   Robot& _robot;
     
   std::vector<::Signal::SmartHandle> _eventHandles;

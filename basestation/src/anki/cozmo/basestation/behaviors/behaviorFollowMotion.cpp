@@ -40,7 +40,7 @@ BehaviorFollowMotion::BehaviorFollowMotion(Robot& robot, const Json::Value& conf
   }});
 }
   
-bool BehaviorFollowMotion::IsRunnable(const Robot& robot) const
+bool BehaviorFollowMotion::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

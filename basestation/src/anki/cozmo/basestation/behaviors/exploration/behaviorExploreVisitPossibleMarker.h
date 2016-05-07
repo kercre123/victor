@@ -53,7 +53,7 @@ public:
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  virtual bool IsRunnable(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   virtual float EvaluateScoreInternal(const Robot& robot) const override { return 1.0f; }
   
 protected:

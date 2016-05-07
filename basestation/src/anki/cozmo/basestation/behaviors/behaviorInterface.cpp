@@ -15,6 +15,8 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
+#include "anki/cozmo/basestation/behaviorSystem/unlockIdHelpers.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -23,6 +25,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
+#include "util/enums/stringToEnumMapper.hpp"
 #include "util/math/numericCast.h"
 
 namespace Anki {
@@ -36,10 +39,11 @@ static const char* kEmotionScorersKey    = "emotionScorers";
 static const char* kFlatScoreKey         = "flatScore";
 static const char* kRepetitionPenaltyKey = "repetitionPenalty";
 static const char* kBehaviorGroupsKey    = "behaviorGroups";
-  
+static const char* kRequiredUnlockKey    = "requiredUnlockId";
   
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
-  : _moodScorer()
+  : _requiredUnlockId( UnlockId::Count )
+  , _moodScorer()
   , _flatScore(0.0f)
   , _robot(robot)
   , _startedRunningTime_s(0.0)
@@ -68,6 +72,26 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
 {
   const Json::Value& nameJson = config[kNameKey];
   _name = nameJson.isString() ? nameJson.asCString() : kBaseDefaultName;
+
+  // - - - - - - - - - -
+  // Required unlock
+  // - - - - - - - - - -
+  const Json::Value& requiredUnlockJson = config[kRequiredUnlockKey];
+  if ( !requiredUnlockJson.isNull() )
+  {
+    ASSERT_NAMED(requiredUnlockJson.isString(), "IBehavior.ReadFromJson.NonStringUnlockId");
+    
+    // this is probably the only place where we need this, otherwise please refactor to proper header
+    const UnlockId requiredUnlock = UnlockIdFromString(requiredUnlockJson.asString());
+    if ( requiredUnlock != UnlockId::Count ) {
+      PRINT_NAMED_INFO("IBehavior.ReadFromJson.RequiredUnlock", "Behavior '%s' requires unlock '%s'",
+                        GetName().c_str(), requiredUnlockJson.asString().c_str() );
+      _requiredUnlockId = requiredUnlock;
+    } else {
+      PRINT_NAMED_ERROR("IBehavior.ReadFromJson.InvalidUnlockId", "Could not convert string to unlock id '%s'",
+        requiredUnlockJson.asString().c_str());
+    }
+  }
 
   // - - - - - - - - - -
   // Mood scorer
@@ -219,6 +243,24 @@ void IBehavior::Stop()
   StopInternal(_robot);
   _lastRunTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   StopActing(false);
+}
+
+bool IBehavior::IsRunnable(const Robot& robot) const
+{
+  // first check the unlock
+  if ( _requiredUnlockId != UnlockId::Count )
+  {
+    // ask progression component if the unlockId is currently unlocked
+    const ProgressionUnlockComponent& progressionComp = robot.GetProgressionUnlockComponent();
+    const bool isUnlocked = progressionComp.IsUnlocked( _requiredUnlockId );
+    if ( !isUnlocked ) {
+      return false;
+    }
+  }
+
+  // no unlock or unlock passed, ask subclass
+  const bool isRunnable = IsRunnableInternal(robot);
+  return isRunnable;
 }
 
 Util::RandomGenerator& IBehavior::GetRNG() const {

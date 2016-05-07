@@ -185,24 +185,9 @@ namespace Anki {
         LoadEmotionEvents();
       }
 
-      // Read in progression unlock config
-      if (nullptr != _context->GetDataPlatform())
-      {
-        Json::Value progressionUnlockConfig;
-        std::string jsonFilename = "config/basestation/config/unlock_config.json";
-        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
-                                                               jsonFilename,
-                                                               progressionUnlockConfig);
-        if (!success)
-        {
-          PRINT_NAMED_ERROR("Robot.UnlockConfigJsonNotFound",
-                            "Progression unlock Json config file %s not found.",
-                            jsonFilename.c_str());
-        }
-        
-        _progressionUnlockComponent->Init(progressionUnlockConfig);
-        _progressionUnlockComponent->SendUnlockStatus();
-      }
+      // Initialize progression
+      _progressionUnlockComponent->Init();
+      _progressionUnlockComponent->SendUnlockStatus();
       
       // load available behaviors into the behavior factory
       // rsam: 05/02/16 we are moving behaviors to basestation, but at the moment we support both paths for legacy

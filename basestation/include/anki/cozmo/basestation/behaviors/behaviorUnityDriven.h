@@ -33,7 +33,7 @@ public:
   
   virtual ~BehaviorUnityDriven();
   
-  virtual bool IsRunnable(const Robot& robot) const override { return _isRunnable; }
+  virtual bool IsRunnableInternal(const Robot& robot) const override { return _isRunnable; }
   
   virtual float EvaluateScoreInternal(const Robot& robot) const override;
     
