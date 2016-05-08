@@ -77,6 +77,9 @@ private:
 
   State _state = State::None;
 
+  // for the UI to know which state, we need to convert state to an int
+  static unsigned int GetStateNum(State state);
+
   std::string _name;
 
   void SetState_internal(State state, const std::string& stateName);
