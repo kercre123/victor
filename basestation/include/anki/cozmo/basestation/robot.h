@@ -108,6 +108,7 @@ struct RobotState;
 class ActiveCube;
 class CannedAnimationContainer;
 class SpeedChooser;
+class DrivingAnimationHandler;
 
 typedef enum {
   SAVE_OFF = 0,
@@ -706,10 +707,13 @@ public:
     inline ProgressionUnlockComponent& GetProgressionUnlockComponent() { assert(_progressionUnlockComponent); return *_progressionUnlockComponent; }
 
     const NVStorageComponent& GetNVStorageComponent() const { return _nvStorageComponent; }
-    NVStorageComponent& GetNVStorageComponent() { return _nvStorageComponent; }
+          NVStorageComponent& GetNVStorageComponent() { return _nvStorageComponent; }
   
     const SpeedChooser& GetSpeedChooser() const { return *_speedChooser; }
           SpeedChooser& GetSpeedChooser()       { return *_speedChooser; }
+  
+    const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return *_drivingAnimationHandler; }
+          DrivingAnimationHandler& GetDrivingAnimationHandler()       { return *_drivingAnimationHandler; }
 
     // Handle various message types
     template<typename T>
@@ -764,6 +768,8 @@ public:
     s32 _numAnimationAudioFramesPlayed   = 0;
     s32 _numAnimationAudioFramesStreamed = 0;
     u8  _animationTag                    = 0;
+  
+    DrivingAnimationHandler* _drivingAnimationHandler;
   
     //ActionQueue           _actionQueue;
     ActionList              _actionList;
@@ -853,6 +859,10 @@ public:
     bool             _isCliffDetected    = false;
     bool             _isCliffSensorOn    = false;
     u16              _forwardSensorValue_mm = 0;
+    bool             _isOnBack = false;
+    TimeStamp_t      _robotFirstOnBack_ms = 0;
+    bool             _lastSendOnBackValue = false;
+
 
 
     std::vector<std::string> _idleAnimationNameStack;

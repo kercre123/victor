@@ -133,6 +133,10 @@ message RobotPoked {
 message RobotStopped {
 }
 
+message RobotOnBack {
+    bool onBack
+}
+
 // Generic string for sending debug string up to game
 message DebugString {
     string    text
@@ -491,6 +495,14 @@ message RequestEnrollFace {}
 
 message SparkUnlockEnded {
 
+}
+
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  DEMO  /////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+message DemoState {
+  uint_8 stateNum
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

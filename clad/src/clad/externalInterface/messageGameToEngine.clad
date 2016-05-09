@@ -633,6 +633,13 @@ message SetIdleAnimation {
 message ReadAnimationFile {
 }
 
+// SetDrivingAnimations
+message SetDrivingAnimations {
+    string drivingStartAnim,
+    string drivingLoopAnim,
+    string drivingEndAnim
+}
+
 message EnableVisionMode {
    VisionMode mode,
    bool       enable

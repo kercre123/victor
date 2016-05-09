@@ -43,8 +43,6 @@ private:
 
   bool _isInAir = false;
 
-  float _timeToConsiderOnBack = -1.0f;
-  
   virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
 }; // class BehaviorReactToPickup

@@ -33,6 +33,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToCliff.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnBack.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToStop.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
@@ -179,6 +180,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     {
       newBehavior = new BehaviorFlipDownFromWheelie(robot, config);
       break;
+    }
+    case BehaviorType::ReactToRobotOnBack:
+    {
+      newBehavior = new BehaviorReactToRobotOnBack(robot, config);
+      break;     
     }
     case BehaviorType::Count:
     {
