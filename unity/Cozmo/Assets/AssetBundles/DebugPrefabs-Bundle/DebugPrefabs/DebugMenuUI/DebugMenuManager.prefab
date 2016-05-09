@@ -108,6 +108,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _DebugMenuDialogPrefab: {fileID: 11496938, guid: 8d0286a28c83143099cdbf6c5cf3def7,
     type: 2}
+  _LatencyCalculator: {fileID: 11415984}
   _DebugMenuCanvas: {fileID: 22391704}
 --- !u!114 &11430208
 MonoBehaviour:

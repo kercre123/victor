@@ -14,6 +14,8 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// and handles launching, ticking, and messaging with the Cozmo Engine
 /// </summary>
 public class RobotEngineManager : MonoBehaviour {
+
+  public const string kRobotIP = "172.31.1.1";
   
   public static RobotEngineManager Instance = null;
 
