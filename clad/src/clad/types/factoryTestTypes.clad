@@ -60,7 +60,8 @@ enum uint_8 FactoryTestResultCode {
   MOTOR_CALIB_UNEXPECTED,
   TEST_RESULT_WRITE_FAILED,
   TEST_TIMED_OUT,
-  TEST_CANCELLED
+  TEST_CANCELLED,
+  ROBOT_PICKUP,
 }
 
 structure FactoryTestResultEntry {

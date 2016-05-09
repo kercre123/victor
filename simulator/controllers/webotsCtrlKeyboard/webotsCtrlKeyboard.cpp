@@ -2130,6 +2130,11 @@ namespace Anki {
         // receipt of NVStorageOpResult message below.
       }
     
+      void AppendToFile(const std::string& filename, const std::string& data) {
+        auto contents = Util::FileUtils::ReadFile(_mfgDataSaveFile);
+        contents = contents + '\n' + data;
+        Util::FileUtils::WriteFile(_mfgDataSaveFile, contents);
+      }
     
       void WebotsKeyboardController::HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg)
       {
@@ -2165,7 +2170,7 @@ namespace Anki {
               
               char buf[256];
               snprintf(buf, sizeof(buf),
-                       "[CameraCalibration] Tag: %s: %f, fy: %f, cx: %f, cy: %f, skew: %f, nrows: %d, ncols: %d",
+                       "[CameraCalibration] Tag: %s: fx: %f, fy: %f, cx: %f, cy: %f, skew: %f, nrows: %d, ncols: %d",
                       EnumToString(msg.tag),
                       calib.focalLength_x, calib.focalLength_y,
                       calib.center_x, calib.center_y,
@@ -2173,10 +2178,8 @@ namespace Anki {
                       calib.nrows, calib.ncols);
               
               PRINT_NAMED_INFO("HandleNVStorageOpResult.CamCalibration", "%s", buf);
-              
-              auto contents = Util::FileUtils::ReadFile(_mfgDataSaveFile);
-              contents = contents + '\n' + buf;
-              Util::FileUtils::WriteFile(_mfgDataSaveFile, contents);
+
+              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_ToolCodeInfo:
@@ -2200,10 +2203,7 @@ namespace Anki {
               
               PRINT_NAMED_INFO("HandleNVStorageOpResult.ToolCodeInfo","%s", buf);
               
-              
-              auto contents = Util::FileUtils::ReadFile(_mfgDataSaveFile);
-              contents = contents + '\n' + buf;
-              Util::FileUtils::WriteFile(_mfgDataSaveFile, contents);
+              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_CalibPose:
@@ -2232,11 +2232,7 @@ namespace Anki {
               
               PRINT_NAMED_INFO("HandleNVStorageOpResult.CalibPose","%s", buf);
               
-              
-              auto contents = Util::FileUtils::ReadFile(_mfgDataSaveFile);
-              contents = contents + '\n' + buf;
-              Util::FileUtils::WriteFile(_mfgDataSaveFile, contents);
-              
+              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_PlaypenTestResults:
@@ -2248,12 +2244,15 @@ namespace Anki {
                 break;
               }
               result.Unpack(recvdData->data(), result.Size());
-              time_t rawtime = static_cast<time_t>(result.utcTime);
+              //time_t rawtime = static_cast<time_t>(result.utcTime);
               
               char buf[512];
               snprintf(buf, sizeof(buf),
-                       "[PlayPenTest] Result: %s, Time: %s, SHA-1: %x, stationID: %d, Timestamps: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
-                       EnumToString(result.result), ctime(&rawtime), result.engineSHA1, result.stationID,
+                       "[PlayPenTest] Result: %s, Time: %llu, SHA-1: %x, stationID: %d, Timestamps: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+                       EnumToString(result.result),
+                       //ctime(&rawtime),
+                       result.utcTime,
+                       result.engineSHA1, result.stationID,
                        result.timestamps[0], result.timestamps[1], result.timestamps[2], result.timestamps[3],
                        result.timestamps[4], result.timestamps[5], result.timestamps[6], result.timestamps[7],
                        result.timestamps[8], result.timestamps[9], result.timestamps[10], result.timestamps[11],
@@ -2261,9 +2260,7 @@ namespace Anki {
               
               PRINT_NAMED_INFO("HandleNVStorageOpResult.PlaypenTestResults", "%s", buf);
               
-              auto contents = Util::FileUtils::ReadFile(_mfgDataSaveFile);
-              contents = contents + '\n' + buf;
-              Util::FileUtils::WriteFile(_mfgDataSaveFile, contents);
+              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_CalibImage1:

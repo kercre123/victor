@@ -92,6 +92,7 @@ namespace Cozmo {
     Result HandleObjectMoved(const Robot& robot, const ObjectMoved &msg);
     Result HandleCameraCalibration(Robot& robot, const CameraCalibration &msg);
     Result HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg);
+    Result HandleRobotPickedUp(Robot& robot, const ExternalInterface::RobotPickedUp &msg);
     Result HandleMotorCalibration(Robot& robot, const MotorCalibration &msg);
     Result HandleObjectAvailable(Robot& robot, const ExternalInterface::ObjectAvailable &msg);
     Result HandleObjectConnectionState(Robot& robot, const ObjectConnectionState &msg);
