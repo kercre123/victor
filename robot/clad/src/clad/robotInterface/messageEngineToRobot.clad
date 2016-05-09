@@ -272,17 +272,12 @@ message DebugSetRTTO
   uint_16 timeoutMilliseconds
 }
 
-// Display a 
+// Display a large font number
 message DisplayNumber
 {
   uint_32 value,
   uint_8  x,
   uint_8  y
-}
-
-// This is an empty message, just display
-message DisplayRelease
-{  
 }
 
 message NVReadResultToBody

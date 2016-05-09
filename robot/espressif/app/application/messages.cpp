@@ -11,6 +11,7 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "anki/common/constantsAndMacros.h"
 #include "animationController.h"
 #include "rtip.h"
+#include "face.h"
 #include "activeObjectManager.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
@@ -21,9 +22,6 @@ static Anki::Cozmo::NVStorage::NVReportDest nvOpReportTo;
 
 namespace Anki {
   namespace Cozmo {
-    namespace Face {
-      void DisplayNumber(u32 value, int x, int y);
-    }
     namespace Messages {
 
       Result Init()
@@ -277,7 +275,7 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_oledDisplayNumber:
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              Face::DisplayNumber(msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
+              Face::FaceDisplayNumber(msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_testState:

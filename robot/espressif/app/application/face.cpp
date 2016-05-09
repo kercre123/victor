@@ -398,7 +398,7 @@ namespace Face {
   }
 
 
-  void DisplayNumber(u32 value, int x, int y)
+  void FaceDisplayNumber(u32 value, int x, int y)
   {
     const int TOTAL_DIGITS = 4;
 
