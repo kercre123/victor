@@ -289,6 +289,7 @@ private:
   std::string _name;
   std::string _stateName = "";
   
+  // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
   
   MoodScorer              _moodScorer;

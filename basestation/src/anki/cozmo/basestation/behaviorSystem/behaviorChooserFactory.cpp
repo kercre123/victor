@@ -71,13 +71,6 @@ IBehaviorChooser* CreateBehaviorChooser(Robot& robot, const Json::Value& config)
   return newChooser;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DestroyBehaviorChooser(IBehaviorChooser* &chooserPtr)
-{
-  delete chooserPtr;
-  chooserPtr = nullptr;
-}
-
 }; // namespace BehaviorChooserFactory
 } // namespace Cozmo
 } // namespace Anki

@@ -116,7 +116,8 @@ bool LoadTestBehaviors(Robot& testRobot, SimpleBehaviorChooser& behaviorChooser)
       EXPECT_NE(newBehavior, nullptr);
       if (newBehavior)
       {
-        allAddedOk = (behaviorChooser.TryAddBehavior(newBehavior) == Anki::RESULT_OK);
+        const bool addedOk = (behaviorChooser.TryAddBehavior(newBehavior) == Anki::RESULT_OK);
+        allAddedOk = allAddedOk && addedOk;
       }
       else
       {

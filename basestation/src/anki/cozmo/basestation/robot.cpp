@@ -1490,8 +1490,10 @@ namespace Anki {
         if (success && !behaviorJson.empty())
         {
           // PRINT_NAMED_DEBUG("Robot.LoadBehavior", "Loading '%s'", fullFileName.c_str());
-          _behaviorMgr.CreateBehaviorFromConfiguration(behaviorJson);
-          // ignoring return value because we expect internal error control
+          const Result ret = _behaviorMgr.CreateBehaviorFromConfiguration(behaviorJson);
+          if ( ret != RESULT_OK ) {
+            PRINT_NAMED_ERROR("Robot.LoadBehavior.CreateFailed", "Failed to create behavior from '%s'", fullFileName.c_str());
+          }
         }
         else if( ! success )
         {
