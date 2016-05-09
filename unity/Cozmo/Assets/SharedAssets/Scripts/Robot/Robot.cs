@@ -1378,6 +1378,20 @@ public class Robot : IRobot {
 
   #endregion
 
+  #region PressDemoMessages
+
+  public void TransitionToNextDemoState() {
+    RobotEngineManager.Instance.Message.TransitionToNextDemoState = Singleton<TransitionToNextDemoState>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void StartDemoWithEdge(bool demoWithEdge) {
+    RobotEngineManager.Instance.Message.StartDemoWithEdge = Singleton<StartDemoWithEdge>.Instance.Initialize(demoWithEdge);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  #endregion
+
   public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Saying text: " + text);
     SendQueueSingleAction(Singleton<SayText>.Instance.Initialize(text, playEvent, style), callback, queueActionPosition);
