@@ -421,7 +421,9 @@ namespace Face {
     }
 
     u8 top = y / 8;
-    u8 bottom = (y + 16+ 7) / 8;
+    u8 bottom = (y + 7) / 8 + 4;
+
+    if (bottom > PAGES) { bottom = PAGES; }
 
     Face::CreateRects((u64*) frame, x, top, x + NUMBER_WIDTH, bottom);
   }
