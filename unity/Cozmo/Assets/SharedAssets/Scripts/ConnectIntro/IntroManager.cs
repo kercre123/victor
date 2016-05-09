@@ -4,8 +4,8 @@ using System.Collections;
 public class IntroManager : MonoBehaviour {
 
   [SerializeField]
-  private Intro _DevConnectDialog;
-  private GameObject _DevConnectDialogInstance;
+  private ConnectDialog _ConnectDialogPrefab;
+  private GameObject _ConnectDialogInstance;
 
   [SerializeField]
   private HubWorldBase _HubWorldPrefab;
@@ -58,14 +58,14 @@ public class IntroManager : MonoBehaviour {
   }
 
   private void ShowDevConnectDialog() {
-    if (_DevConnectDialogInstance == null && _DevConnectDialog != null) {
-      _DevConnectDialogInstance = UIManager.CreateUIElement(_DevConnectDialog.gameObject);
+    if (_ConnectDialogInstance == null && _ConnectDialogPrefab != null) {
+      _ConnectDialogInstance = UIManager.CreateUIElement(_ConnectDialogPrefab.gameObject);
     }
   }
 
   private void HideDevConnectDialog() {
-    if (_DevConnectDialogInstance != null) {
-      Destroy(_DevConnectDialogInstance);
+    if (_ConnectDialogInstance != null) {
+      Destroy(_ConnectDialogInstance);
     }
   }
 }

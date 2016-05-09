@@ -433,7 +433,7 @@ namespace Cozmo {
       public ShowCozmoCubeSlide ShowCozmoCubesSlide(int numCubesRequired) {
         GameObject slideObject = ShowWideGameStateSlide(MinigameUIPrefabHolder.Instance.InitialCubesSlide, "setup_cubes_slide");
         ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
-        cubeSlide.Initialize(numCubesRequired, Cozmo.CubePalette.OutOfViewColor, Cozmo.CubePalette.InViewColor, LocalizationKeys.kMinigameLabelShowCubes);
+        cubeSlide.Initialize(numCubesRequired, Cozmo.CubePalette.InViewColor);
         return cubeSlide;
       }
 

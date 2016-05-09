@@ -14,6 +14,8 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// and handles launching, ticking, and messaging with the Cozmo Engine
 /// </summary>
 public class RobotEngineManager : MonoBehaviour {
+
+  public const string kRobotIP = "172.31.1.1";
   
   public static RobotEngineManager Instance = null;
 
@@ -82,6 +84,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageOpResult> OnGotNVStorageOpResult;
   public event Action<Anki.Cozmo.ExternalInterface.DebugLatencyMessage> OnDebugLatencyMsg;
   public event Action<Anki.Cozmo.ExternalInterface.RobotEnrolledFace> OnRobotEnrolledFace;
+  public event Action<Anki.Cozmo.ExternalInterface.RequestEnrollFace> OnRequestEnrollFace;
 
   #region Audio Callback events
 
@@ -415,9 +418,18 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RobotEnrolledFace:
       ReceivedSpecificMessage(message.RobotEnrolledFace);
       break;
+    case G2U.MessageEngineToGame.Tag.RequestEnrollFace:
+      ReceivedSpecificMessage(message.RequestEnrollFace);
+      break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
+    }
+  }
+
+  private void ReceivedSpecificMessage(G2U.RequestEnrollFace message) {
+    if (OnRequestEnrollFace != null) {
+      OnRequestEnrollFace(message);
     }
   }
 

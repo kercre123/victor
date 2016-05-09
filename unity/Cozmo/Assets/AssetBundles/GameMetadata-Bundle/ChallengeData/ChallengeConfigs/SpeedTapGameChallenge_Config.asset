@@ -13,9 +13,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SkillConfig:
     _EvaluateLevelChangeEvent:
-    - _EnumValueAsString: OnSpeedtapRoundCozmoWin
+    - _EnumValueAsString: OnSpeedtapRoundCozmoWinAnyIntensity
       _EnumValue: 10
-    - _EnumValueAsString: OnSpeedtapGamePlayerWin
+    - _EnumValueAsString: OnSpeedtapRoundPlayerWinAnyIntensity
       _EnumValue: 13
     _GainChallengePointEvent:
     - _EnumValueAsString: OnSpeedtapHandCozmoWin

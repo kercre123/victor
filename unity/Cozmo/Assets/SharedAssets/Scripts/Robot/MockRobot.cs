@@ -801,6 +801,19 @@ public class MockRobot : IRobot {
 
   #endregion
 
+  #region PressDemoMessages
+
+  public void TransitionToNextDemoState() {
+  
+  }
+
+  public void StartDemoWithEdge(bool demoWithEdge) {
+    
+  }
+
+  #endregion
+
+
   public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     
   }

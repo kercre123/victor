@@ -1,0 +1,33 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "pressDemo.faceEnrollTitle": {
+    "translation": "Cozmo wants to meet you"
+  },
+  "pressDemo.faceEnrollDesc": {
+    "translation": "Select Yes to meet Cozmo"
+  },
+  "pressDemo.speedTapTitle": {
+    "translation": "Cozmo Want To Play Speed Tap"
+  },
+  "pressDemo.speedTapDesc": {
+    "translation": "Select Yes to play Speed Tap"
+  }
+}

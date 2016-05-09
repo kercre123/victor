@@ -56,7 +56,7 @@ namespace FaceEnrollment {
 
     private void PlayFaceReactionAnimation(string faceName) {
       DAS.Debug("FaceEnrollmentGame.PlayFaceReactionAnimation", "Attempt to Play Face Reaction Animation - FaceId: " + faceName);
-      RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(faceName, Anki.Cozmo.GameEvent.OnLearnedPlayerName, Anki.Cozmo.SayTextStyle.Normal, HandleReactionDone);
+      RobotEngineManager.Instance.CurrentRobot.SayTextWithEvent(faceName, Anki.Cozmo.GameEvent.OnLearnedPlayerName, Anki.Cozmo.SayTextStyle.Name_Normal, HandleReactionDone);
     }
 
     private void HandleReactionDone(bool success) {
