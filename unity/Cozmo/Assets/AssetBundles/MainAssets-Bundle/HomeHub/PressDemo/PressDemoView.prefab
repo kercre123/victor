@@ -132,7 +132,7 @@ GameObject:
   - 114: {fileID: 11472752}
   - 114: {fileID: 11490288}
   m_Layer: 5
-  m_Name: StartNoEdgeButton
+  m_Name: StartNoEdgeSecretButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -235,7 +235,7 @@ GameObject:
   - 114: {fileID: 11439490}
   - 114: {fileID: 11499694}
   m_Layer: 5
-  m_Name: ForceProgressButton
+  m_Name: ForceProgressSecretButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -518,9 +518,9 @@ MonoBehaviour:
   _CloseDialogOnTapOutside: 0
   _OptionalCloseDialogButton: {fileID: 0}
   DimBackground: 0
-  _ForceProgressButton: {fileID: 11499694}
+  _ForceProgressSecretButton: {fileID: 11499694}
   _StartButton: {fileID: 11477554}
-  _StartNoEdgeButton: {fileID: 11490288}
+  _StartNoEdgeSecretButton: {fileID: 11490288}
   _FatalErrorText: {fileID: 11400758}
   _PressDebugBaseImage: {fileID: 11413916}
   _PressDebugDatabase:

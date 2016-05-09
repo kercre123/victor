@@ -32,7 +32,7 @@ public class ConnectDialog : MonoBehaviour {
   }
 
   private string RobotIP {
-    get { return PlayerPrefs.GetString("RobotIP", "172.31.1.1"); }
+    get { return PlayerPrefs.GetString("RobotIP", RobotEngineManager.kRobotIP); }
 
     set { PlayerPrefs.SetString("RobotIP", value); }
   }

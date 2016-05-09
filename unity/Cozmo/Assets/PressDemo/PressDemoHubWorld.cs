@@ -1,6 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/// <summary>
+///  handles scene transitions on the unity side for the press demo
+///  scene here refers to the press demo scenes handled in the engine
+///  not unity scenes.
+/// </summary>
 public class PressDemoHubWorld : HubWorldBase {
 
   private GameBase _MiniGameInstance;
@@ -15,7 +20,7 @@ public class PressDemoHubWorld : HubWorldBase {
   private PressDemoView _PressDemoViewPrefab;
   private PressDemoView _PressDemoViewInstance;
 
-  private bool _ForceProgressWhenOver = false;
+  private bool _ProgressSceneWhenMinigameOver = false;
 
   private int _PressDemoDebugSceneIndex = 0;
 
@@ -77,16 +82,16 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void StartFaceEnrollmentActivity() {
     DAS.Debug(this, "Starting Face Enrollment Activity");
-    PlayMinigame(_FaceEnrollmentChallengeData, false);
+    PlayMinigame(_FaceEnrollmentChallengeData, progressSceneWhenMinigameOver: false);
   }
 
   private void StartSpeedTapGame() {
     DAS.Debug(this, "Starting Speed Tap Game");
-    PlayMinigame(_SpeedTapChallengeData, true);
+    PlayMinigame(_SpeedTapChallengeData, progressSceneWhenMinigameOver: true);
   }
 
-  private void PlayMinigame(ChallengeData challengeData, bool forceProgressWhenOver) {
-    _ForceProgressWhenOver = forceProgressWhenOver;
+  private void PlayMinigame(ChallengeData challengeData, bool progressSceneWhenMinigameOver) {
+    _ProgressSceneWhenMinigameOver = progressSceneWhenMinigameOver;
 
     _PressDemoViewInstance.OnForceProgress -= HandleForceProgressPressed;
     _PressDemoViewInstance.OnStartButton -= HandleStartButtonPressed;
@@ -110,7 +115,7 @@ public class PressDemoHubWorld : HubWorldBase {
   private void HandleMiniGameQuit() {
     DAS.Debug(this, "activity ended so force transitioning to the next thing");
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
-    if (_ForceProgressWhenOver) {
+    if (_ProgressSceneWhenMinigameOver) {
       RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
     }
     LoadPressDemoView();

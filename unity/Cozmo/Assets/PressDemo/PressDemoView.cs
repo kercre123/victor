@@ -7,7 +7,7 @@ public class PressDemoView : Cozmo.UI.BaseView {
   public System.Action<bool> OnStartButton;
 
   [SerializeField]
-  private UnityEngine.UI.Button _ForceProgressButton;
+  private UnityEngine.UI.Button _ForceProgressSecretButton;
 
   [SerializeField]
   private UnityEngine.UI.Button _StartButton;
@@ -16,7 +16,7 @@ public class PressDemoView : Cozmo.UI.BaseView {
   // and used if the demoer wants to start the demo and skip
   // the initial edge detection scene.
   [SerializeField]
-  private UnityEngine.UI.Button _StartNoEdgeButton;
+  private UnityEngine.UI.Button _StartNoEdgeSecretButton;
 
   [SerializeField]
   private UnityEngine.UI.Text _FatalErrorText;
@@ -28,9 +28,9 @@ public class PressDemoView : Cozmo.UI.BaseView {
   private Sprite[] _PressDebugDatabase;
 
   void Start() {
-    _ForceProgressButton.onClick.AddListener(HandleForceProgressPressed);
+    _ForceProgressSecretButton.onClick.AddListener(HandleForceProgressPressed);
     _StartButton.onClick.AddListener(HandleStartButton);
-    _StartNoEdgeButton.onClick.AddListener(HandleStartNoEdgeButton);
+    _StartNoEdgeSecretButton.onClick.AddListener(HandleStartNoEdgeButton);
     RobotEngineManager.Instance.DisconnectedFromClient += OnClientDisconnect;
   }
 
@@ -44,7 +44,7 @@ public class PressDemoView : Cozmo.UI.BaseView {
 
   public void HideStartButtons() {
     _StartButton.gameObject.SetActive(false);
-    _StartNoEdgeButton.gameObject.SetActive(false);
+    _StartNoEdgeSecretButton.gameObject.SetActive(false);
   }
 
   private void HandleStartButton() {
