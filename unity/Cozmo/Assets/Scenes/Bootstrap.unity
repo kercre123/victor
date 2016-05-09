@@ -408,7 +408,7 @@ Prefab:
       objectReference: {fileID: 735345286}
     - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
       propertyPath: _MainSceneName
-      value: PressDemo
+      value: HomeHub
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 96563fa7c044a44afa01f530712be672, type: 2}
