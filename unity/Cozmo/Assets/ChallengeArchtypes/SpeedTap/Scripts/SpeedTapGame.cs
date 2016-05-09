@@ -133,11 +133,21 @@ namespace SpeedTap {
       }
     }
 
+    public bool IsHighIntensityRound() {
+      int oneThirdRoundsTotal = _Rounds / 3;
+      return (_PlayerRoundsWon + _CozmoRoundsWon) > oneThirdRoundsTotal;
+    }
+
     public bool IsGameComplete() {
       int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
       int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
       int roundsLeft = _Rounds - losingScore - winningScore;
       return (winningScore > losingScore + roundsLeft);
+    }
+
+    public bool IsHighIntensityGame() {
+      int twoThirdsRoundsTotal = _Rounds / 3 * 2;
+      return (_PlayerRoundsWon + _CozmoRoundsWon) > twoThirdsRoundsTotal;
     }
 
     public void HandleGameEnd() {

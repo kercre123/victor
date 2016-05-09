@@ -29,7 +29,7 @@ public class InitialCubesState : State {
     _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
     _Game.SharedMinigameView.ShowContinueButtonOnShelf(HandleContinueButtonClicked,
       Localization.Get(LocalizationKeys.kButtonContinue), 
-      Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound, 0),
+      GetWaitingForCubesText(_CubesRequired),
       Cozmo.UI.UIColorPalette.NeutralTextColor(),
       "cubes_are_ready_continue_button");
     _Game.SharedMinigameView.EnableContinueButton(false);
@@ -107,14 +107,12 @@ public class InitialCubesState : State {
     _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
 
     if (_NumValidCubes >= _CubesRequired) {
-      _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesReady,
-        _CubesRequired), Cozmo.UI.UIColorPalette.CompleteTextColor());
+      _Game.SharedMinigameView.SetContinueButtonShelfText(GetCubesReadyText(_CubesRequired), Cozmo.UI.UIColorPalette.CompleteTextColor());
 
       _Game.SharedMinigameView.EnableContinueButton(true);
     }
     else {
-      _Game.SharedMinigameView.SetContinueButtonShelfText(Localization.GetWithArgs(LocalizationKeys.kMinigameLabelCubesFound,
-        _NumValidCubes), Cozmo.UI.UIColorPalette.NeutralTextColor());
+      _Game.SharedMinigameView.SetContinueButtonShelfText(GetWaitingForCubesText(_CubesRequired), Cozmo.UI.UIColorPalette.NeutralTextColor());
 
       _Game.SharedMinigameView.EnableContinueButton(false);
     }
@@ -127,6 +125,16 @@ public class InitialCubesState : State {
         lightCube.Value.SetLEDs(Cozmo.CubePalette.OutOfViewColor.lightColor);
       }
     }
+  }
+
+  private string GetCubesReadyText(int numCubes) {
+    string cubesReadyKey = (numCubes > 1) ? LocalizationKeys.kMinigameLabelCubesReadyPlural : LocalizationKeys.kMinigameLabelCubesReadySingular;
+    return Localization.GetWithArgs(cubesReadyKey, numCubes);
+  }
+
+  private string GetWaitingForCubesText(int numCubes) {
+    string waitingForCubesKey = (numCubes > 1) ? LocalizationKeys.kMinigameLabelWaitingForCubesPlural : LocalizationKeys.kMinigameLabelWaitingForCubesSingular;
+    return Localization.Get(waitingForCubesKey);
   }
 
   public override void Exit() {
