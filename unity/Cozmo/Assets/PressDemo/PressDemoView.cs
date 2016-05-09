@@ -25,6 +25,11 @@ public class PressDemoView : Cozmo.UI.BaseView {
     _ForceProgressButton.onClick.AddListener(HandleForceProgressPressed);
     _StartButton.onClick.AddListener(HandleStartButton);
     _StartNoEdgeButton.onClick.AddListener(HandleStartNoEdgeButton);
+    RobotEngineManager.Instance.DisconnectedFromClient += OnClientDisconnect;
+  }
+
+  private void OnClientDisconnect(DisconnectionReason reason) {
+    _FatalErrorText.text = "Disconnected from Cozmo: " + reason.ToString();
   }
 
   public void SetPressDemoDebugState(int index) {
@@ -58,12 +63,7 @@ public class PressDemoView : Cozmo.UI.BaseView {
     }
   }
 
-  void Update() {
-    // TODO: replace with fatal error text.
-    //_FatalErrorText.text = RobotEngineManager.Instance.CurrentRobot.CurrentBehaviorString;
-  }
-
   protected override void CleanUp() {
-    
+    RobotEngineManager.Instance.DisconnectedFromClient -= OnClientDisconnect;
   }
 }
