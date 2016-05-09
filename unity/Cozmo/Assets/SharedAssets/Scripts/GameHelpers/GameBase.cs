@@ -340,6 +340,10 @@ public abstract class GameBase : MonoBehaviour {
 
   #region LightCubes
 
+  public float GetCycleDurationSeconds(int numRotations, float cycleIntervalSeconds) {
+    return (numRotations * cycleIntervalSeconds * 4);
+  }
+
   public void StartCycleCube(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
     // Remove from blink lights if it exists there
     StopBlinkLight(cubeID);

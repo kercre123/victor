@@ -216,6 +216,14 @@ public class LightCube : ObservedObject {
     SetLEDs(onColor, 0, onDurationMs, offDurationMs, transitionMs, transitionMs);
   }
 
+  public void SetFlashingLEDs(Color[] onColors, Color offColor, uint onDurationMs = 100, uint offDurationMs = 100, uint transitionMs = 0) {
+    uint[] onColorsUint = new uint[onColors.Length];
+    for (int i = 0; i < onColorsUint.Length; i++) {
+      onColorsUint[i] = onColors[i].ToUInt();
+    }
+    SetLEDs(onColorsUint, offColor.ToUInt(), onDurationMs, offDurationMs, transitionMs, transitionMs);
+  }
+
   public void SetLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Light.FOREVER, uint offPeriod_ms = 0, 
                       uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
 

@@ -10,12 +10,28 @@ namespace SpeedTap {
 
   public class SpeedTapHandReactToPoint : State {
 
-    private const float _kWinCycleSpeed = 0.1f;
+    private enum CubeLightState {
+      WinnerCycling,
+      WinnerFlashing,
+      LoserFlashing,
+      None
+    }
+
+    private const float _kWinCycleSpeedSeconds = 0.1f;
 
     private SpeedTapGame _SpeedTapGame;
 
     private PointWinner _CurrentWinner;
     private bool _WasMistakeMade;
+
+    private Color[] _WinColors;
+    private LightCube _WinningCube;
+
+    private float _StartWinEffectTimestampSeconds;
+    private float _CubeCycleDurationSeconds;
+    private float _CubeFlashingDurationSeconds;
+
+    private CubeLightState _CurrentCubeLightState = CubeLightState.None;
 
     public SpeedTapHandReactToPoint(PointWinner winner, bool mistakeMade) {
       _CurrentWinner = winner;
@@ -28,34 +44,38 @@ namespace SpeedTap {
       _SpeedTapGame.EndCozmoPickedUpDisruptionDetection();
       _SpeedTapGame.EndCozmoCubeMovedDisruptionDetection();
 
-      Color[] winColors;
-      LightCube winningBlock;
-      LightCube losingBlock;
+      UpdateBlockLights(_CurrentWinner, _WasMistakeMade);
+
       if (_CurrentWinner == PointWinner.Player) {
         _SpeedTapGame.AddPlayerPoint();
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
-        winColors = _SpeedTapGame.PlayerWinColors;
-        winningBlock = _SpeedTapGame.PlayerBlock;
-        losingBlock = _SpeedTapGame.CozmoBlock;
       }
       else {
         _SpeedTapGame.AddCozmoPoint();
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
-        winColors = _SpeedTapGame.CozmoWinColors;
-        winningBlock = _SpeedTapGame.CozmoBlock;
-        losingBlock = _SpeedTapGame.PlayerBlock;
       }
 
+      // Depends on points being scored first
       _SpeedTapGame.UpdateUI();
-
-      SetWinningLightPattern(winningBlock, winColors);
-      SetLosingLightPattern(losingBlock, _WasMistakeMade);
 
       if (_SpeedTapGame.IsRoundComplete()) {
         HandleRoundEnd();
       }
       else {
         ReactToHand();
+      }
+    }
+
+    public override void Update() {
+      float secondsSinceAnimationStarted = Time.time - _StartWinEffectTimestampSeconds;
+      if (_CurrentCubeLightState == CubeLightState.WinnerCycling && secondsSinceAnimationStarted >= _CubeCycleDurationSeconds) {
+        _StartWinEffectTimestampSeconds = Time.time;
+        _SpeedTapGame.StopCycleCube(_WinningCube);
+        SetWinningFlashingPattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
+        _CurrentCubeLightState = CubeLightState.WinnerFlashing;
+      }
+      else if (_CurrentCubeLightState == CubeLightState.WinnerFlashing && secondsSinceAnimationStarted >= _CubeFlashingDurationSeconds) {
+        _StartWinEffectTimestampSeconds = Time.time;
+        SetWinningCyclePattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
+        _CurrentCubeLightState = CubeLightState.WinnerCycling;
       }
     }
 
@@ -69,30 +89,60 @@ namespace SpeedTap {
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapGamePlayerWin, HandleEndGameAnimDone);
     }
 
-    private void SetWinningLightPattern(LightCube winningBlock, Color[] winColors) {
-      if (winColors[0] == Color.white) {
-        _SpeedTapGame.StartCycleCubeSingleColor(winningBlock, winColors, _kWinCycleSpeed, Color.black);
+    private void UpdateBlockLights(PointWinner winner, bool wasMistakeMade) {
+      LightCube losingBlock;
+      if (winner == PointWinner.Player) {
+        _WinColors = _SpeedTapGame.PlayerWinColors;
+        _WinningCube = _SpeedTapGame.PlayerBlock;
+        losingBlock = _SpeedTapGame.CozmoBlock;
       }
       else {
-        _SpeedTapGame.StartCycleCubeSingleColor(winningBlock, winColors, _kWinCycleSpeed, Color.white);
+        _WinColors = _SpeedTapGame.CozmoWinColors;
+        _WinningCube = _SpeedTapGame.CozmoBlock;
+        losingBlock = _SpeedTapGame.PlayerBlock;
+      }
+
+      if (wasMistakeMade) {
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
+        _WinningCube.SetLEDsOff();
+        SetLosingLightPattern(losingBlock, _kWinCycleSpeedSeconds);
+        _CurrentCubeLightState = CubeLightState.LoserFlashing;
+      }
+      else {
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
+        _StartWinEffectTimestampSeconds = Time.time;
+        losingBlock.SetLEDsOff();
+        SetWinningCyclePattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
+        _CubeCycleDurationSeconds = _SpeedTapGame.GetCycleDurationSeconds(3, _kWinCycleSpeedSeconds);
+        _CubeFlashingDurationSeconds = 6 * _kWinCycleSpeedSeconds;
+        _CurrentCubeLightState = CubeLightState.WinnerCycling;
       }
     }
 
-    private void SetLosingLightPattern(LightCube losingBlock, bool madeMistake) {
-      if (madeMistake) {
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapRed);
-        _SpeedTapGame.StartCycleCubeSingleColor(losingBlock, new Color[] { Color.red }, _kWinCycleSpeed, Color.black);
+    private void SetWinningCyclePattern(LightCube winningBlock, Color[] winColors, float cycleDurationSeconds) {
+      if (winColors[0] == Color.white) {
+        _SpeedTapGame.StartCycleCubeSingleColor(winningBlock, winColors, cycleDurationSeconds, Color.black);
       }
       else {
-        losingBlock.SetLEDs(0);
+        _SpeedTapGame.StartCycleCubeSingleColor(winningBlock, winColors, cycleDurationSeconds, Color.white);
       }
+    }
+
+    private void SetWinningFlashingPattern(LightCube winningBlock, Color[] winColors, float flashDurationSeconds) {
+      uint flashDurationMs = (uint)Mathf.FloorToInt(flashDurationSeconds * 1000);
+      winningBlock.SetFlashingLEDs(winColors, Color.white, flashDurationMs, flashDurationMs);
+    }
+
+    private void SetLosingLightPattern(LightCube losingBlock, float flashDurationSeconds) {
+      uint flashDurationMs = (uint)Mathf.FloorToInt(flashDurationSeconds * 1000);
+      losingBlock.SetFlashingLEDs(Color.red, flashDurationMs, flashDurationMs);
     }
 
     private void ClearWinningLightPatterns() {
       _SpeedTapGame.StopCycleCube(_SpeedTapGame.PlayerBlock);
       _SpeedTapGame.PlayerBlock.SetLEDsOff();
       _SpeedTapGame.StopCycleCube(_SpeedTapGame.CozmoBlock);
-      _SpeedTapGame.PlayerBlock.SetLEDsOff();
+      _SpeedTapGame.CozmoBlock.SetLEDsOff();
     }
 
     private void ReactToHand() {
