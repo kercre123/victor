@@ -115,7 +115,7 @@ int main (void)
   FCC::start();
   for (;;) {
     UART::WaitForSync();
-    FCC::mainLEDExecution();
+    FCC::mainDTMExecution();
   }
   #else
   // Run the main thread

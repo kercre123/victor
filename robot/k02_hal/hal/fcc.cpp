@@ -117,14 +117,20 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
   // Display current mode and what we would like to test
   static bool displayNum = false;
 
-  /*
+  Anki::Cozmo::RobotInterface::DisplayNumber msg;
+
+  msg.x = 32;
+  
   displayNum = !displayNum;
   if (displayNum) {
-    OLED::DisplayDigit(target_mode, 48, 2);
+    msg.value = target_mode;
+    msg.y = 0;
   } else {
-    OLED::DisplayDigit(current_mode, 48, 4);
+    msg.value = current_mode;
+    msg.y = 32;
   }
-  */
+
+  RobotInterface::SendMessage(msg);
 
   runTest(current_mode);
 }
