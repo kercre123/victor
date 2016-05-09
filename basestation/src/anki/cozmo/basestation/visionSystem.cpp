@@ -70,6 +70,10 @@
 namespace Anki {
 namespace Cozmo {
   
+  CONSOLE_VAR(bool, kUseCLAHE, "Vision.PreProcessing", false);
+  CONSOLE_VAR(s32, kClaheClipLimit, "Vision.PreProcessing", 2); // Change requires re-Init()
+  CONSOLE_VAR(s32, kClaheTileSize, "Vision.PreProcessing", 8);  // Change requires re-Init()
+  
   CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
   CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
   
@@ -94,6 +98,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   , _dataPath(dataPath)
   , _faceTracker(nullptr)
   , _vizManager(vizMan)
+  , _clahe(cv::createCLAHE())
   {
     PRINT_NAMED_INFO("VisionSystem.Constructor", "");
    
@@ -587,6 +592,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       // TODO: Merge the fiducial detection parameters structs
       Embedded::FiducialDetectionParameters embeddedParams;
       embeddedParams.useIntegralImageFiltering = true;
+      embeddedParams.useIlluminationNormalization = !kUseCLAHE;
       embeddedParams.scaleImage_numPyramidLevels = _detectionParameters.scaleImage_numPyramidLevels;
       embeddedParams.scaleImage_thresholdMultiplier = _detectionParameters.scaleImage_thresholdMultiplier;
       embeddedParams.component1d_minComponentWidth = _detectionParameters.component1d_minComponentWidth;
@@ -2258,6 +2264,9 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
     _isCalibrating = false;
     
+    _clahe->setClipLimit(kClaheClipLimit);
+    _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
+    
     _isInitialized = true;
     
     return result;
@@ -2450,10 +2459,22 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult,
                                        "VisionSystem::Update()", "UpdateMarkerToTrack failed.\n");
     
+
+    
     // Lots of the processing below needs a grayscale version of the image:
     //const Vision::Image inputImageGray = inputImage.ToGray();
     
     Vision::Image inputImageGray = inputImage.ToGray();
+    
+    // Apply CLAHE:
+    if(kUseCLAHE) {
+      _clahe->apply(inputImageGray.get_CvMat_(), inputImageGray.get_CvMat_());
+      
+      // DEBUG!
+      //_debugImageRGBMailbox.putMessage({"ImageCLAHE", inputImageGray});
+    }
+    
+    // Rolling shutter correction
     if(_doRollingShutterCorrection)
     {
       Tic("RollingShutterComputePixelShifts");
@@ -2602,6 +2623,16 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   
   Result VisionSystem::ReadToolCode(const Vision::Image& image)
   {
+    //    // DEBUG!
+    //    Vision::Image image;
+    //    //image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_151585ms_0.jpg");
+    //    image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_251585ms_1.jpg");
+    //    if(image.IsEmpty()) {
+    //      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ReadImageFileFail", "");
+    //      return RESULT_FAIL;
+    //    }
+    //    _clahe->apply(image.get_CvMat_(), image.get_CvMat_());
+    
     ToolCodeInfo readToolCodeMessage;
     readToolCodeMessage.code = ToolCode::UnknownTool;
     
@@ -2681,6 +2712,8 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     // Tool code calibration dot parameters
     const f32 kDotWidth_mm = 2.5f;
     const f32 kDotHole_mm  = 2.5f/3.f;
+    const s32 kBinarizeKernelSize = 11;
+    const f32 kBinarizeKernelSigma = 7.f;
     const f32 kDotAreaFrac = ((kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) /
                               (4.f*kCalibDotSearchSize_mm * kCalibDotSearchSize_mm));
     const f32 kMinDotAreaFrac   = 0.5f * kDotAreaFrac;
@@ -2737,7 +2770,8 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       
       // Perform local binarization:
       Vision::Image dotRoi_blurred;
-      cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(), cv::Size(15,15), 11);
+      cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(),
+                       cv::Size(kBinarizeKernelSize,kBinarizeKernelSize), kBinarizeKernelSigma);
       Vision::Image binarizedDotRoi(dotRoi.GetNumRows(), dotRoi.GetNumCols());
       binarizedDotRoi.get_CvMat_() = dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_();
       
