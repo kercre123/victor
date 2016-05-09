@@ -83,12 +83,17 @@ static void runTest(int mode) {
   }
 }
 
-void Anki::Cozmo::HAL::FCC::start(void) {
+void Anki::Cozmo::HAL::FCC::start(void) { 
+  // Disable espressif test mode
+  EnterFactoryTestMode eftm;
+  eftm.mode = FTM_None;
+  SendMessage(eftm);
+
+  // Enable body radio mode
   SetBodyRadioMode msg;
-  msg.radioMode = BODY_DTM_OPERATING_MODE;
-  
+  msg.radioMode = BODY_DTM_OPERATING_MODE;  
   SendMessage(msg);
-  
+
   configureTest(0);
 }
 

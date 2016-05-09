@@ -108,7 +108,7 @@ int main (void)
   CameraStart();
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
-  //#define ENABLE_FCC_TEST
+  #define ENABLE_FCC_TEST
   //#define GENERATE_WHITE_NOISE (this should be defined elseware)
 
   #ifdef ENABLE_FCC_TEST

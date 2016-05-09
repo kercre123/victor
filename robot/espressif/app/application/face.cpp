@@ -264,7 +264,7 @@ namespace Face {
     return false;
   }
 
-  static void CreateRects(u64* frame) {
+  static void CreateRects(u64* frame, u8 sx = 0, u8 sy = 0, u8 ex = COLS, u8 ey = PAGES) {
     // We cannot create new rects while we are currently transmitting
     if (m_remainingRects > 0) return ;
 
@@ -273,8 +273,8 @@ namespace Face {
     m_activeRect = &m_rects[0];
     m_remainingRects = 0;
 
-    for (int y = 0; y < PAGES; y++) {
-      for (int x = 0; x < COLS; x++) {
+    for (int y = sy; y < ey; y++) {
+      for (int x = sx; x < ex; x++) {
         // Find dirty pixels
         if (PIXEL(m_frame, x, y) == PIXEL(frame, x, y)) {
           continue ;
@@ -401,6 +401,11 @@ namespace Face {
   void FaceDisplayNumber(u32 value, int x, int y)
   {
     const int TOTAL_DIGITS = 4;
+    const int NUMBER_WIDTH = TOTAL_DIGITS * 16;
+
+    if (x + NUMBER_WIDTH > COLS) {
+      return ;
+    }
 
     u64 frame[COLS];
     u64* pixels = &frame[x];
@@ -415,7 +420,10 @@ namespace Face {
       }
     }
 
-    Face::CreateRects((u64*) frame);
+    u8 top = y / 8;
+    u8 bottom = (y + 16+ 7) / 8;
+
+    Face::CreateRects((u64*) frame, x, top, x + NUMBER_WIDTH, bottom);
   }
 
   // Display text on the screen until turned off
