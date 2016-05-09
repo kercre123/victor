@@ -304,13 +304,8 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 418296, guid: 766693e5698c943c1b0e3c509b5dd975, type: 2}
       propertyPath: m_RootOrder
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 11417542, guid: 766693e5698c943c1b0e3c509b5dd975, type: 2}
-      propertyPath: _ConnectDialogPrefab
-      value: 
-      objectReference: {fileID: 11419672, guid: d73c982d72b7d4050937088024507432,
-        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 766693e5698c943c1b0e3c509b5dd975, type: 2}
   m_IsPrefabParent: 0
