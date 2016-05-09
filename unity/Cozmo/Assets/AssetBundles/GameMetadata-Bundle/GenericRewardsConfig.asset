@@ -13,7 +13,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   RewardedActions:
   - GameEvent:
-      _EnumValueAsString: OnSpeedtapGamePlayerWin
+      _EnumValueAsString: OnSpeedtapRoundPlayerWinAnyIntensity
       _EnumValue: 13
     Amount: 15
   - GameEvent:
