@@ -22,7 +22,7 @@ namespace Anki {
     public abstract class GoalCondition {
 
       // Override with unique checks to see if certain conditions are met by the current game state
-      public virtual bool ConditionMet() {
+      public virtual bool ConditionMet(GameEventWrapper cozEvent = null) {
         return true;
       }
       #if UNITY_EDITOR

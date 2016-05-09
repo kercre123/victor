@@ -59,7 +59,7 @@ public class DailyGoalPane : MonoBehaviour {
     if (_CurrentSession == null) {
       return;
     }
-    _CurrentGoal.ProgressGoal(_CurrentGoal.GoalEvent);
+    _CurrentGoal.ProgressGoal(GameEventWrapperFactory.Create(_CurrentGoal.GoalEvent));
   }
 
   private void HandleUndoProgressGoalClicked() {

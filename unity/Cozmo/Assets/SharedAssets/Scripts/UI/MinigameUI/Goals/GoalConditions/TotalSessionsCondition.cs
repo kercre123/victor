@@ -25,7 +25,7 @@ namespace Anki {
       public int MaxSession;
 
       // Returns true if day of the week is the desired day of the week
-      public override bool ConditionMet() {
+      public override bool ConditionMet(GameEventWrapper cozEvent = null) {
         bool isMet = false;
         isMet = !UseMinSession || DataPersistenceManager.Instance.Data.DefaultProfile.Sessions.Count >= MinSession;
         if (isMet) {

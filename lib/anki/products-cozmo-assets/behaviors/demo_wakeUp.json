@@ -2,7 +2,6 @@
   "behaviorType": "PlayAnim",
   "name": "demo_wakeUp",
   "animGroupName": "demo_wakeUp",
-  "num_loops": 3,
   "emotionScorers": [
     {
       "emotionType": "Excited",

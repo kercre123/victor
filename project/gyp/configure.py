@@ -238,7 +238,7 @@ def main(scriptArgs):
     return False
 
   if not options.dasPath:
-    options.dasPath = os.path.join(options.projectRoot, 'lib/anki/das-client')
+    options.dasPath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/lib/das-client')
   if not os.path.exists(options.dasPath):
     UtilLog.error('das-client not found [%s]' % (options.dasPath) )
     return False
@@ -380,6 +380,7 @@ def main(scriptArgs):
   cgAudioProjectGypPath = os.path.abspath(os.path.join(configurePath, audioProjectGypPath))
   ceAudioProjectGypPath = cgAudioProjectGypPath
   cgDasProjectPath = os.path.relpath(dasProjectPath, configurePath)
+  ceDasProjectPath = os.path.relpath(dasProjectPath, cozmoEngineConfigurePath)
   cgBLECozmoProjectPath = os.path.relpath(bleCozmoProjectPath, configurePath)
   ceBLECozmoProjectPath = os.path.relpath(bleCozmoProjectPath, cozmoEngineConfigurePath)
         
@@ -434,8 +435,9 @@ def main(scriptArgs):
                                   cg-audio_path={18}
                                   externals_path={19}
                                   cg-das_path={20}
-                                  cg-ble_cozmo_path={21}
-                                  ce-ble_cozmo_path={22}
+                                  ce-das_path={21}
+                                  cg-ble_cozmo_path={22}
+                                  ce-ble_cozmo_path={23}
                                   """.format(
                                     options.arch,
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -458,6 +460,7 @@ def main(scriptArgs):
                                     cgAudioProjectGypPath,
                                     externalsPath,
                                     cgDasProjectPath,
+                                    ceDasProjectPath,
                                     cgBLECozmoProjectPath,
                                     ceBLECozmoProjectPath,
                                   )
@@ -504,8 +507,9 @@ def main(scriptArgs):
                                 cg-audio_path={15}
                                 externals_path={16}
                                 cg-das_path={17}
-                                cg-ble_cozmo_path={18}
-                                ce-ble_cozmo_path={19}
+                                ce-das_path={18}
+                                cg-ble_cozmo_path={19}
+                                ce-ble_cozmo_path={20}
                                 """.format(
                                   options.arch,
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -525,6 +529,7 @@ def main(scriptArgs):
                                   cgAudioProjectGypPath,
                                   externalsPath,
                                   cgDasProjectPath,
+                                  ceDasProjectPath,
                                   cgBLECozmoProjectPath,
                                   ceBLECozmoProjectPath,
                                 )
@@ -599,8 +604,9 @@ def main(scriptArgs):
                                 cg-audio_path={16}
                                 externals_path={17}
                                 cg-das_path={18}
-                                cg-ble_cozmo_path={19}
-                                ce-ble_cozmo_path={20}
+                                ce-das_path={19}
+                                cg-ble_cozmo_path={20}
+                                ce-ble_cozmo_path={21}
                                 """.format(
                                   options.arch,
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -621,6 +627,7 @@ def main(scriptArgs):
                                   cgAudioProjectGypPath,
                                   externalsPath,
                                   cgDasProjectPath,
+                                  ceDasProjectPath,
                                   cgBLECozmoProjectPath,
                                   ceBLECozmoProjectPath,
                                 )
