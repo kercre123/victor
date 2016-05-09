@@ -395,10 +395,6 @@ Prefab:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
-      propertyPath: _LoadingBarContainer
-      value: 
-      objectReference: {fileID: 1852183772}
-    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
       propertyPath: _LoadingBar
       value: 
       objectReference: {fileID: 1317867611}
@@ -406,10 +402,6 @@ Prefab:
       propertyPath: _LoadingBarLabel
       value: 
       objectReference: {fileID: 735345286}
-    - target: {fileID: 11479852, guid: 96563fa7c044a44afa01f530712be672, type: 2}
-      propertyPath: _MainSceneName
-      value: HomeHub
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 96563fa7c044a44afa01f530712be672, type: 2}
   m_IsPrefabParent: 0
