@@ -10,7 +10,7 @@ GameObject:
   - 4: {fileID: 472576}
   - 114: {fileID: 11477898}
   m_Layer: 0
-  m_Name: PressHub
+  m_Name: PressDemoHub
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -36,7 +36,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 147982}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f70f6010d269f4c8391facfbe422c4a6, type: 3}
+  m_Script: {fileID: 11500000, guid: 4b68eb6887e5e4bdca2b493bcee8427e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _SpeedTapChallengeData: {fileID: 11400000, guid: 42702cbdf4c0c418a84f8792f3062612,

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class PressHubWorld : HubWorldBase {
+public class PressDemoHubWorld : HubWorldBase {
 
   private GameBase _MiniGameInstance;
 

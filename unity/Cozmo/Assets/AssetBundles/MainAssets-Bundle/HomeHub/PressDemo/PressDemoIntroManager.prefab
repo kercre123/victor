@@ -49,7 +49,12 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: _HubWorldPrefab
+      value: 
+      objectReference: {fileID: 11477898, guid: bd9cdefcf513c4aa38b7a3dd570334b2,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 186644}
