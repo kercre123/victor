@@ -153,7 +153,7 @@ void Update()
             ap_config.authmode = AUTH_OPEN;
             ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
             ap_config.beacon_interval = 100;
-            wifi_softap_set_config(&ap_config);
+            wifi_softap_set_config_current(&ap_config);
             break;
           case 2:
             i2spiSwitchMode(I2SPI_RESUME);    // Scarier   
