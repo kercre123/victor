@@ -45,6 +45,6 @@ public class PingStatus : MonoBehaviour {
 
   private void SendPing() {
     _LastPingTime = Time.time;
-    _Ping = new Ping("172.31.1.1");
+    _Ping = new Ping(RobotEngineManager.kRobotIP);
   }
 }

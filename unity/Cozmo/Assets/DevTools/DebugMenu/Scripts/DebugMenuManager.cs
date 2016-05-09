@@ -8,6 +8,9 @@ public class DebugMenuManager : MonoBehaviour {
   private DebugMenuDialog _DebugMenuDialogInstance;
 
   [SerializeField]
+  private LatencyCalculator _LatencyCalculator;
+
+  [SerializeField]
   private Canvas _DebugMenuCanvas;
 
   private int _LastOpenedDebugTab = 0;
@@ -61,6 +64,6 @@ public class DebugMenuManager : MonoBehaviour {
   }
 
   public void EnableLatencyPopup(bool enable) {
-    GetComponent<LatencyCalculator>().EnableLatencyPopup(enable);
+    _LatencyCalculator.EnableLatencyPopup(enable);
   }
 }
