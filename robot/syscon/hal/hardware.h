@@ -1,8 +1,6 @@
 #ifndef HARDWARE_H
 #define HARDWARE_H
 
-//#define FAKE_EP3  //It's time for real EP3
-
 #define NRF_BAUD(x) (int)(x * 4194304.0f / 15625.0f) // 2^28/1MHz
 
 enum watchdog_channels {
@@ -26,17 +24,10 @@ enum e_nrf_gpio {
   // Encoders
   PIN_ENCODER_LEFT    = 13, // ENC1
   PIN_ENCODER_RIGHT   = 4,  // ENC2
-#ifdef FAKE_EP3
-  PIN_ENCODER_HEADA   = 17, // ENC3 - all robots built before 4/20/16 used this wiring
-  PIN_ENCODER_HEADB   = 14,
-  PIN_ENCODER_LIFTA   = 1,  // ENC4
-  PIN_ENCODER_LIFTB   = 0,
-#else
-  PIN_ENCODER_HEADA   = 14, // ENC3 - wire harness reversed in EP3
+  PIN_ENCODER_HEADA   = 14, // ENC3 - wire harness reversed since EP3
   PIN_ENCODER_HEADB   = 17,
-  PIN_ENCODER_LIFTA   = 0,  // ENC4 - wire harness reversed in EP3
+  PIN_ENCODER_LIFTA   = 0,  // ENC4 - wire harness reversed since EP3
   PIN_ENCODER_LIFTB   = 1,      
-#endif
 
   // Motors + charge OK signal
   PIN_LEFT_P          = 19,

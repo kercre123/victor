@@ -339,9 +339,6 @@ void Radio::updateLights() {
       for (int i = 0; i < 3; i++) {
         acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];
       }
-
-      // XXX: THIS IS TEMPORARY
-      memset(acc->tx_state.ledStatus, 0x20, sizeof(acc->tx_state.ledStatus));
     }
   }
 }
