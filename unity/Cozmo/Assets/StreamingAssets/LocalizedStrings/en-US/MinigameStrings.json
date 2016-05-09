@@ -39,13 +39,22 @@
   "minigame.text.score": {
     "translation": "Score"
   },
-  "minigame.label.showCubes": {
+  "minigame.label.showCubes.singular": {
+    "translation": "Put {0} cube in front of Cozmo. It will turn white when he can see it."
+  },
+  "minigame.label.showCubes.plural": {
     "translation": "Put {0} cubes in front of Cozmo. They'll turn white when he can see them."
   },
-  "minigame.label.cubesFound": {
-    "translation": "{0} cubes found"
+  "minigame.label.waitingForCubes.singular": {
+    "translation": "Waiting for cube..."
   },
-  "minigame.label.cubesReady": {
+  "minigame.label.waitingForCubes.plural": {
+    "translation": "Waiting for cubes..."
+  },
+  "minigame.label.cubesReady.singular": {
+    "translation": "{0} cube ready!"
+  },
+  "minigame.label.cubesReady.plural": {
     "translation": "{0} cubes ready!"
   },
   "minigame.label.readyToPlay": {
