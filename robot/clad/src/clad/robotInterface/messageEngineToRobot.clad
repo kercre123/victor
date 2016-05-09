@@ -275,7 +275,7 @@ message DebugSetRTTO
 // Display a 
 message DisplayNumber
 {
-  uint_16 value,
+  uint_32 value,
   uint_8  x,
   uint_8  y
 }
@@ -388,8 +388,6 @@ union EngineToRobot
   PropState                     getPropState                = 0x54,
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
-  DisplayNumber                 oledDisplayNumber           = 0x57,
-  DisplayRelease                oledRelease                 = 0x58,
   
   // 0x80 to 0xAF: To WiFi
   // Flash and OTA message must not be changed or OTA will break
@@ -420,6 +418,7 @@ union EngineToRobot
   CubeSlots                     assignCubeSlots             = 0xA0,
   TestState                     testState                   = 0xA1,
   EnterFactoryTestMode          enterTestMode               = 0xA2,
+  DisplayNumber                 oledDisplayNumber           = 0xA3,
 
   AppConnectConfigString        appConCfgString             = 0xAA,
   AppConnectConfigFlags         appConCfgFlags              = 0xAB,

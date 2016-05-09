@@ -21,6 +21,9 @@ static Anki::Cozmo::NVStorage::NVReportDest nvOpReportTo;
 
 namespace Anki {
   namespace Cozmo {
+    namespace Face {
+      void DisplayNumber(u32 value, int x, int y);
+    }
     namespace Messages {
 
       Result Init()
@@ -269,6 +272,12 @@ namespace Anki {
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               ActiveObjectManager::SetSlots(0, msg.assignCubeSlots.factory_id_length, msg.assignCubeSlots.factory_id);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_oledDisplayNumber:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              Face::DisplayNumber(msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_testState:
