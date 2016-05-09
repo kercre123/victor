@@ -41,7 +41,7 @@ namespace SpeedTap {
 
     private void HandleLiftRaiseComplete(bool success) {
       if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude > _kTargetDistanceToCube) {
-        _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, _kTargetDistanceToCube, HandleGotoObjectComplete);
+        _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, _kTargetDistanceToCube, HandleGotoObjectComplete, false, true);
       }
       else {
         _GotoObjectComplete = true;
