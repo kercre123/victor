@@ -13,10 +13,13 @@
 #define memcpy os_memcpy
 #define strncmp os_strncmp
 #define GetMicroCounter system_get_time
+int xPortGetFreeHeapSize(void);    // Faster than system_get_free_heap_size(), reads the same global
+#define TxStalled() (xPortGetFreeHeapSize() < 1680)   // Return true if transmission is not possible at this time
 #else
 #include <string.h>
 #include <stdio.h>
 #define IRAM_ATTR
+#define TxStalled() (0)       // Return true if transmission is not possible at this time (never on PC)
 #endif
 
 
@@ -112,7 +115,15 @@ static ICACHE_FLASH_ATTR bool QueueMessage(const uint8_t* buffer, const uint16_t
   else if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > /* +1 for tag, easier to assume it's there than check. */
            (ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE - connection->pendingReliableBytes))
   {
-    printf("WARN: No room for pending reliable message data. %d bytes, %d messages queued\r\n", connection->pendingReliableBytes, connection->numPendingReliableMessages);
+    printf("WARN: Pending RT overflow %d bytes %d msgs\r\nTags: ", connection->pendingReliableBytes, connection->numPendingReliableMessages);
+    uint8_t* msg = connection->pendingMessages;
+    int i;
+    for (i = 0; i < connection->numPendingReliableMessages; i++)
+    {
+      printf("%d,", msg[3]);
+      msg += connection->pendingMsgMeta[i].messageSize;
+    }
+    printf("\r\n");
     return false;
   }
   else
@@ -244,6 +255,13 @@ bool ICACHE_FLASH_ATTR SendTxBuf(ReliableConnection* connection)
 /// Trigger sending reliable messages
 bool ICACHE_FLASH_ATTR SendPendingMessages(ReliableConnection* connection, bool newestFirst)
 {
+  // If we can't safely send a packet, just leave everything queued up - maybe next time
+  if (TxStalled())
+  {
+    printf("FQPM\r\n");
+    return false;
+  }
+  
   AppendPendingMessages(connection, newestFirst);
   if (haveDataToSend(connection))
   {
@@ -443,6 +461,13 @@ bool ICACHE_FLASH_ATTR ReliableTransport_SendMessage(const uint8_t* buffer, cons
   }
   else // Unreliable message
   {
+    // If we can't safely send a packet, just throw away unreliable messages
+    if (TxStalled())
+    {
+      printf("FQUM\r\n");
+      return false;
+    }
+    
     const uint16_t msgSubHeaderSizeField = bufferSize + 1*(tag != GLOBAL_INVALID_TAG);
     if ((bufferSize + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH + 1) > // + 1 for tag byte. Easier to assume it's there than check
         (UnreliableTransport_MAX_BYTES_PER_PACKET - connection->txQueued))
@@ -457,6 +482,14 @@ bool ICACHE_FLASH_ATTR ReliableTransport_SendMessage(const uint8_t* buffer, cons
         }
       }
     }
+
+    // If we can't safely send a packet, just throw away unreliable messages
+    if (TxStalled())
+    {
+      printf("FQU2\r\n");
+      return false;
+    }
+    
     // Add this message to the queue
     // Add submessage header
     connection->txBuf[connection->txQueued] = messageType;
