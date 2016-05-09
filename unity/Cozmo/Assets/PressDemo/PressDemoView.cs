@@ -19,7 +19,10 @@ public class PressDemoView : Cozmo.UI.BaseView {
   private UnityEngine.UI.Text _FatalErrorText;
 
   [SerializeField]
-  private PressDemoDebugState _PressDemoDebugState;
+  private UnityEngine.UI.Image _PressDebugBaseImage;
+
+  [SerializeField]
+  private Sprite[] _PressDebugDatabase;
 
   void Start() {
     _ForceProgressButton.onClick.AddListener(HandleForceProgressPressed);
@@ -33,7 +36,7 @@ public class PressDemoView : Cozmo.UI.BaseView {
   }
 
   public void SetPressDemoDebugState(int index) {
-    _PressDemoDebugState.SetDebugImageIndex(index);
+    _PressDebugBaseImage.overrideSprite = _PressDebugDatabase[index];
   }
 
   public void HideStartButtons() {
