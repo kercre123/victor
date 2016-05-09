@@ -17,6 +17,8 @@ public class PressHubWorld : HubWorldBase {
 
   private bool _ForceProgressWhenOver = false;
 
+  private int _PressDemoDebugSceneIndex = 0;
+
   public override bool LoadHubWorld() {
     DebugMenuManager.Instance.EnableLatencyPopup(false);
     LoadPressDemoView();
@@ -39,6 +41,7 @@ public class PressHubWorld : HubWorldBase {
     _PressDemoViewInstance = UIManager.OpenView(_PressDemoViewPrefab);
     _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
     _PressDemoViewInstance.OnStartButton += HandleStartButtonPressed;
+    _PressDemoViewInstance.SetPressDemoDebugState(_PressDemoDebugSceneIndex);
   }
 
   private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
