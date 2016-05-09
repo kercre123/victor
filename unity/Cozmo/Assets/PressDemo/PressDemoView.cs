@@ -12,6 +12,9 @@ public class PressDemoView : Cozmo.UI.BaseView {
   [SerializeField]
   private UnityEngine.UI.Button _StartButton;
 
+  // this button is hidden and on top of _ForceProgressButton
+  // and used if the demoer wants to start the demo and skip
+  // the initial edge detection scene.
   [SerializeField]
   private UnityEngine.UI.Button _StartNoEdgeButton;
 
