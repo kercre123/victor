@@ -120,7 +120,6 @@ static void nv_init_done(const int8_t result)
   i2spiInit();
 
   os_printf("User initalization complete\r\n");
-  os_printf("Fart popcicle\r\n");
 }
 
 /** Callback after all the chip system initalization is done.
@@ -177,7 +176,7 @@ void user_init(void)
   }
   else
   {
-    os_sprintf(ssid, "OK%04x", (*SERIAL_NUMBER) & 0xFFFF);
+    os_sprintf(ssid, "3p%04x", (*SERIAL_NUMBER) & 0xFFFF);
   }
 
   struct softap_config ap_config;
