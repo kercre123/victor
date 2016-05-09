@@ -103,6 +103,9 @@ private:
   
   bool _isLive = false;
   
+  Result AddKeyFrameToBackHelper(const FRAME_TYPE& keyFrame, FRAME_TYPE* &prevKeyFrame);
+  Result AddKeyFrameByTimeHelper(const FRAME_TYPE& keyFrame, FRAME_TYPE* &prevKeyFrame);
+  
 }; // class Track
 
 
@@ -200,13 +203,23 @@ const FRAME_TYPE* Track<FRAME_TYPE>::GetLastKeyFrame() const
 }
   
 template<typename FRAME_TYPE>
-Result Animations::Track<FRAME_TYPE>::AddKeyFrameToBack(const FRAME_TYPE& keyFrame)
+Result Track<FRAME_TYPE>::AddKeyFrameToBackHelper(const FRAME_TYPE& keyFrame,
+                                                  FRAME_TYPE* &prevKeyFrame)
 {
+  prevKeyFrame = nullptr;
+  
   if(_frames.size() > MAX_FRAMES_PER_TRACK) {
     PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameToBack.TooManyFrames",
-      "There are already %lu frames in %s track. Refusing to add more.",
-      (unsigned long)_frames.size(), keyFrame.GetClassName().c_str());
+      "There are already %zu frames in %s track. Refusing to add more.",
+      _frames.size(), keyFrame.GetClassName().c_str());
     return RESULT_FAIL;
+  }
+  
+  if(!_frames.empty()) {
+    ASSERT_NAMED(_frameIter != _frames.end(), "Track.AddKeyFrameHelper.BadFrameIter");
+    prevKeyFrame = &(*_frameIter);
+  } else {
+    prevKeyFrame = nullptr;
   }
 
   _frames.emplace_back(keyFrame);
@@ -222,12 +235,26 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrameToBack(const FRAME_TYPE& keyFra
 }
   
 template<typename FRAME_TYPE>
-Result Animations::Track<FRAME_TYPE>::AddKeyFrameByTime(const FRAME_TYPE& keyFrame)
+inline Result Track<FRAME_TYPE>::AddKeyFrameToBack(const FRAME_TYPE& keyFrame)
 {
+  FRAME_TYPE* dummy;
+  return AddKeyFrameToBackHelper(keyFrame, dummy);
+}
+  
+// Specialization for BodyMotion keyframes (implemented in .cpp)
+template<>
+Result Track<BodyMotionKeyFrame>::AddKeyFrameToBack(const BodyMotionKeyFrame& keyFrame);
+  
+  
+template<typename FRAME_TYPE>
+Result Track<FRAME_TYPE>::AddKeyFrameByTimeHelper(const FRAME_TYPE& keyFrame,
+                                                  FRAME_TYPE* &prevKeyFrame)
+{
+  prevKeyFrame = nullptr;
   if(_frames.size() > MAX_FRAMES_PER_TRACK) {
-    PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameToBack.TooManyFrames",
-      "There are already %lu frames in %s track. Refusing to add more.",
-      (unsigned long)_frames.size(), keyFrame.GetClassName().c_str());
+    PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameByTime.TooManyFrames",
+      "There are already %zu frames in %s track. Refusing to add more.",
+      _frames.size(), keyFrame.GetClassName().c_str());
     return RESULT_FAIL;
   }
 
@@ -239,11 +266,12 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrameByTime(const FRAME_TYPE& keyFra
     // Don't put another key frame at the same time as an existing one
     if (framePlaceIter->GetTriggerTime() == desiredTrigger)
     {
-      PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameToBack.DuplicateTime",
+      PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameByTime.DuplicateTime",
                         "There is already a frame at time %u in %s track.",
                         desiredTrigger, keyFrame.GetClassName().c_str());
       return RESULT_FAIL;
     }
+    prevKeyFrame = &(*framePlaceIter); // return previous keyframe
     ++framePlaceIter;
   }
   
@@ -260,7 +288,18 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrameByTime(const FRAME_TYPE& keyFra
 }
 
 template<typename FRAME_TYPE>
-RobotInterface::EngineToRobot* Animations::Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms)
+inline Result Track<FRAME_TYPE>::AddKeyFrameByTime(const FRAME_TYPE& keyFrame)
+{
+  FRAME_TYPE* dummy;
+  return AddKeyFrameByTimeHelper(keyFrame, dummy);
+}
+
+// Specialization for BodyMotion keyframes (implemented in .cpp)
+template<>
+Result Track<BodyMotionKeyFrame>::AddKeyFrameByTime(const BodyMotionKeyFrame& keyFrame);
+
+template<typename FRAME_TYPE>
+RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms)
 {
   RobotInterface::EngineToRobot* msg = nullptr;
 
@@ -280,22 +319,29 @@ RobotInterface::EngineToRobot* Animations::Track<FRAME_TYPE>::GetCurrentStreamin
 
 
 template<typename FRAME_TYPE>
-Result Animations::Track<FRAME_TYPE>::AddKeyFrameToBack(const Json::Value &jsonRoot, const std::string& animNameDebug)
+Result Track<FRAME_TYPE>::AddKeyFrameToBack(const Json::Value &jsonRoot, const std::string& animNameDebug)
 {
-  Result lastResult = AddKeyFrameToBack(FRAME_TYPE());
+  FRAME_TYPE newKeyFrame;
+  Result lastResult = newKeyFrame.DefineFromJson(jsonRoot, animNameDebug);
   if(RESULT_OK != lastResult) {
     return lastResult;
   }
-
-  lastResult = _frames.back().DefineFromJson(jsonRoot, animNameDebug);
-
+  
+  lastResult = AddKeyFrameToBack(newKeyFrame);
+  if(RESULT_OK != lastResult) {
+    return lastResult;
+  }
+  
   if(lastResult == RESULT_OK) {
     if(_frames.size() > 1) {
       auto nextToLastFrame = _frames.rbegin();
       ++nextToLastFrame;
 
       if(_frames.back().GetTriggerTime() <= nextToLastFrame->GetTriggerTime()) {
-        //PRINT_NAMED_ERROR("Animation.Track.AddKeyFrameToBack.BadTriggerTime", "New keyframe must be after the last keyframe.");
+    PRINT_NAMED_WARNING("Animation.Track.AddKeyFrameToBack.BadTriggerTime",
+                            "New keyframe (t=%d) must be after the last keyframe (t=%d)",
+                            _frames.back().GetTriggerTime(), nextToLastFrame->GetTriggerTime());
+        
         _frames.pop_back();
         lastResult = RESULT_FAIL;
       }
@@ -306,7 +352,7 @@ Result Animations::Track<FRAME_TYPE>::AddKeyFrameToBack(const Json::Value &jsonR
 }
 
 template<typename FRAME_TYPE>
-void Animations::Track<FRAME_TYPE>::ClearUpToCurrent()
+void Track<FRAME_TYPE>::ClearUpToCurrent()
 {
   auto iter = _frames.begin();
   while(iter != _frameIter) {

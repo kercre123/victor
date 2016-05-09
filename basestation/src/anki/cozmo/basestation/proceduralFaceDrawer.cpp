@@ -77,8 +77,8 @@ namespace Cozmo {
     {
       // Upper right corner
       if(upRightRadX > 0 && upRightRadY > 0) {
-        cv::ellipse2Poly(cv::Point(eyeWidth/2  - upRightRadX, -eyeHeight/2 + upRightRadY),
-                         cv::Size(upRightRadX,upRightRadY), 0, 270, 360, ellipseDelta, segment);
+       cv::ellipse2Poly(cv::Point(eyeWidth/2  - upRightRadX, -eyeHeight/2 + upRightRadY),cv::Size(upRightRadX,upRightRadY), 0, 270, 
+          360, (int)ellipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.push_back({eyeWidth/2,-eyeHeight/2});
@@ -95,8 +95,8 @@ namespace Cozmo {
       
       // Lower left corner
       if(lowLeftRadX > 0 && lowLeftRadY > 0) {
-        cv::ellipse2Poly(cv::Point(-eyeWidth/2  + lowLeftRadX, eyeHeight/2 - lowLeftRadY),
-                         cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, ellipseDelta, segment);
+       cv::ellipse2Poly(cv::Point(-eyeWidth/2  + lowLeftRadX, eyeHeight/2 - lowLeftRadY),
+                        cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, ellipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.push_back({-eyeWidth/2, eyeHeight/2});

@@ -44,6 +44,7 @@ static const char* kPickupMotionProfileKey = "pickup_motion_profile";
 static const char* kPlaceMotionProfileKey = "place_motion_profile";
 static const char* kDriveToPlacePoseThreshold_mmKey = "place_position_threshold_mm";
 static const char* kDriveToPlacePoseThreshold_radsKey = "place_position_threshold_rads";
+static const char* kShouldUseBlocksKey = "use_block";
 
 // TODO:(bn) replace these with animation groups
 static const char* kDrivingFailAnimName = "ID_react2block_align_fail";
@@ -55,6 +56,7 @@ static const float kAfterPlaceBackupSpeed_mmpsDefault = 80.0f;
 static const float kFaceVerificationTime_s = 0.75f;
 static const float kDriveToPlacePoseThreshold_mmDefault = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM;
 static const float kDriveToPlacePoseThreshold_radsDefault = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD;
+static const bool  kShouldUseBlocksDefault = true;
 
 // #define kDistToMoveTowardsFace_mm {120.0f, 100.0f, 140.0f, 50.0f, 180.0f, 20.0f}
 // to avoid cliff issues, we're only going to move slightly forwards
@@ -84,22 +86,53 @@ BehaviorRequestGameSimple::BehaviorRequestGameSimple(Robot& robot, const Json::V
                         "Empty json config! This behavior will not function correctly");
   }
   else {
+
+    _shouldUseBlocks = config.get(kShouldUseBlocksKey, kShouldUseBlocksDefault).asBool();
+
     _zeroBlockConfig.LoadFromJson(config[kZeroBlockGroupKey]);
-    _oneBlockConfig.LoadFromJson(config[kOneBlockGroupKey]);
 
-    LoadPathMotionProfileFromJson(_driveToPickupProfile, config[kPickupMotionProfileKey]);
-    LoadPathMotionProfileFromJson(_driveToPlaceProfile, config[kPlaceMotionProfileKey]);
+    if( _shouldUseBlocks ) {
+      _oneBlockConfig.LoadFromJson(config[kOneBlockGroupKey]);
 
-    _driveToPlacePoseThreshold_mm = config.get(kDriveToPlacePoseThreshold_mmKey,
-                                               kDriveToPlacePoseThreshold_mmDefault).asFloat();
-    _driveToPlacePoseThreshold_rads = config.get(kDriveToPlacePoseThreshold_radsKey,
-                                               kDriveToPlacePoseThreshold_radsDefault).asFloat();
+      LoadPathMotionProfileFromJson(_driveToPickupProfile, config[kPickupMotionProfileKey]);
+      LoadPathMotionProfileFromJson(_driveToPlaceProfile, config[kPlaceMotionProfileKey]);
+
+      _driveToPlacePoseThreshold_mm = config.get(kDriveToPlacePoseThreshold_mmKey,
+                                                 kDriveToPlacePoseThreshold_mmDefault).asFloat();
+      _driveToPlacePoseThreshold_rads = config.get(kDriveToPlacePoseThreshold_radsKey,
+                                                   kDriveToPlacePoseThreshold_radsDefault).asFloat();
 
       
-    _afterPlaceBackupDist_mm = config.get(kAfterPlaceBackupDistance_mmKey,
-                                          kAfterPlaceBackupDistance_mmDefault).asFloat();
-    _afterPlaceBackupSpeed_mmps = config.get(kAfterPlaceBackupSpeed_mmpsKey,
-                                             kAfterPlaceBackupSpeed_mmpsDefault).asFloat();
+      _afterPlaceBackupDist_mm = config.get(kAfterPlaceBackupDistance_mmKey,
+                                            kAfterPlaceBackupDistance_mmDefault).asFloat();
+      _afterPlaceBackupSpeed_mmps = config.get(kAfterPlaceBackupSpeed_mmpsKey,
+                                               kAfterPlaceBackupSpeed_mmpsDefault).asFloat();
+    }
+    else {
+      for( const char* blockKey : { kOneBlockGroupKey,
+                                    kPickupMotionProfileKey,
+                                    kPlaceMotionProfileKey,
+                                    kDriveToPlacePoseThreshold_mmKey,
+                                    kDriveToPlacePoseThreshold_radsKey,
+                                    kAfterPlaceBackupDistance_mmKey,
+                                    kAfterPlaceBackupSpeed_mmpsKey
+                                  } ) {
+        if( config.isMember(blockKey) ) {
+          PRINT_NAMED_WARNING("BehaviorRequestGameSimple.InvalidKey",
+                              "Behavior '%s' specifies that it should not use block, but specifies key '%s' "
+                              "which will be ignored",
+                              GetName().c_str(),
+                              blockKey);
+        }
+      }
+
+      if( ! FLT_NEAR( _zeroBlockConfig.scoreFactor, 1.0f ) ) {
+        PRINT_NAMED_WARNING("BehaviorRequestGameSimple.PossibleScoreError",
+                            "Behavior '%s' is not using blocks, but the zero block config discounts score by %f",
+                            GetName().c_str(),
+                            _zeroBlockConfig.scoreFactor);
+      }
+    }
   }
 }
 
@@ -482,6 +515,16 @@ void BehaviorRequestGameSimple::SetState_internal(State state, const std::string
   _state = state;
   PRINT_NAMED_DEBUG("BehaviorRequestGameSimple.TransitionTo", "%s", stateName.c_str());
   SetStateName(stateName);
+}
+
+u32 BehaviorRequestGameSimple::GetNumBlocks(const Robot& robot) const
+{
+  if( _shouldUseBlocks ) {
+    return IBehaviorRequestGame::GetNumBlocks(robot);
+  }
+  else {
+    return 0;
+  }
 }
 
 bool BehaviorRequestGameSimple::GetFaceInteractionPose(Robot& robot, Pose3d& targetPoseRet)

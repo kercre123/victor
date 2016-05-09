@@ -10,7 +10,7 @@
 *
 */
 
-#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer.h"
+#include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer_ios_mac.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"

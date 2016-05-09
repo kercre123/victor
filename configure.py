@@ -392,8 +392,7 @@ class EnginePlatformConfiguration(object):
         
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
-        
-        generate_gyp(self.gyp_dir, self.platform, self.options, "DEPS")
+        generate_gyp(self.gyp_dir, self.platform, self.options, os.path.join(ENGINE_ROOT, "DEPS"))
         if self.platform == 'mac' or self.platform == 'ios':
             ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
 
@@ -425,7 +424,7 @@ class EnginePlatformConfiguration(object):
             if self.options.command == 'clean':
                 command += ['-t', 'clean']
             # if this needs more features should add as ankibuild.ninja.build
-            results = subprocess.call(command, cwd=cwd_loc, shell=True)
+            results = subprocess.call(command, cwd=cwd_loc)
             if results:
                 sys.exit('[ERROR] running %s' % command)
 

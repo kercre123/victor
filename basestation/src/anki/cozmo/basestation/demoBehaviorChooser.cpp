@@ -35,7 +35,7 @@ namespace Cozmo {
 static const char* kWakeUpBehavior = "demo_wakeUp";
 static const char* kFearEdgeBehavior = "demo_fearEdge";
 static const char* kCliffBehavior = "ReactToCliff";
-static const char* kFlipDownFromBackBehavior = "demo_flipDownFromBack";
+static const char* kFlipDownFromBackBehavior = "ReactToRobotOnBack";
 static const char* kSleepBehavior = "demo_sleep";
 static const float kTimeCubesMustBeUpright_s = 3.0f;
 
@@ -57,6 +57,20 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
   _blockworldFilter->SetFilterFcn( std::bind( &DemoBehaviorChooser::FilterBlocks, this, std::placeholders::_1) );
     
   _name = "Demo[]";
+}
+
+unsigned int DemoBehaviorChooser::GetStateNum(State state)
+{
+  switch( state ) {
+    case State::None: return 0;
+    case State::WakeUp: return 1;
+    case State::FearEdge: return 2;
+    case State::Pounce: return 3;
+    case State::Faces: return 4;
+    case State::Cubes: return 5;
+    case State::MiniGame: return 6;
+    case State::Sleep: return 7;
+  }
 }
 
 void DemoBehaviorChooser::Init()
@@ -116,6 +130,8 @@ void DemoBehaviorChooser::TransitionToNextState()
       break;
     }
   }
+
+  _robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::DemoState( GetStateNum( _state ))));
 }
 
 bool DemoBehaviorChooser::DidBehaviorRunAndStop(const char* behaviorName) const
@@ -205,8 +221,6 @@ void DemoBehaviorChooser::TransitionToMiniGame()
   SET_STATE(MiniGame);
 
   _robot.GetMoodManager().SetEmotion(EmotionType::WantToPlay, 1.0f);
-  
-  // TEMP:  // TEMP: setModd here
   
   // leave block behaviors active, but also enable speed tap game request
   EnableBehaviorGroup(BehaviorGroup::RequestSpeedTap);

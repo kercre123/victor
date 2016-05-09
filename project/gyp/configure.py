@@ -51,6 +51,8 @@ def main(scriptArgs):
                       help='Use audio repo checked out at AUDIO_PATH')
   parser.add_argument('--bleCozmo', metavar='BLE_COZMO_PATH', dest='bleCozmoPath', action='store', default=None,
                       help='Use BLECozmo repo checked out at BLE_COZMO_PATH')
+  parser.add_argument('--das', metavar='DAS_PATH', dest='dasPath', action='store', default=None,
+                      help='Use das-client repo checked out at DAS_PATH')
   parser.add_argument('--projectRoot', dest='projectRoot', action='store', default=None,
                       help='project location, assumed to be same as git repo root')
   parser.add_argument('--updateListsOnly', dest='updateListsOnly', action='store_true', default=False,
@@ -135,6 +137,12 @@ def main(scriptArgs):
     return False
   bleCozmoProjectPath = os.path.join(options.bleCozmoPath, 'project/gyp/BLECozmo.gyp')
 
+  if not options.dasPath:
+    options.dasPath = os.path.join(options.projectRoot, 'lib/das-client')
+  if not os.path.exists(options.dasPath):
+    UtilLog.error('das-client not found [%s]' % (options.dasPath) )
+    return False
+  dasProjectPath = os.path.join(options.dasPath, 'gyp/das-client.gyp')
 
   # do not check for coretech external, and gyp if we are only updating list files
   if not options.updateListsOnly:
@@ -230,10 +238,10 @@ def main(scriptArgs):
   ctiAnkiUtilProjectPath = os.path.relpath(ankiUtilProjectPath, coretechInternalConfigurePath)
   coretechInternalProjectPath = os.path.relpath(coretechInternalProjectPath, configurePath)
   audioProjectGypPath = os.path.relpath(audioProjectGypPath, configurePath)
-  audioProjectPath = os.path.relpath(options.audioPath, configurePath)
+  #audioProjectPath = os.path.relpath(options.audioPath, configurePath)
+  audioProjectPath = os.path.abspath(os.path.join(configurePath, options.audioPath))
   bleCozmoProjectPath = os.path.relpath(bleCozmoProjectPath, configurePath)
-
-  print "Set audio project relpath: %s" % audioProjectPath
+  dasProjectPath = os.path.relpath(dasProjectPath, configurePath)
 
   # mac
   if 'mac' in options.platforms:
@@ -246,6 +254,7 @@ def main(scriptArgs):
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
                                   worldviz_library_type=static_library
+                                  das_library_type=static_library
                                   arch_group={0}
                                   output_location={1}
                                   coretech_external_path={2}
@@ -258,7 +267,9 @@ def main(scriptArgs):
                                   ce-util_gyp_path={8}
                                   ce-cti_gyp_path={9}
                                   ce-audio_path={10}
-                                  ce-ble_cozmo_path={11}
+                                  cg-audio_path={11}
+                                  ce-ble_cozmo_path={12}
+                                  ce-das_path={13}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mac'),
@@ -271,7 +282,9 @@ def main(scriptArgs):
                                     ankiUtilProjectPath, 
                                     coretechInternalProjectPath,
                                     audioProjectGypPath,
+                                    audioProjectGypPath,
                                     bleCozmoProjectPath,
+                                    dasProjectPath,
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mac', gypFile]
       gyp.main(gypArgs)
@@ -293,6 +306,7 @@ def main(scriptArgs):
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
+                                das_library_type=static_library
                                 arch_group={0}
                                 output_location={1}
                                 coretech_external_path={2}
@@ -304,7 +318,9 @@ def main(scriptArgs):
                                 ce-util_gyp_path={8}
                                 ce-cti_gyp_path={9}
                                 ce-audio_path={10}
-                                ce-ble_cozmo_path={11}
+                                cg-audio_path={11}
+                                ce-ble_cozmo_path={12}
+                                ce-das_path={13}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/ios'),
@@ -317,7 +333,9 @@ def main(scriptArgs):
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
                                   audioProjectGypPath,
+                                  audioProjectGypPath,
                                   bleCozmoProjectPath,
+                                  dasProjectPath,
                                 )
     gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/ios', gypFile]
     gyp.main(gypArgs)
@@ -335,6 +353,7 @@ def main(scriptArgs):
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
                                   worldviz_library_type=static_library
+                                  das_library_type=static_library
                                   arch_group={0}
                                   output_location={1}
                                   coretech_external_path={2}
@@ -347,6 +366,7 @@ def main(scriptArgs):
                                   ce-cti_gyp_path={9}
                                   ce-audio_path={10}
                                   ce-ble_cozmo_path={11}
+                                  ce-das_path={12}
                                   """.format(
                                     options.arch, 
                                     os.path.join(options.projectRoot, 'generated/mex'),
@@ -355,16 +375,18 @@ def main(scriptArgs):
                                     ctiGtestPath, 
                                     ctiAnkiUtilProjectPath,
                                     projectRoot,
-                                    gtestPath, 
-                                    ankiUtilProjectPath, 
+                                    gtestPath,
+                                    ankiUtilProjectPath,
                                     coretechInternalProjectPath,
                                     audioProjectGypPath,
                                     bleCozmoProjectPath,
+                                    dasProjectPath,
                                   )
       gypArgs = ['--check', '--depth', '.', '-f', 'xcode', '--toplevel-dir', '../..', '--generator-output', '../../generated/mex', gypFile]
       gyp.main(gypArgs)
       
       
+
 
   if 'android' in options.platforms:
     ### Install android build deps if necessary
@@ -403,6 +425,7 @@ def main(scriptArgs):
                                 jsoncpp_library_type=static_library
                                 util_library_type=static_library
                                 worldviz_library_type=static_library
+                                das_library_type=static_library
                                 os_posix=1
                                 OS=android
                                 GYP_CROSSCOMPILE=1
@@ -422,7 +445,9 @@ def main(scriptArgs):
                                 ce-cti_gyp_path={9}
                                 ndk_root={10}
                                 ce-audio_path={11}
-                                ce-ble_cozmo_path={12}
+                                cg-audio_path={12}
+                                ce-ble_cozmo_path={13}
+                                ce-das_path={14}
                                 """.format(
                                   options.arch, 
                                   os.path.join(options.projectRoot, 'generated/android'),
@@ -435,8 +460,10 @@ def main(scriptArgs):
                                   ankiUtilProjectPath, 
                                   coretechInternalProjectPath,
                                   ndk_root,
+                                  audioProjectPath,
                                   audioProjectGypPath,
                                   bleCozmoProjectPath,
+                                  dasProjectPath,
                                 )
     os.environ['CC_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang')
     os.environ['CXX_target'] = os.path.join(ndk_root, 'toolchains/llvm-3.5/prebuilt/darwin-x86_64/bin/clang++')
@@ -461,6 +488,7 @@ def main(scriptArgs):
                                   jsoncpp_library_type=static_library
                                   util_library_type=static_library
                                   worldviz_library_type=static_library
+                                  das_library_type=static_library
                                   arch_group={0}
                                   output_location={1}
                                   coretech_external_path={2}
@@ -474,6 +502,7 @@ def main(scriptArgs):
                                   ce-cti_gyp_path={9}
                                   ce-audio_path={10}
                                   ce-ble_cozmo_path={11}
+                                  ce-das_path={12}
                                   """.format(
                                     options.arch,
                                     os.path.join(options.projectRoot, 'generated/linux'),
@@ -487,6 +516,7 @@ def main(scriptArgs):
                                     coretechInternalProjectPath,
                                     audioProjectGypPath,
                                     bleCozmoProjectPath,
+                                    dasProjectPath,
                                   )
       os.environ['CC_target'] = '/usr/bin/clang'
       os.environ['CXX_target'] = '/usr/bin/clang++'

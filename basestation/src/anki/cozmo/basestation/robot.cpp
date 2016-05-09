@@ -54,6 +54,7 @@
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/gameStatusFlag.h"
+#include "util/console/consoleInterface.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/transport/reliableConnection.h"
@@ -82,9 +83,14 @@ namespace Anki {
       -1, 0, 0,
        0,-1, 0
     });
-     */
-    
-    // For tool code reading
+
+    static const float kPitchAngleOnBack_rads = DEG_TO_RAD(74.5f);
+    static const float kPitchAngleOnBack_sim_rads = DEG_TO_RAD(96.4f);
+
+    CONSOLE_VAR(f32, kPitchAngleOnBackTolerance_deg, "Robot", 5.0f);
+    CONSOLE_VAR(u32, kRobotTimeToConsiderOnBack_ms, "Robot", 300);
+  
+    /* For tool code reading
     // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
     const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
       0,             -0.0698,    0.9976,
@@ -620,17 +626,47 @@ namespace Anki {
        msg.pose_x, msg.pose_y, msg.pose_angle*180.f/M_PI);
        */
       
+      // check if the robot is stuck on it's back. We track internally if it's on it's back, but don't send
+      // the message out until some time.  // TODO:(bn) probably want to check that the robot isn't moving
+      // around based on accelerometer here
+      const float backAngle = IsPhysical() ? kPitchAngleOnBack_rads : kPitchAngleOnBack_sim_rads;
+      const bool currOnBack = std::abs( GetPitchAngle() - backAngle ) <= DEG_TO_RAD( kPitchAngleOnBackTolerance_deg );
+      bool sendOnBackValue = _lastSendOnBackValue;
       
+      if( currOnBack && _isOnBack ) {
+        // check if it has been long enough
+        if( msg.timestamp > _robotFirstOnBack_ms + kRobotTimeToConsiderOnBack_ms ) {
+          sendOnBackValue = true;
+        }
+      }
+      else if( currOnBack && !_isOnBack ) {
+        _robotFirstOnBack_ms = msg.timestamp;
+      }
+      else if ( ! currOnBack ) {
+        sendOnBackValue = false;
+      }
+
+      _isOnBack = currOnBack;
+
+      
+      if( sendOnBackValue != _lastSendOnBackValue ) {
+        Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnBack( sendOnBackValue )));
+        _lastSendOnBackValue = sendOnBackValue;
+      }
+
       // Engine modifications to state message.
       // TODO: Should this just be a different message? Or one that includes the state message from the robot?
       RobotState stateMsg(msg);
-      
+
+      const float imageFrameRate = 1000.0f / GetAverageImagePeriodMS();
+      const float imageProcRate = 1000.0f / GetAverageImageProcPeriodMS();
+            
       // Send state to visualizer for displaying
       GetContext()->GetVizManager()->SendRobotState(stateMsg,
                                                 static_cast<size_t>(AnimConstants::KEYFRAME_BUFFER_SIZE) - (_numAnimationBytesStreamed - _numAnimationBytesPlayed),
                                                 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD-(_numAnimationAudioFramesStreamed - _numAnimationAudioFramesPlayed),
-                                                (u8)MIN(1000.f/GetAverageImagePeriodMS(), u8_MAX),
-                                                (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
+                                                (u8)MIN(((u8)imageFrameRate), u8_MAX),
+                                                (u8)MIN(((u8)imageProcRate), u8_MAX),
                                                 _enabledAnimTracks,
                                                 _animationTag);
       
@@ -1039,6 +1075,8 @@ namespace Anki {
       // Sending debug string to game and viz
       char buffer [128];
 
+      const float imageProcRate = 1000.0f / GetAverageImageProcPeriodMS();
+
       // So we can have an arbitrary number of data here that is likely to change want just hash it all
       // together if anything changes without spamming
       snprintf(buffer, sizeof(buffer),
@@ -1051,7 +1089,7 @@ namespace Anki {
                // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
                // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
                // _movementComponent.AreAnyTracksLocked((u8)AnimTrackFlag::BODY_TRACK) ? 'B' : ' ',
-               (u8)MIN(1000.f/GetAverageImageProcPeriodMS(), u8_MAX),
+               (u8)MIN(((u8)imageProcRate), u8_MAX),
                behaviorChooserName,
                behaviorDebugStr.c_str());
       
@@ -2647,7 +2685,7 @@ namespace Anki {
         compression_params.push_back(CV_IMWRITE_JPEG_QUALITY);
         compression_params.push_back(90);
         sprintf(imgFilename, "%s/cozmo%d_%dms_%d.jpg", imageCaptureDir.c_str(), GetID(), image.GetTimestamp(), imgCounter++);
-        imwrite(imgFilename, image.get_CvMat_(), compression_params);
+        cv::imwrite(imgFilename, image.get_CvMat_(), compression_params);
         
         if (_imageSaveMode == SAVE_ONE_SHOT) {
           _imageSaveMode = SAVE_OFF;

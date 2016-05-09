@@ -1,0 +1,63 @@
+/**
+ * File: behaviorReactToRobotOnBack.h
+ *
+ * Author: Brad Neuman
+ * Created: 2016-05-06
+ *
+ * Description: 
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+#include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnBack.h"
+
+#include "anki/cozmo/basestation/actions/animActions.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+
+namespace Anki {
+namespace Cozmo {
+  
+using namespace ExternalInterface;
+
+static const char* const kFlipDownAnimGroupName = "FlipDownFromBack";
+  
+BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(Robot& robot, const Json::Value& config)
+: IReactionaryBehavior(robot, config)
+{
+  SetDefaultName("ReactToRobotOnBack");
+
+  // These are the tags that should trigger this behavior to be switched to immediately
+  SubscribeToTriggerTags({
+    EngineToGameTag::RobotOnBack
+  });
+}
+
+bool BehaviorReactToRobotOnBack::IsRunnable(const Robot& robot) const
+{
+  return true;
+}
+
+Result BehaviorReactToRobotOnBack::InitInternal(Robot& robot)
+{
+  StartActing(new PlayAnimationGroupAction(robot, kFlipDownAnimGroupName));
+  return Result::RESULT_OK;
+}
+
+bool BehaviorReactToRobotOnBack::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const
+{
+  if( event.GetTag() != MessageEngineToGameTag::RobotOnBack ) {
+    PRINT_NAMED_ERROR("BehaviorReactToRobotOnBack.ShouldRunForEvent.BadEventType",
+                      "Calling ShouldRunForEvent with an event we don't care about, this is a bug");
+    return false;
+  }
+  
+  return event.Get_RobotOnBack().onBack;
+}
+
+void BehaviorReactToRobotOnBack::StopInternal(Robot& robot)
+{
+}
+
+} // namespace Cozmo
+} // namespace Anki

@@ -10,6 +10,14 @@ enum uint_32 GenericState
   Invalid = 0,
 }
 
+enum uint_32 Mood
+{
+  Happy = 1427264549,
+  Invalid = 0,
+  Neutral = 670611050,
+  Sad = 443572635,
+}
+
 enum uint_32 Music
 {
   Gp_Between_Rounds = 658369771,
@@ -21,10 +29,19 @@ enum uint_32 Music
   Wakeup = 2251634718,
 }
 
+enum uint_32 Robot_Output_Source
+{
+  Invalid = 0,
+  To_Device = 1148290935,
+  To_Robot = 114835351,
+}
+
 enum uint_32 StateGroupType
 {
   Invalid = 0,
+  Mood = 3128647864,
   Music = 3991942870,
+  Robot_Output_Source = 3666768831,
 }
 
 } // GameState

@@ -47,8 +47,8 @@ enum uint_32 GenericEvent
   Dev_Robot_Tone_1K_1Sec_Play = 1083086921,
   Dev_Robot_Tone_1K_5Sec_Play = 1323780941,
   Dev_Robot_Tone_440Hz_5Sec_Play = 1348811033,
-  Hijack_Audio_Disable_Bypass = 3535474666,  // This is only used by Robot Audio Client
-  Hijack_Audio_Enable_Bypass = 2589144983,  // This is only used by Robot Audio Client
+  Hijack_Audio_Disable_Bypass = 3535474666,  // Deprecated - Working on new method
+  Hijack_Audio_Enable_Bypass = 2589144983,  // Deprecated - Working on new method
   Invalid = 0,  // Use this to check for Invalid events
   Music_Play = 202194903,
   Music_Stop = 3227181061,
@@ -66,6 +66,12 @@ enum uint_32 GenericEvent
   Sfx_Gp_St_Lose_Play = 3132723231,
   Sfx_Gp_St_Tap_Red_Play = 2305458725,
   Sfx_Gp_St_Win_Play = 2930798326,
+  Sfx_Mvt_Tread_Backward_Lp_Play = 1168186391,
+  Sfx_Mvt_Tread_Backward_Lp_Stop = 4151596101,
+  Sfx_Mvt_Tread_Forward_Lp_Play = 3645633611,
+  Sfx_Mvt_Tread_Forward_Lp_Stop = 2509873633,
+  Sfx_Mvt_Tread_Spin_Lp_Play = 3670184840,
+  Sfx_Mvt_Tread_Spin_Lp_Stop = 1752784890,
   Sfx_Placeholder_Play = 1074988205,
   Sfx_Srcn_Angry_Long_Play = 1044379185,
   Sfx_Srcn_Angry_Play = 2970495120,
@@ -113,7 +119,8 @@ enum uint_32 GenericEvent
   Sfx_Ui_Shared_Win_Play = 790005487,
   Sfx_Ui_Window_Close_Play = 945548936,
   Sfx_Ui_Window_Open_Play = 1425451874,
-  Vo_Coz_External_Play = 3049878514,
+  Vo_Coz_External_Name_First_Play = 3129794587,
+  Vo_Coz_External_Name_Play = 1707690926,
   Vo_Coz_Gp_Shared_Fakeout_Play = 2145308968,
   Vo_Coz_Gp_Shared_Lose_Level1_Play = 1274627492,
   Vo_Coz_Gp_Shared_Lose_Level2_Play = 2780324953,
@@ -136,11 +143,6 @@ enum uint_32 GenericEvent
   Vo_Coz_Gp_Shared_Win_Short_Play = 1731815324,
   Vo_Coz_Gp_Shared_Win_Short_Wow_Play = 2491294792,
   Vo_Coz_Gp_St_Tap_Effort_Play = 1227708849,
-  Vo_Coz_Names_Brian_Play = 3604123502,
-  Vo_Coz_Names_Charles_Play = 1544368438,
-  Vo_Coz_Names_Cozmo_Play = 668936046,
-  Vo_Coz_Names_Hanns_Play = 1495436810,
-  Vo_Coz_Names_Mark_Play = 3817785349,
   Vo_Coz_Placeholder_Play = 1720370564,
   Vo_Coz_React_Cliff_Play = 2113972887,
   Vo_Coz_See_Cube_First_Play = 2830862605,
@@ -185,8 +187,8 @@ enum uint_32 Music
 
 enum uint_32 PlugInControl
 {
-  HijackAudioDisableBypass = 3535474666,  // This is only used by Robot Audio Client
-  HijackAudioEnableBypass = 2589144983,  // This is only used by Robot Audio Client
+  HijackAudioDisableBypass = 3535474666,  // Deprecated - Working on new method
+  HijackAudioEnableBypass = 2589144983,  // Deprecated - Working on new method
   Invalid = 0,  // Use this to check for Invalid events
 }
 
@@ -196,7 +198,8 @@ enum uint_32 Robot
   EffortLift = 2460792037,
   EffortTap = 1227708849,
   Excited = 2632256753,
-  ExternalSource = 3049878514,
+  ExternalName = 1707690926,
+  ExternalNameFirstPlay = 3129794587,
   Fussy = 566465057,
   Happy = 201496157,
   Idea = 1539283944,
@@ -204,11 +207,6 @@ enum uint_32 Robot
   Lose1 = 1274627492,
   Lose2 = 2780324953,
   Lose3 = 62862858,
-  NameBrian_TEMP = 3604123502,
-  NameCharles_TEMP = 1544368438,
-  NameCozmo_TEMP = 668936046,
-  NameHanns_TEMP = 1495436810,
-  NameMark_TEMP = 3817785349,
   ReactCliff = 2113972887,
   ReactFace1 = 1544570445,
   ReactFace2 = 1241463592,
@@ -302,6 +300,12 @@ enum uint_32 SFX
   GameSharedRoundEnd = 3882290608,
   GameStart = 2618363978,
   Invalid = 0,  // Use this to check for Invalid events
+  MovementTreadBackward_Loop = 1168186391,
+  MovementTreadBackward_LoopStop = 4151596101,
+  MovementTreadForward_Loop = 3645633611,
+  MovementTreadForward_LoopStop = 2509873633,
+  MovementTreadSpin_Loop = 3670184840,
+  MovementTreadSpin_LoopStop = 1752784890,
   RelationshipGain = 3786297767,
   RelationshipLose = 3505317917,
   SharedLose = 2255190640,

@@ -77,7 +77,10 @@ uint8_t BLECozmoMessage::ChunkifyMessage(const uint8_t* bytes, const uint32_t nu
   // If we had any leftover bytes on the last chunk, fill them randomly
   if (lastNumBytesWritten < kMessageChunkSize)
   {
+    //TODO:  Add android version of this function.  
+#ifndef ANDROID
     BLECozmoGetRandomBytes(_messageChunks[chunkIndex] + lastNumBytesWritten, kMessageChunkSize - lastNumBytesWritten);
+#endif 
   }
   
   _messageChunks[chunkIndex][flagIndex] |= MESSAGE_END;

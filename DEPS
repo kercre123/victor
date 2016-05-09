@@ -11,11 +11,11 @@
                 "subdirs": [
                     "animations"
                 ],
-                "version": "58"
+                "version": "108"
             },
             "cozmosoundbanks": {
                 "package_name": "GeneratedSoundBanks.tar.gz",
-                "version": "31"
+                "version": "35"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
@@ -23,11 +23,11 @@
     "teamcity": {
         "builds": {
             "coretech_external": {
-                "build_id": "82788",
+                "build_id": "87386",
                 "build_type_id": "Cozmo_CoretechExternal_Build",
                 "extension": "tar.gz",
                 "package_name": "Cozmo_CoretechExternal",
-                "version": "115"
+                "version": "124"
             }
         },
         "default_usr": "puller_cozmo",

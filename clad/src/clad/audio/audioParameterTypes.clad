@@ -7,10 +7,15 @@ namespace GameParameter {
 
 enum uint_32 ParameterType
 {
+  External_Name_Duration = 2145805753,
   Invalid = 0,
   Mood = 3128647864,
   Music_Volume = 1006694123,
   Relationship = 3723222599,
+  Robot_Aux_Send_1 = 2318225993,
+  Robot_Aux_Send_2 = 2318225994,
+  Robot_Aux_Send_3 = 2318225995,
+  Robot_Aux_Send_4 = 2318225996,
   Robot_Volume = 1669075520,
   Sfx_Volume = 1564184899,
   Ss_Air_Fear = 1351367891,

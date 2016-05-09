@@ -32,6 +32,9 @@ namespace Anki {
       // Random acceleration
       motionProfile.accel_mmps2 = rng.RandDblInRange(20, 100);
       
+      // Deceleration is opposite of acceleration
+      motionProfile.decel_mmps2 = 120 - motionProfile.accel_mmps2;
+      
       // Speed based on distance to goal
       Pose3d pose;
       goal.GetWithRespectTo(_robot.GetPose(), pose);

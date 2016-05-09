@@ -13,6 +13,9 @@ enum uint_32 GameObjectType
   SFX,
   Aria,
   CozmoAnimation,
+  CozmoBus_2,
+  CozmoBus_3,
+  CozmoBus_4,
 
   End, // Need end val so I can enumerate through GameObjects
 

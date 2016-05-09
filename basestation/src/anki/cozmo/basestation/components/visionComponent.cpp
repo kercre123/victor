@@ -1287,7 +1287,7 @@ namespace Cozmo {
     cv::cvtColor(img.get_CvMat_(), img.get_CvMat_(), CV_BGR2RGB);
     
     std::vector<u8> compressedBuffer;
-    cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
+    //cv::imencode(".jpg",  img.get_CvMat_(), compressedBuffer, compressionParams);
     
     const u32 numTotalBytes = static_cast<u32>(compressedBuffer.size());
     
@@ -1669,10 +1669,6 @@ namespace Cozmo {
 
     // Every time a new face is enrolled with a name, store the album on the robot
     SaveFaceAlbumToRobot();
-
-    // Get the robot ready to be able to say the name
-    // TODO: Need to determine what styles need to be created
-    _robot.GetTextToSpeechComponent().CreateSpeech(name, SayTextStyle::Normal);
   }
   
 } // namespace Cozmo

@@ -1979,7 +1979,7 @@ namespace Anki {
                   printf("ERROR: sayString field is empty\n");
                 }
                 // TODO: Add ability to set style from KB controller field too
-                sayTextMsg.style = SayTextStyle::Normal;
+                sayTextMsg.style = SayTextStyle::Name_Normal;
                 
                 printf("Saying '%s' in style '%s'\n", sayTextMsg.text.c_str(), EnumToString(sayTextMsg.style));
                 SendMessage(ExternalInterface::MessageGameToEngine(std::move(sayTextMsg)));

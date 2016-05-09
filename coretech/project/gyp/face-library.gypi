@@ -121,6 +121,11 @@
         '<(coretech_external_path)/okaoVision/lib/iOS',
       ],
     }],
+    ['OS=="android" and face_library=="okao"', {
+      'face_library_lib_path': [
+        '<(coretech_external_path)/okaoVision/lib/Android/armeabi-v7a',
+      ],
+    }],
     
   ], # conditions
   

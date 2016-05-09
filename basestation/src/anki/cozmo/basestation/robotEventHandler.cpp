@@ -613,7 +613,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::sayText:
     {
       SayTextAction* sayTextAction = new SayTextAction(robot, actionUnion.Get_sayText().text, actionUnion.Get_sayText().style, true);
-      sayTextAction->SetGameEvent(actionUnion.Get_sayText().playEvent);
+      //sayTextAction->SetGameEvent(actionUnion.Get_sayText().playEvent);
       return sayTextAction;
     }
       

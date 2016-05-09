@@ -54,7 +54,7 @@ namespace Anki {
       const f32 maxStorageSize_bytes = 128000;
       
       // Delay between sending op/read result messages back to engine
-      const f32 delayBetweenMessages_ms = 100;
+      const f32 delayBetweenMessages_ms = 200;
       
       // Time the last op/read result was sent
       f32 lastSendTime_ = 0;

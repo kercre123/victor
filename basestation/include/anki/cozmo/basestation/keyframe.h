@@ -396,6 +396,9 @@ namespace Cozmo {
     
     virtual bool IsDone() override;
     
+    s32 GetDurationTime() const { return _durationTime_ms; }
+    void EnableStopMessage(bool enable) { _enableStopMessage = enable; }
+    
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
     
@@ -403,6 +406,7 @@ namespace Cozmo {
     
     s32 _durationTime_ms;
     s32 _currentTime_ms;
+    bool _enableStopMessage = true;
     
     AnimKeyFrame::BodyMotion _streamMsg;
     AnimKeyFrame::BodyMotion _stopMsg;
