@@ -86,7 +86,7 @@ BehaviorExploreLookAroundInPlace::~BehaviorExploreLookAroundInPlace()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreLookAroundInPlace::IsRunnable(const Robot& robot) const
+bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) const
 {
   // Probably want to run if I don't have any other exploration behavior that wants to, unless I have completely
   // mapped the floor around me 'recently'.

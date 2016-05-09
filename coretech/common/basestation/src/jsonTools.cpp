@@ -15,8 +15,11 @@
 #include "anki/common/basestation/math/pose.h"
 #include "anki/common/basestation/math/point_impl.h"
 
+#include "util/logging/logging.h"
+
 #include "json/json.h"
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 
@@ -161,12 +164,15 @@ namespace JsonTools
     
     return retVal;
   }
+
+namespace {
   
-__attribute__((used)) void PrintJson(const Json::Value& config, int maxDepth)
+__attribute__((used)) void PrintJsonInternal(const Json::Value& config, int maxDepth, const std::function<void(std::string)>& outputFunction)
 {
   if(maxDepth == 0) {
     Json::StyledWriter writer;
-    std::cout<<writer.write(config)<<std::endl;
+    const std::string& outString = writer.write(config);
+    outputFunction(outString);
   }
   else {
     // we need to replace everything below the max depth with "...",
@@ -206,11 +212,56 @@ __attribute__((used)) void PrintJson(const Json::Value& config, int maxDepth)
         **qIt = "...";
     }
 
-    Json::StyledWriter writer;
-    std::cout<<"<note: limited printing depth to "<<maxDepth<<">\n";
-    std::cout<<writer.write(tree)<<std::endl;
+    // add warning and print
+    {
+      Json::StyledWriter writer;
+      std::stringstream outputSS;
+      outputSS<<"<note: limited printing depth to "<<maxDepth<<">\n";
+      outputSS<<writer.write(tree);
+      const std::string& outString = outputSS.str();
+      outputFunction(outString);
+    }
   }
-} // PrintJson()
+} // PrintJsonInternal()
+
+}; // annon namespace for internal linkage
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+__attribute__((used)) void PrintJsonCout(const Json::Value& config, int maxDepth)
+{
+  auto function = []( const std::string& str ) {
+    std::cout << str << std::endl;
+  };
+  PrintJsonInternal(config, maxDepth, function);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+__attribute__((used)) void PrintJsonDebug(const Json::Value& config, const std::string& eventName, int maxDepth)
+{
+  auto function = [eventName]( const std::string& str ) {
+    PRINT_NAMED_DEBUG(eventName.c_str(), "\n%s", str.c_str());
+  };
+  PrintJsonInternal(config, maxDepth, function);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+__attribute__((used)) void PrintJsonInfo(const Json::Value& config, const std::string& eventName, int maxDepth)
+{
+  auto function = [eventName]( const std::string& str ) {
+    PRINT_NAMED_INFO(eventName.c_str(), "\n%s", str.c_str());
+  };
+  PrintJsonInternal(config, maxDepth, function);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+__attribute__((used)) void PrintJsonError(const Json::Value& config, const std::string& eventName, int maxDepth)
+{
+  auto function = [eventName]( const std::string& str ) {
+    PRINT_NAMED_ERROR(eventName.c_str(), "\n%s", str.c_str());
+  };
+  PrintJsonInternal(config, maxDepth, function);
+}
+
 
 } // namespace JsonTools
 

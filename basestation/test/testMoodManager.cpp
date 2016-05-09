@@ -15,7 +15,7 @@
 #include "gtest/gtest.h"
 
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/behaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
@@ -461,8 +461,8 @@ TEST(MoodManager, BehaviorScoring)
   Json::Value chooserConfig;
   SimpleBehaviorChooser behaviorChooser(testRobot, chooserConfig);
   
-  behaviorChooser.AddBehavior(testBehaviorReqHappy);
-  behaviorChooser.AddBehavior(testBehaviorReqCalm);
+  behaviorChooser.TryAddBehavior(testBehaviorReqHappy);
+  behaviorChooser.TryAddBehavior(testBehaviorReqCalm);
   
   testBehaviorReqHappy->ClearEmotionScorers();
   testBehaviorReqHappy->AddEmotionScorer(EmotionScorer(EmotionType::Happy, Anki::Util::GraphEvaluator2d({{-1.0f, 0.0f}, {0.5f, 1.0f}, {1.0f, 0.6f}}), false));

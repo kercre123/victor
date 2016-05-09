@@ -30,7 +30,7 @@ private:
 public:
 
   // checks if the motion is within pouncing distance
-  virtual bool IsRunnable(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
 
   // this can only run if it detects some motion
   virtual float EvaluateScoreInternal(const Robot& robot) const override;

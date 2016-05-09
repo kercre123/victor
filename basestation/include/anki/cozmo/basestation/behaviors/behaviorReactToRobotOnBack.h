@@ -28,7 +28,7 @@ private:
   
 public:
   
-  virtual bool IsRunnable(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   // don't know where the robot will land, so don't resume
   // TODO:(bn) should this depend on how long the robot was "in the air"?
   virtual bool ShouldResumeLastBehavior() const override { return false; }

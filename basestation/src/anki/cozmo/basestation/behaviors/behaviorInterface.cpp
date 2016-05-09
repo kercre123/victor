@@ -15,6 +15,8 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorFactory.h"
 #include "anki/cozmo/basestation/behaviorSystem/behaviorGroupHelpers.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/components/unlockIdsHelpers.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -23,6 +25,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 
+#include "util/enums/stringToEnumMapper.hpp"
 #include "util/math/numericCast.h"
 
 namespace Anki {
@@ -33,20 +36,21 @@ const char* IBehavior::kBaseDefaultName = "no_name";
   
 static const char* kNameKey              = "name";
 static const char* kEmotionScorersKey    = "emotionScorers";
+static const char* kFlatScoreKey         = "flatScore";
 static const char* kRepetitionPenaltyKey = "repetitionPenalty";
 static const char* kBehaviorGroupsKey    = "behaviorGroups";
-  
+static const char* kRequiredUnlockKey    = "requiredUnlockId";
   
 IBehavior::IBehavior(Robot& robot, const Json::Value& config)
-  : _moodScorer()
+  : _requiredUnlockId( UnlockId::Count )
+  , _moodScorer()
+  , _flatScore(0.0f)
   , _robot(robot)
   , _startedRunningTime_s(0.0)
   , _lastRunTime_s(0.0)
-  , _overrideScore(-1.0f)
   , _extraRunningScore(0.0f)
   , _isRunning(false)
-  , _isOwnedByFactory(false)
-  , _isChoosable(true)
+  , _isOwnedByFactory(false)  
   , _enableRepetitionPenalty(true)
 {
   ReadFromJson(config);
@@ -63,11 +67,35 @@ IBehavior::IBehavior(Robot& robot, const Json::Value& config)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IBehavior::ReadFromJson(const Json::Value& config)
 {
   const Json::Value& nameJson = config[kNameKey];
   _name = nameJson.isString() ? nameJson.asCString() : kBaseDefaultName;
 
+  // - - - - - - - - - -
+  // Required unlock
+  // - - - - - - - - - -
+  const Json::Value& requiredUnlockJson = config[kRequiredUnlockKey];
+  if ( !requiredUnlockJson.isNull() )
+  {
+    ASSERT_NAMED(requiredUnlockJson.isString(), "IBehavior.ReadFromJson.NonStringUnlockId");
+    
+    // this is probably the only place where we need this, otherwise please refactor to proper header
+    const UnlockId requiredUnlock = UnlockIdsFromString(requiredUnlockJson.asString());
+    if ( requiredUnlock != UnlockId::Count ) {
+      PRINT_NAMED_INFO("IBehavior.ReadFromJson.RequiredUnlock", "Behavior '%s' requires unlock '%s'",
+                        GetName().c_str(), requiredUnlockJson.asString().c_str() );
+      _requiredUnlockId = requiredUnlock;
+    } else {
+      PRINT_NAMED_ERROR("IBehavior.ReadFromJson.InvalidUnlockId", "Could not convert string to unlock id '%s'",
+        requiredUnlockJson.asString().c_str());
+    }
+  }
+
+  // - - - - - - - - - -
+  // Mood scorer
+  // - - - - - - - - - -
   _moodScorer.ClearEmotionScorers();
     
   const Json::Value& emotionScorersJson = config[kEmotionScorersKey];
@@ -75,7 +103,23 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
   {
     _moodScorer.ReadFromJson(emotionScorersJson);
   }
-    
+  
+  // - - - - - - - - - -
+  // Flat score
+  // - - - - - - - - - -
+  
+  const Json::Value& flatScoreJson = config[kFlatScoreKey];
+  if (!flatScoreJson.isNull()) {
+    _flatScore = flatScoreJson.asFloat();
+  }
+  
+  // make sure we only set one scorer (flat or mood)
+  ASSERT_NAMED( flatScoreJson.isNull() || _moodScorer.IsEmpty(), "IBehavior.ReadFromJson.MultipleScorers" );
+  
+  // - - - - - - - - - -
+  // Repetition penalty
+  // - - - - - - - - - -
+  
   _repetitionPenalty.Clear();
     
   const Json::Value& repetitionPenaltyJson = config[kRepetitionPenaltyKey];
@@ -96,8 +140,10 @@ bool IBehavior::ReadFromJson(const Json::Value& config)
     _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
   }
     
+  // - - - - - - - - - -
   // Behavior Groups
-    
+  // - - - - - - - - - -
+  
   ClearBehaviorGroups();
     
   const Json::Value& behaviorGroupsJson = config[kBehaviorGroupsKey];
@@ -199,6 +245,24 @@ void IBehavior::Stop()
   StopActing(false);
 }
 
+bool IBehavior::IsRunnable(const Robot& robot) const
+{
+  // first check the unlock
+  if ( _requiredUnlockId != UnlockId::Count )
+  {
+    // ask progression component if the unlockId is currently unlocked
+    const ProgressionUnlockComponent& progressionComp = robot.GetProgressionUnlockComponent();
+    const bool isUnlocked = progressionComp.IsUnlocked( _requiredUnlockId );
+    if ( !isUnlocked ) {
+      return false;
+    }
+  }
+
+  // no unlock or unlock passed, ask subclass
+  const bool isRunnable = IsRunnableInternal(robot);
+  return isRunnable;
+}
+
 Util::RandomGenerator& IBehavior::GetRNG() const {
   static Util::RandomGenerator sRNG;
   return sRNG;
@@ -230,22 +294,25 @@ double IBehavior::GetRunningDuration() const
   }
   return 0.0;
 }
-  
-float IBehavior::EvaluateEmotionScore(const MoodManager& moodManager) const
-{
-  return _moodScorer.EvaluateEmotionScore(moodManager);
-}
-  
+   
 // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
 float IBehavior::EvaluateScoreInternal(const Robot& robot) const
 {
-  return EvaluateEmotionScore(robot.GetMoodManager());
+  float score = _flatScore;
+  if ( !_moodScorer.IsEmpty() ) {
+    score = _moodScorer.EvaluateEmotionScore(robot.GetMoodManager());
+  }
+  return score;
 }
 
 // EvaluateScoreInternal is virtual and can optionally be overriden by subclasses
 float IBehavior::EvaluateRunningScoreInternal(const Robot& robot) const
 {
-  return EvaluateEmotionScore(robot.GetMoodManager());
+  float score = _flatScore;
+  if ( !_moodScorer.IsEmpty() ) {
+    score = _moodScorer.EvaluateEmotionScore(robot.GetMoodManager());
+  }
+  return score;
 }
   
 float IBehavior::EvaluateRepetitionPenalty() const
@@ -265,16 +332,11 @@ float IBehavior::EvaluateScore(const Robot& robot) const
 {
   if (IsRunnable(robot) || IsRunning())
   {
-    const bool doOverrideScore = (_overrideScore >= 0.0f);
     const bool isRunning = IsRunning();
                 
     float score = 0.0f;
       
-    if (doOverrideScore)
-    {
-      score = _overrideScore;
-    }
-    else if (isRunning)
+    if (isRunning)
     {
       score = EvaluateRunningScoreInternal(robot) + _extraRunningScore;
     }

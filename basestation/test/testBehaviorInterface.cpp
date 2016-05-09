@@ -43,7 +43,7 @@ public:
   int _numUpdates = 0;
   bool _stopped = false;
 
-  virtual bool IsRunnable(const Robot& robot) const override {
+  virtual bool IsRunnableInternal(const Robot& robot) const override {
     return true;
   }
 
@@ -709,7 +709,7 @@ public:
 
   bool _stopAction = false;
   
-  virtual bool IsRunnable(const Robot& robot) const override {
+  virtual bool IsRunnableInternal(const Robot& robot) const override {
     return true;
   }
 

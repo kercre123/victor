@@ -38,7 +38,7 @@ BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& conf
   });
 }
 
-bool BehaviorReactToCliff::IsRunnable(const Robot& robot) const
+bool BehaviorReactToCliff::IsRunnableInternal(const Robot& robot) const
 {
   return robot.GetBehaviorManager().GetWhiteboard().IsCliffReactionEnabled();
 }

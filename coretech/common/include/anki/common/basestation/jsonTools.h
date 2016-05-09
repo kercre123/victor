@@ -66,10 +66,13 @@ namespace Anki
     // floats and the color will be white.
     bool GetColorOptional(const Json::Value& node, const std::string& key, Anki::ColorRGBA& color);
     
-    // Dump the json to stdout (pretty-printed). The depth argument limits
+    // Dump the json to the selected output (pretty-printed). The depth argument limits
     // the depth of the tree that is printed. It is 0 by default, which
     // means to print the whole tree
-    void PrintJson(const Json::Value& config, int maxDepth = 0);
+    void PrintJsonCout(const Json::Value& config, int maxDepth = 0);  // std::cout
+    void PrintJsonDebug(const Json::Value& config, const std::string& eventName, int maxDepth = 0); // print_named_debug
+    void PrintJsonInfo(const Json::Value& config, const std::string& eventName, int maxDepth = 0);  // print_named_info
+    void PrintJsonError(const Json::Value& config, const std::string& eventName, int maxDepth = 0);  // print_named_error
     
 #if 0
 #pragma mark --- Templated Implementations ---

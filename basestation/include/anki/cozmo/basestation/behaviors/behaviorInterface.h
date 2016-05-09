@@ -23,6 +23,7 @@
 #include "clad/externalInterface/messageEngineToGameTag.h"
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/types/behaviorGroup.h"
+#include "clad/types/unlockTypes.h"
 #include "util/bitFlags/bitFlags.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
@@ -107,7 +108,7 @@ public:
     
   // Returns true iff the state of the world/robot is sufficient for this
   // behavior to be executed
-  virtual bool IsRunnable(const Robot& robot) const = 0;
+  bool IsRunnable(const Robot& robot) const;
   
   const std::string& GetName() const { return _name; }
   const std::string& GetStateName() const { return _stateName; }
@@ -118,9 +119,6 @@ public:
   // likely waiting for something to complete
   inline bool IsActing() const;
     
-  // EvaluateEmotionScore is a score directly based on the given emotion rules
-  float EvaluateEmotionScore(const MoodManager& moodManager) const;
-  
   float EvaluateScore(const Robot& robot) const;
 
   const MoodScorer& GetMoodScorer() const { return _moodScorer; }
@@ -130,16 +128,11 @@ public:
   size_t GetEmotionScorerCount() const { return _moodScorer.GetEmotionScorerCount(); }
   const EmotionScorer& GetEmotionScorer(size_t index) const { return _moodScorer.GetEmotionScorer(index); }
     
-    
-  void SetOverrideScore(float newVal) { _overrideScore = newVal; }
-    
+  
   float EvaluateRepetitionPenalty() const;
   const Util::GraphEvaluator2d& GetRepetionalPenalty() const { return _repetitionPenalty; }
     
   bool IsOwnedByFactory() const { return _isOwnedByFactory; }
-    
-  bool IsChoosable() const { return _isChoosable; }
-  void SetIsChoosable(bool newVal) { _isChoosable = newVal; }
     
   virtual IReactionaryBehavior* AsReactionaryBehavior() { assert(0); return nullptr; }
     
@@ -172,10 +165,11 @@ protected:
     
   virtual Result InitInternal(Robot& robot) = 0;
   virtual Result ResumeInternal(Robot& robot) { return InitInternal(robot); }
+  virtual bool IsRunnableInternal(const Robot& robot) const = 0;
 
-  // EvaluateScoreInternal is used to score each behavior for behavior selection - by default it just uses
-  // EvaluateEmotionScore. If the behavior is running, it uses the Running score to decide if it should keep
-  // running
+  // EvaluateScoreInternal is used to score each behavior for behavior selection - it uses mood scorer or
+  // flat score depending on configuration. If the behavior is running, it uses the Running score to decide if it should
+  // keep running
   virtual float EvaluateRunningScoreInternal(const Robot& robot) const;
   virtual float EvaluateScoreInternal(const Robot& robot) const;
 
@@ -294,10 +288,14 @@ private:
     
   std::string _name;
   std::string _stateName = "";
-        
-  MoodScorer                 _moodScorer;
-  Util::GraphEvaluator2d     _repetitionPenalty;
-    
+  
+  // if an unlockId is set, the behavior won't be runnable unless the unlockId is unlocked in the progression component
+  UnlockId _requiredUnlockId;
+  
+  MoodScorer              _moodScorer;
+  Util::GraphEvaluator2d  _repetitionPenalty;
+  float                   _flatScore;
+  
   Robot& _robot;
     
   std::vector<::Signal::SmartHandle> _eventHandles;
@@ -305,8 +303,6 @@ private:
   double _startedRunningTime_s;
   double _lastRunTime_s;
   int _startCount = 0;
-
-  float _overrideScore; // any value >= 0 implies it should be used
 
   // for Start/StopActing if invalid, no action
   u32 _lastActionTag = ActionConstants::INVALID_TAG;
@@ -317,7 +313,6 @@ private:
 
   bool _isRunning;
   bool _isOwnedByFactory;
-  bool _isChoosable;
     
   bool _enableRepetitionPenalty;
     

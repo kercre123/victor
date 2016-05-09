@@ -24,7 +24,7 @@
 #include "clad/types/actionTypes.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/behaviorChooserType.h"
-#include "clad/types/behaviorType.h"
+#include "clad/types/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -1033,51 +1033,17 @@ namespace Anki {
               {
 
                 if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT ||
-                    modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                    modifier_key & webots::Supervisor::KEYBOARD_ALT)
+                {
 
                   if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT &&
                       modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
                     printf("ERROR: invalid hotkey\n");
                     break;
                   }
+                  
+                  // Do not use, soon we'll use games and sparks here!
 
-                  bool enable = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
-                  
-                  // handle behavior group
-                  webots::Field* behaviorGroupField = root_->getField("behaviorGroup");
-                  if (behaviorGroupField == nullptr) {
-                    printf("ERROR: No behaviorGroup field found in WebotsKeyboardController.proto\n");
-                    break;
-                  }
-                  
-                  std::string behaviorGroupStr = behaviorGroupField->getSFString();
-                  if (behaviorGroupStr.empty()) {
-                    printf("sending SetEnableAllBehaviors(%s)\n", enable ? "true" : "false");
-                    // enable or disable all
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::BehaviorManagerMessage(
-                                    1,
-                                    ExternalInterface::BehaviorManagerMessageUnion(
-                                      ExternalInterface::SetEnableAllBehaviors(enable)))));
-                  }
-                  else {
-                    // get the behavior group enum
-                    BehaviorGroup group = BehaviorGroupFromString(behaviorGroupStr);
-                    if( group != BehaviorGroup::Count) {
-                      printf("sending EnableBehgaviorGroup(%s, %s)\n", behaviorGroupStr.c_str(),
-                             enable ? "true" : "false");
-                      SendMessage(ExternalInterface::MessageGameToEngine(
-                                    ExternalInterface::BehaviorManagerMessage(
-                                      1,
-                                      ExternalInterface::BehaviorManagerMessageUnion(
-                                        ExternalInterface::SetEnableBehaviorGroup(group, enable)))));
-                    }
-                    else {
-                      printf("ERROR: couldnt convert string to behavior group '%s'\n",
-                             behaviorGroupStr.c_str());
-                    }
-                  }
-                  
                 }
                 else {
                   // select behavior chooser
