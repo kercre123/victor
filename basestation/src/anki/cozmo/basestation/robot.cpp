@@ -83,6 +83,7 @@ namespace Anki {
       -1, 0, 0,
        0,-1, 0
     });
+     */
 
     static const float kPitchAngleOnBack_rads = DEG_TO_RAD(74.5f);
     static const float kPitchAngleOnBack_sim_rads = DEG_TO_RAD(96.4f);
@@ -90,7 +91,7 @@ namespace Anki {
     CONSOLE_VAR(f32, kPitchAngleOnBackTolerance_deg, "Robot", 5.0f);
     CONSOLE_VAR(u32, kRobotTimeToConsiderOnBack_ms, "Robot", 300);
   
-    /* For tool code reading
+    // For tool code reading
     // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
     const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
       0,             -0.0698,    0.9976,

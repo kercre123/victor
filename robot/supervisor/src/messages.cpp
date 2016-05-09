@@ -860,9 +860,19 @@ namespace Anki {
       }
       void Process_enterTestMode(const RobotInterface::EnterFactoryTestMode&)
       {
+        // nothing to do here//
+      }
+      /*
+      void Process_configureBluetooth(const RobotInterface::ConfigureBluetooth&)
+      {
         // nothing to do here
       }
-      void Process_configureBluetooth(const RobotInterface::ConfigureBluetooth&)
+       */
+      void Process_sendDTMCommand(const RobotInterface::SendDTMCommand&)
+      {
+        // nothing to do here
+      }
+      void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode&)
       {
         // nothing to do here
       }
