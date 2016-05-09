@@ -77,6 +77,10 @@ namespace Anki {
         // Save robot image to file
         bool saveRobotImageToFile_ = false;
         
+        std::string _drivingStartAnim = "";
+        std::string _drivingLoopAnim = "";
+        std::string _drivingEndAnim = "";
+        
       } // private namespace
     
       // ======== Message handler callbacks =======
@@ -446,6 +450,29 @@ namespace Anki {
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
           //       key, modifier_key, key | modifier_key, lastKeyPressed_);
+          
+          const std::string drivingStartAnim = root_->getField("drivingStartAnim")->getSFString();
+          const std::string drivingLoopAnim = root_->getField("drivingLoopAnim")->getSFString();
+          const std::string drivingEndAnim = root_->getField("drivingEndAnim")->getSFString();
+          
+          if(_drivingStartAnim.compare(drivingStartAnim) != 0 ||
+             _drivingLoopAnim.compare(drivingLoopAnim) != 0 ||
+             _drivingEndAnim.compare(drivingEndAnim) != 0)
+          {
+            _drivingStartAnim = drivingStartAnim;
+            _drivingLoopAnim = drivingLoopAnim;
+            _drivingEndAnim = drivingEndAnim;
+          
+            ExternalInterface::SetDrivingAnimations m;
+            m.drivingStartAnim = _drivingStartAnim;
+            m.drivingLoopAnim = _drivingLoopAnim;
+            m.drivingEndAnim = _drivingEndAnim;
+            
+            ExternalInterface::MessageGameToEngine msg;
+            msg.Set_SetDrivingAnimations(m);
+            SendMessage(msg);
+          }
+          
           
           // Check for test mode (alt + key)
           bool testMode = false;

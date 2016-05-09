@@ -45,6 +45,7 @@
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/cozmo/basestation/speedChooser.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/observableObjectLibrary_impl.h"
@@ -108,6 +109,7 @@ namespace Anki {
     , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimations())
     , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
     , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
+    , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
     , _movementComponent(*this)
     , _visionComponent(*this, VisionComponent::RunMode::Asynchronous, _context)
     , _nvStorageComponent(*this, _context)
@@ -261,6 +263,8 @@ namespace Anki {
       Util::SafeDelete(_moodManager);
       Util::SafeDelete(_progressionUnlockComponent);
       Util::SafeDelete(_blockFilter);
+      Util::SafeDelete(_drivingAnimationHandler);
+      Util::SafeDelete(_speedChooser);
 
       _selectedPathPlanner = nullptr;
       
