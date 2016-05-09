@@ -70,7 +70,7 @@ static bool ProcessDrop(void) {
         // Handle OTA related messages here rather than in message dispatch loop so it's harder to break
         case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_bootloadRTIP:
         {
-          SPI::EnterOTAMode();
+          SPI::EnterRecoveryMode();
           break;
         }
         default:
