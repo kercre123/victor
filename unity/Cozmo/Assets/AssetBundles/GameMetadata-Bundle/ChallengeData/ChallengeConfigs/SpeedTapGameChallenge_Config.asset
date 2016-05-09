@@ -13,15 +13,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _SkillConfig:
     _EvaluateLevelChangeEvent:
-    - _EnumValueAsString: OnSpeedtapSessionWin
-      _EnumValue: 12
-    - _EnumValueAsString: OnSpeedtapSessionLose
+    - _EnumValueAsString: OnSpeedtapRoundCozmoWin
+      _EnumValue: 10
+    - _EnumValueAsString: OnSpeedtapGamePlayerWin
       _EnumValue: 13
     _GainChallengePointEvent:
-    - _EnumValueAsString: OnSpeedtapHandWin
+    - _EnumValueAsString: OnSpeedtapHandCozmoWin
       _EnumValue: 8
     _LoseChallengePointEvent:
-    - _EnumValueAsString: OnSpeedtapHandLose
+    - _EnumValueAsString: OnSpeedtapHandPlayerWin
       _EnumValue: 9
     _ResetPointsEvent:
     - _EnumValueAsString: OnSpeedtapStarted
@@ -102,16 +102,16 @@ MonoBehaviour:
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 1.5
+      SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 1.125
+      SecondsHandDisplayed: 1.125
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 0.75
+      SecondsHandDisplayed: 0.75
   - DifficultyID: 1
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -121,16 +121,16 @@ MonoBehaviour:
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 1.5
+      SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 1.125
+      SecondsHandDisplayed: 1.125
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 0.75
+      SecondsHandDisplayed: 0.75
   - DifficultyID: 2
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -140,16 +140,16 @@ MonoBehaviour:
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 1.5
+      SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 1.125
+      SecondsHandDisplayed: 1.125
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 0.75
+      SecondsHandDisplayed: 0.75
   - DifficultyID: 3
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -159,13 +159,13 @@ MonoBehaviour:
     SpeedTapRoundSettings:
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 1.5
+      SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 1.125
+      SecondsHandDisplayed: 1.125
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 3
-      SecondsHandDisplayed: 2
+      SecondsBetweenHands: 0.75
+      SecondsHandDisplayed: 0.75

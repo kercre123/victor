@@ -1,8 +1,14 @@
 {
   "Animations": [
     {
-      "Name": "anim_VS_loco_cliffReact",
-      "Weight": 1.0,
+      "Name": "anim_reactToCliff_edgeLiftUp_01",
+      "Weight": 100.0,
+      "CooldownTime_Sec": 3600.0,
+      "Mood": "Default"
+    },
+    {
+      "Name": "anim_reactToCliff_edge_01",
+      "Weight": 0.1,
       "CooldownTime_Sec": 0.0,
       "Mood": "Default"
     }

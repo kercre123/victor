@@ -80,19 +80,19 @@ public class AnimationManager {
     }
   }
 
-  public void GameEventReceived(GameEvent cozEvent) {
+  public void GameEventReceived(GameEventWrapper cozEvent) {
     string animGroup = "";
-    if (!AnimationGroupDict.ContainsKey(cozEvent)) {
-      DAS.Error(this, string.Format("GameEvent {0} doesn't exist within AnimationGroupDict. Have you Initialized the AnimationManager?", cozEvent));
+    // Not containing an event just means this might be only used for game logic not animation.
+    if (!AnimationGroupDict.ContainsKey(cozEvent.GameEventEnum)) {
       return;
     }
-    if (AnimationGroupDict.TryGetValue(cozEvent, out animGroup)) {
+    if (AnimationGroupDict.TryGetValue(cozEvent.GameEventEnum, out animGroup)) {
       RobotCallback newCallback = null;
       if (!string.IsNullOrEmpty(animGroup)) {
-        AnimationCallbackDict.TryGetValue(cozEvent, out newCallback);
+        AnimationCallbackDict.TryGetValue(cozEvent.GameEventEnum, out newCallback);
         CurrentRobot.SendAnimationGroup(animGroup, newCallback, QueueActionPosition.NEXT);
       }
-      else if (AnimationCallbackDict.TryGetValue(cozEvent, out newCallback)) {
+      else if (AnimationCallbackDict.TryGetValue(cozEvent.GameEventEnum, out newCallback)) {
         DAS.Warn(this, string.Format("GameEvent {0} has an animation callback, but no animation group", cozEvent));
         newCallback.Invoke(true);
       }

@@ -14,8 +14,6 @@ namespace Cozmo {
 
       public Action OnProgChanged;
 
-      private int _GoalTarget;
-
       [SerializeField]
       private AnkiTextLabel _GoalLabel;
 
@@ -72,11 +70,10 @@ namespace Cozmo {
         if (update) {
           goal.OnDailyGoalUpdated += OnGoalUpdate;
         }
-        _GoalTarget = goal.Target;
         // TODO: Load by string? Or set up a config file for mapping icons to enums?
         //_GoalIcon.sprite = goal.GoalIcon;
         _GoalLabel.text = goal.Title;
-        SetProgress((float)goal.Progress / (float)_GoalTarget);
+        SetProgress((float)goal.Progress / (float)goal.Target);
       }
 
       private void OnGoalUpdate(DailyGoal goal) {

@@ -1378,4 +1378,9 @@ public class Robot : IRobot {
   }
 
   #endregion
+
+  public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    DAS.Debug(this, "Saying text: " + text);
+    SendQueueSingleAction(Singleton<SayText>.Instance.Initialize(text, playEvent, style), callback, queueActionPosition);
+  }
 }
