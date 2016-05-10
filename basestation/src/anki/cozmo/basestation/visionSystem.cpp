@@ -70,7 +70,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  CONSOLE_VAR(bool, kUseCLAHE, "Vision.PreProcessing", true);
+  CONSOLE_VAR(bool, kUseCLAHE, "Vision.PreProcessing", false);
   CONSOLE_VAR(s32, kClaheClipLimit, "Vision.PreProcessing", 2); // Change requires re-Init()
   CONSOLE_VAR(s32, kClaheTileSize, "Vision.PreProcessing", 8);  // Change requires re-Init()
   

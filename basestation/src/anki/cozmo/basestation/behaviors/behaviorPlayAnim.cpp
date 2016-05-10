@@ -57,7 +57,7 @@ BehaviorPlayAnim::~BehaviorPlayAnim()
 {  
 }
   
-bool BehaviorPlayAnim::IsRunnable(const Robot& robot) const
+bool BehaviorPlayAnim::IsRunnableInternal(const Robot& robot) const
 {
   const bool retVal = true;
   return retVal;

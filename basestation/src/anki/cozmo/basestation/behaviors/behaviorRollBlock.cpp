@@ -37,7 +37,7 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   _blockworldFilter->SetFilterFcn( std::bind( &BehaviorRollBlock::FilterBlocks, this, std::placeholders::_1) );
 }
   
-bool BehaviorRollBlock::IsRunnable(const Robot& robot) const
+bool BehaviorRollBlock::IsRunnableInternal(const Robot& robot) const
 {
   // runnable if we have a block we'd like to roll
   return HasValidTargetBlock(robot);

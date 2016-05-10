@@ -56,6 +56,9 @@ namespace Anki {
       bool ReadFromJson(const Json::Value& inJson);
       bool WriteToJson(Json::Value& outJson) const;
       
+      // return true if no scorers are currently set
+      bool IsEmpty() const { return _emotionScorers.empty(); }
+      
       void ClearEmotionScorers()                         { _emotionScorers.clear(); }
       void AddEmotionScorer(const EmotionScorer& scorer) { _emotionScorers.push_back(scorer); }
       size_t GetEmotionScorerCount() const { return _emotionScorers.size(); }

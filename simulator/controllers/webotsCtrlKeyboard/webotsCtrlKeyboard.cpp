@@ -24,7 +24,7 @@
 #include "clad/types/actionTypes.h"
 #include "clad/types/activeObjectTypes.h"
 #include "clad/types/behaviorChooserType.h"
-#include "clad/types/behaviorType.h"
+#include "clad/types/behaviorTypes.h"
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -78,6 +78,10 @@ namespace Anki {
         // Save robot image to file
         bool saveRobotImageToFile_ = false;
         
+        std::string _drivingStartAnim = "";
+        std::string _drivingLoopAnim = "";
+        std::string _drivingEndAnim = "";
+
         // Manufacturing data save folder name
         std::string _mfgDataSaveFolder = "";
         std::string _mfgDataSaveFile = "nvStorageStuff.txt";
@@ -451,6 +455,29 @@ namespace Anki {
           
           //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
           //       key, modifier_key, key | modifier_key, lastKeyPressed_);
+          
+          const std::string drivingStartAnim = root_->getField("drivingStartAnim")->getSFString();
+          const std::string drivingLoopAnim = root_->getField("drivingLoopAnim")->getSFString();
+          const std::string drivingEndAnim = root_->getField("drivingEndAnim")->getSFString();
+          if(_drivingStartAnim.compare(drivingStartAnim) != 0 ||
+          
+             _drivingLoopAnim.compare(drivingLoopAnim) != 0 ||
+             _drivingEndAnim.compare(drivingEndAnim) != 0)
+          {
+            _drivingStartAnim = drivingStartAnim;
+            _drivingLoopAnim = drivingLoopAnim;
+            _drivingEndAnim = drivingEndAnim;
+          
+            ExternalInterface::SetDrivingAnimations m;
+            m.drivingStartAnim = _drivingStartAnim;
+            m.drivingLoopAnim = _drivingLoopAnim;
+            m.drivingEndAnim = _drivingEndAnim;
+            
+            ExternalInterface::MessageGameToEngine msg;
+            msg.Set_SetDrivingAnimations(m);
+            SendMessage(msg);
+          }
+          
           
           // Check for test mode (alt + key)
           bool testMode = false;
@@ -1011,51 +1038,17 @@ namespace Anki {
               {
 
                 if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT ||
-                    modifier_key & webots::Supervisor::KEYBOARD_ALT) {
+                    modifier_key & webots::Supervisor::KEYBOARD_ALT)
+                {
 
                   if( modifier_key & webots::Supervisor::KEYBOARD_SHIFT &&
                       modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
                     printf("ERROR: invalid hotkey\n");
                     break;
                   }
+                  
+                  // Do not use, soon we'll use games and sparks here!
 
-                  bool enable = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;
-                  
-                  // handle behavior group
-                  webots::Field* behaviorGroupField = root_->getField("behaviorGroup");
-                  if (behaviorGroupField == nullptr) {
-                    printf("ERROR: No behaviorGroup field found in WebotsKeyboardController.proto\n");
-                    break;
-                  }
-                  
-                  std::string behaviorGroupStr = behaviorGroupField->getSFString();
-                  if (behaviorGroupStr.empty()) {
-                    printf("sending SetEnableAllBehaviors(%s)\n", enable ? "true" : "false");
-                    // enable or disable all
-                    SendMessage(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::BehaviorManagerMessage(
-                                    1,
-                                    ExternalInterface::BehaviorManagerMessageUnion(
-                                      ExternalInterface::SetEnableAllBehaviors(enable)))));
-                  }
-                  else {
-                    // get the behavior group enum
-                    BehaviorGroup group = BehaviorGroupFromString(behaviorGroupStr);
-                    if( group != BehaviorGroup::Count) {
-                      printf("sending EnableBehgaviorGroup(%s, %s)\n", behaviorGroupStr.c_str(),
-                             enable ? "true" : "false");
-                      SendMessage(ExternalInterface::MessageGameToEngine(
-                                    ExternalInterface::BehaviorManagerMessage(
-                                      1,
-                                      ExternalInterface::BehaviorManagerMessageUnion(
-                                        ExternalInterface::SetEnableBehaviorGroup(group, enable)))));
-                    }
-                    else {
-                      printf("ERROR: couldnt convert string to behavior group '%s'\n",
-                             behaviorGroupStr.c_str());
-                    }
-                  }
-                  
                 }
                 else {
                   // select behavior chooser

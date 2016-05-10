@@ -35,7 +35,7 @@ protected:
   
 public:
 
-  virtual bool IsRunnable(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   
   virtual float EvaluateScoreInternal(const Anki::Cozmo::Robot &robot) const override;
   

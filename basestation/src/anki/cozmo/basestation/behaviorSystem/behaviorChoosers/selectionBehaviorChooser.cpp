@@ -10,7 +10,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/selectionBehaviorChooser.h"
+#include "selectionBehaviorChooser.h"
 
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
@@ -29,8 +29,7 @@ namespace Cozmo {
   
 SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Value& config)
   : SimpleBehaviorChooser(robot, config)
-  , _robot(robot)
-  , _config(config)
+  , _robot(robot)  
 {
   if (_robot.HasExternalInterface())
   {
@@ -47,7 +46,7 @@ SelectionBehaviorChooser::SelectionBehaviorChooser(Robot& robot, const Json::Val
   
   // Setup None Behavior now since it's always the fallback
   _behaviorNone = robot.GetBehaviorFactory().CreateBehavior(BehaviorType::NoneBehavior, robot, config);
-  Result addResult = AddBehavior(_behaviorNone);
+  Result addResult = TryAddBehavior(_behaviorNone);
   if (Result::RESULT_OK != addResult)
   {
     PRINT_NAMED_ERROR("SelectionBehaviorChooser.SelectionBehaviorChooser", "BehaviorNone was not created properly.");
@@ -82,7 +81,7 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
     case ExternalInterface::MessageGameToEngineTag::ExecuteBehavior: {
       const ExternalInterface::ExecuteBehavior& msg = event.GetData().Get_ExecuteBehavior();
       BehaviorType type = msg.behaviorType;
-      selectedBehavior = GetBehaviorByName(EnumToString(type));
+      selectedBehavior = FindBehaviorInTableByName( EnumToString(type) );
 
       if (nullptr == selectedBehavior)
       {
@@ -126,12 +125,13 @@ void SelectionBehaviorChooser::HandleExecuteBehavior(const AnkiEvent<ExternalInt
   
 IBehavior* SelectionBehaviorChooser::AddNewBehavior(BehaviorType newType)
 {
+  Json::Value nullConfig;
   BehaviorFactory& behaviorFactory = _robot.GetBehaviorFactory();
-  IBehavior* newBehavior = behaviorFactory.CreateBehavior(newType, _robot, _config);
+  IBehavior* newBehavior = behaviorFactory.CreateBehavior(newType, _robot, nullConfig);
   
   if (newBehavior)
   {
-    const Result addResult = AddBehavior(newBehavior);
+    const Result addResult = TryAddBehavior(newBehavior);
     if (Result::RESULT_OK != addResult)
     {
       PRINT_NAMED_ERROR("SelectionBehaviorChooser.AddNewBehavior",

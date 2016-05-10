@@ -58,7 +58,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   // todo: document. Is this behavior alway runnable, or we won't look around in an area we already know everything?
-  virtual bool IsRunnable(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
   
   virtual float EvaluateScoreInternal(const Robot& robot) const override { return 1.0f; }
   

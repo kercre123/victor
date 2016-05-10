@@ -29,7 +29,7 @@ protected:
 
 public:
 
-  virtual bool IsRunnable(const Robot& robot) const override {return true;}
+  virtual bool IsRunnableInternal(const Robot& robot) const override {return true;}
 
 protected:
 

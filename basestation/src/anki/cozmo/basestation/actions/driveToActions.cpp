@@ -17,14 +17,9 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/speedChooser.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "driveToActions.h"
-
-// TEMP: disabled default sounds for now to avoid animation bugs
-static const char* kDefaultDrivingSoundsSadClipStart = ""; // "ID_AlignToObject_Frustrated_Start";
-static const char* kDefaultDrivingSoundsSadClipStop = ""; //"ID_AlignToObject_Frustrated_Stop";
-static const char* kDefaultDrivingSoundsDefaultClipStart = ""; //"ID_AlignToObject_Content_Start";
-static const char* kDefaultDrivingSoundsDefaultClipStop = ""; //"ID_AlignToObject_Content_Stop";
 
 namespace Anki {
   
@@ -123,19 +118,6 @@ namespace Anki {
       PRINT_NAMED_INFO("DriveToObjectAction.SetApproachingAngle", "%f rad", angle_rad);
       _useApproachAngle = true;
       _approachAngle_rad = angle_rad;
-    }
-
-    void DriveToObjectAction::SetDrivingSounds(const std::string& drivingSoundStartClipName,
-                                               const std::string& drivingSoundStopClipName)
-    {
-      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
-        PRINT_NAMED_WARNING("DriveToObjectAction.SetDrivingSounds.Invalid",
-                            "Tried to set driving sounds, but action has already started");
-        return;
-      }
-      _startDrivingAnimClip = drivingSoundStartClipName;
-      _stopDrivingAnimClip = drivingSoundStopClipName;
-      _hasCustomDrivingSounds = true;
     }
     
     void DriveToObjectAction::SetMotionProfile(const PathMotionProfile& motionProfile)
@@ -315,9 +297,6 @@ namespace Anki {
           if(_hasMotionProfile)
           {
             driveToPoseAction->SetMotionProfile(_pathMotionProfile);
-          }
-          if( _hasCustomDrivingSounds ) {
-            driveToPoseAction->SetDrivingSounds(_startDrivingAnimClip, _stopDrivingAnimClip);
           }
           _compoundAction.AddAction(driveToPoseAction);
         }
@@ -567,12 +546,7 @@ namespace Anki {
     , _maxReplanPlanningTime(DEFAULT_MAX_PLANNER_REPLAN_COMPUTATION_TIME_S)
     , _timeToAbortPlanning(-1.0f)
     {
-      if( robot.GetMoodManager().GetSimpleMood() == SimpleMoodType::Sad ) {
-        SetDrivingSounds(kDefaultDrivingSoundsSadClipStart, kDefaultDrivingSoundsSadClipStop);
-      }
-      else {
-        SetDrivingSounds(kDefaultDrivingSoundsDefaultClipStart, kDefaultDrivingSoundsDefaultClipStop);
-      }
+
     }
     
     DriveToPoseAction::DriveToPoseAction(Robot& robot,
@@ -615,8 +589,8 @@ namespace Anki {
       _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
       _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
       _robot.GetContext()->GetVizManager()->EraseAllPlannerObstacles(false);
-
-      StopDrivingSoundsIfNeeded();
+      
+      _robot.GetDrivingAnimationHandler().ActionIsBeingDestroyed();
     }
     
     Result DriveToPoseAction::SetGoal(const Pose3d& pose,
@@ -656,30 +630,6 @@ namespace Anki {
       _isGoalSet = true;
       
       return RESULT_OK;
-    }
-
-    void DriveToPoseAction::StopDrivingSoundsIfNeeded()
-    {
-      if( _shouldStopDrivingSounds ) {
-        if( !_stopDrivingAnimClip.empty() ) {
-          IActionRunner* animAction = new PlayAnimationAction(_robot, _stopDrivingAnimClip);
-          animAction->ShouldEmitCompletionSignal(false);
-          _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
-        }
-        _shouldStopDrivingSounds = false;
-      }
-    }
-  
-    void DriveToPoseAction::SetDrivingSounds(const std::string& drivingSoundStartClipName,
-                                             const std::string& drivingSoundStopClipName)
-    {
-      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
-        PRINT_NAMED_WARNING("DriveToPoseAction.SetDrivingSounds.Invalid",
-                            "Tried to set driving sounds, but action has already started");
-        return;
-      }
-      _startDrivingAnimClip = drivingSoundStartClipName;
-      _stopDrivingAnimClip = drivingSoundStopClipName;
     }
     
     const std::string& DriveToPoseAction::GetName() const
@@ -769,20 +719,18 @@ namespace Anki {
         
       } // if/else isGoalSet
       
-      if(ActionResult::SUCCESS == result && !_startDrivingAnimClip.empty()) {
-        // Play starting sound if there is one (only if nothing else is playing)
-        IActionRunner* animAction = new PlayAnimationAction(_robot, _startDrivingAnimClip, 1, false);
-        animAction->ShouldEmitCompletionSignal(false);
-        _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, animAction);
-        _shouldStopDrivingSounds = true;
-      }
-      
       return result;
     } // Init()
     
     ActionResult DriveToPoseAction::CheckIfDone()
     {
       ActionResult result = ActionResult::RUNNING;
+      
+      // Still running while the drivingEnd animation is playing
+      if(_robot.GetDrivingAnimationHandler().IsPlayingEndAnim())
+      {
+        return ActionResult::RUNNING;
+      }
       
       switch( _robot.CheckDriveToPoseStatus() ) {
         case ERobotDriveToPoseStatus::Error:
@@ -829,6 +777,11 @@ namespace Anki {
         }
           
         case ERobotDriveToPoseStatus::FollowingPath: {
+        
+          // If we are following a path start playing driving animations
+          // Won't do anything if DrivingAnimationHandler has already been inited
+          _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock());
+        
           // clear abort timing, since we got a path
           _timeToAbortPlanning = -1.0f;
           
@@ -881,9 +834,11 @@ namespace Anki {
         }
       }
       
-      if(ActionResult::RUNNING != result)
+      // If we are no longer running so start drivingEnd animation and keep this action running
+      if(ActionResult::RUNNING != result &&
+         _robot.GetDrivingAnimationHandler().PlayEndAnim())
       {
-        StopDrivingSoundsIfNeeded();
+        result = ActionResult::RUNNING;
       }
 
       return result;
@@ -917,18 +872,6 @@ namespace Anki {
                                                      useManualSpeed);
 
       AddAction(_driveToObjectAction);
-    }
-
-    void IDriveToInteractWithObject::SetDrivingSounds(const std::string& drivingSoundStartClipName,
-                                                      const std::string& drivingSoundStopClipName)
-    {
-      if( GetState() != ActionResult::FAILURE_NOT_STARTED ) {
-        PRINT_NAMED_WARNING("IDriveToInteractWithObject.SetDrivingSounds.Invalid",
-                            "Tried to set driving sounds, but action has already started");
-        return;
-      }
-      assert(nullptr != _driveToObjectAction);
-      _driveToObjectAction->SetDrivingSounds(drivingSoundStartClipName, drivingSoundStopClipName);
     }
 
     void IDriveToInteractWithObject::SetApproachAngle(const f32 angle_rad)

@@ -326,6 +326,13 @@ namespace Anki {
       if(WheelController::AreWheelsMoving() && ABS(desspeed) > SpeedController::SPEED_CONSIDER_VEHICLE_STOPPED_MM_S) {
         steering_active = TRUE;
       }
+      
+      // Disable steering while we are changing direction (going from forwards to backwards or backwards to
+      // forwards)
+      if((currspeed > 0 && userDesiredSpeed < 0) || (currspeed < 0 && userDesiredSpeed > 0))
+      {
+        steering_active = FALSE;
+      }
 
 
       // Desired behavior?  We probably only want the robot to actively steering when it's attempting to follow a path.

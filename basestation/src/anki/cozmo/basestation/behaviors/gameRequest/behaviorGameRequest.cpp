@@ -59,7 +59,7 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
   });
 }
 
-bool IBehaviorRequestGame::IsRunnable(const Robot& robot) const
+bool IBehaviorRequestGame::IsRunnableInternal(const Robot& robot) const
 {
   const bool hasFace = HasFace(robot);
 

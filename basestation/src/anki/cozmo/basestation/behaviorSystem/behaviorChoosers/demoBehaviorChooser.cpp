@@ -11,7 +11,7 @@
  *
  **/
 
-#include "anki/cozmo/basestation/demoBehaviorChooser.h"
+#include "demoBehaviorChooser.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
@@ -73,9 +73,9 @@ unsigned int DemoBehaviorChooser::GetStateNum(State state)
   }
 }
 
-void DemoBehaviorChooser::Init()
+void DemoBehaviorChooser::OnSelected()
 {
-  EnableAllBehaviors(false);
+  SetAllBehaviorsEnabled(false);
   _initCalled = true;
 }
 
@@ -157,8 +157,8 @@ void DemoBehaviorChooser::TransitionToWakeUp()
 
   _robot.SetEnableCliffSensor(false);
   
-  EnableAllBehaviors(false);
-  EnableBehavior(kWakeUpBehavior, true);
+  SetAllBehaviorsEnabled(false);
+  SetBehaviorEnabled(kWakeUpBehavior, true);
 
   _checkTransition = std::bind(&DemoBehaviorChooser::DidBehaviorRunAndStop, this, kWakeUpBehavior);
 }
@@ -169,8 +169,8 @@ void DemoBehaviorChooser::TransitionToFearEdge()
 
   _robot.SetEnableCliffSensor(true);
 
-  EnableAllBehaviors(false);
-  EnableBehavior(kFearEdgeBehavior, true);
+  SetAllBehaviorsEnabled(false);
+  SetBehaviorEnabled(kFearEdgeBehavior, true);
 
   _checkTransition = std::bind(&DemoBehaviorChooser::DidBehaviorRunAndStop, this, kCliffBehavior);
 }
@@ -183,8 +183,8 @@ void DemoBehaviorChooser::TransitionToPounce()
 
   _robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
   
-  EnableAllBehaviors(false);
-  EnableBehaviorGroup(BehaviorGroup::DemoFingerPounce);
+  SetAllBehaviorsEnabled(false);
+  SetBehaviorGroupEnabled(BehaviorGroup::DemoFingerPounce);
 
   // the "flip down on back" behavior is a special behavior which runs a reaction when the robot is up on it's
   // back. Once this behavior has run and stopped, we are ready to transition
@@ -197,8 +197,8 @@ void DemoBehaviorChooser::TransitionToFaces()
 
   _robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, false);
   
-  EnableAllBehaviors(false);
-  EnableBehaviorGroup(BehaviorGroup::DemoFaces);
+  SetAllBehaviorsEnabled(false);
+  SetBehaviorGroupEnabled(BehaviorGroup::DemoFaces);
 
   // TODO:(bn) figure out how enrollment will work
   
@@ -208,8 +208,8 @@ void DemoBehaviorChooser::TransitionToFaces()
 void DemoBehaviorChooser::TransitionToCubes()
 {
   SET_STATE(Cubes);
-  EnableAllBehaviors(false);
-  EnableBehaviorGroup(BehaviorGroup::DemoCubes);
+  SetAllBehaviorsEnabled(false);
+  SetBehaviorGroupEnabled(BehaviorGroup::DemoCubes);
 
   // transition out of cubes is a special case
   _cubesUprightTime_s = -1.0f;
@@ -223,7 +223,7 @@ void DemoBehaviorChooser::TransitionToMiniGame()
   _robot.GetMoodManager().SetEmotion(EmotionType::WantToPlay, 1.0f);
   
   // leave block behaviors active, but also enable speed tap game request
-  EnableBehaviorGroup(BehaviorGroup::RequestSpeedTap);
+  SetBehaviorGroupEnabled(BehaviorGroup::RequestSpeedTap);
 
   // when mini game starts, will go to selection chooser, then back to this chooser
   _initCalled = false;
@@ -233,8 +233,8 @@ void DemoBehaviorChooser::TransitionToMiniGame()
 void DemoBehaviorChooser::TransitionToSleep()
 {
   SET_STATE(Sleep);
-  EnableAllBehaviors(false);
-  EnableBehavior(kSleepBehavior, true);
+  SetAllBehaviorsEnabled(false);
+  SetBehaviorEnabled(kSleepBehavior, true);
 
   // no transition out of this one
   _checkTransition = nullptr;

@@ -15,7 +15,7 @@
 #define __Cozmo_Basestation_DemoBehaviorChooser_H__
 
 #include "anki/common/basestation/objectIDs.h"
-#include "anki/cozmo/basestation/behaviorChooser.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorChoosers/simpleBehaviorChooser.h"
 #include "json/json-forwards.h"
 #include "util/signals/simpleSignal.hpp"
 
@@ -33,7 +33,7 @@ public:
   // This disabled all behaviors from running, regardless of the config.
   DemoBehaviorChooser(Robot& robot, const Json::Value& config);
 
-  virtual void Init() override;
+  virtual void OnSelected() override;
 
   virtual Result Update() override;
 
