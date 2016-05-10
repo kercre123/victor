@@ -1130,13 +1130,12 @@ public class Robot : IRobot {
   }
 
   // enable/disable games available for Cozmo to request
-  public void SetAvailableGames(BehaviorGameFlag games)
-  {
+  public void SetAvailableGames(BehaviorGameFlag games) {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
-        ID, 
-        Singleton<SetAvailableGames>.Instance.Initialize(games)
-      ); 
+      ID, 
+      Singleton<SetAvailableGames>.Instance.Initialize(games)
+    ); 
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -1365,5 +1364,10 @@ public class Robot : IRobot {
   public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Saying text: " + text);
     SendQueueSingleAction(Singleton<SayText>.Instance.Initialize(text, playEvent, style), callback, queueActionPosition);
+  }
+
+  public void SendDemoResetState() {
+    RobotEngineManager.Instance.Message.DemoResetState = Singleton<DemoResetState>.Instance;
+    RobotEngineManager.Instance.SendMessage();
   }
 }

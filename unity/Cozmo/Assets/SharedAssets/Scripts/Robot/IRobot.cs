@@ -275,4 +275,5 @@ public interface IRobot : IDisposable {
 
   void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
+  void SendDemoResetState();
 }
