@@ -31,6 +31,11 @@ static uint8_t measure(uint8_t frequency) {
   return data;
 }
 
+int tohex(int i)
+{
+  return i > 9 ? i + 'a'-10 : i + '0';
+}
+
 int main(void)
 {
   // Start 16 MHz crystal oscillator.
@@ -58,6 +63,7 @@ int main(void)
 
   // Run forever, because we are awesome.
   for (;;) {    
+    /*
     NRF_UART0->TASKS_STARTRX = 1;
 
     while (!NRF_UART0->EVENTS_RXDRDY) ;
@@ -65,17 +71,30 @@ int main(void)
 
     NRF_UART0->TASKS_STOPRX = 1;
     NRF_UART0->EVENTS_RXDRDY = 0;
-
-    uint8_t reading = measure(channel);
-
-
+    */
+    
+    uint8_t channel = 81;
+    uint8_t reading = 0;
+    for (int i = 0; i < 1000; i++)
+    {
+      uint8_t read = measure(channel);
+      if (read > reading)
+        reading = read;
+    }
+      
     NRF_UART0->TASKS_STARTTX = 1;
 
-    NRF_UART0->TXD = channel;
+    //NRF_UART0->TXD = channel;
+    NRF_UART0->TXD = tohex(reading >> 4);
     while (!NRF_UART0->EVENTS_TXDRDY) ;
     NRF_UART0->EVENTS_TXDRDY = 0;
 
-    NRF_UART0->TXD = reading;
+    //NRF_UART0->TXD = reading;
+    NRF_UART0->TXD = tohex(reading & 15);
+    while (!NRF_UART0->EVENTS_TXDRDY) ;
+    NRF_UART0->EVENTS_TXDRDY = 0;
+    
+    NRF_UART0->TXD = '.';
     while (!NRF_UART0->EVENTS_TXDRDY) ;
     NRF_UART0->EVENTS_TXDRDY = 0;
 
