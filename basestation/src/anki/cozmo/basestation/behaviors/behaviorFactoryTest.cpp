@@ -208,37 +208,40 @@ namespace Cozmo {
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
       _testResult = resCode;
       
+      // Generate result struct
+      ExternalInterface::FactoryTestResult testResMsg;
+      FactoryTestResultEntry &testRes = testResMsg.resultEntry;
+      testRes.result = resCode;
+      testRes.engineSHA1 = 0;   // TODO
+      testRes.utcTime = time(0);
+      
+      // Mark end time
+      _stateTransitionTimestamps[testRes.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + testRes.timestamps.size(), testRes.timestamps.begin());
+      
+      testRes.stationID = 0;   // TODO: How to get this?
+
+      
       if (ENABLE_NVSTORAGE_WRITES) {
-        // Generate result struct
-        FactoryTestResultEntry testRes;
-        testRes.result = resCode;
-        //testRes.engineSHA1 = COZMO_VERSION_COMMIT; // TODO
-        testRes.utcTime = time(0);
-        
-        // Mark end time
-        _stateTransitionTimestamps[testRes.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-        std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + testRes.timestamps.size(), testRes.timestamps.begin());
-        
-        testRes.stationID = 0;   // TODO: How to get this?
-        
         u8 buf[testRes.Size()];
         size_t numBytes = testRes.Pack(buf, sizeof(buf));
         
         // Store test result to robot flash
         robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, buf, numBytes,
-                                            [this,&robot,resCode](NVStorage::NVResult res){
+                                            [this,&robot,&testResMsg](NVStorage::NVResult res){
                                               if (res != NVStorage::NVResult::NV_OKAY) {
                                                 PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WriteFailed",
                                                                     "WriteResult: %s (Original test result: %s)",
-                                                                    EnumToString(res), EnumToString(resCode));
+                                                                    EnumToString(res), EnumToString(testResMsg.resultEntry.result));
                                                 _testResult = FactoryTestResultCode::TEST_RESULT_WRITE_FAILED;
                                               }
                                               PrintAndLightResult(robot,_testResult);
-                                              robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
+                                              testResMsg.resultEntry.result = _testResult;
+                                              robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
                                             });
       } else {
         PrintAndLightResult(robot,_testResult);
-        robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
+        robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
       }
     } else {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestAlreadyComplete",

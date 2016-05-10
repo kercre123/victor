@@ -62,6 +62,8 @@ enum uint_8 FactoryTestResultCode {
   TEST_TIMED_OUT,
   TEST_CANCELLED,
   ROBOT_PICKUP,
+
+  // New result codes should be added at the end
 }
 
 structure FactoryTestResultEntry {
