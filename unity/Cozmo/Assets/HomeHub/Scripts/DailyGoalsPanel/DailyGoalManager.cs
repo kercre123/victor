@@ -85,13 +85,13 @@ public class DailyGoalManager : MonoBehaviour {
     for (int i = 0; i < _ChallengeList.ChallengeData.Length; i++) {
       if (_ChallengeList.ChallengeData[i].ChallengeID == config.ChallengeID) {
         _LastChallengeData = _ChallengeList.ChallengeData[i];
-        BehaviorGroup bGroup = GetRequestBehaviorGroup(_LastChallengeData.ChallengeID);
+        BehaviorGameFlag bGame = GetRequestBehaviorGameFlag(_LastChallengeData.ChallengeID);
         // Do not reate the minigame message if the behavior group is invalid.
-        if (bGroup == BehaviorGroup.MiniGame) {
+        if (bGame == BehaviorGameFlag.NoGame) {
           return null;
         }
         DisableRequestGameBehaviorGroups();
-        RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(bGroup, true);
+        RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(bGame);
         return _LastChallengeData;
       }
     }
@@ -99,21 +99,18 @@ public class DailyGoalManager : MonoBehaviour {
     return null;
   }
 
-  public BehaviorGroup GetRequestBehaviorGroup(string challengeID) {
+  public BehaviorGameFlag GetRequestBehaviorGameFlag(string challengeID) {
     for (int i = 0; i < _RequestMinigameConfig.RequestList.Length; i++) {
       if (challengeID == _RequestMinigameConfig.RequestList[i].ChallengeID) {
-        return _RequestMinigameConfig.RequestList[i].RequestBehaviorGroup;
+        return _RequestMinigameConfig.RequestList[i].RequestBehaviorGameFlag;
       }
     }
     DAS.Error(this, string.Format("Challenge ID not found in RequestMinigameList {0}", challengeID));
-    return BehaviorGroup.MiniGame;
+    return BehaviorGameFlag.NoGame;
   }
 
   public void DisableRequestGameBehaviorGroups() {
-    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.MiniGame, false);
-    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.RequestSpeedTap, false);
-    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.RequestCubePounce, false);
-    RobotEngineManager.Instance.CurrentRobot.SetEnableBehaviorGroup(BehaviorGroup.RequestSimon, false);
+    RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(BehaviorGameFlag.NoGame);
   }
 
   /// <summary>

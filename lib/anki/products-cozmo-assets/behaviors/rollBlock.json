@@ -1,6 +1,7 @@
 {
   "behaviorType": "RollBlock",
   "name": "RollBlock",
+  "requiredUnlockId": "CubeRollAction",
   "emotionScorers": [
     {
       "emotionType": "Social",
@@ -38,6 +39,7 @@
   "behaviorGroups": [
     "AffectsBlocks",
     "Unlock_CubeRoll",
-    "DemoCubes"
+    "DemoCubes",
+    "FreeplayOne"
   ]
 }

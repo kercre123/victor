@@ -1,64 +1,58 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
 
-public class Intro : MonoBehaviour {
-  [SerializeField] protected InputField _EngineIPInputField;
-  [SerializeField] protected InputField _RobotIPInputField;
-  [SerializeField] protected InputField _SimIPInputField;
-  [SerializeField] protected Text _Error;
-  [SerializeField] protected InputField _RobotNameInputField;
+public class ConnectDialog : MonoBehaviour {
+
+  [SerializeField]
+  private Text _ConnectionStatus;
+
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _ConnectButton;
+
+  [SerializeField]
+  private Cozmo.UI.CozmoButton _SimButton;
+
+  [SerializeField]
+  private PingStatus _PingStatus;
+
+  private const int kRobotID = 1;
 
   private bool _Simulated = false;
   private string _CurrentRobotIP;
   private string _CurrentScene;
-
-  private const int kRobotID = 1;
+  private bool _Connecting = false;
 
   private IRobot _Robot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
-  private string LastEngineIP {
-    get { return PlayerPrefs.GetString("LastEngineIP", "127.0.0.1"); }
+  private string EngineIP {
+    get { return PlayerPrefs.GetString("EngineIP", "127.0.0.1"); }
 
-    set { PlayerPrefs.SetString("LastEngineIP", value); }
+    set { PlayerPrefs.SetString("EngineIP", value); }
   }
 
-  private string LastIP {
-    get { return PlayerPrefs.GetString("LastIP", "172.31.1.1"); }
-    
-    set { PlayerPrefs.SetString("LastIP", value); }
+  private string RobotIP {
+    get { return PlayerPrefs.GetString("RobotIP", RobotEngineManager.kRobotIP); }
+
+    set { PlayerPrefs.SetString("RobotIP", value); }
   }
 
-  private string LastSimIP {
-    get { return PlayerPrefs.GetString("LastSimIP", "127.0.0.1"); }
-    
-    set { PlayerPrefs.SetString("LastSimIP", value); }
+  private string SimRobotIP {
+    get { return PlayerPrefs.GetString("SimRobotIP", "127.0.0.1"); }
+
+    set { PlayerPrefs.SetString("SimRobotIP", value); }
   }
 
-  private string LastID {
-    get { return PlayerPrefs.GetString("LastID", "1"); }
-    
-    set { PlayerPrefs.SetString("LastID", value); }
+  private string RobotID {
+    get { return PlayerPrefs.GetString("RobotID", "1"); }
+
+    set { PlayerPrefs.SetString("RobotID", value); }
   }
 
-  private string LastRobotName {
-    get { return PlayerPrefs.GetString("LastRobotName", "OK0000"); }
-    
-    set { PlayerPrefs.SetString("LastRobotName", value); }
-  }
+  private string RobotName {
+    get { return PlayerPrefs.GetString("RobotName", "OK0000"); }
 
-  protected void OnEnable() {
-
-    _EngineIPInputField.text = LastEngineIP;
-    _RobotIPInputField.text = LastIP;
-    _SimIPInputField.text = LastSimIP;
-    _RobotNameInputField.text = LastRobotName;
-
-    _EngineIPInputField.Rebuild(CanvasUpdate.PreRender);
-    _RobotIPInputField.Rebuild(CanvasUpdate.PreRender);
-    _SimIPInputField.Rebuild(CanvasUpdate.PreRender);
-    _RobotNameInputField.Rebuild(CanvasUpdate.PreRender);
-
+    set { PlayerPrefs.SetString("RobotName", value); }
   }
 
   private void Start() {
@@ -72,10 +66,25 @@ public class Intro : MonoBehaviour {
     }
 
     Application.targetFrameRate = 30;
-    
+
     Input.gyro.enabled = true;
     Input.compass.enabled = true;
     Input.multiTouchEnabled = true;
+
+    _ConnectButton.Initialize(HandleConnectButton, "connect_button", "connect_dialog");
+    _SimButton.Initialize(HandleSimButton, "sim_button", "connect_dialog");
+
+    #if !UNITY_EDITOR
+    _SimButton.gameObject.SetActive(false);
+    #endif
+  }
+
+  private void HandleConnectButton() {
+    this.Play(false);
+  }
+
+  private void HandleSimButton() {
+    this.Play(true);
   }
 
   private void OnDestroy() {
@@ -88,36 +97,41 @@ public class Intro : MonoBehaviour {
 
   private void Update() {
 
+    if (_Connecting || !_PingStatus.GetPingStatus()) {
+      _ConnectButton.Interactable = false;
+    }
+    else {
+      _ConnectButton.Interactable = true;
+    }
+
     if (RobotEngineManager.Instance != null) {
       DisconnectionReason reason = RobotEngineManager.Instance.GetLastDisconnectionReason();
       if (reason != DisconnectionReason.None) {
-        _Error.text = "Disconnected: " + reason.ToString();
+        _ConnectionStatus.text = "Disconnected: " + reason.ToString();
       }
     }
   }
 
   public void Play(bool sim) {
+    _Connecting = true;
+    _ConnectButton.Interactable = false;
+    _SimButton.Interactable = false;
+    _ConnectButton.Text = "LOADING";
+
     _Simulated = sim;
     RobotEngineManager.Instance.Disconnect();
 
     string errorText = null;
-    string ipText = _Simulated ? _SimIPInputField.text : _RobotIPInputField.text;
-    if (string.IsNullOrEmpty(_EngineIPInputField.text)) {
-      errorText = "You must enter a device ip address.";
-    }
-    if (string.IsNullOrEmpty(errorText) && string.IsNullOrEmpty(ipText)) {
-      errorText = "You must enter a robot ip address.";
-    }
+    string ipText = _Simulated ? SimRobotIP : RobotIP;
 
     if (string.IsNullOrEmpty(errorText)) {
       _CurrentRobotIP = ipText;
 
-      SaveData();
-      RobotEngineManager.Instance.Connect(_EngineIPInputField.text);
-      _Error.text = "<color=#ffffff>Connecting to engine at " + _EngineIPInputField.text + "....</color>";
+      RobotEngineManager.Instance.Connect(EngineIP);
+      _ConnectionStatus.text = "<color=#ffffff>Connecting to engine at " + EngineIP + "....</color>";
     }
     else {
-      _Error.text = errorText;
+      _ConnectionStatus.text = errorText;
     }
   }
 
@@ -126,24 +140,17 @@ public class Intro : MonoBehaviour {
   }
 
   public void ConfigureWifi() {
-    CozmoBinding.WifiSetup(_RobotNameInputField.text, "2manysecrets");
-  }
-
-  protected void SaveData() {
-    LastIP = _RobotIPInputField.text;
-    LastSimIP = _SimIPInputField.text;
-    LastEngineIP = _EngineIPInputField.text;
-    LastRobotName = _RobotNameInputField.text;
+    CozmoBinding.WifiSetup(RobotName, "2manysecrets");
   }
 
   private void Connected(string connectionIdentifier) {
-    _Error.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
+    _ConnectionStatus.text = "<color=#ffffff>Connected to " + connectionIdentifier + ". Force-adding robot...</color>";
     RobotEngineManager.Instance.StartEngine();
     RobotEngineManager.Instance.ForceAddRobot(kRobotID, _CurrentRobotIP, _Simulated);
   }
 
   private void Disconnected(DisconnectionReason reason) {
-    _Error.text = "Disconnected: " + reason.ToString();
+    _ConnectionStatus.text = "Disconnected: " + reason.ToString();
   }
 
   private void RobotConnected(int robotID) {
@@ -151,7 +158,7 @@ public class Intro : MonoBehaviour {
       DAS.Error(this, "Unknown robot connected: " + robotID.ToString());
       return;
     }
-
+      
     // actually load default volume
     if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences.ContainsKey(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot)) {
       _Robot.SetRobotVolume(DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences[Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot]);
@@ -170,7 +177,7 @@ public class Intro : MonoBehaviour {
 
     Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
-    _Error.text = "";
+    _ConnectionStatus.text = "";
     DAS.Info(this, "Robot Connected!");
   }
 

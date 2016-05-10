@@ -59,6 +59,7 @@
   [
     "AffectsBlocks",
     "MiniGame",
-    "RequestCubePounce"
+    "RequestCubePounce",
+    "FreeplayOne"
   ]
 }

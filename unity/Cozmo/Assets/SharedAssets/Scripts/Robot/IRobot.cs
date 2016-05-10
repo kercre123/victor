@@ -139,15 +139,8 @@ public interface IRobot : IDisposable {
 
   void StopSparkUnlock();
 
-  void SetEnableAllBehaviors(bool enabled);
-
-  void SetEnableBehaviorGroup(BehaviorGroup behaviorGroup, bool enabled);
-
-  void SetEnableBehavior(string behaviorName, bool enabled);
-
-  void ClearAllBehaviorScoreOverrides();
-
-  void OverrideBehaviorScore(string behaviorName, float newScore);
+  // enable/disable games available for Cozmo to request
+  void SetAvailableGames(BehaviorGameFlag games);
 
   void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message);
 
@@ -271,6 +264,14 @@ public interface IRobot : IDisposable {
   ObservedObject GetCharger();
 
   void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+
+  #region PressDemoMessages
+
+  void TransitionToNextDemoState();
+
+  void StartDemoWithEdge(bool demoWithEdge);
+
+  #endregion
 
   void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
