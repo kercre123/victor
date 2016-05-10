@@ -1,3 +1,4 @@
+#ifndef LEGACY_CUBES
 #include <stdint.h>
 #include <string.h>
 
@@ -412,3 +413,4 @@ void Radio::manage(void) {
     next_resume += SCHEDULE_PERIOD;
   }
 }
+#endif
