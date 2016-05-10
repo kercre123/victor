@@ -66,7 +66,6 @@ void flash_data(void* target, const uint8_t* source, int size) {
 }
 
 void update_bootloader(void) {
-  // THIS SHOULD NEVER BE INCLUDED IN PRODUCTION
   for (int i = 0; i < BOOTLOADER_LENGTH; i++) {
     if (BOOTLOADER_UPDATE[i] != BOOTLOADER[i])
     {
