@@ -85,6 +85,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.DebugLatencyMessage> OnDebugLatencyMsg;
   public event Action<Anki.Cozmo.ExternalInterface.RobotEnrolledFace> OnRobotEnrolledFace;
   public event Action<Anki.Cozmo.ExternalInterface.RequestEnrollFace> OnRequestEnrollFace;
+  public event Action<int> OnDemoState;
 
   #region Audio Callback events
 
@@ -421,9 +422,18 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RequestEnrollFace:
       ReceivedSpecificMessage(message.RequestEnrollFace);
       break;
+    case G2U.MessageEngineToGame.Tag.DemoState:
+      ReceivedSpecificMessage(message.DemoState);
+      break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
+    }
+  }
+
+  private void ReceivedSpecificMessage(G2U.DemoState message) {
+    if (OnDemoState != null) {
+      OnDemoState(message.stateNum);
     }
   }
 
