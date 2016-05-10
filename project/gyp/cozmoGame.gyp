@@ -218,7 +218,6 @@
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
                   '<@(opencv_lib_search_path_debug)',
-                  '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
                 ],
               },
             }],
@@ -256,7 +255,6 @@
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
                   '<@(opencv_lib_search_path_debug)',
-                  '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
                 ],
               },
             }],
@@ -294,7 +292,6 @@
                 ],
                 'FRAMEWORK_SEARCH_PATHS': [
                   '<@(opencv_lib_search_path_debug)',
-                  '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
                 ],
               },
             }],
@@ -355,47 +352,10 @@
         },
         'targets': [
           {
-            'target_name': 'CSharpBinding',
-            'type': 'static_library',
-            'include_dirs': [
-              '../../unity/CSharpBinding/src',
-              '<@(opencv_includes)',
-              '<@(das_include)',
-              '<@(routing_http_server_include)',
-            ],
-            'dependencies': [
-              '<(cg-ce_gyp_path):cozmoEngine',
-              '<(cg-cti_gyp_path):ctiCommon',
-              '<(cg-cti_gyp_path):ctiMessaging',
-              '<(cg-cti_gyp_path):ctiPlanning',
-              '<(cg-cti_gyp_path):ctiVision',
-              '<(cg-util_gyp_path):util',
-              '<(cg-util_gyp_path):jsoncpp',
-            ],
-            'sources': [ '<!@(cat <(csharp_source))' ],
-            'libraries': [
-              '<@(face_library_libs)',
-              '../../lib/anki/vendor/HockeySDK-iOS/HockeySDK.framework',
-              '<@(routing_http_server_libs)',
-              '$(SDKROOT)/System/Library/Frameworks/AssetsLibrary.framework',
-              '$(SDKROOT)/System/Library/Frameworks/CoreText.framework',
-              '$(SDKROOT)/System/Library/Frameworks/CoreGraphics.framework',
-              '$(SDKROOT)/System/Library/Frameworks/Foundation.framework',
-              '$(SDKROOT)/System/Library/Frameworks/MobileCoreServices.framework',
-              '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
-              '$(SDKROOT)/System/Library/Frameworks/QuickLook.framework',
-              '$(SDKROOT)/System/Library/Frameworks/Security.framework',
-              '$(SDKROOT)/System/Library/Frameworks/SystemConfiguration.framework',
-              '$(SDKROOT)/System/Library/Frameworks/UIKit.framework',
-            ],
-          }, # end CSharpBinding
-
-          {
             # fake target to see all of the sources...
             'target_name': 'all_lib_targets',
             'type': 'none',
             'dependencies': [
-              'CSharpBinding',
               'AssetFiles',
               '<(cg-ce_gyp_path):cozmoEngine',
               '<(cg-cti_gyp_path):ctiCommon',

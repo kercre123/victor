@@ -338,7 +338,6 @@ def main(scriptArgs):
   # generator.processFolder(['game/src/anki/cozmo', 'game/include',
   #   'lib/anki/products-cozmo-assets/animations', 'lib/anki/products-cozmo-assets/faceAnimations',
   #   'lib/anki/products-cozmo-assets/sounds'], ['project/gyp/cozmoGame.lst'])
-  generator.processFolder(['unity/CSharpBinding/src'], ['project/gyp/csharp.lst'])
   generator.processFolder([options.cozmoAssetPath], ['project/gyp/assets.lst'])
 
   if options.updateListsOnly:

@@ -242,7 +242,7 @@ class GamePlatformConfiguration(object):
             self.unity_sphinx_symlink_target = os.path.join(CTE_ROOT,
                                                             'pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos')
             self.unity_hockeyapp_symlink = os.path.join(self.unity_xcode_project_dir, 'HockeyApp')
-            self.unity_hockeyapp_symlink_target = os.path.join(GAME_ROOT, 'lib', 'anki', 'vendor',"HockeySDK-iOS")
+            self.unity_hockeyapp_symlink_target = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine', 'lib',"HockeySDK-iOS")
 
             self.unity_build_symlink = os.path.join(self.unity_xcode_project_dir, 'UnityBuild')
             self.artifact_dir = os.path.join(self.platform_build_dir, 'app-{0}'.format(self.platform))
