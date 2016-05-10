@@ -255,7 +255,6 @@ enum uint_32 Robot
 {
   Dev_Placeholder = 1720370564,
   EffortTap = 1227708849,
-  Excited_LoopStop = 1668649942,
   ExternalName = 1707690926,
   ExternalNameFirstPlay = 3129794587,
   Invalid = 0,  // Use this to check for Invalid events
@@ -315,6 +314,7 @@ enum uint_32 Robot
   SharedEffortLift = 2460792037,
   SharedExcited = 2632256753,
   SharedExcited_Loop = 3993832652,
+  SharedExcited_LoopStop = 1668649942,
   SharedFussy = 566465057,
   SharedFussy_Loop = 1512138332,
   SharedFussy_LoopStop = 265842886,
