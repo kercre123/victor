@@ -52,20 +52,16 @@ nrf_fix:
 	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
 
 # This fixes the headers and places the binaries in release
-copy_keil: k02_fix nrf_fix
+release_binaries: k02_fix nrf_fix
 	cp ./syscon/build/app/syscon.axf ./releases
 	cp ./build/app/robot.axf ./releases
-
-make_binary:
-	python3 ./tools/sign.py rtip:./releases/robot.axf body:./releases/syscon.axf ./releases/rtip.safe
-	# wifi:./espressif/bin/upgrade/user1.2048.new.3.bin
 	cp ./espressif/bin/upgrade/user1.2048.new.3.bin releases/esp.user.bin
 
-release: copy_keil make_binary
-	# Fake command
+release: release_binaries
+	python3 ./tools/sign.py ./releases/rtip.safe	# Should be renamed to cozmo.safe when all images are included
 
-kevin:  k02_fix nrf_fix
-	python3 ./tools/sign.py rtip:./build/app/robot.axf body:./releases/syscon.axf ./releases/rtip.safe
+kevin: k02_fix
+	python3 ./tools/sign.py --rtip ./build/app/robot.axf ./releases/rtip.safe # Should be renamed to cozmo.safe when all images are included
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"
