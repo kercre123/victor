@@ -13,20 +13,31 @@ public class LatencyCalculator : MonoBehaviour {
   private LatencyDisplay _LatencyDisplayInst;
 
   private bool _IsInitted;
+  private bool _Enabled = true;
+
   // Use this for initialization
   private void Start() {
     _IsInitted = false;
-    DebugConsoleData.Instance.AddConsoleFunctionUnity("Show Latency Stats", "Network.Stats", this.HandleForceShowLatencyDisplay);
+  }
+
+  public void EnableLatencyPopup(bool enable) {
+    _Enabled = enable;
+    if (_Enabled == false && _LatencyDisplayInst != null) {
+      GameObject.Destroy(_LatencyDisplayInst.gameObject);
+    }
   }
 
   private void Update() {
+    if (_Enabled == false) {
+      return;
+    }
     // Wait til we have a real connection
     if (!_IsInitted && RobotEngineManager.Instance != null) {
       RobotEngineManager.Instance.OnDebugLatencyMsg += HandleDebugLatencyMsg;
       RobotEngineManager.Instance.RobotConnected += HandleRobotConnected;
       _IsInitted = true;
       if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LatencyDisplayEnabled) {
-        ForceShowLatencyDisplay();
+        ShowLatencyDisplay();
       }
     }
   }
@@ -39,32 +50,30 @@ public class LatencyCalculator : MonoBehaviour {
   }
 
   private void HandleDebugLatencyMsg(Anki.Cozmo.ExternalInterface.DebugLatencyMessage msg) {
-    if (_LatencyDisplayInst) {
-      _LatencyDisplayInst.HandleDebugLatencyMsg(msg);
+    if (_Enabled) {
+      if (_LatencyDisplayInst) {
+        _LatencyDisplayInst.HandleDebugLatencyMsg(msg);
+      }
+      else if (msg.averageLatency > LatencyDisplay.kMaxThresholdBeforeWarning_ms) {
+        // Warning we are over the limit Warn people disconnects might happen.
+        ShowLatencyDisplay();
+      }
     }
-    else if (msg.averageLatency > LatencyDisplay.kMaxThresholdBeforeWarning_ms) {
-      // Warning we are over the limit Warn people disconnects might happen.
-      ForceShowLatencyDisplay();
-    }
+
   }
 
   private void HandleRobotConnected(int id) {
     // Force init connection monitoring as long as we need this component.
     RobotEngineManager.Instance.SetDebugConsoleVar("NetConnStatsUpdate", "true");
   }
-  // Hide happens just by hitting the x on the display.
-  private void HandleForceShowLatencyDisplay(System.Object setvar = null) {
-    ForceShowLatencyDisplay();
-    if (_LatencyDisplayInst != null) {
-      _LatencyDisplayInst.SaveEnabled(true);
-    }
-  }
 
-  private void ForceShowLatencyDisplay() {
-    if (_LatencyDisplayInst == null) {
-      GameObject latencyDisplayInstance = GameObject.Instantiate(_LatencyDisplayPrefab.gameObject);
-      latencyDisplayInstance.transform.SetParent(DebugMenuManager.Instance.DebugOverlayCanvas.transform, false);
-      _LatencyDisplayInst = latencyDisplayInstance.GetComponent<LatencyDisplay>();
+  private void ShowLatencyDisplay() {
+    if (_Enabled) {
+      if (_LatencyDisplayInst == null) {
+        GameObject latencyDisplayInstance = GameObject.Instantiate(_LatencyDisplayPrefab.gameObject);
+        latencyDisplayInstance.transform.SetParent(DebugMenuManager.Instance.DebugOverlayCanvas.transform, false);
+        _LatencyDisplayInst = latencyDisplayInstance.GetComponent<LatencyDisplay>();
+      }
     }
   }
 

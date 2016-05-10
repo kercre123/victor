@@ -8,8 +8,8 @@ Event,,Dev_Robot_Tone_1760Hz_5Sec_Play,1500105173,DevRobot,Tone_1760HZ_5Sec,
 Event,,Dev_Robot_Tone_1K_1Sec_Play,1083086921,DevRobot,Tone_1K_1Sec,
 Event,,Dev_Robot_Tone_1K_5Sec_Play,1323780941,DevRobot,Tone_1K_5Sec,
 Event,,Dev_Robot_Tone_440Hz_5Sec_Play,1348811033,DevRobot,Tone_440HZ_5Sec,
-Event,,Hijack_Audio_Disable_Bypass,3535474666,PlugInControl,HijackAudioDisableBypass,This is only used by Robot Audio Client
-Event,,Hijack_Audio_Enable_Bypass,2589144983,PlugInControl,HijackAudioEnableBypass,This is only used by Robot Audio Client
+Event,,Hijack_Audio_Disable_Bypass,3535474666,PlugInControl,HijackAudioDisableBypass,Deprecated - Working on new method
+Event,,Hijack_Audio_Enable_Bypass,2589144983,PlugInControl,HijackAudioEnableBypass,Deprecated - Working on new method
 Event,,Music_Play,202194903,Music,Play,
 Event,,Music_Stop,3227181061,Music,Stop,
 Event,,Sfx_Gp_Shared_Block_Connect_Play,596005814,SFX,GameSharedBlockConnect,
@@ -79,8 +79,8 @@ Event,,Sfx_Ui_Shared_Lose_Play,2255190640,SFX,SharedLose,
 Event,,Sfx_Ui_Shared_Win_Play,790005487,SFX,SharedWin,
 Event,,Sfx_Ui_Window_Close_Play,945548936,UI,WindowClose,
 Event,,Sfx_Ui_Window_Open_Play,1425451874,UI,WindowOpen,
-Event,,Vo_Coz_Exernal_First_Play,1069697665,Robot,ExternalSourceFirst,
-Event,,Vo_Coz_External_Play,3049878514,Robot,ExternalSource,
+Event,,Vo_Coz_External_Name_First_Play,3129794587,Robot,ExternalNameFirstPlay,
+Event,,Vo_Coz_External_Name_Play,1707690926,Robot,ExternalName,
 Event,,Vo_Coz_Gp_Shared_Fakeout_Play,2145308968,Robot,Takeout,
 Event,,Vo_Coz_Gp_Shared_Lose_Level1_Play,1274627492,Robot,Lose1,
 Event,,Vo_Coz_Gp_Shared_Lose_Level2_Play,2780324953,Robot,Lose2,

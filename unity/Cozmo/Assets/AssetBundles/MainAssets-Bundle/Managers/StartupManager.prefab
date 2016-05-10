@@ -39,6 +39,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba238b3d97f5a48d9a968bbb380894a2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _LoadingBar: {fileID: 0}
+  _LoadingBarLabel: {fileID: 0}
+  _AddDotSeconds: 0.25
   _AssetBundlesToLoad:
   - main-scene
   _MainSceneAssetBundleName: main-scene

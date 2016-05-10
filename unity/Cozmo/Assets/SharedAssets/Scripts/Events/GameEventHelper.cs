@@ -69,8 +69,8 @@ public class GameEventWrapperFactory {
   public static void Init() {
     _EnumWrappers = new Dictionary<Anki.Cozmo.GameEvent,Type>();
     // Specific wrappers, otherwise just use the base class.
-    Register(GameEvent.OnSpeedtapGameCozmoWin, typeof(MinigameCompletedGameEvent));
-    Register(GameEvent.OnSpeedtapGamePlayerWin, typeof(MinigameCompletedGameEvent));
+    Register(GameEvent.OnSpeedtapGameCozmoWinAnyIntensity, typeof(MinigameCompletedGameEvent));
+    Register(GameEvent.OnSpeedtapGamePlayerWinAnyIntensity, typeof(MinigameCompletedGameEvent));
   }
 
   private static void Register(Anki.Cozmo.GameEvent Enum, Type type) {

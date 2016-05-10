@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using Anki.Cozmo;
 using Anki.Cozmo.Audio;
 
 namespace SpeedTap {
@@ -23,6 +24,9 @@ namespace SpeedTap {
 
     private PointWinner _CurrentWinner;
     private bool _WasMistakeMade;
+
+    private GameEvent _AnimationEventSent;
+    private RobotCallback _AnimationCallbackUsed;
 
     private Color[] _WinColors;
     private LightCube _WinningCube;
@@ -57,10 +61,22 @@ namespace SpeedTap {
       _SpeedTapGame.UpdateUI();
 
       if (_SpeedTapGame.IsRoundComplete()) {
-        HandleRoundEnd();
+        GameAudioClient.SetMusicState(_SpeedTapGame.BetweenRoundsMusic);
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
+
+        _SpeedTapGame.UpdateRoundScore();
+        _SpeedTapGame.UpdateUI();
+
+        if (_SpeedTapGame.IsGameComplete()) {
+          _SpeedTapGame.UpdateUIForGameEnd();
+          PlayReactToGameAnimationAndSendEvent();
+        }
+        else {
+          PlayReactToRoundAnimationAndSendEvent();
+        }
       }
       else {
-        ReactToHand();
+        PlayReactToHandAnimation();
       }
     }
 
@@ -81,12 +97,7 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapHandCozmoWin, HandleHandEndAnimDone);
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapHandPlayerWin, HandleHandEndAnimDone);
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundCozmoWin, HandleRoundEndAnimDone);
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundPlayerWin, HandleRoundEndAnimDone);
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapGameCozmoWin, HandleEndGameAnimDone);
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapGamePlayerWin, HandleEndGameAnimDone);
+      AnimationManager.Instance.RemoveAnimationEndedCallback(_AnimationEventSent, _AnimationCallbackUsed);
     }
 
     private void UpdateBlockLights(PointWinner winner, bool wasMistakeMade) {
@@ -145,53 +156,51 @@ namespace SpeedTap {
       _SpeedTapGame.CozmoBlock.SetLEDsOff();
     }
 
-    private void ReactToHand() {
-      if (_CurrentWinner == PointWinner.Player) {
-        // TODO add event listener
-        AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapHandPlayerWin, HandleHandEndAnimDone);
-        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapHandPlayerWin);
-      }
-      else {
-        // TODO add event listener
-        AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapHandCozmoWin, HandleHandEndAnimDone);
-        GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapHandCozmoWin);
-      }
+    private void PlayReactToHandAnimation() {
+      GameEvent animationEventToSend = (_CurrentWinner == PointWinner.Player) ?
+        GameEvent.OnSpeedtapHandPlayerWin : GameEvent.OnSpeedtapHandCozmoWin;
+      ListenForAnimationEnd(animationEventToSend, HandleHandEndAnimDone);
     }
 
-    private void HandleRoundEnd() {
-      GameAudioClient.SetMusicState(_SpeedTapGame.BetweenRoundsMusic);
-      GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
-
-      _SpeedTapGame.UpdateRoundScore();
-      _SpeedTapGame.UpdateUI();
-
-      if (_SpeedTapGame.IsGameComplete()) {
-        _SpeedTapGame.UpdateUIForGameEnd();
-        if (_CurrentWinner == PointWinner.Player) {
-          // TODO add event listener
-          AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapGamePlayerWin, HandleEndGameAnimDone);
-          GameEventManager.Instance.SendGameEventToEngine(GameEventWrapperFactory.Create(Anki.Cozmo.GameEvent.OnSpeedtapGamePlayerWin, 
-            _SpeedTapGame.CurrentDifficulty));
-        }
-        else {
-          // TODO add event listener
-          AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapGameCozmoWin, HandleEndGameAnimDone);
-          GameEventManager.Instance.SendGameEventToEngine(GameEventWrapperFactory.Create(Anki.Cozmo.GameEvent.OnSpeedtapGameCozmoWin, 
-            _SpeedTapGame.CurrentDifficulty));
-        }
+    private void PlayReactToRoundAnimationAndSendEvent() {
+      GameEvent animationEventToSend = GameEvent.Count;
+      bool highIntensity = _SpeedTapGame.IsHighIntensityRound();
+      if (_CurrentWinner == PointWinner.Player) {
+        GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnSpeedtapRoundPlayerWinAnyIntensity);
+        animationEventToSend = (highIntensity) ? 
+          GameEvent.OnSpeedtapRoundPlayerWinHighIntensity : GameEvent.OnSpeedtapRoundPlayerWinLowIntensity;
       }
       else {
-        if (_CurrentWinner == PointWinner.Player) {
-          // TODO add event listener
-          AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundPlayerWin, HandleRoundEndAnimDone);
-          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapRoundPlayerWin);
-        }
-        else {
-          // TODO add event listener
-          AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapRoundCozmoWin, HandleRoundEndAnimDone);
-          GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapRoundCozmoWin);
-        }
+        GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnSpeedtapRoundCozmoWinAnyIntensity);
+        animationEventToSend = (highIntensity) ? 
+          GameEvent.OnSpeedtapRoundCozmoWinHighIntensity : GameEvent.OnSpeedtapRoundCozmoWinLowIntensity;
       }
+      ListenForAnimationEnd(animationEventToSend, HandleRoundEndAnimDone);
+    }
+
+    private void PlayReactToGameAnimationAndSendEvent() {
+      GameEvent animationEventToSend = GameEvent.Count;
+      bool highIntensity = _SpeedTapGame.IsHighIntensityGame();
+      if (_CurrentWinner == PointWinner.Player) {
+        GameEventManager.Instance.SendGameEventToEngine(
+          GameEventWrapperFactory.Create(GameEvent.OnSpeedtapGamePlayerWinAnyIntensity, _SpeedTapGame.CurrentDifficulty));
+        animationEventToSend = (highIntensity) ? 
+          GameEvent.OnSpeedtapGamePlayerWinHighIntensity : GameEvent.OnSpeedtapGamePlayerWinLowIntensity;
+      }
+      else {
+        GameEventManager.Instance.SendGameEventToEngine(
+          GameEventWrapperFactory.Create(GameEvent.OnSpeedtapGameCozmoWinAnyIntensity, _SpeedTapGame.CurrentDifficulty));
+        animationEventToSend = (highIntensity) ? 
+          GameEvent.OnSpeedtapGameCozmoWinHighIntensity : GameEvent.OnSpeedtapGameCozmoWinLowIntensity;
+      }
+      ListenForAnimationEnd(animationEventToSend, HandleEndGameAnimDone);
+    }
+
+    private void ListenForAnimationEnd(GameEvent gameEvent, RobotCallback animationCallback) {
+      _AnimationEventSent = gameEvent;
+      _AnimationCallbackUsed = animationCallback;
+      AnimationManager.Instance.AddAnimationEndedCallback(gameEvent, animationCallback);
+      GameEventManager.Instance.SendGameEventToEngine(gameEvent);
     }
 
     private void HandleHandEndAnimDone(bool success) {

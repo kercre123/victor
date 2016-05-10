@@ -1,0 +1,10 @@
+{
+  "Animations": [
+    {
+      "Name": "anim_speedTap_winRound_intensity01_01",
+      "Weight": 1.0,
+      "CooldownTime_Sec": 60.0,
+      "Mood": "Default"
+    }
+  ]
+}

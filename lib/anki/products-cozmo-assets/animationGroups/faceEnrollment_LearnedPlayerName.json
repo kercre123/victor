@@ -1,7 +1,7 @@
 {
   "Animations": [
     {
-      "Name": "faceEnrollReact00",
+      "Name": "anim_freePlay_reactToFace_longName_01",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
       "Mood": "Default"

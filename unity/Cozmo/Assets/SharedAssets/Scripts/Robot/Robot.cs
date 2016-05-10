@@ -562,47 +562,6 @@ public class Robot : IRobot {
 
   #region Behavior Manager
 
-  public void SetEnableAllBehaviors(bool enabled) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetEnableAllBehaviors>.Instance.Initialize(enabled)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void SetEnableBehaviorGroup(BehaviorGroup behaviorGroup, bool enabled) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetEnableBehaviorGroup>.Instance.Initialize(behaviorGroup, enabled)
-    ); 
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void SetEnableBehavior(string behaviorName, bool enabled) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetEnableBehavior>.Instance.Initialize(behaviorName, enabled)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void ClearAllBehaviorScoreOverrides() {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(ID, Singleton<ClearAllBehaviorScoreOverrides>.Instance);
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void OverrideBehaviorScore(string behaviorName, float newScore) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<OverrideBehaviorScore>.Instance.Initialize(behaviorName, newScore)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
 
   #endregion
 
@@ -1171,6 +1130,17 @@ public class Robot : IRobot {
     SparkUnlockId = UnlockId.Count;
   }
 
+  // enable/disable games available for Cozmo to request
+  public void SetAvailableGames(BehaviorGameFlag games)
+  {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(
+        ID, 
+        Singleton<SetAvailableGames>.Instance.Initialize(games)
+      ); 
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     SendQueueSingleAction(Singleton<TurnInPlace>.Instance.Initialize(
@@ -1375,6 +1345,20 @@ public class Robot : IRobot {
       if (_LightsChanged)
         SetAllBackpackLEDs();
     }
+  }
+
+  #endregion
+
+  #region PressDemoMessages
+
+  public void TransitionToNextDemoState() {
+    RobotEngineManager.Instance.Message.TransitionToNextDemoState = Singleton<TransitionToNextDemoState>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void StartDemoWithEdge(bool demoWithEdge) {
+    RobotEngineManager.Instance.Message.StartDemoWithEdge = Singleton<StartDemoWithEdge>.Instance.Initialize(demoWithEdge);
+    RobotEngineManager.Instance.SendMessage();
   }
 
   #endregion
