@@ -1,0 +1,68 @@
+/**
+* File: dasLoggerProvider
+*
+* Author: damjan stulic
+* Created: 4/27/15
+*
+* Description: 
+*
+* Copyright: Anki, inc. 2015
+*
+*/
+
+#ifndef __DasSystemLoggerProvider_H_
+#define __DasSystemLoggerProvider_H_
+
+#include "util/logging/iLoggerProvider.h"
+#include "util/logging/iEventProvider.h"
+#include <DAS/Das.h>
+
+namespace Anki {
+namespace Util {
+
+class DasLoggerProvider : public ILoggerProvider, public IEventProvider {
+public:
+
+  inline void PrintEvent(const char* eventName,
+    const std::vector<std::pair<const char*, const char*>>& keyValues,
+    const char* eventValue) override {
+    _DAS_LogKv(DASLogLevel_Event, eventName, eventValue, keyValues);
+  };
+  inline void PrintLogE(const char* eventName,
+    const std::vector<std::pair<const char*, const char*>>& keyValues,
+    const char* eventValue) override {
+    _DAS_LogKv(DASLogLevel_Error, eventName, eventValue, keyValues);
+  }
+  inline void PrintLogW(const char* eventName,
+    const std::vector<std::pair<const char*, const char*>>& keyValues,
+    const char* eventValue) override {
+    _DAS_LogKv(DASLogLevel_Warn, eventName, eventValue, keyValues);
+  };
+  inline void PrintLogI(const char* eventName,
+    const std::vector<std::pair<const char*, const char*>>& keyValues,
+    const char* eventValue) override {
+    _DAS_LogKv(DASLogLevel_Info, eventName, eventValue, keyValues);
+  };
+  inline void PrintLogD(const char* eventName,
+    const std::vector<std::pair<const char*, const char*>>& keyValues,
+    const char* eventValue) override {
+    _DAS_LogKv(DASLogLevel_Debug, eventName, eventValue, keyValues);
+  }
+  
+  inline void SetGlobal(const char* key, const char* value) override {
+    _DAS_SetGlobal(key, value);
+  }
+
+  inline void EnableNetwork(int reason) override {
+    DASEnableNetwork((DASDisableNetworkReason)reason);
+  }
+  inline void DisableNetwork(int reason) override {
+    DASDisableNetwork((DASDisableNetworkReason)reason);
+  }
+};
+
+} // end namespace Util
+} // end namespace Anki
+
+
+#endif //__DasSystemLoggerProvider_H_
