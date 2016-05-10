@@ -48,7 +48,7 @@ BehaviorReactToPoke::BehaviorReactToPoke(Robot& robot, const Json::Value& config
   
 }
 
-bool BehaviorReactToPoke::IsRunnable(const Robot& robot) const
+bool BehaviorReactToPoke::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }
@@ -134,9 +134,13 @@ void BehaviorReactToPoke::StopInternal(Robot& robot)
 void BehaviorReactToPoke::AlwaysHandle(const EngineToGameEvent& event,
                                          const Robot& robot)
 {
-  if( ! IsChoosable() ) {
-    return;
-  }
+
+// this behavior is currently not being used. If we reenable it, we may need to revisit why this reaction
+// needed to be disabled in the first place
+//  if( ! IsChoosable() ) {
+//    return;
+//  }
+
   // We want to get these messages, even when not running
   switch (event.GetData().GetTag())
   {

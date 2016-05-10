@@ -38,7 +38,7 @@ BehaviorReactToStop::BehaviorReactToStop(Robot& robot, const Json::Value& config
   });
 }
 
-bool BehaviorReactToStop::IsRunnable(const Robot& robot) const
+bool BehaviorReactToStop::IsRunnableInternal(const Robot& robot) const
 {
   // if we aren't allowed to react to cliffs, no reason to run this behavior since it is the job of the
   // behavior handling the cliff message to do it

@@ -36,7 +36,7 @@ public:
 
   IBehaviorRequestGame(Robot& robot, const Json::Value& config);
 
-  virtual bool IsRunnable(const Robot& robot) const final override;
+  virtual bool IsRunnableInternal(const Robot& robot) const final override;
   virtual Result InitInternal(Robot& robot) final override;
   virtual Status UpdateInternal(Robot& robot) final override;
 

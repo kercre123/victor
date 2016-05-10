@@ -80,7 +80,7 @@ BehaviorFindFaces::BehaviorFindFaces(Robot& robot, const Json::Value& config)
   }
 }
   
-bool BehaviorFindFaces::IsRunnable(const Robot& robot) const
+bool BehaviorFindFaces::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

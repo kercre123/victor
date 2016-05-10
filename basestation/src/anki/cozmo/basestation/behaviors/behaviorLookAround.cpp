@@ -67,7 +67,7 @@ BehaviorLookAround::~BehaviorLookAround()
 {
 }
   
-bool BehaviorLookAround::IsRunnable(const Robot& robot) const
+bool BehaviorLookAround::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

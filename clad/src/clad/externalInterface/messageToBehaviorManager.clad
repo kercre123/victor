@@ -3,7 +3,7 @@
 // Created: 01/25/16
 // Copyright: Anki Inc (c) 2016
 
-#include "clad/types/behaviorGroup.clad"
+#include "clad/types/behaviorTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -15,40 +15,22 @@ namespace ExternalInterface {
 // are within a BehaviorManagerMessageUnion in BehaviorManagerMessage message)
 // See BehaviorManagerMessage in messagesGameToEngine.clad for usage of the union
 
-// SetEnable functions can be used to enable or disable depending on whether enable == true / false
-structure SetEnableAllBehaviors
+// Tells the behavior manager which games Cozmo can ask to play
+structure SetAvailableGames
 {
-  bool enable
+  BehaviorGameFlag availableGames
 }
 
-structure SetEnableBehaviorGroup
+// Tells the behavior manager to activate the given spark. Sparks are used to steer Cozmo towards doing
+// specific behavior sets, for example "stacking and destacking cubes nonstop for 30 seconds"
+structure SetActiveSpark
 {
-  BehaviorGroup behaviorGroup,
-  bool enable
-}
-
-structure SetEnableBehavior
-{
-  string behaviorName,
-  bool enable
-}
-
-structure ClearAllBehaviorScoreOverrides
-{
-}
-
-structure OverrideBehaviorScore
-{
-  string    behaviorName,
-  float_32  newScore
+  BehaviorSpark behaviorSpark
 }
 
 union BehaviorManagerMessageUnion {
-  SetEnableAllBehaviors SetEnableAllBehaviors,
-  SetEnableBehaviorGroup SetEnableBehaviorGroup,
-  SetEnableBehavior SetEnableBehavior,
-  ClearAllBehaviorScoreOverrides ClearAllBehaviorScoreOverrides,
-  OverrideBehaviorScore OverrideBehaviorScore
+  SetAvailableGames SetAvailableGames,
+  SetActiveSpark SetActiveSpark,
 }
 
 } // namespace U2G

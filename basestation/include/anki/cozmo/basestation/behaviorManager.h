@@ -18,6 +18,9 @@
 
 #include "anki/common/types.h"
 
+#include "clad/types/behaviorTypes.h"
+
+#include "util/helpers/templateHelpers.h"
 #include "util/random/randomGenerator.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -36,6 +39,7 @@ namespace Cozmo {
 // Forward declaration
 class BehaviorFactory;
 class AIWhiteboard;
+class AIGoalEvaluator;
 class IBehavior;
 class IBehaviorChooser;
 class IReactionaryBehavior;
@@ -50,12 +54,24 @@ class BehaviorManagerMessageUnion;
 class BehaviorManager
 {
 public:
-    
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Initialization/Destruction
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
   BehaviorManager(Robot& robot);
   ~BehaviorManager();
-    
-  Result Init(const Json::Value& config);
-    
+
+  // initialize this behavior manager from the given Json config
+  Result InitConfiguration(const Json::Value& config);
+  
+  // create a behavior from the given config and add to the factory. Can fail if the configuration is not valid
+  Result CreateBehaviorFromConfiguration(const Json::Value& behaviorConfig);
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  //
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   // Calls the current behavior's Update() method until it returns COMPLETE or FAILURE.
   Result Update();
         
@@ -70,7 +86,7 @@ public:
   // Returns nullptr if there is no current behavior
   const IBehavior* GetCurrentBehavior() const { return _currentBehavior; }
 
-  const IBehaviorChooser* GetBehaviorChooser() const { return _behaviorChooser; }
+  const IBehaviorChooser* GetBehaviorChooser() const { return _currentChooserPtr; }
     
   const BehaviorFactory& GetBehaviorFactory() const { assert(_behaviorFactory); return *_behaviorFactory; }
         BehaviorFactory& GetBehaviorFactory()       { assert(_behaviorFactory); return *_behaviorFactory; }
@@ -78,15 +94,18 @@ public:
   // accessors: whiteboard
   const AIWhiteboard& GetWhiteboard() const { assert(_whiteboard); return *_whiteboard; }
         AIWhiteboard& GetWhiteboard()       { assert(_whiteboard); return *_whiteboard; }
-    
-  IBehavior* LoadBehaviorFromJson(const Json::Value& behaviorJson);
-    
-  void ClearAllBehaviorOverrides();
-  bool OverrideBehaviorScore(const std::string& behaviorName, float newScore);
-    
+     
   void HandleMessage(const Anki::Cozmo::ExternalInterface::BehaviorManagerMessageUnion& message);
 
 private:
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Types
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Methods
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // switches to a given behavior (stopping the current behavior if necessary). Returns true if it switched
   bool SwitchToBehavior(IBehavior* nextBehavior);
@@ -112,39 +131,78 @@ private:
   template<typename EventType>
   void ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventType>& event);
 
-  bool _isInitialized;
-    
-  Robot& _robot;    
-    
-  // Factory creates and tracks data-driven behaviors etc
-  BehaviorFactory* _behaviorFactory;
-    
-  // How we store and choose next behavior (weak ptr)
-  IBehaviorChooser* _behaviorChooser = nullptr;
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Games
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // sets which games are available by setting the mask/flag combination
+  void SetAvailableGame(BehaviorGameFlag availableGames) { _availableGames = Util::EnumToUnderlying(availableGames); }
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Sparks
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // sets the given spark as currently active
+  void SetActiveSpark(BehaviorSpark spark);
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Attributes
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  bool _isInitialized = false;
+    
+  Robot& _robot;
+  
+  // - - - - - - - - - - - - - - -
+  // current running behavior
+  // - - - - - - - - - - - - - - -
+  
+  bool _runningReactionaryBehavior = false;
+  
+  // behavior currently running and responsible for controlling the robot
+  IBehavior* _currentBehavior  = nullptr;
+  
+  // this is the behavior to go back to after a reactionary behavior is completed
+  IBehavior* _behaviorToResume = nullptr;
+  
+  // current behavior chooser (weak_ptr pointing to one of the others)
+  IBehaviorChooser* _currentChooserPtr = nullptr;
+  
+  // - - - - - - - - - - - - - - -
+  // factory & choosers
+  // - - - - - - - - - - - - - - -
+  
+  // Factory creates and tracks data-driven behaviors etc
+  BehaviorFactory* _behaviorFactory = nullptr;
+    
   // This is a chooser which manually runs specific behaviors. The manager starts out using this chooser to
   // avoid immediately executing a behavior when the engine starts
   IBehaviorChooser* _selectionChooser = nullptr;
-
-  // This is the behavior used for freeplay. This is the default chooser
-  IBehaviorChooser* _freeplayBehaviorChooser = nullptr;
 
   // This is a special chooser for the demo. In addition to choosing behaviors, it is also the central place
   // in engine for any demo-specific code. This is in reference to the announce / PR demo
   IBehaviorChooser* _demoChooser = nullptr;
 
-  bool _runningReactionaryBehavior = false;
+  // Behavior chooser for freeplay mode, it also includes games and sparks if needed
+  IBehaviorChooser* _freeplayChooser = nullptr;
   
-  IBehavior* _currentBehavior = nullptr;
+  // list of behaviors that fire automatically as reactions to events
+  std::vector<IReactionaryBehavior*> _reactionaryBehaviors;
 
-  // This is the behavior to go back to after a reactionary behavior is completed
-  IBehavior* _behaviorToResume = nullptr;
-    
+  // - - - - - - - - - - - - - - -
+  // others/shared
+  // - - - - - - - - - - - - - - -
+  
+  // games that are available currently for Cozmo to request
+  using BehaviorGameFlagMask = std::underlying_type<BehaviorGameFlag>::type;
+  BehaviorGameFlagMask _availableGames = Util::EnumToUnderlying( BehaviorGameFlag::NoGame );
+  
+  // current active spark (this does guarantee that behaviors will kick in, only that Cozmo is in a Sparked state)
+  BehaviorSpark _activeSpark = BehaviorSpark::NoSpark;
+
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   std::unique_ptr<AIWhiteboard> _whiteboard;
-
-  std::vector<IReactionaryBehavior*> _reactionaryBehaviors;
-    
+  
   // For random numbers
   Util::RandomGenerator _rng;
     

@@ -143,7 +143,7 @@ BehaviorExploreBringCubeToBeacon::~BehaviorExploreBringCubeToBeacon()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreBringCubeToBeacon::IsRunnable(const Robot& robot) const
+bool BehaviorExploreBringCubeToBeacon::IsRunnableInternal(const Robot& robot) const
 {
   // check if any known cubes are not currently in a valid beacon
   const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();

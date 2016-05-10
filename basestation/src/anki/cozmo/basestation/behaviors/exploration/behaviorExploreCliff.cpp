@@ -50,7 +50,7 @@ BehaviorExploreCliff::~BehaviorExploreCliff()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreCliff::IsRunnable(const Robot& robot) const
+bool BehaviorExploreCliff::IsRunnableInternal(const Robot& robot) const
 {
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   if ( nullptr == memoryMap ) {

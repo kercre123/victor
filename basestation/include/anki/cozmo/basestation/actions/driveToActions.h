@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actionableObject.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/animationKeyFrames.h"
 #include "util/helpers/templateHelpers.h"
 
@@ -61,11 +62,6 @@ namespace Anki {
       Result SetGoals(const std::vector<Pose3d>& poses,
                       const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                       const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
-
-      // Sets the driving animations (usually just sounds, expected not to lock anything). Set to empty
-      // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
-      // the start, otherwise you may break things (e.g. sounds might never stop playing).
-      void SetDrivingSounds(const std::string& drivingSoundStartClipName, const std::string& drivingSoundStopClipName);
       
       void SetMotionProfile(const PathMotionProfile& motionProfile);
       
@@ -75,14 +71,8 @@ namespace Anki {
       // Don't lock wheels if we're using manual speed control (i.e. "assisted RC")
       virtual u8 GetTracksToLock() const override
       {
-        u8 ignoredTracks = (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
-        if (!_useManualSpeed)
-        {
-          ignoredTracks |= ((u8)AnimTrackFlag::BODY_TRACK);
-        }
-        return ignoredTracks;
+        return (_useManualSpeed ? 0 : (u8)AnimTrackFlag::BODY_TRACK);
       }
-            
 
     protected:
       
@@ -90,8 +80,6 @@ namespace Anki {
       virtual ActionResult CheckIfDone() override;
       
       bool IsUsingManualSpeed() {return _useManualSpeed;}
-
-      void StopDrivingSoundsIfNeeded();
       
       bool     _startedTraversingPath = false;
       
@@ -113,10 +101,6 @@ namespace Anki {
       float _maxReplanPlanningTime;
       
       float _timeToAbortPlanning;
-
-      std::string _startDrivingAnimClip;
-      std::string _stopDrivingAnimClip;
-      bool _shouldStopDrivingSounds = false;
             
       Signal::SmartHandle _originChangedHandle;
       
@@ -159,11 +143,6 @@ namespace Anki {
       // Whether or not to verify the final pose, once the path is complete,
       // according to the latest know preAction pose for the specified object.
       void DoPositionCheckOnPathCompletion(bool doCheck) { _doPositionCheckOnPathCompletion = doCheck; }
-
-      // Sets the driving animations (usually just sounds, expected not to lock anything). Set to empty
-      // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
-      // the start, otherwise you may break things (e.g. sounds might never stop playing).
-      void SetDrivingSounds(const std::string& drivingSoundStartClipName, const std::string& drivingSoundStopClipName);
       
       void SetMotionProfile(const PathMotionProfile& motionProfile);
             
@@ -189,10 +168,6 @@ namespace Anki {
       Radians                    _approachAngle_rad;
 
       bool                       _doPositionCheckOnPathCompletion;
-      
-      std::string _startDrivingAnimClip;
-      std::string _stopDrivingAnimClip;
-      bool _hasCustomDrivingSounds = false;
       
       PathMotionProfile          _pathMotionProfile;
       bool _hasMotionProfile = false;
@@ -246,11 +221,6 @@ namespace Anki {
                                  const bool useManualSpeed);
 
     public:
-
-      // Sets the driving animations (usually just sounds, expected not to lock anything). Set to empty
-      // strings to not play sounds. Must be called before action starts. NOTE: the stop animation MUST match
-      // the start, otherwise you may break things (e.g. sounds might never stop playing).
-      void SetDrivingSounds(const std::string& drivingSoundStartClipName, const std::string& drivingSoundStopClipName);
       
       void SetMotionProfile(const PathMotionProfile& motionProfile);
 

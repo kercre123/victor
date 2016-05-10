@@ -106,7 +106,7 @@ namespace Cozmo {
     
   }
 
-  bool BehaviorInteractWithFaces::IsRunnable(const Robot& robot) const
+  bool BehaviorInteractWithFaces::IsRunnableInternal(const Robot& robot) const
   {
     // runnable if there are any faces that we might want to interact with
     

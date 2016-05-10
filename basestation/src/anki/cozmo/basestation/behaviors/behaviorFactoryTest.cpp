@@ -108,6 +108,7 @@ namespace Cozmo {
       EngineToGameTag::ObjectMoved,
       EngineToGameTag::CameraCalibration,
       EngineToGameTag::RobotStopped,
+      EngineToGameTag::RobotPickedUp,
       EngineToGameTag::MotorCalibration,
       EngineToGameTag::ObjectAvailable,
       EngineToGameTag::ObjectConnectionState
@@ -118,7 +119,7 @@ namespace Cozmo {
 #pragma mark -
 #pragma mark Inherited Virtual Implementations
   
-  bool BehaviorFactoryTest::IsRunnable(const Robot& robot) const
+  bool BehaviorFactoryTest::IsRunnableInternal(const Robot& robot) const
   {
     return _testResult == FactoryTestResultCode::UNKNOWN;
   }
@@ -285,6 +286,11 @@ namespace Cozmo {
         // Check for mismatched CLAD
         if (robot.HasMismatchedCLAD()) {
           END_TEST(FactoryTestResultCode::MISMATCHED_CLAD);
+        }
+        
+        // Check for pickup
+        if (robot.IsPickedUp()) {
+          END_TEST(FactoryTestResultCode::ROBOT_PICKUP);
         }
         
         // Check for past test results
@@ -471,20 +477,8 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::NOT_IN_CALIBRATION_POSE);
         }
         
-        /*
-        // Check if all calibration images received from flash.
-        // If so, go directly to ComputeCameraCalibration.
-        // Otherwise, acquire images
-        if (robot.GetVisionComponent().GetNumStoredCameraCalibrationImages() >= _kMinNumberOfCalibrationImagesRequired) {
-           SetCurrState(FactoryTestState::ComputeCameraCalibration);
-        } else {
-          PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.InsufficientCalibrationImagesInFlash",
-                              "Only %zu images found in flash. Taking pictures now.",
-                              robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
-         */
-          _camCalibPoseIndex = 0;
-          SetCurrState(FactoryTestState::TakeCalibrationImages);
-        //}
+        _camCalibPoseIndex = 0;
+        SetCurrState(FactoryTestState::TakeCalibrationImages);
         break;
       }
         
@@ -719,8 +713,7 @@ namespace Cozmo {
         };
         
         // Put block down
-        const bool checkFreeDestination = true;
-        PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(robot, _actualLightCubePose, false, false, checkFreeDestination);
+        PlaceObjectOnGroundAction* action = new PlaceObjectOnGroundAction(robot);
         //action->SetMotionProfile(_motionProfile);
         StartActing(robot,
                     action,
@@ -844,6 +837,10 @@ namespace Cozmo {
         
       case EngineToGameTag::RobotStopped:
         _lastHandlerResult = HandleRobotStopped(robot, event.GetData().Get_RobotStopped());
+        break;
+
+      case EngineToGameTag::RobotPickedUp:
+        _lastHandlerResult = HandleRobotPickedUp(robot, event.GetData().Get_RobotPickedUp());
         break;
         
       case EngineToGameTag::MotorCalibration:
@@ -1131,6 +1128,13 @@ namespace Cozmo {
     
     return RESULT_OK;
   }
+
+  Result BehaviorFactoryTest::HandleRobotPickedUp(Robot& robot, const ExternalInterface::RobotPickedUp &msg)
+  {
+    EndTest(robot, FactoryTestResultCode::ROBOT_PICKUP);
+    return RESULT_OK;
+  }
+
   
   Result BehaviorFactoryTest::HandleMotorCalibration(Robot& robot, const MotorCalibration &msg)
   {

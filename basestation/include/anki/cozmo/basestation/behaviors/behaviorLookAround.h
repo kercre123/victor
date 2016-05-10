@@ -42,7 +42,7 @@ public:
 
   virtual ~BehaviorLookAround() override;
   
-  virtual bool IsRunnable(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
 
   void SetLookAroundHeadAngle(float angle_rads) { _lookAroundHeadAngle_rads = angle_rads; }
   
