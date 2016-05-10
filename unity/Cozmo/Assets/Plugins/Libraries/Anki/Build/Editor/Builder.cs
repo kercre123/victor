@@ -275,6 +275,8 @@ namespace Anki {
           }
         }
 
+
+        CopyEngineAssetsToStreamingAssets();
         // Later on use this to switch between building for different targets
         // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
 
@@ -444,4 +446,3 @@ namespace Anki {
     }
   }
 }
-    
