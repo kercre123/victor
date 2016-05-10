@@ -1,3 +1,5 @@
+#ifdef LEGACY_CUBES
+
 #include <stdint.h>
 #include <string.h>
 
@@ -13,8 +15,7 @@
 #include "random.h"
 #include "hardware.h"
 #include "rtos.h"
-#include "debug.h"
-#include "radio.h"
+#include "legacy.h"
 #include "timer.h"
 #include "head.h"
 #include "crypto.h"
@@ -417,3 +418,5 @@ void Radio::manage(void) {
     next_resume += SCHEDULE_PERIOD;
   }
 }
+
+#endif
