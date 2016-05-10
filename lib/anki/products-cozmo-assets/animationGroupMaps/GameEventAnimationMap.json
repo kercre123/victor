@@ -41,12 +41,20 @@
       "AnimName": "ag_speedTap_loseHand"
     },
     {
+      "CladEvent": "OnSpeedtapRoundCozmoWinAnyIntensity",
+      "AnimName": "ag_speedTap_winRound_intensity01"
+    },
+    {
       "CladEvent": "OnSpeedtapRoundCozmoWinLowIntensity",
       "AnimName": "ag_speedTap_winRound_intensity01"
     },
     {
       "CladEvent": "OnSpeedtapRoundCozmoWinHighIntensity",
       "AnimName": "ag_speedTap_winRound_intensity02"
+    },
+    {
+      "CladEvent": "OnSpeedtapRoundPlayerWinAnyIntensity",
+      "AnimName": "ag_speedTap_loseRound_intensity01"
     },
     {
       "CladEvent": "OnSpeedtapRoundPlayerWinLowIntensity",
@@ -57,12 +65,20 @@
       "AnimName": "ag_speedTap_loseRound_intensity02"
     },
     {
+      "CladEvent": "OnSpeedtapGameCozmoWinAnyIntensity",
+      "AnimName": "ag_speedTap_winGame_intensity02"
+    },
+    {
       "CladEvent": "OnSpeedtapGameCozmoWinLowIntensity",
       "AnimName": "ag_speedTap_winGame_intensity02"
     },
     {
       "CladEvent": "OnSpeedtapGameCozmoWinHighIntensity",
       "AnimName": "ag_speedTap_winGame_intensity03"
+    },
+    {
+      "CladEvent": "OnSpeedtapGamePlayerWinAnyIntensity",
+      "AnimName": "ag_speedTap_loseGame_intensity02"
     },
     {
       "CladEvent": "OnSpeedtapGamePlayerWinLowIntensity",
