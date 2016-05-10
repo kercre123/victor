@@ -40,6 +40,7 @@
     ]
   },
   "behaviorGroups": [
-    "DemoCubes"
+    "DemoCubes",
+    "FreeplayOne"
   ]
 }
