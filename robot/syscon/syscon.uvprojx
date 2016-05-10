@@ -573,6 +573,21 @@
           </Files>
         </Group>
         <Group>
+          <GroupName>bootloader</GroupName>
+          <Files>
+            <File>
+              <FileName>bootloader.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\bootloader.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>bootbin.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\hal\bootbin.s</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
           <GroupName>::CMSIS</GroupName>
         </Group>
       </Groups>

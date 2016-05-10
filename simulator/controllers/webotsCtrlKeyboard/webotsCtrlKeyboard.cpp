@@ -2163,8 +2163,7 @@ namespace Anki {
               
               char buf[256];
               snprintf(buf, sizeof(buf),
-                       "[CameraCalibration] Tag: %s: fx: %f, fy: %f, cx: %f, cy: %f, skew: %f, nrows: %d, ncols: %d",
-                      EnumToString(msg.tag),
+                       "[CameraCalibration]\nfx: %f\nfy: %f\ncx: %f\ncy: %f\nskew: %f\nnrows: %d\nncols: %d\n",
                       calib.focalLength_x, calib.focalLength_y,
                       calib.center_x, calib.center_y,
                       calib.skew,
@@ -2187,7 +2186,7 @@ namespace Anki {
               
               char buf[256];
               snprintf(buf, sizeof(buf),
-                       "[ToolCode] Code: %s, Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
+                       "[ToolCode]\nCode: %s\nExpected_L: %f, %f\nExpected_R: %f, %f\nObserved_L: %f, %f\nObserved_R: %f, %f\n",
                        EnumToString(info.code),
                        info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y,
                        info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
@@ -2220,7 +2219,7 @@ namespace Anki {
               char buf[128];
               f32* poseData = (f32*)(recvdData->data());
               snprintf(buf, sizeof(buf),
-                       "[CalibPose] Rot: (%f %f %f), Trans: (%f %f %f)",
+                       "[CalibPose]\nRot: %f %f %f\nTrans: %f %f %f\n",
                        poseData[0], poseData[1], poseData[2], poseData[3], poseData[4], poseData[5] );
               
               PRINT_NAMED_INFO("HandleNVStorageOpResult.CalibPose","%s", buf);
@@ -2241,7 +2240,7 @@ namespace Anki {
               
               char buf[512];
               snprintf(buf, sizeof(buf),
-                       "[PlayPenTest] Result: %s, Time: %llu, SHA-1: %x, stationID: %d, Timestamps: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+                       "[PlayPenTest]\nResult: %s\nTime: %llu\nSHA-1: %x\nStationID: %d\nTimestamps: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
                        EnumToString(result.result),
                        //ctime(&rawtime),
                        result.utcTime,
