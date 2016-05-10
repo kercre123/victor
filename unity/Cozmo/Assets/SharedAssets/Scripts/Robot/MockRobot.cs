@@ -111,7 +111,7 @@ public class MockRobot : IRobot {
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
 
   }
-		
+
   public void SetEnableCliffSensor(bool enabled) {
     // Do nothing
   }
@@ -125,8 +125,7 @@ public class MockRobot : IRobot {
   }
 
   // enable/disable games available for Cozmo to request
-  public void SetAvailableGames(BehaviorGameFlag games)
-  {
+  public void SetAvailableGames(BehaviorGameFlag games) {
 
   }
 
@@ -813,8 +812,11 @@ public class MockRobot : IRobot {
 
   #endregion
 
-
   public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    
+  }
+
+  public void SendDemoResetState() {
     
   }
 }
