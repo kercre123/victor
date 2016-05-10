@@ -59,19 +59,16 @@ bool FlashSector(int target, const uint32_t* data)
   return true;
 }
 
-void flash_data(void* target, const uint8_t* source, int size) {
-  for (int i = 0; i < size; i += FLASH_BLOCK_SIZE) {
-    FlashSector(i + (int)target, (const uint32_t*)&source[i]);
-  }
-}
-
 void update_bootloader(void) {
   for (int i = 0; i < BOOTLOADER_LENGTH; i++) {
     if (BOOTLOADER_UPDATE[i] != BOOTLOADER[i])
     {
       __disable_irq();
-      flash_data(BOOTLOADER, BOOTLOADER_UPDATE, BOOTLOADER_LENGTH);
+      for (i = 0; i < BOOTLOADER_LENGTH; i += FLASH_BLOCK_SIZE) {
+        FlashSector((int)BOOTLOADER[i], (const uint32_t*)&BOOTLOADER_UPDATE[i]);
+      }
       NVIC_SystemReset();
+      return ;
     }
   }
 }

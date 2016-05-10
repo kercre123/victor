@@ -24,12 +24,10 @@ const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
 static DropToWiFi spi_backbuff[2];
 
-extern DropToWiFi* spi_write_buff = &spi_backbuff[0];
 static DropToWiFi* spi_tx_buff = &spi_backbuff[1];
+DropToWiFi* spi_write_buff = &spi_backbuff[0];
 
 transmissionWord spi_rx_buff[RX_SIZE];
-
-static int totalDrops = 0;
 
 static bool audioUpdated = false;
 static uint8_t AudioBackBuffer[MAX_AUDIO_BYTES_PER_DROP];
@@ -49,7 +47,7 @@ static bool ProcessDrop(void) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
     DropToRTIP* drop = (DropToRTIP*)target;
-    //Watchdog::kick(WDOG_WIFI_COMMS);
+    Watchdog::kick(WDOG_WIFI_COMMS);
     
     // Buffer the data that needs to be fed into the devices for next cycle
     audioUpdated = drop->droplet & audioDataValid;
@@ -60,7 +58,6 @@ static bool ProcessDrop(void) {
     }
 
     uint8_t *payload_data = (uint8_t*) drop->payload;
-    totalDrops++;
     
     if (drop->payloadLen)
     {
@@ -113,11 +110,12 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
     *((u32*)(drop_tx->payload + jpeglen)) = frameNumber;
     jpeglen += 4;
   }
-	drop_tx->droplet = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0);
+
+  drop_tx->droplet = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0);
   uint8_t *drop_addr = drop_tx->payload + jpeglen;
   
   const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - jpeglen;
-	drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
+  drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
 }
 
 // This is Thors hammer.  Forces recovery mode
@@ -147,7 +145,8 @@ void Anki::Cozmo::HAL::SPI::EnterOTAMode(void) {
   UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
 
   // Fire the SVC handler in the boot-loader force the SVC to have a high priority because otherwise this will fault
-  void (* const call)(void) = (void (* const)(void)) (*(uint32_t*) 0x2C);
+  const uint32_t * const SVC_Vector = (uint32_t*) 0x2C;
+  void (*call)(void) = (void (*)(void)) *SVC_Vector;
   
   SCB->VTOR = 0;
   call();
@@ -185,14 +184,11 @@ void DMA2_IRQHandler(void) {
       case 0x8004:
         __disable_irq();
         break ;
+      case 0x8008:
+        Watchdog::kick(WDOG_WIFI_COMMS);
+        break ;
     }
   }
-}
-
-extern "C"
-void DMA3_IRQHandler(void) {
-  DMA_CDNE = DMA_CDNE_CDNE(3);
-  DMA_CINT = 3;
 }
 
 void Anki::Cozmo::HAL::SPI::InitDMA(void) {
@@ -228,14 +224,13 @@ void Anki::Cozmo::HAL::SPI::InitDMA(void) {
   DMA_TCD3_DLASTSGA       = 0;
 
   DMA_TCD3_NBYTES_MLNO    = sizeof(transmissionWord);                   // The minor loop moves 32 bytes per transfer
-  DMA_TCD3_BITER_ELINKNO  = TX_SIZE;                          // Major loop iterations
-  DMA_TCD3_CITER_ELINKNO  = TX_SIZE;                          // Set current interation count
+  DMA_TCD3_BITER_ELINKNO  = TX_SIZE;                                    // Major loop iterations
+  DMA_TCD3_CITER_ELINKNO  = TX_SIZE;                                    // Set current interation count
   DMA_TCD3_ATTR           = (DMA_ATTR_SSIZE(1) | DMA_ATTR_DSIZE(1));    // Source/destination size (8bit)
  
-  DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration
+  DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK;                          // clear ERQ @ end of major iteration
 
   NVIC_EnableIRQ(DMA2_IRQn);
-  NVIC_EnableIRQ(DMA3_IRQn);
 }
 
 inline uint16_t WaitForByte(void) {
@@ -309,7 +304,6 @@ void Anki::Cozmo::HAL::SPI::Init(void) {
 
   // Clear all status flags
   SPI0_SR = SPI0_SR;
-  
 
   SPI::InitDMA();
   SyncSPI();

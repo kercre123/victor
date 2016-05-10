@@ -6,7 +6,7 @@
 enum WatchdogChannels {
   WDOG_HAL_EXEC,
   WDOG_SPINE_COMMS,
-  //WDOG_WIFI_COMMS,
+  WDOG_WIFI_COMMS,
   WDOG_TOTAL_CHANNELS
 };
 
@@ -23,4 +23,3 @@ namespace Anki {
 }
 
 #endif
-
