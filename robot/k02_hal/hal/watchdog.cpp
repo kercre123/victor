@@ -16,7 +16,7 @@ static uint32_t reset_magic __attribute__((section("UNINIT"),zero_init));
 static uint32_t reset_count __attribute__((section("UNINIT"),zero_init));
 
 void Anki::Cozmo::HAL::Watchdog::init(void) {
-  static const uint32_t RESET_TIME = 5 * 1024;  // 5 seconds (1khz LPO)
+  static const uint32_t RESET_TIME = 1 * 1024;  // 5 seconds (1khz LPO)
 
   __disable_irq();
   WDOG_UNLOCK = 0xC520;

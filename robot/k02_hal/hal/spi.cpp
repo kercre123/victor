@@ -170,6 +170,11 @@ void DMA2_IRQHandler(void) {
   static transmissionWord lastWord = 0;
   static int SilentDrops = 0;
 
+  // We are likely in OTA mode
+  if (spi_rx_buff[0] == 0xFFFF) {
+    Watchdog::kick(WDOG_WIFI_COMMS);
+  }
+
   if (lastWord != spi_rx_buff[0]) {
     lastWord = spi_rx_buff[0];
     SilentDrops = 0;
@@ -183,9 +188,6 @@ void DMA2_IRQHandler(void) {
         break ;
       case 0x8004:
         __disable_irq();
-        break ;
-      case 0x8008:
-        Watchdog::kick(WDOG_WIFI_COMMS);
         break ;
     }
   }
@@ -275,7 +277,7 @@ void SyncSPI(void) {
 }
 
 void Anki::Cozmo::HAL::SPI::Init(void) {
-	// Turn on power to DMA, PORTC and SPI0
+  // Turn on power to DMA, PORTC and SPI0
   SIM_SCGC6 |= SIM_SCGC6_SPI0_MASK | SIM_SCGC6_DMAMUX_MASK;
   SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
 
