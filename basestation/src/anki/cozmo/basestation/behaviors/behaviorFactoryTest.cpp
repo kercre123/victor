@@ -448,8 +448,8 @@ namespace Cozmo {
         // TODO: Create a function that's shared by LocalizeToObject and LocalizeToMat that does this?
         robot.SetNewPose(_cliffDetectPose);
         
-        DriveToPoseAction* action = new DriveToPoseAction(robot, _camCalibPose);
-        action->SetMotionProfile(_motionProfile);
+        f32 distToCamCalibPose = _camCalibPose.GetTranslation().x() - robot.GetPose().GetTranslation().x();
+        DriveStraightAction* action = new DriveStraightAction(robot, distToCamCalibPose, -100);
         
         // Go to camera calibration pose
         StartActing(robot, action,
