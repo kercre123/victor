@@ -32,7 +32,7 @@ public class PressDemoHubWorld : HubWorldBase {
     RobotEngineManager.Instance.OnRequestGameStart += HandleRequestSpeedTap;
     RobotEngineManager.Instance.OnRequestEnrollFace += HandleRequestEnrollFace;
     RobotEngineManager.Instance.OnDemoState += HandleDemoState;
-    LoopRobotSleep();
+    RobotEngineManager.Instance.CurrentRobot.SendAnimation(AnimationName.kStartSleeping, LoopRobotSleep);
     return true;
   }
 
@@ -77,6 +77,7 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void HandleStartButtonPressed(bool startWithEdge) {
     RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleSleepAnimationComplete);
+    RobotEngineManager.Instance.CurrentRobot.CancelCallback(LoopRobotSleep);
   }
 
   private void HandleForceProgressPressed() {
