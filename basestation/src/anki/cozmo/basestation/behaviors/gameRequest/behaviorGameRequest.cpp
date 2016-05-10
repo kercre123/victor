@@ -87,7 +87,7 @@ void IBehaviorRequestGame::SendRequest(Robot& robot)
 {
   using namespace ExternalInterface;
 
-  robot.Broadcast( MessageEngineToGame( RequestGameStart() ) );
+  robot.Broadcast( MessageEngineToGame( RequestGameStart(true) ) );
   _requestTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
