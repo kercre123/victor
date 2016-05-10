@@ -322,11 +322,12 @@ namespace SpeedTap {
       _CozmoRot = CurrentRobot.Rotation;
     }
 
-    // TODO: Reset _CozmoPos and _CozmoRot whenever we receive a deloc message to prevent COZMO-
+    // TODO: Reset _CozmoPos and _CozmoRot whenever we receive a deloc message to prevent COZMO-829
     public void CheckForAdjust(RobotCallback adjustCallback = null) {
       float dist = 0.0f;
       dist = (CurrentRobot.WorldPosition - _CozmoPos).magnitude;
       if (dist > _kTapAdjustRange) {
+        Debug.LogWarning(string.Format("ADJUST : From Pos {0} - Rot {1} : To Pos {2} - Rot {3}", CurrentRobot.WorldPosition, CurrentRobot.Rotation, _CozmoPos, _CozmoRot));
         CurrentRobot.GotoPose(_CozmoPos, _CozmoRot, false, false, adjustCallback);
       }
       else {
