@@ -31,6 +31,7 @@ public class PressDemoHubWorld : HubWorldBase {
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
     RobotEngineManager.Instance.OnRequestGameStart += HandleRequestSpeedTap;
     RobotEngineManager.Instance.OnRequestEnrollFace += HandleRequestEnrollFace;
+    RobotEngineManager.Instance.OnDemoState += HandleDemoState;
     LoopRobotSleep();
     return true;
   }
@@ -39,6 +40,7 @@ public class PressDemoHubWorld : HubWorldBase {
     GameObject.Destroy(_PressDemoViewInstance.gameObject);
     RobotEngineManager.Instance.OnRequestGameStart -= HandleRequestSpeedTap;
     RobotEngineManager.Instance.OnRequestEnrollFace -= HandleRequestEnrollFace;
+    RobotEngineManager.Instance.OnDemoState -= HandleDemoState;
     return true;
   }
 
@@ -47,6 +49,12 @@ public class PressDemoHubWorld : HubWorldBase {
     _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
     _PressDemoViewInstance.OnStartButton += HandleStartButtonPressed;
     _PressDemoViewInstance.SetPressDemoDebugState(_PressDemoDebugSceneIndex);
+  }
+
+  private void HandleDemoState(int demoNum) {
+    if (_PressDemoViewInstance != null) {
+      _PressDemoViewInstance.SetPressDemoDebugState(demoNum);
+    }
   }
 
   private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
