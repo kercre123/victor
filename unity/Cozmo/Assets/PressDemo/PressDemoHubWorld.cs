@@ -121,7 +121,6 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleMiniGameQuit() {
-    DAS.Debug(this, "activity ended so force transitioning to the next thing");
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
     if (_ProgressSceneWhenMinigameOver) {
       RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
