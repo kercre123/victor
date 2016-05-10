@@ -18,8 +18,7 @@ namespace FaceEnrollment {
     private string _NameForFace;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
-      RobotEngineManager.Instance.OnRobotEnrolledFace += HandleEnrolledFace;
+
     }
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -34,6 +33,9 @@ namespace FaceEnrollment {
       _NameForFace = name;
       CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.LookingStraight);
       SharedMinigameView.ShowWideGameStateSlide(_EnrollmentInstructionsSlidePrefab.gameObject, "enrollment_instructions_slide").GetComponent<FaceEnrollmentInstructionsSlide>();
+
+      RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
+      RobotEngineManager.Instance.OnRobotEnrolledFace += HandleEnrolledFace;
     }
 
     private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
