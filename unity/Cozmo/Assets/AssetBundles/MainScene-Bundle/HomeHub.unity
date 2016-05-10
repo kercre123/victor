@@ -359,7 +359,7 @@ Transform:
 --- !u!4 &1197554515 stripped
 Transform:
   m_PrefabParentObject: {fileID: 488436, guid: 4c907f46693e946a28129e509372244a, type: 2}
-  m_PrefabInternal: {fileID: 1835564272}
+  m_PrefabInternal: {fileID: 1973263931}
 --- !u!1001 &1290490494
 Prefab:
   m_ObjectHideFlags: 0
@@ -649,7 +649,7 @@ Prefab:
 Transform:
   m_PrefabParentObject: {fileID: 484612, guid: ba92aeb7b26da467d8d8cb93a48a834f, type: 2}
   m_PrefabInternal: {fileID: 1671943058}
---- !u!1001 &1835564272
+--- !u!1001 &1973263931
 Prefab:
   m_ObjectHideFlags: 0
   serializedVersion: 2
