@@ -21,10 +21,9 @@ extern "C" {
 #include "crypto.h"
 #include "bluetooth.h"
 #include "dtm.h"
+#include "bootloader.h"
 
 #include "sha1.h"
-
-#include "bootloader.h"
 
 #include "anki/cozmo/robot/spineData.h"
 #include "anki/cozmo/robot/rec_protocol.h"
@@ -101,8 +100,12 @@ void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode) {
 int main(void)
 {
   using namespace Anki::Cozmo::RobotInterface;
-  
+
+  // DO NOT INCLUDE THIS IN PRODUCTION VERY BAD WILL MURDER YOUR FACE
+  Bootloader::init();
+
   Storage::init();
+  Bootloader::init();
   
   // Initialize our scheduler
   RTOS::init();
