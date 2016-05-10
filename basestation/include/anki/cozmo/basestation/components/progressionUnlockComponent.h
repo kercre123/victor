@@ -13,12 +13,12 @@
 #ifndef __Anki_Cozmo_Basestation_Components_ProgressionUnlockComponent_H__
 #define __Anki_Cozmo_Basestation_Components_ProgressionUnlockComponent_H__
 
-#include "anki/cozmo/basestation/components/progressionUnlockEntry.h"
 #include "clad/types/unlockTypes.h"
 #include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal.hpp"
 #include <map>
+#include <set>
 #include <vector>
 
 namespace Anki {
@@ -32,7 +32,7 @@ public:
 
   explicit ProgressionUnlockComponent(Robot& robot);
 
-  void Init(const Json::Value& config);
+  void Init();
 
   bool IsUnlocked(UnlockId unlock) const;
 
@@ -42,11 +42,6 @@ public:
 
   // send a message representing the current status of all unlocks
   void SendUnlockStatus() const;
-
-  // Calls the provided function with the behavior group corresponding to each unlocked unlock NOTE: this
-  // assumes that no two unlocks use the same behavior group. If they do, bad things may happen
-  using UnlockBehaviorCallback = std::function<void(BehaviorGroup group, bool enabled)>;
-  void IterateUnlockedFreeplayBehaviors(UnlockBehaviorCallback callback);
 
   void Update();
 
@@ -58,7 +53,7 @@ private:
   Robot& _robot;
 
   // eventually this will be stored on the robot
-  std::map<UnlockId, ProgressionUnlockEntry> _unlocks;
+  std::set<UnlockId> _currentUnlocks;
 
   // for now, to simulate the robot "taking some time" to confirm values, delay a few ticks before
   // broadcasting confirmations

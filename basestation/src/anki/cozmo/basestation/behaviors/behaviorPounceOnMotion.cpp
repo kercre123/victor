@@ -41,7 +41,7 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
 
 }
 
-bool BehaviorPounceOnMotion::IsRunnable(const Robot& robot) const
+bool BehaviorPounceOnMotion::IsRunnableInternal(const Robot& robot) const
 {
   // we can only run if there is a pounce pose to pounce on
   return _numValidPouncePoses > 0 || _state != State::Inactive;

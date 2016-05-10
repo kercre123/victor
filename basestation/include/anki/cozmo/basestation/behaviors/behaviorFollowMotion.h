@@ -32,7 +32,7 @@ private:
   
 public:
   
-  virtual bool IsRunnable(const Robot& robot) const override;
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
 
   virtual float EvaluateScoreInternal(const Robot& robot) const override;
 

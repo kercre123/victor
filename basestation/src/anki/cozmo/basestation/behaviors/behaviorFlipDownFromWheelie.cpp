@@ -30,7 +30,7 @@ BehaviorFlipDownFromWheelie::BehaviorFlipDownFromWheelie(Robot& robot, const Jso
   SetDefaultName("FlipDownFromWheelie");
 }
 
-bool BehaviorFlipDownFromWheelie::IsRunnable(const Robot& robot) const
+bool BehaviorFlipDownFromWheelie::IsRunnableInternal(const Robot& robot) const
 {
   return robot.GetPitchAngle() > kPitchAngleToConsiderOnBack_rads;
 }

@@ -108,8 +108,6 @@ int main (void)
   CameraStart();
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
-  //StartupSelfTest();
-
   //#define ENABLE_FCC_TEST
   //#define GENERATE_WHITE_NOISE (this should be defined elseware)
 
@@ -117,7 +115,7 @@ int main (void)
   FCC::start();
   for (;;) {
     UART::WaitForSync();
-    FCC::mainLEDExecution();
+    FCC::mainDTMExecution();
   }
   #else
   // Run the main thread

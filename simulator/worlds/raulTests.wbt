@@ -2,10 +2,11 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  position 0.103873 -0.0320719 1.47883
+  orientation 0.813578 -0.160689 -0.558811 0.679483
+  position -0.212343 -1.11188 1.98528
 }
 Can {
-  translation 0.0804576 0.11318 0.312
+  translation -0.05473 0.136394 0.312
   rotation 1 0 0 1.5708
 }
 Background {
@@ -23,6 +24,9 @@ DirectionalLight {
   direction -2 -2 -1
   intensity 0.5
 }
+LightCube {
+  translation -0.128297 -0.193646 0.271993
+}
 DirectionalLight {
   ambientIntensity 0.5
   direction 0 2 -1
@@ -35,7 +39,11 @@ CozmoMat {
 }
 RectangleArena {
   rotation 1 0 0 1.5708
-  floorSize 5 5
+  floorSize 3 3
+}
+Laptop {
+  translation 0.165 0.277999 0.249823
+  rotation -0.179672 -0.719782 -0.670546 3.52264
 }
 LightCube {
   translation -0.081448 -0.141559 0.271993
@@ -44,7 +52,7 @@ LightCube {
 }
 Table {
   rotation 1 0 0 1.5708
-  size 0.5 0.25 0.5
+  size 0.75 0.25 1
 }
 BlockWorldComms {
 }

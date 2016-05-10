@@ -47,7 +47,7 @@ BehaviorExploreMarkedCube::~BehaviorExploreMarkedCube()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreMarkedCube::IsRunnable(const Robot& robot) const
+bool BehaviorExploreMarkedCube::IsRunnableInternal(const Robot& robot) const
 {
   const INavMemoryMap* memoryMap = robot.GetBlockWorld().GetNavMemoryMap();
   if ( nullptr == memoryMap ) {

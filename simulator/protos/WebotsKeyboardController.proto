@@ -13,9 +13,6 @@ PROTO WebotsKeyboardController [
   #  Use "DISABLED" to disable behaviors
   field SFString behaviorName "DISABLED"
 
-  # Behavior group to enable or disable. Blank to enable or disable all
-  field SFString behaviorGroup "RequestSpeedTap"
-
   # BehaviorChooser to send
   field SFString behaviorChooserName "Freeplay"
 
@@ -173,6 +170,10 @@ PROTO WebotsKeyboardController [
   field SFInt32 nvTag 100
   field SFInt32 nvNumBlobs 1
   field SFInt32 nvBlobDataLength 1024
+
+  field SFString drivingStartAnim ""
+  field SFString drivingLoopAnim ""
+  field SFString drivingEndAnim ""
 
   # Force-add robot options
   field SFBool   forceAddRobot FALSE

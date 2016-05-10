@@ -48,7 +48,7 @@ BehaviorExploreVisitPossibleMarker::~BehaviorExploreVisitPossibleMarker()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorExploreVisitPossibleMarker::IsRunnable(const Robot& robot) const
+bool BehaviorExploreVisitPossibleMarker::IsRunnableInternal(const Robot& robot) const
 {
   // check whiteboard for known markers
   const AIWhiteboard& whiteboard = robot.GetBehaviorManager().GetWhiteboard();

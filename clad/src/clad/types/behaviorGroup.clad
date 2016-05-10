@@ -17,7 +17,10 @@ enum uint_8 BehaviorGroup {
     RequestCubePounce,
     RequestFaceEnroll,
     Unlock_CubeRoll,
-    FreeplayExplore,
+
+    // Freeplay
+    FreeplayOne,      // this is a temp goal with the old behaviors from freeplay. Placeholder for games before turning into proper goals
+    FreeplayExplore,  // this will be the new exploration goal
 
     Demo,
     DemoFingerPounce,

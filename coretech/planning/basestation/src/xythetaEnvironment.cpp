@@ -63,7 +63,7 @@ bool State::Import(const Json::Value& config)
        !JsonTools::GetValueOptional(config, "y", y) ||
        !JsonTools::GetValueOptional(config, "theta", theta)) {
       PRINT_NAMED_ERROR("State.Import.Invalid", "could not parse state, dump follows");
-      JsonTools::PrintJson(config, 1);
+      JsonTools::PrintJsonCout(config, 1);
       return false;
     }
   }
@@ -129,7 +129,7 @@ bool State_c::Import(const Json::Value& config)
        !JsonTools::GetValueOptional(config, "y_mm", y_mm) ||
        !JsonTools::GetValueOptional(config, "theta_rads", theta)) {
       PRINT_NAMED_ERROR("State_c.Import.Invalid", "could not parse State_c, dump follows");
-      JsonTools::PrintJson(config, 1);
+      JsonTools::PrintJsonCout(config, 1);
       return false;
     }
   }
@@ -618,7 +618,7 @@ bool ActionType::Import(const Json::Value& config)
        !JsonTools::GetValueOptional(config, "index", _id) ||
        !JsonTools::GetValueOptional(config, "name", _name)) {
       printf("error: could not parse ActionType\n");
-      JsonTools::PrintJson(config, 1);
+      JsonTools::PrintJsonCout(config, 1);
       return false;
     }
     JsonTools::GetValueOptional(config, "reverse_action", _reverse);
@@ -763,7 +763,7 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
     if(!JsonTools::GetValueOptional(config, "resolution_mm", resolution_mm_) ||
        !JsonTools::GetValueOptional(config, "num_angles", numAngles_)) {
       printf("error: could not find key 'resolution_mm' or 'num_angles' in motion primitives\n");
-      JsonTools::PrintJson(config, 1);
+      JsonTools::PrintJsonCout(config, 1);
       return false;
     }
 
@@ -803,7 +803,7 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
     // parse through each starting angle
     if(config["angles"].size() != numAngles_) {
       printf("error: could not find key 'angles' in motion primitives\n");
-      JsonTools::PrintJson(config, 1);
+      JsonTools::PrintJsonCout(config, 1);
       return false;
     }
 
@@ -934,7 +934,7 @@ bool xythetaEnvironment::ParseObstacles(const Json::Value& config)
         PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.badConfig",
                           "theta %d contains invalid obstacle (dump follows)",
                           theta);
-        JsonTools::PrintJson( config["angles"][theta], 3 );
+        JsonTools::PrintJsonCout( config["angles"][theta], 3 );
         return false;
       }
 
@@ -943,7 +943,7 @@ bool xythetaEnvironment::ParseObstacles(const Json::Value& config)
           PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.badConfig",
                             "theta %d contains invalid obstacle (dump follows)",
                             theta);
-          JsonTools::PrintJson( obsConfig["cost"], 3 );
+          JsonTools::PrintJsonCout( obsConfig["cost"], 3 );
           return false;
         }
 
@@ -1151,7 +1151,7 @@ bool MotionPrimitive::Create(const Json::Value& config, StateTheta startingAngle
 
   if(!JsonTools::GetValueOptional(config, "action_index", id)) {
     printf("error: missing key 'action_index'\n");
-    JsonTools::PrintJson(config, 1);
+    JsonTools::PrintJsonCout(config, 1);
     return false;
   }
   assert(id >= 0);
@@ -1322,14 +1322,14 @@ bool MotionPrimitive::Import(const Json::Value& config)
     if( config["action_index"].isNull() ) {
       PRINT_NAMED_ERROR("MotionPrimitive.Import.InvalidConfig",
                         "no action_index in config. dump follows");
-      JsonTools::PrintJson(config, 3);
+      JsonTools::PrintJsonCout(config, 3);
       return false;
     }
 
     if( config["cost"].isNull() ) {
       PRINT_NAMED_ERROR("MotionPrimitive.Import.InvalidConfig2",
                         "missing 'cost' key. Did you mean to call Create() instead of Import()?");
-      JsonTools::PrintJson(config, 3);
+      JsonTools::PrintJsonCout(config, 3);
       return false;
     }
 
@@ -1344,7 +1344,7 @@ bool MotionPrimitive::Import(const Json::Value& config)
       PRINT_NAMED_ERROR("MotionPrimitive.Import.InvalidConfig3",
                         "'intermediate_poses' size %d too small (or not a list). Dump follows",
                         config["intermediate_poses"].size());
-      JsonTools::PrintJson(config["intermediate_poses"], 3);
+      JsonTools::PrintJsonCout(config["intermediate_poses"], 3);
       return false;
     }
 

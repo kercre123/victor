@@ -1,0 +1,8 @@
+{
+  "behaviorType": "ExploreLookAroundInPlace",
+  "name": "ExploreLookAroundInPlace",
+  "flatScore" : 1.0,
+  "behaviorGroups": [
+      "FreeplayExplore"
+  ]
+}

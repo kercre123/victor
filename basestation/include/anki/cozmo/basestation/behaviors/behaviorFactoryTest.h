@@ -46,7 +46,7 @@ namespace Cozmo {
 
     virtual ~BehaviorFactoryTest() { }
     
-    virtual bool IsRunnable(const Robot& robot) const override;
+    virtual bool IsRunnableInternal(const Robot& robot) const override;
     
   private:
     

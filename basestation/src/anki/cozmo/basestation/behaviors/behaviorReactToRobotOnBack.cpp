@@ -33,7 +33,7 @@ BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(Robot& robot, const Json:
   });
 }
 
-bool BehaviorReactToRobotOnBack::IsRunnable(const Robot& robot) const
+bool BehaviorReactToRobotOnBack::IsRunnableInternal(const Robot& robot) const
 {
   return true;
 }

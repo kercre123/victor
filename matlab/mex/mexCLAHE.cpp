@@ -1,5 +1,8 @@
-
-// Usage example: [faces,eyes,hands] = mexFaceDetect(im);
+// Mex wrapper for Contrast Limited Adaptive Histogram Equalization (CLAHE)
+//
+// Andrew Stein
+// 05-09-2016
+//
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp"

@@ -41,13 +41,13 @@ static const DTM_Mode_Settings DTM_MODE[] = {
 
 static const int DTM_MODE_COUNT  = sizeof(DTM_MODE) / sizeof(DTM_Mode_Settings);
 
-static const int abs(int x) {
+static int abs(int x) {
   return (x < 0) ? -x : x;
 }
 
-  // This make the head select the target mode for the FCC test
-  static int current_mode = -1;
-  static int target_mode = 0;
+// This make the head select the target mode for the FCC test
+static int current_mode = -1;
+static int target_mode = 0;
 
 
 static void configureTest(int mode) {
@@ -83,12 +83,17 @@ static void runTest(int mode) {
   }
 }
 
-void Anki::Cozmo::HAL::FCC::start(void) {
+void Anki::Cozmo::HAL::FCC::start(void) { 
+  // Disable espressif test mode
+  EnterFactoryTestMode eftm;
+  eftm.mode = FTM_None;
+  SendMessage(eftm);
+
+  // Enable body radio mode
   SetBodyRadioMode msg;
-  msg.radioMode = BODY_DTM_OPERATING_MODE;
-  
+  msg.radioMode = BODY_DTM_OPERATING_MODE;  
   SendMessage(msg);
-  
+
   configureTest(0);
 }
 
@@ -117,12 +122,20 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
   // Display current mode and what we would like to test
   static bool displayNum = false;
 
+  Anki::Cozmo::RobotInterface::DisplayNumber msg;
+
+  msg.x = 32;
+  
   displayNum = !displayNum;
   if (displayNum) {
-    OLED::DisplayDigit(target_mode, 48, 2);
+    msg.value = target_mode;
+    msg.y = 0;
   } else {
-    OLED::DisplayDigit(current_mode, 48, 4);
+    msg.value = current_mode;
+    msg.y = 32;
   }
+
+  RobotInterface::SendMessage(msg);
 
   runTest(current_mode);
 }
