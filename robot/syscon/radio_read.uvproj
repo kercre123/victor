@@ -66,7 +66,7 @@
             <nStopU2X>0</nStopU2X>
           </BeforeCompile>
           <BeforeMake>
-            <RunUserProg1>1</RunUserProg1>
+            <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
             <UserProg1Name>bash -c "make -C .. nrf"</UserProg1Name>
             <UserProg2Name></UserProg2Name>
@@ -74,7 +74,7 @@
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
           </BeforeMake>
           <AfterMake>
-            <RunUserProg1>1</RunUserProg1>
+            <RunUserProg1>0</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
             <UserProg1Name>bash -c "make -C .. nrf_fix"</UserProg1Name>
             <UserProg2Name></UserProg2Name>
@@ -409,14 +409,14 @@
           <GroupName>lib</GroupName>
           <Files>
             <File>
-              <FileName>startup_nrf51.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\hal\startup_nrf51.s</FilePath>
-            </File>
-            <File>
               <FileName>system_nrf51.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\lib\system_nrf51.c</FilePath>
+            </File>
+            <File>
+              <FileName>startup_nrf51.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\radio_test\startup_nrf51.s</FilePath>
             </File>
           </Files>
         </Group>
