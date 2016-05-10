@@ -78,6 +78,8 @@ public class ConnectDialog : MonoBehaviour {
     #if !UNITY_EDITOR
     _SimButton.gameObject.SetActive(false);
     #endif
+
+    _ConnectButton.Text = Localization.Get(LocalizationKeys.kLabelConnect);
   }
 
   private void HandleConnectButton() {
@@ -117,7 +119,7 @@ public class ConnectDialog : MonoBehaviour {
     _Connecting = true;
     _ConnectButton.Interactable = false;
     _SimButton.Interactable = false;
-    _ConnectButton.Text = "LOADING";
+    Localization.Get(LocalizationKeys.kLabelLoading);
 
     _Simulated = sim;
     RobotEngineManager.Instance.Disconnect();
