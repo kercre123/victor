@@ -51,6 +51,7 @@ namespace FaceEnrollment {
     }
 
     private void HandleEnrolledFace(Anki.Cozmo.ExternalInterface.RobotEnrolledFace message) {
+      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
       PlayFaceReactionAnimation(message.name);
     }
 
