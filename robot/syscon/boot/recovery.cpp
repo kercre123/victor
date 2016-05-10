@@ -271,7 +271,7 @@ void EnterRecovery(void) {
         ClearEvilWord();
         writeByte((uint8_t) STATE_ACK);
         return ;
-     
+
       case COMMAND_BOOT_READY:
         state = (CheckEvilWord() && CheckSig()) ? STATE_ACK : STATE_NACK;
         break ;

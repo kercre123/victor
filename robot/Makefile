@@ -51,13 +51,20 @@ k02_fix:
 nrf_fix:
 	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
 
-release: k02_fix nrf_fix
+# This fixes the headers and places the binaries in release
+copy_keil: k02_fix nrf_fix
 	cp ./syscon/build/app/syscon.axf ./releases
 	cp ./build/app/robot.axf ./releases
-	python3 ./tools/sign.py rtip:./build/app/robot.axf body:./syscon/build/app/syscon.axf ./releases/rtip.safe
+
+make_binary:
+	python3 ./tools/sign.py rtip:./releases/robot.axf body:./releases/syscon.axf ./releases/rtip.safe
+	# wifi:./espressif/bin/upgrade/user1.2048.new.3.bin
 	cp ./espressif/bin/upgrade/user1.2048.new.3.bin releases/esp.user.bin
 
-kevin:
+release: copy_keil make_binary
+	# Fake command
+
+kevin:  k02_fix nrf_fix
 	python3 ./tools/sign.py rtip:./build/app/robot.axf body:./releases/syscon.axf ./releases/rtip.safe
 
 vesp:

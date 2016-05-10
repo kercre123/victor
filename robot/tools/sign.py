@@ -29,11 +29,16 @@ with open(argv[-1], "wb") as fo:
 	for fn in argv[1:-1]:		
 		kind, fn = fn.split(":")
 		# Write to our safe
-		rom_data, base_addr = get_image(fn)
-
-		for block, data in enumerate(chunk(rom_data, BLOCK_LENGTH)):
+		
+		if kind == 'wifi':
+			base_addr = 0x40000000
+			rom_data = open(fn, "rb").read()
+			print (len(rom_data))
+		else:	
+			rom_data, base_addr = get_image(fn)
 			if kind == 'body':
 				base_addr |= 0x80000000
 
+		for block, data in enumerate(chunk(rom_data, BLOCK_LENGTH)):
 			fo.write(data)
 			fo.write(pack("<II", block*BLOCK_LENGTH+base_addr, crc32(data)))
