@@ -198,3 +198,6 @@ UnityDASDll/UnityDASDll/bin/*
 # Anki specific
 EXTERNALS
 lib/anki/products-cozmo-assets/animations
+
+# VSCode
+.vscode
