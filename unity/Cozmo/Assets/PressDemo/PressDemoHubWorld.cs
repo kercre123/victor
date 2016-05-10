@@ -32,7 +32,7 @@ public class PressDemoHubWorld : HubWorldBase {
     RobotEngineManager.Instance.OnRequestGameStart += HandleRequestSpeedTap;
     RobotEngineManager.Instance.OnRequestEnrollFace += HandleRequestEnrollFace;
     RobotEngineManager.Instance.OnDemoState += HandleDemoState;
-    LoopRobotSleep();
+    RobotEngineManager.Instance.CurrentRobot.SendAnimation(AnimationName.kStartSleeping, HandleSleepAnimationComplete);
     return true;
   }
 
