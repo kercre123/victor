@@ -67,7 +67,7 @@ static bool ProcessDrop(void) {
         // Handle OTA related messages here rather than in message dispatch loop so it's harder to break
         case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_bootloadRTIP:
         {
-          SPI::EnterOTAMode();
+          SPI::EnterRecoveryMode();
           break;
         }
         default:
@@ -184,7 +184,7 @@ void DMA2_IRQHandler(void) {
         NVIC_SystemReset();
         break ;
       case 0x8002:
-        SPI::EnterOTAMode();
+        SPI::EnterRecoveryMode();
         break ;
       case 0x8004:
         __disable_irq();
