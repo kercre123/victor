@@ -80,19 +80,20 @@ namespace SpeedTap {
 
     public SpeedTapRulesBase Rules;
 
-    private int _CozmoScore;
-    private int _PlayerScore;
-    private int _PlayerRoundsWon;
-    private int _CozmoRoundsWon;
-    private int _Rounds;
 
-    public int CurrentRound {
+    public int CozmoScore;
+    public int PlayerScore;
+    public int PlayerRoundsWon;
+    public int CozmoRoundsWon;
+    public int TotalRounds;
+
+    public int RoundsPlayed {
       get {
-        return _PlayerRoundsWon + _CozmoRoundsWon;
+        return PlayerRoundsWon + CozmoRoundsWon;
       }
     }
 
-    private int _MaxScorePerRound;
+    public int MaxScorePerRound;
 
     public event Action PlayerTappedBlockEvent;
     public event Action CozmoTappedBlockEvent;
@@ -107,51 +108,51 @@ namespace SpeedTap {
     private GameObject _WaitForCozmoSlidePrefab;
 
     public void ResetScore() {
-      _CozmoScore = 0;
-      _PlayerScore = 0;
+      CozmoScore = 0;
+      PlayerScore = 0;
       UpdateUI();
     }
 
     public void AddCozmoPoint() {
-      _CozmoScore++;
+      CozmoScore++;
     }
 
     public void AddPlayerPoint() {
-      _PlayerScore++;
+      PlayerScore++;
     }
 
     public bool IsRoundComplete() {
-      return (_CozmoScore >= _MaxScorePerRound || _PlayerScore >= _MaxScorePerRound);
+      return (CozmoScore >= MaxScorePerRound || PlayerScore >= MaxScorePerRound);
     }
 
     public void UpdateRoundScore() {
-      if (_PlayerScore > _CozmoScore) {
-        _PlayerRoundsWon++;
+      if (PlayerScore > CozmoScore) {
+        PlayerRoundsWon++;
       }
       else {
-        _CozmoRoundsWon++;
+        CozmoRoundsWon++;
       }
     }
 
     public bool IsHighIntensityRound() {
-      int oneThirdRoundsTotal = _Rounds / 3;
-      return (_PlayerRoundsWon + _CozmoRoundsWon) > oneThirdRoundsTotal;
+      int oneThirdRoundsTotal = TotalRounds / 3;
+      return (PlayerRoundsWon + CozmoRoundsWon) > oneThirdRoundsTotal;
     }
 
     public bool IsGameComplete() {
-      int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
-      int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
-      int roundsLeft = _Rounds - losingScore - winningScore;
+      int losingScore = Mathf.Min(PlayerRoundsWon, CozmoRoundsWon);
+      int winningScore = Mathf.Max(PlayerRoundsWon, CozmoRoundsWon);
+      int roundsLeft = TotalRounds - losingScore - winningScore;
       return (winningScore > losingScore + roundsLeft);
     }
 
     public bool IsHighIntensityGame() {
-      int twoThirdsRoundsTotal = _Rounds / 3 * 2;
-      return (_PlayerRoundsWon + _CozmoRoundsWon) > twoThirdsRoundsTotal;
+      int twoThirdsRoundsTotal = TotalRounds / 3 * 2;
+      return (PlayerRoundsWon + CozmoRoundsWon) > twoThirdsRoundsTotal;
     }
 
     public void HandleGameEnd() {
-      if (_PlayerRoundsWon > _CozmoRoundsWon) {
+      if (PlayerRoundsWon > CozmoRoundsWon) {
         PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
         int currentDifficultyUnlocked = 0;
         if (playerProfile.GameDifficulty.ContainsKey(_ChallengeData.ChallengeID)) {
@@ -172,8 +173,8 @@ namespace SpeedTap {
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
       // Set all Config based values
-      _Rounds = speedTapConfig.Rounds;
-      _MaxScorePerRound = speedTapConfig.MaxScorePerRound;
+      TotalRounds = speedTapConfig.Rounds;
+      MaxScorePerRound = speedTapConfig.MaxScorePerRound;
       _AllDifficultySettings = speedTapConfig.DifficultySettings;
       _BetweenRoundsMusic = speedTapConfig.BetweenRoundMusic;
       BaseMatchChance = speedTapConfig.BaseMatchChance;
@@ -257,19 +258,19 @@ namespace SpeedTap {
     }
 
     public void UpdateUI() {
-      int halfTotalRounds = (_Rounds + 1) / 2;
+      int halfTotalRounds = (TotalRounds + 1) / 2;
       Cozmo.MinigameWidgets.ScoreWidget cozmoScoreWidget = SharedMinigameView.CozmoScoreboard;
-      cozmoScoreWidget.Score = _CozmoScore;
+      cozmoScoreWidget.Score = CozmoScore;
       cozmoScoreWidget.MaxRounds = halfTotalRounds;
-      cozmoScoreWidget.RoundsWon = _CozmoRoundsWon;
+      cozmoScoreWidget.RoundsWon = CozmoRoundsWon;
 
       Cozmo.MinigameWidgets.ScoreWidget playerScoreWidget = SharedMinigameView.PlayerScoreboard;
-      playerScoreWidget.Score = _PlayerScore;
+      playerScoreWidget.Score = PlayerScore;
       playerScoreWidget.MaxRounds = halfTotalRounds;
-      playerScoreWidget.RoundsWon = _PlayerRoundsWon;
+      playerScoreWidget.RoundsWon = PlayerRoundsWon;
 
       // Display the current round
-      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
+      SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, CozmoRoundsWon + PlayerRoundsWon + 1);
     }
 
     public void UpdateUIForGameEnd() {
@@ -342,15 +343,15 @@ namespace SpeedTap {
       Dictionary<string, string> quitGameScoreKeyValues = new Dictionary<string, string>();
       Dictionary<string, string> quitGameRoundsWonKeyValues = new Dictionary<string, string>();
 
-      quitGameScoreKeyValues.Add("CozmoScore", _CozmoScore.ToString());
-      quitGameRoundsWonKeyValues.Add("CozmoRoundsWon", _CozmoRoundsWon.ToString());
+      quitGameScoreKeyValues.Add("CozmoScore", CozmoScore.ToString());
+      quitGameRoundsWonKeyValues.Add("CozmoRoundsWon", CozmoRoundsWon.ToString());
 
-      DAS.Event(DASConstants.Game.kQuitGameScore, _PlayerScore.ToString(), null, quitGameScoreKeyValues);
-      DAS.Event(DASConstants.Game.kQuitGameRoundsWon, _PlayerRoundsWon.ToString(), null, quitGameRoundsWonKeyValues);
+      DAS.Event(DASConstants.Game.kQuitGameScore, PlayerScore.ToString(), null, quitGameScoreKeyValues);
+      DAS.Event(DASConstants.Game.kQuitGameRoundsWon, PlayerRoundsWon.ToString(), null, quitGameRoundsWonKeyValues);
     }
 
     public SpeedTapRoundData GetCurrentRoundData() {
-      return CurrentDifficultySettings.SpeedTapRoundSettings[CurrentRound];
+      return CurrentDifficultySettings.SpeedTapRoundSettings[RoundsPlayed];
     }
 
     public float GetLightsOffDurationSec() {
