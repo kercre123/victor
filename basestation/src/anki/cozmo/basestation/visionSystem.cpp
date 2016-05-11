@@ -2182,7 +2182,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
     // Default processing modes to enable
     EnableMode(VisionMode::DetectingMarkers, true);
-    //EnableMode(VisionMode::DetectingMotion,  true);
+    EnableMode(VisionMode::DetectingMotion,  true);
     EnableMode(VisionMode::DetectingFaces,   true);
     //EnableMode(VisionMode::DetectingOverheadEdges, true);
     
@@ -2527,10 +2527,12 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
     if(IsModeEnabled(VisionMode::DetectingMotion))
     {
+      Tic("TotalDetectingMotion");
       if((lastResult = DetectMotion(inputImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
         return lastResult;
       }
+      Toc("TotalDetectingMotion");
     }
     
     if(IsModeEnabled(VisionMode::DetectingOverheadEdges))

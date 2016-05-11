@@ -26,8 +26,10 @@ namespace Anki {
 namespace Cozmo {
 
 using namespace ExternalInterface;
-
-// TODO:(bn) add animation for face / sound
+  
+const static std::string s_PounceAnimGroup        = "ag_pounceOnMotionPounce";
+const static std::string s_PounceSuccessAnimGroup = "ag_pounceOnMotionSuccess";
+const static std::string s_PounceFailAnimGroup    = "ag_pounceOnMotionFail";
 
 BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -193,14 +195,13 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
 
   _prePouncePitch = robot.GetPitchAngle();
   
-  std::string _pounceAnimation = "pounceOnMotionPounce";
 
   // disable idle
   _previousIdleAnimation = robot.GetIdleAnimationName();
   robot.SetIdleAnimation("NONE");
   
   _state = State::Pouncing;
-  IActionRunner* animAction = new PlayAnimationGroupAction(robot, _pounceAnimation);
+  IActionRunner* animAction = new PlayAnimationGroupAction(robot, s_PounceAnimGroup);
 
   IActionRunner* actionToRun = animAction;
 
@@ -246,11 +247,11 @@ void BehaviorPounceOnMotion::CheckPounceResult(Robot& robot)
 
   IActionRunner* newAction = nullptr;
   if( caught ) {
-    newAction = new PlayAnimationGroupAction(robot, "pounceOnMotionSuccess" );
+    newAction = new PlayAnimationGroupAction(robot, s_PounceSuccessAnimGroup);
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Caught", "got it!");
   }
   else {
-    newAction = new PlayAnimationGroupAction(robot, "pounceOnMotionFail" );
+    newAction = new PlayAnimationGroupAction(robot, s_PounceFailAnimGroup );
     PRINT_NAMED_INFO("BehaviorPounceOnMotion.CheckResult.Miss", "missed...");
   }
   
