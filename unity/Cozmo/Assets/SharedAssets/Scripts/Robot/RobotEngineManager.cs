@@ -426,6 +426,7 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.DemoState:
       ReceivedSpecificMessage(message.DemoState);
+      break;
     case G2U.MessageEngineToGame.Tag.AnimationEvent:
       ReceiveSpecificMessage(message.AnimationEvent);
       break;
@@ -910,10 +911,10 @@ public class RobotEngineManager : MonoBehaviour {
     StringBuilder sb = new StringBuilder(configuration);
     sb.Remove(configuration.IndexOf('}') - 1, 3);
     sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
-      ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
-      "\n}");
+    ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
+    ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
+    ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
+    "\n}");
 
     return sb.ToString();
   }
