@@ -47,7 +47,7 @@ static bool ProcessDrop(void) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
     DropToRTIP* drop = (DropToRTIP*)target;
-    Watchdog::kick(WDOG_WIFI_COMMS);
+    //Watchdog::kick(WDOG_WIFI_COMMS);
     
     // Buffer the data that needs to be fed into the devices for next cycle
     audioUpdated = drop->droplet & audioDataValid;
@@ -169,11 +169,6 @@ void DMA2_IRQHandler(void) {
   static const int MaximumSilence = 32;
   static transmissionWord lastWord = 0;
   static int SilentDrops = 0;
-
-  // We are likely in OTA mode
-  if (spi_rx_buff[0] == 0xFFFF) {
-    Watchdog::kick(WDOG_WIFI_COMMS);
-  }
 
   if (lastWord != spi_rx_buff[0]) {
     lastWord = spi_rx_buff[0];
