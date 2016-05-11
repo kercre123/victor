@@ -1312,7 +1312,7 @@ namespace Vision {
     EnrolledFaceEntry entry;
     
     size_t startIndex = 0;
-    while(startIndex < serializedEnrollData.size())
+    while(startIndex < serializedEnrollData.size()-3) // "-3" to handle an extra bytes of padding
     {
       Result lastResult = entry.Deserialize(serializedEnrollData, startIndex);
       if(RESULT_OK != lastResult) {

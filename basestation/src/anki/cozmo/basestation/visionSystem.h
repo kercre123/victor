@@ -94,10 +94,10 @@ namespace Cozmo {
     // Methods:
     //
     
-    Result Init(Vision::CameraCalibration& camCalib);
-    void UnInit() { _isInitialized = false; };
+    Result Init(const Json::Value& config);
+    bool   IsInitialized() const;
     
-    bool IsInitialized() const;
+    Result UpdateCameraCalibration(Vision::CameraCalibration& camCalib);
     
     Result EnableMode(VisionMode whichMode, bool enabled);
     bool   IsModeEnabled(VisionMode whichMode) const { return _mode & static_cast<u32>(whichMode); }
@@ -192,18 +192,16 @@ namespace Cozmo {
                                  Embedded::Array<f32>&        rotationWrtRobot,
                                  Embedded::Point3<f32>&       translationWrtRobot);
     
-    // Returns field of view (radians) of camera
-    f32 GetVerticalFOV();
-    f32 GetHorizontalFOV();
-    
-    const FaceDetectionParameters& GetFaceDetectionParams();
-    
+    // VisionMode <-> String Lookups
     std::string GetModeName(VisionMode mode) const;
     std::string GetCurrentModeName() const;
-    
+    VisionMode  GetModeFromString(const std::string& str) const;
     
     Result AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
     void SetFaceEnrollmentMode(Vision::FaceEnrollmentMode mode);
+    
+    Result LoadFaceAlbum(const std::string& albumName, std::list<Vision::FaceNameAndID>& namesAndIDs);
+    Result SaveFaceAlbum(const std::string& albumName);
     
     void GetSerializedFaceData(std::vector<u8>& albumData,
                                std::vector<u8>& enrollData) const;
@@ -223,13 +221,6 @@ namespace Cozmo {
                    const f32 maxExposureTime,
                    const u8 highValue,
                    const f32 percentileToMakeHigh);
-
-    void SetFaceDetectParams(const f32 scaleFactor,
-                             const s32 minNeighbors,
-                             const s32 minObjectHeight,
-                             const s32 minObjectWidth,
-                             const s32 maxObjectHeight,
-                             const s32 maxObjectWidth);
 
     const std::string& GetDataPath() const { return _dataPath; }
   
@@ -280,7 +271,7 @@ namespace Cozmo {
     // Formerly in Embedded VisionSystem "private" namespace:
     //
     
-    bool _isInitialized;
+    bool _isInitialized = false;
     const std::string _dataPath;
     
     Vision::Camera _camera;
@@ -297,11 +288,6 @@ namespace Cozmo {
     // TODO: Move this to visionParameters
     const s32 MAX_TRACKING_FAILURES = 1;
     
-    //const Anki::Cozmo::HAL::CameraInfo* _headCamInfo;
-    f32 _headCamFOV_ver;
-    f32 _headCamFOV_hor;
-    Embedded::Array<f32> _RcamWrtRobot;
-    
     u32 _mode = static_cast<u32>(VisionMode::Idle);
     u32 _modeBeforeTracking = static_cast<u32>(VisionMode::Idle);
     
@@ -309,13 +295,13 @@ namespace Cozmo {
     
     // Camera parameters
     // TODO: Should these be moved to (their own struct in) visionParameters.h/cpp?
-    f32 _exposureTime;
+    f32 _exposureTime = 0.2f;
     
     VignettingCorrection _vignettingCorrection = VignettingCorrection_Off;
 
     const f32 _vignettingCorrectionParameters[5] = {0,0,0,0,0};
     
-    s32 _frameNumber;
+    s32 _frameNumber = 0;
     bool _autoExposure_enabled = true;
     s32 _trackingIteration; // Simply for display at this point
     
@@ -360,7 +346,7 @@ namespace Cozmo {
     bool          _newMarkerToTrackWasProvided = false;
     
     Embedded::Quadrilateral<f32>    _trackingQuad;
-    s32                             _numTrackFailures ;
+    s32                             _numTrackFailures = 0;
     Tracker                         _tracker;
     bool                            _trackerJustInitialized = false;
     bool                            _isTrackingMarkerFound = false;
@@ -368,29 +354,27 @@ namespace Cozmo {
     Embedded::Point3<P3P_PRECISION> _canonicalMarker3d[4];
     
     // Snapshots of robot state
-    bool _wasCalledOnce = false;
+    bool _wasCalledOnce    = false;
     bool _havePrevPoseData = false;
     VisionPoseData _poseData, _prevPoseData;
     
     // Parameters defined in visionParameters.h
     DetectFiducialMarkersParameters _detectionParameters;
     TrackerParameters               _trackerParameters;
-    FaceDetectionParameters         _faceDetectionParameters;
     ImageResolution                 _captureResolution;
     
     // For sending images to basestation
     ImageSendMode                 _imageSendMode = ImageSendMode::Off;
     ImageResolution               _nextSendImageResolution = ImageResolution::ImageResolutionNone;
     
-    // FaceTracking
-    Vision::FaceTracker*          _faceTracker;
+    // Face detection, tracking, and recognition
+    Vision::FaceTracker*          _faceTracker = nullptr;
     
     // We hold a reference to the VizManager since we often want to draw to it
     VizManager*                   _vizManager = nullptr;
 
     // Tool code stuff
     TimeStamp_t                   _lastToolCodeReadTime_ms = 0;
-    const TimeStamp_t             kToolCodeReadPeriod_ms = 500; // TODO: Increase
     
     // Calibration stuff
     static const u32              _kMinNumCalibImagesRequired = 4;
@@ -409,15 +393,15 @@ namespace Cozmo {
 
       static const s32 MAX_MARKERS = 100; // TODO: this should probably be in visionParameters
       
-      OFFCHIP char offchipBuffer[OFFCHIP_BUFFER_SIZE];
-      ONCHIP  char onchipBuffer[ONCHIP_BUFFER_SIZE];
-      CCM     char ccmBuffer[CCM_BUFFER_SIZE];
+      u8 _offchipBuffer[OFFCHIP_BUFFER_SIZE];
+      u8 _onchipBuffer[ONCHIP_BUFFER_SIZE];
+      u8 _ccmBuffer[CCM_BUFFER_SIZE];
       
       Embedded::MemoryStack _offchipScratch;
       Embedded::MemoryStack _onchipScratch;
       Embedded::MemoryStack _ccmScratch;
       
-      // Markers is the one things that can move between functions, so it is always allocated in memory
+      // Markers is the one thing that can move between functions, so it is always allocated in memory
       Embedded::FixedLengthList<Embedded::VisionMarker> _markers;
       
       // WARNING: ResetBuffers should be used with caution
@@ -487,10 +471,10 @@ namespace Cozmo {
     Mailbox<ExternalInterface::RobotObservedMotion>  _motionMailbox;
     MultiMailbox<std::pair<Pose3d, TimeStamp_t>, 4>  _dockingMailbox; // holds timestamped marker pose w.r.t. camera
     MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
-    //MultiMailbox<MessageFaceDetection, FaceDetectionParameters::MAX_FACE_DETECTIONS>   _faceDetectMailbox;
-    
-    MultiMailbox<Vision::TrackedFace, FaceDetectionParameters::MAX_FACE_DETECTIONS> _faceMailbox;
-    MultiMailbox<Vision::UpdatedFaceID, FaceDetectionParameters::MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
+
+    static const s32 MAX_FACE_DETECTIONS = 16;
+    MultiMailbox<Vision::TrackedFace, MAX_FACE_DETECTIONS>   _faceMailbox;
+    MultiMailbox<Vision::UpdatedFaceID, MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
     
     MultiMailbox<OverheadEdgeFrame, 8> _overheadEdgeFrameMailbox;
     
