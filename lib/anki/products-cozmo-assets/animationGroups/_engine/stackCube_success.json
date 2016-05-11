@@ -1,7 +1,7 @@
 {
   "Animations": [
     {
-      "Name": "anim_reactToBlock_success_01",
+      "Name": "anim_reactToBlock_admireCubeTower_01",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
       "Mood": "Default"
