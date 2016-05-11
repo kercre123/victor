@@ -9,10 +9,12 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
+#include "anki/cozmo/basestation/behaviors/gameRequest/behaviorGameRequest.h"
 
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/actionInterface.h"
-#include "anki/cozmo/basestation/behaviors/gameRequest/behaviorGameRequest.h"
+#include "anki/cozmo/basestation/behaviorManager.h"
+#include "anki/cozmo/basestation/behaviorSystem/behaviorTypesHelpers.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
@@ -25,13 +27,14 @@ namespace Cozmo {
 #define DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE 0
 
 static const char* kMaxFaceAgeKey = "maxFaceAge_ms";
+static const char* kRequiredGameFlagsKey = "requiredGameFlags";
 
 IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
   , _blockworldFilter( new BlockWorldFilter )
 {
   if( config.isNull() ) {
-    PRINT_NAMED_WARNING("IBehaviorRequestGame.Config.Error",
+    PRINT_NAMED_ERROR("IBehaviorRequestGame.Config.Error",
                         "Empty json config! This behavior will not function correctly");
   }
   else {
@@ -48,7 +51,20 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
                                                     this,
                                                     &robot,
                                                     std::placeholders::_1) );
-
+  
+  
+  // read required game flag. It must be specified
+  const Json::Value& requiredGameFlagsJson = config[kRequiredGameFlagsKey];
+  if ( !requiredGameFlagsJson.isNull())
+  {
+    _requiredGameFlags = BehaviorGameFlagFromString( requiredGameFlagsJson.asString() );
+  }
+  else
+  {
+    JsonTools::PrintJsonError(config, "IBehaviorRequestGame.NoGameFlag");
+    ASSERT_NAMED(!requiredGameFlagsJson.isNull(), "IBehaviorRequestGame.NoGameFlag");
+  }
+  
   SubscribeToTags({{
     EngineToGameTag::RobotObservedFace,
     EngineToGameTag::RobotDeletedFace,
@@ -61,6 +77,16 @@ IBehaviorRequestGame::IBehaviorRequestGame(Robot& robot, const Json::Value& conf
 
 bool IBehaviorRequestGame::IsRunnableInternal(const Robot& robot) const
 {
+  const bool isGameAvailable = robot.GetBehaviorManager().IsAnyGameFlagAvailable(_requiredGameFlags);
+  if ( !isGameAvailable )
+  {
+    if ( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
+      PRINT_NAMED_DEBUG("IBehaviorRequestGame.IsRunnable", "'%s': GameFlag not available (%s). Behavior not runnable",
+                        GetName().c_str(), BehaviorGameFlagToString(_requiredGameFlags) );
+    }
+    return false;
+  }
+
   const bool hasFace = HasFace(robot);
 
   if( DEBUG_BEHAVIOR_GAME_REQUEST_RUNNABLE ) {
