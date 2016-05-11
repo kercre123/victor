@@ -6,6 +6,8 @@ __author__ = "Mark Wesley"
 import sys, os, time
 import threading # for threaded engine
 from collections import deque # queue for threaded engine
+from debugConsole import DebugConsoleManager
+from moodManager import MoodManager
 
 CLAD_SRC  = os.path.join("clad")
 CLAD_DIR  = os.path.join("generated", "cladPython")
@@ -52,118 +54,35 @@ gAsyncEngineInterfaceInstance = None
 
 class EngineCommand:
     ""
-    consoleVar = 0
+    consoleVar  = 0
     consoleFunc = 1
-    sendMsg = 2
+    sendMsg     = 2
+    setEmotion  = 3
+    
     
     
 class ConnectionState:
     "An enum for connection states"
-    notConnected     = 0
-    connected        = 1
-    startedEngine    = 2
-    addedRobot       = 3
-    requestedVars    = 4
-    connectingToRobot = 5    
-    connectedToRobot = 6
-    
-    
-# ================================================================================    
-# DebugConsoleVarWrapper - [MARKW:TODO] Move this to its own file
-# ================================================================================
+    notConnected      = 0
+    tryingToConnect   = 1
+    connected         = 2
+    startedEngine     = 3
+    addedRobot        = 4
+    requestedVars     = 5
+    connectingToRobot = 6    
+    connectedToRobot  = 7
 
 
-class DebugConsoleVarWrapper:
-    "Wraps an Anki.Cozmo.ExternalInterface.DebugConsoleVar and supports sorting"
-
-    def __init__(self, debugConsoleVar):
-        self.var = debugConsoleVar
+def ArgListToString(*args):
+    "Collapse an array of arguments into a space-separated string"
+    argsToString = ""
+    for i in range(0, len(args)):
+        if i > 0:
+            argsToString += " "
+        argsToString += args[i]
+    return argsToString
         
-    @property
-    def varName(self):
-        return self.var.varName
         
-    @property
-    def category(self):
-        return self.var.category
-        
-    @property
-    def minValue(self):
-        return self.var.minValue
-        
-    @property
-    def maxValue(self):
-        return self.var.maxValue
-        
-    @property
-    def varValue(self):
-        return self.var.varValue
-        
-    @varValue.setter
-    def varValue(self, value):
-        self.var.varValue = value
-        
-    def formatValueToString(self, inVal):
-        varValue = self.varValue
-        if varValue.tag == varValue.Tag.varDouble:
-            return str(inVal)
-        elif varValue.tag == varValue.Tag.varUint:
-            return "{:.0f}".format(inVal)
-        elif varValue.tag == varValue.Tag.varInt:
-            return "{:.0f}".format(inVal)
-        elif varValue.tag == varValue.Tag.varBool:
-            return "{:.0f}".format(inVal)
-        elif varValue.tag == varValue.Tag.varFunction:
-            return str(inVal)
-        else:
-            return "ERROR"
-        
-    def minValueToString(self):
-        return self.formatValueToString(self.minValue)
-        
-    def maxValueToString(self):
-        return self.formatValueToString(self.maxValue)
-
-    def varValueTypeName(self):
-        varValue = self.varValue
-        if varValue.tag == varValue.Tag.varDouble:
-            return "double"
-        elif varValue.tag == varValue.Tag.varUint:
-            return "uint32_t"
-        elif varValue.tag == varValue.Tag.varInt:
-            return "int"
-        elif varValue.tag == varValue.Tag.varBool:
-            return "bool"
-        elif varValue.tag == varValue.Tag.varFunction:
-            return "function"
-        else:
-            return "ERROR"
-            
-    def varValueContents(self):
-        varValue = self.varValue
-        if varValue.tag == varValue.Tag.varDouble:
-            return varValue.varDouble
-        elif varValue.tag == varValue.Tag.varUint:
-            return varValue.varUint
-        elif varValue.tag == varValue.Tag.varInt:
-            return varValue.varInt
-        elif varValue.tag == varValue.Tag.varBool:
-            return varValue.varBool
-        elif varValue.tag == varValue.Tag.varFunction:
-            return varValue.varFunction
-        else:
-            return "ERROR"
-                    
-    def varValueToString(self):
-        return self.formatValueToString(self.varValueContents())        
-    
-    def __lt__(self, rhs):
-        if (self.category == rhs.category):
-            return (self.varName < rhs.varName)
-        else:
-            return (self.category < rhs.category)
-
-
 # ================================================================================    
 # Internal Private _EngineInterfaceImpl for talking to/from cozmo-engine
 # ================================================================================
@@ -187,21 +106,16 @@ class _EngineInterfaceImpl:
         
         self.numAnims = 0
         
-        self.consoleVars = {}
-        self.consoleFuncs = {}
+        self.verboseAd = False
+        self.verboseEngine = True
+        
+        self.debugConsoleManager = DebugConsoleManager()
+        self.moodManager = MoodManager()
+        
         
     def __del__(self):
         self.Disconnect()    
-        
-        
-    def HandleInitDebugConsoleVarMessage(self, msg):
-    
-        for cVar in msg.varData:
-            if cVar.varValue.tag == cVar.varValue.Tag.varFunction:
-                self.consoleFuncs[cVar.varName] = DebugConsoleVarWrapper(cVar) 
-            else:
-                self.consoleVars[cVar.varName] = DebugConsoleVarWrapper(cVar)
-
+         
 
     def ReceiveFromEngine(self):
     
@@ -243,10 +157,10 @@ class _EngineInterfaceImpl:
                         msg = fromEngMsg.UiDeviceConnected 
                         sys.stdout.write("Recv: UiDeviceConnected Type=" + str(msg.connectionType) + ", id=" + str(msg.deviceID) + ", success=" + str(msg.successful) + os.linesep)
                         if msg.connectionType == Anki.Cozmo.UiConnectionType.SDK:
-                            sys.stdout.write("SDK Connected!" + os.linesep)
+                            sys.stdout.write("SDK Connected to Engine!" + os.linesep)
                             self.state = ConnectionState.connected
                         else:
-                            sys.stdout.write("Not SDK?" + os.linesep)
+                            sys.stdout.write("Something else Connected to Engine" + os.linesep)
                     elif fromEngMsg.tag == fromEngMsg.Tag.UpdateEngineState:
                         msg = fromEngMsg.UpdateEngineState
                         sys.stdout.write("Recv: UpdateEngineState from " + str(msg.oldState) + " to " + str(msg.newState) + os.linesep)
@@ -292,27 +206,25 @@ class _EngineInterfaceImpl:
                     elif fromEngMsg.tag == fromEngMsg.Tag.InitDebugConsoleVarMessage:
                         # multiple of these arrive after we send GetAllDebugConsoleVarMessage (they don't all fit in 1 message)
                         msg = fromEngMsg.InitDebugConsoleVarMessage
-                        self.HandleInitDebugConsoleVarMessage(msg)
+                        self.debugConsoleManager.HandleInitDebugConsoleVarMessage(msg)
                     elif fromEngMsg.tag == fromEngMsg.Tag.VerifyDebugConsoleVarMessage:
                         msg = fromEngMsg.VerifyDebugConsoleVarMessage
-                        consoleVar = self.consoleVars.get(msg.varName)
-                        #varValue
                         if msg.success:
-                            sys.stdout.write("Recv: Var Success: '" + msg.varName + "' " + msg.statusMessage + os.linesep)
+                            sys.stdout.write("Recv: ConsoleVar Success: '" + msg.varName + "' = '" + msg.statusMessage + "'" + os.linesep)
+                            consoleVar = self.debugConsoleManager.GetVar(msg.varName)
                             if consoleVar != None:
                                 consoleVar.varValue = msg.varValue
                         else:
-                            sys.stdout.write("Recv: Var Failure: '" + msg.varName + "' " + msg.statusMessage + os.linesep)
+                            sys.stdout.write("Recv: ConsoleVar Failure: '" + msg.varName + "' " + msg.statusMessage + os.linesep)
                     elif fromEngMsg.tag == fromEngMsg.Tag.VerifyDebugConsoleFuncMessage:
-                        msg = fromEngMsg.VerifyDebugConsoleFuncMessage
-                        # consoleFunc = self.consoleFuncs.get(msg.funcName)                         
+                        msg = fromEngMsg.VerifyDebugConsoleFuncMessage                         
                         if msg.success:
-                            sys.stdout.write("Recv: Func Success: '" + msg.funcName + "' " + msg.statusMessage + os.linesep)                            
+                            sys.stdout.write("Recv: ConsoleFunc Success: '" + msg.funcName + "':" + os.linesep + msg.statusMessage)
                         else:
-                            sys.stdout.write("Recv: Func Failure: '" + msg.funcName + "' " + msg.statusMessage + os.linesep)
+                            sys.stdout.write("Recv: ConsoleFunc Failure: '" + msg.funcName + "': " + msg.statusMessage)
                     elif fromEngMsg.tag == fromEngMsg.Tag.MoodState:
                         msg = fromEngMsg.MoodState
-                        #UpdateMoodState(msg)                    
+                        self.moodManager.UpdateMoodState(msg)         
                     elif fromEngMsg.tag == fromEngMsg.Tag.DebugLatencyMessage:
                         # [MARKW:TODO], update this locally for anything that wants to query engine<->robot latency
                         pass
@@ -335,8 +247,8 @@ class _EngineInterfaceImpl:
                         sys.stdout.write("     " + repr(fromEngMsg) + os.linesep);
                         
                     sys.stdout.flush()
-    
-    
+                
+                
     def HandleConsoleVarCommand(self, *args):
     
         if (len(args) == 0):
@@ -344,45 +256,27 @@ class _EngineInterfaceImpl:
             return False
         
         varName = args[0]
+        varNameLower = varName.lower()
         
-        if varName.lower() == 'list':
-            
-            sys.stdout.write("List of Console Variables:" + os.linesep)
-            
-            # 1st sort the vars so we can display them in category and name order
-            sortedVars = sorted(self.consoleVars.values())
-            
-            currentCat = ""
-            
-            for varValue in sortedVars:
-                varName = varValue.varName
-                if varValue.category != currentCat:
-                    currentCat = varValue.category
-                    sys.stdout.write("  " + currentCat + ":" + os.linesep)
-                sys.stdout.write("    " + str(varName) + " = " + varValue.varValueToString() + " (" + varValue.varValueTypeName() + ")(" + varValue.minValueToString() + ".." + varValue.maxValueToString() + ")" + os.linesep)
-                
-            return True
+        if varNameLower == 'list':        
+            return self.debugConsoleManager.ListConsoleVars()
+        elif varNameLower == 'get_matching_names':
+            return self.debugConsoleManager.GetMatchingVarNames(args[1])
         else:
-        
-            if varName in self.consoleVars:
-                varValue = self.consoleVars[varName]
-                sys.stdout.write("Pre  " + str(varName) + " = " + varValue.varValueToString() + " (" + varValue.varValueTypeName() + ")(" + varValue.minValueToString() + ".." + varValue.maxValueToString() + ")" + os.linesep)
-            else:
+            consoleVar = self.debugConsoleManager.GetVar(varName)
+            if consoleVar == None:
                 sys.stderr.write("[HandleConsoleVarCommand] Error - unknown variable '" + varName + "'" + os.linesep)
                 return False
-                                        
+
+            sys.stdout.write("Var " + str(varName) + " was: " + consoleVar.varValueToString() + " (" + consoleVar.varValueTypeName() + ")(" + consoleVar.minValueToString() + ".." + consoleVar.maxValueToString() + ")" + os.linesep)
+                                                    
             setVarMsg = GToEI.SetDebugConsoleVarMessage()
-            setVarMsg.varName = varName
-            
-            argsToString = ""
-            for i in range(1, len(args)):
-                argsToString += args[i] + " "
-            
-            setVarMsg.tryValue = argsToString
+            setVarMsg.varName  = varName
+            setVarMsg.tryValue = ArgListToString(*args[1:])
     
             toEngMessage = GToEM(SetDebugConsoleVarMessage = setVarMsg);
                 
-            sys.stdout.write("Send SetDebugConsoleVarMessage = '" + str(toEngMessage) + "'" + os.linesep)
+            sys.stdout.write("Send: " + str(setVarMsg) + os.linesep)
             self.sendToEngine(toEngMessage)
             
             return True
@@ -395,45 +289,29 @@ class _EngineInterfaceImpl:
             return False
         
         funcName = args[0]
+        funcNameLower = funcName.lower()
         
-        if funcName.lower() == 'list':
-            
-            sys.stdout.write("List of Console Functions:" + os.linesep)
-            
-            # 1st sort the vars so we can display them in category and name order
-            sortedFuncs = sorted(self.consoleFuncs.values())
-            
-            currentCat = ""
-            
-            for funcValue in sortedFuncs:
-                funcName = funcValue.varName
-                if funcValue.category != currentCat:
-                    currentCat = funcValue.category
-                    sys.stdout.write("  " + currentCat + ":" + os.linesep)
-                sys.stdout.write("    " + str(funcName) + " : Args = '" + funcValue.varValueToString() + "'" + os.linesep)
-                
-            return True
+        if funcNameLower == 'list':
+            return self.debugConsoleManager.ListConsoleFuncs()
+        elif funcNameLower == 'get_matching_names':
+            return self.debugConsoleManager.GetMatchingFuncNames(args[1])
         else:
-        
-            if funcName not in self.consoleFuncs:
+            consoleFunc = self.debugConsoleManager.GetFunc(funcName)
+            if consoleFunc == None:
                 sys.stderr.write("[HandleConsoleFuncCommand] Error - unknown function '" + funcName + "'" + os.linesep)
                 return False
                                         
             runFuncMsg = GToEI.RunDebugConsoleFuncMessage()
             runFuncMsg.funcName = funcName
-            
-            argsToString = ""
-            for i in range(1, len(args)):
-                argsToString += args[i] + " "
-            
-            runFuncMsg.funcArgs = argsToString
+            runFuncMsg.funcArgs = ArgListToString(*args[1:])
     
             toEngMessage = GToEM(RunDebugConsoleFuncMessage = runFuncMsg);
                 
-            sys.stdout.write("Send RunDebugConsoleFuncMessage = '" + str(toEngMessage) + "'" + os.linesep)
+            sys.stdout.write("Send: " + str(runFuncMsg) + os.linesep)
             self.sendToEngine(toEngMessage)
             
             return True
+        
             
     def HandleHelpSpecificMessage(self, cmd, oneLine = False): 
         if not hasattr(GToEM, cmd):
@@ -489,6 +367,10 @@ class _EngineInterfaceImpl:
     
     def HandleSendMessageCommand(self, *args):
     
+        if (len(args) == 0):
+            sys.stderr.write("[HandleSendMessageCommand] Error: no args, expected 'list' or message name" + os.linesep)
+            return False
+            
         msgName = args[0]
         
         if msgName.lower() == "list":
@@ -539,21 +421,63 @@ class _EngineInterfaceImpl:
         self.sendToEngine(toEngMessage)
         
         
-    def DoCommand(self, inCommand):
+    def HandleSetEmotionCommand(self, *args):
+    
+        lenArgs = len(args)
         
-        sys.stdout.write(os.linesep) # clean new line after the CLI prompt
+        if (lenArgs == 0):
+            sys.stderr.write("[HandleSetEmotionCommand] Error: no args, expected 'list' or 'emotionName newValue'" + os.linesep)
+            return False
+
+        emotionName = args[0]
+        
+        if emotionName.lower() == "list":
+            self.moodManager.PrintEmotions()
+            return True
+            
+        emotionType = self.moodManager.EmotionNameToType(emotionName)
+        if emotionType == None:
+            sys.stderr.write("[HandleSetEmotionCommand] Error: unknown emotion '" + emotionName + "'!" + os.linesep)
+            return False
+        
+        oldEmotionValue = self.moodManager.GetEmotionValue(emotionType)
+
+        if (lenArgs == 1):
+            sys.stdout.write("emotion " + emotionName + " = " + str(oldEmotionValue) + " (no newValue provided)" + os.linesep)
+            return True
+            
+        newValue = args[1]
+        
+        sys.stdout.write("emotion " + emotionName + " was = " + str(oldEmotionValue) + os.linesep)
+        
+        setEmotionMsg = GToEI.SetEmotion()
+        setEmotionMsg.emotionType = emotionType
+        setEmotionMsg.newVal = newValue
+        
+        moodMessage = GToEI.MoodMessage()        
+        moodMessage.robotID = 1
+        moodMessage.MoodMessageUnion = GToEI.MoodMessageUnion()
+        moodMessage.MoodMessageUnion.SetEmotion = setEmotionMsg
+
+        toEngMessage = GToEM(MoodMessage = moodMessage);
+    
+        self.sendToEngine(toEngMessage)
+                        
+        return True
+        
+        
+    def DoCommand(self, inCommand):
         
         commandType = inCommand[0]
                 
         if (commandType == EngineCommand.consoleVar):
             return self.HandleConsoleVarCommand(*inCommand[1])
-            
         elif (commandType == EngineCommand.consoleFunc):
             return self.HandleConsoleFuncCommand(*inCommand[1])
-            
         elif (commandType == EngineCommand.sendMsg):
             return self.HandleSendMessageCommand(*inCommand[1])
-            
+        elif (commandType == EngineCommand.setEmotion):
+            return self.HandleSetEmotionCommand(*inCommand[1])
         else:
             sys.stderr.write("[DoCommand] Unhandled commande type: " + str(commandType) + os.linesep)
             return False
@@ -564,6 +488,11 @@ class _EngineInterfaceImpl:
         self.ReceiveFromEngine()
                 
         if (self.state == ConnectionState.notConnected): 
+
+            sys.stdout.write("Trying to connect to Engine..." + os.linesep);
+            self.state = ConnectionState.tryingToConnect
+
+        if (self.state == ConnectionState.tryingToConnect):
               
             adMsg = GToE.AdvertisementRegistrationMsg()
             adMsg.toEnginePort=self.sdkToEngPort
@@ -575,7 +504,6 @@ class _EngineInterfaceImpl:
             
             toEngMsg = GToEM(AdvertisementRegistrationMsg = adMsg);
             
-            sys.stdout.write("Send AdvertisementRegistrationMsg" + os.linesep)
             self.sendToAd(toEngMsg)
             
         elif (self.state == ConnectionState.connected):
@@ -639,11 +567,13 @@ class _EngineInterfaceImpl:
         self.udpTransport.CloseSocket()
 
     def sendToEngine(self, msg):
-        sys.stdout.write("[sendToEngine] '" + str(msg) + "'" + os.linesep)
+        if self.verboseEngine:
+            sys.stdout.write("[sendToEngine] '" + str(msg) + "'" + os.linesep)
         return self.udpTransport.SendData(self.engDest, msg.pack())
         
     def sendToAd(self, msg):
-        sys.stdout.write("[sendToAd] '" + str(msg) + "'" + os.linesep)
+        if self.verboseAd:
+            sys.stdout.write("[sendToAd] '" + str(msg) + "'" + os.linesep)
         return self.udpTransport.SendData(self.adDest, msg.pack())
 
 
@@ -674,22 +604,21 @@ class AsyncEngineInterface(threading.Thread):
     def run(self):
         while self._continue:     
             try:
-            
                 self.updateLock.acquire()
-                
-                newCommand = self.PopCommand()
-                if newCommand is not None:
-                    self.engineInterface.DoCommand(newCommand)
+                try:
+                    newCommand = self.PopCommand()
+                    if newCommand is not None:
+                        sys.stdout.write(os.linesep) # clean new line after the CLI prompt
+                        self.engineInterface.DoCommand(newCommand)
                         
-                self.engineInterface.Update()
-                
+                    self.engineInterface.Update()
+                except Exception as e:
+                    sys.stderr.write("[AsyncEngineInterface.Update] Exception: " + str(e) + os.linesep)
                 self.updateLock.release()
                 
                 time.sleep(0.1)
             except Exception as e:
-                sys.stderr.write("[AsyncEngineInterface] Exception: " + str(e) + os.linesep)
-            else:
-                pass
+                sys.stderr.write("[AsyncEngineInterface.Run] Exception: " + str(e) + os.linesep)
 
     def KillThread(self):
         "Clean up the thread"
@@ -700,6 +629,8 @@ class AsyncEngineInterface(threading.Thread):
         
     def QueueCommand(self, inCommand):
         "Thread safe queing of an Async command, will run later in update loop"
+        # [MARKW:TODO] would be great to get a unique ID (monotonically increasing?) back that can be queried
+        #              e.g. get an OnComplete() callback, or do IsComplete(taskID)
         self.queueLock.acquire()
         self.queue.append(inCommand)
         self.queueLock.release()
@@ -707,7 +638,11 @@ class AsyncEngineInterface(threading.Thread):
     def SyncCommand(self, inCommand):
         "Thread safe blocking to call a command synchronously"
         self.updateLock.acquire()
-        retVal = self.engineInterface.DoCommand(newCommand)
+        try:
+            retVal = self.engineInterface.DoCommand(inCommand)
+        except Exception as e:
+            retVal = None
+            sys.stderr.write("[AsyncEngineInterface.SyncCommand] Exception: " + str(e) + os.linesep)
         self.updateLock.release()
         return retVal
         
