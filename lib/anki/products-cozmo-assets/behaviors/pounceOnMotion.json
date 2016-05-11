@@ -1,0 +1,45 @@
+{
+  "behaviorType": "PounceOnMotion",
+  "name": "fp_PounceOnMotion",
+  "emotionScorers": [
+    {
+      "emotionType": "Excited",
+      "scoreGraph": {
+        "nodes": [
+          {
+            "x": -1.0,
+            "y": 0.8
+          },
+          {
+            "x": -0.004,
+            "y": 0.4
+          },
+          {
+            "x": 1.0,
+            "y": 0.1
+          }
+        ]
+      },
+      "trackDelta": false
+    }
+  ],
+  "repetitionPenalty": {
+    "nodes": [
+      {
+        "x": 4.0,
+        "y": 0.0
+      },
+      {
+        "x": 6.0,
+        "y": 0.1
+      },
+      {
+        "x": 8.0,
+        "y": 1.0
+      }
+    ]
+  },
+  "behaviorGroups": [
+    "FreeplayOne"
+  ]
+}
