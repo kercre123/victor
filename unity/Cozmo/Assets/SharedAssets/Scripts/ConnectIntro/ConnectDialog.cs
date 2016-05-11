@@ -66,6 +66,7 @@ public class ConnectDialog : MonoBehaviour {
     }
 
     Application.targetFrameRate = 30;
+    Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
     Input.gyro.enabled = true;
     Input.compass.enabled = true;
@@ -176,8 +177,6 @@ public class ConnectDialog : MonoBehaviour {
     if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled) {
       ConsoleLogManager.Instance.EnableSOSLogs(true);
     }
-
-    Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
     _ConnectionStatus.text = "";
     DAS.Info(this, "Robot Connected!");
