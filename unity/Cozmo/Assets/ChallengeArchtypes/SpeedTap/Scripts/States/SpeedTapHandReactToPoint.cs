@@ -64,8 +64,7 @@ namespace SpeedTap {
         GameAudioClient.SetMusicState(_SpeedTapGame.BetweenRoundsMusic);
         GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
 
-        _SpeedTapGame.UpdateRoundScore();
-        _SpeedTapGame.UpdateUI();
+        _SpeedTapGame.EndCurrentRound();
 
         if (_SpeedTapGame.IsGameComplete()) {
           _SpeedTapGame.UpdateUIForGameEnd();

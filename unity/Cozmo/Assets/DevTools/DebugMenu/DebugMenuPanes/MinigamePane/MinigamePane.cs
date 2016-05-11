@@ -53,11 +53,6 @@ public class MinigamePane : MonoBehaviour {
     _SetPlayerScoreButton.onClick.AddListener(PlayerSetScoreButtonClicked);
 	
   }
-	
-  // Update is called once per frame
-  void Update() {
-	
-  }
 
   private HomeHub GetHomeHub() {
     if (_currHub != null) {
@@ -98,16 +93,25 @@ public class MinigamePane : MonoBehaviour {
     }
   }
 
-  // Force Round Win for Cozmo
+  /// <summary>
+  /// Force Round Win for Cozmo, forces cozmo score to higher than player score and then ends the round
+  /// </summary>
   private void CozmoRoundButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
+      minigame.CozmoScore = Mathf.Max(minigame.PlayerScore + 1, minigame.CozmoScore);
+      minigame.EndCurrentRound();
     }
   }
-  // Force Round Win for Player
+
+  /// <summary>
+  /// Force Round Win for Player, forces player score to higher than cozmo score and then ends the round
+  /// </summary>
   private void PlayerRoundButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
+      minigame.PlayerScore = Mathf.Max(minigame.CozmoScore + 1, minigame.PlayerScore);
+      minigame.EndCurrentRound();
     }
   }
 
@@ -115,12 +119,16 @@ public class MinigamePane : MonoBehaviour {
   private void CozmoSetRoundsButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
+      minigame.CozmoRoundsWon = int.Parse(_SetCozmoRoundsField.text);
+      minigame.UpdateUI();
     }
   }
   // Set Rounds Won for Player
   private void PlayerSetRoundsButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
+      minigame.PlayerRoundsWon = int.Parse(_SetPlayerRoundsField.text);
+      minigame.UpdateUI();
     }
   }
 
@@ -128,12 +136,16 @@ public class MinigamePane : MonoBehaviour {
   private void CozmoSetScoreButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
+      minigame.CozmoScore = int.Parse(_SetCozmoScoreField.text);
+      minigame.UpdateUI();
     }
   }
   // Set Score for Player
   private void PlayerSetScoreButtonClicked() {
     var minigame = GetCurrMinigame();
     if (minigame != null) {
+      minigame.PlayerScore = int.Parse(_SetPlayerScoreField.text);
+      minigame.UpdateUI();
     }
   }
 }

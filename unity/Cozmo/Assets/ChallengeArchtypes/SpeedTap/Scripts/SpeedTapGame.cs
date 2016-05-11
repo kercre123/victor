@@ -80,21 +80,6 @@ namespace SpeedTap {
 
     public SpeedTapRulesBase Rules;
 
-
-    public int CozmoScore;
-    public int PlayerScore;
-    public int PlayerRoundsWon;
-    public int CozmoRoundsWon;
-    public int TotalRounds;
-
-    public int RoundsPlayed {
-      get {
-        return PlayerRoundsWon + CozmoRoundsWon;
-      }
-    }
-
-    public int MaxScorePerRound;
-
     public event Action PlayerTappedBlockEvent;
     public event Action CozmoTappedBlockEvent;
 
@@ -106,69 +91,6 @@ namespace SpeedTap {
 
     [SerializeField]
     private GameObject _WaitForCozmoSlidePrefab;
-
-    public void ResetScore() {
-      CozmoScore = 0;
-      PlayerScore = 0;
-      UpdateUI();
-    }
-
-    public void AddCozmoPoint() {
-      CozmoScore++;
-    }
-
-    public void AddPlayerPoint() {
-      PlayerScore++;
-    }
-
-    public bool IsRoundComplete() {
-      return (CozmoScore >= MaxScorePerRound || PlayerScore >= MaxScorePerRound);
-    }
-
-    public void UpdateRoundScore() {
-      if (PlayerScore > CozmoScore) {
-        PlayerRoundsWon++;
-      }
-      else {
-        CozmoRoundsWon++;
-      }
-    }
-
-    public bool IsHighIntensityRound() {
-      int oneThirdRoundsTotal = TotalRounds / 3;
-      return (PlayerRoundsWon + CozmoRoundsWon) > oneThirdRoundsTotal;
-    }
-
-    public bool IsGameComplete() {
-      int losingScore = Mathf.Min(PlayerRoundsWon, CozmoRoundsWon);
-      int winningScore = Mathf.Max(PlayerRoundsWon, CozmoRoundsWon);
-      int roundsLeft = TotalRounds - losingScore - winningScore;
-      return (winningScore > losingScore + roundsLeft);
-    }
-
-    public bool IsHighIntensityGame() {
-      int twoThirdsRoundsTotal = TotalRounds / 3 * 2;
-      return (PlayerRoundsWon + CozmoRoundsWon) > twoThirdsRoundsTotal;
-    }
-
-    public void HandleGameEnd() {
-      if (PlayerRoundsWon > CozmoRoundsWon) {
-        PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
-        int currentDifficultyUnlocked = 0;
-        if (playerProfile.GameDifficulty.ContainsKey(_ChallengeData.ChallengeID)) {
-          currentDifficultyUnlocked = playerProfile.GameDifficulty[_ChallengeData.ChallengeID];
-        }
-        int newDifficultyUnlocked = CurrentDifficulty + 1;
-        if (currentDifficultyUnlocked < newDifficultyUnlocked) {
-          playerProfile.GameDifficulty[_ChallengeData.ChallengeID] = newDifficultyUnlocked;
-          DataPersistence.DataPersistenceManager.Instance.Save();
-        }
-        RaiseMiniGameWin();
-      }
-      else {
-        RaiseMiniGameLose();
-      }
-    }
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
@@ -191,14 +113,6 @@ namespace SpeedTap {
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapStarted);
       // End config based values
       InitializeMinigameObjects(1);
-    }
-
-    private int HighestLevelCompleted() {
-      int difficulty = 0;
-      if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty.TryGetValue(_ChallengeData.ChallengeID, out difficulty)) {
-        return difficulty;
-      }
-      return 0;
     }
 
     // Use this for initialization
@@ -257,7 +171,8 @@ namespace SpeedTap {
       CubeIdsForGame.Add(cube);
     }
 
-    public void UpdateUI() {
+    public override void UpdateUI() {
+      base.UpdateUI();
       int halfTotalRounds = (TotalRounds + 1) / 2;
       Cozmo.MinigameWidgets.ScoreWidget cozmoScoreWidget = SharedMinigameView.CozmoScoreboard;
       cozmoScoreWidget.Score = CozmoScore;
@@ -273,7 +188,8 @@ namespace SpeedTap {
       SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, CozmoRoundsWon + PlayerRoundsWon + 1);
     }
 
-    public void UpdateUIForGameEnd() {
+    public override void UpdateUIForGameEnd() {
+      base.UpdateUIForGameEnd();
       // Hide Current Round at end
       SharedMinigameView.InfoTitleText = string.Empty;
     }

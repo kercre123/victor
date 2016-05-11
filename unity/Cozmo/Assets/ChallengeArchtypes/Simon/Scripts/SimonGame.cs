@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Simon {
-
+  // TODO : SCORE RELATED LOGIC HAS BEEN MOVED TO THE SCORING REGION OF GAMEBASE, private fields for score/rounds are obsolete
   public class SimonGame : GameBase {
     // TODO: Use animation events?
     public const float kCozmoLightBlinkDelaySeconds = 0.1f;

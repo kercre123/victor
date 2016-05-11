@@ -4,7 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace CubePounce {
-  
+  // TODO : SCORE RELATED LOGIC HAS BEEN MOVED TO THE SCORING REGION OF GAMEBASE, private fields for score/rounds are obsolete
   public class CubePounceGame : GameBase {
 
     public const string kSetUp = "SetUp";

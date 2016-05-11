@@ -153,17 +153,136 @@ public abstract class GameBase : MonoBehaviour {
     // Do we need to add ability to pause / unpause the states inside the machine?
   }
 
-  protected void PauseGame() {
+  public virtual void PauseGame() {
     _IsPaused = true;
   }
 
-  protected void UnpauseGame() {
+  public virtual void UnpauseGame() {
     _IsPaused = false;
   }
 
   #endregion
 
   // end Update
+
+  #region Scoring
+
+  // Score in the Current Round
+  public int CozmoScore;
+  public int PlayerScore;
+  // Points needed to win Round
+  public int MaxScorePerRound;
+
+  public void ResetScore() {
+    CozmoScore = 0;
+    PlayerScore = 0;
+    UpdateUI();
+  }
+
+  // TODO: Add any effects for Scoring Points here to propogate to all minigames for consistency
+
+  public void AddCozmoPoint() {
+    CozmoScore++;
+  }
+
+  public void AddPlayerPoint() {
+    PlayerScore++;
+  }
+
+  //
+
+  // Number of Rounds Won this Game
+  public int PlayerRoundsWon;
+  public int CozmoRoundsWon;
+  // Total number of Rounds in this Game
+  public int TotalRounds;
+  // Number of Rounds Played this Game
+  public int RoundsPlayed {
+    get {
+      return PlayerRoundsWon + CozmoRoundsWon;
+    }
+  }
+
+  public virtual void UpdateUI() {
+    // TODO: Put any base logic for Updating UI Here.
+  }
+
+  public virtual void UpdateUIForGameEnd() {
+    // TODO: Put any base logic for Updating UI for game end here.
+  }
+
+  public bool IsRoundComplete() {
+    return (CozmoScore >= MaxScorePerRound || PlayerScore >= MaxScorePerRound);
+  }
+
+  // True if the Round is Close in terms of Points.
+  public bool IsHighIntensityRound() {
+    int oneThirdRoundsTotal = TotalRounds / 3;
+    return (PlayerRoundsWon + CozmoRoundsWon) > oneThirdRoundsTotal;
+  }
+
+  /// <summary>
+  /// Ends the current round, whoever has the higher current score wins.
+  /// </summary>
+  public void EndCurrentRound() {
+    if (PlayerScore > CozmoScore) {
+      PlayerRoundsWon++;
+    }
+    else {
+      CozmoRoundsWon++;
+    }
+    UpdateUI();
+  }
+
+  // True if someone has enough rounds won to complete the Game.
+  public bool IsGameComplete() {
+    int losingScore = Mathf.Min(PlayerRoundsWon, CozmoRoundsWon);
+    int winningScore = Mathf.Max(PlayerRoundsWon, CozmoRoundsWon);
+    int roundsLeft = TotalRounds - losingScore - winningScore;
+    return (winningScore > losingScore + roundsLeft);
+  }
+
+  // True if the Game is Close in terms of Rounds.
+  public bool IsHighIntensityGame() {
+    int twoThirdsRoundsTotal = TotalRounds / 3 * 2;
+    return (PlayerRoundsWon + CozmoRoundsWon) > twoThirdsRoundsTotal;
+  }
+
+  // Handles the end of the game based on Rounds won, will attempt to progress difficulty as well
+  public virtual void HandleGameEnd() {
+    if (PlayerRoundsWon > CozmoRoundsWon) {
+      PlayerProfile playerProfile = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile;
+      int currentDifficultyUnlocked = 0;
+      if (playerProfile.GameDifficulty.ContainsKey(_ChallengeData.ChallengeID)) {
+        currentDifficultyUnlocked = playerProfile.GameDifficulty[_ChallengeData.ChallengeID];
+      }
+      int newDifficultyUnlocked = CurrentDifficulty + 1;
+      if (currentDifficultyUnlocked < newDifficultyUnlocked) {
+        playerProfile.GameDifficulty[_ChallengeData.ChallengeID] = newDifficultyUnlocked;
+        DataPersistence.DataPersistenceManager.Instance.Save();
+      }
+      RaiseMiniGameWin();
+    }
+    else {
+      RaiseMiniGameLose();
+    }
+  }
+
+  /// <summary>
+  /// Returns Highest Unlocked Difficulty.
+  /// </summary>
+  /// <returns>Int representing the highest difficulty unlocked for this game's ChallengeID.</returns>
+  public int HighestLevelCompleted() {
+    int difficulty = 0;
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.GameDifficulty.TryGetValue(_ChallengeData.ChallengeID, out difficulty)) {
+      return difficulty;
+    }
+    return 0;
+  }
+
+  #endregion
+
+  // End Scoring
 
   #region Clean Up
 
