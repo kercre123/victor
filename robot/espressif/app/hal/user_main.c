@@ -87,9 +87,9 @@ static void checkAndClearBootloaderConfig(void)
 {
   const BootloaderConfig* const bootConfig = (const BootloaderConfig* const)(FLASH_MEMORY_MAP + BOOT_CONFIG_SECTOR*SECTOR_SIZE);
   if (bootConfig->header == 0xe1df0c05)
-  {
-    os_printf("Clearing bootloader config\r\n");
-    // Clear the bootloader config to indicate we have successfully booted
+    {
+      os_printf("Clearing bootloader config\r\n");
+      // Clear the bootloader config to indicate we have successfully booted
     if (spi_flash_erase_sector(BOOT_CONFIG_SECTOR) != SPI_FLASH_RESULT_OK)
     {
       os_printf("Error erasing bootloader config\r\n");
@@ -203,7 +203,8 @@ void user_init(void)
   wifi_set_phy_mode(PHY_MODE_11G);
   // Disable radio sleep
   //wifi_set_sleep_type(NONE_SLEEP_T);
-  wifi_set_user_fixed_rate(FIXED_RATE_MASK_AP, PHY_RATE_24);
+  // XXX: This may help streaming performance, but seems to cause slow advertising - not sure which is worse
+  //wifi_set_user_fixed_rate(FIXED_RATE_MASK_AP, PHY_RATE_24);
   
   // Disable DHCP server before setting static IP info
   err = wifi_softap_dhcps_stop();

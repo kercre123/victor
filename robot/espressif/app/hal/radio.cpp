@@ -25,12 +25,19 @@ namespace Anki {
     
     void sendImgChunk(ImageChunk& msg, bool eof)
     {
+      static bool skipFrame = false;
       msg.imageEncoding = JPEGMinimizedGray;
       msg.resolution    = QVGA;
-      clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_image, false, eof);
+      
+      // As soon as we skip one chunk of a frame, skip the remaining chunks - the robot can't recover it anyway
+      if (!skipFrame)
+        if (!clientSendMessage(msg.GetBuffer(), msg.Size(), RobotInterface::RobotToEngine::Tag_image, false, eof))
+          skipFrame = true;
+        
       if (eof)
       {
         msg.chunkId = 0;
+        skipFrame = false;
       }
       else
       {
