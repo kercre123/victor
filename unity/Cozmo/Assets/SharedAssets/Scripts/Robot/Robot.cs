@@ -561,47 +561,6 @@ public class Robot : IRobot {
 
   #region Behavior Manager
 
-  public void SetEnableAllBehaviors(bool enabled) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetEnableAllBehaviors>.Instance.Initialize(enabled)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void SetEnableBehaviorGroup(BehaviorGroup behaviorGroup, bool enabled) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetEnableBehaviorGroup>.Instance.Initialize(behaviorGroup, enabled)
-    ); 
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void SetEnableBehavior(string behaviorName, bool enabled) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetEnableBehavior>.Instance.Initialize(behaviorName, enabled)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void ClearAllBehaviorScoreOverrides() {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(ID, Singleton<ClearAllBehaviorScoreOverrides>.Instance);
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void OverrideBehaviorScore(string behaviorName, float newScore) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<OverrideBehaviorScore>.Instance.Initialize(behaviorName, newScore)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
 
   #endregion
 
@@ -668,10 +627,6 @@ public class Robot : IRobot {
   }
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
-
-    //TODO: We should be displaying whatever is on the face on the robot here, but
-    // we don't have access to that yet.
-    CozmoFace.DisplayProceduralFace(faceAngle, faceCenter, faceScale, leftEyeParams, rightEyeParams);
 
     RobotEngineManager.Instance.Message.DisplayProceduralFace = 
       Singleton<DisplayProceduralFace>.Instance.Initialize(
@@ -773,19 +728,9 @@ public class Robot : IRobot {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  public void PrepareFaceNameAnimation(int faceId, string name) {
-    DAS.Debug(this, "Perform Face Name Animation - faceId: " + faceId + " name: " + name);
-    RobotEngineManager.Instance.Message.PrepareFaceNameAnimation = Singleton<PrepareFaceNameAnimation>.Instance.Initialize(faceId, name);
-    RobotEngineManager.Instance.SendMessage();
-  }
-
   public void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
-    // TODO: We should be displaying what is actually on the robot, instead
-    // we are faking it.
-    CozmoFace.PlayAnimation(animName);
-
     SendQueueSingleAction(Singleton<PlayAnimation>.Instance.Initialize(ID, 1, animName), callback, queueActionPosition);
   }
 
@@ -1176,6 +1121,17 @@ public class Robot : IRobot {
     SparkUnlockId = UnlockId.Count;
   }
 
+  // enable/disable games available for Cozmo to request
+  public void SetAvailableGames(BehaviorGameFlag games)
+  {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(
+        ID, 
+        Singleton<SetAvailableGames>.Instance.Initialize(games)
+      ); 
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     SendQueueSingleAction(Singleton<TurnInPlace>.Instance.Initialize(
@@ -1383,4 +1339,23 @@ public class Robot : IRobot {
   }
 
   #endregion
+
+  #region PressDemoMessages
+
+  public void TransitionToNextDemoState() {
+    RobotEngineManager.Instance.Message.TransitionToNextDemoState = Singleton<TransitionToNextDemoState>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void StartDemoWithEdge(bool demoWithEdge) {
+    RobotEngineManager.Instance.Message.StartDemoWithEdge = Singleton<StartDemoWithEdge>.Instance.Initialize(demoWithEdge);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  #endregion
+
+  public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    DAS.Debug(this, "Saying text: " + text);
+    SendQueueSingleAction(Singleton<SayText>.Instance.Initialize(text, playEvent, style), callback, queueActionPosition);
+  }
 }

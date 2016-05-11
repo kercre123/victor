@@ -15,7 +15,17 @@ namespace Cozmo {
       public LocalizedString Title;
       public LocalizedString Description;
       public string RewardType;
-      public int Progress;
+      private int _Progress;
+
+      public int Progress {
+        get {
+          return _Progress;
+        }
+        set {
+          _Progress = Mathf.Min(value, Target);
+        }
+      }
+
       public int Target;
       public int PointsRewarded;
 
@@ -61,18 +71,70 @@ namespace Cozmo {
         GameEventManager.Instance.OnGameEvent -= ProgressGoal;
       }
 
-      private void ProgressGoal(GameEvent gEvent) {
-        if (gEvent != GoalEvent) {
+      public void ProgressGoal(GameEventWrapper gEvent) {
+        if (gEvent.GameEventEnum != GoalEvent) {
           return;
         }
         // If ProgConditions aren't met, don't progress
-        if (!CanProg()) {
+        if (!CanProgress(gEvent)) {
           return;
         }
         // Progress Goal
         Progress++;
         DAS.Event(this, string.Format("{0} Progressed to {1}", Title, Progress));
         // Check if Completed
+        CheckIfComplete();
+        if (OnDailyGoalUpdated != null) {
+          OnDailyGoalUpdated.Invoke(this);
+        }
+      }
+
+      public void DebugSetGoalProgress(int prog) {
+        Progress = prog;
+        if (!GoalComplete && _Completed) {
+          _Completed = false;
+          GameEventManager.Instance.OnGameEvent += ProgressGoal;
+        }
+        else if (_Completed == false) {
+          CheckIfComplete();
+        }
+        if (OnDailyGoalUpdated != null) {
+          OnDailyGoalUpdated.Invoke(this);
+        }
+        
+      }
+
+      public void DebugUndoGoalProgress() {
+        if (Progress > 0) {
+          Progress--;
+          if (!GoalComplete && _Completed) {
+            _Completed = false;
+            GameEventManager.Instance.OnGameEvent += ProgressGoal;
+          }
+          if (OnDailyGoalUpdated != null) {
+            OnDailyGoalUpdated.Invoke(this);
+          }
+        }
+        
+      }
+
+      public void DebugResetGoalProgress() {
+        Progress = 0;
+        if (_Completed) {
+          _Completed = false;
+          GameEventManager.Instance.OnGameEvent += ProgressGoal;
+        }
+        if (OnDailyGoalUpdated != null) {
+          OnDailyGoalUpdated.Invoke(this);
+        }
+
+      }
+
+      /// <summary>
+      /// Checks if the goal has just been completed, handles any logic that is fired when
+      /// a goal is completed.
+      /// </summary>
+      public void CheckIfComplete() {
         if (GoalComplete && _Completed == false) {
           // Grant Reward
           DAS.Event(this, string.Format("{0} Completed", Title));
@@ -83,14 +145,14 @@ namespace Cozmo {
           _Completed = true;
           GameEventManager.Instance.OnGameEvent -= ProgressGoal;
         }
-        if (OnDailyGoalUpdated != null) {
-          OnDailyGoalUpdated.Invoke(this);
-        }
       }
 
-      public bool CanProg() {
+      public bool CanProgress(GameEventWrapper gEvent) {
+        if (ProgConditions == null) {
+          return true;
+        }
         for (int i = 0; i < ProgConditions.Count; i++) {
-          if (ProgConditions[i].ConditionMet() == false) {
+          if (ProgConditions[i].ConditionMet(gEvent) == false) {
             return false;
           }
         }

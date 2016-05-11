@@ -20,7 +20,7 @@ namespace Cozmo {
 
       public void SetMaximumSegments(int maxNumSegments) {
         if (maxNumSegments < 0) {
-          DAS.Warn(this, "Trying to set a negative number of segments! Clamping to 0.");
+          DAS.Warn("SegmentedBar.SetMaximumSegments.NegativeSegments", "Trying to set a negative number of segments! Clamping to 0.");
           maxNumSegments = 0;
         }
 
@@ -44,11 +44,11 @@ namespace Cozmo {
 
       public void SetCurrentNumSegments(int currentNumSegments) {
         if (currentNumSegments < 0) {
-          DAS.Warn(this, "Trying to set a negative number of segments! Clamping to 0.");
+          DAS.Warn("SegmentedBar.SetCurrentSegments.NegativeSegments", "Trying to set a negative number of segments! Clamping to 0.");
           currentNumSegments = 0;
         }
         else if (currentNumSegments > _CurrentSegments.Count) {
-          DAS.Warn(this, "Trying to set a more segments than the max! Clamping to max.");
+          DAS.Warn("SegmentedBar.SetCurrentSegments.OutOfRange", "Trying to set a more segments than the max! Clamping to max.");
           currentNumSegments = _CurrentSegments.Count;
         }
 

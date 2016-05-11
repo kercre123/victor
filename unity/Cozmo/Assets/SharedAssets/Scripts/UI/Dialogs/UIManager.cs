@@ -9,20 +9,18 @@ using Cozmo.UI;
 
 public class UIManager : MonoBehaviour {
 
-  private static readonly IDAS sDAS = DAS.GetInstance(typeof(UIManager));
-
   private static UIManager _Instance;
 
   public static UIManager Instance {
     get {
       if (_Instance == null) {
-        sDAS.Error("Don't access this until Start!");
+        DAS.Error("UIManager.NullInstance", "Do not access UIManager until start");
       }
       return _Instance;
     }
     private set {
       if (_Instance != null) {
-        sDAS.Error("There shouldn't be more than one UIManager");
+        DAS.Error("UIManager.DuplicateInstance", "UIManager Instance already exists");
       }
       _Instance = value;
     }
@@ -45,9 +43,6 @@ public class UIManager : MonoBehaviour {
 
   [SerializeField]
   private Canvas _HorizontalCanvas;
-
-  [SerializeField]
-  private Canvas _VerticalCanvas;
   
   [SerializeField]
   private EventSystem _EventSystemScript;
@@ -124,13 +119,12 @@ public class UIManager : MonoBehaviour {
     T viewPrefab, 
     System.Action<T> preInitFunc = null,
     bool? overrideBackgroundDim = null, 
-    bool? overrideCloseOnTouchOutside = null, 
-    bool verticalCanvas = false) where T : BaseView {
+    bool? overrideCloseOnTouchOutside = null) where T : BaseView {
 
     GameObject newView = GameObject.Instantiate(viewPrefab.gameObject);
     T viewScript = newView.GetComponent<T>();
 
-    Transform targetCanvas = verticalCanvas ? Instance._VerticalCanvas.transform : Instance._HorizontalCanvas.transform;
+    Transform targetCanvas = Instance._HorizontalCanvas.transform;
     bool shouldDimBackground = overrideBackgroundDim.HasValue ? overrideBackgroundDim.Value : viewScript.DimBackground;
     if (shouldDimBackground) {
       Instance.DimBackground(viewScript, targetCanvas);

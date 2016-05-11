@@ -82,6 +82,8 @@ public abstract class GameBase : MonoBehaviour {
     public Color[] originalColor;
   }
 
+  private bool _IsPaused = false;
+
   #region Initialization
 
   public void InitializeMinigame(ChallengeData challengeData) {
@@ -144,7 +146,19 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   protected virtual void UpdateStateMachine() {
-    _StateMachine.UpdateStateMachine();
+    if (!_IsPaused) {
+      _StateMachine.UpdateStateMachine();
+    }
+
+    // Do we need to add ability to pause / unpause the states inside the machine?
+  }
+
+  protected void PauseGame() {
+    _IsPaused = true;
+  }
+
+  protected void UnpauseGame() {
+    _IsPaused = false;
   }
 
   #endregion
@@ -326,6 +340,10 @@ public abstract class GameBase : MonoBehaviour {
 
   #region LightCubes
 
+  public float GetCycleDurationSeconds(int numRotations, float cycleIntervalSeconds) {
+    return (numRotations * cycleIntervalSeconds * 4);
+  }
+
   public void StartCycleCube(int cubeID, Color[] lightColorsCounterclockwise, float cycleIntervalSeconds) {
     // Remove from blink lights if it exists there
     StopBlinkLight(cubeID);
@@ -385,9 +403,9 @@ public abstract class GameBase : MonoBehaviour {
   private void CycleLightsSingleColor(CycleData data) {
     LightCube cube = CurrentRobot.LightCubes[data.cubeID];
     data.colorIndex++;
-    data.colorIndex %= data.cycleColors.Length;
+    data.colorIndex %= cube.Lights.Length;
     for (int i = 0; i < cube.Lights.Length; i++) {
-      cube.Lights[i].OnColor = data.cycleColors[i].ToUInt();
+      cube.Lights[i].OnColor = data.cycleColors[i % data.cycleColors.Length].ToUInt();
       if (i == data.colorIndex) {
         cube.Lights[i].OnColor = data.singleColor;
       }

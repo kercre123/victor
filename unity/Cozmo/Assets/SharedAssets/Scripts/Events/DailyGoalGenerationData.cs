@@ -81,11 +81,11 @@ namespace Anki.Cozmo {
       /// <summary>
       /// The Conditions for if this goal is able to be selected for generation.
       /// </summary>
-      public List<GoalCondition> GenConditions;
+      public List<GoalCondition> GenConditions = new List<GoalCondition>();
       /// <summary>
       /// The Conditions for if this goal will progress when its event is fired.
       /// </summary>
-      public List<GoalCondition> ProgressConditions;
+      public List<GoalCondition> ProgressConditions = new List<GoalCondition>();
 
       public bool CanGen() {
         for (int i = 0; i < GenConditions.Count; i++) {

@@ -149,17 +149,22 @@ public class SkillSystem {
     return null;
   }
 
-  public void HandleGameEvent(Anki.Cozmo.GameEvent cozEvent) {
+  public void HandleGameEvent(GameEventWrapper cozEvent) {
     GameSkillData currSkillData = GetSkillDataForGame();
     if (currSkillData != null) {
       GameSkillConfig skillConfig = _CurrChallengeData.MinigameConfig.SkillConfig;
-      if (skillConfig.GainChallengePointEvent == cozEvent) {
+      if (skillConfig.IsGainChallengePointEvent(cozEvent.GameEventEnum)) {
         currSkillData.WinPointsTotal++;
       }
-      if (skillConfig.LoseChallengePointEvent == cozEvent) {
+      if (skillConfig.IsLoseChallengePointEvent(cozEvent.GameEventEnum)) {
         currSkillData.LossPointsTotal++;
       }
-      if (skillConfig.EvaluateLevelChangeEvent == cozEvent) {
+      // In the event we quit out early and didn't reach an evaluate event, force a clear
+      if (skillConfig.IsResetPointEvent(cozEvent.GameEventEnum)) {
+        currSkillData.ResetPoints();
+      }
+
+      if (skillConfig.IsLevelChangeEvent(cozEvent.GameEventEnum)) {
         // See if things are pass the level up/down thresholds...
         GameSkillLevelConfig skillLevelConfig = GetSkillLevelConfig();
         if (skillLevelConfig != null) {
@@ -235,7 +240,6 @@ public class SkillSystem {
   }
 
   private void HandleRobotConnected(int rbt_id) {
-
     RobotEngineManager.Instance.Message.NVStorageReadEntry = new G2U.NVStorageReadEntry();
     RobotEngineManager.Instance.Message.NVStorageReadEntry.tag = NVEntryTag.NVEntry_GameSkillLevels;
     RobotEngineManager.Instance.SendMessage();
@@ -260,9 +264,14 @@ public class SkillSystem {
   }
 
   private void SetCozmoHighestLevelsReached(byte[] robotData, int robotDataLen) {
-// RobotData is just highest level in challengeList order
+    // RobotData is just highest level in challengeList order
     ChallengeDataList challengeList = ChallengeDataList.Instance;
-    int numChallenges = Mathf.Max(robotDataLen, challengeList.ChallengeData.Length);
+    // default if starting on the wrong scene or in factory 
+    int numChallenges = 1;
+    if (challengeList != null) {
+      numChallenges = challengeList.ChallengeData.Length;
+    }
+    numChallenges = Mathf.Max(robotDataLen, numChallenges);
     _CozmoHighestLevels = new byte[numChallenges];
     // first time init
     if (robotData != null) {

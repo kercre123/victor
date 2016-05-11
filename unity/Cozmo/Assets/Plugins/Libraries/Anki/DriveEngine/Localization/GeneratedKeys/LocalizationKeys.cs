@@ -72,6 +72,16 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region FaceEnrollment
+
+  public const string kFaceEnrollmentInstructionsBodyText = "faceEnrollment.instructions.bodyText";
+  public const string kFaceEnrollmentInstructionsTitle = "faceEnrollment.instructions.title";
+  public const string kFaceEnrollmentInstructionsDoneText = "faceEnrollment.instructions.doneText";
+  public const string kFaceEnrollmentEnterNameButtonText = "faceEnrollment.enterName.buttonText";
+  public const string kFaceEnrollmentEnterNamePlaceholderText = "faceEnrollment.enterName.placeholderText";
+
+  #endregion
+
   #region ItemStrings
 
   public const string kItemExperienceSingular = "item.experience.singular";
@@ -90,9 +100,12 @@ public static class LocalizationKeys {
   public const string kMinigameQuitViewDescription = "minigame.quitView.description";
   public const string kMinigameTextWinner = "minigame.text.winner";
   public const string kMinigameTextScore = "minigame.text.score";
-  public const string kMinigameLabelShowCubes = "minigame.label.showCubes";
-  public const string kMinigameLabelCubesFound = "minigame.label.cubesFound";
-  public const string kMinigameLabelCubesReady = "minigame.label.cubesReady";
+  public const string kMinigameLabelShowCubesSingular = "minigame.label.showCubes.singular";
+  public const string kMinigameLabelShowCubesPlural = "minigame.label.showCubes.plural";
+  public const string kMinigameLabelWaitingForCubesSingular = "minigame.label.waitingForCubes.singular";
+  public const string kMinigameLabelWaitingForCubesPlural = "minigame.label.waitingForCubes.plural";
+  public const string kMinigameLabelCubesReadySingular = "minigame.label.cubesReady.singular";
+  public const string kMinigameLabelCubesReadyPlural = "minigame.label.cubesReady.plural";
   public const string kMinigameLabelReadyToPlay = "minigame.label.readyToPlay";
   public const string kMinigamesLabelGamesAndActivities = "minigames.label.gamesAndActivities";
   public const string kMinigamesLabelCozmoUnlocksPanel = "minigames.label.cozmoUnlocksPanel";
@@ -124,6 +137,10 @@ public static class LocalizationKeys {
   public const string kSpeedTapTextHowToPlayLightCountNoColor = "speedTap.text.howToPlayLightCountNoColor";
   public const string kSpeedTapTapBlock = "speedTap.tapBlock";
   public const string kSpeedTapTapBlockForRound = "speedTap.tapBlockForRound";
+  public const string kSpeedTapDontMoveCozmoTitle = "speedTap.dontMoveCozmo.title";
+  public const string kSpeedTapDontMoveCozmoDescription = "speedTap.dontMoveCozmo.description";
+  public const string kSpeedTapDontMoveBlockTitle = "speedTap.dontMoveBlock.title";
+  public const string kSpeedTapDontMoveBlockDescription = "speedTap.dontMoveBlock.description";
   public const string kTreasureHuntTitle = "treasureHunt.title";
   public const string kVortexTitle = "vortex.title";
   public const string kVortexSubtitle = "vortex.subtitle";
@@ -171,8 +188,18 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region PressDemoStrings
+
+  public const string kPressDemoFaceEnrollTitle = "pressDemo.faceEnrollTitle";
+  public const string kPressDemoFaceEnrollDesc = "pressDemo.faceEnrollDesc";
+  public const string kPressDemoSpeedTapTitle = "pressDemo.speedTapTitle";
+  public const string kPressDemoSpeedTapDesc = "pressDemo.speedTapDesc";
+
+  #endregion
+
   #region SimpleStrings
 
+  public const string kButtonQuitGame = "button.quitGame";
   public const string kButtonQuit = "button.quit";
   public const string kButtonStartChallenge = "button.startChallenge";
   public const string kButtonYes = "button.yes";
@@ -195,6 +222,7 @@ public static class LocalizationKeys {
   public const string kDailyGoalComplete = "dailyGoal.Complete";
   public const string kTimelineWeekLabel = "timeline.weekLabel";
   public const string kLabelConnect = "label.connect";
+  public const string kLabelLoading = "label.loading";
   public const string kButtonSave = "button.save";
   public const string kCozmoTabTitle = "cozmoTab.title";
   public const string kCozmoTabHexCount = "cozmoTab.hexCount";

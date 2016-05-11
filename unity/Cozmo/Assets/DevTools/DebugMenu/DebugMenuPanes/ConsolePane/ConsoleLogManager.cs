@@ -7,6 +7,25 @@ using Anki.UI;
 
 public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
+
+  private static ConsoleLogManager _Instance;
+
+  public static ConsoleLogManager Instance {
+    get {
+      if (_Instance == null) {
+        DAS.Error("ConsoleLogManager.NullInstance", "Don't access ConsoleLogManager until Start!");
+      }
+      return _Instance;
+    }
+    private set {
+      if (_Instance != null) {
+        DAS.Error("ConsoleLogManager.DuplicateInstance", "ConsoleLogManager already exists");
+      }
+      _Instance = value;
+    }
+  }
+
+
   // Each string element should be < 16250 characters because
   // Unity uses a mesh to display text, 4 verts per letter, and has
   // a hard limit of 65000 verts per mesh
@@ -20,6 +39,9 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   [SerializeField]
   private int numberCachedLogMaximum = 100;
 
+  private const int kClipboardLogMaximum = 9000;
+
+  private Queue<LogPacket> _LogToClipboard;
   private Queue<LogPacket> _MostRecentLogs;
   private Queue<LogPacket> _ReceivedPackets;
 
@@ -31,9 +53,12 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
 
   // Use this for initialization
   private void Awake() {
+    Instance = this;
+
     _TextLabelPool = new SimpleObjectPool<AnkiTextLabel>(CreateTextLabel, ResetTextLabel, 3);
     _MostRecentLogs = new Queue<LogPacket>();
     _ReceivedPackets = new Queue<LogPacket>();
+    _LogToClipboard = new Queue<LogPacket>();
     _ConsoleLogPaneView = null;
 
     _LastToggleValues = new Dictionary<LogPacket.ELogKind, bool>();
@@ -51,7 +76,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void Update() {
-    lock(_ReceivedPackets) {
+    lock (_ReceivedPackets) {
       while (_ReceivedPackets.Count > 0) {
         LogPacket newPacket;
 
@@ -63,23 +88,33 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
           _MostRecentLogs.Dequeue();
         }
 
+        while (_LogToClipboard.Count > kClipboardLogMaximum) {
+          _LogToClipboard.Dequeue();
+        }
+
         // Update the UI, if it is open
         if ((_ConsoleLogPaneView != null) && (_LastToggleValues[newPacket.LogKind])) {
-            _ConsoleLogPaneView.AppendLog(newPacket.ToString());
+          _ConsoleLogPaneView.AppendLog(newPacket.ToString());
         }
       }
     }
   }
 
-  private void EnableSOSLogs() {
-    if (_SOSLoggingEnabled) {
-      DAS.Warn(this, "SOS log already enabled");
-      return;
+  public void EnableSOSLogs(bool enable) {
+
+    DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled = enable;
+    DataPersistence.DataPersistenceManager.Instance.Save();
+
+    if (!_SOSLoggingEnabled && enable) {
+      _SOSLoggingEnabled = enable;
+      SOSLogManager.Instance.CreateListener();
+      RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
+      SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
     }
-    _SOSLoggingEnabled = true;
-    SOSLogManager.Instance.CreateListener();
-    RobotEngineManager.Instance.CurrentRobot.SetEnableSOSLogging(true);
-    SOSLogManager.Instance.RegisterListener(HandleNewSOSLog);
+    else if (_SOSLoggingEnabled && !enable) {
+      _SOSLoggingEnabled = false;
+      SOSLogManager.Instance.CleanUp();
+    }
   }
 
   private void HandleNewSOSLog(string log) {
@@ -144,14 +179,15 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     LogPacket newPacket = new LogPacket(logKind, eventName, eventValue, context, keyValues);
 
     // This can be called from multiple threads while the main one is processing the received packets so we have to lock
-    lock(_ReceivedPackets) {
+    lock (_ReceivedPackets) {
       _ReceivedPackets.Enqueue(newPacket);
+      _LogToClipboard.Enqueue(newPacket);
     }
   }
 
   private void OnConsoleLogPaneOpened(ConsoleLogPane logPane) {
     _ConsoleLogPaneView = logPane;
-    _ConsoleLogPaneView.ConsoleSOSLogButtonEnable += EnableSOSLogs;
+    _ConsoleLogPaneView.ConsoleSOSToggle += EnableSOSLogs;
     _ConsoleLogPaneView.ConsoleLogCopyToClipboard += CopyLogsToClipboard;
 
     List<string> consoleText = CompileRecentLogs();
@@ -173,17 +209,16 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void CopyLogsToClipboard() {
-    List<string> logDb = CompileRecentLogs();
     string logFull = "";
-    for (int i = 0; i < logDb.Count; ++i) {
-      logFull += logDb[i];
+    foreach (LogPacket logPacket in _LogToClipboard) {
+      logFull += logPacket.GetStringNoFromatting() + "\n";
     }
     CozmoBinding.SendToClipboard(logFull);
     GUIUtility.systemCopyBuffer = logFull;
   }
 
   private void OnConsoleLogPaneClosed() {
-    _ConsoleLogPaneView.ConsoleSOSLogButtonEnable -= EnableSOSLogs;
+    _ConsoleLogPaneView.ConsoleSOSToggle -= EnableSOSLogs;
     _ConsoleLogPaneView.ConsoleLogCopyToClipboard -= CopyLogsToClipboard;
     _ConsoleLogPaneView.ConsoleLogToggleChanged -= OnConsoleToggleChanged;
     _ConsoleLogPaneView = null;
@@ -279,6 +314,56 @@ public class LogPacket {
     EventValue = eventValue;
     Context = context;
     KeyValues = keyValue;
+  }
+
+  public string GetStringNoFromatting() {
+    string logKindStr = "";
+    string contextStr = "";
+    switch (LogKind) {
+    case ELogKind.Global:
+      logKindStr = "GLOBAL";
+      break;
+    case ELogKind.Info:
+      logKindStr = "INFO";
+      break;
+    case ELogKind.Warning:
+      logKindStr = "WARN";
+      break;
+    case ELogKind.Error:
+      logKindStr = "ERROR";
+      break;
+    case ELogKind.Event:
+      logKindStr = "EVENT";
+      break;
+    case ELogKind.Debug:
+      logKindStr = "DEBUG";
+      break;
+    }
+    if (Context != null) {
+      Dictionary<string, string> contextDict = Context as Dictionary<string, string>;
+      if (contextDict != null) {
+        contextStr = string.Join(", ", contextDict.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
+      }
+      else {
+        contextStr = Context.ToString();
+      }
+    }
+
+    string keyValuesStr = "";
+    if (KeyValues != null) {
+      keyValuesStr = string.Join(", ", KeyValues.Select(kvp => kvp.Key + "=" + kvp.Value).ToArray());
+    }
+
+    StringBuilder formatStr = new StringBuilder("[{0}] {1}: {2}"); 
+    if (!string.IsNullOrEmpty(contextStr)) {
+      formatStr.Append(" ({3})");
+    }
+
+    if (!string.IsNullOrEmpty(keyValuesStr)) {
+      formatStr.Append(" ({4})");
+    }
+
+    return string.Format(formatStr.ToString(), logKindStr, EventName, EventValue, contextStr, keyValuesStr);
   }
 
   public override string ToString() {

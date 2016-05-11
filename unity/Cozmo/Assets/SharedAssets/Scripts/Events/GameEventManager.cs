@@ -5,15 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-// Saves the GameEvents as a string so they don't get out of order.
-[Serializable]
-public class SerializableGameEvents : SerializableEnum<Anki.Cozmo.GameEvent> {
-  // Init as invalid
-  public SerializableGameEvents() {
-    Value = GameEvent.Count;
-  }
-}
-
 public class GameEventManager {
   
   private static GameEventManager _Instance = null;
@@ -29,7 +20,7 @@ public class GameEventManager {
 
   // Event that fires and notifes all listeners of a CozmoEvent being recieved,
   // other managers listen to this and use that to map enum based events to things
-  public event Action<GameEvent> OnGameEvent;
+  public event Action<GameEventWrapper> OnGameEvent;
 
   // List of All Event Enums, used by tools for visualization
   public readonly List<GameEvent> GameEventList;
@@ -39,13 +30,14 @@ public class GameEventManager {
     for (int i = 0; i < (int)GameEvent.Count; i++) {
       GameEventList.Add((GameEvent)i);
     }
+    GameEventWrapperFactory.Init();
     // Listen to whatever message is giving us the CozmoEvent message.
     // TODO : Add RobotEngineManager Event Handling Here once engine work is done
   }
 
   // Fire the Action without sending a message base to engine
-  // Use this for
-  public void HandleGameEvent(GameEvent cozEvent) {
+  // Use this for when we receive a game event from engine
+  public void HandleGameEvent(GameEventWrapper cozEvent) {
     if (OnGameEvent != null) {
       OnGameEvent(cozEvent);
     }
@@ -53,6 +45,10 @@ public class GameEventManager {
 
   // Potentially use this for cases where the event is expected to be sent from unity to engine
   public void SendGameEventToEngine(GameEvent cozEvent) {
+    SendGameEventToEngine(GameEventWrapperFactory.Create(cozEvent));
+  }
+
+  public void SendGameEventToEngine(GameEventWrapper cozEvent) {
     // TODO : Send Message down to engine before firing the game event
     HandleGameEvent(cozEvent);
   }

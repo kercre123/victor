@@ -14,6 +14,8 @@ using U2G = Anki.Cozmo.ExternalInterface;
 /// and handles launching, ticking, and messaging with the Cozmo Engine
 /// </summary>
 public class RobotEngineManager : MonoBehaviour {
+
+  public const string kRobotIP = "172.31.1.1";
   
   public static RobotEngineManager Instance = null;
 
@@ -64,6 +66,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.EmotionType, float> OnEmotionRecieved;
   public event Action<Anki.Cozmo.ProgressionStatType, int> OnProgressionStatRecieved;
   public event Action<Vector2> OnObservedMotion;
+  public event Action OnRobotPickedUp;
   public event Action<Anki.Cozmo.CliffEvent> OnCliffEvent;
   public event Action<Anki.Cozmo.ExternalInterface.RequestGameStart> OnRequestGameStart;
   public event Action<Anki.Cozmo.ExternalInterface.DenyGameStart> OnDenyGameStart;
@@ -79,6 +82,9 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action OnSparkUnlockEnded;
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageData> OnGotNVStorageData;
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageOpResult> OnGotNVStorageOpResult;
+  public event Action<Anki.Cozmo.ExternalInterface.DebugLatencyMessage> OnDebugLatencyMsg;
+  public event Action<Anki.Cozmo.ExternalInterface.RobotEnrolledFace> OnRobotEnrolledFace;
+  public event Action<Anki.Cozmo.ExternalInterface.RequestEnrollFace> OnRequestEnrollFace;
 
   #region Audio Callback events
 
@@ -122,9 +128,8 @@ public class RobotEngineManager : MonoBehaviour {
     #endif
   }
 
-
   private void OnEnable() {
-    DAS.Info("RobotEngineManager", "Enabling Robot Engine Manager");
+    DAS.Event("RobotEngineManager.OnEnable", string.Empty);
     if (Instance != null && Instance != this) {
       Destroy(gameObject);
       return;
@@ -140,10 +145,12 @@ public class RobotEngineManager : MonoBehaviour {
     }
 
     if (config == null) {
-      DAS.Error("RobotEngineManager", "Error initializing CozmoBinding: No configuration.");
+      DAS.Error("RobotEngineManager.ErrorInitializingCozmoBinding.NoConfig", string.Empty);
     }
     else {
-      CozmoBinding.Startup(config.text);
+      string configuration = AddDataPlatformPathsToConfiguration(config.text);
+
+      CozmoBinding.Startup(configuration);
       _CozmoBindingStarted = true;
     }
 
@@ -228,7 +235,7 @@ public class RobotEngineManager : MonoBehaviour {
       float limit = Time.realtimeSinceStartup + 2.0f;
       while (_Channel.HasPendingOperations) {
         if (limit < Time.realtimeSinceStartup) {
-          DAS.Warn("RobotEngineManager", "Not waiting for disconnect to finish sending.");
+          DAS.Warn("RobotEngineManager.NotWaitingForDisconnectToFinishSending", string.Empty);
           break;
         }
         System.Threading.Thread.Sleep(500);
@@ -250,7 +257,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void Disconnected(DisconnectionReason reason) {
-    DAS.Debug("RobotEngineManager", "Disconnected: " + reason.ToString());
+    DAS.Debug("RobotEngineManager.Disconnected", reason.ToString());
     _IsRobotConnected = false;
 
     _LastDisconnectionReason = reason;
@@ -261,7 +268,7 @@ public class RobotEngineManager : MonoBehaviour {
 
   public void SendMessage() {
     if (!IsConnected) {
-      DAS.Warn("RobotEngineManager", "Message not sent because not connected");
+      DAS.Warn("RobotEngineManager.MessageNotSent", "Not Connected");
       return;
     }
 
@@ -334,12 +341,10 @@ public class RobotEngineManager : MonoBehaviour {
       ReceivedSpecificMessage(message.AnimationAvailable);
       break;
     case G2U.MessageEngineToGame.Tag.RobotPickedUp:
+      ReceivedSpecificMessage(message.RobotPickedUp);
       break;
     case G2U.MessageEngineToGame.Tag.MoodState:
       ReceivedSpecificMessage(message.MoodState);
-      break;
-    case G2U.MessageEngineToGame.Tag.ProgressionStats:
-      ReceivedSpecificMessage(message.ProgressionStats);
       break;
     // Audio Callbacks
     case G2U.MessageEngineToGame.Tag.AudioCallback:
@@ -362,6 +367,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.DebugAnimationString:
       ReceivedSpecificMessage(message.DebugAnimationString);
+      break;
+    case G2U.MessageEngineToGame.Tag.DebugLatencyMessage:
+      ReceivedSpecificMessage(message.DebugLatencyMessage);
       break;
     case G2U.MessageEngineToGame.Tag.RequestGameStart:
       ReceivedSpecificMessage(message.RequestGameStart);
@@ -408,9 +416,21 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.NVStorageOpResult:
       ReceivedSpecificMessage(message.NVStorageOpResult);
       break;
-    default:
-      DAS.Warn("RobotEngineManager", message.GetTag() + " is not supported");
+    case G2U.MessageEngineToGame.Tag.RobotEnrolledFace:
+      ReceivedSpecificMessage(message.RobotEnrolledFace);
       break;
+    case G2U.MessageEngineToGame.Tag.RequestEnrollFace:
+      ReceivedSpecificMessage(message.RequestEnrollFace);
+      break;
+    default:
+      DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
+      break;
+    }
+  }
+
+  private void ReceivedSpecificMessage(G2U.RequestEnrollFace message) {
+    if (OnRequestEnrollFace != null) {
+      OnRequestEnrollFace(message);
     }
   }
 
@@ -441,11 +461,11 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.UiDeviceConnected message) {
-    DAS.Debug("RobotEngineManager", "Device connected: " + message.connectionType.ToString() + "," + message.deviceID.ToString());
+    DAS.Debug("RobotEngineManager.DeviceConnected", "Device connected: " + message.connectionType.ToString() + "," + message.deviceID.ToString());
   }
 
   private void ReceivedSpecificMessage(G2U.RobotDisconnected message) {
-    DAS.Error("RobotEngineManager", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
+    DAS.Error("RobotEngineManager.RobotDisconnected", "Robot " + message.robotID + " disconnected after " + message.timeSinceLastMsg_sec.ToString("0.00") + " seconds.");
     Disconnect();
     Disconnected(DisconnectionReason.RobotDisconnected);
   }
@@ -465,7 +485,7 @@ public class RobotEngineManager : MonoBehaviour {
   }
 
   private void ReceivedSpecificMessage(G2U.InitDebugConsoleVarMessage message) {
-    DAS.Info("RobotEngineManager", " Recieved Debug Console Init");
+    DAS.Info("RobotEngineManager.ReceivedDebugConsoleInit", " Recieved Debug Console Init");
     for (int i = 0; i < message.varData.Length; ++i) {
       Anki.Debug.DebugConsoleData.Instance.AddConsoleVar(message.varData[i]);
     }
@@ -561,7 +581,7 @@ public class RobotEngineManager : MonoBehaviour {
     if (CurrentRobot == null)
       return;
 
-    DAS.Debug("RobotEngineManager", "Deleted object with ID " + message.objectID);
+    DAS.Debug("RobotEngineManager.DeletedObject", "Deleted ID " + message.objectID);
 
     CurrentRobot.SeenObjects.Remove(CurrentRobot.SeenObjects.Find(x => x == message.objectID));
     CurrentRobot.VisibleObjects.Remove(CurrentRobot.VisibleObjects.Find(x => x == message.objectID));
@@ -586,7 +606,7 @@ public class RobotEngineManager : MonoBehaviour {
     Face deleted = CurrentRobot.Faces.Find(x => x == message.faceID);
 
     if (deleted != null) {
-      DAS.Debug("RobotEngineManager", "Deleted face with ID " + message.faceID);
+      DAS.Debug("RobotEngineManager.DeletedFace", "Deleted ID " + message.faceID);
       CurrentRobot.Faces.Remove(deleted);
     }
 
@@ -632,6 +652,12 @@ public class RobotEngineManager : MonoBehaviour {
       _RobotAnimationNames.Add(message.animName);
   }
 
+  private void ReceivedSpecificMessage(G2U.RobotPickedUp message) {
+    if (CurrentRobot != null && CurrentRobotID == message.robotID && OnRobotPickedUp != null) {
+      OnRobotPickedUp();
+    }
+  }
+
   private void ReceivedSpecificMessage(G2U.MoodState message) {
     if (CurrentRobot == null)
       return;
@@ -644,24 +670,6 @@ public class RobotEngineManager : MonoBehaviour {
         //DAS.Info("Mood", "Robot " + message.robotID.ToString() + ": Emotion '" + i + "' = " + message.emotionValues[(int)i]);
         if (OnEmotionRecieved != null) {
           OnEmotionRecieved(i, message.emotionValues[(int)i]);
-        }
-      }
-    }
-  }
-
-  private void ReceivedSpecificMessage(G2U.ProgressionStats message) {
-    if (CurrentRobot == null)
-      return;
-
-    if (message.statValues.Length != (int)ProgressionStatType.Count) {
-      DAS.Error("ProgressionStats.statValues.BadLength", "Expected " + ProgressionStatType.Count + " entries but got " + message.statValues.Length);
-    }
-    else {
-     
-      for (ProgressionStatType i = 0; i < ProgressionStatType.Count; ++i) {
-        // DAS.Info("Progression", "Robot " + message.robotID.ToString() + ": Stat '" + i + "' = " + message.statValues[(int)i]);
-        if (OnProgressionStatRecieved != null) {
-          OnProgressionStatRecieved(i, message.statValues[(int)i]);
         }
       }
     }
@@ -682,6 +690,13 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallback message) {
     if (ReceivedAudioCallback != null) {
       ReceivedAudioCallback(message);
+    }
+  }
+
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RobotEnrolledFace message) {
+    if (OnRobotEnrolledFace != null) {
+      OnRobotEnrolledFace(message);
     }
   }
 
@@ -749,6 +764,13 @@ public class RobotEngineManager : MonoBehaviour {
       }
     }
   }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DebugLatencyMessage message) {
+    if (OnDebugLatencyMsg != null) {
+      OnDebugLatencyMsg(message);
+    }
+  }
+
 
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.UnlockStatus message) {
     if (UnlockablesManager.Instance != null) {
@@ -865,6 +887,17 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
+  private string AddDataPlatformPathsToConfiguration(string configuration) {
+    StringBuilder sb = new StringBuilder(configuration);
+    sb.Remove(configuration.IndexOf('}') - 1, 3);
+    sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
+      ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
+      ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
+      ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
+      "\n}");
+
+    return sb.ToString();
+  }
 
   #region Mocks
 

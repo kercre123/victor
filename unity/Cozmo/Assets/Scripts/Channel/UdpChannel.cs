@@ -184,7 +184,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
           int realPort = ((IPEndPoint)mainServer.LocalEndPoint).Port;
 
           // set up advertisement message
-          DAS.Debug(this, "Advertising IP: " + localIP);
+          DAS.Debug(string.Format("{0}.AdvertisingIP", this), localIP);
           _AdvertisementRegistrationMsg.ip = localIP;
           _AdvertisementRegistrationMsg.toEnginePort = (ushort)realPort;
           _AdvertisementRegistrationMsg.fromEnginePort = (ushort)realPort;
@@ -820,6 +820,7 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
 
   // adapted from http://stackoverflow.com/a/24814027
   public static IPAddress GetLocalIPv4() {
+    #if UNITY_EDITOR || !UNITY_ANDROID
     NetworkInterface[] interfaces = NetworkInterface.GetAllNetworkInterfaces();
     Array.Sort(interfaces, CompareInterfaces);
 
@@ -831,6 +832,26 @@ public class UdpChannel<MessageIn, MessageOut> : ChannelBase<MessageIn, MessageO
       }
     }
     return null;
+    #else
+    int intIPAddress = 0;
+    using(var activityClass = new AndroidJavaClass("com.unity3d.player.UnityPlayer"))
+    using(var contextClass = new AndroidJavaClass("android.content.Context")) 
+    {
+        string wifiString = contextClass.GetStatic<string>("WIFI_SERVICE");
+
+        using(var activityObject = activityClass.GetStatic<AndroidJavaObject>("currentActivity"))
+        using(var wifiManager = activityObject.Call<AndroidJavaObject>("getSystemService", wifiString))
+        using(var connectionInfo = wifiManager.Call<AndroidJavaObject>("getConnectionInfo"))
+        {
+          intIPAddress = connectionInfo.Call<int>("getIpAddress");
+        }
+    }
+
+    IPAddress ipAddress = new IPAddress(BitConverter.GetBytes(intIPAddress));
+    Debug.Log("WiFi IP address: " + ipAddress.ToString());
+ 
+    return ipAddress;
+    #endif
   }
 
   private static int CompareInterfaces(NetworkInterface a, NetworkInterface b) {

@@ -99,6 +99,19 @@ namespace Anki.Cozmo.Viz {
 
     private bool _ShowingObjects = true;
 
+    // Whether or not we should render the Memory Map
+    private bool _RenderMemoryMap = true;
+
+    public bool RenderMemoryMap {
+      get {
+        return _RenderMemoryMap;
+      }
+      set {
+        //TODO: Send engine message here
+        _RenderMemoryMap = value;
+      }
+    }
+
     private readonly Dictionary<uint, Dictionary<uint, VizQuad>> _Quads = new Dictionary<uint, Dictionary<uint, VizQuad>>();
     private readonly Dictionary<uint, VizQuad> _Objects = new Dictionary<uint, VizQuad>();
     private readonly Dictionary<uint, VizLabel> _ObjectLabels = new Dictionary<uint, VizLabel>();
@@ -131,7 +144,7 @@ namespace Anki.Cozmo.Viz {
 
     private void OnEnable() {
       
-      DAS.Info(this, "Enabling VizManager");
+      DAS.Info("VizManager.OnEnable", string.Empty);
       if (Instance != null && Instance != this) {
         Destroy(gameObject);
         return;
@@ -178,7 +191,7 @@ namespace Anki.Cozmo.Viz {
         float limit = Time.realtimeSinceStartup + 2.0f;
         while (_Channel.HasPendingOperations) {
           if (limit < Time.realtimeSinceStartup) {
-            DAS.Warn("VizManager", "Not waiting for disconnect to finish sending.");
+            DAS.Warn("VizManager.Disconnect.DidNotWaitToFinishSending", "Not waiting for disconnect to finish sending.");
             break;
           }
           System.Threading.Thread.Sleep(500);
@@ -200,7 +213,7 @@ namespace Anki.Cozmo.Viz {
     }
 
     private void Disconnected(DisconnectionReason reason) {
-      DAS.Debug("VizManager", "Disconnected: " + reason.ToString());
+      DAS.Debug("VizManager.Disconnected", reason.ToString());
 
       _LastDisconnectionReason = reason;
       if (DisconnectedFromClient != null) {
@@ -664,7 +677,7 @@ namespace Anki.Cozmo.Viz {
     public void SimpleQuadVector(SimpleQuadVectorMessage msg) {
       VizQuad vizQuad;
       if (!_SimpleQuadVectors.TryGetValue(msg.identifier, out vizQuad)) {
-        DAS.Error(this, "Could not find SimpleQuadVector with identifier " + msg.identifier);
+        DAS.Error("VizManager.SimpleQuadVector.IdentifierNotFoundError", "Could not find SimpleQuadVector with identifier " + msg.identifier);
         return;
       }
       foreach (var quad in msg.quads) {
@@ -692,7 +705,7 @@ namespace Anki.Cozmo.Viz {
     public void EndSimpleQuadVector(SimpleQuadVectorMessageEnd end) {
       VizQuad vizQuad;
       if (!_SimpleQuadVectors.TryGetValue(end.identifier, out vizQuad)) {
-        DAS.Error(this, "Could not find SimpleQuadVector with identifier " + end.identifier);
+        DAS.Error("VizManager.SimpleQuadVector.IdentifierNotFoundError", "Could not find SimpleQuadVector with identifier " + end.identifier);
         return;
       }
       vizQuad.EndUpdateQuadList();
@@ -729,7 +742,7 @@ namespace Anki.Cozmo.Viz {
     public void SetPathColor(SetPathColor path) {
       VizPath vizPath;
       if (!_Paths.TryGetValue(path.pathID, out vizPath)) {
-        DAS.Warn(this, "Could not set color for path " + path.pathID);
+        DAS.Warn("VizManager.SetPathColor.CouldNotSetColor", "Could not set color for path " + path.pathID);
         return;
       }
       // Not sure if we are using the color as raw color, as a lookup

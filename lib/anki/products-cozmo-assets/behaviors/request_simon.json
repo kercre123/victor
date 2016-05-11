@@ -3,16 +3,16 @@
   "name" : "RequestSimon",
 
   "zero_block_config": {
-    "request_animName" : "ID_react2face_A01",
-    "deny_animName" : "ID_react2face_disgust",
+    "request_animName" : "requestGame_generic_request",
+    "deny_animName" : "requestGame_generic_deny",
     "minRequestDelay_s" : 20.0
   },
 
   "one_block_config": {
-    "initial_animName" : "ID_catch_start",
-    "preDrive_animName" : "ID_reactTo2ndBlock_01",
-    "request_animName" : "ID_MotionFollow_ReactToMotion",
-    "deny_animName" : "ID_catch_fail",
+    "initial_animName" : "requestGame_generic_initial",
+    "preDrive_animName" : "requestGame_generic_predrive",
+    "request_animName" : "requestGame_generic_request",
+    "deny_animName" : "requestGame_generic_deny",
     "minRequestDelay_s" : 20.0
   },
   
@@ -59,6 +59,7 @@
   [
     "AffectsBlocks",
     "MiniGame",
-    "RequestSimon"
+    "RequestSimon",
+    "FreeplayOne"
   ]
 }

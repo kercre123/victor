@@ -1,8 +1,7 @@
 {
   "behaviorType": "PlayAnim",
   "name": "demo_wakeUp",
-  "animName": "anim_keepAlive_blink_01",
-  "num_loops": 3,
+  "animGroupName": "demo_wakeUp",
   "emotionScorers": [
     {
       "emotionType": "Excited",

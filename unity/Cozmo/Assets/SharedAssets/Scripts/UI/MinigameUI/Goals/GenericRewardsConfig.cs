@@ -12,7 +12,7 @@ namespace Cozmo {
 
     [System.Serializable]
     public class RewardedAction {
-      public GameEvent GameEvent;
+      public SerializableGameEvents GameEvent;
       public int Amount;
     }
   }

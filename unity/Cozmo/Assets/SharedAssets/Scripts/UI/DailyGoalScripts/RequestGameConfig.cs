@@ -4,6 +4,5 @@ using Anki.Cozmo;
 
 public class RequestGameConfig : ScriptableObject {
   public string ChallengeID;
-  public BehaviorGroup RequestBehaviorGroup;
-	
+  public BehaviorGameFlag RequestBehaviorGameFlag;	
 }

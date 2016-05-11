@@ -40,11 +40,12 @@ public class AnimationManager {
   // Map RobotCallbacks to GameEvents instead of AnimationGroups to separate game logic from Animation names
   private Dictionary<GameEvent, RobotCallback> AnimationCallbackDict = new Dictionary<GameEvent, RobotCallback>();
 
-  #if UNITY_IOS && !UNITY_EDITOR
-  public static string sEventMapDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/animationGroupMaps"); } }
-  
-#else
+  #if UNITY_EDITOR
   public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroupMaps"; } }
+  #elif UNITY_IOS
+  public static string sEventMapDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/animationGroupMaps"); } }
+  #elif UNITY_ANDROID
+  public static string sEventMapDirectory { get { return  Path.Combine(Application.persistentDataPath, "/cozmo_resources/assets/animationGroupMaps"); } }
   #endif
 
   public void Initialize() {
@@ -57,11 +58,11 @@ public class AnimationManager {
         LoadAnimationMap(_EventMapFiles[0]);
       }
       else {
-        DAS.Warn(this, string.Format("No Animation Event Map to load in {0}"));
+        DAS.Warn(this, string.Format("No Animation Event Map to load in {0}", sEventMapDirectory));
       }
     }
     else {
-      DAS.Warn(this, string.Format("No Animation Event Map to load in {0}"));
+      DAS.Warn(this, string.Format("No Animation Event Map to load in {0}", sEventMapDirectory));
     }
   }
 
@@ -80,19 +81,19 @@ public class AnimationManager {
     }
   }
 
-  public void GameEventReceived(GameEvent cozEvent) {
+  public void GameEventReceived(GameEventWrapper cozEvent) {
     string animGroup = "";
-    if (!AnimationGroupDict.ContainsKey(cozEvent)) {
-      DAS.Error(this, string.Format("GameEvent {0} doesn't exist within AnimationGroupDict. Have you Initialized the AnimationManager?", cozEvent));
+    // Not containing an event just means this might be only used for game logic not animation.
+    if (!AnimationGroupDict.ContainsKey(cozEvent.GameEventEnum)) {
       return;
     }
-    if (AnimationGroupDict.TryGetValue(cozEvent, out animGroup)) {
+    if (AnimationGroupDict.TryGetValue(cozEvent.GameEventEnum, out animGroup)) {
       RobotCallback newCallback = null;
       if (!string.IsNullOrEmpty(animGroup)) {
-        AnimationCallbackDict.TryGetValue(cozEvent, out newCallback);
-        CurrentRobot.SendAnimationGroup(animGroup, newCallback);
+        AnimationCallbackDict.TryGetValue(cozEvent.GameEventEnum, out newCallback);
+        CurrentRobot.SendAnimationGroup(animGroup, newCallback, QueueActionPosition.NEXT);
       }
-      else if (AnimationCallbackDict.TryGetValue(cozEvent, out newCallback)) {
+      else if (AnimationCallbackDict.TryGetValue(cozEvent.GameEventEnum, out newCallback)) {
         DAS.Warn(this, string.Format("GameEvent {0} has an animation callback, but no animation group", cozEvent));
         newCallback.Invoke(true);
       }

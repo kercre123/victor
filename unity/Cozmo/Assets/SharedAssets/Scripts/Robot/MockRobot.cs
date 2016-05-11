@@ -96,20 +96,6 @@ public class MockRobot : IRobot {
     // won't get called
   }
 
-  private readonly StatContainer _ProgressionStats = new StatContainer();
-
-  public int GetProgressionStat(Anki.Cozmo.ProgressionStatType index) {
-    return _ProgressionStats[index];
-  }
-
-  public StatContainer GetProgressionStats() {
-    return _ProgressionStats;
-  }
-
-  public void AddToProgressionStat(Anki.Cozmo.ProgressionStatType index, int deltaValue) {
-    _ProgressionStats[index] += deltaValue;
-  }
-
   public void VisualizeQuad(Vector3 lowerLeft, Vector3 upperRight) {
     // Do nothing
   }
@@ -122,30 +108,10 @@ public class MockRobot : IRobot {
     _EmotionValues[(int)type] = value;
   }
 
-  public void SetProgressionStat(Anki.Cozmo.ProgressionStatType type, int value) {
-    _ProgressionStats[type] = value;
-  }
-
-  public void SetProgressionStats(StatContainer stats) {
-    _ProgressionStats.Set(stats);
-  }
-
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
 
   }
-
-  public void SetEnableAllBehaviors(bool enabled) {
-    // Do nothing
-  }
-
-  public void SetEnableBehaviorGroup(Anki.Cozmo.BehaviorGroup behaviorGroup, bool enabled) {
-    // Do nothing
-  }
-
-  public void SetEnableBehavior(string behaviorName, bool enabled) {
-    // Do nothing
-  }
-
+		
   public void SetEnableCliffSensor(bool enabled) {
     // Do nothing
   }
@@ -158,12 +124,10 @@ public class MockRobot : IRobot {
     
   }
 
-  public void ClearAllBehaviorScoreOverrides() {
-    // Do nothing
-  }
+  // enable/disable games available for Cozmo to request
+  public void SetAvailableGames(BehaviorGameFlag games)
+  {
 
-  public void OverrideBehaviorScore(string behaviorName, float newScore) {
-    // Do nothing
   }
 
   public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
@@ -179,8 +143,6 @@ public class MockRobot : IRobot {
   }
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
-    // we can update our display face
-    CozmoFace.DisplayProceduralFace(faceAngle, faceCenter, faceScale, leftEyeParams, rightEyeParams);
   }
 
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
@@ -275,15 +237,8 @@ public class MockRobot : IRobot {
     
   }
 
-  public void PrepareFaceNameAnimation(int faceId, string name) {
-  
-  }
-
   public void SendAnimation(string animName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
-    // we can actually fake the callback by using CozmoFace
-    float len = CozmoFace.PlayAnimation(animName);
-
-    QueueCallback(len, callback);
+    QueueCallback(0.5f, callback);
   }
 
   public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
@@ -840,5 +795,21 @@ public class MockRobot : IRobot {
   }
 
   #endregion
+
+  #region PressDemoMessages
+
+  public void TransitionToNextDemoState() {
   
+  }
+
+  public void StartDemoWithEdge(bool demoWithEdge) {
+    
+  }
+
+  #endregion
+
+
+  public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+    
+  }
 }

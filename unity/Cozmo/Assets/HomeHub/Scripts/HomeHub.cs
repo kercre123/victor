@@ -68,6 +68,7 @@ namespace Cozmo.HomeHub {
     }
 
     private void ShowStartView() {
+      RobotEngineManager.Instance.CurrentRobot.SetLiftHeight(0);
       RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(false);
       _StartViewInstance = UIManager.OpenView(_StartViewPrefab);
       _StartViewInstance.OnConnectClicked += HandleConnectClicked;
@@ -80,7 +81,7 @@ namespace Cozmo.HomeHub {
 
     private void ShowTimelineDialog() {
       // Create dialog with the game prefabs
-      _HomeViewInstance = UIManager.OpenView(_HomeViewPrefab, verticalCanvas: true);
+      _HomeViewInstance = UIManager.OpenView(_HomeViewPrefab);
       _HomeViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
       _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
       _HomeViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
@@ -160,8 +161,7 @@ namespace Cozmo.HomeHub {
       _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab, 
         newView => {
           newView.Initialize(_ChallengeStatesById[challenge].Data, buttonTransform);
-        }, 
-        verticalCanvas: true);
+        });
 
       // React to when we should start the challenge.
       _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;

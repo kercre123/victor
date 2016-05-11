@@ -29,6 +29,8 @@ public static class CozmoBinding {
 
   private static bool initialized = false;
 
+  #if UNITY_IOS || UNITY_STANDALONE
+
   [DllImport("__Internal")]
   private static extern int cozmo_startup(string configuration_data);
 
@@ -40,6 +42,22 @@ public static class CozmoBinding {
 
   [DllImport("__Internal")]
   private static extern void cozmo_send_to_clipboard(string logData);
+
+  #elif UNITY_ANDROID
+
+  [DllImport("cozmoEngine")]
+  private static extern int cozmo_startup(string configuration_data);
+
+  [DllImport("cozmoEngine")]
+  private static extern int cozmo_shutdown();
+
+  [DllImport("cozmoEngine")]
+  private static extern int cozmo_wifi_setup(string wifiSSID, string wifiPasskey);
+
+  [DllImport("cozmoEngine")]
+  private static extern void cozmo_send_to_clipboard(string logData);
+
+  #endif
 
   public static void Startup(string configurationData) {
     if (initialized) {

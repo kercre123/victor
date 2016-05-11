@@ -11,6 +11,8 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      _SpeedTapGame.StartCozmoPickedUpDisruptionDetection();
+      _SpeedTapGame.StartCozmoCubeMovedDisruptionDetection();
 
       if (_SpeedTapGame.PlayerBlock == null) {
         foreach (var kvp in _CurrentRobot.LightCubes) {
@@ -55,7 +57,7 @@ namespace SpeedTap {
     private void HandlePlayerCubeTap() {
       // Ben wants to use the same sound for player tap and for Cozmo tap
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CubeCozmoTap);
-      _StateMachine.SetNextState(new SpeedTapStatePlayNewHand());
+      _StateMachine.SetNextState(new SpeedTapHandCubesOff());
     }
 
     public override void Exit() {

@@ -14,67 +14,87 @@
     },
     {
       "CladEvent": "OnFollowMotionLookDown",
-      "AnimName": ""
+      "AnimName": "followMotionLookDown"
     },
     {
       "CladEvent": "OnFollowMotionLookUp",
-      "AnimName": ""
+      "AnimName": "followMotionLookUp"
     },
     {
       "CladEvent": "OnFollowMotionLookUpAndDown",
-      "AnimName": ""
+      "AnimName": "followMotionLookUpAndDown"
     },
     {
       "CladEvent": "OnFollowMotionReact",
-      "AnimName": ""
+      "AnimName": "followMotionReact"
     },
     {
       "CladEvent": "OnSpeedtapStarted",
       "AnimName": ""
     },
     {
-      "CladEvent": "OnSpeedtapHandWin",
-      "AnimName": "speedTap_WinHand"
+      "CladEvent": "OnSpeedtapHandCozmoWin",
+      "AnimName": "ag_speedTap_winHand"
     },
     {
-      "CladEvent": "OnSpeedtapHandLose",
-      "AnimName": "speedTap_LoseHand"
+      "CladEvent": "OnSpeedtapHandPlayerWin",
+      "AnimName": "ag_speedTap_loseHand"
     },
     {
-      "CladEvent": "OnSpeedtapRoundWin",
-      "AnimName": "speedTap_WinRound"
+      "CladEvent": "OnSpeedtapRoundCozmoWinLowIntensity",
+      "AnimName": "ag_speedTap_winRound_intensity01"
     },
     {
-      "CladEvent": "OnSpeedtapRoundLose",
-      "AnimName": "speedTap_LoseRound"
+      "CladEvent": "OnSpeedtapRoundCozmoWinHighIntensity",
+      "AnimName": "ag_speedTap_winRound_intensity02"
     },
     {
-      "CladEvent": "OnSpeedtapSessionWin",
-      "AnimName": "speedTap_WinSession"
+      "CladEvent": "OnSpeedtapRoundPlayerWinLowIntensity",
+      "AnimName": "ag_speedTap_loseRound_intensity01"
     },
     {
-      "CladEvent": "OnSpeedtapSessionLose",
-      "AnimName": "speedTap_LoseSession"
+      "CladEvent": "OnSpeedtapRoundPlayerWinHighIntensity",
+      "AnimName": "ag_speedTap_loseRound_intensity02"
+    },
+    {
+      "CladEvent": "OnSpeedtapGameCozmoWinLowIntensity",
+      "AnimName": "ag_speedTap_winGame_intensity02"
+    },
+    {
+      "CladEvent": "OnSpeedtapGameCozmoWinHighIntensity",
+      "AnimName": "ag_speedTap_winGame_intensity03"
+    },
+    {
+      "CladEvent": "OnSpeedtapGamePlayerWinLowIntensity",
+      "AnimName": "ag_speedTap_loseGame_intensity02"
+    },
+    {
+      "CladEvent": "OnSpeedtapGamePlayerWinHighIntensity",
+      "AnimName": "ag_speedTap_loseGame_intensity03"
     },
     {
       "CladEvent": "OnSpeedtapGetOut",
-      "AnimName": "speedTap_GetOut"
+      "AnimName": "ag_speedTap_getOut"
     },
     {
       "CladEvent": "OnSpeedtapCozmoConfirm",
-      "AnimName": "speedTap_Tap"
+      "AnimName": "ag_speedTap_tap"
     },
     {
       "CladEvent": "OnSpeedtapTap",
-      "AnimName": "speedTap_Tap"
+      "AnimName": "ag_speedTap_tap"
     },
     {
       "CladEvent": "OnSpeedtapFakeout",
-      "AnimName": "speedTap_Fake"
+      "AnimName": "ag_speedTap_fake"
     },
     {
       "CladEvent": "OnSpeedtapIdle",
-      "AnimName": "speedTap_Peek"
+      "AnimName": "ag_speedTap_peek"
+    },
+    {
+      "CladEvent": "OnLearnedPlayerName",
+      "AnimName": "faceEnrollment_LearnedPlayerName"
     }
   ]
 }
