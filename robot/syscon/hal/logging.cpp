@@ -4,7 +4,7 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "anki/cozmo/robot/logging.h"
 
-int Anki::Cozmo::RobotInterface::SendLog(const LogLevel level, const uint16_t name, const char* nameString, const uint16_t formatId, const char* formatString, const uint8_t numArgs, ...)
+int Anki::Cozmo::RobotInterface::SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...)
 {
   using namespace Anki::Cozmo::RobotInterface;
   static u32 missedMessages = 0;

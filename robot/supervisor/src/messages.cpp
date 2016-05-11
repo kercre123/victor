@@ -1016,52 +1016,7 @@ namespace Anki {
 
 
     namespace RobotInterface {
-      
-#if REDIRECT_ANKI_LOGS_TO_STDOUT
-#ifndef SIMULATOR
-#error REDIRECT_ANKI_LOGS_TO_STDOUT not supported in Keil build
-#endif
-      int SendLog(const LogLevel level, const uint16_t name, const char* nameString, const uint16_t formatId, const char* fmtString, const uint8_t numArgs, ...)
-      {
-        size_t BUFSIZE = 1024;
-        char buf[BUFSIZE];
-        
-        // Write log level
-        const char* levelStr = "";
-        switch(level) {
-          case ANKI_LOG_LEVEL_DEBUG:
-            levelStr = "DEBUG";
-            break;
-          case ANKI_LOG_LEVEL_INFO:
-            levelStr = "INFO";
-            break;
-          case ANKI_LOG_LEVEL_EVENT:
-            levelStr = "EVENT";
-            break;
-          case ANKI_LOG_LEVEL_WARN:
-            levelStr = "WARN";
-            break;
-          case ANKI_LOG_LEVEL_ERROR:
-            levelStr = "ERROR";
-            break;
-          default:
-            break;
-        }
-        
-        // Write event name
-        int charsWritten = snprintf(buf, sizeof(buf), "[%s] - %s: ", levelStr, nameString);
-        
-        va_list argptr;
-        va_start(argptr, numArgs);
-        vsnprintf(buf + charsWritten, BUFSIZE - charsWritten, fmtString, argptr);
-        va_end(argptr);
-        
-        printf("%s\n", buf);
-
-        return 0;
-      }
-#else
-      int SendLog(const LogLevel level, const uint16_t name, const char* nameString, const uint16_t formatId, const char* fmtString, const uint8_t numArgs, ...)
+      int SendLog(const LogLevel level, const uint16_t name, const uint16_t formatId, const uint8_t numArgs, ...)
       {
         static u32 missedMessages = 0;
         PrintTrace m;
@@ -1096,7 +1051,6 @@ namespace Anki {
         }
         return 0;
       }
-#endif //#if REDIRECT_ANKI_LOGS_TO_STDOUT
     } // namespace RobotInterface
 
     namespace HAL {
