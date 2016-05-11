@@ -18,16 +18,26 @@
       "/{*}"
     ]
   },
-  "pressDemo.faceEnrollTitle": {
+  "pressDemo.faceEnrollRequestTitle": {
     "translation": "Cozmo wants to meet you"
   },
-  "pressDemo.faceEnrollDesc": {
+  "pressDemo.faceEnrollRequestDesc": {
     "translation": "Select Yes to meet Cozmo"
   },
-  "pressDemo.speedTapTitle": {
-    "translation": "Cozmo Want To Play Speed Tap"
+  "pressDemo.speedTapRequestTitle": {
+    "translation": "Cozmo Want To Play"
   },
-  "pressDemo.speedTapDesc": {
-    "translation": "Select Yes to play Speed Tap"
+  "pressDemo.speedTapRequestDesc": {
+    "translation": "Speed Tap"
+  },
+  "pressDemo.speedTapRequestAgainTitle": {
+    "translation": "Cozmo Really Wants To Play"
+  },
+  "pressDemo.speedTapRequestAgainDesc": {
+    "translation": "Speed Tap"
+  }
+  ,
+  "pressDemo.speedTapRequestAgainDesc": {
+    "translation": "Oh alright!"
   }
 }

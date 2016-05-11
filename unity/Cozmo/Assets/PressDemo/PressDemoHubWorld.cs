@@ -63,17 +63,26 @@ public class PressDemoHubWorld : HubWorldBase {
     alertView.SetCloseButtonEnabled(false);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartFaceEnrollmentActivity);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
-    alertView.TitleLocKey = "#pressDemo.faceEnrollTitle";
-    alertView.DescriptionLocKey = "#pressDemo.faceEnrollDesc";
+    alertView.TitleLocKey = "#pressDemo.faceEnrollRequestTitle";
+    alertView.DescriptionLocKey = "#pressDemo.faceEnrollRequestDesc";
   }
 
   private void HandleRequestSpeedTap(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
     Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
-    alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
-    alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
-    alertView.TitleLocKey = "#pressDemo.speedTapTitle";
-    alertView.DescriptionLocKey = "#pressDemo.speedTapDesc";
+    if (message.firstRequest) {
+      alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
+      alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
+      alertView.TitleLocKey = "#pressDemo.speedTapRequestTitle";
+      alertView.DescriptionLocKey = "#pressDemo.speedTapRequestDesc";
+    }
+    else {
+      alertView.SetPrimaryButton("#pressDemo.ohAlright", StartSpeedTapGame);
+      alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
+      alertView.TitleLocKey = "#pressDemo.speedTapRequestAgainTitle";
+      alertView.DescriptionLocKey = "#pressDemo.speedTapRequestAgainDesc";
+    }
+
   }
 
   private void HandleStartButtonPressed(bool startWithEdge) {

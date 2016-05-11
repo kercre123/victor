@@ -87,6 +87,9 @@
   "label.connect": {
     "translation": "Connect"
   },
+  "label.loading": {
+    "translation": "Loading"
+  },
   "button.save": {
     "translation": "Save"
   },

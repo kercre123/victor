@@ -66,6 +66,7 @@ public class ConnectDialog : MonoBehaviour {
     }
 
     Application.targetFrameRate = 30;
+    Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
     Input.gyro.enabled = true;
     Input.compass.enabled = true;
@@ -77,6 +78,8 @@ public class ConnectDialog : MonoBehaviour {
     #if !UNITY_EDITOR
     _SimButton.gameObject.SetActive(false);
     #endif
+
+    _ConnectButton.Text = Localization.Get(LocalizationKeys.kLabelConnect);
   }
 
   private void HandleConnectButton() {
@@ -116,7 +119,7 @@ public class ConnectDialog : MonoBehaviour {
     _Connecting = true;
     _ConnectButton.Interactable = false;
     _SimButton.Interactable = false;
-    _ConnectButton.Text = "LOADING";
+    Localization.Get(LocalizationKeys.kLabelLoading);
 
     _Simulated = sim;
     RobotEngineManager.Instance.Disconnect();
@@ -174,8 +177,6 @@ public class ConnectDialog : MonoBehaviour {
     if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled) {
       ConsoleLogManager.Instance.EnableSOSLogs(true);
     }
-
-    Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
     _ConnectionStatus.text = "";
     DAS.Info(this, "Robot Connected!");

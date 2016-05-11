@@ -188,6 +188,15 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region PressDemoStrings
+
+  public const string kPressDemoFaceEnrollTitle = "pressDemo.faceEnrollTitle";
+  public const string kPressDemoFaceEnrollDesc = "pressDemo.faceEnrollDesc";
+  public const string kPressDemoSpeedTapTitle = "pressDemo.speedTapTitle";
+  public const string kPressDemoSpeedTapDesc = "pressDemo.speedTapDesc";
+
+  #endregion
+
   #region SimpleStrings
 
   public const string kButtonQuitGame = "button.quitGame";
@@ -213,6 +222,7 @@ public static class LocalizationKeys {
   public const string kDailyGoalComplete = "dailyGoal.Complete";
   public const string kTimelineWeekLabel = "timeline.weekLabel";
   public const string kLabelConnect = "label.connect";
+  public const string kLabelLoading = "label.loading";
   public const string kButtonSave = "button.save";
   public const string kCozmoTabTitle = "cozmoTab.title";
   public const string kCozmoTabHexCount = "cozmoTab.hexCount";

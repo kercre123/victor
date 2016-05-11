@@ -142,8 +142,6 @@ public class MockRobot : IRobot {
   }
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
-    // we can update our display face
-    CozmoFace.DisplayProceduralFace(faceAngle, faceCenter, faceScale, leftEyeParams, rightEyeParams);
   }
 
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
@@ -239,10 +237,7 @@ public class MockRobot : IRobot {
   }
 
   public void SendAnimation(string animName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
-    // we can actually fake the callback by using CozmoFace
-    float len = CozmoFace.PlayAnimation(animName);
-
-    QueueCallback(len, callback);
+    QueueCallback(0.5f, callback);
   }
 
   public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
