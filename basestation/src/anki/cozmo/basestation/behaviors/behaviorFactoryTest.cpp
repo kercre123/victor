@@ -450,6 +450,8 @@ namespace Cozmo {
         
         f32 distToCamCalibPose = _camCalibPose.GetTranslation().x() - robot.GetPose().GetTranslation().x();
         DriveStraightAction* action = new DriveStraightAction(robot, distToCamCalibPose, -100);
+        action->SetAccel(1000);
+        action->SetDecel(1000);
         
         // Go to camera calibration pose
         StartActing(robot, action,
@@ -520,7 +522,12 @@ namespace Cozmo {
       {
         // Move head down to line up for readToolCode.
         // Hopefully this reduces some readToolCode errors
-        StartActing(robot, new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE));
+        MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE);
+        DriveStraightAction* backupAction = new DriveStraightAction(robot, -25.0, -100.f);
+        backupAction->SetAccel(1000);
+        backupAction->SetDecel(1000);
+        CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {headAction, backupAction});
+        StartActing(robot, compoundAction);
         
         
         // Start calibration computation
@@ -536,17 +543,11 @@ namespace Cozmo {
       {
         if (_calibrationReceived) {
           
-          // Backup and read tool code at the same time.
-          // Backing up so that it is more likely to execute a straight line path to the
-          // the following predock pose.
           ReadToolCodeAction* toolCodeAction = new ReadToolCodeAction(robot, false);
-          DriveStraightAction* backupAction = new DriveStraightAction(robot, -25.0, -100.f);
-          CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {toolCodeAction, backupAction});
-          toolCodeAction->ShouldEmitCompletionSignal(true);
           
           if (USING_EP3) {
           // Read lift tool code
-          StartActing(robot, compoundAction,
+          StartActing(robot, toolCodeAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
                           EndTest(robot, FactoryTestResultCode::READ_TOOL_CODE_FAILED);
@@ -588,8 +589,7 @@ namespace Cozmo {
                                                               });
                         }
                         return true;
-                      },
-                      toolCodeAction->GetTag());
+                      });
           }; // if (USING_EP3)
 
           SetCurrState(FactoryTestState::ReadLiftToolCode);
