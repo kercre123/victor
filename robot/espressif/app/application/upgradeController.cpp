@@ -361,6 +361,8 @@ LOCAL bool TaskOtaRTIP(uint32 param)
         {
           AnkiInfo( 29, "UpgradeController", 180, "RTIP OTA transfer complete", 0);
 
+          CheckForAndDoStaged();
+
           if (i2spiBootloaderCommandDone())
           {
             i2spiSwitchMode(I2SPI_NORMAL);
