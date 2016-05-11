@@ -59,28 +59,30 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
+    DAS.Debug("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Face Enroll");
     Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartFaceEnrollmentActivity);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
-    alertView.TitleLocKey = "#pressDemo.faceEnrollRequestTitle";
-    alertView.DescriptionLocKey = "#pressDemo.faceEnrollRequestDesc";
+    alertView.TitleLocKey = "pressDemo.faceEnrollRequestTitle";
+    alertView.DescriptionLocKey = "pressDemo.faceEnrollRequestDesc";
   }
 
   private void HandleRequestSpeedTap(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
+    DAS.Debug("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Speed Tap");
     Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
     if (message.firstRequest) {
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
       alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
-      alertView.TitleLocKey = "#pressDemo.speedTapRequestTitle";
-      alertView.DescriptionLocKey = "#pressDemo.speedTapRequestDesc";
+      alertView.TitleLocKey = "pressDemo.speedTapRequestTitle";
+      alertView.DescriptionLocKey = "pressDemo.speedTapRequestDesc";
     }
     else {
-      alertView.SetPrimaryButton("#pressDemo.ohAlright", StartSpeedTapGame);
+      alertView.SetPrimaryButton("pressDemo.ohAlright", StartSpeedTapGame);
       alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
-      alertView.TitleLocKey = "#pressDemo.speedTapRequestAgainTitle";
-      alertView.DescriptionLocKey = "#pressDemo.speedTapRequestAgainDesc";
+      alertView.TitleLocKey = "pressDemo.speedTapRequestAgainTitle";
+      alertView.DescriptionLocKey = "pressDemo.speedTapRequestAgainDesc";
     }
 
   }

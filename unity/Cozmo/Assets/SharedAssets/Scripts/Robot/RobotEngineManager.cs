@@ -86,6 +86,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.RobotEnrolledFace> OnRobotEnrolledFace;
   public event Action<Anki.Cozmo.ExternalInterface.RequestEnrollFace> OnRequestEnrollFace;
   public event Action<int> OnDemoState;
+  public event Action<Anki.Cozmo.ExternalInterface.AnimationEvent> OnRobotAnimationEvent;
 
   #region Audio Callback events
 
@@ -426,6 +427,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.DemoState:
       ReceivedSpecificMessage(message.DemoState);
       break;
+    case G2U.MessageEngineToGame.Tag.AnimationEvent:
+      ReceiveSpecificMessage(message.AnimationEvent);
+      break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
@@ -441,6 +445,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.RequestEnrollFace message) {
     if (OnRequestEnrollFace != null) {
       OnRequestEnrollFace(message);
+    }
+  }
+
+  private void ReceiveSpecificMessage(Anki.Cozmo.ExternalInterface.AnimationEvent message) {
+    if (OnRobotAnimationEvent != null) {  
+      OnRobotAnimationEvent(message);
     }
   }
 
@@ -901,10 +911,10 @@ public class RobotEngineManager : MonoBehaviour {
     StringBuilder sb = new StringBuilder(configuration);
     sb.Remove(configuration.IndexOf('}') - 1, 3);
     sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
-      ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
-      "\n}");
+    ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
+    ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
+    ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
+    "\n}");
 
     return sb.ToString();
   }
