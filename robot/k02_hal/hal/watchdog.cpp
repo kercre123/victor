@@ -63,6 +63,6 @@ void WDOG_EWM_IRQHandler(void)
 {
   if (++reset_count > MAXIMUM_RESET_COUNT) {
     reset_count = 0;
-    Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
+    //Anki::Cozmo::HAL::SPI::EnterRecoveryMode();
   }
 }

@@ -276,6 +276,7 @@ message DebugSetRTTO
 message DisplayNumber
 {
   uint_32 value,
+  uint_8  digits,
   uint_8  x,
   uint_8  y
 }

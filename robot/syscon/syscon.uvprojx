@@ -329,7 +329,7 @@
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
             <VariousControls>
-              <MiscControls>--gnu -DLEGACY_CUBES</MiscControls>
+              <MiscControls>--gnu</MiscControls>
               <Define>NRF51,COZMO_ROBOT,SOFTDEVICE_PRESENT,BLE_STACK_SUPPORT_REQD</Define>
               <Undefine></Undefine>
               <IncludePath>./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/ble_dtm;./components/ble/common;./components/drivers_nrf/hal;./components/libraries/util;./components/libraries/timer;../generated/clad/robot;../include;./crypto;./hal;./cubes;.</IncludePath>
@@ -561,14 +561,14 @@
           <GroupName>legacy_cubes</GroupName>
           <Files>
             <File>
-              <FileName>micro_esb.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\cubes\legacy\micro_esb.cpp</FilePath>
-            </File>
-            <File>
               <FileName>legacy.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\cubes\legacy\legacy.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>legacy_micro_esb.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\cubes\legacy\legacy_micro_esb.cpp</FilePath>
             </File>
           </Files>
         </Group>
