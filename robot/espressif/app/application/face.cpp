@@ -398,12 +398,11 @@ namespace Face {
   }
 
 
-  void FaceDisplayNumber(u32 value, int x, int y)
+  void FaceDisplayNumber(int digits, u32 value, int x, int y)
   {
-    const int TOTAL_DIGITS = 4;
-    const int NUMBER_WIDTH = TOTAL_DIGITS * 16;
+    const int number_width = digits * 16;
 
-    if (x + NUMBER_WIDTH > COLS) {
+    if (x + number_width > COLS) {
       return ;
     }
 
@@ -413,7 +412,7 @@ namespace Face {
 
 
     for (int c = 0; c < 4; c++) {
-      int ch = (value >> ((TOTAL_DIGITS - 1 - c) * 4)) & 0xF;
+      int ch = (value >> ((digits - 1 - c) * 4)) & 0xF;
       for (int x = 0; x < 16; x++) {
         u64 line = DIGITS[ch][x];
         *(pixels++) = line << y;
@@ -425,7 +424,7 @@ namespace Face {
 
     if (bottom > PAGES) { bottom = PAGES; }
 
-    Face::CreateRects((u64*) frame, x, top, x + NUMBER_WIDTH, bottom);
+    Face::CreateRects((u64*) frame, x, top, x + number_width, bottom);
   }
 
   // Display text on the screen until turned off

@@ -44,7 +44,7 @@ namespace Anki {
         void FaceDebugPrintf(const char *format, ...);
 
         // Display a large font number on the screen
-        void FaceDisplayNumber(u32 value, int x, int y);
+        void FaceDisplayNumber(int digits, u32 value, int x, int y);
       }
     } // Face
   } // Cozmo

@@ -275,7 +275,7 @@ namespace Anki {
             case RobotInterface::EngineToRobot::Tag_oledDisplayNumber:
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              Face::FaceDisplayNumber(msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
+              Face::FaceDisplayNumber(msg.oledDisplayNumber.digits, msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_testState:

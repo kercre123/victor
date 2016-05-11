@@ -26,6 +26,8 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
+//#define TESTING_CUBES
+
 using namespace Anki::Cozmo;
 
 static void EnterState(RadioState state);
@@ -208,11 +210,16 @@ void uesb_event_handler(uint32_t flags)
     // Attempt to locate existing accessory and repair
     slot = LocateAccessory(advert.id);
     if (slot < 0) {
+      #ifdef TESTING_CUBES
+      static int assign_slot = 0;
+      Radio::assignProp(assign_slot++, advert.id);
+      #endif
+      
       ObjectDiscovered msg;
       msg.factory_id = advert.id;
       msg.rssi = rx_payload.rssi;
       RobotInterface::SendMessage(msg);
-            
+
       // Do not auto allocate the cube
       break ;
     }
@@ -239,6 +246,8 @@ void uesb_event_handler(uint32_t flags)
     {
       accessories[slot].allocated = true;
       accessories[slot].active = true;
+      accessories[slot].tx_state.msg_id = 0;
+
       SendObjectConnectionState(slot);
     }
 
@@ -340,6 +349,10 @@ void Radio::updateLights() {
       for (int i = 0; i < 3; i++) {
         acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];
       }
+      
+      #ifdef TESTING_CUBES
+      memset(acc->tx_state.ledStatus, 0x10, sizeof(acc->tx_state.ledStatus));
+      #endif
     }
   }
 }

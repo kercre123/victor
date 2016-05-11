@@ -1,10 +1,22 @@
 from __future__ import print_function
 
 from zlib import crc32
-from hashlib import sha1
-from sys import argv
 from struct import pack
 from elfInfo import rom_info, HEADER_LENGTH
+
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument("output", type=str,
+                    help="target location for file")
+parser.add_argument("-r", "--rtip", type=str, default="./releases/robot.axf",
+                    help="K02 ELF Image")
+parser.add_argument("-b", "--body", type=str, default="./releases/syscon.axf",
+                    help="NRF ELF Image")
+parser.add_argument("-w", "--wifi", type=str, default="./releases/esp.user.bin",
+                    help="ESP Raw binary image")
+parser.add_argument("-s", "--sign", action="store_true",
+					help="Include signature block")
+args = parser.parse_args()
 
 BLOCK_LENGTH = 0x800
 
@@ -25,15 +37,20 @@ def get_image(fn):
 	return rom_data, base_addr
 
 # This generates a single file for RTIP that is actually both
-with open(argv[-1], "wb") as fo:
-	for fn in argv[1:-1]:		
-		kind, fn = fn.split(":")
-		# Write to our safe
-		rom_data, base_addr = get_image(fn)
+with open(args.output, "wb") as fo:
+	for kind, fn in [('body', args.body), ('wifi', args.wifi), ('rtip', args.rtip)]:
+		if kind == 'wifi':
+			# DISABLED UNTIL DANIEL GETS THIS WORKING
+			continue
 
-		for block, data in enumerate(chunk(rom_data, BLOCK_LENGTH)):
+			base_addr = 0x40000000
+			rom_data = open(fn, "rb").read()
+			print (len(rom_data))
+		else:	
+			rom_data, base_addr = get_image(fn)
 			if kind == 'body':
 				base_addr |= 0x80000000
 
+		for block, data in enumerate(chunk(rom_data, BLOCK_LENGTH)):
 			fo.write(data)
 			fo.write(pack("<II", block*BLOCK_LENGTH+base_addr, crc32(data)))

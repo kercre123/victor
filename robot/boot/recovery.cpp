@@ -252,14 +252,14 @@ void EnterRecovery() {
           SPI0_PUSHR_SLAVE = STATE_NACK;
           break ;
         }
-                
+
         ClearEvilWord();
 
         *recovery_word = 0;
         SPI0_PUSHR_SLAVE = STATE_IDLE;
 
         return ;
-     
+
       case COMMAND_CHECK_SIG:
         SPI0_PUSHR_SLAVE = (CheckSig() && CheckBodySig()) ? STATE_IDLE : STATE_NACK;
         break ;

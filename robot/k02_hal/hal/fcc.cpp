@@ -124,6 +124,7 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
 
   Anki::Cozmo::RobotInterface::DisplayNumber msg;
 
+  msg.digits = 1;
   msg.x = 32;
   
   displayNum = !displayNum;
