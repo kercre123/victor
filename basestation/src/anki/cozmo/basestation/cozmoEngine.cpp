@@ -48,7 +48,7 @@
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 #endif
 
-#define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 1
+#define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
 #define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
 
 #if REMOTE_CONSOLE_ENABLED
@@ -275,8 +275,8 @@ Result CozmoEngine::Update(const float currTime_sec)
     return RESULT_FAIL;
   }
   
-#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
   {
     static bool firstUpdate = true;
     static double lastUpdateTimeMs = 0.0;
