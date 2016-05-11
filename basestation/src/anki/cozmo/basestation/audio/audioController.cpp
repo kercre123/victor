@@ -19,15 +19,13 @@
 #include "clad/audio/audioParameterTypes.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/time/universalTime.h"
 #include "util/logging/logging.h"
 #include <unordered_map>
 
 #include "anki/cozmo/basestation/audio/audioControllerPluginInterface.h"
 #include "anki/cozmo/basestation/audio/audioWaveFileReader.h"
 
-#if HijackAudioPlugInDebugLogs
-#include "util/time/universalTime.h"
-#endif
 // Allow the build to include/exclude the audio libs
 //#define EXCLUDE_ANKI_AUDIO_LIBS 0
 
@@ -43,7 +41,12 @@
 #define USE_AUDIO_ENGINE 0
 
 #endif
-
+#define ENABLE_AC_SLEEP_TIME_DIAGNOSTICS 1
+// RUN_TIME requires SLEEP_TIME
+#define ENABLE_AC_RUN_TIME_DIAGNOSTICS 1
+#define UPDATE_LOOP_SLEEP_DURATION_MS 10
+#define STR_HELPER(x) #x
+#define STR(x) STR_HELPER(x)
 
 namespace Anki {
 namespace Cozmo {
@@ -106,7 +109,7 @@ AudioController::AudioController( Util::Data::DataPlatform* dataPlatfrom )
   
     // Setup our update method to be called periodically
     _dispatchQueue = Util::Dispatch::Create();
-    const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(10);
+    const std::chrono::milliseconds sleepDuration = std::chrono::milliseconds(UPDATE_LOOP_SLEEP_DURATION_MS);
     _taskHandle = Util::Dispatch::ScheduleCallback( _dispatchQueue, sleepDuration, std::bind( &AudioController::Update, this ) );
   }
 }
@@ -374,8 +377,45 @@ RobotAudioBuffer* AudioController::GetAudioBuffer( int32_t plugInId ) const
 void AudioController::Update()
 {
 #if USE_AUDIO_ENGINE
+  
+#if ENABLE_AC_SLEEP_TIME_DIAGNOSTICS
+  const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  {
+    static bool firstUpdate = true;
+    static double lastUpdateTimeMs = 0.0;
+    if (! firstUpdate)
+    {
+      const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
+      const double maxLatency = UPDATE_LOOP_SLEEP_DURATION_MS + 15.;
+      if (timeSinceLastUpdate > maxLatency)
+      {
+        Anki::Util::sEventF("audio_controller.update.sleep.slow", {{DDATA,STR(UPDATE_LOOP_SLEEP_DURATION_MS)}}, "%.2f", timeSinceLastUpdate);
+      }
+    }
+    lastUpdateTimeMs = startUpdateTimeMs;
+    firstUpdate = false;
+  }
+#endif // ENABLE_AC_SLEEP_TIME_DIAGNOSTICS
+  
+  
   // NOTE: Don't need time delta
   _audioEngine->Update( 0.0 );
+
+
+
+#if ENABLE_AC_RUN_TIME_DIAGNOSTICS
+  {
+    const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+    const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
+    const double maxUpdateDuration = UPDATE_LOOP_SLEEP_DURATION_MS;
+    if (updateLengthMs > maxUpdateDuration)
+    {
+      Anki::Util::sEventF("audio_controller.update.run.slow", {{DDATA,STR(UPDATE_LOOP_SLEEP_DURATION_MS)}}, "%.2f", updateLengthMs);
+    }
+  }
+#endif // ENABLE_AC_RUN_TIME_DIAGNOSTICS
+
+
 #endif
 }
 

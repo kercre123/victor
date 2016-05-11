@@ -694,7 +694,7 @@ namespace Cozmo {
         _nextImg = {};
         
         Unlock();
-        
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
       } else if(!_nextImg.IsEmpty()) {
         Lock();
         _currentImg        = _nextImg;
