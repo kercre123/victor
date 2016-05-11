@@ -28,6 +28,8 @@
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
+#define DEBUG_PRINT_ALL_CUBE_STATES 0
+
 namespace Anki {
 namespace Cozmo {
 
@@ -279,8 +281,13 @@ bool DemoBehaviorChooser::FilterBlocks(ObservableObject* obj) const
     return false;
   }
 
+  if( obj->GetFamily() != ObjectFamily::LightCube ) {
+    return false;
+  }
+
   const AxisName upAxis = obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
-  return obj->IsPoseStateKnown() &&
+
+  const bool ret =  obj->IsPoseStateKnown() &&
     !obj->IsMoving() &&
     obj->IsRestingFlat() &&
     // ignore object we are carrying
@@ -288,6 +295,29 @@ bool DemoBehaviorChooser::FilterBlocks(ObservableObject* obj) const
     upAxis == AxisName::Z_POS &&
     // ignore objects that aren't clear
     _robot.CanStackOnTopOfObject( *obj );
+
+  
+  if( DEBUG_PRINT_ALL_CUBE_STATES ) {
+    static std::map< ObjectID, bool > _lastValues;
+
+    auto it = _lastValues.find(obj->GetID());
+    if( it == _lastValues.end() || it->second != ret ) {
+      _lastValues[obj->GetID()] = ret;
+    
+      PRINT_NAMED_DEBUG("DemoBehaviorChooser.BlockState.Change",
+                        "%d: known?%d !moving?%d flat?%d !carried?%d upright?%d stackable?%d status:%d",
+                        obj->GetID().GetValue(),
+                        obj->IsPoseStateKnown() ,
+                        !obj->IsMoving() ,
+                        obj->IsRestingFlat() ,
+                        ( !_robot.IsCarryingObject() || _robot.GetCarryingObject() != obj->GetID() ) ,
+                        upAxis == AxisName::Z_POS ,
+                        _robot.CanStackOnTopOfObject( *obj ),
+                        ret);
+    }
+  }
+
+  return ret;  
 }
 
 template<>
