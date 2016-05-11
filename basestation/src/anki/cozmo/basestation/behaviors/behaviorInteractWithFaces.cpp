@@ -671,7 +671,7 @@ namespace Cozmo {
 
     // if we are changing the old face, update current face as well
     if( _currentFace != Vision::UnknownFaceID && _currentFace == oldFaceID ) {
-      _currentFace = newIt->first;
+      _currentFace = newFaceID;
       PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.UpdateCurrentFace",
                         "Updating current face because of merge");
     }
