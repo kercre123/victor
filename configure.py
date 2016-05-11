@@ -319,7 +319,6 @@ class GamePlatformConfiguration(object):
         # END ENGINE GENERATE
 
         file = open(os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated', 'BuildFlags.cs'), 'w')
-        print self.options.features
 
         if self.options.features != None and 'pressDemo' in self.options.features[0]:
             file.write('public class BuildFlags { '+'\n'+
