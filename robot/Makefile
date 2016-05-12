@@ -75,13 +75,10 @@ espressif/bin/upgrade/user1.2048.new.3.bin: esp
 $(BINARY_RELEASE_DIR)/esp.user.bin: espressif/bin/upgrade/user1.2048.new.3.bin
 	cp $< $@
 
-$(BINARY_RELEASE_DIR)/robot.safe: build/41/robot.safe
-	cp $< $@
+$(BINARY_RELEASE_DIR)/robot.safe: k02_fix
+	python3 ./tools/sign.py --rtip build/app/robot.axf ./releases/rtip.safe
 
-$(BINARY_RELEASE_DIR)/syscon.safe: syscon/build/syscon.safe
-	cp $< $@
-
-otaBinaries: $(BINARY_RELEASE_DIR)/esp.user.bin $(BINARY_RELEASE_DIR)/robot.safe $(BINARY_RELEASE_DIR)/syscon.safe
+otaBinaries: $(BINARY_RELEASE_DIR)/esp.user.bin $(BINARY_RELEASE_DIR)/robot.safe $(BINARY_RELEASE_DIR)/syscon.axf
 
 onBuildServer: k02 $(BINARY_RELEASE_DIR)/esp.user.bin
 
