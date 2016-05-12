@@ -7,6 +7,14 @@ using Cozmo.Util;
 namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
 
+    private static HomeHub _Instance = null;
+
+    public static HomeHub Instance { 
+      get {
+        return _Instance; 
+      } 
+    }
+
     public Transform[] RewardIcons = null;
 
     [SerializeField]

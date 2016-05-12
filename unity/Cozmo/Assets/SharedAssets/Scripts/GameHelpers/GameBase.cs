@@ -184,16 +184,13 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   // TODO: Add any effects for Scoring Points here to propogate to all minigames for consistency
-
-  public void AddCozmoPoint() {
+  public virtual void AddCozmoPoint() {
     CozmoScore++;
   }
 
-  public void AddPlayerPoint() {
+  public virtual void AddPlayerPoint() {
     PlayerScore++;
   }
-
-  //
 
   // Number of Rounds Won this Game
   public int PlayerRoundsWon;

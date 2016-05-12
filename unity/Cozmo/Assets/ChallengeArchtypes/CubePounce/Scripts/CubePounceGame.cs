@@ -15,21 +15,15 @@ namespace CubePounce {
     // Consts for determining the exact placement and forgiveness for cube location
     // Must be consistent for animations to work
     public const float kCubePlaceDist = 65.0f;
-    private int _CozmoScore;
-    private int _PlayerScore;
-    private int _PlayerRoundsWon;
-    private int _CozmoRoundsWon;
     private int _CloseRoundCount;
 
     private float _MinAttemptDelay;
     private float _MaxAttemptDelay;
-    private int _Rounds;
 
     private bool _CliffFlagTrown = false;
     private float _CurrentPounceChance;
     private float _BasePounceChance;
     private int _MaxFakeouts;
-    private int _MaxScorePerRound;
 
     private MusicStateWrapper _BetweenRoundsMusic;
 
@@ -37,25 +31,25 @@ namespace CubePounce {
 
     public bool AllRoundsCompleted {
       get {
-        int losingScore = Mathf.Min(_PlayerRoundsWon, _CozmoRoundsWon);
-        int winningScore = Mathf.Max(_PlayerRoundsWon, _CozmoRoundsWon);
-        int roundsLeft = _Rounds - losingScore - winningScore;
+        int losingScore = Mathf.Min(PlayerRoundsWon, CozmoRoundsWon);
+        int winningScore = Mathf.Max(PlayerRoundsWon, CozmoRoundsWon);
+        int roundsLeft = TotalRounds - losingScore - winningScore;
         return (winningScore > losingScore + roundsLeft);
       }
     }
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       CubePounceConfig config = minigameConfig as CubePounceConfig;
-      _Rounds = config.Rounds;
+      TotalRounds = config.Rounds;
       _MinAttemptDelay = config.MinAttemptDelay;
       _MaxAttemptDelay = config.MaxAttemptDelay;
       _BasePounceChance = config.StartingPounceChance;
       _MaxFakeouts = config.MaxFakeouts;
-      _MaxScorePerRound = config.MaxScorePerRound;
-      _CozmoScore = 0;
-      _PlayerScore = 0;
-      _PlayerRoundsWon = 0;
-      _CozmoRoundsWon = 0;
+      MaxScorePerRound = config.MaxScorePerRound;
+      CozmoScore = 0;
+      PlayerScore = 0;
+      PlayerRoundsWon = 0;
+      CozmoRoundsWon = 0;
       _CurrentTarget = null;
       _BetweenRoundsMusic = config.BetweenRoundMusic;
       InitializeMinigameObjects(config.NumCubesRequired());
@@ -141,14 +135,14 @@ namespace CubePounce {
     }
 
     public void OnPlayerWin() {
-      _PlayerScore++;
+      PlayerScore++;
       UpdateScoreboard();
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
       _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_LoseHand, HandEndAnimationDone));
     }
 
     public void OnCozmoWin() {
-      _CozmoScore++;
+      CozmoScore++;
       UpdateScoreboard();
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
       CurrentRobot.CancelCallback(HandleFakeoutEnd);
@@ -159,17 +153,17 @@ namespace CubePounce {
       // Determines winner and loser at the end of Cozmo's animation, or returns
       // to seek state for the next round
       // Display the current round
-      if (Mathf.Max(_CozmoScore, _PlayerScore) > _MaxScorePerRound) {
-        if (_CozmoScore > _PlayerScore) {
-          _CozmoRoundsWon++;
+      if (Mathf.Max(CozmoScore, PlayerScore) > MaxScorePerRound) {
+        if (CozmoScore > PlayerScore) {
+          CozmoRoundsWon++;
         }
         else {
-          _PlayerRoundsWon++;
+          PlayerRoundsWon++;
         }
         UpdateScoreboard();
         if (AllRoundsCompleted) {
           GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
-          if (_CozmoRoundsWon > _PlayerRoundsWon) {
+          if (CozmoRoundsWon > PlayerRoundsWon) {
             _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinSession, HandleLoseGameAnimationDone));
           }
           else {
@@ -179,7 +173,7 @@ namespace CubePounce {
         else {
           GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedRoundEnd);
           GameAudioClient.SetMusicState(_BetweenRoundsMusic);
-          if (_CozmoScore > _PlayerScore) {
+          if (CozmoScore > PlayerScore) {
             _StateMachine.SetNextState(new AnimationGroupState(AnimationGroupName.kCubePounce_WinRound, RoundEndAnimationDone));
           }
           else {
@@ -201,7 +195,7 @@ namespace CubePounce {
     }
 
     public void RoundEndAnimationDone(bool success) {
-      if (Mathf.Abs(_PlayerScore - _CozmoScore) < 2) {
+      if (Mathf.Abs(PlayerScore - CozmoScore) < 2) {
         _CloseRoundCount++;
       }
       _StateMachine.SetNextState(new SeekState());
@@ -216,16 +210,16 @@ namespace CubePounce {
     }
 
     public void UpdateScoreboard() {
-      int halfTotalRounds = (_Rounds + 1) / 2;
+      int halfTotalRounds = (TotalRounds + 1) / 2;
       Cozmo.MinigameWidgets.ScoreWidget cozmoScoreWidget = SharedMinigameView.CozmoScoreboard;
-      cozmoScoreWidget.Score = _CozmoScore;
+      cozmoScoreWidget.Score = CozmoScore;
       cozmoScoreWidget.MaxRounds = halfTotalRounds;
-      cozmoScoreWidget.RoundsWon = _CozmoRoundsWon;
+      cozmoScoreWidget.RoundsWon = CozmoRoundsWon;
 
       Cozmo.MinigameWidgets.ScoreWidget playerScoreWidget = SharedMinigameView.PlayerScoreboard;
-      playerScoreWidget.Score = _PlayerScore;
+      playerScoreWidget.Score = PlayerScore;
       playerScoreWidget.MaxRounds = halfTotalRounds;
-      playerScoreWidget.RoundsWon = _PlayerRoundsWon;
+      playerScoreWidget.RoundsWon = PlayerRoundsWon;
 
       if (AllRoundsCompleted) {
         // Hide Current Round at end
@@ -233,7 +227,7 @@ namespace CubePounce {
       }
       else {
         // Display the current round
-        SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, _CozmoRoundsWon + _PlayerRoundsWon + 1);
+        SharedMinigameView.InfoTitleText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapRoundsText, CozmoRoundsWon + PlayerRoundsWon + 1);
       }
     }
 
@@ -243,11 +237,11 @@ namespace CubePounce {
       Dictionary<string, string> quitGameScoreKeyValues = new Dictionary<string, string>();
       Dictionary<string, string> quitGameRoundsWonKeyValues = new Dictionary<string, string>();
 
-      quitGameScoreKeyValues.Add("CozmoScore", _CozmoScore.ToString());
-      quitGameRoundsWonKeyValues.Add("CozmoRoundsWon", _CozmoRoundsWon.ToString());
+      quitGameScoreKeyValues.Add("CozmoScore", CozmoScore.ToString());
+      quitGameRoundsWonKeyValues.Add("CozmoRoundsWon", CozmoRoundsWon.ToString());
 
-      DAS.Event(DASConstants.Game.kQuitGameScore, _PlayerScore.ToString(), null, quitGameScoreKeyValues);
-      DAS.Event(DASConstants.Game.kQuitGameRoundsWon, _PlayerRoundsWon.ToString(), null, quitGameRoundsWonKeyValues);
+      DAS.Event(DASConstants.Game.kQuitGameScore, PlayerScore.ToString(), null, quitGameScoreKeyValues);
+      DAS.Event(DASConstants.Game.kQuitGameRoundsWon, PlayerRoundsWon.ToString(), null, quitGameRoundsWonKeyValues);
     }
 
   }

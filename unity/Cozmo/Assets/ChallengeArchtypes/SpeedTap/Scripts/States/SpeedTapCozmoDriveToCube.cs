@@ -38,6 +38,7 @@ namespace SpeedTap {
     }
 
     private void HandleLiftRaiseComplete(bool success) {
+      // TODO: Remove _kTargetDistancetoCube once AlignWithObject is handling its own distance checks.
       if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude > _kTargetDistanceToCube) {
         _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 0.0f, HandleGotoObjectComplete, false, true);
       }
