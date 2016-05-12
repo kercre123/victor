@@ -7,7 +7,6 @@ using Cozmo.HomeHub;
 using System.Linq;
 
 public class MinigamePane : MonoBehaviour {
-  private HomeHub _currHub = null;
   // Force Win Game Buttons
   [SerializeField]
   private Button _CozmoGameButton;
@@ -54,23 +53,10 @@ public class MinigamePane : MonoBehaviour {
 	
   }
 
-  private HomeHub GetHomeHub() {
-    if (_currHub != null) {
-      return _currHub;
-    }
-    var go = GameObject.Find("HomeHub(Clone)");
-    if (go != null) {
-      _currHub = go.GetComponent<HomeHub>();
-      return _currHub;
-    }
-    return null;
-  }
-
   private GameBase GetCurrMinigame() {
-    var homeHub = GetHomeHub();
-    if (homeHub != null) {
-      if (homeHub.MiniGameInstance != null) {
-        return homeHub.MiniGameInstance;
+    if (HomeHub.Instance != null) {
+      if (HomeHub.Instance.MiniGameInstance != null) {
+        return HomeHub.Instance.MiniGameInstance;
       }
     }
     Debug.LogWarning("CurrentMinigame is NULL, Only use these commands during a Minigame");

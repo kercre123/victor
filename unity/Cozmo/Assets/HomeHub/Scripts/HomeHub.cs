@@ -11,6 +11,9 @@ namespace Cozmo.HomeHub {
 
     public static HomeHub Instance { 
       get {
+        if (_Instance == null) {
+          DAS.Error("HomeHub.Instance", "NULL HomeHub Instance");
+        }
         return _Instance; 
       } 
     }
@@ -53,6 +56,7 @@ namespace Cozmo.HomeHub {
 
     public override bool LoadHubWorld() {
       RobotEngineManager.Instance.OnRequestSetUnlockResult += RefreshChallengeUnlockInfo;
+      _Instance = this;
       LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
       ShowStartView();
       return true;

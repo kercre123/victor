@@ -45,19 +45,10 @@ public class DebugMenuManager : MonoBehaviour {
     CreateDebugDialog();
   }
 
-  private HomeHub GetHomeHub() {
-    var go = GameObject.Find("HomeHub(Clone)");
-    if (go != null) {
-      return go.GetComponent<HomeHub>();
-    }
-    return null;
-  }
-
   private GameBase GetCurrMinigame() {
-    var homeHub = GetHomeHub();
-    if (homeHub != null) {
-      if (homeHub.MiniGameInstance != null) {
-        return homeHub.MiniGameInstance;
+    if (HomeHub.Instance != null) {
+      if (HomeHub.Instance.MiniGameInstance != null) {
+        return HomeHub.Instance.MiniGameInstance;
       }
     }
     return null;
