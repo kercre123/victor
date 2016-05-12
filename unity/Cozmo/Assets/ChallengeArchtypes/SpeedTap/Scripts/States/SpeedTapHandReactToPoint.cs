@@ -45,8 +45,6 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      _SpeedTapGame.EndCozmoPickedUpDisruptionDetection();
-      _SpeedTapGame.EndCozmoCubeMovedDisruptionDetection();
 
       UpdateBlockLights(_CurrentWinner, _WasMistakeMade);
 

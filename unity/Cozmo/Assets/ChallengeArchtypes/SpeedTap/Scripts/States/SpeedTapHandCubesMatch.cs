@@ -11,9 +11,6 @@ namespace SpeedTap {
     private bool _IsCozmoMoving;
     private bool _AnyTapRegistered;
 
-    // TODO Change logic when animation keyframe is implemented
-    private const float _kCozmoAnimationTapTime_sec = 0.5f;
-    private float _StartTapAnimationTimestamp_sec;
 
     public override void Enter() {
       base.Enter();
@@ -23,7 +20,6 @@ namespace SpeedTap {
       _CozmoMovementDelay_sec = 0.001f * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
       _IsCozmoMoving = false;
       _AnyTapRegistered = false;
-      _StartTapAnimationTimestamp_sec = float.MinValue;
 
       // Set lights on cubes
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
@@ -31,6 +27,8 @@ namespace SpeedTap {
 
       // Listen for player taps
       _SpeedTapGame.PlayerTappedBlockEvent += HandlePlayerTap;
+
+      RobotEngineManager.Instance.OnRobotAnimationEvent += HandleRobotAnimationEvent;
     }
 
     public override void Update() {
@@ -41,24 +39,22 @@ namespace SpeedTap {
       if (!_IsCozmoMoving && secondsElapsed > _CozmoMovementDelay_sec) {
         _IsCozmoMoving = true;
 
-        _SpeedTapGame.EndCozmoCubeMovedDisruptionDetection();
+        // All the taps should have a "TAPPED_BLOCK" RobotAnimationEvent.
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
-        _StartTapAnimationTimestamp_sec = Time.time;
-      }
-      else if (_IsCozmoMoving && (Time.time - _StartTapAnimationTimestamp_sec) > _kCozmoAnimationTapTime_sec) {
-        // TODO Change logic when animation keyframe is implemented
-        // Move to react state with cozmo mistapping
-        if (!_AnyTapRegistered) {
-          _AnyTapRegistered = true;
-          _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Cozmo, false));
-        }
       }
     }
 
     public override void Exit() {
       base.Exit();
-      _SpeedTapGame.StartCozmoCubeMovedDisruptionDetection();
       _SpeedTapGame.PlayerTappedBlockEvent -= HandlePlayerTap;
+      RobotEngineManager.Instance.OnRobotAnimationEvent += HandleRobotAnimationEvent;
+    }
+
+    private void HandleRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent msg) {
+      if (msg.event_id == Anki.Cozmo.AnimEvent.TAPPED_BLOCK && !_AnyTapRegistered) {
+        _AnyTapRegistered = true;
+        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Cozmo, false));
+      }
     }
 
     private void HandlePlayerTap() {

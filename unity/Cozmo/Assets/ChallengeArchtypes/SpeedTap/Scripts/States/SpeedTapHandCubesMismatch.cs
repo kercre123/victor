@@ -12,10 +12,6 @@ namespace SpeedTap {
     private bool _IsCozmoMoving;
     private bool _AnyTapRegistered;
 
-    // TODO Change logic when animation keyframe is implemented
-    private const float _kCozmoAnimationTapTime_sec = 0.5f;
-    private float _StartTapAnimationTimestamp_sec;
-
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
@@ -25,7 +21,6 @@ namespace SpeedTap {
       _CozmoMovementDelay_sec = 0.001f * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
       _IsCozmoMoving = false;
       _AnyTapRegistered = false;
-      _StartTapAnimationTimestamp_sec = float.MinValue;
 
       // Set lights on cubes
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
@@ -33,6 +28,7 @@ namespace SpeedTap {
 
       // Listen for player taps
       _SpeedTapGame.PlayerTappedBlockEvent += HandlePlayerTap;
+      RobotEngineManager.Instance.OnRobotAnimationEvent += HandleRobotAnimationEvent;
     }
 
     public override void Update() {
@@ -43,15 +39,6 @@ namespace SpeedTap {
       if (!_IsCozmoMoving && secondsElapsed > _CozmoMovementDelay_sec) {
         _IsCozmoMoving = true;
         DoCozmoMovement();
-      }
-      else if (_IsCozmoMoving && _StartTapAnimationTimestamp_sec != float.MinValue
-               && (Time.time - _StartTapAnimationTimestamp_sec) > _kCozmoAnimationTapTime_sec) {
-        // TODO Change logic when animation keyframe is implemented
-        // Move to react state with cozmo mistapping
-        if (!_AnyTapRegistered) {
-          _AnyTapRegistered = true;
-          _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Player, true));
-        }
       }
 
       // Check to turn off cubes after some time
@@ -64,12 +51,19 @@ namespace SpeedTap {
     public override void Exit() {
       base.Exit();
       _SpeedTapGame.PlayerTappedBlockEvent -= HandlePlayerTap;
-      _SpeedTapGame.StartCozmoCubeMovedDisruptionDetection();
+      RobotEngineManager.Instance.OnRobotAnimationEvent -= HandleRobotAnimationEvent;
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, HandleCozmoFakeoutAnimationEnd);
     }
 
     private void HandleCozmoFakeoutAnimationEnd(bool success) {
       _SpeedTapGame.CheckForAdjust();
+    }
+
+    private void HandleRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent msg) {
+      if (msg.event_id == Anki.Cozmo.AnimEvent.TAPPED_BLOCK && !_AnyTapRegistered) {
+        _AnyTapRegistered = true;
+        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Player, true));
+      }
     }
 
     private void HandlePlayerTap() {
@@ -88,9 +82,7 @@ namespace SpeedTap {
         // Favor the player if Cozmo makes a mistake
         _SpeedTapGame.PlayerTappedBlockEvent -= HandlePlayerTap;
 
-        _SpeedTapGame.EndCozmoCubeMovedDisruptionDetection();
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
-        _StartTapAnimationTimestamp_sec = Time.time;
       }
       else {
         randomPercent -= _SpeedTapGame.CozmoMistakeChance;

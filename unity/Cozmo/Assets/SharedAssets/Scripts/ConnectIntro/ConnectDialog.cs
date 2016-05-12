@@ -14,6 +14,9 @@ public class ConnectDialog : MonoBehaviour {
   private Cozmo.UI.CozmoButton _SimButton;
 
   [SerializeField]
+  private Cozmo.UI.CozmoButton _MockButton;
+
+  [SerializeField]
   private PingStatus _PingStatus;
 
   private const int kRobotID = 1;
@@ -66,6 +69,7 @@ public class ConnectDialog : MonoBehaviour {
     }
 
     Application.targetFrameRate = 30;
+    Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
     Input.gyro.enabled = true;
     Input.compass.enabled = true;
@@ -73,12 +77,18 @@ public class ConnectDialog : MonoBehaviour {
 
     _ConnectButton.Initialize(HandleConnectButton, "connect_button", "connect_dialog");
     _SimButton.Initialize(HandleSimButton, "sim_button", "connect_dialog");
+    _MockButton.Initialize(HandleMockButton, "mock_button", "connect_dialog");
 
     #if !UNITY_EDITOR
     _SimButton.gameObject.SetActive(false);
+    _MockButton.gameObject.SetActive(false);
     #endif
 
     _ConnectButton.Text = Localization.Get(LocalizationKeys.kLabelConnect);
+  }
+
+  private void HandleMockButton() {
+    this.PlayMock();
   }
 
   private void HandleConnectButton() {
@@ -176,8 +186,6 @@ public class ConnectDialog : MonoBehaviour {
     if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled) {
       ConsoleLogManager.Instance.EnableSOSLogs(true);
     }
-
-    Screen.sleepTimeout = SleepTimeout.NeverSleep;
 
     _ConnectionStatus.text = "";
     DAS.Info(this, "Robot Connected!");

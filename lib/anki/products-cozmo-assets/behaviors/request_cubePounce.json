@@ -1,6 +1,7 @@
 {
   "behaviorType" : "RequestGameSimple",
   "name" : "RequestCubePounce",
+  "requiredGameFlags" : "CubePounce",
 
   "zero_block_config": {
     "request_animName" : "requestGame_generic_request",

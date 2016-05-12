@@ -1,6 +1,7 @@
 {
   "behaviorType" : "RequestGameSimple",
   "name" : "RequestSimon",
+  "requiredGameFlags" : "Simon",
 
   "zero_block_config": {
     "request_animName" : "requestGame_generic_request",

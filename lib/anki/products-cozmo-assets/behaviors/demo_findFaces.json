@@ -1,6 +1,6 @@
 {
   "behaviorType": "FindFaces",
-  "name": "demo_findFaces",
+  "name": "demo_findFaces_oldRemoveMe",
   "center_face_angle": false,
   "minimum_face_age_s": 0.0,
   "minimum_pause_s": 1.1,
@@ -25,8 +25,5 @@
       "trackDelta": false
     }
   ],  
-  "behaviorGroups": [
-    "Demo",
-    "DemoFaces"
-  ]
+  "behaviorGroups": []
 }
