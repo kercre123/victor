@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "clad/types/behaviorTypes.h"
 #include <memory>
 #include <set>
 #include <string>
@@ -36,7 +37,9 @@ public:
 
   IBehaviorRequestGame(Robot& robot, const Json::Value& config);
 
+  // final to ensure subclass does not skip. If you need to override in subclass I suggest another internal one
   virtual bool IsRunnableInternal(const Robot& robot) const final override;
+  
   virtual Result InitInternal(Robot& robot) final override;
   virtual Status UpdateInternal(Robot& robot) final override;
 
@@ -99,6 +102,9 @@ private:
   bool       _hasBlockPose = false;
   Pose3d     _lastBlockPose;
   ObjectID   _robotsBlockID;
+  
+  // this behavior can only run if the Robot currently has available the given flags
+  BehaviorGameFlag _requiredGameFlags = BehaviorGameFlag::NoGame;
 
   std::set<ObjectID> _badBlocks;
 

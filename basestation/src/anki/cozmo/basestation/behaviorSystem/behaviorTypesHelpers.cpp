@@ -29,7 +29,35 @@ BehaviorType BehaviorTypeFromString(const char* inString)
 {
   return gStringToBehaviorTypeMapper.GetTypeFromString(inString);
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// BehaviorGameFlag
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorGameFlag BehaviorGameFlagFromString(const std::string& inString)
+{
+  // can't use StringToEnumMapper because the enum class is a flag enum (discontinuous)
+  // todo rsam Should clad generate stringToEnum as well?
+  if ( inString == "NoGame" )
+  {
+    return BehaviorGameFlag::NoGame;
+  }
+  else if ( inString == "SpeedTap" )
+  {
+    return BehaviorGameFlag::SpeedTap;
+  }
+  else if ( inString == "Simon" ) {
+    return BehaviorGameFlag::Simon;
+  }
+  else if ( inString == "CubePounce" ) {
+    return BehaviorGameFlag::CubePounce;
+  }
+  else if ( inString == "All" ) {
+    return BehaviorGameFlag::All;
+  }
+
+  ASSERT_NAMED(false, "BehaviorGameFlagFromString.InvalidString");
+  return BehaviorGameFlag::NoGame;
+}
 
 } // namespace Cozmo
 } // namespace Anki
