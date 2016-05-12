@@ -244,7 +244,9 @@ namespace SpeedTap {
     private void BlockTapped(int blockID, int tappedTimes, float timeStamp) {
       if (PlayerBlock != null && PlayerBlock.ID == blockID) {
         if (PlayerTappedBlockEvent != null) {
-          _LastPlayerTimeStamp = timeStamp;
+          if (_LastPlayerTimeStamp > timeStamp || _LastPlayerTimeStamp == -1) {
+            _LastPlayerTimeStamp = timeStamp;
+          }
           PlayerTappedBlockEvent();
         }
       }
@@ -255,7 +257,10 @@ namespace SpeedTap {
     /// </summary>
     /// <param name="animEvent">Animation event.</param>
     private void OnRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent animEvent) {
-      _LastCozmoTimeStamp = animEvent.timestamp;
+      if (animEvent.event_id == AnimEvent.TAPPED_BLOCK &&
+          (_LastCozmoTimeStamp > animEvent.timestamp || _LastCozmoTimeStamp == -1)) {
+        _LastCozmoTimeStamp = animEvent.timestamp;
+      }
     }
 
     private static SpeedTapRulesBase GetRules(SpeedTapRuleSet ruleSet) {
