@@ -8,9 +8,18 @@
 namespace Anki {
 namespace Cozmo {
 
+enum uint_16 ObjectType
+{
+  OBJECT_CHARGER = 0xff00,
+  OBJECT_CUBE1 = 0xff01,
+  OBJECT_CUBE2 = 0xff02,
+  OBJECT_CUBE3 = 0xff03
+}
+
 message ObjectDiscovered
 {
   uint_32     factory_id,
+  ObjectType  device_type,
   int_8       rssi
 }
 

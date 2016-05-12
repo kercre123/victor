@@ -216,6 +216,7 @@ void uesb_event_handler(uint32_t flags)
       #endif
       
       ObjectDiscovered msg;
+      msg.device_type = advert.model;
       msg.factory_id = advert.id;
       msg.rssi = rx_payload.rssi;
       RobotInterface::SendMessage(msg);

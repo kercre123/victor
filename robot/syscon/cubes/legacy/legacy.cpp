@@ -22,6 +22,7 @@
 #include "lights.h"
 #include "messages.h"
 
+#include "clad/robotInterface/messageFromActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -228,7 +229,10 @@ void uesb_event_handler(uint32_t flags)
     // Attempt to locate existing accessory and repair
     slot = LocateAccessory(packet.id);
     if (slot < 0) {
+      using namespace Anki::Cozmo;
+      
       ObjectDiscovered msg;
+      msg.device_type = (packet.id & 0x80000000) ? OBJECT_CHARGER : (OBJECT_CUBE1 + (packet.id & 0x3));
       msg.factory_id = packet.id;
       msg.rssi = rx_payload.rssi;
       RobotInterface::SendMessage(msg);
