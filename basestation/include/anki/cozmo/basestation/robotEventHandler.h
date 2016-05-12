@@ -64,6 +64,7 @@ protected:
   void HandleClearCalibrationImages(const GameToEngineEvent& event);
   void HandleComputeCameraCalibration(const GameToEngineEvent& event);
   void HandleCameraCalibration(const GameToEngineEvent& event);
+  void HandleSetHeadlight(const GameToEngineEvent& event);
 };
 
   
