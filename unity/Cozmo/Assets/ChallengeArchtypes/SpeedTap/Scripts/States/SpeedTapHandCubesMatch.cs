@@ -39,7 +39,6 @@ namespace SpeedTap {
       if (!_IsCozmoMoving && secondsElapsed > _CozmoMovementDelay_sec) {
         _IsCozmoMoving = true;
 
-        _SpeedTapGame.EndCozmoCubeMovedDisruptionDetection();
         // All the taps should have a "TAPPED_BLOCK" RobotAnimationEvent.
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
       }
@@ -47,7 +46,6 @@ namespace SpeedTap {
 
     public override void Exit() {
       base.Exit();
-      _SpeedTapGame.StartCozmoCubeMovedDisruptionDetection();
       _SpeedTapGame.PlayerTappedBlockEvent -= HandlePlayerTap;
       RobotEngineManager.Instance.OnRobotAnimationEvent += HandleRobotAnimationEvent;
     }

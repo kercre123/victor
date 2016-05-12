@@ -11,8 +11,6 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      _SpeedTapGame.StartCozmoPickedUpDisruptionDetection();
-      _SpeedTapGame.StartCozmoCubeMovedDisruptionDetection();
 
       if (_SpeedTapGame.PlayerBlock == null) {
         foreach (var kvp in _CurrentRobot.LightCubes) {
