@@ -2202,7 +2202,8 @@ namespace Anki {
                                  const f32 placementOffsetY_mm,
                                  const f32 placementOffsetAngle_rad,
                                  const bool useManualSpeed,
-                                 const u8 numRetries)
+                                 const u8 numRetries,
+                                 const DockingMethod dockingMethod)
     {
       return DockWithObject(objectID,
                             speed_mmps,
@@ -2214,7 +2215,8 @@ namespace Anki {
                             0, 0, u8_MAX,
                             placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
                             useManualSpeed,
-                            numRetries);
+                            numRetries,
+                            dockingMethod);
     }
     
     Result Robot::DockWithObject(const ObjectID objectID,
@@ -2231,7 +2233,8 @@ namespace Anki {
                                  const f32 placementOffsetY_mm,
                                  const f32 placementOffsetAngle_rad,
                                  const bool useManualSpeed,
-                                 const u8 numRetries)
+                                 const u8 numRetries,
+                                 const DockingMethod dockingMethod)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
@@ -2266,7 +2269,7 @@ namespace Anki {
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
-      Result sendResult = SendRobotMessage<::Anki::Cozmo::DockWithObject>(0.0f, speed_mmps, accel_mmps2, decel_mmps2, dockAction, useManualSpeed, numRetries);
+      Result sendResult = SendRobotMessage<::Anki::Cozmo::DockWithObject>(0.0f, speed_mmps, accel_mmps2, decel_mmps2, dockAction, useManualSpeed, numRetries, dockingMethod);
       
       
       if(sendResult == RESULT_OK) {

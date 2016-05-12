@@ -6,6 +6,13 @@
 namespace Anki {
 namespace Cozmo {
 
+enum uint_8 DockingMethod
+{
+  BLIND_DOCKING,
+  TRACKER_DOCKING,
+  HYBRID_DOCKING
+}
+
 message DockWithObject
 {
   float_32   horizontalOffset_mm, // Offset wrt to docking object. Don't know if this will work yet.
@@ -15,6 +22,7 @@ message DockWithObject
   DockAction action,
   bool       useManualSpeed,
   uint_8     numRetries,
+  DockingMethod dockingMethod
 }
 
 message AbortDocking

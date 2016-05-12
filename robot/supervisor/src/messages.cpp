@@ -335,6 +335,8 @@ namespace Anki {
         AnkiInfo( 104, "Messages.Process_dockWithObject.Recvd", 353, "action %d, speed %f, acccel %f, decel %f, manualSpeed %d", 5,
               msg.action, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2, msg.useManualSpeed);
 
+        DockingController::SetDockingMethod(msg.dockingMethod);
+
         // Currently passing in default values for rel_x, rel_y, and rel_angle
         PickAndPlaceController::DockToBlock(msg.action,
                                             msg.speed_mmps,

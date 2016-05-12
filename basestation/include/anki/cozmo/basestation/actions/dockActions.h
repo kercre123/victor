@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/types/dockingSignals.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "util/helpers/templateHelpers.h"
 
@@ -67,6 +68,8 @@ namespace Anki {
       // Sets the animation to play when lift moves after docking.
       // The animation should only contain a sound track!
       void SetPostDockLiftMovingAnimation(const std::string& animName);
+      
+      void SetDockingMethod(DockingMethod dockingMethod) { _dockingMethod = dockingMethod; }
       
       // Should only lock wheels if we are not using manual speed (i.e. "assisted RC")
       virtual u8 GetTracksToLock() const override
@@ -132,6 +135,7 @@ namespace Anki {
       ObjectInteractionResult    _interactionResult              = ObjectInteractionResult::INCOMPLETE;
       bool                       _doNearPredockPoseCheck         = true;
       u8                         _numDockingRetries              = 2;
+      DockingMethod              _dockingMethod                  = DockingMethod::BLIND_DOCKING;
       
     private:
       
