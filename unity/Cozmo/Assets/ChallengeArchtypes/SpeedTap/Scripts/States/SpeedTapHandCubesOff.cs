@@ -18,6 +18,7 @@ namespace SpeedTap {
 
       _SpeedTapGame.CozmoBlock.SetLEDs(0);
       _SpeedTapGame.PlayerBlock.SetLEDs(0);
+      _SpeedTapGame.ResetTapTimestamps();
 
       _CubeOffStartTimestamp_sec = Time.time;
       _OffDuration_sec = _SpeedTapGame.GetLightsOffDurationSec();

@@ -1,11 +1,18 @@
 using UnityEngine;
 using System.Collections;
 using System;
+using Anki.Cozmo;
 using Anki.Cozmo.Audio;
 using Cozmo.Util;
 using System.Collections.Generic;
 
 namespace SpeedTap {
+
+  public enum FirstToTap {
+    Cozmo,
+    Player,
+    NoTaps
+  }
 
   public class SpeedTapGame : GameBase {
 
@@ -14,6 +21,39 @@ namespace SpeedTap {
     private const string _kWrongTapChance = "WrongTapChance";
     private const string _kTapDelayMin = "TapDelayMin";
     private const string _kTapDelayMax = "TapDelayMax";
+
+    public FirstToTap FirstTapper {
+      get {
+        // If neither timestamp has been set, no taps
+        if (_LastCozmoTimeStamp == -1 && _LastPlayerTimeStamp == -1) {
+          return FirstToTap.NoTaps;
+        }
+        // If one of the two timestamps hasn't been set, other one counts as first
+        if ((_LastCozmoTimeStamp == -1) || (_LastPlayerTimeStamp == -1)) {
+          if (_LastCozmoTimeStamp != -1) {
+            return FirstToTap.Cozmo;
+          }
+          else if (_LastPlayerTimeStamp != -1) {
+            return FirstToTap.Player;
+          }
+        }
+        // If both have been set, most recent timestamp counts as first
+        if (_LastCozmoTimeStamp < _LastPlayerTimeStamp) {
+          return FirstToTap.Cozmo;
+        }
+        else {
+          return FirstToTap.Player;
+        }
+      }
+    }
+
+    public void ResetTapTimestamps() {
+      _LastCozmoTimeStamp = -1;
+      _LastPlayerTimeStamp = -1;
+    }
+
+    private float _LastPlayerTimeStamp = -1;
+    private float _LastCozmoTimeStamp = -1;
 
     #region Config Values
 
@@ -129,6 +169,7 @@ namespace SpeedTap {
 
       CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
+      RobotEngineManager.Instance.OnRobotAnimationEvent += OnRobotAnimationEvent;
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
@@ -157,6 +198,8 @@ namespace SpeedTap {
 
     protected override void CleanUpOnDestroy() {
       LightCube.TappedAction -= BlockTapped;
+      RobotEngineManager.Instance.OnRobotAnimationEvent -= OnRobotAnimationEvent;
+
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGetOut);
     }
 
@@ -192,17 +235,28 @@ namespace SpeedTap {
       SharedMinigameView.InfoTitleText = string.Empty;
     }
 
-    private void BlockTapped(int blockID, int tappedTimes) {
+    /// <summary>
+    /// Sets player's last tapped timestamp based on light cube message.
+    /// Cozmo uses AnimationEvents for maximum accuracy.
+    /// </summary>
+    /// <param name="blockID">Block ID.</param>
+    /// <param name="tappedTimes">Tapped times.</param>
+    /// <param name="timeStamp">Time stamp.</param>
+    private void BlockTapped(int blockID, int tappedTimes, float timeStamp) {
       if (PlayerBlock != null && PlayerBlock.ID == blockID) {
         if (PlayerTappedBlockEvent != null) {
+          _LastPlayerTimeStamp = timeStamp;
           PlayerTappedBlockEvent();
         }
       }
-      else if (CozmoBlock != null && CozmoBlock.ID == blockID) {
-        if (CozmoTappedBlockEvent != null) {
-          CozmoTappedBlockEvent();
-        }
-      }
+    }
+
+    /// <summary>
+    /// Sets cozmo's last tapped timestamp based on animation event message
+    /// </summary>
+    /// <param name="animEvent">Animation event.</param>
+    private void OnRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent animEvent) {
+      _LastCozmoTimeStamp = animEvent.timestamp;
     }
 
     private static SpeedTapRulesBase GetRules(SpeedTapRuleSet ruleSet) {

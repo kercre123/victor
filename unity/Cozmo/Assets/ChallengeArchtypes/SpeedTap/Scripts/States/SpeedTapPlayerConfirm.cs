@@ -32,7 +32,7 @@ namespace SpeedTap {
       LightCube.TappedAction += HandleTap;
     }
 
-    private void HandleTap(int id, int tappedTimes) {
+    private void HandleTap(int id, int tappedTimes, float timeStamp) {
       if (_SpeedTapGame.PlayerBlock == null) {
         if (id != _SpeedTapGame.CozmoBlock.ID) {
           foreach (var kvp in _CurrentRobot.LightCubes) {

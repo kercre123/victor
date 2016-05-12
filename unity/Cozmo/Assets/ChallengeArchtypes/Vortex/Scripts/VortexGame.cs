@@ -160,7 +160,7 @@ namespace Vortex {
       }
     }
 
-    public void HandleBlockTapped(int blockID, int tappedTimes) {
+    public void HandleBlockTapped(int blockID, int tappedTimes, float timeStamp) {
       DAS.Info(this, "Player Block Tapped. " + blockID);
       if (_PlayerDataList == null) {
         return;
