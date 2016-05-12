@@ -28,7 +28,7 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(f32, kScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
+CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
 
 BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -66,15 +66,14 @@ void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
   if( nullptr != closestObj ) {
     _targetBlock = closestObj->GetID();
   }
+  else {
+    _targetBlock.UnSet();
+  }
 }
 
 bool BehaviorRollBlock::FilterBlocks(ObservableObject* obj) const
 {
-  return obj->GetFamily() == ObjectFamily::LightCube &&
-    obj->GetPoseState() == ObservableObject::PoseState::Known && // only consider known, non-dirty blocks
-    !obj->IsMoving() &&
-    obj->IsRestingFlat() &&
-    ( !_robot.IsCarryingObject() || _robot.GetCarryingObject() != obj->GetID() ) && // dont pick the block in our lift
+  return _robot.CanPickUpObjectFromGround(*obj) &&
     obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS;
 }
 
@@ -115,14 +114,12 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot)
                   // in a few ticks it won't be. We should consider adding a delay here, or better yet, having
                   // an extra state where if a cube is valid for other reasons, but is moving or not flat, we
                   // "track" it for a while
-                  _targetBlock.UnSet();
                   if( IsRunnable(robot) ) {
                     TransitionToPerformingAction(robot);
                   }
                   else {
                     // play success animation, but then double check if we are really done or not
                     auto animCompleteBlock = [this](Robot& robot) {
-                      _targetBlock.UnSet();
                       if( IsRunnable(robot) ) {
                         TransitionToPerformingAction(robot);
                       }
@@ -171,7 +168,6 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot)
                                    "Failed to verify roll, searching for block");
                   StartActing(new SearchSideToSideAction(robot),
                               [this](Robot& robot) {
-                                _targetBlock.UnSet();
                                 if( IsRunnable(robot) ) {
                                   TransitionToPerformingAction(robot);
                                 }
@@ -185,7 +181,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot)
                                    "action failed without retry, behavior ending");
                 }
               });
-  IncreaseScoreWhileActing( kScoreIncreaseForAction );
+  IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
 }
 
 void BehaviorRollBlock::SetState_internal(State state, const std::string& stateName)

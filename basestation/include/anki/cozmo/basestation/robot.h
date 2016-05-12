@@ -425,7 +425,11 @@ public:
     // returns true if we should try to stack on top of the given object, false if something would prevent it,
     // for example if we think that block has something on top or it's too high to reach
     bool CanStackOnTopOfObject(const ObservableObject& object) const;
-  
+
+    // let's the robot decide if we should try to pick up the given object (assuming it is flat, not picking up
+    // out of someone's hand). Checks that object is flat, not moving, no unknown pose, etc.
+    bool CanPickUpObjectFromGround(const ObservableObject& object) const;
+    
     /*
     //
     // Proximity Sensors
@@ -873,6 +877,9 @@ public:
     // Unless you know what you're doing you probably want to use
     // the public function SetNewPose()
     void SetPose(const Pose3d &newPose);
+
+    // helper for CanStackOnTopOfObject and CanPickUpObjectFromGround
+  bool CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const;
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,

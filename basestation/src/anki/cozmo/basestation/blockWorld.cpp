@@ -1188,38 +1188,31 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
           if(useThisObjectToLocalize)
           {
             if (!_robot->GetMoveComponent().IsMoving()) {
-              
-              if (objSeen->IsRestingFlat()) {
-                assert(ActiveIdentityState::Identified == matchingObject->GetIdentityState());
-                
-                // If the objSeen is no closer to the robot than the object already stored for this frame
-                // then just update its pose. Otherwise, set the pose of the stored object and replace
-                // it with this one.
-                const Pose3d* matchingObjectFrame = &matchingObject->GetPose().FindOrigin();
-                
-                if (potentialObjectsForLocalizingTo.count(matchingObjectFrame) > 0) {
-                  // There's already an ObservedMatchPair for the current frame.
-                  // Check if it's farther away from robot than this one.
-                  ObservedAndMatchedPair* obsAndMatchPair = &potentialObjectsForLocalizingTo.at(matchingObjectFrame);
-                  if (distToObj < obsAndMatchPair->distance ) {
-                    // This new one is closer so merge the stored pair and replace it with this one
-                    obsAndMatchPair->MergeAndDelete();
-                    *obsAndMatchPair = { .observedObject = objSeen, .matchedObject = matchingObject, .distance = distToObj };
-                  } else {
-                    matchingObject->SetPose( objSeen->GetPose(), distToObj );
-                    delete objSeen;
-                  }
-                  
+
+              assert(ActiveIdentityState::Identified == matchingObject->GetIdentityState());
+
+              // If the objSeen is no closer to the robot than the object already stored for this frame
+              // then just update its pose. Otherwise, set the pose of the stored object and replace
+              // it with this one.
+              const Pose3d* matchingObjectFrame = &matchingObject->GetPose().FindOrigin();
+
+              if (potentialObjectsForLocalizingTo.count(matchingObjectFrame) > 0) {
+                // There's already an ObservedMatchPair for the current frame.
+                // Check if it's farther away from robot than this one.
+                ObservedAndMatchedPair* obsAndMatchPair = &potentialObjectsForLocalizingTo.at(matchingObjectFrame);
+                if (distToObj < obsAndMatchPair->distance ) {
+                  // This new one is closer so merge the stored pair and replace it with this one
+                  obsAndMatchPair->MergeAndDelete();
+                  *obsAndMatchPair = { .observedObject = objSeen, .matchedObject = matchingObject, .distance = distToObj };
                 } else {
-                  potentialObjectsForLocalizingTo[matchingObjectFrame] = { .observedObject = objSeen, .matchedObject = matchingObject, .distance = distToObj };
+                  matchingObject->SetPose( objSeen->GetPose(), distToObj );
+                  delete objSeen;
                 }
-                
+
               } else {
-                PRINT_NAMED_INFO("BlockWorld.AddAndUpdateObjects.LocalizeFailure",
-                                 "Not localizing to object %d because it is not observed to be flat",
-                                 matchingObject->GetID().GetValue());
+                potentialObjectsForLocalizingTo[matchingObjectFrame] = { .observedObject = objSeen, .matchedObject = matchingObject, .distance = distToObj };
               }
-              
+
             }
           } else {
             matchingObject->SetPose( objSeen->GetPose(), distToObj );
@@ -2945,7 +2938,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       }
      
       // Toss any remaining markers?
-      ClearAllObservedMarkers();
+      ClearAllObservedMarkers();      
       
       /*
       Result lastResult = UpdateProxObstaclePoses();

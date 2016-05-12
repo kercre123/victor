@@ -58,6 +58,8 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
   _blockworldFilter->SetFilterFcn( std::bind( &DemoBehaviorChooser::FilterBlocks, this, std::placeholders::_1) );
     
   _name = "Demo[]";
+
+  SetAllBehaviorsEnabled(false);
 }
 
 unsigned int DemoBehaviorChooser::GetStateNum(State state)
@@ -76,7 +78,6 @@ unsigned int DemoBehaviorChooser::GetStateNum(State state)
 
 void DemoBehaviorChooser::OnSelected()
 {
-  SetAllBehaviorsEnabled(false);
   _initCalled = true;
 
   // TransitionToCubes();
@@ -213,6 +214,7 @@ void DemoBehaviorChooser::TransitionToCubes()
   SET_STATE(Cubes);
 
   _robot.GetProgressionUnlockComponent().SetUnlock(UnlockId::CubeRollAction, true);
+  _robot.GetProgressionUnlockComponent().SetUnlock(UnlockId::CubeStackAction, true);
 
   SetAllBehaviorsEnabled(false);
   SetBehaviorGroupEnabled(BehaviorGroup::DemoCubes);

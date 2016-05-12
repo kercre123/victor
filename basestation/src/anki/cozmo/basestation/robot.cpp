@@ -2549,18 +2549,48 @@ namespace Anki {
     
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    bool Robot::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const
+    {
+      // TODO:(bn) maybe there should be some central logic for which object families are valid here
+      if( object.GetFamily() != ObjectFamily::Block &&
+          object.GetFamily() != ObjectFamily::LightCube ) {
+        return false;
+      }
+
+      // check that the object is ready to place on top of
+      if( object.IsPoseStateUnknown() ||
+          object.IsMoving() ||
+          !object.IsRestingFlat() ||
+          (IsCarryingObject() && GetCarryingObject() == object.GetID()) ) {
+        return false;
+      }
+
+      // check if we can transform to robot space
+      if ( !object.GetPose().GetWithRespectTo(GetPose(), relPose) ) {
+        return false;
+      }
+
+      // check if it has something on top
+      const ObservableObject* objectOnTop = GetBlockWorld().FindObjectOnTopOf(object, STACKED_HEIGHT_TOL_MM);
+      if ( nullptr != objectOnTop ) {
+        return false;
+      }
+
+      return true;
+    }
+  
     bool Robot::CanStackOnTopOfObject(const ObservableObject& objectToStackOn) const
     {
       // Note rsam/kevin: this only works currently for original cubes. Doing height checks would require more
       // comparison of sizes, checks for I can stack but not pick up due to slack required to pick up, etc. In order
       // to simplify just cover the most basic case here (for the moment)
-      
-      // check if we can transform to robot space
+
       Pose3d relPos;
-      if ( !objectToStackOn.GetPose().GetWithRespectTo(GetPose(), relPos) ) {
+      if( ! CanInteractWithObjectHelper(objectToStackOn, relPos) ) {
         return false;
       }
-      
+            
       // check if it's too high to stack on
       const float topZ = relPos.GetTranslation().z() + objectToStackOn.GetSize().z() * 0.5f;
       const float isTooHigh = topZ > (objectToStackOn.GetSize().z() + STACKED_HEIGHT_TOL_MM);
@@ -2568,15 +2598,28 @@ namespace Anki {
         return false;
       }
     
-      // check if it already has something on top
-      const ObservableObject* objectOnTop = GetBlockWorld().FindObjectOnTopOf(objectToStackOn, STACKED_HEIGHT_TOL_MM);
-      if ( nullptr != objectOnTop ) {
-        return false;
-      }
-
       // all checks clear
       return true;
     }
+
+    bool Robot::CanPickUpObjectFromGround(const ObservableObject& objectToPickUp) const
+    {
+      Pose3d relPos;
+      if( ! CanInteractWithObjectHelper(objectToPickUp, relPos) ) {
+        return false;
+      }
+      
+      // check if it's too high to pick up
+      const float topZ = relPos.GetTranslation().z() + objectToPickUp.GetSize().z() * 0.5f;
+      const float isTooHigh = topZ > ( 2 * objectToPickUp.GetSize().z() + STACKED_HEIGHT_TOL_MM);
+      if ( isTooHigh ) {
+        return false;
+      }
+    
+      // all checks clear
+      return true;
+    }
+
     
     // ============ Messaging ================
     
