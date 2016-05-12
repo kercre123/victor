@@ -1005,16 +1005,16 @@ namespace Anki {
                     break;
                   }
                   
-                  printf("Selecting behavior: %s\n", behaviorName.c_str());
-
                   SendMessage(ExternalInterface::MessageGameToEngine(
                                 ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
 
                   if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                    printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
                     SendMessage(ExternalInterface::MessageGameToEngine(
                                   ExternalInterface::ExecuteBehaviorByName(behaviorName)));
                   }
                   else {
+                    printf("Selecting behavior by TYPE: %s\n", behaviorName.c_str());
                     SendMessage(ExternalInterface::MessageGameToEngine(
                                   ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
                   }

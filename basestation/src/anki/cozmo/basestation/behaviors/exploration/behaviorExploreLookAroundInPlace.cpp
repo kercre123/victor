@@ -27,47 +27,12 @@
 namespace Anki {
 namespace Cozmo {
 
-// distance from previous location to not repeat this behavior near recent locations
-// note this should probably depend on the length of the groundplaneROI, but it does not have to be bound to it
-CONSOLE_VAR(float, kElaip_DistanceFromRecentLocationMin_mm, "BehaviorExploreLookAroundInPlace", 300.0f);
-CONSOLE_VAR(uint8_t, kElaip_RecentLocationsMax, "BehaviorExploreLookAroundInPlace", 5);
-// turn speed
-CONSOLE_VAR(float, kElaip_sx_BodyTurnSpeed_degPerSec, "BehaviorExploreLookAroundInPlace", 90.0f);
-CONSOLE_VAR(float, kElaip_sxt_HeadTurnSpeed_degPerSec, "BehaviorExploreLookAroundInPlace", 15.0f); // for turn states
-CONSOLE_VAR(float, kElaip_sxh_HeadTurnSpeed_degPerSec, "BehaviorExploreLookAroundInPlace", 60.0f); // for head move states
-// chance that the main turn will be counter clockwise (vs ccw)
-CONSOLE_VAR(float, kElaip_s0_MainTurnCWChance , "BehaviorExploreLookAroundInPlace", 0.5f);
-// [min,max] range for random turn angles for step 1
-CONSOLE_VAR(float, kElaip_s1_BodyAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace",  10.0f);
-CONSOLE_VAR(float, kElaip_s1_BodyAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace",  30.0f);
-CONSOLE_VAR(float, kElaip_s1_HeadAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace", -15.0f);
-CONSOLE_VAR(float, kElaip_s1_HeadAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace",  -5.0f);
-// [min,max] range for pause for step 2
-CONSOLE_VAR(float, kElaip_s2_WaitMin_sec, "BehaviorExploreLookAroundInPlace", 0.50f);
-CONSOLE_VAR(float, kElaip_s2_WaitMax_sec, "BehaviorExploreLookAroundInPlace", 1.25f);
-// [min,max] range for random angle turns for step 3
-CONSOLE_VAR(float, kElaip_s3_BodyAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace",  5.0f);
-CONSOLE_VAR(float, kElaip_s3_BodyAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace", 25.0f);
-CONSOLE_VAR(float, kElaip_s3_HeadAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace", -5.0f);
-CONSOLE_VAR(float, kElaip_s3_HeadAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace",  5.0f);
-// [min,max] range for head move for step 4
-CONSOLE_VAR(float, kElaip_s4_HeadAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace",  5.0f);
-CONSOLE_VAR(float, kElaip_s4_HeadAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace", 20.0f);
-CONSOLE_VAR(uint8_t, kElaip_s4_HeadAngleChangesMin, "BehaviorExploreLookAroundInPlace",  2);
-CONSOLE_VAR(uint8_t, kElaip_s4_HeadAngleChangesMax, "BehaviorExploreLookAroundInPlace",  4);
-// [min,max] range for head move  for step 5
-CONSOLE_VAR(float, kElaip_s5_HeadAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace", -5.0f);
-CONSOLE_VAR(float, kElaip_s5_HeadAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace",  5.0f);
-// [min,max] range for random angle turns for step 6
-CONSOLE_VAR(float, kElaip_s6_BodyAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace",  30.0f);
-CONSOLE_VAR(float, kElaip_s6_BodyAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace",  65.0f);
-CONSOLE_VAR(float, kElaip_s6_HeadAngleRangeMin_deg, "BehaviorExploreLookAroundInPlace", -20.0f);
-CONSOLE_VAR(float, kElaip_s6_HeadAngleRangeMax_deg, "BehaviorExploreLookAroundInPlace", -15.0f);
-
+static const char* kConfigParamsKey = "params";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot, const Json::Value& config)
 : IBehavior(robot, config)
+, _configParams{}
 , _iterationStartingBodyFacing_rad(0.0f)
 , _behaviorBodyFacingDone_rad(0.0f)
 , _mainTurnDirection(EClockDirection::CW)
@@ -78,6 +43,9 @@ BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot,
   SubscribeToTags({
     EngineToGameTag::RobotCompletedAction
   });
+  
+  // parse all parameters now
+  LoadConfig(config[kConfigParamsKey]);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -95,9 +63,15 @@ bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) co
   bool nearRecentLocation = false;
   for( const auto& recentLocation : _visitedLocations )
   {
+    // if this location is from a different origin simply ignore it
+    const bool sharesOrigin = (&recentLocation.FindOrigin()) == (&robot.GetPose().FindOrigin());
+    if ( !sharesOrigin ) {
+      continue;
+    }
+
     // if close to any recent location, flag
-    const float distSQ = (robot.GetPose().GetTranslation() - recentLocation).LengthSq();
-    const float maxDistSq = kElaip_DistanceFromRecentLocationMin_mm*kElaip_DistanceFromRecentLocationMin_mm;
+    const float distSQ = (robot.GetPose().GetTranslation() - recentLocation.GetTranslation()).LengthSq();
+    const float maxDistSq = _configParams.behavior_DistanceFromRecentLocationMin_mm*_configParams.behavior_DistanceFromRecentLocationMin_mm;
     if ( distSQ < maxDistSq ) {
       nearRecentLocation = true;
       break;
@@ -110,6 +84,58 @@ bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) co
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+float ParseFloat(const Json::Value& config, const char* key ) {
+  ASSERT_NAMED_EVENT(config[key].isNumeric(), "BehaviorExploreLookAroundInPlace.ParseFloat.NotValidFloat", "%s", key);
+  return config[key].asFloat();
+}
+uint8_t ParseUint8(const Json::Value& config, const char* key ) {
+  ASSERT_NAMED_EVENT(config[key].isNumeric(), "BehaviorExploreLookAroundInPlace.ParseUint8.NotValidUint8", "%s", key);
+  Json::Int intVal = config[key].asInt();
+  return Anki::Util::numeric_cast<uint8_t>(intVal);
+}
+};
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
+{
+  _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm");
+  _configParams.behavior_RecentLocationsMax = ParseUint8(config, "behavior_RecentLocationsMax");
+  // turn speed
+  _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec");
+  _configParams.sxt_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxt_HeadTurnSpeed_degPerSec");
+  _configParams.sxh_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxh_HeadTurnSpeed_degPerSec");
+  // chance that the main turn will be counter clockwise (vs ccw)
+  _configParams.s0_MainTurnCWChance = ParseFloat(config, "s0_MainTurnCWChance");
+  // [min,max] range for random turn angles for step 1
+  _configParams.s1_BodyAngleRangeMin_deg = ParseFloat(config, "s1_BodyAngleRangeMin_deg");
+  _configParams.s1_BodyAngleRangeMax_deg = ParseFloat(config, "s1_BodyAngleRangeMax_deg");
+  _configParams.s1_HeadAngleRangeMin_deg = ParseFloat(config, "s1_HeadAngleRangeMin_deg");
+  _configParams.s1_HeadAngleRangeMax_deg = ParseFloat(config, "s1_HeadAngleRangeMax_deg");
+  // [min,max] range for pause for step 2
+  _configParams.s2_WaitMin_sec = ParseFloat(config, "s2_WaitMin_sec");
+  _configParams.s2_WaitMax_sec = ParseFloat(config, "s2_WaitMax_sec");
+  // [min,max] range for random angle turns for step 3
+  _configParams.s3_BodyAngleRangeMin_deg = ParseFloat(config, "s3_BodyAngleRangeMin_deg");
+  _configParams.s3_BodyAngleRangeMax_deg = ParseFloat(config, "s3_BodyAngleRangeMax_deg");
+  _configParams.s3_HeadAngleRangeMin_deg = ParseFloat(config, "s3_HeadAngleRangeMin_deg");
+  _configParams.s3_HeadAngleRangeMax_deg = ParseFloat(config, "s3_HeadAngleRangeMax_deg");
+  // [min,max] range for head move for step 4
+  _configParams.s4_HeadAngleRangeMin_deg = ParseFloat(config, "s4_HeadAngleRangeMin_deg");
+  _configParams.s4_HeadAngleRangeMax_deg = ParseFloat(config, "s4_HeadAngleRangeMax_deg");
+  _configParams.s4_HeadAngleChangesMin = ParseUint8(config, "s4_HeadAngleChangesMin");
+  _configParams.s4_HeadAngleChangesMax = ParseUint8(config, "s4_HeadAngleChangesMax");
+  // [min,max] range for head move  for step 5
+  _configParams.s5_HeadAngleRangeMin_deg = ParseFloat(config, "s5_HeadAngleRangeMin_deg");
+  _configParams.s5_HeadAngleRangeMax_deg = ParseFloat(config, "s5_HeadAngleRangeMax_deg");
+  // [min,max] range for random angle turns for step 6
+  _configParams.s6_BodyAngleRangeMin_deg = ParseFloat(config, "s6_BodyAngleRangeMin_deg");
+  _configParams.s6_BodyAngleRangeMax_deg = ParseFloat(config, "s6_BodyAngleRangeMax_deg");
+  _configParams.s6_HeadAngleRangeMin_deg = ParseFloat(config, "s6_HeadAngleRangeMin_deg");
+  _configParams.s6_HeadAngleRangeMax_deg = ParseFloat(config, "s6_HeadAngleRangeMax_deg");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
 {
   // grab run values
@@ -117,7 +143,7 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   
   // decide main turn direction
   const double randomDirection = GetRNG().RandDbl();
-  _mainTurnDirection = (randomDirection<=kElaip_s0_MainTurnCWChance) ? EClockDirection::CW : EClockDirection::CCW;
+  _mainTurnDirection = (randomDirection<=_configParams.s0_MainTurnCWChance) ? EClockDirection::CW : EClockDirection::CCW;
   // _mainTurnDirection = EClockDirection::CW;
 
   // start first iteration
@@ -149,9 +175,9 @@ void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(Robot& robot)
   // create turn action for this state
   const EClockDirection turnDir = GetOpposite(_mainTurnDirection);
   IAction* turnAction = CreateBodyAndHeadTurnAction(robot, turnDir,
-        kElaip_s1_BodyAngleRangeMin_deg, kElaip_s1_BodyAngleRangeMax_deg,
-        kElaip_s1_HeadAngleRangeMin_deg, kElaip_s1_HeadAngleRangeMax_deg,
-        kElaip_sx_BodyTurnSpeed_degPerSec, kElaip_sxt_HeadTurnSpeed_degPerSec);
+        _configParams.s1_BodyAngleRangeMin_deg, _configParams.s1_BodyAngleRangeMax_deg,
+        _configParams.s1_HeadAngleRangeMin_deg, _configParams.s1_HeadAngleRangeMax_deg,
+        _configParams.sx_BodyTurnSpeed_degPerSec, _configParams.sxt_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
   StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS2_Pause );
@@ -161,7 +187,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(Robot& robot)
 void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(Robot& robot)
 {
   // create action
-  const double waitTime_sec = GetRNG().RandDblInRange(kElaip_s2_WaitMin_sec, kElaip_s2_WaitMax_sec);
+  const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s2_WaitMin_sec, _configParams.s2_WaitMax_sec);
   WaitAction* waitAction = new WaitAction( robot, waitTime_sec );
 
   // request action with transition to proper state
@@ -174,12 +200,12 @@ void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn(Robot& robot)
   // create turn action for this state
   const EClockDirection turnDir = _mainTurnDirection;
   IAction* turnAction = CreateBodyAndHeadTurnAction(robot, turnDir,
-        kElaip_s3_BodyAngleRangeMin_deg, kElaip_s3_BodyAngleRangeMax_deg,
-        kElaip_s3_HeadAngleRangeMin_deg, kElaip_s3_HeadAngleRangeMax_deg,
-        kElaip_sx_BodyTurnSpeed_degPerSec, kElaip_sxt_HeadTurnSpeed_degPerSec);
+        _configParams.s3_BodyAngleRangeMin_deg, _configParams.s3_BodyAngleRangeMax_deg,
+        _configParams.s3_HeadAngleRangeMin_deg, _configParams.s3_HeadAngleRangeMax_deg,
+        _configParams.sx_BodyTurnSpeed_degPerSec, _configParams.sxt_HeadTurnSpeed_degPerSec);
   
   // calculate head moves now
-  const int randMoves = GetRNG().RandIntInRange(kElaip_s4_HeadAngleChangesMin, kElaip_s4_HeadAngleChangesMax);
+  const int randMoves = GetRNG().RandIntInRange(_configParams.s4_HeadAngleChangesMin, _configParams.s4_HeadAngleChangesMax);
   _s4HeadMovesLeft = Util::numeric_cast<uint8_t>(randMoves);
 
   // request action with transition to proper state
@@ -191,8 +217,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
 {
   // create head move action for this state
   IAction* moveHeadAction = CreateHeadTurnAction(robot,
-        kElaip_s4_HeadAngleRangeMin_deg, kElaip_s4_HeadAngleRangeMax_deg,
-        kElaip_sxh_HeadTurnSpeed_degPerSec);
+        _configParams.s4_HeadAngleRangeMin_deg, _configParams.s4_HeadAngleRangeMax_deg,
+        _configParams.sxh_HeadTurnSpeed_degPerSec);
 
   // count our action as a move
   --_s4HeadMovesLeft;
@@ -211,8 +237,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown(Robot& robot)
 {
   // create head move action for this state
   IAction* moveHeadAction = CreateHeadTurnAction(robot,
-        kElaip_s5_HeadAngleRangeMin_deg, kElaip_s5_HeadAngleRangeMax_deg,
-        kElaip_sxh_HeadTurnSpeed_degPerSec);
+        _configParams.s5_HeadAngleRangeMin_deg, _configParams.s5_HeadAngleRangeMax_deg,
+        _configParams.sxh_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
   StartActing( moveHeadAction, &BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal );
@@ -224,9 +250,9 @@ void BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal(Robot& robot
   // create turn action for this state
   const EClockDirection turnDir = _mainTurnDirection;
   IAction* turnAction = CreateBodyAndHeadTurnAction(robot, turnDir,
-        kElaip_s6_BodyAngleRangeMin_deg, kElaip_s6_BodyAngleRangeMax_deg,
-        kElaip_s6_HeadAngleRangeMin_deg, kElaip_s6_HeadAngleRangeMax_deg,
-        kElaip_sx_BodyTurnSpeed_degPerSec, kElaip_sxt_HeadTurnSpeed_degPerSec);
+        _configParams.s6_BodyAngleRangeMin_deg, _configParams.s6_BodyAngleRangeMax_deg,
+        _configParams.s6_HeadAngleRangeMin_deg, _configParams.s6_HeadAngleRangeMax_deg,
+        _configParams.sx_BodyTurnSpeed_degPerSec, _configParams.sxt_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
   StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd );
@@ -252,13 +278,13 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
   {
     // we have finished a location by iterating more than 360 degrees, note down as recent location
     // make room if necessary
-    if ( _visitedLocations.size() >= kElaip_RecentLocationsMax ) {
+    if ( _visitedLocations.size() >= _configParams.behavior_RecentLocationsMax ) {
       assert( !_visitedLocations.empty() ); // otherwise the limit of locations is 0, so the behavior would run forever
       _visitedLocations.pop_front();
     }
   
     // note down this location so that we don't do it again in the same place
-    _visitedLocations.emplace_back( robot.GetPose().GetTranslation() );
+    _visitedLocations.emplace_back( robot.GetPose() );
   }
 }
 
@@ -281,8 +307,8 @@ IAction* BehaviorExploreLookAroundInPlace::CreateBodyAndHeadTurnAction(Robot& ro
   const Radians bodyTargetAngleAbs_rad( _iterationStartingBodyFacing_rad + DEG_TO_RAD(bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
   PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
-  turnAction->SetMaxPanSpeed( DEG_TO_RAD(kElaip_sx_BodyTurnSpeed_degPerSec) );
-  turnAction->SetMaxTiltSpeed( DEG_TO_RAD(kElaip_sxt_HeadTurnSpeed_degPerSec) );
+  turnAction->SetMaxPanSpeed( DEG_TO_RAD(_configParams.sx_BodyTurnSpeed_degPerSec) );
+  turnAction->SetMaxTiltSpeed( DEG_TO_RAD(_configParams.sxt_HeadTurnSpeed_degPerSec) );
 
   return turnAction;
 }
