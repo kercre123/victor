@@ -45,7 +45,7 @@ public class AnimationManager {
   #elif UNITY_IOS
   public static string sEventMapDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/animationGroupMaps"); } }
   #elif UNITY_ANDROID
-  public static string sEventMapDirectory { get { return  Path.Combine(Application.persistentDataPath, "/cozmo_resources/assets/animationGroupMaps"); } }
+  public static string sEventMapDirectory { get { return  Path.Combine(Application.persistentDataPath, "cozmo_resources/assets/animationGroupMaps"); } }
   #endif
 
   public void Initialize() {
