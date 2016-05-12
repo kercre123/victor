@@ -1,8 +1,6 @@
 {
   "behaviorType": "PounceOnMotion",
   "name": "fp_PounceOnMotion",
-  "maxNoGroundMotionBeforeBored_Sec": 30.0,
-  "backUpDistance": -50.0,
   "emotionScorers": [
     {
       "emotionType": "Excited",
@@ -14,11 +12,11 @@
           },
           {
             "x": -0.004,
-            "y": 0.4
+            "y": 0.48
           },
           {
             "x": 1.0,
-            "y": 0.1
+            "y": 0.49
           }
         ]
       },
@@ -32,8 +30,8 @@
         "y": 0.0
       },
       {
-        "x": 6.0,
-        "y": 0.1
+        "x": 5.583,
+        "y": 0.41
       },
       {
         "x": 8.0,
@@ -43,5 +41,7 @@
   },
   "behaviorGroups": [
     "FreeplayOne"
-  ]
+  ],
+  "maxNoGroundMotionBeforeBored_Sec": 20.0,
+  "backUpDistance": -50.0
 }
