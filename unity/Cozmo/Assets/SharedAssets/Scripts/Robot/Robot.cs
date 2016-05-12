@@ -1024,7 +1024,7 @@ public class Robot : IRobot {
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
-  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, float approachAngleRad = 0.0f, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(
       Singleton<AlignWithObject>.Instance.Initialize(
         objectID: obj,
@@ -1032,7 +1032,7 @@ public class Robot : IRobot {
         distanceFromMarker_mm: distanceFromMarker_mm,
         approachAngle_rad: approachAngleRad,
         useApproachAngle: useApproachAngle,
-        usePreDockPose: false,
+        usePreDockPose: usePreDockPose,
         useManualSpeed: false
       ), 
       callback, 
