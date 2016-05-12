@@ -44,42 +44,51 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
-  float _maxPounceDist = 110.0f;
+  float _maxPounceDist = 160.0f;
   float _minGroundAreaForPounce = 0.01f;
   float _maxTimeBetweenPoses = 4.0f;
+  // TODO: move to config.
+  const float _minimumTimeSinceSeenLastMotion_sec = 30.f;
   
   float _prePouncePitch = 0.0f;
   float _lastValidPouncePoseTime = 0.0f;
   int _numValidPouncePoses = 0;
 
   float _lastPoseDist = 0.0f;
-  const float _driveForwardUntilDist = 70.0f;
+  const float _driveForwardUntilDist = 75.0f;
 
   float _backupAfterPounce = 200.0f;
   float _backupSpeed = 80.0f;
+  
+  
   
 private:
 
   enum class State {
     Inactive,
+    BringingHeadDown,
+    WaitingForMotion,
     Pouncing,
     RelaxingLift,
     PlayingFinalReaction,
     Complete,
   };
 
+  float _lastMotionTime;
   State _state = State::Inactive;
 
   u32 _waitForActionTag = 0;
 
   float _stopRelaxingTime = 0.0f;
-
   std::string _previousIdleAnimation;
   
   void CheckPounceResult(Robot& robot);
 
   // reset everything for when the behavior is finished
   void Cleanup(Robot& robot);
+  
+  void TransitionToWaitForMotion(Robot& robot);
+  void TransitionToPounce(Robot& robot);
 
 };
 
