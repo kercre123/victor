@@ -49,6 +49,7 @@ public class PressDemoHubWorld : HubWorldBase {
     _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
     _PressDemoViewInstance.OnStartButton += HandleStartButtonPressed;
     _PressDemoViewInstance.SetPressDemoDebugState(_PressDemoDebugSceneIndex);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
   }
 
   private void HandleDemoState(int demoNum) {
