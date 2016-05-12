@@ -798,12 +798,10 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      
-      void Process_setBackpackLights(RobotInterface::BackpackLights const&)
+      void Process_setHeadlight(RobotInterface::SetHeadlight const&)
       {
         // Nothing to do here
       }
-       
       void Process_bleEncodedKey(Anki::Cozmo::BLE_EncodedKey const&)
       {
         // Nothing to do here

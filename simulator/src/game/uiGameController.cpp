@@ -72,12 +72,14 @@ namespace Anki {
 
       
       // TODO: Move this to WebotsKeyboardController?
-      const f32 area = msg.img_width * msg.img_height;
-      _lastObservedObject.family = msg.objectFamily;
-      _lastObservedObject.type   = msg.objectType;
-      _lastObservedObject.id     = msg.objectID;
-      _lastObservedObject.isActive = msg.isActive;
-      _lastObservedObject.area   = area;
+      if (msg.markersVisible) {
+        const f32 area = msg.img_width * msg.img_height;
+        _lastObservedObject.family = msg.objectFamily;
+        _lastObservedObject.type   = msg.objectType;
+        _lastObservedObject.id     = msg.objectID;
+        _lastObservedObject.isActive = msg.isActive;
+        _lastObservedObject.area   = area;
+      }
 
       
       HandleRobotObservedObject(msg);

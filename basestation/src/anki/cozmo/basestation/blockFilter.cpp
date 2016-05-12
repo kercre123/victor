@@ -225,7 +225,6 @@ void BlockFilter::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
         ExternalInterface::BlockPoolBlockData blockData;
         blockData.enabled = true;
         blockData.id = factoryId;
-        blockData.objectType = ObservableObject::GetTypeFromFactoryID(factoryId);
         allBlocks.push_back(blockData);
       }
       // TODO: push in all discovered by robot but unlisted blocks here as well.

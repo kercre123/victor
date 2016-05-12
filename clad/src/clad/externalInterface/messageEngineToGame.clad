@@ -415,7 +415,6 @@ message UpdateEngineState {
 
 structure BlockPoolBlockData {
   uint_32 id,
-  ObjectType objectType,
   bool enabled
 }
 
