@@ -148,6 +148,8 @@ void CozmoAPI::CozmoInstanceRunner::Run()
       Stop();
     }
     
+    const auto minimumSleepTimeMs = std::chrono::milliseconds( (long)(BS_TIME_STEP * 0.2) );
+    
     auto tickNow = std::chrono::system_clock::now();
     auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - tickStart);
     if (ms_left < std::chrono::milliseconds(0))
@@ -160,6 +162,10 @@ void CozmoAPI::CozmoInstanceRunner::Run()
     }
     else
     {
+      if (ms_left < minimumSleepTimeMs)
+      {
+        ms_left = minimumSleepTimeMs;
+      }
       std::this_thread::sleep_for(ms_left);
     }
   }
