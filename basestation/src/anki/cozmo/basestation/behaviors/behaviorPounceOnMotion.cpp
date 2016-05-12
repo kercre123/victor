@@ -100,7 +100,6 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
       }
       if( _state == State::WaitingForMotion )
       {
-        
         const float robotOffsetX = motionObserved.ground_x;
         const float robotOffsetY = motionObserved.ground_y;
         // const u32 imageTimestamp = motionObserved.timestamp;
@@ -166,7 +165,9 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
         else if( _state == State::BackUp)
         {
           PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.Complete", "post-pounce reaction animation complete");
-          _state = State::Complete;
+          // We exit out of this mode during the update when we time out so just start waiting for motion again after backing up
+          _numValidPouncePoses = 0; // wait until we're seeing motion again
+          TransitionToBringingHeadDown(robot);
         }
       }
       break;
@@ -297,12 +298,6 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
 
   float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
-  // We're done if we haven't seen motion in a long while or since start.
-  if ( _lastMotionTime + _maxTimeSinceNoMotion_sec < currentTime_sec )
-  {
-    PRINT_NAMED_INFO("BehaviorPounceOnMotion.Timeout", "No motion found, giving up");
-    _state = State::Complete;
-  }
   
   switch( _state )
   {
@@ -312,7 +307,14 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
     }
     case State::WaitingForMotion:
     {
-      if( _numValidPouncePoses > 0 ) {
+      // We're done if we haven't seen motion in a long while or since start.
+      if ( _lastMotionTime + _maxTimeSinceNoMotion_sec < currentTime_sec )
+      {
+        PRINT_NAMED_INFO("BehaviorPounceOnMotion.Timeout", "No motion found, giving up");
+        _state = State::Complete;
+      }
+      else if( _numValidPouncePoses > 0 )
+      {
         TransitionToPounce(robot);
       }
       break;

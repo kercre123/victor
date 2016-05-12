@@ -53,8 +53,8 @@ protected:
   const float _driveForwardUntilDist = 75.0f;
   
   // Overwritten by config.
-  float _maxTimeSinceNoMotion_sec;
-  float _backUpDistance;
+  float _maxTimeSinceNoMotion_sec = 30.0;
+  float _backUpDistance = -50.0;
   
   
 private:
