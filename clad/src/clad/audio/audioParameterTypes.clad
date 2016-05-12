@@ -11,6 +11,7 @@ enum uint_32 ParameterType
   Invalid = 0,
   Mood = 3128647864,
   Music_Volume = 1006694123,
+  Mvt_Speed = 3464961452,
   Relationship = 3723222599,
   Robot_Aux_Send_1 = 2318225993,
   Robot_Aux_Send_2 = 2318225994,

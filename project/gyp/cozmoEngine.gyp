@@ -293,6 +293,9 @@
                     '<(webots_path)/lib/',
                     '<@(flite_lib_search_path_ios)',
                 ],
+                'FRAMEWORK_SEARCH_PATHS': [
+                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
+                ],
               },
             }],
             ['OS=="mac"', {
@@ -327,6 +330,9 @@
                     '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/',
                     '<@(flite_lib_search_path_ios)',
+                ],
+                'FRAMEWORK_SEARCH_PATHS': [
+                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
                 ],
               },
             }],
@@ -363,7 +369,10 @@
                     '<(webots_path)/lib/',
                     '<@(flite_lib_search_path_ios)',
                 ],
-              },
+                 'FRAMEWORK_SEARCH_PATHS': [
+                  '../../lib/HockeySDK-iOS/HockeySDK.framework',
+                ],
+             },
             }],
             ['OS=="mac"', {
               'xcode_settings': {
@@ -1427,7 +1436,6 @@
         '<@(pocketsphinx_includes)',
         '<@(flite_includes)',
         '<@(routing_http_server_include)',
-        '../../cozmoAPI/src',
         '../../cozmoAPI/include',
         '../../generated/clad/game',
         '<@(libarchive_include)',
@@ -1554,7 +1562,8 @@
             ],
           }
         ],
-        ['face_library=="faciometric"', {
+        
+       ['face_library=="faciometric"', {
           # Copy FacioMetric's models into the resources so they are available at runtime.
           # This is a little icky since it reaches into cozmo engine...
           'actions': [
@@ -1569,9 +1578,18 @@
             },
           ],
         }],
-        ['OS=="ios" or OS=="mac"',{
+        ['OS=="ios"',{
           'sources/': [ 
             ['exclude', '(android|linux)']
+          ],
+          'libraries': [
+              '../../lib/HockeySDK-iOS/HockeySDK.framework',
+          ]
+        }],
+        ['OS=="mac"',{
+          'sources/': [ 
+            ['exclude', '(android|linux)'],
+            ['exclude', '../../cozmoAPI/src/anki/cozmo/csharp-binding/ios']
           ]
         }],
         ['OS=="android"',{

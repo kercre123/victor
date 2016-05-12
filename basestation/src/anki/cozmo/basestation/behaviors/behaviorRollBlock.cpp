@@ -19,11 +19,16 @@
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
+#include "util/console/consoleInterface.h"
 
-#define SET_STATE(s) SetState_internal(s, #s)
+#define SET_STATE(s) SetState_internal(State::s, #s)
+
+#define DEBUG_PRINT_ALL_BLOCKS 0
 
 namespace Anki {
 namespace Cozmo {
+
+CONSOLE_VAR(f32, kScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
 
 BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -36,30 +41,17 @@ BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   _blockworldFilter->OnlyConsiderLatestUpdate(false);
   _blockworldFilter->SetFilterFcn( std::bind( &BehaviorRollBlock::FilterBlocks, this, std::placeholders::_1) );
 }
-  
+
 bool BehaviorRollBlock::IsRunnableInternal(const Robot& robot) const
 {
-  // runnable if we have a block we'd like to roll
-  return HasValidTargetBlock(robot);
+  UpdateTargetBlock(robot);
+  
+  return _targetBlock.IsSet() && !robot.IsCarryingObject();
 }
-
-float BehaviorRollBlock::EvaluateRunningScoreInternal(const Robot& robot) const
-{
-  // if we have requested, and are past the timeout, then we don't want to keep running
-  float minScore = 0.0f;
-  if( IsActing() ) {
-    // while we are doing things, we really don't want to be interrupted
-    minScore = 0.8f;
-  }
-
-  // otherwise, fall back to running score
-  return std::max( minScore, EvaluateScoreInternal(robot) );
-}
-
 
 Result BehaviorRollBlock::InitInternal(Robot& robot)
 {
-  TransitionToSelectingTargetBlock(robot);
+  TransitionToReactingToBlock(robot);
   return Result::RESULT_OK;
 }
   
@@ -68,78 +60,132 @@ void BehaviorRollBlock::StopInternal(Robot& robot)
   ResetBehavior(robot);
 }
 
-
-void BehaviorRollBlock::TransitionToSelectingTargetBlock(Robot& robot)
+void BehaviorRollBlock::UpdateTargetBlock(const Robot& robot) const
 {
-  SET_STATE(State::SelectingTargetBlock);
-
   ObservableObject* closestObj = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(), *_blockworldFilter);
-  if( nullptr == closestObj ) {
-    PRINT_NAMED_INFO("BehaviorRollBlock.TransitionToSelectingTargetBlock.NoValidBlock",
-                     "couldn't find a target block, behavior is done");
-  }
-  else {
+  if( nullptr != closestObj ) {
     _targetBlock = closestObj->GetID();
-
-    StartActing(new TurnTowardsFaceWrapperAction(
-                  robot,
-                  new PlayAnimationGroupAction(robot, _initialAnimGroup)),                  
-                &BehaviorRollBlock::TransitionToRollingBlock);
   }
 }
 
-void BehaviorRollBlock::TransitionToRollingBlock(Robot& robot)
+bool BehaviorRollBlock::FilterBlocks(ObservableObject* obj) const
 {
-  SET_STATE(State::RollingBlock);
-  if( ! _targetBlock.IsSet() ) {
-    PRINT_NAMED_ERROR("BehaviorRollBlock.TransitionToRollingBlock.NoBlockID",
-                      "Transitioning to rolling block, but we don't have a valid block ID");
-    // behavior will stop
+  return obj->GetFamily() == ObjectFamily::LightCube &&
+    obj->GetPoseState() == ObservableObject::PoseState::Known && // only consider known, non-dirty blocks
+    !obj->IsMoving() &&
+    obj->IsRestingFlat() &&
+    ( !_robot.IsCarryingObject() || _robot.GetCarryingObject() != obj->GetID() ) && // dont pick the block in our lift
+    obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() != AxisName::Z_POS;
+}
+
+void BehaviorRollBlock::TransitionToReactingToBlock(Robot& robot)
+{
+  SET_STATE(ReactingToBlock);
+
+  if( !_initialAnimGroup.empty() ) {
+    StartActing(new TurnTowardsFaceWrapperAction(
+                  robot,
+                  new PlayAnimationGroupAction(robot, _initialAnimGroup)),                  
+                &BehaviorRollBlock::TransitionToPerformingAction);
   }
   else {
+    TransitionToPerformingAction(robot);
+  }
+}
 
-    DriveToRollObjectAction* rollAction = new DriveToRollObjectAction(robot, _targetBlock);
-    rollAction->RollToUpright();
+void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot)
+{
+  SET_STATE(PerformingAction);
+  if( ! _targetBlock.IsSet() ) {
+    PRINT_NAMED_WARNING("BehaviorRollBlock.NoBlockID",
+                        "%s: Transitioning to action state, but we don't have a valid block ID",
+                        GetName().c_str());
+    return;
+  }
 
-    StartActing(rollAction, 
-                [&,this](const ExternalInterface::RobotCompletedAction& msg) {
-                  if( msg.result == ActionResult::SUCCESS ) {
-                    if( IsBlockInTargetRestingPosition( robot, _targetBlock ) ) {
-                      // we rolled, but still need to roll again
-                      TransitionToRollingBlock(robot);
-                    }
-                    else {
-                      // we are done!
-                      StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup));
-                    }
-                  }
-                  else if (msg.result == ActionResult::FAILURE_RETRY ) {
-                    IActionRunner* animAction = nullptr;
-                    switch(msg.completionInfo.Get_objectInteractionCompleted().result)
-                    {
-                      case ObjectInteractionResult::INCOMPLETE:
-                      case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
-                      {
-                        animAction = new PlayAnimationGroupAction(robot, _realignAnimGroup);
-                        break;
-                      }
-            
-                      default: {
-                        animAction = new PlayAnimationGroupAction(robot, _retryRollAnimGroup);
-                        break;
-                      }
-                    }
-                    assert(nullptr != animAction);
+  DriveToRollObjectAction* action = new DriveToRollObjectAction(robot, _targetBlock);
+  action->RollToUpright();
 
-                    StartActing(animAction, &BehaviorRollBlock::TransitionToRollingBlock);
+  StartActing(action,
+              [&,this](const ExternalInterface::RobotCompletedAction& msg) {
+                if( msg.result == ActionResult::SUCCESS ) {
+                  // check if we want to run again
+
+                  // TODO:(bn) this sometimes fails because the block is still reporting that it's moving, but
+                  // in a few ticks it won't be. We should consider adding a delay here, or better yet, having
+                  // an extra state where if a cube is valid for other reasons, but is moving or not flat, we
+                  // "track" it for a while
+                  _targetBlock.UnSet();
+                  if( IsRunnable(robot) ) {
+                    TransitionToPerformingAction(robot);
                   }
                   else {
-                    // real failure or cancelation, just end the behavior
-                    PRINT_NAMED_INFO("BehaviorRollBlock.RollBlockFailed",
-                                     "roll block failed without retry, behavior ending");
+                    // play success animation, but then double check if we are really done or not
+                    auto animCompleteBlock = [this](Robot& robot) {
+                      _targetBlock.UnSet();
+                      if( IsRunnable(robot) ) {
+                        TransitionToPerformingAction(robot);
+                      }
+                    };
+
+                    if( !_successAnimGroup.empty() ) {
+                      StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup), animCompleteBlock);
+                    }
+                    else {
+                      animCompleteBlock(robot);
+                    }
                   }
-                });
-  }
+                }
+                else if( msg.result == ActionResult::FAILURE_RETRY ) {
+                  IActionRunner* animAction = nullptr;
+                  switch(msg.completionInfo.Get_objectInteractionCompleted().result)
+                  {
+                    case ObjectInteractionResult::INCOMPLETE:
+                    case ObjectInteractionResult::DID_NOT_REACH_PREACTION_POSE:
+                    {
+                      if( ! _realignAnimGroup.empty() ) {
+                        animAction = new PlayAnimationGroupAction(robot, _realignAnimGroup);
+                      }
+                      break;
+                    }
+            
+                    default: {
+                      if( ! _retryActionAnimGroup.empty() ) {
+                        animAction = new PlayAnimationGroupAction(robot, _retryActionAnimGroup);
+                      }
+                      break;
+                    }
+                  }
+
+                  if( nullptr != animAction ) {
+                    StartActing(animAction, &BehaviorRollBlock::TransitionToPerformingAction);
+                  }
+                  else {
+                    TransitionToPerformingAction(robot);
+                  }
+                }
+                else if( msg.result == ActionResult::FAILURE_ABORT ) {
+                  // assume that failure is because we didn't visually verify (although it could be due to an
+                  // error)
+                  PRINT_NAMED_INFO("BehaviorRollBlock.FailedAbort",
+                                   "Failed to verify roll, searching for block");
+                  StartActing(new SearchSideToSideAction(robot),
+                              [this](Robot& robot) {
+                                _targetBlock.UnSet();
+                                if( IsRunnable(robot) ) {
+                                  TransitionToPerformingAction(robot);
+                                }
+                                // TODO:(bn) if we actually succeeded here, we should play the success anim,
+                                // or at least a recognition anim
+                              });
+                }
+                else {
+                  // other failure, just end
+                  PRINT_NAMED_INFO("BehaviorRollBlock.FailedActionNoRetry",
+                                   "action failed without retry, behavior ending");
+                }
+              });
+  IncreaseScoreWhileActing( kScoreIncreaseForAction );
 }
 
 void BehaviorRollBlock::SetState_internal(State state, const std::string& stateName)
@@ -151,54 +197,9 @@ void BehaviorRollBlock::SetState_internal(State state, const std::string& stateN
 
 void BehaviorRollBlock::ResetBehavior(Robot& robot)
 {
-  _state = State::SelectingTargetBlock;
+  _state = State::ReactingToBlock;
   _targetBlock.UnSet();
 }
 
-bool BehaviorRollBlock::FilterBlocks(ObservableObject* obj) const
-{
-  if( obj->GetFamily() != ObjectFamily::LightCube ||
-      obj->GetPoseState() != ObservableObject::PoseState::Known || // only consider known, non-dirty blocks
-      obj->IsMoving() ||
-      !obj->IsRestingFlat() ||
-      ( _robot.IsCarryingObject() && _robot.GetCarryingObject() == obj->GetID() ) || // ignore the block we are carrying
-      !IsBlockInTargetRestingPosition(obj)
-    ) {
-    return false;
-  }
-
-  return true;
-}
-
-bool BehaviorRollBlock::IsBlockInTargetRestingPosition(const Robot& robot, ObjectID objectID) const
-{
-  return IsBlockInTargetRestingPosition( robot.GetBlockWorld().GetObjectByID(objectID) );
-}
-
-bool BehaviorRollBlock::IsBlockInTargetRestingPosition(const ObservableObject* obj) const
-{
-  if( nullptr == obj ) {
-    // if we have a null object, assume that it is in the correct position, so we don't try to roll it
-    return true;
-  }
-
-  if( !obj->IsRestingFlat() ) {
-    return false;
-  }
-
-  AxisName upAxis = obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
-  return upAxis != AxisName::Z_POS;
-}
-
-bool BehaviorRollBlock::HasValidTargetBlock(const Robot& robot) const
-{
-  // runnable if there are any valid target blocks
-  std::vector<ObservableObject*> blocks;
-  robot.GetBlockWorld().FindMatchingObjects(*_blockworldFilter, blocks);
-
-  return ! blocks.empty();
-}
-
 }
 }
-

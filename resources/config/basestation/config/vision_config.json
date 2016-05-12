@@ -1,0 +1,16 @@
+{
+  "InitialVisionModes" : {
+    // If a vision mode is not listed, it will be left in its default state
+    "DetectingMarkers"       : true,
+    "DetectingFaces"         : true,
+    "DetectingMotion"        : false,
+    "DetectingOverheadEdges" : false
+  },
+  "FaceAlbum" : "robot",       // Name of album on disk to load or "robot" to use the one from the robot
+  "FaceDetection" : {
+    "DetectionMode": "video"   // "video" or "singleImage"
+  },
+  "FaceRecognition" : {
+    "RunMode": "asynchronous"  // "synchronous" or "asynchronous"
+  }
+}

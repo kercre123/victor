@@ -146,15 +146,65 @@ namespace Cozmo {
     
   } // VisionSystem()
 
-  void VisionComponent::SetCameraCalibration(const Vision::CameraCalibration& camCalib)
+  Result VisionComponent::Init(const Json::Value& config)
+  {
+    _isInitialized = false;
+    Result result = _visionSystem->Init(config);
+    if(RESULT_OK != result) {
+      PRINT_NAMED_ERROR("VisionComponent.Init.VisionSystemInitFailed", "");
+      return result;
+    }
+    
+    if(ROLLING_SHUTTER_CORRECTION)
+    {
+      _visionSystem->ShouldDoRollingShutterCorrection(_robot.IsPhysical());
+    }
+    else
+    {
+      _visionSystem->ShouldDoRollingShutterCorrection(false);
+      EnableVisionWhileMovingFast(false);
+    }
+    
+    // Request face album data from the robot
+    std::string faceAlbumName;
+    JsonTools::GetValueOptional(config, "FaceAlbum", faceAlbumName);
+    if(faceAlbumName.empty() || faceAlbumName == "robot") {
+      result = LoadFaceAlbumFromRobot();
+      if(RESULT_OK != result) {
+        PRINT_NAMED_WARNING("VisionComponent.Init.LoadFaceAlbumFromRobotFailed", "");
+      }
+    } else {
+      
+      std::list<Vision::FaceNameAndID> namesAndIDs;
+      result = _visionSystem->LoadFaceAlbum(faceAlbumName, namesAndIDs);
+      BroadcastLoadedNamesAndIDs(namesAndIDs);
+      
+      if(RESULT_OK != result) {
+        PRINT_NAMED_WARNING("VisionComponent.Init.LoadFaceAlbumFromFileFailed",
+                            "AlbumFile: %s", faceAlbumName.c_str());
+      }
+    }
+    
+    _isInitialized = true;
+    return RESULT_OK;
+    
+  } //Init()
+  
+  void VisionComponent::SetCameraCalibration(Vision::CameraCalibration& camCalib)
   {
     if(_camCalib != camCalib || !_isCamCalibSet)
     {
       _camCalib = camCalib;
       _camera.SetSharedCalibration(&_camCalib);
       _isCamCalibSet = true;
-      
-      _visionSystem->UnInit();
+     
+      Lock();
+      _visionSystem->UpdateCameraCalibration(_camCalib);
+      Unlock();
+     
+      if(_runMode == RunMode::Asynchronous) {
+        Start();
+      }
       
       // Got a new calibration: rebuild the LUT for ground plane homographies
       PopulateGroundPlaneHomographyLUT();
@@ -162,23 +212,21 @@ namespace Cozmo {
       // Fine-tune calibration using tool code dots
       //_robot.GetActionList().QueueActionNext(new ReadToolCodeAction(_robot));
     }
-  }
+  } // SetCameraCalibration()
   
   
   void VisionComponent::SetRunMode(RunMode mode) {
     if(mode == RunMode::Synchronous && _runMode == RunMode::Asynchronous) {
       PRINT_NAMED_INFO("VisionComponent.SetRunMode.SwitchToSync", "");
       if(_running) {
-        //Save old dataPath before destroying current vision system
-        std::string dataPath = _visionSystem->GetDataPath();
         Stop();
-        _visionSystem = new VisionSystem(dataPath, _vizManager);
       }
       _runMode = mode;
     }
     else if(mode == RunMode::Asynchronous && _runMode == RunMode::Synchronous) {
       PRINT_NAMED_INFO("VisionComponent.SetRunMode.SwitchToAsync", "");
       _runMode = mode;
+      Start();
     }
   }
   
@@ -369,38 +417,24 @@ namespace Cozmo {
   
   Result VisionComponent::SetNextImage(const Vision::ImageRGB& image)
   {
+    if(!_isInitialized) {
+      PRINT_NAMED_WARNING("VisionComponent.SetNextImage.NotInitialized", "");
+      return RESULT_FAIL;
+    }
+
     if (!_enabled) {
       return RESULT_OK;
     }
     
     if(_isCamCalibSet) {
       ASSERT_NAMED(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
-      if(!_visionSystem->IsInitialized()) {
-
-        Result initResult = _visionSystem->Init(_camCalib);
-        if (initResult == RESULT_OK) {
-          // Wait for initialization to complete (i.e. Matlab to start up, if needed)
-          while(!_visionSystem->IsInitialized()) {
-            std::this_thread::sleep_for(std::chrono::microseconds(500));
-          }
-          
-          LoadFaceAlbumFromRobot();
-          
-          if(_runMode == RunMode::Asynchronous) {
-            Start();
-          }
-        } else {
-          PRINT_NAMED_WARNING("VisionComponent.SetNextImage.VisionSystemInitFailed", "Result: %d", initResult);
-        }
-      }
+      ASSERT_NAMED(_visionSystem->IsInitialized(), "VisionComponent.SetNextImage.VisionSystemNotInitialized");
 
       // Fill in the pose data for the given image, by querying robot history
       RobotPoseStamp imagePoseStamp;
       TimeStamp_t imagePoseStampTimeStamp;
       
       Result lastResult = _robot.GetPoseHistory()->ComputePoseAt(image.GetTimestamp(), imagePoseStampTimeStamp, imagePoseStamp, true);
-      
-      
       
       // If we are unable to compute a pose at image timestamp because we haven't recieved any state updates
       // after that timestamp then use the latest pose
@@ -463,11 +497,8 @@ namespace Cozmo {
         case RunMode::Synchronous:
         {
           if(!_paused) {
-            _visionSystem->Update(_nextPoseData, image);
+            UpdateVisionSystem(_nextPoseData, image);
             _lastImg = image;
-            
-            _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
-                                               "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
           }
           break;
         }
@@ -531,7 +562,7 @@ namespace Cozmo {
       
     } else {
       PRINT_NAMED_WARNING("VisionComponent.Update.NoCamCalib",
-                        "Camera calibration must be set before calling Update().\n");
+                          "Camera calibration should be set before calling Update().");
       return RESULT_FAIL;
     }
     
@@ -620,6 +651,18 @@ namespace Cozmo {
     
   } // LookupGroundPlaneHomography()
 
+  void VisionComponent::UpdateVisionSystem(const VisionPoseData& poseData, const Vision::ImageRGB& img)
+  {
+    Result result = _visionSystem->Update(poseData, img);
+    if(RESULT_OK != result) {
+      PRINT_NAMED_WARNING("VisionComponent.UpdateVisionSystem.UpdateFailed", "");
+    }
+    
+    _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
+                         "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+  }
+  
+  
   void VisionComponent::Processor()
   {
     PRINT_NAMED_INFO("VisionComponent.Processor",
@@ -635,26 +678,13 @@ namespace Cozmo {
         continue;
       }
       
-      //if(_currentImg != nullptr) {
-      if(!_currentImg.IsEmpty()) {
+      if(!_currentImg.IsEmpty())
+      {
         // There is an image to be processed:
-        
-        //assert(_currentImg != nullptr);
-        if(ROLLING_SHUTTER_CORRECTION)
-        {
-          _visionSystem->ShouldDoRollingShutterCorrection(_robot.IsPhysical());
-        }
-        else
-        {
-          _visionSystem->ShouldDoRollingShutterCorrection(false);
-          EnableVisionWhileMovingFast(false);
-        }
-        _visionSystem->Update(_currentPoseData, _currentImg);
-        
-        _vizManager->SetText(VizManager::VISION_MODE, NamedColors::CYAN,
-                                           "Vision: %s", _visionSystem->GetCurrentModeName().c_str());
+        UpdateVisionSystem(_currentPoseData, _currentImg);
         
         Lock();
+        
         // Store frame rate
         _processingPeriod = _currentImg.GetTimestamp() - _lastImg.GetTimestamp();
         
@@ -668,7 +698,7 @@ namespace Cozmo {
         _nextImg = {};
         
         Unlock();
-        
+        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
       } else if(!_nextImg.IsEmpty()) {
         Lock();
         _currentImg        = _nextImg;
@@ -1474,7 +1504,6 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
-      
       ++imgIdx;
     }
     
@@ -1578,7 +1607,7 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
-    ASSERT_NAMED(_visionSystem != nullptr && _visionSystem->IsInitialized(),
+    ASSERT_NAMED(_visionSystem != nullptr,
                  "VisionComponent.LoadFaceAlbumFromRobot.VisionSystemNotReady");
     
     NVStorageComponent::NVStorageReadCallback readCallback =
@@ -1597,26 +1626,12 @@ namespace Cozmo {
                            "Finished setting %zu-byte album data and %zu-byte enroll data",
                            _albumData.size(), _enrollData.size());
 
-          // Notify about the newly-available names and IDs, and create wave files
-          // for the names if they don't already exist, so we've already got them
-          // when we want to say them at some point later.
-          using namespace ExternalInterface;
-          _robot.Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
-          for(auto & nameAndID : namesAndIDs)
-          {
-            RobotEnrolledFace msg;
-            msg.name = nameAndID.name;
-            msg.faceID = nameAndID.faceID;
-            _robot.Broadcast(MessageEngineToGame(std::move(msg)));
-            
-            // TODO: Need to determine what styles need to be created
-            _robot.GetTextToSpeechComponent().CreateSpeech(nameAndID.name, SayTextStyle::Normal);
-          }
+          BroadcastLoadedNamesAndIDs(namesAndIDs);
           
         } else {
           PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.Failure",
-                            "Failed setting %zu-byte album data and %zu-byte enroll data",
-                            _albumData.size(), _enrollData.size());
+                              "Failed setting %zu-byte album data and %zu-byte enroll data",
+                              _albumData.size(), _enrollData.size());
         }
       } else {
         PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbumFromRobot.ReadFaceEnrollDataFail",
@@ -1669,6 +1684,25 @@ namespace Cozmo {
 
     // Every time a new face is enrolled with a name, store the album on the robot
     SaveFaceAlbumToRobot();
+  }
+  
+  void VisionComponent::BroadcastLoadedNamesAndIDs(const std::list<Vision::FaceNameAndID>& namesAndIDs) const
+  {
+    // Notify about the newly-available names and IDs, and create wave files
+    // for the names if they don't already exist, so we've already got them
+    // when we want to say them at some point later.
+    using namespace ExternalInterface;
+    _robot.Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
+    for(auto & nameAndID : namesAndIDs)
+    {
+      RobotEnrolledFace msg;
+      msg.name = nameAndID.name;
+      msg.faceID = nameAndID.faceID;
+      _robot.Broadcast(MessageEngineToGame(std::move(msg)));
+      
+      // TODO: Need to determine what styles need to be created
+      _robot.GetTextToSpeechComponent().CreateSpeech(nameAndID.name, SayTextStyle::Normal);
+    }
   }
   
 } // namespace Cozmo

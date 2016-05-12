@@ -32,6 +32,7 @@ OUTPUT_VIZ_CPP=$(patsubst %.clad, %.cpp, $(INPUT_VIZ_FILES))
 OUTPUT_VIZ_H=$(patsubst %.clad, %.h, $(INPUT_VIZ_FILES))
 OUTPUT_VIZ_H_AND_CPP=$(OUTPUT_VIZ_H) $(OUTPUT_VIZ_CPP)
 OUTPUT_VIZ_CSHARP=$(patsubst %.clad, %.cs, $(INPUT_VIZ_FILES))
+OUTPUT_VIZ_PYTHON=$(patsubst %.clad, %.py, $(INPUT_VIZ_FILES))
 OUTPUT_VIZ_LST=../generated/clad/viz.lst
 
 INPUT_ROBOT_DIR=../robot/clad/src/
@@ -67,7 +68,7 @@ vpath %.h $(OUTPUT_DIR_CTI_VISION)/
 
 .PHONY: show clean $(OUTPUT_VIZ_LST)
 
-all: cpp $(OUTPUT_VIZ_LST)
+all: cpp python $(OUTPUT_VIZ_LST)
 
 cpp: engineCpp robotCpp vizCpp ctiVisionCpp
 robotCpp: $(OUTPUT_ROBOT_CPP)
@@ -81,8 +82,9 @@ vizCsharp: $(OUTPUT_VIZ_CSHARP)
 ctiVisionCsharp: $(OUTPUT_CTI_VISION_CSHARP)
 robotPython: $(OUTPUT_ROBOT_PYTHON)
 enginePython: $(OUTPUT_ENGINE_PYTHON)
+vizPython: $(OUTPUT_VIZ_PYTHON)
 ctiVisionPython: $(OUTPUT_CTI_VISION_PYTHON)
-python: enginePython robotPython ctiVisionPython
+python: enginePython robotPython vizPython ctiVisionPython
 
 $(OUTPUT_VIZ_H_AND_CPP): $(INPUT_VIZ_FILES) $(CLAD_DEPENDENCIES) $(CLAD_CPP) $(CLAD_CPP_DECL) $(CLAD_CPP_SWITCH)
 	if test -f $(OUTPUT_DIR_ENGINE)/$*.h; then chmod -f 777 $(OUTPUT_DIR_ENGINE)/$*.h; fi
@@ -169,13 +171,20 @@ $(OUTPUT_ENGINE_PYTHON): $(INPUT_ENGINE_FILES) $(CLAD_DEPENDENCIES) $(CLAD_PYTHO
 	if test -f $(OUTPUT_DIR_PYTHON)/$@; then chmod -f 777 $(OUTPUT_DIR_PYTHON)/$@; fi
 	$(CLAD_PYTHON) -C $(INPUT_ENGINE_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_PYTHON)/ $(@:.py=.clad)
 	chmod -f 555 $(OUTPUT_DIR_PYTHON)/$@
+	
+# in this target stem does not work. probably issue with patsubst,
+# instead of $*.clad use $(@:.py=.clad)
+$(OUTPUT_VIZ_PYTHON): $(INPUT_VIZ_FILES) $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
+	if test -f $(OUTPUT_DIR_PYTHON)/$@; then chmod -f 777 $(OUTPUT_DIR_PYTHON)/$@; fi
+	$(CLAD_PYTHON) -C $(INPUT_VIZ_DIR) -I $(INPUT_ROBOT_DIR) $(INPUT_ENGINE_DIR) -o $(OUTPUT_DIR_PYTHON)/ $(@:.py=.clad)
+	chmod -f 555 $(OUTPUT_DIR_PYTHON)/$@
 
 # in this target stem does not work. probably issue with patsubst,
 # instead of $*.clad use $(@:.py=.clad)
 $(OUTPUT_CTI_VISION_PYTHON): $(INPUT_CTI_VISION_FILES) $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
-	if test -f $(OUTPUT_DIR_CTI_VISION)/$@; then chmod -f 777 $(OUTPUT_DIR_CTI_VISION)/$@; fi
-	$(CLAD_PYTHON) -C $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_CTI_VISION)/ $(@:.py=.clad)
-	chmod -f 555 $(OUTPUT_DIR_CTI_VISION)/$@
+	if test -f $(OUTPUT_DIR_PYTHON)/$@; then chmod -f 777 $(OUTPUT_DIR_PYTHON)/$@; fi
+	$(CLAD_PYTHON) -C $(INPUT_CTI_VISION_DIR) -o $(OUTPUT_DIR_PYTHON)/ $(@:.py=.clad)
+	chmod -f 555 $(OUTPUT_DIR_PYTHON)/$@
 	
 # clad specific paths in here..
 $(OUTPUT_VIZ_LST): 
