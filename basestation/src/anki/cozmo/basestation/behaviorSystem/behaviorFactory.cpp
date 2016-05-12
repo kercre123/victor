@@ -24,7 +24,6 @@
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFlipDownFromWheelie.h"
-#include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
@@ -104,11 +103,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToPoke:
     {
       newBehavior = new BehaviorReactToPoke(robot, config);
-      break;
-    }
-    case BehaviorType::FollowMotion:
-    {
-      newBehavior = new BehaviorFollowMotion(robot, config);
       break;
     }
     case BehaviorType::PlayAnim:
