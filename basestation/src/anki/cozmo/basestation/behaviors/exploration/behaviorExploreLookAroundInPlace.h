@@ -65,6 +65,13 @@ public:
 protected:
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Initialization
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // set attributes from the given config
+  void LoadConfig(const Json::Value& config);
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // IBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
@@ -93,6 +100,45 @@ private:
   // Turn direction
   enum class EClockDirection { CW, CCW };
   
+  // attributes specifically for configuration of every state
+  struct Configuration
+  {
+    float   behavior_DistanceFromRecentLocationMin_mm;
+    uint8_t behavior_RecentLocationsMax;
+    // turn speed
+    float sx_BodyTurnSpeed_degPerSec;
+    float sxt_HeadTurnSpeed_degPerSec; // for turn states
+    float sxh_HeadTurnSpeed_degPerSec; // for head move states
+    // chance that the main turn will be counter clockwise (vs ccw)
+    float s0_MainTurnCWChance;
+    // [min,max] range for random turn angles for step 1
+    float s1_BodyAngleRangeMin_deg;
+    float s1_BodyAngleRangeMax_deg;
+    float s1_HeadAngleRangeMin_deg;
+    float s1_HeadAngleRangeMax_deg;
+    // [min,max] range for pause for step 2
+    float s2_WaitMin_sec;
+    float s2_WaitMax_sec;
+    // [min,max] range for random angle turns for step 3
+    float s3_BodyAngleRangeMin_deg;
+    float s3_BodyAngleRangeMax_deg;
+    float s3_HeadAngleRangeMin_deg;
+    float s3_HeadAngleRangeMax_deg;
+    // [min,max] range for head move for step 4
+    float s4_HeadAngleRangeMin_deg;
+    float s4_HeadAngleRangeMax_deg;
+    uint8_t s4_HeadAngleChangesMin;
+    uint8_t s4_HeadAngleChangesMax;
+    // [min,max] range for head move  for step 5
+    float s5_HeadAngleRangeMin_deg;
+    float s5_HeadAngleRangeMax_deg;
+    // [min,max] range for random angle turns for step 6
+    float s6_BodyAngleRangeMin_deg;
+    float s6_BodyAngleRangeMax_deg;
+    float s6_HeadAngleRangeMin_deg;
+    float s6_HeadAngleRangeMax_deg;
+  };
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State helpers
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -118,6 +164,9 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // parsed configurations params from json
+  Configuration _configParams;
   
   // facing direction when we start an iteration
   Radians _iterationStartingBodyFacing_rad;
