@@ -101,11 +101,8 @@ int main(void)
 {
   using namespace Anki::Cozmo::RobotInterface;
 
-  // DO NOT INCLUDE THIS IN PRODUCTION VERY BAD WILL MURDER YOUR FACE
-  Bootloader::init();
-
   Storage::init();
-  Bootloader::init();
+//Bootloader::init();
   
   // Initialize our scheduler
   RTOS::init();
