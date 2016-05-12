@@ -21,6 +21,7 @@
 #include "lights.h"
 #include "messages.h"
 
+#include "clad/robotInterface/messageFromActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -122,12 +123,13 @@ static void EnterState(RadioState state) {
   }
 }
 
-static void SendObjectConnectionState(int slot)
+static void SendObjectConnectionState(int slot, uint16_t deviceType = OBJECT_UNKNOWN)
 {
   ObjectConnectionState msg;
   msg.objectID = slot;
   msg.factoryID = accessories[slot].id;
   msg.connected = accessories[slot].active;
+  msg.device_type = deviceType;
   RobotInterface::SendMessage(msg);
 }
 
@@ -249,7 +251,7 @@ void uesb_event_handler(uint32_t flags)
       accessories[slot].active = true;
       accessories[slot].tx_state.msg_id = 0;
 
-      SendObjectConnectionState(slot);
+      SendObjectConnectionState(slot, advert.model);
     }
 
     // Send a pairing packet
