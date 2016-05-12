@@ -82,11 +82,24 @@ namespace Cozmo {
   CONSOLE_VAR(f32, kCalibDotSearchSize_mm,    "Vision.ToolCode",  4.5f);
   CONSOLE_VAR(f32, kCalibDotMinContrastRatio, "Vision.ToolCode",  1.1f);
   
+  // For speed, compute motion detection on half-resolution images
   CONSOLE_VAR(bool, kUseHalfResMotionDetection,       "Vision.MotionDetection", true);
+  // How long we have to wait between motion detections. This may be reduce-able, but can't get
+  // too small or we'll hallucinate image change (i.e. "motion") due to the robot moving.
   CONSOLE_VAR(u32,  kLastMotionDelay_ms,              "Vision.MotionDetection", 500);
+  // Affects sensitivity (darker pixels are inherently noisier and should be ignored for
+  // change detection). Range is [0,255]
   CONSOLE_VAR(u8,   kMinBrightnessForMotionDetection, "Vision.MotionDetection", 10);
+  // This is the main sensitivity parameter: higher means more image difference is required
+  // to register a change and thus report motion.
   CONSOLE_VAR(f32,  kMotionDetectRatioThreshold,      "Vision.MotionDetection", 1.25f);
+  // NOTE: This has no effect with USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID turned off
   CONSOLE_VAR(f32,  kMinMotionAreaFraction,           "Vision.MotionDetection", 1.f/225.f); // 1/15 of each image dimension
+  // For computing robust "centroid" of motion
+  CONSOLE_VAR(f32,  kMotionCentroidPercentileX,       "Vision.MotionDetection", 0.5f);  // In image coordinates
+  CONSOLE_VAR(f32,  kMotionCentroidPercentileY,       "Vision.MotionDetection", 0.5f);  // In image coordinates
+  CONSOLE_VAR(f32,  kGroundMotionCentroidPercentileX, "Vision.MotionDetection", 0.05f); // In robot coordinates (Most important for pounce: distance from robot)
+  CONSOLE_VAR(f32,  kGroundMotionCentroidPercentileY, "Vision.MotionDetection", 0.50f); // In robot coordinates
   
   // Min/max size of calibration pattern blobs and distance between them
   CONSOLE_VAR(float, kMaxCalibBlobPixelArea,         "Vision.Calibration", 800.f);
@@ -1548,7 +1561,9 @@ namespace Cozmo {
   }
 #endif
   
-  size_t GetCentroid(const Vision::Image& motionImg, size_t minArea, Anki::Point2f& centroid)
+  // Computes "centroid" at specified percentiles in X and Y
+  size_t GetCentroid(const Vision::Image& motionImg, size_t minArea, Anki::Point2f& centroid,
+                     f32 xPercentile, f32 yPercentile)
   {
 #   if USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
     Array2d<s32> motionRegions(motionImg.GetNumRows(), motionImg.GetNumCols());
@@ -1557,28 +1572,38 @@ namespace Cozmo {
     
     return FindLargestRegionCentroid(regionPoints, minArea, centroid);
 #   else
-    size_t area = 0;
-    centroid = 0.f;
+    std::vector<s32> xValues, yValues;
     
     for(s32 y=0; y<motionImg.GetNumRows(); ++y)
     {
       const u8* motionData_y = motionImg.GetRow(y);
       for(s32 x=0; x<motionImg.GetNumCols(); ++x) {
         if(motionData_y[x] != 0) {
-          centroid += Anki::Point2f(x,y);
-          ++area;
+          xValues.push_back(x);
+          yValues.push_back(y);
         }
       }
     }
-    if(area > minArea) {
-      centroid /= static_cast<f32>(area);
-      return area;
-    } else {
+    
+    ASSERT_NAMED(xValues.size() == yValues.size(), "VisionSystem.GetCentroid.xyValuesSizeMismatch");
+    
+    if(xValues.empty()) {
       centroid = 0.f;
       return 0;
+    } else {
+      ASSERT_NAMED(xPercentile >= 0.f && xPercentile <= 1.f, "VisionSystem.GetCentroid.xPercentileOOR");
+      ASSERT_NAMED(yPercentile >= 0.f && yPercentile <= 1.f, "VisionSystem.GetCentroid.yPercentileOOR");
+      const size_t area = xValues.size();
+      auto xcen = xValues.begin() + std::round(xPercentile * (f32)area);
+      auto ycen = yValues.begin() + std::round(yPercentile * (f32)area);
+      std::nth_element(xValues.begin(), xcen, xValues.end());
+      std::nth_element(yValues.begin(), ycen, yValues.end());
+      centroid.x() = *xcen;
+      centroid.y() = *ycen;
+      return area;
     }
-#   endif
-  }
+#   endif // USE_CONNECTED_COMPONENTS_FOR_MOTION_CENTROID
+  } // GetCentroid()
   
   
   Result VisionSystem::DetectMotion(const Vision::ImageRGB &imageIn)
@@ -1667,7 +1692,8 @@ namespace Cozmo {
       f32 imgRegionArea    = 0.f;
       f32 groundRegionArea = 0.f;
       if(numAboveThresh > minArea) {
-        imgRegionArea = GetCentroid(foregroundMotion, minArea, centroid);
+        imgRegionArea = GetCentroid(foregroundMotion, minArea, centroid,
+                                    kMotionCentroidPercentileX, kMotionCentroidPercentileY);
       }
       
       // Get centroid of all the motion within the ground plane, if we have one to reason about
@@ -1706,11 +1732,17 @@ namespace Cozmo {
           }
         }
         
-        // Find centroid of largest connected component inside the ground plane
+        // Find centroid of motion inside the ground plane
+        // NOTE!! We swap X and Y for the percentiles because the ground centroid
+        //        gets mapped to the ground plane in robot coordinates later, but
+        //        small x on the ground corresponds to large y in the *image*, where
+        //        the centroid is actually being computed here.
         const f32 imgQuadArea = imgQuad.ComputeArea();
         groundRegionArea = GetCentroid(groundPlaneForegroundMotion,
                                        imgQuadArea*kMinMotionAreaFraction,
-                                       groundPlaneCentroid);
+                                       groundPlaneCentroid,
+                                       kGroundMotionCentroidPercentileY,
+                                       (1.f - kGroundMotionCentroidPercentileX));
         
         // Move back to image coordinates from ROI coordinates
         groundPlaneCentroid += boundingRect.GetTopLeft();
@@ -1747,8 +1779,12 @@ namespace Cozmo {
           groundPlaneCentroid.x() = temp.x() * divisor;
           groundPlaneCentroid.y() = temp.y() * divisor;
           
-          ASSERT_NAMED(Quad2f(_poseData.groundPlaneROI.GetGroundQuad()).Contains(groundPlaneCentroid),
-                       "VisionSystem.DetectMotion.BadGroundPlaneCentroid");
+          //ASSERT_NAMED(Quad2f(_poseData.groundPlaneROI.GetGroundQuad()).Contains(groundPlaneCentroid),
+          //             "VisionSystem.DetectMotion.BadGroundPlaneCentroid");
+          if(!Quad2f(_poseData.groundPlaneROI.GetGroundQuad()).Contains(groundPlaneCentroid)) {
+            PRINT_NAMED_WARNING("VisionSystem.DetectMotion.BadGroundPlaneCentroid",
+                                "Centroid=(%.2f,%.2f)", centroid.x(), centroid.y());
+          }
         }
       } // if(groundPlaneVisible)
       
@@ -1820,34 +1856,40 @@ namespace Cozmo {
         }
         
         _motionMailbox.putMessage(std::move(msg));
-      }
+        //}
       
-#     if DEBUG_MOTION_DETECTION
+      if(DEBUG_MOTION_DETECTION)
       {
+        char tempText[128];
         Vision::ImageRGB ratioImgDisp(foregroundMotion);
-        ratioImgDisp.DrawPoint(centroid + _camera.GetCalibration().GetCenter(), NamedColors::RED, 4);
-        cv::putText(ratioImgDisp.get_CvMat_(), "Area: " + std::to_string(imgRegionArea),
-                    cv::Point(0,ratioImgDisp.GetNumRows()), CV_FONT_NORMAL, .5f, CV_RGB(0,255,0));
+        ratioImgDisp.DrawPoint(centroid + (_camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier)), NamedColors::RED, 4);
+        snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, msg.img_x, msg.img_y);
+        cv::putText(ratioImgDisp.get_CvMat_(), std::string(tempText),
+                    cv::Point(0,ratioImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0,255,0));
         _debugImageRGBMailbox.putMessage({"RatioImg", ratioImgDisp});
         
         //_debugImageMailbox.putMessage({"PrevRatioImg", _prevRatioImg});
         //_debugImageMailbox.putMessage({"ForegroundMotion", foregroundMotion});
         //_debugImageMailbox.putMessage({"AND", cvAND});
         
-        //          ratioImgDisp = Vision::ImageRGB(_poseData.groundPlaneROI.GetOverheadMask());
-        //          if(groundRegionArea > 0.f) {
-        //            ratioImgDisp.DrawPoint(groundPlaneCentroid-_poseData.groundPlaneROI.GetOverheadImageOrigin(),
-        //                                   NamedColors::RED, 2);
-        //
-        //            cv::putText(ratioImgDisp.get_CvMat_(), "Area: " + std::to_string(groundRegionArea),
-        //                        cv::Point(0,_poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .5f,
-        //                        CV_RGB(0,255,0));
-        //          }
-        //          _debugImageRGBMailbox.putMessage({"RatioImgGround", ratioImgDisp});
+        Vision::Image foregroundMotionFullSize(imageIn.GetNumRows(), imageIn.GetNumCols());;
+        foregroundMotion.Resize(foregroundMotionFullSize, Vision::ResizeMethod::NearestNeighbor);
+        Vision::ImageRGB ratioImgDispGround(_poseData.groundPlaneROI.GetOverheadImage(foregroundMotionFullSize,
+                                                                                      _poseData.groundPlaneHomography));
+        if(groundRegionArea > 0.f) {
+          Anki::Point2f dispCentroid(groundPlaneCentroid.x(), -groundPlaneCentroid.y()); // Negate Y for display
+          ratioImgDispGround.DrawPoint(dispCentroid - _poseData.groundPlaneROI.GetOverheadImageOrigin(), NamedColors::RED, 2);
+          snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", groundRegionArea, msg.ground_x, msg.ground_y);
+          cv::putText(ratioImgDispGround.get_CvMat_(), std::string(tempText),
+                      cv::Point(0,_poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
+                      CV_RGB(0,255,0));
+        }
+        _debugImageRGBMailbox.putMessage({"RatioImgGround", ratioImgDispGround});
+        
         //
         //_debugImageRGBMailbox.putMessage({"CurrentImg", image});
       }
-#     endif
+      }
       
       //_prevRatioImg = ratio12;
       
@@ -1924,7 +1966,7 @@ namespace Cozmo {
   
   namespace {
     
-    inline void SetEdgePosition(const Matrix_3x3f& invH,
+    inline bool SetEdgePosition(const Matrix_3x3f& invH,
                                 s32 i, s32 j,
                                 OverheadEdgePoint& edgePoint)
     {
@@ -1932,11 +1974,16 @@ namespace Cozmo {
       // Note that b/c we are working transposed, i is x and j is y in the
       // original image.
       Point3f temp = invH * Point3f(i, j, 1.f);
-      ASSERT_NAMED(temp.z() > 0, "VisionSystem.SetEdgePositionHelper.BadProjectedZ");
+      if(temp.z() <= 0.f) {
+        PRINT_NAMED_WARNING("VisionSystem.SetEdgePositionHelper.BadProjectedZ", "z=%f", temp.z());
+        return false;
+      }
+      
       const f32 divisor = 1.f / temp.z();
       
       edgePoint.position.x() = temp.x() * divisor;
       edgePoint.position.y() = temp.y() * divisor;
+      return true;
     }
     
   } // anonymous namespace
@@ -2036,11 +2083,12 @@ namespace Cozmo {
           // Project point onto ground plane
           // Note that b/c we are working transposed, i is x and j is y in the
           // original image.
-          SetEdgePosition(invH, i, j, edgePoint);
-          edgePoint.gradient = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()};
-          
-          foundBorder = true;
-          AddEdgePoint(edgePoint, foundBorder, candidateChains);
+          const bool success = SetEdgePosition(invH, i, j, edgePoint);
+          if(success) {
+            edgePoint.gradient = {edgePixelX.r(), edgePixelX.g(), edgePixelX.b()};
+            foundBorder = true;
+            AddEdgePoint(edgePoint, foundBorder, candidateChains);
+          }
           break; // only keep first edge found in each row (working right to left)
         }
       }
@@ -2056,9 +2104,11 @@ namespace Cozmo {
           // Project point onto ground plane
           // Note that b/c we are working transposed, i is x and j is y in the
           // original image.
-          SetEdgePosition(invH, i, bbox.GetY(), edgePoint);
-          edgePoint.gradient = 0;
-          AddEdgePoint(edgePoint, foundBorder, candidateChains);
+          const bool success = SetEdgePosition(invH, i, bbox.GetY(), edgePoint);
+          if(success) {
+            edgePoint.gradient = 0;
+            AddEdgePoint(edgePoint, foundBorder, candidateChains);
+          }
         }
       }
       
