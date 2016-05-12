@@ -28,6 +28,7 @@ namespace Anki {
 namespace Cozmo {
 
 CONSOLE_VAR(f32, kBSB_ScoreIncreaseForAction, "Behavior.StackBlocks", 0.8f);
+CONSOLE_VAR(f32, kBSB_TimeToWaitForValidBlocks_s, "Behavior.StackBlocks", 0.3f);
 
 BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -51,7 +52,10 @@ BehaviorStackBlocks::BehaviorStackBlocks(Robot& robot, const Json::Value& config
 
 bool BehaviorStackBlocks::IsRunnableInternal(const Robot& robot) const
 {
-  UpdateTargetBlocks(robot);
+  // don't change blocks while we're running
+  if( !IsRunning() ) {
+    UpdateTargetBlocks(robot);
+  }
   
   return _targetBlockBottom.IsSet() && _targetBlockTop.IsSet();
 }
@@ -71,6 +75,7 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
 {
 
   // if we've got a cube in our lift, use that for top
+  const ObjectID lastTopID = _targetBlockTop;
   _targetBlockTop.UnSet();
   if( robot.IsCarryingObject() ) {
     const ObservableObject* carriedObject = robot.GetBlockWorld().GetObjectByID( robot.GetCarryingObject() );
@@ -94,12 +99,35 @@ void BehaviorStackBlocks::UpdateTargetBlocks(const Robot& robot) const
     }
   }
 
+  if( lastTopID.IsSet() && ! _targetBlockTop.IsSet() ) {
+    const ObservableObject* lastTop = robot.GetBlockWorld().GetObjectByID(lastTopID);
+    if( nullptr == lastTop ) {
+      PRINT_NAMED_DEBUG("BehaviorStackBlocks.UpdateTargets.LostTopBlock.null",
+                        "last top (%d) must have been deleted",
+                        lastTopID.GetValue());
+    }
+    else {
+      PrintCubeDebug("BehaviorStackBlocks.UpdateTargets.LostTopBlock", lastTop);
+    }
+  }
+
   ObservableObject* bottomObject = robot.GetBlockWorld().FindObjectClosestTo(robot.GetPose(),
                                                                              *_blockworldFilterForBottom);
   if( nullptr != bottomObject ) {
     _targetBlockBottom = bottomObject->GetID();
   }
   else {
+    if( _targetBlockBottom.IsSet() ) {
+      const ObservableObject* oldBottom = robot.GetBlockWorld().GetObjectByID(_targetBlockBottom);
+      if( nullptr == oldBottom ) {
+        PRINT_NAMED_DEBUG("BehaviorStackBlocks.UpdateTargets.LostBottomBlock.null",
+                          "last bottom (%d) must have been deleted",
+                          _targetBlockBottom.GetValue());
+      }
+      else {
+        PrintCubeDebug("BehaviorStackBlocks.UpdateTargets.LostBottomBlock", oldBottom);
+      }
+    }
     _targetBlockBottom.UnSet();
   }
 }
@@ -126,18 +154,24 @@ bool BehaviorStackBlocks::FilterBlocksForBottom(const ObservableObject* obj) con
 bool BehaviorStackBlocks::AreBlocksAreStillValid(const Robot& robot)
 {
   if( !_targetBlockTop.IsSet() || !_targetBlockBottom.IsSet() ) {
+    PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.BlocksNoLongerSet",
+                     "one of the blocks isn't set");
     return false;
   }
 
   // if the top block is being carried, assume it's valid (if it matches what top should be). Otherwise check it
   if( robot.IsCarryingObject() && robot.GetCarryingObject() != _targetBlockTop ) {
+    PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.CarryingWrongObject",
+                     "robot is carrying object %d, but %d is supposed to be the top",
+                     robot.GetCarryingObject().GetValue(),
+                     _targetBlockTop.GetValue());
     return false;
   }
       
   if( !robot.IsCarryingObject() ) {
     const ObservableObject* topObject = robot.GetBlockWorld().GetObjectByID(_targetBlockTop);
     if( topObject == nullptr ) {
-      PRINT_NAMED_INFO("BehaviorStackBlocks.BlockDeleted",
+      PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.BlockDeleted",
                        "target block %d has no pointer in blockworld",
                        _targetBlockTop.GetValue());
       _targetBlockTop.UnSet();
@@ -145,6 +179,10 @@ bool BehaviorStackBlocks::AreBlocksAreStillValid(const Robot& robot)
     }
 
     if( ! FilterBlocksForTop( topObject ) ) {
+      PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.TopFailedFilter",
+                       "top block failed it's filter");
+
+      PrintCubeDebug("BehaviorStackBlocks.InvalidBlock.TopFailedFilter.Debug", topObject);
       return false;
     }
   }
@@ -159,12 +197,28 @@ bool BehaviorStackBlocks::AreBlocksAreStillValid(const Robot& robot)
   }
 
   if( ! FilterBlocksForBottom( bottomObject ) ) {
+    PRINT_NAMED_INFO("BehaviorStackBlocks.InvalidBlock.BottomFailedFilter",
+                     "bottom block failed it's filter");
+    PrintCubeDebug("BehaviorStackBlocks.InvalidBlock.BottomFailedFilter.Debug", bottomObject);
     return false;
   }
 
   return true;
 }
 
+IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
+{
+  if( _state == State::WaitForBlocksToBeValid ) {
+    UpdateTargetBlocks(robot);
+    if( AreBlocksAreStillValid(robot) ) {
+      PRINT_NAMED_DEBUG("BehaviorStackBlocks.WaitForValid",
+                        "Got valid blocks! resuming behavior");
+      TransitionToPickingUpBlock(robot);
+    }
+  }
+
+  return IBehavior::UpdateInternal(robot);
+}
 
 void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
 {
@@ -173,6 +227,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
   // check that blocks are still good
   if( ! AreBlocksAreStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
+    UpdateTargetBlocks(robot);
     if( IsRunnable(robot) ) {
       // ok, found some new blocks, use those
       PRINT_NAMED_INFO("BehaviorStackBlocks.Picking.RestartWithNewBlocks",
@@ -180,6 +235,7 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
       // fall through to the function, which will now operate with the new blocks
     }
     else {
+      TransitionToWaitForBlocksToBeValid(robot);
       return;
     }
   }
@@ -229,11 +285,15 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
   // check that blocks are still good
   if( ! AreBlocksAreStillValid(robot) ) {
     // uh oh, blocks are no good, see if we can pick new ones
+    UpdateTargetBlocks(robot);
     if( IsRunnable(robot) ) {
       // ok, found some new blocks, use those
       PRINT_NAMED_INFO("BehaviorStackBlocks.Stacking.RestartWithNewBlocks.",
                        "had to change blocks, re-starting behavior");
       TransitionToPickingUpBlock(robot);
+    }
+    else {
+      TransitionToWaitForBlocksToBeValid(robot);
     }
     return;
   }
@@ -282,6 +342,16 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
   }
 }
 
+void BehaviorStackBlocks::TransitionToWaitForBlocksToBeValid(Robot& robot)
+{
+  SET_STATE(WaitForBlocksToBeValid);
+
+  // wait a bit to see if things settle and the cubes become valid (e.g. they were moving, so give them some
+  // time to settle). If they become stable, Update will transition us out
+  StartActing(new WaitAction(robot, kBSB_TimeToWaitForValidBlocks_s));                
+}
+
+
 void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
 {
   SET_STATE(PlayingFinalAnim);
@@ -302,6 +372,26 @@ void BehaviorStackBlocks::ResetBehavior(Robot& robot)
   _state = State::PickingUpBlock;
   _targetBlockTop.UnSet();
   _targetBlockBottom.UnSet();
+}
+
+void BehaviorStackBlocks::PrintCubeDebug(const char* event, const ObservableObject* obj) const
+{
+  const char* poseStateStr = "";
+  switch(obj->GetPoseState()) {
+    case ObservableObject::PoseState::Known: poseStateStr = "known"; break;
+    case ObservableObject::PoseState::Unknown: poseStateStr = "unknown"; break;
+    case ObservableObject::PoseState::Dirty: poseStateStr = "dirty"; break;
+  }
+  
+  PRINT_NAMED_DEBUG(event,
+                    "block %d: blockUpright?%d CanPickUpObjectFromGround?%d CanStackOnTopOfObject?%d poseState=%s moving?%d restingFlat?%d",
+                    obj->GetID().GetValue(),
+                    obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS,
+                    _robot.CanPickUpObjectFromGround(*obj),
+                    _robot.CanStackOnTopOfObject(*obj),
+                    poseStateStr,
+                    obj->IsMoving(),
+                    obj->IsRestingFlat());
 }
 
 

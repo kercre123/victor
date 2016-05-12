@@ -32,6 +32,7 @@ protected:
 
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
+  virtual Status UpdateInternal(Robot& robot) override;
 
   virtual bool IsRunnableInternal(const Robot& robot) const override;
     
@@ -51,7 +52,8 @@ private:
   enum class State {
     PickingUpBlock,
     StackingBlock,
-    PlayingFinalAnim
+    PlayingFinalAnim,
+    WaitForBlocksToBeValid
   };
 
   State _state = State::PickingUpBlock;
@@ -59,6 +61,7 @@ private:
   void TransitionToPickingUpBlock(Robot& robot);
   void TransitionToStackingBlock(Robot& robot);
   void TransitionToPlayingFinalAnim(Robot& robot);
+  void TransitionToWaitForBlocksToBeValid(Robot& robot);
 
   void SetState_internal(State state, const std::string& stateName);
   void ResetBehavior(Robot& robot);
@@ -70,6 +73,9 @@ private:
   bool AreBlocksAreStillValid(const Robot& robot);
   
   void UpdateTargetBlocks(const Robot& robot) const;
+
+  // prints some useful stuff about the block
+  void PrintCubeDebug(const char* event, const ObservableObject* obj) const;
 };
 
 
