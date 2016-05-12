@@ -33,6 +33,8 @@ inline BehaviorType BehaviorTypeFromString(const std::string& inString)
   return BehaviorTypeFromString(inString.c_str());
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorGameFlag BehaviorGameFlagFromString(const std::string& inString);
 
 } // namespace Cozmo
 } // namespace Anki

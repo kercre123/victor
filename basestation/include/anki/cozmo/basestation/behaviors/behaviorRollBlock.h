@@ -15,7 +15,6 @@
 
 #include "anki/common/basestation/objectIDs.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
-#include <set>
 #include <string>
 
 namespace Anki {
@@ -28,51 +27,48 @@ class Robot;
 class BehaviorRollBlock : public IBehavior
 {
 protected:
-
   // Enforce creation through BehaviorFactory
-  friend class BehaviorFactory;  
+  friend class BehaviorFactory;
   BehaviorRollBlock(Robot& robot, const Json::Value& config);
-  
-public:
-
-  virtual bool IsRunnableInternal(const Robot& robot) const override;
-
-protected:
 
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
-  virtual float  EvaluateRunningScoreInternal(const Robot& robot) const override;
 
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
+    
 private:
 
   std::string _initialAnimGroup = "rollCube_initial";
   std::string _realignAnimGroup = "rollCube_realign";
-  std::string _retryRollAnimGroup = "rollCube_retry";
+  std::string _retryActionAnimGroup = "rollCube_retry";
   std::string _successAnimGroup = "rollCube_success";
-  
-  ObjectID _targetBlock;
+
+  // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
+  // UpdateWhileNotRunning
+  mutable ObjectID _targetBlock;
 
   std::unique_ptr<BlockWorldFilter>  _blockworldFilter;
 
   const Robot& _robot;
 
   enum class State {
-    SelectingTargetBlock,
-    RollingBlock
+    ReactingToBlock,
+    PerformingAction
   };
 
-  State _state = State::SelectingTargetBlock;
+  State _state = State::ReactingToBlock;
 
-  void TransitionToSelectingTargetBlock(Robot& robot);
-  void TransitionToRollingBlock(Robot& robot);
+  void TransitionToReactingToBlock(Robot& robot);
+  void TransitionToPerformingAction(Robot& robot);
 
   void SetState_internal(State state, const std::string& stateName);
   void ResetBehavior(Robot& robot);
 
-  bool FilterBlocks(ObservableObject* obj) const;
-  bool IsBlockInTargetRestingPosition(const Robot& robot, ObjectID objectID) const;
-  bool IsBlockInTargetRestingPosition(const ObservableObject* obj) const;
-  bool HasValidTargetBlock(const Robot& robot) const;
+  // This should return true if the block is valid for this action, false otherwise. Checks that the block is
+  // a light cube with known position, not moving, resting flat, and not being carried
+  virtual bool FilterBlocks(ObservableObject* obj) const;
+
+  virtual void UpdateTargetBlock(const Robot& robot) const;
 };
 
 }

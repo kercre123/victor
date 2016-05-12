@@ -238,6 +238,24 @@ namespace Anki {
       _shortMinAnglePathPlanner = new MinimalAnglePlanner;
       _selectedPathPlanner = _longPathPlanner;
       
+      if (nullptr != _context->GetDataPlatform())
+      {
+        // Read in parameters from the Json config file:
+        Json::Value visionConfig;
+        std::string jsonFilename = "config/basestation/config/vision_config.json";
+        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                               jsonFilename,
+                                                               visionConfig);
+        if (!success)
+        {
+          PRINT_NAMED_ERROR("Robot.VisionConfigJsonNotFound",
+                            "Vision Json config file %s not found.",
+                            jsonFilename.c_str());
+        }
+
+        _visionComponent.Init(visionConfig);
+      }
+      
     } // Constructor: Robot
     
     Robot::~Robot()
@@ -2184,7 +2202,8 @@ namespace Anki {
                                  const f32 placementOffsetY_mm,
                                  const f32 placementOffsetAngle_rad,
                                  const bool useManualSpeed,
-                                 const u8 numRetries)
+                                 const u8 numRetries,
+                                 const DockingMethod dockingMethod)
     {
       return DockWithObject(objectID,
                             speed_mmps,
@@ -2196,7 +2215,8 @@ namespace Anki {
                             0, 0, u8_MAX,
                             placementOffsetX_mm, placementOffsetY_mm, placementOffsetAngle_rad,
                             useManualSpeed,
-                            numRetries);
+                            numRetries,
+                            dockingMethod);
     }
     
     Result Robot::DockWithObject(const ObjectID objectID,
@@ -2213,7 +2233,8 @@ namespace Anki {
                                  const f32 placementOffsetY_mm,
                                  const f32 placementOffsetAngle_rad,
                                  const bool useManualSpeed,
-                                 const u8 numRetries)
+                                 const u8 numRetries,
+                                 const DockingMethod dockingMethod)
     {
       ActionableObject* object = dynamic_cast<ActionableObject*>(_blockWorld.GetObjectByID(objectID));
       if(object == nullptr) {
@@ -2248,7 +2269,7 @@ namespace Anki {
       // the marker can be seen anywhere in the image (same as above function), otherwise the
       // marker's center must be seen at the specified image coordinates
       // with pixel_radius pixels.
-      Result sendResult = SendRobotMessage<::Anki::Cozmo::DockWithObject>(0.0f, speed_mmps, accel_mmps2, decel_mmps2, dockAction, useManualSpeed, numRetries);
+      Result sendResult = SendRobotMessage<::Anki::Cozmo::DockWithObject>(0.0f, speed_mmps, accel_mmps2, decel_mmps2, dockAction, useManualSpeed, numRetries, dockingMethod);
       
       
       if(sendResult == RESULT_OK) {
@@ -2528,18 +2549,48 @@ namespace Anki {
     
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    bool Robot::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const
+    {
+      // TODO:(bn) maybe there should be some central logic for which object families are valid here
+      if( object.GetFamily() != ObjectFamily::Block &&
+          object.GetFamily() != ObjectFamily::LightCube ) {
+        return false;
+      }
+
+      // check that the object is ready to place on top of
+      if( object.IsPoseStateUnknown() ||
+          object.IsMoving() ||
+          !object.IsRestingFlat() ||
+          (IsCarryingObject() && GetCarryingObject() == object.GetID()) ) {
+        return false;
+      }
+
+      // check if we can transform to robot space
+      if ( !object.GetPose().GetWithRespectTo(GetPose(), relPose) ) {
+        return false;
+      }
+
+      // check if it has something on top
+      const ObservableObject* objectOnTop = GetBlockWorld().FindObjectOnTopOf(object, STACKED_HEIGHT_TOL_MM);
+      if ( nullptr != objectOnTop ) {
+        return false;
+      }
+
+      return true;
+    }
+  
     bool Robot::CanStackOnTopOfObject(const ObservableObject& objectToStackOn) const
     {
       // Note rsam/kevin: this only works currently for original cubes. Doing height checks would require more
       // comparison of sizes, checks for I can stack but not pick up due to slack required to pick up, etc. In order
       // to simplify just cover the most basic case here (for the moment)
-      
-      // check if we can transform to robot space
+
       Pose3d relPos;
-      if ( !objectToStackOn.GetPose().GetWithRespectTo(GetPose(), relPos) ) {
+      if( ! CanInteractWithObjectHelper(objectToStackOn, relPos) ) {
         return false;
       }
-      
+            
       // check if it's too high to stack on
       const float topZ = relPos.GetTranslation().z() + objectToStackOn.GetSize().z() * 0.5f;
       const float isTooHigh = topZ > (objectToStackOn.GetSize().z() + STACKED_HEIGHT_TOL_MM);
@@ -2547,15 +2598,28 @@ namespace Anki {
         return false;
       }
     
-      // check if it already has something on top
-      const ObservableObject* objectOnTop = GetBlockWorld().FindObjectOnTopOf(objectToStackOn, STACKED_HEIGHT_TOL_MM);
-      if ( nullptr != objectOnTop ) {
-        return false;
-      }
-
       // all checks clear
       return true;
     }
+
+    bool Robot::CanPickUpObjectFromGround(const ObservableObject& objectToPickUp) const
+    {
+      Pose3d relPos;
+      if( ! CanInteractWithObjectHelper(objectToPickUp, relPos) ) {
+        return false;
+      }
+      
+      // check if it's too high to pick up
+      const float topZ = relPos.GetTranslation().z() + objectToPickUp.GetSize().z() * 0.5f;
+      const float isTooHigh = topZ > ( 2 * objectToPickUp.GetSize().z() + STACKED_HEIGHT_TOL_MM);
+      if ( isTooHigh ) {
+        return false;
+      }
+    
+      // all checks clear
+      return true;
+    }
+
     
     // ============ Messaging ================
     

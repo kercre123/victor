@@ -18,10 +18,14 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/charger.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
   
   namespace Cozmo {
+  
+    // Which docking method actions should use
+    CONSOLE_VAR(u8, kDockingMethod, "Docking", (u8)DockingMethod::BLIND_DOCKING);
     
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far robot is from actionObject
@@ -61,6 +65,7 @@ namespace Anki {
     : IAction(robot)
     , _dockObjectID(objectID)
     , _useManualSpeed(useManualSpeed)
+    , _dockingMethod((DockingMethod)kDockingMethod)
     {
       
     }
@@ -347,7 +352,8 @@ namespace Anki {
                                       _placementOffsetY_mm,
                                       _placementOffsetAngle_rad,
                                       _useManualSpeed,
-                                      _numDockingRetries) == RESULT_OK)
+                                      _numDockingRetries,
+                                      _dockingMethod) == RESULT_OK)
             {
               //NOTE: Any completion (success or failure) after this point should tell
               // the robot to stop tracking and go back to looking for markers!

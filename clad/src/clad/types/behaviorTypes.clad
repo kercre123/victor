@@ -42,6 +42,7 @@ enum uint_8 BehaviorType {
   ExploreVisitPossibleMarker,
   RequestGameSimple,
   RollBlock,
+  StackBlocks,
   FactoryTest,
   DemoFearEdge,
   FlipDownFromWheelie,

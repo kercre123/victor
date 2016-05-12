@@ -379,7 +379,8 @@ public:
                           const f32 placementOffsetY_mm = 0,
                           const f32 placementOffsetAngle_rad = 0,
                           const bool useManualSpeed = false,
-                          const u8 numRetries = 2);
+                          const u8 numRetries = 2,
+                          const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING);
   
     // Same as above but without specifying image location for marker
     Result DockWithObject(const ObjectID objectID,
@@ -393,7 +394,8 @@ public:
                           const f32 placementOffsetY_mm = 0,
                           const f32 placementOffsetAngle_rad = 0,
                           const bool useManualSpeed = false,
-                          const u8 numRetries = 2);
+                          const u8 numRetries = 2,
+                          const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING);
     
     // Transitions the object that robot was docking with to the one that it
     // is carrying, and puts it in the robot's pose chain, attached to the
@@ -423,7 +425,11 @@ public:
     // returns true if we should try to stack on top of the given object, false if something would prevent it,
     // for example if we think that block has something on top or it's too high to reach
     bool CanStackOnTopOfObject(const ObservableObject& object) const;
-  
+
+    // let's the robot decide if we should try to pick up the given object (assuming it is flat, not picking up
+    // out of someone's hand). Checks that object is flat, not moving, no unknown pose, etc.
+    bool CanPickUpObjectFromGround(const ObservableObject& object) const;
+    
     /*
     //
     // Proximity Sensors
@@ -871,6 +877,9 @@ public:
     // Unless you know what you're doing you probably want to use
     // the public function SetNewPose()
     void SetPose(const Pose3d &newPose);
+
+    // helper for CanStackOnTopOfObject and CanPickUpObjectFromGround
+  bool CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const;
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,

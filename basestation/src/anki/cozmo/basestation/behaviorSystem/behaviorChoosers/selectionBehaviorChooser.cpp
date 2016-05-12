@@ -130,14 +130,7 @@ IBehavior* SelectionBehaviorChooser::AddNewBehavior(BehaviorType newType)
   
   if (newBehavior)
   {
-    const Result addResult = TryAddBehavior(newBehavior);
-    if (Result::RESULT_OK != addResult)
-    {
-      PRINT_NAMED_ERROR("SelectionBehaviorChooser.AddNewBehavior",
-                        "Behavior '%s' of type %s was created but failed to add to chooser!", newBehavior->GetName().c_str(), EnumToString(newType));
-      
-      newBehavior = nullptr; // behavior will be retained by factory, but chooser cannot use it
-    }
+    TryAddBehavior(newBehavior);
   }
   else
   {

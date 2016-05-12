@@ -56,6 +56,8 @@ namespace Anki {
       Result Init();
 
       Result Update();
+      
+      void SetDockingMethod(DockingMethod method);
 
       // Returns true if robot is the process of looking for a block or docking to a block
       bool IsBusy();

@@ -64,10 +64,12 @@ struct DockingErrorSignal;
     VisionComponent(Robot& robot, RunMode mode, const CozmoContext* context);
     virtual ~VisionComponent();
     
+    Result Init(const Json::Value& config);
+    
     void SetRunMode(RunMode mode);
 
-    // Calibration must be provided before Update() can be called
-    void SetCameraCalibration(const Vision::CameraCalibration& camCalib);
+    // Calibration must be provided before Update() will run
+    void SetCameraCalibration(Vision::CameraCalibration& camCalib);
     
     // Provide next image for processing, with corresponding robot state.
     // In synchronous mode, the image is processed immediately. In asynchronous
@@ -193,6 +195,8 @@ struct DockingErrorSignal;
     
   protected:
     
+    bool _isInitialized = false;
+    
     Robot& _robot;
     
     VisionSystem* _visionSystem = nullptr;
@@ -242,6 +246,7 @@ struct DockingErrorSignal;
     bool LookupGroundPlaneHomography(f32 atHeadAngle, Matrix_3x3f& H) const;
     
     void Processor();
+    void UpdateVisionSystem(const VisionPoseData& poseData, const Vision::ImageRGB& img);
     
     void Lock();
     void Unlock();
@@ -249,6 +254,9 @@ struct DockingErrorSignal;
     // Used for asynchronous run mode
     void Start(); // SetCameraCalibration() must have been called already
     void Stop();
+    
+    // Helper for loading face album data from file / robot
+    void BroadcastLoadedNamesAndIDs(const std::list<Vision::FaceNameAndID>& namesAndIDs) const;
     
   }; // class VisionComponent
   

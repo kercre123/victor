@@ -22,9 +22,11 @@
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/rect_impl.h"
 #include "anki/common/basestation/math/linearAlgebra_impl.h"
+
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
+
 #include "util/helpers/templateHelpers.h"
 #include "util/helpers/cleanupHelper.h"
 #include "util/console/consoleInterface.h"
@@ -70,9 +72,9 @@
 namespace Anki {
 namespace Cozmo {
   
-  CONSOLE_VAR(bool, kUseCLAHE, "Vision.PreProcessing", false);
+  CONSOLE_VAR(bool, kUseCLAHE,      "Vision.PreProcessing", false);
   CONSOLE_VAR(s32, kClaheClipLimit, "Vision.PreProcessing", 2); // Change requires re-Init()
-  CONSOLE_VAR(s32, kClaheTileSize, "Vision.PreProcessing", 8);  // Change requires re-Init()
+  CONSOLE_VAR(s32, kClaheTileSize,  "Vision.PreProcessing", 8);  // Change requires re-Init()
   
   CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
   CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
@@ -86,22 +88,27 @@ namespace Cozmo {
   CONSOLE_VAR(f32,  kMotionDetectRatioThreshold,      "Vision.MotionDetection", 1.25f);
   CONSOLE_VAR(f32,  kMinMotionAreaFraction,           "Vision.MotionDetection", 1.f/225.f); // 1/15 of each image dimension
   
-CONSOLE_VAR(float, kMaxCalibBlobPixelArea, "Vision.Calibration", 800.f); // max number of pixels in calibration pattern blob
-CONSOLE_VAR(float, kMinCalibBlobPixelArea, "Vision.Calibration", 20.f); // min number of pixels in calibration pattern blob
-CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); // min pixel distance between calibration pattern blobs
+  // Min/max size of calibration pattern blobs and distance between them
+  CONSOLE_VAR(float, kMaxCalibBlobPixelArea,         "Vision.Calibration", 800.f);
+  CONSOLE_VAR(float, kMinCalibBlobPixelArea,         "Vision.Calibration", 20.f);
+  CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f);
   
   using namespace Embedded;
   
   VisionSystem::VisionSystem(const std::string& dataPath, VizManager* vizMan)
   : _rollingShutterCorrector()
-  , _isInitialized(false)
   , _dataPath(dataPath)
-  , _faceTracker(nullptr)
   , _vizManager(vizMan)
   , _clahe(cv::createCLAHE())
   {
-    PRINT_NAMED_INFO("VisionSystem.Constructor", "");
-   
+    
+  } // VisionSystem()
+  
+  
+  Result VisionSystem::Init(const Json::Value& config)
+  {
+    _isInitialized = false;
+    
 #   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
     // Force the NN library to load _now_, not on first use
     PRINT_NAMED_INFO("VisionSystem.Constructor.LoadNearestNeighborLibrary",
@@ -109,7 +116,113 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     VisionMarker::GetNearestNeighborLibrary();
 #   endif
     
-  } // VisionSystem()
+    Profiler::SetProfileGroupName("VisionSystem");
+    
+    VisionMarker::SetDataPath(_dataPath);
+    
+    // Default processing modes to enable (first hard-coded, then overrides from config file)
+    EnableMode(VisionMode::DetectingMarkers, true);
+    //EnableMode(VisionMode::DetectingMotion,  true);
+    EnableMode(VisionMode::DetectingFaces,   true);
+    //EnableMode(VisionMode::DetectingOverheadEdges, true);
+    
+    if(config.isMember("InitialVisionModes"))
+    {
+      const Json::Value& configModes = config["InitialVisionModes"];
+      for(auto & modeName : configModes.getMemberNames())
+      {
+        VisionMode mode = GetModeFromString(modeName);
+        if(mode == VisionMode::Idle) {
+          PRINT_NAMED_WARNING("VisionSystem.Init.BadVisionMode",
+                              "Ignoring initial Idle mode for string '%s' in vision config",
+                              modeName.c_str());
+        } else {
+          EnableMode(mode, configModes[modeName].asBool());
+        }
+      }
+    }
+ 
+    PRINT_NAMED_INFO("VisionSystem.Constructor.InstantiatingFaceTracker",
+                     "With model path %s.", _dataPath.c_str());
+    _faceTracker = new Vision::FaceTracker(_dataPath, config);
+    PRINT_NAMED_INFO("VisionSystem.Constructor.DoneInstantiatingFaceTracker", "");
+    
+    _markerToTrack.Clear();
+    _newMarkerToTrack.Clear();
+    
+    _clahe->setClipLimit(kClaheClipLimit);
+    _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
+    
+    Result initMemoryResult = _memory.Initialize();
+    if(initMemoryResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("VisionSystem.Init.MemoryInitFailed", "");
+      return RESULT_FAIL_MEMORY;
+    }
+    
+#   if USE_MATLAB_TRACKER || USE_MATLAB_DETECTOR
+    {
+      Result matlabInitResult = MatlabVisionProcessor::Initialize();
+      if(RESULT_OK != matlabInitResult) {
+        PRINT_NAMED_WARNING("VisionSystem.Constructor.MatlabInitFail", "");
+        // We'll still mark as initialized -- can proceed without
+      }
+    }
+#   endif
+    
+    _isInitialized = true;
+    return RESULT_OK;
+  }
+  
+  Result VisionSystem::UpdateCameraCalibration(Vision::CameraCalibration& camCalib)
+  {
+    Result result = RESULT_OK;
+    if(_camera.IsCalibrated() && *_camera.GetCalibration() == camCalib)
+    {
+      // Camera already calibrated with same settings, no need to do anything
+      return result;
+    }
+    
+    bool calibSizeValid = false;
+    switch(camCalib.GetNcols())
+    {
+      case 640:
+        calibSizeValid = camCalib.GetNrows() == 480;
+        _captureResolution = ImageResolution::VGA;
+        break;
+      case 400:
+        calibSizeValid = camCalib.GetNrows() == 296;
+        _captureResolution = ImageResolution::CVGA;
+        break;
+      case 320:
+        calibSizeValid = camCalib.GetNrows() == 240;
+        _captureResolution = ImageResolution::QVGA;
+        break;
+    }
+    
+    if(!calibSizeValid)
+    {
+      PRINT_NAMED_ERROR("VisionSystem.Init.InvalidCalibrationResolution",
+                        "Unexpected calibration resolution (%dx%d)\n",
+                        camCalib.GetNcols(), camCalib.GetNrows());
+      return RESULT_FAIL_INVALID_SIZE;
+    }
+    
+    // Just make all the vision parameters' resolutions match capture resolution:
+    _detectionParameters.Initialize(_captureResolution);
+    _trackerParameters.Initialize(_captureResolution,
+                                  _detectionParameters.fiducialThicknessFraction,
+                                  _detectionParameters.roundedCornersFraction);
+    
+    // NOTE: we do NOT want to give our bogus camera its own calibration, b/c the camera
+    // gets copied out in Vision::ObservedMarkers we leave in the mailbox for
+    // the main engine thread. We don't want it referring to any memory allocated
+    // here.
+    _camera.SetSharedCalibration(&camCalib);
+    
+    return result;
+  } // Init()
+
+  
   
   VisionSystem::~VisionSystem()
   {
@@ -120,9 +233,9 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   // WARNING: ResetBuffers should be used with caution
   Result VisionSystem::VisionMemory::ResetBuffers()
   {
-    _offchipScratch = MemoryStack(offchipBuffer, OFFCHIP_BUFFER_SIZE);
-    _onchipScratch  = MemoryStack(onchipBuffer, ONCHIP_BUFFER_SIZE);
-    _ccmScratch     = MemoryStack(ccmBuffer, CCM_BUFFER_SIZE);
+    _offchipScratch = MemoryStack(_offchipBuffer, OFFCHIP_BUFFER_SIZE);
+    _onchipScratch  = MemoryStack(_onchipBuffer, ONCHIP_BUFFER_SIZE);
+    _ccmScratch     = MemoryStack(_ccmBuffer, CCM_BUFFER_SIZE);
     
     if(!_offchipScratch.IsValid() || !_onchipScratch.IsValid() || !_ccmScratch.IsValid()) {
       PRINT_STREAM_INFO("VisionSystem.VisionMemory.ResetBuffers", "Error: InitializeScratchBuffers");
@@ -271,24 +384,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       }
     }
   }
-  
-  
-#if 0
-#pragma mark --- Simulator-Related Definitions ---
-#endif
-  // This little namespace is just for simulated processing time for
-  // tracking and detection (since those run far faster in simulation on
-  // a PC than they do on embedded hardware. Basically, this is used by
-  // Update() below to wait until a frame is ready before proceeding.
-  namespace Simulator {
-
-    static Result Initialize() { return RESULT_OK; }
-    static bool IsFrameReady() { return true; }
-    static void SetDetectionReadyTime() { }
-    static void SetTrackingReadyTime() { }
-    static void SetFaceDetectionReadyTime() {}
-
-  } // namespace Simulator
   
   
   Embedded::Quadrilateral<f32> VisionSystem::GetTrackerQuad(MemoryStack scratch)
@@ -514,8 +609,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
                                       std::vector<Quad2f>& markerQuads)
   {
     Result lastResult = RESULT_OK;
-    
-    Simulator::SetDetectionReadyTime(); // no-op on real hardware
     
     BeginBenchmark("VisionSystem_LookForMarkers");
     
@@ -971,7 +1064,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   Result VisionSystem::TrackTemplate(const Vision::Image& inputImageGray)
   {
     Result lastResult = RESULT_OK;
-    Simulator::SetTrackingReadyTime(); // no-op on real hardware
     
     MemoryStack ccmScratch = _memory._ccmScratch;
     MemoryStack onchipScratch(_memory._onchipScratch);
@@ -1368,8 +1460,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
       lastProfilePrint = grayImage.GetTimestamp();
     }
      */
-    
-    Simulator::SetFaceDetectionReadyTime();
     
     if(_faceTracker == nullptr) {
       PRINT_NAMED_ERROR("VisionSystem.Update.NullFaceTracker",
@@ -2097,18 +2187,6 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     return _markerToTrack.size_mm;
   }
   
-  f32 VisionSystem::GetVerticalFOV() {
-    return _headCamFOV_ver;
-  }
-  
-  f32 VisionSystem::GetHorizontalFOV() {
-    return _headCamFOV_hor;
-  }
-  
-  const FaceDetectionParameters& VisionSystem::GetFaceDetectionParams() {
-    return _faceDetectionParameters;
-  }
-  
   std::string VisionSystem::GetCurrentModeName() const {
     return VisionSystem::GetModeName(static_cast<VisionMode>(_mode));
   }
@@ -2116,7 +2194,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   std::string VisionSystem::GetModeName(VisionMode mode) const
   {
     
-    static const std::map<VisionMode, std::string> LUT = {
+    static const std::map<VisionMode, std::string> LUT{
       {VisionMode::Idle,                     "IDLE"}
       ,{VisionMode::DetectingMarkers,        "MARKERS"}
       ,{VisionMode::Tracking,                "TRACKING"}
@@ -2147,29 +2225,29 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
     
   } // GetModeName()
   
-  Result VisionSystem::Init(Vision::CameraCalibration& camCalib)
+  VisionMode VisionSystem::GetModeFromString(const std::string& str) const
   {
-    Result result = RESULT_OK;
+    // NOTE: Can't use StringToEnumMapper because VisionModes are bit flags, not simple enumeration
+    static const std::map<std::string, VisionMode> LUT{
+      {"Idle",                         VisionMode::Idle},
+      {"DetectingMarkers",             VisionMode::DetectingMarkers},
+      {"DetectingFaces",               VisionMode::DetectingFaces},
+      {"DetectingMotion",              VisionMode::DetectingMotion},
+      {"Tracking",                     VisionMode::Tracking},
+      {"ReadingToolCode",              VisionMode::ReadingToolCode},
+      {"DetectingOverheadEdges",       VisionMode::DetectingOverheadEdges},
+      {"ComputingCalibration",         VisionMode::ComputingCalibration},
+    };
     
-    Profiler::SetProfileGroupName("VisionSystem");
-    
-    bool calibSizeValid = false;
-    switch(camCalib.GetNcols())
-    {
-      case 640:
-        calibSizeValid = camCalib.GetNrows() == 480;
-        _captureResolution = ImageResolution::VGA;
-        break;
-      case 400:
-        calibSizeValid = camCalib.GetNrows() == 296;
-        _captureResolution = ImageResolution::CVGA;
-        break;
-      case 320:
-        calibSizeValid = camCalib.GetNrows() == 240;
-        _captureResolution = ImageResolution::QVGA;
-        break;
+    auto iter = LUT.find(str);
+    if(iter == LUT.end()) {
+      PRINT_NAMED_WARNING("VisionSystem.GetModeFromString.UnknownMode",
+                          "No string for mode '%s'. Returning Idle mode", str.c_str());
+      return VisionMode::Idle;
+    } else {
+      return iter->second;
     }
-    AnkiConditionalErrorAndReturnValue(calibSizeValid, RESULT_FAIL_INVALID_SIZE,
+  }
                                        "VisionSystem.Init.InvalidCalibrationResolution",
                                        "Unexpected calibration resolution (%dx%d)\n",
                                        camCalib.GetNcols(), camCalib.GetNrows());
@@ -2436,15 +2514,14 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   {
     Result lastResult = RESULT_OK;
     
-    AnkiConditionalErrorAndReturnValue(IsInitialized(), RESULT_FAIL,
-                                       "VisionSystem.Update", "VisionSystem not initialized.\n");
+    if(!_isInitialized || !_camera.IsCalibrated())
+    {
+      PRINT_NAMED_WARNING("VisionSystem.Update.NotReady",
+                          "Must be initialized and have calibrated camera to Update");
+      return RESULT_FAIL;
+    }
     
     _frameNumber++;
-    
-    // no-op on real hardware
-    if(!Simulator::IsFrameReady()) {
-      return RESULT_OK;
-    }
     
     // Store the new robot state and keep a copy of the previous one
     UpdatePoseData(poseData);
@@ -3214,6 +3291,7 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
   void VisionSystem::GetSerializedFaceData(std::vector<u8>& albumData,
                                            std::vector<u8>& enrollData) const
   {
+    ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.GetSerializedFaceData.NullFaceTracker");
     _faceTracker->GetSerializedData(albumData, enrollData);
   }
   
@@ -3221,8 +3299,22 @@ CONSOLE_VAR(float, kMinCalibPixelDistBetweenBlobs, "Vision.Calibration", 5.f); /
                                              const std::vector<u8>& enrollData,
                                              std::list<Vision::FaceNameAndID>& namesAndIDs)
   {
+    ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.SetSerializedFaceData.NullFaceTracker");
     return _faceTracker->SetSerializedData(albumData, enrollData, namesAndIDs);
   }
+  
+  Result VisionSystem::LoadFaceAlbum(const std::string& albumName, std::list<Vision::FaceNameAndID> &namesAndIDs)
+  {
+    ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.LoadFaceAlbum.NullFaceTracker");
+    return _faceTracker->LoadAlbum(albumName, namesAndIDs);
+  }
+  
+  Result VisionSystem::SaveFaceAlbum(const std::string& albumName)
+  {
+    ASSERT_NAMED(nullptr != _faceTracker, "VisionSystem.SaveFaceAlbum.NullFaceTracker");
+    return _faceTracker->SaveAlbum(albumName);
+  }
+
   
 } // namespace Cozmo
 } // namespace Anki

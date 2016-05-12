@@ -31,10 +31,12 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "util/console/consoleInterface.h"
+#include "util/global/globalDefinitions.h"
 #include "util/logging/sosLoggerProvider.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/multiLoggerProvider.h"
-#include "util/global/globalDefinitions.h"
+#include "util/time/universalTime.h"
+#include <cstdlib>
 
 #if ANDROID
 #include "anki/cozmo/basestation/speechRecognition/keyWordRecognizer_android.h"
@@ -45,6 +47,9 @@
 #if ANKI_DEV_CHEATS
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"
 #endif
+
+#define ENABLE_CE_SLEEP_TIME_DIAGNOSTICS 0
+#define ENABLE_CE_RUN_TIME_DIAGNOSTICS 1
 
 #if REMOTE_CONSOLE_ENABLED
 namespace Anki { namespace Util {
@@ -270,6 +275,28 @@ Result CozmoEngine::Update(const float currTime_sec)
     return RESULT_FAIL;
   }
   
+  const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+#if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+  {
+    static bool firstUpdate = true;
+    static double lastUpdateTimeMs = 0.0;
+    //const double currentTimeMs = (double)currTime_sec * 1e+3;
+    if (! firstUpdate)
+    {
+      const double timeSinceLastUpdate = startUpdateTimeMs - lastUpdateTimeMs;
+      const double maxLatency = BS_TIME_STEP + 15.;
+      if (timeSinceLastUpdate > maxLatency)
+      {
+        char dataString[20]{0};
+        std::snprintf(dataString, sizeof(dataString), "%d", BS_TIME_STEP);
+        Anki::Util::sEventF("cozmo_engine.update.sleep.slow", {{DDATA,dataString}}, "%.2f", timeSinceLastUpdate);
+      }
+    }
+    lastUpdateTimeMs = startUpdateTimeMs;
+    firstUpdate = false;
+  }
+#endif // ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
+  
   // Handle UI
   Result lastResult = _uiMsgHandler->Update();
   if (RESULT_OK != lastResult)
@@ -346,6 +373,20 @@ Result CozmoEngine::Update(const float currTime_sec)
       PRINT_NAMED_ERROR("CozmoEngine.Update.UnexpectedState","Running Update in an unexpected state!");
   }
   
+#if ENABLE_CE_RUN_TIME_DIAGNOSTICS
+  {
+    const double endUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+    const double updateLengthMs = endUpdateTimeMs - startUpdateTimeMs;
+    const double maxUpdateDuration = BS_TIME_STEP;
+    if (updateLengthMs > maxUpdateDuration)
+    {
+      char dataString[20]{0};
+      std::snprintf(dataString, sizeof(dataString), "%d", BS_TIME_STEP);
+      Anki::Util::sEventF("cozmo_engine.update.run.slow", {{DDATA,dataString}}, "%.2f", updateLengthMs);
+    }
+  }
+#endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
+
   return RESULT_OK;
 }
   
