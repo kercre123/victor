@@ -121,7 +121,6 @@ namespace SpeedTap {
     public SpeedTapRulesBase Rules;
 
     public event Action PlayerTappedBlockEvent;
-    public event Action CozmoTappedBlockEvent;
 
     [SerializeField]
     private GameObject _PlayerTapSlidePrefab;

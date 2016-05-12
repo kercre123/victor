@@ -139,7 +139,7 @@ namespace Vortex {
     }
 
     public void HandleDebugTap() {
-      HandleBlockTapped(1, 1);
+      HandleBlockTapped(1, 1, 0.0f);
     }
 
     public void HandleReplaySelected() {

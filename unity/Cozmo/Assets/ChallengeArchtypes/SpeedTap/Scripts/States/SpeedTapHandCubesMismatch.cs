@@ -62,7 +62,7 @@ namespace SpeedTap {
     private void HandleRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent msg) {
       if (msg.event_id == Anki.Cozmo.AnimEvent.TAPPED_BLOCK && !_AnyTapRegistered) {
         _AnyTapRegistered = true;
-        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(FirstToTap.Player, true));
+        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Player, true));
       }
     }
 
@@ -70,7 +70,7 @@ namespace SpeedTap {
       // Move to react state with player mistapping
       if (!_AnyTapRegistered) {
         _AnyTapRegistered = true;
-        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(FirstToTap.Cozmo, true));
+        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Cozmo, true));
       }
     }
 
