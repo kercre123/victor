@@ -43,6 +43,11 @@ namespace RobotInterface {
  * and to make debugging from message dumps more sane.
  */
 
+message SetHeadlight
+{
+  bool enable
+}
+
 message DriveWheels
 {
   float_32 lwheel_speed_mmps,
@@ -335,6 +340,7 @@ union EngineToRobot
   NVReadResultToBody            nvReadToBody                = 0x08,
   NVOpResultToBody              nvOpResultToBody            = 0x09,
   SendDTMCommand                sendDTMCommand              = 0x0A,
+  SetHeadlight                  setHeadlight                = 0x0B,
 
   BLE_RecvHello                 bleRecvHelloMessage         = 0x26,
   BLE_EnterPairing              bleEnterPairing             = 0x27,

@@ -11,6 +11,7 @@
 #include "bluetooth.h"
 #include "backpack.h"
 #include "dtm.h"
+#include "battery.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
@@ -56,6 +57,11 @@ static void Process_bleRecvHelloMessage(const BLE_RecvHello& msg)
 static void Process_bleEnterPairing(const BLE_EnterPairing& msg)
 {
   Bluetooth::enterPairing(msg);
+}
+
+static void Process_setHeadlight(const RobotInterface::SetHeadlight& msg)
+{
+  Battery::setHeadlight(msg.enable);
 }
 
 static void Process_nvReadToBody(const RobotInterface::NVReadResultToBody& msg)

@@ -798,12 +798,12 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      /*
-      void Process_oledRelease(Anki::Cozmo::RobotInterface::DisplayRelease const&)
+      
+      void Process_setBackpackLights(RobotInterface::BackpackLights const&)
       {
         // Nothing to do here
       }
-       */
+       
       void Process_bleEncodedKey(Anki::Cozmo::BLE_EncodedKey const&)
       {
         // Nothing to do here
