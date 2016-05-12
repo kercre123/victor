@@ -150,15 +150,15 @@ MonoBehaviour:
   _TextLabelOffset: -5
   TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
   TextPressedColor: {r: 0.8088235, g: 0.8088235, b: 0.8088235, a: 1}
-  TextDisabledColor: {r: 1, g: 1, b: 1, a: 0.20392157}
+  TextDisabledColor: {r: 0.60294116, g: 0.60294116, b: 0.60294116, a: 0.741}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11403850}
     ignoreSprite: 0
     pressedSprite: {fileID: 21300000, guid: c8c259840af204378a8303a468366e73, type: 3}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
-    disabledSprite: {fileID: 21300000, guid: 4d232ce4fe0fb4f569ada82563d259d2, type: 3}
-    disabledColor: {r: 1, g: 1, b: 1, a: 0}
+    disabledSprite: {fileID: 21300000, guid: f06f3ac2bd68e45ea98cef17b2a841e8, type: 3}
+    disabledColor: {r: 1, g: 1, b: 1, a: 1}
   - targetImage: {fileID: 11441256}
     ignoreSprite: 0
     pressedSprite: {fileID: 0}
