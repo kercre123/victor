@@ -243,7 +243,12 @@ public class StartupManager : MonoBehaviour {
   }
 
   private void LoadMainScene(AssetBundleManager assetBundleManager) {
-    assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: null);
+    if (string.IsNullOrEmpty(BuildFlags.kDefaultBuildScene)) {
+      assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, _MainSceneName, loadAdditively: false, callback: null);
+    }
+    else {
+      assetBundleManager.LoadSceneAsync(_MainSceneAssetBundleName, BuildFlags.kDefaultBuildScene, loadAdditively: false, callback: null);
+    }
   }
 
   private IEnumerator UpdateLoadingDots() {

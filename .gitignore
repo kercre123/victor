@@ -169,6 +169,16 @@ unity/Cozmo/AssetBundles/*
 unity/Cozmo/Assets/StreamingAssets/AssetBundles/*
 unity/Cozmo/Assets/StreamingAssets/AssetBundles.meta
 
+# Unity cozmo_resources
+unity/Cozmo/Assets/StreamingAssets/cozmo_resources/*
+unity/Cozmo/Assets/StreamingAssets/cozmo_resources.meta
+unity/Cozmo/Assets/StreamingAssets/resources.txt
+unity/Cozmo/Assets/StreamingAssets/resources.txt.meta
+
+# Unity android libs
+unity/Cozmo/Assets/Plugins/Android/libs
+unity/Cozmo/Assets/Plugins/Android/libs.meta
+
 # Visual studio
 *.userprefs
 .vs

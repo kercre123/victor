@@ -52,7 +52,6 @@ namespace SpeedTap {
       base.Exit();
       _SpeedTapGame.PlayerTappedBlockEvent -= HandlePlayerTap;
       RobotEngineManager.Instance.OnRobotAnimationEvent -= HandleRobotAnimationEvent;
-      _SpeedTapGame.StartCozmoCubeMovedDisruptionDetection();
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, HandleCozmoFakeoutAnimationEnd);
     }
 
@@ -83,7 +82,6 @@ namespace SpeedTap {
         // Favor the player if Cozmo makes a mistake
         _SpeedTapGame.PlayerTappedBlockEvent -= HandlePlayerTap;
 
-        _SpeedTapGame.EndCozmoCubeMovedDisruptionDetection();
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
       }
       else {
