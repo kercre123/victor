@@ -379,9 +379,8 @@ class GamePlatformConfiguration(object):
             self.call_engine(self.options.command)
             # move files.
             # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
-            ankibuild.util.File.cp(os.path.join(self.engine_generated, "out",
-                                                self.options.configuration, "lib", "libcozmoEngine.so"),
-                                   self.android_unity_plugin_dir)
+            ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib", "libcozmoEngine.so"),
+                                   os.path.join(self.android_unity_plugin_dir, "libs"))
             # move third ndk libs.
             self.move_ndk()
             # Call unity for game
