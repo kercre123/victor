@@ -1,6 +1,8 @@
 {
   "behaviorType": "PounceOnMotion",
   "name": "fp_PounceOnMotion",
+  "maxNoGroundMotionBeforeBored_Sec": 30.0,
+  "backUpDistance": -50.0,
   "emotionScorers": [
     {
       "emotionType": "Excited",
