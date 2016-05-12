@@ -27,6 +27,10 @@ public abstract class GameBase : MonoBehaviour {
 
   public event MiniGameWinHandler OnMiniGameLose;
 
+  public delegate void EndGameDialogHandler();
+
+  public event EndGameDialogHandler OnShowEndGameDialog;
+
   public IRobot CurrentRobot { get { return RobotEngineManager.Instance != null ? RobotEngineManager.Instance.CurrentRobot : null; } }
 
   private SharedMinigameView _SharedMinigameViewInstance;
@@ -195,12 +199,9 @@ public abstract class GameBase : MonoBehaviour {
   }
 
   public void EndGameRobotReset() {
-    RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
-    CurrentRobot.SetVisionMode(VisionMode.DetectingFaces, true);
-    CurrentRobot.SetVisionMode(VisionMode.DetectingMarkers, true);
-    CurrentRobot.SetVisionMode(VisionMode.DetectingMotion, true);
-    // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
-    CurrentRobot.SetEnableCliffSensor(true);
+    if (OnShowEndGameDialog != null) {
+      OnShowEndGameDialog();
+    }
   }
 
   #endregion

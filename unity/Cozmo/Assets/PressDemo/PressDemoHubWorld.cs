@@ -106,6 +106,17 @@ public class PressDemoHubWorld : HubWorldBase {
     _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
     _MiniGameInstance.OnMiniGameWin += HandleMinigameOver;
     _MiniGameInstance.OnMiniGameLose += HandleMinigameOver;
+    _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
+  }
+
+  private void HandleEndGameDialog() {
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+    RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.NoGame);
+    RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
+    RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+    RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
+    // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
+    RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(true);
   }
 
   private void HandleMinigameOver(Transform[] rewards) {
@@ -115,6 +126,7 @@ public class PressDemoHubWorld : HubWorldBase {
   private void HandleMiniGameQuit() {
     DAS.Debug(this, "activity ended so force transitioning to the next thing");
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+    RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
     if (_ProgressSceneWhenMinigameOver) {
       RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
     }
