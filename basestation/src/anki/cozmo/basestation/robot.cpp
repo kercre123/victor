@@ -240,6 +240,24 @@ namespace Anki {
       _shortMinAnglePathPlanner = new MinimalAnglePlanner;
       _selectedPathPlanner = _longPathPlanner;
       
+      if (nullptr != _context->GetDataPlatform())
+      {
+        // Read in parameters from the Json config file:
+        Json::Value visionConfig;
+        std::string jsonFilename = "config/basestation/config/vision_config.json";
+        bool success = _context->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                               jsonFilename,
+                                                               visionConfig);
+        if (!success)
+        {
+          PRINT_NAMED_ERROR("Robot.VisionConfigJsonNotFound",
+                            "Vision Json config file %s not found.",
+                            jsonFilename.c_str());
+        }
+
+        _visionComponent.Init(visionConfig);
+      }
+      
     } // Constructor: Robot
     
     Robot::~Robot()

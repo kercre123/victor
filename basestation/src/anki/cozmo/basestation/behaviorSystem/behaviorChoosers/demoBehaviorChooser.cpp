@@ -19,15 +19,16 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "json/json.h"
 
-
-
 #define SET_STATE(s) SetState_internal(State::s, #s)
+
+#define DEBUG_PRINT_ALL_CUBE_STATES 0
 
 namespace Anki {
 namespace Cozmo {
@@ -44,7 +45,7 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
   , _blockworldFilter( new BlockWorldFilter )
   , _robot(robot)
 {
-  if (_robot.HasExternalInterface() )
+  if ( _robot.HasExternalInterface() )
   {
     auto helper = MakeAnkiEventUtil(*_robot.GetExternalInterface(), *this, _signalHandles);
     using namespace ExternalInterface;
@@ -77,6 +78,8 @@ void DemoBehaviorChooser::OnSelected()
 {
   SetAllBehaviorsEnabled(false);
   _initCalled = true;
+
+  // TransitionToCubes();
 }
 
 Result DemoBehaviorChooser::Update()
@@ -208,10 +211,12 @@ void DemoBehaviorChooser::TransitionToFaces()
 void DemoBehaviorChooser::TransitionToCubes()
 {
   SET_STATE(Cubes);
+
+  _robot.GetProgressionUnlockComponent().SetUnlock(UnlockId::CubeRollAction, true);
+
   SetAllBehaviorsEnabled(false);
   SetBehaviorGroupEnabled(BehaviorGroup::DemoCubes);
 
-  // transition out of cubes is a special case
   _cubesUprightTime_s = -1.0f;
   _checkTransition = std::bind(&DemoBehaviorChooser::ShouldTransitionOutOfCubesState, this);
 }
@@ -276,8 +281,13 @@ bool DemoBehaviorChooser::FilterBlocks(ObservableObject* obj) const
     return false;
   }
 
+  if( obj->GetFamily() != ObjectFamily::LightCube ) {
+    return false;
+  }
+
   const AxisName upAxis = obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
-  return obj->IsPoseStateKnown() &&
+
+  const bool ret =  obj->IsPoseStateKnown() &&
     !obj->IsMoving() &&
     obj->IsRestingFlat() &&
     // ignore object we are carrying
@@ -285,6 +295,29 @@ bool DemoBehaviorChooser::FilterBlocks(ObservableObject* obj) const
     upAxis == AxisName::Z_POS &&
     // ignore objects that aren't clear
     _robot.CanStackOnTopOfObject( *obj );
+
+  
+  if( DEBUG_PRINT_ALL_CUBE_STATES ) {
+    static std::map< ObjectID, bool > _lastValues;
+
+    auto it = _lastValues.find(obj->GetID());
+    if( it == _lastValues.end() || it->second != ret ) {
+      _lastValues[obj->GetID()] = ret;
+    
+      PRINT_NAMED_DEBUG("DemoBehaviorChooser.BlockState.Change",
+                        "%d: known?%d !moving?%d flat?%d !carried?%d upright?%d stackable?%d status:%d",
+                        obj->GetID().GetValue(),
+                        obj->IsPoseStateKnown() ,
+                        !obj->IsMoving() ,
+                        obj->IsRestingFlat() ,
+                        ( !_robot.IsCarryingObject() || _robot.GetCarryingObject() != obj->GetID() ) ,
+                        upAxis == AxisName::Z_POS ,
+                        _robot.CanStackOnTopOfObject( *obj ),
+                        ret);
+    }
+  }
+
+  return ret;  
 }
 
 template<>

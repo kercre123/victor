@@ -1862,6 +1862,32 @@ namespace Anki {
                 break;
               }
                 
+              case (s32)']':
+              {
+                // Set console variable
+                webots::Field* field = root_->getField("consoleVarName");
+                if(nullptr == field) {
+                  printf("No consoleVarName field\n");
+                } else {
+                  ExternalInterface::SetDebugConsoleVarMessage msg;
+                  msg.varName = field->getSFString();
+                  if(msg.varName.empty()) {
+                    printf("Empty consoleVarName\n");
+                  } else {
+                    field = root_->getField("consoleVarValue");
+                    if(nullptr == field) {
+                      printf("No consoleVarValue field\n");
+                    } else {
+                      msg.tryValue = field->getSFString();
+                      printf("Trying to set console var '%s' to '%s'\n",
+                             msg.varName.c_str(), msg.tryValue.c_str());
+                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
+                    }
+                  }
+                }
+                break;
+              }
+                
               case (s32)'F':
               {
                 const bool shiftPressed = modifier_key & webots::Supervisor::KEYBOARD_SHIFT;

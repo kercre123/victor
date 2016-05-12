@@ -415,7 +415,7 @@ namespace Cozmo {
   {
     SET_STATE(RequestingFaceEnrollment);
 
-    robot.Broadcast( MessageEngineToGame( RequestEnrollFace() ) );
+    robot.Broadcast( MessageEngineToGame( RequestEnrollFace(true) ) );
 
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     _requestEnrollOnCooldownUntil_s = currTime_s + kEnrollRequestCooldownInterval_s;
@@ -671,7 +671,7 @@ namespace Cozmo {
 
     // if we are changing the old face, update current face as well
     if( _currentFace != Vision::UnknownFaceID && _currentFace == oldFaceID ) {
-      _currentFace = newIt->first;
+      _currentFace = newFaceID;
       PRINT_NAMED_DEBUG("BehaviorInteractWithFaces.UpdateCurrentFace",
                         "Updating current face because of merge");
     }

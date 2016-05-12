@@ -487,10 +487,14 @@ message CozmoGameEvent {
 ///////////////////////////////////////////////////////////////////////////////
 
 // The behavior wants the UI to pop up a game request
-message RequestGameStart {}
+message RequestGameStart {
+  bool firstRequest
+}
 
 // Special request for face enrollment
-message RequestEnrollFace {}
+message RequestEnrollFace {
+  bool firstRequest
+}
 
 message SparkUnlockEnded {
 

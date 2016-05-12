@@ -97,9 +97,9 @@ TEST(BlockWorld, AddAndRemoveObject)
   };
   */
   
-  const Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                           HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                           HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
+  Vision::CameraCalibration camCalib(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
+                                     HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
+                                     HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
   
   robot.GetVisionComponent().SetCameraCalibration(camCalib);
   const f32 halfHeight = 0.25f*static_cast<f32>(camCalib.GetNrows());

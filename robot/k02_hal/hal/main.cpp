@@ -10,6 +10,7 @@
 #include "anki/cozmo/robot/rec_protocol.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/hardware.h"
+#include "bootloader.h"
 
 #include "uart.h"
 #include "oled.h"
@@ -86,7 +87,9 @@ int main (void)
   // Enable reset filtering
   RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
   RCM_RPFW = 16;
-  
+
+//  update_bootloader();
+
   Power::enableEspressif();
 
   Watchdog::init();

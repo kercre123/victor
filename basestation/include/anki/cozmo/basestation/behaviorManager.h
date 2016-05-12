@@ -69,6 +69,14 @@ public:
   Result CreateBehaviorFromConfiguration(const Json::Value& behaviorConfig);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Games
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // get if the given flags are available, you can check for all or if any is set
+  inline bool AreAllGameFlagsAvailable(BehaviorGameFlag gameFlag) const;
+  inline bool IsAnyGameFlagAvailable(BehaviorGameFlag gameFlag) const;
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -210,6 +218,24 @@ private:
   std::vector<Signal::SmartHandle> _eventHandlers;
     
 }; // class BehaviorManager
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Inline
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorManager::AreAllGameFlagsAvailable(BehaviorGameFlag gameFlag) const
+{
+  const BehaviorGameFlagMask flags = Util::EnumToUnderlying(gameFlag);
+  const bool allSet = ((_availableGames & flags) == flags);
+  return allSet;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorManager::IsAnyGameFlagAvailable(BehaviorGameFlag gameFlag) const
+{
+  const BehaviorGameFlagMask flags = Util::EnumToUnderlying(gameFlag);
+  const bool anySet = ((_availableGames & flags) != 0);
+  return anySet;
+}
 
 } // namespace Cozmo
 } // namespace Anki

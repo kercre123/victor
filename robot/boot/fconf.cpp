@@ -21,8 +21,6 @@ static const uint32_t nFPROT = 0x00000000;
 static const uint32_t FPROT  = ~nFPROT;
 
 /*
-;     </h>
-;   </h>
 ;   <h> Flash nonvolatile option byte (FOPT)
 ;     <i> Allows the user to customize the operation of the MCU at boot time.
 ;     <o.0> LPBOOT
@@ -38,7 +36,6 @@ static const uint32_t FPROT  = ~nFPROT;
 */
 static const uint8_t FOPT = 0xFF;
 /*
-;   </h>
 ;   <h> Flash security byte (FSEC)
 ;     <i> WARNING: If SEC field is configured as "MCU security status is secure" and MEEN field is configured as "Mass erase is disabled",
 ;     <i> MCU's security status cannot be set back to unsecure state since Mass erase via the debugger is blocked !!!
@@ -58,12 +55,8 @@ static const uint8_t FOPT = 0xFF;
 ;       <3=> Backdoor key access disabled
 ;         <i> Backdoor Key Security Enable
 */
-static const uint8_t FSEC = 0xFE;
-/*
-;   </h>
-; </h>
-*/
 
+static const uint8_t FSEC = 0xFE;
 struct KinetisFlashConfig {
 	uint64_t 	BackDoor;
 	uint32_t 	FProt;
@@ -76,7 +69,7 @@ extern "C"
 const KinetisFlashConfig FlashConfig[] __attribute__((at(0x00000400))) = {
 	0xFFFFFFFFFFFFFFFFL,
 	FPROT,
-	FSEC, 			
-	FOPT, 			
+	FSEC,
+	FOPT,
 	~0
 };
