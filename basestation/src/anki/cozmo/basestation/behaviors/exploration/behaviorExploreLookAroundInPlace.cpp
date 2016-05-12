@@ -68,7 +68,7 @@ bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) co
     if ( !sharesOrigin ) {
       continue;
     }
-  >
+
     // if close to any recent location, flag
     const float distSQ = (robot.GetPose().GetTranslation() - recentLocation.GetTranslation()).LengthSq();
     const float maxDistSq = _configParams.behavior_DistanceFromRecentLocationMin_mm*_configParams.behavior_DistanceFromRecentLocationMin_mm;
