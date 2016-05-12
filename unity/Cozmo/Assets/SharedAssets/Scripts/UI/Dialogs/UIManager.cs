@@ -43,9 +43,6 @@ public class UIManager : MonoBehaviour {
 
   [SerializeField]
   private Canvas _HorizontalCanvas;
-
-  [SerializeField]
-  private Canvas _VerticalCanvas;
   
   [SerializeField]
   private EventSystem _EventSystemScript;
@@ -122,13 +119,12 @@ public class UIManager : MonoBehaviour {
     T viewPrefab, 
     System.Action<T> preInitFunc = null,
     bool? overrideBackgroundDim = null, 
-    bool? overrideCloseOnTouchOutside = null, 
-    bool verticalCanvas = false) where T : BaseView {
+    bool? overrideCloseOnTouchOutside = null) where T : BaseView {
 
     GameObject newView = GameObject.Instantiate(viewPrefab.gameObject);
     T viewScript = newView.GetComponent<T>();
 
-    Transform targetCanvas = verticalCanvas ? Instance._VerticalCanvas.transform : Instance._HorizontalCanvas.transform;
+    Transform targetCanvas = Instance._HorizontalCanvas.transform;
     bool shouldDimBackground = overrideBackgroundDim.HasValue ? overrideBackgroundDim.Value : viewScript.DimBackground;
     if (shouldDimBackground) {
       Instance.DimBackground(viewScript, targetCanvas);

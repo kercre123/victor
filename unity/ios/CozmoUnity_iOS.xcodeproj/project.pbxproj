@@ -69,7 +69,6 @@
 		46D2C2461B4F9D6B00FC7553 /* libjsoncpp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C23D1B4F9D6B00FC7553 /* libjsoncpp.a */; };
 		46D2C2471B4F9D6B00FC7553 /* libkazmath.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C23E1B4F9D6B00FC7553 /* libkazmath.a */; };
 		46D2C2481B4F9D6B00FC7553 /* libutil.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C23F1B4F9D6B00FC7553 /* libutil.a */; };
-		46D2C2EF1B4FA4E900FC7553 /* libCSharpBinding.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2EE1B4FA4E900FC7553 /* libCSharpBinding.a */; };
 		46D2C2F91B4FA6AC00FC7553 /* libctiCommonRobot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2F81B4FA6AC00FC7553 /* libctiCommonRobot.a */; };
 		46D2C2FE1B4FAA0800FC7553 /* libctiVisionRobot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 46D2C2FD1B4FAA0800FC7553 /* libctiVisionRobot.a */; };
 		47B6D2A836D9105EE64E49F6 /* Bulk_Generics_1.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A512A8847E198206767637D3 /* Bulk_Generics_1.cpp */; };
@@ -475,7 +474,6 @@
 				F8BD0CFA1B5EB38D00F71EA3 /* CoreText.framework in Frameworks */,
 				46D2C2FE1B4FAA0800FC7553 /* libctiVisionRobot.a in Frameworks */,
 				46D2C2F91B4FA6AC00FC7553 /* libctiCommonRobot.a in Frameworks */,
-				46D2C2EF1B4FA4E900FC7553 /* libCSharpBinding.a in Frameworks */,
 				46D2C2401B4F9D6B00FC7553 /* libcozmoEngine.a in Frameworks */,
 				46D2C2421B4F9D6B00FC7553 /* libctiCommon.a in Frameworks */,
 				46D2C2431B4F9D6B00FC7553 /* libctiMessaging.a in Frameworks */,

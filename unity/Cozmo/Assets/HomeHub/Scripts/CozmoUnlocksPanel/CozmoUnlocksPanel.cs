@@ -90,7 +90,7 @@ public class CozmoUnlocksPanel : MonoBehaviour {
   private void HandleTappedUnlocked(UnlockableInfo unlockInfo) {
     DAS.Debug(this, "Tapped Unlocked: " + unlockInfo.Id);
     if (unlockInfo.UnlockableType == UnlockableType.Action) {
-      _RequestTricksViewInstance = UIManager.OpenView<RequestTricksView>(_RequestTricksViewPrefab, verticalCanvas: true);
+      _RequestTricksViewInstance = UIManager.OpenView<RequestTricksView>(_RequestTricksViewPrefab);
       _RequestTricksViewInstance.Initialize(unlockInfo);
     }
     else if (unlockInfo.UnlockableType == UnlockableType.Game) {

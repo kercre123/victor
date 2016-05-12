@@ -81,7 +81,7 @@ namespace Cozmo.HomeHub {
 
     private void ShowTimelineDialog() {
       // Create dialog with the game prefabs
-      _HomeViewInstance = UIManager.OpenView(_HomeViewPrefab, verticalCanvas: true);
+      _HomeViewInstance = UIManager.OpenView(_HomeViewPrefab);
       _HomeViewInstance.OnLockedChallengeClicked += HandleLockedChallengeClicked;
       _HomeViewInstance.OnUnlockedChallengeClicked += HandleUnlockedChallengeClicked;
       _HomeViewInstance.OnCompletedChallengeClicked += HandleCompletedChallengeClicked;
@@ -161,8 +161,7 @@ namespace Cozmo.HomeHub {
       _ChallengeDetailsDialogInstance = UIManager.OpenView(_ChallengeDetailsPrefab, 
         newView => {
           newView.Initialize(_ChallengeStatesById[challenge].Data, buttonTransform);
-        }, 
-        verticalCanvas: true);
+        });
 
       // React to when we should start the challenge.
       _ChallengeDetailsDialogInstance.ChallengeStarted += HandleStartChallengeClicked;

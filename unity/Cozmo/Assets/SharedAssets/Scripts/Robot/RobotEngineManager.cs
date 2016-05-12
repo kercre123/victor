@@ -85,6 +85,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.DebugLatencyMessage> OnDebugLatencyMsg;
   public event Action<Anki.Cozmo.ExternalInterface.RobotEnrolledFace> OnRobotEnrolledFace;
   public event Action<Anki.Cozmo.ExternalInterface.RequestEnrollFace> OnRequestEnrollFace;
+  public event Action<Anki.Cozmo.ExternalInterface.AnimationEvent> OnRobotAnimationEvent;
 
   #region Audio Callback events
 
@@ -128,7 +129,6 @@ public class RobotEngineManager : MonoBehaviour {
     #endif
   }
 
-
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
     if (Instance != null && Instance != this) {
@@ -149,7 +149,9 @@ public class RobotEngineManager : MonoBehaviour {
       DAS.Error("RobotEngineManager.ErrorInitializingCozmoBinding.NoConfig", string.Empty);
     }
     else {
-      CozmoBinding.Startup(config.text);
+      string configuration = AddDataPlatformPathsToConfiguration(config.text);
+
+      CozmoBinding.Startup(configuration);
       _CozmoBindingStarted = true;
     }
 
@@ -421,6 +423,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RequestEnrollFace:
       ReceivedSpecificMessage(message.RequestEnrollFace);
       break;
+    case G2U.MessageEngineToGame.Tag.AnimationEvent:
+      ReceiveSpecificMessage(message.AnimationEvent);
+      break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
@@ -430,6 +435,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(G2U.RequestEnrollFace message) {
     if (OnRequestEnrollFace != null) {
       OnRequestEnrollFace(message);
+    }
+  }
+
+  private void ReceiveSpecificMessage(Anki.Cozmo.ExternalInterface.AnimationEvent message) {
+    if (OnRobotAnimationEvent != null) {  
+      OnRobotAnimationEvent(message);
     }
   }
 
@@ -886,6 +897,17 @@ public class RobotEngineManager : MonoBehaviour {
     SendMessage();
   }
 
+  private string AddDataPlatformPathsToConfiguration(string configuration) {
+    StringBuilder sb = new StringBuilder(configuration);
+    sb.Remove(configuration.IndexOf('}') - 1, 3);
+    sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
+      ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
+      ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
+      ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
+      "\n}");
+
+    return sb.ToString();
+  }
 
   #region Mocks
 

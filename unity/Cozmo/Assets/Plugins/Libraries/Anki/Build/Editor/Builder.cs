@@ -107,6 +107,72 @@ namespace Anki {
         }
       }
 
+      [MenuItem(Build.Builder._kProjectName + "/Build/Copy Engine Assets to StreamingAssets")]
+      public static void CopyEngineAssetsToStreamingAssets() {
+
+        // Delete and create the directory to make sure we don't leave stale assets
+        FileUtil.DeleteFileOrDirectory("Assets/StreamingAssets/cozmo_resources");
+        Directory.CreateDirectory("Assets/StreamingAssets/cozmo_resources");
+
+        // Copy engine resources
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets", "Assets/StreamingAssets/cozmo_resources/assets");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/cozmo-engine/resources/config", "Assets/StreamingAssets/cozmo_resources/config");
+
+        // Delete compressed animation files that we don't need
+        string[] tarFiles = Directory.GetFiles("Assets/StreamingAssets/cozmo_resources/assets/animations", "*.tar", SearchOption.AllDirectories);
+        foreach (string tf in tarFiles) {
+          File.Delete(tf);
+        }
+
+        // Copy audio banks from a specific folder depending on the platform
+        string soundFolder;
+        switch (EditorUserBuildSettings.activeBuildTarget) {
+        case BuildTarget.Android: 
+          soundFolder = "Android";
+          break;
+
+        case BuildTarget.iOS:
+          soundFolder = "iOS";
+          break;
+
+        case BuildTarget.StandaloneOSXIntel:
+        case BuildTarget.StandaloneOSXIntel64:
+        case BuildTarget.StandaloneOSXUniversal:
+          soundFolder = "Mac";
+          break;
+
+        default:
+          throw new NotImplementedException();
+        }
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/cozmo-engine/EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/" + soundFolder, "Assets/StreamingAssets/cozmo_resources/sound");
+
+        // Generate the resources.txt file. This file will be used on Android to extract all the files from the jar file.
+        // The file has a line for folder that needs to be created and for every file that needs to be extracted. 
+        // The paths in the file need to be relative to Assets/StreamingAssets.
+        int substringIndex = "Assets/StreamingAsssets".Length;
+        List<string> all = new List<string>();
+
+        string[] directories = Directory.GetDirectories("Assets/StreamingAssets", "*", SearchOption.AllDirectories);
+        foreach (string d in directories) {
+          all.Add(d.Substring(substringIndex));
+        }
+
+        string[] files = Directory.GetFiles("Assets/StreamingAssets", "*.*", SearchOption.AllDirectories);
+        foreach (string f in files) {
+          // Filter the files we don't need to ship
+          if (!f.Contains(".meta") && !f.Contains(".DS_Store")) {
+            all.Add(f.Substring(substringIndex));
+          }
+        }
+
+        File.WriteAllLines("Assets/StreamingAssets/resources.txt", all.ToArray());
+
+        // Refresh the asset DB so Unity picks up the new files
+        AssetDatabase.Refresh();
+
+        Debug.Log("Engine assets copied to StreamingAssets");
+      }
+
       [MenuItem(Build.Builder._kProjectName + "/Build/Build Asset Bundles %#a")]
       public static void BuildAssetBundles() {
         BuildAssetBundlesInternal(EditorUserBuildSettings.activeBuildTarget);
@@ -128,7 +194,7 @@ namespace Anki {
         }
         Debug.Log(result);
       }
-
+	  
       // Build the project from a set of arguments. This method is used for automated builds
       public static string BuildWithArgs(string[] argv) {
 
@@ -138,9 +204,9 @@ namespace Anki {
         string sdk = null;
         bool enableDebugging = false;
         bool connectWithProfiler = false;
-
         int i = 0;
-        while (i < argv.Length) {
+        
+		while (i < argv.Length) {
           string arg = argv[i++];
           switch (arg) {
           case "--platform":
@@ -209,6 +275,8 @@ namespace Anki {
           }
         }
 
+
+        CopyEngineAssetsToStreamingAssets();
         // Later on use this to switch between building for different targets
         // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
 
@@ -273,11 +341,8 @@ namespace Anki {
 
       // Returns build options apropriate for the given build config
       private static BuildOptions GetBuildOptions(BuildTarget target, bool isDebugBuild, bool enableDebugging, bool connectWithProfiler) {
-        BuildOptions options = BuildOptions.AcceptExternalModificationsToPlayer;
-        if (target == BuildTarget.iOS) {
-          // Overwrite any existing xcodeproject files for iOS
-          options = BuildOptions.None;
-        }
+        BuildOptions options = BuildOptions.None;
+
         if (isDebugBuild) {
           options |= BuildOptions.Development;
         }
@@ -357,7 +422,7 @@ namespace Anki {
           {
             string configuration = Debug.isDebugBuild ? "Debug" : "Release";
             string platformName = Assets.AssetBundleManager.GetPlatformName(buildTarget);
-            string path = _kBuildOuputFolder + platformName + "/" + "unity-" + platformName + "/" + configuration + "-iphoneos/";
+            string path = _kBuildOuputFolder + platformName + "/" + "unity-" + platformName + "/" + configuration + "-" + platformName;
             return path;
           }
         default:
@@ -381,4 +446,3 @@ namespace Anki {
     }
   }
 }
-    

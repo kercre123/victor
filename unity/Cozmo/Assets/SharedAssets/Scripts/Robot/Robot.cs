@@ -629,10 +629,6 @@ public class Robot : IRobot {
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
 
-    //TODO: We should be displaying whatever is on the face on the robot here, but
-    // we don't have access to that yet.
-    CozmoFace.DisplayProceduralFace(faceAngle, faceCenter, faceScale, leftEyeParams, rightEyeParams);
-
     RobotEngineManager.Instance.Message.DisplayProceduralFace = 
       Singleton<DisplayProceduralFace>.Instance.Initialize(
       robotID: ID,
@@ -736,10 +732,6 @@ public class Robot : IRobot {
   public void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
-    // TODO: We should be displaying what is actually on the robot, instead
-    // we are faking it.
-    CozmoFace.PlayAnimation(animName);
-
     SendQueueSingleAction(Singleton<PlayAnimation>.Instance.Initialize(ID, 1, animName), callback, queueActionPosition);
   }
 
