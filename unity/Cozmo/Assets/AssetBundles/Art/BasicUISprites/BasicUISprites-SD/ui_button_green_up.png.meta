@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: 355a80a4b5df84d69a1b43fee101b003
-timeCreated: 1463092626
+timeCreated: 1463352824
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -51,7 +51,7 @@ TextureImporter:
   spriteSheet:
     sprites: []
     outline: []
-  spritePackingTag: basicUIAtlasSD
+  spritePackingTag: minigameUIAtlasSD
   userData: 
   assetBundleName: 
   assetBundleVariant: 
