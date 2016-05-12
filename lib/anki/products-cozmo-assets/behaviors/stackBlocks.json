@@ -1,22 +1,23 @@
 {
-  "behaviorType": "LookAround",
-  "name": "lookAround",
+  "behaviorType": "StackBlocks",
+  "name": "StackBlocks",
+  "requiredUnlockId": "CubeStackAction",
   "emotionScorers": [
     {
-      "emotionType": "Excited",
+      "emotionType": "Social",
       "scoreGraph": {
         "nodes": [
           {
             "x": -1.0,
-            "y": 0.8
+            "y": 0.1
           },
           {
             "x": -0.004,
-            "y": 0.4
+            "y": 0.7
           },
           {
             "x": 1.0,
-            "y": 0.1
+            "y": 0.7
           }
         ]
       },
@@ -26,12 +27,8 @@
   "repetitionPenalty": {
     "nodes": [
       {
-        "x": 4.0,
-        "y": 0.49
-      },
-      {
-        "x": 5.599,
-        "y": 0.67
+        "x": 3.0,
+        "y": 0.0
       },
       {
         "x": 8.0,
@@ -40,6 +37,7 @@
     ]
   },
   "behaviorGroups": [
+    "AffectsBlocks",
     "Demo",
     "DemoCubes",
     "FreeplayOne"
