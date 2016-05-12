@@ -27,13 +27,11 @@ int SendCommand()
 bool FlashSector(int target, const uint32_t* data)
 {
   volatile const uint32_t* original = (uint32_t*)target;
+
   volatile uint32_t* flashcmd = (uint32_t*)&FTFA->FCCOB3;
 
   // Test for sector erase nessessary
-  FTFA->FCCOB0 = 0x09;
-  FTFA->FCCOB1 = target >> 16;
-  FTFA->FCCOB2 = target >> 8;
-  FTFA->FCCOB3 = target;
+  *flashcmd = (target & 0xFFFFFF) | 0x09000000;
     
   // Erase block
   if (SendCommand()) { 
@@ -59,16 +57,19 @@ bool FlashSector(int target, const uint32_t* data)
   return true;
 }
 
+void flash_bootloader(void) {
+  __disable_irq();
+  for (int i = 0; i < BOOTLOADER_LENGTH; i += FLASH_BLOCK_SIZE) {
+    FlashSector(i, (const uint32_t*)&BOOTLOADER_UPDATE[i]);
+  }
+  NVIC_SystemReset();
+}
+
 void update_bootloader(void) {
   for (int i = 0; i < BOOTLOADER_LENGTH; i++) {
     if (BOOTLOADER_UPDATE[i] != BOOTLOADER[i])
     {
-      __disable_irq();
-      for (i = 0; i < BOOTLOADER_LENGTH; i += FLASH_BLOCK_SIZE) {
-        FlashSector((int)BOOTLOADER[i], (const uint32_t*)&BOOTLOADER_UPDATE[i]);
-      }
-      NVIC_SystemReset();
-      return ;
+      flash_bootloader();
     }
   }
 }
