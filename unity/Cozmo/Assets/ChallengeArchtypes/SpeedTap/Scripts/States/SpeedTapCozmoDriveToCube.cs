@@ -6,8 +6,8 @@ namespace SpeedTap {
 
   public class SpeedTapCozmoDriveToCube : State {
 
-    private const float _kArriveAtCubeThreshold = 50.0f;
-    private const float _kTargetDistanceToCube = 10.0f;
+    private const float _kArriveAtCubeThreshold = 60.0f;
+    private const float _kTargetDistanceToCube = 45.0f;
 
     private SpeedTapGame _SpeedTapGame = null;
 
@@ -22,8 +22,6 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
-      _CurrentRobot.SetEnableCliffSensor(true);
       if (_IsFirstTime) {
         _SpeedTapGame.InitialCubesDone();
       }
@@ -40,8 +38,9 @@ namespace SpeedTap {
     }
 
     private void HandleLiftRaiseComplete(bool success) {
+      // TODO: Remove _kTargetDistancetoCube once AlignWithObject is handling its own distance checks.
       if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude > _kTargetDistanceToCube) {
-        _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, _kTargetDistanceToCube, HandleGotoObjectComplete);
+        _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 0.0f, HandleGotoObjectComplete, false, true);
       }
       else {
         _GotoObjectComplete = true;
@@ -49,18 +48,18 @@ namespace SpeedTap {
     }
 
     private void HandleGotoObjectComplete(bool success) {
-      _GotoObjectComplete = true;
+      _GotoObjectComplete = success;
+      if (success == false) {
+        _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 0.0f, HandleGotoObjectComplete, false, true);
+      }
     }
 
     public override void Update() {
       if (_GotoObjectComplete) {
         if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < _kArriveAtCubeThreshold) {
-          // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
-          _CurrentRobot.SetEnableCliffSensor(false);
           _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
         }
         else {
-          // restart this state
           _StateMachine.SetNextState(new SpeedTapCozmoDriveToCube(false));
         }
       }
