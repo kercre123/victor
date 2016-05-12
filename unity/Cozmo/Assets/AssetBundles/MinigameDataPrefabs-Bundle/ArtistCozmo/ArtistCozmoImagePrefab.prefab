@@ -81,7 +81,7 @@ MonoBehaviour:
   ModifiedValues:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"RETRY"'
+    JsonValue: '"#button.retry"'
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: ArtistCozmoImageMenu:_RetryButton
@@ -116,7 +116,7 @@ MonoBehaviour:
   ModifiedValues:
   - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"SAVE"'
+    JsonValue: '"#button.save"'
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: ArtistCozmoImageMenu:_SaveButton
