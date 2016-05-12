@@ -1,8 +1,0 @@
-{
-  "FaceDetection" : {
-    "DetectionMode": "video"
-  },
-  "FaceRecognition" : {
-    "RunMode": "asynchronous"
-  }
-}

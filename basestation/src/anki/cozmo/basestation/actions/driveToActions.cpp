@@ -1042,9 +1042,11 @@ namespace Anki {
 
       if( preActionPoses.empty() ) {
         PRINT_NAMED_INFO("DriveToRollObjectAction.RollToUpright",
-                         "No valid pre-dock poses for object %d, giving up on behavior",
+                         "No valid pre-dock poses will upright object %d, not restricting pose",
                          _objectID.GetValue());
-        return;
+        // NOTE: this will make it so we *might* get lucky and roll the cube into a state where we can roll it
+        // again to upright it, although there is no guarantee. A real solution would need a high-level
+        // planner to solve this. By doing nothing here, we don't limit the approach angle at all
       }
         
       // Execute roll

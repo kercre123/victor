@@ -18,9 +18,8 @@ kCliCmdNames = [
 
 class EngineRemoteCmd(cmd.Cmd):
 
-    def __init__(self):
-        super().__init__()
-        self.prompt = "CozmoSDK> "
+    prompt = "CozmoSDK> "
+    
         
     def emptyline(self):
         pass # overriden to prevent an empty line entered repeating last command, and instead doing nothing
@@ -59,20 +58,12 @@ class EngineRemoteCmd(cmd.Cmd):
     def complete_cv(self, text, line, start_index, end_index):
     
         suggestions = []
-        # [MARKW:TODO] Accessing consoleVars directly is technically unsafe, engine could be
-        #              modifying this at the same time. _But_ the map is built (via CLAD) at the start
-        #              and _unlikely_ to change at the same time so not too dangerous in practice
-        #              Need a way of either queuing this, blocking on it with a mutex, and/or having a double
-        #              buffered accessor to it (to minimize locking window)
-        consoleVars = engineInterface.gEngineInterfaceInstance.consoleVars.values()
     
         for cliCmdName in kCliCmdNames:
             if cliCmdName.startswith(text):
                 suggestions.append(cliCmdName)
-                
-        for consoleVar in consoleVars:
-            if consoleVar.varName.startswith(text):
-                suggestions.append(consoleVar.varName)
+            
+        suggestions += engineInterface.SyncCommand( (EngineCommand.consoleVar, ["get_matching_names", text]) )
 
         return suggestions
 
@@ -89,22 +80,46 @@ class EngineRemoteCmd(cmd.Cmd):
     def complete_cf(self, text, line, start_index, end_index):
     
         suggestions = []
-        # [MARKW:TODO] Accessing consoleFuncs directly is technically unsafe, engine could be
-        #              modifying this at the same time. _But_ the map is built (via CLAD) at the start
-        #              and _unlikely_ to change at the same time so not too dangerous in practice
-        #              Need a way of either queuing this, blocking on it with a mutex, and/or having a double
-        #              buffered accessor to it (to minimize locking window)
-        consoleFuncs = engineInterface.gEngineInterfaceInstance.consoleFuncs.values()
     
         for cliCmdName in kCliCmdNames:
             if cliCmdName.startswith(text):
                 suggestions.append(cliCmdName)
                 
-        for consoleFunc in consoleFuncs:
-            if consoleFunc.varName.startswith(text):
-                suggestions.append(consoleFunc.varName)
+        suggestions += engineInterface.SyncCommand( (EngineCommand.consoleFunc, ["get_matching_names", text]) )
 
         return suggestions
+        
+    # ================================================================================  
+    # Mood  
+
+    def do_setEmotion(self, line):
+        "setEmotion emotionName newValue ['setEmotion list' to list all emotions]" 
+        engineInterface.QueueCommand( (EngineCommand.setEmotion, line.split()) )
+
+    def complete_setEmotion(self, text, line, start_index, end_index):
+    
+        suggestions = []
+
+        emotionNames = engineInterface.gEngineInterfaceInstance.moodManager.emotionNames
+    
+        for cliCmdName in kCliCmdNames:
+            if cliCmdName.startswith(text):
+                suggestions.append(cliCmdName)
+                
+        for emotionName in emotionNames:
+            if emotionName.startswith(text):
+                suggestions.append(emotionName)
+
+        return suggestions
+        
+    # ================================================================================  
+    # quit / exit / etc
+    
+    def do_quit(self, line):
+        "Quit / Exit the command line app"
+        sys.exit(1)
+      
+    do_exit = do_quit
     
     
 class EngineRemoteCLI:
