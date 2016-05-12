@@ -182,7 +182,7 @@ private:
   uint8_t _s4HeadMovesLeft;
   
   // positions we have recently done
-  std::list<Vec3f> _visitedLocations;
+  std::list<Pose3d> _visitedLocations;
 };
   
 

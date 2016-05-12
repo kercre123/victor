@@ -63,8 +63,14 @@ bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) co
   bool nearRecentLocation = false;
   for( const auto& recentLocation : _visitedLocations )
   {
+    // if this location is from a different origin simply ignore it
+    const bool sharesOrigin = (&recentLocation.FindOrigin()) == (&robot.GetPose().FindOrigin());
+    if ( !sharesOrigin ) {
+      continue;
+    }
+  >
     // if close to any recent location, flag
-    const float distSQ = (robot.GetPose().GetTranslation() - recentLocation).LengthSq();
+    const float distSQ = (robot.GetPose().GetTranslation() - recentLocation.GetTranslation()).LengthSq();
     const float maxDistSq = _configParams.behavior_DistanceFromRecentLocationMin_mm*_configParams.behavior_DistanceFromRecentLocationMin_mm;
     if ( distSQ < maxDistSq ) {
       nearRecentLocation = true;
@@ -278,7 +284,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
     }
   
     // note down this location so that we don't do it again in the same place
-    _visitedLocations.emplace_back( robot.GetPose().GetTranslation() );
+    _visitedLocations.emplace_back( robot.GetPose() );
   }
 }
 
