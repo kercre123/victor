@@ -1,0 +1,80 @@
+/**
+ * File: behaviorStackBlocks.h
+ *
+ * Author: Brad Neuman
+ * Created: 2016-05-11
+ *
+ * Description: Behavior to pick up one cube and stack it on another
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorStackBlocks_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorStackBlocks_H__
+
+#include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
+
+namespace Anki {
+namespace Cozmo {
+
+class BlockWorldFilter;
+class ObservableObject;
+class Robot;
+
+class BehaviorStackBlocks : public IBehavior
+{
+protected:
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
+  BehaviorStackBlocks(Robot& robot, const Json::Value& config);
+
+  virtual Result InitInternal(Robot& robot) override;
+  virtual void   StopInternal(Robot& robot) override;
+
+  virtual bool IsRunnableInternal(const Robot& robot) const override;
+    
+private:
+
+  std::string _retryActionAnimGroup = "rollCube_retry";
+  std::string _successAnimGroup = "stackCube_success";
+
+  mutable ObjectID _targetBlockTop;
+  mutable ObjectID _targetBlockBottom;
+
+  std::unique_ptr<BlockWorldFilter>  _blockworldFilterForTop;
+  std::unique_ptr<BlockWorldFilter>  _blockworldFilterForBottom;
+
+  const Robot& _robot;
+
+  enum class State {
+    PickingUpBlock,
+    StackingBlock,
+    PlayingFinalAnim
+  };
+
+  State _state = State::PickingUpBlock;
+
+  void TransitionToPickingUpBlock(Robot& robot);
+  void TransitionToStackingBlock(Robot& robot);
+  void TransitionToPlayingFinalAnim(Robot& robot);
+
+  void SetState_internal(State state, const std::string& stateName);
+  void ResetBehavior(Robot& robot);
+
+  bool FilterBlocksForTop(const ObservableObject* obj) const;
+  bool FilterBlocksForBottom(const ObservableObject* obj) const;
+  bool FilterBlocksHelper(const ObservableObject* obj) const;
+
+  bool AreBlocksAreStillValid(const Robot& robot);
+  
+  void UpdateTargetBlocks(const Robot& robot) const;
+};
+
+
+}
+}
+
+
+#endif

@@ -69,7 +69,7 @@ BehaviorLookAround::~BehaviorLookAround()
   
 bool BehaviorLookAround::IsRunnableInternal(const Robot& robot) const
 {
-  return true;
+  return ! robot.IsCarryingObject();
 }
 
 float BehaviorLookAround::EvaluateRunningScoreInternal(const Robot& robot) const

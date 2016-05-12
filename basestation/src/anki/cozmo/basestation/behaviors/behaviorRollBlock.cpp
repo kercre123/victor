@@ -28,7 +28,7 @@
 namespace Anki {
 namespace Cozmo {
 
-CONSOLE_VAR(f32, kScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
+CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
 
 BehaviorRollBlock::BehaviorRollBlock(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -181,7 +181,7 @@ void BehaviorRollBlock::TransitionToPerformingAction(Robot& robot)
                                    "action failed without retry, behavior ending");
                 }
               });
-  IncreaseScoreWhileActing( kScoreIncreaseForAction );
+  IncreaseScoreWhileActing( kBRB_ScoreIncreaseForAction );
 }
 
 void BehaviorRollBlock::SetState_internal(State state, const std::string& stateName)

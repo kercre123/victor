@@ -213,6 +213,7 @@ void DemoBehaviorChooser::TransitionToCubes()
   SET_STATE(Cubes);
 
   _robot.GetProgressionUnlockComponent().SetUnlock(UnlockId::CubeRollAction, true);
+  _robot.GetProgressionUnlockComponent().SetUnlock(UnlockId::CubeStackAction, true);
 
   SetAllBehaviorsEnabled(false);
   SetBehaviorGroupEnabled(BehaviorGroup::DemoCubes);

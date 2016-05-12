@@ -36,6 +36,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnBack.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToStop.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
+#include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 
@@ -186,6 +187,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     {
       newBehavior = new BehaviorReactToRobotOnBack(robot, config);
       break;     
+    }
+    case BehaviorType::StackBlocks:
+    {
+      newBehavior = new BehaviorStackBlocks(robot, config);
+      break;
     }
     case BehaviorType::Count:
     {
