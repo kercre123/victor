@@ -28,11 +28,7 @@ private:
   BehaviorPounceOnMotion(Robot& robot, const Json::Value& config);
   
 public:
-
-  // checks if the motion is within pouncing distance
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-
-  // this can only run if it detects some motion
   virtual float EvaluateScoreInternal(const Robot& robot) const override;
 
 protected:
@@ -55,13 +51,10 @@ protected:
 
   float _lastPoseDist = 0.0f;
   const float _driveForwardUntilDist = 75.0f;
-
-  float _backupAfterPounce = 200.0f;
-  float _backupSpeed = 80.0f;
   
   // Overwritten by config.
-  float _maxTimeSinceNoMotion_sec = 30.f;
-  float _backUpDistance = -50.f;
+  float _maxTimeSinceNoMotion_sec;
+  float _backUpDistance;
   
   
 private:
@@ -84,7 +77,6 @@ private:
   u32 _waitForActionTag = 0;
 
   float _stopRelaxingTime = 0.0f;
-  std::string _previousIdleAnimation;
 
   // reset everything for when the behavior is finished
   void Cleanup(Robot& robot);

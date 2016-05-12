@@ -46,29 +46,22 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
 
   _maxTimeSinceNoMotion_sec = config.get(kMaxNoMotionBeforeBored_Sec, _maxTimeSinceNoMotion_sec).asFloat();
   _backUpDistance = config.get(kBackUpDistance, _backUpDistance).asFloat();
+  
+  _state = State::Inactive;
+  _lastMotionTime = 0.f;
 }
 
 bool BehaviorPounceOnMotion::IsRunnableInternal(const Robot& robot) const
 {
-  // Can run whenever
+  // Can always run now. Used to be more motion based.
   return true;
 }
 
 float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot) const
 {
-  if( _state != State::Inactive )
-  {
-    return 1.f;
-  }
-  double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
-  // We're done if we haven't seen motion in a long while or since start.
-  if ( _lastMotionTime < currentTime_sec + SEC_TO_MILIS(_maxTimeSinceNoMotion_sec))
-  {
-    return IBehavior::EvaluateScoreInternal(robot);
-  }
-  
-  return 0.f;
+  // maybe make more sensitive to _lastMotionTime, but we're not likely to see ground motion
+  // unless looking at it so now just relying on mood scores.
+  return IBehavior::EvaluateScoreInternal(robot);
 }
 
 
@@ -154,8 +147,6 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
 
     case MessageEngineToGameTag::RobotCompletedAction: {
       if( _waitForActionTag == event.GetData().Get_RobotCompletedAction().idTag ) {
-        // restore idle
-        robot.SetIdleAnimation(_previousIdleAnimation);
         if( _state == State::InitialAnim)
         {
           TransitionToBringingHeadDown(robot);
@@ -186,30 +177,6 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
       break;
     }
   }
-}
-
-void BehaviorPounceOnMotion::Cleanup(Robot& robot)
-{
-  if( _state == State::RelaxingLift) {
-    robot.GetMoveComponent().EnableLiftPower(true);
-  }
-
-  _state = State::Inactive;
-  _numValidPouncePoses = 0;
-  _lastValidPouncePoseTime = 0.0f;
-}
-
-  
-Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
-{
-  _prePouncePitch = robot.GetPitchAngle();
-  
-  double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _lastMotionTime = (float)currentTime_sec;
-  
-  TransitionToInitialWarningAnim(robot);
-  
-  return Result::RESULT_OK;
 }
 
 void BehaviorPounceOnMotion::TransitionToInitialWarningAnim(Robot& robot)
@@ -288,10 +255,6 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
 
   bool caught = robot.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
 
-  // disable idle while animation plays
-  _previousIdleAnimation = robot.GetIdleAnimationName();
-  robot.SetIdleAnimation("NONE");
-
   IActionRunner* newAction = nullptr;
   if( caught ) {
     newAction = new PlayAnimationGroupAction(robot, s_PounceSuccessAnimGroup);
@@ -316,11 +279,30 @@ void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
   _waitForActionTag = driveAction->GetTag();
   robot.GetActionList().QueueActionNow(driveAction);
 }
+  
+Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
+{
+  _prePouncePitch = robot.GetPitchAngle();
+  
+  double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _lastMotionTime = (float)currentTime_sec;
+  
+  TransitionToInitialWarningAnim(robot);
+  
+  return Result::RESULT_OK;
+}
 
 IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
 {
 
-  float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  // We're done if we haven't seen motion in a long while or since start.
+  if ( _lastMotionTime + _maxTimeSinceNoMotion_sec < currentTime_sec )
+  {
+    PRINT_NAMED_INFO("BehaviorPounceOnMotion.Timeout", "No motion found, giving up");
+    _state = State::Complete;
+  }
   
   switch( _state )
   {
@@ -337,7 +319,7 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
     }
     case State::RelaxingLift:
     {
-      if( currTime > _stopRelaxingTime )
+      if( currentTime_sec > _stopRelaxingTime )
       {
         TransitionToResultAnim(robot);
       }
@@ -359,7 +341,19 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
   
 void BehaviorPounceOnMotion::StopInternal(Robot& robot)
 {
+  _state = State::Inactive;
   Cleanup(robot);
+}
+  
+void BehaviorPounceOnMotion::Cleanup(Robot& robot)
+{
+  if( _state == State::RelaxingLift) {
+    robot.GetMoveComponent().EnableLiftPower(true);
+  }
+  
+  _state = State::Inactive;
+  _numValidPouncePoses = 0;
+  _lastValidPouncePoseTime = 0.0f;
 }
 
 
