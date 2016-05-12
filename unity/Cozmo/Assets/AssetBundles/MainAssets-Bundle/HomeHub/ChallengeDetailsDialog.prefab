@@ -646,18 +646,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
-  - ObjectPath: ButtonDropShadow/ButtonText
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#button.startChallenge"'
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_GameObjectType
-    JsonValue: 0
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_EventType
-    JsonValue: 4
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
-    JsonValue: -1676603318
   ModifiedLocalReferences:
   - ObjectPath: ../../../
     FieldName: ChallengeDetailsDialog:_StartChallengeButton
