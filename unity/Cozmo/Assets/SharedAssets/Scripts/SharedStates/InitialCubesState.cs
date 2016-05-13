@@ -10,7 +10,7 @@ public class InitialCubesState : State {
   private int _NumValidCubes;
   private GameBase _Game;
 
-  private const float kCubeTimeoutSeconds = 0.15f;
+  private const float kCubeTimeoutSeconds = 0.4f;
   private List<int> _ValidCubeIds;
   private Dictionary <int, float> _CubeIdToTimeout;
 
