@@ -28,11 +28,7 @@ private:
   BehaviorPounceOnMotion(Robot& robot, const Json::Value& config);
   
 public:
-
-  // checks if the motion is within pouncing distance
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-
-  // this can only run if it detects some motion
   virtual float EvaluateScoreInternal(const Robot& robot) const override;
 
 protected:
@@ -44,42 +40,54 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
-  float _maxPounceDist = 110.0f;
+  float _maxPounceDist = 160.0f;
   float _minGroundAreaForPounce = 0.01f;
   float _maxTimeBetweenPoses = 4.0f;
+  
   
   float _prePouncePitch = 0.0f;
   float _lastValidPouncePoseTime = 0.0f;
   int _numValidPouncePoses = 0;
 
   float _lastPoseDist = 0.0f;
-  const float _driveForwardUntilDist = 70.0f;
-
-  float _backupAfterPounce = 200.0f;
-  float _backupSpeed = 80.0f;
+  const float _driveForwardUntilDist = 75.0f;
+  
+  // Overwritten by config.
+  float _maxTimeSinceNoMotion_sec = 30.0;
+  float _backUpDistance = -50.0;
+  
   
 private:
 
   enum class State {
     Inactive,
+    InitialAnim,
+    BringingHeadDown,
+    WaitingForMotion,
     Pouncing,
     RelaxingLift,
     PlayingFinalReaction,
+    BackUp,
     Complete,
   };
 
+  float _lastMotionTime;
   State _state = State::Inactive;
 
   u32 _waitForActionTag = 0;
 
   float _stopRelaxingTime = 0.0f;
 
-  std::string _previousIdleAnimation;
-  
-  void CheckPounceResult(Robot& robot);
-
   // reset everything for when the behavior is finished
   void Cleanup(Robot& robot);
+  
+  void TransitionToInitialWarningAnim(Robot& robot);
+  void TransitionToBringingHeadDown(Robot& robot);
+  void TransitionToWaitForMotion(Robot& robot);
+  void TransitionToPounce(Robot& robot);
+  void TransitionToRelaxLift(Robot& robot);
+  void TransitionToResultAnim(Robot& robot);
+  void TransitionToBackUp(Robot& robot);
 
 };
 
