@@ -28,6 +28,7 @@
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 //#define TESTING_CUBES
+//#define NATHAN_CUBE_JUNK
 
 using namespace Anki::Cozmo;
 
@@ -92,6 +93,10 @@ void Radio::advertise(void) {
   currentAccessory = 0;
 
   uesb_init(&uesb_config);
+  
+  #ifdef NATHAN_CUBE_JUNK
+  assignProp(0, 0xca11ab1e);
+  #endif
 }
 
 void Radio::shutdown(void) {
@@ -213,8 +218,12 @@ void uesb_event_handler(uint32_t flags)
     slot = LocateAccessory(advert.id);
     if (slot < 0) {
       #ifdef TESTING_CUBES
-      static int assign_slot = 0;
-      Radio::assignProp(assign_slot++, advert.id);
+      for (int i = 0; i < MAX_ACCESSORIES; i++) {
+        if (!accessories[i].allocated) {
+          Radio::assignProp(i, advert.id);
+          break ;
+        }
+      }
       #endif
       
       ObjectDiscovered msg;
@@ -263,12 +272,10 @@ void uesb_event_handler(uint32_t flags)
       new_addr->address = advert.id;
       new_addr->payload_length = sizeof(AccessoryHandshake);
       new_addr->rf_channel = (new_addr->rf_channel >> 1) ^ (new_addr->rf_channel & 1 ? 0 : 0x2D);
+      new_addr->rf_channel = 85;
       
       // Tell the cube to listen on channel 42
-      uesb_address_desc_t address = {
-        ADV_CHANNEL,
-        advert.id,
-      };
+      uesb_address_desc_t address = { ADV_CHANNEL, advert.id };
       CapturePacket pair;
       
       pair.hopIndex = 0;
@@ -283,6 +290,10 @@ void uesb_event_handler(uint32_t flags)
     AccessorySlot* acc = &accessories[currentAccessory];
     AccessoryHandshake* ap = (AccessoryHandshake*) &rx_payload.data;
 
+    #ifdef NATHAN_CUBE_JUNK
+    acc->tx_state.ledStatus[0] = 0x80;
+    #endif
+  
     acc->last_received = 0;
 
     PropState msg;
@@ -354,7 +365,7 @@ void Radio::updateLights() {
       }
       
       #ifdef TESTING_CUBES
-      memset(acc->tx_state.ledStatus, 0x10, sizeof(acc->tx_state.ledStatus));
+      memset(acc->tx_state.ledStatus, 0x80, sizeof(acc->tx_state.ledStatus));
       #endif
     }
   }
@@ -378,7 +389,15 @@ void Radio::prepare(void* userdata) {
 
     // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
+
     uesb_prepare_tx_payload(&address, &acc->tx_state, sizeof(acc->tx_state));
+  
+    #ifdef NATHAN_CUBE_JUNK
+    for(int i = 2; i < sizeof(acc->tx_state.ledStatus); i+=3) {
+      acc->tx_state.ledStatus[i]++;
+    }
+    acc->tx_state.ledStatus[0] = 0;
+    #endif
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
     if (acc->active)
