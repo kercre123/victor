@@ -10,8 +10,10 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 
+#include "anki/vision/basestation/faceTracker.h"
 #include <dirent.h>
 #include <regex>
+#include <thread>
 
 // TODO: Remove this once we sort build failures (See COZMO-797)
 #define SKIP_FACE_RECOGNITION_TESTS 1
