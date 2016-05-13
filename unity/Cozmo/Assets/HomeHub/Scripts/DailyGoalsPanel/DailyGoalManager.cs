@@ -18,13 +18,7 @@ public class DailyGoalManager : MonoBehaviour {
   // List of Current Generation Data
   private DailyGoalGenerationData _CurrentGenData;
 
-  #if UNITY_EDITOR
-  public static string sDailyGoalDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/DailyGoals"; } }
-  #elif UNITY_IOS
-  public static string sDailyGoalDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/DailyGoals"); } }  
-  #elif UNITY_ANDROID
-  public static string sDailyGoalDirectory { get { return  Path.Combine(Application.persistentDataPath, "cozmo_resources/assets/DailyGoals"); } }  
-  #endif
+  public static string sDailyGoalDirectory { get { return PlatformUtil.GetResourcesFolder("DailyGoals"); } }
 
   #region constants
 

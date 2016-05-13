@@ -893,7 +893,7 @@ public class RobotEngineManager : MonoBehaviour {
     sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
       ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
       ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
+      ", \n  \"DataPlatformResourcesPath\" : \"" + PlatformUtil.GetResourcesFolder() + "\"" +
       "\n}");
 
     return sb.ToString();

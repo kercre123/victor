@@ -1,0 +1,31 @@
+﻿using UnityEngine;
+using System;
+
+public class PlatformUtil {
+
+  public static string GetResourcesFolder() {
+    // On Android assets are extracted from the jar file (see StartupManager.ExtractResourceFiles) 
+    // to persistentDataPath so this is the path we have to send to the engine. On iOS we can access the
+    // files on streamingAssetsPath directly
+
+    #if UNITY_EDITOR
+    return Application.dataPath + "/../../../lib/anki/products-cozmo-assets";
+    #elif UNITY_IOS
+    return Application.streamingAssetsPath + "/cozmo_resources";
+    #elif UNITY_ANDROID
+    return Application.persistentDataPath + "/cozmo_resources";
+    #endif
+  }
+
+  public static string GetResourcesFolder(string resourcesSubfolder) {
+    // On device the resources are all copied into the "assets" subfolder.
+    #if UNITY_EDITOR
+    return GetResourcesFolder() + "/" + resourcesSubfolder;
+    #elif UNITY_IOS
+    return GetResourcesFolder() + "/assets/" + resourcesSubfolder;
+    #elif UNITY_ANDROID
+    return GetResourcesFolder() + "/assets/" + resourcesSubfolder;
+    #endif
+  }
+}
+

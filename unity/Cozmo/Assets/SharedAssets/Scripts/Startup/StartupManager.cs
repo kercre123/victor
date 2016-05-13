@@ -300,6 +300,8 @@ public class StartupManager : MonoBehaviour {
 
   private IEnumerator ExtractResourceFiles() {
     #if !UNITY_EDITOR && UNITY_ANDROID
+    // In Android the files in streamingAssetsPath are in the jar file which means our native code can't access them. Here
+    // we extract them from the jar file into persistentDataPath using the resources manifest.
     string fromPath = Application.streamingAssetsPath + "/";
     string toPath = Application.persistentDataPath + "/";
 
