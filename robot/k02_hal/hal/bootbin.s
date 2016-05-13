@@ -5,7 +5,7 @@
                 EXPORT  BOOTLOADER_LENGTH
 
 BOOTLOADER_UPDATE
-                INCBIN  build/robot_boot.bin
+                INCBIN  binaries/robot_boot.bin
 __EMERGENCY_BOOTLOADER_END
 BOOTLOADER_LENGTH
                 DCD     __EMERGENCY_BOOTLOADER_END - BOOTLOADER_UPDATE

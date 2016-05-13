@@ -54,8 +54,6 @@ nrf_fix:
 # This fixes the headers and places the binaries in release
 stage_binaries: k02_fix nrf_fix
 	cp ./build/app/robot.axf ./binaries
-	cp ./build/robot_boot.bin ./binaries
-	cp ./syscon/build/boot/sys_boot.bin ./binaries
 	cp ./syscon/build/app/syscon.axf ./binaries
 	cp ./espressif/bin/upgrade/user1.2048.new.3.bin ./binaries/esp.user.bin
 
@@ -65,7 +63,7 @@ stage: stage_binaries
 	python3 ./tools/sign.py --wifi ./binaries/esp.user.bin 	./staging/wifi.safe
 	python3 ./tools/sign.py --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf --wifi ./binaries/esp.user.bin ./staging/cozmo.safe
 
-release: stage_binaries
+release:
 	python3 ./tools/sign.py --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf --wifi ./binaries/esp.user.bin ./releases/cozmo.safe
 	cp ./binaries/esp.user.bin releases
 
