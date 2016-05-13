@@ -1,0 +1,340 @@
+/**
+ * File: behaviorAdmireStack.cpp
+ *
+ * Author: Brad Neuman
+ * Created: 2016-05-12
+ *
+ * Description: Behavior to look at and admire a stack of blocks, then knock it over if a 3rd is added
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+#include "anki/cozmo/basestation/behaviors/behaviorAdmireStack.h"
+
+#include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
+#include "anki/cozmo/basestation/blockWorld.h"
+#include "anki/cozmo/basestation/blockWorldFilter.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/vision/basestation/observableObject.h"
+#include "util/console/consoleInterface.h"
+
+#define SET_STATE(s) SetState_internal(State::s, #s)
+
+namespace Anki {
+namespace Cozmo {
+
+CONSOLE_VAR(u32, kBAS_maxBlockAge_ms, "Behavior.AdmireStack", 500);
+
+CONSOLE_VAR(f32, kBAS_backupAccel_mmps2, "Behavior.AdmireStack", 100.0f);
+CONSOLE_VAR(f32, kBAS_backupDecel_mmps2, "Behavior.AdmireStack", 500.0f);
+CONSOLE_VAR(f32, kBAS_backupDist_mm, "Behavior.AdmireStack", 70.0f);
+CONSOLE_VAR(f32, kBAS_backupForSearchDist_mm, "Behavior.AdmireStack", 50.0f);
+CONSOLE_VAR(f32, kBAS_backupForSearchSpeed_mmps, "Behavior.AdmireStack", 60.0f);
+CONSOLE_VAR(f32, kBAS_backupSpeed_mmps, "Behavior.AdmireStack", 50.0f);
+CONSOLE_VAR(f32, kBAS_distanceToTryToGrabFrom_mm, "Behavior.AdmireStack", 65.0f);
+CONSOLE_VAR(f32, kBAS_driveThroughAccel_mmps2, "Behavior.AdmireStack", 500.0f);
+CONSOLE_VAR(f32, kBAS_driveThroughDecel_mmps2, "Behavior.AdmireStack", 100.0f);
+CONSOLE_VAR(f32, kBAS_driveThroughDist_mm, "Behavior.AdmireStack", 300.0f);
+CONSOLE_VAR(f32, kBAS_driveThroughSpeed_mmps, "Behavior.AdmireStack", 180.0f);
+CONSOLE_VAR(f32, kBAS_headAngleForKnockOver_deg, "Behavior.AdmireStack", -14.0f);
+CONSOLE_VAR(f32, kBAS_headAngleForSearch_deg, "Behavior.AdmireStack", 25.0f);
+CONSOLE_VAR(f32, kBAS_lookAtFaceDelay_s, "Behavior.AdmireStack", 0.4f);
+CONSOLE_VAR(f32, kBAS_minDistanceFromStack_mm, "Behavior.AdmireStack", 130.0f);
+
+CONSOLE_VAR(f32, kBAS_ScoreIncreaseForAction, "Behavior.AdmireStack", 0.8f);
+
+BehaviorAdmireStack::BehaviorAdmireStack(Robot& robot, const Json::Value& config)
+  : IBehavior(robot, config)
+{
+  SetDefaultName("AdmireStack");
+
+  SubscribeToTags({
+    EngineToGameTag::RobotObservedObject
+  });  
+}
+
+bool BehaviorAdmireStack::IsRunnableInternal(const Robot& robot) const
+{
+  return robot.GetBehaviorManager().GetWhiteboard().HasStackToAdmire();
+}
+
+Result BehaviorAdmireStack::InitInternal(Robot& robot)
+{
+  //_topPlacedBlock = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
+  TransitionToWatchingStack(robot);
+
+  return Result::RESULT_OK;
+}
+
+void BehaviorAdmireStack::StopInternal(Robot& robot)
+{
+  ResetBehavior(robot);
+}
+
+IBehavior::Status BehaviorAdmireStack::UpdateInternal(Robot& robot)
+{
+  if( _state == State::WatchingStack ) {
+    // make sure we have seen the second cube recently enough
+    TimeStamp_t currTime = robot.GetLastImageTimeStamp();
+    if( currTime > _topBlockLastSeentime + kBAS_maxBlockAge_ms ) {
+      PRINT_NAMED_DEBUG("BehaviorAdmireStack.LostSecondBlock",
+                        "haven't seen second block (id %d) since %d (curr=%d), searching",
+                        robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID().GetValue(),
+                        _topBlockLastSeentime,
+                        currTime);
+      StopActing(false);
+      TransitionToSearchingForStack(robot);
+    }
+  }
+
+  return IBehavior::UpdateInternal(robot);
+}
+
+void BehaviorAdmireStack::TransitionToWatchingStack(Robot& robot)
+{
+  SET_STATE(WatchingStack);
+
+  ObjectID topPlacedBlock = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
+  ObservableObject* secondBlock = robot.GetBlockWorld().GetObjectByID(topPlacedBlock);
+  if( nullptr == secondBlock ) {
+    PRINT_NAMED_WARNING("BehaviorAdmireStack.NullBlock",
+                        "Robot should admire block %d, but can't get pointer",
+                        topPlacedBlock.GetValue());
+    return;
+  }
+
+
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
+  
+  // if we're too close to the cube, back up
+  Pose3d poseWrtRobot;
+  if( secondBlock->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
+    const float fudgeFactor = 10.0f;
+    if( poseWrtRobot.GetTranslation().x() < kBAS_minDistanceFromStack_mm + fudgeFactor) {
+      float distToDrive = kBAS_minDistanceFromStack_mm - poseWrtRobot.GetTranslation().x();
+      action->AddAction(new DriveStraightAction(robot, -distToDrive, -kBAS_backupForSearchSpeed_mmps));
+    }
+  }
+
+  // look right in between where the current top (2nd) block is and where the 3rd would go
+  
+  Pose3d lookPose = secondBlock->GetPose();
+  lookPose.SetTranslation( { secondBlock->GetPose().GetTranslation().x(),
+        secondBlock->GetPose().GetTranslation().y(),
+        secondBlock->GetPose().GetTranslation().z() + 0.5f * secondBlock->GetSize().z() });
+
+  action->AddAction(new TurnTowardsPoseAction(robot, lookPose, Radians(PI_F)));
+  
+  // TODO:(bn) looping animation?
+  action->AddAction(new HangAction(robot));
+
+  StartActing(action);
+  // will hang in this state until we see the third cube
+  // don't increase score here (??)
+}
+
+void BehaviorAdmireStack::TransitionToReactingToThirdBlock(Robot& robot)
+{
+  SET_STATE(ReactingToThirdBlock);
+
+  StartActing(new PlayAnimationGroupAction(robot, _reactToThirdCubeAnimGroup),
+              &BehaviorAdmireStack::TransitionToTryingToGrabThirdBlock);
+  IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
+}
+
+void BehaviorAdmireStack::TransitionToTryingToGrabThirdBlock(Robot& robot)
+{
+  SET_STATE(TryingToGrabThirdBlock);
+
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
+
+  ObjectID topPlacedBlock = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
+  ObservableObject* secondBlock = robot.GetBlockWorld().GetObjectByID(topPlacedBlock);
+  if( nullptr == secondBlock ) {
+    PRINT_NAMED_WARNING("BehaviorAdmireStack.NullBlock",
+                        "Robot should admire block %d, but can't get pointer",
+                        topPlacedBlock.GetValue());
+    return;
+  }
+
+  Pose3d poseWrtRobot;
+  if( secondBlock->GetPose().GetWithRespectTo(robot.GetPose(), poseWrtRobot) ) {
+    const float fudgeFactor = 10.0f;
+    if( poseWrtRobot.GetTranslation().x() + fudgeFactor > kBAS_distanceToTryToGrabFrom_mm) {
+      float distToDrive = poseWrtRobot.GetTranslation().x() - kBAS_distanceToTryToGrabFrom_mm;
+      action->AddAction(new DriveStraightAction(robot, distToDrive, kBAS_backupForSearchSpeed_mmps));
+    }
+  }
+
+  action->AddAction(new PlayAnimationGroupAction(robot, _tryToGrabThirdCubeAnimGroup));
+
+  StartActing(action, &BehaviorAdmireStack::TransitionToKnockingOverStack);
+  IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
+}
+
+void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
+{
+  SET_STATE(KnockingOverStack);
+
+  CompoundActionSequential* action = new CompoundActionSequential(robot);
+
+  ObjectID topBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
+  
+  action->AddAction(new TurnTowardsFaceWrapperAction(robot, 
+                                                     // TODO:(bn) animation here?
+                                                     new WaitAction(robot, kBAS_lookAtFaceDelay_s)));
+  action->AddAction(new TurnTowardsObjectAction(robot,
+                                                topBlockID,
+                                                Radians(PI_F),
+                                                true, // verify when done
+                                                false));
+  action->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBAS_headAngleForKnockOver_deg)));
+  DriveStraightAction* backupAction = new DriveStraightAction(robot, -kBAS_backupDist_mm, -kBAS_backupSpeed_mmps);
+  backupAction->SetAccel(kBAS_backupAccel_mmps2);
+  backupAction->SetDecel(kBAS_backupDecel_mmps2);
+  action->AddAction(backupAction);
+
+  DriveStraightAction* driveThroughAction = new DriveStraightAction(robot,
+                                                                    kBAS_driveThroughDist_mm + kBAS_backupDist_mm,
+                                                                    kBAS_driveThroughSpeed_mmps);
+  driveThroughAction->SetAccel(kBAS_driveThroughAccel_mmps2);
+  driveThroughAction->SetDecel(kBAS_driveThroughDecel_mmps2);
+  action->AddAction(driveThroughAction);
+
+  StartActing(action, [this, &robot](ActionResult res) {
+      if( res == ActionResult::SUCCESS ) {
+        TransitionToReactingToTopple(robot);
+      }
+      else {
+        TransitionToSearchingForStack(robot);
+      }
+    });
+  IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
+}
+
+void BehaviorAdmireStack::TransitionToReactingToTopple(Robot& robot)
+{
+  SET_STATE(ReactingToTopple);
+
+  StartActing(new PlayAnimationGroupAction(robot, _succesAnimGroup));
+  IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
+
+  robot.GetBehaviorManager().GetWhiteboard().ClearHasStackToAdmire();
+}
+
+void BehaviorAdmireStack::TransitionToSearchingForStack(Robot& robot)
+{
+  SET_STATE(SearchingForStack);
+
+  TimeStamp_t currLastSeenTime = _topBlockLastSeentime;
+
+  StartActing(new CompoundActionSequential(robot, {
+        new MoveHeadToAngleAction(robot, DEG_TO_RAD( kBAS_headAngleForSearch_deg )),
+        new DriveStraightAction(robot, -kBAS_backupForSearchDist_mm, -kBAS_backupForSearchSpeed_mmps),
+        new SearchSideToSideAction(robot) }),
+    [this, currLastSeenTime](Robot& robot) {
+      // check if we've seen the cube more recently than before
+      if( _topBlockLastSeentime > currLastSeenTime ) {
+        PRINT_NAMED_DEBUG("BehaviorAdmireStack.Searching.Success",
+                          "found a top block, resetting behavior");
+        TransitionToWatchingStack(robot);
+      }
+      else {
+        PRINT_NAMED_DEBUG("BehaviorAdmireStack.Searching.Failed",
+                          "couldn't find stack, leaving behavior");
+      }
+    });
+}
+
+void BehaviorAdmireStack::HandleWhileRunning(const EngineToGameEvent& event, Robot& robot)
+{
+  ASSERT_NAMED(event.GetData().GetTag() == EngineToGameTag::RobotObservedObject,
+               "BehaviorAdmireStack.InvalidMessageTag");
+
+  if( ! robot.GetBehaviorManager().GetWhiteboard().HasStackToAdmire() ) {
+    return;
+  }  
+
+  const auto& msg = event.GetData().Get_RobotObservedObject();
+
+  ObjectID secondBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
+
+  ObservableObject* obj = robot.GetBlockWorld().GetObjectByID(msg.objectID);
+  if( nullptr == obj  ) {
+    PRINT_NAMED_ERROR("BehaviorAdmireStack.HandleBlockUpdate.NoBlockPointer",
+                      "object id %d sent a message but can't get it's pointer",
+                      msg.objectID);
+    return;
+  }
+
+  if( msg.objectID == robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID() &&
+      msg.markersVisible ) {
+    _topBlockLastSeentime = msg.timestamp;
+
+    const bool upAxisOk = ! robot.GetProgressionUnlockComponent().IsUnlocked(UnlockId::CubeRollAction) ||
+      obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS;
+
+    if( ! upAxisOk ) {
+      PRINT_NAMED_DEBUG("BehaviorAdmireStack.HandleBlockUpdate.StackMessedWith",
+                        "Top block rotated, stopping behavior");
+      // TODO:(bn) play animation here?
+      robot.GetBehaviorManager().GetWhiteboard().ClearHasStackToAdmire();
+      StopActing(false);
+      return;
+    }
+    else if ( _state == State::SearchingForStack ) {
+      PRINT_NAMED_DEBUG("BehaviorAdmireStack.FoundDuringSearch",
+                        "found top block while searching");
+      StopActing(false);
+      TransitionToWatchingStack(robot);
+    }
+  }
+  else if( _state == State::WatchingStack ){
+    // check if this could possibly be the 3rd stacked block
+    if( msg.markersVisible &&
+        msg.objectFamily == ObjectFamily::LightCube ) {
+
+      ObservableObject* secondBlock = robot.GetBlockWorld().GetObjectByID( secondBlockID );
+      if( nullptr == secondBlock ) {
+        PRINT_NAMED_ERROR("BehaviorAdmireStack.HandleBlockUpdate.NoSecondBlockPointer",
+                          "couldn't get object id %d pointer",
+                          secondBlockID.GetValue());
+        return;
+      }
+
+      const float kZTolerance_mm = 15.0f;
+      
+      if( robot.GetBlockWorld().FindObjectOnTopOf( *secondBlock, kZTolerance_mm ) == obj && ! obj->IsMoving() ) {
+        PRINT_NAMED_INFO("BehaviorAdmireStack.HandleObjectObserved.FoundThirdBlock",
+                         "Found that block %d appears to be the top of a 3 stack",
+                         msg.objectID);
+        StopActing(false);
+        TransitionToReactingToThirdBlock(robot);
+      }
+    }
+
+  }
+    
+}
+
+
+void BehaviorAdmireStack::SetState_internal(State state, const std::string& stateName)
+{
+  _state = state;
+  PRINT_NAMED_DEBUG("BehaviorAdmireStack.TransitionTo", "%s", stateName.c_str());
+  SetStateName(stateName);
+}
+
+void BehaviorAdmireStack::ResetBehavior(Robot& robot)
+{
+  _state = State::WatchingStack;
+}
+
+}
+}
+

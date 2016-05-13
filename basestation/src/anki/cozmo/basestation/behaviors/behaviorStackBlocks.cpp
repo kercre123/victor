@@ -15,12 +15,13 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
+#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "util/console/consoleInterface.h"
-#include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -355,6 +356,8 @@ void BehaviorStackBlocks::TransitionToWaitForBlocksToBeValid(Robot& robot)
 void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
 {
   SET_STATE(PlayingFinalAnim);
+
+  robot.GetBehaviorManager().GetWhiteboard().SetHasStackToAdmire(_targetBlockTop);
 
   StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup));
   IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );

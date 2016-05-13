@@ -23,8 +23,6 @@
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
-#define DEBUG_PRINT_ALL_BLOCKS 0
-
 namespace Anki {
 namespace Cozmo {
 
