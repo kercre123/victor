@@ -315,7 +315,7 @@ bool AudioController::RegisterGameObject( AudioEngine::AudioGameObject gameObjec
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AudioController::SetGameObjectAuxSendValues( AudioEngine::AudioGameObject gameObject,
-                                                  std::vector<AudioEngine::AudioAuxBusValue>& auxSendValues )
+                                                  const AuxSendList& auxSendValues )
 {
   bool success = false;
   
@@ -364,9 +364,10 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   {
     PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback! PluginId: %d", plugInId );
     RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
-    // TODO: This doesn't work durring this transition proccess
-//    ASSERT_NAMED( buffer != nullptr, "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.RobotAudioBufferNotNull"); // Catch mistakes with wwise project
-    if (buffer != nullptr) {
+    // Catch mistakes with wwise project
+    ASSERT_NAMED( buffer != nullptr,
+                  "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.SetCreatePlugInCallback.RobotAudioBufferNull");
+    if ( buffer != nullptr ) {
       buffer->PrepareAudioBuffer();
     }
     
@@ -380,8 +381,9 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   {
     PRINT_NAMED_INFO( "AudioController.Initialize", "Create Destroy Callback! PluginId: %d", plugInId );
     RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
-    // TODO: This doesn't work durring this transition proccess
-//    assert( nullptr != buffer ); // Catch mistakes with wwise project
+    // Catch mistakes with wwise project
+    ASSERT_NAMED( buffer != nullptr,
+                  "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.SetDestroyPluginCallback.RobotAudioBufferNull");
     // Done with voice clear audio buffer
     if ( buffer != nullptr ) {
       buffer->ClearCache();
@@ -397,8 +399,9 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   _hijackAudioPlugIn->SetProcessCallback( [this] ( const uint32_t plugInId, const uint8_t* frames, const uint32_t frameCount )
   {
     RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
-    // TODO: This doesn't work durring this transition proccess
-//    assert( nullptr != buffer ); // Catch mistakes with wwise project
+    // Catch mistakes with wwise project
+    ASSERT_NAMED( buffer != nullptr,
+                  "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.GetRobotAudioBufferWithPluginId.RobotAudioBufferNull");
     if ( buffer != nullptr ) {
       buffer->UpdateBuffer( frames, frameCount );
     }
