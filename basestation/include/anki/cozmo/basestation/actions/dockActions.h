@@ -259,6 +259,7 @@ namespace Anki {
       const Vision::KnownMarker*  _carryObjectMarker = nullptr;
       IActionRunner*              _faceAndVerifyAction = nullptr;
       ObjectInteractionResult     _interactionResult = ObjectInteractionResult::INCOMPLETE;
+      bool                        _startedPlacing = false;
       
     }; // class PlaceObjectOnGroundAction
     

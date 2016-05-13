@@ -846,6 +846,8 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
+      _startedPlacing = false;
+      
       // Robot must be carrying something to put something down!
       if(_robot.IsCarryingObject() == false) {
         PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
@@ -867,8 +869,10 @@ namespace Anki {
           result = ActionResult::FAILURE_ABORT;
         }
         
-        _faceAndVerifyAction = new TurnTowardsObjectAction(_robot, _carryingObjectID,
-                                                    _carryObjectMarker->GetCode(), 0, true, false);
+        _faceAndVerifyAction = new TurnTowardsObjectAction(_robot,
+                                                           _carryingObjectID,
+                                                           _carryObjectMarker->GetCode(),
+                                                           0, true, false);
         
         _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
         _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
@@ -888,7 +892,13 @@ namespace Anki {
       
       // Wait for robot to report it is done picking/placing and that it's not
       // moving
-      if (!_robot.IsPickingOrPlacing() && !_robot.GetMoveComponent().IsMoving())
+      
+      if(_robot.IsPickingOrPlacing())
+      {
+        _startedPlacing = true;
+      }
+      
+      if (_startedPlacing && !_robot.IsPickingOrPlacing() && !_robot.GetMoveComponent().IsMoving())
       {
         // Stopped executing docking path, and should have placed carried block
         // and backed out by now, and have head pointed at an angle to see
