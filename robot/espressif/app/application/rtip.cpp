@@ -78,13 +78,13 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
         {
           if (clientConnected())
           {
-            if ((relayBuffer[1] == RobotInterface::RobotToEngine::Tag_trace) && (clientQueueAvailable() < 200))
+            if ((tag == RobotInterface::RobotToEngine::Tag_trace) && (clientQueueAvailable() < 200))
             {
               AnkiWarn( 50, "RTIP.AcceptRTIPMessage", 442, "dropping RTIP trace", 0);
             }
             else
             {
-              AnkiConditionalError(clientSendMessage(relayBuffer + 1, size, RobotInterface::GLOBAL_INVALID_TAG, relayBuffer[1] < RobotInterface::TO_ENG_UNREL, false), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, tag, size);
+              AnkiConditionalError(clientSendMessage(relayBuffer + 1, size, RobotInterface::GLOBAL_INVALID_TAG, tag < RobotInterface::TO_ENG_UNREL, false), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, tag, size);
             }
           }
         }
