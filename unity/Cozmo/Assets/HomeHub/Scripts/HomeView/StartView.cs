@@ -32,9 +32,6 @@ public class StartView : BaseView {
 
     LoopRobotSleep();
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
-  }
-
-  private void Start() {
     _ConnectButton.Initialize(HandleConnectClicked, "wake_up_cozmo_button", DASEventViewName);
   }
 

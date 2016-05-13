@@ -121,20 +121,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
-  ModifiedValues:
-  - ObjectPath: ButtonDropShadow/ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_HorizontalOverflow:value__
-    JsonValue: 1
-  - ObjectPath: ButtonDropShadow/ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MaxSize
-    JsonValue: 75
-  - ObjectPath: ButtonDropShadow/ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_MinSize
-    JsonValue: 40
+  ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: DifficultySelectOption:_Label
-    ReferencePath: ButtonDropShadow/ButtonText
+    ReferencePath: ButtonText
   - ObjectPath: ../
     FieldName: DifficultySelectOption:_Button
     ReferencePath: 
