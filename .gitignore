@@ -251,3 +251,6 @@ JLinkLog.txt
 robot/cube/lst/block.m51
 resources/config/basestation/AnkiLogStringTables.json
 coretech/generated
+
+# VSCode
+.vscode
