@@ -43,6 +43,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/blocks/blockFilter.h"
 #include "anki/cozmo/basestation/speedChooser.h"
 #include "anki/cozmo/basestation/drivingAnimationHandler.h"
@@ -111,7 +112,7 @@ namespace Anki {
     , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
     , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
     , _movementComponent(*this)
-    , _visionComponent(*this, VisionComponent::RunMode::Asynchronous, _context)
+    , _visionComponentPtr( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
     , _nvStorageComponent(*this, _context)
     , _textToSpeechComponent(_context)
     , _neckPose(0.f,Y_AXIS_3D(), {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, &_pose, "RobotNeck")
@@ -253,7 +254,7 @@ namespace Anki {
                             jsonFilename.c_str());
         }
 
-        _visionComponent.Init(visionConfig);
+        _visionComponentPtr->Init(visionConfig);
       }
       
     } // Constructor: Robot
@@ -261,6 +262,10 @@ namespace Anki {
     Robot::~Robot()
     {
       AbortAll();
+      
+      // destroy vision component first because its thread might be using things from Robot. This fixes a crash
+      // caused by the vision thread using _poseHistory when it was destroyed here
+      Util::SafeDelete(_visionComponentPtr);
       
       Util::SafeDelete(_imageDeChunker);
       Util::SafeDelete(_poseHistory);
@@ -284,13 +289,13 @@ namespace Anki {
         // Robot is being picked up: de-localize it
         Delocalize();
         
-        _visionComponent.Pause(true);
+        _visionComponentPtr->Pause(true);
         
         Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPickedUp(GetID())));
       }
       else if (true == _isPickedUp && false == t) {
         // Robot just got put back down
-        _visionComponent.Pause(false);
+        _visionComponentPtr->Pause(false);
         
         ASSERT_NAMED(!IsLocalized(), "Robot should be delocalized when first put back down!");
         
@@ -378,7 +383,7 @@ namespace Anki {
       for(auto marker : object->GetMarkers()) {
         if(marker.GetLastObservedTime() >= mostRecentObsTime) {
           Pose3d markerPoseWrtCamera;
-          if(false == marker.GetPose().GetWithRespectTo(_visionComponent.GetCamera().GetPose(), markerPoseWrtCamera)) {
+          if(false == marker.GetPose().GetWithRespectTo(_visionComponentPtr->GetCamera().GetPose(), markerPoseWrtCamera)) {
             PRINT_NAMED_ERROR("Robot.SetLocalizedTo.MarkerOriginProblem",
                               "Could not get pose of marker w.r.t. robot camera.\n");
             return RESULT_FAIL;
@@ -762,7 +767,7 @@ namespace Anki {
     
     Vision::Camera Robot::GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const
     {
-      Vision::Camera camera(_visionComponent.GetCamera());
+      Vision::Camera camera(_visionComponentPtr->GetCamera());
       
       // Update the head camera's pose
       camera.SetPose(GetHistoricalCameraPose(p, t));
@@ -823,14 +828,14 @@ namespace Anki {
        */
       
       
-      if(_visionComponent.GetCamera().IsCalibrated())
+      if(_visionComponentPtr->GetCamera().IsCalibrated())
       {
         Result visionResult = RESULT_OK;
 
         // Helper macro for running a vision component, capturing result, and
         // printing error message / returning if that result was not RESULT_OK.
 #       define TRY_AND_RETURN_ON_FAILURE(__NAME__) \
-        do { if((visionResult = _visionComponent.__NAME__()) != RESULT_OK) { \
+        do { if((visionResult = _visionComponentPtr->__NAME__()) != RESULT_OK) { \
           PRINT_NAMED_ERROR("Robot.Update." QUOTE(__NAME__) "Failed", ""); \
           return visionResult; } } while(0)
         
@@ -1200,7 +1205,7 @@ namespace Anki {
                             angle, RAD_TO_DEG(angle));
       }
       
-      _visionComponent.GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
+      _visionComponentPtr->GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
       
     } // SetHeadAngle()
     
@@ -2282,7 +2287,7 @@ namespace Anki {
                                    dockAction == DockAction::DA_CROSS_BRIDGE);
         
         // Tell the VisionSystem to start tracking this marker:
-        _visionComponent.SetMarkerToTrack(marker->GetCode(), marker->GetSize(),
+        _visionComponentPtr->SetMarkerToTrack(marker->GetCode(), marker->GetSize(),
                                           image_pixel_x, image_pixel_y, checkAngleX,
                                           placementOffsetX_mm, placementOffsetY_mm,
                                           placementOffsetAngle_rad);
@@ -2716,6 +2721,10 @@ namespace Anki {
       _imageSaveMode = mode;
     }
     
+    TimeStamp_t Robot::GetLastImageTimeStamp() {
+      return GetVisionComponent().GetLastProcessedImageTimeStamp();
+    }
+    
     Result Robot::ProcessImage(const Vision::ImageRGB& image)
     {
       Result lastResult = RESULT_OK;
@@ -2751,9 +2760,9 @@ namespace Anki {
       
       const f32 imgProcrateAvgCoeff = 0.9f;
       _imgProcPeriod = (_imgProcPeriod * (1.f-imgProcrateAvgCoeff) +
-                        _visionComponent.GetProcessingPeriod() * imgProcrateAvgCoeff);
+                        _visionComponentPtr->GetProcessingPeriod() * imgProcrateAvgCoeff);
       
-      _visionComponent.SetNextImage(image);
+      _visionComponentPtr->SetNextImage(image);
       
       return lastResult;
     }

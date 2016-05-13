@@ -15,12 +15,14 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/firmwareUpdater/firmwareUpdater.h"
+#include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/gameEvent.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/time/stepTimers.h"
 #include <sys/stat.h>
 
+#include "anki/common/robot/config.h"
 #include "util/global/globalDefinitions.h"
 #if ANKI_DEV_CHEATS
 #include "anki/cozmo/basestation/debug/usbTunnelEndServer_ios.h"

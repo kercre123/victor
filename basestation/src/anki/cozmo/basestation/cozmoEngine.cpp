@@ -23,6 +23,7 @@
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
 #include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"

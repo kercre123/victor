@@ -48,7 +48,6 @@
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
-#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
@@ -57,6 +56,7 @@
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
+#include "clad/externalInterface/messageEngineToGame.h"
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
@@ -100,6 +100,7 @@ class MatPiece;
 class MoodManager;
 class PathDolerOuter;
 class ProgressionUnlockComponent;
+class VisionComponent;
 class BlockFilter;
 class RobotPoseHistory;
 class RobotPoseStamp;
@@ -213,8 +214,8 @@ public:
     //
     // Camera / Vision
     //
-    VisionComponent&         GetVisionComponent() { return _visionComponent; }
-    const VisionComponent&   GetVisionComponent() const { return _visionComponent; }
+    VisionComponent&         GetVisionComponent() { assert(_visionComponentPtr); return *_visionComponentPtr; }
+    const VisionComponent&   GetVisionComponent() const { assert(_visionComponentPtr); return *_visionComponentPtr; }
     Vision::Camera           GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
     Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request) const;
     Pose3d                   GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
@@ -460,7 +461,7 @@ public:
     void SetSaveImageMode(const SaveMode_t mode);
     
     // Return the timestamp of the last _processed_ image
-    TimeStamp_t GetLastImageTimeStamp() { return _visionComponent.GetLastProcessedImageTimeStamp(); }
+    TimeStamp_t GetLastImageTimeStamp();
   
     // =========== Actions Commands =============
     
@@ -780,7 +781,7 @@ public:
     //ActionQueue           _actionQueue;
     ActionList              _actionList;
     MovementComponent       _movementComponent;
-    VisionComponent         _visionComponent;
+    VisionComponent*        _visionComponentPtr;
     NVStorageComponent      _nvStorageComponent;
     TextToSpeechComponent  _textToSpeechComponent;
   
