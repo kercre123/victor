@@ -119,9 +119,12 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
       break ;
     case TRANSMIT_RECEIVE:
       while (UART0_RCFIFO) {
+        uint8_t data = UART0_D;
+        UART::DebugPutc(data);
+
         if (rx_source != SPI_SOURCE_BODY) {
           // Shifty header
-          rx_source = (rx_source >> 8) | (UART0_D << 24);
+          rx_source = (rx_source >> 8) | (data << 24);
           
           // The body isn't booted
           if (rx_source == BODY_RECOVERY_NOTICE) {
@@ -129,7 +132,7 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
           }
           continue ;
         }	else {
-          txRxBuffer[txRxIndex++] = UART0_D;
+          txRxBuffer[txRxIndex++] = data;
         }
 
         if (txRxIndex >= sizeof(GlobalDataToHead)) {

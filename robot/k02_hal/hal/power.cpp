@@ -36,6 +36,7 @@ namespace Anki
           GPIO_OUT(GPIO_POWEREN, PIN_POWEREN);
           SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);
 
+          #ifndef ENABLE_FCC_TEST
           // Wait for Espressif to toggle out 4 words of I2SPI
           for (int i = 0; i < 32; i++)
           {
@@ -51,6 +52,7 @@ namespace Anki
           while((MCG->S & MCG_S_CLKST_MASK))    ;
 
           MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
+          #endif
         }
         
         void disableEspressif(void)

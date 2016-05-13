@@ -92,15 +92,18 @@ int main (void)
 
   Power::enableEspressif();
 
-  Watchdog::init();
   UART::DebugInit();
+  #ifndef ENABLE_FCC_TEST
+  Watchdog::init();
   SPI::Init();
+  #endif
   DAC::Init();
 
   I2C::Init();
   UART::Init();
   IMU::Init();
   OLED::Init();
+  #ifndef ENABLE_FCC_TEST
   CameraInit();
 
   Anki::Cozmo::Robot::Init();
@@ -111,20 +114,24 @@ int main (void)
   CameraStart();
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
-  //#define ENABLE_FCC_TEST
-  //#define GENERATE_WHITE_NOISE (this should be defined elseware)
 
-  #ifdef ENABLE_FCC_TEST
-  FCC::start();
-  for (;;) {
-    UART::WaitForSync();
-    FCC::mainDTMExecution();
-  }
-  #else
   // Run the main thread
   do {
     // Wait for head body sync to occur
     UART::WaitForSync();
   } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
+  #else
+
+  FCC::start();
+  I2C::Enable();
+  for (;;) {
+    UART::Transmit();
+
+    if (UART::HeadDataReceived) {
+      UART::HeadDataReceived = false;
+      FCC::mainDTMExecution();
+    }
+  }
+
   #endif
 }
