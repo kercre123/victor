@@ -18,11 +18,12 @@
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "util/helpers/templateHelpers.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
-#include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
-#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
 #include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
+#include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
@@ -556,10 +557,7 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     _context->GetAudioServer()->RegisterClientConnection( engineConnection );
     
     // Set Robot Audio Client Message Handler to link to Connection and Robot Audio Buffer ( Audio played on Robot )
-    RobotAudioClient* audioClient = robot->GetRobotAudioClient();
-    audioClient->SetMessageHandler( engineConnection->GetMessageHandler() );
-    audioClient->SetAudioController( _context->GetAudioServer()->GetAudioController() );
-    audioClient->SetupRobotAudio();
+    robot->GetRobotAudioClient()->SetMessageHandler( engineConnection->GetMessageHandler() );
   }
   
   return lastResult;

@@ -50,13 +50,13 @@
 #include "anki/cozmo/basestation/components/movementComponent.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
-#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/textToSpeech/textToSpeechComponent.h"
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
+#include <memory>
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
@@ -109,6 +109,10 @@ class ActiveCube;
 class CannedAnimationContainer;
 class SpeedChooser;
 class DrivingAnimationHandler;
+  
+namespace Audio {
+  class RobotAudioClient;
+}
 
 typedef enum {
   SAVE_OFF = 0,
@@ -527,7 +531,7 @@ public:
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   
     // =========== Audio =============
-    Audio::RobotAudioClient* GetRobotAudioClient() { return &_audioClient; }
+    Audio::RobotAudioClient* GetRobotAudioClient() { return _audioClient.get(); }
   
     // Ask the UI to play a sound for us
     // TODO: REMOVE OLD AUDIO SYSTEM
@@ -762,8 +766,9 @@ public:
     FaceWorld         _faceWorld;
   
     BehaviorManager  _behaviorMgr;
-    
   
+    ///////// Audio /////////
+    std::unique_ptr<Audio::RobotAudioClient> _audioClient;
   
     ///////// Animation /////////
     CannedAnimationContainer&   _cannedAnimations;
@@ -937,9 +942,6 @@ public:
     void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
     */
   
-    ///////// Audio /////////
-    Audio::RobotAudioClient _audioClient;
-    
     ///////// Mood/Emotions ////////
     MoodManager*         _moodManager;
 

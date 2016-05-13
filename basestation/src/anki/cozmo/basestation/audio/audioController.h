@@ -105,11 +105,10 @@ public:
   
   
   // Game-Defined Auxiliary Sends
-  bool SetGameObjectAuxSendValues( AudioEngine::AudioGameObject gameObject,
-                                   std::vector<AudioEngine::AudioAuxBusValue>& auxSendValues );
+  using AuxSendList = std::vector<AudioEngine::AudioAuxBusValue>;
+  bool SetGameObjectAuxSendValues( AudioEngine::AudioGameObject gameObject, const AuxSendList& auxSendValues );
   
-  bool SetGameObjectOutputBusVolume( AudioEngine::AudioGameObject gameObject,
-                                     AudioEngine::AudioReal32 controlVolume );
+  bool SetGameObjectOutputBusVolume( AudioEngine::AudioGameObject gameObject, AudioEngine::AudioReal32 controlVolume );
 
   
   // TEMP: Set Cozmo Speaker Volumes

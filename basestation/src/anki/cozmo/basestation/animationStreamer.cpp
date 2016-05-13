@@ -258,12 +258,7 @@ namespace Cozmo {
       
 #     if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       // Prep sound
-      {
-        using namespace Audio;
-        const RobotAudioClient::AnimationMode mode = robot.IsPhysical() ?
-          RobotAudioClient::AnimationMode::PlayOnRobot : RobotAudioClient::AnimationMode::PlayOnDevice;
-        _audioClient.CreateAudioAnimation( anim , mode);
-      }
+      _audioClient.CreateAudioAnimation( anim );
 #     endif
       
 #     if PLAY_ROBOT_AUDIO_ON_DEVICE
