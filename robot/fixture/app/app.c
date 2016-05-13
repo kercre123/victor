@@ -109,11 +109,19 @@ void SetFixtureText(void)
   DisplayTextHeightMultiplier(1);
   DisplayTextWidthMultiplier(1);
   DisplayMoveCursor(55, 110);
+#ifdef FCC
+  DisplayPutChar('c');
+  DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
+  DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
+  DisplayMoveCursor(55, 0);
+  DisplayPutString("CERT/TEST ONLY");
+#else
   DisplayPutChar('v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
   DisplayMoveCursor(55, 0);
-  DisplayPutString("EP3");
+  DisplayPutString(BUILD_INFO);
+#endif
   
   DisplayFlip();
 }
