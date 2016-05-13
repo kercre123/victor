@@ -22,14 +22,45 @@ namespace Anki {
 namespace Cozmo {
 namespace Audio {
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioBuffer* RobotAudioClient::GetAvailableAudioBuffer()
+void RobotAudioClient::SetupRobotAudio()
 {
-  // TODO: This will get an audio buffer from a poll of buffers to allow us to buffer data from multiple sources
-  RobotAudioBuffer* buffer = nullptr;
-  _audioController->GetAvailableRobotAudioBuffer( buffer );
-  return buffer;
+  // Configure Robot Audio buffers with Wwise buses. PlugIn Ids are set in Wwise project
+  // Setup Robot Buffers
+  RegisterRobotAudioBuffer( GameObjectType::CozmoAnimation, 1, Bus::BusType::Robot_Bus_1 );
+  
+  // TEMP: Setup other buses
+  RegisterRobotAudioBuffer( GameObjectType::CozmoBus_2, 2, Bus::BusType::Robot_Bus_2 );
+  RegisterRobotAudioBuffer( GameObjectType::CozmoBus_3, 3, Bus::BusType::Robot_Bus_3 );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer( GameObjectType gameObject,
+                                                              PluginId_t pluginId,
+                                                              Bus::BusType audioBus )
+{
+  ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.RegisterRobotAudioBuffer.AudioControllerNull" );
+  
+  // Setup GameObject with Bus
+  using namespace AudioEngine;
+  AudioEngine::AudioGameObject gameObj = static_cast<const AudioEngine::AudioGameObject>( gameObject );
+  std::vector<AudioEngine::AudioAuxBusValue> busValues;
+  AudioAuxBusValue aBusValue( static_cast<AudioAuxBusId>( audioBus ), 1.0f );
+  busValues.emplace_back( aBusValue );
+  _audioController->SetGameObjectAuxSendValues( gameObj, busValues );
+  
+  // Create Buffer for bus
+  return _audioController->RegisterRobotAudioBuffer( gameObj, pluginId );
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotAudioBuffer* RobotAudioClient::GetRobotAudiobuffer( GameObjectType gameObject )
+{
+  ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.GetRobotAudiobuffer.AudioControllerNull" );
+  const AudioEngine::AudioGameObject gameObj = static_cast<const AudioEngine::AudioGameObject>( gameObject );
+  return _audioController->GetRobotAudioBufferWithGameObject( gameObj );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -130,7 +161,7 @@ bool RobotAudioClient::AnimationIsComplete()
   return false;
 }
 
-  
+
 } // Audio
 } // Cozmo
 } // Anki

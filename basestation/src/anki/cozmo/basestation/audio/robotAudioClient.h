@@ -41,8 +41,15 @@ public:
   // Set Audio Controller to provide access to robot audio buffers
   void SetAudioController( AudioController* audioController ) { _audioController = audioController; }
   
-  // Get an available Audio Buffer from pool
-  RobotAudioBuffer* GetAvailableAudioBuffer();
+  // Setup Robot audio buses and buffers
+  void SetupRobotAudio();
+  
+  // Create Audio Buffer for the corresponding Game Object
+  using PluginId_t = uint32_t;
+  RobotAudioBuffer* RegisterRobotAudioBuffer( GameObjectType gameObject, PluginId_t pluginId, Bus::BusType bus );
+  
+  // The the audio buffer for the corresponding Game Object
+  RobotAudioBuffer* GetRobotAudiobuffer( GameObjectType gameObject );
   
   // Post Cozmo specific Audio events
   CallbackIdType PostCozmoEvent( GameEvent::GenericEvent event, AudioEngineClient::CallbackFunc callback = nullptr );

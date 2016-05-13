@@ -559,6 +559,7 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     RobotAudioClient* audioClient = robot->GetRobotAudioClient();
     audioClient->SetMessageHandler( engineConnection->GetMessageHandler() );
     audioClient->SetAudioController( _context->GetAudioServer()->GetAudioController() );
+    audioClient->SetupRobotAudio();
   }
   
   return lastResult;
