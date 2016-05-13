@@ -19,22 +19,22 @@
     ]
   },
   "pressDemo.faceEnrollRequestTitle": {
-    "translation": "Cozmo wants to meet you"
+    "translation": ""
   },
   "pressDemo.faceEnrollRequestDesc": {
-    "translation": "Select Yes to meet Cozmo"
+    "translation": "Cozmo wants to meet you"
   },
   "pressDemo.speedTapRequestTitle": {
-    "translation": "Cozmo Want To Play"
+    "translation": "Speed Tap"
   },
   "pressDemo.speedTapRequestDesc": {
-    "translation": "Speed Tap"
+    "translation": "Cozmo Wants To Play"
   },
   "pressDemo.speedTapRequestAgainTitle": {
-    "translation": "Cozmo Really Wants To Play"
+    "translation": "Speed Tap"
   },
   "pressDemo.speedTapRequestAgainDesc": {
-    "translation": "Speed Tap"
+    "translation": "Cozmo Really Wants To Play"
   },
   "pressDemo.speedTapRequestAgainDesc": {
     "translation": "Oh alright!"
