@@ -1770,20 +1770,34 @@ namespace Cozmo {
           // Make ground region area into a fraction of the ground ROI area
           groundRegionArea /= imgQuadArea;
           
-          // Map the centroid onto the ground plane
-          Matrix_3x3f invH;
-          _poseData.groundPlaneHomography.GetInverse(invH);
-          Point3f temp = invH * Point3f{groundPlaneCentroid.x(), groundPlaneCentroid.y(), 1.f};
-          ASSERT_NAMED(temp.z() > 0, "VisionSystem.DetectMotion.BadProjectedZ");
-          const f32 divisor = 1.f/temp.z();
-          groundPlaneCentroid.x() = temp.x() * divisor;
-          groundPlaneCentroid.y() = temp.y() * divisor;
-          
-          //ASSERT_NAMED(Quad2f(_poseData.groundPlaneROI.GetGroundQuad()).Contains(groundPlaneCentroid),
-          //             "VisionSystem.DetectMotion.BadGroundPlaneCentroid");
-          if(!Quad2f(_poseData.groundPlaneROI.GetGroundQuad()).Contains(groundPlaneCentroid)) {
-            PRINT_NAMED_WARNING("VisionSystem.DetectMotion.BadGroundPlaneCentroid",
-                                "Centroid=(%.2f,%.2f)", centroid.x(), centroid.y());
+          // Map the centroid onto the ground plane, by doing inv(H) * centroid
+          Point3f temp;
+          Result solveResult = LeastSquares(_poseData.groundPlaneHomography,
+                                            Point3f{groundPlaneCentroid.x(), groundPlaneCentroid.y(), 1.f},
+                                            temp);
+          if(RESULT_OK != solveResult) {
+            PRINT_NAMED_WARNING("VisionSystem.DetectMotion.LeastSquaresFailed",
+                                "Failed to project centroid (%.1f,%.1f) to ground plane",
+                                groundPlaneCentroid.x(), groundPlaneCentroid.y());
+            // Don't report this centroid
+            groundRegionArea = 0.f;
+            groundPlaneCentroid = 0.f;
+          } else if(temp.z() <= 0.f) {
+            PRINT_NAMED_WARNING("VisionSystem.DetectMotion.BadProjectedZ",
+                                "z<=0 (%f) when projecting motion centroid to ground. Bad homography at head angle %.3fdeg?",
+                                temp.z(), RAD_TO_DEG(_poseData.poseStamp.GetHeadAngle()));
+            // Don't report this centroid
+            groundRegionArea = 0.f;
+            groundPlaneCentroid = 0.f;
+          } else {
+            const f32 divisor = 1.f/temp.z();
+            groundPlaneCentroid.x() = temp.x() * divisor;
+            groundPlaneCentroid.y() = temp.y() * divisor;
+
+            if(!Quad2f(_poseData.groundPlaneROI.GetGroundQuad()).Contains(groundPlaneCentroid)) {
+              PRINT_NAMED_WARNING("VisionSystem.DetectMotion.BadGroundPlaneCentroid",
+                                  "Centroid=(%.2f,%.2f)", centroid.x(), centroid.y());
+            }
           }
         }
       } // if(groundPlaneVisible)
