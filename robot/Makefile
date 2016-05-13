@@ -52,16 +52,25 @@ nrf_fix:
 	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
 
 # This fixes the headers and places the binaries in release
-release_binaries: k02_fix nrf_fix
-	cp ./syscon/build/app/syscon.axf ./releases
-	cp ./build/app/robot.axf ./releases
-	cp ./espressif/bin/upgrade/user1.2048.new.3.bin releases/esp.user.bin
+stage_binaries: k02_fix nrf_fix
+	cp ./build/app/robot.axf ./binaries
+	cp ./build/robot_boot.bin ./binaries
+	cp ./syscon/build/boot/sys_boot.bin ./binaries
+	cp ./syscon/build/app/syscon.axf ./binaries
+	cp ./espressif/bin/upgrade/user1.2048.new.3.bin ./binaries/esp.user.bin
 
-release: release_binaries
-	python3 ./tools/sign.py ./releases/rtip.safe	# Should be renamed to cozmo.safe when all images are included
+stage: stage_binaries
+	python3 ./tools/sign.py --rtip ./binaries/robot.axf 	./staging/rtip.safe
+	python3 ./tools/sign.py --body ./binaries/syscon.axf	./staging/body.safe
+	python3 ./tools/sign.py --wifi ./binaries/esp.user.bin 	./staging/wifi.safe
+	python3 ./tools/sign.py --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf --wifi ./binaries/esp.user.bin ./staging/cozmo.safe
+
+release: stage_binaries
+	python3 ./tools/sign.py --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf --wifi ./binaries/esp.user.bin ./releases/cozmo.safe
+	cp ./binaries/esp.user.bin releases
 
 kevin: k02_fix
-	python3 ./tools/sign.py --rtip ./build/app/robot.axf ./releases/rtip.safe # Should be renamed to cozmo.safe when all images are included
+	python3 ./tools/sign.py --rtip ./build/app/robot.axf ./staging/rtip.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"
