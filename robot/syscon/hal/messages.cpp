@@ -38,7 +38,7 @@ static void Process_setCubeLights(const CubeLights& msg)
 
 static void Process_setPropSlot(const SetPropSlot& msg)
 {
-  //Radio::assignProp(msg.slot, msg.factory_id);
+  Radio::assignProp(msg.slot, msg.factory_id);
 }
 
 static void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode& msg) {
@@ -81,6 +81,7 @@ static void Process_killBodyCode(const KillBodyCode& msg)
   while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
   NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
   while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  NVIC_SystemReset();
 }
 
 void Spine::ProcessHeadData()
