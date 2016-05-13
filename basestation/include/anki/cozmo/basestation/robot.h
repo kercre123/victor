@@ -884,7 +884,7 @@ public:
     void SetPose(const Pose3d &newPose);
 
     // helper for CanStackOnTopOfObject and CanPickUpObjectFromGround
-  bool CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const;
+    bool CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const;
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,

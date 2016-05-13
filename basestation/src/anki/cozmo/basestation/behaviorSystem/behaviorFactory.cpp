@@ -20,6 +20,7 @@
 #include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 #include "../behaviors/exploration/behaviorExploreMarkedCube.h"
 #include "../behaviors/exploration/behaviorExploreVisitPossibleMarker.h"
+#include "anki/cozmo/basestation/behaviors/behaviorAdmireStack.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
@@ -38,7 +39,6 @@
 #include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
-
 
 
 namespace Anki {
@@ -185,6 +185,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::StackBlocks:
     {
       newBehavior = new BehaviorStackBlocks(robot, config);
+      break;
+    }
+    case BehaviorType::AdmireStack:
+    {
+      newBehavior = new BehaviorAdmireStack(robot, config);
       break;
     }
     case BehaviorType::Count:
