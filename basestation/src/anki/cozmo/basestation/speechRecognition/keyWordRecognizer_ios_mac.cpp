@@ -60,21 +60,21 @@ void sphinxLogger(void* user_data, err_lvl_t level, const char* format, ...)
   va_start(args, format);
   switch (level){
     case ERR_DEBUG:
-      //Util::sDebugV("KeywordRecognizer.sphinx", {{}}, format, args);
+      //Util::sDebugV("KeywordRecognizer.sphinx", {}, format, args);
       break;
     case ERR_INFO:
-      //Util::sInfoV("KeywordRecognizer.sphinx", {{}}, format, args);
+      //Util::sInfoV("KeywordRecognizer.sphinx", {}, format, args);
       break;
     case ERR_INFOCONT:
-      //Util::sInfoV("KeywordRecognizer.sphinx", {{}}, format, args);
+      //Util::sInfoV("KeywordRecognizer.sphinx", {}, format, args);
       break;
     case ERR_WARN:
-      Util::sWarningV("KeywordRecognizer.sphinx", {{}}, format, args);
+      Util::sWarningV("KeywordRecognizer.sphinx", {}, format, args);
       break;
     case ERR_ERROR:
     case ERR_FATAL:
     case ERR_MAX:
-      Util::sErrorV("KeywordRecognizer.sphinx", {{}}, format, args);
+      Util::sErrorV("KeywordRecognizer.sphinx", {}, format, args);
       break;
   }
   va_end(args);
