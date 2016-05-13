@@ -348,7 +348,8 @@ void Radio::updateLights() {
     
     if (!acc->active) continue ;
     
-    // Update the color status of the lights
+    #ifndef NATHAN_CUBE_JUNK
+    // Update the color status of the lights   
     for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
       static const uint8_t light_index[NUM_PROP_LIGHTS][3] = {
         {  6,  7,  8 },
@@ -368,6 +369,7 @@ void Radio::updateLights() {
       memset(acc->tx_state.ledStatus, 0x80, sizeof(acc->tx_state.ledStatus));
       #endif
     }
+    #endif
   }
 }
 
