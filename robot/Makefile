@@ -64,7 +64,8 @@ stage: stage_binaries
 	python3 ./tools/sign.py --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf --wifi ./binaries/esp.user.bin ./staging/cozmo.safe
 
 release:
-	python3 ./tools/sign.py --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf --wifi ./binaries/esp.user.bin ./releases/cozmo.safe
+	#  --wifi ./binaries/esp.user.bin Should be added once single file OTA is finished
+	python3 ./tools/sign.py --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
 	cp ./binaries/esp.user.bin releases
 
 kevin: k02_fix
