@@ -182,7 +182,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 130312, guid: 951f725c69a4d417ab1592bf68f45089, type: 2}
   ModifiedValues:
-  - ObjectPath: ButtonDropShadow/ButtonText
+  - ObjectPath: ButtonText
     FieldName: Anki.UI.AnkiTextLabel:m_Text
     JsonValue: '"#requestSparkView.sparkunlockbutton"'
   ModifiedLocalReferences:
@@ -237,10 +237,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 85d9e07d30b304f2782d1dc4fa7f476c, type: 2}
-  ModifiedValues:
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_GameObjectType
-    JsonValue: 0
+  ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: RequestTricksView:_OptionalCloseDialogButton

@@ -28,6 +28,8 @@ public class PressDemoHubWorld : HubWorldBase {
     DebugMenuManager.Instance.EnableLatencyPopup(false);
     LoadPressDemoView();
 
+    RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
+
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
     RobotEngineManager.Instance.OnRequestGameStart += HandleRequestSpeedTap;
     RobotEngineManager.Instance.OnRequestEnrollFace += HandleRequestEnrollFace;
@@ -61,8 +63,9 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
     DAS.Debug("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Face Enroll");
-    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
+    alertView.SetIcon(_FaceEnrollmentChallengeData.ChallengeIcon);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartFaceEnrollmentActivity);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
     alertView.TitleLocKey = "pressDemo.faceEnrollRequestTitle";
@@ -71,8 +74,10 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void HandleRequestSpeedTap(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
     DAS.Debug("PressDemoHubWorld.HandleRequestSpeedTap", "Engine Requested Speed Tap");
-    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
+    alertView.SetIcon(_SpeedTapChallengeData.ChallengeIcon);
+
     if (message.firstRequest) {
       alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
       alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
@@ -85,7 +90,6 @@ public class PressDemoHubWorld : HubWorldBase {
       alertView.TitleLocKey = "pressDemo.speedTapRequestAgainTitle";
       alertView.DescriptionLocKey = "pressDemo.speedTapRequestAgainDesc";
     }
-
   }
 
   private void HandleStartButtonPressed(bool startWithEdge) {
