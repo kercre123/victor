@@ -7,6 +7,7 @@
 //
 
 // TODO:(bn) should these be a full path?
+#include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/latticePlanner.h"
 #include "anki/cozmo/basestation/minimalAnglePlanner.h"
@@ -107,9 +108,10 @@ namespace Anki {
     , _blockWorld(this)
     , _faceWorld(*this)
     , _behaviorMgr(*this)
+    , _audioClient(new Audio::RobotAudioClient(this))
     , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimations())
     , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
-    , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, _audioClient)
+    , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, *_audioClient)
     , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
     , _movementComponent(*this)
     , _visionComponentPtr( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
