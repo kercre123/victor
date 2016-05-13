@@ -84,7 +84,15 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
             }
             else
             {
-              AnkiConditionalError(clientSendMessage(relayBuffer + 1, size, RobotInterface::GLOBAL_INVALID_TAG, tag < RobotInterface::TO_ENG_UNREL, false), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, tag, size);
+              const bool reliable = tag < RobotInterface::TO_ENG_UNREL;
+              if (reliable)
+              {
+                AnkiConditionalError(clientSendMessage(relayBuffer + 1, size, RobotInterface::GLOBAL_INVALID_TAG, true, false), 50, "RTIP.AcceptRTIPMessage", 289, "Couldn't relay message (%x[%d]) from RTIP over wifi", 2, tag, size);
+              }
+              else 
+              {
+                clientSendMessage(relayBuffer + 1, size, RobotInterface::GLOBAL_INVALID_TAG, false, false);
+              }
             }
           }
         }
