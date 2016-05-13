@@ -125,6 +125,11 @@ namespace Anki {
     PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, const std::string& animName,
                                                    u32 numLoops = 1,bool interruptRunning = true);
 
+    // This will turn a vector into a compound action of play animation actions (from CreatePlayAnimationAction)
+    IActionRunner* CreatePlayAnimtionListAction(Robot& robot,
+                                                const std::vector< std::string >& animNames,
+                                                bool interruptRunning = true );
+
     class DeviceAudioAction : public IAction
     {
     public:

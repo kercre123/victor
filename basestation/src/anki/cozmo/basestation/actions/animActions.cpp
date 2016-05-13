@@ -14,10 +14,12 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
 
 namespace Anki {
@@ -400,6 +402,20 @@ namespace Anki {
       // similar to old behavior, can't return null and will error out on init.
       return new PlayAnimationAction(robot, animName,numLoops,interruptRunning);;
     }
+
+
+    IActionRunner* CreatePlayAnimtionListAction(Robot& robot,
+                                                const std::vector< std::string >& animNames,
+                                                bool interruptRunning )
+    {
+      CompoundActionSequential* action = new CompoundActionSequential(robot);
+      for( const auto& animStr : animNames ) {
+        action->AddAction( CreatePlayAnimationAction(robot, animStr, 1, interruptRunning) );
+      }
+
+      return action;
+    }
+
     
 
     #pragma mark ---- DeviceAudioAction ----
