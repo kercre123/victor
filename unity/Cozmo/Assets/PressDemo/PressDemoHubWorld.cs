@@ -50,8 +50,9 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
-    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
+    alertView.SetIcon(_FaceEnrollmentChallengeData.ChallengeIcon);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartFaceEnrollmentActivity);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
     alertView.TitleLocKey = "#pressDemo.faceEnrollTitle";
@@ -59,8 +60,9 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleRequestSpeedTap(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
-    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
+    alertView.SetIcon(_SpeedTapChallengeData.ChallengeIcon);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
     alertView.TitleLocKey = "#pressDemo.speedTapTitle";
