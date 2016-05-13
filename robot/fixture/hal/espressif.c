@@ -83,10 +83,14 @@ struct FlashLoadLocation {
 };
   
 static const FlashLoadLocation ESPRESSIF_ROMS[] = {
+#ifdef FCC
+  { "FCC",  0x000000, g_EspUserEnd - g_EspUser, g_EspUser },
+#else
   { "BOOT", 0x000000, g_EspBootEnd - g_EspBoot, g_EspBoot },
   { "USER",  0x003000, g_EspUserEnd - g_EspUser, g_EspUser },
   { "INIT", 0x1fc000, g_EspInitEnd - g_EspInit, g_EspInit },
   { "BLANK", 0x1fe000, g_EspBlankEnd - g_EspBlank, g_EspBlank },
+#endif
   { 0, 0, NULL }
 };
 

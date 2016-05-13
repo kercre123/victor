@@ -428,6 +428,11 @@
               <FileType>8</FileType>
               <FilePath>.\crypto\crc32.cpp</FilePath>
             </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\boot\lights.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
