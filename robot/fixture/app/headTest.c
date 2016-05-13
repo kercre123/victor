@@ -67,6 +67,11 @@ void HeadESP(void)
 {
   // Turn off and let power drain out
   DeinitEspressif();  // XXX - would be better to ensure it was like this up-front
+  for (int i = 5; i > 0; i--)
+  {
+    MicroWait(1000000);
+    ConsolePrintf("%d..", i);
+  }
   SWDDeinit();
   DisableBAT();     // This has a built-in delay while battery power leaches out
   

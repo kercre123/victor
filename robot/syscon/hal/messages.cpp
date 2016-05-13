@@ -38,7 +38,7 @@ static void Process_setCubeLights(const CubeLights& msg)
 
 static void Process_setPropSlot(const SetPropSlot& msg)
 {
-  Radio::assignProp(msg.slot, msg.factory_id);
+  //Radio::assignProp(msg.slot, msg.factory_id);
 }
 
 static void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode& msg) {

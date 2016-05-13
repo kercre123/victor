@@ -22,7 +22,7 @@ void Anki::Cozmo::HAL::Watchdog::init(void) {
   WDOG_UNLOCK = 0xC520;
   WDOG_UNLOCK = 0xD928;
   __enable_irq();
-
+  
   // Using the LPO (1khz clock)
   WDOG_TOVALL = RESET_TIME & 0xFFFF;
   WDOG_TOVALH = RESET_TIME >> 16;

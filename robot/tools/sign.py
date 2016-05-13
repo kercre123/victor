@@ -8,17 +8,20 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("output", type=str,
                     help="target location for file")
-parser.add_argument("-r", "--rtip", type=str, default="./releases/robot.axf",
+parser.add_argument("-r", "--rtip", type=str,
                     help="K02 ELF Image")
-parser.add_argument("-b", "--body", type=str, default="./releases/syscon.axf",
+parser.add_argument("-b", "--body", type=str,
                     help="NRF ELF Image")
-parser.add_argument("-w", "--wifi", type=str, default="./releases/esp.user.bin",
+parser.add_argument("-w", "--wifi", type=str,
                     help="ESP Raw binary image")
 parser.add_argument("-s", "--sign", action="store_true",
 					help="Include signature block")
 args = parser.parse_args()
 
 BLOCK_LENGTH = 0x800
+
+
+#  TODO: ADD CERT BUILDING
 
 def chunk(i, size):
 	for x in range(0, len(i), size):
@@ -39,13 +42,12 @@ def get_image(fn):
 # This generates a single file for RTIP that is actually both
 with open(args.output, "wb") as fo:
 	for kind, fn in [('body', args.body), ('wifi', args.wifi), ('rtip', args.rtip)]:
-		if kind == 'wifi':
-			# DISABLED UNTIL DANIEL GETS THIS WORKING
+		if fn == None:
 			continue
 
+		if kind == 'wifi':
 			base_addr = 0x40000000
 			rom_data = open(fn, "rb").read()
-			print (len(rom_data))
 		else:	
 			rom_data, base_addr = get_image(fn)
 			if kind == 'body':

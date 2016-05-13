@@ -91,7 +91,7 @@ void Anki::Cozmo::HAL::OLED::ClearFace() {
   }
 }
 
-void Anki::Cozmo::HAL::OLED::FeedFace(bool rect, uint8_t *face_bytes) {
+void Anki::Cozmo::HAL::OLED::FeedFace(bool rect, const uint8_t *face_bytes) {
   static bool was_rect = false;
   
   if (rect) {
@@ -125,4 +125,39 @@ void Anki::Cozmo::HAL::OLED::FeedFace(bool rect, uint8_t *face_bytes) {
   }
 
   was_rect = rect;
+}
+
+void Anki::Cozmo::HAL::OLED::DisplayDigit(int x, int y, int digit) {
+  static const uint8_t DIGITS[10][5] = {
+   { 0x3E, 0x51, 0x49, 0x45, 0x3E },
+   { 0x00, 0x42, 0x7F, 0x40, 0x00 },
+   { 0x72, 0x49, 0x49, 0x49, 0x46 },
+   { 0x21, 0x41, 0x49, 0x4D, 0x33 },
+   { 0x18, 0x14, 0x12, 0x7F, 0x10 },
+   { 0x27, 0x45, 0x45, 0x45, 0x39 },
+   { 0x3C, 0x4A, 0x49, 0x49, 0x31 },
+   { 0x41, 0x21, 0x11, 0x09, 0x07 },
+   { 0x36, 0x49, 0x49, 0x49, 0x36 },
+   { 0x46, 0x49, 0x49, 0x29, 0x1E }
+  };
+
+  uint8_t command[] = {
+    I2C_COMMAND | I2C_CONTINUATION,
+    COLUMNADDR, x, x + sizeof(DIGITS[digit]) - 1,
+    PAGEADDR, y, y
+  };
+
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
+      command,
+      sizeof(command),
+      I2C_FORCE_START);
+
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
+    &StartWrite, 
+    sizeof(StartWrite), 
+    I2C_FORCE_START);
+
+  I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
+    DIGITS[digit], 
+    sizeof(DIGITS[digit]));
 }
