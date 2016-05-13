@@ -34,6 +34,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnBack.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToStop.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
@@ -190,6 +191,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::AdmireStack:
     {
       newBehavior = new BehaviorAdmireStack(robot, config);
+      break;
+    }
+    case BehaviorType::ReactToOnCharger:
+    {
+      newBehavior = new BehaviorReactToOnCharger(robot, config);
       break;
     }
     case BehaviorType::Count:

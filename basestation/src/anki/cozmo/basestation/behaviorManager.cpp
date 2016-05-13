@@ -97,6 +97,8 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
       behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior(
       behaviorFactory.CreateBehavior(BehaviorType::ReactToRobotOnBack,  _robot, config)->AsReactionaryBehavior() );
+    AddReactionaryBehavior(
+      behaviorFactory.CreateBehavior(BehaviorType::ReactToOnCharger,  _robot, config)->AsReactionaryBehavior() );
     // AddReactionaryBehavior(
     //   behaviorFactory.CreateBehavior(BehaviorType::ReactToPoke,   _robot, config)->AsReactionaryBehavior() );
   }

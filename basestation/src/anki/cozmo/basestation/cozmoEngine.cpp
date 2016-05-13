@@ -24,6 +24,7 @@
 #include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"

@@ -76,7 +76,7 @@ typedef struct _PendingReliableMessage
 } PendingReliableMessageMetaData;
 
 /// Number of pending reliable messages we will queue per connection
-#define ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH 32
+#define ReliableConnection_PENDING_MESSAGE_QUEUE_LENGTH 64
 
 /** Structure for maintaining information about a reliable connection
  * dest is a void pointer which is passed directly to the unreliable transport layer. We use void pointer so as not to
