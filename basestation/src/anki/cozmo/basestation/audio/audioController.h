@@ -62,11 +62,11 @@ public:
   ~AudioController();
 
   // Note: Transfer's callback context ownership to Audio Controller
-  AudioEngine::AudioPlayingID PostAudioEvent( const std::string& eventName,
+  AudioEngine::AudioPlayingId PostAudioEvent( const std::string& eventName,
                                               AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject,
                                               AudioEngine::AudioCallbackContext* callbackContext = nullptr );
   
-  AudioEngine::AudioPlayingID PostAudioEvent( AudioEngine::AudioEventID eventId,
+  AudioEngine::AudioPlayingId PostAudioEvent( AudioEngine::AudioEventId eventId,
                                               AudioEngine::AudioGameObject gameObjectId = AudioEngine::kInvalidAudioGameObject,
                                               AudioEngine::AudioCallbackContext* callbackContext = nullptr );
 
@@ -87,15 +87,29 @@ public:
                      AudioEngine::AudioTimeMs valueChangeDuration = 0,
                      AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear ) const;
   
-  // Set out_buffer
-  // Return coresponding game object for out_buffer
-  AudioEngine::AudioGameObject GetAvailableRobotAudioBuffer( RobotAudioBuffer*& out_buffer );
+  
+  // Create and store a Robot Audio Buffer with the corresponding GameObject and PluginId
+  RobotAudioBuffer* RegisterRobotAudioBuffer( AudioEngine::AudioGameObject gameObject,
+                                              AudioEngine::AudioPluginId pluginId );
+  
+  // Get Robot Audio Buffer
+  RobotAudioBuffer* GetRobotAudioBufferWithGameObject( AudioEngine::AudioGameObject gameObject ) const;
+  RobotAudioBuffer* GetRobotAudioBufferWithPluginId( AudioEngine::AudioPluginId pluginId ) const;
+  
   
   // Register Game Objects
   // Note Game Object Ids must be unique
   bool RegisterGameObject( AudioEngine::AudioGameObject gameObjectId,  std::string gameObjectName );
 
   // TODO: Add RemoveRegisterGameObject()
+  
+  
+  // Game-Defined Auxiliary Sends
+  using AuxSendList = std::vector<AudioEngine::AudioAuxBusValue>;
+  bool SetGameObjectAuxSendValues( AudioEngine::AudioGameObject gameObject, const AuxSendList& auxSendValues );
+  
+  bool SetGameObjectOutputBusVolume( AudioEngine::AudioGameObject gameObject, AudioEngine::AudioReal32 controlVolume );
+
   
   // TEMP: Set Cozmo Speaker Volumes
   void StartUpSetDefaults();
@@ -114,14 +128,17 @@ private:
   // Controller Components
   AudioControllerPluginInterface*           _pluginInterface = nullptr;
   
-  std::unordered_map< int32_t, RobotAudioBuffer* >  _robotAudioBufferPool; // Store all Audio Buffers
+  // Store Robot Audio Buffer and Look up tables
+  // Once a buffer is created it is not intended to be destroyed
+  std::unordered_map< AudioEngine::AudioPluginId, RobotAudioBuffer* > _robotAudioBufferIdMap;
+  std::unordered_map< AudioEngine::AudioGameObject, AudioEngine::AudioPluginId > _gameObjectPluginIdMap;
   
   Util::Dispatch::Queue*    _dispatchQueue  = nullptr;  // The dispatch queue we're ticking on
   Anki::Util::TaskHandle    _taskHandle     = nullptr;  // Handle to our tick callback task
   
   bool _isInitialized = false;
   
-  using CallbackContextMap = std::unordered_map< AudioEngine::AudioPlayingID, AudioEngine::AudioCallbackContext* >;
+  using CallbackContextMap = std::unordered_map< AudioEngine::AudioPlayingId, AudioEngine::AudioCallbackContext* >;
   CallbackContextMap _eventCallbackContexts;
   
   std::vector< AudioEngine::AudioCallbackContext* > _callbackGarbageCollector;
@@ -131,9 +148,7 @@ private:
   
   // Setup WavePortal plug-in
   void SetupWavePortalPlugIn();
-  
-  RobotAudioBuffer* GetAudioBuffer( int32_t plugInId ) const;
-  
+    
   // Tick Audio Engine
   void Update();
   

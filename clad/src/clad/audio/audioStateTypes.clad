@@ -5,6 +5,13 @@ namespace Cozmo {
 namespace Audio {
 namespace GameState {
 
+enum uint_32 External_Name
+{
+  External_Name_Off = 151699428,
+  External_Name_On = 4053302206,
+  Invalid = 0,
+}
+
 enum uint_32 GenericState
 {
   Invalid = 0,
@@ -29,19 +36,12 @@ enum uint_32 Music
   Wakeup = 2251634718,
 }
 
-enum uint_32 Robot_Output_Source
-{
-  Invalid = 0,
-  To_Device = 1148290935,
-  To_Robot = 114835351,
-}
-
 enum uint_32 StateGroupType
 {
+  External_Name = 2869506494,
   Invalid = 0,
   Mood = 3128647864,
   Music = 3991942870,
-  Robot_Output_Source = 3666768831,
 }
 
 } // GameState

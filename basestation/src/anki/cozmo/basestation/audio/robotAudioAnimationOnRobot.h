@@ -50,8 +50,8 @@ public:
   // when to send a AudioSilence message.
   // Note: EngineToRobot pointer memory needs to be manage or it will leak memory.
   virtual void PopRobotAudioMessage( RobotInterface::EngineToRobot*& out_RobotAudioMessagePtr,
-                                    TimeStamp_t startTime_ms,
-                                    TimeStamp_t streamingTime_ms ) override;
+                                     TimeStamp_t startTime_ms,
+                                     TimeStamp_t streamingTime_ms ) override;
 
 
 protected:

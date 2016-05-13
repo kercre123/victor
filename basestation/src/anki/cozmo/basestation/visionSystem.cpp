@@ -135,7 +135,7 @@ namespace Cozmo {
     
     // Default processing modes to enable (first hard-coded, then overrides from config file)
     EnableMode(VisionMode::DetectingMarkers, true);
-    //EnableMode(VisionMode::DetectingMotion,  true);
+    EnableMode(VisionMode::DetectingMotion,  true);
     EnableMode(VisionMode::DetectingFaces,   true);
     //EnableMode(VisionMode::DetectingOverheadEdges, true);
     
@@ -2553,10 +2553,12 @@ namespace Cozmo {
     
     if(IsModeEnabled(VisionMode::DetectingMotion))
     {
+      Tic("TotalDetectingMotion");
       if((lastResult = DetectMotion(inputImage)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
         return lastResult;
       }
+      Toc("TotalDetectingMotion");
     }
     
     if(IsModeEnabled(VisionMode::DetectingOverheadEdges))

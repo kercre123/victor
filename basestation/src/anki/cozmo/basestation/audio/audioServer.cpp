@@ -78,7 +78,7 @@ const AudioClientConnection* AudioServer::GetConnection( uint8_t connectionId ) 
 void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdType connectionId )
 {
   // Decode Event Message
-  const AudioEventID eventId = Util::numeric_cast<AudioEventID>( message.audioEvent );
+  const AudioEventId eventId = Util::numeric_cast<AudioEventId>( message.audioEvent );
   const AudioGameObject objectId = static_cast<AudioGameObject>( message.gameObject );
   const uint16_t callbackId = message.callbackId;
   const AudioEngine::AudioCallbackFlag callbackFlags = (callbackId == 0) ?
@@ -86,7 +86,7 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
                                                         AudioEngine::AudioCallbackFlag::AllCallbacks;
 
   // Perform Event
-  AudioPlayingID playingId = kInvalidAudioPlayingID;
+  AudioPlayingId playingId = kInvalidAudioPlayingId;
   if ( AudioEngine::AudioCallbackFlag::NoCallbacks != callbackFlags ) {
     AudioCallbackContext* callbackContext = new AudioCallbackContext();
     // Set callback flags
@@ -105,7 +105,7 @@ void AudioServer::ProcessMessage( const PostAudioEvent& message, ConnectionIdTyp
     playingId = _audioController->PostAudioEvent( eventId, objectId );
   }
   
-  if ( playingId == kInvalidAudioPlayingID ) {
+  if ( playingId == kInvalidAudioPlayingId ) {
     PRINT_NAMED_ERROR( "AudioServer.ProcessMessage", "Unable To Play Event %s on GameObject %d",
                        EnumToString( message.audioEvent ), message.gameObject );
   }

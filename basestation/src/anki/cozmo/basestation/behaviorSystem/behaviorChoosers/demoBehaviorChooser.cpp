@@ -184,8 +184,6 @@ void DemoBehaviorChooser::TransitionToPounce()
   SET_STATE(Pounce);
 
   _robot.SetEnableCliffSensor(true);
-
-  _robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
   
   SetAllBehaviorsEnabled(false);
   SetBehaviorGroupEnabled(BehaviorGroup::DemoFingerPounce);
@@ -198,8 +196,6 @@ void DemoBehaviorChooser::TransitionToPounce()
 void DemoBehaviorChooser::TransitionToFaces()
 {
   SET_STATE(Faces);
-
-  _robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, false);
   
   SetAllBehaviorsEnabled(false);
   SetBehaviorGroupEnabled(BehaviorGroup::DemoFaces);
