@@ -21,6 +21,7 @@
 #include "app/robotTest.h"
 
 u8 g_fixtureReleaseVersion = 15;
+const char* BUILD_INFO = "NOT FOR FACTORY";
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[] = FIXTURE_TYPES;
