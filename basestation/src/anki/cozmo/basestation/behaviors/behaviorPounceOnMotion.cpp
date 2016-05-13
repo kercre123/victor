@@ -343,7 +343,6 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
   
 void BehaviorPounceOnMotion::StopInternal(Robot& robot)
 {
-  _state = State::Inactive;
   Cleanup(robot);
 }
   
