@@ -40,13 +40,7 @@ public class AnimationManager {
   // Map RobotCallbacks to GameEvents instead of AnimationGroups to separate game logic from Animation names
   private Dictionary<GameEvent, RobotCallback> AnimationCallbackDict = new Dictionary<GameEvent, RobotCallback>();
 
-  #if UNITY_EDITOR
-  public static string sEventMapDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/animationGroupMaps"; } }
-  #elif UNITY_IOS
-  public static string sEventMapDirectory { get { return  Path.Combine(Application.dataPath, "../cozmo_resources/assets/animationGroupMaps"); } }
-  #elif UNITY_ANDROID
-  public static string sEventMapDirectory { get { return  Path.Combine(Application.persistentDataPath, "/cozmo_resources/assets/animationGroupMaps"); } }
-  #endif
+  public static string sEventMapDirectory { get { return PlatformUtil.GetResourcesFolder("animationGroupMaps"); } }
 
   public void Initialize() {
     GameEventManager.Instance.OnGameEvent += GameEventReceived;
