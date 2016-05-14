@@ -111,7 +111,7 @@ public class MockRobot : IRobot {
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
 
   }
-		
+
   public void SetEnableCliffSensor(bool enabled) {
     // Do nothing
   }
@@ -125,8 +125,7 @@ public class MockRobot : IRobot {
   }
 
   // enable/disable games available for Cozmo to request
-  public void SetAvailableGames(BehaviorGameFlag games)
-  {
+  public void SetAvailableGames(BehaviorGameFlag games) {
 
   }
 
@@ -251,6 +250,14 @@ public class MockRobot : IRobot {
   }
 
   public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false) {
+    // Do nothing
+  }
+
+  public void ResetDrivingAnimations() {
+    // Do nothing
+  }
+
+  public void SetDrivingAnimations(string driveStartAnim, string driveStartLoop, string driveEndLoop) {
     // Do nothing
   }
 
@@ -417,7 +424,7 @@ public class MockRobot : IRobot {
     GotoPose(new Vector3(x_mm, y_mm, 0f), Quaternion.Euler(0, 0, Mathf.Rad2Deg * rad), level, useManualSpeed, callback, queueActionPosition);
   }
 
-  public void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     var delta = (WorldPosition - obj.WorldPosition).normalized * distance_mm;
 
