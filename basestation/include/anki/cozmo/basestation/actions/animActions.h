@@ -60,7 +60,7 @@ namespace Anki {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
-      virtual f32 GetTimeoutInSeconds() const override { return 60.f; }
+      virtual f32 GetTimeoutInSeconds() const override { return 10.f; }
       
       virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       

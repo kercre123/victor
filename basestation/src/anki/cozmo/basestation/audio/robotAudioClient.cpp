@@ -42,10 +42,13 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
   // Add listener to robot messages
   // This only helps to determine if we should play sound on Webots or on the Robot
   auto robotSyncCallback = [this] ( const AnkiEvent<RobotInterface::RobotToEngine>& message ) {
-    RobotInterface::SyncTimeAck payload = message.GetData().Get_syncTimeAck();
-    RobotAudioOutputSource outputSource = payload.isPhysical
-                                            ? RobotAudioOutputSource::PlayOnRobot
-                                            : RobotAudioOutputSource::PlayOnDevice;
+//    RobotInterface::SyncTimeAck payload = message.GetData().Get_syncTimeAck();
+//    RobotAudioOutputSource outputSource = payload.isPhysical
+//                                            ? RobotAudioOutputSource::PlayOnRobot
+//                                            : RobotAudioOutputSource::PlayOnDevice;
+   // rsam: I believe there's a problem with audio streaming to robot that causes anims to lock. Trying this as
+   // a temporary fix until Jordan can take a look
+    RobotAudioOutputSource outputSource = RobotAudioOutputSource::PlayOnDevice;
     SetOutputSource( outputSource );
   };
   RobotInterface::MessageHandler* msgHandler = context->GetRobotMsgHandler();
