@@ -112,7 +112,7 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void StartSpeedTapGame() {
     DAS.Debug(this, "Starting Speed Tap Game");
-    PlayMinigame(_SpeedTapChallengeData, progressSceneWhenMinigameOver: true);
+    PlayMinigame(_SpeedTapChallengeData, progressSceneWhenMinigameOver: false);
   }
 
   private void PlayMinigame(ChallengeData challengeData, bool progressSceneWhenMinigameOver) {
