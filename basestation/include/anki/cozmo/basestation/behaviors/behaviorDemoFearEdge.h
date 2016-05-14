@@ -40,7 +40,8 @@ protected:
 private:
 
   enum class State {
-    DrivingForward
+    DrivingForward,
+    BackingUpForPounce,
   };
 
   State _state = State::DrivingForward;
@@ -50,7 +51,8 @@ private:
   std::string _stopDrivingAnimGroup = "ag_launch_endDriving";
 
   void TransitionToDrivingForward(Robot& robot);
-
+  void TransitionToBackingUpForPounce(Robot& robot);
+  
   void SetState_internal(State state, const std::string& stateName);
 };
 
