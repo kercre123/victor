@@ -6,8 +6,8 @@ namespace SpeedTap {
 
   public class SpeedTapCozmoDriveToCube : State {
 
-    private const float _kArriveAtCubeThreshold = 60.0f;
-    private const float _kTargetDistanceToCube = 45.0f;
+    private const float _kPreDockPoseDistanceFromCube_mm = 120.0f;
+    private const float _kCubeDistanceThreshold_mm = 45.0f;
 
     private SpeedTapGame _SpeedTapGame = null;
 
@@ -16,8 +16,6 @@ namespace SpeedTap {
     public SpeedTapCozmoDriveToCube(bool isFirstTime) {
       _IsFirstTime = isFirstTime;
     }
-
-    private bool _GotoObjectComplete = false;
 
     public override void Enter() {
       base.Enter();
@@ -32,37 +30,79 @@ namespace SpeedTap {
         Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
 
       _SpeedTapGame.ShowWaitForCozmoSlide();
-      _GotoObjectComplete = false;
 
-      _CurrentRobot.SetLiftHeight(1.0f, HandleLiftRaiseComplete);
+      _CurrentRobot.SetDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
+        AnimationGroupName.kSpeedTap_Driving_Loop, null);
+      if (IsFarAwayFromCube()) {
+        DriveToPreDockPose();
+      }
+      else if (IsReallyCloseToCube()) {
+        CompleteDriveToCube();
+      }
+      else {
+        RaiseLift();
+      }
+    }
+
+    public override void Exit() {
+      base.Exit();
+      _CurrentRobot.ResetDrivingAnimations();
+    }
+
+    private bool IsFarAwayFromCube() {
+      return (_CurrentRobot.WorldPosition.xy() - _SpeedTapGame.CozmoBlock.WorldPosition.xy()).sqrMagnitude
+      >= (_kPreDockPoseDistanceFromCube_mm * _kPreDockPoseDistanceFromCube_mm);
+    }
+
+    private bool IsReallyCloseToCube() {
+      return (_CurrentRobot.WorldPosition.xy() - _SpeedTapGame.CozmoBlock.WorldPosition.xy()).sqrMagnitude
+      <= (_kCubeDistanceThreshold_mm * _kCubeDistanceThreshold_mm);
+    }
+
+    private void DriveToPreDockPose() {
+      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, _kPreDockPoseDistanceFromCube_mm, 
+        goToPreDockPose: true, callback: HandleDriveToPreDockPoseComplete);
+    }
+
+    private void HandleDriveToPreDockPoseComplete(bool success) {
+      if (success) {
+        RaiseLift();
+      }
+      else {
+        DriveToPreDockPose();
+      }
+    }
+
+    private void RaiseLift() {
+      _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Driving_End, HandleLiftRaiseComplete);
     }
 
     private void HandleLiftRaiseComplete(bool success) {
-      // TODO: Remove _kTargetDistancetoCube once AlignWithObject is handling its own distance checks.
-      if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude > _kTargetDistanceToCube) {
-        _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 0.0f, HandleGotoObjectComplete, false, true);
+      if (success) {
+        DriveToCube();
       }
       else {
-        _GotoObjectComplete = true;
+        RaiseLift();
       }
     }
 
-    private void HandleGotoObjectComplete(bool success) {
-      _GotoObjectComplete = success;
-      if (success == false) {
-        _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 0.0f, HandleGotoObjectComplete, false, true);
+    private void DriveToCube() {
+      // INGO / AL TODO: usePreDockPose is not currently implemented in engine, but should work after it is
+      _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 0.0f, HandleDriveToCubeComplete, 
+        useApproachAngle: false, usePreDockPose: false);
+    }
+
+    private void HandleDriveToCubeComplete(bool success) {
+      if (success) {
+        CompleteDriveToCube();
+      }
+      else {
+        DriveToCube();
       }
     }
 
-    public override void Update() {
-      if (_GotoObjectComplete) {
-        if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < _kArriveAtCubeThreshold) {
-          _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
-        }
-        else {
-          _StateMachine.SetNextState(new SpeedTapCozmoDriveToCube(false));
-        }
-      }
+    private void CompleteDriveToCube() {
+      _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
     }
   }
 
