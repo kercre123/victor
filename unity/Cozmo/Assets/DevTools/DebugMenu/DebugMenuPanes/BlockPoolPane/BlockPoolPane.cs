@@ -72,7 +72,7 @@ public class BlockPoolPane : MonoBehaviour {
     for (int i = 0; i < initMsg.blockData.Length; ++i) {
       // Never get an rssi value for things that were previously connected and won't be discovered 
       // if they connected to something else properly, so just indicate with a 0.
-      AddButton(initMsg.blockData[i].id, initMsg.blockData[i].objectType, initMsg.blockData[i].enabled, 0);
+      AddButton(initMsg.blockData[i].id, Anki.Cozmo.ObjectType.Unknown, initMsg.blockData[i].enabled, 0);
     }
     // The first one gets previous ones serialized that may or may exist, this message gets the one we see.
     RobotEngineManager.Instance.OnObjectAvailableMsg += HandleObjectAvailableMsg;
@@ -151,9 +151,10 @@ public class BlockPoolPane : MonoBehaviour {
       UpdateButton(id);
       btn.onClick.AddListener(() => HandleButtonClick(id));
     }
-    else if (data.SignalStrength != signal_strength) {
+    else if (data.SignalStrength != signal_strength || data.ObjectType != type) {
       // enabled is only changed form unity.
       data.SignalStrength = signal_strength;
+      data.ObjectType = type;
       UpdateButton(id);
     }
   }
