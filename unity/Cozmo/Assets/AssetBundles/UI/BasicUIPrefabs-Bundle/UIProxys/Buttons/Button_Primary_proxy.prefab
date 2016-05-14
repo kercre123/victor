@@ -148,9 +148,9 @@ MonoBehaviour:
   _Interactable: 1
   _TextLabel: {fileID: 11492386}
   _TextLabelOffset: -5
-  TextEnabledColor: {r: 1, g: 1, b: 1, a: 1}
-  TextPressedColor: {r: 0.8088235, g: 0.8088235, b: 0.8088235, a: 1}
-  TextDisabledColor: {r: 0.60294116, g: 0.60294116, b: 0.60294116, a: 0.741}
+  TextEnabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
+  TextPressedColor: {r: 0.422947, g: 0.49264705, b: 0.32963884, a: 1}
+  TextDisabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 0.391}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11403850}
@@ -182,7 +182,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
   m_RaycastTarget: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
@@ -300,7 +300,23 @@ Prefab:
   serializedVersion: 2
   m_Modification:
     m_TransformParent: {fileID: 0}
-    m_Modifications: []
+    m_Modifications:
+    - target: {fileID: 0}
+      propertyPath: TextDisabledColor.r
+      value: 0.4117647
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: TextDisabledColor.g
+      value: 0.40784314
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: TextDisabledColor.b
+      value: 0.34901962
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: TextDisabledColor.a
+      value: 0.391
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 130312}
