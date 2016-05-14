@@ -1,0 +1,11 @@
+{
+  "behaviorType": "AdmireStack",
+  "name": "AdmireStack",
+  "flatScore": 0.75,
+  
+  "behaviorGroups": [
+    "AffectsBlocks",
+    "Demo",
+    "DemoCubes"
+  ]
+}
