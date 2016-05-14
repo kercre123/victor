@@ -48,6 +48,11 @@ namespace Anki {
       _drivingLoopAnim = drivingLoopAnim;
       _drivingEndAnim = drivingEndAnim;
     }
+
+    void DrivingAnimationHandler::ResetDrivingAnimations()
+    {
+      SetDrivingAnimations(kDefaultDrivingStartAnim, kDefaultDrivingLoopAnim, kDefaultDrivingEndAnim);
+    }
     
     void DrivingAnimationHandler::HandleActionCompleted(const ExternalInterface::RobotCompletedAction& msg)
     {
