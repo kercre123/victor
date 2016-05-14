@@ -111,7 +111,7 @@ public class MockRobot : IRobot {
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
 
   }
-		
+
   public void SetEnableCliffSensor(bool enabled) {
     // Do nothing
   }
@@ -125,8 +125,7 @@ public class MockRobot : IRobot {
   }
 
   // enable/disable games available for Cozmo to request
-  public void SetAvailableGames(BehaviorGameFlag games)
-  {
+  public void SetAvailableGames(BehaviorGameFlag games) {
 
   }
 
@@ -251,6 +250,14 @@ public class MockRobot : IRobot {
   }
 
   public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false) {
+    // Do nothing
+  }
+
+  public void ResetDrivingAnimations() {
+    // Do nothing
+  }
+
+  public void SetDrivingAnimations(string driveStartAnim, string driveStartLoop, string driveEndLoop) {
     // Do nothing
   }
 

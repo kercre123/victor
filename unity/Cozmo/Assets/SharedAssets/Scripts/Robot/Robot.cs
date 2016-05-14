@@ -757,6 +757,16 @@ public class Robot : IRobot {
 
   }
 
+  public void ResetDrivingAnimations() {
+    SetDrivingAnimations(null, null, null);
+  }
+
+  public void SetDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim) {
+    RobotEngineManager.Instance.Message.SetDrivingAnimations = 
+      Singleton<SetDrivingAnimations>.Instance.Initialize(drivingStartAnim, drivingLoopAnim, drivingEndAnim);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public float GetHeadAngleFactor() {
 
     float angle = HeadAngle;
@@ -1122,13 +1132,12 @@ public class Robot : IRobot {
   }
 
   // enable/disable games available for Cozmo to request
-  public void SetAvailableGames(BehaviorGameFlag games)
-  {
+  public void SetAvailableGames(BehaviorGameFlag games) {
     RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
       Singleton<BehaviorManagerMessage>.Instance.Initialize(
-        ID, 
-        Singleton<SetAvailableGames>.Instance.Initialize(games)
-      ); 
+      ID, 
+      Singleton<SetAvailableGames>.Instance.Initialize(games)
+    ); 
     RobotEngineManager.Instance.SendMessage();
   }
 
