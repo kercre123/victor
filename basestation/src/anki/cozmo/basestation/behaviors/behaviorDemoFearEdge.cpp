@@ -14,13 +14,15 @@
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {
 
-static const float kInitialDriveSpeed  = 80.0f;
+static const float kInitialDriveSpeed = 100.0f;
+static const float kInitialDriveAccel = 40.0f;
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -45,8 +47,9 @@ Result BehaviorDemoFearEdge::InitInternal(Robot& robot)
 
 void BehaviorDemoFearEdge::StopInternal(Robot& robot)
 {
+  // TODO:(bn) driving animations should be push/pop
+  robot.GetDrivingAnimationHandler().ResetDrivingAnimations();
 }
-
 
 void BehaviorDemoFearEdge::TransitionToDrivingForward(Robot& robot)
 {
@@ -56,8 +59,13 @@ void BehaviorDemoFearEdge::TransitionToDrivingForward(Robot& robot)
   // interrupted by the cliff behavior
 
   // TODO:(bn) a better path here
-  StartActing(new DriveStraightAction(robot, 1000.0f, kInitialDriveSpeed),
-              &BehaviorDemoFearEdge::TransitionToDrivingForward);
+  robot.GetDrivingAnimationHandler().SetDrivingAnimations(_startDrivingAnimGroup,
+                                                          _drivingLoopAnimGroup,
+                                                          _stopDrivingAnimGroup);
+
+  DriveStraightAction* action = new DriveStraightAction(robot, 1000.0f, kInitialDriveSpeed);
+  action->SetAccel(kInitialDriveAccel);
+  StartActing(action, &BehaviorDemoFearEdge::TransitionToDrivingForward);
 }
 
 void BehaviorDemoFearEdge::SetState_internal(State state, const std::string& stateName)
