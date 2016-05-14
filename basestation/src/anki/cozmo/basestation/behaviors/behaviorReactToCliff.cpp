@@ -26,6 +26,8 @@ namespace Cozmo {
 using namespace ExternalInterface;
   
 static const char* kCliffReactAnimName = "reactToCliff";
+static const float kCliffBackupDist_mm = 80.0f;
+static const float kCliffBackupSpeed_mmps = 100.0f;
 
 BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
@@ -47,11 +49,19 @@ Result BehaviorReactToCliff::InitInternal(Robot& robot)
 {
   robot.GetMoodManager().TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
 
-  StartActing(new PlayAnimationGroupAction(robot, kCliffReactAnimName));
+  StartActing(new PlayAnimationGroupAction(robot, kCliffReactAnimName), &BehaviorReactToCliff::BackupAfterAnim);
   
   return Result::RESULT_OK;
 }
-  
+
+void BehaviorReactToCliff::BackupAfterAnim(Robot& robot)
+{
+  // if the animation doesn't drive us backwards enough, do it manually
+  if( robot.IsCliffDetected() ) {
+    StartActing(new DriveStraightAction(robot, -kCliffBackupDist_mm, -kCliffBackupSpeed_mmps));
+  }
+}
+
 void BehaviorReactToCliff::StopInternal(Robot& robot)
 {
 }
