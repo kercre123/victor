@@ -1021,11 +1021,12 @@ public class Robot : IRobot {
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
-  public void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(Singleton<GotoObject>.Instance.Initialize(
       objectID: obj,
       distanceFromObjectOrigin_mm: distance_mm,
       useManualSpeed: false,
+      usePreDockPose: goToPreDockPose,
       motionProf: PathMotionProfileDefault
     ), 
       callback, 

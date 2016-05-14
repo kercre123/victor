@@ -247,7 +247,7 @@ namespace CodeBreaker {
     }
 
     private void DriveToCube(ObservedObject cube) {
-      _CurrentRobot.GotoObject(cube, kCubeDistance, HandleMoveToCubeCallback);
+      _CurrentRobot.GotoObject(cube, kCubeDistance, callback: HandleMoveToCubeCallback);
       _IsDrivingToPose = true;
     }
 

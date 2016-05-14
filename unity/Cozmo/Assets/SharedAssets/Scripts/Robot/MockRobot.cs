@@ -424,7 +424,7 @@ public class MockRobot : IRobot {
     GotoPose(new Vector3(x_mm, y_mm, 0f), Quaternion.Euler(0, 0, Mathf.Rad2Deg * rad), level, useManualSpeed, callback, queueActionPosition);
   }
 
-  public void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     var delta = (WorldPosition - obj.WorldPosition).normalized * distance_mm;
 
