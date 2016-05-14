@@ -129,7 +129,8 @@ protected:
   void SendGotoObject(const s32 objectID,
                       const f32 distFromObjectOrigin_mm,
                       PathMotionProfile motionProf,
-                      const bool useManualSpeed = false);
+                      const bool useManualSpeed = false,
+                      const bool usePreDockPose = false);
   
   void SendAlignWithObject(const s32 objectID,
                            const f32 distFromMarker_mm,

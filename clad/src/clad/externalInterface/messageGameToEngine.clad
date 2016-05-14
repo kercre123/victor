@@ -265,7 +265,8 @@ message GotoObject {
     int_32 objectID,
     PathMotionProfile motionProf,
     float_32 distanceFromObjectOrigin_mm,
-    bool useManualSpeed
+    bool useManualSpeed,
+    bool usePreDockPose = 0
 }
 
 // AlignWithObject

@@ -280,10 +280,21 @@ IActionRunner* GetDriveToObjectActionHelper(Robot& robot, const ExternalInterfac
     selectedObjectID = msg.objectID;
   }
   
-  DriveToObjectAction* action = new DriveToObjectAction(robot,
-                                                        selectedObjectID,
-                                                        msg.distanceFromObjectOrigin_mm,
-                                                        msg.useManualSpeed);
+  DriveToObjectAction* action;
+  if(msg.usePreDockPose)
+  {
+    action = new DriveToObjectAction(robot,
+                                     selectedObjectID,
+                                     PreActionPose::ActionType::DOCKING);
+  }
+  else
+  {
+    action = new DriveToObjectAction(robot,
+                                     selectedObjectID,
+                                     msg.distanceFromObjectOrigin_mm,
+                                     msg.useManualSpeed);
+  }
+  
   if(msg.motionProf.isCustom)
   {
     action->SetMotionProfile(msg.motionProf);
