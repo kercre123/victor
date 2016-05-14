@@ -7,6 +7,16 @@
 namespace Anki {
 namespace Cozmo {
 
+enum uint_16 ActiveObjectType
+{
+  OBJECT_CHARGER = 0xff00,
+  OBJECT_CUBE1   = 0xff01,
+  OBJECT_CUBE2   = 0xff02,
+  OBJECT_CUBE3   = 0xff03,
+  OBJECT_UNKNOWN = 0xffff
+}
+
+
 // Specify LEDs, relative to block's top face (as determined by accelerometer)
 // Looking down at top face (and through to bottom face), LEDs are
 // numbered as follows, with each value corresponding to a bit in a u8:

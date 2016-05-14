@@ -250,6 +250,7 @@ protected:
   void SendNVStorageReadEntry(NVStorage::NVEntryTag tag);
   void SendNVStorageEraseEntry(NVStorage::NVEntryTag tag);
   void SendNVClearPartialPendingWriteData();
+  void SendSetHeadlight(bool enable);
   
 
   // ====== Accessors =====

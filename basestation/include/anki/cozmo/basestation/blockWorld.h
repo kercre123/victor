@@ -78,7 +78,7 @@ namespace Anki
       // Adds an active object of the appropriate type based on factoryID at
       // an unknown pose. To be used when the active object first comes into radio contact.
       // This function does nothing if an active object of the same type with the active ID already exists.
-      ObjectID AddActiveObject(ActiveID activeID, FactoryID factoryID);
+      ObjectID AddActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
       
       //
       // Object Access

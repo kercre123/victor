@@ -66,11 +66,11 @@ namespace Anki {
       CORETECH_ASSERT(uniqueCodes.size() == markerList.size());
     }
     
-    ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID)
-    : ActiveCube(GetTypeFromFactoryID(factoryID))
+    ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
+    : ActiveCube(GetTypeFromActiveObjectType(activeObjectType))
     {
       
-      ObjectType objType = GetTypeFromFactoryID(factoryID);
+      ObjectType objType = GetTypeFromActiveObjectType(activeObjectType);
       ASSERT_NAMED(objType == ObjectType::Block_LIGHTCUBE1 ||
                    objType == ObjectType::Block_LIGHTCUBE2 ||
                    objType == ObjectType::Block_LIGHTCUBE3,

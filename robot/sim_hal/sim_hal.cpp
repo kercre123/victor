@@ -125,6 +125,7 @@ namespace Anki {
 
       struct ActiveObjectSlotInfo {
         u32 assignedFactoryID;
+        ActiveObjectType device_type;
         webots::Receiver *receiver;
         TimeStamp_t lastHeardTime;
         bool connected;
@@ -800,6 +801,7 @@ namespace Anki {
                   if (activeObjectSlots_[i].assignedFactoryID == 0) {
                     printf("sim_hal.Update.AutoAssignedObject: FactoryID 0x%x in slot %d\n", odMsg.factory_id, i);
                     activeObjectSlots_[i].assignedFactoryID = odMsg.factory_id;
+                    activeObjectSlots_[i].device_type = odMsg.device_type;
                     activeObjectSlots_[i].receiver->setChannel(odMsg.factory_id);
                     activeObjectSlots_[i].receiver->enable(TIME_STEP);
                     activeObjectSlots_[i].connected = false;
@@ -818,6 +820,7 @@ namespace Anki {
                     ObjectConnectionState ocsMsg;
                     ocsMsg.objectID = i;
                     ocsMsg.factoryID = cubeInfo->assignedFactoryID;
+                    ocsMsg.device_type = cubeInfo->device_type;
                     ocsMsg.connected = true;
                     RobotInterface::SendMessage(ocsMsg);
                     
