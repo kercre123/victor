@@ -15,10 +15,14 @@ namespace FaceEnrollment {
 
     private bool _AttemptedEnrollFace = false;
 
+    // used by press demo to skip saving to actual robot.
+    private bool _SaveToRobot = true;
+
     private string _NameForFace;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-
+      // make cozmo look up
+      CurrentRobot.SetHeadAngle(0.5f);
     }
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -29,13 +33,16 @@ namespace FaceEnrollment {
       _EnterNameSlideInstance.OnNameEntered += HandleNameEntered;
     }
 
+    public void SetSaveToRobot(bool saveToRobot) {
+      _SaveToRobot = saveToRobot;
+    }
+
     private void HandleNameEntered(string name) {
       _NameForFace = name;
-      CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.LookingStraight);
+
       SharedMinigameView.ShowWideGameStateSlide(_EnrollmentInstructionsSlidePrefab.gameObject, "enrollment_instructions_slide").GetComponent<FaceEnrollmentInstructionsSlide>();
 
       RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
-      RobotEngineManager.Instance.OnRobotEnrolledFace += HandleEnrolledFace;
     }
 
     private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
@@ -44,17 +51,23 @@ namespace FaceEnrollment {
         return;
       }
 
-      SharedMinigameView.HideGameStateSlide();
-
-      CurrentRobot.AssignNameToFace(id, _NameForFace);
-      CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
-      RobotEngineManager.Instance.OnRobotEnrolledFace += HandleEnrolledFace;
+      CurrentRobot.EnrollNamedFace(id, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
       _AttemptedEnrollFace = true;
     }
 
-    private void HandleEnrolledFace(Anki.Cozmo.ExternalInterface.RobotEnrolledFace message) {
-      Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
-      PlayFaceReactionAnimation(message.name);
+    private void HandleEnrolledFace(bool success) {
+
+      // hides the instructions slide
+      SharedMinigameView.HideGameStateSlide();
+
+      if (success) {
+        Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
+        PlayFaceReactionAnimation(_NameForFace);
+      }
+      else {
+        // TODO: Retry or notify failure or something?
+        base.RaiseMiniGameQuit();
+      }
     }
 
     private void PlayFaceReactionAnimation(string faceName) {
@@ -67,10 +80,9 @@ namespace FaceEnrollment {
     }
 
     protected override void CleanUpOnDestroy() {
-      CurrentRobot.SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode.Disabled);
+
       SharedMinigameView.HideGameStateSlide();
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
-      RobotEngineManager.Instance.OnRobotEnrolledFace -= HandleEnrolledFace;
     }
 
   }
