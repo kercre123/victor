@@ -120,16 +120,6 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
   private U2G.DenyGameStart _DenyGameStartMessage = new U2G.DenyGameStart();
 
-  private void Awake() {
-    #if ANIMATION_TOOL
-    DAS.AddTarget(new ConsoleDasTarget());
-    #elif UNITY_IPHONE && !UNITY_EDITOR
-    DAS.AddTarget(new IphoneDasTarget());
-    #else
-    DAS.AddTarget(new UnityDasTarget());
-    #endif
-  }
-
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
     if (Instance != null && Instance != this) {

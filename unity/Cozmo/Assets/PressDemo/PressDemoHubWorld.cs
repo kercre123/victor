@@ -113,9 +113,11 @@ public class PressDemoHubWorld : HubWorldBase {
   private void StartSpeedTapGame() {
     DAS.Debug(this, "Starting Speed Tap Game");
     PlayMinigame(_SpeedTapChallengeData, progressSceneWhenMinigameOver: false);
+    int maxLevel = _SpeedTapChallengeData.MinigameConfig.SkillConfig.GetMaxLevel();
+    SkillSystem.Instance.SetDebugSkillsForGame(maxLevel, maxLevel, maxLevel);
   }
 
-  private void PlayMinigame(ChallengeData challengeData, bool progressSceneWhenMinigameOver) {
+  private GameBase PlayMinigame(ChallengeData challengeData, bool progressSceneWhenMinigameOver) {
     _ProgressSceneWhenMinigameOver = progressSceneWhenMinigameOver;
 
     _PressDemoViewInstance.OnForceProgress -= HandleForceProgressPressed;
@@ -132,6 +134,7 @@ public class PressDemoHubWorld : HubWorldBase {
     _MiniGameInstance.OnMiniGameWin += HandleMinigameOver;
     _MiniGameInstance.OnMiniGameLose += HandleMinigameOver;
     _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
+    return _MiniGameInstance;
   }
 
   private void HandleEndGameDialog() {
