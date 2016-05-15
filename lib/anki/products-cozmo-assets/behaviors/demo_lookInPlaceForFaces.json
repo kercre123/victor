@@ -32,7 +32,7 @@
     "behavior_RecentLocationsMax": 5,
     // shared speeds
     "sx_BodyTurnSpeed_degPerSec": 60.0,   // turn speed
-    "sxt_HeadTurnSpeed_degPerSec": 15.0,  // head tilt speed while turning body
+    "sxt_HeadTurnSpeed_degPerSec": 25.0,  // head tilt speed while turning body
     "sxh_HeadTurnSpeed_degPerSec": 40.0,  // head tilt speed for states that don't turn body
     
     // state 0 - initialization parameters (this happen once per behavior run)
