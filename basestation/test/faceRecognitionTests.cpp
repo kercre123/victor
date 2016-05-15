@@ -218,9 +218,9 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     for(auto & test : testDirData)
     {
       if(test.isForTraining) {
-        faceTracker->SetFaceEnrollmentMode(Vision::FaceEnrollmentMode::LookingStraight);
+        faceTracker->SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight);
       } else {
-        faceTracker->SetFaceEnrollmentMode(Vision::FaceEnrollmentMode::Disabled);
+        faceTracker->SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::Disabled);
       }
       
       const char* testDir = test.dirName;

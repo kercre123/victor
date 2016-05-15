@@ -257,12 +257,19 @@ message RobotReadToolCode {
   ToolCodeInfo info
 }
 
-// Sent when a new (named) face is registered (e.g. as confirmation for an
-// AssignNameToFace message) or a face is loaded from a saved album,
-// in order to keep the game's list of names and IDs in sync with the engine
-message RobotEnrolledFace {
+// Sent when a face is loaded from a saved album, in order to keep the game's list of
+// names and IDs in sync with the engine
+message RobotLoadedKnownFace {
     int_32 faceID,
     string name
+}
+
+// RobotReachedEnrollmentCount
+//  Sent when enrollment count hits zero and enroll ID is set
+//  (Used within Engine, probably not useful to Game)
+message RobotReachedEnrollmentCount {
+    int_32  faceID,
+    uint_8  count
 }
 
 // NOTE: This is separate from deleting an _observed_ face.

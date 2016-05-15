@@ -271,7 +271,7 @@ namespace Anki {
       
       HandleNVStorageData(msg);
     }
-
+    
     void UiGameController::HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg)
     {
       PRINT_NAMED_INFO("HandleNVStorageOpResult",

@@ -53,7 +53,8 @@ enum int_32 RobotActionType {
     TRACK_MOTION,
     TURN_TOWARDS_LAST_FACE_POSE,
     READ_TOOL_CODE,
-    SAY_TEXT
+    SAY_TEXT, 
+    ENROLL_NAMED_FACE
 }
 
 
@@ -113,6 +114,12 @@ structure ReadToolCodeCompleted {
   ToolCodeInfo info // info.code will be UnknownTool if failure
 }
 
+// Used by EnrollNamedFaceAction on success
+structure FaceEnrollmentCompleted {
+  int_32 faceID,
+  string name
+}
+
 // Use tag to determine what struct to use
 union ActionCompletedUnion {
   ObjectInteractionCompleted  objectInteractionCompleted,
@@ -120,6 +127,7 @@ union ActionCompletedUnion {
   DeviceAudioCompleted        deviceAudioCompleted,
   TrackFaceCompleted          trackFaceCompleted,
   ReadToolCodeCompleted       readToolCodeCompleted,
+  FaceEnrollmentCompleted     faceEnrollmentCompleted,
 }
 
 

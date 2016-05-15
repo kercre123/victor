@@ -139,49 +139,49 @@ void LiveEnroll(Vision::FaceTracker& faceTracker, const std::string& name, const
   }
   
   // Set up the various enrollment modes and ordering
-  auto enrollMode = Vision::FaceEnrollmentMode::LookingStraight;
-  faceTracker.SetFaceEnrollmentMode(enrollMode);
+  auto enrollPose = Vision::FaceEnrollmentPose::LookingStraight;
+  faceTracker.SetFaceEnrollmentMode(enrollPose);
   const TimeStamp_t kMinTimePerEnrollMode_ms = 1000;
   TimeStamp_t lastModeChangeTime_ms = 0;
   
-  const std::map<Vision::FaceEnrollmentMode, std::string> instructions{
-    {Vision::FaceEnrollmentMode::LookingStraight,       "LOOK STRAIGHT AT COSMO"},
-    {Vision::FaceEnrollmentMode::LookingStraightClose,  "SLOWLY MOVE CLOSER"},
-    {Vision::FaceEnrollmentMode::LookingStraightFar,    "SLOWLY MOVE AWAY"},
-    {Vision::FaceEnrollmentMode::LookingLeft,           "SLOWLY TURN TO THE RIGHT"},
-    {Vision::FaceEnrollmentMode::LookingRight,          "SLOWLY TURN TO THE LEFT"},
-    {Vision::FaceEnrollmentMode::LookingUp,             "SLOWLY TILT HEAD UP"},
-    {Vision::FaceEnrollmentMode::LookingDown,           "SLOWLY TILT HEAD DOWN"},
-    {Vision::FaceEnrollmentMode::Disabled,              "DONE!"},
+  const std::map<Vision::FaceEnrollmentPose, std::string> instructions{
+    {Vision::FaceEnrollmentPose::LookingStraight,       "LOOK STRAIGHT AT COSMO"},
+    {Vision::FaceEnrollmentPose::LookingStraightClose,  "SLOWLY MOVE CLOSER"},
+    {Vision::FaceEnrollmentPose::LookingStraightFar,    "SLOWLY MOVE AWAY"},
+    {Vision::FaceEnrollmentPose::LookingLeft,           "SLOWLY TURN TO THE RIGHT"},
+    {Vision::FaceEnrollmentPose::LookingRight,          "SLOWLY TURN TO THE LEFT"},
+    {Vision::FaceEnrollmentPose::LookingUp,             "SLOWLY TILT HEAD UP"},
+    {Vision::FaceEnrollmentPose::LookingDown,           "SLOWLY TILT HEAD DOWN"},
+    {Vision::FaceEnrollmentPose::Disabled,              "DONE!"},
   };
   
   // Enrollment using left/right/up
-//  std::vector<Vision::FaceEnrollmentMode> sequence{
-//    Vision::FaceEnrollmentMode::LookingStraight,
-//    Vision::FaceEnrollmentMode::LookingLeft,
-//    Vision::FaceEnrollmentMode::LookingRight,
-//    Vision::FaceEnrollmentMode::LookingStraight,
-//    Vision::FaceEnrollmentMode::LookingUp,
-//    Vision::FaceEnrollmentMode::LookingStraight,
-//    Vision::FaceEnrollmentMode::LookingStraightClose,
-//    Vision::FaceEnrollmentMode::LookingStraightFar,
-//    Vision::FaceEnrollmentMode::None
+//  std::vector<Vision::FaceEnrollmentPose> sequence{
+//    Vision::FaceEnrollmentPose::LookingStraight,
+//    Vision::FaceEnrollmentPose::LookingLeft,
+//    Vision::FaceEnrollmentPose::LookingRight,
+//    Vision::FaceEnrollmentPose::LookingStraight,
+//    Vision::FaceEnrollmentPose::LookingUp,
+//    Vision::FaceEnrollmentPose::LookingStraight,
+//    Vision::FaceEnrollmentPose::LookingStraightClose,
+//    Vision::FaceEnrollmentPose::LookingStraightFar,
+//    Vision::FaceEnrollmentPose::None
 //  };
 
   // Enrollment using just straight-ahead at various distances
-  std::vector<Vision::FaceEnrollmentMode> sequence{
-    Vision::FaceEnrollmentMode::LookingStraight,
-    Vision::FaceEnrollmentMode::LookingStraightClose,
-    Vision::FaceEnrollmentMode::LookingStraightFar,
-    Vision::FaceEnrollmentMode::Disabled
+  std::vector<Vision::FaceEnrollmentPose> sequence{
+    Vision::FaceEnrollmentPose::LookingStraight,
+    Vision::FaceEnrollmentPose::LookingStraightClose,
+    Vision::FaceEnrollmentPose::LookingStraightFar,
+    Vision::FaceEnrollmentPose::Disabled
   };
   Vision::kTimeBetweenInitialFaceEnrollmentUpdates_sec = 0.75f;
   
   ASSERT_NAMED(sequence.size() < 10, "Enroll.EnrollmentSequenceTooLong");
 
   // Helpers for speaking the instructions and waiting until we're ready
-  auto sayInstructions = [&instructions, &enrollMode, &lastModeChangeTime_ms, &frame]() {
-    system(("say -v Vicki " + instructions.at(enrollMode)).c_str());
+  auto sayInstructions = [&instructions, &enrollPose, &lastModeChangeTime_ms, &frame]() {
+    system(("say -v Vicki " + instructions.at(enrollPose)).c_str());
     lastModeChangeTime_ms = frame.GetTimestamp();
   };
   
@@ -226,21 +226,21 @@ void LiveEnroll(Vision::FaceTracker& faceTracker, const std::string& name, const
             
             if(face.GetName().empty())
             {
-              auto newEnrollMode = sequence[face.GetNumEnrollments()/2];
-              if(newEnrollMode != enrollMode)
+              auto newEnrollPose = sequence[face.GetNumEnrollments()/2];
+              if(newEnrollPose != enrollPose)
               {
-                faceTracker.SetFaceEnrollmentMode(Vision::FaceEnrollmentMode::Disabled);
+                faceTracker.SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::Disabled);
                 
                 if(frame.GetTimestamp() - lastModeChangeTime_ms > kMinTimePerEnrollMode_ms)
                 {
                   // Time to switch enrollment modes and say the instructions
-                  enrollMode = newEnrollMode;
+                  enrollPose = newEnrollPose;
                   std::thread sayThread(sayInstructions);
                   sayThread.detach();
                   
-                  faceTracker.SetFaceEnrollmentMode(enrollMode);
+                  faceTracker.SetFaceEnrollmentMode(enrollPose);
                   
-                  if(enrollMode == Vision::FaceEnrollmentMode::Disabled) {
+                  if(enrollPose == Vision::FaceEnrollmentPose::Disabled) {
                     enrollmentComplete = true;
                   }
                 }
@@ -260,9 +260,9 @@ void LiveEnroll(Vision::FaceTracker& faceTracker, const std::string& name, const
             frame.DrawRect(face.GetRect(), NamedColors::RED, 2);
           }
         
-          frame.DrawText({1, frame.GetNumRows()-20}, instructions.at(enrollMode), NamedColors::RED, 0.5f);
+          frame.DrawText({1, frame.GetNumRows()-20}, instructions.at(enrollPose), NamedColors::RED, 0.5f);
           frame.DrawText({1, frame.GetNumRows()-1},
-                         "Mode: " + std::to_string((u8)enrollMode) +
+                         "Mode: " + std::to_string((u8)enrollPose) +
                          " N: " + std::to_string(face.GetNumEnrollments()),
                          NamedColors::RED, 0.75f);
         }
@@ -304,7 +304,7 @@ void LiveRecognize(Vision::FaceTracker& faceTracker, const std::string& albumNam
   s32 nextSayNameTime = 0;
   
   Vision::ImageRGB frame;
-  faceTracker.SetFaceEnrollmentMode(Vision::FaceEnrollmentMode::Disabled);
+  faceTracker.SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::Disabled);
   Vision::TrackedFace face;
   
   bool done = false;

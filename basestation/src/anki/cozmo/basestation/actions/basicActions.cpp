@@ -332,7 +332,21 @@ namespace Anki {
     , _dist_mm(dist_mm)
     , _speed_mmps(speed_mmps)
     {
+      if(_speed_mmps < 0.f) {
+        PRINT_NAMED_WARNING("DriveStraightAction.Constructor.NegativeSpeed",
+                            "Speed should always be positive (not %f). Making positive.",
+                            _speed_mmps);
+        _speed_mmps = -_speed_mmps;
+      }
       
+      if(dist_mm < 0.f) {
+        // If distance is negative, we are driving backward and will negate speed
+        // internally. Yes, we could have just double-negated if the caller passed in
+        // a negative speed already, but this avoids confusion on caller's side about
+        // which signs to use and the documentation says speed should always be positive.
+        ASSERT_NAMED(_speed_mmps >= 0.f, "DriveStraightAction.Constructor.NegativeSpeed");
+        _speed_mmps = -speed_mmps;
+      }
     }
 
     DriveStraightAction::~DriveStraightAction()

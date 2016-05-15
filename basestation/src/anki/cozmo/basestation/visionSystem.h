@@ -198,7 +198,14 @@ namespace Cozmo {
     VisionMode  GetModeFromString(const std::string& str) const;
     
     Result AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
-    void SetFaceEnrollmentMode(Vision::FaceEnrollmentMode mode);
+    
+    // Enable face enrollment mode and optionally specify the ID for which 
+    // enrollment is allowed (use UnknownFaceID to indicate "any" ID).
+    // Enrollment will automatically disable after numEnrollments. (Use 
+    // a value < 0 to enable ongoing enrollments.)
+    void SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
+                               Vision::FaceID_t forFaceID = Vision::UnknownFaceID,
+                               s32 numEnrollments = -1);
     
     Result LoadFaceAlbum(const std::string& albumName, std::list<Vision::FaceNameAndID>& namesAndIDs);
     Result SaveFaceAlbum(const std::string& albumName);
@@ -213,6 +220,7 @@ namespace Cozmo {
     // Returns the ID of the erased face, or UnknownFaceID if the name isn't found
     Vision::FaceID_t EraseFace(const std::string& name);
     Result           EraseFace(Vision::FaceID_t faceID);
+    void             EraseAllFaces();
     
     void SetParams(const bool autoExposureOn,
                    const f32 exposureTime,

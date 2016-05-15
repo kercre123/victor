@@ -1455,9 +1455,16 @@ namespace Cozmo {
     return _faceTracker->EraseFace(faceID);
   }
   
-  void VisionSystem::SetFaceEnrollmentMode(Vision::FaceEnrollmentMode mode)
+  void VisionSystem::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
+ 																						  Vision::FaceID_t forFaceID,
+																						  s32 numEnrollments)
   {
-    _faceTracker->SetFaceEnrollmentMode(mode);
+    _faceTracker->SetFaceEnrollmentMode(pose, forFaceID, numEnrollments);
+  }
+  
+  void VisionSystem::EraseAllFaces()
+  {
+    _faceTracker->EraseAllFaces();
   }
   
   Result VisionSystem::DetectFaces(const Vision::Image& grayImage,

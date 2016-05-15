@@ -101,10 +101,8 @@ protected:
   virtual void HandleDebugString(ExternalInterface::DebugString const& msg){};
   virtual void HandleNVStorageData(ExternalInterface::NVStorageData const& msg){};
   virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
-  
-  
-  virtual void HandleRobotEnrolledFace(const ExternalInterface::RobotEnrolledFace& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
+  
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
   void SendPing();
@@ -322,9 +320,6 @@ private:
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();
-  
-  
-  
   
   const f32 TIME_UNTIL_READY_SEC = 1.5;
   

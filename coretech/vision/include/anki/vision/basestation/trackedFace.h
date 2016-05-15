@@ -47,7 +47,6 @@ namespace Vision {
     FaceID_t    GetID()             const;
     s32         GetNumEnrollments() const;
     
-    
     const std::string& GetName() const;
     void SetName(const std::string& newName);
     
@@ -133,11 +132,11 @@ namespace Vision {
   private:
     
     FaceID_t       _id             = UnknownFaceID;
-    s32            _numEnrollments = 0;
     float          _score          = 0.f;
-    bool           _isBeingTracked = false;
     TimeStamp_t    _timestamp      = 0;
-    
+    s32            _numEnrollments = 0;
+    bool           _isBeingTracked = false;
+
     std::string    _name;
     
     Rectangle<f32> _rect;
