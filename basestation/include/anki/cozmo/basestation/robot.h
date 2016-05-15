@@ -356,6 +356,10 @@ public:
     bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
     bool IsPickingOrPlacing() const {return _isPickingOrPlacing;}
     bool IsPickedUp()         const {return _isPickedUp;}
+
+    // returns true if the robot is on it's back. Note that this does not correspond 1 to 1 with the
+    // RobotOnBack message, because there is some throttling / delay on the mesage
+    bool IsOnBack() const {return _isOnBack;}
     
     void SetCarryingObject(ObjectID carryObjectID);
     void UnSetCarryingObjects(bool topOnly = false);

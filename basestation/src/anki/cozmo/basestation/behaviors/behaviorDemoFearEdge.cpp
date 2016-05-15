@@ -27,7 +27,7 @@ static const float kInitialDriveAccel = 40.0f;
 static const float kBackupDriveDist_mm = 200.0f;
 static const float kBackupDriveSpeed_mmps = 100.0f;
 static const float kBackupDriveAccel = 500.0f;
-static const float kBackupDriveDecel = 50.0f;
+static const float kBackupDriveDecel = 100.0f;
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 

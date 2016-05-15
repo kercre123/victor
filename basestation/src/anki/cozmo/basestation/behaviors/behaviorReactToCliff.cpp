@@ -26,7 +26,7 @@ namespace Cozmo {
 using namespace ExternalInterface;
   
 static const char* kCliffReactAnimName = "reactToCliff";
-static const float kCliffBackupDist_mm = 80.0f;
+static const float kCliffBackupDist_mm = 60.0f;
 static const float kCliffBackupSpeed_mmps = 100.0f;
 
 BehaviorReactToCliff::BehaviorReactToCliff(Robot& robot, const Json::Value& config)
