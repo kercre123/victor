@@ -254,8 +254,13 @@ void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
                     TransitionToStackingBlock(robot);
                   }
                   else if( res == ActionResult::FAILURE_RETRY ) {
-                    StartActing(new PlayAnimationGroupAction(robot, _retryActionAnimGroup),
-                                &BehaviorStackBlocks::TransitionToPickingUpBlock);
+                    if( ! _retryActionAnimGroup.empty() ) {                      
+                      StartActing(new PlayAnimationGroupAction(robot, _retryActionAnimGroup),
+                                  &BehaviorStackBlocks::TransitionToPickingUpBlock);
+                    }
+                    else {
+                      TransitionToPickingUpBlock(robot);
+                    }
                   }
                   else if( res == ActionResult::FAILURE_ABORT ) {
                     StartActing(new SearchSideToSideAction(robot),
@@ -312,8 +317,13 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
                     TransitionToPlayingFinalAnim(robot);
                   }
                   else if( res == ActionResult::FAILURE_RETRY ) {
-                    StartActing(new PlayAnimationGroupAction(robot, _retryActionAnimGroup),
-                                &BehaviorStackBlocks::TransitionToStackingBlock);
+                    if( ! _retryActionAnimGroup.empty() ) {                      
+                      StartActing(new PlayAnimationGroupAction(robot, _retryActionAnimGroup),
+                                  &BehaviorStackBlocks::TransitionToStackingBlock);
+                    }
+                    else {
+                      TransitionToStackingBlock(robot);
+                    }
                   }
                   else if( res == ActionResult::FAILURE_ABORT ) {
 
