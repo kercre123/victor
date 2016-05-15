@@ -76,6 +76,9 @@ public:
   inline bool AreAllGameFlagsAvailable(BehaviorGameFlag gameFlag) const;
   inline bool IsAnyGameFlagAvailable(BehaviorGameFlag gameFlag) const;
   
+  // sets which games are available by setting the mask/flag combination
+  void SetAvailableGame(BehaviorGameFlag availableGames) { _availableGames = Util::EnumToUnderlying(availableGames); }
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -138,13 +141,6 @@ private:
   // it if so
   template<typename EventType>
   void ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventType>& event);
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Games
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // sets which games are available by setting the mask/flag combination
-  void SetAvailableGame(BehaviorGameFlag availableGames) { _availableGames = Util::EnumToUnderlying(availableGames); }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Sparks
