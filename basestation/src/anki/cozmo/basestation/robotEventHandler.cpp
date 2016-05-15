@@ -311,18 +311,24 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
     selectedObjectID = msg.objectID;
   }
   
-  DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(robot,
-                                                                          selectedObjectID,
-                                                                          msg.distanceFromMarker_mm,
-                                                                          msg.useApproachAngle,
-                                                                          msg.approachAngle_rad,
-                                                                          msg.useManualSpeed);
-  
-  if(msg.motionProf.isCustom)
-  {
-    action->SetMotionProfile(msg.motionProf);
+  if(static_cast<bool>(msg.usePreDockPose)) {
+    DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(robot,
+                                                                            selectedObjectID,
+                                                                            msg.distanceFromMarker_mm,
+                                                                            msg.useApproachAngle,
+                                                                            msg.approachAngle_rad,
+                                                                            msg.useManualSpeed);
+    if(msg.motionProf.isCustom)
+    {
+      action->SetMotionProfile(msg.motionProf);
+    }
+    return action;
+  } else {
+    AlignWithObjectAction* action = new AlignWithObjectAction(robot, selectedObjectID, msg.useManualSpeed);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
+    action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    return action;
   }
-  return action;
 }
   
 IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::RollObject& msg)
