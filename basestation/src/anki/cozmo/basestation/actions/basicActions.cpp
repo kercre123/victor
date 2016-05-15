@@ -11,13 +11,15 @@
  **/
 
 #include "basicActions.h"
-#include "anki/cozmo/basestation/robot.h"
+
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
   
@@ -332,7 +334,15 @@ namespace Anki {
     {
       
     }
-    
+
+    DriveStraightAction::~DriveStraightAction()
+    {
+      _robot.AbortDrivingToPose();
+      _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
+
+      _robot.GetDrivingAnimationHandler().ActionIsBeingDestroyed();
+    }
+  
     ActionResult DriveStraightAction::Init()
     {
       const Radians heading = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
@@ -369,12 +379,28 @@ namespace Anki {
     ActionResult DriveStraightAction::CheckIfDone()
     {
       ActionResult result = ActionResult::RUNNING;
+
+      if(_robot.GetDrivingAnimationHandler().IsPlayingEndAnim())
+      {
+        return ActionResult::RUNNING;
+      }
+      else if ( _hasStarted && !_robot.IsTraversingPath() ) {
+        result = ActionResult::SUCCESS;;
+      }
       
       if(!_hasStarted) {
         PRINT_NAMED_INFO("DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
         _hasStarted = _robot.IsTraversingPath();
+        if( _hasStarted ) {
+          _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock());
+        }
       } else if(/*hasStarted AND*/ !_robot.IsTraversingPath()) {
-        result = ActionResult::SUCCESS;
+        if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
+          return ActionResult::RUNNING;
+        }
+        else {
+          result = ActionResult::SUCCESS;
+        }
       }
       
       return result;

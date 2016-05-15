@@ -177,7 +177,10 @@ void DemoBehaviorChooser::TransitionToFearEdge()
   SetAllBehaviorsEnabled(false);
   SetBehaviorEnabled(kFearEdgeBehavior, true);
 
-  _checkTransition = std::bind(&DemoBehaviorChooser::DidBehaviorRunAndStop, this, kCliffBehavior);
+  // will transition when the fear edge is interrupted by cliff
+  _checkTransition = [this]() {
+    return DidBehaviorRunAndStop(kFearEdgeBehavior) && DidBehaviorRunAndStop(kCliffBehavior);
+  };
 }
 
 void DemoBehaviorChooser::TransitionToPounce()

@@ -40,6 +40,9 @@ namespace Anki {
         void SetDrivingAnimations(const std::string& drivingStartAnim,
                                   const std::string& drivingLoopAnim,
                                   const std::string& drivingEndAnim);
+
+        // Resets the driving animations to default
+        void ResetDrivingAnimations();
       
         // Returns true if the drivingEnd animation is playing
         bool IsPlayingEndAnim() const { return _endAnimStarted && !_endAnimCompleted; }
