@@ -83,7 +83,6 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageData> OnGotNVStorageData;
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageOpResult> OnGotNVStorageOpResult;
   public event Action<Anki.Cozmo.ExternalInterface.DebugLatencyMessage> OnDebugLatencyMsg;
-  public event Action<Anki.Cozmo.ExternalInterface.RobotEnrolledFace> OnRobotEnrolledFace;
   public event Action<Anki.Cozmo.ExternalInterface.RequestEnrollFace> OnRequestEnrollFace;
   public event Action<Anki.Cozmo.ExternalInterface.AnimationEvent> OnRobotAnimationEvent;
 
@@ -407,9 +406,6 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.NVStorageOpResult:
       ReceivedSpecificMessage(message.NVStorageOpResult);
       break;
-    case G2U.MessageEngineToGame.Tag.RobotEnrolledFace:
-      ReceivedSpecificMessage(message.RobotEnrolledFace);
-      break;
     case G2U.MessageEngineToGame.Tag.RequestEnrollFace:
       ReceivedSpecificMessage(message.RequestEnrollFace);
       break;
@@ -690,13 +686,6 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.Audio.AudioCallback message) {
     if (ReceivedAudioCallback != null) {
       ReceivedAudioCallback(message);
-    }
-  }
-
-
-  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RobotEnrolledFace message) {
-    if (OnRobotEnrolledFace != null) {
-      OnRobotEnrolledFace(message);
     }
   }
 
