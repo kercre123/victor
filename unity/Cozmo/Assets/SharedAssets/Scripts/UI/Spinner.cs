@@ -5,7 +5,7 @@ public class Spinner : MonoBehaviour {
   [SerializeField]
   private UnityEngine.UI.Image _ImageToSpin;
 
-  [Tooltip("in radians per second")]
+  [Tooltip("in angles per second")]
   [SerializeField]
   private float _SpinSpeed;
 
