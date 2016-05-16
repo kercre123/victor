@@ -345,7 +345,7 @@ namespace Anki {
         // a negative speed already, but this avoids confusion on caller's side about
         // which signs to use and the documentation says speed should always be positive.
         ASSERT_NAMED(_speed_mmps >= 0.f, "DriveStraightAction.Constructor.NegativeSpeed");
-        _speed_mmps = -speed_mmps;
+        _speed_mmps = -_speed_mmps;
       }
     }
 
