@@ -107,7 +107,9 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void StartFaceEnrollmentActivity() {
     DAS.Debug(this, "Starting Face Enrollment Activity");
-    PlayMinigame(_FaceEnrollmentChallengeData, progressSceneWhenMinigameOver: false);
+    FaceEnrollment.FaceEnrollmentGame faceEnrollment = PlayMinigame(_FaceEnrollmentChallengeData, progressSceneWhenMinigameOver: false) as FaceEnrollment.FaceEnrollmentGame;
+    // demo mode should not be saving faces to the actual robot.
+    faceEnrollment.SetSaveToRobot(false);
   }
 
   private void StartSpeedTapGame() {
