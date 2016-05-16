@@ -2983,6 +2983,11 @@ namespace Anki {
       SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLights(lights)));
     }
     
+    void Robot::SetHeadlight(bool on)
+    {
+      SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadlight(on)));
+    }
+    
     Result Robot::SetObjectLights(const ObjectID& objectID,
                                   const WhichCubeLEDs whichLEDs,
                                   const u32 onColor, const u32 offColor,

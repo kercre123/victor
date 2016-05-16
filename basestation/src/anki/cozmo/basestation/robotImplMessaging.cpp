@@ -286,7 +286,7 @@ void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotTo
     const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
     
     // Check object type
-    ObjectType objType = ObservableObject::GetTypeFromFactoryID(payload.factory_id);
+    ObjectType objType = ObservableObject::GetTypeFromActiveObjectType(payload.device_type);
     switch(objType) {
       case ObjectType::Charger_Basic:
       {
@@ -297,7 +297,9 @@ void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotTo
       }
       case ObjectType::Unknown:
       {
-        PRINT_NAMED_WARNING("Robot.HandleActiveObjectDiscovered.UnknownType", "FactoryID: 0x%x", payload.factory_id);
+        PRINT_NAMED_WARNING("Robot.HandleActiveObjectDiscovered.UnknownType",
+                            "FactoryID: 0x%x, device_type: 0x%hx",
+                            payload.factory_id, payload.device_type);
         return;
       }
       default:
@@ -325,11 +327,11 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
   
   if (payload.connected) {
     // Add active object to blockworld if not already there
-    objID = GetBlockWorld().AddActiveObject(payload.objectID, payload.factoryID);
+    objID = GetBlockWorld().AddActiveObject(payload.objectID, payload.factoryID, payload.device_type);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
-                       "Object %d (activeID %d, factoryID 0x%x)",
-                       objID.GetValue(), payload.objectID, payload.factoryID);
+                       "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx)",
+                       objID.GetValue(), payload.objectID, payload.factoryID, payload.device_type);
       
       // Turn off lights upon connection
       std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure

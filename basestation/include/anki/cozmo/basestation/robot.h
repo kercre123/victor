@@ -611,7 +611,8 @@ public:
                            const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
                            const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
    
-    
+    void SetHeadlight(bool on);
+  
     // =========  Block messages  ============
   
     // Assign which blocks the robot should connect to.

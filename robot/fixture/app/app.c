@@ -21,6 +21,7 @@
 #include "app/robotTest.h"
 
 u8 g_fixtureReleaseVersion = 15;
+const char* BUILD_INFO = "NOT FOR FACTORY";
 
 BOOL g_isDevicePresent = 0;
 const char* FIXTYPES[] = FIXTURE_TYPES;
@@ -109,11 +110,19 @@ void SetFixtureText(void)
   DisplayTextHeightMultiplier(1);
   DisplayTextWidthMultiplier(1);
   DisplayMoveCursor(55, 110);
+#ifdef FCC
+  DisplayPutChar('c');
+  DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
+  DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
+  DisplayMoveCursor(55, 0);
+  DisplayPutString("CERT/TEST ONLY");
+#else
   DisplayPutChar('v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
   DisplayMoveCursor(55, 0);
-  DisplayPutString("EP3");
+  DisplayPutString(BUILD_INFO);
+#endif
   
   DisplayFlip();
 }

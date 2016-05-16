@@ -22,6 +22,7 @@
 #include "lights.h"
 #include "messages.h"
 
+#include "clad/robotInterface/messageFromActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -195,12 +196,13 @@ static void send_capture_packet(void* userdata) {
   uesb_write_tx_payload(&PairingAddress, ROBOT_PAIR_PIPE, &pair, sizeof(CapturePacket));
 }
 
-void SendObjectConnectionState(int slot)
+static void SendObjectConnectionState(int slot, uint16_t deviceType = OBJECT_UNKNOWN)
 {
   ObjectConnectionState msg;
   msg.objectID = slot;
   msg.factoryID = accessories[slot].id;
   msg.connected = accessories[slot].active;
+  msg.device_type = deviceType;
   RobotInterface::SendMessage(msg);
 }
 
@@ -225,10 +227,15 @@ void uesb_event_handler(uint32_t flags)
     AdvertisePacket packet;
     memcpy(&packet, &rx_payload.data, sizeof(AdvertisePacket));
 
+    ObjectType type = (packet.id & 0x80000000) ? OBJECT_CHARGER : (OBJECT_CUBE1 + (packet.id & 0x3));
+    
     // Attempt to locate existing accessory and repair
     slot = LocateAccessory(packet.id);
     if (slot < 0) {
+      using namespace Anki::Cozmo;
+      
       ObjectDiscovered msg;
+      msg.device_type = type;
       msg.factory_id = packet.id;
       msg.rssi = rx_payload.rssi;
       RobotInterface::SendMessage(msg);
@@ -248,7 +255,7 @@ void uesb_event_handler(uint32_t flags)
     if (accessories[slot].active == false)
     {
       accessories[slot].active = true;
-      SendObjectConnectionState(slot);
+      SendObjectConnectionState(slot, type);
     }
 
     // Schedule a one time capture for this slot

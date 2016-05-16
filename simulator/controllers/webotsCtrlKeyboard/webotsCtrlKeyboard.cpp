@@ -994,6 +994,15 @@ namespace Anki {
                 break;
               }
                 
+              case (s32)',':
+              {
+                static bool toggle = true;
+                printf("Turning headlight %s\n", toggle ? "ON" : "OFF");
+                SendSetHeadlight(toggle);
+                toggle = !toggle;
+                break;
+              }
+                
               case (s32)'C':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {

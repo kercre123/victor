@@ -11,6 +11,7 @@
 #include "bluetooth.h"
 #include "backpack.h"
 #include "dtm.h"
+#include "battery.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
@@ -58,6 +59,11 @@ static void Process_bleEnterPairing(const BLE_EnterPairing& msg)
   Bluetooth::enterPairing(msg);
 }
 
+static void Process_setHeadlight(const RobotInterface::SetHeadlight& msg)
+{
+  Battery::setHeadlight(msg.enable);
+}
+
 static void Process_nvReadToBody(const RobotInterface::NVReadResultToBody& msg)
 {
 }
@@ -75,6 +81,7 @@ static void Process_killBodyCode(const KillBodyCode& msg)
   while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
   NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
   while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  NVIC_SystemReset();
 }
 
 void Spine::ProcessHeadData()

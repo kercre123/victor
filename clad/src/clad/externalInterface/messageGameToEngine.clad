@@ -653,6 +653,11 @@ message ReliableTransportRunMode {
   bool isSync
 }
 
+message SetHeadlight
+{
+  bool enable
+}
+
 // SetActiveObjectLEDs
 message SetActiveObjectLEDs {
     uint_32  objectID,

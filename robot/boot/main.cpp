@@ -54,6 +54,7 @@ int main (void) {
   // Tear down unnessessary components
   UART::shutdown();
   SPI::disable();
+  Power::disableEspressif();
 
   SCB->VTOR = (uint32_t) IMAGE_HEADER->vector_tbl;
   IMAGE_HEADER->entry_point();

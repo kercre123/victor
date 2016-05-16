@@ -72,7 +72,7 @@ struct uesb_address_desc_t
 {
   uint8_t                 rf_channel;
   uint32_t                address;
-  uint8_t              		payload_length;
+  uint8_t                 payload_length;
 };
 
 struct uesb_config_t

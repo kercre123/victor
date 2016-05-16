@@ -44,7 +44,7 @@ namespace Anki {
     public:
       
       Charger(ObjectType type = ObjectType::Charger_Basic);
-      Charger(ActiveID activeID, FactoryID factoryID);
+      Charger(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
       
       virtual const Point3f& GetSize() const override { return _size; }
       

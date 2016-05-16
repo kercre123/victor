@@ -1,6 +1,11 @@
 #ifndef __HARDWARE_H
 #define __HARDWARE_H
 
+
+// THESE SHOULD BE DONE IN THE PROJECT DEFINE LIST
+//#define ENABLE_FCC_TEST
+//#define GENERATE_WHITE_NOISE
+
 #define EP1_HEADBOARD
 
 // All of these are for EP1 and EP2

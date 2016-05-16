@@ -11,13 +11,15 @@ namespace Cozmo {
 message ObjectDiscovered
 {
   uint_32     factory_id,
+  ActiveObjectType  device_type,
   int_8       rssi
 }
 
 message ObjectConnectionState
-{
+{  
   uint_32 objectID,   // The active ID when coming from Robot, the BlockWorld ID when coming from Engine!
   uint_32 factoryID,
+  ActiveObjectType  device_type,
   bool connected
 }
 

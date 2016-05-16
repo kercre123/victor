@@ -2331,7 +2331,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     */
 
   
-    ObjectID BlockWorld::AddActiveObject(ActiveID activeID, FactoryID factoryID)
+    ObjectID BlockWorld::AddActiveObject(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
     {
       if (activeID >= 4 || activeID < 0) {
         PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.InvalidActiveID", "activeID %d", activeID);
@@ -2339,7 +2339,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       }
       
       // Is there an active object with the same activeID that already exists?
-      ObjectType objType = ObservableObject::GetTypeFromFactoryID(factoryID);
+      ObjectType objType = ObservableObject::GetTypeFromActiveObjectType(activeObjectType);
       const char* objTypeStr = EnumToString(objType);
       ObservableObject* matchingObject = GetActiveObjectByActiveID(activeID);
       if (matchingObject == nullptr) {
@@ -2400,16 +2400,16 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         case ObjectType::Block_LIGHTCUBE2:
         case ObjectType::Block_LIGHTCUBE3:
         {
-          newObject = new ActiveCube(activeID, factoryID);
+          newObject = new ActiveCube(activeID, factoryID, activeObjectType);
           break;
         }
         case ObjectType::Charger_Basic:
         {
-          newObject = new Charger(activeID, factoryID);
+          newObject = new Charger(activeID, factoryID, activeObjectType);
           break;
         }
         default:
-          PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.UnsupportActiveObjectType", "%s", objTypeStr);
+          PRINT_NAMED_WARNING("BlockWorld.AddActiveObject.UnsupportedActiveObjectType", "%s (ActiveObjectType: 0x%hx)", objTypeStr, activeObjectType);
           return ObjectID();
       }
       
