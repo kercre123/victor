@@ -24,6 +24,8 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private int _PressDemoDebugSceneIndex = 0;
 
+  private Cozmo.UI.AlertView _RequestDialog = null;
+
   public override bool LoadHubWorld() {
     DebugMenuManager.Instance.EnableLatencyPopup(false);
     LoadPressDemoView();
@@ -31,6 +33,7 @@ public class PressDemoHubWorld : HubWorldBase {
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
     RobotEngineManager.Instance.OnRequestGameStart += HandleRequestSpeedTap;
     RobotEngineManager.Instance.OnRequestEnrollFace += HandleRequestEnrollFace;
+    RobotEngineManager.Instance.OnDenyGameStart += HandleExternalRejection;
     LoopRobotSleep();
     return true;
   }
@@ -39,6 +42,7 @@ public class PressDemoHubWorld : HubWorldBase {
     GameObject.Destroy(_PressDemoViewInstance.gameObject);
     RobotEngineManager.Instance.OnRequestGameStart -= HandleRequestSpeedTap;
     RobotEngineManager.Instance.OnRequestEnrollFace -= HandleRequestEnrollFace;
+    RobotEngineManager.Instance.OnDenyGameStart -= HandleExternalRejection;
     return true;
   }
 
@@ -57,6 +61,14 @@ public class PressDemoHubWorld : HubWorldBase {
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
     alertView.TitleLocKey = "#pressDemo.faceEnrollTitle";
     alertView.DescriptionLocKey = "#pressDemo.faceEnrollDesc";
+    _RequestDialog = alertView;
+  }
+
+  private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
+    if (_RequestDialog != null) {
+      _RequestDialog.CloseView();
+      _RequestDialog = null;
+    }
   }
 
   private void HandleRequestSpeedTap(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
@@ -79,11 +91,13 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleRejection() {
+    _RequestDialog = null;
     RobotEngineManager.Instance.SendDenyGameStart();
   }
 
   private void StartFaceEnrollmentActivity() {
     DAS.Debug(this, "Starting Face Enrollment Activity");
+    _RequestDialog = null;
     PlayMinigame(_FaceEnrollmentChallengeData, progressSceneWhenMinigameOver: false);
   }
 
