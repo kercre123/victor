@@ -1782,9 +1782,9 @@ MonoBehaviour:
   onValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 11488482}
-        m_MethodName: OnPauseToggleChanged
-        m_Mode: 6
+      - m_Target: {fileID: 0}
+        m_MethodName: 
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -2108,6 +2108,7 @@ MonoBehaviour:
   - logKind: 5
     toggle: {fileID: 11436792}
   _SOSToggle: {fileID: 11411936}
+  _PauseToggle: {fileID: 11463460}
   _CopyLogButton: {fileID: 11487024}
 --- !u!114 &11489016
 MonoBehaviour:
