@@ -103,6 +103,17 @@ public class ConsoleLogPane : MonoBehaviour {
   }
 
   public void HandleTogglePause(bool enable) {
+    if (HomeHub.Instance != null) {
+      var game = HomeHub.Instance.MiniGameInstance;
+      if (game != null) {
+        if (game.Paused == false && enable) {
+          game.PauseGame();
+        }
+        else if (game.Paused && !enable) {
+          game.UnpauseGame();
+        }
+      }
+    }
     DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled = enable;
     DataPersistence.DataPersistenceManager.Instance.Save();
   }

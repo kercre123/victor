@@ -62,11 +62,25 @@ public class DebugMenuManager : MonoBehaviour {
     _DebugMenuDialogInstance = debugMenuDialogInstance.GetComponent<DebugMenuDialog>();
     _DebugMenuDialogInstance.Initialize(_LastOpenedDebugTab);
     _DebugMenuDialogInstance.OnDebugMenuClosed += OnDebugMenuDialogClose;
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled) {
+      GameBase game = GetCurrMinigame();
+      if (game != null) {
+        if (game.Paused == false) {
+          game.PauseGame();
+        }
+      }
+    }
   }
 
   private void OnDebugMenuDialogClose(int lastOpenTab) {
     _DebugMenuDialogInstance.OnDebugMenuClosed -= OnDebugMenuDialogClose;
     _LastOpenedDebugTab = lastOpenTab;
+    GameBase game = GetCurrMinigame();
+    if (game != null) {
+      if (game.Paused) {
+        game.UnpauseGame();
+      }
+    }
   }
 
   public bool IsDialogOpen() {
