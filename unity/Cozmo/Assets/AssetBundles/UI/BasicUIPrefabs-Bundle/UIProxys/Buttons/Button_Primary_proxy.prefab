@@ -171,7 +171,6 @@ MonoBehaviour:
     _EventType: 7
     _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
-  _ShowPressedStateOnRelease: 0
 --- !u!114 &11492386
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -324,6 +323,10 @@ Prefab:
       value: 
       objectReference: {fileID: 12800000, guid: 01314919a94634a228a0ccc4039bcf62,
         type: 3}
+    - target: {fileID: 0}
+      propertyPath: _TextLabelOffset
+      value: -5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 130312}

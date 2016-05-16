@@ -9,6 +9,7 @@ public class SelectDifficultyState : State {
   private List<DifficultySelectOptionData> _DifficultyOptions;
   private State _NextState;
   private DifficultySelectButtonPanel _DifficultySelectButtonPanel;
+  private DifficultySelectOptionData _SelectedDifficultyData;
 
   public SelectDifficultyState(State nextState, List<DifficultySelectOptionData> difficultyOptions, int highestLevelCompleted) {
     _NextState = nextState;
@@ -39,6 +40,7 @@ public class SelectDifficultyState : State {
   }
 
   private void HandleDifficultySelected(float buttonXWorldPosition, bool isUnlocked, DifficultySelectOptionData data) {
+    _SelectedDifficultyData = data;
     _Game.SharedMinigameView.ShelfWidget.MoveCarat(buttonXWorldPosition);
     _Game.SharedMinigameView.EnableContinueButton(isUnlocked);
     if (isUnlocked) {
@@ -53,16 +55,17 @@ public class SelectDifficultyState : State {
   }
 
   private void HandleContinueButtonClicked() {
-    var option = _Game.SharedMinigameView.GetSelectedDifficulty();
-    _Game.CurrentDifficulty = option != null ? option.DifficultyId : 0;
+    _Game.CurrentDifficulty = _SelectedDifficultyData.DifficultyId;
 
     // Don't tween transitions in Exit because that will cause errors in DoTween if exiting 
     // the state machine is through the quit button
+    _Game.SharedMinigameView.ShowHowToPlayButton(_SelectedDifficultyData.DifficultyDescription.Key, _SelectedDifficultyData.AnimationPrefab);
     _Game.SharedMinigameView.ShelfWidget.HideCaratOffscreenLeft();
     _Game.SharedMinigameView.ShelfWidget.ShrinkShelfBackground();
     _Game.SharedMinigameView.HideDifficultySelectButtonPanel();
     _Game.SharedMinigameView.HideContinueButton();
-    _Game.SharedMinigameView.ShowHowToPlayButton();
+    _Game.SharedMinigameView.HideBackButton();
+    _Game.SharedMinigameView.ShowQuitButton();
 
     _StateMachine.SetNextState(_NextState);
   }

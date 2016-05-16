@@ -1,16 +1,16 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &152768
+--- !u!1 &108350
 GameObject:
   m_ObjectHideFlags: 0
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
-  - 224: {fileID: 22403134}
-  - 114: {fileID: 11460356}
+  - 224: {fileID: 22416398}
+  - 114: {fileID: 11415844}
   m_Layer: 5
-  m_Name: QuitButton
+  m_Name: BackButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -32,27 +32,27 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &11460356
+--- !u!114 &11415844
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 152768}
+  m_GameObject: {fileID: 108350}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 164906, guid: 63331bfce488d4ee9bd9684d440e3316, type: 2}
-  ModifiedValues:
-  - ObjectPath: ButtonText
-    FieldName: Anki.UI.AnkiTextLabel:m_Text
-    JsonValue: '"#button.quit"'
+  Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
+  ModifiedValues: []
   ModifiedLocalReferences:
   - ObjectPath: ../
     FieldName: Cozmo.MinigameWidgets.QuitMinigameButton:_QuitButtonInstance
     ReferencePath: 
-  ModifiedGlobalReferences: []
+  ModifiedGlobalReferences:
+  - ObjectPath: ButtonIcon
+    FieldName: UnityEngine.UI.Image:m_Sprite
+    Reference: {fileID: 21300000, guid: 0be4cbea6ee7946a4a7f42eff5bcab10, type: 3}
 --- !u!114 &11462868
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -65,12 +65,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _QuitButtonInstance: {fileID: 0}
---- !u!224 &22403134
+--- !u!224 &22416398
 RectTransform:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 152768}
+  m_GameObject: {fileID: 108350}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
@@ -79,8 +79,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 259, y: -102.5}
-  m_SizeDelta: {x: 518, y: 205}
+  m_AnchoredPosition: {x: 133.99968, y: -101.000496}
+  m_SizeDelta: {x: 270, y: 203}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22469030
 RectTransform:
@@ -92,7 +92,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
-  - {fileID: 22403134}
+  - {fileID: 22416398}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 1}

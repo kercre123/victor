@@ -10,6 +10,8 @@ public class InitialCubesState : State {
   private int _NumValidCubes;
   private GameBase _Game;
 
+  // TODO: Use RobotProcessedImage to count how many ticks / vision frames a cube
+  // is not visible instead of using a time-based timeout
   private const float kCubeTimeoutSeconds = 0.4f;
   private List<int> _ValidCubeIds;
   private Dictionary <int, float> _CubeIdToTimeout;

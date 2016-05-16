@@ -137,7 +137,7 @@ MonoBehaviour:
   _TextLabel: {fileID: 11492938}
   _TextLabelOffset: -5
   TextEnabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  TextPressedColor: {r: 1, g: 1, b: 1, a: 1}
+  TextPressedColor: {r: 0.27205884, g: 0.26880816, b: 0.2200476, a: 1}
   TextDisabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 0.3882353}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
@@ -152,14 +152,13 @@ MonoBehaviour:
     pressedSprite: {fileID: 0}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 0}
-    disabledColor: {r: 1, g: 1, b: 1, a: 0.203}
+    disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _GlintAnimator: {fileID: 11493876}
   _UISoundEvent:
     _Event: -1705717452
     _EventType: 7
     _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
-  _ShowPressedStateOnRelease: 0
 --- !u!114 &11492938
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -340,6 +339,10 @@ Prefab:
       value: 
       objectReference: {fileID: 12800000, guid: 01314919a94634a228a0ccc4039bcf62,
         type: 3}
+    - target: {fileID: 0}
+      propertyPath: _TextLabelOffset
+      value: -5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 164906}
