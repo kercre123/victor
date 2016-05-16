@@ -148,19 +148,15 @@ string    text
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////  VISION  ////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-/*
-// Full QVGA Image from a specifed Robot
-message RobotImage_320x240 {
-    uint_32 robotID
-    uint_8 image[320*240]
-}
 
-// Full VGA Image from a specifed Robot
-message RobotImage_640x480 {
-    uint_32 robotID
-    uint_8 image[640*480]
+// RobotProcessedImage
+//  Sent every time a full frame processing is completed, whether or not anything was
+//  detected. Reports the image timestamp that was processed. Sent _after_ any results
+//  or observations from the same image to indicate nothing else is coming from that
+//  image.
+message RobotProcessedImage {
+   uint_32 timestamp
 }
-*/
 
 // RobotObservedObject for signaling that an object
 //  with specified ID/Type/Family was seen at a particular location in the image

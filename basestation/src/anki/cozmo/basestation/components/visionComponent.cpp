@@ -533,16 +533,6 @@ namespace Cozmo {
         }
       }
       
-      // Display any debug images left by the vision system
-      std::pair<std::string, Vision::Image>    debugGray;
-      std::pair<std::string, Vision::ImageRGB> debugRGB;
-      while(_visionSystem->CheckDebugMailbox(debugGray)) {
-        debugGray.second.Display(debugGray.first.c_str());
-      }
-      while(_visionSystem->CheckDebugMailbox(debugRGB)) {
-        debugRGB.second.Display(debugRGB.first.c_str());
-      }
-      
     } else {
       PRINT_NAMED_WARNING("VisionComponent.Update.NoCamCalib",
                           "Camera calibration should be set before calling Update().");
@@ -848,187 +838,219 @@ namespace Cozmo {
     
   } // QueueObservedMarker()
   
-  Result VisionComponent::UpdateVisionMarkers()
+  Result VisionComponent::UpdateAllResults()
   {
-    Result lastResult = RESULT_OK;
+    bool anyFailures = false;
+    
     if(_visionSystem != nullptr)
     {
-      Vision::ObservedMarker visionMarker;
-      while(true == _visionSystem->CheckMailbox(visionMarker)) {
+      VisionProcessingResult result;
+      
+      while(true == _visionSystem->CheckMailbox(result))
+      {
+        // Helper macro to print error message and set anyFailures=true if that result was not RESULT_OK.
+#       define TRY_AND_REPORT_FAILURE(__NAME__) \
+        do { if(RESULT_OK != this->__NAME__(result)) { \
+        PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults." QUOTE(__NAME__) "Failed", ""); \
+        anyFailures = true; } } while(0)
+
+        TRY_AND_REPORT_FAILURE(UpdateVisionMarkers);
+        TRY_AND_REPORT_FAILURE(UpdateFaces);
+        TRY_AND_REPORT_FAILURE(UpdateTrackingQuad);
+        TRY_AND_REPORT_FAILURE(UpdateDockingErrorSignal);
+        TRY_AND_REPORT_FAILURE(UpdateMotionCentroid);
+        TRY_AND_REPORT_FAILURE(UpdateOverheadEdges);
+        TRY_AND_REPORT_FAILURE(UpdateToolCode);
+        TRY_AND_REPORT_FAILURE(UpdateComputedCalibration);
+
+#       undef TRY_AND_REPORT_FAILURE
         
-        lastResult = QueueObservedMarker(visionMarker);
-        if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("VisionComponent.Update.FailedToQueueVisionMarker",
-                            "Got VisionMarker message from vision processing thread but failed to queue it.");
-          return lastResult;
+        // Display any debug images left by the vision system
+        for(auto & debugGray : result.debugImages) {
+          debugGray.second.Display(debugGray.first.c_str());
+        }
+        for(auto & debugRGB : result.debugImageRGBs) {
+          debugRGB.second.Display(debugRGB.first.c_str());
         }
         
-        const Quad2f& corners = visionMarker.GetImageCorners();
-        const ColorRGBA& drawColor = (visionMarker.GetCode() == Vision::MARKER_UNKNOWN ?
-                                      NamedColors::BLUE : NamedColors::RED);
-        _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
-        
-        const bool drawMarkerNames = false;
-        if(drawMarkerNames)
-        {
-          Rectangle<f32> boundingRect(corners);
-          std::string markerName(visionMarker.GetCodeName());
-          _vizManager->DrawCameraText(boundingRect.GetTopLeft(),
-                                      markerName.substr(strlen("MARKER_"),std::string::npos),
-                                      drawColor);
-        }
+        // Send the processed image message last
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotProcessedImage(result.timestamp)));
       }
     }
+    
+    if(anyFailures) {
+      return RESULT_FAIL;
+    } else {
+      return RESULT_OK;
+    }
+  } // UpdateAllResults()
+  
+  
+  Result VisionComponent::UpdateVisionMarkers(const VisionProcessingResult& procResult)
+  {
+    Result lastResult = RESULT_OK;
+    
+    for(auto & visionMarker : procResult.observedMarkers)
+    {
+      lastResult = QueueObservedMarker(visionMarker);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionComponent.Update.FailedToQueueVisionMarker",
+                          "Got VisionMarker message from vision processing thread but failed to queue it.");
+        return lastResult;
+      }
+      
+      const Quad2f& corners = visionMarker.GetImageCorners();
+      const ColorRGBA& drawColor = (visionMarker.GetCode() == Vision::MARKER_UNKNOWN ?
+                                    NamedColors::BLUE : NamedColors::RED);
+      _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
+      
+      const bool drawMarkerNames = false;
+      if(drawMarkerNames)
+      {
+        Rectangle<f32> boundingRect(corners);
+        std::string markerName(visionMarker.GetCodeName());
+        _vizManager->DrawCameraText(boundingRect.GetTopLeft(),
+                                    markerName.substr(strlen("MARKER_"),std::string::npos),
+                                    drawColor);
+      }
+    }
+
     return lastResult;
   } // UpdateVisionMarkers()
   
-  Result VisionComponent::UpdateFaces()
+  Result VisionComponent::UpdateFaces(const VisionProcessingResult& procResult)
   {
     Result lastResult = RESULT_OK;
-    if(_visionSystem != nullptr)
+
+    for(auto & updatedID : procResult.updatedFaceIDs)
     {
-      Vision::UpdatedFaceID updatedID;
-      while(true == _visionSystem->CheckMailbox(updatedID))
-      {
-        _robot.GetFaceWorld().ChangeFaceID(updatedID.oldID, updatedID.newID);
-      }
+      _robot.GetFaceWorld().ChangeFaceID(updatedID.oldID, updatedID.newID);
+    }
 
-      Vision::TrackedFace faceDetection;
-      while(true == _visionSystem->CheckMailbox(faceDetection))
-      {
-        /*
-         PRINT_NAMED_INFO("VisionComponent.Update",
-                          "Saw face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
-                          "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
-                          faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
-                          faceDetection.GetRect().GetWidth(), faceDetection.GetRect().GetHeight(),
-                          faceDetection.GetTimeStamp(),
-                          faceDetection.GetHeadRoll().getDegrees(),
-                          faceDetection.GetHeadPitch().getDegrees(),
-                          faceDetection.GetHeadYaw().getDegrees(),
-                          faceDetection.GetHeadPose().GetTranslation().x(),
-                          faceDetection.GetHeadPose().GetTranslation().y(),
-                          faceDetection.GetHeadPose().GetTranslation().z());
-         */
-        
-        // Get historical robot pose at specified timestamp to get
-        // head angle and to attach as parent of the camera pose.
-        TimeStamp_t t;
-        RobotPoseStamp* p = nullptr;
-        HistPoseKey poseKey;
+    for(auto faceDetection : procResult.faces)
+    {
+      /*
+       PRINT_NAMED_INFO("VisionComponent.Update",
+                        "Saw face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
+                        "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
+                        faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
+                        faceDetection.GetRect().GetWidth(), faceDetection.GetRect().GetHeight(),
+                        faceDetection.GetTimeStamp(),
+                        faceDetection.GetHeadRoll().getDegrees(),
+                        faceDetection.GetHeadPitch().getDegrees(),
+                        faceDetection.GetHeadYaw().getDegrees(),
+                        faceDetection.GetHeadPose().GetTranslation().x(),
+                        faceDetection.GetHeadPose().GetTranslation().y(),
+                        faceDetection.GetHeadPose().GetTranslation().z());
+       */
+      
+      // Get historical robot pose at specified timestamp to get
+      // head angle and to attach as parent of the camera pose.
+      TimeStamp_t t;
+      RobotPoseStamp* p = nullptr;
+      HistPoseKey poseKey;
 
-        _robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
-        
-        // If we were moving too fast at the timestamp the face was detected then don't update it
-        if(WasMovingTooFast(faceDetection.GetTimeStamp(), p))
-        {
-          return RESULT_OK;
-        }
-        
-        // Use the faceDetection to update FaceWorld:
-        lastResult = _robot.GetFaceWorld().AddOrUpdateFace(faceDetection);
-        if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("VisionComponent.Update.FailedToUpdateFace",
-                            "Got FaceDetection from vision processing but failed to update it.");
-          return lastResult;
-        }
-        
-        if(faceDetection.GetNumEnrollments() > 0) {
-          ExternalInterface::RobotReachedEnrollmentCount enrollCountMsg;
-          enrollCountMsg.faceID = faceDetection.GetID();
-          enrollCountMsg.count  = faceDetection.GetNumEnrollments();
-          
-          _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(enrollCountMsg)));
-        }
+      _robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
+      
+      // If we were moving too fast at the timestamp the face was detected then don't update it
+      if(WasMovingTooFast(faceDetection.GetTimeStamp(), p))
+      {
+        return RESULT_OK;
       }
       
-    } // if(_visionSystem != nullptr)
+      // Use the faceDetection to update FaceWorld:
+      lastResult = _robot.GetFaceWorld().AddOrUpdateFace(faceDetection);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionComponent.Update.FailedToUpdateFace",
+                          "Got FaceDetection from vision processing but failed to update it.");
+        return lastResult;
+      }
+      
+      if(faceDetection.GetNumEnrollments() > 0) {
+        ExternalInterface::RobotReachedEnrollmentCount enrollCountMsg;
+        enrollCountMsg.faceID = faceDetection.GetID();
+        enrollCountMsg.count  = faceDetection.GetNumEnrollments();
+        
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(enrollCountMsg)));
+      }
+    }
+    
     return lastResult;
   } // UpdateFaces()
   
-  Result VisionComponent::UpdateTrackingQuad()
+  Result VisionComponent::UpdateTrackingQuad(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+    for(auto & trackerQuad : procResult.trackerQuads)
     {
-      VizInterface::TrackerQuad trackerQuad;
-      if(true == _visionSystem->CheckMailbox(trackerQuad)) {
-        // Send tracker quad info to viz
-        _vizManager->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
-                                                   trackerQuad.topRight_x, trackerQuad.topRight_y,
-                                                   trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
-                                                   trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
-      }
+      // Send tracker quad info to viz
+      _vizManager->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
+                                   trackerQuad.topRight_x, trackerQuad.topRight_y,
+                                   trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
+                                   trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
     }
+
     return RESULT_OK;
   } // UpdateTrackingQuad()
   
-  Result VisionComponent::UpdateDockingErrorSignal()
+  Result VisionComponent::UpdateDockingErrorSignal(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+    for(auto markerPoseWrtCamera : procResult.dockingPoses)
     {
-      std::pair<Pose3d, TimeStamp_t> markerPoseWrtCamera;
-      while(true == _visionSystem->CheckMailbox(markerPoseWrtCamera)) {
-        
-        // Hook the pose coming out of the vision system up to the historical
-        // camera at that timestamp
-        Vision::Camera histCamera(_robot.GetHistoricalCamera(markerPoseWrtCamera.second));
-        markerPoseWrtCamera.first.SetParent(&histCamera.GetPose());
-        /*
-         // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
-         Pose3d markerPoseWrtRobot;
-         if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
-         PRINT_NAMED_ERROR("VisionComponent.Update.PoseOriginFail",
-         "Could not get marker pose w.r.t. robot.");
-         return RESULT_FAIL;
-         }
-         */
-        //Pose3d poseWrtRobot = poseWrtCam;
-        //poseWrtRobot.PreComposeWith(camWrtRobotPose);
-        Pose3d markerPoseWrtRobot(markerPoseWrtCamera.first);
-        markerPoseWrtRobot.PreComposeWith(histCamera.GetPose());
-        
-        DockingErrorSignal dockErrMsg;
-        dockErrMsg.timestamp = markerPoseWrtCamera.second;
-        dockErrMsg.x_distErr = markerPoseWrtRobot.GetTranslation().x();
-        dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
-        dockErrMsg.z_height  = markerPoseWrtRobot.GetTranslation().z();
-        dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
-        
-        // Visualize docking error signal
-        _vizManager->SetDockingError(dockErrMsg.x_distErr,
-                                                   dockErrMsg.y_horErr,
-                                                   dockErrMsg.angleErr);
+      // Hook the pose coming out of the vision system up to the historical
+      // camera at that timestamp
+      Vision::Camera histCamera(_robot.GetHistoricalCamera(procResult.timestamp));
+      markerPoseWrtCamera.SetParent(&histCamera.GetPose());
+      /*
+       // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
+       Pose3d markerPoseWrtRobot;
+       if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
+       PRINT_NAMED_ERROR("VisionComponent.Update.PoseOriginFail",
+       "Could not get marker pose w.r.t. robot.");
+       return RESULT_FAIL;
+       }
+       */
+      //Pose3d poseWrtRobot = poseWrtCam;
+      //poseWrtRobot.PreComposeWith(camWrtRobotPose);
+      Pose3d markerPoseWrtRobot(markerPoseWrtCamera);
+      markerPoseWrtRobot.PreComposeWith(histCamera.GetPose());
+      
+      DockingErrorSignal dockErrMsg;
+      dockErrMsg.timestamp = procResult.timestamp;
+      dockErrMsg.x_distErr = markerPoseWrtRobot.GetTranslation().x();
+      dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
+      dockErrMsg.z_height  = markerPoseWrtRobot.GetTranslation().z();
+      dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
+      
+      // Visualize docking error signal
+      _vizManager->SetDockingError(dockErrMsg.x_distErr,
+                                   dockErrMsg.y_horErr,
+                                   dockErrMsg.angleErr);
 
-        // Try to use this for closed-loop control by sending it on to the robot
-        _robot.SendRobotMessage<DockingErrorSignal>(std::move(dockErrMsg));
-      }
-    } // if(_visionSystem != nullptr)
+      // Try to use this for closed-loop control by sending it on to the robot
+      _robot.SendRobotMessage<DockingErrorSignal>(std::move(dockErrMsg));
+    }
+
     return RESULT_OK;
   } // UpdateDockingErrorSignal()
   
-  Result VisionComponent::UpdateMotionCentroid()
+  Result VisionComponent::UpdateMotionCentroid(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+  
+    for(auto motionCentroid : procResult.observedMotions)
     {
-      ExternalInterface::RobotObservedMotion motionCentroid;
-      if (true == _visionSystem->CheckMailbox(motionCentroid))
-      {
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(motionCentroid)));
-      }
-    } // if(_visionSystem != nullptr)
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(motionCentroid)));
+    }
+
     return RESULT_OK;
   } // UpdateMotionCentroid()
   
-  Result VisionComponent::UpdateOverheadEdges()
+  Result VisionComponent::UpdateOverheadEdges(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+    for(auto & edgeFrame : procResult.overheadEdges)
     {
-      OverheadEdgeFrame edgeFrame;
-      while(true == _visionSystem->CheckMailbox(edgeFrame))
-      {
-        _robot.GetBlockWorld().ProcessVisionOverheadEdges(edgeFrame);
-      }      
+      _robot.GetBlockWorld().ProcessVisionOverheadEdges(edgeFrame);
     }
+    
     return RESULT_OK;
   }
   
@@ -1118,46 +1140,38 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateOverheadMap()
   
-  Result VisionComponent::UpdateToolCode()
+  Result VisionComponent::UpdateToolCode(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+    for(auto & info : procResult.toolCodes)
     {
-      ToolCodeInfo info;
-      if(true == _visionSystem->CheckMailbox(info))
-      {
-        ExternalInterface::RobotReadToolCode msg;
-        msg.info = info;
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-      }
+      ExternalInterface::RobotReadToolCode msg;
+      msg.info = info;
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
 
     return RESULT_OK;
   }
   
 
-  Result VisionComponent::UpdateComputedCalibration()
+  Result VisionComponent::UpdateComputedCalibration(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+    for(auto & calib : procResult.cameraCalibrations)
     {
-      Vision::CameraCalibration calib;
-      if(true == _visionSystem->CheckMailbox(calib))
-      {
-        CameraCalibration msg;
-        msg.center_x = calib.GetCenter_x();
-        msg.center_y = calib.GetCenter_y();
-        msg.focalLength_x = calib.GetFocalLength_x();
-        msg.focalLength_y = calib.GetFocalLength_y();
-        msg.nrows = calib.GetNrows();
-        msg.ncols = calib.GetNcols();
-        msg.skew = calib.GetSkew();
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-      }
+      CameraCalibration msg;
+      msg.center_x = calib.GetCenter_x();
+      msg.center_y = calib.GetCenter_y();
+      msg.focalLength_x = calib.GetFocalLength_x();
+      msg.focalLength_y = calib.GetFocalLength_y();
+      msg.nrows = calib.GetNrows();
+      msg.ncols = calib.GetNcols();
+      msg.skew = calib.GetSkew();
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
-    
+  
     return RESULT_OK;
   }
 
-    bool VisionComponent::WasHeadMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
+  bool VisionComponent::WasHeadMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
                                          const f32 headTurnSpeedLimit_radPerSec)
   {
     // Check to see if the robot's body or head are

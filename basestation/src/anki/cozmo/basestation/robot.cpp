@@ -832,25 +832,11 @@ namespace Anki {
       
       if(_visionComponentPtr->GetCamera().IsCalibrated())
       {
-        Result visionResult = RESULT_OK;
-
-        // Helper macro for running a vision component, capturing result, and
-        // printing error message / returning if that result was not RESULT_OK.
-#       define TRY_AND_RETURN_ON_FAILURE(__NAME__) \
-        do { if((visionResult = _visionComponentPtr->__NAME__()) != RESULT_OK) { \
-          PRINT_NAMED_ERROR("Robot.Update." QUOTE(__NAME__) "Failed", ""); \
-          return visionResult; } } while(0)
-        
-        TRY_AND_RETURN_ON_FAILURE(UpdateVisionMarkers);
-        TRY_AND_RETURN_ON_FAILURE(UpdateFaces);
-        TRY_AND_RETURN_ON_FAILURE(UpdateTrackingQuad);
-        TRY_AND_RETURN_ON_FAILURE(UpdateDockingErrorSignal);
-        TRY_AND_RETURN_ON_FAILURE(UpdateMotionCentroid);
-        TRY_AND_RETURN_ON_FAILURE(UpdateOverheadEdges);
-        TRY_AND_RETURN_ON_FAILURE(UpdateToolCode);
-        TRY_AND_RETURN_ON_FAILURE(UpdateComputedCalibration);
-        
-#       undef TRY_AND_RETURN_ON_FAILURE
+        Result visionResult = _visionComponentPtr->UpdateAllResults();
+        if(RESULT_OK != visionResult) {
+          PRINT_NAMED_WARNING("Robot.Update.VisionComponentUpdateFail", "");
+          return visionResult;
+        }
         
         // Update Block and Face Worlds
         if(RESULT_OK != _blockWorld.Update()) {
