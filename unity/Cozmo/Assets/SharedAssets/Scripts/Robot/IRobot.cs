@@ -164,9 +164,7 @@ public interface IRobot : IDisposable {
 
   void CancelAllCallbacks();
 
-  void SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode mode);
-
-  void AssignNameToFace(int faceID, string name);
+  void EnrollNamedFace(int faceID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
@@ -280,4 +278,6 @@ public interface IRobot : IDisposable {
   void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendDemoResetState();
+  void EraseAllEnrolledFaces();
+
 }

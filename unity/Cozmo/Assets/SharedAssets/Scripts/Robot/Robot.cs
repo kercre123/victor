@@ -716,16 +716,10 @@ public class Robot : IRobot {
     _RobotCallbacks.Clear();
   }
 
-  public void SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode mode) {
-    DAS.Debug(this, "Setting face enrollment to " + mode);
-    RobotEngineManager.Instance.Message.SetFaceEnrollmentMode = Singleton<SetFaceEnrollmentMode>.Instance.Initialize(mode);
-    RobotEngineManager.Instance.SendMessage();
-  }
+  public void EnrollNamedFace(int faceID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
-  public void AssignNameToFace(int faceID, string name) {
-    DAS.Debug(this, "Assigning face " + faceID + " to " + name);
-    RobotEngineManager.Instance.Message.AssignNameToFace = Singleton<AssignNameToFace>.Instance.Initialize(faceID, name);
-    RobotEngineManager.Instance.SendMessage();
+    DAS.Debug(this, "Sending EnrollNamedFace for ID=" + faceID + " with " + name);
+    SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, name, seq, saveToRobot), callback, queueActionPosition);
   }
 
   public void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -1371,6 +1365,11 @@ public class Robot : IRobot {
 
   public void SendDemoResetState() {
     RobotEngineManager.Instance.Message.DemoResetState = Singleton<DemoResetState>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void EraseAllEnrolledFaces() {
+    RobotEngineManager.Instance.Message.EraseAllEnrolledFaces = Singleton<EraseAllEnrolledFaces>.Instance;
     RobotEngineManager.Instance.SendMessage();
   }
 }
