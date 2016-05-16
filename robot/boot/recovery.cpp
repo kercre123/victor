@@ -204,6 +204,11 @@ void EnterRecovery() {
   bool remote_boot_ok = SendBodyCommand(COMMAND_BOOT_READY);
   bool boot_ok = recovery_force && CheckBootReady() && remote_boot_ok;
 
+  for (int i = 0; i < 0x3F; i++) {
+    SetLight(i);
+    MicroWait(10000);
+  }
+  
   // If the body says it's safe, feel free to exit
   if (boot_ok && SendBodyCommand(COMMAND_DONE)) {
     return ;
