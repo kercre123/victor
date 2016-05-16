@@ -71,6 +71,20 @@ The basic commands are as follows:
 
 Only generate and delete are really useful for C++ developers since the other commands are just duplicates of what you have in Xcode. C# developers might find the terminal commands easier to work with, and eventually the terminal versions should be cross-platform.
 
+KNOWN ISSUE : if you are having the following build failure, go to cozmo-game/unity/ios/ then throw the HockeyApp file in there into the trash and rebuild. Currently
+delete does not properly remove the HockeySDK file and the link is broken.
+    ⚠️  ld: directory not found for option '-F/Users/ryananderson/Desktop/cozmo-game/unity/ios/HockeyApp'
+    
+    ❌  ld: framework not found HockeySDK
+    
+    
+    
+    ❌  clang: error: linker command failed with exit code 1 (use -v to see invocation)
+    
+    
+    ** BUILD FAILED **
+    
+
 ### webots orphaned processes
 
  * Happens often when simulator crashes

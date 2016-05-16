@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 namespace WhackAMole {
-  // Chase after the current target, changes to confused state if 
+  // Chase after the current target, changes to confused state if
   // no cubes are active.
   // Changes to Panic state if Both cubes are active.
   // Plays Celebration and deactivates cube before returning to Idle state if
@@ -17,8 +17,8 @@ namespace WhackAMole {
       _WhackAMoleGame = (_StateMachine.GetGame() as WhackAMoleGame);
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       KeyValuePair<int,int> _TargetKvP = _WhackAMoleGame.CurrentTargetKvP;
-      _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key],0f ,WentToObject ,true , 
-        _WhackAMoleGame.GetRelativeRad(_TargetKvP) , Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
+      _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], 0f, WentToObject, true, false,
+        _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
     }
 
     void WentToObject(bool success) {

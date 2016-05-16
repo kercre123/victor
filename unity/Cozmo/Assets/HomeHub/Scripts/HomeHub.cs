@@ -7,6 +7,17 @@ using Cozmo.Util;
 namespace Cozmo.HomeHub {
   public class HomeHub : HubWorldBase {
 
+    private static HomeHub _Instance = null;
+
+    public static HomeHub Instance { 
+      get {
+        if (_Instance == null) {
+          DAS.Error("HomeHub.Instance", "NULL HomeHub Instance");
+        }
+        return _Instance; 
+      } 
+    }
+
     public Transform[] RewardIcons = null;
 
     [SerializeField]
@@ -45,6 +56,7 @@ namespace Cozmo.HomeHub {
 
     public override bool LoadHubWorld() {
       RobotEngineManager.Instance.OnRequestSetUnlockResult += RefreshChallengeUnlockInfo;
+      _Instance = this;
       LoadChallengeData(_ChallengeDataList, out _ChallengeStatesById);
       ShowStartView();
       return true;
@@ -203,7 +215,17 @@ namespace Cozmo.HomeHub {
       _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
       _MiniGameInstance.OnMiniGameWin += HandleMiniGameWin;
       _MiniGameInstance.OnMiniGameLose += HandleMiniGameLose;
+      _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
       RobotEngineManager.Instance.CurrentRobot.SetIdleAnimation("NONE");
+    }
+
+    private void HandleEndGameDialog() {
+      RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayBehaviorChooser(true);
+      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
+      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+      RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
+      // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
+      RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(true);
     }
 
     private void CloseMiniGameImmediately() {
@@ -218,6 +240,7 @@ namespace Cozmo.HomeHub {
         _MiniGameInstance.OnMiniGameQuit -= HandleMiniGameQuit;
         _MiniGameInstance.OnMiniGameWin -= HandleMiniGameWin;
         _MiniGameInstance.OnMiniGameLose -= HandleMiniGameLose;
+        _MiniGameInstance.OnShowEndGameDialog -= HandleEndGameDialog;
       }
     }
 

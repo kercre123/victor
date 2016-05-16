@@ -170,6 +170,10 @@ def parse_game_arguments():
 
     # signing_group = parser.add_mutually_exclusive_group(required=False)
 
+    parser.add_argument('--features', action='append', dest='features',
+                      choices=['pressDemo'], nargs='+',
+                      help="Generates feature flags for project")
+
     parser.add_argument(
             '--provision-profile',
             metavar='string',
@@ -314,6 +318,19 @@ class GamePlatformConfiguration(object):
             self.call_engine('generate')
         # END ENGINE GENERATE
 
+        file = open(os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated', 'BuildFlags.cs'), 'w')
+
+        if self.options.features != None and 'pressDemo' in self.options.features[0]:
+            file.write('public class BuildFlags { '+'\n'+
+            '  public const string kDefaultBuildScene=\"PressDemo\";'+'\n'+
+            '}')
+        else:
+            file.write('public class BuildFlags { '+'\n'+
+            '  public const string kDefaultBuildScene=\"\";'+'\n'+
+            '}')
+        
+        file.close()
+        
         if self.platform == 'mac':
             workspace.add_scheme_gyp(self.scheme, relative_gyp_project)
             xcconfig = [
@@ -379,9 +396,8 @@ class GamePlatformConfiguration(object):
             self.call_engine(self.options.command)
             # move files.
             # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
-            ankibuild.util.File.cp(os.path.join(self.engine_generated, "out",
-                                                self.options.configuration, "lib", "libcozmoEngine.so"),
-                                   self.android_unity_plugin_dir)
+            ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib", "libcozmoEngine.so"),
+                                   os.path.join(self.android_unity_plugin_dir, "libs"))
             # move third ndk libs.
             self.move_ndk()
             # Call unity for game

@@ -6,8 +6,8 @@ namespace SpeedTap {
 
   public class SpeedTapCozmoDriveToCube : State {
 
-    private const float _kArriveAtCubeThreshold = 50.0f;
-    private const float _kTargetDistanceToCube = 10.0f;
+    private const float _kPreDockPoseDistanceFromCube_mm = 120.0f;
+    private const float _kCubeDistanceThreshold_mm = 45.0f;
 
     private SpeedTapGame _SpeedTapGame = null;
 
@@ -17,13 +17,9 @@ namespace SpeedTap {
       _IsFirstTime = isFirstTime;
     }
 
-    private bool _GotoObjectComplete = false;
-
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
-      // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
-      _CurrentRobot.SetEnableCliffSensor(true);
       if (_IsFirstTime) {
         _SpeedTapGame.InitialCubesDone();
       }
@@ -34,36 +30,79 @@ namespace SpeedTap {
         Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
 
       _SpeedTapGame.ShowWaitForCozmoSlide();
-      _GotoObjectComplete = false;
 
-      _CurrentRobot.SetLiftHeight(1.0f, HandleLiftRaiseComplete);
+      _CurrentRobot.SetDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
+        AnimationGroupName.kSpeedTap_Driving_Loop, null);
+      if (IsFarAwayFromCube()) {
+        DriveToPreDockPose();
+      }
+      else if (IsReallyCloseToCube()) {
+        CompleteDriveToCube();
+      }
+      else {
+        RaiseLift();
+      }
+    }
+
+    public override void Exit() {
+      base.Exit();
+      _CurrentRobot.ResetDrivingAnimations();
+    }
+
+    private bool IsFarAwayFromCube() {
+      return (_CurrentRobot.WorldPosition.xy() - _SpeedTapGame.CozmoBlock.WorldPosition.xy()).sqrMagnitude
+      >= (_kPreDockPoseDistanceFromCube_mm * _kPreDockPoseDistanceFromCube_mm);
+    }
+
+    private bool IsReallyCloseToCube() {
+      return (_CurrentRobot.WorldPosition.xy() - _SpeedTapGame.CozmoBlock.WorldPosition.xy()).sqrMagnitude
+      <= (_kCubeDistanceThreshold_mm * _kCubeDistanceThreshold_mm);
+    }
+
+    private void DriveToPreDockPose() {
+      _CurrentRobot.GotoObject(_SpeedTapGame.CozmoBlock, _kPreDockPoseDistanceFromCube_mm, 
+        goToPreDockPose: true, callback: HandleDriveToPreDockPoseComplete);
+    }
+
+    private void HandleDriveToPreDockPoseComplete(bool success) {
+      if (success) {
+        RaiseLift();
+      }
+      else {
+        DriveToPreDockPose();
+      }
+    }
+
+    private void RaiseLift() {
+      _CurrentRobot.SendAnimationGroup(AnimationGroupName.kSpeedTap_Driving_End, HandleLiftRaiseComplete);
     }
 
     private void HandleLiftRaiseComplete(bool success) {
-      if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude > _kTargetDistanceToCube) {
-        _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, _kTargetDistanceToCube, HandleGotoObjectComplete);
+      if (success) {
+        DriveToCube();
       }
       else {
-        _GotoObjectComplete = true;
+        RaiseLift();
       }
     }
 
-    private void HandleGotoObjectComplete(bool success) {
-      _GotoObjectComplete = true;
+    private void DriveToCube() {
+      // INGO / AL TODO: usePreDockPose is not currently implemented in engine, but should work after it is
+      _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 0.0f, HandleDriveToCubeComplete, 
+        useApproachAngle: false, usePreDockPose: false);
     }
 
-    public override void Update() {
-      if (_GotoObjectComplete) {
-        if ((_CurrentRobot.WorldPosition - _SpeedTapGame.CozmoBlock.WorldPosition).magnitude < _kArriveAtCubeThreshold) {
-          // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
-          _CurrentRobot.SetEnableCliffSensor(false);
-          _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
-        }
-        else {
-          // restart this state
-          _StateMachine.SetNextState(new SpeedTapCozmoDriveToCube(false));
-        }
+    private void HandleDriveToCubeComplete(bool success) {
+      if (success) {
+        CompleteDriveToCube();
       }
+      else {
+        DriveToCube();
+      }
+    }
+
+    private void CompleteDriveToCube() {
+      _StateMachine.SetNextState(new SpeedTapCozmoConfirm());
     }
   }
 

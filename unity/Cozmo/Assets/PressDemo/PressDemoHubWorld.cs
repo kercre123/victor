@@ -50,8 +50,9 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
-    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
+    alertView.SetIcon(_FaceEnrollmentChallengeData.ChallengeIcon);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartFaceEnrollmentActivity);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
     alertView.TitleLocKey = "#pressDemo.faceEnrollTitle";
@@ -59,8 +60,9 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleRequestSpeedTap(Anki.Cozmo.ExternalInterface.RequestGameStart message) {
-    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab, overrideCloseOnTouchOutside: false);
+    Cozmo.UI.AlertView alertView = UIManager.OpenView(Cozmo.UI.AlertViewLoader.Instance.AlertViewPrefab_Icon, overrideCloseOnTouchOutside: false);
     alertView.SetCloseButtonEnabled(false);
+    alertView.SetIcon(_SpeedTapChallengeData.ChallengeIcon);
     alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, StartSpeedTapGame);
     alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleRejection);
     alertView.TitleLocKey = "#pressDemo.speedTapTitle";
@@ -106,6 +108,17 @@ public class PressDemoHubWorld : HubWorldBase {
     _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
     _MiniGameInstance.OnMiniGameWin += HandleMinigameOver;
     _MiniGameInstance.OnMiniGameLose += HandleMinigameOver;
+    _MiniGameInstance.OnShowEndGameDialog += HandleEndGameDialog;
+  }
+
+  private void HandleEndGameDialog() {
+    RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+    RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.NoGame);
+    RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, true);
+    RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
+    RobotEngineManager.Instance.CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, true);
+    // TODO : Remove this once we have a more stable, permanent solution in Engine for false cliff detection
+    RobotEngineManager.Instance.CurrentRobot.SetEnableCliffSensor(true);
   }
 
   private void HandleMinigameOver(Transform[] rewards) {
@@ -115,6 +128,7 @@ public class PressDemoHubWorld : HubWorldBase {
   private void HandleMiniGameQuit() {
     DAS.Debug(this, "activity ended so force transitioning to the next thing");
     RobotEngineManager.Instance.CurrentRobot.ActivateBehaviorChooser(Anki.Cozmo.BehaviorChooserType.Demo);
+    RobotEngineManager.Instance.CurrentRobot.SetAvailableGames(Anki.Cozmo.BehaviorGameFlag.All);
     if (_ProgressSceneWhenMinigameOver) {
       RobotEngineManager.Instance.CurrentRobot.TransitionToNextDemoState();
     }

@@ -1,9 +1,9 @@
 {
   "Animations": [
     {
-      "Name": "invDemo_P05_CatchFwd",
+      "Name": "anim_speedTap_endDriving_01",
       "Weight": 1.0,
-      "CooldownTime_Sec": 0.0,
+      "CooldownTime_Sec": 60.0,
       "Mood": "Default"
     }
   ]

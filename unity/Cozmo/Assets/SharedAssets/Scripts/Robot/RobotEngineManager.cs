@@ -83,7 +83,6 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageData> OnGotNVStorageData;
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageOpResult> OnGotNVStorageOpResult;
   public event Action<Anki.Cozmo.ExternalInterface.DebugLatencyMessage> OnDebugLatencyMsg;
-  public event Action<Anki.Cozmo.ExternalInterface.RobotEnrolledFace> OnRobotEnrolledFace;
   public event Action<Anki.Cozmo.ExternalInterface.RequestEnrollFace> OnRequestEnrollFace;
   public event Action<Anki.Cozmo.ExternalInterface.AnimationEvent> OnRobotAnimationEvent;
 
@@ -118,16 +117,6 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.SetDebugConsoleVarMessage _SetDebugConsoleVarMessage = new U2G.SetDebugConsoleVarMessage();
   private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
   private U2G.DenyGameStart _DenyGameStartMessage = new U2G.DenyGameStart();
-
-  private void Awake() {
-    #if ANIMATION_TOOL
-    DAS.AddTarget(new ConsoleDasTarget());
-    #elif UNITY_IPHONE && !UNITY_EDITOR
-    DAS.AddTarget(new IphoneDasTarget());
-    #else
-    DAS.AddTarget(new UnityDasTarget());
-    #endif
-  }
 
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
@@ -417,9 +406,6 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.NVStorageOpResult:
       ReceivedSpecificMessage(message.NVStorageOpResult);
       break;
-    case G2U.MessageEngineToGame.Tag.RobotEnrolledFace:
-      ReceivedSpecificMessage(message.RobotEnrolledFace);
-      break;
     case G2U.MessageEngineToGame.Tag.RequestEnrollFace:
       ReceivedSpecificMessage(message.RequestEnrollFace);
       break;
@@ -703,13 +689,6 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-
-  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RobotEnrolledFace message) {
-    if (OnRobotEnrolledFace != null) {
-      OnRobotEnrolledFace(message);
-    }
-  }
-
   private void ReceivedSpecificMessage(Anki.Cozmo.CliffEvent message) {
     if (OnCliffEvent != null) {
       OnCliffEvent(message);
@@ -903,7 +882,7 @@ public class RobotEngineManager : MonoBehaviour {
     sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
       ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
       ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
+      ", \n  \"DataPlatformResourcesPath\" : \"" + PlatformUtil.GetResourcesFolder() + "\"" +
       "\n}");
 
     return sb.ToString();
