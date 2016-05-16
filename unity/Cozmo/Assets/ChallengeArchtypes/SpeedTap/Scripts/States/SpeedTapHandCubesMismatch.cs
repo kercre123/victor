@@ -5,6 +5,7 @@ namespace SpeedTap {
   public class SpeedTapHandCubesMismatch : State {
     
     private SpeedTapGame _SpeedTapGame;
+    private const float kResultsCheckDelay = 500.0f;
 
     private float _OnDuration_sec;
     private float _CozmoMovementDelay_sec;
@@ -14,6 +15,7 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      _SpeedTapGame.ResetTapTimestamps();
 
       _StartTimestamp_sec = Time.time;
       _OnDuration_sec = _SpeedTapGame.GetLightsOnDurationSec();

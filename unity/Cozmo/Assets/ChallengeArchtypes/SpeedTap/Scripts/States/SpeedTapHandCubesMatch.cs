@@ -16,6 +16,7 @@ namespace SpeedTap {
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      _SpeedTapGame.ResetTapTimestamps();
 
       _StartTimestamp_sec = Time.time;
       _EndTimestamp_sec = -1;
