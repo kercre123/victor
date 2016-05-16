@@ -77,19 +77,11 @@ namespace Cozmo {
           auto const& payload = event.GetData().Get_EnableVisionMode();
           EnableMode(payload.mode, payload.enable);
         }));
-      
-      // AssignNameToFace
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::AssignNameToFace,
-        [this] (const AnkiEvent<MessageGameToEngine>& event)
-        {
-          const ExternalInterface::AssignNameToFace& msg = event.GetData().Get_AssignNameToFace();
-          AssignNameToFace(msg.faceID, msg.name);
-        }));
-      
+            
       // EnableNewFaceEnrollment
-      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::SetFaceEnrollmentMode,
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::SetFaceEnrollmentPose,
         [this] (const AnkiEvent<MessageGameToEngine>& event) {
-          _visionSystem->SetFaceEnrollmentMode(event.GetData().Get_SetFaceEnrollmentMode().mode);
+          SetFaceEnrollmentMode(event.GetData().Get_SetFaceEnrollmentPose().pose);
         }));
       
       // StartFaceTracking
@@ -116,31 +108,26 @@ namespace Cozmo {
            SetRunMode((msg.isSync ? RunMode::Synchronous : RunMode::Asynchronous));
          }));
 
+      // EraseEnrolledFaceByName
       _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EraseEnrolledFaceByName,
          [this] (const AnkiEvent<MessageGameToEngine>& event)
          {
-           Vision::FaceID_t erasedID = _visionSystem->EraseFace(event.GetData().Get_EraseEnrolledFaceByName().name);
-           if(Vision::UnknownFaceID != erasedID) {
-             // Send back confirmation
-             RobotDeletedFace msg;
-             msg.robotID = _robot.GetID(); // Really necessary?
-             msg.faceID  = erasedID;
-             _robot.Broadcast(MessageEngineToGame(std::move(msg)));
-           }
+           EraseFace(event.GetData().Get_EraseEnrolledFaceByName().name);
          }));
 
+      // EraseEnrolledFaceByID
       _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EraseEnrolledFaceByID,
         [this] (const AnkiEvent<MessageGameToEngine>& event)
         {
           auto const faceID = event.GetData().Get_EraseEnrolledFaceByID().faceID;
-          Result result = _visionSystem->EraseFace(faceID);
-          if(RESULT_OK == result) {
-            // Send back confirmation
-            RobotDeletedFace msg;
-            msg.robotID = _robot.GetID(); // Really necessary?
-            msg.faceID  = faceID;
-            _robot.Broadcast(MessageEngineToGame(std::move(msg)));
-          }
+          EraseFace(faceID);
+        }));
+      
+      // EraseAllEnrolledFaces
+      _signalHandles.push_back(context->GetExternalInterface()->Subscribe(MessageGameToEngineTag::EraseAllEnrolledFaces,
+        [this] (const AnkiEvent<MessageGameToEngine>& event)
+        {
+          EraseAllFaces();
         }));
     }
     
@@ -935,6 +922,7 @@ namespace Cozmo {
         HistPoseKey poseKey;
 
         _robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
+        
         // If we were moving too fast at the timestamp the face was detected then don't update it
         if(WasMovingTooFast(faceDetection.GetTimeStamp(), p))
         {
@@ -947,6 +935,14 @@ namespace Cozmo {
           PRINT_NAMED_ERROR("VisionComponent.Update.FailedToUpdateFace",
                             "Got FaceDetection from vision processing but failed to update it.");
           return lastResult;
+        }
+        
+        if(faceDetection.GetNumEnrollments() > 0) {
+          ExternalInterface::RobotReachedEnrollmentCount enrollCountMsg;
+          enrollCountMsg.faceID = faceDetection.GetID();
+          enrollCountMsg.count  = faceDetection.GetNumEnrollments();
+          
+          _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(enrollCountMsg)));
         }
       }
       
@@ -1544,20 +1540,6 @@ namespace Cozmo {
     _visionSystem->GetSerializedFaceData(_albumData, _enrollData);
     this->Unlock();
 
-    if(_albumData.empty() && _enrollData.empty()) {
-      PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.EmptyAlbumData", "");
-      return RESULT_OK;
-    }
-    
-    // Pad to a multiple of 4 for NVStorage
-    _albumData.resize(GetPaddedNumBytes(_albumData.size()));
-    _enrollData.resize(GetPaddedNumBytes(_enrollData.size()));
-    
-    // If one of the data is not empty, neither should be (we can't have album data with
-    // no enroll data or vice versa)
-    ASSERT_NAMED(!_albumData.empty() && !_enrollData.empty(),
-                 "VisionComponent.SaveFaceAblumToRobot.BadAlbumOrEnrollData");
-
     // Callback to display result when NVStorage.Write finishes
     NVStorageComponent::NVStorageWriteEraseCallback saveAlbumCallback = [](NVStorage::NVResult result) {
       if(result == NVStorage::NVResult::NV_OKAY) {
@@ -1580,6 +1562,32 @@ namespace Cozmo {
                             EnumToString(result));
       }
     };
+
+    
+    if(_albumData.empty() && _enrollData.empty()) {
+      PRINT_NAMED_INFO("VisionComponent.SaveFaceAlbumToRobot.EmptyAlbumData", "Will erase robot album data");
+      // Special case: no face data, so erase what's on the robot so it matches
+      bool sendSucceeded = _robot.GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_FaceAlbumData, saveAlbumCallback);
+      if(!sendSucceeded) {
+        PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendEraseAlbumDataFail", "");
+        lastResult = RESULT_FAIL;
+      } else {
+        sendSucceeded = _robot.GetNVStorageComponent().Erase(NVStorage::NVEntryTag::NVEntry_FaceEnrollData, saveEnrollCallback);
+        if(!sendSucceeded) {
+          PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbumToRobot.SendEraseEnrollDataFail", "");
+        }
+      }
+      return lastResult;
+    }
+    
+    // Pad to a multiple of 4 for NVStorage
+    _albumData.resize(GetPaddedNumBytes(_albumData.size()));
+    _enrollData.resize(GetPaddedNumBytes(_enrollData.size()));
+    
+    // If one of the data is not empty, neither should be (we can't have album data with
+    // no enroll data or vice versa)
+    ASSERT_NAMED(!_albumData.empty() && !_enrollData.empty(),
+                 "VisionComponent.SaveFaceAblumToRobot.BadAlbumOrEnrollData");
     
     // Use NVStorage to save it
     bool sendSucceeded = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_FaceAlbumData,
@@ -1675,15 +1683,61 @@ namespace Cozmo {
     Lock();
     _visionSystem->AssignNameToFace(faceID, name);
     Unlock();
-    
-    // Assume it worked (?) and give game confirmation
-    ExternalInterface::RobotEnrolledFace addMsg;
-    addMsg.name = name;
-    addMsg.faceID = faceID;
-    _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(addMsg)));
-
-    // Every time a new face is enrolled with a name, store the album on the robot
+  }
+  
+  void VisionComponent::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
+ 																						  Vision::FaceID_t forFaceID,
+																						  s32 numEnrollments)
+  
+  {
+    _visionSystem->SetFaceEnrollmentMode(pose, forFaceID, numEnrollments);
+  }
+  
+  Result VisionComponent::EraseFace(Vision::FaceID_t faceID)
+  {
+    Lock();
+    Result result = _visionSystem->EraseFace(faceID);
+    Unlock();
+    if(RESULT_OK == result) {
+      // Update robot
+      SaveFaceAlbumToRobot();
+      // Send back confirmation
+      ExternalInterface::RobotErasedEnrolledFace msg;
+      msg.faceID  = faceID;
+      msg.name    = "";
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      return RESULT_OK;
+    } else {
+      return RESULT_FAIL;
+    }
+  }
+  
+  Result VisionComponent::EraseFace(const std::string& name)
+  {
+    Lock();
+    Vision::FaceID_t erasedID = _visionSystem->EraseFace(name);
+    Unlock();
+    if(Vision::UnknownFaceID != erasedID) {
+      // Update robot
+      SaveFaceAlbumToRobot();
+      // Send back confirmation
+      ExternalInterface::RobotErasedEnrolledFace msg;
+      msg.faceID  = erasedID;
+      msg.name    = name;
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+      return RESULT_OK;
+    } else {
+      return RESULT_FAIL;
+    }
+  }
+  
+  void VisionComponent::EraseAllFaces()
+  {
+    Lock();
+    _visionSystem->EraseAllFaces();
+    Unlock();
     SaveFaceAlbumToRobot();
+    _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotErasedAllEnrolledFaces()));
   }
   
   void VisionComponent::BroadcastLoadedNamesAndIDs(const std::list<Vision::FaceNameAndID>& namesAndIDs) const
@@ -1695,7 +1749,7 @@ namespace Cozmo {
     _robot.Broadcast(MessageEngineToGame(RobotErasedAllEnrolledFaces()));
     for(auto & nameAndID : namesAndIDs)
     {
-      RobotEnrolledFace msg;
+      RobotLoadedKnownFace msg;
       msg.name = nameAndID.name;
       msg.faceID = nameAndID.faceID;
       _robot.Broadcast(MessageEngineToGame(std::move(msg)));

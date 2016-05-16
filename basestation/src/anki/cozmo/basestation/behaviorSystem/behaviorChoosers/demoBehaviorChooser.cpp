@@ -20,7 +20,9 @@
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
 #include "anki/cozmo/basestation/components/progressionUnlockComponent.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
+#include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
@@ -38,7 +40,12 @@ static const char* kFearEdgeBehavior = "demo_fearEdge";
 static const char* kCliffBehavior = "ReactToCliff";
 static const char* kFlipDownFromBackBehavior = "ReactToRobotOnBack";
 static const char* kSleepBehavior = "demo_sleep";
+static const char* kFindFacesBehavior = "demo_lookInPlaceForFaces";
+
 static const float kTimeCubesMustBeUpright_s = 3.0f;
+
+// NOTE: this must match the game request max face age! // TODO:(bn) read it from the behavior?
+static const u32 kMaxFaceAge_ms = 30000;
 
 DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config)
   : SimpleBehaviorChooser(robot, config)
@@ -56,8 +63,17 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
 
   _blockworldFilter->OnlyConsiderLatestUpdate(false);
   _blockworldFilter->SetFilterFcn( std::bind( &DemoBehaviorChooser::FilterBlocks, this, std::placeholders::_1) );
-    
+
+  _faceSearchBehavior = _robot.GetBehaviorFactory().FindBehaviorByName(kFindFacesBehavior);
+  if( nullptr == _faceSearchBehavior ) {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.NoFaceSearchBehavior",
+                      "couldnt get pointer to behavior '%s', won't be able to search for faces in mini game scene",
+                      kFindFacesBehavior);
+  }
+  
   _name = "Demo[]";
+
+  SetAllBehaviorsEnabled(false);
 }
 
 unsigned int DemoBehaviorChooser::GetStateNum(State state)
@@ -76,7 +92,6 @@ unsigned int DemoBehaviorChooser::GetStateNum(State state)
 
 void DemoBehaviorChooser::OnSelected()
 {
-  SetAllBehaviorsEnabled(false);
   _initCalled = true;
 
   // TransitionToCubes();
@@ -88,7 +103,35 @@ Result DemoBehaviorChooser::Update()
     TransitionToNextState();
   }
 
+  if( _state == State::MiniGame ) {
+    // mini game requires a face, so if the last seen face is really old, search for a new one
+    Pose3d waste;
+    TimeStamp_t lastFaceTime = _robot.GetFaceWorld().GetLastObservedFace(waste);
+    TimeStamp_t lastMessageTime = _robot.GetLastImageTimeStamp();
+
+    if( lastFaceTime == 0 || lastMessageTime - lastFaceTime > kMaxFaceAge_ms ) {
+      // force the search behavior to run
+      PRINT_NAMED_INFO("DemoBehaviorChooser.ForceSearchBehavior", "searching for faces");
+      _forceBehavior = _faceSearchBehavior;
+    }
+    else if ( _forceBehavior == _faceSearchBehavior ) {
+      // we were searching for a face, but got one, so clear the forced behavior
+      _forceBehavior = nullptr;
+      PRINT_NAMED_INFO("DemoBehaviorChooser.ClearForcedBehavior", "returning to normal behavior");
+    }
+  }
+  
   return Result::RESULT_OK;
+}
+
+IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
+{
+  if( _forceBehavior == nullptr ) {
+    return super::ChooseNextBehavior(robot);
+  }
+  else {
+    return _forceBehavior;
+  }
 }
 
 void DemoBehaviorChooser::TransitionToNextState()
@@ -175,7 +218,10 @@ void DemoBehaviorChooser::TransitionToFearEdge()
   SetAllBehaviorsEnabled(false);
   SetBehaviorEnabled(kFearEdgeBehavior, true);
 
-  _checkTransition = std::bind(&DemoBehaviorChooser::DidBehaviorRunAndStop, this, kCliffBehavior);
+  // will transition when the fear edge is interrupted by cliff
+  _checkTransition = [this]() {
+    return DidBehaviorRunAndStop(kFearEdgeBehavior) && DidBehaviorRunAndStop(kCliffBehavior);
+  };
 }
 
 void DemoBehaviorChooser::TransitionToPounce()
@@ -183,8 +229,6 @@ void DemoBehaviorChooser::TransitionToPounce()
   SET_STATE(Pounce);
 
   _robot.SetEnableCliffSensor(true);
-
-  _robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, true);
   
   SetAllBehaviorsEnabled(false);
   SetBehaviorGroupEnabled(BehaviorGroup::DemoFingerPounce);
@@ -197,8 +241,6 @@ void DemoBehaviorChooser::TransitionToPounce()
 void DemoBehaviorChooser::TransitionToFaces()
 {
   SET_STATE(Faces);
-
-  _robot.GetVisionComponent().EnableMode(VisionMode::DetectingMotion, false);
   
   SetAllBehaviorsEnabled(false);
   SetBehaviorGroupEnabled(BehaviorGroup::DemoFaces);
@@ -213,6 +255,7 @@ void DemoBehaviorChooser::TransitionToCubes()
   SET_STATE(Cubes);
 
   _robot.GetProgressionUnlockComponent().SetUnlock(UnlockId::CubeRollAction, true);
+  _robot.GetProgressionUnlockComponent().SetUnlock(UnlockId::CubeStackAction, true);
 
   SetAllBehaviorsEnabled(false);
   SetBehaviorGroupEnabled(BehaviorGroup::DemoCubes);
@@ -226,6 +269,7 @@ void DemoBehaviorChooser::TransitionToMiniGame()
   SET_STATE(MiniGame);
 
   _robot.GetMoodManager().SetEmotion(EmotionType::WantToPlay, 1.0f);
+  _robot.GetBehaviorManager().SetAvailableGame(BehaviorGameFlag::SpeedTap);
   
   // leave block behaviors active, but also enable speed tap game request
   SetBehaviorGroupEnabled(BehaviorGroup::RequestSpeedTap);

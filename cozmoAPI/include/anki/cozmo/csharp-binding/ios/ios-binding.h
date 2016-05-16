@@ -6,18 +6,25 @@
 //
 //
 
-#ifndef __CSharpBinding__ios_binding__
-#define __CSharpBinding__ios_binding__
+#ifndef __ios_binding__
+#define __ios_binding__
 
 namespace Anki {
+    
+namespace Util {
+namespace Data {
+    class DataPlatform;
+}
+}
+
 namespace Cozmo {
-namespace CSharpBinding {
+namespace iOSBinding {
 
-// Creates a new CozmoEngineHost instance
-int cozmo_engine_create(const char* configuration_data);
+// iOS specific initialization 
+int cozmo_startup(Anki::Util::Data::DataPlatform* dataPlatform);
 
-// Destroys the current CozmoEngineHost instance, if any
-int cozmo_engine_destroy();
+// iOS specific finalization
+int cozmo_shutdown();
   
 int cozmo_engine_wifi_setup(const char* wifiSSID, const char* wifiPasskey);
   
@@ -27,4 +34,4 @@ void cozmo_engine_send_to_clipboard(const char* log);
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __CSharpBinding__ios_binding__
+#endif // __ios_binding__

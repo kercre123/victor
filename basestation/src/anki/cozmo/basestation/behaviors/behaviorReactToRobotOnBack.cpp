@@ -13,6 +13,8 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnBack.h"
 
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
@@ -21,6 +23,7 @@ namespace Cozmo {
 using namespace ExternalInterface;
 
 static const char* const kFlipDownAnimGroupName = "FlipDownFromBack";
+static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
   
 BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
@@ -40,8 +43,24 @@ bool BehaviorReactToRobotOnBack::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorReactToRobotOnBack::InitInternal(Robot& robot)
 {
-  StartActing(new PlayAnimationGroupAction(robot, kFlipDownAnimGroupName));
+  FlipDownIfNeeded(robot);
   return Result::RESULT_OK;
+}
+
+void BehaviorReactToRobotOnBack::FlipDownIfNeeded(Robot& robot)
+{
+  if( robot.IsOnBack() ) {
+    StartActing(new PlayAnimationGroupAction(robot, kFlipDownAnimGroupName),
+                &BehaviorReactToRobotOnBack::DelayThenFlipDown);
+  }
+}
+
+void BehaviorReactToRobotOnBack::DelayThenFlipDown(Robot& robot)
+{
+  if( robot.IsOnBack() ) {
+    StartActing(new WaitAction(robot, kWaitTimeBeforeRepeatAnim_s),
+                &BehaviorReactToRobotOnBack::FlipDownIfNeeded);
+  }
 }
 
 bool BehaviorReactToRobotOnBack::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const
@@ -51,7 +70,7 @@ bool BehaviorReactToRobotOnBack::ShouldRunForEvent(const ExternalInterface::Mess
                       "Calling ShouldRunForEvent with an event we don't care about, this is a bug");
     return false;
   }
-  
+
   return event.Get_RobotOnBack().onBack;
 }
 

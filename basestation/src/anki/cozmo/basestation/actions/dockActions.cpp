@@ -16,12 +16,17 @@
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/charger.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
   
   namespace Cozmo {
+  
+    // Which docking method actions should use
+    CONSOLE_VAR(u8, kDockingMethod, "Docking", (u8)DockingMethod::BLIND_DOCKING);
     
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far robot is from actionObject
@@ -61,6 +66,7 @@ namespace Anki {
     : IAction(robot)
     , _dockObjectID(objectID)
     , _useManualSpeed(useManualSpeed)
+    , _dockingMethod((DockingMethod)kDockingMethod)
     {
       
     }
@@ -347,7 +353,8 @@ namespace Anki {
                                       _placementOffsetY_mm,
                                       _placementOffsetAngle_rad,
                                       _useManualSpeed,
-                                      _numDockingRetries) == RESULT_OK)
+                                      _numDockingRetries,
+                                      _dockingMethod) == RESULT_OK)
             {
               //NOTE: Any completion (success or failure) after this point should tell
               // the robot to stop tracking and go back to looking for markers!
@@ -839,6 +846,8 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
+      _startedPlacing = false;
+      
       // Robot must be carrying something to put something down!
       if(_robot.IsCarryingObject() == false) {
         PRINT_NAMED_ERROR("PlaceObjectOnGroundAction.CheckPreconditions.NotCarryingObject",
@@ -860,8 +869,10 @@ namespace Anki {
           result = ActionResult::FAILURE_ABORT;
         }
         
-        _faceAndVerifyAction = new TurnTowardsObjectAction(_robot, _carryingObjectID,
-                                                    _carryObjectMarker->GetCode(), 0, true, false);
+        _faceAndVerifyAction = new TurnTowardsObjectAction(_robot,
+                                                           _carryingObjectID,
+                                                           _carryObjectMarker->GetCode(),
+                                                           0, true, false);
         
         _faceAndVerifyAction->ShouldEmitCompletionSignal(false);
         _faceAndVerifyAction->ShouldSuppressTrackLocking(true);
@@ -883,7 +894,9 @@ namespace Anki {
       
       // Wait for robot to report it is done picking/placing and that it's not
       // moving
-      if (_robot.IsPickingOrPlacing()) {
+      
+      if(_robot.IsPickingOrPlacing())
+      {
         _startedPlacing = true;
       }
       

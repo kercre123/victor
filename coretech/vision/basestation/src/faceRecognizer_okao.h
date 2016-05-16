@@ -52,6 +52,8 @@ namespace Vision {
     Result   AssignNameToID(FaceID_t faceID, const std::string& name);
     FaceID_t EraseFace(const std::string& name);
     Result   EraseFace(FaceID_t faceID);
+    void     EraseAllFaces();
+    
     // Request that the recognizer work on assigning a new or existing FaceID
     // from its album of known faces to the specified trackerID, using the
     // given facial part data. Returns true if the request is accepted (i.e.,
@@ -64,9 +66,17 @@ namespace Vision {
                                 HPTRESULT okaoPartDetectionResultHandle,
                                 bool enableEnrollment);
     
+    // Use faceID = UnknownFaceID to allow enrollments for any face.
+    // Use N = -1 to allow ongoing enrollment.
+    void SetAllowedEnrollments(s32 N, FaceID_t forFaceID);
+    
     void RemoveTrackingID(INT32 trackerID);
     
-    EnrolledFaceEntry GetRecognitionData(INT32 forTrackingID);
+    // Return existing or newly-computed recognitino info for a given tracking ID.
+    // If a specific enrollment ID and count are in use, and the enrollment just
+    // completed (the count was just reached), then that count is returned in
+    // 'enrollmentCountReached'. Otherwise 0 is returned.
+    EnrolledFaceEntry GetRecognitionData(INT32 forTrackingID, s32& enrollmentCountReached);
     
     Result LoadAlbum(HCOMMON okaoCommonHandle, const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
     Result SaveAlbum(const std::string& albumName);
@@ -96,6 +106,8 @@ namespace Vision {
     
     Result RecognizeFace(FaceID_t& faceID, INT32& recognitionScore);
     
+		bool   IsMergingAllowed(FaceID_t toFaceID) const;
+		
     Result MergeFaces(FaceID_t keepID, FaceID_t mergeID);
     
     Result RemoveUser(INT32 userID);
@@ -150,12 +162,18 @@ namespace Vision {
     Image          _img;
     HPTRESULT      _okaoPartDetectionResultHandle = NULL;
     DETECTION_INFO _detectionInfo;
-    bool           _isEnrollmentEnabled;
     
     // Internal bookkeeping and parameters
     std::map<INT32, FaceID_t> _trackingToFaceID;
     
     INT32 _lastRegisteredUserID = 1; // Don't start at zero: that's the UnknownFace ID!
+    
+    // Which face we are allowed to add enrollment data for (UnknownFaceID == "any" face),
+    // and how many enrollments we are allowed to add ( <0 means as many as we want)
+    bool     _isEnrollmentEnabled = true;
+    FaceID_t _enrollmentID = UnknownFaceID;
+    s32       _enrollmentCount = -1; // Has no effect if enrollmentID not set
+    s32       _origEnrollmentCount = -1;
     
     // Store additinal bookkeeping information we need, on top of the album data
     // stored by Okao.

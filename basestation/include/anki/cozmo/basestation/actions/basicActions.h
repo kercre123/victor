@@ -122,6 +122,7 @@ namespace Anki {
       // Positive distance for forward, negative for backward.
       // Speed should be positive.
       DriveStraightAction(Robot& robot, f32 dist_mm, f32 speed_mmps);
+      virtual ~DriveStraightAction();
       
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::DRIVE_STRAIGHT; }

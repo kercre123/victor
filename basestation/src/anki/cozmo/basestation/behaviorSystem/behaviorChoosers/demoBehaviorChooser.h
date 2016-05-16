@@ -28,6 +28,7 @@ class Robot;
 
 class DemoBehaviorChooser : public SimpleBehaviorChooser
 {
+  using super = SimpleBehaviorChooser;
 public:
 
   // This disabled all behaviors from running, regardless of the config.
@@ -36,6 +37,8 @@ public:
   virtual void OnSelected() override;
 
   virtual Result Update() override;
+
+  virtual IBehavior* ChooseNextBehavior(const Robot& robot) const override;
 
   virtual const char* GetName() const override { return _name.c_str(); }
 
@@ -89,6 +92,10 @@ private:
 
   bool _initCalled = false;
 
+  IBehavior* _faceSearchBehavior = nullptr;
+
+  IBehavior* _forceBehavior = nullptr;
+  
   // tracking for the cubes to determine when there are three that are upright (and have been for some time)
   float _cubesUprightTime_s = -1.0f;
   // true if the cube is upright and (nearly) level and on the ground. Set to false if it moves or is observed

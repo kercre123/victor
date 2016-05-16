@@ -15,14 +15,18 @@
 #include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+
 #include "anki/cozmo/basestation/actions/actionInterface.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
-#include "anki/cozmo/basestation/actions/basicActions.h"
-#include "anki/cozmo/basestation/actions/animActions.h"
-#include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/actions/enrollNamedFaceAction.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
+#include "anki/cozmo/basestation/actions/trackingActions.h"
+
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -44,33 +48,35 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // We'll use this callback for all action events
     auto actionEventCallback = std::bind(&RobotEventHandler::HandleActionEvents, this, std::placeholders::_1);
     
-    // These are the all action event tags
+    // These are the all handled action event tags, in alphabetical order
+    // TODO: Can we get all the tags from messageActions.clad programatically?
     std::vector<MessageGameToEngineTag> actionTagList =
     {
-      ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGround,
-      ExternalInterface::MessageGameToEngineTag::PlaceObjectOnGroundHere,
-      ExternalInterface::MessageGameToEngineTag::GotoPose,
-      ExternalInterface::MessageGameToEngineTag::GotoObject,
-      ExternalInterface::MessageGameToEngineTag::AlignWithObject,
-      ExternalInterface::MessageGameToEngineTag::PickupObject,
-      ExternalInterface::MessageGameToEngineTag::PlaceOnObject,
-      ExternalInterface::MessageGameToEngineTag::PlaceRelObject,
-      ExternalInterface::MessageGameToEngineTag::RollObject,
-      ExternalInterface::MessageGameToEngineTag::PopAWheelie,
-      ExternalInterface::MessageGameToEngineTag::TraverseObject,
-      ExternalInterface::MessageGameToEngineTag::MountCharger,
-      ExternalInterface::MessageGameToEngineTag::PlayAnimation,
-      ExternalInterface::MessageGameToEngineTag::PlayAnimationGroup,
-      ExternalInterface::MessageGameToEngineTag::TurnTowardsObject,
-      ExternalInterface::MessageGameToEngineTag::TurnTowardsPose,
-      ExternalInterface::MessageGameToEngineTag::TurnInPlace,
-      ExternalInterface::MessageGameToEngineTag::TrackToObject,
-      ExternalInterface::MessageGameToEngineTag::TrackToFace,
-      ExternalInterface::MessageGameToEngineTag::SetHeadAngle,
-      ExternalInterface::MessageGameToEngineTag::PanAndTilt,
-      ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose,
-      ExternalInterface::MessageGameToEngineTag::ReadToolCode,
-      ExternalInterface::MessageGameToEngineTag::SayText
+      MessageGameToEngineTag::AlignWithObject,
+      MessageGameToEngineTag::GotoPose,
+      MessageGameToEngineTag::GotoObject,
+      MessageGameToEngineTag::EnrollNamedFace,
+      MessageGameToEngineTag::MountCharger,
+      MessageGameToEngineTag::PanAndTilt,
+      MessageGameToEngineTag::PickupObject,
+      MessageGameToEngineTag::PlaceObjectOnGround,
+      MessageGameToEngineTag::PlaceObjectOnGroundHere,
+      MessageGameToEngineTag::PlaceOnObject,
+      MessageGameToEngineTag::PlaceRelObject,
+      MessageGameToEngineTag::PlayAnimation,
+      MessageGameToEngineTag::PopAWheelie,
+      MessageGameToEngineTag::ReadToolCode,
+      MessageGameToEngineTag::RollObject,
+      MessageGameToEngineTag::SayText,
+      MessageGameToEngineTag::SetHeadAngle,
+      MessageGameToEngineTag::SetLiftHeight,
+      MessageGameToEngineTag::TrackToFace,
+      MessageGameToEngineTag::TrackToObject,
+      MessageGameToEngineTag::TraverseObject,
+      MessageGameToEngineTag::TurnInPlace,
+      MessageGameToEngineTag::TurnTowardsLastFacePose,
+      MessageGameToEngineTag::TurnTowardsObject,
+      MessageGameToEngineTag::TurnTowardsPose,
     };
     
     // Subscribe to all action events
@@ -86,10 +92,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // Custom handler for QueueCompoundAction
     auto queueCompoundActionCallback = std::bind(&RobotEventHandler::HandleQueueCompoundAction, this, std::placeholders::_1);
     _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::QueueCompoundAction, queueCompoundActionCallback));
-    
-    // Custom handler for SetLiftHeight
-    auto setLiftHeightCallback = std::bind(&RobotEventHandler::HandleSetLiftHeight, this, std::placeholders::_1);
-    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::SetLiftHeight, setLiftHeightCallback));
     
     // Custom handler for EnableLiftPower
     auto enableLiftPowerCallback = std::bind(&RobotEventHandler::HandleEnableLiftPower, this, std::placeholders::_1);
@@ -283,10 +285,21 @@ IActionRunner* GetDriveToObjectActionHelper(Robot& robot, const ExternalInterfac
     selectedObjectID = msg.objectID;
   }
   
-  DriveToObjectAction* action = new DriveToObjectAction(robot,
-                                                        selectedObjectID,
-                                                        msg.distanceFromObjectOrigin_mm,
-                                                        msg.useManualSpeed);
+  DriveToObjectAction* action;
+  if(msg.usePreDockPose)
+  {
+    action = new DriveToObjectAction(robot,
+                                     selectedObjectID,
+                                     PreActionPose::ActionType::DOCKING);
+  }
+  else
+  {
+    action = new DriveToObjectAction(robot,
+                                     selectedObjectID,
+                                     msg.distanceFromObjectOrigin_mm,
+                                     msg.useManualSpeed);
+  }
+  
   if(msg.motionProf.isCustom)
   {
     action->SetMotionProfile(msg.motionProf);
@@ -303,18 +316,24 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
     selectedObjectID = msg.objectID;
   }
   
-  DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(robot,
-                                                                          selectedObjectID,
-                                                                          msg.distanceFromMarker_mm,
-                                                                          msg.useApproachAngle,
-                                                                          msg.approachAngle_rad,
-                                                                          msg.useManualSpeed);
-  
-  if(msg.motionProf.isCustom)
-  {
-    action->SetMotionProfile(msg.motionProf);
+  if(static_cast<bool>(msg.usePreDockPose)) {
+    DriveToAlignWithObjectAction* action = new DriveToAlignWithObjectAction(robot,
+                                                                            selectedObjectID,
+                                                                            msg.distanceFromMarker_mm,
+                                                                            msg.useApproachAngle,
+                                                                            msg.approachAngle_rad,
+                                                                            msg.useManualSpeed);
+    if(msg.motionProf.isCustom)
+    {
+      action->SetMotionProfile(msg.motionProf);
+    }
+    return action;
+  } else {
+    AlignWithObjectAction* action = new AlignWithObjectAction(robot, selectedObjectID, msg.useManualSpeed);
+    action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
+    action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
+    return action;
   }
-  return action;
 }
   
 IActionRunner* GetRollObjectActionHelper(Robot& robot, const ExternalInterface::RollObject& msg)
@@ -621,6 +640,15 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       return sayTextAction;
     }
       
+    case RobotActionUnionTag::enrollNamedFace:
+    {
+      auto & enrollNamedFace = actionUnion.Get_enrollNamedFace();
+      EnrollNamedFaceAction* action =  new EnrollNamedFaceAction(robot, enrollNamedFace.faceID, enrollNamedFace.name);
+      action->SetSequenceType(enrollNamedFace.sequence);
+      action->EnableSaveToRobot(enrollNamedFace.saveToRobot);
+      return action;
+    }
+      
       // TODO: Add cases for other actions
       
     default:
@@ -761,6 +789,12 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
       newAction = GetMoveHeadToAngleActionHelper(robot, event.GetData().Get_SetHeadAngle());
       break;
     }
+    case ExternalInterface::MessageGameToEngineTag::SetLiftHeight:
+    {
+      // Special case: doesn't use queuing below
+      HandleSetLiftHeight(event);
+      return;
+    }
     case ExternalInterface::MessageGameToEngineTag::TurnTowardsLastFacePose:
     {
       newAction = GetTurnTowardsLastFacePoseActionHelper(robot, event.GetData().Get_TurnTowardsLastFacePose());
@@ -774,6 +808,15 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
     case ExternalInterface::MessageGameToEngineTag::SayText:
     {
       newAction = new SayTextAction(robot, event.GetData().Get_SayText().text, event.GetData().Get_SayText().style, true);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::EnrollNamedFace:
+    {
+      auto & enrollNamedFace = event.GetData().Get_EnrollNamedFace();
+      EnrollNamedFaceAction* enrollAction = new EnrollNamedFaceAction(robot, enrollNamedFace.faceID, enrollNamedFace.name);
+      enrollAction->SetSequenceType(enrollNamedFace.sequence);
+      enrollAction->EnableSaveToRobot(enrollNamedFace.saveToRobot);
+      newAction = enrollAction;
       break;
     }
     default:

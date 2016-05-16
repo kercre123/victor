@@ -1,6 +1,7 @@
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -289,16 +290,8 @@ namespace Cozmo {
       }
 
       // Draw 3D face
-      ColorRGBA drawFaceColor;
-      if(knownFace->face.GetID() == _ownerID)
-      {
-        // Draw owner in orange
-        drawFaceColor = NamedColors::ORANGE;
-      } else {
-        // Rotate through other colors for other faces
-        drawFaceColor = ColorRGBA::CreateFromColorIndex((u32)knownFace->face.GetID());
-      }
-      
+      ColorRGBA drawFaceColor = ColorRGBA::CreateFromColorIndex((u32)knownFace->face.GetID());
+
       /*
       PRINT_NAMED_INFO("FaceWorld.AddOrUpdateFace",
                        "Known face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "

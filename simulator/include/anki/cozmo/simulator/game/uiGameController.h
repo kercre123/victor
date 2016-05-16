@@ -102,10 +102,8 @@ protected:
   virtual void HandleNVStorageData(ExternalInterface::NVStorageData const& msg){};
   virtual void HandleNVStorageOpResult(ExternalInterface::NVStorageOpResult const& msg){};
   virtual void HandleFactoryTestResult(ExternalInterface::FactoryTestResult const& msg){};
-  
-  
-  virtual void HandleRobotEnrolledFace(const ExternalInterface::RobotEnrolledFace& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
+  
   // Message senders
   void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
   void SendPing();
@@ -130,7 +128,8 @@ protected:
   void SendGotoObject(const s32 objectID,
                       const f32 distFromObjectOrigin_mm,
                       PathMotionProfile motionProf,
-                      const bool useManualSpeed = false);
+                      const bool useManualSpeed = false,
+                      const bool usePreDockPose = false);
   
   void SendAlignWithObject(const s32 objectID,
                            const f32 distFromMarker_mm,
@@ -324,9 +323,6 @@ private:
   
   void UpdateActualObjectPoses();
   bool ForceAddRobotIfSpecified();
-  
-  
-  
   
   const f32 TIME_UNTIL_READY_SEC = 1.5;
   

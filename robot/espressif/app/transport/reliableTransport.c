@@ -615,5 +615,5 @@ bool ICACHE_FLASH_ATTR ReliableTransport_Update(ReliableConnection* connection)
 
 int16_t ICACHE_FLASH_ATTR ReliableConnection_GetReliableQueueAvailable(ReliableConnection* connection)
 {
-  return ((int16_t)connection->pendingReliableBytes) - ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE;
+  return ReliableTransport_MAX_TOTAL_BYTES_PER_MESSAGE - ((int16_t)connection->pendingReliableBytes);
 }

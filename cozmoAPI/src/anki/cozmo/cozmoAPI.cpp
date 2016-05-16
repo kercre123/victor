@@ -147,24 +147,26 @@ void CozmoAPI::CozmoInstanceRunner::Run()
     {
       Stop();
     }
-    const auto minimumSleepTimeMs = std::chrono::duration<double>( BS_TIME_STEP * 0.2 );
+    
+    const auto minimumSleepTimeMs = std::chrono::milliseconds( (long)(BS_TIME_STEP * 0.2) );
+    
     auto tickNow = std::chrono::system_clock::now();
-    auto timeLeftMs = std::chrono::milliseconds(BS_TIME_STEP) - std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - tickStart);
-    if (timeLeftMs < std::chrono::milliseconds(0))
+    auto ms_left = std::chrono::milliseconds(BS_TIME_STEP) - std::chrono::duration_cast<std::chrono::milliseconds>(tickNow - tickStart);
+    if (ms_left < std::chrono::milliseconds(0))
     {
       // Don't sleep if we're overtime, but only complain if we're more than 10ms overtime
-      if (timeLeftMs < std::chrono::milliseconds(-10))
+      if (ms_left < std::chrono::milliseconds(-10))
       {
-        PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) ran over by %lldms", BS_TIME_STEP, (-timeLeftMs).count());
+        PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) ran over by %lldms", BS_TIME_STEP, (-ms_left).count());
       }
-      // mandatory sleep for 15 milliseconds
-      std::this_thread::sleep_for(minimumSleepTimeMs);
     }
     else
     {
-      // mandatory sleep for 15 milliseconds
-      auto sleepLengthMs = timeLeftMs < minimumSleepTimeMs ? minimumSleepTimeMs : timeLeftMs;
-      std::this_thread::sleep_for(sleepLengthMs);
+      if (ms_left < minimumSleepTimeMs)
+      {
+        ms_left = minimumSleepTimeMs;
+      }
+      std::this_thread::sleep_for(ms_left);
     }
   }
 }

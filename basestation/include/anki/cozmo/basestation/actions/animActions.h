@@ -60,7 +60,7 @@ namespace Anki {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
-      virtual f32 GetTimeoutInSeconds() const override { return 60.f; }
+      virtual f32 GetTimeoutInSeconds() const override { return 10.f; }
       
       virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
       
@@ -124,6 +124,11 @@ namespace Anki {
                         u32 numLoops = 1,bool interruptRunning = true);
     PlayAnimationAction* CreatePlayAnimationAction(Robot& robot, const std::string& animName,
                                                    u32 numLoops = 1,bool interruptRunning = true);
+
+    // This will turn a vector into a compound action of play animation actions (from CreatePlayAnimationAction)
+    IActionRunner* CreatePlayAnimtionListAction(Robot& robot,
+                                                const std::vector< std::string >& animNames,
+                                                bool interruptRunning = true );
 
     class DeviceAudioAction : public IAction
     {

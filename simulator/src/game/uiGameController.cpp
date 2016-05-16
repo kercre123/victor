@@ -273,7 +273,7 @@ namespace Anki {
       
       HandleNVStorageData(msg);
     }
-
+    
     void UiGameController::HandleNVStorageOpResultBase(ExternalInterface::NVStorageOpResult const& msg)
     {
       PRINT_NAMED_INFO("HandleNVStorageOpResult",
@@ -882,13 +882,15 @@ namespace Anki {
     void UiGameController::SendGotoObject(const s32 objectID,
                                           const f32 distFromObjectOrigin_mm,
                                           PathMotionProfile motionProf,
-                                          const bool useManualSpeed)
+                                          const bool useManualSpeed,
+                                          const bool usePreDockPose)
     {
       ExternalInterface::GotoObject msg;
       msg.objectID = objectID;
       msg.distanceFromObjectOrigin_mm = distFromObjectOrigin_mm;
       msg.motionProf = motionProf;
       msg.useManualSpeed = useManualSpeed;
+      msg.usePreDockPose = usePreDockPose;
       
       ExternalInterface::MessageGameToEngine msgWrapper;
       msgWrapper.Set_GotoObject(msg);

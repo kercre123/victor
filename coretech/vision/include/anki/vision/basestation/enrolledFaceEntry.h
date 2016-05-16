@@ -15,7 +15,7 @@
 
 #include "anki/vision/basestation/faceIdTypes.h"
 
-#include "clad/externalInterface/enrolledFaceMessage.h"
+#include "clad/types/enrolledFaceStorage.h"
 
 #include <chrono>
 #include <string>
@@ -26,10 +26,10 @@ namespace Json {
   class Value;
 }
 
-
 namespace Anki {
 namespace Vision {
 
+// TODO: This has gotten complex enough to promote to a class and use setters/getters
 struct EnrolledFaceEntry
 {
   FaceID_t                  faceID;
@@ -44,18 +44,15 @@ struct EnrolledFaceEntry
   Time                      lastSeenTime;           // last time this person was seen
   
   s32                       score            = 1000;  // [0,1000]
-  s32                       nextDataToUpdate = 0;     // index of next data to update
-  s32                       numEnrollments   = 0;     // how many enrollment "examples" stored
-  
-  bool                      isForThisSessionOnly = true;
+  u8                        nextDataToUpdate = 0;     // index of next data to update
   
   EnrolledFaceEntry(FaceID_t withID = UnknownFaceID);
   
   // Faces constructed from Json default to _not_ being for this session only
   EnrolledFaceEntry(FaceID_t withID, Json::Value& json);
   
-  // Instantation from an EnrolledFaceMessage
-  EnrolledFaceEntry(const ExternalInterface::EnrolledFaceMessage& message);
+  // Instantation from an EnrolledFaceStorage
+  EnrolledFaceEntry(const EnrolledFaceStorage& message);
   
   // NOTE: Just sums numEnrollments
   void MergeWith(EnrolledFaceEntry& otherEntry);
@@ -70,8 +67,10 @@ struct EnrolledFaceEntry
   // Returns RESULT_OK if serialization succeeds.
   Result Deserialize(const std::vector<u8>& buffer, size_t& startIndex);
   
-  // Casting operator to convert to an EnrolledFaceMessage
-  explicit operator ExternalInterface::EnrolledFaceMessage() const;
+  // Casting operator to convert to an EnrolledFaceStorage
+  explicit operator EnrolledFaceStorage() const;
+  
+  bool IsForThisSessionOnly() const { return name.empty(); }
   
 }; // class EnrolledFaceEntry
   

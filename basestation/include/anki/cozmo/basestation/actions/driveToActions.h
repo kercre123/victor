@@ -81,8 +81,6 @@ namespace Anki {
       
       bool IsUsingManualSpeed() {return _useManualSpeed;}
       
-      bool     _startedTraversingPath = false;
-      
     private:
       bool     _isGoalSet;
       bool     _driveWithHeadDown;

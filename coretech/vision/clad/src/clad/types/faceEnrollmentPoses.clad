@@ -1,0 +1,29 @@
+/**
+* File: faceEnrollmentPoses.clad
+*
+* Author: Andrew Stein
+* Date:   5/10/2016
+*
+* Description: CLAD enum for various head poses to require for updating a face enrollment
+*
+* Copyright: Anki, Inc. 2016
+**/
+
+namespace Anki {
+namespace Vision {
+
+  enum uint_8 FaceEnrollmentPose
+  {
+    LookingStraight = 0,
+    LookingStraightClose,
+    LookingStraightFar,
+    LookingLeft,
+    LookingRight,
+    LookingUp,
+    LookingDown,
+    
+    Disabled
+  }
+      
+} // namespace Vision
+} // namespace Anki

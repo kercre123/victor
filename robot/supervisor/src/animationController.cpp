@@ -356,7 +356,7 @@ namespace AnimationController {
       if (!ready) {
         if (!_isBufferStarved) {
           _isBufferStarved = true;
-          AnkiWarn( 2, "AnimationController", 10, "IsReadyToPlay.BufferStarved", 0);
+          AnkiWarn( 169, "AnimationController.IsReadyToPlay.BufferStarved", 305, "", 0);
         }
       } else {
         _isBufferStarved = false;
@@ -402,11 +402,9 @@ namespace AnimationController {
               msgID != RobotInterface::EngineToRobot::Tag_animAudioSample)
         {
           // Shut down, and report back what happened
-          Clear();
           RobotInterface::AnimationEnded aem;
           aem.tag = _currentTag;
           RobotInterface::SendMessage(aem);
-          return false;
         }
 
         switch(msgID)
@@ -453,7 +451,7 @@ namespace AnimationController {
           }
           default:
           {
-            AnkiWarn( 2, "AnimationController", 13, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
+            AnkiWarn( 164, "AnimationController.ExpectedAudio", 455, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
             Clear();
             return false;
           }
@@ -518,7 +516,7 @@ namespace AnimationController {
           // (Note that IsReadyToPlay() checks for there being at least _two_
           //  keyframes in the buffer, where a "keyframe" is considered an
           //  audio sample (or silence) or an end-of-animation indicator.)
-          AnkiWarn( 2, "AnimationController", 15, "Ran out of animation buffer after getting audio/silence.", 0);
+          AnkiWarn( 165, "AnimationController.BufferUnexpectedlyEmpty", 451, "Ran out of animation buffer after getting audio/silence.", 0);
           return RESULT_FAIL;
         }
 
@@ -545,16 +543,16 @@ namespace AnimationController {
             msg.tag = _currentTag;
             RobotInterface::SendMessage(msg);
 
-#             if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 16, "StartOfAnimation w/ tag=%d", 1, _currentTag);
+#           if DEBUG_ANIMATION_CONTROLLER
+              AnkiDebug( 168, "AnimationController.StartOfAnimation", 454, "StartOfAnimation w/ tag=%d", 1,  _currentTag);
 #           endif
             break;
           }
           case RobotInterface::EngineToRobot::Tag_animEndOfAnimation:
           {
 #           if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 17, "[t=%dms(%d)] hit EndOfAnimation", 2,
-                    _currentTime_ms, system_get_time());
+              AnkiDebug( 166, "AnimationController.EndOfAnimation", 17, "[t=%dms(%d)] tag %d hit EndOfAnimation", 3,
+                    _currentTime_ms, system_get_time(), _currentTag);
 #           endif
             GetFromBuffer(&msg);
             terminatorFound = true;
@@ -674,7 +672,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & EVENT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 451, "[t=%dms(%d)] event %d.", 3,
+              AnkiDebug( 2, "AnimationController", 456, "[t=%dms(%d)] event %d.", 3,
                     _currentTime_ms, system_get_time(), msg.tag);
 #               endif
 
@@ -746,7 +744,7 @@ namespace AnimationController {
 
           default:
           {
-            AnkiWarn( 2, "AnimationController", 25, "Unexpected message type %d in animation buffer!", 1, msgID);
+            AnkiWarn( 167, "AnimationController.UnexpectedTag", 453, "Unexpected message type %d in animation buffer!", 1, msgID);
             return RESULT_FAIL;
           }
 

@@ -192,13 +192,37 @@ namespace Anki {
       // status window
       //printf("HandleDebugString: %s\n", msg.text.c_str());
     }
-    
-    void WebotsKeyboardController::HandleRobotEnrolledFace(ExternalInterface::RobotEnrolledFace const& msg)
-    {
-      printf("HandleRobotEnrolledFace: Added '%s' with ID=%d\n",
-             msg.name.c_str(), msg.faceID);
-    }
 
+
+    void WebotsKeyboardController::HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg)
+    {
+      switch(msg.actionType)
+      {
+        case RobotActionType::ENROLL_NAMED_FACE:
+        {
+          auto & completionInfo = msg.completionInfo.Get_faceEnrollmentCompleted();
+          
+          printf("RobotEnrolledFace: Added '%s' with ID=%d\n",
+                 completionInfo.name.c_str(), completionInfo.faceID);
+          
+          using namespace ExternalInterface;
+          SayText sayText;
+          sayText.text = completionInfo.name;
+          //sayText.playEvent = GameEvent::OnLearnedPlayerName;
+          sayText.style = SayTextStyle::Normal;
+          
+          SendMessage(MessageGameToEngine(std::move(sayText)));
+          break;
+        } // ENROLL_NAMED_FACE
+          
+        default:
+          // Just ignore other action types
+          break;
+          
+      } // switch(actionType)
+      
+    } // HandleRobotCompletedAction()
+    
     // ============== End of message handlers =================
 
     void WebotsKeyboardController::PreInit()
@@ -1019,16 +1043,16 @@ namespace Anki {
                     break;
                   }
                   
-                  printf("Selecting behavior: %s\n", behaviorName.c_str());
-
                   SendMessage(ExternalInterface::MessageGameToEngine(
                                 ExternalInterface::ActivateBehaviorChooser(BehaviorChooserType::Selection)));
 
                   if( modifier_key & webots::Supervisor::KEYBOARD_ALT ) {
+                    printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
                     SendMessage(ExternalInterface::MessageGameToEngine(
                                   ExternalInterface::ExecuteBehaviorByName(behaviorName)));
                   }
                   else {
+                    printf("Selecting behavior by TYPE: %s\n", behaviorName.c_str());
                     SendMessage(ExternalInterface::MessageGameToEngine(
                                   ExternalInterface::ExecuteBehavior(GetBehaviorType(behaviorName))));
                   }
@@ -1909,17 +1933,23 @@ namespace Anki {
                     std::string userName = userNameField->getSFString();
                     if(!userName.empty())
                     {
-                      printf("Assigning name '%s' to ID %d\n", userName.c_str(), GetLastObservedFaceID());
-                      ExternalInterface::AssignNameToFace assignNameToFace;
-                      assignNameToFace.faceID = GetLastObservedFaceID();
-                      assignNameToFace.name   = userName;
-                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(assignNameToFace)));
+//                      printf("Assigning name '%s' to ID %d\n", userName.c_str(), GetLastObservedFaceID());
+//                      ExternalInterface::AssignNameToFace assignNameToFace;
+//                      assignNameToFace.faceID = GetLastObservedFaceID();
+//                      assignNameToFace.name   = userName;
+//                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(assignNameToFace)));
+                      printf("Enrolling face ID %d with name '%s'\n", GetLastObservedFaceID(), userName.c_str());
+                      ExternalInterface::EnrollNamedFace enrollNamedFace;
+                      enrollNamedFace.faceID   = GetLastObservedFaceID();
+                      enrollNamedFace.name     = userName;
+                      enrollNamedFace.sequence = FaceEnrollmentSequence::Default;
+                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(enrollNamedFace)));
                     } else {
                       // No user name, enable enrollment
-                      ExternalInterface::SetFaceEnrollmentMode setEnrollmentMode;
-                      setEnrollmentMode.mode = Vision::FaceEnrollmentMode::LookingStraight;
+                      ExternalInterface::SetFaceEnrollmentPose setEnrollmentPose;
+                      setEnrollmentPose.pose = Vision::FaceEnrollmentPose::LookingStraight;
                       printf("Enabling enrollment of next face\n");
-                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(setEnrollmentMode)));
+                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(setEnrollmentPose)));
                     }
                     
                   } else {
@@ -1934,6 +1964,10 @@ namespace Anki {
                   turnTowardsPose.maxTurnAngle = M_PI;
                   turnTowardsPose.robotID = 1;
                   SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsPose)));
+                } else if(altPressed && shiftPressed) {
+                  // SHIFT+ALT+F: Erase current face
+                  using namespace ExternalInterface;
+                  SendMessage(MessageGameToEngine(EraseEnrolledFaceByID(GetLastObservedFaceID())));
                 } else {
                   // Just F: Toggle face detection
                   static bool isFaceDetectionEnabled = true;

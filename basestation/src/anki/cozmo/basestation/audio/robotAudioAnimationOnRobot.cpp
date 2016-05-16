@@ -249,10 +249,7 @@ bool RobotAudioAnimationOnRobot::IsAnimationDone() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioAnimationOnRobot::BeginBufferingAudioOnRobotMode()
 {
-  // Set plug-in bypass state - Disable bypass
-  using namespace GameEvent;
-  _audioClient->PostEvent( GenericEvent::Hijack_Audio_Disable_Bypass, GameObjectType::CozmoAnimation );
-  
+ // Begin Loading robot audio buffer by posting animation audio events
   _state = AnimationState::BufferLoading;
   
   const uint32_t firstAudioEventOffset = _animationEvents.front().TimeInMS;

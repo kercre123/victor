@@ -25,6 +25,7 @@
 #include "clad/types/visionModes.h"
 #include "util/helpers/noncopyable.h"
 #include "anki/cozmo/basestation/rollingShutterCorrector.h"
+#include "util/signals/simpleSignal.hpp"
 
 #include <thread>
 #include <mutex>
@@ -197,6 +198,19 @@ struct DockingErrorSignal;
 
     // Links a name with a face ID and sets up the robot's ability to say that name
     void AssignNameToFace(Vision::FaceID_t faceID, const std::string& name);
+    
+		// Enable face enrollment mode and optionally specify the ID for which 
+    // enrollment is allowed (use UnknownFaceID to indicate "any" ID).
+    // Enrollment will automatically disable after numEnrollments. (Use 
+    // a value < 0 to enable ongoing enrollments.)
+		void SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
+															 Vision::FaceID_t forFaceID = Vision::UnknownFaceID,
+															 s32 numEnrollments = -1);
+
+    // Erase faces
+    Result EraseFace(Vision::FaceID_t faceID);
+    Result EraseFace(const std::string& name);
+    void   EraseAllFaces();
     
     // Load/Save face album data to robot
     Result SaveFaceAlbumToRobot();
