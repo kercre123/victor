@@ -229,7 +229,6 @@ namespace Anki {
         const f32 ERRMSG_NOT_IN_POSITION_ANGLE_TOL = DEG_TO_RAD(10);
         const f32 POSE_NOT_IN_POSITION_ANGLE_TOL = DEG_TO_RAD(5);
         
-#if(USE_DOCKING_STEERING_GAINS)
         // Steering controller gains for docking
         const f32 DOCKING_K1 = 0.05f;
         const f32 DOCKING_K2 = 12.f;
@@ -241,7 +240,6 @@ namespace Anki {
         f32 prevK2_;
         f32 prevPathDistOffsetCap_;
         f32 prevPathAngOffsetCap_;
-#endif
         
         // Values related to our path to get use from our current pose to dockPose
         const u8 DIST_AWAY_FROM_BLOCK_FOR_PT_MM = 60;

@@ -356,7 +356,7 @@ namespace AnimationController {
       if (!ready) {
         if (!_isBufferStarved) {
           _isBufferStarved = true;
-          AnkiWarn( 163, "AnimationController.IsReadyToPlay.BufferStarved", 305, "", 0);
+          AnkiWarn( 169, "AnimationController.IsReadyToPlay.BufferStarved", 305, "", 0);
         }
       } else {
         _isBufferStarved = false;
@@ -451,7 +451,7 @@ namespace AnimationController {
           }
           default:
           {
-            AnkiWarn( 164, "AnimationController.ExpectedAudio", 450, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
+            AnkiWarn( 164, "AnimationController.ExpectedAudio", 455, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
             Clear();
             return false;
           }
@@ -672,7 +672,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & EVENT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 451, "[t=%dms(%d)] event %d.", 3,
+              AnkiDebug( 2, "AnimationController", 456, "[t=%dms(%d)] event %d.", 3,
                     _currentTime_ms, system_get_time(), msg.tag);
 #               endif
 
