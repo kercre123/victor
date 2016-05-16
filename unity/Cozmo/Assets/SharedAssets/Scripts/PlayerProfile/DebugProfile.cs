@@ -9,9 +9,11 @@ using System.Collections.Generic;
 public class DebugProfile {
   public bool SOSLoggerEnabled;
   public bool LatencyDisplayEnabled;
+  public bool DebugPauseEnabled;
 
   public DebugProfile() {
     SOSLoggerEnabled = false;
     LatencyDisplayEnabled = false;
+    DebugPauseEnabled = false;
   }
 }

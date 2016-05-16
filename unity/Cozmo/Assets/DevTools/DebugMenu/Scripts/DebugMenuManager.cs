@@ -45,7 +45,7 @@ public class DebugMenuManager : MonoBehaviour {
     CreateDebugDialog();
   }
 
-  private GameBase GetCurrMinigame() {
+  public GameBase GetCurrMinigame() {
     if (HomeHub.Instance != null) {
       if (HomeHub.Instance.MiniGameInstance != null) {
         return HomeHub.Instance.MiniGameInstance;
