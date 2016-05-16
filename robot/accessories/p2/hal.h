@@ -2,59 +2,69 @@
 #ifndef HAL_H__
 #define HAL_H__
 
+// #define DEBUG    // Uncomment this for debug prints on 2m baud UART
+
 #include "reg31512.h"
 #include "portable.h"
 #include "board.h"
+#include "messages.h"
 
 // Temporary holding area for radio payloads (inbound and outbound)
-extern u8 data _radioPayload[32];   // Largest packet supported by chip is 32 bytes
+extern u8 data _radioIn[HAND_LEN];
+extern u8 data _radioOut[HAND_LEN];
 
 // The sync (connect) packet starts at this address so OTA patches can pick it up
 #define SyncPkt 0x76
 #define SyncLen 10
 
-bit RadioHandshake();
-bit RadioBeacon();
-void Advertise();
-
-// Write accelerometer setting
-void AccelWrite(u8 reg, u8 val);
 // Drain the entire accelerometer FIFO into an outbound packet
-// Worst case timing is 146 32768Hz ticks (typical is about 50), so schedule carefully!
 void AccelRead();
+void AccelInit();
 
-// Init and test accelerometer - returns 1 if okay
-bit AccelInit();
+// Complete a handshake with the robot - hop, broadcast, listen, timeout
+bit RadioHandshake();
+void RadioLegacyStart();
 
+// At 2mbaud, UART-print a 1 character note followed by len bytes of hex data
+#ifdef DEBUG
+void DebugPrint(u8 note, u8 idata *hex, u8 len);
+#else
+#define DebugPrint(note, hex, len)
+#endif
+
+/**
+ * These functions are included from the EP3 bootloader
+ * Revise these pointers for the production bootloader!
+ * NOTE:  You must collect the pointers from the "Public Symbols" section later in the map file
+ */
+ 
+// Read bytes from the radio FIFO
+#define RadioRead ((void (code *) (u8 idata *buf, u8 len)) 0x3B17)
+  
+// Configure the radio with a zero-terminated list of radio registers and values
+#define RadioSetup ((void (code *) (u8 code *conf)) 0x397E)
+
+// Hop to the selected channel
+#define RadioHopTo ((void (code *) (u8 channel)) 0x3DC8)
+  
 // Set RGB LED values from _radioPayload[1..12]
-void LedSetValues();
+#define LedSetValues ((void (code *) (void)) 0x3B8F)
+#define LedInit ((void (code *) (void)) 0x3B5F)
 
-// Start LED ISR - this increases power consumption for connected mode
-void LedInit();
-
-// Turn on a single LED (0-15), or 16 for none
-void LightOn(u8 i);
-#define LightsOff() LightOn(16);
-
-// Flash red, green, blue, IR, then the cube ID
-void LedTest();
-
-// Decrypt the contents of PRAM (caller sets which page)
-// If the signature is valid, burn it forever into OTP!
-void OTABurn();
-
-// Am I a charger?  Written by fixture/cube.cpp (also see advertise.c)
-#define IsCharger() (!*(u8 code*)(0x3fe4))
+// Return the model/type from the advertising packet
+#define GetModel ((u8 (code *) (void)) 0x3A52)
+  
+// Am I a charger?
+#define IsCharger() (!GetModel())
 
 // Pet the watchdog - reset after 0.5 seconds (16384 ticks) by default
 #define PetWatchdog() do { WDSV = 64; WDSV = 0; } while(0)
-// 2 second version of the watchdog for advertising
-#define PetSlowWatchdog() do { WDSV = 255; WDSV = 0; } while(0)
 
 // Handy macros to start/monitor/stop a microsecond timer - uses T2 - not reentrant!
-#define TIMER_CONVERT(x) (-x*16/12)
-#define TimerStart(x) do { TL2 = TIMER_CONVERT(x); TH2 = TIMER_CONVERT(x)>>8; T2I0 = 1; } while(0)
+#define TIMER_CONVERT(x) (-(x)*16/24)
+#define TimerStart(x) do { TimerStop(); TH2 = TIMER_CONVERT(x)>>8; TL2 = TIMER_CONVERT(x); T2CON = T2_24 | T2_RUN; } while(0)
 #define TimerStop() T2I0 = 0
 #define TimerMSB() TH2
+#define TimerLSB() TL2
 
 #endif /* HAL_H__ */

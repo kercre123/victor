@@ -171,12 +171,18 @@ static void OTARemoteDevice(uint32_t id) {
 
   EnterState(RADIO_OTA);
 
-  // Tell our device to begin
+  // Tell our device to begin - must set EVERY field
   CapturePacket pair;
+  pair.ticksUntilStart = 132; // Lowest legal value
   pair.hopIndex = 0;
   pair.hopBlackout = OTAAddress.rf_channel;
+  pair.ticksPerBeat = 164;    // 32768/164 = 200Hz
+  pair.beatsPerHandshake = 7; // 1 out of 7 beats handshakes with this cube
+  pair.ticksToListen = 0;     // Currently unused
+  pair.beatsPerRead = 4;
+  pair.beatsUntilRead = 4;    // Should be computed to synchronize all tap data
   pair.patchStart = 0;
-
+  
   uesb_address_desc_t address = { ADV_CHANNEL, id };  
   uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
 
@@ -272,14 +278,19 @@ void uesb_event_handler(uint32_t flags)
       new_addr->address = advert.id;
       new_addr->payload_length = sizeof(AccessoryHandshake);
       new_addr->rf_channel = (new_addr->rf_channel >> 1) ^ (new_addr->rf_channel & 1 ? 0 : 0x2D);
-      new_addr->rf_channel = 85;
-      
-      // Tell the cube to listen on channel 42
+
+      // Tell the cube to start listening
       uesb_address_desc_t address = { ADV_CHANNEL, advert.id };
       CapturePacket pair;
       
+      pair.ticksUntilStart = 132; // Lowest legal value
       pair.hopIndex = 0;
       pair.hopBlackout = new_addr->rf_channel;
+      pair.ticksPerBeat = 164;    // 32768/164 = 200Hz
+      pair.beatsPerHandshake = 7; // 1 out of 7 beats handshakes with this cube
+      pair.ticksToListen = 0;     // Currently unused
+      pair.beatsPerRead = 4;
+      pair.beatsUntilRead = 4;    // Should be computed to synchronize all tap data
       pair.patchStart = CUBE_UPDATE.patchStart;
       
       uesb_write_tx_payload(&address, &pair, sizeof(CapturePacket));
@@ -291,7 +302,7 @@ void uesb_event_handler(uint32_t flags)
     AccessoryHandshake* ap = (AccessoryHandshake*) &rx_payload.data;
 
     #ifdef NATHAN_CUBE_JUNK
-    acc->tx_state.ledStatus[0] = 0x80;
+    acc->tx_state.ledStatus[0] = ap->x;
     #endif
   
     acc->last_received = 0;
@@ -398,7 +409,6 @@ void Radio::prepare(void* userdata) {
     for(int i = 2; i < sizeof(acc->tx_state.ledStatus); i+=3) {
       acc->tx_state.ledStatus[i]++;
     }
-    acc->tx_state.ledStatus[0] = 0;
     #endif
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away

@@ -11,7 +11,7 @@ u8 code bekey[] = { 0xdd,0xed,0x88,0x17,0xdc,0x28,0xe6,0x0f,0x41,0x98,0x76,0xfa,
 #define pram8(x) *((u8 pdata *)(x))
 #define key32(x) *(u32 code *)(bekey+(x))
 
-// Decrypt the contents of _pram (caller sets which page) - return 1 if they are valid
+// Decrypt the contents of _pram (caller sets which page) - if valid, burn to OTP
 // This takes a long time - up to 250ms - so make sure watchdog is pet and accelerometer is off
 void OTABurn()
 {

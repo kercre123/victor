@@ -62,6 +62,7 @@
 #define FIFO_CONFIG_1   0x3E
 #define FIFO_DATA       0x3F
 
+#define BGW_SOFTRESET_MAGIC   0xB6
 
 // Accelerometer Register values  // XXX check these values
 #define RANGE_2G            0x03

@@ -220,6 +220,10 @@ sbit  RFCKEN       = RFCON^2;
 #define XOSC_ON       (1 << 7)
 // OPMCON
 #define OPM_LATCH     (1 << 1)
+// T2CON
+#define T2_24         (1 << 7)
+#define T2_RUN        (1 << 0)
+#define T2_STOP       (0 << 0)
 
 //-----------------------------------------------------------------------------
 // Interrupt Vector Definitions
@@ -249,5 +253,7 @@ sbit  RFCKEN       = RFCON^2;
 #define MISC_ISR()      void misc_isr(void)     interrupt INTERRUPT_MISCIRQ // MISC interrupt (0x63)
 #define ADC_ISR()       void adc_isr(void)      interrupt INTERRUPT_MISCIRQ // ADC interrupt (0x63)
 #define TICK_ISR()      void tick_isr(void)     interrupt INTERRUPT_TICK    // Internal wakeup interrupt (0x6b)
+
+#define RF_START_US     130
 
 #endif

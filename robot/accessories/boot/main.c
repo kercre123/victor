@@ -1,28 +1,18 @@
 /**
- * Cozmo nRF31 "accessory" (cube/charger) firmware
+ * Cozmo nRF31 "accessory" (cube/charger) boot loader
  * Author:  Bryan Hood, Nathan Monson
  *
- * main.c - contains startup code and the main loop
+ * main.c - contains startup code and the main OTA loop
  *
- * The nRF31 is incredibly cheap - too limited for "traditional, well-factored" code
- * Some tips:  http://www.barrgroup.com/Embedded-Systems/How-To/Optimal-C-Code-8051
+ * Accessories are expected to use OTA patches - don't put the main program in here
+ * Rebuilding the bootloader BREAKS all patches - YOU MUST update advertise.c "hardware version"
  *
- * YOU MUST read the .lst files (assembly output) - Keil C51 USUALLY misunderstands your intention
- * Make sure the .lst shows locals "assigned to register" - limit the local's scope until it does
- * Slim the .lst by BREAKING UP expressions - a=*p; p++; is faster/shorter than a=*p++;
- * Use u8 as much as possible - avoid signed integers (char/s8), multiplies, divides, and 16/32-bit
- * Compares: Prefer implicit x !x, then --x, then == !=, then &, then < > as a last resort
- * Always use typed pointers (code, idata, pdata) - NEVER use generic pointers (e.g., memcpy())
- * Try to avoid passing parameters, ESPECIALLY pointers - use global arrays and constants as often as possible
- * Use #define for constants/one-line functions, "code" for arrays - Keil C51 ignores inline/const
- * Global/static initialization is broken - you must zero/set your globals in main()
+ * The bootloader provides library functions for the patches (see p2/hal.h)
+ * BootHAL claims 87 bytes from 0x50..0xA6 - a patch can reclaim that by not using BootHAL
+ * BootHAL also claims 8 bytes from 0x8..0xF for the LED/timer ISR
+ * See main.c in your patch for full definitions
  */
 #include "hal.h"
-
-// OTA works on a patching system - so any variables shared with patches are located here
-// BootHAL claims 87 bytes from 0x50..0xA6 - a patch can reclaim that by not using BootHAL
-// BootHAL also claims 8 bytes from 0x8..0xF for the LED/timer ISR
-// See main.c in your patch for full definitions
 
 // Cube timing is synchronized to the robot using a "Sync packet" (aka Connect packet)
 // (Why isn't this a struct?  Try it.. you're gonna love this compiler!)
@@ -51,7 +41,7 @@ void MainExecution()
   u8 i, dest;
   u8 idata *src;
   
-  PetWatchdog();
+  PetWatchdog();      // XXX: Move UNDER handshake to prevent OTA reboot
   RadioHandshake();
       
   // Set LED values
@@ -86,9 +76,9 @@ void main()
   // Proceed to lower-power advertising mode - return with sync packet filled in
   Advertise();
   
-  // XXX-FEP: Wait for _waitLSB/_waitMSB - subtract 3 ticks for LedInit latency
-  
   // Enter high power consumption mode - watchdog is the best way to exit
+  // XXX: Let the patch call LedInit and manage _waitLSB/_waitMSB delay
+  // _wait delay is -3 ticks for LED init, -3 ticks for radio receive delay
   LedInit();
 
   // If valid, start the requested OTA patch - see makesafe/cube.c for more details

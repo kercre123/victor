@@ -41,13 +41,13 @@ int main (void) {
     SIM_SCGC5_PORTC_MASK |
     SIM_SCGC5_PORTD_MASK |
     SIM_SCGC5_PORTE_MASK;
-  
+
   __disable_irq();
   TimerInit();
   MicroWait(100000);
 
   Power::init();
-
+  
   UART::init();
   EnterRecovery();
 

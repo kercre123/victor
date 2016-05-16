@@ -10,4 +10,6 @@
 #define R2A_BASIC_SETLEDS   0     // Set the LEDs and get basic IMU/tap responses
 #define R2A_OTA             0xF0  // 0xF0..0xFF: Send OTA data - ROBOT MUST REPEAT EACH OTA MESSAGE UNTIL ACKED
 
+#define A2R_SIMPLE_TAP      0     // "Classic" tap message - XYZ + tap count
+
 #endif
