@@ -28,6 +28,7 @@ namespace SpeedTap {
         if (_LastCozmoTimeStamp == -1 && _LastPlayerTimeStamp == -1) {
           return FirstToTap.NoTaps;
         }
+        DAS.Event("SpeedTap.FirstTapper", string.Format("Player Timestamp : {0} - Cozmo Timestamp : {1}", _LastPlayerTimeStamp, _LastCozmoTimeStamp));
         // If one of the two timestamps hasn't been set, other one counts as first
         if ((_LastCozmoTimeStamp == -1) || (_LastPlayerTimeStamp == -1)) {
           if (_LastCozmoTimeStamp != -1) {

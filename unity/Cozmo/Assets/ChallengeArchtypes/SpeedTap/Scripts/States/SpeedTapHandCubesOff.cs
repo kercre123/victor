@@ -18,7 +18,6 @@ namespace SpeedTap {
 
       _SpeedTapGame.CozmoBlock.SetLEDs(0);
       _SpeedTapGame.PlayerBlock.SetLEDs(0);
-      _SpeedTapGame.ResetTapTimestamps();
 
       _CubeOffStartTimestamp_sec = Time.time;
       _OffDuration_sec = _SpeedTapGame.GetLightsOffDurationSec();
@@ -39,6 +38,7 @@ namespace SpeedTap {
     public override void Exit() {
       base.Exit();
 
+      _SpeedTapGame.ResetTapTimestamps();
       // Cancel animation callbacks if any
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, HandlePeekAnimationEnd);
       _SpeedTapGame.CurrentRobot.CancelCallback(HandlePeekAnimationEnd);
