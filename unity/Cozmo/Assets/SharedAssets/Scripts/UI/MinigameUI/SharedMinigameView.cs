@@ -81,6 +81,10 @@ namespace Cozmo {
         }
       }
 
+      [SerializeField]
+      private SpinnerWidget _SpinnerWidgetPrefab;
+      private SpinnerWidget _SpinnerWidgetInstance;
+
       #endregion
 
       #region Difficulty Select
@@ -690,6 +694,15 @@ namespace Cozmo {
       }
 
       #endregion
+
+      public void ShowSpinnerWidget() {
+        CreateWidgetIfNull<SpinnerWidget>(ref _SpinnerWidgetInstance, _SpinnerWidgetPrefab);
+      }
+
+      public void HideSpinnerWidget() {
+        HideWidget(_SpinnerWidgetInstance);
+        _SpinnerWidgetInstance = null;
+      }
     }
   }
 }

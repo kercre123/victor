@@ -37,6 +37,8 @@ namespace FaceEnrollment {
     private void HandleNameEntered(string name) {
       _NameForFace = name;
       SharedMinigameView.ShowWideAnimationSlide("faceEnrollment.instructions", "face_enrollment_wait_instructions", null, HandleInstructionsSlideEntered);
+      SharedMinigameView.ShowShelf();
+      SharedMinigameView.ShowSpinnerWidget();
     }
 
     private void HandleInstructionsSlideEntered() {
@@ -57,6 +59,8 @@ namespace FaceEnrollment {
 
       // hides the instructions slide
       SharedMinigameView.HideGameStateSlide();
+      SharedMinigameView.HideShelf();
+      SharedMinigameView.HideSpinnerWidget();
 
       if (success) {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
