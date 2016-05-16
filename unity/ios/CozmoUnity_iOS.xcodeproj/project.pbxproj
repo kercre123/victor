@@ -860,6 +860,7 @@
 				1D60588E0D05DD3D006BFB54 /* Sources */,
 				1D60588F0D05DD3D006BFB54 /* Frameworks */,
 				46F5C0B61A96C9830078F6E7 /* Copy Mono Assemblies */,
+				46F5C0B71A96C99C0078F6E7 /* Copy CozmoEngine Resources */,
 				4615E0661A98401200285574 /* Symlink App */,
 				49109E091B8BAFB400827BBF /* Embed Frameworks */,
 			);
@@ -955,6 +956,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
 			shellScript = "set -e\n\nBUILT_APP_BUNDLE=\"${BUILT_PRODUCTS_DIR}/${WRAPPER_NAME}\"\n\necho \"UNITY_BUILD_ROOT=${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}\"\necho \"BUILT_APP_BUNDLE=${BUILT_APP_BUNDLE}\"\n\nrm -rf \"${BUILT_APP_BUNDLE}/Data\"\ncp -HRf \"${ANKI_BUILD_UNITY_XCODE_BUILD_DIR}/Data\" \"${BUILT_APP_BUNDLE}\"";
+			showEnvVarsInLog = 0;
+		};
+		46F5C0B71A96C99C0078F6E7 /* Copy CozmoEngine Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Copy CozmoEngine Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "\"${ANKI_BUILD_REPO_ROOT}/project/iosCopyResources.sh\" \"${ANKI_BUILD_REPO_ROOT}/lib/anki/cozmo-engine/resources/config\" \"${ANKI_BUILD_REPO_ROOT}/lib/anki/products-cozmo-assets/\" \"${CONFIGURATION_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/\"\n";
 			showEnvVarsInLog = 0;
 		};
 		83D0C1FB0E6C8D5900EBCE5D /* Run Unity Build */ = {
