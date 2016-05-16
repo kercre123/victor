@@ -645,7 +645,7 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\</OutputDirectory>
+          <OutputDirectory>.\build\fcc\</OutputDirectory>
           <OutputName>fixture-fcc</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
@@ -677,7 +677,7 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>1</RunUserProg2>
-            <UserProg1Name>fromelf --bin build\fixture-fcc.axf --output build\fixture-fcc.bin</UserProg1Name>
+            <UserProg1Name>fromelf --bin build\fcc\fixture-fcc.axf --output build\fixture-fcc.bin</UserProg1Name>
             <UserProg2Name>..\crypto\Release_FIXTURE\makesafe_fixture -prod fixture.safe build\fixture-fcc.bin</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>

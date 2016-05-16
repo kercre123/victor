@@ -45,7 +45,8 @@ void BodyNRF51(void)
   // Send the bootloader and app
   SWDSend(0x20001000, 0x400, 0,       g_BodyBLE,  g_BodyBLEEnd,    0,    0);  
   SWDSend(0x20001000, 0x400, 0x18000, g_Body,     g_BodyEnd,       0,    0);  
-  SWDSend(0x20001000, 0x400, 0x1F000, g_BodyBoot, g_BodyBootEnd,   0,    0);   // XXX: No serial number this time
+  SWDSend(0x20001000, 0x400, 0x1F000, g_BodyBoot, g_BodyBootEnd,   0,    0);   
+  // XXX: No serial number this time - how are we going to add it?
   
   DisableVEXT();  // Even on failure, this should happen
 }

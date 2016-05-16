@@ -109,14 +109,16 @@ void SetFixtureText(void)
   // Show the version number in the corner
   DisplayTextHeightMultiplier(1);
   DisplayTextWidthMultiplier(1);
-  DisplayMoveCursor(55, 110);
 #ifdef FCC
+  DisplayInvert(1);
+  DisplayMoveCursor(55, 108);
   DisplayPutChar('c');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
-  DisplayMoveCursor(55, 0);
+  DisplayMoveCursor(55, 2);
   DisplayPutString("CERT/TEST ONLY");
 #else
+  DisplayMoveCursor(55, 110);
   DisplayPutChar('v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));

@@ -4,16 +4,16 @@
  *
  * main.c - contains main execution and message parsing
  *
- * The nRF31 is incredibly cheap - too limited for "traditional, well-factored" code
+ * The nRF31 is incredibly cheap - too slow and simple for "traditional, well-factored" code
  * Some tips:  http://www.barrgroup.com/Embedded-Systems/How-To/Optimal-C-Code-8051
  *
  * YOU MUST read the .lst files (assembly output) - Keil C51 USUALLY misunderstands your intention
  * Make sure the .lst shows locals "assigned to register" - limit the local's scope until it does
  * Slim the .lst by BREAKING UP expressions - a=*p; p++; is faster/shorter than a=*p++;
+ * USE GLOBAL VARIABLES - avoid passing parameters whenever possible, ESPECIALLY pointers
  * Use u8 as much as possible - avoid signed integers (char/s8), multiplies, divides, and 16/32-bit
  * Compares: Prefer implicit x !x, then --x, then == !=, then &, then < > as a last resort
  * Always use typed pointers (code, idata, pdata) - NEVER use generic pointers (e.g., memcpy())
- * Try to avoid passing parameters, ESPECIALLY pointers - use global arrays and constants as often as possible
  * Use #define for constants/one-line functions, "code" for arrays - Keil C51 ignores inline/const
  * Global/static initialization is broken - you must zero/set your globals in main()
  */
@@ -38,38 +38,95 @@ u8 _patchStart  _at_ SyncPkt+9;// MSB of the start address for the OTA patch to 
 u8 _beatAdjust  _at_ SyncPkt-1;// Delay (positive) or advance (negative) the next beat by X ticks
 u8 _beatCount   _at_ SyncPkt-2;// Incremented when a new beat starts
 
-// Temporary holding area for incoming/outgoing packets
-u8 data _radioPayload[32] _at_ 0x50;    // Largest packet supported by chip is 32 bytes
+// Internal state tracking radio/accelerometer sync
+u8 _hop;        // Current hopping channel (before hopBlackout)
+u8 _shakeWait;  // How long until next handshake
 
-void delay_ms(u8 delay)
+// Sleep until the next beat
+void Sleep()
 {
-  do {
-    u8 j = 16;
-    do {
-      u8 i = 248;
-      while (--i);  // 4 cycles*248*16 is about 1ms (with overhead)
-    } while (--j);
-  } while(--delay);
+  // XXX: Add retention mode sleep to save more battery
+  while (!_beatCount)
+    PWRDWN = STANDBY;
+  PWRDWN = 0;
+  _beatCount--;   // We should never miss >1 beat, but this catches us up if we do
 }
+
+// Perform a radio handshake, then interpret and execute the message
+void MainExecution()
+{
+  Sleep();    // Sleep first, to skip the runt beat at startup
+
+  // XXX: Timing workaround - set LEDs at same moment each time
+  if (R2A_BASIC_SETLEDS == _radioIn[0])
+  {
+    LedSetValues();
+    _radioIn[0] = 255;
+  }
+
+  // Do this first:  If we're ready for a handshake, talk to the robot
+  if (!_shakeWait)
+  {
+    _shakeWait = _shakeBeats;
+    if (RadioHandshake())
+    {
+      PetWatchdog();    // Only if we hear from the robot
+     
+      DebugPrint('r', _radioIn, HAND_LEN);
+      DebugPrint('t', _radioOut, HAND_LEN);
+      
+      // Process future commands here
+    }
+  }
+  
+  // If we're ready for the accelerometer, drain its FIFO
+  if (!_accelWait)
+  {
+    AccelRead();
+    _accelWait = _accelBeats;
+  }
+  
+  // Until next time...
+  _shakeWait--;
+  _accelWait--;
+}
+
+// Startup
 void main()
 {
-  u8 i, j;
-
+  // Wait for robot start time while we initialize everything
+  // XXX-FEP: This should be moved to bootloader
   EA = 0;
+  RTC2CON = 0;
+  RTC2CMP0 = _waitLSB;
+  RTC2CMP1 = _waitMSB;
+  RTC2CON = RTC_COMPARE | RTC_ENABLE;
+
+  // Clear timing variables (there's no static init in patches)
+  _beatCount = _hop = _shakeWait = 0;
   
-  // Do a little light spinny thing to show we got in
-  i = j = 0;
-  do {
-    do {
-      i--;
-      LightOn(i&7);
-      delay_ms(250);
-      LightsOff();
-      //delay_ms(1);
-    } while (i);
-    j += 1;
-  } while (j != 12);
-  
-  // Now just go to sleep forever
-  PWRDWN = RETENTION;
+  // Power up the accelerometer - this takes at least 2ms/70 ticks
+  AccelInit();
+  DebugPrint('s', SyncPkt, ADV_LEN);    // Print the start/sync packet
+  RadioSetup(0x38A0);     // XXX-FEP:  Workaround bootloader TX address
+    
+  // Sleep until robot is ready
+  // XXX-FEP:  The below ops are order-sensitive and hacky - just move to bootloader
+  EA = 0;
+  WUF = 0;
+  PWRDWN = STANDBY;
+  WUF = 0;
+  RTC2CON = 0;
+  EA = 1;
+
+  // XXX legacy:  Old non-hopping robots park on a single channel and sync on first packet
+  if (!_hopIndex)
+    RadioLegacyStart();   // Listen for first packet, adjust timing to match its arrival
+
+  // Start beat counter - we get our first beat in 3 ticks, then properly spaced thereafter
+  LedInit();
+
+  // Keep running until watchdog times us out
+  while (1)
+    MainExecution();
 }
