@@ -16,6 +16,8 @@ public class DebugMenuManager : MonoBehaviour {
 
   private int _LastOpenedDebugTab = 0;
 
+  private bool _DebugPause = false;
+
   private static DebugMenuManager _Instance;
 
   public static DebugMenuManager Instance {
@@ -67,6 +69,7 @@ public class DebugMenuManager : MonoBehaviour {
       if (game != null) {
         if (game.Paused == false) {
           game.PauseGame();
+          _DebugPause = true;
         }
       }
     }
@@ -75,10 +78,13 @@ public class DebugMenuManager : MonoBehaviour {
   private void OnDebugMenuDialogClose(int lastOpenTab) {
     _DebugMenuDialogInstance.OnDebugMenuClosed -= OnDebugMenuDialogClose;
     _LastOpenedDebugTab = lastOpenTab;
-    GameBase game = GetCurrMinigame();
-    if (game != null) {
-      if (game.Paused) {
-        game.UnpauseGame();
+    if (_DebugPause == true) {
+      _DebugPause = false;
+      GameBase game = GetCurrMinigame();
+      if (game != null) {
+        if (game.Paused) {
+          game.UnpauseGame();
+        }
       }
     }
   }
