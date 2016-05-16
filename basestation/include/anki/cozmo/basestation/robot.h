@@ -48,7 +48,6 @@
 #include "anki/cozmo/basestation/imageDeChunker.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/components/movementComponent.h"
-#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/tracePrinter.h"
@@ -57,6 +56,8 @@
 #include "util/signals/simpleSignal.hpp"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/imageTypes.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include <memory>
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
@@ -100,6 +101,7 @@ class MatPiece;
 class MoodManager;
 class PathDolerOuter;
 class ProgressionUnlockComponent;
+class VisionComponent;
 class BlockFilter;
 class RobotPoseHistory;
 class RobotPoseStamp;
@@ -109,6 +111,10 @@ class ActiveCube;
 class CannedAnimationContainer;
 class SpeedChooser;
 class DrivingAnimationHandler;
+  
+namespace Audio {
+  class RobotAudioClient;
+}
 
 typedef enum {
   SAVE_OFF = 0,
@@ -213,8 +219,8 @@ public:
     //
     // Camera / Vision
     //
-    VisionComponent&         GetVisionComponent() { return _visionComponent; }
-    const VisionComponent&   GetVisionComponent() const { return _visionComponent; }
+    VisionComponent&         GetVisionComponent() { assert(_visionComponentPtr); return *_visionComponentPtr; }
+    const VisionComponent&   GetVisionComponent() const { assert(_visionComponentPtr); return *_visionComponentPtr; }
     Vision::Camera           GetHistoricalCamera(const RobotPoseStamp& p, TimeStamp_t t) const;
     Vision::Camera           GetHistoricalCamera(TimeStamp_t t_request) const;
     Pose3d                   GetHistoricalCameraPose(const RobotPoseStamp& histPoseStamp, TimeStamp_t t) const;
@@ -350,6 +356,10 @@ public:
     bool IsCarryingObject()   const {return _carryingObjectID.IsSet(); }
     bool IsPickingOrPlacing() const {return _isPickingOrPlacing;}
     bool IsPickedUp()         const {return _isPickedUp;}
+
+    // returns true if the robot is on it's back. Note that this does not correspond 1 to 1 with the
+    // RobotOnBack message, because there is some throttling / delay on the mesage
+    bool IsOnBack() const {return _isOnBack;}
     
     void SetCarryingObject(ObjectID carryObjectID);
     void UnSetCarryingObjects(bool topOnly = false);
@@ -379,7 +389,8 @@ public:
                           const f32 placementOffsetY_mm = 0,
                           const f32 placementOffsetAngle_rad = 0,
                           const bool useManualSpeed = false,
-                          const u8 numRetries = 2);
+                          const u8 numRetries = 2,
+                          const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING);
   
     // Same as above but without specifying image location for marker
     Result DockWithObject(const ObjectID objectID,
@@ -393,7 +404,8 @@ public:
                           const f32 placementOffsetY_mm = 0,
                           const f32 placementOffsetAngle_rad = 0,
                           const bool useManualSpeed = false,
-                          const u8 numRetries = 2);
+                          const u8 numRetries = 2,
+                          const DockingMethod dockingMethod = DockingMethod::BLIND_DOCKING);
     
     // Transitions the object that robot was docking with to the one that it
     // is carrying, and puts it in the robot's pose chain, attached to the
@@ -423,7 +435,11 @@ public:
     // returns true if we should try to stack on top of the given object, false if something would prevent it,
     // for example if we think that block has something on top or it's too high to reach
     bool CanStackOnTopOfObject(const ObservableObject& object) const;
-  
+
+    // let's the robot decide if we should try to pick up the given object (assuming it is flat, not picking up
+    // out of someone's hand). Checks that object is flat, not moving, no unknown pose, etc.
+    bool CanPickUpObjectFromGround(const ObservableObject& object) const;
+    
     /*
     //
     // Proximity Sensors
@@ -454,7 +470,7 @@ public:
     void SetSaveImageMode(const SaveMode_t mode);
     
     // Return the timestamp of the last _processed_ image
-    TimeStamp_t GetLastImageTimeStamp() { return _visionComponent.GetLastProcessedImageTimeStamp(); }
+    TimeStamp_t GetLastImageTimeStamp();
   
     // =========== Actions Commands =============
     
@@ -521,7 +537,7 @@ public:
     AnimationStreamer& GetAnimationStreamer() { return _animationStreamer; }
   
     // =========== Audio =============
-    Audio::RobotAudioClient* GetRobotAudioClient() { return &_audioClient; }
+    Audio::RobotAudioClient* GetRobotAudioClient() { return _audioClient.get(); }
   
     // Ask the UI to play a sound for us
     // TODO: REMOVE OLD AUDIO SYSTEM
@@ -757,8 +773,9 @@ public:
     FaceWorld         _faceWorld;
   
     BehaviorManager  _behaviorMgr;
-    
   
+    ///////// Audio /////////
+    std::unique_ptr<Audio::RobotAudioClient> _audioClient;
   
     ///////// Animation /////////
     CannedAnimationContainer&   _cannedAnimations;
@@ -775,7 +792,7 @@ public:
     //ActionQueue           _actionQueue;
     ActionList              _actionList;
     MovementComponent       _movementComponent;
-    VisionComponent         _visionComponent;
+    VisionComponent*        _visionComponentPtr;
     NVStorageComponent      _nvStorageComponent;
     TextToSpeechComponent  _textToSpeechComponent;
   
@@ -872,6 +889,9 @@ public:
     // Unless you know what you're doing you probably want to use
     // the public function SetNewPose()
     void SetPose(const Pose3d &newPose);
+
+    // helper for CanStackOnTopOfObject and CanPickUpObjectFromGround
+    bool CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const;
   
     // Pose history
     Result ComputeAndInsertPoseIntoHistory(const TimeStamp_t t_request,
@@ -929,9 +949,6 @@ public:
     void SetProxSensorData(const ProxSensor_t sensor, u8 value, bool blocked) {_proxVals[sensor] = value; _proxBlocked[sensor] = blocked;}
     */
   
-    ///////// Audio /////////
-    Audio::RobotAudioClient _audioClient;
-    
     ///////// Mood/Emotions ////////
     MoodManager*         _moodManager;
 

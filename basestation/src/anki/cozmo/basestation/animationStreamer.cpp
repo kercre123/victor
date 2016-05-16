@@ -72,17 +72,19 @@ namespace Cozmo {
         return NotAnimatingTag;
       }
       
-      using namespace ExternalInterface;
       PRINT_NAMED_WARNING("AnimationStreamer.SetStreamingAnimation.Aborting",
                           "Animation %s is interrupting animation %s",
                           anim != nullptr ? anim->GetName().c_str() : "NULL",
                           _streamingAnimation->GetName().c_str());
-      robot.GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
     }
     
     // If there's something already streaming or we're purposefully clearing the buffer, abort
     if(nullptr != _streamingAnimation || nullptr == anim)
     {
+      if (_tag != NotAnimatingTag) {
+        using namespace ExternalInterface;        
+        robot.GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
+      }
       Abort(robot);
     }
     
@@ -155,8 +157,7 @@ namespace Cozmo {
     // tag in use
     ++_tagCtr;
     while(_tagCtr == AnimationStreamer::NotAnimatingTag ||
-          _tagCtr == AnimationStreamer::IdleAnimationTag ||
-          _faceLayers.find(_tagCtr) != _faceLayers.end())
+          _tagCtr == AnimationStreamer::IdleAnimationTag)
     {
       ++_tagCtr;
     }
@@ -179,6 +180,10 @@ namespace Cozmo {
   {
     if(nullptr != _streamingAnimation)
     {
+      PRINT_NAMED_INFO("AnimationStreamer.Abort",
+                       "Tag: %d, %s, startOfAnimationSent: %d, endOfAnimationSent: %d",
+                       _tag, _streamingAnimation->GetName().c_str(), _startOfAnimationSent, _endOfAnimationSent);
+      
       // Tell the robot to abort
       robot.AbortAnimation();
       _startOfAnimationSent = false;
@@ -258,12 +263,7 @@ namespace Cozmo {
       
 #     if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       // Prep sound
-      {
-        using namespace Audio;
-        const RobotAudioClient::AnimationMode mode = robot.IsPhysical() ?
-          RobotAudioClient::AnimationMode::PlayOnRobot : RobotAudioClient::AnimationMode::PlayOnDevice;
-        _audioClient.CreateAudioAnimation( anim , mode);
-      }
+      _audioClient.CreateAudioAnimation( anim );
 #     endif
       
 #     if PLAY_ROBOT_AUDIO_ON_DEVICE
@@ -913,6 +913,8 @@ namespace Cozmo {
       BufferAudioToSend( sendSilence, _startTime_ms, _streamingTime_ms );
       
       if(!_startOfAnimationSent) {
+        IncrementTagCtr();
+        _tag = _tagCtr;
         SendStartOfAnimation();
       }
       

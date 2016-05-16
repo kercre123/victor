@@ -9,10 +9,18 @@
 #include "anki/cozmo/csharp-binding/csharp-binding.h"
 
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
+#include "anki/cozmo/csharp-binding/dasLoggerProvider.h"
+#include "anki/cozmo/cozmoAPI.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "anki/common/basestation/jsonTools.h"
+#include "anki/common/basestation/utils/data/dataPlatform.h"
+
+#include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+#include "util/logging/printfLoggerProvider.h"
+#include "util/logging/sosLoggerProvider.h"
+#include "util/logging/multiLoggerProvider.h"
 
 #include <algorithm>
 #include <string>
@@ -25,17 +33,24 @@
 #endif
 #endif
 
+#if ANKI_DEV_CHEATS
+#include "anki/cozmo/basestation/debug/devLoggingSystem.h"
+#include "util/logging/saveToFileLoggerProvider.h"
+#include "util/logging/rollingFileLogger.h"
+#endif
+
 #ifdef USE_IOS
 #include "anki/cozmo/csharp-binding/ios/ios-binding.h"
 #endif
 
 using namespace Anki;
 using namespace Anki::Cozmo;
-#ifdef USE_IOS
-using namespace Anki::Cozmo::CSharpBinding;
-#endif
 
-bool initialized = false;
+const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
+const char* VIZ_HOST_IP = "127.0.0.1";
+
+CozmoAPI* engineAPI = nullptr;
+Anki::Util::Data::DataPlatform* dataPlatform = nullptr;
 
 void Unity_DAS_Event(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount) {
   std::vector<std::pair<const char*, const char *>> keyValues;
@@ -82,26 +97,103 @@ void Unity_DAS_SetGlobal(const char* key, const char* value)
   Anki::Util::sSetGlobal(key,value);
 }
 
+void configure_engine(Json::Value config)
+{
+  if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
+    config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
+  }
+  if(!config.isMember(AnkiUtil::kP_VIZ_HOST_IP)) {
+    config[AnkiUtil::kP_VIZ_HOST_IP] = VIZ_HOST_IP;
+  }
+  if(!config.isMember(AnkiUtil::kP_ROBOT_ADVERTISING_PORT)) {
+    config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT] = ROBOT_ADVERTISING_PORT;
+  }
+  if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
+    config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
+  }
+  
+  config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
+  config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
+}
+
 int cozmo_startup(const char *configuration_data)
 {
-    int result = (int)RESULT_OK;
-    
+  int result = (int)RESULT_OK;
+  
+  if (engineAPI != nullptr) {
+      PRINT_STREAM_ERROR("cozmo_startup", "Game already initialized.");
+      return (int)RESULT_FAIL;
+  }
+  
+  Json::Reader reader;
+  Json::Value config;
+  if (!reader.parse(configuration_data, configuration_data + std::strlen(configuration_data), config)) {
+      PRINT_STREAM_ERROR("cozmo_startup", "json configuration parsing error: " << reader.getFormattedErrorMessages());
+      return (int)RESULT_FAIL;
+  }
+
+  // Create the data platform with the folders sent from Unity
+  std::string filesPath = config["DataPlatformFilesPath"].asCString();
+  std::string cachePath = config["DataPlatformCachePath"].asCString();
+  std::string externalPath = config["DataPlatformExternalPath"].asCString();
+  std::string resourcesPath = config["DataPlatformResourcesPath"].asCString();
+
+  dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
+
+  // Initialize logging
+  #if ANKI_DEV_CHEATS
+    DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, ""));
+  #endif
+  
+  Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({
+    new Util::SosLoggerProvider()
 #ifdef USE_IOS
-    result = cozmo_engine_create(configuration_data);
+    , new Util::DasLoggerProvider() // DAS is not working on Android yet
+#endif
+#if ANKI_DEV_CHEATS
+    , new Util::SaveToFileLoggerProvider(DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory() + "/print")
+#endif
+  });
+  Anki::Util::gLoggerProvider = loggerProvider;
+  
+  PRINT_NAMED_INFO("cozmo_startup", "Creating engine");
+  PRINT_NAMED_DEBUG("cozmo_startup", "Initialized data platform with filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s", filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());
+
+#ifdef USE_IOS
+    result = Anki::Cozmo::iOSBinding::cozmo_startup(dataPlatform);
 #endif
     
-    return result;
+  configure_engine(config);
+
+  Cozmo::CozmoAPI* created_engine = new Cozmo::CozmoAPI();
+
+  bool engineResult = created_engine->StartRun(dataPlatform, config);
+  if (! engineResult) {
+    delete created_engine;
+    return (int)engineResult;
+  }
+  
+  engineAPI = created_engine;
+  
+  return result;
 }
 
 int cozmo_shutdown()
 {
-    int result = (int)RESULT_OK;
+  int result = (int)RESULT_OK;
     
 #ifdef USE_IOS
-    result = cozmo_engine_destroy();
+    result = Anki::Cozmo::iOSBinding::cozmo_shutdown();
 #endif
     
-    return result;
+  Anki::Util::SafeDelete(engineAPI);
+  Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
+#if ANKI_DEV_CHEATS
+  DevLoggingSystem::DestroyInstance();
+#endif
+  Anki::Util::SafeDelete(dataPlatform);
+
+  return result;
 }
 
 int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
@@ -109,7 +201,7 @@ int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
   int result = (int)RESULT_OK;
   
 #ifdef USE_IOS
-  result = cozmo_engine_wifi_setup(wifiSSID, wifiPasskey);
+  result = Anki::Cozmo::iOSBinding::cozmo_engine_wifi_setup(wifiSSID, wifiPasskey);
 #endif
   
   return result;
@@ -117,6 +209,6 @@ int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
 
 void cozmo_send_to_clipboard(const char* log) {
 #ifdef USE_IOS
-  cozmo_engine_send_to_clipboard(log);
+  Anki::Cozmo::iOSBinding::cozmo_engine_send_to_clipboard(log);
 #endif
 }

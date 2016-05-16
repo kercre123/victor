@@ -16,6 +16,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/ankiEventUtil.h"
 #include "anki/cozmo/basestation/pathPlanner.h"
 #include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
@@ -250,7 +251,7 @@ void Robot::HandleBlockPickedUp(const AnkiEvent<RobotInterface::RobotToEngine>& 
 
   // Note: this returns the vision system to whatever mode it was in before
   // it was docking/tracking
-  _visionComponent.EnableMode(VisionMode::Tracking, false);
+  _visionComponentPtr->EnableMode(VisionMode::Tracking, false);
 }
 
 void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -268,8 +269,8 @@ void Robot::HandleBlockPlaced(const AnkiEvent<RobotInterface::RobotToEngine>& me
     SetLastPickOrPlaceSucceeded(false);
   }
 
-  _visionComponent.EnableMode(VisionMode::DetectingMarkers, true);
-  _visionComponent.EnableMode(VisionMode::Tracking, false);
+  _visionComponentPtr->EnableMode(VisionMode::DetectingMarkers, true);
+  _visionComponentPtr->EnableMode(VisionMode::Tracking, false);
 
 }
 
@@ -685,7 +686,7 @@ void Robot::HandleImageChunk(const AnkiEvent<RobotInterface::RobotToEngine>& mes
     Vision::ImageRGB image(height,width,cvImg.data);
     image.SetTimestamp(payload.frameTimeStamp);
     
-    _visionComponent.GetImuDataHistory().CalculateTimestampForImageIMU(payload.imageId, payload.frameTimeStamp, RollingShutterCorrector::timeBetweenFrames_ms, height);
+    _visionComponentPtr->GetImuDataHistory().CalculateTimestampForImageIMU(payload.imageId, payload.frameTimeStamp, RollingShutterCorrector::timeBetweenFrames_ms, height);
     
     /* For help debugging COZMO-694:
     PRINT_NAMED_INFO("Robot.HandleImageChunk.ImageReady",
@@ -838,7 +839,7 @@ void Robot::HandleImageImuData(const AnkiEvent<RobotInterface::RobotToEngine>& m
 {
   const ImageImuData& payload = message.GetData().Get_imageGyro();
   
-  _visionComponent.GetImuDataHistory().AddImuData(payload.imageId,
+  _visionComponentPtr->GetImuDataHistory().AddImuData(payload.imageId,
                                                   payload.rateX,
                                                   payload.rateY,
                                                   payload.rateZ,

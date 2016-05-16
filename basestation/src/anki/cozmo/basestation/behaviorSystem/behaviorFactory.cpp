@@ -20,11 +20,11 @@
 #include "../behaviors/exploration/behaviorExploreLookAroundInPlace.h"
 #include "../behaviors/exploration/behaviorExploreMarkedCube.h"
 #include "../behaviors/exploration/behaviorExploreVisitPossibleMarker.h"
+#include "anki/cozmo/basestation/behaviors/behaviorAdmireStack.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFactoryTest.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFindFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorFlipDownFromWheelie.h"
-#include "anki/cozmo/basestation/behaviors/behaviorFollowMotion.h"
 #include "anki/cozmo/basestation/behaviors/behaviorInteractWithFaces.h"
 #include "anki/cozmo/basestation/behaviors/behaviorLookAround.h"
 #include "anki/cozmo/basestation/behaviors/behaviorNone.h"
@@ -34,11 +34,12 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPickup.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnBack.h"
+#include "anki/cozmo/basestation/behaviors/behaviorReactToOnCharger.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToStop.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
+#include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
-
 
 
 namespace Anki {
@@ -105,11 +106,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToPoke:
     {
       newBehavior = new BehaviorReactToPoke(robot, config);
-      break;
-    }
-    case BehaviorType::FollowMotion:
-    {
-      newBehavior = new BehaviorFollowMotion(robot, config);
       break;
     }
     case BehaviorType::PlayAnim:
@@ -186,6 +182,21 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     {
       newBehavior = new BehaviorReactToRobotOnBack(robot, config);
       break;     
+    }
+    case BehaviorType::StackBlocks:
+    {
+      newBehavior = new BehaviorStackBlocks(robot, config);
+      break;
+    }
+    case BehaviorType::AdmireStack:
+    {
+      newBehavior = new BehaviorAdmireStack(robot, config);
+      break;
+    }
+    case BehaviorType::ReactToOnCharger:
+    {
+      newBehavior = new BehaviorReactToOnCharger(robot, config);
+      break;
     }
     case BehaviorType::Count:
     {

@@ -48,12 +48,15 @@ namespace Anki {
     QR
   };
   
+  // Returns x for the linear system Ax = b
+  // 1. b and x are columns stored as a SmallMatrix
   template<s32 M, s32 N, typename T>
   Result LeastSquares(const SmallMatrix<M, N, T>&   A,
                       const SmallMatrix<M, 1, T>&   b,
                       SmallMatrix<N,1,T>&           x,
                       LeastSquaresMethod            method = LeastSquaresMethod::LU);
   
+  // 2. b and x are stored as vectors (points)
   template<s32 M, s32 N, typename T>
   Result LeastSquares(const SmallMatrix<M, N, T>&   A,
                       const Point<M,T>&             b,

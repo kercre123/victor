@@ -136,10 +136,6 @@ void RobotAudioAnimationOnDevice::PrepareAnimation()
     PRINT_NAMED_INFO("RobotAudioAnimationOnDevice::PrepareAnimation", "Animation %s", _animationName.c_str());
   }
   
-  // Set plug-in bypass state - Enable Bypass
-  using namespace GameEvent;
-  _audioClient->PostEvent( GenericEvent::Hijack_Audio_Enable_Bypass, GameObjectType::CozmoAnimation );
-  
   // Use audio controller to play sounds therefore we are ready to go
   _state = AnimationState::BufferReady;
 }

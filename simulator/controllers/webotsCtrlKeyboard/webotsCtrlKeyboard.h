@@ -42,9 +42,7 @@ protected:
   virtual void HandleDebugString(ExternalInterface::DebugString const& msg) override;
   virtual void HandleNVStorageData(const ExternalInterface::NVStorageData &msg) override;
   virtual void HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg) override;
-
-  virtual void HandleRobotEnrolledFace(const ExternalInterface::RobotEnrolledFace& msg) override;
-
+  virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg) override;
 private:
 
   bool _shouldQuit = false;

@@ -26,7 +26,7 @@ namespace Audio {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AudioEngineClient::SetMessageHandler( AudioEngineMessageHandler* messageHandler )
 {
-  ASSERT_NAMED(nullptr != messageHandler, "Can NOT set message handler to NULL");
+  ASSERT_NAMED(nullptr != messageHandler, "AudioEngineClient.SetMessageHandler.MessageHandlerNull");
   // Subscribe to Audio Messages
   _messageHandler = messageHandler;
   auto callback = [this]( const AnkiEvent<MessageAudioClient>& event ) {
@@ -73,7 +73,7 @@ void AudioEngineClient::StopAllEvents( GameObjectType gameObject )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void AudioEngineClient::PostGameState( GameState::StateGroupType gameStateGroup, GameState::GenericState gameState )
+void AudioEngineClient::PostGameState( GameState::StateGroupType gameStateGroup, GameState::GenericState gameState )
 {
   if ( nullptr != _messageHandler ) {
     const MessageAudioClient msg( (PostAudioGameState( gameStateGroup, gameState )) );
@@ -85,9 +85,9 @@ void AudioEngineClient::StopAllEvents( GameObjectType gameObject )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void AudioEngineClient::PostSwitchState( SwitchState::SwitchGroupType switchGroup,
-                                           SwitchState::GenericSwitch switchState,
-                                           GameObjectType gameObject )
+void AudioEngineClient::PostSwitchState( SwitchState::SwitchGroupType switchGroup,
+                                         SwitchState::GenericSwitch switchState,
+                                         GameObjectType gameObject )
 {
   if ( nullptr != _messageHandler ) {
     const MessageAudioClient msg( PostAudioSwitchState( switchGroup, switchState, gameObject ) );

@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/audio/audioBusses.h"
 #include "clad/audio/audioGameObjectTypes.h"
 #include "clad/audio/audioParameterTypes.h"
 #include "util/dispatchQueue/dispatchQueue.h"
@@ -136,15 +137,15 @@ AudioController::~AudioController()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& eventName,
+AudioEngine::AudioPlayingId AudioController::PostAudioEvent( const std::string& eventName,
                                                              AudioEngine::AudioGameObject gameObjectId,
                                                              AudioEngine::AudioCallbackContext* callbackContext )
 {
-  AudioPlayingID playingId = kInvalidAudioPlayingID;
+  AudioPlayingId playingId = kInvalidAudioPlayingId;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
     playingId = _audioEngine->PostEvent( eventName, gameObjectId, callbackContext );
-    if ( kInvalidAudioPlayingID != playingId &&
+    if ( kInvalidAudioPlayingId != playingId &&
         nullptr != callbackContext ) {
       callbackContext->SetPlayId( playingId );
       callbackContext->SetDestroyCallbackFunc( [this] ( const AudioCallbackContext* thisContext )
@@ -153,13 +154,13 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& 
                                               } );
       _eventCallbackContexts.emplace( playingId, callbackContext );
     }
-    else if ( kInvalidAudioPlayingID == playingId &&
+    else if ( kInvalidAudioPlayingId == playingId &&
              nullptr != callbackContext ) {
       // Event Failed and there is a callback
       // Perform Error callback for Event Failed and delete callbackContext
-      const AudioEventID eventId = _audioEngine->GetAudioHashFromString( eventName );
+      const AudioEventId eventId = _audioEngine->GetAudioHashFromString( eventName );
       callbackContext->HandleCallback( AudioErrorCallbackInfo( gameObjectId,
-                                                               kInvalidAudioPlayingID,
+                                                               kInvalidAudioPlayingId,
                                                                eventId,
                                                                AudioEngine::AudioCallbackErrorType::EventFailed ) );
       Util::SafeDelete( callbackContext );
@@ -170,15 +171,15 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( const std::string& 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioEventID eventId,
+AudioEngine::AudioPlayingId AudioController::PostAudioEvent( AudioEngine::AudioEventId eventId,
                                                              AudioEngine::AudioGameObject gameObjectId,
                                                              AudioEngine::AudioCallbackContext* callbackContext  )
 {
-  AudioPlayingID playingId = kInvalidAudioPlayingID;
+  AudioPlayingId playingId = kInvalidAudioPlayingId;
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
     playingId = _audioEngine->PostEvent( eventId, gameObjectId, callbackContext );
-    if ( kInvalidAudioPlayingID != playingId &&
+    if ( kInvalidAudioPlayingId != playingId &&
          nullptr != callbackContext ) {
       callbackContext->SetPlayId( playingId );
       callbackContext->SetDestroyCallbackFunc( [this] ( const AudioCallbackContext* thisContext )
@@ -187,12 +188,12 @@ AudioEngine::AudioPlayingID AudioController::PostAudioEvent( AudioEngine::AudioE
       } );
       _eventCallbackContexts.emplace( playingId, callbackContext );
     }
-    else if ( kInvalidAudioPlayingID == playingId &&
+    else if ( kInvalidAudioPlayingId == playingId &&
               nullptr != callbackContext ) {
       // Event Failed and there is a callback
       // Perform Error callback for Event Failed and delete callbackContext
       callbackContext->HandleCallback( AudioErrorCallbackInfo( gameObjectId,
-                                                               kInvalidAudioPlayingID,
+                                                               kInvalidAudioPlayingId,
                                                                eventId,
                                                                AudioEngine::AudioCallbackErrorType::EventFailed ) );
       Util::SafeDelete( callbackContext );
@@ -260,13 +261,42 @@ bool AudioController::SetParameter( AudioEngine::AudioParameterId parameterId,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioGameObject AudioController::GetAvailableRobotAudioBuffer( RobotAudioBuffer*& out_buffer )
+RobotAudioBuffer* AudioController::RegisterRobotAudioBuffer( AudioEngine::AudioGameObject gameObject,
+                                                             AudioEngine::AudioPluginId pluginId )
 {
-  // TODO: Need to finish this!!!
-  // Need a method to find an audio buffer it's coresponding game object that are ready to use
-  out_buffer = GetAudioBuffer( 0 ); // This is just until we update the wwise project with multiple buffers
+  RobotAudioBuffer* buffer = new RobotAudioBuffer();
+  const auto it = _robotAudioBufferIdMap.emplace( pluginId, buffer );
+  _gameObjectPluginIdMap.emplace( gameObject, pluginId );
+  
+  if ( !it.second ) {
+    // If buffer already exist
+    delete buffer;
+    PRINT_NAMED_ERROR( "AudioController.RegisterRobotAudioBuffer",
+                       "Robot buffer already exist! PluginId: %d GameObject: %u",
+                       pluginId, static_cast<uint32_t>( gameObject ) );
+  }
+  
+  return it.first->second;
+}
 
-  return static_cast<AudioEngine::AudioGameObject>( GameObjectType::CozmoAnimation );
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotAudioBuffer* AudioController::GetRobotAudioBufferWithGameObject( AudioEngine::AudioGameObject gameObject ) const
+{
+  const auto it = _gameObjectPluginIdMap.find( gameObject );
+  if ( it != _gameObjectPluginIdMap.end() ) {
+    return GetRobotAudioBufferWithPluginId( it->second );
+  }
+  return nullptr;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotAudioBuffer* AudioController::GetRobotAudioBufferWithPluginId( AudioEngine::AudioPluginId pluginId ) const
+{
+  const auto it = _robotAudioBufferIdMap.find( pluginId );
+  if ( it != _robotAudioBufferIdMap.end() ) {
+    return it->second;
+  }
+  return nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -277,6 +307,36 @@ bool AudioController::RegisterGameObject( AudioEngine::AudioGameObject gameObjec
 #if USE_AUDIO_ENGINE
   if ( _isInitialized ) {
     success = _audioEngine->RegisterAudioGameObject( gameObjectId, gameObjectName );
+  }
+#endif
+  
+  return success;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AudioController::SetGameObjectAuxSendValues( AudioEngine::AudioGameObject gameObject,
+                                                  const AuxSendList& auxSendValues )
+{
+  bool success = false;
+  
+#if USE_AUDIO_ENGINE
+  if ( _isInitialized ) {
+    success = _audioEngine->SetGameObjectAuxSendValues( gameObject, auxSendValues );
+  }
+#endif
+  
+  return success;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AudioController::SetGameObjectOutputBusVolume( AudioEngine::AudioGameObject gameObject,
+                                                    AudioEngine::AudioReal32 controlVolume )
+{
+  bool success = false;
+  
+#if USE_AUDIO_ENGINE
+  if ( _isInitialized ) {
+    success = _audioEngine->SetGameObjectOutputBusVolume( gameObject, controlVolume );
   }
 #endif
   
@@ -298,24 +358,19 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   using namespace PlugIns;
   // Setup CozmoPlugIn & RobotAudioBuffer
   _hijackAudioPlugIn = new HijackAudioPlugIn( static_cast<uint32_t>( AnimConstants::AUDIO_SAMPLE_RATE ), static_cast<uint16_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) );
-  
-  // Posible plug-ids
-  // TODO: Need to pair with game object
-//  std::vector<int32_t> ids = { 1, 2, 3, 4 };
-  std::vector<int32_t> ids = { 0 }; // Use this until we setup wwise to work with multiple plug-ins
-
-  
-  for ( auto anId : ids ) {
-    _robotAudioBufferPool.emplace( anId, new RobotAudioBuffer() );
-  } 
 
   // Setup Callbacks
   _hijackAudioPlugIn->SetCreatePlugInCallback( [this] ( const uint32_t plugInId )
   {
-    PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback!" );
-    RobotAudioBuffer* buffer = GetAudioBuffer( plugInId );
-    assert( nullptr != buffer ); // Catch mistakes with wwise project
-    buffer->PrepareAudioBuffer();
+    PRINT_NAMED_INFO( "AudioController.Initialize", "Create PlugIn Callback! PluginId: %d", plugInId );
+    RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
+    // Catch mistakes with wwise project
+    ASSERT_NAMED( buffer != nullptr,
+                  "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.SetCreatePlugInCallback.RobotAudioBufferNull");
+    if ( buffer != nullptr ) {
+      buffer->PrepareAudioBuffer();
+    }
+    
     
 #if HijackAudioPlugInDebugLogs
     _plugInLog.emplace_back( TimeLog( LogEnumType::CreatePlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
@@ -324,11 +379,16 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   
   _hijackAudioPlugIn->SetDestroyPluginCallback( [this] ( const uint32_t plugInId )
   {
-    PRINT_NAMED_INFO( "AudioController.Initialize", "Create Destroy Callback!" );
-    RobotAudioBuffer* buffer = GetAudioBuffer( plugInId );
-    assert( nullptr != buffer ); // Catch mistakes with wwise project
+    PRINT_NAMED_INFO( "AudioController.Initialize", "Create Destroy Callback! PluginId: %d", plugInId );
+    RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
+    // Catch mistakes with wwise project
+    ASSERT_NAMED( buffer != nullptr,
+                  "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.SetDestroyPluginCallback.RobotAudioBufferNull");
     // Done with voice clear audio buffer
-    buffer->ClearCache();
+    if ( buffer != nullptr ) {
+      buffer->ClearCache();
+    }
+    
     
 #if HijackAudioPlugInDebugLogs
     _plugInLog.emplace_back( TimeLog( LogEnumType::DestoryPlugIn, "", Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
@@ -338,12 +398,16 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
   
   _hijackAudioPlugIn->SetProcessCallback( [this] ( const uint32_t plugInId, const uint8_t* frames, const uint32_t frameCount )
   {
-    RobotAudioBuffer* buffer = GetAudioBuffer( plugInId );
-    assert( nullptr != buffer ); // Catch mistakes with wwise project
-    buffer->UpdateBuffer( frames, frameCount );
+    RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
+    // Catch mistakes with wwise project
+    ASSERT_NAMED( buffer != nullptr,
+                  "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.GetRobotAudioBufferWithPluginId.RobotAudioBufferNull");
+    if ( buffer != nullptr ) {
+      buffer->UpdateBuffer( frames, frameCount );
+    }
      
 #if HijackAudioPlugInDebugLogs
-     _plugInLog.emplace_back( TimeLog( LogEnumType::Update, "FrameCount: " + std::to_string(buffer.frameCount) , Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
+     _plugInLog.emplace_back( TimeLog( LogEnumType::Update, "FrameCount: " + std::to_string(frameCount) , Util::Time::UniversalTime::GetCurrentTimeInNanoseconds() ));
 #endif
   } );
   
@@ -360,17 +424,6 @@ void AudioController:: SetupWavePortalPlugIn()
   // Register Wave file
   _wavePortalPlugIn = new WavePortalPlugIn();
   _wavePortalPlugIn->RegisterPlugIn();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioBuffer* AudioController::GetAudioBuffer( int32_t plugInId ) const
-{
-  const auto it = _robotAudioBufferPool.find( plugInId );
-  if ( it != _robotAudioBufferPool.end() ) {
-    return it->second;
-  }
-  
-  return nullptr;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

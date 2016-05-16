@@ -14,8 +14,9 @@
 
 #include "AIBeacon.h" 
 
-#include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
 #include "anki/common/basestation/math/pose.h"
+#include "anki/common/basestation/objectIDs.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface_fwd.h"
 #include "clad/types/objectTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 
@@ -68,6 +69,13 @@ public:
   
   // called when Cozmo can identify a clear quad (no borders, obstacles, etc)
   void ProcessClearQuad(const Quad2f& quad);
+
+  // set to the top cube when cozmo builds a stack he wants to admire, cleared if the stack gets disrupted
+  void SetHasStackToAdmire(ObjectID topBlockID) { _topOfStackToAdmire = topBlockID; }
+  void ClearHasStackToAdmire() { _topOfStackToAdmire.UnSet(); }
+  
+  bool HasStackToAdmire() const { return _topOfStackToAdmire.IsSet(); }
+  ObjectID GetStackToAdmireTopBlockID() const { return _topOfStackToAdmire; }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -135,6 +143,8 @@ private:
   
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;
+
+  ObjectID _topOfStackToAdmire;
 };
   
 

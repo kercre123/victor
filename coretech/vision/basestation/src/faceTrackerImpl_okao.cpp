@@ -19,8 +19,8 @@
 #include "anki/common/basestation/math/rotation.h"
 #include "anki/common/basestation/jsonTools.h"
 
-#include "util/logging/logging.h"
 #include "util/helpers/boundedWhile.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Vision {
@@ -528,7 +528,8 @@ namespace Vision {
       if(facePartsFound)
       {
         const bool enableEnrollment = IsEnrollable(detectionInfo, face);
-        //PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable", "EnableEnrollment=%d", enableEnrollment);
+        //PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
+        //                  "EnableEnrollment=%d", enableEnrollment);
         
         bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
                                                               detectionInfo,
@@ -542,7 +543,8 @@ namespace Vision {
       } 
       
       // Get whatever is the latest recognition information for the current tracker ID
-      auto recognitionData = _recognizer.GetRecognitionData(detectionInfo.nID);
+      s32 enrollmentCompleted = 0;
+      auto recognitionData = _recognizer.GetRecognitionData(detectionInfo.nID, enrollmentCompleted);
       
       if(recognitionData.faceID != recognitionData.prevID) {
         //face.SetThumbnail(_recognizer.GetEnrollmentImage(recognitionData.faceID));
@@ -561,7 +563,7 @@ namespace Vision {
       } else {
         face.SetID(recognitionData.faceID);
         face.SetName(recognitionData.name); // Could be empty!
-        face.SetNumEnrollments(recognitionData.numEnrollments);
+        face.SetNumEnrollments(enrollmentCompleted);
       }
       
     } // FOR each face
@@ -584,6 +586,11 @@ namespace Vision {
     return _recognizer.EraseFace(faceID);
   }
   
+  void FaceTracker::Impl::EraseAllFaces()
+  {
+    _recognizer.EraseAllFaces();
+  }
+  
   Result FaceTracker::Impl::SaveAlbum(const std::string& albumName)
   {
     return _recognizer.SaveAlbum(albumName);
@@ -604,6 +611,15 @@ namespace Vision {
     return _recognizer.LoadAlbum(_okaoCommonHandle, albumName, names);
   }
   
+  void FaceTracker::Impl::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
+                                                Vision::FaceID_t forFaceID,
+                                                s32 numEnrollments)
+  { 
+    _enrollPose = pose;
+    _recognizer.SetAllowedEnrollments(numEnrollments, forFaceID);
+  }
+
+
   bool FaceTracker::Impl::IsEnrollable(const DETECTION_INFO& detectionInfo, const TrackedFace& face)
   {
 #   define DEBUG_ENROLLABILITY 0
@@ -614,7 +630,7 @@ namespace Vision {
     const f32 kCloseDistanceBetweenEyesMax  = 128.f;
     const f32 kFarDistanceBetweenEyesMin    = 16.f;
     const f32 kFarDistanceBetweenEyesMax    = 32.f;
-    const f32 kLookingStraightMaxAngle_deg  = 20.f;
+    const f32 kLookingStraightMaxAngle_deg  = 25.f;
     //const f32 kLookingLeftRightMinAngle_deg = 10.f;
     //const f32 kLookingLeftRightMaxAngle_deg = 20.f;
     const f32 kLookingUpMinAngle_deg        = 25.f;
@@ -628,9 +644,9 @@ namespace Vision {
     {
       const f32 d = face.GetIntraEyeDistance();
       
-      switch(_enrollMode)
+      switch(_enrollPose)
       {
-        case FaceEnrollmentMode::LookingStraight:
+        case FaceEnrollmentPose::LookingStraight:
         {
           if(detectionInfo.nPose == POSE_YAW_FRONT &&
              std::abs(face.GetHeadRoll().getDegrees())  <= kLookingStraightMaxAngle_deg &&
@@ -648,7 +664,7 @@ namespace Vision {
           break;
         }
           
-        case FaceEnrollmentMode::LookingStraightClose:
+        case FaceEnrollmentPose::LookingStraightClose:
         {
           // Close enough and not too much head angle
           if(d >= kCloseDistanceBetweenEyesMin &&
@@ -671,7 +687,7 @@ namespace Vision {
           break;
         }
           
-        case FaceEnrollmentMode::LookingStraightFar:
+        case FaceEnrollmentPose::LookingStraightFar:
         {
           // Far enough and not too much head angle
           if(d >= kFarDistanceBetweenEyesMin &&
@@ -694,7 +710,7 @@ namespace Vision {
           break;
         }
           
-        case FaceEnrollmentMode::LookingLeft:
+        case FaceEnrollmentPose::LookingLeft:
         {
           // Looking left enough, but not too much. "No" pitch/roll.
           if(detectionInfo.nPose == POSE_YAW_LH_PROFILE /*
@@ -715,7 +731,7 @@ namespace Vision {
           break;
         }
           
-        case FaceEnrollmentMode::LookingRight:
+        case FaceEnrollmentPose::LookingRight:
         {
           // Looking right enough, but not too much. "No" pitch/roll.
           if(detectionInfo.nPose == POSE_YAW_RH_PROFILE /*
@@ -736,7 +752,7 @@ namespace Vision {
           break;
         }
           
-        case FaceEnrollmentMode::LookingUp:
+        case FaceEnrollmentPose::LookingUp:
         {
           // Looking up enough, but not too much. "No" pitch/roll.
           if(detectionInfo.nPose == POSE_YAW_FRONT && d >= kFarDistanceBetweenEyesMax &&
@@ -757,7 +773,7 @@ namespace Vision {
           break;
         }
           
-        case FaceEnrollmentMode::LookingDown:
+        case FaceEnrollmentPose::LookingDown:
         {
           // Looking up enough, but not too much. "No" pitch/roll.
           if(detectionInfo.nPose == POSE_YAW_FRONT && d >= kFarDistanceBetweenEyesMax &&
@@ -778,14 +794,14 @@ namespace Vision {
           break;
         }
         
-        case FaceEnrollmentMode::Disabled:
+        case FaceEnrollmentPose::Disabled:
           break;
           
-      } // switch(_enrollMode)
+      } // switch(_enrollPose)
     } // if detectionConfidence high enough
 
     if(DEBUG_ENROLLABILITY && enableEnrollment) {
-      PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable", "Mode=%d", (u8)_enrollMode);
+      PRINT_NAMED_DEBUG("FaceTrackerImpl.IsEnrollable", "Mode=%d", (u8)_enrollPose);
     }
     
     return enableEnrollment;

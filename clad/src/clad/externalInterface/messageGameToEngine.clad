@@ -3,34 +3,42 @@
 // Author: Greg Nagel
 // Copyright: Anki Inc (c) 2015
 
-#include "clad/types/actionTypes.clad"
-#include "clad/types/imageTypes.clad"
-#include "clad/types/robotTestModes.clad"
-#include "clad/types/proceduralEyeParameters.clad"
-#include "clad/types/behaviorTypes.clad"
-#include "clad/types/behaviorChooserType.clad"
-#include "clad/types/emotionTypes.clad"
-#include "clad/types/debugConsoleTypes.clad"
-#include "clad/types/activeObjectTypes.clad"
-#include "clad/types/pathMotionProfile.clad"
-#include "clad/types/unlockTypes.clad"
-#include "clad/types/controllerChannels.clad"
+#include "clad/audio/audioMessage.clad"
+
+#include "clad/externalInterface/messageActions.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/messageToBehaviorManager.clad"
 #include "clad/externalInterface/keyWordRecognitionState.clad"
-#include "clad/types/liveIdleAnimationParameters.clad"
+
+#include "clad/types/actionTypes.clad"
+#include "clad/types/activeObjectTypes.clad"
+#include "clad/types/behaviorGroup.clad"
+#include "clad/types/behaviorTypes.clad"
+#include "clad/types/behaviorChooserType.clad"
+#include "clad/types/controllerChannels.clad"
+#include "clad/types/debugConsoleTypes.clad"
+#include "clad/types/emotionTypes.clad"
+#include "clad/types/faceEnrollmentPoses.clad"
 #include "clad/types/globalVizOrigin.clad"
-#include "clad/audio/audioMessage.clad"
-#include "clad/types/uiConnectionTypes.clad"
-#include "clad/types/visionModes.clad"
+#include "clad/types/imageTypes.clad"
+#include "clad/types/liveIdleAnimationParameters.clad"
 #include "clad/types/nvStorageTypes.clad"
-#include "clad/types/faceEnrollmentModes.clad"
+#include "clad/types/pathMotionProfile.clad"
+#include "clad/types/proceduralEyeParameters.clad"
+#include "clad/types/robotTestModes.clad"
 #include "clad/types/sayTextStyles.clad"
-#include "clad/types/gameEvent.clad"
+#include "clad/types/uiConnectionTypes.clad"
+#include "clad/types/unlockTypes.clad"
+#include "clad/types/visionModes.clad"
+
 
 namespace Anki {
 namespace Cozmo {
 namespace ExternalInterface {
+
+///////////////////////////////////////////////////////////////////////////////
+// Communication / Connectivity
+///////////////////////////////////////////////////////////////////////////////
 
 message ConnectToRobot {
     uint_8 robotID
@@ -61,6 +69,15 @@ message ForceAddRobot {
 message StartEngine {
 }
 
+message ReliableTransportRunMode {
+  bool isSync
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Low-level Robot Controls
+///////////////////////////////////////////////////////////////////////////////
+
 // UpdateFirmware
 // Tell the engine to start updating the robot firmware to specific version
 message UpdateFirmware {
@@ -75,89 +92,6 @@ message DriveWheels {
     float_32 rwheel_accel_mmps2 = 0.0
 }
 
-// TurnInPlace
-// If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
-// If isAbsolute != 0, turns to the specified absolute orientation.
-message TurnInPlace {
-    float_32 angle_rad, // relative mode: postive turns left negative turns right
-    float_32 speed_rad_per_sec = 0.0,
-    float_32 accel_rad_per_sec2 = 0.0,
-    uint_8 isAbsolute,    // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
-    uint_8 robotID
-}
-
-message SearchSideToSide {
-    uint_8 robotID
-}
-
-// TurnInPlaceAtSpeed
-message TurnInPlaceAtSpeed {
-    float_32 speed_rad_per_sec,
-    float_32 accel_rad_per_sec2,
-    uint_8 robotID
-}
-
-// TurnTowardsObject - Turns and tilts head to look at object in last known position
-//   If facing the object requires less than a turnAngleTol turn, then no
-//   turn is performed. If a turn greater than maxTurnAngle is required,
-//   the action fails. For angles in between, the robot will first turn
-//   to face the object, then tilt its head. To completely disallow turning,
-//   set maxTurnAngle to zero. (All angles in radians and forced to be positive.)
-//   Set headTrackWhenDone to non-zero to enable head tracking to the specified
-//   object once the robot has successfully faced it.
-message TurnTowardsObject {
-    uint_32  objectID,
-    float_32 maxTurnAngle,
-
-    // A value of 0 means 'Don't care' (i.e. use engine's default value)
-    float_32 maxPanSpeed_radPerSec = 0.0,
-    float_32 panAccel_radPerSec2 = 0.0,
-    float_32 panTolerance_rad = 0.0,
-    float_32 maxTiltSpeed_radPerSec = 0.0,
-    float_32 tiltAccel_radPerSec2 = 0.0,
-    float_32 tiltTolerance_rad = 0.0,
-
-    uint_8   robotID,
-    bool   visuallyVerifyWhenDone,
-    bool   headTrackWhenDone
-}
-
-// TurnTowardsPose
-//  Tell the robot to turn and tilt his head to face a give 3D pose in world
-//  coordinates.
-message TurnTowardsPose {
-    float_32 world_x,
-    float_32 world_y,
-    float_32 world_z,
-    float_32 maxTurnAngle,
-
-    // A value of 0 means 'Don't care' (i.e. use engine's default value)
-    float_32 maxPanSpeed_radPerSec = 0.0,
-    float_32 panAccel_radPerSec2 = 0.0,
-    float_32 panTolerance_rad = 0.0,
-    float_32 maxTiltSpeed_radPerSec = 0.0,
-    float_32 tiltAccel_radPerSec2 = 0.0,
-    float_32 tiltTolerance_rad = 0.0,
-
-    uint_8   robotID
-}
-
-// TurnTowardsLastFacePose
-//  Tell the robot to turn and tilt his head to face the pose of the last known face
-message TurnTowardsLastFacePose {
-float_32 maxTurnAngle,
-
-// A value of 0 means 'Don't care' (i.e. use engine's default value)
-float_32 maxPanSpeed_radPerSec = 0.0,
-float_32 panAccel_radPerSec2 = 0.0,
-float_32 panTolerance_rad = 0.0,
-float_32 maxTiltSpeed_radPerSec = 0.0,
-float_32 tiltAccel_radPerSec2 = 0.0,
-float_32 tiltTolerance_rad = 0.0,
-
-uint_8   robotID
-}
-
 // MoveHead
 message MoveHead {
     float_32 speed_rad_per_sec
@@ -166,14 +100,6 @@ message MoveHead {
 // MoveLift
 message MoveLift {
     float_32 speed_rad_per_sec
-}
-
-// SetLiftHeight
-message SetLiftHeight {
-    float_32 height_mm,
-    float_32 max_speed_rad_per_sec,
-    float_32 accel_rad_per_sec2,
-    float_32 duration_sec
 }
 
 // EnableLiftPower
@@ -185,39 +111,83 @@ message EnableCliffSensor {
     bool enable
 }
 
-// SetHeadAngle
-message SetHeadAngle {
-    float_32 angle_rad,
-    float_32 max_speed_rad_per_sec,
-    float_32 accel_rad_per_sec2,
-    float_32 duration_sec
-}
-
-// TrackToObject
-//   Robot will automatically adjust head and body angle to look at this object ID, if it
-//   is observed. Sending SetHeadAngle message (above) will disable this behavior.
-//   Set headOnly to true to only use the head and not turn the body.
-//   Use objectID = u32_MAX to disable tracking.
-message TrackToObject {
-    uint_32 objectID,
-    uint_8  robotID,
-    bool    headOnly
-}
-
-// TrackToFace
-//   Robot will automatically adjust head and body angle to look at this face ID, if it
-//   is observed. Sending SetHeadAngle message (above) will disable this behavior.
-//   Set headOnly to true to only use the head and not turn the body.
-//   Use objectID = u32_MAX to disable tracking.
-message TrackToFace {
-    uint_32 faceID,
-    uint_8  robotID,
-    bool    headOnly
-}
-
 // StopAllMotors
 message StopAllMotors {
+
 }
+
+// ControllerGains
+message ControllerGains
+{
+  float_32 kp,
+  float_32 ki,
+  float_32 kd,
+  float_32 maxIntegralError,
+  ControllerChannel controller
+}
+
+message SetMotionModelParams
+{
+  float_32 slipFactor,
+}
+
+// SetRobotVolume
+message SetRobotVolume {
+  uint_8   robotId,
+  float_32 volume
+}
+
+// Enable/Disable paralysis of motors on pickup
+message EnableRobotPickupParalysis
+{
+   bool enable
+}
+
+message ForceDelocalizeRobot {
+  uint_8 robotID
+}
+
+// IMURequest
+message IMURequest {
+    uint_32 length_ms
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action Queuing Commands  (Actions themselves are in messageActions.clad!)
+///////////////////////////////////////////////////////////////////////////////
+
+// CancelAction
+//  Use actionType to cancel any queued actions of the specified type.
+//  Use actionType = -1 to cancel all actions, regardless of type.
+message CancelAction {
+  RobotActionType actionType,  // See actionTypes.def
+  uint_8 robotID
+}
+
+// QueueSingleAction
+  message QueueSingleAction {
+  uint_8  robotID,
+  uint_32 idTag,  // caller-specified identifier that will be returned with the completion message
+  uint_8  numRetries,
+  QueueActionPosition    position,
+  RobotActionUnion       action
+}
+
+// QueueCompoundAction
+message QueueCompoundAction {
+  uint_8  robotID,
+  uint_32 idTag,   // caller-specified identifier that will be returned with the completion message
+  uint_8  numRetries,
+  bool  parallel,  // false means sequential
+  QueueActionPosition    position,
+  RobotActionUnion       actions[uint_8]
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Image-Related Commands
+///////////////////////////////////////////////////////////////////////////////
 
 // ImageRequest
 message ImageRequest {
@@ -240,6 +210,7 @@ message SaveImages {
     uint_8 mode // See SaveMode_t in cozmoTypes.h
 }
 
+
 // SaveRobotState
 message SaveRobotState {
     uint_8 mode // See SaveMode_t in cozmoTypes.h
@@ -250,56 +221,6 @@ message EnableDisplay {
     uint_8 enable
 }
 
-// GotoPose
-message GotoPose {
-    float_32 x_mm,
-    float_32 y_mm,
-    float_32 rad,
-    PathMotionProfile motionProf,
-    uint_8 level,
-    bool useManualSpeed
-}
-
-// GotoObject
-message GotoObject {
-    int_32 objectID,
-    PathMotionProfile motionProf,
-    float_32 distanceFromObjectOrigin_mm,
-    bool useManualSpeed
-}
-
-// AlignWithObject
-// "Docks" to object so that it is aligned with it at the specified distance
-message AlignWithObject {
-    int_32 objectID,
-    PathMotionProfile motionProf,
-    float_32 distanceFromMarker_mm,
-    float_32 approachAngle_rad,
-    bool useApproachAngle,
-    bool usePreDockPose,
-    bool useManualSpeed
-}
-
-// PlaceObjectOnGround
-message PlaceObjectOnGround {
-    float_32 x_mm,
-    float_32 y_mm,
-    float_32 qw,             // Specify rotation via quaternion
-    float_32 qx,
-    float_32 qy,
-    float_32 qz,
-    PathMotionProfile motionProf,
-    uint_8 level,
-    bool useManualSpeed,
-    bool useExactRotation,    // If true, then tries to place object at the exact rotation specified by the quaternion
-                             // otherwise it chooses the closest preActionPose such the object is aligned with the quaternion rotation.
-    bool checkDestinationFree, // if true the action will check whether the destination is still free of obstacles along the way
-}
-
-// PlaceObjectOnGroundHere
-message PlaceObjectOnGroundHere {
-}
-
 // ExecuteTestPlans
 message ExecuteTestPlan {
 PathMotionProfile motionProf
@@ -307,106 +228,7 @@ PathMotionProfile motionProf
 
 // SelectNextObject
 message SelectNextObject {
-}
 
-// PickupObject
-// @param useApproachAngle  - If true, then only the preAction pose that results in a robot
-//                            approach angle closest to approachAngle_rad is considered.
-// @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
-message PickupObject {
-    int_32 objectID, // negative value means "currently selected object"
-    PathMotionProfile motionProf,
-    float_32 approachAngle_rad,
-    bool   useApproachAngle,
-    bool usePreDockPose,
-    bool useManualSpeed,
-}
-
-// PlaceOnObject
-// Places the carried object on top of objectID.
-// @param useExactRotation - If true, then only the preAction pose that results in the carried object
-//                           being placed in alignment with objectID that is closest to the specified
-//                           quaternion rotation is considered.
-//                           If the up-axis of the current rotation is not the same as that of the
-//                           currently carried object, the action fails.
-message PlaceOnObject {
-    int_32 objectID, // negative value means "currently selected object"
-    PathMotionProfile motionProf,
-    float_32 approachAngle_rad,
-    bool   useApproachAngle,
-    bool usePreDockPose,
-    bool useManualSpeed,
-}
-
-// PlaceRelObject
-// @param placementOffsetX_mm - The desired distance between the center of the docking marker
-//                              and the center of the object that is being placed, along the
-//                              direction of the docking marker's normal.
-// @param useApproachAngle  - If true, then only the preAction pose that results in a robot
-//                            approach angle closest to approachAngle_rad is considered.
-// @param approachAngle_rad - The desired docking approach angle of the robot in world coordinates.
-message PlaceRelObject {
-    int_32 objectID, // negative value means "currently selected object"
-    PathMotionProfile motionProf,
-    float_32 placementOffsetX_mm,  // X-axis offset for object placement (where +x extends out the marker face)
-    float_32 approachAngle_rad,
-    bool   useApproachAngle,
-    bool usePreDockPose,
-    bool useManualSpeed,
-}
-
-// RollObject
-message RollObject {
-  int_32 objectID, // negative value means "currently selected object"
-  PathMotionProfile motionProf,
-  float_32 approachAngle_rad,
-  bool   useApproachAngle,
-  bool usePreDockPose,
-  bool useManualSpeed
-}
-
-// PopAWheelie
-message PopAWheelie {
-  int_32 objectID, // negative value means "currently selected object"
-  PathMotionProfile motionProf,
-  float_32 approachAngle_rad,
-  bool useApproachAngle,
-  bool usePreDockPose,
-  bool useManualSpeed
-}
-
-// MountCharger
-message MountCharger {
-  int_32 objectID,
-  PathMotionProfile motionProf,
-  bool usePreDockPose,
-  bool useManualSpeed
-}
-
-// TraverseObject
-message TraverseObject {
-  PathMotionProfile motionProf,
-  bool usePreDockPose,
-  bool useManualSpeed
-}
-
-// DriveStraight
-message DriveStraight {
-  float_32 speed_mmps,
-  float_32 dist_mm
-}
-
-// PanAndTilt
-message PanAndTilt {
-  float_32 bodyPan,
-  float_32 headTilt,
-  bool isPanAbsolute,
-  bool isTiltAbsolute
-}
-
-// Wait
-message Wait {
-  float_32 time_s
 }
 
 // SetRobotCarryingObject
@@ -416,6 +238,10 @@ message SetRobotCarryingObject {
     int_32 objectID, // use -1 to specify "none"
     uint_8 robotID
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Vision Settings and Commands
+///////////////////////////////////////////////////////////////////////////////
 
 // ClearAllBlocks
 //   Clears just blocks (active and passive)
@@ -443,15 +269,9 @@ message VisionWhileMoving {
     uint_8 enable // True or false
 }
 
-// Assign a name to a specific face ID
-message AssignNameToFace {
-  int_32 faceID,
-  string name
-}
-
-// Set the face enrollment mode
-message SetFaceEnrollmentMode {
-  Vision::FaceEnrollmentMode mode
+// Set the face enrollment pose
+message SetFaceEnrollmentPose {
+  Vision::FaceEnrollmentPose pose
 }
 
 // Erase a face record by name
@@ -463,6 +283,25 @@ message EraseEnrolledFaceByName {
 message EraseEnrolledFaceByID {
   int_32 faceID
 }
+
+// Erase all enrolled faces (use with care!)
+message EraseAllEnrolledFaces {
+
+}
+
+message EnableVisionMode {
+   VisionMode mode,
+   bool       enable
+}
+
+message VisionRunMode {
+  bool isSync
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Behavior Commands
+///////////////////////////////////////////////////////////////////////////////
 
 // ActivateBehaviorChooser
 message ActivateBehaviorChooser {
@@ -490,82 +329,7 @@ message AbortPath {
 
 // AbortAll
 message AbortAll {
-}
 
-// CancelAction
-//  Use actionType to cancel any queued actions of the specified type.
-//  Use actionType = -1 to cancel all actions, regardless of type.
-message CancelAction {
-  RobotActionType actionType,  // See actionTypes.def
-//  int_32 slotHandle,  // TODO: Add this later if it makes sense
-  uint_8 robotID
-}
-
-// DrawPoseMarker
-message DrawPoseMarker {
-    float_32 x_mm,
-    float_32 y_mm,
-    float_32 rad,
-    uint_8 level
-}
-
-// ErasePoseMarker
-message ErasePoseMarker {
-}
-
-// ControllerGains
-message ControllerGains
-{
-  float_32 kp,
-  float_32 ki,
-  float_32 kd,
-  float_32 maxIntegralError,
-  ControllerChannel controller
-}
-
-// SetWheelControllerGains
-message SetWheelControllerGains {
-  float_32 kpLeft,
-  float_32 kiLeft,
-  float_32 maxIntegralErrorLeft,
-  float_32 kpRight,
-  float_32 kiRight,
-  float_32 maxIntegralErrorRight
-}
-
-// SetHeadControllerGains
-message SetHeadControllerGains {
-    float_32 kp,
-    float_32 kd,
-    float_32 ki,
-    float_32 maxIntegralError
-}
-
-// SetLiftControllerGains
-message SetLiftControllerGains {
-    float_32 kp,
-    float_32 kd,
-    float_32 ki,
-    float_32 maxIntegralError
-}
-
-// SetSteeringControllerGains
-message SetSteeringControllerGains {
-  float_32 k1,
-  float_32 k2,
-  float_32 dockPathDistOffsetCap_mm,
-  float_32 dockPathAngularOffsetCap_rad
-}
-
-message SetMotionModelParams
-{
-  float_32 slipFactor,
-}
-
-// SetRobotVolume
-message SetRobotVolume {
-  uint_8   robotId,
-  float_32 volume
 }
 
 // StartTestMode
@@ -577,42 +341,55 @@ message StartTestMode {
     TestMode mode
 }
 
-// IMURequest
-message IMURequest {
-    uint_32 length_ms
+
+///////////////////////////////////////////////////////////////////////////////
+// Visualization (Viz) Related
+///////////////////////////////////////////////////////////////////////////////
+
+// DrawPoseMarker
+message DrawPoseMarker {
+    float_32 x_mm,
+    float_32 y_mm,
+    float_32 rad,
+    uint_8 level
 }
 
-// Enable/Disable paralysis of motors on pickup
-message EnableRobotPickupParalysis
-{
-    bool enable
-}
-
-// ReadToolCode
-message ReadToolCode {
+// ErasePoseMarker
+message ErasePoseMarker {
 
 }
 
-// SayText
-message SayText {
-    string       text,
-    GameEvent    playEvent,
-    SayTextStyle style  // "How" to say the text
+// VisualizeQuad
+//  Draws the specified quadrilateral using the Visualization system.
+//  The quadID will be created if new or replaced if it already exists (i.e., you
+//  do not need to send an EraseQuad message before updating an existing quad).
+message VisualizeQuad {
+  uint_32 quadID,
+  uint_32 color, // RGBA
+  float_32 xUpperLeft,
+  float_32 yUpperLeft,
+  float_32 zUpperLeft,
+  float_32 xLowerLeft,
+  float_32 yLowerLeft,
+  float_32 zLowerLeft,
+  float_32 xUpperRight,
+  float_32 yUpperRight,
+  float_32 zUpperRight,
+  float_32 xLowerRight,
+  float_32 yLowerRight,
+  float_32 zLowerRight
 }
 
-// PlayAnimation
-message PlayAnimation {
-    uint_8  robotID,
-    uint_32 numLoops,
-    string animationName
+// EraseQuad
+//  Erase the visualized quad with the specified ID
+message EraseQuad {
+  uint_32 quadID
 }
 
-// PlayAnimationGroup
-message PlayAnimationGroup {
-uint_8  robotID,
-uint_32 numLoops,
-string animationGroupName
-}
+
+///////////////////////////////////////////////////////////////////////////////
+// Animation Commands
+///////////////////////////////////////////////////////////////////////////////
 
 // ReplayLastAnimation
 message ReplayLastAnimation {
@@ -633,6 +410,25 @@ message SetIdleAnimation {
 message ReadAnimationFile {
 }
 
+message SetLiveIdleAnimationParameters {
+  LiveIdleAnimationParameter   paramNames[uint_8],
+  float_32                     paramValues[uint_8], // must be same length as paramNames
+  uint_8                       robotID,
+  bool                         setUnspecifiedToDefault = 0
+}
+
+// DisplayProceduralFace
+message DisplayProceduralFace {
+  float_32 faceAngle,        // Degrees
+  float_32 faceCenX,
+  float_32 faceCenY,
+  float_32 faceScaleX,
+  float_32 faceScaleY,
+  float_32 leftEye[uint_8],  // TODO: make this fixed length = ProceduralEyeParameter::NumParameters
+  float_32 rightEye[uint_8], //
+  uint_8   robotID
+}
+
 // SetDrivingAnimations
 message SetDrivingAnimations {
     string drivingStartAnim,
@@ -640,18 +436,10 @@ message SetDrivingAnimations {
     string drivingEndAnim
 }
 
-message EnableVisionMode {
-   VisionMode mode,
-   bool       enable
-}
 
-message VisionRunMode {
-  bool isSync
-}
-
-message ReliableTransportRunMode {
-  bool isSync
-}
+///////////////////////////////////////////////////////////////////////////////
+// Robot / Cube LED Controls
+///////////////////////////////////////////////////////////////////////////////
 
 message SetHeadlight
 {
@@ -702,100 +490,11 @@ message SetBackpackLEDs {
   uint_8   robotID
 }
 
-// DisplayProceduralFace
-message DisplayProceduralFace {
-  float_32 faceAngle,        // Degrees
-  float_32 faceCenX,
-  float_32 faceCenY,
-  float_32 faceScaleX,
-  float_32 faceScaleY,
-  float_32 leftEye[uint_8],  // TODO: make this fixed length = ProceduralEyeParameter::NumParameters
-  float_32 rightEye[uint_8], //
-  uint_8   robotID
-}
 
-message SetLiveIdleAnimationParameters {
-  LiveIdleAnimationParameter   paramNames[uint_8],
-  float_32                     paramValues[uint_8], // must be same length as paramNames
-  uint_8                       robotID,
-  bool                         setUnspecifiedToDefault = 0
-}
 
-// VisualizeQuad
-//  Draws the specified quadrilateral using the Visualization system.
-//  The quadID will be created if new or replaced if it already exists (i.e., you
-//  do not need to send an EraseQuad message before updating an existing quad).
-message VisualizeQuad {
-  uint_32 quadID,
-  uint_32 color, // RGBA
-  float_32 xUpperLeft,
-  float_32 yUpperLeft,
-  float_32 zUpperLeft,
-  float_32 xLowerLeft,
-  float_32 yLowerLeft,
-  float_32 zLowerLeft,
-  float_32 xUpperRight,
-  float_32 yUpperRight,
-  float_32 zUpperRight,
-  float_32 xLowerRight,
-  float_32 yLowerRight,
-  float_32 zLowerRight
-}
-
-// EraseQuad
-//  Erase the visualized quad with the specified ID
-message EraseQuad {
-  uint_32 quadID
-}
-
-union RobotActionUnion {
-  TurnTowardsObject         turnTowardsObject,
-  TurnTowardsPose           turnTowardsPose,
-  GotoPose                  goToPose,
-  GotoObject                goToObject,
-  AlignWithObject           alignWithObject,
-  PlayAnimation             playAnimation,
-  PlayAnimationGroup        playAnimationGroup,
-  PickupObject              pickupObject,
-  PlaceOnObject             placeOnObject,
-  PlaceRelObject            placeRelObject,
-  PlaceObjectOnGround       placeObjectOnGround,
-  PlaceObjectOnGroundHere   placeObjectOnGroundHere,
-  RollObject                rollObject,
-  PopAWheelie               popAWheelie,
-  SetLiftHeight             setLiftHeight,
-  SetHeadAngle              setHeadAngle,
-  TurnInPlace               turnInPlace,
-  SearchSideToSide          searchSideToSide,
-  TrackToFace               trackFace,
-  TrackToObject             trackObject,
-  DriveStraight             driveStraight,
-  PanAndTilt                panAndTilt,
-  Wait                      wait,
-  MountCharger              mountCharger,
-  TurnTowardsLastFacePose   turnTowardsLastFacePose,
-  ReadToolCode              readToolCode, 
-  SayText                   sayText
-}
-
-// QueueSingleAction
-message QueueSingleAction {
-  uint_8  robotID,
-  uint_32 idTag,  // caller-specified identifier that will be returned with the completion message
-  uint_8  numRetries,
-  QueueActionPosition    position,
-  RobotActionUnion       action
-}
-
-// QueueCompoundAction
-message QueueCompoundAction {
-  uint_8  robotID,
-  uint_32 idTag,   // caller-specified identifier that will be returned with the completion message
-  uint_8  numRetries,
-  bool  parallel,  // false means sequential
-  QueueActionPosition    position,
-  RobotActionUnion       actions[uint_8]
-}
+///////////////////////////////////////////////////////////////////////////////
+// Demo
+///////////////////////////////////////////////////////////////////////////////
 
 message TransitionToNextDemoState {
 }
@@ -804,19 +503,13 @@ message StartDemoWithEdge {
   bool hasEdge = 1
 }
 
-message ForceDelocalizeRobot {
-  uint_8 robotID
-}
-
-message EnableSparkUnlock {
-  UnlockId enableSparkId
-}
-
-message StopSparkUnlock {
+message DemoResetState {
 
 }
 
+///////////////////////////////////////////////////////////////////////////////
 // Mood / Emotions
+///////////////////////////////////////////////////////////////////////////////
 
 structure GetEmotions {
 }
@@ -872,8 +565,16 @@ message RequestSetUnlock {
   bool unlocked
 }
 
+message EnableSparkUnlock {
+  UnlockId enableSparkId
+}
+
+message StopSparkUnlock {
+
+}
+
 ///////////////////////////////////////////////////////////////////////////////
-// DebugConsole
+// Debug / Logging
 ///////////////////////////////////////////////////////////////////////////////
 
 message SetDebugConsoleVarMessage {
@@ -893,17 +594,10 @@ message GetDebugConsoleVarMessage {
 message GetAllDebugConsoleVarMessage {
 }
 
-///////////////////////////////////////////////////////////////////////////////
-//
-///////////////////////////////////////////////////////////////////////////////
-
 message SetEnableSOSLogging {
   bool enabled
 }
 
-message DemoResetState {
-
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // BlockPool

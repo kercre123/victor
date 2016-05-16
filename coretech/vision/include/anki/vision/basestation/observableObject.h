@@ -199,7 +199,7 @@ namespace Anki {
       // sides (within the given tolerance). This means it is allowed to have any
       // orientation around the Z axis (w.r.t. its parent), but no rotation about the
       // X and Y axes.
-      bool IsRestingFlat(const Radians& angleTol = DEG_TO_RAD(5)) const;
+      bool IsRestingFlat(const Radians& angleTol = DEG_TO_RAD(10)) const;
 
       enum class PoseState
       {

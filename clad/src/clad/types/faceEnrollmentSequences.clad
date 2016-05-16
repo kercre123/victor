@@ -1,0 +1,23 @@
+/**
+* File: faceEnrollmentSequences.clad
+*
+* Author: Andrew Stein
+* Date:   5/10/2016
+*
+* Description: CLAD enum for Cozmo face-enrollment sequences
+*
+* Copyright: Anki, Inc. 2016
+**/
+
+namespace Anki {
+namespace Cozmo {
+
+enum uint_8 FaceEnrollmentSequence {
+    Simple = 0,
+    BackAndForth = 1,
+    
+    Default = 0
+}
+
+} // namespace Cozmo
+} // namespace Anki

@@ -11,12 +11,15 @@
  **/
 
 #include "basicActions.h"
-#include "anki/cozmo/basestation/robot.h"
+
 #include "anki/common/basestation/utils/timer.h"
-#include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/trackingActions.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/drivingAnimationHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
+#include "anki/cozmo/basestation/robot.h"
 
 namespace Anki {
   
@@ -329,9 +332,31 @@ namespace Anki {
     , _dist_mm(dist_mm)
     , _speed_mmps(speed_mmps)
     {
+      if(_speed_mmps < 0.f) {
+        PRINT_NAMED_WARNING("DriveStraightAction.Constructor.NegativeSpeed",
+                            "Speed should always be positive (not %f). Making positive.",
+                            _speed_mmps);
+        _speed_mmps = -_speed_mmps;
+      }
       
+      if(dist_mm < 0.f) {
+        // If distance is negative, we are driving backward and will negate speed
+        // internally. Yes, we could have just double-negated if the caller passed in
+        // a negative speed already, but this avoids confusion on caller's side about
+        // which signs to use and the documentation says speed should always be positive.
+        ASSERT_NAMED(_speed_mmps >= 0.f, "DriveStraightAction.Constructor.NegativeSpeed");
+        _speed_mmps = -speed_mmps;
+      }
     }
-    
+
+    DriveStraightAction::~DriveStraightAction()
+    {
+      _robot.AbortDrivingToPose();
+      _robot.GetContext()->GetVizManager()->ErasePath(_robot.GetID());
+
+      _robot.GetDrivingAnimationHandler().ActionIsBeingDestroyed();
+    }
+  
     ActionResult DriveStraightAction::Init()
     {
       if(_dist_mm == 0.f) {
@@ -374,12 +399,28 @@ namespace Anki {
     ActionResult DriveStraightAction::CheckIfDone()
     {
       ActionResult result = ActionResult::RUNNING;
+
+      if(_robot.GetDrivingAnimationHandler().IsPlayingEndAnim())
+      {
+        return ActionResult::RUNNING;
+      }
+      else if ( _hasStarted && !_robot.IsTraversingPath() ) {
+        result = ActionResult::SUCCESS;;
+      }
       
       if(!_hasStarted) {
         PRINT_NAMED_INFO("DriveStraightAction.CheckIfDone.WaitingForPathStart", "");
         _hasStarted = _robot.IsTraversingPath();
+        if( _hasStarted ) {
+          _robot.GetDrivingAnimationHandler().PlayStartAnim(GetTracksToLock());
+        }
       } else if(/*hasStarted AND*/ !_robot.IsTraversingPath()) {
-        result = ActionResult::SUCCESS;
+        if( _robot.GetDrivingAnimationHandler().PlayEndAnim()) {
+          return ActionResult::RUNNING;
+        }
+        else {
+          result = ActionResult::SUCCESS;
+        }
       }
       
       return result;

@@ -81,6 +81,11 @@ namespace Vision {
     return _pImpl->EraseFace(faceID);
   }
   
+  void FaceTracker::EraseAllFaces()
+  {
+    return _pImpl->EraseAllFaces();
+  }
+  
   Result FaceTracker::SaveAlbum(const std::string& albumName)
   {
     return _pImpl->SaveAlbum(albumName);
@@ -96,9 +101,11 @@ namespace Vision {
     _pImpl->PrintAverageTiming();
   }
   
-  void FaceTracker::SetFaceEnrollmentMode(FaceEnrollmentMode mode)
+  void FaceTracker::SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
+ 																						  Vision::FaceID_t forFaceID,
+																						  s32 numEnrollments)
   {
-    _pImpl->SetFaceEnrollmentMode(mode);
+    _pImpl->SetFaceEnrollmentMode(pose, forFaceID, numEnrollments);
   }
   
   Result FaceTracker::GetSerializedData(std::vector<u8>& albumData,

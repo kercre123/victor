@@ -23,15 +23,12 @@ EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID)
 , enrollmentTime(std::chrono::milliseconds(0))
 , lastDataUpdateTime(std::chrono::milliseconds(0))
 , lastSeenTime(std::chrono::milliseconds(0))
-, numEnrollments(1)
-, isForThisSessionOnly(true)
 {
 
 }
 
 EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
 : faceID(withID)
-, isForThisSessionOnly(false)
 {
   auto MissingFieldWarning = [withID](const char* fieldName) {
     PRINT_NAMED_WARNING("EnrolledFaceEntry.ConstructFromJson.MissingField",
@@ -67,13 +64,6 @@ EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
     name = json["name"].asString();
   }
   
-  if(!json.isMember("numEnrollments")) {
-    MissingFieldWarning("numEnrollments");
-    numEnrollments = 1;
-  } else {
-    numEnrollments = json["numEnrollments"].asInt();
-  }
-  
   if(!json.isMember("lastSeenTime")) {
     MissingFieldWarning("lastSeenTime");
     numTicks = 0;
@@ -84,15 +74,13 @@ EnrolledFaceEntry::EnrolledFaceEntry(FaceID_t withID, Json::Value& json)
   
 }
   
-EnrolledFaceEntry::EnrolledFaceEntry(const ExternalInterface::EnrolledFaceMessage& message)
+EnrolledFaceEntry::EnrolledFaceEntry(const EnrolledFaceStorage& message)
 : faceID(message.faceID)
 , name(message.name)
 , enrollmentTime(std::chrono::milliseconds(message.enrollmentTimeCount))
 , lastDataUpdateTime(std::chrono::milliseconds(message.lastDataUpdateTimeCount))
 , lastSeenTime(std::chrono::milliseconds(message.lastSeenTimeCount))
 , nextDataToUpdate(message.nextDataToUpdate)
-, numEnrollments(message.numEnrollments)
-, isForThisSessionOnly(false)
 {
   
 }
@@ -124,7 +112,6 @@ void EnrolledFaceEntry::MergeWith(EnrolledFaceEntry& otherEntry)
   
   enrollmentTime = std::min(enrollmentTime, otherEntry.enrollmentTime);
   score = std::max(score, otherEntry.score);
-  numEnrollments += otherEntry.numEnrollments;
 }
   
 void EnrolledFaceEntry::FillJson(Json::Value& entry) const
@@ -138,15 +125,14 @@ void EnrolledFaceEntry::FillJson(Json::Value& entry) const
   entry["enrollmentTime"]     = (Json::LargestInt)duration_cast<milliseconds>(enrollmentTime.time_since_epoch()).count();
   entry["lastDataUpdateTime"] = (Json::LargestInt)duration_cast<milliseconds>(lastDataUpdateTime.time_since_epoch()).count();
   entry["lastSeenTime"]       = (Json::LargestInt)duration_cast<milliseconds>(lastSeenTime.time_since_epoch()).count();
-  entry["numEnrollments"]     = numEnrollments;
   // NOTE: Not storing faceID because we're assuming it's being used as the key for the entire entry
 }
   
 
 
-EnrolledFaceEntry::operator ExternalInterface::EnrolledFaceMessage() const
+EnrolledFaceEntry::operator EnrolledFaceStorage() const
 {
-  ExternalInterface::EnrolledFaceMessage message;
+  EnrolledFaceStorage message;
   using namespace std::chrono;
   
   message.enrollmentTimeCount     = duration_cast<milliseconds>(this->enrollmentTime.time_since_epoch()).count();
@@ -154,7 +140,6 @@ EnrolledFaceEntry::operator ExternalInterface::EnrolledFaceMessage() const
   message.lastSeenTimeCount       = duration_cast<milliseconds>(this->lastSeenTime.time_since_epoch()).count();
   message.faceID                  = this->faceID;
   message.nextDataToUpdate        = this->nextDataToUpdate;
-  message.numEnrollments          = this->numEnrollments;
   message.name                    = this->name;
   
   return message;
@@ -164,7 +149,7 @@ EnrolledFaceEntry::operator ExternalInterface::EnrolledFaceMessage() const
 void EnrolledFaceEntry::Serialize(std::vector<u8>& buffer) const
 {
   // Create the message
-  const ExternalInterface::EnrolledFaceMessage message(*this);
+  const EnrolledFaceStorage message(*this);
   
   // Pack it into a temp buffer
   const size_t expectedNumBytes = message.Size();
@@ -193,7 +178,7 @@ Result EnrolledFaceEntry::Deserialize(const std::vector<u8>& buffer, size_t& sta
   }
   
   // Deserialize using CLAD features
-  ExternalInterface::EnrolledFaceMessage message;
+  EnrolledFaceStorage message;
   const size_t expectedNumBytes = message.Size();
   if(startIndex + expectedNumBytes > buffer.size()) {
     PRINT_NAMED_WARNING("EnrolledFaceEntry.Deserialize.BufferTooShort",
@@ -217,8 +202,6 @@ Result EnrolledFaceEntry::Deserialize(const std::vector<u8>& buffer, size_t& sta
   lastDataUpdateTime   = Time(std::chrono::milliseconds(message.lastDataUpdateTimeCount));
   lastSeenTime         = Time(std::chrono::milliseconds(message.lastSeenTimeCount));
   nextDataToUpdate     = message.nextDataToUpdate;
-  numEnrollments       = message.numEnrollments;
-  isForThisSessionOnly = false;
   
   // Increment by the number of bytes we read
   startIndex += numBytes;

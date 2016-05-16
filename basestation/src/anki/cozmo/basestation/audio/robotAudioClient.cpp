@@ -11,25 +11,67 @@
 
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/audio/audioController.h"
+#include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/audio/robotAudioAnimationOnDevice.h"
 #include "anki/cozmo/basestation/audio/robotAudioAnimationOnRobot.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "clad/audio/messageAudioClient.h"
-#include <util/helpers/templateHelpers.h>
-#include <util/logging/logging.h>
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
 
 
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-RobotAudioBuffer* RobotAudioClient::GetAvailableAudioBuffer()
+RobotAudioClient::RobotAudioClient( Robot* robot )
+: _robot( robot )
 {
-  // TODO: This will get an audio buffer from a poll of buffers to allow us to buffer data from multiple sources
-  RobotAudioBuffer* buffer = nullptr;
-  _audioController->GetAvailableRobotAudioBuffer( buffer );
-  return buffer;
+  const CozmoContext* context = _robot->GetContext();
+  // For Unit Test bale out if there is no Audio Server
+  if ( context->GetAudioServer() == nullptr ) {
+    return;
+  }
+
+  _audioController = context->GetAudioServer()->GetAudioController();
+
+  // Add listener to robot messages
+  // This only helps to determine if we should play sound on Webots or on the Robot
+  auto robotSyncCallback = [this] ( const AnkiEvent<RobotInterface::RobotToEngine>& message ) {
+//    RobotInterface::SyncTimeAck payload = message.GetData().Get_syncTimeAck();
+//    RobotAudioOutputSource outputSource = payload.isPhysical
+//                                            ? RobotAudioOutputSource::PlayOnRobot
+//                                            : RobotAudioOutputSource::PlayOnDevice;
+   // rsam: I believe there's a problem with audio streaming to robot that causes anims to lock. Trying this as
+   // a temporary fix until Jordan can take a look
+    RobotAudioOutputSource outputSource = RobotAudioOutputSource::PlayOnDevice;
+    SetOutputSource( outputSource );
+  };
+  RobotInterface::MessageHandler* msgHandler = context->GetRobotMsgHandler();
+  _signalHandles.emplace_back( msgHandler->Subscribe( _robot->GetID(),
+                                                      RobotInterface::RobotToEngineTag::syncTimeAck,
+                                                      robotSyncCallback ) );
+  
+  // Configure Robot Audio buffers with Wwise buses. PlugIn Ids are set in Wwise project
+  // Setup Robot Buffers
+  // Note: This is only configured to work with a single robot
+  RegisterRobotAudioBuffer( GameObjectType::CozmoAnimation, 1, Bus::BusType::Robot_Bus_1 );
+  
+  // TEMP: Setup other buses
+  RegisterRobotAudioBuffer( GameObjectType::CozmoBus_2, 2, Bus::BusType::Robot_Bus_2 );
+  RegisterRobotAudioBuffer( GameObjectType::CozmoBus_3, 3, Bus::BusType::Robot_Bus_3 );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotAudioBuffer* RobotAudioClient::GetRobotAudiobuffer( GameObjectType gameObject )
+{
+  ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.GetRobotAudiobuffer.AudioControllerNull" );
+  const AudioEngine::AudioGameObject aGameObject = static_cast<const AudioEngine::AudioGameObject>( gameObject );
+  return _audioController->GetRobotAudioBufferWithGameObject( aGameObject );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -41,27 +83,22 @@ AudioEngineClient::CallbackIdType RobotAudioClient::PostCozmoEvent( GameEvent::G
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::SetRobotVolume(float volume)
-{
-  PostParameter(GameParameter::ParameterType::Robot_Volume, volume, GameObjectType::Invalid);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation, const AnimationMode mode )
+void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
 {
   // Create appropriate animation type for mode
   RobotAudioAnimation* audioAnimation = nullptr;
-  switch ( mode ) {
+  switch ( _outputSource ) {
   
-    case AnimationMode::PlayOnDevice:
+    case RobotAudioOutputSource::PlayOnDevice:
       audioAnimation = dynamic_cast<RobotAudioAnimation*>( new RobotAudioAnimationOnDevice( anAnimation, this ) );
       break;
       
-    case AnimationMode::PlayOnRobot:
+    case RobotAudioOutputSource::PlayOnRobot:
       audioAnimation = dynamic_cast<RobotAudioAnimation*>( new RobotAudioAnimationOnRobot( anAnimation, this ) );
       break;
       
     default:
+      // Do Nothing
       break;
   }
   
@@ -73,7 +110,7 @@ void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation, const Anima
   // Check if animation is valid
   const RobotAudioAnimation::AnimationState animationState = audioAnimation->GetAnimationState();
   if ( animationState != RobotAudioAnimation::AnimationState::AnimationCompleted &&
-      animationState != RobotAudioAnimation::AnimationState::AnimationError) {
+       animationState != RobotAudioAnimation::AnimationState::AnimationError ) {
     
     _currentAnimation = audioAnimation;
   }
@@ -123,14 +160,89 @@ bool RobotAudioClient::AnimationIsComplete()
   }
   // Animation state is completed or it has error
   else if ( _currentAnimation->GetAnimationState() == RobotAudioAnimation::AnimationState::AnimationCompleted ||
-           _currentAnimation->GetAnimationState() == RobotAudioAnimation::AnimationState::AnimationError ) {
+            _currentAnimation->GetAnimationState() == RobotAudioAnimation::AnimationState::AnimationError ) {
     return true;
   }
   
   return false;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::SetRobotVolume(float volume)
+{
+  PostParameter(GameParameter::ParameterType::Robot_Volume, volume, GameObjectType::Invalid);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void RobotAudioClient::SetOutputSource( RobotAudioOutputSource outputSource )
+{
+  ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.SetOutputSource.AudioControllerNull" );
+  using namespace AudioEngine;
   
+  if ( _outputSource == outputSource ) {
+    // Do Nothing
+    return;
+  }
+  _outputSource = outputSource;
+  
+  switch ( _outputSource ) {
+    case RobotAudioOutputSource::None:
+    case RobotAudioOutputSource::PlayOnDevice:
+    {
+      // Setup Audio engine to play audio through device
+      // Remove GameObject Aux sends
+      AudioController::AuxSendList emptyList;
+      for ( auto& aKVP : _busConfigurationMap ) {
+        const AudioGameObject aGameObject = static_cast<const AudioGameObject>( aKVP.second.gameObject );
+        // Set Aux send settings in Audio Engine
+        _audioController->SetGameObjectAuxSendValues( aGameObject, emptyList );
+      }
+    }
+      break;
+      
+    case RobotAudioOutputSource::PlayOnRobot:
+    {
+      // Setup Audio engine to play audio through device
+      // Setup GameObject Aux Sends
+      for ( auto& aKVP : _busConfigurationMap ) {
+        RobotBusConfiguration& busConfig = aKVP.second;
+        const AudioGameObject aGameObject = static_cast<const AudioGameObject>( busConfig.gameObject );
+        AudioAuxBusValue aBusValue( static_cast<AudioAuxBusId>( busConfig.bus ), 1.0f );
+        AudioController::AuxSendList sendList;
+        sendList.emplace_back( aBusValue );
+        // Set Aux send settings in Audio Engine
+        _audioController->SetGameObjectAuxSendValues( aGameObject, sendList );
+        _audioController->SetGameObjectOutputBusVolume( aGameObject, 0.0f );
+      }
+    }
+      break;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+RobotAudioBuffer* RobotAudioClient::RegisterRobotAudioBuffer( GameObjectType gameObject,
+                                                             PluginId_t pluginId,
+                                                             Bus::BusType audioBus )
+{
+  ASSERT_NAMED( _audioController != nullptr, "RobotAudioClient.RegisterRobotAudioBuffer.AudioControllerNull" );
+  
+  // Create Configuration Struct
+  RobotBusConfiguration busConfiguration = { gameObject, pluginId, audioBus };
+  const auto it = _busConfigurationMap.emplace( gameObject, busConfiguration );
+  if ( !it.second ) {
+    // Bus configuration already exist
+    PRINT_NAMED_ERROR("RobotAudioClient.RegisterRobotAudioBuffer", "Buss configuration already exist for GameObject: %d",
+                      static_cast<uint32_t>(gameObject));
+  }
+  
+  // Setup GameObject with Bus
+  AudioEngine::AudioGameObject aGameObject = static_cast<const AudioEngine::AudioGameObject>( gameObject );
+  
+  // Create Buffer for buses
+  return _audioController->RegisterRobotAudioBuffer( aGameObject, pluginId );
+}
+
+
 } // Audio
 } // Cozmo
 } // Anki

@@ -48,14 +48,17 @@ namespace Vision {
     
     static bool IsRecognitionSupported() { return true; }
     
-    void SetFaceEnrollmentMode(FaceEnrollmentMode mode) { _enrollMode = mode; }
-    
+    void SetFaceEnrollmentMode(Vision::FaceEnrollmentPose pose,
+                               Vision::FaceID_t forFaceID,
+                               s32 numEnrollments);
+																						      
     void EnableEmotionDetection(bool enable) { _detectEmotion = enable; }
     bool IsEmotionDetectionEnabled() const   { return _detectEmotion;  }
 
     Result   AssignNameToID(FaceID_t faceID, const std::string& name);
     FaceID_t EraseFace(const std::string& name);
     Result   EraseFace(FaceID_t faceID);
+    void     EraseAllFaces();
 
     Result LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
     Result SaveAlbum(const std::string& albumName);
@@ -107,7 +110,7 @@ namespace Vision {
     INT32 _facialPartConfs[PT_POINT_KIND_MAX];
     INT32 _expressionValues[EX_EXPRESSION_KIND_MAX];
     
-    FaceEnrollmentMode _enrollMode = FaceEnrollmentMode::LookingStraight;
+    FaceEnrollmentPose _enrollPose = FaceEnrollmentPose::LookingStraight;
     
     // Runs on a separate thread
     FaceRecognizer _recognizer;

@@ -16,8 +16,7 @@
 #include "anki/common/types.h"
 #include "anki/vision/basestation/trackedFace.h"
 #include "anki/vision/basestation/faceIdTypes.h"
-#include "clad/types/faceEnrollmentModes.h"
-
+#include "clad/types/faceEnrollmentPoses.h"
 #include <list>
 
 // Forward declaration:
@@ -39,22 +38,27 @@ namespace Vision {
     ~FaceTracker();
     
     // Returns the faces found and any IDs that may have been updated (e.g. due
-    // to a new recognition or a merge of existing records)
-    Result Update(const Vision::Image&    frameOrig,
-                  std::list<TrackedFace>& faces,
+    // to a new recognition or a merge of existing records).
+    Result Update(const Vision::Image&        frameOrig,
+                  std::list<TrackedFace>&     faces,
                   std::list<UpdatedFaceID>&   updatedIDs);
     
     void EnableDisplay(bool enabled);
     
-    void SetFaceEnrollmentMode(FaceEnrollmentMode mode);
+    void SetFaceEnrollmentMode(FaceEnrollmentPose pose,
+                               FaceID_t forFaceID = UnknownFaceID,
+															 s32 numEnrollments = -1);
     
     // Will return false if the private implementation does not support face recognition
     static bool IsRecognitionSupported();
     
     
     Result   AssignNameToID(FaceID_t faceID, const std::string& name);
+    
     FaceID_t EraseFace(const std::string& name);
     Result   EraseFace(FaceID_t faceID);
+    void     EraseAllFaces();
+    
     Result SaveAlbum(const std::string& albumName);
     Result LoadAlbum(const std::string& albumName, std::list<FaceNameAndID>& namesAndIDs);
     
