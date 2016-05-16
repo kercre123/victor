@@ -28,8 +28,6 @@
 
 #include "anki/common/types.h"
 
-#include "anki/common/basestation/mailbox.h"
-
 // Robot includes should eventually go away once Basestation vision is natively
 // implemented
 #include "anki/common/robot/fixedLengthList.h"
@@ -61,6 +59,8 @@
 #include "clad/types/toolCodes.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#include <mutex>
+#include <queue>
 
 namespace Anki {
 namespace Embedded {
@@ -82,6 +82,27 @@ namespace Cozmo {
     bool                  isMoving;
     ImuDataHistory        imuDataHistory;
   };
+  
+  // Everything that can be generated from one image in one big package:
+  struct VisionProcessingResult
+  {
+    TimeStamp_t timestamp; // Always set, even if all the lists below are empty (e.g. nothing is found)
+    
+    std::list<VizInterface::TrackerQuad>               trackerQuads;
+    std::list<ExternalInterface::RobotObservedMotion>  observedMotions;
+    std::list<Vision::ObservedMarker>                  observedMarkers;
+    std::list<Vision::TrackedFace>                     faces;
+    std::list<Pose3d>                                  dockingPoses;
+    std::list<OverheadEdgeFrame>                       overheadEdges;
+    std::list<Vision::UpdatedFaceID>                   updatedFaceIDs;
+    std::list<ToolCodeInfo>                            toolCodes;
+    std::list<Vision::CameraCalibration>               cameraCalibrations;
+    
+    // Used to pass debug images back to main thread for display:
+    std::list<std::pair<std::string, Vision::Image>>    debugImages;
+    std::list<std::pair<std::string, Vision::ImageRGB>> debugImageRGBs;
+  };
+  
 
   class VisionSystem : public Vision::Profiler
   {
@@ -239,27 +260,11 @@ namespace Cozmo {
 
     const std::string& GetDataPath() const { return _dataPath; }
   
-    // These return true if a mailbox messages was available, and they copy
-    // that message into the passed-in message struct.
-    //bool CheckMailbox(ImageChunk&          msg);
-    //bool CheckMailbox(MessageFaceDetection&       msg);
-    bool CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera);
-    bool CheckMailbox(Vision::ObservedMarker&     msg);
-    bool CheckMailbox(VizInterface::TrackerQuad&  msg);
-    //bool CheckMailbox(RobotInterface::PanAndTilt& msg);
-    bool CheckMailbox(ExternalInterface::RobotObservedMotion& msg);
-    bool CheckMailbox(Vision::TrackedFace&        msg);
-    bool CheckMailbox(Vision::UpdatedFaceID&  msg);
-    bool CheckMailbox(OverheadEdgeFrame& msg);
-    bool CheckMailbox(ToolCodeInfo& msg);
-    bool CheckMailbox(Vision::CameraCalibration& msg);
-    
-    bool CheckDebugMailbox(std::pair<std::string, Vision::Image>& msg);
-    bool CheckDebugMailbox(std::pair<std::string, Vision::ImageRGB>& msg);
+    bool CheckMailbox(VisionProcessingResult& result);
     
     const RollingShutterCorrector& GetRollingShutterCorrector() { return _rollingShutterCorrector; }
-    void ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
-    bool IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
+    void  ShouldDoRollingShutterCorrection(bool b) { _doRollingShutterCorrection = b; }
+    bool  IsDoingRollingShutterCorrection() const { return _doRollingShutterCorrection; }
     
   protected:
   
@@ -282,6 +287,7 @@ namespace Cozmo {
     Anki::Point2f    _prevGroundMotionCentroid;
     f32              _prevCentroidFilterWeight = 0.f;
     f32              _prevGroundCentroidFilterWeight = 0.f;
+    
     //
     // Formerly in Embedded VisionSystem "private" namespace:
     //
@@ -477,31 +483,15 @@ namespace Cozmo {
                         DockingErrorSignal& dockErrMsg,
                         Embedded::MemoryStack scratch);
     
+    void RestoreNonTrackingMode();
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;
-    
-    
-    // Mailboxes for different types of messages that the vision
-    // system communicates back to the vision processing thread
-    Mailbox<VizInterface::TrackerQuad>        _trackerMailbox;
-    Mailbox<ExternalInterface::RobotObservedMotion>  _motionMailbox;
-    MultiMailbox<std::pair<Pose3d, TimeStamp_t>, 4>  _dockingMailbox; // holds timestamped marker pose w.r.t. camera
-    MultiMailbox<Vision::ObservedMarker, DetectFiducialMarkersParameters::MAX_MARKERS>   _visionMarkerMailbox;
 
-    static const s32 MAX_FACE_DETECTIONS = 16;
-    MultiMailbox<Vision::TrackedFace, MAX_FACE_DETECTIONS>   _faceMailbox;
-    MultiMailbox<Vision::UpdatedFaceID, MAX_FACE_DETECTIONS> _updatedFaceIdMailbox;
-    
-    MultiMailbox<OverheadEdgeFrame, 8> _overheadEdgeFrameMailbox;
-    
-    Mailbox<ToolCodeInfo> _toolCodeMailbox;
-    Mailbox<Vision::CameraCalibration> _calibrationMailbox;
-    
-    MultiMailbox<std::pair<std::string, Vision::Image>, 10>     _debugImageMailbox;
-    MultiMailbox<std::pair<std::string, Vision::ImageRGB>, 10>  _debugImageRGBMailbox;
-    
-    void RestoreNonTrackingMode();
+    // "Mailbox" for passing things out to main thread
+    std::mutex _mutex;
+    std::queue<VisionProcessingResult> _results;
+    VisionProcessingResult _currentResult;
     
   }; // class VisionSystem
   

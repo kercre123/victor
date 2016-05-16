@@ -116,21 +116,10 @@ struct DockingErrorSignal;
     // turning too fast or head is moving too fast) will be considered
     void   EnableVisionWhileMovingFast(bool enable);
     
-    Result UpdateFaces();
-    Result UpdateVisionMarkers();
-    Result UpdateTrackingQuad();
-    Result UpdateDockingErrorSignal();
-    Result UpdateMotionCentroid();
+    Result UpdateAllResults();
     Result UpdateOverheadMap(const Vision::ImageRGB& image,
                              const VisionPoseData& poseData);
-    
-    Result UpdateOverheadEdges();
-    
-    // See what tool we have on our lifter and calibrate the camera
-    Result UpdateToolCode();
-    
-    Result UpdateComputedCalibration();
-    
+
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
     
@@ -282,6 +271,19 @@ struct DockingErrorSignal;
     
     // Helper for loading face album data from file / robot
     void BroadcastLoadedNamesAndIDs(const std::list<Vision::FaceNameAndID>& namesAndIDs) const;
+    
+    // Individual processing update helpers
+    Result UpdateFaces(const VisionProcessingResult& result);
+    Result UpdateVisionMarkers(const VisionProcessingResult& result);
+    Result UpdateTrackingQuad(const VisionProcessingResult& result);
+    Result UpdateDockingErrorSignal(const VisionProcessingResult& result);
+    Result UpdateMotionCentroid(const VisionProcessingResult& result);
+    Result UpdateOverheadEdges(const VisionProcessingResult& result);
+    
+    // See what tool we have on our lifter and calibrate the camera
+    Result UpdateToolCode(const VisionProcessingResult& result);
+    
+    Result UpdateComputedCalibration(const VisionProcessingResult& result);
     
   }; // class VisionComponent
   
