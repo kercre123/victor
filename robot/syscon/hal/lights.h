@@ -31,18 +31,41 @@ using namespace Anki::Cozmo;
    PACK_IR(i) \
 )
 
-static const int BACKPACK_LIGHT_INDEX_BASE = 0;
-static const int CUBE_LIGHT_INDEX_BASE = NUM_BACKPACK_LEDS;
-static const int CUBE_LIGHT_STRIDE = NUM_PROP_LIGHTS;
-
-static const int TOTAL_LIGHTS = NUM_BACKPACK_LEDS + MAX_ACCESSORIES * NUM_PROP_LIGHTS;
 static const int LIGHTS_PER_WORD = 4;
+
+enum LightMode {
+  HOLD_VALUE,
+  TRANSITION_UP,
+  HOLD_ON,
+  TRANSITION_DOWN,
+  HOLD_OFF
+};
+
+struct LightValues {
+  LightState state;
+  LightMode mode;
+  int clock;
+  int phase;
+  uint8_t values[LIGHTS_PER_WORD];
+};
+
+union ControllerLights {
+  struct {
+    LightValues backpack[5];
+    LightValues cube[MAX_ACCESSORIES][NUM_PROP_LIGHTS];
+  };
+  
+  LightValues lights[];
+};
+
+static const int TOTAL_LIGHTS = sizeof(ControllerLights) / sizeof(LightValues);
+
+extern ControllerLights lightController;
 
 namespace Lights {
   void init();
   void manage();
-  void update(int index, const LightState* ledParams);
-  uint8_t* state(int index);
+  void update(LightValues& light, const LightState* ledParams);
 };
 
 #endif

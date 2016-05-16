@@ -173,7 +173,7 @@ void Backpack::manage() {
     
   int idx = 0;
   for (int g = 0; g < NUM_BACKPACK_LEDS; g++) {
-    uint8_t* levels = Lights::state(BACKPACK_LIGHT_INDEX_BASE+g);
+    uint8_t* levels = lightController.backpack[g].values;
 
     for (int i = 0; i < 3; i++, idx++) {
       // Disabled channel
@@ -186,7 +186,7 @@ void Backpack::manage() {
 
 void Backpack::setLights(const LightState* update) {
   for (int i = 0; i < NUM_BACKPACK_LEDS; i++) {
-    Lights::update(i, &update[i]);
+    Lights::update(lightController.backpack[i], &update[i]);
   }
 }
 

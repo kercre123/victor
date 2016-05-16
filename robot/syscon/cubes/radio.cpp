@@ -27,9 +27,6 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
-//#define TESTING_CUBES
-//#define NATHAN_CUBE_JUNK
-
 using namespace Anki::Cozmo;
 
 static void EnterState(RadioState state);
@@ -222,16 +219,7 @@ void uesb_event_handler(uint32_t flags)
 
     // Attempt to locate existing accessory and repair
     slot = LocateAccessory(advert.id);
-    if (slot < 0) {
-      #ifdef TESTING_CUBES
-      for (int i = 0; i < MAX_ACCESSORIES; i++) {
-        if (!accessories[i].allocated) {
-          Radio::assignProp(i, advert.id);
-          break ;
-        }
-      }
-      #endif
-      
+    if (slot < 0) {     
       ObjectDiscovered msg;
       msg.device_type = advert.model;
       msg.factory_id = advert.id;
@@ -301,10 +289,6 @@ void uesb_event_handler(uint32_t flags)
     AccessorySlot* acc = &accessories[currentAccessory];
     AccessoryHandshake* ap = (AccessoryHandshake*) &rx_payload.data;
 
-    #ifdef NATHAN_CUBE_JUNK
-    acc->tx_state.ledStatus[0] = ap->x;
-    #endif
-  
     acc->last_received = 0;
 
     PropState msg;
@@ -326,7 +310,7 @@ void Radio::setPropLights(unsigned int slot, const LightState *state) {
   }
 
   for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
-   Lights::update(CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * slot + c, &state[c]);
+    Lights::update(lightController.cube[slot][c], &state[c]);
   }
 }
 
@@ -359,7 +343,6 @@ void Radio::updateLights() {
     
     if (!acc->active) continue ;
     
-    #ifndef NATHAN_CUBE_JUNK
     // Update the color status of the lights   
     for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
       static const uint8_t light_index[NUM_PROP_LIGHTS][3] = {
@@ -369,18 +352,13 @@ void Radio::updateLights() {
         {  9, 10, 11 }
       };
 
-      int group = CUBE_LIGHT_INDEX_BASE + CUBE_LIGHT_STRIDE * currentAccessory + c;
-      uint8_t* rgbi = Lights::state(group);
+      //uint8_t* rgbi = lightController.cube[i][c].values;
+      uint8_t* rgbi = lightController.backpack[c].values;
 
       for (int i = 0; i < 3; i++) {
         acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];
       }
-      
-      #ifdef TESTING_CUBES
-      memset(acc->tx_state.ledStatus, 0x80, sizeof(acc->tx_state.ledStatus));
-      #endif
     }
-    #endif
   }
 }
 
@@ -404,12 +382,6 @@ void Radio::prepare(void* userdata) {
     EnterState(RADIO_TALKING);
 
     uesb_prepare_tx_payload(&address, &acc->tx_state, sizeof(acc->tx_state));
-  
-    #ifdef NATHAN_CUBE_JUNK
-    for(int i = 2; i < sizeof(acc->tx_state.ledStatus); i+=3) {
-      acc->tx_state.ledStatus[i]++;
-    }
-    #endif
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
     if (acc->active)
