@@ -8,8 +8,8 @@ namespace Cozmo {
   namespace MinigameWidgets {
     public class SpinnerWidget : MinigameWidget {
 
-      private const float kAnimXOffset = -200.0f;
-      private const float kAnimYOffset = 200.0f;
+      private const float kAnimXOffset = 0.0f;
+      private const float kAnimYOffset = -200.0f;
       private const float kAnimDur = 0.25f;
 
       [SerializeField]
