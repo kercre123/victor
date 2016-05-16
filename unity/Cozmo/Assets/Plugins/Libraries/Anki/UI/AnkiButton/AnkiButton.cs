@@ -168,7 +168,7 @@ namespace Anki {
 
       protected override void Start() {
         base.Start();
-        if (!_Initialized) {
+        if (!_Initialized && Application.isPlaying) {
           DAS.Error("AnkiButton.Start", this.gameObject.name + " needs to be initialized.");
         }
       }
@@ -193,7 +193,7 @@ namespace Anki {
         _Initialized = true;
       }
 
-      private void InitializeDefaultGraphics() {
+      protected void InitializeDefaultGraphics() {
         if (!_IsInitialized && ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (graphic.targetImage != null) {
@@ -264,7 +264,7 @@ namespace Anki {
         }
 
         // Reset to normal visual state
-        ShowEnabledState();
+        UpdateVisuals();
         _OnRelease.Invoke();
       }
   
@@ -291,7 +291,7 @@ namespace Anki {
         Release();
       }
 
-      private void UpdateVisuals() {
+      protected virtual void UpdateVisuals() {
         InitializeDefaultGraphics();
         if (IsInteractable()) {
           ShowEnabledState();

@@ -1,6 +1,6 @@
 fileFormatVersion: 2
 guid: 21a4a7c0145ac469dae7bc08bac433c3
-timeCreated: 1462308031
+timeCreated: 1463352823
 licenseType: Pro
 TextureImporter:
   fileIDToRecycleName: {}
@@ -29,7 +29,7 @@ TextureImporter:
   textureFormat: -3
   maxTextureSize: 2048
   textureSettings:
-    filterMode: 1
+    filterMode: -1
     aniso: 16
     mipBias: -1
     wrapMode: 1
@@ -51,7 +51,7 @@ TextureImporter:
   spriteSheet:
     sprites: []
     outline: []
-  spritePackingTag: basicUIAtlasSD
+  spritePackingTag: minigameUIAtlasSD
   userData: 
   assetBundleName: 
   assetBundleVariant: 

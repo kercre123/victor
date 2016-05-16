@@ -117,6 +117,7 @@ namespace Anki {
         // Copy engine resources
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets", "Assets/StreamingAssets/cozmo_resources/assets");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/cozmo-engine/resources/config", "Assets/StreamingAssets/cozmo_resources/config");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../generated/resources/pocketsphinx", "Assets/StreamingAssets/cozmo_resources/pocketsphinx");
 
         // Delete compressed animation files that we don't need
         string[] tarFiles = Directory.GetFiles("Assets/StreamingAssets/cozmo_resources/assets/animations", "*.tar", SearchOption.AllDirectories);
