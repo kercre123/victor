@@ -1,0 +1,34 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "notification.local1": {
+    "translation": "Cozmo misses you!"
+  },
+  "notification.local2": {
+    "translation": "Come back!"
+  },
+  "notification.local3": {
+    "translation": "How about a game of Speed Tap?"
+  },
+  "notification.local4": {
+    "translation": "◕︵◕"
+  }
+
+}

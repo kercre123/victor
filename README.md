@@ -1,117 +1,113 @@
-products-cozmo
-==================
+# cozmo-game
 
-The Cozmo core engine.
+Cozmo Unity gameplay code. 
 
-******************************************************************************
-NOTE: These build instructions are outdated, see the readme in anki/cozmo-game
-******************************************************************************
+If you are contributing to the Unity/C# codebase, please read the [Unity Coding Guidelines](https://github.com/anki/cozmo-game/wiki/Unity-Coding-Guidelines).
 
-==================
+# Building cozmo-game
 
+### Brew
 
-==========================
-Building products-cozmo
-==========================
+First install [brew](http://brew.sh/). Then use brew to install the following dependencies:
 
+    brew install cmake
+    brew install python3
 
--------------
-XCode (Mac)
---------------
+### Unity
 
-1) Build coretech external (see its local readme)
+We are using [Unity 5.3.1p3](https://unity3d.com/unity/qa/patch-releases/5.3.1p3). Make sure you also install the iOS and Android components.
 
-2) In products-cozmo/build --- create 'build' folder if it doesn't exist --- run
- 
-  cmake .. -G Xcode
+Right now we use one scene and load assets by code. The main scene is located here
 
-3) Open Cozmo.xcodeproj/ and build
+    /unity/Cozmo/Assets/Scenes/Bootstrap.unity
 
+### Xcode
 
--------------
-Microsoft Visual Studio 2012 MSVC (Windows)
--------------
-1) Build coretech external (see its local readme)
+We are using XCode Version 7.2 (7C68). Install from the OS X App Store. Make sure you open XCode at least once after installing / updating because it may ask for accepting terms of service before permitting us to run it from build scripts.
 
-2) In products-cozmo/build --- create 'build' folder if it doesn't exist --- run
- 
-  cmake -G"Visual Studio 11" ..
+### Build Script
 
-3) Open Cozmo.sln in Visual Studio 2012 and build
+To run the configure python scripts you'll need xcpretty.
 
+    sudo gem install xcpretty
 
--------------
-GCC on Ubuntu (Including Amazon EC2)
--------------
+Build everything from the cozmo-game folder.
 
-1) Install compilation tools
-sudo apt-get install cmake
-sudo apt-get install g++
-sudo apt-get install git
+    cd <path-to-cozmo-repository>
+    ./configure.py build
 
-2) Build coretech external (see its local readme)
+### Webots
 
-3) In products-cozmo/build --- create 'build' folder if it doesn't exist --- run
-cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DEMBEDDED_USE_GTEST=0
+Webots is used for our robotics simulation environment. It is also used to run the engine on desktop/Mac when we connect to a physical robot.
 
-4) Make the project (-j16 is for a 16 core machine)
-make -j16
+We are currently using [version 8.2.1](https://www.cyberbotics.com/archive/mac/webots-8.2.1.dmg). You will need to get a license from IT.
 
--------------
-GCC on Cubietruck (Cortex-A7)
--------------
+The Webots worlds can be found in /lib/anki/cozmo-engine/simulator/worlds
 
-1) Install Ubuntu
-1a) Download the image of Lubuntu 13.04: http://dl.cubieboard.org/software/a20-cubietruck/lubuntu/ct-lubuntu-nand-v1.03/EN/lubuntu-desktop-nand.img.gz
-1b) Flash to NAND by using the instructions (with newer image file) at: http://docs.cubieboard.org/tutorials/ct1/installation/cb3_lubuntu-12.10-desktop_nand_installation_v1.00
+Useful worlds:
 
-2) Change the first line in the /etc/apt/sources.list to "deb http://old-releases.ubuntu.com/ubuntu/ quantal main universe"
+ * cozmoViz.wbt - Includes a keyboard controller and the engine. Used to talk to a physical robot.
 
-3) Change your timezone, and verify that it worked by running "date"
-sudo mv /etc/localtime /etc/localtime-old
-sudo ln -sf /usr/share/zoneinfo/US/Pacific-New /etc/localtime
-date
+ * cozmoVizForUnity.wbt - runs the engine. Use this if you want to run Unity to talk to a physical robot.
 
-4) Mount the external hard drive with "sudo mount -o umask=000 /dev/sda4 /mnt/fastExtern
+ * PatternPlay.wbt - Simulated environment for a virtual robot. Useful for using Unity to run simulated games. You can create your own versions of this ideal for the game you are testing.
 
-5) Install compilation tools
-sudo apt-get update
-sudo apt-get upgrade
-sudo apt-get install cmake g++ zlib1g-dev build-essential gcc-multilib
+ * remoteAnimationWorld.wbt - Used by the animation tool to see your animation on a simulated robot.
 
-6) In products-cozmo/build --- create 'build' folder if it doesn't exist --- run cmake twice
-cmake .. -DCMAKE_BUILD_TYPE=Release -DEMBEDDED_USE_GTEST=0 -DEMBEDDED_USE_MATLAB=0 -DEMBEDDED_USE_OPENCV=0
-cmake .. -DCMAKE_BUILD_TYPE=Release -DEMBEDDED_USE_GTEST=0 -DEMBEDDED_USE_MATLAB=0 -DEMBEDDED_USE_OPENCV=0
+# Optional Info
 
-7) Make the project
-make -j3 ; python ../python/addSourceToGccAssembly.py /mnt/fastExtern/products-cozmo/build
+### configure.py Commands
 
--------------
-GCC on Linux, cross-compiled for Cubietruck (Cortex-A7)
--------------
+The basic commands are as follows:
 
-1) Follow steps 1-3 and 5 for "GCC on Cubietruck (Cortex-A7)"
+    ./configure.py generate    # (default) create the Xcode projects and workspaces.
+    ./configure.py build       # generate, then use xcodebuild to build the generated projects (including Unity on iOS).
+    ./configure.py install     # generate, build, then install the app on a connected ios device.
+    ./configure.py run -p ios  # generate, build, install, then debug the app on a connected ios device using lldb.
+    ./configure.py uninstall   # uninstall the app from a connected device.
+    ./configure.py clean       # use xcodebuild to clean the generated projects (assuming they exist).
+    ./configure.py delete      # delete all generated projects and compiled files.
+    ./configure.py wipeall!    # delete, then wipe all ignored files in the entire repository
 
-2) Install cross-compilation on PC-based Ubuntu 12.04 or 14.04 (or probably others, though I haven't tested)
-# On the PC, enter the following:
-sudo add-apt-repository 'deb http://us.archive.ubuntu.com/ubuntu utopic main'
-sudo apt-get update
-sudo apt-get install cmake gcc-4.9-arm-linux-gnueabihf g++-4.9-arm-linux-gnueabihf
-sudo add-apt-repository --remove 'deb http://us.archive.ubuntu.com/ubuntu utopic main'
-sudo apt-get update
+Only generate and delete are really useful for C++ developers since the other commands are just duplicates of what you have in Xcode. C# developers might find the terminal commands easier to work with, and eventually the terminal versions should be cross-platform.
 
-3) Build cross-compiled.  In products-cozmo/build --- create 'build' folder if it doesn't exist --- run cmake
-AR=arm-linux-gnueabihf-gcc-ar-4.9 AS=arm-linux-gnueabihf-gcc-as-4.9 CC=arm-linux-gnueabihf-gcc-4.9 CXX=arm-linux-gnueabihf-g++-4.9 cmake .. -DCMAKE_BUILD_TYPE=Release -DEMBEDDED_USE_GTEST=0 -DEMBEDDED_USE_MATLAB=0 -DEMBEDDED_USE_OPENCV=0
-make -j8
+KNOWN ISSUE : if you are having the following build failure, go to cozmo-game/unity/ios/ then throw the HockeyApp file in there into the trash and rebuild. Currently
+delete does not properly remove the HockeySDK file and the link is broken.
+    ⚠️  ld: directory not found for option '-F/Users/ryananderson/Desktop/cozmo-game/unity/ios/HockeyApp'
+    
+    ❌  ld: framework not found HockeySDK
+    
+    
+    
+    ❌  clang: error: linker command failed with exit code 1 (use -v to see invocation)
+    
+    
+    ** BUILD FAILED **
+    
 
-4) On the board, run sudo ifconfig to determine the inet addr (In the format as 192.168.1.???)
+### webots orphaned processes
 
-5) Set up ssh key
-  # On the PC
-  ssh-keygen -t rsa
-  # For the file to save the key, choose something like "/home/yourUserId/.ssh/id_rsa_cubie"
-  ssh linaro@192.168.1.125 mkdir -p .ssh
-  cat .ssh/id_rsa_cubie.pub | ssh linaro@192.168.1.125 'cat >> .ssh/authorized_keys'
+ * Happens often when simulator crashes
+ * `ps -ef | grep simulator\/controllers | cut -d ' ' -f 4 | xargs kill`
+ * You can also search for orphaned processes in Activity Monitor.
 
-6) Comple, upload, and run on the board, by running the file "products-cozmo/runA7.sh"
+### ios-deploy
 
+To install, run or uninstall, you must have the ios-deploy application. To get it, run these commands:
+
+    brew install node
+    npm install -g ios-deploy
+
+ios-deploy does not seem to be 100% reliable, nor does it have great error messages. If you have problems:
+
+1. Make sure your ios device is connected and trusts the machine. If it's still waiting for a device, sometimes disconnecting and reconnecting helps.
+
+2. Make sure you have the latest Xcode, or at least one that can build an iOS app for the targeted device.
+
+3. If you have never built on this particular device, you may need to open the workspace in Xcode once with the device connected so that it can load some symbol files. (Unsure why this can't be done from the command line.)
+
+4. When running, sometimes the lldb (debugger) will fail to attach and you won't get logs. In that case, the best you can do is rerun.
+
+5. If none of the above apply, it's likely it won't work in Xcode either and Xcode has better error messages, so try running it from there.
+
+6. ios-deploy is a popular enough program that google can usually lead you to an answer.

@@ -1,0 +1,37 @@
+{
+  "GenList": [
+    {
+      "TitleKey": "dailyGoal.title.WinSpeedTap",
+      "DescKey": "dailyGoal.description.WinSpeedTap",
+      "RewardType": "experience",
+      "PointsRewarded": 100,
+      "Target": 5,
+      "CladEvent": "OnSpeedtapGamePlayerWinAnyIntensity",
+      "GenConditions": [],
+      "ProgressConditions": []
+    },
+    {
+      "TitleKey": "dailyGoal.title.PlaySpeedTap",
+      "DescKey": "dailyGoal.description.PlaySpeedTap",
+      "RewardType": "experience",
+      "PointsRewarded": 30,
+      "Target": 10,
+      "CladEvent": "OnSpeedtapStarted",
+      "GenConditions": [
+        {
+          "$type": "Anki.Cozmo.TotalSessionsCondition, Assembly-CSharp",
+          "UseMinSession": true,
+          "MinSession": 5,
+          "UseMaxSession": false,
+          "MaxSession": 0,
+          "Label": {
+            "text": "Total Sessions Condition",
+            "image": null,
+            "tooltip": ""
+          }
+        }
+      ],
+      "ProgressConditions": []
+    }
+  ]
+}

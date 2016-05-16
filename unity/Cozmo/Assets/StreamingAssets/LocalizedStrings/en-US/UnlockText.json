@@ -1,0 +1,39 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "unlockable.CubeRollAction.Title": {
+    "translation": "Cube Roll"
+  },
+  "unlockable.CubeRollAction.Description": {
+    "translation": "Get Cozmo to Roll a Cube"
+  },
+  "unlockable.Default.Title": {
+    "translation": "Unlockable Default Title"
+  },
+  "unlockable.Default.Description": {
+    "translation": "Unlockable Default Description"
+  },
+  "skills.LevelUp.Description": {
+    "translation": "Skills Leveled up to {0} in {1}"
+  },
+  "skills.LevelUp.Title": {
+    "translation": "Level Up"
+  }
+}

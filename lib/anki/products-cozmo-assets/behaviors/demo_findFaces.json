@@ -1,0 +1,29 @@
+{
+  "behaviorType": "FindFaces",
+  "name": "demo_findFaces_oldRemoveMe",
+  "center_face_angle": false,
+  "minimum_face_age_s": 0.0,
+  "minimum_pause_s": 1.1,
+  "maximum_pause_s": 2.3,
+  "min_score_while_active": 0.4,
+  "stop_on_any_face": false,
+  "emotionScorers": [
+    {
+      "emotionType": "Social",
+      "scoreGraph": {
+        "nodes": [
+          {
+            "x": -1.0,
+            "y": 0.1
+          },
+          {
+            "x": 1.0,
+            "y": 0.1
+          }
+        ]
+      },
+      "trackDelta": false
+    }
+  ],  
+  "behaviorGroups": []
+}

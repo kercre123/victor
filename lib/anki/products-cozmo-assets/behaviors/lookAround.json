@@ -1,0 +1,47 @@
+{
+  "behaviorType": "LookAround",
+  "name": "lookAround",
+  "emotionScorers": [
+    {
+      "emotionType": "Excited",
+      "scoreGraph": {
+        "nodes": [
+          {
+            "x": -1.0,
+            "y": 0.8
+          },
+          {
+            "x": -0.004,
+            "y": 0.4
+          },
+          {
+            "x": 1.0,
+            "y": 0.1
+          }
+        ]
+      },
+      "trackDelta": false
+    }
+  ],
+  "repetitionPenalty": {
+    "nodes": [
+      {
+        "x": 4.0,
+        "y": 0.49
+      },
+      {
+        "x": 5.599,
+        "y": 0.67
+      },
+      {
+        "x": 8.0,
+        "y": 1.0
+      }
+    ]
+  },
+  "behaviorGroups": [
+    "Demo",
+    "DemoCubes",
+    "FreeplayOne"
+  ]
+}

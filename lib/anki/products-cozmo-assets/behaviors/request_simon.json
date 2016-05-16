@@ -1,0 +1,66 @@
+{
+  "behaviorType" : "RequestGameSimple",
+  "name" : "RequestSimon",
+  "requiredGameFlags" : "Simon",
+
+  "zero_block_config": {
+    "request_animName" : "requestGame_generic_request",
+    "deny_animName" : "requestGame_generic_deny",
+    "minRequestDelay_s" : 20.0
+  },
+
+  "one_block_config": {
+    "initial_animName" : "requestGame_generic_initial",
+    "preDrive_animName" : "requestGame_generic_predrive",
+    "request_animName" : "requestGame_generic_request",
+    "deny_animName" : "requestGame_generic_deny",
+    "minRequestDelay_s" : 20.0
+  },
+  
+  "emotionScorers" :
+  [
+    {
+      "emotionType" : "WantToPlay",
+      "scoreGraph" :
+      {
+        "nodes" :
+        [
+          {
+            "x" : 0.0,
+            "y" : 0.0
+          },
+          {
+            "x" : 1.0,
+            "y" : 0.8
+          }
+        ]
+      },
+      "trackDelta" : false
+    }
+  ],
+  "repetitionPenalty" :
+  {
+    "nodes" :
+    [
+      {
+        "x" : 5.0,
+        "y" : 0.0
+      },
+      {
+        "x" : 10.0,
+        "y" : 0.1
+      },
+      {
+        "x" : 20.0,
+        "y" : 1.0
+      }
+    ]
+  },
+  "behaviorGroups" :
+  [
+    "AffectsBlocks",
+    "MiniGame",
+    "RequestSimon",
+    "FreeplayOne"
+  ]
+}
