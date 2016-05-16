@@ -17,9 +17,15 @@ namespace Anki
         void enableEspressif(void)
         {
           // Pull-down SCK during ESP8266 boot
+          GPIO_RESET(GPIO_MISO, PIN_MISO);
+          GPIO_OUT(GPIO_MISO, PIN_MISO);
+          SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
+
+          // Pull-down SCK during ESP8266 boot
           GPIO_RESET(GPIO_SCK, PIN_SCK);
           GPIO_OUT(GPIO_SCK, PIN_SCK);
           SOURCE_SETUP(GPIO_SCK, SOURCE_SCK, SourceGPIO);
+          
           // Weakly pull MOSI high to put ESP8266 into flash boot mode
           // We rely on the fixture to pull this strongly low and enter bootloader mode
           GPIO_IN(GPIO_MOSI, PIN_MOSI);
@@ -53,6 +59,9 @@ namespace Anki
 
           MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
           #endif
+
+          GPIO_IN(GPIO_MISO, PIN_MISO);
+          GPIO_IN(GPIO_SCK, PIN_SCK);
         }
         
         void disableEspressif(void)

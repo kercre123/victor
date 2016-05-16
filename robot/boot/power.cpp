@@ -51,9 +51,15 @@ void Anki::Cozmo::HAL::Power::init()
 void Anki::Cozmo::HAL::Power::enableEspressif(void)
 {
   // Pull-down SCK during ESP8266 boot
+  GPIO_SET(GPIO_MISO, PIN_MISO);
+  GPIO_OUT(GPIO_MISO, PIN_MISO);
+  SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
+
+  // Pull-down SCK during ESP8266 boot
   GPIO_RESET(GPIO_SCK, PIN_SCK);
   GPIO_OUT(GPIO_SCK, PIN_SCK);
   SOURCE_SETUP(GPIO_SCK, SOURCE_SCK, SourceGPIO);
+  
   // Weakly pull MOSI high to put ESP8266 into flash boot mode
   // We rely on the fixture to pull this strongly low and enter bootloader mode
   GPIO_IN(GPIO_MOSI, PIN_MOSI);
@@ -71,13 +77,14 @@ void Anki::Cozmo::HAL::Power::enableEspressif(void)
   SOURCE_SETUP(GPIO_POWEREN, SOURCE_POWEREN, SourceGPIO);
 
   // Wait for Espressif to toggle out 4 words of I2SPI
-  /* XXX: This could not possibly work because the Espressif may not be programmed
   for (int i = 0; i < 32; i++)
   {
     while (GPIO_READ(GPIO_WS) & PIN_WS)     ;
     while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;
   }
-  */
+
+  GPIO_IN(GPIO_MISO, PIN_MISO);
+  GPIO_IN(GPIO_SCK, PIN_SCK);
 }
 
 void Anki::Cozmo::HAL::Power::disableEspressif(void)
