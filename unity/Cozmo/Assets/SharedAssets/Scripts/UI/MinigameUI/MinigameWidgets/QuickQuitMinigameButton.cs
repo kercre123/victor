@@ -25,8 +25,7 @@ namespace Cozmo {
       }
 
       private void Awake() {
-        _QuickQuitButtonInstance.DASEventButtonName = "quit_game_during_setup_button";
-        _QuickQuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
+        _QuickQuitButtonInstance.Initialize(HandleQuitButtonTap, "quit_game_during_setup_button", "TBD");
       }
 
       public override void DestroyWidgetImmediately() {
