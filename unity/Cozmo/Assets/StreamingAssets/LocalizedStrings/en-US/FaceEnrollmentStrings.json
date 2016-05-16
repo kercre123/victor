@@ -19,10 +19,10 @@
     ]
   },
   "faceEnrollment.instructions": {
-    "translation": "Cozmo Needs to Check you out!\nLook at Cozmo straight on, and hold still.\nWhen he's done, you'll hear a chime."
+    "translation": "Cozmo Needs to Check you out! Look at Cozmo straight on, and hold still.\n\nWhen he's done, you'll hear a chime."
   },
   "faceEnrollment.enterName.buttonText": {
-    "translation": "Set Name"
+    "translation": "Done"
   },
   "faceEnrollment.enterName.placeholderText": {
     "translation": "Enter Name"
