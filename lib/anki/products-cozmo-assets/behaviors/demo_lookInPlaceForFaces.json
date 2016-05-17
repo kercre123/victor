@@ -1,7 +1,6 @@
 {
   "behaviorType": "ExploreLookAroundInPlace",
   "name": "demo_lookInPlaceForFaces",
-  "min_score_while_active": 0.4,
   "emotionScorers": [
     {
       "emotionType": "Social",
@@ -28,6 +27,7 @@
   // -- configuration parameters for ExploreLookAroundInPlace
   "params":
   {
+    "behavior_ShouldResetTurnDirection": false,
     "behavior_DistanceFromRecentLocationMin_mm": 300.0,
     "behavior_RecentLocationsMax": 5,
     // shared speeds
