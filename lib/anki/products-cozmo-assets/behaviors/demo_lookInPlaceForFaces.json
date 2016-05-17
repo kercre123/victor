@@ -1,7 +1,6 @@
 {
   "behaviorType": "ExploreLookAroundInPlace",
   "name": "demo_lookInPlaceForFaces",
-  "min_score_while_active": 0.4,
   "emotionScorers": [
     {
       "emotionType": "Social",
