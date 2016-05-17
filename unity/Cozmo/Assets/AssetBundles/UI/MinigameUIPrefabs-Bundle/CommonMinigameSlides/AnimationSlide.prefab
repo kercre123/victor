@@ -2,14 +2,14 @@
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &105410
 GameObject:
-  m_ObjectHideFlags: 0
+  m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
   serializedVersion: 4
   m_Component:
   - 224: {fileID: 22439628}
   m_Layer: 5
-  m_Name: AnimationContainer
+  m_Name: AnimationInnerContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -26,6 +26,21 @@ GameObject:
   - 114: {fileID: 11476080}
   m_Layer: 5
   m_Name: TextContentsProxy
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!1 &190078
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  serializedVersion: 4
+  m_Component:
+  - 224: {fileID: 22417516}
+  m_Layer: 5
+  m_Name: AnimationContainer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81,6 +96,24 @@ MonoBehaviour:
     FieldName: Cozmo.MinigameWidgets.AnimationSlide:_InfoTextLabel
     ReferencePath: 
   ModifiedGlobalReferences: []
+--- !u!224 &22417516
+RectTransform:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 190078}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children:
+  - {fileID: 22439628}
+  m_Father: {fileID: 22477086}
+  m_RootOrder: 1
+  m_AnchorMin: {x: 0.45, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -25, y: 0}
+  m_SizeDelta: {x: -70, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22439628
 RectTransform:
   m_ObjectHideFlags: 1
@@ -91,12 +124,12 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
-  m_Father: {fileID: 22477086}
-  m_RootOrder: 1
-  m_AnchorMin: {x: 0.45, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -25, y: 0}
-  m_SizeDelta: {x: -70, y: 0}
+  m_Father: {fileID: 22417516}
+  m_RootOrder: 0
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 1500, y: 765}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22467622
 RectTransform:
@@ -126,7 +159,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 22467622}
-  - {fileID: 22439628}
+  - {fileID: 22417516}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_AnchorMin: {x: 0, y: 0}
