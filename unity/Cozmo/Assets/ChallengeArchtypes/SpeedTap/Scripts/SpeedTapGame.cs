@@ -120,7 +120,7 @@ namespace SpeedTap {
 
       InitialCubesState initCubeState = new InitialCubesState(
                                           new SelectDifficultyState(
-                                            new HowToPlayState(new SpeedTapCozmoDriveToCube(true)),
+                                            new SpeedTapCozmoDriveToCube(true),
                                             DifficultyOptions,
                                             HighestLevelCompleted()
                                           ), 
