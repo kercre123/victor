@@ -25,7 +25,7 @@ public class BlockPoolPane : MonoBehaviour {
       this.ObjectType = type;
       this.IsEnabled = is_enabled;
       this.SignalStrength = signal_strength;
-      this.Btn = btn;
+      this.BlockButton = btn;
     }
 
     public Anki.Cozmo.ObjectType ObjectType { get; set; }
@@ -34,7 +34,7 @@ public class BlockPoolPane : MonoBehaviour {
 
     public sbyte SignalStrength { get; set; }
 
-    public Button Btn { get; set; }
+    public Button BlockButton { get; set; }
   }
 
   private Dictionary<uint,BlockData> _BlockStates;
@@ -110,7 +110,7 @@ public class BlockPoolPane : MonoBehaviour {
   private void HandleObjectUnavailableMsg(Anki.Cozmo.ExternalInterface.ObjectUnavailable objUnAvailableMsg) {
     BlockPoolPane.BlockData data;
     if (_BlockStates.TryGetValue(objUnAvailableMsg.factory_id, out data)) {
-      Destroy(data.Btn.gameObject);
+      Destroy(data.BlockButton.gameObject);
       _BlockStates.Remove(objUnAvailableMsg.factory_id);
     }
   }
@@ -120,7 +120,6 @@ public class BlockPoolPane : MonoBehaviour {
     if (_BlockStates.TryGetValue(id, out data)) {
       bool is_enabled = !data.IsEnabled;
       data.IsEnabled = is_enabled;
-      
       UpdateButton(id);
       _BlockSelectedMessage.factoryId = id;
       _BlockSelectedMessage.selected = is_enabled;
@@ -148,7 +147,7 @@ public class BlockPoolPane : MonoBehaviour {
     BlockPoolPane.BlockData data;
     if (!_BlockStates.TryGetValue(id, out data)) {
       GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, _UIContainer);
-      gameObject.name = "block_" + id;
+      gameObject.name = "block_" + id.ToString("X");
       Button button = gameObject.GetComponent<Button>();
       data = new BlockPoolPane.BlockData(type, is_enabled, signal_strength, button);
       _BlockStates.Add(id, data);
@@ -166,7 +165,7 @@ public class BlockPoolPane : MonoBehaviour {
   private void UpdateButton(uint id) {
     BlockPoolPane.BlockData data;
     if (_BlockStates.TryGetValue(id, out data)) {
-      Text txt = data.Btn.GetComponentInChildren<Text>();
+      Text txt = data.BlockButton.GetComponentInChildren<Text>();
       if (txt) {
         txt.text = "ID: " + id.ToString("X") + " \n " +
         "type: " + data.ObjectType + "\n" +
