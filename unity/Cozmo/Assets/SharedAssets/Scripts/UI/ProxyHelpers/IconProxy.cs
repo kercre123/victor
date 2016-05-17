@@ -23,6 +23,12 @@ namespace Cozmo {
       public void SetIcon(Sprite sprite) {
         _IconImage.sprite = sprite;
       }
+
+      public void SetAlpha(float alpha) {
+        Color oldColor = _IconImage.color;
+        oldColor.a = alpha;
+        _IconImage.color = oldColor;
+      }
     }
   }
 }

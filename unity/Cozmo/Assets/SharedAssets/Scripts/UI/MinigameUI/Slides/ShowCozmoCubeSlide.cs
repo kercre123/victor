@@ -2,6 +2,8 @@
 using UnityEngine.UI;
 using Anki.UI;
 using System.Collections;
+using Cozmo;
+using Cozmo.UI;
 
 public class ShowCozmoCubeSlide : MonoBehaviour {
 
@@ -9,7 +11,7 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   private HorizontalOrVerticalLayoutGroup _CubeContainer;
 
   [SerializeField]
-  private Image _CubePrefab;
+  private IconProxy _CubePrefab;
 
   [SerializeField]
   private AnkiTextLabel _ShowCozmoCubesLabel;
@@ -17,11 +19,16 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
   [SerializeField]
   private RectTransform _TransparentCubeContainer;
 
-  private Image[] _CubeImages;
+  private IconProxy[] _CubeImages;
 
   private float _OutOfViewAlpha = 0.5f;
 
-  public void Initialize(int numCubesToShow, Cozmo.CubePalette.CubeColor inViewColor) {
+  private CubePalette.CubeColor _InViewColor;
+  private CubePalette.CubeColor _OutViewColor;
+
+  public void Initialize(int numCubesToShow, CubePalette.CubeColor inViewColor, CubePalette.CubeColor outViewColor) {
+    _InViewColor = inViewColor;
+    _OutViewColor = outViewColor;
     CreateCubes(numCubesToShow, inViewColor.uiSprite);
     LightUpCubes(0);
     string locKeyToUse = (numCubesToShow > 1) ? LocalizationKeys.kMinigameLabelShowCubesPlural : LocalizationKeys.kMinigameLabelShowCubesSingular;
@@ -33,16 +40,23 @@ public class ShowCozmoCubeSlide : MonoBehaviour {
 
   public void LightUpCubes(int numberCubes) {
     for (int i = 0; i < _CubeImages.Length; i++) {
-      _CubeImages[i].color = (i < numberCubes) ? Color.white : new Color(1, 1, 1, _OutOfViewAlpha);
+      if (i < numberCubes) {
+        _CubeImages[i].SetIcon(_InViewColor.uiSprite);
+        _CubeImages[i].SetAlpha(1f);
+      }
+      else {
+        _CubeImages[i].SetIcon(_OutViewColor.uiSprite);
+        _CubeImages[i].SetAlpha(_OutOfViewAlpha);
+      }
     }
     _TransparentCubeContainer.gameObject.SetActive(numberCubes < _CubeImages.Length);
   }
 
   private void CreateCubes(int numCubesToShow, Sprite inViewSprite) {
-    _CubeImages = new Image[numCubesToShow];
+    _CubeImages = new IconProxy[numCubesToShow];
     for (int i = 0; i < _CubeImages.Length; i++) {
-      _CubeImages[i] = UIManager.CreateUIElement(_CubePrefab, _CubeContainer.transform).GetComponent<Image>();
-      _CubeImages[i].sprite = inViewSprite;
+      _CubeImages[i] = UIManager.CreateUIElement(_CubePrefab, _CubeContainer.transform).GetComponent<Cozmo.UI.IconProxy>();
+      _CubeImages[i].SetIcon(inViewSprite);
     }
   }
 }
