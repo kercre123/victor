@@ -11,6 +11,10 @@ public class HexMap {
     _Map = map;
   }
 
+  public Dictionary<Coord, PuzzlePiece> GetOccupancyMap() {
+    return _OccupancyMap;
+  }
+
   // tries to remove the PuzzlePiece at mapCoord. returns true if a piece was successfully removed.
   // returns false if mapCoord was an available cell.
   public bool TryRemove(Coord mapCoord, out PuzzlePiece removedPiece) {
@@ -27,34 +31,34 @@ public class HexMap {
     foreach (Coord localCoord in toRemoveLocalCoords) {
       // convert to mapCoord space by adding the map position of the puzzle piece we are
       // removing
-      _OccupancyMap.Remove(localCoord + removedPiece.MapPosition);
+      _OccupancyMap.Remove(removedPiece.LocalToMapCoord(localCoord));
     }
 
     return true;
   }
 
-  public bool CanAdd(PuzzlePiece hexItem, Coord mapCoord) {
+  public bool CanAdd(PuzzlePiece hexItem) {
     foreach (Coord localCoord in hexItem.PieceData.HexSet.HexSetData) {
       // check to see if the coordinate has been occupied by another piece.
-      if (_OccupancyMap.ContainsKey(mapCoord + localCoord)) {
+      if (_OccupancyMap.ContainsKey(hexItem.LocalToMapCoord(localCoord))) {
         return false;
       }
       // check to see if the coordinate exists in the map hex set.
-      if (_Map.HexSetData.Contains(mapCoord + localCoord) == false) {
+      if (_Map.HexSetData.Contains(hexItem.LocalToMapCoord(localCoord)) == false) {
         return false;
       }
     }
     return true;
   }
 
-  public bool TryAdd(PuzzlePiece hexItem, Coord mapCoord) {
-    if (!CanAdd(hexItem, mapCoord)) {
+  public bool TryAdd(PuzzlePiece hexItem) {
+    if (!CanAdd(hexItem)) {
       return false;
     }
 
     // update the occupancy map
     foreach (Coord localCoord in hexItem.PieceData.HexSet.HexSetData) {
-      _OccupancyMap.Add(mapCoord + localCoord, hexItem);
+      _OccupancyMap.Add(hexItem.LocalToMapCoord(localCoord), hexItem);
     }
     return true;
   }
