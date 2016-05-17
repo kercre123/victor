@@ -1084,6 +1084,12 @@ namespace Anki {
         return RESULT_FAIL;
       }
       
+      if(!_placeObjectOnGroundIfCarrying && !_robot.CanStackOnTopOfObject(*object))
+      {
+        PRINT_NAMED_WARNING("PlaceRelObjectAction.SelectDockAction", "Can't stack on object");
+        return RESULT_FAIL;
+      }
+      
       _dockAction = _placeObjectOnGroundIfCarrying ? DockAction::DA_PLACE_LOW : DockAction::DA_PLACE_HIGH;
       
       // Need to record the object we are currently carrying because it
