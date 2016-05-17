@@ -183,7 +183,9 @@ namespace Anki {
       AlignWithObjectAction(Robot& robot,
                             ObjectID objectID,
                             const f32 distanceFromMarker_mm,
+                            const AlignmentType alignmentType = AlignmentType::CUSTOM,
                             const bool useManualSpeed = false);
+      
       virtual ~AlignWithObjectAction();
       
       virtual const std::string& GetName() const override;

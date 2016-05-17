@@ -849,7 +849,7 @@ namespace Anki {
     IDriveToInteractWithObject::IDriveToInteractWithObject(Robot& robot,
                                                            const ObjectID& objectID,
                                                            const PreActionPose::ActionType& actionType,
-                                                           const f32 distanceFromMarker_mm,
+                                                           const f32 predockOffsetDistX_mm,
                                                            const bool useApproachAngle,
                                                            const f32 approachAngle_rad,
                                                            const bool useManualSpeed)
@@ -866,7 +866,7 @@ namespace Anki {
       _driveToObjectAction = new DriveToObjectAction(robot,
                                                      objectID,
                                                      actionType,
-                                                     distanceFromMarker_mm,
+                                                     predockOffsetDistX_mm,
                                                      useApproachAngle,
                                                      approachAngle_rad,
                                                      useManualSpeed);
@@ -909,17 +909,21 @@ namespace Anki {
                                                                const f32 distanceFromMarker_mm,
                                                                const bool useApproachAngle,
                                                                const f32 approachAngle_rad,
+                                                               const AlignmentType alignmentType,
                                                                const bool useManualSpeed)
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::PLACE_RELATIVE,
-                                 distanceFromMarker_mm,
+                                 0,
                                  useApproachAngle,
                                  approachAngle_rad,
                                  useManualSpeed)
     {
-      AlignWithObjectAction* action = new AlignWithObjectAction(robot, objectID,
-                                                                distanceFromMarker_mm, useManualSpeed);
+      AlignWithObjectAction* action = new AlignWithObjectAction(robot,
+                                                                objectID,
+                                                                distanceFromMarker_mm,
+                                                                alignmentType,
+                                                                useManualSpeed);
       AddAction(action);
     }
     
@@ -976,7 +980,7 @@ namespace Anki {
     : IDriveToInteractWithObject(robot,
                                  objectID,
                                  PreActionPose::PLACE_RELATIVE,
-                                 placementOffsetX_mm,
+                                 0,
                                  useApproachAngle,
                                  approachAngle_rad,
                                  useManualSpeed)

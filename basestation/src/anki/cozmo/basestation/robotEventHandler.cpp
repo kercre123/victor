@@ -319,6 +319,7 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
                                                                             msg.distanceFromMarker_mm,
                                                                             msg.useApproachAngle,
                                                                             msg.approachAngle_rad,
+                                                                            msg.alignmentType,
                                                                             msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
@@ -326,7 +327,11 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
     }
     return action;
   } else {
-    AlignWithObjectAction* action = new AlignWithObjectAction(robot, selectedObjectID, msg.useManualSpeed);
+    AlignWithObjectAction* action = new AlignWithObjectAction(robot,
+                                                              selectedObjectID,
+                                                              msg.distanceFromMarker_mm,
+                                                              msg.alignmentType,
+                                                              msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;

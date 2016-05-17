@@ -21,7 +21,8 @@ namespace ExternalInterface {
 // =============================================
 
 // AlignWithObject
-// "Docks" to object so that it is aligned with it at the specified distance
+// "Docks" to object so that it is aligned with it at the specified AligmentType or distance
+// If alignmentType is CUSTOM, distanceFromMarker_mm is used, otherwise distanceFromMarker_mm is ignored
 message AlignWithObject {
     int_32 objectID,
     PathMotionProfile motionProf,
@@ -29,7 +30,8 @@ message AlignWithObject {
     float_32 approachAngle_rad,
     bool useApproachAngle,
     bool usePreDockPose,
-    bool useManualSpeed
+    bool useManualSpeed,
+    AlignmentType alignmentType
 }
 
 // DriveStraight
