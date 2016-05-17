@@ -5,11 +5,12 @@ namespace SpeedTap {
   public class SpeedTapHandCubesMatch : State {
 
     private SpeedTapGame _SpeedTapGame;
-    private const float kResultsCheckDelay = 500.0f;
+    private const float kResultsCheckDelay = 0.025f;
 
     private float _CozmoMovementDelay_sec;
     private float _StartTimestamp_sec;
     private float _EndTimestamp_sec;
+    private float _LightsOnDuration;
     private bool _IsCozmoMoving;
 
 
@@ -17,18 +18,22 @@ namespace SpeedTap {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _SpeedTapGame.ResetTapTimestamps();
-
+      _LightsOnDuration = _SpeedTapGame.GetLightsOnDurationSec();
       _StartTimestamp_sec = Time.time;
       _EndTimestamp_sec = -1;
-      _CozmoMovementDelay_sec = 0.001f * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
+
+      // Reaction time should be relative to the LightsOnDuration
+      _CozmoMovementDelay_sec = 0.001f * _LightsOnDuration * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
+      // Cap delays to prevent issues, but fire a warning
+      if (_CozmoMovementDelay_sec > _LightsOnDuration) {
+        DAS.Warn("SpeedTapHandCubesMatch.Enter", "TapDelay is greater than _LightsOnDuration, Skill Configs are likely wrong");
+        _CozmoMovementDelay_sec = _LightsOnDuration;
+      }
       _IsCozmoMoving = false;
 
       // Set lights on cubes
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
       _SpeedTapGame.Rules.SetLights(shouldMatch: true, game: _SpeedTapGame);
-
-      // Listen for player taps
-      AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, HandleRobotAnimEnd);
     }
 
     public override void Update() {
@@ -42,18 +47,16 @@ namespace SpeedTap {
         // All the taps should have a "TAPPED_BLOCK" RobotAnimationEvent.
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
       }
+      else if (_IsCozmoMoving && _SpeedTapGame.FirstTapper != FirstToTap.NoTaps) {
+        // If any taps have been registered and cozmo has attempted to move, immediately set the end timestamp
+        // in order to make Resolve hand more responsive when receiving player taps significantly before Cozmo
+        // taps. Still we use the kResultsCheckDelay in order to prevent issues with messages being received
+        // in a different order than their actual timestamps.
+        _EndTimestamp_sec = Time.time;
+      }
       else if (_EndTimestamp_sec != -1 && Time.time - _EndTimestamp_sec > kResultsCheckDelay) {
         ResolveHand();
       }
-    }
-
-    public override void Exit() {
-      base.Exit();
-      AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapTap, HandleRobotAnimEnd);
-    }
-
-    private void HandleRobotAnimEnd(bool success) {
-      _EndTimestamp_sec = Time.time;
     }
 
     /// <summary>
