@@ -64,6 +64,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::PlaceOnObject,
       MessageGameToEngineTag::PlaceRelObject,
       MessageGameToEngineTag::PlayAnimation,
+      MessageGameToEngineTag::PlayAnimationGroup,
       MessageGameToEngineTag::PopAWheelie,
       MessageGameToEngineTag::ReadToolCode,
       MessageGameToEngineTag::RollObject,
