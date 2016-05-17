@@ -18,19 +18,13 @@
       "/{*}"
     ]
   },
-  "faceEnrollment.instructions.title": {
-    "translation": "Cozmo Needs to Check you out!"
-  },
-  "faceEnrollment.instructions.bodyText": {
-    "translation": "Look at Cozmo straight on, and hold still."
-  },
-  "faceEnrollment.instructions.doneText": {
-    "translation": "When he's done, you'll hear a chime."
+  "faceEnrollment.instructions": {
+    "translation": "Cozmo Needs to Check you out! Look at Cozmo straight on, and hold still.\n\nWhen he's done, you'll hear a chime."
   },
   "faceEnrollment.enterName.buttonText": {
-    "translation": "SET NAME"
+    "translation": "Done"
   },
   "faceEnrollment.enterName.placeholderText": {
-    "translation": "ENTER NAME"
+    "translation": "Enter Name"
   }
 }
