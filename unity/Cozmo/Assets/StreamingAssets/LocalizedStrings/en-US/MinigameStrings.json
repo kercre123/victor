@@ -22,10 +22,10 @@
     "translation": "Put {0} cubes in front of Cozmo."
   },
   "minigame.text.playerWins": {
-    "translation": "WINNER: PLAYER"
+    "translation": "Player\nWins!"
   },
   "minigame.text.cozmoWins": {
-    "translation": "WINNER: COZMO"
+    "translation": "Cozmo\nWins!"
   },
   "minigame.quitView.title": {
     "translation": "Return to Main Menu?"

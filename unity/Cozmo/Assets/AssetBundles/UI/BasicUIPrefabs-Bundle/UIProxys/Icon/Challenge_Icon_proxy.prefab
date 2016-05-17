@@ -116,6 +116,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _IconImage: {fileID: 11471792}
+  _ShowBackground: 1
+  _BackgroundImage: {fileID: 11463104}
 --- !u!222 &22267340
 CanvasRenderer:
   m_ObjectHideFlags: 1
