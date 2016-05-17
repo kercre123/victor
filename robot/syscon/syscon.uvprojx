@@ -558,21 +558,6 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>legacy_cubes</GroupName>
-          <Files>
-            <File>
-              <FileName>legacy.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\cubes\legacy\legacy.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>legacy_micro_esb.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\cubes\legacy\legacy_micro_esb.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>bootloader</GroupName>
           <Files>
             <File>
