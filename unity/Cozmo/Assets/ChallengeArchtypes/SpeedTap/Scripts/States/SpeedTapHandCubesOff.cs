@@ -38,7 +38,6 @@ namespace SpeedTap {
     public override void Exit() {
       base.Exit();
 
-      _SpeedTapGame.ResetTapTimestamps();
       // Cancel animation callbacks if any
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapIdle, HandlePeekAnimationEnd);
       _SpeedTapGame.CurrentRobot.CancelCallback(HandlePeekAnimationEnd);

@@ -26,6 +26,7 @@ namespace SpeedTap {
       get {
         // If neither timestamp has been set, no taps
         if (_LastCozmoTimeStamp == -1 && _LastPlayerTimeStamp == -1) {
+          DAS.Event("SpeedTap.FirstTapper", "No Taps Registered");
           return FirstToTap.NoTaps;
         }
         DAS.Event("SpeedTap.FirstTapper", string.Format("Player Timestamp : {0} - Cozmo Timestamp : {1}", _LastPlayerTimeStamp, _LastCozmoTimeStamp));
@@ -120,8 +121,6 @@ namespace SpeedTap {
     public MusicStateWrapper BetweenRoundsMusic { get { return _BetweenRoundsMusic; } }
 
     public SpeedTapRulesBase Rules;
-
-    public event Action PlayerTappedBlockEvent;
 
     [SerializeField]
     private GameObject _PlayerTapSlidePrefab;
@@ -244,11 +243,8 @@ namespace SpeedTap {
     /// <param name="timeStamp">Time stamp.</param>
     private void BlockTapped(int blockID, int tappedTimes, float timeStamp) {
       if (PlayerBlock != null && PlayerBlock.ID == blockID) {
-        if (PlayerTappedBlockEvent != null) {
-          if (_LastPlayerTimeStamp > timeStamp || _LastPlayerTimeStamp == -1) {
-            _LastPlayerTimeStamp = timeStamp;
-          }
-          PlayerTappedBlockEvent();
+        if (_LastPlayerTimeStamp > timeStamp || _LastPlayerTimeStamp == -1) {
+          _LastPlayerTimeStamp = timeStamp;
         }
       }
     }

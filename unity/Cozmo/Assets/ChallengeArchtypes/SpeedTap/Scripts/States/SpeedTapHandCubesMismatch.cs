@@ -5,7 +5,6 @@ namespace SpeedTap {
   public class SpeedTapHandCubesMismatch : State {
     
     private SpeedTapGame _SpeedTapGame;
-    private const float kResultsCheckDelay = 500.0f;
 
     private float _OnDuration_sec;
     private float _CozmoMovementDelay_sec;
