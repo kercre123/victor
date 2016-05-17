@@ -62,6 +62,7 @@ enum uint_8 FactoryTestResultCode {
   TEST_TIMED_OUT,
   TEST_CANCELLED,
   ROBOT_PICKUP,
+  TOOL_CODE_IMAGES_WRITE_FAILED,
 
   // New result codes should be added at the end
 }

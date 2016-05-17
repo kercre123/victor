@@ -1728,6 +1728,9 @@ namespace Anki {
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage4);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage5);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage6);
+                  
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight);
                 }
                 
                 // Set mfg save folder and file
@@ -2330,6 +2333,8 @@ namespace Anki {
             case NVStorage::NVEntryTag::NVEntry_CalibImage4:
             case NVStorage::NVEntryTag::NVEntry_CalibImage5:
             case NVStorage::NVEntryTag::NVEntry_CalibImage6:
+            case NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft:
+            case NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight:
             case NVStorage::NVEntryTag::NVEntry_MultiBlobJunk:
             {
               char outFile[128];

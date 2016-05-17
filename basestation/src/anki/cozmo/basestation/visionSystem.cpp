@@ -121,6 +121,9 @@ namespace Cozmo {
   {
     _isInitialized = false;
     
+    _isCalibrating = false;
+    _isReadingToolCode = false;
+    
 #   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
     // Force the NN library to load _now_, not on first use
     PRINT_NAMED_INFO("VisionSystem.Constructor.LoadNearestNeighborLibrary",
@@ -2365,6 +2368,19 @@ namespace Cozmo {
     _calibImages.clear();
     return RESULT_OK;
   }
+
+  Result VisionSystem::ClearToolCodeImages()
+  {
+    if(_isReadingToolCode) {
+      PRINT_NAMED_INFO("VisionSystem.ClearToolCodeImages.AlreadyReadingToolCode",
+                       "Cannot clear tool code images while already in the middle of reading tool codes.");
+      return RESULT_FAIL;
+    }
+    
+    _toolCodeImages.clear();
+    return RESULT_OK;
+  }
+
   
   // This is the regular Update() call
   Result VisionSystem::Update(const VisionPoseData&      poseData,
@@ -2568,12 +2584,13 @@ namespace Cozmo {
     
     ToolCodeInfo readToolCodeMessage;
     readToolCodeMessage.code = ToolCode::UnknownTool;
-    
+    _isReadingToolCode = true;
 
     auto cleanupLambda = [this,&readToolCodeMessage]() {
       this->_currentResult.toolCodes.push_back(readToolCodeMessage);
       this->EnableMode(VisionMode::ReadingToolCode, false);
       this->_firstReadToolCodeTime_ms = 0;
+      this->_isReadingToolCode = false;
       PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
     };
     
@@ -2675,6 +2692,7 @@ namespace Cozmo {
     
     Anki::Point2f camCen;
     std::vector<Anki::Point2f> observedPoints;
+    _toolCodeImages.clear();
     for(size_t iDot=0; iDot<projectedToolCodeDots.size(); ++iDot)
     {
       // Get an ROI around where we expect to see the dot in the image
@@ -2712,7 +2730,10 @@ namespace Cozmo {
       _camera.Project3dPoints(dotQuadRoi3dWrtCam, dotQuadRoi2d);
       
       Anki::Rectangle<s32> dotRectRoi(dotQuadRoi2d);
-      const Vision::Image dotRoi = image.GetROI(dotRectRoi);
+      
+      // Save ROI image for writing to robot's NVStorage
+      _toolCodeImages.emplace_back(image.GetROI(dotRectRoi));
+      const Vision::Image& dotRoi = _toolCodeImages.back();
       
       // Simple global threshold for binarization
       //Vision::Image invertedDotRoi = dotRoi.GetNegative();

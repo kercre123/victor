@@ -176,11 +176,16 @@ struct DockingErrorSignal;
     // Executes callback when all writes have completed.
     // Also erases remaining calibration image slots on robot.
     // We don't want to have a mix of images from different calibration runs.
-    using WriteCalibrationImagesToRobotCallback = std::function<void(std::vector<NVStorage::NVResult>&)>;
-    Result WriteCalibrationImagesToRobot(WriteCalibrationImagesToRobotCallback callback = {});
+    using WriteImagesToRobotCallback = std::function<void(std::vector<NVStorage::NVResult>&)>;
+    Result WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback = {});
     
     // Write the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
     Result WriteCalibrationPoseToRobot(size_t whichPose, NVStorageComponent::NVStorageWriteEraseCallback callback = {});
+    
+    // Tool code images
+    Result ClearToolCodeImages();    
+    size_t  GetNumStoredToolCodeImages() const;
+    Result WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback = {});
     
     const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
     ImuDataHistory& GetImuDataHistory() { return _imuHistory; }
@@ -237,6 +242,8 @@ struct DockingErrorSignal;
     bool _storeNextImageForCalibration = false;
     Rectangle<s32> _calibTargetROI;
     std::vector<NVStorage::NVResult> _writeCalibImagesToRobotResults;
+    
+    std::vector<NVStorage::NVResult> _writeToolCodeImagesToRobotResults;
     
     constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
     constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);

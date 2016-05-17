@@ -449,7 +449,7 @@ namespace Cozmo {
         robot.SetNewPose(_cliffDetectPose);
         
         f32 distToCamCalibPose = _camCalibPose.GetTranslation().x() - robot.GetPose().GetTranslation().x();
-        DriveStraightAction* action = new DriveStraightAction(robot, distToCamCalibPose, -100);
+        DriveStraightAction* action = new DriveStraightAction(robot, distToCamCalibPose, 100);
         action->SetAccel(1000);
         action->SetDecel(1000);
         
@@ -549,6 +549,32 @@ namespace Cozmo {
           // Read lift tool code
           StartActing(robot, toolCodeAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                        
+                        // Save tool code images to robot (whether it succeeded to read code or not)
+                        if (robot.GetVisionComponent().WriteToolCodeImagesToRobot([this,&robot](std::vector<NVStorage::NVResult>& results){
+                                                                                    // Clear tool code images from VisionSystem
+                                                                                    robot.GetVisionComponent().ClearToolCodeImages();
+                                                                                    
+                                                                                    u32 numFailures = 0;
+                                                                                    for (auto r : results) {
+                                                                                      if (r != NVStorage::NVResult::NV_OKAY) {
+                                                                                        ++numFailures;
+                                                                                      }
+                                                                                    }
+                                                                                    
+                                                                                    if (numFailures > 0) {
+                                                                                      PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteToolCodeImages.FAILED", "%d failures", numFailures);
+                                                                                      EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
+                                                                                    } else {
+                                                                                      PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCodeImages.SUCCESS", "");
+                                                                                    }
+                                                                                  }) != RESULT_OK)
+                        {
+                          EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
+                          return false;
+                        }
+                        
+                        // Check result of tool code read
                         if (result != ActionResult::SUCCESS) {
                           EndTest(robot, FactoryTestResultCode::READ_TOOL_CODE_FAILED);
                           return false;
@@ -579,14 +605,19 @@ namespace Cozmo {
                         if (ENABLE_NVSTORAGE_WRITES) {
                           u8 buf[info.Size()];
                           size_t numBytes = info.Pack(buf, sizeof(buf));
-                          robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes,
+                          if (!robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes,
                                                               [this,&robot](NVStorage::NVResult res) {
                                                                 if (res != NVStorage::NVResult::NV_OKAY) {
                                                                   EndTest(robot, FactoryTestResultCode::TOOL_CODE_WRITE_FAILED);
                                                                 } else {
                                                                   PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCode.Success", "");
                                                                 }
-                                                              });
+                                                              }))
+                          {
+                            EndTest(robot, FactoryTestResultCode::TOOL_CODE_WRITE_FAILED);
+                            return false;
+                          }
+                          
                         }
                         return true;
                       });
