@@ -82,7 +82,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Prefab: {fileID: 116638, guid: 44454b3ff11754c71b8b19311c580825, type: 2}
   ModifiedValues: []
-  ModifiedLocalReferences: []
+  ModifiedLocalReferences:
+  - ObjectPath: ../
+    FieldName: Cozmo.MinigameWidgets.ChallengeTitleWidget:_ChallangeIcon
+    ReferencePath: 
   ModifiedGlobalReferences: []
 --- !u!114 &11452892
 MonoBehaviour:

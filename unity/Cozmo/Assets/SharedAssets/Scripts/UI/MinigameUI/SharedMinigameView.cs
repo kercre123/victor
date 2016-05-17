@@ -193,6 +193,7 @@ namespace Cozmo {
 
       public void Initialize() {
         HideNarrowInfoTextSlide();
+        HideOverlayBackground();
       }
 
       #region Base View

@@ -37,7 +37,6 @@ public class InitialCubesState : State {
       "cubes_are_ready_continue_button");
     _Game.SharedMinigameView.EnableContinueButton(false);
     _Game.SharedMinigameView.ShowShelf();
-    _Game.SharedMinigameView.HideOverlayBackground();
     _Game.SharedMinigameView.ShowMiddleBackground();
 
     _Game.CubeIdsForGame = new List<int>();
