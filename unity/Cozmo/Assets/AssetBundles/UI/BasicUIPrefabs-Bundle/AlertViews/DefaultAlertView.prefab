@@ -209,14 +209,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
-  ModifiedValues:
-  - ObjectPath: 
-    FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_Event
-    JsonValue: 945548936
-  ModifiedLocalReferences:
-  - ObjectPath: ../../
-    FieldName: Cozmo.UI.AlertView:_CloseButton
-    ReferencePath: 
+  ModifiedValues: []
+  ModifiedLocalReferences: []
   ModifiedGlobalReferences: []
 --- !u!114 &11408772
 MonoBehaviour:
@@ -566,7 +560,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1100, y: 600}
+  m_SizeDelta: {x: 1500, y: 600}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22449406
 RectTransform:

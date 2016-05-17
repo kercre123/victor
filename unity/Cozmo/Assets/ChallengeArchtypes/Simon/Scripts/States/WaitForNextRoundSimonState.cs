@@ -32,7 +32,7 @@ namespace Simon {
     }
 
     private void HandleContinuePressed() {
-      _GameInstance.SharedMinigameView.HideContinueButtonShelf();
+      _GameInstance.SharedMinigameView.HideContinueButton();
       Anki.Cozmo.Audio.GameAudioClient.SetMusicState(_GameInstance.GetDefaultMusicState());
       if (_NextPlayer == PlayerType.Cozmo) {
         _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnCozmoStartAnimationDone));

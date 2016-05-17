@@ -8,6 +8,7 @@ public static class AnimationName {
 
   public const string kDefaultFace = "neutral_face";
 
+  public const string kStartSleeping = "anim_launch_startSleeping_01";
   public const string kSleeping = "ID_sleeping_02";
   public const string kSurprise = "ID_reactTppl_Surprise";
   public const string kHappyA = "ID_catCatch_happyB";

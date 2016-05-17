@@ -10,7 +10,7 @@ public class InitialCubesState : State {
   private int _NumValidCubes;
   private GameBase _Game;
 
-  private const float kCubeTimeoutSeconds = 0.15f;
+  private const float kCubeTimeoutSeconds = 0.4f;
   private List<int> _ValidCubeIds;
   private Dictionary <int, float> _CubeIdToTimeout;
 
@@ -26,13 +26,16 @@ public class InitialCubesState : State {
     _CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
 
     _Game = _StateMachine.GetGame();
+
     _ShowCozmoCubesSlide = _Game.SharedMinigameView.ShowCozmoCubesSlide(_CubesRequired);
-    _Game.SharedMinigameView.ShowContinueButtonOnShelf(HandleContinueButtonClicked,
+    _Game.SharedMinigameView.ShowContinueButtonOffset(HandleContinueButtonClicked,
       Localization.Get(LocalizationKeys.kButtonContinue), 
       GetWaitingForCubesText(_CubesRequired),
-      Cozmo.UI.UIColorPalette.NeutralTextColor(),
+      Cozmo.UI.UIColorPalette.NeutralTextColor,
       "cubes_are_ready_continue_button");
     _Game.SharedMinigameView.EnableContinueButton(false);
+    _Game.SharedMinigameView.ShowShelf();
+
     _Game.CubeIdsForGame = new List<int>();
     _CubeIdToTimeout = new Dictionary<int, float>();
     _ValidCubeIds = new List<int>();
@@ -107,12 +110,12 @@ public class InitialCubesState : State {
     _ShowCozmoCubesSlide.LightUpCubes(_NumValidCubes);
 
     if (_NumValidCubes >= _CubesRequired) {
-      _Game.SharedMinigameView.SetContinueButtonShelfText(GetCubesReadyText(_CubesRequired), Cozmo.UI.UIColorPalette.CompleteTextColor());
+      _Game.SharedMinigameView.SetContinueButtonSupplementText(GetCubesReadyText(_CubesRequired), Cozmo.UI.UIColorPalette.CompleteTextColor);
 
       _Game.SharedMinigameView.EnableContinueButton(true);
     }
     else {
-      _Game.SharedMinigameView.SetContinueButtonShelfText(GetWaitingForCubesText(_CubesRequired), Cozmo.UI.UIColorPalette.NeutralTextColor());
+      _Game.SharedMinigameView.SetContinueButtonSupplementText(GetWaitingForCubesText(_CubesRequired), Cozmo.UI.UIColorPalette.NeutralTextColor);
 
       _Game.SharedMinigameView.EnableContinueButton(false);
     }

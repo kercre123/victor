@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Simon {
-
+  
   public class SimonGame : GameBase {
     // TODO: Use animation events?
     public const float kCozmoLightBlinkDelaySeconds = 0.1f;

@@ -117,6 +117,7 @@ namespace Anki {
         // Copy engine resources
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets", "Assets/StreamingAssets/cozmo_resources/assets");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/cozmo-engine/resources/config", "Assets/StreamingAssets/cozmo_resources/config");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../generated/resources/pocketsphinx", "Assets/StreamingAssets/cozmo_resources/pocketsphinx");
 
         // Delete compressed animation files that we don't need
         string[] tarFiles = Directory.GetFiles("Assets/StreamingAssets/cozmo_resources/assets/animations", "*.tar", SearchOption.AllDirectories);
@@ -145,30 +146,6 @@ namespace Anki {
           throw new NotImplementedException();
         }
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/cozmo-engine/EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/" + soundFolder, "Assets/StreamingAssets/cozmo_resources/sound");
-
-        // Generate the resources.txt file. This file will be used on Android to extract all the files from the jar file.
-        // The file has a line for folder that needs to be created and for every file that needs to be extracted. 
-        // The paths in the file need to be relative to Assets/StreamingAssets.
-        int substringIndex = "Assets/StreamingAsssets".Length;
-        List<string> all = new List<string>();
-
-        string[] directories = Directory.GetDirectories("Assets/StreamingAssets", "*", SearchOption.AllDirectories);
-        foreach (string d in directories) {
-          all.Add(d.Substring(substringIndex));
-        }
-
-        string[] files = Directory.GetFiles("Assets/StreamingAssets", "*.*", SearchOption.AllDirectories);
-        foreach (string f in files) {
-          // Filter the files we don't need to ship
-          if (!f.Contains(".meta") && !f.Contains(".DS_Store")) {
-            all.Add(f.Substring(substringIndex));
-          }
-        }
-
-        File.WriteAllLines("Assets/StreamingAssets/resources.txt", all.ToArray());
-
-        // Refresh the asset DB so Unity picks up the new files
-        AssetDatabase.Refresh();
 
         Debug.Log("Engine assets copied to StreamingAssets");
       }
@@ -275,8 +252,6 @@ namespace Anki {
           }
         }
 
-
-        CopyEngineAssetsToStreamingAssets();
         // Later on use this to switch between building for different targets
         // EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTarget.Android);
 
@@ -330,6 +305,15 @@ namespace Anki {
 
         // Build and copy asset bundles
         BuildAssetBundlesInternal(buildTarget);
+
+        // Copy engine assets
+        CopyEngineAssetsToStreamingAssets();
+
+        // Generate the manifest
+        GenerateResourcesManifest();
+
+        // Refresh the asset DB so Unity picks up the new files
+        AssetDatabase.Refresh();
 
         string[] scenes = GetScenesFromBuildSettings();
         string outputPath = outputFolder + "/" + GetOutputName(buildTarget);
@@ -401,6 +385,29 @@ namespace Anki {
         }
 
         return true;
+      }
+
+      // Generate the resources.txt file. This file will be used on Android to extract all the files from the jar file.
+      // The file has a line for folder that needs to be created and for every file that needs to be extracted. 
+      // The paths in the file need to be relative to Assets/StreamingAssets.
+      private static void GenerateResourcesManifest() {
+        int substringIndex = "Assets/StreamingAsssets".Length;
+        List<string> all = new List<string>();
+
+        string[] directories = Directory.GetDirectories("Assets/StreamingAssets", "*", SearchOption.AllDirectories);
+        foreach (string d in directories) {
+          all.Add(d.Substring(substringIndex));
+        }
+
+        string[] files = Directory.GetFiles("Assets/StreamingAssets", "*.*", SearchOption.AllDirectories);
+        foreach (string f in files) {
+          // Filter the files we don't need to ship
+          if (!f.Contains(".meta") && !f.Contains(".DS_Store")) {
+            all.Add(f.Substring(substringIndex));
+          }
+        }
+
+        File.WriteAllLines("Assets/StreamingAssets/resources.txt", all.ToArray());
       }
 
       // Returns all the enabled scenes from the editor settings

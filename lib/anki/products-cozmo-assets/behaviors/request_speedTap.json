@@ -1,6 +1,7 @@
 {
   "behaviorType" : "RequestGameSimple",
   "name" : "RequestSpeedTap",
+  "requiredGameFlags" : "SpeedTap",
 
   "zero_block_config": {
     "request_animName" : "requestGame_speedTap_request",
@@ -77,6 +78,7 @@
     "AffectsBlocks",
     "MiniGame",
     "RequestSpeedTap",
-    "FreeplayOne"
+    "FreeplayOne",
+    "Demo"
   ]
 }

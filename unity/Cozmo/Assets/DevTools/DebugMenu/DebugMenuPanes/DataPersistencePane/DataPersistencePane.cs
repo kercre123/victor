@@ -21,12 +21,6 @@ namespace DataPersistence {
     private Text _SessionDays;
 
     [SerializeField]
-    private Button _WinGameButton;
-
-    [SerializeField]
-    private Button _LoseGameButton;
-
-    [SerializeField]
     private ChallengeDataList _ChallengeDataList;
 
     [SerializeField]
@@ -79,8 +73,6 @@ namespace DataPersistence {
     private void Start() {
       _ResetSaveDataButton.onClick.AddListener(HandleResetSaveDataButtonClicked);
       _StartNewSessionButton.onClick.AddListener(StartNewSessionButtonClicked);
-      _WinGameButton.onClick.AddListener(WinGameButtonClicked);
-      _LoseGameButton.onClick.AddListener(LoseGameButtonClicked);
       _SubmitNotificationButton.onClick.AddListener(SubmitNotificationButtonClicked);
 
       _SubmitSaveButton.onClick.AddListener(SubmitSaveButtonClicked);
@@ -119,25 +111,6 @@ namespace DataPersistence {
       TryReloadHomeHub();
     }
 
-    private void WinGameButtonClicked() {
-      var homeHub = GetHomeHub();
-      if (homeHub != null) {
-        var minigame = homeHub.MiniGameInstance;
-        if (minigame != null) {
-          minigame.RaiseMiniGameWin();
-        }
-      }
-    }
-
-    private void LoseGameButtonClicked() {
-      var homeHub = GetHomeHub();
-      if (homeHub != null) {
-        var minigame = homeHub.MiniGameInstance;
-        if (minigame != null) {
-          minigame.RaiseMiniGameLose();
-        }
-      }
-    }
 
     private void SubmitSaveButtonClicked() {
       DataPersistenceManager.Instance.DebugSave(_SaveStringInput.text);

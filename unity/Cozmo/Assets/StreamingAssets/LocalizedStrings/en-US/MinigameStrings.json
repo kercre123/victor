@@ -266,5 +266,17 @@
   },
   "speedTap.text.waitForCozmo": {
     "translation": "Wait for Cozmo to claim his cube."
+  },
+  "speedTap.difficulty.easyDescription.locked": {
+    "translation": "Unlock by unlocking Speed Tap."
+  },
+  "speedTap.difficulty.mediumDescription.locked": {
+    "translation": "Unlock by winning Speed Tap Easy."
+  },
+  "speedTap.difficulty.hardDescription.locked": {
+    "translation": "Unlock by winning Speed Tap Medium."
+  },
+  "speedTap.difficulty.expertDescription.locked": {
+    "translation": "Unlock by winning Speed Tap Hard."
   }
 }

@@ -40,11 +40,11 @@ namespace Cozmo {
             _GoalProgressBar.SetProgress(value);
             if (_GoalProg >= 1.0f) {
               _GoalLabel.text = Localization.Get(LocalizationKeys.kDailyGoalComplete);
-              _GoalLabel.color = UIColorPalette.CompleteTextColor();
+              _GoalLabel.color = UIColorPalette.CompleteTextColor;
             }
             else {
               _GoalLabel.text = _Goal.Title;
-              _GoalLabel.color = UIColorPalette.NeutralTextColor();
+              _GoalLabel.color = UIColorPalette.NeutralTextColor;
             }
             if (OnProgChanged != null) {
               OnProgChanged.Invoke();

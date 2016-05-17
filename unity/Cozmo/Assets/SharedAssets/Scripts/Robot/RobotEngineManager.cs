@@ -83,8 +83,9 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageData> OnGotNVStorageData;
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageOpResult> OnGotNVStorageOpResult;
   public event Action<Anki.Cozmo.ExternalInterface.DebugLatencyMessage> OnDebugLatencyMsg;
-  public event Action<Anki.Cozmo.ExternalInterface.RobotEnrolledFace> OnRobotEnrolledFace;
   public event Action<Anki.Cozmo.ExternalInterface.RequestEnrollFace> OnRequestEnrollFace;
+  public event Action<int> OnDemoState;
+  public event Action<Anki.Cozmo.ExternalInterface.AnimationEvent> OnRobotAnimationEvent;
 
   #region Audio Callback events
 
@@ -117,16 +118,6 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.SetDebugConsoleVarMessage _SetDebugConsoleVarMessage = new U2G.SetDebugConsoleVarMessage();
   private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
   private U2G.DenyGameStart _DenyGameStartMessage = new U2G.DenyGameStart();
-
-  private void Awake() {
-    #if ANIMATION_TOOL
-    DAS.AddTarget(new ConsoleDasTarget());
-    #elif UNITY_IPHONE && !UNITY_EDITOR
-    DAS.AddTarget(new IphoneDasTarget());
-    #else
-    DAS.AddTarget(new UnityDasTarget());
-    #endif
-  }
 
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
@@ -416,11 +407,14 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.NVStorageOpResult:
       ReceivedSpecificMessage(message.NVStorageOpResult);
       break;
-    case G2U.MessageEngineToGame.Tag.RobotEnrolledFace:
-      ReceivedSpecificMessage(message.RobotEnrolledFace);
-      break;
     case G2U.MessageEngineToGame.Tag.RequestEnrollFace:
       ReceivedSpecificMessage(message.RequestEnrollFace);
+      break;
+    case G2U.MessageEngineToGame.Tag.DemoState:
+      ReceivedSpecificMessage(message.DemoState);
+      break;
+    case G2U.MessageEngineToGame.Tag.AnimationEvent:
+      ReceiveSpecificMessage(message.AnimationEvent);
       break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
@@ -428,9 +422,21 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
+  private void ReceivedSpecificMessage(G2U.DemoState message) {
+    if (OnDemoState != null) {
+      OnDemoState(message.stateNum);
+    }
+  }
+
   private void ReceivedSpecificMessage(G2U.RequestEnrollFace message) {
     if (OnRequestEnrollFace != null) {
       OnRequestEnrollFace(message);
+    }
+  }
+
+  private void ReceiveSpecificMessage(Anki.Cozmo.ExternalInterface.AnimationEvent message) {
+    if (OnRobotAnimationEvent != null) {  
+      OnRobotAnimationEvent(message);
     }
   }
 
@@ -693,13 +699,6 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
-
-  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RobotEnrolledFace message) {
-    if (OnRobotEnrolledFace != null) {
-      OnRobotEnrolledFace(message);
-    }
-  }
-
   private void ReceivedSpecificMessage(Anki.Cozmo.CliffEvent message) {
     if (OnCliffEvent != null) {
       OnCliffEvent(message);
@@ -891,10 +890,10 @@ public class RobotEngineManager : MonoBehaviour {
     StringBuilder sb = new StringBuilder(configuration);
     sb.Remove(configuration.IndexOf('}') - 1, 3);
     sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
-      ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformResourcesPath\" : \"" + Application.persistentDataPath + "/cozmo_resources\"" +
-      "\n}");
+    ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
+    ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
+    ", \n  \"DataPlatformResourcesPath\" : \"" + PlatformUtil.GetResourcesFolder() + "\"" +
+    "\n}");
 
     return sb.ToString();
   }
