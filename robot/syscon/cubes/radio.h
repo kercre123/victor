@@ -36,7 +36,6 @@ struct AccessorySlot {
   bool                  allocated;
   int                   last_received;
   uint32_t              id;
-  RobotHandshake        tx_state;
   
   uesb_address_desc_t   address;
 };
@@ -54,7 +53,6 @@ namespace Radio {
   void prepare(void* userdata);
   void resume(void* userdata);
   void manage();
-  void updateLights();
 }
 
 #endif

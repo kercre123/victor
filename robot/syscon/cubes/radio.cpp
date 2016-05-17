@@ -251,7 +251,6 @@ void uesb_event_handler(uint32_t flags)
     {
       accessories[slot].allocated = true;
       accessories[slot].active = true;
-      accessories[slot].tx_state.msg_id = 0;
 
       SendObjectConnectionState(slot, advert.model);
     }
@@ -336,31 +335,6 @@ void Radio::assignProp(unsigned int slot, uint32_t accessory) {
   }
 }
 
-void Radio::updateLights() {
-  for (int i = 0; i < MAX_ACCESSORIES; i++) {
-    AccessorySlot* acc = &accessories[currentAccessory];
-    
-    if (!acc->active) continue ;
-    
-    // Update the color status of the lights   
-    for (int c = 0; c < NUM_PROP_LIGHTS; c++) {
-      static const uint8_t light_index[NUM_PROP_LIGHTS][3] = {
-        {  6,  7,  8 },
-        {  3,  4,  5 },
-        {  0,  1,  2 },
-        {  9, 10, 11 }
-      };
-
-      uint8_t* rgbi = lightController.cube[i][c].values;
-      //uint8_t* rgbi = lightController.backpack[c].values;
-
-      for (int i = 0; i < 3; i++) {
-        acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];
-      }
-    }
-  }
-}
-
 void Radio::prepare(void* userdata) {
   uesb_stop();
 
@@ -376,11 +350,26 @@ void Radio::prepare(void* userdata) {
   if (acc->active && ++acc->last_received < ACCESSORY_TIMEOUT) {
     // We send the previous LED state (so we don't get jitter on radio)
     uesb_address_desc_t& address = accessories[currentAccessory].address;
+    
+    RobotHandshake        tx_state;
+    tx_state.msg_id = 0;
 
     // Broadcast to the appropriate device
     EnterState(RADIO_TALKING);
 
-    uesb_prepare_tx_payload(&address, &acc->tx_state, sizeof(acc->tx_state));
+    // Update the color status of the lights   
+    static const int channel_order[] = { 2, 1, 0, 3 };
+    int tx_index = 0;
+    
+    for (int light = 0; light < NUM_PROP_LIGHTS; light++) {
+      uint8_t* rgbi = lightController.cube[currentAccessory][channel_order[light]].values;
+
+      for (int ch = 0; ch < 3; ch++) {
+        tx_state.ledStatus[tx_index++] = rgbi[ch];
+      }
+    }
+
+    uesb_prepare_tx_payload(&address, &tx_state, sizeof(tx_state));
   } else {
     // Timeslice is empty, send a dummy command on the channel so people know to stay away
     if (acc->active)

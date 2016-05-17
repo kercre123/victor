@@ -51,8 +51,8 @@ struct LightValues {
 
 union ControllerLights {
   struct {
-    LightValues backpack[5];
     LightValues cube[MAX_ACCESSORIES][NUM_PROP_LIGHTS];
+    LightValues backpack[5];
   };
   
   LightValues lights[];

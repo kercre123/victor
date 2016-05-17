@@ -138,6 +138,5 @@ int main(void)
     Crypto::manage();
     Lights::manage();
     Backpack::manage();
-    Radio::updateLights();
   }
 }
