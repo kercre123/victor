@@ -48,7 +48,7 @@ namespace Cozmo {
       [SerializeField]
       private Image _OverlayBackgroundImage;
 
-      private bool _IsShowingOverlay = false;
+      private bool _IsShowingOverlay = true;
       private Sequence _OverlayBackgroundTween;
 
       #endregion
@@ -339,6 +339,9 @@ namespace Cozmo {
         _BackgroundImage.color = baseColor;
         _MiddleBackgroundImage.color = baseColor;
         _OverlayBackgroundImage.color = baseColor;
+        _IsShowingLocked = _LockedBackgroundImage.color.a > 0;
+        _IsShowingMiddle = _MiddleBackgroundImage.color.a > 0;
+        _IsShowingOverlay = _OverlayBackgroundImage.color.a > 0;
       }
 
       public void ShowLockedBackground() {
