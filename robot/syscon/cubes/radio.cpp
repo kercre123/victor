@@ -352,8 +352,7 @@ void Radio::updateLights() {
         {  9, 10, 11 }
       };
 
-      //uint8_t* rgbi = lightController.cube[i][c].values;
-      uint8_t* rgbi = lightController.backpack[c].values;
+      uint8_t* rgbi = lightController.cube[i][c].values;
 
       for (int i = 0; i < 3; i++) {
         acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];

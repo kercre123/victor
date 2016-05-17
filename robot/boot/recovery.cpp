@@ -160,7 +160,7 @@ static inline bool FlashBlock() {
   }
 
   // We will not override the boot loader
-  if (packet.blockAddress < ROBOT_BOOTLOADER) {
+  if (packet.blockAddress < ROBOT_BOOTLOADER || packet.blockAddress >= 0x10000) {
     return false;
   }
 
