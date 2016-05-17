@@ -189,6 +189,11 @@ def main(scriptArgs):
   if (subprocess.call(['make', '--silent'], cwd=os.path.join(projectRoot, 'robot/clad')) != 0):
     UtilLog.error("error compiling clad files")
     return False
+    
+  #generate AnkiLogStringTables.json
+  if (subprocess.call(['make', '--silent', 'app'], cwd=os.path.join(projectRoot, 'robot')) != 0):
+      UtilLog.error("Error generating AnkiLogStringTables.json")
+      return False
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
