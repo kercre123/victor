@@ -27,12 +27,15 @@ namespace Json {
 namespace Anki {
   namespace Cozmo {
     
+    // Forward declaration
+    class CannedAnimationContainer;
+    
     class AnimationGroupContainer
     {
     public:
       AnimationGroupContainer();
 
-      Result DefineFromJson(const Json::Value& jsonRoot, const std::string& animationGroupName);
+      Result DefineFromJson(const Json::Value& jsonRoot, const std::string& animationGroupName, const CannedAnimationContainer* cannedAnimations);
       
       Result AddAnimationGroup(const std::string& name);
       

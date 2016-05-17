@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld.h"
@@ -218,7 +219,16 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
     }
   }
 
-  return IBehavior::UpdateInternal(robot);
+  IBehavior::Status ret = IBehavior::UpdateInternal(robot);
+
+  // workaround for bugs that leave us stuck with a cube in our hands
+
+  if( ret != Status::Running && robot.IsCarryingObject() ) {
+    StartActing(new PlaceObjectOnGroundAction(robot));
+    return Status::Running;
+  }
+  
+  return ret;
 }
 
 void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)

@@ -36,13 +36,15 @@ CONSOLE_VAR(f32, kBAS_backupDist_mm, "Behavior.AdmireStack", 70.0f);
 CONSOLE_VAR(f32, kBAS_backupForSearchDist_mm, "Behavior.AdmireStack", 50.0f);
 CONSOLE_VAR(f32, kBAS_backupForSearchSpeed_mmps, "Behavior.AdmireStack", 60.0f);
 CONSOLE_VAR(f32, kBAS_backupSpeed_mmps, "Behavior.AdmireStack", 50.0f);
-CONSOLE_VAR(f32, kBAS_distanceToTryToGrabFrom_mm, "Behavior.AdmireStack", 65.0f);
+CONSOLE_VAR(f32, kBAS_distanceToTryToGrabFrom_mm, "Behavior.AdmireStack", 85.0f);
 CONSOLE_VAR(f32, kBAS_driveThroughAccel_mmps2, "Behavior.AdmireStack", 500.0f);
 CONSOLE_VAR(f32, kBAS_driveThroughDecel_mmps2, "Behavior.AdmireStack", 100.0f);
 CONSOLE_VAR(f32, kBAS_driveThroughDist_mm, "Behavior.AdmireStack", 300.0f);
 CONSOLE_VAR(f32, kBAS_driveThroughSpeed_mmps, "Behavior.AdmireStack", 180.0f);
 CONSOLE_VAR(f32, kBAS_headAngleForKnockOver_deg, "Behavior.AdmireStack", -14.0f);
-CONSOLE_VAR(f32, kBAS_headAngleForSearch_deg, "Behavior.AdmireStack", 25.0f);
+CONSOLE_VAR(f32, kBAS_minHeadAngleForSearch_deg, "Behavior.AdmireStack", 10.0f);
+CONSOLE_VAR(f32, kBAS_maxHeadAngleForSearch_deg, "Behavior.AdmireStack", 25.0f);
+CONSOLE_VAR(f32, kBAS_betweenHeadAnglePause_s, "Behavior.AdmireStack", 1.0f);
 CONSOLE_VAR(f32, kBAS_lookAtFaceDelay_s, "Behavior.AdmireStack", 0.4f);
 CONSOLE_VAR(f32, kBAS_minDistanceFromStack_mm, "Behavior.AdmireStack", 130.0f);
 
@@ -73,6 +75,10 @@ Result BehaviorAdmireStack::InitInternal(Robot& robot)
 
 void BehaviorAdmireStack::StopInternal(Robot& robot)
 {
+  if( _state == State::TryingToGrabThirdBlock ) {
+    robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
+  }
+  
   ResetBehavior(robot);
 }
 
@@ -117,7 +123,7 @@ void BehaviorAdmireStack::TransitionToWatchingStack(Robot& robot)
     const float fudgeFactor = 10.0f;
     if( poseWrtRobot.GetTranslation().x() < kBAS_minDistanceFromStack_mm + fudgeFactor) {
       float distToDrive = kBAS_minDistanceFromStack_mm - poseWrtRobot.GetTranslation().x();
-      action->AddAction(new DriveStraightAction(robot, -distToDrive, -kBAS_backupForSearchSpeed_mmps));
+      action->AddAction(new DriveStraightAction(robot, -distToDrive, kBAS_backupForSearchSpeed_mmps));
     }
   }
 
@@ -151,6 +157,8 @@ void BehaviorAdmireStack::TransitionToTryingToGrabThirdBlock(Robot& robot)
 {
   SET_STATE(TryingToGrabThirdBlock);
 
+  robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
+    
   CompoundActionSequential* action = new CompoundActionSequential(robot);
 
   ObjectID topPlacedBlock = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
@@ -181,6 +189,8 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
 {
   SET_STATE(KnockingOverStack);
 
+  robot.GetBehaviorManager().GetWhiteboard().RequestEnableCliffReaction(this);
+
   CompoundActionSequential* action = new CompoundActionSequential(robot);
 
   ObjectID topBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
@@ -191,10 +201,10 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
   action->AddAction(new TurnTowardsObjectAction(robot,
                                                 topBlockID,
                                                 Radians(PI_F),
-                                                true, // verify when done
+                                                false, // verify when done?
                                                 false));
   action->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBAS_headAngleForKnockOver_deg)));
-  DriveStraightAction* backupAction = new DriveStraightAction(robot, -kBAS_backupDist_mm, -kBAS_backupSpeed_mmps);
+  DriveStraightAction* backupAction = new DriveStraightAction(robot, -kBAS_backupDist_mm, kBAS_backupSpeed_mmps);
   backupAction->SetAccel(kBAS_backupAccel_mmps2);
   backupAction->SetDecel(kBAS_backupDecel_mmps2);
   action->AddAction(backupAction);
@@ -210,9 +220,10 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
       if( res == ActionResult::SUCCESS ) {
         TransitionToReactingToTopple(robot);
       }
-      else {
-        TransitionToSearchingForStack(robot);
-      }
+      // disabled because this was triggering for some reason, don't really need to search from this state
+      // else {
+      //   TransitionToSearchingForStack(robot);
+      // }
     });
   IncreaseScoreWhileActing(kBAS_ScoreIncreaseForAction);
 }
@@ -234,8 +245,10 @@ void BehaviorAdmireStack::TransitionToSearchingForStack(Robot& robot)
   TimeStamp_t currLastSeenTime = _topBlockLastSeentime;
 
   StartActing(new CompoundActionSequential(robot, {
-        new MoveHeadToAngleAction(robot, DEG_TO_RAD( kBAS_headAngleForSearch_deg )),
-        new DriveStraightAction(robot, -kBAS_backupForSearchDist_mm, -kBAS_backupForSearchSpeed_mmps),
+        new MoveHeadToAngleAction(robot, DEG_TO_RAD( kBAS_minHeadAngleForSearch_deg )),
+        new WaitAction(robot, kBAS_betweenHeadAnglePause_s),
+        new MoveHeadToAngleAction(robot, DEG_TO_RAD( kBAS_maxHeadAngleForSearch_deg )),
+        new DriveStraightAction(robot, -kBAS_backupForSearchDist_mm, kBAS_backupForSearchSpeed_mmps),
         new SearchSideToSideAction(robot) }),
     [this, currLastSeenTime](Robot& robot) {
       // check if we've seen the cube more recently than before
@@ -247,6 +260,7 @@ void BehaviorAdmireStack::TransitionToSearchingForStack(Robot& robot)
       else {
         PRINT_NAMED_DEBUG("BehaviorAdmireStack.Searching.Failed",
                           "couldn't find stack, leaving behavior");
+        robot.GetBehaviorManager().GetWhiteboard().ClearHasStackToAdmire();
       }
     });
 }

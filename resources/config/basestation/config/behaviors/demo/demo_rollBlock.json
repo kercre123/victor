@@ -1,0 +1,12 @@
+{
+  "behaviorType": "RollBlock",
+  "name": "demo_RollBlock",
+  "requiredUnlockId": "CubeRollAction",
+  "flatScore": 1.0,
+  "behaviorGroups": [
+    "AffectsBlocks",
+    "Unlock_CubeRoll",
+    "Demo",
+    "DemoCubes"
+  ]
+}

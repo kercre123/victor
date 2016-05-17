@@ -33,6 +33,7 @@ CONSOLE_VAR(float, kBW_PossibleMarkerClose_mm, "AIWhiteboard", 50.0f);
 CONSOLE_VAR(float, kBW_PossibleMarkerClose_rad, "AIWhiteboard", PI_F); // current markers flip due to distance, consider 360 since we don't care
 // limit to how many pending possible markers we have stored
 CONSOLE_VAR(uint32_t, kBW_MaxPossibleMarkers, "AIWhiteboard", 10);
+CONSOLE_VAR(float, kFlatPosisbleObjectTol_deg, "AIWhiteboard", 10.0f);
 // debug render
 CONSOLE_VAR(bool, kBW_DebugRenderPossibleMarkers, "AIWhiteboard", true);
 CONSOLE_VAR(float, kBW_DebugRenderPossibleMarkersZ, "AIWhiteboard", 35.0f);
@@ -197,6 +198,14 @@ void AIWhiteboard::HandleMessage(const ExternalInterface::RobotObservedPossibleO
   const UnitQuaternion<float> obsQuat(possibleObject.quaternion_w, possibleObject.quaternion_x, possibleObject.quaternion_y, possibleObject.quaternion_z);
   const Rotation3d obsRot(obsQuat);
   const Pose3d obsPose( obsRot, {possibleObject.world_x, possibleObject.world_y, possibleObject.world_z}, _robot.GetWorldOrigin());
+
+  // only add relatively flat markers
+  const RotationMatrix3d Rmat = obsPose.GetRotationMatrix();
+  const bool isFlat = (Rmat.GetAngularDeviationFromParentAxis<'Z'>() < DEG_TO_RAD(kFlatPosisbleObjectTol_deg));
+
+  if( ! isFlat ) {
+    return;
+  }
 
   // remove any markers that are similar to this
   RemovePossibleMarkersMatching(possibleObject.objectType, obsPose);

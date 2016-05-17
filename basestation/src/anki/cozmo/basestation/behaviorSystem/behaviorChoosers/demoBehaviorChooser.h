@@ -90,8 +90,6 @@ private:
   bool _hasEdge = true;
   bool _hasSeenBlock = false;
 
-  bool _initCalled = false;
-
   IBehavior* _faceSearchBehavior = nullptr;
 
   IBehavior* _forceBehavior = nullptr;

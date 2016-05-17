@@ -86,6 +86,12 @@ enum uint_8 ObjectInteractionResult {
     UNKNOWN_PROBLEM,
 }
 
+enum uint_8 AlignmentType {
+  LIFT_FINGER = 0, // Fingers aligned with object
+  LIFT_PLATE,      // Lift plate aligned with object
+  BODY,            // Front of body aligned with object
+  CUSTOM
+}
 
 // Object Interaction completed is used actions that interact with objects
 structure ObjectInteractionCompleted {
