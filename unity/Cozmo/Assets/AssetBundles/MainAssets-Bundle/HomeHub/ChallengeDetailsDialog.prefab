@@ -605,7 +605,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 103458, guid: 85d9e07d30b304f2782d1dc4fa7f476c, type: 2}
+  Prefab: {fileID: 103458, guid: 9cca1fb20b84d4dd29d61b10c7434724, type: 2}
   ModifiedValues:
   - ObjectPath: 
     FieldName: Cozmo.UI.CozmoButton:_UISoundEvent:_GameObjectType

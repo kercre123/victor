@@ -119,8 +119,7 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance = UIManager.OpenView(
       MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       newView => {
-        newView.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
-          _ChallengeData.HowToPlayDialogContentLocKey);
+        newView.Initialize();
         InitializeView(newView, _ChallengeData);
       });
 
@@ -394,7 +393,7 @@ public abstract class GameBase : MonoBehaviour {
     // Listen for dialog close
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
       Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
-    
+    SharedMinigameView.HideHowToPlayButton();
   }
 
   private void HandleChallengeResultViewClosed() {
