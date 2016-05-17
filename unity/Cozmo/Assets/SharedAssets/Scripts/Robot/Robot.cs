@@ -1363,6 +1363,11 @@ public class Robot : IRobot {
     SendQueueSingleAction(Singleton<SayText>.Instance.Initialize(text, playEvent, style), callback, queueActionPosition);
   }
 
+  public void SendDemoResetState() {
+    RobotEngineManager.Instance.Message.DemoResetState = Singleton<DemoResetState>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
   public void EraseAllEnrolledFaces() {
     RobotEngineManager.Instance.Message.EraseAllEnrolledFaces = Singleton<EraseAllEnrolledFaces>.Instance;
     RobotEngineManager.Instance.SendMessage();

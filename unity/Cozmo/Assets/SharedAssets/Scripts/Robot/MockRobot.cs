@@ -818,4 +818,8 @@ public class MockRobot : IRobot {
   public void EraseAllEnrolledFaces() {
     
   }
+
+  public void SendDemoResetState() {
+    
+  }
 }

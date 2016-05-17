@@ -402,6 +402,8 @@ Prefab:
       propertyPath: _LoadingBarLabel
       value: 
       objectReference: {fileID: 735345286}
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 96563fa7c044a44afa01f530712be672, type: 2}
   m_IsPrefabParent: 0
