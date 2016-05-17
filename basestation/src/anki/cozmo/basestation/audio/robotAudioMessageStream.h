@@ -15,7 +15,7 @@
 #ifndef __Basestation_Audio_RobotAudioMessageStream_H__
 #define __Basestation_Audio_RobotAudioMessageStream_H__
 
-#include "anki/cozmo/basestation/audio/mixingConsole/audioMixerTypes.h"
+#include "anki/cozmo/basestation/audio/audioDataTypes.h"
 #include "util/helpers/noncopyable.h"
 #include <stdio.h>
 #include <queue>

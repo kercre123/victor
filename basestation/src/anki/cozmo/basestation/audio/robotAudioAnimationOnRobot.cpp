@@ -17,8 +17,9 @@
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "clad/audio/messageAudioClient.h"
-#include <util/helpers/templateHelpers.h>
-#include <util/logging/logging.h>
+#include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 
 
 namespace Anki {
@@ -27,6 +28,8 @@ namespace Audio {
   
 // TEMP Solution to converting audio frame into robot audio message
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+constexpr float INT16_MAX_FLT = float(INT16_MAX);
+
 uint8_t encodeMuLaw(float in_val)
 {
   static const uint8_t MuLawCompressTable[] =
@@ -42,7 +45,7 @@ uint8_t encodeMuLaw(float in_val)
   };
   
   // Convert float (-1.0, 1.0) to int16
-  int16_t sample = in_val * INT16_MAX;
+  int16_t sample = Util::numeric_cast<int16_t>( in_val * INT16_MAX_FLT );
   
   bool sign = sample < 0;
   
@@ -233,12 +236,12 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
     
     // TEMP: Convert audio frame into correct robot output, this will done in the Mixing Console at some point
     // Create Audio Frame
-    AnimKeyFrame::AudioSample keyFrame = AnimKeyFrame::AudioSample();
+    AnimKeyFrame::AudioSample keyFrame;
     ASSERT_NAMED(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= keyFrame.Size(),
                  "Block size must be less or equal to audioSameple size");
     // Convert audio format to robot format
     for ( size_t idx = 0; idx < audioFrame->sampleCount; ++idx ) {
-      keyFrame.sample[idx] = encodeMuLaw( audioFrame->samples[idx] * 0.25f );
+      keyFrame.sample[idx] = encodeMuLaw( audioFrame->samples[idx] * _robotVolume );
     }
     
     // Pad the back of the buffer with 0s
@@ -247,9 +250,11 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
       std::fill( keyFrame.sample.begin() + audioFrame->sampleCount, keyFrame.sample.end(), 0 );
     }
 
+    // After adding audio data to robot audio keyframe delete frame
+    Util::SafeDelete( audioFrame );
+    // Create Audio message
     RobotInterface::EngineToRobot* audioMsg = new RobotInterface::EngineToRobot( std::move( keyFrame ) );
     out_RobotAudioMessagePtr = audioMsg;
-    
     
     // Ignore any animation events that belong to this frame
     while ( GetEventIndex() < _animationEvents.size() ) {

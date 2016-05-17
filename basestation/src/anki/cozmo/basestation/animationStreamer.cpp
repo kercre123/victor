@@ -482,6 +482,7 @@ namespace Cozmo {
     if ( _audioClient.HasAnimation() ) {
       
       RobotAudioAnimation* audioAnimation = _audioClient.GetCurrentAnimation();
+      
       RobotInterface::EngineToRobot* audioMsg = nullptr;
       audioAnimation->PopRobotAudioMessage( audioMsg, startTime_ms, streamingTime_ms );
       if ( nullptr != audioMsg ) {

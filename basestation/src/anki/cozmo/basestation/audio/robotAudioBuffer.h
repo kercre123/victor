@@ -16,7 +16,7 @@
 #define __Basestation_Audio_RobotAudioBuffer_H__
 
 #include "anki/cozmo/basestation/audio/robotAudioMessageStream.h"
-#include "anki/cozmo/basestation/audio/mixingConsole/audioMixerTypes.h"
+#include "anki/cozmo/basestation/audio/audioDataTypes.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/container/circularBuffer.h"
 #include "util/dispatchQueue/dispatchQueue.h"
@@ -63,7 +63,7 @@ public:
   // Get the front / top Audio Buffer stream in the queue
   RobotAudioMessageStream* GetFrontAudioBufferStream();
   
-  // Pop the front  / top Audio buffer stream in the queue
+  // Pop the front / top Audio buffer stream in the queue
   void PopAudioBufferStream() { _streamQueue.pop(); }
   
   // Clear the Audio buffer stream queue

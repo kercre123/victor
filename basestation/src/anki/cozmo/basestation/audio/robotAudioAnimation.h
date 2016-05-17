@@ -18,7 +18,7 @@
 
 #include "anki/cozmo/basestation/animations/track.h"
 #include "anki/cozmo/basestation/audio/audioEngineClient.h"
-#include <util/dispatchQueue/dispatchQueue.h>
+#include "util/dispatchQueue/dispatchQueue.h"
 #include <vector>
 #include <mutex>
 
@@ -77,6 +77,8 @@ public:
                             TimeStamp_t startTime_ms,
                             TimeStamp_t streamingTime_ms ) = 0;
 
+  // FIXME: This is a temp fix, will remove once we have an Audio Mixer
+  void SetRobotVolume( float volume ) { _robotVolume = volume; }
 
 protected:
   
@@ -145,6 +147,9 @@ protected:
 
   // Handle AudioClient's PostCozmo() callbacks from audio engine (Wwise)s
   void HandleCozmoEventCallback( AnimationEvent* animationEvent, AudioCallback& callback );
+  
+  // FIXME: This is a temp fix, will remove once we have an Audio Mixer
+  float _robotVolume = 1.0f;
 
 private:
 

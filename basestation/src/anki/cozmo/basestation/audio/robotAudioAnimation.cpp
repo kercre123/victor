@@ -20,8 +20,8 @@
 #include "anki/cozmo/basestation/keyframe.h"
 #include "anki/cozmo/basestation/animation/animation.h"
 #include "clad/audio/messageAudioClient.h"
-#include <util/helpers/templateHelpers.h>
-#include <util/logging/logging.h>
+#include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
 
 
 namespace Anki {
@@ -139,6 +139,8 @@ void RobotAudioAnimation::HandleCozmoEventCallback( AnimationEvent* animationEve
       
     case AudioCallbackInfoTag::callbackError:
     {
+      PRINT_NAMED_INFO( "RobotAudioAnimation.HandleCozmoEventCallback", "ErrorType: %s",
+                        EnumToString(callback.callbackInfo.Get_callbackError().callbackError) );
       IncrementCompletedEventCount();
       std::lock_guard<std::mutex> lock(_animationEventLock);
       animationEvent->State = AnimationEvent::AnimationEventState::Error;

@@ -43,7 +43,7 @@ void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sa
   
   // Copy audio samples into frame & push it into the queue
   AudioFrameData *audioFrame = new AudioFrameData( sampleCount );
-  audioFrame->CopySamples(samples);
+  audioFrame->CopySamples( samples, sampleCount );
   _currentStream->PushRobotAudioFrame( audioFrame );
 }
 

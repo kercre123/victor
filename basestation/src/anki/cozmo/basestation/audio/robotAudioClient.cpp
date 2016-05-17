@@ -15,12 +15,15 @@
 #include "anki/cozmo/basestation/audio/robotAudioAnimationOnDevice.h"
 #include "anki/cozmo/basestation/audio/robotAudioAnimationOnRobot.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
+#include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "clad/audio/messageAudioClient.h"
-#include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
+
+// Always play audio on device
+#define OVERRIDE_ON_DEVICE_OUTPUT_SOURCE 0
 
 
 namespace Anki {
@@ -42,19 +45,33 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
   // Add listener to robot messages
   // This only helps to determine if we should play sound on Webots or on the Robot
   auto robotSyncCallback = [this] ( const AnkiEvent<RobotInterface::RobotToEngine>& message ) {
-//    RobotInterface::SyncTimeAck payload = message.GetData().Get_syncTimeAck();
-//    RobotAudioOutputSource outputSource = payload.isPhysical
-//                                            ? RobotAudioOutputSource::PlayOnRobot
-//                                            : RobotAudioOutputSource::PlayOnDevice;
-   // rsam: I believe there's a problem with audio streaming to robot that causes anims to lock. Trying this as
-   // a temporary fix until Jordan can take a look
     RobotAudioOutputSource outputSource = RobotAudioOutputSource::PlayOnDevice;
+    if ( ! OVERRIDE_ON_DEVICE_OUTPUT_SOURCE ) {
+      const RobotInterface::SyncTimeAck msg = message.GetData().Get_syncTimeAck();
+      outputSource = msg.isPhysical ? RobotAudioOutputSource::PlayOnRobot : RobotAudioOutputSource::PlayOnDevice;
+    }
     SetOutputSource( outputSource );
   };
-  RobotInterface::MessageHandler* msgHandler = context->GetRobotMsgHandler();
-  _signalHandles.emplace_back( msgHandler->Subscribe( _robot->GetID(),
-                                                      RobotInterface::RobotToEngineTag::syncTimeAck,
-                                                      robotSyncCallback ) );
+  
+  auto robotVolumeCallback = [this] ( const AnkiEvent<ExternalInterface::MessageGameToEngine>& message ) {
+    const ExternalInterface::SetRobotVolume& msg = message.GetData().Get_SetRobotVolume();
+    SetRobotVolume( msg.volume );
+  };
+  
+  RobotInterface::MessageHandler* robotMsgHandler = context->GetRobotMsgHandler();
+  if ( robotMsgHandler) {
+    _signalHandles.push_back( robotMsgHandler->Subscribe( _robot->GetID(),
+                                                          RobotInterface::RobotToEngineTag::syncTimeAck,
+                                                          robotSyncCallback ) );
+  }
+
+  IExternalInterface* gameToEngineInterface = context->GetExternalInterface();
+  if ( gameToEngineInterface ) {
+    _signalHandles.push_back(gameToEngineInterface->Subscribe( ExternalInterface::MessageGameToEngineTag::SetRobotVolume,
+                                                               robotVolumeCallback) );
+  }
+  
+  
   
   // Configure Robot Audio buffers with Wwise buses. PlugIn Ids are set in Wwise project
   // Setup Robot Buffers
@@ -107,6 +124,9 @@ void RobotAudioClient::CreateAudioAnimation( Animation* anAnimation )
     return;
   }
   
+  // FIXME: This is a temp fix, will remove once we have an Audio Mixer
+    audioAnimation->SetRobotVolume( _robotVolume );
+
   // Check if animation is valid
   const RobotAudioAnimation::AnimationState animationState = audioAnimation->GetAnimationState();
   if ( animationState != RobotAudioAnimation::AnimationState::AnimationCompleted &&
@@ -170,7 +190,15 @@ bool RobotAudioClient::AnimationIsComplete()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioClient::SetRobotVolume(float volume)
 {
+  // Keep On device robot volume (Wwise) in sync with robot volume
   PostParameter(GameParameter::ParameterType::Robot_Volume, volume, GameObjectType::Invalid);
+  _robotVolume = volume;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float RobotAudioClient::GetRobotVolume() const
+{
+  return _robotVolume;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
