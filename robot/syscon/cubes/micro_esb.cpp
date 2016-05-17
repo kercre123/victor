@@ -1,4 +1,3 @@
-#ifndef LEGACY_CUBES
 /* Copyright (c) 2014 Nordic Semiconductor. All Rights Reserved.
  *
  * The information contained herein is property of Nordic Semiconductor ASA.
@@ -293,4 +292,3 @@ extern "C" void RADIO_IRQHandler()
   m_uesb_mainstate = UESB_STATE_IDLE;
   uesb_start();
 }
-#endif

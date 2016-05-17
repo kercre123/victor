@@ -1,9 +1,6 @@
 #include <stdint.h>
 
-#ifdef LEGACY_CUBES
-#include "./legacy/legacy.h"
-
-#elif !defined(RADIO_H)
+#ifndef RADIO_H
 #define RADIO_H
 
 #include "protocol.h"

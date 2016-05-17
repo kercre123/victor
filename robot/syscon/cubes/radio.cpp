@@ -1,4 +1,3 @@
-#ifndef LEGACY_CUBES
 #include <stdint.h>
 #include <string.h>
 
@@ -353,6 +352,7 @@ void Radio::updateLights() {
       };
 
       uint8_t* rgbi = lightController.cube[i][c].values;
+      //uint8_t* rgbi = lightController.backpack[c].values;
 
       for (int i = 0; i < 3; i++) {
         acc->tx_state.ledStatus[light_index[c][i]] = rgbi[i];
@@ -431,4 +431,3 @@ void Radio::manage(void) {
     next_resume += SCHEDULE_PERIOD;
   }
 }
-#endif
