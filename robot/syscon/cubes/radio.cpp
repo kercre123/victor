@@ -358,7 +358,7 @@ void Radio::prepare(void* userdata) {
     EnterState(RADIO_TALKING);
 
     // Update the color status of the lights   
-    static const int channel_order[] = { 2, 1, 0, 3 };
+    static const int channel_order[] = { 3, 2, 1, 0 };
     int tx_index = 0;
     
     for (int light = 0; light < NUM_PROP_LIGHTS; light++) {
