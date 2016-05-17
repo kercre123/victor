@@ -15,6 +15,7 @@
 #include "anki/common/basestation/utils/timer.h"
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
@@ -37,10 +38,6 @@ namespace Cozmo {
 
   static const char * const kInitialTakeAnimGroupKey = "initial_take_anim_group";
   static const char * const kWaitAnimGroupKey = "wait_anim_group";
-  static const char * const kNewUnnamedFaceAnimGroupKey = "new_unnamed_face_anim_group";
-  static const char * const kNewNamedFaceAnimGroupKey = "new_named_face_anim_group";
-  static const char * const kUnnamedFaceAnimGroupKey = "unnamed_face_anim_group";
-  static const char * const kNamedFaceAnimGroupKey = "named_face_anim_group";
   static const char * const kFaceEnrollRequestEnabledKey = "enable_face_enrollment_request";
 
   // Length of time in seconds to ignore a specific face that has hit the kFaceInterestingDuration limit
@@ -69,12 +66,6 @@ namespace Cozmo {
 
     _initialTakeAnimGroup = config.get(kInitialTakeAnimGroupKey, "").asString();
     _waitAnimGroup = config.get(kWaitAnimGroupKey, "").asString();
-
-    _unnamedFaceAnimGroup = config.get(kUnnamedFaceAnimGroupKey, "").asString();
-    _namedFaceAnimGroup = config.get(kNamedFaceAnimGroupKey, "").asString();
-    
-    _newUnnamedFaceAnimGroup = config.get(kNewUnnamedFaceAnimGroupKey, _unnamedFaceAnimGroup).asString();
-    _newNamedFaceAnimGroup = config.get(kNewNamedFaceAnimGroupKey, _namedFaceAnimGroup).asString();
 
     _faceEnrollEnabled = config.get(kFaceEnrollRequestEnabledKey, false).asBool();
     
@@ -362,11 +353,15 @@ namespace Cozmo {
 
     if( !faceData->_playedNewFaceAnim ) {
       if( face->GetName().empty() ) {
-        compoundAction->AddAction( new PlayAnimationGroupAction(robot, _newUnnamedFaceAnimGroup) );
+        compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnSawNewUnnamedFace) );
         robot.GetMoodManager().TriggerEmotionEvent("NewUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
       }
       else {
-        compoundAction->AddAction( new PlayAnimationGroupAction(robot, _newNamedFaceAnimGroup) );
+        // He's happy to see you so play an anim first
+        compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnWiggle) );
+        SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, true);
+        sayTextAction->SetGameEvent(Anki::Cozmo::GameEvent::OnSawNewNamedFace);
+        compoundAction->AddAction( sayTextAction );
         robot.GetMoodManager().TriggerEmotionEvent("NewNamedFace", MoodManager::GetCurrentTimeInSeconds());
 
         if( _faceEnrollEnabled ) {
@@ -382,11 +377,14 @@ namespace Cozmo {
     }
     else {
       if( face->GetName().empty() ) {
-        compoundAction->AddAction( new PlayAnimationGroupAction(robot, _unnamedFaceAnimGroup) );
+        compoundAction->AddAction( new PlayAnimationGroupAction(robot, GameEvent::OnSawOldUnnamedFace) );
         robot.GetMoodManager().TriggerEmotionEvent("OldUnnamedFace", MoodManager::GetCurrentTimeInSeconds());
+        EnumToString(GameEvent::OnSawNewNamedFace);
       }
       else {
-        compoundAction->AddAction( new PlayAnimationGroupAction(robot, _namedFaceAnimGroup) );
+        SayTextAction* sayTextAction = new SayTextAction(robot, face->GetName(), SayTextStyle::Name_Normal, true);
+        sayTextAction->SetGameEvent(Anki::Cozmo::GameEvent::OnSawOldNamedFace);
+        compoundAction->AddAction( sayTextAction );
         robot.GetMoodManager().TriggerEmotionEvent("OldNamedFace", MoodManager::GetCurrentTimeInSeconds());
         
         if( _faceEnrollEnabled ) {
