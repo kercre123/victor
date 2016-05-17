@@ -16,9 +16,10 @@
 #define __Basestation_Audio_RobotAudioBuffer_H__
 
 #include "anki/cozmo/basestation/audio/robotAudioMessageStream.h"
-#include <util/helpers/templateHelpers.h>
-#include <util/container/circularBuffer.h>
-#include <util/dispatchQueue/dispatchQueue.h>
+#include "anki/cozmo/basestation/audio/audioDataTypes.h"
+#include "util/helpers/templateHelpers.h"
+#include "util/container/circularBuffer.h"
+#include "util/dispatchQueue/dispatchQueue.h"
 #include <stdint.h>
 #include <stdio.h>
 #include <queue>
@@ -29,11 +30,6 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-namespace AnimKeyFrame {
-  struct AudioSample;
-}
-  
 namespace Audio {
   
 
@@ -50,7 +46,7 @@ public:
   void PrepareAudioBuffer();
   
   // Write samples to buffer
-  void UpdateBuffer( const uint8_t* samples, const size_t sampleCount );
+  void UpdateBuffer( const AudioSample* samples, const size_t sampleCount );
   
   // This is called when the plug-in is terminated. It will flush the remaining audio samples out of the cache
   void ClearCache();
@@ -67,7 +63,7 @@ public:
   // Get the front / top Audio Buffer stream in the queue
   RobotAudioMessageStream* GetFrontAudioBufferStream();
   
-  // Pop the front  / top Audio buffer stream in the queue
+  // Pop the front / top Audio buffer stream in the queue
   void PopAudioBufferStream() { _streamQueue.pop(); }
   
   // Clear the Audio buffer stream queue

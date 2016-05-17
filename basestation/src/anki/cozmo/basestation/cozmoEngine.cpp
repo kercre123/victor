@@ -97,7 +97,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceAddRobot, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReliableTransportRunMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging, callback));
 
@@ -677,15 +676,6 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       Robot* robot = GetRobotByID(msg.robotID);
       if(robot != nullptr) {
         robot->SendRobotMessage<StartControllerTestMode>(msg.p1, msg.p2, msg.p3, msg.mode);
-      }
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::SetRobotVolume:
-    {
-      const ExternalInterface::SetRobotVolume& msg = event.GetData().Get_SetRobotVolume();
-      Robot* robot = GetRobotByID(msg.robotId);
-      if(robot != nullptr) {
-        robot->GetRobotAudioClient()->SetRobotVolume(msg.volume);
       }
       break;
     }

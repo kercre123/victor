@@ -68,6 +68,8 @@ namespace Cozmo {
     
     AnimationStreamer(const CozmoContext* context, Audio::RobotAudioClient& audioClient);
     
+    ~AnimationStreamer();
+    
     // Sets an animation to be streamed and how many times to stream it.
     // Use numLoops = 0 to play the animation indefinitely.
     // Returns a tag you can use to monitor whether the robot is done playing this
@@ -256,6 +258,8 @@ namespace Cozmo {
     // given tick.
     bool BufferMessageToSend(RobotInterface::EngineToRobot* msg);
     Result SendBufferedMessages(Robot& robot);
+    
+    void ClearSendBuffer();
     
     std::list<RobotInterface::EngineToRobot*> _sendBuffer;
     s32 _numBytesToSend = 0;
