@@ -818,7 +818,8 @@ public class Robot : IRobot {
   public void SetRobotVolume(float volume) {
     DAS.Debug(this, "Set Robot Volume " + volume);
 
-    Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot, volume);
+    RobotEngineManager.Instance.Message.SetRobotVolume = Singleton<SetRobotVolume>.Instance.Initialize(ID, volume);
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public float GetRobotVolume() {
