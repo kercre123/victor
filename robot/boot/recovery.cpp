@@ -263,6 +263,7 @@ void EnterRecovery() {
         *recovery_word = 0;
         SPI0_PUSHR_SLAVE = STATE_IDLE;
 
+        NVIC_SystemReset();
         return ;
 
       case COMMAND_CHECK_SIG:
