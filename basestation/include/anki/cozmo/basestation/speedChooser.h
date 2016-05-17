@@ -41,7 +41,7 @@ namespace Anki {
         const int maxSpeed_mmps = MAX_WHEEL_SPEED_MMPS;
       
         // Min speed a generated motion profile can have
-        const int minSpeed_mmps = 40;
+        const int minSpeed_mmps = 60;
       
         const int distToObjectForMaxSpeed_mm = 500;
       

@@ -46,6 +46,12 @@ BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot,
   
   // parse all parameters now
   LoadConfig(config[kConfigParamsKey]);
+
+  if( !_configParams.behavior_ShouldResetTurnDirection ) {
+    // we won't be resetting this, so set it once now
+    DecideTurnDirection();
+  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -56,6 +62,11 @@ BehaviorExploreLookAroundInPlace::~BehaviorExploreLookAroundInPlace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) const
 {
+  // don't run if I'm holding a block (can't really look around through the cube)
+  if( robot.IsCarryingObject() ) {
+    return false;
+  }
+  
   // Probably want to run if I don't have any other exploration behavior that wants to, unless I have completely
   // mapped the floor around me 'recently'.
   // Now this is the case for exploration, but some other supergroup that uses the same behavior would have different
@@ -94,7 +105,11 @@ uint8_t ParseUint8(const Json::Value& config, const char* key ) {
   Json::Int intVal = config[key].asInt();
   return Anki::Util::numeric_cast<uint8_t>(intVal);
 }
+bool ParseBool(const Json::Value& config, const char* key) {
+  ASSERT_NAMED_EVENT(config[key].isBool(), "BehaviorExploreLookAroundInPlace.ParseBool.NotValidBool", "%s", key);
+  return config[key].asBool();
 };
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
@@ -133,6 +148,8 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.s6_BodyAngleRangeMax_deg = ParseFloat(config, "s6_BodyAngleRangeMax_deg");
   _configParams.s6_HeadAngleRangeMin_deg = ParseFloat(config, "s6_HeadAngleRangeMin_deg");
   _configParams.s6_HeadAngleRangeMax_deg = ParseFloat(config, "s6_HeadAngleRangeMax_deg");
+
+  _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -141,11 +158,10 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   // grab run values
   _behaviorBodyFacingDone_rad = 0;
   
-  // decide main turn direction
-  const double randomDirection = GetRNG().RandDbl();
-  _mainTurnDirection = (randomDirection<=_configParams.s0_MainTurnCWChance) ? EClockDirection::CW : EClockDirection::CCW;
-  // _mainTurnDirection = EClockDirection::CW;
-
+  if( _configParams.behavior_ShouldResetTurnDirection ) {
+    DecideTurnDirection();
+  }
+  
   // start first iteration
   TransitionToS1_OppositeTurn(robot);
 
@@ -286,6 +302,15 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
     // note down this location so that we don't do it again in the same place
     _visitedLocations.emplace_back( robot.GetPose() );
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreLookAroundInPlace::DecideTurnDirection()
+{
+  // decide main turn direction
+  const double randomDirection = GetRNG().RandDbl();
+  _mainTurnDirection = (randomDirection<=_configParams.s0_MainTurnCWChance) ? EClockDirection::CW : EClockDirection::CCW;
+  // _mainTurnDirection = EClockDirection::CW;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
