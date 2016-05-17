@@ -30,6 +30,7 @@ namespace Anki {
     
     //Forward declaration
     class AnimationGroupContainer;
+    class CannedAnimationContainer;
     
     class AnimationGroup
     {
@@ -38,7 +39,7 @@ namespace Anki {
       explicit AnimationGroup(const std::string& name = "");
       
       // For reading animation groups from files
-      Result DefineFromJson(const std::string& name, const Json::Value& json);
+      Result DefineFromJson(const std::string& name, const Json::Value& json, const CannedAnimationContainer* cannedAnimations);
 
       // Retrieve an animation based on the mood manager
       const std::string& GetAnimationName(const MoodManager& moodManager, AnimationGroupContainer& animationGroupContainer, float headAngleRad=0.f) const;

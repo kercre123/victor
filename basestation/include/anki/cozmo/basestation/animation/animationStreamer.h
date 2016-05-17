@@ -17,7 +17,8 @@
 #define ANKI_COZMO_ANIMATION_STREAMER_H
 
 #include "anki/types.h"
-#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/animation/animation.h"
+#include "anki/cozmo/basestation/animations/track.h"
 #include "anki/cozmo/basestation/utils/hasSettableParameters.h"
 #include "clad/types/liveIdleAnimationParameters.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -40,6 +41,9 @@ namespace Cozmo {
   // Forward declaration
   class Robot;
   class ProceduralFace;
+  class CozmoContext;
+  class CannedAnimationContainer;
+  class AnimationGroupContainer;
   
   class IExternalInterface;
   namespace ExternalInterface {
@@ -57,24 +61,34 @@ namespace Cozmo {
     
     static const std::string   LiveAnimation;
     static const std::string   AnimToolAnimation;
+    static const std::string   NeutralFaceAnimName;
+    
     static const Tag  NotAnimatingTag  = 0;
     static const Tag  IdleAnimationTag = 255;
     
-    AnimationStreamer(IExternalInterface* externalInterface, CannedAnimationContainer& container, Audio::RobotAudioClient& audioClient);
+    AnimationStreamer(const CozmoContext* context, Audio::RobotAudioClient& audioClient);
     
     // Sets an animation to be streamed and how many times to stream it.
     // Use numLoops = 0 to play the animation indefinitely.
     // Returns a tag you can use to monitor whether the robot is done playing this
     // animation.
+    // If interruptRunning == true, any currently-streaming animation will be aborted.
     // Actual streaming occurs on calls to Update().
-    Tag SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
+    Tag SetStreamingAnimation(const std::string& name, u32 numLoops = 1, bool interruptRunning = true);
+    Tag SetStreamingAnimation(Animation* anim, u32 numLoops = 1, bool interruptRunning = true);
     
-    Tag SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops = 1, bool interruptRunning = true);
+    // Set the animation to be played when no other animation has been specified.  Use the empty string to
+    // disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
+    Result SetIdleAnimation(const std::string& animName);
     
-    // Sets the "idle" animation that will be streamed (in a loop) when no other
-    // animation is streaming. Use empty string ("") to disable.
-    // Use static LiveAnimation above to use live procedural animation (default).
-    Result SetIdleAnimation(const std::string& name);
+    // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
+    // idle (even if it came from SetIdleAnimation) is always on the stack
+    Result PushIdleAnimation(const std::string& animName);
+    
+    // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
+    // Returns RESULT_OK on success and RESULT_FAIL if the stack of idle animations was empty.
+    // Will not pop the last idle off the stack.
+    Result PopIdleAnimation();
 
     const std::string& GetIdleAnimationName() const;
     
@@ -104,6 +118,9 @@ namespace Cozmo {
     const std::string GetStreamingAnimationName() const;
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
     
+    const std::string& GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const;
+    const Animation* GetCannedAnimation(const std::string& name) const;
+
     // Required by HasSettableParameters:
     virtual void SetDefaultParams() override;
     
@@ -121,10 +138,15 @@ namespace Cozmo {
     
     // Initialize the streaming of an animation with a given tag
     // (This will call anim->Init())
-    Result InitStream(Robot& robot, Animation* anim, Tag withTag);
+    Result InitStream(Animation* anim, Tag withTag);
     
     // Actually stream the animation (called each tick)
     Result UpdateStream(Robot& robot, Animation* anim, bool storeFace);
+    
+    // Helper for fast forwarding to end of animation and streaming last face,
+    // used in case an animation gets interrupted with nothing and we don't
+    // want to leave its face frozen in an arbitrary place
+    bool StreamLastFace(Animation* anim);
     
     // This is performs the test cases for the animation while loop
     bool ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
@@ -148,15 +170,20 @@ namespace Cozmo {
     
     // If we are currently streaming, kill it, and make sure not to leave a
     // random face displayed (stream last face keyframe)
-    void Abort(Robot& robot);
+    void Abort();
+    
+    const CozmoContext* _context = nullptr;
     
     // Container for all known "canned" animations (i.e. non-live)
     CannedAnimationContainer& _animationContainer;
-
-    std::string _idleAnimationGroupName;
+    AnimationGroupContainer&  _animationGroups;
+    
     Animation*  _idleAnimation = nullptr;
     Animation*  _streamingAnimation = nullptr;
     TimeStamp_t _timeSpentIdling_ms = 0;
+    std::vector<std::string> _idleAnimationNameStack;
+
+    std::string _lastPlayedAnimationId;
     
     // For layering procedural face animations on top of whatever is currently
     // playing:
@@ -258,8 +285,14 @@ namespace Cozmo {
     Audio::RobotAudioClient& _audioClient;
     
     std::unique_ptr<ProceduralFace> _lastProceduralFace;
+    
+    // For handling incoming messages
+    std::vector<Signal::SmartHandle> _eventHandlers;
+    void SetupHandlers(IExternalInterface* externalInterface);
+
   }; // class AnimationStreamer
-  
+
+
 } // namespace Cozmo
 } // namespace Anki
 

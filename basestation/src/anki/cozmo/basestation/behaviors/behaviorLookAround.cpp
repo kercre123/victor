@@ -142,7 +142,7 @@ void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, const Robo
 Result BehaviorLookAround::ResumeInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
-    robot.PushIdleAnimation("NONE");
+    robot.GetAnimationStreamer().PushIdleAnimation("NONE");
   }
     
   TransitionToWaitForOtherActions(robot);
@@ -401,7 +401,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
 void BehaviorLookAround::StopInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
-    robot.PopIdleAnimation();
+    robot.GetAnimationStreamer().PopIdleAnimation();
   }
   ResetBehavior(robot);
 }

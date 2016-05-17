@@ -248,7 +248,7 @@ namespace Anki {
       {
         if (!_liftMovingAnimation.empty()) {
           // Check that the animation only has sound keyframes
-          const Animation* anim = _robot.GetCannedAnimation(_liftMovingAnimation);
+          const Animation* anim = _robot.GetAnimationStreamer().GetCannedAnimation(_liftMovingAnimation);
           if (nullptr != anim) {
             auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
             auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();

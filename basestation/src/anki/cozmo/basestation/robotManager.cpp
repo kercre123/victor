@@ -383,7 +383,8 @@ namespace Anki {
         
         PRINT_NAMED_INFO("RobotManager.ReadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), filename);
         
-        _animationGroups->DefineFromJson(animGroupDef, animationGroupName);
+        ASSERT_NAMED(nullptr != _cannedAnimations, "RobotManager.ReadAnimationGroupFile.NullCannedAnimations");
+        _animationGroups->DefineFromJson(animGroupDef, animationGroupName, _cannedAnimations.get());
       }
     }
     

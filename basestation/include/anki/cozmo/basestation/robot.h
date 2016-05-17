@@ -42,7 +42,6 @@
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
-#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
@@ -108,7 +107,6 @@ class RobotPoseStamp;
 class IExternalInterface;
 struct RobotState;
 class ActiveCube;
-class CannedAnimationContainer;
 class SpeedChooser;
 class DrivingAnimationHandler;
   
@@ -487,32 +485,6 @@ public:
     
     // =========== Animation Commands =============
     
-    // Plays specified animation numLoops times.
-    // If numLoops == 0, animation repeats forever.
-    // If interruptRunning == true, any currently-streaming animation will be aborted.
-    // Returns the streaming tag, so you can find out when it is done.
-    AnimationStreamer::Tag PlayAnimation(const std::string& animName, const u32 numLoops = 1, bool interruptRunning = true);
-    AnimationStreamer::Tag PlayAnimation(Animation* animation, u32 numLoops = 1, bool interruptRunning = true);
-  
-    // Set the animation to be played when no other animation has been specified.  Use the empty string to
-    // disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
-    Result SetIdleAnimation(const std::string& animName);
-
-    // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
-    // idle (even if it came from SetIdleAnimation) is always on the stack
-    Result PushIdleAnimation(const std::string& animName);
-
-    // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
-    // Returns true if it had an animation to return to, otherwise doesn't change the animation and returns
-    // false. If SetIdleAnimation has been called since then, this is invalid and will return false.
-    bool PopIdleAnimation();
-
-    const std::string& GetIdleAnimationName() const;
-    
-    // Returns name of currently streaming animation. Does not include idle animation.
-    // Returns "" if no non-idle animation is streaming.
-    const std::string GetStreamingAnimationName() const;
-    
     // Returns the number of animation bytes or audio frames played on the robot since
     // it was initialized with SyncTime.
     s32 GetNumAnimationBytesPlayed() const;
@@ -558,7 +530,7 @@ public:
     // Returns true iff the robot is currently playing the idle animation.
     bool IsIdleAnimating() const;
     
-    // Returns the "tag" of the 
+    // Returns the "tag" of the animation currently playing on the robot
     u8 GetCurrentAnimationTag() const;
 
     Result SyncTime();
@@ -743,10 +715,6 @@ public:
     Util::Data::DataPlatform* GetDataPlatform() { return _context->GetDataPlatform(); }
     const CozmoContext* GetContext() const { return _context; }
   
-    const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
-  
-    const std::string& GetAnimationNameFromGroup(const std::string& name);
-  
     ExternalInterface::RobotState GetRobotState();
   
   protected:
@@ -777,8 +745,6 @@ public:
     std::unique_ptr<Audio::RobotAudioClient> _audioClient;
   
     ///////// Animation /////////
-    CannedAnimationContainer&   _cannedAnimations;
-    AnimationGroupContainer&    _animationGroups;
     AnimationStreamer           _animationStreamer;
     s32 _numAnimationBytesPlayed         = 0;
     s32 _numAnimationBytesStreamed       = 0;
@@ -880,9 +846,6 @@ public:
     TimeStamp_t      _robotFirstOnBack_ms = 0;
     bool             _lastSendOnBackValue = false;
 
-
-
-    std::vector<std::string> _idleAnimationNameStack;
   
     // Sets robot pose but does not update the pose on the robot.
     // Unless you know what you're doing you probably want to use
@@ -935,7 +898,6 @@ public:
     u32         _imgFramePeriod        = 0;
     u32         _imgProcPeriod         = 0;
     TimeStamp_t _lastImgTimeStamp      = 0;
-    std::string _lastPlayedAnimationId;
   
     ///////// Modifiers ////////
   

@@ -240,7 +240,7 @@ namespace Anki {
     SearchSideToSideAction::~SearchSideToSideAction()
     {
       if( _shouldPopIdle ) {
-        _robot.PopIdleAnimation();
+        _robot.GetAnimationStreamer().PopIdleAnimation();
         _shouldPopIdle = false;
       }
     }
@@ -304,7 +304,7 @@ namespace Anki {
       // disable the live idle animation, so we aren't moving during the "wait" sections
       if( ! _shouldPopIdle ) {
         _shouldPopIdle = true;
-        _robot.PushIdleAnimation("NONE");
+        _robot.GetAnimationStreamer().PushIdleAnimation("NONE");
       }
 
       // Go ahead and do the first Update for the compound action so we don't

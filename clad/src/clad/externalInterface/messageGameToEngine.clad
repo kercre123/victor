@@ -406,6 +406,20 @@ message SetIdleAnimation {
     string animationName // Group name, not individual animation!
 }
 
+// PushIdleAnimation
+//  Switches the idle animation (the one played in a continuous loop while no other
+//  animation is requested via PlayAnimation) to the one specified.
+message PushIdleAnimation {
+    string animationName // Group name, not individual animation!
+}
+
+// PopIdleAnimation
+//  Stops using the last pushed idle animation and goes back to whatever was
+//  previously the idle.
+message PopIdleAnimation {
+
+}
+
 // ReadAnimationFile
 message ReadAnimationFile {
 }
