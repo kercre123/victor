@@ -12,7 +12,9 @@
 
 #include "anki/cozmo/basestation/behaviors/behaviorReactToStop.h"
 
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
@@ -20,13 +22,13 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-
-
 namespace Anki {
 namespace Cozmo {
   
 using namespace ExternalInterface;
-  
+
+static const char* kStopReactName = "ag_reactToStop";
+
 BehaviorReactToStop::BehaviorReactToStop(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
 {
@@ -47,13 +49,18 @@ bool BehaviorReactToStop::IsRunnableInternal(const Robot& robot) const
 
 Result BehaviorReactToStop::InitInternal(Robot& robot)
 {
-  // TODO:(bn) use an animation instead?
-
   // in case latency spiked between the Stop and Cliff message, add a small extra delay
   const float latencyDelay_s = 0.05f;
-  const float waitTime_s = (1.0 / 1000.0 ) * CLIFF_EVENT_DELAY_MS + latencyDelay_s;
-    
-  StartActing(new WaitAction(robot, waitTime_s));
+  const float minWaitTime_s = (1.0 / 1000.0 ) * CLIFF_EVENT_DELAY_MS + latencyDelay_s;
+  const float waitTimeBeforeReactionAnim_s = latencyDelay_s;
+  
+  CompoundActionParallel* action = new CompoundActionParallel(robot);
+  action->AddAction(new WaitAction(robot, minWaitTime_s));
+  action->AddAction(new CompoundActionSequential(robot, {
+        new WaitAction(robot, waitTimeBeforeReactionAnim_s),
+        new PlayAnimationGroupAction(robot, kStopReactName) }));
+  StartActing(action);
+  
   PRINT_NAMED_INFO("BehaviorReactToStop.Init",
                    "Pausing to give time for a cliff or pickup event");
   
