@@ -416,10 +416,16 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.AnimationEvent:
       ReceiveSpecificMessage(message.AnimationEvent);
       break;
+    case G2U.MessageEngineToGame.Tag.RobotProcessedImage:
+      ReceiveSpecificMessage(message.RobotProcessedImage);
     default:
-      //DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
+      DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
     }
+  }
+
+  private void ReceiveSpecificMessage(G2U.RobotProcessedImage message) {
+    // TODO: implement this
   }
 
   private void ReceivedSpecificMessage(G2U.DemoState message) {
