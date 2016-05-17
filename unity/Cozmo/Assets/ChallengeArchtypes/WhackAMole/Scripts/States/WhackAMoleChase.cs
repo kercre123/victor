@@ -21,7 +21,7 @@ namespace WhackAMole {
       _TargetKvP = _WhackAMoleGame.CurrentTargetKvP;
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
       _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], kTargetDist, AlignDone, true, false, 
-        _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
+        _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
       _WhackAMoleGame.FixCozmoAngles();
       _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
     }
@@ -67,7 +67,7 @@ namespace WhackAMole {
       base.Update();
       if (_CurrentRobot.IsBusy == false) {
         _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], kTargetDist, AlignDone, true, false,
-          _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.QueueActionPosition.NEXT);
+          _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition.NEXT);
         _WhackAMoleGame.FixCozmoAngles();
       }
     }
@@ -87,7 +87,7 @@ namespace WhackAMole {
         _TargetKvP = _WhackAMoleGame.CurrentTargetKvP;
         _CurrentRobot.CancelCallback(AlignDone);
         _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], kTargetDist, AlignDone, true, false,
-          _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.QueueActionPosition.NEXT);
+          _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition.NEXT);
       }
     }
 
