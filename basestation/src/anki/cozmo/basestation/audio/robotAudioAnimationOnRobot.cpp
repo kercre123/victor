@@ -10,8 +10,10 @@
  * Copyright: Anki, Inc. 2016
  */
 
-#include "anki/cozmo/basestation/audio/robotAudioAnimationOnRobot.h"
+// TEMP Include
+#include "clad/robotInterface/messageEngineToRobot.h"
 
+#include "anki/cozmo/basestation/audio/robotAudioAnimationOnRobot.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
 #include "clad/audio/messageAudioClient.h"
@@ -19,10 +21,46 @@
 #include <util/logging/logging.h>
 
 
-
 namespace Anki {
 namespace Cozmo {
 namespace Audio {
+  
+// TEMP Solution to converting audio frame into robot audio message
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint8_t encodeMuLaw(float in_val)
+{
+  static const uint8_t MuLawCompressTable[] =
+  {
+    0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,
+    5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+    6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+    6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+    7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7
+  };
+  
+  // Convert float (-1.0, 1.0) to int16
+  int16_t sample = in_val * INT16_MAX;
+  
+  bool sign = sample < 0;
+  
+  if (sign)	{
+    sample = ~sample;
+  }
+  
+  uint8_t exponent = MuLawCompressTable[sample >> 8];
+  uint8_t mantessa;
+  
+  if (exponent) {
+    mantessa = (sample >> (exponent + 3)) & 0xF;
+  } else {
+    mantessa = sample >> 4;
+  }
+  
+  return (sign ? 0x80 : 0) | (exponent << 4) | mantessa;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotAudioAnimationOnRobot::RobotAudioAnimationOnRobot( Animation* anAnimation, RobotAudioClient* audioClient )
@@ -79,7 +117,6 @@ RobotAudioAnimationOnRobot::AnimationState RobotAudioAnimationOnRobot::Update( T
       break;
   }
   
-  
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
     bool hasBuffer = false;
     size_t frameCount = 0;
@@ -88,7 +125,7 @@ RobotAudioAnimationOnRobot::AnimationState RobotAudioAnimationOnRobot::Update( T
       frameCount = _audioBuffer->GetFrontAudioBufferStream()->RobotAudioMessageCount();
     }
     
-    PRINT_NAMED_INFO("RobotAudioAnimationOnRobot::Update", "EXIT State: %hhu - HasBuffer: %d - FrameCount: %zu - HasCurrentBuffer: %d", _state, hasBuffer, frameCount, HasCurrentBufferStream() );
+    PRINT_NAMED_INFO("RobotAudioAnimationOnRobot.Update", "EXIT State: %hhu - HasBuffer: %d - FrameCount: %zu - HasCurrentBuffer: %d", _state, hasBuffer, frameCount, HasCurrentBufferStream() );
   }
   
   return _state;
@@ -191,7 +228,28 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
   
   // Get data from stream
   if ( HasCurrentBufferStream() ) {
-    out_RobotAudioMessagePtr = _currentBufferStream->PopRobotAudioMessage();
+    
+    AudioFrameData* audioFrame = _currentBufferStream->PopRobotAudioFrame();
+    
+    // TEMP: Convert audio frame into correct robot output, this will done in the Mixing Console at some point
+    // Create Audio Frame
+    AnimKeyFrame::AudioSample keyFrame = AnimKeyFrame::AudioSample();
+    ASSERT_NAMED(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= keyFrame.Size(),
+                 "Block size must be less or equal to audioSameple size");
+    // Convert audio format to robot format
+    for ( size_t idx = 0; idx < audioFrame->sampleCount; ++idx ) {
+      keyFrame.sample[idx] = encodeMuLaw( audioFrame->samples[idx] * 0.25f );
+    }
+    
+    // Pad the back of the buffer with 0s
+    // This should only apply to the last frame
+    if (audioFrame->sampleCount < static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE )) {
+      std::fill( keyFrame.sample.begin() + audioFrame->sampleCount, keyFrame.sample.end(), 0 );
+    }
+
+    RobotInterface::EngineToRobot* audioMsg = new RobotInterface::EngineToRobot( std::move( keyFrame ) );
+    out_RobotAudioMessagePtr = audioMsg;
+    
     
     // Ignore any animation events that belong to this frame
     while ( GetEventIndex() < _animationEvents.size() ) {
@@ -213,7 +271,7 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
       
       frameCount = _audioBuffer->GetFrontAudioBufferStream()->RobotAudioMessageCount();
     }
-    PRINT_NAMED_INFO("RobotAudioAnimationOnRobot::PopRobotAudioMessage", "EXIT PopMsg: %d - HasBuffer: %d - FrameCount: %zu - HasCurrentBuffer: %d", (out_RobotAudioMessagePtr != nullptr), hasBuffer, frameCount, HasCurrentBufferStream() );
+    PRINT_NAMED_INFO("RobotAudioAnimationOnRobot.PopRobotAudioMessage", "EXIT PopMsg: %d - HasBuffer: %d - FrameCount: %zu - HasCurrentBuffer: %d", (out_RobotAudioMessagePtr != nullptr), hasBuffer, frameCount, HasCurrentBufferStream() );
   }
 }
 
@@ -221,7 +279,7 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
 void RobotAudioAnimationOnRobot::PrepareAnimation()
 {
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimationOnRobot::PrepareAnimation", "Animation %s", _animationName.c_str());
+    PRINT_NAMED_INFO("RobotAudioAnimationOnRobot.PrepareAnimation", "Animation %s", _animationName.c_str());
   }
   
   // Check if buffer is ready
@@ -235,7 +293,7 @@ void RobotAudioAnimationOnRobot::PrepareAnimation()
 bool RobotAudioAnimationOnRobot::IsAnimationDone() const
 {
   if ( DEBUG_ROBOT_ANIMATION_AUDIO ) {
-    PRINT_NAMED_INFO("RobotAudioAnimation::AllAnimationsPlayed", "eventCount: %lu  eventIdx: %d  completedCount: %d  hasAudioBufferStream: %d", (unsigned long)_animationEvents.size(), GetEventIndex(), GetCompletedEventCount(), _audioBuffer->HasAudioBufferStream());
+    PRINT_NAMED_INFO("RobotAudioAnimation.AllAnimationsPlayed", "eventCount: %lu  eventIdx: %d  completedCount: %d  hasAudioBufferStream: %d", (unsigned long)_animationEvents.size(), GetEventIndex(), GetCompletedEventCount(), _audioBuffer->HasAudioBufferStream());
   }
   
   // Compare completed event count with number of events

@@ -13,8 +13,7 @@
  */
 
 #include "anki/cozmo/basestation/audio/robotAudioBuffer.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
-#include <util/logging/logging.h>
+#include "util/logging/logging.h"
 
 
 namespace Anki {
@@ -32,7 +31,7 @@ void RobotAudioBuffer::PrepareAudioBuffer()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void RobotAudioBuffer::UpdateBuffer( const uint8_t* samples, const size_t sampleCount )
+void RobotAudioBuffer::UpdateBuffer( const AudioSample* samples, const size_t sampleCount )
 {
   // Ignore updates if we are waiting for the plug-in to reset
   if ( _isWaitingForReset ) {
@@ -42,29 +41,10 @@ void RobotAudioBuffer::UpdateBuffer( const uint8_t* samples, const size_t sample
     return;
   }
   
-  // Create Robot AnkiKey Frame AudioSample struct
-  ASSERT_NAMED( sampleCount <= static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ),
-                ("RobotAudioBuffer.UpdateBuffer buffer is too big!"+ std::to_string(sampleCount) + " > " +
-                 std::to_string(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ))).c_str() );
-  
-  // Create Audio Frame
-  AnimKeyFrame::AudioSample audioFrame = AnimKeyFrame::AudioSample();
-  ASSERT_NAMED(static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE ) <= audioFrame.Size(),
-                "Block size must be less or equal to audioSameple size");
-  // Copy samples into audioSample
-  memcpy(audioFrame.sample.data(), samples, sampleCount * sizeof(uint8_t));
-  
-  
-  // Pad the back of the buffer with 0s
-  // This should only apply to the last frame
-  if (sampleCount < static_cast<int32_t>( AnimConstants::AUDIO_SAMPLE_SIZE )) {
-    std::fill( audioFrame.sample.begin() + sampleCount, audioFrame.sample.end(), 0 );
-  }
-  
-  ASSERT_NAMED( nullptr != _currentStream, "Must pass a Robot Audio Buffer Stream object" );
-  RobotInterface::EngineToRobot* audioMsg = new RobotInterface::EngineToRobot( std::move( audioFrame ) );
-  
-  _currentStream->PushRobotAudioMessage( audioMsg );
+  // Copy audio samples into frame & push it into the queue
+  AudioFrameData *audioFrame = new AudioFrameData( sampleCount );
+  audioFrame->CopySamples(samples);
+  _currentStream->PushRobotAudioFrame( audioFrame );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
@@ -78,7 +58,7 @@ RobotAudioMessageStream* RobotAudioBuffer::GetFrontAudioBufferStream()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void RobotAudioBuffer::ClearBufferStreams()
 {
-  while (!_streamQueue.empty()) {
+  while ( !_streamQueue.empty() ) {
     _streamQueue.pop();
   }
 }
