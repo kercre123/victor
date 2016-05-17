@@ -148,11 +148,11 @@ public class BlockPoolPane : MonoBehaviour {
     BlockPoolPane.BlockData data;
     if (!_BlockStates.TryGetValue(id, out data)) {
       GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, _UIContainer);
-      Button btn = gameObject.GetComponent<Button>();
-      data = new BlockPoolPane.BlockData(type, is_enabled, signal_strength, btn);
+      Button button = gameObject.GetComponent<Button>();
+      data = new BlockPoolPane.BlockData(type, is_enabled, signal_strength, button);
       _BlockStates.Add(id, data);
       UpdateButton(id);
-      btn.onClick.AddListener(() => HandleButtonClick(id));
+      button.onClick.AddListener(() => HandleButtonClick(id));
     }
     else if (data.SignalStrength != signal_strength || data.ObjectType != type) {
       // enabled is only changed form unity.
