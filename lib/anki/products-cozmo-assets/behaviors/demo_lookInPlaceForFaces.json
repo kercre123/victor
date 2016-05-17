@@ -27,13 +27,14 @@
   // -- configuration parameters for ExploreLookAroundInPlace
   "params":
   {
-    "behavior_ShouldResetTurnDirection": false,
+    "behavior_ShouldResetTurnDirection": true,
     "behavior_DistanceFromRecentLocationMin_mm": 300.0,
-    "behavior_RecentLocationsMax": 5,
+    "behavior_RecentLocationsMax": 1,
+    
     // shared speeds
-    "sx_BodyTurnSpeed_degPerSec": 60.0,   // turn speed
-    "sxt_HeadTurnSpeed_degPerSec": 25.0,  // head tilt speed while turning body
-    "sxh_HeadTurnSpeed_degPerSec": 40.0,  // head tilt speed for states that don't turn body
+    "sx_BodyTurnSpeed_degPerSec": 75.0,   // turn speed
+    "sxt_HeadTurnSpeed_degPerSec": 60.0,  // head tilt speed while turning body
+    "sxh_HeadTurnSpeed_degPerSec": 90.0,  // head tilt speed for states that don't turn body
     
     // state 0 - initialization parameters (this happen once per behavior run)
     "s0_MainTurnCWChance": 0.5,           // chance to CW vs CCW
@@ -46,7 +47,7 @@
     
     // state 2 - wait at that location
     "s2_WaitMin_sec": 0.50,
-    "s2_WaitMax_sec": 1.25,
+    "s2_WaitMax_sec": 1.75,
     
     // state 3 - body turn in fwd direction (#1/2)
     "s3_BodyAngleRangeMin_deg":  5.0,
@@ -54,13 +55,19 @@
     "s3_HeadAngleRangeMin_deg": 30.0,   // head min fwd turn #1
     "s3_HeadAngleRangeMax_deg": 42.0,   // head max fwd turn #1
     
-    // state 4 - head angle changes in place (no body turn)
-    "s4_HeadAngleRangeMin_deg": 10.0,   // head min in place
-    "s4_HeadAngleRangeMax_deg": 30.0,   // head max in place
-    "s4_HeadAngleChangesMin":  2,
-    "s4_HeadAngleChangesMax":  4,
+    // state 4 - head angle changes in place (can have body mini-turn)
+    "s4_BodyAngleRelativeRangeMin_deg" :  1.0, // +- body mini-turn from [min,max]
+    "s4_BodyAngleRelativeRangeMax_deg" : 20.0, // +- body mini-turn from [min,max]
+    "s4_HeadAngleRangeMin_deg": 20.0,   // head min in place
+    "s4_HeadAngleRangeMax_deg": 45.0,   // head max in place
+    "s4_HeadAngleChangesMin":  3,
+    "s4_HeadAngleChangesMax":  5,
+    "s4_WaitBetweenChangesMin_sec" : 0.01,
+    "s4_WaitBetweenChangesMax_sec" : 0.4,
     
-    // state 5 - head angle change (no body turn), here to undo what state 4 does randomly, resetting head angle before 6
+    // state 5 - head angle change (can have body mini-turn), here to undo what state 4 does randomly, resetting head angle before 6
+    "s5_BodyAngleRelativeRangeMin_deg" :  1.0, // +- body mini-turn from [min,max]
+    "s5_BodyAngleRelativeRangeMax_deg" : 10.0, // +- body mini-turn from [min,max]
     "s5_HeadAngleRangeMin_deg": 20.0,   // head min
     "s5_HeadAngleRangeMax_deg": 40.0,   // head max
     
