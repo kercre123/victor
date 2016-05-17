@@ -21,6 +21,10 @@
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "anki/cozmo/basestation/components/visionComponent.h"
+#include "anki/cozmo/basestation/actions/basicActions.h"
+
+#define SET_STATE(s) SetState_internal(State::s, #s)
 
 namespace Anki {
 namespace Cozmo {
@@ -47,8 +51,8 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
   _maxTimeSinceNoMotion_sec = config.get(kMaxNoMotionBeforeBored_Sec, _maxTimeSinceNoMotion_sec).asFloat();
   _backUpDistance = config.get(kBackUpDistance, _backUpDistance).asFloat();
   
-  _state = State::Inactive;
-  _lastMotionTime = 0.f;
+  SET_STATE(Inactive);
+  _lastMotionTime = -1000.f;
 }
 
 bool BehaviorPounceOnMotion::IsRunnableInternal(const Robot& robot) const
@@ -59,9 +63,18 @@ bool BehaviorPounceOnMotion::IsRunnableInternal(const Robot& robot) const
 
 float BehaviorPounceOnMotion::EvaluateScoreInternal(const Robot& robot) const
 {
-  // maybe make more sensitive to _lastMotionTime, but we're not likely to see ground motion
-  // unless looking at it so now just relying on mood scores.
-  return IBehavior::EvaluateScoreInternal(robot);
+  // more likely to run if we did happen to see ground motion recently.
+  // This isn't likely unless cozmo is looking down in explore mode, but possible
+  float multiplier = 1.f;
+  if( !IsRunning() )
+  {
+    double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    if ( _lastMotionTime + _maxTimeSinceNoMotion_sec > currentTime_sec )
+    {
+      multiplier = 1.2f;
+    }
+  }
+  return IBehavior::EvaluateScoreInternal(robot) * multiplier;
 }
 
 
@@ -70,6 +83,21 @@ void BehaviorPounceOnMotion::HandleWhileNotRunning(const EngineToGameEvent& even
   switch (event.GetData().GetTag())
   {
     case MessageEngineToGameTag::RobotObservedMotion: {
+      // be more likely to run with observed motion
+      const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
+      const bool inGroundPlane = motionObserved.ground_area > _minGroundAreaForPounce;
+      if( inGroundPlane )
+      {
+        const float robotOffsetX = motionObserved.ground_x;
+        const float robotOffsetY = motionObserved.ground_y;
+        float distSquared = robotOffsetX * robotOffsetX + robotOffsetY * robotOffsetY;
+        float maxDistSquared = _maxPounceDist * _maxPounceDist;
+        if( distSquared <= maxDistSquared )
+        {
+          double currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          _lastMotionTime = (float)currentTime_sec;
+        }
+      }
       break;
     }
 
@@ -102,10 +130,8 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
       {
         const float robotOffsetX = motionObserved.ground_x;
         const float robotOffsetY = motionObserved.ground_y;
-        // const u32 imageTimestamp = motionObserved.timestamp;
         
         bool gotPose = false;
-        
         // we haven't started the pounce, so update the pounce location
         if( inGroundPlane )
         {
@@ -118,6 +144,7 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
             _lastPoseDist = dist;
             PRINT_NAMED_INFO("BehaviorPounceOnMotion.GotPose", "got valid pose with dist = %f. Now have %d",
                              dist, _numValidPouncePoses);
+            TransitionToTurnToMotion(robot, motionObserved.img_x, motionObserved.img_y);
           }
           else
           {
@@ -154,6 +181,10 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
         {
           TransitionToWaitForMotion(robot);
         }
+        else if( _state == State::TurnToMotion)
+        {
+          TransitionToPounce(robot);
+        }
         else if( _state == State::Pouncing )
         {
           TransitionToRelaxLift(robot);
@@ -183,7 +214,7 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
 void BehaviorPounceOnMotion::TransitionToInitialWarningAnim(Robot& robot)
 {
   PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToInitialWarningAnim","BehaviorPounceOnMotion.TransitionToInitialWarningAnim");
-  _state = State::InitialAnim;
+  SET_STATE(InitialAnim);
   IActionRunner* animAction = new PlayAnimationGroupAction(robot, s_PounceInitalWarningAnimGroup);
   robot.GetActionList().QueueActionAtEnd(animAction);
   _waitForActionTag = animAction->GetTag();
@@ -192,7 +223,7 @@ void BehaviorPounceOnMotion::TransitionToInitialWarningAnim(Robot& robot)
 void BehaviorPounceOnMotion::TransitionToBringingHeadDown(Robot& robot)
 {
   PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToBringingHeadDown","BehaviorPounceOnMotion.TransitionToBringingHeadDown");
-  _state = State::BringingHeadDown;
+  SET_STATE(BringingHeadDown);
   Radians tiltRads;
   tiltRads.setDegrees(-10.f);
   IActionRunner* moveAction = new PanAndTiltAction(robot, 0, tiltRads, false, true);
@@ -203,12 +234,25 @@ void BehaviorPounceOnMotion::TransitionToBringingHeadDown(Robot& robot)
 void BehaviorPounceOnMotion::TransitionToWaitForMotion(Robot& robot)
 {
   PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToWaitForMotion","BehaviorPounceOnMotion.TransitionToWaitForMotion");
-  _state = State::WaitingForMotion;
+  SET_STATE( WaitingForMotion);
+}
+  
+void BehaviorPounceOnMotion::TransitionToTurnToMotion(Robot& robot, int16_t motion_img_x, int16_t motion_img_y)
+{
+  PRINT_NAMED_DEBUG("TransitionToTurnToMotion", "Motion Found, Turn to Motion");
+  SET_STATE(TurnToMotion);
+  
+  const Point2f motionCentroid(motion_img_x, motion_img_y);
+  Radians absPanAngle;
+  Radians absTiltAngle;
+  robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
+  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, absPanAngle, 0, true, false);
+  robot.GetActionList().QueueActionAtEnd(turnAction);
+  _waitForActionTag = turnAction->GetTag();
 }
 void BehaviorPounceOnMotion::TransitionToPounce(Robot& robot)
 {
-  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToPounce", "Motion found, doing pounce");
-  _state = State::Pouncing;
+  SET_STATE(Pouncing);
   IActionRunner* animAction = new PlayAnimationGroupAction(robot, s_PounceAnimGroup);
   
   IActionRunner* actionToRun = animAction;
@@ -233,7 +277,7 @@ void BehaviorPounceOnMotion::TransitionToRelaxLift(Robot& robot)
 {
   PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.RelaxLift", "pounce animation complete, relaxing lift");
   robot.GetMoveComponent().EnableLiftPower(false); // TEMP: make sure this gets cleaned up
-  _state = State::RelaxingLift;
+  SET_STATE(RelaxingLift);
   const float relaxTime = 0.15f;
   _stopRelaxingTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + relaxTime;
 }
@@ -268,17 +312,24 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   
   _waitForActionTag = newAction->GetTag();
   robot.GetActionList().QueueActionNow(newAction);
-  _state = State::PlayingFinalReaction;
+  SET_STATE(PlayingFinalReaction);
   
   robot.GetMoveComponent().EnableLiftPower(true);
 }
   
 void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
 {
-  _state = State::BackUp;
-  IActionRunner* driveAction = new DriveStraightAction(robot, _backUpDistance, -50.0f);
+  SET_STATE(BackUp);
+  IActionRunner* driveAction = new DriveStraightAction(robot, _backUpDistance, 50.0f);
   _waitForActionTag = driveAction->GetTag();
   robot.GetActionList().QueueActionNow(driveAction);
+}
+  
+void BehaviorPounceOnMotion::SetState_internal(State state, const std::string& stateName)
+{
+  _state = state;
+  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionTo", "%s", stateName.c_str());
+  SetStateName(stateName);
 }
   
 Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
@@ -311,11 +362,7 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
       if ( _lastMotionTime + _maxTimeSinceNoMotion_sec < currentTime_sec )
       {
         PRINT_NAMED_INFO("BehaviorPounceOnMotion.Timeout", "No motion found, giving up");
-        _state = State::Complete;
-      }
-      else if( _numValidPouncePoses > 0 )
-      {
-        TransitionToPounce(robot);
+        SET_STATE(Complete);
       }
       break;
     }
@@ -352,7 +399,7 @@ void BehaviorPounceOnMotion::Cleanup(Robot& robot)
     robot.GetMoveComponent().EnableLiftPower(true);
   }
   
-  _state = State::Inactive;
+  SET_STATE(Inactive);
   _numValidPouncePoses = 0;
   _lastValidPouncePoseTime = 0.0f;
 }
