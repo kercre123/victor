@@ -148,6 +148,7 @@ public class BlockPoolPane : MonoBehaviour {
     BlockPoolPane.BlockData data;
     if (!_BlockStates.TryGetValue(id, out data)) {
       GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, _UIContainer);
+      gameObject.name = "block_" + id;
       Button button = gameObject.GetComponent<Button>();
       data = new BlockPoolPane.BlockData(type, is_enabled, signal_strength, button);
       _BlockStates.Add(id, data);
