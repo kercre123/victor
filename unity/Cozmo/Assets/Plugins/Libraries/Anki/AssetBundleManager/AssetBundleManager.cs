@@ -296,14 +296,14 @@ namespace Anki {
       private string RemapVariantName(string assetBundleName) {
 
         // Check if the bundle is supposed to have variants
-        /*string[] split = assetBundleName.Split('.');
+        string[] split = assetBundleName.Split('.');
         if (split.Length <= 1) {
           return assetBundleName;
-        }*/
+        }
 
         // Find the variant information for the bundle
         List<string> variants = null;
-        if (!_Variants.TryGetValue(assetBundleName, out variants)) {
+        if (!_Variants.TryGetValue(split[0], out variants)) {
           return assetBundleName;
         }
 
@@ -318,7 +318,7 @@ namespace Anki {
         }
 
         if (variantIndex != -1) {
-          string variantAssetBundleName = assetBundleName + "." + variants[variantIndex];
+          string variantAssetBundleName = split[0] + "." + variants[variantIndex];
           Log(LogType.Log, "Remapping asset bundle " + assetBundleName + " to " + variantAssetBundleName);
 
           return variantAssetBundleName;

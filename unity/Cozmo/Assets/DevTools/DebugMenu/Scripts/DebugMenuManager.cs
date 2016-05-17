@@ -16,6 +16,8 @@ public class DebugMenuManager : MonoBehaviour {
 
   private int _LastOpenedDebugTab = 0;
 
+  private bool _DebugPause = false;
+
   private static DebugMenuManager _Instance;
 
   public static DebugMenuManager Instance {
@@ -45,7 +47,7 @@ public class DebugMenuManager : MonoBehaviour {
     CreateDebugDialog();
   }
 
-  private GameBase GetCurrMinigame() {
+  public GameBase GetCurrMinigame() {
     if (HomeHub.Instance != null) {
       if (HomeHub.Instance.MiniGameInstance != null) {
         return HomeHub.Instance.MiniGameInstance;
@@ -62,21 +64,28 @@ public class DebugMenuManager : MonoBehaviour {
     _DebugMenuDialogInstance = debugMenuDialogInstance.GetComponent<DebugMenuDialog>();
     _DebugMenuDialogInstance.Initialize(_LastOpenedDebugTab);
     _DebugMenuDialogInstance.OnDebugMenuClosed += OnDebugMenuDialogClose;
-
-    // If the current minigame is active, make sure to pause it while this is open.
-    var currGame = GetCurrMinigame();
-    if (currGame != null) {
-      currGame.PauseGame();
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled) {
+      GameBase game = GetCurrMinigame();
+      if (game != null) {
+        if (game.Paused == false) {
+          game.PauseGame();
+          _DebugPause = true;
+        }
+      }
     }
   }
 
   private void OnDebugMenuDialogClose(int lastOpenTab) {
     _DebugMenuDialogInstance.OnDebugMenuClosed -= OnDebugMenuDialogClose;
     _LastOpenedDebugTab = lastOpenTab;
-    // If the current minigame is active, make sure to unpause it as we close this
-    var currGame = GetCurrMinigame();
-    if (currGame != null) {
-      currGame.UnpauseGame();
+    if (_DebugPause == true) {
+      _DebugPause = false;
+      GameBase game = GetCurrMinigame();
+      if (game != null) {
+        if (game.Paused) {
+          game.UnpauseGame();
+        }
+      }
     }
   }
 

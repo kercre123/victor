@@ -84,6 +84,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageOpResult> OnGotNVStorageOpResult;
   public event Action<Anki.Cozmo.ExternalInterface.DebugLatencyMessage> OnDebugLatencyMsg;
   public event Action<Anki.Cozmo.ExternalInterface.RequestEnrollFace> OnRequestEnrollFace;
+  public event Action<int> OnDemoState;
   public event Action<Anki.Cozmo.ExternalInterface.AnimationEvent> OnRobotAnimationEvent;
 
   #region Audio Callback events
@@ -409,12 +410,21 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RequestEnrollFace:
       ReceivedSpecificMessage(message.RequestEnrollFace);
       break;
+    case G2U.MessageEngineToGame.Tag.DemoState:
+      ReceivedSpecificMessage(message.DemoState);
+      break;
     case G2U.MessageEngineToGame.Tag.AnimationEvent:
       ReceiveSpecificMessage(message.AnimationEvent);
       break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
+    }
+  }
+
+  private void ReceivedSpecificMessage(G2U.DemoState message) {
+    if (OnDemoState != null) {
+      OnDemoState(message.stateNum);
     }
   }
 
@@ -880,10 +890,10 @@ public class RobotEngineManager : MonoBehaviour {
     StringBuilder sb = new StringBuilder(configuration);
     sb.Remove(configuration.IndexOf('}') - 1, 3);
     sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
-      ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformResourcesPath\" : \"" + PlatformUtil.GetResourcesFolder() + "\"" +
-      "\n}");
+    ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
+    ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
+    ", \n  \"DataPlatformResourcesPath\" : \"" + PlatformUtil.GetResourcesFolder() + "\"" +
+    "\n}");
 
     return sb.ToString();
   }

@@ -88,6 +88,12 @@ public abstract class GameBase : MonoBehaviour {
 
   private bool _IsPaused = false;
 
+  public bool Paused {
+    get {
+      return _IsPaused;
+    }
+  }
+
   #region Initialization
 
   public void InitializeMinigame(ChallengeData challengeData) {

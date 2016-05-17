@@ -1030,13 +1030,14 @@ public class Robot : IRobot {
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
-  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(
       Singleton<AlignWithObject>.Instance.Initialize(
         objectID: obj,
         motionProf: PathMotionProfileDefault,
         distanceFromMarker_mm: distanceFromMarker_mm,
         approachAngle_rad: approachAngleRad,
+        alignmentType: alignmentType,
         useApproachAngle: useApproachAngle,
         usePreDockPose: usePreDockPose,
         useManualSpeed: false
@@ -1362,6 +1363,11 @@ public class Robot : IRobot {
   public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Saying text: " + text);
     SendQueueSingleAction(Singleton<SayText>.Instance.Initialize(text, playEvent, style), callback, queueActionPosition);
+  }
+
+  public void SendDemoResetState() {
+    RobotEngineManager.Instance.Message.DemoResetState = Singleton<DemoResetState>.Instance;
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public void EraseAllEnrolledFaces() {

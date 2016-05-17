@@ -27,11 +27,23 @@ public class PressDemoView : Cozmo.UI.BaseView {
   [SerializeField]
   private Sprite[] _PressDebugDatabase;
 
+  [SerializeField]
+  private UnityEngine.UI.Button _ResetButton;
+
   void Start() {
     _ForceProgressSecretButton.onClick.AddListener(HandleForceProgressPressed);
     _StartButton.onClick.AddListener(HandleStartButton);
     _StartNoEdgeSecretButton.onClick.AddListener(HandleStartNoEdgeButton);
     RobotEngineManager.Instance.DisconnectedFromClient += OnClientDisconnect;
+    _ResetButton.onClick.AddListener(HandleResetButton);
+  }
+
+  private void HandleResetButton() {
+    IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+    if (robot != null) {
+      DAS.Debug("PressDemoView.HandleResetButton", "Sending Reset Button for Demo");
+      robot.SendDemoResetState();
+    }
   }
 
   private void OnClientDisconnect(DisconnectionReason reason) {

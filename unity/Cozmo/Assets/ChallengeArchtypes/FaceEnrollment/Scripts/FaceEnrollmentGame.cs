@@ -10,9 +10,6 @@ namespace FaceEnrollment {
     private FaceEnrollmentEnterNameSlide _EnterNameSlidePrefab;
     private FaceEnrollmentEnterNameSlide _EnterNameSlideInstance;
 
-    [SerializeField]
-    private FaceEnrollmentInstructionsSlide _EnrollmentInstructionsSlidePrefab;
-
     private bool _AttemptedEnrollFace = false;
 
     // used by press demo to skip saving to actual robot.
@@ -39,9 +36,12 @@ namespace FaceEnrollment {
 
     private void HandleNameEntered(string name) {
       _NameForFace = name;
+      SharedMinigameView.ShowWideAnimationSlide("faceEnrollment.instructions", "face_enrollment_wait_instructions", null, HandleInstructionsSlideEntered);
+      SharedMinigameView.ShowShelf();
+      SharedMinigameView.ShowSpinnerWidget();
+    }
 
-      SharedMinigameView.ShowWideGameStateSlide(_EnrollmentInstructionsSlidePrefab.gameObject, "enrollment_instructions_slide").GetComponent<FaceEnrollmentInstructionsSlide>();
-
+    private void HandleInstructionsSlideEntered() {
       RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
     }
 
@@ -59,6 +59,8 @@ namespace FaceEnrollment {
 
       // hides the instructions slide
       SharedMinigameView.HideGameStateSlide();
+      SharedMinigameView.HideShelf();
+      SharedMinigameView.HideSpinnerWidget();
 
       if (success) {
         Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedBlockConnect);
