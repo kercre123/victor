@@ -87,9 +87,8 @@ namespace SpeedTap {
     }
 
     private void DriveToCube() {
-      // INGO / AL TODO: usePreDockPose is not currently implemented in engine, but should work after it is
       _CurrentRobot.AlignWithObject(_SpeedTapGame.CozmoBlock, 0.0f, HandleDriveToCubeComplete, 
-        useApproachAngle: false, usePreDockPose: false);
+        useApproachAngle: false, usePreDockPose: false, alignmentType: Anki.Cozmo.AlignmentType.BODY);
     }
 
     private void HandleDriveToCubeComplete(bool success) {
