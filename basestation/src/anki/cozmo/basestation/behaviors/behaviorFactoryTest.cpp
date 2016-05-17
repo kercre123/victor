@@ -535,7 +535,7 @@ namespace Cozmo {
                          "%zu images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
         robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
         _calibrationReceived = false;
-        _holdUntilTime = currentTime_sec + 10.f;
+        _holdUntilTime = currentTime_sec + _kCalibrationTimeout_sec;
         SetCurrState(FactoryTestState::WaitForCameraCalibration);
         break;
       }
@@ -644,6 +644,14 @@ namespace Cozmo {
         StartActing(robot, action,
                     [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                       if (result != ActionResult::SUCCESS) {
+                        PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.GotoPrePickupPoseFailed",
+                                            "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
+                                            robot.GetPose().GetTranslation().x(),
+                                            robot.GetPose().GetTranslation().y(),
+                                            robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
+                                            _prePickupPose.GetTranslation().x(),
+                                            _prePickupPose.GetTranslation().y(),
+                                            _prePickupPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
                         EndTest(robot, FactoryTestResultCode::GOTO_PRE_PICKUP_POSE_ACTION_FAILED);
                       } else {
                         _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;

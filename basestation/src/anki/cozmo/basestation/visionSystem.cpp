@@ -78,7 +78,8 @@ namespace Cozmo {
   CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
   CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
   
-  CONSOLE_VAR(f32, kCalibDotSearchSize_mm,    "Vision.ToolCode",  4.5f);
+  CONSOLE_VAR(f32, kCalibDotSearchWidth_mm,   "Vision.ToolCode",  4.5f);
+  CONSOLE_VAR(f32, kCalibDotSearchHeight_mm,  "Vision.ToolCode",  6.5f);
   CONSOLE_VAR(f32, kCalibDotMinContrastRatio, "Vision.ToolCode",  1.1f);
   
   // For speed, compute motion detection on half-resolution images
@@ -2683,7 +2684,7 @@ namespace Cozmo {
     const f32 holeArea = kDotHole_mm*kDotHole_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
     const f32 filledDotArea = kDotWidth_mm*kDotWidth_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
     const f32 kDotAreaFrac =  (filledDotArea - holeArea) /
-                              (4.f*kCalibDotSearchSize_mm * kCalibDotSearchSize_mm);
+                              (4.f*kCalibDotSearchWidth_mm * kCalibDotSearchHeight_mm);
     const f32 kMinDotAreaFrac   = 0.25f * kDotAreaFrac;
     const f32 kMaxDotAreaFrac   = 2.00f * kDotAreaFrac;
     const f32 kHoleAreaFrac     = holeArea / filledDotArea;
@@ -2698,10 +2699,10 @@ namespace Cozmo {
       // Get an ROI around where we expect to see the dot in the image
       const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[iDot];
       Quad3f dotQuadRoi3d = {
-        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchHeight_mm, dotWrtLift3d.y() - kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchHeight_mm, dotWrtLift3d.y() + kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchHeight_mm, dotWrtLift3d.y() - kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchHeight_mm, dotWrtLift3d.y() + kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
       };
       
       Quad3f dotQuadRoi3dWrtCam;
