@@ -112,6 +112,9 @@ private:
   u32 _currentDriveActionID = 0;
   u32 _numDestinationsLeft = kDestinationsToReach;
   f32 _lookAroundHeadAngle_rads = DEG_TO_RAD(-5);
+
+  bool _shouldHandleConfirmedObjectOverved;
+  bool _shouldHandlePossibleObjectOverved;
   
   std::set<ObjectID> _recentObjects;
   std::set<ObjectID> _oldBoringObjects;

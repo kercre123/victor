@@ -30,7 +30,7 @@
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
-#define DEBUG_PRINT_ALL_CUBE_STATES 0
+#define DEBUG_PRINT_CUBE_STATE_CHANGES 1
 
 namespace Anki {
 namespace Cozmo {
@@ -41,6 +41,7 @@ static const char* kCliffBehavior = "ReactToCliff";
 static const char* kFlipDownFromBackBehavior = "ReactToRobotOnBack";
 static const char* kSleepBehavior = "demo_sleep";
 static const char* kFindFacesBehavior = "demo_lookInPlaceForFaces";
+static const char* kKnockOverStackBehavior = "AdmireStack";
 
 static const float kTimeCubesMustBeUpright_s = 3.0f;
 
@@ -92,8 +93,6 @@ unsigned int DemoBehaviorChooser::GetStateNum(State state)
 
 void DemoBehaviorChooser::OnSelected()
 {
-  _initCalled = true;
-
   // TransitionToCubes();
 }
 
@@ -275,8 +274,7 @@ void DemoBehaviorChooser::TransitionToMiniGame()
   SetBehaviorGroupEnabled(BehaviorGroup::RequestSpeedTap);
 
   // when mini game starts, will go to selection chooser, then back to this chooser
-  _initCalled = false;
-  _checkTransition = [this]() { return _initCalled; };
+  _checkTransition = [this]() { return false; };
 }
 
 void DemoBehaviorChooser::TransitionToSleep()
@@ -293,6 +291,14 @@ bool DemoBehaviorChooser::ShouldTransitionOutOfCubesState()
 {
   float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
+  if( ! DidBehaviorRunAndStop(kKnockOverStackBehavior) ) {
+    return false;
+  }
+  else {
+    // disable checking the cube states for now, just let it transition
+    return true;
+  }
+  
   // check block world for three cubes in the correct state for transition
   
   std::vector<ObservableObject*> uprightCubes;
@@ -331,17 +337,13 @@ bool DemoBehaviorChooser::FilterBlocks(ObservableObject* obj) const
 
   const AxisName upAxis = obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
 
-  const bool ret =  obj->IsPoseStateKnown() &&
-    !obj->IsMoving() &&
+  const bool ret = !obj->IsMoving() &&
     obj->IsRestingFlat() &&
     // ignore object we are carrying
     ( !_robot.IsCarryingObject() || _robot.GetCarryingObject() != obj->GetID() ) &&
-    upAxis == AxisName::Z_POS &&
-    // ignore objects that aren't clear
-    _robot.CanStackOnTopOfObject( *obj );
-
+    upAxis == AxisName::Z_POS;
   
-  if( DEBUG_PRINT_ALL_CUBE_STATES ) {
+  if( DEBUG_PRINT_CUBE_STATE_CHANGES ) {
     static std::map< ObjectID, bool > _lastValues;
 
     auto it = _lastValues.find(obj->GetID());

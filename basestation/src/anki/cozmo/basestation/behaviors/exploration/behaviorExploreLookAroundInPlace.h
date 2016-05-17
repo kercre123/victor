@@ -60,8 +60,6 @@ public:
   // todo: document. Is this behavior alway runnable, or we won't look around in an area we already know everything?
   virtual bool IsRunnableInternal(const Robot& robot) const override;
   
-  virtual float EvaluateScoreInternal(const Robot& robot) const override { return 1.0f; }
-  
 protected:
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -105,6 +103,7 @@ private:
   {
     float   behavior_DistanceFromRecentLocationMin_mm;
     uint8_t behavior_RecentLocationsMax;
+    bool behavior_ShouldResetTurnDirection;
     // turn speed
     float sx_BodyTurnSpeed_degPerSec;
     float sxt_HeadTurnSpeed_degPerSec; // for turn states
@@ -150,6 +149,9 @@ private:
   static inline EClockDirection GetOpposite(const EClockDirection direction) {
     return (direction == EClockDirection::CW) ? EClockDirection::CCW : EClockDirection::CW; }
 
+  // decide which direction to turn
+  void DecideTurnDirection();
+  
   // request the proper action given the parameters so that the robot turns and moves head
   IAction* CreateBodyAndHeadTurnAction(Robot& robot, EClockDirection clockDirection,  // body turn clock direction
             float bodyStartRelativeMin_deg, float bodyStartRelativeMax_deg,           // body min/max range relative to starting angle (from original state)
