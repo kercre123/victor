@@ -248,7 +248,7 @@ namespace Anki {
       {
         if (!_liftMovingAnimation.empty()) {
           // Check that the animation only has sound keyframes
-          const Animation* anim = _robot.GetCannedAnimation(_liftMovingAnimation);
+          const Animation* anim = _robot.GetAnimationStreamer().GetCannedAnimation(_liftMovingAnimation);
           if (nullptr != anim) {
             auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
             auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
@@ -564,10 +564,35 @@ namespace Anki {
     AlignWithObjectAction::AlignWithObjectAction(Robot& robot,
                                                  ObjectID objectID,
                                                  const f32 distanceFromMarker_mm,
+                                                 const AlignmentType alignmentType,
                                                  const bool useManualSpeed)
     : IDockAction(robot, objectID, useManualSpeed)
     {
-      SetPlacementOffset(distanceFromMarker_mm, 0, 0);
+      f32 distance = 0;
+      switch(alignmentType)
+      {
+        case(AlignmentType::LIFT_FINGER):
+        {
+          distance = ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM;
+          break;
+        }
+        case(AlignmentType::LIFT_PLATE):
+        {
+          distance = ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM - LIFT_FRONT_WRT_WRIST_JOINT;
+          break;
+        }
+        case(AlignmentType::BODY):
+        {
+          distance = WHEEL_RAD_TO_MM;
+          break;
+        }
+        case(AlignmentType::CUSTOM):
+        {
+          distance = distanceFromMarker_mm;
+          break;
+        }
+      }
+      SetPlacementOffset(distance, 0, 0);
     }
     
     AlignWithObjectAction::~AlignWithObjectAction()
@@ -1058,6 +1083,12 @@ namespace Anki {
       if (!_robot.IsCarryingObject()) {
         PRINT_STREAM_INFO("PlaceRelObjectAction.SelectDockAction", "Can't place if not carrying an object. Aborting.");
         _interactionResult = ObjectInteractionResult::NOT_CARRYING;
+        return RESULT_FAIL;
+      }
+      
+      if(!_placeObjectOnGroundIfCarrying && !_robot.CanStackOnTopOfObject(*object))
+      {
+        PRINT_NAMED_WARNING("PlaceRelObjectAction.SelectDockAction", "Can't stack on object");
         return RESULT_FAIL;
       }
       

@@ -12,6 +12,8 @@
  **/
 
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 
@@ -48,7 +50,7 @@ const AnimationGroup* AnimationGroupContainer::GetAnimationGroup(const std::stri
   auto retVal = _animationGroups.find(name);
   if(retVal == _animationGroups.end()) {
     PRINT_NAMED_ERROR("AnimationGroupContainer.GetAnimationGroup_Const.InvalidName",
-                      "AnimationGroup requested for unknown animation group '%s'.\n",
+                      "AnimationGroup requested for unknown animation group '%s'.",
                       name.c_str());
   } else {
     animPtr = &retVal->second;
@@ -76,12 +78,14 @@ std::vector<std::string> AnimationGroupContainer::GetAnimationGroupNames()
 }
     
     
-Result AnimationGroupContainer::DefineFromJson(const Json::Value& jsonRoot, const std::string& animationGroupName)
+Result AnimationGroupContainer::DefineFromJson(const Json::Value& jsonRoot,
+                                               const std::string& animationGroupName,
+                                               const CannedAnimationContainer* cannedAnimations)
 {
       
   if(RESULT_OK != AddAnimationGroup(animationGroupName)) {
     PRINT_NAMED_INFO("AnimationGroupContainer.DefineAnimationGroupFromJson.ReplaceName",
-                     "Replacing existing animation group named '%s'.\n",
+                     "Replacing existing animation group named '%s'.",
                      animationGroupName.c_str());
   }
       
@@ -94,12 +98,13 @@ Result AnimationGroupContainer::DefineFromJson(const Json::Value& jsonRoot, cons
   }
       
   Result result = animationGroup->DefineFromJson(animationGroupName,
-                                                 jsonRoot);
+                                                 jsonRoot,
+                                                 cannedAnimations);
       
       
   if(result != RESULT_OK) {
     PRINT_NAMED_ERROR("AnimationGroupContainer.DefineAnimationGroupFromJson",
-                      "Failed to define animation group '%s' from Json.\n",
+                      "Failed to define animation group '%s' from Json.",
                       animationGroupName.c_str());
   }
       

@@ -1,6 +1,10 @@
 
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/proceduralFaceDrawer.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -24,6 +28,7 @@
 namespace Anki {
 namespace Cozmo {
   
+  const std::string AnimationStreamer::NeutralFaceAnimName = "anim_neutral_eyes_01";
   const std::string AnimationStreamer::LiveAnimation = "_LIVE_";
   const std::string AnimationStreamer::AnimToolAnimation = "_ANIM_TOOL_";
 
@@ -32,19 +37,93 @@ namespace Cozmo {
   // This is roughly (2 x ExpectedOneWayLatency_ms + BasestationTick_ms) / AudioSampleLength_ms
   const s32 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD = std::ceil((2.f * 200.f + BS_TIME_STEP) / static_cast<f32>(IKeyFrame::SAMPLE_LENGTH_MS));
   
-  AnimationStreamer::AnimationStreamer(IExternalInterface* externalInterface,
-                                       CannedAnimationContainer& container,
+  AnimationStreamer::AnimationStreamer(const CozmoContext* context,
                                        Audio::RobotAudioClient& audioClient)
-  : HasSettableParameters(externalInterface)
-  , _animationContainer(container)
+  : HasSettableParameters(context->GetExternalInterface())
+  , _context(context)
+  , _animationContainer(_context->GetRobotManager()->GetCannedAnimations())
+  , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
   , _liveAnimation(LiveAnimation)
   , _audioClient( audioClient )
-  ,_lastProceduralFace(new ProceduralFace)
+  , _lastProceduralFace(new ProceduralFace)
   {
     _liveAnimation.SetIsLive(true);
+    
+    // TODO: Provide a default idle animation via Json config? COZMO-1662
+    // For now, default the idle to be doing nothing, since that what it used to be.
+    _idleAnimationNameStack.push_back("");
+    
+    ASSERT_NAMED(nullptr != _context, "AnimationStreamer.Constructor.NullContext");
+    
+    SetupHandlers(_context->GetExternalInterface());
+    
+    // Set up the neutral face to use when resetting procedural animations
+    Animation* neutralFaceAnim = _animationContainer.GetAnimation(NeutralFaceAnimName);
+    if (nullptr != neutralFaceAnim)
+    {
+      auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
+      ProceduralFace::SetResetData(frame->GetFace());
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("AnimationStreamer.Constructor.NeutralFaceDataNotFound",
+                          "Could not find expected neutral face animation file called %s",
+                          NeutralFaceAnimName.c_str());
+    }
+    
+    // Do this after the ProceduralFace class has set to use the right neutral face
+    _lastProceduralFace->Reset();
+  }
+  
+  void AnimationStreamer::SetupHandlers(IExternalInterface* extIntFace)
+  {
+    if(nullptr == extIntFace) {
+      return;
+    }
+      
+    using namespace ExternalInterface;
+    using GameToEngineEvent = AnkiEvent<MessageGameToEngine>;
+    
+    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::SetIdleAnimation,
+                                                   [this](const GameToEngineEvent& msg) {
+                                                     SetIdleAnimation(msg.GetData().Get_SetIdleAnimation().animationName);
+                                                   }));
+    
+    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::PushIdleAnimation,
+                                                   [this](const GameToEngineEvent& msg) {
+                                                     PushIdleAnimation(msg.GetData().Get_PushIdleAnimation().animationName);
+                                                   }));
+    
+    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::PopIdleAnimation,
+                                                   [this](const GameToEngineEvent&) {
+                                                     PopIdleAnimation();
+                                                   }));
+    
+    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::ReplayLastAnimation,
+                                                   [this](const GameToEngineEvent& msg) {
+                                                     SetStreamingAnimation(_lastPlayedAnimationId,
+                                                                           msg.GetData().Get_ReplayLastAnimation().numLoops);
+                                                   }));
+
+  } // SetupHandlers()
+
+  const std::string& AnimationStreamer::GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const 
+  {
+    const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
+    if(group != nullptr && !group->IsEmpty()) {
+      return group->GetAnimationName(robot.GetMoodManager(), _animationGroups, robot.GetHeadAngle());
+    }
+    static const std::string empty("");
+    return empty;
+  }
+  
+  const Animation* AnimationStreamer::GetCannedAnimation(const std::string& name) const
+  {
+    return _animationContainer.GetAnimation(name);
   }
 
-  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops, bool interruptRunning)
+  
+  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops, bool interruptRunning)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
@@ -54,13 +133,48 @@ namespace Cozmo {
                        GetStreamingAnimationName().c_str());
 #     endif
 
-      return SetStreamingAnimation(robot, nullptr);
+      return SetStreamingAnimation(nullptr);
     }
     
-    return SetStreamingAnimation(robot, _animationContainer.GetAnimation(name), numLoops, interruptRunning);
+    return SetStreamingAnimation(_animationContainer.GetAnimation(name), numLoops, interruptRunning);
   }
   
-  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops, bool interruptRunning)
+  bool AnimationStreamer::StreamLastFace(Animation* anim)
+  {
+    const bool hasProcFace = !anim->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
+    const bool hasAnimFace = !anim->GetTrack<FaceAnimationKeyFrame>().IsEmpty();
+    if(hasProcFace || hasAnimFace)
+    {
+      PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation.AbortAndSendEndingFace",
+                       "Aborting %s with no replacement. Will send final face keyframe",
+                       anim->GetName().c_str());
+      
+      if(hasProcFace) {
+        anim->GetTrack<ProceduralFaceKeyFrame>().MoveToLastKeyFrame();
+        _streamingTime_ms = anim->GetTrack<ProceduralFaceKeyFrame>().GetCurrentKeyFrame().GetTriggerTime();
+      } else { // hasAnimFace
+        anim->GetTrack<FaceAnimationKeyFrame>().MoveToLastKeyFrame();
+        _streamingTime_ms = anim->GetTrack<FaceAnimationKeyFrame>().GetCurrentKeyFrame().GetTriggerTime();
+      }
+      
+      // Move all other tracks to the end, so they don't stream anything else
+      anim->GetTrack<HeadAngleKeyFrame>().MoveToEnd();
+      anim->GetTrack<LiftHeightKeyFrame>().MoveToEnd();
+      anim->GetTrack<FaceAnimationKeyFrame>().MoveToEnd();
+      anim->GetTrack<ProceduralFaceKeyFrame>().MoveToEnd();
+      anim->GetTrack<EventKeyFrame>().MoveToEnd();
+      anim->GetTrack<BackpackLightsKeyFrame>().MoveToEnd();
+      anim->GetTrack<BodyMotionKeyFrame>().MoveToEnd();
+      anim->GetTrack<DeviceAudioKeyFrame>().MoveToEnd();
+      anim->GetTrack<RobotAudioKeyFrame>().MoveToEnd();
+      
+      return true;
+    }
+    
+    return false;
+  } // StreamLastFace()
+  
+  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(Animation* anim, u32 numLoops, bool interruptRunning)
   {
     if(nullptr != _streamingAnimation)
     {
@@ -83,42 +197,21 @@ namespace Cozmo {
     {
       if (_tag != NotAnimatingTag) {
         using namespace ExternalInterface;        
-        robot.GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
+        _context->GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
       }
-      Abort(robot);
+      Abort();
     }
     
     // If we're cancelling a current anim with no replacement, jump to the last face
     // and stream it first, to make sure we end up with the expected face.
     if (nullptr != _streamingAnimation && nullptr == anim)
     {
-      const bool hasProcFace = !_streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
-      const bool hasAnimFace = !_streamingAnimation->GetTrack<FaceAnimationKeyFrame>().IsEmpty();
-      if(hasProcFace || hasAnimFace)
-      {
+      const bool sendingLastFace = StreamLastFace(_streamingAnimation);
+      if(sendingLastFace) {
         PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation.AbortAndSendEndingFace",
                          "Aborting %s with no replacement. Will send final face keyframe",
                          _streamingAnimation->GetName().c_str());
 
-        if(hasProcFace) {
-          _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().MoveToLastKeyFrame();
-          _streamingTime_ms = _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetCurrentKeyFrame().GetTriggerTime();
-        } else { // hasAnimFace
-          _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().MoveToLastKeyFrame();
-          _streamingTime_ms = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetCurrentKeyFrame().GetTriggerTime();
-        }
-        
-        // Move all other tracks to the end, so they don't stream anything else
-        _streamingAnimation->GetTrack<HeadAngleKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<LiftHeightKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<EventKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<BackpackLightsKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<BodyMotionKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<DeviceAudioKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<RobotAudioKeyFrame>().MoveToEnd();
-        
         // Return existing tag counter because we haven't actually changed animations.
         // Instead, we will simply let this animation finish it's one additional
         // face keyframe on the next tick
@@ -131,10 +224,13 @@ namespace Cozmo {
     if(_streamingAnimation == nullptr) {
       return NotAnimatingTag;
     } else {
+      
+      _lastPlayedAnimationId = _streamingAnimation->GetName();
+      
       IncrementTagCtr();
     
       // Get the animation ready to play
-      InitStream(robot, _streamingAnimation, _tagCtr);
+      InitStream(_streamingAnimation, _tagCtr);
       
       _numLoops = numLoops;
       _loopCtr = 0;
@@ -176,7 +272,7 @@ namespace Cozmo {
     }
   }
   
-  void AnimationStreamer::Abort(Robot& robot)
+  void AnimationStreamer::Abort()
   {
     if(nullptr != _streamingAnimation)
     {
@@ -184,8 +280,6 @@ namespace Cozmo {
                        "Tag: %d, %s, startOfAnimationSent: %d, endOfAnimationSent: %d",
                        _tag, _streamingAnimation->GetName().c_str(), _startOfAnimationSent, _endOfAnimationSent);
       
-      // Tell the robot to abort
-      robot.AbortAnimation();
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
 #if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
@@ -200,31 +294,75 @@ namespace Cozmo {
   
   Result AnimationStreamer::SetIdleAnimation(const std::string &name)
   {
+    if(!_idleAnimationNameStack.empty()) {
+      PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation.ClearingIdleStack",
+                       "Had %zu idles in the stack",
+                       _idleAnimationNameStack.size());
+      _idleAnimationNameStack.clear();
+    }
+
+    return PushIdleAnimation(name);
+    
+  } // SetIdleAnimation()
+  
+  Result AnimationStreamer::PushIdleAnimation(const std::string& name)
+  {
     if(name.empty() || name == "NONE") {
 #     if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation",
-                       "Disabling idle animation.\n");
+      PRINT_NAMED_INFO("AnimationStreamer.PushIdleAnimation.Disabling",
+                       "Disabling idle animation.");
 #     endif
-      _idleAnimationGroupName = "";
+      _idleAnimationNameStack.push_back("");
       _idleAnimation = nullptr;
       _isIdling = false;
     } else {
-      if(name == LiveAnimation) {
-        // Special case: point idle animation at the "live" animation container
-        _idleAnimation = &_liveAnimation;
-        _isLiveTwitchEnabled = true;
-      }
-      // NOTE: _idleAnimation will get set from the group inside Update() for non-live case
-      
-      _idleAnimationGroupName = name;
+      _idleAnimationNameStack.push_back(name);
     }
     
 #   if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation",
-                       "Setting idle animation to '%s'.\n",
-                       name.c_str());
+    PRINT_NAMED_INFO("AnimationStreamer.PushIdleAnimation",
+                     "Setting idle animation to '%s'.\n",
+                     name.c_str());
 #   endif
+    
+    return RESULT_OK;
+  } // PushIdleAnimation()
+  
+  
+  Result AnimationStreamer::PopIdleAnimation()
+  {
+    if(_idleAnimationNameStack.size() == 1) {
+      PRINT_NAMED_INFO("AnimationStreamer.PopIdleAnimation.WillNotPopLast",
+                       "Refusing to pop last idle animation '%s'",
+                       _idleAnimationNameStack.back().c_str());
+      return RESULT_OK;
+    }
+    
+    if( _idleAnimationNameStack.empty() ) {
+      // This shouldn't really happen because we generally want something always
+      // in the idle stack
+      PRINT_NAMED_WARNING("AnimationStreamer.PopIdleAnimation.NoStack",
+                          "Trying to pop an idle animation, but the stack is empty");
+      return RESULT_FAIL;
+    }
 
+    _idleAnimationNameStack.pop_back();
+    
+    ASSERT_NAMED(!_idleAnimationNameStack.empty(), "AnimationStreamer.PopIdleAnimation.EmptyIdleStack");
+    
+    // If what's left on the stack is "no idle", make sure to make idle null and isIdling = false:
+    if(_idleAnimationNameStack.back().empty()) {
+      // If we were just idling and there's nothing streaming, we don't want to leave
+      // the face in a weird spot, so stream the neutral face, just in case
+      if(_idleAnimation != nullptr && _streamingAnimation == nullptr) {
+        // Send the neutral face
+        SetStreamingAnimation(NeutralFaceAnimName);
+      }
+
+      _idleAnimation = nullptr;
+      _isIdling = false;
+    }
+    
     return RESULT_OK;
   }
 
@@ -238,7 +376,7 @@ namespace Cozmo {
     return _idleAnimation->GetName();
   }
   
-  Result AnimationStreamer::InitStream(Robot& robot, Animation* anim, Tag withTag)
+  Result AnimationStreamer::InitStream(Animation* anim, Tag withTag)
   {
     Result lastResult = anim->Init();
     if(lastResult == RESULT_OK)
@@ -1179,10 +1317,10 @@ namespace Cozmo {
     // Wait a 1/2 second before running after we finish the last streaming animation
     // to help reduce stepping on the next animation's toes when we have things
     // sequenced.
-    
-    // _tagCtr check so we wait until we get one behavior until we start playing
+    // NOTE: lastStreamTime>0 check so that we dont' start keeping face alive before
+    //       first animation of any kind is sent.
     if(GetParam<bool>(LiveIdleAnimationParameter::EnableKeepFaceAlive) &&
-       _tagCtr > 0 && _streamingAnimation == nullptr &&
+       _streamingAnimation == nullptr && _lastStreamTime > 0.f &&
        (_idleAnimation == &_liveAnimation || (_idleAnimation == nullptr &&
        BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime > 0.5f)))
     {
@@ -1197,22 +1335,22 @@ namespace Cozmo {
         ++_loopCtr;
         
         if(_numLoops == 0 || _loopCtr < _numLoops) {
-#         if DEBUG_ANIMATION_STREAMING
-          PRINT_NAMED_INFO("AnimationStreamer.Update.Looping",
-                           "Finished loop %d of %d of '%s' animation. Restarting.\n",
-                           _loopCtr, _numLoops,
-                           _streamingAnimation->GetName().c_str());
-#         endif
+         if(DEBUG_ANIMATION_STREAMING) {
+           PRINT_NAMED_INFO("AnimationStreamer.Update.Looping",
+                            "Finished loop %d of %d of '%s' animation. Restarting.\n",
+                            _loopCtr, _numLoops,
+                            _streamingAnimation->GetName().c_str());
+         }
           
           // Reset the animation so it can be played again:
-          InitStream(robot, _streamingAnimation, _tagCtr);
+          InitStream(_streamingAnimation, _tagCtr);
           
         } else {
-#         if DEBUG_ANIMATION_STREAMING
-          PRINT_NAMED_INFO("AnimationStreamer.Update.FinishedStreaming",
-                           "Finished streaming '%s' animation.\n",
-                           _streamingAnimation->GetName().c_str());
-#         endif
+          if(DEBUG_ANIMATION_STREAMING) {
+            PRINT_NAMED_INFO("AnimationStreamer.Update.FinishedStreaming",
+                             "Finished streaming '%s' animation.\n",
+                             _streamingAnimation->GetName().c_str());
+          }
           
           _streamingAnimation = nullptr;
         }
@@ -1224,13 +1362,19 @@ namespace Cozmo {
         streamUpdated = true;
         _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
-    } else if(_idleAnimation != nullptr || !_idleAnimationGroupName.empty()) {
+    } else if(!_idleAnimationNameStack.empty() && !_idleAnimationNameStack.back().empty()) {
+      
+      std::string& idleAnimationGroupName = _idleAnimationNameStack.back();
       
       Animation* oldIdleAnimation = _idleAnimation;
       
-      if(_idleAnimationGroupName == LiveAnimation)
+      if(idleAnimationGroupName == LiveAnimation)
       {
-        // Update the live animation if we're using it
+        // Make sure these are set, in case we just popped an idle and came back to idle
+        _idleAnimation = &_liveAnimation;
+        _isLiveTwitchEnabled = true;
+
+        // Update the live animation's keyframes
         lastResult = UpdateLiveAnimation(robot);
         if(RESULT_OK != lastResult) {
           PRINT_NAMED_ERROR("AnimationStreamer.Update.LiveUpdateFailed",
@@ -1241,27 +1385,30 @@ namespace Cozmo {
         // We aren't doing "live" idle and the robot is either done with the last
         // idle animation or hasn't started idling yet. So it's time to select the
         // next idle from the group.
-        const std::string animName = robot.GetAnimationNameFromGroup(_idleAnimationGroupName);
-        if(animName.empty()) {
-          PRINT_NAMED_ERROR("AnimationStreamer.Update.EmptyIdleAnimationFromGroup",
-                            "Returned empty animation name for group %s",
-                            _idleAnimationGroupName.c_str());
-          _idleAnimationGroupName = "";
-          _idleAnimation = nullptr;
-          return RESULT_FAIL;
-        }
-        _idleAnimation = _animationContainer.GetAnimation(animName);
-        if(_idleAnimation == nullptr) {
-          PRINT_NAMED_ERROR("AnimationStreamer.Update.InvalidIdleAnimationFromGroup",
-                            "Returned null animation for name '%s' from group '%s'",
-                            animName.c_str(), _idleAnimationGroupName.c_str());
-          _idleAnimationGroupName = "";
-          return RESULT_FAIL;
-        }
-        
-        PRINT_NAMED_DEBUG("AnimationStreamer.Update.SelectedNewIdle",
-                          "Selected idle animation '%s' from group '%s'",
-                          animName.c_str(), _idleAnimationGroupName.c_str());
+        if(!idleAnimationGroupName.empty())
+        {
+          const std::string animName = GetAnimationNameFromGroup(idleAnimationGroupName, robot);
+          if(animName.empty()) {
+            PRINT_NAMED_ERROR("AnimationStreamer.Update.EmptyIdleAnimationFromGroup",
+                              "Returned empty animation name for group %s. Popping the group.",
+                              idleAnimationGroupName.c_str());
+            PopIdleAnimation();
+            _idleAnimation = nullptr;
+            return RESULT_FAIL;
+          }
+          _idleAnimation = _animationContainer.GetAnimation(animName);
+          if(_idleAnimation == nullptr) {
+            PRINT_NAMED_ERROR("AnimationStreamer.Update.InvalidIdleAnimationFromGroup",
+                              "Returned null animation for name '%s' from group '%s'. Popping the group.",
+                              animName.c_str(), idleAnimationGroupName.c_str());
+            PopIdleAnimation();
+            return RESULT_FAIL;
+          }
+          
+          PRINT_NAMED_DEBUG("AnimationStreamer.Update.SelectedNewIdle",
+                            "Selected idle animation '%s' from group '%s'",
+                            animName.c_str(), idleAnimationGroupName.c_str());
+        } // if(!idleAnimationGroupName.empty())
       }
       
       ASSERT_NAMED(_idleAnimation != nullptr, "AnimationStreamer.Update.NullIdleAnimation");
@@ -1271,16 +1418,16 @@ namespace Cozmo {
         _isIdling = false;
       }
       
-      if(!_isIdling || IsFinished(_idleAnimation)) { // re-check because isIdling could have changed
-#       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("AnimationStreamer.Update.IdleAnimInit",
-                         "(Re-)Initializing idle animation: '%s'.\n",
-                         _idleAnimation->GetName().c_str());
-#       endif
+      if(!_isIdling || IsFinished(_idleAnimation)) { // re-check because isIdling could have
+        if(DEBUG_ANIMATION_STREAMING) {
+          PRINT_NAMED_INFO("AnimationStreamer.Update.IdleAnimInit",
+                           "(Re-)Initializing idle animation: '%s'.\n",
+                           _idleAnimation->GetName().c_str());
+        }
         
         // Just finished playing a loop, or we weren't just idling. Either way,
         // (re-)init the animation so it can be played (again)
-        InitStream(robot, _idleAnimation, IdleAnimationTag);
+        InitStream(_idleAnimation, IdleAnimationTag);
         _isIdling = true;
         
       } else {

@@ -155,7 +155,7 @@ AnimationGroup DeserializeAnimationGroupFromJson(const char* jsonString) {
   
   AnimationGroup animGroup;
   
-  auto result = animGroup.DefineFromJson("Win", data);
+  auto result = animGroup.DefineFromJson("Win", data, nullptr);
   
   EXPECT_EQ(Anki::RESULT_OK, result);
   
@@ -169,7 +169,7 @@ void DeserializeAnimationGroupContainerFromJson(AnimationGroupContainer & contai
   
   EXPECT_TRUE(success);
   
-  auto result = container.DefineFromJson(data, name);
+  auto result = container.DefineFromJson(data, name, nullptr);
   
   EXPECT_EQ(Anki::RESULT_OK, result);
 }

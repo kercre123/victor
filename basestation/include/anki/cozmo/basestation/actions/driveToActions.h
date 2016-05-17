@@ -18,6 +18,7 @@
 #include "anki/cozmo/basestation/actions/actionInterface.h"
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
 #include "util/helpers/templateHelpers.h"
 
@@ -213,7 +214,7 @@ namespace Anki {
       IDriveToInteractWithObject(Robot& robot,
                                  const ObjectID& objectID,
                                  const PreActionPose::ActionType& actionType,
-                                 const f32 distanceFromMarker_mm,
+                                 const f32 predockOffsetDistX_mm,
                                  const bool useApproachAngle,
                                  const f32 approachAngle_rad,
                                  const bool useManualSpeed);
@@ -249,6 +250,7 @@ namespace Anki {
                                    const f32 distanceFromMarker_mm,
                                    const bool useApproachAngle = false,
                                    const f32 approachAngle_rad = 0,
+                                   const AlignmentType alignmentType = AlignmentType::CUSTOM,
                                    const bool useManualSpeed = false);
       
       // GetType returns the type from the AlignWithObjectAction

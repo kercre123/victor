@@ -27,13 +27,18 @@
 #include "util/random/randomGenerator.h"
 
 #include <array>
+#include "anki/cozmo/basestation/actions/basicActions.h"
+
+// if true, plan to a pose which is adjacent to one of the markers. Otherwise, just drive straight towards the
+// cube
+#define APPROACH_NORMAL_TO_MARKERS 0
 
 namespace Anki {
 namespace Cozmo {
 
 // distance from the possible cube to go visit
 CONSOLE_VAR(float, kEvpm_DistanceFromPossibleCubeMin_mm, "BehaviorExploreLookAroundInPlace", 100.0f);
-CONSOLE_VAR(float, kEvpm_DistanceFromPossibleCubeMax_mm, "BehaviorExploreLookAroundInPlace", 200.0f);
+CONSOLE_VAR(float, kEvpm_DistanceFromPossibleCubeMax_mm, "BehaviorExploreLookAroundInPlace", 150.0f);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorExploreVisitPossibleMarker::BehaviorExploreVisitPossibleMarker(Robot& robot, const Json::Value& config)
@@ -112,55 +117,88 @@ void BehaviorExploreVisitPossibleMarker::ApproachPossibleCube(Robot& robot, cons
 
   // randomize distance now
   const float distanceRand = static_cast<float>( GetRNG().RandDblInRange(
-    kEvpm_DistanceFromPossibleCubeMax_mm, kEvpm_DistanceFromPossibleCubeMin_mm));
-  
-  // generate all possible points to pick one later on
-  Vec3f fwd (possibleCubePose.GetRotation() * X_AXIS_3D());
-  fwd.z() = 0.0f;
-  Vec3f side(fwd.y(), -fwd.x(), 0.0f);
-  std::array<Vec3f, 4> possiblePoints;
-  possiblePoints[0] = possibleCubePose.GetTranslation() + (fwd  * distanceRand);
-  possiblePoints[1] = possibleCubePose.GetTranslation() - (fwd  * distanceRand);
-  possiblePoints[2] = possibleCubePose.GetTranslation() + (side * distanceRand);
-  possiblePoints[3] = possibleCubePose.GetTranslation() - (side * distanceRand);
+    kEvpm_DistanceFromPossibleCubeMin_mm, kEvpm_DistanceFromPossibleCubeMax_mm));
 
-  // pick closest
-  const Vec3f& robotLoc = robot.GetPose().GetTranslation();
-  size_t bestIndex = 0;
-  float bestDistSq = (possiblePoints[bestIndex] - robotLoc).LengthSq();
-  for( size_t i=1; i<possiblePoints.size(); ++i)
-  {
-    const float distSQ = (possiblePoints[i] - robotLoc).LengthSq();
-    if ( distSQ < bestDistSq ) {
-      bestDistSq = distSQ;
-      bestIndex = i;
+  CompoundActionSequential* approachAction = new CompoundActionSequential(robot);
+  
+  if( APPROACH_NORMAL_TO_MARKERS ) {  
+    // generate all possible points to pick one later on
+    Vec3f fwd (possibleCubePose.GetRotation() * X_AXIS_3D());
+    fwd.z() = 0.0f;
+    Vec3f side(fwd.y(), -fwd.x(), 0.0f);
+    std::array<Vec3f, 4> possiblePoints;
+    possiblePoints[0] = possibleCubePose.GetTranslation() + (fwd  * distanceRand);
+    possiblePoints[1] = possibleCubePose.GetTranslation() - (fwd  * distanceRand);
+    possiblePoints[2] = possibleCubePose.GetTranslation() + (side * distanceRand);
+    possiblePoints[3] = possibleCubePose.GetTranslation() - (side * distanceRand);
+
+    // pick closest
+    const Vec3f& robotLoc = robot.GetPose().GetTranslation();
+    size_t bestIndex = 0;
+    float bestDistSq = (possiblePoints[bestIndex] - robotLoc).LengthSq();
+    for( size_t i=1; i<possiblePoints.size(); ++i)
+    {
+      const float distSQ = (possiblePoints[i] - robotLoc).LengthSq();
+      if ( distSQ < bestDistSq ) {
+        bestDistSq = distSQ;
+        bestIndex = i;
+      }
+    }
+  
+    // calculate pose for the final goal location (is there an easier way to calculate rotation?)
+    const Vec3f& goalLocation = possiblePoints[bestIndex];
+    float goalRotation_rad = 0.0f;
+    {
+      const Vec3f& kFwdVector = X_AXIS_3D();
+      const Vec3f& kRightVector = -Y_AXIS_3D();
+    
+      // use directionality from the extra info to point in the same direction
+      Vec3f facing = possibleCubePose.GetTranslation() - goalLocation;
+      facing.MakeUnitLength();
+      float facingAngleCos = DotProduct(facing, kFwdVector);
+      const bool isPositiveAngle = (DotProduct(facing, kRightVector) >= 0.0f);
+      goalRotation_rad = isPositiveAngle ? -std::acos(facingAngleCos) : std::acos(facingAngleCos);
+    }
+  
+    const Vec3f& kUpVector = Z_AXIS_3D();
+    const Pose3d goalPose(goalRotation_rad, kUpVector, goalLocation, &robot.GetPose().FindOrigin());
+    approachAction->AddAction( new DriveToPoseAction(robot, goalPose, false) );
+  }
+  else {
+    // drive directly to the cube
+
+    // NOTE: there may be an obstacle here, this isn't a great way to do this (should use planning distance,
+    // etc)
+
+    Pose3d relPose;
+    if( possibleCubePose.GetWithRespectTo( robot.GetPose(), relPose ) ) {
+      const Pose2d relPose2d(relPose);
+      Vec3f newTranslation = relPose.GetTranslation();
+      float oldLength = newTranslation.MakeUnitLength();
+      
+      Pose3d newTargetPose(RotationVector3d{},
+                           newTranslation * (oldLength - distanceRand),
+                           &robot.GetPose());
+
+      // turn first to signal intent
+      approachAction->AddAction( new TurnTowardsPoseAction(robot, possibleCubePose, PI_F) );
+      approachAction->AddAction( new DriveToPoseAction(robot, newTargetPose, false) );
+
+      // This requires us to bail out of this behavior if we see one, but that's not currently happening
+      // // add a search action after driving / facing, in case we don't see the object
+      // approachAction->AddAction(new SearchSideToSideAction(robot));
+    }
+    else {
+      PRINT_NAMED_WARNING("BehaviorExploreVisitPossibleMarker.NoTransform",
+                          "Could not get pose of possible object W.R.T robot");
+      delete approachAction;
+      return;
     }
   }
   
-  // calculate pose for the final goal location (is there an easier way to calculate rotation?)
-  const Vec3f& goalLocation = possiblePoints[bestIndex];
-  float goalRotation_rad = 0.0f;
-  {
-    const Vec3f& kFwdVector = X_AXIS_3D();
-    const Vec3f& kRightVector = -Y_AXIS_3D();
-    
-    // use directionality from the extra info to point in the same direction
-    Vec3f facing = possibleCubePose.GetTranslation() - goalLocation;
-    facing.MakeUnitLength();
-    float facingAngleCos = DotProduct(facing, kFwdVector);
-    const bool isPositiveAngle = (DotProduct(facing, kRightVector) >= 0.0f);
-    goalRotation_rad = isPositiveAngle ? -std::acos(facingAngleCos) : std::acos(facingAngleCos);
-  }
-  
-  const Vec3f& kUpVector = Z_AXIS_3D();
-  const Pose3d goalPose(goalRotation_rad, kUpVector, goalLocation, &robot.GetPose().FindOrigin());
-  
-  // create action to go to that point
-  DriveToPoseAction* driveAction = new DriveToPoseAction(robot, goalPose, false);
-  
   // TODO Either set head up at end, or at start and as soon as we see the cube, react
   
-  StartActing(driveAction);
+  StartActing(approachAction);
 }
 
 } // namespace Cozmo

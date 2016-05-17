@@ -491,9 +491,7 @@ namespace Anki {
           }
           
           // Fail immediatly if the block height is above our docking limit
-          if(dockingErrSignalMsg_.z_height > DOCK_HEIGHT_LIMIT_MM ||
-             (PickAndPlaceController::IsCarryingBlock() &&
-              dockingErrSignalMsg_.z_height > BLOCK_ON_GROUND_DOCK_ERR_Z_HEIGHT_MM))
+          if(dockingErrSignalMsg_.z_height > DOCK_HEIGHT_LIMIT_MM)
           {
             StopDocking(DOCK_FAILURE_TOO_HIGH);
             return RESULT_FAIL;

@@ -14,6 +14,8 @@
  **/
 
 #include "anki/cozmo/basestation/animationGroup/animationGroupEntry.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+
 #include "util/logging/logging.h"
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/cozmo/basestation/moodSystem/simpleMoodTypesHelpers.h"
@@ -33,7 +35,7 @@ namespace Anki {
     {
     }
     
-    Result AnimationGroupEntry::DefineFromJson(const Json::Value &jsonRoot)
+    Result AnimationGroupEntry::DefineFromJson(const Json::Value &jsonRoot, const CannedAnimationContainer* cannedAnimations)
     {
       const Json::Value& jsonName = jsonRoot[kNameKey];
       
@@ -44,6 +46,12 @@ namespace Anki {
       }
       
       _name = jsonName.asString();
+      if(nullptr != cannedAnimations && nullptr == cannedAnimations->GetAnimation(_name)) {
+        PRINT_NAMED_ERROR("AnimationGroupEntry.DefineFromJson.InvalidName",
+                          "No canned animation exists named '%s'",
+                          _name.c_str());
+        return RESULT_FAIL;
+      }
       
       const Json::Value& jsonWeight = jsonRoot[kWeightKey];
       

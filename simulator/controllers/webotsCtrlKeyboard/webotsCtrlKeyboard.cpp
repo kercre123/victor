@@ -1847,7 +1847,13 @@ namespace Anki {
                   }
                   std::string idleAnimToSendName = idleAnimToSendField->getSFString();
                   
-                  SendSetIdleAnimation(idleAnimToSendName);
+                  using namespace ExternalInterface;
+                  if(idleAnimToSendName.empty()) {
+                    SendMessage(MessageGameToEngine(PopIdleAnimation()));
+                  } else {
+                    SendMessage(MessageGameToEngine(PushIdleAnimation(idleAnimToSendName)));
+                  }
+
                 }
                 else {
                   // Send whatever animation is specified in the animationToSendName field

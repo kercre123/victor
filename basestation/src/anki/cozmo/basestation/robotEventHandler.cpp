@@ -64,6 +64,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::PlaceOnObject,
       MessageGameToEngineTag::PlaceRelObject,
       MessageGameToEngineTag::PlayAnimation,
+      MessageGameToEngineTag::PlayAnimationGroup,
       MessageGameToEngineTag::PopAWheelie,
       MessageGameToEngineTag::ReadToolCode,
       MessageGameToEngineTag::RollObject,
@@ -138,7 +139,11 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       auto eventCallback = std::bind(&RobotEventHandler::HandleBehaviorManagerEvent, this, std::placeholders::_1);
       _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
     }
-        
+
+    // Custom handler for animation aborted
+    auto animAbortedCallback = std::bind(&RobotEventHandler::HandleAnimationAborted, this, std::placeholders::_1);
+    _signalHandles.push_back(externalInterface->Subscribe(MessageEngineToGameTag::AnimationAborted, animAbortedCallback));
+    
   }
 }
   
@@ -322,6 +327,7 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
                                                                             msg.distanceFromMarker_mm,
                                                                             msg.useApproachAngle,
                                                                             msg.approachAngle_rad,
+                                                                            msg.alignmentType,
                                                                             msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
@@ -329,7 +335,11 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
     }
     return action;
   } else {
-    AlignWithObjectAction* action = new AlignWithObjectAction(robot, selectedObjectID, msg.useManualSpeed);
+    AlignWithObjectAction* action = new AlignWithObjectAction(robot,
+                                                              selectedObjectID,
+                                                              msg.distanceFromMarker_mm,
+                                                              msg.alignmentType,
+                                                              msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
@@ -1154,6 +1164,21 @@ void RobotEventHandler::HandleSendAvailableObjects(const GameToEngineEvent& even
     }
   }
 
+  void RobotEventHandler::HandleAnimationAborted(const EngineToGameEvent &event)
+  {
+    RobotID_t robotID = 1;
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    if(nullptr == robot) {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleAnimationAborted.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      robot->AbortAnimation();
+      PRINT_NAMED_INFO("RobotEventHandler.HandleAnimationAborted.SendingRobotAbortAnimation", "");
+    }
+  }
+  
   
 } // namespace Cozmo
 } // namespace Anki
