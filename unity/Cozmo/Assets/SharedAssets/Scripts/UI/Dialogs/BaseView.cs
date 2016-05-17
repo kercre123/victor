@@ -98,8 +98,7 @@ namespace Cozmo {
         fullScreenButton.transform.SetAsFirstSibling();
         Cozmo.UI.TouchCatcher fullScreenCollider = fullScreenButton.GetComponent<Cozmo.UI.TouchCatcher>();
         fullScreenCollider.OnTouch += (HandleCloseColliderClicked);
-        fullScreenCollider.DASEventButtonName = "close_view_by_touch_outside_button";
-        fullScreenCollider.DASEventViewController = DASEventViewName;
+        fullScreenCollider.Initialize("close_view_by_touch_outside_button", DASEventViewName);
       }
 
       private void SetupCloseButton() {

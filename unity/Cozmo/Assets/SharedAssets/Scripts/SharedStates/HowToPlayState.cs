@@ -13,9 +13,9 @@ public class HowToPlayState : State {
 
   public override void Enter() {
     _Game = _StateMachine.GetGame();
-    _Game.SharedMinigameView.ShowContinueButtonOnShelf(HandleContinueButtonClicked, 
+    _Game.SharedMinigameView.ShowContinueButtonOffset(HandleContinueButtonClicked, 
       Localization.Get(LocalizationKeys.kButtonStartChallenge), Localization.Get(LocalizationKeys.kMinigameLabelReadyToPlay), 
-      Cozmo.UI.UIColorPalette.NeutralTextColor(), "from_how_to_play_to_start_game_continue_button");
+      Cozmo.UI.UIColorPalette.NeutralTextColor, "from_how_to_play_to_start_game_continue_button");
     _Game.SharedMinigameView.ShowHowToPlayButton();
     _Game.SharedMinigameView.OpenHowToPlayView();
   }
@@ -25,7 +25,7 @@ public class HowToPlayState : State {
     _Game.SharedMinigameView.HideBackButton();
     _Game.SharedMinigameView.ShowQuitButton();
     _Game.SharedMinigameView.CloseHowToPlayView();
-    _Game.SharedMinigameView.HideContinueButtonShelf();
+    _Game.SharedMinigameView.HideContinueButton();
 
     if (_NextState == null) {
       _StateMachine.PopState();

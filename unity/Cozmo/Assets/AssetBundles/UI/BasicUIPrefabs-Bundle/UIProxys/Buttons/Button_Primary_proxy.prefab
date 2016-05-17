@@ -149,8 +149,8 @@ MonoBehaviour:
   _TextLabel: {fileID: 11492386}
   _TextLabelOffset: -5
   TextEnabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  TextPressedColor: {r: 0.422947, g: 0.49264705, b: 0.32963884, a: 1}
-  TextDisabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 0.391}
+  TextPressedColor: {r: 0.28676468, g: 0.2837336, b: 0.23826772, a: 1}
+  TextDisabledColor: {r: 0.41176474, g: 0.40784317, b: 0.34901962, a: 0.316}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
   - targetImage: {fileID: 11403850}
@@ -170,6 +170,8 @@ MonoBehaviour:
     _Event: -1705717452
     _EventType: 7
     _GameObjectType: 2
+  _ShowDisabledStateWhenInteractable: 0
+  _ShowPressedStateOnRelease: 0
 --- !u!114 &11492386
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -190,11 +192,11 @@ MonoBehaviour:
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
-    m_Font: {fileID: 12800000, guid: 690bf25a268804b5a9391906610cf24b, type: 3}
-    m_FontSize: 75
+    m_Font: {fileID: 12800000, guid: 01314919a94634a228a0ccc4039bcf62, type: 3}
+    m_FontSize: 74
     m_FontStyle: 0
     m_BestFit: 0
-    m_MinSize: 10
+    m_MinSize: 7
     m_MaxSize: 75
     m_Alignment: 4
     m_AlignByGeometry: 0
@@ -203,7 +205,7 @@ MonoBehaviour:
     m_VerticalOverflow: 0
     m_LineSpacing: 1
   m_Text: BUTTON TEXT
-  _AllUppercase: 1
+  _AllUppercase: 0
   GlowText: 0
 --- !u!222 &22207890
 CanvasRenderer:
@@ -317,6 +319,11 @@ Prefab:
       propertyPath: TextDisabledColor.a
       value: 0.391
       objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: m_FontData.m_Font
+      value: 
+      objectReference: {fileID: 12800000, guid: 01314919a94634a228a0ccc4039bcf62,
+        type: 3}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 130312}

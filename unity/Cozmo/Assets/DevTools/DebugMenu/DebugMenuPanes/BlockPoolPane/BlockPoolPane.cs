@@ -86,9 +86,12 @@ public class BlockPoolPane : MonoBehaviour {
     RobotEngineManager.Instance.OnObjectUnavailableMsg -= HandleObjectUnavailableMsg;
     SendAvailableObjects(false);
     // clear the lights we've turned blue to show connections
-    foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
-      kvp.Value.SetLEDs(0, 0, 0, 0);
+    if (RobotEngineManager.Instance.CurrentRobot != null) {
+      foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
+        kvp.Value.SetLEDs(0, 0, 0, 0);
+      }
     }
+
   }
 
   private void HandleObjectAvailableMsg(Anki.Cozmo.ExternalInterface.ObjectAvailable objAvailableMsg) {

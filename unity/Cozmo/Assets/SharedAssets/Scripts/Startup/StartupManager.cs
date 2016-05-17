@@ -98,11 +98,9 @@ public class StartupManager : MonoBehaviour {
     // _IsDebugBuild = Debug.isDebugBuild;
     _IsDebugBuild = true;
 
-    yield return LoadDebugAssetBundle(assetBundleManager, _IsDebugBuild);
-
-    AddLoadingBarProgress(0.1f);
-
     assetBundleManager.AddActiveVariant(GetActiveVariant());
+
+    yield return LoadDebugAssetBundle(assetBundleManager, _IsDebugBuild);
 
     AddLoadingBarProgress(0.1f);
 

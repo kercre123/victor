@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using Anki.UI;
+using Cozmo.HomeHub;
 
 public class ConsoleLogPane : MonoBehaviour {
 
@@ -58,6 +59,9 @@ public class ConsoleLogPane : MonoBehaviour {
   private UnityEngine.UI.Toggle _SOSToggle;
 
   [SerializeField]
+  private UnityEngine.UI.Toggle _PauseToggle;
+
+  [SerializeField]
   private Button _CopyLogButton;
 
   private SimpleObjectPool<AnkiTextLabel> _TextLabelPool;
@@ -72,6 +76,10 @@ public class ConsoleLogPane : MonoBehaviour {
 
     _SOSToggle.isOn = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.SOSLoggerEnabled;
     _SOSToggle.onValueChanged.AddListener(HandleToggleSOS);
+
+    _PauseToggle.isOn = DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled;
+    _PauseToggle.onValueChanged.AddListener(HandleTogglePause);
+
     _CopyLogButton.onClick.AddListener(HandleOnCopyLogButton);
   }
 
@@ -92,6 +100,22 @@ public class ConsoleLogPane : MonoBehaviour {
     if (ConsoleSOSToggle != null) {
       ConsoleSOSToggle(enable);
     }
+  }
+
+  public void HandleTogglePause(bool enable) {
+    if (HomeHub.Instance != null) {
+      var game = HomeHub.Instance.MiniGameInstance;
+      if (game != null) {
+        if (game.Paused == false && enable) {
+          game.PauseGame();
+        }
+        else if (game.Paused && !enable) {
+          game.UnpauseGame();
+        }
+      }
+    }
+    DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled = enable;
+    DataPersistence.DataPersistenceManager.Instance.Save();
   }
 
   public void Initialize(List<string> consoleText, SimpleObjectPool<AnkiTextLabel> textLabelPool) {

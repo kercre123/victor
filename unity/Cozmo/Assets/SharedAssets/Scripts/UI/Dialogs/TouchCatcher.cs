@@ -23,8 +23,12 @@ namespace Cozmo {
         set { _FullScreenButton.DASEventViewController = value; }
       }
 
-      private void Start() {
-        _FullScreenButton.onClick.AddListener(HandleButtonClick);
+      public void Initialize(string dasEventButtonName, string dasEventViewController) {
+        _FullScreenButton.Initialize(HandleButtonClick, dasEventButtonName, dasEventViewController);
+      }
+
+      private void OnDestroy() {
+        _FullScreenButton.onClick.RemoveListener(HandleButtonClick);
       }
 
       public void HandleButtonClick() {
