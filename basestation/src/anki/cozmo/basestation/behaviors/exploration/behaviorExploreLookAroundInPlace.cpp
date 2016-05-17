@@ -116,6 +116,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
 {
   _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm");
   _configParams.behavior_RecentLocationsMax = ParseUint8(config, "behavior_RecentLocationsMax");
+  _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection");
   // turn speed
   _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec");
   _configParams.sxt_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxt_HeadTurnSpeed_degPerSec");
@@ -136,11 +137,17 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.s3_HeadAngleRangeMin_deg = ParseFloat(config, "s3_HeadAngleRangeMin_deg");
   _configParams.s3_HeadAngleRangeMax_deg = ParseFloat(config, "s3_HeadAngleRangeMax_deg");
   // [min,max] range for head move for step 4
+  _configParams.s4_BodyAngleRelativeRangeMin_deg = ParseFloat(config, "s4_BodyAngleRelativeRangeMin_deg");
+  _configParams.s4_BodyAngleRelativeRangeMax_deg = ParseFloat(config, "s4_BodyAngleRelativeRangeMax_deg");
   _configParams.s4_HeadAngleRangeMin_deg = ParseFloat(config, "s4_HeadAngleRangeMin_deg");
   _configParams.s4_HeadAngleRangeMax_deg = ParseFloat(config, "s4_HeadAngleRangeMax_deg");
   _configParams.s4_HeadAngleChangesMin = ParseUint8(config, "s4_HeadAngleChangesMin");
   _configParams.s4_HeadAngleChangesMax = ParseUint8(config, "s4_HeadAngleChangesMax");
+  _configParams.s4_WaitBetweenChangesMin_sec = ParseFloat(config, "s4_WaitBetweenChangesMin_sec");
+  _configParams.s4_WaitBetweenChangesMax_sec = ParseFloat(config, "s4_WaitBetweenChangesMax_sec");
   // [min,max] range for head move  for step 5
+  _configParams.s5_BodyAngleRelativeRangeMin_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMin_deg");
+  _configParams.s5_BodyAngleRelativeRangeMax_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMax_deg");
   _configParams.s5_HeadAngleRangeMin_deg = ParseFloat(config, "s5_HeadAngleRangeMin_deg");
   _configParams.s5_HeadAngleRangeMax_deg = ParseFloat(config, "s5_HeadAngleRangeMax_deg");
   // [min,max] range for random angle turns for step 6
@@ -148,8 +155,6 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.s6_BodyAngleRangeMax_deg = ParseFloat(config, "s6_BodyAngleRangeMax_deg");
   _configParams.s6_HeadAngleRangeMin_deg = ParseFloat(config, "s6_HeadAngleRangeMin_deg");
   _configParams.s6_HeadAngleRangeMax_deg = ParseFloat(config, "s6_HeadAngleRangeMax_deg");
-
-  _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -223,6 +228,9 @@ void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn(Robot& robot)
   // calculate head moves now
   const int randMoves = GetRNG().RandIntInRange(_configParams.s4_HeadAngleChangesMin, _configParams.s4_HeadAngleChangesMax);
   _s4HeadMovesLeft = Util::numeric_cast<uint8_t>(randMoves);
+  
+  // set current facing for the next state
+  _s4_s5StartingBodyFacing_rad = robot.GetPose().GetRotationAngle<'Z'>();
 
   // request action with transition to proper state
   StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp );
@@ -231,21 +239,38 @@ void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
 {
-  // create head move action for this state
-  IAction* moveHeadAction = CreateHeadTurnAction(robot,
-        _configParams.s4_HeadAngleRangeMin_deg, _configParams.s4_HeadAngleRangeMax_deg,
-        _configParams.sxh_HeadTurnSpeed_degPerSec);
-
-  // count our action as a move
+  // count the action we are going to queue as a move
   --_s4HeadMovesLeft;
+  const bool isLastMove = (_s4HeadMovesLeft == 0);
 
-  // request action with transition to proper state
-  if ( _s4HeadMovesLeft == 0 ) {
-    StartActing( moveHeadAction, &BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown );
-  } else {
-    // still moves to do, continue in this state
-    StartActing( moveHeadAction, &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp );
-  }
+  // check which transition method to call after the head move is done, S5 or S4 again?
+  using TransitionCallback = void(BehaviorExploreLookAroundInPlace::*)(Robot&);
+  TransitionCallback nextCallback = isLastMove ?
+    &BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown :
+    &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp;
+
+  // this is the lambda that will run after the wait action finishes
+  auto runAfterWait = [this, &robot, nextCallback](const ExternalInterface::RobotCompletedAction& actionRet)
+  {
+    // create head move action
+    IAction* moveHeadAction = CreateHeadTurnAction(robot,
+          _configParams.s4_BodyAngleRelativeRangeMin_deg,
+          _configParams.s4_BodyAngleRelativeRangeMax_deg,
+          RAD_TO_DEG( _s4_s5StartingBodyFacing_rad.ToFloat() ),
+          _configParams.s4_HeadAngleRangeMin_deg,
+          _configParams.s4_HeadAngleRangeMax_deg,
+          _configParams.sx_BodyTurnSpeed_degPerSec,
+          _configParams.sxh_HeadTurnSpeed_degPerSec);
+  
+    // do head action and transition to next state or same (depending on callback)
+    StartActing( moveHeadAction, nextCallback );
+  };
+
+  // run the wait action first, setting the lambda
+  const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s4_WaitBetweenChangesMin_sec,
+                                                      _configParams.s4_WaitBetweenChangesMax_sec);
+  WaitAction* waitAction = new WaitAction( robot, waitTime_sec );
+  StartActing( waitAction, runAfterWait );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -253,7 +278,12 @@ void BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown(Robot& robot)
 {
   // create head move action for this state
   IAction* moveHeadAction = CreateHeadTurnAction(robot,
-        _configParams.s5_HeadAngleRangeMin_deg, _configParams.s5_HeadAngleRangeMax_deg,
+        _configParams.s5_BodyAngleRelativeRangeMin_deg,
+        _configParams.s5_BodyAngleRelativeRangeMax_deg,
+        RAD_TO_DEG( _s4_s5StartingBodyFacing_rad.ToFloat() ),
+        _configParams.s5_HeadAngleRangeMin_deg,
+        _configParams.s5_HeadAngleRangeMax_deg,
+        _configParams.sx_BodyTurnSpeed_degPerSec,
         _configParams.sxh_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
@@ -332,27 +362,38 @@ IAction* BehaviorExploreLookAroundInPlace::CreateBodyAndHeadTurnAction(Robot& ro
   const Radians bodyTargetAngleAbs_rad( _iterationStartingBodyFacing_rad + DEG_TO_RAD(bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
   PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
-  turnAction->SetMaxPanSpeed( DEG_TO_RAD(_configParams.sx_BodyTurnSpeed_degPerSec) );
-  turnAction->SetMaxTiltSpeed( DEG_TO_RAD(_configParams.sxt_HeadTurnSpeed_degPerSec) );
+  turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
+  turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
 
   return turnAction;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IAction* BehaviorExploreLookAroundInPlace::CreateHeadTurnAction(Robot& robot,
+  float bodyRelativeMin_deg, float bodyRelativeMax_deg,
+  float bodyReference_deg,
   float headAbsoluteMin_deg, float headAbsoluteMax_deg,
-  float headTurnSpeed_degPerSec)
+  float bodyTurnSpeed_degPerSec, float headTurnSpeed_degPerSec)
 {
+  // generate turn sign
+  const EClockDirection turnDir = (GetRNG().RandInt(2) == 0) ? EClockDirection::CW : EClockDirection::CCW;
+
+  // [min,max] range for random body angle turn
+  const double bodyTargetAngleRelative_deg =
+    GetRNG().RandDblInRange(bodyRelativeMin_deg, bodyRelativeMax_deg) * GetTurnSign(turnDir);
+
   // [min,max] range for random head angle turn
   const double headTargetAngleAbs_deg =
     GetRNG().RandDblInRange(headAbsoluteMin_deg, headAbsoluteMax_deg);
-
+  
   // create proper action for body & head turn
+  const Radians bodyTargetAngleAbs_rad( DEG_TO_RAD(bodyReference_deg + bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
-  MoveHeadToAngleAction* moveHeadAction = new MoveHeadToAngleAction(robot, headTargetAngleAbs_rad);
-  moveHeadAction->SetMaxSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
+  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
+  turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
+  turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
 
-  return moveHeadAction;
+  return turnAction;
 }
 
 } // namespace Cozmo
