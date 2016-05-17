@@ -36,6 +36,7 @@ class AnkiEvent;
 
 namespace ExternalInterface {
   class MessageGameToEngine;
+  class MessageEngineToGame;
 }
 
 
@@ -49,6 +50,7 @@ protected:
   std::vector<Signal::SmartHandle> _signalHandles;
   
   using GameToEngineEvent = AnkiEvent<ExternalInterface::MessageGameToEngine>;
+  using EngineToGameEvent = AnkiEvent<ExternalInterface::MessageEngineToGame>;
   
   void HandleActionEvents(const GameToEngineEvent& event);
   void HandleQueueSingleAction(const GameToEngineEvent& event);
@@ -65,6 +67,7 @@ protected:
   void HandleComputeCameraCalibration(const GameToEngineEvent& event);
   void HandleCameraCalibration(const GameToEngineEvent& event);
   void HandleSetHeadlight(const GameToEngineEvent& event);
+  void HandleAnimationAborted(const EngineToGameEvent& event);
 };
 
   

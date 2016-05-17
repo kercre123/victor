@@ -301,7 +301,7 @@ LOCAL bool TaskOtaRTIP(uint32 param)
           case SPI_FLASH_RESULT_OK:
           {
             retries = MAX_RETRIES;
-            if (i2spiBootloaderPushChunk(&chunk))
+            if ((chunk.blockAddress & 0x40000000) || i2spiBootloaderPushChunk(&chunk))
             {
               state->phase = 1;
               state->count = system_get_time();

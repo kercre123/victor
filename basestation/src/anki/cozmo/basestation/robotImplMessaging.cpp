@@ -158,7 +158,11 @@ void Robot::HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine
 {
   const MotorCalibration& payload = message.GetData().Get_motorCalibration();
   PRINT_NAMED_INFO("MotorCalibration", "Motor %d, started %d", (int)payload.motorID, payload.calibStarted);
-  
+
+  if( payload.motorID == MotorID::MOTOR_LIFT && payload.calibStarted && IsCarryingObject() ) {
+    // if this was a lift calibration, we are no longer holding a cube
+    UnSetCarryObject( GetCarryingObject() );
+  }
   Broadcast(ExternalInterface::MessageEngineToGame(MotorCalibration(payload)));
 }
   
@@ -546,7 +550,7 @@ void Robot::HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& m
   // get deleted during the ActionList.Cancel() below because the action will get notified
   // of the abort first, and not generate a warning about being deleted without
   // getting notified about a stop or abort.
-  _animationStreamer.SetStreamingAnimation(*this, nullptr);
+  _animationStreamer.SetStreamingAnimation(nullptr);
   
   // Stop whatever we were doing
   GetActionList().Cancel();
@@ -863,6 +867,7 @@ void Robot::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& mes
   Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked(payload.robotID)));
 }
 
+// TODO: ALl of the following should probably be robotEventHandling.cpp, b/c they are ExternalInterface, not RobotInterface
   
 void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
 {
@@ -874,8 +879,6 @@ void Robot::SetupMiscHandlers(IExternalInterface& externalInterface)
   helper.SubscribeGameToEngine<MessageGameToEngineTag::IMURequest>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableRobotPickupParalysis>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::SetIdleAnimation>();
-  helper.SubscribeGameToEngine<MessageGameToEngineTag::ReplayLastAnimation>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::ExecuteTestPlan>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveImages>();
   helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveRobotState>();
@@ -920,18 +923,6 @@ void Robot::HandleMessage(const ExternalInterface::SetBackpackLEDs& msg)
   SetBackpackLights(msg.onColor, msg.offColor,
                     msg.onPeriod_ms, msg.offPeriod_ms,
                     msg.transitionOnPeriod_ms, msg.transitionOffPeriod_ms);
-}
-
-template<>
-void Robot::HandleMessage(const ExternalInterface::SetIdleAnimation& msg)
-{
-  _animationStreamer.SetIdleAnimation(msg.animationName);
-}
-
-template<>
-void Robot::HandleMessage(const ExternalInterface::ReplayLastAnimation& msg)
-{
-  _animationStreamer.SetStreamingAnimation(*this, _lastPlayedAnimationId, msg.numLoops);
 }
 
 template<>

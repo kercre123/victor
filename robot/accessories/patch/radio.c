@@ -96,20 +96,21 @@ bit RadioHandshake()
   jitter = TimerLSB();  // No timeout, keep going
   RFCE = 0;
 
+  // Read the new packet now to add 20uS delay - robot needs delay
+  RadioRead(_radioIn, HAND_LEN);
+
   // Start TX, wait for TX complete
-  RadioSetup(SETUP_TX_HAND);
+  for (chan = 0; chan < 5; chan++)    // XXX: Add more delay for robot
+    RadioSetup(SETUP_TX_HAND);
   RFCE = 1;
   RFF = 0;
-
-  // While radio is turning around, read the new packet
-  RadioRead(_radioIn, HAND_LEN);
 
   // Adjust beat counter based on measured jitter
   DebugPrint('j', &jitter, 1);  // Show microsecond-jitter (units of 1.5uS)
   jitter >>= 4;                         // 20 T2 counts (/24) per tick
   jitter += -(16-LISTEN_TIME_US/2/24);  // Mid point becomes 0 adjustment
   _beatAdjust = jitter;                 // If we arrive late, lengthen beat to arrive early
-   
+  
   // Wait here
   while (!RFF)
     ;

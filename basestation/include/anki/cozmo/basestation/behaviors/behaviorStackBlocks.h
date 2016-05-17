@@ -38,7 +38,7 @@ protected:
     
 private:
 
-  std::string _retryActionAnimGroup = ""; // "rollCube_retry";
+  std::string _retryActionAnimGroup = "rollCube_retry";
   std::string _successAnimGroup = "stackCube_success";
 
   mutable ObjectID _targetBlockTop;

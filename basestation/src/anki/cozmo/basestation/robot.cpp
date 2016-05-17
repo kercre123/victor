@@ -111,9 +111,7 @@ namespace Anki {
     , _faceWorld(*this)
     , _behaviorMgr(*this)
     , _audioClient(new Audio::RobotAudioClient(this))
-    , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimations())
-    , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
-    , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, *_audioClient)
+    , _animationStreamer(_context, *_audioClient)
     , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
     , _movementComponent(*this)
     , _visionComponentPtr( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
@@ -165,22 +163,7 @@ namespace Anki {
       {
         FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
       }
-      
-      // Set up the neutral face to use when resetting procedural animations
-      static const char* neutralFaceAnimName = "neutral_face";
-      Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
-      if (nullptr != neutralFaceAnim)
-      {
-        auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
-        ProceduralFace::SetResetData(frame->GetFace());
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("Robot.NeutralFaceDataNotFound",
-                            "Could not find expected neutral face animation file called %s",
-                            neutralFaceAnimName);
-      }
-      
+
       // Read in Mood Manager Json
       if (nullptr != _context->GetDataPlatform())
       {
@@ -1383,66 +1366,6 @@ namespace Anki {
                                                                 useManualSpeed);
     }
     
-    AnimationStreamer::Tag Robot::PlayAnimation(const std::string& animName, u32 numLoops, bool interruptRunning)
-    {
-      AnimationStreamer::Tag tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops, interruptRunning);
-      if(tag != AnimationStreamer::NotAnimatingTag) {
-        _lastPlayedAnimationId = animName;
-      }
-      return tag;
-    }
-    
-    AnimationStreamer::Tag Robot::PlayAnimation(Animation* animation, u32 numLoops, bool interruptRunning)
-    {
-      AnimationStreamer::Tag tag = _animationStreamer.SetStreamingAnimation(*this, animation, numLoops, interruptRunning);
-      if(tag != AnimationStreamer::NotAnimatingTag) {
-        _lastPlayedAnimationId = animation->GetName();
-      }
-      return tag;
-    }
-    
-    Result Robot::SetIdleAnimation(const std::string &animName)
-    {
-      _idleAnimationNameStack.clear();
-      return _animationStreamer.SetIdleAnimation(animName);
-    }
-
-    Result Robot::PushIdleAnimation(const std::string& animName)
-    {
-      _idleAnimationNameStack.push_back(GetIdleAnimationName());
-      return _animationStreamer.SetIdleAnimation(animName);
-    }
-      
-    bool Robot::PopIdleAnimation()
-    {
-      if( _idleAnimationNameStack.empty() ) {
-        PRINT_NAMED_WARNING("Robot.PopIdleAnimation.NoStack",
-                            "Trying to pop an idle animation, but the stack is empty");
-        return false;
-      }
-      
-      Result ret = _animationStreamer.SetIdleAnimation(_idleAnimationNameStack.back());
-      if( ret != RESULT_OK ) {
-        PRINT_NAMED_WARNING("Robot.PopIdleAnimation",
-                            "Trying to return to idle animation '%s', but Set failed",
-                            _idleAnimationNameStack.back().c_str());
-      }
-      
-      _idleAnimationNameStack.pop_back();
-
-      return ret == RESULT_OK;
-    }
-
-    const std::string& Robot::GetIdleAnimationName() const
-    {
-      return _animationStreamer.GetIdleAnimationName();
-    }
-    
-    const std::string Robot::GetStreamingAnimationName() const
-    {
-      return _animationStreamer.GetStreamingAnimationName();
-    }
-
     void Robot::ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
                           TimeStamp_t duration_ms, const std::string& name)
     {
@@ -1483,15 +1406,7 @@ namespace Anki {
     {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
     } // StopSound()
-    
-    const std::string& Robot::GetAnimationNameFromGroup(const std::string& name) {
-      const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
-      if(group != nullptr && !group->IsEmpty()) {
-        return group->GetAnimationName(GetMoodManager(), _animationGroups, GetHeadAngle());
-      }
-      static const std::string empty("");
-      return empty;
-    }
+   
     
     void Robot::LoadEmotionEvents()
     {

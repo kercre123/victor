@@ -160,7 +160,7 @@ static inline bool FlashBlock() {
   }
 
   // We will not override the boot loader
-  if (packet.blockAddress < ROBOT_BOOTLOADER) {
+  if (packet.blockAddress < ROBOT_BOOTLOADER || packet.blockAddress >= 0x10000) {
     return false;
   }
 
@@ -263,6 +263,7 @@ void EnterRecovery() {
         *recovery_word = 0;
         SPI0_PUSHR_SLAVE = STATE_IDLE;
 
+        NVIC_SystemReset();
         return ;
 
       case COMMAND_CHECK_SIG:

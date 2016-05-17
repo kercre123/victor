@@ -246,7 +246,7 @@ void BehaviorPounceOnMotion::TransitionToTurnToMotion(Robot& robot, int16_t moti
   Radians absPanAngle;
   Radians absTiltAngle;
   robot.GetVisionComponent().GetCamera().ComputePanAndTiltAngles(motionCentroid, absPanAngle, absTiltAngle);
-  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, absPanAngle, 0, true, false);
+  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, absPanAngle, 0, false, false);
   robot.GetActionList().QueueActionAtEnd(turnAction);
   _waitForActionTag = turnAction->GetTag();
 }
