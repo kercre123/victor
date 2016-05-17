@@ -184,6 +184,11 @@ void Robot::HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine
 {
   const RobotInterface::MotorCalibration& payload = message.GetData().Get_motorCalibration();
   PRINT_NAMED_INFO("MotorCalibration", "Motor %d, started %d", (int)payload.motorID, payload.calibStarted);
+
+  if( payload.motorID == MotorID::MOTOR_LIFT && payload.calibStarted && IsCarryingObject() ) {
+    // if this was a lift calibration, we are no longer holding a cube
+    UnSetCarryObject( GetCarryingObject() );
+  }
 }
   
 void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
