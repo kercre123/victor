@@ -110,6 +110,12 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
   if (_robot.HasExternalInterface())
   {
     IExternalInterface* externalInterface = _robot.GetExternalInterface();
+    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
+                            ExternalInterface::MessageGameToEngineTag::EnableReactionaryBehaviors,
+                          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                          {
+                            _reactionsEnabled = event.GetData().Get_EnableReactionaryBehaviors().enabled;
+                          }));
     _eventHandlers.push_back(externalInterface->Subscribe(
                                ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
                                [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -197,6 +203,9 @@ void BehaviorManager::AddReactionaryBehavior(IReactionaryBehavior* behavior)
 template<typename EventType>
 void BehaviorManager::ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventType>& event)
 {
+  if( !_reactionsEnabled ) {
+    return;
+  }
   for (auto& behavior : _reactionaryBehaviors)
   {
     if (0 != GetReactionaryBehaviorTags<typename EventType::Tag>(behavior).count(event.GetData().GetTag()))

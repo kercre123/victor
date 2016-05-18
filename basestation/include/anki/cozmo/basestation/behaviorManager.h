@@ -192,6 +192,7 @@ private:
   
   // list of behaviors that fire automatically as reactions to events
   std::vector<IReactionaryBehavior*> _reactionaryBehaviors;
+  bool                               _reactionsEnabled = true;
 
   // - - - - - - - - - - - - - - -
   // others/shared
