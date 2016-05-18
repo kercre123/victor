@@ -5,12 +5,12 @@ namespace SpeedTap {
   public class SpeedTapHandCubesMatch : State {
 
     private SpeedTapGame _SpeedTapGame;
-    private const float kResultsCheckDelay = 0.02f;
+    private const float kResultsCheckDelay_sec = 0.02f;
 
     private float _CozmoMovementDelay_sec;
     private float _StartTimestamp_sec;
     private float _EndTimestamp_sec;
-    private float _LightsOnDuration;
+    private float _LightsOnDuration_sec;
     private bool _IsCozmoMoving;
 
 
@@ -18,16 +18,16 @@ namespace SpeedTap {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
       _SpeedTapGame.ResetTapTimestamps();
-      _LightsOnDuration = _SpeedTapGame.GetLightsOnDurationSec();
+      _LightsOnDuration_sec = _SpeedTapGame.GetLightsOnDurationSec();
       _StartTimestamp_sec = Time.time;
       _EndTimestamp_sec = -1;
 
       // Reaction time should be relative to the LightsOnDuration
-      _CozmoMovementDelay_sec = 0.001f * _LightsOnDuration * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
+      _CozmoMovementDelay_sec = (_LightsOnDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelay, _SpeedTapGame.MaxTapDelay)) - _SpeedTapGame.CozmoTapLatency_sec;
       // Cap delays to prevent issues, but fire a warning
-      if (_CozmoMovementDelay_sec > _LightsOnDuration) {
+      if (_CozmoMovementDelay_sec > _LightsOnDuration_sec) {
         DAS.Warn("SpeedTapHandCubesMatch.Enter", "TapDelay is greater than _LightsOnDuration, Skill Configs are likely wrong");
-        _CozmoMovementDelay_sec = _LightsOnDuration;
+        _CozmoMovementDelay_sec = _LightsOnDuration_sec;
       }
       _IsCozmoMoving = false;
 
@@ -54,7 +54,7 @@ namespace SpeedTap {
         // in a different order than their actual timestamps.
         _EndTimestamp_sec = Time.time;
       }
-      else if (_EndTimestamp_sec != -1 && Time.time - _EndTimestamp_sec > kResultsCheckDelay) {
+      else if (_EndTimestamp_sec != -1 && Time.time - _EndTimestamp_sec > kResultsCheckDelay_sec) {
         ResolveHand();
       }
     }

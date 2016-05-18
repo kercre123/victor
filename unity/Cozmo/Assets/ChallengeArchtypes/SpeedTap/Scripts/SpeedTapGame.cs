@@ -54,6 +54,8 @@ namespace SpeedTap {
 
     private float _LastPlayerTimeStamp = -1;
     private float _LastCozmoTimeStamp = -1;
+    public float CozmoTapLatency_sec = 0.0f;
+    public float CozmoTapLatencyCheckStart = 0.0f;
 
     #region Config Values
 
@@ -67,9 +69,9 @@ namespace SpeedTap {
 
     public float MaxIdleIntervalMs { get; private set; }
 
-    public float MinTapDelayMs { get; private set; }
+    public float MinTapDelay { get; private set; }
 
-    public float MaxTapDelayMs { get; private set; }
+    public float MaxTapDelay { get; private set; }
 
     public float CozmoMistakeChance { get; private set; }
 
@@ -144,8 +146,8 @@ namespace SpeedTap {
       CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
 
       CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
-      MinTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
-      MaxTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
+      MinTapDelay = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
+      MaxTapDelay = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
 
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapStarted);
       // End config based values
@@ -254,6 +256,9 @@ namespace SpeedTap {
     private void OnRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent animEvent) {
       if (animEvent.event_id == AnimEvent.TAPPED_BLOCK &&
           (_LastCozmoTimeStamp > animEvent.timestamp || _LastCozmoTimeStamp == -1)) {
+        if (CozmoTapLatency_sec == 0.0f && CozmoTapLatencyCheckStart != 0.0f) {
+          CozmoTapLatency_sec = (animEvent.timestamp - CozmoTapLatencyCheckStart) * 0.001f;
+        }
         _LastCozmoTimeStamp = animEvent.timestamp;
       }
     }

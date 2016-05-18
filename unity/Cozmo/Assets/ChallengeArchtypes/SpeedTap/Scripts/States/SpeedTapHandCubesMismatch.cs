@@ -6,7 +6,7 @@ namespace SpeedTap {
     
     private SpeedTapGame _SpeedTapGame;
 
-    private float _OnDuration_sec;
+    private float _LightsOnDuration_sec;
     private float _CozmoMovementDelay_sec;
     private float _StartTimestamp_sec;
     private bool _IsCozmoMoving;
@@ -17,8 +17,8 @@ namespace SpeedTap {
       _SpeedTapGame.ResetTapTimestamps();
 
       _StartTimestamp_sec = Time.time;
-      _OnDuration_sec = _SpeedTapGame.GetLightsOnDurationSec();
-      _CozmoMovementDelay_sec = 0.001f * _OnDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
+      _LightsOnDuration_sec = _SpeedTapGame.GetLightsOnDurationSec();
+      _CozmoMovementDelay_sec = (_LightsOnDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelay, _SpeedTapGame.MaxTapDelay)) - _SpeedTapGame.CozmoTapLatency_sec;
       _IsCozmoMoving = false;
 
       // Set lights on cubes
@@ -37,7 +37,7 @@ namespace SpeedTap {
       }
 
       // Check to turn off cubes after some time
-      if (secondsElapsed > _OnDuration_sec) {
+      if (secondsElapsed > _LightsOnDuration_sec) {
         // Move to turn off state
         ResolveHand();
       }
