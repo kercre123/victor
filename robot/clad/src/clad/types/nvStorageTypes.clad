@@ -55,6 +55,8 @@ namespace NVStorage {
     NVEntry_CalibImage5 = 0x80050000,
     NVEntry_CalibImage6 = 0x80060000,
 
+    NVEntry_ToolCodeImageLeft  = 0x80100000,
+    NVEntry_ToolCodeImageRight = 0x80110000,
   }
 
   // Nominally 0 is success > 0 is conditional success and < 0 is error

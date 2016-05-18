@@ -97,6 +97,9 @@ namespace Anki
       // BlockWorld entirely.
       bool DeleteObject(const ObjectID withID);
       
+      void DeleteObjectsByFamily(const ObjectFamily family);
+      void DeleteObjectsByType(const ObjectType type);
+      
       // Get objects that exist in the world, by family, type, ID, etc.
       // NOTE: Like IDs, object types are unique across objects so they can be
       //       used without specifying which family.

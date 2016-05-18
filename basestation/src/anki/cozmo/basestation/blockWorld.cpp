@@ -3299,6 +3299,49 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       }
     } // ClearBlocksByType()
 
+  
+    void BlockWorld::DeleteObjectsByFamily(const ObjectFamily family)
+    {
+      if(_canDeleteObjects) {
+        ObjectsMapByFamily_t::iterator objectsWithFamily = _existingObjects.find(family);
+        if(objectsWithFamily != _existingObjects.end()) {
+          for(auto & objectsByType : objectsWithFamily->second) {
+            for(auto & objectsByID : objectsByType.second) {
+              ClearObjectHelper(objectsByID.second);
+            }
+          }
+          _existingObjects.erase(objectsWithFamily);
+        }
+      } else {
+        PRINT_NAMED_WARNING("BlockWorld.DeleteObjectsByFamily.ClearDisabled",
+                            "Will not delete family %d objects because object deletion is disabled.",
+                            family);
+      }
+    }
+    
+    void BlockWorld::DeleteObjectsByType(const ObjectType type) {
+      if(_canDeleteObjects) {
+        for(auto & objectsByFamily : _existingObjects) {
+          ObjectsMapByType_t::iterator objectsWithType = objectsByFamily.second.find(type);
+          if(objectsWithType != objectsByFamily.second.end()) {
+            for(auto & objectsByID : objectsWithType->second) {
+              ClearObjectHelper(objectsByID.second);
+            }
+            
+            objectsByFamily.second.erase(objectsWithType);
+            
+            // Types are unique.  No need to keep looking
+            return;
+          }
+        }
+      } else {
+        PRINT_NAMED_WARNING("BlockWorld.DeleteObjectsByType.DeleteDisabled",
+                            "Will not delete %s objects because object deletion is disabled.",
+                            ObjectTypeToString(type));
+        
+      }
+    }
+  
     bool BlockWorld::DeleteObject(const ObjectID withID)
     {
       bool retval = false;

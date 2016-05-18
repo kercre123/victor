@@ -208,37 +208,40 @@ namespace Cozmo {
     if (_testResult == FactoryTestResultCode::UNKNOWN) {
       _testResult = resCode;
       
+      // Generate result struct
+      ExternalInterface::FactoryTestResult testResMsg;
+      FactoryTestResultEntry &testRes = testResMsg.resultEntry;
+      testRes.result = resCode;
+      testRes.engineSHA1 = 0;   // TODO
+      testRes.utcTime = time(0);
+      
+      // Mark end time
+      _stateTransitionTimestamps[testRes.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + testRes.timestamps.size(), testRes.timestamps.begin());
+      
+      testRes.stationID = 0;   // TODO: How to get this?
+
+      
       if (ENABLE_NVSTORAGE_WRITES) {
-        // Generate result struct
-        FactoryTestResultEntry testRes;
-        testRes.result = resCode;
-        //testRes.engineSHA1 = COZMO_VERSION_COMMIT; // TODO
-        testRes.utcTime = time(0);
-        
-        // Mark end time
-        _stateTransitionTimestamps[testRes.timestamps.size()-1] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-        std::copy(_stateTransitionTimestamps.begin(), _stateTransitionTimestamps.begin() + testRes.timestamps.size(), testRes.timestamps.begin());
-        
-        testRes.stationID = 0;   // TODO: How to get this?
-        
         u8 buf[testRes.Size()];
         size_t numBytes = testRes.Pack(buf, sizeof(buf));
         
         // Store test result to robot flash
         robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults, buf, numBytes,
-                                            [this,&robot,resCode](NVStorage::NVResult res){
+                                            [this,&robot,&testResMsg](NVStorage::NVResult res){
                                               if (res != NVStorage::NVResult::NV_OKAY) {
                                                 PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.WriteFailed",
                                                                     "WriteResult: %s (Original test result: %s)",
-                                                                    EnumToString(res), EnumToString(resCode));
+                                                                    EnumToString(res), EnumToString(testResMsg.resultEntry.result));
                                                 _testResult = FactoryTestResultCode::TEST_RESULT_WRITE_FAILED;
                                               }
                                               PrintAndLightResult(robot,_testResult);
-                                              robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
+                                              testResMsg.resultEntry.result = _testResult;
+                                              robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
                                             });
       } else {
         PrintAndLightResult(robot,_testResult);
-        robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(_testResult)));
+        robot.Broadcast( ExternalInterface::MessageEngineToGame( ExternalInterface::FactoryTestResult(std::move(testResMsg))));
       }
     } else {
       PRINT_NAMED_WARNING("BehaviorFactoryTest.EndTest.TestAlreadyComplete",
@@ -445,8 +448,10 @@ namespace Cozmo {
         // TODO: Create a function that's shared by LocalizeToObject and LocalizeToMat that does this?
         robot.SetNewPose(_cliffDetectPose);
         
-        DriveToPoseAction* action = new DriveToPoseAction(robot, _camCalibPose);
-        action->SetMotionProfile(_motionProfile);
+        f32 distToCamCalibPose = _camCalibPose.GetTranslation().x() - robot.GetPose().GetTranslation().x();
+        DriveStraightAction* action = new DriveStraightAction(robot, distToCamCalibPose, 100);
+        action->SetAccel(1000);
+        action->SetDecel(1000);
         
         // Go to camera calibration pose
         StartActing(robot, action,
@@ -517,7 +522,12 @@ namespace Cozmo {
       {
         // Move head down to line up for readToolCode.
         // Hopefully this reduces some readToolCode errors
-        StartActing(robot, new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE));
+        MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(robot, MIN_HEAD_ANGLE);
+        DriveStraightAction* backupAction = new DriveStraightAction(robot, -25.0, -100.f);
+        backupAction->SetAccel(1000);
+        backupAction->SetDecel(1000);
+        CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {headAction, backupAction});
+        StartActing(robot, compoundAction);
         
         
         // Start calibration computation
@@ -525,7 +535,7 @@ namespace Cozmo {
                          "%zu images", robot.GetVisionComponent().GetNumStoredCameraCalibrationImages());
         robot.GetVisionComponent().EnableMode(VisionMode::ComputingCalibration, true);
         _calibrationReceived = false;
-        _holdUntilTime = currentTime_sec + 10.f;
+        _holdUntilTime = currentTime_sec + _kCalibrationTimeout_sec;
         SetCurrState(FactoryTestState::WaitForCameraCalibration);
         break;
       }
@@ -533,18 +543,38 @@ namespace Cozmo {
       {
         if (_calibrationReceived) {
           
-          // Backup and read tool code at the same time.
-          // Backing up so that it is more likely to execute a straight line path to the
-          // the following predock pose.
           ReadToolCodeAction* toolCodeAction = new ReadToolCodeAction(robot, false);
-          DriveStraightAction* backupAction = new DriveStraightAction(robot, -25.0, -100.f);
-          CompoundActionParallel* compoundAction = new CompoundActionParallel(robot, {toolCodeAction, backupAction});
-          toolCodeAction->ShouldEmitCompletionSignal(true);
           
           if (USING_EP3) {
           // Read lift tool code
-          StartActing(robot, compoundAction,
+          StartActing(robot, toolCodeAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
+                        
+                        // Save tool code images to robot (whether it succeeded to read code or not)
+                        if (robot.GetVisionComponent().WriteToolCodeImagesToRobot([this,&robot](std::vector<NVStorage::NVResult>& results){
+                                                                                    // Clear tool code images from VisionSystem
+                                                                                    robot.GetVisionComponent().ClearToolCodeImages();
+                                                                                    
+                                                                                    u32 numFailures = 0;
+                                                                                    for (auto r : results) {
+                                                                                      if (r != NVStorage::NVResult::NV_OKAY) {
+                                                                                        ++numFailures;
+                                                                                      }
+                                                                                    }
+                                                                                    
+                                                                                    if (numFailures > 0) {
+                                                                                      PRINT_NAMED_WARNING("BehaviorFactoryTest.WriteToolCodeImages.FAILED", "%d failures", numFailures);
+                                                                                      EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
+                                                                                    } else {
+                                                                                      PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCodeImages.SUCCESS", "");
+                                                                                    }
+                                                                                  }) != RESULT_OK)
+                        {
+                          EndTest(robot, FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
+                          return false;
+                        }
+                        
+                        // Check result of tool code read
                         if (result != ActionResult::SUCCESS) {
                           EndTest(robot, FactoryTestResultCode::READ_TOOL_CODE_FAILED);
                           return false;
@@ -575,18 +605,22 @@ namespace Cozmo {
                         if (ENABLE_NVSTORAGE_WRITES) {
                           u8 buf[info.Size()];
                           size_t numBytes = info.Pack(buf, sizeof(buf));
-                          robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes,
+                          if (!robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo, buf, numBytes,
                                                               [this,&robot](NVStorage::NVResult res) {
                                                                 if (res != NVStorage::NVResult::NV_OKAY) {
                                                                   EndTest(robot, FactoryTestResultCode::TOOL_CODE_WRITE_FAILED);
                                                                 } else {
                                                                   PRINT_NAMED_INFO("BehaviorFactoryTest.WriteToolCode.Success", "");
                                                                 }
-                                                              });
+                                                              }))
+                          {
+                            EndTest(robot, FactoryTestResultCode::TOOL_CODE_WRITE_FAILED);
+                            return false;
+                          }
+                          
                         }
                         return true;
-                      },
-                      toolCodeAction->GetTag());
+                      });
           }; // if (USING_EP3)
 
           SetCurrState(FactoryTestState::ReadLiftToolCode);
@@ -609,7 +643,18 @@ namespace Cozmo {
         //action->SetMotionProfile(_motionProfile);
         StartActing(robot, action,
                     [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                      if (result != ActionResult::SUCCESS) {
+                      // NOTE: This result check should be ok, but in sim the action often doesn't result in
+                      // the robot being exactly where it's supposed to be so the action itself sometimes fails.
+                      // When robot path following is improved (particularly in sim) this physical check can be removed.
+                      if (result != ActionResult::SUCCESS && robot.IsPhysical()) {
+                        PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.GotoPrePickupPoseFailed",
+                                            "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
+                                            robot.GetPose().GetTranslation().x(),
+                                            robot.GetPose().GetTranslation().y(),
+                                            robot.GetPose().GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees(),
+                                            _prePickupPose.GetTranslation().x(),
+                                            _prePickupPose.GetTranslation().y(),
+                                            _prePickupPose.GetRotationMatrix().GetAngleAroundAxis<'Z'>().getDegrees());
                         EndTest(robot, FactoryTestResultCode::GOTO_PRE_PICKUP_POSE_ACTION_FAILED);
                       } else {
                         _holdUntilTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + 1.0f;

@@ -1441,7 +1441,7 @@ namespace Cozmo {
     return lastResult;
   }
   
-  Result VisionComponent::WriteCalibrationImagesToRobot(WriteCalibrationImagesToRobotCallback callback)
+  Result VisionComponent::WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback)
   {
     auto calibImages = _visionSystem->GetCalibrationImages();
     
@@ -1486,9 +1486,9 @@ namespace Cozmo {
       */
       
       // Write images to robot
+      PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingWrite", "Image %d", imgIdx);
       bool res = true;
       if (imgIdx < calibImages.size() - 1) {
-        PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingWrite", "Image %d", imgIdx);
         res = _robot.GetNVStorageComponent().Write(calibImageTags[imgIdx], &imgVec,
                                                    [this](NVStorage::NVResult res) {
                                                     _writeCalibImagesToRobotResults.push_back(res);
@@ -1531,6 +1531,93 @@ namespace Cozmo {
     return (res == true ? RESULT_OK : RESULT_FAIL);
     
     
+  }
+  
+  Result VisionComponent::ClearToolCodeImages()
+  {
+    if(nullptr == _visionSystem || !_visionSystem->IsInitialized())
+    {
+      PRINT_NAMED_ERROR("VisionComponent.ClearToolCodeImages.VisionSystemNotReady", "");
+      return RESULT_FAIL;
+    }
+    else
+    {
+      return _visionSystem->ClearToolCodeImages();
+    }
+  }
+  
+  size_t VisionComponent::GetNumStoredToolCodeImages() const
+  {
+    return _visionSystem->GetNumStoredToolCodeImages();
+  }
+  
+  Result VisionComponent::WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback)
+  {
+    auto images = _visionSystem->GetToolCodeImages();
+    
+    // Make sure there is no more than 2 images in the list
+    if (images.size() != 2) {
+      PRINT_NAMED_INFO("VisionComponent.WriteToolCodeImagesToRobot.TooManyOrTooFewImages",
+                       "%zu images (Need exactly 2 images)", _visionSystem->GetNumStoredToolCodeImages());
+      return RESULT_FAIL;
+    }
+    
+    PRINT_NAMED_INFO("VisionComponent.WriteToolCodeImagesToRobot.StartingWrite",
+                     "%zu images", _visionSystem->GetNumStoredToolCodeImages());
+    _writeToolCodeImagesToRobotResults.clear();
+    
+    
+    static const NVStorage::NVEntryTag toolCodeImageTags[2] = {NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft, NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight};
+    
+    // Write images to robot
+    u32 imgIdx = 0;
+    for (auto const& img : images)
+    {
+      // Compress to jpeg
+      std::vector<u8> imgVec;
+      cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 75}));
+      
+      /*
+       std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
+       FILE* fp = fopen(imgFilename.c_str(), "w");
+       fwrite(imgVec.data(), imgVec.size(), 1, fp);
+       fclose(fp);
+       */
+      
+      
+      // Write images to robot
+      PRINT_NAMED_DEBUG("VisionComponent.WriteToolCodeImagesToFile.RequestingWrite", "Image %d", imgIdx);
+      bool res = true;
+      if (imgIdx < images.size() - 1) {
+        res = _robot.GetNVStorageComponent().Write(toolCodeImageTags[imgIdx], &imgVec,
+                                                   [this](NVStorage::NVResult res) {
+                                                     _writeToolCodeImagesToRobotResults.push_back(res);
+                                                   });
+      } else {
+        res = _robot.GetNVStorageComponent().Write(toolCodeImageTags[imgIdx], &imgVec,
+                                                   [this, callback](NVStorage::NVResult res) {
+                                                     _writeToolCodeImagesToRobotResults.push_back(res);
+                                                     
+                                                     std::string resStr = "";
+                                                     for(auto r : _writeToolCodeImagesToRobotResults) {
+                                                       resStr += EnumToString(r) + std::string(", ");
+                                                     }
+                                                     PRINT_NAMED_DEBUG("VisionComponent.WriteToolCodeImagesToFile.Complete", "%s", resStr.c_str());
+                                                     
+                                                     if (callback) {
+                                                       callback(_writeToolCodeImagesToRobotResults);
+                                                     }
+                                                   });
+      }
+      
+      if (!res) {
+        return RESULT_FAIL;
+      }
+      
+      ++imgIdx;
+    }
+    
+    return RESULT_OK;
   }
   
   inline static size_t GetPaddedNumBytes(size_t numBytes)
