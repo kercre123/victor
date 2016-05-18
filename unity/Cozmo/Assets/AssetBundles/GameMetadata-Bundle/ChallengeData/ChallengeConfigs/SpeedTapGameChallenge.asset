@@ -15,14 +15,12 @@ MonoBehaviour:
   _ChallengeID: SpeedTapGame
   _ChallengeTitleLocKey: speedTap.title
   _ChallengeDescriptionLocKey: speedTap.description
-  _ChallengeIcon: {fileID: 21300000, guid: 99869049e36d148d2b8f194100de1639, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: e227610e9173641e688fc8d5b8714c49, type: 3}
   _UnlockId:
     _EnumValueAsString: SpeedTapGame
     _EnumValue: 5
-  _HowToPlayDialogContentLocKey: speedTap.text.howToPlay
-  _HowToPlayDialogContentPrefab: {fileID: 0}
   _Music:
-    _Music: 1944187438
+    _Music: 1971384320
   MinigameConfig: {fileID: 11400000, guid: 0094ba7b384ea408dae405fb7e1b021d, type: 2}
   DifficultyOptions:
   - DifficultyId: 0
@@ -30,7 +28,7 @@ MonoBehaviour:
       Key: minigame.difficulty.easy
     DifficultyDescription:
       Key: speedTap.difficulty.easyDescription
-    AnimationPrefab: {fileID: 0}
+    AnimationPrefab: {fileID: 199182, guid: 67543091c15c74367b85fcdf736e709d, type: 2}
     LockedDifficultyDescription:
       Key: speedTap.difficulty.easyDescription.locked
   - DifficultyId: 1
@@ -38,7 +36,7 @@ MonoBehaviour:
       Key: minigame.difficulty.medium
     DifficultyDescription:
       Key: speedTap.difficulty.mediumDescription
-    AnimationPrefab: {fileID: 0}
+    AnimationPrefab: {fileID: 199182, guid: 67543091c15c74367b85fcdf736e709d, type: 2}
     LockedDifficultyDescription:
       Key: speedTap.difficulty.mediumDescription.locked
   - DifficultyId: 2
@@ -46,7 +44,7 @@ MonoBehaviour:
       Key: minigame.difficulty.hard
     DifficultyDescription:
       Key: speedTap.difficulty.hardDescription
-    AnimationPrefab: {fileID: 0}
+    AnimationPrefab: {fileID: 199182, guid: 67543091c15c74367b85fcdf736e709d, type: 2}
     LockedDifficultyDescription:
       Key: speedTap.difficulty.hardDescription.locked
   - DifficultyId: 3
@@ -54,6 +52,6 @@ MonoBehaviour:
       Key: minigame.difficulty.expert
     DifficultyDescription:
       Key: speedTap.difficulty.expertDescription
-    AnimationPrefab: {fileID: 0}
+    AnimationPrefab: {fileID: 199182, guid: 67543091c15c74367b85fcdf736e709d, type: 2}
     LockedDifficultyDescription:
       Key: speedTap.difficulty.expertDescription.locked

@@ -56,20 +56,6 @@ public class ChallengeData : ScriptableObject {
   }
 
   [SerializeField]
-  protected string _HowToPlayDialogContentLocKey = null;
-
-  public string HowToPlayDialogContentLocKey {
-    get { return _HowToPlayDialogContentLocKey; }
-  }
-
-  [SerializeField]
-  protected GameObject _HowToPlayDialogContentPrefab;
-
-  public GameObject HowToPlayDialogContentPrefab {
-    get { return _HowToPlayDialogContentPrefab; }
-  }
-
-  [SerializeField]
   protected MusicStateWrapper _Music;
 
   public Anki.Cozmo.Audio.GameState.Music DefaultMusic {

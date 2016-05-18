@@ -12,9 +12,23 @@ namespace Cozmo {
       private const float kAnimYOffset = 0.0f;
       private const float kAnimDur = 0.25f;
 
+      private float _AnimationXOffset;
+
       public float AnimationXOffset {
-        set;
-        private get;
+        set {
+          _AnimationXOffset = value;
+          bool isOnLeft = (_AnimationXOffset < 0);
+
+          // Widget on the left; use the left circuit
+          _LeftCircuitry.gameObject.SetActive(isOnLeft);
+          _RightCircuitry.gameObject.SetActive(!isOnLeft);
+
+          // Flip background x scale if on left
+          if (isOnLeft) {
+            _Background.gameObject.transform.localScale = new Vector3(-1, 1, 1);
+          }
+        }
+        private get { return _AnimationXOffset; }
       }
 
       [SerializeField]
@@ -37,6 +51,15 @@ namespace Cozmo {
 
       [SerializeField]
       private Canvas _WinnerCanvas;
+
+      [SerializeField]
+      private Image _LeftCircuitry;
+
+      [SerializeField]
+      private Image _RightCircuitry;
+
+      [SerializeField]
+      private Image _Background;
 
       public int MaxRounds {
         set {
