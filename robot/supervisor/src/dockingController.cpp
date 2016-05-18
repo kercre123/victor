@@ -37,7 +37,7 @@
 #define IGNORE_FAST_ROTATING_ERRSIG 0
 
 // Whether or not to adjust the head angle to try to look towards the block based on our error signal
-#define TRACK_BLOCK 0
+#define TRACK_BLOCK 1
 
 
 namespace Anki {
@@ -189,6 +189,14 @@ namespace Anki {
         u8 maxDockRetries_ = 2;
         Anki::Embedded::Pose2d backupPose_; // Pose of robot when it started to backup
         
+        // For Hybrid Docking: the previous block pose used to determine if the block or we have moved weirdly
+        // so we should acquire a new docking error signal and use it to plan a new path
+        f32 prev_blockPose_x_ = -1;
+        f32 prev_blockPose_y_ = -1;
+        f32 prev_blockPose_a_ = -1;
+        const f32 DELTA_BLOCKPOSE_X_TOL_MM = 5;
+        const f32 DELTA_BLOCKPOSE_Y_TOL_MM = 5;
+        const f32 DELTA_BLOCKPOSE_A_TOL_RAD = DEG_TO_RAD(6);
        
         const u8 DIST_TO_BACKUP_ON_FAILURE_MM = 60;
 
@@ -196,6 +204,9 @@ namespace Anki {
         // Allows us to slow down when we are close to the dockPose
         const f32 finalDockSpeed_mmps_ = 20;
 
+        // When hybrid docking the hanns maneuver tolerance for rel_x needs to be increased since we didn't push the
+        // block
+        const u8 HYBRID_REL_X_TOL_MM = 4;
 
         // If the robot's pose relative to the dockPose is more than these tolerances off it is not in position and
         // should backup and retry docking
@@ -234,6 +245,7 @@ namespace Anki {
         const f32 DOCKING_K2 = 12.f;
         const f32 DOCKING_PATH_DIST_OFFSET_CAP_MM = 10;
         const f32 DOCKING_PATH_ANG_OFFSET_CAP_RAD = 0.4;
+        bool appliedGains_ = false;
         
         // Values related to our path to get use from our current pose to dockPose
         const u8 DIST_AWAY_FROM_BLOCK_FOR_PT_MM = 60;
@@ -268,13 +280,15 @@ namespace Anki {
         
         DockingResult dockingResult_ = DOCK_UNKNOWN;
         
+        bool processedDockingErrorMsg_ = false;
+        
       } // "private" namespace
 
       void SetDockingMethod(DockingMethod method)
       {
         if(!IsBusy())
         {
-          AnkiDebug(5, "DockingController", 400, "Setting docking method: %d", 1, method);
+          AnkiDebug( 5, "DockingController", 400, "Setting docking method: %d", 1, method);
           dockingMethod_ = method;
         }
       }
@@ -324,6 +338,35 @@ namespace Anki {
         maxDockRetries_ = numRetries;
       }
 
+      // Saves previous gains and applies new docking specific ones
+      void ApplyDockingSteeringGains()
+      {
+        if(appliedGains_)
+        {
+          return;
+        }
+        
+        prevK1_ = SteeringController::GetK1Gain();
+        prevK2_ = SteeringController::GetK2Gain();
+        prevPathDistOffsetCap_ = SteeringController::GetPathDistOffsetCap();
+        prevPathAngOffsetCap_ = SteeringController::GetPathAngOffsetCap();
+        
+        SteeringController::SetGains(DOCKING_K1,
+                                     DOCKING_K2,
+                                     DOCKING_PATH_DIST_OFFSET_CAP_MM,
+                                     DOCKING_PATH_ANG_OFFSET_CAP_RAD);
+        appliedGains_ = true;
+      }
+      
+      // Sets the gains back to the original ones only if new gains were applied
+      void RestoreSteeringGains()
+      {
+        if(appliedGains_)
+        {
+          SteeringController::SetGains(prevK1_, prevK2_, prevPathDistOffsetCap_, prevPathAngOffsetCap_);
+          appliedGains_ = false;
+        }
+      }
 
       // Returns true if the last known pose of the marker is fully within
       // the horizontal field of view of the camera.
@@ -479,11 +522,45 @@ namespace Anki {
 
       Result Update()
       {
+      
+        // If we failed to dock and are now backing up ignore error signals until we are
+        // DIST_TO_BACKUP_ON_FAILURE_MM away from our initial backing up pose
+        if(failureMode_ == BACKING_UP)
+        {
+          if(dockingErrSignalMsgReady_)
+          {
+            // Keep looking at marker while backing up
+            f32 desiredHeadAngle = atan_fast( (dockingErrSignalMsg_.z_height - NECK_JOINT_POSITION[2])/dockingErrSignalMsg_.x_distErr);
+            HeadController::SetDesiredAngle(desiredHeadAngle);
+          }
+          
+          if(Localization::GetDistTo(backupPose_.x(), backupPose_.y()) > DIST_TO_BACKUP_ON_FAILURE_MM)
+          {
+            failureMode_ = NO_FAILURE;
+            
+            // If we are doing hybrid docking then we want to backup when not in position and then fail
+            // so if action retries we are close to predock pose
+            if(dockingMethod_ == HYBRID_DOCKING)
+            {
+              StopDocking(DOCK_FAILURE_RETRY);
+            }
+          }
+          else
+          {
+            // While we are backing up we don't want to time out due to ignoring error signals so fake time
+            lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
+            return RESULT_OK;
+          }
+        }
+      
+        processedDockingErrorMsg_ = false;
+      
         // Get any docking error signal available from the vision system
         // and update our path accordingly.
         while( dockingErrSignalMsgReady_ )
         {
           dockingErrSignalMsgReady_ = false;
+          processedDockingErrorMsg_ = true;
 
           // If we're not actually docking, just toss the dockingErrSignalMsg_.
           if (mode_ == IDLE) {
@@ -495,22 +572,6 @@ namespace Anki {
           {
             StopDocking(DOCK_FAILURE_TOO_HIGH);
             return RESULT_FAIL;
-          }
-          
-          // If we failed to dock and are now backing up ignore error signals until we are
-          // DIST_TO_BACKUP_ON_FAILURE_MM away from our initial backing up pose
-          if(failureMode_ == BACKING_UP)
-          {
-            if(Localization::GetDistTo(backupPose_.x(), backupPose_.y()) > DIST_TO_BACKUP_ON_FAILURE_MM)
-            {
-              failureMode_ = NO_FAILURE;
-            }
-            else
-            {
-              // While we are backing up we don't want to time out due to ignoring error signals so fake time
-              lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
-            }
-            break;
           }
 
 #if(0)
@@ -697,8 +758,11 @@ namespace Anki {
                 // distances to the dock pose to determine if we are in position
                 if(!markerlessDocking_)
                 {
+                  // Since hybrid docking doesn't plan into the block the error signal will be slightly larger
+                  // when we finish traversing the path so increase the x_dist_err tolerance
+                  f32 rel_x_tol_mm = (dockingMethod_ == HYBRID_DOCKING ? HYBRID_REL_X_TOL_MM : 0);
                   if((HAL::GetTimeStamp() - dockingErrSignalMsg_.timestamp) <= TIME_SINCE_LAST_ERRSIG &&
-                     (dockingErrSignalMsg_.x_distErr > pointOfNoReturnDistMM_ ||
+                     (dockingErrSignalMsg_.x_distErr > pointOfNoReturnDistMM_ + rel_x_tol_mm ||
                       ABS(dockingErrSignalMsg_.y_horErr) > LATERAL_DOCK_TOLERANCE_AT_DOCK_MM ||
                       ABS(dockingErrSignalMsg_.angleErr) > ERRMSG_NOT_IN_POSITION_ANGLE_TOL))
                   {
@@ -784,6 +848,10 @@ namespace Anki {
                   {
                     SendDockingStatusMessage(STATUS_DOING_HANNS_MANEUVER);
                     AnkiDebug( 5, "DockingController", 425, "Executing Hanns maneuver", 0);
+                    
+                    // Hanns Maneuver was accidentally tuned to work with specific gains so apply them
+                    ApplyDockingSteeringGains();
+                    
                     f32 x;
                     f32 y;
                     Radians a;
@@ -875,10 +943,13 @@ namespace Anki {
               {
                 AnkiDebug( 5, "DockingController", 416, "vert:%f hort:%f rel_x:%f rel_y:%f t:%d", 5, rel_vert_dist_block, ABS(rel_horz_dist_block), dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, (int)(HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp));
                 AnkiDebug( 5, "DockingController", 38, "*** DOCKING SUCCESS ***", 0);
-                StopDocking(DOCK_SUCCESS);
                 if(numDockingFails_ > 0)
                 {
                   StopDocking(DOCK_SUCCESS_RETRY);
+                }
+                else
+                {
+                  StopDocking(DOCK_SUCCESS);
                 }
               }
             }
@@ -898,28 +969,24 @@ namespace Anki {
 
         return retVal;
 
-      } // Update()
+      } // Update()-
 
 
       void SetRelDockPose(f32 rel_x, f32 rel_y, f32 rel_rad, TimeStamp_t t)
       {
         // Check for readings that we do not expect to get
-        if (rel_x < 0.f || ABS(rel_rad) > 0.75f*PIDIV2_F
-            ) {
+        if (rel_x < 0.f || ABS(rel_rad) > 0.75f*PIDIV2_F) {
           AnkiWarn( 5, "DockingController", 429, "Ignoring out of range docking error signal (%f, %f, %f)", 3, rel_x, rel_y, rel_rad);
           return;
         }
-
+        
+        // If we are idle or already succeeded docking
         if (mode_ == IDLE || DidLastDockSucceed()) {
           // We already accomplished the dock. We're done!
           return;
         }
         
-        if (PathFollower::IsTraversingPath() && dockingMethod_ == BLIND_DOCKING) {
-          return;
-        }
-
-
+        // Blind docking will ignore error signals when rotating fast
         if(dockingMethod_ == BLIND_DOCKING || IGNORE_FAST_ROTATING_ERRSIG)
         {
           if (ABS(IMUFilter::GetRotationSpeed()) > 0.3f) {
@@ -956,6 +1023,64 @@ namespace Anki {
 
           followingBlockNormalPath_ = false;
         }
+        
+        // DOCK_OFFSET_DIST_X_OFFSET is added to the dockOffsetDistX_ here because when the robot is docked with the block
+        // rel_x is generally greater than dockOffsetDistX_
+        if (rel_x <= dockOffsetDistX_+DOCK_OFFSET_DIST_X_OFFSET && ABS(rel_y) <= LATERAL_DOCK_TOLERANCE_AT_DOCK_MM) {
+#if(DEBUG_DOCK_CONTROLLER)
+          AnkiDebug( 5, "DockingController", 41, "DOCK POSE REACHED (dockOffsetDistX = %f)", 1, dockOffsetDistX_+DOCK_OFFSET_DIST_X_OFFSET);
+#endif
+          return;
+        }
+
+        // This error signal is with respect to the pose the robot was at at time dockMsg.timestamp
+        // Find the pose the robot was at at that time and transform it to be with respect to the
+        // robot's current pose
+        Anki::Embedded::Pose2d histPose;
+        if ((t == 0) || (t == HAL::GetTimeStamp())) {
+          Localization::GetCurrentMatPose(histPose.x(), histPose.y(), histPose.angle());
+        }  else {
+          Localization::GetHistPoseAtTime(t, histPose);
+        }
+        
+#if(DEBUG_DOCK_CONTROLLER)
+        Anki::Embedded::Pose2d currPose;
+        Localization::GetCurrentMatPose(currPose.x(), currPose.y(), currPose.angle());
+        AnkiDebug( 5, "DockingController", 42, "HistPose %f %f %f (t=%d), currPose %f %f %f (t=%d)\n", 8,
+                  histPose.x(), histPose.y(), histPose.angle().getDegrees(), t,
+                  currPose.x(), currPose.y(), currPose.angle().getDegrees(), HAL::GetTimeStamp());
+#endif
+        
+        // Compute absolute block pose using error relative to pose at the time image was taken.
+        f32 distToBlock = sqrtf((rel_x * rel_x) + (rel_y * rel_y));
+        f32 angle_to_block = atan2_acc(rel_y, rel_x);
+        f32 blockPose_x = histPose.x() + distToBlock * cosf(angle_to_block + histPose.GetAngle().ToFloat());
+        f32 blockPose_y = histPose.y() + distToBlock * sinf(angle_to_block + histPose.GetAngle().ToFloat());
+        f32 blockPose_a = (histPose.GetAngle() + rel_rad).ToFloat();
+        
+        bool hybridDockingAcquireNewSignal = false;
+        // If we are hybrid docking check if blockPose has changed too much indicating
+        // something moved unexpectedly
+        if(dockingMethod_ == HYBRID_DOCKING && prev_blockPose_x_ != -1)
+        {
+          if(ABS(prev_blockPose_x_ - blockPose_x) > DELTA_BLOCKPOSE_X_TOL_MM ||
+             ABS(prev_blockPose_y_ - blockPose_y) > DELTA_BLOCKPOSE_Y_TOL_MM ||
+             ABS(prev_blockPose_a_ - blockPose_a) > DELTA_BLOCKPOSE_A_TOL_RAD)
+          {
+            AnkiDebug( 5, "DockingController", 450, "Acquire new signal %f %f %f", 3,
+                      prev_blockPose_x_ - blockPose_x,
+                      prev_blockPose_y_ - blockPose_y,
+                      prev_blockPose_a_ - blockPose_a);
+            hybridDockingAcquireNewSignal = true;
+          }
+        }
+        
+        // Ignore error signal if blind docking or hybird docking and we dont need to acquire a new signal
+        if (PathFollower::IsTraversingPath() &&
+            (dockingMethod_ == BLIND_DOCKING ||
+            (dockingMethod_ == HYBRID_DOCKING && !hybridDockingAcquireNewSignal))) {
+          return;
+        }
 
         // Create new path that is aligned with the normal of the block we want to dock to.
         // End point: Where the robot origin should be by the time the robot has docked.
@@ -977,50 +1102,24 @@ namespace Anki {
         //               /
         //              +ve y-axis
 
-        // DOCK_OFFSET_DIST_X_OFFSET is added to the dockOffsetDistX_ here because when the robot is docked with the block
-        // rel_x is generally greater than dockOffsetDistX_ which is origin_to_lift_distance
-        if (rel_x <= dockOffsetDistX_+DOCK_OFFSET_DIST_X_OFFSET && ABS(rel_y) <= LATERAL_DOCK_TOLERANCE_AT_DOCK_MM) {
-#if(DEBUG_DOCK_CONTROLLER)
-          AnkiDebug( 5, "DockingController", 41, "DOCK POSE REACHED (dockOffsetDistX = %f)", 1, dockOffsetDistX_+DOCK_OFFSET_DIST_X_OFFSET);
-#endif
-          return;
-        }
+        // Update blockPose and prevBlockPose
+        blockPose_.x() = blockPose_x;
+        blockPose_.y() = blockPose_y;
+        blockPose_.angle() = blockPose_a;
 
-        // This error signal is with respect to the pose the robot was at at time dockMsg.timestamp
-        // Find the pose the robot was at at that time and transform it to be with respect to the
-        // robot's current pose
-        Anki::Embedded::Pose2d histPose;
-        if ((t == 0) || (t == HAL::GetTimeStamp())) {
-          Localization::GetCurrentMatPose(histPose.x(), histPose.y(), histPose.angle());
-        }  else {
-          Localization::GetHistPoseAtTime(t, histPose);
-        }
-
-#if(DEBUG_DOCK_CONTROLLER)
-        Anki::Embedded::Pose2d currPose;
-        Localization::GetCurrentMatPose(currPose.x(), currPose.y(), currPose.angle());
-        AnkiDebug( 5, "DockingController", 42, "HistPose %f %f %f (t=%d), currPose %f %f %f (t=%d)\n", 8,
-              histPose.x(), histPose.y(), histPose.angle().getDegrees(), t,
-              currPose.x(), currPose.y(), currPose.angle().getDegrees(), HAL::GetTimeStamp());
-#endif
-
-        // Compute absolute block pose using error relative to pose at the time image was taken.
-        f32 distToBlock = sqrtf((rel_x * rel_x) + (rel_y * rel_y));
-        f32 rel_angle_to_block = atan2_acc(rel_y, rel_x);
-        blockPose_.x() = histPose.x() + distToBlock * cosf(rel_angle_to_block + histPose.GetAngle().ToFloat());
-        blockPose_.y() = histPose.y() + distToBlock * sinf(rel_angle_to_block + histPose.GetAngle().ToFloat());
-        blockPose_.angle() = histPose.GetAngle() + rel_rad;
-
+        prev_blockPose_x_ = blockPose_.x();
+        prev_blockPose_y_ = blockPose_.y();
+        prev_blockPose_a_ = blockPose_.angle().ToFloat();
 
         // Field of view check
         if (markerOutOfFOV_) {
           // Marker has been outside field of view,
           // but the latest error signal may indicate that it is back in.
           if (IsMarkerInFOV(blockPose_, MARKER_WIDTH)) {
-            AnkiInfo( 5, "DockingController", 43, "Marker signal is INSIDE FOV\n", 0);
+            AnkiDebug( 5, "DockingController", 43, "Marker signal is INSIDE FOV\n", 0);
             markerOutOfFOV_ = false;
           } else {
-            //AnkiInfo( 5, "DockingController", 431, "Marker is expected to be out of FOV. Ignoring error signal\n", 0);
+            //AnkiDebug( 5, "DockingController", 431, "Marker is expected to be out of FOV. Ignoring error signal\n", 0);
             return;
           }
         }
@@ -1129,7 +1228,7 @@ namespace Anki {
         // Either try again with smaller radii or just let the controller
         // attempt to get on to a straight line normal path.
         if (followingBlockNormalPath_) {
-          if(dockingMethod_ == BLIND_DOCKING)
+          if(dockingMethod_ != TRACKER_DOCKING)
           {
             // Compute new starting point for path
             // HACK: Feeling lazy, just multiplying path by some scalar so that it's likely to be behind the current robot pose.
@@ -1140,7 +1239,7 @@ namespace Anki {
             PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
                                                  dockSpeed_mmps_, dockAccel_mmps2_, dockAccel_mmps2_);
             
-            //PRINT("Computing straight line path (%f, %f) to (%f, %f)\n", x_start_m, y_start_m, dockPose_.x(), dockPose_.y());
+            //AnkiDebug( 5, "DockingController", 456, "Computing straight line path (%f, %f) to (%f, %f)\n", 4,x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y());
           }
           else
           {
@@ -1275,17 +1374,10 @@ namespace Anki {
         mode_ = LOOKING_FOR_BLOCK;
         lastDockingErrorSignalRecvdTime_ = HAL::GetTimeStamp();
         
-        if(dockingMethod_ != BLIND_DOCKING)
+        // Change gains for tracker docking to smooth pathfollowing due to constantly changing path
+        if(dockingMethod_ == TRACKER_DOCKING)
         {
-          prevK1_ = SteeringController::GetK1Gain();
-          prevK2_ = SteeringController::GetK2Gain();
-          prevPathDistOffsetCap_ = SteeringController::GetPathDistOffsetCap();
-          prevPathAngOffsetCap_ = SteeringController::GetPathAngOffsetCap();
-          
-          SteeringController::SetGains(DOCKING_K1,
-                                       DOCKING_K2,
-                                       DOCKING_PATH_DIST_OFFSET_CAP_MM,
-                                       DOCKING_PATH_ANG_OFFSET_CAP_RAD);
+          ApplyDockingSteeringGains();
         }
       }
 
@@ -1347,11 +1439,12 @@ namespace Anki {
         
         failureMode_ = NO_FAILURE;
         
-        // Only set the gains back if we actually started docking
-        if(dockingStarted && dockingMethod_ != BLIND_DOCKING)
-        {
-          SteeringController::SetGains(prevK1_, prevK2_, prevPathDistOffsetCap_, prevPathAngOffsetCap_);
-        }
+        prev_blockPose_x_ = -1;
+        prev_blockPose_y_ = -1;
+        prev_blockPose_a_ = -1;
+        
+        RestoreSteeringGains();
+        
         dockingStarted = false;
       }
 
@@ -1385,7 +1478,6 @@ namespace Anki {
         dockingErrSignalMsg_ = msg;
         dockingErrSignalMsgReady_ = true;
       }
-
 
       } // namespace DockingController
     } // namespace Cozmo

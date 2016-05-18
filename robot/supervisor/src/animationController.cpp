@@ -451,7 +451,7 @@ namespace AnimationController {
           }
           default:
           {
-            AnkiWarn( 164, "AnimationController.ExpectedAudio", 450, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
+            AnkiWarn( 164, "AnimationController.ExpectedAudio", 455, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
             Clear();
             return false;
           }
