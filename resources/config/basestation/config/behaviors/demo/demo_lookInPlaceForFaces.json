@@ -21,7 +21,8 @@
   ],  
   "behaviorGroups": [
     "Demo",
-    "DemoFaces"
+    "DemoFaces",
+    "DemoRequestSpeedTap"    
   ],
   
   // -- configuration parameters for ExploreLookAroundInPlace
