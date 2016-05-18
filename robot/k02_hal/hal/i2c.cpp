@@ -148,6 +148,7 @@ void Anki::Cozmo::HAL::I2C::WriteReg(uint8_t slave, uint8_t addr, uint8_t data) 
   uint8_t cmd[2] = { addr, data };
 
   Write(SLAVE_WRITE(slave), cmd, sizeof(cmd), I2C_FORCE_START);
+  Flush();
 }
 
 uint8_t Anki::Cozmo::HAL::I2C::ReadReg(uint8_t slave, uint8_t addr) {
