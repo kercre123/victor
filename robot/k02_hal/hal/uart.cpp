@@ -120,7 +120,6 @@ void Anki::Cozmo::HAL::UART::Transmit(void) {
     case TRANSMIT_RECEIVE:
       while (UART0_RCFIFO) {
         uint8_t data = UART0_D;
-        UART::DebugPutc(data);
 
         if (rx_source != SPI_SOURCE_BODY) {
           // Shifty header

@@ -77,7 +77,7 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
   if (imu_changed) {
     // Attempt to find the adjustment for the update counter
     uint8_t offset = 0x80 + 0x40 - (imu_state.timestamp & ~0x80);
-    update_counter = offset * MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY + ADJUST_OVERSHOOT;
+    update_counter = offset * (MANAGE_FREQUENCY / IMU_UPDATE_FREQUENCY) + ADJUST_OVERSHOOT;
     
     IMU::frameNumberStamp = CameraGetFrameNumber();
     IMU::scanLineStamp    = CameraGetScanLine();
@@ -91,8 +91,8 @@ void Anki::Cozmo::HAL::IMU::Manage(void) {
       for (int i = 0; i < sizeof(IMUData); i++)
         UART::DebugPrintf("%02x ", ((uint8_t*) data)[i]);
       UART::DebugPrintf("\n");
+      UART::DebugPutc('.');
     #endif
-    UART::DebugPutc('.');
   }
 
   // Adjust up the IMU update frequency
