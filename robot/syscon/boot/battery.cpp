@@ -43,8 +43,8 @@ void Battery::init()
 }
 
 void Battery::powerOn() {
-  // Enable charger
-  nrf_gpio_pin_set(PIN_CHARGE_EN);
+  // Disable charger during boot
+  nrf_gpio_pin_clear(PIN_CHARGE_EN);
   nrf_gpio_cfg_output(PIN_CHARGE_EN);
  
   // Syscon power - this should always be on until battery fail
