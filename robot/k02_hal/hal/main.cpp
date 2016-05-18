@@ -29,6 +29,8 @@ GlobalDataToBody g_dataToBody;
 
 extern int StartupSelfTest(void);
 
+//#define UPDATE_BOOTLOADER
+
 namespace Anki
 {
   namespace Cozmo
@@ -88,7 +90,9 @@ int main (void)
   RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
   RCM_RPFW = 16;
 
-  //update_bootloader();
+  #ifdef UPDATE_BOOTLOADER
+  update_bootloader();
+  #endif
   
   Power::enableEspressif();
 
@@ -116,10 +120,16 @@ int main (void)
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
 
   // Run the main thread
+  #ifndef UPDATE_BOOTLOADER
   do {
     // Wait for head body sync to occur
     UART::WaitForSync();
   } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
+  #else
+  do {
+    UART::WaitForSync();
+  } while(true);
+  #endif
   #else
 
   FCC::start();
