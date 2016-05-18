@@ -213,7 +213,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
     foreach (LogPacket logPacket in _LogToClipboard) {
       logFull += logPacket.GetStringNoFromatting() + "\n";
     }
-    CozmoBinding.SendToClipboard(logFull);
+    CozmoBinding.SendToClipboard(BuildFlags.kGitHash + logFull);
     GUIUtility.systemCopyBuffer = logFull;
   }
 
