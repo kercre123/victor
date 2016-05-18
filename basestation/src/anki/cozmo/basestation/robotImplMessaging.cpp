@@ -38,8 +38,9 @@
 #define HANDLE_PROX_OBSTACLES 0
 
 // Prints the IDs of the active blocks that are on but not currently
-// talking to a robot. Prints roughly once/sec.
-#define PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS 0
+// talking to a robot whose rssi is less than this threshold.
+// Prints roughly once/sec.
+#define DISCOVERED_OBJECTS_RSSI_PRINT_THRESH 55
 
 // Filter that makes chargers not discoverable
 #define IGNORE_CHARGER_DISCOVERY 0
@@ -287,37 +288,42 @@ void Robot::HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& 
   
 void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  if (_enableDiscoveredObjectsBroadcasting) {
-    const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
-    
-    // Check object type
-    ObjectType objType = ObservableObject::GetTypeFromActiveObjectType(payload.device_type);
-    switch(objType) {
-      case ObjectType::Charger_Basic:
-      {
-        if (IGNORE_CHARGER_DISCOVERY) {
-          return;
-        }
-        break;
-      }
-      case ObjectType::Unknown:
-      {
-        PRINT_NAMED_WARNING("Robot.HandleActiveObjectDiscovered.UnknownType",
-                            "FactoryID: 0x%x, device_type: 0x%hx",
-                            payload.factory_id, payload.device_type);
+
+  const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
+  
+  // Check object type
+  ObjectType objType = ObservableObject::GetTypeFromActiveObjectType(payload.device_type);
+  switch(objType) {
+    case ObjectType::Charger_Basic:
+    {
+      if (IGNORE_CHARGER_DISCOVERY) {
         return;
       }
-      default:
-        break;
+      break;
     }
-    
-    if (_discoveredObjects.find(payload.factory_id) == _discoveredObjects.end() || PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS) {
+    case ObjectType::Unknown:
+    {
+      PRINT_NAMED_WARNING("Robot.HandleActiveObjectDiscovered.UnknownType",
+                          "FactoryID: 0x%x, device_type: 0x%hx",
+                          payload.factory_id, payload.device_type);
+      return;
+    }
+    default:
+      break;
+  }
+  
+  _discoveredObjects[payload.factory_id].factoryID = payload.factory_id;
+  _discoveredObjects[payload.factory_id].objectType = objType;
+  _discoveredObjects[payload.factory_id].lastDiscoveredTimeStamp = GetLastMsgTimestamp();  // Not super accurate, but this doesn't need to be
+
+  if (_enableDiscoveredObjectsBroadcasting) {
+
+    if (payload.rssi < DISCOVERED_OBJECTS_RSSI_PRINT_THRESH) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectDiscovered.ObjectDiscovered",
                        "Type: %s, FactoryID 0x%x, rssi %d, (currTime %d)",
                        EnumToString(objType), payload.factory_id, payload.rssi, GetLastMsgTimestamp());
     }
-    _discoveredObjects[payload.factory_id] = GetLastMsgTimestamp();  // Not super accurate, but this doesn't need to be
-
+    
     // Send ObjectAvailable to game
     ExternalInterface::ObjectAvailable m(payload.factory_id, objType, payload.rssi);
     Broadcast(ExternalInterface::MessageEngineToGame(std::move(m)));

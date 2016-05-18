@@ -78,7 +78,8 @@ namespace Cozmo {
   CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
   CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
   
-  CONSOLE_VAR(f32, kCalibDotSearchSize_mm,    "Vision.ToolCode",  4.5f);
+  CONSOLE_VAR(f32, kCalibDotSearchWidth_mm,   "Vision.ToolCode",  4.5f);
+  CONSOLE_VAR(f32, kCalibDotSearchHeight_mm,  "Vision.ToolCode",  6.5f);
   CONSOLE_VAR(f32, kCalibDotMinContrastRatio, "Vision.ToolCode",  1.1f);
   
   // For speed, compute motion detection on half-resolution images
@@ -120,6 +121,9 @@ namespace Cozmo {
   Result VisionSystem::Init(const Json::Value& config)
   {
     _isInitialized = false;
+    
+    _isCalibrating = false;
+    _isReadingToolCode = false;
     
 #   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
     // Force the NN library to load _now_, not on first use
@@ -2365,6 +2369,19 @@ namespace Cozmo {
     _calibImages.clear();
     return RESULT_OK;
   }
+
+  Result VisionSystem::ClearToolCodeImages()
+  {
+    if(_isReadingToolCode) {
+      PRINT_NAMED_INFO("VisionSystem.ClearToolCodeImages.AlreadyReadingToolCode",
+                       "Cannot clear tool code images while already in the middle of reading tool codes.");
+      return RESULT_FAIL;
+    }
+    
+    _toolCodeImages.clear();
+    return RESULT_OK;
+  }
+
   
   // This is the regular Update() call
   Result VisionSystem::Update(const VisionPoseData&      poseData,
@@ -2568,12 +2585,13 @@ namespace Cozmo {
     
     ToolCodeInfo readToolCodeMessage;
     readToolCodeMessage.code = ToolCode::UnknownTool;
-    
+    _isReadingToolCode = true;
 
     auto cleanupLambda = [this,&readToolCodeMessage]() {
       this->_currentResult.toolCodes.push_back(readToolCodeMessage);
       this->EnableMode(VisionMode::ReadingToolCode, false);
       this->_firstReadToolCodeTime_ms = 0;
+      this->_isReadingToolCode = false;
       PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
     };
     
@@ -2666,7 +2684,7 @@ namespace Cozmo {
     const f32 holeArea = kDotHole_mm*kDotHole_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
     const f32 filledDotArea = kDotWidth_mm*kDotWidth_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
     const f32 kDotAreaFrac =  (filledDotArea - holeArea) /
-                              (4.f*kCalibDotSearchSize_mm * kCalibDotSearchSize_mm);
+                              (4.f*kCalibDotSearchWidth_mm * kCalibDotSearchHeight_mm);
     const f32 kMinDotAreaFrac   = 0.25f * kDotAreaFrac;
     const f32 kMaxDotAreaFrac   = 2.00f * kDotAreaFrac;
     const f32 kHoleAreaFrac     = holeArea / filledDotArea;
@@ -2675,15 +2693,16 @@ namespace Cozmo {
     
     Anki::Point2f camCen;
     std::vector<Anki::Point2f> observedPoints;
+    _toolCodeImages.clear();
     for(size_t iDot=0; iDot<projectedToolCodeDots.size(); ++iDot)
     {
       // Get an ROI around where we expect to see the dot in the image
       const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[iDot];
       Quad3f dotQuadRoi3d = {
-        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchHeight_mm, dotWrtLift3d.y() - kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchHeight_mm, dotWrtLift3d.y() + kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchHeight_mm, dotWrtLift3d.y() - kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchHeight_mm, dotWrtLift3d.y() + kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
       };
       
       Quad3f dotQuadRoi3dWrtCam;
@@ -2712,7 +2731,10 @@ namespace Cozmo {
       _camera.Project3dPoints(dotQuadRoi3dWrtCam, dotQuadRoi2d);
       
       Anki::Rectangle<s32> dotRectRoi(dotQuadRoi2d);
-      const Vision::Image dotRoi = image.GetROI(dotRectRoi);
+      
+      // Save ROI image for writing to robot's NVStorage
+      _toolCodeImages.emplace_back(image.GetROI(dotRectRoi));
+      const Vision::Image& dotRoi = _toolCodeImages.back();
       
       // Simple global threshold for binarization
       //Vision::Image invertedDotRoi = dotRoi.GetNegative();

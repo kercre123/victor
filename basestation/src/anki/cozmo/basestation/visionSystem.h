@@ -145,6 +145,10 @@ namespace Cozmo {
     };
     const std::vector<CalibImage>& GetCalibrationImages() const {return _calibImages;}
     const std::vector<Pose3d>& GetCalibrationPoses() const { return _calibPoses;}
+
+    Result ClearToolCodeImages();
+    size_t GetNumStoredToolCodeImages() const {return _toolCodeImages.size();}
+    const std::vector<Vision::Image>& GetToolCodeImages() const {return _toolCodeImages;}
     
     void StopTracking();
 
@@ -397,6 +401,8 @@ namespace Cozmo {
     // Tool code stuff
     TimeStamp_t                   _firstReadToolCodeTime_ms = 0;
     const TimeStamp_t             kToolCodeMotionTimeout_ms = 1000;
+    std::vector<Vision::Image>    _toolCodeImages;
+    bool                          _isReadingToolCode;
     
     // Calibration stuff
     static const u32              _kMinNumCalibImagesRequired = 4;

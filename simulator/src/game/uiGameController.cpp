@@ -283,6 +283,14 @@ namespace Anki {
       HandleNVStorageOpResult(msg);
     }
     
+    void UiGameController::HandleFactoryTestResultBase(ExternalInterface::FactoryTestResult const& msg)
+    {
+      PRINT_NAMED_INFO("HandleFactoryTestResult",
+                       "Test result: %s", EnumToString(msg.resultEntry.result));
+      
+      HandleFactoryTestResult(msg);
+    }
+    
     const std::vector<u8>* UiGameController::GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const
     {
       if (_recvdNVStorageData.find(tag) != _recvdNVStorageData.end()) {
@@ -415,6 +423,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::NVStorageOpResult:
             HandleNVStorageOpResultBase(message.Get_NVStorageOpResult());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::FactoryTestResult:
+            HandleFactoryTestResultBase(message.Get_FactoryTestResult());
             break;
           default:
             // ignore

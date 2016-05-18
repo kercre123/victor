@@ -59,6 +59,7 @@ namespace Cozmo {
     Pose3d _expectedChargerPose;
     std::vector<std::pair<f32,f32> > _camCalibPanAndTiltAngles;
     
+    static constexpr f32 _kCalibrationTimeout_sec = 8.f;
     static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
     static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(10);
     static constexpr f32 _kExpectedCubePoseDistThresh_mm = 30;

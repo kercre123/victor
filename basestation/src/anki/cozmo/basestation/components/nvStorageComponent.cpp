@@ -545,8 +545,8 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
     // Check if all writes have been confirmed for this write request
     if (_writeDataAckMap[baseTag].numTagsLeftToAck == 0) {
       PRINT_NAMED_INFO("NVStorageComponent.HandleNVOpResult.MsgWriteConfirmed",
-                       "BaseTag: %s, lastTag: 0x%x, writeNotErase: %d",
-                       baseTagStr, tag, _writeDataAckMap[baseTag].writeNotErase);
+                       "BaseTag: %s, lastTag: 0x%x, writeNotErase: %d, result: %s",
+                       baseTagStr, tag, _writeDataAckMap[baseTag].writeNotErase, EnumToString(payload.report.result));
       
       // Execute write complete callback
       if (_writeDataAckMap[baseTag].callback) {
@@ -559,8 +559,8 @@ void NVStorageComponent::HandleNVOpResult(const AnkiEvent<RobotInterface::RobotT
     
     if (payload.report.result != NVStorage::NVResult::NV_OKAY) {
       PRINT_NAMED_WARNING("NVStorageComponent.HandleNVOpResult.WriteOpFailed",
-                          "Tag: 0x%x, write: %d, result: %s",
-                          tag, payload.report.write, EnumToString(payload.report.result));
+                          "Tag: 0x%x, writeNotErase: %d, result: %s",
+                          tag, _writeDataAckMap[baseTag].writeNotErase, EnumToString(payload.report.result));
     }
     
   } else {
