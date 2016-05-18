@@ -158,8 +158,6 @@ void DMA2_IRQHandler(void) {
   DMA_CDNE = DMA_CDNE_CDNE(2);
   DMA_CINT = 2;
 
-  I2C::Disable();		
-
   // Don't check for silence, we had a drop
   if (ProcessDrop()) {
     return ;
