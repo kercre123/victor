@@ -7,7 +7,13 @@
 #include "MK02F12810.h"
 #include "hal/hardware.h"
 
+#define MAX_IRQS 4    // We have time for up to 4 I2C operations per drop
+
 #define I2C_C1_COMMON (I2C_C1_IICEN_MASK | I2C_C1_IICIE_MASK)
+
+// Cribbed from core_cm4.h - these versions inline properly
+#define EnableIRQ(IRQn) NVIC->ISER[(uint32_t)((int32_t)IRQn) >> 5] = (uint32_t)(1 << ((uint32_t)((int32_t)IRQn) & (uint32_t)0x1F))
+#define DisableIRQ(IRQn) NVIC->ICER[((uint32_t)(IRQn) >> 5)] = (1 << ((uint32_t)(IRQn) & 0x1F))
 
 // Internal Settings
 enum I2C_Control {
@@ -35,8 +41,9 @@ static volatile int _fifo_end;
 
 // Random state values
 static volatile bool _active = false;
-static volatile bool _enabled = false;
 static bool _send_reset = false;
+
+static int _irqsleft = 0; // int for performance
 
 // Read buffer
 static volatile void* _read_target = NULL;
@@ -123,10 +130,8 @@ void Anki::Cozmo::HAL::I2C::Init()
 }
 
 void Anki::Cozmo::HAL::I2C::Enable(void) {
-  if (_enabled) return ;
-
-  _enabled = true;
-  NVIC_EnableIRQ(I2C0_IRQn);
+  _irqsleft = MAX_IRQS;
+  EnableIRQ(I2C0_IRQn);
   
   if (!_active && _fifo_start != _fifo_end) {
     _active = true;
@@ -135,8 +140,7 @@ void Anki::Cozmo::HAL::I2C::Enable(void) {
 }
 
 void Anki::Cozmo::HAL::I2C::Disable(void) {
-  _enabled = false;
-  NVIC_DisableIRQ(I2C0_IRQn);
+  DisableIRQ(I2C0_IRQn);
 }
 
 // Register calls
@@ -192,7 +196,6 @@ void Anki::Cozmo::HAL::I2C::SetupRead(void* target, int size, i2c_callback cb) {
 static void Enqueue(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags) {
   using namespace Anki::Cozmo::HAL::I2C;
   
-  bool ena = _enabled;
   Disable();
     
   if (slave != _active_slave || flags & I2C_FORCE_START) {
@@ -211,16 +214,8 @@ static void Enqueue(uint8_t slave, const uint8_t *bytes, int len, uint8_t flags)
   while (len-- > 0) {
     write_queue(I2C_CTRL_SEND, *(bytes++));
   }
-
-  if (ena) {
-    Enable();
-
-    if (!_active) {
-      _active = true;
-      I2C0_Proc();
-    }
-  }
-
+  
+  // It's too racy to re-enable - just take the performance hit by starting next drop
   _send_reset = true;
 }
 
@@ -241,7 +236,10 @@ void Anki::Cozmo::HAL::I2C::Read(uint8_t slave, uint8_t flags) {
 
 static void Read_Handler(void) {
   using namespace Anki::Cozmo::HAL;
-
+  
+  if (0 == --_irqsleft)
+    DisableIRQ(I2C0_IRQn);
+  
   I2C0_S |= I2C_S_IICIF_MASK;
   
   bool complete = false;
@@ -272,6 +270,9 @@ __attribute__((section("CODERAM")))
 static void Write_Handler(void) {
   using namespace Anki::Cozmo::HAL;
   
+  if (0 == --_irqsleft)
+    DisableIRQ(I2C0_IRQn);
+    
   I2C0_S |= I2C_S_IICIF_MASK;
 
   if (_fifo_start == _fifo_end) {
