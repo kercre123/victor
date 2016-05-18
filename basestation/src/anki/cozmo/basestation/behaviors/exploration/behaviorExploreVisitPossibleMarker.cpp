@@ -78,6 +78,10 @@ Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
     // pick closes marker to us
     const Vec3f& dirToMarker = marker.pose.GetTranslation() - robot.GetPose().GetTranslation();
     const float distToMarkerSQ = dirToMarker.LengthSq();
+    if( distToMarkerSQ < std::pow( kEvpm_DistanceFromPossibleCubeMin_mm, 2) ) {
+      // ignore cubes which we are already close to
+      continue;
+    }
     if ( (nullptr==closestMarker) || (distToMarkerSQ<distToClosestSQ) )
     {
       closestMarker = &marker;
@@ -89,6 +93,10 @@ Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
   // we should have a closest marker
   if ( nullptr != closestMarker )
   {
+    PRINT_NAMED_DEBUG("BehaviorExploreVisitPossibleMarker.Init",
+                      "Approaching possible marker which if sqrt(%f)mm away",
+                      distToClosestSQ);
+    
     // calculate best approach position
     ApproachPossibleCube(robot, closestMarker->pose);
   
@@ -97,7 +105,7 @@ Result BehaviorExploreVisitPossibleMarker::InitInternal(Robot& robot)
   else
   {
     //this could happen if markers can be removed between IsRunnable and InitInternal
-    PRINT_NAMED_ERROR("BehaviorExploreVisitPossibleMarker.InitInternal", "Could not pick closest marker on init");
+    PRINT_NAMED_INFO("BehaviorExploreVisitPossibleMarker.InitInternal", "Could not pick closest marker on init");
     return Result::RESULT_FAIL;
   }
 
