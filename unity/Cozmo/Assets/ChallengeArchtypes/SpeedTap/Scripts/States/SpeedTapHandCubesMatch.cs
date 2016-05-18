@@ -5,7 +5,7 @@ namespace SpeedTap {
   public class SpeedTapHandCubesMatch : State {
 
     private SpeedTapGame _SpeedTapGame;
-    private const float kResultsCheckDelay = 0.025f;
+    private const float kResultsCheckDelay = 0.02f;
 
     private float _CozmoMovementDelay_sec;
     private float _StartTimestamp_sec;
@@ -47,7 +47,7 @@ namespace SpeedTap {
         // All the taps should have a "TAPPED_BLOCK" RobotAnimationEvent.
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
       }
-      else if (_IsCozmoMoving && _SpeedTapGame.FirstTapper != FirstToTap.NoTaps) {
+      else if (_IsCozmoMoving && _SpeedTapGame.FirstTapper != FirstToTap.NoTaps && _EndTimestamp_sec == -1) {
         // If any taps have been registered and cozmo has attempted to move, immediately set the end timestamp
         // in order to make Resolve hand more responsive when receiving player taps significantly before Cozmo
         // taps. Still we use the kResultsCheckDelay in order to prevent issues with messages being received

@@ -18,7 +18,7 @@ namespace SpeedTap {
 
       _StartTimestamp_sec = Time.time;
       _OnDuration_sec = _SpeedTapGame.GetLightsOnDurationSec();
-      _CozmoMovementDelay_sec = 0.001f * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
+      _CozmoMovementDelay_sec = 0.001f * _OnDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
       _IsCozmoMoving = false;
 
       // Set lights on cubes
