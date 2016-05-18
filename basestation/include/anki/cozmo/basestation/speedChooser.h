@@ -38,12 +38,15 @@ namespace Anki {
         Robot& _robot;
       
         // Max speed a generated motion profile can have
-        const int maxSpeed_mmps = MAX_WHEEL_SPEED_MMPS;
+        const float maxSpeed_mmps = 200.0f;
       
         // Min speed a generated motion profile can have
-        const int minSpeed_mmps = 60;
+        const float minSpeed_mmps = 160.0f;
+
+        const float minAccel_mmps2 = 80.0f;
+        const float maxAccel_mmps2 = 100.0f;
       
-        const int distToObjectForMaxSpeed_mm = 500;
+        const float distToObjectForMaxSpeed_mm = 300;
       
         Util::RandomGenerator rng;
     };

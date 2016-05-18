@@ -30,10 +30,10 @@ namespace Anki {
       PathMotionProfile motionProfile = DEFAULT_PATH_MOTION_PROFILE;
       
       // Random acceleration
-      motionProfile.accel_mmps2 = rng.RandDblInRange(20, 100);
+      motionProfile.accel_mmps2 = rng.RandDblInRange(minAccel_mmps2, maxAccel_mmps2);
       
       // Deceleration is opposite of acceleration
-      motionProfile.decel_mmps2 = 120 - motionProfile.accel_mmps2;
+      motionProfile.decel_mmps2 = maxAccel_mmps2 - motionProfile.accel_mmps2 + minAccel_mmps2;
       
       // Speed based on distance to goal
       Pose3d pose;
