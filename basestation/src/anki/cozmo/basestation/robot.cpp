@@ -1000,20 +1000,25 @@ namespace Anki {
       }
       
       /////////// Update discovered active objects //////
-      if (_enableDiscoveredObjectsBroadcasting) {
-        for (auto obj : _discoveredObjects) {
-          if (GetLastMsgTimestamp() - obj.second > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
+      for (auto obj : _discoveredObjects) {
+        if (GetLastMsgTimestamp() - obj.second.lastDiscoveredTimeStamp > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
+          if (_enableDiscoveredObjectsBroadcasting) {
             PRINT_NAMED_INFO("Robot.Update.ObjectUndiscovered",
-                             "FactoryID 0x%x (lastObservedTime %d, currTime %d)",
-                             obj.first, obj.second, GetLastMsgTimestamp());
-            
+                             "FactoryID 0x%x (type: %s, lastObservedTime %d, currTime %d)",
+                             obj.first, EnumToString(obj.second.objectType),
+                             obj.second.lastDiscoveredTimeStamp, GetLastMsgTimestamp());
+
             // Send unavailable message for this object
             ExternalInterface::ObjectUnavailable m(obj.first);
             Broadcast(ExternalInterface::MessageEngineToGame(std::move(m)));
-            _discoveredObjects.erase(obj.first);
           }
+          _discoveredObjects.erase(obj.first);
         }
       }
+
+      
+      // Connect to objects requested via ConnectToBlocks;
+      ConnectToRequestedObjects();
       
       /////////// Update visualization ////////////
       
@@ -3038,59 +3043,108 @@ namespace Anki {
     
     Result Robot::ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids)
     {
-      CubeSlots msg;
-      for (auto & fid : msg.factory_id) {
-        fid = 0;
+      ASSERT_NAMED_EVENT(static_cast<u32>(factory_ids.size()) <= static_cast<u32>(ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS),
+                         "Robot.ConnectToBlocks.TooManySlotsRequested",
+                         "%zu slots requested. Max %d",
+                         factory_ids.size(), ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS);
+
+      PRINT_NAMED_INFO("Robot.ConnectToBlocks.ConnectionRequested", "%zu objects", factory_ids.size());
+      
+      // Save the requested ids
+      _blocksToConnectTo = factory_ids;
+      
+      // Send empty object now to disconnect from whatever we were connected to
+      SendMessage(RobotInterface::EngineToRobot(CubeSlots()));
+      
+      // Delete all active objects in BlockWorld
+      _blockWorld.DeleteObjectsByFamily(ObjectFamily::LightCube);
+      _blockWorld.DeleteObjectsByFamily(ObjectFamily::Charger);
+
+      _connectedObjects.clear();
+      
+      return RESULT_OK;
+    }
+    
+    u8 Robot::ConnectToRequestedObjects()
+    {
+      // Just run this every second
+      static TimeStamp_t nextRunTime = 0;
+      if (GetLastMsgTimestamp() < nextRunTime) {
+        return 0;
+      }
+      nextRunTime += 1000;
+      
+      
+      if (_blocksToConnectTo.empty()) {
+        return 0;
       }
       
-      u8 objectsSelectedMask = 0;
-      for (auto & fid : factory_ids) {
+      u8 numCubesToAdd = 0;
+      for (auto fid = _blocksToConnectTo.begin(); fid != _blocksToConnectTo.end(); ) {
         
         // Zero is not a valid factoryID
-        if (fid == 0) {
-          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ZeroID", "Skipping");
+        if (*fid == 0) {
+          PRINT_NAMED_WARNING("Robot.ConnectToRequestedObjects.ZeroID", "Skipping");
+          _blocksToConnectTo.erase(fid++);
           continue;
         }
         
-        // Check if there is still space in the message
-        if (msg.factory_id.size() >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
-          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", (unsigned long)factory_ids.size());
-          return RESULT_FAIL;
-        }
-        
-        
-        // Check if charger already added
-        bool isCharger = fid & 0x80000000;
-        bool chargerAlreadyInList = (objectsSelectedMask & (fid & 0x80000000));
-        
-        // Check if block of this type already added
-        bool blockTypeAlreadyInList = (objectsSelectedMask & (1 << (fid & 0x3)));
-        
-        if (chargerAlreadyInList || blockTypeAlreadyInList) {
-          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.DuplicateTypeInList",
-                              "Object with factory ID 0x%x matches type of another active object in the list. Only one of each type may be connected.",
-                              fid);
-          return RESULT_FAIL;
+        // Check if the object is discovered yet
+        auto discoveredObjIt = _discoveredObjects.find(*fid);
+        if (discoveredObjIt == _discoveredObjects.end()) {
+          ++fid;
+          continue;
         }
 
-        msg.factory_id.push_back(fid);
-        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x (slot %lu)", fid, (unsigned long)msg.factory_id.size());
-        
-        if (isCharger) {
-          objectsSelectedMask |= 0x80000000;
-        } else {
-          objectsSelectedMask |= (1 << (fid & 0x3));
+        // Check if there is already an object of the same type that is connected
+        bool sameTypeAlreadyConnected = false;
+        for (const auto & connectedObj : _connectedObjects) {
+          if (connectedObj.objectType == discoveredObjIt->second.objectType) {
+            PRINT_NAMED_WARNING("Robot.ConnectToRequestedObjects.SameTypeAlreadyConnected",
+                                "Object with factory ID 0x%x matches type (%s) of another connected object. Only one of each type may be connected.",
+                                *fid, EnumToString(connectedObj.objectType));
+            sameTypeAlreadyConnected = true;
+            break;
+          }
         }
-  
+        if (sameTypeAlreadyConnected) {
+          _blocksToConnectTo.erase(fid++);
+          continue;
+        }
+
+        // Check if there is still space for more connections
+        if (_connectedObjects.size() >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
+          PRINT_NAMED_WARNING("Robot.ConnectToRequestedObjects.ArrayFull", "Too many objects specified (limit: %zu)", _connectedObjects.size());
+          _blocksToConnectTo.clear();
+          break;
+        }
+        
+        // Add object to list of objects to connect to
+        _connectedObjects.push_back(discoveredObjIt->second);
+        _blocksToConnectTo.erase(fid++);
+        
+        ++numCubesToAdd;
+      }
+
+      // If there are cubes to add, generate message and send.
+      if (numCubesToAdd > 0) {
+        
+        CubeSlots msg;
+
+        for (const auto & obj : _connectedObjects) {
+          PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.FactoryID",
+                           "0x%x (slot %zu)",
+                           obj.factoryID, msg.factory_id.size());
+          msg.factory_id.push_back(obj.factoryID);
+        }
+
+        
+        PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.Sending", "Num objects %zu", msg.factory_id.size());
+        SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+        
       }
       
-      // Clear all active blocks in BlockWorld
-      _blockWorld.ClearObjectsByFamily(ObjectFamily::LightCube);
-      _blockWorld.ClearObjectsByFamily(ObjectFamily::Charger);
-      
-      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %lu", (unsigned long)msg.factory_id.size());
-      return SendMessage(RobotInterface::EngineToRobot(CubeSlots(msg)));
-      
+      return numCubesToAdd;
     }
     
     

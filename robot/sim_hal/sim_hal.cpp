@@ -695,23 +695,10 @@ namespace Anki {
        */
     }
 
-    
-    u32 GetObjectTypeByFactoryID(u32 factoryID)
+    bool IsSameTypeActiveObjectAssigned(u32 device_type)
     {
-      bool isCharger = factoryID & 0x80000000;
-      if (isCharger) {
-        return 0x4;
-      } else {
-        return factoryID & 0x3;
-      }
-    }
-    
-    bool IsSameTypeActiveObjectAssigned(u32 factoryID)
-    {
-      u32 objectType = GetObjectTypeByFactoryID(factoryID);
       for (u32 i = 0; i < MAX_NUM_ACTIVE_OBJECTS; ++i) {
-        if (activeObjectSlots_[i].assignedFactoryID != 0 &&
-            GetObjectTypeByFactoryID(activeObjectSlots_[i].assignedFactoryID) == objectType) {
+        if (activeObjectSlots_[i].device_type != 0 && activeObjectSlots_[i].device_type == device_type) {
           return true;
         }
       }
@@ -796,7 +783,7 @@ namespace Anki {
               
               // If autoconnect is enabled, assign this block to a slot if another block
               // of the same type is not already assigned.
-              if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(odMsg.factory_id)) {
+              if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(odMsg.device_type)) {
                 for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
                   if (activeObjectSlots_[i].assignedFactoryID == 0) {
                     printf("sim_hal.Update.AutoAssignedObject: FactoryID 0x%x in slot %d\n", odMsg.factory_id, i);
