@@ -60,7 +60,7 @@ namespace Simon {
       _CurrentRobot.DriveWheels(0f, 0f);
     }
 
-    private void OnBlockTapped(int id, int times) {
+    private void OnBlockTapped(int id, int times, float timeStamp) {
       _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
       if (Time.time - _LastTappedTime < 0.4f || _StartLightBlinkTime != -1) {
         return;

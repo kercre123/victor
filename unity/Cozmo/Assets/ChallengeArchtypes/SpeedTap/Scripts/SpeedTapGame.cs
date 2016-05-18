@@ -1,11 +1,18 @@
 using UnityEngine;
 using System.Collections;
 using System;
+using Anki.Cozmo;
 using Anki.Cozmo.Audio;
 using Cozmo.Util;
 using System.Collections.Generic;
 
 namespace SpeedTap {
+
+  public enum FirstToTap {
+    Cozmo,
+    Player,
+    NoTaps
+  }
 
   public class SpeedTapGame : GameBase {
 
@@ -15,6 +22,41 @@ namespace SpeedTap {
     private const string _kTapDelayMin = "TapDelayMin";
     private const string _kTapDelayMax = "TapDelayMax";
 
+    public FirstToTap FirstTapper {
+      get {
+        // If neither timestamp has been set, no taps
+        if (_LastCozmoTimeStamp == -1 && _LastPlayerTimeStamp == -1) {
+          return FirstToTap.NoTaps;
+        }
+        // If one of the two timestamps hasn't been set, other one counts as first
+        if ((_LastCozmoTimeStamp == -1) || (_LastPlayerTimeStamp == -1)) {
+          if (_LastCozmoTimeStamp != -1) {
+            return FirstToTap.Cozmo;
+          }
+          else if (_LastPlayerTimeStamp != -1) {
+            return FirstToTap.Player;
+          }
+        }
+        // If both have been set, most recent timestamp counts as first
+        if (_LastCozmoTimeStamp < _LastPlayerTimeStamp) {
+          return FirstToTap.Cozmo;
+        }
+        else {
+          return FirstToTap.Player;
+        }
+      }
+    }
+
+    public void ResetTapTimestamps() {
+      _LastCozmoTimeStamp = -1;
+      _LastPlayerTimeStamp = -1;
+    }
+
+    private float _LastPlayerTimeStamp = -1;
+    private float _LastCozmoTimeStamp = -1;
+    public float CozmoTapLatency_sec = 0.0f;
+    public float CozmoTapLatencyCheckTimestamp = 0.0f;
+
     #region Config Values
 
     public float BaseMatchChance { get; private set; }
@@ -23,13 +65,13 @@ namespace SpeedTap {
 
     public float CurrentMatchChance { get; set; }
 
-    public float MinIdleIntervalMs { get; private set; }
+    public float MinIdleInterval_percent { get; private set; }
 
-    public float MaxIdleIntervalMs { get; private set; }
+    public float MaxIdleInterval_percent { get; private set; }
 
-    public float MinTapDelayMs { get; private set; }
+    public float MinTapDelay_percent { get; private set; }
 
-    public float MaxTapDelayMs { get; private set; }
+    public float MaxTapDelay_percent { get; private set; }
 
     public float CozmoMistakeChance { get; private set; }
 
@@ -80,9 +122,6 @@ namespace SpeedTap {
 
     public SpeedTapRulesBase Rules;
 
-    public event Action PlayerTappedBlockEvent;
-    public event Action CozmoTappedBlockEvent;
-
     [SerializeField]
     private GameObject _PlayerTapSlidePrefab;
 
@@ -116,13 +155,13 @@ namespace SpeedTap {
       BaseMatchChance = speedTapConfig.BaseMatchChance;
       CurrentMatchChance = BaseMatchChance;
       MatchChanceIncrease = speedTapConfig.MatchChanceIncrease;
-      MinIdleIntervalMs = speedTapConfig.MinIdleIntervalMs;
-      MaxIdleIntervalMs = speedTapConfig.MaxIdleIntervalMs;
+      MinIdleInterval_percent = speedTapConfig.MinIdleInterval_percent;
+      MaxIdleInterval_percent = speedTapConfig.MaxIdleInterval_percent;
       CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
 
       CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
-      MinTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
-      MaxTapDelayMs = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
+      MinTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMin);
+      MaxTapDelay_percent = SkillSystem.Instance.GetSkillVal(_kTapDelayMax);
 
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapStarted);
       // End config based values
@@ -143,6 +182,7 @@ namespace SpeedTap {
 
       CurrentRobot.VisionWhileMoving(true);
       LightCube.TappedAction += BlockTapped;
+      RobotEngineManager.Instance.OnRobotAnimationEvent += OnRobotAnimationEvent;
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMarkers, true);
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingMotion, false);
@@ -171,6 +211,8 @@ namespace SpeedTap {
 
     protected override void CleanUpOnDestroy() {
       LightCube.TappedAction -= BlockTapped;
+      RobotEngineManager.Instance.OnRobotAnimationEvent -= OnRobotAnimationEvent;
+
       GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapGetOut);
     }
 
@@ -206,16 +248,32 @@ namespace SpeedTap {
       SharedMinigameView.InfoTitleText = string.Empty;
     }
 
-    private void BlockTapped(int blockID, int tappedTimes) {
+    /// <summary>
+    /// Sets player's last tapped timestamp based on light cube message.
+    /// Cozmo uses AnimationEvents for maximum accuracy.
+    /// </summary>
+    /// <param name="blockID">Block ID.</param>
+    /// <param name="tappedTimes">Tapped times.</param>
+    /// <param name="timeStamp">Time stamp.</param>
+    private void BlockTapped(int blockID, int tappedTimes, float timeStamp) {
       if (PlayerBlock != null && PlayerBlock.ID == blockID) {
-        if (PlayerTappedBlockEvent != null) {
-          PlayerTappedBlockEvent();
+        if (_LastPlayerTimeStamp > timeStamp || _LastPlayerTimeStamp == -1) {
+          _LastPlayerTimeStamp = timeStamp;
         }
       }
-      else if (CozmoBlock != null && CozmoBlock.ID == blockID) {
-        if (CozmoTappedBlockEvent != null) {
-          CozmoTappedBlockEvent();
+    }
+
+    /// <summary>
+    /// Sets cozmo's last tapped timestamp based on animation event message
+    /// </summary>
+    /// <param name="animEvent">Animation event.</param>
+    private void OnRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent animEvent) {
+      if (animEvent.event_id == AnimEvent.TAPPED_BLOCK &&
+          (_LastCozmoTimeStamp > animEvent.timestamp || _LastCozmoTimeStamp == -1)) {
+        if (CozmoTapLatency_sec == 0.0f && CozmoTapLatencyCheckTimestamp != 0.0f) {
+          CozmoTapLatency_sec = (animEvent.timestamp * 0.00001f - CozmoTapLatencyCheckTimestamp * 0.001f);
         }
+        _LastCozmoTimeStamp = animEvent.timestamp;
       }
     }
 

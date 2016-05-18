@@ -83,7 +83,7 @@ namespace Simon {
       _StateMachine.SetNextState(new AnimationState(AnimationName.kShocked, HandleOnPlayerWinAnimationDone));
     }
 
-    private void OnBlockTapped(int id, int times) {
+    private void OnBlockTapped(int id, int times, float timeStamp) {
       _CurrentRobot.SetHeadAngle(Random.Range(CozmoUtil.kIdealBlockViewHeadValue, 0f));
       if (Time.time - _LastTappedTime < _kTapBufferSeconds || _StartLightBlinkTime != -1) {
         return;
