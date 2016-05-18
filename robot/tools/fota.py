@@ -141,26 +141,28 @@ if __name__ == '__main__':
 
     up = Upgrader()
 
-    if len(sys.argv) < 2:
-        UpgradeAll(up)
-    elif sys.argv[1] == 'all':
-        UpgradeAll(up)
-    elif sys.argv[1] == 'wifi':
+    #if len(sys.argv) < 2:
+    #    UpgradeAll(up)
+    #elif sys.argv[1] == 'all':
+    #    UpgradeAll(up)
+    if sys.argv[1] == 'wifi':
         UpgradeWiFi(up, sys.argv[2] if len(sys.argv) > 2 else DEFAULT_WIFI_IMAGE)
     elif sys.argv[1] == 'rtip':
         UpgradeRTIP(up, sys.argv[2] if len(sys.argv) > 2 else DEFAULT_RTIP_IMAGE)
-    else: # Try asset
-        ind = 1
-        addresses = []
-        assetFNs  = []
-        while ind + 1 < len(sys.argv):
-            try:
-                fa = int(eval(sys.argv[ind]))
-            except:
-                sys.exit("Couldn't parse {} as a flash address".format(sys.argv[ind]))
-            addresses.append(fa)
-            assetFNs.append(sys.argv[ind+1])
-            ind += 2
-        UpgradeAssets(up, addresses, assetFNs)
+    # else: # Try asset
+        # ind = 1
+        # addresses = []
+        # assetFNs  = []
+        # while ind + 1 < len(sys.argv):
+            # try:
+                # fa = int(eval(sys.argv[ind]))
+            # except:
+                # sys.exit("Couldn't parse {} as a flash address".format(sys.argv[ind]))
+            # addresses.append(fa)
+            # assetFNs.append(sys.argv[ind+1])
+            # ind += 2
+        # UpgradeAssets(up, addresses, assetFNs)
+    else:
+        print ("You are not daniel or kevin...")
     time.sleep(5) # Wait for upgrade to finish
     del up
