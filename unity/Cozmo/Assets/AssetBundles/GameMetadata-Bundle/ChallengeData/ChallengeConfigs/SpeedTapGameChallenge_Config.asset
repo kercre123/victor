@@ -114,12 +114,12 @@ MonoBehaviour:
       SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 1.125
-      SecondsHandDisplayed: 1.125
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 0.75
-      SecondsHandDisplayed: 0.75
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1
   - DifficultyID: 1
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -133,12 +133,12 @@ MonoBehaviour:
       SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 1.125
-      SecondsHandDisplayed: 1.125
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 0.75
-      SecondsHandDisplayed: 0.75
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1
   - DifficultyID: 2
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -152,12 +152,12 @@ MonoBehaviour:
       SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 1.125
-      SecondsHandDisplayed: 1.125
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 0.75
-      SecondsHandDisplayed: 0.75
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1
   - DifficultyID: 3
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -171,9 +171,9 @@ MonoBehaviour:
       SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 1.125
-      SecondsHandDisplayed: 1.125
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 0.75
-      SecondsHandDisplayed: 0.75
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1

@@ -257,7 +257,7 @@ namespace SpeedTap {
       if (animEvent.event_id == AnimEvent.TAPPED_BLOCK &&
           (_LastCozmoTimeStamp > animEvent.timestamp || _LastCozmoTimeStamp == -1)) {
         if (CozmoTapLatency_sec == 0.0f && CozmoTapLatencyCheckStart != 0.0f) {
-          CozmoTapLatency_sec = (animEvent.timestamp - CozmoTapLatencyCheckStart) * 0.001f;
+          CozmoTapLatency_sec = (animEvent.timestamp * 0.00001f - CozmoTapLatencyCheckStart * 0.001f);
         }
         _LastCozmoTimeStamp = animEvent.timestamp;
       }
