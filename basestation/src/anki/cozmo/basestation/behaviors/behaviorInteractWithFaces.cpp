@@ -413,7 +413,7 @@ namespace Cozmo {
   {
     SET_STATE(RequestingFaceEnrollment);
 
-    robot.Broadcast( MessageEngineToGame( RequestEnrollFace(true) ) );
+    robot.Broadcast( MessageEngineToGame( RequestEnrollFace(true, _currentFace) ) );
 
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     _requestEnrollOnCooldownUntil_s = currTime_s + kEnrollRequestCooldownInterval_s;
