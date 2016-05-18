@@ -26,6 +26,7 @@ enum uint_8 BehaviorGroup {
     DemoFingerPounce,
     DemoFaces,
     DemoCubes,
+    DemoRequestSpeedTap,
     
     Count
 }
