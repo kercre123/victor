@@ -69,7 +69,7 @@ namespace SpeedTap {
           PlayReactToGameAnimationAndSendEvent();
         }
         else {
-          PlayReactToRoundAnimationAndSendEvent();
+          _StateMachine.SetNextState(new SpeedTapReactToRoundEnd(_CurrentWinner));
         }
       }
       else {
@@ -146,33 +146,10 @@ namespace SpeedTap {
       losingBlock.SetFlashingLEDs(Color.red, flashDurationMs, flashDurationMs);
     }
 
-    private void ClearWinningLightPatterns() {
-      _SpeedTapGame.StopCycleCube(_SpeedTapGame.PlayerBlock);
-      _SpeedTapGame.PlayerBlock.SetLEDsOff();
-      _SpeedTapGame.StopCycleCube(_SpeedTapGame.CozmoBlock);
-      _SpeedTapGame.CozmoBlock.SetLEDsOff();
-    }
-
     private void PlayReactToHandAnimation() {
       GameEvent animationEventToSend = (_CurrentWinner == PointWinner.Player) ?
         GameEvent.OnSpeedtapHandPlayerWin : GameEvent.OnSpeedtapHandCozmoWin;
       ListenForAnimationEnd(animationEventToSend, HandleHandEndAnimDone);
-    }
-
-    private void PlayReactToRoundAnimationAndSendEvent() {
-      GameEvent animationEventToSend = GameEvent.Count;
-      bool highIntensity = _SpeedTapGame.IsHighIntensityRound();
-      if (_CurrentWinner == PointWinner.Player) {
-        GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnSpeedtapRoundPlayerWinAnyIntensity);
-        animationEventToSend = (highIntensity) ? 
-          GameEvent.OnSpeedtapRoundPlayerWinHighIntensity : GameEvent.OnSpeedtapRoundPlayerWinLowIntensity;
-      }
-      else {
-        GameEventManager.Instance.SendGameEventToEngine(GameEvent.OnSpeedtapRoundCozmoWinAnyIntensity);
-        animationEventToSend = (highIntensity) ? 
-          GameEvent.OnSpeedtapRoundCozmoWinHighIntensity : GameEvent.OnSpeedtapRoundCozmoWinLowIntensity;
-      }
-      ListenForAnimationEnd(animationEventToSend, HandleRoundEndAnimDone);
     }
 
     private void PlayReactToGameAnimationAndSendEvent() {
@@ -201,19 +178,13 @@ namespace SpeedTap {
     }
 
     private void HandleHandEndAnimDone(bool success) {
-      ClearWinningLightPatterns();
+      _SpeedTapGame.ClearWinningLightPatterns();
       _StateMachine.SetNextState(new SpeedTapHandCubesOff());
-    }
-
-    private void HandleRoundEndAnimDone(bool success) {
-      _SpeedTapGame.ResetScore();
-      ClearWinningLightPatterns();
-      _StateMachine.SetNextState(new SpeedTapCozmoDriveToCube(false));
     }
 
     private void HandleEndGameAnimDone(bool success) {
       GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.GameSharedEnd);
-      ClearWinningLightPatterns();
+      _SpeedTapGame.ClearWinningLightPatterns();
       _SpeedTapGame.HandleGameEnd();
     }
   }

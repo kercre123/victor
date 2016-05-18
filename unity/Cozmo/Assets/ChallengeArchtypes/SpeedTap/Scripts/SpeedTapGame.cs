@@ -92,6 +92,20 @@ namespace SpeedTap {
     [SerializeField]
     private GameObject _WaitForCozmoSlidePrefab;
 
+    [SerializeField]
+    private SpeedTapRoundBeginSlide _SpeedTapRoundBeginSlidePrefab;
+
+    public SpeedTapRoundBeginSlide SpeedTapRoundBeginSlidePrefab {
+      get { return _SpeedTapRoundBeginSlidePrefab; }
+    }
+
+    [SerializeField]
+    private SpeedTapRoundEndSlide _SpeedTapRoundEndSlidePrefab;
+
+    public SpeedTapRoundEndSlide SpeedTapRoundEndSlidePrefab {
+      get { return _SpeedTapRoundEndSlidePrefab; }
+    }
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       SpeedTapGameConfig speedTapConfig = minigameConfig as SpeedTapGameConfig;
       // Set all Config based values
@@ -302,6 +316,13 @@ namespace SpeedTap {
 
     private void HandleCubeMovedQuitGameViewClosed() {
       RaiseMiniGameQuit();
+    }
+
+    public void ClearWinningLightPatterns() {
+      StopCycleCube(PlayerBlock);
+      PlayerBlock.SetLEDsOff();
+      StopCycleCube(CozmoBlock);
+      CozmoBlock.SetLEDsOff();
     }
   }
 }

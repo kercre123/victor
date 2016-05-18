@@ -178,6 +178,10 @@ public static class LocalizationKeys {
   public const string kSpeedTapDifficultyMediumDescriptionLocked = "speedTap.difficulty.mediumDescription.locked";
   public const string kSpeedTapDifficultyHardDescriptionLocked = "speedTap.difficulty.hardDescription.locked";
   public const string kSpeedTapDifficultyExpertDescriptionLocked = "speedTap.difficulty.expertDescription.locked";
+  public const string kSpeedTapTextGetReady = "speedTap.text.getReady";
+  public const string kSpeedTapTextBestOf = "speedTap.text.bestOf";
+  public const string kSpeedTapTextDisplayWinnerSubtitle = "speedTap.text.displayWinnerSubtitle";
+  public const string kSpeedTapTextRoundScore = "speedTap.text.roundScore";
 
   #endregion
 
@@ -204,6 +208,8 @@ public static class LocalizationKeys {
 
   #region SimpleStrings
 
+  public const string kNameCozmo = "name.cozmo";
+  public const string kNamePlayer = "name.player";
   public const string kButtonQuitGame = "button.quitGame";
   public const string kButtonQuit = "button.quit";
   public const string kButtonStartChallenge = "button.startChallenge";

@@ -14,13 +14,13 @@ MonoBehaviour:
   RewardedActions:
   - GameEvent:
       _EnumValueAsString: OnSpeedtapRoundPlayerWinAnyIntensity
-      _EnumValue: 13
+      _EnumValue: 9
     Amount: 15
   - GameEvent:
       _EnumValueAsString: OnSpeedtapStarted
-      _EnumValue: 7
+      _EnumValue: 3
     Amount: 3
   - GameEvent:
-      _EnumValueAsString: OnFollowMotionReact
+      _EnumValueAsString: OnSpeedtapRoundCozmoWinAnyIntensity
       _EnumValue: 6
     Amount: 5

@@ -203,12 +203,25 @@ public abstract class GameBase : MonoBehaviour {
   // Number of Rounds Won this Game
   public int PlayerRoundsWon;
   public int CozmoRoundsWon;
+
   // Total number of Rounds in this Game
   public int TotalRounds;
   // Number of Rounds Played this Game
   public int RoundsPlayed {
     get {
       return PlayerRoundsWon + CozmoRoundsWon;
+    }
+  }
+
+  public int RoundsNeededToWin {
+    get {
+      return (TotalRounds / 2) + 1;
+    }
+  }
+
+  public int CurrentRound {
+    get {
+      return RoundsPlayed + 1;
     }
   }
 
