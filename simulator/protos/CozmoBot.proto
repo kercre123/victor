@@ -1188,7 +1188,6 @@ Supervisor {
 							       
 								Connector {
 									name "gripperConnector"
-									#translation 0.0035 0 -0.0145
 									translation 0.0035 0 -0.0145
 									rotation 0 1 0 1.57
 									model "magnetic"

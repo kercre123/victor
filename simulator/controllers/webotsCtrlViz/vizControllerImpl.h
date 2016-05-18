@@ -95,6 +95,8 @@ private:
   void ProcessVizStartRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizEndRobotUpdate(const AnkiEvent<VizInterface::MessageViz>& msg);
   
+  void ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg);
+  
   using EmotionBuffer = Util::CircularBuffer<float>;
   using EmotionEventBuffer = Util::CircularBuffer< std::vector<std::string> >;
   
@@ -145,6 +147,9 @@ private:
 
   // Image message processing
   ImageDeChunker _imageDeChunker;
+  TimeStamp_t _curImageTimestamp;
+  bool _saveImages = false;
+  std::string _savedImagesFolder = "";
 
   AnkiEventMgr<VizInterface::MessageViz> _eventMgr;
   

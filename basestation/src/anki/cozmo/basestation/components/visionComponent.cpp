@@ -1024,6 +1024,7 @@ namespace Cozmo {
       // Visualize docking error signal
       _vizManager->SetDockingError(dockErrMsg.x_distErr,
                                    dockErrMsg.y_horErr,
+                                   dockErrMsg.z_height,
                                    dockErrMsg.angleErr);
 
       // Try to use this for closed-loop control by sending it on to the robot

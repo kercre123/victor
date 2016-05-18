@@ -48,6 +48,7 @@ enum uint_8 BehaviorType {
   FactoryTest,
   DemoFearEdge,
   FlipDownFromWheelie,
+  DockingTestSimple,
 
   Count
 }

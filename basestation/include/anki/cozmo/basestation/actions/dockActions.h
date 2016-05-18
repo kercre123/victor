@@ -254,9 +254,6 @@ namespace Anki {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
-      // Need longer than default for check if done:
-      virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }
-      
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker = nullptr;
       IActionRunner*              _faceAndVerifyAction = nullptr;

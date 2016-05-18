@@ -384,7 +384,7 @@ namespace Cozmo {
       case FactoryTestState::GotoCalibrationPose:
       {
         // Check that robot is in correct pose
-        if (!robot.GetPose().IsSameAs(_camCalibPose, _kRobotPoseSamenessDistThresh_mm, _kRbotPoseSamenessAngleThresh_rad)) {
+        if (!robot.GetPose().IsSameAs(_camCalibPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingInCalibPose",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
                               robot.GetPose().GetTranslation().x(),
@@ -531,7 +531,7 @@ namespace Cozmo {
       case FactoryTestState::GotoPickupPose:
       {
         // Verify that robot is where expected
-        if (!robot.GetPose().IsSameAs(_prePickupPose, _kRobotPoseSamenessDistThresh_mm, _kRbotPoseSamenessAngleThresh_rad)) {
+        if (!robot.GetPose().IsSameAs(_prePickupPose, _kRobotPoseSamenessDistThresh_mm, _kRobotPoseSamenessAngleThresh_rad)) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.ExpectingInPrePickupPose",
                               "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
                               robot.GetPose().GetTranslation().x(),

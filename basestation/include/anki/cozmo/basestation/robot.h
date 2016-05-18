@@ -676,6 +676,8 @@ public:
     void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   
+    void SetImageSaveMode(SaveMode_t m) { _imageSaveMode = m;}
+  
     void SetLastSentImageID(u32 lastSentImageID) { _lastSentImageID = lastSentImageID; }
     const u32 GetLastSentImageID() const { return _lastSentImageID; }
   

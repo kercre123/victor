@@ -244,6 +244,7 @@ message DockingErrorSignal
 {
   float_32 x_dist,
   float_32 y_dist,
+  float_32 z_dist,
   float_32 angle,
 }
 
@@ -318,6 +319,12 @@ message StartRobotUpdate
 
 message EndRobotUpdate
 {
+}
+
+message SaveImages
+{
+  bool saveImages,
+  string path
 }
 
 // keep empty to generate an auto-union that includes all messages in this file

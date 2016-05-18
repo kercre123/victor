@@ -60,7 +60,7 @@ namespace Cozmo {
     std::vector<std::pair<f32,f32> > _camCalibPanAndTiltAngles;
     
     static constexpr f32 _kRobotPoseSamenessDistThresh_mm = 10;
-    static constexpr f32 _kRbotPoseSamenessAngleThresh_rad = DEG_TO_RAD(5);
+    static constexpr f32 _kRobotPoseSamenessAngleThresh_rad = DEG_TO_RAD(5);
     static constexpr u32 _kNumPickupRetries = 1;
     static constexpr f32 _kIMUDriftDetectPeriod_sec = 2.f;
     static constexpr f32 _kIMUDriftAngleThreshDeg = 0.2f;
