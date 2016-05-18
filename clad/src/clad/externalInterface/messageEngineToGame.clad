@@ -495,7 +495,8 @@ message RequestGameStart {
 
 // Special request for face enrollment
 message RequestEnrollFace {
-  bool firstRequest
+  bool firstRequest,
+  int_32 face_id
 }
 
 message SparkUnlockEnded {

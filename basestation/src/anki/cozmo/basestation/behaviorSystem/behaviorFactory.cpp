@@ -39,6 +39,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
 
 
@@ -182,6 +183,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     {
       newBehavior = new BehaviorReactToRobotOnBack(robot, config);
       break;     
+    }
+    case BehaviorType::DockingTestSimple:
+    {
+      newBehavior = new BehaviorDockingTestSimple(robot, config);
+      break;
     }
     case BehaviorType::StackBlocks:
     {

@@ -396,14 +396,14 @@ void AudioController::SetupHijackAudioPlugInAndRobotAudioBuffers()
 #endif
   } );
   
-  _hijackAudioPlugIn->SetProcessCallback( [this] ( const uint32_t plugInId, const uint8_t* frames, const uint32_t frameCount )
+  _hijackAudioPlugIn->SetProcessCallback( [this] ( const uint32_t plugInId, const AudioReal32* samples, const uint32_t sampleCount )
   {
     RobotAudioBuffer* buffer = GetRobotAudioBufferWithPluginId( plugInId );
     // Catch mistakes with wwise project
     ASSERT_NAMED( buffer != nullptr,
                   "AudioController.SetupHijackAudioPlugInAndRobotAudioBuffers.GetRobotAudioBufferWithPluginId.RobotAudioBufferNull");
     if ( buffer != nullptr ) {
-      buffer->UpdateBuffer( frames, frameCount );
+      buffer->UpdateBuffer( samples, sampleCount );
     }
      
 #if HijackAudioPlugInDebugLogs

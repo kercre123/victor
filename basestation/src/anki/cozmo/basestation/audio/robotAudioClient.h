@@ -67,8 +67,9 @@ public:
   // Check Animation States to see if it's completed
   bool AnimationIsComplete();
   
-  // Value between ( 0.0 - 1.0 )
+  // Robot Volume Value is between ( 0.0 - 1.0 )
   void SetRobotVolume(float volume);
+  float GetRobotVolume() const;
 
   // Must be called after RegisterRobotAudioBuffer() to properly setup robot audio signal flow
   void SetOutputSource( RobotAudioOutputSource outputSource );
@@ -100,6 +101,9 @@ private:
   
   // Create Audio Buffer for the corresponding Game Object
   RobotAudioBuffer* RegisterRobotAudioBuffer( GameObjectType gameObject, PluginId_t pluginId, Bus::BusType bus );
+  
+  // Keep current robot volume
+  float _robotVolume = 0.0f;
   
 };
   

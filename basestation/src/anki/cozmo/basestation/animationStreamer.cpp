@@ -121,6 +121,11 @@ namespace Cozmo {
   {
     return _animationContainer.GetAnimation(name);
   }
+  
+  AnimationStreamer::~AnimationStreamer()
+  {
+    ClearSendBuffer();
+  }
 
   
   AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops, bool interruptRunning)
@@ -391,7 +396,7 @@ namespace Cozmo {
       
       if(!_sendBuffer.empty()) {
         PRINT_NAMED_WARNING("Animation.Init", "Expecting SendBuffer to be empty. Will clear.");
-        _sendBuffer.clear();
+        ClearSendBuffer();
       }
       
       // If this is an empty (e.g. live) animation, there is no need to
@@ -620,6 +625,7 @@ namespace Cozmo {
     if ( _audioClient.HasAnimation() ) {
       
       RobotAudioAnimation* audioAnimation = _audioClient.GetCurrentAnimation();
+      
       RobotInterface::EngineToRobot* audioMsg = nullptr;
       audioAnimation->PopRobotAudioMessage( audioMsg, startTime_ms, streamingTime_ms );
       if ( nullptr != audioMsg ) {
@@ -639,6 +645,13 @@ namespace Cozmo {
     return RESULT_OK;
   } // BufferAudioToSend()
   
+  void AnimationStreamer::ClearSendBuffer()
+  {
+    for (auto& engineToRobotMsg : _sendBuffer ) {
+      Util::SafeDelete(engineToRobotMsg);
+    }
+    _sendBuffer.clear();
+  }
 
   bool AnimationStreamer::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                                         TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,

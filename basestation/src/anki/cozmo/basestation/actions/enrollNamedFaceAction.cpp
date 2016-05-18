@@ -360,8 +360,9 @@ namespace Cozmo {
       
       _robot.GetVisionComponent().AssignNameToFace(_faceID, _faceName);
       
-      // Get the robot ready to be able to say the name the first time (really necessary?)
+      // Get the robot ready to be able to say the name (really necessary?)
       _robot.GetTextToSpeechComponent().CreateSpeech(_faceName, SayTextStyle::Name_FirstIntroduction);
+      _robot.GetTextToSpeechComponent().CreateSpeech(_faceName, SayTextStyle::Name_Normal);
       
       // Save the new album to the robot.
       if(_saveToRobot) {

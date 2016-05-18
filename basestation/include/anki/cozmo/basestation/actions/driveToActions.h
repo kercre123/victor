@@ -20,6 +20,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/animationKeyFrames.h"
+#include "clad/types/dockingSignals.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
@@ -299,6 +300,9 @@ namespace Anki {
           completionUnion = _completedActionInfoStack.back().first;
         }
       }
+      
+      void SetDockingMethod(DockingMethod dockingMethod);
+      void SetMotionProfile(PathMotionProfile motionProfile);
       
     };
     

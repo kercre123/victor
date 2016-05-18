@@ -13,10 +13,6 @@ enum uint_8 GameEvent
   OnDriveStart,
   OnDriveEnd,
   OnFidget,
-  OnFollowMotionLookDown,
-  OnFollowMotionLookUp,
-  OnFollowMotionLookUpAndDown,
-  OnFollowMotionReact,
   OnSpeedtapStarted,
   OnSpeedtapHandCozmoWin,
   OnSpeedtapHandPlayerWin,
@@ -38,6 +34,11 @@ enum uint_8 GameEvent
   OnSpeedtapFakeout,
   OnSpeedtapIdle,
   OnLearnedPlayerName,
+  OnSawNewUnnamedFace,
+  OnSawNewNamedFace,
+  OnSawOldUnnamedFace,
+  OnSawOldNamedFace,
+  OnWiggle,
   Count, // Keep count at end.
 }
 

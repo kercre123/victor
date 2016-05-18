@@ -11,7 +11,6 @@ PROTO CozmoWorldInfo [
 WorldInfo {
   title IS title
   info IS info
-  # Makes the world more "spongy", allows objects to slightly intersect before exploding them apart
   gravity 0 0 -9.81
   physics "cozmo_physics"
   basicTimeStep 5

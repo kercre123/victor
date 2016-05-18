@@ -115,6 +115,9 @@ protected:
   
   float ScoreBonusForCurrentBehavior(float runningDuration) const;
 
+  // Allows derived classes to modify a score for a particular behavior. Updates passed in score value (if desired)
+  virtual void ModifyScore(const IBehavior* behavior, float& score) const {}
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

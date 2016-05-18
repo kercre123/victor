@@ -946,6 +946,16 @@ namespace Anki {
       AddAction(action);
     }
     
+    void DriveToPickupObjectAction::SetDockingMethod(DockingMethod dockingMethod)
+    {
+      ((IDockAction*)(GetActionList().back()))->SetDockingMethod(dockingMethod);
+    }
+    
+    void DriveToPickupObjectAction::SetMotionProfile(PathMotionProfile motionProfile)
+    {
+      ((DriveToObjectAction*)(GetActionList().front()))->SetMotionProfile(motionProfile);
+    }
+    
 #pragma mark ---- DriveToPlaceOnObjectAction ----
     
     DriveToPlaceOnObjectAction::DriveToPlaceOnObjectAction(Robot& robot,

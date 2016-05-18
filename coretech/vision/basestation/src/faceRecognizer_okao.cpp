@@ -801,7 +801,7 @@ namespace Vision {
 
   }
   
-  Result FaceRecognizer::RemoveUser(INT32 userID)
+  Result FaceRecognizer::RemoveUserHelper(INT32 userID)
   {
     INT32 okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, userID-1);
     if(OKAO_NORMAL != okaoResult) {
@@ -809,8 +809,6 @@ namespace Vision {
                           "OKAO result=%d", okaoResult);
       return RESULT_FAIL;
     }
-    
-    _enrollmentData.erase(userID);
     
     if(DEBUG_ENROLLMENT_IMAGES) {
       for(s32 iEnroll=0; iEnroll<_enrollmentImages[userID].size(); ++iEnroll)
@@ -821,7 +819,7 @@ namespace Vision {
       }
       _enrollmentImages.erase(userID);
     }
-    
+
     // TODO: Keep a reference to which trackerIDs are pointing to each faceID to avoid this search
     for(auto iter = _trackingToFaceID.begin(); iter != _trackingToFaceID.end(); )
     {
@@ -831,8 +829,20 @@ namespace Vision {
         ++iter;
       }
     }
-    
     return RESULT_OK;
+  } // RemoveUserHelper()
+  
+  
+  FaceRecognizer::EnrollmentData::iterator FaceRecognizer::RemoveUser(EnrollmentData::iterator userIter)
+  {
+    RemoveUserHelper(userIter->first);
+    return _enrollmentData.erase(userIter);
+  }
+  
+  Result FaceRecognizer::RemoveUser(INT32 userID)
+  {
+    _enrollmentData.erase(userID);
+    return RemoveUserHelper(userID);
   }
   
 
@@ -1234,7 +1244,7 @@ namespace Vision {
       if(enrollData.second.name == name) {
         Result removeResult = RemoveUser(enrollData.first);
         if(RESULT_OK != removeResult) {
-          PRINT_NAMED_WARNING("FaceRecognizer.EraseName.RemoveUserFailed", "");
+          PRINT_NAMED_WARNING("FaceRecognizer.EraseName.RemoveUserFailed", "ID=%d", enrollData.first);
         }
         return enrollData.first;
       }
@@ -1257,7 +1267,7 @@ namespace Vision {
      {
        Result removeResult = RemoveUser(enrollIter->first);
        if(RESULT_OK != removeResult) {
-         PRINT_NAMED_WARNING("FaceRecognizer.EraseName.RemoveUserFailed", "");
+         PRINT_NAMED_WARNING("FaceRecognizer.EraseName.RemoveUserFailed", "ID=%d", enrollIter->first);
        }
        return removeResult;
      }
@@ -1271,6 +1281,14 @@ namespace Vision {
   
   void FaceRecognizer::EraseAllFaces()
   {
+    // Remove each user one at a time, to make sure all the cleanup gets done
+    // (Like dissociating tracker IDs)
+    for(auto enrollIter=_enrollmentData.begin(); enrollIter!=_enrollmentData.end(); )
+    {
+      enrollIter = RemoveUser(enrollIter);
+    }
+    
+    // These should not be necessary since all the RemoveUser calls should have done it, but...
     _enrollmentData.clear();
     INT32 okaoResult = OKAO_FR_ClearAlbum(_okaoFaceAlbum);
     if(OKAO_NORMAL != okaoResult) {

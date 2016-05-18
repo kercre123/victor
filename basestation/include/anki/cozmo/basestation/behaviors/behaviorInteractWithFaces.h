@@ -131,13 +131,9 @@ namespace Cozmo {
     // recognition system some more time. Then if we need more time, we play the _wait group (which can be cut
     // at any time). Then we check if the face data has _playedNewFaceAnim, and either play a new group or a
     // regular group. In either case, we play named or unnamed based on whether or not the face has an
-    // associated name
+    // associated name. The Named or Unnamed are part of the "GameEvents" clad enum
     std::string _initialTakeAnimGroup;
     std::string _waitAnimGroup;
-    std::string _newUnnamedFaceAnimGroup;
-    std::string _newNamedFaceAnimGroup;
-    std::string _unnamedFaceAnimGroup;
-    std::string _namedFaceAnimGroup;
 
   }; // BehaviorInteractWithFaces
   

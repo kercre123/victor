@@ -155,6 +155,22 @@
   return NO;
 }
 
+- (BOOL)disableReactionGroup:(NSString *)path
+{
+  CozmoUSBTunnelHTTPServer* cozmo_server = (CozmoUSBTunnelHTTPServer*)[config server];
+  Anki::Cozmo::IExternalInterface* external_interface = [cozmo_server GetExternalInterface];
+  if( external_interface)
+  {
+    bool is_enabled = [path containsString:@"true"];
+    Anki::Cozmo::ExternalInterface::MessageGameToEngine reaction_enable_msg;
+    Anki::Cozmo::ExternalInterface::EnableReactionaryBehaviors reaction_enable_content(is_enabled);
+    reaction_enable_msg.Set_EnableReactionaryBehaviors(std::move(reaction_enable_content));
+    external_interface->BroadcastDeferred(std::move(reaction_enable_msg));
+    return YES;
+  }
+  return NO;
+}
+
 - (NSObject<HTTPResponse> *)httpResponseForMethod:(NSString *)method URI:(NSString *)path
 {
   @autoreleasepool
@@ -171,6 +187,10 @@
       else if( [path containsString:@"cmd_play_group/"] )
       {
         [self playAnimGroup:path];
+      }
+      else if( [path containsString:@"cmd_enable_reactions/"] )
+      {
+        [self disableReactionGroup:path];
       }
       
       NSData *response = [@"Cozmo USB tunnel: Post Recieved\n" dataUsingEncoding:NSUTF8StringEncoding];
