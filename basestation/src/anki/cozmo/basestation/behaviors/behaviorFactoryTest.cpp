@@ -643,7 +643,10 @@ namespace Cozmo {
         //action->SetMotionProfile(_motionProfile);
         StartActing(robot, action,
                     [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
-                      if (result != ActionResult::SUCCESS) {
+                      // NOTE: This result check should be ok, but in sim the action often doesn't result in
+                      // the robot being exactly where it's supposed to be so the action itself sometimes fails.
+                      // When robot path following is improved (particularly in sim) this physical check can be removed.
+                      if (result != ActionResult::SUCCESS && robot.IsPhysical()) {
                         PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.GotoPrePickupPoseFailed",
                                             "actual: (x,y,deg) = %f, %f, %f; expected: %f %f %f",
                                             robot.GetPose().GetTranslation().x(),
