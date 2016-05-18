@@ -30,6 +30,7 @@ namespace SpeedTap {
         Cozmo.CubePalette.TapMeColor.cycleIntervalSeconds);
 
       _SpeedTapGame.ShowWaitForCozmoSlide();
+      _SpeedTapGame.SharedMinigameView.ShowMiddleBackground();
 
       _CurrentRobot.SetDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
         AnimationGroupName.kSpeedTap_Driving_Loop, null);

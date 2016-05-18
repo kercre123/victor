@@ -28,7 +28,7 @@ namespace Cozmo {
       private float _GrowTweenDurationSeconds = 0.2f;
 
       [SerializeField]
-      private float _CaratTweenSpeedUnityUnitsPerSecond = 0.2f;
+      private float _CaratTweenDurationSeconds = 0.4f;
 
       [SerializeField]
       private float _CaratExitTweenDurationSeconds = 0.2f;
@@ -48,38 +48,37 @@ namespace Cozmo {
       private Sequence _BackgroundTween = null;
       private bool _IsBackgroundGrown = false;
 
-      private Sequence _CaratTween = null;
+      private Tweener _CaratTween = null;
 
       private Sequence _ContentTween = null;
       private GameObject _ContentObject = null;
 
       private void Start() {
-        // Be under everyone else, but over the background
-        transform.SetSiblingIndex(1);
+        transform.SetAsFirstSibling();
       }
 
       public void GrowShelfBackground() {
         if (!_IsBackgroundGrown) {
           _IsBackgroundGrown = true;
-          PlayBackgroundTween(0f);
+          PlayBackgroundTween(0f, Ease.OutQuad);
         }
       }
 
       public void ShrinkShelfBackground() {
         if (_IsBackgroundGrown) {
           _IsBackgroundGrown = false;
-          PlayBackgroundTween(_StartYLocalPos);
+          PlayBackgroundTween(_StartYLocalPos, Ease.InQuad);
         }
       }
 
-      private void PlayBackgroundTween(float targetY) {
+      private void PlayBackgroundTween(float targetY, Ease easing) {
         if (_BackgroundTween != null) {
           _BackgroundTween.Kill();
         }
         _BackgroundTween = DOTween.Sequence();
         _BackgroundTween.Append(_BackgroundImageContainer.transform.DOLocalMoveY(
           targetY,
-          _GrowTweenDurationSeconds).SetEase(Ease.OutBack));
+          _GrowTweenDurationSeconds).SetEase(easing));
       }
 
       public void HideCaratOffscreenRight() {
@@ -91,22 +90,22 @@ namespace Cozmo {
       }
 
       public void MoveCarat(float xWorldPos) {
-        PlayCaratTween(xWorldPos, _CaratTweenSpeedUnityUnitsPerSecond, isWorldPos: true);
+        PlayCaratTween(xWorldPos, _CaratTweenDurationSeconds, isWorldPos: true);
       }
 
       private void PlayCaratTween(float targetPos, float duration, bool isWorldPos) {
         if (_CaratTween != null) {
           _CaratTween.Kill();
         }
-        _CaratTween = DOTween.Sequence();
         if (isWorldPos) {
-          _CaratTween.Append(_CaratContainer.transform.DOMoveX(targetPos, 
-            _CaratTweenSpeedUnityUnitsPerSecond).SetEase(Ease.OutBack).SetSpeedBased());
+          _CaratTween = _CaratContainer.transform.DOMoveX(targetPos, 
+            _CaratTweenDurationSeconds).SetEase(Ease.OutBack);
         }
         else {
-          _CaratTween.Append(_CaratContainer.transform.DOLocalMoveX(targetPos, 
-            _CaratTweenSpeedUnityUnitsPerSecond).SetEase(Ease.OutBack));
+          _CaratTween = _CaratContainer.transform.DOLocalMoveX(targetPos, 
+            _CaratTweenDurationSeconds).SetEase(Ease.OutBack);
         }
+        _CaratTween.Play();
       }
 
       public GameObject AddContent(MonoBehaviour contentPrefab, TweenCallback endInTweenCallback) {

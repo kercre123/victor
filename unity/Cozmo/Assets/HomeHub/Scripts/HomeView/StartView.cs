@@ -17,7 +17,7 @@ public class StartView : BaseView {
   private Image _BluetoothIndicator;
 
   [SerializeField]
-  private Button _SecretSkipButton;
+  private CozmoButton _SecretSkipButton;
 
   [SerializeField]
   private CozmoButton _ConnectButton;
@@ -25,19 +25,23 @@ public class StartView : BaseView {
   public event System.Action OnConnectClicked;
 
   private void Awake() {
+    _ConnectButton.Initialize(HandleConnectClicked, "wake_up_cozmo_button", DASEventViewName);
 
     #if UNITY_EDITOR
-    _SecretSkipButton.onClick.AddListener(HandleSecretSkipButtonClicked);
+    _SecretSkipButton.Initialize(HandleSecretSkipButtonClicked, "secret_button", DASEventViewName);
     #endif
 
     LoopRobotSleep();
     Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
-    _ConnectButton.Initialize(HandleConnectClicked, "wake_up_cozmo_button", DASEventViewName);
   }
 
   private void Update() {
-    _WifiIndicator.color = IsWifiConnected() ? Color.white : _DisconnectedColor;
-    _BluetoothIndicator.color = IsBluetoothConnected() ? Color.white : _DisconnectedColor;
+    if (_WifiIndicator != null) {
+      _WifiIndicator.color = IsWifiConnected() ? Color.white : _DisconnectedColor;
+    }
+    if (_BluetoothIndicator != null) {
+      _BluetoothIndicator.color = IsBluetoothConnected() ? Color.white : _DisconnectedColor;
+    }
   }
 
   private bool IsWifiConnected() {

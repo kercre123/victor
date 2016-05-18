@@ -146,13 +146,13 @@ MonoBehaviour:
   _CaratContainer: {fileID: 22443070}
   _ContentContainer: {fileID: 22568676}
   _StartYLocalPos: -200
-  _GrowTweenDurationSeconds: 0.2
-  _CaratTweenSpeedUnityUnitsPerSecond: 0.2
-  _CaratExitTweenDurationSeconds: 0.2
+  _GrowTweenDurationSeconds: 0.3
+  _CaratTweenDurationSeconds: 0.5
+  _CaratExitTweenDurationSeconds: 0.3
   _CaratLeftOffscreenLocalXPos: -1500
   _CaratRightOffscreenLocalXPos: 2900
   _ContentFadeTweenDurationSeconds: 0.2
-  _ContentTweenXOffset: 100
+  _ContentTweenXOffset: -100
 --- !u!114 &11455288
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -322,8 +322,8 @@ RectTransform:
   m_RootOrder: 2
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1500, y: 5.999715}
-  m_SizeDelta: {x: 2800, y: 83}
+  m_AnchoredPosition: {x: -1650, y: 5.999715}
+  m_SizeDelta: {x: 3100, y: 83}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22426186
 RectTransform:
@@ -356,8 +356,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 1500, y: 6}
-  m_SizeDelta: {x: 2800, y: 83}
+  m_AnchoredPosition: {x: 1650, y: 6}
+  m_SizeDelta: {x: 3100, y: 83}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22443070
 RectTransform:
@@ -455,6 +455,22 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _CaratLeftOffscreenLocalXPos
       value: -1500
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _ContentTweenXOffset
+      value: -100
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CaratTweenDurationSeconds
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _GrowTweenDurationSeconds
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _CaratExitTweenDurationSeconds
+      value: 0.3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}

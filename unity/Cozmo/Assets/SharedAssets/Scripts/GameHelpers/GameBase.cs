@@ -119,8 +119,7 @@ public abstract class GameBase : MonoBehaviour {
     _SharedMinigameViewInstance = UIManager.OpenView(
       MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       newView => {
-        newView.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
-          _ChallengeData.HowToPlayDialogContentLocKey);
+        newView.Initialize();
         InitializeView(newView, _ChallengeData);
       });
 
@@ -353,7 +352,11 @@ public abstract class GameBase : MonoBehaviour {
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
 
-    UpdateScoreboard(_WonChallenge);
+    UpdateScoreboard(didPlayerWin: _WonChallenge);
+
+    if (string.IsNullOrEmpty(subtitleText)) {
+      subtitleText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
+    }
     OpenChallengeEndedDialog(subtitleText);
   }
 
@@ -363,7 +366,11 @@ public abstract class GameBase : MonoBehaviour {
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
 
-    UpdateScoreboard(_WonChallenge);
+    UpdateScoreboard(didPlayerWin: _WonChallenge);
+
+    if (string.IsNullOrEmpty(subtitleText)) {
+      subtitleText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+    }
     OpenChallengeEndedDialog(subtitleText);
   }
 
@@ -394,7 +401,7 @@ public abstract class GameBase : MonoBehaviour {
     // Listen for dialog close
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
       Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
-    
+    SharedMinigameView.HideHowToPlayButton();
   }
 
   private void HandleChallengeResultViewClosed() {

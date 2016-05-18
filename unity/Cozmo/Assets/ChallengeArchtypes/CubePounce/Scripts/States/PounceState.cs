@@ -23,7 +23,7 @@ namespace CubePounce {
       _AttemptTriggered = false;
       _DidPounce = false;
       _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderWaitForPounce);
-      _CubePounceGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoWaitForPounce);
+      _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoWaitForPounce);
       LightCube.OnMovedAction += HandleCubeMoved;
     }
 
@@ -40,7 +40,7 @@ namespace CubePounce {
     private void HandleCubeMoved(int id, float accX, float accY, float aaZ) {
       if ((!_AttemptTriggered || !_DidPounce) && id == _CubePounceGame.GetCurrentTarget().ID) {
         _CubePounceGame.SharedMinigameView.InfoTitleText = Localization.Get(LocalizationKeys.kCubePounceHeaderCozmoWinEarly);
-        _CubePounceGame.SharedMinigameView.ShowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinEarly);
+        _CubePounceGame.SharedMinigameView.ShowNarrowInfoTextSlideWithKey(LocalizationKeys.kCubePounceInfoCozmoWinEarly);
         _CubePounceGame.OnCozmoWin();
 
         // Disable listener

@@ -10,6 +10,8 @@ public class InitialCubesState : State {
   private int _NumValidCubes;
   private GameBase _Game;
 
+  // TODO: Use RobotProcessedImage to count how many ticks / vision frames a cube
+  // is not visible instead of using a time-based timeout
   private const float kCubeTimeoutSeconds = 0.4f;
   private List<int> _ValidCubeIds;
   private Dictionary <int, float> _CubeIdToTimeout;
@@ -35,6 +37,7 @@ public class InitialCubesState : State {
       "cubes_are_ready_continue_button");
     _Game.SharedMinigameView.EnableContinueButton(false);
     _Game.SharedMinigameView.ShowShelf();
+    _Game.SharedMinigameView.ShowMiddleBackground();
 
     _Game.CubeIdsForGame = new List<int>();
     _CubeIdToTimeout = new Dictionary<int, float>();

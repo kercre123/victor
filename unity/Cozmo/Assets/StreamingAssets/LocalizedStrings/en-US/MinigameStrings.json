@@ -22,10 +22,10 @@
     "translation": "Put {0} cubes in front of Cozmo."
   },
   "minigame.text.playerWins": {
-    "translation": "WINNER: PLAYER"
+    "translation": "Player\nWins!"
   },
   "minigame.text.cozmoWins": {
-    "translation": "WINNER: COZMO"
+    "translation": "Cozmo\nWins!"
   },
   "minigame.quitView.title": {
     "translation": "Return to Main Menu?"
@@ -118,7 +118,7 @@
     "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
   },
   "speedTap.roundsText": {
-    "translation": "Round: {0:N0}"
+    "translation": "Round {0:N0}"
   },
   "speedTap.roundsWon.cozmo": {
     "translation": "cozmo rounds won: {0:N0}"

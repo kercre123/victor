@@ -15,12 +15,11 @@ MonoBehaviour:
   _ChallengeID: WhackAMole
   _ChallengeTitleLocKey: whackAMole.title
   _ChallengeDescriptionLocKey: whackAMole.description
-  _ChallengeIcon: {fileID: 21300000, guid: b9aff666f4e44424795e2b6746840501, type: 3}
+  _ChallengeIcon: {fileID: 21300000, guid: f28815dae66704e729160fe1d7e1e61f, type: 3}
   _UnlockId:
     _EnumValueAsString: BurpAction
     _EnumValue: 0
-  _HowToPlayDialogContentLocKey: 
-  _HowToPlayDialogContentPrefab: {fileID: 0}
   _Music:
     _Music: 1971384320
   MinigameConfig: {fileID: 11400000, guid: 566bcc302b99544f39c6182baf144e67, type: 2}
+  DifficultyOptions: []

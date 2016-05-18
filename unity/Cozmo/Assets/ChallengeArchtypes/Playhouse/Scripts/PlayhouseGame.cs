@@ -13,9 +13,7 @@ namespace Playhouse {
     private int _SequenceIndex = -1;
 
     protected override void Initialize(MinigameConfigBase minigameConfig) {
-      State nextState = new RequestPlay();
-      HowToPlayState howToPlayState = new HowToPlayState(nextState);
-      _StateMachine.SetNextState(howToPlayState);
+      _StateMachine.SetNextState(new RequestPlay());
 
     }
 

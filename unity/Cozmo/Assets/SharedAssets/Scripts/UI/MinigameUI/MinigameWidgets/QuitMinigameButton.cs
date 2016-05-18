@@ -8,7 +8,7 @@ namespace Cozmo {
   namespace MinigameWidgets {
     public class QuitMinigameButton : MinigameWidget {
 
-      private const float kAnimXOffset = -200.0f;
+      private const float kAnimXOffset = 0f;
       private const float kAnimYOffset = 200.0f;
       private const float kAnimDur = 0.25f;
 
@@ -27,8 +27,7 @@ namespace Cozmo {
       private bool _ConfimedQuit = false;
 
       private void Awake() {
-        _QuitButtonInstance.DASEventButtonName = "open_quit_game_confirm_view_button";
-        _QuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
+        _QuitButtonInstance.Initialize(HandleQuitButtonTap, "open_quit_game_confirm_view_button", "shared_minigame_view");
       }
 
       public override void DestroyWidgetImmediately() {
