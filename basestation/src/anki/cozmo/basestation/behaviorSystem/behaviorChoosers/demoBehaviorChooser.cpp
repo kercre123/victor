@@ -102,7 +102,7 @@ Result DemoBehaviorChooser::Update()
     TransitionToNextState();
   }
 
-  if( _state == State::MiniGame ) {
+  if( _state == State::MiniGame && ! _robot.IsCarryingObject() ) {
     // mini game requires a face, so if the last seen face is really old, search for a new one
     Pose3d waste;
     TimeStamp_t lastFaceTime = _robot.GetFaceWorld().GetLastObservedFace(waste);
@@ -267,11 +267,10 @@ void DemoBehaviorChooser::TransitionToMiniGame()
 {
   SET_STATE(MiniGame);
 
-  _robot.GetMoodManager().SetEmotion(EmotionType::WantToPlay, 1.0f);
   _robot.GetBehaviorManager().SetAvailableGame(BehaviorGameFlag::SpeedTap);
   
   // leave block behaviors active, but also enable speed tap game request
-  SetBehaviorGroupEnabled(BehaviorGroup::RequestSpeedTap);
+  SetBehaviorGroupEnabled(BehaviorGroup::DemoRequestSpeedTap);
 
   // when mini game starts, will go to selection chooser, then back to this chooser
   _checkTransition = [this]() { return false; };
