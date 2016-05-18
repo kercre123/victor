@@ -3230,7 +3230,7 @@ namespace Cozmo {
     
                           
     // Check if average reprojection error is too high
-    const f64 reprojErrThresh_pix = 1.0;
+    const f64 reprojErrThresh_pix = 0.5;
     if (rms > reprojErrThresh_pix) {
       PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh",
                        "%f > %f", rms, reprojErrThresh_pix);
