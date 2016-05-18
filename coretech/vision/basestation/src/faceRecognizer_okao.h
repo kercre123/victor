@@ -111,6 +111,8 @@ namespace Vision {
     Result MergeFaces(FaceID_t keepID, FaceID_t mergeID);
     
     Result RemoveUser(INT32 userID);
+    EnrollmentData::iterator RemoveUser(EnrollmentData::iterator userIter);
+    Result RemoveUserHelper(INT32 userID);
 
     Result GetSerializedAlbum(std::vector<u8>& serializedAlbum) const;
     
