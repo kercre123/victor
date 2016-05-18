@@ -69,9 +69,6 @@ namespace Cozmo {
 
     [System.Serializable]
     public class CubeCycleColors {
-      // TODO: Use generic sprites from mock tray or write a shader instead of
-      // having a sprite for every color in existence
-      public Sprite uiSprite;
       public Color[] lightColors;
       public float cycleIntervalSeconds;
     }

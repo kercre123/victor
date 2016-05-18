@@ -352,7 +352,11 @@ public abstract class GameBase : MonoBehaviour {
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
 
-    UpdateScoreboard(_WonChallenge);
+    UpdateScoreboard(didPlayerWin: _WonChallenge);
+
+    if (string.IsNullOrEmpty(subtitleText)) {
+      subtitleText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
+    }
     OpenChallengeEndedDialog(subtitleText);
   }
 
@@ -362,7 +366,11 @@ public abstract class GameBase : MonoBehaviour {
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
 
-    UpdateScoreboard(_WonChallenge);
+    UpdateScoreboard(didPlayerWin: _WonChallenge);
+
+    if (string.IsNullOrEmpty(subtitleText)) {
+      subtitleText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+    }
     OpenChallengeEndedDialog(subtitleText);
   }
 

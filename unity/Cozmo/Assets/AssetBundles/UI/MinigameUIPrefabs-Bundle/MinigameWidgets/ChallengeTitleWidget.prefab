@@ -133,8 +133,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -158, y: -0.24993134}
-  m_SizeDelta: {x: -316, y: 1}
+  m_AnchoredPosition: {x: -131, y: -0.24993134}
+  m_SizeDelta: {x: -263, y: 1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22411410
 RectTransform:
@@ -150,8 +150,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -151, y: -110}
-  m_SizeDelta: {x: 302, y: 185}
+  m_AnchoredPosition: {x: -118, y: -110}
+  m_SizeDelta: {x: 237, y: 185}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:
