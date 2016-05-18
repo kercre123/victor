@@ -87,7 +87,7 @@ MonoBehaviour:
       m_Calls: []
     m_TypeName: UnityEngine.UI.MaskableGraphic+CullStateChangedEvent, UnityEngine.UI,
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
-  m_Sprite: {fileID: 21300000, guid: a26742a6399614d4db64c01eefd28930, type: 3}
+  m_Sprite: {fileID: 21300000, guid: cd8652dcb3b244500a6bf0e4a70cb22a, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -137,7 +137,7 @@ MonoBehaviour:
   _TextLabel: {fileID: 11492938}
   _TextLabelOffset: -5
   TextEnabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 1}
-  TextPressedColor: {r: 1, g: 1, b: 1, a: 1}
+  TextPressedColor: {r: 0.27205884, g: 0.26880816, b: 0.2200476, a: 1}
   TextDisabledColor: {r: 0.4117647, g: 0.40784314, b: 0.34901962, a: 0.3882353}
   _AlphaController: {fileID: 0}
   ButtonGraphics:
@@ -152,14 +152,13 @@ MonoBehaviour:
     pressedSprite: {fileID: 0}
     pressedColor: {r: 1, g: 1, b: 1, a: 1}
     disabledSprite: {fileID: 0}
-    disabledColor: {r: 1, g: 1, b: 1, a: 0.203}
+    disabledColor: {r: 1, g: 1, b: 1, a: 0}
   _GlintAnimator: {fileID: 11493876}
   _UISoundEvent:
     _Event: -1705717452
     _EventType: 7
     _GameObjectType: 2
   _ShowDisabledStateWhenInteractable: 0
-  _ShowPressedStateOnRelease: 0
 --- !u!114 &11492938
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -181,11 +180,11 @@ MonoBehaviour:
       Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
   m_FontData:
     m_Font: {fileID: 12800000, guid: 01314919a94634a228a0ccc4039bcf62, type: 3}
-    m_FontSize: 74
+    m_FontSize: 80
     m_FontStyle: 0
     m_BestFit: 0
     m_MinSize: 7
-    m_MaxSize: 75
+    m_MaxSize: 80
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 0
@@ -340,6 +339,10 @@ Prefab:
       value: 
       objectReference: {fileID: 12800000, guid: 01314919a94634a228a0ccc4039bcf62,
         type: 3}
+    - target: {fileID: 0}
+      propertyPath: _TextLabelOffset
+      value: -5
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 164906}

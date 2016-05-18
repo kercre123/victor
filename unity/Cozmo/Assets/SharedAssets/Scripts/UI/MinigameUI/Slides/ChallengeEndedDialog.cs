@@ -26,19 +26,27 @@ public class ChallengeEndedDialog : MonoBehaviour {
 
   public void SetupDialog(string subtitleText) {
     _RewardIconsByStat = new Transform[(int)Anki.Cozmo.ProgressionStatType.Count];
-    _RewardContainerLayoutElement.gameObject.SetActive(false);
+    if (_RewardContainerLayoutElement != null) {
+      _RewardContainerLayoutElement.gameObject.SetActive(false);
+    }
 
     if (!string.IsNullOrEmpty(subtitleText)) {
-      _AdditionalInfoLabelLayoutElement.gameObject.SetActive(true);
+      if (_AdditionalInfoLabelLayoutElement != null) {
+        _AdditionalInfoLabelLayoutElement.gameObject.SetActive(true);
+      }
       _AdditionalInfoLabel.text = subtitleText;
     }
     else {
-      _AdditionalInfoLabelLayoutElement.gameObject.SetActive(false);
+      if (_AdditionalInfoLabelLayoutElement != null) {
+        _AdditionalInfoLabelLayoutElement.gameObject.SetActive(false);
+      }
     }
   }
 
   public void AddReward(Anki.Cozmo.ProgressionStatType progressionStat, int numberPoints) {
-    _RewardContainerLayoutElement.gameObject.SetActive(true);
+    if (_RewardContainerLayoutElement != null) {
+      _RewardContainerLayoutElement.gameObject.SetActive(true);
+    }
     IconTextLabel iconTextLabel = UIManager.CreateUIElement(_RewardIconPrefab, 
                                     _RewardContainer.transform).GetComponent<IconTextLabel>();
     iconTextLabel.SetText(Localization.GetWithArgs(LocalizationKeys.kLabelPlusCount, numberPoints));

@@ -20,25 +20,12 @@ namespace Cozmo {
       [SerializeField]
       private Anki.UI.AnkiTextLabel _ContentsTextLabel;
 
-      public void Initialize(string contentsLocKey) {
+      public void Initialize(string contentsLocKey, GameObject contentsPrefab) {
         if (!string.IsNullOrEmpty(contentsLocKey)) {
-          _ContentsTextLabel.gameObject.SetActive(true);
           _ContentsTextLabel.text = Localization.Get(contentsLocKey);
-          _ContentsContainer.gameObject.SetActive(false);
         }
-        else {
-          _ContentsTextLabel.gameObject.SetActive(false);
-        }
-      }
-
-      public void Initialize(GameObject contentsPrefab) {
         if (contentsPrefab != null) {
-          _ContentsContainer.gameObject.SetActive(true);
           UIManager.CreateUIElement(contentsPrefab, _ContentsContainer);
-          _ContentsTextLabel.gameObject.SetActive(false);
-        }
-        else {
-          _ContentsContainer.gameObject.SetActive(false);
         }
       }
 
@@ -49,8 +36,8 @@ namespace Cozmo {
       }
 
       protected override void ConstructOpenAnimation(Sequence openAnimation) {
-        openAnimation.Append(transform.DOLocalMoveY(
-          50, 0.15f).From().SetEase(Ease.OutQuad).SetRelative());
+        openAnimation.Append(transform.DOLocalMoveX(
+          -100, 0.25f).From().SetEase(Ease.OutQuad).SetRelative());
         if (_AlphaController != null) {
           _AlphaController.alpha = 0;
           openAnimation.Join(_AlphaController.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
@@ -58,8 +45,8 @@ namespace Cozmo {
       }
 
       protected override void ConstructCloseAnimation(Sequence closeAnimation) {
-        closeAnimation.Append(transform.DOLocalMoveY(
-          -50, 0.15f).SetEase(Ease.OutQuad).SetRelative());
+        closeAnimation.Append(transform.DOLocalMoveX(
+          -100, 0.25f).SetEase(Ease.OutQuad).SetRelative());
         if (_AlphaController != null) {
           closeAnimation.Join(_AlphaController.DOFade(0, 0.25f));
         }

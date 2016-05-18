@@ -13,22 +13,6 @@
       "AnimName": ""
     },
     {
-      "CladEvent": "OnFollowMotionLookDown",
-      "AnimName": "followMotionLookDown"
-    },
-    {
-      "CladEvent": "OnFollowMotionLookUp",
-      "AnimName": "followMotionLookUp"
-    },
-    {
-      "CladEvent": "OnFollowMotionLookUpAndDown",
-      "AnimName": "followMotionLookUpAndDown"
-    },
-    {
-      "CladEvent": "OnFollowMotionReact",
-      "AnimName": "followMotionReact"
-    },
-    {
       "CladEvent": "OnSpeedtapStarted",
       "AnimName": ""
     },
@@ -110,7 +94,27 @@
     },
     {
       "CladEvent": "OnLearnedPlayerName",
-      "AnimName": "faceEnrollment_LearnedPlayerName"
+      "AnimName": "ag_faceEnrollment_LearnedPlayerName"
+    },
+    {
+      "CladEvent": "OnSawNewUnnamedFace",
+      "AnimName": "ag_interactFaces_Unenrolled"
+    },
+    {
+      "CladEvent": "OnSawNewNamedFace",
+      "AnimName": "ag_interactFaces_Enrolled"
+    },
+    {
+      "CladEvent": "OnSawOldUnnamedFace",
+      "AnimName": "ag_interactFaces_Unenrolled"
+    },
+    {
+      "CladEvent": "OnSawOldNamedFace",
+      "AnimName": "ag_interactFaces_Enrolled"
+    },
+    {
+      "CladEvent": "OnWiggle",
+      "AnimName": "ag_faceEnrollment_Wiggle"
     }
   ]
 }

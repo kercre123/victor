@@ -59,7 +59,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abf1217fe3ffa417c8998bf4c98cf5b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Prefab: {fileID: 176160, guid: 10f33d59217b548c690367d9dbad1e40, type: 2}
+  Prefab: {fileID: 111598, guid: 6c199a31aa3af4bab8ff78a73ac57fb1, type: 2}
   ModifiedValues:
   - ObjectPath: 
     FieldName: Anki.UI.AnkiTextLabel:m_FontData:m_Alignment:value__
@@ -133,8 +133,8 @@ RectTransform:
   m_RootOrder: 1
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -158, y: -0.24993134}
-  m_SizeDelta: {x: -316, y: 1}
+  m_AnchoredPosition: {x: -131, y: -0.24993134}
+  m_SizeDelta: {x: -263, y: 1}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &22411410
 RectTransform:
@@ -150,8 +150,8 @@ RectTransform:
   m_RootOrder: 0
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -151, y: -110}
-  m_SizeDelta: {x: 302, y: 185}
+  m_AnchoredPosition: {x: -118, y: -110}
+  m_SizeDelta: {x: 237, y: 185}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &100100000
 Prefab:

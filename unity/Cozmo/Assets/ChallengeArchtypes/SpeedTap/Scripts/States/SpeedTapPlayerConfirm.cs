@@ -61,6 +61,7 @@ namespace SpeedTap {
     public override void Exit() {
       base.Exit();
       _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
+      _SpeedTapGame.SharedMinigameView.HideMiddleBackground();
       LightCube.TappedAction -= HandleTap;
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
