@@ -22,6 +22,6 @@ static uint32_t * const recovery_word = (uint32_t*) 0x20001FFC;
 
 static const BootLoaderSignature * const IMAGE_HEADER = (BootLoaderSignature*) BOOT_LOADER_LENGTH;
 
-void EnterRecovery();
+void EnterRecovery(bool force);
 
 #endif

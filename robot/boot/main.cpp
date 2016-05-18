@@ -26,8 +26,7 @@ extern "C" void OTA_EntryPoint (void) {
   SCB->VTOR = __Vectors;
   memset((void*)0x1FFFE000, 0, 0x4000);
   
-  *recovery_word = recovery_value;
-  EnterRecovery();
+  EnterRecovery(true);
   NVIC_SystemReset();
 }
 
@@ -49,7 +48,7 @@ int main (void) {
   Power::init();
   
   UART::init();
-  EnterRecovery();
+  EnterRecovery(false);
 
   // Tear down unnessessary components
   UART::shutdown();

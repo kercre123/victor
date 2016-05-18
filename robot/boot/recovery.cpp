@@ -185,7 +185,10 @@ static void SyncToBody(void) {
   uint32_t recovery_header = 0;
 
   while (recovery_header != BODY_RECOVERY_NOTICE) {
-    recovery_header = (UART::readByte() << 24) | (recovery_header >> 8);
+    UART0_S1 = UART0_S1;
+    while (!UART0_RCFIFO) ;
+    
+    recovery_header = (UART0_D << 24) | (recovery_header >> 8);
   }
 
   MicroWait(10);
@@ -193,16 +196,16 @@ static void SyncToBody(void) {
   UART::write(&HEAD_RECOVERY_NOTICE, sizeof(HEAD_RECOVERY_NOTICE));
 }
 
-void EnterRecovery() {  
+void EnterRecovery(bool force) {  
   // Pin to our body
   UART::receive();
   SyncToBody();
 
   // These are the requirements to boot immediately into the application
   // if any test fails, the robot will not exit recovery mode
-  bool recovery_force = *recovery_word != recovery_value;
+  bool recovery_force = force || *recovery_word == recovery_value;
   bool remote_boot_ok = SendBodyCommand(COMMAND_BOOT_READY);
-  bool boot_ok = recovery_force && CheckBootReady() && remote_boot_ok;
+  bool boot_ok = !recovery_force && CheckBootReady() && remote_boot_ok;
 
   for (int i = 0; i < 0x3F; i++) {
     SetLight(i);
