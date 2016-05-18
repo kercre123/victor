@@ -318,17 +318,20 @@ class GamePlatformConfiguration(object):
             self.call_engine('generate')
         # END ENGINE GENERATE
 
+        class_code = 'public class BuildFlags { \n'
+        git_variable = '  public const string kGitHash = \"' + subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip() + '\";\n'
+
         file = open(os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated', 'BuildFlags.cs'), 'w')
 
         if self.options.features != None and 'pressDemo' in self.options.features[0]:
-            file.write('public class BuildFlags { '+'\n'+
-            '  public const string kDefaultBuildScene=\"PressDemo\";'+'\n'+
+            file.write(class_code + git_variable +
+            '  public const string kDefaultBuildScene = \"PressDemo\";'+'\n'+
             '}')
         else:
-            file.write('public class BuildFlags { '+'\n'+
-            '  public const string kDefaultBuildScene=\"\";'+'\n'+
+            file.write(class_code + git_variable +
+            '  public const string kDefaultBuildScene = \"\";'+'\n'+
             '}')
-        
+
         file.close()
         
         if self.platform == 'mac':

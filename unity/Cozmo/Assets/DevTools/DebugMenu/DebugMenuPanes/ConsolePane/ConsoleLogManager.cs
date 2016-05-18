@@ -209,7 +209,7 @@ public class ConsoleLogManager : MonoBehaviour, IDASTarget {
   }
 
   private void CopyLogsToClipboard() {
-    string logFull = "";
+    string logFull = "git hash: " + BuildFlags.kGitHash + "\n";
     foreach (LogPacket logPacket in _LogToClipboard) {
       logFull += logPacket.GetStringNoFromatting() + "\n";
     }
