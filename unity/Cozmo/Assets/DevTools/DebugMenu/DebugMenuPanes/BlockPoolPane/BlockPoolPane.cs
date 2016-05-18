@@ -16,16 +16,20 @@ public class BlockPoolPane : MonoBehaviour {
 
   [SerializeField]
   private RectTransform _UIContainer;
+
+  [SerializeField]
+  private InputField _FilterInput;
+  private string _CurrentFilterString;
   
   private U2G.BlockPoolEnabledMessage _BlockPoolEnabledMessage;
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
 
   private class BlockData {
-    public BlockData(Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength, Button btn) {
+    public BlockData(Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength, Button button) {
       this.ObjectType = type;
       this.IsEnabled = is_enabled;
       this.SignalStrength = signal_strength;
-      this.BlockButton = btn;
+      this.BlockButton = button;
     }
 
     public Anki.Cozmo.ObjectType ObjectType { get; set; }
@@ -41,6 +45,8 @@ public class BlockPoolPane : MonoBehaviour {
 
   void Start() {
 
+    _FilterInput.onEndEdit.AddListener(HandleFilterStringUpdate);
+
     _EnabledCheckbox.onValueChanged.AddListener(HandlePoolEnabledValueChanged);
     
     _BlockPoolEnabledMessage = new U2G.BlockPoolEnabledMessage();
@@ -54,7 +60,19 @@ public class BlockPoolPane : MonoBehaviour {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  void HandleInitBlockPool(G2U.InitBlockPoolMessage initMsg) {
+  private void HandleFilterStringUpdate(string inputFilter) {
+    foreach (KeyValuePair<uint, BlockData> kvp in _BlockStates) {
+      if (kvp.Key.ToString("X").StartsWith(inputFilter)) {
+        kvp.Value.BlockButton.gameObject.SetActive(true);
+      }
+      else {
+        kvp.Value.BlockButton.gameObject.SetActive(false);
+      }
+    }
+    _CurrentFilterString = inputFilter;
+  }
+
+  private void HandleInitBlockPool(G2U.InitBlockPoolMessage initMsg) {
 
     // clear the lights we've turned blue to show connections.
     // Might stomp game setup but hopefully people are using this debug menu before playing.
@@ -80,7 +98,7 @@ public class BlockPoolPane : MonoBehaviour {
     SendAvailableObjects(true);
   }
 
-  void OnDestroy() {
+  private void OnDestroy() {
     RobotEngineManager.Instance.OnInitBlockPoolMsg -= HandleInitBlockPool;
     RobotEngineManager.Instance.OnObjectAvailableMsg -= HandleObjectAvailableMsg;
     RobotEngineManager.Instance.OnObjectUnavailableMsg -= HandleObjectUnavailableMsg;
@@ -165,6 +183,12 @@ public class BlockPoolPane : MonoBehaviour {
   private void UpdateButton(uint id) {
     BlockPoolPane.BlockData data;
     if (_BlockStates.TryGetValue(id, out data)) {
+      if (id.ToString("X").StartsWith(_CurrentFilterString)) {
+        data.BlockButton.gameObject.SetActive(true);
+      }
+      else {
+        data.BlockButton.gameObject.SetActive(false);
+      }
       Text txt = data.BlockButton.GetComponentInChildren<Text>();
       if (txt) {
         txt.text = "ID: " + id.ToString("X") + " \n " +
