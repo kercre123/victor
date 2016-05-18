@@ -45,7 +45,7 @@ public class BlockPoolPane : MonoBehaviour {
 
   void Start() {
 
-    _FilterInput.onEndEdit.AddListener(HandleFilterStringUpdate);
+    _FilterInput.onValueChanged.AddListener(HandleFilterStringUpdate);
 
     _EnabledCheckbox.onValueChanged.AddListener(HandlePoolEnabledValueChanged);
     
@@ -62,7 +62,7 @@ public class BlockPoolPane : MonoBehaviour {
 
   private void HandleFilterStringUpdate(string inputFilter) {
     foreach (KeyValuePair<uint, BlockData> kvp in _BlockStates) {
-      if (kvp.Key.ToString("X").StartsWith(inputFilter)) {
+      if (string.IsNullOrEmpty(_CurrentFilterString) || kvp.Key.ToString("X").StartsWith(inputFilter)) {
         kvp.Value.BlockButton.gameObject.SetActive(true);
       }
       else {
@@ -183,7 +183,7 @@ public class BlockPoolPane : MonoBehaviour {
   private void UpdateButton(uint id) {
     BlockPoolPane.BlockData data;
     if (_BlockStates.TryGetValue(id, out data)) {
-      if (id.ToString("X").StartsWith(_CurrentFilterString)) {
+      if (string.IsNullOrEmpty(_CurrentFilterString) || id.ToString("X").StartsWith(_CurrentFilterString)) {
         data.BlockButton.gameObject.SetActive(true);
       }
       else {
