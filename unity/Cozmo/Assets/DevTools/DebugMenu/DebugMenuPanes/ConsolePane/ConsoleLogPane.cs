@@ -127,7 +127,7 @@ public class ConsoleLogPane : MonoBehaviour {
   }
 
   public void SetText(List<string> consoleText) {
-    bool wasAtBottom = (_TextScrollRect.verticalNormalizedPosition >= 1);
+    bool wasAtBottom = (_TextScrollRect.verticalNormalizedPosition < 0.01f);
 
     // Return all the text labels to the pool
     ReturnLabelsToPool();
@@ -136,12 +136,12 @@ public class ConsoleLogPane : MonoBehaviour {
     CreateLabelsForText(consoleText);
 
     if (wasAtBottom) {
-      _TextScrollRect.verticalNormalizedPosition = 1;
+      _TextScrollRect.verticalNormalizedPosition = 0.0f;
     }
   }
 
   public void AppendLog(string newLog) {
-    bool wasAtBottom = (_TextScrollRect.verticalNormalizedPosition >= 1);
+    bool wasAtBottom = (_TextScrollRect.verticalNormalizedPosition < 0.01f);
 
     // If there is space, add the new log to the current newest text field
     if (_NewestTextLabel != null &&
@@ -158,7 +158,7 @@ public class ConsoleLogPane : MonoBehaviour {
     }
 
     if (wasAtBottom) {
-      _TextScrollRect.verticalNormalizedPosition = 1;
+      _TextScrollRect.verticalNormalizedPosition = 0.0f;
     }
   }
 
