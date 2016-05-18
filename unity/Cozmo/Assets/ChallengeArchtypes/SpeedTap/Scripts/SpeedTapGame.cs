@@ -65,9 +65,9 @@ namespace SpeedTap {
 
     public float CurrentMatchChance { get; set; }
 
-    public float MinIdleIntervalMs { get; private set; }
+    public float MinIdleInterval { get; private set; }
 
-    public float MaxIdleIntervalMs { get; private set; }
+    public float MaxIdleInterval { get; private set; }
 
     public float MinTapDelay { get; private set; }
 
@@ -141,8 +141,8 @@ namespace SpeedTap {
       BaseMatchChance = speedTapConfig.BaseMatchChance;
       CurrentMatchChance = BaseMatchChance;
       MatchChanceIncrease = speedTapConfig.MatchChanceIncrease;
-      MinIdleIntervalMs = speedTapConfig.MinIdleIntervalMs;
-      MaxIdleIntervalMs = speedTapConfig.MaxIdleIntervalMs;
+      MinIdleInterval = speedTapConfig.MinIdleInterval;
+      MaxIdleInterval = speedTapConfig.MaxIdleInterval;
       CozmoFakeoutChance = speedTapConfig.CozmoFakeoutChance;
 
       CozmoMistakeChance = SkillSystem.Instance.GetSkillVal(_kWrongTapChance);
