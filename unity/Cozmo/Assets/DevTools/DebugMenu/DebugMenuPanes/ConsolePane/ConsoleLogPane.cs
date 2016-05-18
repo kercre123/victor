@@ -123,7 +123,7 @@ public class ConsoleLogPane : MonoBehaviour {
     CreateLabelsForText(consoleText);
 
     // Scroll to the bottom
-    _TextScrollRect.verticalNormalizedPosition = 1;
+    _TextScrollRect.verticalNormalizedPosition = 0.0f;
   }
 
   public void SetText(List<string> consoleText) {
