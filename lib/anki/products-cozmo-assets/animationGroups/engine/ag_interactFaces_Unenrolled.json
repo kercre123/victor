@@ -1,13 +1,13 @@
 {
   "Animations": [
     {
-      "Name": "anim_pounce_fail_01",
+      "Name": "anim_freePlay_reactToFace_suspicious_01",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
       "Mood": "Default"
     },
     {
-      "Name": "anim_pounce_fail_02",
+      "Name": "anim_freePlay_reactToFace_suspicious_02",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
       "Mood": "Default"
