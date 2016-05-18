@@ -13,9 +13,9 @@ public class SpeedTapGameConfig : MinigameConfigBase {
   public int Rounds;
   public int MaxScorePerRound;
   [Range(0.0f, 1.0f)]
-  public float MinIdleInterval;
+  public float MinIdleInterval_percent;
   [Range(0.0f, 1.0f)]
-  public float MaxIdleInterval;
+  public float MaxIdleInterval_percent;
   [Range(0.0f, 1.0f)]
   public float BaseMatchChance;
   [Range(0.0f, 1.0f)]

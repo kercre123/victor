@@ -23,12 +23,7 @@ namespace SpeedTap {
       _EndTimestamp_sec = -1;
 
       // Reaction time should be relative to the LightsOnDuration
-      _CozmoTapDelay_sec = (_LightsOnDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelay, _SpeedTapGame.MaxTapDelay)) - _SpeedTapGame.CozmoTapLatency_sec;
-      // Cap delays to prevent issues, but fire a warning
-      if (_CozmoTapDelay_sec > _LightsOnDuration_sec - _SpeedTapGame.CozmoTapLatency_sec) {
-        DAS.Warn("SpeedTapHandCubesMatch.Enter", "TapDelay is greater than _LightsOnDuration, Skill Configs are likely wrong");
-        _CozmoTapDelay_sec = _LightsOnDuration_sec - _SpeedTapGame.CozmoTapLatency_sec;
-      }
+      _CozmoTapDelay_sec = (_LightsOnDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelay_percent, _SpeedTapGame.MaxTapDelay_percent)) - _SpeedTapGame.CozmoTapLatency_sec;
       _DidCozmoTap = false;
 
       // Set lights on cubes
