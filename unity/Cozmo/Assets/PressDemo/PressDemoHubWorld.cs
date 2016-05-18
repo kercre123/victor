@@ -24,6 +24,8 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private int _PressDemoDebugSceneIndex = 0;
 
+  private int _ExplicitFaceID = -1;
+
   private Cozmo.UI.AlertView _RequestDialog = null;
 
   public override bool LoadHubWorld() {
@@ -75,6 +77,7 @@ public class PressDemoHubWorld : HubWorldBase {
     alertView.TitleLocKey = "pressDemo.faceEnrollRequestTitle";
     alertView.DescriptionLocKey = "pressDemo.faceEnrollRequestDesc";
     _RequestDialog = alertView;
+    _ExplicitFaceID = message.face_id;
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
@@ -124,6 +127,7 @@ public class PressDemoHubWorld : HubWorldBase {
     _RequestDialog = null;
     // demo mode should not be saving faces to the actual robot.
     faceEnrollment.SetSaveToRobot(false);
+    faceEnrollment.SetFixedFaceID(_ExplicitFaceID);
   }
 
   private void StartSpeedTapGame() {
