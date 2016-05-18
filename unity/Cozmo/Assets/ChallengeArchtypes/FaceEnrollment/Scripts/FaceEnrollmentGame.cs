@@ -20,13 +20,14 @@ namespace FaceEnrollment {
 
     private string _NameForFace;
 
+    private int _FixedFaceID = -1;
+
+    private bool _UseFixedFaceID = false;
+
     protected override void Initialize(MinigameConfigBase minigameConfig) {
       // make cozmo look up
       CurrentRobot.SetHeadAngle(0.5f);
-
       AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnWiggle, HandleWiggleAnimEnd);
-
-      
     }
 
     protected override void InitializeView(Cozmo.MinigameWidgets.SharedMinigameView newView, ChallengeData data) {
@@ -41,6 +42,11 @@ namespace FaceEnrollment {
       _SaveToRobot = saveToRobot;
     }
 
+    public void SetFixedFaceID(int id) {
+      _FixedFaceID = id;
+      _UseFixedFaceID = true;
+    }
+
     private void HandleNameEntered(string name) {
       _NameForFace = name;
       SharedMinigameView.ShowWideAnimationSlide("faceEnrollment.instructions", "face_enrollment_wait_instructions", _FaceEnrollmentDiagramPrefab, HandleInstructionsSlideEntered);
@@ -49,7 +55,13 @@ namespace FaceEnrollment {
     }
 
     private void HandleInstructionsSlideEntered() {
-      RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
+      if (_UseFixedFaceID) {
+        CurrentRobot.EnrollNamedFace(_FixedFaceID, _NameForFace, saveToRobot: _SaveToRobot, callback: HandleEnrolledFace);
+        _AttemptedEnrollFace = true;
+      }
+      else {
+        RobotEngineManager.Instance.RobotObservedNewFace += HandleObservedNewFace;
+      }
     }
 
     private void HandleObservedNewFace(int id, Vector3 pos, Quaternion rot) {
@@ -94,7 +106,6 @@ namespace FaceEnrollment {
     }
 
     protected override void CleanUpOnDestroy() {
-
       SharedMinigameView.HideGameStateSlide();
       RobotEngineManager.Instance.RobotObservedNewFace -= HandleObservedNewFace;
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnWiggle, HandleWiggleAnimEnd);
