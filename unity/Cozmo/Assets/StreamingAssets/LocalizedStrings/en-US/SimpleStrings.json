@@ -18,6 +18,12 @@
       "/{*}"
     ]
   },
+  "name.cozmo": {
+    "translation": "Cozmo"
+  },
+  "name.player": {
+    "translation": "Player"
+  },
   "button.quitGame": {
     "translation": "Quit Game"
   },

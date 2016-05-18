@@ -6,29 +6,24 @@ namespace SpeedTap {
     
     private SpeedTapGame _SpeedTapGame;
 
-    private float _OnDuration_sec;
+    private float _LightsOnDuration_sec;
     private float _CozmoMovementDelay_sec;
     private float _StartTimestamp_sec;
     private bool _IsCozmoMoving;
-    private bool _AnyTapRegistered;
 
     public override void Enter() {
       base.Enter();
       _SpeedTapGame = _StateMachine.GetGame() as SpeedTapGame;
+      _SpeedTapGame.ResetTapTimestamps();
 
       _StartTimestamp_sec = Time.time;
-      _OnDuration_sec = _SpeedTapGame.GetLightsOnDurationSec();
-      _CozmoMovementDelay_sec = 0.001f * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelayMs, _SpeedTapGame.MaxTapDelayMs);
+      _LightsOnDuration_sec = _SpeedTapGame.GetLightsOnDurationSec();
+      _CozmoMovementDelay_sec = (_LightsOnDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinTapDelay_percent, _SpeedTapGame.MaxTapDelay_percent)) - _SpeedTapGame.CozmoTapLatency_sec;
       _IsCozmoMoving = false;
-      _AnyTapRegistered = false;
 
       // Set lights on cubes
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLightup);
       _SpeedTapGame.Rules.SetLights(shouldMatch: false, game: _SpeedTapGame);
-
-      // Listen for player taps
-      _SpeedTapGame.PlayerTappedBlockEvent += HandlePlayerTap;
-      RobotEngineManager.Instance.OnRobotAnimationEvent += HandleRobotAnimationEvent;
     }
 
     public override void Update() {
@@ -42,16 +37,14 @@ namespace SpeedTap {
       }
 
       // Check to turn off cubes after some time
-      if (secondsElapsed > _OnDuration_sec) {
+      if (secondsElapsed > _LightsOnDuration_sec) {
         // Move to turn off state
-        _StateMachine.SetNextState(new SpeedTapHandCubesOff());
+        ResolveHand();
       }
     }
 
     public override void Exit() {
       base.Exit();
-      _SpeedTapGame.PlayerTappedBlockEvent -= HandlePlayerTap;
-      RobotEngineManager.Instance.OnRobotAnimationEvent -= HandleRobotAnimationEvent;
       AnimationManager.Instance.RemoveAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, HandleCozmoFakeoutAnimationEnd);
     }
 
@@ -59,29 +52,10 @@ namespace SpeedTap {
       _SpeedTapGame.CheckForAdjust();
     }
 
-    private void HandleRobotAnimationEvent(Anki.Cozmo.ExternalInterface.AnimationEvent msg) {
-      if (msg.event_id == Anki.Cozmo.AnimEvent.TAPPED_BLOCK && !_AnyTapRegistered) {
-        _AnyTapRegistered = true;
-        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Player, true));
-      }
-    }
-
-    private void HandlePlayerTap() {
-      // Move to react state with player mistapping
-      if (!_AnyTapRegistered) {
-        _AnyTapRegistered = true;
-        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Cozmo, true));
-      }
-    }
-
     private void DoCozmoMovement() {
       // Mistake or fakeout or nothing?
       float randomPercent = UnityEngine.Random.Range(0f, 1f);
       if (randomPercent < _SpeedTapGame.CozmoMistakeChance) {
-        // TODO Change logic when animation keyframe is implemented
-        // Favor the player if Cozmo makes a mistake
-        _SpeedTapGame.PlayerTappedBlockEvent -= HandlePlayerTap;
-
         GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapTap);
       }
       else {
@@ -90,6 +64,24 @@ namespace SpeedTap {
           AnimationManager.Instance.AddAnimationEndedCallback(Anki.Cozmo.GameEvent.OnSpeedtapFakeout, HandleCozmoFakeoutAnimationEnd);
           GameEventManager.Instance.SendGameEventToEngine(Anki.Cozmo.GameEvent.OnSpeedtapFakeout);
         }
+      }
+    }
+
+    /// <summary>
+    /// Resolves the hand, first tapper loses, if no taps, we keep going.
+    /// </summary>
+    private void ResolveHand() {
+      switch (_SpeedTapGame.FirstTapper) {
+      case FirstToTap.Cozmo:
+        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Player, true));
+        break;
+      case FirstToTap.Player:
+        _StateMachine.SetNextState(new SpeedTapHandReactToPoint(PointWinner.Cozmo, true));
+        break;
+      case FirstToTap.NoTaps:
+      default:
+        _StateMachine.SetNextState(new SpeedTapHandCubesOff());
+        break;
       }
     }
   }

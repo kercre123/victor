@@ -278,5 +278,17 @@
   },
   "speedTap.difficulty.expertDescription.locked": {
     "translation": "Unlock by winning Speed Tap Hard."
+  }, 
+  "speedTap.text.getReady": {
+    "translation": "Get Ready!"
+  },
+  "speedTap.text.bestOf": {
+    "translation": "<b>Winner:</b> Best of {0} Rounds"
+  },
+  "speedTap.text.displayWinnerSubtitle": {
+    "translation": "takes Round {0}!"
+  },
+  "speedTap.text.roundScore": {
+    "translation": "Player: {0} - Cozmo: {1}"
   }
 }

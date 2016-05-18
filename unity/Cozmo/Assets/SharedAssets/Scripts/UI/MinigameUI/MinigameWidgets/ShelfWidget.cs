@@ -16,16 +16,16 @@ namespace Cozmo {
       private RectTransform _BackgroundImageContainer;
 
       [SerializeField]
-      private RectTransform _CaratContainer;
-
-      [SerializeField]
-      private CanvasGroup _ContentContainer;
-
-      [SerializeField]
       private float _StartYLocalPos = -300f;
 
       [SerializeField]
       private float _GrowTweenDurationSeconds = 0.2f;
+
+      private Sequence _BackgroundTween = null;
+      private bool _IsBackgroundGrown = false;
+
+      [SerializeField]
+      private RectTransform _CaratContainer;
 
       [SerializeField]
       private float _CaratTweenDurationSeconds = 0.4f;
@@ -39,22 +39,61 @@ namespace Cozmo {
       [SerializeField]
       private float _CaratRightOffscreenLocalXPos = -200f;
 
+      private Tweener _CaratTween = null;
+
+      [SerializeField]
+      private CanvasGroup _ContentContainer;
+
       [SerializeField]
       private float _ContentFadeTweenDurationSeconds = 0.2f;
 
       [SerializeField]
       private float _ContentTweenXOffset = 100f;
 
-      private Sequence _BackgroundTween = null;
-      private bool _IsBackgroundGrown = false;
-
-      private Tweener _CaratTween = null;
-
       private Sequence _ContentTween = null;
       private GameObject _ContentObject = null;
 
+      [SerializeField]
+      private RectTransform _BannerContainer;
+
+      [SerializeField]
+      private AnkiTextLabel _BannerTextLabel;
+
+      [SerializeField]
+      private float _BannerInOutAnimationDurationSeconds = 0.3f;
+
+      [SerializeField]
+      private float _BannerSlowAnimationDurationSeconds = .75f;
+
+      [SerializeField]
+      private float _BannerLeftOffscreenLocalXPos = 0;
+
+      [SerializeField]
+      private float _BannerRightOffscreenLocalXPos = 0f;
+
+      [SerializeField]
+      private float _BannerSlowDistance = 100f;
+
+      private Sequence _BannerTween = null;
+
       private void Start() {
         transform.SetAsFirstSibling();
+        _BannerContainer.gameObject.SetActive(false);
+      }
+
+      private void OnDestroy() {
+        if (_ContentTween != null) {
+          _ContentTween.Kill();
+        }
+        if (_BackgroundTween != null) {
+          _BackgroundTween.Kill();
+        }
+        if (_CaratTween != null) {
+          _CaratTween.Kill();
+        }
+        if (_BannerTween != null) {
+          _BannerTween.Kill();
+        }
       }
 
       public void GrowShelfBackground() {
@@ -156,6 +195,36 @@ namespace Cozmo {
           Destroy(_ContentObject);
           _ContentObject = null;
         }
+      }
+
+      public void PlayBannerAnimation(string textToDisplay, TweenCallback animationEndCallback = null, float customSlowDurationSeconds = 0f) {
+        _BannerContainer.gameObject.SetActive(true);
+        Vector3 localPos = _BannerContainer.gameObject.transform.localPosition;
+        localPos.x = _BannerLeftOffscreenLocalXPos;
+        _BannerContainer.gameObject.transform.localPosition = localPos;
+
+        // set text
+        _BannerTextLabel.text = textToDisplay;
+
+        float slowDuration = (customSlowDurationSeconds != 0) ? customSlowDurationSeconds : _BannerSlowAnimationDurationSeconds;
+
+        // build sequence
+        if (_BannerTween != null) {
+          _BannerTween.Kill();
+        }
+        _BannerTween = DOTween.Sequence();
+        float midpoint = (_BannerRightOffscreenLocalXPos + _BannerLeftOffscreenLocalXPos) * 0.5f;
+        _BannerTween.Append(_BannerContainer.DOLocalMoveX(midpoint - _BannerSlowDistance, _BannerInOutAnimationDurationSeconds).SetEase(Ease.OutQuad));
+        _BannerTween.Append(_BannerContainer.DOLocalMoveX(midpoint, slowDuration));
+        _BannerTween.Append(_BannerContainer.DOLocalMoveX(_BannerRightOffscreenLocalXPos, _BannerInOutAnimationDurationSeconds).SetEase(Ease.InQuad));
+        _BannerTween.AppendCallback(HandleBannerAnimationEnd);
+        if (animationEndCallback != null) {
+          _BannerTween.AppendCallback(animationEndCallback);
+        }
+      }
+
+      private void HandleBannerAnimationEnd() {
+        _BannerContainer.gameObject.SetActive(false);
       }
 
       #region IMinigameWidget
