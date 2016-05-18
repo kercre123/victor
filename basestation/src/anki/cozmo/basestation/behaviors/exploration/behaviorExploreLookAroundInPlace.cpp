@@ -15,6 +15,7 @@
 #include "behaviorExploreLookAroundInPlace.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/math/point_impl.h"
@@ -109,6 +110,10 @@ bool ParseBool(const Json::Value& config, const char* key) {
   ASSERT_NAMED_EVENT(config[key].isBool(), "BehaviorExploreLookAroundInPlace.ParseBool.NotValidBool", "%s", key);
   return config[key].asBool();
 };
+std::string ParseString(const Json::Value& config, const char* key) {
+  ASSERT_NAMED_EVENT(config[key].isString(), "BehaviorExploreLookAroundInPlace.ParseString.NotValidString", "%s", key);
+  return config[key].asString();
+};
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -131,6 +136,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   // [min,max] range for pause for step 2
   _configParams.s2_WaitMin_sec = ParseFloat(config, "s2_WaitMin_sec");
   _configParams.s2_WaitMax_sec = ParseFloat(config, "s2_WaitMax_sec");
+  _configParams.s2_WaitAnimGroupName = ParseString(config, "s2_WaitAnimGroupName");
   // [min,max] range for random angle turns for step 3
   _configParams.s3_BodyAngleRangeMin_deg = ParseFloat(config, "s3_BodyAngleRangeMin_deg");
   _configParams.s3_BodyAngleRangeMax_deg = ParseFloat(config, "s3_BodyAngleRangeMax_deg");
@@ -145,6 +151,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.s4_HeadAngleChangesMax = ParseUint8(config, "s4_HeadAngleChangesMax");
   _configParams.s4_WaitBetweenChangesMin_sec = ParseFloat(config, "s4_WaitBetweenChangesMin_sec");
   _configParams.s4_WaitBetweenChangesMax_sec = ParseFloat(config, "s4_WaitBetweenChangesMax_sec");
+  _configParams.s4_WaitAnimGroupName = ParseString(config, "s4_WaitAnimGroupName");
   // [min,max] range for head move  for step 5
   _configParams.s5_BodyAngleRelativeRangeMin_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMin_deg");
   _configParams.s5_BodyAngleRelativeRangeMax_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMax_deg");
@@ -171,6 +178,12 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   TransitionToS1_OppositeTurn(robot);
 
   return Result::RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreLookAroundInPlace::StopInternal(Robot& robot)
+{
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -207,12 +220,22 @@ void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(Robot& robot)
 {
-  // create action
-  const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s2_WaitMin_sec, _configParams.s2_WaitMax_sec);
-  WaitAction* waitAction = new WaitAction( robot, waitTime_sec );
-
+  IAction* pauseAction = nullptr;
+  const std::string& animGroupName = _configParams.s2_WaitAnimGroupName;
+  if ( !animGroupName.empty() )
+  {
+    pauseAction = CreatePlayAnimationAction(robot, animGroupName);
+  }
+  else
+  {
+    // create wait action
+    const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s2_WaitMin_sec, _configParams.s2_WaitMax_sec);
+    pauseAction = new WaitAction( robot, waitTime_sec );
+  }
+  
   // request action with transition to proper state
-  StartActing( waitAction, &BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn );
+  ASSERT_NAMED( nullptr!=pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS2_Pause.NullAction");
+  StartActing( pauseAction, &BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -250,7 +273,7 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
     &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp;
 
   // this is the lambda that will run after the wait action finishes
-  auto runAfterWait = [this, &robot, nextCallback](const ExternalInterface::RobotCompletedAction& actionRet)
+  auto runAfterPause = [this, &robot, nextCallback](const ExternalInterface::RobotCompletedAction& actionRet)
   {
     // create head move action
     IAction* moveHeadAction = CreateHeadTurnAction(robot,
@@ -265,12 +288,24 @@ void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
     // do head action and transition to next state or same (depending on callback)
     StartActing( moveHeadAction, nextCallback );
   };
-
-  // run the wait action first, setting the lambda
-  const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s4_WaitBetweenChangesMin_sec,
+  
+  IAction* pauseAction = nullptr;
+  const std::string& animGroupName = _configParams.s4_WaitAnimGroupName;
+  if ( !animGroupName.empty() )
+  {
+    pauseAction = CreatePlayAnimationAction(robot, animGroupName);
+  }
+  else
+  {
+    // create wait action
+    const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s4_WaitBetweenChangesMin_sec,
                                                       _configParams.s4_WaitBetweenChangesMax_sec);
-  WaitAction* waitAction = new WaitAction( robot, waitTime_sec );
-  StartActing( waitAction, runAfterWait );
+    pauseAction = new WaitAction( robot, waitTime_sec );
+  }
+  
+  // request action with transition to proper state
+  ASSERT_NAMED( nullptr!=pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp.NullPauseAction");
+  StartActing( pauseAction, runAfterPause );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
