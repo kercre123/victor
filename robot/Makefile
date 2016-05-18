@@ -47,10 +47,31 @@ nrf: $(ANKI_LOG_TABLE_JSON)
 k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
-release:
-	cp ./build/41/robot.safe releases
-	cp ./syscon/build/app/syscon.safe releases
-	cp ./espressif/bin/upgrade/user1.2048.new.3.bin releases/esp.user.bin
+k02_fix:
+	python3 ./tools/boot_header.py ./build/app/robot.axf
+
+nrf_fix:
+	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
+
+# This fixes the headers and places the binaries in release
+stage_binaries: k02_fix nrf_fix
+	cp ./build/app/robot.axf ./binaries
+	cp ./syscon/build/app/syscon.axf ./binaries
+	cp ./espressif/bin/upgrade/user1.2048.new.3.bin ./binaries/esp.user.bin
+
+stage: stage_binaries
+	python3 ./tools/sign.py --rtip ./binaries/robot.axf 	./staging/rtip.safe
+	python3 ./tools/sign.py --body ./binaries/syscon.axf	./staging/body.safe
+	python3 ./tools/sign.py --wifi ./binaries/esp.user.bin 	./staging/wifi.safe
+	python3 ./tools/sign.py --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf --wifi ./binaries/esp.user.bin ./staging/cozmo.safe
+
+release: stage_binaries
+	#  --wifi ./binaries/esp.user.bin Should be added once single file OTA is finished
+	python3 ./tools/sign.py --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
+	cp ./binaries/esp.user.bin releases
+
+kevin: k02_fix
+	python3 ./tools/sign.py --rtip ./build/app/robot.axf ./staging/rtip.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"
@@ -59,22 +80,15 @@ esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3
 
-safe:
-	python3 ./tools/sign.py ./build/41/robot.out ./build/41/robot.safe  ./build/robot.bin
-	python3 ./tools/sign.py ./syscon/build/app/syscon.axf ./syscon/build/app/syscon.safe ./syscon/build/app/syscon.bin
-
 espressif/bin/upgrade/user1.2048.new.3.bin: esp
 
 $(BINARY_RELEASE_DIR)/esp.user.bin: espressif/bin/upgrade/user1.2048.new.3.bin
 	cp $< $@
 
-$(BINARY_RELEASE_DIR)/robot.safe: build/41/robot.safe
-	cp $< $@
+$(BINARY_RELEASE_DIR)/cozmo.safe: k02_fix
+	python3 ./tools/sign.py --rtip build/app/robot.axf  --body ./binaries/syscon.axf $@
 
-$(BINARY_RELEASE_DIR)/syscon.safe: syscon/build/syscon.safe
-	cp $< $@
-
-otaBinaries: $(BINARY_RELEASE_DIR)/esp.user.bin $(BINARY_RELEASE_DIR)/robot.safe $(BINARY_RELEASE_DIR)/syscon.safe
+otaBinaries: $(BINARY_RELEASE_DIR)/esp.user.bin $(BINARY_RELEASE_DIR)/cozmo.safe
 
 onBuildServer: k02 $(BINARY_RELEASE_DIR)/esp.user.bin
 

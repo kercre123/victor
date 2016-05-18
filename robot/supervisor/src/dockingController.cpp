@@ -247,6 +247,12 @@ namespace Anki {
         const f32 DOCKING_PATH_ANG_OFFSET_CAP_RAD = 0.4;
         bool appliedGains_ = false;
         
+        // Save previous controller gains
+        f32 prevK1_;
+        f32 prevK2_;
+        f32 prevPathDistOffsetCap_;
+        f32 prevPathAngOffsetCap_;
+        
         // Values related to our path to get use from our current pose to dockPose
         const u8 DIST_AWAY_FROM_BLOCK_FOR_PT_MM = 60;
         const u8 DIST_AWAY_FROM_BLOCK_FOR_ADDITIONAL_PATH_MM = 100;
@@ -269,12 +275,6 @@ namespace Anki {
           HANNS_MANEUVER
         };
         FailureMode failureMode_ = NO_FAILURE;
-        
-        // Save previous controller gains
-        f32 prevK1_;
-        f32 prevK2_;
-        f32 prevPathDistOffsetCap_;
-        f32 prevPathAngOffsetCap_;
         
         bool dockingStarted = false;
         
@@ -681,10 +681,12 @@ namespace Anki {
         
         Result retVal = RESULT_OK;
         
+#if(!USE_BLIND_DOCKING)
         // There are some special cases for aligning with a block (rolling is basically aligning)
         const bool isAligning = PickAndPlaceController::GetCurAction() == DA_ALIGN ||
                                 PickAndPlaceController::GetCurAction() == DA_ROLL_LOW;
-
+#endif
+        
         switch(mode_)
         {
           case IDLE:
@@ -831,6 +833,11 @@ namespace Anki {
                 }
               }
 
+              
+#if(!CHECK_FINAL_POSE)
+              inPosition = true;
+#endif
+              
               // If we know we are not in position and we are not currently backing up due to an already recognized
               // failure then fail this dock and either backup or do Hanns maneuver. We are only able to fail
               // docking this way if the docking involves markers
@@ -1067,7 +1074,7 @@ namespace Anki {
              ABS(prev_blockPose_y_ - blockPose_y) > DELTA_BLOCKPOSE_Y_TOL_MM ||
              ABS(prev_blockPose_a_ - blockPose_a) > DELTA_BLOCKPOSE_A_TOL_RAD)
           {
-            AnkiDebug( 5, "DockingController", 450, "Acquire new signal %f %f %f", 3,
+            AnkiDebug( 5, "DockingController", 457, "Acquire new signal %f %f %f", 3,
                       prev_blockPose_x_ - blockPose_x,
                       prev_blockPose_y_ - blockPose_y,
                       prev_blockPose_a_ - blockPose_a);
@@ -1239,7 +1246,7 @@ namespace Anki {
             PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
                                                  dockSpeed_mmps_, dockAccel_mmps2_, dockAccel_mmps2_);
             
-            //AnkiDebug( 5, "DockingController", 456, "Computing straight line path (%f, %f) to (%f, %f)\n", 4,x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y());
+            //AnkiDebug( 5, "DockingController", 458, "Computing straight line path (%f, %f) to (%f, %f)\n", 4,x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y());
           }
           else
           {

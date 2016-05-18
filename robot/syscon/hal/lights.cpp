@@ -9,23 +9,7 @@
 #include "backpack.h"
 #include "radio.h"
 
-enum LightMode {
-  HOLD_VALUE,
-  TRANSITION_UP,
-  HOLD_ON,
-  TRANSITION_DOWN,
-  HOLD_OFF
-};
-
-struct LightValues {
-  LightState state;
-  LightMode mode;
-  int clock;
-  int phase;
-  uint8_t values[LIGHTS_PER_WORD];
-};
-
-static LightValues lights[TOTAL_LIGHTS];
+ControllerLights lightController;
 
 static const uint16_t DivTable[] = {
   65535, 65535, 32768, 21845, 16384, 13107, 10922,  9362,
@@ -143,7 +127,7 @@ void Lights::init() {
   memset(&state, 0, sizeof(state));
   
   for (int i = 0; i < TOTAL_LIGHTS; i++) {
-    update(i, &state);
+    update(lightController.lights[i], &state);
   }
 }
 
@@ -151,25 +135,19 @@ void Lights::manage() {
   int time = GetFrame();
   
   for (int i = 0; i < TOTAL_LIGHTS; i++) {
-    CalculateLEDColor(lights[i], time);
+    CalculateLEDColor(lightController.lights[i], time);
   }
 }
 
-void Lights::update(int index, const LightState* params) {
-  LightValues* light = &lights[index];
-  
-  memcpy(&light->state, params, sizeof(LightState));
+void Lights::update(LightValues& light, const LightState* params) {
+  memcpy(&light.state, params, sizeof(LightState));
 
   // If this is a constant light
   if (params->onFrames == 255 || (params->onColor == params->offColor)) {
-    light->mode = HOLD_VALUE;   
-    UnpackColor(light->values, params->onColor);
+    light.mode = HOLD_VALUE;   
+    UnpackColor(light.values, params->onColor);
   } else {
-    light->mode = TRANSITION_UP;
-    light->phase = 0;
+    light.mode = TRANSITION_UP;
+    light.phase = 0;
   }
-}
-
-uint8_t* Lights::state(int idx) {
-  return lights[idx].values;
 }

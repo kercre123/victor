@@ -129,6 +129,10 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // Custom handler for CameraCalibration event
     auto cameraCalibrationCallback = std::bind(&RobotEventHandler::HandleCameraCalibration, this, std::placeholders::_1);
     _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::CameraCalibration, cameraCalibrationCallback));
+    
+    // Custom handler for SetHeadlight
+    auto headlightCallback = std::bind(&RobotEventHandler::HandleSetHeadlight, this, std::placeholders::_1);
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::SetHeadlight, headlightCallback));
 
     // Custom handlers for BehaviorManager events
     {
@@ -1134,12 +1138,29 @@ void RobotEventHandler::HandleSendAvailableObjects(const GameToEngineEvent& even
       CameraCalibration calib = event.GetData().Get_CameraCalibration();
       std::vector<u8> calibVec(calib.Size());
       calib.Pack(calibVec.data(), calib.Size());
-      robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalibration, calibVec.data(), calibVec.size());
+      robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, calibVec.data(), calibVec.size());
       
       PRINT_NAMED_INFO("RobotEventHandler.HandleCameraCalibration.SendingCalib",
                        "fx: %f, fy: %f, cx: %f, cy: %f, nrows %d, ncols %d",
                        calib.focalLength_x, calib.focalLength_y, calib.center_x, calib.center_y, calib.nrows, calib.ncols);
       
+    }
+  }
+  
+  void RobotEventHandler::HandleSetHeadlight(const GameToEngineEvent& event)
+  {
+    // TODO: get RobotID in a non-hack way
+    RobotID_t robotID = 1;
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    // We need a robot
+    if (nullptr == robot)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      robot->SetHeadlight(event.GetData().Get_SetHeadlight().enable);
     }
   }
 

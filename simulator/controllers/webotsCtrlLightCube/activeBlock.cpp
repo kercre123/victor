@@ -113,11 +113,8 @@ namespace Anki {
           {0, 1, 2, 3}
         };
         
-        // Mapping from type ID to FactoryID
-        // This is just what it happens to be in EP2. Changes to this mapping should
-        // also be reflected in ActiveCube::GetTypeFromFactoryID().
-        // Alternatively, modify the LightCube ObjectTypes to match the factoryID.
-        const u32 activeIDToFactoryIDMap_[MAX_NUM_CUBES] = {2, 1, 0, 3};
+        // Mapping from block ID to activeObjectType
+        const ActiveObjectType blockIDToActiveObjectType_[MAX_NUM_CUBES] = { OBJECT_CUBE1, OBJECT_CUBE2, OBJECT_CUBE3, OBJECT_UNKNOWN };
         u32 factoryID_ = 0;
         
         // Flash ID params
@@ -239,7 +236,7 @@ namespace Anki {
         u32 currTime_ms = static_cast<u32>(1000 * block_controller.getTime());
         
         // Generate a factory ID
-        factoryID_ = currTime_ms * 100000 + nodeIndex * 1000 + activeIDToFactoryIDMap_[blockID_];
+        factoryID_ = currTime_ms * 100000 + nodeIndex * 1000 + blockID_;
         factoryID_ &= 0x7FFFFFFF; // Make sure it doesn't get mistaken for a charger
         printf("Starting ActiveBlock %d (factoryID %d)\n", blockID_, factoryID_);
         
@@ -523,6 +520,7 @@ namespace Anki {
             BlockMessages::LightCubeMessage msg;
             msg.tag = BlockMessages::LightCubeMessage::Tag_discovered;
             msg.discovered.factory_id = factoryID_;
+            msg.discovered.device_type = blockIDToActiveObjectType_[blockID_];
             emitter_->setChannel(OBJECT_DISCOVERY_CHANNEL);
             emitter_->send(msg.GetBuffer(), msg.Size());
             emitter_->setChannel(factoryID_);

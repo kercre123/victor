@@ -260,6 +260,7 @@ namespace Anki {
       ObjectInteractionResult     _interactionResult = ObjectInteractionResult::INCOMPLETE;
       bool                        _startedPlacing = false;
       
+      
     }; // class PlaceObjectOnGroundAction
     
     

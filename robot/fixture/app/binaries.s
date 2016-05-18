@@ -9,14 +9,18 @@
   EXPORT g_Cube
   EXPORT g_CubeEnd
 g_Cube
+#ifdef FCC
+  INCBIN releases\\cube31.fcc.bin
+#else
   INCBIN releases\\cube31.bin
+#endif
 g_CubeEnd
-
 
   ALIGN
   EXPORT g_Body
   EXPORT g_BodyEnd
 g_Body
+  ; FCC support is built into factory syscon
   INCBIN releases\\syscon.bin
 g_BodyEnd
 
@@ -46,7 +50,11 @@ g_stubBodyEnd
   EXPORT g_K02
   EXPORT g_K02End
 g_K02
+#ifdef FCC
+  INCBIN releases\\robot.fcc.bin
+#else
   INCBIN releases\\robot.bin
+#endif
 g_K02End
 
   ALIGN
@@ -76,6 +84,12 @@ g_EspBlankEnd
   EXPORT g_EspUser
   EXPORT g_EspUserEnd
 g_EspUser
+
+#ifdef FCC
+  INCBIN releases\\esp.fcc.bin
+g_EspUserEnd
+
+#else
   INCBIN releases\\esp.user.bin
 g_EspUserEnd
 
@@ -92,6 +106,7 @@ g_EspBootEnd
 g_EspInit
   INCBIN releases\\esp.init.bin
 g_EspInitEnd
+#endif
 
   ALIGN
   EXPORT g_canary

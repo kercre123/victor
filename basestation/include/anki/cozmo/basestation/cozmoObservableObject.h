@@ -73,24 +73,27 @@ namespace Cozmo {
     virtual bool IsActive()                     const   { return false; }
     FactoryID    GetFactoryID()                 const   { return _factoryID; }
     
-    static ObjectType GetTypeFromFactoryID(FactoryID id) {
-        static constexpr ObjectType factoryIDToObjectType[4] = {
-          ObjectType::Block_LIGHTCUBE3,
-          ObjectType::Block_LIGHTCUBE2,
-          ObjectType::Block_LIGHTCUBE1,
-          ObjectType::Unknown
-        };
-        
-        if (id & 0x80000000) {
-          // This is a charger
-          return ObjectType::Charger_Basic;
-        }
-        
-        // This is a light cube
-        u8 typeID = id & 0x3;
-        return factoryIDToObjectType[typeID];
-    };
-
+    static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type) {
+      ObjectType objType = ObjectType::Unknown;
+      switch(type) {
+        case ActiveObjectType::OBJECT_CHARGER:
+          objType = ObjectType::Charger_Basic;
+          break;
+        case ActiveObjectType::OBJECT_CUBE1:
+          objType = ObjectType::Block_LIGHTCUBE1;
+          break;
+        case ActiveObjectType::OBJECT_CUBE2:
+          objType = ObjectType::Block_LIGHTCUBE2;
+          break;
+        case ActiveObjectType::OBJECT_CUBE3:
+          objType = ObjectType::Block_LIGHTCUBE3;
+          break;
+        default:
+          break;
+      }
+      
+      return objType;
+    }
 
   
     struct LEDstate {

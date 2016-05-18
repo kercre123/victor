@@ -81,7 +81,7 @@
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
           </AfterMake>
-          <SelectedForBatchBuild>0</SelectedForBatchBuild>
+          <SelectedForBatchBuild>1</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
         </TargetCommonOption>
         <CommonProperty>
@@ -165,10 +165,10 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>4096</DriverSelection>
+            <DriverSelection>4099</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
-          <Flash2>BIN\UL2CM3.DLL</Flash2>
+          <Flash2>Segger\JL2CM3.dll</Flash2>
           <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
@@ -423,6 +423,16 @@
               <FileType>2</FileType>
               <FilePath>.\boot\startup_nrf51.s</FilePath>
             </File>
+            <File>
+              <FileName>crc32.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\crypto\crc32.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\boot\lights.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -432,16 +442,6 @@
               <FileName>system_nrf51.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\lib\system_nrf51.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>crypto</GroupName>
-          <Files>
-            <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\sha1.cpp</FilePath>
             </File>
           </Files>
         </Group>

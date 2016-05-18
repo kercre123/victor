@@ -8,8 +8,8 @@ import sys, os, time, hashlib, struct
 
 USAGE = """
 Upgrade firmware:
-    {exe} wifi|rtip|body|all [<ALTERNATE IMAGE>]
-Where the WiFi, RTIP or body (or all of them) firmware is upgraded with the default image
+    {exe} wifi|rtip|all [<ALTERNATE IMAGE>]
+Where the WiFi or RTIP (or all of them) firmware is upgraded with the default image
 If not upgrading all, an alternate image file may be specifid.
 
 Upload asset:
@@ -116,11 +116,6 @@ def UpgradeRTIP(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_R
     "Sends an RTIP firmware upgrade"
     up.ota(fwPathName, RI.OTACommand.OTA_RTIP, version, flashAddress)
 
-def UpgradeBody(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_body_flash_address):
-    up.disableMotors()
-    up.send(RI.EngineToRobot(bootloadBody=RI.BootloadBody()))
-    up.ota(fwPathName, RI.OTACommand.OTA_body, version, flashAddress)
-
 def UpgradeAssets(up, flashAddresss, assetPathNames, version=0):
     "Sends an asset to flash"
     for f, a in zip(flashAddresss, assetPathName):
@@ -128,17 +123,14 @@ def UpgradeAssets(up, flashAddresss, assetPathNames, version=0):
         time.sleep(1.0) # Wait for finish
 
 DEFAULT_WIFI_IMAGE = os.path.join("releases", "esp.user.bin")
-DEFAULT_RTIP_IMAGE = os.path.join("releases", "robot.safe")
-DEFAULT_BODY_IMAGE = os.path.join("releases", "syscon.safe")
+DEFAULT_RTIP_IMAGE = os.path.join("releases", "cozmo.safe")
 
-def UpgradeAll(up, version=0, wifiImage=DEFAULT_WIFI_IMAGE, rtipImage=DEFAULT_RTIP_IMAGE, bodyImage=DEFAULT_BODY_IMAGE):
+def UpgradeAll(up, version=0, wifiImage=DEFAULT_WIFI_IMAGE, rtipImage=DEFAULT_RTIP_IMAGE):
     "Stages all firmware upgrades and triggers upgrade"
     assert os.path.isfile(wifiImage)
     assert os.path.isfile(rtipImage)
-    assert os.path.isfile(bodyImage)
     up.ota(wifiImage, RI.OTACommand.OTA_none,  version, RI.OTAFlashRegions.OTA_WiFi_flash_address)
-    up.ota(rtipImage, RI.OTACommand.OTA_none,  version, RI.OTAFlashRegions.OTA_RTIP_flash_address)
-    up.ota(bodyImage, RI.OTACommand.OTA_stage, version, RI.OTAFlashRegions.OTA_body_flash_address)
+    up.ota(rtipImage, RI.OTACommand.OTA_stage, version, RI.OTAFlashRegions.OTA_RTIP_flash_address)
 
 # Script entry point
 if __name__ == '__main__':
@@ -157,8 +149,6 @@ if __name__ == '__main__':
         UpgradeWiFi(up, sys.argv[2] if len(sys.argv) > 2 else DEFAULT_WIFI_IMAGE)
     elif sys.argv[1] == 'rtip':
         UpgradeRTIP(up, sys.argv[2] if len(sys.argv) > 2 else DEFAULT_RTIP_IMAGE)
-    elif sys.argv[1] == 'body':
-        UpgradeBody(up, sys.argv[2] if len(sys.argv) > 2 else DEFAULT_BODY_IMAGE)
     else: # Try asset
         ind = 1
         addresses = []

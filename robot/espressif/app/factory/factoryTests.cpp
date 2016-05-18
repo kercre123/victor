@@ -8,6 +8,7 @@ extern "C" {
 #include "osapi.h"
 #include "mem.h"
 #include "client.h"
+#include "driver/i2spi.h"
 }
 #include "anki/cozmo/robot/logging.h"
 #include "anki/common/constantsAndMacros.h"
@@ -45,6 +46,7 @@ static const FTMenuItem rootMenuItems[] = {
   {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      30000000 },
   {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
   {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 },
+  {"Playpen test",    RobotInterface::FTM_PlayPenTest,   30000000 },  
 };
 #define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
 
@@ -85,6 +87,8 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
     }
   }
 }
+
+static char factoryAPPhase = 0;
 
 void Update()
 {
@@ -133,6 +137,34 @@ void Update()
         }
         break;
       }
+      case RobotInterface::FTM_PlayPenTest:
+      {
+        // First time in this mode, switch our AP name to the fixture's
+        switch (factoryAPPhase)
+        {
+          case 0:
+            i2spiSwitchMode(I2SPI_PAUSED);    // Scary - but cool that it works!
+            break;
+          case 1:    
+            // Create config for test fixture open AP
+            struct softap_config ap_config;
+            wifi_softap_get_config(&ap_config);
+            os_sprintf((char*)ap_config.ssid, "Afix01");
+            ap_config.authmode = AUTH_OPEN;
+            ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
+            ap_config.beacon_interval = 100;
+            wifi_softap_set_config_current(&ap_config);
+            break;
+          case 2:
+            i2spiSwitchMode(I2SPI_RESUME);    // Scarier   
+            break;
+          case 3:
+            SetMode(RobotInterface::FTM_WiFiInfo);
+            break;
+        }
+        factoryAPPhase++;
+        break;
+      }
       case RobotInterface::FTM_WiFiInfo:
       {
         static const char wifiFaceFormat[] ICACHE_RODATA_ATTR STORE_ATTR = "SSID: %s\nPSK:  %s\nChan: %d  Stas: %d\nWiFi-V: %x\nWiFi-D: %s\nRTIP-V: %x\nRTIP-D: %s\n          %c";
@@ -165,6 +197,8 @@ void Update()
           msg.tag = RobotInterface::EngineToRobot::Tag_drive;
           msg.drive.lwheel_speed_mmps = wheelSpd;
           msg.drive.rwheel_speed_mmps = wheelSpd;
+          msg.drive.lwheel_accel_mmps2 = 500.0f;
+          msg.drive.rwheel_accel_mmps2 = 500.0f;
           RTIP::SendMessage(msg);
           msg.tag = RobotInterface::EngineToRobot::Tag_moveLift;
           msg.moveLift.speed_rad_per_sec = liftSpd;
@@ -265,6 +299,13 @@ RobotInterface::FactoryTestMode GetMode()
 
 void SetMode(const RobotInterface::FactoryTestMode newMode)
 {
+  // Some test modes can't touch the motors at all (maybe there's a better way to clean this up)
+  if (newMode == RobotInterface::FTM_PlayPenTest)
+  {
+    mode = newMode;
+    return;
+  }
+  
   RobotInterface::EngineToRobot msg;
   Anki::Cozmo::Face::FaceUnPrintf();
   menuIndex = 0;

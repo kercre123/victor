@@ -907,6 +907,8 @@ namespace Anki {
       // If we were moving, stop moving.
       _robot.GetMoveComponent().StopAllMotors();
       
+      _startedPlacing = false;
+      
       return result;
       
     } // CheckPreconditions()

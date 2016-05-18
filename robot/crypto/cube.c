@@ -94,7 +94,7 @@ int cubeEncrypt(u8* src, u8* dest, bool nocrypt)
       swapForKeil();           // Keil C51 uses big endian for 32-bit values
       btea((long*)_xx, -XX_LEN/4, _KEY);
       swapForKeil();           // Keil C51 uses big endian for 32-bit values
-#ifdef TEST_CRYPTO
+#ifdef TEST_CRYPT
       for (int i = 0; i < XX_LEN; i++)
         printf("0x%02x,", _xx[i]);
       printf("\n");

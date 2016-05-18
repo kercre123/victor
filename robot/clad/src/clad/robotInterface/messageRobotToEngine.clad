@@ -45,12 +45,6 @@ message RobotStopped
   uint_8 reason  // reserved for later in case we need reasons
 }
 
-message MotorCalibration
-{
-  MotorID motorID,
-  bool calibStarted
-}
-
 // These two messages bookend animations as they are played on the robot
 message AnimationStarted
 {

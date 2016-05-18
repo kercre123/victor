@@ -6,17 +6,19 @@ namespace Anki {
 namespace Cozmo {
 namespace RobotInterface {
   
+  /// Note:  These modes must have explicit IDs and should not be reordered, because they're used by already-deployed fixture firmware
   enum int_32 FactoryTestMode
   {
     FTM_menus = -2, ///< Display menus on face
     FTM_entry = -1, ///< Default disconnected state
     FTM_None  = 0,   ///< Exit factory test mode
-    FTM_WiFiInfo,
-    FTM_StateMenu,
-    FTM_ADCInfo,
-    FTM_ImuInfo,
-    FTM_EncoderInfo,
-    FTM_motorLifeTest,
+    FTM_WiFiInfo = 1,
+    FTM_StateMenu = 2,
+    FTM_ADCInfo = 3,
+    FTM_ImuInfo = 4,
+    FTM_EncoderInfo = 5,
+    FTM_motorLifeTest = 6,
+    FTM_PlayPenTest = 7
   }
   
   /// The active test mode of the robot

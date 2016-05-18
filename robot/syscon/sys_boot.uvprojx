@@ -54,7 +54,7 @@
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\</ListingPath>
+          <ListingPath>.\build\boot\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -81,14 +81,14 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>fromelf --bin build\boot\sys_boot.axf --output build\boot\sys_boot.bin</UserProg1Name>
+            <UserProg1Name>fromelf --bin build\boot\sys_boot.axf --output ..\binaries\sys_boot.bin</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopA1X>0</nStopA1X>
             <nStopA2X>0</nStopA2X>
           </AfterMake>
-          <SelectedForBatchBuild>0</SelectedForBatchBuild>
+          <SelectedForBatchBuild>1</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
         </TargetCommonOption>
         <CommonProperty>
@@ -332,7 +332,7 @@
               <MiscControls></MiscControls>
               <Define>NRF51,COZMO_ROBOT</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/device;./components/drivers_nrf/hal;../include;.;./components/softdevice/s110/headers;./crypto</IncludePath>
+              <IncludePath>./components/device;./components/drivers_nrf/hal;./components/softdevice/s110/headers;../include;./crypto;.</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -400,6 +400,16 @@
               <FileType>2</FileType>
               <FilePath>.\boot\startup_nrf51.s</FilePath>
             </File>
+            <File>
+              <FileName>crc32.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\crypto\crc32.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>lights.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\boot\lights.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -409,16 +419,6 @@
               <FileName>system_nrf51.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\lib\system_nrf51.c</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>crypto</GroupName>
-          <Files>
-            <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\sha1.cpp</FilePath>
             </File>
           </Files>
         </Group>

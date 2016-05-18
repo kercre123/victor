@@ -73,6 +73,8 @@ static struct sdio_queue rxQueue[DMA_BUF_COUNT];
 static struct sdio_queue* nextOutgoingDesc;
 /// Stores the alignment for outgoing drops.
 static int16_t outgoingPhase;
+/// Also stores the alignment of outgoing drops, since outgoingPhase is sometimes unusable (being used as an enum)
+static int16_t resumePhase;
 /** Phase relationship between incoming drops and outgoing drops
  * This comes from the phase relationship between I2SPI transmission and reception required for DMA timing on the K02,
  * the phase offset introduced by the I2S FIFO on the Espressif, aiming for the middle of the SPI receive buffer on the
@@ -87,8 +89,6 @@ static uint16_t messageBufferWind;
 static uint16_t messageBufferRind;
 /// The last state we've received from the RTIP bootloader regarding it's state
 static int16_t rtipBootloaderState;
-/// The last state we've received from the RTIP updating the Body bootloader state
-static uint32_t bodyBootloaderCode;
 /// The number of bytes we estimate are in the RTIP's CLAD rx queue
 static int16_t rtipRXQueueEstimate;
 
@@ -123,17 +123,7 @@ void processDrop(DropToWiFi* drop)
 {
   const uint8 rxJpegLen = (drop->droplet & jpegLenMask) * 4;
   if (rxJpegLen > 0) imageSenderQueueData(drop->payload, rxJpegLen, drop->droplet & jpegEOF);
-  if (unlikely(drop->droplet & bootloaderStatus && drop->payloadLen == sizeof(bodyBootloaderCode)))
-  {
-    //static unsigned int prevValue;
-    os_memcpy(&bodyBootloaderCode, drop->payload + rxJpegLen, drop->payloadLen);
-    /*if (bodyBootloaderCode != prevValue)
-    {
-      os_printf("BS: %08x\r\n", bodyBootloaderCode);
-      prevValue = bodyBootloaderCode;
-    }*/
-  }
-  else if (drop->payloadLen > 0)
+  if (drop->payloadLen > 0)
   {
     AcceptRTIPMessage(drop->payload + rxJpegLen, drop->payloadLen);
   }
@@ -217,6 +207,8 @@ void makeDrop(void)
 ct_assert(DMA_BUF_SIZE == 512); // We assume that the DMA buff size is 128 32bit words in a lot of logic below.
 #define DRIFT_MARGIN 2
 
+int16_t dropPhase = 0; ///< Stores the estiamted alightment of drops in the DMA buffer.
+
 void i2spiTask(os_event_t *event)
 {
   struct sdio_queue* desc = asDesc(event->par);
@@ -233,7 +225,6 @@ void i2spiTask(os_event_t *event)
     {
       static DropToWiFi drop;
       static uint8 dropWrInd = 0; // In 16bit half-words
-      static int16_t dropPhase = 0; ///< Stores the estiamted alightment of drops in the DMA buffer.
       static int16_t drift = 0;
       uint16_t* buf = (uint16_t*)(desc->buf_ptr);
       while(true)
@@ -284,7 +275,7 @@ void i2spiTask(os_event_t *event)
           }
           else break; // The end of the drop wasn't in this buffer, go on to the next one
         }
-        else 
+        else
         {
           if (buf[DMA_BUF_SIZE/2] == STATE_IDLE)
           {
@@ -383,6 +374,9 @@ void dmaisr(void* arg) {
       case SHUTDOWN_PHASE:
       {
         prepSdioQueue(asDesc(eofDesAddr), 0);
+        while (dropPhase < DMA_BUF_SIZE/2)
+          dropPhase += DROP_SPACING/2;
+        dropPhase -= DMA_BUF_SIZE/2;
         break;
       }
       case BOOTLOADER_SYNC_PHASE:
@@ -432,6 +426,9 @@ void dmaisr(void* arg) {
         int w;
         for (w=0; w<DMA_BUF_SIZE/4; w++) buf[w] = outWord;
         nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+        while (resumePhase < DMA_BUF_SIZE/2)
+          resumePhase += DROP_SPACING/2;
+        resumePhase -= DMA_BUF_SIZE/2;
         break;
       }
       case BOOTLOADER_SYNC_PHASE:
@@ -471,7 +468,6 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   messageBufferWind     = 0;
   messageBufferRind     = 0;
   rtipBootloaderState   = STATE_UNKNOWN;
-  bodyBootloaderCode    = STATE_UNKNOWN;
   rtipRXQueueEstimate   = 0;
 
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
@@ -662,8 +658,15 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
     }
     case I2SPI_PAUSED:
     {
+      resumePhase = outgoingPhase;
       outgoingPhase = PAUSED_PHASE;
       os_printf("I2Spi mode paused\r\n");
+      return;
+    }
+    case I2SPI_RESUME:
+    {
+      outgoingPhase = resumePhase - DRIFT_MARGIN;
+      os_printf("I2Spi mode resumed\r\n");
       return;
     }
     case I2SPI_REBOOT:
@@ -691,12 +694,6 @@ int16_t ICACHE_FLASH_ATTR i2spiGetRtipBootloaderState(void)
 {
   if (outgoingPhase > PHASE_FLAGS) return STATE_RUNNING; 
   else return rtipBootloaderState;
-}
-
-uint32_t ICACHE_FLASH_ATTR i2spiGetBodyBootloaderCode(void)
-{
-  if (outgoingPhase < PHASE_FLAGS) return STATE_UNKNOWN;
-  else return bodyBootloaderCode;
 }
 
 bool ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)

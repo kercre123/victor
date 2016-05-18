@@ -10,6 +10,7 @@
 #include "anki/cozmo/robot/rec_protocol.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "hal/hardware.h"
+#include "bootloader.h"
 
 #include "uart.h"
 #include "oled.h"
@@ -17,13 +18,18 @@
 #include "dac.h"
 #include "wifi.h"
 #include "spine.h"
-#include "hal/i2c.h"
-#include "hal/imu.h"
+#include "power.h"
+#include "watchdog.h"
+#include "i2c.h"
+#include "imu.h"
+#include "fcc.h"
 
 GlobalDataToHead g_dataToHead;
 GlobalDataToBody g_dataToBody;
 
 extern int StartupSelfTest(void);
+
+//#define UPDATE_BOOTLOADER
 
 namespace Anki
 {
@@ -34,8 +40,6 @@ namespace Anki
       // Import init functions from all HAL components
       void CameraInit(void);
       void CameraStart(void);
-      void TimerInit(void);
-      void PowerInit(void);
 
       TimeStamp_t t_;
       TimeStamp_t GetTimeStamp(void){ return t_; }
@@ -55,6 +59,8 @@ namespace Anki
         SPI::ManageDrop();
         UART::Transmit();
         IMU::Manage();
+        Watchdog::kick(WDOG_HAL_EXEC);
+        Watchdog::pet();
       }
     }
   }
@@ -80,45 +86,28 @@ int main (void)
 {
   using namespace Anki::Cozmo::HAL;
 
-  // Power up all ports
-  SIM_SCGC5 |=
-    SIM_SCGC5_PORTA_MASK |
-    SIM_SCGC5_PORTB_MASK |
-    SIM_SCGC5_PORTC_MASK |
-    SIM_SCGC5_PORTD_MASK |
-    SIM_SCGC5_PORTE_MASK;
+  // Enable reset filtering
+  RCM_RPFC = RCM_RPFC_RSTFLTSS_MASK | RCM_RPFC_RSTFLTSRW(2);
+  RCM_RPFW = 16;
 
-  // Initialize everything we can, while waiting for Espressif to boot
-  UART::DebugInit();
-  TimerInit();
-  PowerInit();
-
-  DAC::Init();
-
-  // Wait for Espressif to toggle out 4 words of I2SPI
-  for (int i = 0; i < 32; i++)
-  {
-    while (GPIO_READ(GPIO_WS) & PIN_WS)     ;
-    while (!(GPIO_READ(GPIO_WS) & PIN_WS))  ;
-  }
+  #ifdef UPDATE_BOOTLOADER
+  update_bootloader();
+  #endif
   
-  // Switch to 10MHz Espressif/external reference and 100MHz clock
-  MCG_C1 &= ~MCG_C1_IREFS_MASK;
-  // Wait for IREF to turn off
-  while((MCG->S & MCG_S_IREFST_MASK))   ;
-  // Wait for FLL to lock
-  while((MCG->S & MCG_S_CLKST_MASK))    ;
+  Power::enableEspressif();
 
-  MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
-
-  DAC::Tone();
-  MicroWait(10);
-  DAC::Mute();
+  UART::DebugInit();
+  #ifndef ENABLE_FCC_TEST
+  Watchdog::init();
+  SPI::Init();
+  #endif
+  DAC::Init();
 
   I2C::Init();
   UART::Init();
   IMU::Init();
   OLED::Init();
+  #ifndef ENABLE_FCC_TEST
   CameraInit();
 
   Anki::Cozmo::Robot::Init();
@@ -129,12 +118,30 @@ int main (void)
   CameraStart();
 
   // IT IS NOT SAFE TO CALL ANY HAL FUNCTIONS (NOT EVEN DebugPrintf) AFTER CameraStart() 
-  //StartupSelfTest();
 
   // Run the main thread
+  #ifndef UPDATE_BOOTLOADER
   do {
     // Wait for head body sync to occur
     UART::WaitForSync();
-    Anki::Cozmo::HAL::IMU::Update();
   } while (Anki::Cozmo::Robot::step_MainExecution() == Anki::RESULT_OK);
+  #else
+  do {
+    UART::WaitForSync();
+  } while(true);
+  #endif
+  #else
+
+  FCC::start();
+  I2C::Enable();
+  for (;;) {
+    UART::Transmit();
+
+    if (UART::HeadDataReceived) {
+      UART::HeadDataReceived = false;
+      FCC::mainDTMExecution();
+    }
+  }
+
+  #endif
 }

@@ -17,7 +17,7 @@ namespace NVStorage {
     NVEntry_Invalid           = 0xFFFFffff,
     NVEntry_EraseAll          = 0,  // The only operation that can be done on this tag is erase
                                     // and doing so ERASES ALL non-factory entries.
-    NVEntry_CameraCalibration = 1,  // NOTE: This will eventually be removed and replaced by NVEntry_CameraCalib
+    //NVEntry_CameraCalibration = 1,  // NOTE: This will eventually be removed and replaced by NVEntry_CameraCalib
     NVEntry_GameSkillLevels = 2,
 
 
@@ -43,8 +43,9 @@ namespace NVStorage {
     // Single blob manufacturing entries start here
     NVEntry_CameraCalib        = 0x80000001,
     NVEntry_ToolCodeInfo       = 0x80000002,
+    NVEntry_CalibPose          = 0x80000003,
+    NVEntry_CalibImagesUsed    = 0x80000004, // bit mask for which calibration images had dots found
     NVEntry_PlaypenTestResults = 0x80000010,
-
 
     // Multi-blob manufacturing entires start here
     NVEntry_CalibImage1 = 0x80010000,
@@ -52,7 +53,10 @@ namespace NVStorage {
     NVEntry_CalibImage3 = 0x80030000,
     NVEntry_CalibImage4 = 0x80040000,
     NVEntry_CalibImage5 = 0x80050000,
+    NVEntry_CalibImage6 = 0x80060000,
 
+    NVEntry_ToolCodeImageLeft  = 0x80100000,
+    NVEntry_ToolCodeImageRight = 0x80110000,
   }
 
   // Nominally 0 is success > 0 is conditional success and < 0 is error

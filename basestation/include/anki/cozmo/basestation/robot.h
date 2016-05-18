@@ -599,7 +599,8 @@ public:
                            const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
                            const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
    
-    
+    void SetHeadlight(bool on);
+  
     // =========  Block messages  ============
   
     // Assign which blocks the robot should connect to.
@@ -924,9 +925,25 @@ public:
     //////// Block pool ////////
     BlockFilter*         _blockFilter;
   
+    // Set of desired blocks to connect to. Set by BlockFilter.
+    std::unordered_set<FactoryID> _blocksToConnectTo;
+
     // Map of discovered objects and the last time that they were heard from
-    std::unordered_map<FactoryID, TimeStamp_t> _discoveredObjects;
+    struct ActiveObjectInfo {
+      FactoryID   factoryID;
+      ObjectType  objectType;
+      TimeStamp_t lastDiscoveredTimeStamp;
+    };
+    std::unordered_map<FactoryID, ActiveObjectInfo> _discoveredObjects;
     bool _enableDiscoveredObjectsBroadcasting = false;
+
+    // Vector of currently connected blocks by active slot index
+    std::vector<ActiveObjectInfo> _connectedObjects;
+
+    // Called in Update(), checks if there are blocksToConnectTo that
+    // have been discovered and should be connected to
+    u8 ConnectToRequestedObjects();
+
   
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending
@@ -944,7 +961,6 @@ public:
   
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-    void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);

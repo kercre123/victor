@@ -47,14 +47,14 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\41\</OutputDirectory>
-          <OutputName>robot.out</OutputName>
+          <OutputDirectory>.\build\app\</OutputDirectory>
+          <OutputName>robot</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\build\41\</ListingPath>
+          <ListingPath>.\build\app\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -81,7 +81,7 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>bash -c "make safe"</UserProg1Name>
+            <UserProg1Name>bash -c "make k02_fix"</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -468,11 +468,6 @@
               <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
             </File>
             <File>
-              <FileName>power.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
-            </File>
-            <File>
               <FileName>debug.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\debug.cpp</FilePath>
@@ -481,16 +476,6 @@
               <FileName>imu.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\imu.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\sha1.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>test.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\test.cpp</FilePath>
             </File>
             <File>
               <FileName>wifi.cpp</FileName>
@@ -516,6 +501,21 @@
               <FileName>spine.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\spine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>watchdog.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\watchdog.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>power.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>fcc.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\fcc.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -656,6 +656,68 @@
               <FileName>backpackLightController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>bootloader</GroupName>
+          <Files>
+            <File>
+              <FileName>bootbin.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\k02_hal\hal\bootbin.s</FilePath>
+            </File>
+            <File>
+              <FileName>bootloader.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\bootloader.cpp</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>2</IncludeInBuild>
+                  <AlwaysBuild>2</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>1</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>2</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
           </Files>
         </Group>

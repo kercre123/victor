@@ -72,12 +72,14 @@ namespace Anki {
 
       
       // TODO: Move this to WebotsKeyboardController?
-      const f32 area = msg.img_width * msg.img_height;
-      _lastObservedObject.family = msg.objectFamily;
-      _lastObservedObject.type   = msg.objectType;
-      _lastObservedObject.id     = msg.objectID;
-      _lastObservedObject.isActive = msg.isActive;
-      _lastObservedObject.area   = area;
+      if (msg.markersVisible) {
+        const f32 area = msg.img_width * msg.img_height;
+        _lastObservedObject.family = msg.objectFamily;
+        _lastObservedObject.type   = msg.objectType;
+        _lastObservedObject.id     = msg.objectID;
+        _lastObservedObject.isActive = msg.isActive;
+        _lastObservedObject.area   = area;
+      }
 
       
       HandleRobotObservedObject(msg);
@@ -281,6 +283,14 @@ namespace Anki {
       HandleNVStorageOpResult(msg);
     }
     
+    void UiGameController::HandleFactoryTestResultBase(ExternalInterface::FactoryTestResult const& msg)
+    {
+      PRINT_NAMED_INFO("HandleFactoryTestResult",
+                       "Test result: %s", EnumToString(msg.resultEntry.result));
+      
+      HandleFactoryTestResult(msg);
+    }
+    
     const std::vector<u8>* UiGameController::GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const
     {
       if (_recvdNVStorageData.find(tag) != _recvdNVStorageData.end()) {
@@ -413,6 +423,9 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGame::Tag::NVStorageOpResult:
             HandleNVStorageOpResultBase(message.Get_NVStorageOpResult());
+            break;
+          case ExternalInterface::MessageEngineToGame::Tag::FactoryTestResult:
+            HandleFactoryTestResultBase(message.Get_FactoryTestResult());
             break;
           default:
             // ignore
@@ -1459,7 +1472,13 @@ namespace Anki {
       message.Set_NVStorageClearPartialPendingWriteEntry(msg);
       SendMessage(message);
     }
-    
+
+    void UiGameController::SendSetHeadlight(bool enable)
+    {
+      ExternalInterface::SetHeadlight m;
+      m.enable = enable;
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
     
     void UiGameController::SendEnableVisionMode(VisionMode mode, bool enable)
     {

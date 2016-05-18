@@ -2,19 +2,24 @@
 #ifndef FIXTURE_H
 #define FIXTURE_H
 
-#define FIXTURE_CUBE3_TEST    7     // ID 3 + 2 + 1
-#define FIXTURE_CUBE2_TEST    6     // ID 3 + 2
-#define FIXTURE_CUBE1_TEST    5     // ID 3 + 1
-#define FIXTURE_CHARGER_TEST  4     // ID 3
-#define FIXTURE_HEAD_TEST     2     // ID 2
-#define FIXTURE_BODY_TEST     1     // ID 1
 #define FIXTURE_NONE          0     // No ID resistors
-  
+#define FIXTURE_BODY_TEST     1     // ID 1
+#define FIXTURE_HEAD_TEST     2     // ID 2  
+
+// Note:  The following accessory tests must be in order (charger, cube1, cube2, etc..) 
+#define FIXTURE_CHARGER_TEST  4     // ID 3
+#define FIXTURE_CUBE1_TEST    5     // ID 3 + 1
+#define FIXTURE_CUBE2_TEST    6     // ID 3 + 2
+#define FIXTURE_CUBE3_TEST    7     // ID 3 + 2 + 1
+
+#define FIXTURE_PLAYPEN_TEST  9     // ID 4 + 1
+#define FIXTURE_CUBEFCC_TEST  13    // ID 4 + 3 + 1
+
 #define FIXTURE_DEBUG         16
 
 typedef unsigned char FixtureType;
-#define FIXTURE_TYPES { "NO ID", "BODY", "HEAD", "?", "CHARGE", "CUBE 1", "CUBE 2", "CUBE 3", \
-                        "?", "?", "?", "?",  "?", "?", "?", "?", "DEBUG" }
+#define FIXTURE_TYPES { "NO ID", "BODY", "HEAD", "?", "CHARGE", "CUBE1", "CUBE2", "CUBE3", \
+                        "?", "PLAYPEN", "?", "?",  "?", "CUBEFCC", "?", "?", "DEBUG" }
 
 extern char g_lotCode[15];
 extern u32 g_time;
@@ -55,6 +60,8 @@ typedef enum
 #define ERROR_OUT_OF_SERIALS        10    // When the fixture itself runs out of 500,000 serial numbers
 
 #define ERROR_CUBE_ROM_OVERSIZE     11    // When you link a too-big cube ROM
+#define ERROR_CUBE_ROM_MISPATCH     12    // When you can't patch the cube ROM
+#define ERROR_SERIAL_INVALID        13    // When the serial number of this fixture exceeds 255, it can't make cubes!
 
 #define IS_INTERNAL_ERROR(e) (e < 100)
 
@@ -74,6 +81,7 @@ typedef enum
 #define ERROR_HEAD_RADIO_SYNC       510   // Can't sync with radio
 #define ERROR_HEAD_RADIO_ERASE      511   // Problem erasing flash
 #define ERROR_HEAD_RADIO_FLASH      512   // Problem programming radio
+#define ERROR_HEAD_RADIO_TIMEOUT    513   // Unable to send command due to ESP timeout (broken connection?)
 
 // Body errors
 #define ERROR_BODY_BOOTLOADER       600   // Can't load bootloader onto body

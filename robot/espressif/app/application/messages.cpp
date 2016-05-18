@@ -11,6 +11,7 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "anki/common/constantsAndMacros.h"
 #include "animationController.h"
 #include "rtip.h"
+#include "face.h"
 #include "activeObjectManager.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
@@ -50,7 +51,7 @@ namespace Anki {
           }
           default:
           {
-            AnkiError( 151, "Messages.SendNVOpResult", 448, "Unhandled report destination %d", 1, dest);
+            AnkiError( 151, "Messages.SendNVOpResult", 450, "Unhandled report destination %d", 1, dest);
           }
         }
       }
@@ -105,7 +106,7 @@ namespace Anki {
             }
             default:
             {
-              AnkiError( 152, "Messages.NVReadDoneCB", 448, "Unhandled report destination %d", 1, nvOpReportTo);
+              AnkiError( 152, "Messages.NVReadDoneCB", 450, "Unhandled report destination %d", 1, nvOpReportTo);
             }
           }
         }
@@ -269,6 +270,12 @@ namespace Anki {
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               ActiveObjectManager::SetSlots(0, msg.assignCubeSlots.factory_id_length, msg.assignCubeSlots.factory_id);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_oledDisplayNumber:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              Face::FaceDisplayNumber(msg.oledDisplayNumber.digits, msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_testState:

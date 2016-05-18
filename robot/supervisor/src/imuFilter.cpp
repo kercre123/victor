@@ -692,8 +692,8 @@ namespace Anki {
 
 
         // Get IMU data
-        HAL::IMUReadData(imu_data_);
-
+        // NB: Only call IMUReadData once per mainExecution tic!
+        while (HAL::IMUReadData(imu_data_)) {
 
         ////// Gyro Update //////
 
@@ -841,7 +841,8 @@ namespace Anki {
 
         }
 
-
+        } // while (HAL::IMUReadData())
+        
         return retVal;
 
       } // Update()

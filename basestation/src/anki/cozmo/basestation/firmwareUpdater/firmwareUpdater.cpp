@@ -111,9 +111,7 @@ const char* GetFileNameForState(FirmwareUpdateStage state)
     case FirmwareUpdateStage::Wifi:
       return "esp.user.bin";
     case FirmwareUpdateStage::RTIP:
-      return "robot.safe";
-    case FirmwareUpdateStage::Body:
-      return "syscon.safe";
+      return "rtip.safe";
     default:
       assert(0);
       return "";
@@ -129,8 +127,6 @@ Anki::Cozmo::RobotInterface::OTACommand GetOTACommandForState(FirmwareUpdateStag
       return RobotInterface::OTACommand::OTA_none;
     case FirmwareUpdateStage::RTIP:
       return RobotInterface::OTACommand::OTA_none;
-    case FirmwareUpdateStage::Body:
-      return RobotInterface::OTACommand::OTA_stage;
     default:
       assert(0);
       return RobotInterface::OTACommand::OTA_none;
@@ -149,9 +145,9 @@ uint32_t GetFlashAddressForState(FirmwareUpdateStage state)
     case FirmwareUpdateStage::RTIP:
       flashRegion = RobotInterface::OTAFlashRegions::OTA_RTIP_flash_address;
       break;
-    case FirmwareUpdateStage::Body:
-      flashRegion = RobotInterface::OTAFlashRegions::OTA_body_flash_address;
-      break;
+//    case FirmwareUpdateStage::Body:
+//      flashRegion = RobotInterface::OTAFlashRegions::OTA_body_flash_address;
+//      break;
     default:
       assert(0);
   }
@@ -321,7 +317,6 @@ void FirmwareUpdater::SendProgressToGame(const RobotMap& robots, float ratioComp
   
   const std::string& fwSigWifi = GetFwSignature(FirmwareUpdateStage::Wifi);
   const std::string& fwSigRTIP = GetFwSignature(FirmwareUpdateStage::RTIP);
-  const std::string& fwSigBody = GetFwSignature(FirmwareUpdateStage::Body);
   
   for (const RobotUpgradeInfo& robotUpgradeInfo : _robotsToUpgrade)
   {
@@ -330,7 +325,7 @@ void FirmwareUpdater::SendProgressToGame(const RobotMap& robots, float ratioComp
     {
       Robot* robot = it->second;
     
-      ExternalInterface::FirmwareUpdateProgress message(robot->GetID(), _state, _subState, fwSigWifi, fwSigRTIP, fwSigBody, percentComplete);
+      ExternalInterface::FirmwareUpdateProgress message(robot->GetID(), _state, _subState, fwSigWifi, fwSigRTIP, percentComplete);
       robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
     else
@@ -348,7 +343,6 @@ void FirmwareUpdater::SendCompleteResultToGame(const RobotMap& robots, FirmwareU
 {
   const std::string& fwSigWifi = GetFwSignature(FirmwareUpdateStage::Wifi);
   const std::string& fwSigRTIP = GetFwSignature(FirmwareUpdateStage::RTIP);
-  const std::string& fwSigBody = GetFwSignature(FirmwareUpdateStage::Body);
   
   for (const RobotUpgradeInfo& robotUpgradeInfo : _robotsToUpgrade)
   {
@@ -357,7 +351,7 @@ void FirmwareUpdater::SendCompleteResultToGame(const RobotMap& robots, FirmwareU
     {
       Robot* robot = it->second;
       
-      ExternalInterface::FirmwareUpdateComplete message(robot->GetID(), updateResult, fwSigWifi, fwSigRTIP, fwSigBody);
+      ExternalInterface::FirmwareUpdateComplete message(robot->GetID(), updateResult, fwSigWifi, fwSigRTIP);
       robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
     else
@@ -581,7 +575,7 @@ bool FirmwareUpdater::InitUpdate(const RobotMap& robots, int version)
   }
   
   _version = version;
-  _state   = FirmwareUpdateStage::Wifi;
+  _state   = FirmwareUpdateStage::RTIP;
   SetSubState(robots, FirmwareUpdateSubStage::Init);
   
   _eventHandles.clear();
@@ -621,7 +615,6 @@ bool FirmwareUpdater::Update(const RobotMap& robots)
   {
     case FirmwareUpdateStage::Wifi:
     case FirmwareUpdateStage::RTIP:
-    case FirmwareUpdateStage::Body:
       UpdateSubState(robots);
       break;
     case FirmwareUpdateStage::Done:

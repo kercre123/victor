@@ -8,6 +8,7 @@
 #include "hal/cube.h"
 #include "hal/monitor.h"
 #include "app/fixture.h"
+#include "binaries.h"
 
 #define GPIOB_VDD   0
 #define GPIOC_RESET 5
@@ -34,13 +35,18 @@ bool CubeDetect(void)
   // Put everything back to normal
   PIN_PULL_NONE(GPIOC, GPIOC_RESET);
   
+  // Wait 1ms in detect
+  MicroWait(1000);
+  
   return detect;
 }
+
+extern FixtureType g_fixtureType;
 
 // Connect to and burn the program into the cube or charger
 void CubeBurn(void)
 {  
-  ProgramCube();
+  ProgramCubeWithSerial();    // Normal bootloader (or cert firmware in FCC build)
 }
 
 // List of all functions invoked by the test, in order

@@ -18,7 +18,6 @@ enum uint_8 FactoryTestState {
   GotoPickupPose,
   StartPickup,
   PickingUpBlock,
-  StartPlacement,
   PlacingBlock,
   DockToCharger
 }
@@ -29,6 +28,8 @@ enum uint_8 FactoryTestResultCode {
   MISMATCHED_CLAD,
   INIT_LIFT_HEIGHT_FAILED,
   CHARGER_UNDETECTED,
+  CHARGER_UNAVAILABLE,
+  CHARGER_UNCONNECTED,
   IMU_DRIFTING,
   STILL_ON_CHARGER,
   GOTO_CALIB_POSE_ACTION_FAILED,
@@ -39,7 +40,9 @@ enum uint_8 FactoryTestResultCode {
   CALIBRATION_VALUES_OOR,
   CAMERA_CALIB_WRITE_FAILED,
   CALIB_IMAGES_WRITE_FAILED,
+  CALIB_POSE_WRITE_FAILED,
   CALIB_IMAGES_SEND_FAILED,
+  CALIB_POSE_SEND_FAILED, 
   READ_TOOL_CODE_FAILED,
   TOOL_CODE_POSITIONS_OOR,
   TOOL_CODE_WRITE_FAILED,
@@ -54,13 +57,20 @@ enum uint_8 FactoryTestResultCode {
   CHARGER_NOT_FOUND,
   CHARGER_DOCK_FAILED,
   QUEUE_ACTION_FAILED,
+  MOTOR_CALIB_UNEXPECTED,
   TEST_RESULT_WRITE_FAILED,
   TEST_TIMED_OUT,
-  TEST_CANCELLED
+  TEST_CANCELLED,
+  ROBOT_PICKUP,
+  TOOL_CODE_IMAGES_WRITE_FAILED,
+
+  // New result codes should be added at the end
 }
 
 structure FactoryTestResultEntry {
   uint_64 utcTime,
+  uint_32 engineSHA1,
+  uint_32 timestamps[16],
   uint_32 stationID,
   FactoryTestResultCode result,
 }

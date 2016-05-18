@@ -156,8 +156,8 @@ namespace Anki {
           return RESULT_FAIL;
         }
 
-        u16 prevIdx = 0;
-        for (idx = hStart_; idx != hEnd_; ++idx) {
+        u16 prevIdx = hStart_;
+        for (idx = hStart_; prevIdx != hEnd_; ++idx) {
 
           // Check if we hit the end of the history array
           if (idx >= POSE_HISTORY_SIZE) {
@@ -300,9 +300,9 @@ namespace Anki {
         // Search through history for closest pose in time
         TimeStamp_t prevHistTime = 0;
         TimeStamp_t histTime = 0;
-        u16 prevIdx = 0;
+        u16 prevIdx = hStart_;
 
-        for (u16 i = hStart_; i != hEnd_; ) {
+        for (u16 i = hStart_; prevIdx != hEnd_; ) {
 
           histTime = hist_[i].t;
 

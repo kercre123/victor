@@ -4,7 +4,6 @@
 #include "battery.h"
 #include "motors.h"
 #include "head.h"
-#include "debug.h"
 #include "radio.h"
 #include "timer.h"
 #include "lights.h"

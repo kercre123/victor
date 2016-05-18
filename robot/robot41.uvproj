@@ -44,14 +44,14 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\41\</OutputDirectory>
-          <OutputName>robot.out</OutputName>
+          <OutputDirectory>.\build\app\</OutputDirectory>
+          <OutputName>robot</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\build\41\</ListingPath>
+          <ListingPath>.\build\app\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -75,9 +75,9 @@
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
-            <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>c:\cygwin\bin\python2.7 ./tools/sign.py ./build/41/robot.out ./build/41/robot.safe  ./build/robot.bin</UserProg1Name>
-            <UserProg2Name></UserProg2Name>
+            <RunUserProg2>1</RunUserProg2>
+            <UserProg1Name>bash -c "make k02_fix"</UserProg1Name>
+            <UserProg2Name>fromelf --bin build\app\robot.axf --output build\robot.bin</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
           </AfterMake>
@@ -354,10 +354,10 @@
             <uThumb>0</uThumb>
             <uSurpInc>1</uSurpInc>
             <VariousControls>
-              <MiscControls></MiscControls>
-              <Define>TARGET_K02,COZMO_ROBOT,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
+              <MiscControls>--no_exceptions</MiscControls>
+              <Define>TARGET_K02,COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
               <Undefine></Undefine>
-              <IncludePath>.;supervisor/src;include;k02_hal/lib;k02_hal/;k02_hal/startup;k02_hal/lib/device;k02_hal/lib/drivers;k02_hal/lib/hal;generated/clad/robot;.\supervisor\src</IncludePath>
+              <IncludePath>.;supervisor/src;include;k02_hal/lib;k02_hal/;k02_hal/startup;k02_hal/lib/device;k02_hal/lib/drivers;k02_hal/lib/hal;generated/clad/robot;.\supervisor\src;k02_hal/hal</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -371,7 +371,7 @@
             <uSurpInc>0</uSurpInc>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define></Define>
+              <Define>DEBUG</Define>
               <Undefine></Undefine>
               <IncludePath></IncludePath>
             </VariousControls>
@@ -390,7 +390,7 @@
             <IncludeLibsPath></IncludeLibsPath>
             <Misc>--remove</Misc>
             <LinkerInputFile></LinkerInputFile>
-            <DisabledWarnings></DisabledWarnings>
+            <DisabledWarnings>6314</DisabledWarnings>
           </LDads>
         </TargetArmAds>
       </TargetOption>
@@ -451,7 +451,7 @@
                     <PlainCh>2</PlainCh>
                     <Ropi>2</Ropi>
                     <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
+                    <wLevel>2</wLevel>
                     <uThumb>2</uThumb>
                     <uSurpInc>2</uSurpInc>
                     <VariousControls>
@@ -485,11 +485,6 @@
               <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
             </File>
             <File>
-              <FileName>power.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
-            </File>
-            <File>
               <FileName>debug.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\debug.cpp</FilePath>
@@ -498,16 +493,6 @@
               <FileName>imu.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\imu.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\sha1.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>test.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\test.cpp</FilePath>
             </File>
             <File>
               <FileName>wifi.cpp</FileName>
@@ -533,6 +518,31 @@
               <FileName>spine.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\spine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>watchdog.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\watchdog.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>power.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>fcc.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\fcc.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>bootloader.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\bootloader.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>bootbin.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\k02_hal\hal\bootbin.s</FilePath>
             </File>
           </Files>
         </Group>
@@ -605,11 +615,6 @@
               <FilePath>.\supervisor\src\trig_fast.cpp</FilePath>
             </File>
             <File>
-              <FileName>backpackLightController.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
-            </File>
-            <File>
               <FileName>dockingController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\dockingController.cpp</FilePath>
@@ -673,6 +678,11 @@
               <FileName>version.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\version.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>backpackLightController.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
             </File>
           </Files>
         </Group>

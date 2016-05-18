@@ -18,6 +18,7 @@
 #include "anki/vision/basestation/image.h"
 #include "anki/vision/basestation/visionMarker.h"
 #include "anki/vision/basestation/faceTracker.h"
+#include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/visionSystem.h"
 #include "clad/types/robotStatusAndActions.h"
@@ -66,6 +67,9 @@ struct DockingErrorSignal;
     virtual ~VisionComponent();
     
     Result Init(const Json::Value& config);
+
+    // SetNextImage does nothing until enabled
+    void Enable(bool enable) { _enabled = enable; }
     
     void SetRunMode(RunMode mode);
 
@@ -162,7 +166,9 @@ struct DockingErrorSignal;
 
     
     // Camera calibration
-    void StoreNextImageForCameraCalibration()           { _storeNextImageForCalibration = true;  }
+    void StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI);
+    void StoreNextImageForCameraCalibration(); // Target ROI = entire image
+    
     bool WillStoreNextImageForCameraCalibration() const { return _storeNextImageForCalibration;  }
     size_t  GetNumStoredCameraCalibrationImages() const;
     
@@ -170,8 +176,16 @@ struct DockingErrorSignal;
     // Executes callback when all writes have completed.
     // Also erases remaining calibration image slots on robot.
     // We don't want to have a mix of images from different calibration runs.
-    using WriteCalibrationImagesToRobotCallback = std::function<void(std::vector<NVStorage::NVResult>&)>;
-    Result WriteCalibrationImagesToRobot(WriteCalibrationImagesToRobotCallback callback = {});
+    using WriteImagesToRobotCallback = std::function<void(std::vector<NVStorage::NVResult>&)>;
+    Result WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback = {});
+    
+    // Write the specified calibration pose to the robot. 'whichPose' must be [0,numCalibrationimages].
+    Result WriteCalibrationPoseToRobot(size_t whichPose, NVStorageComponent::NVStorageWriteEraseCallback callback = {});
+    
+    // Tool code images
+    Result ClearToolCodeImages();    
+    size_t  GetNumStoredToolCodeImages() const;
+    Result WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback = {});
     
     const ImuDataHistory& GetImuDataHistory() const { return _imuHistory; }
     ImuDataHistory& GetImuDataHistory() { return _imuHistory; }
@@ -211,6 +225,7 @@ struct DockingErrorSignal;
     Vision::Camera            _camera;
     Vision::CameraCalibration _camCalib;
     bool                      _isCamCalibSet = false;
+    bool                      _enabled = false;
     
     RunMode _runMode = RunMode::Asynchronous;
     
@@ -225,7 +240,10 @@ struct DockingErrorSignal;
     ImuDataHistory _imuHistory;
 
     bool _storeNextImageForCalibration = false;
+    Rectangle<s32> _calibTargetROI;
     std::vector<NVStorage::NVResult> _writeCalibImagesToRobotResults;
+    
+    std::vector<NVStorage::NVResult> _writeToolCodeImagesToRobotResults;
     
     constexpr static f32 kDefaultBodySpeedThresh = DEG_TO_RAD(60);
     constexpr static f32 kDefaultHeadSpeedThresh = DEG_TO_RAD(10);
@@ -321,6 +339,15 @@ struct DockingErrorSignal;
   {
     bodyTurnSpeedThresh_degPerSec = RAD_TO_DEG(_markerDetectionBodyTurnSpeedThreshold_radPerSec);
     headTurnSpeedThresh_degPerSec = RAD_TO_DEG(_markerDetectionHeadTurnSpeedThreshold_radPerSec);
+  }
+  
+  inline void VisionComponent::StoreNextImageForCameraCalibration() {
+    StoreNextImageForCameraCalibration(Rectangle<s32>(0,0,_camCalib.GetNcols(), _camCalib.GetNrows()));
+  }
+  
+  inline void VisionComponent::StoreNextImageForCameraCalibration(const Rectangle<s32>& targetROI) {
+    _storeNextImageForCalibration = true;
+    _calibTargetROI = targetROI;
   }
 
 } // namespace Cozmo

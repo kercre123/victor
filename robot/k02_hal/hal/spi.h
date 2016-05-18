@@ -11,6 +11,7 @@ namespace Anki
     {
       namespace SPI
       {
+        void EnterOTAMode(void);
         void EnterRecoveryMode(void);
         
         void InitDMA(void);

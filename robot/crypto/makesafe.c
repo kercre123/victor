@@ -13,7 +13,7 @@
 
 // This version number is reserved for developer builds
 #define DEV_VERSION 0xd3b
-#define MIN_REAL_VERSION 0x2002   // Minimum real version
+#define MIN_REAL_VERSION 0x2020   // Minimum real version
 
 int m_guid = 0;
 int TestCrunch(char* dest, unsigned short* src, int srclen, int guid);
@@ -211,6 +211,10 @@ void cubeWrite(char* filename, int options)
   printf("Start address 0x%04x\n", start);
   if (m_stageImage[0] != 0x2 || (start & 0xff))
     bye("FAIL:  Cube patch must be linked to start on a 256 byte boundary");
+  // Patch must start with mov sp, ... instruction - denoting proper startup.a51 file
+  // Also, you can't just hack this here - the bootloader is looking for this combination
+  if (m_stageImage[start] != 0x75)
+    bye("FAIL:  Cube patch startup.a51 invalid");
   // Wipe out the start address so it doesn't become part of the patch
   m_stageImage[0] = m_stageImage[1] = m_stageImage[2] = -1;
 
@@ -232,8 +236,8 @@ void cubeWrite(char* filename, int options)
   version = 0xffff ^ version;
 
   // Advertising version always gets written last (since we write bytes in order)
-  m_stageImage[0x3fe6] = version;         // See accessories/boot/hal/advertise.c for details
-  m_stageImage[0x3fe7] = version >> 8;
+  m_stageImage[0x3ff6] = version;         // See accessories/boot/hal/advertise.c for details
+  m_stageImage[0x3ff7] = version >> 8;
 
   // Leave space for header before encrypting
   int len = 16;
@@ -244,7 +248,7 @@ void cubeWrite(char* filename, int options)
   m_safeImage[4] = (len-16);  m_safeImage[5] = (len-16)>>8;
   m_safeImage[6] = version;   m_safeImage[7] = version>>8;
   m_safeImage[8] = start>>8;
-  m_safeImage[9] = 3;         // HW version EP3
+  m_safeImage[9] = 4;         // HW version 3=EP2, 4=EP3
 
   FILE *fp = fopen(filename, "wb");
   printf("Writing %s...", filename);
@@ -253,11 +257,6 @@ void cubeWrite(char* filename, int options)
   fclose(fp);
 
   printf("wrote %d bytes, %d blocks, patch level 0x%04X\n", len, len >> 8, version);
-
-  for (int i = 16; i < 272; i++) {
-    printf("0x%02x,", (u8)m_safeImage[i]);
-    if (31 == ((i-16) & 31)) printf("\n");
-  }
 }
 
 // Write the requested image

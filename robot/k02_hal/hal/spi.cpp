@@ -7,6 +7,7 @@
 #include "anki/cozmo/robot/drop.h"
 #include "hal/portable.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #include "spi.h"
 #include "uart.h"
@@ -14,6 +15,7 @@
 #include "oled.h"
 #include "i2c.h"
 #include "wifi.h"
+#include "watchdog.h"
 
 typedef uint16_t transmissionWord;
 const int RX_OVERFLOW = 8;  // Adjust this to fix screen - possibly at expense of camera
@@ -22,20 +24,17 @@ const int RX_SIZE = DROP_TO_RTIP_SIZE / sizeof(transmissionWord) + RX_OVERFLOW;
 
 static DropToWiFi spi_backbuff[2];
 
-extern DropToWiFi* spi_write_buff = &spi_backbuff[0];
 static DropToWiFi* spi_tx_buff = &spi_backbuff[1];
+DropToWiFi* spi_write_buff = &spi_backbuff[0];
 
 transmissionWord spi_rx_buff[RX_SIZE];
-
-static int totalDrops = 0;
 
 static bool audioUpdated = false;
 static uint8_t AudioBackBuffer[MAX_AUDIO_BYTES_PER_DROP];
 
 void Anki::Cozmo::HAL::SPI::ManageDrop(void) {
   // This should probably bias
-  DAC::Feed(AudioBackBuffer);
-  DAC::EnableAudio(audioUpdated);
+  DAC::Feed(audioUpdated, AudioBackBuffer);
 }
 
 static bool ProcessDrop(void) {
@@ -48,6 +47,7 @@ static bool ProcessDrop(void) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
     DropToRTIP* drop = (DropToRTIP*)target;
+    Watchdog::kick(WDOG_WIFI_COMMS);
     
     // Buffer the data that needs to be fed into the devices for next cycle
     audioUpdated = drop->droplet & audioDataValid;
@@ -58,7 +58,6 @@ static bool ProcessDrop(void) {
     }
 
     uint8_t *payload_data = (uint8_t*) drop->payload;
-    totalDrops++;
     
     if (drop->payloadLen)
     {
@@ -69,12 +68,6 @@ static bool ProcessDrop(void) {
         case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_bootloadRTIP:
         {
           SPI::EnterRecoveryMode();
-          break;
-        }
-        case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_bodyUpgradeData:
-        {
-          //assert(drop->payloadLen-1 == Anki::Cozmo::RobotInterface::BodyUpgradeData::MAX_SIZE);
-          UART::SendRecoveryData(payload_data+1, Anki::Cozmo::RobotInterface::BodyUpgradeData::MAX_SIZE);
           break;
         }
         default:
@@ -117,28 +110,46 @@ void Anki::Cozmo::HAL::SPI::FinalizeDrop(int jpeglen, const bool eof, const uint
     *((u32*)(drop_tx->payload + jpeglen)) = frameNumber;
     jpeglen += 4;
   }
-	drop_tx->droplet = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0);
+
+  drop_tx->droplet = JPEG_LENGTH(jpeglen) | (eof ? jpegEOF : 0);
   uint8_t *drop_addr = drop_tx->payload + jpeglen;
   
   const int remainingSpace = DROP_TO_WIFI_MAX_PAYLOAD - jpeglen;
-	drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
-	if ((drop_tx->payloadLen == 0) && (remainingSpace >= sizeof(RobotInterface::BodyFirmwareState))) // Have nothing to send so transmit body state info
-	{
-		Anki::Cozmo::RobotInterface::BodyFirmwareState bodyState;
-		bodyState.state = UART::recoveryMode;
-		bodyState.count = UART::RecoveryStateUpdated;
-		memcpy(drop_addr, &bodyState, sizeof(Anki::Cozmo::RobotInterface::BodyFirmwareState));
-		drop_tx->payloadLen = sizeof(Anki::Cozmo::RobotInterface::BodyFirmwareState);
-		drop_tx->droplet |= bootloaderStatus;
-	}
+  drop_tx->payloadLen = Anki::Cozmo::HAL::WiFi::GetTxData(drop_addr, remainingSpace);
 }
 
+// This is Thors hammer.  Forces recovery mode
 void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
-  __disable_irq();
   static uint32_t* recovery_word = (uint32_t*) 0x20001FFC;
   static const uint32_t recovery_value = 0xCAFEBABE;
+
   *recovery_word = recovery_value;
   NVIC_SystemReset();
+}
+
+// This is the nice version, leave espressif synced and running
+void Anki::Cozmo::HAL::SPI::EnterOTAMode(void) {
+  // Disable watchdog
+  __disable_irq();
+  WDOG_UNLOCK = 0xC520;
+  WDOG_UNLOCK = 0xD928;
+  WDOG_STCTRLH = 0;
+
+  // Start turning the lights off of all the things we will no longer be using
+  SIM_SCGC6 &= ~(SIM_SCGC6_DMAMUX_MASK | SIM_SCGC6_FTM1_MASK | SIM_SCGC6_FTM2_MASK | SIM_SCGC6_PDB_MASK | SIM_SCGC6_DAC0_MASK);
+  SIM_SCGC7 &= ~SIM_SCGC7_DMA_MASK;
+  SIM_SCGC4 &= ~SIM_SCGC4_I2C0_MASK;
+  
+  // Flush our UART, and set it to idle
+  UART0_C2 = 0;
+  UART0_CFIFO = UART_CFIFO_TXFLUSH_MASK | UART_CFIFO_RXFLUSH_MASK ;
+
+  // Fire the SVC handler in the boot-loader force the SVC to have a high priority because otherwise this will fault
+  const uint32_t * const SVC_Vector = (uint32_t*) 0x2C;
+  void (*call)(void) = (void (*)(void)) *SVC_Vector;
+  
+  SCB->VTOR = 0;
+  call();
 };
 
 extern "C"
@@ -147,8 +158,6 @@ void DMA2_IRQHandler(void) {
   DMA_CDNE = DMA_CDNE_CDNE(2);
   DMA_CINT = 2;
 
-  I2C::Disable();
-  
   // Don't check for silence, we had a drop
   if (ProcessDrop()) {
     return ;
@@ -158,6 +167,11 @@ void DMA2_IRQHandler(void) {
   static const int MaximumSilence = 32;
   static transmissionWord lastWord = 0;
   static int SilentDrops = 0;
+
+  // We are likely in OTA mode
+  if (spi_rx_buff[0] == 0xFFFF) {
+    Watchdog::kick(WDOG_WIFI_COMMS);
+  }
 
   if (lastWord != spi_rx_buff[0]) {
     lastWord = spi_rx_buff[0];
@@ -177,12 +191,6 @@ void DMA2_IRQHandler(void) {
   }
 }
 
-extern "C"
-void DMA3_IRQHandler(void) {
-  DMA_CDNE = DMA_CDNE_CDNE(3);
-  DMA_CINT = 3;
-}
-
 void Anki::Cozmo::HAL::SPI::InitDMA(void) {
   // Disable DMA
   DMA_ERQ &= ~DMA_ERQ_ERQ3_MASK & ~DMA_ERQ_ERQ2_MASK;
@@ -199,11 +207,11 @@ void Anki::Cozmo::HAL::SPI::InitDMA(void) {
   DMA_TCD2_DLASTSGA       = -sizeof(spi_rx_buff);
 
   DMA_TCD2_NBYTES_MLNO    = sizeof(transmissionWord);                   // The minor loop moves 32 bytes per transfer
-  DMA_TCD2_BITER_ELINKNO  = RX_SIZE;                          // Major loop iterations
-  DMA_TCD2_CITER_ELINKNO  = RX_SIZE;                          // Set current interation count  
+  DMA_TCD2_BITER_ELINKNO  = RX_SIZE;                                    // Major loop iterations
+  DMA_TCD2_CITER_ELINKNO  = RX_SIZE;                                    // Set current interation count  
   DMA_TCD2_ATTR           = (DMA_ATTR_SSIZE(1) | DMA_ATTR_DSIZE(1));    // Source/destination size (8bit)
  
-  DMA_TCD2_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration               
+  DMA_TCD2_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration
 
   // Configure transfer buffer
   DMAMUX_CHCFG3 = (DMAMUX_CHCFG_ENBL_MASK | DMAMUX_CHCFG_SOURCE(15)); 
@@ -216,14 +224,13 @@ void Anki::Cozmo::HAL::SPI::InitDMA(void) {
   DMA_TCD3_DLASTSGA       = 0;
 
   DMA_TCD3_NBYTES_MLNO    = sizeof(transmissionWord);                   // The minor loop moves 32 bytes per transfer
-  DMA_TCD3_BITER_ELINKNO  = TX_SIZE;                          // Major loop iterations
-  DMA_TCD3_CITER_ELINKNO  = TX_SIZE;                          // Set current interation count
+  DMA_TCD3_BITER_ELINKNO  = TX_SIZE;                                    // Major loop iterations
+  DMA_TCD3_CITER_ELINKNO  = TX_SIZE;                                    // Set current interation count
   DMA_TCD3_ATTR           = (DMA_ATTR_SSIZE(1) | DMA_ATTR_DSIZE(1));    // Source/destination size (8bit)
  
-  DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK | DMA_CSR_INTMAJOR_MASK;  // clear ERQ @ end of major iteration
+  DMA_TCD3_CSR            = DMA_CSR_DREQ_MASK;                          // clear ERQ @ end of major iteration
 
   NVIC_EnableIRQ(DMA2_IRQn);
-  NVIC_EnableIRQ(DMA3_IRQn);
 }
 
 inline uint16_t WaitForByte(void) {
@@ -270,7 +277,6 @@ void SyncSPI(void) {
 void Anki::Cozmo::HAL::SPI::Init(void) {
   // Turn on power to DMA, PORTC and SPI0
   SIM_SCGC6 |= SIM_SCGC6_SPI0_MASK | SIM_SCGC6_DMAMUX_MASK;
-  SIM_SCGC5 |= SIM_SCGC5_PORTD_MASK | SIM_SCGC5_PORTE_MASK;
   SIM_SCGC7 |= SIM_SCGC7_DMA_MASK;
 
   // Configure SPI pins

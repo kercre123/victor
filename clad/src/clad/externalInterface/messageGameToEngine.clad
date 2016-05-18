@@ -455,6 +455,11 @@ message SetDrivingAnimations {
 // Robot / Cube LED Controls
 ///////////////////////////////////////////////////////////////////////////////
 
+message SetHeadlight
+{
+  bool enable
+}
+
 // SetActiveObjectLEDs
 message SetActiveObjectLEDs {
     uint_32  objectID,

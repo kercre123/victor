@@ -24,7 +24,7 @@ namespace Cozmo {
     static const s32 NUM_LEDS = 4;
     
     ActiveCube(Type type);
-    ActiveCube(ActiveID activeID, FactoryID factoryID);
+    ActiveCube(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
     
     virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
     

@@ -38,8 +38,9 @@
 #define HANDLE_PROX_OBSTACLES 0
 
 // Prints the IDs of the active blocks that are on but not currently
-// talking to a robot. Prints roughly once/sec.
-#define PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS 0
+// talking to a robot whose rssi is less than this threshold.
+// Prints roughly once/sec.
+#define DISCOVERED_OBJECTS_RSSI_PRINT_THRESH 55
 
 // Filter that makes chargers not discoverable
 #define IGNORE_CHARGER_DISCOVERY 0
@@ -62,7 +63,6 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
   Anki::Util::sEvent("robot.InitRobotMessageComponent",{},"");
   
   // bind to specific handlers in the robot class
-  doRobotSubscribe(RobotInterface::RobotToEngineTag::cameraCalibration,           &Robot::HandleCameraCalibration);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::printText,                   &Robot::HandlePrint);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::trace,                       &Robot::HandleTrace);
   doRobotSubscribe(RobotInterface::RobotToEngineTag::crashReport,                 &Robot::HandleCrashReport);
@@ -154,41 +154,17 @@ void Robot::InitRobotMessageComponent(RobotInterface::MessageHandler* messageHan
     }));
 }
 
-
-void Robot::HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
-{
-  const CameraCalibration& payload = message.GetData().Get_cameraCalibration();
-  PRINT_NAMED_INFO("RobotMessageHandler.CameraCalibration",
-                   "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f, cy: %f)",
-                   payload.ncols, payload.nrows,
-                   payload.focalLength_x, payload.focalLength_y,
-                   payload.center_x, payload.center_y);
-
-  // Convert calibration message into a calibration object to pass to
-  // the robot
-  Vision::CameraCalibration calib(payload.nrows,
-    payload.ncols,
-    payload.focalLength_x,
-    payload.focalLength_y,
-    payload.center_x,
-    payload.center_y,
-    payload.skew);
-
-  _visionComponentPtr->SetCameraCalibration(calib);  // Set intrisic calibration
-  SetCameraRotation(0, 0, 0);                           // Set extrinsic calibration (rotation only, assuming known position)
-                                                        // TODO: Set these from rotation calibration info to be sent in CameraCalibration message
-                                                        //       and/or when we do on-engine calibration with images of tool code.
-}
   
 void Robot::HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  const RobotInterface::MotorCalibration& payload = message.GetData().Get_motorCalibration();
+  const MotorCalibration& payload = message.GetData().Get_motorCalibration();
   PRINT_NAMED_INFO("MotorCalibration", "Motor %d, started %d", (int)payload.motorID, payload.calibStarted);
 
   if( payload.motorID == MotorID::MOTOR_LIFT && payload.calibStarted && IsCarryingObject() ) {
     // if this was a lift calibration, we are no longer holding a cube
     UnSetCarryObject( GetCarryingObject() );
   }
+  Broadcast(ExternalInterface::MessageEngineToGame(MotorCalibration(payload)));
 }
   
 void Robot::HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message)
@@ -312,35 +288,42 @@ void Robot::HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& 
   
 void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
-  if (_enableDiscoveredObjectsBroadcasting) {
-    const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
-    
-    // Check object type
-    ObjectType objType = ObservableObject::GetTypeFromFactoryID(payload.factory_id);
-    switch(objType) {
-      case ObjectType::Charger_Basic:
-      {
-        if (IGNORE_CHARGER_DISCOVERY) {
-          return;
-        }
-        break;
-      }
-      case ObjectType::Unknown:
-      {
-        PRINT_NAMED_WARNING("Robot.HandleActiveObjectDiscovered.UnknownType", "FactoryID: 0x%x", payload.factory_id);
+
+  const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
+  
+  // Check object type
+  ObjectType objType = ObservableObject::GetTypeFromActiveObjectType(payload.device_type);
+  switch(objType) {
+    case ObjectType::Charger_Basic:
+    {
+      if (IGNORE_CHARGER_DISCOVERY) {
         return;
       }
-      default:
-        break;
+      break;
     }
-    
-    if (_discoveredObjects.find(payload.factory_id) == _discoveredObjects.end() || PRINT_UNCONNECTED_ACTIVE_OBJECT_IDS) {
+    case ObjectType::Unknown:
+    {
+      PRINT_NAMED_WARNING("Robot.HandleActiveObjectDiscovered.UnknownType",
+                          "FactoryID: 0x%x, device_type: 0x%hx",
+                          payload.factory_id, payload.device_type);
+      return;
+    }
+    default:
+      break;
+  }
+  
+  _discoveredObjects[payload.factory_id].factoryID = payload.factory_id;
+  _discoveredObjects[payload.factory_id].objectType = objType;
+  _discoveredObjects[payload.factory_id].lastDiscoveredTimeStamp = GetLastMsgTimestamp();  // Not super accurate, but this doesn't need to be
+
+  if (_enableDiscoveredObjectsBroadcasting) {
+
+    if (payload.rssi < DISCOVERED_OBJECTS_RSSI_PRINT_THRESH) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectDiscovered.ObjectDiscovered",
                        "Type: %s, FactoryID 0x%x, rssi %d, (currTime %d)",
                        EnumToString(objType), payload.factory_id, payload.rssi, GetLastMsgTimestamp());
     }
-    _discoveredObjects[payload.factory_id] = GetLastMsgTimestamp();  // Not super accurate, but this doesn't need to be
-
+    
     // Send ObjectAvailable to game
     ExternalInterface::ObjectAvailable m(payload.factory_id, objType, payload.rssi);
     Broadcast(ExternalInterface::MessageEngineToGame(std::move(m)));
@@ -355,11 +338,11 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
   
   if (payload.connected) {
     // Add active object to blockworld if not already there
-    objID = GetBlockWorld().AddActiveObject(payload.objectID, payload.factoryID);
+    objID = GetBlockWorld().AddActiveObject(payload.objectID, payload.factoryID, payload.device_type);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("Robot.HandleActiveObjectConnectionState.Connected",
-                       "Object %d (activeID %d, factoryID 0x%x)",
-                       objID.GetValue(), payload.objectID, payload.factoryID);
+                       "Object %d (activeID %d, factoryID 0x%x, device_type 0x%hx)",
+                       objID.GetValue(), payload.objectID, payload.factoryID, payload.device_type);
       
       // Turn off lights upon connection
       std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure

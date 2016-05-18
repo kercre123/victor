@@ -18,9 +18,8 @@ enum uint_8 FirmwareUpdateResult {
 
 
 enum uint_8 FirmwareUpdateStage {
-  Wifi = 0,
-  RTIP,
-  Body,
+  RTIP = 0,
+  Wifi,
   Done,
   Failed
 }
