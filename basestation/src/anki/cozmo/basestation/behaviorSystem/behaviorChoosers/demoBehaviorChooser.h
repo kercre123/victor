@@ -46,6 +46,10 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
 
+protected:
+
+  virtual void ModifyScore(const IBehavior* behavior, float& score) const override;
+
 private:
 
   void TransitionToNextState();
@@ -92,7 +96,7 @@ private:
 
   IBehavior* _faceSearchBehavior = nullptr;
 
-  IBehavior* _forceBehavior = nullptr;
+  bool _encourageFaceBehavior = false;
   
   // tracking for the cubes to determine when there are three that are upright (and have been for some time)
   float _cubesUprightTime_s = -1.0f;

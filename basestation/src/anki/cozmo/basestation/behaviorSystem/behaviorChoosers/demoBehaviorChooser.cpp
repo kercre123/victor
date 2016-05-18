@@ -45,6 +45,9 @@ static const char* kKnockOverStackBehavior = "AdmireStack";
 
 static const float kTimeCubesMustBeUpright_s = 3.0f;
 
+// if we are in the mini game state and need a face, use this score
+static const float kEcouragedFaceBehaviorScore = 1.1f;
+
 // NOTE: this must match the game request max face age! // TODO:(bn) read it from the behavior?
 static const u32 kMaxFaceAge_ms = 30000;
 
@@ -101,36 +104,39 @@ Result DemoBehaviorChooser::Update()
   if( _checkTransition && _checkTransition() ) {
     TransitionToNextState();
   }
-
+  
+  _encourageFaceBehavior = false;
   if( _state == State::MiniGame && ! _robot.IsCarryingObject() ) {
-    // mini game requires a face, so if the last seen face is really old, search for a new one
+    // mini game requires a face, so if the last seen face is really old, encourage the search for a new one
     Pose3d waste;
     TimeStamp_t lastFaceTime = _robot.GetFaceWorld().GetLastObservedFace(waste);
     TimeStamp_t lastMessageTime = _robot.GetLastImageTimeStamp();
 
     if( lastFaceTime == 0 || lastMessageTime - lastFaceTime > kMaxFaceAge_ms ) {
-      // force the search behavior to run
-      PRINT_NAMED_INFO("DemoBehaviorChooser.ForceSearchBehavior", "searching for faces");
-      _forceBehavior = _faceSearchBehavior;
-    }
-    else if ( _forceBehavior == _faceSearchBehavior ) {
-      // we were searching for a face, but got one, so clear the forced behavior
-      _forceBehavior = nullptr;
-      PRINT_NAMED_INFO("DemoBehaviorChooser.ClearForcedBehavior", "returning to normal behavior");
+      _encourageFaceBehavior = true;
     }
   }
   
   return Result::RESULT_OK;
 }
 
+void DemoBehaviorChooser::ModifyScore(const IBehavior* behavior, float& score) const
+{
+  if( nullptr != _faceSearchBehavior && _state == State::MiniGame &&
+      behavior == _faceSearchBehavior ) {
+    if( _encourageFaceBehavior ) {
+      score = kEcouragedFaceBehaviorScore;
+    }
+    else {
+      // we are in mini game, but don't want to encourage this behavior, so don't do it
+      score = 0.0f;
+    }
+  }
+}
+
 IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
 {
-  if( _forceBehavior == nullptr ) {
-    return super::ChooseNextBehavior(robot);
-  }
-  else {
-    return _forceBehavior;
-  }
+  return super::ChooseNextBehavior(robot);
 }
 
 void DemoBehaviorChooser::TransitionToNextState()
