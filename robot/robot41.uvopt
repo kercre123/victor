@@ -207,7 +207,7 @@
       <Focus>0</Focus>
       <ColumnNumber>27</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>82</TopLine>
+      <TopLine>84</TopLine>
       <CurrentLine>93</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>k02_hal/hal/main.cpp</PathWithFileName>
@@ -223,7 +223,7 @@
       <Focus>0</Focus>
       <ColumnNumber>14</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>382</TopLine>
+      <TopLine>392</TopLine>
       <CurrentLine>402</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\camera.cpp</PathWithFileName>
@@ -235,12 +235,12 @@
       <GroupNumber>1</GroupNumber>
       <FileNumber>3</FileNumber>
       <FileType>8</FileType>
-      <tvExp>1</tvExp>
+      <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>18</ColumnNumber>
+      <ColumnNumber>22</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>10</CurrentLine>
+      <TopLine>191</TopLine>
+      <CurrentLine>205</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\i2c.cpp</PathWithFileName>
       <FilenameWithoutPath>i2c.cpp</FilenameWithoutPath>
@@ -271,7 +271,7 @@
       <Focus>0</Focus>
       <ColumnNumber>38</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>93</TopLine>
+      <TopLine>99</TopLine>
       <CurrentLine>109</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\enjpeg.cpp</PathWithFileName>
@@ -303,7 +303,7 @@
       <Focus>0</Focus>
       <ColumnNumber>28</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>66</TopLine>
+      <TopLine>79</TopLine>
       <CurrentLine>89</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\oled.cpp</PathWithFileName>
@@ -319,7 +319,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>152</TopLine>
+      <TopLine>154</TopLine>
       <CurrentLine>160</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\spi.cpp</PathWithFileName>
@@ -333,10 +333,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>8</ColumnNumber>
+      <ColumnNumber>7</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>109</TopLine>
-      <CurrentLine>123</CurrentLine>
+      <TopLine>114</TopLine>
+      <CurrentLine>124</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\uart.cpp</PathWithFileName>
       <FilenameWithoutPath>uart.cpp</FilenameWithoutPath>
@@ -367,7 +367,7 @@
       <Focus>0</Focus>
       <ColumnNumber>10</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>80</TopLine>
+      <TopLine>85</TopLine>
       <CurrentLine>95</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\imu.cpp</PathWithFileName>
@@ -447,7 +447,7 @@
       <Focus>0</Focus>
       <ColumnNumber>20</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>58</TopLine>
+      <TopLine>41</TopLine>
       <CurrentLine>42</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\spine.cpp</PathWithFileName>
@@ -463,7 +463,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>28</TopLine>
+      <TopLine>34</TopLine>
       <CurrentLine>44</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\watchdog.cpp</PathWithFileName>
@@ -479,7 +479,7 @@
       <Focus>0</Focus>
       <ColumnNumber>16</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>35</TopLine>
+      <TopLine>47</TopLine>
       <CurrentLine>61</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\power.cpp</PathWithFileName>
@@ -511,7 +511,7 @@
       <Focus>0</Focus>
       <ColumnNumber>1</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
+      <TopLine>15</TopLine>
       <CurrentLine>25</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\k02_hal\hal\bootloader.cpp</PathWithFileName>
@@ -615,7 +615,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
+      <TopLine>398</TopLine>
       <CurrentLine>408</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\cozmoBot.cpp</PathWithFileName>
@@ -631,8 +631,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>833</TopLine>
+      <CurrentLine>843</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\messages.cpp</PathWithFileName>
       <FilenameWithoutPath>messages.cpp</FilenameWithoutPath>
@@ -663,7 +663,7 @@
       <Focus>0</Focus>
       <ColumnNumber>35</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>358</TopLine>
+      <TopLine>368</TopLine>
       <CurrentLine>378</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\velocityProfileGenerator.cpp</PathWithFileName>
@@ -709,10 +709,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>18</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>403</TopLine>
-      <CurrentLine>409</CurrentLine>
+      <TopLine>413</TopLine>
+      <CurrentLine>423</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\imuFilter.cpp</PathWithFileName>
       <FilenameWithoutPath>imuFilter.cpp</FilenameWithoutPath>
@@ -887,7 +887,7 @@
       <Focus>0</Focus>
       <ColumnNumber>48</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>99</TopLine>
+      <TopLine>107</TopLine>
       <CurrentLine>117</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\wheelController.cpp</PathWithFileName>
@@ -949,10 +949,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>27</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>88</TopLine>
-      <CurrentLine>97</CurrentLine>
+      <TopLine>110</TopLine>
+      <CurrentLine>111</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\supervisor\src\backpackLightController.cpp</PathWithFileName>
       <FilenameWithoutPath>backpackLightController.cpp</FilenameWithoutPath>
