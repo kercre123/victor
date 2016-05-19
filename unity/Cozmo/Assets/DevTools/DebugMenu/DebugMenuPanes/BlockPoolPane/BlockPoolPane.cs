@@ -7,28 +7,30 @@ using G2U = Anki.Cozmo.ExternalInterface;
 using U2G = Anki.Cozmo.ExternalInterface;
 
 public class BlockPoolPane : MonoBehaviour {
+
+  private const int _DefaultRSSIFilter = 80;
+
   [SerializeField]
   private GameObject _ButtonPrefab;
 
   [SerializeField]
   private Toggle _EnabledCheckbox;
-  // Use this for initialization
 
   [SerializeField]
   private RectTransform _UIContainer;
 
   [SerializeField]
   private InputField _FilterInput;
-  private string _CurrentFilterString;
+  private int _FilterRSSI = _DefaultRSSIFilter;
   
   private U2G.BlockPoolEnabledMessage _BlockPoolEnabledMessage;
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
 
   private class BlockData {
-    public BlockData(Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength, Button button) {
+    public BlockData(Anki.Cozmo.ObjectType type, bool is_enabled, sbyte rssi, Button button) {
       this.ObjectType = type;
       this.IsEnabled = is_enabled;
-      this.SignalStrength = signal_strength;
+      this.RSSI = rssi;
       this.BlockButton = button;
     }
 
@@ -36,7 +38,7 @@ public class BlockPoolPane : MonoBehaviour {
 
     public bool IsEnabled { get; set; }
 
-    public sbyte SignalStrength { get; set; }
+    public sbyte RSSI { get; set; }
 
     public Button BlockButton { get; set; }
   }
@@ -45,7 +47,9 @@ public class BlockPoolPane : MonoBehaviour {
 
   void Start() {
 
-    _FilterInput.onValueChanged.AddListener(HandleFilterStringUpdate);
+    _FilterInput.text = _DefaultRSSIFilter.ToString();
+
+    _FilterInput.onValueChanged.AddListener(HandleFilterUpdate);
 
     _EnabledCheckbox.onValueChanged.AddListener(HandlePoolEnabledValueChanged);
     
@@ -60,16 +64,18 @@ public class BlockPoolPane : MonoBehaviour {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  private void HandleFilterStringUpdate(string inputFilter) {
+  private void HandleFilterUpdate(string filter) {
+    _FilterRSSI = int.Parse(filter);
+
     foreach (KeyValuePair<uint, BlockData> kvp in _BlockStates) {
-      if (string.IsNullOrEmpty(_CurrentFilterString) || kvp.Key.ToString("X").StartsWith(inputFilter)) {
+      if (kvp.Value.RSSI < _FilterRSSI) {
         kvp.Value.BlockButton.gameObject.SetActive(true);
       }
       else {
         kvp.Value.BlockButton.gameObject.SetActive(false);
       }
     }
-    _CurrentFilterString = inputFilter;
+
   }
 
   private void HandleInitBlockPool(G2U.InitBlockPoolMessage initMsg) {
@@ -172,9 +178,9 @@ public class BlockPoolPane : MonoBehaviour {
       UpdateButton(id);
       button.onClick.AddListener(() => HandleButtonClick(id));
     }
-    else if (data.SignalStrength != signal_strength || data.ObjectType != type) {
+    else if (data.RSSI != signal_strength || data.ObjectType != type) {
       // enabled is only changed form unity.
-      data.SignalStrength = signal_strength;
+      data.RSSI = signal_strength;
       data.ObjectType = type;
       UpdateButton(id);
     }
@@ -183,7 +189,7 @@ public class BlockPoolPane : MonoBehaviour {
   private void UpdateButton(uint id) {
     BlockPoolPane.BlockData data;
     if (_BlockStates.TryGetValue(id, out data)) {
-      if (string.IsNullOrEmpty(_CurrentFilterString) || id.ToString("X").StartsWith(_CurrentFilterString)) {
+      if (data.RSSI < _FilterRSSI) {
         data.BlockButton.gameObject.SetActive(true);
       }
       else {
@@ -194,7 +200,7 @@ public class BlockPoolPane : MonoBehaviour {
         txt.text = "ID: " + id.ToString("X") + " \n " +
         "type: " + data.ObjectType + "\n" +
         "enabled: " + (data.IsEnabled ? "Y" : "N") + "\n" +
-        "rssi: " + data.SignalStrength;
+        "rssi: " + data.RSSI;
       }
       // Show all our enabled lights to blue so we can see what is currently connected
       foreach (KeyValuePair<int, LightCube> kvp in RobotEngineManager.Instance.CurrentRobot.LightCubes) {
