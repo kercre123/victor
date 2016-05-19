@@ -87,6 +87,9 @@ namespace Cozmo {
     const float halfHeight = 0.5f * GetSize().z();  
     const float halfDepth  = 0.5f * GetSize().x();
     
+    // Flip preActionPoses are at the corners of the block so need to divided by root2 to get x and y dist
+    const float flipPreActionPoseDist = DEFAULT_FLIP_PREDOCK_POSE_DISTAMCE_MM / 1.414f;
+    
     // SetSize() should have been called already
     CORETECH_ASSERT(halfDepth > 0.f && halfHeight > 0.f && halfWidth > 0.f);
     
@@ -139,12 +142,16 @@ namespace Cozmo {
       
       auto const& Rvec = preActionPoseRotations[rot];
       
-      // Add docking preaction poses
+      // Add docking and flipping preaction poses
       if (dockOrientations & (1 << rot)) {
         for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
           Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {v.GetX() , -v.GetY(), -halfHeight}, &marker->GetPose());
           preDockPose.RotateBy(Rvec);
           AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose);
+          
+          Pose3d preDockPose2(M_PI_2 + M_PI_4 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {flipPreActionPoseDist + halfWidth, -flipPreActionPoseDist, -halfHeight}, &marker->GetPose());
+          preDockPose2.RotateBy(Rvec);
+          AddPreActionPose(PreActionPose::FLIPPING, marker, preDockPose2);
         }
       }
       

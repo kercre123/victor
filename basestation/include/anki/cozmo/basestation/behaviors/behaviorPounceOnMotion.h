@@ -55,6 +55,7 @@ protected:
   // Overwritten by config.
   float _maxTimeSinceNoMotion_sec = 30.0;
   float _backUpDistance = -50.0;
+  float _maxTimeBeforeRotate = 8.f;
   
   
 private:
@@ -63,15 +64,16 @@ private:
     Inactive,
     InitialAnim,
     BringingHeadDown,
+    RotateToWatchingNewArea,
     WaitingForMotion,
     TurnToMotion,
     Pouncing,
     RelaxingLift,
     PlayingFinalReaction,
-    BackUp,
     Complete,
   };
 
+  float _lastTimeRotate;
   float _lastMotionTime;
   State _state = State::Inactive;
 
@@ -85,12 +87,12 @@ private:
   void SetState_internal(State state, const std::string& stateName);
   void TransitionToInitialWarningAnim(Robot& robot);
   void TransitionToBringingHeadDown(Robot& robot);
+  void TransitionToRotateToWatchingNewArea(Robot& robot);
   void TransitionToWaitForMotion(Robot& robot);
   void TransitionToTurnToMotion(Robot& robot, int16_t motion_img_x, int16_t motion_img_y);
   void TransitionToPounce(Robot& robot);
   void TransitionToRelaxLift(Robot& robot);
   void TransitionToResultAnim(Robot& robot);
-  void TransitionToBackUp(Robot& robot);
 
 };
 

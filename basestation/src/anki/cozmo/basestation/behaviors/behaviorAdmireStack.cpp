@@ -15,6 +15,7 @@
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
+#include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld.h"
 #include "anki/cozmo/basestation/blockWorldFilter.h"
@@ -193,28 +194,35 @@ void BehaviorAdmireStack::TransitionToKnockingOverStack(Robot& robot)
 
   CompoundActionSequential* action = new CompoundActionSequential(robot);
 
-  ObjectID topBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireTopBlockID();
+  ObjectID bottomBlockID = robot.GetBehaviorManager().GetWhiteboard().GetStackToAdmireBottomBlockID();
   
-  action->AddAction(new TurnTowardsFaceWrapperAction(robot, 
-                                                     // TODO:(bn) animation here?
-                                                     new WaitAction(robot, kBAS_lookAtFaceDelay_s)));
-  action->AddAction(new TurnTowardsObjectAction(robot,
-                                                topBlockID,
-                                                Radians(PI_F),
-                                                false, // verify when done?
-                                                false));
-  action->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBAS_headAngleForKnockOver_deg)));
+  // Backup
   DriveStraightAction* backupAction = new DriveStraightAction(robot, -kBAS_backupDist_mm, kBAS_backupSpeed_mmps);
   backupAction->SetAccel(kBAS_backupAccel_mmps2);
   backupAction->SetDecel(kBAS_backupDecel_mmps2);
   action->AddAction(backupAction);
-
-  DriveStraightAction* driveThroughAction = new DriveStraightAction(robot,
-                                                                    kBAS_driveThroughDist_mm + kBAS_backupDist_mm,
-                                                                    kBAS_driveThroughSpeed_mmps);
-  driveThroughAction->SetAccel(kBAS_driveThroughAccel_mmps2);
-  driveThroughAction->SetDecel(kBAS_driveThroughDecel_mmps2);
-  action->AddAction(driveThroughAction);
+  
+  // Drive to preDockPose for flipping
+  action->AddAction(new DriveToFlipBlockPoseAction(robot, bottomBlockID));
+  
+  // Look at face
+  action->AddAction(new TurnTowardsFaceWrapperAction(robot, 
+                                                     // TODO:(bn) animation here?
+                                                     new WaitAction(robot, kBAS_lookAtFaceDelay_s)));
+  
+  // Turn towards bottom block of stack
+  action->AddAction(new TurnTowardsObjectAction(robot,
+                                                bottomBlockID,
+                                                Radians(PI_F),
+                                                false, // verify when done?
+                                                false));
+  
+  // Move head for knock over
+  action->AddAction(new MoveHeadToAngleAction(robot, DEG_TO_RAD(kBAS_headAngleForKnockOver_deg)));
+  
+  // Knock over
+  FlipBlockAction* flipBlockAction = new FlipBlockAction(robot);
+  action->AddAction(flipBlockAction);
 
   StartActing(action, [this, &robot](ActionResult res) {
       if( res == ActionResult::SUCCESS ) {
