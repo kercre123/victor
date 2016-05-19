@@ -121,16 +121,6 @@ public class RobotEngineManager : MonoBehaviour {
 
   public bool InitSkillSystem;
 
-  private void Awake() {
-    #if ANIMATION_TOOL
-    DAS.AddTarget(new ConsoleDasTarget());
-    #elif UNITY_IPHONE && !UNITY_EDITOR
-    DAS.AddTarget(new IphoneDasTarget());
-    #else
-    DAS.AddTarget(new UnityDasTarget());
-    #endif
-  }
-
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
     if (Instance != null && Instance != this) {
