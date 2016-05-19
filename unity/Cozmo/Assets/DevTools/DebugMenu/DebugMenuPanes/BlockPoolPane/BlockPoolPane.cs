@@ -189,7 +189,7 @@ public class BlockPoolPane : MonoBehaviour {
   private void UpdateButton(uint id) {
     BlockPoolPane.BlockData data;
     if (_BlockStates.TryGetValue(id, out data)) {
-      if (_FilterRSSI < data.RSSI) {
+      if (data.RSSI < _FilterRSSI) {
         data.BlockButton.gameObject.SetActive(true);
       }
       else {
