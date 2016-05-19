@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/enrollNamedFaceAction.h"
+#include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 
@@ -53,6 +54,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     std::vector<MessageGameToEngineTag> actionTagList =
     {
       MessageGameToEngineTag::AlignWithObject,
+      MessageGameToEngineTag::FlipBlock,
       MessageGameToEngineTag::GotoPose,
       MessageGameToEngineTag::GotoObject,
       MessageGameToEngineTag::EnrollNamedFace,
@@ -658,7 +660,22 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       action->EnableSaveToRobot(enrollNamedFace.saveToRobot);
       return action;
     }
+    
+    case RobotActionUnionTag::flipBlock:
+    {
+      ObjectID selectedObjectID = actionUnion.Get_flipBlock().objectID;
+      if(selectedObjectID < 0) {
+        selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+      }
+    
+      DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, selectedObjectID);
       
+      if(actionUnion.Get_flipBlock().motionProf.isCustom)
+      {
+        action->SetMotionProfile(actionUnion.Get_flipBlock().motionProf);
+      }
+      return action;
+    }
       // TODO: Add cases for other actions
       
     default:
@@ -827,6 +844,24 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
       enrollAction->SetSequenceType(enrollNamedFace.sequence);
       enrollAction->EnableSaveToRobot(enrollNamedFace.saveToRobot);
       newAction = enrollAction;
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::FlipBlock:
+    {
+      auto& flipBlock = event.GetData().Get_FlipBlock();
+      
+      ObjectID selectedObjectID = flipBlock.objectID;
+      if(selectedObjectID < 0) {
+        selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+      }
+      
+      DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, selectedObjectID);
+      
+      if(flipBlock.motionProf.isCustom)
+      {
+        action->SetMotionProfile(flipBlock.motionProf);
+      }
+      newAction = action;
       break;
     }
     default:

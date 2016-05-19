@@ -49,23 +49,29 @@ message EnrollNamedFace {
    bool saveToRobot=1  // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
 }
 
+// FlipBlock
+message FlipBlock {
+  int_32 objectID,
+  PathMotionProfile motionProf
+}
+
 // GotoObject
 message GotoObject {
-    int_32 objectID,
-    PathMotionProfile motionProf,
-    float_32 distanceFromObjectOrigin_mm,
-    bool useManualSpeed,
-    bool usePreDockPose = 0
+  int_32 objectID,
+  PathMotionProfile motionProf,
+  float_32 distanceFromObjectOrigin_mm,
+  bool useManualSpeed,
+  bool usePreDockPose = 0
 }
 
 // GotoPose
 message GotoPose {
-    float_32 x_mm,
-    float_32 y_mm,
-    float_32 rad,
-    PathMotionProfile motionProf,
-    uint_8 level,
-    bool useManualSpeed
+  float_32 x_mm,
+  float_32 y_mm,
+  float_32 rad,
+  PathMotionProfile motionProf,
+  uint_8 level,
+  bool useManualSpeed
 }
 
 // MountCharger
@@ -340,6 +346,7 @@ union RobotActionUnion {
   AlignWithObject           alignWithObject,
   DriveStraight             driveStraight,
   EnrollNamedFace           enrollNamedFace,
+  FlipBlock                 flipBlock,
   GotoObject                goToObject,
   GotoPose                  goToPose,
   MountCharger              mountCharger,

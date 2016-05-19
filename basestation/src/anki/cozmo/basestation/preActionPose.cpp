@@ -30,7 +30,8 @@ namespace Anki {
         {DOCKING,         ColorRGBA(0.0f,0.0f,1.0f,0.5f)},
         {PLACE_RELATIVE,  ColorRGBA(0.0f,0.8f,0.2f,0.5f)},
         {PLACE_ON_GROUND, ColorRGBA(0.5f,0.5f,0.0f,0.5f)},
-        {ENTRY,           ColorRGBA(1.f,0.f,0.f,0.5f)}
+        {ENTRY,           ColorRGBA(1.f,0.f,0.f,0.5f)},
+        {FLIPPING,        ColorRGBA(0.5f,0.f,0.5f,0.5f)}
       };
       
       static const ColorRGBA Default(1.0f,0.0f,0.0f,0.5f);

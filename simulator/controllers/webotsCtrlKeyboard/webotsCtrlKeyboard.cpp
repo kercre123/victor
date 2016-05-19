@@ -334,6 +334,7 @@ namespace Anki {
         printf("       unlock progression unlock:  n\n");
         printf("         lock progression unlock:  Shift+n\n");
         printf("    Respond 'no' to game request:  Alt+n\n");
+        printf("             Flip selected block:  y\n");
         printf("        Quit keyboard controller:  Shift+Alt+x\n");
         printf("                      Print help:  ?\n");
         printf("\n");
@@ -2054,6 +2055,17 @@ namespace Anki {
                 
                 printf("Saying '%s' in style '%s'\n", sayTextMsg.text.c_str(), EnumToString(sayTextMsg.style));
                 SendMessage(ExternalInterface::MessageGameToEngine(std::move(sayTextMsg)));
+                break;
+              }
+              
+              case (s32)'Y':
+              {
+                ExternalInterface::FlipBlock m;
+                m.objectID = -1;
+                m.motionProf = pathMotionProfile_;
+                ExternalInterface::MessageGameToEngine message;
+                message.Set_FlipBlock(m);
+                SendMessage(message);
                 break;
               }
             
