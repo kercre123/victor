@@ -23,7 +23,7 @@ public class TapCubeState : State {
     LightCube.TappedAction += HandleTap;
   }
 
-  private void HandleTap(int id, int tapCount) {
+  private void HandleTap(int id, int tapCount, float timeStamp) {
     if (id == _CubeId) {
       if (_CubeStateDone != null) {
         _CubeStateDone();

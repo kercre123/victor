@@ -105,7 +105,10 @@ public class LightCube : ObservedObject {
 
   public event Action<LightCube> OnAxisChange;
 
-  public static Action<int, int> TappedAction;
+  /// <summary>
+  /// TappedAction<ID, Tap Count, Timestamp>.
+  /// </summary>
+  public static Action<int, int, float> TappedAction;
   public static Action<int, float, float, float> OnMovedAction;
   public static Action<int> OnStoppedAction;
 
@@ -156,7 +159,7 @@ public class LightCube : ObservedObject {
   public void Tapped(ObjectTapped message) {
     DAS.Debug(this, "Tapped Message Received for LightCube(" + ID + "): " + message.numTaps + " taps");
     if (TappedAction != null)
-      TappedAction(ID, message.numTaps);
+      TappedAction(ID, message.numTaps, message.timestamp);
   }
 
   public void SetAllLEDs() { // should only be called from update loop
