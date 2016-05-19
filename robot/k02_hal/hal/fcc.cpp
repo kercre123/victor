@@ -32,14 +32,19 @@ struct DTM_Mode_Settings {
 };
 
 static const DTM_Mode_Settings DTM_MODE[] = {
-  { false,    LE_RECEIVER_TEST,  1,                   0xFF,         0xFF },
-  { false, LE_TRANSMITTER_TEST,  1,          DTM_PKT_PRBS9,           31 },
+  { false,    LE_RECEIVER_TEST,  1,                   0xFF,         0xFF },   // 0 = listen
+  { false, LE_TRANSMITTER_TEST,  1,          DTM_PKT_PRBS9,           31 },   // 1 = tx ch1
   { false, LE_TRANSMITTER_TEST, 20,          DTM_PKT_PRBS9,           31 },
   { false, LE_TRANSMITTER_TEST, 40,          DTM_PKT_PRBS9,           31 },
-  { false, LE_TRANSMITTER_TEST,  1, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
+  { false, LE_TRANSMITTER_TEST,  1, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },   // 4 = tx ch1
   { false, LE_TRANSMITTER_TEST, 20, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
   { false, LE_TRANSMITTER_TEST, 40, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
-  { true,             LE_RESET,  0,                   0xFF,         0xFF }
+  { true,             LE_RESET,  0,                   0xFF,         0xFF },   // 7 = motor test
+  { false,            LE_RESET,  0,                   0xFF,         0xFF },
+  { false,            LE_RESET,  0,                   0xFF,         0xFF },
+  { false,            LE_RESET,  0,                   0xFF,         0xFF },   // 10 = wifi ch1 (wifi modes start at 10)
+  { false,            LE_RESET,  0,                   0xFF,         0xFF },
+  { false,            LE_RESET,  0,                   0xFF,         0xFF },
 };
 
 static const int DTM_MODE_COUNT  = sizeof(DTM_MODE) / sizeof(DTM_Mode_Settings);
@@ -97,33 +102,37 @@ void Anki::Cozmo::HAL::FCC::start(void) {
 
 // See "ESP8266 Certification and Test Guide" for details on the command format
 static const char* WIFI_TESTS[] = {
-  /* 0 = No Test            */  "CmdStop\r",
-  /* 1 = 2412MHz 0dB 1Mbps  */  "WifiTxout 1 1 0 0\r",
-  /* 2 = 2412MHz 0dB 1Mbps  */  "WifiTxout 1 1 0 0\r",
-  /* 3 = 2412MHz 0dB 1Mbps  */  "WifiTxout 1 1 0 0\r",
+  /* 0 = No Test             */  "CmdStop\r",
+  /* 1 = 2412MHz  0dB 1Mbps  */  "WifiTxout 1 1 0 0\r",
+  /* 2 = 2437MHz +4dB 1Mbps  */  "WifiTxout 6 1 240 0\r",
+  /* 3 = 2462MHz  0dB 1Mbps  */  "WifiTxout 11 1 0 0\r",
 };
 #define WIFI_TEST_COUNT (sizeof(WIFI_TESTS)/sizeof(char*))
 static void sendWifiCommand(int test) {
-  // Stop any running test first
-  static int running = 0;
+  static int running = 0, startdelay = 0;
   if (test >= WIFI_TEST_COUNT)
     test = 0;
-  if (running && test)
-    sendWifiCommand(0);
   // Don't do anything if test is already running
   if (test == running)
     return;
+  // Stop any running test first - and just wait to be called 5ms later
+  if (running && test)
+    test = 0;
+  // If we're going to start a new test, we need to wait 100ms first
+  if (test && ++startdelay < 20)
+    return;
+  startdelay = 0;
   running = test;
   
   // All we have is a bit-bang UART with no feedback.. so don't send commands too frequently!
+  const char* s = WIFI_TESTS[test];
   const u32 DIVISOR = (32768*2560)/(115200);   // K02 weird RC clock / ESP baud rate
   
   // Send some start bits before the string
   GPIO_SET(GPIO_MISO, PIN_MISO);
   GPIO_OUT(GPIO_MISO, PIN_MISO);
-  Anki::Cozmo::HAL::MicroWait(100);
-  
-  const char* s = WIFI_TESTS[test];
+  SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
+  Anki::Cozmo::HAL::MicroWait(50);  
   while (*s)
   {
     u16 now, last = SysTick->VAL;
@@ -148,8 +157,8 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
   // If the motors are not going crazy, use wheel positions for
   // selecting things
   if (!DTM_MODE[current_mode].motor_drive) {
-    static int configuring_motor = g_dataToHead.positions[2];
-    bool select = iabs(configuring_motor - g_dataToHead.positions[2]) > 0x400;
+    static int configuring_motor = 0;
+    bool select = iabs(configuring_motor - g_dataToHead.positions[2]) > 0x100;
 
     if (select) {
       configuring_motor = g_dataToHead.positions[2];
@@ -179,7 +188,7 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
   if (3 == updates)
     OLED::DisplayDigit(116, 0, current_mode % 10);
 
-  //sendWifiCommand(current_mode);
+  sendWifiCommand((current_mode < 10) ? 0 : current_mode-9);  // Wifi test modes start at 10
   runTest(current_mode);
 }
 
