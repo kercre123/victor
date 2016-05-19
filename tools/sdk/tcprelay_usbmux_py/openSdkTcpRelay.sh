@@ -1,3 +1,5 @@
 #!/bin/bash
-# Tunnel a TCP connection from port 5000 on local PC to port 6000 on SDK running on attached iOS device over USB
-./tcprelay.py 6000:5000
+# Tunnel a TCP connection to:from
+# to:   port 5106 (SDK_ON_DEVICE_TCP_PORT)   on app running on attached iOS device over USB
+# from: port 5107 (SDK_ON_COMPUTER_TCP_PORT) on local PC
+./tcprelay.py 5106:5107

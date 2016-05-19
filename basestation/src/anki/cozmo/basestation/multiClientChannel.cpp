@@ -139,19 +139,26 @@ void MultiClientChannel::Update()
         const uint8_t* innerMessageBytes = &messageData[1];
         const size_t   innerMessageSize  = bytes_recvd - sizeof(messageTag);
         
-        advertisementMessage.Unpack(innerMessageBytes, innerMessageSize);
+        const size_t bytesUnpacked = advertisementMessage.Unpack(innerMessageBytes, innerMessageSize);
 
-        if (!_reliableChannel.IsConnectionActive(advertisementMessage.id))
+        if (bytesUnpacked == innerMessageSize)
         {
-          if (_advertisingInfo.count(advertisementMessage.id) == 0)
+          if (!_reliableChannel.IsConnectionActive(advertisementMessage.id))
           {
-            PRINT_STREAM_DEBUG("[MultiClientChannel] MultiClientChannel.Update",
-                               "Detected advertising connection id " << ((uint)advertisementMessage.id) <<
-                               " when hosting on host " << advertisementMessage.ip <<
-                               " at ports ToEng:" << advertisementMessage.toEnginePort << " FromEng:" << advertisementMessage.fromEnginePort <<  ".");
+            if (_advertisingInfo.count(advertisementMessage.id) == 0)
+            {
+              PRINT_STREAM_DEBUG("[MultiClientChannel] MultiClientChannel.Update",
+                                 "Detected advertising connection id " << ((uint)advertisementMessage.id) <<
+                                 " when hosting on host " << advertisementMessage.ip <<
+                                 " at ports ToEng:" << advertisementMessage.toEnginePort << " FromEng:" << advertisementMessage.fromEnginePort <<  ".");
+            }
+            
+            _advertisingInfo[advertisementMessage.id] = AdvertisementConnectionInfo(advertisementMessage, currentTime);
           }
-          
-          _advertisingInfo[advertisementMessage.id] = AdvertisementConnectionInfo(advertisementMessage, currentTime);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("MultiClientChannel.Update.ErrorUnpacking", "Unpacked %zu bytes, expected %zu", bytesUnpacked, innerMessageSize);
         }
       }
     }
@@ -242,7 +249,7 @@ bool MultiClientChannel::Send(const Anki::Comms::OutgoingPacket &packet)
 //  #if(DO_SIM_COMMS_LATENCY)
 //  /*
 //  // If no send latency, just send now
-//  if (SIM_SEND_LATENCY_SEC == 0) {
+//  if (SIM_SEND_LATENCY_SEC == 0.0) {
 //    if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + p.dataLen > maxSentBytesPerTic_)) {
 //      #if(DEBUG_COMMS)
 //      PRINT_NAMED_INFO("MultiClientChannel.MaxSendLimitReached", "queueing message\n");
@@ -255,7 +262,7 @@ bool MultiClientChannel::Send(const Anki::Comms::OutgoingPacket &packet)
 //  */
 //  // Otherwise add to send queue
 //  sendMsgPackets_[p.destId].emplace_back(std::piecewise_construct,
-//                                         std::forward_as_tuple((f32)(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + SIM_SEND_LATENCY_SEC)),
+//                                         std::forward_as_tuple((double)(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + SIM_SEND_LATENCY_SEC)),
 //                                         std::forward_as_tuple(p));
 //  
 //  // Fake the number of bytes sent

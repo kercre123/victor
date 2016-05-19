@@ -97,7 +97,7 @@ void Unity_DAS_SetGlobal(const char* key, const char* value)
   Anki::Util::sSetGlobal(key,value);
 }
 
-void configure_engine(Json::Value config)
+void configure_engine(Json::Value& config)
 {
   if(!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
     config[AnkiUtil::kP_ADVERTISING_HOST_IP] = ROBOT_ADVERTISING_HOST_IP;
@@ -111,9 +111,10 @@ void configure_engine(Json::Value config)
   if(!config.isMember(AnkiUtil::kP_UI_ADVERTISING_PORT)) {
     config[AnkiUtil::kP_UI_ADVERTISING_PORT] = UI_ADVERTISING_PORT;
   }
+  if(!config.isMember(AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT)) {
+    config[AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT] = SDK_ON_DEVICE_TCP_PORT;
+  }
   
-  config[AnkiUtil::kP_NUM_ROBOTS_TO_WAIT_FOR] = 0;
-  config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
 }
 
 int cozmo_startup(const char *configuration_data)

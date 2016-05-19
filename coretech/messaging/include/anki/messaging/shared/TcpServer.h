@@ -11,6 +11,9 @@
 //
 #define DEBUG_TCP_SERVER(__expr__)
 //#define DEBUG_TCP_SERVER(__expr__) (std::cout << __expr__ << std::endl)
+// Verbose macro adds a lot of spam (e.g. every send and recv)
+#define DEBUG_TCP_SERVER_VERBOSE(__expr__)
+//#define DEBUG_TCP_SERVER_VERBOSE(__expr__) (std::cout << __expr__ << std::endl)
 
 class TcpServer {
 public:
@@ -29,7 +32,6 @@ public:
   int Recv(char* data, int maxSize);
 
 private:
-  struct addrinfo *host_info_list; // Pointer to the to the linked list of host_info's.
 
   void set_nonblock(int socket);
   

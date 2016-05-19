@@ -6,6 +6,7 @@ __author__ = "Mark Wesley"
 
 import sys, os, time    
 import cmd
+import argparse
 
 sys.path.insert(0, os.path.join("tools"))
 import engineInterface
@@ -111,6 +112,25 @@ class EngineRemoteCmd(cmd.Cmd):
                 suggestions.append(emotionName)
 
         return suggestions
+
+    # ================================================================================  
+    # Start connect etc.  
+
+    def do_startEngine(self, line):
+        "startEngine - starts the engine!" 
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["StartEngine"]) )
+
+    def do_forceAddRobot(self, line):
+        "forceAddRobot - forces a localhost robot to be added" 
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["ForceAddRobot", "(127,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0)", "1", "1"]) )
+
+    def do_connectToRobot(self, line):
+        "forceAddRobot - forces a localhost robot to be added" 
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["ConnectToRobot", "1"]) )
+
+    def do_requestDataDrivenLists(self, line):
+        "requestDataDrivenLists - requests lists of anything non-CLAD data-driven e.g. all console vars, all animations"
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["GetAllDebugConsoleVarMessage"]) )  # get all the Console Var/Function entries
         
     # ================================================================================  
     # quit / exit / etc
@@ -125,7 +145,13 @@ class EngineRemoteCmd(cmd.Cmd):
 class EngineRemoteCLI:
 
     def __init__(self):
-        engineInterface.Init(True)
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-udp", dest='udp', action='store_true', default=False, help="Connect over UDP (e.g. for Webots) vs default TCP connection to iOS device")
+        args = parser.parse_args()
+        useTcp = not args.udp
+
+        engineInterface.Init(True, useTcp)
         self.keepRunning = True
         self.run()
         

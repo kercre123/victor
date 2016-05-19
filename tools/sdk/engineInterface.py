@@ -8,6 +8,8 @@ import threading # for threaded engine
 from collections import deque # queue for threaded engine
 from debugConsole import DebugConsoleManager
 from moodManager import MoodManager
+from tcpConnection import TcpConnection
+
 
 CLAD_SRC  = os.path.join("clad")
 CLAD_DIR  = os.path.join("generated", "cladPython")
@@ -57,8 +59,7 @@ class EngineCommand:
     consoleVar  = 0
     consoleFunc = 1
     sendMsg     = 2
-    setEmotion  = 3
-    
+    setEmotion  = 3    
     
     
 class ConnectionState:
@@ -66,11 +67,6 @@ class ConnectionState:
     notConnected      = 0
     tryingToConnect   = 1
     connected         = 2
-    startedEngine     = 3
-    addedRobot        = 4
-    requestedVars     = 5
-    connectingToRobot = 6    
-    connectedToRobot  = 7
 
 
 def ArgListToString(*args):
@@ -91,17 +87,27 @@ def ArgListToString(*args):
 class _EngineInterfaceImpl:
     "Internal interface for talking to cozmo-engine"
     
-    def __init__(self):
-        self.udpTransport = UDPTransport(None, None, False)
-        self.ipAddress = "127.0.0.1" # localhost, using raw "unreliable" udp
-        self.engineIpAddress = "127.0.0.1"
-        self.sdkToEngPort = 5114     # = 0x13FA, byte-swapped = 0xFA13 64019
-        self.engToSdkPort = 5116     # = 0x13FC, byte-swapped = 0xFC13 64531        
-        htons_sdkToEngPort = 64019   # [MARKW:TODO] don't hardcode this, htons in the correct places
-        self.engDest = (self.engineIpAddress, htons_sdkToEngPort)        
-        self.adPort = 5105
-        self.adDest = (self.engineIpAddress, self.adPort)
-        self.udpTransport.OpenSocket(self.engToSdkPort)
+    def __init__(self, useTcpConnection):
+
+        self.useTcpConnection = useTcpConnection;
+        if self.useTcpConnection:
+            self.tcpConnection = TcpConnection()
+            sys.stdout.write("Creating TCP Engine" + os.linesep)
+        else:
+            sys.stdout.write("Creating UDP Engine" + os.linesep)
+
+            self.udpTransport = UDPTransport(None, None, False)
+            self.ipAddress = "127.0.0.1" # localhost, using raw "unreliable" udp
+            self.engineIpAddress = "127.0.0.1"
+            self.sdkToEngPort = 5114     # = 0x13FA, byte-swapped = 0xFA13 64019
+            self.engToSdkPort = 5116     # = 0x13FC, byte-swapped = 0xFC13 64531        
+            htons_sdkToEngPort = 64019   # [MARKW:TODO] don't hardcode this, htons in the correct places
+
+            self.engDest = (self.engineIpAddress, htons_sdkToEngPort)        
+            self.adPort = 5105
+            self.adDest = (self.engineIpAddress, self.adPort)
+            self.udpTransport.OpenSocket(self.engToSdkPort)
+
         self.state = ConnectionState.notConnected
         
         self.numAnims = 0
@@ -121,8 +127,14 @@ class _EngineInterfaceImpl:
     
         keepPumpingIncomingSocket = True
         while keepPumpingIncomingSocket:
-            d, a = self.udpTransport.ReceiveData()
-            if (d == None):
+
+            if self.useTcpConnection:
+                self.tcpConnection.Update()
+                d, a = self.tcpConnection.ReceiveData()
+            else:
+                d, a = self.udpTransport.ReceiveData()
+
+            if (d == None) or (len(d) == 0):
                 # nothing left to read
                 keepPumpingIncomingSocket = False
             elif ((len(d) == 1) and (d[0] == 0)):
@@ -134,13 +146,14 @@ class _EngineInterfaceImpl:
                 try:
                     fromEngMsg = EToGM.unpack(buffer)
                 except Exception as e:
-                    sys.stderr.write("Exception unpacking message from " + str(a) + os.linesep)
-                    sys.stderr.write("     " + str(d) + os.linesep);
-                    if len(buffer):
+                    lenBuffer =  len(buffer)
+                    if lenBuffer:
                         tag = ord(buffer[0]) if sys.version_info.major < 3 else buffer[0]
-                        sys.stderr.write("Error decoding incoming message {0:02x}[{1:d}]{linesep}\t{2:s}{linesep}".format(tag, len(buffer), str(e), linesep=os.linesep))
                     else:
-                        sys.stderr.write("Got 0 length message!" + os.linesep)
+                        tag = -1
+
+                    sys.stderr.write("Exception unpacking message from " + str(a) + ":" + os.linesep + "  " + str(e) + os.linesep)
+                    sys.stderr.write("  " + str(d) + " (" + str(lenBuffer) + " bytes, tag = " + str(tag) + ")" + os.linesep);
                     sys.stderr.flush()
                 else:
                     
@@ -156,8 +169,11 @@ class _EngineInterfaceImpl:
                     if fromEngMsg.tag == fromEngMsg.Tag.UiDeviceConnected:
                         msg = fromEngMsg.UiDeviceConnected 
                         sys.stdout.write("Recv: UiDeviceConnected Type=" + str(msg.connectionType) + ", id=" + str(msg.deviceID) + ", success=" + str(msg.successful) + os.linesep)
-                        if msg.connectionType == Anki.Cozmo.UiConnectionType.SDK:
-                            sys.stdout.write("SDK Connected to Engine!" + os.linesep)
+                        if self.useTcpConnection and (msg.connectionType == Anki.Cozmo.UiConnectionType.SdkOverTcp):
+                            sys.stdout.write("SDK Connected to Engine (TCP)!" + os.linesep)
+                            self.state = ConnectionState.connected
+                        elif (not self.useTcpConnection) and (msg.connectionType == Anki.Cozmo.UiConnectionType.SdkOverUdp):
+                            sys.stdout.write("SDK Connected to Engine (UDP)!" + os.linesep)
                             self.state = ConnectionState.connected
                         else:
                             sys.stdout.write("Something else Connected to Engine" + os.linesep)
@@ -172,16 +188,31 @@ class _EngineInterfaceImpl:
                         
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotObservedNothing:
                         msg = fromEngMsg.RobotObservedNothing
-                        #UpdateBlah
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotObservedPossibleObject:
                         msg = fromEngMsg.RobotObservedPossibleObject
-                        #UpdateBlah
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotObservedObject:
                         msg = fromEngMsg.RobotObservedObject
-                        #UpdateBlah
+                    elif fromEngMsg.tag == fromEngMsg.Tag.RobotObservedMotion:
+                        msg = fromEngMsg.RobotObservedMotion
+                    elif fromEngMsg.tag == fromEngMsg.Tag.RobotObservedFace:
+                        pass
+                    elif fromEngMsg.tag == fromEngMsg.Tag.RobotProcessedImage:
+                        pass
+                    elif fromEngMsg.tag == fromEngMsg.Tag.RobotChangedObservedFaceID:
+                        pass
+                    elif fromEngMsg.tag == fromEngMsg.Tag.RobotDeletedFace:
+                        pass
+                    elif fromEngMsg.tag == fromEngMsg.Tag.RobotErasedAllEnrolledFaces:
+                        pass
+                    elif fromEngMsg.tag == fromEngMsg.Tag.NVStorageData:
+                        pass
+                    elif fromEngMsg.tag == fromEngMsg.Tag.NVStorageOpResult:
+                        pass
                     elif fromEngMsg.tag == fromEngMsg.Tag.RobotState:
                         msg = fromEngMsg.RobotState
                         #UpdateBlah
+                    elif fromEngMsg.tag == fromEngMsg.Tag.ChargerEvent:
+                        pass
                     elif fromEngMsg.tag == fromEngMsg.Tag.ObjectConnectionState:
                         msg = fromEngMsg.ObjectConnectionState
                         #UpdateBlah
@@ -241,6 +272,10 @@ class _EngineInterfaceImpl:
                         # Current animation playing (set to "" when done)
                         msg = fromEngMsg.DebugAnimationString                        
                         #sys.stdout.write("Recv: DebugAnimationString '" + msg.text + "'" + os.linesep)
+                    elif fromEngMsg.tag == fromEngMsg.Tag.EngineRobotCLADVersionMismatch:
+                        pass
+                    elif fromEngMsg.tag == fromEngMsg.Tag.EngineRobotCLADVersionMismatch:
+                        pass
                     else:
                         sys.stdout.write("Recv: Unhandled " + str(fromEngMsg.tag) + " = " + EToGM._tags_by_value[fromEngMsg.tag] + " from " + str(a) +  os.linesep);
                         sys.stdout.write("     " + str(d) + os.linesep);
@@ -494,69 +529,30 @@ class _EngineInterfaceImpl:
 
         if (self.state == ConnectionState.tryingToConnect):
               
-            adMsg = GToE.AdvertisementRegistrationMsg()
-            adMsg.toEnginePort=self.sdkToEngPort
-            adMsg.fromEnginePort=self.engToSdkPort
-            adMsg.ip = self.ipAddress
-            adMsg.id = 1
-            adMsg.enableAdvertisement = True
-            adMsg.oneShot = True
-            
-            toEngMsg = GToEM(AdvertisementRegistrationMsg = adMsg);
-            
-            self.sendToAd(toEngMsg)
+            if self.useTcpConnection:
+                pass
+            else:
+                adMsg = GToE.AdvertisementRegistrationMsg()
+                adMsg.toEnginePort=self.sdkToEngPort
+                adMsg.fromEnginePort=self.engToSdkPort
+                adMsg.ip = self.ipAddress
+                adMsg.id = 1
+                adMsg.enableAdvertisement = True
+                adMsg.oneShot = True
+                
+                toEngMsg = GToEM(AdvertisementRegistrationMsg = adMsg);
+                
+                self.sendToAd(toEngMsg)
             
         elif (self.state == ConnectionState.connected):
-         
-            startMsg = GToEI.StartEngine()
-            toEngMsg = GToEM(StartEngine = startMsg);
-            
-            sys.stdout.write("Send StartEngine" + os.linesep)
-            
-            self.sendToEngine(toEngMsg)
-            
-            self.state = ConnectionState.startedEngine
-            
-        elif (self.state == ConnectionState.startedEngine):
-        
-            addRobotMsg = GToEI.ForceAddRobot()
-            
-            addRobotMsg.robotID = 1        
-            addRobotMsg.ipAddress = "127.0.0.1\0\0\0\0\0\0\0".encode('ascii') # "127.0.0.1"
-            addRobotMsg.isSimulated = 1 # [MARKW:TODO] Need to distinguish somewhere, maybe never do this outside engine?
-            
-            toEngMsg = GToEM(ForceAddRobot = addRobotMsg);
-            
-            sys.stdout.write("Send ForceAddRobot" + os.linesep)
-            self.sendToEngine(toEngMsg)
-            
-            self.state = ConnectionState.addedRobot
-        
-        elif (self.state == ConnectionState.addedRobot):
 
-            getVarsMsg = GToEI.GetAllDebugConsoleVarMessage() 
-            toEngMsg = GToEM(GetAllDebugConsoleVarMessage = getVarsMsg);
-            
-            sys.stdout.write("Send GetAllDebugConsoleVarMessage" + os.linesep)            
-            self.sendToEngine(toEngMsg)
-            
-            self.state = ConnectionState.requestedVars
-            
-        elif (self.state == ConnectionState.requestedVars):
-        
-            connMsg = GToEI.ConnectToRobot()
-            connMsg.robotID = 1
-           
-            toEngMsg = GToEM(ConnectToRobot = connMsg);
-            
-            sys.stdout.write("Send ConnectToRobot" + os.linesep)
-            self.sendToEngine(toEngMsg)
-
-            self.state = ConnectionState.connectingToRobot;
-        elif (self.state == ConnectionState.connectingToRobot):
-            pass # wait for connected message
-        elif (self.state == ConnectionState.connectedToRobot):
-            pass # all is running
+            shouldSendPing = True
+            if shouldSendPing:
+                outPingMsg = GToEI.Ping()
+                outPingMsg.counter = 1 # TODO - should increase for duration of connecion
+                    
+                toEngMsg = GToEM(Ping = outPingMsg);
+                self.sendToEngine(toEngMsg, False)
         else:
             sys.stderr.write("[Update] Unexpected state: " + str(self.state) + os.linesep)
     
@@ -564,17 +560,26 @@ class _EngineInterfaceImpl:
         return self.state >= ConnectionState.connectedToRobot
         
     def Disconnect(self):
-        self.udpTransport.CloseSocket()
+        if self.useTcpConnection:
+            self.tcpConnection.CloseSocket()
+        else:
+            self.udpTransport.CloseSocket()
 
-    def sendToEngine(self, msg):
-        if self.verboseEngine:
+    def sendToEngine(self, msg, logIfVerbose=False):
+        if self.verboseEngine and logIfVerbose:
             sys.stdout.write("[sendToEngine] '" + str(msg) + "'" + os.linesep)
-        return self.udpTransport.SendData(self.engDest, msg.pack())
+        if self.useTcpConnection:
+            return self.tcpConnection.SendData(msg.pack())
+        else:
+            return self.udpTransport.SendData(self.engDest, msg.pack())
         
     def sendToAd(self, msg):
-        if self.verboseAd:
-            sys.stdout.write("[sendToAd] '" + str(msg) + "'" + os.linesep)
-        return self.udpTransport.SendData(self.adDest, msg.pack())
+        if self.useTcpConnection:
+            return True # no add server for TCP
+        else:
+            if self.verboseAd:
+                sys.stdout.write("[sendToAd] '" + str(msg) + "'" + os.linesep)
+            return self.udpTransport.SendData(self.adDest, msg.pack())
 
 
 # ================================================================================    
@@ -631,6 +636,7 @@ class AsyncEngineInterface(threading.Thread):
         "Thread safe queing of an Async command, will run later in update loop"
         # [MARKW:TODO] would be great to get a unique ID (monotonically increasing?) back that can be queried
         #              e.g. get an OnComplete() callback, or do IsComplete(taskID)
+        #sys.stdout.write("[AsyncEngineInterface.QueueCommand] '" + str(inCommand) + "'" + os.linesep)
         self.queueLock.acquire()
         self.queue.append(inCommand)
         self.queueLock.release()
@@ -662,14 +668,14 @@ class AsyncEngineInterface(threading.Thread):
 # ================================================================================
 
         
-def Init(runAsync=False):
+def Init(runAsync, useTcpConnection):
     "Initalize the engine interface. Must be called before any other methods"
     global gEngineInterfaceInstance
     if gEngineInterfaceInstance is not None:
         sys.stderr.write("Already Initialized!")
         return None        
     if gEngineInterfaceInstance is None:
-        gEngineInterfaceInstance = _EngineInterfaceImpl()
+        gEngineInterfaceInstance = _EngineInterfaceImpl(useTcpConnection)
     if runAsync:
         global gAsyncEngineInterfaceInstance
         if gAsyncEngineInterfaceInstance is None:            
