@@ -43,6 +43,12 @@
 #include "anki/cozmo/csharp-binding/ios/ios-binding.h"
 #endif
 
+#if defined(USE_IOS) || defined(ANDROID)
+#define USE_DAS 1
+#else
+#define USE_DAS 0
+#endif
+
 using namespace Anki;
 using namespace Anki::Cozmo;
 
@@ -116,6 +122,16 @@ void configure_engine(Json::Value config)
   config[AnkiUtil::kP_NUM_UI_DEVICES_TO_WAIT_FOR] = 0;
 }
 
+static void cozmo_configure_das(const std::string& resourcesBasePath, const Anki::Util::Data::DataPlatform* platform)
+{
+#if USE_DAS
+  std::string dasConfigPath = resourcesBasePath + "/DASConfig.json";
+  std::string dasLogPath = platform->pathToResource(Anki::Util::Data::Scope::Cache, "DASLogs");
+  std::string gameLogPath = platform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, "");
+  DASConfigure(dasConfigPath.c_str(), dasLogPath.c_str(), gameLogPath.c_str());
+#endif
+}
+
 int cozmo_startup(const char *configuration_data)
 {
   int result = (int)RESULT_OK;
@@ -137,8 +153,11 @@ int cozmo_startup(const char *configuration_data)
   std::string cachePath = config["DataPlatformCachePath"].asCString();
   std::string externalPath = config["DataPlatformExternalPath"].asCString();
   std::string resourcesPath = config["DataPlatformResourcesPath"].asCString();
+  std::string resourcesBasePath = config["DataPlatformResourcesBasePath"].asCString();
 
   dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
+
+  cozmo_configure_das(resourcesBasePath, dataPlatform);
 
   // Initialize logging
   #if ANKI_DEV_CHEATS
@@ -147,8 +166,8 @@ int cozmo_startup(const char *configuration_data)
   
   Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({
     new Util::SosLoggerProvider()
-#ifdef USE_IOS
-    , new Util::DasLoggerProvider() // DAS is not working on Android yet
+#if USE_DAS
+    , new Util::DasLoggerProvider()
 #endif
 #if ANKI_DEV_CHEATS
     , new Util::SaveToFileLoggerProvider(DevLoggingSystem::GetInstance()->GetDevLoggingBaseDirectory() + "/print")
