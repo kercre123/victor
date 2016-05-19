@@ -148,10 +148,11 @@ class EngineRemoteCLI:
 
         parser = argparse.ArgumentParser()
         parser.add_argument("-udp", dest='udp', action='store_true', default=False, help="Connect over UDP (e.g. for Webots) vs default TCP connection to iOS device")
+        parser.add_argument("-verbose", dest='verbose', action='store_true', default=False, help="Verbose logging")
         args = parser.parse_args()
         useTcp = not args.udp
 
-        engineInterface.Init(True, useTcp)
+        engineInterface.Init(True, useTcp, args.verbose)
         self.keepRunning = True
         self.run()
         
