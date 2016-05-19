@@ -1498,6 +1498,64 @@ namespace Anki {
                     msg.whichLEDs = WhichCubeLEDs::FRONT;
                     msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
                     msg.turnOffUnspecifiedLEDs = 1;
+                    
+                    
+/*
+                    static bool white = false;
+                    white = !white;
+                    if (white) {
+                      ExternalInterface::SetAllActiveObjectLEDs m;
+                      m.robotID = 1;
+                      m.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+                      m.objectID = GetLastObservedObject().id;
+                      for(s32 iLED = 0; iLED<(s32)ActiveObjectConstants::NUM_CUBE_LEDS; ++iLED) {
+                        m.onColor[iLED]  = ::Anki::NamedColors::WHITE;
+                        m.offColor[iLED]  = ::Anki::NamedColors::BLACK;
+                        m.onPeriod_ms[iLED] = 250;
+                        m.offPeriod_ms[iLED] = 250;
+                        m.transitionOnPeriod_ms[iLED] = 500;
+                        m.transitionOffPeriod_ms[iLED] = 100;
+                      }
+                      ExternalInterface::MessageGameToEngine msgWrapper;
+                      msgWrapper.Set_SetAllActiveObjectLEDs(m);
+                      SendMessage(msgWrapper);
+                      break;
+                    } else {
+                      msg.onColor = ::Anki::NamedColors::RED;
+                      msg.offColor = ::Anki::NamedColors::BLACK;
+                      msg.whichLEDs = WhichCubeLEDs::FRONT;
+                      msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+                      msg.turnOffUnspecifiedLEDs = 0;
+                      ExternalInterface::MessageGameToEngine msgWrapper;
+                      msgWrapper.Set_SetActiveObjectLEDs(msg);
+                      SendMessage(msgWrapper);
+
+                      msg.onColor = ::Anki::NamedColors::GREEN;
+                      msg.offColor = ::Anki::NamedColors::BLACK;
+                      msg.whichLEDs = WhichCubeLEDs::RIGHT;
+                      msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+                      msg.turnOffUnspecifiedLEDs = 0;
+                      msgWrapper.Set_SetActiveObjectLEDs(msg);
+                      SendMessage(msgWrapper);
+                      
+                      msg.onColor = ::Anki::NamedColors::BLUE;
+                      msg.offColor = ::Anki::NamedColors::BLACK;
+                      msg.whichLEDs = WhichCubeLEDs::BACK;
+                      msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+                      msg.turnOffUnspecifiedLEDs = 0;
+                      msgWrapper.Set_SetActiveObjectLEDs(msg);
+                      SendMessage(msgWrapper);
+
+                      msg.onColor = ::Anki::NamedColors::YELLOW;
+                      msg.offColor = ::Anki::NamedColors::BLACK;
+                      msg.whichLEDs = WhichCubeLEDs::LEFT;
+                      msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+                      msg.turnOffUnspecifiedLEDs = 0;
+                      msgWrapper.Set_SetActiveObjectLEDs(msg);
+                      SendMessage(msgWrapper);
+                    }
+*/
+
                   }
                   
                   if(colorIndex == NUM_COLORS) {
