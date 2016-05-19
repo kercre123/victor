@@ -7,7 +7,7 @@ using Anki.Cozmo.ExternalInterface;
 public class FactoryIntroManager : MonoBehaviour {
 
   [SerializeField]
-  private Intro _DevConnectDialog;
+  private ConnectDialog _DevConnectDialog;
   private GameObject _DevConnectDialogInstance;
 
   [SerializeField]
