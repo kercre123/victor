@@ -139,7 +139,7 @@ public abstract class GameBase : MonoBehaviour {
     ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
     titleWidget.Icon = data.ChallengeIcon;
-    newView.ShowBackButton();
+    newView.ShowQuitButton();
 
     // TODO use different color for activities vs games
     newView.InitializeColor(UIColorPalette.GameBackgroundColor);
