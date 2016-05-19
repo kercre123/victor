@@ -61,7 +61,7 @@ namespace Vortex {
       LightCube.TappedAction += HandleBlockTapped;
 
       // we need at least one for cozmo and one for at least one player but if we find more cool, stateintro will deal with it.
-      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(new StateIntro()), numCubes);
+      InitialCubesState initCubeState = new InitialCubesState(new StateIntro(), numCubes);
       _StateMachine.SetNextState(initCubeState);
 
       _RoundNumber = 0;
@@ -139,7 +139,7 @@ namespace Vortex {
     }
 
     public void HandleDebugTap() {
-      HandleBlockTapped(1, 1);
+      HandleBlockTapped(1, 1, 0.0f);
     }
 
     public void HandleReplaySelected() {
@@ -160,7 +160,7 @@ namespace Vortex {
       }
     }
 
-    public void HandleBlockTapped(int blockID, int tappedTimes) {
+    public void HandleBlockTapped(int blockID, int tappedTimes, float timeStamp) {
       DAS.Info(this, "Player Block Tapped. " + blockID);
       if (_PlayerDataList == null) {
         return;

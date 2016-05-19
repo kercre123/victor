@@ -65,8 +65,8 @@ namespace WhackAMole {
         if (!kVp.Equals(curr)) {
           _WhackAMoleGame.CurrentTargetKvP = kVp;
           DAS.Debug(this, string.Format("Panic - Now Target Cube {0}", kVp.Key));
-          _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[kVp.Key], 150f, null, true, 
-            _WhackAMoleGame.GetRelativeRad(kVp), Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
+          _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[kVp.Key], 150f, null, true, false,
+            _WhackAMoleGame.GetRelativeRad(kVp), Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
           return;
         }
       }

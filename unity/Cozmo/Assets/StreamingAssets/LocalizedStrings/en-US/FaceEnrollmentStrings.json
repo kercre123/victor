@@ -1,0 +1,30 @@
+{
+  "smartling": {
+    "translate_paths": [
+      "*/translation"
+    ],
+    "variants_enabled": true,
+    "translate_mode": "custom",
+    "placeholder_format_custom": [
+      "%%[^%]+?%%",
+      "%[^%]+?%",
+      "##[^#]+?##",
+      "__[^_]+?__",
+      "[$]\\{[^\\}\\{]+?\\}",
+      "\\{\\{[^\\}\\{]+?\\}\\}",
+      "(?<!\\{)\\{[^\\}\\{]+?\\}(?!\\})"
+    ],
+    "source_key_paths": [
+      "/{*}"
+    ]
+  },
+  "faceEnrollment.instructions": {
+    "translation": "Cozmo Needs to Check you out! Look at Cozmo straight on, and hold still.\n\nWhen he's done, you'll hear a chime."
+  },
+  "faceEnrollment.enterName.buttonText": {
+    "translation": "Done"
+  },
+  "faceEnrollment.enterName.placeholderText": {
+    "translation": "Enter Name"
+  }
+}

@@ -72,13 +72,13 @@ public class ChallengeDetailsDialog : BaseView {
 
   protected override void ConstructOpenAnimation(DG.Tweening.Sequence openAnimation) {
     // Slide the dialog out and back
-    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).From().SetEase(Ease.Linear).SetDelay(0.2f);
+    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveY(-1600, 0.2f).From().SetEase(Ease.OutQuad).SetDelay(0.2f);
     openAnimation.Join(dialogTween);
   }
 
   protected override void ConstructCloseAnimation(DG.Tweening.Sequence closeAnimation) {
     // Slide the dialog out
-    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveX(2500, 0.5f).SetEase(Ease.Linear);
+    DG.Tweening.Tweener dialogTween = _DialogBackground.DOLocalMoveY(-1600, 0.2f).SetEase(Ease.OutQuad);
     closeAnimation.Join(dialogTween);
   }
 }

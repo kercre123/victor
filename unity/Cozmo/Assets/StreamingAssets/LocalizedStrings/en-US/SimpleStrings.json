@@ -18,6 +18,12 @@
       "/{*}"
     ]
   },
+  "name.cozmo": {
+    "translation": "Cozmo"
+  },
+  "name.player": {
+    "translation": "Player"
+  },
   "button.quitGame": {
     "translation": "Quit Game"
   },
@@ -86,6 +92,9 @@
   },
   "label.connect": {
     "translation": "Connect"
+  },
+  "label.loading": {
+    "translation": "Loading"
   },
   "button.save": {
     "translation": "Save"

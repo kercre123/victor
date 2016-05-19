@@ -72,11 +72,9 @@ public static class LocalizationKeys {
 
   #endregion
 
-  #region FaceEnrollment
+  #region FaceEnrollmentStrings
 
-  public const string kFaceEnrollmentInstructionsBodyText = "faceEnrollment.instructions.bodyText";
-  public const string kFaceEnrollmentInstructionsTitle = "faceEnrollment.instructions.title";
-  public const string kFaceEnrollmentInstructionsDoneText = "faceEnrollment.instructions.doneText";
+  public const string kFaceEnrollmentInstructions = "faceEnrollment.instructions";
   public const string kFaceEnrollmentEnterNameButtonText = "faceEnrollment.enterName.buttonText";
   public const string kFaceEnrollmentEnterNamePlaceholderText = "faceEnrollment.enterName.placeholderText";
 
@@ -176,6 +174,14 @@ public static class LocalizationKeys {
   public const string kSpeedTapDifficultyExpertDescription = "speedTap.difficulty.expertDescription";
   public const string kButtonRetry = "button.retry";
   public const string kSpeedTapTextWaitForCozmo = "speedTap.text.waitForCozmo";
+  public const string kSpeedTapDifficultyEasyDescriptionLocked = "speedTap.difficulty.easyDescription.locked";
+  public const string kSpeedTapDifficultyMediumDescriptionLocked = "speedTap.difficulty.mediumDescription.locked";
+  public const string kSpeedTapDifficultyHardDescriptionLocked = "speedTap.difficulty.hardDescription.locked";
+  public const string kSpeedTapDifficultyExpertDescriptionLocked = "speedTap.difficulty.expertDescription.locked";
+  public const string kSpeedTapTextGetReady = "speedTap.text.getReady";
+  public const string kSpeedTapTextBestOf = "speedTap.text.bestOf";
+  public const string kSpeedTapTextDisplayWinnerSubtitle = "speedTap.text.displayWinnerSubtitle";
+  public const string kSpeedTapTextRoundScore = "speedTap.text.roundScore";
 
   #endregion
 
@@ -188,8 +194,22 @@ public static class LocalizationKeys {
 
   #endregion
 
+  #region PressDemoStrings
+
+  public const string kPressDemoFaceEnrollRequestTitle = "pressDemo.faceEnrollRequestTitle";
+  public const string kPressDemoFaceEnrollRequestDesc = "pressDemo.faceEnrollRequestDesc";
+  public const string kPressDemoSpeedTapRequestTitle = "pressDemo.speedTapRequestTitle";
+  public const string kPressDemoSpeedTapRequestDesc = "pressDemo.speedTapRequestDesc";
+  public const string kPressDemoSpeedTapRequestAgainTitle = "pressDemo.speedTapRequestAgainTitle";
+  public const string kPressDemoSpeedTapRequestAgainDesc = "pressDemo.speedTapRequestAgainDesc";
+  public const string kPressDemoOhAlright = "pressDemo.ohAlright";
+
+  #endregion
+
   #region SimpleStrings
 
+  public const string kNameCozmo = "name.cozmo";
+  public const string kNamePlayer = "name.player";
   public const string kButtonQuitGame = "button.quitGame";
   public const string kButtonQuit = "button.quit";
   public const string kButtonStartChallenge = "button.startChallenge";
@@ -213,6 +233,7 @@ public static class LocalizationKeys {
   public const string kDailyGoalComplete = "dailyGoal.Complete";
   public const string kTimelineWeekLabel = "timeline.weekLabel";
   public const string kLabelConnect = "label.connect";
+  public const string kLabelLoading = "label.loading";
   public const string kButtonSave = "button.save";
   public const string kCozmoTabTitle = "cozmoTab.title";
   public const string kCozmoTabHexCount = "cozmoTab.hexCount";
@@ -238,7 +259,7 @@ public static class LocalizationKeys {
 
   #endregion
 
-  #region UnlockText
+  #region UnlockStrings
 
   public const string kUnlockableCubeRollActionTitle = "unlockable.CubeRollAction.Title";
   public const string kUnlockableCubeRollActionDescription = "unlockable.CubeRollAction.Description";

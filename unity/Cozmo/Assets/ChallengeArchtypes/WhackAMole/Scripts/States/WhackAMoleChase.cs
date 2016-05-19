@@ -20,8 +20,8 @@ namespace WhackAMole {
       _WhackAMoleGame = (_StateMachine.GetGame() as WhackAMoleGame);
       _TargetKvP = _WhackAMoleGame.CurrentTargetKvP;
       _CurrentRobot.ExecuteBehavior(Anki.Cozmo.BehaviorType.NoneBehavior);
-      _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], kTargetDist, AlignDone, true, 
-        _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
+      _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], kTargetDist, AlignDone, true, false, 
+        _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition.NOW_AND_CLEAR_REMAINING);
       _WhackAMoleGame.FixCozmoAngles();
       _WhackAMoleGame.MoleStateChanged += HandleMoleStateChange;
     }
@@ -66,8 +66,8 @@ namespace WhackAMole {
     public override void Update() {
       base.Update();
       if (_CurrentRobot.IsBusy == false) {
-        _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], kTargetDist, AlignDone, true, 
-          _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.QueueActionPosition.NEXT);
+        _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], kTargetDist, AlignDone, true, false,
+          _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition.NEXT);
         _WhackAMoleGame.FixCozmoAngles();
       }
     }
@@ -86,8 +86,8 @@ namespace WhackAMole {
         // A different cube is the target now.
         _TargetKvP = _WhackAMoleGame.CurrentTargetKvP;
         _CurrentRobot.CancelCallback(AlignDone);
-        _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], kTargetDist, AlignDone, true, 
-          _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.QueueActionPosition.NEXT);
+        _CurrentRobot.AlignWithObject(_CurrentRobot.LightCubes[_TargetKvP.Key], kTargetDist, AlignDone, true, false,
+          _WhackAMoleGame.GetRelativeRad(_TargetKvP), Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition.NEXT);
       }
     }
 

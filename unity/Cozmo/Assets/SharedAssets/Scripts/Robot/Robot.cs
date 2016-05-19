@@ -562,47 +562,6 @@ public class Robot : IRobot {
 
   #region Behavior Manager
 
-  public void SetEnableAllBehaviors(bool enabled) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetEnableAllBehaviors>.Instance.Initialize(enabled)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void SetEnableBehaviorGroup(BehaviorGroup behaviorGroup, bool enabled) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetEnableBehaviorGroup>.Instance.Initialize(behaviorGroup, enabled)
-    ); 
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void SetEnableBehavior(string behaviorName, bool enabled) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<SetEnableBehavior>.Instance.Initialize(behaviorName, enabled)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void ClearAllBehaviorScoreOverrides() {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(ID, Singleton<ClearAllBehaviorScoreOverrides>.Instance);
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void OverrideBehaviorScore(string behaviorName, float newScore) {
-    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
-      Singleton<BehaviorManagerMessage>.Instance.Initialize(
-      ID, 
-      Singleton<OverrideBehaviorScore>.Instance.Initialize(behaviorName, newScore)
-    );
-    RobotEngineManager.Instance.SendMessage();
-  }
 
   #endregion
 
@@ -669,10 +628,6 @@ public class Robot : IRobot {
   }
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
-
-    //TODO: We should be displaying whatever is on the face on the robot here, but
-    // we don't have access to that yet.
-    CozmoFace.DisplayProceduralFace(faceAngle, faceCenter, faceScale, leftEyeParams, rightEyeParams);
 
     RobotEngineManager.Instance.Message.DisplayProceduralFace = 
       Singleton<DisplayProceduralFace>.Instance.Initialize(
@@ -762,25 +717,15 @@ public class Robot : IRobot {
     _RobotCallbacks.Clear();
   }
 
-  public void SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode mode) {
-    DAS.Debug(this, "Setting face enrollment to " + mode);
-    RobotEngineManager.Instance.Message.SetFaceEnrollmentMode = Singleton<SetFaceEnrollmentMode>.Instance.Initialize(mode);
-    RobotEngineManager.Instance.SendMessage();
-  }
+  public void EnrollNamedFace(int faceID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
-  public void AssignNameToFace(int faceID, string name) {
-    DAS.Debug(this, "Assigning face " + faceID + " to " + name);
-    RobotEngineManager.Instance.Message.AssignNameToFace = Singleton<AssignNameToFace>.Instance.Initialize(faceID, name);
-    RobotEngineManager.Instance.SendMessage();
+    DAS.Debug(this, "Sending EnrollNamedFace for ID=" + faceID + " with " + name);
+    SendQueueSingleAction(Singleton<EnrollNamedFace>.Instance.Initialize(faceID, name, seq, saveToRobot), callback, queueActionPosition);
   }
 
   public void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
     DAS.Debug(this, "Sending " + animName + " with " + 1 + " loop");
-    // TODO: We should be displaying what is actually on the robot, instead
-    // we are faking it.
-    CozmoFace.PlayAnimation(animName);
-
     SendQueueSingleAction(Singleton<PlayAnimation>.Instance.Initialize(ID, 1, animName), callback, queueActionPosition);
   }
 
@@ -805,6 +750,16 @@ public class Robot : IRobot {
       Singleton<SetLiveIdleAnimationParameters>.Instance.Initialize(paramNames, paramValues, ID, setUnspecifiedToDefault);
     RobotEngineManager.Instance.SendMessage();
 
+  }
+
+  public void ResetDrivingAnimations() {
+    SetDrivingAnimations(null, null, null);
+  }
+
+  public void SetDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim) {
+    RobotEngineManager.Instance.Message.SetDrivingAnimations = 
+      Singleton<SetDrivingAnimations>.Instance.Initialize(drivingStartAnim, drivingLoopAnim, drivingEndAnim);
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public float GetHeadAngleFactor() {
@@ -864,7 +819,8 @@ public class Robot : IRobot {
   public void SetRobotVolume(float volume) {
     DAS.Debug(this, "Set Robot Volume " + volume);
 
-    Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot, volume);
+    RobotEngineManager.Instance.Message.SetRobotVolume = Singleton<SetRobotVolume>.Instance.Initialize(ID, volume);
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public float GetRobotVolume() {
@@ -1061,11 +1017,12 @@ public class Robot : IRobot {
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
-  public void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(Singleton<GotoObject>.Instance.Initialize(
       objectID: obj,
       distanceFromObjectOrigin_mm: distance_mm,
       useManualSpeed: false,
+      usePreDockPose: goToPreDockPose,
       motionProf: PathMotionProfileDefault
     ), 
       callback, 
@@ -1074,15 +1031,16 @@ public class Robot : IRobot {
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
-  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, float approachAngleRad = 0.0f, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(
       Singleton<AlignWithObject>.Instance.Initialize(
         objectID: obj,
         motionProf: PathMotionProfileDefault,
         distanceFromMarker_mm: distanceFromMarker_mm,
         approachAngle_rad: approachAngleRad,
+        alignmentType: alignmentType,
         useApproachAngle: useApproachAngle,
-        usePreDockPose: false,
+        usePreDockPose: usePreDockPose,
         useManualSpeed: false
       ), 
       callback, 
@@ -1169,6 +1127,16 @@ public class Robot : IRobot {
   private void SparkUnlockEnded() {
     IsSparked = false;
     SparkUnlockId = UnlockId.Count;
+  }
+
+  // enable/disable games available for Cozmo to request
+  public void SetAvailableGames(BehaviorGameFlag games) {
+    RobotEngineManager.Instance.Message.BehaviorManagerMessage = 
+      Singleton<BehaviorManagerMessage>.Instance.Initialize(
+      ID, 
+      Singleton<SetAvailableGames>.Instance.Initialize(games)
+    ); 
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public void TurnInPlace(float angle_rad, float speed_rad_per_sec, float accel_rad_per_sec2, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
@@ -1379,8 +1347,32 @@ public class Robot : IRobot {
 
   #endregion
 
+  #region PressDemoMessages
+
+  public void TransitionToNextDemoState() {
+    RobotEngineManager.Instance.Message.TransitionToNextDemoState = Singleton<TransitionToNextDemoState>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void StartDemoWithEdge(bool demoWithEdge) {
+    RobotEngineManager.Instance.Message.StartDemoWithEdge = Singleton<StartDemoWithEdge>.Instance.Initialize(demoWithEdge);
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  #endregion
+
   public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Saying text: " + text);
     SendQueueSingleAction(Singleton<SayText>.Instance.Initialize(text, playEvent, style), callback, queueActionPosition);
+  }
+
+  public void SendDemoResetState() {
+    RobotEngineManager.Instance.Message.DemoResetState = Singleton<DemoResetState>.Instance;
+    RobotEngineManager.Instance.SendMessage();
+  }
+
+  public void EraseAllEnrolledFaces() {
+    RobotEngineManager.Instance.Message.EraseAllEnrolledFaces = Singleton<EraseAllEnrolledFaces>.Instance;
+    RobotEngineManager.Instance.SendMessage();
   }
 }

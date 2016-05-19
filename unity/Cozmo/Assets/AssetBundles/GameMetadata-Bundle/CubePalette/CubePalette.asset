@@ -12,19 +12,18 @@ MonoBehaviour:
   m_Name: CubePalette
   m_EditorClassIdentifier: 
   _OffColor:
-    uiSprite: {fileID: 21300000, guid: 049a6b8b83062465ca4813545702d5c5, type: 3}
+    uiSprite: {fileID: 21300000, guid: 06a184a0fb69d48dc8906b6c0fb9cffd, type: 3}
     lightColor: {r: 0, g: 0, b: 0, a: 1}
   _InViewColor:
-    uiSprite: {fileID: 21300000, guid: 5cd7f4864070540f8b6f069d19efaebe, type: 3}
+    uiSprite: {fileID: 21300000, guid: d12b27138f0d34b9ab4b69782c7c6c6a, type: 3}
     lightColor: {r: 1, g: 1, b: 1, a: 1}
   _OutOfViewColor:
-    uiSprite: {fileID: 21300000, guid: 049a6b8b83062465ca4813545702d5c5, type: 3}
+    uiSprite: {fileID: 21300000, guid: 06a184a0fb69d48dc8906b6c0fb9cffd, type: 3}
     lightColor: {r: 0, g: 0, b: 0, a: 1}
   _ReadyColor:
     uiSprite: {fileID: 21300000, guid: 6e830b09012e240b7bef77cb34e75a70, type: 3}
     lightColor: {r: 0, g: 1, b: 0, a: 1}
   _TapMeColor:
-    uiSprite: {fileID: 21300000, guid: d35ee8cf1a9614409972c78d523e311b, type: 3}
     lightColors:
     - {r: 1, g: 0, b: 0, a: 1}
     - {r: 0, g: 1, b: 0, a: 1}

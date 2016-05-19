@@ -388,8 +388,8 @@ MonoBehaviour:
     panePrefab: {fileID: 113112, guid: b053830e566d3424a96bbb0aef9ec596, type: 2}
   - name: Debug Console
     panePrefab: {fileID: 113112, guid: 3bd508acfffff402bb84d7e68c9e2964, type: 2}
-  - name: Data Persistence
-    panePrefab: {fileID: 108612, guid: 747a6b93d250d41b58305e030e28a3c7, type: 2}
+  - name: Minigames
+    panePrefab: {fileID: 177866, guid: 62e798b41a7244ef69188f972ceb55c0, type: 2}
   - name: Viz
     panePrefab: {fileID: 179792, guid: ea3140e2d4dfa4e66bc09d5abd8813ee, type: 2}
   - name: The Rest
@@ -408,6 +408,10 @@ MonoBehaviour:
     panePrefab: {fileID: 149194, guid: 440942ce90caf4e13b4f07a870587f1b, type: 2}
   - name: DailyGoal
     panePrefab: {fileID: 149194, guid: 6952cd381a30e48b48aacd5aca28eb45, type: 2}
+  - name: Data Persistence
+    panePrefab: {fileID: 108612, guid: 747a6b93d250d41b58305e030e28a3c7, type: 2}
+  - name: FaceEnrollment
+    panePrefab: {fileID: 184652, guid: 0df6b876209ca40c5b32f20b561782da, type: 2}
   _TabButtonPrefab: {fileID: 11405442, guid: af361c7b5f09a450b9edcb10ae948308, type: 2}
   _TabContainer: {fileID: 188218}
   _ContentPaneContainer: {fileID: 121806}
@@ -592,7 +596,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.size
-      value: 15
+      value: 18
       objectReference: {fileID: 0}
     - target: {fileID: 0}
       propertyPath: tabButtonPrefab_
@@ -724,6 +728,14 @@ Prefab:
       propertyPath: _DebugContentPaneData.Array.data[13].panePrefab
       value: 
       objectReference: {fileID: 179320, guid: 4682347e280f4412b81e3ee61f2e7a6c, type: 2}
+    - target: {fileID: 0}
+      propertyPath: _DebugContentPaneData.Array.data[17].name
+      value: FaceEnrollment
+      objectReference: {fileID: 0}
+    - target: {fileID: 0}
+      propertyPath: _DebugContentPaneData.Array.data[17].panePrefab
+      value: 
+      objectReference: {fileID: 184652, guid: 0df6b876209ca40c5b32f20b561782da, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 159258}

@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using Cozmo.HomeHub;
 using System.Collections;
 
 public class DebugMenuManager : MonoBehaviour {
@@ -8,9 +9,14 @@ public class DebugMenuManager : MonoBehaviour {
   private DebugMenuDialog _DebugMenuDialogInstance;
 
   [SerializeField]
+  private LatencyCalculator _LatencyCalculator;
+
+  [SerializeField]
   private Canvas _DebugMenuCanvas;
 
   private int _LastOpenedDebugTab = 0;
+
+  private bool _DebugPause = false;
 
   private static DebugMenuManager _Instance;
 
@@ -41,6 +47,15 @@ public class DebugMenuManager : MonoBehaviour {
     CreateDebugDialog();
   }
 
+  public GameBase GetCurrMinigame() {
+    if (HomeHub.Instance != null) {
+      if (HomeHub.Instance.MiniGameInstance != null) {
+        return HomeHub.Instance.MiniGameInstance;
+      }
+    }
+    return null;
+  }
+
   private void CreateDebugDialog() {
     GameObject debugMenuDialogInstance = GameObject.Instantiate(_DebugMenuDialogPrefab.gameObject);
     Transform dialogTransform = debugMenuDialogInstance.transform;
@@ -49,14 +64,36 @@ public class DebugMenuManager : MonoBehaviour {
     _DebugMenuDialogInstance = debugMenuDialogInstance.GetComponent<DebugMenuDialog>();
     _DebugMenuDialogInstance.Initialize(_LastOpenedDebugTab);
     _DebugMenuDialogInstance.OnDebugMenuClosed += OnDebugMenuDialogClose;
+    if (DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.DebugPauseEnabled) {
+      GameBase game = GetCurrMinigame();
+      if (game != null) {
+        if (game.Paused == false) {
+          game.PauseGame();
+          _DebugPause = true;
+        }
+      }
+    }
   }
 
   private void OnDebugMenuDialogClose(int lastOpenTab) {
     _DebugMenuDialogInstance.OnDebugMenuClosed -= OnDebugMenuDialogClose;
     _LastOpenedDebugTab = lastOpenTab;
+    if (_DebugPause == true) {
+      _DebugPause = false;
+      GameBase game = GetCurrMinigame();
+      if (game != null) {
+        if (game.Paused) {
+          game.UnpauseGame();
+        }
+      }
+    }
   }
 
   public bool IsDialogOpen() {
     return _DebugMenuDialogInstance != null;
+  }
+
+  public void EnableLatencyPopup(bool enable) {
+    _LatencyCalculator.EnableLatencyPopup(enable);
   }
 }

@@ -183,16 +183,17 @@ namespace Cozmo {
           string title = Localization.Get(titleKey);
           button.gameObject.SetActive(true);
           button.Text = title;
-          if (!audioParam.IsInvalid()) {
-            button.SoundEvent = audioParam;
-          }
-          button.onClick.AddListener(() => {
+
+          button.Initialize(() => {
             if (action != null) {
               action();
             }
             CloseView();
-          });
-          button.DASEventButtonName = string.Format("{0}_button", title);
+          }, string.Format("{0}_button", title), "alert_view");
+
+          if (!audioParam.IsInvalid()) {
+            button.SoundEvent = audioParam;
+          }
         }
         else {
           DAS.Warn(this, "Tried to set up a button that doesn't exist in this AlertView! " + gameObject.name);

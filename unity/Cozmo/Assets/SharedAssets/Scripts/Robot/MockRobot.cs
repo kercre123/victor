@@ -51,7 +51,7 @@ public class MockRobot : IRobot {
 
   public bool IsLightCubeInPickupRange(LightCube lightCube) {
     var bounds = new Bounds(
-                   new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f), 
+                   new Vector3(CozmoUtil.kOriginToLowLiftDDistMM, 0, CozmoUtil.kBlockLengthMM * 0.5f),
                    Vector3.one * CozmoUtil.kBlockLengthMM);
 
     return bounds.Contains(WorldToCozmo(lightCube.WorldPosition));
@@ -112,36 +112,21 @@ public class MockRobot : IRobot {
 
   }
 
-  public void SetEnableAllBehaviors(bool enabled) {
-    // Do nothing
-  }
-
-  public void SetEnableBehaviorGroup(Anki.Cozmo.BehaviorGroup behaviorGroup, bool enabled) {
-    // Do nothing
-  }
-
-  public void SetEnableBehavior(string behaviorName, bool enabled) {
-    // Do nothing
-  }
-
   public void SetEnableCliffSensor(bool enabled) {
     // Do nothing
   }
 
   public void EnableSparkUnlock(Anki.Cozmo.UnlockId id) {
-    
+
   }
 
   public void StopSparkUnlock() {
-    
+
   }
 
-  public void ClearAllBehaviorScoreOverrides() {
-    // Do nothing
-  }
+  // enable/disable games available for Cozmo to request
+  public void SetAvailableGames(BehaviorGameFlag games) {
 
-  public void OverrideBehaviorScore(string behaviorName, float newScore) {
-    // Do nothing
   }
 
   public void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message) {
@@ -157,8 +142,6 @@ public class MockRobot : IRobot {
   }
 
   public void DisplayProceduralFace(float faceAngle, Vector2 faceCenter, Vector2 faceScale, float[] leftEyeParams, float[] rightEyeParams) {
-    // we can update our display face
-    CozmoFace.DisplayProceduralFace(faceAngle, faceCenter, faceScale, leftEyeParams, rightEyeParams);
   }
 
   public void DriveWheels(float leftWheelSpeedMmps, float rightWheelSpeedMmps) {
@@ -245,19 +228,12 @@ public class MockRobot : IRobot {
     _Callbacks.Clear();
   }
 
-  public void SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode mode) {
-    
-  }
+  public void EnrollNamedFace(int faceID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
 
-  public void AssignNameToFace(int faceID, string name) {
-    
   }
 
   public void SendAnimation(string animName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
-    // we can actually fake the callback by using CozmoFace
-    float len = CozmoFace.PlayAnimation(animName);
-
-    QueueCallback(len, callback);
+    QueueCallback(0.5f, callback);
   }
 
   public void SendAnimationGroup(string animGroupName, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
@@ -270,6 +246,14 @@ public class MockRobot : IRobot {
   }
 
   public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false) {
+    // Do nothing
+  }
+
+  public void ResetDrivingAnimations() {
+    // Do nothing
+  }
+
+  public void SetDrivingAnimations(string driveStartAnim, string driveStartLoop, string driveEndLoop) {
     // Do nothing
   }
 
@@ -329,7 +313,7 @@ public class MockRobot : IRobot {
   }
 
   public void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
-    
+
   }
 
   public void StopTrackToObject() {
@@ -436,7 +420,7 @@ public class MockRobot : IRobot {
     GotoPose(new Vector3(x_mm, y_mm, 0f), Quaternion.Euler(0, 0, Mathf.Rad2Deg * rad), level, useManualSpeed, callback, queueActionPosition);
   }
 
-  public void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose, RobotCallback callback = null, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     var delta = (WorldPosition - obj.WorldPosition).normalized * distance_mm;
 
@@ -445,7 +429,7 @@ public class MockRobot : IRobot {
     QueueCallback(2f, callback);
   }
 
-  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, float approachAngleRad = 0f, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
+  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0f, Anki.Cozmo.AlignmentType alignmentType = Anki.Cozmo.AlignmentType.CUSTOM, Anki.Cozmo.QueueActionPosition queueActionPosition = Anki.Cozmo.QueueActionPosition.NOW) {
 
     Rotation = obj.Rotation.zRotation();
     WorldPosition = (obj.WorldPosition + Rotation * (Vector3.left * CozmoUtil.kOriginToLowLiftDDistMM)).xy0();
@@ -490,11 +474,11 @@ public class MockRobot : IRobot {
   }
 
   public void RequestSetUnlock(Anki.Cozmo.UnlockId unlockID, bool unlocked) {
-    
+
   }
 
   public void SetEnableSOSLogging(bool enable) {
-    
+
   }
 
   public void ExecuteBehavior(Anki.Cozmo.BehaviorType type) {
@@ -556,14 +540,14 @@ public class MockRobot : IRobot {
     SetBackpackLED((int)ledToChange, colorUint, 0, onDurationMs, offDurationMs, transitionDurationMs, transitionDurationMs);
   }
 
-  private void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Robot.Light.FOREVER, uint offPeriod_ms = 0, 
+  private void SetBackpackLEDs(uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Robot.Light.FOREVER, uint offPeriod_ms = 0,
                                uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
     for (int i = 0; i < BackpackLights.Length; ++i) {
       SetBackpackLED(i, onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
     }
   }
 
-  private void SetBackpackLED(int index, uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Robot.Light.FOREVER, uint offPeriod_ms = 0, 
+  private void SetBackpackLED(int index, uint onColor = 0, uint offColor = 0, uint onPeriod_ms = Robot.Light.FOREVER, uint offPeriod_ms = 0,
                               uint transitionOnPeriod_ms = 0, uint transitionOffPeriod_ms = 0) {
     // Special case for arrow lights; they only accept red as a color
     if (index == (int)LEDId.LED_BACKPACK_LEFT || index == (int)LEDId.LED_BACKPACK_RIGHT) {
@@ -771,9 +755,9 @@ public class MockRobot : IRobot {
     set;
   }
 
-  public string CurrentDebugAnimationString { 
-    get; 
-    set; 
+  public string CurrentDebugAnimationString {
+    get;
+    set;
   }
 
   private ObservedObject _CarryingObject;
@@ -815,7 +799,27 @@ public class MockRobot : IRobot {
 
   #endregion
 
+  #region PressDemoMessages
+
+  public void TransitionToNextDemoState() {
+
+  }
+
+  public void StartDemoWithEdge(bool demoWithEdge) {
+
+  }
+
+  #endregion
+
   public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+
+  }
+
+  public void EraseAllEnrolledFaces() {
+    
+  }
+
+  public void SendDemoResetState() {
     
   }
 }

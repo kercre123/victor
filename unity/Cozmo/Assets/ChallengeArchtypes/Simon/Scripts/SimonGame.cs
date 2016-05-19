@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Simon {
-
+  
   public class SimonGame : GameBase {
     // TODO: Use animation events?
     public const float kCozmoLightBlinkDelaySeconds = 0.1f;
@@ -51,7 +51,7 @@ namespace Simon {
         _FirstPlayer = PlayerType.Cozmo;
       }
       State nextState = new CozmoMoveCloserToCubesState(new WaitForNextRoundSimonState(_FirstPlayer));
-      InitialCubesState initCubeState = new InitialCubesState(new HowToPlayState(nextState), _Config.NumCubesRequired());
+      InitialCubesState initCubeState = new InitialCubesState(nextState, _Config.NumCubesRequired());
       _StateMachine.SetNextState(initCubeState);
 
       CurrentRobot.SetVisionMode(Anki.Cozmo.VisionMode.DetectingFaces, false);
@@ -152,7 +152,7 @@ namespace Simon {
       string infoText = Localization.Get(locKey);
       infoText += Localization.kNewLine;
       infoText += Localization.GetWithArgs(LocalizationKeys.kSimonGameLabelStepsLeft, currentIndex, sequenceCount);
-      SharedMinigameView.ShowInfoTextSlideWithKey(infoText);
+      SharedMinigameView.ShowNarrowInfoTextSlideWithKey(infoText);
     }
 
     protected override void RaiseMiniGameQuit() {

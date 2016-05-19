@@ -68,6 +68,8 @@ namespace Anki {
       private Vector3? _TextDefaultPosition = null;
       private Vector3 _TextPressedPosition;
 
+      private bool _Initialized = false;
+
       public Color TextEnabledColor = Color.white;
 
       public Color TextPressedColor = Color.gray;
@@ -166,6 +168,9 @@ namespace Anki {
 
       protected override void Start() {
         base.Start();
+        if (!_Initialized && Application.isPlaying) {
+          DAS.Error("AnkiButton.Start", this.gameObject.name + " needs to be initialized.");
+        }
       }
 
       public void Initialize(UnityAction clickCallback, string dasEventButtonName, string dasEventViewController) {
@@ -185,9 +190,10 @@ namespace Anki {
         }
 
         UpdateVisuals();
+        _Initialized = true;
       }
 
-      private void InitializeDefaultGraphics() {
+      protected void InitializeDefaultGraphics() {
         if (!_IsInitialized && ButtonGraphics != null) {
           foreach (AnkiButtonImage graphic in ButtonGraphics) {
             if (graphic.targetImage != null) {
@@ -258,7 +264,7 @@ namespace Anki {
         }
 
         // Reset to normal visual state
-        ShowEnabledState();
+        UpdateVisuals();
         _OnRelease.Invoke();
       }
   
@@ -285,7 +291,7 @@ namespace Anki {
         Release();
       }
 
-      private void UpdateVisuals() {
+      protected virtual void UpdateVisuals() {
         InitializeDefaultGraphics();
         if (IsInteractable()) {
           ShowEnabledState();
@@ -368,6 +374,7 @@ namespace Anki {
         public Image targetImage;
         public bool ignoreSprite = false;
 
+        // we will just grab it from targetImage;
         [NonSerialized]
         public Sprite enabledSprite;
 

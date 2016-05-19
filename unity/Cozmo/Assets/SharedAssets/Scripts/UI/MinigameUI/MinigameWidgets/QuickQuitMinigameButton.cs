@@ -8,7 +8,7 @@ namespace Cozmo {
   namespace MinigameWidgets {
     public class QuickQuitMinigameButton : MinigameWidget {
 
-      private const float kAnimXOffset = -200.0f;
+      private const float kAnimXOffset = 0f;
       private const float kAnimYOffset = 200.0f;
       private const float kAnimDur = 0.25f;
 
@@ -25,8 +25,7 @@ namespace Cozmo {
       }
 
       private void Awake() {
-        _QuickQuitButtonInstance.DASEventButtonName = "quit_game_during_setup_button";
-        _QuickQuitButtonInstance.onClick.AddListener(HandleQuitButtonTap);
+        _QuickQuitButtonInstance.Initialize(HandleQuitButtonTap, "quit_game_during_setup_button", "TBD");
       }
 
       public override void DestroyWidgetImmediately() {

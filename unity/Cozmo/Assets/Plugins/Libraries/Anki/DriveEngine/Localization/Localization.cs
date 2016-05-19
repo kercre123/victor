@@ -109,7 +109,11 @@ public static class Localization {
   }
 
   public static string[] GetLocalizationJsonFilePaths(string locale) {
+    #if UNITY_EDITOR || !UNITY_ANDROID
     return Directory.GetFiles(Application.streamingAssetsPath + kLocalizationStreamingAssetsFolderPath + locale, "*.json");
+    #else
+    return Directory.GetFiles(Application.persistentDataPath + kLocalizationStreamingAssetsFolderPath +  locale, "*.json");
+    #endif
   }
 
   public static JSONObject GetJsonContentsFromLocalizationFile(string locale, string localizationFilePath) {

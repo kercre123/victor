@@ -139,15 +139,8 @@ public interface IRobot : IDisposable {
 
   void StopSparkUnlock();
 
-  void SetEnableAllBehaviors(bool enabled);
-
-  void SetEnableBehaviorGroup(BehaviorGroup behaviorGroup, bool enabled);
-
-  void SetEnableBehavior(string behaviorName, bool enabled);
-
-  void ClearAllBehaviorScoreOverrides();
-
-  void OverrideBehaviorScore(string behaviorName, float newScore);
+  // enable/disable games available for Cozmo to request
+  void SetAvailableGames(BehaviorGameFlag games);
 
   void ObjectConnectionState(Anki.Cozmo.ObjectConnectionState message);
 
@@ -171,15 +164,17 @@ public interface IRobot : IDisposable {
 
   void CancelAllCallbacks();
 
-  void SetFaceEnrollmentMode(Anki.Vision.FaceEnrollmentMode mode);
-
-  void AssignNameToFace(int faceID, string name);
+  void EnrollNamedFace(int faceID, string name, Anki.Cozmo.FaceEnrollmentSequence seq = Anki.Cozmo.FaceEnrollmentSequence.Default, bool saveToRobot = true, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendAnimation(string animName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SendAnimationGroup(string animGroupName, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SetIdleAnimation(string default_anim);
+
+  void ResetDrivingAnimations();
+
+  void SetDrivingAnimations(string drivingStartAnim, string drivingLoopAnim, string drivingEndAnim);
 
   void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues, bool setUnspecifiedToDefault = false);
 
@@ -220,9 +215,9 @@ public interface IRobot : IDisposable {
 
   void GotoPose(float x_mm, float y_mm, float rad, bool level = false, bool useManualSpeed = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void GotoObject(ObservedObject obj, float distance_mm, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void GotoObject(ObservedObject obj, float distance_mm, bool goToPreDockPose = false, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
-  void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, float approachAngleRad = 0.0f, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+  void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
   void SetLiftHeight(float heightFactor, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
@@ -272,6 +267,17 @@ public interface IRobot : IDisposable {
 
   void MountCharger(ObservedObject charger, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
 
+  #region PressDemoMessages
+
+  void TransitionToNextDemoState();
+
+  void StartDemoWithEdge(bool demoWithEdge);
+
+  #endregion
+
   void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW);
+
+  void SendDemoResetState();
+  void EraseAllEnrolledFaces();
 
 }
