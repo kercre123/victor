@@ -149,5 +149,11 @@
   },
   "artistCozmo.description": {
     "translation": "Artist Cozmo Description"
+  },
+  "faceEnrollment.title": {
+    "translation": "Face Enrollment"
+  },
+  "faceEnrollment.description": {
+    "translation": "Face Enrollment Description"
   }
 }
