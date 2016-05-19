@@ -16,6 +16,7 @@ void DTM::start(void) {
     return ;
   }
 
+  NVIC_DisableIRQ(RADIO_IRQn);
   NRF_TIMER0->POWER = 1;
   NRF_RADIO->POWER = 1;
   dtm_init();
@@ -32,6 +33,7 @@ void DTM::testCommand(int32_t command, int32_t freq, int32_t length, int32_t pay
   }
 
   dtm_cmd(LE_RESET, 0, 0, 0);
+  dtm_cmd(command, freq, length, payload);
 }
 
 void DTM::stop(void) {
@@ -41,10 +43,11 @@ void DTM::stop(void) {
 
   // Send a reset command
   dtm_cmd(LE_RESET, 0, 0, 0);
-  
+
   // Power down all the devices
   NRF_RADIO->POWER = 0;
   NRF_TIMER0->POWER = 0;
+  NVIC_EnableIRQ(RADIO_IRQn);
 
   dtm_initalized = false;
 }

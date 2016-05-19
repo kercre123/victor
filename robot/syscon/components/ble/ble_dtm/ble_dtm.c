@@ -17,7 +17,7 @@
 
 #define DTM_HEADER_OFFSET        0                                         /**< Index where the header of the pdu is located. */
 #define DTM_HEADER_SIZE          2                                         /**< Size of PDU header. */
-#define DTM_PAYLOAD_MAX_SIZE     37                                        /**< Maximum payload size allowed during dtm execution. */
+#define DTM_PAYLOAD_MAX_SIZE     255                                       /**< Maximum payload size allowed during dtm execution. */
 #define DTM_LENGTH_OFFSET        (DTM_HEADER_OFFSET + 1)                   /**< Index where the length of the payload is encoded. */
 #define DTM_PDU_MAX_MEMORY_SIZE  (DTM_HEADER_SIZE + DTM_PAYLOAD_MAX_SIZE)  /**< Maximum PDU size allowed during dtm execution. */
 
@@ -328,7 +328,7 @@ static uint32_t dtm_vendor_specific_pkt(uint32_t vendor_cmd, dtm_freq_t vendor_o
 
             // Shortcut between READY event and START task
             NRF_RADIO->SHORTS = 1 << RADIO_SHORTS_READY_START_Pos;
-
+            
             // Shortcut will start radio in Tx mode when it is ready
             NRF_RADIO->TASKS_TXEN = 1;
             m_state               = STATE_CARRIER_TEST;
@@ -527,10 +527,19 @@ uint32_t dtm_cmd(dtm_cmd_t cmd, dtm_freq_t freq, uint32_t length, dtm_pkt_type_t
 
         // Initialize CRC value, set channel:
         radio_prepare(TX_MODE);
+        
+        NRF_RADIO->TEST = (RADIO_TEST_PLL_LOCK_Enabled << RADIO_TEST_PLL_LOCK_Pos);
+        NRF_RADIO->SHORTS |= RADIO_SHORTS_DISABLED_TXEN_Msk;
+
+        NRF_RADIO->TASKS_TXEN = 1;
+        
         // Configure PPI so that timer will activate radio every 625 us
+        /*
         NRF_PPI->CH[0].EEP = (uint32_t)&mp_timer->EVENTS_COMPARE[0];
         NRF_PPI->CH[0].TEP = (uint32_t)&NRF_RADIO->TASKS_TXEN;
         NRF_PPI->CHENSET   = 0x01;
+        */
+
         m_state            = STATE_TRANSMITTER_TEST;
     }
     return DTM_SUCCESS;
