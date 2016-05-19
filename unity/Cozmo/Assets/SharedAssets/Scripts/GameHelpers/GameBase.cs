@@ -96,7 +96,9 @@ public abstract class GameBase : MonoBehaviour {
 
   #region Initialization
 
-  public void InitializeMinigame(ChallengeData challengeData) {
+  // the playGameSpecificMusic flag is mostly used for the press demo / face enrollment if we want the freeplay
+  // music to continue playing without using an activity specific track.
+  public void InitializeMinigame(ChallengeData challengeData, bool playGameSpecificMusic = true) {
     _GameStartTime = Time.time;
     _StateMachine.SetGameRef(this);
 
@@ -104,7 +106,9 @@ public abstract class GameBase : MonoBehaviour {
     _DifficultyOptions = _ChallengeData.DifficultyOptions;
     _WonChallenge = false;
 
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
+    if (playGameSpecificMusic) {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
+    }
 
     RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
 
