@@ -12,13 +12,7 @@ void ConfigureDASForPlatform(Anki::Util::Data::DataPlatform * platform)
     DASDisableNetwork(DASDisableNetworkReason_Simulator);
 #endif
     
-    NSString *dasConfigPath = [[NSBundle mainBundle] pathForResource:@"DASConfig" ofType:@"json"];
-    if ([[NSFileManager defaultManager] fileExistsAtPath:dasConfigPath]) {
-
-      NSString *dasVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.das.version"];
-      [[DASClientInfo sharedInfo] eventsMainStart:"build" appVersion:dasVersion.UTF8String product:"cozmo"];
-    } else {
-      NSLog(@"[WARNING] DAS configuration file does not exist (%@). DAS reporting is disabled.", dasConfigPath);
-    }
+    NSString *dasVersion = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"com.anki.das.version"];
+    [[DASClientInfo sharedInfo] eventsMainStart:"build" appVersion:dasVersion.UTF8String product:"cozmo"];
   }
 }
