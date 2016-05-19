@@ -21,7 +21,6 @@ void Anki::Cozmo::HAL::Watchdog::init(void) {
   __disable_irq();
   WDOG_UNLOCK = 0xC520;
   WDOG_UNLOCK = 0xD928;
-  __enable_irq();
   
   // Using the LPO (1khz clock)
   WDOG_TOVALL = RESET_TIME & 0xFFFF;
@@ -29,7 +28,13 @@ void Anki::Cozmo::HAL::Watchdog::init(void) {
   WDOG_PRESC  = 0;
   
   // Turn on the watchdog (with interrupts)
-  WDOG_STCTRLH = WDOG_STCTRLH_WDOGEN_MASK | WDOG_STCTRLH_IRQRSTEN_MASK; 
+  WDOG_STCTRLH = 
+    WDOG_STCTRLH_ALLOWUPDATE_MASK |
+    WDOG_STCTRLH_WDOGEN_MASK | 
+    WDOG_STCTRLH_IRQRSTEN_MASK; 
+
+  __enable_irq();
+
   NVIC_EnableIRQ(WDOG_EWM_IRQn);
   NVIC_SetPriority(WDOG_EWM_IRQn, 0);
   

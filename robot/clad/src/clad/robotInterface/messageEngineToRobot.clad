@@ -261,11 +261,6 @@ message RTIPVersionInfo
   string  description
 }
 
-message BodyUpgradeData
-{
-  uint_32 word
-}
-
 message RadioState
 {
   bool wifiConnected
@@ -336,7 +331,6 @@ union EngineToRobot
   SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
   SetBodyRadioMode              setBodyRadioMode            = 0x07,
-
   NVReadResultToBody            nvReadToBody                = 0x08,
   NVOpResultToBody              nvOpResultToBody            = 0x09,
   SendDTMCommand                sendDTMCommand              = 0x0A,
@@ -352,7 +346,7 @@ union EngineToRobot
   AppConnectConfigResult        wifiCfgResult               = 0x2f,
 
   // 0x30 to 0x7f: To RTIP
-  BootloadRTIP                  bootloadRTIP                = 0x30,
+  // Available for future use                               = 0x31,
   RadioState                    radioConnected              = 0x31,
   DriveWheels                   drive                       = 0x32,
   DriveWheelsCurvature          driveCurvature              = 0x33,
@@ -392,13 +386,12 @@ union EngineToRobot
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
   
   // 0x80 to 0xAF: To WiFi
-  // Flash and OTA message must not be changed or OTA will break
-  EraseFlash                    eraseFlash                  = 0x80,
-  WriteFlash                    writeFlash                  = 0x81,
-  OTAUpgrade                    triggerOTAUpgrade           = 0x82,
+  // Available for future use                               = 0x80,  
+  // Available for future use                               = 0x81,
+  // Available for future use                               = 0x82,
   NVStorage::NVStorageWrite     writeNV                     = 0x83,
   NVStorage::NVStorageRead      readNV                      = 0x84,
-  // Reserved for FlashWriteAcknowledge message in OTA      = 0x85,
+  // Available for future use                               = 0x85,
   RTIPVersionInfo               rtipVersion                 = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   AbortAnimation                abortAnimation              = 0x90,
@@ -421,6 +414,7 @@ union EngineToRobot
   TestState                     testState                   = 0xA1,
   EnterFactoryTestMode          enterTestMode               = 0xA2,
   DisplayNumber                 oledDisplayNumber           = 0xA3,
+  OTA::Write                    otaWrite                    = 0xAF,
 
   AppConnectConfigString        appConCfgString             = 0xAA,
   AppConnectConfigFlags         appConCfgFlags              = 0xAB,

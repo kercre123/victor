@@ -8,7 +8,7 @@ extern "C" const uint8_t BOOTLOADER_UPDATE[];
 static uint8_t* BOOTLOADER = (uint8_t*)0x0000;
 static const int FLASH_BLOCK_SIZE = 0x800;
 
-int SendCommand()
+static int SendCommand()
 {
   const int FSTAT_ERROR = FTFA_FSTAT_FPVIOL_MASK | FTFA_FSTAT_ACCERR_MASK | FTFA_FSTAT_FPVIOL_MASK;
 
@@ -24,7 +24,7 @@ int SendCommand()
   return FTFA->FSTAT & FSTAT_ERROR;
 }
 
-bool FlashSector(int target, const uint32_t* data)
+static bool FlashSector(int target, const uint32_t* data)
 {
   volatile const uint32_t* original = (uint32_t*)target;
 
@@ -57,7 +57,7 @@ bool FlashSector(int target, const uint32_t* data)
   return true;
 }
 
-void flash_bootloader(void) {
+static void flash_bootloader(void) {
   __disable_irq();
   for (int i = 0; i < BOOTLOADER_LENGTH; i += FLASH_BLOCK_SIZE) {
     FlashSector(i, (const uint32_t*)&BOOTLOADER_UPDATE[i]);

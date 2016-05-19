@@ -91,6 +91,17 @@ static uint16_t messageBufferRind;
 static int16_t rtipBootloaderState;
 /// The number of bytes we estimate are in the RTIP's CLAD rx queue
 static int16_t rtipRXQueueEstimate;
+/// Pointer to pending firmware block data
+static uint32_t* pendingFWB;
+/// Operational phase for bootloader commands
+static int16_t bootloaderCommandPhase;
+/// Enumerated state values for bootloaderCommandPhase
+enum {
+  BLCP_command_done = -3,
+  BLCP_flash_header = -2,
+  BLCP_none         = -1,
+  BLCP_fwb_start    =  0,
+};
 
 /// Prep an sdio_queue structure (DMA descriptor) for (re)use
 void prepSdioQueue(struct sdio_queue* desc, uint8 eof)
@@ -281,6 +292,7 @@ void i2spiTask(os_event_t *event)
           {
             outgoingPhase       = BOOTLOADER_XFER_PHASE;
             rtipBootloaderState = STATE_IDLE;
+            os_printf("I2SPI Recovery mode synchronized.\r\n");
           }
           break;
         }
@@ -298,8 +310,8 @@ void i2spiTask(os_event_t *event)
           uint32_t* txBuf = (uint32_t*)desc->buf_ptr;
           int w;
           for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0x80000000;
-          nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-          }
+        }
+        nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
       }
       else // When running
       {
@@ -313,9 +325,11 @@ void i2spiTask(os_event_t *event)
     }
     case TASK_SIG_I2SPI_BL_RX:
     {
-      uint16_t* buf = (uint16_t*)(desc->buf_ptr);
-      rtipBootloaderState = buf[DMA_BUF_SIZE/2 - 1]; // Last half-word in buffer is latest state we know
-      if (rtipBootloaderState == STATE_IDLE) outgoingPhase = BOOTLOADER_XFER_PHASE;
+      const uint16_t* buf = (const uint16_t*)(desc->buf_ptr);
+      const uint16_t newState = buf[DMA_BUF_SIZE/2 - 1]; // Last half-word in buffer is latest state we know
+      if (newState == STATE_IDLE) outgoingPhase = BOOTLOADER_XFER_PHASE;
+      if (rtipBootloaderState == STATE_BUSY && newState == STATE_IDLE) rtipBootloaderState = STATE_ACK;
+      else rtipBootloaderState = newState;
       prepSdioQueue(desc, 0);
       break;
     }
@@ -331,14 +345,46 @@ void i2spiTask(os_event_t *event)
       else // When running
       {
         if (txFillCount > 0) txFillCount--; // We just transmitted one
-        struct sdio_queue* newOut = asDesc(asDesc(desc->next_link_ptr)->next_link_ptr);
-        if (newOut == nextOutgoingDesc) // Fill in drops until we are as far ahead as we want to be
+        while (txFillCount < (DMA_BUF_COUNT - 2)) // Two in the pipeline
         {
+          uint32_t* txBuf = (uint32_t*)(nextOutgoingDesc->buf_ptr);
           int w;
-          uint32_t* txBuf = (uint32_t*)newOut->buf_ptr;
-          for (w=0; w<DMA_BUF_SIZE/4; w++) txBuf[w] = 0;
-          i2spiTxUnderflowCount++; // Keep track of the underflow
+          for (w=0; w<DMA_BUF_SIZE/4; w++) 
+          {
+            switch (bootloaderCommandPhase)
+            {
+              case BLCP_none:
+              {
+                txBuf[w] = 0;
+                break;
+              }
+              case BLCP_command_done:
+              {
+                txBuf[w] = (COMMAND_HEADER) | (COMMAND_DONE << 16);
+                bootloaderCommandPhase = BLCP_none;
+                os_printf("Send command done: %08x\r\n", txBuf[w]);
+                break;
+              }
+              case BLCP_flash_header:
+              {
+                txBuf[w] = (COMMAND_HEADER) | (COMMAND_FLASH << 16);
+                bootloaderCommandPhase = BLCP_fwb_start;
+                break;
+              }
+              default: // 0 and up, flash block word
+              {
+                txBuf[w] = pendingFWB[bootloaderCommandPhase++];
+                if (bootloaderCommandPhase >= sizeof(FirmwareBlock)/sizeof(uint32_t))
+                {
+                  bootloaderCommandPhase = BLCP_none;
+                  pendingFWB = NULL;
+                }
+              }
+            }
+          }
           nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+          i2spiTxUnderflowCount++;
+          txFillCount++;
         }
       }
       break;
@@ -437,6 +483,9 @@ void dmaisr(void* arg) {
         if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_BL_TX, eofDesAddr) == false)
         {
           os_put_char('!'); os_put_char('I'); os_put_char('G');
+          os_memset((uint32_t*)(asDesc(eofDesAddr)->buf_ptr), 0, DMA_BUF_SIZE);
+          if (txFillCount > 0) txFillCount--;
+          else nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
         }
         break;
       }
@@ -445,6 +494,9 @@ void dmaisr(void* arg) {
         if (system_os_post(I2SPI_PRIO, TASK_SIG_I2SPI_TX, eofDesAddr) == false)
         {
           os_put_char('!'); os_put_char('I'); os_put_char('T');
+          //os_memset((uint32_t*)(asDesc(eofDesAddr)->buf_ptr), 0, DMA_BUF_SIZE);
+          if (txFillCount > 0) txFillCount--;
+          else nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
         }
         break;
       }
@@ -457,18 +509,20 @@ void dmaisr(void* arg) {
 int8_t ICACHE_FLASH_ATTR i2spiInit() {
   int i;
 
-  outgoingPhase = UNINITALIZED_PHASE; // Not established yet
-  nextOutgoingDesc = &txQueue[2]; // 0th entry will imeediately be going out and we want to stay one ahead
-  i2spiTxUnderflowCount = 0;
-  i2spiTxOverflowCount  = 0;
-  i2spiRxOverflowCount  = 0;
-  i2spiPhaseErrorCount  = 0;
-  i2spiIntegralDrift    = 0;
-  txFillCount           = 0;
-  messageBufferWind     = 0;
-  messageBufferRind     = 0;
-  rtipBootloaderState   = STATE_UNKNOWN;
-  rtipRXQueueEstimate   = 0;
+  outgoingPhase           = UNINITALIZED_PHASE; // Not established yet
+  nextOutgoingDesc        = &txQueue[2]; // 0th entry will imeediately be going out and we want to stay one ahead
+  i2spiTxUnderflowCount   = 0;
+  i2spiTxOverflowCount    = 0;
+  i2spiRxOverflowCount    = 0;
+  i2spiPhaseErrorCount    = 0;
+  i2spiIntegralDrift      = 0;
+  txFillCount             = 0;
+  messageBufferWind       = 0;
+  messageBufferRind       = 0;
+  rtipBootloaderState     = STATE_UNKNOWN;
+  rtipRXQueueEstimate     = 0;
+  pendingFWB              = NULL;
+  bootloaderCommandPhase  = BLCP_none; // No command
 
   system_os_task(i2spiTask, I2SPI_PRIO, i2spiTaskQ, I2SPI_TASK_QUEUE_LEN);
 
@@ -640,6 +694,7 @@ bool ICACHE_FLASH_ATTR i2spiMessageQueueIsEmpty(void)
 
 void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
 {
+  bootloaderCommandPhase = BLCP_none;
   switch(mode)
   {
     case I2SPI_NORMAL:
@@ -651,9 +706,9 @@ void ICACHE_FLASH_ATTR i2spiSwitchMode(const I2SpiMode mode)
     }
     case I2SPI_BOOTLOADER:
     {
-      os_printf("I2Spi mode bootloader sync\r\n");
-      outgoingPhase = BOOTLOADER_SYNC_PHASE;
+      outgoingPhase = BOOTLOADER_XFER_PHASE;
       rtipBootloaderState = STATE_UNKNOWN;
+      os_printf("I2Spi mode bootloader xfer\r\n");
       return;
     }
     case I2SPI_PAUSED:
@@ -698,44 +753,20 @@ int16_t ICACHE_FLASH_ATTR i2spiGetRtipBootloaderState(void)
 
 bool ICACHE_FLASH_ATTR i2spiBootloaderPushChunk(FirmwareBlock* chunk)
 {
-  const int availableBuffers = DMA_BUF_COUNT - 3 - txFillCount; // Leave space for 2 in pipeline plus one more for end of firmware message
-  const int availableSpace   = availableBuffers * DMA_BUF_SIZE;
-  if (availableSpace > sizeof(FirmwareBlock))
+  if (bootloaderCommandPhase == BLCP_none)
   {
-    int wInd = 0;
-    int rInd = 0;
-    uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-    uint16_t* data  = (uint16_t*)(chunk);
-    txBuf[wInd++] = COMMAND_HEADER;
-    txBuf[wInd++] = COMMAND_FLASH;
-    while (rInd < (sizeof(FirmwareBlock)/2))
-    {
-      while ((wInd < (DMA_BUF_SIZE/2)) && (rInd < (sizeof(FirmwareBlock)/2)))
-      {
-        txBuf[wInd++] = data[rInd++];
-      }
-      nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
-      txFillCount++;
-      txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-      wInd = 0;
-    }
+    pendingFWB = (uint32_t*)chunk;
+    bootloaderCommandPhase = BLCP_flash_header;
     return true;
   }
-  else
-  {
-    return false;
-  }
+  else return false;
 }
 
 bool ICACHE_FLASH_ATTR i2spiBootloaderCommandDone(void)
 {
-  const int availableBuffers = DMA_BUF_COUNT - 3 - txFillCount; // Leave space for 2 in pipeline plus one more for end of firmware message
-  if (availableBuffers > 0)
+  if (bootloaderCommandPhase == BLCP_none)
   {
-    uint16_t* txBuf = (uint16_t*)(nextOutgoingDesc->buf_ptr);
-    txBuf[0] = COMMAND_HEADER;
-    txBuf[1] = COMMAND_DONE;
-    nextOutgoingDesc = asDesc(nextOutgoingDesc->next_link_ptr);
+    bootloaderCommandPhase = BLCP_command_done;
     return true;
   }
   else return false;

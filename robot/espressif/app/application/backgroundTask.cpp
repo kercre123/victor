@@ -41,14 +41,6 @@ namespace Anki {
 namespace Cozmo {
 namespace BackgroundTask {
 
-void CheckForUpgrades(void)
-{
-  if (i2spiGetRtipBootloaderState() == STATE_IDLE)
-  {
-    UpgradeController::StartRTIPUpgrade();
-  }
-}
-
 /** The OS task which dispatches subtasks.
 */
 void Exec(os_event_t *event)
@@ -68,11 +60,6 @@ void Exec(os_event_t *event)
   {
     case 0:
     {
-      CheckForUpgrades();
-      break;
-    }
-    case 1:
-    {
       static u32 lastAnimStateTime = 0;
       const u32 now = system_get_time();
       if ((now - lastAnimStateTime) > ANIM_STATE_INTERVAL)
@@ -84,19 +71,24 @@ void Exec(os_event_t *event)
       }
       break;
     }
-    case 2:
+    case 1:
     {
       Factory::Update();
       break;
     }
-    case 3:
+    case 2:
     {
       ActiveObjectManager::Update();
       break;
     }
-    case 4:
+    case 3:
     {
       NVStorage::Update();
+      break;
+    }
+    case 4:
+    {
+      UpgradeController::Update();
       break;
     }
     // Add new "long execution" tasks as switch cases here.
@@ -174,6 +166,12 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't initalize factory test framework\r\n");
     return -7;
   }
+  // Upgrade controller should be initalized last
+  else if (Anki::Cozmo::UpgradeController::Init() == false)
+  {
+    os_printf("\tCouldn't initalize upgrade controller\r\n");
+    return -128;
+  }
   else
   {
     return 0;
@@ -182,7 +180,6 @@ extern "C" int8_t backgroundTaskInit(void)
 
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
-  if (Anki::Cozmo::UpgradeController::CheckForAndDoStaged()) return false;
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
   return false;
 }

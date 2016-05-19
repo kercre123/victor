@@ -233,7 +233,9 @@ class ReliableTransport(threading.Thread):
                     connectionInfo.AckMessage(reliablePacketHeader.seqIdMax)
                     if self.IMMEDIATE_ACK:
                         print(threading.currentThread().name, "Sending ACK")
+                        self.lock.acquire()
                         self.SendMessage(True, sourceAddress, b"", EReliableMessageType.ACK)
+                        self.lock.release()
                 # Unpack payload
                 innerMessage = buffer[reliablePacketHeader.LENGTH:]
                 if reliablePacketHeader.type in (EReliableMessageType.MultipleReliableMessages, \

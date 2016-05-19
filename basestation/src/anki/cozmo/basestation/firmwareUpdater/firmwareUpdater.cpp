@@ -12,13 +12,15 @@
 
 
 #include "anki/cozmo/basestation/firmwareUpdater/firmwareUpdater.h"
-#include "anki/cozmo/basestation/firmwareUpdater/sha1/sha1.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/math/math.h"
 #include "util/math/numericCast.h"
 #include "util/debug/messageDebugging.h" // for printing sha1
+
+#include <cstring>
 
 
 namespace Anki {
@@ -30,7 +32,7 @@ FirmwareUpdater::FirmwareUpdater(const CozmoContext* context)
   , _numFramesInSubState(0)
   , _numBytesWritten(0)
   , _version(0)
-  , _state(FirmwareUpdateStage::Wifi)
+  , _state(FirmwareUpdateStage::Flashing)
   , _subState(FirmwareUpdateSubStage::Init)
 {
 }
@@ -61,19 +63,14 @@ void LoadFirmwareFile(AsyncLoaderData* loaderData)
     const uint32_t fileSize = Util::numeric_cast<uint32_t>(ftell(fp));
     fseek(fp, 0, SEEK_SET);
     
-    loaderData->GetBytes().resize(fileSize + sizeof(fileSize));
-    size_t bytesRead = fread(&loaderData->GetBytes()[sizeof(fileSize)], 1, fileSize, fp);
+    loaderData->GetBytes().resize(fileSize);
+    size_t bytesRead = fread(&loaderData->GetBytes()[0], 1, fileSize, fp);
     fclose(fp);
     
     if (bytesRead != fileSize)
     {
       PRINT_NAMED_ERROR("LoadFirmwareFile.ReadMismatch", "BytesRead %zu != fileSize %u", bytesRead, fileSize);
       loaderData->GetBytes().clear();
-    }
-    else
-    {
-      // write the fileSize into the header
-      memcpy(&loaderData->GetBytes()[0], &fileSize, sizeof(fileSize));
     }
   }
   else
@@ -84,84 +81,16 @@ void LoadFirmwareFile(AsyncLoaderData* loaderData)
   loaderData->SetComplete();
 }
   
-  
-void GenerateSHA1(const std::vector<uint8_t>& dataBytes, size_t headerSize, std::array<uint8_t, SHA1_BLOCK_SIZE>& outSig)
-{
-  assert(dataBytes.size() > headerSize);
-  
-  SHA1_CTX sha1Ctx;
-  sha1_init(&sha1Ctx);
-  
-  sha1_update(&sha1Ctx, &dataBytes[headerSize], dataBytes.size() - headerSize);
-  
-  uint8_t sha1Hash[SHA1_BLOCK_SIZE];
-  sha1_final(&sha1Ctx, sha1Hash);
-  
-  for (int i = 0; i < SHA1_BLOCK_SIZE; ++i)
-  {
-    outSig[i] = sha1Hash[i];
-  }
-}
-
-  
 const char* GetFileNameForState(FirmwareUpdateStage state)
 {
   switch(state)
   {
-    case FirmwareUpdateStage::Wifi:
-      return "esp.user.bin";
-    case FirmwareUpdateStage::RTIP:
-      return "rtip.safe";
+    case FirmwareUpdateStage::Flashing:
+      return "cozmo.safe";
     default:
       assert(0);
       return "";
   }
-}
-
-  
-Anki::Cozmo::RobotInterface::OTACommand GetOTACommandForState(FirmwareUpdateStage state)
-{
-  switch(state)
-  {
-    case FirmwareUpdateStage::Wifi:
-      return RobotInterface::OTACommand::OTA_none;
-    case FirmwareUpdateStage::RTIP:
-      return RobotInterface::OTACommand::OTA_none;
-    default:
-      assert(0);
-      return RobotInterface::OTACommand::OTA_none;
-  }
-}
-
-  
-uint32_t GetFlashAddressForState(FirmwareUpdateStage state)
-{
-  RobotInterface::OTAFlashRegions flashRegion = RobotInterface::OTAFlashRegions::OTA_WiFi_flash_address;
-  switch(state)
-  {
-    case FirmwareUpdateStage::Wifi:
-      flashRegion = RobotInterface::OTAFlashRegions::OTA_WiFi_flash_address;
-      break;
-    case FirmwareUpdateStage::RTIP:
-      flashRegion = RobotInterface::OTAFlashRegions::OTA_RTIP_flash_address;
-      break;
-//    case FirmwareUpdateStage::Body:
-//      flashRegion = RobotInterface::OTAFlashRegions::OTA_body_flash_address;
-//      break;
-    default:
-      assert(0);
-  }
-  
-  const uint32_t kSectorSize = 0x1000;
-  const uint32_t flashAddress = Util::numeric_cast<uint32_t>(flashRegion);
-  if ((flashAddress % kSectorSize) != 0)
-  {
-    PRINT_NAMED_ERROR("GetFlashAddressForState.BadAddress", "Flash address %u is not a multiple of sector size %u",
-                      flashAddress, kSectorSize);
-    assert(0);
-  }
-  
-  return flashAddress;
 }
   
   
@@ -171,6 +100,8 @@ void FirmwareUpdater::SetSubState(const RobotMap& robots, FirmwareUpdateSubStage
   _subState = newState;
   _numFramesInSubState = 0;
   _numBytesWritten = 0;
+  _numBytesProcessed = 0;
+  _currentPacketNumber = 0;
   
   SendProgressToGame(robots);
 }
@@ -277,8 +208,7 @@ bool FirmwareUpdater::HaveAllRobotsAcked() const
   
 bool FirmwareUpdater::ShouldRobotsBeRebooting() const
 {
-  const bool robotsAreRebooting = (_subState == FirmwareUpdateSubStage::WaitOTAUpgrade) &&
-                                  (GetOTACommandForState(_state) != RobotInterface::OTACommand::OTA_none);
+  const bool robotsAreRebooting = (_subState == FirmwareUpdateSubStage::WaitOTAUpgrade);
   return robotsAreRebooting;
 }
   
@@ -315,8 +245,7 @@ void FirmwareUpdater::SendProgressToGame(const RobotMap& robots, float ratioComp
 {
   const uint8_t percentComplete = Util::Clamp(uint8_t(ratioComplete * 100.0f), uint8_t(0u), uint8_t(100u));
   
-  const std::string& fwSigWifi = GetFwSignature(FirmwareUpdateStage::Wifi);
-  const std::string& fwSigRTIP = GetFwSignature(FirmwareUpdateStage::RTIP);
+  const std::string& fwSig = GetFwSignature(FirmwareUpdateStage::Flashing);
   
   for (const RobotUpgradeInfo& robotUpgradeInfo : _robotsToUpgrade)
   {
@@ -325,7 +254,7 @@ void FirmwareUpdater::SendProgressToGame(const RobotMap& robots, float ratioComp
     {
       Robot* robot = it->second;
     
-      ExternalInterface::FirmwareUpdateProgress message(robot->GetID(), _state, _subState, fwSigWifi, fwSigRTIP, percentComplete);
+      ExternalInterface::FirmwareUpdateProgress message(robot->GetID(), _state, _subState, fwSig, percentComplete);
       robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
     else
@@ -341,8 +270,7 @@ void FirmwareUpdater::SendProgressToGame(const RobotMap& robots, float ratioComp
 
 void FirmwareUpdater::SendCompleteResultToGame(const RobotMap& robots, FirmwareUpdateResult updateResult)
 {
-  const std::string& fwSigWifi = GetFwSignature(FirmwareUpdateStage::Wifi);
-  const std::string& fwSigRTIP = GetFwSignature(FirmwareUpdateStage::RTIP);
+  const std::string& fwSig = GetFwSignature(FirmwareUpdateStage::Flashing);
   
   for (const RobotUpgradeInfo& robotUpgradeInfo : _robotsToUpgrade)
   {
@@ -351,7 +279,7 @@ void FirmwareUpdater::SendCompleteResultToGame(const RobotMap& robots, FirmwareU
     {
       Robot* robot = it->second;
       
-      ExternalInterface::FirmwareUpdateComplete message(robot->GetID(), updateResult, fwSigWifi, fwSigRTIP);
+      ExternalInterface::FirmwareUpdateComplete message(robot->GetID(), updateResult, fwSig);
       robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
     }
     else
@@ -414,19 +342,7 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
         }
         else
         {
-          const uint32_t flashAddress = GetFlashAddressForState(_state);
-          const uint32_t firmwareSize = Util::numeric_cast<uint32_t>(_fileLoaderData.GetBytes().size());
-          
-          RobotInterface::EngineToRobot msg( RobotInterface::EraseFlash(flashAddress, firmwareSize) );
-          
-          PRINT_NAMED_INFO("FirmwareUpdater.LoadingFile", "Sending EraseFlash(%u, %u)",
-                           flashAddress, firmwareSize);
-
-          if (!SendToAllRobots(robots, msg))
-          {
-            return;
-          }
-        
+          LoadHeaderData();
           SetSubState( robots, FirmwareUpdateSubStage::Flash);
         }
       }
@@ -436,30 +352,9 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
     {
       if (HaveAllRobotsAcked())
       {
-        const uint32_t flashAddress = GetFlashAddressForState(_state);
-        
-        const size_t kChunkSize = 1024;
-        const size_t numBytesLeftToSend = _fileLoaderData.GetBytes().size() - _numBytesWritten;
-        const size_t numBytesToSendThisMsg = Util::Min(numBytesLeftToSend, kChunkSize);
-        
-        std::vector<uint8_t> chunk;
-        chunk.resize(numBytesToSendThisMsg);
-        memcpy(&chunk[0], &_fileLoaderData.GetBytes()[_numBytesWritten], numBytesToSendThisMsg);
-        
-        RobotInterface::EngineToRobot msg(RobotInterface::WriteFlash(flashAddress+_numBytesWritten, chunk));
-        
-        //PRINT_NAMED_DEBUG("FirmwareUpdater.Flash", "Sending WriteFlash(%u+%u, %zu bytes)", flashAddress,_numBytesWritten, chunk.size());
-        
-        if (!SendToAllRobots(robots, msg))
+        if (SendWriteMessages(robots))
         {
-          return;
-        }
-        
-        _numBytesWritten += chunk.size();
-        
-        if (_numBytesWritten >= _fileLoaderData.GetBytes().size())
-        {
-          SetSubState( robots, FirmwareUpdateSubStage::SendOTAUpgrade );
+          SetSubState( robots, FirmwareUpdateSubStage::SendFlashEOF );
         }
         else
         {
@@ -469,22 +364,14 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
       }
       break;
     }
-    case FirmwareUpdateSubStage::SendOTAUpgrade:
+    case FirmwareUpdateSubStage::SendFlashEOF:
     {
       if (HaveAllRobotsAcked())
       {
-        const uint32_t flashAddress = GetFlashAddressForState(_state);
+        RobotInterface::EngineToRobot msg(RobotInterface::OTA::Write{-1, {}});
         
-        std::array<uint8_t, SHA1_BLOCK_SIZE> sig;
-        GenerateSHA1(_fileLoaderData.GetBytes(), sizeof(uint32_t), sig);
-        Anki::Cozmo::RobotInterface::OTACommand oTACommand = GetOTACommandForState(_state);
-        
-        GetFwSignature(_state) = Util::ConvertMessageBufferToString(&sig[0], SHA1_BLOCK_SIZE, Util::eBTTT_Hex, false);
-        
-        RobotInterface::EngineToRobot msg(RobotInterface::OTAUpgrade(flashAddress, _version, sig, oTACommand));
-        
-        PRINT_NAMED_INFO("FirmwareUpdater.SendOTAUpgrade", "Sending OTAUpgrade(%u, %d, %s, %s)",
-                         flashAddress, _version, GetFwSignature(_state).c_str(), EnumToString(oTACommand));
+        //PRINT_NAMED_INFO("FirmwareUpdater.SendFlashEOF", "Sending SendFlashEOF(%u, %d, %s)",
+        //                 flashAddress, _version, GetFwSignature(_state).c_str());
         
         if (!SendToAllRobots(robots, msg))
         {
@@ -517,17 +404,103 @@ void FirmwareUpdater::UpdateSubState(const RobotMap& robots)
     }
   }
 }
+  
+void FirmwareUpdater::LoadHeaderData()
+{
+  if (!_fileLoaderData.IsComplete())
+  {
+    PRINT_NAMED_ERROR("FirmwareUpdater.LoadHeaderData", "Firmware file not yet loaded");
+    return;
+  }
+  
+  constexpr size_t kFirmwareHeaderMaxSize = 1024 * 2;
+  const size_t fileSize = _fileLoaderData.GetBytes().size();
+  if (fileSize < kFirmwareHeaderMaxSize)
+  {
+    PRINT_NAMED_ERROR("FirmwareUpdater.LoadHeaderData", "Firmware file %zu bytes when expected to be > %zu bytes.", fileSize, kFirmwareHeaderMaxSize);
+    return;
+  }
+  
+  const char* stringBegin = (const char*) _fileLoaderData.GetBytes().data();
+  
+  // use std::memchr to find the nullptr at the end of the json string (otherwise assume using the whole 2k)
+  const char* stringEnd = (char*) std::memchr(stringBegin, '\0', kFirmwareHeaderMaxSize);
+  if (nullptr == stringEnd)
+  {
+    stringEnd = stringBegin + kFirmwareHeaderMaxSize;
+  }
+  
+  Json::Reader jsonReader;
+  Json::Value headerData;
+  if (jsonReader.parse(stringBegin, stringEnd, headerData))
+  {
+    // if success, try to get the values that we want
+    std::string versionString;
+    if (headerData.isObject() && JsonTools::GetValueOptional(headerData, "version", versionString))
+    {
+      GetFwSignature(FirmwareUpdateStage::Flashing) = std::move(versionString);
+    }
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("FirmwareUpdater.LoadHeaderData.ReadHeaderFailed", "%s", jsonReader.getFormattedErrorMessages().c_str());
+  }
+}
+  
+// Returns true if entire file has been sent, false otherwise
+bool FirmwareUpdater::SendWriteMessages(const RobotMap& robots)
+{
+  RobotInterface::OTA::Write writeMsg;
+  int32_t kPacketSize = writeMsg.data.size();
+  int32_t kTotalFileSize = Util::numeric_cast<int32_t>(_fileLoaderData.GetBytes().size());
+  int32_t numBytesToSendNextMsg = Util::Min(kTotalFileSize - Util::numeric_cast<int32_t>(_numBytesWritten), kPacketSize);
+  int32_t emptySpace = (size_t)AnimConstants::KEYFRAME_BUFFER_SIZE - (_numBytesWritten - _numBytesProcessed);
+  
+  while (_numBytesWritten < kTotalFileSize && (emptySpace - numBytesToSendNextMsg > 0))
+  {
+    writeMsg = {}; // Using bracket init to zero out message to begin with
+    writeMsg.packetNumber = _currentPacketNumber++;
+    memcpy(writeMsg.data.data(), &_fileLoaderData.GetBytes()[_numBytesWritten], numBytesToSendNextMsg);
+    
+    //PRINT_NAMED_DEBUG("FirmwareUpdater::SendWriteMessages",
+    //                  "Empty: %d NumSending: %d NumWritten: %d NumProcessed: %d",
+    //                  emptySpace, numBytesToSendNextMsg, _numBytesWritten, _numBytesProcessed);
+    
+    if (!SendToAllRobots(robots, RobotInterface::EngineToRobot(std::move(writeMsg))))
+    {
+      return false;
+    }
+    
+    _numBytesWritten += numBytesToSendNextMsg;
+    emptySpace -= numBytesToSendNextMsg;
+    numBytesToSendNextMsg = Util::Min(kTotalFileSize - Util::numeric_cast<int32_t>(_numBytesWritten), kPacketSize);
+  }
+  
+  return _numBytesWritten == kTotalFileSize;
+}
 
   
-void FirmwareUpdater::HandleFlashWriteAck(RobotID_t robotId, const RobotInterface::FlashWriteAcknowledge& flashWriteAck)
+void FirmwareUpdater::HandleFlashWriteAck(RobotID_t robotId, const RobotInterface::OTA::Ack& flashWriteAck)
 {
   for (RobotUpgradeInfo& robotUpgradeInfo : _robotsToUpgrade)
   {
     if (robotUpgradeInfo.GetId() == robotId)
     {
-      if (!robotUpgradeInfo.HasAckPending())
+      if (flashWriteAck.result != RobotInterface::OTA::Result::OKAY)
       {
-        PRINT_NAMED_WARNING("FirmwareUpdater.HandleFlashWriteAck.NoAckPending", "Robot id %u had no pending ack!?", robotId);
+        PRINT_NAMED_ERROR("FirmwareUpdater.HandleFlashWriteAck.Error",
+                          "Robot %u flash ack %d had error %s on %d bytes processed.",
+                          robotId, flashWriteAck.packetNumber,
+                          RobotInterface::OTA::EnumToString(flashWriteAck.result),
+                          flashWriteAck.bytesProcessed);
+        // TODO:(lc) This is hacky. Update FirmwareUpdater to have some internal state for handling failureon the next
+        // Update() call (from cozmoEngine) rather than going directly to the robot map in the robotmanager here, in order
+        // to go to the failed state.
+        GotoFailedState( _context->GetRobotManager()->GetRobotMap(), FirmwareUpdateResult::Failed_SendingData );
+      }
+      else
+      {
+        _numBytesProcessed = flashWriteAck.bytesProcessed;
       }
       
       robotUpgradeInfo.ConfirmAck();
@@ -575,7 +548,7 @@ bool FirmwareUpdater::InitUpdate(const RobotMap& robots, int version)
   }
   
   _version = version;
-  _state   = FirmwareUpdateStage::RTIP;
+  _state   = FirmwareUpdateStage::Flashing;
   SetSubState(robots, FirmwareUpdateSubStage::Init);
   
   _eventHandles.clear();
@@ -587,12 +560,12 @@ bool FirmwareUpdater::InitUpdate(const RobotMap& robots, int version)
     
     auto handleFlashWriteAck = [this, robotId](const AnkiEvent<RobotInterface::RobotToEngine>& event)
     {
-      const RobotInterface::FlashWriteAcknowledge& flashWriteAck = event.GetData().Get_flashWriteAck();
+      const RobotInterface::OTA::Ack& flashWriteAck = event.GetData().Get_otaAck();
       this->HandleFlashWriteAck(robotId, flashWriteAck);
     };
 
     _eventHandles.push_back(robot->GetRobotMessageHandler()->Subscribe(robot->GetID(),
-                                                                       RobotInterface::RobotToEngineTag::flashWriteAck,
+                                                                       RobotInterface::RobotToEngineTag::otaAck,
                                                                        handleFlashWriteAck));
    
     PRINT_NAMED_INFO("FirmwareUpdater.InitUpdate", "Init update to version %d for robot %d", version, (int)robot->GetID());
@@ -613,8 +586,7 @@ bool FirmwareUpdater::Update(const RobotMap& robots)
   
   switch(_state)
   {
-    case FirmwareUpdateStage::Wifi:
-    case FirmwareUpdateStage::RTIP:
+    case FirmwareUpdateStage::Flashing:
       UpdateSubState(robots);
       break;
     case FirmwareUpdateStage::Done:

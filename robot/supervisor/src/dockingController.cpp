@@ -1074,7 +1074,7 @@ namespace Anki {
              ABS(prev_blockPose_y_ - blockPose_y) > DELTA_BLOCKPOSE_Y_TOL_MM ||
              ABS(prev_blockPose_a_ - blockPose_a) > DELTA_BLOCKPOSE_A_TOL_RAD)
           {
-            AnkiDebug( 5, "DockingController", 457, "Acquire new signal %f %f %f", 3,
+            AnkiDebug( 5, "DockingController", 471, "Acquire new signal %f %f %f", 3,
                       prev_blockPose_x_ - blockPose_x,
                       prev_blockPose_y_ - blockPose_y,
                       prev_blockPose_a_ - blockPose_a);
@@ -1246,7 +1246,7 @@ namespace Anki {
             PathFollower::AppendPathSegment_Line(0, x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y(),
                                                  dockSpeed_mmps_, dockAccel_mmps2_, dockAccel_mmps2_);
             
-            //AnkiDebug( 5, "DockingController", 458, "Computing straight line path (%f, %f) to (%f, %f)\n", 4,x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y());
+            //AnkiDebug( 5, "DockingController", 472, "Computing straight line path (%f, %f) to (%f, %f)\n", 4,x_start_mm, y_start_mm, dockPose_.x(), dockPose_.y());
           }
           else
           {

@@ -13,6 +13,7 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/powerMessages.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
+#include "clad/robotInterface/otaMessages.clad"
 #include "clad/types/nvStorage.clad"
 #include "clad/types/bleMessages.clad"
 #include "clad/types/animationEvents.clad"
@@ -81,13 +82,6 @@ message NVOpResultToEngine
   NVStorage::NVOpResult report
 }
 
-message FlashWriteAcknowledge
-{
-  uint_32 address,      ///< The address we wrote to
-  uint_8  length,       ///< The number of 32 bit words we wrote, will be 0 on failure
-  bool    writeNotErase ///< True if acknowledging a write, false if acknowledging an erase
-}
-
 enum int_8 CrashSource
 {
   WiFiCrash,
@@ -110,8 +104,6 @@ message CrashReport
  * 0xB0 and up going to the engine
  */
 union RobotToEngine {
-  FlashWriteAcknowledge      flashWriteAck          = 0x85, // Special case message for OTA compatibility
-  
   // 0xB0 to 0xEF: Reliable messages to the Engine
   PrintTrace                 trace                  = 0xB0,
   PrintText                  printText              = 0xB1,
@@ -150,6 +142,8 @@ union RobotToEngine {
   DockingStatus              dockingStatus          = 0xD3,
   RobotStopped               robotStopped           = 0xD4,
   AnimationEvent             animEvent              = 0xD5,
+  
+  OTA::Ack                   otaAck                 = 0xEF,
   
   //0xF0 to 0x FE: Unreliable message to the Engine
   RobotState                 state                  = 0xF0,

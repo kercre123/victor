@@ -171,6 +171,8 @@ static inline bool FlashBlock() {
     return false;
   }
 
+  MicroWait(1000);
+
   // Write sectors to flash
   for (int i = 0; i < TRANSMIT_BLOCK_SIZE; i+= FLASH_BLOCK_SIZE) {
     if (!FlashSector(packet.blockAddress + i, &packet.flashBlock[i / sizeof(uint32_t)])) {

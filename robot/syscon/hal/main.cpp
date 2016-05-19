@@ -102,7 +102,7 @@ int main(void)
   using namespace Anki::Cozmo::RobotInterface;
 
   Storage::init();
-  Bootloader::init();
+  //Bootloader::init();
   
   // Initialize our scheduler
   RTOS::init();

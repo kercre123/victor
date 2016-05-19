@@ -539,7 +539,7 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
     uint8_t* msg = buffer + sizeof(AnkiReliablePacketHeader);
     uint16_t bytesProcessed = sizeof(AnkiReliablePacketHeader);
 
-    //printf("Recv: siz=%d typ=%d seq=%d..%d ack=%d\r\n", connection->txQueued,
+    //printf("Recv: siz=%d typ=%d seq=%d..%d ack=%d\r\n", bufferSize,
     //  header.type, header.seqIdMin, header.seqIdMax, header.lastReceivedId);
 
     // Unpack the message
@@ -556,7 +556,7 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
         msgLen |= (*msg) << 8; msg++;
         if (msgLen > (bufferSize - bytesProcessed))
         {
-          //printf("ERROR ReliableTransport not enough data for submessage %d < %d-%d\r\n", msgLen, bufferSize, bytesProcessed);
+          printf("ERROR ReliableTransport not enough data for submessage %d < %d-%d\r\n", msgLen, bufferSize, bytesProcessed);
           return -3;
         }
         bytesProcessed += msgLen + ReliableTransport_MULTIPLE_MESSAGE_SUB_HEADER_LENGTH;
@@ -572,7 +572,7 @@ int16_t ICACHE_FLASH_ATTR ReliableTransport_ReceiveData(ReliableConnection* conn
     {
       if (header.seqIdMax != header.seqIdMin)
       {
-        //printf("ERROR: ReliableTransport seqIds don't match %d %d %d\r\n", header.seqIdMin, header.seqIdMax, header.type);
+        printf("ERROR: ReliableTransport seqIds don't match %d %d %d\r\n", header.seqIdMin, header.seqIdMax, header.type);
         return -4;
       }
       else

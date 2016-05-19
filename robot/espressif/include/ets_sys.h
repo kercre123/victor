@@ -110,6 +110,7 @@ typedef void (*int_handler_t)(void*);
 /// Anki added missing function prototypes see
 // https://github.com/esp8266/Arduino/blob/e95596e368a89f136d28506696226ba24617419c/hardware/esp8266com/esp8266/tools/sdk/include/ets_sys.h
 void *ets_memcpy(void *dest, const void *src, size_t n);
+void *ets_memmove(void *dest, const void *src, size_t n);
 void *ets_memset(void *s, int c, size_t n);
 void ets_timer_arm_new(ETSTimer *a, int b, int c, int isMstimer);
 void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);

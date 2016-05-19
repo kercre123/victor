@@ -143,22 +143,10 @@ namespace Anki {
           AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, 137, "WiFi.Messages", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg.MAX_SIZE);
           switch(buffer[0])
           {
-            case RobotInterface::EngineToRobot::Tag_eraseFlash:
+            case RobotInterface::EngineToRobot::Tag_otaWrite:
             {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              UpgradeController::EraseFlash(msg.eraseFlash);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_writeFlash:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              UpgradeController::WriteFlash(msg.writeFlash);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_triggerOTAUpgrade:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              UpgradeController::Trigger(msg.triggerOTAUpgrade);
+              memcpy(msg.GetBuffer(), buffer, bufferSize);
+              UpgradeController::Write(msg.otaWrite);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_writeNV:

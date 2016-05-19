@@ -7,35 +7,18 @@
 
 #include "clad/robotInterface/otaMessages.h"
 
-/// An impossible flash address to invalidate the state
-#define INVALID_FLASH_ADDRESS (0xFFFFffff)
-/// Lowest address we will allow writing to in order to protect the bootloader.and firmware, assets etc go beyond 1MB
-#define FLASH_WRITE_START_ADDRESS (0x100000)
-
 namespace Anki {
   namespace Cozmo {
     namespace UpgradeController
     {
-      /// Command to erase flash
-      void EraseFlash(RobotInterface::EraseFlash& msg);
+      /// Initalize the upgrade controller and enable its operation
+      bool Init();
       
-      /// Command writing data into flash
-      void WriteFlash(RobotInterface::WriteFlash& msg);
+      /// Periodic update function run in background trhead
+      void Update();
       
-      /// Command upgrade initiation
-      void Trigger(RobotInterface::OTAUpgrade& msg);
-      
-      /// Check if an upgrade is staged and trigger it
-      bool CheckForAndDoStaged(void);
-      
-      /// Run a WiFi upgrade with default settings
-      void StartWiFiUpgrade(bool reboot);
-      
-      /// Run an RTIP upgrade as requested by the RTIP
-      void StartRTIPUpgrade(void);
-      
-      /// Run a body upgrade as requested by the body
-      void StartBodyUpgrade(void);
+      /// Command writing data into flash on the Espressif or RTIP or Body
+      void Write(RobotInterface::OTA::Write& msg);
     }
   }
 }

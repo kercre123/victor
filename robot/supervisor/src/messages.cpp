@@ -765,29 +765,13 @@ namespace Anki {
       {
         HAL::RadioUpdateState(state.wifiConnected, false);
       }
-      void Process_bootloadRTIP(const RobotInterface::BootloadRTIP&)
-      {
-        // Handled in HAL SPI not here
-      }
-      void Process_bodyUpgradeData(const RobotInterface::BodyUpgradeData&)
-      {
-        // Handled in HAL SPI not here
-      }
 
 #ifdef SIMULATOR
+      void Process_otaWrite(const Anki::Cozmo::RobotInterface::OTA::Write& msg)
+      {
+        
+      }
       /// Stub message handlers to satisfy simulator build
-      void Process_eraseFlash(Anki::Cozmo::RobotInterface::EraseFlash const&)
-      {
-        // Nothing to do here
-      }
-      void Process_writeFlash(RobotInterface::WriteFlash const&)
-      {
-        // Nothing to do here
-      }
-      void Process_triggerOTAUpgrade(Anki::Cozmo::RobotInterface::OTAUpgrade const&)
-      {
-        // Nothing to do here
-      }
       void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageWrite const& msg)
       {
         SimNVStorageSpace::Write(msg);

@@ -97,7 +97,7 @@ extern "C" bool AcceptRTIPMessage(uint8_t* payload, uint8_t length)
           }
         }
         relayQueued -= sizeWHeader;
-        os_memcpy(relayBuffer, relayBuffer + sizeWHeader, relayQueued);
+        os_memmove(relayBuffer, relayBuffer + sizeWHeader, relayQueued);
       }
       else
       {

@@ -20,6 +20,7 @@ extern "C" {
 extern "C" void FacePrintf(const char *format, ...);
 #define ONCHIP
 #else // Not on Espressif
+#define STORE_ATTR
 #include <string.h>
 #include "headController.h"
 #include "liftController.h"
@@ -50,7 +51,7 @@ namespace AnimationController {
     static const s32 ANIMATION_PREROLL_LENGTH = 7;
 
     // Circular byte buffer for keyframe messages
-    ONCHIP u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
+    ONCHIP STORE_ATTR u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
     s32 _currentBufferPos;
     s32 _lastBufferPos;
 
@@ -73,6 +74,7 @@ namespace AnimationController {
     s16 _audioReadInd;
     bool _playSilence;
 
+    bool _disabled;
 
 #   if DEBUG_ANIMATION_CONTROLLER
     TimeStamp_t _currentTime_ms;
@@ -87,6 +89,8 @@ namespace AnimationController {
 #   endif
 
     _tracksToPlay = ALL_TRACKS;
+    
+    _disabled = false;
 
     Clear();
 
@@ -277,6 +281,13 @@ namespace AnimationController {
   {
     const s32 numBytesAvailable = GetNumBytesAvailable();
     const s32 numBytesNeeded = bufferSize + 2;
+    
+    if (_disabled) 
+    {
+      AnkiDebug( 2, "AnimationController", 452, "BufferKeyFrame called while disabled", 0);
+      return RESULT_FAIL;
+    }
+    
     if(numBytesAvailable < numBytesNeeded) {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
@@ -797,6 +808,19 @@ namespace AnimationController {
   u8 GetCurrentTag()
   {
     return _currentTag;
+  }
+
+  s32 SuspendAndGetBuffer(u8** buffer)
+  {
+    _disabled = true;
+    Clear();
+    *buffer = _keyFrameBuffer;
+    return KEYFRAME_BUFFER_SIZE;
+  }
+  
+  void ResumeAndRestoreBuffer()
+  {
+    _disabled = false;
   }
 
 } // namespace AnimationController

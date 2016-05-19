@@ -64,6 +64,7 @@ int16_t i2spiGetRtipBootloaderState(void);
 uint32_t i2spiGetBodyBootloaderCode(void);
 
 /** Push a chunk of firmware to the RTIP
+ * Does not actually send the data imeediately, queues it for sending, pointer must remain valid
  * @param chunk a Pointer to data to be sent
  */
 bool i2spiBootloaderPushChunk(FirmwareBlock* chunk);

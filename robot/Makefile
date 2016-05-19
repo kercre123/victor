@@ -13,7 +13,7 @@ BINARY_RELEASE_DIR=releases
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h
 
-.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh
+.PHONY: clean $(VERSION_HEADER) purgeAnkiLog verboseAnkiLog esp k02 nrf sim fresh app
 
 all: k02 esp sim
 
@@ -26,7 +26,7 @@ $(ANKI_LOG_TABLE_JSON): $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS
 
 purgeAnkiLog: $(ANKI_LOG_PP)
 	python3 $(ANKI_LOG_PP) --purge --preprocessor --string-table --output $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_SRC_DIRS)
-	
+
 verboseAnkiLog: $(ANKI_LOG_PP)
 	python3 $(ANKI_LOG_PP) -vvv --preprocessor --string-table --output $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_SRC_DIRS)
 
@@ -36,7 +36,9 @@ $(VERSION_HEADER):
 python:
 	make -C clad python
 
-app: $(ANKI_LOG_TABLE_JSON)
+# App target doesn't run the preprocessor
+app: $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
+	python3 $(ANKI_LOG_PP) --string-table --output $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_SRC_DIRS)
 
 sim: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make fourzero -C clad -j4
@@ -47,48 +49,33 @@ nrf: $(ANKI_LOG_TABLE_JSON)
 k02: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make $@ -C clad -j4
 
-k02_fix:
+staging_dir:
+	mkdir -p ./staging
+
+k02_fix: staging_dir
 	python3 ./tools/boot_header.py ./build/app/robot.axf
+	python3 ./tools/sign.py --wifi ./binaries/esp.user.bin --rtip ./build/app/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.safe
 
 nrf_fix:
 	python3 ./tools/boot_header.py ./syscon/build/app/syscon.axf
 
 # This fixes the headers and places the binaries in release
-stage_binaries: k02_fix nrf_fix
-	cp ./build/app/robot.axf ./binaries
-	cp ./syscon/build/app/syscon.axf ./binaries
-	cp ./espressif/bin/upgrade/user1.2048.new.3.bin ./binaries/esp.user.bin
-
-stage: stage_binaries
-	python3 ./tools/sign.py --rtip ./binaries/robot.axf 	./staging/rtip.safe
-	python3 ./tools/sign.py --body ./binaries/syscon.axf	./staging/body.safe
-	python3 ./tools/sign.py --wifi ./binaries/esp.user.bin 	./staging/wifi.safe
-	python3 ./tools/sign.py --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf --wifi ./binaries/esp.user.bin ./staging/cozmo.safe
+stage_binaries:
+	if test ./build/app/robot.axf -nt ./binaries/robot.afx; then cp ./build/app/robot.axf ./binaries; fi
+	if test ./syscon/build/app/syscon.afx -nt ./binaries/syscon.afx; then cp ./syscon/build/app/syscon.axf ./binaries; fi
+	if test ./staging/esp.user.bin -nt ./binaries/esp.user.bin; then cp ./staging/esp.user.bin ./binaries/esp.user.bin; fi
 
 release: stage_binaries
-	#  --wifi ./binaries/esp.user.bin Should be added once single file OTA is finished
-	python3 ./tools/sign.py --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
-	cp ./binaries/esp.user.bin releases
-
-kevin: k02_fix
-	python3 ./tools/sign.py --rtip ./build/app/robot.axf ./staging/rtip.safe
+	python3 ./tools/sign.py --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
 
 vesp:
 	vagrant ssh -c "make -C /vagrant/robot esp"
 
-esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
+esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 	make $@ -C clad -j4
 	make -C espressif/app ROBOT_INC_DIR=$(shell pwd)/include BOOT=new APP=1 SPI_SPEED=80 SPI_MODE=QIO SPI_SIZE_MAP=3
-
-espressif/bin/upgrade/user1.2048.new.3.bin: esp
-
-$(BINARY_RELEASE_DIR)/esp.user.bin: espressif/bin/upgrade/user1.2048.new.3.bin
-	cp $< $@
-
-$(BINARY_RELEASE_DIR)/cozmo.safe: k02_fix
-	python3 ./tools/sign.py --rtip build/app/robot.axf  --body ./binaries/syscon.axf $@
-
-otaBinaries: $(BINARY_RELEASE_DIR)/esp.user.bin $(BINARY_RELEASE_DIR)/cozmo.safe
+	cp ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.user.bin
+	python3 ./tools/sign.py --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.safe
 
 onBuildServer: k02 $(BINARY_RELEASE_DIR)/esp.user.bin
 

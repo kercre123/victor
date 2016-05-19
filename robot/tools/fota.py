@@ -6,163 +6,96 @@ __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys, os, time, hashlib, struct
 
+DEFAULT_FIRMWARE_IMAGE = os.path.join("releases", "cozmo.safe")
+
 USAGE = """
 Upgrade firmware:
-    {exe} wifi|rtip|all [<ALTERNATE IMAGE>]
-Where the WiFi or RTIP (or all of them) firmware is upgraded with the default image
-If not upgrading all, an alternate image file may be specifid.
+    {exe} [<ALTERNATE IMAGE>]
+The default firmware image is "{default}"
 
-Upload asset:
-    {exe} <ADDRESS> <ASSET FILE PATH NAME> [...]
-Uploads one or more assets to the robot flash.
-<ADDRESS> is the flash address to write the asset to and <ASSET FILE PATH NAME> is the file to load there.
-Any number of pairs of addresses and files may be specified.
+This tool must be run from the robot folder.
 
-""".format(exe=sys.argv[0])
+""".format(exe=sys.argv[0], default=DEFAULT_FIRMWARE_IMAGE)
 
 sys.path.insert(0, os.path.join("tools"))
 import robotInterface
 RI = robotInterface.RI
 
-class Upgrader:
-    "robotInterface client to control the firmwre upgrade transmission"
-
-    def recieveAck(self, msg):
-        sys.stdout.write(".")
-        sys.stdout.flush()
-        self.acked = True
-
-    def send(self, msg):
-        "Send a message to the robot"
-        return robotInterface.Send(msg)
-
-    def sendAndWait(self, msg):
-        "Sends a flash command message and waits for a flash ack response"
-        self.acked = False
-        self.send(msg)
-        while self.acked == False:
-            time.sleep(0.0005)
-
-    def disableMotors(self):
-        for i in range(5):
-            self.send(RI.EngineToRobot(setControllerGains=RI.ControllerGains(0,0,0,0,i)))
-        self.send(RI.EngineToRobot(enableLiftPower=RI.EnableLiftPower(False)))
-        self.send(RI.EngineToRobot(stop=RI.StopAllMotors()))
-        time.sleep(2)
-
-    def ota(self, filePathName, command, version, flashAddress):
-        """Load a file and send it to the robot for flash
-        Note that flashAddress must be a multiple of 0x1000
-        """
-        assert (flashAddress % 0x1000) == 0, "Flash address must be a multiple of sector size"
-        FW_CHUNK_SIZE = 1024
-        try:
-            fw = open(filePathName, "rb").read()
-        except Exception as inst:
-            sys.stderr.write("Couldn't load requested firmware file \"{}\"\r\n".format(filePathName))
-            raise inst
+class OTAStreamer:
+    "Streams OTA data from file to the robot"
+    
+    ROBOT_BUFFER_SIZE    = 16384 # Size of OTA RX buffer on the robot. Presently this is the animaiton key frame buffer
+    MESSAGE_PAYLOAD_SIZE = len(RI.OTA.Write().data)
+    
+    def Write(self):
+        "Sends a write to the robot"
+        while (self.bytesSent - self.bytesProcessed) < (self.ROBOT_BUFFER_SIZE - self.MESSAGE_PAYLOAD_SIZE):
+            payload = self.fw.read(self.MESSAGE_PAYLOAD_SIZE)
+            eof = len(payload) < self.MESSAGE_PAYLOAD_SIZE
+            if eof:
+                payload += b"\xFF" * (self.MESSAGE_PAYLOAD_SIZE - len(payload))
+            robotInterface.Send(RI.EngineToRobot(otaWrite=RI.OTA.Write(self.packetNumber, payload)))
+            self.bytesSent += self.MESSAGE_PAYLOAD_SIZE
+            #sys.stdout.write("Sending packet {0:d} {1:x}{linesep}".format(self.packetNumber, payload[0], linesep=os.linesep))
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            self.packetNumber += 1
+            if eof:
+                # Send EOF marker to robot
+                robotInterface.Send(RI.EngineToRobot(otaWrite=RI.OTA.Write(-1, b"\xFF" * self.MESSAGE_PAYLOAD_SIZE)))
+                self.doneSending = True
+                sys.stdout.write("Finished sending firmware image to robot")
+                sys.stdout.write(os.linesep)
+                break
+        self.writing = False
+    
+    def OnConnect(self, connectionInfo):
+        "Handles robot connected event, starts upgrade"
+        self.writing = True
+        
+    def OnAck(self, ack):
+        "Handles OTA.Ack messages and continues streaming"
+        self.bytesProcessed = ack.bytesProcessed
+        if ack.result == RI.OTA.Result.OKAY:
+            #sys.stdout.write("ACK p#={:d}\tbp={:d}{linesep}".format(ack.packetNumber, ack.bytesProcessed, linesep=os.linesep))
+            if not self.doneSending:
+                self.writing = True
+        elif ack.result == RI.OTA.Result.SUCCESS:
+            sys.stdout.write("Success :-)")
+            sys.stdout.write(os.linesep)
+            self.receivedSuccess = True
         else:
-            # Calculate signature
-            sig = hashlib.sha1(fw).digest()
-            # Prepend length of firmware
-            fwSize = len(fw)
-            sys.stdout.write("Loading \"{}\", {:d} bytes.\r\n".format(filePathName, fwSize))
-            fw = struct.pack('i', fwSize) + fw
-            fwSize = len(fw)
-            
-            # Print out the SHA1 signature
-            sys.stdout.write("sig = ")
-            for b in sig:
-                sys.stdout.write("{:02X}".format(b) ) 
-            sys.stdout.write("\r\n")
+            sys.exit("OTA Error:{linesep}\t{ack}{linesep}".format(ack=repr(ack), linesep=os.linesep))
+    
+    def __init__(self, firmwareFileName):
+        self.fw = open(firmwareFileName, "rb")
+        self.bytesSent    = 0
+        self.bytesProcessed = 0;
+        self.packetNumber = 0
+        self.writing = False
+        self.doneSending = False
+        self.receivedSuccess = False
+        robotInterface.SubscribeToConnect(self.OnConnect)
+        robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.otaAck, self.OnAck)
 
-            # Wait for connection
-            while not robotInterface.GetConnected():
+    def main(self):
+        while not self.receivedSuccess:
+            if self.writing:
+                self.Write()
+            else:
                 time.sleep(0.1)
-            # Erase flash
-            sys.stdout.write("Erasing flash\r\n")
-            self.sendAndWait(RI.EngineToRobot(eraseFlash=RI.EraseFlash(flashAddress, fwSize)))
-            sys.stdout.write("\r\n");
-            # Write Firmware
-            sys.stdout.write("Writing new firmware to robot storage\r\n")
-            written = 0
-            while written < fwSize:
-                if sys.version_info.major < 3:
-                    chunk = [ord(b) for b in fw[written:written+FW_CHUNK_SIZE]]
-                else:
-                    chunk = fw[written:written+FW_CHUNK_SIZE]
-                self.sendAndWait(RI.EngineToRobot(writeFlash=RI.WriteFlash(flashAddress+written, chunk)))
-                written += len(chunk)
-            sys.stdout.write("\r\n");
-            # Finish OTA
-            self.send(RI.EngineToRobot(
-                triggerOTAUpgrade=RI.OTAUpgrade(
-                    start   = flashAddress,
-                    version = version,
-                    sig     = [ord(b) for b in sig] if sys.version_info.major < 3 else sig,
-                    command = command
-                )
-            ))
-
-    def __init__(self):
-        self.acked = None
-        robotInterface.SubscribeToTag(RI.RobotToEngine.Tag.flashWriteAck, self.recieveAck)
-
-def UpgradeWiFi(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_WiFi_flash_address):
-    "Sends a WiFi firmware upgrade"
-    up.ota(fwPathName, RI.OTACommand.OTA_WiFi, version, flashAddress)
-
-def UpgradeRTIP(up, fwPathName, version=0, flashAddress=RI.OTAFlashRegions.OTA_RTIP_flash_address):
-    "Sends an RTIP firmware upgrade"
-    up.ota(fwPathName, RI.OTACommand.OTA_RTIP, version, flashAddress)
-
-def UpgradeAssets(up, flashAddresss, assetPathNames, version=0):
-    "Sends an asset to flash"
-    for f, a in zip(flashAddresss, assetPathName):
-        up.ota(a, RI.OTACommand.OTA_RTIP, version, f)
-        time.sleep(1.0) # Wait for finish
-
-DEFAULT_WIFI_IMAGE = os.path.join("releases", "esp.user.bin")
-DEFAULT_RTIP_IMAGE = os.path.join("releases", "cozmo.safe")
-
-def UpgradeAll(up, version=0, wifiImage=DEFAULT_WIFI_IMAGE, rtipImage=DEFAULT_RTIP_IMAGE):
-    "Stages all firmware upgrades and triggers upgrade"
-    assert os.path.isfile(wifiImage)
-    assert os.path.isfile(rtipImage)
-    up.ota(wifiImage, RI.OTACommand.OTA_none,  version, RI.OTAFlashRegions.OTA_WiFi_flash_address)
-    up.ota(rtipImage, RI.OTACommand.OTA_stage, version, RI.OTAFlashRegions.OTA_RTIP_flash_address)
-
+        
 # Script entry point
 if __name__ == '__main__':
-    robotInterface.Init(False)
+    fwi = DEFAULT_FIRMWARE_IMAGE
+    if len(sys.argv) > 1:
+        if os.path.isfile(sys.argv[1]):
+            fwi = sys.argv[1]
+        else:
+            sys.exit("No such file as {1}".format(*sys.argv))
+    
+    robotInterface.Init(True)
+    up = OTAStreamer(fwi)
     robotInterface.Connect()
-    while not robotInterface.GetConnected():
-        time.sleep(0.1)
-
-    up = Upgrader()
-
-    #if len(sys.argv) < 2:
-    #    UpgradeAll(up)
-    #elif sys.argv[1] == 'all':
-    #    UpgradeAll(up)
-    if sys.argv[1] == 'wifi':
-        UpgradeWiFi(up, sys.argv[2] if len(sys.argv) > 2 else DEFAULT_WIFI_IMAGE)
-    elif sys.argv[1] == 'rtip':
-        UpgradeRTIP(up, sys.argv[2] if len(sys.argv) > 2 else DEFAULT_RTIP_IMAGE)
-    # else: # Try asset
-        # ind = 1
-        # addresses = []
-        # assetFNs  = []
-        # while ind + 1 < len(sys.argv):
-            # try:
-                # fa = int(eval(sys.argv[ind]))
-            # except:
-                # sys.exit("Couldn't parse {} as a flash address".format(sys.argv[ind]))
-            # addresses.append(fa)
-            # assetFNs.append(sys.argv[ind+1])
-            # ind += 2
-        # UpgradeAssets(up, addresses, assetFNs)
-    else:
-        print ("You are not daniel or kevin...")
-    time.sleep(5) # Wait for upgrade to finish
+    up.main()
     del up

@@ -151,7 +151,9 @@ SVC_Handler\
                 IMPORT   OTA_EntryPoint
 
                 CPSID   I                       ; Mask interrupts
-                LDR     sp, =__Vectors          ; Setup our initial SP
+                MOV     R0, #0
+                LDR     SP, [R0]        ; Setup our initial SP
+                
                 LDR     R0, =OTA_EntryPoint
                 BX      R0
                 ENDP

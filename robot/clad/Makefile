@@ -32,6 +32,8 @@ RTIP_END_TAG:=0x7F
 WIFI_START_TAG:=0x80
 WIFI_END_TAG:=0xAF
 
+PYTHON=python3
+
 vpath %.clad $(INPUT_DIR)
 vpath %.h $(OUTPUT_DIR)/robot/
 vpath %.cpp $(OUTPUT_DIR)/robot/
@@ -48,60 +50,59 @@ python: $(OUTPUT_PYTHON) $(ENGINE_TO_ROBOT_UNION)_hash.py $(ROBOT_TO_ENGINE_UNIO
 
 %_switch_group_anim.def : %.clad $(CLAD_CPP_SWITCH)
 	if test -f $(OUTPUT_DIR)robot/$*_switch_group_anim.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_group_anim.def; fi
-	python $(CLAD_CPP_SWITCH) --group=anim -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	$(PYTHON) $(CLAD_CPP_SWITCH) --group=anim -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_group_anim.def
 
 %_switch.def : %.clad $(CLAD_CPP_SWITCH)
 	if test -f $(OUTPUT_DIR)robot/$*_switch.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch.def; fi
-	python $(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	$(PYTHON) $(CLAD_CPP_SWITCH) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*_switch.def
 
 %_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def : %.clad $(CLAD_CPP_SWITCH)
-		if test -f $(OUTPUT_DIR)robot/$*_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def; fi
-		python $(CLAD_CPP_SWITCH) --start=$(BODY_START_TAG) --end=$(BODY_END_TAG) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
-		chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def
+	if test -f $(OUTPUT_DIR)robot/$*_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def; fi
+	$(PYTHON) $(CLAD_CPP_SWITCH) --start=$(BODY_START_TAG) --end=$(BODY_END_TAG) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def
 
 %_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def : %.clad $(CLAD_CPP_SWITCH)
-		if test -f $(OUTPUT_DIR)robot/$*_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def; fi
-		python $(CLAD_CPP_SWITCH) --start=$(RTIP_START_TAG) --end=$(RTIP_END_TAG) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
-		chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def
+	if test -f $(OUTPUT_DIR)robot/$*_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def; fi
+	$(PYTHON) $(CLAD_CPP_SWITCH) --start=$(RTIP_START_TAG) --end=$(RTIP_END_TAG) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_from_$(RTIP_START_TAG)_to_$(RTIP_END_TAG).def
 
 %_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def : %.clad $(CLAD_CPP_SWITCH)
-		if test -f $(OUTPUT_DIR)robot/$*_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def; fi
-		python $(CLAD_CPP_SWITCH) --start=$(WIFI_START_TAG) --end=$(WIFI_END_TAG) --group=anim -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
-		chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def
+	if test -f $(OUTPUT_DIR)robot/$*_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def; fi
+	$(PYTHON) $(CLAD_CPP_SWITCH) --start=$(WIFI_START_TAG) --end=$(WIFI_END_TAG) --group=anim -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	chmod -f 555 $(OUTPUT_DIR)robot/$*_switch_from_$(WIFI_START_TAG)_to_$(WIFI_END_TAG)_group_anim.def
 
 %_declarations.def : %.clad $(CLAD_CPP_DECL)
 	if test -f $(OUTPUT_DIR)robot/$*_declarations.def; then chmod -f 777 $(OUTPUT_DIR)robot/$*_declarations.def; fi
-	python $(CLAD_CPP_DECL)   -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	$(PYTHON) $(CLAD_CPP_DECL)   -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*_declarations.def
 
 %_send_helper.h : %.clad $(CLAD_CPPLITE_SEND_HELPER)
 	if test -f $(OUTPUT_DIR)robot/$*_send_helper.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*_send_helper.h; fi
-	python $(CLAD_CPPLITE_SEND_HELPER) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
+	$(PYTHON) $(CLAD_CPPLITE_SEND_HELPER) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*_send_helper.h
 
 %.h %.cpp : %.clad $(CLAD_DEPENDENCIES) $(CLAD_CPPLITE)
-	#mkdir -p $(OUTPUT_DIR)/robot/$(dir $<)
 	if test -f $(OUTPUT_DIR)robot/$*.h; then chmod -f 777 $(OUTPUT_DIR)robot/$*.h; fi
 	if test -f $(OUTPUT_DIR)robot/$*.cpp; then chmod -f 777 $(OUTPUT_DIR)robot/$*.cpp; fi
-	python $(CLAD_CPPLITE) --max-message-size 1400 -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/robot/ $*.clad
+	$(PYTHON) $(CLAD_CPPLITE) --max-message-size 1400 -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR)/robot/ $*.clad
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.h
 	chmod -f 555 $(OUTPUT_DIR)robot/$*.cpp
 
 %_hash.h : %.clad $(CLAD_DEPENDENCIES) $(CLAD_HASH) $(shell /usr/bin/find $(INPUT_DIR) -type f)
 	if test -f $(OUTPUT_DIR)robot/$@; then chmod -f 777 $(OUTPUT_DIR)robot/$@; fi
-	python $(CLAD_HASH) -I $(INPUT_DIR) -o $(OUTPUT_DIR)robot/$@ $<
+	$(PYTHON) $(CLAD_HASH) -I $(INPUT_DIR) -o $(OUTPUT_DIR)robot/$@ $<
 	chmod -f 555 $(OUTPUT_DIR)robot/$@
 
 %_hash.py: %.clad $(CLAD_DEPENDENCIES) $(CLAD_HASH) $(shell /usr/bin/find $(INPUT_DIR) -type f)
 	if test -f $(OUTPUT_DIR_PYTHON)robot/$@; then chmod -f 777 $(OUTPUT_DIR_PYTHON)robot/$@; fi
-	python $(CLAD_HASH) -I $(INPUT_DIR) -o $(OUTPUT_DIR_PYTHON)robot/$@ $<
+	$(PYTHON) $(CLAD_HASH) -I $(INPUT_DIR) -o $(OUTPUT_DIR_PYTHON)robot/$@ $<
 	chmod -f 555 $(OUTPUT_DIR_PYTHON)robot/$@
 
 %.py : %.clad $(CLAD_DEPENDENCIES) $(CLAD_PYTHON)
 	if test -f $(OUTPUT_DIR_PYTHON)robot/$*.py; then chmod -f 777 $(OUTPUT_DIR_PYTHON)robot/$*.py; fi
-	python $(CLAD_PYTHON) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR_PYTHON)robot $*.clad
+	$(PYTHON) $(CLAD_PYTHON) -C $(INPUT_DIR) -I $(INCLUDE_DIRS) -o $(OUTPUT_DIR_PYTHON)robot $*.clad
 	chmod -f 555 $(OUTPUT_DIR_PYTHON)robot/$*.py
 
 cpplilib: cpp
@@ -110,8 +111,8 @@ cpplilib: cpp
 	@rm $(OUTPUT_DIR)cpps.list
 
 hashes:
-	python $(CLAD_HASH) -C $(INPUT_DIR) $(ENGINE_TO_ROBOT_UNION).clad
-	python $(CLAD_HASH) -C $(INPUT_DIR) $(ROBOT_TO_ENGINE_UNION).clad
+	$(PYTHON) $(CLAD_HASH) -C $(INPUT_DIR) $(ENGINE_TO_ROBOT_UNION).clad
+	$(PYTHON) $(CLAD_HASH) -C $(INPUT_DIR) $(ROBOT_TO_ENGINE_UNION).clad
 
 nrf: cpplilib $(ENGINE_TO_ROBOT_UNION)_switch_from_$(BODY_START_TAG)_to_$(BODY_END_TAG).def $(ENGINE_TO_ROBOT_UNION)_declarations.def $(ROBOT_TO_ENGINE_UNION)_send_helper.h $(ENGINE_TO_ROBOT_UNION)_send_helper.h
 

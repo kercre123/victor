@@ -460,16 +460,14 @@ message FirmwareUpdateProgress {
   uint_32 robotID,
   FirmwareUpdateStage stage,
   FirmwareUpdateSubStage subStage,
-  string  fwSigWifi,
-  string  fwSigRTIP,
+  string  fwSig,
   uint_8  percentComplete
 }
 
 message FirmwareUpdateComplete {
   uint_32 robotID,
   FirmwareUpdateResult  result,
-  string  fwSigWifi,
-  string  fwSigRTIP
+  string  fwSig
 }
 
 ///////////////////////////////////////////////////////////////////////////////

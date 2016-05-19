@@ -47,7 +47,7 @@ static bool ProcessDrop(void) {
     if (*target != TO_RTIP_PREAMBLE) continue ;
     
     DropToRTIP* drop = (DropToRTIP*)target;
-    Watchdog::kick(WDOG_WIFI_COMMS);
+    //Watchdog::kick(WDOG_WIFI_COMMS);
     
     // Buffer the data that needs to be fed into the devices for next cycle
     audioUpdated = drop->droplet & audioDataValid;
@@ -61,20 +61,7 @@ static bool ProcessDrop(void) {
     
     if (drop->payloadLen)
     {
-      uint8_t *payload_data = (uint8_t*)drop->payload;
-      switch(payload_data[0])
-      {
-        // Handle OTA related messages here rather than in message dispatch loop so it's harder to break
-        case Anki::Cozmo::RobotInterface::EngineToRobot::Tag_bootloadRTIP:
-        {
-          SPI::EnterRecoveryMode();
-          break;
-        }
-        default:
-        {
-          Anki::Cozmo::HAL::WiFi::ReceiveMessage(drop->payload, drop->payloadLen);
-        }
-      }
+      Anki::Cozmo::HAL::WiFi::ReceiveMessage(drop->payload, drop->payloadLen);
     }
     
     return true;
@@ -131,9 +118,12 @@ void Anki::Cozmo::HAL::SPI::EnterRecoveryMode(void) {
 void Anki::Cozmo::HAL::SPI::EnterOTAMode(void) {
   // Disable watchdog
   __disable_irq();
+  WDOG_REFRESH = 0xA602;
+  WDOG_REFRESH = 0xB480;
+
   WDOG_UNLOCK = 0xC520;
   WDOG_UNLOCK = 0xD928;
-  WDOG_STCTRLH = 0;
+  WDOG_STCTRLH = WDOG_STCTRLH_ALLOWUPDATE_MASK;
 
   // Start turning the lights off of all the things we will no longer be using
   SIM_SCGC6 &= ~(SIM_SCGC6_DMAMUX_MASK | SIM_SCGC6_FTM1_MASK | SIM_SCGC6_FTM2_MASK | SIM_SCGC6_PDB_MASK | SIM_SCGC6_DAC0_MASK);
@@ -168,11 +158,6 @@ void DMA2_IRQHandler(void) {
   static transmissionWord lastWord = 0;
   static int SilentDrops = 0;
 
-  // We are likely in OTA mode
-  if (spi_rx_buff[0] == 0xFFFF) {
-    Watchdog::kick(WDOG_WIFI_COMMS);
-  }
-
   if (lastWord != spi_rx_buff[0]) {
     lastWord = spi_rx_buff[0];
     SilentDrops = 0;
@@ -182,10 +167,10 @@ void DMA2_IRQHandler(void) {
         NVIC_SystemReset();
         break ;
       case 0x8002:
-        SPI::EnterRecoveryMode();
+        SPI::EnterOTAMode();
         break ;
-      case 0x8004:
-        __disable_irq();
+      case 0x8003: // Reset & OTA
+        SPI::EnterRecoveryMode();
         break ;
     }
   }

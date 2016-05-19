@@ -16,6 +16,7 @@
 
 
 #include "anki/common/types.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "clad/types/firmwareTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <assert.h>
@@ -35,7 +36,9 @@ class Robot;
 namespace RobotInterface
 {
   class EngineToRobot;
-  struct FlashWriteAcknowledge;
+  namespace OTA {
+    struct Ack;
+  }
 }
   
 
@@ -75,12 +78,12 @@ public:
   explicit FirmwareUpdater(const CozmoContext* context);
   ~FirmwareUpdater();
   
-  using RobotMap = std::map<RobotID_t,Robot*>;
+  using RobotMap = RobotManager::RobotMap;
   
   bool InitUpdate(const RobotMap& robots, int version);
   bool Update(const RobotMap& robots);
   
-  void HandleFlashWriteAck(RobotID_t robotId, const RobotInterface::FlashWriteAcknowledge& flashWriteAck);
+  void HandleFlashWriteAck(RobotID_t robotId, const RobotInterface::OTA::Ack& flashWriteAck);
   
 private:
   
@@ -138,6 +141,9 @@ private:
     return _fwSignatures[idx];
   }
   
+  void LoadHeaderData();
+  bool SendWriteMessages(const RobotMap& robots);
+  
   // ==================== Member Data ====================
   
   AsyncLoaderData _fileLoaderData;
@@ -153,11 +159,14 @@ private:
   
   uint32_t        _numFramesInSubState;
   uint32_t        _numBytesWritten;
+  uint32_t        _numBytesProcessed = 0;
   
   int32_t         _version;
   
   FirmwareUpdateStage     _state;
   FirmwareUpdateSubStage  _subState;
+  
+  int16_t _currentPacketNumber = 0;
 };
 
 

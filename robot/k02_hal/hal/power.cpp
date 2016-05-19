@@ -21,7 +21,7 @@ namespace Anki
           //GPIO_RESET(GPIO_MISO, PIN_MISO);
           //GPIO_OUT(GPIO_MISO, PIN_MISO);
           //SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
-          
+
           // Pull-down SCK during ESP8266 boot
           GPIO_RESET(GPIO_SCK, PIN_SCK);
           GPIO_OUT(GPIO_SCK, PIN_SCK);    // XXX: Driving SCK low here is bad for the ESP, why not pulldown?

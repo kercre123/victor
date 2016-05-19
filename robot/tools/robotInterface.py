@@ -12,7 +12,7 @@ ANKI_LOG_STRING_TABLE_GLOBAL = os.path.join('..', 'resources', 'config', 'basest
 
 if os.path.isfile(os.path.join(CLAD_SRC, "Makefile")):
     import subprocess
-    make = subprocess.Popen(["make", "python", "-C", "clad"])
+    make = subprocess.Popen(["make", "python", "-C", "clad", "-j4"])
     if make.wait() != 0:
         sys.exit("Could't build/update python clad, exit status {:d}".format(make.wait(), linesep=os.linesep))
 

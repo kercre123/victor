@@ -108,11 +108,13 @@ public:
   // Iterate through the loaded animations and broadcast their names
   void BroadcastAvailableAnimations();
   
+  using RobotMap = std::map<RobotID_t,Robot*>;
+  const RobotMap& GetRobotMap() const { return _robots; }
   RobotInterface::MessageHandler* GetMsgHandler() const { return _robotMessageHandler.get(); }
 
 protected:
   RobotDisconnectedSignal _robotDisconnectedSignal;
-  std::map<RobotID_t,Robot*> _robots;
+  RobotMap _robots;
   std::vector<RobotID_t>     _IDs;
   const CozmoContext* _context;
   RobotEventHandler _robotEventHandler;
