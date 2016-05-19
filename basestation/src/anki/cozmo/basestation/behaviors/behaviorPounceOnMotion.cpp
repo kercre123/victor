@@ -37,6 +37,7 @@ static const std::string s_PounceFailAnimGroup    = "ag_pounceOnMotionFail";
 static const std::string s_PounceInitalWarningAnimGroup = "ag_pounceWarningInitial";
 static const char* kMaxNoMotionBeforeBored_Sec    = "maxNoGroundMotionBeforeBored_Sec";
 static const char* kBackUpDistance                = "backUpDistance";
+static const char* kTimeBeforeRotate_Sec          = "TimeBeforeRotate_Sec";
 
 BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& config)
   : IBehavior(robot, config)
@@ -50,6 +51,7 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(Robot& robot, const Json::Value& 
 
   _maxTimeSinceNoMotion_sec = config.get(kMaxNoMotionBeforeBored_Sec, _maxTimeSinceNoMotion_sec).asFloat();
   _backUpDistance = config.get(kBackUpDistance, _backUpDistance).asFloat();
+  _maxTimeBeforeRotate = config.get(kTimeBeforeRotate_Sec, _maxTimeBeforeRotate).asFloat();
   
   SET_STATE(Inactive);
   _lastMotionTime = -1000.f;
@@ -177,7 +179,7 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
         {
           TransitionToBringingHeadDown(robot);
         }
-        else if( _state == State::BringingHeadDown)
+        else if( _state == State::BringingHeadDown || _state == State::RotateToWatchingNewArea )
         {
           TransitionToWaitForMotion(robot);
         }
@@ -190,10 +192,6 @@ void BehaviorPounceOnMotion::HandleWhileRunning(const EngineToGameEvent& event, 
           TransitionToRelaxLift(robot);
         }
         else if( _state == State::PlayingFinalReaction )
-        {
-          TransitionToBackUp(robot);
-        }
-        else if( _state == State::BackUp)
         {
           PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.Complete", "post-pounce reaction animation complete");
           // We exit out of this mode during the update when we time out so just start waiting for motion again after backing up
@@ -231,10 +229,27 @@ void BehaviorPounceOnMotion::TransitionToBringingHeadDown(Robot& robot)
   _waitForActionTag = moveAction->GetTag();
 }
   
+void BehaviorPounceOnMotion::TransitionToRotateToWatchingNewArea(Robot& robot)
+{
+  SET_STATE( RotateToWatchingNewArea );
+
+  constexpr static float kPanMin_Deg = 20;
+  constexpr static float kPanMax_Deg = 60;
+  Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(kPanMin_Deg,kPanMax_Deg)));
+  // other direction half the time
+  if( GetRNG().RandDbl() < 0.5 )
+  {
+    panAngle *= -1.f;
+  }
+  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, panAngle, 0, false, false);
+  robot.GetActionList().QueueActionAtEnd(turnAction);
+  _waitForActionTag = turnAction->GetTag();
+}
+  
 void BehaviorPounceOnMotion::TransitionToWaitForMotion(Robot& robot)
 {
-  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.TransitionToWaitForMotion","BehaviorPounceOnMotion.TransitionToWaitForMotion");
   SET_STATE( WaitingForMotion);
+  _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
   
 void BehaviorPounceOnMotion::TransitionToTurnToMotion(Robot& robot, int16_t motion_img_x, int16_t motion_img_y)
@@ -275,7 +290,6 @@ void BehaviorPounceOnMotion::TransitionToPounce(Robot& robot)
   
 void BehaviorPounceOnMotion::TransitionToRelaxLift(Robot& robot)
 {
-  PRINT_NAMED_DEBUG("BehaviorPounceOnMotion.RelaxLift", "pounce animation complete, relaxing lift");
   robot.GetMoveComponent().EnableLiftPower(false); // TEMP: make sure this gets cleaned up
   SET_STATE(RelaxingLift);
   const float relaxTime = 0.15f;
@@ -317,14 +331,6 @@ void BehaviorPounceOnMotion::TransitionToResultAnim(Robot& robot)
   robot.GetMoveComponent().EnableLiftPower(true);
 }
   
-void BehaviorPounceOnMotion::TransitionToBackUp(Robot& robot)
-{
-  SET_STATE(BackUp);
-  IActionRunner* driveAction = new DriveStraightAction(robot, _backUpDistance, 50.0f);
-  _waitForActionTag = driveAction->GetTag();
-  robot.GetActionList().QueueActionNow(driveAction);
-}
-  
 void BehaviorPounceOnMotion::SetState_internal(State state, const std::string& stateName)
 {
   _state = state;
@@ -346,10 +352,7 @@ Result BehaviorPounceOnMotion::InitInternal(Robot& robot)
 
 IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
 {
-
   float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
-  
   switch( _state )
   {
     case State::Inactive:
@@ -363,6 +366,10 @@ IBehavior::Status BehaviorPounceOnMotion::UpdateInternal(Robot& robot)
       {
         PRINT_NAMED_INFO("BehaviorPounceOnMotion.Timeout", "No motion found, giving up");
         SET_STATE(Complete);
+      }
+      else if ( _lastTimeRotate + _maxTimeBeforeRotate < currentTime_sec )
+      {
+        TransitionToRotateToWatchingNewArea(robot);
       }
       break;
     }
