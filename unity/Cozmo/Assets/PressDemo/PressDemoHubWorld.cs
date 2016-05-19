@@ -123,7 +123,7 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void StartFaceEnrollmentActivity() {
     DAS.Debug(this, "Starting Face Enrollment Activity");
-    FaceEnrollment.FaceEnrollmentGame faceEnrollment = PlayMinigame(_FaceEnrollmentChallengeData, progressSceneWhenMinigameOver: false) as FaceEnrollment.FaceEnrollmentGame;
+    FaceEnrollment.FaceEnrollmentGame faceEnrollment = PlayMinigame(_FaceEnrollmentChallengeData, progressSceneWhenMinigameOver: false, playGameSpecificMusic: false) as FaceEnrollment.FaceEnrollmentGame;
     _RequestDialog = null;
     // demo mode should not be saving faces to the actual robot.
     faceEnrollment.SetSaveToRobot(false);
@@ -132,12 +132,12 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void StartSpeedTapGame() {
     DAS.Debug(this, "Starting Speed Tap Game");
-    PlayMinigame(_SpeedTapChallengeData, progressSceneWhenMinigameOver: false);
+    PlayMinigame(_SpeedTapChallengeData, progressSceneWhenMinigameOver: false, playGameSpecificMusic: true);
     int maxLevel = _SpeedTapChallengeData.MinigameConfig.SkillConfig.GetMaxLevel();
     SkillSystem.Instance.SetDebugSkillsForGame(maxLevel, maxLevel, maxLevel);
   }
 
-  private GameBase PlayMinigame(ChallengeData challengeData, bool progressSceneWhenMinigameOver) {
+  private GameBase PlayMinigame(ChallengeData challengeData, bool progressSceneWhenMinigameOver, bool playGameSpecificMusic) {
     _ProgressSceneWhenMinigameOver = progressSceneWhenMinigameOver;
 
     _PressDemoViewInstance.OnForceProgress -= HandleForceProgressPressed;
@@ -149,7 +149,7 @@ public class PressDemoHubWorld : HubWorldBase {
 
     GameObject newMiniGameObject = GameObject.Instantiate(challengeData.MinigamePrefab);
     _MiniGameInstance = newMiniGameObject.GetComponent<GameBase>();
-    _MiniGameInstance.InitializeMinigame(challengeData);
+    _MiniGameInstance.InitializeMinigame(challengeData, playGameSpecificMusic);
     _MiniGameInstance.OnMiniGameQuit += HandleMiniGameQuit;
     _MiniGameInstance.OnMiniGameWin += HandleMinigameOver;
     _MiniGameInstance.OnMiniGameLose += HandleMinigameOver;

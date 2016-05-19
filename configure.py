@@ -220,10 +220,20 @@ class GamePlatformConfiguration(object):
         self.platform_output_dir = os.path.join(options.output_dir, self.platform)
         self.unity_project_root = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME)
         self.unity_plugin_dir = os.path.join(self.unity_project_root, 'Assets', 'Plugins')
+        self.unity_scripts_dir = os.path.join(self.unity_project_root, 'Assets', 'Scripts')
 
         # TODO: When processors has more than one option make a parameter.
         self.processors = ["armeabi-v7a"]
         self.engine_generated = os.path.join(ENGINE_ROOT, "generated", self.platform)
+
+        #because these is being deleted no matter what it must exist for all configurations.
+        self.android_unity_plugin_dir = os.path.join(self.unity_plugin_dir, 'Android', 'libs')
+
+
+        self.symlink_keys = ['opencv', 'sphinx', 'HockeyApp']
+        # The keys defined in symlink must exist in the following dictionaries
+        self.unity_symlink = {}
+        self.unity_target = {}
 
         if platform != 'android':
             self.gyp_dir = os.path.join(GAME_ROOT, 'project', 'gyp')
@@ -245,7 +255,6 @@ class GamePlatformConfiguration(object):
 
             self.android_opencv_target = os.path.join(CTE_ROOT, 'build', 'opencv-android',
                                                       'OpenCV-android-sdk', 'sdk', 'native', 'libs')
-            self.android_unity_plugin_dir = os.path.join(self.unity_plugin_dir, self.platform.title())
 
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
@@ -273,17 +282,14 @@ class GamePlatformConfiguration(object):
                 self.other_cs_flags = None
 
             self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
-
-            self.unity_opencv_symlink = os.path.join(self.unity_xcode_project_dir, 'opencv')
-
-            self.unity_opencv_symlink_target = os.path.join(CTE_ROOT, 'build', 'opencv-ios')
-            self.unity_sphinx_symlink = os.path.join(self.unity_xcode_project_dir, 'sphinx')
-            self.unity_sphinx_symlink_target = os.path.join(CTE_ROOT,
+            #there should be a 1-to-1 with self.symlink_list for _symlink
+            for sl in self.symlink_keys:
+                self.unity_symlink[sl] = os.path.join(self.unity_xcode_project_dir, sl)
+            self.unity_target['opencv'] = os.path.join(CTE_ROOT, 'build', 'opencv-ios')
+            self.unity_target['sphinx'] = os.path.join(CTE_ROOT,
                                                             'pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos')
-            self.unity_hockeyapp_symlink = os.path.join(self.unity_xcode_project_dir, 'HockeyApp')
-            self.unity_hockeyapp_symlink_target = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine', 'lib',"HockeySDK-iOS")
+            self.unity_target['HockeyApp'] = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine', 'lib', "HockeySDK-iOS")
 
-            self.unity_build_symlink = os.path.join(self.unity_xcode_project_dir, 'UnityBuild')
             self.artifact_dir = os.path.join(self.platform_build_dir, 'app-{0}'.format(self.platform))
             self.artifact_path = os.path.join(self.artifact_dir, '{0}.app'.format(PRODUCT_NAME.lower()))
 
@@ -350,9 +356,6 @@ class GamePlatformConfiguration(object):
 
             workspace.add_scheme_ios(self.scheme, relative_unity_xcode_project)
 
-            if not os.path.exists(self.unity_opencv_symlink_target):
-                sys.exit('ERROR: opencv does not appear to have been built for ios. Please build opencv for ios.')
-
             xcconfig = [
                 'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
                 'ANKI_BUILD_UNITY_PROJECT_PATH=${ANKI_BUILD_REPO_ROOT}/unity/Cozmo',  # {0}'.format(PRODUCT_NAME),
@@ -373,16 +376,15 @@ class GamePlatformConfiguration(object):
 
             ankibuild.util.File.mkdir_p(self.unity_build_dir)
             ankibuild.util.File.ln_s(self.platform_output_dir, self.unity_output_symlink)
-            ankibuild.util.File.ln_s(self.unity_opencv_symlink_target, self.unity_opencv_symlink)
-            ankibuild.util.File.ln_s(self.unity_sphinx_symlink_target, self.unity_sphinx_symlink)
-            ankibuild.util.File.ln_s(self.unity_hockeyapp_symlink_target, self.unity_hockeyapp_symlink)
+            for sl in self.symlink_keys:
+                ankibuild.util.File.ln_s(self.unity_target[sl], self.unity_symlink[sl])
             ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
             ankibuild.util.File.mkdir_p(self.artifact_dir)
         elif self.platform == 'android':
             ankibuild.util.File.mkdir_p(self.android_unity_plugin_dir)
             for chipset in self.processors:
                 # TODO: create a cp_r in util.
-                libfolder = os.path.join(self.android_unity_plugin_dir, "libs", chipset)
+                libfolder = os.path.join(self.android_unity_plugin_dir, chipset)
                 # TODO: change cp -r steps to linking steps for android assets
                 copytree(os.path.join(self.android_opencv_target, chipset), libfolder)
         else:
@@ -399,8 +401,8 @@ class GamePlatformConfiguration(object):
             self.call_engine(self.options.command)
             # move files.
             # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
-            ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib", "libcozmoEngine.so"),
-                                   os.path.join(self.android_unity_plugin_dir, "libs"))
+            ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
+                                                "libcozmoEngine.so"), self.android_unity_plugin_dir)
             # move third ndk libs.
             self.move_ndk()
             # Call unity for game
@@ -458,7 +460,7 @@ class GamePlatformConfiguration(object):
             for lib_type in ndk:
                 original = os.path.join(self.android_ndk_root, ndk_values['{0}_path'.format(lib_type)],
                                         chipset, ndk_values[lib_type])
-                copy = os.path.join(self.android_unity_plugin_dir, 'libs', chipset)
+                copy = os.path.join(self.android_unity_plugin_dir, chipset)
                 if os.path.isfile(original):
                     ankibuild.util.File.cp(original, copy)
                 else:
@@ -510,17 +512,19 @@ class GamePlatformConfiguration(object):
 
     def delete(self):
         if self.options.verbose:
-            print_status('Deleting generated files for platform {0}...'.format(self.platform))
+            print_status('Deleting generated files ...')
 
-        # reverse generation
-        if self.platform == 'ios':
-            ankibuild.util.File.rm(self.unity_build_symlink)
-            ankibuild.util.File.rm(self.unity_output_symlink)
-            ankibuild.util.File.rm(self.unity_opencv_symlink)
-        if self.platform == 'android':
+        for sl in self.symlink_keys:
+            if os.path.exists(os.path.join('unity', 'ios', sl)):
+                ankibuild.util.File.rm(sl)
+        if os.path.exists(self.android_unity_plugin_dir):
             ankibuild.util.File.rm_rf(self.android_unity_plugin_dir)
-        ankibuild.util.File.rm_rf(self.platform_build_dir)
-        ankibuild.util.File.rm_rf(self.platform_output_dir)
+        if os.path.exists(os.path.join(self.unity_scripts_dir, 'Generated')):
+            ankibuild.util.File.rm_rf(os.path.join(self.unity_scripts_dir, 'Generated'))
+            ankibuild.util.File.rm(os.path.join(self.unity_scripts_dir, 'Generated.meta'))
+
+        ankibuild.util.File.rm_rf(self.options.build_dir)
+        ankibuild.util.File.rm_rf(self.options.output_dir)
 
 
 ###############

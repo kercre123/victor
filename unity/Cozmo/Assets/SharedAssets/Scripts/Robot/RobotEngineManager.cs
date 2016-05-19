@@ -110,7 +110,6 @@ public class RobotEngineManager : MonoBehaviour {
   public U2G.MessageGameToEngine Message { get { return _MessageOut.Message; } }
 
   private U2G.StartEngine StartEngineMessage = new U2G.StartEngine();
-  private U2G.ForceAddRobot ForceAddRobotMessage = new U2G.ForceAddRobot();
   private U2G.ConnectToRobot ConnectToRobotMessage = new U2G.ConnectToRobot();
   private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice(UiConnectionType.UI, 0);
 
@@ -270,9 +269,6 @@ public class RobotEngineManager : MonoBehaviour {
     var message = messageIn.Message;
     switch (message.GetTag()) {
     case G2U.MessageEngineToGame.Tag.Ping:
-      break;
-    case G2U.MessageEngineToGame.Tag.RobotAvailable:
-      ReceivedSpecificMessage(message.RobotAvailable);
       break;
     case G2U.MessageEngineToGame.Tag.UiDeviceAvailable:
       ReceivedSpecificMessage(message.UiDeviceAvailable);
@@ -445,13 +441,6 @@ public class RobotEngineManager : MonoBehaviour {
     if (OnRobotAnimationEvent != null) {  
       OnRobotAnimationEvent(message);
     }
-  }
-
-  private void ReceivedSpecificMessage(G2U.RobotAvailable message) {
-    ConnectToRobotMessage.robotID = (byte)message.robotID;
-
-    Message.ConnectToRobot = ConnectToRobotMessage;
-    SendMessage();
   }
 
   private void ReceivedSpecificMessage(G2U.UiDeviceAvailable message) {
@@ -880,16 +869,16 @@ public class RobotEngineManager : MonoBehaviour {
       throw new ArgumentNullException("robotIP");
     }
 
-    if (Encoding.UTF8.GetByteCount(robotIP) + 1 > ForceAddRobotMessage.ipAddress.Length) {
+    if (Encoding.UTF8.GetByteCount(robotIP) + 1 > ConnectToRobotMessage.ipAddress.Length) {
       throw new ArgumentException("IP address too long.", "robotIP");
     }
-    int length = Encoding.UTF8.GetBytes(robotIP, 0, robotIP.Length, ForceAddRobotMessage.ipAddress, 0);
-    ForceAddRobotMessage.ipAddress[length] = 0;
+    int length = Encoding.UTF8.GetBytes(robotIP, 0, robotIP.Length, ConnectToRobotMessage.ipAddress, 0);
+    ConnectToRobotMessage.ipAddress[length] = 0;
     
-    ForceAddRobotMessage.robotID = (byte)robotID;
-    ForceAddRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
+    ConnectToRobotMessage.robotID = (byte)robotID;
+    ConnectToRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
 
-    Message.ForceAddRobot = ForceAddRobotMessage;
+    Message.ConnectToRobot = ConnectToRobotMessage;
     SendMessage();
   }
 
