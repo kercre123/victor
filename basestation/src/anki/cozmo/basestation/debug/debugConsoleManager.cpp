@@ -222,8 +222,8 @@ namespace Cozmo {
         {
           enum { kBufferSize = 512 };
           char buffer[kBufferSize];
-          NativeAnkiUtilConsoleCallFunction( msg.funcName.c_str(), msg.funcArgs.c_str(), kBufferSize, buffer);
-          SendVerifyDebugConsoleFuncMessage(_externalInterface, msg.funcName.c_str(), buffer, true);
+          const uint32_t res = NativeAnkiUtilConsoleCallFunction( msg.funcName.c_str(), msg.funcArgs.c_str(), kBufferSize, buffer);
+          SendVerifyDebugConsoleFuncMessage(_externalInterface, msg.funcName.c_str(), buffer, (res != 0));
         }
         else
         {

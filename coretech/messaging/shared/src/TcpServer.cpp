@@ -5,10 +5,15 @@
 #include <cstring>      // Needed for memset
 #include <sys/socket.h> // Needed for the socket functions
 #include <netdb.h>      // Needed for the socket functions
+#include <netinet/tcp.h> // for tcp no delay
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <assert.h>
 #include <errno.h>
+
+#ifdef __ANDROID__
+#include <linux/in.h>
+#endif
 
 TcpServer::TcpServer()
 {
@@ -81,7 +86,8 @@ bool TcpServer::StartListening(const unsigned short port)
     int yes = 1;
     status = setsockopt(socketfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
 
-
+    status = setsockopt(socketfd, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(int));
+  
     //status = setsockopt(socketfd, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int));  // For auto-detecting disconnected clients.
     set_nonblock(socketfd);
     if (status == -1) {
@@ -94,6 +100,8 @@ bool TcpServer::StartListening(const unsigned short port)
       std::cerr << "**** ERROR: bind error (You might have orphaned processes running) ****\n";
       return false;
     }
+  
+    freeaddrinfo(host_info_list);
 
     DEBUG_TCP_SERVER("TcpServer: Listening for connections...");
 
@@ -111,7 +119,6 @@ void TcpServer::StopListening()
   if (socketfd >= 0) {
     DEBUG_TCP_SERVER("TcpServer: Stopping server listening on socket " << socketfd);
     
-    freeaddrinfo(host_info_list);
     close(socketfd);
     socketfd = -1;
     return;
@@ -160,7 +167,7 @@ int TcpServer::Send(const char* data, int size)
     return -1;
   }
 
-  DEBUG_TCP_SERVER("TcpServer: sending   " << data);
+  DEBUG_TCP_SERVER_VERBOSE("TcpServer: sending " << size << " bytes " << data);
 
   const ssize_t bytes_sent = send(client_sd, data, size, 0);
   
@@ -195,7 +202,7 @@ int TcpServer::Recv(char* data, int maxSize)
       bytes_received = 0;
     }
   } else {
-    DEBUG_TCP_SERVER("TcpServer: " << bytes_received << " bytes received : " << data);
+    DEBUG_TCP_SERVER_VERBOSE("TcpServer: " << bytes_received << " bytes received : " << data);
   }
 
   if(bytes_received > std::numeric_limits<int>::max()) {

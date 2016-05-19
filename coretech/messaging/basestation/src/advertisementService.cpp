@@ -81,9 +81,15 @@ namespace Anki {
             const uint8_t* innerMessageBytes = &messageData[sizeof(RegMsgTag)];
             const size_t   innerMessageSize  = bytes_recvd - sizeof(RegMsgTag);
           
-            regMsg.Unpack(innerMessageBytes, innerMessageSize);
-            
-            ProcessRegistrationMsg(regMsg);
+            const size_t bytesUnpacked = regMsg.Unpack(innerMessageBytes, innerMessageSize);
+            if (bytesUnpacked == innerMessageSize)
+            {
+              ProcessRegistrationMsg(regMsg);
+            }
+            else
+            {
+              PRINT_NAMED_WARNING("AdvertisementService.Recv.ErrorUnpacking", "Unpacked %zu bytes, expected %zu", bytesUnpacked, innerMessageSize);
+            }
           }
           else
           {
