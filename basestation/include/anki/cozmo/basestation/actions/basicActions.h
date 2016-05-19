@@ -556,6 +556,8 @@ namespace Anki {
       virtual const std::string& GetName() const override { return _name; }
       virtual RobotActionType GetType() const override { return RobotActionType::WAIT_FOR_LAMBDA; }
 
+      virtual u8 GetTracksToLock() const override { return (u8)AnimTrackFlag::NO_TRACKS; }
+
       virtual f32 GetTimeoutInSeconds() const override { return std::numeric_limits<f32>::max(); }
       
     protected:
