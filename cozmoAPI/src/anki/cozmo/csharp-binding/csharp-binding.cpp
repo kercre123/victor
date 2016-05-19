@@ -16,6 +16,7 @@
 #include "anki/common/basestation/jsonTools.h"
 #include "anki/common/basestation/utils/data/dataPlatform.h"
 
+#include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
