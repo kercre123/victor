@@ -160,4 +160,6 @@ void Anki::Cozmo::HAL::OLED::DisplayDigit(int x, int y, int digit) {
   I2C::Write(SLAVE_WRITE(SLAVE_ADDRESS), 
     DIGITS[digit], 
     sizeof(DIGITS[digit]));
+    
+  I2C::Flush();
 }

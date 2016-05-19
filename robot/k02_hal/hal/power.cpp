@@ -16,14 +16,15 @@ namespace Anki
       {  
         void enableEspressif(void)
         {
-          // Pull-down SCK during ESP8266 boot
-          GPIO_RESET(GPIO_MISO, PIN_MISO);
-          GPIO_OUT(GPIO_MISO, PIN_MISO);
-          SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
-
+          // Pull-down MISO during ESP8266 boot
+          // XXX: Daniel says disable this to allow esp_tool/fixture to work until bootloader "test mode"
+          //GPIO_RESET(GPIO_MISO, PIN_MISO);
+          //GPIO_OUT(GPIO_MISO, PIN_MISO);
+          //SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
+          
           // Pull-down SCK during ESP8266 boot
           GPIO_RESET(GPIO_SCK, PIN_SCK);
-          GPIO_OUT(GPIO_SCK, PIN_SCK);
+          GPIO_OUT(GPIO_SCK, PIN_SCK);    // XXX: Driving SCK low here is bad for the ESP, why not pulldown?
           SOURCE_SETUP(GPIO_SCK, SOURCE_SCK, SourceGPIO);
           
           // Weakly pull MOSI high to put ESP8266 into flash boot mode
@@ -58,10 +59,11 @@ namespace Anki
           while((MCG->S & MCG_S_CLKST_MASK))    ;
 
           MicroWait(100);     // Because of erratum e7735: Wait 2 IRC cycles (or 2/32.768KHz)
+          
+          GPIO_IN(GPIO_SCK, PIN_SCK);   // XXX: Shouldn't we turn around SCK sooner? Are we driving against each other?
           #endif
 
           GPIO_IN(GPIO_MISO, PIN_MISO);
-          GPIO_IN(GPIO_SCK, PIN_SCK);
         }
         
         void disableEspressif(void)

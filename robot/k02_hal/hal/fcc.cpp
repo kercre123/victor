@@ -6,6 +6,9 @@
 
 #include "anki/cozmo/robot/spineData.h"
 
+#include "hal/portable.h"
+#include "MK02F12810.h"
+#include "hardware.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
@@ -41,7 +44,7 @@ static const DTM_Mode_Settings DTM_MODE[] = {
 
 static const int DTM_MODE_COUNT  = sizeof(DTM_MODE) / sizeof(DTM_Mode_Settings);
 
-static int abs(int x) {
+static int iabs(int x) {
   return (x < 0) ? -x : x;
 }
 
@@ -84,11 +87,6 @@ static void runTest(int mode) {
 }
 
 void Anki::Cozmo::HAL::FCC::start(void) { 
-  // Disable espressif test mode
-  EnterFactoryTestMode eftm;
-  eftm.mode = FTM_None;
-  SendMessage(eftm);
-
   // Enable body radio mode
   SetBodyRadioMode msg;
   msg.radioMode = BODY_DTM_OPERATING_MODE;  
@@ -97,17 +95,64 @@ void Anki::Cozmo::HAL::FCC::start(void) {
   configureTest(0);
 }
 
-
+// See "ESP8266 Certification and Test Guide" for details on the command format
+static const char* WIFI_TESTS[] = {
+  /* 0 = No Test            */  "CmdStop\r",
+  /* 1 = 2412MHz 0dB 1Mbps  */  "WifiTxout 1 1 0 0\r",
+  /* 2 = 2412MHz 0dB 1Mbps  */  "WifiTxout 1 1 0 0\r",
+  /* 3 = 2412MHz 0dB 1Mbps  */  "WifiTxout 1 1 0 0\r",
+};
+#define WIFI_TEST_COUNT (sizeof(WIFI_TESTS)/sizeof(char*))
+static void sendWifiCommand(int test) {
+  // Stop any running test first
+  static int running = 0;
+  if (test >= WIFI_TEST_COUNT)
+    test = 0;
+  if (running && test)
+    sendWifiCommand(0);
+  // Don't do anything if test is already running
+  if (test == running)
+    return;
+  running = test;
+  
+  // All we have is a bit-bang UART with no feedback.. so don't send commands too frequently!
+  const u32 DIVISOR = (32768*2560)/(115200);   // K02 weird RC clock / ESP baud rate
+  
+  // Send some start bits before the string
+  GPIO_SET(GPIO_MISO, PIN_MISO);
+  GPIO_OUT(GPIO_MISO, PIN_MISO);
+  Anki::Cozmo::HAL::MicroWait(100);
+  
+  const char* s = WIFI_TESTS[test];
+  while (*s)
+  {
+    u16 now, last = SysTick->VAL;
+    u16 c = *s++;
+    c <<= 1;      // Start bit
+    c |= (3<<9);  // Stop bits (always 2)
+    for (int i = 0; i < 11; i++)
+    {
+      // This line relies on 100MHz SysTick->LOAD in timer.cpp (despite our 84MHz actual clock)
+      while (((last-(now = SysTick->VAL))&65535) < DIVISOR) // And don't forget Systick counts DOWN
+        ;
+      last = now;
+      if (c & (1<<i))
+        GPIO_SET(GPIO_MISO, PIN_MISO);
+      else
+        GPIO_RESET(GPIO_MISO, PIN_MISO);      
+    }
+  }
+}
 
 void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
   // If the motors are not going crazy, use wheel positions for
   // selecting things
   if (!DTM_MODE[current_mode].motor_drive) {
-    static int configuring_motor = g_dataToHead.positions[0];
-    bool select = abs(configuring_motor - g_dataToHead.positions[0]) > 0x400;
+    static int configuring_motor = g_dataToHead.positions[2];
+    bool select = iabs(configuring_motor - g_dataToHead.positions[2]) > 0x400;
 
     if (select) {
-      configuring_motor = g_dataToHead.positions[0];
+      configuring_motor = g_dataToHead.positions[2];
       
       // Set our run mode
       if (current_mode != target_mode) {
@@ -116,19 +161,25 @@ void Anki::Cozmo::HAL::FCC::mainDTMExecution(void) {
     }
   }
 
-  // Target mode is set based on the position of the left tred
-  target_mode = (unsigned int)(g_dataToHead.positions[1] >> 10) % DTM_MODE_COUNT;
+  // Target mode is set based on the position of the right tread
+  target_mode = (unsigned int)(g_dataToHead.positions[0] >> 9) % DTM_MODE_COUNT;
 
   // Display current mode and what we would like to test
   static bool displayNum = false;
 
   static int updates = 0;
   
-  if (++updates >= 10) {   
-    OLED::DisplayDigit(0, 0, current_mode);
-    OLED::DisplayDigit(6, 0, target_mode);
-  }
+  updates = (updates+1) & 7;
+  if (0 == updates)
+    OLED::DisplayDigit(6, 0, target_mode / 10);
+  if (1 == updates)
+    OLED::DisplayDigit(12, 0, target_mode % 10);
+  if (2 == updates)
+    OLED::DisplayDigit(110, 0, current_mode / 10);
+  if (3 == updates)
+    OLED::DisplayDigit(116, 0, current_mode % 10);
 
+  //sendWifiCommand(current_mode);
   runTest(current_mode);
 }
 
