@@ -202,8 +202,8 @@ public class FactoryIntroManager : MonoBehaviour {
   }
 
   private void FactoryResult(FactoryTestResult result) {
-    SetStatusText("Result Code: " + (int)result.resultCode + " (" + result.resultCode + ")");
-    if (result.resultCode == Anki.Cozmo.FactoryTestResultCode.SUCCESS) {
+    SetStatusText("Result Code: " + (int)result.resultEntry.result + " (" + result.resultEntry.result + ")");
+    if (result.resultEntry.result == Anki.Cozmo.FactoryTestResultCode.SUCCESS) {
       TestPassed();
     }
     else {
@@ -215,7 +215,7 @@ public class FactoryIntroManager : MonoBehaviour {
     if (_DevConnectDialogInstance == null && _DevConnectDialog != null) {
       _DevConnectDialogInstance = GameObject.Instantiate(_DevConnectDialog.gameObject);
     }
-    _DevConnectDialogInstance.GetComponent<Intro>().Play(_IsSim);
+    _DevConnectDialogInstance.GetComponent<ConnectDialog>().Play(_IsSim);
   }
 
   private void HideDevConnectDialog() {
