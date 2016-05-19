@@ -112,34 +112,9 @@ namespace BackpackLightController {
   //       until the robot comes off the charger. This may or may not be what we want.
   void SetCurrParams()
   {
-    bool isCharged = HAL::BatteryGetVoltage10x() >= CHARGED_BATT_VOLTAGE_10x;
-
-    // Hysteresis on charging light pattern
     if (HAL::BatteryIsOnCharger()) {
-      if (isCharged) {
-        if (_isChargedCount < LIGHT_TRANSITION_CYCLE_COUNT_THRESHOLD ) {
-          ++_isChargedCount;
-        }
-      } else {
-        if (_isChargedCount > -LIGHT_TRANSITION_CYCLE_COUNT_THRESHOLD) {
-          --_isChargedCount;
-        }
-      }
-    } else {
-      _isChargedCount = 0;
-    }
-
-    if (HAL::BatteryIsOnCharger()) {
-      if ((_currParams != &_chargingParams) && _isChargedCount <= 0)
-      {
-        // Reset current lights and switch to charging lights
-        SetParams(_chargingParams);
-      }
-      else if ((_currParams != &_chargedParams) && _isChargedCount > 0)
-      {
-        // Reset current lights and switch to charged lights
-        SetParams(_chargedParams);
-      }
+      // Reset current lights and switch to charging lights
+      SetParams(_chargingParams);
     }
     else if (!HAL::BatteryIsOnCharger() && _currParams != &_ledParams)
     {
