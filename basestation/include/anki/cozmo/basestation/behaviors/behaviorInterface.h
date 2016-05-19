@@ -368,8 +368,8 @@ public:
 
   // if a trigger tag is received, this function will be called. If it returns true, this behavior will run
   // immediately
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const { return true; }
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageGameToEngine& event) const { return true; }
+  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) { return true; }
+  virtual bool ShouldRunForEvent(const ExternalInterface::MessageGameToEngine& event) { return true; }
     
   virtual IReactionaryBehavior* AsReactionaryBehavior() override { return this; }
 

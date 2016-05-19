@@ -62,7 +62,7 @@ void BehaviorReactToOnCharger::StopInternal(Robot& robot)
 {
 }
 
-bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const
+bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event)
 {
   if( event.GetTag() != MessageEngineToGameTag::ChargerEvent )
   {

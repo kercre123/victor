@@ -77,10 +77,15 @@ void BehaviorDemoFearEdge::TransitionToBackingUpForPounce(Robot& robot)
 {
   SET_STATE(BackingUpForPounce);
 
-  DriveStraightAction* action = new DriveStraightAction(robot, -kBackupDriveDist_mm, -kBackupDriveSpeed_mmps);
+  DriveStraightAction* action = new DriveStraightAction(robot, -kBackupDriveDist_mm, kBackupDriveSpeed_mmps);
   action->SetAccel(kBackupDriveAccel);
   action->SetDecel(kBackupDriveDecel);
-  StartActing(action);
+  StartActing(action, &BehaviorDemoFearEdge::TransitionToFinished);
+}
+
+void BehaviorDemoFearEdge::TransitionToFinished()
+{
+  SET_STATE(Finished);
 }
 
 void BehaviorDemoFearEdge::SetState_internal(State state, const std::string& stateName)

@@ -22,6 +22,7 @@
 namespace Anki {
 namespace Cozmo {
 
+class BehaviorDemoFearEdge;
 class BlockWorldFilter;
 class ObservableObject;
 class Robot;
@@ -95,6 +96,7 @@ private:
   bool _hasSeenBlock = false;
 
   IBehavior* _faceSearchBehavior = nullptr;
+  BehaviorDemoFearEdge* _fearEdgeBehavior = nullptr;
 
   bool _encourageFaceBehavior = false;
   

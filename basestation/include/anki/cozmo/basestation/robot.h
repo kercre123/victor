@@ -451,6 +451,7 @@ public:
     */
 
     void SetEnableCliffSensor(bool val) { _enableCliffSensor = val; }
+    bool IsCliffSensorEnabled() const { return _enableCliffSensor; }
   
     // Returns true if a cliff event was detected
     bool IsCliffDetected() const { return _isCliffDetected; }

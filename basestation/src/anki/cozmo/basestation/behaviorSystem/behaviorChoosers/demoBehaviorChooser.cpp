@@ -27,6 +27,7 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "json/json.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -37,7 +38,7 @@ namespace Cozmo {
 
 static const char* kWakeUpBehavior = "demo_wakeUp";
 static const char* kFearEdgeBehavior = "demo_fearEdge";
-static const char* kCliffBehavior = "ReactToCliff";
+// static const char* kCliffBehavior = "ReactToCliff";
 static const char* kFlipDownFromBackBehavior = "ReactToRobotOnBack";
 static const char* kSleepBehavior = "demo_sleep";
 static const char* kFindFacesBehavior = "demo_lookInPlaceForFaces";
@@ -74,7 +75,16 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
                       "couldnt get pointer to behavior '%s', won't be able to search for faces in mini game scene",
                       kFindFacesBehavior);
   }
-  
+
+  _fearEdgeBehavior = static_cast<BehaviorDemoFearEdge*>(
+    _robot.GetBehaviorFactory().FindBehaviorByName(kFearEdgeBehavior) );
+
+  if( nullptr == _fearEdgeBehavior ) {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.NoFearEdgeBehavior",
+                      "couldn't find behavior '%s', demo won't work",
+                      kFearEdgeBehavior);
+  }
+    
   _name = "Demo[]";
 
   SetAllBehaviorsEnabled(false);
@@ -225,7 +235,7 @@ void DemoBehaviorChooser::TransitionToFearEdge()
 
   // will transition when the fear edge is interrupted by cliff
   _checkTransition = [this]() {
-    return DidBehaviorRunAndStop(kFearEdgeBehavior) && DidBehaviorRunAndStop(kCliffBehavior);
+    return _fearEdgeBehavior != nullptr && _fearEdgeBehavior->HasFinished();
   };
 }
 

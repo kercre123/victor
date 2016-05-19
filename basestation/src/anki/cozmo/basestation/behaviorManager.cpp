@@ -90,8 +90,6 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     // TODO:(bn) load these from json? A special reactionary behaviors list?
     BehaviorFactory& behaviorFactory = GetBehaviorFactory();
     AddReactionaryBehavior(
-      behaviorFactory.CreateBehavior(BehaviorType::ReactToStop,  _robot, config)->AsReactionaryBehavior() );
-    AddReactionaryBehavior(
       behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior(
       behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
