@@ -54,7 +54,8 @@ enum int_32 RobotActionType {
     TURN_TOWARDS_LAST_FACE_POSE,
     READ_TOOL_CODE,
     SAY_TEXT, 
-    ENROLL_NAMED_FACE
+    ENROLL_NAMED_FACE,
+    FLIP_BLOCK
 }
 
 

@@ -377,7 +377,7 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
 {
   SET_STATE(PlayingFinalAnim);
 
-  robot.GetBehaviorManager().GetWhiteboard().SetHasStackToAdmire(_targetBlockTop);
+  robot.GetBehaviorManager().GetWhiteboard().SetHasStackToAdmire(_targetBlockTop, _targetBlockBottom);
 
   StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup));
   IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );

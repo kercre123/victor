@@ -306,8 +306,8 @@ def wipe_all(options, root_path, kill_unity=True):
     print_status('Checking what to remove:')
     old_dir = ankibuild.util.File.pwd()
     ankibuild.util.File.cd(root_path)
-    ankibuild.util.File.execute(['git', 'clean', '-Xdn'])
-    ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-Xdn'])
+    ankibuild.util.File.execute(['git', 'clean', '-xffdn'])
+    ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-xffdn'])
     prompt = 'Are you sure you want to wipe all ignored files and folders from the entire repository?'
     if kill_unity:
         prompt += ('\nYou will need to do a full reimport in Unity and rebuild everything from scratch.' +
@@ -322,7 +322,7 @@ def wipe_all(options, root_path, kill_unity=True):
             ankibuild.util.File.execute(['killall', 'Unity'], ignore_result=True)
         print_status('Wiping all ignored files from the entire repository...')
         ankibuild.util.File.execute(['git', 'clean', '-Xdf'])
-        ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-Xdf'])
+        ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-xdf'])
         ankibuild.util.File.cd(old_dir)
 
 
@@ -429,12 +429,18 @@ class EnginePlatformConfiguration(object):
                 sys.exit('[ERROR] running %s' % command)
 
     def delete(self):
+        exclude = 'EXTERNALS'
+
+        for root, dirs, files in os.walk(ENGINE_ROOT):
+            dirs[:] = [d for d in dirs if d not in exclude]
+            if "generated" in dirs:
+                if self.options.verbose:
+                    print_status('Deleting generated folders {0}/generated'.format(root))
+                ankibuild.util.File.rm_rf(os.path.join(root, "generated"))
         if self.options.verbose:
-            print_status('Deleting generated files for platform {0}...'.format(self.platform))
-        
-        ankibuild.util.File.rm_rf(self.platform_build_dir)
-        ankibuild.util.File.rm_rf(self.platform_output_dir)
-        
+            print_status('Deleting build folder {0}'.format(self.options.build_dir))
+        ankibuild.util.File.rm_rf(self.options.build_dir)
+
         
 ###############
 # ENTRY POINT #
@@ -459,20 +465,6 @@ def configure(options, root_path, platform_configuration_type, clad_folders, sha
         print_header('PLATFORM {0}:'.format(platform.upper()))
         config = platform_configuration_type(platform, options)
         config.process()
-    
-    if options.command in ('delete', 'wipeall!'):
-        if clad_folders:
-            if options.verbose:
-                print_status('Deleting clad files...')
-            for folder in clad_folders:
-                ankibuild.util.File.rm_rf(folder)
-        if shared_generated_folders:
-            if options.verbose:
-                print_status('Deleting generated folders (if empty)...')
-            for folder in shared_generated_folders:
-                ankibuild.util.File.rmdir(folder)
-        
-        # TODO: Delete generated CLAD
     
     if options.command == 'wipeall!':
         wipe_all(options, root_path)
