@@ -1322,14 +1322,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 106072}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 21b8c8186a3de4a2e8c3ba2de77de642, type: 3}
+  m_Script: {fileID: 11500000, guid: 035991f9bd3ad4473bc1ada057e27796, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _EngineIPInputField: {fileID: 11483324}
-  _RobotIPInputField: {fileID: 11489520}
-  _SimIPInputField: {fileID: 11409454}
-  _Error: {fileID: 11413692}
-  _RobotNameInputField: {fileID: 11433668}
 --- !u!114 &11483000
 MonoBehaviour:
   m_ObjectHideFlags: 1
