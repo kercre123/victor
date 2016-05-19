@@ -22,8 +22,6 @@
 #include "anki/cozmo/basestation/latticePlanner.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 
 using namespace Anki;
 using namespace Cozmo;

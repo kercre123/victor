@@ -385,11 +385,24 @@ void ReliableUDPChannel::Stop_Internal()
 
 ReliableUDPChannel::ConnectionData *ReliableUDPChannel::GetConnectionData(const TransportAddress& address)
 {
+  std::lock_guard<std::recursive_mutex> guard(mutex);
   auto found = _connectionDataMapping.find(address);
   if (found != _connectionDataMapping.end()) {
     return &found->second;
   }
   return nullptr;
+}
+
+
+bool ReliableUDPChannel::GetConnectionData(const TransportAddress& address, ReliableUDPChannel::ConnectionData& data_out) const
+{
+  std::lock_guard<std::recursive_mutex> guard(mutex);
+  auto found = _connectionDataMapping.find(address);
+  if (found != _connectionDataMapping.end()) {
+    data_out = found->second;
+    return true;
+  }
+  return false;
 }
 
 // mainly sets packet.sourceId

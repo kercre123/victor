@@ -17,6 +17,7 @@
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "clad/audio/messageAudioClient.h"
 #include "util/helpers/templateHelpers.h"
@@ -58,7 +59,7 @@ RobotAudioClient::RobotAudioClient( Robot* robot )
     SetRobotVolume( msg.volume );
   };
   
-  RobotInterface::MessageHandler* robotMsgHandler = context->GetRobotMsgHandler();
+  RobotInterface::MessageHandler* robotMsgHandler = context->GetRobotManager()->GetMsgHandler();
   if ( robotMsgHandler) {
     _signalHandles.push_back( robotMsgHandler->Subscribe( _robot->GetID(),
                                                           RobotInterface::RobotToEngineTag::syncTimeAck,

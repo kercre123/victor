@@ -22,109 +22,117 @@
 #include <string>
 
 
+namespace Json {
+  class Value;
+}
 
 namespace Anki {
   
-  namespace Util {
-  namespace Data {
-    class DataPlatform;
-  }
-  }
+namespace Util {
+namespace Data {
+  class DataPlatform;
+}
+}
+
+namespace Cozmo {
   
-  namespace Cozmo {
-    
-  // Forward declarations:
-  namespace RobotInterface {
-  class MessageHandler;
-  }
-  class Robot;
-  class IExternalInterface;
-  class CozmoContext;
-  class CannedAnimationContainer;
-  class AnimationGroupContainer;
-  class FirmwareUpdater;
-  class GameEventResponsesContainer;
+// Forward declarations:
+namespace RobotInterface {
+class MessageHandler;
+}
+class Robot;
+class IExternalInterface;
+class CozmoContext;
+class CannedAnimationContainer;
+class AnimationGroupContainer;
+class FirmwareUpdater;
+class GameEventResponsesContainer;
 
-    class RobotManager : Util::noncopyable
-    {
-    public:
-    
-      RobotManager(const CozmoContext* context);
-      
-      ~RobotManager();
-      
-      void Init();
-      
-      // Get the list of known robot ID's
-      std::vector<RobotID_t> const& GetRobotIDList() const;
+class RobotManager : Util::noncopyable
+{
+public:
 
-      // for when you don't care and you just want a damn robot
-      Robot* GetFirstRobot();
+  RobotManager(const CozmoContext* context);
+  
+  ~RobotManager();
+  
+  void Init(const Json::Value& config);
+  
+  // Get the list of known robot ID's
+  std::vector<RobotID_t> const& GetRobotIDList() const;
 
-      // Get a pointer to a robot by ID
-      Robot* GetRobotByID(const RobotID_t robotID);
-      
-      // Check whether a robot exists
-      bool DoesRobotExist(const RobotID_t withID) const;
-      
-      // Add / remove robots
-      void AddRobot(const RobotID_t withID);
-      void RemoveRobot(const RobotID_t withID);
-      
-      // Call each Robot's Update() function
-      void UpdateAllRobots();
-      
-      // Attempt to begin updating firmware to specified version (return false if it cannot begin)
-      bool InitUpdateFirmware(int version);
-      
-      // Update firmware (if appropriate) on every connected robot
-      bool UpdateFirmware();
-      
-      // Return a
-      // Return the number of availale robots
-      size_t GetNumRobots() const;
+  // for when you don't care and you just want a damn robot
+  Robot* GetFirstRobot();
 
-      // Events
-      using RobotDisconnectedSignal = Signal::Signal<void (RobotID_t)>;
-      RobotDisconnectedSignal& OnRobotDisconnected() { return _robotDisconnectedSignal; }
+  // Get a pointer to a robot by ID
+  Robot* GetRobotByID(const RobotID_t robotID);
+  
+  // Check whether a robot exists
+  bool DoesRobotExist(const RobotID_t withID) const;
+  
+  // Add / remove robots
+  void AddRobot(const RobotID_t withID);
+  void RemoveRobot(const RobotID_t withID);
+  
+  // Call each Robot's Update() function
+  void UpdateAllRobots();
+  
+  // Update robot connection state
+  void UpdateRobotConnection();
+  
+  // Attempt to begin updating firmware to specified version (return false if it cannot begin)
+  bool InitUpdateFirmware(int version);
+  
+  // Update firmware (if appropriate) on every connected robot
+  bool UpdateFirmware();
+  
+  // Return a
+  // Return the number of availale robots
+  size_t GetNumRobots() const;
 
-      CannedAnimationContainer& GetCannedAnimations() { return *_cannedAnimations; }
-      AnimationGroupContainer& GetAnimationGroups() { return *_animationGroups; }
-      
-      bool HasCannedAnimation(const std::string& animName);
-      bool HasAnimationGroup(const std::string& groupName);
-      bool HasAnimationResponseForEvent( GameEvent ev );
-      std::string GetAnimationResponseForEvent( GameEvent ev );
-      
-      // Read the animations in a dir
-      void ReadAnimationDir();
+  // Events
+  using RobotDisconnectedSignal = Signal::Signal<void (RobotID_t)>;
+  RobotDisconnectedSignal& OnRobotDisconnected() { return _robotDisconnectedSignal; }
 
-      // Iterate through the loaded animations and broadcast their names
-      void BroadcastAvailableAnimations();
+  CannedAnimationContainer& GetCannedAnimations() { return *_cannedAnimations; }
+  AnimationGroupContainer& GetAnimationGroups() { return *_animationGroups; }
+  
+  bool HasCannedAnimation(const std::string& animName);
+  bool HasAnimationGroup(const std::string& groupName);
+  bool HasAnimationResponseForEvent( GameEvent ev );
+  std::string GetAnimationResponseForEvent( GameEvent ev );
+  
+  // Read the animations in a dir
+  void ReadAnimationDir();
 
-    protected:
-      RobotDisconnectedSignal _robotDisconnectedSignal;
-      std::map<RobotID_t,Robot*> _robots;
-      std::vector<RobotID_t>     _IDs;
-      const CozmoContext* _context;
-      RobotEventHandler _robotEventHandler;
-      std::unique_ptr<CannedAnimationContainer>   _cannedAnimations;
-      std::unique_ptr<AnimationGroupContainer>    _animationGroups;
-      std::unique_ptr<FirmwareUpdater>            _firmwareUpdater;
-      std::unordered_map<std::string, time_t> _loadedAnimationFiles;
-      std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
-      std::unique_ptr<GameEventResponsesContainer> _gameEventResponses;
-      
-      void ReadAnimationDirImpl(const std::string& animationDir);
-      void ReadAnimationFile(const char* filename);
+  // Iterate through the loaded animations and broadcast their names
+  void BroadcastAvailableAnimations();
+  
+  RobotInterface::MessageHandler* GetMsgHandler() const { return _robotMessageHandler.get(); }
 
-      void ReadAnimationGroupDir();
-      void ReadAnimationGroupFile(const char* filename);
-      
-    }; // class RobotManager
-    
-    
-  } // namespace Cozmo
+protected:
+  RobotDisconnectedSignal _robotDisconnectedSignal;
+  std::map<RobotID_t,Robot*> _robots;
+  std::vector<RobotID_t>     _IDs;
+  const CozmoContext* _context;
+  RobotEventHandler _robotEventHandler;
+  std::unique_ptr<CannedAnimationContainer>   _cannedAnimations;
+  std::unique_ptr<AnimationGroupContainer>    _animationGroups;
+  std::unique_ptr<FirmwareUpdater>            _firmwareUpdater;
+  std::unordered_map<std::string, time_t> _loadedAnimationFiles;
+  std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
+  std::unique_ptr<GameEventResponsesContainer> _gameEventResponses;
+  std::unique_ptr<RobotInterface::MessageHandler> _robotMessageHandler;
+  
+  void ReadAnimationDirImpl(const std::string& animationDir);
+  void ReadAnimationFile(const char* filename);
+
+  void ReadAnimationGroupDir();
+  void ReadAnimationGroupFile(const char* filename);
+  
+}; // class RobotManager
+  
+} // namespace Cozmo
 } // namespace Anki
 
 

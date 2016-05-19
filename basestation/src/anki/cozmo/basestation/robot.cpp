@@ -145,7 +145,7 @@ namespace Anki {
       _isLocalized = true;
       SetLocalizedTo(nullptr);
       
-      InitRobotMessageComponent(_context->GetRobotMsgHandler(),robotID);
+      InitRobotMessageComponent(_context->GetRobotManager()->GetMsgHandler(),robotID);
       
       if (HasExternalInterface())
       {
@@ -210,7 +210,7 @@ namespace Anki {
 
       
       SetHeadAngle(_currentHeadAngle);
-      _pdo = new PathDolerOuter(_context->GetRobotMsgHandler(), robotID);
+      _pdo = new PathDolerOuter(_context->GetRobotManager()->GetMsgHandler(), robotID);
 
       if (nullptr != _context->GetDataPlatform()) {
         _longPathPlanner  = new LatticePlanner(this, _context->GetDataPlatform());
@@ -2540,7 +2540,7 @@ namespace Anki {
     
     Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
     {
-      Result sendResult = _context->GetRobotMsgHandler()->SendMessage(_ID, msg, reliable, hot);
+      Result sendResult = _context->GetRobotManager()->GetMsgHandler()->SendMessage(_ID, msg, reliable, hot);
       if(sendResult != RESULT_OK) {
         PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.", _ID);
       }
@@ -3253,7 +3253,7 @@ namespace Anki {
       m.onPeriod_ms = onPeriod_ms;
       m.offPeriod_ms = offPeriod_ms;
 
-      return _context->GetRobotMsgHandler()->SendMessage(GetID(), m);
+      return _context->GetRobotManager()->GetMsgHandler()>SendMessage(GetID(), m);
     }
        */
       
@@ -3433,5 +3433,15 @@ namespace Anki {
       return msg;
     }
     
+    RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
+    {
+      if (!_context->GetRobotManager())
+      {
+        ASSERT_NAMED(false, "Robot.GetRobotMessageHandler.nullptr");
+        return nullptr;
+      }
+        
+      return _context->GetRobotManager()->GetMsgHandler();
+    }
   } // namespace Cozmo
 } // namespace Anki

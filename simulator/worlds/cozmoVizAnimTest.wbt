@@ -32,5 +32,6 @@ CozmoVizDisplay {
 }
 WebotsKeyboardController {
   animationToSendName "ID_offCharger_thrustFwd"
-  forceAddRobot TRUE
+  forcedRobotIsSimulated FALSE
+  forcedRobotIP "172.31.1.1"
 }

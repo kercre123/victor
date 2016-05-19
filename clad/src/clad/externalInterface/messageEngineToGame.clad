@@ -35,11 +35,6 @@ namespace ExternalInterface {
 ///////////////////////////////////////////////////////////////////////////////
 
 
-// Let the UI know that a robot is advertising as available
-message RobotAvailable {
-    uint_32 robotID
-}
-
 message UiDeviceAvailable {
     UiConnectionType  connectionType,
     uint_32 deviceID

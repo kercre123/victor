@@ -41,7 +41,9 @@ namespace ExternalInterface {
 ///////////////////////////////////////////////////////////////////////////////
 
 message ConnectToRobot {
-    uint_8 robotID
+    uint_8 ipAddress[16],
+    uint_8 robotID,
+    uint_8 isSimulated
 }
 
 // ConnectToUiDevice
@@ -54,14 +56,6 @@ message ConnectToUiDevice {
 message DisconnectFromUiDevice {
     UiConnectionType  connectionType,
     uint_8 deviceID
-}
-
-// ForceAddRobot
-// NOTE: This can be removed once physical robots can advertise (e.g. with BLE
-message ForceAddRobot {
-    uint_8 ipAddress[16],
-    uint_8 robotID,
-    uint_8 isSimulated
 }
 
 // StartEngine

@@ -11,6 +11,7 @@
 
 #include "anki/cozmo/basestation/components/nvStorageComponent.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/common/robot/errorHandling.h"
@@ -45,7 +46,7 @@ NVStorageComponent::NVStorageComponent(Robot& inRobot, const CozmoContext* conte
     }
     
     // Setup robot message handlers
-    RobotInterface::MessageHandler *messageHandler = context->GetRobotMsgHandler();
+    RobotInterface::MessageHandler *messageHandler = context->GetRobotManager()->GetMsgHandler();
     RobotID_t robotId = _robot.GetID();
     
     using localHandlerType = void(NVStorageComponent::*)(const AnkiEvent<RobotInterface::RobotToEngine>&);

@@ -17,6 +17,13 @@
 #include "anki/common/types.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "util/signals/simpleSignal_fwd.h"
+
+#include <memory>
+
+namespace Json {
+  class Value;
+}
 
 namespace Anki {
 
@@ -24,10 +31,20 @@ namespace Comms {
 class IChannel;
 struct IncomingPacket;
 }
+  
+namespace Util {
+  class TransportAddress;
+}
 
 namespace Cozmo {
 
 class RobotManager;
+class CozmoContext;
+class MultiClientChannel;
+  
+namespace ExternalInterface {
+  struct ConnectToRobot;
+}
 
 namespace RobotInterface {
 
@@ -35,9 +52,9 @@ class MessageHandler {
 public:
 
   MessageHandler();
-  virtual ~MessageHandler(){};
+  virtual ~MessageHandler();
 
-  virtual void Init(Comms::IChannel* channel, RobotManager* robotMgr);
+  virtual void Init(const Json::Value& config, RobotManager* robotMgr, const CozmoContext* context);
 
   virtual void ProcessMessages();
 
@@ -46,18 +63,26 @@ public:
   Signal::SmartHandle Subscribe(const uint32_t robotId, const RobotInterface::RobotToEngineTag& tagType, std::function<void(const AnkiEvent<RobotInterface::RobotToEngine>&)> messageHandler) {
     return _eventMgr.Subscribe(robotId, static_cast<uint32_t>(tagType), messageHandler);
   }
+  
+  // Handle various event message types
+  template<typename T>
+  void HandleMessage(const T& msg);
+  
+  Result AddRobotConnection(const ExternalInterface::ConnectToRobot& connectMsg);
 
 protected:
   void Broadcast(const uint32_t robotId, const RobotInterface::RobotToEngine& message);
   void Broadcast(const uint32_t robotId, RobotInterface::RobotToEngine&& message);
 private:
   void ProcessPacket(const Comms::IncomingPacket& packet);
+  void VerifyRobotConnection();
 
   AnkiEventMgr<RobotInterface::RobotToEngine, MailboxSignalMap<RobotInterface::RobotToEngine> > _eventMgr;
-  Comms::IChannel* _channel;
+  std::unique_ptr<MultiClientChannel> _channel;
   RobotManager* _robotManager;
   bool _isInitialized;
-
+  std::vector<Signal::SmartHandle> _signalHandles;
+  std::unique_ptr<Util::TransportAddress> _cachedAddress;
   
 };
 

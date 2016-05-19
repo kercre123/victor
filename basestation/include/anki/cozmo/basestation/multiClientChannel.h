@@ -67,6 +67,8 @@ namespace Cozmo {
     // true if we are either trying to connect or currently sending/receiving with the connection
     virtual bool IsConnectionActive(ConnectionId connectionId) const override;
     
+    bool IsAddressConnected(const TransportAddress& transportAddress) const;
+    
     int32_t CountAdvertisingConnections() const;
     
     virtual int32_t CountActiveConnections() const override;

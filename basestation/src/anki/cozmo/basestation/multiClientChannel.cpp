@@ -339,6 +339,17 @@ bool MultiClientChannel::IsConnectionActive(ConnectionId connectionId) const
   return _reliableChannel.IsConnectionActive(connectionId);
 }
 
+bool MultiClientChannel::IsAddressConnected(const TransportAddress& transportAddress) const
+{
+  Comms::ReliableUDPChannel::ConnectionData connectionData(Comms::ReliableUDPChannel::ConnectionData::State::Disconnected);
+  if (!_reliableChannel.GetConnectionData(transportAddress, connectionData))
+  {
+    return false;
+  }
+  
+  return connectionData.state == Comms::ReliableUDPChannel::ConnectionData::State::Connected;
+}
+
 int32_t MultiClientChannel::CountAdvertisingConnections() const
 {
   return static_cast<int32_t>(_advertisingInfo.size());

@@ -67,17 +67,7 @@ namespace Anki {
       virtual uint32_t GetMaxTotalBytesPerMessage() const override;
       
       Anki::Util::ReliableTransport* GetReliableTransport() { return &reliableTransport; }
-
-    protected:
-
-      // NOTE: This method runs on a separate thread, and thus should never touch ConnectionData::state.
-      virtual void ReceiveData(const uint8_t *buffer, unsigned int bufferSize, const TransportAddress& sourceAddress) override;
-
-      Anki::Util::ReliableTransport reliableTransport;
-      // need recursive for RemoveConnection to not be a pain
-      mutable std::recursive_mutex mutex;
-
-    private:
+      
       struct ConnectionData {
       public:
         enum class State {
@@ -102,6 +92,19 @@ namespace Anki {
         bool isDisconnectionQueued;
         std::vector<OutgoingPacket> connectionPackets;
       };
+      
+      bool GetConnectionData(const TransportAddress& address, ConnectionData& data_out) const;
+
+    protected:
+
+      // NOTE: This method runs on a separate thread, and thus should never touch ConnectionData::state.
+      virtual void ReceiveData(const uint8_t *buffer, unsigned int bufferSize, const TransportAddress& sourceAddress) override;
+
+      Anki::Util::ReliableTransport reliableTransport;
+      // need recursive for RemoveConnection to not be a pain
+      mutable std::recursive_mutex mutex;
+
+    private:
 
       void ConfigureReliableTransport();
 

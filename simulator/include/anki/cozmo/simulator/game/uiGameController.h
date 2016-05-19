@@ -88,7 +88,6 @@ protected:
   virtual void HandleRobotObservedFace(ExternalInterface::RobotObservedFace const& msg){};
   virtual void HandleRobotObservedNothing(ExternalInterface::RobotObservedNothing const& msg){};
   virtual void HandleRobotDeletedObject(ExternalInterface::RobotDeletedObject const& msg){};
-  virtual void HandleRobotConnection(const ExternalInterface::RobotAvailable& msgIn){};
   virtual void HandleUiDeviceConnection(const ExternalInterface::UiDeviceAvailable& msgIn){};
   virtual void HandleRobotConnected(ExternalInterface::RobotConnected const &msg){};
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg){};
@@ -238,7 +237,6 @@ protected:
   void SendReplayLastAnimation();
   void SendReadAnimationFile();
   void SendEnableVisionMode(VisionMode mode, bool enable);
-  void SendForceAddRobot();
   void SendSetIdleAnimation(const std::string &animName);
   void SendQueuePlayAnimAction(const std::string &animName, u32 numLoops, QueueActionPosition pos);
   void SendCancelAction();
@@ -306,7 +304,6 @@ private:
   void HandleRobotObservedFaceBase(ExternalInterface::RobotObservedFace const& msg);
   void HandleRobotObservedNothingBase(ExternalInterface::RobotObservedNothing const& msg);
   void HandleRobotDeletedObjectBase(ExternalInterface::RobotDeletedObject const& msg);
-  void HandleRobotConnectionBase(ExternalInterface::RobotAvailable const& msgIn);
   void HandleUiDeviceConnectionBase(ExternalInterface::UiDeviceAvailable const& msgIn);
   void HandleRobotConnectedBase(ExternalInterface::RobotConnected const &msg);
   void HandleRobotCompletedActionBase(ExternalInterface::RobotCompletedAction const& msg);

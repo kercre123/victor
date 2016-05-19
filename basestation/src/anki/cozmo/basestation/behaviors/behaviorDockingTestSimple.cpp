@@ -29,6 +29,7 @@
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "clad/types/dockingSignals.h"
 #include "util/console/consoleInterface.h"
 #include <ctime>
@@ -82,9 +83,10 @@ namespace Anki {
         EngineToGameTag::RobotPutDown
       }});
       
-      if(robot.GetContext()->GetRobotMsgHandler() != nullptr)
+      if(nullptr != robot.GetContext()->GetRobotManager() &&
+         robot.GetContext()->GetRobotManager()->GetMsgHandler() != nullptr)
       {
-        _signalHandle = (robot.GetContext()->GetRobotMsgHandler()->Subscribe(robot.GetID(),
+        _signalHandle = (robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(robot.GetID(),
             RobotInterface::RobotToEngineTag::dockingStatus,
             std::bind(&BehaviorDockingTestSimple::HandleDockingStatus, this, std::placeholders::_1)));
       }

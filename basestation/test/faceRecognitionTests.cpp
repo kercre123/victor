@@ -7,8 +7,6 @@
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 
 #include "anki/vision/basestation/faceTracker.h"
 #include <dirent.h>
@@ -137,7 +135,6 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
 
   Result lastResult = RESULT_OK;
   
-  RobotInterface::MessageHandlerStub  msgHandler;
   Robot robot(1, cozmoContext);
   
   if(false == Vision::FaceTracker::IsRecognitionSupported()) {

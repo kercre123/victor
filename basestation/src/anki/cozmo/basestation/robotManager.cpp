@@ -18,6 +18,7 @@
 #include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/gameEvent.h"
+#include "json/json.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/time/stepTimers.h"
 #include <sys/stat.h>
@@ -38,17 +39,19 @@ namespace Anki {
     , _animationGroups(new AnimationGroupContainer())
     , _firmwareUpdater(new FirmwareUpdater(context))
     , _gameEventResponses(new GameEventResponsesContainer())
+    , _robotMessageHandler(new RobotInterface::MessageHandler())
     {
       
     }
     
     RobotManager::~RobotManager() = default;
     
-    void RobotManager::Init()
+    void RobotManager::Init(const Json::Value& config)
     {
       auto startTime = std::chrono::system_clock::now();
     
       Anki::Util::Time::PushTimedStep("RobotManager::Init");
+      _robotMessageHandler->Init(config, this, _context);
       
       Anki::Util::Time::PushTimedStep("ReadAnimationDir");
       ReadAnimationDir();
@@ -210,6 +213,11 @@ namespace Anki {
         }
       } // End loop on _robots
       
+    }
+    
+    void RobotManager::UpdateRobotConnection()
+    {
+      _robotMessageHandler->ProcessMessages();
     }
     
     void RobotManager::ReadAnimationDir()

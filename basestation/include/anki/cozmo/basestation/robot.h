@@ -671,9 +671,7 @@ public:
     IExternalInterface* GetExternalInterface() {
       ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr"); return _context->GetExternalInterface();
     }
-    RobotInterface::MessageHandler* GetRobotMessageHandler() {
-      ASSERT_NAMED(_context->GetRobotMsgHandler() != nullptr, "Robot.GetRobotMessageHandler.nullptr"); return _context->GetRobotMsgHandler();
-    }
+    RobotInterface::MessageHandler* GetRobotMessageHandler();
     void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   

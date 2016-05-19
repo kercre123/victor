@@ -8,7 +8,6 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotPoseHistory.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 
 #define DIST_EQ_THRESH 0.00001
 #define ANGLE_EQ_THRESH 0.00001
