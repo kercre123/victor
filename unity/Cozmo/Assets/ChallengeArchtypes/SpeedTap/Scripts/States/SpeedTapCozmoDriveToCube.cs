@@ -31,6 +31,7 @@ namespace SpeedTap {
 
       _SpeedTapGame.ShowWaitForCozmoSlide();
       _SpeedTapGame.SharedMinigameView.ShowMiddleBackground();
+      _SpeedTapGame.SharedMinigameView.ShowSpinnerWidget();
 
       _CurrentRobot.SetDrivingAnimations(AnimationGroupName.kSpeedTap_Driving_Start, 
         AnimationGroupName.kSpeedTap_Driving_Loop, null);
@@ -48,6 +49,7 @@ namespace SpeedTap {
     public override void Exit() {
       base.Exit();
       _CurrentRobot.ResetDrivingAnimations();
+      _SpeedTapGame.SharedMinigameView.HideSpinnerWidget();
     }
 
     private bool IsFarAwayFromCube() {

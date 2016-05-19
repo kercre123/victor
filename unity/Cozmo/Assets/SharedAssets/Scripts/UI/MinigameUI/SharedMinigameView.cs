@@ -40,6 +40,9 @@ namespace Cozmo {
       private Image _BackgroundImage;
 
       [SerializeField]
+      private Image _BackgroundGradient;
+
+      [SerializeField]
       private Image _MiddleBackgroundImage;
 
       private bool _IsShowingMiddle = true;
@@ -174,8 +177,16 @@ namespace Cozmo {
       [SerializeField]
       private Sprite _CozmoPortraitSprite;
 
+      public Sprite CozmoPortrait {
+        get { return _CozmoPortraitSprite; }
+      }
+
       [SerializeField]
       private Sprite _PlayerPortraitSprite;
+
+      public Sprite PlayerPortrait {
+        get { return _PlayerPortraitSprite; }
+      }
 
       #endregion
 
@@ -193,7 +204,6 @@ namespace Cozmo {
 
       public void Initialize() {
         HideNarrowInfoTextSlide();
-        HideOverlayBackground();
       }
 
       #region Base View
@@ -338,10 +348,11 @@ namespace Cozmo {
 
       public void InitializeColor(Color baseColor) {
         _BackgroundImage.color = baseColor;
+        _BackgroundGradient.color = baseColor;
         _MiddleBackgroundImage.color = baseColor;
-        _OverlayBackgroundImage.color = baseColor;
         _IsShowingLocked = _LockedBackgroundImage.color.a > 0;
         _IsShowingMiddle = _MiddleBackgroundImage.color.a > 0;
+        _OverlayBackgroundImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0);
         _IsShowingOverlay = _OverlayBackgroundImage.color.a > 0;
       }
 

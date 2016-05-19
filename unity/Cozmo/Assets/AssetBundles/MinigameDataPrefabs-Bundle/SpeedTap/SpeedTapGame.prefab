@@ -40,14 +40,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CubeIdsForGame: 
-  PlayerHitFirst: 0
-  AllRoundsOver: 0
-  ConsecutiveMisses: 0
+  CozmoScore: 0
+  PlayerScore: 0
+  MaxScorePerRound: 0
+  PlayerRoundsWon: 0
+  CozmoRoundsWon: 0
+  TotalRounds: 0
   _PlayerTapSlidePrefab: {fileID: 119438, guid: a746841c043c145299eb44a48a59bd14,
     type: 2}
   _PlayerTapRoundBeginSlidePrefab: {fileID: 165892, guid: 482f66e1b59e44e15b914d510f4ae5f0,
     type: 2}
   _WaitForCozmoSlidePrefab: {fileID: 119438, guid: f28ac4312db3b44098196bedceadf7fa,
+    type: 2}
+  _SpeedTapRoundBeginSlidePrefab: {fileID: 11467366, guid: 99b49c3a9679141308821eb03300d327,
+    type: 2}
+  _SpeedTapRoundEndSlidePrefab: {fileID: 11461808, guid: d81e0c006364c489fa6a3146ba1aa626,
     type: 2}
 --- !u!1001 &100100000
 Prefab:
@@ -107,6 +114,16 @@ Prefab:
       propertyPath: _PlayerTapRoundBeginSlidePrefab
       value: 
       objectReference: {fileID: 165892, guid: 482f66e1b59e44e15b914d510f4ae5f0, type: 2}
+    - target: {fileID: 0}
+      propertyPath: _SpeedTapRoundBeginSlidePrefab
+      value: 
+      objectReference: {fileID: 11467366, guid: 99b49c3a9679141308821eb03300d327,
+        type: 2}
+    - target: {fileID: 0}
+      propertyPath: _SpeedTapRoundEndSlidePrefab
+      value: 
+      objectReference: {fileID: 11461808, guid: d81e0c006364c489fa6a3146ba1aa626,
+        type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 141604}

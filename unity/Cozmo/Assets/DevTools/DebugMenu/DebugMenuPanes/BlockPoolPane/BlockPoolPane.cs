@@ -16,16 +16,20 @@ public class BlockPoolPane : MonoBehaviour {
 
   [SerializeField]
   private RectTransform _UIContainer;
+
+  [SerializeField]
+  private InputField _FilterInput;
+  private string _CurrentFilterString;
   
   private U2G.BlockPoolEnabledMessage _BlockPoolEnabledMessage;
   private U2G.BlockSelectedMessage _BlockSelectedMessage;
 
   private class BlockData {
-    public BlockData(Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength, Button btn) {
+    public BlockData(Anki.Cozmo.ObjectType type, bool is_enabled, sbyte signal_strength, Button button) {
       this.ObjectType = type;
       this.IsEnabled = is_enabled;
       this.SignalStrength = signal_strength;
-      this.Btn = btn;
+      this.BlockButton = button;
     }
 
     public Anki.Cozmo.ObjectType ObjectType { get; set; }
@@ -34,12 +38,14 @@ public class BlockPoolPane : MonoBehaviour {
 
     public sbyte SignalStrength { get; set; }
 
-    public Button Btn { get; set; }
+    public Button BlockButton { get; set; }
   }
 
   private Dictionary<uint,BlockData> _BlockStates;
 
   void Start() {
+
+    _FilterInput.onValueChanged.AddListener(HandleFilterStringUpdate);
 
     _EnabledCheckbox.onValueChanged.AddListener(HandlePoolEnabledValueChanged);
     
@@ -54,7 +60,19 @@ public class BlockPoolPane : MonoBehaviour {
     RobotEngineManager.Instance.SendMessage();
   }
 
-  void HandleInitBlockPool(G2U.InitBlockPoolMessage initMsg) {
+  private void HandleFilterStringUpdate(string inputFilter) {
+    foreach (KeyValuePair<uint, BlockData> kvp in _BlockStates) {
+      if (string.IsNullOrEmpty(_CurrentFilterString) || kvp.Key.ToString("X").StartsWith(inputFilter)) {
+        kvp.Value.BlockButton.gameObject.SetActive(true);
+      }
+      else {
+        kvp.Value.BlockButton.gameObject.SetActive(false);
+      }
+    }
+    _CurrentFilterString = inputFilter;
+  }
+
+  private void HandleInitBlockPool(G2U.InitBlockPoolMessage initMsg) {
 
     // clear the lights we've turned blue to show connections.
     // Might stomp game setup but hopefully people are using this debug menu before playing.
@@ -72,7 +90,7 @@ public class BlockPoolPane : MonoBehaviour {
     for (int i = 0; i < initMsg.blockData.Length; ++i) {
       // Never get an rssi value for things that were previously connected and won't be discovered 
       // if they connected to something else properly, so just indicate with a 0.
-      AddButton(initMsg.blockData[i].id, initMsg.blockData[i].objectType, initMsg.blockData[i].enabled, 0);
+      AddButton(initMsg.blockData[i].id, Anki.Cozmo.ObjectType.Unknown, initMsg.blockData[i].enabled, 0);
     }
     // The first one gets previous ones serialized that may or may exist, this message gets the one we see.
     RobotEngineManager.Instance.OnObjectAvailableMsg += HandleObjectAvailableMsg;
@@ -80,7 +98,7 @@ public class BlockPoolPane : MonoBehaviour {
     SendAvailableObjects(true);
   }
 
-  void OnDestroy() {
+  private void OnDestroy() {
     RobotEngineManager.Instance.OnInitBlockPoolMsg -= HandleInitBlockPool;
     RobotEngineManager.Instance.OnObjectAvailableMsg -= HandleObjectAvailableMsg;
     RobotEngineManager.Instance.OnObjectUnavailableMsg -= HandleObjectUnavailableMsg;
@@ -110,7 +128,7 @@ public class BlockPoolPane : MonoBehaviour {
   private void HandleObjectUnavailableMsg(Anki.Cozmo.ExternalInterface.ObjectUnavailable objUnAvailableMsg) {
     BlockPoolPane.BlockData data;
     if (_BlockStates.TryGetValue(objUnAvailableMsg.factory_id, out data)) {
-      Destroy(data.Btn.gameObject);
+      Destroy(data.BlockButton.gameObject);
       _BlockStates.Remove(objUnAvailableMsg.factory_id);
     }
   }
@@ -120,7 +138,6 @@ public class BlockPoolPane : MonoBehaviour {
     if (_BlockStates.TryGetValue(id, out data)) {
       bool is_enabled = !data.IsEnabled;
       data.IsEnabled = is_enabled;
-      
       UpdateButton(id);
       _BlockSelectedMessage.factoryId = id;
       _BlockSelectedMessage.selected = is_enabled;
@@ -148,15 +165,17 @@ public class BlockPoolPane : MonoBehaviour {
     BlockPoolPane.BlockData data;
     if (!_BlockStates.TryGetValue(id, out data)) {
       GameObject gameObject = UIManager.CreateUIElement(_ButtonPrefab, _UIContainer);
-      Button btn = gameObject.GetComponent<Button>();
-      data = new BlockPoolPane.BlockData(type, is_enabled, signal_strength, btn);
+      gameObject.name = "block_" + id.ToString("X");
+      Button button = gameObject.GetComponent<Button>();
+      data = new BlockPoolPane.BlockData(type, is_enabled, signal_strength, button);
       _BlockStates.Add(id, data);
       UpdateButton(id);
-      btn.onClick.AddListener(() => HandleButtonClick(id));
+      button.onClick.AddListener(() => HandleButtonClick(id));
     }
-    else if (data.SignalStrength != signal_strength) {
+    else if (data.SignalStrength != signal_strength || data.ObjectType != type) {
       // enabled is only changed form unity.
       data.SignalStrength = signal_strength;
+      data.ObjectType = type;
       UpdateButton(id);
     }
   }
@@ -164,7 +183,13 @@ public class BlockPoolPane : MonoBehaviour {
   private void UpdateButton(uint id) {
     BlockPoolPane.BlockData data;
     if (_BlockStates.TryGetValue(id, out data)) {
-      Text txt = data.Btn.GetComponentInChildren<Text>();
+      if (string.IsNullOrEmpty(_CurrentFilterString) || id.ToString("X").StartsWith(_CurrentFilterString)) {
+        data.BlockButton.gameObject.SetActive(true);
+      }
+      else {
+        data.BlockButton.gameObject.SetActive(false);
+      }
+      Text txt = data.BlockButton.GetComponentInChildren<Text>();
       if (txt) {
         txt.text = "ID: " + id.ToString("X") + " \n " +
         "type: " + data.ObjectType + "\n" +
