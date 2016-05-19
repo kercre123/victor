@@ -48,13 +48,16 @@ void TransmitData()
   u8 i;
   
   for (i = 31; i; --i)
-    _radioPayload[i] = 0xff;
+    _radioPayload[i] = 0x55;
 
   // Enable the radio clock
   RFCKEN = 1;
 
   // Set datarate (1mbps - default) and power (0dbm)
-  writeReg(RF_SETUP, RF_PWR1 | RF_PWR0 | PLL_LOCK);    // XXX: PLL Lock is for test purposes onlyj
+  writeReg(RF_SETUP, RF_PWR1 | RF_PWR0 | PLL_LOCK);    // XXX: PLL Lock is for test purposes only
+  if (_whichTest >= 4)
+    writeReg(RF_SETUP, RF_PWR1 | /*RF_PWR0 |*/ PLL_LOCK);    // -6dB
+
   // Set channel
   if (_whichTest & 1)
     writeReg(RF_CH, 81);   // 2481
@@ -107,18 +110,22 @@ void TransmitData()
   RFCE = 1;
 
   // Broadcast continually
+  /*
   if (_whichTest >= 4)
   {
     writeReg(RF_SETUP, RF_PWR1 | RF_PWR0 | PLL_LOCK | CONT_WAVE);    // XXX: PLL Lock is for test purposes onlyj
     while(1)
       LedTest(_whichTest);  
   }
+  */
     
+  writeMultiReg(W_TX_PAYLOAD_NOACK, _radioPayload, 17);
+
   // Send packets continually
   while (1)
   {
     LedTest(_whichTest);
-    writeMultiReg(W_TX_PAYLOAD_NOACK, _radioPayload, 10);
+    writeMultiReg(W_TX_PAYLOAD_NOACK, _radioPayload, 17);
 
     // Clear radio IRQ flags and RRF
     writeReg(STATUS, RX_DR | TX_DS | MAX_RT);
@@ -126,8 +133,6 @@ void TransmitData()
 
     // Wait for radio to signal transmit complete
     while (!RFF) ;
-    
-    delayms(5);
   }
     
   // Power everything down

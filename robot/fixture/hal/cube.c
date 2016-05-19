@@ -355,6 +355,7 @@ void ProgramCubeWithSerial()
     GPIO_SetBits(GPIOC, GPIO_Pin_5);  // #Reset
     MicroWait(10000);
          
+#ifndef FCC
     // Check serial number from (possibly) last time
     // We don't want to reserialize the same block
     u32 serial;
@@ -375,6 +376,7 @@ void ProgramCubeWithSerial()
     Patch(cubeboot+0x388d, __REV(0xca11ab1e), serial);
     Patch(cubeboot+0x38a4, __REV(0xca11ab1e), serial);
     Patch(cubeboot+0x3ff0, 0xca11ab1e, __REV(serial));  // Reversed copy (thanks Vandiver)
+#endif
     
     //ConsoleWriteHex(cubeboot, 16384); 
     LoadRom(cubeboot, length);

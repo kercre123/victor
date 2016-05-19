@@ -34,8 +34,8 @@ struct DTM_Mode_Settings {
 static const DTM_Mode_Settings DTM_MODE[] = {
   { false,    LE_RECEIVER_TEST,  1,                   0xFF,         0xFF },   // 0 = listen
   { false, LE_TRANSMITTER_TEST,  1,           DTM_PKT_0X55,         0xFF },   // 1 = tx ch1
+  { false, LE_TRANSMITTER_TEST, 20,           DTM_PKT_0X55,         0xFF },
   { false, LE_TRANSMITTER_TEST, 40,           DTM_PKT_0X55,         0xFF },
-  { false, LE_TRANSMITTER_TEST, 20,          DTM_PKT_PRBS9,         0xFF },
   { false, LE_TRANSMITTER_TEST,  1, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },   // 4 = tx ch1
   { false, LE_TRANSMITTER_TEST, 20, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
   { false, LE_TRANSMITTER_TEST, 40, DTM_PKT_VENDORSPECIFIC, CARRIER_TEST },
@@ -97,7 +97,7 @@ void Anki::Cozmo::HAL::FCC::start(void) {
   msg.radioMode = BODY_DTM_OPERATING_MODE;  
   SendMessage(msg);
 
-  configureTest(1);
+  configureTest(0);
 }
 
 // See "ESP8266 Certification and Test Guide" for details on the command format

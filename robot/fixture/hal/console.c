@@ -399,6 +399,8 @@ void SendTestMessage(void)
   SendTestMode(test);
 }
 
+void HeadESP();
+
 static CommandFunction m_functions[] =
 {
   {"GetSerial", GetSerial, FALSE},
@@ -414,6 +416,7 @@ static CommandFunction m_functions[] =
   {"Burn", CubeBurn, FALSE},
   {"SetVBAT", SetVBAT, FALSE},
   {"Send", SendTestMessage, FALSE},
+  {"ESP", HeadESP, FALSE},
 };
 
 static void ParseCommand(void)

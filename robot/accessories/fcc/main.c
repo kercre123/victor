@@ -33,8 +33,6 @@ void main(void)
   if (!_whichTest || _whichTest > 5)
     _whichTest = 1;
   
-  _whichTest = 3;
-
   CLKLFCTRL = 1;  // Turn on RC LF
   TransmitData();
 }

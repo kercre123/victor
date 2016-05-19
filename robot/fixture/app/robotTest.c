@@ -108,8 +108,6 @@ void SendTestChar(int c)
 }
 void SendTestMode(int test)
 {
-  for (int i = 0; i < 200; i++)
-    SendTestChar(' ');
   SendTestChar('W');
   SendTestChar('t');
   SendTestChar('f');
