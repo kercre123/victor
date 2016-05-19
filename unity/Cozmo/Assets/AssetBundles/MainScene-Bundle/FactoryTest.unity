@@ -450,6 +450,76 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 420244542}
+--- !u!1 &426970218
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 135706, guid: dab6d6baa9820407098b2c8879445c7f, type: 2}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 4
+  m_Component:
+  - 4: {fileID: 426970221}
+  - 114: {fileID: 426970220}
+  - 114: {fileID: 426970219}
+  m_Layer: 0
+  m_Name: FactoryIntroManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &426970219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 11406414, guid: dab6d6baa9820407098b2c8879445c7f,
+    type: 2}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 426970218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 035991f9bd3ad4473bc1ada057e27796, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &426970220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 11429234, guid: dab6d6baa9820407098b2c8879445c7f,
+    type: 2}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 426970218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65dc7be214371450897ab2ba1522fd59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _DevConnectDialog: {fileID: 0}
+  _Background: {fileID: 420244544}
+  _LogsButton: {fileID: 764554401}
+  _OptionsButton: {fileID: 680834003}
+  _RestartButton: {fileID: 124199790}
+  _StartButton: {fileID: 1265716901}
+  _PingStatusText: {fileID: 1166636782}
+  _FactoryLogPanelPrefab: {fileID: 11453686, guid: 9f19c1cdd9a2e499a83850459fe76106,
+    type: 2}
+  _FactoryOptionsPanelPrefab: {fileID: 11480756, guid: f8a6aeb9f46144736b24bf26416230b2,
+    type: 2}
+  _FactoryOTAPanelPrefab: {fileID: 11463534, guid: ad75df988a669485b8910e355f76432b,
+    type: 2}
+  _StatusText: {fileID: 114390866}
+  _StationNumberText: {fileID: 2049307386}
+  _Canvas: {fileID: 1138259041}
+  _InProgressSpinner: {fileID: 1123326646}
+--- !u!4 &426970221
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 408664, guid: dab6d6baa9820407098b2c8879445c7f, type: 2}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 426970218}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
 --- !u!1 &680834001
 GameObject:
   m_ObjectHideFlags: 0
@@ -1623,89 +1693,3 @@ CanvasRenderer:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 2049307384}
---- !u!1001 &2102575139
-Prefab:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 415364, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_RootOrder
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 11479862, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: _Background
-      value: 
-      objectReference: {fileID: 420244544}
-    - target: {fileID: 11479862, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: _LogsButton
-      value: 
-      objectReference: {fileID: 764554401}
-    - target: {fileID: 11479862, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: _OptionsButton
-      value: 
-      objectReference: {fileID: 680834003}
-    - target: {fileID: 11479862, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: _RestartButton
-      value: 
-      objectReference: {fileID: 124199790}
-    - target: {fileID: 11479862, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: _StartButton
-      value: 
-      objectReference: {fileID: 1265716901}
-    - target: {fileID: 11479862, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: _PingStatusText
-      value: 
-      objectReference: {fileID: 1166636782}
-    - target: {fileID: 11479862, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: _StatusText
-      value: 
-      objectReference: {fileID: 114390866}
-    - target: {fileID: 11479862, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: _StationNumberText
-      value: 
-      objectReference: {fileID: 2049307386}
-    - target: {fileID: 11479862, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: _Canvas
-      value: 
-      objectReference: {fileID: 1138259041}
-    - target: {fileID: 11479862, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: _InProgressSpinner
-      value: 
-      objectReference: {fileID: 1123326646}
-    - target: {fileID: 106742, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-      propertyPath: m_Name
-      value: FactoryIntroManager
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_ParentPrefab: {fileID: 100100000, guid: d03a6b14c839047bc8ff52e543828227, type: 2}
-  m_IsPrefabParent: 0
