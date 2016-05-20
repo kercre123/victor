@@ -2613,7 +2613,7 @@ namespace Cozmo {
 
     const bool headDown = _poseData.poseStamp.GetHeadAngle() <= MIN_HEAD_ANGLE + HEAD_ANGLE_TOL;
     
-    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK + 2.f; // 2mm fudge
+    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK + READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM;
     
     // Sanity checks: we should not even be calling ReadToolCode if everybody
     // hasn't done their job and got us into position

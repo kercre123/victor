@@ -64,6 +64,7 @@ namespace Anki {
     // Mostly used by TurnInPlaceAction, but also used by planner in some places. Maybe planner should keep its own constants?
     const f32 POINT_TURN_ANGLE_TOL = DEG_TO_RAD(2.f);
     
+    const f32 READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM = 2.f;
     
     /***************************************************************************
      *
