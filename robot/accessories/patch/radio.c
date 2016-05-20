@@ -82,7 +82,7 @@ bit RadioHandshake()
   RadioSend(_radioOut, HAND_LEN);
 
   //DebugPrint('f', &jitter, 1);  // Show frame-to-frame jitter in units of 384uS (only works when Sleep() has no PWRDWN)
-  //DebugPrint('h', &chan, 1);    // Show where we hopped to
+  DebugPrint('h', &chan, 1);    // Show where we hopped to
 
   // Wait here
   while (!RFF)
@@ -107,8 +107,8 @@ bit RadioHandshake()
 
   // Adjust beat counter based on measured jitter
   DebugPrint('j', &jitter, 1);  // Show microsecond-jitter (units of 1.5uS)
-  jitter >>= 4;                         // 20 T2 counts (/24) per tick
-  jitter += -(16-LISTEN_TIME_US/2/24);  // Mid point becomes 0 adjustment
+  jitter >>= 5;                         // T2/20=ticks - We call it T2/32 to dampening it a bit
+  jitter += -(8-LISTEN_TIME_US/2/48);   // Mid point becomes 0 adjustment
   _beatAdjust = jitter;                 // If we arrive late, lengthen beat to arrive early
   
   // Wait here

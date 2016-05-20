@@ -122,7 +122,9 @@ void main()
   // XXX legacy:  Old non-hopping robots park on a single channel and sync on first packet
   if (!_hopIndex)
     RadioLegacyStart();   // Listen for first packet, adjust timing to match its arrival
-
+  else
+    _shakeWait = 1;       // Skip first/runt beat in LED timer
+  
   // Start beat counter - we get our first beat in 3 ticks, then properly spaced thereafter
   LedInit();
 

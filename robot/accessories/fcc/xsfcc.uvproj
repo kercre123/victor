@@ -205,7 +205,7 @@
             <Mode2>0</Mode2>
             <useCB>0</useCB>
             <useXB>0</useXB>
-            <useL251>0</useL251>
+            <useL251>1</useL251>
             <useA251>0</useA251>
             <Mx51>0</Mx51>
             <ModC812>0</ModC812>
@@ -239,8 +239,8 @@
               </RXB>
               <Ocm1>
                 <Type>0</Type>
-                <StartAddress>0x0</StartAddress>
-                <Size>0x0</Size>
+                <StartAddress>0x1c00</StartAddress>
+                <Size>0x400</Size>
               </Ocm1>
               <Ocm2>
                 <Type>0</Type>
@@ -342,7 +342,7 @@
             <CClasses></CClasses>
             <UserClasses></UserClasses>
             <CSection></CSection>
-            <UserSection></UserSection>
+            <UserSection>?C_C51STARTUP</UserSection>
             <CodeBaseAddress>0x800-0x1000</CodeBaseAddress>
             <XDataBaseAddress></XDataBaseAddress>
             <PDataBaseAddress></PDataBaseAddress>
