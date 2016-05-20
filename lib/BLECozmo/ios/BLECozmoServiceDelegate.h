@@ -11,7 +11,6 @@
 
 @class BLECozmoManager;
 @class BLECozmoConnection;
-@class BLECozmoMessage;
 
 @protocol BLECozmoServiceDelegate <NSObject>
 -(void)vehicleManager:(BLECozmoManager*)manager vehicleDidAppear:(BLECozmoConnection *)connection;

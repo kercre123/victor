@@ -25,6 +25,7 @@
 @property (readonly, nonatomic) NSNumber* rssi;
 @property (readwrite, nonatomic) BOOL discovered;
 @property (readonly, nonatomic) NSMutableDictionary* advertisementData; // holds the union of all the advertisments
+@property (strong, nonatomic) NSData* mfgData;
 
 -(void)readRSSI:(NSNumber*)newRSSI;
 -(void)addServiceID:(CBUUID*)serviceID;

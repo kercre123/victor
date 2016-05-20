@@ -14,8 +14,6 @@
 
 #import <mach/mach_time.h>
 
-#include "BLECozmoMessage.h"
-
 UInt64 BLE_TimeInNanoseconds() {
   static mach_timebase_info_data_t machTimebase;
   if (machTimebase.denom == 0) {
@@ -121,8 +119,8 @@ static bool StateIsConnectingOrConnected(BLEConnectionState state);
   return self.connectionsByPeripheralId[peripheral.identifier];
 }
 
--(BLECozmoConnection *)connectionForMfgID:(UInt64)mfgID {
-  return self.connectionsByMfgId[@(mfgID)];
+-(BLECozmoConnection *)connectionForMfgID:(NSUUID*)mfgID {
+  return self.connectionsByMfgId[mfgID];
 }
 
 #pragma mark - Add / Remove Vehicles
@@ -130,14 +128,14 @@ static bool StateIsConnectingOrConnected(BLEConnectionState state);
 - (void)addVehicleConnection:(BLECozmoConnection *)connection {
   BLECozmoConnection *existingConnection = [self connectionForPeripheral:connection.carPeripheral];
   if ( existingConnection ) {
-    BLELogError("BLECozmoManager.addVehicle.duplicateVehicle", "0x%llx", connection.mfgID);
+    BLELogError("BLECozmoManager.addVehicle.duplicateVehicle", "%s", [[connection.mfgID UUIDString] UTF8String]);
   }
   
-  BLELogDebug("BLECozmoManager.addVehicle", "0x%llx", connection.mfgID);
+  BLELogDebug("BLECozmoManager.addVehicle", "%s", [[connection.mfgID UUIDString] UTF8String]);
   
   [self willChangeValueForKey:@"vehicleConnections"];
   [vehicleConnections addObject:connection];
-  self.connectionsByMfgId[@(connection.mfgID)] = connection;
+  self.connectionsByMfgId[connection.mfgID] = connection;
   self.connectionsByPeripheralId[connection.carPeripheral.identifier] = connection;
   [self didChangeValueForKey:@"vehicleConnections"];
 }
@@ -145,13 +143,13 @@ static bool StateIsConnectingOrConnected(BLEConnectionState state);
 - (void)removeVehicleConnection:(BLECozmoConnection *)connection {
   [connection clearAdvertisementState];
   if (connection && connection.connectionState <= kDisconnected) {
-    BLELogDebug("BLECozmoManager.removeVehicle", "0x%llx", connection.mfgID);
+    BLELogDebug("BLECozmoManager.removeVehicle", "%s", [[connection.mfgID UUIDString] UTF8String]);
     connection.connectionState = kUnavailable;
     
     [self willChangeValueForKey:@"vehicleConnections"];
     [vehicleConnections removeObject:connection];
     [self.connectionsByPeripheralId removeObjectForKey:connection.carPeripheral.identifier];
-    [self.connectionsByMfgId removeObjectForKey:@(connection.mfgID)];
+    [self.connectionsByMfgId removeObjectForKey:connection.mfgID];
     [self didChangeValueForKey:@"vehicleConnections"];
   }
 }
@@ -231,7 +229,7 @@ static bool StateIsConnectingOrConnected(BLEConnectionState state);
     vehicleConn.connectionState = kUnavailable;
     vehicleConn.mfgData = advertisementData[CBAdvertisementDataManufacturerDataKey];
     [self addVehicleConnection:vehicleConn];
-    BLELogDebug("BLECozmoManager.initialRSSI", "0x%llx = %ld", vehicleConn.mfgID, (long)rssiVal.integerValue);
+    BLELogDebug("BLECozmoManager.initialRSSI", "%s = %ld", [[vehicleConn.mfgID UUIDString] UTF8String], (long)rssiVal.integerValue);
   }
   
   vehicleConn.scannedRSSI = rssiVal.integerValue;
@@ -242,12 +240,12 @@ static bool StateIsConnectingOrConnected(BLEConnectionState state);
     [self notifyVehicleDidAppear:vehicleConn];
   } else if (vehicleConn.connectionState == kDisconnected) {
     BLELogDebug("BLECozmoManager.didDiscoverPeripheral.updatingAdvertisingData", "%s", vehicleConn.description.UTF8String);
-    BLELogDebug("BLECozmoManager.advertisedRSSI", "0x%llx = %ld", vehicleConn.mfgID, (long)rssiVal.integerValue);
+    BLELogDebug("BLECozmoManager.advertisedRSSI", "%s = %ld", [[vehicleConn.mfgID UUIDString] UTF8String], (long)rssiVal.integerValue);
     [self notifyVehicleDidUpdateAdvertisement:vehicleConn];
   } else {
     // This can happen during if we are scanning and request to disconnect a vehicle.
     // We will receive this callback before disconnecting.
-    BLELogDebug("BLECozmoManager.didDiscoverPeripheral", "0x%llx received advertisement in connecting state [%d]", vehicleConn.mfgID, vehicleConn.connectionState);
+    BLELogDebug("BLECozmoManager.didDiscoverPeripheral", "%s received advertisement in connecting state [%d]", [[vehicleConn.mfgID UUIDString] UTF8String], vehicleConn.connectionState);
   }
 }
 
@@ -273,7 +271,7 @@ static bool StateIsConnectingOrConnected(BLEConnectionState state);
       // TODO: consider creating specific error messages to indicate the disconnection
       //       reason in BLECentralMultiplexer
       BLELogEvent("BLECozmoManager.didDisconnectPeripheral.forgetVehicleConnection",
-                  "0x%llx - received disconnect from non-connected state", connection.mfgID);
+                  "%s - received disconnect from non-connected state", [[connection.mfgID UUIDString] UTF8String]);
       [self removeVehicleConnection:connection];
     }
   }
@@ -340,29 +338,7 @@ static bool StateIsConnectingOrConnected(BLEConnectionState state);
     return;
   }
   
-  static Anki::Cozmo::BLECozmoMessage cozmoMessage{};
-  BLEAssert(!cozmoMessage.IsMessageComplete());
-  BLEAssert(Anki::Cozmo::BLECozmoMessage::kMessageExactMessageLength == message.length);
-  if (!cozmoMessage.AppendChunk(static_cast<const uint8_t*>(message.bytes), (uint32_t)message.length))
-  {
-    BLEAssert(false);
-  }
-  
-  if (cozmoMessage.IsMessageComplete())
-  {
-    uint8_t completeMessage[Anki::Cozmo::BLECozmoMessage::kMessageMaxTotalSize];
-    uint8_t numBytes = cozmoMessage.DechunkifyMessage(completeMessage, Anki::Cozmo::BLECozmoMessage::kMessageMaxTotalSize);
-    
-    // TODO:(lc) do something with incoming messages besides printing them and clearing
-    NSMutableString *string = [NSMutableString stringWithCapacity:numBytes*2];
-    for (NSInteger idx = 0; idx < numBytes; ++idx) {
-      [string appendFormat:@"%02x", completeMessage[idx]];
-    }
-    BLELogDebug("BLECozmoManager.incomingMessage","Received: 0x%s", [string UTF8String]);
-    
-    [self notfiyVehicle:vehicleConnection didReceiveMessage:[[NSData alloc] initWithBytes:completeMessage length:numBytes]];
-    cozmoMessage.Clear();
-  }
+  [self notfiyVehicle:vehicleConnection didReceiveMessage:message];
 }
 
 -(void)service:(BLECentralServiceDescription *)service peripheral:(CBPeripheral *)peripheral didUpdateRSSI:(NSNumber *)rssiVal {
@@ -372,7 +348,7 @@ static bool StateIsConnectingOrConnected(BLEConnectionState state);
   }
   
   vehicleConn.scannedRSSI = rssiVal.integerValue;
-  BLELogDebug("BLECozmoManager.advertisedRSSI", "0x%llx = %ld", vehicleConn.mfgID, (long)rssiVal.integerValue);
+  BLELogDebug("BLECozmoManager.advertisedRSSI", "%s = %ld", [[vehicleConn.mfgID UUIDString] UTF8String], (long)rssiVal.integerValue);
   [self notifyVehicleDidUpdateProximity:vehicleConn];
 }
 
@@ -429,18 +405,17 @@ static bool StateIsConnectingOrConnected(BLEConnectionState state) {
   [_centralMultiplexer connectPeripheral:connection.carPeripheral withService:[self serviceDescription]];
 }
 
-- (BOOL) connectToVehicleByMfgID:(UInt64)mfgID {
+- (BOOL) connectToVehicleByMfgID:(NSUUID*)mfgID {
   BLECozmoConnection *vehicleConn = [self connectionForMfgID:mfgID];
   if ( !vehicleConn ) {
-    BLELogError("BLECozmoManager.connectToVehicleByMFGID.unknownID", "0x%llx", mfgID);
+    BLELogError("BLECozmoManager.connectToVehicleByMFGID.unknownID", "%s", [[mfgID UUIDString] UTF8String]);
   } else {
     [self connectPeripheralForVehicleConnection:vehicleConn];
   }
   return (nil != vehicleConn);
 }
 
-- (BOOL)disconnectVehicleWithMfgId:(UInt64)mfgID
-            sendDisconnectMessages:(BOOL)sendDisconnectMessages;
+- (BOOL)disconnectVehicleWithMfgId:(NSUUID*)mfgID;
 {
   BLECozmoConnection *vehicleConn = [self connectionForMfgID:mfgID];
   if (!vehicleConn) {
@@ -455,8 +430,8 @@ static bool StateIsConnectingOrConnected(BLEConnectionState state) {
 - (void)disconnectConnection:(BLECozmoConnection *)connection;
 {
   BLELogEvent("BLECozmoManager.disconnectConnection",
-              "0x%llx connectionState: %d",
-              connection.mfgID, connection.connectionState);
+              "%s connectionState: %d",
+              [[connection.mfgID UUIDString] UTF8String], connection.connectionState);
   
   if (StateIsConnectingOrConnected(connection.connectionState)) {
     [_centralMultiplexer disconnectPeripheral:connection.carPeripheral withService:[self serviceDescription]];
@@ -473,7 +448,7 @@ static bool StateIsConnectingOrConnected(BLEConnectionState state) {
     return;
   }
   if (StateIsConnectingOrConnected(vehicleConn.connectionState)) {
-    BLELogInfo("BLECozmoManager.setVehicleConnectionState", "vehicle=0x%llx state=%d", vehicleConn.mfgID, connectionState);
+    BLELogInfo("BLECozmoManager.setVehicleConnectionState", "vehicle=%s state=%d", [[vehicleConn.mfgID UUIDString] UTF8String], connectionState);
   }
   vehicleConn.connectionState = connectionState;
   if (vehicleConn.connectionState == kConnectedPipeReady) {

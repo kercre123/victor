@@ -248,7 +248,7 @@
         'SHARED_LIB_DIR': '', #bogus, just to make the mac / ios builds happy
       },
       ],
-      ['OS=="ios"', {
+      ['OS=="ios" or OS=="mac"', {
         'compiler_flags': [
           '-fobjc-arc',
         ],
@@ -637,6 +637,7 @@
               '$(SDKROOT)/System/Library/Frameworks/QTKit.framework',
               '$(SDKROOT)/System/Library/Frameworks/QuartzCore.framework',
               '$(SDKROOT)/System/Library/Frameworks/OpenAL.framework',
+              '$(SDKROOT)/System/Library/Frameworks/CoreBluetooth.framework',
               '<@(sphinx_libs)',
               '<@(flite_libs)',
               '<@(opencv_libs)',

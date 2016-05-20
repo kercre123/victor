@@ -63,7 +63,7 @@ typedef int BLEConnectionState;
 // advertised data
 @property (strong, nonatomic) NSData*             mfgData;
 @property (readonly, nonatomic) NSDictionary*     advertisementData;
-@property (readonly, nonatomic) UInt64            mfgID;
+@property (readonly, nonatomic) NSUUID*           mfgID;
 
 @property (assign, nonatomic) BOOL canWrite;
 @property (strong, nonatomic) NSMutableArray*     enqueuedMessages;
@@ -97,7 +97,7 @@ typedef int BLEConnectionState;
 // Buffered I/O
 // Send data to carPeripheral, using a throttling mechanism to avoid
 // saturating the connection.
-- (BOOL)writeMessageData:(NSData *)data error:(NSError *__autoreleasing *)error encrypted:(BOOL)encrypted;
+- (BOOL)writeData:(NSData *)data error:(NSError *__autoreleasing *)error;
 
 @end
   

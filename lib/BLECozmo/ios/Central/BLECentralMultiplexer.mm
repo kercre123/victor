@@ -87,6 +87,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
   BOOL _usePeripheralNameIfLocalNameIsAbsent;
   NSMutableDictionary* _advertisementsByPeripheralAddress; // BLEAdvertisement given a peripheral address
   NSMapTable* _servicesForPeripheral; // <CBPeripheral(weak) -> NSMutableSet of BLECentralServiceDescription(strong)> Used to map events back to delegates registered by Service ID.
+  NSMutableSet* _peripheralsWaitingForData;
   
   // Advertisement expiry
   dispatch_source_t _advertSweepTimer;
@@ -169,6 +170,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
     _connectedPeripherals = [NSMutableSet setWithCapacity:20];
     _disconnectingPeripherals = [NSMutableSet setWithCapacity:20];
     _scanningState = BLECentralMultiplexerScanningStateStopped;
+    _peripheralsWaitingForData = [NSMutableSet setWithCapacity:20];
   }
   return self;
 }
@@ -354,6 +356,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
 
 -(void)setScanningState:(BLECentralMultiplexerScanningState)scanningState {
   if (scanningState != _scanningState) {
+    (void)ScanningStateName(scanningState);
     BLELogInfo("BLECentralMultiplexer.setScanningState",
                "%s => %s", ScanningStateName(_scanningState), ScanningStateName(scanningState));
     _scanningState = scanningState;
@@ -841,6 +844,11 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
   }
 }
 
+static BOOL hasRequiredAdvertisingData(BLEAdvertisement* advertisement)
+{
+  return advertisement && advertisement.name && advertisement.serviceIDs && advertisement.serviceIDs.count > 0 && advertisement.mfgData;
+}
+
 - (void)centralManager:(CBCentralManager *)central
  didDiscoverPeripheral:(CBPeripheral *)peripheral
      advertisementData:(NSDictionary *)advertisementData
@@ -863,6 +871,7 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
 
   NSArray* serviceIDs = amendedAdvertisementData[CBAdvertisementDataServiceUUIDsKey];
   NSString* serviceLocalName = amendedAdvertisementData[CBAdvertisementDataLocalNameKey];
+  NSData* mfgData = amendedAdvertisementData[CBAdvertisementDataManufacturerDataKey];
   id<NSCopying> peripheralAddress = _addressOfPeripheral(peripheral);
   
   if ( !peripheral || peripheral == (id)[NSNull null] )
@@ -870,68 +879,72 @@ static const char* ScanningStateName(BLECentralMultiplexerScanningState state) {
   
   BLEAdvertisement* existingAdvertisement = _advertisementsByPeripheralAddress[peripheralAddress];
   
-  if(existingAdvertisement != nil) {
-    // Existing Peripheral advertisement, refresh the advertisement record
-    //  and the observed RSSI.
-    
-    NSNumber* oldRssi = [existingAdvertisement rssi];
-    // update the RSSI
-    [existingAdvertisement readRSSI:RSSI];
-    // bump the timestamp to prevent expiry.
-    existingAdvertisement.timeStamp = CFAbsoluteTimeGetCurrent();
-    
-    // possibly update / merge the advertisement data dictionary.
-    BOOL needToUpdateClient =
-      ![amendedAdvertisementData isEqualToDictionary:existingAdvertisement.advertisementData];
-    if(needToUpdateClient) {
-      [existingAdvertisement.advertisementData addEntriesFromDictionary:amendedAdvertisementData];
-    }
-    
-    needToUpdateClient |= ([oldRssi doubleValue] != [[existingAdvertisement rssi] doubleValue]);
-
-    if(needToUpdateClient) {
-      for(CBUUID* serviceID in [_servicesForPeripheral objectForKey:peripheral]) {
-        BLECentralServiceDescription* service = [self serviceForUUID:serviceID];
-        [service.delegate service:service peripheral:peripheral didUpdateAdvertisementData:existingAdvertisement.advertisementData];
-      }
-    }
-    
-    // FIXME: check all service ID's and dispatch notification to any new ones we've found.
-    //  It's possible that some of the services come later in overflow advertisements.
-    //  We haven't actually seen this happen yet.
-  }
-  else if (serviceLocalName){
+  if (!existingAdvertisement)
+  {
     // New Peripheral discovered
-    BLEAdvertisement* advertisement = [[BLEAdvertisement alloc] init];
-    advertisement.name = serviceLocalName;
-    advertisement.timeStamp = CFAbsoluteTimeGetCurrent();
-    advertisement.peripheral = peripheral;
-    advertisement.discovered = YES;
-    [advertisement readRSSI:RSSI];
-    
-    [advertisement.advertisementData addEntriesFromDictionary:amendedAdvertisementData];
-    _advertisementsByPeripheralAddress[peripheralAddress] = advertisement;
-
-    if (serviceIDs) {
-      NSMutableSet* servicesForPeripheral = [NSMutableSet set];
-      // For each of these service ID's, we must let any delegates know that we've discovered peripherals
-      for(CBUUID* serviceID in serviceIDs) {
-        [servicesForPeripheral addObject:serviceID];
-        [advertisement addServiceID:serviceID];
-      }
-      BLEAssert(servicesForPeripheral.count > 0);
-      // Uses a weak key to let the mapping drop when nobody cares about the peripheral any longer.
-      //  We could add a debug flag to switch this to strong key to check for this being the source of bugs.
-      [_servicesForPeripheral setObject:servicesForPeripheral forKey:peripheral];
+    BLEAdvertisement* newAdvert = [[BLEAdvertisement alloc] init];
+    newAdvert.peripheral = peripheral;
+    newAdvert.discovered = YES;
+    [newAdvert readRSSI:RSSI];
+    existingAdvertisement = newAdvert;
+    _advertisementsByPeripheralAddress[peripheralAddress] = newAdvert;
+    [_peripheralsWaitingForData addObject:peripheralAddress];
+  }
+  
+  if (serviceLocalName)
+  {
+    existingAdvertisement.name = serviceLocalName;
+  }
+  
+  if (mfgData)
+  {
+    existingAdvertisement.mfgData = mfgData;
+  }
+  
+  if (serviceIDs) {
+    NSMutableSet* servicesForPeripheral = [NSMutableSet setWithSet:[_servicesForPeripheral objectForKey:peripheral]];
+    // For each of these service ID's, we must let any delegates know that we've discovered peripherals
+    for(CBUUID* serviceID in serviceIDs) {
+      [servicesForPeripheral addObject:serviceID];
+      [existingAdvertisement addServiceID:serviceID];
     }
-
-    if (advertisement.name && advertisement.serviceIDs) {
-      for(CBUUID* serviceID in serviceIDs) {
+    BLEAssert(servicesForPeripheral.count > 0);
+    // Uses a weak key to let the mapping drop when nobody cares about the peripheral any longer.
+    //  We could add a debug flag to switch this to strong key to check for this being the source of bugs.
+    [_servicesForPeripheral setObject:servicesForPeripheral forKey:peripheral];
+  }
+  
+  NSNumber* oldRssi = [existingAdvertisement rssi];
+  // update the RSSI
+  [existingAdvertisement readRSSI:RSSI];
+  // bump the timestamp to prevent expiry.
+  existingAdvertisement.timeStamp = CFAbsoluteTimeGetCurrent();
+  
+  NSDictionary* originalItems = [NSDictionary dictionaryWithDictionary: existingAdvertisement.advertisementData];
+  [existingAdvertisement.advertisementData addEntriesFromDictionary:advertisementData];
+  
+  // If we were waiting for complete advertising data before 'discovering' this periperhal and it now has the data
+  // 'discover' it now
+  if ([_peripheralsWaitingForData containsObject:peripheralAddress])
+  {
+    if (hasRequiredAdvertisingData(existingAdvertisement))
+    {
+      for(CBUUID* serviceID in existingAdvertisement.serviceIDs) {
         BLECentralServiceDescription* registeredService = [self serviceForUUID:serviceID];
-        // FIXME: need to allow the delegate to return NO in order to ignore this advertisement.
-        // This is because we sometimes don't get the advertising data that the delegate needs (i.e. mfgData).
-        [registeredService.delegate service:registeredService didDiscoverPeripheral:peripheral withRSSI:advertisement.rssi advertisementData:advertisement.advertisementData];
+        [registeredService.delegate service:registeredService
+                      didDiscoverPeripheral:peripheral
+                                   withRSSI:existingAdvertisement.rssi
+                          advertisementData:existingAdvertisement.advertisementData];
       }
+      [_peripheralsWaitingForData removeObject:peripheralAddress];
+    }
+  }
+  else if (![existingAdvertisement.advertisementData isEqualToDictionary:originalItems]
+           || [oldRssi doubleValue] != [[existingAdvertisement rssi] doubleValue])
+  {
+    for(CBUUID* serviceID in [_servicesForPeripheral objectForKey:peripheral]) {
+      BLECentralServiceDescription* service = [self serviceForUUID:serviceID];
+      [service.delegate service:service peripheral:peripheral didUpdateAdvertisementData:existingAdvertisement.advertisementData];
     }
   }
 }

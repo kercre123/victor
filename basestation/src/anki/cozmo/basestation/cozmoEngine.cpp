@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
 #include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
+#include "anki/cozmo/basestation/ble/BLESystem.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
@@ -68,6 +69,8 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   : _uiMsgHandler(new UiMessageHandler(1))
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
+  // TODO:(lc) Once the BLESystem state machine has been implemented, create it here
+  //, _bleSystem(new BLESystem())
 #if ANKI_DEV_CHEATS && !ANDROID
   , _usbTunnelServerDebug(new USBTunnelServer(_uiMsgHandler.get(),dataPlatform))
 #endif

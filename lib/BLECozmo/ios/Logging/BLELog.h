@@ -9,28 +9,44 @@
 #ifndef BLEManager_BLELog_h
 #define BLEManager_BLELog_h
 
-#ifndef USE_DAS
-#define USE_DAS 0
-#endif
+#define BLECOZMO_FORCE_PRINT 1
+#define BLECOZMO_STANDALONE 1
 
-#if (USE_DAS == 1)
-#include <DAS/DAS.h>
+#if !BLECOZMO_STANDALONE
+#include "util/logging/logging.h"
 
+#if BLECOZMO_FORCE_PRINT
 //BLELogDebug
-#define BLELogDebug DASDebug
+#define BLELogDebug PRINT_NAMED_DEBUG
 //BLELogInfo
-#define BLELogInfo  DASInfo
+#define BLELogInfo  PRINT_NAMED_INFO
 //BLELogEvent
-#define BLELogEvent DASEvent
+#define BLELogEvent PRINT_NAMED_EVENT
 //BLELogWarn
-#define BLELogWarn  DASWarn
+#define BLELogWarn  PRINT_NAMED_WARNING
 //BLELogError
-#define BLELogError DASError
+#define BLELogError PRINT_NAMED_ERROR
 
-#define BLEAssert   DASAssert
+#define xstr(s) str(s)
+#define str(s) #s
+#define BLEAssert(_test)  ASSERT_NAMED((_test), "BLEAssert." __FILE__ ":" xstr(__LINE__) )
 
 #else
-// NO DAS
+// NO Logging
+
+#define BLENoLog(who, what, ...)
+
+#define BLELogDebug BLENoLog
+#define BLELogInfo  BLENoLog
+#define BLELogEvent BLENoLog
+#define BLELogWarn  BLENoLog
+#define BLELogError BLENoLog
+#define BLEAssert(_test)
+
+#endif // end debug level or force print
+
+#else // IS Standalone
+
 #define BLELogDebug BLELog
 #define BLELogInfo  BLELog
 #define BLELogEvent BLELog
@@ -46,6 +62,6 @@
 
 #define BLEAssert assert
 
-#endif // end NO DAS
+#endif // end IS Standalone
 
-#endif
+#endif // BLEManager_BLELog_h

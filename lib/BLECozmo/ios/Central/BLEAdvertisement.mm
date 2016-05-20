@@ -42,13 +42,12 @@
 -(void)readRSSI:(NSNumber*)newRSSI {
 #ifdef DEBUG
   if(self.advertisementData) {
-    NSData* mfgData = [self.advertisementData objectForKey:CBAdvertisementDataManufacturerDataKey];
-    if(mfgData) {
-      UInt64 mfgID __attribute__((unused)) = CFSwapInt64BigToHost(*((UInt64*)mfgData.bytes));
-      //BLELogDebug("BLEAdvertisement.rawVehicleRSSI", "0x%llx %d %lf", mfgID, newRSSI.intValue, self.timeStamp);
+    if(self.mfgData) {
+      UInt64 mfgID __attribute__((unused)) = CFSwapInt64BigToHost(*((UInt64*)self.mfgData.bytes));
+      BLELogDebug("BLEAdvertisement.rawVehicleRSSI", "0x%llx %d %lf", mfgID, newRSSI.intValue, self.timeStamp);
     }
   }
-  //BLELogDebug("BLEAdvertisement.readRSSI", "%d", newRSSI.intValue);
+  BLELogDebug("BLEAdvertisement.readRSSI", "%d", newRSSI.intValue);
 #endif // DEBUG
   
   float diff = newRSSI.floatValue - _rssiMedian;

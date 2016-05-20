@@ -26,7 +26,6 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
 };
 
 @interface BLECozmoConnection ()
-- (BOOL)writeData:(NSData *)data error:(NSError *__autoreleasing *)error;
 - (void)writeDataToPeripheral:(NSData *)data;
 
 @property (nonatomic, strong) dispatch_block_t canWriteBlock;
@@ -52,16 +51,6 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
 - (void) setMfgData:(NSData *)mfgData
 {
   _mfgData = mfgData;
-  
-  if (BLECOZMOCONNECTION_DEBUG)
-  {
-    NSUInteger numBytes = mfgData.length;
-    NSMutableString *string = [NSMutableString stringWithCapacity:numBytes*2];
-    for (NSInteger idx = 0; idx < numBytes; ++idx) {
-      [string appendFormat:@"%02x", ((uint8_t*)mfgData.bytes)[idx]];
-    }
-    BLELogDebug("BLECozmoConnection.mfgID","0x%llx is short for 0x%s", [self mfgID], [string UTF8String]);
-  }
 }
 
 - (id) init
@@ -110,14 +99,19 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
   _throttlingDisabled = NO;
 }
 
-- (UInt64)mfgID {
-  // TODO:(lc) Our mfgData is larger than 8 bytes, but it's not clear whether we care about it all or what.
-  // Once we know what part of the data is unique and useful, revisit this to get the data properly
-  //BLEAssert(mfgData && mfgData.length == 8);
-  if(_mfgData && _mfgData.bytes) {
-    return CFSwapInt64BigToHost(*((UInt64*)_mfgData.bytes));
+- (NSUUID*)mfgID {
+  static constexpr auto kUUIDByteLength = 16;
+  auto numBytesToCopy = _mfgData.length;
+  if (numBytesToCopy > kUUIDByteLength)
+  {
+    BLELogWarn("BLECozmoConnection.mfgID", "ID truncated to %d bytes", kUUIDByteLength);
+    numBytesToCopy = kUUIDByteLength;
   }
-  return 0x00;
+  
+  uint8_t mfgIDBytes[kUUIDByteLength]{}; // Note we zero out the bytes on declare
+  memcpy(mfgIDBytes, _mfgData.bytes, numBytesToCopy);
+  
+  return [[NSUUID alloc] initWithUUIDBytes:mfgIDBytes];
 }
 
 #pragma mark - unbuffered I/O
@@ -177,7 +171,7 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
 - (void)writeBufferedData
 {
   if ( self.connectionState != kConnectedPipeReady ) {
-    BLELogInfo("BLECozmoConnection.writeBufferedData.disconnected.dropBufferedMessages", "mfgId=0x%llx, count=%lu", self.mfgID, (unsigned long)self.enqueuedMessages.count);
+    BLELogInfo("BLECozmoConnection.writeBufferedData.disconnected.dropBufferedMessages", "mfgId=0x%s, count=%lu", [[self.mfgID UUIDString] UTF8String], (unsigned long)self.enqueuedMessages.count);
     [self clearQueuedMessages];
     return;
   }
@@ -209,38 +203,6 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
   dispatch_after(popTime, self.throttlingQueue, ^(void){
     [weakSelf writeBufferedData];
   });
-}
-
-- (BOOL)writeMessageData:(NSData *)data error:(NSError *__autoreleasing *)error encrypted:(BOOL)encrypted
-{
-  if (!data)
-  {
-    return NO;
-  }
-  
-  Anki::Cozmo::BLECozmoMessage cozmoMessage;
-  uint8_t numChunks = cozmoMessage.ChunkifyMessage(static_cast<const uint8_t*>(data.bytes), (uint32_t)data.length);
-  
-  if (BLECOZMOCONNECTION_DEBUG)
-  {
-    uint8_t dechunked[Anki::Cozmo::BLECozmoMessage::kMessageMaxTotalSize];
-    cozmoMessage.DechunkifyMessage(dechunked, Anki::Cozmo::BLECozmoMessage::kMessageMaxTotalSize);
-    for (int i=0; i<data.length; i++)
-    {
-      BLEAssert(dechunked[i] == static_cast<const uint8_t*>(data.bytes)[i]);
-    }
-  }
-  
-  for (int i=0; i < numChunks; i++)
-  {
-    if (![self writeData:[[NSData alloc] initWithBytes:cozmoMessage.GetChunkData(i)
-                                                length:Anki::Cozmo::BLECozmoMessage::kMessageExactMessageLength]
-                   error:error])
-    {
-      return NO;
-    }
-  }
-  return YES;
 }
 
 - (BOOL)writeData:(NSData *)data error:(NSError *__autoreleasing *)error
@@ -287,8 +249,8 @@ static BLECozmoonnectionThrottlingParams sConnectionThrottlingParams = {
 }
 
 -(NSString*)description {
-  return [NSString stringWithFormat:@"<BLECozmoConnection: %p mfgID=0x%llx rssi=%ld connectionState=%d peripheral=%p characteristic=%p>",
-          self, self.mfgID, (long)self.scannedRSSI, self.connectionState, self.carPeripheral, self.toCarCharacteristic];
+  return [NSString stringWithFormat:@"<BLECozmoConnection: %p mfgID=0x%s rssi=%ld connectionState=%d peripheral=%p characteristic=%p>",
+          self, [[self.mfgID UUIDString] UTF8String], (long)self.scannedRSSI, self.connectionState, self.carPeripheral, self.toCarCharacteristic];
 }
 
 - (void)readConnectedRSSI {

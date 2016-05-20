@@ -32,11 +32,6 @@
     'linker_flags' : [
         '-g',
     ],
-    #'include_directories': [
-    #    '../include',
-    #    '../include/DAS',
-    #    '../src',
-    #],
 
     # Set default ARCHS based on platform
     # We need an a new variables scope so that vars
@@ -151,6 +146,12 @@
         'ALWAYS_SEARCH_USER_PATHS': 'NO',
         'DYLIB_INSTALL_NAME_BASE': '@loader_path',
     },
+    'defines': [
+      'USE_DAS=1',
+    ],
+    'include_dirs': [
+        '../../../../tools/anki-util/source/anki'
+    ],
     'configurations': {
       'Debug': {
           'cflags': ['-O0'],
@@ -249,18 +250,25 @@
           ],
         },
       },
-      'sources': [
-        '<!@(cat BLECozmo_ios.lst)',
-      ],
-      'conditions': [    
-        [
-          "OS=='ios'",
-          {
-            'xcode_settings': {
-              'SDKROOT': 'iphoneos',
-            },
+      'conditions': [
+        ['OS=="ios"', {
+          'xcode_settings': {
+            'SDKROOT': 'iphoneos',
           },
-        ],
+          'sources': [
+            '<!@(cat BLECozmo_ios.lst)',
+          ],
+        }],
+        ['OS=="mac"', {
+          'sources': [
+            '<!@(cat BLECozmo_ios.lst)',
+          ],
+        }],
+        ['OS=="android"', {
+          'sources': [
+            '<!@(cat BLECozmo_android.lst)',
+          ],
+        }],
       ],
     },
   ],
