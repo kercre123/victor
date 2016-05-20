@@ -411,8 +411,14 @@ class GamePlatformConfiguration(object):
     def build(self):
         if self.options.verbose:
             print_status('Building project for platform {0}...'.format(self.platform))
+
+        if self.options.command == 'clean':
+            buildaction = 'clean'
+        else:
+            buildaction = 'build'
+
         if self.platform == 'android':
-            self.call_engine('build')
+            self.call_engine(buildaction)
             # move files.
             # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
             ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
@@ -428,10 +434,6 @@ class GamePlatformConfiguration(object):
                     'Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
             sys.exit(0)
         else:
-            if self.options.command == 'clean':
-                buildaction = 'clean'
-            else:
-                buildaction = 'build'
 
             # Other cs flags and codesigning identity have default values that will work no matter what.
             try:
