@@ -1,5 +1,6 @@
 """
-Utility classes for interfacing with the Cozmo engine through a localhost UDP socket, by exchanging CLAD messages.
+SDK Interface to Cozmo-Engine, supports communication over either a localhost UDP socket, or a TCP socket
+All communication is via CLAD messages.
 """
 __author__ = "Mark Wesley"
 
@@ -10,26 +11,14 @@ from debugConsole import DebugConsoleManager
 from moodManager import MoodManager
 from tcpConnection import TcpConnection
 
-
-CLAD_SRC  = os.path.join("clad")
 CLAD_DIR  = os.path.join("generated", "cladPython")
-
-# Following ensures CLAD files are up-to-date for python
-# We probably want to move this to the general configure script
-# definitely no reason to ship this bit
-if os.path.isfile(os.path.join(CLAD_SRC, "Makefile")):
-    import subprocess
-    make = subprocess.Popen(["make", "python", "-C", "clad"])
-    if make.wait() != 0:
-        sys.exit("Could't build/update python clad, exit status {:d}".format(make.wait(), linesep=os.linesep))
-
 sys.path.insert(0, CLAD_DIR)
 
 try:
-    sys.path.append('robot/tools/') # [MARKW:TODO] Share ReliableTransport more cleanly between sdk and robot-tools
-    from ReliableTransport import * # [MARKW:TODO] Just need UDPTransport? only using it for localhost socket?
+    sys.path.append('robot/tools/') # [MARKW:TODO] Share ReliableTransport (or just UDPTransport) more cleanly between sdk and robot-tools
+    from ReliableTransport import UDPTransport
 except:
-    sys.exit("Can't import ReliableTransport!{linesep}\t* Are you running from the base cozmo-engine directory?{linesep}".format(linesep=os.linesep))
+    sys.exit("Can't import UDPTransport!{linesep}\t* Are you running from the base cozmo-engine directory?{linesep}".format(linesep=os.linesep))
 
 try:
     from clad.externalInterface.messageEngineToGame import Anki
@@ -565,7 +554,7 @@ class _EngineInterfaceImpl:
         else:
             self.udpTransport.CloseSocket()
 
-    def sendToEngine(self, msg, logIfVerbose=False):
+    def sendToEngine(self, msg, logIfVerbose=True):
         if self.verboseSendToEngine and logIfVerbose:
             sys.stdout.write("[sendToEngine] '" + str(msg) + "'" + os.linesep)
         if self.useTcpConnection:

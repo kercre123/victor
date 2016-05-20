@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Python command line interface for Engine, using cmd
+Python command line interface for talking to SDK engineInterface, using cmd
 """
 __author__ = "Mark Wesley"
 
@@ -16,6 +16,31 @@ from engineInterface import EngineCommand # for enum
 kCliCmdNames = [
     "list",
 ]
+
+
+def textStringToByteArrayString(inString, byteArrayStringLength):
+    """ Converts a string into a string representation of a fixed-length ASCII-encoded byte array 
+        This byte array could then be, for example, cast directly back to a c-string on the C++ side"""
+
+    lenString = len(inString)
+
+    if lenString > byteArrayStringLength:
+        sys.stderr.write("[textStringToByteArrayString] inString '" + str(inString) + "' length = " + str(lenString) + " > " + str(byteArrayStringLength) + os.linesep)
+        return ""
+
+    outString = "("
+    for inChar in inString:
+        outString += str(ord(inChar)) + ","
+
+    # pad to byte array length
+    for i in range(byteArrayStringLength - lenString):
+        outString += "0,"
+
+    # Remove the trailing comma and add closing bracket
+    outString = outString[:-1] + ")"
+
+    return outString
+    
 
 class EngineRemoteCmd(cmd.Cmd):
 
@@ -116,17 +141,15 @@ class EngineRemoteCmd(cmd.Cmd):
     # ================================================================================  
     # Start connect etc.  
 
-    def do_startEngine(self, line):
-        "startEngine - starts the engine!" 
+    def do_startsim(self, line):
+        "start sim - starts the engine and connects to a sim robot" 
         engineInterface.QueueCommand( (EngineCommand.sendMsg, ["StartEngine"]) )
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["ConnectToRobot", textStringToByteArrayString("127.0.0.1", 16), "1", "1"]) )
 
-    def do_forceAddRobot(self, line):
-        "forceAddRobot - forces a localhost robot to be added" 
-        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["ForceAddRobot", "(127,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0)", "1", "1"]) )
-
-    def do_connectToRobot(self, line):
-        "forceAddRobot - forces a localhost robot to be added" 
-        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["ConnectToRobot", "1"]) )
+    def do_startreal(self, line):
+        "start real - starts the engine and connects to a real robot" 
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["StartEngine"]) )
+        engineInterface.QueueCommand( (EngineCommand.sendMsg, ["ConnectToRobot", textStringToByteArrayString("172.31.1.1", 16), "1", "0"]) )
 
     def do_requestDataDrivenLists(self, line):
         "requestDataDrivenLists - requests lists of anything non-CLAD data-driven e.g. all console vars, all animations"
