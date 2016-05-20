@@ -492,7 +492,7 @@ namespace Anki {
         case AudioActionType::SetState:
         {
           // FIXME: This is temp until we add boot process which will start music at launch
-          if (Audio::GameState::StateGroupType:: Music == _stateGroup) {
+          if (Audio::GameState::StateGroupType::Music == _stateGroup) {
             static bool didStartMusic = false;
             if (!didStartMusic) {
               _robot.GetRobotAudioClient()->PostEvent( static_cast<Audio::GameEvent::GenericEvent>(Audio::GameEvent::Music::Play), Audio::GameObjectType::Default );
