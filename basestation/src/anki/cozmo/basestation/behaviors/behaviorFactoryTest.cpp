@@ -34,8 +34,6 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-// Enable this when running on actual EP3 robots
-#define USING_EP3 1
 
 #define TEST_CHARGER_CONNECT 0
 
@@ -146,9 +144,8 @@ namespace Cozmo {
     
     
     // Disable reactionary behaviors
-    if (robot.GetBehaviorManager().GetWhiteboard().IsCliffReactionEnabled()) {
-      robot.GetBehaviorManager().GetWhiteboard().DisableCliffReaction(this);
-    }
+    robot.GetExternalInterface()->BroadcastToEngine<ExternalInterface::EnableReactionaryBehaviors>(false);
+    
     
     // Disable keep face alive animation
     robot.GetAnimationStreamer().SetParam(Anki::Cozmo::LiveIdleAnimationParameter::EnableKeepFaceAlive, 0);
@@ -277,6 +274,11 @@ namespace Cozmo {
       END_TEST(FactoryTestResultCode::TEST_TIMED_OUT);
     }
     
+    // Check for pickup
+    if (robot.IsPickedUp()) {
+      END_TEST(FactoryTestResultCode::ROBOT_PICKUP);
+    }
+    
     if (IsActing()) {
       return Status::Running;
     }
@@ -291,11 +293,8 @@ namespace Cozmo {
           END_TEST(FactoryTestResultCode::MISMATCHED_CLAD);
         }
         
-        // Check for pickup
-        if (robot.IsPickedUp()) {
-          END_TEST(FactoryTestResultCode::ROBOT_PICKUP);
-        }
         
+        /*
         // Check for past test results
         robot.GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults,
                                            [this](u8* data, size_t size, NVStorage::NVResult res) {
@@ -337,6 +336,7 @@ namespace Cozmo {
                                                PRINT_NAMED_INFO("BehaviorFactoryTest.Update.NoPastToolCodeInfoFound", "");
                                              }
                                            });
+        */
         
         if (TEST_CHARGER_CONNECT) {
           // Check if charger is discovered
@@ -545,7 +545,6 @@ namespace Cozmo {
           
           ReadToolCodeAction* toolCodeAction = new ReadToolCodeAction(robot, false);
           
-          if (USING_EP3) {
           // Read lift tool code
           StartActing(robot, toolCodeAction,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
@@ -621,8 +620,7 @@ namespace Cozmo {
                         }
                         return true;
                       });
-          }; // if (USING_EP3)
-
+      
           SetCurrState(FactoryTestState::ReadLiftToolCode);
         } else if (currentTime_sec > _holdUntilTime) {
           PRINT_NAMED_WARNING("BehaviorFactoryTest.Update.CalibrationTimedout", "");

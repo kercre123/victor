@@ -433,7 +433,7 @@ namespace Anki {
     , _headAngle(headAngle)
     , _angleTolerance(tolerance)
     , _variability(variability)
-    , _name("MoveHeadTo" + std::to_string(std::round(RAD_TO_DEG(_headAngle.ToFloat()))) + "DegAction")
+    , _name("MoveHeadTo" + std::to_string(RAD_TO_DEG(_headAngle.ToFloat())) + "DegAction")
     , _inPosition(false)
     {
       if(_headAngle < MIN_HEAD_ANGLE) {
@@ -1500,7 +1500,7 @@ namespace Anki {
     {
       // Put the head and lift down for read
       _headAndLiftDownAction.AddAction(new MoveHeadToAngleAction(_robot, MIN_HEAD_ANGLE));
-      _headAndLiftDownAction.AddAction(new MoveLiftToHeightAction(_robot, LIFT_HEIGHT_LOWDOCK));
+      _headAndLiftDownAction.AddAction(new MoveLiftToHeightAction(_robot, LIFT_HEIGHT_LOWDOCK, 2));
       
       _state = State::WaitingToGetInPosition;
       
