@@ -2611,9 +2611,9 @@ namespace Cozmo {
     
     const bool liftMoving = !NEAR(_poseData.poseStamp.GetLiftAngle(), _prevPoseData.poseStamp.GetLiftAngle(), DEG_TO_RAD_F32(0.1));
 
-    const bool headDown = _poseData.poseStamp.GetHeadAngle() <= MIN_HEAD_ANGLE + DEG_TO_RAD(1.5);
+    const bool headDown = _poseData.poseStamp.GetHeadAngle() <= MIN_HEAD_ANGLE + HEAD_ANGLE_TOL;
     
-    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK + 2.f; // 2mm fudge
+    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK + READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM;
     
     // Sanity checks: we should not even be calling ReadToolCode if everybody
     // hasn't done their job and got us into position
