@@ -340,20 +340,8 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
                     if( robot.IsCarryingObject() ) {
                       // we are still carrying the object, so maybe we lost the one we are trying to stack on
                       // top of?
-                      StartActing(new SearchSideToSideAction(robot),
-                                  [this](Robot& robot) {
-                                    StartActing(new TurnTowardsObjectAction(robot,
-                                                                            _targetBlockBottom,
-                                                                            Radians(PI_F),
-                                                                            true,
-                                                                            false),
-                                                [this, &robot](ActionResult res) {
-                                                  if( res == ActionResult::SUCCESS ) {
-                                                    TransitionToStackingBlock(robot);
-                                                  }
-                                                  // else end behavior (lost the block)
-                                                });
-                                  });
+                      CompoundActionSequential* action = new CompoundActionSequential(robot, {new DriveStraightAction(robot, -_distToBackupOnStackFailure_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps), new PlaceObjectOnGroundAction(robot)});
+                      StartActing(action);
                     }
                     // else we lost the block, but somehow still failed the placement action, so stop the behavior
                   }
