@@ -62,7 +62,7 @@ namespace Anki {
       Anki::Util::Time::PopTimedStep();
       
       Anki::Util::Time::PushTimedStep("ReadAnimationGroupMapsDir");
-      _gameEventResponses->Load(_context->GetDataPlatform(),"assets/AnimationGroupMaps");
+      _gameEventResponses->Load(_context->GetDataPlatform(),"assets/animationGroupMaps");
       Anki::Util::Time::PopTimedStep();
       
       Anki::Util::Time::PopTimedStep(); // RobotManager::Init
