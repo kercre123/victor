@@ -79,14 +79,14 @@ namespace Simon {
     private void CozmoLoseGame() {
       _GameInstance.SetCubeLightsGuessWrong();
 
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
       _StateMachine.SetNextState(new AnimationState(AnimationName.kMajorFail, HandleOnCozmoLoseAnimationDone));
     }
 
     private void CozmoWinGame() {
       _GameInstance.SetCubeLightsGuessRight();
 
-      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
 
       // TODO: Need to find a better animation than shocked; Cozmo should be determined to win 
       // and feel a bit thwarted 
