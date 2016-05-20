@@ -20,6 +20,6 @@ MonoBehaviour:
     _EnumValueAsString: BurpAction
     _EnumValue: 0
   _Music:
-    _Music: 1971384320
+    _Music: -527946100
   MinigameConfig: {fileID: 11400000, guid: ea5ab4db723ca4fc2a43430f6a79b910, type: 2}
   DifficultyOptions: []
