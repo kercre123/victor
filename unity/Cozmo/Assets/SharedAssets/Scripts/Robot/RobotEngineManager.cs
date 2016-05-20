@@ -76,6 +76,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
+  public event Action<Anki.Cozmo.ExternalInterface.FactoryTestResult> OnFactoryResult;
   public event Action<Anki.Cozmo.UnlockId, bool> OnRequestSetUnlockResult;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress> OnFirmwareUpdateProgress;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete> OnFirmwareUpdateComplete;
@@ -118,6 +119,8 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
   private U2G.DenyGameStart _DenyGameStartMessage = new U2G.DenyGameStart();
 
+  public bool InitSkillSystem;
+
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
     if (Instance != null && Instance != this) {
@@ -153,8 +156,11 @@ public class RobotEngineManager : MonoBehaviour {
 
     Robots = new Dictionary<int, IRobot>();
 
-// Startup Singletons depending on RobotEvents
-    SkillSystem.Instance.InitInstance();
+    // Startup Singletons depending on RobotEvents
+    if (InitSkillSystem) {
+      SkillSystem.Instance.InitInstance();
+    }
+
   }
 
   private void OnDisable() {
@@ -387,6 +393,9 @@ public class RobotEngineManager : MonoBehaviour {
       break;
     case G2U.MessageEngineToGame.Tag.RequestSetUnlockResult:
       ReceivedSpecificMessage(message.RequestSetUnlockResult);
+      break;
+    case G2U.MessageEngineToGame.Tag.FactoryTestResult:
+      ReceivedSpecificMessage(message.FactoryTestResult);
       break;
     case G2U.MessageEngineToGame.Tag.FirmwareUpdateProgress:
       ReceivedSpecificMessage(message.FirmwareUpdateProgress);
@@ -741,6 +750,12 @@ public class RobotEngineManager : MonoBehaviour {
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject message) {
     if (OnObservedPossibleObject != null) {
       OnObservedPossibleObject(message);
+    }
+  }
+
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.FactoryTestResult message) {
+    if (OnFactoryResult != null) {
+      OnFactoryResult(message);
     }
   }
 

@@ -123,6 +123,7 @@ public class BlockPoolPane : MonoBehaviour {
     case Anki.Cozmo.ObjectType.Block_LIGHTCUBE1:
     case Anki.Cozmo.ObjectType.Block_LIGHTCUBE2:
     case Anki.Cozmo.ObjectType.Block_LIGHTCUBE3:
+    case Anki.Cozmo.ObjectType.Charger_Basic:
       AddButton(objAvailableMsg.factory_id, objAvailableMsg.objectType, false, objAvailableMsg.rssi);
       break;
     default:
