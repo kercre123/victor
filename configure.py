@@ -213,6 +213,18 @@ def parse_game_arguments():
             metavar='path',
             help='Use this flag to specify external dependency location.')
 
+    parser.add_argument(
+            '-l', '--logcat',
+            required=False,
+            action='store_true',
+            help='Launch logcat for Android devices')
+
+    parser.add_argument(
+           '-n', '--nobuild',
+           required=False,
+           action='store_true',
+           help='Skip build step, i.e. to install/run without building when no code has changed')
+
     return parser.parse_args()
 
 
@@ -321,6 +333,9 @@ class GamePlatformConfiguration(object):
         if self.options.command in ('delete', 'wipeall!'):
             self.delete()
 
+        if self.platform == 'android' and self.options.logcat:
+            subprocess.call("./tools/android/logcatAllDevices.sh", shell=True)
+
     def generate(self):
         if self.options.verbose:
             print_status('Generating files for platform {0}...'.format(self.platform))
@@ -413,13 +428,17 @@ class GamePlatformConfiguration(object):
             workspace.generate(self.workspace_path, self.derived_data_dir)
 
     def build(self):
-        if self.options.verbose:
-            print_status('Building project for platform {0}...'.format(self.platform))
-
         if self.options.command == 'clean':
             buildaction = 'clean'
         else:
             buildaction = 'build'
+
+        if self.options.nobuild and buildaction != 'clean':
+            print_status('Skipping \'build\' step due to nobuild option')
+            return
+
+        if self.options.verbose:
+            print_status('Building project for platform {0}...'.format(self.platform))
 
         if self.platform == 'android':
             self.call_engine(buildaction)
