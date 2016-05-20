@@ -76,6 +76,18 @@ def find_unity_app_path():
 
     return unity_app_path
 
+def get_android_device():
+    process = subprocess.Popen("adb devices -l", shell=True, stdout=subprocess.PIPE)
+    output = process.communicate()[0]
+    device_list = output.splitlines()
+    # get usb devices from strings that look like:
+    # 85b6394a36495334       device usb:336592896X product:nobleltejv model:SM_N920C device:noblelte
+    device_list = [x for x in device_list if "usb" in x]
+    if len(device_list) == 0:
+        return ""
+    # return id of first device in list
+    return device_list[0].split(' ')[0]
+
 #stolen from http://stackoverflow.com/questions/1868714/how-do-i-copy-an-entire-directory-of-files-into-an-existing-directory-using-pyth
 def copytree(src, dst, symlinks=False, ignore=None):
     if not os.path.exists(dst):
@@ -301,6 +313,8 @@ class GamePlatformConfiguration(object):
         if self.options.command in ('build', 'clean', 'install', 'run'):
             self.build()
         if self.options.command in ('install', 'run'):
+            self.install()
+        if self.options.command == 'run':
             self.run()
         if self.options.command == 'uninstall':
             self.uninstall()
@@ -398,7 +412,7 @@ class GamePlatformConfiguration(object):
         if self.options.verbose:
             print_status('Building project for platform {0}...'.format(self.platform))
         if self.platform == 'android':
-            self.call_engine(self.options.command)
+            self.call_engine('build')
             # move files.
             # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
             ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
@@ -484,21 +498,47 @@ class GamePlatformConfiguration(object):
         # ret = android_build.run()
         # TODO: Generate android gradle project here. Or just post this function call.
 
-    def run(self):
+    def install(self):
         if self.options.verbose:
             print_status('Installing built binaries for platform {0}...'.format(self.platform))
 
         if self.platform == 'ios':
             if self.options.command == 'install':
                 ankibuild.ios_deploy.install(self.artifact_path)
-            elif self.options.command == 'run':
+
+        elif self.platform == 'android':
+            device = get_android_device()
+            if len(device) > 0:
+                subprocess.call("adb install -r -d ./build/android/Cozmo.apk", shell=True)
+            else:
+                print('{0}: No attached devices found via adb'.format(self.options.command))
+
+        else:
+            print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
+
+
+    def run(self):
+        if self.options.verbose:
+            print_status('Executing on platform {0}...'.format(self.platform))
+
+        if self.platform == 'ios':
+            if self.options.command == 'run':
                 # ankibuild.ios_deploy.noninteractive(self.artifact_path)
                 ankibuild.ios_deploy.debug(self.artifact_path)
 
                 # elif self.platform == 'mac':
                 # run webots?
+
+        elif self.platform == 'android':
+            device = get_android_device()
+            if len(device) > 0:
+                activity = "com.anki.cozmo/com.unity3d.player.UnityPlayerActivity"
+                cmd = "adb -s {0} shell am start -n {1}".format(device, activity)
+                subprocess.call(cmd, shell=True)
+            else:
+                print('{0}: No attached devices found via adb'.format(self.options.command))
+
         else:
-            # TODO: run android
             print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
 
     def uninstall(self):
