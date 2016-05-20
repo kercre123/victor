@@ -12,7 +12,6 @@ extern "C" {
 #include "client.h"
 #include "driver/i2spi.h"
 #include "driver/crash.h"
-#include "rboot.h"
 }
 #include "rtip.h"
 #include "activeObjectManager.h"
@@ -200,8 +199,6 @@ static bool sendWifiConnectionState(const bool state)
 
 extern "C" void backgroundTaskOnConnect(void)
 {
-  const uint32_t* const factoryData = (const uint32_t* const)(FLASH_MEMORY_MAP + FACTORY_SECTOR*SECTOR_SIZE);
-
   if (crashHandlerHasReport()) foregroundTaskPost(Anki::Cozmo::BackgroundTask::readAndSendCrashReport, 0);
   else Anki::Cozmo::Face::FaceUnPrintf();
   
@@ -219,15 +216,15 @@ extern "C" void backgroundTaskOnConnect(void)
     os_memcpy(vi.toEngineCLADHash, messageRobotToEngineHash, sizeof(vi.toEngineCLADHash));
     Anki::Cozmo::RobotInterface::SendMessage(vi);
   }
-  
+
   // Send our serial number to the engine
   {
     Anki::Cozmo::RobotInterface::RobotAvailable idMsg;
-    idMsg.robotID = factoryData[0];
-    idMsg.modelID = factoryData[1] & 0xFFFF;
+    idMsg.robotID = getSerialNumber();
+    idMsg.modelID = getModelNumber();
     Anki::Cozmo::RobotInterface::SendMessage(idMsg);
   }
-  
+
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();

@@ -50,8 +50,8 @@ void Anki::Cozmo::HAL::Power::init()
 
 void Anki::Cozmo::HAL::Power::enableEspressif(void)
 {
-  // Pull-down SCK during ESP8266 boot
-  GPIO_SET(GPIO_MISO, PIN_MISO);
+  // Hold MISO low to enable recovery mode
+  GPIO_RESET(GPIO_MISO, PIN_MISO);
   GPIO_OUT(GPIO_MISO, PIN_MISO);
   SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
 

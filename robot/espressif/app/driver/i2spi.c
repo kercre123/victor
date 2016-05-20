@@ -19,6 +19,7 @@
 #include "imageSender.h"
 
 extern bool i2spiSynchronizedCallback(uint32 param);
+extern bool i2spiRecoveryCallback(uint32 param);
 
 // Forward declaration
 bool    PumpAudioData(uint8_t* dest);
@@ -293,6 +294,11 @@ void i2spiTask(os_event_t *event)
             outgoingPhase       = BOOTLOADER_XFER_PHASE;
             rtipBootloaderState = STATE_IDLE;
             os_printf("I2SPI Recovery mode synchronized.\r\n");
+            #if FACTORY_FIRMWARE
+              foregroundTaskPost(i2spiRecoveryCallback, rtipBootloaderState);
+            #else
+              while(1); /// We shouldn't be here, wait for reboot into our factory firmware
+            #endif
           }
           break;
         }

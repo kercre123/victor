@@ -11,6 +11,7 @@
 
 extern "C" {
   #include "user_interface.h"
+  #include "flash_map.h"
 }
 #include "anki/types.h"
 #include "clad/types/nvStorage.h"
@@ -30,10 +31,9 @@ struct NVDataAreaHeader
 #define NV_STORAGE_FORMAT_VERSION 1
 
 #define NV_STORAGE_NUM_AREAS 2
-
-#define NV_STORAGE_START_ADDRESS (0x1c0000)
-#define NV_STORAGE_END_ADDRESS   (0x200000)
-#define NV_STORAGE_AREA_SIZE     ((NV_STORAGE_END_ADDRESS - NV_STORAGE_START_ADDRESS) / NV_STORAGE_NUM_AREAS)
+#define NV_STORAGE_START_ADDRESS (NV_STORAGE_SECTOR * SECTOR_SIZE)
+#define NV_STORAGE_END_ADDRESS   (NV_STORAGE_START_ADDRESS + (NV_STORAGE_AREA_SIZE * NV_STORAGE_NUM_AREAS))
+#define NV_STORAGE_AREA_SIZE     (0x20 * SECTOR_SIZE)
 #define NV_STORAGE_CAPACITY      (NV_STORAGE_AREA_SIZE - sizeof(NVDataAreaHeader))
 
 namespace Anki {

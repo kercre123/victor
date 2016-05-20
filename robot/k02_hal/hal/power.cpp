@@ -16,11 +16,9 @@ namespace Anki
       {  
         void enableEspressif(void)
         {
-          // Pull-down MISO during ESP8266 boot
-          // XXX: Daniel says disable this to allow esp_tool/fixture to work until bootloader "test mode"
-          //GPIO_RESET(GPIO_MISO, PIN_MISO);
-          //GPIO_OUT(GPIO_MISO, PIN_MISO);
-          //SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
+          // Pull-up MISO during ESP8266 boot
+          GPIO_IN(GPIO_MISO, PIN_MISO);
+          SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO | SourcePullUp);
 
           // Pull-down SCK during ESP8266 boot
           GPIO_RESET(GPIO_SCK, PIN_SCK);
@@ -63,7 +61,7 @@ namespace Anki
           GPIO_IN(GPIO_SCK, PIN_SCK);   // XXX: Shouldn't we turn around SCK sooner? Are we driving against each other?
           #endif
 
-          GPIO_IN(GPIO_MISO, PIN_MISO);
+          SOURCE_SETUP(GPIO_MISO, SOURCE_MISO, SourceGPIO);
         }
         
         void disableEspressif(void)

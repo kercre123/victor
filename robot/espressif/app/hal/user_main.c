@@ -14,7 +14,6 @@
 #include "backgroundTask.h"
 #include "foregroundTask.h"
 #include "user_config.h"
-#include "rboot.h"
 
 /** Handle wifi events passed by the OS
  */
@@ -83,35 +82,6 @@ void wifi_event_callback(System_Event_t *evt)
   }
 }
 
-static void checkAndClearBootloaderConfig(void)
-{
-  // To work around reboot loop bugs in upgradeController, always FULLY erase the sector if even one bit remains
-  u32 bootdata;
-  u32 i;
-  for (i = 0; i < SECTOR_SIZE; i += 4)
-  {
-    // Avoiding using ICACHE to read data since it might not be valid
-    while(spi_flash_read((BOOT_CONFIG_SECTOR*SECTOR_SIZE) + i, &bootdata, 4) != SPI_FLASH_RESULT_OK)
-    {
-      os_printf("ERBCS\r\n");
-      // Can't continue booting until this is done so might as well continue
-    }
-    
-    if (bootdata != 0xFFFFffff)
-    {
-      os_printf("Clearing bootloader config\r\n");
-      // Clear the bootloader config to indicate we have successfully booted
-      while (spi_flash_erase_sector(BOOT_CONFIG_SECTOR) != SPI_FLASH_RESULT_OK)
-      {
-        os_printf("EEBCS\r\n");
-        // Can't safely continue booting so might as well keep trying
-      }
-      break;
-    }
-  }
-}
-
-
 /** System calls this method before initalizing the radio.
  * This method is only nessisary to call system_phy_set_rfoption which may only be called here.
  * I think everything else should still happen in user_init and system_init_done
@@ -141,10 +111,6 @@ static void nv_init_done(const int8_t result)
  */
 static void system_init_done(void)
 {
-  // Check bootloader config and clear if nessisary
-  // Do this before i2spiInit so we don't desynchronize
-  checkAndClearBootloaderConfig();
-  
   // Setup Basestation client
   clientInit();
 
@@ -183,14 +149,15 @@ void user_init(void)
   uint8 macaddr[6];
   wifi_get_macaddr(SOFTAP_IF, macaddr);
   
-  if (*SERIAL_NUMBER == 0xFFFFffff)
+  
+  if (getSerialNumber() == 0xFFFFffff)
   {
     os_printf("No serial number present, will use MAC instead\r\n");
     os_sprintf(ssid, "FAIL%02x%02x", macaddr[4], macaddr[5]);
   }
   else
   {
-    os_sprintf(ssid, "3p%04x", (*SERIAL_NUMBER) & 0xFFFF);
+    os_sprintf(ssid, "3p%04x", getSerialNumber() & 0xFFFF);
   }
 
   struct softap_config ap_config;

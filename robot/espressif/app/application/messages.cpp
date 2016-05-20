@@ -1,7 +1,6 @@
 extern "C" {
 #include "client.h"
 #include "foregroundTask.h"
-#include "rboot.h"
 // Forward declaration
 void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 }
@@ -38,7 +37,7 @@ namespace Anki {
           case NVStorage::ENGINE:
           {
             RobotInterface::NVOpResultToEngine msg;
-            msg.robotAddress = *SERIAL_NUMBER;
+            msg.robotAddress = getSerialNumber();
             os_memcpy(&msg.report, report, sizeof(NVStorage::NVOpResult));
             RobotInterface::SendMessage(msg);
             break;
@@ -92,7 +91,7 @@ namespace Anki {
             case NVStorage::ENGINE:
             {
               RobotInterface::NVReadResultToEngine msg;
-              msg.robotAddress = *SERIAL_NUMBER;
+              msg.robotAddress = getSerialNumber();
               os_memcpy(&msg.blob, entry, sizeof(NVStorage::NVStorageBlob));
               RobotInterface::SendMessage(msg);
               break;

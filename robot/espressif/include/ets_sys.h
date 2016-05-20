@@ -112,6 +112,7 @@ typedef void (*int_handler_t)(void*);
 void *ets_memcpy(void *dest, const void *src, size_t n);
 void *ets_memmove(void *dest, const void *src, size_t n);
 void *ets_memset(void *s, int c, size_t n);
+int ets_memcmp(const void *s1, const void *s2, int len);
 void ets_timer_arm_new(ETSTimer *a, int b, int c, int isMstimer);
 void ets_timer_setfn(ETSTimer *t, ETSTimerFunc *fn, void *parg);
 void ets_timer_disarm(ETSTimer *a);

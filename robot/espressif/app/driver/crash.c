@@ -6,6 +6,7 @@
 #include "ets_sys.h"
 #include "osapi.h"
 #include "user_interface.h"
+#include "flash_map.h"
 #include "driver/crash.h"
 #include "driver/uart.h"
 #include "transport/reliableTransport.h"
@@ -17,6 +18,10 @@
 #define RTC_MEM_START (64)
 
 static const unsigned int CRASH_DUMP_STORAGE_HEADER = 0xCDFAF320;
+
+#define FACTORY_DATA_SIZE (8)
+
+static uint32_t factoryData[FACTORY_DATA_SIZE/sizeof(uint32_t)];
 
 extern ReliableConnection g_conn;   // So we can check canaries when we crash
 
@@ -230,6 +235,11 @@ void ICACHE_FLASH_ATTR crashHandlerInit(void)
   _xtos_set_exception_handler(9, crash_handler);    // Bad load/store alignment  
   _xtos_set_exception_handler(28, crash_handler);   // Bad load address
   _xtos_set_exception_handler(29, crash_handler);   // Bad store address
+  
+  if (spi_flash_read(FACTORY_SECTOR * SECTOR_SIZE, factoryData, FACTORY_DATA_SIZE) != SPI_FLASH_RESULT_OK)
+  {
+    os_memset(factoryData, 0xff, FACTORY_DATA_SIZE);
+  }
 }
 
 extern void FacePrintf(const char *format, ...); // Forward declaration
@@ -272,4 +282,14 @@ int ICACHE_FLASH_ATTR crashHandlerGetReport(uint32_t* dest, const int available)
   {
     return -1;
   }
+}
+
+uint32_t ICACHE_FLASH_ATTR getSerialNumber(void)
+{
+  return factoryData[0];
+}
+
+uint16_t ICACHE_FLASH_ATTR getModelNumber(void)
+{
+  return factoryData[1] & 0xffff;
 }

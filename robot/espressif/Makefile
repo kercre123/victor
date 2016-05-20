@@ -120,38 +120,9 @@ else
   endif
 endif
 
-LD_FILE = $(LDDIR)/eagle.app.v6.ld
 
-ifneq ($(boot), none)
-ifneq ($(app),0)
-    ifeq ($(size_map), 6)
-      LD_FILE = $(LDDIR)/eagle.app.v6.$(boot).2048.ld
-    else
-      ifeq ($(size_map), 5)
-        LD_FILE = $(LDDIR)/eagle.app.v6.$(boot).2048.ld
-      else
-        ifeq ($(size_map), 4)
-          LD_FILE = $(LDDIR)/eagle.app.v6.$(boot).1024.app$(app).ld
-        else
-          ifeq ($(size_map), 3)
-            LD_FILE = $(LDDIR)/eagle.app.v6.$(boot).1024.app$(app).ld
-          else
-            ifeq ($(size_map), 2)
-              LD_FILE = $(LDDIR)/eagle.app.v6.$(boot).1024.app$(app).ld
-            else
-              ifeq ($(size_map), 0)
-                LD_FILE = $(LDDIR)/eagle.app.v6.$(boot).512.app$(app).ld
-              endif
-            endif
-	      endif
-	    endif
-	  endif
-	endif
-	BIN_NAME = user$(app).$(flash).$(boot).$(size_map)
-endif
-else
-    app = 0
-endif
+#LD_FILE = $(LDDIR)/espressif_application.ld
+BIN_NAME = user$(app).$(flash).$(boot).$(size_map)
 
 CSRCS ?= $(wildcard *.c)
 CXXSRCS ?= $(wildcard *.cpp)

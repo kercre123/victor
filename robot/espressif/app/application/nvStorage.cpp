@@ -9,7 +9,6 @@
 
 #include "nvStorage.h"
 extern "C" {
-#include "rboot.h"
 #include "osapi.h"
 #include "mem.h"
 #include "foregroundTask.h"
@@ -19,6 +18,8 @@ extern "C" {
 #include "anki/cozmo/robot/esp.h"
 
 #define READ_BACKOFF_INTERVAL_us (1000000)
+
+#define FACTORY_DATA_BIT (0x80000000)
 
 #define DEBUG_NVS 0
 
@@ -31,6 +32,13 @@ extern "C" {
 namespace Anki {
 namespace Cozmo {
 namespace NVStorage {
+
+typedef enum {
+  NV_SEGMENT_A = 0,
+  NV_SEGMENT_B = 1,
+  NV_SEGMENT_F = 0x40,
+  NV_SEGMENT_UNINITALIZED = 0x80
+} NVSegment;
 
 struct NVEntryHeader {
   u32 size;      ///< Size of the entry data plus this header
@@ -52,28 +60,39 @@ struct NVStorageState {
   ReadDoneCB     pendingReadCallback;
   MultiOpDoneCB  pendingMultiReadDoneCallback;
   u32            lastReadTime; // The last time we returned a read result, use to back off and leave room for transport to clear
-  s32            startOfData; // Address of the 0th byte of NV data
-  s32            endOfData;   // Address 1 past the last byte of data
   s32            flashPointer;
   s8             phase;
   s8             retries;
+  s8             segment;
   bool           multiEraseDidAny;
   bool           multiReadFoundAny;
 };
 
 static NVStorageState nv;
 
+
+static s32 getStartOfSegment(void)
+{
+  if (nv.segment & NV_SEGMENT_F) return FACTORY_NV_STORAGE_SECTOR * SECTOR_SIZE;
+  else return NV_STORAGE_START_ADDRESS + (NV_STORAGE_AREA_SIZE * nv.segment);
+}
+
+static inline s32 getEndOfSegment(void)
+{
+  return getStartOfSegment() + NV_STORAGE_CAPACITY;
+}
+
 static void printNVSS()
 {
   db_printf("pw  = %x\tpwdc = %x\tpoha = %x\r\n"
             "pes = %d\tpee  = %d\tpec  = %x\tpmedc = %x\r\n"
             "prs = %d\tpre  = %d\tprc  = %x\tpmrdc = %x\r\n"
-            "sod = %x\teod  = %x\tfp   = %x\r\n"
+            "fp  = %x\tseg  = %x\tsos  = %x\teos   = %x\r\n"
             "p   = %d\tr    = %d\tmeda = %x\tmrfa = %x\r\n\r\n",
   (u32)nv.pendingWrite, (u32)nv.pendingWriteDoneCallback, nv.pendingOverwriteHeaderAddress,
   nv.pendingEraseStart, nv.pendingEraseEnd, (u32)nv.pendingEraseCallback, (u32)nv.pendingMultiEraseDoneCallback,
   nv.pendingReadStart, nv.pendingReadEnd, (u32)nv.pendingReadCallback, (u32)nv.pendingMultiReadDoneCallback,
-  nv.startOfData, nv.endOfData, nv.flashPointer,
+  nv.flashPointer, nv.segment, getStartOfSegment(), getEndOfSegment(),
   nv.phase, nv.retries, nv.multiEraseDidAny, nv.multiReadFoundAny);
 }
 
@@ -87,7 +106,8 @@ static void resetWrite()
   nv.pendingOverwriteHeaderAddress = 0;
   nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
   nv.phase = 0;
-  nv.flashPointer = nv.startOfData;
+  nv.segment |= ~NV_SEGMENT_F;
+  nv.flashPointer = getStartOfSegment();
 }
 
 static void resetErase()
@@ -99,7 +119,7 @@ static void resetErase()
   nv.multiEraseDidAny = false;
   nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
   nv.phase = 0;
-  nv.flashPointer = nv.startOfData;
+  nv.flashPointer = getStartOfSegment();
 }
 
 static void resetRead()
@@ -111,7 +131,8 @@ static void resetRead()
   nv.multiReadFoundAny = false;
   nv.retries = FLASH_OP_RETRIES_BEFORE_FAIL;
   nv.phase = 0;
-  nv.flashPointer = nv.startOfData;
+  nv.segment |= ~NV_SEGMENT_F;
+  nv.flashPointer = getStartOfSegment();
 }
 
 static inline bool isBusy()
@@ -192,28 +213,28 @@ static bool GarbageCollectionTask(uint32_t param)
   {
     case GC_init:
     {
-      GET_FLASH(nv.startOfData - sizeof(NVDataAreaHeader), reinterpret_cast<uint32*>(&gc->dah), sizeof(NVDataAreaHeader));
+      GET_FLASH(getStartOfSegment() - sizeof(NVDataAreaHeader), reinterpret_cast<uint32*>(&gc->dah), sizeof(NVDataAreaHeader));
       if (gc->dah.nvStorageVersion != NV_STORAGE_FORMAT_VERSION)
       {
         os_printf("NVS GC format conversion from %d to %d not supported\r\n", gc->dah.nvStorageVersion, NV_STORAGE_FORMAT_VERSION);
         gc->finishedCallback(NV_ERROR);
         break;
       }
-      else if (nv.startOfData == (NV_STORAGE_START_ADDRESS + sizeof(NVDataAreaHeader)))
+      else if (getStartOfSegment() == (NV_STORAGE_START_ADDRESS + sizeof(NVDataAreaHeader)))
       {
         gc->areaStart = NV_STORAGE_START_ADDRESS + NV_STORAGE_AREA_SIZE;
       }
-      else if (nv.startOfData == (NV_STORAGE_START_ADDRESS + NV_STORAGE_AREA_SIZE + sizeof(NVDataAreaHeader)))
+      else if (getStartOfSegment() == (NV_STORAGE_START_ADDRESS + NV_STORAGE_AREA_SIZE + sizeof(NVDataAreaHeader)))
       {
         gc->areaStart = NV_STORAGE_START_ADDRESS;
       }
       else
       {
-        os_printf("NVS GC unexpected start of data %x fail!\r\n", nv.startOfData);
+        os_printf("NVS GC unexpected start of data %x fail!\r\n", getStartOfSegment());
         gc->finishedCallback(NV_ERROR);
         break;
       }
-      gc->readPointer   = nv.startOfData;
+      gc->readPointer   = getStartOfSegment();
       gc->writePointer  = gc->areaStart + sizeof(NVDataAreaHeader);
       gc->entryCount    = 0;
       gc->sectorCounter = 0;
@@ -248,9 +269,9 @@ static bool GarbageCollectionTask(uint32_t param)
     case GC_rewrite:
     {
       //printGCState(gc);
-      if ((gc->readPointer - nv.startOfData) >= static_cast<s32>(NV_STORAGE_CAPACITY))
+      if ((gc->readPointer - getStartOfSegment()) >= static_cast<s32>(NV_STORAGE_CAPACITY))
       {
-        os_printf("NV GarbageCollect WARNING: read pointer hit end of capacity %x %x\r\n", gc->readPointer, nv.startOfData);
+        os_printf("NV GarbageCollect WARNING: read pointer hit end of capacity %x %x\r\n", gc->readPointer, getStartOfSegment());
         db_printf("NVS %d entries, 0x%x bytes used after GC\r\n", gc->entryCount, gc->writePointer-gc->areaStart);
         gc->phase = GC_finalize;
         return true;
@@ -307,9 +328,7 @@ static bool GarbageCollectionTask(uint32_t param)
       gc->dah.nvStorageVersion = NV_STORAGE_FORMAT_VERSION;
       gc->dah.journalNumber += 1;
       PUT_FLASH(gc->areaStart, reinterpret_cast<uint32_t*>(&gc->dah), sizeof(NVDataAreaHeader));
-      nv.startOfData = gc->areaStart + sizeof(NVDataAreaHeader);
-      nv.endOfData = nv.startOfData + NV_STORAGE_CAPACITY;
-      nv.flashPointer = nv.startOfData;
+      nv.flashPointer = getStartOfSegment();
       printNVSS();
       gc->finishedCallback(NV_OKAY);
       break;
@@ -352,9 +371,9 @@ extern "C" int8_t GarbageCollect(NVInitDoneCB finishedCallback)
 extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
 {
   NVDataAreaHeader dah;
-  s32 newestJournalNumber = -1;
-  u32 newestJournalAddress = 0;
+  s32 newestJournalNumber  = -1;
   s32 newestJournalVersion = NV_STORAGE_FORMAT_VERSION;
+  s8 newestJournalSegment  = NV_SEGMENT_UNINITALIZED;
   int area;
   nv.pendingWrite = NULL;
   resetWrite();
@@ -382,12 +401,12 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
       {
         newestJournalVersion = dah.nvStorageVersion;
         newestJournalNumber  = dah.journalNumber;
-        newestJournalAddress = addr;
+        newestJournalSegment = area;
       }
     }
   }
   
-  if (newestJournalAddress == 0) // Uninitalized storage
+  if (newestJournalSegment == NV_SEGMENT_UNINITALIZED) // Uninitalized storage
   {
     const u32 addr = NV_STORAGE_START_ADDRESS;
     dah.dataAreaMagic = NV_STORAGE_AREA_HEADER_MAGIC;
@@ -404,9 +423,8 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
     }
     else
     {
-      nv.startOfData  = addr + sizeof(NVDataAreaHeader);
-      nv.endOfData    = nv.startOfData + NV_STORAGE_CAPACITY;
-      nv.flashPointer = nv.startOfData;
+      nv.segment = NV_SEGMENT_A;
+      nv.flashPointer = getStartOfSegment();
       printNVSS();
       finishedCallback(NV_OKAY);
       return 0;
@@ -414,10 +432,9 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
   }
   else
   {
-    os_printf("NVInit selecting segment at %x\r\n", newestJournalAddress);
-    nv.startOfData  = newestJournalAddress + sizeof(NVDataAreaHeader);
-    nv.endOfData    = nv.startOfData + NV_STORAGE_CAPACITY;
-    nv.flashPointer = nv.startOfData;
+    nv.segment = newestJournalSegment;
+    nv.flashPointer = getStartOfSegment();
+    os_printf("NVInit selecting segment at %x\r\n", nv.flashPointer - sizeof(NVDataAreaHeader));
     if ((newestJournalVersion != NV_STORAGE_FORMAT_VERSION) && (gc == false))
     {
       os_printf("NVInit WARNING: flash storage version %d current softare version %d but GC not scheduled!\r\n", newestJournalVersion, NV_STORAGE_FORMAT_VERSION);
@@ -426,7 +443,7 @@ extern "C" int8_t NVInit(const bool gc, NVInitDoneCB finishedCallback)
     }
   }
   
-  if (gc)
+  if (gc && FACTORY_FIRMWARE==0)
   {
     const NVResult ret = GarbageCollect(finishedCallback);
     if (ret != NV_SCHEDULED)
@@ -472,7 +489,7 @@ static void processFailure(const NVResult fail)
   if (nv.pendingMultiReadDoneCallback != NULL) nv.pendingMultiReadDoneCallback(nv.pendingReadStart, fail);
   resetRead();
 
-  nv.flashPointer = nv.startOfData;
+  nv.flashPointer = getStartOfSegment();
 }
 
 static void endWrite(const NVResult writeResult)
@@ -493,7 +510,7 @@ Result Update()
   { // If we have anything to do
     static NVEntryHeader header;
     SpiFlashOpResult flashResult;
-    if (nv.flashPointer >= nv.endOfData) // Handle wrap around edge case here
+    if (nv.flashPointer >= getEndOfSegment()) // Handle wrap around edge case here
     {
       header.tag = NVEntry_Invalid;
       flashResult = SPI_FLASH_RESULT_OK;
@@ -520,7 +537,7 @@ Result Update()
         {
           const u32 blobSize  = ((nv.pendingWrite->blob_length + 3)/4)*4;
           const u32 entrySize = blobSize + sizeof(NVEntryHeader) + 4;
-          if (nv.flashPointer + (s32)entrySize >= nv.endOfData) // No room!
+          if (nv.flashPointer + (s32)entrySize >= getEndOfSegment()) // No room!
           {
             endWrite(NV_NO_ROOM);
           }
@@ -650,7 +667,7 @@ Result Update()
         
         else
         {
-          nv.flashPointer = nv.startOfData;
+          nv.flashPointer = getStartOfSegment();
           nv.phase = 0;
         }
       } // Done with handling end of flash
@@ -666,7 +683,7 @@ Result Update()
             ((nv.pendingEraseStart != NVEntry_Invalid) && (nv.pendingEraseStart == nv.pendingEraseEnd)) ||
             ((nv.pendingReadStart  != NVEntry_Invalid) && (nv.pendingReadStart  == nv.pendingReadEnd)))
         { // This points toward the entry we are seeking
-          if (((s32)header.successor < nv.startOfData) || ((s32)header.successor >= nv.endOfData))
+          if (((s32)header.successor < getStartOfSegment()) || ((s32)header.successor >= getEndOfSegment()))
           {
             AnkiWarn( 147, "NVStorage.Seek.BadSuccessor", 418, "Bad successor 0x%x on tag 0x%x at 0x%x, skipping to 0x%x", 4, header.successor, header.tag, nv.flashPointer, nv.flashPointer + header.size);
             nv.flashPointer += header.size;
@@ -827,6 +844,11 @@ NVResult Write(NVStorageBlob* entry, WriteDoneCB callback)
   if (entry == NULL) return NV_BAD_ARGS;
   if (entry->tag == NVEntry_Invalid) return NV_BAD_ARGS;
   if (isBusy()) return NV_BUSY; // Already have something queued
+  if (entry->tag & FACTORY_DATA_BIT) 
+  {
+    nv.segment |= NV_SEGMENT_F;
+    nv.flashPointer = getStartOfSegment();
+  }
   nv.pendingWrite = reinterpret_cast<NVStorageBlob*>(os_zalloc(sizeof(NVStorageBlob)));
   if (nv.pendingWrite == NULL) return NV_NO_MEM;
   os_memcpy(nv.pendingWrite, entry, sizeof(NVStorageBlob));
@@ -844,6 +866,7 @@ NVResult Erase(const u32 tag, EraseDoneCB callback)
 NVResult EraseRange(const u32 start, const u32 end, EraseDoneCB eachCallback, MultiOpDoneCB finishedCallback)
 {
   if (isBusy()) return NV_BUSY; // Already have something queued
+  else if (start & FACTORY_DATA_BIT) return NV_BAD_ARGS; // Cannot erase factory storage
   nv.pendingEraseStart = start;
   nv.pendingEraseEnd   = end;
   nv.pendingEraseCallback = eachCallback;
@@ -862,6 +885,11 @@ NVResult ReadRange(const u32 start, const u32 end, ReadDoneCB readCallback, Mult
 {
   if (readCallback == NULL) return NV_BAD_ARGS;
   if (isBusy()) return NV_BUSY; // Already have something queued
+  if (start & FACTORY_DATA_BIT)
+  {
+    nv.segment |= NV_SEGMENT_F;
+    nv.flashPointer = getStartOfSegment();
+  }
   nv.pendingReadStart = start;
   nv.pendingReadEnd   = end;
   nv.pendingReadCallback = readCallback;
