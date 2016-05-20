@@ -171,7 +171,7 @@ def parse_game_arguments():
     # signing_group = parser.add_mutually_exclusive_group(required=False)
 
     parser.add_argument('--features', action='append', dest='features',
-                      choices=['pressDemo'], nargs='+',
+                      choices=['pressDemo', 'factoryTest'], nargs='+',
                       help="Generates feature flags for project")
 
     parser.add_argument(
@@ -332,6 +332,10 @@ class GamePlatformConfiguration(object):
         if self.options.features != None and 'pressDemo' in self.options.features[0]:
             file.write(class_code + git_variable +
             '  public const string kDefaultBuildScene = \"PressDemo\";'+'\n'+
+            '}')
+        elif self.options.features != None and 'factoryTest' in self.options.features[0]:
+            file.write(class_code + git_variable +
+            '  public const string kDefaultBuildScene = \"FactoryTest\";'+'\n'+
             '}')
         else:
             file.write(class_code + git_variable +
