@@ -136,10 +136,10 @@ namespace Cozmo {
     
     VisionMarker::SetDataPath(_dataPath);
     
-    // Default processing modes to enable (first hard-coded, then overrides from config file)
-    EnableMode(VisionMode::DetectingMarkers, true);
-    EnableMode(VisionMode::DetectingMotion,  true);
-    EnableMode(VisionMode::DetectingFaces,   true);
+    // Default processing modes should be set from vision_config.json now!
+    //EnableMode(VisionMode::DetectingMarkers, true);
+    //EnableMode(VisionMode::DetectingMotion,  true);
+    //EnableMode(VisionMode::DetectingFaces,   true);
     //EnableMode(VisionMode::DetectingOverheadEdges, true);
     
     if(config.isMember("InitialVisionModes"))

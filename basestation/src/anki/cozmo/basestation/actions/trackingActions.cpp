@@ -49,6 +49,9 @@ ITrackAction::~ITrackAction()
 
   // Make sure to restore original eye dart distance
   _robot.GetAnimationStreamer().SetParam(LiveIdleAnimationParameter::EyeDartMaxDistance_pix, _originalEyeDartDist);
+  
+  // Make sure we abort any sound actions we triggered
+  _robot.GetActionList().Cancel(_soundAnimTag);
 }
 
 void ITrackAction::SetTiltSpeeds(f32 minSpeed_radPerSec, f32 maxSpeed_radPerSec) {
@@ -228,7 +231,9 @@ ActionResult ITrackAction::CheckIfDone()
     if(!_turningSoundAnimation.empty() && currentTime > _nextSoundTime && angleLargeEnoughForSound)
     {
       // Queue sound to only play if nothing else is playing
-      _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, new PlayAnimationAction(_robot, _turningSoundAnimation, 1, false));
+      PlayAnimationAction* soundAction = new PlayAnimationAction(_robot, _turningSoundAnimation, 1, false);
+      _soundAnimTag = soundAction->GetTag();
+      _robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, soundAction);
       
       _nextSoundTime = currentTime + GetRNG().RandDblInRange(_soundSpacingMin_sec, _soundSpacingMax_sec);
     }

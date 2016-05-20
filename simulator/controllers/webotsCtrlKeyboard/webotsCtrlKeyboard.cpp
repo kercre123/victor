@@ -201,17 +201,21 @@ namespace Anki {
         case RobotActionType::ENROLL_NAMED_FACE:
         {
           auto & completionInfo = msg.completionInfo.Get_faceEnrollmentCompleted();
-          
-          printf("RobotEnrolledFace: Added '%s' with ID=%d\n",
-                 completionInfo.name.c_str(), completionInfo.faceID);
-          
-          using namespace ExternalInterface;
-          SayText sayText;
-          sayText.text = completionInfo.name;
-          //sayText.playEvent = GameEvent::OnLearnedPlayerName;
-          sayText.style = SayTextStyle::Normal;
-          
-          SendMessage(MessageGameToEngine(std::move(sayText)));
+          if(msg.result == ActionResult::SUCCESS)
+          {
+            printf("RobotEnrolledFace: Added '%s' with ID=%d\n",
+                   completionInfo.name.c_str(), completionInfo.faceID);
+            
+//            using namespace ExternalInterface;
+//            SayText sayText;
+//            sayText.text = completionInfo.name;
+//            //sayText.playEvent = GameEvent::OnLearnedPlayerName;
+//            sayText.style = SayTextStyle::Name_Normal;
+//            
+//            SendMessage(MessageGameToEngine(std::move(sayText)));
+          } else {
+            printf("RobotEnrolledFace FAILED\n");
+          }
           break;
         } // ENROLL_NAMED_FACE
           
@@ -2010,7 +2014,8 @@ namespace Anki {
                       ExternalInterface::EnrollNamedFace enrollNamedFace;
                       enrollNamedFace.faceID   = GetLastObservedFaceID();
                       enrollNamedFace.name     = userName;
-                      enrollNamedFace.sequence = FaceEnrollmentSequence::Default;
+                      enrollNamedFace.sequence = FaceEnrollmentSequence::Simple;
+                      enrollNamedFace.saveToRobot = false; // for testing it's nice not to save
                       SendMessage(ExternalInterface::MessageGameToEngine(std::move(enrollNamedFace)));
                     } else {
                       // No user name, enable enrollment

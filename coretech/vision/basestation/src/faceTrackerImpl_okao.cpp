@@ -528,8 +528,9 @@ namespace Vision {
       if(facePartsFound)
       {
         const bool enableEnrollment = IsEnrollable(detectionInfo, face);
-        //PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
-        //                  "EnableEnrollment=%d", enableEnrollment);
+        //        PRINT_NAMED_DEBUG("FaceTrackerImpl.Update.IsEnrollable",
+        //                          "TrackerID:%d EnableEnrollment:%d",
+        //                          -detectionInfo.nID, enableEnrollment);
         
         bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
                                                               detectionInfo,

@@ -26,15 +26,6 @@
 #include <list>
 #include <memory>
 
-// This enables cozmo sounds through webots. Useful for now because not all robots have their own speakers.
-// Later, when we expect all robots to have speakers, this will only be needed when using the simulated robot
-// and needing sound.
-#if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
-#  define PLAY_ROBOT_AUDIO_ON_DEVICE 1
-#else
-#  define PLAY_ROBOT_AUDIO_ON_DEVICE 0
-#endif
-
 namespace Anki {
 namespace Cozmo {
   

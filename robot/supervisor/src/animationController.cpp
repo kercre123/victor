@@ -284,7 +284,7 @@ namespace AnimationController {
     
     if (_disabled) 
     {
-      AnkiDebug( 2, "AnimationController", 452, "BufferKeyFrame called while disabled", 0);
+      AnkiDebug( 2, "AnimationController", 473, "BufferKeyFrame called while disabled", 0);
       return RESULT_FAIL;
     }
     
@@ -462,7 +462,7 @@ namespace AnimationController {
           }
           default:
           {
-            AnkiWarn( 164, "AnimationController.ExpectedAudio", 455, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
+            AnkiWarn( 173, "AnimationController.ExpectedAudio", 455, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
             Clear();
             return false;
           }
@@ -527,7 +527,7 @@ namespace AnimationController {
           // (Note that IsReadyToPlay() checks for there being at least _two_
           //  keyframes in the buffer, where a "keyframe" is considered an
           //  audio sample (or silence) or an end-of-animation indicator.)
-          AnkiWarn( 165, "AnimationController.BufferUnexpectedlyEmpty", 451, "Ran out of animation buffer after getting audio/silence.", 0);
+          AnkiWarn( 174, "AnimationController.BufferUnexpectedlyEmpty", 451, "Ran out of animation buffer after getting audio/silence.", 0);
           return RESULT_FAIL;
         }
 
@@ -755,7 +755,7 @@ namespace AnimationController {
 
           default:
           {
-            AnkiWarn( 167, "AnimationController.UnexpectedTag", 453, "Unexpected message type %d in animation buffer!", 1, msgID);
+            AnkiWarn( 167, "AnimationController.UnexpectedTag", 474, "Unexpected message type %d in animation buffer!", 1, msgID);
             return RESULT_FAIL;
           }
 

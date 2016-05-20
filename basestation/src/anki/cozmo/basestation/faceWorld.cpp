@@ -4,12 +4,15 @@
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "util/console/consoleInterface.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 
 namespace Anki {
 namespace Cozmo {
+  
+  CONSOLE_VAR(u32, kDeletionTimeout_ms, "Vision.FaceWorld", 4000); // How long before deleting unobserved face
   
   FaceWorld::KnownFace::KnownFace(Vision::TrackedFace& faceIn)
   : face(faceIn)
@@ -360,7 +363,7 @@ namespace Cozmo {
     {
       Vision::TrackedFace& face = faceIter->second.face;
       
-      if(_robot.GetVisionComponent().GetLastProcessedImageTimeStamp() > _deletionTimeout_ms + face.GetTimeStamp()) {
+      if(_robot.GetVisionComponent().GetLastProcessedImageTimeStamp() > kDeletionTimeout_ms + face.GetTimeStamp()) {
         
         PRINT_NAMED_INFO("FaceWorld.Update.DeletingOldFace",
                          "Removing face %d at t=%d, because it hasn't been seen since t=%d.",

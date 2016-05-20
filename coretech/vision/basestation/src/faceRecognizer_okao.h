@@ -172,8 +172,9 @@ namespace Vision {
     
     // Which face we are allowed to add enrollment data for (UnknownFaceID == "any" face),
     // and how many enrollments we are allowed to add ( <0 means as many as we want)
-    bool     _isEnrollmentEnabled = true;
-    FaceID_t _enrollmentID = UnknownFaceID;
+    bool      _isEnrollmentEnabled = true;
+    FaceID_t  _enrollmentID = UnknownFaceID;
+    FaceID_t  _enrollmentTrackID = UnknownFaceID;
     s32       _enrollmentCount = -1; // Has no effect if enrollmentID not set
     s32       _origEnrollmentCount = -1;
     

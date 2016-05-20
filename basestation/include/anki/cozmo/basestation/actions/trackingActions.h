@@ -123,6 +123,8 @@ private:
   f32      _minPanSpeed_radPerSec  = 20.f;
   f32      _maxPanSpeed_radPerSec  = 80.f;
   
+  u32      _soundAnimTag = (u32)ActionConstants::INVALID_TAG;
+  
 }; // class ITrackAction
   
 inline void ITrackAction::SetSoundSpacing(f32 spacingMin_sec, f32 spacingMax_sec) {

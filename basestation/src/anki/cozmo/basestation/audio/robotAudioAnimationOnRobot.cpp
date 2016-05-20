@@ -20,6 +20,7 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
+#include "util/math/math.h"
 
 
 namespace Anki {
@@ -28,7 +29,7 @@ namespace Audio {
   
 // TEMP Solution to converting audio frame into robot audio message
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-constexpr float INT16_MAX_FLT = float(INT16_MAX);
+constexpr float INT16_MAX_FLT = (float)std::numeric_limits<int16_t>::max();
 
 uint8_t encodeMuLaw(float in_val)
 {
@@ -45,7 +46,8 @@ uint8_t encodeMuLaw(float in_val)
   };
   
   // Convert float (-1.0, 1.0) to int16
-  int16_t sample = Util::numeric_cast<int16_t>( in_val * INT16_MAX_FLT );
+
+  int16_t sample = Util::numeric_cast<int16_t>( Util::Clamp(in_val, -1.f, 1.f) * INT16_MAX_FLT );
   
   bool sign = sample < 0;
   
@@ -259,7 +261,7 @@ void RobotAudioAnimationOnRobot::PopRobotAudioMessage( RobotInterface::EngineToR
     // Ignore any animation events that belong to this frame
     while ( GetEventIndex() < _animationEvents.size() ) {
       AnimationEvent* currentEvent = &_animationEvents[GetEventIndex()];
-      if ( currentEvent->TimeInMS <= relevantTimeMS ) {
+      if ( currentEvent->TimeInMS < relevantTimeMS ) {
         IncrementEventIndex();
       }
       else {

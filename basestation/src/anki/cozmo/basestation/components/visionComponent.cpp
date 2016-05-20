@@ -956,6 +956,17 @@ namespace Cozmo {
 
       _robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
       
+      // Check this before potentially ignoring the face detection for faceWorld's purposes below
+      if(faceDetection.GetNumEnrollments() > 0) {
+        PRINT_NAMED_DEBUG("VisionComponent.UpdateFaces.ReachedEnrollmentCount",
+                          "Count=%d", faceDetection.GetNumEnrollments());
+        ExternalInterface::RobotReachedEnrollmentCount enrollCountMsg;
+        enrollCountMsg.faceID = faceDetection.GetID();
+        enrollCountMsg.count  = faceDetection.GetNumEnrollments();
+        
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(enrollCountMsg)));
+      }
+      
       // If we were moving too fast at the timestamp the face was detected then don't update it
       if(WasMovingTooFast(faceDetection.GetTimeStamp(), p))
       {
@@ -970,13 +981,6 @@ namespace Cozmo {
         return lastResult;
       }
       
-      if(faceDetection.GetNumEnrollments() > 0) {
-        ExternalInterface::RobotReachedEnrollmentCount enrollCountMsg;
-        enrollCountMsg.faceID = faceDetection.GetID();
-        enrollCountMsg.count  = faceDetection.GetNumEnrollments();
-        
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(enrollCountMsg)));
-      }
     }
     
     return lastResult;
