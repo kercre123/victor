@@ -81,6 +81,7 @@ public class PressDemoHubWorld : HubWorldBase {
   }
 
   private void HandleExternalRejection(Anki.Cozmo.ExternalInterface.DenyGameStart message) {
+    DAS.Info(this, "PressDemoHubWorld.HandleExternalRejection");
     if (_RequestDialog != null) {
       _RequestDialog.CloseView();
       _RequestDialog = null;
@@ -105,6 +106,7 @@ public class PressDemoHubWorld : HubWorldBase {
       alertView.TitleLocKey = "pressDemo.speedTapRequestAgainTitle";
       alertView.DescriptionLocKey = "pressDemo.speedTapRequestAgainDesc";
     }
+    _RequestDialog = alertView;
   }
 
   private void HandleStartButtonPressed(bool startWithEdge) {
