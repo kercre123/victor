@@ -133,6 +133,11 @@ message RobotOnBack {
     bool onBack
 }
 
+// Tests a collision, not contacts.
+message RobotOnChargerPlatformEvent {
+  bool   onCharger
+}
+
 // Generic string for sending debug string up to game
 message DebugString {
     string    text

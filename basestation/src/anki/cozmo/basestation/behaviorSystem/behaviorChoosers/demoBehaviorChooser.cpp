@@ -37,6 +37,7 @@ namespace Anki {
 namespace Cozmo {
 
 static const char* kWakeUpBehavior = "demo_wakeUp";
+static const char* kDriveOffChargerBehavior = "DriveOffCharger";
 static const char* kFearEdgeBehavior = "demo_fearEdge";
 // static const char* kCliffBehavior = "ReactToCliff";
 static const char* kFlipDownFromBackBehavior = "ReactToRobotOnBack";
@@ -95,12 +96,13 @@ unsigned int DemoBehaviorChooser::GetStateNum(State state)
   switch( state ) {
     case State::None: return 0;
     case State::WakeUp: return 1;
-    case State::FearEdge: return 2;
-    case State::Pounce: return 3;
-    case State::Faces: return 4;
-    case State::Cubes: return 5;
-    case State::MiniGame: return 6;
-    case State::Sleep: return 7;
+    case State::DriveOffCharger: return 2;
+    case State::FearEdge: return 3;
+    case State::Pounce: return 4;
+    case State::Faces: return 5;
+    case State::Cubes: return 6;
+    case State::MiniGame: return 7;
+    case State::Sleep: return 8;
   }
 }
 
@@ -157,12 +159,16 @@ void DemoBehaviorChooser::TransitionToNextState()
       break;
     }
     case State::WakeUp: {
+      TransitionToDriveOffCharger();
+      break;
+    }
+    case State::DriveOffCharger: {
       if( _hasEdge ) {
         TransitionToFearEdge();
       }
       else {
         TransitionToPounce();
-      }            
+      }
       break;
     }
     case State::FearEdge: {
@@ -222,6 +228,18 @@ void DemoBehaviorChooser::TransitionToWakeUp()
   SetBehaviorEnabled(kWakeUpBehavior, true);
 
   _checkTransition = std::bind(&DemoBehaviorChooser::DidBehaviorRunAndStop, this, kWakeUpBehavior);
+}
+  
+void DemoBehaviorChooser::TransitionToDriveOffCharger()
+{
+  SET_STATE(DriveOffCharger);
+  SetAllBehaviorsEnabled(false);
+  SetBehaviorEnabled(kDriveOffChargerBehavior, true);
+  
+  // Deals with case where no connected charger has been added
+  _checkTransition = [this]() {
+    return DidBehaviorRunAndStop(kDriveOffChargerBehavior) || !_robot.IsOnChargerPlatform();
+  };
 }
 
 void DemoBehaviorChooser::TransitionToFearEdge()

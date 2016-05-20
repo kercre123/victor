@@ -14,6 +14,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/charger.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
@@ -347,6 +348,18 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
       // Turn off lights upon connection
       std::array<Anki::Cozmo::LightState, 4> lights{}; // Use the default constructed, empty light structure
       SendRobotMessage<CubeLights>(lights, payload.objectID);
+      
+      // if a charger, and robot is on the charger, add a pose for the charager
+      if( payload.device_type == Anki::Cozmo::ActiveObjectType::OBJECT_CHARGER && IsOnCharger() )
+      {
+        SetCharger(objID);
+        Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(objID, ObjectFamily::Charger));
+        if( charger )
+        {
+          charger->SetPoseToRobot(GetPose());
+        }
+      }
+      
     }
   } else {
     // Remove active object from blockworld if it exists
@@ -634,6 +647,12 @@ void Robot::HandleChargerEvent(const AnkiEvent<RobotInterface::RobotToEngine>& m
     
     // Stop whatever we were doing
     //GetActionList().Cancel();
+    
+    Charger* charger = dynamic_cast<Charger*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
+    if( charger )
+    {
+      charger->SetPoseToRobot(GetPose());
+    }
     
   } else {
     PRINT_NAMED_INFO("RobotImplMessaging.HandleChargerEvent.OffCharger", "");

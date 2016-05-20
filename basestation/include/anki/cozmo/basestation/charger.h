@@ -54,6 +54,7 @@ namespace Anki {
       
       // Return pose of the robot when it's in the charger
       Pose3d GetDockedPose()  const;
+      void SetPoseToRobot(Pose3d robotPose);
       
       virtual bool IsActive() const override  { return true; }
       

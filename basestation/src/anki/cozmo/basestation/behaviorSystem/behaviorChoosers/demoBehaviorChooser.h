@@ -56,6 +56,7 @@ private:
   void TransitionToNextState();
 
   void TransitionToWakeUp();
+  void TransitionToDriveOffCharger();
   void TransitionToFearEdge();
   void TransitionToPounce();
   void TransitionToFaces();
@@ -75,6 +76,7 @@ private:
   enum class State {
     None,
     WakeUp,
+    DriveOffCharger,
     FearEdge,
     Pounce,
     Faces,

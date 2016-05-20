@@ -1095,6 +1095,17 @@ namespace Anki {
         _lastDebugStringHash = curr_hash;
       }
       
+      // Update ChargerPlatform
+      ObservableObject* charger = dynamic_cast<ObservableObject*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
+      if( charger )
+      {
+        bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
+        if( isOnChargerPlatform != _isOnChargerPlatform)
+        {
+          _isOnChargerPlatform = isOnChargerPlatform;
+          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(isOnChargerPlatform)));
+        }
+      }
       
       return RESULT_OK;
       

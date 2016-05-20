@@ -96,6 +96,16 @@ namespace Anki {
       return pose;
     }
     
+    void Charger::SetPoseToRobot(Pose3d robotPose)
+    {
+      Pose3d pose(-M_PI, Z_AXIS_3D(),
+                  Point3f{RobotToChargerDistWhenDocked, 0, 0},
+                  &robotPose,
+                  "Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
+      
+      SetPose(pose.GetWithRespectToOrigin());
+    }
+    
     
 #if 0
 #pragma mark --- Virtual Method Implementations ---

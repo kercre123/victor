@@ -202,6 +202,8 @@ public:
 
     // True if robot is on charger
     bool   IsOnCharger() const { return _isOnCharger; }
+    // True if we know we're on a connected charger, but not the contacts
+    bool   IsOnChargerPlatform() const { return _isOnChargerPlatform; }
   
     // Updates pose to be on charger
     Result SetPoseOnCharger();
@@ -847,6 +849,7 @@ public:
     bool             _isOnBack = false;
     TimeStamp_t      _robotFirstOnBack_ms = 0;
     bool             _lastSendOnBackValue = false;
+    bool             _isOnChargerPlatform = false;
 
   
     // Sets robot pose but does not update the pose on the robot.

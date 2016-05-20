@@ -117,7 +117,7 @@ void BehaviorReactToCliff::StopInternal(Robot& robot)
   _state = State::PlayingStopReaction;
 }
 
-bool BehaviorReactToCliff::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event)
+bool BehaviorReactToCliff::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
 {  
   switch( event.GetTag() ) {
     case EngineToGameTag::CliffEvent: {

@@ -40,6 +40,7 @@
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
 #include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
+#include "anki/cozmo/basestation/behaviors/BehaviorDriveOffCharger.h"
 
 
 namespace Anki {
@@ -196,6 +197,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToOnCharger:
     {
       newBehavior = new BehaviorReactToOnCharger(robot, config);
+      break;
+    }
+    case BehaviorType::DriveOffCharger:
+    {
+      newBehavior = new BehaviorDriveOffCharger(robot, config);
       break;
     }
     case BehaviorType::Count:
