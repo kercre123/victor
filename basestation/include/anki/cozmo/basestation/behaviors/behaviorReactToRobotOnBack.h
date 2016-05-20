@@ -33,7 +33,7 @@ public:
   // TODO:(bn) should this depend on how long the robot was "in the air"?
   virtual bool ShouldResumeLastBehavior() const override { return false; }
 
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const override;
+  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) override;
   
 protected:
     

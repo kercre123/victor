@@ -77,6 +77,7 @@ public:
   bool HasStackToAdmire() const { return _topOfStackToAdmire.IsSet(); }
   ObjectID GetStackToAdmireTopBlockID() const { return _topOfStackToAdmire; }
   ObjectID GetStackToAdmireBottomBlockID() const { return _bottomOfStackToAdmire; }
+
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
