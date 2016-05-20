@@ -36,9 +36,7 @@ $(VERSION_HEADER):
 python:
 	make -C clad python
 
-# App target doesn't run the preprocessor
-app: $(ANKI_LOG_PP) $(shell /usr/bin/find $(ANKI_LOG_SRC_DIRS) -type f)
-	python3 $(ANKI_LOG_PP) --string-table --output $(ANKI_LOG_TABLE_JSON) $(ANKI_LOG_SRC_DIRS)
+app: $(ANKI_LOG_TABLE_JSON)
 
 sim: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON)
 	make fourzero -C clad -j4
