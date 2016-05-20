@@ -19,7 +19,8 @@ enum uint_8 FactoryTestState {
   StartPickup,
   PickingUpBlock,
   PlacingBlock,
-  DockToCharger
+  DockToCharger,
+  BLE_TestControl,
 }
 
 enum uint_8 FactoryTestResultCode {

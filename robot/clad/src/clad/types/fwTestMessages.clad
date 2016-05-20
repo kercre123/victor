@@ -18,7 +18,10 @@ namespace RobotInterface {
     FTM_ImuInfo = 4,
     FTM_EncoderInfo = 5,
     FTM_motorLifeTest = 6,
-    FTM_PlayPenTest = 7
+    FTM_PlayPenTest = 7,
+    FTM_BLE_Menu,
+    FTM_BLE_On,
+    FTM_BLE_Off
   }
   
   /// The active test mode of the robot

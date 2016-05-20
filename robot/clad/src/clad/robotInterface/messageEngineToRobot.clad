@@ -234,9 +234,15 @@ message EnableLiftPower
   bool enable
 }
 
+enum int_8 BodyRadioMode {
+  BODY_BLUETOOTH_OPERATING_MODE = 0,
+  BODY_WIFI_OPERATING_MODE = 1,
+  BODY_DTM_OPERATING_MODE = 2
+}
+
 message SetBodyRadioMode
 {
-  uint_8 radioMode
+  BodyRadioMode radioMode
 }
 
 message SendDTMCommand
@@ -305,12 +311,6 @@ enum uint_32 ToRobotAddressSpace
   TO_ENG_START  = 0xB0,
   TO_ENG_UNREL  = 0xF0,
   TO_ENG_END    = 0xFE
-}
-
-enum uint_8 BodyRadioMode {
-  BODY_BLUETOOTH_OPERATING_MODE = 0,
-  BODY_WIFI_OPERATING_MODE = 1,
-  BODY_DTM_OPERATING_MODE = 2
 }
 
 /// *************** Overall message pipe ******************************* ///

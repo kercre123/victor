@@ -4,9 +4,9 @@
 
 #include "activeObjectManager.h"
 #include "anki/cozmo/robot/logging.h"
-#include "rtip.h"
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -39,11 +39,10 @@ void Update()
     {
       if (needUpdate & (1 << i))
       {
-        RobotInterface::EngineToRobot msg;
-        msg.tag = RobotInterface::EngineToRobot::Tag_setPropSlot;
-        msg.setPropSlot.factory_id = assignments[i];
-        msg.setPropSlot.slot = i;
-        if (RTIP::SendMessage(msg)) needUpdate &= ~(1<<i);
+        SetPropSlot msg;
+        msg.factory_id = assignments[i];
+        msg.slot = i;
+        if (RobotInterface::SendMessage(msg)) needUpdate &= ~(1<<i);
         lastBodyUpdateTime = system_get_time();
         break;
       }

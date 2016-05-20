@@ -8,7 +8,9 @@ ANKI_LOG_PP=tools/ankiLogPP.py
 ANKI_LOG_TABLE_JSON=../resources/config/basestation/AnkiLogStringTables.json
 ANKI_LOG_SRC_DIRS=supervisor/src k02_hal espressif/app sim_hal/ syscon/hal
 
-BINARY_RELEASE_DIR=releases
+STAGING_DIR=staging
+BINARY_DIR=binaries
+RELEASE_DIR=releases
 
 VERSION_GENERATOR=tools/versionGenerator/versionGenerator.sh
 VERSION_HEADER=include/anki/cozmo/robot/version.h
@@ -59,9 +61,9 @@ nrf_fix:
 
 # This fixes the headers and places the binaries in release
 stage_binaries:
-	if test ./build/app/robot.axf -nt ./binaries/robot.afx; then cp ./build/app/robot.axf ./binaries; fi
-	if test ./syscon/build/app/syscon.afx -nt ./binaries/syscon.afx; then cp ./syscon/build/app/syscon.axf ./binaries; fi
-	if test ./staging/esp.user.bin -nt ./binaries/esp.user.bin; then cp ./staging/esp.user.bin ./binaries/esp.user.bin; fi
+	@if test ./build/app/robot.axf -nt ./binaries/robot.afx; then cp -v ./build/app/robot.axf ./binaries; fi
+	@if test ./syscon/build/app/syscon.afx -nt ./binaries/syscon.afx; then cp -v ./syscon/build/app/syscon.axf ./binaries; fi
+	@if test ./staging/esp.user.bin -nt ./binaries/esp.user.bin; then cp -v ./staging/esp.user.bin ./binaries/esp.user.bin; fi
 
 release: stage_binaries
 	python3 ./tools/sign.py --wifi binaries/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./releases/cozmo.safe
@@ -75,7 +77,7 @@ esp: $(VERSION_HEADER) $(ANKI_LOG_TABLE_JSON) staging_dir
 	cp ./espressif/bin/upgrade/user1.2048.new.3.bin ./staging/esp.user.bin
 	python3 ./tools/sign.py --wifi ./staging/esp.user.bin --rtip ./binaries/robot.axf  --body ./binaries/syscon.axf ./staging/cozmo.safe
 
-onBuildServer: k02 $(BINARY_RELEASE_DIR)/esp.user.bin
+onBuildServer: esp
 
 
 clean:

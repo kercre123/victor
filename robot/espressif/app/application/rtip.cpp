@@ -28,11 +28,23 @@ bool Init()
   return true;
 }
 
-bool SendMessage(u8* buffer, u16 bufferSize)
+bool SendMessage(const u8* buffer, const u16 bufferSize, const u8 tag)
 {
-  AnkiConditionalErrorAndReturnValue(bufferSize <= DROP_TO_RTIP_MAX_VAR_PAYLOAD,     false, 30, "RTIP", 198, "SendMessage: Message too large for RTIP, %d > %d", 2, bufferSize, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
-  AnkiConditionalErrorAndReturnValue(i2spiQueueMessage(buffer, bufferSize), false, 30, "RTIP", 199, "SendMessage: Couldn't forward message %x[%d] to RTIP", 2, buffer[0], bufferSize);
+  if (tag == RobotInterface::GLOBAL_INVALID_TAG)
+  {
+    AnkiConditionalErrorAndReturnValue(bufferSize <= DROP_TO_RTIP_MAX_VAR_PAYLOAD,     false, 30, "RTIP", 198, "SendMessage: Message too large for RTIP, %d > %d", 2, bufferSize, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
+    AnkiConditionalErrorAndReturnValue(i2spiQueueMessage(buffer, bufferSize), false, 30, "RTIP", 199, "SendMessage: Couldn't forward message %x[%d] to RTIP", 2, buffer[0], bufferSize);
+    return true;
+  }
+  else
+  {
+    u8 msgBuffer[DROP_TO_RTIP_MAX_VAR_PAYLOAD];
+    AnkiConditionalErrorAndReturnValue(bufferSize + 1 <= DROP_TO_RTIP_MAX_VAR_PAYLOAD, false, 30, "RTIP", 415, "SendMessage with %x[%d] > %d", 3, tag, bufferSize, DROP_TO_RTIP_MAX_VAR_PAYLOAD);
+    msgBuffer[0] = tag;
+    os_memcpy(msgBuffer + 1, buffer, bufferSize);
+    AnkiConditionalErrorAndReturnValue(i2spiQueueMessage(msgBuffer, bufferSize+1), false, 30, "RTIP", 199, "SendMessage: Couldn't forward message %x[%d] to RTIP", 2, tag, bufferSize+1);
   return true;
+  }
 }
 
 bool SendMessage(RobotInterface::EngineToRobot& msg)

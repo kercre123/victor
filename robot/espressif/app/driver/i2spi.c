@@ -649,7 +649,7 @@ int8_t ICACHE_FLASH_ATTR i2spiInit() {
   return 0;
 }
 
-bool ICACHE_FLASH_ATTR i2spiQueueMessage(uint8_t* msgData, int msgLen)
+bool ICACHE_FLASH_ATTR i2spiQueueMessage(const uint8_t* msgData, const int msgLen)
 {
   if (unlikely(outgoingPhase < PHASE_FLAGS))
   {
