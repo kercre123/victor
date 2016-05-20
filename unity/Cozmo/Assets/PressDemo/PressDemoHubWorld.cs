@@ -63,6 +63,7 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void HandleDemoState(int demoNum) {
     _PressDemoDebugSceneIndex = demoNum;
+    DAS.Debug("PressDemo", "Demo State #: " + demoNum);
     if (_PressDemoViewInstance != null) {
       _PressDemoViewInstance.SetPressDemoDebugState(demoNum);
     }
