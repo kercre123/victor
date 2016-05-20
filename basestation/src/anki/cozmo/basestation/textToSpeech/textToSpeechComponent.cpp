@@ -47,9 +47,11 @@ TextToSpeechComponent::TextToSpeechComponent(const CozmoContext* context)
   flite_init();
   
   _voice = register_cmu_us_rms( nullptr );
+  
   // Add Duration Stretch feature to voice
   // Create text with 2x length, Wwise will time stretch them to the desired length
-  feat_set_float( _voice->features, "duration_stretch", 2.0 );
+  // feat_set_float( _voice->features, "duration_stretch", 2.0 );
+  // ^^^^ Just kiding we don't know what we want ^^^^
   
   
   if( nullptr != context ) {
