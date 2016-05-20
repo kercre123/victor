@@ -87,7 +87,7 @@ namespace Anki.Cozmo.Audio {
 
       switch(group.text){
       case "Music":
-        GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silence);
+        GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
         break;
       case "UI":
         AudioClient.Instance.StopAllAudioEvents(GameObjectType.UI);

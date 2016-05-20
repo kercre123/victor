@@ -32,7 +32,7 @@ public class StartView : BaseView {
     #endif
 
     LoopRobotSleep();
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
   }
 
   private void Update() {

@@ -40,6 +40,7 @@ public class PressDemoHubWorld : HubWorldBase {
     RobotEngineManager.Instance.OnDemoState += HandleDemoState;
     RobotEngineManager.Instance.OnDenyGameStart += HandleExternalRejection;
     RobotEngineManager.Instance.CurrentRobot.SendAnimation(AnimationName.kStartSleeping, HandleSleepAnimationComplete);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Sleep);
     return true;
   }
 
@@ -57,7 +58,7 @@ public class PressDemoHubWorld : HubWorldBase {
     _PressDemoViewInstance.OnForceProgress += HandleForceProgressPressed;
     _PressDemoViewInstance.OnStartButton += HandleStartButtonPressed;
     _PressDemoViewInstance.SetPressDemoDebugState(_PressDemoDebugSceneIndex);
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Wakeup);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
   }
 
   private void HandleDemoState(int demoNum) {
