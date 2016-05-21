@@ -190,7 +190,7 @@ void RobotAudioAnimationOnRobot::UpdateBufferReady( TimeStamp_t startTime_ms, Ti
     while ( GetEventIndex() < _animationEvents.size() ) {
 
       const AnimationEvent* anEvent = &_animationEvents[GetEventIndex()];
-      if ( anEvent->TimeInMS < relevantTimeMS ) {
+      if ( anEvent->TimeInMS <= relevantTimeMS ) {
        // Check if the event is valid
         if ( anEvent->State == AnimationEvent::AnimationEventState::Error ) {
           // Ignore invalid event, move on to next event
@@ -198,13 +198,10 @@ void RobotAudioAnimationOnRobot::UpdateBufferReady( TimeStamp_t startTime_ms, Ti
           continue;
         }
         
-        // Check if there the buffer stream is ready
+        // Check if the buffer stream is ready
         if ( _audioBuffer->HasAudioBufferStream() && _audioBuffer->GetFrontAudioBufferStream()->HasRobotAudioMessage() ) {
           // Set current buffer stream
           _currentBufferStream = _audioBuffer->GetFrontAudioBufferStream();
-          
-          // Update the current event index
-          IncrementEventIndex();
         }
         else {
           // Wait for buffer stream to get more frames
