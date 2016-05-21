@@ -67,6 +67,10 @@ public class PressDemoHubWorld : HubWorldBase {
     if (_PressDemoViewInstance != null) {
       _PressDemoViewInstance.SetPressDemoDebugState(demoNum);
     }
+    // last demo scene so shut off music
+    if (demoNum == 7) {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Silent);
+    }
   }
 
   private void HandleRequestEnrollFace(Anki.Cozmo.ExternalInterface.RequestEnrollFace message) {
