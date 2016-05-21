@@ -42,7 +42,7 @@ namespace SpeedTap {
         roundsWinnerWon = _SpeedTapGame.PlayerRoundsWon;
       }
       int roundsNeeded = _SpeedTapGame.RoundsNeededToWin;
-      roundEndSlideScript.Initialize(winnerPortrait, winnerNameLocKey, roundsWinnerWon, roundsNeeded, _SpeedTapGame.CurrentRound);
+      roundEndSlideScript.Initialize(winnerPortrait, winnerNameLocKey, roundsWinnerWon, roundsNeeded, _SpeedTapGame.RoundsPlayed);
 
       // Play banner animation with score
       string bannerText = Localization.GetWithArgs(LocalizationKeys.kSpeedTapTextRoundScore, 
