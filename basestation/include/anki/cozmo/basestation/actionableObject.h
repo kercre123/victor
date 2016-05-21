@@ -42,7 +42,7 @@ namespace Anki {
     class ActionableObject : public virtual ObservableObject // NOTE: Cozmo::ObservableObject, not Vision::
     {
     public:
-      ActionableObject(ObjectFamily family, ObjectType type);
+      ActionableObject();
       
       // Return true if actions poses of any type exist for this object
       bool HasPreActionPoses() const;

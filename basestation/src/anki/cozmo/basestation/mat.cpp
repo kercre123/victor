@@ -34,7 +34,7 @@ namespace Anki {
     }
     
     MatPiece::MatPiece(ObjectType type, const Point3f& size)
-    : ActionableObject(ObjectFamily::Mat, type)
+    : ObservableObject(ObjectFamily::Mat, type)
     , _size(size)
     , _canonicalCorners({
       Point3f(-0.5f*_size.x(), -0.5f*_size.y(), -_size.z()),
