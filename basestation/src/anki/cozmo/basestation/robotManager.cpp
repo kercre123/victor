@@ -261,7 +261,7 @@ namespace Anki {
       
       auto filePaths = Util::FileUtils::FilesInDirectory(animationFolder, true, "json", true);
       
-      for (auto path : filePaths)
+      for (const auto& path : filePaths)
       {
         struct stat attrib{0};
         int result = stat(path.c_str(), &attrib);
@@ -343,7 +343,7 @@ namespace Anki {
       _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
       
       auto filePaths = Util::FileUtils::FilesInDirectory(animationGroupFolder, true, "json",true);
-      for (auto path : filePaths)
+      for (const auto& path : filePaths)
       {
         struct stat attrib{0};
         int result = stat(path.c_str(), &attrib);

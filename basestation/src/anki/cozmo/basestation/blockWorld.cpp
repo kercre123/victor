@@ -232,9 +232,9 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     BlockWorld::~BlockWorld()
     {
       
-      for(auto objectFamily : _existingObjects) {
-        for(auto objectTypes : objectFamily.second) {
-          for(auto objectIDs : objectTypes.second) {
+      for(const auto& objectFamily : _existingObjects) {
+        for(const auto& objectTypes : objectFamily.second) {
+          for(const auto& objectIDs : objectTypes.second) {
             delete objectIDs.second;
           }
         }
@@ -304,10 +304,10 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     
     ObservableObject* BlockWorld::GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const
     {
-      for(auto objectsByType : _existingObjects) {
+      for(const auto& objectsByType : _existingObjects) {
         if(inFamily == ObjectFamily::Unknown || inFamily == objectsByType.first) {
-          for(auto objectsByID : objectsByType.second) {
-            for(auto objectWithID : objectsByID.second) {
+          for(const auto& objectsByID : objectsByType.second) {
+            for(const auto& objectWithID : objectsByID.second) {
               ObservableObject* object = objectWithID.second;
               if(object->IsActive() && object->GetActiveID() == activeID) {
                 return object;
@@ -352,7 +352,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     {
       auto objectsExistingIter = objectsExisting.find(objectSeen->GetType());
       if(objectsExistingIter != objectsExisting.end()) {
-        for(auto objectToCheck : objectsExistingIter->second) {
+        for(const auto& objectToCheck : objectsExistingIter->second) {
           CheckForOverlapHelper(objectSeen, objectToCheck.second, overlappingExistingObjects);
         }
       }
@@ -364,7 +364,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
                                             const std::vector<ObservableObject*>& objectsSeen,
                                             std::vector<ObservableObject*>& overlappingSeenObjects) const
     {
-      for(auto objectToCheck : objectsSeen) {
+      for(const auto& objectToCheck : objectsSeen) {
         CheckForOverlapHelper(objectExisting, objectToCheck, overlappingSeenObjects);
       }
     }
@@ -373,7 +373,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
                                             const std::multimap<f32, ObservableObject*>& objectsSeen,
                                             std::vector<ObservableObject*>& overlappingSeenObjects) const
     {
-      for(auto objectToCheckPair : objectsSeen) {
+      for(const auto& objectToCheckPair : objectsSeen) {
         ObservableObject* objectToCheck = objectToCheckPair.second;
         CheckForOverlapHelper(objectExisting, objectToCheck, overlappingSeenObjects);
       }
@@ -839,7 +839,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
       
 
       
-      for(auto objSeenPair : objectsSeen) {
+      for(const auto& objSeenPair : objectsSeen) {
 
         ObservableObject* objSeen = objSeenPair.second;
         
@@ -924,8 +924,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         const f32 objectDiagonal = objSeen->GetSameDistanceTolerance().Length();
         ObservableObject* parentMat = nullptr;
 
-        for(auto objectsByType : _existingObjects[ObjectFamily::Mat]) {
-          for(auto objectsByID : objectsByType.second) {
+        for(const auto& objectsByType : _existingObjects[ObjectFamily::Mat]) {
+          for(const auto& objectsByID : objectsByType.second) {
             MatPiece* mat = dynamic_cast<MatPiece*>(objectsByID.second);
             assert(mat != nullptr);
             
@@ -1768,7 +1768,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         // Is the robot "on" any of the mats it sees?
         // TODO: What to do if robot is "on" more than one mat simultaneously?
         MatPiece* onMat = nullptr;
-        for(auto objectPair : matsSeen) {
+        for(const auto& objectPair : matsSeen) {
           Vision::ObservableObject* object = objectPair.second;
           
           // ObservedObjects are w.r.t. the arbitrary historical origin of the camera
@@ -1873,7 +1873,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
             // most accurate) and localize to that one.
             f32 minDistSq = -1.f;
             MatPiece* closestMat = nullptr;
-            for(auto matPair : matsSeen) {
+            for(const auto& matPair : matsSeen) {
               Vision::ObservableObject* mat = matPair.second;
               
               std::vector<const Vision::KnownMarker*> observedMarkers;
@@ -2002,7 +2002,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         // just like they are any "regular" object, unless that mat is the
         // robot's current "world" origin, [TODO:] in which case we will update the pose
         // of the mat we are on w.r.t. that world.
-        for(auto matSeenPair : matsSeen) {
+        for(const auto& matSeenPair : matsSeen) {
           ObservableObject* matSeen = matSeenPair.second;
           
           if(matSeen != matToLocalizeTo) {
@@ -2173,7 +2173,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         // Remove used markers from map
         RemoveUsedMarkers(obsMarkersAtTimestamp);
       
-        for(auto objectPair : objectsSeen) {
+        for(const auto& objectPair : objectsSeen) {
           Vision::ObservableObject* object = objectPair.second;
           
           // ObservedObjects are w.r.t. the arbitrary historical origin of the camera
@@ -2974,8 +2974,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     {
       if(_canDeleteObjects) {
         for(auto & objectsByFamily : _existingObjects) {
-          for(auto objectsByType : objectsByFamily.second) {
-            for(auto objectsByID : objectsByType.second) {
+          for(const auto& objectsByType : objectsByFamily.second) {
+            for(const auto& objectsByID : objectsByType.second) {
               ClearObjectHelper(objectsByID.second);
             }
           }
@@ -3561,8 +3561,8 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
     void BlockWorld::DrawObsMarkers() const
     {
       if (_enableDraw) {
-        for (auto poseKeyMarkerMapAtTimestamp : _obsMarkers) {
-          for (auto poseKeyMarkerMap : poseKeyMarkerMapAtTimestamp.second) {
+        for (const auto& poseKeyMarkerMapAtTimestamp : _obsMarkers) {
+          for (const auto& poseKeyMarkerMap : poseKeyMarkerMapAtTimestamp.second) {
             const Quad2f& q = poseKeyMarkerMap.second.GetImageCorners();
             f32 scaleF = 1.0f;
             switch(IMG_STREAM_RES) {
