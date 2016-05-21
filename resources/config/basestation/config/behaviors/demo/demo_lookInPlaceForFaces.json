@@ -31,6 +31,7 @@
     "behavior_ShouldResetTurnDirection": true,
     "behavior_DistanceFromRecentLocationMin_mm": 300.0,
     "behavior_RecentLocationsMax": 1,
+    "behavior_AngleOfFocus_deg": 120.0,
     
     // shared speeds
     "sx_BodyTurnSpeed_degPerSec": 75.0,   // turn speed

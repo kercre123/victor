@@ -76,6 +76,7 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   virtual IBehavior::Status UpdateInternal(Robot& robot) override;
   virtual void StopInternal(Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions
@@ -104,6 +105,7 @@ private:
     float   behavior_DistanceFromRecentLocationMin_mm;
     uint8_t behavior_RecentLocationsMax;
     bool    behavior_ShouldResetTurnDirection;
+    float   behavior_AngleOfFocus_deg;
     // turn speed
     float sx_BodyTurnSpeed_degPerSec;
     float sxt_HeadTurnSpeed_degPerSec; // for turn states
@@ -198,6 +200,9 @@ private:
   
   // positions we have recently done
   std::list<Pose3d> _visitedLocations;
+  
+  // Initial direction on behavior init
+  Radians _initialBodyDirection;
 };
   
 

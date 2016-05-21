@@ -41,9 +41,10 @@ BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot,
 {
   SetDefaultName("BehaviorExploreLookAroundInPlace");
 
-  SubscribeToTags({
-    EngineToGameTag::RobotCompletedAction
-  });
+  SubscribeToTags({{
+    EngineToGameTag::RobotCompletedAction,
+    EngineToGameTag::RobotPutDown
+  }});
   
   // parse all parameters now
   LoadConfig(config[kConfigParamsKey]);
@@ -53,6 +54,8 @@ BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot,
     DecideTurnDirection();
   }
 
+  // We init the body direction to zero because behaviors are init before robot pose is set to anything real
+  _initialBodyDirection = 0.f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -122,6 +125,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm");
   _configParams.behavior_RecentLocationsMax = ParseUint8(config, "behavior_RecentLocationsMax");
   _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection");
+  _configParams.behavior_AngleOfFocus_deg = ParseFloat(config, "behavior_AngleOfFocus_deg");
   // turn speed
   _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec");
   _configParams.sxt_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxt_HeadTurnSpeed_degPerSec");
@@ -185,6 +189,23 @@ void BehaviorExploreLookAroundInPlace::StopInternal(Robot& robot)
 {
   
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreLookAroundInPlace::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  switch (event.GetData().GetTag())
+  {
+    case EngineToGameTag::RobotPutDown:
+    {
+      _initialBodyDirection = robot.GetPose().GetRotationAngle<'Z'>();
+      break;
+    }
+    default:
+    {
+      break;
+    }
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::Status BehaviorExploreLookAroundInPlace::UpdateInternal(Robot& robot)
@@ -205,6 +226,21 @@ void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(Robot& robot)
 {
   // cache iteration values
   _iterationStartingBodyFacing_rad = robot.GetPose().GetRotationAngle<'Z'>();
+  
+  // If we have the parameter set for an angle to focus on
+  if (!Util::IsNearZero(_configParams.behavior_AngleOfFocus_deg))
+  {
+    const float angleDiff_deg = (_iterationStartingBodyFacing_rad - _initialBodyDirection).getDegrees() * GetTurnSign(_mainTurnDirection);
+    
+    if (angleDiff_deg >= _configParams.behavior_AngleOfFocus_deg * 0.5f)
+    {
+      // We've hit (or gone past) the edge of the cone, so turn the other direction
+      _mainTurnDirection = GetOpposite(_mainTurnDirection);
+      
+      // When we have a cone we're staying inside of, we never finish a location, so reset our counter
+      _behaviorBodyFacingDone_rad = 0.f;
+    }
+  }
   
   // create turn action for this state
   const EClockDirection turnDir = GetOpposite(_mainTurnDirection);
