@@ -63,6 +63,7 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void HandleDemoState(int demoNum) {
     _PressDemoDebugSceneIndex = demoNum;
+    DAS.Debug("PressDemo", "Demo State #: " + demoNum);
     if (_PressDemoViewInstance != null) {
       _PressDemoViewInstance.SetPressDemoDebugState(demoNum);
     }
@@ -112,6 +113,7 @@ public class PressDemoHubWorld : HubWorldBase {
 
   private void HandleStartButtonPressed(bool startWithEdge) {
     RobotEngineManager.Instance.CurrentRobot.CancelCallback(HandleSleepAnimationComplete);
+    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(Anki.Cozmo.Audio.GameState.Music.Hub);
   }
 
   private void HandleForceProgressPressed() {
