@@ -219,7 +219,8 @@ namespace Anki {
     public:
       
       Block_Cube1x1(Type type)
-      : Block(type)
+      : ObservableObject(ObjectFamily::Block, type)
+      , Block(type)
       {
         // The sizes specified by the block definitions should
         // agree with this being a cube (all dimensions the same)
@@ -260,7 +261,8 @@ namespace Anki {
     public:
       
       Block_2x1(Type type)
-      : Block(type)
+      : ObservableObject(ObjectFamily::Block, type)
+      , Block(type)
       {
         
       }

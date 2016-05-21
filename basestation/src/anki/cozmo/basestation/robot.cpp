@@ -2960,25 +2960,32 @@ namespace Anki {
                                   const MakeRelativeMode makeRelative,
                                   const Point2f& relativeToPoint)
     {
-      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(GetBlockWorld().GetActiveObjectByID(objectID, ObjectFamily::LightCube));
-      if(activeCube == nullptr) {
+      ActiveObject* activeObject = GetBlockWorld().GetActiveObjectByID(objectID);
+      if(activeObject == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.");
         return RESULT_FAIL_INVALID_OBJECT;
       } else {
         
-        // NOTE: if make relative mode is "off", this call doesn't do anything:
-        const WhichCubeLEDs rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs,
-                                                                                      relativeToPoint,
-                                                                                      makeRelative);
+        WhichCubeLEDs rotatedWhichLEDs = whichLEDs;
         
-        activeCube->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
+        ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
+        if(activeCube != nullptr) {
+          // NOTE: if make relative mode is "off", this call doesn't do anything:
+          rotatedWhichLEDs = activeCube->MakeWhichLEDsRelativeToXY(whichLEDs, relativeToPoint, makeRelative);
+        } else if (makeRelative != MakeRelativeMode::RELATIVE_LED_MODE_OFF) {
+          PRINT_NAMED_WARNING("Robot.SetObjectLights.MakeRelativeOnNonCube", "");
+          return RESULT_FAIL;
+        }
+
+        
+        activeObject->SetLEDs(rotatedWhichLEDs, onColor, offColor, onPeriod_ms, offPeriod_ms,
                             transitionOnPeriod_ms, transitionOffPeriod_ms,
                             turnOffUnspecifiedLEDs);
         
         std::array<Anki::Cozmo::LightState, 4> lights;
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-          const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+          const ActiveObject::LEDstate& ledState = activeObject->GetLEDState(i);
           lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
           lights[i].offColor = ENCODED_COLOR(ledState.offColor);
           lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
@@ -2990,10 +2997,10 @@ namespace Anki {
         if( DEBUG_BLOCK_LIGHTS ) {
           PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set1",
                             "Setting lights for object %d (activeID %d)",
-                            objectID.GetValue(), activeCube->GetActiveID());
+                            objectID.GetValue(), activeObject->GetActiveID());
         }
 
-        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
+        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeObject->GetActiveID())));
       }
     }
       
@@ -3007,21 +3014,28 @@ namespace Anki {
                                   const MakeRelativeMode makeRelative,
                                   const Point2f& relativeToPoint)
     {
-      ActiveCube* activeCube = dynamic_cast<ActiveCube*>(GetBlockWorld().GetActiveObjectByID(objectID, ObjectFamily::LightCube));
-      if(activeCube == nullptr) {
+      ActiveObject* activeObject = GetBlockWorld().GetActiveObjectByID(objectID);
+      if(activeObject == nullptr) {
         PRINT_NAMED_ERROR("Robot.SetObjectLights", "Null active object pointer.\n");
         return RESULT_FAIL_INVALID_OBJECT;
       } else {
         
-        activeCube->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
+        activeObject->SetLEDs(onColor, offColor, onPeriod_ms, offPeriod_ms, transitionOnPeriod_ms, transitionOffPeriod_ms);
 
-        // NOTE: if make relative mode is "off", this call doesn't do anything:
-        activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
+
+        ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
+        if(activeCube != nullptr) {
+          // NOTE: if make relative mode is "off", this call doesn't do anything:
+          activeCube->MakeStateRelativeToXY(relativeToPoint, makeRelative);
+        } else if (makeRelative != MakeRelativeMode::RELATIVE_LED_MODE_OFF) {
+          PRINT_NAMED_WARNING("Robot.SetObjectLights.MakeRelativeOnNonCube", "");
+          return RESULT_FAIL;
+        }
         
         std::array<Anki::Cozmo::LightState, 4> lights;
         ASSERT_NAMED((int)ActiveObjectConstants::NUM_CUBE_LEDS == 4, "Robot.wrong.number.of.cube.ligths");
         for (int i = 0; i < (int)ActiveObjectConstants::NUM_CUBE_LEDS; ++i){
-          const ActiveCube::LEDstate& ledState = activeCube->GetLEDState(i);
+          const ActiveObject::LEDstate& ledState = activeObject->GetLEDState(i);
           lights[i].onColor  = ENCODED_COLOR(ledState.onColor);
           lights[i].offColor = ENCODED_COLOR(ledState.offColor);
           lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
@@ -3033,10 +3047,10 @@ namespace Anki {
         if( DEBUG_BLOCK_LIGHTS ) {
           PRINT_NAMED_DEBUG("Robot.SetObjectLights.Set2",
                             "Setting lights for object %d (activeID %d)",
-                            objectID.GetValue(), activeCube->GetActiveID());
+                            objectID.GetValue(), activeObject->GetActiveID());
         }
         
-        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeCube->GetActiveID())));
+        return SendMessage(RobotInterface::EngineToRobot(CubeLights(lights, (uint32_t)activeObject->GetActiveID())));
       }
 
     }

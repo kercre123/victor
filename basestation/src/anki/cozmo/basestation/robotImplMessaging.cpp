@@ -292,7 +292,7 @@ void Robot::HandleActiveObjectDiscovered(const AnkiEvent<RobotInterface::RobotTo
   const ObjectDiscovered payload = message.GetData().Get_activeObjectDiscovered();
   
   // Check object type
-  ObjectType objType = ObservableObject::GetTypeFromActiveObjectType(payload.device_type);
+  ObjectType objType = ActiveObject::GetTypeFromActiveObjectType(payload.device_type);
   switch(objType) {
     case ObjectType::Charger_Basic:
     {
@@ -350,7 +350,7 @@ void Robot::HandleActiveObjectConnectionState(const AnkiEvent<RobotInterface::Ro
     }
   } else {
     // Remove active object from blockworld if it exists
-    ObservableObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
+    ActiveObject* obj = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
     if (obj) {
       objID = obj->GetID();
       GetBlockWorld().ClearObject(objID);
@@ -380,7 +380,7 @@ void Robot::HandleActiveObjectMoved(const AnkiEvent<RobotInterface::RobotToEngin
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
+  ActiveObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -450,7 +450,7 @@ void Robot::HandleActiveObjectStopped(const AnkiEvent<RobotInterface::RobotToEng
   // The message from the robot has the active object ID in it, so we need
   // to find the object in blockworld (which has its own bookkeeping ID) that
   // has the matching active ID
-  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
+  ActiveObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {
@@ -508,7 +508,7 @@ void Robot::HandleActiveObjectTapped(const AnkiEvent<RobotInterface::RobotToEngi
 {
   // We make a copy of this message so we can update the object ID before broadcasting
   ObjectTapped payload = message.GetData().Get_activeObjectTapped();
-  ObservableObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
+  ActiveObject* object = GetBlockWorld().GetActiveObjectByActiveID(payload.objectID);
   
   if(nullptr == object)
   {

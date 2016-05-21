@@ -1047,7 +1047,12 @@ namespace Anki {
         return;
       }
 
-      ActionableObject* obj = static_cast<ActionableObject*>(observableObject);
+      ActionableObject* obj = dynamic_cast<ActionableObject*>(observableObject);
+      if( nullptr == obj ) {
+        PRINT_NAMED_WARNING("DriveToRollObjectAction.NonActionableObject", "");
+        return;
+      }
+      
       std::vector<PreActionPose> preActionPoses;
       obj->GetCurrentPreActionPoses(preActionPoses,
                                     {PreActionPose::DOCKING},

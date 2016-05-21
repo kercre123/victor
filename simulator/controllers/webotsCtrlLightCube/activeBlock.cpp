@@ -114,8 +114,9 @@ namespace Anki {
         };
         
         // Mapping from block ID to activeObjectType
-        const ActiveObjectType blockIDToActiveObjectType_[MAX_NUM_CUBES] = { OBJECT_CUBE1, OBJECT_CUBE2, OBJECT_CUBE3, OBJECT_UNKNOWN };
+        const ActiveObjectType blockIDToActiveObjectType_[MAX_NUM_CUBES] = { OBJECT_CUBE1, OBJECT_CUBE2, OBJECT_CUBE3, OBJECT_CHARGER };
         u32 factoryID_ = 0;
+        ActiveObjectType activeObjectType_ = OBJECT_UNKNOWN;
         
         // Flash ID params
         double flashIDStartTime_ = 0;
@@ -194,7 +195,6 @@ namespace Anki {
         if(activeIdField) {
           return activeIdField->getSFInt32();
         } else {
-          printf("Missing ID field in active block.\n");
           return -1;
         }
       }
@@ -207,30 +207,64 @@ namespace Anki {
       Result Init()
       {
         state_ = NORMAL;
+
+        block_controller.step(TIMESTEP);
+        
+        
+        webots::Node* selfNode = block_controller.getSelf();
         
         // Get this block's ID
-        blockID_ = GetBlockID();
-        if (blockID_ < 0) {
-          printf("Failed to find blockID\n");
+        webots::Field* activeIdField = selfNode->getField("ID");
+        if(activeIdField) {
+          blockID_ = activeIdField->getSFInt32();
+        } else {
+          printf("Failed to find active object ID\n");
           return RESULT_FAIL;
         }
         
+        
+        // Get active object type
+        webots::Field* nodeName = selfNode->getField("name");
+        if (nodeName) {
+          std::string name = nodeName->getSFString();
+          if (name.compare("LightCube") == 0) {
+            activeObjectType_ = blockIDToActiveObjectType_[blockID_];
+            if (blockID_ > 2) {
+              printf("Expecting charger to have ID < 3\n");
+              return RESULT_FAIL;
+            }
+          } else if (name.compare("CozmoCharger") == 0) {
+            activeObjectType_ = OBJECT_CHARGER;
+            if (blockID_ != 3) {
+              printf("Expecting charger to have ID 3\n");
+              return RESULT_FAIL;
+            }
+          }
+        } else {
+          printf("Active object has no name\n");
+          return RESULT_FAIL;
+        }
+        
+        
+        
         // Get index of this block in the children list to get a globally unique identifier
-        u32 nodeIndex = 0;
+        s32 nodeIndex = -1;
         webots::Node* rootNode = block_controller.getRoot();
         webots::Field* rootChildren = rootNode->getField("children");
         int numRootChildren = rootChildren->getCount();
         for (int n = 0 ; n<numRootChildren; ++n) {
           webots::Node* nd = rootChildren->getMFNode(n);
-          webots::Field* nameField = nd->getField("name");
-          if (nameField && nameField->getSFString().compare("LightCube") == 0) {
-            webots::Field* activeIdField = nd->getField("ID");
-            if (activeIdField && activeIdField->getSFInt32() == blockID_) {
-              nodeIndex = n;
-              break;
-            }
+          if (nd == selfNode) {
+            nodeIndex = n;
+            break;
           }
         }
+        
+        if (nodeIndex < 0) {
+          printf("Could not find node in scene\n");
+          return RESULT_FAIL;
+        }
+        
         
         // Use current time to make globally unique identifier robust to the scene tree changing due to dynamically added objects
         u32 currTime_ms = static_cast<u32>(1000 * block_controller.getTime());
@@ -238,7 +272,7 @@ namespace Anki {
         // Generate a factory ID
         factoryID_ = currTime_ms * 100000 + nodeIndex * 1000 + blockID_;
         factoryID_ &= 0x7FFFFFFF; // Make sure it doesn't get mistaken for a charger
-        printf("Starting ActiveBlock %d (factoryID %d)\n", blockID_, factoryID_);
+        printf("Starting active object %d (factoryID %d)\n", blockID_, factoryID_);
         
         
         // Get all LED handles
@@ -520,7 +554,7 @@ namespace Anki {
             BlockMessages::LightCubeMessage msg;
             msg.tag = BlockMessages::LightCubeMessage::Tag_discovered;
             msg.discovered.factory_id = factoryID_;
-            msg.discovered.device_type = blockIDToActiveObjectType_[blockID_];
+            msg.discovered.device_type = activeObjectType_;
             emitter_->setChannel(OBJECT_DISCOVERY_CHANNEL);
             emitter_->send(msg.GetBuffer(), msg.Size());
             emitter_->setChannel(factoryID_);

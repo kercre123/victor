@@ -21,6 +21,7 @@
 #include "anki/vision/MarkerCodeDefinitions.h"
 
 #include "anki/cozmo/basestation/actionableObject.h"
+#include "anki/cozmo/basestation/activeObject.h"
 #include "anki/cozmo/basestation/viz/vizManager.h"
 
 namespace Anki {
@@ -39,7 +40,7 @@ namespace Anki {
     //   <= Platform =><= Slope ==>
     //
     
-    class Charger : public ActionableObject
+    class Charger : public ActionableObject, public ActiveObject
     {
     public:
       
@@ -55,7 +56,6 @@ namespace Anki {
       // Return pose of the robot when it's in the charger
       Pose3d GetDockedPose()  const;
       
-      virtual bool IsActive() const override  { return true; }
       
       //
       // Inherited Virtual Methods
