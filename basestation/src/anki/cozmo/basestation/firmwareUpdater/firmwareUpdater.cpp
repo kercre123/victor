@@ -486,7 +486,8 @@ void FirmwareUpdater::HandleFlashWriteAck(RobotID_t robotId, const RobotInterfac
   {
     if (robotUpgradeInfo.GetId() == robotId)
     {
-      if (flashWriteAck.result != RobotInterface::OTA::Result::OKAY)
+      if (flashWriteAck.result != RobotInterface::OTA::Result::OKAY &&
+          flashWriteAck.result != RobotInterface::OTA::Result::SUCCESS)
       {
         PRINT_NAMED_ERROR("FirmwareUpdater.HandleFlashWriteAck.Error",
                           "Robot %u flash ack %d had error %s on %d bytes processed.",
