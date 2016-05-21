@@ -22,13 +22,13 @@
     "translation": "Put {0} cubes in front of Cozmo."
   },
   "minigame.text.playerWins": {
-    "translation": "WINNER: PLAYER"
+    "translation": "Player\nWins!"
   },
   "minigame.text.cozmoWins": {
-    "translation": "WINNER: COZMO"
+    "translation": "Cozmo\nWins!"
   },
   "minigame.quitView.title": {
-    "translation": "Return to Main Menu?"
+    "translation": "Quit Game?"
   },
   "minigame.quitView.description": {
     "translation": "Any progress in this game will be lost. Are you sure?"
@@ -118,7 +118,7 @@
     "translation": "Take turns with Cozmo to make patterns. When Cozmo makes a pattern, watch closely and  try to copy him by tapping the cubes in the same order. When It's your turn, tap the cubes to make a pattern for Cozmo to copy! The game ends when someone messes up. Try for a high score!"
   },
   "speedTap.roundsText": {
-    "translation": "Round: {0:N0}"
+    "translation": "Round {0:N0}"
   },
   "speedTap.roundsWon.cozmo": {
     "translation": "cozmo rounds won: {0:N0}"
@@ -266,5 +266,29 @@
   },
   "speedTap.text.waitForCozmo": {
     "translation": "Wait for Cozmo to claim his cube."
+  },
+  "speedTap.difficulty.easyDescription.locked": {
+    "translation": "Unlock by unlocking Speed Tap."
+  },
+  "speedTap.difficulty.mediumDescription.locked": {
+    "translation": "Unlock by winning Speed Tap Easy."
+  },
+  "speedTap.difficulty.hardDescription.locked": {
+    "translation": "Unlock by winning Speed Tap Medium."
+  },
+  "speedTap.difficulty.expertDescription.locked": {
+    "translation": "Unlock by winning Speed Tap Hard."
+  }, 
+  "speedTap.text.getReady": {
+    "translation": "Get Ready!"
+  },
+  "speedTap.text.bestOf": {
+    "translation": "<b>Winner:</b> Best of {0} Rounds"
+  },
+  "speedTap.text.displayWinnerSubtitle": {
+    "translation": "takes Round {0}!"
+  },
+  "speedTap.text.roundScore": {
+    "translation": "Player: {0} - Cozmo: {1}"
   }
 }

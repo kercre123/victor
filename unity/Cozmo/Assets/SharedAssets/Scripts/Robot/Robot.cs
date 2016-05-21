@@ -549,7 +549,8 @@ public class Robot : IRobot {
   }
 
   public void SetCalibrationData(float focalLengthX, float focalLengthY, float centerX, float centerY) {
-    RobotEngineManager.Instance.Message.CameraCalibration = Singleton<CameraCalibration>.Instance.Initialize(focalLengthX, focalLengthY, centerX, centerY, 0.0f, 240, 320);
+    float[] dummyDistortionCoeffs = {0,0,0,0,0,0,0,0};
+    RobotEngineManager.Instance.Message.CameraCalibration = Singleton<CameraCalibration>.Instance.Initialize(focalLengthX, focalLengthY, centerX, centerY, 0.0f, 240, 320, dummyDistortionCoeffs);
     RobotEngineManager.Instance.SendMessage();
   }
 
@@ -818,7 +819,8 @@ public class Robot : IRobot {
   public void SetRobotVolume(float volume) {
     DAS.Debug(this, "Set Robot Volume " + volume);
 
-    Anki.Cozmo.Audio.GameAudioClient.SetVolumeValue(Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot, volume);
+    RobotEngineManager.Instance.Message.SetRobotVolume = Singleton<SetRobotVolume>.Instance.Initialize(ID, volume);
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public float GetRobotVolume() {
@@ -1029,13 +1031,14 @@ public class Robot : IRobot {
     _LocalBusyTimer = CozmoUtil.kLocalBusyTime;
   }
 
-  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
+  public void AlignWithObject(ObservedObject obj, float distanceFromMarker_mm, RobotCallback callback = null, bool useApproachAngle = false, bool usePreDockPose = false, float approachAngleRad = 0.0f, AlignmentType alignmentType = AlignmentType.CUSTOM, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     SendQueueSingleAction(
       Singleton<AlignWithObject>.Instance.Initialize(
         objectID: obj,
         motionProf: PathMotionProfileDefault,
         distanceFromMarker_mm: distanceFromMarker_mm,
         approachAngle_rad: approachAngleRad,
+        alignmentType: alignmentType,
         useApproachAngle: useApproachAngle,
         usePreDockPose: usePreDockPose,
         useManualSpeed: false
@@ -1361,6 +1364,11 @@ public class Robot : IRobot {
   public void SayTextWithEvent(string text, GameEvent playEvent, SayTextStyle style = SayTextStyle.Normal, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW) {
     DAS.Debug(this, "Saying text: " + text);
     SendQueueSingleAction(Singleton<SayText>.Instance.Initialize(text, playEvent, style), callback, queueActionPosition);
+  }
+
+  public void SendDemoResetState() {
+    RobotEngineManager.Instance.Message.DemoResetState = Singleton<DemoResetState>.Instance;
+    RobotEngineManager.Instance.SendMessage();
   }
 
   public void EraseAllEnrolledFaces() {

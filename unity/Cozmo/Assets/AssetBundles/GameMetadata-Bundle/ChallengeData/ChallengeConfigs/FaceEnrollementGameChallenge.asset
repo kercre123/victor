@@ -13,14 +13,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _MinigamePrefab: {fileID: 128684, guid: 707f1254ecf3a4b3dad8aefc106af3ea, type: 2}
   _ChallengeID: FaceEnrollmentTest
-  _ChallengeTitleLocKey: FaceEnrollmentTest
-  _ChallengeDescriptionLocKey: FaceEnrollmentTest
-  _ChallengeIcon: {fileID: 21300000, guid: b9aff666f4e44424795e2b6746840501, type: 3}
+  _ChallengeTitleLocKey: faceEnrollment.title
+  _ChallengeDescriptionLocKey: faceEnrollment.desciption
+  _ChallengeIcon: {fileID: 21300000, guid: fdba5e56d36db40fdb260db03b84882b, type: 3}
   _UnlockId:
     _EnumValueAsString: FaceEnrollmentGame
-    _EnumValue: 6
-  _HowToPlayDialogContentLocKey: 
-  _HowToPlayDialogContentPrefab: {fileID: 0}
+    _EnumValue: 0
   _Music:
-    _Music: -1253404070
+    _Music: -527946100
   MinigameConfig: {fileID: 11400000, guid: b674784e041d447f7bc1db7987a1d0d9, type: 2}
+  DifficultyOptions: []

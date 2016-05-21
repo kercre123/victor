@@ -11,6 +11,17 @@ namespace Cozmo.UI {
     [SerializeField]
     private Anki.Cozmo.Audio.AudioEventParameter _UISoundEvent = Anki.Cozmo.Audio.AudioEventParameter.DefaultClick;
 
+    [SerializeField]
+    protected bool _ShowDisabledStateWhenInteractable = false;
+
+    public bool ShowDisabledStateWhenInteractable {
+      get { return _ShowDisabledStateWhenInteractable; }
+      set { 
+        _ShowDisabledStateWhenInteractable = value; 
+        UpdateVisuals();
+      } 
+    }
+
     public Anki.Cozmo.Audio.AudioEventParameter SoundEvent {
       get { return _UISoundEvent; }
       set { _UISoundEvent = value; }
@@ -26,14 +37,34 @@ namespace Cozmo.UI {
       base.onClick.RemoveListener(HandleOnPress);
     }
 
+    protected override void UpdateVisuals() {
+      if (_ShowDisabledStateWhenInteractable) {
+        InitializeDefaultGraphics();
+        ShowDisabledState();
+      }
+      else {
+        base.UpdateVisuals();
+      }
+    }
+
     protected override void ShowEnabledState() {
-      base.ShowEnabledState();
-      ShowGlint(true);
+      if (_ShowDisabledStateWhenInteractable) {
+        ShowDisabledState();
+      }
+      else {
+        base.ShowEnabledState();
+        ShowGlint(true);
+      }
     }
 
     protected override void ShowPressedState() {
-      base.ShowPressedState();
-      ShowGlint(true);
+      if (_ShowDisabledStateWhenInteractable) {
+        ShowDisabledState();
+      }
+      else {
+        base.ShowPressedState();
+        ShowGlint(true);
+      }
     }
 
     protected override void ShowDisabledState() {

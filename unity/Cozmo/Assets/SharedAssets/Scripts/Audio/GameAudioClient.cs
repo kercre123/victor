@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 namespace Anki {
@@ -142,11 +142,19 @@ namespace Anki {
           client.UnregisterCallbackHandler(playId);
         }
 
-        static public void SetVolumeValue(VolumeParameters.VolumeType parameter, float volume, int timeInMS = 0, CurveType curve = CurveType.Linear) {
-          // TODO Fix GameObject Id -- JMR Do I still need this?
-          AudioClient client = AudioClient.Instance;
-          // TODO Need to cast for Invalid GameObj to set global RTPCs -- JMR Do I still need this?
-          client.PostParameter((GameParameter.ParameterType)parameter, volume, GameObjectType.Invalid, timeInMS, curve);
+        static public void SetVolumeValue(VolumeParameters.VolumeType parameter, float volume, int timeInMS = 0, CurveType curve = CurveType.Linear) {      
+          // Must sent to the robot's volume through the robot object
+          if (parameter == Anki.Cozmo.Audio.VolumeParameters.VolumeType.Robot) {
+            IRobot robot = RobotEngineManager.Instance.CurrentRobot;
+            if (robot != null) {
+              robot.SetRobotVolume(volume);
+            }              
+          }
+          else {
+            // User GameObjectType.Invalid to set global RTPC values
+            AudioClient client = AudioClient.Instance;
+            client.PostParameter((GameParameter.ParameterType)parameter, volume, GameObjectType.Invalid, timeInMS, curve);
+          }
 
           System.Collections.Generic.Dictionary<VolumeParameters.VolumeType, float> volumePrefs = DataPersistence.DataPersistenceManager.Instance.Data.DefaultProfile.VolumePreferences;
           if (volumePrefs.ContainsKey(parameter)) {

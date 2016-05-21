@@ -88,9 +88,17 @@ public abstract class GameBase : MonoBehaviour {
 
   private bool _IsPaused = false;
 
+  public bool Paused {
+    get {
+      return _IsPaused;
+    }
+  }
+
   #region Initialization
 
-  public void InitializeMinigame(ChallengeData challengeData) {
+  // the playGameSpecificMusic flag is mostly used for the press demo / face enrollment if we want the freeplay
+  // music to continue playing without using an activity specific track.
+  public void InitializeMinigame(ChallengeData challengeData, bool playGameSpecificMusic = true) {
     _GameStartTime = Time.time;
     _StateMachine.SetGameRef(this);
 
@@ -98,7 +106,9 @@ public abstract class GameBase : MonoBehaviour {
     _DifficultyOptions = _ChallengeData.DifficultyOptions;
     _WonChallenge = false;
 
-    Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
+    if (playGameSpecificMusic) {
+      Anki.Cozmo.Audio.GameAudioClient.SetMusicState(GetDefaultMusicState());
+    }
 
     RobotEngineManager.Instance.CurrentRobot.TurnTowardsLastFacePose(Mathf.PI, FinishTurnToFace);
 
@@ -106,15 +116,14 @@ public abstract class GameBase : MonoBehaviour {
     _BlinkCubeTimers = new Dictionary<int, BlinkData>();
 
     SkillSystem.Instance.StartGame(_ChallengeData);
-    SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
+    //SkillSystem.Instance.OnLevelUp += HandleCozmoSkillLevelUp;
   }
 
   private void FinishTurnToFace(bool success) {
     _SharedMinigameViewInstance = UIManager.OpenView(
       MinigameUIPrefabHolder.Instance.SharedMinigameViewPrefab, 
       newView => {
-        newView.Initialize(_ChallengeData.HowToPlayDialogContentPrefab,
-          _ChallengeData.HowToPlayDialogContentLocKey);
+        newView.Initialize();
         InitializeView(newView, _ChallengeData);
       });
 
@@ -134,7 +143,10 @@ public abstract class GameBase : MonoBehaviour {
     ChallengeTitleWidget titleWidget = newView.TitleWidget;
     titleWidget.Text = Localization.Get(data.ChallengeTitleLocKey);
     titleWidget.Icon = data.ChallengeIcon;
-    newView.ShowBackButton();
+    newView.ShowQuitButton();
+
+    // TODO use different color for activities vs games
+    newView.InitializeColor(UIColorPalette.GameBackgroundColor);
   }
 
   #endregion
@@ -195,12 +207,25 @@ public abstract class GameBase : MonoBehaviour {
   // Number of Rounds Won this Game
   public int PlayerRoundsWon;
   public int CozmoRoundsWon;
+
   // Total number of Rounds in this Game
   public int TotalRounds;
   // Number of Rounds Played this Game
   public int RoundsPlayed {
     get {
       return PlayerRoundsWon + CozmoRoundsWon;
+    }
+  }
+
+  public int RoundsNeededToWin {
+    get {
+      return (TotalRounds / 2) + 1;
+    }
+  }
+
+  public int CurrentRound {
+    get {
+      return RoundsPlayed + 1;
     }
   }
 
@@ -302,7 +327,7 @@ public abstract class GameBase : MonoBehaviour {
     }
     DAS.Info(this, "Finished GameBase On Destroy");
     SkillSystem.Instance.EndGame();
-    SkillSystem.Instance.OnLevelUp -= HandleCozmoSkillLevelUp;
+    //SkillSystem.Instance.OnLevelUp -= HandleCozmoSkillLevelUp;
   }
 
   public void CloseMinigameImmediately() {
@@ -344,7 +369,11 @@ public abstract class GameBase : MonoBehaviour {
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedWin);
 
-    UpdateScoreboard(_WonChallenge);
+    UpdateScoreboard(didPlayerWin: _WonChallenge);
+
+    if (string.IsNullOrEmpty(subtitleText)) {
+      subtitleText = Localization.Get(LocalizationKeys.kMinigameTextPlayerWins);
+    }
     OpenChallengeEndedDialog(subtitleText);
   }
 
@@ -354,7 +383,11 @@ public abstract class GameBase : MonoBehaviour {
 
     Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SharedLose);
 
-    UpdateScoreboard(_WonChallenge);
+    UpdateScoreboard(didPlayerWin: _WonChallenge);
+
+    if (string.IsNullOrEmpty(subtitleText)) {
+      subtitleText = Localization.Get(LocalizationKeys.kMinigameTextCozmoWins);
+    }
     OpenChallengeEndedDialog(subtitleText);
   }
 
@@ -385,7 +418,7 @@ public abstract class GameBase : MonoBehaviour {
     // Listen for dialog close
     SharedMinigameView.ShowContinueButtonCentered(HandleChallengeResultViewClosed,
       Localization.Get(LocalizationKeys.kButtonContinue), "end_of_game_continue_button");
-    
+    SharedMinigameView.HideHowToPlayButton();
   }
 
   private void HandleChallengeResultViewClosed() {
@@ -441,6 +474,11 @@ public abstract class GameBase : MonoBehaviour {
   protected virtual void OnDifficultySet(int difficulty) {
   }
 
+  /// <summary>
+  /// TODO: Replace this with better handling for notifying Results view that a level up occoured during
+  /// game instead of creating a popup. Create an appropriate results cell with the same info.
+  /// </summary>
+  /// <param name="newLevel">New level.</param>
   protected void HandleCozmoSkillLevelUp(int newLevel) {
     AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
     // Hook up callbacks

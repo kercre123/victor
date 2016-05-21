@@ -76,6 +76,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ObjectConnectionState> OnObjectConnectionState;
   public event Action<ImageChunk> OnImageChunkReceived;
   public event Action<Anki.Cozmo.ExternalInterface.RobotObservedPossibleObject> OnObservedPossibleObject;
+  public event Action<Anki.Cozmo.ExternalInterface.FactoryTestResult> OnFactoryResult;
   public event Action<Anki.Cozmo.UnlockId, bool> OnRequestSetUnlockResult;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateProgress> OnFirmwareUpdateProgress;
   public event Action<Anki.Cozmo.ExternalInterface.FirmwareUpdateComplete> OnFirmwareUpdateComplete;
@@ -84,6 +85,7 @@ public class RobotEngineManager : MonoBehaviour {
   public event Action<Anki.Cozmo.ExternalInterface.NVStorageOpResult> OnGotNVStorageOpResult;
   public event Action<Anki.Cozmo.ExternalInterface.DebugLatencyMessage> OnDebugLatencyMsg;
   public event Action<Anki.Cozmo.ExternalInterface.RequestEnrollFace> OnRequestEnrollFace;
+  public event Action<int> OnDemoState;
   public event Action<Anki.Cozmo.ExternalInterface.AnimationEvent> OnRobotAnimationEvent;
 
   #region Audio Callback events
@@ -109,7 +111,6 @@ public class RobotEngineManager : MonoBehaviour {
   public U2G.MessageGameToEngine Message { get { return _MessageOut.Message; } }
 
   private U2G.StartEngine StartEngineMessage = new U2G.StartEngine();
-  private U2G.ForceAddRobot ForceAddRobotMessage = new U2G.ForceAddRobot();
   private U2G.ConnectToRobot ConnectToRobotMessage = new U2G.ConnectToRobot();
   private U2G.ConnectToUiDevice ConnectToUiDeviceMessage = new U2G.ConnectToUiDevice(UiConnectionType.UI, 0);
 
@@ -117,6 +118,8 @@ public class RobotEngineManager : MonoBehaviour {
   private U2G.SetDebugConsoleVarMessage _SetDebugConsoleVarMessage = new U2G.SetDebugConsoleVarMessage();
   private U2G.RunDebugConsoleFuncMessage _RunDebugConsoleFuncMessage = new U2G.RunDebugConsoleFuncMessage();
   private U2G.DenyGameStart _DenyGameStartMessage = new U2G.DenyGameStart();
+
+  public bool InitSkillSystem;
 
   private void OnEnable() {
     DAS.Event("RobotEngineManager.OnEnable", string.Empty);
@@ -153,8 +156,11 @@ public class RobotEngineManager : MonoBehaviour {
 
     Robots = new Dictionary<int, IRobot>();
 
-// Startup Singletons depending on RobotEvents
-    SkillSystem.Instance.InitInstance();
+    // Startup Singletons depending on RobotEvents
+    if (InitSkillSystem) {
+      SkillSystem.Instance.InitInstance();
+    }
+
   }
 
   private void OnDisable() {
@@ -269,9 +275,6 @@ public class RobotEngineManager : MonoBehaviour {
     var message = messageIn.Message;
     switch (message.GetTag()) {
     case G2U.MessageEngineToGame.Tag.Ping:
-      break;
-    case G2U.MessageEngineToGame.Tag.RobotAvailable:
-      ReceivedSpecificMessage(message.RobotAvailable);
       break;
     case G2U.MessageEngineToGame.Tag.UiDeviceAvailable:
       ReceivedSpecificMessage(message.UiDeviceAvailable);
@@ -391,6 +394,9 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RequestSetUnlockResult:
       ReceivedSpecificMessage(message.RequestSetUnlockResult);
       break;
+    case G2U.MessageEngineToGame.Tag.FactoryTestResult:
+      ReceivedSpecificMessage(message.FactoryTestResult);
+      break;
     case G2U.MessageEngineToGame.Tag.FirmwareUpdateProgress:
       ReceivedSpecificMessage(message.FirmwareUpdateProgress);
       break;
@@ -409,12 +415,28 @@ public class RobotEngineManager : MonoBehaviour {
     case G2U.MessageEngineToGame.Tag.RequestEnrollFace:
       ReceivedSpecificMessage(message.RequestEnrollFace);
       break;
+    case G2U.MessageEngineToGame.Tag.DemoState:
+      ReceivedSpecificMessage(message.DemoState);
+      break;
     case G2U.MessageEngineToGame.Tag.AnimationEvent:
       ReceiveSpecificMessage(message.AnimationEvent);
+      break;
+    case G2U.MessageEngineToGame.Tag.RobotProcessedImage:
+      ReceiveSpecificMessage(message.RobotProcessedImage);
       break;
     default:
       DAS.Warn("RobotEngineManager.ReceiveUnsupportedMessage", message.GetTag() + " is not supported");
       break;
+    }
+  }
+
+  private void ReceiveSpecificMessage(G2U.RobotProcessedImage message) {
+    // TODO: implement this
+  }
+
+  private void ReceivedSpecificMessage(G2U.DemoState message) {
+    if (OnDemoState != null) {
+      OnDemoState(message.stateNum);
     }
   }
 
@@ -428,13 +450,6 @@ public class RobotEngineManager : MonoBehaviour {
     if (OnRobotAnimationEvent != null) {  
       OnRobotAnimationEvent(message);
     }
-  }
-
-  private void ReceivedSpecificMessage(G2U.RobotAvailable message) {
-    ConnectToRobotMessage.robotID = (byte)message.robotID;
-
-    Message.ConnectToRobot = ConnectToRobotMessage;
-    SendMessage();
   }
 
   private void ReceivedSpecificMessage(G2U.UiDeviceAvailable message) {
@@ -738,6 +753,12 @@ public class RobotEngineManager : MonoBehaviour {
     }
   }
 
+  private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.FactoryTestResult message) {
+    if (OnFactoryResult != null) {
+      OnFactoryResult(message);
+    }
+  }
+
   private void ReceivedSpecificMessage(Anki.Cozmo.ExternalInterface.DebugString message) {
     if (CurrentRobot != null) {
       if (CurrentRobot.CurrentBehaviorString != message.text) {
@@ -863,16 +884,16 @@ public class RobotEngineManager : MonoBehaviour {
       throw new ArgumentNullException("robotIP");
     }
 
-    if (Encoding.UTF8.GetByteCount(robotIP) + 1 > ForceAddRobotMessage.ipAddress.Length) {
+    if (Encoding.UTF8.GetByteCount(robotIP) + 1 > ConnectToRobotMessage.ipAddress.Length) {
       throw new ArgumentException("IP address too long.", "robotIP");
     }
-    int length = Encoding.UTF8.GetBytes(robotIP, 0, robotIP.Length, ForceAddRobotMessage.ipAddress, 0);
-    ForceAddRobotMessage.ipAddress[length] = 0;
+    int length = Encoding.UTF8.GetBytes(robotIP, 0, robotIP.Length, ConnectToRobotMessage.ipAddress, 0);
+    ConnectToRobotMessage.ipAddress[length] = 0;
     
-    ForceAddRobotMessage.robotID = (byte)robotID;
-    ForceAddRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
+    ConnectToRobotMessage.robotID = (byte)robotID;
+    ConnectToRobotMessage.isSimulated = robotIsSimulated ? (byte)1 : (byte)0;
 
-    Message.ForceAddRobot = ForceAddRobotMessage;
+    Message.ConnectToRobot = ConnectToRobotMessage;
     SendMessage();
   }
 
@@ -880,10 +901,11 @@ public class RobotEngineManager : MonoBehaviour {
     StringBuilder sb = new StringBuilder(configuration);
     sb.Remove(configuration.IndexOf('}') - 1, 3);
     sb.Append(",\n  \"DataPlatformFilesPath\" : \"" + Application.persistentDataPath + "\"" +
-      ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
-      ", \n  \"DataPlatformResourcesPath\" : \"" + PlatformUtil.GetResourcesFolder() + "\"" +
-      "\n}");
+    ", \n  \"DataPlatformCachePath\" : \"" + Application.temporaryCachePath + "\"" +
+    ", \n  \"DataPlatformExternalPath\" : \"" + Application.temporaryCachePath + "\"" +
+    ", \n  \"DataPlatformResourcesPath\" : \"" + PlatformUtil.GetResourcesFolder() + "\"" +
+    ", \n  \"DataPlatformResourcesBasePath\" : \"" + PlatformUtil.GetResourcesBaseFolder() + "\"" +
+    "\n}");
 
     return sb.ToString();
   }

@@ -133,8 +133,8 @@
 		83B2574F0E63025400468741 /* libiconv.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 83B2574E0E63025400468741 /* libiconv.2.dylib */; };
 		840D146DB5E8DF800E7FA9E0 /* Bulk_Generics_9.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 64B958AC6BD87F99753A4E26 /* Bulk_Generics_9.cpp */; };
 		85065E851BF1904400DBAF35 /* libDriveAudioEngine.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */; };
-		852C0B6D1C6965730003DCFD /* DASConfig.json in Resources */ = {isa = PBXBuildFile; fileRef = 852C0B6C1C6965730003DCFD /* DASConfig.json */; };
 		85D6352F1CC9A92700A5FB8A /* libBLECozmo.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */; };
+		85DD01461CD2A17300F2EAD5 /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DD01451CD2A17300F2EAD5 /* CoreBluetooth.framework */; };
 		85DEB8FF1C652A3C00202214 /* libDAS.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 85DEB8FE1C652A3C00202214 /* libDAS.a */; };
 		85DF60091CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig in Resources */ = {isa = PBXBuildFile; fileRef = 85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */; };
 		85F44C1D5C0709D7AACE6C09 /* Il2CppGenericMethodTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 36BDDFF568A6239A8136E27B /* Il2CppGenericMethodTable.cpp */; };
@@ -373,6 +373,7 @@
 		85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDriveAudioEngine.a; path = "../../lib/anki/cozmo-engine/lib/audio/gyp/build/Debug-iphoneos/libDriveAudioEngine.a"; sourceTree = "<group>"; };
 		852C0B6C1C6965730003DCFD /* DASConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = DASConfig.json; sourceTree = "<group>"; };
 		85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libBLECozmo.a; path = "../../lib/anki/cozmo-engine/lib/BLECozmo/project/gyp/build/Debug-iphoneos/libBLECozmo.a"; sourceTree = "<group>"; };
+		85DD01451CD2A17300F2EAD5 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
 		85DEB8FE1C652A3C00202214 /* libDAS.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDAS.a; path = "../../lib/anki/cozmo-engine/tools/das-client/gyp/build/Debug-iphoneos/libDAS.a"; sourceTree = "<group>"; };
 		85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = CozmoWifiConfigTemplate.mobileconfig; sourceTree = "<group>"; };
 		872D8FE853E21136529C3BDB /* WWWConnection.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = WWWConnection.mm; path = UnityBuild/Classes/Unity/WWWConnection.mm; sourceTree = "<group>"; };
@@ -462,6 +463,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				85DD01461CD2A17300F2EAD5 /* CoreBluetooth.framework in Frameworks */,
 				85D6352F1CC9A92700A5FB8A /* libBLECozmo.a in Frameworks */,
 				6F54323B1C8928C4006D3724 /* QuickLook.framework in Frameworks */,
 				6F5432391C8928AF006D3724 /* MobileCoreServices.framework in Frameworks */,
@@ -615,6 +617,7 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				85DD01451CD2A17300F2EAD5 /* CoreBluetooth.framework */,
 				85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */,
 				6F54323A1C8928C4006D3724 /* QuickLook.framework */,
 				6F5432381C8928AF006D3724 /* MobileCoreServices.framework */,
@@ -889,7 +892,7 @@
 					};
 				};
 			};
-			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS" */;
+			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 1;
@@ -915,7 +918,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F8BD0CE01B5EAF0400F71EA3 /* ios.xcconfig in Resources */,
-				852C0B6D1C6965730003DCFD /* DASConfig.json in Resources */,
 				85DF60091CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig in Resources */,
 				02B586D964836D51B9590340 /* Images.xcassets in Resources */,
 				17E2C07577A687C86B439BF7 /* LaunchScreen-iPhoneLandscape.png in Resources */,
@@ -1286,7 +1288,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_IOS" */ = {
+		C01FCF4E08A954540054247B /* Build configuration list for PBXProject "CozmoUnity_iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C01FCF5008A954540054247B /* Release */,

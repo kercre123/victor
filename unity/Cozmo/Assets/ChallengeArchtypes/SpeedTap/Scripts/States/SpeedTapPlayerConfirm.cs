@@ -32,7 +32,7 @@ namespace SpeedTap {
       LightCube.TappedAction += HandleTap;
     }
 
-    private void HandleTap(int id, int tappedTimes) {
+    private void HandleTap(int id, int tappedTimes, float timeStamp) {
       if (_SpeedTapGame.PlayerBlock == null) {
         if (id != _SpeedTapGame.CozmoBlock.ID) {
           foreach (var kvp in _CurrentRobot.LightCubes) {
@@ -55,12 +55,12 @@ namespace SpeedTap {
     private void HandlePlayerCubeTap() {
       // Ben wants to use the same sound for player tap and for Cozmo tap
       Anki.Cozmo.Audio.GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.CubeCozmoTap);
-      _StateMachine.SetNextState(new SpeedTapHandCubesOff());
+      _StateMachine.SetNextState(new SpeedTapBeginRound());
     }
 
     public override void Exit() {
       base.Exit();
-      _SpeedTapGame.SharedMinigameView.HideGameStateSlide();
+      _SpeedTapGame.SharedMinigameView.HideMiddleBackground();
       LightCube.TappedAction -= HandleTap;
       _CurrentRobot.DriveWheels(0.0f, 0.0f);
       _SpeedTapGame.CozmoBlock.SetLEDs(Color.black);
@@ -68,9 +68,6 @@ namespace SpeedTap {
       if (_SpeedTapGame.PlayerBlock != null) {
         _SpeedTapGame.PlayerBlock.SetLEDs(Color.black);
       }
-
-
-      _SpeedTapGame.ResetScore();
     }
   }
 

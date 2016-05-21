@@ -395,7 +395,7 @@ MonoBehaviour:
   - name: The Rest
     panePrefab: {fileID: 154368, guid: 2da9919e30bd0435184e8335d2c1b2b2, type: 2}
   - name: BlockPool
-    panePrefab: {fileID: 113112, guid: caced7547f49649ddb9e729689c70d39, type: 2}
+    panePrefab: {fileID: 170730, guid: caced7547f49649ddb9e729689c70d39, type: 2}
   - name: RemoteControl
     panePrefab: {fileID: 113112, guid: 8c3f37331342f4f9ea1f27702db99db0, type: 2}
   - name: Unlock
@@ -671,7 +671,7 @@ Prefab:
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[9].panePrefab
       value: 
-      objectReference: {fileID: 113112, guid: caced7547f49649ddb9e729689c70d39, type: 2}
+      objectReference: {fileID: 170730, guid: caced7547f49649ddb9e729689c70d39, type: 2}
     - target: {fileID: 0}
       propertyPath: _DebugContentPaneData.Array.data[8].name
       value: The Rest

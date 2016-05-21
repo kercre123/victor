@@ -40,6 +40,7 @@ public class SOSTCPClient {
 
   public void CleanUp() {
     _IsActive = false;
+    _TcpListener.Stop();
   }
 
   public void ProcessMessages() {

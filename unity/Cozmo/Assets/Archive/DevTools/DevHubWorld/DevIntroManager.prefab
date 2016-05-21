@@ -8,7 +8,8 @@ GameObject:
   serializedVersion: 4
   m_Component:
   - 4: {fileID: 415364}
-  - 114: {fileID: 11464276}
+  - 114: {fileID: 11479862}
+  - 114: {fileID: 11414538}
   m_Layer: 0
   m_Name: DevIntroManager
   m_TagString: Untagged
@@ -28,7 +29,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
---- !u!114 &11464276
+--- !u!114 &11414538
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_PrefabParentObject: {fileID: 0}
@@ -36,13 +37,37 @@ MonoBehaviour:
   m_GameObject: {fileID: 106742}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 925afa713f29940c7ad2d5d1d2d07018, type: 3}
+  m_Script: {fileID: 11500000, guid: 723899f7b24144737b256bf74bb620b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _DevConnectDialog: {fileID: 11479636, guid: 3b9cf9ff8ffdd479091ec33a2b620033, type: 2}
-  _HubWorldPrefab: {fileID: 11466608, guid: 6a1896e8147fa4277a1f396a5575f32d, type: 2}
-  _IntroScriptedSequenceName: 
-  _RobotStateTextFieldPrefab: {fileID: 0}
+--- !u!114 &11479862
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 106742}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65dc7be214371450897ab2ba1522fd59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _DevConnectDialog: {fileID: 11464748, guid: 8815496b5af52428aa9fe74118d9bae3, type: 2}
+  _Background: {fileID: 0}
+  _LogsButton: {fileID: 0}
+  _OptionsButton: {fileID: 0}
+  _RestartButton: {fileID: 0}
+  _StartButton: {fileID: 0}
+  _PingStatusText: {fileID: 0}
+  _FactoryLogPanelPrefab: {fileID: 11453686, guid: 9f19c1cdd9a2e499a83850459fe76106,
+    type: 2}
+  _FactoryOptionsPanelPrefab: {fileID: 11480756, guid: f8a6aeb9f46144736b24bf26416230b2,
+    type: 2}
+  _FactoryOTAPanelPrefab: {fileID: 11463534, guid: ad75df988a669485b8910e355f76432b,
+    type: 2}
+  _StatusText: {fileID: 0}
+  _StationNumberText: {fileID: 0}
+  _Canvas: {fileID: 0}
+  _InProgressSpinner: {fileID: 0}
 --- !u!1001 &100100000
 Prefab:
   m_ObjectHideFlags: 1

@@ -39,67 +39,67 @@ MonoBehaviour:
     _Levels:
     - SkillsArray:
       - name: TapDelayMin
-        val: 400
+        val: 0.5
       - name: TapDelayMax
-        val: 700
+        val: 0.85
       - name: WrongTapChance
         val: 0.05
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
       - name: TapDelayMin
-        val: 250
+        val: 0.4
       - name: TapDelayMax
-        val: 600
+        val: 0.7
       - name: WrongTapChance
         val: 0.05
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
       - name: TapDelayMin
-        val: 200
+        val: 0.35
       - name: TapDelayMax
-        val: 500
+        val: 0.6
       - name: WrongTapChance
         val: 0.04
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
       - name: TapDelayMin
-        val: 200
+        val: 0.25
       - name: TapDelayMax
-        val: 400
+        val: 0.5
       - name: WrongTapChance
         val: 0.03
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
       - name: TapDelayMin
-        val: 200
+        val: 0.15
       - name: TapDelayMax
-        val: 300
+        val: 0.4
       - name: WrongTapChance
         val: 0.02
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
     - SkillsArray:
       - name: TapDelayMin
-        val: 100
+        val: 0.05
       - name: TapDelayMax
-        val: 300
+        val: 0.3
       - name: WrongTapChance
         val: 0
       UpperBoundThreshold: 0.7
       LowerBoundThreshold: 0.3
   Rounds: 3
   MaxScorePerRound: 5
-  MinIdleIntervalMs: 400
-  MaxIdleIntervalMs: 600
+  MinIdleInterval_percent: 0
+  MaxIdleInterval_percent: 0.3
   BaseMatchChance: 0.2
   MatchChanceIncrease: 0.1
   CozmoFakeoutChance: 0.2
   _BetweenRoundMusic:
-    _Music: 658369771
+    _Music: -527946100
   DifficultySettings:
   - DifficultyID: 0
     Colors:
@@ -114,12 +114,12 @@ MonoBehaviour:
       SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 1.125
-      SecondsHandDisplayed: 1.125
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 0.75
-      SecondsHandDisplayed: 0.75
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1
   - DifficultyID: 1
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -133,12 +133,12 @@ MonoBehaviour:
       SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 1.125
-      SecondsHandDisplayed: 1.125
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 0.75
-      SecondsHandDisplayed: 0.75
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1
   - DifficultyID: 2
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -152,12 +152,12 @@ MonoBehaviour:
       SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 1.125
-      SecondsHandDisplayed: 1.125
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 0.75
-      SecondsHandDisplayed: 0.75
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1
   - DifficultyID: 3
     Colors:
     - {r: 1, g: 0.5176471, b: 0, a: 1}
@@ -171,9 +171,9 @@ MonoBehaviour:
       SecondsHandDisplayed: 1.5
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 1.125
-      SecondsHandDisplayed: 1.125
+      SecondsBetweenHands: 1.25
+      SecondsHandDisplayed: 1.25
     - _MidRoundMusic:
         _Music: 0
-      SecondsBetweenHands: 0.75
-      SecondsHandDisplayed: 0.75
+      SecondsBetweenHands: 1
+      SecondsHandDisplayed: 1

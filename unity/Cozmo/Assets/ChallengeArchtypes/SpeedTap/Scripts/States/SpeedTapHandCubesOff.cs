@@ -46,7 +46,7 @@ namespace SpeedTap {
 
     private void StartPeekAnimationCycle() {
       // Figure out the next time we should peek
-      _PeekDelay_sec = 0.001f * UnityEngine.Random.Range(_SpeedTapGame.MinIdleIntervalMs, _SpeedTapGame.MaxIdleIntervalMs);
+      _PeekDelay_sec = _OffDuration_sec * UnityEngine.Random.Range(_SpeedTapGame.MinIdleInterval_percent, _SpeedTapGame.MaxIdleInterval_percent);
         
       // Reset peek timer
       _PeekDelayStartTimestamp_sec = Time.time;

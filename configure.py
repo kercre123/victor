@@ -76,6 +76,18 @@ def find_unity_app_path():
 
     return unity_app_path
 
+def get_android_device():
+    process = subprocess.Popen("adb devices -l", shell=True, stdout=subprocess.PIPE)
+    output = process.communicate()[0]
+    device_list = output.splitlines()
+    # get usb devices from strings that look like:
+    # 85b6394a36495334       device usb:336592896X product:nobleltejv model:SM_N920C device:noblelte
+    device_list = [x for x in device_list if "usb" in x]
+    if len(device_list) == 0:
+        return ""
+    # return id of first device in list
+    return device_list[0].split(' ')[0]
+
 #stolen from http://stackoverflow.com/questions/1868714/how-do-i-copy-an-entire-directory-of-files-into-an-existing-directory-using-pyth
 def copytree(src, dst, symlinks=False, ignore=None):
     if not os.path.exists(dst):
@@ -171,7 +183,7 @@ def parse_game_arguments():
     # signing_group = parser.add_mutually_exclusive_group(required=False)
 
     parser.add_argument('--features', action='append', dest='features',
-                      choices=['pressDemo'], nargs='+',
+                      choices=['pressDemo', 'factoryTest'], nargs='+',
                       help="Generates feature flags for project")
 
     parser.add_argument(
@@ -200,6 +212,18 @@ def parse_game_arguments():
             default=EXTERNALS_ROOT,
             metavar='path',
             help='Use this flag to specify external dependency location.')
+
+    parser.add_argument(
+            '-l', '--logcat',
+            required=False,
+            action='store_true',
+            help='Launch logcat for Android devices')
+
+    parser.add_argument(
+           '-n', '--nobuild',
+           required=False,
+           action='store_true',
+           help='Skip build step, i.e. to install/run without building when no code has changed')
 
     return parser.parse_args()
 
@@ -256,10 +280,20 @@ class GamePlatformConfiguration(object):
         self.platform_output_dir = os.path.join(options.output_dir, self.platform)
         self.unity_project_root = os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME)
         self.unity_plugin_dir = os.path.join(self.unity_project_root, 'Assets', 'Plugins')
+        self.unity_scripts_dir = os.path.join(self.unity_project_root, 'Assets', 'Scripts')
 
         # TODO: When processors has more than one option make a parameter.
         self.processors = ["armeabi-v7a"]
         self.engine_generated = os.path.join(ENGINE_ROOT, "generated", self.platform)
+
+        #because these is being deleted no matter what it must exist for all configurations.
+        self.android_unity_plugin_dir = os.path.join(self.unity_plugin_dir, 'Android', 'libs')
+
+
+        self.symlink_keys = ['opencv', 'sphinx', 'HockeyApp']
+        # The keys defined in symlink must exist in the following dictionaries
+        self.unity_symlink = {}
+        self.unity_target = {}
 
         if platform != 'android':
             self.gyp_dir = os.path.join(GAME_ROOT, 'project', 'gyp')
@@ -281,7 +315,6 @@ class GamePlatformConfiguration(object):
 
             self.android_opencv_target = os.path.join(CTE_ROOT, 'build', 'opencv-android',
                                                       'OpenCV-android-sdk', 'sdk', 'native', 'libs')
-            self.android_unity_plugin_dir = os.path.join(self.unity_plugin_dir, self.platform.title())
 
         if platform == 'ios':
             self.unity_xcode_project_dir = os.path.join(GAME_ROOT, 'unity', self.platform)
@@ -309,17 +342,14 @@ class GamePlatformConfiguration(object):
                 self.other_cs_flags = None
 
             self.unity_output_symlink = os.path.join(self.unity_xcode_project_dir, 'generated')
-
-            self.unity_opencv_symlink = os.path.join(self.unity_xcode_project_dir, 'opencv')
-
-            self.unity_opencv_symlink_target = os.path.join(CTE_ROOT, 'build', 'opencv-ios')
-            self.unity_sphinx_symlink = os.path.join(self.unity_xcode_project_dir, 'sphinx')
-            self.unity_sphinx_symlink_target = os.path.join(CTE_ROOT,
+            #there should be a 1-to-1 with self.symlink_list for _symlink
+            for sl in self.symlink_keys:
+                self.unity_symlink[sl] = os.path.join(self.unity_xcode_project_dir, sl)
+            self.unity_target['opencv'] = os.path.join(CTE_ROOT, 'build', 'opencv-ios')
+            self.unity_target['sphinx'] = os.path.join(CTE_ROOT,
                                                             'pocketsphinx/pocketsphinx/generated/ios/DerivedData/Release-iphoneos')
-            self.unity_hockeyapp_symlink = os.path.join(self.unity_xcode_project_dir, 'HockeyApp')
-            self.unity_hockeyapp_symlink_target = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine', 'lib',"HockeySDK-iOS")
+            self.unity_target['HockeyApp'] = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine', 'lib', "HockeySDK-iOS")
 
-            self.unity_build_symlink = os.path.join(self.unity_xcode_project_dir, 'UnityBuild')
             self.artifact_dir = os.path.join(self.platform_build_dir, 'app-{0}'.format(self.platform))
             self.artifact_path = os.path.join(self.artifact_dir, '{0}.app'.format(PRODUCT_NAME.lower()))
 
@@ -331,11 +361,16 @@ class GamePlatformConfiguration(object):
         if self.options.command in ('build', 'clean', 'install', 'run'):
             self.build()
         if self.options.command in ('install', 'run'):
+            self.install()
+        if self.options.command == 'run':
             self.run()
         if self.options.command == 'uninstall':
             self.uninstall()
         if self.options.command in ('delete', 'wipeall!'):
             self.delete()
+
+        if self.platform == 'android' and self.options.logcat:
+            subprocess.call("./tools/android/logcatAllDevices.sh", shell=True)
 
     def generate(self):
         if self.options.verbose:
@@ -354,17 +389,24 @@ class GamePlatformConfiguration(object):
             self.call_engine('generate')
         # END ENGINE GENERATE
 
+        class_code = 'public class BuildFlags { \n'
+        git_variable = '  public const string kGitHash = \"' + subprocess.check_output(['git', 'rev-parse', 'HEAD']).strip() + '\";\n'
+
         file = open(os.path.join(GAME_ROOT, 'unity', PRODUCT_NAME, 'Assets', 'Scripts', 'Generated', 'BuildFlags.cs'), 'w')
 
         if self.options.features != None and 'pressDemo' in self.options.features[0]:
-            file.write('public class BuildFlags { '+'\n'+
-            '  public const string kDefaultBuildScene=\"PressDemo\";'+'\n'+
+            file.write(class_code + git_variable +
+            '  public const string kDefaultBuildScene = \"PressDemo\";'+'\n'+
+            '}')
+        elif self.options.features != None and 'factoryTest' in self.options.features[0]:
+            file.write(class_code + git_variable +
+            '  public const string kDefaultBuildScene = \"FactoryTest\";'+'\n'+
             '}')
         else:
-            file.write('public class BuildFlags { '+'\n'+
-            '  public const string kDefaultBuildScene=\"\";'+'\n'+
+            file.write(class_code + git_variable +
+            '  public const string kDefaultBuildScene = \"\";'+'\n'+
             '}')
-        
+
         file.close()
         
         if self.platform == 'mac':
@@ -382,9 +424,6 @@ class GamePlatformConfiguration(object):
             workspace.add_project(relative_unity_xcode_project)
 
             workspace.add_scheme_ios(self.scheme, relative_unity_xcode_project)
-
-            if not os.path.exists(self.unity_opencv_symlink_target):
-                sys.exit('ERROR: opencv does not appear to have been built for ios. Please build opencv for ios.')
 
             xcconfig = [
                 'ANKI_BUILD_REPO_ROOT={0}'.format(GAME_ROOT),
@@ -406,16 +445,15 @@ class GamePlatformConfiguration(object):
 
             ankibuild.util.File.mkdir_p(self.unity_build_dir)
             ankibuild.util.File.ln_s(self.platform_output_dir, self.unity_output_symlink)
-            ankibuild.util.File.ln_s(self.unity_opencv_symlink_target, self.unity_opencv_symlink)
-            ankibuild.util.File.ln_s(self.unity_sphinx_symlink_target, self.unity_sphinx_symlink)
-            ankibuild.util.File.ln_s(self.unity_hockeyapp_symlink_target, self.unity_hockeyapp_symlink)
+            for sl in self.symlink_keys:
+                ankibuild.util.File.ln_s(self.unity_target[sl], self.unity_symlink[sl])
             ankibuild.util.File.write(self.config_path, '\n'.join(xcconfig))
             ankibuild.util.File.mkdir_p(self.artifact_dir)
         elif self.platform == 'android':
             ankibuild.util.File.mkdir_p(self.android_unity_plugin_dir)
             for chipset in self.processors:
                 # TODO: create a cp_r in util.
-                libfolder = os.path.join(self.android_unity_plugin_dir, "libs", chipset)
+                libfolder = os.path.join(self.android_unity_plugin_dir, chipset)
                 # TODO: change cp -r steps to linking steps for android assets
                 copytree(os.path.join(self.android_opencv_target, chipset), libfolder)
         else:
@@ -426,14 +464,24 @@ class GamePlatformConfiguration(object):
             workspace.generate(self.workspace_path, self.derived_data_dir)
 
     def build(self):
+        if self.options.command == 'clean':
+            buildaction = 'clean'
+        else:
+            buildaction = 'build'
+
+        if self.options.nobuild and buildaction != 'clean':
+            print_status('Skipping \'build\' step due to nobuild option')
+            return
+
         if self.options.verbose:
             print_status('Building project for platform {0}...'.format(self.platform))
+
         if self.platform == 'android':
-            self.call_engine(self.options.command)
+            self.call_engine(buildaction)
             # move files.
             # TODO: When cozmoEngine is built for different self.processors This will need to change to a for loop.
-            ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib", "libcozmoEngine.so"),
-                                   os.path.join(self.android_unity_plugin_dir, "libs"))
+            ankibuild.util.File.cp(os.path.join(self.engine_generated, "out", self.options.configuration, "lib",
+                                                "libcozmoEngine.so"), self.android_unity_plugin_dir)
             # move third ndk libs.
             self.move_ndk()
             # Call unity for game
@@ -445,10 +493,6 @@ class GamePlatformConfiguration(object):
                     'Workspace {0} does not exist. (clean does not generate workspaces.)'.format(self.workspace_path))
             sys.exit(0)
         else:
-            if self.options.command == 'clean':
-                buildaction = 'clean'
-            else:
-                buildaction = 'build'
 
             # Other cs flags and codesigning identity have default values that will work no matter what.
             try:
@@ -491,7 +535,7 @@ class GamePlatformConfiguration(object):
             for lib_type in ndk:
                 original = os.path.join(self.android_ndk_root, ndk_values['{0}_path'.format(lib_type)],
                                         chipset, ndk_values[lib_type])
-                copy = os.path.join(self.android_unity_plugin_dir, 'libs', chipset)
+                copy = os.path.join(self.android_unity_plugin_dir, chipset)
                 if os.path.isfile(original):
                     ankibuild.util.File.cp(original, copy)
                 else:
@@ -515,21 +559,47 @@ class GamePlatformConfiguration(object):
         # ret = android_build.run()
         # TODO: Generate android gradle project here. Or just post this function call.
 
-    def run(self):
+    def install(self):
         if self.options.verbose:
             print_status('Installing built binaries for platform {0}...'.format(self.platform))
 
         if self.platform == 'ios':
             if self.options.command == 'install':
                 ankibuild.ios_deploy.install(self.artifact_path)
-            elif self.options.command == 'run':
+
+        elif self.platform == 'android':
+            device = get_android_device()
+            if len(device) > 0:
+                subprocess.call("adb install -r -d ./build/android/Cozmo.apk", shell=True)
+            else:
+                print('{0}: No attached devices found via adb'.format(self.options.command))
+
+        else:
+            print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
+
+
+    def run(self):
+        if self.options.verbose:
+            print_status('Executing on platform {0}...'.format(self.platform))
+
+        if self.platform == 'ios':
+            if self.options.command == 'run':
                 # ankibuild.ios_deploy.noninteractive(self.artifact_path)
                 ankibuild.ios_deploy.debug(self.artifact_path)
 
                 # elif self.platform == 'mac':
                 # run webots?
+
+        elif self.platform == 'android':
+            device = get_android_device()
+            if len(device) > 0:
+                activity = "com.anki.cozmo/com.unity3d.player.UnityPlayerActivity"
+                cmd = "adb -s {0} shell am start -n {1}".format(device, activity)
+                subprocess.call(cmd, shell=True)
+            else:
+                print('{0}: No attached devices found via adb'.format(self.options.command))
+
         else:
-            # TODO: run android
             print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
 
     def uninstall(self):
@@ -552,7 +622,21 @@ class GamePlatformConfiguration(object):
                 ankibuild.util.File.rm_rf(os.path.join(root, "generated"))
         if self.options.verbose:
             print_status('Deleting build folder {0}'.format(self.options.build_dir))
+            print_status('Deleting generated files ...')
         ankibuild.util.File.rm_rf(self.options.build_dir)
+
+        for sl in self.symlink_keys:
+            if os.path.exists(os.path.join('unity', 'ios', sl)):
+                ankibuild.util.File.rm(sl)
+        if os.path.exists(self.android_unity_plugin_dir):
+            ankibuild.util.File.rm_rf(self.android_unity_plugin_dir)
+        if os.path.exists(os.path.join(self.unity_scripts_dir, 'Generated')):
+            ankibuild.util.File.rm_rf(os.path.join(self.unity_scripts_dir, 'Generated'))
+            ankibuild.util.File.rm(os.path.join(self.unity_scripts_dir, 'Generated.meta'))
+
+        ankibuild.util.File.rm_rf(self.options.build_dir)
+        ankibuild.util.File.rm_rf(self.options.output_dir)
+
 
         
 ###############

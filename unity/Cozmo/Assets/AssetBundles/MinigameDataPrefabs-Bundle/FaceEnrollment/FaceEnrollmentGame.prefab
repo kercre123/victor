@@ -40,9 +40,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CubeIdsForGame: 
+  CozmoScore: 0
+  PlayerScore: 0
+  MaxScorePerRound: 0
+  PlayerRoundsWon: 0
+  CozmoRoundsWon: 0
+  TotalRounds: 0
   _EnterNameSlidePrefab: {fileID: 11431490, guid: e9fb59d52d3f64ef2825d07f7ed56372,
     type: 2}
-  _EnrollmentInstructionsSlidePrefab: {fileID: 11497634, guid: 7e9bf5b75a9614ab8ad9e0a0a15da855,
+  _FaceEnrollmentDiagramPrefab: {fileID: 124218, guid: 943f20b5dd5c447d5a65021eed590a4a,
     type: 2}
 --- !u!1001 &100100000
 Prefab:
@@ -293,6 +299,10 @@ Prefab:
       value: 
       objectReference: {fileID: 11497634, guid: 7e9bf5b75a9614ab8ad9e0a0a15da855,
         type: 2}
+    - target: {fileID: 0}
+      propertyPath: _FaceEnrollmentDiagramPrefab
+      value: 
+      objectReference: {fileID: 124218, guid: 943f20b5dd5c447d5a65021eed590a4a, type: 2}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 128684}

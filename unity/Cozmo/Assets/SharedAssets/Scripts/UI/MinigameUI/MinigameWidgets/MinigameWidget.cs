@@ -42,7 +42,7 @@ namespace Cozmo {
         Sequence open = DOTween.Sequence();
         open.Append(this.transform.DOLocalMove(new Vector3(this.transform.localPosition.x + xOffset, 
           this.transform.localPosition.y + yOffset, this.transform.localPosition.z),
-          duration).From().SetEase(Ease.OutQuad));
+          duration).From().SetEase(Ease.OutBack));
         if (OpenSequence != null) {
           OpenSequence.Kill();
         }

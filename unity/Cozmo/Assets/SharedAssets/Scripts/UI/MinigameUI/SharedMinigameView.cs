@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using Cozmo.UI;
 using DG.Tweening;
 using System.Collections;
@@ -8,11 +9,54 @@ namespace Cozmo {
   namespace MinigameWidgets {
     public class SharedMinigameView : BaseView {
 
+      public enum ContentLayer {
+        Bottom,
+        Middle,
+        Overlay
+      }
+
       public delegate void SharedMinigameViewHandler();
 
       public event SharedMinigameViewHandler QuitMiniGameConfirmed;
 
-      #region Simple widgets
+      [SerializeField]
+      private RectTransform _BottomWidgetContainer;
+
+      [SerializeField]
+      private RectTransform _MiddleWidgetContainer;
+
+      [SerializeField]
+      private RectTransform _OverlayWidgetContainer;
+
+      #region Backgrounds
+
+      [SerializeField]
+      private Image _LockedBackgroundImage;
+
+      private bool _IsShowingLocked = false;
+      private Sequence _LockedBackgroundTween;
+
+      [SerializeField]
+      private Image _BackgroundImage;
+
+      [SerializeField]
+      private Image _BackgroundGradient;
+
+      [SerializeField]
+      private Image _MiddleBackgroundImage;
+
+      private bool _IsShowingMiddle = true;
+      private Sequence _MiddleBackgroundTween;
+
+      [SerializeField]
+      private Image _OverlayBackgroundImage;
+
+      private bool _IsShowingOverlay = true;
+      private Sequence _OverlayBackgroundTween;
+
+      #endregion
+
+      #region Top widgets
 
       [SerializeField]
       private QuitMinigameButton _QuitGameButtonPrefab;
@@ -25,6 +69,15 @@ namespace Cozmo {
       private QuickQuitMinigameButton _QuickQuitButtonInstance;
 
       [SerializeField]
+      private ChallengeTitleWidget _TitleWidgetPrefab;
+
+      private ChallengeTitleWidget _TitleWidgetInstance;
+
+      #endregion
+
+      #region Bottom widgets
+
+      [SerializeField]
       private CozmoStatusWidget _CozmoStatusPrefab;
 
       private CozmoStatusWidget _CozmoStatusInstance;
@@ -35,26 +88,40 @@ namespace Cozmo {
       private ChallengeProgressWidget _ChallengeProgressWidgetInstance;
 
       [SerializeField]
-      private ChallengeTitleWidget _TitleWidgetPrefab;
-
-      private ChallengeTitleWidget _TitleWidgetInstance;
+      private ContinueGameButtonWidget _ContinueButtonOffsetPrefab;
 
       [SerializeField]
-      private ContinueGameShelfWidget _ContinueButtonShelfPrefab;
+      private ContinueGameButtonWidget _ContinueButtonCenterPrefab;
 
-      [SerializeField]
-      private ContinueGameShelfWidget _ContinueButtonCenterPrefab;
-
-      private bool _IsContinueButtonShelfCentered;
-      private ContinueGameShelfWidget _ContinueButtonShelfInstance;
+      private bool _IsContinueButtonCentered;
+      private ContinueGameButtonWidget _ContinueButtonInstance;
 
       [SerializeField]
       private HowToPlayButton _HowToPlayButtonPrefab;
       private HowToPlayButton _HowToPlayButtonInstance;
 
       [SerializeField]
-      private DifficultySelectSlide _DifficultySelectViewPrefab;
-      private DifficultySelectSlide _DifficultySelectViewInstance;
+      private ShelfWidget _ShelfWidgetPrefab;
+      private ShelfWidget _ShelfWidgetInstance;
+
+      public ShelfWidget ShelfWidget {
+        get {
+          ShowShelf();
+          return _ShelfWidgetInstance;
+        }
+      }
+
+      [SerializeField]
+      private SpinnerWidget _SpinnerWidgetPrefab;
+      private SpinnerWidget _SpinnerWidgetInstance;
+
+      #endregion
+
+      #region Difficulty Select
+
+      [SerializeField]
+      private DifficultySelectButtonPanel _DifficultySelectButtonPanelPrefab;
+      private DifficultySelectButtonPanel _DifficultySelectButtonPanelInstance;
 
       #endregion
 
@@ -73,10 +140,20 @@ namespace Cozmo {
       private Anki.UI.AnkiTextLabel _InfoTitleTextLabel;
 
       [SerializeField]
+      private UnityEngine.UI.LayoutElement _InfoTextSlideLayoutElement;
+
+      [SerializeField]
       private RectTransform _InfoTextGameSlideContainer;
+
+      #endregion
+
+      #region Default Slides
 
       [SerializeField]
       private Anki.UI.AnkiTextLabel _InfoTextSlidePrefab;
+
+      [SerializeField]
+      private AnimationSlide _AnimationSlidePrefab;
 
       #endregion
 
@@ -100,8 +177,16 @@ namespace Cozmo {
       [SerializeField]
       private Sprite _CozmoPortraitSprite;
 
+      public Sprite CozmoPortrait {
+        get { return _CozmoPortraitSprite; }
+      }
+
       [SerializeField]
       private Sprite _PlayerPortraitSprite;
+
+      public Sprite PlayerPortrait {
+        get { return _PlayerPortraitSprite; }
+      }
 
       #endregion
 
@@ -117,13 +202,8 @@ namespace Cozmo {
 
       public bool _OpenAnimationStarted = false;
 
-      private GameObject _HowToPlayContentPrefab;
-
-      private string _HowToPlayContentLocKey;
-
-      public void Initialize(GameObject howToPlayContentPrefab, string howToPlayContentLocKey) {
-        _HowToPlayContentPrefab = howToPlayContentPrefab;
-        _HowToPlayContentLocKey = howToPlayContentLocKey;
+      public void Initialize() {
+        HideNarrowInfoTextSlide();
       }
 
       #region Base View
@@ -148,6 +228,16 @@ namespace Cozmo {
         }
         if (_TransitionOutSlide != null) {
           Destroy(_TransitionOutSlide.gameObject);
+        }
+
+        if (_LockedBackgroundTween != null) {
+          _LockedBackgroundTween.Kill();
+        }
+        if (_MiddleBackgroundTween != null) {
+          _MiddleBackgroundTween.Kill();
+        }
+        if (_OverlayBackgroundTween != null) {
+          _OverlayBackgroundTween.Kill();
         }
       }
 
@@ -180,14 +270,30 @@ namespace Cozmo {
         _InfoTitleLayoutElement.gameObject.SetActive(false);
       }
 
-      private void CreateWidgetIfNull<T>(ref T widgetInstance, MonoBehaviour widgetPrefab) where T : MinigameWidget {
+      private bool CreateWidgetIfNull<T>(ref T widgetInstance, MonoBehaviour widgetPrefab, ContentLayer layer = ContentLayer.Overlay) where T : MinigameWidget {
         if (widgetInstance != null) {
-          return;
+          return false;
         }
 
-        GameObject newWidget = UIManager.CreateUIElement(widgetPrefab.gameObject, this.transform);
+        Transform parentTransform = this.transform;
+        switch (layer) {
+        case ContentLayer.Bottom:
+          parentTransform = _BottomWidgetContainer;
+          break;
+        case ContentLayer.Middle:
+          parentTransform = _MiddleWidgetContainer;
+          break;
+        case ContentLayer.Overlay:
+          parentTransform = _OverlayWidgetContainer;
+          break;
+        default:
+          break;
+        }
+
+        GameObject newWidget = UIManager.CreateUIElement(widgetPrefab.gameObject, parentTransform);
         widgetInstance = newWidget.GetComponent<T>();
         AddWidget(widgetInstance);
+        return true;
       }
 
       private void AddWidget(MinigameWidget widgetToAdd) {
@@ -228,8 +334,8 @@ namespace Cozmo {
           _HowToPlayButtonInstance.DASEventViewController = currentViewName;
         }
 
-        if (_ContinueButtonShelfInstance != null) {
-          _ContinueButtonShelfInstance.DASEventViewController = currentViewName;
+        if (_ContinueButtonInstance != null) {
+          _ContinueButtonInstance.DASEventViewController = currentViewName;
         }
       }
 
@@ -237,6 +343,66 @@ namespace Cozmo {
         return string.Format("{0}_{1}", DASEventViewName, 
           string.IsNullOrEmpty(slideName) ? "no_slide" : slideName);
       }
+
+      #region Background Color
+
+      public void InitializeColor(Color baseColor) {
+        _BackgroundImage.color = baseColor;
+        _BackgroundGradient.color = baseColor;
+        _MiddleBackgroundImage.color = baseColor;
+        _IsShowingLocked = _LockedBackgroundImage.color.a > 0;
+        _IsShowingMiddle = _MiddleBackgroundImage.color.a > 0;
+        _OverlayBackgroundImage.color = new Color(baseColor.r, baseColor.g, baseColor.b, 0);
+        _IsShowingOverlay = _OverlayBackgroundImage.color.a > 0;
+      }
+
+      public void ShowLockedBackground() {
+        ShowBackground(ref _IsShowingLocked, ref _LockedBackgroundTween, _LockedBackgroundImage);
+      }
+
+      public void HideLockedBackground() {
+        HideBackground(ref _IsShowingLocked, ref _LockedBackgroundTween, _LockedBackgroundImage);
+      }
+
+      public void ShowMiddleBackground() {
+        ShowBackground(ref _IsShowingMiddle, ref _MiddleBackgroundTween, _MiddleBackgroundImage);
+      }
+
+      public void HideMiddleBackground() {
+        HideBackground(ref _IsShowingMiddle, ref _MiddleBackgroundTween, _MiddleBackgroundImage);
+      }
+
+      public void ShowOverlayBackground() {
+        ShowBackground(ref _IsShowingOverlay, ref _OverlayBackgroundTween, _OverlayBackgroundImage);
+      }
+
+      public void HideOverlayBackground() {
+        HideBackground(ref _IsShowingOverlay, ref _OverlayBackgroundTween, _OverlayBackgroundImage);
+      }
+
+      public void ShowBackground(ref bool currentlyShowing, ref Sequence sequence, Image targetImage) {
+        if (!currentlyShowing) {
+          currentlyShowing = true;
+          PlayFadeTween(ref sequence, targetImage, 1);
+        }
+      }
+
+      public void HideBackground(ref bool currentlyShowing, ref Sequence sequence, Image targetImage) {
+        if (currentlyShowing) {
+          currentlyShowing = false;
+          PlayFadeTween(ref sequence, targetImage, 0);
+        }
+      }
+
+      private void PlayFadeTween(ref Sequence sequenceToUse, Image targetImage, float targetAlpha) {
+        if (sequenceToUse != null) {
+          sequenceToUse.Kill();
+        }
+        sequenceToUse = DOTween.Sequence();
+        sequenceToUse.Append(targetImage.DOFade(targetAlpha, 0.2f));
+      }
+
+      #endregion
 
       #region Challenge Title Widget
 
@@ -321,13 +487,13 @@ namespace Cozmo {
       #region Quit Button
 
       public void ShowQuitButton() {
-        CreateWidgetIfNull<QuitMinigameButton>(ref _QuitButtonInstance, _QuitGameButtonPrefab);
+        CreateWidgetIfNull<QuitMinigameButton>(ref _QuitButtonInstance, _QuitGameButtonPrefab, ContentLayer.Middle);
         _QuitButtonInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
         _QuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
       }
 
       public void ShowBackButton() {
-        CreateWidgetIfNull<QuickQuitMinigameButton>(ref _QuickQuitButtonInstance, _QuickQuitGameButtonPrefab);
+        CreateWidgetIfNull<QuickQuitMinigameButton>(ref _QuickQuitButtonInstance, _QuickQuitGameButtonPrefab, ContentLayer.Middle);
         _QuickQuitButtonInstance.DASEventViewController = ComposeDasViewName(_CurrentSlideName);
         _QuickQuitButtonInstance.QuitGameConfirmed += HandleQuitConfirmed;
       }
@@ -348,20 +514,39 @@ namespace Cozmo {
 
       #region How To Play Button
 
-      public void ShowHowToPlayButton() {
+      public void ShowHowToPlayButton(string howToPlayDescKey, GameObject howToPlayAnimationPrefab) {
         CreateWidgetIfNull<HowToPlayButton>(ref _HowToPlayButtonInstance, _HowToPlayButtonPrefab);
-        _HowToPlayButtonInstance.Initialize(_HowToPlayContentLocKey, _HowToPlayContentPrefab, ComposeDasViewName(_CurrentSlideName));
+        _HowToPlayButtonInstance.Initialize(howToPlayDescKey, howToPlayAnimationPrefab, ComposeDasViewName(_CurrentSlideName), UIColorPalette.GameToggleColor);
+        _HowToPlayButtonInstance.OnHowToPlayButtonClicked += HandleHowToPlayButtonClicked;
+      }
+
+      public void HideHowToPlayButton() {
+        if (_HowToPlayButtonInstance != null) {
+          HideWidget(_HowToPlayButtonInstance);
+          _HowToPlayButtonInstance = null;
+        }
       }
 
       public void OpenHowToPlayView() {
         if (_HowToPlayButtonInstance != null) {
-          _HowToPlayButtonInstance.OpenHowToPlayView(false, false);
+          _HowToPlayButtonInstance.IsHowToPlayViewOpen = true;
         }
       }
 
       public void CloseHowToPlayView() {
         if (_HowToPlayButtonInstance != null) {
-          _HowToPlayButtonInstance.CloseHowToPlayView();
+          _HowToPlayButtonInstance.IsHowToPlayViewOpen = false;
+        }
+      }
+
+      private void HandleHowToPlayButtonClicked(bool isHowToPlayViewOpen) {
+        if (isHowToPlayViewOpen) {
+          ShelfWidget.MoveCarat(_HowToPlayButtonInstance.transform.position.x);
+          ShowOverlayBackground();
+        }
+        else {
+          ShelfWidget.HideCaratOffscreenLeft();
+          HideOverlayBackground();
         }
       }
 
@@ -369,54 +554,106 @@ namespace Cozmo {
 
       #region ContinueButtonShelfWidget
 
-      public void ShowContinueButtonOnShelf(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
-                                            string buttonText, string shelfText, Color shelfColor, string dasButtonName) {
-        if (_IsContinueButtonShelfCentered) {
-          if (_ContinueButtonShelfInstance != null) {
-            HideContinueButtonShelf();
+      public void ShowContinueButtonOffset(ContinueGameButtonWidget.ContinueButtonClickHandler buttonClickHandler,
+                                           string buttonText, string shelfText, Color shelfColor, string dasButtonName) {
+        if (_IsContinueButtonCentered) {
+          if (_ContinueButtonInstance != null) {
+            HideContinueButton();
           }
         }
-        CreateWidgetIfNull<ContinueGameShelfWidget>(ref _ContinueButtonShelfInstance, _ContinueButtonShelfPrefab);
-        _IsContinueButtonShelfCentered = false;
+        CreateWidgetIfNull<ContinueGameButtonWidget>(ref _ContinueButtonInstance, _ContinueButtonOffsetPrefab);
+        _IsContinueButtonCentered = false;
         string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
-        _ContinueButtonShelfInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfColor, dasButtonName, dasViewControllerName);
+        _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, shelfText, shelfColor, dasButtonName, dasViewControllerName);
         EnableContinueButton(true);
       }
 
-      public void ShowContinueButtonCentered(ContinueGameShelfWidget.ContinueButtonClickHandler buttonClickHandler,
+      public void ShowContinueButtonCentered(ContinueGameButtonWidget.ContinueButtonClickHandler buttonClickHandler,
                                              string buttonText, string dasButtonName) {
-        if (!_IsContinueButtonShelfCentered) {
-          if (_ContinueButtonShelfInstance != null) {
-            HideContinueButtonShelf();
+        if (!_IsContinueButtonCentered) {
+          if (_ContinueButtonInstance != null) {
+            HideContinueButton();
           }
         }
-        CreateWidgetIfNull<ContinueGameShelfWidget>(ref _ContinueButtonShelfInstance, _ContinueButtonCenterPrefab);
-        _IsContinueButtonShelfCentered = true;
+        CreateWidgetIfNull<ContinueGameButtonWidget>(ref _ContinueButtonInstance, _ContinueButtonCenterPrefab);
+        _IsContinueButtonCentered = true;
         string dasViewControllerName = ComposeDasViewName(_CurrentSlideName);
-        _ContinueButtonShelfInstance.Initialize(buttonClickHandler, buttonText, string.Empty, Color.clear, dasButtonName, dasViewControllerName);
+        _ContinueButtonInstance.Initialize(buttonClickHandler, buttonText, string.Empty, Color.clear, dasButtonName, dasViewControllerName);
         EnableContinueButton(true);
       }
 
-      public void HideContinueButtonShelf() {
-        HideWidget(_ContinueButtonShelfInstance);
-        _ContinueButtonShelfInstance = null;
+      public void HideContinueButton() {
+        HideWidget(_ContinueButtonInstance);
+        _ContinueButtonInstance = null;
       }
 
       public void EnableContinueButton(bool enable) {
-        if (_ContinueButtonShelfInstance != null) {
-          _ContinueButtonShelfInstance.SetButtonInteractivity(enable);
+        if (_ContinueButtonInstance != null) {
+          _ContinueButtonInstance.SetButtonInteractivity(enable);
         }
       }
 
-      public void SetContinueButtonShelfText(string text, Color color) {
-        if (_ContinueButtonShelfInstance != null) {
-          _ContinueButtonShelfInstance.SetShelfText(text, color);
+      public void SetContinueButtonSupplementText(string text, Color color) {
+        if (_ContinueButtonInstance != null) {
+          _ContinueButtonInstance.SetShelfText(text, color);
         }
       }
 
       #endregion
 
-      #region Info Title Text
+      #region Shelf Widget
+
+      public void ShowShelf() {
+        CreateWidgetIfNull<ShelfWidget>(ref _ShelfWidgetInstance, _ShelfWidgetPrefab);
+      }
+
+      public void HideShelf() {
+        HideWidget(_ShelfWidgetInstance);
+        _ShelfWidgetInstance = null;
+      }
+
+      #endregion
+
+      #region Game State Slides
+
+      public ShowCozmoCubeSlide ShowCozmoCubesSlide(int numCubesRequired, TweenCallback endInTweenCallback = null) {
+        GameObject slideObject = ShowWideGameStateSlide(MinigameUIPrefabHolder.Instance.InitialCubesSlide, "setup_cubes_slide", endInTweenCallback);
+        ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
+        cubeSlide.Initialize(numCubesRequired, Cozmo.CubePalette.InViewColor, Cozmo.CubePalette.OutOfViewColor);
+        return cubeSlide;
+      }
+
+      public void ShowWideAnimationSlide(string descLocKey, string slideDasName, GameObject animationPrefab, TweenCallback endInTweenCallback) {
+        GameObject slide = ShowWideGameStateSlide(_AnimationSlidePrefab.gameObject, slideDasName, endInTweenCallback);
+        AnimationSlide animationSlide = slide.GetComponent<AnimationSlide>();
+        animationSlide.Initialize(animationPrefab, descLocKey);
+      }
+
+      public void ShowWideSlideWithText(string descLocKey, TweenCallback endInTweenCallback) {
+        GameObject slide = ShowWideGameStateSlide(_InfoTextSlidePrefab.gameObject, "wide_info_slide_" + descLocKey, endInTweenCallback);
+        Anki.UI.AnkiTextLabel textLabel = slide.GetComponent<Anki.UI.AnkiTextLabel>();
+        textLabel.text = Localization.Get(descLocKey);
+      }
+
+      public GameObject ShowWideGameStateSlide(GameObject prefab, string slideDasName, TweenCallback endInTweenCallback = null) {
+        if (slideDasName == _CurrentSlideName) {
+          return _CurrentSlide.gameObject;
+        }
+        InfoTitleText = null;
+        HideGameStateSlide();
+        HidePlayerScoreboard();
+        HideCozmoScoreboard();
+        return ShowGameStateSlide(slideDasName, prefab, _WideGameSlideContainer, endInTweenCallback);
+      }
+
+      public GameObject ShowNarrowGameStateSlide(GameObject prefab, string slideDasName, TweenCallback endInTweenCallback = null) {
+        if (slideDasName == _CurrentSlideName) {
+          return _CurrentSlide.gameObject;
+        }
+        InfoTitleText = null;
+        HideGameStateSlide();
+        return ShowGameStateSlide(slideDasName, prefab, _NarrowGameSlideContainer, endInTweenCallback);
+      }
 
       public string InfoTitleText {
         get { return _InfoTitleTextLabel.text; }
@@ -426,42 +663,16 @@ namespace Cozmo {
         }
       }
 
-      #endregion
-
-      #region Game State Slides
-
-      public ShowCozmoCubeSlide ShowCozmoCubesSlide(int numCubesRequired) {
-        GameObject slideObject = ShowWideGameStateSlide(MinigameUIPrefabHolder.Instance.InitialCubesSlide, "setup_cubes_slide");
-        ShowCozmoCubeSlide cubeSlide = slideObject.GetComponent<ShowCozmoCubeSlide>();
-        cubeSlide.Initialize(numCubesRequired, Cozmo.CubePalette.InViewColor);
-        return cubeSlide;
-      }
-
-      public GameObject ShowWideGameStateSlide(GameObject prefab, string slideDasName) {
-        if (slideDasName == _CurrentSlideName) {
-          return _CurrentSlide.gameObject;
-        }
-        InfoTitleText = null;
-        HideGameStateSlide();
-        HidePlayerScoreboard();
-        HideCozmoScoreboard();
-        return ShowGameStateSlide(slideDasName, prefab, _WideGameSlideContainer);
-      }
-
-      public GameObject ShowNarrowGameStateSlide(GameObject prefab, string slideDasName) {
-        if (slideDasName == _CurrentSlideName) {
-          return _CurrentSlide.gameObject;
-        }
-        InfoTitleText = null;
-        HideGameStateSlide();
-        return ShowGameStateSlide(slideDasName, prefab, _NarrowGameSlideContainer);
-      }
-
-      public void ShowInfoTextSlideWithKey(string localizationKey) {
+      public void ShowNarrowInfoTextSlideWithKey(string localizationKey, TweenCallback endInTweenCallback = null) {
+        _InfoTextSlideLayoutElement.gameObject.SetActive(true);
         GameObject slide = ShowGameStateSlide("info_slide_" + localizationKey, _InfoTextSlidePrefab.gameObject, 
-                             _InfoTextGameSlideContainer);
+                             _InfoTextGameSlideContainer, endInTweenCallback);
         Anki.UI.AnkiTextLabel textLabel = slide.GetComponent<Anki.UI.AnkiTextLabel>();
         textLabel.text = Localization.Get(localizationKey);
+      }
+
+      public void HideNarrowInfoTextSlide() {
+        _InfoTextSlideLayoutElement.gameObject.SetActive(false);
       }
 
       public void HideGameStateSlide() {
@@ -484,7 +695,7 @@ namespace Cozmo {
           }
           _SlideOutTween = DOTween.Sequence();
           _SlideOutTween.Append(_TransitionOutSlide.transform.DOLocalMoveX(
-            100, 0.25f).SetEase(Ease.OutQuad).SetRelative());
+            -100, 0.25f).SetEase(Ease.OutQuad).SetRelative());
           _SlideOutTween.Join(_TransitionOutSlide.DOFade(0, 0.25f));
 
           // At the end of the tween destroy the out slide
@@ -498,7 +709,7 @@ namespace Cozmo {
       }
 
       private GameObject ShowGameStateSlide(string slideName, GameObject slidePrefab,
-                                            RectTransform slideContainer) {
+                                            RectTransform slideContainer, TweenCallback endInTweenCallback = null) {
         if (slideName == _CurrentSlideName) {
           return _CurrentSlide.gameObject;
         }
@@ -529,8 +740,11 @@ namespace Cozmo {
         // Play a transition in tween on it
         _SlideInTween = DOTween.Sequence();
         _SlideInTween.Append(_CurrentSlide.transform.DOLocalMoveX(
-          -100, 0.25f).From().SetEase(Ease.OutQuad).SetRelative());
+          100, 0.25f).From().SetEase(Ease.OutQuad).SetRelative());
         _SlideInTween.Join(_CurrentSlide.DOFade(1, 0.25f).SetEase(Ease.OutQuad));
+        if (endInTweenCallback != null) {
+          _SlideInTween.AppendCallback(endInTweenCallback);
+        }
         _SlideInTween.Play();
 
         return newSlideObj;
@@ -540,28 +754,31 @@ namespace Cozmo {
 
       #region Difficulty Select Widget
 
-      public void ShowDifficultySelectView(List<DifficultySelectOptionData> options, int highestDifficultyAvailable) {
-        if (_DifficultySelectViewInstance != null) {
-          return;
+      public DifficultySelectButtonPanel ShowDifficultySelectButtons(List<DifficultySelectOptionData> options, int highestDifficultyAvailable,
+                                                                     TweenCallback endInTweenCallback) {
+        if (_DifficultySelectButtonPanelInstance == null) {
+          GameObject difficultySlide = ShelfWidget.AddContent(_DifficultySelectButtonPanelPrefab, endInTweenCallback);
+          _DifficultySelectButtonPanelInstance = difficultySlide.GetComponent<DifficultySelectButtonPanel>();
+          _DifficultySelectButtonPanelInstance.Initialize(options, highestDifficultyAvailable);
         }
-        GameObject difficultySlide = ShowWideGameStateSlide(_DifficultySelectViewPrefab.gameObject, "difficulty_select_slide");
-        _DifficultySelectViewInstance = difficultySlide.GetComponent<DifficultySelectSlide>();
-        _DifficultySelectViewInstance.Initialize(options, highestDifficultyAvailable);
+        return _DifficultySelectButtonPanelInstance;
       }
 
-      public void HideDifficultySelectView() {
-        HideGameStateSlide();
-        _DifficultySelectViewInstance = null;
-      }
-
-      public DifficultySelectOptionData GetSelectedDifficulty() {
-        if (_DifficultySelectViewInstance != null) {
-          return _DifficultySelectViewInstance.SelectedDifficulty;
-        }
-        return null;
+      public void HideDifficultySelectButtonPanel() {
+        ShelfWidget.HideContent();
+        _DifficultySelectButtonPanelInstance = null;
       }
 
       #endregion
+
+      public void ShowSpinnerWidget() {
+        CreateWidgetIfNull<SpinnerWidget>(ref _SpinnerWidgetInstance, _SpinnerWidgetPrefab);
+      }
+
+      public void HideSpinnerWidget() {
+        HideWidget(_SpinnerWidgetInstance);
+        _SpinnerWidgetInstance = null;
+      }
     }
   }
 }

@@ -1,7 +1,7 @@
 {
   "Animations": [
     {
-      "Name": "anim_speedTap_winGame_intesnity03_01",
+      "Name": "anim_speedTap_winGame_intensity03_01",
       "Weight": 1.0,
       "CooldownTime_Sec": 0.0,
       "Mood": "Default"
