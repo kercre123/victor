@@ -31,7 +31,7 @@ namespace Cozmo
     
     auto filePaths = Anki::Util::FileUtils::FilesInDirectory(map_dir, true, "json", true);
     // Read all json files in that dir..
-    for (auto filename : filePaths)
+    for (const auto& filename : filePaths)
     {
       Json::Value jsonRoot;
       const bool success = data->readAsJson(filename, jsonRoot);

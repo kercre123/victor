@@ -842,7 +842,7 @@ namespace Cozmo {
   void BehaviorFactoryTest::StopInternal(Robot& robot)
   {
     // Cancel all actions
-    for (auto tag : _actionCallbackMap) {
+    for (const auto& tag : _actionCallbackMap) {
       robot.GetActionList().Cancel(tag.first);
     }
     _actionCallbackMap.clear();

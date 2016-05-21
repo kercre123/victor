@@ -792,7 +792,7 @@ namespace Anki {
           Vec3f Tdiff;
           Radians angleDiff;
           ObservableObject* objectInOriginalPose = nullptr;
-          for(auto object : objectsWithType)
+          for(const auto& object : objectsWithType)
           {
             // TODO: is it safe to always have useAbsRotation=true here?
             Vec3f Tdiff;

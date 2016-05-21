@@ -1448,7 +1448,7 @@ namespace Cozmo {
   
   Result VisionComponent::WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback)
   {
-    auto calibImages = _visionSystem->GetCalibrationImages();
+    const auto& calibImages = _visionSystem->GetCalibrationImages();
     
     // Make sure there is no more than 5 images in the list
     if (calibImages.size() > 6 || calibImages.size() < 4) {
@@ -1558,7 +1558,7 @@ namespace Cozmo {
   
   Result VisionComponent::WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback)
   {
-    auto images = _visionSystem->GetToolCodeImages();
+    const auto& images = _visionSystem->GetToolCodeImages();
     
     // Make sure there is no more than 2 images in the list
     if (images.size() != 2) {

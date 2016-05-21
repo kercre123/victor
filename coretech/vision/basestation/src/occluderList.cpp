@@ -200,7 +200,7 @@ namespace Anki {
     
     void OccluderList::GetAllOccluders(std::vector<Rectangle<f32> >& occluders) const
     {
-      for(auto rectDepthPair : rectDepthPairs_)
+      for(const auto& rectDepthPair : rectDepthPairs_)
       {
         occluders.emplace_back(rectDepthPair.second);
       }

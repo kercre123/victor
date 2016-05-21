@@ -383,7 +383,7 @@ bool MultiClientChannel::AcceptAdvertisingConnection(ConnectionId connectionId)
 bool MultiClientChannel::AcceptAllAdvertisingConnections()
 {
   bool allAccepted = true;
-  for (auto entry : _advertisingInfo) {
+  for (const auto& entry : _advertisingInfo) {
     allAccepted |= AcceptAdvertisingConnectionInternal(entry.first, entry.second);
   }
   return allAccepted;
