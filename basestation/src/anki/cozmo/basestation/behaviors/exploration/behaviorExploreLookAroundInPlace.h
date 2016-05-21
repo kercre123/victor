@@ -195,8 +195,9 @@ private:
   EClockDirection _mainTurnDirection;
   
   // s4 specific vars
-  Radians _s4_s5StartingBodyFacing_rad;  // starting facing for s4 (because angle changes are relative to this angle)
-  uint8_t _s4HeadMovesLeft;           // number of head moves left for step4
+  Radians _s4_s5StartingBodyFacing_rad; // starting facing for s4 (because angle changes are relative to this angle)
+  uint8_t _s4HeadMovesRolled;           // number of head moves rolled for step4
+  uint8_t _s4HeadMovesLeft;             // number of head moves left for step4
   
   // positions we have recently done
   std::list<Pose3d> _visitedLocations;
