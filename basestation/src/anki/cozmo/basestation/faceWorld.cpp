@@ -13,6 +13,7 @@ namespace Anki {
 namespace Cozmo {
   
   CONSOLE_VAR(u32, kDeletionTimeout_ms, "Vision.FaceWorld", 4000); // How long before deleting unobserved face
+  CONSOLE_VAR(u32, kKnownFaceDeletionTimeout_ms, "Vision.FaceWorld", 4000);
   
   FaceWorld::KnownFace::KnownFace(Vision::TrackedFace& faceIn)
   : face(faceIn)
@@ -363,10 +364,12 @@ namespace Cozmo {
     {
       Vision::TrackedFace& face = faceIter->second.face;
       
-      if(_robot.GetVisionComponent().GetLastProcessedImageTimeStamp() > kDeletionTimeout_ms + face.GetTimeStamp()) {
+      const u32 timeout = face.GetName().empty() ? kDeletionTimeout_ms : kKnownFaceDeletionTimeout_ms;
+      if(_robot.GetVisionComponent().GetLastProcessedImageTimeStamp() > timeout + face.GetTimeStamp()) {
         
         PRINT_NAMED_INFO("FaceWorld.Update.DeletingOldFace",
-                         "Removing face %d at t=%d, because it hasn't been seen since t=%d.",
+                         "Removing %sface %d at t=%d, because it hasn't been seen since t=%d.",
+                         face.GetName().empty() ? "" : "known ",
                          faceIter->first, _robot.GetLastImageTimeStamp(),
                          faceIter->second.face.GetTimeStamp());
         
