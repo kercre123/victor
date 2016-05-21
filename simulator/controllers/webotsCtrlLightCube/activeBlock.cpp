@@ -1,7 +1,7 @@
 /*
  * File:          activeBlock.cpp
  * Date:
- * Description:   
+ * Description:   Main controller for simulated blocks and chargers
  * Author:        
  * Modifications: 
  */
@@ -23,7 +23,7 @@
 #include <webots/Accelerometer.hpp>
 #include <webots/LED.hpp>
 
-webots::Supervisor block_controller;
+webots::Supervisor active_object_controller;
 
 
 namespace Anki {
@@ -142,7 +142,7 @@ namespace Anki {
       void Process_flashID(const FlashObjectIDs& msg)
       {
         state_ = FLASHING_ID;
-        flashIDStartTime_ = block_controller.getTime();
+        flashIDStartTime_ = active_object_controller.getTime();
         //printf("Starting ID flash\n");
       }
       
@@ -189,7 +189,7 @@ namespace Anki {
       // receiver channel for comms with the robot.
       // This is not meant to reflect how actual comms will work.
       s32 GetBlockID() {
-        webots::Node* selfNode = block_controller.getSelf();
+        webots::Node* selfNode = active_object_controller.getSelf();
         
         webots::Field* activeIdField = selfNode->getField("ID");
         if(activeIdField) {
@@ -208,10 +208,10 @@ namespace Anki {
       {
         state_ = NORMAL;
 
-        block_controller.step(TIMESTEP);
+        active_object_controller.step(TIMESTEP);
         
         
-        webots::Node* selfNode = block_controller.getSelf();
+        webots::Node* selfNode = active_object_controller.getSelf();
         
         // Get this block's ID
         webots::Field* activeIdField = selfNode->getField("ID");
@@ -249,7 +249,7 @@ namespace Anki {
         
         // Get index of this block in the children list to get a globally unique identifier
         s32 nodeIndex = -1;
-        webots::Node* rootNode = block_controller.getRoot();
+        webots::Node* rootNode = active_object_controller.getRoot();
         webots::Field* rootChildren = rootNode->getField("children");
         int numRootChildren = rootChildren->getCount();
         for (int n = 0 ; n<numRootChildren; ++n) {
@@ -267,7 +267,7 @@ namespace Anki {
         
         
         // Use current time to make globally unique identifier robust to the scene tree changing due to dynamically added objects
-        u32 currTime_ms = static_cast<u32>(1000 * block_controller.getTime());
+        u32 currTime_ms = static_cast<u32>(1000 * active_object_controller.getTime());
         
         // Generate a factory ID
         factoryID_ = currTime_ms * 100000 + nodeIndex * 1000 + blockID_;
@@ -279,23 +279,23 @@ namespace Anki {
         for (int i=0; i<NUM_CUBE_LEDS; ++i) {
           char led_name[32];
           sprintf(led_name, "led%d", i);
-          led_[i] = block_controller.getLED(led_name);
+          led_[i] = active_object_controller.getLED(led_name);
           assert(led_[i] != nullptr);
         }
         
         // Get radio receiver
-        receiver_ = block_controller.getReceiver("receiver");
+        receiver_ = active_object_controller.getReceiver("receiver");
         assert(receiver_ != nullptr);
         receiver_->enable(TIMESTEP);
         receiver_->setChannel(factoryID_ + 1);
         
         // Get radio emitter
-        emitter_ = block_controller.getEmitter("emitter");
+        emitter_ = active_object_controller.getEmitter("emitter");
         assert(emitter_ != nullptr);
         emitter_->setChannel(factoryID_);
         
         // Get accelerometer
-        accel_ = block_controller.getAccelerometer("accel");
+        accel_ = active_object_controller.getAccelerometer("accel");
         assert(accel_ != nullptr);
         accel_->enable(TIMESTEP);
         
@@ -491,7 +491,7 @@ namespace Anki {
       
       
       Result Update() {
-        if (block_controller.step(TIMESTEP) != -1) {
+        if (active_object_controller.step(TIMESTEP) != -1) {
           
 #if(0)
           // Test: Blink all LEDs in order
@@ -528,7 +528,7 @@ namespace Anki {
           }
           
           // TODO: Time probably won't be in seconds on the real blocks...
-          const double currTime_sec = block_controller.getTime();
+          const double currTime_sec = active_object_controller.getTime();
           
           // Get accel values
           const double* accelVals = accel_->getValues();

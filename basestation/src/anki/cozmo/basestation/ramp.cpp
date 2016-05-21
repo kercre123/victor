@@ -44,7 +44,7 @@ namespace Anki {
     
     
     Ramp::Ramp()
-    : ObservableObject(ObjectFamily::Mat, ObjectType::Ramp_Basic)
+    : ObservableObject(ObjectFamily::Ramp, ObjectType::Ramp_Basic)
     , _size(SlopeLength+PlatformLength, Width, Height)
     , _preAscentPose(0, Z_AXIS_3D(),
                      {-PreAscentDistance, 0.f, 0.f},

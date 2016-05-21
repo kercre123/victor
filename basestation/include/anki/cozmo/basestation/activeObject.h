@@ -61,27 +61,7 @@ namespace Cozmo {
     virtual bool CanBeUsedForLocalization() const override;
     
     // Mapping of ActiveObjectType to ObjectType
-    static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type) {
-      ObjectType objType = ObjectType::Unknown;
-      switch(type) {
-        case ActiveObjectType::OBJECT_CHARGER:
-          objType = ObjectType::Charger_Basic;
-          break;
-        case ActiveObjectType::OBJECT_CUBE1:
-          objType = ObjectType::Block_LIGHTCUBE1;
-          break;
-        case ActiveObjectType::OBJECT_CUBE2:
-          objType = ObjectType::Block_LIGHTCUBE2;
-          break;
-        case ActiveObjectType::OBJECT_CUBE3:
-          objType = ObjectType::Block_LIGHTCUBE3;
-          break;
-        default:
-          break;
-      }
-      
-      return objType;
-    }
+    static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type);
     
     struct LEDstate {
       ColorRGBA onColor;

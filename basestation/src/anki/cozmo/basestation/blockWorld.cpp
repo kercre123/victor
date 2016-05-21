@@ -299,7 +299,7 @@ CONSOLE_VAR(bool, kDebugRenderOverheadEdges, "BlockWorld.MapMemory", true); // k
         return nullptr;
       }
       
-      return (ActiveObject*)dynamic_cast<const ActiveObject*>(object);
+      return const_cast<ActiveObject*>(dynamic_cast<const ActiveObject*>(object));
     } // GetActiveObject()
     
     ActiveObject* BlockWorld::GetActiveObjectByActiveIDHelper(const u32 activeID, const ObjectFamily inFamily) const

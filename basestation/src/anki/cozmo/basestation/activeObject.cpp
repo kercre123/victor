@@ -165,6 +165,27 @@ namespace Anki {
 */
 
     
+    ObjectType ActiveObject::GetTypeFromActiveObjectType(ActiveObjectType type) {
+      ObjectType objType = ObjectType::Unknown;
+      switch(type) {
+        case ActiveObjectType::OBJECT_CHARGER:
+          objType = ObjectType::Charger_Basic;
+          break;
+        case ActiveObjectType::OBJECT_CUBE1:
+          objType = ObjectType::Block_LIGHTCUBE1;
+          break;
+        case ActiveObjectType::OBJECT_CUBE2:
+          objType = ObjectType::Block_LIGHTCUBE2;
+          break;
+        case ActiveObjectType::OBJECT_CUBE3:
+          objType = ObjectType::Block_LIGHTCUBE3;
+          break;
+        default:
+          break;
+      }
+      
+      return objType;
+    }
 
   } // namespace Cozmo
 } // namespace Anki
