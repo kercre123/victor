@@ -46,6 +46,8 @@ public static class LocalizationKeys {
   public const string kChallengeEndedLabelReward = "challengeEnded.label.reward";
   public const string kArtistCozmoTitle = "artistCozmo.title";
   public const string kArtistCozmoDescription = "artistCozmo.description";
+  public const string kFaceEnrollmentTitle = "faceEnrollment.title";
+  public const string kFaceEnrollmentDescription = "faceEnrollment.description";
 
   #endregion
 

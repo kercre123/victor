@@ -45,13 +45,12 @@ namespace Cozmo {
 
       private void HandleQuitButtonTap() {
         // Open confirmation dialog instead
-        AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab);
+        AlertView alertView = UIManager.OpenView(AlertViewLoader.Instance.AlertViewPrefab_NoText);
         // Hook up callbacks
         alertView.SetCloseButtonEnabled(false);
         alertView.SetPrimaryButton(LocalizationKeys.kButtonYes, HandleQuitConfirmed);
         alertView.SetSecondaryButton(LocalizationKeys.kButtonNo, HandleQuitCancelled);
         alertView.TitleLocKey = LocalizationKeys.kMinigameQuitViewTitle;
-        alertView.DescriptionLocKey = LocalizationKeys.kMinigameQuitViewDescription;
         // Listen for dialog close
         alertView.ViewCloseAnimationFinished += HandleQuitViewClosed;
         _ConfimedQuit = false;
