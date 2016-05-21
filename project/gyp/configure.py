@@ -332,11 +332,6 @@ def main(scriptArgs):
   if (generateUnityMeta.generateMetaFiles(unityGeneratedPath, options.verbose)):
     UtilLog.error("error generating unity meta files")
     return False
-    
-  #generate AnkiLogStringTables.json
-  if (subprocess.call(['make', '--silent', 'app'], cwd=os.path.join(projectRoot, 'robot')) != 0):
-      UtilLog.error("Error generating AnkiLogStringTables.json")
-      return False
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)
@@ -348,7 +343,7 @@ def main(scriptArgs):
   if options.updateListsOnly:
     # TODO: remove dependency on abspath.
     # there is a bug due to 'os.chdir' and user passed rel path
-    if (subprocess.call([os.path.join(options.cozmoEnginePath, 'project/gyp/configure.py'),
+    if (subprocess.call([os.path.join(options.cozmoEnginePath, 'project/gyp/configure_engine.py'),
      '--updateListsOnly', '--buildTools', options.buildToolsPath, '--ankiUtil', options.ankiUtilPath]) != 0):
       UtilLog.error("error executing cozmo-engine configure")
       return False

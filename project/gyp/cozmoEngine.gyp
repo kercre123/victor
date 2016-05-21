@@ -1575,7 +1575,7 @@
                 'cp',
                 '-R',
                 '<(face_library_path)/Demo/models',
-                '../../lib/anki/cozmo-engine/resources/config/basestation/vision/faciometric',
+                '../../resources/config/basestation/vision/faciometric',
               ],
             },
           ],

@@ -315,7 +315,7 @@
 		4C218432EC4CF649E54E45E5 /* InternalProfiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InternalProfiler.h; path = UnityBuild/Classes/Unity/InternalProfiler.h; sourceTree = "<group>"; };
 		4DD55392C8374AE088D2C8CF /* Bulk_UnityEngine.UI_1.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_UnityEngine.UI_1.cpp; path = UnityBuild/Classes/Native/Bulk_UnityEngine.UI_1.cpp; sourceTree = "<group>"; };
 		4DEB9F0D032BF61C7A6E2609 /* UnityAppController+Rendering.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = "UnityAppController+Rendering.mm"; path = "UnityBuild/Classes/UnityAppController+Rendering.mm"; sourceTree = "<group>"; };
-		4E3C5ED01C055A8B008399F7 /* libCozmoFxPlugIn.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCozmoFxPlugIn.a; path = "../../lib/anki/cozmo-engine/lib/audio/plugins/cozmo/gyp/build/Debug-iphoneos/libCozmoFxPlugIn.a"; sourceTree = "<group>"; };
+		4E3C5ED01C055A8B008399F7 /* libCozmoFxPlugIn.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libCozmoFxPlugIn.a; path = "../../lib/audio/plugins/cozmo/gyp/build/Debug-iphoneos/libCozmoFxPlugIn.a"; sourceTree = "<group>"; };
 		50C487894F530BC620776E29 /* UnityViewControllerListener.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = UnityViewControllerListener.mm; path = UnityBuild/Classes/PluginBase/UnityViewControllerListener.mm; sourceTree = "<group>"; };
 		54BF5D7D4068BA8F8EEC6287 /* DeviceSettings.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = DeviceSettings.mm; path = UnityBuild/Classes/Unity/DeviceSettings.mm; sourceTree = "<group>"; };
 		55347E9811187A1208F2DBCB /* Bulk_Generics_8.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_8.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_8.cpp; sourceTree = "<group>"; };
@@ -370,11 +370,11 @@
 		83B2574E0E63025400468741 /* libiconv.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.2.dylib; path = usr/lib/libiconv.2.dylib; sourceTree = SDKROOT; };
 		83BF13F00AF4A251214D6A6C /* Il2CppMarshalingFunctionsTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppMarshalingFunctionsTable.cpp; path = UnityBuild/Classes/Native/Il2CppMarshalingFunctionsTable.cpp; sourceTree = "<group>"; };
 		8441767ABE25B8DAE63ED332 /* Bulk_Generics_4.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bulk_Generics_4.cpp; path = UnityBuild/Classes/Native/Bulk_Generics_4.cpp; sourceTree = "<group>"; };
-		85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDriveAudioEngine.a; path = "../../lib/anki/cozmo-engine/lib/audio/gyp/build/Debug-iphoneos/libDriveAudioEngine.a"; sourceTree = "<group>"; };
+		85065E841BF1904400DBAF35 /* libDriveAudioEngine.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDriveAudioEngine.a; path = "../../lib/audio/gyp/build/Debug-iphoneos/libDriveAudioEngine.a"; sourceTree = "<group>"; };
 		852C0B6C1C6965730003DCFD /* DASConfig.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = DASConfig.json; sourceTree = "<group>"; };
-		85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libBLECozmo.a; path = "../../lib/anki/cozmo-engine/lib/BLECozmo/project/gyp/build/Debug-iphoneos/libBLECozmo.a"; sourceTree = "<group>"; };
+		85D6352E1CC9A92700A5FB8A /* libBLECozmo.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libBLECozmo.a; path = "../../lib/BLECozmo/project/gyp/build/Debug-iphoneos/libBLECozmo.a"; sourceTree = "<group>"; };
 		85DD01451CD2A17300F2EAD5 /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
-		85DEB8FE1C652A3C00202214 /* libDAS.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDAS.a; path = "../../lib/anki/cozmo-engine/tools/das-client/gyp/build/Debug-iphoneos/libDAS.a"; sourceTree = "<group>"; };
+		85DEB8FE1C652A3C00202214 /* libDAS.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libDAS.a; path = "../../tools/das-client/gyp/build/Debug-iphoneos/libDAS.a"; sourceTree = "<group>"; };
 		85DF60081CA337F5002F99DA /* CozmoWifiConfigTemplate.mobileconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = CozmoWifiConfigTemplate.mobileconfig; sourceTree = "<group>"; };
 		872D8FE853E21136529C3BDB /* WWWConnection.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objc; name = WWWConnection.mm; path = UnityBuild/Classes/Unity/WWWConnection.mm; sourceTree = "<group>"; };
 		87EEE4C8E35C05A18245D3CC /* Il2CppMethodPointerTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Il2CppMethodPointerTable.cpp; path = UnityBuild/Classes/Native/Il2CppMethodPointerTable.cpp; sourceTree = "<group>"; };
@@ -1141,7 +1141,7 @@
 					"$(SRCROOT)/UnityBuild/Classes/Native",
 					"$(SRCROOT)/UnityBuild/Libraries/bdwgc/include",
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
-					"$(SRCROOT)/../../lib/anki/cozmo-engine/lib/das-client/include",
+					"$(SRCROOT)/../../lib/das-client/include",
 				);
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
@@ -1202,7 +1202,7 @@
 					"$(SRCROOT)/UnityBuild/Classes/Native",
 					"$(SRCROOT)/UnityBuild/Libraries/bdwgc/include",
 					"$(SRCROOT)/UnityBuild/Libraries/libil2cpp/include",
-					"$(SRCROOT)/../../lib/anki/cozmo-engine/lib/das-client/include",
+					"$(SRCROOT)/../../lib/das-client/include",
 				);
 				INFOPLIST_FILE = Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
