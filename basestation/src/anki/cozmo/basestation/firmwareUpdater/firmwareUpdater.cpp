@@ -521,7 +521,7 @@ bool FirmwareUpdater::InitUpdate(const RobotMap& robots, int version)
   }
   
   _robotsToUpgrade.clear();
-  for (auto kv : robots)
+  for (const auto& kv : robots)
   {
     RobotID_t robotId = kv.first;
     
@@ -553,7 +553,7 @@ bool FirmwareUpdater::InitUpdate(const RobotMap& robots, int version)
   
   _eventHandles.clear();
   
-  for (auto kv : robots)
+  for (const auto& kv : robots)
   {
     RobotID_t robotId = kv.first;
     Robot* robot = kv.second;

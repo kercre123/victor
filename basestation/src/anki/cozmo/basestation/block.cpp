@@ -144,7 +144,7 @@ namespace Cozmo {
       
       // Add docking and flipping preaction poses
       if (dockOrientations & (1 << rot)) {
-        for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
+        for (const auto& v : BLOCK_PREDOCK_POSE_OFFSETS) {
           Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {v.GetX() , -v.GetY(), -halfHeight}, &marker->GetPose());
           preDockPose.RotateBy(Rvec);
           AddPreActionPose(PreActionPose::DOCKING, marker, preDockPose);
@@ -157,7 +157,7 @@ namespace Cozmo {
       
       // Add rolling preaction poses
       if (rollOrientations & (1 << rot)) {
-        for (auto v : BLOCK_PREDOCK_POSE_OFFSETS) {
+        for (const auto& v : BLOCK_PREDOCK_POSE_OFFSETS) {
           Pose3d preDockPose(M_PI_2 + v.GetAngle().ToFloat(), Z_AXIS_3D(),  {v.GetX() , -v.GetY(), -halfHeight}, &marker->GetPose());
           preDockPose.RotateBy(Rvec);
           AddPreActionPose(PreActionPose::ROLLING, marker, preDockPose);
@@ -206,7 +206,7 @@ namespace Cozmo {
              
     markersByFace_.fill(NULL);
     
-    for(auto face : LookupBlockInfo(_type).faces) {
+    for(const auto& face : LookupBlockInfo(_type).faces) {
       AddFace(face.whichFace, face.code, face.size, face.dockOrientations, face.rollOrientations);
     }
     

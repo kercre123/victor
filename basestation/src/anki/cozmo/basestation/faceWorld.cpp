@@ -393,7 +393,7 @@ namespace Cozmo {
   std::vector<Vision::FaceID_t> FaceWorld::GetKnownFaceIDs() const
   {
     std::vector<Vision::FaceID_t> faceIDs;
-    for (auto pair : _knownFaces) {
+    for (const auto& pair : _knownFaces) {
       faceIDs.push_back(pair.first);
     }
     return faceIDs;
@@ -402,7 +402,7 @@ namespace Cozmo {
   std::list<Vision::FaceID_t> FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const
   {
     std::list<Vision::FaceID_t> faceIDs;
-    for (auto pair : _knownFaces) {
+    for (const auto& pair : _knownFaces) {
       if (pair.second.face.GetTimeStamp() >= seenSinceTime_ms) {
         faceIDs.push_back(pair.second.face.GetID());
       }

@@ -244,7 +244,7 @@ namespace Anki {
     
     void IActionRunner::RunCallbacks(ActionResult result) const
     {
-      for(auto callback : _completionCallbacks) {
+      for(const auto& callback : _completionCallbacks) {
         callback(result);
       }
     }

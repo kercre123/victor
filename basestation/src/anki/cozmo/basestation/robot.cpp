@@ -367,7 +367,7 @@ namespace Anki {
       
       // Find the closest, most recently observed marker on the object
       TimeStamp_t mostRecentObsTime = 0;
-      for(auto marker : object->GetMarkers()) {
+      for(const auto& marker : object->GetMarkers()) {
         if(marker.GetLastObservedTime() >= mostRecentObsTime) {
           Pose3d markerPoseWrtCamera;
           if(false == marker.GetPose().GetWithRespectTo(_visionComponentPtr->GetCamera().GetPose(), markerPoseWrtCamera)) {
@@ -1000,7 +1000,7 @@ namespace Anki {
       }
       
       /////////// Update discovered active objects //////
-      for (auto obj : _discoveredObjects) {
+      for (const auto& obj : _discoveredObjects) {
         if (GetLastMsgTimestamp() - obj.second.lastDiscoveredTimeStamp > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
           if (_enableDiscoveredObjectsBroadcasting) {
             PRINT_NAMED_INFO("Robot.Update.ObjectUndiscovered",

@@ -260,7 +260,7 @@ void ReliableUDPChannel::RemoveAllConnections()
   std::unordered_map<TransportAddress, ConnectionData> dataMapping;
   std::swap(dataMapping, _connectionDataMapping);
 
-  for (auto entry : dataMapping) {
+  for (const auto& entry : dataMapping) {
     if (entry.second.isRealConnectionActive) {
       reliableTransport.Disconnect(entry.first);
     }

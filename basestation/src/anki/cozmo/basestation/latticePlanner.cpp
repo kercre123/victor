@@ -587,7 +587,7 @@ void LatticePlannerImpl::ImportBlockworldObstacles(const bool isReplanning, cons
       Poly2f robotPoly;
       robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding) );
 
-      for(auto boundingQuad : boundingBoxes) {
+      for(const auto& boundingQuad : boundingBoxes) {
 
         Poly2f boundingPoly;
         boundingPoly.ImportQuad2d(boundingQuad.first);

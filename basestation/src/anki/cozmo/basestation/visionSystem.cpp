@@ -2173,7 +2173,7 @@ namespace Cozmo {
     if(mode == VisionMode::Idle) {
       return LUT.at(VisionMode::Idle);
     } else {
-      for(auto possibleMode : LUT) {
+      for(const auto& possibleMode : LUT) {
         if(possibleMode.first != VisionMode::Idle &&
            static_cast<u32>(mode) & static_cast<u32>(possibleMode.first))
         {

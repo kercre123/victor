@@ -485,7 +485,7 @@ namespace Anki {
         
         // Check to see if the rotational part of the pose difference is
         // similar enough to one of the rotational ambiguities
-        for(auto R_ambiguity : R_ambiguities) {
+        for(const auto& R_ambiguity : R_ambiguities) {
           if(RdiffMat.GetAngleDiffFrom(R_ambiguity) < angleThreshold) {
             isSame = true;
             break;
