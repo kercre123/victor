@@ -103,21 +103,22 @@ namespace SpeedTap {
         _WinColors = _SpeedTapGame.PlayerWinColors;
         _WinningCube = _SpeedTapGame.PlayerBlock;
         losingBlock = _SpeedTapGame.CozmoBlock;
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
       }
       else {
         _WinColors = _SpeedTapGame.CozmoWinColors;
         _WinningCube = _SpeedTapGame.CozmoBlock;
         losingBlock = _SpeedTapGame.PlayerBlock;
+        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
       }
 
       if (wasMistakeMade) {
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapLose);
         _WinningCube.SetLEDsOff();
         SetLosingLightPattern(losingBlock, _kWinCycleSpeedSeconds);
         _CurrentCubeLightState = CubeLightState.LoserFlashing;
       }
       else {
-        GameAudioClient.PostSFXEvent(Anki.Cozmo.Audio.GameEvent.SFX.SpeedTapWin);
+
         _StartWinEffectTimestampSeconds = Time.time;
         losingBlock.SetLEDsOff();
         SetWinningCyclePattern(_WinningCube, _WinColors, _kWinCycleSpeedSeconds);
