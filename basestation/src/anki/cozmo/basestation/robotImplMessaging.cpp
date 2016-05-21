@@ -40,7 +40,7 @@
 // Prints the IDs of the active blocks that are on but not currently
 // talking to a robot whose rssi is less than this threshold.
 // Prints roughly once/sec.
-#define DISCOVERED_OBJECTS_RSSI_PRINT_THRESH 55
+#define DISCOVERED_OBJECTS_RSSI_PRINT_THRESH 50
 
 // Filter that makes chargers not discoverable
 #define IGNORE_CHARGER_DISCOVERY 0

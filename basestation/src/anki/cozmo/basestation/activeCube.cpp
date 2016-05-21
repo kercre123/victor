@@ -209,16 +209,6 @@ namespace Anki {
     } // MakeWhichLEDsRelativeToXY()
     
     
-    bool ActiveCube::CanBeUsedForLocalization() const
-    {
-      return (GetPoseState() == ObservableObject::PoseState::Known &&
-              GetLastPoseUpdateDistance() >= 0.f &&
-              GetLastPoseUpdateDistance() <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
-              GetIdentityState() == ActiveIdentityState::Identified &&
-              IsRestingFlat(DEG_TO_RAD(5))); // TODO: AS: 5 was the old value, not sure if we still want it here
-    }
-    
-    
     WhichCubeLEDs ActiveCube::GetCornerClosestToXY(const Point2f& xyPosition) const
     {
       // Get a vector from center of marker in its current pose to given xyPosition

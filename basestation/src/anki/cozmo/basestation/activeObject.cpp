@@ -115,6 +115,16 @@ namespace Anki {
       ScaleLEDValuesForHardware();
     }
     
+    
+    bool ActiveObject::CanBeUsedForLocalization() const
+    {
+      return (GetPoseState() == ObservableObject::PoseState::Known &&
+              GetLastPoseUpdateDistance() >= 0.f &&
+              GetLastPoseUpdateDistance() <= MAX_LOCALIZATION_AND_ID_DISTANCE_MM &&
+              GetIdentityState() == ActiveIdentityState::Identified &&
+              IsRestingFlat(DEG_TO_RAD(5))); // TODO: AS: 5 was the old value, not sure if we still want it here
+    }
+    
     /*
     void ActiveObject::TurnOffAllLEDs()
     {

@@ -58,6 +58,7 @@ namespace Cozmo {
     // Set the moving state of the object and when it either started or stopped moving.
     virtual void SetIsMoving(bool isMoving, TimeStamp_t t) override { _isMoving = isMoving; _movingTime = t;}
     
+    virtual bool CanBeUsedForLocalization() const override;
     
     // Mapping of ActiveObjectType to ObjectType
     static ObjectType GetTypeFromActiveObjectType(ActiveObjectType type) {

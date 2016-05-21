@@ -51,11 +51,7 @@ namespace Cozmo {
     WhichCubeLEDs MakeWhichLEDsRelativeToXY(const WhichCubeLEDs whichLEDs,
                                              const Point2f& xyPosition,
                                              MakeRelativeMode mode) const;
-    
-    virtual bool CanBeUsedForLocalization() const override;
-
-    
-    
+        
     
     // Take the given top LED pattern and create a pattern that indicates
     // the corresponding bottom LEDs as well
