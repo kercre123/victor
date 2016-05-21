@@ -142,16 +142,6 @@ namespace Cozmo {
       return result;
     }
     
-    if(ROLLING_SHUTTER_CORRECTION)
-    {
-      _visionSystem->ShouldDoRollingShutterCorrection(_robot.IsPhysical());
-    }
-    else
-    {
-      _visionSystem->ShouldDoRollingShutterCorrection(false);
-      EnableVisionWhileMovingFast(false);
-    }
-    
     // Request face album data from the robot
     std::string faceAlbumName;
     JsonTools::GetValueOptional(config, "FaceAlbum", faceAlbumName);
@@ -198,6 +188,16 @@ namespace Cozmo {
       
       // Fine-tune calibration using tool code dots
       //_robot.GetActionList().QueueActionNext(new ReadToolCodeAction(_robot));
+    }
+    
+    if(ROLLING_SHUTTER_CORRECTION)
+    {
+      _visionSystem->ShouldDoRollingShutterCorrection(_robot.IsPhysical());
+    }
+    else
+    {
+      _visionSystem->ShouldDoRollingShutterCorrection(false);
+      EnableVisionWhileMovingFast(false);
     }
   } // SetCameraCalibration()
   
