@@ -112,6 +112,7 @@ public:
   const RobotMap& GetRobotMap() const { return _robots; }
   RobotInterface::MessageHandler* GetMsgHandler() const { return _robotMessageHandler.get(); }
 
+    
 protected:
   RobotDisconnectedSignal _robotDisconnectedSignal;
   RobotMap _robots;
@@ -125,6 +126,7 @@ protected:
   std::unordered_map<std::string, time_t> _loadedAnimationGroupFiles;
   std::unique_ptr<GameEventResponsesContainer> _gameEventResponses;
   std::unique_ptr<RobotInterface::MessageHandler> _robotMessageHandler;
+  std::vector<Signal::SmartHandle> _signalHandles;
   
   void ReadAnimationDirImpl(const std::string& animationDir);
   void ReadAnimationFile(const char* filename);

@@ -418,6 +418,11 @@ message PopIdleAnimation {
 message ReadAnimationFile {
 }
 
+// RequestAvailableAnimations
+message RequestAvailableAnimations{
+  
+}
+
 message SetLiveIdleAnimationParameters {
   LiveIdleAnimationParameter   paramNames[uint_8],
   float_32                     paramValues[uint_8], // must be same length as paramNames
