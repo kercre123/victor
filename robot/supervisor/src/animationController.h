@@ -78,6 +78,16 @@ namespace Anki {
       // Return the "tag" from the most recent StartOfAnimation keyframe
       u8 GetCurrentTag();
       
+      /** Clears the animation controller and suspends it's operation so it's large buffer can be used for other
+       * functions.
+       * @param[out] buffer A pointer to set to point to the buffer
+       * @return The number of bytes available in buffer pointer or negative number on error.
+       */
+      s32 SuspendAndGetBuffer(u8** buffer);
+      
+      /// Resumes AnimationController normal operation
+      void ResumeAndRestoreBuffer();
+      
     } // namespace AnimationController
   } // namespcae Cozmo
 } // namespace Anki

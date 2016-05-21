@@ -3,8 +3,9 @@
 #include "nrf.h"
 #include "nrf_gpio.h"
 
+#include "lights.h"
 #include "recovery.h"
-#include "sha1.h"
+#include "crc32.h"
 #include "timer.h"
 #include "battery.h"
 #include "hal/hardware.h"
@@ -12,50 +13,16 @@
 
 #include "anki/cozmo/robot/rec_protocol.h"
 
-static const int MAX_TIMEOUT = 1000000;
-
+// These are all the magic numbers for the boot loader
 static const int target_pin = PIN_TX_HEAD;
 static bool UartWritting;
+static const int UART_TIMEOUT = 0x2000 << 8;
 
 void setTransmit(bool tx);
 
-// Define charlie wiring here:
-struct charliePlex_s {
-  int anode;
-  int cathodes[3];
-};
-
-static inline void setCathode(int pin, bool set) {
-  if (set) {
-    nrf_gpio_pin_clear(pin);
-    nrf_gpio_cfg_output(pin);
-  } else {
-    nrf_gpio_cfg_input(pin, NRF_GPIO_PIN_NOPULL);
-  }
-}
-
-void setLight(int channel) {
-  static int clr = 0;
-  clr += 2;
-  clr = (clr == 8) ? 2 : clr;
-
-  static const charliePlex_s RGBLightPins[] =
-  {
-    // anode, cath_red, cath_gree, cath_blue
-    {PIN_LED1, {PIN_LED2, PIN_LED3, PIN_LED4}},
-    {PIN_LED2, {PIN_LED1, PIN_LED3, PIN_LED4}},
-    {PIN_LED3, {PIN_LED1, PIN_LED2, PIN_LED4}},
-    {PIN_LED4, {PIN_LED1, PIN_LED2, PIN_LED3}}
-  };
-
-  // Setup anode
-  nrf_gpio_pin_set(RGBLightPins[channel].anode);
-  nrf_gpio_cfg_output(RGBLightPins[channel].anode);
-  
-  // Set lights for current charlie channel
-  setCathode(RGBLightPins[channel].cathodes[0], clr & 1);
-  setCathode(RGBLightPins[channel].cathodes[1], clr & 2);
-  setCathode(RGBLightPins[channel].cathodes[2], clr & 4);
+void setLight(uint8_t clr) {
+  int channel = (clr >> 3) & 3;
+  Lights::set(channel, clr & 7, 0x80);
 }
 
 void UARTInit(void) {
@@ -69,6 +36,8 @@ void UARTInit(void) {
   NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
   NRF_UART0->TASKS_STARTTX = 1;
   NRF_UART0->TASKS_STARTRX = 1;
+  NRF_UART0->EVENTS_TXDRDY = 0;
+  NRF_UART0->EVENTS_RXDRDY = 0;
 
   // Initialize the UART for the specified baudrate
   NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
@@ -77,15 +46,11 @@ void UARTInit(void) {
   setTransmit(false);
 }
 
-void toggleTargetPin(void) {
-  //target_pin = (target_pin == PIN_TX_HEAD) ? PIN_TX_VEXT : PIN_TX_HEAD;
-}
-
 void setTransmit(bool tx) {
   if (UartWritting == tx) return ;
 
   UartWritting = tx;
-  
+
   if (tx) {
     NRF_UART0->PSELRXD = 0xFFFFFFFF;
     MicroWait(10);
@@ -106,60 +71,80 @@ void setTransmit(bool tx) {
   }
 
   // Clear our UART interrupts
-  NRF_UART0->EVENTS_RXDRDY = 0;
-  uint8_t test = NRF_UART0->RXD;
+  while (NRF_UART0->EVENTS_RXDRDY) {
+    NRF_UART0->EVENTS_RXDRDY = 0;
+    uint8_t temp = NRF_UART0->RXD;
+  }
+
   NRF_UART0->EVENTS_TXDRDY = 0;
 }
 
-static uint8_t ReadByte(void) {
-  while (!NRF_UART0->EVENTS_RXDRDY) {
-    Battery::manage();
-  }
-  NRF_UART0->EVENTS_RXDRDY = 0;
-  return NRF_UART0->RXD;
-}
-
-static commandWord ReadWord(void) {
-  commandWord word = 0;
-  
-  for (int i = 0; i < sizeof(commandWord); i++) {
-    word = (ReadByte() << 8) | (word >> 8);
-  }
-
-  return word;
-}
-
-static bool WaitWord(commandWord target) {
+static void readUart(void* p, int length, bool timeout = true) {
+  uint8_t* data = (uint8_t*) p;
   setTransmit(false);
 
-  commandWord word = 0;
-  
-  while (target != word) {
-    // Wait with timeout
-    int waitTime = GetCounter() + MAX_TIMEOUT;
-    while (!NRF_UART0->EVENTS_RXDRDY) {
-      Battery::manage();
+  while (length-- > 0) {
+    int waitTime = GetCounter() + UART_TIMEOUT;
 
-      signed int remaining = waitTime - GetCounter();
-      if (remaining <= 0) return false;
+    while (!NRF_UART0->EVENTS_RXDRDY) {
+      int ticks = waitTime - GetCounter();
+      if (ticks < 0) {
+        if (timeout) {
+          NVIC_SystemReset();
+        } else {
+          static uint8_t color = 0x10;
+          color = ((color + 1) & 7) | 0x10;
+          setLight(color);
+        }
+        
+        waitTime = GetCounter() + UART_TIMEOUT;
+      }
+
+      Battery::manage();
     }
 
-    // We received a word
     NRF_UART0->EVENTS_RXDRDY = 0;
-    word = (NRF_UART0->RXD << 8) | (word >> 8);
+    *(data++) = NRF_UART0->RXD;
   }
-
-  return word == target;
 }
 
-static void WriteWord(commandWord word) {
+static void writeUart(const void* p, int length) {
+  uint8_t* data = (uint8_t*) p;
   setTransmit(true);
 
-  for (int i = sizeof(commandWord) - 1; i >= 0; i--) {
-    NRF_UART0->TXD = word >> (i * 8);
+  while (length-- > 0) {
+    NRF_UART0->TXD = *(data++);
 
     while (!NRF_UART0->EVENTS_TXDRDY) ;
+
     NRF_UART0->EVENTS_TXDRDY = 0;
+  }
+}
+
+static uint8_t readByte(bool timeout = true) {
+  uint8_t byte;
+  readUart(&byte, sizeof(byte), timeout);
+
+  return byte;
+}
+
+static void writeByte(const uint8_t byte) {
+  writeUart(&byte, sizeof(byte));
+}
+
+static void SyncToHead(void) {
+  // Write our recovery sync signal
+  writeUart(&BODY_RECOVERY_NOTICE, sizeof(BODY_RECOVERY_NOTICE));
+  setTransmit(false);
+
+  uint32_t recoveryWord = 0;
+
+  // This will read a word, and attempt to sync to head
+  readUart(&recoveryWord, sizeof(recoveryWord));
+
+  // Simply restart when we receive bad data
+  if (recoveryWord != HEAD_RECOVERY_NOTICE) {
+    NVIC_SystemReset();
   }
 }
 
@@ -169,33 +154,19 @@ bool FlashSector(int target, const uint32_t* data)
   
   volatile uint32_t* original = (uint32_t*)target;
 
-  // Test for sector erase nessessary
-  for (int i = 0; i < FLASH_BLOCK_SIZE / sizeof(uint32_t); i++) {
-    if (original[i] == 0xFFFFFFFF) continue ;
-    
-    setLight(3);
-
-    // Block requires erasing
-    if (original[i] != data[i])
-    {
-      // Erase the sector and continue
-      NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos;
-      while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-      NRF_NVMC->ERASEPAGE = target;
-      while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-      NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
-      while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
-      break ;
-    }
-  }
+  // Erase the sector and continue
+  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Een << NVMC_CONFIG_WEN_Pos;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  NRF_NVMC->ERASEPAGE = target;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
 
   for (int i = 0; i < FLASH_BLOCK_SIZE / sizeof(uint32_t); i++, target += sizeof(uint32_t)) {
     // Program word does not need to be written
     if (data[i] == original[i]) {
       continue ;
     }
-
-    setLight(3);
 
     NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
     while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
@@ -208,35 +179,51 @@ bool FlashSector(int target, const uint32_t* data)
   return true;
 }
 
+// Boot loader info
+bool CheckSig(void) {
+  if (IMAGE_HEADER->sig != HEADER_SIGNATURE) return false;
+  
+  // Compute signature length
+  uint32_t crc = calc_crc32(IMAGE_HEADER->rom_start, IMAGE_HEADER->rom_length);
+
+  return crc == IMAGE_HEADER->checksum;
+}
+
+bool CheckEvilWord(void) {
+  return IMAGE_HEADER->evil_word == 0x00000000;
+}
+
+static inline void ClearEvilWord() {
+  if (IMAGE_HEADER->evil_word != 0xFFFFFFFF) {
+    return ;
+  }
+
+  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen << NVMC_CONFIG_WEN_Pos;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  *(uint32_t*)&IMAGE_HEADER->evil_word = 0x00000000;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
+  while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+}
+
 static inline bool FlashBlock() {
   static FirmwareBlock packet;
-  uint8_t sig[SHA1_BLOCK_SIZE];
-  uint8_t* raw = (uint8_t*) &packet;
   
   // Load raw packet into memory
-  for (int index = 0; index < sizeof(FirmwareBlock); index++) {
-    setLight(2);
-    raw[index] = ReadByte();
-  }
+  readUart(&packet, sizeof(packet));
  
-  // Check the SHA-1 of the packet to verify that transmission actually worked
-  SHA1_CTX ctx;
-  sha1_init(&ctx);
-  sha1_update(&ctx, (uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
-
-  sha1_final(&ctx, sig);
-
   int writeAddress = packet.blockAddress;
 
   // We will not override the boot loader
-  if (writeAddress < SECURE_SPACE || writeAddress >= BOOTLOADER) {
+  if (writeAddress < BODY_SECURE_SPACE || writeAddress >= BODY_BOOTLOADER) {
     return false;
   }
-  
+ 
+  // Check the SHA-1 of the packet to verify that transmission actually worked
+  uint32_t crc = calc_crc32((uint8_t*)packet.flashBlock, sizeof(packet.flashBlock));
+
   // Verify block before writting to flash
-  for (int i = 0; i < SHA1_BLOCK_SIZE; i++) {
-    if (sig[i] != packet.checkSum[i]) return false;
-  }
+  if (crc != packet.checkSum) return false;
 
   // Write sectors to flash
   const int FLASH_BLOCK_SIZE = NRF_FICR->CODEPAGESIZE;
@@ -249,38 +236,59 @@ static inline bool FlashBlock() {
   return true;
 }
 
-void BlinkALot(void) {
-  for (int i = 0; i < 20; i++) {
-    setLight(1+i%3);
-    MicroWait(10000);
-  }
-}
 
 void EnterRecovery(void) {
   UARTInit();
-
-  RECOVERY_STATE state = STATE_IDLE;
+  SyncToHead();
 
   for (;;) {
-    do {
-      setLight(1);
-      toggleTargetPin();
-      WriteWord(COMMAND_HEADER);
-      WriteWord(state);
-    } while (!WaitWord(COMMAND_HEADER));
-
     // Receive command packet
-    switch (ReadWord()) {
+    RECOVERY_STATE state;
+    
+    switch (readByte()) {
       case COMMAND_DONE:
-        state = STATE_IDLE;
+        // Signature is invalid
+        if (!CheckSig()) {
+          state = STATE_NACK;
+          break ;
+        }
+
+        ClearEvilWord();
+        writeByte((uint8_t) STATE_ACK);
         return ;
-     
+
+      case COMMAND_BOOT_READY:
+        state = (CheckEvilWord() && CheckSig()) ? STATE_ACK : STATE_NACK;
+        break ;
+        
+      case COMMAND_CHECK_SIG:
+        state = CheckSig() ? STATE_ACK : STATE_NACK;
+        break ;
+
       case COMMAND_FLASH:
-        state = FlashBlock() ? STATE_IDLE : STATE_NACK;
+        state = FlashBlock() ? STATE_ACK : STATE_NACK;
         break ;
       
+      case COMMAND_SET_LED:
+        setLight(readByte());
+        state = STATE_ACK;
+        break ;
+      
+      case COMMAND_PAUSE:
+        while(readByte(false) != COMMAND_RESUME) ;
+        break ;
+      
+      case COMMAND_IDLE:
+        // This is a no op and we don't want to send a reply (so it doesn't stall out the k02)
+        static int color = 0x0E;
+        setLight(color ^= 0x07);
+        continue ;
+              
       default:
+        state = STATE_NACK;
         break ;
     }
+    
+    writeByte((uint8_t) state);
   }
 }

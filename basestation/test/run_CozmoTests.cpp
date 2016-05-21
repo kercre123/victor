@@ -19,7 +19,6 @@
 #include "util/logging/printfLoggerProvider.h"
 #include "util/fileUtils/fileUtils.h"
 #include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 #include <unistd.h>
 
 Anki::Cozmo::CozmoContext* cozmoContext = nullptr; // This is externed and used by tests

@@ -33,7 +33,8 @@ sudo ln -s python python2
 #### Serial tools
 If you will be programming the Espressif directly over serial you'll need to install the open source esptool
 ```
-sudo pip install git+https://github.com/themadinventor/esptool.git```
+sudo pip install git+https://github.com/themadinventor/esptool.git
+```
 
 For some scripts you may also need to install Python3 pyserial by running
 ```

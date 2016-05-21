@@ -1,6 +1,5 @@
 #include "string.h"
 
-#include "debug.h"
 #include "head.h"
 #include "timer.h"
 #include "nrf.h"
@@ -18,6 +17,9 @@
 
 #include "messages.h"
 
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+
 using namespace Anki::Cozmo;
 
 #define MAX(a, b) ((a > b) ? a : b)
@@ -25,17 +27,16 @@ using namespace Anki::Cozmo;
 uint8_t txRxBuffer[MAX(sizeof(GlobalDataToBody), sizeof(GlobalDataToHead))];
 
 enum TRANSMIT_MODE {
+  TRANSMIT_UNKNOWN,
   TRANSMIT_SEND,
   TRANSMIT_RECEIVE,
-  TRANSMIT_DEBUG
+  TRANSMIT_CHARGER_RX,
 };
 
-static const int DEBUG_BYTES = 32;
-
 static int txRxIndex;
-static int debugSafeWords;
 static TRANSMIT_MODE uart_mode;
 static bool m_enabled;
+static const int charger_baud_rate = 100000;
 
 bool Head::spokenTo = false;
 
@@ -60,21 +61,15 @@ void Head::init()
 
   // Enable the peripheral and start the tasks
   NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos;
-  NRF_UART0->TASKS_STARTTX = 1;
-  NRF_UART0->TASKS_STARTRX = 1;
-
-  // Initialize the UART for the specified baudrate
-  NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
 
   // Extremely low priorty IRQ
   NRF_UART0->INTENSET = UART_INTENSET_TXDRDY_Msk | UART_INTENSET_RXDRDY_Msk;
   NVIC_SetPriority(UART0_IRQn, UART_PRIORITY);
   NVIC_EnableIRQ(UART0_IRQn);
 
-  // We begin in receive mode (slave)
-  setTransmitMode(TRANSMIT_RECEIVE);
-  MicroWait(80);
+  nrf_gpio_pin_set(PIN_TX_HEAD);
 
+  // We begin in receive mode (slave)
   m_enabled = true;
 
   RTOS::schedule(Head::manage);
@@ -85,53 +80,57 @@ void Head::enable(bool enable) {
 }
 
 static void setTransmitMode(TRANSMIT_MODE mode) {
+  if (uart_mode == mode) {
+    return ;
+  }
+
+  // Shut it down (because reasons)
+  NRF_UART0->TASKS_STOPRX = 1;
+  NRF_UART0->TASKS_STOPTX = 1;
+    
+  uart_mode = mode;
+  txRxIndex = 0;
+
   switch (mode) {
     case TRANSMIT_SEND:
-      // Prevent debug words from transmitting
-      debugSafeWords = 0;
-
-      NRF_UART0->PSELRXD = 0xFFFFFFFF;
-      MicroWait(10);
-      NRF_UART0->PSELTXD = PIN_TX_HEAD;
-
       // Configure pin so it is open-drain
       NRF_GPIO->PIN_CNF[PIN_TX_HEAD] = (GPIO_PIN_CNF_SENSE_Disabled << GPIO_PIN_CNF_SENSE_Pos)
-                                    | (GPIO_PIN_CNF_DRIVE_H0D1 << GPIO_PIN_CNF_DRIVE_Pos)
+                                    | (GPIO_PIN_CNF_DRIVE_H0S1 << GPIO_PIN_CNF_DRIVE_Pos)
                                     | (GPIO_PIN_CNF_PULL_Disabled << GPIO_PIN_CNF_PULL_Pos)
                                     | (GPIO_PIN_CNF_INPUT_Disconnect << GPIO_PIN_CNF_INPUT_Pos)
                                     | (GPIO_PIN_CNF_DIR_Output << GPIO_PIN_CNF_DIR_Pos);
+
+      // Prevent debug words from transmitting
+      NRF_UART0->PSELRXD = 0xFFFFFFFF;
+      NRF_UART0->PSELTXD = PIN_TX_HEAD;
+      NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
+
+      NRF_UART0->TASKS_STARTTX = 1;
+
       break ;
     case TRANSMIT_RECEIVE:
-      #ifndef DUMP_DISCOVER
       nrf_gpio_cfg_input(PIN_TX_HEAD, NRF_GPIO_PIN_NOPULL);
 
       NRF_UART0->PSELTXD = 0xFFFFFFFF;
-      MicroWait(10);
       NRF_UART0->PSELRXD = PIN_TX_HEAD;
+      NRF_UART0->BAUDRATE = NRF_BAUD(spine_baud_rate);
+
+      NRF_UART0->TASKS_STARTRX = 1;
+
       break ;
-      #endif
-    case TRANSMIT_DEBUG:
-      if (!UART::DebugQueue()) return ;
+    case TRANSMIT_CHARGER_RX:
+      nrf_gpio_cfg_input(PIN_TX_VEXT, NRF_GPIO_PIN_PULLUP);
 
-      NRF_UART0->PSELRXD = 0xFFFFFFFF;
-      NRF_UART0->PSELTXD = PIN_TX_VEXT;
+      NRF_UART0->PSELTXD = 0xFFFFFFFF;
+      NRF_UART0->PSELRXD = PIN_TX_VEXT;
+      NRF_UART0->BAUDRATE = NRF_BAUD(charger_baud_rate);
 
-      // Configure pin so it is open-drain
-      nrf_gpio_cfg_output(PIN_TX_VEXT);
-      
-      // We are in debug transmit mode, these are the safe bytes
-      debugSafeWords = DEBUG_BYTES;
-      uart_mode = TRANSMIT_DEBUG;
-      
-      UART::DebugChar();
-      break;
+      NRF_UART0->TASKS_STARTRX = 1;
+      break ;
+
+    default:
+      break ;
   }
-  
-  // Clear our UART interrupts
-  NRF_UART0->EVENTS_RXDRDY = 0;
-  NRF_UART0->EVENTS_TXDRDY = 0;
-  uart_mode = mode;
-  txRxIndex = 0;
 }
 
 static inline void transmitByte() { 
@@ -164,25 +163,57 @@ void UART0_IRQHandler()
   if (NRF_UART0->EVENTS_RXDRDY) {
     NRF_UART0->EVENTS_RXDRDY = 0;
 
-    // Re-sync to header
-    if (txRxIndex < 4) {
-      header_shift = (header_shift >> 8) | (NRF_UART0->RXD << 24);
-      
-      if (header_shift == SPI_SOURCE_HEAD) {
-        txRxIndex = 4;
-        return ;
-      }
-    } else {
-      txRxBuffer[txRxIndex] = NRF_UART0->RXD;
-    }
+    uint8_t data = NRF_UART0->RXD;
 
-    // We received a full packet
-    if (++txRxIndex >= sizeof(GlobalDataToBody)) {
-      memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
-      Spine::ProcessHeadData();
-      Head::spokenTo = true;
+    switch (uart_mode) {
+      case TRANSMIT_RECEIVE:
+          // Re-sync to header
+        if (txRxIndex < 4) {
+          header_shift = (header_shift >> 8) | (data << 24);
+          
+          if (header_shift == SPI_SOURCE_HEAD) {
+            txRxIndex = 4;
+            return ;
+          }
+        } else {
+          txRxBuffer[txRxIndex] = data;
+        }
+
+        // We received a full packet
+        if (++txRxIndex >= sizeof(GlobalDataToBody)) {
+          memcpy(&g_dataToBody, txRxBuffer, sizeof(GlobalDataToBody));
+          Spine::ProcessHeadData();
+          Head::spokenTo = true;
+          RTOS::kick(WDOG_UART);
+          
+          setTransmitMode(TRANSMIT_CHARGER_RX);
+        } else if (txRxIndex + 1 == sizeof(GlobalDataToBody)) {
+          // Let our fixture know we are almost ready to receive data
+          nrf_gpio_pin_set(PIN_TX_VEXT);
+          nrf_gpio_cfg_output(PIN_TX_VEXT);
+        }
+
+        break ;
+      case TRANSMIT_CHARGER_RX:
+        static const uint32_t PREFIX = 0x57746600;
+        static const uint32_t MASK = 0xFFFFFF00;
+        static uint32_t fixture_data = 0;
+        
+        fixture_data = (fixture_data << 8) | data;
       
-      setTransmitMode(TRANSMIT_DEBUG);
+        if ((fixture_data & MASK) == PREFIX) {
+          using namespace Anki::Cozmo;
+
+          RobotInterface::EnterFactoryTestMode msg;
+          msg.mode = fixture_data & ~MASK;
+          RobotInterface::SendMessage(msg);
+          
+          fixture_data = 0;
+        }
+
+        break ;
+      default:
+        break ;
     }
   }
 
@@ -191,29 +222,16 @@ void UART0_IRQHandler()
     NRF_UART0->EVENTS_TXDRDY = 0;
 
     switch(uart_mode) {
-      case TRANSMIT_RECEIVE:
       case TRANSMIT_SEND:
         // We are in regular head transmission mode
         if (txRxIndex >= sizeof(GlobalDataToHead)) {
-          #ifdef DUMP_DISCOVER
-          setTransmitMode(TRANSMIT_DEBUG);
-          #else
           setTransmitMode(TRANSMIT_RECEIVE);
           header_shift = 0;
-          #endif
         } else {
           transmitByte();
         }
         break ;
-      case TRANSMIT_DEBUG:
-        if (debugSafeWords-- > 0) {
-          // We are stuffing debug words
-          if (UART::DebugQueue()) {
-            UART::DebugChar();
-            return ;
-          }
-        }
-
+      default:
         break ;
     }
   }

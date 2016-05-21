@@ -79,12 +79,14 @@
 namespace Anki {
   namespace Cozmo {
     
+    /*
     // static initializers
     const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
        0, 0, 1,
       -1, 0, 0,
        0,-1, 0
     });
+     */
 
     static const float kPitchAngleOnBack_rads = DEG_TO_RAD(74.5f);
     static const float kPitchAngleOnBack_sim_rads = DEG_TO_RAD(96.4f);
@@ -92,14 +94,14 @@ namespace Anki {
     CONSOLE_VAR(f32, kPitchAngleOnBackTolerance_deg, "Robot", 5.0f);
     CONSOLE_VAR(u32, kRobotTimeToConsiderOnBack_ms, "Robot", 300);
   
-    /* For tool code reading
+    // For tool code reading
     // 4-degree look down: (Make sure to update cozmoBot.proto to match!)
     const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
       0,             -0.0698,    0.9976,
       -1.0000,         0,         0,
       0,             -0.9976,   -0.0698,
     });
-     */
+    
     
     Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     : _context(context)
@@ -109,9 +111,7 @@ namespace Anki {
     , _faceWorld(*this)
     , _behaviorMgr(*this)
     , _audioClient(new Audio::RobotAudioClient(this))
-    , _cannedAnimations(_context->GetRobotManager()->GetCannedAnimations())
-    , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
-    , _animationStreamer(_context->GetExternalInterface(), _cannedAnimations, *_audioClient)
+    , _animationStreamer(_context, *_audioClient)
     , _drivingAnimationHandler(new DrivingAnimationHandler(*this))
     , _movementComponent(*this)
     , _visionComponentPtr( new VisionComponent(*this, VisionComponent::RunMode::Asynchronous, _context))
@@ -145,7 +145,7 @@ namespace Anki {
       _isLocalized = true;
       SetLocalizedTo(nullptr);
       
-      InitRobotMessageComponent(_context->GetRobotMsgHandler(),robotID);
+      InitRobotMessageComponent(_context->GetRobotManager()->GetMsgHandler(),robotID);
       
       if (HasExternalInterface())
       {
@@ -163,22 +163,7 @@ namespace Anki {
       {
         FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_context->GetDataPlatform());
       }
-      
-      // Set up the neutral face to use when resetting procedural animations
-      static const char* neutralFaceAnimName = "neutral_face";
-      Animation* neutralFaceAnim = _cannedAnimations.GetAnimation(neutralFaceAnimName);
-      if (nullptr != neutralFaceAnim)
-      {
-        auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
-        ProceduralFace::SetResetData(frame->GetFace());
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("Robot.NeutralFaceDataNotFound",
-                            "Could not find expected neutral face animation file called %s",
-                            neutralFaceAnimName);
-      }
-      
+
       // Read in Mood Manager Json
       if (nullptr != _context->GetDataPlatform())
       {
@@ -225,7 +210,7 @@ namespace Anki {
 
       
       SetHeadAngle(_currentHeadAngle);
-      _pdo = new PathDolerOuter(_context->GetRobotMsgHandler(), robotID);
+      _pdo = new PathDolerOuter(_context->GetRobotManager()->GetMsgHandler(), robotID);
 
       if (nullptr != _context->GetDataPlatform()) {
         _longPathPlanner  = new LatticePlanner(this, _context->GetDataPlatform());
@@ -382,7 +367,7 @@ namespace Anki {
       
       // Find the closest, most recently observed marker on the object
       TimeStamp_t mostRecentObsTime = 0;
-      for(auto marker : object->GetMarkers()) {
+      for(const auto& marker : object->GetMarkers()) {
         if(marker.GetLastObservedTime() >= mostRecentObsTime) {
           Pose3d markerPoseWrtCamera;
           if(false == marker.GetPose().GetWithRespectTo(_visionComponentPtr->GetCamera().GetPose(), markerPoseWrtCamera)) {
@@ -832,25 +817,11 @@ namespace Anki {
       
       if(_visionComponentPtr->GetCamera().IsCalibrated())
       {
-        Result visionResult = RESULT_OK;
-
-        // Helper macro for running a vision component, capturing result, and
-        // printing error message / returning if that result was not RESULT_OK.
-#       define TRY_AND_RETURN_ON_FAILURE(__NAME__) \
-        do { if((visionResult = _visionComponentPtr->__NAME__()) != RESULT_OK) { \
-          PRINT_NAMED_ERROR("Robot.Update." QUOTE(__NAME__) "Failed", ""); \
-          return visionResult; } } while(0)
-        
-        TRY_AND_RETURN_ON_FAILURE(UpdateVisionMarkers);
-        TRY_AND_RETURN_ON_FAILURE(UpdateFaces);
-        TRY_AND_RETURN_ON_FAILURE(UpdateTrackingQuad);
-        TRY_AND_RETURN_ON_FAILURE(UpdateDockingErrorSignal);
-        TRY_AND_RETURN_ON_FAILURE(UpdateMotionCentroid);
-        TRY_AND_RETURN_ON_FAILURE(UpdateOverheadEdges);
-        TRY_AND_RETURN_ON_FAILURE(UpdateToolCode);
-        TRY_AND_RETURN_ON_FAILURE(UpdateComputedCalibration);
-        
-#       undef TRY_AND_RETURN_ON_FAILURE
+        Result visionResult = _visionComponentPtr->UpdateAllResults();
+        if(RESULT_OK != visionResult) {
+          PRINT_NAMED_WARNING("Robot.Update.VisionComponentUpdateFail", "");
+          return visionResult;
+        }
         
         // Update Block and Face Worlds
         if(RESULT_OK != _blockWorld.Update()) {
@@ -1029,20 +1000,25 @@ namespace Anki {
       }
       
       /////////// Update discovered active objects //////
-      if (_enableDiscoveredObjectsBroadcasting) {
-        for (auto obj : _discoveredObjects) {
-          if (GetLastMsgTimestamp() - obj.second > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
+      for (const auto& obj : _discoveredObjects) {
+        if (GetLastMsgTimestamp() - obj.second.lastDiscoveredTimeStamp > 10 * static_cast<u32>(ActiveObjectConstants::ACTIVE_OBJECT_DISCOVERY_PERIOD_MS) ) {
+          if (_enableDiscoveredObjectsBroadcasting) {
             PRINT_NAMED_INFO("Robot.Update.ObjectUndiscovered",
-                             "FactoryID 0x%x (lastObservedTime %d, currTime %d)",
-                             obj.first, obj.second, GetLastMsgTimestamp());
-            
+                             "FactoryID 0x%x (type: %s, lastObservedTime %d, currTime %d)",
+                             obj.first, EnumToString(obj.second.objectType),
+                             obj.second.lastDiscoveredTimeStamp, GetLastMsgTimestamp());
+
             // Send unavailable message for this object
             ExternalInterface::ObjectUnavailable m(obj.first);
             Broadcast(ExternalInterface::MessageEngineToGame(std::move(m)));
-            _discoveredObjects.erase(obj.first);
           }
+          _discoveredObjects.erase(obj.first);
         }
       }
+
+      
+      // Connect to objects requested via ConnectToBlocks;
+      ConnectToRequestedObjects();
       
       /////////// Update visualization ////////////
       
@@ -1119,6 +1095,17 @@ namespace Anki {
         _lastDebugStringHash = curr_hash;
       }
       
+      // Update ChargerPlatform
+      ObservableObject* charger = dynamic_cast<ObservableObject*>(GetBlockWorld().GetObjectByIDandFamily(_chargerID, ObjectFamily::Charger));
+      if( charger )
+      {
+        bool isOnChargerPlatform = charger->GetBoundingQuadXY().Intersects(GetBoundingQuadXY());
+        if( isOnChargerPlatform != _isOnChargerPlatform)
+        {
+          _isOnChargerPlatform = isOnChargerPlatform;
+          Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotOnChargerPlatformEvent(isOnChargerPlatform)));
+        }
+      }
       
       return RESULT_OK;
       
@@ -1395,66 +1382,6 @@ namespace Anki {
                                                                 useManualSpeed);
     }
     
-    AnimationStreamer::Tag Robot::PlayAnimation(const std::string& animName, u32 numLoops, bool interruptRunning)
-    {
-      AnimationStreamer::Tag tag = _animationStreamer.SetStreamingAnimation(*this, animName, numLoops, interruptRunning);
-      if(tag != AnimationStreamer::NotAnimatingTag) {
-        _lastPlayedAnimationId = animName;
-      }
-      return tag;
-    }
-    
-    AnimationStreamer::Tag Robot::PlayAnimation(Animation* animation, u32 numLoops, bool interruptRunning)
-    {
-      AnimationStreamer::Tag tag = _animationStreamer.SetStreamingAnimation(*this, animation, numLoops, interruptRunning);
-      if(tag != AnimationStreamer::NotAnimatingTag) {
-        _lastPlayedAnimationId = animation->GetName();
-      }
-      return tag;
-    }
-    
-    Result Robot::SetIdleAnimation(const std::string &animName)
-    {
-      _idleAnimationNameStack.clear();
-      return _animationStreamer.SetIdleAnimation(animName);
-    }
-
-    Result Robot::PushIdleAnimation(const std::string& animName)
-    {
-      _idleAnimationNameStack.push_back(GetIdleAnimationName());
-      return _animationStreamer.SetIdleAnimation(animName);
-    }
-      
-    bool Robot::PopIdleAnimation()
-    {
-      if( _idleAnimationNameStack.empty() ) {
-        PRINT_NAMED_WARNING("Robot.PopIdleAnimation.NoStack",
-                            "Trying to pop an idle animation, but the stack is empty");
-        return false;
-      }
-      
-      Result ret = _animationStreamer.SetIdleAnimation(_idleAnimationNameStack.back());
-      if( ret != RESULT_OK ) {
-        PRINT_NAMED_WARNING("Robot.PopIdleAnimation",
-                            "Trying to return to idle animation '%s', but Set failed",
-                            _idleAnimationNameStack.back().c_str());
-      }
-      
-      _idleAnimationNameStack.pop_back();
-
-      return ret == RESULT_OK;
-    }
-
-    const std::string& Robot::GetIdleAnimationName() const
-    {
-      return _animationStreamer.GetIdleAnimationName();
-    }
-    
-    const std::string Robot::GetStreamingAnimationName() const
-    {
-      return _animationStreamer.GetStreamingAnimationName();
-    }
-
     void Robot::ShiftEyes(AnimationStreamer::Tag& tag, f32 xPix, f32 yPix,
                           TimeStamp_t duration_ms, const std::string& name)
     {
@@ -1495,15 +1422,7 @@ namespace Anki {
     {
       Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::StopSound()));
     } // StopSound()
-    
-    const std::string& Robot::GetAnimationNameFromGroup(const std::string& name) {
-      const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
-      if(group != nullptr && !group->IsEmpty()) {
-        return group->GetAnimationName(GetMoodManager(), _animationGroups, GetHeadAngle());
-      }
-      static const std::string empty("");
-      return empty;
-    }
+   
     
     void Robot::LoadEmotionEvents()
     {
@@ -2632,7 +2551,7 @@ namespace Anki {
     
     Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
     {
-      Result sendResult = _context->GetRobotMsgHandler()->SendMessage(_ID, msg, reliable, hot);
+      Result sendResult = _context->GetRobotManager()->GetMsgHandler()->SendMessage(_ID, msg, reliable, hot);
       if(sendResult != RESULT_OK) {
         PRINT_NAMED_ERROR("Robot.SendMessage", "Robot %d failed to send a message.", _ID);
       }
@@ -3038,6 +2957,11 @@ namespace Anki {
       SendMessage(RobotInterface::EngineToRobot(RobotInterface::BackpackLights(lights)));
     }
     
+    void Robot::SetHeadlight(bool on)
+    {
+      SendMessage(RobotInterface::EngineToRobot(RobotInterface::SetHeadlight(on)));
+    }
+    
     Result Robot::SetObjectLights(const ObjectID& objectID,
                                   const WhichCubeLEDs whichLEDs,
                                   const u32 onColor, const u32 offColor,
@@ -3130,59 +3054,108 @@ namespace Anki {
     
     Result Robot::ConnectToBlocks(const std::unordered_set<FactoryID>& factory_ids)
     {
-      CubeSlots msg;
-      for (auto & fid : msg.factory_id) {
-        fid = 0;
+      ASSERT_NAMED_EVENT(static_cast<u32>(factory_ids.size()) <= static_cast<u32>(ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS),
+                         "Robot.ConnectToBlocks.TooManySlotsRequested",
+                         "%zu slots requested. Max %d",
+                         factory_ids.size(), ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS);
+
+      PRINT_NAMED_INFO("Robot.ConnectToBlocks.ConnectionRequested", "%zu objects", factory_ids.size());
+      
+      // Save the requested ids
+      _blocksToConnectTo = factory_ids;
+      
+      // Send empty object now to disconnect from whatever we were connected to
+      SendMessage(RobotInterface::EngineToRobot(CubeSlots()));
+      
+      // Delete all active objects in BlockWorld
+      _blockWorld.DeleteObjectsByFamily(ObjectFamily::LightCube);
+      _blockWorld.DeleteObjectsByFamily(ObjectFamily::Charger);
+
+      _connectedObjects.clear();
+      
+      return RESULT_OK;
+    }
+    
+    u8 Robot::ConnectToRequestedObjects()
+    {
+      // Just run this every second
+      static TimeStamp_t nextRunTime = 0;
+      if (GetLastMsgTimestamp() < nextRunTime) {
+        return 0;
+      }
+      nextRunTime += 1000;
+      
+      
+      if (_blocksToConnectTo.empty()) {
+        return 0;
       }
       
-      u8 objectsSelectedMask = 0;
-      for (auto & fid : factory_ids) {
+      u8 numCubesToAdd = 0;
+      for (auto fid = _blocksToConnectTo.begin(); fid != _blocksToConnectTo.end(); ) {
         
         // Zero is not a valid factoryID
-        if (fid == 0) {
-          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ZeroID", "Skipping");
+        if (*fid == 0) {
+          PRINT_NAMED_WARNING("Robot.ConnectToRequestedObjects.ZeroID", "Skipping");
+          _blocksToConnectTo.erase(fid++);
           continue;
         }
         
-        // Check if there is still space in the message
-        if (msg.factory_id.size() >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
-          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.ArrayFull", "Too many objects specified (limit: %lu)", (unsigned long)factory_ids.size());
-          return RESULT_FAIL;
-        }
-        
-        
-        // Check if charger already added
-        bool isCharger = fid & 0x80000000;
-        bool chargerAlreadyInList = (objectsSelectedMask & (fid & 0x80000000));
-        
-        // Check if block of this type already added
-        bool blockTypeAlreadyInList = (objectsSelectedMask & (1 << (fid & 0x3)));
-        
-        if (chargerAlreadyInList || blockTypeAlreadyInList) {
-          PRINT_NAMED_WARNING("Robot.ConnectToBlocks.DuplicateTypeInList",
-                              "Object with factory ID 0x%x matches type of another active object in the list. Only one of each type may be connected.",
-                              fid);
-          return RESULT_FAIL;
+        // Check if the object is discovered yet
+        auto discoveredObjIt = _discoveredObjects.find(*fid);
+        if (discoveredObjIt == _discoveredObjects.end()) {
+          ++fid;
+          continue;
         }
 
-        msg.factory_id.push_back(fid);
-        PRINT_NAMED_INFO("Robot.ConnectToBlocks.FactoryID", "0x%x (slot %lu)", fid, (unsigned long)msg.factory_id.size());
-        
-        if (isCharger) {
-          objectsSelectedMask |= 0x80000000;
-        } else {
-          objectsSelectedMask |= (1 << (fid & 0x3));
+        // Check if there is already an object of the same type that is connected
+        bool sameTypeAlreadyConnected = false;
+        for (const auto & connectedObj : _connectedObjects) {
+          if (connectedObj.objectType == discoveredObjIt->second.objectType) {
+            PRINT_NAMED_WARNING("Robot.ConnectToRequestedObjects.SameTypeAlreadyConnected",
+                                "Object with factory ID 0x%x matches type (%s) of another connected object. Only one of each type may be connected.",
+                                *fid, EnumToString(connectedObj.objectType));
+            sameTypeAlreadyConnected = true;
+            break;
+          }
         }
-  
+        if (sameTypeAlreadyConnected) {
+          _blocksToConnectTo.erase(fid++);
+          continue;
+        }
+
+        // Check if there is still space for more connections
+        if (_connectedObjects.size() >= (int)ActiveObjectConstants::MAX_NUM_ACTIVE_OBJECTS) {
+          PRINT_NAMED_WARNING("Robot.ConnectToRequestedObjects.ArrayFull", "Too many objects specified (limit: %zu)", _connectedObjects.size());
+          _blocksToConnectTo.clear();
+          break;
+        }
+        
+        // Add object to list of objects to connect to
+        _connectedObjects.push_back(discoveredObjIt->second);
+        _blocksToConnectTo.erase(fid++);
+        
+        ++numCubesToAdd;
+      }
+
+      // If there are cubes to add, generate message and send.
+      if (numCubesToAdd > 0) {
+        
+        CubeSlots msg;
+
+        for (const auto & obj : _connectedObjects) {
+          PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.FactoryID",
+                           "0x%x (slot %zu)",
+                           obj.factoryID, msg.factory_id.size());
+          msg.factory_id.push_back(obj.factoryID);
+        }
+
+        
+        PRINT_NAMED_INFO("Robot.ConnectToRequestedObjects.Sending", "Num objects %zu", msg.factory_id.size());
+        SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+        
       }
       
-      // Clear all active blocks in BlockWorld
-      _blockWorld.ClearObjectsByFamily(ObjectFamily::LightCube);
-      _blockWorld.ClearObjectsByFamily(ObjectFamily::Charger);
-      
-      PRINT_NAMED_INFO("Robot.ConnectToBlocks.Sending", "Num objects %lu", (unsigned long)msg.factory_id.size());
-      return SendMessage(RobotInterface::EngineToRobot(CubeSlots(msg)));
-      
+      return numCubesToAdd;
     }
     
     
@@ -3291,7 +3264,7 @@ namespace Anki {
       m.onPeriod_ms = onPeriod_ms;
       m.offPeriod_ms = offPeriod_ms;
 
-      return _context->GetRobotMsgHandler()->SendMessage(GetID(), m);
+      return _context->GetRobotManager()->GetMsgHandler()>SendMessage(GetID(), m);
     }
        */
       
@@ -3471,5 +3444,15 @@ namespace Anki {
       return msg;
     }
     
+    RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
+    {
+      if (!_context->GetRobotManager())
+      {
+        ASSERT_NAMED(false, "Robot.GetRobotMessageHandler.nullptr");
+        return nullptr;
+      }
+        
+      return _context->GetRobotManager()->GetMsgHandler();
+    }
   } // namespace Cozmo
 } // namespace Anki

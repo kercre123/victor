@@ -63,7 +63,7 @@ void BehaviorReactToRobotOnBack::DelayThenFlipDown(Robot& robot)
   }
 }
 
-bool BehaviorReactToRobotOnBack::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const
+bool BehaviorReactToRobotOnBack::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
 {
   if( event.GetTag() != MessageEngineToGameTag::RobotOnBack ) {
     PRINT_NAMED_ERROR("BehaviorReactToRobotOnBack.ShouldRunForEvent.BadEventType",

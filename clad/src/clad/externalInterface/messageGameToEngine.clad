@@ -41,7 +41,9 @@ namespace ExternalInterface {
 ///////////////////////////////////////////////////////////////////////////////
 
 message ConnectToRobot {
-    uint_8 robotID
+    uint_8 ipAddress[16],
+    uint_8 robotID,
+    uint_8 isSimulated
 }
 
 // ConnectToUiDevice
@@ -54,14 +56,6 @@ message ConnectToUiDevice {
 message DisconnectFromUiDevice {
     UiConnectionType  connectionType,
     uint_8 deviceID
-}
-
-// ForceAddRobot
-// NOTE: This can be removed once physical robots can advertise (e.g. with BLE
-message ForceAddRobot {
-    uint_8 ipAddress[16],
-    uint_8 robotID,
-    uint_8 isSimulated
 }
 
 // StartEngine
@@ -406,8 +400,27 @@ message SetIdleAnimation {
     string animationName // Group name, not individual animation!
 }
 
+// PushIdleAnimation
+//  Switches the idle animation (the one played in a continuous loop while no other
+//  animation is requested via PlayAnimation) to the one specified.
+message PushIdleAnimation {
+    string animationName // Group name, not individual animation!
+}
+
+// PopIdleAnimation
+//  Stops using the last pushed idle animation and goes back to whatever was
+//  previously the idle.
+message PopIdleAnimation {
+
+}
+
 // ReadAnimationFile
 message ReadAnimationFile {
+}
+
+// RequestAvailableAnimations
+message RequestAvailableAnimations{
+  
 }
 
 message SetLiveIdleAnimationParameters {
@@ -440,6 +453,11 @@ message SetDrivingAnimations {
 ///////////////////////////////////////////////////////////////////////////////
 // Robot / Cube LED Controls
 ///////////////////////////////////////////////////////////////////////////////
+
+message SetHeadlight
+{
+  bool enable
+}
 
 // SetActiveObjectLEDs
 message SetActiveObjectLEDs {
@@ -590,6 +608,11 @@ message GetAllDebugConsoleVarMessage {
 }
 
 message SetEnableSOSLogging {
+  bool enabled
+}
+
+// Msg used by maya to disable reaction behaviors.
+message EnableReactionaryBehaviors {
   bool enabled
 }
 

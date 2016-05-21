@@ -28,7 +28,7 @@ private:
 public:
   
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const override;
+  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   
 protected:
@@ -38,6 +38,9 @@ protected:
   virtual Status UpdateInternal(Robot& robot) override;
   
   void TransitionToSleepLoop(Robot& robot);
+private:
+  // need to change in EventRun
+  bool _hasBeenOffChargerPlatform;
 }; // class BehaviorReactToOnCharger
   
 

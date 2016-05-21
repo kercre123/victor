@@ -64,6 +64,7 @@ namespace Anki {
     // Mostly used by TurnInPlaceAction, but also used by planner in some places. Maybe planner should keep its own constants?
     const f32 POINT_TURN_ANGLE_TOL = DEG_TO_RAD(2.f);
     
+    const f32 READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM = 2.f;
     
     /***************************************************************************
      *
@@ -97,6 +98,9 @@ namespace Anki {
     
     // Default distance from marker for predock pose
     const f32 DEFAULT_PREDOCK_POSE_DISTANCE_MM = 120.f;
+    
+    // Default distance to block for flip preDock pose
+    const f32 DEFAULT_FLIP_PREDOCK_POSE_DISTAMCE_MM = 80.f;
     
     // Maximum difference along Z-axis between robot and predock pose for it
     // to be able to reach predock pose.

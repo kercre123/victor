@@ -11,8 +11,8 @@ namespace Cozmo {
 enum uint_8 UiConnectionType {
 
     UI = 0,
-    SDK,
-    
+    SdkOverUdp,
+    SdkOverTcp,
     Count
 }
 

@@ -18,9 +18,7 @@ enum uint_8 FirmwareUpdateResult {
 
 
 enum uint_8 FirmwareUpdateStage {
-  Wifi = 0,
-  RTIP,
-  Body,
+  Flashing = 0,
   Done,
   Failed
 }
@@ -30,7 +28,7 @@ enum uint_8 FirmwareUpdateSubStage {
   Init = 0,
   LoadingFile,
   Flash,
-  SendOTAUpgrade,
+  SendFlashEOF,
   WaitOTAUpgrade
 }
 

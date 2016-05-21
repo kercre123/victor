@@ -3,16 +3,9 @@
 
 #define NRF_BAUD(x) (int)(x * 4194304.0f / 15625.0f) // 2^28/1MHz
 
-//#define DEBUG_MESSAGES
-//#define RADIO_TIMING_TEST
-//#define DUMP_DISCOVER
-
-// Updated for EP1
-#define ROBOT_EP1_BODY
-
 enum watchdog_channels {
   WDOG_RTOS,
-  WDOG_NERVE_PINCH,
+  WDOG_UART,
   WDOG_TOTAL_CHANNELS
 };
 
@@ -25,25 +18,16 @@ enum IRQ_Priority {
   RTOS_PRIORITY = 3
 };
 
-enum BodyOperatingMode {
-  LOW_POWER_OPERATING_MODE,
-  BLUETOOTH_OPERATING_MODE,
-  WIFI_OPERATING_MODE
-};
-
-extern void enterOperatingMode(BodyOperatingMode mode);
-
 static const uint8_t wdog_channel_mask = (1 << WDOG_TOTAL_CHANNELS) - 1;
 
 enum e_nrf_gpio {
   // Encoders
   PIN_ENCODER_LEFT    = 13, // ENC1
   PIN_ENCODER_RIGHT   = 4,  // ENC2
-  PIN_ENCODER_HEADA   = 17, // ENC3
-  PIN_ENCODER_HEADB   = 14,
-  PIN_ENCODER_LIFTA   = 1,  // ENC4
-  PIN_ENCODER_LIFTB   = 0,
-  
+  PIN_ENCODER_HEADA   = 14, // ENC3 - wire harness reversed since EP3
+  PIN_ENCODER_HEADB   = 17,
+  PIN_ENCODER_LIFTA   = 0,  // ENC4 - wire harness reversed since EP3
+  PIN_ENCODER_LIFTB   = 1,      
 
   // Motors + charge OK signal
   PIN_LEFT_P          = 19,

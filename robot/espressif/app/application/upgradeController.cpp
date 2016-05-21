@@ -8,7 +8,6 @@ extern "C" {
 #include "osapi.h"
 #include "mem.h"
 #include "client.h"
-#include "foregroundTask.h"
 #include "driver/i2spi.h"
 #include "sha1.h"
 #include "rboot.h"
@@ -16,909 +15,578 @@ extern "C" {
 #include "upgradeController.h"
 #include "anki/cozmo/robot/esp.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/robot/rec_protocol.h"
 #include "rtip.h"
+#include "animationController.h"
+#include "face.h"
 #include "clad/robotInterface/otaMessages.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
+#define ESP_FW_WRITE_ADDRESS (0x100004)
+#define ESP_FW_MAX_SIZE      (0x080000)
+#define ESP_FW_ADDR_MASK     (0x07FFFF)
+
+#define WRITE_DATA_SIZE (1024)
+
 #define MAX_RETRIES 2
 #define SHA_CHECK_READ_LENGTH 512
+
+#define CRC32_POLYNOMIAL (0xedb88320L)
+
+#define FLASH_WRITE_COUNT SECTOR_SIZE
+#define RTIP_WRITE_COUNT  TRANSMIT_BLOCK_SIZE
+
+#define DEBUG_OTA 1
 
 namespace Anki {
 namespace Cozmo {
 namespace UpgradeController {
 
-#define DEBUG_OTA
+  #define DEBUG_OTA 1
 
-#define FLASH_STAGED_FLAG_ADDRESS ((BOOT_CONFIG_SECTOR * SECTOR_SIZE) + 0x100)
-
-static const uint32* const flashStagedFlags = (const uint32* const)(FLASH_STAGED_FLAG_ADDRESS + FLASH_MEMORY_MAP);
-
-static uint8 retries;
-
-/// Stores the state nessisary for the over the air upgrade task
-typedef struct 
-{
-  SHA1_CTX ctx;     ///< SHA1 calculation state
-  int32   fwStart; ///< Starting address in flash of the firmware imageId
-  int32   fwSize;  ///< Number of bytes of firmware
-  int32   version; ///< Version number for the firmware
-  int32   index;   ///< Index through reading, writing etc.
-  int32   phase;   ///< Operation phase
-  int32   count;   ///< More stored state for variable use
-  uint8   sig[SHA1_DIGEST_LENGTH]; ///< The digest we are looking for
-  RobotInterface::OTACommand cmd; ///< The command we are processing
-} OTAUpgradeTaskState;
-
-/// A task that just waits for the I2SPI message queue to clear before changing mode
-LOCAL bool TaskI2SPISwitchMode(uint32 mode)
-{
-  if (i2spiMessageQueueIsEmpty())
+  typedef enum
   {
-    i2spiSwitchMode((I2SpiMode)mode);
-    return false;
-  }
-  else
+    OTAT_Uninitalized = 0,
+    OTAT_Ready,
+    OTAT_Delay,
+    OTAT_Flash_Erase,
+    OTAT_Sync_Recovery,
+    OTAT_Flash_Write,
+    OTAT_Wait,
+    OTAT_Sig_Check,
+    OTAT_Reject,
+    OTAT_Apply_WiFi,
+    OTAT_Apply_RTIP,
+    OTAT_Wait_For_RTIP_Ack,
+    OTAT_Reboot,
+    OTAT_Wait_For_Reboot,
+  } OTATaskPhase;
+
+  uint8_t* buffer; ///< Pointer to RX buffer
+  int32_t  bufferSize; ///< Number of bytes of storage at buffer
+  int32_t  bufferUsed; ///< Number of bytes of storage buffer currently filled
+  int32_t  bytesProcessed; ///< The number of bytes of OTA data that have been processed from the buffer
+  uint32_t counter; ///< A in phase counter
+  int16_t  acceptedPacketNumber; ///< Highest packet number we have accepted
+  int8_t   retries; ///< Flash operation retries
+  OTATaskPhase phase; ///< Keeps track of our current task state
+  bool didEsp; ///< We have new firmware for the Espressif
+  bool haveTermination; ///< Have received termination
+
+  bool Init()
   {
-#ifdef DEBUG_OTA__
-    os_printf("w");
-#endif
+    
+    buffer = NULL;
+    bufferSize = 0;
+    bufferUsed = 0;
+    bytesProcessed = 0;
+    counter = system_get_time();
+    acceptedPacketNumber = -1;
+    retries = MAX_RETRIES;
+    phase = OTAT_Ready;
+    didEsp = false;
+    haveTermination = false;
     return true;
   }
-}
-
-LOCAL bool TaskDoEraseFlash(uint32 param)
-{
-  RobotInterface::EraseFlash* msg = reinterpret_cast<RobotInterface::EraseFlash*>(param);
-  // TODO: Add block based erase
-  const uint16 sector = msg->start / SECTOR_SIZE;
-  RobotInterface::FlashWriteAcknowledge resp;
-  const SpiFlashOpResult rslt = spi_flash_erase_sector(sector);
-  switch (rslt)
+  
+  LOCAL void Reset()
   {
-    case SPI_FLASH_RESULT_OK:
-    {
-#ifdef DEBUG_OTA
-      os_printf("Erased sector %x\r\n", sector);
-#endif
-      if (msg->size > SECTOR_SIZE) // This wasn't the last sector
-      {
-        msg->start += SECTOR_SIZE;
-        msg->size  -= SECTOR_SIZE;
-        retries = MAX_RETRIES;
-        return true; // Repost ourselves to erase the next sector
+    AnkiDebug( 170, "UpdateController", 466, "Reset()", 0);
+    buffer = NULL;
+    bufferSize = 0;
+    bufferUsed = 0;
+    bytesProcessed = 0;
+    acceptedPacketNumber = -1;
+    retries = MAX_RETRIES;
+    phase = OTAT_Ready;
+    didEsp = false;
+    haveTermination = false;
+    AnimationController::ResumeAndRestoreBuffer();
+    i2spiBootloaderCommandDone();
+    //i2spiSwitchMode(I2SPI_REBOOT);
+  }
+
+  LOCAL uint32_t calc_crc32(const uint8_t* data, int length)
+  {
+    uint32_t checksum = 0xFFFFFFFF;
+
+    while (length-- > 0) {
+      checksum ^= *(data++);
+      for (int b = 0; b < 8; b++) {
+        checksum = (checksum >> 1) ^ ((checksum & 1) ? CRC32_POLYNOMIAL : 0);
       }
-      else // We're done erasing
+    }
+
+    return ~checksum;
+  }
+
+  LOCAL bool VerifyFirmwareBlock(const FirmwareBlock* fwb)
+  {
+    return calc_crc32(reinterpret_cast<const uint8*>(fwb->flashBlock), TRANSMIT_BLOCK_SIZE) == fwb->checkSum;
+  }
+
+  void Write(RobotInterface::OTA::Write& msg)
+  {
+    using namespace RobotInterface::OTA;
+    Ack ack;
+    ack.bytesProcessed = bytesProcessed;
+    ack.packetNumber = acceptedPacketNumber;
+    #if DEBUG_OTA > 1
+    os_printf("UpC: Write(%d, %x...)\r\n", msg.packetNumber, msg.data[0]);
+    #endif
+    switch (phase)
+    {
+      case OTAT_Uninitalized:
       {
-#ifdef DEBUG_OTA
-        os_printf("Finished erase\r\n");
-#endif
-        resp.address = msg->start;
-        resp.length  = msg->size;
-        resp.writeNotErase = false;
-        RobotInterface::SendMessage(resp);
+        ack.result = NOT_ENABLED;
+        RobotInterface::SendMessage(ack);
         break;
       }
-    }
-    case SPI_FLASH_RESULT_ERR:
-    {
-#ifdef DEBUG_OTA
-      os_printf("Failed to erase sector %x\r\n", sector);
-#endif
-      resp.address = msg->start;
-      resp.length  = 0; // Indicates failure
-      resp.writeNotErase = false;
-      RobotInterface::SendMessage(resp);
-      break;
-    }
-    case SPI_FLASH_RESULT_TIMEOUT:
-    {
-      if (retries-- > 0)
+      case OTAT_Ready:
       {
-        foregroundTaskPost(TaskDoEraseFlash, param);
-        return true;
-      }
-      else
-      {
-        AnkiWarn( 29, "UpgradeController", 291, "Timed out erasing sector %x\r\n", 1, sector);
-        resp.address = msg->start;
-        resp.length  = 0; // Indicates failure
-        resp.writeNotErase = false;
-        RobotInterface::SendMessage(resp);
-        break;
-      }
-    }
-    default:
-    {
-      AnkiError( 29, "UpgradeController", 171, "Unexpected SPI Flash Erase operation result", 0);
-      break;
-    }
-  }
-  
-  os_free(msg);
-  return false;
-}
-
-LOCAL bool TaskEraseFlash(uint32 param)
-{
-  if (i2spiMessageQueueIsEmpty())
-  {
-    i2spiSwitchMode(I2SPI_PAUSED);
-    foregroundTaskPost(TaskDoEraseFlash, param);
-    return false;
-  }
-  else
-  {
-#ifdef DEBUG_OTA
-    os_printf("e");
-#endif
-    return true;
-  }
-}
-
-LOCAL bool TaskWriteFlash(uint32 param)
-{
-  RobotInterface::WriteFlash* msg = reinterpret_cast<RobotInterface::WriteFlash*>(param);
-  RobotInterface::FlashWriteAcknowledge resp;
-  switch(spi_flash_write(msg->address, reinterpret_cast<uint32*>(msg->data), msg->data_length))
-  {
-    case SPI_FLASH_RESULT_OK:
-    {
-#ifdef DEBUG_OTA
-      os_printf("Wrote to flash %x[%d]\r\n", msg->address, msg->data_length);
-#endif
-      resp.address = msg->address;
-      resp.length  = msg->data_length;
-      resp.writeNotErase = true;
-      RobotInterface::SendMessage(resp);
-      break;
-    }
-    case SPI_FLASH_RESULT_ERR:
-    {
-      AnkiWarn( 29, "UpgradeController", 292, "Failed to write to address %x", 1, msg->address);
-      resp.address = msg->address;
-      resp.length  = 0; // Indicates failure
-      resp.writeNotErase = true;
-      RobotInterface::SendMessage(resp);
-      break;
-    }
-    case SPI_FLASH_RESULT_TIMEOUT:
-    {
-      if (retries-- > 0)
-      {
-        return true;
-      }
-      else
-      {
-        AnkiWarn( 29, "UpgradeController", 293, "Timed out writting to address %x", 1, msg->address);
-        resp.address = msg->address;
-        resp.length  = 0; // Indicates failure
-        resp.writeNotErase = true;
-        RobotInterface::SendMessage(resp);
-        break;
-      }
-    }
-    default:
-    {
-      AnkiError( 29, "UpgradeController", 172, "Unexpected SPI Flash write operation result", 0);
-      break;
-    }
-  }
-  
-  os_free(msg);
-  return false;
-}
-
-LOCAL bool TaskOtaAsset(uint32 param)
-{
-  OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
-  // TODO Do something with this new asset update
-  AnkiInfo( 29, "UpgradeController", 173, "Asset OTA successful", 0);
-  os_free(state);
-  return false;
-}
-
-LOCAL bool TaskOtaWiFi(uint32 param)
-{
-  BootloaderConfig blcfg;
-  OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
-  
-#ifdef DEBUG_OTA
-  os_printf("TaskOtaWiFi\r\n");
-#endif
-  
-  blcfg.header = BOOT_CONFIG_HEADER;
-  blcfg.newImageStart = state->fwStart / SECTOR_SIZE;
-  blcfg.newImageSize  = state->fwSize  / SECTOR_SIZE + 1;
-  blcfg.version       = state->version;
-  blcfg.chksum        = calc_chksum((uint8*)&blcfg, &blcfg.chksum);
-  
-  switch (spi_flash_write(BOOT_CONFIG_SECTOR * SECTOR_SIZE, reinterpret_cast<uint32*>(&blcfg), sizeof(BootloaderConfig)))
-  {
-    case SPI_FLASH_RESULT_OK:
-    {
-      AnkiInfo( 29, "UpgradeController", 294, "WiFi OTA rebooting for version %d", 1, state->version);
-      os_free(state);
-      if (state->phase)
-      {
-        i2spiSwitchMode(I2SPI_REBOOT);
-      }
-      return false;
-    }
-    case SPI_FLASH_RESULT_ERR:
-    {
-      AnkiError( 29, "UpgradeController", 174, "Could not write bootloader config to flash for ota upgrade version %d.", 1, state->version);
-      os_free(state);
-      return false;
-    }
-    case SPI_FLASH_RESULT_TIMEOUT:
-    {
-      if (retries-- > 0)
-      {
-        return true;
-      }
-      else
-      {
-        AnkiError( 29, "UpgradeController", 175, "Timed out writing bootlaoder config to flash for ota upgrade version %d.", 1, state->version);
-        os_free(state);
-        return false;
-      }
-    }
-    default:
-    {
-      AnkiError( 29, "UpgradeController", 176, "Unexpected flash write result writing bootloader config", 0);
-      os_free(state);
-      return false;
-    }
-  }
-}
-
-LOCAL bool TaskOtaRTIP(uint32 param)
-{
-  OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
-  const uint16_t rtipState = i2spiGetRtipBootloaderState();
-  
-#ifdef DEBUG_OTA
-  static int32_t  prevIndex = 0xFFFF;
-  static int32_t  prevPhase = 0xFFFF;
-  static uint16_t prevState = 0xFFFF;
-  if ((rtipState != prevState) || (state->index != prevIndex) || (state->phase != prevPhase))
-  {
-    prevIndex = state->index;
-    prevPhase = state->phase;
-    prevState = rtipState;
-    os_printf("TaskOtaRTIP: state = %x\tphase = %d\tindex = %x\r\n", prevState, prevPhase, prevIndex);
-  }
-#endif
-  
-  switch (rtipState)
-  {
-    case STATE_NACK:
-    {
-      if (retries-- == 0)
-      {
-        AnkiError( 29, "UpgradeController", 177, "RTIP OTA transfer failure! Aborting.", 0);
-        #ifdef DEBUG_OTA
-        os_printf("RTIP OTA too many NACKs, aborting.\r\n");
-        #endif
-        os_free(state);
-        return false;
-      }
-      state->phase = 0;
-      // Have retries left, fall through and try writing
-    }
-    case STATE_IDLE:
-    {
-      if (state->phase == 0)
-      {
-        FirmwareBlock chunk;
-        switch (spi_flash_read(state->fwStart + state->index, reinterpret_cast<uint32*>(&chunk), sizeof(FirmwareBlock)))
+        if (msg.packetNumber != 0)
         {
-          case SPI_FLASH_RESULT_OK:
-          {
-            retries = MAX_RETRIES;
-            if (i2spiBootloaderPushChunk(&chunk))
-            {
-              state->phase = 1;
-              state->count = system_get_time();
-            }
-            else
-            {
-              os_printf("-");
-            }
-            return true;
-          }
-          case SPI_FLASH_RESULT_ERR:
-          {
-            AnkiError( 29, "UpgradeController", 178, "RTIP OTA flash readback failure, aborting", 0);
-            #ifdef DEBUG_OTA
-            os_printf("RTIP OTA flash readback failure aborting.\r\n");
-            #endif
-            os_free(state);
-            return false;
-          }
-          case SPI_FLASH_RESULT_TIMEOUT:
-          {
-            if (retries-- > 0)
-            {
-              return true;
-            }
-            else
-            {
-              AnkiError( 29, "UpgradeController", 179, "RTIP OTA flash readback timeout, aborting", 0);
-              #ifdef DEBUG_OTA
-              os_printf("RTIP OTA flash readback timeout, aborting.\r\n");
-              #endif
-              os_free(state);
-              return false;
-            }
-          }
+          #if DEBUG_OTA
+          os_printf("\tOOO %d\r\n", msg.packetNumber);
+          #endif
+          ack.result = OUT_OF_ORDER;
+          RobotInterface::SendMessage(ack);
+          break;
+        }
+        else
+        {
+          #if DEBUG_OTA
+          os_printf("\tStarting upgrade\r\n");
+          #endif
+          bufferSize = AnimationController::SuspendAndGetBuffer(&buffer);
+          Face::FacePrintf("Starting FOTA\nupgrade...");
+          counter = system_get_time() + 100000; /// 100 ms delay
+          phase = OTAT_Delay;
+          // Explicit fallthrough to next case
         }
       }
-      else if (state->phase == 1) /// XXX This is a bandaid on the first chunk being missed about 1 in 3 times.
+      case OTAT_Delay:
+      case OTAT_Flash_Erase:
+      case OTAT_Sync_Recovery:
+      case OTAT_Flash_Write:
+      case OTAT_Wait:
       {
-        if ((system_get_time() - state->count) > 1000000)
+        if ((bufferSize - bufferUsed) < WRITE_DATA_SIZE)
         {
-          os_printf("RTIP OTA chunk timed out, retrying\r\n");
-          state->phase = 0;
+          #if DEBUG_OTA
+          os_printf("\tNo mem p=%d s=%d u=%d\r\n", bytesProcessed, bufferSize, bufferUsed);
+          #endif
+          ack.result = ERR_NO_MEM;
+          RobotInterface::SendMessage(ack);
         }
-        return true;
-      }
-      else if (state->phase == 2)
-      {
-        state->index += sizeof(FirmwareBlock);
-        if (state->index < state->fwSize) // Have more firmware left to write
+        else if (msg.packetNumber == -1) // End of data flag
         {
+          #if DEBUG_OTA
+          os_printf("\tTermination\r\n");
+          #endif
+          AnkiDebug( 171, "UpgradeController", 467, "Received termination", 0)
+          haveTermination = true;
+        }
+        else if (msg.packetNumber != (acceptedPacketNumber + 1))
+        {
+          #if DEBUG_OTA
+          os_printf("\tOOO\r\n");
+          #endif
+          ack.result = OUT_OF_ORDER;
+          RobotInterface::SendMessage(ack);
+        }
+        else
+        {
+          os_memcpy(buffer + bufferUsed, msg.data, WRITE_DATA_SIZE);
+          bufferUsed += WRITE_DATA_SIZE;
+          acceptedPacketNumber = msg.packetNumber;
+        }
+        break;
+      }
+      case OTAT_Sig_Check:
+      case OTAT_Reject:
+      case OTAT_Apply_WiFi:
+      case OTAT_Apply_RTIP:
+      case OTAT_Wait_For_RTIP_Ack:
+      case OTAT_Reboot:
+      case OTAT_Wait_For_Reboot:
+      {
+        ack.result = BUSY;
+        RobotInterface::SendMessage(ack);
+        return;
+      }
+    }
+  }
+  
+  void Update()
+  {
+    using namespace RobotInterface::OTA;
+    Ack ack;
+    ack.bytesProcessed = bytesProcessed;
+    ack.packetNumber   = acceptedPacketNumber;
+    switch (phase)
+    {
+      case OTAT_Uninitalized:
+      case OTAT_Ready:
+      {
+        break;
+      }
+      case OTAT_Delay:
+      {
+        if ((system_get_time() > counter) && i2spiMessageQueueIsEmpty())
+        {
+          i2spiSwitchMode(I2SPI_RECOVERY);
+          phase = OTAT_Flash_Erase;
           retries = MAX_RETRIES;
-          state->phase = 0;
-          return true;
+          counter = 0;
+          AnkiDebug( 172, "UpgradeController.state", 468, "flash erase", 0);
         }
-        else // Done writing firmware
+        break;
+      }
+      case OTAT_Flash_Erase:
+      {
+        if (counter < ESP_FW_MAX_SIZE)
         {
-          AnkiInfo( 29, "UpgradeController", 180, "RTIP OTA transfer complete", 0);
-          if (flashStagedFlags[0] != 0xFFFFffff && flashStagedFlags[1] != 0)
+          const uint32 sector = (ESP_FW_WRITE_ADDRESS + counter) / SECTOR_SIZE;
+          #if DEBUG_OTA
+          os_printf("Erase sector 0x%x\r\n", sector);
+          #endif
+          const SpiFlashOpResult rslt = spi_flash_erase_sector(sector);
+          if (rslt != SPI_FLASH_RESULT_OK)
           {
-            uint32 flag = 0;
-            if (spi_flash_write(FLASH_STAGED_FLAG_ADDRESS+4, &flag, 4) != SPI_FLASH_RESULT_OK)
+            if (retries-- <= 0)
             {
-              os_printf("Couldn't set stage 2 staged upgrade flag\r\n");
+              ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_ERASE_ERROR : ERR_ERASE_TIMEOUT;
+              RobotInterface::SendMessage(ack);
+              Reset();
             }
-          }
-          if (i2spiBootloaderCommandDone())
-          {
-            i2spiSwitchMode(I2SPI_NORMAL);
-            state->phase = 3;
-          }
-          return true;
-        }
-      }
-      else if (state->phase == 3) // Waiting for reboot
-      {
-        return true;
-      }
-      else
-      {
-        return true;
-      }
-    }
-    case STATE_BUSY: // Just waiting
-    {
-      if (state->phase == 1) state->phase = 2;
-      return true;
-    }
-    case STATE_SYNC: // We will read garbage instead of sync so default is the same
-    default:
-    {
-      return true;
-    }
-  }
-}
-
-LOCAL bool TaskOtaBody(uint32 param)
-{
-  OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
-  
-  const uint32_t bodyBootloaderCode  = i2spiGetBodyBootloaderCode();
-  const uint16_t bodyBootloaderState = bodyBootloaderCode & 0xFFFF;
-  const uint16_t bodyBootloaderCount = bodyBootloaderCode >> 16;
-  
-#ifdef DEBUG_OTA__
-  static int32_t  prevIndex = 0xFFFF;
-  static int32_t  prevPhase = 0xFFFF;
-  static uint16_t prevState = 0xFFFF;
-  static uint16_t prevCount = 0;
-  if ((prevIndex != state->index) || (prevPhase != state->phase) || (prevState != bodyBootloaderState) || prevCount != bodyBootloaderCount)
-  {
-    prevIndex = state->index;
-    prevPhase = state->phase;
-    prevState = bodyBootloaderState;
-    prevCount = bodyBootloaderCount;
-    os_printf("TaskOtaBody: state = %x (%d)\tphase = %d\tindex = %d\r\n",
-              prevState, bodyBootloaderCount, prevPhase, prevIndex);
-  }
-#endif
-  
-  switch(bodyBootloaderState)
-  {
-    case STATE_SYNC:
-    case STATE_BUSY:
-    case STATE_RUNNING:
-    case STATE_UNKNOWN:
-    {
-      return true; // Just wait
-    }
-    case STATE_NACK: // Last try failed, try again
-    {
-      os_printf("N");
-      // Fall through to next case
-    }
-    case STATE_IDLE: // Ready to receive packet
-    {
-      if (bodyBootloaderCount != state->count) // Ready for another chunk
-      {
-        struct BodyUpgradeData {
-          uint8_t  PADDING[3];
-          uint8_t  command;
-          union {
-            uint32_t word;
-            uint8_t  bytes[4];
-          };
-        } msg;
-        ct_assert(sizeof(msg) == 8);
-        msg.command = RobotInterface::EngineToRobot::Tag_bodyUpgradeData;
-        
-        if (state->index >= state->fwSize) // Done loading firmware
-        {
-          os_printf("Done loading body, commanding reboot\r\n");
-          msg.bytes[1] = COMMAND_HEADER >> 8;
-          msg.bytes[0] = COMMAND_HEADER & 0xff;
-          msg.bytes[3] = COMMAND_DONE   >> 8;
-          msg.bytes[2] = COMMAND_DONE   & 0xff;
-          if (i2spiQueueMessage(&msg.command, 5) == false)
-          {
-            os_printf("Couldn't send flash done command, will retry\r\n");
-            return true;
           }
           else
           {
-            if (flashStagedFlags[0] == 0xFFFFffff)
-            {
-              foregroundTaskPost(TaskI2SPISwitchMode, I2SPI_REBOOT);
-            }
-            else
-            {
-              foregroundTaskPost(TaskI2SPISwitchMode, I2SPI_RECOVERY);
-            }
-            return false;
+            retries = MAX_RETRIES;
+            counter += SECTOR_SIZE;
+          }
+        }
+        else // Done with erase, advance state
+        {
+          AnkiDebug( 172, "UpgradeController.state", 469, "sync recovery", 0);
+          i2spiSwitchMode(I2SPI_BOOTLOADER); // Start synchronizing with the bootloader
+          phase = OTAT_Sync_Recovery;
+          counter = system_get_time() + 2000000; // 2 second timeout
+          retries = MAX_RETRIES;
+        }
+        break;
+      }
+      case OTAT_Sync_Recovery:
+      {
+        if (i2spiGetRtipBootloaderState() == STATE_IDLE)
+        {
+          AnkiDebug( 172, "UpgradeController.state", 470, "flash write", 0);
+          phase = OTAT_Flash_Write;
+          counter = 0; // 2 second timeout
+          retries = MAX_RETRIES;
+          ack.result = OKAY;
+          RobotInterface::SendMessage(ack);
+        }
+        else if (system_get_time() > counter)
+        {
+          #if DEBUG_OTA
+          os_printf("Sync recovery timeout!\r\n");
+          #endif
+          ack.result = ERR_RTIP_TIMEOUT;
+          RobotInterface::SendMessage(ack);
+          Reset();
+        }
+        break;
+      }
+      case OTAT_Flash_Write:
+      {
+        if (bufferUsed < (int)sizeof(FirmwareBlock)) // We've reached the end of the buffer
+        {
+          if (haveTermination) // If there's no more, advance now
+          {
+            AnkiDebug( 172, "UpgradeController.state", 457, "Sig check", 0);
+            counter = 0;
+            retries = MAX_RETRIES;
+            phase = OTAT_Sig_Check;
           }
         }
         else
         {
-          const int remainingWords = (sizeof(FirmwareBlock) - state->phase)/4;
-          if (remainingWords > 0)
+          FirmwareBlock* fwb = reinterpret_cast<FirmwareBlock*>(buffer);
+          if (VerifyFirmwareBlock(fwb) == false)
           {
-            if (state->phase == 0) // Starting another block
+            #if DEBUG_OTA
+            os_printf("Bad block CRC at %d\r\n", bytesProcessed);
+            #endif
+            ack.result = ERR_BAD_DATA;
+            RobotInterface::SendMessage(ack);
+            Reset();
+          }
+          else
+          {
+            if (fwb->blockAddress == 0xFFFFffff)
             {
-#ifdef DEBUG_OTA
-              os_printf("Starting chunk to body\r\n");
-#endif
-              msg.bytes[1] = COMMAND_HEADER >> 8;
-              msg.bytes[0] = COMMAND_HEADER & 0xff;
-              msg.bytes[3] = COMMAND_FLASH  >> 8;
-              msg.bytes[2] = COMMAND_FLASH  & 0xff;
-              if (i2spiQueueMessage(&msg.command, 5) == false)
-              {
-#ifdef DEBUG_OTA
-                os_printf(".");
-#endif
-                return true; // Just retry later
-              }
+              // TODO something with signature header
+              #if DEBUG_OTA
+              os_printf("OTA Sig header\r\n");
+              #endif
+              retries = MAX_RETRIES;
+              bufferUsed -= sizeof(FirmwareBlock);
+              os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+              bytesProcessed += sizeof(FirmwareBlock);
+              ack.bytesProcessed = bytesProcessed;
+              ack.result = OKAY;
+              RobotInterface::SendMessage(ack);
             }
-            
-            switch (spi_flash_read(state->fwStart + state->index + state->phase, &(msg.word), 4))
+            else if (fwb->blockAddress == 0xFFFFfffc) // Comment block, ignore
             {
-              case SPI_FLASH_RESULT_OK:
+              #if DEBUG_OTA
+              os_printf("OTA comment\r\n");
+              #endif
+              retries = MAX_RETRIES;
+              bufferUsed -= sizeof(FirmwareBlock);
+              os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+              bytesProcessed += sizeof(FirmwareBlock);
+              ack.bytesProcessed = bytesProcessed;
+              ack.result = OKAY;
+              RobotInterface::SendMessage(ack);
+            }
+            else if (fwb->blockAddress & 0x40000000) // Destined for the Espressif flash
+            {
+              const uint32 destAddr = ESP_FW_WRITE_ADDRESS + (fwb->blockAddress & ESP_FW_ADDR_MASK);
+              #if DEBUG_OTA
+              os_printf("WF 0x%x\r\n", destAddr);
+              #endif
+              const SpiFlashOpResult rslt = spi_flash_write(destAddr, fwb->flashBlock, TRANSMIT_BLOCK_SIZE);
+              if (rslt != SPI_FLASH_RESULT_OK)
               {
+                if (retries-- <= 0)
+                {
+                  ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
+                  RobotInterface::SendMessage(ack);
+                  Reset();
+                }
+              }
+              else
+              {
+                didEsp = true;
                 retries = MAX_RETRIES;
-                break;
-              }
-              case SPI_FLASH_RESULT_ERR:
-              {
-                AnkiError( 29, "UpgradeController", 181, "BODY OTA flash readback failure, aborting", 0);
-                os_free(state);
-                return false;
-              }
-              case SPI_FLASH_RESULT_TIMEOUT:
-              {
-                if (retries-- > 0)
-                {
-                  return true;
-                }
-                else
-                {
-                  AnkiError( 29, "UpgradeController", 182, "BODY OTA flash readback timeout, aborting", 0);
-                  os_free(state);
-                  return false;
-                }
+                bufferUsed -= sizeof(FirmwareBlock);
+                os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+                bytesProcessed += sizeof(FirmwareBlock);
+                ack.bytesProcessed = bytesProcessed;
+                ack.result = OKAY;
+                RobotInterface::SendMessage(ack);
               }
             }
-            if (i2spiQueueMessage(&msg.command, 5) == true)
+            else // This is bound for the RTIP or body
             {
-              state->phase += 4;
-              //os_printf("W %08x\r\n", msg.word);
+              switch (i2spiGetRtipBootloaderState())
+              {
+                case STATE_NACK:
+                case STATE_ACK:
+                case STATE_IDLE:
+                {
+                  if (i2spiBootloaderPushChunk(fwb))
+                  {
+                    #if DEBUG_OTA
+                    os_printf("Write RTIP 0x%x\t", fwb->blockAddress);
+                    #endif
+                    phase = OTAT_Wait;
+                  }
+                  // Else try again next time
+                  break;
+                }
+                case STATE_BUSY:
+                case STATE_SYNC:
+                default:
+                {
+                  // Just wait for this to clear
+                  #if DEBUG_OTA > 2
+                  os_printf("w4r %x\r\n", i2spiGetRtipBootloaderState());
+                  #endif
+                  break;
+                }
+              }
             }
-            return true;
-          }
-          else // Done sending chunk
-          {
-#ifdef DEBUG_OTA
-            os_printf("Finished chunk to body\r\n");
-#endif
-            state->index += state->phase;
-            state->phase = 0;
-            state->count = bodyBootloaderCount;
-            return true;
           }
         }
+        break;
       }
-      else // Waiting for advance to next count
+      case OTAT_Wait:
       {
-        return true;
-      }
-    }
-    default:
-    {
-      os_printf("UpgradeController: Unexpected body bootloader state %d, %08x, aborting\r\n", bodyBootloaderState, bodyBootloaderCode);
-    }
-  }
-  
-  os_free(state);
-  return false;
-}
-
-LOCAL bool TaskCheckSig(uint32 param)
-{
-  OTAUpgradeTaskState* state = reinterpret_cast<OTAUpgradeTaskState*>(param);
-  uint32 buffer[SHA_CHECK_READ_LENGTH/4]; // Allocate as uint32 for alignment
-  const uint32 remaining  = state->fwSize - state->index;
-  const uint32 readLength = SHA_CHECK_READ_LENGTH < remaining ? SHA_CHECK_READ_LENGTH : remaining;
-  switch (spi_flash_read(state->fwStart + state->index, buffer, readLength))
-  {
-    case SPI_FLASH_RESULT_OK:
-    {
-      SHA1Update(&(state->ctx), reinterpret_cast<uint8*>(buffer), readLength);
-      retries = MAX_RETRIES;
-      break;
-    }
-    case SPI_FLASH_RESULT_ERR:
-    {
-      AnkiError( 29, "UpgradeController", 183, "reading back flash at %x for signature check", 1, state->index);
-      os_free(state);
-      return false;
-    }
-    case SPI_FLASH_RESULT_TIMEOUT:
-    {
-      if (retries-- > 0)
-      {
-        return true; // Just retry
-      }
-      else
-      {
-        AnkiError( 29, "UpgradeController", 184, "timed out reading back flash at %x for signature check", 1, state->index);
-        os_free(state);
-        return false;
-      }
-    }
-    default:
-    {
-      AnkiError( 29, "UpgradeController", 185, "unexpected flash result when reading back at %x for signature check", 1, state->index);
-    }
-  }
-  
-  if (remaining > SHA_CHECK_READ_LENGTH)
-  {
-    state->index += readLength;
-    return true;
-  }
-  else
-  {
-    int i;
-    uint8 digest[SHA1_DIGEST_LENGTH];
-#ifdef DEBUG_OTA
-    os_printf("SHA1 Final\r\n");
-#endif
-    SHA1Final(digest, &(state->ctx));
-    for (i=0; i<SHA1_DIGEST_LENGTH; i++)
-    {
-      if (digest[i] != state->sig[i])
-      {
-        AnkiWarn( 29, "UpgradeController", 186, "Firmware signature missmatch at character %d, %02x != %02x", 3, i, digest[i], state->sig[i]);
-        os_free(state);
-        return false;
-      }
-    }
-#ifdef DEBUG_OTA
-    os_printf("Signature matches\r\n");
-#endif
-    // If we got here, the signature matched
-    retries = MAX_RETRIES;
-    state->index = 0;
-    switch(state->cmd)
-    {
-      case RobotInterface::OTA_none:
-      {
-        AnkiInfo( 29, "UpgradeController", 187, "Successfully confirmed flash signature for OTA none", 0);
-        os_free(state);
-        return false;
-      }
-      case RobotInterface::OTA_asset:
-      {
-        foregroundTaskPost(TaskOtaAsset, param);
-        return false;
-      }
-      case RobotInterface::OTA_WiFi:
-      {
-        state->phase = true; // Do trigger reboot in this mode
-#ifdef DEBUG_OTA
-        os_printf("WiFi signature OKAY, posting task\r\n");
-#endif
-        foregroundTaskPost(TaskOtaWiFi, param);
-        return false;
-      }
-      case RobotInterface::OTA_RTIP:
-      {
-#ifdef DEBUG_OTA
-        os_printf("RTIP signature OKAY, switching modes and posting task\r\n");
-#endif
-        os_free(state);
-        i2spiSwitchMode(I2SPI_RECOVERY);
-        return false;
-      }
-      case RobotInterface::OTA_body:
-      {
-#ifdef DEBUG_OTA
-        os_printf("Body signature OKAY, switching mode and posting task\r\n");
-#endif
-        os_free(state);
-        i2spiSwitchMode(I2SPI_REBOOT);
-        return false;
-      }
-      case RobotInterface::OTA_stage:
-      {
-        uint32_t flag = state->cmd;
-        if (spi_flash_write(FLASH_STAGED_FLAG_ADDRESS, &flag, 4) != SPI_FLASH_RESULT_OK)
+        switch(i2spiGetRtipBootloaderState())
         {
-          AnkiError( 29, "UpgradeController", 188, "Couldn't write flash staged flag!", 0);
-#ifdef DEBUG_OTA
-          os_printf("Couldn't write flash staged flag!\r\n");
+          case STATE_NACK:
+          {
+            os_printf("RTIP NACK!\r\n");
+            if (retries-- <= 0)
+            {
+              ack.result = ERR_I2SPI;
+              RobotInterface::SendMessage(ack);
+              Reset();
+            }
+            phase = OTAT_Flash_Write; // try again
+            break;
+          }
+          case STATE_ACK:
+          case STATE_BUSY:
+          {
+            os_printf("Done\r\n");
+            bufferUsed -= sizeof(FirmwareBlock);
+            os_memmove(buffer, buffer + sizeof(FirmwareBlock), bufferUsed);
+            bytesProcessed += sizeof(FirmwareBlock);
+            ack.bytesProcessed = bytesProcessed;
+            ack.result = OKAY;
+            RobotInterface::SendMessage(ack);
+            phase = OTAT_Flash_Write; // Finished operation
+          }
+          case STATE_IDLE:
+          {
+            break;
+          }
+          default:
+          {
+            os_printf("OW %d\r\n", i2spiGetRtipBootloaderState());
+            break;
+          }
+        }
+        break;
+      }
+      case OTAT_Sig_Check:
+      {
+        AnkiWarn( 171, "UpgradeController", 458, "Signature check not implemented", 0);
+        AnkiDebug( 172, "UpgradeController.state", 459, "Apply WiFi", 0)
+        phase   = OTAT_Apply_WiFi;
+        retries = MAX_RETRIES;
+        break;
+      }
+      case OTAT_Reject:
+      {
+        AnkiError( 171, "UpgradeController", 460, "Factory reset not yet implemented", 0);
+        Reset();
+        break;
+      }
+      case OTAT_Apply_WiFi:
+      {
+        SpiFlashOpResult rslt;
+        if (didEsp)
+        {
+          BootloaderConfig blcfg;
+          blcfg.header        = BOOT_CONFIG_HEADER;
+          blcfg.newImageStart = ESP_FW_WRITE_ADDRESS / SECTOR_SIZE;
+          blcfg.newImageSize  = ESP_FW_MAX_SIZE      / SECTOR_SIZE;
+          blcfg.version       = 0;
+          blcfg.chksum        = calc_chksum((uint8*)&blcfg, &blcfg.chksum);
+          rslt = spi_flash_write(BOOT_CONFIG_SECTOR * SECTOR_SIZE, reinterpret_cast<uint32*>(&blcfg), sizeof(BootloaderConfig));
         }
         else
         {
-          os_printf("Successfully triggering staged upgrade");
-#endif
+          rslt = SPI_FLASH_RESULT_OK;
         }
-        i2spiSwitchMode(I2SPI_REBOOT);
-        os_free(state);
-        return false;
+        if (rslt != SPI_FLASH_RESULT_OK)
+        {
+          if (retries-- <= 0)
+          {
+            ack.result = rslt == SPI_FLASH_RESULT_ERR ? ERR_WRITE_ERROR : ERR_WRITE_TIMEOUT;
+            RobotInterface::SendMessage(ack);
+            Reset();
+          }
+        }
+        else
+        {
+          AnkiDebug( 172, "UpgradeController.state", 461, "Reboot", 0);
+          phase   = OTAT_Reboot;
+          //phase   = OTAT_Apply_RTIP;
+          //counter = system_get_time() + 10000000; // 10 second timeout
+          retries = MAX_RETRIES;
+        }
+        break;
+      }
+      case OTAT_Apply_RTIP:
+      {
+        if(i2spiGetRtipBootloaderState() == STATE_IDLE)
+        {
+          if (i2spiBootloaderCommandDone() == false)
+          {
+            #if DEBUG_OTA
+            os_printf("NSD\r\n");
+            #endif
+          }
+          else
+          {
+            AnkiDebug( 172, "UpgradeController.state", 462, "Wait for RTIP Ack", 0);
+            phase = OTAT_Wait_For_RTIP_Ack;
+            counter = system_get_time() + 2000000; // 2 second timeout
+          }
+        }
+        else if (system_get_time() > counter)
+        {
+          #if DEBUG_OTA
+          os_printf("Apply RTIP timeout, state %x\r\n", i2spiGetRtipBootloaderState());
+          #endif
+          ack.result = ERR_RTIP_TIMEOUT;
+          RobotInterface::SendMessage(ack);
+          Reset();
+        }
+        break;
+      }
+      case OTAT_Wait_For_RTIP_Ack:
+      {
+        switch (i2spiGetRtipBootloaderState())
+        {
+          case STATE_BUSY:
+          {
+            // Wait
+            if (system_get_time() > counter)
+            {
+              ack.result = ERR_RTIP_TIMEOUT;
+              RobotInterface::SendMessage(ack);
+              Reset();
+            }
+            break;
+          }
+          case STATE_NACK:
+          {
+            ack.result = ERR_RTIP_NAK;
+            RobotInterface::SendMessage(ack);
+            Reset();
+            break;
+          }
+          case STATE_ACK:
+          case STATE_IDLE:
+          default: // If the RTIP has booted we'll get other gibberish
+          {
+            AnkiDebug( 172, "UpgradeController.state", 463, "Reboot", 0);
+            phase = OTAT_Reboot;
+            break;
+          }
+        }
+        break;
+      }
+      case OTAT_Reboot:
+      {
+        i2spiBootloaderCommandDone();
+        ack.result = SUCCESS;
+        RobotInterface::SendMessage(ack);
+        AnkiDebug( 172, "UpgradeController.state", 464, "Wait for reboot", 0);
+        phase = OTAT_Wait_For_Reboot;
+        break;
+      }
+      case OTAT_Wait_For_Reboot:
+      {
+        break;
       }
       default:
       {
-        AnkiError( 29, "UpgradeController", 189, "Unexpected OTA command %d", 1, state->cmd);
-        os_free(state);
-        return false;
+        AnkiAssert(false, 465);
       }
     }
   }
-}
-  
-void EraseFlash(RobotInterface::EraseFlash& msg)
-{
-  if (msg.start < FLASH_WRITE_START_ADDRESS) // Refuse to erase addresses that are too low
-  {
-    AnkiWarn( 29, "UpgradeController", 190, "Refusing to erase flash address %x, below %x", 2, msg.start, FLASH_WRITE_START_ADDRESS);
-  }
-  else
-  {
-    u8 radioConnectedMsg[] = {Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected, false};
-    Anki::Cozmo::RTIP::SendMessage(radioConnectedMsg, 2);
-    
-    RobotInterface::EraseFlash* taskMsg = static_cast<RobotInterface::EraseFlash*>(os_zalloc(msg.Size()));
-    if (taskMsg == NULL)
-    {
-      AnkiError( 29, "UpgradeController", 191, "Failed to allocate memory for flash erase task", 0);
-    }
-    else
-    {
-      os_memcpy(taskMsg, &msg, msg.Size());
-      retries = MAX_RETRIES;
-      foregroundTaskPost(TaskEraseFlash, reinterpret_cast<uint32>(taskMsg));
-    }
-  }
-}
 
-void WriteFlash(RobotInterface::WriteFlash& msg)
-{
-  if (msg.address < FLASH_WRITE_START_ADDRESS) // Refuse to write addresses that are too low
-  {
-    AnkiWarn( 29, "UpgradeController", 192, "Refusing to write flash address %x, below %x", 2, msg.address, FLASH_WRITE_START_ADDRESS);
-  }
-  else
-  {
-    RobotInterface::WriteFlash* taskMsg = static_cast<RobotInterface::WriteFlash*>(os_zalloc(msg.Size()));
-    if (taskMsg == NULL)
-    {
-      AnkiError( 29, "UpgradeController", 193, "Failed to allocate memory for flash write task", 0);
-    }
-    else
-    {
-      os_memcpy(taskMsg, &msg, msg.Size());
-      retries = MAX_RETRIES;
-#ifdef DEBUG_OTA__
-      os_printf("Posting TaskWriteFlash\r\n");
-#endif
-      if (foregroundTaskPost(TaskWriteFlash, reinterpret_cast<uint32>(taskMsg)) == false)
-      {
-        AnkiError( 29, "UpgradeController", 389, "Failed to post TaskWriteFlash", 0);
-      }
-#ifdef DEBUG_OTA__
-      os_printf("\tdone\r\n");
-#endif
-    }
-  }
-}
-  
-  void Trigger(RobotInterface::OTAUpgrade& msg)
-  {
-    OTAUpgradeTaskState* otaState = static_cast<OTAUpgradeTaskState*>(os_zalloc(sizeof(OTAUpgradeTaskState)));
-    if (otaState == NULL)
-    {
-      AnkiError( 29, "UpgradeController", 194, "Failed to allocate memory for upgrade task", 0);
-    }
-    else
-    {
-#ifdef DEBUG_OTA
-      os_printf("OTA finish: fwStart=%x, version=%d, command=%d\r\n", msg.start, msg.version, msg.command);
-#endif
-      retries = MAX_RETRIES;
-      SHA1Init(&(otaState->ctx)); // Initalize the SHA1
-      otaState->fwStart = msg.start + 4; // Offset for size header
-      otaState->version = msg.version;
-      otaState->index   = 0;
-      otaState->phase   = 0;
-      otaState->count   = 0;
-      otaState->cmd     = msg.command;
-      os_memcpy(&(otaState->sig), msg.sig, SHA1_DIGEST_LENGTH);
-      if(spi_flash_read(msg.start, (uint32*)&(otaState->fwSize), 4) != SPI_FLASH_RESULT_OK)
-      {
-        AnkiError( 29, "UpgradeController", 195, "Couldn't read back firmware image size! Aborting", 0);
-      }
-      else if(foregroundTaskPost(TaskCheckSig, reinterpret_cast<uint32>(otaState)) == false)
-      {
-        AnkiError( 29, "UpgradeController", 196, "Couldn't schedule signature check task! Aborting", 0);
-      }
-    }
-  }
-  
-  void StartWiFiUpgrade(bool reboot)
-  {
-    OTAUpgradeTaskState* otaState = static_cast<OTAUpgradeTaskState*>(os_zalloc(sizeof(OTAUpgradeTaskState)));
-    if (otaState == NULL)
-    {
-      os_printf("Failed to allocate memory for upgrade task\r\n");
-    }
-    else
-    {
-      os_memset(otaState, 0 , sizeof(OTAUpgradeTaskState));
-      otaState->fwStart = RobotInterface::OTA_WiFi_flash_address + 4;
-      if (spi_flash_read(RobotInterface::OTA_WiFi_flash_address, (uint32*)&(otaState->fwSize), 4) != SPI_FLASH_RESULT_OK)
-      {
-        os_printf("Couldn't read back WiFi image size, aborting!\r\n");
-        os_free(otaState);
-      }
-      else
-      {
-        otaState->cmd = RobotInterface::OTA_RTIP;
-        otaState->phase = reboot;
-        retries = MAX_RETRIES;
-        if (foregroundTaskPost(TaskOtaWiFi, (uint32)otaState) == false)
-        {
-          os_printf("Couldn't post TaskOtaWiFi! Aborting\r\n");
-          os_free(otaState);
-        }
-        else
-        {
-          os_printf("Starting WiFi upgrade from address 0x%x, 0x%x bytes\r\n", otaState->fwStart, otaState->fwSize);
-        }
-      }
-    }
-  }
-  
-  bool CheckForAndDoStaged(void)
-  {
-    if (flashStagedFlags[0] != 0xFFFFFFFF)
-    {
-      if (flashStagedFlags[1] == 0xFFFFffff) // First pass through staged upgrade
-      {
-        u8 msg = RobotInterface::EngineToRobot::Tag_bootloadBody;
-        os_printf("Flash staged, starting upgrade sequence\r\n");
-        return RTIP::SendMessage(&msg, 1);
-      }
-      else
-      {
-        StartWiFiUpgrade(true);
-      }
-      return true;
-    }
-    return false;
-  }
-  
-  void StartRTIPUpgrade(void)
-  {
-    OTAUpgradeTaskState* otaState = static_cast<OTAUpgradeTaskState*>(os_zalloc(sizeof(OTAUpgradeTaskState)));
-    if (otaState == NULL)
-    {
-      os_printf("Failed to allocate memory for upgrade task\r\n");
-    }
-    else
-    {
-      os_memset(otaState, 0 , sizeof(OTAUpgradeTaskState));
-      otaState->fwStart = RobotInterface::OTA_RTIP_flash_address + 4;
-      if (spi_flash_read(RobotInterface::OTA_RTIP_flash_address, (uint32*)&(otaState->fwSize), 4) != SPI_FLASH_RESULT_OK)
-      {
-        os_printf("Couldn't read back RTIP image size, aborting!\r\n");
-        os_free(otaState);
-      }
-      else
-      {
-        otaState->cmd = RobotInterface::OTA_RTIP;
-        retries = MAX_RETRIES;
-        if (foregroundTaskPost(TaskOtaRTIP, (uint32)otaState) == false)
-        {
-          os_printf("Couldn't post TaskOtaRTIP! Aborting\r\n");
-          os_free(otaState);
-        }
-        else
-        {
-          os_printf("Starting RTIP upgrade from address 0x%x, 0x%x bytes\r\n", otaState->fwStart, otaState->fwSize);
-        }
-      }
-    }
-  }
-  
-  void StartBodyUpgrade(void)
-  {
-    OTAUpgradeTaskState* otaState = static_cast<OTAUpgradeTaskState*>(os_zalloc(sizeof(OTAUpgradeTaskState)));
-    if (otaState == NULL)
-    {
-      os_printf("Failed to allocate memory for upgrade task\r\n");
-    }
-    else
-    {
-      os_memset(otaState, 0 , sizeof(OTAUpgradeTaskState));
-      otaState->fwStart = RobotInterface::OTA_body_flash_address + 4;
-      if (spi_flash_read(RobotInterface::OTA_body_flash_address, (uint32*)&(otaState->fwSize), 4) != SPI_FLASH_RESULT_OK)
-      {
-        os_printf("Couldn't read back body image size, aborting!\r\n");
-        os_free(otaState);
-      }
-      else
-      {
-        otaState->cmd = RobotInterface::OTA_body;
-        retries = MAX_RETRIES;
-        if (foregroundTaskPost(TaskOtaBody, (uint32)otaState) == false)
-        {
-          os_printf("Couldn't post TaskOtaBody! Aborting\r\n");
-          os_free(otaState);
-        }
-        else
-        {
-          os_printf("Starting body upgrade from 0x%x, 0x%x bytes\r\n", otaState->fwStart, otaState->fwSize);
-        }
-      }
-    }
-  }
-  
 }
 }
 }

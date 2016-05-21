@@ -66,11 +66,11 @@ namespace Anki {
       CORETECH_ASSERT(uniqueCodes.size() == markerList.size());
     }
     
-    ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID)
-    : ActiveCube(GetTypeFromFactoryID(factoryID))
+    ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
+    : ActiveCube(GetTypeFromActiveObjectType(activeObjectType))
     {
       
-      ObjectType objType = GetTypeFromFactoryID(factoryID);
+      ObjectType objType = GetTypeFromActiveObjectType(activeObjectType);
       ASSERT_NAMED(objType == ObjectType::Block_LIGHTCUBE1 ||
                    objType == ObjectType::Block_LIGHTCUBE2 ||
                    objType == ObjectType::Block_LIGHTCUBE3,
@@ -81,6 +81,26 @@ namespace Anki {
       
       if (_activeID >= 0)
         _identityState = ActiveIdentityState::Identified;
+    }
+    
+    // The physical blocks are not capable of displaying
+    // all light channels at full intensity so this is where
+    // we do smart scaling to make it work.
+    void ActiveCube::ScaleLEDValuesForHardware()
+    {
+      _scaledLedState = _ledState;
+
+      // TODO: Do smart scaling instead of this dumb scaling
+      const f32 scale = 0.5f;
+      for(u8 i=0; i<NUM_LEDS; ++i) {
+        _scaledLedState[i].onColor.SetR(_ledState[i].onColor.GetR() * scale);
+        _scaledLedState[i].onColor.SetG(_ledState[i].onColor.GetG() * scale);
+        _scaledLedState[i].onColor.SetB(_ledState[i].onColor.GetB() * scale);
+        
+        _scaledLedState[i].offColor.SetR(_ledState[i].offColor.GetR() * scale);
+        _scaledLedState[i].offColor.SetG(_ledState[i].offColor.GetG() * scale);
+        _scaledLedState[i].offColor.SetB(_ledState[i].offColor.GetB() * scale);
+      }
     }
   
     void ActiveCube::SetLEDs(const WhichCubeLEDs whichLEDs,
@@ -114,6 +134,7 @@ namespace Anki {
         }
         shiftedLEDs = shiftedLEDs >> 1;
       }
+      ScaleLEDValuesForHardware();
     }
     
     void ActiveCube::SetLEDs(const std::array<u32,NUM_LEDS>& onColors,
@@ -152,6 +173,7 @@ namespace Anki {
         _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriods_ms[iLED];
         _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriods_ms[iLED];
       }
+      ScaleLEDValuesForHardware();
     }
     
     void ActiveCube::MakeStateRelativeToXY(const Point2f& xyPosition, MakeRelativeMode mode)
@@ -433,6 +455,8 @@ namespace Anki {
       
       // Swap new state into place
       std::swap(newState, _ledState);
+      
+      ScaleLEDValuesForHardware();
     } // RotatePatternAroundTopFace()
     
     

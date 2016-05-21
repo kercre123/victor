@@ -163,7 +163,7 @@ void BehaviorFindFaces::AlwaysHandle(const EngineToGameEvent& event, const Robot
 Result BehaviorFindFaces::InitInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_FIND_FACES ) {
-    robot.PushIdleAnimation("NONE");
+    robot.GetAnimationStreamer().PushIdleAnimation("NONE");
   }
   _currentDriveActionID = (uint32_t)ActionConstants::INVALID_TAG;
   _currentState = State::WaitToFinishMoving;
@@ -272,7 +272,7 @@ void BehaviorFindFaces::StartMoving(Robot& robot)
 void BehaviorFindFaces::StopInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_FIND_FACES ) {
-    robot.PopIdleAnimation();
+    robot.GetAnimationStreamer().PopIdleAnimation();
   }
   if (_currentDriveActionID != (uint32_t)ActionConstants::INVALID_TAG)
   {

@@ -60,8 +60,6 @@ public:
   // todo: document. Is this behavior alway runnable, or we won't look around in an area we already know everything?
   virtual bool IsRunnableInternal(const Robot& robot) const override;
   
-  virtual float EvaluateScoreInternal(const Robot& robot) const override { return 1.0f; }
-  
 protected:
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -77,7 +75,8 @@ protected:
   
   virtual Result InitInternal(Robot& robot) override;
   virtual IBehavior::Status UpdateInternal(Robot& robot) override;
-  virtual void StopInternal(Robot& robot) override {} // TODO?
+  virtual void StopInternal(Robot& robot) override;
+  virtual void AlwaysHandle(const EngineToGameEvent& event, const Robot& robot) override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State transitions
@@ -105,6 +104,8 @@ private:
   {
     float   behavior_DistanceFromRecentLocationMin_mm;
     uint8_t behavior_RecentLocationsMax;
+    bool    behavior_ShouldResetTurnDirection;
+    float   behavior_AngleOfFocus_deg;
     // turn speed
     float sx_BodyTurnSpeed_degPerSec;
     float sxt_HeadTurnSpeed_degPerSec; // for turn states
@@ -119,17 +120,25 @@ private:
     // [min,max] range for pause for step 2
     float s2_WaitMin_sec;
     float s2_WaitMax_sec;
+    std::string s2_WaitAnimGroupName; // name of the animation that will play instead of the wait
     // [min,max] range for random angle turns for step 3
     float s3_BodyAngleRangeMin_deg;
     float s3_BodyAngleRangeMax_deg;
     float s3_HeadAngleRangeMin_deg;
     float s3_HeadAngleRangeMax_deg;
     // [min,max] range for head move for step 4
+    float s4_BodyAngleRelativeRangeMin_deg; // this is relative with respect to s4 start
+    float s4_BodyAngleRelativeRangeMax_deg; // this is relative with respect to s4 start
     float s4_HeadAngleRangeMin_deg;
     float s4_HeadAngleRangeMax_deg;
+    float s4_WaitBetweenChangesMin_sec;
+    float s4_WaitBetweenChangesMax_sec;
     uint8_t s4_HeadAngleChangesMin;
     uint8_t s4_HeadAngleChangesMax;
+    std::string s4_WaitAnimGroupName; // name of the animation that will play instead of the wait
     // [min,max] range for head move  for step 5
+    float s5_BodyAngleRelativeRangeMin_deg;
+    float s5_BodyAngleRelativeRangeMax_deg;
     float s5_HeadAngleRangeMin_deg;
     float s5_HeadAngleRangeMax_deg;
     // [min,max] range for random angle turns for step 6
@@ -150,16 +159,23 @@ private:
   static inline EClockDirection GetOpposite(const EClockDirection direction) {
     return (direction == EClockDirection::CW) ? EClockDirection::CCW : EClockDirection::CW; }
 
-  // request the proper action given the parameters so that the robot turns and moves head
-  IAction* CreateBodyAndHeadTurnAction(Robot& robot, EClockDirection clockDirection,  // body turn clock direction
-            float bodyStartRelativeMin_deg, float bodyStartRelativeMax_deg,           // body min/max range relative to starting angle (from original state)
-            float headAbsoluteMin_deg, float headAbsoluteMax_deg,                     // head min/max range absolute
-            float bodyTurnSpeed_degPerSec, float headTurnSpeed_degPerSec);            // turn speeds
+  // decide which direction to turn
+  void DecideTurnDirection();
   
-  // request the proper action given the parameters so that the robot moves its head
+  // request the proper action given the parameters so that the robot turns and moves head
+  IAction* CreateBodyAndHeadTurnAction(Robot& robot,
+            EClockDirection clockDirection,                                 // body turn clock direction
+            float bodyStartRelativeMin_deg, float bodyStartRelativeMax_deg, // body min/max range relative to starting angle (from original state)
+            float headAbsoluteMin_deg, float headAbsoluteMax_deg,           // head min/max range absolute
+            float bodyTurnSpeed_degPerSec, float headTurnSpeed_degPerSec);  // turn speeds
+  
+  // request the proper action given the parameters so that the robot moves its head.
+  // Animation team suggested to also do a small body move
   IAction* CreateHeadTurnAction(Robot& robot,
-            float headAbsoluteMin_deg, float headAbsoluteMax_deg,                     // head min/max range absolute
-            float headTurnSpeed_degPerSec);                                           // turn speed
+            float bodyRelativeMin_deg, float bodyRelativeMax_deg,           // to provide mini-turns with head moves (animation team suggests)
+            float bodyReference_deg,                                        // angle the relative ones use as referance (to turn absolute)
+            float headAbsoluteMin_deg, float headAbsoluteMax_deg,           // head min/max range absolute
+            float bodyTurnSpeed_degPerSec, float headTurnSpeed_degPerSec);  // turn speed
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
@@ -178,11 +194,16 @@ private:
   // up and down
   EClockDirection _mainTurnDirection;
   
-  // number of head moves left for step4
-  uint8_t _s4HeadMovesLeft;
+  // s4 specific vars
+  Radians _s4_s5StartingBodyFacing_rad; // starting facing for s4 (because angle changes are relative to this angle)
+  uint8_t _s4HeadMovesRolled;           // number of head moves rolled for step4
+  uint8_t _s4HeadMovesLeft;             // number of head moves left for step4
   
   // positions we have recently done
   std::list<Pose3d> _visitedLocations;
+  
+  // Initial direction on behavior init
+  Radians _initialBodyDirection;
 };
   
 

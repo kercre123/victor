@@ -210,6 +210,9 @@ class ReliableConnection:
                 seqIdMax = self.pendingMessageList[i].sequenceNumber
                 break
         if numMessagesToSend == 1:
+            k = loInd
+            assert seqIdMin == seqIdMax
+            assert seqIdMin == self.pendingMessageList[k].sequenceNumber, (loInd, hiInd)
             transport.ReSendReliableMessage(self, self.pendingMessageList[k].message, self.pendingMessageList[k].type, \
                                             seqIdMin, seqIdMax)
             if self.pendingMessageList[k].type in UNRELIABLE_MESSAGE_TYPES:

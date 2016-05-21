@@ -15,6 +15,7 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "BLECozmoRandom.h"
+#include "BLECozmoMessage.h"
 
 @interface AppDelegate ()
 
@@ -98,7 +99,17 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
   return configFlags;
 }
 
-
+static void SendMessageToRobot(BLECozmoConnection* weakConnection, const Anki::Cozmo::RobotInterface::EngineToRobot& robotMsg)
+{
+  Anki::Cozmo::BLECozmoMessage cozmoMessage;
+  uint8_t numChunks = cozmoMessage.ChunkifyMessage(robotMsg.GetBuffer(), robotMsg.Size());
+  
+  for (int i=0; i < numChunks; i++)
+  {
+    [weakConnection writeData:[[NSData alloc] initWithBytes:cozmoMessage.GetChunkData(i) length:Anki::Cozmo::BLECozmoMessage::kMessageExactMessageLength]
+                        error:nil];
+  }
+}
 
 - (void) doSendTestLightsMessage:(BLECozmoConnection*)connection {
   __weak __typeof(connection) weakConnection = connection;
@@ -117,9 +128,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBackpackLights;
     robotMsg.setBackpackLights = lightsData;
     
-    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                       error:nil
-                                                   encrypted:NO];
+    SendMessageToRobot(weakConnection, robotMsg);
   });
   
   static constexpr int kNumFlashSeconds = 1;
@@ -129,9 +138,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBackpackLights;
     robotMsg.setBackpackLights = Anki::Cozmo::RobotInterface::BackpackLights{}; // Use an empty message to shut off lights
     
-    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                       error:nil
-                                                   encrypted:NO];
+    SendMessageToRobot(weakConnection, robotMsg);
   });
 }
 
@@ -148,9 +155,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     Anki::Cozmo::RobotInterface::EngineToRobot robotMsg{};
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
     robotMsg.appConCfgString = configString;
-    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                       error:nil
-                                                   encrypted:NO];
+    SendMessageToRobot(weakConnection, robotMsg);
     
     // Send 2nd half of string if needed
     configString = Anki::Cozmo::RobotInterface::AppConnectConfigString{};
@@ -169,9 +174,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
       
       robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
       robotMsg.appConCfgString = configString;
-      [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                         error:nil
-                                                     encrypted:NO];
+      SendMessageToRobot(weakConnection, robotMsg);
     }
     
     // Set up password
@@ -203,9 +206,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
       
       robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgString;
       robotMsg.appConCfgString = configString;
-      [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                 error:nil
-                             encrypted:NO];
+      SendMessageToRobot(weakConnection, robotMsg);
     }
     
     // Set up config flags #1
@@ -217,9 +218,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgFlags;
     robotMsg.appConCfgFlags = configFlags;
-    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                       error:nil
-                                                   encrypted:NO];
+    SendMessageToRobot(weakConnection, robotMsg);
     
     // Set up config flags #2, bring down dhcp
     configFlags = InitConnectFlags();
@@ -227,9 +226,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgFlags;
     robotMsg.appConCfgFlags = configFlags;
-    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                       error:nil
-                                                   encrypted:NO];
+    SendMessageToRobot(weakConnection, robotMsg);
     
     // Set up IP Info
     Anki::Cozmo::RobotInterface::AppConnectConfigIPInfo configIPInfo{};
@@ -240,9 +237,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgIPInfo;
     robotMsg.appConCfgIPInfo = configIPInfo;
-    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                       error:nil
-                                                   encrypted:NO];
+    SendMessageToRobot(weakConnection, robotMsg);
     
     // Set up config flags #3, bring back up dhcp
     configFlags = InitConnectFlags();
@@ -250,9 +245,7 @@ static Anki::Cozmo::RobotInterface::AppConnectConfigFlags InitConnectFlags()
     
     robotMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_appConCfgFlags;
     robotMsg.appConCfgFlags = configFlags;
-    [weakConnection writeMessageData:[[NSData alloc] initWithBytes:robotMsg.GetBuffer() length:robotMsg.Size()]
-                                                       error:nil
-                                                   encrypted:NO];
+    SendMessageToRobot(weakConnection, robotMsg);
   });
 }
 

@@ -1,0 +1,78 @@
+/**
+ * File: TcpSocketComms
+ *
+ * Author: Mark Wesley
+ * Created: 05/14/16
+ *
+ * Description: TCP implementation for socket-based communications from e.g. Game/SDK to Engine
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
+
+
+#ifndef __Cozmo_Game_Comms_TcpSocketComms_H__
+#define __Cozmo_Game_Comms_TcpSocketComms_H__
+
+
+#include "anki/cozmo/game/comms/iSocketComms.h"
+
+
+class TcpServer;
+
+
+namespace Anki {
+namespace Cozmo {
+
+
+class TcpSocketComms : public ISocketComms
+{
+public:
+  
+  TcpSocketComms(UiConnectionType connectionType);
+  virtual ~TcpSocketComms();
+  
+  virtual bool Init(UiConnectionType connectionType, const Json::Value& config) override;
+
+  virtual void Update() override;
+  
+  virtual bool SendMessage(const Comms::MsgPacket& msgPacket) override;
+  virtual bool RecvMessage(Comms::MsgPacket& outMsgPacket) override;
+  
+  virtual bool ConnectToDeviceByID(DeviceId deviceId) override;
+  virtual bool DisconnectDeviceByID(DeviceId deviceId) override;
+  
+  virtual void GetAdvertisingDeviceIDs(std::vector<ISocketComms::DeviceId>& outDeviceIds) override;
+  
+  virtual uint32_t GetNumConnectedDevices() const override;
+  
+private:
+  
+  // ============================== Private Member Functions ==============================
+  
+  void  HandleDisconnect();
+  bool  IsConnected() const;
+  
+  bool  ReadFromSocket();
+  bool  ExtractNextMessage(Comms::MsgPacket& outMsgPacket);
+  
+  // ============================== Private Member Vars ==============================
+  
+  TcpServer*            _tcpServer;
+  
+  // TCP doesn't send/recv as single packets, so it's possible to receive just part of a message
+  // so we hang on to the partial message bytes until we have enough to deliver
+  std::vector<uint8_t>  _receivedBuffer;
+  
+  DeviceId              _connectedId;
+  bool                  _hasClient;
+};
+
+  
+    
+} // namespace Cozmo
+} // namespace Anki
+
+
+#endif // __Cozmo_Game_Comms_TcpSocketComms_H__
+

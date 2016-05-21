@@ -8,6 +8,7 @@ extern "C" {
 #include "osapi.h"
 #include "mem.h"
 #include "client.h"
+#include "driver/i2spi.h"
 }
 #include "anki/cozmo/robot/logging.h"
 #include "anki/common/constantsAndMacros.h"
@@ -45,6 +46,8 @@ static const FTMenuItem rootMenuItems[] = {
   {"WiFi & Ver info", RobotInterface::FTM_WiFiInfo,      30000000 },
   {"State info",      RobotInterface::FTM_StateMenu,     30000000 },
   {"Motor test",      RobotInterface::FTM_motorLifeTest, 30000000 },
+  {"Playpen test",    RobotInterface::FTM_PlayPenTest,   30000000 },
+  {"BLE",             RobotInterface::FTM_BLE_Menu,      15000000 },
 };
 #define NUM_ROOT_MENU_ITEMS (sizeof(rootMenuItems)/sizeof(FTMenuItem))
 
@@ -55,6 +58,14 @@ static const FTMenuItem stateMenuItems[] = {
   {"<--",             RobotInterface::FTM_menus, MENU_TIMEOUT}
 };
 #define NUM_STATE_MENU_ITEMS (sizeof(stateMenuItems)/sizeof(FTMenuItem))
+
+static const FTMenuItem bleMenuItems[] = {
+  {"BLE On",  RobotInterface::FTM_BLE_On,  1000000},
+  {"BLE Off", RobotInterface::FTM_BLE_Off, 1000000},
+  {"<--",     RobotInterface::FTM_menus,   MENU_TIMEOUT}
+};
+#define NUM_BLE_MENU_ITEMS (sizeof(bleMenuItems)/sizeof(FTMenuItem))
+
 
 bool Init()
 {
@@ -78,6 +89,11 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
       *items = stateMenuItems;
       return NUM_STATE_MENU_ITEMS;
     }
+    case RobotInterface::FTM_BLE_Menu:
+    {
+      *items = bleMenuItems;
+      return NUM_BLE_MENU_ITEMS;
+    }
     default:
     {
       *items = NULL;
@@ -85,6 +101,8 @@ static u8 getCurrentMenuItems(const FTMenuItem** items)
     }
   }
 }
+
+static char factoryAPPhase = 0;
 
 void Update()
 {
@@ -107,6 +125,7 @@ void Update()
       }
       case RobotInterface::FTM_menus:
       case RobotInterface::FTM_StateMenu:
+      case RobotInterface::FTM_BLE_Menu:
       {
         char menuBuf[256];
         unsigned int bufIndex = 0;
@@ -131,6 +150,34 @@ void Update()
           menuBuf[bufIndex] = 0;
           Face::FacePrintf(menuBuf);
         }
+        break;
+      }
+      case RobotInterface::FTM_PlayPenTest:
+      {
+        // First time in this mode, switch our AP name to the fixture's
+        switch (factoryAPPhase)
+        {
+          case 0:
+            i2spiSwitchMode(I2SPI_PAUSED);    // Scary - but cool that it works!
+            break;
+          case 1:    
+            // Create config for test fixture open AP
+            struct softap_config ap_config;
+            wifi_softap_get_config(&ap_config);
+            os_sprintf((char*)ap_config.ssid, "Afix01");
+            ap_config.authmode = AUTH_OPEN;
+            ap_config.channel = 11;    // Hardcoded channel - EL (factory) has no traffic here
+            ap_config.beacon_interval = 100;
+            wifi_softap_set_config_current(&ap_config);
+            break;
+          case 2:
+            i2spiSwitchMode(I2SPI_RESUME);    // Scarier   
+            break;
+          case 3:
+            SetMode(RobotInterface::FTM_WiFiInfo);
+            break;
+        }
+        factoryAPPhase++;
         break;
       }
       case RobotInterface::FTM_WiFiInfo:
@@ -165,6 +212,8 @@ void Update()
           msg.tag = RobotInterface::EngineToRobot::Tag_drive;
           msg.drive.lwheel_speed_mmps = wheelSpd;
           msg.drive.rwheel_speed_mmps = wheelSpd;
+          msg.drive.lwheel_accel_mmps2 = 500.0f;
+          msg.drive.rwheel_accel_mmps2 = 500.0f;
           RTIP::SendMessage(msg);
           msg.tag = RobotInterface::EngineToRobot::Tag_moveLift;
           msg.moveLift.speed_rad_per_sec = liftSpd;
@@ -202,6 +251,7 @@ void Process_TestState(const RobotInterface::TestState& state)
     }
     case RobotInterface::FTM_menus:
     case RobotInterface::FTM_StateMenu:
+    case RobotInterface::FTM_BLE_Menu:
     {
       const FTMenuItem* items;
       const u8 numItems = getCurrentMenuItems(&items);
@@ -265,6 +315,13 @@ RobotInterface::FactoryTestMode GetMode()
 
 void SetMode(const RobotInterface::FactoryTestMode newMode)
 {
+  // Some test modes can't touch the motors at all (maybe there's a better way to clean this up)
+  if (newMode == RobotInterface::FTM_PlayPenTest)
+  {
+    mode = newMode;
+    return;
+  }
+  
   RobotInterface::EngineToRobot msg;
   Anki::Cozmo::Face::FaceUnPrintf();
   menuIndex = 0;
@@ -289,6 +346,7 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
     case RobotInterface::FTM_menus:
     case RobotInterface::FTM_WiFiInfo:
     case RobotInterface::FTM_StateMenu:
+    case RobotInterface::FTM_BLE_Menu:
     {
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
       msg.enableLiftPower.enable = true;
@@ -318,9 +376,24 @@ void SetMode(const RobotInterface::FactoryTestMode newMode)
     case RobotInterface::FTM_menus:
     case RobotInterface::FTM_WiFiInfo:
     case RobotInterface::FTM_StateMenu:
+    case RobotInterface::FTM_BLE_Menu:
     {
       msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_enableLiftPower;
       msg.enableLiftPower.enable = false;
+      Anki::Cozmo::RTIP::SendMessage(msg);
+      break;
+    }
+    case RobotInterface::FTM_BLE_On:
+    {
+      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+      msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_BLUETOOTH_OPERATING_MODE;
+      Anki::Cozmo::RTIP::SendMessage(msg);
+      break;
+    }
+    case RobotInterface::FTM_BLE_Off:
+    {
+      msg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_setBodyRadioMode;
+      msg.setBodyRadioMode.radioMode = Anki::Cozmo::RobotInterface::BODY_WIFI_OPERATING_MODE;
       Anki::Cozmo::RTIP::SendMessage(msg);
       break;
     }

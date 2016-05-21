@@ -30,6 +30,9 @@ protected:
 public:
 
   virtual bool IsRunnableInternal(const Robot& robot) const override {return true;}
+  
+  // true when we have finished driving to the edge, reacting, and backing up
+  bool HasFinished() const { return _state == State::Finished; }
 
 protected:
 
@@ -42,6 +45,7 @@ private:
   enum class State {
     DrivingForward,
     BackingUpForPounce,
+    Finished
   };
 
   State _state = State::DrivingForward;
@@ -52,6 +56,7 @@ private:
 
   void TransitionToDrivingForward(Robot& robot);
   void TransitionToBackingUpForPounce(Robot& robot);
+  void TransitionToFinished();
   
   void SetState_internal(State state, const std::string& stateName);
 };

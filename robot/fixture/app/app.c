@@ -18,10 +18,13 @@
 #include "app/bodyTest.h"
 #include "app/cubeTest.h"
 #include "app/headTest.h"
+#include "app/robotTest.h"
 
-u8 g_fixtureReleaseVersion = 12;
+u8 g_fixtureReleaseVersion = 15;
+const char* BUILD_INFO = "NOT FOR FACTORY";
 
 BOOL g_isDevicePresent = 0;
+const char* FIXTYPES[] = FIXTURE_TYPES;
 FixtureType g_fixtureType = FIXTURE_NONE;
 FlashParams g_flashParams;
 
@@ -101,33 +104,27 @@ void SetFixtureText(void)
 {
   DisplayClear();
   
-  if (g_fixtureType == FIXTURE_CHARGER_TEST) {    
-    DisplayBigCenteredText("CHARGE");
-  } else if (g_fixtureType == FIXTURE_CUBE1_TEST) {    
-    DisplayBigCenteredText("CUBE 1");
-  } else if (g_fixtureType == FIXTURE_CUBE2_TEST) {    
-    DisplayBigCenteredText("CUBE 2");
-  } else if (g_fixtureType == FIXTURE_CUBE3_TEST) {    
-    DisplayBigCenteredText("CUBE 3");
-  } else if (g_fixtureType == FIXTURE_HEAD_TEST) {    
-    DisplayBigCenteredText("HEAD");  
-  } else if (g_fixtureType == FIXTURE_BODY_TEST) {    
-    DisplayBigCenteredText("BODY");
-  } else if (g_fixtureType == FIXTURE_DEBUG) {    
-    DisplayBigCenteredText("DEBUG");
-  } else {    
-    DisplayBigCenteredText("NO ID");
-  }
+  DisplayBigCenteredText(FIXTYPES[g_fixtureType]);
   
   // Show the version number in the corner
   DisplayTextHeightMultiplier(1);
   DisplayTextWidthMultiplier(1);
+#ifdef FCC
+  DisplayInvert(1);
+  DisplayMoveCursor(55, 108);
+  DisplayPutChar('c');
+  DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
+  DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
+  DisplayMoveCursor(55, 2);
+  DisplayPutString("CERT/TEST ONLY");
+#else
   DisplayMoveCursor(55, 110);
   DisplayPutChar('v');
   DisplayPutChar('0' + ((g_fixtureReleaseVersion / 10) % 10));
   DisplayPutChar('0' + (g_fixtureReleaseVersion % 10));
   DisplayMoveCursor(55, 0);
-  DisplayPutString("NOT FOR EP3");
+  DisplayPutString(BUILD_INFO);
+#endif
   
   DisplayFlip();
 }
@@ -173,11 +170,14 @@ bool DetectDevice(void)
     case FIXTURE_CUBE1_TEST:
     case FIXTURE_CUBE2_TEST:
     case FIXTURE_CUBE3_TEST:
+    case FIXTURE_CUBEFCC_TEST:
       return CubeDetect();
     case FIXTURE_HEAD_TEST:
       return HeadDetect();
     case FIXTURE_BODY_TEST:
       return BodyDetect();
+    case FIXTURE_PLAYPEN_TEST:
+      return RobotDetect();
   }
 
   // If we don't know what kind of device to look for, it's not there!
@@ -209,10 +209,9 @@ void WaitForDeviceOff(void)
     {
       if (!DetectDevice())
       {
-        // 500 checks * 1000uS = 500ms delay showing error post removal
+        // 500 checks * 1ms = 500ms delay showing error post removal
         if (++debounce >= 500)
           g_isDevicePresent = 0;
-        MicroWait(1000);
       }
       
       DisplayUpdate();  // While we wait, let screen saver kick in
@@ -248,13 +247,7 @@ void TryToEnterDiagnosticMode(void)
   throw ERROR_ACK1;
 }
 #endif
-/*
-static __align(4) u8 m_globalBuffer[1024 * 5];
-u8* GetGlobalBuffer(void)
-{
-  return m_globalBuffer;
-}
-*/
+
 // Walk through tests one by one - logging to the PC and to the Device flash
 static void RunTests()
 {
@@ -323,7 +316,6 @@ static BOOL IsDevicePresent(void)
       s_debounce = 0;
       return TRUE;
     }
-    MicroWait(1000);
   } else {
     s_debounce  = 0;
   }
@@ -400,7 +392,8 @@ static void MainExecution()
     case FIXTURE_CHARGER_TEST:
     case FIXTURE_CUBE1_TEST:
     case FIXTURE_CUBE2_TEST:
-    case FIXTURE_CUBE3_TEST:      
+    case FIXTURE_CUBE3_TEST:   
+    case FIXTURE_CUBEFCC_TEST:         
       m_functions = GetCubeTestFunctions();
       break;
     case FIXTURE_BODY_TEST:
@@ -411,6 +404,9 @@ static void MainExecution()
       break;    
     case FIXTURE_DEBUG:
       m_functions = GetDebugTestFunctions();
+      break;
+    case FIXTURE_PLAYPEN_TEST:
+      m_functions = GetRobotTestFunctions();
       break;
   }
   

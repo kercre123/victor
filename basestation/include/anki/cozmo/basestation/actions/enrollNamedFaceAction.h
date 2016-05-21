@@ -35,8 +35,8 @@ namespace Cozmo {
     virtual const std::string& GetName() const override { return _actionName; }
     virtual RobotActionType GetType() const override { return RobotActionType::ENROLL_NAMED_FACE; }
         
-    virtual u8 GetTracksToLock() const override { 
-      return (u8)AnimTrackFlag::LIFT_TRACK;
+    virtual u8 GetTracksToLock() const override {
+      return (u8)AnimTrackFlag::NO_TRACKS;
     }
     
     virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
@@ -46,6 +46,8 @@ namespace Cozmo {
     
     // Set to true to save the enrolled face to the robot's NVStorage when done (default is true)
     void EnableSaveToRobot(bool enable) { _saveToRobot = enable; }
+    
+    //void SetIdleAnimation(const std::string& name) { _idleAnimName = name; }
     
   protected:
     
@@ -57,7 +59,8 @@ namespace Cozmo {
     enum class State : u8 {
       PreActing,
       Enrolling,
-      PostActing
+      PostActing,
+      Finishing
     };
     
     State _state;
@@ -69,15 +72,16 @@ namespace Cozmo {
     std::string               _faceName;
     IActionRunner*            _action = nullptr;
     TimeStamp_t               _lastModeChangeTime_ms;
-    const TimeStamp_t         kMinTimePerEnrollMode_ms = 1000;
+    TimeStamp_t               _minTimePerEnrollStep_ms = 1000;
     s32                       _numEnrollmentsRequired = 0;
     bool                      _enrollmentCountReached = false;
     bool                      _saveToRobot = true;
+    bool                      _idlePushed = false;
     
     struct EnrollStep {
       Vision::FaceEnrollmentPose pose;
       s32 numEnrollments;
-      std::function<Result(const Vision::TrackedFace*)> startFcn, stopFcn;
+      std::function<Result(const Vision::TrackedFace*)> startFcn, duringFcn, stopFcn;
     };
     
     std::vector<EnrollStep> _enrollSequence;

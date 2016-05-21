@@ -36,6 +36,7 @@ namespace Anki {
         PLACE_ON_GROUND, // for putting a carried object down
         ENTRY,           // for entering a bridge or ascending/descending a ramp
         ROLLING,         // for rolling a block towards the robot
+        FLIPPING,        // for flipping a block
         NONE
       };
       

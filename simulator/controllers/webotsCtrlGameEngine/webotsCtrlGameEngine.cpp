@@ -150,6 +150,10 @@ int main(int argc, char **argv)
     config[AnkiUtil::kP_SDK_ADVERTISING_PORT] = SDK_ADVERTISING_PORT;
   }
   
+  if(!config.isMember(AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT)) {
+    config[AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT] = SDK_ON_DEVICE_TCP_PORT;
+  }
+  
   int numUIDevicesToWaitFor = 1;
 #ifndef NO_WEBOTS
   webots::Field* numUIsField = basestationController.getSelf()->getField("numUIDevicesToWaitFor");

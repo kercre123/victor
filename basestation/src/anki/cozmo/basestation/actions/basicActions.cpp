@@ -240,7 +240,7 @@ namespace Anki {
     SearchSideToSideAction::~SearchSideToSideAction()
     {
       if( _shouldPopIdle ) {
-        _robot.PopIdleAnimation();
+        _robot.GetAnimationStreamer().PopIdleAnimation();
         _shouldPopIdle = false;
       }
     }
@@ -304,7 +304,7 @@ namespace Anki {
       // disable the live idle animation, so we aren't moving during the "wait" sections
       if( ! _shouldPopIdle ) {
         _shouldPopIdle = true;
-        _robot.PushIdleAnimation("NONE");
+        _robot.GetAnimationStreamer().PushIdleAnimation("NONE");
       }
 
       // Go ahead and do the first Update for the compound action so we don't
@@ -345,7 +345,7 @@ namespace Anki {
         // a negative speed already, but this avoids confusion on caller's side about
         // which signs to use and the documentation says speed should always be positive.
         ASSERT_NAMED(_speed_mmps >= 0.f, "DriveStraightAction.Constructor.NegativeSpeed");
-        _speed_mmps = -speed_mmps;
+        _speed_mmps = -_speed_mmps;
       }
     }
 
@@ -359,6 +359,12 @@ namespace Anki {
   
     ActionResult DriveStraightAction::Init()
     {
+      if(_dist_mm == 0.f) {
+        // special case
+        _hasStarted = true;
+        return ActionResult::SUCCESS;
+      }
+      
       const Radians heading = _robot.GetPose().GetRotation().GetAngleAroundZaxis();
       
       const Vec3f& T = _robot.GetDriveCenterPose().GetTranslation();
@@ -427,7 +433,7 @@ namespace Anki {
     , _headAngle(headAngle)
     , _angleTolerance(tolerance)
     , _variability(variability)
-    , _name("MoveHeadTo" + std::to_string(std::round(RAD_TO_DEG(_headAngle.ToFloat()))) + "DegAction")
+    , _name("MoveHeadTo" + std::to_string(RAD_TO_DEG(_headAngle.ToFloat())) + "DegAction")
     , _inPosition(false)
     {
       if(_headAngle < MIN_HEAD_ANGLE) {
@@ -862,12 +868,14 @@ namespace Anki {
       action->SetTolerance(_panAngleTol);
       action->SetMaxSpeed(_maxPanSpeed_radPerSec);
       action->SetAccel(_panAccel_radPerSec2);
+      action->SetMoveEyes(_moveEyes);
       _compoundAction.AddAction(action);
       
       const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : _robot.GetHeadAngle() + _headTiltAngle;
       MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(_robot, newHeadAngle, _tiltAngleTol);
       headAction->SetMaxSpeed(_maxTiltSpeed_radPerSec);
       headAction->SetAccel(_tiltAccel_radPerSec2);
+      headAction->SetMoveEyes(_moveEyes);
       _compoundAction.AddAction(headAction);
       
       // Put the angles in the name for debugging
@@ -1262,7 +1270,7 @@ namespace Anki {
       
       auto obsObjLambda = [this](const AnkiEvent<MessageEngineToGame>& event)
       {
-        auto objectObservation = event.GetData().Get_RobotObservedObject();
+        const auto& objectObservation = event.GetData().Get_RobotObservedObject();
         // ID has to match and we have to actually have seen a marker (not just
         // saying part of the object is in FOV due to assumed projection)
         if(!_objectSeen && objectObservation.objectID == _objectID && objectObservation.markersVisible)
@@ -1483,16 +1491,17 @@ namespace Anki {
     ReadToolCodeAction::ReadToolCodeAction(Robot& robot, bool doCalibration)
     : IAction(robot)
     , _doCalibration(doCalibration)
+    , _headAndLiftDownAction(robot)
     {
       _toolCodeInfo.code = ToolCode::UnknownTool;
     }
     
     ActionResult ReadToolCodeAction::Init()
     {
-      // Start calibration mode on robot
-      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableReadToolCodeMode(-0.5f, -0.3f, true)));
+      // Put the head and lift down for read
+      _headAndLiftDownAction.AddAction(new MoveHeadToAngleAction(_robot, MIN_HEAD_ANGLE));
+      _headAndLiftDownAction.AddAction(new MoveLiftToHeightAction(_robot, LIFT_HEIGHT_LOWDOCK, READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM));
       
-      _toolCodeLastMovedTime   = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       _state = State::WaitingToGetInPosition;
       
       _toolReadSignalHandle = _robot.GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotReadToolCode,
@@ -1508,8 +1517,6 @@ namespace Anki {
     
     ReadToolCodeAction::~ReadToolCodeAction()
     {
-      // Stop calibration mode on robot
-      _robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableReadToolCodeMode(0, 0, false)));
       _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, false);
     }
     
@@ -1517,14 +1524,16 @@ namespace Anki {
     {
       ActionResult result = ActionResult::RUNNING;
       
-      TimeStamp_t currTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      
       switch(_state)
       {
         case State::WaitingToGetInPosition:
         {
-          if (currTimestamp - _toolCodeLastMovedTime > kRequiredStillTime_ms)
+          // Wait for head and lift to get into position (i.e. the action to complete)
+          result = _headAndLiftDownAction.Update();
+          if(ActionResult::SUCCESS == result)
           {
+            result = ActionResult::RUNNING; // return value should still be running
+            
             Result setCalibResult = _robot.GetVisionComponent().EnableToolCodeCalibration(_doCalibration);
             if(RESULT_OK != setCalibResult) {
               PRINT_NAMED_INFO("ReadToolCodeAction.CheckIfDone.FailedToSetCalibration", "");
@@ -1535,13 +1544,6 @@ namespace Anki {
               _robot.GetVisionComponent().EnableMode(VisionMode::ReadingToolCode, true);
               _state = State::WaitingForRead;
             }
-          }
-          else if (_robot.GetHeadAngle() != _toolCodeLastHeadAngle ||
-                   _robot.GetLiftAngle() != _toolCodeLastLiftAngle)
-          {
-            _toolCodeLastHeadAngle = _robot.GetHeadAngle();
-            _toolCodeLastLiftAngle = _robot.GetLiftAngle();
-            _toolCodeLastMovedTime = currTimestamp;
           }
           break;
         }

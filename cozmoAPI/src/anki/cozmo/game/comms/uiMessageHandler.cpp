@@ -17,13 +17,14 @@
 #include "anki/cozmo/basestation/debug/devLoggingSystem.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/robotManager.h"
+#include "anki/cozmo/game/comms/tcpSocketComms.h"
+#include "anki/cozmo/game/comms/udpSocketComms.h"
 #include "anki/cozmo/game/comms/uiMessageHandler.h"
 #include "anki/cozmo/basestation/multiClientComms.h"
 
 #include "anki/cozmo/basestation/behaviorManager.h"
 
 #include "anki/cozmo/basestation/viz/vizManager.h"
-#include "anki/cozmo/basestation/utils/parsingConstants/parsingConstants.h"
 
 #include "anki/common/basestation/math/quad_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
@@ -40,60 +41,51 @@ namespace Anki {
   namespace Cozmo {
     
     
+#if (ANKI_IOS_BUILD || ANDROID)
+  #define ANKI_ENABLE_SDK_OVER_UDP  0
+  #define ANKI_ENABLE_SDK_OVER_TCP  1
+#else
+  #define ANKI_ENABLE_SDK_OVER_UDP  1
+  #define ANKI_ENABLE_SDK_OVER_TCP  0
+#endif
+    
+    
     IMPLEMENT_ENUM_INCREMENT_OPERATORS(UiConnectionType);
     
     
-    SocketComms::SocketComms()
-      : _comms(new MultiClientComms())
-      , _advertisementService(nullptr)
+    
+    ISocketComms* CreateSocketComms(UiConnectionType type)
     {
-    }
-    
-    
-    SocketComms::~SocketComms()
-    {
-      delete(_comms);
-      delete(_advertisementService);
-    }
-    
-    
-    void SocketComms::StartAdvertising(UiConnectionType type)
-    {
-      const char* socketTypeName = EnumToString(type);
-      std::string serviceName = std::string() + "AdvertisementService";
-      assert(_advertisementService == nullptr);
-      delete(_advertisementService);
-      _advertisementService = new Comms::AdvertisementService(serviceName.c_str());
+      // Note: Some SocketComms are deliberately null depending on the build platform, type etc.
 
-      int registrationPort = (type == UiConnectionType::UI) ? UI_ADVERTISEMENT_REGISTRATION_PORT : SDK_ADVERTISEMENT_REGISTRATION_PORT;
-      int advertisingPort  = (type == UiConnectionType::UI) ? UI_ADVERTISING_PORT : SDK_ADVERTISING_PORT;
-      
-      PRINT_NAMED_INFO("SocketComms::StartAdvertising",
-                       "Starting %sAdvertisementService, reg port %d, ad port %d",
-                       socketTypeName, registrationPort, advertisingPort);
-      
-      _advertisementService->StartService(registrationPort, advertisingPort);
-    }
-    
-    void SocketComms::Update()
-    {
-      _advertisementService->Update();
-    }
-    
-    uint32_t SocketComms::GetNumActiveConnectedDevices() const
-    {
-      uint32_t numActive = 0;
-      for (const AdvertisingUiDevice& device : _connectedDevices)
+      switch(type)
       {
-        // [MARKW-TODO] Track if device is still active (e.g. activity in last N seconds)
-        (void)device;
-        //if (device is active)
+        case UiConnectionType::UI:
         {
-          ++numActive;
+          return new UdpSocketComms(type);
+        }
+        case UiConnectionType::SdkOverUdp:
+        {
+        #if ANKI_ENABLE_SDK_OVER_UDP
+          return new UdpSocketComms(type);
+        #else
+          return nullptr;
+        #endif
+        }
+        case UiConnectionType::SdkOverTcp:
+        {
+        #if ANKI_ENABLE_SDK_OVER_TCP
+          return new TcpSocketComms(type);
+        #else
+          return nullptr;
+        #endif
+        }
+        default:
+        {
+          assert(0);
+          return nullptr;
         }
       }
-      
-      return numActive;
     }
     
 
@@ -103,56 +95,33 @@ namespace Anki {
     {
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
-        SocketComms& comms = GetSocketComms(i);
-        comms.StartAdvertising(i);
+        _socketComms[(uint32_t)i] = CreateSocketComms(i);
       }
     }
     
-    // This needs to be defined in the cpp so that the full definition of unique_ptr types is available for destruction
-    UiMessageHandler::~UiMessageHandler() = default;
+    
+    UiMessageHandler::~UiMessageHandler()
+    {
+      for (uint32_t i=0; i < (uint32_t)UiConnectionType::Count; ++i)
+      {
+        delete _socketComms[i];
+        _socketComms[i] = nullptr;
+      }
+    }
+    
     
     Result UiMessageHandler::Init(const Json::Value& config)
     {
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
-        SocketComms& comms = GetSocketComms(i);
-
-        using namespace AnkiUtil;
-        const char* hostIPKey     = (i==UiConnectionType::UI) ? kP_ADVERTISING_HOST_IP : kP_SDK_ADVERTISING_HOST_IP;
-        const char* advertPortKey = (i==UiConnectionType::UI) ? kP_UI_ADVERTISING_PORT : kP_SDK_ADVERTISING_PORT;
-        
-        const Json::Value& hostIPValue     = config[hostIPKey];
-        const Json::Value& advertPortValue = config[advertPortKey];
-        
-        if (hostIPValue.isString() && advertPortValue.isNumeric())
+        ISocketComms* socketComms = GetSocketComms(i);
+        if (socketComms)
         {
-          Result retVal = comms.GetComms()->Init(hostIPValue.asCString(), advertPortValue.asInt());
-          
-          if(retVal != RESULT_OK) {
-            PRINT_NAMED_ERROR("UiMessageHandler.Init.InitComms", "Failed to initialize %s Comms.", EnumToString(i));
-            return retVal;
-          }
-        }
-        else
-        {
-          if (i==UiConnectionType::UI)
+          if (!socketComms->Init(i, config))
           {
-            PRINT_NAMED_ERROR("UiMessageHandler.Init.MissingSettings", "Missing advertising host IP / UI advertising port in Json config file.");
             return RESULT_FAIL;
           }
         }
-        
-        const char* numDevicesKey = (i==UiConnectionType::UI) ? kP_NUM_UI_DEVICES_TO_WAIT_FOR : kP_NUM_SDK_DEVICES_TO_WAIT_FOR;
-
-        int desiredNumUiDevices = 0;
-        if(!config.isMember(numDevicesKey)) {
-          desiredNumUiDevices = 1;
-          PRINT_NAMED_WARNING("CozmoGameImpl.Init", "No %s defined in Json config, defaulting to %d", numDevicesKey, desiredNumUiDevices);
-        } else {
-          desiredNumUiDevices = config[numDevicesKey].asInt();
-        }
-        
-        comms.SetDesiredNumDevices(desiredNumUiDevices);
       }
       
       _isInitialized = true;
@@ -166,68 +135,101 @@ namespace Anki {
       
       return RESULT_OK;
     }
+    
 
     uint32_t UiMessageHandler::GetNumConnectedDevicesOnAnySocket() const
     {
       uint32_t numCommsConnected = 0;
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
-        const SocketComms& socketComms = GetSocketComms(i);
-        numCommsConnected += socketComms.GetNumConnectedDevices();
+        const ISocketComms* socketComms = GetSocketComms(i);
+        if (socketComms)
+        {
+          numCommsConnected += socketComms->GetNumConnectedDevices();
+        }
       }
       return numCommsConnected;
     }
 
-    void UiMessageHandler::DeliverToGame(const ExternalInterface::MessageEngineToGame& message)
+    
+    void UiMessageHandler::DeliverToGame(const ExternalInterface::MessageEngineToGame& message, DestinationId desinationId)
     {
       if (GetNumConnectedDevicesOnAnySocket() > 0)
       {
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
         
-#if ANKI_DEV_CHEATS
+        #if ANKI_DEV_CHEATS
         if (nullptr != DevLoggingSystem::GetInstance())
         {
           DevLoggingSystem::GetInstance()->LogMessage(message);
         }
-#endif
+        #endif
         
         p.dataLen = message.Size();
         p.destId = _hostUiDeviceID;
 
-        for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
+        const bool sendToEveryone = (desinationId == kDestinationIdEveryone);
+        UiConnectionType connectionType = sendToEveryone ? UiConnectionType(0) : (UiConnectionType)desinationId;
+        if (connectionType >= UiConnectionType::Count)
         {
-          SocketComms& socketComms = GetSocketComms(i);
-          if (socketComms.GetComms()->GetNumConnectedDevices() > 0)
+          PRINT_NAMED_WARNING("UiMessageHandler.DeliverToGame.BadDestinationId", "Invalid destinationId %u = UiConnectionType '%s'", desinationId, EnumToString(connectionType));
+        }
+        
+        while (connectionType < UiConnectionType::Count)
+        {
+          ISocketComms* socketComms = GetSocketComms(connectionType);
+          if (socketComms)
           {
-            socketComms.GetComms()->Send(p);
+            socketComms->SendMessage(p);
+          }
+          
+          if (sendToEveryone)
+          {
+            ++connectionType;
+          }
+          else
+          {
+            return;
           }
         }
       }
     }
-  
-    Result UiMessageHandler::ProcessPacket(const Comms::MsgPacket& packet)
+ 
+    
+    Result UiMessageHandler::ProcessMessageBytes(const uint8_t* packetBytes, uint16_t packetSize, UiConnectionType connectionType)
     {
       ExternalInterface::MessageGameToEngine message;
-      if (message.Unpack(packet.data, packet.dataLen) != packet.dataLen) {
+      size_t bytesUnpacked = message.Unpack(packetBytes, packetSize);
+      if (bytesUnpacked != packetSize)
+      {
         PRINT_STREAM_ERROR("UiMessageHandler.MessageBufferWrongSize",
-                          "Buffer's size does not match expected size for this message ID. (Msg " << ExternalInterface::MessageGameToEngineTagToString(message.GetTag()) << ", expected " << message.Size() << ", recvd " << packet.dataLen << ")");
+                          "Buffer's size does not match expected size for this message ID. (Msg "
+                           << ExternalInterface::MessageGameToEngineTagToString(message.GetTag())
+                           << ", expected " << message.Size() << ", recvd " << packetSize << ")" );
         
         return RESULT_FAIL;
       }
       
-#if ANKI_DEV_CHEATS
+      #if ANKI_DEV_CHEATS
       if (nullptr != DevLoggingSystem::GetInstance())
       {
         DevLoggingSystem::GetInstance()->LogMessage(message);
       }
-#endif
+      #endif
       
       // Send out this message to anyone that's subscribed
       Broadcast(std::move(message));
       
       return RESULT_OK;
-    } // ProcessBuffer()
+    }
+    
+    
+    Result UiMessageHandler::ProcessMessageBytes(const Comms::MsgPacket& packet, UiConnectionType connectionType)
+    {
+      return ProcessMessageBytes(packet.data, packet.dataLen, connectionType);
+    }
+    
     
     // Broadcasting MessageGameToEngine messages are only internal
     void UiMessageHandler::Broadcast(const ExternalInterface::MessageGameToEngine& message)
@@ -236,6 +238,7 @@ namespace Anki {
         BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.GetTag()), message));
     } // Broadcast(MessageGameToEngine)
     
+    
     void UiMessageHandler::Broadcast(ExternalInterface::MessageGameToEngine&& message)
     {
       u32 type = static_cast<u32>(message.GetTag());
@@ -243,17 +246,21 @@ namespace Anki {
         BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
     } // Broadcast(MessageGameToEngine &&)
     
+    
     // Called from any not main thread and dealt with during the update.
     void UiMessageHandler::BroadcastDeferred(const ExternalInterface::MessageGameToEngine& message)
     {
       std::lock_guard<std::mutex> lock(_mutex);
       _threadedMsgs.emplace_back(message);
     }
+    
+    
     void UiMessageHandler::BroadcastDeferred(ExternalInterface::MessageGameToEngine&& message)
     {
       std::lock_guard<std::mutex> lock(_mutex);
       _threadedMsgs.emplace_back(std::move(message));
     }
+    
     
     // Broadcasting MessageEngineToGame messages also delivers them out of the engine
     void UiMessageHandler::Broadcast(const ExternalInterface::MessageEngineToGame& message)
@@ -263,6 +270,7 @@ namespace Anki {
         BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), static_cast<u32>(message.GetTag()), message));
     } // Broadcast(MessageEngineToGame)
     
+    
     void UiMessageHandler::Broadcast(ExternalInterface::MessageEngineToGame&& message)
     {
       DeliverToGame(message);
@@ -271,12 +279,14 @@ namespace Anki {
         BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(), type, std::move(message)));
     } // Broadcast(MessageEngineToGame &&)
     
+    
     // Provides a way to subscribe to message types using the AnkiEventMgrs
     Signal::SmartHandle UiMessageHandler::Subscribe(const ExternalInterface::MessageEngineToGameTag& tagType,
                                                     std::function<void(const AnkiEvent<ExternalInterface::MessageEngineToGame>&)> messageHandler)
     {
       return _eventMgrToGame.Subscribe(static_cast<u32>(tagType), messageHandler);
     } // Subscribe(MessageEngineToGame)
+    
     
     Signal::SmartHandle UiMessageHandler::Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType,
                                                     std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler)
@@ -289,23 +299,33 @@ namespace Anki {
     {
       Result retVal = RESULT_FAIL;
       
-      if(_isInitialized) {
+      if(_isInitialized)
+      {
         retVal = RESULT_OK;
 
         for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
         {
-          SocketComms& socketComms = GetSocketComms(i);
-
-          while(socketComms.GetComms()->GetNumPendingMsgPackets() > 0)
+          ISocketComms* socketComms = GetSocketComms(i);
+          if (socketComms)
           {
-            Comms::MsgPacket packet;
-            bool res = socketComms.GetComms()->GetNextMsgPacket(packet);
-            
-            if(res && (ProcessPacket(packet) != RESULT_OK)) {
-              retVal = RESULT_FAIL;
+            bool keepReadingMessages = true;
+            while(keepReadingMessages)
+            {
+              Comms::MsgPacket packet;
+              keepReadingMessages = socketComms->RecvMessage(packet);
+              
+              if (keepReadingMessages)
+              {
+                Result res = ProcessMessageBytes(packet, i);
+                if (res != RESULT_OK)
+                {
+                  retVal = RESULT_FAIL;
+                }
+              }
             }
-          } // while messages are still available from comms
+          }
         }
+        
       }
       
       return retVal;
@@ -314,26 +334,28 @@ namespace Anki {
     
     Result UiMessageHandler::Update()
     {
-      // Update comms
+      // Update all the comms
       
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
-        SocketComms& socketComms = GetSocketComms(i);
-
-        if(socketComms.GetComms()->IsInitialized())
+        ISocketComms* socketComms = GetSocketComms(i);
+        if (socketComms)
         {
-          socketComms.GetComms()->Update();
+          socketComms->Update();
           
-          if(socketComms.GetComms()->GetNumConnectedDevices() > 0)
+          if(socketComms->GetNumConnectedDevices() > 0)
           {
-            // Ping the UI to let them know we're still here
+            // Ping the connection to let them know we're still here
+            
             ExternalInterface::MessageEngineToGame message;
-            message.Set_Ping(socketComms.GetPing());
-            Broadcast(message);
-            ++socketComms.GetPing().counter;
+            ExternalInterface::Ping outPing( socketComms->NextPingCounter() );
+            message.Set_Ping(outPing);
+            DeliverToGame(message, (DestinationId)i);
           }
         }
       }
+      
+      // Read messages from all the comms
       
       Result lastResult = ProcessMessages();
       if (RESULT_OK != lastResult)
@@ -341,25 +363,34 @@ namespace Anki {
         return lastResult;
       }
       
+      // Send to all of the comms
+      
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
-        SocketComms& socketComms = GetSocketComms(i);
-
-        if (!socketComms.HasDesiredActiveDevices())
+        ISocketComms* socketComms = GetSocketComms(i);
+        if (socketComms)
         {
-          socketComms.Update();
-          
-          std::vector<int> advertisingUiDevices;
-          socketComms.GetComms()->GetAdvertisingDeviceIDs(advertisingUiDevices);
-          for(auto & device : advertisingUiDevices) {
-            if(device == GetHostUiDeviceID()) {
+          std::vector<ISocketComms::DeviceId> advertisingUiDevices;
+          socketComms->GetAdvertisingDeviceIDs(advertisingUiDevices);
+          for (ISocketComms::DeviceId deviceId : advertisingUiDevices)
+          {
+            if (deviceId == GetHostUiDeviceID())
+            {
               // Force connection to first (local) UI device
-              if(true == ConnectToUiDevice(device, i)) {
-                PRINT_NAMED_INFO("CozmoGameImpl.Update",
-                                 "Automatically connected to local UI device %d!", device);
+              if (ConnectToUiDevice(deviceId, i))
+              {
+                PRINT_NAMED_INFO("UiMessageHandler.Update.Connected",
+                                 "Automatically connected to local %s device %d!", EnumToString(i), deviceId);
               }
-            } else {
-              Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceAvailable(i, device)));
+              else
+              {
+                PRINT_NAMED_WARNING("UiMessageHandler.Update.FailedToConnect",
+                                 "Failed to connected to local %s device %d!", EnumToString(i), deviceId);
+              }
+            }
+            else
+            {
+              Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceAvailable(i, deviceId)));
             }
           }
         }
@@ -378,20 +409,18 @@ namespace Anki {
       
       return lastResult;
     } // Update()
+
     
-    bool UiMessageHandler::ConnectToUiDevice(AdvertisingUiDevice whichDevice, UiConnectionType connectionType)
+    bool UiMessageHandler::ConnectToUiDevice(ISocketComms::DeviceId deviceId, UiConnectionType connectionType)
     {
-      SocketComms& socketComms = GetSocketComms(connectionType);
+      ISocketComms* socketComms = GetSocketComms(connectionType);
       
-      const bool success = socketComms.GetComms()->ConnectToDeviceByID(whichDevice);
-      if(success) {
-        socketComms.AddDevice(whichDevice);
-      }
-
-      Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceConnected(connectionType, whichDevice, success)));
-
+      const bool success = socketComms ? socketComms->ConnectToDeviceByID(deviceId) : false;
+      Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::UiDeviceConnected(connectionType, deviceId, success)));
+    
       return success;
     }
+    
     
     void UiMessageHandler::HandleEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
@@ -400,14 +429,15 @@ namespace Anki {
         case ExternalInterface::MessageGameToEngineTag::ConnectToUiDevice:
         {
           const ExternalInterface::ConnectToUiDevice& msg = event.GetData().Get_ConnectToUiDevice();
+          const ISocketComms::DeviceId deviceID = msg.deviceID;
           
-          const bool success = ConnectToUiDevice(msg.deviceID, msg.connectionType);
+          const bool success = ConnectToUiDevice(deviceID, msg.connectionType);
           if(success) {
             PRINT_NAMED_INFO("UiMessageHandler.HandleEvents", "Connected to %s device %d!",
-                             EnumToString(msg.connectionType), msg.deviceID);
+                             EnumToString(msg.connectionType), deviceID);
           } else {
             PRINT_NAMED_ERROR("UiMessageHandler.HandleEvents", "Failed to connect to %s device %d!",
-                              EnumToString(msg.connectionType), msg.deviceID);
+                              EnumToString(msg.connectionType), deviceID);
           }
           
           break;
@@ -416,20 +446,13 @@ namespace Anki {
         {
           const ExternalInterface::DisconnectFromUiDevice& msg = event.GetData().Get_DisconnectFromUiDevice();
           
-          SocketComms& socketComms = GetSocketComms(msg.connectionType);
+          ISocketComms* socketComms = GetSocketComms(msg.connectionType);
+          const ISocketComms::DeviceId deviceId = msg.deviceID;
 
-          if (socketComms.GetComms()->DisconnectDeviceByID(msg.deviceID))
+          if (socketComms && socketComms->DisconnectDeviceByID(deviceId))
           {
-            PRINT_NAMED_INFO("UiMessageHandler.ProcessMessage", "Disconnected from %s device %d!", EnumToString(msg.connectionType), msg.deviceID);
-
-            if(socketComms.GetComms()->GetNumConnectedDevices() == 0)
-            {
-              //PRINT_NAMED_INFO("UiMessageHandler.ProcessMessage",
-              //                 "Last UI device just disconnected: forcing re-initialization.");
-              // LeeC TODO: Should we be doing this init anymore? It kind of breaks things, and I'm not sure it reflects
-              // the flow we should be doing now. It was also done in the game and not here, before this got moved
-              //Init(_config);
-            }
+            PRINT_NAMED_INFO("UiMessageHandler.ProcessMessage", "Disconnected from %s device %d!",
+                             EnumToString(msg.connectionType), deviceId);
           }
 
           break;
@@ -447,8 +470,8 @@ namespace Anki {
     {
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
-        const SocketComms& socketComms = GetSocketComms(i);
-        if (socketComms.HasDesiredDevices())
+        const ISocketComms* socketComms = GetSocketComms(i);
+        if (socketComms && socketComms->HasDesiredDevices())
         {
           return true;
         }

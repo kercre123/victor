@@ -28,8 +28,8 @@
 // Note that the resolution of these latencies is currently equal to
 // the Basestation frequency since that's what defines how often Update() is called.
 #define DO_SIM_COMMS_LATENCY 1
-#define SIM_RECV_LATENCY_SEC 0 // 0.03
-#define SIM_SEND_LATENCY_SEC 0 // 0.03
+#define SIM_RECV_LATENCY_SEC 0.0 // 0.03
+#define SIM_SEND_LATENCY_SEC 0.0 // 0.03
 
 
 
@@ -38,7 +38,7 @@ namespace Cozmo {
 
   typedef struct {
     AdvertisementMsg devInfo;
-    f32 lastSeenTime;
+    double lastSeenTime_s;
   } DeviceConnectionInfo_t;
   
   
@@ -54,8 +54,10 @@ namespace Cozmo {
     
     void DestroyClients();
     
-    void UpdateLastRecvTime(double newTime) { _lastRecvTime = newTime; }
-    double GetLastRecvTime() const { return _lastRecvTime; }
+    void UpdateLastRecvTime(double newTime_s) { _lastRecvTime_s = newTime_s; }
+    double GetLastRecvTime() const { return _lastRecvTime_s; }
+
+    double GetInitialConnectionTime() const { return _initialConnectionTime_s; }
     
     UdpClient* GetInClient()  { return _inClient; }
     UdpClient* GetOutClient() { return _outClient; }
@@ -66,7 +68,8 @@ namespace Cozmo {
     UdpClient* _inClient;
     UdpClient* _outClient;
     
-    double _lastRecvTime;
+    double _initialConnectionTime_s;
+    double _lastRecvTime_s;
   };
   
   
@@ -122,6 +125,7 @@ namespace Cozmo {
     void DisconnectAllDevices();
     
     u32 GetNumConnectedDevices() const { return (u32)connectedDevices_.size(); }
+    u32 GetNumActiveConnectedDevices(double maxIdleTime_s) const;
     
     u32 GetNumAdvertisingDevices() const { return (u32)advertisingDevices_.size(); }
     
@@ -158,7 +162,7 @@ namespace Cozmo {
     // 'Queue' of received messages from all connected devices with their received times.
     //std::multimap<TimeStamp_t, Comms::MsgPacket> recvdMsgPackets_;
     //std::deque<Comms::MsgPacket> recvdMsgPackets_;
-    using PacketQueue_t = std::deque< std::pair<f32, Comms::MsgPacket> >;
+    using PacketQueue_t = std::deque< std::pair<double, Comms::MsgPacket> >;
     PacketQueue_t recvdMsgPackets_;
     
 #if(DO_SIM_COMMS_LATENCY)

@@ -16,6 +16,7 @@
 #include "anki/vision/basestation/image.h"
 #include "clad/vizInterface/messageViz.h"
 #include "clad/types/animationKeyFrames.h"
+#include "util/fileUtils/fileUtils.h"
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>
@@ -80,6 +81,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessVizStartRobotUpdate, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::EndRobotUpdate,
     std::bind(&VizControllerImpl::ProcessVizEndRobotUpdate, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::SaveImages,
+    std::bind(&VizControllerImpl::ProcessSaveImages, this, std::placeholders::_1));
 
   // Get display devices
   disp = vizSupervisor.getDisplay("cozmo_viz_display");
@@ -150,6 +153,15 @@ void VizControllerImpl::ProcessMessage(VizInterface::MessageViz&& message)
   uint32_t type = static_cast<uint32_t>(message.GetTag());
   _eventMgr.Broadcast(AnkiEvent<VizInterface::MessageViz>(
     type, std::move(message)));
+}
+void VizControllerImpl::ProcessSaveImages(const AnkiEvent<VizInterface::MessageViz>& msg)
+{
+  const auto& payload = msg.GetData().Get_SaveImages();
+  _saveImages = payload.saveImages;
+  if(_saveImages)
+  {
+    _savedImagesFolder = payload.path;
+  }
 }
 
 void VizControllerImpl::SetRobotPose(CozmoBotVizParams *p,
@@ -256,8 +268,11 @@ void VizControllerImpl::ProcessVizDockingErrorSignalMessage(const AnkiEvent<VizI
 
   // Print values
   char text[111];
-  sprintf(text, "ErrSig x: %.1f, y: %.1f, ang: %.2f\n", payload.x_dist, payload.y_dist, payload.angle);
+  sprintf(text, "ErrSig x:%.1f y:%.1f z:%.1f a:%.2f\n",
+          payload.x_dist, payload.y_dist, payload.z_dist, payload.angle);
   DrawText(VizTextLabelType::TEXT_LABEL_DOCK_ERROR_SIGNAL, text);
+  camDisp->setColor(0xff0000);
+  camDisp->drawText(text, 0, 0);
 
 
   // Clear the space
@@ -389,6 +404,20 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
     }
     // Delete existing image if there is one.
     if (camImg != nullptr) {
+      if(_saveImages)
+      {
+        if (!_savedImagesFolder.empty() && !Util::FileUtils::CreateDirectory(_savedImagesFolder, false, true)) {
+          PRINT_NAMED_WARNING("VizControllerImpl.CreateDirectory", "Could not create images directory");
+        }
+        else
+        {
+          webots::ImageRef* img = camDisp->imageCopy(0, 0, camDisp->getWidth(), camDisp->getHeight());
+          std::stringstream ss;
+          ss << "images_" << _curImageTimestamp << ".jpg";
+          camDisp->imageSave(img, Util::FileUtils::FullFilePath({_savedImagesFolder,ss.str()}));
+        }
+      }
+      
       camDisp->imageDelete(camImg);
     }
 
@@ -396,6 +425,7 @@ void VizControllerImpl::ProcessVizImageChunkMessage(const AnkiEvent<VizInterface
 
     camImg = camDisp->imageNew(cvImg.cols, cvImg.rows, cvImg.data, webots::Display::RGB);
     camDisp->imagePaste(camImg, 0, 0);
+    _curImageTimestamp = payload.frameTimeStamp;
   }
 }
 

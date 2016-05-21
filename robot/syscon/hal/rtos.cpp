@@ -19,10 +19,10 @@ void RTOS::init(void) {
 
   // Setup the watchdog
   NRF_WDT->CONFIG = (WDT_CONFIG_SLEEP_Run << WDT_CONFIG_SLEEP_Pos);
-  NRF_WDT->CRV = 0x8000*30; // 30 seconds before everything explodes
+  NRF_WDT->CRV = 0x8000*5; // 2 seconds before everything explodes
   NRF_WDT->RREN = wdog_channel_mask;
   NRF_WDT->TASKS_START = 1;
-
+  
   // Manage trigger set
   NVIC_EnableIRQ(SWI0_IRQn);
   NVIC_SetPriority(SWI0_IRQn, RTOS_PRIORITY);
@@ -114,8 +114,6 @@ extern "C" void SWI0_IRQHandler(void) {
       continue ;
     }
 
-    task->task(task->userdata);
-
     // Either release the task slice, or reinsert it with the period
     if (task->repeating) {
       do {
@@ -124,6 +122,8 @@ extern "C" void SWI0_IRQHandler(void) {
     } else {
       task->active = false;
     }
+
+    task->task(task->userdata);
   }
 
   RTOS::kick(WDOG_RTOS);

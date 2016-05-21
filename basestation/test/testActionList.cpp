@@ -17,8 +17,6 @@
 #include "anki/cozmo/basestation/actions/compoundActions.h"
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/cozmoContext.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandler.h"
-#include "anki/cozmo/basestation/robotInterface/messageHandlerStub.h"
 #include "anki/common/types.h"
 #include "util/helpers/templateHelpers.h"
 #include <limits.h>

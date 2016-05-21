@@ -24,7 +24,7 @@ namespace Cozmo {
     static const s32 NUM_LEDS = 4;
     
     ActiveCube(Type type);
-    ActiveCube(ActiveID activeID, FactoryID factoryID);
+    ActiveCube(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType);
     
     virtual std::vector<RotationMatrix3d> const& GetRotationAmbiguities() const override;
     
@@ -121,6 +121,9 @@ namespace Cozmo {
     
     // Keep track of flash rate and color of each LED
     std::array<LEDstate,NUM_LEDS> _ledState;
+    std::array<LEDstate,NUM_LEDS> _scaledLedState;
+    
+    void ScaleLEDValuesForHardware();
     
     // Temporary timer for faking duration of identification process
     // TODO: Remove once real identification is implemented
@@ -149,7 +152,7 @@ namespace Cozmo {
                           "LED index should be >= 0, not %d. Using 0.", whichLED);
       whichLED = 0;
     }
-    return _ledState[whichLED];
+    return _scaledLedState[whichLED];
   }
   
 } // namespace Cozmo

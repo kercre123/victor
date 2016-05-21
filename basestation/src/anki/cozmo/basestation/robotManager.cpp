@@ -18,8 +18,11 @@
 #include "anki/common/robot/config.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/types/gameEvent.h"
+#include "json/json.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/signals/simpleSignal_fwd.h"
 #include "util/time/stepTimers.h"
+#include <vector>
 #include <sys/stat.h>
 
 #include "anki/common/robot/config.h"
@@ -38,17 +41,30 @@ namespace Anki {
     , _animationGroups(new AnimationGroupContainer())
     , _firmwareUpdater(new FirmwareUpdater(context))
     , _gameEventResponses(new GameEventResponsesContainer())
+    , _robotMessageHandler(new RobotInterface::MessageHandler())
     {
+      using namespace ExternalInterface;
       
+      auto broadcastAvailableAnimationsCallback = [this](const AnkiEvent<MessageGameToEngine>& event)
+      {
+          this->BroadcastAvailableAnimations();
+      };
+      
+      MessageGameToEngineTag tag = MessageGameToEngineTag::RequestAvailableAnimations;
+      IExternalInterface* externalInterface = context->GetExternalInterface();
+      if (externalInterface != nullptr){
+        _signalHandles.push_back( externalInterface->Subscribe(tag, broadcastAvailableAnimationsCallback) );
+      }
     }
     
     RobotManager::~RobotManager() = default;
     
-    void RobotManager::Init()
+    void RobotManager::Init(const Json::Value& config)
     {
       auto startTime = std::chrono::system_clock::now();
     
       Anki::Util::Time::PushTimedStep("RobotManager::Init");
+      _robotMessageHandler->Init(config, this, _context);
       
       Anki::Util::Time::PushTimedStep("ReadAnimationDir");
       ReadAnimationDir();
@@ -59,7 +75,7 @@ namespace Anki {
       Anki::Util::Time::PopTimedStep();
       
       Anki::Util::Time::PushTimedStep("ReadAnimationGroupMapsDir");
-      _gameEventResponses->Load(_context->GetDataPlatform(),"assets/AnimationGroupMaps");
+      _gameEventResponses->Load(_context->GetDataPlatform(),"assets/animationGroupMaps");
       Anki::Util::Time::PopTimedStep();
       
       Anki::Util::Time::PopTimedStep(); // RobotManager::Init
@@ -212,6 +228,11 @@ namespace Anki {
       
     }
     
+    void RobotManager::UpdateRobotConnection()
+    {
+      _robotMessageHandler->ProcessMessages();
+    }
+    
     void RobotManager::ReadAnimationDir()
     {
       if (nullptr == _context || nullptr ==_context->GetDataPlatform())
@@ -240,7 +261,7 @@ namespace Anki {
       
       auto filePaths = Util::FileUtils::FilesInDirectory(animationFolder, true, "json", true);
       
-      for (auto path : filePaths)
+      for (const auto& path : filePaths)
       {
         struct stat attrib{0};
         int result = stat(path.c_str(), &attrib);
@@ -322,7 +343,7 @@ namespace Anki {
       _context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, "assets/animationGroups/");
       
       auto filePaths = Util::FileUtils::FilesInDirectory(animationGroupFolder, true, "json",true);
-      for (auto path : filePaths)
+      for (const auto& path : filePaths)
       {
         struct stat attrib{0};
         int result = stat(path.c_str(), &attrib);
@@ -383,7 +404,8 @@ namespace Anki {
         
         PRINT_NAMED_INFO("RobotManager.ReadAnimationGroupFile", "reading %s - %s", animationGroupName.c_str(), filename);
         
-        _animationGroups->DefineFromJson(animGroupDef, animationGroupName);
+        ASSERT_NAMED(nullptr != _cannedAnimations, "RobotManager.ReadAnimationGroupFile.NullCannedAnimations");
+        _animationGroups->DefineFromJson(animGroupDef, animationGroupName, _cannedAnimations.get());
       }
     }
     

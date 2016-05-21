@@ -20,6 +20,7 @@ extern "C" {
 extern "C" void FacePrintf(const char *format, ...);
 #define ONCHIP
 #else // Not on Espressif
+#define STORE_ATTR
 #include <string.h>
 #include "headController.h"
 #include "liftController.h"
@@ -50,7 +51,7 @@ namespace AnimationController {
     static const s32 ANIMATION_PREROLL_LENGTH = 7;
 
     // Circular byte buffer for keyframe messages
-    ONCHIP u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
+    ONCHIP STORE_ATTR u8 _keyFrameBuffer[KEYFRAME_BUFFER_SIZE];
     s32 _currentBufferPos;
     s32 _lastBufferPos;
 
@@ -73,6 +74,7 @@ namespace AnimationController {
     s16 _audioReadInd;
     bool _playSilence;
 
+    bool _disabled;
 
 #   if DEBUG_ANIMATION_CONTROLLER
     TimeStamp_t _currentTime_ms;
@@ -87,6 +89,8 @@ namespace AnimationController {
 #   endif
 
     _tracksToPlay = ALL_TRACKS;
+    
+    _disabled = false;
 
     Clear();
 
@@ -277,6 +281,13 @@ namespace AnimationController {
   {
     const s32 numBytesAvailable = GetNumBytesAvailable();
     const s32 numBytesNeeded = bufferSize + 2;
+    
+    if (_disabled) 
+    {
+      AnkiDebug( 2, "AnimationController", 473, "BufferKeyFrame called while disabled", 0);
+      return RESULT_FAIL;
+    }
+    
     if(numBytesAvailable < numBytesNeeded) {
       // Only print the error message if we haven't already done so this tick,
       // to prevent spamming that could clog reliable UDP
@@ -356,7 +367,7 @@ namespace AnimationController {
       if (!ready) {
         if (!_isBufferStarved) {
           _isBufferStarved = true;
-          AnkiWarn( 163, "AnimationController.IsReadyToPlay.BufferStarved", 305, "", 0);
+          AnkiWarn( 169, "AnimationController.IsReadyToPlay.BufferStarved", 305, "", 0);
         }
       } else {
         _isBufferStarved = false;
@@ -451,7 +462,7 @@ namespace AnimationController {
           }
           default:
           {
-            AnkiWarn( 164, "AnimationController.ExpectedAudio", 450, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
+            AnkiWarn( 173, "AnimationController.ExpectedAudio", 455, "Expecting either audio sample or silence next in animation buffer. (Got 0x%02x instead)", 1, msgID);
             Clear();
             return false;
           }
@@ -516,7 +527,7 @@ namespace AnimationController {
           // (Note that IsReadyToPlay() checks for there being at least _two_
           //  keyframes in the buffer, where a "keyframe" is considered an
           //  audio sample (or silence) or an end-of-animation indicator.)
-          AnkiWarn( 165, "AnimationController.BufferUnexpectedlyEmpty", 451, "Ran out of animation buffer after getting audio/silence.", 0);
+          AnkiWarn( 174, "AnimationController.BufferUnexpectedlyEmpty", 451, "Ran out of animation buffer after getting audio/silence.", 0);
           return RESULT_FAIL;
         }
 
@@ -672,7 +683,7 @@ namespace AnimationController {
 
             if(_tracksToPlay & EVENT_TRACK) {
 #               if DEBUG_ANIMATION_CONTROLLER
-              AnkiDebug( 2, "AnimationController", 447, "[t=%dms(%d)] event %d.", 3,
+              AnkiDebug( 2, "AnimationController", 456, "[t=%dms(%d)] event %d.", 3,
                     _currentTime_ms, system_get_time(), msg.tag);
 #               endif
 
@@ -744,7 +755,7 @@ namespace AnimationController {
 
           default:
           {
-            AnkiWarn( 167, "AnimationController.UnexpectedTag", 453, "Unexpected message type %d in animation buffer!", 1, msgID);
+            AnkiWarn( 167, "AnimationController.UnexpectedTag", 474, "Unexpected message type %d in animation buffer!", 1, msgID);
             return RESULT_FAIL;
           }
 
@@ -797,6 +808,19 @@ namespace AnimationController {
   u8 GetCurrentTag()
   {
     return _currentTag;
+  }
+
+  s32 SuspendAndGetBuffer(u8** buffer)
+  {
+    _disabled = true;
+    Clear();
+    *buffer = _keyFrameBuffer;
+    return KEYFRAME_BUFFER_SIZE;
+  }
+  
+  void ResumeAndRestoreBuffer()
+  {
+    _disabled = false;
   }
 
 } // namespace AnimationController

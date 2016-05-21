@@ -125,6 +125,7 @@ namespace Anki {
 
       struct ActiveObjectSlotInfo {
         u32 assignedFactoryID;
+        ActiveObjectType device_type;
         webots::Receiver *receiver;
         TimeStamp_t lastHeardTime;
         bool connected;
@@ -536,7 +537,7 @@ namespace Anki {
 
 
 
-    void HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
+    bool HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
     {
       const double* vals = gyro_->getValues();  // rad/s
       IMUData.rate_x = (f32)(vals[0]);
@@ -547,6 +548,12 @@ namespace Anki {
       IMUData.acc_x = (f32)(vals[0] * 1000);  // convert to mm/s^2
       IMUData.acc_y = (f32)(vals[1] * 1000);
       IMUData.acc_z = (f32)(vals[2] * 1000);
+      
+      // Return true if IMU was already read this timestamp
+      static TimeStamp_t lastReadTimestamp = 0;
+      bool newReading = lastReadTimestamp != HAL::GetTimeStamp();
+      lastReadTimestamp = HAL::GetTimeStamp();
+      return newReading;
     }
     
     void HAL::IMUReadRawData(int16_t* accel, int16_t* gyro, uint8_t* timestamp)
@@ -688,23 +695,10 @@ namespace Anki {
        */
     }
 
-    
-    u32 GetObjectTypeByFactoryID(u32 factoryID)
+    bool IsSameTypeActiveObjectAssigned(u32 device_type)
     {
-      bool isCharger = factoryID & 0x80000000;
-      if (isCharger) {
-        return 0x4;
-      } else {
-        return factoryID & 0x3;
-      }
-    }
-    
-    bool IsSameTypeActiveObjectAssigned(u32 factoryID)
-    {
-      u32 objectType = GetObjectTypeByFactoryID(factoryID);
       for (u32 i = 0; i < MAX_NUM_ACTIVE_OBJECTS; ++i) {
-        if (activeObjectSlots_[i].assignedFactoryID != 0 &&
-            GetObjectTypeByFactoryID(activeObjectSlots_[i].assignedFactoryID) == objectType) {
+        if (activeObjectSlots_[i].device_type != 0 && activeObjectSlots_[i].device_type == device_type) {
           return true;
         }
       }
@@ -789,11 +783,12 @@ namespace Anki {
               
               // If autoconnect is enabled, assign this block to a slot if another block
               // of the same type is not already assigned.
-              if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(odMsg.factory_id)) {
+              if (autoConnectToBlocks_ && !IsSameTypeActiveObjectAssigned(odMsg.device_type)) {
                 for (u32 i=0; i< MAX_NUM_ACTIVE_OBJECTS; ++i) {
                   if (activeObjectSlots_[i].assignedFactoryID == 0) {
                     printf("sim_hal.Update.AutoAssignedObject: FactoryID 0x%x in slot %d\n", odMsg.factory_id, i);
                     activeObjectSlots_[i].assignedFactoryID = odMsg.factory_id;
+                    activeObjectSlots_[i].device_type = odMsg.device_type;
                     activeObjectSlots_[i].receiver->setChannel(odMsg.factory_id);
                     activeObjectSlots_[i].receiver->enable(TIME_STEP);
                     activeObjectSlots_[i].connected = false;
@@ -812,6 +807,7 @@ namespace Anki {
                     ObjectConnectionState ocsMsg;
                     ocsMsg.objectID = i;
                     ocsMsg.factoryID = cubeInfo->assignedFactoryID;
+                    ocsMsg.device_type = cubeInfo->device_type;
                     ocsMsg.connected = true;
                     RobotInterface::SendMessage(ocsMsg);
                     

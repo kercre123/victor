@@ -22,6 +22,7 @@
 namespace Anki {
 namespace Cozmo {
 
+class BehaviorDemoFearEdge;
 class BlockWorldFilter;
 class ObservableObject;
 class Robot;
@@ -46,11 +47,16 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
 
+protected:
+
+  virtual void ModifyScore(const IBehavior* behavior, float& score) const override;
+
 private:
 
   void TransitionToNextState();
 
   void TransitionToWakeUp();
+  void TransitionToDriveOffCharger();
   void TransitionToFearEdge();
   void TransitionToPounce();
   void TransitionToFaces();
@@ -70,6 +76,7 @@ private:
   enum class State {
     None,
     WakeUp,
+    DriveOffCharger,
     FearEdge,
     Pounce,
     Faces,
@@ -90,11 +97,10 @@ private:
   bool _hasEdge = true;
   bool _hasSeenBlock = false;
 
-  bool _initCalled = false;
-
   IBehavior* _faceSearchBehavior = nullptr;
+  BehaviorDemoFearEdge* _fearEdgeBehavior = nullptr;
 
-  IBehavior* _forceBehavior = nullptr;
+  bool _encourageFaceBehavior = false;
   
   // tracking for the cubes to determine when there are three that are upright (and have been for some time)
   float _cubesUprightTime_s = -1.0f;

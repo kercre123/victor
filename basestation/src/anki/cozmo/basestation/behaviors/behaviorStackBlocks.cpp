@@ -14,6 +14,7 @@
 
 #include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/behaviorSystem/AIWhiteboard.h"
 #include "anki/cozmo/basestation/blockWorld.h"
@@ -218,7 +219,16 @@ IBehavior::Status BehaviorStackBlocks::UpdateInternal(Robot& robot)
     }
   }
 
-  return IBehavior::UpdateInternal(robot);
+  IBehavior::Status ret = IBehavior::UpdateInternal(robot);
+
+  // workaround for bugs that leave us stuck with a cube in our hands
+
+  if( ret != Status::Running && robot.IsCarryingObject() ) {
+    StartActing(new PlaceObjectOnGroundAction(robot));
+    return Status::Running;
+  }
+  
+  return ret;
 }
 
 void BehaviorStackBlocks::TransitionToPickingUpBlock(Robot& robot)
@@ -330,20 +340,8 @@ void BehaviorStackBlocks::TransitionToStackingBlock(Robot& robot)
                     if( robot.IsCarryingObject() ) {
                       // we are still carrying the object, so maybe we lost the one we are trying to stack on
                       // top of?
-                      StartActing(new SearchSideToSideAction(robot),
-                                  [this](Robot& robot) {
-                                    StartActing(new TurnTowardsObjectAction(robot,
-                                                                            _targetBlockBottom,
-                                                                            Radians(PI_F),
-                                                                            true,
-                                                                            false),
-                                                [this, &robot](ActionResult res) {
-                                                  if( res == ActionResult::SUCCESS ) {
-                                                    TransitionToStackingBlock(robot);
-                                                  }
-                                                  // else end behavior (lost the block)
-                                                });
-                                  });
+                      CompoundActionSequential* action = new CompoundActionSequential(robot, {new DriveStraightAction(robot, -_distToBackupOnStackFailure_mm, DEFAULT_PATH_MOTION_PROFILE.speed_mmps), new PlaceObjectOnGroundAction(robot)});
+                      StartActing(action);
                     }
                     // else we lost the block, but somehow still failed the placement action, so stop the behavior
                   }
@@ -367,7 +365,7 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim(Robot& robot)
 {
   SET_STATE(PlayingFinalAnim);
 
-  robot.GetBehaviorManager().GetWhiteboard().SetHasStackToAdmire(_targetBlockTop);
+  robot.GetBehaviorManager().GetWhiteboard().SetHasStackToAdmire(_targetBlockTop, _targetBlockBottom);
 
   StartActing(new PlayAnimationGroupAction(robot, _successAnimGroup));
   IncreaseScoreWhileActing( kBSB_ScoreIncreaseForAction );

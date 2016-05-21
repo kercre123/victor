@@ -1,20 +1,21 @@
 #! armcc -E
-#define m_header_start                 0x00001000
-#define m_header_size                  0x00000080
-
-#define m_text_start                   (m_header_start + m_header_size)
+#define m_text_start                   0x00001000
 #define m_text_size                    (0x10000 - m_text_start)
 
 ; 8KB - 768 bytes for camera - 1.5KB for stack
 #define m_data_start                   0x1FFFE600
-#define m_data_size                    0x00001700   
+#define m_data_size                    0x00001700
 
 ; 8KB + 768 bytes
-#define m_data_2_start                 0x1FFFFD00   
-#define m_data_2_size                  0x00002300
+#define m_data_2_start                 0x1FFFFD00
+#define m_data_2_size                  0x000022F0
+
+#define m_data_uninit_start            0x20001FF0
+#define m_data_uninit_size             0x00000010
 
 LR_m_text m_text_start m_text_size {   ; load region size_region
-  ER_m_text m_text_start m_text_size { ; load address = execution address
+  ER_IROM1 m_text_start m_text_size { ; load address = execution address
+    * (HEADER,+FIRST)
     * (InRoot$$Sections)
     .ANY (+RO)
   }
@@ -24,13 +25,11 @@ LR_m_text m_text_start m_text_size {   ; load region size_region
     *(CODERAM)
   }
   
-  RW_DATA2 m_data_2_start { ; RW data
+  RW_DATA2 m_data_2_start m_data_2_size { ; RW data
     *(CAMRAM)
   }
-}
-
-LR_m_header m_header_start m_header_size {
-  ER_IROM1 m_header_start m_header_size {
-    * (HEADER,+FIRST)
+  
+  RW_DATA_UNINIT m_data_uninit_start UNINIT m_data_uninit_size {
+    * (UNINIT)
   }
 }

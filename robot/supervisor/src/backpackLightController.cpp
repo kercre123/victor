@@ -56,22 +56,22 @@ namespace BackpackLightController {
       {0, 0, 0, 0, 0, 0} // LED_BACKPACK_RIGHT
     }};
 
-    // Light when charged
-    const RobotInterface::BackpackLights _chargedParams = {{
-      {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
-      {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_FRONT
-      {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_MIDDLE
-      {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_BACK
-      {0, 0, 0, 0, 0, 0} // LED_BACKPACK_RIGHT
-    }};
+    // // Light when charged
+    // const RobotInterface::BackpackLights _chargedParams = {{
+    //   {0, 0, 0, 0, 0, 0}, // LED_BACKPACK_LEFT
+    //   {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_FRONT
+    //   {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_MIDDLE
+    //   {0x03e0, 0x0180, 33, 1, 33, 33}, // LED_BACKPACK_BACK
+    //   {0, 0, 0, 0, 0, 0} // LED_BACKPACK_RIGHT
+    // }};
 
-    // Voltage at which it is considered charged
-    // TODO: Should there be a HAL::IsFastCharging()?
-    const u8 CHARGED_BATT_VOLTAGE_10x = 46;
+    // // Voltage at which it is considered charged
+    // // TODO: Should there be a HAL::IsFastCharging()?
+    // const u8 CHARGED_BATT_VOLTAGE_10x = 46;
 
-    // Number of cycles it must be detected as charged or not charged before it switches over
-    const s32 LIGHT_TRANSITION_CYCLE_COUNT_THRESHOLD = 200;
-    s32 _isChargedCount = 0;
+    // // Number of cycles it must be detected as charged or not charged before it switches over
+    // const s32 LIGHT_TRANSITION_CYCLE_COUNT_THRESHOLD = 200;
+    // s32 _isChargedCount = 0;
 
     // The current LED params being played
     const RobotInterface::BackpackLights* _currParams = &_ledParams;
@@ -112,34 +112,9 @@ namespace BackpackLightController {
   //       until the robot comes off the charger. This may or may not be what we want.
   void SetCurrParams()
   {
-    bool isCharged = HAL::BatteryGetVoltage10x() >= CHARGED_BATT_VOLTAGE_10x;
-
-    // Hysteresis on charging light pattern
     if (HAL::BatteryIsOnCharger()) {
-      if (isCharged) {
-        if (_isChargedCount < LIGHT_TRANSITION_CYCLE_COUNT_THRESHOLD ) {
-          ++_isChargedCount;
-        }
-      } else {
-        if (_isChargedCount > -LIGHT_TRANSITION_CYCLE_COUNT_THRESHOLD) {
-          --_isChargedCount;
-        }
-      }
-    } else {
-      _isChargedCount = 0;
-    }
-
-    if (HAL::BatteryIsOnCharger()) {
-      if ((_currParams != &_chargingParams) && _isChargedCount <= 0)
-      {
-        // Reset current lights and switch to charging lights
-        SetParams(_chargingParams);
-      }
-      else if ((_currParams != &_chargedParams) && _isChargedCount > 0)
-      {
-        // Reset current lights and switch to charged lights
-        SetParams(_chargedParams);
-      }
+      // Reset current lights and switch to charging lights
+      SetParams(_chargingParams);
     }
     else if (!HAL::BatteryIsOnCharger() && _currParams != &_ledParams)
     {

@@ -80,6 +80,42 @@ namespace Anki {
 #ifndef TARGET_K02
         ReliableTransport_Init();
         ReliableConnection_Init(&connection, NULL); // We only have one connection so dest pointer is superfluous
+        
+        
+        // Store camera calibration in nvStorage
+        const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
+        if(headCamInfo == NULL) {
+          AnkiWarn( 163, "Messages.Init.CalibNotFound", 359, "NULL HeadCamInfo retrieved from HAL.", 0);
+        }
+        else {
+
+          CameraCalibration headCalib{
+            headCamInfo->focalLength_x,
+            headCamInfo->focalLength_y,
+            headCamInfo->center_x,
+            headCamInfo->center_y,
+            headCamInfo->skew,
+            headCamInfo->nrows,
+            headCamInfo->ncols
+          };
+          
+          for(s32 iCoeff=0; iCoeff<NUM_RADIAL_DISTORTION_COEFFS; ++iCoeff) {
+            headCalib.distCoeffs[iCoeff] = headCamInfo->distortionCoeffs[iCoeff];
+          }
+          
+          NVStorage::NVStorageWrite nvWrite;
+          nvWrite.entry.tag = NVStorage::NVEntry_CameraCalib;
+          nvWrite.entry.blob_length = headCalib.Size();
+          memcpy(nvWrite.entry.blob, headCalib.GetBuffer(), headCalib.Size());
+          nvWrite.reportDone = false;
+          nvWrite.reportEach = false;
+          nvWrite.rangeEnd = NVStorage::NVEntry_Invalid;
+          nvWrite.writeNotErase = true;
+          nvWrite.reportTo = NVStorage::RTIP;
+          SimNVStorageSpace::Write(nvWrite);
+          
+        }
+        
 #endif
         return RESULT_OK;
       }
@@ -454,7 +490,7 @@ namespace Anki {
         AnkiInfo( 110, "Messages.Process_imageRequest.Recvd", 358, "mode: %d, resolution: %d", 2, msg.sendMode, msg.resolution);
 #ifndef TARGET_K02
         HAL::SetImageSendMode(msg.sendMode, msg.resolution);
-
+/*
         // Send back camera calibration for this resolution
         const HAL::CameraInfo* headCamInfo = HAL::GetHeadCamInfo();
 
@@ -501,6 +537,7 @@ namespace Anki {
             AnkiWarn( 113, "Messages.Process_imageRequest.SendCalibFailed", 361, "Failed to send camera calibration message.", 0);
           }
         }
+ */
 #endif
       } // ProcessImageRequestMessage()
 
@@ -728,29 +765,13 @@ namespace Anki {
       {
         HAL::RadioUpdateState(state.wifiConnected, false);
       }
-      void Process_bootloadRTIP(const RobotInterface::BootloadRTIP&)
-      {
-        // Handled in HAL SPI not here
-      }
-      void Process_bodyUpgradeData(const RobotInterface::BodyUpgradeData&)
-      {
-        // Handled in HAL SPI not here
-      }
 
 #ifdef SIMULATOR
+      void Process_otaWrite(const Anki::Cozmo::RobotInterface::OTA::Write& msg)
+      {
+        
+      }
       /// Stub message handlers to satisfy simulator build
-      void Process_eraseFlash(Anki::Cozmo::RobotInterface::EraseFlash const&)
-      {
-        // Nothing to do here
-      }
-      void Process_writeFlash(RobotInterface::WriteFlash const&)
-      {
-        // Nothing to do here
-      }
-      void Process_triggerOTAUpgrade(Anki::Cozmo::RobotInterface::OTAUpgrade const&)
-      {
-        // Nothing to do here
-      }
       void Process_writeNV(Anki::Cozmo::NVStorage::NVStorageWrite const& msg)
       {
         SimNVStorageSpace::Write(msg);
@@ -759,15 +780,11 @@ namespace Anki {
       {
         SimNVStorageSpace::Read(msg);
       }
-      void Process_bodyState(Anki::Cozmo::RobotInterface::BodyFirmwareState const&)
-      {
-        // Nothing to do here
-      }
       void Process_rtipVersion(Anki::Cozmo::RobotInterface::RTIPVersionInfo const&)
       {
         // Nothing to do here
       }
-      void Process_oledRelease(Anki::Cozmo::RobotInterface::DisplayRelease const&)
+      void Process_setHeadlight(RobotInterface::SetHeadlight const&)
       {
         // Nothing to do here
       }
@@ -803,10 +820,6 @@ namespace Anki {
       {
         // Nothing to do here
       }
-      void Process_bootloadBody(Anki::Cozmo::RobotInterface::BootloadBody const&)
-      {
-        // Nothing to do here
-      }
       void Process_setRTTO(Anki::Cozmo::RobotInterface::DebugSetRTTO const&)
       {
         // TODO honor this in simulator
@@ -833,9 +846,19 @@ namespace Anki {
       }
       void Process_enterTestMode(const RobotInterface::EnterFactoryTestMode&)
       {
+        // nothing to do here//
+      }
+      /*
+      void Process_configureBluetooth(const RobotInterface::ConfigureBluetooth&)
+      {
         // nothing to do here
       }
-      void Process_configureBluetooth(const RobotInterface::ConfigureBluetooth&)
+       */
+      void Process_sendDTMCommand(const RobotInterface::SendDTMCommand&)
+      {
+        // nothing to do here
+      }
+      void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode&)
       {
         // nothing to do here
       }
@@ -908,7 +931,7 @@ namespace Anki {
       
       Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted)
       {
-        RobotInterface::MotorCalibration m;
+        MotorCalibration m;
         m.motorID = motor;
         m.calibStarted = calibStarted;
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;

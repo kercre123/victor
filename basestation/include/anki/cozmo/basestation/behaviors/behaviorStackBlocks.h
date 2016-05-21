@@ -38,8 +38,9 @@ protected:
     
 private:
 
-  std::string _retryActionAnimGroup = ""; // "rollCube_retry";
+  std::string _retryActionAnimGroup = "rollCube_retry";
   std::string _successAnimGroup = "stackCube_success";
+  const f32   _distToBackupOnStackFailure_mm = 40;
 
   mutable ObjectID _targetBlockTop;
   mutable ObjectID _targetBlockBottom;

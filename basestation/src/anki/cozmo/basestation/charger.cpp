@@ -69,10 +69,10 @@ namespace Anki {
       
     } // Charger() Constructor
     
-    Charger::Charger(ActiveID activeID, FactoryID factoryID)
-    : Charger(GetTypeFromFactoryID(factoryID))
+    Charger::Charger(ActiveID activeID, FactoryID factoryID, ActiveObjectType activeObjectType)
+    : Charger(GetTypeFromActiveObjectType(activeObjectType))
     {
-      ASSERT_NAMED(GetTypeFromFactoryID(factoryID) == ObjectType::Charger_Basic, "Charger.InvalidFactoryID");
+      ASSERT_NAMED(GetTypeFromActiveObjectType(activeObjectType) == ObjectType::Charger_Basic, "Charger.InvalidFactoryID");
       
       _activeID = activeID;
       _factoryID = factoryID;
@@ -94,6 +94,16 @@ namespace Anki {
       pose.SetName("Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
       
       return pose;
+    }
+    
+    void Charger::SetPoseToRobot(Pose3d robotPose)
+    {
+      Pose3d pose(-M_PI, Z_AXIS_3D(),
+                  Point3f{RobotToChargerDistWhenDocked, 0, 0},
+                  &robotPose,
+                  "Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
+      
+      SetPose(pose.GetWithRespectToOrigin());
     }
     
     

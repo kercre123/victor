@@ -229,6 +229,9 @@ IBehavior* SimpleBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
                             scoreData.behaviorScore);
         }
       }
+
+      // allow sub-classes to modify this score
+      ModifyScore(behavior, scoreData.totalScore);
       
       if (scoreData.totalScore > bestScore)
       {

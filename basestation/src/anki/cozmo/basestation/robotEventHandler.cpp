@@ -22,6 +22,7 @@
 #include "anki/cozmo/basestation/actions/dockActions.h"
 #include "anki/cozmo/basestation/actions/driveToActions.h"
 #include "anki/cozmo/basestation/actions/enrollNamedFaceAction.h"
+#include "anki/cozmo/basestation/actions/flipBlockAction.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
 #include "anki/cozmo/basestation/actions/trackingActions.h"
 
@@ -53,6 +54,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     std::vector<MessageGameToEngineTag> actionTagList =
     {
       MessageGameToEngineTag::AlignWithObject,
+      MessageGameToEngineTag::FlipBlock,
       MessageGameToEngineTag::GotoPose,
       MessageGameToEngineTag::GotoObject,
       MessageGameToEngineTag::EnrollNamedFace,
@@ -64,6 +66,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
       MessageGameToEngineTag::PlaceOnObject,
       MessageGameToEngineTag::PlaceRelObject,
       MessageGameToEngineTag::PlayAnimation,
+      MessageGameToEngineTag::PlayAnimationGroup,
       MessageGameToEngineTag::PopAWheelie,
       MessageGameToEngineTag::ReadToolCode,
       MessageGameToEngineTag::RollObject,
@@ -128,13 +131,21 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // Custom handler for CameraCalibration event
     auto cameraCalibrationCallback = std::bind(&RobotEventHandler::HandleCameraCalibration, this, std::placeholders::_1);
     _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::CameraCalibration, cameraCalibrationCallback));
+    
+    // Custom handler for SetHeadlight
+    auto headlightCallback = std::bind(&RobotEventHandler::HandleSetHeadlight, this, std::placeholders::_1);
+    _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::SetHeadlight, headlightCallback));
 
     // Custom handlers for BehaviorManager events
     {
       auto eventCallback = std::bind(&RobotEventHandler::HandleBehaviorManagerEvent, this, std::placeholders::_1);
       _signalHandles.push_back(externalInterface->Subscribe(MessageGameToEngineTag::BehaviorManagerMessage, eventCallback));
     }
-        
+
+    // Custom handler for animation aborted
+    auto animAbortedCallback = std::bind(&RobotEventHandler::HandleAnimationAborted, this, std::placeholders::_1);
+    _signalHandles.push_back(externalInterface->Subscribe(MessageEngineToGameTag::AnimationAborted, animAbortedCallback));
+    
   }
 }
   
@@ -318,6 +329,7 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
                                                                             msg.distanceFromMarker_mm,
                                                                             msg.useApproachAngle,
                                                                             msg.approachAngle_rad,
+                                                                            msg.alignmentType,
                                                                             msg.useManualSpeed);
     if(msg.motionProf.isCustom)
     {
@@ -325,7 +337,11 @@ IActionRunner* GetDriveToAlignWithObjectActionHelper(Robot& robot, const Externa
     }
     return action;
   } else {
-    AlignWithObjectAction* action = new AlignWithObjectAction(robot, selectedObjectID, msg.useManualSpeed);
+    AlignWithObjectAction* action = new AlignWithObjectAction(robot,
+                                                              selectedObjectID,
+                                                              msg.distanceFromMarker_mm,
+                                                              msg.alignmentType,
+                                                              msg.useManualSpeed);
     action->SetSpeedAndAccel(msg.motionProf.dockSpeed_mmps, msg.motionProf.dockAccel_mmps2, msg.motionProf.dockDecel_mmps2);
     action->SetPreActionPoseAngleTolerance(-1.f); // disable pre-action pose distance check
     return action;
@@ -632,7 +648,7 @@ IActionRunner* CreateNewActionByType(Robot& robot,
     case RobotActionUnionTag::sayText:
     {
       SayTextAction* sayTextAction = new SayTextAction(robot, actionUnion.Get_sayText().text, actionUnion.Get_sayText().style, true);
-      //sayTextAction->SetGameEvent(actionUnion.Get_sayText().playEvent);
+      sayTextAction->SetGameEvent(actionUnion.Get_sayText().playEvent);
       return sayTextAction;
     }
       
@@ -644,7 +660,22 @@ IActionRunner* CreateNewActionByType(Robot& robot,
       action->EnableSaveToRobot(enrollNamedFace.saveToRobot);
       return action;
     }
+    
+    case RobotActionUnionTag::flipBlock:
+    {
+      ObjectID selectedObjectID = actionUnion.Get_flipBlock().objectID;
+      if(selectedObjectID < 0) {
+        selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+      }
+    
+      DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, selectedObjectID);
       
+      if(actionUnion.Get_flipBlock().motionProf.isCustom)
+      {
+        action->SetMotionProfile(actionUnion.Get_flipBlock().motionProf);
+      }
+      return action;
+    }
       // TODO: Add cases for other actions
       
     default:
@@ -813,6 +844,24 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
       enrollAction->SetSequenceType(enrollNamedFace.sequence);
       enrollAction->EnableSaveToRobot(enrollNamedFace.saveToRobot);
       newAction = enrollAction;
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::FlipBlock:
+    {
+      auto& flipBlock = event.GetData().Get_FlipBlock();
+      
+      ObjectID selectedObjectID = flipBlock.objectID;
+      if(selectedObjectID < 0) {
+        selectedObjectID = robot.GetBlockWorld().GetSelectedObject();
+      }
+      
+      DriveAndFlipBlockAction* action = new DriveAndFlipBlockAction(robot, selectedObjectID);
+      
+      if(flipBlock.motionProf.isCustom)
+      {
+        action->SetMotionProfile(flipBlock.motionProf);
+      }
+      newAction = action;
       break;
     }
     default:
@@ -1124,7 +1173,7 @@ void RobotEventHandler::HandleSendAvailableObjects(const GameToEngineEvent& even
       CameraCalibration calib = event.GetData().Get_CameraCalibration();
       std::vector<u8> calibVec(calib.Size());
       calib.Pack(calibVec.data(), calib.Size());
-      robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalibration, calibVec.data(), calibVec.size());
+      robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, calibVec.data(), calibVec.size());
       
       PRINT_NAMED_INFO("RobotEventHandler.HandleCameraCalibration.SendingCalib",
                        "fx: %f, fy: %f, cx: %f, cy: %f, nrows %d, ncols %d",
@@ -1132,7 +1181,39 @@ void RobotEventHandler::HandleSendAvailableObjects(const GameToEngineEvent& even
       
     }
   }
+  
+  void RobotEventHandler::HandleSetHeadlight(const GameToEngineEvent& event)
+  {
+    // TODO: get RobotID in a non-hack way
+    RobotID_t robotID = 1;
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    // We need a robot
+    if (nullptr == robot)
+    {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleCameraCalibration.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      robot->SetHeadlight(event.GetData().Get_SetHeadlight().enable);
+    }
+  }
 
+  void RobotEventHandler::HandleAnimationAborted(const EngineToGameEvent &event)
+  {
+    RobotID_t robotID = 1;
+    Robot* robot = _context->GetRobotManager()->GetRobotByID(robotID);
+    
+    if(nullptr == robot) {
+      PRINT_NAMED_WARNING("RobotEventHandler.HandleAnimationAborted.InvalidRobotID", "Failed to find robot %u.", robotID);
+    }
+    else
+    {
+      robot->AbortAnimation();
+      PRINT_NAMED_INFO("RobotEventHandler.HandleAnimationAborted.SendingRobotAbortAnimation", "");
+    }
+  }
+  
   
 } // namespace Cozmo
 } // namespace Anki

@@ -203,6 +203,42 @@ def parse_game_arguments():
 
     return parser.parse_args()
 
+#################################
+# PLATFORM-INDEPENDENT COMMANDS #
+#################################
+
+def install_dependencies(options):
+    options.deps = ['ninja', 'python3']
+    if options.deps:
+        print_status('Checking dependencies...')
+        installer = ankibuild.installBuildDeps.DependencyInstaller(options);
+        if not installer.install():
+            sys.exit("Failed to verify build tool dependencies")
+
+def wipe_all(options, root_path, kill_unity=True):
+    print_header('WIPING ALL DATA')
+    print_status('Checking what to remove:')
+    old_dir = ankibuild.util.File.pwd()
+    ankibuild.util.File.cd(root_path)
+    ankibuild.util.File.execute(['git', 'clean', '-xffdn'])
+    ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-xffdn'])
+    prompt = 'Are you sure you want to wipe all ignored files and folders from the entire repository?'
+    if kill_unity:
+        prompt += ('\nYou will need to do a full reimport in Unity and rebuild everything from scratch.' +
+            '\nIf Unity is open, it will also be closed without saving.')
+    prompt += ' (Y/N) '
+    if not dialog(prompt):
+        ankibuild.util.File.cd(old_dir)
+        sys.exit('Operation cancelled (though delete ran successfully).')
+    else:
+        if kill_unity:
+            print_status('Killing Unity...')
+            ankibuild.util.File.execute(['killall', 'Unity'], ignore_result=True)
+        print_status('Wiping all ignored files from the entire repository...')
+        ankibuild.util.File.execute(['git', 'clean', '-Xdf'])
+        ankibuild.util.File.execute(['git', 'submodule', 'foreach', '--recursive', 'git', 'clean', '-xdf'])
+        ankibuild.util.File.cd(old_dir)
+
 
 ###############################
 # PLATFORM-DEPENDENT COMMANDS #
@@ -506,20 +542,19 @@ class GamePlatformConfiguration(object):
             print('{0}: Nothing to do on platform {1}'.format(self.options.command, self.platform))
 
     def delete(self):
+        exclude = 'EXTERNALS'
+
+        for root, dirs, files in os.walk(ENGINE_ROOT):
+            dirs[:] = [d for d in dirs if d not in exclude]
+            if "generated" in dirs:
+                if self.options.verbose:
+                    print_status('Deleting generated folders {0}/generated'.format(root))
+                ankibuild.util.File.rm_rf(os.path.join(root, "generated"))
         if self.options.verbose:
-            print_status('Deleting generated files for platform {0}...'.format(self.platform))
+            print_status('Deleting build folder {0}'.format(self.options.build_dir))
+        ankibuild.util.File.rm_rf(self.options.build_dir)
 
-        # reverse generation
-        if self.platform == 'ios':
-            ankibuild.util.File.rm(self.unity_build_symlink)
-            ankibuild.util.File.rm(self.unity_output_symlink)
-            ankibuild.util.File.rm(self.unity_opencv_symlink)
-        if self.platform == 'android':
-            ankibuild.util.File.rm_rf(self.android_unity_plugin_dir)
-        ankibuild.util.File.rm_rf(self.platform_build_dir)
-        ankibuild.util.File.rm_rf(self.platform_output_dir)
-
-
+        
 ###############
 # ENTRY POINT #
 ###############
@@ -533,6 +568,30 @@ def recursive_delete(options):
         args += ['--verbose']
     ankibuild.util.File.execute(args)
 
+def configure(options, root_path, platform_configuration_type, clad_folders, shared_generated_folders):
+    initialize_colors()
+    
+    if len(options.platforms) != 1:
+        platforms_text = 'PLATFORMS {{{0}}}'
+    else:
+        platforms_text = 'PLATFORM {0}'
+    platforms_text = platforms_text.format(','.join(options.platforms).upper())
+    
+    print_header('RUNNING COMMAND {0} ON {1}'.format(options.command.upper(), platforms_text))
+    
+    if options.command in ('generate', 'build', 'install', 'run'):
+        install_dependencies(options)
+        # TODO: Generate CLAD
+    
+    for platform in options.platforms:
+        print_header('PLATFORM {0}:'.format(platform.upper()))
+        config = platform_configuration_type(platform, options)
+        config.process()
+    
+    if options.command == 'wipeall!':
+        wipe_all(options, root_path)
+    
+    print_header('DONE COMMAND {0} ON {1}'.format(options.command.upper(), platforms_text))
 
 def main():
     options = parse_game_arguments()

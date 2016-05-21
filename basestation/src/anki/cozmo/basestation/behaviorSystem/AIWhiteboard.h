@@ -71,11 +71,13 @@ public:
   void ProcessClearQuad(const Quad2f& quad);
 
   // set to the top cube when cozmo builds a stack he wants to admire, cleared if the stack gets disrupted
-  void SetHasStackToAdmire(ObjectID topBlockID) { _topOfStackToAdmire = topBlockID; }
-  void ClearHasStackToAdmire() { _topOfStackToAdmire.UnSet(); }
+  void SetHasStackToAdmire(ObjectID topBlockID, ObjectID bottomBlockID) { _topOfStackToAdmire = topBlockID; _bottomOfStackToAdmire = bottomBlockID; }
+  void ClearHasStackToAdmire() { _topOfStackToAdmire.UnSet(); _bottomOfStackToAdmire.UnSet(); }
   
   bool HasStackToAdmire() const { return _topOfStackToAdmire.IsSet(); }
   ObjectID GetStackToAdmireTopBlockID() const { return _topOfStackToAdmire; }
+  ObjectID GetStackToAdmireBottomBlockID() const { return _bottomOfStackToAdmire; }
+
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
@@ -145,6 +147,7 @@ private:
   BeaconList _beacons;
 
   ObjectID _topOfStackToAdmire;
+  ObjectID _bottomOfStackToAdmire;
 };
   
 

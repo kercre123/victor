@@ -21,6 +21,7 @@
 
 #include "clad/externalInterface/messageGameToEngineTag.h"
 #include "util/debug/messageDebugging.h"
+#include "util/time/universalTime.h"
 
 #define DEBUG_COMMS 0
 
@@ -28,10 +29,18 @@ namespace Anki {
 namespace Cozmo {
   
   
+  static double GetCurrentTimeInSeconds()
+  {
+    // Note: BaseStationTimer returns 0.0 when not started, so we have to use universal time here
+    return Util::Time::UniversalTime::GetCurrentTimeInSeconds();
+  }
+  
+  
   ConnectedDeviceInfo::ConnectedDeviceInfo()
     : _inClient(nullptr)
     , _outClient(nullptr)
-    , _lastRecvTime(0.0)
+    , _initialConnectionTime_s(0.0)
+    , _lastRecvTime_s(0.0)
   { 
   }
   
@@ -50,8 +59,10 @@ namespace Cozmo {
     _inClient = inClient;
     _outClient = outClient;
     
+    const double currentTime_s = GetCurrentTimeInSeconds();
+    _initialConnectionTime_s = currentTime_s;
     // Pretend we just received something, so the timeout countdown starts from now
-    _lastRecvTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _lastRecvTime_s = currentTime_s;
   }
   
   
@@ -129,7 +140,7 @@ namespace Cozmo {
     #if(DO_SIM_COMMS_LATENCY)
     /*
     // If no send latency, just send now
-    if (SIM_SEND_LATENCY_SEC == 0) {
+    if (SIM_SEND_LATENCY_SEC == 0.0) {
       if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + p.dataLen > maxSentBytesPerTic_)) {
         #if(DEBUG_COMMS)
         PRINT_NAMED_INFO("MultiClientComms.MaxSendLimitReached", "queueing message");
@@ -142,7 +153,7 @@ namespace Cozmo {
     */
     // Otherwise add to send queue
     sendMsgPackets_[p.destId].emplace_back(std::piecewise_construct,
-                                           std::forward_as_tuple((f32)(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + SIM_SEND_LATENCY_SEC)),
+                                           std::forward_as_tuple((GetCurrentTimeInSeconds() + SIM_SEND_LATENCY_SEC)),
                                            std::forward_as_tuple(p));
     
     // Fake the number of bytes sent
@@ -178,8 +189,7 @@ namespace Cozmo {
   
   void MultiClientComms::Update(bool send_queued_msgs)
   {
-    
-    f32 currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    const double currentTime_s = GetCurrentTimeInSeconds();
     
     // Read datagrams and update advertising device list.
     using EMessageTag = Cozmo::ExternalInterface::MessageGameToEngineTag;
@@ -200,21 +210,46 @@ namespace Cozmo {
           const uint8_t* innerMessageBytes = &messageData[sizeof(EMessageTag)];
           const size_t   innerMessageSize  = bytes_recvd - sizeof(EMessageTag);
           
-          advMsg.Unpack(innerMessageBytes, innerMessageSize);
+          const size_t bytesUnpacked = advMsg.Unpack(innerMessageBytes, innerMessageSize);
           
-          // Check if already connected to this device.
-          // Advertisement may have arrived right after connection.
-          // If not already connected, add it to advertisement list.
-          if (connectedDevices_.find(advMsg.id) == connectedDevices_.end())
+          if (bytesUnpacked == innerMessageSize)
           {
-            if (DEBUG_COMMS && (advertisingDevices_.find(advMsg.id) == advertisingDevices_.end()))
-            {
-              PRINT_NAMED_INFO("MultiClientComms.Update.NewDevice", "Detected advertising device %d on host %s at ports ToEng=%d, FromEng=%d",
-                               advMsg.id, advMsg.ip.c_str(), (int)advMsg.toEnginePort, (int)advMsg.fromEnginePort);
-            }
+            // Check if already connected to this device.
+            // Advertisement may have arrived right after connection.
+            // If not already connected, add it to advertisement list.
             
-            advertisingDevices_[advMsg.id].devInfo = advMsg;
-            advertisingDevices_[advMsg.id].lastSeenTime = currTime;
+            connectedDevicesIt_t it = connectedDevices_.find(advMsg.id);
+            if (it != connectedDevices_.end())
+            {
+              // if connection is old assume this is a new connection attempt
+              // disconnect the old connection and allow it to full connect on the next re-send
+              ConnectedDeviceInfo& deviceInfo = it->second;
+              const double initialConnectionTime = deviceInfo.GetInitialConnectionTime();
+              const double timeConnected_s = currentTime_s - initialConnectionTime;
+              const double kMinConnectedTimeBeforeNewConnect_s = 5.0;
+              if (timeConnected_s > kMinConnectedTimeBeforeNewConnect_s)
+              {
+                PRINT_NAMED_INFO("MultiClientComms.Update.DisconnectOldConnection",
+                                 "Advert for device %d connected for %.1f seconds, assume new connection attempt",
+                                 advMsg.id, timeConnected_s);
+                DisconnectDeviceByID(advMsg.id);
+              }
+            }
+            else
+            {
+              if (DEBUG_COMMS && (advertisingDevices_.find(advMsg.id) == advertisingDevices_.end()))
+              {
+                PRINT_NAMED_INFO("MultiClientComms.Update.NewDevice", "Detected advertising device %d on host %s at ports ToEng=%d, FromEng=%d",
+                                 advMsg.id, advMsg.ip.c_str(), (int)advMsg.toEnginePort, (int)advMsg.fromEnginePort);
+              }
+              
+              advertisingDevices_[advMsg.id].devInfo = advMsg;
+              advertisingDevices_[advMsg.id].lastSeenTime_s = currentTime_s;
+            }
+          }
+          else
+          {
+            PRINT_NAMED_WARNING("MultiClientComms.Update.ErrorUnpackingAdMsg", "Unpacked %zu bytes, expected %zu", bytesUnpacked, innerMessageSize);
           }
         }
       }
@@ -225,7 +260,7 @@ namespace Cozmo {
     // Remove devices from advertising list if they're already connected.
     advertisingDevicesIt_t it = advertisingDevices_.begin();
     while(it != advertisingDevices_.end()) {
-      if (currTime - it->second.lastSeenTime > ROBOT_ADVERTISING_TIMEOUT_S) {
+      if (currentTime_s - it->second.lastSeenTime_s > ROBOT_ADVERTISING_TIMEOUT_S) {
         #if(DEBUG_COMMS)
         PRINT_NAMED_INFO("MultiClientComms.Update.TimeoutDevice", "Removing device %d from advertising list. (Last seen: %f, curr time: %f)", it->second.devInfo.id, it->second.lastSeenTime, currTime);
         #endif
@@ -243,7 +278,7 @@ namespace Cozmo {
     numRecvRdyMsgs_ = 0;
     PacketQueue_t::iterator iter;
     for (iter = recvdMsgPackets_.begin(); iter != recvdMsgPackets_.end(); ++iter) {
-      if (iter->first <= currTime) {
+      if (iter->first <= currentTime_s) {
         ++numRecvRdyMsgs_;
       } else {
         break;
@@ -259,7 +294,7 @@ namespace Cozmo {
       while (sendQueueIt != sendMsgPackets_.end()) {
         PacketQueue_t* pQueue = &(sendQueueIt->second);
         while (!pQueue->empty()) {
-          if (pQueue->front().first <= currTime) {
+          if (pQueue->front().first <= currentTime_s) {
             
             if ((maxSentBytesPerTic_ > 0) && (bytesSentThisUpdateCycle_ + pQueue->front().second.dataLen > maxSentBytesPerTic_)) {
               #if(DEBUG_COMMS)
@@ -334,9 +369,9 @@ namespace Cozmo {
           
           receivedAnything = true;
           
-          const double currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          latestRecvTime = currentTimeInSeconds;
-          f32 recvTime = currentTimeInSeconds;
+          const double currentTime_s = GetCurrentTimeInSeconds();
+          latestRecvTime = currentTime_s;
+          double recvTime = currentTime_s;
           
           #if(DO_SIM_COMMS_LATENCY)
           recvTime += SIM_RECV_LATENCY_SEC;
@@ -348,7 +383,7 @@ namespace Cozmo {
                                                               (s32)-1,
                                                               Util::numeric_cast<u16>(bytes_recvd),
                                                               recvBuf,
-                                                              BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds())
+                                                              currentTime_s)
                                         );
           
         }
@@ -526,6 +561,25 @@ namespace Cozmo {
     }
   #endif // #if(DO_SIM_COMMS_LATENCY)
     return 0;
+  }
+    
+  u32 MultiClientComms::GetNumActiveConnectedDevices(double maxIdleTime_s) const
+  {
+    const double currentTime_s = GetCurrentTimeInSeconds();
+    
+    u32 numDevices = 0;
+    for (auto& kv :connectedDevices_)
+    {
+      const ConnectedDeviceInfo& deviceInfo = kv.second;
+
+      const double secondsSinceLastRecv = currentTime_s - deviceInfo.GetLastRecvTime();
+      if (secondsSinceLastRecv < maxIdleTime_s)
+      {
+        ++numDevices;
+      }
+    }
+    
+    return numDevices;
   }
   
 }  // namespace Cozmo

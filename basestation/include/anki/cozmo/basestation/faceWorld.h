@@ -68,8 +68,6 @@ namespace Cozmo {
     using KnownFaceIter = FaceContainer::iterator;
     FaceContainer _knownFaces;
     
-    TimeStamp_t _deletionTimeout_ms = 4000;
-
     Vision::FaceID_t _idCtr = 0;
     
     Pose3d      _lastObservedFacePose;

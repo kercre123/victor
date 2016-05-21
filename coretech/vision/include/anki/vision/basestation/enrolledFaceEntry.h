@@ -32,8 +32,10 @@ namespace Vision {
 // TODO: This has gotten complex enough to promote to a class and use setters/getters
 struct EnrolledFaceEntry
 {
-  FaceID_t                  faceID;
-  FaceID_t                  prevID = UnknownFaceID;
+  FaceID_t                  faceID;                 // The ID used for recognition
+  FaceID_t                  prevID = UnknownFaceID; // The previous ID if the ID just changed (e.g. due to merge)
+  
+  s32                       trackID;                // The last associated tracker ID
   
   std::string               name;
   

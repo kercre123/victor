@@ -91,7 +91,7 @@ namespace Anki {
         PRINT_NAMED_WARNING("PlayAnimationAction.Destructor.NotStoppedOrAborted",
                             "Action destructing, but stopped/aborted message not "
                             "received for animation %s", _animName.c_str());
-        _robot.GetAnimationStreamer().SetStreamingAnimation(_robot, nullptr);
+        _robot.GetAnimationStreamer().SetStreamingAnimation(nullptr);
         }
       } else {
         PRINT_NAMED_WARNING("PlayAnimationAction.Destructor.NotStoppedOrAborted",
@@ -141,14 +141,14 @@ namespace Anki {
       // this will be == total number of loops
       if (_alteredAnimation)
       {
-        _animTag = _robot.PlayAnimation(_alteredAnimation.get(), _numLoopsRemaining, _interruptRunning);
+        _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_alteredAnimation.get(), _numLoopsRemaining, _interruptRunning);
       }
       else // do the normal thing
       {
         if(_customAnimation != nullptr) {
-          _animTag = _robot.PlayAnimation(_customAnimation, _numLoopsRemaining, _interruptRunning);
+          _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_customAnimation, _numLoopsRemaining, _interruptRunning);
         } else {
-          _animTag = _robot.PlayAnimation(_animName, _numLoopsRemaining, _interruptRunning);
+          _animTag = _robot.GetAnimationStreamer().SetStreamingAnimation(_animName, _numLoopsRemaining, _interruptRunning);
         }
         
         _robot.GetExternalInterface()->BroadcastToGame<ExternalInterface::DebugAnimationString>(_animName);
@@ -242,7 +242,7 @@ namespace Anki {
 
     inline const Animation* PlayAnimationAction::GetOurAnimation() const
     {
-      return (_customAnimation == nullptr ? _robot.GetCannedAnimation(_animName) : _customAnimation);
+      return (_customAnimation == nullptr ? _robot.GetAnimationStreamer().GetCannedAnimation(_animName) : _customAnimation);
     }
     
     bool PlayAnimationAction::NeedsAlteredAnimation() const
@@ -274,14 +274,14 @@ namespace Anki {
       bool animHasInitialFaceFrame = false;
       if (nullptr != ourAnimation)
       {
-        auto procFaceTrack = ourAnimation->GetTrack<ProceduralFaceKeyFrame>();
+        const auto& procFaceTrack = ourAnimation->GetTrack<ProceduralFaceKeyFrame>();
         // If our track is not empty and starts at beginning
         if (!procFaceTrack.IsEmpty() && procFaceTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
         {
           animHasInitialFaceFrame = true;
         }
         
-        auto faceAnimTrack = ourAnimation->GetTrack<FaceAnimationKeyFrame>();
+        const auto& faceAnimTrack = ourAnimation->GetTrack<FaceAnimationKeyFrame>();
         // If our track is not empty and starts at beginning
         if (!faceAnimTrack.IsEmpty() && faceAnimTrack.GetFirstKeyFrame()->GetTriggerTime() == 0)
         {
@@ -347,7 +347,7 @@ namespace Anki {
 
     ActionResult PlayAnimationGroupAction::Init()
     {
-      _animName = _robot.GetAnimationNameFromGroup(_animGroupName);
+      _animName = _robot.GetAnimationStreamer().GetAnimationNameFromGroup(_animGroupName, _robot);
       if( _animName.empty() ) {
         return ActionResult::FAILURE_ABORT;
       }
@@ -492,7 +492,7 @@ namespace Anki {
         case AudioActionType::SetState:
         {
           // FIXME: This is temp until we add boot process which will start music at launch
-          if (Audio::GameState::StateGroupType:: Music == _stateGroup) {
+          if (Audio::GameState::StateGroupType::Music == _stateGroup) {
             static bool didStartMusic = false;
             if (!didStartMusic) {
               _robot.GetRobotAudioClient()->PostEvent( static_cast<Audio::GameEvent::GenericEvent>(Audio::GameEvent::Music::Play), Audio::GameObjectType::Default );

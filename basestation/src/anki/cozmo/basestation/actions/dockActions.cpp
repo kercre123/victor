@@ -26,7 +26,7 @@ namespace Anki {
   namespace Cozmo {
   
     // Which docking method actions should use
-    CONSOLE_VAR(u8, kDockingMethod, "Docking", (u8)DockingMethod::BLIND_DOCKING);
+    CONSOLE_VAR(u32, kDockingMethod, "Docking", (u8)DockingMethod::BLIND_DOCKING);
     
     // Helper function for computing the distance-to-preActionPose threshold,
     // given how far robot is from actionObject
@@ -248,7 +248,7 @@ namespace Anki {
       {
         if (!_liftMovingAnimation.empty()) {
           // Check that the animation only has sound keyframes
-          const Animation* anim = _robot.GetCannedAnimation(_liftMovingAnimation);
+          const Animation* anim = _robot.GetAnimationStreamer().GetCannedAnimation(_liftMovingAnimation);
           if (nullptr != anim) {
             auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
             auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
@@ -564,10 +564,35 @@ namespace Anki {
     AlignWithObjectAction::AlignWithObjectAction(Robot& robot,
                                                  ObjectID objectID,
                                                  const f32 distanceFromMarker_mm,
+                                                 const AlignmentType alignmentType,
                                                  const bool useManualSpeed)
     : IDockAction(robot, objectID, useManualSpeed)
     {
-      SetPlacementOffset(distanceFromMarker_mm, 0, 0);
+      f32 distance = 0;
+      switch(alignmentType)
+      {
+        case(AlignmentType::LIFT_FINGER):
+        {
+          distance = ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM;
+          break;
+        }
+        case(AlignmentType::LIFT_PLATE):
+        {
+          distance = ORIGIN_TO_LIFT_FRONT_FACE_DIST_MM - LIFT_FRONT_WRT_WRIST_JOINT;
+          break;
+        }
+        case(AlignmentType::BODY):
+        {
+          distance = WHEEL_RAD_TO_MM;
+          break;
+        }
+        case(AlignmentType::CUSTOM):
+        {
+          distance = distanceFromMarker_mm;
+          break;
+        }
+      }
+      SetPlacementOffset(distance, 0, 0);
     }
     
     AlignWithObjectAction::~AlignWithObjectAction()
@@ -767,7 +792,7 @@ namespace Anki {
           Vec3f Tdiff;
           Radians angleDiff;
           ObservableObject* objectInOriginalPose = nullptr;
-          for(auto object : objectsWithType)
+          for(const auto& object : objectsWithType)
           {
             // TODO: is it safe to always have useAbsRotation=true here?
             Vec3f Tdiff;
@@ -881,6 +906,8 @@ namespace Anki {
       
       // If we were moving, stop moving.
       _robot.GetMoveComponent().StopAllMotors();
+      
+      _startedPlacing = false;
       
       return result;
       
@@ -1056,6 +1083,12 @@ namespace Anki {
       if (!_robot.IsCarryingObject()) {
         PRINT_STREAM_INFO("PlaceRelObjectAction.SelectDockAction", "Can't place if not carrying an object. Aborting.");
         _interactionResult = ObjectInteractionResult::NOT_CARRYING;
+        return RESULT_FAIL;
+      }
+      
+      if(!_placeObjectOnGroundIfCarrying && !_robot.CanStackOnTopOfObject(*object))
+      {
+        PRINT_NAMED_WARNING("PlaceRelObjectAction.SelectDockAction", "Can't stack on object");
         return RESULT_FAIL;
       }
       

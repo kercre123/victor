@@ -640,9 +640,9 @@ namespace Anki {
     */
     
     // ============== Misc. Debug methods =================
-    void VizManager::SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle)
+    void VizManager::SetDockingError(const f32 x_dist, const f32 y_dist, const f32 z_dist, const f32 angle)
     {
-      SendMessage(VizInterface::MessageViz(VizInterface::DockingErrorSignal(x_dist, y_dist, angle)));
+      SendMessage(VizInterface::MessageViz(VizInterface::DockingErrorSignal(x_dist, y_dist, z_dist, angle)));
     }
 
     void VizManager::SendRobotState(const RobotState &msg,
@@ -679,6 +679,11 @@ namespace Anki {
     void VizManager::SendEndRobotUpdate()
     {
       SendMessage(VizInterface::MessageViz(VizInterface::EndRobotUpdate()));
+    }
+    
+    void VizManager::SendSaveImages(bool saveImages, std::string path)
+    {
+      SendMessage(VizInterface::MessageViz(VizInterface::SaveImages(saveImages, path)));
     }
 
     /*

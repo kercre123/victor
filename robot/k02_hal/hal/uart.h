@@ -9,8 +9,14 @@
 
 static const uint32_t debug_baud_rate = 3000000;
 
-#define BAUD_SBR(baud)  (CORE_CLOCK * 2 / (baud) / 32)
-#define BAUD_BRFA(baud) (CORE_CLOCK * 2 / (baud) % 32)
+#ifdef ENABLE_FCC_TEST
+static const int UART_CORE_CLOCK = 32768*2560;
+#else
+static const int UART_CORE_CLOCK = CORE_CLOCK;
+#endif
+
+#define BAUD_SBR(baud)  (UART_CORE_CLOCK * 2 / (baud) / 32)
+#define BAUD_BRFA(baud) (UART_CORE_CLOCK * 2 / (baud) % 32)
 
 extern GlobalDataToHead g_dataToHead;
 extern GlobalDataToBody g_dataToBody;

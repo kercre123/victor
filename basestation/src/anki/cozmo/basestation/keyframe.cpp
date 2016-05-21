@@ -625,8 +625,8 @@ _streamMsg.colors[__LED_NAME__] = u32(color) >> 8; } while(0) // Note we shift t
     
     bool BodyMotionKeyFrame::IsDone()
     {
-      // Done once enough time has ticked by
-      if(_currentTime_ms >= _durationTime_ms) {
+      // Done once enough time has ticked by or if we're not sending a done message
+      if(!_enableStopMessage || _currentTime_ms >= _durationTime_ms) {
         _currentTime_ms = 0; // Reset for next time
         return true;
       } else {

@@ -1,7 +1,6 @@
 #include "battery.h"
 #include "nrf.h"
 #include "nrf_gpio.h"
-#include "debug.h"
 #include "timer.h"
 #include "anki/cozmo/robot/spineData.h"
 #include "messages.h"
@@ -10,6 +9,9 @@
 
 #include "hardware.h"
 #include "rtos.h"
+
+static const int MaxContactTime = 90000; // (30min) 20ms per count
+static const int MinContactTime = 100;   //
 
 // Updated to 3.0
 const u32 V_REFERNCE_MV = 1200; // 1.2V Bandgap reference
@@ -21,8 +23,6 @@ const Fixed VBAT_SCALE  = TO_FIXED(4.0); // Cozmo 4.1 voltage divider
 
 const Fixed VBAT_CHGD_HI_THRESHOLD = TO_FIXED(4.05); // V
 const Fixed VBAT_CHGD_LO_THRESHOLD = TO_FIXED(3.30); // V
-
-//const Fixed VBAT_EMPTY_THRESHOLD   = TO_FIXED(2.90); // V
 
 const Fixed VEXT_DETECT_THRESHOLD  = TO_FIXED(4.40); // V
 
@@ -59,7 +59,7 @@ static inline Fixed getADCsample(AnalogInput channel, const Fixed scale)
   return calcResult(scale);
 }
 
-void SendPowerStateUpdate(void *userdata)
+static void SendPowerStateUpdate(void *userdata)
 {
   Anki::Cozmo::PowerState msg;
   msg.VBatFixed = vBat;
@@ -71,7 +71,7 @@ void SendPowerStateUpdate(void *userdata)
 void Battery::init()
 {
   // Configure charge pins
-  nrf_gpio_pin_set(PIN_CHARGE_EN);
+  nrf_gpio_pin_clear(PIN_CHARGE_EN);
   nrf_gpio_cfg_output(PIN_CHARGE_EN);
  
   // Configure cliff sensor pins
@@ -81,7 +81,7 @@ void Battery::init()
   nrf_gpio_pin_set(PIN_PWR_EN);
   nrf_gpio_cfg_output(PIN_PWR_EN);
   
-  // Encoder and headboard power
+  // Encoder and LED power
   nrf_gpio_pin_set(PIN_VDDs_EN);
   nrf_gpio_cfg_output(PIN_VDDs_EN);
 
@@ -126,7 +126,6 @@ void Battery::setHeadlight(bool status) {
 void Battery::powerOn()
 {
   // Let power drain out - 10ms is plenty long enough
-  MicroWait(10000);
   nrf_gpio_pin_clear(PIN_VDDs_EN);
 }
 
@@ -190,29 +189,38 @@ void Battery::manage(void* userdata)
 
     case ANALOG_V_EXT_SENSE:
       {
-        uint32_t raw = NRF_ADC->RESULT;
+        // Are our power pins shorted?
         static int ground_short = 0;
-
-        if (raw >= 0x30){
-          RTOS::kick(WDOG_NERVE_PINCH);
+        if (NRF_ADC->RESULT < 0x30) {
+          if (++ground_short > 30) {
+            Battery::powerOff();
+            for (;;) ;
+          }
+        } else {
           ground_short = 0;
-        } else if (ground_short++ >= 30) {
-          Battery::powerOff();
-          while(true) ;
         }
 
         vExt = calcResult(VEXT_SCALE);
         onContacts = vExt > VEXT_DETECT_THRESHOLD;
-
         startADCsample(ANALOG_CLIFF_SENSE);
+                
+        static int ContactTime = 0;
+        
+        if (!onContacts) {
+          ContactTime = 0;
+        } else {
+          ContactTime++;
+        }
+
+        if (ContactTime < MaxContactTime && ContactTime > MinContactTime) {
+          nrf_gpio_pin_set(PIN_CHARGE_EN);
+        } else {
+          nrf_gpio_pin_clear(PIN_CHARGE_EN);
+        }
       }
       break ;
     case ANALOG_CLIFF_SENSE:
       sampleCliffSensor();
-      break ;
-    default:
-      // Panic because something cause the stack to freak out
-      Battery::powerOff();
       break ;
   }
 }

@@ -78,6 +78,7 @@ message CameraCalibration
   float_32 skew,
   uint_16  nrows,
   uint_16  ncols,
+  float_32 distCoeffs[8], // NUM_RADIAL_DISTORTION_COEFFS
 }
 
 } // namespace Cozmo

@@ -183,7 +183,9 @@ namespace Anki {
       AlignWithObjectAction(Robot& robot,
                             ObjectID objectID,
                             const f32 distanceFromMarker_mm,
+                            const AlignmentType alignmentType = AlignmentType::CUSTOM,
                             const bool useManualSpeed = false);
+      
       virtual ~AlignWithObjectAction();
       
       virtual const std::string& GetName() const override;
@@ -252,14 +254,12 @@ namespace Anki {
       
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
-      // Need longer than default for check if done:
-      virtual f32 GetCheckIfDoneDelayInSeconds() const override { return 1.5f; }
-      
       ObjectID                    _carryingObjectID;
       const Vision::KnownMarker*  _carryObjectMarker = nullptr;
       IActionRunner*              _faceAndVerifyAction = nullptr;
       ObjectInteractionResult     _interactionResult = ObjectInteractionResult::INCOMPLETE;
       bool                        _startedPlacing = false;
+      
       
     }; // class PlaceObjectOnGroundAction
     

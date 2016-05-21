@@ -157,8 +157,6 @@ protected:
     _behaviorGroups.SetBitFlag(behaviorGroup, newVal);
   }
     
-  // Going forward we don't want names being set arbitrarily (they can come from data etc.)
-  void DEMO_HACK_SetName(const char* inName) { _name = inName; }
   // Only sets the name if it's currenty the base default name
   void SetDefaultName(const char* inName);
   inline void SetStateName(const std::string& inName) { _stateName = inName; }
@@ -368,8 +366,8 @@ public:
 
   // if a trigger tag is received, this function will be called. If it returns true, this behavior will run
   // immediately
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const { return true; }
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageGameToEngine& event) const { return true; }
+  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) { return true; }
+  virtual bool ShouldRunForEvent(const ExternalInterface::MessageGameToEngine& event, const Robot& robot) { return true; }
     
   virtual IReactionaryBehavior* AsReactionaryBehavior() override { return this; }
 

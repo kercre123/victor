@@ -58,12 +58,14 @@ class CozmoContext;
 class MultiClientChannel;
 class UiMessageHandler;
 class USBTunnelServer;
+class BLESystem;
   
 template <typename Type>
 class AnkiEvent;
 
 namespace ExternalInterface {
   class MessageGameToEngine;
+  struct ConnectToRobot;
 }
 
 namespace SpeechRecognition {
@@ -94,21 +96,11 @@ public:
 
   virtual void ReadAnimationsFromDisk();
 
-  void DisconnectFromRobot(RobotID_t whichRobot);
-
   // TODO: Add IsConnected methods
   // Check to see if a specified robot / UI device is connected
   // bool IsRobotConnected(AdvertisingRobot whichRobot) const;
 
   virtual bool GetCurrentRobotImage(RobotID_t robotId, Vision::Image& img, TimeStamp_t newerThanTime);
-  
-  // For adding a real robot to the list of availale ones advertising, using its
-  // known IP address. This is only necessary until we have real advertising
-  // capability on real robots.
-  // TODO: Remove this once we have sorted out the advertising process for real robots
-  void ForceAddRobot(AdvertisingRobot robotID,
-                     const char*      robotIP,
-                     bool             robotIsSimulated);
   
   void ListenForRobotConnections(bool listen);
   
@@ -118,7 +110,7 @@ public:
   bool   HasRobotWithID(const RobotID_t robotID) const;
   std::vector<RobotID_t> const& GetRobotIDList() const;
   
-  virtual bool ConnectToRobot(AdvertisingRobot whichRobot);
+  virtual bool ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg);
   
   void SetImageSendMode(RobotID_t robotID, ImageSendMode newMode);
   void SetRobotImageSendMode(RobotID_t robotID, ImageSendMode newMode, ImageResolution resolution);
@@ -128,13 +120,11 @@ protected:
   std::vector<::Signal::SmartHandle> _signalHandles;
   
   bool                                                      _isInitialized = false;
-  bool                                                      _isListeningForRobots = false;
   Json::Value                                               _config;
-  std::unique_ptr<MultiClientChannel>                       _robotChannel;
   std::unique_ptr<UiMessageHandler>                         _uiMsgHandler;
   std::unique_ptr<SpeechRecognition::KeyWordRecognizer>     _keywordRecognizer;
   std::unique_ptr<CozmoContext>                             _context;
-  std::map<AdvertisingRobot, bool>                          _forceAddedRobots;
+  std::unique_ptr<BLESystem>                                _bleSystem;
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
 
   virtual Result InitInternal();

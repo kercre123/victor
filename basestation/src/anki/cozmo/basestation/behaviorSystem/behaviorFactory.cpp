@@ -35,11 +35,12 @@
 #include "anki/cozmo/basestation/behaviors/behaviorReactToPoke.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToRobotOnBack.h"
 #include "anki/cozmo/basestation/behaviors/behaviorReactToOnCharger.h"
-#include "anki/cozmo/basestation/behaviors/behaviorReactToStop.h"
 #include "anki/cozmo/basestation/behaviors/behaviorRollBlock.h"
 #include "anki/cozmo/basestation/behaviors/behaviorStackBlocks.h"
 #include "anki/cozmo/basestation/behaviors/behaviorUnityDriven.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDockingTestSimple.h"
 #include "anki/cozmo/basestation/behaviors/gameRequest/behaviorRequestGameSimple.h"
+#include "anki/cozmo/basestation/behaviors/BehaviorDriveOffCharger.h"
 
 
 namespace Anki {
@@ -86,11 +87,6 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::InteractWithFaces:
     {
       newBehavior = new BehaviorInteractWithFaces(robot, config);
-      break;
-    }
-    case BehaviorType::ReactToStop:
-    {
-      newBehavior = new BehaviorReactToStop(robot, config);
       break;
     }
     case BehaviorType::ReactToPickup:
@@ -183,6 +179,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
       newBehavior = new BehaviorReactToRobotOnBack(robot, config);
       break;     
     }
+    case BehaviorType::DockingTestSimple:
+    {
+      newBehavior = new BehaviorDockingTestSimple(robot, config);
+      break;
+    }
     case BehaviorType::StackBlocks:
     {
       newBehavior = new BehaviorStackBlocks(robot, config);
@@ -196,6 +197,11 @@ IBehavior* BehaviorFactory::CreateBehavior(BehaviorType behaviorType, Robot& rob
     case BehaviorType::ReactToOnCharger:
     {
       newBehavior = new BehaviorReactToOnCharger(robot, config);
+      break;
+    }
+    case BehaviorType::DriveOffCharger:
+    {
+      newBehavior = new BehaviorDriveOffCharger(robot, config);
       break;
     }
     case BehaviorType::Count:

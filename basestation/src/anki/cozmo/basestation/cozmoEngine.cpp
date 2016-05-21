@@ -20,6 +20,7 @@
 #include "anki/cozmo/basestation/audio/audioController.h"
 #include "anki/cozmo/basestation/audio/audioEngineMessageHandler.h"
 #include "anki/cozmo/basestation/audio/audioEngineClientConnection.h"
+#include "anki/cozmo/basestation/ble/BLESystem.h"
 #include "anki/cozmo/basestation/audio/audioServer.h"
 #include "anki/cozmo/basestation/audio/audioUnityClientConnection.h"
 #include "anki/cozmo/basestation/audio/robotAudioClient.h"
@@ -65,10 +66,11 @@ namespace Anki {
 namespace Cozmo {
 
 CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
-  : _robotChannel(new MultiClientChannel{})
-  , _uiMsgHandler(new UiMessageHandler(1))
+  : _uiMsgHandler(new UiMessageHandler(1))
   , _keywordRecognizer(new SpeechRecognition::KeyWordRecognizer(_uiMsgHandler.get()))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
+  // TODO:(lc) Once the BLESystem state machine has been implemented, create it here
+  //, _bleSystem(new BLESystem())
 #if ANKI_DEV_CHEATS && !ANDROID
   , _usbTunnelServerDebug(new USBTunnelServer(_uiMsgHandler.get(),dataPlatform))
 #endif
@@ -78,27 +80,13 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
   
-  PRINT_NAMED_INFO("CozmoEngine.Constructor",
-                   "Starting RobotAdvertisementService, reg port %d, ad port %d",
-                   ROBOT_ADVERTISEMENT_REGISTRATION_PORT, ROBOT_ADVERTISING_PORT);
-  
-  _context->GetRobotAdvertisementService()->StartService(ROBOT_ADVERTISEMENT_REGISTRATION_PORT,
-                                          ROBOT_ADVERTISING_PORT);
-  
-  // Handle robot disconnection:
-  _signalHandles.emplace_back( _context->GetRobotManager()->OnRobotDisconnected().ScopedSubscribe(
-                                                                               std::bind(&CozmoEngine::DisconnectFromRobot, this, std::placeholders::_1)
-                                                                               ));
   // We'll use this callback for simple events we care about
   auto callback = std::bind(&CozmoEngine::HandleGameEvents, this, std::placeholders::_1);
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotImageSendMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ImageRequest, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ConnectToRobot, callback));
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ForceAddRobot, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReadAnimationFile, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::StartTestMode, callback));
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, callback));
-  _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::ReliableTransportRunMode, callback));
   _signalHandles.push_back(_context->GetExternalInterface()->Subscribe(ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging, callback));
 
   
@@ -115,8 +103,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
 
 CozmoEngine::~CozmoEngine()
 {
-  _robotChannel->Stop();
-  
   if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
     Anki::Util::gTickTimeProvider = nullptr;
   }
@@ -190,7 +176,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
   
   _isInitialized = true;
   
-  _context->GetRobotManager()->Init();
+  _context->GetRobotManager()->Init(_config);
   
   return RESULT_OK;
 }
@@ -201,25 +187,6 @@ void CozmoEngine::HandleStartEngine(const AnkiEvent<ExternalInterface::MessageGa
     PRINT_NAMED_ERROR("CozmoEngine.HandleStartEngine.AlreadyStarted", "");
     return;
   }
-  
-  ListenForRobotConnections(true);
-  
-  const char *ipString = _config[AnkiUtil::kP_ADVERTISING_HOST_IP].asCString();
-  int port =_config[AnkiUtil::kP_ROBOT_ADVERTISING_PORT].asInt();
-  if (port < 0 || port >= 0x10000) {
-    PRINT_NAMED_ERROR("CozmoEngine.HandleStartEngine", "Failed to initialize RobotComms; bad port %d", port);
-    return;
-  }
-  Anki::Util::TransportAddress address(ipString, static_cast<uint16_t>(port));
-  PRINT_STREAM_DEBUG("CozmoEngine.HandleStartEngine", "Initializing on address: " << address << ": " << address.GetIPAddress() << ":" << address.GetIPPort() << "; originals: " << ipString << ":" << port);
-  
-  _robotChannel->Start(address);
-  if(!_robotChannel->IsStarted()) {
-    PRINT_NAMED_ERROR("CozmoEngine.HandleStartEngine", "Failed to initialize RobotComms.");
-    return;
-  }
-  
-  _context->GetRobotMsgHandler()->Init(_robotChannel.get(), _context->GetRobotManager());
   
   SetEngineState(EngineState::WaitingForUIDevices);
 }
@@ -240,34 +207,19 @@ void CozmoEngine::HandleUpdateFirmware(const AnkiEvent<ExternalInterface::Messag
   }
 }
   
-bool CozmoEngine::ConnectToRobot(AdvertisingRobot whichRobot)
+bool CozmoEngine::ConnectToRobot(const ExternalInterface::ConnectToRobot& connectMsg)
 {
-  if( CozmoEngine::HasRobotWithID(whichRobot)) {
-    PRINT_NAMED_INFO("CozmoEngine.ConnectToRobot.AlreadyConnected", "Robot %d already connected", whichRobot);
+  if( CozmoEngine::HasRobotWithID(connectMsg.robotID)) {
+    PRINT_NAMED_INFO("CozmoEngine.ConnectToRobot.AlreadyConnected", "Robot %d already connected", connectMsg.robotID);
     return true;
   }
   
-  // Connection is the same as normal except that we have to remove forcefully-added
-  // robots from the advertising service manually (if they could do this, they also
-  // could have registered itself)
-  Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
-  bool result = _robotChannel->AcceptAdvertisingConnection(id);
-  if(_forceAddedRobots.count(whichRobot) > 0) {
-    PRINT_NAMED_INFO("CozmoEngine.ConnectToRobot",
-                     "Manually deregistering force-added robot %d from advertising service.", whichRobot);
-    _context->GetRobotAdvertisementService()->DeregisterAllAdvertisers();
-  }
+  _context->GetRobotManager()->GetMsgHandler()->AddRobotConnection(connectMsg);
   
   // Another exception for hosts: have to tell the basestation to add the robot as well
-  AddRobot(whichRobot);
-  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotConnected>(whichRobot, result);
-  return result;
-}
-  
-void CozmoEngine::DisconnectFromRobot(RobotID_t whichRobot)
-{
-  Anki::Comms::ConnectionId id = static_cast<Anki::Comms::ConnectionId>(whichRobot);
-  _robotChannel->RemoveConnection(id);
+  AddRobot(connectMsg.robotID);
+  _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotConnected>(connectMsg.robotID, RESULT_OK);
+  return RESULT_OK;
 }
   
 Result CozmoEngine::Update(const float currTime_sec)
@@ -323,23 +275,10 @@ Result CozmoEngine::Update(const float currTime_sec)
     }
     case EngineState::Running:
     {
-      // Notify any listeners that robots are advertising
-      std::vector<Comms::ConnectionId> advertisingRobots;
-      _robotChannel->GetAdvertisingConnections(advertisingRobots);
-      for(auto robot : advertisingRobots) {
-        _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotAvailable>(robot);
-      }
-      
-      _robotChannel->Update();
-      
-      if(_isListeningForRobots) {
-        _context->GetRobotAdvertisementService()->Update();
-      }
+      _context->GetRobotManager()->UpdateRobotConnection();
       
       // Update time
       BaseStationTimer::getInstance()->UpdateTime(SEC_TO_NANOS(currTime_sec));
-      
-      _context->GetRobotMsgHandler()->ProcessMessages();
       
       // Let the robot manager do whatever it's gotta do to update the
       // robots in the world.
@@ -357,10 +296,7 @@ Result CozmoEngine::Update(const float currTime_sec)
     case EngineState::UpdatingFirmware:
     {
       // Update comms and messages from robot
-      
-      _robotChannel->Update();
-      
-      _context->GetRobotMsgHandler()->ProcessMessages();
+      _context->GetRobotManager()->UpdateRobotConnection();
       
       // Update the firmware updating, returns true when complete (error or success)
       
@@ -428,34 +364,6 @@ Result CozmoEngine::InitInternal()
   
   return RESULT_OK;
 }
-
-void CozmoEngine::ForceAddRobot(AdvertisingRobot robotID,
-                                        const char*      robotIP,
-                                        bool             robotIsSimulated)
-{
-  if(_isInitialized) {
-    
-    // Force add physical robot since it's not registering by itself yet.
-    AdvertisementRegistrationMsg forcedRegistrationMsg;
-    forcedRegistrationMsg.id = robotID;
-    forcedRegistrationMsg.toEnginePort = Anki::Cozmo::ROBOT_RADIO_BASE_PORT + (robotIsSimulated ? robotID : 0);
-    forcedRegistrationMsg.fromEnginePort = forcedRegistrationMsg.toEnginePort;
-    forcedRegistrationMsg.enableAdvertisement = 1;
-    forcedRegistrationMsg.ip = robotIP;
-    
-    PRINT_NAMED_INFO("CozmoEngine.ForceAddRobot", "Force-adding %s robot with ID %d and IP %s:%d",
-                     (robotIsSimulated ? "simulated" : "real"), robotID, robotIP, (int)forcedRegistrationMsg.toEnginePort);
-    
-    _context->GetRobotAdvertisementService()->ProcessRegistrationMsg(forcedRegistrationMsg);
-    
-    // Mark this robot as force-added so we can deregister it from the advertising
-    // service manually once we connect to it.
-    _forceAddedRobots[robotID] = true;
-  } else {
-    PRINT_NAMED_ERROR("CozmoEngine.ForceAddRobot",
-                      "You cannot force-add a robot until the engine is initialized.");
-  }
-}
   
 Result CozmoEngine::AddRobot(RobotID_t robotID)
 {
@@ -471,81 +379,45 @@ Result CozmoEngine::AddRobot(RobotID_t robotID)
     lastResult = robot->SyncTime();
     
     // Requesting camera calibration
-    robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalibration,
+    robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib,
                                         [robot](u8* data, size_t size, NVStorage::NVResult res) {
                                         
                                         if (res == NVStorage::NVResult::NV_OKAY) {
                                           CameraCalibration payload;
-                                          payload.Unpack(data, size);
-                                          PRINT_NAMED_INFO("CozmoEngine.ReadCameraCalibration",
-                                                           "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f cy: %f)",
-                                                           payload.ncols, payload.nrows,
-                                                           payload.focalLength_x, payload.focalLength_y,
-                                                           payload.center_x, payload.center_y);
                                           
-                                          // Convert calibration message into a calibration object to pass to the robot
-                                          Vision::CameraCalibration calib(payload.nrows,
-                                                                          payload.ncols,
-                                                                          payload.focalLength_x,
-                                                                          payload.focalLength_y,
-                                                                          payload.center_x,
-                                                                          payload.center_y,
-                                                                          payload.skew);
-                                          
-                                          robot->GetVisionComponent().SetCameraCalibration(calib);
-                                          
-                                          
-                                          
+                                          if (size != NVStorageComponent::MakeWordAligned(payload.Size())) {
+                                            PRINT_NAMED_WARNING("CozmoEngine.ReadCameraCalibration.SizeMismatch",
+                                                                "Expected %zu, got %zu",
+                                                                NVStorageComponent::MakeWordAligned(payload.Size()), size);
+                                          } else {
+                                            
+                                            payload.Unpack(data, size);
+                                            PRINT_NAMED_INFO("CozmoEngine.ReadCameraCalibration.Recvd",
+                                                             "Received new %dx%d camera calibration from robot. (fx: %f, fy: %f, cx: %f cy: %f)",
+                                                             payload.ncols, payload.nrows,
+                                                             payload.focalLength_x, payload.focalLength_y,
+                                                             payload.center_x, payload.center_y);
+                                            
+                                            const std::vector<f32> tempVector(payload.distCoeffs.begin(), payload.distCoeffs.end());
+                                            
+                                            // Convert calibration message into a calibration object to pass to the robot
+                                            Vision::CameraCalibration calib(payload.nrows,
+                                                                            payload.ncols,
+                                                                            payload.focalLength_x,
+                                                                            payload.focalLength_y,
+                                                                            payload.center_x,
+                                                                            payload.center_y,
+                                                                            payload.skew,
+                                                                            tempVector);
+                                            
+                                            robot->GetVisionComponent().SetCameraCalibration(calib);
+                                          }
                                           
                                         } else {
                                           PRINT_NAMED_INFO("CozmoEngine.ReadCameraCalibration.Failed", "");
                                         }
-                                        });
-
-    // TEMP: Copy calibration over to NVEntry_CameraCalib, which is in the manufacturing partition.
-    //       Eventually we'll delete NVEntry_CameraCalibration.
-    robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib,
-                                        [robot](u8* data, size_t size, NVStorage::NVResult res) {
-                                          CameraCalibration payload;
-                                          if (res == NVStorage::NVResult::NV_OKAY) {
-                                            payload.Unpack(data, size);
-                                            PRINT_NAMED_INFO("CozmoEngine.ReadMfgCameraCalib",
-                                                             "Mfg camera calib received from robot (size: %dx%d, fx: %f, fy: %f, cx: %f cy: %f)",
-                                                             payload.ncols, payload.nrows,
-                                                             payload.focalLength_x, payload.focalLength_y,
-                                                             payload.center_x, payload.center_y);
-                                          } else {
-                                            
-                                            if (!robot->GetVisionComponent().IsCameraCalibrationSet()) {
-                                              PRINT_NAMED_INFO("CozmoEngine.CopyCamCalibToMfg.FailedBecauseCalibNotSet", "");
-                                              return;
-                                            }
-                                            
-                                            // Camera calibration was not found in manufacturing partition
-                                            // Write it!
-                                            Vision::CameraCalibration calib = robot->GetVisionComponent().GetCameraCalibration();
-                                            payload.focalLength_x = calib.GetFocalLength_x();
-                                            payload.focalLength_y = calib.GetFocalLength_y();
-                                            payload.center_x = calib.GetCenter_x();
-                                            payload.center_y = calib.GetCenter_y();
-                                            payload.skew = calib.GetSkew();
-                                            payload.nrows = calib.GetNrows();
-                                            payload.ncols = calib.GetNcols();
-                                            
-                                            u8 buf[2*sizeof(payload)];
-                                            size_t numBytes = payload.Pack(buf, sizeof(buf));
-                                            
-                                            PRINT_NAMED_INFO("CozmoEngine.CopyCamCalibToMfg.Copying",
-                                                             "size: %dx%d, fx: %f, fy: %f, cx: %f cy: %f",
-                                                             payload.ncols, payload.nrows,
-                                                             payload.focalLength_x, payload.focalLength_y,
-                                                             payload.center_x, payload.center_y);
-                                            
-                                            robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CameraCalib, buf, numBytes,
-                                                                                 [](NVStorage::NVResult res) {
-                                                                                   PRINT_NAMED_INFO("CozmoEngine.CopyCamCalibToMfg.Complete", "%s", EnumToString(res));
-                                                                                 });
-                                          }
+                                          
+                                        robot->GetVisionComponent().Enable(true);
                                           
                                         });
     
@@ -581,11 +453,6 @@ Robot* CozmoEngine::GetRobotByID(const RobotID_t robotID) {
 bool  CozmoEngine::HasRobotWithID(const RobotID_t robotID) const
 {
   return _context->GetRobotManager()->DoesRobotExist(robotID);
-}
-
-void CozmoEngine::ListenForRobotConnections(bool listen)
-{
-  _isListeningForRobots = listen;
 }
 
 bool CozmoEngine::GetCurrentRobotImage(RobotID_t robotID, Vision::Image& img, TimeStamp_t newerThanTime)
@@ -634,19 +501,10 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
 {
   switch (event.GetData().GetTag())
   {
-    case ExternalInterface::MessageGameToEngineTag::ForceAddRobot:
-    {
-      const ExternalInterface::ForceAddRobot& msg = event.GetData().Get_ForceAddRobot();
-      char ip[16];
-      assert(msg.ipAddress.size() <= 16);
-      std::copy(msg.ipAddress.begin(), msg.ipAddress.end(), ip);
-      ForceAddRobot(msg.robotID, ip, msg.isSimulated);
-      break;
-    }
     case ExternalInterface::MessageGameToEngineTag::ConnectToRobot:
     {
       const ExternalInterface::ConnectToRobot& msg = event.GetData().Get_ConnectToRobot();
-      const bool success = ConnectToRobot(msg.robotID);
+      const bool success = ConnectToRobot(msg);
       if(success) {
         PRINT_NAMED_INFO("CozmoEngine.HandleEvents", "Connected to robot %d!", msg.robotID);
       } else {
@@ -678,21 +536,6 @@ void CozmoEngine::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGam
       if(robot != nullptr) {
         robot->SendRobotMessage<StartControllerTestMode>(msg.p1, msg.p2, msg.p3, msg.mode);
       }
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::SetRobotVolume:
-    {
-      const ExternalInterface::SetRobotVolume& msg = event.GetData().Get_SetRobotVolume();
-      Robot* robot = GetRobotByID(msg.robotId);
-      if(robot != nullptr) {
-        robot->GetRobotAudioClient()->SetRobotVolume(msg.volume);
-      }
-      break;
-    }
-    case ExternalInterface::MessageGameToEngineTag::ReliableTransportRunMode:
-    {
-      const ExternalInterface::ReliableTransportRunMode& msg = event.GetData().Get_ReliableTransportRunMode();
-      _robotChannel->SetReliableTransportRunMode(msg.isSync);
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::SetEnableSOSLogging:

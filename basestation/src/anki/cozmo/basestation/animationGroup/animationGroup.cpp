@@ -15,6 +15,7 @@
 
 #include "anki/cozmo/basestation/animationGroup/animationGroup.h"
 #include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
 #include "anki/cozmo/basestation/moodSystem/moodManager.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
@@ -33,7 +34,7 @@ AnimationGroup::AnimationGroup(const std::string& name)
       
 }
     
-Result AnimationGroup::DefineFromJson(const std::string& name, const Json::Value &jsonRoot)
+Result AnimationGroup::DefineFromJson(const std::string& name, const Json::Value &jsonRoot, const CannedAnimationContainer* cannedAnimations)
 {
   _name = name;
       
@@ -51,26 +52,31 @@ Result AnimationGroup::DefineFromJson(const std::string& name, const Json::Value
   const s32 numEntries = jsonAnimations.size();
       
   _animations.reserve(numEntries);
-      
+  
+  bool anyFailures = false;
   for(s32 iEntry = 0; iEntry < numEntries; ++iEntry)
   {
     const Json::Value& jsonEntry = jsonAnimations[iEntry];
-        
-    _animations.emplace_back();
-        
-    auto addResult = _animations.back().DefineFromJson(jsonEntry);
-        
-    if(addResult != RESULT_OK) {
+    
+    AnimationGroupEntry newEntry;
+    Result addResult = newEntry.DefineFromJson(jsonEntry, cannedAnimations);
+    if(RESULT_OK != addResult) {
       PRINT_NAMED_ERROR("AnimationGroup.DefineFromJson.AddEntryFailure",
                         "Adding animation %d failed.",
                         iEntry);
-      return addResult;
+      anyFailures = true;
+    } else {
+      // Only add if the new entry was defined successfully
+      _animations.emplace_back(std::move(newEntry));
     }
-        
-        
+    
   } // for each Entry
-      
-  return RESULT_OK;
+  
+  if(anyFailures) {
+    return RESULT_FAIL;
+  } else {
+    return RESULT_OK;
+  }
 }
     
 bool AnimationGroup::IsEmpty() const

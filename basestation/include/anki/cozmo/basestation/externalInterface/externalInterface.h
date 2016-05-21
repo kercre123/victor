@@ -58,8 +58,11 @@ public:
   
   virtual Signal::SmartHandle Subscribe(const ExternalInterface::MessageGameToEngineTag& tagType, std::function<void(const AnkiEvent<ExternalInterface::MessageGameToEngine>&)> messageHandler) = 0;
   
+  using DestinationId = uint32_t;
+  static constexpr DestinationId kDestinationIdEveryone = 0xffffffff;
+  
 protected:
-  virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) = 0;
+  virtual void DeliverToGame(const ExternalInterface::MessageEngineToGame& message, DestinationId desinationId) = 0;
   
   //virtual bool HasMoreMessagesForEngine() const;
   //virtual const MessageGameToEngine GetNextUndeliveredMessage();
@@ -69,7 +72,7 @@ protected:
 
 class SimpleExternalInterface : public IExternalInterface {
 protected:
-  void DeliverToGame(const ExternalInterface::MessageEngineToGame& message) override;
+  void DeliverToGame(const ExternalInterface::MessageEngineToGame& message, DestinationId desinationId) override;
 
 };
 

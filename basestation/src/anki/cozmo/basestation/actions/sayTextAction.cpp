@@ -33,6 +33,14 @@ namespace Cozmo {
       _name = "SayText_" + _text + "_Action";
     }
     
+    {
+      // TODO: Remove this TEMP FIX
+      // Override temporary WWise default which says a random name for say text
+      // Once we figure this out, we can change the WWise default ot be "On" and remove this.
+      using namespace Audio::GameState;
+      _robot.GetRobotAudioClient()->PostGameState(StateGroupType::External_Name, (GenericState)External_Name::External_Name_On);
+    }
+    
     // Create speech data
     TextToSpeechComponent::SpeechState state = _robot.GetTextToSpeechComponent().CreateSpeech( _text, _style );
     if (state == TextToSpeechComponent::SpeechState::None) {

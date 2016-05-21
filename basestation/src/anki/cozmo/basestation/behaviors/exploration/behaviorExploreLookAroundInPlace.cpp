@@ -15,6 +15,7 @@
 #include "behaviorExploreLookAroundInPlace.h"
 
 #include "anki/cozmo/basestation/actions/basicActions.h"
+#include "anki/cozmo/basestation/actions/animActions.h"
 #include "anki/cozmo/basestation/robot.h"
 
 #include "anki/common/basestation/math/point_impl.h"
@@ -36,16 +37,26 @@ BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(Robot& robot,
 , _iterationStartingBodyFacing_rad(0.0f)
 , _behaviorBodyFacingDone_rad(0.0f)
 , _mainTurnDirection(EClockDirection::CW)
+, _s4HeadMovesRolled(0)
 , _s4HeadMovesLeft(0)
 {
   SetDefaultName("BehaviorExploreLookAroundInPlace");
 
-  SubscribeToTags({
-    EngineToGameTag::RobotCompletedAction
-  });
+  SubscribeToTags({{
+    EngineToGameTag::RobotCompletedAction,
+    EngineToGameTag::RobotPutDown
+  }});
   
   // parse all parameters now
   LoadConfig(config[kConfigParamsKey]);
+
+  if( !_configParams.behavior_ShouldResetTurnDirection ) {
+    // we won't be resetting this, so set it once now
+    DecideTurnDirection();
+  }
+
+  // We init the body direction to zero because behaviors are init before robot pose is set to anything real
+  _initialBodyDirection = 0.f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -56,6 +67,11 @@ BehaviorExploreLookAroundInPlace::~BehaviorExploreLookAroundInPlace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreLookAroundInPlace::IsRunnableInternal(const Robot& robot) const
 {
+  // don't run if I'm holding a block (can't really look around through the cube)
+  if( robot.IsCarryingObject() ) {
+    return false;
+  }
+  
   // Probably want to run if I don't have any other exploration behavior that wants to, unless I have completely
   // mapped the floor around me 'recently'.
   // Now this is the case for exploration, but some other supergroup that uses the same behavior would have different
@@ -94,13 +110,23 @@ uint8_t ParseUint8(const Json::Value& config, const char* key ) {
   Json::Int intVal = config[key].asInt();
   return Anki::Util::numeric_cast<uint8_t>(intVal);
 }
+bool ParseBool(const Json::Value& config, const char* key) {
+  ASSERT_NAMED_EVENT(config[key].isBool(), "BehaviorExploreLookAroundInPlace.ParseBool.NotValidBool", "%s", key);
+  return config[key].asBool();
 };
+std::string ParseString(const Json::Value& config, const char* key) {
+  ASSERT_NAMED_EVENT(config[key].isString(), "BehaviorExploreLookAroundInPlace.ParseString.NotValidString", "%s", key);
+  return config[key].asString();
+};
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
 {
   _configParams.behavior_DistanceFromRecentLocationMin_mm = ParseFloat(config, "behavior_DistanceFromRecentLocationMin_mm");
   _configParams.behavior_RecentLocationsMax = ParseUint8(config, "behavior_RecentLocationsMax");
+  _configParams.behavior_ShouldResetTurnDirection = ParseBool(config, "behavior_ShouldResetTurnDirection");
+  _configParams.behavior_AngleOfFocus_deg = ParseFloat(config, "behavior_AngleOfFocus_deg");
   // turn speed
   _configParams.sx_BodyTurnSpeed_degPerSec = ParseFloat(config, "sx_BodyTurnSpeed_degPerSec");
   _configParams.sxt_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxt_HeadTurnSpeed_degPerSec");
@@ -115,17 +141,25 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   // [min,max] range for pause for step 2
   _configParams.s2_WaitMin_sec = ParseFloat(config, "s2_WaitMin_sec");
   _configParams.s2_WaitMax_sec = ParseFloat(config, "s2_WaitMax_sec");
+  _configParams.s2_WaitAnimGroupName = ParseString(config, "s2_WaitAnimGroupName");
   // [min,max] range for random angle turns for step 3
   _configParams.s3_BodyAngleRangeMin_deg = ParseFloat(config, "s3_BodyAngleRangeMin_deg");
   _configParams.s3_BodyAngleRangeMax_deg = ParseFloat(config, "s3_BodyAngleRangeMax_deg");
   _configParams.s3_HeadAngleRangeMin_deg = ParseFloat(config, "s3_HeadAngleRangeMin_deg");
   _configParams.s3_HeadAngleRangeMax_deg = ParseFloat(config, "s3_HeadAngleRangeMax_deg");
   // [min,max] range for head move for step 4
+  _configParams.s4_BodyAngleRelativeRangeMin_deg = ParseFloat(config, "s4_BodyAngleRelativeRangeMin_deg");
+  _configParams.s4_BodyAngleRelativeRangeMax_deg = ParseFloat(config, "s4_BodyAngleRelativeRangeMax_deg");
   _configParams.s4_HeadAngleRangeMin_deg = ParseFloat(config, "s4_HeadAngleRangeMin_deg");
   _configParams.s4_HeadAngleRangeMax_deg = ParseFloat(config, "s4_HeadAngleRangeMax_deg");
   _configParams.s4_HeadAngleChangesMin = ParseUint8(config, "s4_HeadAngleChangesMin");
   _configParams.s4_HeadAngleChangesMax = ParseUint8(config, "s4_HeadAngleChangesMax");
+  _configParams.s4_WaitBetweenChangesMin_sec = ParseFloat(config, "s4_WaitBetweenChangesMin_sec");
+  _configParams.s4_WaitBetweenChangesMax_sec = ParseFloat(config, "s4_WaitBetweenChangesMax_sec");
+  _configParams.s4_WaitAnimGroupName = ParseString(config, "s4_WaitAnimGroupName");
   // [min,max] range for head move  for step 5
+  _configParams.s5_BodyAngleRelativeRangeMin_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMin_deg");
+  _configParams.s5_BodyAngleRelativeRangeMax_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMax_deg");
   _configParams.s5_HeadAngleRangeMin_deg = ParseFloat(config, "s5_HeadAngleRangeMin_deg");
   _configParams.s5_HeadAngleRangeMax_deg = ParseFloat(config, "s5_HeadAngleRangeMax_deg");
   // [min,max] range for random angle turns for step 6
@@ -141,15 +175,37 @@ Result BehaviorExploreLookAroundInPlace::InitInternal(Robot& robot)
   // grab run values
   _behaviorBodyFacingDone_rad = 0;
   
-  // decide main turn direction
-  const double randomDirection = GetRNG().RandDbl();
-  _mainTurnDirection = (randomDirection<=_configParams.s0_MainTurnCWChance) ? EClockDirection::CW : EClockDirection::CCW;
-  // _mainTurnDirection = EClockDirection::CW;
-
+  if( _configParams.behavior_ShouldResetTurnDirection ) {
+    DecideTurnDirection();
+  }
+  
   // start first iteration
   TransitionToS1_OppositeTurn(robot);
 
   return Result::RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreLookAroundInPlace::StopInternal(Robot& robot)
+{
+  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreLookAroundInPlace::AlwaysHandle(const EngineToGameEvent& event, const Robot& robot)
+{
+  switch (event.GetData().GetTag())
+  {
+    case EngineToGameTag::RobotPutDown:
+    {
+      _initialBodyDirection = robot.GetPose().GetRotationAngle<'Z'>();
+      break;
+    }
+    default:
+    {
+      break;
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -169,8 +225,25 @@ IBehavior::Status BehaviorExploreLookAroundInPlace::UpdateInternal(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(Robot& robot)
 {
+  SetStateName("TransitionToS1_OppositeTurn");
+
   // cache iteration values
   _iterationStartingBodyFacing_rad = robot.GetPose().GetRotationAngle<'Z'>();
+  
+  // If we have the parameter set for an angle to focus on
+  if (!Util::IsNearZero(_configParams.behavior_AngleOfFocus_deg))
+  {
+    const float angleDiff_deg = (_iterationStartingBodyFacing_rad - _initialBodyDirection).getDegrees() * GetTurnSign(_mainTurnDirection);
+    
+    if (angleDiff_deg >= _configParams.behavior_AngleOfFocus_deg * 0.5f)
+    {
+      // We've hit (or gone past) the edge of the cone, so turn the other direction
+      _mainTurnDirection = GetOpposite(_mainTurnDirection);
+      
+      // When we have a cone we're staying inside of, we never finish a location, so reset our counter
+      _behaviorBodyFacingDone_rad = 0.f;
+    }
+  }
   
   // create turn action for this state
   const EClockDirection turnDir = GetOpposite(_mainTurnDirection);
@@ -186,17 +259,31 @@ void BehaviorExploreLookAroundInPlace::TransitionToS1_OppositeTurn(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS2_Pause(Robot& robot)
 {
-  // create action
-  const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s2_WaitMin_sec, _configParams.s2_WaitMax_sec);
-  WaitAction* waitAction = new WaitAction( robot, waitTime_sec );
+  SetStateName("TransitionToS2_Pause");
 
+  IAction* pauseAction = nullptr;
+  const std::string& animGroupName = _configParams.s2_WaitAnimGroupName;
+  if ( !animGroupName.empty() )
+  {
+    pauseAction = CreatePlayAnimationAction(robot, animGroupName);
+  }
+  else
+  {
+    // create wait action
+    const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s2_WaitMin_sec, _configParams.s2_WaitMax_sec);
+    pauseAction = new WaitAction( robot, waitTime_sec );
+  }
+  
   // request action with transition to proper state
-  StartActing( waitAction, &BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn );
+  ASSERT_NAMED( nullptr!=pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS2_Pause.NullAction");
+  StartActing( pauseAction, &BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn(Robot& robot)
 {
+  SetStateName("TransitionToS3_MainTurn");
+
   // create turn action for this state
   const EClockDirection turnDir = _mainTurnDirection;
   IAction* turnAction = CreateBodyAndHeadTurnAction(robot, turnDir,
@@ -206,8 +293,9 @@ void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn(Robot& robot)
   
   // calculate head moves now
   const int randMoves = GetRNG().RandIntInRange(_configParams.s4_HeadAngleChangesMin, _configParams.s4_HeadAngleChangesMax);
-  _s4HeadMovesLeft = Util::numeric_cast<uint8_t>(randMoves);
-
+  _s4HeadMovesRolled = Util::numeric_cast<uint8_t>(randMoves);
+  _s4HeadMovesLeft = _s4HeadMovesRolled;
+  
   // request action with transition to proper state
   StartActing( turnAction, &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp );
 }
@@ -215,29 +303,78 @@ void BehaviorExploreLookAroundInPlace::TransitionToS3_MainTurn(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp(Robot& robot)
 {
-  // create head move action for this state
-  IAction* moveHeadAction = CreateHeadTurnAction(robot,
-        _configParams.s4_HeadAngleRangeMin_deg, _configParams.s4_HeadAngleRangeMax_deg,
-        _configParams.sxh_HeadTurnSpeed_degPerSec);
-
-  // count our action as a move
-  --_s4HeadMovesLeft;
-
-  // request action with transition to proper state
-  if ( _s4HeadMovesLeft == 0 ) {
-    StartActing( moveHeadAction, &BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown );
-  } else {
-    // still moves to do, continue in this state
-    StartActing( moveHeadAction, &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp );
+  {
+    std::string stateName = "TransitionToS4_HeadOnlyUp (" + std::to_string(_s4HeadMovesLeft) + " / " +
+      std::to_string(_s4HeadMovesRolled) + ")";
+    SetStateName(stateName);
   }
+
+  // cache the rotation the first time that we run S4
+  const bool isFirstMove = (_s4HeadMovesLeft == _s4HeadMovesRolled);
+  if ( isFirstMove )  {
+    // set current facing for the next state
+    _s4_s5StartingBodyFacing_rad = robot.GetPose().GetRotationAngle<'Z'>();
+  }
+
+  // count the action we are going to queue as a move
+  --_s4HeadMovesLeft;
+  const bool isLastMove = (_s4HeadMovesLeft == 0);
+
+  // check which transition method to call after the head move is done, S5 or S4 again?
+  using TransitionCallback = void(BehaviorExploreLookAroundInPlace::*)(Robot&);
+  TransitionCallback nextCallback = isLastMove ?
+    &BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown :
+    &BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp;
+
+  // this is the lambda that will run after the wait action finishes
+  auto runAfterPause = [this, &robot, nextCallback](const ExternalInterface::RobotCompletedAction& actionRet)
+  {
+    // create head move action
+    IAction* moveHeadAction = CreateHeadTurnAction(robot,
+          _configParams.s4_BodyAngleRelativeRangeMin_deg,
+          _configParams.s4_BodyAngleRelativeRangeMax_deg,
+          RAD_TO_DEG( _s4_s5StartingBodyFacing_rad.ToFloat() ),
+          _configParams.s4_HeadAngleRangeMin_deg,
+          _configParams.s4_HeadAngleRangeMax_deg,
+          _configParams.sx_BodyTurnSpeed_degPerSec,
+          _configParams.sxh_HeadTurnSpeed_degPerSec);
+  
+    // do head action and transition to next state or same (depending on callback)
+    StartActing( moveHeadAction, nextCallback );
+  };
+  
+  IAction* pauseAction = nullptr;
+  const std::string& animGroupName = _configParams.s4_WaitAnimGroupName;
+  if ( !animGroupName.empty() )
+  {
+    pauseAction = CreatePlayAnimationAction(robot, animGroupName);
+  }
+  else
+  {
+    // create wait action
+    const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s4_WaitBetweenChangesMin_sec,
+                                                      _configParams.s4_WaitBetweenChangesMax_sec);
+    pauseAction = new WaitAction( robot, waitTime_sec );
+  }
+  
+  // request action with transition to proper state
+  ASSERT_NAMED( nullptr!=pauseAction, "BehaviorExploreLookAroundInPlace::TransitionToS4_HeadOnlyUp.NullPauseAction");
+  StartActing( pauseAction, runAfterPause );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown(Robot& robot)
 {
+  SetStateName("TransitionToS5_HeadOnlyDown");
+
   // create head move action for this state
   IAction* moveHeadAction = CreateHeadTurnAction(robot,
-        _configParams.s5_HeadAngleRangeMin_deg, _configParams.s5_HeadAngleRangeMax_deg,
+        _configParams.s5_BodyAngleRelativeRangeMin_deg,
+        _configParams.s5_BodyAngleRelativeRangeMax_deg,
+        RAD_TO_DEG( _s4_s5StartingBodyFacing_rad.ToFloat() ),
+        _configParams.s5_HeadAngleRangeMin_deg,
+        _configParams.s5_HeadAngleRangeMax_deg,
+        _configParams.sx_BodyTurnSpeed_degPerSec,
         _configParams.sxh_HeadTurnSpeed_degPerSec);
 
   // request action with transition to proper state
@@ -247,6 +384,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS5_HeadOnlyDown(Robot& robot)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal(Robot& robot)
 {
+  SetStateName("TransitionToS6_MainTurnFinal");
+
   // create turn action for this state
   const EClockDirection turnDir = _mainTurnDirection;
   IAction* turnAction = CreateBodyAndHeadTurnAction(robot, turnDir,
@@ -261,6 +400,8 @@ void BehaviorExploreLookAroundInPlace::TransitionToS6_MainTurnFinal(Robot& robot
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
 {
+  SetStateName("TransitionToS7_IterationEnd");
+
   Radians currentZ_rad = robot.GetPose().GetRotationAngle<'Z'>();
   float doneThisIteration_rad = (currentZ_rad - _iterationStartingBodyFacing_rad).ToFloat();
   _behaviorBodyFacingDone_rad += doneThisIteration_rad;
@@ -289,6 +430,15 @@ void BehaviorExploreLookAroundInPlace::TransitionToS7_IterationEnd(Robot& robot)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreLookAroundInPlace::DecideTurnDirection()
+{
+  // decide main turn direction
+  const double randomDirection = GetRNG().RandDbl();
+  _mainTurnDirection = (randomDirection<=_configParams.s0_MainTurnCWChance) ? EClockDirection::CW : EClockDirection::CCW;
+  // _mainTurnDirection = EClockDirection::CW;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IAction* BehaviorExploreLookAroundInPlace::CreateBodyAndHeadTurnAction(Robot& robot, EClockDirection clockDirection,
   float bodyStartRelativeMin_deg, float bodyStartRelativeMax_deg,
   float headAbsoluteMin_deg, float headAbsoluteMax_deg,
@@ -307,27 +457,38 @@ IAction* BehaviorExploreLookAroundInPlace::CreateBodyAndHeadTurnAction(Robot& ro
   const Radians bodyTargetAngleAbs_rad( _iterationStartingBodyFacing_rad + DEG_TO_RAD(bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
   PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
-  turnAction->SetMaxPanSpeed( DEG_TO_RAD(_configParams.sx_BodyTurnSpeed_degPerSec) );
-  turnAction->SetMaxTiltSpeed( DEG_TO_RAD(_configParams.sxt_HeadTurnSpeed_degPerSec) );
+  turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
+  turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
 
   return turnAction;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IAction* BehaviorExploreLookAroundInPlace::CreateHeadTurnAction(Robot& robot,
+  float bodyRelativeMin_deg, float bodyRelativeMax_deg,
+  float bodyReference_deg,
   float headAbsoluteMin_deg, float headAbsoluteMax_deg,
-  float headTurnSpeed_degPerSec)
+  float bodyTurnSpeed_degPerSec, float headTurnSpeed_degPerSec)
 {
+  // generate turn sign
+  const EClockDirection turnDir = (GetRNG().RandInt(2) == 0) ? EClockDirection::CW : EClockDirection::CCW;
+
+  // [min,max] range for random body angle turn
+  const double bodyTargetAngleRelative_deg =
+    GetRNG().RandDblInRange(bodyRelativeMin_deg, bodyRelativeMax_deg) * GetTurnSign(turnDir);
+
   // [min,max] range for random head angle turn
   const double headTargetAngleAbs_deg =
     GetRNG().RandDblInRange(headAbsoluteMin_deg, headAbsoluteMax_deg);
-
+  
   // create proper action for body & head turn
+  const Radians bodyTargetAngleAbs_rad( DEG_TO_RAD(bodyReference_deg + bodyTargetAngleRelative_deg) );
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
-  MoveHeadToAngleAction* moveHeadAction = new MoveHeadToAngleAction(robot, headTargetAngleAbs_rad);
-  moveHeadAction->SetMaxSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
+  PanAndTiltAction* turnAction = new PanAndTiltAction(robot, bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
+  turnAction->SetMaxPanSpeed( DEG_TO_RAD(bodyTurnSpeed_degPerSec) );
+  turnAction->SetMaxTiltSpeed( DEG_TO_RAD(headTurnSpeed_degPerSec) );
 
-  return moveHeadAction;
+  return turnAction;
 }
 
 } // namespace Cozmo

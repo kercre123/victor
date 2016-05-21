@@ -37,6 +37,9 @@ bool HeadDetect(void)
   // Now let it float and see if it ends up high
   PIN_IN(GPIOB, GPIOB_SWD);
   MicroWait(50);  // Reaches 1.72V after 25uS - so give it 50 just to be safe
+   
+  // Wait 1ms in detect
+  MicroWait(1000);
   
   // True if high
   return !!(GPIO_READ(GPIOB) & (1 << GPIOB_SWD));
@@ -68,13 +71,22 @@ void HeadESP(void)
   DisableBAT();     // This has a built-in delay while battery power leaches out
   
   InitEspressif();
+
+  for (int i = 5; i > 0; i--)
+  {
+    MicroWait(1000000);
+    ConsolePrintf("%d..", i);
+  }
+
   EnableBAT();
 
   // Program espressif, which will start up
   ProgramEspressif();
   
+#ifndef FCC
   // Set serial number in Espressif
   ESPFlashLoad(0x1000, 4, (uint8_t*)&serial_);
+#endif
 }
 
 void HeadTest(void)

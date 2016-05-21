@@ -26,7 +26,6 @@ enum uint_8 BehaviorType {
   NoneBehavior, // Named differently to not conflict with the Python keyword
   LookAround,
   InteractWithFaces,
-  ReactToStop,
   ReactToCliff,
   ReactToPickup,
   ReactToPoke,
@@ -48,7 +47,8 @@ enum uint_8 BehaviorType {
   FactoryTest,
   DemoFearEdge,
   FlipDownFromWheelie,
-
+  DockingTestSimple,
+  DriveOffCharger,
   Count
 }
 

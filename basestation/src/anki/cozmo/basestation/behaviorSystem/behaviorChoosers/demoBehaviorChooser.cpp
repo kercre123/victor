@@ -27,22 +27,28 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/vision/basestation/observableObject.h"
 #include "json/json.h"
+#include "anki/cozmo/basestation/behaviors/behaviorDemoFearEdge.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
-#define DEBUG_PRINT_ALL_CUBE_STATES 0
+#define DEBUG_PRINT_CUBE_STATE_CHANGES 1
 
 namespace Anki {
 namespace Cozmo {
 
 static const char* kWakeUpBehavior = "demo_wakeUp";
+static const char* kDriveOffChargerBehavior = "DriveOffCharger";
 static const char* kFearEdgeBehavior = "demo_fearEdge";
-static const char* kCliffBehavior = "ReactToCliff";
+// static const char* kCliffBehavior = "ReactToCliff";
 static const char* kFlipDownFromBackBehavior = "ReactToRobotOnBack";
 static const char* kSleepBehavior = "demo_sleep";
 static const char* kFindFacesBehavior = "demo_lookInPlaceForFaces";
+static const char* kKnockOverStackBehavior = "AdmireStack";
 
 static const float kTimeCubesMustBeUpright_s = 3.0f;
+
+// if we are in the mini game state and need a face, use this score
+static const float kEcouragedFaceBehaviorScore = 1.1f;
 
 // NOTE: this must match the game request max face age! // TODO:(bn) read it from the behavior?
 static const u32 kMaxFaceAge_ms = 30000;
@@ -70,7 +76,16 @@ DemoBehaviorChooser::DemoBehaviorChooser(Robot& robot, const Json::Value& config
                       "couldnt get pointer to behavior '%s', won't be able to search for faces in mini game scene",
                       kFindFacesBehavior);
   }
-  
+
+  _fearEdgeBehavior = static_cast<BehaviorDemoFearEdge*>(
+    _robot.GetBehaviorFactory().FindBehaviorByName(kFearEdgeBehavior) );
+
+  if( nullptr == _fearEdgeBehavior ) {
+    PRINT_NAMED_ERROR("DemoBehaviorChooser.NoFearEdgeBehavior",
+                      "couldn't find behavior '%s', demo won't work",
+                      kFearEdgeBehavior);
+  }
+    
   _name = "Demo[]";
 
   SetAllBehaviorsEnabled(false);
@@ -81,19 +96,18 @@ unsigned int DemoBehaviorChooser::GetStateNum(State state)
   switch( state ) {
     case State::None: return 0;
     case State::WakeUp: return 1;
-    case State::FearEdge: return 2;
-    case State::Pounce: return 3;
-    case State::Faces: return 4;
-    case State::Cubes: return 5;
-    case State::MiniGame: return 6;
-    case State::Sleep: return 7;
+    case State::DriveOffCharger: return 2;
+    case State::FearEdge: return 3;
+    case State::Pounce: return 4;
+    case State::Faces: return 5;
+    case State::Cubes: return 6;
+    case State::MiniGame: return 7;
+    case State::Sleep: return 8;
   }
 }
 
 void DemoBehaviorChooser::OnSelected()
 {
-  _initCalled = true;
-
   // TransitionToCubes();
 }
 
@@ -102,36 +116,39 @@ Result DemoBehaviorChooser::Update()
   if( _checkTransition && _checkTransition() ) {
     TransitionToNextState();
   }
-
-  if( _state == State::MiniGame ) {
-    // mini game requires a face, so if the last seen face is really old, search for a new one
+  
+  _encourageFaceBehavior = false;
+  if( _state == State::MiniGame && ! _robot.IsCarryingObject() ) {
+    // mini game requires a face, so if the last seen face is really old, encourage the search for a new one
     Pose3d waste;
     TimeStamp_t lastFaceTime = _robot.GetFaceWorld().GetLastObservedFace(waste);
     TimeStamp_t lastMessageTime = _robot.GetLastImageTimeStamp();
 
     if( lastFaceTime == 0 || lastMessageTime - lastFaceTime > kMaxFaceAge_ms ) {
-      // force the search behavior to run
-      PRINT_NAMED_INFO("DemoBehaviorChooser.ForceSearchBehavior", "searching for faces");
-      _forceBehavior = _faceSearchBehavior;
-    }
-    else if ( _forceBehavior == _faceSearchBehavior ) {
-      // we were searching for a face, but got one, so clear the forced behavior
-      _forceBehavior = nullptr;
-      PRINT_NAMED_INFO("DemoBehaviorChooser.ClearForcedBehavior", "returning to normal behavior");
+      _encourageFaceBehavior = true;
     }
   }
   
   return Result::RESULT_OK;
 }
 
+void DemoBehaviorChooser::ModifyScore(const IBehavior* behavior, float& score) const
+{
+  if( nullptr != _faceSearchBehavior && _state == State::MiniGame &&
+      behavior == _faceSearchBehavior ) {
+    if( _encourageFaceBehavior ) {
+      score = kEcouragedFaceBehaviorScore;
+    }
+    else {
+      // we are in mini game, but don't want to encourage this behavior, so don't do it
+      score = 0.0f;
+    }
+  }
+}
+
 IBehavior* DemoBehaviorChooser::ChooseNextBehavior(const Robot& robot) const
 {
-  if( _forceBehavior == nullptr ) {
-    return super::ChooseNextBehavior(robot);
-  }
-  else {
-    return _forceBehavior;
-  }
+  return super::ChooseNextBehavior(robot);
 }
 
 void DemoBehaviorChooser::TransitionToNextState()
@@ -142,12 +159,16 @@ void DemoBehaviorChooser::TransitionToNextState()
       break;
     }
     case State::WakeUp: {
+      TransitionToDriveOffCharger();
+      break;
+    }
+    case State::DriveOffCharger: {
       if( _hasEdge ) {
         TransitionToFearEdge();
       }
       else {
         TransitionToPounce();
-      }            
+      }
       break;
     }
     case State::FearEdge: {
@@ -208,6 +229,18 @@ void DemoBehaviorChooser::TransitionToWakeUp()
 
   _checkTransition = std::bind(&DemoBehaviorChooser::DidBehaviorRunAndStop, this, kWakeUpBehavior);
 }
+  
+void DemoBehaviorChooser::TransitionToDriveOffCharger()
+{
+  SET_STATE(DriveOffCharger);
+  SetAllBehaviorsEnabled(false);
+  SetBehaviorEnabled(kDriveOffChargerBehavior, true);
+  
+  // Deals with case where no connected charger has been added
+  _checkTransition = [this]() {
+    return DidBehaviorRunAndStop(kDriveOffChargerBehavior) || !_robot.IsOnChargerPlatform();
+  };
+}
 
 void DemoBehaviorChooser::TransitionToFearEdge()
 {
@@ -220,7 +253,7 @@ void DemoBehaviorChooser::TransitionToFearEdge()
 
   // will transition when the fear edge is interrupted by cliff
   _checkTransition = [this]() {
-    return DidBehaviorRunAndStop(kFearEdgeBehavior) && DidBehaviorRunAndStop(kCliffBehavior);
+    return _fearEdgeBehavior != nullptr && _fearEdgeBehavior->HasFinished();
   };
 }
 
@@ -268,15 +301,13 @@ void DemoBehaviorChooser::TransitionToMiniGame()
 {
   SET_STATE(MiniGame);
 
-  _robot.GetMoodManager().SetEmotion(EmotionType::WantToPlay, 1.0f);
   _robot.GetBehaviorManager().SetAvailableGame(BehaviorGameFlag::SpeedTap);
   
   // leave block behaviors active, but also enable speed tap game request
-  SetBehaviorGroupEnabled(BehaviorGroup::RequestSpeedTap);
+  SetBehaviorGroupEnabled(BehaviorGroup::DemoRequestSpeedTap);
 
   // when mini game starts, will go to selection chooser, then back to this chooser
-  _initCalled = false;
-  _checkTransition = [this]() { return _initCalled; };
+  _checkTransition = [this]() { return false; };
 }
 
 void DemoBehaviorChooser::TransitionToSleep()
@@ -293,6 +324,14 @@ bool DemoBehaviorChooser::ShouldTransitionOutOfCubesState()
 {
   float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
+  if( ! DidBehaviorRunAndStop(kKnockOverStackBehavior) ) {
+    return false;
+  }
+  else {
+    // disable checking the cube states for now, just let it transition
+    return true;
+  }
+  
   // check block world for three cubes in the correct state for transition
   
   std::vector<ObservableObject*> uprightCubes;
@@ -331,17 +370,13 @@ bool DemoBehaviorChooser::FilterBlocks(ObservableObject* obj) const
 
   const AxisName upAxis = obj->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>();
 
-  const bool ret =  obj->IsPoseStateKnown() &&
-    !obj->IsMoving() &&
+  const bool ret = !obj->IsMoving() &&
     obj->IsRestingFlat() &&
     // ignore object we are carrying
     ( !_robot.IsCarryingObject() || _robot.GetCarryingObject() != obj->GetID() ) &&
-    upAxis == AxisName::Z_POS &&
-    // ignore objects that aren't clear
-    _robot.CanStackOnTopOfObject( *obj );
-
+    upAxis == AxisName::Z_POS;
   
-  if( DEBUG_PRINT_ALL_CUBE_STATES ) {
+  if( DEBUG_PRINT_CUBE_STATE_CHANGES ) {
     static std::map< ObjectID, bool > _lastValues;
 
     auto it = _lastValues.find(obj->GetID());

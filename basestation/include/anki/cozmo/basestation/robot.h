@@ -42,7 +42,6 @@
 #include "anki/cozmo/basestation/actions/actionContainers.h"
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
 #include "anki/cozmo/basestation/proceduralFace.h"
-#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
 #include "anki/cozmo/basestation/behaviorManager.h"
 #include "anki/cozmo/basestation/ramp.h"
 #include "anki/cozmo/basestation/imageDeChunker.h"
@@ -108,7 +107,6 @@ class RobotPoseStamp;
 class IExternalInterface;
 struct RobotState;
 class ActiveCube;
-class CannedAnimationContainer;
 class SpeedChooser;
 class DrivingAnimationHandler;
   
@@ -204,6 +202,8 @@ public:
 
     // True if robot is on charger
     bool   IsOnCharger() const { return _isOnCharger; }
+    // True if we know we're on a connected charger, but not the contacts
+    bool   IsOnChargerPlatform() const { return _isOnChargerPlatform; }
   
     // Updates pose to be on charger
     Result SetPoseOnCharger();
@@ -453,6 +453,7 @@ public:
     */
 
     void SetEnableCliffSensor(bool val) { _enableCliffSensor = val; }
+    bool IsCliffSensorEnabled() const { return _enableCliffSensor; }
   
     // Returns true if a cliff event was detected
     bool IsCliffDetected() const { return _isCliffDetected; }
@@ -486,32 +487,6 @@ public:
     
     
     // =========== Animation Commands =============
-    
-    // Plays specified animation numLoops times.
-    // If numLoops == 0, animation repeats forever.
-    // If interruptRunning == true, any currently-streaming animation will be aborted.
-    // Returns the streaming tag, so you can find out when it is done.
-    AnimationStreamer::Tag PlayAnimation(const std::string& animName, const u32 numLoops = 1, bool interruptRunning = true);
-    AnimationStreamer::Tag PlayAnimation(Animation* animation, u32 numLoops = 1, bool interruptRunning = true);
-  
-    // Set the animation to be played when no other animation has been specified.  Use the empty string to
-    // disable idle animation. NOTE: this wipes out any idle animation stack (from the push/pop actions below)
-    Result SetIdleAnimation(const std::string& animName);
-
-    // Set the idle animation and also add it to the idle animation stack, so we can use pop later. The current
-    // idle (even if it came from SetIdleAnimation) is always on the stack
-    Result PushIdleAnimation(const std::string& animName);
-
-    // Return to the idle animation which was running prior to the most recent call to PushIdleAnimation.
-    // Returns true if it had an animation to return to, otherwise doesn't change the animation and returns
-    // false. If SetIdleAnimation has been called since then, this is invalid and will return false.
-    bool PopIdleAnimation();
-
-    const std::string& GetIdleAnimationName() const;
-    
-    // Returns name of currently streaming animation. Does not include idle animation.
-    // Returns "" if no non-idle animation is streaming.
-    const std::string GetStreamingAnimationName() const;
     
     // Returns the number of animation bytes or audio frames played on the robot since
     // it was initialized with SyncTime.
@@ -558,7 +533,7 @@ public:
     // Returns true iff the robot is currently playing the idle animation.
     bool IsIdleAnimating() const;
     
-    // Returns the "tag" of the 
+    // Returns the "tag" of the animation currently playing on the robot
     u8 GetCurrentAnimationTag() const;
 
     Result SyncTime();
@@ -627,7 +602,8 @@ public:
                            const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOnPeriod_ms,
                            const std::array<u32,(size_t)LEDId::NUM_BACKPACK_LEDS>& transitionOffPeriod_ms);
    
-    
+    void SetHeadlight(bool on);
+  
     // =========  Block messages  ============
   
     // Assign which blocks the robot should connect to.
@@ -698,11 +674,11 @@ public:
     IExternalInterface* GetExternalInterface() {
       ASSERT_NAMED(_context->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr"); return _context->GetExternalInterface();
     }
-    RobotInterface::MessageHandler* GetRobotMessageHandler() {
-      ASSERT_NAMED(_context->GetRobotMsgHandler() != nullptr, "Robot.GetRobotMessageHandler.nullptr"); return _context->GetRobotMsgHandler();
-    }
+    RobotInterface::MessageHandler* GetRobotMessageHandler();
     void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
     const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
+  
+    void SetImageSaveMode(SaveMode_t m) { _imageSaveMode = m;}
   
     void SetLastSentImageID(u32 lastSentImageID) { _lastSentImageID = lastSentImageID; }
     const u32 GetLastSentImageID() const { return _lastSentImageID; }
@@ -743,10 +719,6 @@ public:
     Util::Data::DataPlatform* GetDataPlatform() { return _context->GetDataPlatform(); }
     const CozmoContext* GetContext() const { return _context; }
   
-    const Animation* GetCannedAnimation(const std::string& name) const { return _cannedAnimations.GetAnimation(name); }
-  
-    const std::string& GetAnimationNameFromGroup(const std::string& name);
-  
     ExternalInterface::RobotState GetRobotState();
   
   protected:
@@ -777,8 +749,6 @@ public:
     std::unique_ptr<Audio::RobotAudioClient> _audioClient;
   
     ///////// Animation /////////
-    CannedAnimationContainer&   _cannedAnimations;
-    AnimationGroupContainer&    _animationGroups;
     AnimationStreamer           _animationStreamer;
     s32 _numAnimationBytesPlayed         = 0;
     s32 _numAnimationBytesStreamed       = 0;
@@ -879,10 +849,8 @@ public:
     bool             _isOnBack = false;
     TimeStamp_t      _robotFirstOnBack_ms = 0;
     bool             _lastSendOnBackValue = false;
+    bool             _isOnChargerPlatform = false;
 
-
-
-    std::vector<std::string> _idleAnimationNameStack;
   
     // Sets robot pose but does not update the pose on the robot.
     // Unless you know what you're doing you probably want to use
@@ -935,7 +903,6 @@ public:
     u32         _imgFramePeriod        = 0;
     u32         _imgProcPeriod         = 0;
     TimeStamp_t _lastImgTimeStamp      = 0;
-    std::string _lastPlayedAnimationId;
   
     ///////// Modifiers ////////
   
@@ -960,9 +927,25 @@ public:
     //////// Block pool ////////
     BlockFilter*         _blockFilter;
   
+    // Set of desired blocks to connect to. Set by BlockFilter.
+    std::unordered_set<FactoryID> _blocksToConnectTo;
+
     // Map of discovered objects and the last time that they were heard from
-    std::unordered_map<FactoryID, TimeStamp_t> _discoveredObjects;
+    struct ActiveObjectInfo {
+      FactoryID   factoryID;
+      ObjectType  objectType;
+      TimeStamp_t lastDiscoveredTimeStamp;
+    };
+    std::unordered_map<FactoryID, ActiveObjectInfo> _discoveredObjects;
     bool _enableDiscoveredObjectsBroadcasting = false;
+
+    // Vector of currently connected blocks by active slot index
+    std::vector<ActiveObjectInfo> _connectedObjects;
+
+    // Called in Update(), checks if there are blocksToConnectTo that
+    // have been discovered and should be connected to
+    u8 ConnectToRequestedObjects();
+
   
     ///////// Messaging ////////
     // These methods actually do the creation of messages and sending
@@ -980,7 +963,6 @@ public:
   
     void InitRobotMessageComponent(RobotInterface::MessageHandler* messageHandler, RobotID_t robotId);
     void HandleRobotSetID(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-    void HandleCameraCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandlePrint(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleTrace(const AnkiEvent<RobotInterface::RobotToEngine>& message);
     void HandleCrashReport(const AnkiEvent<RobotInterface::RobotToEngine>& message);

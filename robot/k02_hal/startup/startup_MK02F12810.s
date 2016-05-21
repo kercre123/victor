@@ -45,16 +45,13 @@
 
 
                 AREA    HEADER, DATA, READONLY
-__Signature     DCB     'C','Z','M','0'
-                DCD     Reset_Handler
+__Signature     DCD     Reset_Handler
+                DCB     'C','Z','M','0'
                 DCD     __Vectors
                 DCD     0xDEADFACE
                 DCD     0xDEADFACE
                 DCD     0xDEADFACE
-                DCD     0xDEADFACE
-                DCD     0xDEADFACE
-                DCD     0xDEADFACE
-                DCD     0xDEADFACE
+                DCD     0x00000000
 
 ; Vector Table Mapped, aligned to a a 1kbyte boundary
 
@@ -158,7 +155,7 @@ I2C0_Proc       DCD     I2C0_IRQHandler                     ;I2C0 interrupt
                 ; DCD     Reserved89_IRQHandler               ;Reserved interrupt 89
 __Vectors_End
 
-__Vectors_Size 	EQU     __Vectors_End - __Vectors
+__Vectors_Size  EQU     __Vectors_End - __Vectors
 
 _NVIC_ICER0     EQU   0xE000E180
 _NVIC_ICPR0     EQU   0xE000E280

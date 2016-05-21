@@ -72,12 +72,14 @@ namespace Anki {
 
       
       // TODO: Move this to WebotsKeyboardController?
-      const f32 area = msg.img_width * msg.img_height;
-      _lastObservedObject.family = msg.objectFamily;
-      _lastObservedObject.type   = msg.objectType;
-      _lastObservedObject.id     = msg.objectID;
-      _lastObservedObject.isActive = msg.isActive;
-      _lastObservedObject.area   = area;
+      if (msg.markersVisible) {
+        const f32 area = msg.img_width * msg.img_height;
+        _lastObservedObject.family = msg.objectFamily;
+        _lastObservedObject.type   = msg.objectType;
+        _lastObservedObject.id     = msg.objectID;
+        _lastObservedObject.isActive = msg.isActive;
+        _lastObservedObject.area   = area;
+      }
 
       
       HandleRobotObservedObject(msg);
@@ -116,20 +118,6 @@ namespace Anki {
       HandleRobotDeletedObject(msg);
     }
 
-    void UiGameController::HandleRobotConnectionBase(ExternalInterface::RobotAvailable const& msgIn)
-    {
-      // Just send a message back to the game to connect to any robot that's
-      // advertising (since we don't have a selection mechanism here)
-      PRINT_NAMED_INFO("UiGameController.HandleRobotConnectionBase", "Sending message to command connection to robot %d.", msgIn.robotID);
-      ExternalInterface::ConnectToRobot msgOut;
-      msgOut.robotID = msgIn.robotID;
-      ExternalInterface::MessageGameToEngine message;
-      message.Set_ConnectToRobot(msgOut);
-      SendMessage(message);
-      
-      HandleRobotConnection(msgIn);
-    }
-    
     void UiGameController::HandleUiDeviceConnectionBase(ExternalInterface::UiDeviceAvailable const& msgIn)
     {
       // Just send a message back to the game to connect to any UI device that's
@@ -281,6 +269,14 @@ namespace Anki {
       HandleNVStorageOpResult(msg);
     }
     
+    void UiGameController::HandleFactoryTestResultBase(ExternalInterface::FactoryTestResult const& msg)
+    {
+      PRINT_NAMED_INFO("HandleFactoryTestResult",
+                       "Test result: %s", EnumToString(msg.resultEntry.result));
+      
+      HandleFactoryTestResult(msg);
+    }
+    
     const std::vector<u8>* UiGameController::GetReceivedNVStorageData(NVStorage::NVEntryTag tag) const
     {
       if (_recvdNVStorageData.find(tag) != _recvdNVStorageData.end()) {
@@ -378,9 +374,6 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::UiDeviceAvailable:
             HandleUiDeviceConnectionBase(message.Get_UiDeviceAvailable());
             break;
-          case ExternalInterface::MessageEngineToGame::Tag::RobotAvailable:
-            HandleRobotConnectionBase(message.Get_RobotAvailable());
-            break;
           case ExternalInterface::MessageEngineToGame::Tag::ImageChunk:
             HandleImageChunkBase(message.Get_ImageChunk());
             break;
@@ -414,6 +407,9 @@ namespace Anki {
           case ExternalInterface::MessageEngineToGame::Tag::NVStorageOpResult:
             HandleNVStorageOpResultBase(message.Get_NVStorageOpResult());
             break;
+          case ExternalInterface::MessageEngineToGame::Tag::FactoryTestResult:
+            HandleFactoryTestResultBase(message.Get_FactoryTestResult());
+            break;
           default:
             // ignore
             break;
@@ -428,9 +424,9 @@ namespace Anki {
   
     bool UiGameController::ForceAddRobotIfSpecified()
     {
-      bool doForceAddRobot = false;
-      bool forcedRobotIsSim = false;
-      std::string forcedRobotIP;
+      bool doForceAddRobot = true;
+      bool forcedRobotIsSim = true;
+      std::string forcedRobotIP = "127.0.0.1";
       int  forcedRobotId = 1;
       
       webots::Field* forceAddRobotField = _root->getField("forceAddRobot");
@@ -465,15 +461,15 @@ namespace Anki {
       }
       
       if(doForceAddRobot) {
-        ExternalInterface::ForceAddRobot msg;
+        ExternalInterface::ConnectToRobot msg;
         msg.isSimulated = forcedRobotIsSim;
         msg.robotID = forcedRobotId;
-        
         std::fill(msg.ipAddress.begin(), msg.ipAddress.end(), '\0');
-        std::copy(forcedRobotIP.begin(), forcedRobotIP.end(), msg.ipAddress.begin());
+        std::string ipStr = forcedRobotIP;
+        std::copy(ipStr.begin(), ipStr.end(), msg.ipAddress.data());
         
         ExternalInterface::MessageGameToEngine message;
-        message.Set_ForceAddRobot(msg);
+        message.Set_ConnectToRobot(msg);
         _msgHandler.SendMessage(1, message); // TODO: don't hardcode ID here
       }
       
@@ -1459,7 +1455,13 @@ namespace Anki {
       message.Set_NVStorageClearPartialPendingWriteEntry(msg);
       SendMessage(message);
     }
-    
+
+    void UiGameController::SendSetHeadlight(bool enable)
+    {
+      ExternalInterface::SetHeadlight m;
+      m.enable = enable;
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
     
     void UiGameController::SendEnableVisionMode(VisionMode mode, bool enable)
     {
@@ -1469,32 +1471,6 @@ namespace Anki {
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }
 
-    void UiGameController::SendForceAddRobot()
-    {
-      if (_root) {
-        ExternalInterface::ForceAddRobot msg;
-        msg.isSimulated = false;
-        msg.ipAddress.fill('\0'); // ensure null-termination after copy below
-        
-        webots::Field* ipField = _root->getField("forceAddIP");
-        webots::Field* idField = _root->getField("forceAddID");
-        
-        if(ipField != nullptr && idField != nullptr) {
-          const std::string ipStr = ipField->getSFString();
-          std::copy(ipStr.begin(), ipStr.end(), msg.ipAddress.data());
-          
-          msg.robotID = static_cast<u8>(idField->getSFInt32());
-
-          PRINT_NAMED_INFO("UiGameController.SendForceAddRobot", "Sending message to force-add robot %d at %s", msg.robotID, ipStr.c_str());
-          ExternalInterface::MessageGameToEngine message;
-          message.Set_ForceAddRobot(msg);
-          SendMessage(message);
-        } else {
-          PRINT_NAMED_INFO("UiGameController.SendForceAddRobot", "ERROR: No 'forceAddIP' / 'forceAddID' field(s) found!");
-        }
-      }
-    }
-    
     void UiGameController::QuitWebots(s32 status)
     {
       PRINT_NAMED_INFO("UiGameController.QuitWebots.Result", "%d", status);

@@ -16,14 +16,14 @@
 #include "anki/cozmo/basestation/robot.h"
 #include "anki/cozmo/basestation/actions/basicActions.h"
 #include "anki/cozmo/basestation/actions/sayTextAction.h"
+#include "anki/cozmo/basestation/actions/trackingActions.h"
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/cozmo/basestation/externalInterface/externalInterface.h"
 #include "anki/cozmo/basestation/faceWorld.h"
 #include "anki/vision/basestation/trackedFace.h"
+#include "util/console/consoleInterface.h"
 
-#define DEBUG_ENROLL_NAMED_FACE_ACTION 1
-
-#define USE_BACKPACK_LIGHTS 1
+#define DEBUG_ENROLL_NAMED_FACE_ACTION 0
 
 #if DEBUG_ENROLL_NAMED_FACE_ACTION
 #  define PRINT_ENROLL_DEBUG(...) PRINT_NAMED_DEBUG(__VA_ARGS__)
@@ -34,9 +34,20 @@
 namespace Anki {
 namespace Cozmo {
 
+  static std::string kIdleAnimName = "ag_keepAlive_eyes_01";
+  
+  static void SetIdleAnimName(ConsoleFunctionContextRef context) {
+    kIdleAnimName = ConsoleArg_Get_String(context, "name");
+  }
+  
+  CONSOLE_FUNC(SetIdleAnimName,             "Actions.EnrollNamedFace", const char* name);
+  CONSOLE_VAR(f32, kENF_MinSoundSpace_s,    "Actions.EnrollNamedFace", 0.25f);
+  CONSOLE_VAR(f32, kENF_MaxSoundSpace_s,    "Actions.EnrollNamedFace", 0.75f);
+  CONSOLE_VAR(bool, kENF_UseBackpackLights, "Actions.EnrollNamedFace", true);
+  
   static void SetBackpackLightsHelper(Robot& robot, const ColorRGBA& color)
   {
-    if(USE_BACKPACK_LIGHTS)
+    if(kENF_UseBackpackLights)
     {
       std::array<u32, (size_t)LEDId::NUM_BACKPACK_LEDS> onColor, offColor, onPeriod, offPeriod, transitionOnPeriod, transitionOffPeriod;
       onColor.fill(color);
@@ -87,6 +98,23 @@ namespace Cozmo {
     
     // Turn backpack off:
     SetBackpackLightsHelper(_robot, NamedColors::BLACK);
+    
+    // Go back to previous idle
+    if(_idlePushed) {
+      _robot.GetAnimationStreamer().PopIdleAnimation();
+    }
+  
+  }
+  
+  static TrackFaceAction* CreateTrackAction(Robot& robot, Vision::FaceID_t faceID)
+  {
+    TrackFaceAction* trackAction = new TrackFaceAction(robot, faceID);
+    //trackAction->SetSound("");
+    // Make him make more sound while enrolling:
+    trackAction->SetSoundSpacing(kENF_MinSoundSpace_s, kENF_MaxSoundSpace_s);
+    trackAction->SetMinPanAngleForSound(DEG_TO_RAD(5));
+    trackAction->SetMinTiltAngleForSound(DEG_TO_RAD(5));
+    return trackAction;
   }
   
   Result EnrollNamedFaceAction::InitSequence()
@@ -102,16 +130,16 @@ namespace Cozmo {
           .startFcn = [this](const Vision::TrackedFace* face) {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStart", "");
             SetBackpackLightsHelper(_robot, NamedColors::GREEN);
-            _action = new CompoundActionSequential(_robot, {
-              new TurnTowardsPoseAction(_robot, face->GetHeadPose(), DEG_TO_RAD(45)),
-              // TODO: Play start animation?
-            });
+            return RESULT_OK;
+          },
+          .duringFcn = [this](const Vision::TrackedFace*) {
+            _action = CreateTrackAction(_robot, _faceID);
             return RESULT_OK;
           },
           .stopFcn = [this](const Vision::TrackedFace*) {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.SimpleStepOneStop", "");
             SetBackpackLightsHelper(_robot, NamedColors::BLACK);
-            // TODO: _action = PlayAnimationGroupAction();
+            //_action = new PlayAnimationGroupAction(_robot, kSuccessAnimName);
             return RESULT_OK;
           },
         });
@@ -151,6 +179,10 @@ namespace Cozmo {
             });
             return RESULT_OK;
           },
+          .duringFcn = [this](const Vision::TrackedFace*) {
+            _action = CreateTrackAction(_robot, _faceID);
+            return RESULT_OK;
+          },
         });
         
         _enrollSequence.emplace_back(EnrollStep{
@@ -165,13 +197,32 @@ namespace Cozmo {
             });
             return RESULT_OK;
           },
+          .duringFcn = [this](const Vision::TrackedFace*) {
+            _action = CreateTrackAction(_robot, _faceID);
+            return RESULT_OK;
+          },
           .stopFcn = [this](const Vision::TrackedFace* face) {
             PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.StepFourEnd", "Black");
             SetBackpackLightsHelper(_robot, NamedColors::BLACK);
+            //_action = new PlayAnimationGroupAction(_robot, kSuccessAnimName);
             return RESULT_OK;
           },
         });
 
+        break;
+      }
+        
+      case FaceEnrollmentSequence::Immediate:
+      {
+        _enrollSequence.emplace_back(EnrollStep{
+          .pose = Vision::FaceEnrollmentPose::LookingStraight,
+          .numEnrollments = -1, // Don't count enrollments: use whatever we already have
+          .startFcn = {},
+          .duringFcn = {},
+          .stopFcn = {},
+        });
+        _enrollmentCountReached = true;
+        _minTimePerEnrollStep_ms = 0;
         break;
       }
         
@@ -210,10 +261,12 @@ namespace Cozmo {
     
     // Disable enrollments, in case we just started an action
     _robot.GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::Disabled);
-    ASSERT_NAMED_EVENT(_seqIter->numEnrollments > 0, "EnrollNamedFaceAction.InitCurrentStep.BadNumEnrollments",
-                       "Expecting numEnrollments > 0, not %d", _seqIter->numEnrollments);
+    ASSERT_NAMED_EVENT(_seqIter->numEnrollments != 0, "EnrollNamedFaceAction.InitCurrentStep.BadNumEnrollments",
+                       "Expecting numEnrollments != 0, not %d", _seqIter->numEnrollments);
     _numEnrollmentsRequired = _seqIter->numEnrollments;
-    _enrollmentCountReached = false;
+    if(_numEnrollmentsRequired > 0) {
+      _enrollmentCountReached = false;
+    }
 
     _state = State::PreActing;
     
@@ -230,17 +283,10 @@ namespace Cozmo {
     PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.Init", "");
     
     if(_faceID <= 0) {
-      // Make sure enrollment is enabled if we got asked to enroll a negative (tracking) ID.
-      // Hope we start enrollment and this gets updated to a positive ID via the
-      // updatedID handler set up in the constructor.
       PRINT_NAMED_WARNING("EnrollNamedFaceAction.Init.InvalidID",
-                          "Can only enroll positive IDs, not unknown/tracker ID %d. Enabling enrollment and trying again...",
+                          "Can only enroll positive IDs, not unknown/tracker ID %d",
                           _faceID);
-      _robot.GetVisionComponent().SetFaceEnrollmentMode(Vision::FaceEnrollmentPose::LookingStraight);
-      return ActionResult::RUNNING;
-      
-      // TODO: Do we want to just go back to failing in this case?
-      //      return ActionResult::FAILURE_ABORT;
+      return ActionResult::FAILURE_ABORT;
     }
 
     Result initSeqResult = InitSequence();
@@ -279,6 +325,7 @@ namespace Cozmo {
     return ActionResult::SUCCESS;
   } // Init()
   
+  
   ActionResult EnrollNamedFaceAction::CheckIfDone()
   {
     switch(_state)
@@ -296,15 +343,63 @@ namespace Cozmo {
           }
         }
         
+        PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.SetEnrollmentMode",
+                           "pose:%s ID:%d enrollCount:%d",
+                           EnumToString(_seqIter->pose), _faceID, _numEnrollmentsRequired);
+        
         _robot.GetVisionComponent().SetFaceEnrollmentMode(_seqIter->pose, _faceID, _numEnrollmentsRequired);
+        if(_seqIter->duringFcn != nullptr) {
+          const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_faceID);
+          if(nullptr == face) {
+            PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.NullFace",
+                                "Face %d does not exist in face world", _faceID);
+            return ActionResult::FAILURE_ABORT;
+          }
+          
+          PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.StartingDuringAction", "");
+          Result duringResult = _seqIter->duringFcn(face);
+          if(RESULT_OK != duringResult) {
+            PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.DuringFcnFailed", "");
+            return ActionResult::FAILURE_ABORT;
+          }
+        }
+        
+        PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.TransitionToEnrolling", "");
         _state = State::Enrolling;
         break;
       }
         
       case State::Enrolling:
       {
+        if(_action != nullptr)
+        {
+          ActionResult subResult = _action->Update();
+          if(ActionResult::RUNNING != subResult) {
+            if(ActionResult::SUCCESS != subResult) {
+              PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.DuringActionFailed", "");
+            }
+            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.PreActionCompleted", "");
+            Util::SafeDelete(_action); // delete and set to null to signify we're done with this action
+          } else {
+            //PRINT_NAMED_DEBUG("EnrollNamedFaceAction.CheckIfDone.DuringActionRunning", "");
+          }
+        }
+        
+        
+        if(!_idlePushed) {
+          _robot.GetAnimationStreamer().PushIdleAnimation(kIdleAnimName);
+          _idlePushed = true;
+        }
+        
         // Just waiting for enrollments to come in...
-        if(_enrollmentCountReached) {
+        if(_enrollmentCountReached)
+        {
+          PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.ReachedEnrollmentCount",
+                             "Count=%d", _numEnrollmentsRequired);
+          
+          // Cancel any "during" action we were doing
+          Util::SafeDelete(_action);
+          
           if(nullptr != _seqIter->stopFcn) {
             const Vision::TrackedFace* face = _robot.GetFaceWorld().GetFace(_faceID);
             if(nullptr == face) {
@@ -312,12 +407,15 @@ namespace Cozmo {
                                   "Face %d does not exist in face world", _faceID);
               return ActionResult::FAILURE_ABORT;
             }
+            
             Result result = _seqIter->stopFcn(face);
             if(RESULT_OK != result) {
               PRINT_NAMED_WARNING("EnrollNamedFaceAction.CheckIfDone.StopFcnFailed", "");
               return ActionResult::FAILURE_ABORT;
             }
           }
+          
+          PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.TransitionToPostActing", "");
           _state = State::PostActing;
         }
         break;
@@ -337,39 +435,73 @@ namespace Cozmo {
         }
         
         const TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-        if(currentTime_ms - _lastModeChangeTime_ms > kMinTimePerEnrollMode_ms)
+        if(currentTime_ms - _lastModeChangeTime_ms > _minTimePerEnrollStep_ms)
         {
+          PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.DoneWithCurrentStep", "");
           _lastModeChangeTime_ms = currentTime_ms;
           
           // Move to next step in the sequence
           ++_seqIter;
+          
+          if(_seqIter == _enrollSequence.end())
+          {
+            // Completed all steps!
+            PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.CompletedAllSteps", "");
+            
+            _robot.GetVisionComponent().AssignNameToFace(_faceID, _faceName);
+            
+            // Play success animation which says player's name
+            SayTextAction* sayTextAction = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
+            sayTextAction->SetGameEvent(GameEvent::OnLearnedPlayerName);
+            _action = sayTextAction;
+            
+            //  // Test: trying saying name twice
+            //  SayTextAction* sayTextAction2 = new SayTextAction(_robot, _faceName, SayTextStyle::Name_Normal, false);
+            //  sayTextAction2->SetGameEvent(GameEvent::OnLearnedPlayerName);
+            //  _action = new CompoundActionSequential(_robot, {sayTextAction, sayTextAction2});
+            
+            //  // Test: Play happy animation after say text
+            //  _action = new CompoundActionSequential(_robot, {sayTextAction,
+            //    new PlayAnimationAction(_robot, "anim_reactToBlock_success_01_45"),
+            //    new MoveHeadToAngleAction(_robot, DEG_TO_RAD(40))
+            //  });
+            
+            // Save the new album to the robot.
+            if(_saveToRobot) {
+              _robot.GetVisionComponent().SaveFaceAlbumToRobot();
+            }
+            _state = State::Finishing;
+            
+            break;
+          }
           
           Result stepInitResult = InitCurrentStep();
           if(RESULT_OK != stepInitResult) {
             PRINT_NAMED_WARNING("EnrollNamedFaceAction.Init.StepInitFailed", "");
             return ActionResult::FAILURE_ABORT;
           }
+        } else {
+          PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.WaitingForMinTimerPerStep",
+                             "CurrentTime=%d LastChange=%d MinTime=%d",
+                             currentTime_ms, _lastModeChangeTime_ms, _minTimePerEnrollStep_ms);
         }
+        
         break;
       }
-    } // switch(_state)
     
-    if(_seqIter == _enrollSequence.end()) {
-      // Completed all steps!
-      PRINT_ENROLL_DEBUG("EnrollNamedFaceAction.CheckIfDone.CompletedAllSteps", "");
-      
-      _robot.GetVisionComponent().AssignNameToFace(_faceID, _faceName);
-      
-      // Get the robot ready to be able to say the name the first time (really necessary?)
-      _robot.GetTextToSpeechComponent().CreateSpeech(_faceName, SayTextStyle::Name_FirstIntroduction);
-      
-      // Save the new album to the robot.
-      if(_saveToRobot) {
-        _robot.GetVisionComponent().SaveFaceAlbumToRobot();
+      case State::Finishing:
+      {
+        if(nullptr != _action)
+        {
+          // Finish the final success SayTextAction. Once it completes, this action
+          // will return SUCCESS.
+          return _action->Update();
+        } else {
+          return ActionResult::SUCCESS;
+        }
       }
-      
-      return ActionResult::SUCCESS;
-    }
+        
+    } // switch(_state)
 
     return ActionResult::RUNNING;
     

@@ -239,7 +239,7 @@ void ChannelBase::RemoveConnectionForOverwrite(ConnectionId connectionId)
 bool ChannelBase::RemoveConnectionInternal(TransportAddress& address, ConnectionId connectionId)
 {
   auto found = _connectionIdLookup.find(connectionId);
-  if (found == _connectionIdLookup.end()) {
+  if (found != _connectionIdLookup.end()) {
     address = found->second;
     _addressLookup.erase(address);
     _connectionIdLookup.erase(found);

@@ -10,12 +10,12 @@
       <TargetName>syscon</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
-      <pCCUsed>5060061::V5.06 update 1 (build 61)::ARMCC</pCCUsed>
+      <pCCUsed>5060183::V5.06 update 2 (build 183)::ARMCC</pCCUsed>
       <TargetOption>
         <TargetCommonOption>
           <Device>nRF51822_xxAA</Device>
           <Vendor>Nordic Semiconductor</Vendor>
-          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.5.0</PackID>
+          <PackID>NordicSemiconductor.nRF_DeviceFamilyPack.8.6.0</PackID>
           <PackURL>http://developer.nordicsemi.com/nRF5_SDK/pieces/nRF_DeviceFamilyPack/</PackURL>
           <Cpu>IROM(0x00000000,0x40000) IRAM(0x20000000,0x4000) CPUTYPE("Cortex-M0") CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
@@ -54,7 +54,7 @@
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\</ListingPath>
+          <ListingPath>.\build\app\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -81,14 +81,14 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>bash -c "make -C .. safe"</UserProg1Name>
+            <UserProg1Name>bash -c "make -C .. nrf_fix"</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopA1X>0</nStopA1X>
             <nStopA2X>0</nStopA2X>
           </AfterMake>
-          <SelectedForBatchBuild>0</SelectedForBatchBuild>
+          <SelectedForBatchBuild>1</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
         </TargetCommonOption>
         <CommonProperty>
@@ -328,11 +328,13 @@
             <v6LangP>0</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
+            <v6Lto>0</v6Lto>
+            <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>--gnu</MiscControls>
               <Define>NRF51,COZMO_ROBOT,SOFTDEVICE_PRESENT,BLE_STACK_SUPPORT_REQD</Define>
               <Undefine></Undefine>
-              <IncludePath>./components/device;./components/drivers_nrf/hal;./components/libraries/util/;./components/drivers_nrf/config/;./components/drivers_nrf/common/;./components/drivers_nrf/rng;./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/common;./components/ble/ble_services/ble_bas;./components/ble/ble_services/ble_dis;./components/ble/ble_advertising;../include;.;./components/libraries/trace;./components/drivers_nrf/pstorage;./components/drivers_nrf/pstorage/config;./components/ble/device_manager;./components/ble/device_manager/config;./components/libraries/timer;./components/softdevice/s110/headers;./components/ble/ble_services/ble_bps;../generated/clad/robot;./crypto</IncludePath>
+              <IncludePath>./components/softdevice/common/softdevice_handler;./components/softdevice/s110/headers;./components/ble/ble_dtm;./components/ble/common;./components/drivers_nrf/hal;./components/libraries/util;./components/libraries/timer;../generated/clad/robot;../include;./crypto;./hal;./cubes;.</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -381,11 +383,6 @@
               <FilePath>.\hal\battery.cpp</FilePath>
             </File>
             <File>
-              <FileName>debug.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\debug.cpp</FilePath>
-            </File>
-            <File>
               <FileName>head.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\head.cpp</FilePath>
@@ -396,19 +393,9 @@
               <FilePath>.\hal\main.cpp</FilePath>
             </File>
             <File>
-              <FileName>micro_esb.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\micro_esb.cpp</FilePath>
-            </File>
-            <File>
               <FileName>motors.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\motors.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>radio.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\radio.cpp</FilePath>
             </File>
             <File>
               <FileName>rtos.cpp</FileName>
@@ -474,53 +461,6 @@
               <FileName>bluetooth.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\bluetooth.cpp</FilePath>
-              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>2</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>2</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>1</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>2</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <uC99>2</uC99>
-                    <useXO>2</useXO>
-                    <v6Lang>0</v6Lang>
-                    <v6LangP>0</v6LangP>
-                    <vShortEn>2</vShortEn>
-                    <vShortWch>2</vShortWch>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>
             </File>
             <File>
               <FileName>app_timer.cpp</FileName>
@@ -541,6 +481,11 @@
               <FileName>settings.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\hal\settings.c</FilePath>
+            </File>
+            <File>
+              <FileName>ble_dtm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\components\ble\ble_dtm\ble_dtm.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -568,14 +513,14 @@
               <FilePath>.\crypto\bignum.cpp</FilePath>
             </File>
             <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\sha1.cpp</FilePath>
-            </File>
-            <File>
               <FileName>aes.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\crypto\aes.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>sha1.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\crypto\sha1.cpp</FilePath>
             </File>
             <File>
               <FileName>diffie.cpp</FileName>
@@ -586,6 +531,31 @@
               <FileName>random.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\crypto\random.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>cubes</GroupName>
+          <Files>
+            <File>
+              <FileName>firmware.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\cubes\firmware.s</FilePath>
+            </File>
+            <File>
+              <FileName>micro_esb.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\cubes\micro_esb.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>radio.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\cubes\radio.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>dtm.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\dtm.cpp</FilePath>
             </File>
           </Files>
         </Group>

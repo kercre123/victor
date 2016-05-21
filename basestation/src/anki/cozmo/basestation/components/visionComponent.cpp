@@ -142,16 +142,6 @@ namespace Cozmo {
       return result;
     }
     
-    if(ROLLING_SHUTTER_CORRECTION)
-    {
-      _visionSystem->ShouldDoRollingShutterCorrection(_robot.IsPhysical());
-    }
-    else
-    {
-      _visionSystem->ShouldDoRollingShutterCorrection(false);
-      EnableVisionWhileMovingFast(false);
-    }
-    
     // Request face album data from the robot
     std::string faceAlbumName;
     JsonTools::GetValueOptional(config, "FaceAlbum", faceAlbumName);
@@ -198,6 +188,16 @@ namespace Cozmo {
       
       // Fine-tune calibration using tool code dots
       //_robot.GetActionList().QueueActionNext(new ReadToolCodeAction(_robot));
+    }
+    
+    if(ROLLING_SHUTTER_CORRECTION)
+    {
+      _visionSystem->ShouldDoRollingShutterCorrection(_robot.IsPhysical());
+    }
+    else
+    {
+      _visionSystem->ShouldDoRollingShutterCorrection(false);
+      EnableVisionWhileMovingFast(false);
     }
   } // SetCameraCalibration()
   
@@ -408,6 +408,10 @@ namespace Cozmo {
       PRINT_NAMED_WARNING("VisionComponent.SetNextImage.NotInitialized", "");
       return RESULT_FAIL;
     }
+
+    if (!_enabled) {
+      return RESULT_OK;
+    }
     
     if(_isCamCalibSet) {
       ASSERT_NAMED(nullptr != _visionSystem, "VisionComponent.SetNextImage.NullVisionSystem");
@@ -523,7 +527,7 @@ namespace Cozmo {
           if(!WasMovingTooFast(image.GetTimestamp(), &p, DEG_TO_RAD(0.1), DEG_TO_RAD(0.1)))
           {
             _storeNextImageForCalibration = false;
-            Result addResult = _visionSystem->AddCalibrationImage(image.ToGray());
+            Result addResult = _visionSystem->AddCalibrationImage(image.ToGray(), _calibTargetROI);
             if(RESULT_OK != addResult) {
               PRINT_NAMED_INFO("VisionComponent.SetNextImage.AddCalibrationImageFailed", "");
             }
@@ -531,16 +535,6 @@ namespace Cozmo {
             PRINT_NAMED_DEBUG("VisionComponent.SetNextImage.SkippingStorageForCalibrationBecauseMoving", "");
           }
         }
-      }
-      
-      // Display any debug images left by the vision system
-      std::pair<std::string, Vision::Image>    debugGray;
-      std::pair<std::string, Vision::ImageRGB> debugRGB;
-      while(_visionSystem->CheckDebugMailbox(debugGray)) {
-        debugGray.second.Display(debugGray.first.c_str());
-      }
-      while(_visionSystem->CheckDebugMailbox(debugRGB)) {
-        debugRGB.second.Display(debugRGB.first.c_str());
       }
       
     } else {
@@ -848,187 +842,224 @@ namespace Cozmo {
     
   } // QueueObservedMarker()
   
-  Result VisionComponent::UpdateVisionMarkers()
+  Result VisionComponent::UpdateAllResults()
   {
-    Result lastResult = RESULT_OK;
+    bool anyFailures = false;
+    
     if(_visionSystem != nullptr)
     {
-      Vision::ObservedMarker visionMarker;
-      while(true == _visionSystem->CheckMailbox(visionMarker)) {
+      VisionProcessingResult result;
+      
+      while(true == _visionSystem->CheckMailbox(result))
+      {
+        // Helper macro to print error message and set anyFailures=true if that result was not RESULT_OK.
+#       define TRY_AND_REPORT_FAILURE(__NAME__) \
+        do { if(RESULT_OK != this->__NAME__(result)) { \
+        PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults." QUOTE(__NAME__) "Failed", ""); \
+        anyFailures = true; } } while(0)
+
+        TRY_AND_REPORT_FAILURE(UpdateVisionMarkers);
+        TRY_AND_REPORT_FAILURE(UpdateFaces);
+        TRY_AND_REPORT_FAILURE(UpdateTrackingQuad);
+        TRY_AND_REPORT_FAILURE(UpdateDockingErrorSignal);
+        TRY_AND_REPORT_FAILURE(UpdateMotionCentroid);
+        TRY_AND_REPORT_FAILURE(UpdateOverheadEdges);
+        TRY_AND_REPORT_FAILURE(UpdateToolCode);
+        TRY_AND_REPORT_FAILURE(UpdateComputedCalibration);
+
+#       undef TRY_AND_REPORT_FAILURE
         
-        lastResult = QueueObservedMarker(visionMarker);
-        if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("VisionComponent.Update.FailedToQueueVisionMarker",
-                            "Got VisionMarker message from vision processing thread but failed to queue it.");
-          return lastResult;
+        // Display any debug images left by the vision system
+        for(auto & debugGray : result.debugImages) {
+          debugGray.second.Display(debugGray.first.c_str());
+        }
+        for(auto & debugRGB : result.debugImageRGBs) {
+          debugRGB.second.Display(debugRGB.first.c_str());
         }
         
-        const Quad2f& corners = visionMarker.GetImageCorners();
-        const ColorRGBA& drawColor = (visionMarker.GetCode() == Vision::MARKER_UNKNOWN ?
-                                      NamedColors::BLUE : NamedColors::RED);
-        _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
-        
-        const bool drawMarkerNames = false;
-        if(drawMarkerNames)
-        {
-          Rectangle<f32> boundingRect(corners);
-          std::string markerName(visionMarker.GetCodeName());
-          _vizManager->DrawCameraText(boundingRect.GetTopLeft(),
-                                      markerName.substr(strlen("MARKER_"),std::string::npos),
-                                      drawColor);
-        }
+        // Send the processed image message last
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotProcessedImage(result.timestamp)));
       }
     }
+    
+    if(anyFailures) {
+      return RESULT_FAIL;
+    } else {
+      return RESULT_OK;
+    }
+  } // UpdateAllResults()
+  
+  
+  Result VisionComponent::UpdateVisionMarkers(const VisionProcessingResult& procResult)
+  {
+    Result lastResult = RESULT_OK;
+    
+    for(auto & visionMarker : procResult.observedMarkers)
+    {
+      lastResult = QueueObservedMarker(visionMarker);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionComponent.Update.FailedToQueueVisionMarker",
+                          "Got VisionMarker message from vision processing thread but failed to queue it.");
+        return lastResult;
+      }
+      
+      const Quad2f& corners = visionMarker.GetImageCorners();
+      const ColorRGBA& drawColor = (visionMarker.GetCode() == Vision::MARKER_UNKNOWN ?
+                                    NamedColors::BLUE : NamedColors::RED);
+      _vizManager->DrawCameraQuad(corners, drawColor, NamedColors::GREEN);
+      
+      const bool drawMarkerNames = false;
+      if(drawMarkerNames)
+      {
+        Rectangle<f32> boundingRect(corners);
+        std::string markerName(visionMarker.GetCodeName());
+        _vizManager->DrawCameraText(boundingRect.GetTopLeft(),
+                                    markerName.substr(strlen("MARKER_"),std::string::npos),
+                                    drawColor);
+      }
+    }
+
     return lastResult;
   } // UpdateVisionMarkers()
   
-  Result VisionComponent::UpdateFaces()
+  Result VisionComponent::UpdateFaces(const VisionProcessingResult& procResult)
   {
     Result lastResult = RESULT_OK;
-    if(_visionSystem != nullptr)
+
+    for(auto & updatedID : procResult.updatedFaceIDs)
     {
-      Vision::UpdatedFaceID updatedID;
-      while(true == _visionSystem->CheckMailbox(updatedID))
-      {
-        _robot.GetFaceWorld().ChangeFaceID(updatedID.oldID, updatedID.newID);
-      }
+      _robot.GetFaceWorld().ChangeFaceID(updatedID.oldID, updatedID.newID);
+    }
 
-      Vision::TrackedFace faceDetection;
-      while(true == _visionSystem->CheckMailbox(faceDetection))
-      {
-        /*
-         PRINT_NAMED_INFO("VisionComponent.Update",
-                          "Saw face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
-                          "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
-                          faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
-                          faceDetection.GetRect().GetWidth(), faceDetection.GetRect().GetHeight(),
-                          faceDetection.GetTimeStamp(),
-                          faceDetection.GetHeadRoll().getDegrees(),
-                          faceDetection.GetHeadPitch().getDegrees(),
-                          faceDetection.GetHeadYaw().getDegrees(),
-                          faceDetection.GetHeadPose().GetTranslation().x(),
-                          faceDetection.GetHeadPose().GetTranslation().y(),
-                          faceDetection.GetHeadPose().GetTranslation().z());
-         */
-        
-        // Get historical robot pose at specified timestamp to get
-        // head angle and to attach as parent of the camera pose.
-        TimeStamp_t t;
-        RobotPoseStamp* p = nullptr;
-        HistPoseKey poseKey;
+    for(auto faceDetection : procResult.faces)
+    {
+      /*
+       PRINT_NAMED_INFO("VisionComponent.Update",
+                        "Saw face at (x,y,w,h)=(%.1f,%.1f,%.1f,%.1f), "
+                        "at t=%d Pose: roll=%.1f, pitch=%.1f yaw=%.1f, T=(%.1f,%.1f,%.1f).",
+                        faceDetection.GetRect().GetX(), faceDetection.GetRect().GetY(),
+                        faceDetection.GetRect().GetWidth(), faceDetection.GetRect().GetHeight(),
+                        faceDetection.GetTimeStamp(),
+                        faceDetection.GetHeadRoll().getDegrees(),
+                        faceDetection.GetHeadPitch().getDegrees(),
+                        faceDetection.GetHeadYaw().getDegrees(),
+                        faceDetection.GetHeadPose().GetTranslation().x(),
+                        faceDetection.GetHeadPose().GetTranslation().y(),
+                        faceDetection.GetHeadPose().GetTranslation().z());
+       */
+      
+      // Get historical robot pose at specified timestamp to get
+      // head angle and to attach as parent of the camera pose.
+      TimeStamp_t t;
+      RobotPoseStamp* p = nullptr;
+      HistPoseKey poseKey;
 
-        _robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
+      _robot.GetPoseHistory()->ComputeAndInsertPoseAt(faceDetection.GetTimeStamp(), t, &p, &poseKey, true);
+      
+      // Check this before potentially ignoring the face detection for faceWorld's purposes below
+      if(faceDetection.GetNumEnrollments() > 0) {
+        PRINT_NAMED_DEBUG("VisionComponent.UpdateFaces.ReachedEnrollmentCount",
+                          "Count=%d", faceDetection.GetNumEnrollments());
+        ExternalInterface::RobotReachedEnrollmentCount enrollCountMsg;
+        enrollCountMsg.faceID = faceDetection.GetID();
+        enrollCountMsg.count  = faceDetection.GetNumEnrollments();
         
-        // If we were moving too fast at the timestamp the face was detected then don't update it
-        if(WasMovingTooFast(faceDetection.GetTimeStamp(), p))
-        {
-          return RESULT_OK;
-        }
-        
-        // Use the faceDetection to update FaceWorld:
-        lastResult = _robot.GetFaceWorld().AddOrUpdateFace(faceDetection);
-        if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("VisionComponent.Update.FailedToUpdateFace",
-                            "Got FaceDetection from vision processing but failed to update it.");
-          return lastResult;
-        }
-        
-        if(faceDetection.GetNumEnrollments() > 0) {
-          ExternalInterface::RobotReachedEnrollmentCount enrollCountMsg;
-          enrollCountMsg.faceID = faceDetection.GetID();
-          enrollCountMsg.count  = faceDetection.GetNumEnrollments();
-          
-          _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(enrollCountMsg)));
-        }
+        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(enrollCountMsg)));
       }
       
-    } // if(_visionSystem != nullptr)
+      // If we were moving too fast at the timestamp the face was detected then don't update it
+      if(WasMovingTooFast(faceDetection.GetTimeStamp(), p))
+      {
+        return RESULT_OK;
+      }
+      
+      // Use the faceDetection to update FaceWorld:
+      lastResult = _robot.GetFaceWorld().AddOrUpdateFace(faceDetection);
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionComponent.Update.FailedToUpdateFace",
+                          "Got FaceDetection from vision processing but failed to update it.");
+        return lastResult;
+      }
+      
+    }
+    
     return lastResult;
   } // UpdateFaces()
   
-  Result VisionComponent::UpdateTrackingQuad()
+  Result VisionComponent::UpdateTrackingQuad(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+    for(auto & trackerQuad : procResult.trackerQuads)
     {
-      VizInterface::TrackerQuad trackerQuad;
-      if(true == _visionSystem->CheckMailbox(trackerQuad)) {
-        // Send tracker quad info to viz
-        _vizManager->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
-                                                   trackerQuad.topRight_x, trackerQuad.topRight_y,
-                                                   trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
-                                                   trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
-      }
+      // Send tracker quad info to viz
+      _vizManager->SendTrackerQuad(trackerQuad.topLeft_x, trackerQuad.topLeft_y,
+                                   trackerQuad.topRight_x, trackerQuad.topRight_y,
+                                   trackerQuad.bottomRight_x, trackerQuad.bottomRight_y,
+                                   trackerQuad.bottomLeft_x, trackerQuad.bottomLeft_y);
     }
+
     return RESULT_OK;
   } // UpdateTrackingQuad()
   
-  Result VisionComponent::UpdateDockingErrorSignal()
+  Result VisionComponent::UpdateDockingErrorSignal(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+    for(auto markerPoseWrtCamera : procResult.dockingPoses)
     {
-      std::pair<Pose3d, TimeStamp_t> markerPoseWrtCamera;
-      while(true == _visionSystem->CheckMailbox(markerPoseWrtCamera)) {
-        
-        // Hook the pose coming out of the vision system up to the historical
-        // camera at that timestamp
-        Vision::Camera histCamera(_robot.GetHistoricalCamera(markerPoseWrtCamera.second));
-        markerPoseWrtCamera.first.SetParent(&histCamera.GetPose());
-        /*
-         // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
-         Pose3d markerPoseWrtRobot;
-         if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
-         PRINT_NAMED_ERROR("VisionComponent.Update.PoseOriginFail",
-         "Could not get marker pose w.r.t. robot.");
-         return RESULT_FAIL;
-         }
-         */
-        //Pose3d poseWrtRobot = poseWrtCam;
-        //poseWrtRobot.PreComposeWith(camWrtRobotPose);
-        Pose3d markerPoseWrtRobot(markerPoseWrtCamera.first);
-        markerPoseWrtRobot.PreComposeWith(histCamera.GetPose());
-        
-        DockingErrorSignal dockErrMsg;
-        dockErrMsg.timestamp = markerPoseWrtCamera.second;
-        dockErrMsg.x_distErr = markerPoseWrtRobot.GetTranslation().x();
-        dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
-        dockErrMsg.z_height  = markerPoseWrtRobot.GetTranslation().z();
-        dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
-        
-        // Visualize docking error signal
-        _vizManager->SetDockingError(dockErrMsg.x_distErr,
-                                                   dockErrMsg.y_horErr,
-                                                   dockErrMsg.angleErr);
+      // Hook the pose coming out of the vision system up to the historical
+      // camera at that timestamp
+      Vision::Camera histCamera(_robot.GetHistoricalCamera(procResult.timestamp));
+      markerPoseWrtCamera.SetParent(&histCamera.GetPose());
+      /*
+       // Get the pose w.r.t. the (historical) robot pose instead of the camera pose
+       Pose3d markerPoseWrtRobot;
+       if(false == markerPoseWrtCamera.first.GetWithRespectTo(p.GetPose(), markerPoseWrtRobot)) {
+       PRINT_NAMED_ERROR("VisionComponent.Update.PoseOriginFail",
+       "Could not get marker pose w.r.t. robot.");
+       return RESULT_FAIL;
+       }
+       */
+      //Pose3d poseWrtRobot = poseWrtCam;
+      //poseWrtRobot.PreComposeWith(camWrtRobotPose);
+      Pose3d markerPoseWrtRobot(markerPoseWrtCamera);
+      markerPoseWrtRobot.PreComposeWith(histCamera.GetPose());
+      
+      DockingErrorSignal dockErrMsg;
+      dockErrMsg.timestamp = procResult.timestamp;
+      dockErrMsg.x_distErr = markerPoseWrtRobot.GetTranslation().x();
+      dockErrMsg.y_horErr  = markerPoseWrtRobot.GetTranslation().y();
+      dockErrMsg.z_height  = markerPoseWrtRobot.GetTranslation().z();
+      dockErrMsg.angleErr  = markerPoseWrtRobot.GetRotation().GetAngleAroundZaxis().ToFloat() + M_PI_2;
+      
+      // Visualize docking error signal
+      _vizManager->SetDockingError(dockErrMsg.x_distErr,
+                                   dockErrMsg.y_horErr,
+                                   dockErrMsg.z_height,
+                                   dockErrMsg.angleErr);
 
-        // Try to use this for closed-loop control by sending it on to the robot
-        _robot.SendRobotMessage<DockingErrorSignal>(std::move(dockErrMsg));
-      }
-    } // if(_visionSystem != nullptr)
+      // Try to use this for closed-loop control by sending it on to the robot
+      _robot.SendRobotMessage<DockingErrorSignal>(std::move(dockErrMsg));
+    }
+
     return RESULT_OK;
   } // UpdateDockingErrorSignal()
   
-  Result VisionComponent::UpdateMotionCentroid()
+  Result VisionComponent::UpdateMotionCentroid(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+  
+    for(auto motionCentroid : procResult.observedMotions)
     {
-      ExternalInterface::RobotObservedMotion motionCentroid;
-      if (true == _visionSystem->CheckMailbox(motionCentroid))
-      {
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(motionCentroid)));
-      }
-    } // if(_visionSystem != nullptr)
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(motionCentroid)));
+    }
+
     return RESULT_OK;
   } // UpdateMotionCentroid()
   
-  Result VisionComponent::UpdateOverheadEdges()
+  Result VisionComponent::UpdateOverheadEdges(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+    for(auto & edgeFrame : procResult.overheadEdges)
     {
-      OverheadEdgeFrame edgeFrame;
-      while(true == _visionSystem->CheckMailbox(edgeFrame))
-      {
-        _robot.GetBlockWorld().ProcessVisionOverheadEdges(edgeFrame);
-      }      
+      _robot.GetBlockWorld().ProcessVisionOverheadEdges(edgeFrame);
     }
+    
     return RESULT_OK;
   }
   
@@ -1118,46 +1149,38 @@ namespace Cozmo {
     return RESULT_OK;
   } // UpdateOverheadMap()
   
-  Result VisionComponent::UpdateToolCode()
+  Result VisionComponent::UpdateToolCode(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+    for(auto & info : procResult.toolCodes)
     {
-      ToolCodeInfo info;
-      if(true == _visionSystem->CheckMailbox(info))
-      {
-        ExternalInterface::RobotReadToolCode msg;
-        msg.info = info;
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-      }
+      ExternalInterface::RobotReadToolCode msg;
+      msg.info = info;
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
 
     return RESULT_OK;
   }
   
 
-  Result VisionComponent::UpdateComputedCalibration()
+  Result VisionComponent::UpdateComputedCalibration(const VisionProcessingResult& procResult)
   {
-    if(_visionSystem != nullptr)
+    for(auto & calib : procResult.cameraCalibrations)
     {
-      Vision::CameraCalibration calib;
-      if(true == _visionSystem->CheckMailbox(calib))
-      {
-        CameraCalibration msg;
-        msg.center_x = calib.GetCenter_x();
-        msg.center_y = calib.GetCenter_y();
-        msg.focalLength_x = calib.GetFocalLength_x();
-        msg.focalLength_y = calib.GetFocalLength_y();
-        msg.nrows = calib.GetNrows();
-        msg.ncols = calib.GetNcols();
-        msg.skew = calib.GetSkew();
-        _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-      }
+      CameraCalibration msg;
+      msg.center_x = calib.GetCenter_x();
+      msg.center_y = calib.GetCenter_y();
+      msg.focalLength_x = calib.GetFocalLength_x();
+      msg.focalLength_y = calib.GetFocalLength_y();
+      msg.nrows = calib.GetNrows();
+      msg.ncols = calib.GetNcols();
+      msg.skew = calib.GetSkew();
+      _robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
-    
+  
     return RESULT_OK;
   }
 
-    bool VisionComponent::WasHeadMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
+  bool VisionComponent::WasHeadMovingTooFast(TimeStamp_t t, RobotPoseStamp* p,
                                          const f32 headTurnSpeedLimit_radPerSec)
   {
     // Check to see if the robot's body or head are
@@ -1376,12 +1399,59 @@ namespace Cozmo {
     return _visionSystem->GetNumStoredCalibrationImages();
   }
   
-  Result VisionComponent::WriteCalibrationImagesToRobot(WriteCalibrationImagesToRobotCallback callback)
+  Result VisionComponent::WriteCalibrationPoseToRobot(size_t whichPose,
+                                                      NVStorageComponent::NVStorageWriteEraseCallback callback)
   {
-    const std::list<Vision::Image> calibImages = _visionSystem->GetCalibrationImages();
+    Result lastResult = RESULT_OK;
+    
+    auto & calibPoses = _visionSystem->GetCalibrationPoses();
+    if(whichPose >= calibPoses.size()) {
+      PRINT_NAMED_WARNING("VisionComponent.WriteCalibrationPoseToRobot.InvalidPoseIndex",
+                          "Requested %zu, only %zu available", whichPose, calibPoses.size());
+      lastResult = RESULT_FAIL;
+    } else {
+      auto & calibImages = _visionSystem->GetCalibrationImages();
+      ASSERT_NAMED_EVENT(calibImages.size() >= calibPoses.size(),
+                         "VisionComponent.WriteCalibrationPoseToRobot.SizeMismatch",
+                         "Expecting at least %zu calibration images, got %zu",
+                         calibPoses.size(), calibImages.size());
+      
+      f32 poseData[6] = {0,0,0,0,0,0};
+      
+      if(!calibImages[whichPose].dotsFound) {
+        PRINT_NAMED_INFO("VisionComponent.WriteCalibrationPoseToRobot.PoseNotComputed",
+                         "Dots not found in image %zu, no pose available",
+                         whichPose);
+      } else {
+        // Serialize the requested calibration pose
+        const Pose3d& calibPose = calibPoses[whichPose];
+        Radians angleX, angleY, angleZ;
+        calibPose.GetRotationMatrix().GetEulerAngles(angleX, angleY, angleZ);
+        poseData[0] = angleX.ToFloat();
+        poseData[1] = angleY.ToFloat();
+        poseData[2] = angleZ.ToFloat();
+        poseData[3] = calibPose.GetTranslation().x();
+        poseData[4] = calibPose.GetTranslation().y();
+        poseData[5] = calibPose.GetTranslation().z();
+      }
+      
+      // Write to robot
+      const bool success = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CalibPose,
+                                                                (u8*)poseData, sizeof(poseData), callback);
+                                                        
+      lastResult = (success ? RESULT_OK : RESULT_FAIL);
+    }
+    
+    
+    return lastResult;
+  }
+  
+  Result VisionComponent::WriteCalibrationImagesToRobot(WriteImagesToRobotCallback callback)
+  {
+    const auto& calibImages = _visionSystem->GetCalibrationImages();
     
     // Make sure there is no more than 5 images in the list
-    if (calibImages.size() > 5 || calibImages.size() < 4) {
+    if (calibImages.size() > 6 || calibImages.size() < 4) {
       PRINT_NAMED_INFO("VisionComponent.WriteCalibrationImagesToRobot.TooManyOrTooFewImages",
                        "%zu images (Need 4 or 5)", _visionSystem->GetNumStoredCalibrationImages());
       return RESULT_FAIL;
@@ -1391,15 +1461,24 @@ namespace Cozmo {
                      "%zu images", _visionSystem->GetNumStoredCalibrationImages());
     _writeCalibImagesToRobotResults.clear();
 
-    static const NVStorage::NVEntryTag calibImageTags[5] = {NVStorage::NVEntryTag::NVEntry_CalibImage1,
+    static const NVStorage::NVEntryTag calibImageTags[6] = {NVStorage::NVEntryTag::NVEntry_CalibImage1,
                                                             NVStorage::NVEntryTag::NVEntry_CalibImage2,
                                                             NVStorage::NVEntryTag::NVEntry_CalibImage3,
                                                             NVStorage::NVEntryTag::NVEntry_CalibImage4,
-                                                            NVStorage::NVEntryTag::NVEntry_CalibImage5};
+                                                            NVStorage::NVEntryTag::NVEntry_CalibImage5,
+                                                            NVStorage::NVEntryTag::NVEntry_CalibImage6};
     
     // Write images to robot
     u32 imgIdx = 0;
-    for (auto img : calibImages) {
+    u8 usedMask = 0;
+    for (auto const& calibImage : calibImages)
+    {
+      const Vision::Image& img = calibImage.img;
+      
+      if(calibImage.dotsFound) {
+        usedMask |= ((u8)1 << imgIdx);
+      }
+      
       // Compress to jpeg
       std::vector<u8> imgVec;
       cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 50}));
@@ -1411,10 +1490,10 @@ namespace Cozmo {
       fclose(fp);
       */
       
-      // Write to robot
+      // Write images to robot
+      PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingWrite", "Image %d", imgIdx);
       bool res = true;
       if (imgIdx < calibImages.size() - 1) {
-        PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingWrite", "Image %d", imgIdx);
         res = _robot.GetNVStorageComponent().Write(calibImageTags[imgIdx], &imgVec,
                                                    [this](NVStorage::NVResult res) {
                                                     _writeCalibImagesToRobotResults.push_back(res);
@@ -1443,16 +1522,107 @@ namespace Cozmo {
       ++imgIdx;
     }
     
-
     // Erase remaining calib image tags
     for (u32 i = imgIdx; i < 5; ++i) {
         PRINT_NAMED_DEBUG("VisionComponent.WriteCalibrationImagesToFile.RequestingErase", "Image %d", i);
       _robot.GetNVStorageComponent().Erase(calibImageTags[i]);
     }
+    
+    // Write bit flag indicating in which images dots were found
+    // TODO: Add callback?
+    bool res = _robot.GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_CalibImagesUsed, &usedMask, 1);
 
+
+    return (res == true ? RESULT_OK : RESULT_FAIL);
+    
+    
+  }
+  
+  Result VisionComponent::ClearToolCodeImages()
+  {
+    if(nullptr == _visionSystem || !_visionSystem->IsInitialized())
+    {
+      PRINT_NAMED_ERROR("VisionComponent.ClearToolCodeImages.VisionSystemNotReady", "");
+      return RESULT_FAIL;
+    }
+    else
+    {
+      return _visionSystem->ClearToolCodeImages();
+    }
+  }
+  
+  size_t VisionComponent::GetNumStoredToolCodeImages() const
+  {
+    return _visionSystem->GetNumStoredToolCodeImages();
+  }
+  
+  Result VisionComponent::WriteToolCodeImagesToRobot(WriteImagesToRobotCallback callback)
+  {
+    const auto& images = _visionSystem->GetToolCodeImages();
+    
+    // Make sure there is no more than 2 images in the list
+    if (images.size() != 2) {
+      PRINT_NAMED_INFO("VisionComponent.WriteToolCodeImagesToRobot.TooManyOrTooFewImages",
+                       "%zu images (Need exactly 2 images)", _visionSystem->GetNumStoredToolCodeImages());
+      return RESULT_FAIL;
+    }
+    
+    PRINT_NAMED_INFO("VisionComponent.WriteToolCodeImagesToRobot.StartingWrite",
+                     "%zu images", _visionSystem->GetNumStoredToolCodeImages());
+    _writeToolCodeImagesToRobotResults.clear();
+    
+    
+    static const NVStorage::NVEntryTag toolCodeImageTags[2] = {NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft, NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight};
+    
+    // Write images to robot
+    u32 imgIdx = 0;
+    for (auto const& img : images)
+    {
+      // Compress to jpeg
+      std::vector<u8> imgVec;
+      cv::imencode(".jpg", img.get_CvMat_(), imgVec, std::vector<int>({CV_IMWRITE_JPEG_QUALITY, 75}));
+      
+      /*
+       std::string imgFilename = "savedImg_" + std::to_string(imgIdx) + ".jpg";
+       FILE* fp = fopen(imgFilename.c_str(), "w");
+       fwrite(imgVec.data(), imgVec.size(), 1, fp);
+       fclose(fp);
+       */
+      
+      
+      // Write images to robot
+      PRINT_NAMED_DEBUG("VisionComponent.WriteToolCodeImagesToFile.RequestingWrite", "Image %d", imgIdx);
+      bool res = true;
+      if (imgIdx < images.size() - 1) {
+        res = _robot.GetNVStorageComponent().Write(toolCodeImageTags[imgIdx], &imgVec,
+                                                   [this](NVStorage::NVResult res) {
+                                                     _writeToolCodeImagesToRobotResults.push_back(res);
+                                                   });
+      } else {
+        res = _robot.GetNVStorageComponent().Write(toolCodeImageTags[imgIdx], &imgVec,
+                                                   [this, callback](NVStorage::NVResult res) {
+                                                     _writeToolCodeImagesToRobotResults.push_back(res);
+                                                     
+                                                     std::string resStr = "";
+                                                     for(auto r : _writeToolCodeImagesToRobotResults) {
+                                                       resStr += EnumToString(r) + std::string(", ");
+                                                     }
+                                                     PRINT_NAMED_DEBUG("VisionComponent.WriteToolCodeImagesToFile.Complete", "%s", resStr.c_str());
+                                                     
+                                                     if (callback) {
+                                                       callback(_writeToolCodeImagesToRobotResults);
+                                                     }
+                                                   });
+      }
+      
+      if (!res) {
+        return RESULT_FAIL;
+      }
+      
+      ++imgIdx;
+    }
+    
     return RESULT_OK;
-    
-    
   }
   
   inline static size_t GetPaddedNumBytes(size_t numBytes)

@@ -20,6 +20,7 @@
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/animationEvents.clad"
+#include "clad/types/motorTypes.clad"
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/externalInterface/keyWordRecognized.clad"
 #include "clad/robotInterface/messageFromActiveObject.clad"
@@ -33,11 +34,6 @@ namespace ExternalInterface {
 ////////////////////////  ADVERTISING & CONNECTING  ///////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-
-// Let the UI know that a robot is advertising as available
-message RobotAvailable {
-    uint_32 robotID
-}
 
 message UiDeviceAvailable {
     UiConnectionType  connectionType,
@@ -137,6 +133,11 @@ message RobotOnBack {
     bool onBack
 }
 
+// Tests a collision, not contacts.
+message RobotOnChargerPlatformEvent {
+  bool   onCharger
+}
+
 // Generic string for sending debug string up to game
 message DebugString {
     string    text
@@ -148,19 +149,15 @@ string    text
 ///////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////  VISION  ////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-/*
-// Full QVGA Image from a specifed Robot
-message RobotImage_320x240 {
-    uint_32 robotID
-    uint_8 image[320*240]
-}
 
-// Full VGA Image from a specifed Robot
-message RobotImage_640x480 {
-    uint_32 robotID
-    uint_8 image[640*480]
+// RobotProcessedImage
+//  Sent every time a full frame processing is completed, whether or not anything was
+//  detected. Reports the image timestamp that was processed. Sent _after_ any results
+//  or observations from the same image to indicate nothing else is coming from that
+//  image.
+message RobotProcessedImage {
+   uint_32 timestamp
 }
-*/
 
 // RobotObservedObject for signaling that an object
 //  with specified ID/Type/Family was seen at a particular location in the image
@@ -421,7 +418,6 @@ message UpdateEngineState {
 
 structure BlockPoolBlockData {
   uint_32 id,
-  ObjectType objectType,
   bool enabled
 }
 
@@ -458,7 +454,7 @@ message NVStorageOpResult {
 ///////////////////////////////////////////////////////////////////////////////
 
 message FactoryTestResult {
-  FactoryTestResultCode resultCode
+  FactoryTestResultEntry resultEntry
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -469,18 +465,14 @@ message FirmwareUpdateProgress {
   uint_32 robotID,
   FirmwareUpdateStage stage,
   FirmwareUpdateSubStage subStage,
-  string  fwSigWifi,
-  string  fwSigRTIP,
-  string  fwSigBody,
+  string  fwSig,
   uint_8  percentComplete
 }
 
 message FirmwareUpdateComplete {
   uint_32 robotID,
   FirmwareUpdateResult  result,
-  string  fwSigWifi,
-  string  fwSigRTIP,
-  string  fwSigBody
+  string  fwSig
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -501,7 +493,8 @@ message RequestGameStart {
 
 // Special request for face enrollment
 message RequestEnrollFace {
-  bool firstRequest
+  bool firstRequest,
+  int_32 face_id
 }
 
 message SparkUnlockEnded {

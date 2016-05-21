@@ -146,10 +146,10 @@ namespace Anki {
       // Returns true if this is a duplicate action
       bool       IsDuplicate(IActionRunner* action);
       
-    protected:
       // Blindly clears out the contents of the action list
       void       Clear();
       
+    protected:
       std::map<SlotHandle, ActionQueue> _queues;
       
     }; // class ActionList

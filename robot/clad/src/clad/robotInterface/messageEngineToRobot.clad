@@ -43,6 +43,11 @@ namespace RobotInterface {
  * and to make debugging from message dumps more sane.
  */
 
+message SetHeadlight
+{
+  bool enable
+}
+
 message DriveWheels
 {
   float_32 lwheel_speed_mmps,
@@ -229,9 +234,23 @@ message EnableLiftPower
   bool enable
 }
 
-message ConfigureBluetooth
+enum int_8 BodyRadioMode {
+  BODY_BLUETOOTH_OPERATING_MODE = 0,
+  BODY_WIFI_OPERATING_MODE = 1,
+  BODY_DTM_OPERATING_MODE = 2
+}
+
+message SetBodyRadioMode
 {
-  bool enable
+  BodyRadioMode radioMode
+}
+
+message SendDTMCommand
+{
+  int_32 command, 
+  int_32 freq, 
+  int_32 length, 
+  int_32 payload
 }
 
 message EnableReadToolCodeMode
@@ -248,11 +267,6 @@ message RTIPVersionInfo
   string  description
 }
 
-message BodyUpgradeData
-{
-  uint_32 word
-}
-
 message RadioState
 {
   bool wifiConnected
@@ -264,17 +278,13 @@ message DebugSetRTTO
   uint_16 timeoutMilliseconds
 }
 
-// Display a 
+// Display a large font number
 message DisplayNumber
 {
   uint_32 value,
+  uint_8  digits,
   uint_8  x,
   uint_8  y
-}
-
-// This is an empty message, just display
-message DisplayRelease
-{  
 }
 
 message NVReadResultToBody
@@ -316,16 +326,15 @@ union EngineToRobot
   
   // 0x01 to 0x27: Messages to the body / test fixture
   // 0x28 to 0x2f: Allocated to BLE response messages
-  BootloadBody                  bootloadBody                = 0x01,
-  // Reserved for bootloader data message to get moved here = 0x02,
   BackpackLights                setBackpackLights           = 0x03,
   CubeLights                    setCubeLights               = 0x04,
   SetPropSlot                   setPropSlot                 = 0x05,
   KillBodyCode                  killBodyCode                = 0x06,
-  ConfigureBluetooth            configureBluetooth          = 0x07,
-
+  SetBodyRadioMode              setBodyRadioMode            = 0x07,
   NVReadResultToBody            nvReadToBody                = 0x08,
   NVOpResultToBody              nvOpResultToBody            = 0x09,
+  SendDTMCommand                sendDTMCommand              = 0x0A,
+  SetHeadlight                  setHeadlight                = 0x0B,
 
   BLE_RecvHello                 bleRecvHelloMessage         = 0x26,
   BLE_EnterPairing              bleEnterPairing             = 0x27,
@@ -337,7 +346,7 @@ union EngineToRobot
   AppConnectConfigResult        wifiCfgResult               = 0x2f,
 
   // 0x30 to 0x7f: To RTIP
-  BootloadRTIP                  bootloadRTIP                = 0x30,
+  // Available for future use                               = 0x31,
   RadioState                    radioConnected              = 0x31,
   DriveWheels                   drive                       = 0x32,
   DriveWheelsCurvature          driveCurvature              = 0x33,
@@ -371,23 +380,18 @@ union EngineToRobot
   EnablePickupParalysis         enablePickupParalysis       = 0x4F,
   EnableLiftPower               enableLiftPower             = 0x50,
   SetMotionModelParams          setMotionModelParams        = 0x51,
-  BodyUpgradeData               bodyUpgradeData             = 0x52,
   PowerState                    powerState                  = 0x53,
   PropState                     getPropState                = 0x54,
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x55,
   EnableTestStateMessage        enableTestStateMessage      = 0x56,
-  DisplayNumber                 oledDisplayNumber           = 0x57,
-  DisplayRelease                oledRelease                 = 0x58,
   
   // 0x80 to 0xAF: To WiFi
-  // Flash and OTA message must not be changed or OTA will break
-  EraseFlash                    eraseFlash                  = 0x80,
-  WriteFlash                    writeFlash                  = 0x81,
-  OTAUpgrade                    triggerOTAUpgrade           = 0x82,
+  // Available for future use                               = 0x80,  
+  // Available for future use                               = 0x81,
+  // Available for future use                               = 0x82,
   NVStorage::NVStorageWrite     writeNV                     = 0x83,
   NVStorage::NVStorageRead      readNV                      = 0x84,
-  // Reserved for FlashWriteAcknowledge message in OTA      = 0x85,
-  BodyFirmwareState             bodyState                   = 0x86,
+  // Available for future use                               = 0x85,
   RTIPVersionInfo               rtipVersion                 = 0x87,
   DebugSetRTTO                  setRTTO                     = 0x89,
   AbortAnimation                abortAnimation              = 0x90,
@@ -409,6 +413,8 @@ union EngineToRobot
   CubeSlots                     assignCubeSlots             = 0xA0,
   TestState                     testState                   = 0xA1,
   EnterFactoryTestMode          enterTestMode               = 0xA2,
+  DisplayNumber                 oledDisplayNumber           = 0xA3,
+  OTA::Write                    otaWrite                    = 0xAF,
 
   AppConnectConfigString        appConCfgString             = 0xAA,
   AppConnectConfigFlags         appConCfgFlags              = 0xAB,

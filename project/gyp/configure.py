@@ -332,6 +332,11 @@ def main(scriptArgs):
   if (generateUnityMeta.generateMetaFiles(unityGeneratedPath, options.verbose)):
     UtilLog.error("error generating unity meta files")
     return False
+    
+  #generate AnkiLogStringTables.json
+  if (subprocess.call(['make', '--silent', 'app'], cwd=os.path.join(projectRoot, 'robot')) != 0):
+      UtilLog.error("Error generating AnkiLogStringTables.json")
+      return False
 
   # update file lists
   generator = updateFileLists.FileListGenerator(options)

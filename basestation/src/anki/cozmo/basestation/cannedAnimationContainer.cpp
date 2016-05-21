@@ -61,7 +61,7 @@ namespace Cozmo {
     auto retVal = _animations.find(name);
     if(retVal == _animations.end()) {
       PRINT_NAMED_ERROR("CannedAnimationContainer.GetAnimation_Const.InvalidName",
-                        "Animation requested for unknown animation '%s'.\n",
+                        "Animation requested for unknown animation '%s'.",
                         name.c_str());
     } else {
       animPtr = &retVal->second;
@@ -124,7 +124,7 @@ namespace Cozmo {
     
     if(RESULT_OK != AddAnimation(animationName)) {
       PRINT_NAMED_INFO("CannedAnimationContainer.DefineFromJson.ReplaceName",
-                       "Replacing existing animation named '%s'.\n",
+                       "Replacing existing animation named '%s'.",
                        animationName.c_str());
     }
     
@@ -142,7 +142,7 @@ namespace Cozmo {
     // Sanity check
     if(animation->GetName() != animationName) {
       PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
-                        "Animation's internal name ('%s') doesn't match container's name for it ('%s').\n",
+                        "Animation's internal name ('%s') doesn't match container's name for it ('%s').",
                         animation->GetName().c_str(),
                         animationName.c_str());
       return RESULT_FAIL;
@@ -150,7 +150,7 @@ namespace Cozmo {
     
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson",
-                        "Failed to define animation '%s' from Json.\n",
+                        "Failed to define animation '%s' from Json.",
                         animationName.c_str());
       return lastResult;
     }

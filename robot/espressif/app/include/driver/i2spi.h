@@ -28,6 +28,7 @@ typedef enum {
   I2SPI_REBOOT,     ///< Inform the K02 we want to reboot
   I2SPI_RECOVERY,   ///< Inform the K02 we want to reboot into recovery
   I2SPI_SHUTDOWN,   ///< Inform the K02 we want to shut down
+  I2SPI_RESUME,     ///< Attempt to resume a paused connection without resyncing
 } I2SpiMode;
 
 /** Initalize the I2S peripheral, IO pins and DMA for bi-directional transfer
@@ -41,7 +42,7 @@ int8_t i2spiInit(void);
  *               Must be no more than DROP_TO_RTIP_MAX_VAR_PAYLOAD
  * @return true if the data was successfully queued or false if it could not be queued.
  */
-bool i2spiQueueMessage(uint8_t* msgData, int msgLen);
+bool i2spiQueueMessage(const uint8_t* msgData, const int msgLen);
 
 /** Check if the I2SPI message queue is empty
  * @return True if there are no clad messages waiting to be sent
@@ -63,6 +64,7 @@ int16_t i2spiGetRtipBootloaderState(void);
 uint32_t i2spiGetBodyBootloaderCode(void);
 
 /** Push a chunk of firmware to the RTIP
+ * Does not actually send the data imeediately, queues it for sending, pointer must remain valid
  * @param chunk a Pointer to data to be sent
  */
 bool i2spiBootloaderPushChunk(FirmwareBlock* chunk);

@@ -11,11 +11,14 @@ void ReliableTransport_SetConnectionTimeout(const uint32_t timeoutMicroSeconds);
 #include "anki/common/constantsAndMacros.h"
 #include "animationController.h"
 #include "rtip.h"
+#include "face.h"
 #include "activeObjectManager.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
+#include "wifi_configuration.h"
 #include "upgradeController.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 static Anki::Cozmo::NVStorage::NVReportDest nvOpReportTo;
 
@@ -42,15 +45,14 @@ namespace Anki {
           }
           case NVStorage::BODY:
           {
-            RobotInterface::EngineToRobot msg;
-            msg.tag = RobotInterface::EngineToRobot::Tag_nvOpResultToBody;
-            os_memcpy(&msg.nvOpResultToBody.report, report, sizeof(NVStorage::NVOpResult));
-            RTIP::SendMessage(msg);
+            RobotInterface::NVOpResultToBody msg;
+            os_memcpy(&msg.report, report, sizeof(NVStorage::NVOpResult));
+            RobotInterface::SendMessage(msg);
             break;
           }
           default:
           {
-            AnkiError( 151, "Messages.SendNVOpResult", 448, "Unhandled report destination %d", 1, dest);
+            AnkiError( 151, "Messages.SendNVOpResult", 450, "Unhandled report destination %d", 1, dest);
           }
         }
       }
@@ -97,15 +99,14 @@ namespace Anki {
             }
             case NVStorage::BODY:
             {
-              RobotInterface::EngineToRobot msg;
-              msg.tag = RobotInterface::EngineToRobot::Tag_nvReadToBody;
-              os_memcpy(&msg.nvReadToBody.entry, entry, sizeof(NVStorage::NVStorageBlob));
-              RTIP::SendMessage(msg);
+              RobotInterface::NVReadResultToBody msg;
+              os_memcpy(&msg.entry, entry, sizeof(NVStorage::NVStorageBlob));
+              RobotInterface::SendMessage(msg);
               break;
             }
             default:
             {
-              AnkiError( 152, "Messages.NVReadDoneCB", 448, "Unhandled report destination %d", 1, nvOpReportTo);
+              AnkiError( 152, "Messages.NVReadDoneCB", 450, "Unhandled report destination %d", 1, nvOpReportTo);
             }
           }
         }
@@ -142,22 +143,10 @@ namespace Anki {
           AnkiConditionalWarnAndReturn(bufferSize <= msg.MAX_SIZE, 137, "WiFi.Messages", 256, "Received message too big! %02x[%d] > %d", 3, buffer[0], bufferSize, msg.MAX_SIZE);
           switch(buffer[0])
           {
-            case RobotInterface::EngineToRobot::Tag_eraseFlash:
+            case RobotInterface::EngineToRobot::Tag_otaWrite:
             {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              UpgradeController::EraseFlash(msg.eraseFlash);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_writeFlash:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              UpgradeController::WriteFlash(msg.writeFlash);
-              break;
-            }
-            case RobotInterface::EngineToRobot::Tag_triggerOTAUpgrade:
-            {
-              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
-              UpgradeController::Trigger(msg.triggerOTAUpgrade);
+              memcpy(msg.GetBuffer(), buffer, bufferSize);
+              UpgradeController::Write(msg.otaWrite);
               break;
             }
             case RobotInterface::EngineToRobot::Tag_writeNV:
@@ -271,6 +260,12 @@ namespace Anki {
               ActiveObjectManager::SetSlots(0, msg.assignCubeSlots.factory_id_length, msg.assignCubeSlots.factory_id);
               break;
             }
+            case RobotInterface::EngineToRobot::Tag_oledDisplayNumber:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              Face::FaceDisplayNumber(msg.oledDisplayNumber.digits, msg.oledDisplayNumber.value, msg.oledDisplayNumber.x, msg.oledDisplayNumber.y);
+              break;
+            }
             case RobotInterface::EngineToRobot::Tag_testState:
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
@@ -281,6 +276,36 @@ namespace Anki {
             {
               memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
               Factory::Process_EnterFactoryTestMode(msg.enterTestMode);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_appConCfgString:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              WiFiConfiguration::ProcessConfigString(msg.appConCfgString);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_appConCfgFlags:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              WiFiConfiguration::ProcessConfigFlags(msg.appConCfgFlags);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_appConCfgIPInfo:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              WiFiConfiguration::ProcessConfigIPInfo(msg.appConCfgIPInfo);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_appConGetRobotIP:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              WiFiConfiguration::SendRobotIpInfo(msg.appConGetRobotIP.ifId);
+              break;
+            }
+            case RobotInterface::EngineToRobot::Tag_wifiOff:
+            {
+              memcpy(msg.GetBuffer(), buffer, bufferSize); // Copy out into aligned struct
+              WiFiConfiguration::Off(msg.wifiOff.sleep);
               break;
             }
             default:

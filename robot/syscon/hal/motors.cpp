@@ -12,7 +12,6 @@ extern "C" {
 
 #include "motors.h"
 #include "timer.h"
-#include "debug.h"
 #include "rtos.h"
 #include "head.h"
 
@@ -474,6 +473,7 @@ void Motors::printEncodersRaw()
   tmp2 = METERS_PER_TICK;
   tmp2 *= m_motors[1].position;
 
+  /*
   UART::print("L%cR%cA%c%cH%c%c L%7iR%7iA%7iH%7i",
       '0' + nrf_gpio_pin_read(PIN_ENCODER_LEFT),
       '0' + nrf_gpio_pin_read(PIN_ENCODER_RIGHT),
@@ -487,6 +487,7 @@ void Motors::printEncodersRaw()
   
   // After printing, reset encoders (this is okay because it's used for encoder testing)
   m_motors[0].position = m_motors[1].position = m_motors[2].position = m_motors[3].position = 0;
+  */
 }
 
 
@@ -506,8 +507,10 @@ s32 Motors::debugWheelsGetTicks(u8 motorID)
 
 void Motors::printEncoder(u8 motorID) // XXX: wheels are in encoder ticks, not meters
 {
+  /*
   int i = m_motors[motorID].position;
   UART::print("%c%c%c%c", i, i >> 8, i >> 16, i >> 24);
+  */
 }
 
 // Apologies for the straight-line code - it's required for performance

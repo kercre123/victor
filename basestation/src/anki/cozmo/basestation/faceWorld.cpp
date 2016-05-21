@@ -4,12 +4,16 @@
 #include "anki/cozmo/basestation/components/visionComponent.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "util/console/consoleInterface.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 
 namespace Anki {
 namespace Cozmo {
+  
+  CONSOLE_VAR(u32, kDeletionTimeout_ms, "Vision.FaceWorld", 4000); // How long before deleting unobserved face
+  CONSOLE_VAR(u32, kKnownFaceDeletionTimeout_ms, "Vision.FaceWorld", 4000);
   
   FaceWorld::KnownFace::KnownFace(Vision::TrackedFace& faceIn)
   : face(faceIn)
@@ -360,10 +364,12 @@ namespace Cozmo {
     {
       Vision::TrackedFace& face = faceIter->second.face;
       
-      if(_robot.GetVisionComponent().GetLastProcessedImageTimeStamp() > _deletionTimeout_ms + face.GetTimeStamp()) {
+      const u32 timeout = face.GetName().empty() ? kDeletionTimeout_ms : kKnownFaceDeletionTimeout_ms;
+      if(_robot.GetVisionComponent().GetLastProcessedImageTimeStamp() > timeout + face.GetTimeStamp()) {
         
         PRINT_NAMED_INFO("FaceWorld.Update.DeletingOldFace",
-                         "Removing face %d at t=%d, because it hasn't been seen since t=%d.",
+                         "Removing %sface %d at t=%d, because it hasn't been seen since t=%d.",
+                         face.GetName().empty() ? "" : "known ",
                          faceIter->first, _robot.GetLastImageTimeStamp(),
                          faceIter->second.face.GetTimeStamp());
         
@@ -390,7 +396,7 @@ namespace Cozmo {
   std::vector<Vision::FaceID_t> FaceWorld::GetKnownFaceIDs() const
   {
     std::vector<Vision::FaceID_t> faceIDs;
-    for (auto pair : _knownFaces) {
+    for (const auto& pair : _knownFaces) {
       faceIDs.push_back(pair.first);
     }
     return faceIDs;
@@ -399,7 +405,7 @@ namespace Cozmo {
   std::list<Vision::FaceID_t> FaceWorld::GetKnownFaceIDsObservedSince(TimeStamp_t seenSinceTime_ms) const
   {
     std::list<Vision::FaceID_t> faceIDs;
-    for (auto pair : _knownFaces) {
+    for (const auto& pair : _knownFaces) {
       if (pair.second.face.GetTimeStamp() >= seenSinceTime_ms) {
         faceIDs.push_back(pair.second.face.GetID());
       }

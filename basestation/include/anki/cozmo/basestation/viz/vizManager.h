@@ -355,7 +355,7 @@ namespace Anki {
 
         
       // ==== Misc. Debug functions =====
-      void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 angle);
+      void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 z_dist, const f32 angle);
 
       void EnableImageSend(bool tf) { _sendImages = tf; }
       /*
@@ -396,6 +396,7 @@ namespace Anki {
       void SendNewBehaviorSelected(VizInterface::NewBehaviorSelected&& newBehaviorSelected);
       void SendStartRobotUpdate();
       void SendEndRobotUpdate();
+      void SendSaveImages(bool saveImages, std::string path = "");
 
     protected:
       

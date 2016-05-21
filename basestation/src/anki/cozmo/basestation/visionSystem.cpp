@@ -16,7 +16,6 @@
 
 #include "visionSystem.h"
 #include "anki/cozmo/basestation/robot.h"
-#include "anki/common/basestation/mailbox_impl.h"
 #include "anki/vision/basestation/image_impl.h"
 #include "anki/common/basestation/math/point_impl.h"
 #include "anki/common/basestation/math/quad_impl.h"
@@ -79,7 +78,8 @@ namespace Cozmo {
   CONSOLE_VAR(f32, kEdgeThreshold,  "Vision.OverheadEdges", 50.f);
   CONSOLE_VAR(u32, kMinChainLength, "Vision.OverheadEdges", 3); // in number of edge pixels
   
-  CONSOLE_VAR(f32, kCalibDotSearchSize_mm,    "Vision.ToolCode",  4.5f);
+  CONSOLE_VAR(f32, kCalibDotSearchWidth_mm,   "Vision.ToolCode",  4.5f);
+  CONSOLE_VAR(f32, kCalibDotSearchHeight_mm,  "Vision.ToolCode",  6.5f);
   CONSOLE_VAR(f32, kCalibDotMinContrastRatio, "Vision.ToolCode",  1.1f);
   
   // For speed, compute motion detection on half-resolution images
@@ -122,6 +122,9 @@ namespace Cozmo {
   {
     _isInitialized = false;
     
+    _isCalibrating = false;
+    _isReadingToolCode = false;
+    
 #   if RECOGNITION_METHOD == RECOGNITION_METHOD_NEAREST_NEIGHBOR
     // Force the NN library to load _now_, not on first use
     PRINT_NAMED_INFO("VisionSystem.Constructor.LoadNearestNeighborLibrary",
@@ -133,10 +136,10 @@ namespace Cozmo {
     
     VisionMarker::SetDataPath(_dataPath);
     
-    // Default processing modes to enable (first hard-coded, then overrides from config file)
-    EnableMode(VisionMode::DetectingMarkers, true);
-    EnableMode(VisionMode::DetectingMotion,  true);
-    EnableMode(VisionMode::DetectingFaces,   true);
+    // Default processing modes should be set from vision_config.json now!
+    //EnableMode(VisionMode::DetectingMarkers, true);
+    //EnableMode(VisionMode::DetectingMotion,  true);
+    //EnableMode(VisionMode::DetectingFaces,   true);
     //EnableMode(VisionMode::DetectingOverheadEdges, true);
     
     if(config.isMember("InitialVisionModes"))
@@ -498,115 +501,16 @@ namespace Cozmo {
     return _prevPoseData.poseStamp.GetHeadAngle();
   }
   
-
-  bool VisionSystem::CheckMailbox(std::pair<Pose3d, TimeStamp_t>& markerPoseWrtCamera)
+  bool VisionSystem::CheckMailbox(VisionProcessingResult& result)
   {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _dockingMailbox.getMessage(markerPoseWrtCamera);
+    std::lock_guard<std::mutex> lock(_mutex);
+    if(_results.empty()) {
+      return false;
+    } else {
+      std::swap(result, _results.front());
+      _results.pop();
+      return true;
     }
-    return retVal;
-  }
-  
-  /*
-  bool VisionSystem::CheckMailbox(Viz::FaceDetection&       msg)
-  {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _faceDetectMailbox.getMessage(msg);
-    }
-    return retVal;
-  }
-   */
-  
-  bool VisionSystem::CheckMailbox(Vision::ObservedMarker&        msg)
-  {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _visionMarkerMailbox.getMessage(msg);
-    }
-    return retVal;
-  }
-  
-  bool VisionSystem::CheckMailbox(VizInterface::TrackerQuad&         msg)
-  {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _trackerMailbox.getMessage(msg);
-    }
-    return retVal;
-  }
-  
-  bool VisionSystem::CheckMailbox(ExternalInterface::RobotObservedMotion& msg)
-  {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _motionMailbox.getMessage(msg);
-    }
-    return retVal;
-  }
-  
-  bool VisionSystem::CheckMailbox(Vision::TrackedFace&      msg)
-  {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _faceMailbox.getMessage(msg);
-    }
-    return retVal;
-  }
-  
-  bool VisionSystem::CheckMailbox(Vision::UpdatedFaceID&  msg)
-  {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _updatedFaceIdMailbox.getMessage(msg);
-    }
-    return retVal;
-  }
-  
-  bool VisionSystem::CheckMailbox(OverheadEdgeFrame& msg)
-  {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _overheadEdgeFrameMailbox.getMessage(msg);
-    }
-    return retVal;
-  }
-  
-  bool VisionSystem::CheckMailbox(ToolCodeInfo& msg)
-  {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _toolCodeMailbox.getMessage(msg);
-    }
-    return retVal;
-  }
-
-  bool VisionSystem::CheckMailbox(Vision::CameraCalibration& msg)
-  {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _calibrationMailbox.getMessage(msg);
-    }
-    return retVal;
-  }
-  
-  bool VisionSystem::CheckDebugMailbox(std::pair<std::string, Vision::Image>& msg)
-  {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _debugImageMailbox.getMessage(msg);
-    }
-    return retVal;
-  }
-  
-  bool VisionSystem::CheckDebugMailbox(std::pair<std::string, Vision::ImageRGB>& msg)
-  {
-    bool retVal = false;
-    if(IsInitialized()) {
-      retVal = _debugImageRGBMailbox.getMessage(msg);
-    }
-    return retVal;
   }
   
   bool VisionSystem::IsInitialized() const
@@ -788,7 +692,7 @@ namespace Cozmo {
         Vision::ObservedMarker obsMarker(inputImageGray.GetTimestamp(),
                                          crntMarker.markerType,
                                          quad, _camera);
-        _visionMarkerMailbox.putMessage(obsMarker);
+        _currentResult.observedMarkers.push_back(std::move(obsMarker));
         
         // Was the desired marker found? If so, start tracking it -- if not already in tracking mode!
         if(!IsModeEnabled(VisionMode::Tracking)     &&
@@ -1301,14 +1205,13 @@ namespace Cozmo {
         m.bottomLeft_x  = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].x * scale);
         m.bottomLeft_y  = static_cast<u16>(currentQuad[Embedded::Quadrilateral<f32>::BottomLeft].y * scale);
         
-        //HAL::RadioSendMessage(GET_MESSAGE_ID(Messages::TrackerQuad), &m);
-        _trackerMailbox.putMessage(m);
+        _currentResult.trackerQuads.push_back(std::move(m));
       }
       
       // Reset the failure counter
       _numTrackFailures = 0;
       
-      _dockingMailbox.putMessage({markerPoseWrtCamera, inputImageGray.GetTimestamp()});
+      _currentResult.dockingPoses.push_back(std::move(markerPoseWrtCamera));
     }
     else {
       _numTrackFailures += 1;
@@ -1487,9 +1390,6 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    std::list<Vision::TrackedFace> faces;
-    std::list<Vision::UpdatedFaceID> updatedIDs;
-    
     if(!markerQuads.empty())
     {
       // Black out detected markers so we don't find faces in them
@@ -1507,17 +1407,17 @@ namespace Cozmo {
       }
       
 #     if DEBUG_FACE_DETECTION
-      //_debugImageMailbox.putMessage({"MaskedFaceImage", maskedImage});
+      //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
 #     endif
       
-      _faceTracker->Update(maskedImage, faces, updatedIDs);
+      _faceTracker->Update(maskedImage, _currentResult.faces, _currentResult.updatedFaceIDs);
     } else {
       // No markers were detected, so nothing to black out before looking
       // for faces
-      _faceTracker->Update(grayImage, faces, updatedIDs);
+      _faceTracker->Update(grayImage, _currentResult.faces, _currentResult.updatedFaceIDs);
     }
     
-    for(auto & currentFace : faces)
+    for(auto & currentFace : _currentResult.faces)
     {
       ASSERT_NAMED(currentFace.GetTimeStamp() == grayImage.GetTimestamp(),
                    "VisionSystem.DetectFaces.BadFaceTimestamp");
@@ -1532,15 +1432,8 @@ namespace Cozmo {
       headPose.SetParent(&_poseData.cameraPose);
       headPose = headPose.GetWithRespectToOrigin();
       currentFace.SetHeadPose(headPose);
-      
-      _faceMailbox.putMessage(currentFace);
     }
     
-    for(auto & updatedID : updatedIDs)
-    {
-      _updatedFaceIdMailbox.putMessage(updatedID);
-    }
-
     return RESULT_OK;
   } // DetectFaces()
   
@@ -1876,40 +1769,39 @@ namespace Cozmo {
           _prevGroundCentroidFilterWeight = 0.f;
         }
         
-        _motionMailbox.putMessage(std::move(msg));
-        //}
+        _currentResult.observedMotions.push_back(std::move(msg));
       
-      if(DEBUG_MOTION_DETECTION)
-      {
-        char tempText[128];
-        Vision::ImageRGB ratioImgDisp(foregroundMotion);
-        ratioImgDisp.DrawPoint(centroid + (_camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier)), NamedColors::RED, 4);
-        snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, msg.img_x, msg.img_y);
-        cv::putText(ratioImgDisp.get_CvMat_(), std::string(tempText),
-                    cv::Point(0,ratioImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0,255,0));
-        _debugImageRGBMailbox.putMessage({"RatioImg", ratioImgDisp});
-        
-        //_debugImageMailbox.putMessage({"PrevRatioImg", _prevRatioImg});
-        //_debugImageMailbox.putMessage({"ForegroundMotion", foregroundMotion});
-        //_debugImageMailbox.putMessage({"AND", cvAND});
-        
-        Vision::Image foregroundMotionFullSize(imageIn.GetNumRows(), imageIn.GetNumCols());;
-        foregroundMotion.Resize(foregroundMotionFullSize, Vision::ResizeMethod::NearestNeighbor);
-        Vision::ImageRGB ratioImgDispGround(_poseData.groundPlaneROI.GetOverheadImage(foregroundMotionFullSize,
-                                                                                      _poseData.groundPlaneHomography));
-        if(groundRegionArea > 0.f) {
-          Anki::Point2f dispCentroid(groundPlaneCentroid.x(), -groundPlaneCentroid.y()); // Negate Y for display
-          ratioImgDispGround.DrawPoint(dispCentroid - _poseData.groundPlaneROI.GetOverheadImageOrigin(), NamedColors::RED, 2);
-          snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", groundRegionArea, msg.ground_x, msg.ground_y);
-          cv::putText(ratioImgDispGround.get_CvMat_(), std::string(tempText),
-                      cv::Point(0,_poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
-                      CV_RGB(0,255,0));
+        if(DEBUG_MOTION_DETECTION)
+        {
+          char tempText[128];
+          Vision::ImageRGB ratioImgDisp(foregroundMotion);
+          ratioImgDisp.DrawPoint(centroid + (_camera.GetCalibration()->GetCenter() * (1.f/scaleMultiplier)), NamedColors::RED, 4);
+          snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", imgRegionArea, msg.img_x, msg.img_y);
+          cv::putText(ratioImgDisp.get_CvMat_(), std::string(tempText),
+                      cv::Point(0,ratioImgDisp.GetNumRows()), CV_FONT_NORMAL, .4f, CV_RGB(0,255,0));
+          _currentResult.debugImageRGBs.push_back({"RatioImg", ratioImgDisp});
+          
+          //_currentResult.debugImages.push_back({"PrevRatioImg", _prevRatioImg});
+          //_currentResult.debugImages.push_back({"ForegroundMotion", foregroundMotion});
+          //_currentResult.debugImages.push_back({"AND", cvAND});
+          
+          Vision::Image foregroundMotionFullSize(imageIn.GetNumRows(), imageIn.GetNumCols());;
+          foregroundMotion.Resize(foregroundMotionFullSize, Vision::ResizeMethod::NearestNeighbor);
+          Vision::ImageRGB ratioImgDispGround(_poseData.groundPlaneROI.GetOverheadImage(foregroundMotionFullSize,
+                                                                                        _poseData.groundPlaneHomography));
+          if(groundRegionArea > 0.f) {
+            Anki::Point2f dispCentroid(groundPlaneCentroid.x(), -groundPlaneCentroid.y()); // Negate Y for display
+            ratioImgDispGround.DrawPoint(dispCentroid - _poseData.groundPlaneROI.GetOverheadImageOrigin(), NamedColors::RED, 2);
+            snprintf(tempText, 127, "Area:%.2f X:%d Y:%d", groundRegionArea, msg.ground_x, msg.ground_y);
+            cv::putText(ratioImgDispGround.get_CvMat_(), std::string(tempText),
+                        cv::Point(0,_poseData.groundPlaneROI.GetWidthFar()), CV_FONT_NORMAL, .4f,
+                        CV_RGB(0,255,0));
+          }
+          _currentResult.debugImageRGBs.push_back({"RatioImgGround", ratioImgDispGround});
+          
+          //
+          //_currentResult.debugImageRGBs.push_back({"CurrentImg", image});
         }
-        _debugImageRGBMailbox.putMessage({"RatioImgGround", ratioImgDispGround});
-        
-        //
-        //_debugImageRGBMailbox.putMessage({"CurrentImg", image});
-      }
       }
       
       //_prevRatioImg = ratio12;
@@ -2017,7 +1909,7 @@ namespace Cozmo {
       OverheadEdgeFrame edgeFrame;
       edgeFrame.timestamp = image.GetTimestamp();
       edgeFrame.groundPlaneValid = false;
-      _overheadEdgeFrameMailbox.putMessage( std::move(edgeFrame) );
+      _currentResult.overheadEdges.push_back(std::move(edgeFrame));
       return RESULT_OK;
     }
     
@@ -2194,8 +2086,8 @@ namespace Cozmo {
       dispEdgeImg.DrawQuad(groundInImage, NamedColors::GREEN, 1);
       //dispImg.Display("OverheadImage", 1);
       //dispEdgeImg.Display("OverheadEdgeImage");
-      _debugImageRGBMailbox.putMessage({"OverheadImage", dispImg});
-      _debugImageRGBMailbox.putMessage({"EdgeImage", dispEdgeImg});
+      _currentResult.debugImageRGBs.push_back({"OverheadImage", dispImg});
+      _currentResult.debugImageRGBs.push_back({"EdgeImage", dispEdgeImg});
     } // if(DRAW_OVERHEAD_IMAGE_EDGES_DEBUG)
     
     // create edge frame info to send
@@ -2216,7 +2108,7 @@ namespace Cozmo {
     candidateChains.clear(); // some chains are in undefined state after std::move, clear them now
     
     // put in mailbox
-    _overheadEdgeFrameMailbox.putMessage( std::move(edgeFrame) );
+    _currentResult.overheadEdges.push_back(std::move(edgeFrame));
     
     return RESULT_OK;
   }
@@ -2281,7 +2173,7 @@ namespace Cozmo {
     if(mode == VisionMode::Idle) {
       return LUT.at(VisionMode::Idle);
     } else {
-      for(auto possibleMode : LUT) {
+      for(const auto& possibleMode : LUT) {
         if(possibleMode.first != VisionMode::Idle &&
            static_cast<u32>(mode) & static_cast<u32>(possibleMode.first))
         {
@@ -2452,7 +2344,7 @@ namespace Cozmo {
     return RESULT_OK;
   } // PreprocessImage()
   
-  Result VisionSystem::AddCalibrationImage(const Vision::Image& calibImg)
+  Result VisionSystem::AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI)
   {
     if(_isCalibrating) {
       PRINT_NAMED_INFO("VisionSystem.AddCalibrationImage.AlreadyCalibrating",
@@ -2460,7 +2352,7 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     
-    _calibImages.push_back(calibImg);
+    _calibImages.push_back({.img = calibImg, .roiRect = targetROI, .dotsFound = false});
     PRINT_NAMED_INFO("VisionSystem.AddCalibrationImage",
                      "Num images including this: %u", (u32)_calibImages.size());
     return RESULT_OK;
@@ -2477,6 +2369,19 @@ namespace Cozmo {
     _calibImages.clear();
     return RESULT_OK;
   }
+
+  Result VisionSystem::ClearToolCodeImages()
+  {
+    if(_isReadingToolCode) {
+      PRINT_NAMED_INFO("VisionSystem.ClearToolCodeImages.AlreadyReadingToolCode",
+                       "Cannot clear tool code images while already in the middle of reading tool codes.");
+      return RESULT_FAIL;
+    }
+    
+    _toolCodeImages.clear();
+    return RESULT_OK;
+  }
+
   
   // This is the regular Update() call
   Result VisionSystem::Update(const VisionPoseData&      poseData,
@@ -2518,7 +2423,7 @@ namespace Cozmo {
       _clahe->apply(inputImageGray.get_CvMat_(), inputImageGray.get_CvMat_());
       
       // DEBUG!
-      //_debugImageRGBMailbox.putMessage({"ImageCLAHE", inputImageGray});
+      //_currentResult.debugImageRGBs.push_back({"ImageCLAHE", inputImageGray});
     }
     
     // Rolling shutter correction
@@ -2535,6 +2440,11 @@ namespace Cozmo {
         Toc("RollingShutterWarpImage");
       }
     }
+    
+    // Set up the results for this frame:
+    VisionProcessingResult result;
+    result.timestamp = inputImage.GetTimestamp();
+    std::swap(result, _currentResult);
     
     // TODO: Provide a way to specify camera parameters from basestation
     //HAL::CameraSetParameters(_exposureTime, _vignettingCorrection == VignettingCorrection_CameraHardware);
@@ -2624,6 +2534,12 @@ namespace Cozmo {
     inputImage.CopyTo(_prevImage);
     */
     
+    // We've computed everything from this image that we're gonna compute.
+    // Push it onto the queue of results all together.
+    _mutex.lock();
+    _results.push(_currentResult);
+    _mutex.unlock();
+    
     return lastResult;
   } // Update()
   
@@ -2659,7 +2575,8 @@ namespace Cozmo {
     //    // DEBUG!
     //    Vision::Image image;
     //    //image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_151585ms_0.jpg");
-    //    image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_251585ms_1.jpg");
+    //    //image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_251585ms_1.jpg");
+    //    image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_366670ms_0.jpg");
     //    if(image.IsEmpty()) {
     //      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ReadImageFileFail", "");
     //      return RESULT_FAIL;
@@ -2668,33 +2585,49 @@ namespace Cozmo {
     
     ToolCodeInfo readToolCodeMessage;
     readToolCodeMessage.code = ToolCode::UnknownTool;
-    
-    // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
-    // no matter how we return from this function
-    Util::CleanupHelper disableCheckToolCode([this,&readToolCodeMessage]() {
-      this->_toolCodeMailbox.putMessage(readToolCodeMessage);
+    _isReadingToolCode = true;
+
+    auto cleanupLambda = [this,&readToolCodeMessage]() {
+      this->_currentResult.toolCodes.push_back(readToolCodeMessage);
       this->EnableMode(VisionMode::ReadingToolCode, false);
+      this->_firstReadToolCodeTime_ms = 0;
+      this->_isReadingToolCode = false;
       PRINT_NAMED_INFO("VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
-    });
+    };
+    
+    if(_firstReadToolCodeTime_ms == 0) {
+      _firstReadToolCodeTime_ms = image.GetTimestamp();
+    }
+    else if(image.GetTimestamp() - _firstReadToolCodeTime_ms > kToolCodeMotionTimeout_ms) {
+      PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.TimeoutWaitingForHeadOrLift",
+                          "start: %d, current: %d, timeout=%dms",
+                          _firstReadToolCodeTime_ms, image.GetTimestamp(), kToolCodeMotionTimeout_ms);
+      cleanupLambda();
+      return RESULT_FAIL;
+    }
     
     // All the conditions that must be met to bother trying to read the tool code:
-    const bool liftMoving = !NEAR_ZERO(_poseData.poseStamp.GetLiftAngle()-_prevPoseData.poseStamp.GetLiftAngle());
+    const bool headMoving = !NEAR(_poseData.poseStamp.GetHeadAngle(), _prevPoseData.poseStamp.GetHeadAngle(), DEG_TO_RAD_F32(0.1));
     
-    const bool headMoving = !NEAR_ZERO(_poseData.poseStamp.GetHeadAngle()-_prevPoseData.poseStamp.GetHeadAngle());
+    const bool liftMoving = !NEAR(_poseData.poseStamp.GetLiftAngle(), _prevPoseData.poseStamp.GetLiftAngle(), DEG_TO_RAD_F32(0.1));
+
+    const bool headDown = _poseData.poseStamp.GetHeadAngle() <= MIN_HEAD_ANGLE + HEAD_ANGLE_TOL;
     
-    //const bool longEnoughSinceLastRead = image.GetTimestamp() - _lastToolCodeReadTime_ms > kToolCodeReadPeriod_ms;
-    
-    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK;
+    const bool liftDown = Robot::ConvertLiftAngleToLiftHeightMM(_poseData.poseStamp.GetLiftAngle()) <= LIFT_HEIGHT_LOWDOCK + READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM;
     
     // Sanity checks: we should not even be calling ReadToolCode if everybody
     // hasn't done their job and got us into position
-    if(liftMoving || headMoving || !liftDown)
+    if(headMoving || liftMoving || !headDown || !liftDown)
     {
-      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.NotInPosition",
-                        "LiftMoving=%d, HeadMoving=%d, LiftDown=%d",
-                        liftMoving, headMoving, liftDown);
-      return RESULT_FAIL;
+      PRINT_NAMED_INFO("VisionSystem.ReadToolCode.NotInPosition",
+                       "Waiting for head / lift (headMoving %d, lifMoving %d, headDown %d, liftDown %d",
+                       headMoving, liftMoving, headDown, liftDown);
+      return RESULT_OK;
     }
+    
+    // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
+    // no matter how we return from this function
+    Util::CleanupHelper disableCheckToolCode(cleanupLambda);
     
     // Center points of the calibration dots, in lift coordinate frame
     // TODO: Move these to be defined elsewhere
@@ -2747,24 +2680,29 @@ namespace Cozmo {
     const f32 kDotHole_mm  = 2.5f/3.f;
     const s32 kBinarizeKernelSize = 11;
     const f32 kBinarizeKernelSigma = 7.f;
-    const f32 kDotAreaFrac = ((kDotWidth_mm*kDotWidth_mm - kDotHole_mm*kDotHole_mm) /
-                              (4.f*kCalibDotSearchSize_mm * kCalibDotSearchSize_mm));
-    const f32 kMinDotAreaFrac   = 0.5f * kDotAreaFrac;
-    const f32 kMaxDotAreaFrac   = 1.5f * kDotAreaFrac;
-    const f32 kHoleAreaFrac     = kDotHole_mm * kDotHole_mm / (kDotWidth_mm*kDotWidth_mm);
-    const f32 kMaxHoleAreaFrac  = 2.f * kHoleAreaFrac;
+    const bool kIsCircularDot = true; // false for square dot with rounded corners
+    const f32 holeArea = kDotHole_mm*kDotHole_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
+    const f32 filledDotArea = kDotWidth_mm*kDotWidth_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
+    const f32 kDotAreaFrac =  (filledDotArea - holeArea) /
+                              (4.f*kCalibDotSearchWidth_mm * kCalibDotSearchHeight_mm);
+    const f32 kMinDotAreaFrac   = 0.25f * kDotAreaFrac;
+    const f32 kMaxDotAreaFrac   = 2.00f * kDotAreaFrac;
+    const f32 kHoleAreaFrac     = holeArea / filledDotArea;
+    const f32 kMaxHoleAreaFrac  = 4.f * kHoleAreaFrac;
+    //const f32 kMinSolidity      = 0.5f*(filledDotArea - holeArea) * (kIsCircularDot ? 1.f/(kDotWidth_mm*kDotWidth_mm) : 1.f);
     
     Anki::Point2f camCen;
     std::vector<Anki::Point2f> observedPoints;
+    _toolCodeImages.clear();
     for(size_t iDot=0; iDot<projectedToolCodeDots.size(); ++iDot)
     {
       // Get an ROI around where we expect to see the dot in the image
       const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[iDot];
       Quad3f dotQuadRoi3d = {
-        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() - kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() - kCalibDotSearchSize_mm, dotWrtLift3d.z()},
-        {dotWrtLift3d.x() + kCalibDotSearchSize_mm, dotWrtLift3d.y() + kCalibDotSearchSize_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchHeight_mm, dotWrtLift3d.y() - kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() - kCalibDotSearchHeight_mm, dotWrtLift3d.y() + kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchHeight_mm, dotWrtLift3d.y() - kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
+        {dotWrtLift3d.x() + kCalibDotSearchHeight_mm, dotWrtLift3d.y() + kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
       };
       
       Quad3f dotQuadRoi3dWrtCam;
@@ -2793,7 +2731,10 @@ namespace Cozmo {
       _camera.Project3dPoints(dotQuadRoi3dWrtCam, dotQuadRoi2d);
       
       Anki::Rectangle<s32> dotRectRoi(dotQuadRoi2d);
-      const Vision::Image dotRoi = image.GetROI(dotRectRoi);
+      
+      // Save ROI image for writing to robot's NVStorage
+      _toolCodeImages.emplace_back(image.GetROI(dotRectRoi));
+      const Vision::Image& dotRoi = _toolCodeImages.back();
       
       // Simple global threshold for binarization
       //Vision::Image invertedDotRoi = dotRoi.GetNegative();
@@ -2806,12 +2747,14 @@ namespace Cozmo {
       cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(),
                        cv::Size(kBinarizeKernelSize,kBinarizeKernelSize), kBinarizeKernelSigma);
       Vision::Image binarizedDotRoi(dotRoi.GetNumRows(), dotRoi.GetNumCols());
-      binarizedDotRoi.get_CvMat_() = dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_();
+      const u8 roiMean = cv::saturate_cast<u8>(1.5 * cv::mean(dotRoi.get_CvMat_())[0]); // 1.5 = fudge factor
+      binarizedDotRoi.get_CvMat_() = ((dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_()) &
+                                      (dotRoi.get_CvMat_() < roiMean));
       
       if(false && DRAW_TOOL_CODE_DEBUG) {
-        _debugImageMailbox.putMessage({(iDot==0 ? "dotRoi0" : "dotRoi1"), dotRoi});
-        _debugImageMailbox.putMessage({(iDot==0 ? "dotRoi0_blurred" : "dotRoi1_blurred"), dotRoi_blurred});
-        _debugImageMailbox.putMessage({(iDot==0 ? "InvertedDotROI0" : "InvertedDotRoi1"), binarizedDotRoi});
+        _currentResult.debugImages.push_back({(iDot==0 ? "dotRoi0" : "dotRoi1"), dotRoi});
+        _currentResult.debugImages.push_back({(iDot==0 ? "dotRoi0_blurred" : "dotRoi1_blurred"), dotRoi_blurred});
+        _currentResult.debugImages.push_back({(iDot==0 ? "InvertedDotROI0" : "InvertedDotRoi1"), binarizedDotRoi});
       }
       
       // Get connected components in the ROI
@@ -2830,11 +2773,21 @@ namespace Cozmo {
       {
         const s32* compStats = stats.ptr<s32>(iComp);
         const s32 compArea = compStats[cv::CC_STAT_AREA];
-        const s32 bboxArea = compStats[cv::CC_STAT_HEIGHT]*compStats[cv::CC_STAT_WIDTH];
-        const f32 solidity = (f32)compArea/(f32)bboxArea;
+        //const s32 bboxArea = compStats[cv::CC_STAT_HEIGHT]*compStats[cv::CC_STAT_WIDTH];
+        //const f32 solidity = (f32)compArea/(f32)bboxArea;
+        
+        //        // DEBUG!!!
+        //        {
+        //          Vision::Image temp;
+        //          temp.get_CvMat_() = (labels.get_CvMat_() == iComp);
+        //          PRINT_NAMED_DEBUG("Component", "iComp: %d, Area: %d, solidity: %.3f",
+        //                            iComp, compArea, -1.f);
+        //          temp.Display("Component", 0);
+        //        }
+        
         if(compArea > kMinDotAreaFrac*binarizedDotRoi.GetNumElements() &&
-           compArea < kMaxDotAreaFrac*binarizedDotRoi.GetNumElements() &&
-           solidity > 0.5f*(1.f-kHoleAreaFrac))
+           compArea < kMaxDotAreaFrac*binarizedDotRoi.GetNumElements()
+           /* && solidity > kMinSolidity */)
         {
           const f64* dotCentroid = centroids.ptr<f64>(iComp);
           const f32 distSq = (Anki::Point2f(dotCentroid[0], dotCentroid[1]) - roiCen).LengthSq();
@@ -2844,18 +2797,34 @@ namespace Cozmo {
             // Note the x/y vs. row/col switch here
             const s32 centerLabel = labels(std::round(dotCentroid[1]),
                                            std::round(dotCentroid[0]));
+            
             if(centerLabel == 0)
             {
-              // Verify if we flood fill from center that we get a hole of
-              // reasonable size that doesn't "leak" outside of this component
-              cv::floodFill(labels.get_CvMat_(), cv::Point(dotCentroid[0], dotCentroid[1]),
-                            numComponents+1);
-              
               Anki::Rectangle<s32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
                                             compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
               
               Vision::Image compBrightnessROI = dotRoi.GetROI(compRect);
-              Array2d<s32> labelROI = labels.GetROI(compRect);
+              Array2d<s32> labelROI;
+              labels.GetROI(compRect).CopyTo(labelROI); // need copy!
+              
+              // Verify if we flood fill from center that we get a hole of
+              // reasonable size that doesn't "leak" outside of this component
+              cv::floodFill(labelROI.get_CvMat_(), cv::Point(dotCentroid[0]-compRect.GetX(), dotCentroid[1]-compRect.GetY()),
+                            numComponents+1);
+              
+              //              // DEBUG!!!
+              //              //if(iDot == 1){
+              //              {
+              //                Vision::Image temp;
+              //                temp.get_CvMat_() = (labels.get_CvMat_() == iComp);
+              //                PRINT_NAMED_DEBUG("Component", "iComp: %d, Area: %d, solidity: %.3f",
+              //                                  iComp, compArea, -1.f);
+              //                temp.Display("Component");
+              //
+              //                Vision::Image tempFill;
+              //                tempFill.get_CvMat_() = (labelROI.get_CvMat_() == numComponents+1);
+              //                tempFill.Display("FloodFill", 0);
+              //              }
               
               // Loop over an even smaller ROI right around the component to
               // compute the hole size, the brightness of that hole vs.
@@ -2868,7 +2837,7 @@ namespace Cozmo {
               for(s32 i=0; i<labelROI.GetNumRows() && !touchesEdge; ++i)
               {
                 const u8* brightness_i = compBrightnessROI.GetRow(i);
-                s32* label_i = labelROI.GetRow(i);
+                const s32* label_i = labelROI.GetRow(i);
                 
                 for(s32 j=0; j<labelROI.GetNumCols() && !touchesEdge; ++j)
                 {
@@ -2882,7 +2851,6 @@ namespace Cozmo {
                     {
                       touchesEdge = true;
                     }
-                    label_i[j] = 0; // un-fill
                   }
                   else if(label_i[j] == iComp)  {
                     avgDotBrightness += brightness_i[j];
@@ -2943,7 +2911,7 @@ namespace Cozmo {
                                         compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
           roiImgDisp.DrawRect(compRect, NamedColors::RED, 1);
         }
-        _debugImageRGBMailbox.putMessage({(iDot==0 ? "DotROI0withCentroid" : "DotROI1withCentroid"), roiImgDisp});
+        _currentResult.debugImageRGBs.push_back({(iDot==0 ? "DotROI0withCentroid" : "DotROI1withCentroid"), roiImgDisp});
       } // if(DRAW_TOOL_CODE_DEBUG)
       
       if(dotLabel == -1) {
@@ -2976,7 +2944,6 @@ namespace Cozmo {
     // TODO: Actually read the code and put corresponding result in the mailbox (once we have more than one)
     // NOTE: This gets put in the mailbox by the Cleanup object defined at the top of the function
     readToolCodeMessage.code = ToolCode::CubeLiftingTool;
-    _lastToolCodeReadTime_ms = image.GetTimestamp();
     
     if(_calibrateFromToolCode)
     {
@@ -3024,7 +2991,7 @@ namespace Cozmo {
         snprintf(dispStr, 255, "f=%.1f, cen=(%.1f,%.1f)",
                  f, camCen.x(), camCen.y());
         dispImg.DrawText(Anki::Point2f(0, 15), dispStr, NamedColors::RED, 0.6);
-        _debugImageRGBMailbox.putMessage({"ToolCode", dispImg});
+        _currentResult.debugImageRGBs.push_back({"ToolCode", dispImg});
       }
 #     endif
       
@@ -3082,7 +3049,7 @@ namespace Cozmo {
                 dispImg.DrawPoint(sanityCheckPoints[1], NamedColors::RED, 1);
                 dispImg.DrawPoint(observedPoints[0], NamedColors::GREEN, 1);
                 dispImg.DrawPoint(observedPoints[1], NamedColors::GREEN, 1);
-                _debugImageRGBMailbox.putMessage({"SanityCheck", dispImg});
+                _currentResult.debugImageRGBs.push_back({"SanityCheck", dispImg});
               }
               PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadProjection",
                                 "Reprojection error of point %d = %f",
@@ -3144,7 +3111,7 @@ namespace Cozmo {
     // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
     // no matter how we return from this function
     Util::CleanupHelper disableComputingCalibration([this,&calibration]() {
-      this->_calibrationMailbox.putMessage(calibration);
+      _currentResult.cameraCalibrations.push_back(calibration);
       this->EnableMode(VisionMode::ComputingCalibration, false);
       _isCalibrating = false;
     });
@@ -3159,9 +3126,9 @@ namespace Cozmo {
     
     // Description of asymmetric circles calibration target
     cv::Size boardSize(4,11);
-    static constexpr f32 squareSize = 0.01; // TODO: Doesn't really matter for camera matrix intrinsics computation, but should probably measure this.
-    cv::Size imageSize(_calibImages.front().GetNumCols(), _calibImages.front().GetNumRows());
-    
+    static constexpr f32 squareSize = 0.005;
+    const Vision::Image& firstImg = _calibImages.front().img;
+    cv::Size imageSize(firstImg.GetNumCols(), firstImg.GetNumRows());
     
     std::vector<std::vector<cv::Point2f> > imagePoints;
     std::vector<std::vector<cv::Point3f> > objectPoints(1);
@@ -3175,13 +3142,19 @@ namespace Cozmo {
     int findCirclesFlags = cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING;
     
     int imgCnt = 0;
-    for (auto img : _calibImages) {
+    Vision::Image img(firstImg.GetNumRows(), firstImg.GetNumCols());
+    for (auto & calibImage : _calibImages)
+    {
+      // Extract the ROI (leaveing the rest as zeros)
+      img.FillWith(0);
+      Vision::Image imgROI = img.GetROI(calibImage.roiRect);
+      calibImage.img.GetROI(calibImage.roiRect).CopyTo(imgROI);
       
       // Get image points
       std::vector<cv::Point2f> pointBuf;
-      bool found = cv::findCirclesGrid(img.get_CvMat_(), boardSize, pointBuf, findCirclesFlags, blobDetector);
+      calibImage.dotsFound = cv::findCirclesGrid(img.get_CvMat_(), boardSize, pointBuf, findCirclesFlags, blobDetector);
 
-      if (found) {
+      if (calibImage.dotsFound) {
         PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.FoundPoints", "");
         imagePoints.push_back(pointBuf);
       } else {
@@ -3193,10 +3166,10 @@ namespace Cozmo {
       if (DRAW_CALIB_IMAGES) {
         Vision::ImageRGB dispImg;
         cv::cvtColor(img.get_CvMat_(), dispImg.get_CvMat_(), cv::COLOR_GRAY2BGR);
-        if (found) {
-          cv::drawChessboardCorners(dispImg.get_CvMat_(), boardSize, cv::Mat(pointBuf), found);
+        if (calibImage.dotsFound) {
+          cv::drawChessboardCorners(dispImg.get_CvMat_(), boardSize, cv::Mat(pointBuf), calibImage.dotsFound);
         }
-        _debugImageRGBMailbox.putMessage({std::string("CalibImage") + std::to_string(imgCnt), dispImg});
+        _currentResult.debugImageRGBs.push_back({std::string("CalibImage") + std::to_string(imgCnt), dispImg});
       }
       ++imgCnt;
     }
@@ -3216,16 +3189,39 @@ namespace Cozmo {
     
 
     // Compute calibration
-    std::vector<cv::Mat> rvecs, tvecs;
-    cv::Mat cameraMatrix = cv::Mat::eye(3, 3, CV_64F);
-    cv::Mat distCoeffs = cv::Mat::zeros(8, 1, CV_64F);
+    const s32 kNumDistCoeffs = 8;
+    std::vector<cv::Vec3d> rvecs, tvecs;
+    cv::Mat_<f64> cameraMatrix = cv::Mat_<f64>::eye(3, 3);
+    cv::Mat_<f64> distCoeffs   = cv::Mat_<f64>::zeros(1, kNumDistCoeffs);
     
-    double rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
-    
-    
+    const f64 rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize, cameraMatrix, distCoeffs, rvecs, tvecs);
+
+    // Copy distortion coefficients into a f32 vector to set CameraCalibration
+    const f64* distCoeffs_data = distCoeffs[0];
+    std::vector<f32> distCoeffsVec(kNumDistCoeffs);
+    std::copy(distCoeffs_data, distCoeffs_data+kNumDistCoeffs, distCoeffsVec.begin());
+
     calibration = Vision::CameraCalibration(imageSize.height, imageSize.width,
-                                            cameraMatrix.at<double>(0,0), cameraMatrix.at<double>(1,1),
-                                            cameraMatrix.at<double>(0,2), cameraMatrix.at<double>(1,2));
+                                            cameraMatrix(0,0), cameraMatrix(1,1),
+                                            cameraMatrix(0,2), cameraMatrix(1,2),
+                                            0.f, // skew
+                                            distCoeffsVec);
+    
+    ASSERT_NAMED_EVENT(rvecs.size() == tvecs.size(),
+                       "VisionSystem.ComputeCalibration.BadCalibPoseData",
+                       "Got %zu rotations and %zu translations",
+                       rvecs.size(), tvecs.size());
+    
+    _calibPoses.reserve(rvecs.size());
+    for(s32 iPose=0; iPose<rvecs.size(); ++iPose)
+    {  
+      auto rvec = rvecs[iPose];
+      auto tvec = tvecs[iPose];
+      RotationVector3d R(Vec3f(rvec[0], rvec[1], rvec[2]));
+      Vec3f T(tvec[0], tvec[1], tvec[2]);
+      
+      _calibPoses.emplace_back(Pose3d(R, T));
+    }
 
     PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.CalibValues",
                      "fx: %f, fy: %f, cx: %f, cy: %f (rms %f)",
@@ -3234,8 +3230,10 @@ namespace Cozmo {
     
                           
     // Check if average reprojection error is too high
-    if (rms > 1.f) {
-      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh", "%f", rms);
+    const f64 reprojErrThresh_pix = 0.5;
+    if (rms > reprojErrThresh_pix) {
+      PRINT_NAMED_INFO("VisionSystem.ComputeCalibration.ReprojectionErrorTooHigh",
+                       "%f > %f", rms, reprojErrThresh_pix);
       return RESULT_FAIL;
     }
     

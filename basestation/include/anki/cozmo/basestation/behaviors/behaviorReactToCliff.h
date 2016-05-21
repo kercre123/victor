@@ -4,7 +4,8 @@
  * Author: Kevin
  * Created: 10/16/15
  *
- * Description: Behavior for immediately responding to a detected cliff
+ * Description: Behavior for immediately responding to a detected cliff. This behavior actually handles both
+ *              the stop and cliff events
  *
  * Copyright: Anki, Inc. 2015
  *
@@ -22,6 +23,7 @@ namespace Cozmo {
 class BehaviorReactToCliff : public IReactionaryBehavior
 {
 private:
+  using super = IReactionaryBehavior;
   
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
@@ -30,7 +32,7 @@ private:
 public:
   
   virtual bool IsRunnableInternal(const Robot& robot) const override;
-  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const override;
+  virtual bool ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot) override;
   virtual bool ShouldResumeLastBehavior() const override { return true; }
   
 protected:
@@ -38,10 +40,26 @@ protected:
   virtual Result InitInternal(Robot& robot) override;
   virtual void   StopInternal(Robot& robot) override;
 
+  virtual void HandleWhileRunning(const EngineToGameEvent& event, Robot& robot) override;
+
 private:
 
-  void BackupAfterAnim(Robot& robot);
+  enum class State {
+    PlayingStopReaction,
+    PlayingCliffReaction,
+    BackingUp
+  };
+
+  State _state = State::PlayingStopReaction;
+
+  bool _gotCliff = false;
   
+  void TransitionToPlayingStopReaction(Robot& robot);
+  void TransitionToPlayingCliffReaction(Robot& robot);
+  void TransitionToBackingUp(Robot& robot);
+
+  void SetState_internal(State state, const std::string& stateName);
+
 }; // class BehaviorReactToCliff
   
 

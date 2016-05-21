@@ -10,24 +10,21 @@
 #include "messages.h"
 #include "bluetooth.h"
 #include "backpack.h"
+#include "dtm.h"
+#include "battery.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
+
+extern void enterOperatingMode(Anki::Cozmo::RobotInterface::BodyRadioMode mode);
 
 extern GlobalDataToBody g_dataToBody;
 
 using namespace Anki::Cozmo;
 
-extern void EnterRecovery(void);
-
 static const int QUEUE_DEPTH = 4;
 static CladBufferUp spinebuffer[QUEUE_DEPTH];
 static volatile int spine_enter = 0;
 static volatile int spine_exit  = 0;
-
-static void Process_bootloadBody(const RobotInterface::BootloadBody& msg)
-{
-  EnterRecovery();
-}
 
 static void Process_setBackpackLights(const RobotInterface::BackpackLights& msg)
 {
@@ -44,8 +41,12 @@ static void Process_setPropSlot(const SetPropSlot& msg)
   Radio::assignProp(msg.slot, msg.factory_id);
 }
 
-static void Process_configureBluetooth(const RobotInterface::ConfigureBluetooth& msg) {
-  enterOperatingMode(msg.enable ? BLUETOOTH_OPERATING_MODE : WIFI_OPERATING_MODE);
+static void Process_setBodyRadioMode(const RobotInterface::SetBodyRadioMode& msg) {
+  enterOperatingMode(msg.radioMode);
+}
+
+static void Process_sendDTMCommand(const RobotInterface::SendDTMCommand& msg) {
+  DTM::testCommand(msg.command, msg.freq, msg.length, msg.payload);
 }
 
 static void Process_bleRecvHelloMessage(const BLE_RecvHello& msg)
@@ -56,6 +57,11 @@ static void Process_bleRecvHelloMessage(const BLE_RecvHello& msg)
 static void Process_bleEnterPairing(const BLE_EnterPairing& msg)
 {
   Bluetooth::enterPairing(msg);
+}
+
+static void Process_setHeadlight(const RobotInterface::SetHeadlight& msg)
+{
+  Battery::setHeadlight(msg.enable);
 }
 
 static void Process_nvReadToBody(const RobotInterface::NVReadResultToBody& msg)
@@ -75,6 +81,7 @@ static void Process_killBodyCode(const KillBodyCode& msg)
   while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
   NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren << NVMC_CONFIG_WEN_Pos;
   while (NRF_NVMC->READY == NVMC_READY_READY_Busy) ;
+  NVIC_SystemReset();
 }
 
 void Spine::ProcessHeadData()

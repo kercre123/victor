@@ -47,14 +47,14 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\41\</OutputDirectory>
-          <OutputName>robot.out</OutputName>
+          <OutputDirectory>.\build\app\</OutputDirectory>
+          <OutputName>robot</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\build\41\</ListingPath>
+          <ListingPath>.\build\app\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -81,7 +81,7 @@
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
             <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>bash -c "make safe"</UserProg1Name>
+            <UserProg1Name>bash -c "make k02_fix"</UserProg1Name>
             <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
@@ -328,6 +328,8 @@
             <v6LangP>0</v6LangP>
             <vShortEn>1</vShortEn>
             <vShortWch>1</vShortWch>
+            <v6Lto>0</v6Lto>
+            <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>--no_exceptions</MiscControls>
               <Define>TARGET_K02,COZMO_ROBOT,COZMO_ROBOT_V41,ROBOT_HARDWARE,CORETECH_ROBOT,DEBUG, CPU_MK02FN128VLH10, KEIL, FRDM_K22F120M, FREEDOM</Define>
@@ -437,6 +439,8 @@
                     <v6LangP>0</v6LangP>
                     <vShortEn>2</vShortEn>
                     <vShortWch>2</vShortWch>
+                    <v6Lto>0</v6Lto>
+                    <v6WtE>0</v6WtE>
                     <VariousControls>
                       <MiscControls></MiscControls>
                       <Define></Define>
@@ -468,11 +472,6 @@
               <FilePath>.\k02_hal\hal\uart.cpp</FilePath>
             </File>
             <File>
-              <FileName>power.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
-            </File>
-            <File>
               <FileName>debug.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\debug.cpp</FilePath>
@@ -481,16 +480,6 @@
               <FileName>imu.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\imu.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>sha1.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\sha1.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>test.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\k02_hal\hal\test.cpp</FilePath>
             </File>
             <File>
               <FileName>wifi.cpp</FileName>
@@ -516,6 +505,21 @@
               <FileName>spine.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\k02_hal\hal\spine.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>watchdog.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\watchdog.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>power.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\power.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>fcc.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\fcc.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -656,6 +660,21 @@
               <FileName>backpackLightController.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\supervisor\src\backpackLightController.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>bootloader</GroupName>
+          <Files>
+            <File>
+              <FileName>bootbin.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\k02_hal\hal\bootbin.s</FilePath>
+            </File>
+            <File>
+              <FileName>bootloader.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\k02_hal\hal\bootloader.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.828231 -0.160235 -0.536991 5.59154
-  position 0.448853 -1.09895 1.8555
+  orientation -0.0399028 -0.0399538 -0.998404 4.70936
+  position 0.0624243 0.00268874 1.77156
 }
 Can {
   translation -0.00973 0.156367 0.312
@@ -63,7 +63,7 @@ DEF Cozmo_1 CozmoBot {
 }
 WebotsKeyboardController {
   robotVolume 0
-  behaviorName "ExploreBringCubeToBeacon"
+  behaviorName "demo_lookInPlaceForFaces"
 }
 CozmoVizDisplay {
 }

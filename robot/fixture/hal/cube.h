@@ -2,6 +2,7 @@
 #define __CUBE_H
 
 void InitCube(void);
-void ProgramCube(void);
+void ProgramCubeTest(u8* rom, int length);
+void ProgramCubeWithSerial();
 
 #endif

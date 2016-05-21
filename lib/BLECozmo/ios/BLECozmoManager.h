@@ -62,11 +62,11 @@ uint64_t BLE_TimeInNanoseconds(void);
  * @return NO if a connection attempt can not start, and no callbacks will be sent.
  *         YES if connect attempt will start and callbacks will be sent.
  */
-- (BOOL)connectToVehicleByMfgID:(UInt64)mfgID;
+- (BOOL)connectToVehicleByMfgID:(NSUUID*)mfgID;
 - (void)connectPeripheralForVehicleConnection:(BLECozmoConnection *)connection;
 
 // connection lookup
-- (BLECozmoConnection *)connectionForMfgID:(UInt64)mfgID;
+- (BLECozmoConnection *)connectionForMfgID:(NSUUID*)mfgID;
 
 /**
  * Disconnect from vehicle with mfgId.
@@ -75,8 +75,7 @@ uint64_t BLE_TimeInNanoseconds(void);
  *         YES if disconnect attempt will start and callbacks will be sent.
  *
  */
-- (BOOL)disconnectVehicleWithMfgId:(UInt64)mfgID
-            sendDisconnectMessages:(BOOL)sendDisconnectMessages;
+- (BOOL)disconnectVehicleWithMfgId:(NSUUID*)mfgID;
 - (void)disconnectConnection:(BLECozmoConnection *)connection;
 
 /**

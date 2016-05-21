@@ -28,6 +28,7 @@
 #include "clad/types/ledTypes.h"
 #include "clad/types/proceduralEyeParameters.h"
 #include "util/logging/printfLoggerProvider.h"
+#include "util/fileUtils/fileUtils.h"
 #include <fstream>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <stdio.h>
@@ -80,6 +81,10 @@ namespace Anki {
         std::string _drivingStartAnim = "";
         std::string _drivingLoopAnim = "";
         std::string _drivingEndAnim = "";
+
+        // Manufacturing data save folder name
+        std::string _mfgDataSaveFolder = "";
+        std::string _mfgDataSaveFile = "nvStorageStuff.txt";
         
       } // private namespace
     
@@ -196,17 +201,21 @@ namespace Anki {
         case RobotActionType::ENROLL_NAMED_FACE:
         {
           auto & completionInfo = msg.completionInfo.Get_faceEnrollmentCompleted();
-          
-          printf("RobotEnrolledFace: Added '%s' with ID=%d\n",
-                 completionInfo.name.c_str(), completionInfo.faceID);
-          
-          using namespace ExternalInterface;
-          SayText sayText;
-          sayText.text = completionInfo.name;
-          //sayText.playEvent = GameEvent::OnLearnedPlayerName;
-          sayText.style = SayTextStyle::Normal;
-          
-          SendMessage(MessageGameToEngine(std::move(sayText)));
+          if(msg.result == ActionResult::SUCCESS)
+          {
+            printf("RobotEnrolledFace: Added '%s' with ID=%d\n",
+                   completionInfo.name.c_str(), completionInfo.faceID);
+            
+//            using namespace ExternalInterface;
+//            SayText sayText;
+//            sayText.text = completionInfo.name;
+//            //sayText.playEvent = GameEvent::OnLearnedPlayerName;
+//            sayText.style = SayTextStyle::Name_Normal;
+//            
+//            SendMessage(MessageGameToEngine(std::move(sayText)));
+          } else {
+            printf("RobotEnrolledFace FAILED\n");
+          }
           break;
         } // ENROLL_NAMED_FACE
           
@@ -329,6 +338,7 @@ namespace Anki {
         printf("       unlock progression unlock:  n\n");
         printf("         lock progression unlock:  Shift+n\n");
         printf("    Respond 'no' to game request:  Alt+n\n");
+        printf("             Flip selected block:  y\n");
         printf("        Quit keyboard controller:  Shift+Alt+x\n");
         printf("                      Print help:  ?\n");
         printf("\n");
@@ -478,8 +488,8 @@ namespace Anki {
           const std::string drivingStartAnim = root_->getField("drivingStartAnim")->getSFString();
           const std::string drivingLoopAnim = root_->getField("drivingLoopAnim")->getSFString();
           const std::string drivingEndAnim = root_->getField("drivingEndAnim")->getSFString();
-          
           if(_drivingStartAnim.compare(drivingStartAnim) != 0 ||
+          
              _drivingLoopAnim.compare(drivingLoopAnim) != 0 ||
              _drivingEndAnim.compare(drivingEndAnim) != 0)
           {
@@ -1013,6 +1023,15 @@ namespace Anki {
                 break;
               }
                 
+              case (s32)',':
+              {
+                static bool toggle = true;
+                printf("Turning headlight %s\n", toggle ? "ON" : "OFF");
+                SendSetHeadlight(toggle);
+                toggle = !toggle;
+                break;
+              }
+                
               case (s32)'C':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_SHIFT) {
@@ -1484,6 +1503,64 @@ namespace Anki {
                     msg.whichLEDs = WhichCubeLEDs::FRONT;
                     msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
                     msg.turnOffUnspecifiedLEDs = 1;
+                    
+                    
+/*
+                    static bool white = false;
+                    white = !white;
+                    if (white) {
+                      ExternalInterface::SetAllActiveObjectLEDs m;
+                      m.robotID = 1;
+                      m.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+                      m.objectID = GetLastObservedObject().id;
+                      for(s32 iLED = 0; iLED<(s32)ActiveObjectConstants::NUM_CUBE_LEDS; ++iLED) {
+                        m.onColor[iLED]  = ::Anki::NamedColors::WHITE;
+                        m.offColor[iLED]  = ::Anki::NamedColors::BLACK;
+                        m.onPeriod_ms[iLED] = 250;
+                        m.offPeriod_ms[iLED] = 250;
+                        m.transitionOnPeriod_ms[iLED] = 500;
+                        m.transitionOffPeriod_ms[iLED] = 100;
+                      }
+                      ExternalInterface::MessageGameToEngine msgWrapper;
+                      msgWrapper.Set_SetAllActiveObjectLEDs(m);
+                      SendMessage(msgWrapper);
+                      break;
+                    } else {
+                      msg.onColor = ::Anki::NamedColors::RED;
+                      msg.offColor = ::Anki::NamedColors::BLACK;
+                      msg.whichLEDs = WhichCubeLEDs::FRONT;
+                      msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+                      msg.turnOffUnspecifiedLEDs = 0;
+                      ExternalInterface::MessageGameToEngine msgWrapper;
+                      msgWrapper.Set_SetActiveObjectLEDs(msg);
+                      SendMessage(msgWrapper);
+
+                      msg.onColor = ::Anki::NamedColors::GREEN;
+                      msg.offColor = ::Anki::NamedColors::BLACK;
+                      msg.whichLEDs = WhichCubeLEDs::RIGHT;
+                      msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+                      msg.turnOffUnspecifiedLEDs = 0;
+                      msgWrapper.Set_SetActiveObjectLEDs(msg);
+                      SendMessage(msgWrapper);
+                      
+                      msg.onColor = ::Anki::NamedColors::BLUE;
+                      msg.offColor = ::Anki::NamedColors::BLACK;
+                      msg.whichLEDs = WhichCubeLEDs::BACK;
+                      msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+                      msg.turnOffUnspecifiedLEDs = 0;
+                      msgWrapper.Set_SetActiveObjectLEDs(msg);
+                      SendMessage(msgWrapper);
+
+                      msg.onColor = ::Anki::NamedColors::YELLOW;
+                      msg.offColor = ::Anki::NamedColors::BLACK;
+                      msg.whichLEDs = WhichCubeLEDs::LEFT;
+                      msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
+                      msg.turnOffUnspecifiedLEDs = 0;
+                      msgWrapper.Set_SetActiveObjectLEDs(msg);
+                      SendMessage(msgWrapper);
+                    }
+*/
+
                   }
                   
                   if(colorIndex == NUM_COLORS) {
@@ -1600,9 +1677,9 @@ namespace Anki {
               case (s32)'&':
               {
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
-                  PRINT_NAMED_INFO("SendNVStorageReadEntry", "NVEntry_CameraCalibration");
-                  ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CameraCalibration);
-                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalibration);
+                  PRINT_NAMED_INFO("SendNVStorageReadEntry", "NVEntry_CameraCalib");
+                  ClearReceivedNVStorageData(NVStorage::NVEntryTag::NVEntry_CameraCalib);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                 } else {
                   
                   if (ENABLE_NVSTORAGE_WRITE) {
@@ -1623,15 +1700,15 @@ namespace Anki {
                       // Method 2
                       CameraCalibration calib(focalLength_x, focalLength_y,
                                               center_x, center_y,
-                                              0, 240, 320);
+                                              0, 240, 320, {});
                       std::vector<u8> calibVec(calib.Size());
                       calib.Pack(calibVec.data(), calib.Size());
-                      SendNVStorageWriteEntry(NVStorage::NVEntryTag::NVEntry_CameraCalibration,
+                      SendNVStorageWriteEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib,
                                               calibVec.data(), calibVec.size(),
                                               0, 1);
                     } else {
-                      PRINT_NAMED_INFO("SendNVStorageEraseEntry", "NVEntry_CameraCalibration");
-                      SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CameraCalibration);
+                      PRINT_NAMED_INFO("SendNVStorageEraseEntry", "NVEntry_CameraCalib");
+                      SendNVStorageEraseEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
                     }
                     writeNotErase = !writeNotErase;
                     
@@ -1698,12 +1775,14 @@ namespace Anki {
               }
               case (s32)')':
               {
-                PRINT_NAMED_INFO("RetrievingAllMfgTestData", "");
+                PRINT_NAMED_INFO("RetrievingAllMfgTestData", "...");
                 
                 // Get all Mfg test images and results
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_PlaypenTestResults);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CameraCalib);
+                SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibPose);
                 SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeInfo);
+                
                 
                 if(modifier_key & webots::Supervisor::KEYBOARD_ALT) {
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage1);
@@ -1711,8 +1790,23 @@ namespace Anki {
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage3);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage4);
                   SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage5);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_CalibImage6);
+                  
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft);
+                  SendNVStorageReadEntry(NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight);
                 }
                 
+                // Set mfg save folder and file
+                auto time_point = std::chrono::system_clock::now();
+                time_t nowTime = std::chrono::system_clock::to_time_t(time_point);
+                auto nowLocalTime = localtime(&nowTime);
+                char buf[80];
+                strftime(buf, sizeof(buf), "%F_%H-%M-%S/", nowLocalTime);
+                
+                _mfgDataSaveFolder = buf;
+                Util::FileUtils::CreateDirectory(_mfgDataSaveFolder);
+                _mfgDataSaveFile = _mfgDataSaveFolder + "mfgData.txt";
+                printf("MFG FILE: %s", _mfgDataSaveFile.c_str());
                 break;
               }
               case (s32)'*':
@@ -1819,7 +1913,13 @@ namespace Anki {
                   }
                   std::string idleAnimToSendName = idleAnimToSendField->getSFString();
                   
-                  SendSetIdleAnimation(idleAnimToSendName);
+                  using namespace ExternalInterface;
+                  if(idleAnimToSendName.empty()) {
+                    SendMessage(MessageGameToEngine(PopIdleAnimation()));
+                  } else {
+                    SendMessage(MessageGameToEngine(PushIdleAnimation(idleAnimToSendName)));
+                  }
+
                 }
                 else {
                   // Send whatever animation is specified in the animationToSendName field
@@ -1914,7 +2014,8 @@ namespace Anki {
                       ExternalInterface::EnrollNamedFace enrollNamedFace;
                       enrollNamedFace.faceID   = GetLastObservedFaceID();
                       enrollNamedFace.name     = userName;
-                      enrollNamedFace.sequence = FaceEnrollmentSequence::Default;
+                      enrollNamedFace.sequence = FaceEnrollmentSequence::Simple;
+                      enrollNamedFace.saveToRobot = false; // for testing it's nice not to save
                       SendMessage(ExternalInterface::MessageGameToEngine(std::move(enrollNamedFace)));
                     } else {
                       // No user name, enable enrollment
@@ -2017,6 +2118,17 @@ namespace Anki {
                 
                 printf("Saying '%s' in style '%s'\n", sayTextMsg.text.c_str(), EnumToString(sayTextMsg.style));
                 SendMessage(ExternalInterface::MessageGameToEngine(std::move(sayTextMsg)));
+                break;
+              }
+              
+              case (s32)'Y':
+              {
+                ExternalInterface::FlipBlock m;
+                m.objectID = -1;
+                m.motionProf = pathMotionProfile_;
+                ExternalInterface::MessageGameToEngine message;
+                message.Set_FlipBlock(m);
+                SendMessage(message);
                 break;
               }
             
@@ -2164,6 +2276,11 @@ namespace Anki {
         // receipt of NVStorageOpResult message below.
       }
     
+      void AppendToFile(const std::string& filename, const std::string& data) {
+        auto contents = Util::FileUtils::ReadFile(_mfgDataSaveFile);
+        contents = contents + '\n' + data;
+        Util::FileUtils::WriteFile(_mfgDataSaveFile, contents);
+      }
     
       void WebotsKeyboardController::HandleNVStorageOpResult(const ExternalInterface::NVStorageOpResult &msg)
       {
@@ -2187,7 +2304,6 @@ namespace Anki {
           }
           
           switch(msg.tag) {
-            case NVStorage::NVEntryTag::NVEntry_CameraCalibration:
             case NVStorage::NVEntryTag::NVEntry_CameraCalib:
             {
               CameraCalibration calib;
@@ -2197,13 +2313,18 @@ namespace Anki {
                 break;
               }
               calib.Unpack(recvdData->data(), calib.Size());
-              PRINT_NAMED_INFO("HandleNVStorageOpResult.CamCalibration",
-                               "Tag: %s: %f, fy: %f, cx: %f, cy: %f, skew: %f, nrows: %d, ncols: %d",
-                               EnumToString(msg.tag),
-                               calib.focalLength_x, calib.focalLength_y,
-                               calib.center_x, calib.center_y,
-                               calib.skew,
-                               calib.nrows, calib.ncols);
+              
+              char buf[256];
+              snprintf(buf, sizeof(buf),
+                       "[CameraCalibration]\nfx: %f\nfy: %f\ncx: %f\ncy: %f\nskew: %f\nnrows: %d\nncols: %d\n",
+                      calib.focalLength_x, calib.focalLength_y,
+                      calib.center_x, calib.center_y,
+                      calib.skew,
+                      calib.nrows, calib.ncols);
+              
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.CamCalibration", "%s", buf);
+
+              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_ToolCodeInfo:
@@ -2216,13 +2337,47 @@ namespace Anki {
               }
               info.Unpack(recvdData->data(), info.Size());
               
-              PRINT_NAMED_INFO("HandleNVStorageOpResult.ToolCodeInfo",
-                               "Code: %s, Expected L: (%f, %f), R: (%f, %f), Observed L: (%f, %f), R: (%f, %f)",
-                               EnumToString(info.code),
-                               info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y,
-                               info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
-                               info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
-                               info.observedCalibDotRight_x, info.observedCalibDotRight_y);
+              char buf[256];
+              snprintf(buf, sizeof(buf),
+                       "[ToolCode]\nCode: %s\nExpected_L: %f, %f\nExpected_R: %f, %f\nObserved_L: %f, %f\nObserved_R: %f, %f\n",
+                       EnumToString(info.code),
+                       info.expectedCalibDotLeft_x, info.expectedCalibDotLeft_y,
+                       info.expectedCalibDotRight_x, info.expectedCalibDotRight_y,
+                       info.observedCalibDotLeft_x, info.observedCalibDotLeft_y,
+                       info.observedCalibDotRight_x, info.observedCalibDotRight_y);
+              
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.ToolCodeInfo","%s", buf);
+              
+              AppendToFile(_mfgDataSaveFile, buf);
+              break;
+            }
+            case NVStorage::NVEntryTag::NVEntry_CalibPose:
+            {
+              
+              // Pose data is stored like this. (See VisionSystem.cpp)
+              //const f32 poseData[6] = {
+              //  angleX.ToFloat(), angleY.ToFloat(), angleZ.ToFloat(),
+              //  calibPose.GetTranslation().x(),
+              //  calibPose.GetTranslation().y(),
+              //  calibPose.GetTranslation().z(),
+              //};
+              
+              const u32 sizeOfPoseData = 6 * sizeof(f32);
+              if (recvdData->size() != MakeWordAligned(sizeOfPoseData)) {
+                PRINT_NAMED_INFO("HandleNVStorageOpResult.CalibPose.UnexpectedSize",
+                                 "Expected %zu, got %zu", MakeWordAligned(sizeOfPoseData), recvdData->size());
+                break;
+              }
+              
+              char buf[128];
+              f32* poseData = (f32*)(recvdData->data());
+              snprintf(buf, sizeof(buf),
+                       "[CalibPose]\nRot: %f %f %f\nTrans: %f %f %f\n",
+                       poseData[0], poseData[1], poseData[2], poseData[3], poseData[4], poseData[5] );
+              
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.CalibPose","%s", buf);
+              
+              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_PlaypenTestResults:
@@ -2234,9 +2389,23 @@ namespace Anki {
                 break;
               }
               result.Unpack(recvdData->data(), result.Size());
-              time_t rawtime = static_cast<time_t>(result.utcTime);
-              PRINT_NAMED_INFO("HandleNVStorageOpResult.PlaypenTestResults",
-                               "Result: %s, Time: %s", EnumToString(result.result), ctime(&rawtime) );
+              //time_t rawtime = static_cast<time_t>(result.utcTime);
+              
+              char buf[512];
+              snprintf(buf, sizeof(buf),
+                       "[PlayPenTest]\nResult: %s\nTime: %llu\nSHA-1: %x\nStationID: %d\nTimestamps: %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d\n",
+                       EnumToString(result.result),
+                       //ctime(&rawtime),
+                       result.utcTime,
+                       result.engineSHA1, result.stationID,
+                       result.timestamps[0], result.timestamps[1], result.timestamps[2], result.timestamps[3],
+                       result.timestamps[4], result.timestamps[5], result.timestamps[6], result.timestamps[7],
+                       result.timestamps[8], result.timestamps[9], result.timestamps[10], result.timestamps[11],
+                       result.timestamps[12], result.timestamps[13], result.timestamps[14], result.timestamps[15] );
+              
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.PlaypenTestResults", "%s", buf);
+              
+              AppendToFile(_mfgDataSaveFile, buf);
               break;
             }
             case NVStorage::NVEntryTag::NVEntry_CalibImage1:
@@ -2244,11 +2413,14 @@ namespace Anki {
             case NVStorage::NVEntryTag::NVEntry_CalibImage3:
             case NVStorage::NVEntryTag::NVEntry_CalibImage4:
             case NVStorage::NVEntryTag::NVEntry_CalibImage5:
+            case NVStorage::NVEntryTag::NVEntry_CalibImage6:
+            case NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft:
+            case NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight:
             case NVStorage::NVEntryTag::NVEntry_MultiBlobJunk:
             {
               char outFile[128];
-              sprintf(outFile, "nvstorage_output_%s.jpg", EnumToString(msg.tag));
-              PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.CalibImage1",
+              sprintf(outFile,  "%snvstorage_output_%s.jpg", _mfgDataSaveFolder.c_str(), EnumToString(msg.tag));
+              PRINT_NAMED_INFO("HandleNVStorageOpResult.Read.CalibImage",
                                "Writing to %s, size: %zu",
                                outFile, recvdData->size());
               

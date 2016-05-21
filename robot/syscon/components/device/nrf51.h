@@ -108,7 +108,7 @@ typedef enum {
 /* ================================================================================ */
 /* ================      Processor and Core Peripheral Section     ================ */
 /* ================================================================================ */
-
+ 
 /* ----------------Configuration of the Cortex-M0 Processor and Core Peripherals---------------- */
 #define __CM0_REV                 0x0301            /*!< Cortex-M0 Core Revision                                               */
 #define __MPU_PRESENT                  0            /*!< MPU present or not                                                    */

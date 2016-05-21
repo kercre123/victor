@@ -90,8 +90,6 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
     // TODO:(bn) load these from json? A special reactionary behaviors list?
     BehaviorFactory& behaviorFactory = GetBehaviorFactory();
     AddReactionaryBehavior(
-      behaviorFactory.CreateBehavior(BehaviorType::ReactToStop,  _robot, config)->AsReactionaryBehavior() );
-    AddReactionaryBehavior(
       behaviorFactory.CreateBehavior(BehaviorType::ReactToPickup, _robot, config)->AsReactionaryBehavior() );
     AddReactionaryBehavior(
       behaviorFactory.CreateBehavior(BehaviorType::ReactToCliff,  _robot, config)->AsReactionaryBehavior() );
@@ -110,6 +108,12 @@ Result BehaviorManager::InitConfiguration(const Json::Value &config)
   if (_robot.HasExternalInterface())
   {
     IExternalInterface* externalInterface = _robot.GetExternalInterface();
+    _eventHandlers.push_back(_robot.GetExternalInterface()->Subscribe(
+                            ExternalInterface::MessageGameToEngineTag::EnableReactionaryBehaviors,
+                          [this] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
+                          {
+                            _reactionsEnabled = event.GetData().Get_EnableReactionaryBehaviors().enabled;
+                          }));
     _eventHandlers.push_back(externalInterface->Subscribe(
                                ExternalInterface::MessageGameToEngineTag::ActivateBehaviorChooser,
                                [this, config] (const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
@@ -197,11 +201,14 @@ void BehaviorManager::AddReactionaryBehavior(IReactionaryBehavior* behavior)
 template<typename EventType>
 void BehaviorManager::ConsiderReactionaryBehaviorForEvent(const AnkiEvent<EventType>& event)
 {
+  if( !_reactionsEnabled ) {
+    return;
+  }
   for (auto& behavior : _reactionaryBehaviors)
   {
     if (0 != GetReactionaryBehaviorTags<typename EventType::Tag>(behavior).count(event.GetData().GetTag()))
     {
-      if ( behavior->ShouldRunForEvent(event.GetData()) &&
+      if ( behavior->ShouldRunForEvent(event.GetData(),_robot) &&
            behavior->IsRunnable(_robot) ) {
         PRINT_NAMED_INFO("ReactionaryBehavior.Found",
                          "found reactionary behavior '%s' in response to event of type '%s'",

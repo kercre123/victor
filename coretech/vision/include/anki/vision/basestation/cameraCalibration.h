@@ -25,24 +25,20 @@ namespace Anki {
     class CameraCalibration
     {
     public:
-      /*
-       static const int NumDistortionCoeffs = 5;
-       typedef std::array<float,CameraCalibration::NumDistortionCoeffs> DistortionCoeffVector;
-       */
       
       // Constructors:
       CameraCalibration();
       
-      CameraCalibration(const u16 nrows,    const u16 ncols,
-                        const f32 fx,       const f32 fy,
-                        const f32 center_x, const f32 center_y,
-                        const f32 skew = 0.f);
-      
-      CameraCalibration(const u16 nrows,    const u16 ncols,
-                        const f32 fx,       const f32 fy,
-                        const f32 center_x, const f32 center_y,
-                        const f32 skew,
-                        const std::vector<float> &distCoeffs);
+      CameraCalibration(u16 nrows,    u16 ncols,
+                        f32 fx,       f32 fy,
+                        f32 center_x, f32 center_y,
+                        f32 skew = 0.f);
+                        
+      CameraCalibration(u16 nrows,    u16 ncols,
+                        f32 fx,       f32 fy,
+                        f32 center_x, f32 center_y,
+                        f32 skew,
+                        const std::vector<f32> &distCoeffs);
       
       // Construct from a Json node
       CameraCalibration(const Json::Value& jsonNode);
@@ -68,18 +64,18 @@ namespace Anki {
       Radians ComputeVerticalFOV() const;
       Radians ComputeHorizontalFOV() const;
       
-      //const   DistortionCoeffVector& get_distortionCoeffs() const;
+      const std::vector<f32>& GetDisortionCoeffs() const;
       
       // Returns the 3x3 camera calibration matrix:
       // [fx   skew*fx   center_x;
       //   0      fy     center_y;
       //   0       0         1    ]
-      template<typename PRECISION = float>
+      template<typename PRECISION = f32>
       SmallSquareMatrix<3,PRECISION> GetCalibrationMatrix() const;
       
       // Returns the inverse calibration matrix (e.g. for computing
       // image rays)
-      template<typename PRECISION = float>
+      template<typename PRECISION = f32>
       SmallSquareMatrix<3,PRECISION> GetInvCalibrationMatrix() const;
       
       void CreateJson(Json::Value& jsonNode) const;
@@ -94,7 +90,7 @@ namespace Anki {
       Point2f _center;
       f32     _skew;
       
-      //DistortionCoeffVector distortionCoeffs; // radial distortion coefficients
+      std::vector<f32> _distortionCoeffs; // radial distortion coefficients
       
     }; // class CameraCalibration
     
@@ -141,6 +137,10 @@ namespace Anki {
 
     inline void CameraCalibration::SetCenter(const Point2f& center) {
       _center = center;
+    }
+    
+    inline const std::vector<f32>& CameraCalibration::GetDisortionCoeffs() const {
+      return _distortionCoeffs;
     }
     
     

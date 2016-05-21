@@ -172,10 +172,10 @@ PROTO WebotsKeyboardController [
   field SFString drivingEndAnim ""
 
   # Force-add robot options
-  field SFBool   forceAddRobot FALSE
-  field SFString forcedRobotIP "172.31.1.1"
+  field SFBool   forceAddRobot TRUE
+  field SFString forcedRobotIP "127.0.0.1"
   field SFInt32  forcedRobotID 1
-  field SFBool   forcedRobotIsSimulated FALSE  
+  field SFBool   forcedRobotIsSimulated TRUE  
   
   # Cozmo engine location
   field SFString engineIP "127.0.0.1"

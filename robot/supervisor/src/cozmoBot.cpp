@@ -280,7 +280,7 @@ namespace Anki {
 
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
-          AnkiEvent( 40, "Radio", 445, "Robot radio is connected.", 0);
+          AnkiEvent( 40, "Radio", 447, "Robot radio is connected.", 0);
           wasConnected_ = true;
           BackpackLightController::TurnOffAll();
         } else if (!HAL::RadioIsConnected() && wasConnected_) {
@@ -374,12 +374,12 @@ namespace Anki {
 #ifndef TARGET_K02
               RobotInterface::RobotAvailable msg;
               msg.robotID = HAL::GetIDCard()->esn;
-              PRINT("Robot %d broadcasting availability message.\n", msg.robotID);
+              AnkiEvent( 175, "CozmoBot.BroadcastingAvailability", 475, "RobotID: %d", 1, msg.robotID);
               RobotInterface::SendMessage(msg);
               // Start test mode
               if (DEFAULT_TEST_MODE != TM_NONE) {
                 if(TestModeController::Start(DEFAULT_TEST_MODE) == RESULT_FAIL) {
-                  PRINT("TestMode %d failed to start.\n", DEFAULT_TEST_MODE);
+                  AnkiWarn( 176, "CozmoBot.TestModeFailed", 476, "TestMode %d failed to start.", 1, DEFAULT_TEST_MODE);
                   return RESULT_FAIL;
                 }
               }

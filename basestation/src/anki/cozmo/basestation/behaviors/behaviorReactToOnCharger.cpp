@@ -28,12 +28,13 @@ static const char* kSleepLoopAG = "ag_SleepLoop";
 BehaviorReactToOnCharger::BehaviorReactToOnCharger(Robot& robot, const Json::Value& config)
 : IReactionaryBehavior(robot, config)
 {
+  _hasBeenOffChargerPlatform = false;
   SetDefaultName("ReactToOnCharger");
-
   // These are the tags that should trigger this behavior to be switched to immediately
-  SubscribeToTriggerTags({
-    EngineToGameTag::ChargerEvent
-  });
+  SubscribeToTriggerTags({{
+    EngineToGameTag::RobotOnChargerPlatformEvent,
+    EngineToGameTag::ChargerEvent,
+  }});
 }
 
 bool BehaviorReactToOnCharger::IsRunnableInternal(const Robot& robot) const
@@ -62,16 +63,23 @@ void BehaviorReactToOnCharger::StopInternal(Robot& robot)
 {
 }
 
-bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event) const
+bool BehaviorReactToOnCharger::ShouldRunForEvent(const ExternalInterface::MessageEngineToGame& event, const Robot& robot)
 {
-  if( event.GetTag() != MessageEngineToGameTag::ChargerEvent )
+  // Don't restart the behavior unless we got off the platform
+  if( event.GetTag() == MessageEngineToGameTag::RobotOnChargerPlatformEvent )
   {
-    PRINT_NAMED_ERROR("BehaviorReactToOnCharger.ShouldRunForEvent.BadEventType",
-                      "Calling ShouldRunForEvent with an event we don't care about, this is a bug");
-    return false;
+    // if he was just nudged and got the same event quickly.
+    bool onCharger = event.Get_RobotOnChargerPlatformEvent().onCharger;
+    _hasBeenOffChargerPlatform = !onCharger;
+    return robot.IsOnCharger() && _hasBeenOffChargerPlatform;
+  }
+  else if(event.GetTag() == MessageEngineToGameTag::ChargerEvent)
+  {
+    bool onChargerContacts = event.Get_ChargerEvent().onCharger;
+    return onChargerContacts && _hasBeenOffChargerPlatform;
   }
   
-  return event.Get_ChargerEvent().onCharger;
+  return false;
 }
   
 void BehaviorReactToOnCharger::TransitionToSleepLoop(Robot& robot)

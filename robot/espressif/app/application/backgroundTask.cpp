@@ -19,9 +19,11 @@ extern "C" {
 #include "face.h"
 #include "factoryTests.h"
 #include "nvStorage.h"
+#include "wifi_configuration.h"
 #include "anki/cozmo/robot/esp.h"
 #include "clad/robotInterface/messageToActiveObject.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "clad/types/imageTypes.h"
@@ -40,21 +42,6 @@ os_event_t backgroundTaskQueue[backgroundTaskQueueLen]; ///< Memory for the task
 namespace Anki {
 namespace Cozmo {
 namespace BackgroundTask {
-
-void CheckForUpgrades(void)
-{
-  const uint32 bodyCode  = i2spiGetBodyBootloaderCode();
-  const uint16 bodyState = bodyCode & 0xffff;
-  const uint16 bodyCount = bodyCode >> 16;
-  if (((bodyState == STATE_IDLE) || (bodyState == STATE_NACK)) && (bodyCount > 10 && bodyCount < 100))
-  {
-    UpgradeController::StartBodyUpgrade();
-  }
-  else if (i2spiGetRtipBootloaderState() == STATE_IDLE)
-  {
-    UpgradeController::StartRTIPUpgrade();
-  }
-}
 
 /** The OS task which dispatches subtasks.
 */
@@ -75,11 +62,6 @@ void Exec(os_event_t *event)
   {
     case 0:
     {
-      CheckForUpgrades();
-      break;
-    }
-    case 1:
-    {
       static u32 lastAnimStateTime = 0;
       const u32 now = system_get_time();
       if ((now - lastAnimStateTime) > ANIM_STATE_INTERVAL)
@@ -91,19 +73,24 @@ void Exec(os_event_t *event)
       }
       break;
     }
-    case 2:
+    case 1:
     {
       Factory::Update();
       break;
     }
-    case 3:
+    case 2:
     {
       ActiveObjectManager::Update();
       break;
     }
-    case 4:
+    case 3:
     {
       NVStorage::Update();
+      break;
+    }
+    case 4:
+    {
+      UpgradeController::Update();
       break;
     }
     // Add new "long execution" tasks as switch cases here.
@@ -121,14 +108,6 @@ void Exec(os_event_t *event)
   lastBTT = btStart;
   // Always repost so we'll execute again.
   system_os_post(backgroundTask_PRIO, event->sig + 1, event->par);
-}
-
-void sendCameraCalibration(NVStorage::NVStorageBlob* entry, const NVStorage::NVResult result)
-{
-  os_printf("sendCameraCalibration: %d\r\n", result);
-  AnkiConditionalWarnAndReturn(result == NVStorage::NV_OKAY, 96, "ReadAndSendCameraCal", 350, "Failed to read camera calibration: %d", 1, result);
-  const CameraCalibration* const calib = (CameraCalibration*)entry->blob;
-  RobotInterface::SendMessage(*calib);
 }
 
 bool readAndSendCrashReport(uint32_t param)
@@ -189,6 +168,17 @@ extern "C" int8_t backgroundTaskInit(void)
     os_printf("\tCouldn't initalize factory test framework\r\n");
     return -7;
   }
+  else if (Anki::Cozmo::WiFiConfiguration::Init() != Anki::RESULT_OK)
+  {
+    os_printf("\tCouldn't initalize WiFiConfiguration module\r\n");
+    return -8;
+  }
+  // Upgrade controller should be initalized last
+  else if (Anki::Cozmo::UpgradeController::Init() == false)
+  {
+    os_printf("\tCouldn't initalize upgrade controller\r\n");
+    return -128;
+  }
   else
   {
     return 0;
@@ -197,17 +187,15 @@ extern "C" int8_t backgroundTaskInit(void)
 
 extern "C" bool i2spiSynchronizedCallback(uint32 param)
 {
-  if (Anki::Cozmo::UpgradeController::CheckForAndDoStaged()) return false;
   Anki::Cozmo::Factory::SetMode(Anki::Cozmo::RobotInterface::FTM_entry);
   return false;
 }
 
 static bool sendWifiConnectionState(const bool state)
 {
-  Anki::Cozmo::RobotInterface::EngineToRobot rtipMsg;
-  rtipMsg.tag = Anki::Cozmo::RobotInterface::EngineToRobot::Tag_radioConnected;
-  rtipMsg.radioConnected.wifiConnected = state;
-  return Anki::Cozmo::RTIP::SendMessage(rtipMsg);
+  Anki::Cozmo::RobotInterface::RadioState rtipMsg;
+  rtipMsg.wifiConnected = state;
+  return Anki::Cozmo::RobotInterface::SendMessage(rtipMsg);
 }
 
 extern "C" void backgroundTaskOnConnect(void)
@@ -243,8 +231,6 @@ extern "C" void backgroundTaskOnConnect(void)
   Anki::Cozmo::AnimationController::Clear();
   Anki::Cozmo::AnimationController::ClearNumBytesPlayed();
   Anki::Cozmo::AnimationController::ClearNumAudioFramesPlayed();
-
-  Anki::Cozmo::NVStorage::Read(Anki::Cozmo::NVStorage::NVEntry_CameraCalibration, Anki::Cozmo::BackgroundTask::sendCameraCalibration);
 }
 
 extern "C" void backgroundTaskOnDisconnect(void)

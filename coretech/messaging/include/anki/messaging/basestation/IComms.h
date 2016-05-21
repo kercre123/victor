@@ -32,10 +32,16 @@ namespace Anki {
     class MsgPacket {
     public:
       MsgPacket(){};
-      MsgPacket(const s32 sourceId, const s32 destId, const u16 dataLen, const u8* data, const BaseStationTime_t timestamp = 0) :
-      dataLen(dataLen), sourceId(sourceId), destId(destId), timeStamp(timestamp) {
-        CORETECH_ASSERT(dataLen <= MAX_SIZE);
-        memcpy(this->data, data, dataLen);
+      MsgPacket(const s32 sourceId, const s32 destId, const u16 dataLen, const u8* data, double timestamp = 0.0) :
+      dataLen(dataLen), sourceId(sourceId), destId(destId), timeStamp_s(timestamp) {
+        CopyFrom(dataLen, data);
+      }
+      
+      void CopyFrom(const u16 inDataLen, const u8* inData)
+      {
+        CORETECH_ASSERT(inDataLen <= MAX_SIZE);
+        dataLen = inDataLen;
+        memcpy(data, inData, inDataLen);
       }
       
       static const int MAX_SIZE = 2048;
@@ -43,7 +49,7 @@ namespace Anki {
       u16 dataLen = 0;
       s32 sourceId = -1;
       s32 destId = -1;
-      BaseStationTime_t timeStamp = 0;
+      double timeStamp_s = 0.0;
     };
       
     class IComms {

@@ -38,7 +38,9 @@
 namespace Anki {
 namespace Cozmo {
 
-static const char* kBlockReactAnimGroup = "blockReact";
+static const char* const kBlockReactAnimGroup = "blockReact";
+static const char* const kShouldHandleConfirmedKey = "shouldHandleConfirmedObject";
+static const char* const kShouldHandlePossibleKey = "shouldHandlePossibleObject";
 
 using namespace ExternalInterface;
 
@@ -47,6 +49,9 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
   , _moveAreaCenter(robot.GetPose())
 {
   SetDefaultName("LookAround");
+
+  _shouldHandleConfirmedObjectOverved = config.get(kShouldHandleConfirmedKey, true).asBool();
+  _shouldHandlePossibleObjectOverved = config.get(kShouldHandlePossibleKey, true).asBool();
   
   SubscribeToTags({{
     EngineToGameTag::RobotObservedObject,
@@ -54,13 +59,6 @@ BehaviorLookAround::BehaviorLookAround(Robot& robot, const Json::Value& config)
     EngineToGameTag::RobotPutDown,
     EngineToGameTag::CliffEvent
   }});
-
-  if (GetEmotionScorerCount() == 0)
-  {
-    // Boredom and loneliness -> LookAround
-    AddEmotionScorer(EmotionScorer(EmotionType::Excited, Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
-    AddEmotionScorer(EmotionScorer(EmotionType::Social,  Anki::Util::GraphEvaluator2d({{-1.0f, 1.0f}, {0.0f, 0.7f}, {1.0f, 0.05f}}), false));
-  }
 }
   
 BehaviorLookAround::~BehaviorLookAround()
@@ -142,7 +140,7 @@ void BehaviorLookAround::AlwaysHandle(const EngineToGameEvent& event, const Robo
 Result BehaviorLookAround::ResumeInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
-    robot.PushIdleAnimation("NONE");
+    robot.GetAnimationStreamer().PushIdleAnimation("NONE");
   }
     
   TransitionToWaitForOtherActions(robot);
@@ -401,7 +399,7 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
 void BehaviorLookAround::StopInternal(Robot& robot)
 {
   if( DISABLE_IDLE_DURING_LOOK_AROUND ) {
-    robot.PopIdleAnimation();
+    robot.GetAnimationStreamer().PopIdleAnimation();
   }
   ResetBehavior(robot);
 }
@@ -426,6 +424,14 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
 {
   assert(IsRunning());
 
+  if( ! _shouldHandleConfirmedObjectOverved && confirmed ) {
+    return;
+  }
+
+  if( !_shouldHandlePossibleObjectOverved && !confirmed ) {
+    return;
+  }
+  
   static const std::set<ObjectFamily> familyList = { ObjectFamily::Block, ObjectFamily::LightCube };
   
   if (familyList.count(msg.objectFamily) > 0) {

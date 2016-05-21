@@ -1,6 +1,10 @@
 
 #include "anki/cozmo/basestation/animation/animationStreamer.h"
+#include "anki/cozmo/basestation/animationGroup/animationGroupContainer.h"
+#include "anki/cozmo/basestation/cannedAnimationContainer.h"
+#include "anki/cozmo/basestation/cozmoContext.h"
 #include "anki/cozmo/basestation/robot.h"
+#include "anki/cozmo/basestation/robotManager.h"
 #include "anki/cozmo/basestation/events/ankiEvent.h"
 #include "anki/cozmo/basestation/proceduralFaceDrawer.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
@@ -16,14 +20,10 @@
 
 #define DEBUG_ANIMATION_STREAMING 0
 
-// If 1, plays audio for physical robot on device too.
-// If 0, only plays audio meant for sim robot on device.
-// Only works if PLAY_ROBOT_AUDIO_ON_DEVICE == 1
-#define PLAY_PHYSICAL_ROBOT_AUDIO_ON_DEVICE_TOO 0
-
 namespace Anki {
 namespace Cozmo {
   
+  const std::string AnimationStreamer::NeutralFaceAnimName = "anim_neutral_eyes_01";
   const std::string AnimationStreamer::LiveAnimation = "_LIVE_";
   const std::string AnimationStreamer::AnimToolAnimation = "_ANIM_TOOL_";
 
@@ -32,35 +32,149 @@ namespace Cozmo {
   // This is roughly (2 x ExpectedOneWayLatency_ms + BasestationTick_ms) / AudioSampleLength_ms
   const s32 AnimationStreamer::NUM_AUDIO_FRAMES_LEAD = std::ceil((2.f * 200.f + BS_TIME_STEP) / static_cast<f32>(IKeyFrame::SAMPLE_LENGTH_MS));
   
-  AnimationStreamer::AnimationStreamer(IExternalInterface* externalInterface,
-                                       CannedAnimationContainer& container,
+  AnimationStreamer::AnimationStreamer(const CozmoContext* context,
                                        Audio::RobotAudioClient& audioClient)
-  : HasSettableParameters(externalInterface)
-  , _animationContainer(container)
+  : HasSettableParameters(context->GetExternalInterface())
+  , _context(context)
+  , _animationContainer(_context->GetRobotManager()->GetCannedAnimations())
+  , _animationGroups(_context->GetRobotManager()->GetAnimationGroups())
   , _liveAnimation(LiveAnimation)
   , _audioClient( audioClient )
-  ,_lastProceduralFace(new ProceduralFace)
+  , _lastProceduralFace(new ProceduralFace)
   {
     _liveAnimation.SetIsLive(true);
+    
+    // TODO: Provide a default idle animation via Json config? COZMO-1662
+    // For now, default the idle to be doing nothing, since that what it used to be.
+    _idleAnimationNameStack.push_back("");
+    
+    ASSERT_NAMED(nullptr != _context, "AnimationStreamer.Constructor.NullContext");
+    
+    SetupHandlers(_context->GetExternalInterface());
+    
+    // Set up the neutral face to use when resetting procedural animations
+    Animation* neutralFaceAnim = _animationContainer.GetAnimation(NeutralFaceAnimName);
+    if (nullptr != neutralFaceAnim)
+    {
+      auto frame = neutralFaceAnim->GetTrack<ProceduralFaceKeyFrame>().GetFirstKeyFrame();
+      ProceduralFace::SetResetData(frame->GetFace());
+    }
+    else
+    {
+      PRINT_NAMED_WARNING("AnimationStreamer.Constructor.NeutralFaceDataNotFound",
+                          "Could not find expected neutral face animation file called %s",
+                          NeutralFaceAnimName.c_str());
+    }
+    
+    // Do this after the ProceduralFace class has set to use the right neutral face
+    _lastProceduralFace->Reset();
+  }
+  
+  void AnimationStreamer::SetupHandlers(IExternalInterface* extIntFace)
+  {
+    if(nullptr == extIntFace) {
+      return;
+    }
+      
+    using namespace ExternalInterface;
+    using GameToEngineEvent = AnkiEvent<MessageGameToEngine>;
+    
+    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::SetIdleAnimation,
+                                                   [this](const GameToEngineEvent& msg) {
+                                                     SetIdleAnimation(msg.GetData().Get_SetIdleAnimation().animationName);
+                                                   }));
+    
+    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::PushIdleAnimation,
+                                                   [this](const GameToEngineEvent& msg) {
+                                                     PushIdleAnimation(msg.GetData().Get_PushIdleAnimation().animationName);
+                                                   }));
+    
+    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::PopIdleAnimation,
+                                                   [this](const GameToEngineEvent&) {
+                                                     PopIdleAnimation();
+                                                   }));
+    
+    _eventHandlers.push_back(extIntFace->Subscribe(MessageGameToEngineTag::ReplayLastAnimation,
+                                                   [this](const GameToEngineEvent& msg) {
+                                                     SetStreamingAnimation(_lastPlayedAnimationId,
+                                                                           msg.GetData().Get_ReplayLastAnimation().numLoops);
+                                                   }));
+
+  } // SetupHandlers()
+
+  const std::string& AnimationStreamer::GetAnimationNameFromGroup(const std::string& name, const Robot& robot) const 
+  {
+    const AnimationGroup* group = _animationGroups.GetAnimationGroup(name);
+    if(group != nullptr && !group->IsEmpty()) {
+      return group->GetAnimationName(robot.GetMoodManager(), _animationGroups, robot.GetHeadAngle());
+    }
+    static const std::string empty("");
+    return empty;
+  }
+  
+  const Animation* AnimationStreamer::GetCannedAnimation(const std::string& name) const
+  {
+    return _animationContainer.GetAnimation(name);
+  }
+  
+  AnimationStreamer::~AnimationStreamer()
+  {
+    ClearSendBuffer();
   }
 
-  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(Robot& robot, const std::string& name, u32 numLoops, bool interruptRunning)
+  
+  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(const std::string& name, u32 numLoops, bool interruptRunning)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
-#     if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
-                       "Stopping streaming of animation '%s'.\n",
-                       GetStreamingAnimationName().c_str());
-#     endif
+      if(DEBUG_ANIMATION_STREAMING) {
+        PRINT_NAMED_DEBUG("AnimationStreamer.SetStreamingAnimation",
+                          "Stopping streaming of animation '%s'.\n",
+                          GetStreamingAnimationName().c_str());
+      }
 
-      return SetStreamingAnimation(robot, nullptr);
+      return SetStreamingAnimation(nullptr);
     }
     
-    return SetStreamingAnimation(robot, _animationContainer.GetAnimation(name), numLoops, interruptRunning);
+    return SetStreamingAnimation(_animationContainer.GetAnimation(name), numLoops, interruptRunning);
   }
   
-  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(Robot& robot, Animation* anim, u32 numLoops, bool interruptRunning)
+  bool AnimationStreamer::StreamLastFace(Animation* anim)
+  {
+    const bool hasProcFace = !anim->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
+    const bool hasAnimFace = !anim->GetTrack<FaceAnimationKeyFrame>().IsEmpty();
+    if(hasProcFace || hasAnimFace)
+    {
+      PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation.AbortAndSendEndingFace",
+                       "Aborting %s with no replacement. Will send final face keyframe",
+                       anim->GetName().c_str());
+      
+      if(hasProcFace) {
+        anim->GetTrack<ProceduralFaceKeyFrame>().MoveToLastKeyFrame();
+        _streamingTime_ms = anim->GetTrack<ProceduralFaceKeyFrame>().GetCurrentKeyFrame().GetTriggerTime();
+      } else { // hasAnimFace
+        anim->GetTrack<FaceAnimationKeyFrame>().MoveToLastKeyFrame();
+        _streamingTime_ms = anim->GetTrack<FaceAnimationKeyFrame>().GetCurrentKeyFrame().GetTriggerTime();
+      }
+      
+      // Move all other tracks to the end, so they don't stream anything else
+      anim->GetTrack<HeadAngleKeyFrame>().MoveToEnd();
+      anim->GetTrack<LiftHeightKeyFrame>().MoveToEnd();
+      anim->GetTrack<FaceAnimationKeyFrame>().MoveToEnd();
+      anim->GetTrack<ProceduralFaceKeyFrame>().MoveToEnd();
+      anim->GetTrack<EventKeyFrame>().MoveToEnd();
+      anim->GetTrack<BackpackLightsKeyFrame>().MoveToEnd();
+      anim->GetTrack<BodyMotionKeyFrame>().MoveToEnd();
+      anim->GetTrack<DeviceAudioKeyFrame>().MoveToEnd();
+      anim->GetTrack<RobotAudioKeyFrame>().MoveToEnd();
+      
+      return true;
+    }
+    
+    return false;
+  } // StreamLastFace()
+  
+  AnimationStreamer::Tag AnimationStreamer::SetStreamingAnimation(Animation* anim, u32 numLoops, bool interruptRunning)
   {
     if(nullptr != _streamingAnimation)
     {
@@ -79,46 +193,25 @@ namespace Cozmo {
     }
     
     // If there's something already streaming or we're purposefully clearing the buffer, abort
-    if(nullptr != _streamingAnimation || nullptr == anim)
+    if(nullptr != _streamingAnimation || nullptr != _idleAnimation || nullptr == anim)
     {
       if (_tag != NotAnimatingTag) {
         using namespace ExternalInterface;        
-        robot.GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
+        _context->GetExternalInterface()->Broadcast(MessageEngineToGame(AnimationAborted(_tag)));
       }
-      Abort(robot);
+      Abort();
     }
     
     // If we're cancelling a current anim with no replacement, jump to the last face
     // and stream it first, to make sure we end up with the expected face.
     if (nullptr != _streamingAnimation && nullptr == anim)
     {
-      const bool hasProcFace = !_streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().IsEmpty();
-      const bool hasAnimFace = !_streamingAnimation->GetTrack<FaceAnimationKeyFrame>().IsEmpty();
-      if(hasProcFace || hasAnimFace)
-      {
+      const bool sendingLastFace = StreamLastFace(_streamingAnimation);
+      if(sendingLastFace) {
         PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation.AbortAndSendEndingFace",
                          "Aborting %s with no replacement. Will send final face keyframe",
                          _streamingAnimation->GetName().c_str());
 
-        if(hasProcFace) {
-          _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().MoveToLastKeyFrame();
-          _streamingTime_ms = _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().GetCurrentKeyFrame().GetTriggerTime();
-        } else { // hasAnimFace
-          _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().MoveToLastKeyFrame();
-          _streamingTime_ms = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().GetCurrentKeyFrame().GetTriggerTime();
-        }
-        
-        // Move all other tracks to the end, so they don't stream anything else
-        _streamingAnimation->GetTrack<HeadAngleKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<LiftHeightKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<FaceAnimationKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<ProceduralFaceKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<EventKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<BackpackLightsKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<BodyMotionKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<DeviceAudioKeyFrame>().MoveToEnd();
-        _streamingAnimation->GetTrack<RobotAudioKeyFrame>().MoveToEnd();
-        
         // Return existing tag counter because we haven't actually changed animations.
         // Instead, we will simply let this animation finish it's one additional
         // face keyframe on the next tick
@@ -131,19 +224,22 @@ namespace Cozmo {
     if(_streamingAnimation == nullptr) {
       return NotAnimatingTag;
     } else {
+      
+      _lastPlayedAnimationId = _streamingAnimation->GetName();
+      
       IncrementTagCtr();
     
       // Get the animation ready to play
-      InitStream(robot, _streamingAnimation, _tagCtr);
+      InitStream(_streamingAnimation, _tagCtr);
       
       _numLoops = numLoops;
       _loopCtr = 0;
       
-#     if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_INFO("AnimationStreamer.SetStreamingAnimation",
-                       "Will start streaming '%s' animation %d times with tag=%d.\n",
-                       _streamingAnimation->GetName().c_str(), numLoops, _tagCtr);
-#     endif
+      if(DEBUG_ANIMATION_STREAMING) {
+        PRINT_NAMED_DEBUG("AnimationStreamer.SetStreamingAnimation",
+                          "Will start streaming '%s' animation %d times with tag=%d.\n",
+                          _streamingAnimation->GetName().c_str(), numLoops, _tagCtr);
+      }
       Anki::Util::sEvent("robot.play_animation", {}, _streamingAnimation->GetName().c_str());
       
       return _tagCtr;
@@ -176,55 +272,98 @@ namespace Cozmo {
     }
   }
   
-  void AnimationStreamer::Abort(Robot& robot)
+  void AnimationStreamer::Abort()
   {
-    if(nullptr != _streamingAnimation)
+    if(nullptr != _streamingAnimation || nullptr != _idleAnimation)
     {
+      const char *type = (_streamingAnimation != nullptr ? "Streaming" : "Idle");
+      const std::string& name = (_streamingAnimation != nullptr ? _streamingAnimation->GetName() : _idleAnimation->GetName());
       PRINT_NAMED_INFO("AnimationStreamer.Abort",
-                       "Tag: %d, %s, startOfAnimationSent: %d, endOfAnimationSent: %d",
-                       _tag, _streamingAnimation->GetName().c_str(), _startOfAnimationSent, _endOfAnimationSent);
+                       "Tag: %d, %s:%s, startOfAnimationSent: %d, endOfAnimationSent: %d",
+                       _tag, type, name.c_str(), _startOfAnimationSent, _endOfAnimationSent);
       
-      // Tell the robot to abort
-      robot.AbortAnimation();
       _startOfAnimationSent = false;
       _endOfAnimationSent = false;
-#if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
+
       if ( _audioClient.HasAnimation() ) {
         _audioClient.GetCurrentAnimation()->AbortAnimation();
       }
       _audioClient.ClearCurrentAnimation();
-#endif
     }
   } // Abort()
   
   
   Result AnimationStreamer::SetIdleAnimation(const std::string &name)
   {
+    if(!_idleAnimationNameStack.empty()) {
+      PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation.ClearingIdleStack",
+                       "Had %zu idles in the stack",
+                       _idleAnimationNameStack.size());
+      _idleAnimationNameStack.clear();
+    }
+
+    return PushIdleAnimation(name);
+    
+  } // SetIdleAnimation()
+  
+  Result AnimationStreamer::PushIdleAnimation(const std::string& name)
+  {
     if(name.empty() || name == "NONE") {
-#     if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation",
-                       "Disabling idle animation.\n");
-#     endif
-      _idleAnimationGroupName = "";
+      if(DEBUG_ANIMATION_STREAMING) {
+        PRINT_NAMED_DEBUG("AnimationStreamer.PushIdleAnimation.Disabling",
+                          "Disabling idle animation.");
+      }
+      _idleAnimationNameStack.push_back("");
       _idleAnimation = nullptr;
       _isIdling = false;
     } else {
-      if(name == LiveAnimation) {
-        // Special case: point idle animation at the "live" animation container
-        _idleAnimation = &_liveAnimation;
-        _isLiveTwitchEnabled = true;
-      }
-      // NOTE: _idleAnimation will get set from the group inside Update() for non-live case
-      
-      _idleAnimationGroupName = name;
+      _idleAnimationNameStack.push_back(name);
     }
     
-#   if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_INFO("AnimationStreamer.SetIdleAnimation",
-                       "Setting idle animation to '%s'.\n",
-                       name.c_str());
-#   endif
+    if(DEBUG_ANIMATION_STREAMING) {
+      PRINT_NAMED_DEBUG("AnimationStreamer.PushIdleAnimation",
+                        "Setting idle animation to '%s'.\n",
+                        name.c_str());
+    }
+    
+    return RESULT_OK;
+  } // PushIdleAnimation()
+  
+  
+  Result AnimationStreamer::PopIdleAnimation()
+  {
+    if(_idleAnimationNameStack.size() == 1) {
+      PRINT_NAMED_INFO("AnimationStreamer.PopIdleAnimation.WillNotPopLast",
+                       "Refusing to pop last idle animation '%s'",
+                       _idleAnimationNameStack.back().c_str());
+      return RESULT_OK;
+    }
+    
+    if( _idleAnimationNameStack.empty() ) {
+      // This shouldn't really happen because we generally want something always
+      // in the idle stack
+      PRINT_NAMED_WARNING("AnimationStreamer.PopIdleAnimation.NoStack",
+                          "Trying to pop an idle animation, but the stack is empty");
+      return RESULT_FAIL;
+    }
 
+    _idleAnimationNameStack.pop_back();
+    
+    ASSERT_NAMED(!_idleAnimationNameStack.empty(), "AnimationStreamer.PopIdleAnimation.EmptyIdleStack");
+    
+    // If what's left on the stack is "no idle", make sure to make idle null and isIdling = false:
+    if(_idleAnimationNameStack.back().empty()) {
+      // If we were just idling and there's nothing streaming, we don't want to leave
+      // the face in a weird spot, so stream the neutral face, just in case
+      if(_idleAnimation != nullptr && _streamingAnimation == nullptr) {
+        // Send the neutral face
+        SetStreamingAnimation(NeutralFaceAnimName);
+      }
+
+      _idleAnimation = nullptr;
+      _isIdling = false;
+    }
+    
     return RESULT_OK;
   }
 
@@ -238,7 +377,7 @@ namespace Cozmo {
     return _idleAnimation->GetName();
   }
   
-  Result AnimationStreamer::InitStream(Robot& robot, Animation* anim, Tag withTag)
+  Result AnimationStreamer::InitStream(Animation* anim, Tag withTag)
   {
     Result lastResult = anim->Init();
     if(lastResult == RESULT_OK)
@@ -253,7 +392,7 @@ namespace Cozmo {
       
       if(!_sendBuffer.empty()) {
         PRINT_NAMED_WARNING("Animation.Init", "Expecting SendBuffer to be empty. Will clear.");
-        _sendBuffer.clear();
+        ClearSendBuffer();
       }
       
       // If this is an empty (e.g. live) animation, there is no need to
@@ -261,17 +400,8 @@ namespace Cozmo {
       _endOfAnimationSent = anim->IsEmpty();
       _startOfAnimationSent = false;
       
-#     if !USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       // Prep sound
       _audioClient.CreateAudioAnimation( anim );
-#     endif
-      
-#     if PLAY_ROBOT_AUDIO_ON_DEVICE
-      // This prevents us from replaying the same keyframe
-      _playedRobotAudio_ms = 0;
-      _onDeviceRobotAudioKeyFrameQueue.clear();
-      _lastPlayedOnDeviceRobotAudioKeyFrame = nullptr;
-#     endif
       
       // Make sure any eye dart (which is persistent) gets removed so it doesn't
       // affect the animation we are about to start streaming. Give it a little
@@ -306,11 +436,11 @@ namespace Cozmo {
     newLayer.sentOnce = false;
     newLayer.name = name;
     
-#   if DEBUG_ANIMATION_STREAMING
-    PRINT_NAMED_INFO("AnimationStreamer.AddFaceLayer",
-                     "%s, Tag = %d (Total layers=%lu)",
-                     newLayer.name.c_str(), newLayer.tag, (unsigned long)_faceLayers.size()+1);
-#   endif
+    if(DEBUG_ANIMATION_STREAMING) {
+      PRINT_NAMED_DEBUG("AnimationStreamer.AddFaceLayer",
+                        "%s, Tag = %d (Total layers=%lu)",
+                        newLayer.name.c_str(), newLayer.tag, (unsigned long)_faceLayers.size()+1);
+    }
     
     _faceLayers[_layerTagCtr] = std::move(newLayer);
     
@@ -333,11 +463,11 @@ namespace Cozmo {
     newLayer.sentOnce = false;
     newLayer.name = name;
 
-#   if DEBUG_ANIMATION_STREAMING
-    PRINT_NAMED_INFO("AnimationStreamer.AddPersistentFaceLayer",
-                     "%s, Tag = %d (Total layers=%lu)",
-                     newLayer.name.c_str(), newLayer.tag, (unsigned long)_faceLayers.size());
-#   endif
+    if(DEBUG_ANIMATION_STREAMING){
+      PRINT_NAMED_DEBUG("AnimationStreamer.AddPersistentFaceLayer",
+                        "%s, Tag = %d (Total layers=%lu)",
+                        newLayer.name.c_str(), newLayer.tag, (unsigned long)_faceLayers.size());
+    }
     
     _faceLayers[_layerTagCtr] = std::move(newLayer);
     
@@ -407,10 +537,10 @@ namespace Cozmo {
     // Empty out anything waiting in the send buffer:
     RobotInterface::EngineToRobot* msg = nullptr;
     while(!_sendBuffer.empty()) {
-#     if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_INFO("AnimationStreamer.SendBufferedMessages",
-                       "Send buffer length=%lu.", (unsigned long)_sendBuffer.size());
-#     endif
+      if(DEBUG_ANIMATION_STREAMING) {
+        PRINT_NAMED_DEBUG("AnimationStreamer.SendBufferedMessages",
+                          "Send buffer length=%lu.", (unsigned long)_sendBuffer.size());
+      }
       
       // Compute number of bytes required and whether the robot is accepting any
       // further audio frames yet
@@ -448,10 +578,10 @@ namespace Cozmo {
       } else {
         // Out of bytes or audio frames to send, continue on next Update()
 #       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("Animation.SendBufferedMessages.SentMax",
-                         "Sent %d messages, but ran out of bytes or audio frames to "
-                         "send from buffer. %lu bytes remain, so will continue next Update().",
-                         numSent, (unsigned long)_sendBuffer.size());
+        PRINT_NAMED_DEBUG("Animation.SendBufferedMessages.SentMax",
+                          "Sent %d messages, but ran out of bytes or audio frames to "
+                          "send from buffer. %lu bytes remain, so will continue next Update().",
+                          numSent, (unsigned long)_sendBuffer.size());
 #       endif
         return RESULT_OK;
       }
@@ -465,9 +595,9 @@ namespace Cozmo {
     
 #   if DEBUG_ANIMATION_STREAMING
     if(numSent > 0) {
-      PRINT_NAMED_INFO("Animation.SendBufferedMessages.Sent",
-                       "Sent %d messages, %lu remain in buffer.",
-                       numSent, (unsigned long)_sendBuffer.size());
+      PRINT_NAMED_DEBUG("Animation.SendBufferedMessages.Sent",
+                        "Sent %d messages, %lu remain in buffer.",
+                        numSent, (unsigned long)_sendBuffer.size());
     }
 #   endif
     
@@ -482,6 +612,7 @@ namespace Cozmo {
     if ( _audioClient.HasAnimation() ) {
       
       RobotAudioAnimation* audioAnimation = _audioClient.GetCurrentAnimation();
+      
       RobotInterface::EngineToRobot* audioMsg = nullptr;
       audioAnimation->PopRobotAudioMessage( audioMsg, startTime_ms, streamingTime_ms );
       if ( nullptr != audioMsg ) {
@@ -501,6 +632,13 @@ namespace Cozmo {
     return RESULT_OK;
   } // BufferAudioToSend()
   
+  void AnimationStreamer::ClearSendBuffer()
+  {
+    for (auto& engineToRobotMsg : _sendBuffer ) {
+      Util::SafeDelete(engineToRobotMsg);
+    }
+    _sendBuffer.clear();
+  }
 
   bool AnimationStreamer::GetFaceHelper(Animations::Track<ProceduralFaceKeyFrame>& track,
                                         TimeStamp_t startTime_ms, TimeStamp_t currTime_ms,
@@ -555,12 +693,12 @@ namespace Cozmo {
         }
         
         if(paramsSet) {
-#         if DEBUG_ANIMATION_STREAMING
-          const Point2f& facePosition = interpolatedFace.GetFacePosition();
-          PRINT_NAMED_INFO("AnimationStreamer.GetFaceHelper.EyeShift",
-                           "Applying eye shift from face layer of (%.1f,%.1f)",
-                           facePosition.x(), facePosition.y());
-#         endif // if DEBUG_ANIMATION_STREAMING
+          if(DEBUG_ANIMATION_STREAMING) {
+            const Point2f& facePosition = interpolatedFace.GetFacePosition();
+            PRINT_NAMED_DEBUG("AnimationStreamer.GetFaceHelper.EyeShift",
+                              "Applying eye shift from face layer of (%.1f,%.1f)",
+                              facePosition.x(), facePosition.y());
+          }
           
           if (shouldReplace)
           {
@@ -648,23 +786,24 @@ namespace Cozmo {
         faceTrack.AddKeyFrameToBack(ProceduralFaceKeyFrame(blinkFace, totalOffset));
       } while(moreBlinkFrames);
 
-#     if DEBUG_ANIMATION_STREAMING
-      // Sanity checkt: we should never command two blinks at the same time
-      bool alreadyBlinking = false;
-      for(auto & layer : _faceLayers) {
-        if(layer.second.name == "Blink") {
-          PRINT_NAMED_WARNING("AnimationStreamer.KeepFaceAlive.DuplicateBlink",
-                              "Seems like there's already a blink layer. Skipping this blink.");
-          alreadyBlinking = true;
+      if(DEBUG_ANIMATION_STREAMING)
+      {
+        // Sanity checkt: we should never command two blinks at the same time
+        bool alreadyBlinking = false;
+        for(auto & layer : _faceLayers) {
+          if(layer.second.name == "Blink") {
+            PRINT_NAMED_WARNING("AnimationStreamer.KeepFaceAlive.DuplicateBlink",
+                                "Seems like there's already a blink layer. Skipping this blink.");
+            alreadyBlinking = true;
+          }
         }
-      }
-
-      if(!alreadyBlinking) {
+        
+        if(!alreadyBlinking) {
+          AddFaceLayer("Blink", std::move(faceTrack));
+        }
+      } else {
         AddFaceLayer("Blink", std::move(faceTrack));
-      }
-#     else 
-      AddFaceLayer("Blink", std::move(faceTrack));
-#     endif // DEBUG_ANIMATION_STREAMING
+      } // DEBUG_ANIMATION_STREAMING
       
       _nextBlink_ms = _rng.RandIntInRange(GetParam<s32>(Param::BlinkSpacingMinTime_ms),
                                           GetParam<s32>(Param::BlinkSpacingMaxTime_ms));
@@ -692,12 +831,12 @@ namespace Cozmo {
       }
     }
     
-#   if DEBUG_ANIMATION_STREAMING
-    if(!_faceLayers.empty()) {
-      PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.ApplyingFaceLayers",
-                       "NumLayers=%lu", (unsigned long)_faceLayers.size());
+    if(DEBUG_ANIMATION_STREAMING) {
+      if(!_faceLayers.empty()) {
+        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.ApplyingFaceLayers",
+                          "NumLayers=%lu", (unsigned long)_faceLayers.size());
+      }
     }
-#   endif
     
     std::list<Tag> tagsToErase;
     
@@ -705,12 +844,12 @@ namespace Cozmo {
     {
       auto & faceLayer = faceLayerIter->second;
       
-#     if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.ApplyFaceLayer",
-                        "%slayer %s with tag %d",
-                        faceLayer.isPersistent ? "Persistent" : "",
-                        faceLayer.name.c_str(), faceLayer.tag);
-#     endif
+      if(DEBUG_ANIMATION_STREAMING) {
+        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.ApplyFaceLayer",
+                          "%slayer %s with tag %d",
+                          faceLayer.isPersistent ? "Persistent" : "",
+                          faceLayer.name.c_str(), faceLayer.tag);
+      }
       
       // Note that shouldReplace==false here because face layers do not replace
       // what's on the face, by definition, they layer on top of what's already there.
@@ -732,11 +871,11 @@ namespace Cozmo {
             //...but is marked persistent, so keep applying last frame
             faceLayer.track.MoveToPrevKeyFrame(); // so we're not at end() anymore
             faceLayer.streamTime_ms -= RobotAudioKeyFrame::SAMPLE_LENGTH_MS;
-#           if DEBUG_ANIMATION_STREAMING
-            PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.HoldingLayer",
-                             "Holding last frame of face layer %s with tag %d",
-                             faceLayer.name.c_str(), faceLayer.tag);
-#           endif
+            if(DEBUG_ANIMATION_STREAMING) {
+              PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.HoldingLayer",
+                                "Holding last frame of face layer %s with tag %d",
+                                faceLayer.name.c_str(), faceLayer.tag);
+            }
             faceLayer.sentOnce = true; // mark that it has been sent at least once
             
             // We no longer need anything but the last frame (which should now be
@@ -745,11 +884,11 @@ namespace Cozmo {
           }
         } else {
           //...and is not persistent, so delete it
-#         if DEBUG_ANIMATION_STREAMING
-          PRINT_NAMED_INFO("AnimationStreamer.UpdateFace.RemovingFaceLayer",
-                           "%s, Tag = %d (Layers remaining=%lu)",
-                           faceLayer.name.c_str(), faceLayer.tag, (unsigned long)_faceLayers.size()-1);
-#         endif
+          if(DEBUG_ANIMATION_STREAMING) {
+            PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace.RemovingFaceLayer",
+                              "%s, Tag = %d (Layers remaining=%lu)",
+                              faceLayer.name.c_str(), faceLayer.tag, (unsigned long)_faceLayers.size()-1);
+          }
           tagsToErase.push_back(faceLayerIter->first);
         }
       }
@@ -765,7 +904,7 @@ namespace Cozmo {
       // ...turn the final procedural face into an RLE-encoded image suitable for
       // streaming to the robot
       
-#     if DEBUG_ANIMATION_STREAMING
+      if(DEBUG_ANIMATION_STREAMING)
       {
         using Param = ProceduralEyeParameter;
         const ProceduralFace::WhichEye L = ProceduralFace::WhichEye::Left;
@@ -786,7 +925,6 @@ namespace Cozmo {
                           procFace.GetParameter(R, Param::EyeScaleX),
                           procFace.GetParameter(R, Param::EyeScaleY));
       }
-#     endif
       
       BufferFaceToSend(procFace);
     }
@@ -802,11 +940,11 @@ namespace Cozmo {
       PRINT_NAMED_ERROR("ProceduralFaceKeyFrame.GetStreamMesssageHelper",
                         "Failed to get RLE frame from procedural face.");
     } else {
-#     if DEBUG_ANIMATION_STREAMING
-      PRINT_NAMED_INFO("AnimationStreamer.UpdateFace",
-                       "Streaming ProceduralFaceKeyFrame at t=%dms.",
-                       _streamingTime_ms - _startTime_ms);
-#     endif
+      if(DEBUG_ANIMATION_STREAMING) {
+        PRINT_NAMED_DEBUG("AnimationStreamer.UpdateFace",
+                          "Streaming ProceduralFaceKeyFrame at t=%dms.",
+                          _streamingTime_ms - _startTime_ms);
+      }
       BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(faceImageMsg)));
     }
 
@@ -815,9 +953,9 @@ namespace Cozmo {
   
   Result AnimationStreamer::SendStartOfAnimation()
   {
-#   if DEBUG_ANIMATION_STREAMING
-    PRINT_NAMED_INFO("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d", _tag);
-#   endif
+    if(DEBUG_ANIMATION_STREAMING) {
+      PRINT_NAMED_DEBUG("AnimationStreamer.SendStartOfAnimation.BufferedStartOfAnimation", "Tag=%d", _tag);
+    }
     BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::StartOfAnimation(_tag)));
     _startOfAnimationSent = true;
     _endOfAnimationSent = false;
@@ -831,19 +969,19 @@ namespace Cozmo {
     ASSERT_NAMED(_startOfAnimationSent,
                  "Should not be sending end of animation without having first sent start of animation.");
     
-#   if DEBUG_ANIMATION_STREAMING
-    PRINT_NAMED_INFO("AnimationStreamer.SendEndOfAnimation", "Streaming EndOfAnimation at t=%dms.",
-                     _streamingTime_ms - _startTime_ms);
-    
-    /* no longer necessary to check with the assert above?
-    static TimeStamp_t lastEndOfAnimTime = 0;
-    if(_streamingTime_ms - _startTime_ms == lastEndOfAnimTime) {
-      PRINT_NAMED_INFO("AnimationStreamer.SendEndOfAnimation", "Already sent end of animation at t=%dms.",
-                       lastEndOfAnimTime);
+    if(DEBUG_ANIMATION_STREAMING) {
+      PRINT_NAMED_INFO("AnimationStreamer.SendEndOfAnimation", "Streaming EndOfAnimation at t=%dms.",
+                       _streamingTime_ms - _startTime_ms);
+      
+      /* no longer necessary to check with the assert above?
+       static TimeStamp_t lastEndOfAnimTime = 0;
+       if(_streamingTime_ms - _startTime_ms == lastEndOfAnimTime) {
+       PRINT_NAMED_INFO("AnimationStreamer.SendEndOfAnimation", "Already sent end of animation at t=%dms.",
+       lastEndOfAnimTime);
+       }
+       lastEndOfAnimTime = _streamingTime_ms - _startTime_ms;
+       */
     }
-    lastEndOfAnimTime = _streamingTime_ms - _startTime_ms;
-     */
-#   endif
     
     RobotInterface::EngineToRobot endMsg{AnimKeyFrame::EndOfAnimation()};
     size_t endMsgSize = endMsg.Size();
@@ -886,10 +1024,10 @@ namespace Cozmo {
   {
     Result lastResult = RESULT_OK;
     
-#   if DEBUG_ANIMATION_STREAMING
-    PRINT_NAMED_INFO("AnimationStreamer.StreamFaceLayers",
-                     "Have %lu face layers to stream", (unsigned long)_faceLayers.size());
-#   endif
+    if(DEBUG_ANIMATION_STREAMING) {
+      PRINT_NAMED_DEBUG("AnimationStreamer.StreamFaceLayers",
+                        "Have %lu face layers to stream", (unsigned long)_faceLayers.size());
+    }
     
     // There is no idle/streaming animation playing, but we haven't finished
     // streaming the face layers. Do so now.
@@ -994,54 +1132,17 @@ namespace Cozmo {
     while ( ShouldProcessAnimationFrame(anim, _startTime_ms, _streamingTime_ms) )
     {
       
-#     if DEBUG_ANIMATIONS
-      //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.",
-      //                 numBytesToSend);
-#     endif
-      
-#     if USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
-      // Have to always send an audio frame to keep time, whether that's the next
-      // audio sample or a silent frame. This increments "streamingTime"
-      // NOTE: Audio frame must be first!
-      auto & robotAudioTrack  = anim->GetTrack<RobotAudioKeyFrame>();
-      
-      if(robotAudioTrack.HasFramesLeft() &&
-         robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, _streamingTime_ms))
-      {
-#       if PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-        // Queue up audio frame for playing locally if
-        // it's not already in the queued and it wasn't already played.
-        const RobotAudioKeyFrame* audioKF = &robotAudioTrack.GetCurrentKeyFrame();
-        if ((audioKF != _lastPlayedOnDeviceRobotAudioKeyFrame) &&
-            (_onDeviceRobotAudioKeyFrameQueue.empty() || audioKF != _onDeviceRobotAudioKeyFrameQueue.back())) {
-          _onDeviceRobotAudioKeyFrameQueue.push_back(audioKF);
-        }
-#       endif // PLAY_ROBOT_AUDIO_ON_DEVICE && !defined(ANKI_IOS_BUILD)
-        
-        if(!BufferMessageToSend(robotAudioTrack.GetCurrentKeyFrame().GetStreamMessage()))
-        {
-          // No samples left to send for this keyframe. Move to next keyframe,
-          // and for now send silence.
-          //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.");
-          
-          robotAudioTrack.MoveToNextKeyFrame();
-          BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
-        }
-      } else {
-        // No frames left or not time to play next frame yet, so send silence
-        //PRINT_NAMED_INFO("Animation.Update", "Streaming AudioSilenceKeyFrame.");
-        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
+      if(DEBUG_ANIMATION_STREAMING) {
+        // Very verbose!
+        //PRINT_NAMED_INFO("Animation.Update", "%d bytes left to send this Update.",
+        //                 numBytesToSend);
       }
-
-#     else // if (!USE_SOUND_MANAGER_FOR_ROBOT_AUDIO)
       
       // Stream a single audio sample from the audio manager (or silence if there isn't one)
       // (Have to *always* send an audio frame to keep time, whether that's the next
       // audio sample or a silent frame.)
       // NOTE: Audio frame must be first!
       BufferAudioToSend(true, _startTime_ms, _streamingTime_ms);
-      
-#     endif // USE_SOUND_MANAGER_FOR_ROBOT_AUDIO
       
       //
       // We are guaranteed to have sent some kind of audio frame at this point.
@@ -1179,10 +1280,10 @@ namespace Cozmo {
     // Wait a 1/2 second before running after we finish the last streaming animation
     // to help reduce stepping on the next animation's toes when we have things
     // sequenced.
-    
-    // _tagCtr check so we wait until we get one behavior until we start playing
+    // NOTE: lastStreamTime>0 check so that we dont' start keeping face alive before
+    //       first animation of any kind is sent.
     if(GetParam<bool>(LiveIdleAnimationParameter::EnableKeepFaceAlive) &&
-       _tagCtr > 0 && _streamingAnimation == nullptr &&
+       _streamingAnimation == nullptr && _lastStreamTime > 0.f &&
        (_idleAnimation == &_liveAnimation || (_idleAnimation == nullptr &&
        BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastStreamTime > 0.5f)))
     {
@@ -1197,22 +1298,22 @@ namespace Cozmo {
         ++_loopCtr;
         
         if(_numLoops == 0 || _loopCtr < _numLoops) {
-#         if DEBUG_ANIMATION_STREAMING
-          PRINT_NAMED_INFO("AnimationStreamer.Update.Looping",
-                           "Finished loop %d of %d of '%s' animation. Restarting.\n",
-                           _loopCtr, _numLoops,
-                           _streamingAnimation->GetName().c_str());
-#         endif
+         if(DEBUG_ANIMATION_STREAMING) {
+           PRINT_NAMED_INFO("AnimationStreamer.Update.Looping",
+                            "Finished loop %d of %d of '%s' animation. Restarting.\n",
+                            _loopCtr, _numLoops,
+                            _streamingAnimation->GetName().c_str());
+         }
           
           // Reset the animation so it can be played again:
-          InitStream(robot, _streamingAnimation, _tagCtr);
+          InitStream(_streamingAnimation, _tagCtr);
           
         } else {
-#         if DEBUG_ANIMATION_STREAMING
-          PRINT_NAMED_INFO("AnimationStreamer.Update.FinishedStreaming",
-                           "Finished streaming '%s' animation.\n",
-                           _streamingAnimation->GetName().c_str());
-#         endif
+          if(DEBUG_ANIMATION_STREAMING) {
+            PRINT_NAMED_INFO("AnimationStreamer.Update.FinishedStreaming",
+                             "Finished streaming '%s' animation.\n",
+                             _streamingAnimation->GetName().c_str());
+          }
           
           _streamingAnimation = nullptr;
         }
@@ -1224,13 +1325,19 @@ namespace Cozmo {
         streamUpdated = true;
         _lastStreamTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
-    } else if(_idleAnimation != nullptr || !_idleAnimationGroupName.empty()) {
+    } else if(!_idleAnimationNameStack.empty() && !_idleAnimationNameStack.back().empty()) {
+      
+      std::string& idleAnimationGroupName = _idleAnimationNameStack.back();
       
       Animation* oldIdleAnimation = _idleAnimation;
       
-      if(_idleAnimationGroupName == LiveAnimation)
+      if(idleAnimationGroupName == LiveAnimation)
       {
-        // Update the live animation if we're using it
+        // Make sure these are set, in case we just popped an idle and came back to idle
+        _idleAnimation = &_liveAnimation;
+        _isLiveTwitchEnabled = true;
+
+        // Update the live animation's keyframes
         lastResult = UpdateLiveAnimation(robot);
         if(RESULT_OK != lastResult) {
           PRINT_NAMED_ERROR("AnimationStreamer.Update.LiveUpdateFailed",
@@ -1241,27 +1348,30 @@ namespace Cozmo {
         // We aren't doing "live" idle and the robot is either done with the last
         // idle animation or hasn't started idling yet. So it's time to select the
         // next idle from the group.
-        const std::string animName = robot.GetAnimationNameFromGroup(_idleAnimationGroupName);
-        if(animName.empty()) {
-          PRINT_NAMED_ERROR("AnimationStreamer.Update.EmptyIdleAnimationFromGroup",
-                            "Returned empty animation name for group %s",
-                            _idleAnimationGroupName.c_str());
-          _idleAnimationGroupName = "";
-          _idleAnimation = nullptr;
-          return RESULT_FAIL;
-        }
-        _idleAnimation = _animationContainer.GetAnimation(animName);
-        if(_idleAnimation == nullptr) {
-          PRINT_NAMED_ERROR("AnimationStreamer.Update.InvalidIdleAnimationFromGroup",
-                            "Returned null animation for name '%s' from group '%s'",
-                            animName.c_str(), _idleAnimationGroupName.c_str());
-          _idleAnimationGroupName = "";
-          return RESULT_FAIL;
-        }
-        
-        PRINT_NAMED_DEBUG("AnimationStreamer.Update.SelectedNewIdle",
-                          "Selected idle animation '%s' from group '%s'",
-                          animName.c_str(), _idleAnimationGroupName.c_str());
+        if(!idleAnimationGroupName.empty())
+        {
+          const std::string animName = GetAnimationNameFromGroup(idleAnimationGroupName, robot);
+          if(animName.empty()) {
+            PRINT_NAMED_ERROR("AnimationStreamer.Update.EmptyIdleAnimationFromGroup",
+                              "Returned empty animation name for group %s. Popping the group.",
+                              idleAnimationGroupName.c_str());
+            PopIdleAnimation();
+            _idleAnimation = nullptr;
+            return RESULT_FAIL;
+          }
+          _idleAnimation = _animationContainer.GetAnimation(animName);
+          if(_idleAnimation == nullptr) {
+            PRINT_NAMED_ERROR("AnimationStreamer.Update.InvalidIdleAnimationFromGroup",
+                              "Returned null animation for name '%s' from group '%s'. Popping the group.",
+                              animName.c_str(), idleAnimationGroupName.c_str());
+            PopIdleAnimation();
+            return RESULT_FAIL;
+          }
+          
+          PRINT_NAMED_DEBUG("AnimationStreamer.Update.SelectedNewIdle",
+                            "Selected idle animation '%s' from group '%s'",
+                            animName.c_str(), idleAnimationGroupName.c_str());
+        } // if(!idleAnimationGroupName.empty())
       }
       
       ASSERT_NAMED(_idleAnimation != nullptr, "AnimationStreamer.Update.NullIdleAnimation");
@@ -1271,16 +1381,16 @@ namespace Cozmo {
         _isIdling = false;
       }
       
-      if(!_isIdling || IsFinished(_idleAnimation)) { // re-check because isIdling could have changed
-#       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("AnimationStreamer.Update.IdleAnimInit",
-                         "(Re-)Initializing idle animation: '%s'.\n",
-                         _idleAnimation->GetName().c_str());
-#       endif
+      if(!_isIdling || IsFinished(_idleAnimation)) { // re-check because isIdling could have
+        if(DEBUG_ANIMATION_STREAMING) {
+          PRINT_NAMED_INFO("AnimationStreamer.Update.IdleAnimInit",
+                           "(Re-)Initializing idle animation: '%s'.\n",
+                           _idleAnimation->GetName().c_str());
+        }
         
         // Just finished playing a loop, or we weren't just idling. Either way,
         // (re-)init the animation so it can be played (again)
-        InitStream(robot, _idleAnimation, IdleAnimationTag);
+        InitStream(_idleAnimation, IdleAnimationTag);
         _isIdling = true;
         
       } else {
@@ -1364,10 +1474,10 @@ namespace Cozmo {
     
     s32 audioFramesInBuffer = totalNumAudioFramesStreamed - totalNumAudioFramesPlayed;
 
-#   if DEBUG_ANIMATION_STREAMING
-    PRINT_NAMED_INFO("AnimationStreamer.UpdateAmountToSend", "Streamed= %d, Played=%d, InBuffer=%d",
-                     totalNumAudioFramesStreamed, totalNumAudioFramesPlayed, audioFramesInBuffer);
-#   endif
+    if(DEBUG_ANIMATION_STREAMING) {
+      PRINT_NAMED_INFO("AnimationStreamer.UpdateAmountToSend", "Streamed= %d, Played=%d, InBuffer=%d",
+                       totalNumAudioFramesStreamed, totalNumAudioFramesPlayed, audioFramesInBuffer);
+    }
     _numAudioFramesToSend = std::max(0, NUM_AUDIO_FRAMES_LEAD-audioFramesInBuffer);
     
   } // UpdateAmountToSend()
@@ -1446,10 +1556,10 @@ namespace Cozmo {
           // If turning in place, look in the direction of the turn
           const s32 x = (speed < 0 ? -1.f : 1.f) * _rng.RandIntInRange(0, ProceduralFace::WIDTH/6);
           const s32 y = _rng.RandIntInRange(-ProceduralFace::HEIGHT/6, ProceduralFace::HEIGHT/6);
-#         if DEBUG_ANIMATION_STREAMING
-          PRINT_NAMED_DEBUG("AnimationStreamer.UpdateLiveAnimation.EyeLeadTurn",
-                            "Point turn eye shift (%d,%d)", x, y);
-#         endif
+          if(DEBUG_ANIMATION_STREAMING) {
+            PRINT_NAMED_DEBUG("AnimationStreamer.UpdateLiveAnimation.EyeLeadTurn",
+                              "Point turn eye shift (%d,%d)", x, y);
+          }
           
           ProceduralFace procFace;
           procFace.LookAt(x, y, ProceduralFace::WIDTH/2, ProceduralFace::HEIGHT/2);
@@ -1458,11 +1568,11 @@ namespace Cozmo {
           AddFaceLayer("LiveIdleTurn", std::move(faceTrack));
         }
         
-#       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.BodyTwitch",
-                         "Speed=%d, curvature=%d, duration=%d",
-                         speed, curvature, _bodyMoveDuration_ms);
-#       endif
+        if(DEBUG_ANIMATION_STREAMING) {
+          PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.BodyTwitch",
+                           "Speed=%d, curvature=%d, duration=%d",
+                           speed, curvature, _bodyMoveDuration_ms);
+        }
         
         if(RESULT_OK != _liveAnimation.AddKeyFrameToBack(BodyMotionKeyFrame(speed, curvature, _bodyMoveDuration_ms))) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddBodyMotionKeyFrameFailed", "");
@@ -1484,11 +1594,11 @@ namespace Cozmo {
       {
         _liftMoveDuration_ms = _rng.RandIntInRange(GET_PARAM(s32, LiftMovementDurationMin_ms),
                                                    GET_PARAM(s32, LiftMovementDurationMax_ms));
-
-#       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.LiftTwitch",
-                         "duration=%d", _liftMoveDuration_ms);
-#       endif
+        
+        if(DEBUG_ANIMATION_STREAMING) {
+          PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.LiftTwitch",
+                           "duration=%d", _liftMoveDuration_ms);
+        }
         LiftHeightKeyFrame kf(GET_PARAM(u8, LiftHeightMean_mm),
                               GET_PARAM(u8, LiftHeightVariability_mm),
                               _liftMoveDuration_ms);
@@ -1514,10 +1624,10 @@ namespace Cozmo {
                                                    GET_PARAM(s32, HeadMovementDurationMax_ms));
         const s8 currentAngle_deg = static_cast<s8>(RAD_TO_DEG(robot.GetHeadAngle()));
 
-#       if DEBUG_ANIMATION_STREAMING
-        PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.HeadTwitch",
-                         "duration=%d", _headMoveDuration_ms);
-#       endif
+        if(DEBUG_ANIMATION_STREAMING) {
+          PRINT_NAMED_INFO("AnimationStreamer.UpdateLiveAnimation.HeadTwitch",
+                           "duration=%d", _headMoveDuration_ms);
+        }
         HeadAngleKeyFrame kf(currentAngle_deg, GET_PARAM(u8, HeadAngleVariability_deg), _headMoveDuration_ms);
         if(RESULT_OK != _liveAnimation.AddKeyFrameToBack(kf)) {
           PRINT_NAMED_ERROR("AnimationStreamer.UpdateLiveAnimation.AddHeadAngleKeyFrameFailed", "");

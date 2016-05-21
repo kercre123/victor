@@ -11,6 +11,7 @@
 #include "anki/common/types.h"
 #include "anki/common/matlab/mexWrappers.h"
 
+//int main(int argc, const char** argv)
 void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
 

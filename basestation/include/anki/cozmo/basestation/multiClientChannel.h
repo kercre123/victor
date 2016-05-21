@@ -29,8 +29,8 @@
 // Note that the resolution of these latencies is currently equal to
 // the Basestation frequency since that's what defines how often Update() is called.
 //#define DO_SIM_COMMS_LATENCY 1
-#define SIM_RECV_LATENCY_SEC 0 // 0.03
-#define SIM_SEND_LATENCY_SEC 0 // 0.03
+#define SIM_RECV_LATENCY_SEC 0.0 // 0.03
+#define SIM_SEND_LATENCY_SEC 0.0 // 0.03
 
 
 
@@ -66,6 +66,8 @@ namespace Cozmo {
     
     // true if we are either trying to connect or currently sending/receiving with the connection
     virtual bool IsConnectionActive(ConnectionId connectionId) const override;
+    
+    bool IsAddressConnected(const TransportAddress& transportAddress) const;
     
     int32_t CountAdvertisingConnections() const;
     
