@@ -218,34 +218,34 @@ def main(scriptArgs):
     return False
 
   if not options.cozmoEnginePath:
-    options.cozmoEnginePath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine')
+    options.cozmoEnginePath = options.projectRoot
   if not os.path.exists(options.cozmoEnginePath):
     UtilLog.error('cozmo-engine not found [%s]' % (options.cozmoEnginePath) )
     return False
   cozmoEngineProjectPath = os.path.join(options.cozmoEnginePath, 'project/gyp/cozmoEngine.gyp')
 
   if not options.coretechInternalPath:
-    options.coretechInternalPath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/coretech')
+    options.coretechInternalPath = os.path.join(options.projectRoot, 'coretech')
   if not os.path.exists(options.coretechInternalPath):
     UtilLog.error('coretech-internal not found [%s]' % (options.coretechInternalPath) )
     return False
   coretechInternalProjectPath = os.path.join(options.coretechInternalPath, 'project/gyp/coretech-internal.gyp')
 
   if not options.buildToolsPath:
-    options.buildToolsPath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/tools/anki-util/tools/build-tools')
+    options.buildToolsPath = os.path.join(options.projectRoot, 'tools/anki-util/tools/build-tools')
   if not os.path.exists(options.buildToolsPath):
     UtilLog.error('build tools not found [%s]' % (options.buildToolsPath) )
     return False
 
   if not options.dasPath:
-    options.dasPath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/lib/das-client')
+    options.dasPath = os.path.join(options.projectRoot, 'lib/das-client')
   if not os.path.exists(options.dasPath):
     UtilLog.error('das-client not found [%s]' % (options.dasPath) )
     return False
   dasProjectPath = os.path.join(options.dasPath, 'gyp/das-client.gyp')
 
   if not options.audioPath:
-    options.audioPath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/lib/audio')
+    options.audioPath = os.path.join(options.projectRoot, 'lib/audio')
   if not os.path.exists(options.audioPath):
     UtilLog.error('audio path not found [%s]' % options.audioPath)
     return False
@@ -253,7 +253,7 @@ def main(scriptArgs):
   audioProjectGypPath = os.path.join(audioProjectPath, 'gyp/audioengine.gyp')
 
   if not options.bleCozmoPath:
-    options.bleCozmoPath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/lib/BLECozmo')
+    options.bleCozmoPath = os.path.join(options.projectRoot, 'lib/BLECozmo')
   if not os.path.exists(options.bleCozmoPath):
     UtilLog.error('BLECozmo path not found [%s]' % options.bleCozmoPath)
     return False
@@ -266,7 +266,7 @@ def main(scriptArgs):
   import generateUnityMeta
 
   if not options.ankiUtilPath:
-    options.ankiUtilPath = os.path.join(options.projectRoot, 'lib/anki/cozmo-engine/tools/anki-util')
+    options.ankiUtilPath = os.path.join(options.projectRoot, 'tools/anki-util')
   if not os.path.exists(options.ankiUtilPath):
     UtilLog.error('anki-util not found [%s]' % (options.ankiUtilPath) )
     return False
@@ -353,7 +353,7 @@ def main(scriptArgs):
   for platform in options.platforms:
     # TODO: we should pass in our own options with any additional overides..
     # subproject might need to know about the build-tools location, --verbose, and other args...
-    if (subprocess.call([os.path.join(options.cozmoEnginePath, 'project/gyp/configure.py'),
+    if (subprocess.call([os.path.join(options.cozmoEnginePath, 'project/gyp/configure_engine.py'),
      '--platform', platform, '--buildTools', options.buildToolsPath, '--ankiUtil', options.ankiUtilPath, '--updateListsOnly']) != 0):
       UtilLog.error("error executing submodule configure")
       return False

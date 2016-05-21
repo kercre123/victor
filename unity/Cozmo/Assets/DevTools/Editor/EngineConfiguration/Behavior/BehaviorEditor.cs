@@ -26,9 +26,9 @@ public class BehaviorEditor : EditorWindow {
 
   public static string sBehaviorDirectory { get { return Application.dataPath + "/../../../lib/anki/products-cozmo-assets/behaviors/"; } }
 
-  public static string sBehaviorCppDirectory { get { return Application.dataPath + "/../../../lib/anki/cozmo-engine/basestation/src/anki/cozmo/basestation/behaviors/"; } }
+  public static string sBehaviorCppDirectory { get { return Application.dataPath + "/../../../basestation/src/anki/cozmo/basestation/behaviors/"; } }
 
-  public static string sBehaviorHDirectory { get { return Application.dataPath + "/../../../lib/anki/cozmo-engine/basestation/include/anki/cozmo/basestation/behaviors/"; } }
+  public static string sBehaviorHDirectory { get { return Application.dataPath + "/../../../basestation/include/anki/cozmo/basestation/behaviors/"; } }
 
 
   public static string[] BehaviorNameOptions { get { return _BehaviorNameOptions; } }

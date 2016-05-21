@@ -1,7 +1,7 @@
 {
   'includes': [
-    '../../lib/anki/cozmo-engine/coretech/project/gyp/opencv.gypi',
-    '../../lib/anki/cozmo-engine/coretech/project/gyp/face-library.gypi'
+    '../../coretech/project/gyp/opencv.gypi',
+    '../../coretech/project/gyp/face-library.gypi'
   ],
 
   'variables': {
@@ -555,7 +555,7 @@
           },
           #Build server requires this for webots tests that require assets.
           {
-            'target_name': 'webotsControllers',
+            'target_name': 'webotsControllersForGame',
             'type': 'none',
             'dependencies': [
               '<(cg-ce_gyp_path):webotsControllers',

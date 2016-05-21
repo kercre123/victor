@@ -116,7 +116,7 @@ namespace Anki {
 
         // Copy engine resources
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/products-cozmo-assets", "Assets/StreamingAssets/cozmo_resources/assets");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/cozmo-engine/resources/config", "Assets/StreamingAssets/cozmo_resources/config");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", "Assets/StreamingAssets/cozmo_resources/config");
 
         // Delete compressed animation files that we don't need
         string[] tarFiles = Directory.GetFiles("Assets/StreamingAssets/cozmo_resources/assets/animations", "*.tar", SearchOption.AllDirectories);
@@ -144,7 +144,7 @@ namespace Anki {
         default:
           throw new NotImplementedException();
         }
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../lib/anki/cozmo-engine/EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/" + soundFolder, "Assets/StreamingAssets/cozmo_resources/sound");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmosoundbanks/GeneratedSoundBanks/" + soundFolder, "Assets/StreamingAssets/cozmo_resources/sound");
 
         Debug.Log("Engine assets copied to StreamingAssets");
       }

@@ -330,9 +330,10 @@ def wipe_all(options, root_path, kill_unity=True):
 # PLATFORM-DEPENDENT COMMANDS #
 ###############################
 
-def generate_gyp(path, platform, options, dep_location):
+def generate_gyp(path, command, platform, options, dep_location):
 
-    arguments = ['./configure.py', '--platform', platform]
+    print ("calling configure %s %s %s"% (path, command, options.use_external) )
+    arguments = [ command, '--platform', platform]
 
     if not options.do_not_check_dependencies:
         extract_dependencies(dep_location, EXTERNALS_ROOT)
@@ -392,7 +393,7 @@ class EnginePlatformConfiguration(object):
         
         ankibuild.util.File.mkdir_p(self.platform_build_dir)
         ankibuild.util.File.mkdir_p(self.platform_output_dir)
-        generate_gyp(self.gyp_dir, self.platform, self.options, os.path.join(ENGINE_ROOT, "DEPS"))
+        generate_gyp(self.gyp_dir, './configure_engine.py', self.platform, self.options, os.path.join(ENGINE_ROOT, "DEPS"))
         if self.platform == 'mac' or self.platform == 'ios':
             ankibuild.xcode.XcodeWorkspace.generate_self(self.project_path, self.derived_data_dir)
 

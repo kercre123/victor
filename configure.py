@@ -13,15 +13,15 @@ import shutil
 GAME_ROOT = os.path.normpath(
         os.path.abspath(os.path.realpath(os.path.dirname(inspect.getfile(inspect.currentframe())))))
 
-ENGINE_ROOT = os.path.join(GAME_ROOT, 'lib', 'anki', 'cozmo-engine')
+ENGINE_ROOT = GAME_ROOT
 CERT_ROOT = os.path.join(GAME_ROOT, 'project', 'ios', 'ProvisioningProfiles')
 EXTERNALS_ROOT = os.path.join(ENGINE_ROOT, 'EXTERNALS')
 CTE_ROOT = os.path.join(EXTERNALS_ROOT, 'coretech_external')
 sys.path.insert(0, ENGINE_ROOT)
 PRODUCT_NAME = 'Cozmo'
 
-from configure import BUILD_TOOLS_ROOT, print_header, print_status
-from configure import ArgumentParser, generate_gyp, configure
+from configure_engine import BUILD_TOOLS_ROOT, print_header, print_status
+from configure_engine import ArgumentParser, generate_gyp, configure
 
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 import ankibuild.ios_deploy
@@ -310,7 +310,7 @@ class GamePlatformConfiguration(object):
         # START ENGINE GENERATE
         if self.platform != 'android':
             # Calling generate gyp instead of generate() for engine.
-            generate_gyp(self.gyp_dir, self.platform, self.options, os.path.join(ENGINE_ROOT, 'DEPS'))
+            generate_gyp(self.gyp_dir, './configure.py', self.platform, self.options, os.path.join(ENGINE_ROOT, 'DEPS'))
             relative_gyp_project = os.path.relpath(self.gyp_project_path, self.platform_output_dir)
             workspace = ankibuild.xcode.XcodeWorkspace(self.workspace_name)
             workspace.add_project(relative_gyp_project)
@@ -436,7 +436,7 @@ class GamePlatformConfiguration(object):
                         simulator=self.options.simulator)
 
     def call_engine(self, command):
-        args = [os.path.join(ENGINE_ROOT, 'configure.py'), command]
+        args = [os.path.join(ENGINE_ROOT, 'configure_engine.py'), command]
         args += ['--platform', '+'.join(self.options.platforms)]
         args += ['--config', self.options.configuration]
         if self.options.verbose:
@@ -527,7 +527,7 @@ class GamePlatformConfiguration(object):
 def recursive_delete(options):
     "Calls delete on engine."
     print_header('RECURSING INTO {0}'.format(os.path.relpath(ENGINE_ROOT, GAME_ROOT)))
-    args = [os.path.join(ENGINE_ROOT, 'configure.py'), 'delete']
+    args = [os.path.join(ENGINE_ROOT, 'configure_engine.py'), 'delete']
     args += ['--platform', '+'.join(options.platforms)]
     if options.verbose:
         args += ['--verbose']
